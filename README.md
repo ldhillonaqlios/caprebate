@@ -31,6 +31,19 @@ What to try (since 18 September 2026):
   "Confirm your Cap Rebate login" message, with its link, is printed in the demo's terminal. Open the link and press
   the button, then log in with the address and password you chose. Use an invented address.
 
+## Or on Vercel
+
+Every push to `main` deploys the same demo to **https://caprebate-test.vercel.app** (Vercel project
+`caprebate-test`, set up 18 September 2026). `api/index.mjs` builds the seeded in-memory demo once per instance,
+and `vercel.json` sends every path to it. The same invented logins and password apply.
+
+- **The address is public** on the free Hobby plan: Vercel Authentication does not cover the main address.
+  Invented data only, always.
+- **Nothing is kept.** A new instance starts again from the seed, and a login may need repeating.
+- The sign-up's confirmation link is in the project's **Logs**, because no email is sent.
+- The `package.json` files marked `"type"` in `phase3`, `phase9` and `engine/src` (and `"commonjs"` in
+  `engine/src/generated`) are there because Vercel compiles typeless TypeScript as CommonJS. Keep them.
+
 ## Run the checks
 
     cd Caprebate/09-app/backend && npm run check          # the back end
