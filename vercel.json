@@ -1,11 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "cd Caprebate/09-app/backend && npm ci --omit=dev",
+  "installCommand": "npm install --omit=dev",
   "buildCommand": "",
   "outputDirectory": ".",
   "functions": {
     "api/index.mjs": {
-      "includeFiles": "{Caprebate site.html,Caprebate/**}",
+      "includeFiles": "{Caprebate site.html,Caprebate/**,node_modules/@node-rs/**}",
       "maxDuration": 30
     }
   },
