@@ -58,7 +58,7 @@ import { localDate, localStamp } from './localtime.ts';
 import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from './stages.ts';
 import { missingFacts } from './engaged.ts';
 import { POOL_ROLES, addDaysToDate, insertTask } from './tasks.ts';
-import { type Fields } from './crm.ts';
+import { claimWords, type Fields } from './crm.ts';
 import { mayTake, vocabLabel } from './vocabularies.ts';
 import { createDocumentRequest, NO_RECEIPT_POLICY } from './documents.ts';
 
@@ -272,9 +272,9 @@ export function recentRuns(db: Db, actor: Actor, limit = 100): RunView[] {
   authorise(actor, 'automation_rule.read', RULES_SECTION);
   return db.all<{
     at: string; trigger_event: string; outcome: string; reason: string | null; tasks_created: number; outbox_id: string | null;
-    claim_ref: string | null; lead_id: string | null; task_id: string | null; label: string;
+    claim_id: string | null; lead_id: string | null; task_id: string | null; label: string;
   }>(
-    'SELECT r.at, r.trigger_event, r.outcome, r.reason, r.tasks_created, r.outbox_id, c.claim_ref, r.lead_id, r.task_id, ' +
+    'SELECT r.at, r.trigger_event, r.outcome, r.reason, r.tasks_created, r.outbox_id, c.id AS claim_id, r.lead_id, r.task_id, ' +
       'ar.label FROM automation_runs r JOIN automation_rules ar ON ar.id = r.rule_id LEFT JOIN claims c ON c.id = r.claim_id ' +
       'ORDER BY r.at DESC, r.rowid DESC LIMIT ?',
     [limit],
@@ -282,7 +282,7 @@ export function recentRuns(db: Db, actor: Actor, limit = 100): RunView[] {
     at: localStamp(r.at), rule: r.label, trigger: words(TRIGGERS, r.trigger_event, r.trigger_event),
     ran: r.outcome === 'RAN', reason: r.reason === null ? null : words(RUN_REASONS, r.reason, r.reason),
     tasks_created: r.tasks_created, outbox: r.outbox_id !== null,
-    about: r.claim_ref ?? (r.lead_id !== null ? 'a lead' : r.task_id !== null ? 'a task' : 'an organisation'),
+    about: r.claim_id !== null ? claimWords(db, r.claim_id) : r.lead_id !== null ? 'a lead' : r.task_id !== null ? 'a task' : 'a company',
   }));
 }
 
@@ -630,18 +630,38 @@ function informationRequests(d: AutomationDeps, actor: Actor | null, rule: RuleD
   return finish(d, actor, rule, e, s, run, o);
 }
 
-function noticeWords(rule: RuleDbRow, e: AutomationEvent, s: Subject): { subject: string; body: string } {
-  const on = s.claim_id === null ? '' : ` on ${s.reference}`;
-  let subject: string;
+/**
+ * PHASE 134 — A STAFF NOTICE'S SUBJECT, AND THE COMPANY'S NAME IN IT. BUILT AND SWITCHED OFF.
+ *
+ * Lakhbir, 18 September 2026: every email subject leads with the company name. A notice to a member of staff was built
+ * (CRM 3 of 10) to carry the claim's reference and never an organisation's name, so that a client's name does not travel
+ * in an email subject through a mail provider nobody has chosen yet. Which of the two holds is Lakhbir's to decide —
+ * CAPREBATE QUESTIONS, "Should an email to our own staff name the client company in its subject line?". Until then:
+ *   OFF  the subject says what happened and ends with the reference: "A claim is now at Survey (CR-2026-0004)".
+ *   ON   the subject leads with the company: "Dunmarrow Medical Practice Limited — a claim is now at Survey (CR-2026-0004)".
+ * Turning it on is this one line. test/phase134.test.ts proves both readings.
+ */
+export const NOTICE_SUBJECT_LEADS_WITH_COMPANY = false;
+
+/** The two readings of the switch, as one pure function: the company in front, or the words as they are. */
+export function noticeSubject(what: string, company: string | null): string {
+  return company === null ? what : `${company} — ${what.charAt(0).toLowerCase()}${what.slice(1)}`;
+}
+
+function noticeWords(rule: RuleDbRow, e: AutomationEvent, s: Subject, company: string | null = null): { subject: string; body: string } {
+  const tail = s.claim_id === null || s.reference === 'a task' ? '' : ` (${s.reference})`;
+  const on = s.claim_id === null ? '' : ' on a claim';
+  let what: string;
   switch (e.trigger) {
-    case 'STAGE_ENTERED': subject = `${s.reference} is now at ${anyStageLabel(e.stage)}`; break;
+    case 'STAGE_ENTERED': what = `A claim is now at ${anyStageLabel(e.stage)}${tail}`; break;
     case 'OWNER_CHANGED':
-      subject = s.kind === 'claim' ? `You now own ${s.reference}` : s.kind === 'lead' ? 'A lead is now yours' : `A task is now yours${on}`;
+      what = s.kind === 'claim' ? `You now own a claim${tail}` : s.kind === 'lead' ? 'A lead is now yours' : `A task is now yours${on}${tail}`;
       break;
-    case 'LEAD_CREATED': subject = 'A new lead is yours'; break;
-    case 'TASK_COMPLETED': subject = `A task${on} was completed`; break;
-    default: subject = `A document was requested${on}`;
+    case 'LEAD_CREATED': what = 'A new lead is yours'; break;
+    case 'TASK_COMPLETED': what = `A task${on} was completed${tail}`; break;
+    default: what = `A document was requested${on}${tail}`;
   }
+  const subject = noticeSubject(what, company);
   const href = s.claim_id !== null ? `/staff/claims/${s.claim_id}`
     : s.lead_id !== null ? `/staff/leads/${s.lead_id}`
       : s.task_id !== null ? `/staff/tasks/${s.task_id}` : '/staff';
@@ -663,7 +683,9 @@ function notifyOwner(d: AutomationDeps, actor: Actor | null, rule: RuleDbRow, e:
     'SELECT email, role, disabled_at FROM users WHERE id = ?', [s.owner_id]);
   if (u === undefined || u.disabled_at !== null) return notRun(d, actor, rule, e, s, 'NO_OWNER');
   if (u.role === 'CLIENT') return notRun(d, actor, rule, e, s, 'OWNER_IS_NOT_STAFF');
-  const w = noticeWords(rule, e, s);
+  const company = !NOTICE_SUBJECT_LEADS_WITH_COMPANY || s.business_id === null ? null
+    : d.db.get<{ name: string }>('SELECT name FROM businesses WHERE id = ?', [s.business_id])?.name ?? null;
+  const w = noticeWords(rule, e, s, company);
   const transport = outboxTransport(d.db, d.newId, d.now);
   const done = d.db.tx(() => {
     const sent = transport.send({ to_email: u.email, subject: w.subject, body: w.body, kind: 'NOTIFICATION', business_id: s.business_id });

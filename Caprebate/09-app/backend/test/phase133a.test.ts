@@ -297,7 +297,8 @@ describe('every page works with JavaScript switched off', () => {
     assert.ok(claim);
     const lead = h.made.app.db.get<{ id: string }>('SELECT id FROM leads LIMIT 1');
     assert.ok(lead);
-    const records = [`/staff/claims/${claim.id}`, `/staff/organisations/${claim.business_id}`, `/staff/leads/${lead.id}`,
+    // Phase 134: the organisation's page is the one client page, whose tabs test/phase133b.test.ts reads.
+    const records = [`/staff/claims/${claim.id}`, `/staff/leads/${lead.id}`,
       ...(claim.property_id === null ? [] : [`/staff/properties/${claim.property_id}`])];
     for (const path of records) {
       const page = await as('sales').get(path);

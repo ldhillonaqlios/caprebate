@@ -78,6 +78,8 @@ export const CLAIM_FILTERS: readonly FilterDef[] = Object.freeze([
 ] as FilterDef[]);
 
 export const CLAIM_SORTS: Vocab = Object.freeze({
+  // PHASE 134: the client is the company, so the list reads by company first; the reference is one sort among the rest.
+  company: 'Company, A to Z',
   reference: 'Reference, newest first',
   next_action: 'Next action due, soonest first',
   due_date: 'Expected completion, soonest first',
@@ -109,7 +111,7 @@ export const CLAIM_STATUSES: Vocab = Object.freeze({
   UNKNOWN: 'Stage not recognised',
 });
 
-const DEFAULT_SORT: Readonly<Record<ListKey, string>> = Object.freeze({ CLAIMS: 'reference', LEADS: 'newest' });
+const DEFAULT_SORT: Readonly<Record<ListKey, string>> = Object.freeze({ CLAIMS: 'company', LEADS: 'newest' });
 
 function words(vocab: Vocab, v: string | null | undefined, none: string): string {
   return typeof v === 'string' && Object.hasOwn(vocab, v) ? (vocab[v] ?? v) : none;
@@ -340,14 +342,15 @@ export function claimsList(db: Db, actor: Actor, p: ListParams, ignored: readonl
   }
 
   let sort = p.sort;
-  if ((sort === 'value' && shape !== 'VALUE') || (shape === 'MONEY' && !['reference', 'age'].includes(sort))) {
-    said.push(`Sort: ${CLAIM_SORTS[sort] ?? sort} is not a column this role reads, so the list is in reference order`);
-    sort = 'reference';
+  if ((sort === 'value' && shape !== 'VALUE') || (shape === 'MONEY' && !['company', 'reference', 'age'].includes(sort))) {
+    said.push(`Sort: ${CLAIM_SORTS[sort] ?? sort} is not a column this role reads, so the list is in company order`);
+    sort = 'company';
     notApplied.push('sort');
   }
   const sorted = [...rows].sort((a, b) => {
     const tie = cmp(b.claim_ref, a.claim_ref);
     switch (sort) {
+      case 'company': return a.client.localeCompare(b.client, 'en-GB') || tie;
       case 'next_action': return cmp(a.next_action_due, b.next_action_due) || tie;
       case 'due_date': return cmp(a.expected_completion, b.expected_completion) || tie;
       case 'age': return cmp(a.created_at, b.created_at) || tie;
@@ -362,12 +365,12 @@ export function claimsList(db: Db, actor: Actor, p: ListParams, ignored: readonl
     sort: { key: sort, label: CLAIM_SORTS[sort] ?? sort },
     filters: CLAIM_FILTERS.filter((f) => !(f.needs_working === true && shape === 'MONEY') && !(f.needs_value === true && shape !== 'VALUE')),
     choices,
-    sorts: Object.entries(CLAIM_SORTS).filter(([k]) => !(k === 'value' && shape !== 'VALUE') && !(shape === 'MONEY' && !['reference', 'age'].includes(k)))
+    sorts: Object.entries(CLAIM_SORTS).filter(([k]) => !(k === 'value' && shape !== 'VALUE') && !(shape === 'MONEY' && !['company', 'reference', 'age'].includes(k)))
       .map(([value, label]) => ({ value, label })),
     params: canonical({ filters: Object.fromEntries(applied.map((x) => [x.key, p.filters[x.key] ?? ''])), sort }),
     may_export: can(actor, 'list.export', EXPORT_OBJ),
     rows: sorted.map((r): ClaimListRow => {
-      const base = { id: r.id, claim_ref: r.claim_ref, client: r.client, opened: localDate(r.created_at) };
+      const base = { id: r.id, claim_ref: r.claim_ref, business_id: r.business_id, client: r.client, opened: localDate(r.created_at) };
       if (shape === 'MONEY') return base;
       const working = {
         ...base, property: r.property_label, stage: claimStage(r.stage).label, workstream: words(WORKSTREAMS, r.workstream, r.workstream ?? ''),
@@ -589,13 +592,14 @@ export function csvCell(v: string | number | null | undefined): string {
 }
 
 const CLAIM_COLUMNS: Readonly<Record<ListShape, readonly (readonly [keyof ClaimListRow, string])[]>> = Object.freeze({
-  MONEY: [['claim_ref', 'Reference'], ['client', 'Client'], ['opened', 'Opened']],
-  WORKING: [['claim_ref', 'Reference'], ['client', 'Client'], ['property', 'Property'], ['workstream', 'Workstream'], ['stage', 'Stage'],
+  // PHASE 134: the company first, the reference last.
+  MONEY: [['client', 'Company'], ['opened', 'Opened'], ['claim_ref', 'Reference']],
+  WORKING: [['client', 'Company'], ['property', 'Property'], ['workstream', 'Workstream'], ['stage', 'Stage'],
     ['owner', 'Owner'], ['priority', 'Priority'], ['next_action', 'Next action'], ['next_action_due', 'Next action due'],
-    ['expected_completion', 'Expected completion'], ['opened', 'Opened']],
-  VALUE: [['claim_ref', 'Reference'], ['client', 'Client'], ['property', 'Property'], ['workstream', 'Workstream'], ['stage', 'Stage'],
+    ['expected_completion', 'Expected completion'], ['opened', 'Opened'], ['claim_ref', 'Reference']],
+  VALUE: [['client', 'Company'], ['property', 'Property'], ['workstream', 'Workstream'], ['stage', 'Stage'],
     ['owner', 'Owner'], ['priority', 'Priority'], ['next_action', 'Next action'], ['next_action_due', 'Next action due'],
-    ['expected_completion', 'Expected completion'], ['opened', 'Opened'], ['shown_range', 'Estimated value — the range shown']],
+    ['expected_completion', 'Expected completion'], ['opened', 'Opened'], ['shown_range', 'Estimated value — the range shown'], ['claim_ref', 'Reference']],
 });
 
 const LEAD_COLUMNS: Readonly<Record<'WORKING' | 'VALUE', readonly (readonly [string, string])[]>> = Object.freeze({

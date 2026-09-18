@@ -404,7 +404,7 @@ describe('N1 and the role boundaries, over HTTP, on the seeded data', () => {
       const elverton = businessNamed(h.made.app, 'Elverton Private Hospital Limited');
       const theirs = db.all<{ id: string }>('SELECT id FROM claims WHERE business_id = ?', [elverton]);
       const theirProperty = db.get<{ id: string }>('SELECT id FROM properties WHERE business_id = ? LIMIT 1', [elverton]);
-      assert.ok(mine && myProperty && theirProperty && theirs.length === 2);
+      assert.ok(mine && myProperty && theirProperty && theirs.length === 3); // Phase 134: Elverton's annexe has a claim of its own
 
       const s = await h.signIn('surveying');
       assert.equal((await s.req(`/staff/claims/${mine.id}`)).status, 200);
@@ -774,7 +774,7 @@ describe('STORED CROSS-SITE SCRIPTING', () => {
       assert.ok(salesUser);
       assert.equal((await staff.post(`/staff/claims/${claim.id}/next-action`, { title: SCRIPT, owner_id: salesUser.id, due_on: '2026-12-31' })).status, 303);
 
-      for (const path of [`/staff/organisations/${id}`, `/staff/properties/${property.id}`, `/staff/claims/${claim.id}`]) {
+      for (const path of [`/staff/clients/${id}`, `/staff/properties/${property.id}`, `/staff/claims/${claim.id}`]) {
         const page = await staff.req(path);
         assert.equal(page.status, 200, path);
         assert.equal(page.body.includes('<script>alert(1)</script>'), false, `a script tag reached ${path}`);
@@ -805,7 +805,9 @@ describe('an organisation, a contact, a property and a linked claim — without 
       const staff = await h.signIn('SALES');
 
       assert.match((await staff.req('/staff/organisations')).body, /Linked Records Limited/);
-      assert.equal((await staff.req(`/staff/organisations/${id}`)).status, 200);
+      // Phase 134: the organisation's address sends the reader to the one client page.
+      assert.equal((await staff.req(`/staff/organisations/${id}`)).location, `/staff/clients/${id}`);
+      assert.equal((await staff.req(`/staff/clients/${id}`)).status, 200);
       assert.equal((await staff.post(`/staff/organisations/${id}/contacts`, {
         full_name: 'Accountant Contact', contact_type: 'ACCOUNTANT', email: 'books@firm.example.invalid',
       })).status, 303);

@@ -69,15 +69,7 @@ export async function handleEngaged(
     return 'handled';
   }
 
-  const one = /^\/staff\/clients\/([A-Za-z0-9-]+)$/.exec(path);
-  if (one && method === 'GET') {
-    const id = one[1] ?? '';
-    const p = E.businessPage(db, actor, id);
-    const sources = R.sourcesFor(db, actor, id);
-    html(res, 200, businessPageHtml(d, actor, p, sources, url.searchParams.get('done') ?? undefined,
-      url.searchParams.get('note') ?? undefined));
-    return 'handled';
-  }
+  /* PHASE 134: GET /staff/clients/:id is the ONE client page, drawn by src/web/client-page.ts, which is mounted first. */
 
   /* ---- panel 2 · the one button, and the one exception ---- */
   const run = /^\/staff\/clients\/([A-Za-z0-9-]+)\/research$/.exec(path);
@@ -110,6 +102,7 @@ export async function handleEngaged(
       why: f.get('why') ?? '',
       holds_up: f.get('holds_up') ?? '',
       due_on: emptyToNull(f.get('due_on')),
+      claim_id: emptyToNull(f.get('claim_id')),
     });
     if (!r.ok) return d.problem(res, actor, 'Not sent', r.why, `/staff/clients/${id}`);
     redirect(res, `/staff/clients/${id}?done=sent#tasks`);
@@ -149,9 +142,10 @@ export async function handleEngaged(
   if (note && method === 'POST') {
     const id = note[1] ?? '';
     const f = await form(req);
-    const r = E.addNote(deps, actor, id, f.get('body') ?? '');
+    // PHASE 134: a note belongs to the company, and may say which of its claims it is about.
+    const r = E.addNote(deps, actor, id, f.get('body') ?? '', { claim_id: emptyToNull(f.get('claim_id')) });
     if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, `/staff/clients/${id}`);
-    redirect(res, `/staff/clients/${id}?note=saved#notes`);
+    redirect(res, `/staff/clients/${id}?note=saved#activity`);
     return 'handled';
   }
 
@@ -276,7 +270,7 @@ function listPage(d: EngagedDeps, actor: Actor, rows: readonly E.ClientRow[], so
  * THE BUSINESS PAGE
  * ------------------------------------------------------------------ */
 
-const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
+export const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
   research: 'The research was run. What it reached is below.',
   retry: 'That source was retried.',
   sent: 'The question is in the client’s portal.',
@@ -294,7 +288,7 @@ const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
  * allows it (panel 2 draws the button then), Ask for a missing fact only when something is missing (panel 3 draws the
  * forms then), Add a note only for a login that may read and write notes (panel 5 draws the form then).
  */
-function businessPageHtml(
+export function businessPageHtml(
   d: EngagedDeps, actor: Actor, p: E.BusinessPage, sources: R.SourcesPanel,
   done: string | undefined, note: string | undefined,
 ): string {
@@ -337,7 +331,7 @@ function businessPageHtml(
 
 /* -------------------------------------------------- 1 · questions */
 
-function panel1(p: E.BusinessPage): Safe {
+export function panel1(p: E.BusinessPage): Safe {
   const qa = p.qa;
   if (qa.assessment_id === null) {
     return h`<h2>1 · Questions and answers</h2>
@@ -371,7 +365,7 @@ const STATE_WORDS: Readonly<Record<R.SourceState, string>> = Object.freeze({
   NOT_PERMITTED_YET: 'not permitted yet',
 });
 
-function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
+export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
   return h`
     <h2>2 · Sources — what has fired and what has not</h2>
 
@@ -434,7 +428,7 @@ const BLOCKS_WORDS: Readonly<Record<E.Blocks, string>> = Object.freeze({
   BOTH: 'both packs',
 });
 
-function panel3(p: E.BusinessPage): Safe {
+export function panel3(p: E.BusinessPage, claims: readonly { readonly id: string; readonly name: string }[] = []): Safe {
   if (p.missing.length === 0) {
     return h`<h2>3 · What is still missing</h2>
       <p class="help">Nothing. Every fact the engine asks for is answered.</p>`;
@@ -460,7 +454,7 @@ function panel3(p: E.BusinessPage): Safe {
         : h`<span class="help">not asked</span>`}</td>
       <td>${m.has_task && m.task_state === 'ANSWERED'
         ? h`<span class="help">—</span>`
-        : askForms(p.business.id, m)}</td>
+        : askForms(p.business.id, m, claims)}</td>
     </tr>`)}</tbody></table>
     <div class="gate"><strong>An unknown fact is asked, never guessed.</strong> Nothing on this page
     fills a gap with a plausible default, and nothing routes a missing fact to the answer that would
@@ -476,11 +470,13 @@ function panel3(p: E.BusinessPage): Safe {
  * telephone. Both write the same field. What differs is the record of who
  * entered it, and the file shows that afterwards.
  */
-function askForms(business_id: string, m: E.MissingFact): Safe {
+function askForms(business_id: string, m: E.MissingFact, claims: readonly { readonly id: string; readonly name: string }[] = []): Safe {
   const holds = BLOCKS_WORDS[m.blocks];
   return h`
     <form method="post" action="/staff/clients/${business_id}/tasks/send" class="inline">
-      <input type="hidden" name="fact_id" value="${m.fact_id}">
+      <input type="hidden" name="fact_id" value="${m.fact_id}">${claims.length === 0 ? raw('') : h`
+      <label class="fl">About which claim? <select name="claim_id"><option value="">The company in general</option>${
+        claims.map((c) => h`<option value="${c.id}">${c.name}</option>`)}</select></label>`}
       <input type="hidden" name="question" value="${m.question}">
       <input type="hidden" name="why" value="We need this to finish your claim.">
       <input type="hidden" name="holds_up" value="${holds}">
@@ -504,7 +500,7 @@ function askForms(business_id: string, m: E.MissingFact): Safe {
 
 /* ---------------------------------------------------- 4 · tasks */
 
-function panel4(p: E.BusinessPage): Safe {
+export function panel4(p: E.BusinessPage): Safe {
   return h`
     <h2>4 · Tasks</h2>
     ${p.tasks.length === 0

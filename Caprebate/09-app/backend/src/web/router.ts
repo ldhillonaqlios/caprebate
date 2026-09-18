@@ -46,7 +46,7 @@ import { receivableTypes, startDocumentUpload, type RequestView } from './docume
 import { handleStaff, handlePortalSettings } from './staff.ts';
 import { mayEnterBackOffice } from './backoffice.ts';
 import { navContext, staffShell, portalShell, type NameSwitches, type NavContext } from './navigation.ts';
-import { clientStageBar, welcomeCard, why } from './components.ts';
+import { badge, breadcrumb, card, claimRef, clientStageBar, propertyIn, welcomeCard, why } from './components.ts';
 import { stepName } from './portal-steps.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
 import { clientHelp } from './help.ts';
@@ -600,8 +600,25 @@ async function portalRoutes(
     // CRM 8 of 10: the client's own share-progress answers. A staff member viewing the portal is not the client, and is not asked.
     const shr = actor.role === 'CLIENT' ? clientShareChoices(db, actor, business_id) : [];
     const welcome = actor.role === 'CLIENT' && welcomeShown(db, actor) ? welcomeCard(WELCOME_JOBS.CLIENT, '/portal/welcome/dismiss') : undefined;
+    // PHASE 134: every claim this company holds, each asked of `claim.progress_read`.
+    const cls = P.claims(db, actor, business_id);
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
-      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, ...(welcome === undefined ? {} : { welcome }) }));
+      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, ...(welcome === undefined ? {} : { welcome }) }));
+    return 'handled';
+  }
+
+  /* PHASE 134: ONE CLAIM'S PROGRESS. Looked for only among this company's own claims, so another company's claim and a
+     claim that does not exist both answer 404 — the same page, naming nothing. */
+  const claimMatch = /^\/portal\/claims\/([A-Za-z0-9-]+)$/.exec(path);
+  if (claimMatch && method === 'GET') {
+    const { business } = P.progress(db, actor, business_id);
+    const c = P.claim(db, actor, business_id, claimMatch[1] ?? '');
+    if (c === null) {
+      html(res, 404, page({ title: 'Claim not found', nav: nav(actor), wide: true, body: h`<div class="card"><h1>We cannot find that claim</h1>
+        <p>It may have been typed wrongly.</p><p><a class="btn btn-primary" href="/portal">See your claims</a></p></div>` }));
+      return 'handled';
+    }
+    html(res, 200, portalClaimPage(actor, business, c, nameSwitches().portalSteps));
     return 'handled';
   }
 
@@ -1317,27 +1334,29 @@ function portalPage(
   slots: ReturnType<typeof publicSlots>, nowIso: string,
   dlv: readonly ClientDeliverable[] = [],
   share: readonly ClientShareChoice[] = [],
-  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe } = {},
+  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[] } = {},
 ): string {
   const open = tks.filter((t) => t.state === 'OPEN');
   const asked = reqs.filter((r) => r.state === 'REQUESTED');
   const versionable = [...new Map(dcs.filter((x) => x.logical_document_id !== null && x.type_label !== null)
     .map((x) => [x.logical_document_id ?? '', `${x.type_label ?? ''} ${x.seq ?? ''}`] as const)).entries()];
   const named = extra.proposedSteps === true;
+  const cls = extra.claims ?? [];
   return page({
-    title: 'Your claim', nav: nav(actor), wide: true,
+    title: business.name, nav: nav(actor), wide: true,
     /* PHASE 133c (B9): THE PORTAL, IN THE ORDER A CLIENT NEEDS IT. At the top, how to reach us and book a call; then where
        the claim is; the range with its basis underneath; what we need from you; then everything else. The long step
        explanations sit behind "What happens at each step". Every section Phase 133a drew is still on the page. */
     body: h`
-      <header class="highlights"><p class="eyebrow">Your claim</p><h1>${business.name}</h1>
+      <header class="highlights"><p class="eyebrow">${cls.length === 1 ? 'Your claim' : 'Your claims'}</p><h1>${business.name}</h1>
         <p><a class="btn btn-primary" href="#appointment">Book a call</a> <a class="btn" href="#contact-us">Who to contact</a></p></header>
       ${extra.welcome ?? raw('')}
+      ${cls.length === 0 ? raw('') : card('Your claims', portalClaimTiles(cls, named, business.name), { count: cls.length, id: 'your-claims' })}
       <section class="card" id="contact-us"><div class="card-h"><h2>How to contact us</h2></div>
         <p>To talk to us, ask for a call under <a href="#appointment">Your appointment</a>, or reply to any message we have
         sent you. If you are unhappy with anything we have done, our <a href="/notices/">public notices</a> say how to complain.</p>
       </section>
-      ${progress.known ? clientStageBar(progress.steps.map((s) => ({ label: stepName(s.stage, named), state: s.state }))) : raw('')}
+      ${cls.length === 0 && progress.known ? clientStageBar(progress.steps.map((s) => ({ label: stepName(s.stage, named), state: s.state }))) : raw('')}
 
       <section class="card" id="your-range"><div class="card-h"><h2>The range you were shown</h2></div>
       ${rng === null
@@ -1467,6 +1486,49 @@ function portalPage(
 
       <section class="card"><div class="card-h"><h2>Your account</h2></div>
       <p><a href="/portal/settings">Change your password, name or username</a></p></section>`,
+  });
+}
+
+/** A claim's stage in the client's words. */
+function portalClaimStage(c: P.PortalClaim, named: boolean): string {
+  if (c.state === 'FINISHED') return 'Finished';
+  if (c.state === 'CLOSED') return 'Closed';
+  if (c.state === 'UNKNOWN' || c.progress.current === undefined) return 'We will update this soon';
+  return stepName(c.progress.current, named);
+}
+
+/** PHASE 134 — ONE TILE PER CLAIM: the property, its town, how far it has got, and its reference in grey. */
+function portalClaimTiles(cls: readonly P.PortalClaim[], named: boolean, company: string): Safe {
+  return h`<ul class="tiles">${cls.map((c) => h`<li class="tile">
+    <p class="tilename"><a href="/portal/claims/${c.id}">${propertyIn(company, c.property) ?? 'Your claim'}</a></p>
+    ${c.town === null || c.town.trim() === '' ? raw('') : h`<p class="help">${c.town}</p>`}
+    <p>${badge(portalClaimStage(c, named), c.state === 'OPEN' ? 'info' : 'plain')}</p>
+    <p>${claimRef(c.ref)}</p></li>`)}</ul>
+    <p class="help">Questions, documents and messages for all your claims are on this page.</p>`;
+}
+
+/** PHASE 134 — ONE CLAIM'S PROGRESS, inside the company's portal. Questions, documents and messages stay on /portal. */
+function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, named: boolean): string {
+  const property = propertyIn(business.name, c.property);
+  const where = [property, c.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
+  return page({
+    title: `${business.name} — ${property ?? 'your claim'}`, nav: nav(actor), wide: true,
+    body: h`${breadcrumb([{ label: business.name, href: '/portal' }, { label: property ?? 'Your claim' }])}
+      <header class="highlights"><p class="eyebrow">Your claim</p><h1>${business.name}</h1>
+        <p class="subhead">${where === '' ? 'Your claim' : `Claim on ${where}`} ${claimRef(c.ref)}</p>
+        <p>${badge(portalClaimStage(c, named), c.state === 'OPEN' ? 'info' : 'plain')}</p></header>
+      ${c.progress.known ? clientStageBar(c.progress.steps.map((s) => ({ label: stepName(s.stage, named), state: s.state }))) : raw('')}
+      <section class="card"><div class="card-h"><h2>Where this claim is</h2></div>
+        ${c.state === 'FINISHED' ? h`<p>This claim is finished.</p>`
+          : c.state === 'CLOSED' ? h`<p>This claim is closed. We will have told you why. Ask us if anything is unclear.</p>`
+            : c.progress.current === undefined ? h`<p>We will update this soon. Ask us if you need to know now.</p>`
+              : h`<p>${c.progress.current.toTheClient}</p>`}
+      </section>
+      <section class="card"><div class="card-h"><h2>What we need from you</h2></div>
+        <p>Questions, documents and messages for all your claims are in one place.</p>
+        <p><a class="btn btn-primary" href="/portal#waiting-on-you">See what we need from you</a></p>
+      </section>
+      <p><a href="/portal">Back to your claims</a></p>`,
   });
 }
 

@@ -310,7 +310,8 @@ describe('stage entered and owner changed', () => {
         "SELECT subject, kind, sent_at, transport, business_id FROM outbox WHERE to_email = 'admin@example.invalid' ORDER BY created_at");
       assert.equal(notices.length, 2);
       for (const x of notices) {
-        assert.match(x.subject, /^You now own CR-/);
+        // Phase 134: the notice ends with the reference; it leads with the company only once Lakhbir switches that on.
+        assert.match(x.subject, /^You now own a claim \(CR-\d{4}-\d{4}\)$/);
         assert.deepEqual([x.kind, x.sent_at, x.transport, x.business_id], ['NOTIFICATION', null, 'STUB', org.business]);
       }
       const before = count(app.db, 'SELECT COUNT(*) AS n FROM outbox');
@@ -320,7 +321,7 @@ describe('stage entered and owner changed', () => {
         "SELECT reason FROM automation_runs WHERE rule_id = 'rule-stage-notify-owner' AND claim_id = ? ORDER BY at DESC, rowid DESC LIMIT 1", [own])?.reason,
       'OWNER_MADE_THE_CHANGE');
       assert.equal(fwd(app, actor('SALES'), theirs, 'ENGAGEMENT').ok, true);
-      assert.match(app.db.get<{ subject: string }>('SELECT subject FROM outbox ORDER BY created_at DESC, rowid DESC LIMIT 1')?.subject ?? '', /is now at Engagement$/);
+      assert.match(app.db.get<{ subject: string }>('SELECT subject FROM outbox ORDER BY created_at DESC, rowid DESC LIMIT 1')?.subject ?? '', /^A claim is now at Engagement \(CR-\d{4}-\d{4}\)$/);
     } finally { app.close(); }
   });
 });
@@ -520,7 +521,8 @@ describe('email templates — merged into the outbox, and nowhere else', () => {
       assert.ok(row.body.includes('on [property address not recorded].'), 'the missing address is not a visible gap');
       assert.ok(row.body.includes('The next step is: the next action. We expect it by 31 Dec 2026.')); // Phase 133c: UK dates
       assert.equal(/\{\{|\}\}/.test(row.subject + row.body), false, 'a merge field was left unfilled');
-      assert.match(row.subject, /^Your claim CR-\d{4}-\d{4} — the next step$/);
+      // Phase 134: the subject leads with the company (migration 032 and `companyFirst`).
+      assert.match(row.subject, /^[^—]+ — the next step on your claim$/);
 
       const noProperty = claimAt(app, org, 'SURVEY', { property: null });
       const a = M.mergeValues(app.db, c, contact);

@@ -22,7 +22,7 @@ import { randomUUID } from 'node:crypto';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from './components.ts';
+import { claimRef, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from './components.ts';
 import * as F from './finance.ts';
 import * as I from './invoices.ts';
 import * as V from './vat.ts';
@@ -187,7 +187,7 @@ function vatBlock(v: V.VatReading): Safe {
       <tr><th>The rolling twelve months</th><td>${v.rolling.turnover}: ${V.BAND_WORDS[v.rolling.band]}. <span class="help">${v.rolling.basis}.</span></td></tr>
       <tr><th>The thirty-day test</th><td>${v.forward.expected}: ${V.BAND_WORDS[v.forward.band]}. <span class="help">${v.forward.basis}.</span></td></tr>
       <tr><th>One large fee</th><td>${v.trigger === null ? h`<strong>Not set</strong>` : v.single_engagements.length === 0
-        ? h`none at or over ${v.trigger.shown}` : h`${v.single_engagements.map((s) => h`${s.claim_ref} (${s.expected}) `)}`}</td></tr>
+        ? h`none at or over ${v.trigger.shown}` : h`${v.single_engagements.map((s) => h`${s.expected} ${claimRef(s.claim_ref)} `)}`}</td></tr>
     </tbody></table>
     <p class="help">${v.never_changes_an_invoice}</p>`;
 }
@@ -285,20 +285,20 @@ function listPage(
       ${v.expected.claims.length === 0 ? h`<p class="help">No claim is waiting at the invoice stage.</p>` : h`
         <p class="help">Expected ${v.expected.total}${v.expected.without_a_fee > 0 ? h`; ${v.expected.without_a_fee} whose fee cannot be computed, counted apart` : raw('')}.
           Each claim’s finance task is the one the invoice stage raised — read here, and never a second.</p>
-        <table><thead><tr><th>Claim</th><th>Client</th><th>At the invoice stage since</th><th>Expected fee</th><th>Earned on</th><th>Finance task</th><th></th></tr></thead>
-          <tbody>${v.expected.claims.map((c) => h`<tr><td>${c.claim_ref}</td><td>${c.client_name}</td><td>${c.entered_invoice_on}</td><td>${c.expected}</td>
+        <table><thead><tr><th>Company</th><th>At the invoice stage since</th><th>Expected fee</th><th>Earned on</th><th>Finance task</th><th></th><th>Reference</th></tr></thead>
+          <tbody>${v.expected.claims.map((c) => h`<tr><td>${c.client_name}</td><td>${c.entered_invoice_on}</td><td>${c.expected}</td>
             <td>${c.expected_on === null ? h`<strong>NO DATE</strong><br><span class="help">${c.expected_on_reading}</span>` : h`${c.expected_on}${c.due_if_invoiced_on_delivery === null ? raw('') : h`<br><span class="help">due ${c.due_if_invoiced_on_delivery} if invoiced that day</span>`}`}</td>
             <td>${c.finance_task === null ? h`<span class="help">none recorded</span>` : h`${c.finance_task.title} — ${c.finance_task.due.label}`}</td>
             <td>${c.may_raise ? h`<form method="post" action="/staff/finance/claims/${c.claim_id}/raise"><input type="hidden" name="kind" value="FEE">
-              <button type="submit">Raise our fee</button></form>` : raw('')}</td></tr>`)}</tbody></table>`}
+              <button type="submit">Raise our fee</button></form>` : raw('')}</td><td>${claimRef(c.claim_ref)}</td></tr>`)}</tbody></table>`}
 
       <h2 id="claim-invoices">4 · The claims’ invoices</h2>
       ${v.invoices.length === 0 ? h`<p class="help">No invoice is raised on any claim.</p>` : h`
-        <table><thead><tr><th>Number</th><th>Claim</th><th>Client</th><th>For</th><th>Date</th><th>Amount</th><th>VAT</th><th>Invoice</th><th>Money</th><th>Outstanding</th><th>Due</th></tr></thead>
-          <tbody>${v.invoices.map((i) => h`<tr><td><a href="/staff/finance/${i.id}">${i.number ?? 'unnumbered'}</a></td><td>${i.claim.claim_ref}</td>
-            <td>${i.client_name}</td><td>${i.kind.label}</td><td>${i.invoice_date}</td><td>${i.fee}</td><td>${i.vat}</td><td>${i.state.label}</td>
+        <table><thead><tr><th>Company</th><th>Number</th><th>For</th><th>Date</th><th>Amount</th><th>VAT</th><th>Invoice</th><th>Money</th><th>Outstanding</th><th>Due</th><th>Reference</th></tr></thead>
+          <tbody>${v.invoices.map((i) => h`<tr><td>${i.client_name}</td><td><a href="/staff/finance/${i.id}">${i.number ?? 'unnumbered'}</a></td>
+            <td>${i.kind.label}</td><td>${i.invoice_date}</td><td>${i.fee}</td><td>${i.vat}</td><td>${i.state.label}</td>
             <td>${i.money.label}</td><td>${i.money.outstanding}</td>
-            <td>${i.due_on === null ? h`<strong>UNSET</strong>` : i.money.overdue ? h`<strong>${i.money.due.label}</strong>` : i.money.due.label}</td></tr>`)}</tbody></table>`}
+            <td>${i.due_on === null ? h`<strong>UNSET</strong>` : i.money.overdue ? h`<strong>${i.money.due.label}</strong>` : i.money.due.label}</td><td>${claimRef(i.claim.claim_ref)}</td></tr>`)}</tbody></table>`}
 
 ` },
         { id: 'fees', label: 'Fee controls and firms', body: h`
@@ -309,7 +309,7 @@ function listPage(
       <p class="help">Model B’s fees — recorded, never paid from this view. Nothing here takes or sends money.</p>
       ${v.introducer_fees.length === 0 ? h`<p class="help">No fee to a firm is recorded. The reward model is switched off.</p>` : h`
         <table><thead><tr><th>Firm</th><th>Claim</th><th>Amount</th><th>Disclosed</th><th>State</th></tr></thead>
-          <tbody>${v.introducer_fees.map((f) => h`<tr><td>${f.firm.name}</td><td>${f.claim.claim_ref}</td><td>${f.amount}</td>
+          <tbody>${v.introducer_fees.map((f) => h`<tr><td>${f.firm.name}</td><td>${claimRef(f.claim.claim_ref)}</td><td>${f.amount}</td>
             <td>${f.disclosure.given ? f.disclosure.recorded ?? 'yes' : 'not yet'}</td><td>${f.state.label}</td></tr>`)}</tbody></table>`}
 
 ` },
@@ -448,10 +448,11 @@ function comparisonBlock(c: F.FeeVersusBenefit, fee: string): Safe {
 
 function claimInvoicePage(d: FinanceDeps, actor: Actor, v: I.ClaimInvoiceView, saved: string | undefined): string {
   return page({
-    title: v.number ?? 'An invoice', nav: d.nav(actor), wide: true,
+    title: `${v.client_name} — invoice ${v.number ?? 'unnumbered'}`, nav: d.nav(actor), wide: true,
     body: h`
-      <h1>Invoice ${v.number ?? 'unnumbered'}${v.number_cancelled ? h` <span class="help">(number recorded as cancelled)</span>` : raw('')}</h1>
-      <p class="help">${v.client_name} — claim ${v.claim.claim_ref}. Raised ${v.raised}.</p>
+      <p class="eyebrow">Invoice ${v.number ?? 'unnumbered'}${v.number_cancelled ? h` <span class="help">(number recorded as cancelled)</span>` : raw('')}</p>
+      <h1>${v.client_name}</h1>
+      <p class="help">Raised ${v.raised}. ${claimRef(v.claim.claim_ref)}</p>
       ${saved === undefined ? raw('') : h`<div class="gate">${SAVED[saved] ?? 'Recorded.'}</div>`}
 
       <div class="pblock">

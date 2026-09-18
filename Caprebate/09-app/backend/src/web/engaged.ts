@@ -876,10 +876,16 @@ export type TaskResult = { ok: true; task_id: string } | { ok: false; why: strin
  */
 export function sendTaskToPortal(
   d: TaskDeps, actor: Actor, business_id: string,
-  args: { fact_id: string | null; question: string; why: string; holds_up: string; due_on?: string | null },
+  args: { fact_id: string | null; question: string; why: string; holds_up: string; due_on?: string | null; claim_id?: string | null },
 ): TaskResult {
   authorise(actor, 'business.read', { type: 'business', id: business_id });
   authorise(actor, 'internal_note.write', { type: 'internal_note', id: business_id, business_id });
+
+  // PHASE 134: a question belongs to the company, and may say which of its claims it is about — only one of its own.
+  const claim_id = args.claim_id ?? null;
+  if (claim_id !== null && d.db.get<{ id: string }>('SELECT id FROM claims WHERE id = ? AND business_id = ?', [claim_id, business_id]) === undefined) {
+    return { ok: false, why: 'that claim is not this company’s.' };
+  }
 
   const question = args.question.trim();
   if (question.length === 0) return { ok: false, why: 'write the question you want to ask.' };
@@ -899,8 +905,8 @@ export function sendTaskToPortal(
   const at = d.now();
   d.db.run(
     'INSERT INTO client_tasks (id, business_id, asked_by, question, why, holds_up, state, ' +
-      'created_at, fact_id, sent_to_portal_at, due_on) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, business_id, actor.id, question, why, holds, 'OPEN', at, args.fact_id, at, due === '' ? null : due],
+      'created_at, fact_id, sent_to_portal_at, due_on, claim_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, business_id, actor.id, question, why, holds, 'OPEN', at, args.fact_id, at, due === '' ? null : due, claim_id],
   );
   d.audit.append({
     at, kind: 'USER_UPDATED', outcome: 'ALLOWED',

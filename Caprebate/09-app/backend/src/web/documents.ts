@@ -962,6 +962,8 @@ export type LinkView = {
   readonly id: string;
   readonly to: 'claim' | 'property';
   readonly label: string;
+  /** Phase 134: a claim's reference, drawn as a small grey label beside its name. */
+  readonly ref?: string;
   readonly href: string | null;
   readonly linked: string;
   readonly ended: string | null;
@@ -981,7 +983,7 @@ export type DocumentPage = {
   readonly original: string;
   readonly may_link: boolean;
   readonly may_upload_version: boolean;
-  readonly linkable_claims?: readonly { readonly id: string; readonly claim_ref: string }[];
+  readonly linkable_claims?: readonly { readonly id: string; readonly claim_ref: string; readonly property: string | null }[];
 };
 
 export const HISTORY_NOTE =
@@ -1015,12 +1017,12 @@ export function documentPage(d: { db: Db; audit: AuditLog; now: () => string }, 
     at: d.now(), kind: 'DOCUMENT_ACCESSED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'document', object_id: l.id, detail: { route },
   });
-  const links = d.db.all<{ id: string; claim_id: string | null; claim_ref: string | null; claim_business: string | null; property_id: string | null; property_label: string | null; linked_at: string; unlinked_at: string | null }>(
-    'SELECT k.id, k.claim_id, c.claim_ref, c.business_id AS claim_business, k.property_id, p.label AS property_label, k.linked_at, k.unlinked_at ' +
-      'FROM document_links k LEFT JOIN claims c ON c.id = k.claim_id LEFT JOIN properties p ON p.id = k.property_id ' +
+  const links = d.db.all<{ id: string; claim_id: string | null; claim_ref: string | null; claim_business: string | null; claim_property: string | null; property_id: string | null; property_label: string | null; linked_at: string; unlinked_at: string | null }>(
+    'SELECT k.id, k.claim_id, c.claim_ref, c.business_id AS claim_business, cp.label AS claim_property, k.property_id, p.label AS property_label, k.linked_at, k.unlinked_at ' +
+      'FROM document_links k LEFT JOIN claims c ON c.id = k.claim_id LEFT JOIN properties cp ON cp.id = c.property_id LEFT JOIN properties p ON p.id = k.property_id ' +
       'WHERE k.logical_document_id = ? ORDER BY k.linked_at ASC', [l.id],
   ).map((k): LinkView => k.claim_id !== null
-    ? { id: k.id, to: 'claim', label: k.claim_ref ?? 'a claim', href: `/staff/claims/${k.claim_id}`, linked: localStamp(k.linked_at), ended: k.unlinked_at === null ? null : localStamp(k.unlinked_at) }
+    ? { id: k.id, to: 'claim', label: k.claim_property ?? 'a claim with no property', ...(k.claim_ref === null ? {} : { ref: k.claim_ref }), href: `/staff/claims/${k.claim_id}`, linked: localStamp(k.linked_at), ended: k.unlinked_at === null ? null : localStamp(k.unlinked_at) }
     : { id: k.id, to: 'property', label: k.property_label ?? 'a property', href: `/staff/properties/${k.property_id ?? ''}`, linked: localStamp(k.linked_at), ended: k.unlinked_at === null ? null : localStamp(k.unlinked_at) });
   const mayLink = can(actor, 'document.link', obj);
   const mayUpload = actor.role !== 'CLIENT' && can(actor, 'document.upload', { type: 'business', id: l.business_id }) && l.handler_type !== null;
@@ -1034,7 +1036,7 @@ export function documentPage(d: { db: Db; audit: AuditLog; now: () => string }, 
     history: HISTORY_NOTE, original: ORIGINALS_NOTE,
     may_link: mayLink, may_upload_version: mayUpload,
     ...(mayLink ? {
-      linkable_claims: d.db.all<{ id: string; claim_ref: string }>('SELECT id, claim_ref FROM claims WHERE business_id = ? ORDER BY claim_ref ASC', [l.business_id])
+      linkable_claims: d.db.all<{ id: string; claim_ref: string; property: string | null }>('SELECT c.id, c.claim_ref, p.label AS property FROM claims c LEFT JOIN properties p ON p.id = c.property_id WHERE c.business_id = ? ORDER BY c.claim_ref ASC', [l.business_id])
         .filter((c) => !linkedClaims.has(`/staff/claims/${c.id}`)),
     } : {}),
     ...(nowIso === '' ? {} : {}),
@@ -1176,7 +1178,7 @@ export type CentreRow = {
   readonly label: string;
   readonly type: { readonly code: string; readonly label: string };
   readonly organisation: { readonly id: string; readonly name: string; readonly href: string | null };
-  readonly claims: readonly { readonly id: string; readonly claim_ref: string; readonly href: string | null }[];
+  readonly claims: readonly { readonly id: string; readonly claim_ref: string; readonly property: string | null; readonly href: string | null }[];
   readonly state: { readonly key: string; readonly label: string };
   /** The newest version of all — received or not — with when it arrived and who sent it. */
   readonly newest: { readonly version_no: number | null; readonly uploaded: string; readonly by: string } | null;
@@ -1219,21 +1221,21 @@ export function documentCentre(db: Db, actor: Actor, q: URLSearchParams): Docume
       const newestView = newest === undefined ? null : versionView(newest);
       const anyReceived = versions.some((v) => v.strip_recorded_at !== null && v.quarantine_discharged_at !== null && v.failure_code === null);
       const stateKey = anyReceived ? 'RECEIVED' : newest !== undefined && newest.failure_code !== null ? 'REFUSED' : 'NOT_RECEIVED';
-      const claims = db.all<{ id: string; claim_ref: string; business_id: string }>(
-        'SELECT c.id, c.claim_ref, c.business_id FROM document_links k JOIN claims c ON c.id = k.claim_id ' +
+      const claims = db.all<{ id: string; claim_ref: string; business_id: string; property: string | null }>(
+        'SELECT c.id, c.claim_ref, c.business_id, p.label AS property FROM document_links k JOIN claims c ON c.id = k.claim_id LEFT JOIN properties p ON p.id = c.property_id ' +
           'WHERE k.logical_document_id = ? AND k.unlinked_at IS NULL ORDER BY c.claim_ref ASC',
         [l.id],
       ).map((c) => {
         const surveyors = db.all<{ surveyor_id: string }>(
           'SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE claim_id = ? AND surveyor_id IS NOT NULL', [c.id]).map((r) => r.surveyor_id);
         const open = can(actor, 'claim.read', { type: 'claim', id: c.id, business_id: c.business_id, assigned_surveyor_ids: surveyors });
-        return { id: c.id, claim_ref: c.claim_ref, href: open ? `/staff/claims/${c.id}` : null };
+        return { id: c.id, claim_ref: c.claim_ref, property: c.property, href: open ? `/staff/claims/${c.id}` : null };
       });
       return {
         id: l.id, label: documentLabel(l.label, l.seq), type: { code: l.type_code, label: l.label },
         organisation: {
           id: l.business_id, name: businesses.get(l.business_id) ?? 'an organisation',
-          href: can(actor, 'organisation.read', { type: 'business', id: l.business_id }) ? `/staff/organisations/${l.business_id}` : null,
+          href: can(actor, 'organisation.read', { type: 'business', id: l.business_id }) ? `/staff/clients/${l.business_id}` : null,
         },
         claims, state: { key: stateKey, label: CENTRE_STATES[stateKey] ?? stateKey },
         newest: newest === undefined || newestView === null ? null
@@ -1247,7 +1249,7 @@ export function documentCentre(db: Db, actor: Actor, q: URLSearchParams): Docume
   const choices: Record<string, readonly CentreChoice[]> = {
     type: distinctChoices(readable.map((r) => [r.type.code, r.type.label] as const)),
     organisation: distinctChoices(readable.map((r) => [r.organisation.id, r.organisation.name] as const)),
-    claim: distinctChoices(readable.flatMap((r) => r.claims.map((c) => [c.id, c.claim_ref] as const))),
+    claim: distinctChoices(readable.flatMap((r) => r.claims.map((c) => [c.id, `${r.organisation.name} — ${c.property ?? 'claim'} (${c.claim_ref})`] as const))),
     state: Object.entries(CENTRE_STATES).map(([value, label]) => ({ value, label })),
   };
 

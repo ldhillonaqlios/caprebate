@@ -641,10 +641,11 @@ function seedCrm(
   const b5 = get('b5');
   const main = db.get<{ id: string }>('SELECT id FROM properties WHERE business_id = ? LIMIT 1', [b5]);
   if (main === undefined) throw new Error('seed: b5 has no property');
-  db.run('UPDATE properties SET tenure = ? WHERE id = ?', ['LEASEHOLD', main.id]);
+  db.run('UPDATE properties SET tenure = ?, town = ? WHERE id = ?', ['LEASEHOLD', 'Nowhere Town', main.id]);
+  const annexe = newId();
   db.run(
-    'INSERT INTO properties (id, business_id, label, postcode, created_at, tenure, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [newId(), b5, 'Elverton Private Hospital Limited — outpatient annexe', 'ZZ5 5EF', t, 'FREEHOLD', t],
+    'INSERT INTO properties (id, business_id, label, postcode, created_at, tenure, updated_at, town) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [annexe, b5, 'Elverton Private Hospital Limited — outpatient annexe', 'ZZ5 5EF', t, 'FREEHOLD', t, 'Nowhere Town'],
   );
   // CRM 2 of 10: a claim a person opens starts at the enquiry, with its checks not yet recorded.
   const second = insertClaim(db, now, newId, {
@@ -652,6 +653,14 @@ function seedCrm(
     stage: 'ENQUIRY', owner_id: sales, surveyor_id: null,
   });
   recordOpened({ db, now, newId }, null, second.id, 'ENQUIRY',
+    'opened by staff on a property; its enquiry checks are recorded on the claim');
+  /* PHASE 134 — ONE COMPANY, TWO PROPERTIES, THREE CLAIMS. The annexe gets a claim of its own, so Elverton shows the shape
+     Lakhbir asked about: one client page, three claim tiles, one timeline, and one portal listing three claims. */
+  const third = insertClaim(db, now, newId, {
+    business_id: b5, property_id: annexe, assessment_id: null, workstream: 'PLANT_AND_MACHINERY',
+    stage: 'ENQUIRY', owner_id: sales, surveyor_id: null,
+  });
+  recordOpened({ db, now, newId }, null, third.id, 'ENQUIRY',
     'opened by staff on a property; its enquiry checks are recorded on the claim');
 
   seedLeads(db, now, idOf, sales);
@@ -709,6 +718,10 @@ function seedTasks(
   nextAction('b3', true, { title: 'Chase the documents the signed letter asks for', activity_type: 'DOCUMENT_REQUEST' });
   nextAction('b5', true, { title: 'Ask the surveyor when they can review the annexe drawings', due_on: '2026-09-25' });
   nextAction('b5', false, { title: 'Record the enquiry checks for the structures claim', due_on: '2026-09-19' });
+  const annexeClaim = db.get<{ id: string }>(
+    "SELECT c.id FROM claims c JOIN properties p ON p.id = c.property_id WHERE c.business_id = ? AND p.label LIKE '%outpatient annexe'", [get('b5')]);
+  if (annexeClaim === undefined) throw new Error('seed: no annexe claim for b5');
+  task({ title: 'Ask for the annexe’s fit-out invoices', business_id: get('b5'), claim_id: annexeClaim.id, is_next_action: true, due_on: '2026-09-29' });
   nextAction('b6', true, { title: 'Record why this client asked not to be contacted', owner_id: admin, due_on: '2026-09-22' });
 
   task({

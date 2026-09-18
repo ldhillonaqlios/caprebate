@@ -88,18 +88,20 @@ function panel(body: string, id: string): string {
 }
 
 describe('the five long screens are on the record layout', () => {
-  test('the engaged client’s business page: five tabs, one per numbered panel, with highlights and a side panel', async () => {
+  // PHASE 134: THE ONE CLIENT PAGE. The business page's four working panels are four of its tabs; its notes are beside the
+  // company's one timeline; the organisation's contacts, properties, documents and details are the rest.
+  test('the one client page: the company’s timeline first, the four working panels, then the organisation’s record — with highlights and a side panel', async () => {
     const b = made.app.db.get<{ business_id: string }>("SELECT business_id FROM surveyor_jobs WHERE state = 'SEALED' LIMIT 1");
     assert.ok(b);
     const path = `/staff/clients/${b.business_id}`;
     const r = await as('sales').get(path);
     assert.equal(r.status, 200);
-    sound(path, r.body, ['answers', 'sources', 'missing', 'tasks', 'notes']);
+    sound(path, r.body, ['activity', 'tasks', 'missing', 'answers', 'sources', 'contacts', 'properties', 'documents', 'details']);
     assert.match(r.body, /<header class="highlights">/, 'no highlights panel');
     assert.match(r.body, /<aside class="side"/, 'no right-hand panel');
-    const n = ['answers', 'sources', 'missing', 'tasks', 'notes'];
-    ['1 · Questions and answers', '2 · Sources', '3 · What is still missing', '4 · Tasks', '5 · Internal notes'].forEach((heading, i) =>
-      assert.ok(panel(r.body, n[i] ?? '').includes(`<h2>${heading}`), `panel "${heading}" is not in the #${n[i]} tab`));
+    const n = ['answers', 'sources', 'missing', 'tasks', 'activity'];
+    ['1 · Questions and answers', '2 · Sources', '3 · What is still missing', '4 · Tasks', 'Internal notes — never shown to the client'].forEach((heading, i) =>
+      assert.ok(panel(r.body, n[i] ?? '').includes(heading), `panel "${heading}" is not in the #${n[i]} tab`));
     assert.match(r.body, /<div class="card-h"><h2>Waiting on<\/h2>/, '"Waiting on" is not in the side panel');
   });
 

@@ -34,7 +34,7 @@ import type { FsObjectStore } from './objectstore.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import { staffShell, portalShell, opens, navContext } from './navigation.ts';
 import { refillForm, typedValues } from './refill.ts';
-import { badge, card, emptyState, welcomeCard, why } from './components.ts';
+import { badge, card, claimRef, emptyState, welcomeCard, why } from './components.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
 import { staffHelp } from './help.ts';
 import { financeDashboard } from './invoices.ts';
@@ -47,6 +47,7 @@ import { leadsList } from './lists.ts';
 import * as S from './settings.ts';
 import * as B from './backoffice.ts';
 import { handleEngaged } from './engaged-pages.ts';
+import { handleClientPage } from './client-page.ts';
 import { handleSurveyor } from './surveyor-pages.ts';
 import { handleFinance } from './finance-pages.ts';
 import { handleCrm } from './crm-pages.ts';
@@ -288,6 +289,10 @@ export async function handleStaff(
       B.assignableStaffIfPermitted(db, actor), slots));
     return 'handled';
   }
+
+  /* ------------------ SECTION 3 · the one client page, and a claim inside it (Phase 134) */
+  const client = await handleClientPage({ app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor);
+  if (client === 'handled') return 'handled';
 
   /* ------------------------------ SECTION 3 · engaged clients (Phase 106) */
   const engaged = await handleEngaged(
@@ -678,7 +683,7 @@ function homeCards(app: App, actor: Actor): Safe {
           ${v.money.overdue ? badge('Overdue', 'stop') : badge(v.due_shown, 'plain')}</li>`)}</ul>`}`, { href: '/staff/finance#claim-invoices' }));
       out.push(card('Fees waiting to be invoiced', f.expected.claims.length === 0
         ? emptyState('No claim is at the invoice stage without our fee raised.')
-        : h`<ul class="plain">${f.expected.claims.slice(0, 5).map((e) => h`<li><a href="/staff/claims/${e.claim_id}">${e.claim_ref}</a> · ${e.client_name}
+        : h`<ul class="plain">${f.expected.claims.slice(0, 5).map((e) => h`<li><a href="/staff/claims/${e.claim_id}">${e.client_name}</a> ${claimRef(e.claim_ref)}
             <br><span class="help">expected ${e.expected} · earned ${e.expected_on ?? 'NO DATE'}</span></li>`)}</ul>
           <p><a class="btn" href="/staff/finance#to-invoice">Raise our fee in Finance</a></p>`, { count: f.expected.claims.length, href: '/staff/finance#to-invoice' }));
       const vat = f.vat;
@@ -706,7 +711,7 @@ function homeCards(app: App, actor: Actor): Safe {
     if (role !== 'READ_ONLY') {
       const w = T.myWork(db, actor, now);
       out.push(card('My next actions', w.my_claims.length === 0 ? emptyState('You own no open claims yet.', { href: '/staff/claims', label: 'See all claims' })
-        : h`<ul class="plain">${w.my_claims.slice(0, 6).map((c) => h`<li><a href="/staff/claims/${c.id}">${c.claim_ref}</a> · ${c.stage}
+        : h`<ul class="plain">${w.my_claims.slice(0, 6).map((c) => h`<li><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} · ${c.stage}
             ${c.overdue ? badge('Overdue', 'stop') : raw('')}<br><span class="help">${c.next_action}</span></li>`)}</ul>`, { count: w.my_claims.length }));
       out.push(card('Today and overdue', h`<div class="stat-row"><div><span class="lab">My open tasks</span><span class="stat">${w.tasks.length}</span></div>
           <div><span class="lab">Overdue</span><span class="stat${w.overdue > 0 ? ' overdue' : ''}">${w.overdue}</span></div>

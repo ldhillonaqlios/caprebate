@@ -846,7 +846,8 @@ describe('the pipeline board', () => {
       // The CRM follow-on seeds Dunmarrow's branch surgery as a claim at INVOICE, walked there with every record its gates read,
       // so "Raise our fee" can be shown in training. Its assessed claim is still placed at the survey.
       assert.deepEqual(at('Dunmarrow Medical Practice Limited'), ['SURVEY', 'INVOICE']);
-      assert.deepEqual(at('Elverton Private Hospital Limited'), ['SURVEY', 'ENQUIRY'], 'invoiced with no commitment was placed past the survey');
+      // Phase 134: the outpatient annexe's own claim, opened by staff, starts at the enquiry too.
+      assert.deepEqual(at('Elverton Private Hospital Limited'), ['SURVEY', 'ENQUIRY', 'ENQUIRY'], 'invoiced with no commitment was placed past the survey');
       assert.deepEqual(at('Fenmoor Nursing Homes Limited'), ['SURVEY']);
       // Every seeded survey job carries its claim.
       assert.equal(app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM surveyor_jobs WHERE claim_id IS NULL')?.n, 0);

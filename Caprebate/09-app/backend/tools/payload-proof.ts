@@ -166,11 +166,13 @@ console.log('');
 /* ------------------------------------------------ CRM 1 of 10 — the new routes */
 
 // CRM 2 of 10: the job's own claim, by the id the job now carries.
-const claim = made.app.db.get<{ id: string; claim_ref: string; property_id: string; stage: string }>(
-  'SELECT id, claim_ref, property_id, stage FROM claims WHERE id = ?', [job.claim_id])!;
+const claim = made.app.db.get<{ id: string; claim_ref: string; property_id: string; stage: string; business_id: string }>(
+  'SELECT id, claim_ref, property_id, stage, business_id FROM claims WHERE id = ?', [job.claim_id])!;
 const crmRoutes = [
   { label: 'claim view.json', path: `/staff/claims/${claim.id}/view.json`, json: true },
   { label: 'claim page', path: `/staff/claims/${claim.id}`, json: false },
+  // Phase 134: the same claim, inside its company's page.
+  { label: 'claim in its company', path: `/staff/clients/${claim.business_id}/claims/${claim.id}`, json: false },
   { label: 'property view.json', path: `/staff/properties/${claim.property_id}/view.json`, json: true },
   { label: 'property page', path: `/staff/properties/${claim.property_id}`, json: false },
 ] as const;
@@ -194,6 +196,13 @@ if (elsewhere !== undefined) {
   const r = await req(`/staff/claims/${elsewhere.id}/view.json`);
   console.log(`    a claim on no job of theirs        HTTP ${r.status} (must be 403)`);
   if (r.status !== 403) failures.push('a claim outside the surveyor’s jobs was served');
+}
+{
+  // Phase 134: the one client page carries the research half and the notes; a surveyor is refused it, as the
+  // organisation page refused them.
+  const r = await req(`/staff/clients/${claim.business_id}`);
+  console.log(`    the one client page               HTTP ${r.status} (must be 403)`);
+  if (r.status !== 403) failures.push('the one client page was served to a surveyor');
 }
 console.log('');
 

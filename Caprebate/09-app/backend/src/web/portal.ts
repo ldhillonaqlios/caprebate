@@ -21,7 +21,7 @@ import { authorise, can, type Actor } from '../authz.ts';
 import { BOOKING } from './engine.ts';
 import { localWhen } from './localtime.ts';
 import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES, isBookable } from './schedule.ts';
-import { progressFor, type Progress } from './stages.ts';
+import { claimStage, clientStageFor, progressFor, type Progress } from './stages.ts';
 import { eventsFor } from './uploads.ts';
 import { RECEIVED_ONLY_BY_UPLOAD, requestsFor, versionObj, type RequestView } from './documents.ts';
 
@@ -60,6 +60,65 @@ export function readBusiness(db: Db, actor: Actor, business_id: string): Busines
 export class NotFoundAsRefusal extends Error {
   readonly code = 'E_NOT_AUTHORISED';
   constructor() { super('not authorised'); this.name = 'NotFoundAsRefusal'; }
+}
+
+/* ------------------------------------------------- 0 · YOUR CLAIMS */
+
+/**
+ * PHASE 134 — ONE COMPANY, MANY CLAIMS, ONE PORTAL. A claim as its client sees it: which property, and how far it has
+ * got in the portal's own six steps. NEVER the ten staff stages, a hold reason, an exit note, a value, a next action or
+ * a person — a hold shows the step the claim returns to, and an exit says only that the claim is closed.
+ *
+ *   OPEN      at one of the steps; `progress` is that step's bar
+ *   FINISHED  the procedure has closed it
+ *   CLOSED    it left the procedure by an exit — the client is told by us, in words, why
+ *   UNKNOWN   its stage is not one the portal knows; said so, never guessed (N4)
+ */
+export type PortalClaim = {
+  readonly id: string;
+  readonly ref: string;
+  readonly property: string | null;
+  readonly town: string | null;
+  readonly state: 'OPEN' | 'FINISHED' | 'CLOSED' | 'UNKNOWN';
+  readonly progress: Progress;
+};
+
+type PortalClaimRow = {
+  id: string; claim_ref: string; business_id: string; stage: string | null; hold_return_stage: string | null;
+  property: string | null; town: string | null;
+};
+
+const PORTAL_CLAIM_SELECT =
+  'SELECT c.id, c.claim_ref, c.business_id, c.stage, c.hold_return_stage, p.label AS property, p.town FROM claims c ' +
+  'LEFT JOIN properties p ON p.id = c.property_id ';
+
+function portalClaim(r: PortalClaimRow): PortalClaim {
+  const kind = claimStage(r.stage).kind;
+  const base = { id: r.id, ref: r.claim_ref, property: r.property, town: r.town };
+  if (kind === 'EXIT') return { ...base, state: 'CLOSED', progress: { known: false, steps: [] } };
+  const key = clientStageFor(kind === 'ON_HOLD' ? r.hold_return_stage : r.stage);
+  if (key === null) return { ...base, state: 'UNKNOWN', progress: { known: false, steps: [] } };
+  return { ...base, state: kind === 'CLOSED' ? 'FINISHED' : 'OPEN', progress: progressFor(key) };
+}
+
+/** Every claim of this company, each asked of `claim.progress_read` — a CLIENT only ever their own company's. */
+export function claims(db: Db, actor: Actor, business_id: string): PortalClaim[] {
+  const b = readBusiness(db, actor, business_id);
+  return db.all<PortalClaimRow>(`${PORTAL_CLAIM_SELECT}WHERE c.business_id = ? ORDER BY p.label IS NULL, p.label ASC, c.claim_ref ASC`, [b.id])
+    .filter((r) => can(actor, 'claim.progress_read', { type: 'claim', id: r.id, business_id: r.business_id, assigned_surveyor_ids: [] }))
+    .map(portalClaim);
+}
+
+/**
+ * ONE CLAIM, OR NOTHING. A claim that is not this company's is looked for only among this company's own, so another
+ * company's claim and a claim that does not exist come back the same — null, and the page answers 404 for both.
+ */
+export function claim(db: Db, actor: Actor, business_id: string, claim_id: string): PortalClaim | null {
+  const b = readBusiness(db, actor, business_id);
+  const r = db.get<PortalClaimRow>(`${PORTAL_CLAIM_SELECT}WHERE c.id = ? AND c.business_id = ?`, [claim_id, b.id]);
+  if (r === undefined) return null;
+  authorise(actor, 'claim.progress_read', { type: 'claim', id: r.id, business_id: r.business_id, assigned_surveyor_ids: [] });
+  return portalClaim(r);
 }
 
 /* ------------------------------------------------------- 1 · PROGRESS */

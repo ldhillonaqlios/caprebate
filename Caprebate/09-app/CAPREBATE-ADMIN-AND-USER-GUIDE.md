@@ -957,7 +957,41 @@ when it arrives", "waiting with Accounting — nobody has taken it".
 
 ---
 
-### Training — `B5`/`B6` engaged clients and the business page
+### Training — `B5`/`B6` engaged clients and the one client page
+
+**Phase 134, 18 September 2026 — one page per company.** A company used to have two pages: this one and the
+organisation page. It now has one, at `/staff/clients/{company}`, and the old organisation address opens it.
+
+**Where things are now**
+- **The heading is the company's name**, with its legal name in small text underneath where it differs.
+- **Claims** — one tile per claim: the property, its town, the stage, the next action, and the claim reference as a
+  small grey label. Press the property's name to open the claim. The claim opens with "Company › Property" at the top,
+  so you can always get back to the company.
+- **Tabs**: **Timeline** (tasks, everything that has happened with the company across all its claims, and internal
+  notes), **Questions to the client**, **Still missing**, **Their answers**, **Research**, **Contacts**, **Properties**,
+  **Documents** and **Details**.
+- **A note or a question can say which claim it is about.** Choose it under **About which claim?**, or leave
+  "The company in general".
+
+**Who can open it now:** Admin and Sales see all of it. The view-only login sees the company's record — Timeline,
+Contacts, Properties, Documents and Details — and not the research or the notes. Accounting and Surveying are refused.
+
+**Try it on the demo** (as sales@example.invalid, on a freshly started demo, 18 September 2026)
+- Open **Organisations** and choose **Elverton Private Hospital Limited**. *Observed:* the address becomes
+  `/staff/clients/…`; the highlights read Claims 3, Status Active, Owner nobody yet, Waiting on Us, Engagement letter
+  signed; three tiles read **main site** (Survey, CR-2026-0005), **main site** (Enquiry, CR-2026-0007) and **outpatient
+  annexe** (Enquiry, CR-2026-0008); the tabs read Still missing 16 and Research 12.
+- Press **outpatient annexe**. *Observed:* "Elverton Private Hospital Limited › outpatient annexe" at the top, the
+  heading is the company's name, and "Claim on outpatient annexe, Nowhere Town CR-2026-0008" under it.
+- Back on the company, add a note, choose the annexe under **About which claim?** and press **Save note**. *Observed:*
+  "Note saved. The client cannot see it." and the note's **About** reads "outpatient annexe CR-2026-0008".
+
+**Check yourself**
+- *Where do you find everything said to a company with three claims?* — On its one page, under **Timeline**.
+- *What is the grey CR number for?* — Quoting on the phone. It is never the name of anything.
+
+*The rest of this section was written by Phase 133b and describes the tabs before Phase 134; the four working panels
+behave exactly as it says.*
 
 *Written by Phase 133b on 17 September 2026, which found no training block for these two screens. The exercise was run
 on a freshly started demo that day and the results below are what it showed.*
@@ -1168,6 +1202,12 @@ Address: /staff/users (Settings → "Users and roles")
 
 ### Training — `B13`/`B14` organisations
 
+**Phase 134, 18 September 2026.** The **Organisations** list is unchanged, but each name now opens the **one client
+page** (`B5`/`B6`) — the organisation's own page and the business page were two pages for one company, and are now one.
+Everything below is on that page: the details under **Details**, contacts under **Contacts**, properties under
+**Properties**, documents under **Documents**, and tasks, the timeline and notes under **Timeline**. The old address,
+`/staff/organisations/{organisation}`, still works and takes you there.
+
 **Where things are on the page (Phase 133a, 17 September 2026).** The list is one table. An organisation's page opens
 with its highlights — client status, owner, sector, legal name, source — then three tabs: **Details** (the organisation
 and **Change these**), **Related** (contacts, properties, claims and documents, with a count) and **Activity** (tasks and
@@ -1261,6 +1301,13 @@ allowances were claimed on this property before".
 ---
 
 ### Training — `B17`/`B18` claims
+
+**Phase 134, 18 September 2026 — the company leads.** The claims list's columns are **Company, Property, Stage, Next
+action, Owner** and, last and in grey, **Reference**; it is sorted by company unless you choose otherwise. A claim's
+page is headed with the **company's name**, with "Company › Property" above it and the property and grey reference
+under it. Everywhere else a claim appears — the board, home, tasks, the dashboard, finance, documents, search — it is
+named by its company or property, and the reference sits beside it in grey. *On the demo, as Sales:* the first row of
+**Claims** reads Aldergate Care Group Limited, and **Elverton Private Hospital Limited** has three rows.
 
 **Where things are on the page (Phase 133a, 17 September 2026).** The claims list has **Filter, sort and save** beside
 it, and the underlined headings (Reference, Next action, Value) sort it. A claim's page opens with its highlights —
@@ -1519,7 +1566,7 @@ Address: `/staff/claims/{claim}` (the panels)
 As Sales, on CR-2026-0002, set the next action "Send the engagement letter reminder" with no owner →
 **Next action not set**. Choose Sales User and 2026-09-18 → the header reads "Next action Send the
 engagement letter reminder due 2026-09-18". On CR-2026-0004, queue "What happens next on your claim"
-to Decision Maker Contact. **Settings** then lists "Your claim CR-2026-0004 — the next step NOT SENT".
+to Decision Maker Contact. **Settings** then lists "Dunmarrow Medical Practice Limited — the next step on your claim NOT SENT" (since Phase 134 a subject leads with the company).
 Add a contact to Fenmoor Nursing Homes Limited and try to email them from CR-2026-0006 → **Not queued**.
 
 **Check yourself**
@@ -1624,7 +1671,7 @@ Address: /staff/templates
 1. Add a template labelled *Payment reminder*, body *Dear {{contact_name}}, please send the payment by bank transfer.* *Observed:* "Template not saved — A template may not carry a bank transfer. …"
 2. Add *Welcome* with subject *Welcome, {{first_name}}*. *Observed:* "“{{first_name}}” is not a merge field. …"
 3. Add *Documents we still need*, body *Dear {{contact_name}}, for {{organisation}} we still need: {{next_action}}, by {{due_date}}.* *Observed:* it is saved and listed.
-4. Open claim **CR-2026-0004** (Dunmarrow Medical Practice Limited). Queue "What happens next on your claim" to "Decision Maker Contact". *Observed:* the Settings outbox shows TEMPLATE · "Your claim CR-2026-0004 — the next step" · **NOT SENT**.
+4. Open claim **CR-2026-0004** (Dunmarrow Medical Practice Limited). Queue "What happens next on your claim" to "Decision Maker Contact". *Observed:* the Settings outbox shows TEMPLATE · "Dunmarrow Medical Practice Limited — the next step on your claim" · **NOT SENT** (since Phase 134 a subject leads with the company).
 
 **Check yourself**
 1. *Can a template include our bank details "just for this client"?* No. Any bank detail is refused, and details are confirmed on a channel other than email.
@@ -2162,6 +2209,14 @@ address: "not authorised".
 ---
 
 ### Training — `C6` the portal's CRM additions
+
+**Phase 134, 18 September 2026 — "Your claims".** The portal's one tab is **Your claims**. The page is headed with the
+company's name, and a **Your claims** card shows one tile per claim: the property, its town, how far it has got, and the
+reference in grey. Pressing the property opens that claim's progress, with the steps drawn for that claim alone.
+Questions, documents and messages for all the company's claims stay on the main page. A client can only ever open their
+own company's claims; any other address answers "We cannot find that claim". *On the demo:* as
+client@example.invalid, **Your claims** shows one tile, **main site**. As admin, open
+`/portal?business={Elverton's id}` to see a company with three.
 
 **Where things are on the page (Phase 133c, 17 September 2026).** The portal opens with the business's name and two
 buttons, **Book a call** and **Who to contact**; the **Welcome to Cap Rebate** card until the client hides it; **How to

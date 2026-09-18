@@ -41,6 +41,7 @@
 import type { Db } from '../db.ts';
 import { authorise, can, type Actor, type Obj } from '../authz.ts';
 import { claimObjFor } from './crm.ts';
+import { claimName } from './components.ts';
 import { anyStageLabel } from './stages.ts';
 
 export type SearchKind = 'ORGANISATION' | 'PROSPECT' | 'CONTACT' | 'PROPERTY' | 'CLAIM' | 'INVOICE' | 'NOTE';
@@ -50,6 +51,8 @@ export type SearchHit = {
   readonly label: string;
   readonly detail: string;
   readonly href: string;
+  /** Phase 134: the company the hit belongs to, where it has one — a hit whose company's name matches ranks first. */
+  readonly company?: string;
 };
 
 export type SearchScope = { readonly kind: SearchKind; readonly label: string; readonly searched: 'ALL' | 'ASSIGNED' | 'NOT_SEARCHED' };
@@ -135,14 +138,17 @@ const PROPERTIES_ASSIGNED =
   "OR lower(COALESCE(p.address_line_2, '')) LIKE ? ESCAPE '\\' OR lower(COALESCE(p.town, '')) LIKE ? ESCAPE '\\' " +
   "OR replace(lower(COALESCE(p.postcode, '')), ' ', '') LIKE ? ESCAPE '\\') ORDER BY p.label ASC, p.id ASC LIMIT 25";
 
+// PHASE 134: a claim is found by its reference AND by its company's name, and is named by its company and property.
 const CLAIMS_ALL =
-  'SELECT c.id, c.claim_ref, c.business_id, c.stage, b.name AS business_name FROM claims c JOIN businesses b ON b.id = c.business_id ' +
-  "WHERE lower(c.claim_ref) LIKE ? ESCAPE '\\' ORDER BY c.claim_ref DESC LIMIT 25";
+  'SELECT c.id, c.claim_ref, c.business_id, c.stage, b.name AS business_name, p.label AS property_label FROM claims c ' +
+  'JOIN businesses b ON b.id = c.business_id LEFT JOIN properties p ON p.id = c.property_id ' +
+  "WHERE lower(c.claim_ref) LIKE ? ESCAPE '\\' OR lower(b.name) LIKE ? ESCAPE '\\' ORDER BY b.name ASC, c.claim_ref DESC LIMIT 25";
 
 const CLAIMS_ASSIGNED =
-  'SELECT c.id, c.claim_ref, c.business_id, c.stage, b.name AS business_name FROM claims c JOIN businesses b ON b.id = c.business_id ' +
+  'SELECT c.id, c.claim_ref, c.business_id, c.stage, b.name AS business_name, p.label AS property_label FROM claims c ' +
+  'JOIN businesses b ON b.id = c.business_id LEFT JOIN properties p ON p.id = c.property_id ' +
   'WHERE EXISTS (SELECT 1 FROM surveyor_jobs j WHERE j.claim_id = c.id AND j.surveyor_id = ?) ' +
-  "AND lower(c.claim_ref) LIKE ? ESCAPE '\\' ORDER BY c.claim_ref DESC LIMIT 25";
+  "AND (lower(c.claim_ref) LIKE ? ESCAPE '\\' OR lower(b.name) LIKE ? ESCAPE '\\') ORDER BY b.name ASC, c.claim_ref DESC LIMIT 25";
 
 /**
  * An invoice by its number — CB-000123, 000123 or 123 — or by the start of it as it is printed: "CB-0", "CB-00012". Never
@@ -182,7 +188,7 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
   if (add('ORGANISATION', scopeOf(actor, 'organisation.read', { type: 'business', id: SENTINEL }, null)) === 'ALL') {
     for (const r of db.all<{ id: string; name: string; legal_name: string | null; sector: string }>(ORGANISATIONS_ALL, [like, like, like])) {
       authorise(actor, 'organisation.read', { type: 'business', id: r.id });
-      hits.push({ kind: 'ORGANISATION', label: r.name, detail: r.legal_name ?? r.sector.replace(/_/g, ' '), href: `/staff/organisations/${r.id}` });
+      hits.push({ kind: 'ORGANISATION', label: r.name, detail: r.legal_name ?? r.sector.replace(/_/g, ' '), href: `/staff/clients/${r.id}`, company: r.name });
     }
   }
 
@@ -199,7 +205,8 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
       hits.push({
         kind: 'CONTACT', label: r.full_name,
         detail: r.business_name === null ? 'a contact on a lead' : `a contact at ${r.business_name}`,
-        href: r.business_id !== null ? `/staff/organisations/${r.business_id}` : `/staff/leads/${r.lead_id ?? ''}`,
+        href: r.business_id !== null ? `/staff/clients/${r.business_id}` : `/staff/leads/${r.lead_id ?? ''}`,
+        ...(r.business_name === null ? {} : { company: r.business_name }),
       });
     }
   }
@@ -215,7 +222,7 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
       authorise(actor, 'property.read', { type: 'property', id: r.id, business_id: r.business_id, assigned_surveyor_ids: surveyorsOfBusiness(db, r.business_id) });
       hits.push({
         kind: 'PROPERTY', label: r.label, detail: [r.town, r.postcode, r.business_name].filter((x) => x !== null && x !== '').join(' · '),
-        href: `/staff/properties/${r.id}`,
+        href: `/staff/properties/${r.id}`, company: r.business_name,
       });
     }
   }
@@ -225,11 +232,14 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
     { type: 'claim', id: SENTINEL, business_id: SENTINEL, assigned_surveyor_ids: [actor.id] }));
   if (claims !== 'NOT_SEARCHED') {
     const rows = claims === 'ALL'
-      ? db.all<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string }>(CLAIMS_ALL, [like])
-      : db.all<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string }>(CLAIMS_ASSIGNED, [actor.id, like]);
+      ? db.all<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string; property_label: string | null }>(CLAIMS_ALL, [like, like])
+      : db.all<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string; property_label: string | null }>(CLAIMS_ASSIGNED, [actor.id, like, like]);
     for (const r of rows) {
       authorise(actor, 'claim.read', claimObjFor(db, r));
-      hits.push({ kind: 'CLAIM', label: r.claim_ref, detail: `${r.business_name} · ${anyStageLabel(r.stage)}`, href: `/staff/claims/${r.id}` });
+      hits.push({
+        kind: 'CLAIM', label: claimName(r.business_name, r.property_label), detail: `${anyStageLabel(r.stage)} · ${r.claim_ref}`,
+        href: `/staff/claims/${r.id}`, company: r.business_name,
+      });
     }
   }
 
@@ -241,7 +251,7 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
       for (const r of db.all<{ seq: number; id: string; business_id: string; claim_ref: string; business_name: string }>(
         INVOICES_ALL, [digits === '' ? -1 : Number(digits), `${digits}%`])) {
         authorise(actor, 'invoice.read', { type: 'invoice', id: r.id, business_id: r.business_id });
-        hits.push({ kind: 'INVOICE', label: `CB-${String(r.seq).padStart(6, '0')}`, detail: `${r.business_name} · ${r.claim_ref}`, href: `/staff/finance/${r.id}` });
+        hits.push({ kind: 'INVOICE', label: `${r.business_name} — invoice CB-${String(r.seq).padStart(6, '0')}`, detail: r.claim_ref, href: `/staff/finance/${r.id}`, company: r.business_name });
       }
     }
   }
@@ -250,13 +260,19 @@ export function search(db: Db, actor: Actor, raw: string): SearchResult {
     for (const r of db.all<{ id: string; business_id: string; claim_id: string | null; property_id: string | null; snippet: string; business_name: string }>(NOTES_ALL, [like])) {
       authorise(actor, 'internal_note.read', { type: 'internal_note', id: r.id, business_id: r.business_id });
       hits.push({
-        kind: 'NOTE', label: r.snippet, detail: `a note on ${r.business_name}`,
-        href: r.claim_id !== null ? `/staff/claims/${r.claim_id}` : r.property_id !== null ? `/staff/properties/${r.property_id}` : `/staff/organisations/${r.business_id}`,
+        kind: 'NOTE', label: r.snippet, detail: `a note on ${r.business_name}`, company: r.business_name,
+        href: r.claim_id !== null ? `/staff/claims/${r.claim_id}` : r.property_id !== null ? `/staff/properties/${r.property_id}` : `/staff/clients/${r.business_id}`,
       });
     }
   }
 
-  return { term, hits, scope: scopes, never: NEVER_SEARCHED, note: hits.length === 0 ? 'Nothing you may read matches.' : null };
+  // PHASE 134: A COMPANY-NAME MATCH RANKS FIRST — the company itself, then anything whose company's name matches, then the
+  // rest, each group in the order it was found. The order only; nothing is added or dropped.
+  const t = term.toLowerCase();
+  const rank = (x: SearchHit): number =>
+    x.company !== undefined && x.company.toLowerCase().includes(t) ? (x.kind === 'ORGANISATION' ? 0 : 1) : 2;
+  const ranked = hits.map((x, i) => ({ x, i })).sort((a, b) => rank(a.x) - rank(b.x) || a.i - b.i).map((y) => y.x);
+  return { term, hits: ranked, scope: scopes, never: NEVER_SEARCHED, note: ranked.length === 0 ? 'Nothing you may read matches.' : null };
 }
 
 /** Exported for the test that proves each statement's row cap is the one this file promises. */

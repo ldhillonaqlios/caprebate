@@ -303,6 +303,18 @@ table.compact{margin:0}table.compact td{padding:.3rem .35rem}
 .highlights .hl div{min-width:0}
 .highlights .hl dt{font-size:14px;color:var(--body);font-weight:600;padding:0}
 .highlights .hl dd{margin:.1rem 0 0;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+/* PHASE 134: THE COMPANY IS THE FRAME. The claim reference is a small grey label; a claim is a tile; the breadcrumb
+   names the company first. */
+.highlights .subhead{margin:-.5rem 0 .75rem;color:var(--body);font-size:16px}
+.claimref{display:inline-block;color:var(--body);font-size:14px;font-weight:400;white-space:nowrap}
+.crumbs ol{display:flex;flex-wrap:wrap;list-style:none;margin:0 0 .6rem;padding:0;gap:.2rem;font-size:16px}
+.crumbs li+li::before{content:"\\203A";margin:0 .4rem 0 .2rem;color:var(--body)}
+.crumbs [aria-current="page"]{font-weight:600;color:var(--ink)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.75rem;list-style:none;margin:0 0 1rem;padding:0}
+.tile{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:.8rem .9rem;border-top:4px solid var(--mint);min-width:0;overflow-wrap:anywhere}
+.tile p{margin:.25rem 0}
+.tile .tilename{font-weight:700;font-size:18px}
+.tile .badge,.highlights .badge{white-space:normal;overflow-wrap:anywhere;max-width:100%}
 .stagebar{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:.75rem;margin:0 0 1rem;box-shadow:var(--shadow)}
 .stagebar ol{display:flex;list-style:none;margin:0;padding:0;gap:.2rem;overflow-x:auto}
 /* PHASE 133d (D2): a step is never narrower than its longest word, so a label WRAPS onto a second line instead of being

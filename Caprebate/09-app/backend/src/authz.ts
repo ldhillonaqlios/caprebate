@@ -583,6 +583,13 @@ const RULES: RuleTable = {
   'claim.read_value': { ADMIN: always, SALES: always },
   'claim.create': { ADMIN: always, SALES: always },
   'claim.write': { ADMIN: always, SALES: always },
+  /*
+   * PHASE 134 — A CLIENT SEES THEIR OWN COMPANY'S CLAIMS: each one's property and how far it has got, in the portal's six
+   * client words (src/web/portal.ts). `ownBusiness` on the claim itself, asked of every claim on every request. Nothing
+   * else about a claim reaches a client through it: not the ten staff stages, a hold reason, an exit note, a value, a
+   * next action or a person. ADMIN and SALES may look at a client's portal, as they may today.
+   */
+  'claim.progress_read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
 
   /* --- leads and the pipeline. CRM 2 of 10, 10 September 2026 --------------
    *
@@ -984,6 +991,7 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'claim.read_value': NO('the claim value, tax benefit and sealed estimate fields (N1)'),
   'claim.create': NO(WRITES),
   'claim.write': NO(WRITES),
+  'claim.progress_read': NO('the client portal’s own view of a company’s claims; a view-only login reads a claim through claim.read'),
   'lead.read': YES('a lead, without the range shown — that is estimate.read, which is no'),
   'lead.write': NO(WRITES),
   'lead.convert': NO(WRITES),

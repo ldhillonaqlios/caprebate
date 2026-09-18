@@ -17,7 +17,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import { can, type Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { dataLink, savedMessage } from './components.ts';
+import { claimRef, dataLink, savedMessage } from './components.ts';
 import * as I from './introducers.ts';
 import { vocabulary } from './vocabularies.ts';
 import { SECTORS } from './leads.ts';
@@ -308,7 +308,7 @@ function listPage(d: IntroducerPageDeps, actor: Actor, rows: readonly I.Introduc
 function feeTable(fees: readonly I.FeeView[]): Safe {
   return fees.length === 0 ? h`<p class="help">No fee has accrued to any firm.</p>` : h`<table>
     <thead><tr><th>Firm</th><th>Claim</th><th>Amount</th><th>Disclosure to the client</th><th>State</th><th></th></tr></thead>
-    <tbody>${fees.map((f) => h`<tr><td>${f.firm.name}</td><td>${f.claim.claim_ref}</td><td>${f.amount}</td>
+    <tbody>${fees.map((f) => h`<tr><td>${f.firm.name}</td><td>${claimRef(f.claim.claim_ref)}</td><td>${f.amount}</td>
       <td>${f.disclosure.given ? h`given — ${f.disclosure.recorded ?? ''}` : h`<strong>not recorded — nothing is payable</strong>`}</td>
       <td>${f.state.label}${f.paid === null ? raw('') : h`<br><span class="help">${f.paid}</span>`}${f.payable ? h`<br>payable` : raw('')}</td>
       <td>${f.may_disclose ? h`<form method="post" action="/staff/introducer-fees/${f.id}/disclosure" class="inline"><button type="submit">Record the disclosure as given</button></form>` : raw('')}
@@ -362,7 +362,7 @@ function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg:
         ${v.referrals.length === 0 ? h`<p class="help">No lead names this firm.</p>` : h`<table>
           <thead><tr><th>Client</th><th>Date</th><th>Lead status</th><th>Claim</th><th>Sharing progress</th></tr></thead>
           <tbody>${v.referrals.map((r) => h`<tr><td><a href="/staff/leads/${r.lead_id}">${r.organisation}</a></td><td>${r.lead_date}</td>
-            <td>${r.status}</td><td>${r.claim === null ? h`<span class="help">—</span>` : h`<a href="/staff/claims/${r.claim.id}">${r.claim.claim_ref}</a> · ${r.claim.stage}`}</td>
+            <td>${r.status}</td><td>${r.claim === null ? h`<span class="help">—</span>` : h`<a href="/staff/claims/${r.claim.id}">Open the claim</a> · ${r.claim.stage} ${claimRef(r.claim.claim_ref)}`}</td>
             <td>${orNot(r.share, 'not shown to this role')}</td></tr>`)}</tbody></table>`}
         ${e === undefined ? raw('') : h`<form method="post" action="/staff/introducers/${v.id}/referrals">
           <p class="help">A referral from this firm.</p>

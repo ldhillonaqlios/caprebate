@@ -98,7 +98,8 @@ describe('the claims list — built forwards for its reader, filtered and sorted
 
     const acc = LI.claimsList(app.db, as('ACCOUNTING'), LI.readParams('CLAIMS', q('')).params);
     assert.equal(acc.shape, 'MONEY');
-    for (const r of acc.rows) assert.deepEqual(Object.keys(r).sort(), ['claim_ref', 'client', 'id', 'opened'], 'accounting read more than client and reference');
+    // Phase 134: `business_id` is the company's id, for the claim's address inside its company — no more than the client it names.
+    for (const r of acc.rows) assert.deepEqual(Object.keys(r).sort(), ['business_id', 'claim_ref', 'client', 'id', 'opened'], 'accounting read more than client and reference');
 
     const s = as('SURVEYING');
     const mine = new Set(app.db.all<{ claim_id: string }>('SELECT claim_id FROM surveyor_jobs WHERE surveyor_id = ?', [s.id]).map((x) => x.claim_id));
@@ -117,7 +118,7 @@ describe('the claims list — built forwards for its reader, filtered and sorted
     assert.equal(v.rows.length, atSurvey);
     assert.ok(v.said.some((x) => /^nonsense: not a filter/.test(x)), 'the unknown key was not said');
     assert.ok(v.said.some((x) => /^Sort: not one of the orders offered/.test(x)), 'the injected sort was not said');
-    assert.equal(v.sort.key, 'reference');
+    assert.equal(v.sort.key, 'company'); // Phase 134: the list reads by company first
     assert.ok((app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM claims')?.n ?? 0) > 0, 'the claims table was touched');
   });
 
@@ -232,8 +233,8 @@ describe('export — the reader’s own columns, audited, formula injection neut
     assert.match(sales.body, /'=cmd/);
 
     const acc = LI.exportList(deps(app), as('ACCOUNTING'), 'CLAIMS', q('stage=SURVEY'));
-    assert.equal(acc.body.split('\r\n')[0], 'Reference,Client,Opened');
-    assert.deepEqual([...acc.columns], ['claim_ref', 'client', 'opened']);
+    assert.equal(acc.body.split('\r\n')[0], 'Company,Opened,Reference'); // Phase 134: the company first, the reference last
+    assert.deepEqual([...acc.columns], ['client', 'opened', 'claim_ref']);
     assert.equal(acc.rows, app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM claims')?.n, 'accounting’s export was filtered on a column it does not read');
 
     assert.throws(() => LI.exportList(deps(app), as('SURVEYING'), 'CLAIMS', q('')), /not authorised/);
@@ -242,7 +243,7 @@ describe('export — the reader’s own columns, audited, formula injection neut
     const lines = app.audit.entries().filter((e) => e.kind === 'LIST_EXPORTED');
     assert.equal(lines.length, 2);
     const accLine = lines.find((e) => e.actor_role === 'ACCOUNTING');
-    assert.deepEqual(accLine?.detail['columns'], ['claim_ref', 'client', 'opened']);
+    assert.deepEqual(accLine?.detail['columns'], ['client', 'opened', 'claim_ref']);
     assert.equal(accLine?.detail['rows'], acc.rows);
     assert.equal(JSON.stringify(lines.map((e) => e.detail)).includes('calc'), false, 'a cell value reached the audit log');
   });
@@ -352,7 +353,7 @@ describe('the property and organisation pages — documents panels, a link form,
       const sales = await signIn('SALES');
       const org = JSON.parse((await sales.get(`/staff/properties/${prop.id}/view.json`)).body) as { documents?: unknown };
       assert.ok('documents' in org, 'the property view carries no documents panel');
-      assert.match((await sales.get(`/staff/organisations/${job.business_id}`)).body, /<div class="pnum">Documents<\/div>/, 'the organisation page draws no documents panel');
+      assert.match((await sales.get(`/staff/clients/${job.business_id}`)).body, /<div class="pnum">Documents<\/div>/, 'the client page draws no documents panel');
 
       const noteBefore = db.get<{ n: number }>('SELECT COUNT(*) AS n FROM internal_notes WHERE property_id = ?', [prop.id])?.n ?? 0;
       assert.equal((await sales.post(`/staff/properties/${prop.id}/notes`, { body: 'The boiler house is shared with the neighbour.' })).status, 303);
@@ -380,7 +381,7 @@ describe('the property and organisation pages — documents panels, a link form,
       assert.equal((await accounting.get(`/staff/properties/${prop.id}`)).status, 403);
       const csv = await accounting.get('/staff/claims/export.csv');
       assert.equal(csv.status, 200);
-      assert.equal(csv.body.split('\r\n')[0], 'Reference,Client,Opened');
+      assert.equal(csv.body.split('\r\n')[0], 'Company,Opened,Reference');
     } finally { made.close(); }
   });
 });

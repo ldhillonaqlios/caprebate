@@ -42,7 +42,7 @@ import type { AuditKind, AuditLog } from '../audit.ts';
 import { authorise, can, type Actor, type Obj } from '../authz.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
 import { localDate, localStamp, ukDate, dueWords } from './localtime.ts';
-import { claimObjFor, PRIORITIES, type Fields } from './crm.ts';
+import { claimNaming, claimObjFor, claimWords, PRIORITIES, type Fields } from './crm.ts';
 import { anyStageLabel, claimStage } from './stages.ts';
 import { waitingOn, type WaitingOn } from './engaged.ts';
 import { fireAutomation } from './automation.ts';
@@ -313,11 +313,13 @@ function viewOf(db: Db, actor: Actor, r: TaskDbRow, nowIso: string): TaskView {
   const about: TaskAbout[] = [];
   if (r.claim_id !== null && r.business_id !== null
     && can(actor, 'claim.read', claimObjFor(db, { id: r.claim_id, business_id: r.business_id }))) {
-    about.push({ kind: 'claim', id: r.claim_id, label: r.claim_ref ?? r.claim_id, href: `/staff/claims/${r.claim_id}` });
+    // PHASE 134: a claim is named by its property, never by its reference — the company follows as its own line.
+    const n = claimNaming(db, r.claim_id);
+    about.push({ kind: 'claim', id: r.claim_id, label: n === null || n.property === null ? 'the claim' : `the claim on ${n.property}`, href: `/staff/claims/${r.claim_id}` });
   }
   if (r.business_id !== null) {
     if (can(actor, 'organisation.read', { type: 'business', id: r.business_id })) {
-      about.push({ kind: 'organisation', id: r.business_id, label: r.business_name ?? r.business_id, href: `/staff/organisations/${r.business_id}` });
+      about.push({ kind: 'organisation', id: r.business_id, label: r.business_name ?? r.business_id, href: `/staff/clients/${r.business_id}` });
     } else if (can(actor, 'business.read', { type: 'business', id: r.business_id })) {
       about.push({ kind: 'organisation', id: r.business_id, label: r.business_name ?? r.business_id, href: null });
     }
@@ -936,15 +938,15 @@ export type MyWork = {
    */
   readonly document_requests_outstanding: readonly {
     readonly id: string; readonly type_label: string; readonly due: DueReading; readonly business_id: string; readonly client: string;
-    readonly claim: { readonly id: string; readonly claim_ref: string } | null;
+    readonly claim: { readonly id: string; readonly claim_ref: string; readonly name: string } | null;
   }[];
   /** Claims I own that break the one-next-action rule. */
-  readonly claims_without_next_action: readonly { readonly id: string; readonly claim_ref: string; readonly sentence: string }[];
+  readonly claims_without_next_action: readonly { readonly id: string; readonly claim_ref: string; readonly name: string; readonly sentence: string }[];
   /**
    * THE CRM FOLLOW-ON. Open claims NOBODY owns that break the rule — on no owner's list, so they are on the landing page of
    * the people who hand work out: `pipeline.read`, ADMIN and SALES. Empty for everyone else.
    */
-  readonly unowned_claims_breaking: readonly { readonly id: string; readonly claim_ref: string; readonly client: string; readonly sentence: string }[];
+  readonly unowned_claims_breaking: readonly { readonly id: string; readonly claim_ref: string; readonly name: string; readonly client: string; readonly sentence: string }[];
   /**
    * CRM 9 of 10. EVERY question I put to a client that is still open — not only the overdue ones — each with its due
    * reading, so one past its date is OVERDUE by the UK date and one with none says so; and whether it has reached the
@@ -959,7 +961,7 @@ export type MyWork = {
    * for a reader that list would not admit.
    */
   readonly my_claims: readonly {
-    readonly id: string; readonly claim_ref: string; readonly stage: string; readonly next_action: string; readonly overdue: boolean;
+    readonly id: string; readonly claim_ref: string; readonly name: string; readonly stage: string; readonly next_action: string; readonly overdue: boolean;
     readonly waiting: { readonly who: WaitingOn; readonly why: string } | null;
   }[];
 };
@@ -992,14 +994,14 @@ export function myWork(db: Db, actor: Actor, nowIso: string): MyWork {
   ).filter((q) => can(actor, 'document_request.read', { type: 'document_request', id: q.id, business_id: q.business_id }))
     .map((q) => ({
       id: q.id, type_label: q.type_label, due: dueReading(q.due_on, nowIso), business_id: q.business_id, client: q.business_name,
-      claim: q.claim_id === null || q.claim_ref === null ? null : { id: q.claim_id, claim_ref: q.claim_ref },
+      claim: q.claim_id === null || q.claim_ref === null ? null : { id: q.claim_id, claim_ref: q.claim_ref, name: claimWords(db, q.claim_id) },
     }));
   const owned = db.all<{ id: string; claim_ref: string; business_id: string; stage: string | null }>(
     'SELECT id, claim_ref, business_id, stage FROM claims WHERE owner_id = ? ORDER BY claim_ref ASC', [actor.id],
   ).filter((c) => !isTerminalStage(c.stage) && can(actor, 'claim.read', claimObjFor(db, c)))
     .map((c) => ({ c, reading: nextActionReading(db, c, nowIso) }));
   const mine = owned.filter((x) => x.reading.breaks !== null)
-    .map((x) => ({ id: x.c.id, claim_ref: x.c.claim_ref, sentence: x.reading.sentence }));
+    .map((x) => ({ id: x.c.id, claim_ref: x.c.claim_ref, name: claimWords(db, x.c.id), sentence: x.reading.sentence }));
   // THE CRM FOLLOW-ON: nobody's claims breaking the rule, for the people who give a claim its owner. Each asked of `claim.read`.
   const unowned = can(actor, 'pipeline.read', { type: 'pipeline', id: '__my_work__' })
     ? db.all<{ id: string; claim_ref: string; business_id: string; stage: string | null; business_name: string }>(
@@ -1008,7 +1010,7 @@ export function myWork(db: Db, actor: Actor, nowIso: string): MyWork {
     ).filter((c) => !isTerminalStage(c.stage) && can(actor, 'claim.read', claimObjFor(db, c)))
       .map((c) => ({ c, reading: nextActionReading(db, c, nowIso) }))
       .filter((x) => x.reading.breaks !== null)
-      .map((x) => ({ id: x.c.id, claim_ref: x.c.claim_ref, client: x.c.business_name, sentence: x.reading.sentence }))
+      .map((x) => ({ id: x.c.id, claim_ref: x.c.claim_ref, name: claimWords(db, x.c.id), client: x.c.business_name, sentence: x.reading.sentence }))
     : [];
   // CRM 9 of 10: every open question I asked, overdue first, then by due date, never-dated last.
   const waitingQuestions = db.all<{ question: string; due_on: string | null; business_id: string; business_name: string; sent_to_portal_at: string | null }>(
@@ -1019,7 +1021,7 @@ export function myWork(db: Db, actor: Actor, nowIso: string): MyWork {
   ).filter((q) => can(actor, 'organisation.read', { type: 'business', id: q.business_id }))
     .map((q) => ({ question: q.question, due: dueReading(q.due_on, nowIso), business_id: q.business_id, client: q.business_name, sent: q.sent_to_portal_at !== null }));
   const myClaims = owned.map((x) => ({
-    id: x.c.id, claim_ref: x.c.claim_ref, stage: anyStageLabel(x.c.stage),
+    id: x.c.id, claim_ref: x.c.claim_ref, name: claimWords(db, x.c.id), stage: anyStageLabel(x.c.stage),
     next_action: x.reading.task === null ? x.reading.sentence : `${x.reading.task.title} — ${x.reading.task.due.label}`,
     overdue: x.reading.task?.due.overdue ?? false,
     waiting: can(actor, 'organisation.read', { type: 'business', id: x.c.business_id }) ? waitingOn(db, actor, x.c.business_id) : null,

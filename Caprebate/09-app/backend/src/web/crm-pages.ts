@@ -42,7 +42,7 @@ import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } 
 import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock } from './claim-record-pages.ts';
 import { opens } from './navigation.ts';
 import { assertClientsSection } from './engaged.ts';
-import { badge, brandName, claimStageBar, dataLink, fields, highlights, nextStepCard, recordLayout, recordTabs, savedMessage, sidePanel, why, type QuickAction } from './components.ts';
+import { badge, brandName, breadcrumb, claimHref, claimName, claimRef, claimStageBar, claimTiles, dataLink, propertyIn, fields, highlights, nextStepCard, recordLayout, recordTabs, savedMessage, sidePanel, why, type QuickAction } from './components.ts';
 import { claimNextStep } from './next-step.ts';
 import { dueWords, localStamp, ukDate } from './localtime.ts';
 import { navContext } from './navigation.ts';
@@ -132,21 +132,20 @@ export async function handleCrm(
     return 'handled';
   }
 
+  /* PHASE 134 — ONE CLIENT PAGE PER COMPANY, at /staff/clients/:id (src/web/client-page.ts). This address stays alive:
+     it is asked exactly as it always was — a login refused the organisation is refused here, not redirected — and then
+     sends the reader to the one page. The query (?done=…) travels with it. */
   const org = /^\/staff\/organisations\/([A-Za-z0-9-]+)$/.exec(path);
   if (org && method === 'GET') {
     const v = C.organisationView(db, actor, org[1] ?? '');
-    html(res, 200, organisationPage(d, actor, v, done, {
-      timeline: timelineIfPermitted(db, actor, { kind: 'organisation', id: v.id }),
-      owners: mayCreateTask(actor) ? taskOwnerChoices(db) : null,
-      may_note: can(actor, 'internal_note.write', { type: 'internal_note', id: v.id, business_id: v.id }),
-    }));
+    redirect(res, `/staff/clients/${v.id}${url.search}`);
     return 'handled';
   }
   if (org && method === 'POST') {
     const id = org[1] ?? '';
     const r = C.updateOrganisation(deps, actor, id, posted(await form(req), ORGANISATION_FIELDS));
-    if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, `/staff/organisations/${id}`, r.field);
-    redirect(res, `/staff/organisations/${id}?done=saved`);
+    if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, `/staff/clients/${id}#details`, r.field);
+    redirect(res, `/staff/clients/${id}?done=saved#details`);
     return 'handled';
   }
 
@@ -154,18 +153,18 @@ export async function handleCrm(
   if (addContact && method === 'POST') {
     const id = addContact[1] ?? '';
     const r = C.addContact(deps, actor, id, posted(await form(req), CONTACT_FIELDS));
-    if (!r.ok) return d.problem(res, actor, 'Contact not added', r.why, `/staff/organisations/${id}`, r.field);
-    redirect(res, `/staff/organisations/${id}?done=contact`);
+    if (!r.ok) return d.problem(res, actor, 'Contact not added', r.why, `/staff/clients/${id}#contacts`, r.field);
+    redirect(res, `/staff/clients/${id}?done=contact#contacts`);
     return 'handled';
   }
 
   const contact = /^\/staff\/contacts\/([A-Za-z0-9-]+)$/.exec(path);
   if (contact && method === 'POST') {
     const f = await form(req);
-    const back = `/staff/organisations/${f.get('business_id') ?? ''}`;
+    const back = `/staff/clients/${f.get('business_id') ?? ''}`;
     const r = C.updateContact(deps, actor, contact[1] ?? '', posted(f, CONTACT_FIELDS));
-    if (!r.ok) return d.problem(res, actor, 'Contact not saved', r.why, back);
-    redirect(res, `${back}?done=contact`);
+    if (!r.ok) return d.problem(res, actor, 'Contact not saved', r.why, `${back}#contacts`);
+    redirect(res, `${back}?done=contact#contacts`);
     return 'handled';
   }
 
@@ -173,7 +172,7 @@ export async function handleCrm(
   if (addProperty && method === 'POST') {
     const id = addProperty[1] ?? '';
     const r = C.addProperty(deps, actor, id, posted(await form(req), ['label', 'postcode']));
-    if (!r.ok) return d.problem(res, actor, 'Property not added', r.why, `/staff/organisations/${id}`, r.field);
+    if (!r.ok) return d.problem(res, actor, 'Property not added', r.why, `/staff/clients/${id}#properties`, r.field);
     redirect(res, `/staff/properties/${r.id}?done=added`);
     return 'handled';
   }
@@ -236,17 +235,7 @@ export async function handleCrm(
 
   const claim = /^\/staff\/claims\/([A-Za-z0-9-]+)$/.exec(path);
   if (claim && method === 'GET') {
-    const v = C.claimView(db, actor, claim[1] ?? '', { now: d.app.now() });
-    const biz = v.client.business_id;
-    const mayEmail = can(actor, 'email.queue', { type: 'email', id: v.id, business_id: biz });
-    const contacts = mayEmail && can(actor, 'contact.read', { type: 'contact', id: biz, business_id: biz })
-      ? C.contactsFor(db, actor, biz).map((c) => ({ id: c.id, name: c.full_name, email: c.email }))
-      : undefined;
-    html(res, 200, claimPage(d, actor, v, done, {
-      templates: mayEmail ? activeTemplates(db, actor) : [],
-      contacts,
-      may_note: can(actor, 'internal_note.write', { type: 'internal_note', id: biz, business_id: biz }),
-    }));
+    html(res, 200, renderClaim(d, actor, C.claimView(db, actor, claim[1] ?? '', { now: d.app.now() }), done));
     return 'handled';
   }
   if (claim && method === 'POST') {
@@ -276,6 +265,24 @@ export async function handleCrm(
   }
 
   return 'not-mine';
+}
+
+/**
+ * THE CLAIM PAGE, FOR A VIEW ALREADY AUTHORISED — PHASE 134. The same page is drawn at /staff/claims/:id and inside its
+ * company's page at /staff/clients/:company/claims/:id (src/web/client-page.ts): the company is the frame either way.
+ */
+export function renderClaim(d: CrmPageDeps, actor: Actor, v: C.ClaimView, done: string | undefined): string {
+  const db = d.app.db;
+  const biz = v.client.business_id;
+  const mayEmail = can(actor, 'email.queue', { type: 'email', id: v.id, business_id: biz });
+  const contacts = mayEmail && can(actor, 'contact.read', { type: 'contact', id: biz, business_id: biz })
+    ? C.contactsFor(db, actor, biz).map((c) => ({ id: c.id, name: c.full_name, email: c.email }))
+    : undefined;
+  return claimPage(d, actor, v, done, {
+    templates: mayEmail ? activeTemplates(db, actor) : [],
+    contacts,
+    may_note: can(actor, 'internal_note.write', { type: 'internal_note', id: biz, business_id: biz }),
+  });
 }
 
 /* ------------------------------------------------------------------ *
@@ -405,14 +412,15 @@ function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonl
   </div>`;
 }
 
-function claimLines(claims: readonly C.ClaimSummary[]): Safe {
-  if (claims.length === 0) return h`<p class="help">No claim you may open is recorded here.</p>`;
-  return h`<table><thead><tr><th>Reference</th><th>Workstream</th><th>Stage</th><th>Next action</th><th>Value</th></tr></thead>
-    <tbody>${claims.map((c) => h`<tr><td><a href="/staff/claims/${c.id}">${c.claim_ref}</a></td><td>${c.workstream}</td>
-      <td>${c.stage}</td><td>${orNot(c.next_action, '—')}</td>
-      <td>${c.value === undefined
-        ? h`<span class="help">not shown to this role</span>`
-        : c.value.established ? h`${c.value.shown_range}` : h`<span class="help">no estimate yet</span>`}</td></tr>`)}</tbody></table>`;
+/**
+ * PHASE 134 — A COMPANY'S CLAIMS AS TILES: the property and its town, the stage, the next action, and the reference as a
+ * small grey label. Each opens the claim inside its company's page.
+ */
+export function claimTilesFor(claims: readonly C.ClaimSummary[], empty = 'No claim you may open is recorded here.', company = ''): Safe {
+  return claimTiles(claims.map((c) => ({
+    href: claimHref(c.business_id, c.id), property: propertyIn(company, c.property), town: c.town, stage: c.stage,
+    next_action: c.next_action, next_due: c.next_action_due === null ? null : due(c.next_action_due), ref: c.claim_ref,
+  })), empty);
 }
 
 /* ------------------------------------------------------------------ *
@@ -428,7 +436,7 @@ function organisationsPage(d: CrmPageDeps, actor: Actor, rows: readonly C.Organi
       ${rows.length === 0 ? h`<p class="empty">No organisations yet. An organisation is recorded when a client completes the assessment, or when a lead is recorded for it.</p>` : h`<table>
         <thead><tr><th>Trading name</th><th>Legal name</th><th>Claimant type</th><th>Status</th><th>Owner</th>
         <th>Properties</th><th>Claims</th></tr></thead>
-        <tbody>${rows.map((r) => h`<tr><td><a href="/staff/organisations/${r.id}">${r.trading_name}</a></td>
+        <tbody>${rows.map((r) => h`<tr><td><a href="/staff/clients/${r.id}">${r.trading_name}</a></td>
           <td>${r.legal_name}</td><td>${r.claimant_type}</td>
           <td>${r.do_not_contact ? h`<strong>${r.client_status}</strong>` : h`${r.client_status}`}</td>
           <td>${orNot(r.owner, 'nobody yet')}</td><td>${r.properties}</td><td>${r.claims}</td></tr>`)}</tbody></table>`}`,
@@ -452,30 +460,32 @@ function contactForm(action: string, business_id: string, c: C.ContactView | nul
     <button type="submit">${button}</button></form>`;
 }
 
-function organisationPage(
-  d: CrmPageDeps, actor: Actor, v: C.OrganisationView, msg: string | undefined,
-  x: { timeline: Timeline | undefined; owners: readonly Owner[] | null; may_note: boolean },
-): string {
-  return page({
-    title: v.trading_name, nav: d.nav(actor), wide: true,
-    body: h`${done(msg)}
-      ${highlights('Organisation', v.trading_name, [
-        { label: 'Client status', value: v.client_status.do_not_contact ? badge(v.client_status.label, 'stop') : v.client_status.label },
-        { label: 'Owner', value: orNot(v.owner?.name, 'nobody yet') },
-        { label: 'Sector', value: v.sector.replace(/_/g, ' ') },
-        v.legal_name.value === null ? null : { label: 'Legal name', value: factCell(v.legal_name) },
-        { label: 'Source', value: v.source.label },
-      ])}
-      ${opens(actor, assertClientsSection) ? h`<p class="help">The organisation. Its questions, sources, missing facts and internal notes are on
-      <a href="/staff/clients/${v.id}">the business page</a>.</p>` : raw('')}
-      ${recordLayout(recordTabs([
-        { id: 'details', label: 'Details', body: h`
-      ${v.client_status.do_not_contact
-        ? h`<div class="gate"><strong>Do not contact.</strong> Nothing can be queued to this organisation or to any
-            address it holds — the outbox refuses it, and so does the database.</div>`
-        : raw('')}
+/**
+ * PHASE 134 — THE ORGANISATION'S SECTIONS, FOR THE ONE CLIENT PAGE. Until 18 September 2026 these were a page of their
+ * own at /staff/organisations/:id, beside a second page for the same company at /staff/clients/:id. They are now drawn
+ * inside the one client page (src/web/client-page.ts), from the same view, asked of the same rules: nothing is read that
+ * the organisation page did not read before.
+ */
+export type OrganisationSections = {
+  readonly details: Safe;
+  readonly contacts: Safe;
+  readonly contact_count: number | undefined;
+  readonly properties: Safe;
+  readonly documents: Safe;
+  readonly tasks: Safe;
+  readonly quick: readonly QuickAction[];
+};
 
-      <div class="pblock"><div class="pnum">The organisation</div>${fields([
+export function organisationSections(
+  d: CrmPageDeps, actor: Actor, v: C.OrganisationView,
+  x: { owners: readonly Owner[] | null; may_note: boolean },
+): OrganisationSections {
+  const details = h`
+      ${v.client_status.do_not_contact
+        ? h`<div class="gate"><strong>Do not contact.</strong> Nothing can be sent to this company or to any address it holds.${
+          why('The outbox refuses it, and so does the database.')}</div>`
+        : raw('')}
+      <div class="pblock"><div class="pnum">The company</div>${fields([
         { label: 'Trading name', value: v.trading_name, why: 'The name the client gave us.' },
         // The claimant type decides the claim's route, so "not known" is an answer and stays.
         { label: 'Legal name', value: v.legal_name.value === null ? null : factCell(v.legal_name) },
@@ -489,7 +499,7 @@ function organisationPage(
         { label: 'Source', value: v.source.label },
         v.referred_by === undefined || v.referred_by.length === 0 ? null : { label: 'Referred by', value: h`${
           v.referred_by.map((f) => h`<a href="${f.href}">${f.firm_name}</a> <span class="help">— ${f.leads} ${f.leads === 1 ? 'lead' : 'leads'}</span><br>`)}`,
-          why: 'Read from the organisation’s leads, never typed here.' },
+          why: 'Read from the company’s leads, never typed here.' },
         { label: 'Owner', value: v.owner?.name },
         { label: 'Last changed', value: v.updated === null ? null : localStamp(v.updated, nowIso()) },
       ], v.may_write ? { href: '#change-organisation' } : undefined)}
@@ -509,10 +519,9 @@ function organisationPage(
           <label>Source <select name="source">${options(vocabulary(d.app.db, 'LEAD_SOURCE', v.source.value), v.source.value, 'not recorded')}</select></label>
           <label>Owner <select name="owner_id">${people(v.owner_choices, v.owner?.id ?? null, 'nobody yet')}</select></label>
           <button type="submit">Save</button></form></details>` : raw('')}
-      </div>
+      </div>`;
 
-` },
-        { id: 'related', label: 'Related', count: (v.contacts?.length ?? 0) + v.properties.length + v.claims.length, body: h`
+  const contacts = h`
       <div class="pblock"><div class="pnum">Contacts</div>
       ${v.contacts === null ? h`<p class="help">Contacts are not shown to this role.</p>` : h`
         ${v.contacts.length === 0 ? h`<p class="help">No contact is recorded.</p>` : h`<table>
@@ -522,15 +531,16 @@ function organisationPage(
             <td>${c.is_decision_maker.label}</td><td>${orNot(c.email)}</td><td>${orNot(c.phone)}</td>
             <td><span class="help">${c.last_contact}</span></td>
             <td>${c.next_follow_up_at !== null ? h`${c.next_follow_up_at}` : h`<span class="help">${c.follow_ups_open === 0
-              ? 'none — a follow-up is a task naming the contact' : 'an open follow-up with no due date'}</span>`}</td>
+              ? 'none yet' : 'one open, with no date'}</span>`}</td>
             <td>${orNot(c.notes, 'none')}</td></tr>
             ${v.may_write ? h`<tr><td colspan="9"><details><summary>Change ${c.full_name}</summary>
               ${contactForm(`/staff/contacts/${c.id}`, v.id, c, 'Save contact')}</details></td></tr>` : raw('')}`)}</tbody></table>`}
         ${v.may_write ? h`<details><summary>Add a contact</summary>
           <p class="help">A client's accountant or adviser is a contact, and never has a login.</p>
           ${contactForm(`/staff/organisations/${v.id}/contacts`, v.id, null, 'Add contact')}</details>` : raw('')}`}
-      </div>
+      </div>`;
 
+  const properties = h`
       <div class="pblock"><div class="pnum">Properties</div>
       ${v.properties.length === 0 ? h`<p class="help">No property is recorded.</p>` : h`<table>
         <thead><tr><th>Property</th><th>Postcode</th><th>Jurisdiction</th><th>Claims</th></tr></thead>
@@ -541,26 +551,22 @@ function organisationPage(
           <label>Name of the site or building <input name="label" required></label>
           <label>Postcode <input name="postcode"></label>
           <button type="submit">Add property</button></form></details>` : raw('')}
-      </div>
+      <p class="help">To open a claim, open the property and choose “Open claim”.</p>
+      </div>`;
 
-      <div class="pblock"><div class="pnum">Claims</div>${claimLines(v.claims)}</div>
+  const tasks = x.owners === null ? raw('') : h`<div class="pblock" id="org-tasks"><div class="pnum">Tasks and follow-ups</div>${newTaskForm(
+    taskChoices(d.app.db), { business_id: v.id }, x.owners, `/staff/clients/${v.id}`, 'Add a task, or a follow-up with a contact',
+    (v.contacts ?? []).map((c) => ({ id: c.id, name: c.full_name })))}</div>`;
 
-      ${placeDocumentsBlock(v.documents, null)}
-
-` },
-        { id: 'activity', label: 'Activity', body: h`
-      ${x.owners === null ? raw('') : h`<div class="pblock" id="org-tasks"><div class="pnum">Tasks and follow-ups</div>${newTaskForm(
-        taskChoices(d.app.db), { business_id: v.id }, x.owners, `/staff/organisations/${v.id}`, 'Add a task, or a follow-up with a contact',
-        (v.contacts ?? []).map((c) => ({ id: c.id, name: c.full_name })))}</div>`}
-      ${timelineBlock(x.timeline)}
-      <div id="org-notes">${notesBlock(x.timeline, x.may_note ? `/staff/clients/${v.id}/notes` : null)}</div>` },
-      ]), sidePanel(null, [
-        ...(x.owners === null ? [] : [{ href: '#add-task', label: 'Log a call or add a follow-up' }]),
-        ...(v.may_write ? [{ href: '#related', label: 'Add a contact or a property' }] : []),
-        ...(x.may_note ? [{ href: '#org-notes', label: 'Add a note' }] : []),
-        ...(opens(actor, assertClientsSection) ? [{ href: `/staff/clients/${v.id}`, label: 'The business page — questions and sources' }] : []),
-      ]))}`,
-  });
+  return {
+    details, contacts, contact_count: v.contacts === null ? undefined : v.contacts.length, properties,
+    documents: placeDocumentsBlock(v.documents, null), tasks,
+    quick: [
+      ...(x.owners === null ? [] : [{ href: '#add-task', label: 'Log a call or add a follow-up' }]),
+      ...(v.may_write ? [{ href: '#contacts', label: 'Add a contact' }, { href: '#properties', label: 'Add a property' }] : []),
+      ...(x.may_note ? [{ href: '#company-notes', label: 'Add a note' }] : []),
+    ],
+  };
 }
 
 /* ------------------------------------------------------------------ *
@@ -585,17 +591,16 @@ function propertyPage(
   x: { timeline: Timeline | undefined; owners: readonly Owner[] | null; may_note: boolean },
 ): string {
   return page({
-    title: v.label, nav: d.nav(actor), wide: true,
-    body: h`${done(msg)}
+    title: `${v.business.name} — ${v.label}`, nav: d.nav(actor), wide: true,
+    body: h`${breadcrumb([{ label: v.business.name, href: v.business.linkable ? `/staff/clients/${v.business.id}` : null }, { label: v.label }])}${done(msg)}
       ${highlights('Property', v.label, [
-        { label: 'Organisation', value: v.business.linkable ? h`<a href="/staff/organisations/${v.business.id}">${v.business.name}</a>` : v.business.name },
+        { label: 'Company', value: v.business.linkable ? h`<a href="/staff/clients/${v.business.id}">${v.business.name}</a>` : v.business.name },
         { label: 'Postcode', value: orNot(v.postcode) },
         { label: 'Jurisdiction', value: v.jurisdiction.label },
         { label: 'Tenure', value: v.tenure.label },
         { label: 'Claims', value: String(v.claims.length) },
       ])}
-      <p class="help">Belongs to ${v.business.linkable ? h`<a href="/staff/organisations/${v.business.id}">${v.business.name}</a>` : h`${v.business.name}`}.
-      Survey status, date and surveyor belong to each claim, not to the building.</p>
+      <div class="help">${why('Survey status, date and surveyor belong to each claim, not to the building.')}</div>
 
       ${recordLayout(recordTabs([
         { id: 'details', label: 'Details', body: h`
@@ -658,7 +663,7 @@ function propertyPage(
 
 ` },
         { id: 'related', label: 'Related', count: v.claims.length, body: h`
-      <div class="pblock"><div class="pnum">Claims on this property</div>${claimLines(v.claims)}
+      <div class="pblock"><div class="pnum">Claims on this property</div>${claimTilesFor(v.claims, undefined, v.business.name)}
       ${v.may_open_claim ? h`<form method="post" action="/staff/properties/${v.id}/claims">
         <label>Open a claim for <select name="workstream">${options(C.WORKSTREAMS, null, null)}</select></label>
         <button type="submit">Open claim</button></form>` : raw('')}
@@ -692,14 +697,14 @@ function claimsPage(d: CrmPageDeps, actor: Actor, rows: readonly C.ClaimRow[], c
     body: h`<div class="pagehead"><div><p class="eyebrow">Claims</p><h1>Claims</h1></div><p class="help">${rows.length} shown.</p></div>
       <div class="listlayout">${controls}<div class="listmain">
       ${rows.length === 0 ? h`<p class="empty">No claims yet. A claim opens when a lead is converted, or from a property’s page.</p>` : h`<div class="tablewrap"><table>
-        <thead><tr><th>${sortBy('reference', 'Reference')}</th><th>Client</th><th>Property</th><th>Workstream</th><th>Stage</th><th>Owner</th>
-        <th>${sortBy('next_action', 'Next action')}</th><th>${sortBy('value', 'Value')}</th></tr></thead>
-        <tbody>${rows.map((r) => h`<tr><td><a href="/staff/claims/${r.id}">${r.claim_ref}</a></td><td>${r.client}</td>
+        <thead><tr><th>${sortBy('company', 'Company')}</th><th>Property</th><th>Stage</th>
+        <th>${sortBy('next_action', 'Next action')}</th><th>Owner</th><th>${sortBy('reference', 'Reference')}</th></tr></thead>
+        <tbody>${rows.map((r) => h`<tr><td><a href="${claimHref(r.business_id, r.id)}">${r.client}</a></td>
           <td>${r.property === undefined ? h`<span class="help">—</span>` : orNot(r.property, 'none recorded')}</td>
-          <td>${r.workstream ?? '—'}</td><td>${r.stage ?? '—'}</td>
-          <td>${r.owner === undefined ? h`<span class="help">—</span>` : orNot(r.owner, 'nobody yet')}</td>
+          <td>${r.stage ?? '—'}</td>
           <td>${r.next_action === undefined ? h`<span class="help">—</span>` : orNot(r.next_action, 'none recorded')}</td>
-          <td>${r.shown_range === undefined ? h`<span class="help">not shown to this role</span>` : h`${r.shown_range}`}</td></tr>`)}</tbody></table></div>`}
+          <td>${r.owner === undefined ? h`<span class="help">—</span>` : orNot(r.owner, 'nobody yet')}</td>
+          <td>${claimRef(r.claim_ref)}</td></tr>`)}</tbody></table></div>`}
       </div></div>`,
   });
 }
@@ -724,7 +729,7 @@ function teamBlock(v: C.ClaimView): Safe {
         <tbody>${t.contacts.map((c) => h`<tr><td>${c.name}</td><td>${c.type}</td><td>${c.since} <span class="help">by ${c.linked_by}</span></td>
           <td>${t.may_link ? h`<form method="post" action="/staff/claim-team/${c.link_id}/end" class="inline"><button class="linkish" type="submit">Take off the team</button></form>` : raw('')}</td></tr>`)}</tbody></table>`}
       ${t.candidates === undefined ? raw('') : t.candidates.length === 0
-        ? h`<div class="help"><a href="/staff/organisations/${v.client.business_id}#related">Add the accountant or adviser as a contact</a>${why('The organisation has no other contact recorded as its accountant or adviser. Add one on the organisation page, typed as such.')}</div>`
+        ? h`<div class="help"><a href="/staff/clients/${v.client.business_id}#contacts">Add the accountant or adviser as a contact</a>${why('The company has no other contact recorded as its accountant or adviser. Add one on the company’s page, typed as such.')}</div>`
         : h`<form method="post" action="/staff/claims/${v.id}/team">
             <label>Add to the team <select name="contact_id">${t.candidates.map((c) => h`<option value="${c.id}">${c.name} — ${c.type}</option>`)}</select></label>
             <button type="submit">Add</button></form>`}
@@ -740,7 +745,10 @@ function claimPage(
     may_note: boolean;
   },
 ): string {
-  const client = v.client.linkable ? h`<a href="/staff/organisations/${v.client.business_id}">${v.client.name}</a>` : h`${v.client.name}`;
+  const client = v.client.linkable ? h`<a href="/staff/clients/${v.client.business_id}">${v.client.name}</a>` : h`${v.client.name}`;
+  // PHASE 134: THE COMPANY IS THE FRAME. The heading is the company's name; the property and the reference sit under it.
+  const property = v.header?.property ?? null;
+  const where = property === null ? null : [propertyIn(v.client.name, property.label), property.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
   /* PHASE 133a: THE RECORD PAGE — highlights, the stage bar, three tabs and a right-hand panel. EVERY PANEL THE PAGE DREW
      BEFORE IS STILL DRAWN, in one of the tabs, from the same view; nothing is read that the view did not already carry. */
   const tasks = claimTasksBlock(v.id, v.tasks, taskChoices(d.app.db));
@@ -763,22 +771,20 @@ function claimPage(
         ${v.header.owner === null ? raw('') : h`<p class="help">${v.header.owner}</p>`}`;
   const step = v.pipeline === undefined ? null : claimNextStep(v.id, v.pipeline.gate, v.pipeline.moves, v.pipeline.hold);
   return page({
-    title: v.claim_ref, nav: d.nav(actor), wide: true,
-    body: h`${done(msg)}
-      ${highlights('Claim', h`${v.claim_ref} · ${v.client.name}`, [
+    title: claimName(v.client.name, property?.label), nav: d.nav(actor), wide: true,
+    body: h`${breadcrumb([{ label: v.client.name, href: v.client.linkable ? `/staff/clients/${v.client.business_id}` : null }, { label: propertyIn(v.client.name, property?.label ?? null) ?? 'Claim' }])}${done(msg)}
+      ${highlights('Claim', v.client.name, [
         v.header === undefined ? null : { label: 'Stage', value: v.header.stage.label },
         v.header === undefined ? null : { label: 'Owner', value: orNot(v.header.owner, 'nobody yet') },
         v.header === undefined ? null : { label: 'Property', value: v.header.property === null ? 'none recorded' : v.header.property.label },
         v.overview === undefined ? null : { label: 'Priority', value: v.overview.priority.label },
         v.value === undefined ? null : { label: 'Value', value: v.value.established ? v.value.shown_range : 'no estimate yet' },
-        { label: 'Client', value: client },
-      ])}
+      ], raw(''), h`${where === null ? 'Claim' : `Claim on ${where}`} ${claimRef(v.claim_ref)}`)}
       ${v.pipeline === undefined ? raw('') : claimStageBar(v.pipeline.stage, v.pipeline.steps, v.pipeline.gate)}
       ${recordLayout(recordTabs([
         { id: 'details', label: 'Details', body: h`
       <div class="pblock"><div class="pnum">The claim</div>${fields([
-        { label: 'Reference', value: v.claim_ref },
-        { label: 'Client', value: client },
+        { label: 'Company', value: client },
         v.header === undefined ? null : { label: 'Property', value: v.header.property === null ? null
           : v.header.property.linkable ? h`<a href="/staff/properties/${v.header.property.id}">${v.header.property.label}</a>` : v.header.property.label },
         v.header === undefined ? null : { label: 'Stage', value: v.header.stage.label },
@@ -789,6 +795,7 @@ function claimPage(
         v.origin === undefined ? null : { label: 'Came from', value: v.origin.lead === null ? 'Opened by staff'
           : h`<a href="${v.origin.lead.href}">Its lead</a>`, why: v.origin.lead === null ? 'No lead: this claim was opened by staff on a property.' : v.origin.lead.origin },
         v.origin === undefined ? null : { label: 'Source', value: v.origin.source.label, why: `From ${v.origin.source.from}.` },
+        { label: 'Reference', value: claimRef(v.claim_ref) },
         v.origin?.introducer === undefined ? null : { label: 'Introducer', value: v.origin.introducer === null ? null
           : h`<a href="${v.origin.introducer.href}">${v.origin.introducer.firm_name}</a>` },
       ], v.edit === undefined ? undefined : { href: '#change-claim' })}</div>
@@ -849,7 +856,8 @@ function claimPage(
         { id: 'activity', label: 'Activity', body: h`
       <div id="claim-tasks">${tasks}</div>
       <div id="claim-email">${email}</div>
-      ${timelineBlock(v.timeline)}
+      ${v.timeline === undefined || !v.client.linkable ? raw('') : h`<p><a href="/staff/clients/${v.client.business_id}#activity">See everything for ${v.client.name}</a></p>`}
+      ${timelineBlock(v.timeline, 'This claim’s part of the company’s timeline')}
       <div id="claim-notes">${notes}</div>` },
       ]), sidePanel(nextAction, quick, raw(''), step === null ? raw('') : nextStepCard(step)))}
 

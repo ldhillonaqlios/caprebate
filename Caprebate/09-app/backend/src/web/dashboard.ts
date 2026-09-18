@@ -44,7 +44,7 @@ import { pipelineFigures } from './introducers.ts';
 import { reasonLabel } from './pipeline.ts';
 import { rightsRegister, complaintsLog } from './compliance-rights.ts';
 import { breachRegister } from './compliance-breach.ts';
-import { claimObjFor } from './crm.ts';
+import { claimObjFor, claimWords } from './crm.ts';
 import { vocabLabel } from './vocabularies.ts';
 import { SECTORS } from './leads.ts';
 
@@ -551,7 +551,7 @@ function expectedCompletion(c: Ctx): Built {
         { label: `Expected to complete in ${c.period.words}`, value: plural(dated.filter((r) => inPeriod(c.period, r.expected_completion)).length, 'claim', 'claims') },
       ]),
       ...dated.filter((r) => (r.expected_completion ?? '') < c.today).map((r) => ({
-        label: r.claim_ref, value: `expected ${r.expected_completion ?? ''}, and still open`, href: `/staff/claims/${r.id}`, flag: true,
+        label: claimWords(c.db, r.id), value: `expected ${r.expected_completion ?? ''}, and still open`, href: `/staff/claims/${r.id}`, flag: true,
       })),
     ],
     apart: open.length - dated.length > 0
@@ -717,7 +717,7 @@ function deliverables(c: Ctx): Built {
     lines: [
       { label: 'Claims at the reports stage', value: plural(atReports.length, 'claim', 'claims') },
       ...missing.map((x) => ({
-        label: x.r.claim_ref, value: `not issued: ${x.not.map((k) => DELIVERABLES[k].label.toLowerCase()).join(' and ')}`,
+        label: claimWords(c.db, x.r.id), value: `not issued: ${x.not.map((k) => DELIVERABLES[k].label.toLowerCase()).join(' and ')}`,
         href: `/staff/claims/${x.r.id}`, flag: true,
       })),
     ],
@@ -796,14 +796,14 @@ function compliance(c: Ctx): Built {
 }
 
 function myJobs(c: Ctx): Built {
-  const jobs = c.db.all<{ id: string; business_id: string; surveyor_id: string | null; state: string; claim_ref: string | null; stage: string | null }>(
-    'SELECT j.id, j.business_id, j.surveyor_id, j.state, cl.claim_ref, cl.stage FROM surveyor_jobs j ' +
+  const jobs = c.db.all<{ id: string; business_id: string; surveyor_id: string | null; state: string; claim_id: string | null; claim_ref: string | null; stage: string | null }>(
+    'SELECT j.id, j.business_id, j.surveyor_id, j.state, cl.id AS claim_id, cl.claim_ref, cl.stage FROM surveyor_jobs j ' +
       'LEFT JOIN claims cl ON cl.id = j.claim_id WHERE j.surveyor_id = ? ORDER BY j.created_at ASC, j.id ASC',
     [c.actor.id],
   ).filter((j) => can(c.actor, 'surveyor_job.read', { type: 'surveyor_job', id: j.id, business_id: j.business_id, surveyor_id: j.surveyor_id }));
   return {
     lines: jobs.length === 0 ? [{ label: 'Survey jobs', value: 'No survey job is assigned to you.' }] : jobs.map((j) => ({
-      label: j.claim_ref ?? 'a job not yet on a claim',
+      label: j.claim_id === null ? 'a job not yet on a claim' : claimWords(c.db, j.claim_id),
       value: `${j.stage === null ? 'no stage' : anyStageLabel(j.stage)} · ${j.state === 'SEALED' ? 'waiting for your figures' : 'your figures are committed'}`,
       href: `/staff/survey/${j.id}`, flag: j.state === 'SEALED',
     })),

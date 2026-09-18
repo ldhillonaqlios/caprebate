@@ -21,7 +21,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import { can, type Actor } from '../authz.ts';
-import { badge, brandName, dataLink, fields, highlights, nextStepCard, recordLayout, recordTabs, savedMessage, sidePanel, why } from './components.ts';
+import { badge, brandName, claimRef, dataLink, fields, highlights, nextStepCard, recordLayout, recordTabs, savedMessage, sidePanel, why } from './components.ts';
 import { leadNextStep, plainNeed } from './next-step.ts';
 import { dueWords, ukDatesIn } from './localtime.ts';
 import { navContext } from './navigation.ts';
@@ -349,7 +349,7 @@ function leadsPage(
           r.organisation_recorded ? raw('') : h`<br><span class="help">New enquiry</span>`}</td>
           <td>${r.source}</td><td>${r.origin}</td><td class="when">${ukDatesIn(r.lead_date)}</td><td>${orNot(r.owner, '—')}</td>
           <td>${r.status.label}</td><td>${orNot(r.next_action, '—')}</td>
-          <td>${r.claim === null ? h`<span class="help">—</span>` : h`<a href="/staff/claims/${r.claim.id}">${r.claim.claim_ref}</a>`}</td>
+          <td>${r.claim === null ? h`<span class="help">—</span>` : h`<a href="/staff/claims/${r.claim.id}">Open the claim</a> ${claimRef(r.claim.claim_ref)}`}</td>
           <td>${r.shown_range === undefined ? h`<span class="help">${r.range_note ?? 'not shown to this role'}</span>` : h`${r.shown_range}`}</td></tr>`)}</tbody></table></div>`}
       </div></div>
 
@@ -370,7 +370,7 @@ function leadsPage(
 
 function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string | undefined, tail: Safe = raw('')): string {
   const org = v.organisation.linkable && v.organisation.id !== null
-    ? h`<a href="/staff/organisations/${v.organisation.id}">${v.organisation.name}</a>` : h`${v.organisation.name}`;
+    ? h`<a href="/staff/clients/${v.organisation.id}">${v.organisation.name}</a>` : h`${v.organisation.name}`;
   const step = leadNextStep({ open: v.enquiry.open, needs: v.enquiry.checks.map((c) => ({ what: c.label, met: c.passes })) },
     v.edit !== undefined && v.may_convert, v.may_write);
   return page({
@@ -382,7 +382,7 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
         { label: 'Source', value: v.source.label },
         v.next_action === null ? null : { label: 'Next action', value: `${v.next_action}${v.next_action_due === null ? '' : ` — ${dueWords(v.next_action_due, nowIso())}`}` },
         { label: 'Lead date', value: ukDatesIn(v.lead_date) },
-        v.converted === null ? null : { label: 'Converted to', value: h`<a href="/staff/claims/${v.converted.claim_id}">${v.converted.claim_ref}</a>` },
+        v.converted === null ? null : { label: 'Converted to', value: h`<a href="/staff/claims/${v.converted.claim_id}">Open the claim</a> ${claimRef(v.converted.claim_ref)}` },
       ])}
       ${recordLayout(recordTabs([
         { id: 'details', label: 'Details', body: h`
@@ -402,7 +402,7 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
           why: 'The lead’s earliest open task.' },
         { label: 'Status', value: h`<strong>${v.status.label}</strong>` },
         v.lost === null ? null : { label: v.status.key === 'LOST' ? 'Lost because' : 'Previously lost because', value: h`${v.lost.reason ?? ''}${v.lost.note === null ? raw('') : h`<br><span class="help">${v.lost.note}</span>`}` },
-        v.converted === null ? null : { label: 'Converted', value: h`${ukDatesIn(v.converted.at)} — <a href="/staff/claims/${v.converted.claim_id}">${v.converted.claim_ref}</a>` },
+        v.converted === null ? null : { label: 'Converted', value: h`${ukDatesIn(v.converted.at)} — <a href="/staff/claims/${v.converted.claim_id}">Open the claim</a> ${claimRef(v.converted.claim_ref)}` },
         { label: 'How they asked to be reached', value: v.contact_channel },
         v.person === undefined ? null : { label: 'Who asked', value: h`${v.person.name}${v.person.role === null ? raw('') : h`<br><span class="help">${v.person.role}</span>`}${v.person.reach === null ? raw('') : h`<br>${v.person.reach}`}`,
           why: 'Held on the lead until it has an organisation.' },
@@ -471,8 +471,9 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
  * button posts the same form, and the server asks the gate again.
  */
 function card(c: C.BoardCard): Safe {
-  return h`<li class="cardlet"><p class="ref"><a href="/staff/claims/${c.id}">${c.claim_ref}</a></p><p>${c.client}</p>
-    <p class="help">${c.property ?? 'no property recorded'}<br>owner: ${c.owner ?? 'nobody yet'} ·
+  // PHASE 134: a card leads with the company; the property under it; the reference a small grey label.
+  return h`<li class="cardlet"><p class="ref"><a href="/staff/claims/${c.id}">${c.client}</a></p>
+    <p class="help">${c.property ?? 'no property recorded'} ${claimRef(c.claim_ref)}<br>owner: ${c.owner ?? 'nobody yet'} ·
     ${c.age_days} day${c.age_days === 1 ? '' : 's'} since its last move</p>
     ${c.next_action === null ? raw('') : h`<p>Next action: ${c.next_action}</p>`}${c.value === undefined ? raw('') : h`<p class="help">Range shown ${c.value}</p>`}
     ${c.hold === undefined ? raw('') : h`<p class="help">On hold: ${c.hold.reason ?? 'no reason recorded'} — returns to ${c.hold.returns_to}</p>`}

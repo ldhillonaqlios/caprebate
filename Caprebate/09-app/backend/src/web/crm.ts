@@ -646,6 +646,8 @@ export type ClaimDbRow = {
   created_at: string; updated_at: string;
   hold_return_stage: string | null; tax_adviser_signoff_at: string | null;
   business_name: string; owner_name: string | null; surveyor_name: string | null; property_label: string | null;
+  /** Phase 134: a claim is named by its company and its property, and a tile shows the property's town. */
+  property_town: string | null;
 };
 
 const CLAIM_SELECT =
@@ -657,7 +659,7 @@ const CLAIM_SELECT =
   'c.hold_reason, c.lost_reason, ' +
   'c.expected_completion, c.created_at, c.updated_at, c.hold_return_stage, c.tax_adviser_signoff_at, ' +
   'b.name AS business_name, ' +
-  'o.display_name AS owner_name, s.display_name AS surveyor_name, p.label AS property_label ' +
+  'o.display_name AS owner_name, s.display_name AS surveyor_name, p.label AS property_label, p.town AS property_town ' +
   'FROM claims c JOIN businesses b ON b.id = c.business_id ' +
   'LEFT JOIN users o ON o.id = c.owner_id LEFT JOIN users s ON s.id = c.surveyor_id ' +
   'LEFT JOIN properties p ON p.id = c.property_id ';
@@ -747,18 +749,23 @@ function stageReading(key: string | null): { readonly key: string | null; readon
 export type ClaimSummary = {
   readonly id: string;
   readonly claim_ref: string;
+  /** Phase 134: the company the claim belongs to, and its property — a claim is named by these, never by its reference. */
+  readonly business_id: string;
+  readonly property: string | null;
+  readonly town: string | null;
   readonly workstream: string;
   readonly stage: string;
   readonly next_action: string | null;
+  readonly next_action_due: string | null;
   readonly value?: ClaimValue;
 };
 
 function summaryOf(db: Db, actor: Actor, r: ClaimDbRow): ClaimSummary {
   const base = {
-    id: r.id, claim_ref: r.claim_ref,
+    id: r.id, claim_ref: r.claim_ref, business_id: r.business_id, property: r.property_label, town: r.property_town,
     workstream: words(WORKSTREAMS, r.workstream, r.workstream),
     stage: stageReading(r.stage).label,
-    next_action: r.next_action,
+    next_action: r.next_action, next_action_due: r.next_action_due,
   };
   return can(actor, 'claim.read_value', claimObjFor(db,r)) ? { ...base, value: claimValue(db, r.assessment_id) } : base;
 }
@@ -1479,6 +1486,7 @@ export function updateProperty(
 export type ClaimRow = {
   readonly id: string;
   readonly claim_ref: string;
+  readonly business_id: string;
   readonly client: string;
   readonly property?: string | null;
   readonly stage?: string;
@@ -1498,7 +1506,7 @@ export function claimList(db: Db, actor: Actor, limit = 200): ClaimRow[] {
   return db.all<ClaimDbRow>(`${CLAIM_SELECT}ORDER BY c.claim_ref DESC LIMIT ?`, [limit])
     .filter((r) => can(actor, 'claim.read', claimObjFor(db,r)))
     .map((r) => {
-      const base = { id: r.id, claim_ref: r.claim_ref, client: r.business_name };
+      const base = { id: r.id, claim_ref: r.claim_ref, business_id: r.business_id, client: r.business_name };
       if (actor.role === 'ACCOUNTING') return base;
       const working = {
         ...base, property: r.property_label, stage: stageReading(r.stage).label,
@@ -1518,7 +1526,7 @@ export type ClaimView = {
   readonly claim_ref: string;
   readonly client: { readonly business_id: string; readonly name: string; readonly linkable: boolean };
   readonly header?: {
-    readonly property: { readonly id: string; readonly label: string; readonly postcode: string | null; readonly linkable: boolean } | null;
+    readonly property: { readonly id: string; readonly label: string; readonly postcode: string | null; readonly town: string | null; readonly linkable: boolean } | null;
     readonly stage: { readonly key: string | null; readonly label: string };
     readonly owner: string | null;
     readonly next_action: string | null;
@@ -1585,6 +1593,25 @@ function loadClaim(db: Db, id: string): ClaimDbRow {
   return r;
 }
 
+/**
+ * PHASE 134 — A CLAIM'S NAME FOR A PERSON: its company, its property, and its reference for the small grey label.
+ * No authorisation: the caller has already asked `claim.read` of the claim it is naming.
+ */
+export function claimNaming(db: Db, claim_id: string): { readonly business_id: string; readonly company: string; readonly property: string | null; readonly ref: string } | null {
+  const r = db.get<{ business_id: string; company: string; property: string | null; ref: string }>(
+    'SELECT c.business_id, b.name AS company, p.label AS property, c.claim_ref AS ref FROM claims c JOIN businesses b ON b.id = c.business_id ' +
+      'LEFT JOIN properties p ON p.id = c.property_id WHERE c.id = ?', [claim_id]);
+  return r ?? null;
+}
+
+/** "Company — Property": the words of a link to a claim. Never the reference, which is a label beside it. */
+export function claimWords(db: Db, claim_id: string): string {
+  const n = claimNaming(db, claim_id);
+  if (n === null) return 'a claim';
+  if (n.property === null || n.property.trim() === '') return `${n.company} — claim`;
+  return n.property.startsWith(n.company) ? n.property : `${n.company} — ${n.property}`;
+}
+
 /** The claim row a board card is built from. No authorisation: the caller asks. */
 export function loadClaimRow(db: Db, id: string): ClaimDbRow {
   return loadClaim(db, id);
@@ -1633,7 +1660,7 @@ export function claimView(db: Db, actor: Actor, id: string, opts: { store?: Post
   const assigned = obj.assigned_surveyor_ids.length;
   const header = {
     property: p === undefined ? null : {
-      id: p.id, label: p.label, postcode: p.postcode, linkable: can(actor, 'property.read', propertyObj(db, p)),
+      id: p.id, label: p.label, postcode: p.postcode, town: p.town, linkable: can(actor, 'property.read', propertyObj(db, p)),
     },
     stage: stageReading(r.stage),
     owner: r.owner_name,

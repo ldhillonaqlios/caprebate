@@ -247,6 +247,18 @@ export function mergeValues(db: Db, claim_id: string, contact_id: string | null)
   };
 }
 
+/**
+ * PHASE 134 — AN EMAIL'S SUBJECT LEADS WITH THE COMPANY. Lakhbir, 18 September 2026: the client is the company, and a
+ * person reads the company's name first. A merged subject that does not already start with it gets it in front:
+ * "Elverton Private Hospital Limited — Documents we still need". Where the company has no name recorded, nothing is
+ * invented — the subject is left as merged.
+ */
+export function companyFirst(subject: string, organisation: string | null): string {
+  if (organisation === null) return subject;
+  const name = escapeHtml(organisation).replace(/[\r\n]+/g, ' ');
+  return subject.startsWith(name) ? subject : `${name} — ${subject}`;
+}
+
 /** Merge a text. Escaped values; a visible gap for a missing one; no line break in a subject. */
 export function mergeText(text: string, v: MergeValues, subjectLine: boolean): { text: string; gaps: string[] } {
   const gaps: string[] = [];
@@ -295,7 +307,7 @@ export function queueTemplate(d: TemplateDeps, actor: Actor, claim_id: string, i
   const body = mergeText(t.body, v, false);
   const gaps = [...new Set([...subject.gaps, ...body.gaps])];
   const sent = outboxTransport(d.db, d.newId, d.now).send({
-    to_email: ct.email, subject: subject.text, body: body.text, kind: 'TEMPLATE', business_id: c.business_id,
+    to_email: ct.email, subject: companyFirst(subject.text, v.organisation ?? null), body: body.text, kind: 'TEMPLATE', business_id: c.business_id,
   });
   if (sent.id === null) {
     return { ok: false, why: 'This organisation is marked do not contact. Nothing was queued — the outbox refuses it.' };

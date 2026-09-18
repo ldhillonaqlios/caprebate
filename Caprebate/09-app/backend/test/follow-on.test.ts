@@ -197,7 +197,7 @@ describe('the introducer and the source, where they belong', () => {
       const sales = await h.signIn('sales');
       const org = JSON.parse((await sales.get(`/staff/organisations/${d.business}/view.json`)).body) as C.OrganisationView;
       assert.deepEqual((org.referred_by ?? []).map((f) => [f.firm_name, f.leads]), [['Follow-On Accountants LLP', 1]]);
-      const orgPage = await sales.get(`/staff/organisations/${d.business}`);
+      const orgPage = await sales.get(`/staff/clients/${d.business}`); // Phase 134: the one client page
       assert.match(orgPage.body, /Referred by/);
       assert.ok(orgPage.body.includes('Follow-On Accountants LLP'));
 
@@ -884,7 +884,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
 
       const admin = await h.signIn('admin');
       const brackenfell = businessNamed(db, 'Brackenfell Dental Partnership LLP');
-      const org = await admin.get(`/staff/organisations/${brackenfell}`);
+      const org = await admin.get(`/staff/clients/${brackenfell}`); // Phase 134: the one client page
       assert.ok(org.body.includes('recorded by staff') && org.body.includes('from the Companies House register record'));
       assert.equal(org.body.includes('from recorded by staff'), false);
 
@@ -926,7 +926,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
 
       const hits = async (c: Client, q: string): Promise<string[]> =>
         (JSON.parse((await c.get(`/staff/search/view.json?q=${encodeURIComponent(q)}`)).body) as { hits: { kind: string; label: string }[] }).hits
-          .filter((x) => x.kind === 'INVOICE').map((x) => x.label);
+          .filter((x) => x.kind === 'INVOICE').map((x) => x.label.replace(/^.+ — invoice /, '')); // Phase 134: the company leads
       assert.deepEqual(await hits(accounting, 'CB-0'), ['CB-000001', 'CB-000002', 'CB-000003']);
       assert.deepEqual(await hits(accounting, 'CB-000002'), ['CB-000002']);
       assert.deepEqual(await hits(accounting, 'CB-3'), ['CB-000003'], 'the whole number stopped working');

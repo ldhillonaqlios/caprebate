@@ -23,7 +23,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { savedMessage, why } from './components.ts';
+import { claimRef, savedMessage, why } from './components.ts';
 import * as T from './tasks.ts';
 import * as A from './automation.ts';
 import * as M from './templates.ts';
@@ -355,29 +355,41 @@ export function claimTasksBlock(claim_id: string, p: T.ClaimTaskPanel | undefine
 }
 
 /** THE TIMELINE — events only. Internal notes are drawn by `notesBlock`, never here. */
-export function timelineBlock(t: Timeline | undefined): Safe {
+/** PHASE 134: a scope that names a claim ends " · CR-2026-0007"; the reference is drawn as the small grey label. */
+function scopeCell(scope: string): Safe {
+  const m = / · (CR-[0-9A-Za-z-]+)$/.exec(scope);
+  return m === null ? h`${scope}` : h`${scope.slice(0, m.index)} ${claimRef(m[1] ?? '')}`;
+}
+
+export function timelineBlock(t: Timeline | undefined, heading = 'Activity timeline'): Safe {
   if (t === undefined) return raw('');
-  return h`<div class="pblock"><div class="pnum">Activity timeline</div>
+  return h`<div class="pblock"><div class="pnum">${heading}</div>
     <p class="help">${t.read_not_log} Every time is UK time.</p>
     ${t.limited_to === undefined ? raw('') : h`<p class="help"><strong>${t.limited_to}</strong></p>`}
     ${t.events.length === 0 ? h`<p class="help">Nothing is recorded yet that you may see.</p>` : h`<table>
       <thead><tr><th>When</th><th>What happened</th><th>Who</th><th>Does the client see it?</th><th>Part of</th></tr></thead>
       <tbody>${t.events.map((e) => h`<tr><td class="when">${e.when}</td><td>${e.what}</td>
         <td>${e.who ?? h`<span class="help">—</span>`}</td>
-        <td>${e.audience === 'CLIENT_SEES' ? 'yes' : h`<span class="help">staff only</span>`}</td><td>${e.scope}</td></tr>`)}</tbody></table>`}
+        <td>${e.audience === 'CLIENT_SEES' ? 'yes' : h`<span class="help">staff only</span>`}</td><td>${scopeCell(e.scope)}</td></tr>`)}</tbody></table>`}
   </div>`;
 }
 
-/** INTERNAL NOTES, APART FROM THE TIMELINE — present only where `internal_note.read` put them in. */
-export function notesBlock(t: Timeline | undefined, action: string | null): Safe {
+/**
+ * INTERNAL NOTES, APART FROM THE TIMELINE — present only where `internal_note.read` put them in.
+ * PHASE 134: a note belongs to the COMPANY. On the company's page it may say which claim it is about — `claims` is the
+ * choice, and "The company in general" is the default. The server checks the claim is the company's (`addNote`).
+ */
+export function notesBlock(t: Timeline | undefined, action: string | null, claims: readonly { readonly id: string; readonly name: string }[] = []): Safe {
   if (t === undefined || t.internal_notes === undefined) return raw('');
   return h`<div class="pblock"><div class="pnum">Internal notes — never shown to the client</div>
-    <p class="help">Kept apart from the activity timeline, in the data as well as on this page.</p>
+    ${why('Kept apart from the activity timeline, in the data as well as on this page.')}
     ${action === null ? raw('') : h`<form method="post" action="${action}">
-      <label>Add a note <textarea name="body" rows="3"></textarea></label><button type="submit">Save note</button></form>`}
+      <label>Add a note <textarea name="body" rows="3"></textarea></label>${claims.length === 0 ? raw('') : h`
+      <label>About which claim? <select name="claim_id"><option value="">The company in general</option>${
+        claims.map((c) => h`<option value="${c.id}">${c.name}</option>`)}</select></label>`}<button type="submit">Save note</button></form>`}
     ${t.internal_notes.length === 0 ? h`<p class="help">No notes yet.</p>` : h`<table>
       <thead><tr><th>Note</th><th>About</th><th>Who</th><th>When</th></tr></thead>
-      <tbody>${t.internal_notes.map((n) => h`<tr><td>${n.body}</td><td>${n.about}</td>
+      <tbody>${t.internal_notes.map((n) => h`<tr><td>${n.body}</td><td>${scopeCell(n.about)}</td>
         <td>${n.who ?? h`<span class="help">a deleted account</span>`}</td><td class="when">${n.when}</td></tr>`)}</tbody></table>`}
   </div>`;
 }
@@ -408,16 +420,16 @@ export function myTasksBlock(w: T.MyWork): Safe {
         “${q.question}” — <strong>OVERDUE</strong>, due ${q.due_on}</li>`)}</ul>`}
     ${w.document_requests_outstanding.length === 0 ? raw('') : h`<p><strong>Documents you asked a client for that have not arrived</strong></p>
       <ul>${w.document_requests_outstanding.map((r) => h`<li class="${r.due.overdue ? 'overdue' : ''}">${
-        r.claim === null ? h`<a href="/staff/organisations/${r.business_id}">${r.client}</a>`
-          : h`<a href="/staff/claims/${r.claim.id}">${r.claim.claim_ref}</a> (${r.client})`}:
+        r.claim === null ? h`<a href="/staff/clients/${r.business_id}">${r.client}</a>`
+          : h`<a href="/staff/claims/${r.claim.id}">${r.claim.name}</a> ${claimRef(r.claim.claim_ref)}`}:
         ${r.type_label} — ${r.due.overdue ? h`<strong>${r.due.label}</strong>` : h`${r.due.label}`}</li>`)}</ul>`}
     ${w.claims_without_next_action.length === 0 ? raw('') : h`<p><strong>Claims you own that break the one-next-action rule</strong></p>
-      <ul>${w.claims_without_next_action.map((c) => h`<li><a href="/staff/claims/${c.id}">${c.claim_ref}</a> — ${c.sentence}</li>`)}</ul>`}
+      <ul>${w.claims_without_next_action.map((c) => h`<li><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} — ${c.sentence}</li>`)}</ul>`}
     ${w.unowned_claims_breaking.length === 0 ? raw('') : h`<p><strong>Claims nobody owns that break the one-next-action rule</strong></p>
-      <ul>${w.unowned_claims_breaking.map((c) => h`<li><a href="/staff/claims/${c.id}">${c.claim_ref}</a> (${c.client}) — ${c.sentence}
+      <ul>${w.unowned_claims_breaking.map((c) => h`<li><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} — ${c.sentence}
         <span class="help">— give it an owner, then its next action</span></li>`)}</ul>`}
     ${w.my_claims.length === 0 ? raw('') : h`<p><strong>My claims, their next actions, and who is waiting</strong></p>
-      <ul>${w.my_claims.map((c) => h`<li class="${c.overdue ? 'overdue' : ''}"><a href="/staff/claims/${c.id}">${c.claim_ref}</a> — ${c.stage}:
+      <ul>${w.my_claims.map((c) => h`<li class="${c.overdue ? 'overdue' : ''}"><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} — ${c.stage}:
         ${c.overdue ? h`<strong>${c.next_action}</strong>` : h`${c.next_action}`}${c.waiting === null ? raw('')
           : h` <span class="help">— ${c.waiting.who === 'CLIENT' ? 'waiting on the client' : c.waiting.who === 'US' ? 'waiting on us' : 'nobody is waiting'}: ${c.waiting.why}</span>`}</li>`)}</ul>`}
     ${w.questions_waiting.filter((q) => !q.due.overdue).length === 0 ? raw('') : h`<p><strong>Other questions you are waiting on a client to answer</strong></p>
@@ -488,11 +500,11 @@ function taskDetailPage(d: TaskPageDeps, actor: Actor, p: T.TaskPage, msg: strin
 function breakersPage(d: TaskPageDeps, actor: Actor, b: T.Breakers): string {
   const who = (w: string): string => (w === 'US' ? 'us' : w === 'CLIENT' ? 'the client' : 'nobody');
   const rows = (list: readonly T.BreakerRow[]): Safe => h`<table>
-    <thead><tr><th>Claim</th><th>Client</th><th>Stage</th><th>Claim owner</th><th>The next action</th><th>Waiting on</th></tr></thead>
-    <tbody>${list.map((r) => h`<tr><td><a href="/staff/claims/${r.id}">${r.claim_ref}</a></td><td>${r.client}</td><td>${r.stage}</td>
+    <thead><tr><th>Company</th><th>Stage</th><th>Claim owner</th><th>The next action</th><th>Waiting on</th><th>Reference</th></tr></thead>
+    <tbody>${list.map((r) => h`<tr><td><a href="/staff/claims/${r.id}">${r.client}</a></td><td>${r.stage}</td>
       <td>${r.owner ?? h`<span class="help">nobody yet</span>`}</td>
       <td>${r.reading.breaks !== null ? h`<strong>${r.reading.sentence}</strong>` : r.reading.task === null ? raw('') : h`${r.reading.task.title} — ${dueCell(r.reading.task.due)}`}</td>
-      <td>${r.waiting === undefined ? h`<span class="help">—</span>` : h`${who(r.waiting.who)} — ${r.waiting.why}`}</td></tr>`)}</tbody></table>`;
+      <td>${r.waiting === undefined ? h`<span class="help">—</span>` : h`${who(r.waiting.who)} — ${r.waiting.why}`}</td><td>${claimRef(r.claim_ref)}</td></tr>`)}</tbody></table>`;
   return page({
     title: 'Next actions', nav: d.nav(actor), wide: true,
     body: h`<h1>The one-next-action rule</h1>

@@ -559,7 +559,7 @@ describe('the timeline is a read over what is already recorded — not a second 
       assert.equal(E.addNote(d, sales, b4, 'A note about the claim, for staff only', { claim_id: claim }).ok, true);
 
       const t = TL.timelineFor(app.db, sales, { kind: 'claim', id: claim });
-      assert.ok(t.internal_notes?.some((x) => x.body === 'A note about the claim, for staff only' && x.about.startsWith('CR-')), 'the note is not in the notes');
+      assert.ok(t.internal_notes?.some((x) => x.body === 'A note about the claim, for staff only' && / · CR-\d{4}-\d{4}$/.test(x.about)), 'the note is not in the notes'); // Phase 134: named by its property, the reference last
       assert.equal(t.events.some((e) => e.what.includes('A note about the claim')), false, 'a note reached the events');
       const put = t.events.find((e) => e.what.startsWith('A question was put to the client') && e.what.includes('Which year was the extension built?'));
       assert.equal(put?.audience, 'CLIENT_SEES');
@@ -572,12 +572,14 @@ describe('the timeline is a read over what is already recorded — not a second 
 
       const b5 = businessNamed(app.db, 'Elverton Private Hospital Limited');
       const refs = app.db.all<{ claim_ref: string; property_id: string }>('SELECT claim_ref, property_id FROM claims WHERE business_id = ? ORDER BY claim_ref', [b5]);
-      assert.equal(refs.length, 2);
+      assert.equal(refs.length, 3); // Phase 134: the annexe has a claim of its own
       const orgScopes = new Set(TL.timelineFor(app.db, sales, { kind: 'organisation', id: b5 }).events.map((e) => e.scope));
       const propScopes = new Set(TL.timelineFor(app.db, sales, { kind: 'property', id: refs[0]?.property_id ?? '' }).events.map((e) => e.scope));
       for (const r of refs) {
-        assert.ok(orgScopes.has(r.claim_ref), `the organisation’s timeline has nothing from ${r.claim_ref}`);
-        assert.ok(propScopes.has(r.claim_ref), `the property’s timeline has nothing from ${r.claim_ref}`);
+        // Phase 134: a claim in the timeline is named by its property, and its reference ends the words.
+        assert.ok([...orgScopes].some((x) => x.endsWith(` · ${r.claim_ref}`)), `the organisation’s timeline has nothing from ${r.claim_ref}`);
+        if (r.property_id !== refs[0]?.property_id) continue;
+        assert.ok([...propScopes].some((x) => x.endsWith(` · ${r.claim_ref}`)), `the property’s timeline has nothing from ${r.claim_ref}`);
       }
     } finally { app.close(); }
   });

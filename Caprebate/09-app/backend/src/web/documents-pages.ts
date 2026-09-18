@@ -22,7 +22,7 @@ import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as D from './documents.ts';
-import { badge, dataLink, savedMessage, sectionList, type RecordTab } from './components.ts';
+import { badge, claimRef, dataLink, savedMessage, sectionList, type RecordTab } from './components.ts';
 import type { FsObjectStore } from './objectstore.ts';
 
 export type WebResult = 'handled' | 'not-mine';
@@ -97,10 +97,10 @@ function centrePage(d: DocumentPageDeps, actor: Actor, v: D.DocumentCentre, quer
       </form>
       ${v.said.length === 0 ? raw('') : h`<ul>${v.said.map((x) => h`<li class="help">${x}</li>`)}</ul>`}
       ${v.rows.length === 0 ? h`<p class="help">No document you may read matches.</p>` : h`<table>
-        <thead><tr><th>Document</th><th>Type</th><th>Organisation</th><th>Claims</th><th>State</th><th>Newest version</th><th>Versions</th></tr></thead>
+        <thead><tr><th>Document</th><th>Type</th><th>Company</th><th>Claims</th><th>State</th><th>Newest version</th><th>Versions</th></tr></thead>
         <tbody>${v.rows.map((r) => h`<tr><td><a href="${r.href}">${r.label}</a></td><td>${r.type.label}</td>
           <td>${r.organisation.href === null ? h`${r.organisation.name}` : h`<a href="${r.organisation.href}">${r.organisation.name}</a>`}</td>
-          <td>${r.claims.length === 0 ? h`<span class="help">on no claim</span>` : r.claims.map((c) => (c.href === null ? h`${c.claim_ref}<br>` : h`<a href="${c.href}">${c.claim_ref}</a><br>`))}</td>
+          <td>${r.claims.length === 0 ? h`<span class="help">on no claim</span>` : r.claims.map((c) => h`${c.href === null ? h`${c.property ?? 'a claim'}` : h`<a href="${c.href}">${c.property ?? 'a claim'}</a>`} ${claimRef(c.claim_ref)}<br>`)}</td>
           <td>${r.state.label}</td>
           <td>${r.newest === null ? h`<span class="help">no version</span>` : h`version ${r.newest.version_no ?? '—'}, ${r.newest.uploaded}<br><span class="help">${r.newest.by}</span>`}</td>
           <td>${r.versions}</td></tr>`)}</tbody></table>`}
@@ -255,7 +255,7 @@ export async function handleDocuments(
   if (withdraw && method === 'POST') {
     const r = D.withdrawDocumentRequest(deps, actor, withdraw[1] ?? '');
     if (!r.ok) return d.problem(res, actor, 'Not withdrawn', r.why, '/staff');
-    redirect(res, r.claim_id !== null && r.claim_id !== undefined ? `/staff/claims/${r.claim_id}?done=withdrawn` : `/staff/organisations/${r.business_id ?? ''}?done=withdrawn`);
+    redirect(res, r.claim_id !== null && r.claim_id !== undefined ? `/staff/claims/${r.claim_id}?done=withdrawn` : `/staff/clients/${r.business_id ?? ''}?done=withdrawn`);
     return 'handled';
   }
 
@@ -362,11 +362,11 @@ function documentPageHtml(d: DocumentPageDeps, actor: Actor, p: D.DocumentPage, 
       <div class="pblock"><div class="pnum">Linked to</div>
         ${p.links.length === 0 ? h`<p class="help">Linked to no claim and no property: it is the organisation's, and a surveyor on any of its jobs may read it if it is claim evidence.</p>` : h`<table>
           <thead><tr><th>To</th><th>Linked</th><th>Ended</th><th></th></tr></thead>
-          <tbody>${p.links.map((k) => h`<tr><td>${k.to}: ${k.href === null ? h`${k.label}` : h`<a href="${k.href}">${k.label}</a>`}</td>
+          <tbody>${p.links.map((k) => h`<tr><td>${k.to}: ${k.href === null ? h`${k.label}` : h`<a href="${k.href}">${k.label}</a>`}${k.ref === undefined ? raw('') : h` ${claimRef(k.ref)}`}</td>
             <td>${k.linked}</td><td>${k.ended ?? h`<span class="help">still linked</span>`}</td>
             <td>${k.ended === null && p.may_link ? h`<form method="post" action="/staff/document-links/${k.id}/end" class="inline"><button type="submit">End this link</button></form>` : raw('')}</td></tr>`)}</tbody></table>`}
         ${p.may_link && (p.linkable_claims ?? []).length > 0 ? h`<form method="post" action="/staff/documents/${p.id}/links">
-          <label>Link to claim <select name="claim_id">${(p.linkable_claims ?? []).map((c) => h`<option value="${c.id}">${c.claim_ref}</option>`)}</select></label>
+          <label>Link to claim <select name="claim_id">${(p.linkable_claims ?? []).map((c) => h`<option value="${c.id}">${c.property ?? 'A claim with no property'} (${c.claim_ref})</option>`)}</select></label>
           <button type="submit">Link</button></form>` : raw('')}
       </div>
 

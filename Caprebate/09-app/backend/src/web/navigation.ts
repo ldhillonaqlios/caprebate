@@ -266,14 +266,17 @@ export function staffShell(actor: Actor): Shell {
   return new Shell(html.html, '/staff');
 }
 
-/** The client portal's header — simpler on purpose: their claim, their settings, sign out. */
+/**
+ * The client portal's header — simpler on purpose: their claims, their settings, sign out. PHASE 134: one company may hold
+ * many claims, so the one tab is "Your claims", and it is current on every claim's own page too.
+ */
 export function portalShell(actor: Actor): Shell {
   const ctx = navContext.getStore();
   const name = displayName(ctx?.db, actor);
-  const current = ctx?.path === '/portal';
+  const current = ctx?.path === '/portal' || (ctx?.path ?? '').startsWith('/portal/claims/');
   const html = h`<div class="util"><a class="helplink" href="/portal/help">Help</a>${userMenu(name, actor, '/portal/settings')}</div>
     <nav class="appnav portalnav" aria-label="Sections"><ul class="tabs-main"><li>${current
-      ? h`<a href="/portal" aria-current="page">Your claim</a>` : h`<a href="/portal">Your claim</a>`}</li></ul></nav>`;
+      ? h`<a href="/portal" aria-current="page">Your claims</a>` : h`<a href="/portal">Your claims</a>`}</li></ul></nav>`;
   return new Shell(html.html, '/portal');
 }
 

@@ -33,11 +33,88 @@ export function emptyState(sentence: string, action?: { href: string; label: str
 
 export type Highlight = { readonly label: string; readonly value: Safe | string };
 
-/** THE HIGHLIGHTS PANEL: the record type, its name, and the key fields — only those the caller's view carries. */
-export function highlights(kind: string, title: Safe | string, fields: readonly (Highlight | null)[], after: Safe = raw('')): Safe {
+/**
+ * THE HIGHLIGHTS PANEL: the record type, its name, and the key fields — only those the caller's view carries.
+ * PHASE 134: `sub` is one small line under the name — a company's legal name, a claim's property and reference.
+ */
+export function highlights(kind: string, title: Safe | string, fields: readonly (Highlight | null)[], after: Safe = raw(''), sub: Safe = raw('')): Safe {
   const shown = fields.filter((f): f is Highlight => f !== null);
-  return h`<header class="highlights"><p class="eyebrow">${kind}</p><h1>${title}</h1>
+  return h`<header class="highlights"><p class="eyebrow">${kind}</p><h1>${title}</h1>${sub.html === '' ? raw('') : h`<p class="subhead">${sub}</p>`}
     ${shown.length === 0 ? raw('') : h`<dl class="hl">${shown.map((f) => h`<div><dt>${f.label}</dt><dd>${f.value}</dd></div>`)}</dl>`}${after}</header>`;
+}
+
+/* ================================================================== *
+ * PHASE 134 — THE CLIENT IS THE COMPANY. 18 September 2026.
+ *
+ * A claim is named for a person by its COMPANY, then its PROPERTY. The claim reference (CR-2026-0001) is a small grey
+ * label beside it: never a heading, never the first column, never the words of a link. Every screen that names a claim
+ * draws it through these, and test/phase134.test.ts reads every staff screen's HTML to hold that.
+ * ================================================================== */
+
+/** The claim reference, as a small grey label. */
+export function claimRef(ref: string): Safe {
+  return h`<span class="claimref">${ref}</span>`;
+}
+
+/**
+ * A claim's name in words: "Elverton Private Hospital Limited — outpatient annexe". A property recorded with the company's
+ * name already in front of it ("Elverton Private Hospital Limited — main site") is not given the name twice.
+ */
+export function claimName(company: string, property: string | null | undefined): string {
+  if (property === null || property === undefined || property.trim() === '') return `${company} — claim`;
+  return property.startsWith(company) ? property : `${company} — ${property}`;
+}
+
+/**
+ * A property's name INSIDE its company's frame — a tile, a breadcrumb — where the company is already said. A label
+ * recorded as "Elverton Private Hospital Limited — main site" reads "main site" there.
+ */
+export function propertyIn(company: string, property: string | null): string | null {
+  if (property === null) return null;
+  const prefix = `${company} — `;
+  return property.startsWith(prefix) && property.length > prefix.length ? property.slice(prefix.length) : property;
+}
+
+/** A link to a claim: the company and the property are the words; the reference follows it, in grey. */
+export function claimLink(href: string, company: string, property: string | null | undefined, ref: string): Safe {
+  return h`<a href="${href}">${claimName(company, property)}</a> ${claimRef(ref)}`;
+}
+
+/** Where a claim opens inside its company's page. */
+export function claimHref(business_id: string, claim_id: string): string {
+  return `/staff/clients/${business_id}/claims/${claim_id}`;
+}
+
+/** "Company > Claim": the company is always the frame. The company is a link only for a login that may open its page. */
+export function breadcrumb(parts: readonly { readonly label: string; readonly href?: string | null }[]): Safe {
+  return h`<nav class="crumbs" aria-label="Where you are"><ol>${parts.map((p, i) => i === parts.length - 1
+    ? h`<li><span aria-current="page">${p.label}</span></li>`
+    : h`<li>${p.href === undefined || p.href === null ? h`${p.label}` : h`<a href="${p.href}">${p.label}</a>`}</li>`)}</ol></nav>`;
+}
+
+export type ClaimTile = {
+  readonly href: string | null;
+  readonly property: string | null;
+  readonly town: string | null;
+  readonly stage: string;
+  readonly next_action: string | null;
+  readonly next_due?: string | null;
+  readonly ref: string;
+};
+
+/** ONE TILE PER CLAIM: the property and its town, the stage, the next action, and the reference in grey. */
+export function claimTiles(tiles: readonly ClaimTile[], empty: string): Safe {
+  if (tiles.length === 0) return h`<p class="empty">${empty}</p>`;
+  return h`<ul class="tiles">${tiles.map((t) => {
+    const name = t.property === null || t.property.trim() === '' ? 'No property recorded' : t.property;
+    return h`<li class="tile">
+      <p class="tilename">${t.href === null ? h`${name}` : h`<a href="${t.href}">${name}</a>`}</p>
+      ${t.town === null || t.town.trim() === '' ? raw('') : h`<p class="help">${t.town}</p>`}
+      <p>${badge(t.stage, 'info')}</p>
+      <p class="tilenext">${t.next_action === null ? h`<span class="help">No next action yet</span>`
+        : h`Next: ${t.next_action}${t.next_due === undefined || t.next_due === null || t.next_due === '' ? raw('') : h` <span class="help">— ${t.next_due}</span>`}`}</p>
+      <p>${claimRef(t.ref)}</p></li>`;
+  })}</ul>`;
 }
 
 /**
