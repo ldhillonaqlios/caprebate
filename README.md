@@ -15,7 +15,7 @@ The public website, the free assessment, the client portal and the back office a
 
 ## Try it in a Codespace
 
-Code → Codespaces → Create codespace on main. It installs, starts the demo and opens a preview on port 8105.
+Code → Codespaces → Create codespace on main. It installs everything and starts the demo in the terminal (leave that terminal open), then opens a preview on port 8105.
 The demo builds a throwaway in-memory database with invented users and clients; nothing is kept when it stops.
 Demo logins: `admin@example.invalid`, `sales@example.invalid`, `accounting@example.invalid`,
 `surveying@example.invalid`, `client@example.invalid` — password `change-this-seed-password`.
