@@ -1,8 +1,11 @@
 {
   "name": "Cap Rebate — test demo (invented data only)",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:24",
+  "features": {
+    "ghcr.io/devcontainers/features/sshd:1": { "version": "latest" }
+  },
   "postCreateCommand": "cd Caprebate/09-app/backend && npm ci",
-  "postStartCommand": "cd Caprebate/09-app/backend && nohup npm run start:demo > /tmp/caprebate-demo.log 2>&1 &",
+  "postStartCommand": "bash -c 'cd Caprebate/09-app/backend && setsid nohup npm run start:demo > /tmp/caprebate-demo.log 2>&1 < /dev/null &'",
   "forwardPorts": [8105],
   "portsAttributes": {
     "8105": { "label": "Cap Rebate demo", "onAutoForward": "openPreview" }
