@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+
+    /* THE POINT OF THIS FILE. The engine's whole discipline is that an unknown
+       fact stays unknown; a type system that lets `undefined` masquerade as a
+       number is the fastest way to break non-negotiable N4. */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "useUnknownInCatchVariables": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* src/generated/*.js is a VERBATIM slice of the site file and is not ours
+       to annotate — editing it to satisfy the checker would fork the engine,
+       which is the one thing this package exists to prevent. It is typed from
+       the outside by the hand-written .d.ts beside each file, and those ARE
+       checked under every flag above. See EXTRACTION.md. */
+    "allowJs": true,
+    "checkJs": false,
+
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "esModuleInterop": true,
+    "skipLibCheck": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

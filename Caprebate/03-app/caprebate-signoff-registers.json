@@ -1,0 +1,779 @@
+{
+  "_what": "The adjudicated contents of the three sign-off registers: for every board id that appears in a register's text, whether it is an ENTRY (the register is telling a named professional that this item waits on them) or a MENTION (the id appears in passing prose and gives the item no home).",
+  "_why": "A loose scan for board ids cannot tell those two apart, and if it guesses ENTRY it hides exactly the failure the check exists to find - an item name-dropped in a note would look housed. Phase 113c checked every match by hand on 9 September 2026 and every one happened to be a genuine entry, so the loose scan was safe THAT DAY and is not safe as a design. This file is that judgement, written down once, so the check can be strict instead of generous.",
+  "_how_it_stays_honest": "The check FAILS when a register's text contains a board id this file does not classify, and FAILS when this file names an id the register's text no longer contains. So it cannot quietly go stale: adding an entry to a register without recording it here is a red run, and so is deleting one.",
+  "_entry_shapes_in_use": "Two, and the second exists because of a tooling limit recorded in COORDINATES: a row in the register's Appendix 3 index table, or a prose note declaring an entry. A row cannot be added to an existing Monday table through the document API, so every entry added after a register's table was built is declared in prose beside it. SV-S7, SV-S8, SDP-L3, SDP-V3, SDP-L4, SDP-L5, SDP-P5 to SDP-P8 and SDP-V4 are all of that second kind. Since 15 September 2026 (Phase 132d) every entry code in all three registers carries its register's prefix - SV- for FOR THE SURVEYOR, ACC- for FOR THE ACCOUNTANT, SDP- for FOR THE SOLICITOR, THE DPO AND THE DEVELOPER - in the registers themselves and in the refs here; the check matches board ids and counts, never a ref's code.",
+  "version": "1.0",
+  "written": "2026-09-09",
+  "writtenBy": "Phase 113g",
+  "board": 18422317809,
+  "awaitingLabel": "Built - awaiting sign-off",
+  "_boardIds": "A board id looks exactly like an item id, and every register's Appendix 3 opens by naming the board. These are boards, and the check skips them rather than asking anybody to classify them as entries.",
+  "boardIds": [
+    {
+      "id": 18422317809,
+      "what": "Health Capital - the project board itself"
+    },
+    {
+      "id": 18422317811,
+      "what": "the subitems board"
+    },
+    {
+      "id": 18429145787,
+      "what": "the restricted breach register board"
+    },
+    {
+      "id": 18429145822,
+      "what": "the restricted names annex board"
+    }
+  ],
+  "registers": [
+    {
+      "key": "accountant",
+      "name": "FOR THE ACCOUNTANT",
+      "item": 12980421567,
+      "objectId": 18429783853,
+      "snapshotFile": "register-accountant.md",
+      "entries": [
+        {
+          "ref": "ACC-A1 stamp duty",
+          "id": "12975610449",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-A2 supported housing / dwelling-house",
+          "id": "12851707697",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-A3 buyer's own alterations",
+          "id": "12840979279",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-A4 s.538 carve-out",
+          "id": "12852259255",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-A5 third route, no deadline",
+          "id": "12921346993",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-A6 fixed value requirement applies at all",
+          "id": "12921346994",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-A7 seller never entitled",
+          "id": "12851716705",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-A8 grant deducted twice",
+          "id": "12852269900",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-A9 connected contributor",
+          "id": "12852267228",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-A10 provision of / commissioning",
+          "id": "12843022045",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-A11 trade-purpose flat",
+          "id": "12851716860",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-A12 grant taken off after the ceilings (added Phase 113j, 10 Sep 2026; beside ACC-A8 in the register, id in Appendix 3's closing sentence because a table row cannot be added)",
+          "id": "13014647417",
+          "how": "prose"
+        },
+        {
+          "ref": "ACC-A13 break-even read as not enough taxable profit - a switch where the funnel answers become the engine session, not an engine switch (added Phase 115, 10 Sep 2026; prose note at the end of the register)",
+          "id": "13005757375",
+          "how": "prose"
+        },
+        {
+          "ref": "ACC-E3 the referral channel as built - the progress notices a practice receives and the referral form (added Phase 120, CRM 5 of 10, 11 Sep 2026; prose note at the end of the register)",
+          "id": "13025214371",
+          "how": "prose"
+        },
+        {
+          "ref": "ACC-C5 the claim's facts, the four figures, the tax adviser's sign-off as a record and clause 13, as built (added Phase 121, CRM 6 of 10, 11 Sep 2026; prose note at the end of the register)",
+          "id": "13025790820",
+          "how": "prose"
+        },
+        {
+          "ref": "ACC-B1 rulebook A",
+          "id": "12830061109",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-B2 rulebook A addendum (also a file carrier)",
+          "id": "12921255840",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-B3 rulebook B",
+          "id": "12830061291",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-B4 rulebook C",
+          "id": "12830037336",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-B5 rulebook D",
+          "id": "12830044150",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-B6 rulebook E",
+          "id": "12830037617",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-B7 rulebook F",
+          "id": "12830044153",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-B8 rulebook G",
+          "id": "12830061107",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-B9 rulebook H",
+          "id": "12830043662",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-B10 rulebook I",
+          "id": "12830060773",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-B11 rulebook I addendum",
+          "id": "12889350666",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-C1 client report",
+          "id": "12830166288",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-C2 tax implication summary",
+          "id": "12919762132",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-C3 disposal note",
+          "id": "12830181411",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-C4 defence pack",
+          "id": "12804317757",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-D1 review pack",
+          "id": "12830043701",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-D2 claim-increasing disclosure",
+          "id": "12851910641",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-E1 handoff pack",
+          "id": "12923216479",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-E2 cover note",
+          "id": "12804375491",
+          "how": "table"
+        },
+        {
+          "ref": "ACC-C6 tax implication summary, sole trader",
+          "id": "12830183379",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "ACC-C7 tax implication summary, partnership",
+          "id": "12830205673",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "ACC-C8 the reasoned negative, the no-claim report",
+          "id": "12804151034",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "ACC-C9 the four-document request to the client's accountant",
+          "id": "12804375390",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "ACC-C10 the Stage 2 document upload screen",
+          "id": "12818978746",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "ACC-C11 the yield bands relabelled as assessed, not calibrated",
+          "id": "12818099899",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "ACC-C12 the private hospitals and clinics question flow v2",
+          "id": "12840725124",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "ACC-H1 standard operating procedures, enquiry to defence pack",
+          "id": "12552682457",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026. The tax adviser and the surveyor both sign it; housed with the tax adviser, who signs first. Prose entry in the Phase 128 note."
+        },
+        {
+          "ref": "ACC-H2 the business plan, pricing and forecast",
+          "id": "12552682421",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "ACC-A14 a new lease for a premium with no joint election is not item 9 of the disposal table (added Phase 129a, 13 Sep 2026; entry after ACC-A11 in Section A, id in the dated note at the end of the register)",
+          "id": "13033203928",
+          "how": "prose",
+          "why": "Built by Phase 129a on 13 Sep 2026 as the eighteenth tax-adviser switch, off, and moved to Built - awaiting sign-off with owner CTA. The question it waits on is the tax adviser's, so it is housed here. Prose entry: the internal index sentence in the Phase 129a note at the end of the register."
+        },
+        {
+          "ref": "ACC-A15 the amendment window is the one for the year the money was spent in (added Phase 129b, 13 Sep 2026; entry after ACC-A14 in Section A, id in the dated note at the end of the register)",
+          "id": "13034238993",
+          "how": "prose",
+          "why": "Built by Phase 129b on 13 Sep 2026: live where the year of spend ends before the year end given, which can only close a window, and the nineteenth tax-adviser switch, off, where it would open one. Moved to Built - awaiting sign-off with owner CTA. Prose entry: the internal index sentence in the Phase 129b note at the end of the register."
+        }
+      ],
+      "mentions": [
+        {
+          "id": "12983537653",
+          "why": "Appendix 1 points the reader at the third register, FOR THE SOLICITOR, THE DPO AND THE DEVELOPER. It is that register's own board item, not an entry."
+        },
+        {
+          "id": "13004486738",
+          "why": "A superseded note names the scheduled job that reconciled the registers on 9 September 2026. A job, not something waiting on the accountant."
+        },
+        {
+          "id": "12830178875",
+          "why": "The rulebook A file carrier. Closed into the rulebook item by Phase 129 on 12 Sep 2026: its file is byte-identical to the copy on the rulebook item, which is the entry. Named in the Appendix 3 row that records the closure, not an entry. (Was entry \"B file carrier, rulebook A\".)"
+        },
+        {
+          "id": "12830182172",
+          "why": "The rulebook B file carrier. Closed into the rulebook item by Phase 129 on 12 Sep 2026: its file is byte-identical to the copy on the rulebook item, which is the entry. Named in the Appendix 3 row that records the closure, not an entry. (Was entry \"B file carrier, rulebook B\".)"
+        },
+        {
+          "id": "12841288962",
+          "why": "The rulebook C file carrier. Closed into the rulebook item by Phase 129 on 12 Sep 2026: its file is byte-identical to the copy on the rulebook item, which is the entry. Named in the Appendix 3 row that records the closure, not an entry. (Was entry \"B file carrier, rulebook C\".)"
+        },
+        {
+          "id": "12851645135",
+          "why": "The rulebook D file carrier. Closed into the rulebook item by Phase 129 on 12 Sep 2026: its file is byte-identical to the copy on the rulebook item, which is the entry. Named in the Appendix 3 row that records the closure, not an entry. (Was entry \"B file carrier, rulebook D\".)"
+        },
+        {
+          "id": "12910751557",
+          "why": "The rulebook E file carrier. Closed into the rulebook item by Phase 129 on 12 Sep 2026: its file is byte-identical to the copy on the rulebook item, which is the entry. Named in the Appendix 3 row that records the closure, not an entry. (Was entry \"B file carrier, rulebook E\".)"
+        },
+        {
+          "id": "12910769642",
+          "why": "The rulebook F file carrier. Closed into the rulebook item by Phase 129 on 12 Sep 2026: its file is byte-identical to the copy on the rulebook item, which is the entry. Named in the Appendix 3 row that records the closure, not an entry. (Was entry \"B file carrier, rulebook F\".)"
+        }
+      ]
+    },
+    {
+      "key": "surveyor",
+      "name": "FOR THE SURVEYOR",
+      "item": 12980410244,
+      "objectId": 18429784582,
+      "snapshotFile": "register-surveyor.md",
+      "entries": [
+        {
+          "ref": "SV-S1 quantity model",
+          "id": "12819686328",
+          "how": "table"
+        },
+        {
+          "ref": "SV-S2 room-by-room equipment schedule",
+          "id": "12819698557",
+          "how": "table"
+        },
+        {
+          "ref": "SV-S3 depreciation, both methods",
+          "id": "12927234437",
+          "how": "table"
+        },
+        {
+          "ref": "SV-S4 valuation report template",
+          "id": "12819676756",
+          "how": "table"
+        },
+        {
+          "ref": "SV-S5 video walkthrough capture script",
+          "id": "12819697866",
+          "how": "table"
+        },
+        {
+          "ref": "SV-S6 preliminaries double count",
+          "id": "12804374366",
+          "how": "table",
+          "why": "Built and switched off: the gate leg_e2_drop_prelims_from_erc in 04-phase-work/phase9/caprebate-cost-model.cjs, tested both ways. Moved from Blocked - question to Built - awaiting sign-off by Phase 128, 12 Sep 2026; the register was corrected in place and in a note."
+        },
+        {
+          "ref": "SV-S7 two rebuild costs for the same building",
+          "id": "12991293063",
+          "how": "prose",
+          "why": "Same shape as SV-S6, and declared as such in the 7 September size note. Phase 129, 12 Sep 2026: traced, section 7 restated at £2,841,400, and moved from Blocked - question to Built - awaiting sign-off; the expected status was removed."
+        },
+        {
+          "ref": "SV-S8 regional keying of the rate library",
+          "id": "13004035199",
+          "how": "prose"
+        },
+        {
+          "ref": "SV-S9 what one job costs us, and where a desk-only claim stops paying",
+          "id": "12955448913",
+          "how": "prose",
+          "why": "Written up in full on 9 September 2026 with a sign-off block and no board item number, which is why the first run of the check reported it as housed nowhere. The number was added to the register the same day."
+        }
+      ],
+      "mentions": [
+        {
+          "id": "12983537653",
+          "why": "Appendix 1 points the reader at the third register. Not an entry."
+        }
+      ]
+    },
+    {
+      "key": "solicitor",
+      "name": "FOR THE SOLICITOR, THE DPO AND THE DEVELOPER",
+      "item": 12983537653,
+      "objectId": 18429855060,
+      "snapshotFile": "register-solicitor-dpo-developer.md",
+      "entries": [
+        {
+          "ref": "SDP-L1 money-laundering supervision",
+          "id": "12830181812",
+          "how": "table",
+          "why": "SDP-L1 and SDP-L2 are two entries on ONE board item - one brief, two questions, priced separately. Both are listed, because this register counts entries by label and items separately, and says so: 'Eleven entries covering ten board items'."
+        },
+        {
+          "ref": "SDP-L2 the earlier pre-engagement lookup design",
+          "id": "12830181812",
+          "how": "table",
+          "why": "The second half of the SDP-L1 brief. Same board item."
+        },
+        {
+          "ref": "SDP-L3 the client engagement letter",
+          "id": "12984545390",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-L3 the client engagement letter, extended to its name for us and to the public site, notices page and complaint form",
+          "id": "13069114161",
+          "how": "prose",
+          "why": "Built by Phase 133d, 17 Sep 2026, and moved from Ready - Claude can build. The letter now names the adviser Cap Rebate, which waits on the solicitor; housed under SDP-L3 as the phase prompt asked, rather than as a new entry, in the Phase 133d note at the end of the register, which also describes the developer's side (required words, refusals beside the field, the stage bar)."
+        },
+        {
+          "ref": "SDP-L4 the clawback clause",
+          "id": "12984730922",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-L5 who signs the filing position",
+          "id": "12984726624",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-L6 clause 7 of the engagement letter and section 6 of the privacy notice (added Phase 115, 10 Sep 2026; prose note at the end of the register, beside SDP-L3)",
+          "id": "12993832839",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-L7 the invoice-fraud procedure drafted into SOP 9, and the invoice email held until it is signed off (added Phase 122, CRM 7 of 10, 12 Sep 2026; prose note at the end of the register)",
+          "id": "13032166076",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-L8 customer due diligence — for the solicitor (added Phase 123, CRM 8 of 10, 12 Sep 2026; prose section at the end of the register, beside SDP-L7)",
+          "id": "13032264597",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P12 the rights-request register (added Phase 123, CRM 8 of 10, 12 Sep 2026; prose section at the end of the register)",
+          "id": "13032264597",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P13 the complaints log (added Phase 123, CRM 8 of 10, 12 Sep 2026; prose section at the end of the register)",
+          "id": "13032264597",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P14 the breach register, with attempted invoice fraud (added Phase 123, CRM 8 of 10, 12 Sep 2026; prose section at the end of the register)",
+          "id": "13032264597",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P15 S2, the identity store (added Phase 123, CRM 8 of 10, 12 Sep 2026; prose section at the end of the register)",
+          "id": "13032264597",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P16 one consent history, and the client’s own route (added Phase 123, CRM 8 of 10, 12 Sep 2026; prose section at the end of the register)",
+          "id": "13032264597",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P17 the retention list, and the draft letters (added Phase 123, CRM 8 of 10, 12 Sep 2026; prose section at the end of the register)",
+          "id": "13032264597",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P2 the audit log is tamper-evident",
+          "id": "12949297803",
+          "how": "table"
+        },
+        {
+          "ref": "SDP-P3 breach register and complaints log retention",
+          "id": "12945903194",
+          "how": "table"
+        },
+        {
+          "ref": "SDP-P4 document-pipeline impact assessment",
+          "id": "12910861459",
+          "how": "table"
+        },
+        {
+          "ref": "SDP-P5 the four facts a breach decision turns on",
+          "id": "12927683763",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P6 the list of who we pass client data on to",
+          "id": "12927931400",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P7 the public notices page",
+          "id": "12946752268",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P8 the transparency notice that was sent",
+          "id": "12927936989",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P9 the governance policies, Parts A to D and the flagged draft additions at Part E (retagged from Done by Phase 115, 10 Sep 2026: every Part is DRAFT and none is approved)",
+          "id": "12552682456",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P10 the client-facing privacy notice at v1.4 (retagged from Done by Phase 115, 10 Sep 2026: DRAFT, not approved, not published)",
+          "id": "12818279787",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P11 sharing a referred client's progress with the firm - the opt-in wording and what the privacy notice must say before the referral form opens (added Phase 120, CRM 5 of 10, 11 Sep 2026; prose note at the end of the register)",
+          "id": "13025228235",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-G1 where the breach register lives",
+          "id": "12946269151",
+          "how": "table"
+        },
+        {
+          "ref": "SDP-G2 ad-hoc tax adviser and surveyor engagement",
+          "id": "12927537258",
+          "how": "table"
+        },
+        {
+          "ref": "SDP-V1 developer handover pack",
+          "id": "12937209644",
+          "how": "table"
+        },
+        {
+          "ref": "SDP-V2 back-end data specification",
+          "id": "12948738680",
+          "how": "table"
+        },
+        {
+          "ref": "SDP-V3 the council-area lookup, wired in and switched off",
+          "id": "12993800139",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-V4 postcode to billing authority from the ONS directory",
+          "id": "12991298199",
+          "how": "prose"
+        },
+        {
+          "ref": "SDP-P18 lawful basis and legitimate interests assessment, with the retention and rights-request operating procedure",
+          "id": "12818099921",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P19 data minimisation rule and the two retention exceptions",
+          "id": "12818210932",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P20 name exclusion register and its automated assertion",
+          "id": "12818313893",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P21 the instrument appointing the data protection officer, not executed",
+          "id": "12927221812",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P22 rights-request register, complaints log and the s.164A complaints pack",
+          "id": "12927908435",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P23 the eight data protection response letters",
+          "id": "12927850552",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P24 personal data breach register and incident response procedure",
+          "id": "12927581028",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P25 the six breach and transparency communications",
+          "id": "12927894775",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P26 the Article 14 assessment for people named in uploaded documents",
+          "id": "12927987812",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P27 the pre-filled ICO breach-report answer sheet",
+          "id": "12927942615",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P28 the client-document ingestion minimisation control and its 1 September reconciliation",
+          "id": "12928074627",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P29 business continuity and disaster recovery plan",
+          "id": "12552682536",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P30 annual data protection audit checklist and schedule",
+          "id": "12552683056",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P31 annual policy review schedule",
+          "id": "12552683057",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P32 mandatory and statutory training programme",
+          "id": "12552691715",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P33 client feedback and complaints handling operational process",
+          "id": "12552700588",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P34 the upload boundary, built as a fail-closed quarantine",
+          "id": "12928214881",
+          "how": "prose",
+          "why": "Built 30 Aug 2026 by Phase 44 and labelled Blocked - question; moved to Built - awaiting sign-off by Phase 128, 12 Sep 2026. Prose entry in the Phase 128 note."
+        },
+        {
+          "ref": "SDP-L9 register API terms of use and licensing review",
+          "id": "12818265662",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-L10 AML/KYC position paper",
+          "id": "12830178449",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-L11 ASA/CAP Code claim audit",
+          "id": "12830181513",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-L12 risk register and operational risk assessments",
+          "id": "12552682460",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-L14 supplier and contract management",
+          "id": "12552700455",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-L15 accountant referral network",
+          "id": "12552691718",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-L16 SEO and advertising",
+          "id": "12552691721",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-L17 launch campaign and PR",
+          "id": "12552691722",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-L18 review generation and reputation",
+          "id": "12552691719",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-L19 brand guidelines",
+          "id": "12552682538",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-L20 website structure, copy and code changes",
+          "id": "12552682544",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-L21 rules-defect incident and client correction plan",
+          "id": "12927557335",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-V5 client intake and assessment journey v1",
+          "id": "12552691606",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-V6 user acceptance test scripts",
+          "id": "12552683050",
+          "how": "prose",
+          "why": "Retagged from Done by Phase 128, 12 Sep 2026: its own document says it is a draft. Prose entry in the Phase 128 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P35 company names kept on conveyancing uploads, individuals stripped",
+          "id": "12927233336",
+          "how": "prose",
+          "why": "Built and switched off by Phase 129, 12 Sep 2026, and moved from Blocked - question. Prose entry in the Phase 129 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P36 a recommended receipt strip for each new document type",
+          "id": "13024760177",
+          "how": "prose",
+          "why": "Recommendations recorded, not approved, by Phase 129, 12 Sep 2026, and moved from Ready - Claude can build. Prose entry in the Phase 129 note at the end of the register."
+        },
+        {
+          "ref": "SDP-V7 the CRM layout for each login",
+          "id": "13067753922",
+          "how": "prose",
+          "why": "Built and switched on in the prototype by Phase 133a, 17 Sep 2026, and moved from Ready - Claude can build. Prose entry in the Phase 133a note at the end of the register; the look itself is asked of Lakhbir in CAPREBATE QUESTIONS."
+        },
+        {
+          "ref": "SDP-V7 the CRM layout for each login, extended to the five long screens",
+          "id": "13068082710",
+          "how": "prose",
+          "why": "Built and switched on in the prototype by Phase 133b, 17 Sep 2026, and moved from Ready - Claude can build. The same entry and the same developer question as 13067753922, extended in the Phase 133b note at the end of the register; no new entry, because the question did not change."
+        },
+        {
+          "ref": "SDP-V7 the CRM layout for each login, extended to the Cap Rebate brand and a new user",
+          "id": "13068010579",
+          "how": "prose",
+          "why": "Built and switched on in the prototype by Phase 133c, 17 Sep 2026 (the name switches built and off), and moved from Ready - Claude can build. The same entry as 13067753922, extended in the Phase 133c note at the end of the register with two more developer questions; the names are asked of Lakhbir in CAPREBATE QUESTIONS."
+        }
+      ],
+      "mentions": [
+        {
+          "id": "12984553034",
+          "why": "The break fee, abort fee and fixed-fee decision the engagement letter waits on. The director's decision, named as a dependency of SDP-L3."
+        },
+        {
+          "id": "12983546774",
+          "why": "Signing the data protection officer's appointment - by CAP REBATE LTD, by a director, and by the officer, Sadique Maskeen (18 Sep 2026) - named so the reader knows why the DPO cannot yet open anything."
+        },
+        {
+          "id": "12980421567",
+          "why": "Appendix 1's cross-reference to FOR THE ACCOUNTANT."
+        },
+        {
+          "id": "12980410244",
+          "why": "Appendix 1's cross-reference to FOR THE SURVEYOR."
+        },
+        {
+          "id": "12955088177",
+          "why": "Six years on a client uploaded document. Closed by Phase 129 on 12 Sep 2026 into the retention determinations item, which is SDP-P3; the SDP-P1 heading stays in the text as a record and the Phase 129 note says it is folded into SDP-P3. Not an entry. (Was entry \"P1 six years on a client's uploaded document\".)"
+        }
+      ]
+    }
+  ]
+}

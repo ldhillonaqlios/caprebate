@@ -1,0 +1,1113 @@
+/**
+ * THE CLAIM'S FOUR FIGURES, THE TAX ADVISER'S SIGN-OFF, THE RECONCILIATION LOG,
+ * THE DELIVERABLES REGISTER AND AFTERCARE — CRM 6 of 10, 11 September 2026.
+ *
+ * The schema is migration 015; the facts these rest on are src/web/claim-facts.ts;
+ * the pages are src/web/claim-record-pages.ts, which decides nothing.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * THE FOUR FIGURES, IN THE ORDER THEY ARE PRODUCED, EACH SEALED AND HASHED WHEN
+ * IT IS SET AND NEVER EDITED
+ *
+ *   A  the indicative estimate      sealed in `estimates` with its hash (002)
+ *   B  the researched estimate      NOT_PERMITTED_YET while the register gates are
+ *                                   shut — and no column anywhere can hold one
+ *   C  the surveyor's committed     sealed in `surveyor_commitments` with its hash
+ *      figure                       (006), released under the anchor quarantine
+ *   D  the figure the tax adviser   sealed in the sign-off record below, hashed
+ *      signed
+ *
+ * None is copied into a fourth table: each is READ from the record that sealed
+ * it. The whole panel is `claim_figures.read` — ADMIN and SALES — and a surveyor
+ * never receives it; tools/payload-proof.ts searches for it.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * THE SIGN-OFF IS A RECORD, NOT A SIGNATURE. src/stubs/signature.ts executes
+ * nothing, and the record says so in its own `kind`. The TAX_ADVISER_SIGNOFF gate
+ * and the REPORTS gate read it — only one recorded since the claim last entered
+ * TAX_ADVISER_SIGNOFF — and `claims.tax_adviser_signoff_at` is retired: the
+ * database refuses any write to it.
+ *
+ * NO PART OF THIS FILE GENERATES A REPORT (Developer Spec DS-W10). A deliverable is
+ * tracked — its state, version, issue date and the document type it is.
+ */
+
+import { createHash } from 'node:crypto';
+import type { Db } from '../db.ts';
+import { _canonical, type AuditLog } from '../audit.ts';
+import { authorise, can, type Actor, type Obj } from '../authz.ts';
+import { NotFoundAsRefusal } from './backoffice.ts';
+import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from './crm.ts';
+import { enteredAt, type Need } from './pipeline.ts';
+import { assertSignedEngagement, freeGate } from './research.ts';
+import { ctaSwitchReadings } from './engine.ts';
+import { amendmentWindowReading, dateValue, penceValue } from './claim-facts.ts';
+import { funnelStateFor } from './funnel-session.ts';
+import { loadLetter, type OpenTerm } from './letter.ts';
+import { insertTask } from './tasks.ts';
+import { NO_RECEIPT_POLICY } from './documents.ts';
+import { formatPence, formatShownRange } from './shown-range.ts';
+import { localDate, localStamp } from './localtime.ts';
+import { readEngineVersion, writeCaseStamp } from './case-stamp.ts';
+
+export type RecordDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
+export type RecordResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string };
+export type Fields = Readonly<Record<string, string | null>>;
+type Vocab = Readonly<Record<string, string>>;
+
+function has(vocab: Vocab, v: string | null | undefined): v is string {
+  return typeof v === 'string' && Object.hasOwn(vocab, v);
+}
+
+function text(v: string | null | undefined, max: number, what: string): { ok: true; value: string | null } | { ok: false; why: string } {
+  if (v === null || v === undefined) return { ok: true, value: null };
+  const t = v.trim();
+  if (t === '') return { ok: true, value: null };
+  if (t.length > max) return { ok: false, why: `${what} is longer than we store — ${max.toLocaleString('en-GB')} characters is the limit.` };
+  return { ok: true, value: t };
+}
+
+function sha256(v: unknown): string {
+  return createHash('sha256').update(_canonical(v)).digest('hex');
+}
+
+type ClaimRow = {
+  id: string; claim_ref: string; business_id: string; property_id: string | null; assessment_id: string | null;
+  stage: string | null; created_at: string;
+};
+
+function loadClaim(db: Db, id: string): ClaimRow {
+  const c = db.get<ClaimRow>('SELECT id, claim_ref, business_id, property_id, assessment_id, stage, created_at FROM claims WHERE id = ?', [id]);
+  if (c === undefined) throw new NotFoundAsRefusal();
+  return c;
+}
+
+function figuresObj(c: { id: string; business_id: string }): Extract<Obj, { type: 'claim_figures' }> {
+  return { type: 'claim_figures', id: c.id, business_id: c.business_id };
+}
+
+/* ================================================================== *
+ * 1 · THE SIGN-OFF RECORD, AS THE GATES READ IT
+ * ================================================================== */
+
+type SignoffRow = {
+  id: string; claim_id: string; adviser: string; credential: string; signed_on: string; scope: string; method_note: string;
+  switch_readings_json: string; figure_pence: number; commitment_id: string; record_hash: string; recorded_at: string;
+  recorder: string | null;
+};
+
+const SIGNOFF_SELECT =
+  'SELECT s.id, s.claim_id, s.adviser, s.credential, s.signed_on, s.scope, s.method_note, s.switch_readings_json, s.figure_pence, ' +
+  's.commitment_id, s.record_hash, s.recorded_at, u.display_name AS recorder FROM tax_adviser_signoffs s LEFT JOIN users u ON u.id = s.recorded_by ';
+
+export function latestSignOff(db: Db, claim_id: string): SignoffRow | undefined {
+  return db.get<SignoffRow>(`${SIGNOFF_SELECT}WHERE s.claim_id = ? ORDER BY s.recorded_at DESC, s.rowid DESC LIMIT 1`, [claim_id]);
+}
+
+/** The sign-off record a gate may use: one recorded since the claim last ENTERED TAX_ADVISER_SIGNOFF. */
+export function signOffSinceEntry(db: Db, c: { id: string; created_at: string }): SignoffRow | undefined {
+  const since = enteredAt(db, c, 'TAX_ADVISER_SIGNOFF');
+  return db.get<SignoffRow>(
+    `${SIGNOFF_SELECT}WHERE s.claim_id = ? AND s.recorded_at >= ? ORDER BY s.recorded_at DESC, s.rowid DESC LIMIT 1`, [c.id, since]);
+}
+
+/**
+ * THE SIGN-OFF NEED. OPEN ONLY ON THE RECORD. No confirmation, no setting, no
+ * column and no other record stands in for it — test/claim-record.test.ts writes
+ * each of those and asserts the gate stays shut, then writes the record.
+ */
+export function signOffRecordNeed(db: Db, c: { id: string; created_at: string }): Need {
+  const s = signOffSinceEntry(db, c);
+  return {
+    what: 'The tax adviser’s sign-off is on record',
+    met: s !== undefined,
+    why: s === undefined
+      ? 'no sign-off record exists since the claim entered the tax adviser’s sign-off — and nothing stands in for one'
+      : `signed off on ${s.signed_on}, recorded ${localStamp(s.recorded_at)}`,
+  };
+}
+
+/* ================================================================== *
+ * 2 · THE FOUR FIGURES
+ * ================================================================== */
+
+export type ResearchedReading = { readonly state: 'NOT_PERMITTED_YET' | 'NOT_BUILT'; readonly why: string };
+
+/**
+ * B — THE RESEARCHED ESTIMATE. It comes from the post-gate research, which runs
+ * only past both register gates. While either is shut it is NOT_PERMITTED_YET,
+ * and says which. With both open it is still not shown, because nothing produces
+ * one: it says so, rather than showing a blank that looks like a zero.
+ */
+export function researchedEstimateReading(db: Db, business_id: string): ResearchedReading {
+  const free = freeGate();
+  const paid = assertSignedEngagement(db, business_id);
+  const shut: string[] = [];
+  if (!free.open) shut.push(`the free register gate is shut — ${free.requires}`);
+  if (!paid.signed) shut.push(`the paid register gate is shut — ${paid.why}`);
+  if (shut.length > 0) return { state: 'NOT_PERMITTED_YET', why: `not permitted yet: ${shut.join('; and ')}` };
+  return { state: 'NOT_BUILT', why: 'both register gates are open, and no researched estimate exists: the research that would produce one is not built in this release' };
+}
+
+type CommitmentRow = {
+  id: string; job_id: string; a_qualifying_plant_pence: number; b_building_pence: number; c_bare_land_pence: number;
+  qualifying_pct: number; method_note: string; committed_at: string; figures_hash: string;
+};
+
+export function commitmentOnClaim(db: Db, claim_id: string): CommitmentRow | undefined {
+  return db.get<CommitmentRow>(
+    'SELECT sc.id, sc.job_id, sc.a_qualifying_plant_pence, sc.b_building_pence, sc.c_bare_land_pence, sc.qualifying_pct, ' +
+      'sc.method_note, sc.committed_at, sc.figures_hash FROM surveyor_commitments sc JOIN surveyor_jobs j ON j.id = sc.job_id ' +
+      'WHERE j.claim_id = ? ORDER BY sc.committed_at DESC LIMIT 1',
+    [claim_id]);
+}
+
+export type SignoffView = {
+  readonly id: string;
+  readonly adviser: string;
+  readonly credential: string;
+  readonly signed_on: string;
+  readonly scope: string;
+  readonly method_note: string;
+  readonly switch_readings: readonly { readonly switch: string; readonly on: boolean }[];
+  readonly figure: string;
+  readonly against_commitment: string;
+  readonly record_hash: string;
+  readonly recorded: string;
+  readonly notice: string;
+};
+
+export const SIGNATURE_NOTICE =
+  'A RECORD, NOT A SIGNATURE — the signature provider in this build is a stub, nothing was executed, and this record does not pretend otherwise.';
+
+/** Who a sign-off may name — a firm, or one of these roles. Never a person's name until the question below is answered. */
+export const ADVISER_TOKENS: Vocab = Object.freeze({
+  CAPREBATE_CTA: 'Cap Rebate’s own chartered tax adviser',
+  CLIENT_TAX_ADVISER: 'The client’s own tax adviser',
+  CLIENT_ACCOUNTANT: 'The client’s own accountant',
+});
+
+export const ADVISER_NAME_QUESTION =
+  'May the chartered tax adviser’s own name be kept on the claim’s sign-off record, or only their firm and credential?';
+
+function signoffView(s: SignoffRow): SignoffView {
+  let readings: { switch: string; on: boolean }[] = [];
+  try {
+    const parsed = JSON.parse(s.switch_readings_json) as unknown;
+    if (Array.isArray(parsed)) {
+      readings = parsed.filter((x): x is { switch: string; on: boolean } =>
+        typeof x === 'object' && x !== null && typeof (x as { switch?: unknown }).switch === 'string' && typeof (x as { on?: unknown }).on === 'boolean');
+    }
+  } catch { readings = []; }
+  return {
+    id: s.id, adviser: ADVISER_TOKENS[s.adviser] ?? s.adviser, credential: s.credential, signed_on: s.signed_on, scope: s.scope,
+    method_note: s.method_note, switch_readings: readings, figure: formatPence(s.figure_pence),
+    against_commitment: s.commitment_id, record_hash: s.record_hash,
+    recorded: `${localStamp(s.recorded_at)} by ${s.recorder ?? 'a former user'}`, notice: SIGNATURE_NOTICE,
+  };
+}
+
+export type Sealed<T> = ({ readonly state: 'SEALED' } & T) | { readonly state: 'NOT_YET'; readonly why: string };
+
+export type FiguresPanel = {
+  readonly order: string;
+  readonly a_indicative: Sealed<{
+    readonly figure: string; readonly shown_range: string; readonly sealed: string; readonly hash: string;
+    readonly estimate: Readonly<Record<string, number>>;
+  }>;
+  readonly b_researched: ResearchedReading;
+  readonly c_surveyor: Sealed<{
+    readonly qualifying_plant: string; readonly building: string; readonly bare_land: string; readonly qualifying_pct: string;
+    readonly committed: string; readonly hash: string; readonly method_note: string;
+  }>;
+  readonly d_adviser: Sealed<{ readonly figure: string; readonly signed_on: string; readonly adviser: string; readonly hash: string }>;
+  readonly signoff: SignoffView | null;
+  readonly claimable_figure: { readonly released: boolean; readonly why: string };
+  readonly reconciliation: ReconciliationView | null;
+  readonly may_record_signoff: boolean;
+  readonly may_reconcile: boolean;
+  readonly signoff_form?: {
+    readonly open: boolean;
+    readonly why: string;
+    readonly switches: readonly { readonly switch: string; readonly on: boolean }[];
+    readonly adviser_tokens: Vocab;
+    readonly adviser_question: string;
+  };
+};
+
+export function figuresPanel(db: Db, actor: Actor, claim_id: string, todayIso: string): FiguresPanel {
+  const c = loadClaim(db, claim_id);
+  authorise(actor, 'claim_figures.read', figuresObj(c));
+  const est = c.assessment_id === null ? undefined : db.get<Record<string, number> & { sealed_at: string; estimate_hash: string }>(
+    'SELECT qualifying_expenditure_pence, qualifying_pct, pool_split_main_pence, pool_split_special_pence, bare_land_pence, multiplier, ' +
+      'indicative_lifetime_saving_pence, sealed_at, estimate_hash FROM estimates WHERE assessment_id = ?',
+    [c.assessment_id]);
+  const range = c.assessment_id === null ? undefined : db.get<{ shown_low_pence: number | null; shown_high_pence: number | null }>(
+    'SELECT shown_low_pence, shown_high_pence FROM assessments WHERE id = ?', [c.assessment_id]);
+  const k = commitmentOnClaim(db, c.id);
+  const s = latestSignOff(db, c.id);
+  const released = signOffSinceEntry(db, c);
+  const mayRecordSignoff = can(actor, 'tax_signoff.record', figuresObj(c));
+  return {
+    order: 'In the order they are produced: A the indicative estimate, B the researched estimate, C the surveyor’s committed figure, D the figure the tax adviser signed. Each is sealed and hashed when it is set, and never edited.',
+    a_indicative: est === undefined
+      ? { state: 'NOT_YET', why: c.assessment_id === null ? 'this claim carries no assessment, so no indicative estimate was sealed for it' : 'no estimate is sealed for this claim’s assessment' }
+      : {
+          state: 'SEALED', figure: formatPence(est['qualifying_expenditure_pence'] ?? null),
+          shown_range: formatShownRange({ low_pence: range?.shown_low_pence ?? null, high_pence: range?.shown_high_pence ?? null }),
+          sealed: localStamp(est.sealed_at), hash: est.estimate_hash,
+          estimate: {
+            qualifying_expenditure_pence: est['qualifying_expenditure_pence'] ?? 0, qualifying_pct: est['qualifying_pct'] ?? 0,
+            pool_split_main_pence: est['pool_split_main_pence'] ?? 0, pool_split_special_pence: est['pool_split_special_pence'] ?? 0,
+            bare_land_pence: est['bare_land_pence'] ?? 0, multiplier: est['multiplier'] ?? 0,
+            indicative_lifetime_saving_pence: est['indicative_lifetime_saving_pence'] ?? 0,
+          },
+        },
+    b_researched: researchedEstimateReading(db, c.business_id),
+    c_surveyor: k === undefined
+      ? { state: 'NOT_YET', why: 'no surveyor has committed figures on a survey job on this claim' }
+      : {
+          state: 'SEALED', qualifying_plant: formatPence(k.a_qualifying_plant_pence), building: formatPence(k.b_building_pence),
+          bare_land: formatPence(k.c_bare_land_pence), qualifying_pct: `${(k.qualifying_pct * 100).toFixed(1)}%`,
+          committed: localStamp(k.committed_at), hash: k.figures_hash, method_note: k.method_note,
+        },
+    d_adviser: s === undefined
+      ? { state: 'NOT_YET', why: 'no sign-off record exists for this claim' }
+      : { state: 'SEALED', figure: formatPence(s.figure_pence), signed_on: s.signed_on, adviser: ADVISER_TOKENS[s.adviser] ?? s.adviser, hash: s.record_hash },
+    signoff: s === undefined ? null : signoffView(s),
+    claimable_figure: released === undefined
+      ? { released: false, why: 'no sign-off record exists since the claim entered the tax adviser’s sign-off, so no figure reaches the client as claimable' }
+      : { released: true, why: 'the tax adviser’s sign-off is on record' },
+    reconciliation: reconciliationView(db, c.id, todayIso),
+    may_record_signoff: mayRecordSignoff,
+    may_reconcile: can(actor, 'reconciliation.record', figuresObj(c)),
+    ...(mayRecordSignoff ? {
+      signoff_form: {
+        open: c.stage === 'TAX_ADVISER_SIGNOFF' && k !== undefined,
+        why: c.stage !== 'TAX_ADVISER_SIGNOFF' ? 'a sign-off is recorded while the claim is at the tax adviser’s sign-off'
+          : k === undefined ? 'there is no surveyor’s commitment on this claim to sign off against' : '',
+        switches: ctaSwitchReadings(), adviser_tokens: ADVISER_TOKENS, adviser_question: ADVISER_NAME_QUESTION,
+      },
+    } : {}),
+  };
+}
+
+/* ================================================================== *
+ * 3 · RECORDING THE SIGN-OFF — and the reconciliation opens with it
+ * ================================================================== */
+
+/**
+ * The engine package this build ships, and its version. PHASE 132 MOVED BOTH TO src/web/case-stamp.ts, which stamps the
+ * version on every issued deliverable; the reconciliation still reads it here, from there, and the path is re-exported
+ * so nothing that named it moves.
+ */
+export { ENGINE_PACKAGE_PATH } from './case-stamp.ts';
+
+const TRANSACTION_WORDS: Vocab = Object.freeze({
+  purchase: 'second-hand purchase', new_build: 'new-build', refurb: 'refurbishment', fit_out: 'fit-out of leased premises',
+});
+
+/** The design's transaction type, from the client's own trigger answer where exactly one property was given. Otherwise null. */
+function transactionType(db: Db, assessment_id: string | null): string | null {
+  if (assessment_id === null) return null;
+  const state = funnelStateFor(db, assessment_id);
+  const props = Array.isArray(state?.['properties']) ? (state['properties'] as Record<string, unknown>[]) : [];
+  if (props.length !== 1) return null;
+  const t = props[0]?.['trigger'];
+  return typeof t === 'string' && has(TRANSACTION_WORDS, t) ? (TRANSACTION_WORDS[t] ?? null) : null;
+}
+
+export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, input: Fields): RecordResult {
+  const c = loadClaim(d.db, claim_id);
+  authorise(actor, 'tax_signoff.record', figuresObj(c));
+  if (c.stage !== 'TAX_ADVISER_SIGNOFF') {
+    return { ok: false, why: 'A sign-off is recorded while the claim is at the tax adviser’s sign-off.' };
+  }
+  const k = commitmentOnClaim(d.db, c.id);
+  if (k === undefined) return { ok: false, why: 'There is no surveyor’s commitment on this claim for the tax adviser to have signed off against.' };
+  const adviser = text(input['adviser'], 300, 'The adviser');
+  if (!adviser.ok) return adviser;
+  if (adviser.value === null || !(has(ADVISER_TOKENS, adviser.value) || (isCompanyOrRoleToken(adviser.value) && !has(OWNER_ROLE_TOKENS, adviser.value)))) {
+    return {
+      ok: false,
+      why: 'Record the adviser as their firm — a name ending Limited, LLP or plc — or as one of the roles offered. Not a person’s name: ' +
+        `whether one may be kept is a question for the data protection officer, “${ADVISER_NAME_QUESTION}”`,
+    };
+  }
+  const credential = text(input['credential'], 300, 'The credential');
+  if (!credential.ok) return credential;
+  if (credential.value === null) return { ok: false, why: 'Record the credential the sign-off was given under — for example, Chartered Tax Adviser.' };
+  const signedOn = dateValue(input['signed_on']);
+  if (signedOn === null) return { ok: false, why: 'The date the adviser signed off is a date, as YYYY-MM-DD.' };
+  if (signedOn > localDate(d.now())) return { ok: false, why: 'A sign-off cannot be dated after today.' };
+  const scope = text(input['scope'], 4000, 'The scope');
+  if (!scope.ok) return scope;
+  if (scope.value === null) return { ok: false, why: 'Say what the adviser signed off — the scope. A sign-off without one is not evidence.' };
+  const method = text(input['method_note'], 4000, 'The method note');
+  if (!method.ok) return method;
+  if (method.value === null) return { ok: false, why: 'Say what basis the adviser reached it on — the method note.' };
+  const figure = penceValue(input['figure']);
+  if (figure === null) {
+    return { ok: false, why: 'The figure the adviser signed is an amount in pounds, more than nothing. A signed nil is the reasoned negative exit, not a sign-off.' };
+  }
+  const known = ctaSwitchReadings();
+  const confirmed = (input['confirmed_switches'] ?? '').split(',').map((x) => x.trim()).filter((x) => x !== '');
+  const readings: { switch: string; on: boolean }[] = [];
+  for (const name of [...new Set(confirmed)]) {
+    const r = known.find((x) => x.switch === name);
+    if (r === undefined) return { ok: false, why: `“${name}” is not one of the tax adviser’s switches.` };
+    readings.push({ switch: r.switch, on: r.on });
+  }
+  const id = d.newId();
+  const at = d.now();
+  const record = {
+    id, claim_id: c.id, adviser: adviser.value, credential: credential.value, signed_on: signedOn, scope: scope.value,
+    method_note: method.value, switch_readings: readings, figure_pence: figure, commitment_id: k.id,
+    kind: 'RECORD_NOT_A_SIGNATURE', recorded_by: actor.id, recorded_at: at,
+  };
+  const hash = sha256(record);
+  const opened = d.db.tx(() => {
+    d.db.run(
+      'INSERT INTO tax_adviser_signoffs (id, claim_id, adviser, credential, signed_on, scope, method_note, switch_readings_json, ' +
+        'figure_pence, commitment_id, kind, record_hash, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, c.id, adviser.value, credential.value, signedOn, scope.value, method.value, JSON.stringify(readings), figure, k.id,
+        'RECORD_NOT_A_SIGNATURE', hash, actor.id, at],
+    );
+    return openReconciliation(d, c, { id, figure_pence: figure, signed_on: signedOn, adviser: adviser.value ?? '' }, k, at);
+  });
+  d.audit.append({
+    at, kind: 'TAX_SIGNOFF_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+    object_type: 'claim', object_id: c.id, detail: { signoff: id, commitment: k.id, switches_confirmed: readings.length, business: c.business_id },
+  });
+  if (opened !== null) {
+    d.audit.append({
+      at, kind: 'RECONCILIATION_OPENED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+      object_type: 'claim', object_id: c.id, detail: { reconciliation: opened, signoff: id, business: c.business_id },
+    });
+  }
+  return { ok: true, id };
+}
+
+/**
+ * THE RECONCILIATION OPENS WITH THE FIRST SIGN-OFF RECORD. The design opens it
+ * when the quote is captured; the quote this build holds is the range the client
+ * was shown, which exists from the assessment, so the first moment a case has
+ * something to reconcile against is the figure the adviser signed. A later
+ * sign-off does not rewrite it: its snapshot is fixed, and the database says so.
+ */
+function openReconciliation(
+  d: RecordDeps, c: ClaimRow, s: { id: string; figure_pence: number; signed_on: string; adviser: string }, k: CommitmentRow, at: string,
+): string | null {
+  if (d.db.get<{ id: string }>('SELECT id FROM claim_reconciliations WHERE claim_id = ?', [c.id]) !== undefined) return null;
+  const sector = d.db.get<{ sector: string }>('SELECT sector FROM businesses WHERE id = ?', [c.business_id])?.sector ?? 'not recorded';
+  const est = c.assessment_id === null ? undefined : d.db.get<{ qualifying_expenditure_pence: number; sealed_at: string; estimate_hash: string }>(
+    'SELECT qualifying_expenditure_pence, sealed_at, estimate_hash FROM estimates WHERE assessment_id = ?', [c.assessment_id]);
+  const range = c.assessment_id === null ? undefined : d.db.get<{ shown_low_pence: number | null; shown_high_pence: number | null }>(
+    'SELECT shown_low_pence, shown_high_pence FROM assessments WHERE id = ?', [c.assessment_id]);
+  const letter = assertSignedEngagement(d.db, c.business_id);
+  const snap = {
+    claim_id: c.id, case_id: c.claim_ref, client_sector: sector, transaction_type: transactionType(d.db, c.assessment_id),
+    a_value_pence: est?.qualifying_expenditure_pence ?? null, a_range_low_pence: range?.shown_low_pence ?? null,
+    a_range_high_pence: range?.shown_high_pence ?? null, a_date_captured: est?.sealed_at ?? null,
+    a_estimate_hash: est?.estimate_hash ?? null, a_engine_version: readEngineVersion(),
+    b_range_low_pence: range?.shown_low_pence ?? null, b_range_high_pence: range?.shown_high_pence ?? null,
+    b_date_captured: letter.signed_at,
+    b_basis: 'desk only — the indicative range the client was shown before the engagement letter was signed. The letter states no figure, so there is no quoted figure, and no midpoint is invented',
+    surveyor_value_pence: k.a_qualifying_plant_pence, surveyor_commitment_id: k.id, surveyor_figures_hash: k.figures_hash,
+    c_value_pence: s.figure_pence, c_date_captured: s.signed_on, c_cta_reviewer: s.adviser, c_signoff_id: s.id, opened_at: at,
+  };
+  const id = d.newId();
+  d.db.run(
+    'INSERT INTO claim_reconciliations (id, claim_id, case_id, client_sector, transaction_type, a_value_pence, a_range_low_pence, ' +
+      'a_range_high_pence, a_date_captured, a_estimate_hash, a_engine_version, b_value_pence, b_range_low_pence, b_range_high_pence, ' +
+      'b_date_captured, b_basis, surveyor_value_pence, surveyor_commitment_id, surveyor_figures_hash, c_value_pence, c_date_captured, ' +
+      'c_cta_reviewer, c_signoff_id, opened_at, snapshot_hash, status) ' +
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN_OUTCOME_PENDING')",
+    [id, c.id, snap.case_id, snap.client_sector, snap.transaction_type, snap.a_value_pence, snap.a_range_low_pence, snap.a_range_high_pence,
+      snap.a_date_captured, snap.a_estimate_hash, snap.a_engine_version, snap.b_range_low_pence, snap.b_range_high_pence,
+      snap.b_date_captured, snap.b_basis, snap.surveyor_value_pence, snap.surveyor_commitment_id, snap.surveyor_figures_hash,
+      snap.c_value_pence, snap.c_date_captured, snap.c_cta_reviewer, snap.c_signoff_id, snap.opened_at, sha256(snap)],
+  );
+  return id;
+}
+
+/* ================================================================== *
+ * 4 · THE RECONCILIATION LOG
+ * ================================================================== */
+
+export const RESOLUTION_PATHS: Vocab = Object.freeze({
+  NO_ENQUIRY_WINDOW_LAPSED: 'no enquiry — window lapsed',
+  ENQUIRY_AGREED_AS_SUBMITTED: 'enquiry — agreed as submitted',
+  ENQUIRY_AGREED_REDUCED: 'enquiry — agreed at reduced figure',
+  ENQUIRY_AGREED_INCREASED: 'enquiry — agreed at increased figure',
+  WITHDRAWN_NO_CLAIM: 'withdrawn/no claim',
+});
+
+/** The design's section 4 taxonomy, in its own words. The tax adviser tags it; staff record the tag. */
+export const VARIANCE_CATEGORIES: Vocab = Object.freeze({
+  ENGINE_READ: 'Engine under/over-read',
+  SCOPE_CHANGE: 'Scope change',
+  SURVEY_FINDING: 'Survey finding',
+  STATUTORY_ELECTION_CONSTRAINT: 'Statutory/election constraint',
+  HMRC_NEGOTIATION: 'HMRC negotiation',
+  RATE_LEGISLATION_CHANGE: 'Rate/legislation change',
+  CLIENT_WITHDRAWAL: 'Client withdrawal/no claim',
+});
+
+/** The design's review threshold on the quote gap. A starting value, "revisit after about 20 cases". */
+export const QUOTE_GAP_REVIEW_PCT = 15;
+
+type ReconRow = {
+  id: string; case_id: string; client_sector: string; transaction_type: string | null;
+  a_value_pence: number | null; a_range_low_pence: number | null; a_range_high_pence: number | null; a_date_captured: string | null;
+  a_estimate_hash: string | null; a_engine_version: string | null;
+  b_value_pence: number | null; b_range_low_pence: number | null; b_range_high_pence: number | null; b_date_captured: string | null; b_basis: string;
+  surveyor_value_pence: number; surveyor_commitment_id: string; surveyor_figures_hash: string;
+  c_value_pence: number; c_date_captured: string; c_cta_reviewer: string; c_signoff_id: string;
+  opened_at: string; snapshot_hash: string; filed_on: string | null;
+  variance_category: string | null; variance_notes: string | null;
+  d_value_pence: number | null; d_date_captured: string | null; resolution_path: string | null; hmrc_enquiry_opened: number | null;
+  amount_realised_pence: number | null; status: string;
+};
+
+export type ReconciliationView = {
+  readonly case_id: string;
+  readonly client_sector: string;
+  readonly transaction_type: string;
+  readonly estimate_A_indicative: { readonly value: string; readonly range: string; readonly date_captured: string | null; readonly estimate_hash: string | null; readonly engine_version: string };
+  readonly estimate_B_quoted: { readonly value: string; readonly range: string; readonly date_captured: string | null; readonly basis: string };
+  readonly surveyor_committed: { readonly value: string; readonly figures_hash: string };
+  readonly estimate_C_pre_submission: { readonly value: string; readonly date_captured: string; readonly cta_reviewer: string };
+  readonly filed_on: string | null;
+  readonly outcome_D: {
+    readonly value: string; readonly date_captured: string | null; readonly resolution_path: string;
+    readonly hmrc_enquiry_opened: boolean; readonly amount_realised: string;
+  } | null;
+  readonly variance: {
+    readonly quote_gap: string; readonly quote_gap_pct: string; readonly delivery_gap: string; readonly delivery_gap_pct: string;
+    readonly variance_category: string | null; readonly variance_notes: string | null;
+    readonly review_required: boolean; readonly review_why: string;
+  };
+  readonly status: string;
+  readonly snapshot_hash: string;
+  readonly opened: string;
+};
+
+function signedPence(p: number): string {
+  return p < 0 ? `−${formatPence(-p)}` : formatPence(p);
+}
+
+/**
+ * THE VARIANCE, READ AND NEVER STORED. The quote gap needs a quoted figure, and
+ * the quote this build holds is a range — so the gap is NOT KNOWN, never zero,
+ * and a case whose gap is not known goes to the tax adviser's review before it
+ * closes, exactly as one over the threshold does.
+ */
+export function varianceOf(r: {
+  b_value_pence: number | null; c_value_pence: number; d_value_pence: number | null; resolution_path: string | null;
+}): { quote_gap: number | null; quote_gap_pct: number | null; delivery_gap: number | null; delivery_gap_pct: number | null; review_required: boolean; review_why: string } {
+  const d = r.d_value_pence;
+  const quote = r.b_value_pence === null || d === null ? null : d - r.b_value_pence;
+  const quotePct = quote === null || r.b_value_pence === null || r.b_value_pence === 0 ? null : (quote / r.b_value_pence) * 100;
+  const delivery = d === null ? null : d - r.c_value_pence;
+  const deliveryPct = delivery === null ? null : (delivery / r.c_value_pence) * 100;
+  if (r.resolution_path === 'WITHDRAWN_NO_CLAIM') {
+    return { quote_gap: null, quote_gap_pct: null, delivery_gap: null, delivery_gap_pct: null, review_required: true,
+      review_why: 'a withdrawn case is excluded from the ratios and tracked separately — it is still tagged' };
+  }
+  if (r.b_value_pence === null) {
+    return { quote_gap: null, quote_gap_pct: null, delivery_gap: delivery, delivery_gap_pct: deliveryPct, review_required: true,
+      review_why: 'the quote gap is not known — the quote was a range, not a figure — so the tax adviser tags the variance before the case closes' };
+  }
+  const over = quotePct !== null && Math.abs(quotePct) > QUOTE_GAP_REVIEW_PCT;
+  return { quote_gap: quote, quote_gap_pct: quotePct, delivery_gap: delivery, delivery_gap_pct: deliveryPct, review_required: over || quotePct === null,
+    review_why: over ? `the quote gap is more than ${QUOTE_GAP_REVIEW_PCT}%` : quotePct === null ? 'the quote gap is not known' : 'within the threshold' };
+}
+
+export function reconciliationView(db: Db, claim_id: string, _todayIso: string): ReconciliationView | null {
+  const r = db.get<ReconRow>('SELECT * FROM claim_reconciliations WHERE claim_id = ?', [claim_id]);
+  if (r === undefined) return null;
+  const v = varianceOf(r);
+  const money = (p: number | null): string => (p === null ? 'not known' : formatPence(p));
+  const range = (lo: number | null, hi: number | null): string => formatShownRange({ low_pence: lo, high_pence: hi });
+  return {
+    case_id: r.case_id, client_sector: r.client_sector.replace(/_/g, ' '), transaction_type: r.transaction_type ?? 'not established',
+    estimate_A_indicative: {
+      value: money(r.a_value_pence), range: range(r.a_range_low_pence, r.a_range_high_pence),
+      date_captured: r.a_date_captured === null ? null : localStamp(r.a_date_captured), estimate_hash: r.a_estimate_hash,
+      engine_version: r.a_engine_version ?? 'not known',
+    },
+    estimate_B_quoted: {
+      value: 'no quoted figure — the letter states none', range: range(r.b_range_low_pence, r.b_range_high_pence),
+      date_captured: r.b_date_captured === null ? null : localStamp(r.b_date_captured), basis: r.b_basis,
+    },
+    surveyor_committed: { value: formatPence(r.surveyor_value_pence), figures_hash: r.surveyor_figures_hash },
+    estimate_C_pre_submission: { value: formatPence(r.c_value_pence), date_captured: r.c_date_captured, cta_reviewer: ADVISER_TOKENS[r.c_cta_reviewer] ?? r.c_cta_reviewer },
+    filed_on: r.filed_on,
+    outcome_D: r.resolution_path === null ? null : {
+      value: money(r.d_value_pence), date_captured: r.d_date_captured, resolution_path: RESOLUTION_PATHS[r.resolution_path] ?? r.resolution_path,
+      hmrc_enquiry_opened: r.hmrc_enquiry_opened === 1, amount_realised: money(r.amount_realised_pence),
+    },
+    variance: {
+      quote_gap: v.quote_gap === null ? 'not known' : signedPence(v.quote_gap),
+      quote_gap_pct: v.quote_gap_pct === null ? 'not known' : `${v.quote_gap_pct.toFixed(1)}%`,
+      delivery_gap: v.delivery_gap === null ? 'not known until the outcome' : signedPence(v.delivery_gap),
+      delivery_gap_pct: v.delivery_gap_pct === null ? 'not known until the outcome' : `${v.delivery_gap_pct.toFixed(1)}%`,
+      variance_category: r.variance_category === null ? null : (VARIANCE_CATEGORIES[r.variance_category] ?? r.variance_category),
+      variance_notes: r.variance_notes, review_required: v.review_required, review_why: v.review_why,
+    },
+    status: r.status === 'RECONCILED' ? 'reconciled' : 'open — outcome pending',
+    snapshot_hash: r.snapshot_hash, opened: localStamp(r.opened_at),
+  };
+}
+
+function reconFor(d: RecordDeps, actor: Actor, claim_id: string): { c: ClaimRow; r: ReconRow } {
+  const c = loadClaim(d.db, claim_id);
+  authorise(actor, 'reconciliation.record', figuresObj(c));
+  const r = d.db.get<ReconRow>('SELECT * FROM claim_reconciliations WHERE claim_id = ?', [c.id]);
+  if (r === undefined) throw new NotFoundAsRefusal();
+  return { c, r };
+}
+
+function reconAudit(d: RecordDeps, actor: Actor, c: ClaimRow, step: string, at: string): void {
+  d.audit.append({
+    at, kind: 'RECONCILIATION_UPDATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+    object_type: 'claim', object_id: c.id, detail: { step, business: c.business_id },
+  });
+}
+
+/** THE FILING — the date the return carrying the claim was filed. Once. */
+export function recordFiling(d: RecordDeps, actor: Actor, claim_id: string, input: Fields): RecordResult {
+  const { c, r } = reconFor(d, actor, claim_id);
+  if (r.filed_on !== null) return { ok: false, why: `The filing is already recorded, on ${r.filed_on}, and does not change.` };
+  const filed = dateValue(input['filed_on']);
+  if (filed === null) return { ok: false, why: 'The filing date is a date, as YYYY-MM-DD.' };
+  if (filed > localDate(d.now())) return { ok: false, why: 'A return cannot be recorded as filed after today.' };
+  const at = d.now();
+  d.db.run('UPDATE claim_reconciliations SET filed_on = ?, filed_recorded_by = ?, filed_recorded_at = ? WHERE id = ?', [filed, actor.id, at, r.id]);
+  reconAudit(d, actor, c, 'FILED', at);
+  return { ok: true, id: r.id };
+}
+
+/** THE VARIANCE TAG — from the design's taxonomy, tagged by the tax adviser, recorded once. */
+export function recordVariance(d: RecordDeps, actor: Actor, claim_id: string, input: Fields): RecordResult {
+  const { c, r } = reconFor(d, actor, claim_id);
+  if (r.variance_category !== null) return { ok: false, why: 'The variance is already tagged, and the tag does not change.' };
+  const cat = input['variance_category'] ?? null;
+  if (!has(VARIANCE_CATEGORIES, cat)) return { ok: false, why: 'Choose the variance category from the taxonomy.' };
+  const notes = text(input['variance_notes'], 4000, 'The variance notes');
+  if (!notes.ok) return notes;
+  const at = d.now();
+  d.db.run('UPDATE claim_reconciliations SET variance_category = ?, variance_notes = ?, variance_recorded_by = ?, variance_recorded_at = ? WHERE id = ?',
+    [cat, notes.value, actor.id, at, r.id]);
+  reconAudit(d, actor, c, 'VARIANCE_TAGGED', at);
+  return { ok: true, id: r.id };
+}
+
+/**
+ * A DAY THE TARGET MONTH DOES NOT HAVE IS THAT MONTH'S LAST DAY. Phase 132, 15 September 2026.
+ * It rolled over into the next month: 29 February 2024 plus twelve months read 1 March 2025, and 31 January plus one
+ * read 3 March, holding the enquiry window open a day or more too long. The engine's CB_CASH.addMonths was clamped the
+ * same way on 14 September. A day the target month has reads exactly as before. Exported for its test alone.
+ */
+export function addMonths(date: string, months: number): string {
+  const [y, m, dd] = date.split('-').map(Number);
+  const lastDay = new Date(Date.UTC(y ?? 0, (m ?? 1) - 1 + months + 1, 0)).getUTCDate();
+  const t = new Date(Date.UTC(y ?? 0, (m ?? 1) - 1 + months, Math.min(dd ?? 1, lastDay)));
+  return t.toISOString().slice(0, 10);
+}
+
+/**
+ * THE OUTCOME — DERIVED, NOT KEYED, WHEREVER THE RECORDS SETTLE IT.
+ *
+ *   a closed enquiry        agreed as submitted, reduced or increased, at its figure
+ *   an open enquiry         no outcome yet — refused
+ *   no enquiry              the window lapsed only once twelve months have passed
+ *                           since the recorded filing; before that, refused
+ *   withdrawn               the one outcome a person states, with no figure
+ *
+ * The amount realised is recorded where it is known and left blank where it is
+ * not; nothing requires a guess. A case whose variance the tax adviser has not
+ * tagged does not close.
+ */
+export function recordOutcome(d: RecordDeps, actor: Actor, claim_id: string, input: Fields): RecordResult {
+  const { c, r } = reconFor(d, actor, claim_id);
+  if (r.resolution_path !== null) return { ok: false, why: 'The outcome is already recorded, and does not change.' };
+  if (r.variance_category === null) {
+    return { ok: false, why: 'The tax adviser tags the variance before the case closes — the quote gap is not known, because the quote was a range.' };
+  }
+  const rawRealised = input['amount_realised'] ?? null;
+  const realised = rawRealised === null || rawRealised.trim() === '' ? null : penceValue(rawRealised);
+  if (rawRealised !== null && rawRealised.trim() !== '' && realised === null) return { ok: false, why: 'The amount realised is in pounds and more than nothing — leave it blank if it is not known.' };
+  const today = localDate(d.now());
+  const open = d.db.get<{ id: string }>('SELECT id FROM hmrc_enquiries WHERE claim_id = ? AND closed_on IS NULL', [c.id]);
+  const closed = d.db.get<{ closed_on: string; outcome: string; amended_figure_pence: number | null }>(
+    'SELECT closed_on, outcome, amended_figure_pence FROM hmrc_enquiries WHERE claim_id = ? AND closed_on IS NOT NULL ORDER BY closed_on DESC, rowid DESC LIMIT 1',
+    [c.id]);
+  let path: string, dValue: number | null, dDate: string | null, enquiry: number;
+  if (input['withdrawn'] === 'yes') {
+    if (open !== undefined) return { ok: false, why: 'An HMRC enquiry is open on this claim, so the outcome is its closing.' };
+    path = 'WITHDRAWN_NO_CLAIM'; dValue = null; dDate = today; enquiry = closed === undefined ? 0 : 1;
+  } else if (open !== undefined) {
+    return { ok: false, why: 'An HMRC enquiry is open on this claim. The outcome is recorded when it closes.' };
+  } else if (closed !== undefined) {
+    enquiry = 1; dDate = closed.closed_on;
+    if (closed.outcome === 'NO_CHANGE') { path = 'ENQUIRY_AGREED_AS_SUBMITTED'; dValue = r.c_value_pence; }
+    else if (closed.outcome === 'AMENDED_DOWN') { path = 'ENQUIRY_AGREED_REDUCED'; dValue = closed.amended_figure_pence; }
+    else { path = 'ENQUIRY_AGREED_INCREASED'; dValue = closed.amended_figure_pence; }
+  } else {
+    if (r.filed_on === null) return { ok: false, why: 'The filing is not recorded, so the enquiry window cannot be known to have lapsed.' };
+    const lapses = addMonths(r.filed_on, 12);
+    if (today < lapses) return { ok: false, why: `HMRC may still open an enquiry until ${lapses} — twelve months from the filing — so the outcome is not known yet.` };
+    path = 'NO_ENQUIRY_WINDOW_LAPSED'; dValue = r.c_value_pence; dDate = lapses; enquiry = 0;
+  }
+  const at = d.now();
+  d.db.run(
+    "UPDATE claim_reconciliations SET d_value_pence = ?, d_date_captured = ?, resolution_path = ?, hmrc_enquiry_opened = ?, amount_realised_pence = ?, " +
+      "outcome_recorded_by = ?, outcome_recorded_at = ?, status = 'RECONCILED' WHERE id = ?",
+    [dValue, dDate, path, enquiry, realised, actor.id, at, r.id]);
+  reconAudit(d, actor, c, 'RECONCILED', at);
+  return { ok: true, id: r.id };
+}
+
+/* ================================================================== *
+ * 5 · THE DELIVERABLES REGISTER
+ * ================================================================== */
+
+export type DeliverableKind = 'CLIENT_REPORT' | 'ACCOUNTANT_COMPUTATION_PACK' | 'REASONED_NEGATIVE' | 'DEFENCE_PACK' | 'S203_NOTIFICATION';
+
+export const DELIVERABLES: Readonly<Record<DeliverableKind, {
+  readonly label: string; readonly document_type: string; readonly needs_signoff: boolean; readonly immutable_when_issued: boolean;
+}>> = Object.freeze({
+  CLIENT_REPORT: { label: 'The client report', document_type: 'CA_REPORT', needs_signoff: true, immutable_when_issued: false },
+  ACCOUNTANT_COMPUTATION_PACK: { label: 'The accountant’s computation pack', document_type: 'TAX_COMPUTATION', needs_signoff: true, immutable_when_issued: false },
+  REASONED_NEGATIVE: { label: 'The reasoned negative', document_type: 'CLAIM_DOCUMENTATION', needs_signoff: false, immutable_when_issued: false },
+  DEFENCE_PACK: { label: 'The defence pack', document_type: 'CLAIM_DOCUMENTATION', needs_signoff: false, immutable_when_issued: true },
+  S203_NOTIFICATION: { label: 'The s.203 notification', document_type: 'CORRESPONDENCE', needs_signoff: false, immutable_when_issued: false },
+});
+
+const KINDS = Object.keys(DELIVERABLES) as DeliverableKind[];
+
+export const DELIVERABLE_STATES: Vocab = Object.freeze({
+  NOT_STARTED: 'Not started', DRAFT: 'Draft', ISSUED: 'Issued', SUPERSEDED: 'Superseded',
+});
+
+export const RECEIPT_QUESTION = 'Which receipt strip should each new document type carry before anyone may upload one?';
+
+type DeliverableRow = {
+  id: string; claim_id: string; kind: string; version: number; document_type: string; state: string; issued_on: string | null;
+  content_hash: string | null; logical_document_id: string | null; created_at: string; updated_at: string;
+};
+
+export function deliverableIssued(db: Db, claim_id: string, kind: DeliverableKind): boolean {
+  return db.get<{ n: number }>("SELECT COUNT(*) AS n FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED'", [claim_id, kind])?.n !== 0;
+}
+
+export function deliverableIssuedNeed(db: Db, claim_id: string, kind: DeliverableKind): Need {
+  const issued = db.get<{ issued_on: string; version: number }>(
+    "SELECT issued_on, version FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED' ORDER BY version DESC LIMIT 1",
+    [claim_id, kind]);
+  const def = DELIVERABLES[kind];
+  return {
+    what: `${def.label} is issued`,
+    met: issued !== undefined,
+    why: issued === undefined ? `${def.label.toLowerCase()} is not issued — the deliverables register records no issued version` : `version ${issued.version} issued on ${issued.issued_on}`,
+  };
+}
+
+export function deliverableObj(db: Db, r: { id: string; claim_id: string; kind: string; state: string }, business_id: string): Extract<Obj, { type: 'deliverable' }> {
+  const claim = db.get<{ id: string; created_at: string }>('SELECT id, created_at FROM claims WHERE id = ?', [r.claim_id]);
+  return {
+    type: 'deliverable', id: r.id, business_id, kind: r.kind, state: r.state,
+    figure_released: claim !== undefined && signOffSinceEntry(db, claim) !== undefined,
+  };
+}
+
+export type DeliverableLine = {
+  readonly kind: DeliverableKind;
+  readonly label: string;
+  readonly state: string;
+  readonly state_label: string;
+  readonly version: number | null;
+  readonly issued_on: string | null;
+  readonly content_hash: string | null;
+  readonly document_type: string;
+  readonly stored: string;
+  readonly history: readonly { readonly version: number; readonly state: string; readonly issued_on: string | null }[];
+  readonly may_draft: boolean;
+  readonly may_issue: boolean;
+  readonly refused_why: string | null;
+};
+
+export type DeliverablesPanel = {
+  readonly lines: readonly DeliverableLine[];
+  readonly generation: string;
+  readonly may_record: boolean;
+};
+
+export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): DeliverablesPanel {
+  const c = loadClaim(db, claim_id);
+  authorise(actor, 'deliverable.read', { type: 'deliverable', id: c.id, business_id: c.business_id, kind: 'REGISTER', state: 'REGISTER', figure_released: false });
+  const mayRecord = can(actor, 'deliverable.record', { type: 'deliverable', id: c.id, business_id: c.business_id, kind: 'REGISTER', state: 'DRAFT', figure_released: false });
+  const signed = signOffSinceEntry(db, c) !== undefined;
+  const rows = db.all<DeliverableRow>('SELECT * FROM claim_deliverables WHERE claim_id = ? ORDER BY kind ASC, version DESC', [c.id]);
+  const types = new Map(db.all<{ code: string; label: string }>('SELECT code, label FROM document_types').map((t) => [t.code, t.label] as const));
+  return {
+    generation: 'Tracked, not generated — no part of this build writes a report. Each deliverable is a document on the claim; none of their types has a receipt policy yet, so none can be stored.',
+    may_record: mayRecord,
+    lines: KINDS.map((kind) => {
+      const def = DELIVERABLES[kind];
+      const mine = rows.filter((r) => r.kind === kind);
+      const current = mine[0];
+      const draft = mine.find((r) => r.state === 'DRAFT');
+      const blocked = def.needs_signoff && !signed ? 'no report stating a figure is drafted before the tax adviser’s sign-off is on record' : null;
+      return {
+        kind, label: def.label,
+        state: current?.state ?? 'NOT_STARTED', state_label: DELIVERABLE_STATES[current?.state ?? 'NOT_STARTED'] ?? 'Not started',
+        version: current?.version ?? null, issued_on: current?.issued_on ?? null, content_hash: current?.content_hash ?? null,
+        document_type: types.get(def.document_type) ?? def.document_type,
+        stored: `It cannot be stored yet. ${NO_RECEIPT_POLICY} The question is “${RECEIPT_QUESTION}”`,
+        history: mine.map((r) => ({ version: r.version, state: DELIVERABLE_STATES[r.state] ?? r.state, issued_on: r.issued_on })),
+        may_draft: mayRecord && draft === undefined && blocked === null,
+        may_issue: mayRecord && draft !== undefined,
+        refused_why: blocked,
+      };
+    }),
+  };
+}
+
+/**
+ * DRAFT A NEW VERSION, OR ISSUE THE DRAFT. Nothing else moves a deliverable.
+ * Issuing a new version supersedes the one before it — except the defence pack,
+ * whose every issued version stays exactly as issued, with its hash.
+ */
+export function recordDeliverable(d: RecordDeps, actor: Actor, claim_id: string, input: Fields): RecordResult {
+  const c = loadClaim(d.db, claim_id);
+  const kind = input['kind'] ?? null;
+  authorise(actor, 'deliverable.record', { type: 'deliverable', id: c.id, business_id: c.business_id, kind: kind ?? '', state: 'DRAFT', figure_released: false });
+  if (kind === null || !Object.hasOwn(DELIVERABLES, kind)) return { ok: false, why: 'Choose one of the five deliverables.' };
+  const def = DELIVERABLES[kind as DeliverableKind];
+  const action = input['action'] ?? null;
+  const at = d.now();
+  if (action === 'DRAFT') {
+    if (def.needs_signoff && signOffSinceEntry(d.db, c) === undefined) {
+      return { ok: false, why: `${def.label} states a figure, and no report stating a figure is drafted before the tax adviser’s sign-off is on record.` };
+    }
+    if (d.db.get<{ id: string }>("SELECT id FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'DRAFT'", [c.id, kind]) !== undefined) {
+      return { ok: false, why: `${def.label} already has a draft in progress. Issue it before starting another version.` };
+    }
+    const next = (d.db.get<{ n: number | null }>('SELECT MAX(version) AS n FROM claim_deliverables WHERE claim_id = ? AND kind = ?', [c.id, kind])?.n ?? 0) + 1;
+    const id = d.newId();
+    d.db.run(
+      'INSERT INTO claim_deliverables (id, claim_id, kind, version, document_type, state, created_by, created_at, updated_by, updated_at) ' +
+        "VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?)",
+      [id, c.id, kind, next, def.document_type, actor.id, at, actor.id, at]);
+    d.audit.append({
+      at, kind: 'DELIVERABLE_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+      object_type: 'claim', object_id: c.id, detail: { deliverable: id, deliverable_kind: kind, version: next, state: 'DRAFT', business: c.business_id },
+    });
+    return { ok: true, id };
+  }
+  if (action === 'ISSUE') {
+    const draft = d.db.get<DeliverableRow>("SELECT * FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'DRAFT'", [c.id, kind]);
+    if (draft === undefined) return { ok: false, why: `${def.label} has no draft to issue.` };
+    const issuedOn = dateValue(input['issued_on']);
+    if (issuedOn === null) return { ok: false, why: 'The issue date is a date, as YYYY-MM-DD.' };
+    if (issuedOn > localDate(at)) return { ok: false, why: 'A deliverable cannot be issued after today.' };
+    const rawHash = (input['content_hash'] ?? '').trim().toLowerCase();
+    if (rawHash !== '' && !/^[0-9a-f]{64}$/.test(rawHash)) return { ok: false, why: 'The hash is the SHA-256 of the issued document: sixty-four characters, 0 to 9 and a to f.' };
+    if (kind === 'DEFENCE_PACK' && rawHash === '') {
+      return { ok: false, why: 'An issued defence pack is immutable and its hash is recorded — give the SHA-256 of the pack as issued.' };
+    }
+    if (def.needs_signoff && signOffSinceEntry(d.db, c) === undefined) {
+      return { ok: false, why: `${def.label} states a figure, and it is not issued before the tax adviser’s sign-off is on record.` };
+    }
+    /*
+     * THE CASE STAMP — PHASE 132, 14 SEPTEMBER 2026. EVERY ISSUE, OF EVERY KIND, SEALS WHAT DECIDED THE CASE: the engine
+     * version, the rulebook versions, every switch and its position, and the sign-off records with their hashes
+     * (src/web/case-stamp.ts). IN THE SAME TRANSACTION, AFTER THE ISSUE, so a stamp that cannot be written takes the issue
+     * back with it and an issued deliverable never stands without one. ALWAYS ON: it relieves nothing. A refusal above
+     * returns before this and writes no stamp.
+     */
+    const stamp = d.db.tx(() => {
+      if (!def.immutable_when_issued) {
+        d.db.run("UPDATE claim_deliverables SET state = 'SUPERSEDED', updated_by = ?, updated_at = ? WHERE claim_id = ? AND kind = ? AND state = 'ISSUED'",
+          [actor.id, at, c.id, kind]);
+      }
+      d.db.run("UPDATE claim_deliverables SET state = 'ISSUED', issued_on = ?, content_hash = ?, updated_by = ?, updated_at = ? WHERE id = ?",
+        [issuedOn, rawHash === '' ? null : rawHash, actor.id, at, draft.id]);
+      return writeCaseStamp(d.db, { id: d.newId(), claim_id: c.id, deliverable_id: draft.id, stamped_by: actor.id, stamped_at: at });
+    });
+    d.audit.append({
+      at, kind: 'DELIVERABLE_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+      object_type: 'claim', object_id: c.id, detail: { deliverable: draft.id, deliverable_kind: kind, version: draft.version, state: 'ISSUED', business: c.business_id },
+    });
+    d.audit.append({
+      at, kind: 'CASE_STAMPED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+      object_type: 'claim', object_id: c.id,
+      detail: {
+        stamp: stamp.id, deliverable: draft.id, deliverable_kind: kind, stamp_hash: stamp.stamp_hash,
+        cta_switches: stamp.stamp.cta_switches.length, backend_switches: stamp.stamp.backend_switches.length,
+        signoffs: stamp.stamp.signoffs.length, business: c.business_id,
+      },
+    });
+    return { ok: true, id: draft.id };
+  }
+  return { ok: false, why: 'A deliverable is drafted or issued — nothing else.' };
+}
+
+export type ClientDeliverable = { readonly label: string; readonly version: number; readonly issued_on: string; readonly note: string };
+
+/**
+ * WHAT THE CLIENT'S PORTAL SHOWS FROM THE REGISTER — every deliverable asked of
+ * `deliverable.read` on its own. A reasoned negative reaches the client HERE,
+ * through its deliverable, and never as a stage the portal invents. No figure is
+ * carried: the client report is listed only once its figure is released.
+ */
+export function clientDeliverables(db: Db, actor: Actor, business_id: string): ClientDeliverable[] {
+  return db.all<DeliverableRow>(
+    "SELECT cd.* FROM claim_deliverables cd JOIN claims c ON c.id = cd.claim_id WHERE c.business_id = ? AND cd.state = 'ISSUED' ORDER BY cd.issued_on ASC, cd.kind ASC",
+    [business_id])
+    .filter((r) => can(actor, 'deliverable.read', deliverableObj(db, r, business_id)))
+    .map((r) => ({
+      label: DELIVERABLES[r.kind as DeliverableKind]?.label ?? r.kind, version: r.version, issued_on: r.issued_on ?? '',
+      note: 'Issued to you by Cap Rebate. The document itself cannot be kept in this portal yet, so it reaches you directly from us.',
+    }));
+}
+
+/* ================================================================== *
+ * 6 · AFTERCARE — HMRC ENQUIRIES, CLAUSE 13, AND THE DISPOSAL NOTE
+ * ================================================================== */
+
+export const ENQUIRY_OUTCOMES: Vocab = Object.freeze({
+  NO_CHANGE: 'Closed with no change — agreed as submitted',
+  AMENDED_DOWN: 'Closed with the allowances reduced',
+  AMENDED_UP: 'Closed with the allowances increased',
+});
+
+export const CLAWBACK_QUESTION = 'If a claim is reduced after we have been paid, do we give the money back?';
+
+/**
+ * CLAUSE 13 — THE FEE FOLLOWS THE CORRECTED FIGURE. SHIPPED OFF.
+ *
+ * The letter's clause 13 now states the rule — a reduced claim is recalculated
+ * and the difference credited or refunded — and leaves three terms blank: the
+ * trigger, settlements, and the time limit. Built and switched off: while it is
+ * off, an enquiry that reduces a claim raises nothing and the audit says why;
+ * turned on while clause 13 still carries a blank, it still raises nothing. On,
+ * with the clause complete, a reduction raises a finance task for Accounting.
+ * Nothing here computes a credit: the fee is Caprebate's own finance.
+ */
+export type FeeClawbackSwitch = {
+  readonly enabled: boolean; readonly clause: string; readonly question: string;
+  /** Phase 132e: what Lakhbir decided, recorded. It moves no switch: the trigger and settlement terms are still blank. */
+  readonly decided: { readonly refund: 'YES'; readonly time_limit: string; readonly still_open: readonly string[]; readonly source: string };
+};
+
+export const FEE_CLAWBACK: FeeClawbackSwitch = Object.freeze({
+  enabled: false, clause: 'clause 13 — Fee Adjustment Where a Claim is Reduced', question: CLAWBACK_QUESTION,
+  decided: Object.freeze({
+    refund: 'YES' as const,
+    time_limit: 'for so long as the claim remains open to enquiry',
+    still_open: Object.freeze(['the trigger — any reduction, or only one above a threshold', 'whether it applies to a settlement the client accepts']),
+    source: 'Lakhbir, answering “If a claim is reduced after we have been paid, do we give the money back?”: (a) yes, and (d) no time limit — written into clause 13 as “for so long as the claim remains open to enquiry” by Phase 132e',
+  }),
+});
+
+export function clauseThirteenBlanks(openTerms?: readonly OpenTerm[]): readonly OpenTerm[] {
+  const terms = openTerms ?? loadLetter().openTerms;
+  return terms.filter((t) => /^clause 13 —/.test(t.clause));
+}
+
+export type ClawbackReading = { readonly applies: boolean; readonly reason: 'SWITCH_OFF' | 'CLAUSE_13_BLANK' | 'APPLIES'; readonly why: string; readonly blanks: readonly string[] };
+
+export function clawbackReading(opts: { gate?: { readonly enabled: boolean }; openTerms?: readonly OpenTerm[] } = {}): ClawbackReading {
+  const gate = opts.gate ?? FEE_CLAWBACK;
+  const blanks = clauseThirteenBlanks(opts.openTerms).map((t) => t.text);
+  if (!gate.enabled) {
+    return { applies: false, reason: 'SWITCH_OFF', blanks,
+      why: `switched off — nothing is raised when a claim is reduced until “${CLAWBACK_QUESTION}” is answered and clause 13 is complete` };
+  }
+  if (blanks.length > 0) {
+    return { applies: false, reason: 'CLAUSE_13_BLANK', blanks,
+      why: `the switch is on, and clause 13 of the engagement letter still reads ${blanks.join(' ')} — so nothing is raised` };
+  }
+  return { applies: true, reason: 'APPLIES', blanks, why: 'a reduction raises a finance task: the fee is recalculated on the corrected figure under clause 13' };
+}
+
+type EnquiryRow = {
+  id: string; opened_on: string; note: string | null; closed_on: string | null; outcome: string | null; amended_figure_pence: number | null;
+  opened_recorded_at: string; opener: string | null;
+};
+
+export type EnquiryView = {
+  readonly id: string; readonly opened_on: string; readonly note: string | null; readonly open: boolean;
+  readonly closed_on: string | null; readonly outcome: string | null; readonly amended_figure: string | null; readonly recorded: string;
+};
+
+export type AftercarePanel = {
+  readonly enquiries: readonly EnquiryView[];
+  readonly enquiry_open: boolean;
+  readonly correspondence: string;
+  readonly clawback: ClawbackReading;
+  readonly disposal: { readonly note: string; readonly tasks: readonly { readonly id: string; readonly title: string; readonly status: string }[] };
+  readonly may_record: boolean;
+};
+
+export const DISPOSAL_NOTE_PATH = '08-monday-doc-exports/12830181411__Disposal-note-the-election-the-client-signs-on-a-future-sale.md';
+export const DISPOSAL_TASK_TITLE = 'The election on a future sale — read the Disposal Note';
+
+export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { openTerms?: readonly OpenTerm[] } = {}): AftercarePanel {
+  const c = loadClaim(db, claim_id);
+  authorise(actor, 'claim_facts.read', { type: 'claim_facts', id: c.id, business_id: c.business_id, assigned_surveyor_ids: [] });
+  const enquiries = db.all<EnquiryRow>(
+    'SELECT e.id, e.opened_on, e.note, e.closed_on, e.outcome, e.amended_figure_pence, e.opened_recorded_at, u.display_name AS opener ' +
+      'FROM hmrc_enquiries e LEFT JOIN users u ON u.id = e.opened_by WHERE e.claim_id = ? ORDER BY e.opened_on DESC, e.rowid DESC',
+    [c.id]).map((e) => ({
+    id: e.id, opened_on: e.opened_on, note: e.note, open: e.closed_on === null, closed_on: e.closed_on,
+    outcome: e.outcome === null ? null : (ENQUIRY_OUTCOMES[e.outcome] ?? e.outcome),
+    amended_figure: e.amended_figure_pence === null ? null : formatPence(e.amended_figure_pence),
+    recorded: `${localStamp(e.opened_recorded_at)} by ${e.opener ?? 'a former user'}`,
+  }));
+  const tasks = c.property_id === null ? [] : db.all<{ id: string; title: string; status: string }>(
+    'SELECT id, title, status FROM staff_tasks WHERE property_id = ? AND title = ? ORDER BY created_at DESC', [c.property_id, DISPOSAL_TASK_TITLE]);
+  return {
+    enquiries, enquiry_open: enquiries.some((e) => e.open),
+    correspondence: `Correspondence with HMRC is a document of type Correspondence. ${NO_RECEIPT_POLICY} The question is “${RECEIPT_QUESTION}”`,
+    clawback: clawbackReading(opts.openTerms === undefined ? {} : { openTerms: opts.openTerms }),
+    disposal: {
+      note: `When the property's disposal date is set, or a sale is recorded as in prospect, a task points at the Disposal Note — ${DISPOSAL_NOTE_PATH}.`,
+      tasks,
+    },
+    may_record: can(actor, 'hmrc_enquiry.record', { type: 'hmrc_enquiry', id: c.id, business_id: c.business_id }),
+  };
+}
+
+export function openEnquiry(d: RecordDeps, actor: Actor, claim_id: string, input: Fields): RecordResult {
+  const c = loadClaim(d.db, claim_id);
+  authorise(actor, 'hmrc_enquiry.record', { type: 'hmrc_enquiry', id: c.id, business_id: c.business_id });
+  const opened = dateValue(input['opened_on']);
+  if (opened === null) return { ok: false, why: 'The date HMRC opened the enquiry is a date, as YYYY-MM-DD.' };
+  if (opened > localDate(d.now())) return { ok: false, why: 'An enquiry cannot be recorded as opened after today.' };
+  if (d.db.get<{ id: string }>('SELECT id FROM hmrc_enquiries WHERE claim_id = ? AND closed_on IS NULL', [c.id]) !== undefined) {
+    return { ok: false, why: 'An enquiry is already open on this claim. Close it first.' };
+  }
+  const note = text(input['note'], 2000, 'The note');
+  if (!note.ok) return note;
+  const id = d.newId();
+  const at = d.now();
+  d.db.run('INSERT INTO hmrc_enquiries (id, claim_id, opened_on, note, opened_by, opened_recorded_at) VALUES (?, ?, ?, ?, ?, ?)',
+    [id, c.id, opened, note.value, actor.id, at]);
+  d.audit.append({
+    at, kind: 'HMRC_ENQUIRY_OPENED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+    object_type: 'claim', object_id: c.id, detail: { enquiry: id, business: c.business_id },
+  });
+  return { ok: true, id };
+}
+
+/**
+ * CLOSE AN ENQUIRY. Where it reduces the allowances below the figure the tax
+ * adviser signed, clause 13 is asked — and while its switch is off, or the clause
+ * is blank, nothing is raised and the audit records which.
+ */
+export function closeEnquiry(
+  d: RecordDeps, actor: Actor, claim_id: string, enquiry_id: string, input: Fields,
+  opts: { gate?: { readonly enabled: boolean }; openTerms?: readonly OpenTerm[] } = {},
+): RecordResult {
+  const c = loadClaim(d.db, claim_id);
+  authorise(actor, 'hmrc_enquiry.record', { type: 'hmrc_enquiry', id: c.id, business_id: c.business_id });
+  const e = d.db.get<{ id: string; opened_on: string; closed_on: string | null }>('SELECT id, opened_on, closed_on FROM hmrc_enquiries WHERE id = ? AND claim_id = ?', [enquiry_id, c.id]);
+  if (e === undefined) throw new NotFoundAsRefusal();
+  if (e.closed_on !== null) return { ok: false, why: 'That enquiry is already closed, and its outcome does not change.' };
+  const closedOn = dateValue(input['closed_on']);
+  if (closedOn === null) return { ok: false, why: 'The date the enquiry closed is a date, as YYYY-MM-DD.' };
+  if (closedOn < e.opened_on || closedOn > localDate(d.now())) return { ok: false, why: 'An enquiry closes on or after the day it opened, and not after today.' };
+  const outcome = input['outcome'] ?? null;
+  if (!has(ENQUIRY_OUTCOMES, outcome)) return { ok: false, why: 'Choose how the enquiry closed.' };
+  const amended = outcome === 'NO_CHANGE' ? null : penceValue(input['amended_figure']);
+  if (outcome !== 'NO_CHANGE' && amended === null) return { ok: false, why: 'An amended enquiry carries the allowances HMRC agreed, in pounds.' };
+  const at = d.now();
+  d.db.run('UPDATE hmrc_enquiries SET closed_on = ?, outcome = ?, amended_figure_pence = ?, closed_by = ?, closed_recorded_at = ? WHERE id = ?',
+    [closedOn, outcome, amended, actor.id, at, e.id]);
+  d.audit.append({
+    at, kind: 'HMRC_ENQUIRY_CLOSED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+    object_type: 'claim', object_id: c.id, detail: { enquiry: e.id, enquiry_outcome: outcome, business: c.business_id },
+  });
+  const signed = latestSignOff(d.db, c.id);
+  if (outcome === 'AMENDED_DOWN' && signed !== undefined && amended !== null && amended < signed.figure_pence) {
+    const reading = clawbackReading(opts);
+    if (!reading.applies) {
+      d.audit.append({
+        at, kind: 'FEE_CLAWBACK_NOT_APPLIED', outcome: 'REFUSED', actor_id: actor.id, actor_role: actor.role,
+        object_type: 'claim', object_id: c.id, detail: { enquiry: e.id, reason: reading.reason, business: c.business_id },
+      });
+    } else {
+      insertTask(d.db, d.now, d.newId, {
+        title: 'A claim was reduced on enquiry — recalculate the fee under clause 13',
+        description: `HMRC reduced the allowances on ${closedOn}. Clause 13 of the engagement letter recalculates the fee on the corrected figure and credits or refunds the difference.`,
+        owner_id: null, owner_role: 'ACCOUNTING', due_on: null, priority: null, activity_type: 'TASK',
+        business_id: c.business_id, property_id: null, claim_id: c.id, lead_id: null, contact_id: null, fact_id: null,
+        recurrence: null, recurred_from_id: null, is_next_action: false, origin: 'STAFF', automation_run_id: null, created_by: actor.id,
+      });
+    }
+  }
+  return { ok: true, id: e.id };
+}
+
+/**
+ * A DISPOSAL DATE SET, OR A SALE IN PROSPECT — A TASK POINTING AT THE DISPOSAL
+ * NOTE: the election on a future sale is irrevocable, notified within two years
+ * of completion, with a s.203 notice to follow. Waiting with Sales, due on no
+ * date. One open task per property: a second change raises nothing more.
+ * Called by `updateProperty` in src/web/crm.ts after its write.
+ */
+export function raiseDisposalTask(
+  d: RecordDeps, actor: Actor, property: { id: string; business_id: string }, trigger: 'DISPOSAL_DATE' | 'SALE_IN_PROSPECT',
+): string | null {
+  const open = d.db.get<{ id: string }>(
+    "SELECT id FROM staff_tasks WHERE property_id = ? AND title = ? AND status IN ('OPEN','IN_PROGRESS')", [property.id, DISPOSAL_TASK_TITLE]);
+  if (open !== undefined) return null;
+  const why = trigger === 'DISPOSAL_DATE' ? 'The property’s disposal date was set.' : 'A sale of the property is recorded as in prospect.';
+  const id = insertTask(d.db, d.now, d.newId, {
+    title: DISPOSAL_TASK_TITLE,
+    description: `${why} Read the Disposal Note (${DISPOSAL_NOTE_PATH}) with the client before heads of terms: a s.198 election on the sale is ` +
+      'irrevocable, must be notified to HMRC within two years of completion, and may start a three-month s.203 clock.',
+    owner_id: null, owner_role: 'SALES', due_on: null, priority: null, activity_type: 'TASK',
+    business_id: property.business_id, property_id: property.id, claim_id: null, lead_id: null, contact_id: null, fact_id: null,
+    recurrence: null, recurred_from_id: null, is_next_action: false, origin: 'STAFF', automation_run_id: null, created_by: actor.id,
+  });
+  d.audit.append({
+    at: d.now(), kind: 'STAFF_TASK_CREATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+    object_type: 'staff_task', object_id: id, detail: { task: id, business: property.business_id, property: property.id, route: 'disposal_note', trigger },
+  });
+  return id;
+}
+
+/* ================================================================== *
+ * 7 · THE GATE NEEDS THE WINDOW ADDS
+ * ================================================================== */
+
+/** REPORTS: the amendment window is OPEN today. UNKNOWN does not pass, and neither does CLOSED. */
+export function reportsWindowNeed(db: Db, c: { id: string; business_id: string; property_id: string | null }, todayIso: string): Need {
+  const w = amendmentWindowReading(db, c, todayIso);
+  return { what: 'The amendment window is open', met: w.state === 'OPEN', why: w.why };
+}
+
+/**
+ * INVOICE: the claim went in INSIDE the window. Where the filing is recorded, it
+ * is the filing date that must fall on or before the window's end — a window
+ * that closed after the return went in does not stop the fee. Where it is not,
+ * the window must be open today. UNKNOWN passes neither way.
+ */
+export function invoiceWindowNeed(db: Db, c: { id: string; business_id: string; property_id: string | null }, todayIso: string): Need {
+  const w = amendmentWindowReading(db, c, todayIso);
+  const filed = db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [c.id])?.filed_on ?? null;
+  const what = 'The claim is within the amendment window';
+  if (w.state === 'UNKNOWN' || w.deadline === null) return { what, met: false, why: w.why };
+  if (filed !== null) {
+    return filed <= w.deadline
+      ? { what, met: true, why: `filed on ${filed}, inside the window that ran until ${w.deadline}` }
+      : { what, met: false, why: `filed on ${filed}, after the window closed on ${w.deadline}` };
+  }
+  return { what, met: w.state === 'OPEN', why: `${w.why} — and no filing is recorded` };
+}

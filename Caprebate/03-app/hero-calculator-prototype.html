@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capital Allowances — Pre-Diligence Ceiling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c2a26;          /* deep green-black */
+    --ink-soft:#3f534c;
+    --paper:#f4f1ea;        /* warm parchment */
+    --paper-2:#ebe6da;
+    --line:#d8d1c2;
+    --brand:#0f5132;        /* forest */
+    --brand-soft:#2f6b4a;
+    --gold:#9a7b3a;
+    --accent:#b4642a;       /* terracotta, for the figure */
+    --warn:#7a5a1e;
+    --radius:4px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Spline Sans',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    padding:clamp(1.2rem,4vw,3rem);
+    background-image:radial-gradient(circle at 12% -10%, #fbf9f4 0%, transparent 45%);
+  }
+  .wrap{max-width:640px;margin:0 auto}
+
+  .eyebrow{
+    font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--brand-soft);font-weight:600;margin-bottom:.9rem;
+  }
+  h1{
+    font-family:'Newsreader',serif;font-weight:400;
+    font-size:clamp(1.9rem,5.5vw,3rem);line-height:1.08;
+    letter-spacing:-.01em;margin-bottom:.6rem;
+  }
+  h1 em{font-style:italic;color:var(--brand)}
+  .lede{color:var(--ink-soft);font-size:1.02rem;max-width:46ch;margin-bottom:2.4rem}
+
+  .field{margin-bottom:1.6rem}
+  .field > label{
+    display:block;font-weight:500;font-size:.95rem;margin-bottom:.55rem;
+  }
+  .hint{display:block;font-weight:400;color:var(--ink-soft);font-size:.82rem;margin-top:-.35rem;margin-bottom:.55rem}
+
+  .opts{display:flex;flex-wrap:wrap;gap:.5rem}
+  .opt{
+    border:1px solid var(--line);background:#fbf9f4;
+    padding:.6rem .9rem;border-radius:var(--radius);cursor:pointer;
+    font-size:.9rem;color:var(--ink-soft);transition:all .18s cubic-bezier(.2,.7,.3,1);
+    user-select:none;
+  }
+  .opt:hover{border-color:var(--brand-soft);color:var(--ink)}
+  .opt[aria-pressed="true"]{
+    background:var(--brand);border-color:var(--brand);color:#fbf9f4;font-weight:500;
+    box-shadow:0 2px 10px -4px rgba(15,81,50,.5);
+  }
+
+  .money{position:relative;max-width:340px}
+  .money span{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:var(--ink-soft);font-size:1.05rem}
+  input[type="text"]{
+    width:100%;font-family:'Spline Sans';font-size:1.05rem;
+    padding:.7rem .9rem .7rem 1.7rem;border:1px solid var(--line);
+    border-radius:var(--radius);background:#fbf9f4;color:var(--ink);
+  }
+  input[type="text"]:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,81,50,.12)}
+
+  .cta{
+    font-family:'Spline Sans';font-weight:600;font-size:1rem;
+    background:var(--ink);color:var(--paper);border:none;
+    padding:.95rem 1.8rem;border-radius:var(--radius);cursor:pointer;
+    margin-top:.8rem;transition:background .18s, transform .18s;
+  }
+  .cta:hover{background:var(--brand);transform:translateY(-1px)}
+  .cta:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+  /* result */
+  .result{
+    margin-top:2.6rem;border-top:1px solid var(--line);padding-top:2.2rem;
+    display:grid;grid-template-rows:0fr;opacity:0;
+    transition:grid-template-rows .55s cubic-bezier(.2,.8,.2,1), opacity .55s;
+  }
+  .result.show{grid-template-rows:1fr;opacity:1}
+  .result > div{overflow:hidden}
+
+  .res-label{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--brand-soft);font-weight:600;margin-bottom:.5rem}
+  .figure{
+    font-family:'Newsreader',serif;font-weight:400;color:var(--accent);
+    font-size:clamp(2rem,7vw,3.4rem);line-height:1.05;letter-spacing:-.015em;
+  }
+  .figure .to{color:var(--ink-soft);font-style:italic;font-size:.55em;padding:0 .2em}
+  .sub{color:var(--ink-soft);font-size:.95rem;margin-top:.5rem;max-width:48ch}
+
+  .neg .figure{color:var(--brand);font-size:clamp(1.5rem,4.5vw,2.1rem)}
+
+  .caveats{
+    background:var(--paper-2);border-left:3px solid var(--gold);
+    padding:1.1rem 1.2rem;border-radius:0 var(--radius) var(--radius) 0;
+    margin-top:1.8rem;font-size:.86rem;color:var(--ink-soft);
+  }
+  .caveats strong{color:var(--ink);font-weight:600}
+  .caveats ul{margin:.5rem 0 0;padding-left:1.1rem}
+  .caveats li{margin-bottom:.4rem}
+
+  .nextstep{
+    margin-top:1.6rem;display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;
+  }
+  .book{
+    font-weight:600;background:var(--brand);color:#fbf9f4;border:none;
+    padding:.8rem 1.4rem;border-radius:var(--radius);cursor:pointer;font-family:'Spline Sans';font-size:.95rem;
+  }
+  .book:hover{background:var(--brand-soft)}
+  .wa{color:var(--brand);font-weight:500;font-size:.9rem;text-decoration:none;border-bottom:1px solid var(--line);padding-bottom:1px}
+
+  .assumptions{font-size:.78rem;color:var(--ink-soft);margin-top:1.4rem;font-style:italic}
+  .basis{font-size:.72rem;color:var(--ink-soft);margin-top:2.4rem;text-align:center;opacity:.75}
+  .err{color:var(--accent);font-size:.82rem;margin-top:.4rem;min-height:1rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Capital allowances · healthcare property</div>
+  <h1>How much unclaimed tax relief is <em>hiding in your building?</em></h1>
+  <p class="lede">A 30-second <strong>pre-diligence ceiling</strong> — the most the sector band allows before anything about your property has been checked. It is not an estimate of your claim. Honest, conservative and free — we tell you straight, including when the answer is "little or nothing".</p>
+
+  <div class="field">
+    <label>1 · What type of healthcare property is it?</label>
+    <div class="opts" id="sector" role="group">
+      <div class="opt" data-v="care_homes" role="button" tabindex="0" aria-pressed="false">Care home</div>
+      <div class="opt" data-v="dental" role="button" tabindex="0" aria-pressed="false">Dental practice</div>
+      <div class="opt" data-v="gp" role="button" tabindex="0" aria-pressed="false">GP surgery</div>
+      <div class="opt" data-v="private_hospital" role="button" tabindex="0" aria-pressed="false">Private hospital / clinic</div>
+      <div class="opt" data-v="supported_living" role="button" tabindex="0" aria-pressed="false">Supported living</div>
+      <div class="opt" data-v="other" role="button" tabindex="0" aria-pressed="false">Other healthcare</div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>2 · Are you buying it, building it, or refurbishing / fitting out?</label>
+    <div class="opts" id="trigger" role="group">
+      <div class="opt" data-v="purchase" role="button" tabindex="0" aria-pressed="false">Buying</div>
+      <div class="opt" data-v="new_build" role="button" tabindex="0" aria-pressed="false">Building new</div>
+      <div class="opt" data-v="refurb_fitout" role="button" tabindex="0" aria-pressed="false">Refurbishing / fitting out</div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="amt">3 · Roughly how much is the spend or purchase price?</label>
+    <span class="hint">A ballpark is fine — this only sizes the estimate.</span>
+    <div class="money"><span>£</span><input type="text" id="amt" inputmode="numeric" placeholder="2,000,000" autocomplete="off"></div>
+  </div>
+
+  <div class="field">
+    <label>4 · Does the business pay UK income or corporation tax?</label>
+    <span class="hint">Charities, pension funds and NHS bodies generally don't — and so can't claim.</span>
+    <div class="opts" id="taxpayer" role="group">
+      <div class="opt" data-v="yes" role="button" tabindex="0" aria-pressed="false">Yes</div>
+      <div class="opt" data-v="no" role="button" tabindex="0" aria-pressed="false">No / not sure</div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>5 · Is the business a company, or a sole trader / partnership?</label>
+    <div class="opts" id="claimant" role="group">
+      <div class="opt" data-v="company" role="button" tabindex="0" aria-pressed="false">Limited company</div>
+      <div class="opt" data-v="uninc" role="button" tabindex="0" aria-pressed="false">Sole trader / partnership</div>
+    </div>
+  </div>
+
+  <button class="cta" id="go" disabled>See my pre-diligence ceiling</button>
+  <div class="err" id="err"></div>
+
+  <div class="result" id="result"><div id="resultInner"></div></div>
+
+  <div class="basis">Uses UK tax rates verified 11 June 2026. Sector yield bands are <strong>assessed, not independently calibrated</strong> (Rulebook I sector yields, awaiting chartered tax adviser review). A pre-diligence ceiling only — not an estimate of your claim, and not tax advice. Prototype: placeholder styling, logic per the estimate-engine spec.</div>
+</div>
+
+<script>
+// ---- Verified parameters (mirror of spec §3 + §6) -------------------------
+// PROVENANCE (R-B8): these bands are ASSESSED, NOT INDEPENDENTLY CALIBRATED.
+// Source: Rulebook I sector yields (v1, awaiting CTA review). They are
+// Caprebate’s own reading of typical fixture density, not a benchmarked
+// rate. Every client-facing use must carry that label and be framed as a
+// PRE-DILIGENCE CEILING. Recalibration remains outstanding and is blocked.
+const YIELD_BAND = {
+  care_homes:       {purchase:[0.20,0.40], new_build:[0.25,0.35], refurb_fitout:[0.60,0.90]},
+  dental:           {purchase:[0.15,0.30], new_build:[0.30,0.40], refurb_fitout:[0.50,0.90]},
+  gp:               {purchase:[0.15,0.30], new_build:[0.30,0.40], refurb_fitout:[0.40,0.70]},
+  private_hospital: {purchase:[0.25,0.45], new_build:[0.35,0.45], refurb_fitout:[0.50,0.85]},
+  other:            {purchase:[0.10,0.30], new_build:[0.20,0.35], refurb_fitout:[0.40,0.70]}
+};
+const MARGINAL_RATE = { company:[0.19,0.25], uninc:[0.20,0.45] };
+const RATE_BASIS = "11 June 2026";
+
+// ---- State ----------------------------------------------------------------
+const state = {sector:null, trigger:null, taxpayer:null, claimant:null};
+
+function wireGroup(id, key){
+  document.querySelectorAll('#'+id+' .opt').forEach(el=>{
+    const choose=()=>{
+      document.querySelectorAll('#'+id+' .opt').forEach(o=>o.setAttribute('aria-pressed','false'));
+      el.setAttribute('aria-pressed','true');
+      state[key]=el.dataset.v; validate();
+    };
+    el.addEventListener('click',choose);
+    el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();}});
+  });
+}
+wireGroup('sector','sector'); wireGroup('trigger','trigger');
+wireGroup('taxpayer','taxpayer'); wireGroup('claimant','claimant');
+
+const amt=document.getElementById('amt');
+amt.addEventListener('input',()=>{
+  let v=amt.value.replace(/[^0-9]/g,'');
+  amt.value=v?Number(v).toLocaleString('en-GB'):'';
+  validate();
+});
+
+function parseAmt(){return Number(amt.value.replace(/[^0-9]/g,''))||0;}
+function validate(){
+  const ok=state.sector&&state.trigger&&state.taxpayer&&state.claimant&&parseAmt()>0;
+  document.getElementById('go').disabled=!ok;
+  document.getElementById('err').textContent='';
+}
+
+const fmt=n=>'£'+Math.round(n).toLocaleString('en-GB');
+
+// ---- The public pipeline (spec §10) ---------------------------------------
+function run(){
+  const base=parseAmt();
+  const inner=document.getElementById('resultInner');
+  const res=document.getElementById('result');
+
+  const STD_CAVEATS=`
+    <div class="caveats">
+      <strong>Read this before you celebrate.</strong>
+      <ul>
+        <li>This is a <strong>pre-diligence ceiling, not tax advice or a guarantee</strong> — not an estimate of what you will claim.</li>
+        <li>The sector yield band behind it is <strong>assessed, not independently calibrated</strong>: it is Caprebate’s own reading of typical fixture density for the sector (Rulebook I, awaiting chartered tax adviser review), not a benchmarked or independently verified rate.</li>
+        <li>Your actual claim can only be lower than this ceiling, never higher, once we check entitlement history, any grant funding, the property's dwelling-house position, and the statutory s.185/s.62 caps — in some cases to nil.</li>
+        <li>The defensible figure comes from a chartered-surveyor survey and a CAA 2001 s.562 apportionment; the filing position is signed by your own accountant or tax adviser.</li>
+        <li>This is income / corporation tax relief — <strong>not capital gains tax</strong>.</li>
+      </ul>
+    </div>`;
+
+  const NEXT=`
+    <div class="nextstep">
+      <button class="book" onclick="alert('Booking flow — placeholder')">Book a 15-minute review</button>
+      <a class="wa" href="#" onclick="return false">or message us on WhatsApp →</a>
+    </div>`;
+
+  // Gate: non-taxpayer
+  if(state.taxpayer==='no'){
+    inner.innerHTML=`
+      <div class="res-label">Result</div>
+      <div class="neg"><div class="figure">Likely no claim — but worth a word</div></div>
+      <p class="sub">If the business doesn't pay UK income or corporation tax (a charity, pension fund or NHS body, for example), there's no tax to relieve, so capital allowances can't be claimed. One exception: if you're <strong>selling</strong>, a pre-sale review can still protect you from an unexpected tax charge — and a trading tenant in the building may have its own claim.</p>
+      ${NEXT}
+      <p class="assumptions">Assumption used: business is not a UK taxpayer (your answer to Q4).</p>`;
+    show(res); return;
+  }
+
+  // Sector: supported living — conservative reasoned message
+  if(state.sector==='supported_living'){
+    inner.innerHTML=`
+      <div class="res-label">Result</div>
+      <div class="neg"><div class="figure">Often little or nothing — and we'll tell you why</div></div>
+      <p class="sub">Supported living is the one sector where the honest answer is frequently "no". Because residents usually occupy their homes under tenancies, the property is treated as dwellings, and capital allowances on plant and machinery fall away under CAA 2001 s.35 — often leaving only a small communal-areas claim, sometimes nothing. The exception worth checking: if you're a <strong>company</strong> that converted a <strong>derelict or contaminated</strong> building, <strong>Land Remediation Relief</strong> can be worth more than capital allowances here.</p>
+      ${NEXT}
+      <p class="assumptions">Estimate suppressed deliberately: a headline figure would overstate this sector. This is the protective answer.</p>`;
+    show(res); return;
+  }
+
+  // Otherwise: band × base × marginal rate
+  const band=YIELD_BAND[state.sector][state.trigger];
+  const r=MARGINAL_RATE[state.claimant];
+  const tsLow=base*band[0]*r[0];
+  const tsHigh=base*band[1]*r[1];
+  const qeLow=base*band[0], qeHigh=base*band[1];
+
+  const rateTxt=state.claimant==='company'?'19–25% (corporation tax)':'20–45% (income tax)';
+
+  inner.innerHTML=`
+    <div class="res-label">Pre-diligence ceiling</div>
+    <div class="figure">${fmt(tsLow)}<span class="to">to</span>${fmt(tsHigh)}</div>
+    <p class="sub">From a ceiling of <strong>${fmt(qeLow)} – ${fmt(qeHigh)}</strong> of qualifying plant, machinery and embedded fixtures, relieved over time at ${rateTxt}. This range is sized by a sector yield band that is <strong>assessed, not independently calibrated</strong>.</p>
+    ${STD_CAVEATS}
+    ${NEXT}
+    <p class="assumptions">Assumptions used: full yield band applied at its ceiling, and that band is assessed, not independently calibrated (Rulebook I sector yields, awaiting chartered tax adviser review) — no reduction yet for entitlement history, grants or dwelling-house position; ${state.claimant==='company'?'company rate range 19–25%':'income-tax range 20–45% — most healthcare principals sit at 40%'}; rates current at ${RATE_BASIS}.</p>`;
+  show(res);
+}
+function show(res){res.classList.add('show'); res.scrollIntoView({behavior:'smooth',block:'nearest'});}
+document.getElementById('go').addEventListener('click',run);
+</script>
+</body>
+</html>

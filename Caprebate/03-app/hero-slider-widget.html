@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hidden tax relief — pre-diligence ceiling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c2a26; --ink-soft:#3f534c; --paper:#f4f1ea; --paper-2:#ebe6da;
+    --line:#d8d1c2; --brand:#0f5132; --brand-soft:#2f6b4a; --gold:#9a7b3a;
+    --accent:#b4642a; --radius:5px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Spline Sans',sans-serif;color:var(--ink);line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    background:var(--paper);
+    background-image:radial-gradient(circle at 85% -20%,#fbf9f4 0%,transparent 50%);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:clamp(1rem,4vw,2.5rem);}
+
+  .widget{
+    width:100%;max-width:540px;background:#fbf9f4;border:1px solid var(--line);
+    border-radius:14px;padding:clamp(1.4rem,4vw,2.2rem);
+    box-shadow:0 20px 50px -28px rgba(28,42,38,.4);
+  }
+  .eyebrow{font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--brand-soft);font-weight:600;margin-bottom:.7rem}
+  h1{font-family:'Newsreader',serif;font-weight:400;font-size:clamp(1.5rem,4.5vw,2.1rem);line-height:1.1;letter-spacing:-.01em;margin-bottom:.4rem}
+  h1 em{font-style:italic;color:var(--brand)}
+  .lede{color:var(--ink-soft);font-size:.92rem;margin-bottom:1.7rem}
+
+  .label{font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-bottom:.6rem;display:block}
+  .block{margin-bottom:1.5rem}
+
+  /* segmented toggle */
+  .seg{display:flex;background:var(--paper-2);border-radius:99px;padding:3px;gap:3px}
+  .seg button{flex:1;border:none;background:none;font-family:'Spline Sans';font-size:.9rem;font-weight:500;
+    color:var(--ink-soft);padding:.6rem .5rem;border-radius:99px;cursor:pointer;transition:all .2s}
+  .seg button[aria-pressed="true"]{background:#fbf9f4;color:var(--brand);box-shadow:0 1px 4px -1px rgba(28,42,38,.25)}
+
+  /* slider */
+  .valrow{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem}
+  .valnum{font-family:'Newsreader',serif;font-size:1.6rem;color:var(--ink);letter-spacing:-.01em}
+  input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:99px;
+    background:var(--line);outline:none;cursor:pointer}
+  input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:24px;height:24px;border-radius:50%;
+    background:var(--brand);border:3px solid #fbf9f4;box-shadow:0 2px 8px -2px rgba(15,81,50,.6);cursor:grab}
+  input[type="range"]::-webkit-slider-thumb:active{cursor:grabbing;transform:scale(1.08)}
+  input[type="range"]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--brand);
+    border:3px solid #fbf9f4;box-shadow:0 2px 8px -2px rgba(15,81,50,.6);cursor:grab}
+  .bounds{display:flex;justify-content:space-between;font-size:.72rem;color:var(--ink-soft);margin-top:.5rem}
+
+  /* pills */
+  .pills{display:flex;flex-wrap:wrap;gap:.45rem}
+  .pill{border:1px solid var(--line);background:#fbf9f4;padding:.5rem .85rem;border-radius:99px;cursor:pointer;
+    font-size:.86rem;color:var(--ink-soft);transition:all .16s;user-select:none}
+  .pill:hover{border-color:var(--brand-soft);color:var(--ink)}
+  .pill[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fbf9f4;font-weight:500}
+
+  /* result */
+  .result{margin-top:.6rem;border-top:1px solid var(--line);padding-top:1.6rem}
+  .reslabel{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--brand-soft);font-weight:600;margin-bottom:.45rem}
+  .figure{font-family:'Newsreader',serif;font-weight:400;color:var(--accent);font-size:clamp(2rem,7vw,3rem);line-height:1.04;letter-spacing:-.015em}
+  .figure .to{color:var(--ink-soft);font-style:italic;font-size:.5em;padding:0 .22em}
+  .resnote{color:var(--ink-soft);font-size:.84rem;margin-top:.55rem;max-width:44ch}
+  .timeline{font-size:.86rem;color:var(--brand-soft);font-weight:500;margin-top:.8rem;padding-left:.8rem;border-left:2px solid var(--gold);max-width:46ch}
+
+  /* supported-living honest message */
+  .honest .figure{color:var(--brand);font-size:clamp(1.3rem,3.6vw,1.6rem);line-height:1.2}
+  .honest .resnote{margin-top:.6rem}
+
+  .cta{margin-top:1.5rem;width:100%;font-family:'Spline Sans';font-weight:600;font-size:1rem;
+    background:var(--ink);color:var(--paper);border:none;padding:.95rem;border-radius:var(--radius);cursor:pointer;transition:background .18s}
+  .cta:hover{background:var(--brand)}
+  .foot{font-size:.7rem;color:var(--ink-soft);margin-top:1rem;text-align:center;opacity:.75}
+</style>
+</head>
+<body>
+<div class="widget">
+  <div class="eyebrow">Capital allowances · healthcare property</div>
+  <h1>How much tax relief is <em>hiding in your property?</em></h1>
+  <p class="lede">A 10-second <strong>pre-diligence ceiling</strong> — not an estimate of your claim. Drag, tap, see.</p>
+
+  <div class="block">
+    <span class="label">The business is a…</span>
+    <div class="seg" id="biz" role="group">
+      <button data-v="company" aria-pressed="true">Limited company</button>
+      <button data-v="uninc" aria-pressed="false">Sole trader / partnership</button>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="valrow"><span class="label" style="margin:0">Purchase price</span><span class="valnum" id="valnum">£1,500,000</span></div>
+    <input type="range" id="slider" min="100000" max="10000000" step="50000" value="1500000">
+    <div class="bounds"><span>£100k</span><span>£10m+</span></div>
+  </div>
+
+  <div class="block">
+    <span class="label">Property type</span>
+    <div class="pills" id="sector" role="group">
+      <div class="pill" data-v="care_homes" aria-pressed="true">Care home</div>
+      <div class="pill" data-v="dental" aria-pressed="false">Dental practice</div>
+      <div class="pill" data-v="gp" aria-pressed="false">GP surgery</div>
+      <div class="pill" data-v="private_hospital" aria-pressed="false">Private hospital / clinic</div>
+      <div class="pill" data-v="supported_living" aria-pressed="false">Supported living</div>
+    </div>
+  </div>
+
+  <div class="block">
+    <span class="label">When did you buy it?</span>
+    <div class="pills" id="year" role="group">
+      <div class="pill" data-v="recent" aria-pressed="false">In the last 2 years</div>
+      <div class="pill" data-v="mid" aria-pressed="false">2–6 years ago</div>
+      <div class="pill" data-v="mid" aria-pressed="false">6–12 years ago</div>
+      <div class="pill" data-v="old" aria-pressed="false">Over 12 years ago</div>
+    </div>
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <button class="cta" onclick="alert('Continue to the full personalised estimate \u2014 placeholder')">See what my ceiling is built on \u2192</button>
+  <div class="foot">A pre-diligence ceiling only \u2014 not an estimate of your claim, and not tax advice. Sector yield bands are <strong>assessed, not independently calibrated</strong> (Rulebook I, awaiting CTA review). Rates current June 2026.</div>
+</div>
+
+<script>
+// purchase-route yield bands (qualifying fraction of price) — engine spec §6
+// PROVENANCE (R-B8): ASSESSED, NOT INDEPENDENTLY CALIBRATED. Source: Rulebook I
+// sector yields (v1, awaiting CTA review). Caprebate’s own reading of
+// typical fixture density, not a benchmarked rate. Client-facing uses must carry
+// that label and read as a PRE-DILIGENCE CEILING. Recalibration is outstanding.
+const YIELD = {
+  care_homes:[0.20,0.40], dental:[0.15,0.30], gp:[0.15,0.30],
+  private_hospital:[0.25,0.45], supported_living:null
+};
+// marginal rate ranges — conservative for a public teaser (higher-rate cap, not additional)
+const RATE = { company:[0.19,0.25], uninc:[0.20,0.40] };
+const YEAR_MSG = {
+  recent: "Bought recently? Your tax return may still be open \u2014 that can bring the relief in sooner, not just spread across future years. Whether that means a lower bill or money back depends on your position, which we confirm before anything is filed.",
+  mid: "It\u2019s not too late \u2014 allowances on a past purchase can still be brought into your current return.",
+  old: "You may fall under the older, simpler rules, which can make the claim more straightforward."
+};
+
+const state = { biz:"company", value:1500000, sector:"care_homes", year:null };
+const gbp = n => "\u00a3" + Math.round(n).toLocaleString("en-GB");
+
+// ---- wire segmented toggle ----
+document.querySelectorAll("#biz button").forEach(b=>{
+  b.addEventListener("click",()=>{
+    document.querySelectorAll("#biz button").forEach(x=>x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true"); state.biz=b.dataset.v; compute();
+  });
+});
+
+// ---- wire pills ----
+document.querySelectorAll("#sector .pill").forEach(p=>{
+  p.addEventListener("click",()=>{
+    document.querySelectorAll("#sector .pill").forEach(x=>x.setAttribute("aria-pressed","false"));
+    p.setAttribute("aria-pressed","true"); state.sector=p.dataset.v; compute();
+  });
+});
+
+// ---- wire year buckets (enriches the result, never gates it) ----
+document.querySelectorAll("#year .pill").forEach(p=>{
+  p.addEventListener("click",()=>{
+    document.querySelectorAll("#year .pill").forEach(x=>x.setAttribute("aria-pressed","false"));
+    p.setAttribute("aria-pressed","true"); state.year=p.dataset.v; compute();
+  });
+});
+
+// ---- wire slider (fill + live value) ----
+const slider=document.getElementById("slider");
+function paintSlider(){
+  const pct=(slider.value-slider.min)/(slider.max-slider.min)*100;
+  slider.style.background=`linear-gradient(to right, var(--brand) 0% ${pct}%, var(--line) ${pct}% 100%)`;
+  let label=gbp(+slider.value); if(+slider.value>=10000000) label="£10m+";
+  document.getElementById("valnum").textContent = (+slider.value>=10000000)? "£10m+" : gbp(+slider.value);
+}
+slider.addEventListener("input",()=>{ state.value=+slider.value; paintSlider(); compute(); });
+
+// ---- animated count ----
+let curLo=0, curHi=0, tgtLo=0, tgtHi=0, raf=null;
+function tick(){
+  curLo += (tgtLo-curLo)*0.22; curHi += (tgtHi-curHi)*0.22;
+  if(Math.abs(tgtLo-curLo)<50 && Math.abs(tgtHi-curHi)<50){ curLo=tgtLo; curHi=tgtHi; raf=null; }
+  const el=document.getElementById("figval");
+  if(el) el.innerHTML = gbp(curLo)+'<span class="to">to</span>'+gbp(curHi);
+  if(raf!==null) raf=requestAnimationFrame(tick);
+}
+function animateTo(lo,hi){ tgtLo=lo; tgtHi=hi; if(raf===null){ raf=requestAnimationFrame(tick); } }
+
+// ---- result shell management ----
+let mode=null; // "number" | "supported"
+function renderShell(m){
+  if(m===mode) return;
+  mode=m;
+  if(raf){ cancelAnimationFrame(raf); raf=null; }   // stop any in-flight count before swapping shells
+  const res=document.getElementById("result");
+  if(m==="supported"){
+    res.className="result";
+    res.innerHTML=
+      '<div class="reslabel">Pre-diligence ceiling \u2014 communal areas only, sometimes nil</div>'+
+      '<div class="figure" id="figval"></div>'+
+      '<p class="resnote">In supported living the homes themselves are let to tenants, so they don\u2019t qualify \u2014 but <strong>shared communal and staff areas can</strong>, and it\u2019s nil if there\u2019s little shared space. The upper figure is a ceiling built on a communal-share assumption that is <strong>assessed, not independently calibrated</strong>. If you\u2019re a <strong>company</strong> that converted a derelict or contaminated building, <strong>Land Remediation Relief</strong> can be worth more, separately. This is the one sector where we\u2019d rather under-promise.</p>';
+    curLo=curHi=tgtLo=tgtHi=0;
+  } else {
+    res.className="result";
+    res.innerHTML=
+      '<div class="reslabel">Pre-diligence ceiling</div>'+
+      '<div class="figure" id="figval"></div>'+
+      '<p class="resnote">in income or corporation tax relief. This is a <strong>pre-diligence ceiling, not an estimate of your claim</strong> \u2014 the most the sector band allows before we check entitlement history, grant funding and how the property is used. The band behind it is <strong>assessed, not independently calibrated</strong> (Rulebook I, awaiting CTA review), so the real figure needs a proper look and can only be lower.</p>'+
+      '<p class="timeline" id="timeline" style="display:none"></p>';
+    curLo=curHi=tgtLo=tgtHi=0; // reset so the figure seeds fresh on rebuild
+  }
+}
+
+function setTimeline(){
+  const el=document.getElementById("timeline"); if(!el) return;
+  if(state.year && YEAR_MSG[state.year]){ el.textContent=YEAR_MSG[state.year]; el.style.display="block"; }
+  else { el.textContent=""; el.style.display="none"; }
+}
+
+// ---- compute & render ----
+function compute(){
+  const band=YIELD[state.sector];
+  const [rLo,rHi]=RATE[state.biz];
+  if(band===null){ // supported living — fenced to communal areas, nil floor
+    renderShell("supported");
+    const hi=state.value*0.08*rHi;   // ~communal share (~8% of value) as a conservative ceiling
+    const el=document.getElementById("figval");
+    if(el) el.innerHTML="From nil <span class=\"to\">to</span> "+gbp(hi);
+    return;
+  }
+  renderShell("number");
+  const qMid=(band[0]+band[1])/2;          // lead conservative: low→mid of band, never the top
+  const lo=state.value*band[0]*rLo, hi=state.value*qMid*rHi;
+  if(curLo===0 && curHi===0){              // first paint after building the shell — seed without count-from-zero
+    curLo=lo; curHi=hi; tgtLo=lo; tgtHi=hi;
+    document.getElementById("figval").innerHTML=gbp(lo)+'<span class="to">to</span>'+gbp(hi);
+  } else {
+    animateTo(lo,hi);
+  }
+  setTimeline();
+}
+
+paintSlider();
+compute();
+</script>
+</body>
+</html>

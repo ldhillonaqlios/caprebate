@@ -1,0 +1,29 @@
+{
+  "name": "@caprebate/engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Caprebate capital-allowances estimate engine, extracted from the site file. Facts in, estimate out: no network, no DOM, no storage, no secrets.",
+  "license": "UNLICENSED",
+  "main": "./src/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "src",
+    "dist",
+    "tools",
+    "EXTRACTION.md"
+  ],
+  "scripts": {
+    "extract": "node tools/extract.cjs",
+    "verify": "node tools/verify-extraction.cjs && node tools/extract.cjs --check",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "build": "tsc --project tsconfig.json",
+    "test": "npm run verify && npm run typecheck && npm run typecheck:types",
+    "typecheck:types": "tsc --project tsconfig.typetests.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

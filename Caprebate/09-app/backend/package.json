@@ -1,0 +1,29 @@
+{
+  "name": "@caprebate/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The Caprebate back end: authentication, six application roles, server-side authorisation, and an append-only audit log. One process, both applications.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "migrate": "node src/cli.ts migrate",
+    "seed": "CAPREBATE_ALLOW_SEED=1 node src/cli.ts seed",
+    "verify-audit": "node src/cli.ts verify-audit",
+    "start": "node src/server.ts",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "node tools/typecheck.cjs",
+    "lint:sql": "node tools/lint-sql.cjs",
+    "check": "npm run lint:sql && npm run typecheck && npm run test",
+    "start:demo": "node tools/demo-server.cjs"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

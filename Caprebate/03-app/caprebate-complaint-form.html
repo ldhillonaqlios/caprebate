@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<!--
+  Caprebate — printable complaint form.  Phase 99, 8 September 2026.
+  Slug: /notices/complaint-form/   Linked from /notices/.
+
+  WHY THIS FILE EXISTS SEPARATELY.  DPA 2018 s.164A(2) requires a controller to
+  facilitate complaints "by taking steps such as providing a complaint form which
+  can be completed electronically AND BY OTHER MEANS".  The s.164A pack §4.1 reads
+  "and by other means" as CONJUNCTIVE: an online-only form does not satisfy the
+  example as drafted.  This is the other means — the same questions, on paper,
+  with a postal address and an email route, and no web form in the way.
+
+  Same rules as the page it belongs to: no JavaScript, no external stylesheet, no
+  web font.  Fields are ruled lines rather than inputs, because this is a sheet to
+  be printed and written on.
+
+  SOURCE for every question: the s.164A pack §4.3, board item 12927908435, which
+  stays authoritative.  Nothing here is redrafted, with the one exception below.
+
+  QUESTION 3 WAS ADDED 14 September 2026 (Phase 132); it is not in §4.3.  SOURCE:
+  the same pack, §1.10 "What the ICO's guidance says" (line 254 of the export, the
+  row "A complaint made for someone else", from ICO guidance read 13 September
+  2026): check that the person is authorised to act, and do not investigate until
+  the authority arrives.  It is NOT required and must never become a gate: a
+  complaint that leaves it blank is still a complaint.  §4.3's questions 3 to 8
+  are numbered 4 to 9 here.
+  FOR THE DATA PROTECTION OFFICER: the pack's §4.3 field table should be brought
+  into line with this form (the on-behalf question as field 3, the rest renumbered).
+  §1.10 already records that §4.3 does not ask it.
+
+  CHANGED 15 September 2026 (Phase 132c).  DRAFT FOR THE DATA PROTECTION OFFICER.
+  The closing note names the regulator in dated dual wording, because the Information
+  Commissioner becomes the Information Commission on 30 September 2026 (S.I. 2026/1015
+  reg 2(c), commencing section 119 of the Data (Use and Access) Act 2025; read on
+  legislation.gov.uk, 15 September 2026).  The words match the notices page's Block F
+  and Item 8 Privacy Notice §9, changed the same day.  The route, ico.org.uk and
+  0303 123 1113, is unchanged.  No question on the sheet has changed.
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Complaint form — Cap Rebate (CAP REBATE LTD)</title>
+<link rel="canonical" href="https://caprebate.com/notices/complaint-form/">
+<style>
+  /* CAP REBATE — PHASE 133d. The brand book's tokens and type (09-app/backend/src/web/assets.ts). System fonts only. */
+  :root{--ink:#111111; --ink-soft:#333333; --paper:#F2F8F6; --line:#cfdcd7; --alert:#a01e1e; --alertbg:#fcefef}
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--paper); color:var(--ink-soft); line-height:1.55;
+       font-family:Calibri,"Segoe UI",Inter,Arial,Helvetica,sans-serif;
+       font-size:16px; font-variant-numeric:tabular-nums}
+  h1,h2{font-family:"Bookman Old Style","Roboto Slab",Georgia,"Times New Roman",serif; font-style:normal; font-weight:700; color:var(--ink)}
+  .sheet{max-width:44rem; margin:0 auto; padding:2rem 1.3rem 4rem; background:#fff;
+         border-left:1px solid var(--line); border-right:1px solid var(--line); min-height:100vh}
+  h1{font-size:1.5rem; margin:0 0 .2rem; line-height:1.2}
+  h2{font-size:1.02rem; margin:2rem 0 .4rem}
+  p,li{margin:.6rem 0}
+  .intro{color:var(--ink-soft)}
+  .q{margin:1.6rem 0 0}
+  .q .label{font-weight:600}
+  .q .hint{color:var(--ink-soft); font-size:.92rem; margin:.15rem 0 .5rem}
+  .rule{border-bottom:1px solid var(--ink); height:1.9rem; margin:0 0 .35rem}
+  .box{border:1px solid var(--ink); min-height:9rem; margin-top:.4rem}
+  .box.tall{min-height:13rem}
+  .tick{display:block; margin:.35rem 0}
+  .tick span.b{display:inline-block; width:1rem; height:1rem; border:1px solid var(--ink);
+               margin-right:.55rem; vertical-align:-2px}
+  .unset{background:var(--alertbg); color:var(--alert); font-weight:600; padding:0 .25em; border-radius:2px}
+  .where{border:2px solid var(--ink); padding:1rem 1.1rem; margin-top:2.4rem}
+  .note{font-size:.92rem; color:var(--ink-soft)}
+  @media print{
+    body{background:#fff; font-size:11pt}
+    .sheet{max-width:none; padding:0; border:none; min-height:0}
+    .unset{background:none; border:1pt solid #000}
+    .noprint{display:none}
+    h2{page-break-after:avoid}
+    .q{page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<h1>Make a complaint about how we have handled your personal data</h1>
+<p class="intro">
+  CAP REBATE LTD, trading as Cap Rebate,
+  company number 17307313.
+</p>
+
+<p>
+  <em>If you think we have got something wrong about your personal data, you can complain to
+  us. This is a right you have under section 164A of the Data Protection Act 2018, not a
+  favour we are doing you.</em>
+</p>
+
+<p>
+  <strong>You do not have to use this form.</strong> A complaint by email, by letter, or in a
+  phone call counts just the same, and we will treat it the same way. The form is here to make
+  it easier, not to be a hurdle.
+</p>
+
+<p>
+  <em>We will confirm we have received your complaint <strong>within 30 days</strong> — and in
+  practice within a couple of working days. We do not charge for any of this.</em>
+</p>
+
+<p class="noprint note">
+  This is the printable version. Print this page, fill it in, and post or email it to the
+  address at the bottom. There is also a form you can fill in on screen at
+  <a href="/notices/#complain">https://caprebate.com/notices/</a>.
+</p>
+
+<div class="q">
+  <p class="label">1. Your name</p>
+  <p class="hint">We need it to look for you in our records at all.</p>
+  <div class="rule"></div>
+</div>
+
+<div class="q">
+  <p class="label">2. How we should reply</p>
+  <p class="hint">An email address or a postal address we can reply to. We will use it only to deal with this complaint.</p>
+  <div class="rule"></div>
+  <div class="rule"></div>
+  <div class="rule"></div>
+</div>
+
+<div class="q">
+  <p class="label">3. Are you complaining about your own personal data, or on behalf of someone else? <span class="hint" style="display:inline; font-weight:400">(optional)</span></p>
+  <p class="hint">If you are complaining for someone else, we will check you are authorised to act for them before we look into it, and tell you what we need.</p>
+  <span class="tick"><span class="b"></span>About my own personal data</span>
+  <span class="tick"><span class="b"></span>On behalf of someone else</span>
+  <p class="hint">If for someone else: their name, and how you are authorised to act for them.</p>
+  <div class="rule"></div>
+  <div class="rule"></div>
+</div>
+
+<div class="q">
+  <p class="label">4. Anything that helps us find you <span class="hint" style="display:inline; font-weight:400">(optional)</span></p>
+  <p class="hint">If you know it: the company or the property our records might connect you to, or a reference from anything we have sent you. If you have no idea why we hold your name, say that instead — it is a perfectly normal answer and it tells us where to look.</p>
+  <div class="rule"></div>
+  <div class="rule"></div>
+</div>
+
+<div class="q">
+  <p class="label">5. What is your complaint about?</p>
+  <p class="hint">Tick whichever is closest. Every option leads to the same duty on us, so if none of them fits, tick the last one.</p>
+  <span class="tick"><span class="b"></span>How you got my personal data</span>
+  <span class="tick"><span class="b"></span>What you are doing with it</span>
+  <span class="tick"><span class="b"></span>You did not tell me you had it</span>
+  <span class="tick"><span class="b"></span>How you answered a request I made</span>
+  <span class="tick"><span class="b"></span>How long you are keeping it</span>
+  <span class="tick"><span class="b"></span>Something else — tell us below</span>
+</div>
+
+<div class="q">
+  <p class="label">6. What happened, in your own words</p>
+  <p class="hint">Tell us what happened and what you think we got wrong. You do not need to quote any law, and you do not need to know which rule applies — that is our job.</p>
+  <div class="box tall"></div>
+</div>
+
+<div class="q">
+  <p class="label">7. What would you like us to do? <span class="hint" style="display:inline; font-weight:400">(optional)</span></p>
+  <p class="hint">If there is something specific you want — an explanation, a correction, your data deleted, or for us to stop — tell us here.</p>
+  <div class="box"></div>
+</div>
+
+<div class="q">
+  <p class="label">8. Are you also asking us to do something with your data now? <span class="hint" style="display:inline; font-weight:400">(optional)</span></p>
+  <span class="tick"><span class="b"></span>Tell me what you hold about me</span>
+  <span class="tick"><span class="b"></span>Correct something</span>
+  <span class="tick"><span class="b"></span>Delete it</span>
+  <span class="tick"><span class="b"></span>Stop using it</span>
+  <span class="tick"><span class="b"></span>Pause using it while we sort this out</span>
+  <p><em>You can do both at once. If you tick any of these we will treat it as a request about
+  your data as well as a complaint — they have different timescales, and we will tell you
+  both.</em></p>
+</div>
+
+<div class="q">
+  <p class="label">9. Date</p>
+  <div class="rule" style="max-width:14rem"></div>
+</div>
+
+<div class="where">
+  <h2 style="margin-top:0">Where to send it</h2>
+  <p>
+    <strong>By post:</strong>
+    <span class="unset">[NOT SET — registered office address]</span>
+  </p>
+  <p>
+    <strong>By email:</strong>
+    <span class="unset">[NOT SET — dedicated data protection address]</span>
+    — you can attach a photograph of this sheet, or just type what happened in the email.
+    Either is fine.
+  </p>
+  <p class="note">
+    <strong>You do not have to use this form at all.</strong> A letter or an email that simply
+    says what went wrong is a complaint, with the same 30-day clock attached, and we will treat
+    it exactly the same way.
+  </p>
+</div>
+
+<p style="margin-top:2rem">
+  <em>After we receive this: we will confirm we have received it. We will look into it and tell
+  you the outcome. If you are not happy with how we deal with it, you do not have to come back
+  to us first — you can complain to the Information Commissioner (from 30 September 2026,
+  the Information Commission) at any time
+  (<a href="https://ico.org.uk/">ico.org.uk</a>, 0303 123 1113), and you can also take your own
+  case to court. The full explanation is on our public notices page at
+  <a href="https://caprebate.com/notices/">https://caprebate.com/notices/</a>.</em>
+</p>
+
+</div>
+</body>
+</html>

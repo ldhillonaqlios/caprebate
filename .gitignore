@@ -1,0 +1,40 @@
+# Caprebate test repository — an ALLOW-LIST. Everything is ignored except the code the
+# application and its test suites need. Governance documents, board exports, backups
+# and anything that could hold real client data are never committed.
+/*
+!/.gitignore
+!/.gitattributes
+!/.devcontainer/
+!/README.md
+!/Caprebate site.html
+!/Caprebate/
+/Caprebate/*
+!/Caprebate/09-app/
+!/Caprebate/03-app/
+!/Caprebate/02-modules-and-build-prep/
+/Caprebate/02-modules-and-build-prep/*
+!/Caprebate/02-modules-and-build-prep/Module-0*-*.md
+!/Caprebate/02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv
+!/Caprebate/04-phase-work/
+/Caprebate/04-phase-work/*
+!/Caprebate/04-phase-work/phase3/
+!/Caprebate/04-phase-work/phase9/
+!/Caprebate/06-commercial-and-governance/
+/Caprebate/06-commercial-and-governance/*
+!/Caprebate/06-commercial-and-governance/Caprebate Engagement Letter.docx
+
+# never, anywhere
+*.bak*
+*.orig-fragmented
+*.pre-132b
+.DS_Store
+node_modules/
+dist/
+*.db
+*.db-*
+*.sqlite
+.documents/
+/Caprebate/03-app/signoff-snapshot/
+.env
+.env.*
+.tmp*/

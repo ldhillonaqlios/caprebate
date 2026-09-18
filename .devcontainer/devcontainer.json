@@ -1,0 +1,12 @@
+{
+  "name": "Cap Rebate — test demo (invented data only)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:24",
+  "postCreateCommand": "cd Caprebate/09-app/backend && npm ci",
+  "postStartCommand": "cd Caprebate/09-app/backend && nohup npm run start:demo > /tmp/caprebate-demo.log 2>&1 &",
+  "forwardPorts": [8105],
+  "portsAttributes": {
+    "8105": { "label": "Cap Rebate demo", "onAutoForward": "openPreview" }
+  },
+  "containerEnv": { "CAPREBATE_ALLOW_SEED": "1", "PORT": "8105" },
+  "customizations": { "codespaces": { "openFiles": ["README.md"] } }
+}

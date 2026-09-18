@@ -1,0 +1,316 @@
+/**
+ * Authentication: login, sessions, logout, password change, password reset.
+ *
+ * THE RULES THIS FILE EXISTS TO KEEP, each of which has a test:
+ *
+ *   A password is never logged, never returned, never stored in clear.
+ *   Sessions are httpOnly, secure, sameSite, ROTATED ON PRIVILEGE CHANGE, and
+ *     revocable server-side — which is real revocation, not an expiry wish.
+ *   Login and reset are rate-limited.
+ *   FAILURE MESSAGES ARE GENERIC. "those details did not match", never "no such
+ *     user" — the second is an account-enumeration oracle, and so is a login
+ *     that returns faster for an unknown address than for a wrong password.
+ *   A reset token is single-use and expiring, and only its HASH is stored.
+ */
+
+import { randomBytes } from 'node:crypto';
+import type { Db } from './db.ts';
+import type { AuditLog } from './audit.ts';
+import type { PasswordHasher } from './password.ts';
+import type { User } from './users.ts';
+import { findByEmailWithSecret, findById, hashToken, newId, setPasswordHash, toActor } from './users.ts';
+
+/** The ONE message every authentication failure returns. */
+export const GENERIC_AUTH_FAILURE = 'those details did not match';
+
+export class AuthError extends Error {
+  readonly code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'AuthError';
+    this.code = code;
+  }
+}
+
+export type SessionCookie = {
+  readonly name: string;
+  readonly value: string;
+  readonly httpOnly: true;
+  readonly secure: true;
+  readonly sameSite: 'Strict';
+  readonly path: '/';
+  readonly expires: string;
+};
+
+export const SESSION_COOKIE_NAME = 'cb_session';
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+const RESET_TTL_MS = 30 * 60 * 1000;
+
+export type Deps = {
+  db: Db;
+  audit: AuditLog;
+  hasher: PasswordHasher;
+  now: () => string;
+  /** Injected so a test can make a token predictable without weakening the real one. */
+  randomToken?: () => string;
+};
+
+function token(d: Deps): string {
+  return (d.randomToken ?? (() => randomBytes(32).toString('hex')))();
+}
+
+function cookieFor(value: string, expires: string): SessionCookie {
+  return {
+    name: SESSION_COOKIE_NAME, value,
+    httpOnly: true, secure: true, sameSite: 'Strict', path: '/', expires,
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * Rate limiting — fixed window, counted in the database so it survives a
+ * restart and so two processes cannot each grant a full allowance.
+ * ------------------------------------------------------------------ */
+
+export const LOGIN_LIMIT = 5;
+export const RESET_LIMIT = 3;
+const WINDOW_MS = 15 * 60 * 1000;
+
+function windowStart(nowIso: string): string {
+  const t = Date.parse(nowIso);
+  return new Date(t - (t % WINDOW_MS)).toISOString();
+}
+
+export function rateLimit(d: Deps, bucket: string, limit: number): boolean {
+  const w = windowStart(d.now());
+  d.db.run(
+    'INSERT INTO rate_limit_hits (bucket, window_start, hits) VALUES (?, ?, 1) ' +
+      'ON CONFLICT(bucket, window_start) DO UPDATE SET hits = hits + 1',
+    [bucket, w],
+  );
+  const row = d.db.get<{ hits: number }>(
+    'SELECT hits FROM rate_limit_hits WHERE bucket = ? AND window_start = ?', [bucket, w],
+  );
+  return (row?.hits ?? 0) <= limit;
+}
+
+/* ------------------------------------------------------------------ *
+ * Login
+ * ------------------------------------------------------------------ */
+
+export type LoginResult = { user: User; cookie: SessionCookie; session_id: string };
+
+export async function login(d: Deps, email: string, password: string): Promise<LoginResult> {
+  // The bucket is the email, which IS personal data — so it is HASHED before it
+  // becomes a key, and the key never reaches a log line.
+  const bucket = 'login:' + hashToken(email.trim().toLowerCase());
+  if (!rateLimit(d, bucket, LOGIN_LIMIT)) {
+    d.audit.append({ at: d.now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'login' } });
+    throw new AuthError('E_RATE_LIMITED', GENERIC_AUTH_FAILURE);
+  }
+
+  const found = findByEmailWithSecret(d.db, email);
+
+  // TIMING. An unknown address still pays for a verification, so the response
+  // time does not answer "does this account exist". The dummy hash is a real
+  // argon2id string, so the work done is the same work.
+  const stored = found?.password_hash ?? DUMMY_HASH;
+  const ok = await d.hasher.verify(stored, password);
+
+  if (found === undefined || !ok || found.disabled) {
+    d.audit.append({
+      at: d.now(), kind: 'LOGIN_FAILED', outcome: 'REFUSED',
+      actor_id: found?.id ?? null, actor_role: found?.role ?? null,
+      // WHY it failed is not recorded against the account: it would turn the
+      // audit log into the enumeration oracle the message avoids being.
+      detail: { reason: 'credentials_or_state' },
+    });
+    throw new AuthError('E_AUTH_FAILED', GENERIC_AUTH_FAILURE);
+  }
+
+  const { cookie, session_id } = issueSession(d, found.id);
+  d.audit.append({
+    at: d.now(), kind: 'LOGIN_SUCCEEDED', outcome: 'ALLOWED',
+    actor_id: found.id, actor_role: found.role,
+    object_type: 'session', object_id: session_id, detail: {},
+  });
+
+  // A weak stored hash is upgraded on the one occasion the plaintext is in hand.
+  if (d.hasher.needsRehash(found.password_hash)) {
+    setPasswordHash(d.db, d.now, found.id, await d.hasher.hash(password));
+  }
+
+  const { password_hash: _drop, ...user } = found;
+  void _drop;
+  return { user, cookie, session_id };
+}
+
+/**
+ * A real argon2id hash of a value nobody holds. Generated once at load so the
+ * verify path for an unknown address costs the same as for a known one.
+ */
+let DUMMY_HASH = '$argon2id$v=19$m=19456,t=2,p=1$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+export async function primeTimingDefence(hasher: PasswordHasher): Promise<void> {
+  DUMMY_HASH = await hasher.hash(randomBytes(24).toString('hex'));
+}
+
+function issueSession(d: Deps, user_id: string, rotated_from?: string): { cookie: SessionCookie; session_id: string } {
+  const raw = token(d);
+  const id = newId();
+  const created = d.now();
+  const expires = new Date(Date.parse(created) + SESSION_TTL_MS).toISOString();
+  d.db.run(
+    'INSERT INTO sessions (id, user_id, token_hash, created_at, expires_at, last_seen_at, revoked_at, revoked_reason, rotated_from) ' +
+      'VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, ?)',
+    [id, user_id, hashToken(raw), created, expires, created, rotated_from ?? null],
+  );
+  return { cookie: cookieFor(raw, expires), session_id: id };
+}
+
+/* ------------------------------------------------------------------ *
+ * Reading a session back
+ * ------------------------------------------------------------------ */
+
+export type Authenticated = { user: User; session_id: string };
+
+/** Returns undefined for absent, unknown, expired, revoked, or disabled-owner. */
+export function authenticate(d: Deps, rawToken: string | undefined): Authenticated | undefined {
+  if (rawToken === undefined || rawToken === '') return undefined;
+  const row = d.db.get<{ id: string; user_id: string; expires_at: string; revoked_at: string | null }>(
+    'SELECT id, user_id, expires_at, revoked_at FROM sessions WHERE token_hash = ?',
+    [hashToken(rawToken)],
+  );
+  if (row === undefined) return undefined;
+  if (row.revoked_at !== null) return undefined;
+  if (Date.parse(row.expires_at) <= Date.parse(d.now())) return undefined;
+
+  const user = findById(d.db, row.user_id);
+  if (user === undefined || user.disabled) return undefined;
+
+  d.db.run('UPDATE sessions SET last_seen_at = ? WHERE id = ?', [d.now(), row.id]);
+  return { user, session_id: row.id };
+}
+
+export function logout(d: Deps, session_id: string, actor: User): void {
+  d.db.run(
+    'UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE id = ? AND revoked_at IS NULL',
+    [d.now(), 'LOGOUT', session_id],
+  );
+  d.audit.append({
+    at: d.now(), kind: 'LOGOUT', outcome: 'ALLOWED',
+    actor_id: actor.id, actor_role: actor.role, object_type: 'session', object_id: session_id, detail: {},
+  });
+}
+
+export function revokeAllSessions(d: Deps, user_id: string, reason: string): number {
+  const r = d.db.run(
+    'UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE user_id = ? AND revoked_at IS NULL',
+    [d.now(), reason, user_id],
+  );
+  d.audit.append({
+    at: d.now(), kind: 'SESSION_REVOKED', outcome: 'ALLOWED',
+    actor_id: user_id, object_type: 'session', detail: { reason, count: r.changes },
+  });
+  return r.changes;
+}
+
+/**
+ * ROTATION ON PRIVILEGE CHANGE. The old session is revoked and a new one issued
+ * carrying `rotated_from`, so the rotation is evidence rather than an assertion
+ * in a comment. Call this whenever a role changes or a password changes.
+ */
+export function rotateSession(d: Deps, old_session_id: string, user_id: string): { cookie: SessionCookie; session_id: string } {
+  d.db.run(
+    'UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE id = ? AND revoked_at IS NULL',
+    [d.now(), 'PRIVILEGE_CHANGE', old_session_id],
+  );
+  const issued = issueSession(d, user_id, old_session_id);
+  d.audit.append({
+    at: d.now(), kind: 'SESSION_ROTATED', outcome: 'ALLOWED',
+    actor_id: user_id, object_type: 'session', object_id: issued.session_id,
+    detail: { rotated_from: old_session_id },
+  });
+  return issued;
+}
+
+/* ------------------------------------------------------------------ *
+ * Password change and reset
+ * ------------------------------------------------------------------ */
+
+export async function changeOwnPassword(
+  d: Deps, actor: User, session_id: string, current: string, next: string,
+): Promise<{ cookie: SessionCookie; session_id: string }> {
+  const withSecret = findByEmailWithSecret(d.db, actor.email);
+  if (withSecret === undefined || !(await d.hasher.verify(withSecret.password_hash, current))) {
+    throw new AuthError('E_AUTH_FAILED', GENERIC_AUTH_FAILURE);
+  }
+  setPasswordHash(d.db, d.now, actor.id, await d.hasher.hash(next));
+  d.audit.append({
+    at: d.now(), kind: 'PASSWORD_CHANGED', outcome: 'ALLOWED',
+    actor_id: actor.id, actor_role: actor.role, detail: {},
+  });
+  // A password change is a privilege change.
+  return rotateSession(d, session_id, actor.id);
+}
+
+/**
+ * Requests a reset. ALWAYS reports the same thing to the caller, whether or not
+ * the address is known — the response must not be an enumeration oracle either.
+ * Returns the plaintext token ONLY so the caller can hand it to the email
+ * transport; it is never returned to a browser and never stored in clear.
+ */
+export function requestPasswordReset(
+  d: Deps, email: string,
+): { accepted: true; user?: User; plaintextToken?: string } {
+  const bucket = 'reset:' + hashToken(email.trim().toLowerCase());
+  if (!rateLimit(d, bucket, RESET_LIMIT)) {
+    d.audit.append({ at: d.now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'password_reset' } });
+    return { accepted: true }; // still generic
+  }
+
+  const found = findByEmailWithSecret(d.db, email);
+  if (found === undefined || found.disabled) {
+    d.audit.append({
+      at: d.now(), kind: 'PASSWORD_RESET_REQUESTED', outcome: 'REFUSED',
+      detail: { reason: 'no_active_account' },
+    });
+    return { accepted: true };
+  }
+
+  const raw = token(d);
+  const created = d.now();
+  d.db.run(
+    'INSERT INTO password_reset_tokens (id, user_id, token_hash, created_at, expires_at, used_at) ' +
+      'VALUES (?, ?, ?, ?, ?, NULL)',
+    [newId(), found.id, hashToken(raw), created, new Date(Date.parse(created) + RESET_TTL_MS).toISOString()],
+  );
+  d.audit.append({
+    at: d.now(), kind: 'PASSWORD_RESET_REQUESTED', outcome: 'ALLOWED',
+    actor_id: found.id, actor_role: found.role, detail: {},
+  });
+  const { password_hash: _drop, ...user } = found;
+  void _drop;
+  return { accepted: true, user, plaintextToken: raw };
+}
+
+/** Single-use and expiring. Consuming it revokes every session the user held. */
+export async function completePasswordReset(d: Deps, rawToken: string, next: string): Promise<void> {
+  const row = d.db.get<{ id: string; user_id: string; expires_at: string; used_at: string | null }>(
+    'SELECT id, user_id, expires_at, used_at FROM password_reset_tokens WHERE token_hash = ?',
+    [hashToken(rawToken)],
+  );
+  if (row === undefined || row.used_at !== null || Date.parse(row.expires_at) <= Date.parse(d.now())) {
+    throw new AuthError('E_BAD_TOKEN', 'that reset link is no longer valid');
+  }
+  const hash = await d.hasher.hash(next);
+  d.db.tx(() => {
+    d.db.run('UPDATE password_reset_tokens SET used_at = ? WHERE id = ?', [d.now(), row.id]);
+    setPasswordHash(d.db, d.now, row.user_id, hash);
+  });
+  revokeAllSessions(d, row.user_id, 'PASSWORD_RESET');
+  d.audit.append({
+    at: d.now(), kind: 'PASSWORD_RESET_COMPLETED', outcome: 'ALLOWED',
+    actor_id: row.user_id, detail: {},
+  });
+}
+
+export { toActor };

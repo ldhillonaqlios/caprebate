@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<!--
+  Caprebate — public notices page.  Block G of the Developer Build Order.
+  Built 8 September 2026, Phase 99.  Board item 12946752268.
+
+  WHAT THIS FILE IS.  The page body, assembled from the sources named in the
+  channel specification §3.  It is deliberately self-contained: no JavaScript,
+  no external stylesheet, no web font, no image.  Acceptance tests 6 and 7
+  require the page to be fully readable with all non-essential cookies declined
+  and with JavaScript disabled, and the cheapest way to guarantee both is for
+  the page to need nothing it did not ship with.
+
+  WHAT THIS FILE IS NOT.  It is not the live page.  Seven things this file
+  cannot do are listed in Caprebate-Notices-Page-Host-Checklist.md and every one
+  of them needs somebody with hosting access.  The failure mode here is not a
+  page that does not work; it is a page that renders perfectly and that nobody
+  can find.
+
+  CONTENT IS ASSEMBLED, NEVER AUTHORED HERE.  Each block carries a SOURCE
+  comment naming the document and section it came from.  Those documents stay
+  authoritative.  When one is reissued the block is re-derived from it and the
+  date in Block J is changed.  Nothing in this page is edited to say something
+  its source does not say.
+
+  PLACEHOLDERS.  Every fact that is not yet set appears as
+  <span class="unset">[NOT SET — ...]</span>.  They are meant to be ugly.
+  caprebate-notices-acceptance.cjs counts them and the page must not go live
+  while any remain.
+
+  CHANGED 14 September 2026 (Phase 132).
+  - Block B "Who else sees it": the recipients-list placeholder is replaced by the
+    lists in Item 8 Privacy Notice v1.4 Section 6 (board item 12818279787), which
+    had carried them since v1.4.  See the comment at that block.
+  - Block E, the complaint form: question 3 is new, and asks whether the complaint
+    is made on someone else's behalf.  SOURCE: the s.164A pack §1.10 "What the
+    ICO's guidance says" (board item 12927908435, line 254 of the export, the row
+    "A complaint made for someone else", from ICO guidance read 13 September 2026):
+    check that the person is authorised to act, and do not investigate until the
+    authority arrives.  It is NOT required and must never become a gate.  §4.3's
+    questions 3 to 7 are numbered 4 to 8 here.
+    FOR THE DATA PROTECTION OFFICER: the pack's §4.3 field table should be brought
+    into line with this form (the on-behalf question as field 3, the rest
+    renumbered).  §1.10 already records that §4.3 does not ask it.
+
+  CHANGED 15 September 2026 (Phase 132c).  DRAFT FOR THE DATA PROTECTION OFFICER:
+  not approved, and the page is not live.
+  - The regulator's name.  The Information Commissioner becomes the Information
+    Commission on 30 September 2026.  S.I. 2026/1015 reg 2(c) commences section 119
+    of the Data (Use and Access) Act 2025, the transfer of functions to the
+    Commission, and reg 2(b) commences section 118, which abolishes the office of
+    Information Commissioner (read on legislation.gov.uk, 15 September 2026).
+    Block A's registration line, "Your other rights" and Block F option 2 now name
+    it in dated dual wording that is right on both sides of that date: "the
+    Information Commissioner (from 30 September 2026, the Information Commission)",
+    then "the regulator".  The complaint route stays ico.org.uk and 0303 123 1113:
+    the ICO's news item of 15 September 2026 says its functions continue and service
+    continues, and names no new address or number.
+    SOURCES changed the same way today: Item 8 Privacy Notice §§1, 8 and 9 (board
+    item 12818279787) and Block A of the response letters §0.3 (board item
+    12927850552).  NOT yet changed: the s.164A pack §5.7 (board item 12927908435),
+    which Block F also names as its source.
+    UPDATED 16 September 2026 (Phase 132f): the s.164A pack §5.7 is now changed
+    the same way, its options 2 and 3 matching Block A word for word, so every
+    source this page names for the regulator's wording now carries it.  No text
+    on this page changed; only this comment.
+  - Block B, "Sending information outside the UK".  "We do not intend to send this
+    information outside the UK ..." is replaced with what Microsoft, monday.com and
+    IONOS publish about where they hold data, as read on 15 September 2026 and set
+    out with sources in "Who we pass client personal data on to" §4 (board item
+    12927931400).  It does NOT say where our own accounts hold data: nobody has yet
+    checked the Microsoft tenant's data location, the monday.com region or where
+    IONOS holds our mailboxes.  SOURCE changed the same way today: Article 14
+    Assessment, BTC-T7 section 7, placeholder PL-P17 (board item 12927987812).
+  - Once 30 September 2026 has passed, the dual wording can be shortened to "the
+    Information Commission".  That is for the officer to approve, not to do silently.
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cap Rebate (CAP REBATE LTD) — Public notices</title>
+<meta name="description" content="Public notices from Cap Rebate: information for people whose names reach us from public registers or from documents our clients give us, how to object, and how to complain.">
+<link rel="canonical" href="https://caprebate.com/notices/">
+<style>
+  /* CAP REBATE — PHASE 133d. The brand book's tokens (09-app/backend/src/web/assets.ts): Cap Ink and Body Grey for
+     type, white and Mist for surfaces, Cap Mint for emphasis only (one rule, beside the current-notices statement),
+     the accent Cap Ink until one is supplied. System fonts only: nothing is fetched. */
+  :root{
+    --ink:#111111; --ink-soft:#333333; --paper:#ffffff; --paper-2:#F2F8F6;
+    --line:#cfdcd7; --brand:#111111; --alert:#a01e1e; --alertbg:#fcefef; --mint:#ABEDD8;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink-soft); line-height:1.62;
+    font-family:Calibri,"Segoe UI",Inter,Arial,Helvetica,sans-serif;
+    font-size:16px; font-variant-numeric:tabular-nums;
+  }
+  .wrap{max-width:44rem; margin:0 auto; padding:2.2rem 1.3rem 5rem}
+  h1,h2,h3{font-family:"Bookman Old Style","Roboto Slab",Georgia,"Times New Roman",serif; font-style:normal; font-weight:700; color:var(--ink)}
+  h1{font-size:1.9rem; line-height:1.15; margin:0 0 .3rem; letter-spacing:-.01em}
+  h2{font-size:1.28rem; line-height:1.2; margin:2.9rem 0 .7rem; padding-top:1.4rem;
+     border-top:1px solid var(--line); letter-spacing:-.005em}
+  h3{font-size:1.03rem; margin:1.7rem 0 .5rem}
+  p,li{margin:.75rem 0}
+  a{color:var(--brand)}
+  .lede{color:var(--ink-soft); font-size:1.02rem; margin-top:.5rem}
+  .meta{font-size:.86rem; color:var(--ink-soft)}
+
+  /* Block I — the current-notices statement.  It is the first thing on the page
+     because a reader sent here by a letter is looking for one thing. */
+  .current{border:2px solid var(--line); border-left:6px solid var(--mint); background:var(--paper-2);
+           padding:1.1rem 1.2rem; margin:1.6rem 0 0; border-radius:4px}
+  .current p{margin:.3rem 0}
+  .current .headline{font-weight:700}
+
+  /* Block D — Article 21(4) requires the right to object to be presented
+     "clearly and separately from any other information".  That is a rule about
+     LAYOUT, not about wording, so it is enforced here in the template and not
+     in the copy.  Do not merge this block into the section above or below it. */
+  .objection{border:3px solid var(--brand); background:#fff; border-radius:4px;
+             padding:1.5rem 1.4rem; margin:2.6rem 0}
+  .objection h2{border-top:none; padding-top:0; margin-top:0; color:var(--brand)}
+
+  table{border-collapse:collapse; width:100%; font-size:.9rem; margin:1rem 0; display:block; overflow-x:auto}
+  th,td{border:1px solid var(--line); padding:.5rem .6rem; text-align:left; vertical-align:top}
+  th{background:var(--paper-2); font-weight:600}
+
+  .unset{background:var(--alertbg); color:var(--alert); font-weight:600;
+         padding:0 .25em; border-radius:2px; white-space:normal}
+
+  .form{border:1px solid var(--line); background:#fff; padding:1.3rem 1.3rem 1.6rem;
+        border-radius:4px; margin:1.2rem 0}
+  .form label{display:block; font-weight:600; margin:1.2rem 0 .3rem}
+  .form .hint{font-weight:400; color:var(--ink-soft); font-size:.92rem; display:block; margin-top:.15rem}
+  .form input[type=text],.form input[type=email],.form textarea{
+    width:100%; padding:.55rem .6rem; border:1px solid var(--line); border-radius:3px;
+    font:inherit; font-size:.95rem; background:var(--paper)}
+  .form textarea{min-height:7rem}
+  .form .choice{font-weight:400; margin:.3rem 0}
+  .form button{margin-top:1.5rem; padding:.7rem 1.4rem; font:inherit; font-weight:600;
+               border:1px solid var(--brand); background:var(--brand); color:#fff;
+               border-radius:99px; cursor:pointer}
+  .contents{background:var(--paper-2); border:1px solid var(--line); border-radius:4px;
+            padding:1rem 1.2rem; margin:2rem 0}
+  .contents ul{margin:.4rem 0; padding-left:1.2rem}
+  .contents li{margin:.25rem 0}
+  footer{border-top:1px solid var(--line); margin-top:3rem; padding-top:1.2rem;
+         font-size:.88rem; color:var(--ink-soft)}
+
+  @media print{
+    body{background:#fff; font-size:11pt}
+    .wrap{max-width:none; padding:0}
+    .contents{display:none}
+    .objection{border:2pt solid #000}
+    .current{border:1pt solid #000; background:none}
+    .unset{background:none; border:1pt solid #000}
+    a{color:#000; text-decoration:underline}
+    /* Acceptance test 10: the page has to work on paper, so the URLs behind
+       links have to be on the paper too. */
+    a[href^="http"]::after{content:" (" attr(href) ")"; font-size:9pt; word-break:break-all}
+    a[href^="mailto"]::after{content:" (" attr(href) ")"; font-size:9pt}
+    h2{page-break-after:avoid}
+    .form{page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Public notices</h1>
+  <p class="lede">
+    Cap Rebate, a trading name of CAP REBATE LTD,
+    company number 17307313.
+  </p>
+  <p class="lede">
+    This page is for people we hold information about who are not our clients — because
+    a name reached us from a public register, or because a name appears in a document a
+    client gave us. It is also where we publish any public notice about a personal data
+    breach. It is not a marketing page and there is nothing to sign up to on it.
+  </p>
+</header>
+
+<!-- ══ BLOCK I ══ SOURCE: channel specification §3.1 block I.
+     This line is not decoration.  Without it an empty notices page is
+     indistinguishable from a broken one, and a reader who has been told to look
+     here and finds nothing cannot tell whether a notice was withdrawn, never
+     published, or failed to load. -->
+<section class="current" id="current-notices" aria-labelledby="current-notices-h">
+  <p class="headline" id="current-notices-h">There are no current breach notices.</p>
+  <p class="meta">Last confirmed <span class="unset">[NOT SET — date this line was last confirmed]</span>.</p>
+</section>
+
+<nav class="contents" aria-label="Contents">
+  <p><strong>On this page</strong></p>
+  <ul>
+    <li><a href="#who-we-are">Who we are, and how to contact us</a></li>
+    <li><a href="#documents">If your name is in a document someone gave us</a></li>
+    <li><a href="#registers">The public registers we use, and why</a></li>
+    <li><a href="#registers-not-client">If your name reached us from a public register and you are not our client</a></li>
+    <li><a href="#object">Your right to object</a></li>
+    <li><a href="#other-rights">Your other rights</a></li>
+    <li><a href="#complain">How to complain to us</a></li>
+    <li><a href="#not-satisfied">If you are not satisfied</a></li>
+    <li><a href="#archive">Notices we have published before</a></li>
+  </ul>
+</nav>
+
+<!-- ══ BLOCK A + BLOCK G + BLOCK H ══
+     SOURCE: registered facts; Item 8 Privacy Notice §1 (board item 12818279787);
+     Retention and Rights-Request Operating Procedure §5.2 (board item 12818099921,
+     Document 2) for the Article 37(7) point and the intake route. -->
+<section id="who-we-are">
+  <h2>Who we are, and how to contact us</h2>
+
+  <p>
+    Cap Rebate is a trading name of CAP REBATE LTD,
+    a company registered in England and Wales, company number
+    17307313, registered office
+    1st Floor, 1-9 Castle Street, Hinckley, LE10 1DA.
+  </p>
+
+  <p>
+    We help business owners in UK healthcare property recover tax relief they are
+    entitled to under the capital allowances rules. We are a desk-based professional
+    services firm. We do not provide clinical care and we do not hold patient records.
+  </p>
+
+  <h3>How to contact us about your personal data</h3>
+  <ul>
+    <li><strong>Email:</strong> <span class="unset">[NOT SET — dedicated data protection address]</span></li>
+    <li><strong>Post:</strong> <span class="unset">[NOT SET — registered office address]</span></li>
+  </ul>
+  <p>
+    You can write to us in whatever way suits you. A letter, an email or a phone call
+    all count, and we treat them all the same way.
+  </p>
+
+  <h3>Our Data Protection Officer</h3>
+  <p>
+    We have designated a Data Protection Officer —
+    <span class="unset">[NOT SET — DPO full name]</span>,
+    <span class="unset">[NOT SET — DPO contact details]</span>.
+    Article 37(7) of the UK GDPR requires us to publish those details, and this is
+    where we publish them.
+  </p>
+  <p>
+    <strong>The appointment is not yet in effect, and we would rather tell you that than
+    leave it out.</strong> It takes effect on the later of the two signatures on the
+    instrument of appointment, which has not yet been signed. Until it is signed, anything
+    you send us about your personal data — a request, an objection or a complaint — still
+    reaches our designated officer, <span class="unset">[NOT SET — DPO full name]</span>: send it to
+    us at the contact details above and we pass it to him the same working day. <strong>Your rights, and the time limits
+    within which we must answer you, are exactly the same either way.</strong> Nothing here
+    asks you to wait for a signature, and nothing here is a reason for us to take longer.
+  </p>
+
+  <!-- DRAFT 15 September 2026 (Phase 132c), for the data protection officer: the
+       regulator named both ways.  SOURCE: Item 8 Privacy Notice §1. -->
+  <h3>Registration with the data protection regulator</h3>
+  <p>
+    We are not yet registered with the Information Commissioner's Office (from 30 September
+    2026, the Information Commission). Our registration reference will be added here once
+    registration completes.
+  </p>
+</section>
+
+<!-- ══ BLOCK B ══ SOURCE: Article 14 Assessment §8.6, board item 12927987812,
+     which is authoritative and governs if this page and it ever disagree.
+     §8.6 directs that the wording continues "in the same order and to the same
+     content as BTC-T7 sections 2 to 11" — which is what the rest of this section and
+     the sections after it are.  Nothing here is redrafted. -->
+<section id="documents">
+  <h2>If your name is in a document someone gave us</h2>
+
+  <p>
+    Cap Rebate (CAP REBATE LTD) works out how much tax
+    relief a business can claim on the fittings and equipment in a building. To do that we
+    are given documents about the building by the client who instructs us — for example a
+    lease, a sale contract, replies to enquiries made when a property was sold, or a
+    certificate for building works.
+  </p>
+
+  <p>
+    <strong>Those documents often name people who are not our client</strong> — a landlord
+    or a tenant, someone who sold the property, someone who witnessed a signature, or the
+    surveyor or engineer who produced a report. <strong>If you are one of those people,
+    this notice is for you</strong>, and it is here because we could not find an address to
+    write to you at.
+  </p>
+
+  <h3>Where your information came from</h3>
+  <p>
+    We were given it by our client — the buyer, the tenant or the owner of the property —
+    in a document about that property. <strong>It is not a public document and it did not
+    come from a public source.</strong> We did not obtain it from you.
+  </p>
+
+  <h3>What we hold</h3>
+  <p>
+    Whatever the document itself says about you. Typically that is your name and the
+    capacity you appear in — a party to a contract or a lease, a witness to a signature, or
+    the author of a report — together with any address or description the document gives
+    for you.
+  </p>
+  <p>
+    <strong>If you would like to know exactly what the document says about you, write to us
+    and tell us the property or the transaction</strong>, and we will tell you. That is also
+    how we identify you: for this kind of record we usually cannot look you up from a name
+    alone, so what you tell us about the property is what lets us find the entry.
+  </p>
+
+  <h3>What we use it for, and why we are allowed to</h3>
+  <p>
+    Our client is claiming tax relief on the fittings in a building. The rules limit what
+    they can claim by reference to what earlier owners could have claimed, and to what was
+    agreed about the fittings when the property changed hands. So we have to establish who
+    the parties were and what was agreed. Your name is in the document that records that.
+  </p>
+  <p>
+    <span class="unset">[NOT SET — the legal basis for this processing, and the legitimate
+    interests relied on if the basis is Article 6(1)(f). This is undecided and it is the
+    one thing on this page that cannot be filled in from any existing document. It is Gate
+    B in the Article 14 Assessment, board item 12927987812 §9, and it is for the Data
+    Protection Officer.]</span>
+  </p>
+
+  <h3>How long we keep it</h3>
+  <p>
+    We keep the document this information came from until the point at which the tax claim
+    it supports can no longer be challenged. In practice that means the later of two things:
+    the end of the period in which HM Revenue and Customs can open an enquiry into the tax
+    return the claim was made in, and the end of any enquiry that is actually opened — plus
+    a margin. Then we delete it.
+  </p>
+  <p>
+    <strong>The exact number of years depends on the type of return and when it was filed,
+    and we have not yet fixed it. When we do, we will publish it here.</strong>
+  </p>
+
+  <!-- Filled 14 September 2026 (Phase 132).  SOURCE: Item 8 Privacy Notice v1.4,
+       Section 6 "Who we share information with" (board item 12818279787), which
+       governs.  Board item 12927931400.  The notice's "not yet appointed / not yet
+       chosen" states are copied as they stand and change only when the notice does.
+       Two words are adapted for this block's reader, who is not our client: "your
+       property / your claim / your own accountant" read "the property / the claim /
+       our client's own accountant".  Nothing else is redrafted.  Its bracketed
+       states are printed as plain sentences, because on this page square brackets
+       mean a fact that is not set. -->
+  <h3>Who else sees it</h3>
+  <p>
+    We list two kinds of organisation separately. Both are listed, because both can see
+    your data.
+  </p>
+  <p><strong>Who receives it</strong> — people and organisations we send information to:</p>
+  <ul>
+    <li><strong>The chartered surveyor</strong> who values the fixtures in the property. Not yet appointed. Nothing has been sent to a surveyor.</li>
+    <li><strong>The chartered tax adviser</strong> who reviews the tax treatment of the claim. Not yet appointed. Nothing has been sent to a tax adviser.</li>
+    <li><strong>Our client's own accountant or tax adviser</strong>, where our client was introduced to us through them or has asked us to work with them. Nothing has been sent to any accountant yet.</li>
+    <li><strong>HM Revenue and Customs</strong>, in connection with the claim. HMRC receives whatever a filed claim contains, including names in the chain of ownership, normally through our client or their agent, and anything it asks for if it opens an enquiry. No claim has been filed yet.</li>
+  </ul>
+  <p><strong>Who processes it for us</strong> — organisations that store or carry information for us under written terms that require them to act only on our instructions and to protect it (Article 28 of the UK GDPR):</p>
+  <ul>
+    <li><strong>Microsoft (OneDrive and Microsoft 365)</strong> — our document store. In use today.</li>
+    <li><strong>monday.com</strong> — our work-management system. In use today.</li>
+    <li><strong>IONOS</strong> — our domain and email provider. In use today.</li>
+    <li><strong>A storage provider for documents uploaded through our client portal.</strong> Not yet chosen. It will be named here before the portal is used.</li>
+    <li><strong>The host of our website.</strong> Not yet contracted. It will be named here before the website stores anything about you.</li>
+    <li><strong>A provider that reads the contents of uploaded documents for us.</strong> We do not use one and none has been chosen. Any such provider will be named here before it is used.</li>
+    <li><strong>Homedata</strong>, our address-lookup supplier, which receives a property address each time we look one up. No account has been opened yet, so no address has been sent.</li>
+  </ul>
+  <p>
+    We do not sell your data, and we do not share it for anyone else's marketing.
+  </p>
+
+  <!-- DRAFT 15 September 2026 (Phase 132c), for the data protection officer.  SOURCE:
+       Article 14 Assessment, BTC-T7 section 7, placeholder PL-P17 (board item
+       12927987812), filled from "Who we pass client personal data on to" §4 (board item
+       12927931400), where each provider's pages are listed with the date they were read.
+       Only what the providers PUBLISH is stated.  Where our own accounts hold data has
+       not been checked and must not be stated here until it has. -->
+  <h3>Sending information outside the UK</h3>
+  <p>
+    Three companies store our records for us today: Microsoft, monday.com and IONOS. We have
+    not yet checked which storage location our own accounts with them use, so we cannot
+    promise that your information stays in the UK. This is what each company publishes about
+    where it keeps information and when it may send it abroad:
+  </p>
+  <ul>
+    <li><strong>Microsoft (OneDrive and Microsoft 365)</strong> says that, for an organisation
+    set up in the United Kingdom, it stores email, and files kept in OneDrive and SharePoint,
+    only in the UK. Its terms let it transfer information to the United States or any other
+    country where it or its subprocessors operate, using standard contractual clauses and its
+    UK international data transfer addendum.</li>
+    <li><strong>monday.com</strong> has no UK storage region. It stores information in the
+    United States, the European Union (Germany) or Australia, depending on how an account was
+    set up, and keeps login and profile details in the United States whatever the region. It
+    says information may also be processed in the United States and in Israel, using standard
+    contractual clauses with the UK international data transfer addendum, and decisions that a
+    country's protection is adequate.</li>
+    <li><strong>IONOS</strong> says it processes information in the UK or in the European
+    Economic Area unless a transfer to another country becomes necessary to provide its
+    service. It does not say what safeguard it would use for such a transfer.</li>
+  </ul>
+  <p>
+    We read what these companies publish on 15 September 2026. We have not yet chosen a
+    provider for the automated reading described below, so we cannot yet tell you where that
+    would take place. If you would like to know more, write to us and we will tell you what we
+    have established.
+  </p>
+
+  <h3>Automated decisions</h3>
+  <p>
+    No automated system reads documents like yours today. We do not use a provider that reads
+    the contents of documents, and none has been chosen. Any such provider will be named on
+    this page before it is used. No decision is made about you at all — the decisions we make
+    are about our client's tax. <strong>We are still checking this position against the current
+    rules on automated decision-making and will update it if it changes.</strong>
+  </p>
+  <p>
+    <em>Corrected 15 September 2026. This section used to say that some of the information in
+    documents like yours is read by an automated system and that a person checks what it
+    produces before it is used. No such system is in use, and we have not decided which one, if
+    any, we would use.</em>
+  </p>
+
+  <p>
+    If you think we hold information about you and you would like to know what it is, write
+    to us at the address above and tell us the property or the transaction. We will tell you
+    what we hold and, if you want us to, we will consider stopping.
+  </p>
+</section>
+
+<!-- ══ BLOCK C ══ SOURCE: Item 8 Privacy Notice §§4 and 5, board item 12818279787,
+     which was written to become this page and stays authoritative. -->
+<section id="registers">
+  <h2>The public registers we use, and why</h2>
+
+  <p>
+    We check public registers to establish facts about a property: what it is, how big it
+    is, when it was built, how it is used, and who owns it. We need these facts to work out
+    our client's capital allowances claim.
+  </p>
+
+  <!-- Added 10 September 2026 (Phase 115), from privacy notice v1.4 Section 4. -->
+  <p>
+    <strong>We read from these registers; we send them nothing.</strong> None of them receives
+    information about our client, or about you, from us. The one exception is Homedata, the address-lookup supplier in the table below: to confirm an
+    address it has to be sent the address.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Register</th><th>Who publishes it</th><th>What we look up</th><th>Lawful basis</th><th>How long we keep it</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>EPC register (England &amp; Wales)</td><td>Department for Levelling Up, Housing and Communities</td><td>Floor area, construction age, property type</td><td>Legitimate interests (Article 6(1)(f)) — building facts</td><td>Building facts kept as below; assessor's name never kept</td></tr>
+      <tr><td>EPC register (Scotland)</td><td>Scottish Government</td><td>Floor area, construction age, property type</td><td>Legitimate interests (Article 6(1)(f)) — building facts</td><td>Building facts kept as below; assessor's name never kept</td></tr>
+      <tr><td>CQC (England)</td><td>Care Quality Commission</td><td>Registration status, service categories, bed numbers</td><td>Legitimate interests (Article 6(1)(f)) — building and service facts</td><td>Facts kept as below; manager and nominated individual names never kept</td></tr>
+      <tr><td>CIW / Care Inspectorate Scotland / RQIA</td><td>Welsh, Scottish and Northern Irish care regulators</td><td>Registration status, service categories, bed numbers</td><td>Legitimate interests (Article 6(1)(f)) — building and service facts</td><td>Facts kept as below; responsible individual and manager names never kept</td></tr>
+      <tr><td>Ofsted / Regulator of Social Housing</td><td>Ofsted; Regulator of Social Housing</td><td>Registration status, provider type</td><td>Legitimate interests (Article 6(1)(f)) — building and service facts</td><td>Facts kept as below; registered person names never kept</td></tr>
+      <tr><td>Charity Commission / OSCR</td><td>Charity Commission for England and Wales; Office of the Scottish Charity Regulator</td><td>Charitable status, registration details</td><td>Legitimate interests (Article 6(1)(f)) — organisational facts</td><td>Facts kept as below; trustee names never kept</td></tr>
+      <tr><td>Companies House — company profile</td><td>Companies House</td><td>Company status, SIC code, registered address</td><td>Legitimate interests (Article 6(1)(f)) — organisational facts</td><td>Kept as below; contains no personal data</td></tr>
+      <tr><td>Companies House — persons with significant control</td><td>Companies House</td><td>Name, birth month and year, nationality of the person who controls a company our client has named to us</td><td>Legitimate interests (Article 6(1)(f)) — Annual Investment Allowance common-control check</td><td><strong>Kept as below — this is Exception 1</strong></td></tr>
+      <tr><td>HM Land Registry — Price Paid</td><td>HM Land Registry</td><td>Sale price, sale date</td><td>Legitimate interests (Article 6(1)(f)) — market evidence</td><td>Kept as below; contains no personal data</td></tr>
+      <tr><td>HM Land Registry — title register</td><td>HM Land Registry</td><td>Legal ownership of the property</td><td>Legitimate interests (Article 6(1)(f)) — identifying the claimant</td><td>Proprietor's name kept only where the proprietor is an individual — <strong>this is Exception 2</strong>. Where the proprietor is a company, no name arises</td></tr>
+      <tr><td>Planning sources (PlanIt, planning.data.gov.uk, council portals)</td><td>Local planning authorities, aggregated by third-party services</td><td>Application reference, date, description, decision</td><td>Legitimate interests (Article 6(1)(f)) — building history</td><td>Facts kept as below; <strong>names of applicants, agents, objectors and neighbours are never taken from planning records at all</strong></td></tr>
+      <tr><td>Valuation Office Agency</td><td>Valuation Office Agency</td><td>Rating and valuation data</td><td>Legitimate interests (Article 6(1)(f)) — valuation evidence</td><td>Kept as below; contains no personal data</td></tr>
+      <tr><td>Ordnance Survey, Environment Agency LiDAR, Coal Authority, British Geological Survey</td><td>Respective public bodies</td><td>Mapping, elevation and ground condition data for the property</td><td>Legitimate interests (Article 6(1)(f)) — building and site facts</td><td>Kept as below; contains no personal data</td></tr>
+      <tr><td>Homedata (address lookup)</td><td>Homedata (commercial address data supplier)</td><td>Confirming and standardising the property address</td><td>Legitimate interests (Article 6(1)(f)) — accurate identification of the property</td><td>Kept as below; contains no personal data beyond the address our client has given us</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The names rule</h3>
+  <p>
+    We strip people's names out of these records at the point we receive them. An EPC
+    assessor's name, a care home's registered manager, a charity's trustees — these arrive
+    in the record because the register cannot be queried for the building facts alone, but
+    the name is dropped before it is stored. <strong>There are two exceptions, and only
+    two:</strong>
+  </p>
+  <ol>
+    <li>
+      <strong>Where a company's controlling owner is recorded at Companies House.</strong>
+      The Annual Investment Allowance is shared between businesses under the same control.
+      If a person controls more than one business, the allowance that can be claimed is
+      shared across them, not multiplied. We have to be able to check who controls what —
+      otherwise a claim could be sized too generously and come back on our client when HMRC
+      checks it. We only check companies our client has already told us about; we do not
+      search the register to find out what else they might control.
+    </li>
+    <li>
+      <strong>Where the property is owned in someone's own name rather than by a
+      company.</strong> If a surgery or care home is owned personally rather than through a
+      company, the person named on the title is the person making the claim. We have to
+      record who that is, because the claim belongs to them.
+    </li>
+  </ol>
+
+  <h3>What we never take</h3>
+  <p>
+    We do not take the names of people connected with planning applications — applicants,
+    agents, objectors or neighbours — from planning records, under any circumstances.
+    Planning records can carry very personal information (a health condition mentioned in an
+    objection, a neighbour dispute, a family circumstance) that has nothing to do with a
+    building's tax treatment. We use planning records only for the application reference,
+    date, description and decision. <strong>This is the strongest protection on this page,
+    and we mean it to stay that way.</strong>
+  </p>
+  <p>
+    Some records from these registers are retrieved in full and the names in them are
+    discarded at the point we receive them, before anything is stored. We are telling you
+    that because the retrieval is still something we did with your information, even where
+    nothing was kept.
+  </p>
+
+  <h3>How long we keep it</h3>
+  <p>
+    We keep evidence supporting a claim until the later of: the point at which HMRC can no
+    longer open an enquiry into the tax return the claim was made in, and the point at which
+    any enquiry actually opened has closed — plus a margin.
+    <span class="unset">[NOT SET — the exact retention period. It is to be set by the Data
+    Protection Officer and the chartered tax adviser and has not been fixed.]</span>
+  </p>
+  <p>
+    When the period ends we delete the register-derived evidence, including the two
+    exceptions above, on a scheduled review. We do not keep it for any other purpose, and we
+    do not reuse it for a later, unrelated instruction just because it is still on file.
+  </p>
+</section>
+
+<!-- ══ BLOCK C, second half ══ SOURCE: Item 8 Privacy Notice §5. -->
+<section id="registers-not-client">
+  <h2>If your name reached us from a public register and you are not our client</h2>
+
+  <p>This section is written to you directly.</p>
+
+  <p>
+    You are not our client. You may be the controlling owner of a company that shares common
+    control with a business we have been engaged to work on — for example, you and our
+    client jointly control two related companies, or you are a business partner,
+    co-shareholder or family member recorded at Companies House. Your name reached us
+    because we had to check whether the Annual Investment Allowance is shared between your
+    business and our client's.
+  </p>
+
+  <p>
+    <strong>Why we hold your name.</strong> To confirm whether a business you control shares
+    common control with a business our client has instructed us on, so that we size our
+    client's Annual Investment Allowance claim correctly.
+  </p>
+
+  <p>
+    <strong>Our lawful basis.</strong> Legitimate interests (Article 6(1)(f)). We rely on
+    this because checking common control protects our client from an over-claimed allowance
+    and protects the public interest in tax reliefs being claimed correctly — not because it
+    is convenient for us. We do not search the register to find out what you control; we
+    only confirm companies our client has already named to us.
+  </p>
+
+  <p>
+    <strong>What we hold.</strong> Your name, the month and year of your birth, and your
+    nationality, as published by Companies House. We do not hold your date of birth
+    (Companies House does not publish it), your home address, or your officer or director
+    details from any other Companies House record — we never request that data.
+  </p>
+
+  <p>
+    <strong>How to ask what we hold about you.</strong> Write to us using the contact details
+    above. We will respond without undue delay and in any event before the end of the
+    <strong>applicable time period</strong> — normally one month beginning with the day we
+    receive your request (Articles 12(3) and 12A(1) of the UK GDPR).
+  </p>
+  <p>
+    <strong>Three things can change that, and we will tell you if any of them applies.</strong>
+    If we have to ask you for information to confirm who you are, the month runs from when we
+    get it. If we reasonably need to ask you what your request covers, the days between our
+    question and your answer do not count towards the month. And if your request is complex,
+    or you have made several, we may extend by up to two further months — in which case we
+    will tell you, and tell you why, before the first month ends (Article 12A(2), (3), (4)
+    and (5)).
+  </p>
+</section>
+
+<!-- ══ BLOCK D ══ SOURCE: Item 5 §8.7 (board item 12818099921) and Item 8 Privacy
+     Notice §5 "Your right to object" (board item 12818279787).
+
+     ARTICLE 21(4) IS A LAYOUT RULE.  It requires the right to object to be brought
+     to attention explicitly and presented "clearly and separately from any other
+     information".  A line inside a wall of text does not satisfy it.  The visual
+     separation is in the .objection rule in the stylesheet above; if this block is
+     ever moved into a tab, an accordion, a sidebar or the body of another section,
+     the page stops satisfying 21(4) even though not one word has changed. -->
+<section class="objection" id="object" aria-labelledby="object-h">
+  <h2 id="object-h">Your right to object</h2>
+
+  <p>
+    <strong>You have the right to object to this processing at any time, on grounds relating
+    to your particular situation, under Article 21(1) of the UK GDPR.</strong>
+  </p>
+
+  <p>
+    If you object, we must stop processing your data unless we can show compelling
+    legitimate grounds that override your interests, or unless we need to keep it for the
+    establishment, exercise or defence of a legal claim — for example, because HMRC has
+    opened, or could still open, an enquiry into the claim your name supports.
+  </p>
+
+  <p>
+    <strong>To object, write to us at
+    <span class="unset">[NOT SET — dedicated data protection address]</span>, or by post to
+    <span class="unset">[NOT SET — registered office address]</span>.</strong>
+    Tell us who you are and, if you know it, the company or the property that connects you
+    to our client. You do not need to use any particular form of words. We will consider your
+    objection on its own facts and respond, with our decision and our reasons, before the end
+    of the applicable time period explained above — normally one month from when we receive
+    it. If we decide not to act on your objection we will tell you why within that period,
+    and we will tell you how to complain and how to take it further (Article 12(4) of the
+    UK GDPR).
+  </p>
+</section>
+
+<!-- ══ SOURCE: Item 8 Privacy Notice §8. -->
+<section id="other-rights">
+  <h2>Your other rights</h2>
+
+  <ul>
+    <li><strong>Access</strong> — ask us what we hold about you and get a copy of it.</li>
+    <li><strong>Rectification</strong> — ask us to correct information that is wrong. Where the information came from a public register, we will normally refresh it from the register rather than edit it by hand, and record which we did.</li>
+    <li><strong>Erasure</strong> — ask us to delete your data. This is not absolute: where we still need the data for the establishment, exercise or defence of a legal claim (for example, an open HMRC enquiry), we may need to keep it, and we will explain why.</li>
+    <li><strong>Restriction</strong> — ask us to limit how we use your data while a query about it is resolved (Article 18).</li>
+    <li><strong>Object</strong> — see the block above.</li>
+    <li><strong>Portability</strong> — the right to receive your data in a portable format and have it moved to another provider. <strong>This does not apply to the register-derived data described above</strong>, because that data is not processed on the basis of your consent or a contract with you — it is processed under legitimate interests (Article 6(1)(f)).</li>
+  </ul>
+
+  <p>
+    To exercise any of these rights, write to us using the contact details above.
+    <strong>We will respond without undue delay and in any event before the end of the
+    applicable time period</strong> — normally one month beginning with the day we receive
+    your request, which we may extend by up to two further months where your request is
+    complex or you have made several, and which pauses while we wait for information we have
+    reasonably asked you for (Articles 12(3) and 12A of the UK GDPR).
+    <strong>If we decide not to act on your request, we will tell you why before that period
+    ends</strong> — and we will tell you at the same time about your right to complain to us,
+    your right to complain to the Information Commissioner (from 30 September 2026, the
+    Information Commission), and your right to go to court (Article 12(4)).
+  </p>
+</section>
+
+<!-- ══ BLOCK E ══ SOURCE: the s.164A pack §§4.1, 4.2 and 4.3, board item 12927908435.
+     Three things from §4.1 are built into this section deliberately:
+       - the form is the statutory EXAMPLE of facilitation, not the duty itself;
+       - "and by other means" is CONJUNCTIVE, so the printable form, the postal
+         address and the free-text email route are not extras;
+       - the form CANNOT BE A GATE, and the page has to say so in terms. -->
+<section id="complain">
+  <h2>How to complain to us</h2>
+
+  <p>
+    <strong>You have a right to complain to us about how we have handled your personal
+    data.</strong> This is a right you have under <strong>section 164A of the Data Protection
+    Act 2018</strong>, not a favour we are doing you. You do not have to be our client, you do
+    not have to use any particular words or name any law, and you do not have to be right —
+    if you think something has gone wrong with your personal data, that is a complaint.
+  </p>
+
+  <p>
+    <strong>We will confirm we have received it within 30 days</strong> — and in practice
+    within a couple of working days. We will then look into it, keep you informed of how it
+    is going, and tell you the outcome. We do not charge for any of this.
+  </p>
+
+  <p>
+    <strong>You do not have to use the form.</strong> A complaint by email, by letter or in a
+    phone call counts exactly the same and is treated exactly the same way. The form is here
+    to make complaining easier, not to be a hurdle.
+  </p>
+
+  <h3>Three ways to complain, and they are equal</h3>
+  <ul>
+    <li><strong>Fill in the form below.</strong></li>
+    <li><strong>Print it and post it.</strong> <a href="complaint-form/">Open a printable copy of this form</a>, or print this page. Post it to <span class="unset">[NOT SET — registered office address]</span>.</li>
+    <li><strong>Just write to us.</strong> Email <span class="unset">[NOT SET — dedicated data protection address]</span> and say what happened, in your own words. You do not need to answer any of the questions below.</li>
+  </ul>
+
+  <h3>Make a complaint about how we have handled your personal data</h3>
+
+  <form class="form" method="post" action="/notices/complaint">
+    <p>
+      <em>We will confirm we have received your complaint <strong>within 30 days</strong> — and
+      in practice within a couple of working days. We do not charge for any of this.</em>
+    </p>
+
+    <label for="c-name">1. Your name <span class="hint">We need it to look for you in our records at all.</span></label>
+    <input type="text" id="c-name" name="name" required>
+
+    <label for="c-reply">2. How we should reply <span class="hint">An email address or a postal address we can reply to. We will use it only to deal with this complaint.</span></label>
+    <input type="text" id="c-reply" name="reply_to" required>
+
+    <!-- Question 3 added 14 September 2026 (Phase 132).  SOURCE: the s.164A pack
+         §1.10, line 254 of the export (ICO guidance read 13 September 2026): check
+         that the person is authorised to act, and do not investigate until the
+         authority arrives.  NOT required — neither control carries "required", and
+         must not. -->
+    <fieldset style="border:1px solid var(--line); border-radius:3px; margin-top:1.2rem; padding:.8rem 1rem">
+      <legend style="font-weight:600">3. Are you complaining about your own personal data, or on behalf of someone else?</legend>
+      <span class="hint">Optional. If you are complaining for someone else, we will check you are authorised to act for them before we look into it, and tell you what we need.</span>
+      <p class="choice"><input type="radio" id="c-b1" name="on_behalf" value="self"> <label for="c-b1" style="display:inline; font-weight:400">About my own personal data</label></p>
+      <p class="choice"><input type="radio" id="c-b2" name="on_behalf" value="other"> <label for="c-b2" style="display:inline; font-weight:400">On behalf of someone else</label></p>
+      <label for="c-authority" style="font-weight:400; margin-top:.6rem">If for someone else: their name, and how you are authorised to act for them.</label>
+      <input type="text" id="c-authority" name="authority_detail">
+    </fieldset>
+
+    <label for="c-find">4. Anything that helps us find you <span class="hint">Optional. If you know it: the company or the property our records might connect you to, or a reference from anything we have sent you. If you have no idea why we hold your name, say that instead — it is a perfectly normal answer and it tells us where to look.</span></label>
+    <input type="text" id="c-find" name="matching_info">
+
+    <fieldset style="border:1px solid var(--line); border-radius:3px; margin-top:1.2rem; padding:.8rem 1rem">
+      <legend style="font-weight:600">5. What is your complaint about?</legend>
+      <p class="choice"><input type="radio" id="c-a1" name="about" value="how_obtained"> <label for="c-a1" style="display:inline; font-weight:400">How you got my personal data</label></p>
+      <p class="choice"><input type="radio" id="c-a2" name="about" value="what_doing"> <label for="c-a2" style="display:inline; font-weight:400">What you are doing with it</label></p>
+      <p class="choice"><input type="radio" id="c-a3" name="about" value="not_told"> <label for="c-a3" style="display:inline; font-weight:400">You did not tell me you had it</label></p>
+      <p class="choice"><input type="radio" id="c-a4" name="about" value="answer_to_request"> <label for="c-a4" style="display:inline; font-weight:400">How you answered a request I made</label></p>
+      <p class="choice"><input type="radio" id="c-a5" name="about" value="retention"> <label for="c-a5" style="display:inline; font-weight:400">How long you are keeping it</label></p>
+      <p class="choice"><input type="radio" id="c-a6" name="about" value="other"> <label for="c-a6" style="display:inline; font-weight:400">Something else — tell us below</label></p>
+    </fieldset>
+
+    <label for="c-what">6. What happened, in your own words <span class="hint">Tell us what happened and what you think we got wrong. You do not need to quote any law, and you do not need to know which rule applies — that is our job.</span></label>
+    <textarea id="c-what" name="complaint_verbatim" required></textarea>
+
+    <label for="c-want">7. What would you like us to do? <span class="hint">Optional. If there is something specific you want — an explanation, a correction, your data deleted, or for us to stop — tell us here.</span></label>
+    <textarea id="c-want" name="remedy_sought"></textarea>
+
+    <fieldset style="border:1px solid var(--line); border-radius:3px; margin-top:1.2rem; padding:.8rem 1rem">
+      <legend style="font-weight:600">8. Are you also asking us to do something with your data now?</legend>
+      <p class="choice"><input type="checkbox" id="c-r1" name="rights[]" value="access"> <label for="c-r1" style="display:inline; font-weight:400">Tell me what you hold about me</label></p>
+      <p class="choice"><input type="checkbox" id="c-r2" name="rights[]" value="rectify"> <label for="c-r2" style="display:inline; font-weight:400">Correct something</label></p>
+      <p class="choice"><input type="checkbox" id="c-r3" name="rights[]" value="erase"> <label for="c-r3" style="display:inline; font-weight:400">Delete it</label></p>
+      <p class="choice"><input type="checkbox" id="c-r4" name="rights[]" value="object"> <label for="c-r4" style="display:inline; font-weight:400">Stop using it</label></p>
+      <p class="choice"><input type="checkbox" id="c-r5" name="rights[]" value="restrict"> <label for="c-r5" style="display:inline; font-weight:400">Pause using it while we sort this out</label></p>
+      <p style="margin-top:.6rem"><em>You can do both at once. If you tick any of these we will treat it as a request about your data as well as a complaint — they have different timescales, and we will tell you both.</em></p>
+    </fieldset>
+
+    <p style="margin-top:1.4rem"><em>After you submit: we will confirm we have received this. We will look into it and tell you the outcome. If you are not happy with how we deal with it, the next steps are set out below — you do not have to come back to us first.</em></p>
+
+    <button type="submit">Send this complaint</button>
+  </form>
+
+  <p class="meta">
+    We record the date and time we receive a complaint. If you post or email one instead,
+    that is the date we use.
+  </p>
+</section>
+
+<!-- ══ BLOCK F ══ SOURCE: the s.164A pack §5.7, board item 12927908435 — which is
+     Block A of the standing blocks at communications pack §0.3 (board item
+     12927894775) — and Item 8 Privacy Notice §9 (board item 12818279787).
+     The bolded independence sentence in option 2 is deliberate: it is the sentence
+     a controller is tempted to leave out, and it is the one that makes the page
+     honest.  Article 79 is described but not cited, because a citation a reader
+     cannot resolve is not a route. -->
+<section id="not-satisfied">
+  <h2>If you are not satisfied</h2>
+
+  <p><em>You have three separate options, and you do not have to use them in order.</em></p>
+
+  <p>
+    <strong>1. Complain to us.</strong> You have a right to complain to us about how we have
+    handled your personal data — section 164A of the Data Protection Act 2018. We will confirm
+    we have received it within 30 days, look into it, and tell you the outcome. There is a
+    form above, and you can also just write to us.
+  </p>
+
+  <p>
+    <!-- DRAFT 15 September 2026 (Phase 132c), for the data protection officer: the
+         regulator named both ways, and "the regulator" after that. -->
+    <strong>2. Complain to the data protection regulator.</strong> You have a right to complain
+    to the Information Commissioner (from 30 September 2026, the Information Commission) —
+    section 165 of the Data Protection Act 2018.
+    <strong>You do not have to complain to us first, and you do not have to wait for us to
+    finish.</strong> The regulator must look into it to the extent appropriate, keep you
+    informed of progress, tell you the outcome, and tell you about your rights under section
+    166 of that Act — which let you apply to the Tribunal if the regulator does not deal
+    with your complaint. The regulator's contact details are at
+    <a href="https://ico.org.uk/">ico.org.uk</a>, and the helpline is 0303 123 1113.
+  </p>
+
+  <p>
+    <strong>3. Go to court.</strong> You can also take your own case to court. A court can
+    order us to do something, or to stop doing something (section 167 of the Data Protection
+    Act 2018), and can award compensation — which can include compensation for distress
+    (section 168 of that Act, with Article 82 of the UK GDPR). This is your right and it does
+    not depend on what we or the regulator decide.
+  </p>
+
+  <p class="meta">
+    <strong>A complaint about our service is a different thing.</strong> If your complaint is
+    about our work, our fee, delay or the conduct of someone acting for us, rather than about
+    your personal data, it is handled under our separate complaints policy, which we will send
+    you on request. If your complaint is about both, we deal with both — and the timescales
+    above still apply to the personal data part.
+  </p>
+</section>
+
+<!-- ══ ARCHIVE ══ SOURCE: channel specification §3.2, "Withdrawal and archive".
+     A notice comes down when the breach register records that it should, and moves
+     here.  It is NOT deleted: a notice that vanishes leaves a person who half
+     remembers seeing it with no way to confirm it existed, and leaves the register
+     pointing at a URL with nothing at it. -->
+<section id="archive">
+  <h2>Notices we have published before</h2>
+  <p>
+    When a notice on this page is withdrawn it moves here, with the dates it went up and
+    came down. We do not delete them.
+  </p>
+  <p><strong>We have not published any notices.</strong></p>
+</section>
+
+<footer>
+  <!-- ══ BLOCK J ══ SOURCE: channel specification §3.1 block J, and §4: whoever
+       reissues a source document is responsible for re-deriving this page, and the
+       re-derivation date goes here. -->
+  <p>
+    Last reviewed <span class="unset">[NOT SET — date this page was last reviewed]</span>.
+  </p>
+  <p>
+    The content of this page is taken from documents we hold; where this page and one of
+    those documents differ, the document is the one that governs and we will correct the page.
+  </p>
+  <p>
+    Our privacy notice, which is for people who deal with us directly, is at
+    <a href="/privacy/">https://caprebate.com/privacy/</a>.
+    This page is at <a href="https://caprebate.com/notices/">https://caprebate.com/notices/</a>.
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

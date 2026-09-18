@@ -1,0 +1,180 @@
+/**
+ * CRM 6 of 10 — FIXTURES FOR THE GATES THE CLAIM'S FACTS NOW DECIDE.
+ *
+ * A suite that walks a claim through the procedure needs the facts those gates
+ * read: the election resolved, every grant traced, the amendment window open, the
+ * tax adviser's sign-off record, and the deliverables issued. Each fixture here
+ * writes the REAL record through the real store where the store can take it, so a
+ * walk exercises the same code a person's click does. Two are written as rows —
+ * a surveyor's commitment and the sign-off record for a claim a test places
+ * straight at a later stage — exactly as `claimAt` places the claim itself, and
+ * both still pass the database's own triggers.
+ *
+ * NONE OF THESE IS A STAND-IN FOR A RECORD: the database refuses the retired
+ * sign-off column, and test/claim-record.test.ts proves each gate stays shut
+ * without the record these write.
+ */
+
+import assert from 'node:assert/strict';
+import { createHash, randomUUID } from 'node:crypto';
+import type { Db } from '../src/db.ts';
+import type { AuditLog } from '../src/audit.ts';
+import * as F from '../src/web/claim-facts.ts';
+import * as R from '../src/web/claim-record.ts';
+import { allocateNumber } from '../src/web/invoices.ts';
+import { actor } from './helpers.ts';
+
+export type FixtureApp = { db: Db; audit: AuditLog; now: () => string };
+
+export function recordDeps(app: FixtureApp): R.RecordDeps {
+  return { db: app.db, audit: app.audit, now: app.now, newId: randomUUID };
+}
+
+/** Record one fact through the store, as SALES, and assert it was taken. */
+export function fact(app: FixtureApp, claim: string, fact_key: string, value: string | null, source_id = 'CLIENT_DOC'): void {
+  const r = F.recordFact(recordDeps(app), actor('SALES'), claim, {
+    fact_key, answer: value === null ? 'UNKNOWN' : 'VALUE', value, source_id, note: null,
+  });
+  assert.equal(r.ok, true, r.ok ? '' : r.why);
+}
+
+/** DATA_GATHERING's fact: no election affects the property. */
+export function noElection(app: FixtureApp, claim: string): void {
+  fact(app, claim, 'ELECTION_EXISTS', 'NO');
+}
+
+/** VALUATION's fact: no grant or contribution met the spend. */
+export function noGrants(app: FixtureApp, claim: string): void {
+  fact(app, claim, 'GRANTS_EXIST', 'NO');
+}
+
+/**
+ * THE AMENDMENT WINDOW, OPEN ON THE TEST CLOCK (8 September 2026): a company,
+ * a property bought on 1 June 2025, in the accounting period 1 January to
+ * 31 December 2025 — the engine's company rule closes it on 31 December 2027.
+ */
+export function openWindow(app: FixtureApp, business: string, property: string, claim: string): void {
+  app.db.run("UPDATE businesses SET claimant_type = 'COMPANY' WHERE id = ?", [business]);
+  app.db.run("UPDATE properties SET acquisition_date = '2025-06-01' WHERE id = ?", [property]);
+  fact(app, claim, 'ACCOUNTING_PERIOD_START', '2025-01-01');
+  fact(app, claim, 'ACCOUNTING_PERIOD_END', '2025-12-31');
+}
+
+/**
+ * AN ASSESSMENT FOR AN ORGANISATION A TEST MADE WITHOUT ONE — a survey job carries
+ * an assessment by NOT NULL, so a commitment, and so a sign-off, needs one.
+ */
+export function assessmentFor(app: FixtureApp, business: string): string {
+  const id = randomUUID();
+  const at = app.now();
+  app.db.run(
+    'INSERT INTO assessments (id,business_id,sector,submitted_at,shown_low_pence,shown_high_pence,created_at) VALUES (?,?,?,?,?,?,?)',
+    [id, business, 'dental', at, 100_00, 200_00, at]);
+  return id;
+}
+
+/** A surveyor's commitment on a survey job on THIS claim, written as its row. Returns the commitment's id. */
+export function commitmentOn(app: FixtureApp, business: string, assessment: string, claim: string, surveyor = 'u-SURVEYING'): string {
+  const job = randomUUID();
+  const at = app.now();
+  app.db.run(
+    'INSERT INTO surveyor_jobs (id,business_id,assessment_id,surveyor_id,state,committed_at,created_at,claim_id) VALUES (?,?,?,?,?,?,?,?)',
+    [job, business, assessment, surveyor, 'COMMITTED_AND_RELEASED', at, at, claim]);
+  const id = randomUUID();
+  app.db.run(
+    'INSERT INTO surveyor_commitments (id,job_id,surveyor_id,a_qualifying_plant_pence,b_building_pence,c_bare_land_pence,' +
+      'qualifying_pct,method_note,committed_at,figures_hash,released_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+    [id, job, surveyor, 250_000_00, 700_000_00, 50_000_00, 0.25, 'a fixture commitment', at, 'f'.repeat(64), at]);
+  return id;
+}
+
+/**
+ * THE SIGN-OFF RECORD FOR A CLAIM A TEST PLACES STRAIGHT AT A LATER STAGE —
+ * written as its row, against a commitment on a job on the claim, hashed. A claim
+ * walked to TAX_ADVISER_SIGNOFF records it through `R.recordSignOff` instead.
+ */
+export function signOffRow(app: FixtureApp, business: string, assessment: string, claim: string, figure_pence = 240_000_00): string {
+  const existing = app.db.get<{ id: string }>(
+    'SELECT sc.id FROM surveyor_commitments sc JOIN surveyor_jobs j ON j.id = sc.job_id WHERE j.claim_id = ? LIMIT 1', [claim]);
+  const commitment = existing?.id ?? commitmentOn(app, business, assessment, claim);
+  const id = randomUUID();
+  const at = app.now();
+  app.db.run(
+    'INSERT INTO tax_adviser_signoffs (id, claim_id, adviser, credential, signed_on, scope, method_note, switch_readings_json, ' +
+      "figure_pence, commitment_id, kind, record_hash, recorded_by, recorded_at) VALUES (?, ?, 'CAPREBATE_CTA', 'Chartered Tax Adviser', " +
+      "'2026-09-01', 'the fixture claim', 'a fixture method', '[]', ?, ?, 'RECORD_NOT_A_SIGNATURE', ?, 'u-SALES', ?)",
+    [id, claim, figure_pence, commitment, createHash('sha256').update(id).digest('hex'), at]);
+  return id;
+}
+
+/** Draft and issue a deliverable through the register, as SALES. */
+export function issue(app: FixtureApp, claim: string, kind: R.DeliverableKind, content_hash: string | null = null): string {
+  const d = recordDeps(app);
+  const drafted = R.recordDeliverable(d, actor('SALES'), claim, { kind, action: 'DRAFT' });
+  assert.equal(drafted.ok, true, drafted.ok ? '' : drafted.why);
+  const issued = R.recordDeliverable(d, actor('SALES'), claim, {
+    kind, action: 'ISSUE', issued_on: '2026-09-01', content_hash: content_hash ?? (kind === 'DEFENCE_PACK' ? 'a'.repeat(64) : null),
+  });
+  assert.equal(issued.ok, true, issued.ok ? '' : issued.why);
+  return issued.ok ? issued.id : '';
+}
+
+/**
+ * PHASE 132e — OUR REPORT DELIVERED FOR FILING, which is when our fee is earned (FEE_TRIGGER in src/web/pipeline.ts):
+ * the claim's computation pack issued in the deliverables register, dated. It stands for delivery to the client's
+ * accountant; `issue(app, claim, 'CLIENT_REPORT')` stands for delivery to the client, and either reaches the trigger.
+ */
+export function deliverForFiling(app: FixtureApp, claim: string): string {
+  return issue(app, claim, 'ACCOUNTANT_COMPUTATION_PACK');
+}
+
+/** The same delivery written as its register row — for a claim the store would refuse to issue on (no signed figure). */
+export function deliveredRow(app: FixtureApp, claim: string, issued_on = '2026-09-01'): string {
+  const id = randomUUID();
+  const at = app.now();
+  app.db.run(
+    "INSERT INTO claim_deliverables (id, claim_id, kind, version, document_type, state, issued_on, created_by, created_at, updated_by, updated_at) " +
+      "VALUES (?, ?, 'ACCOUNTANT_COMPUTATION_PACK', 1, 'TAX_COMPUTATION', 'DRAFT', NULL, 'u-SALES', ?, 'u-SALES', ?)",
+    [id, claim, at, at]);
+  app.db.run("UPDATE claim_deliverables SET state = 'ISSUED', issued_on = ?, updated_at = ? WHERE id = ?", [issued_on, at, id]);
+  return id;
+}
+
+/** Everything REPORTS reads besides its two confirmations: the sign-off, both reports issued, and the window open. */
+export function readyForReports(app: FixtureApp, business: string, property: string, assessment: string, claim: string): void {
+  if (app.db.get<{ id: string }>('SELECT id FROM tax_adviser_signoffs WHERE claim_id = ?', [claim]) === undefined) {
+    signOffRow(app, business, assessment, claim);
+  }
+  openWindow(app, business, property, claim);
+  issue(app, claim, 'CLIENT_REPORT');
+  issue(app, claim, 'ACCOUNTANT_COMPUTATION_PACK');
+}
+
+/**
+ * CRM 7 of 10 — A CLAIM'S FEE INVOICE, WRITTEN AS ITS ROW, with the next number in
+ * the series: for a claim a test places straight at a stage, as `claimAt` places
+ * the claim. The store that raises one is `raiseInvoice` in src/web/invoices.ts,
+ * and test/finance-claim.test.ts tries every refusal it makes; this is the row a
+ * gate, a timeline or a dashboard reads. It passes every CHECK and trigger
+ * migration 016 puts on a claim's invoice.
+ */
+export function claimInvoiceRow(
+  app: FixtureApp, business: string, claim: string,
+  opts: { fee_pence?: number; by?: string; invoice_date?: string; status?: 'RAISED' | 'SENT' } = {},
+): string {
+  const id = randomUUID();
+  const at = app.now();
+  const by = opts.by ?? 'u-ACCOUNTING';
+  const fee = opts.fee_pence ?? 900_000;
+  const date = opts.invoice_date ?? at.slice(0, 10);
+  const status = opts.status ?? 'RAISED';
+  app.db.run(
+    'INSERT INTO invoices (id, business_id, claim_id, kind, claim_value_pence, fee_pence, fee_rate, invoice_status, payment_status, ' +
+      'vat_position, vat_setting_id, vat_pence, invoice_date, due_on, due_basis, sent_on, fee_basis, raised_by, created_at) ' +
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    // Phase 132e: 3% of the allowances identified — the claim value is the fee divided by the rate.
+    [id, business, claim, 'FEE', Math.round(fee / 0.03), fee, 0.03, status, 'UNPAID', 'not VAT registered', 'finance-setting-vat-position-2026-08-28', 0,
+      date, null, 'UNSET — a fixture', status === 'SENT' ? date : null, 'a fixture fee', by, at]);
+  allocateNumber(app.db, 'INVOICE', id, null, by, at);
+  return id;
+}
