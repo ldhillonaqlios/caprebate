@@ -227,6 +227,13 @@ export type AuditKind =
   | 'CASE_STAMPED' | 'DEFENCE_PACK_GENERATED'
   /** Phase 133c, 17 September 2026: a person hid the welcome card on their home page. The user's id only. */
   | 'WELCOME_DISMISSED'
+  /**
+   * Phase 133j, 18 September 2026: the website's enquiry form received, and Sales opening an enquiry as a lead or
+   * closing it; a person asking for their own client login after the assessment, and confirming it from the email.
+   * Ids, the sector code and the decision only — never the name, the address or what the person wrote.
+   */
+  | 'WEBSITE_ENQUIRY_RECEIVED' | 'WEBSITE_ENQUIRY_HANDLED'
+  | 'CLIENT_SIGNUP_REQUESTED' | 'CLIENT_SIGNUP_VERIFIED'
   | 'AUTHORISATION_REFUSED';
 
 export type Outcome = 'ALLOWED' | 'REFUSED' | 'ERROR';

@@ -21,6 +21,16 @@ Demo logins: `admin@example.invalid`, `sales@example.invalid`, `accounting@examp
 `surveying@example.invalid`, `client@example.invalid` — password `change-this-seed-password`.
 Keep the forwarded port **Private** (the default).
 
+What to try (since 18 September 2026):
+
+- `/` is the website (`Caprebate site.html`). **Log in** (top right) goes to the sign-in page; a signed-in person goes
+  straight to their home. **Start your assessment** goes to the real assessment.
+- **Request my estimate** at the bottom of the website sends an enquiry. Sign in as `sales@example.invalid`, open
+  **Leads**, then **Website enquiries**, and open it as a lead or close it.
+- Finish the assessment signed out: the thank-you page offers **Create my login**. No email is really sent; the
+  "Confirm your Cap Rebate login" message, with its link, is printed in the demo's terminal. Open the link and press
+  the button, then log in with the address and password you chose. Use an invented address.
+
 ## Run the checks
 
     cd Caprebate/09-app/backend && npm run check          # the back end

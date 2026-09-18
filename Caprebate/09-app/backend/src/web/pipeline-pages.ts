@@ -36,6 +36,7 @@ import { taskChoices, vocabulary } from './vocabularies.ts';
 import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from './lists-pages.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { referralBlock } from './introducers-pages.ts';
+import * as E from './enquiries.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -101,6 +102,27 @@ export async function handlePipeline(
   const db = d.app.db;
   const deps: C.CrmDeps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
   const done = url.searchParams.get('done') ?? undefined;
+
+  /* ------------------------------------------- website enquiries (PHASE 133j) */
+  if (path === '/staff/enquiries' && method === 'GET') {
+    html(res, 200, enquiriesPage(d, actor, E.openEnquiries(deps, actor), done));
+    return 'handled';
+  }
+  const enquiryAct = /^\/staff\/enquiries\/([A-Za-z0-9-]+)\/(lead|close)$/.exec(path);
+  if (enquiryAct && method === 'POST') {
+    await form(req);
+    const id = enquiryAct[1] ?? '';
+    if (enquiryAct[2] === 'lead') {
+      const r = E.enquiryToLead(deps, actor, id);
+      if (!r.ok) return d.problem(res, actor, 'Not opened as a lead', r.why, '/staff/enquiries');
+      redirect(res, `/staff/leads/${r.lead_id}?done=created`);
+      return 'handled';
+    }
+    const r = E.closeEnquiry(deps, actor, id);
+    if (!r.ok) return d.problem(res, actor, 'Not closed', r.why, '/staff/enquiries');
+    redirect(res, '/staff/enquiries?done=closed');
+    return 'handled';
+  }
 
   /* ------------------------------------------------------------ leads */
   if (path === '/staff/leads' && method === 'GET') {
@@ -242,6 +264,25 @@ function orNot(v: string | null | undefined, none: string): Safe {
   return v === null || v === undefined || v === '' ? h`<span class="help">${none}</span>` : h`${v}`;
 }
 
+/**
+ * THE WEBSITE'S ENQUIRY FORM, WAITING FOR SALES — PHASE 133j. Each enquiry is opened as a lead (with a contact
+ * holding the person) or closed. Nothing here decides anything: src/web/enquiries.ts authorises and writes.
+ */
+function enquiriesPage(d: PipelinePageDeps, actor: Actor, rows: readonly E.EnquiryRow[], msg: string | undefined): string {
+  return page({
+    title: 'Website enquiries', nav: d.nav(actor), wide: true,
+    body: h`<div class="pagehead"><div><p class="eyebrow">Leads</p><h1>Website enquiries</h1></div><p><a href="/staff/leads">All leads</a></p></div>${done(msg)}
+      <div class="help">${rows.length} waiting, newest first. These came from the website's "Request my estimate" form. Each person
+      agreed to be contacted about their enquiry; that is not marketing consent.</div>
+      ${rows.length === 0 ? h`<p class="empty">No website enquiries are waiting.</p>` : h`<div class="tablewrap"><table>
+        <thead><tr><th>Received</th><th>Name</th><th>Practice or company</th><th>How to reach them</th><th>Property</th><th>What they wrote</th><th>Action</th></tr></thead>
+        <tbody>${rows.map((r) => h`<tr><td class="when">${ukDatesIn(r.created_at)}</td><td>${r.full_name}</td><td>${orNot(r.firm, '—')}</td>
+          <td>${r.email}${r.phone === null ? raw('') : h`<br>${r.phone}`}</td><td>${r.property_type}</td><td>${orNot(r.message, '—')}</td>
+          <td><form method="post" action="/staff/enquiries/${r.id}/lead"><button type="submit">Open as a lead</button></form>
+            <form method="post" action="/staff/enquiries/${r.id}/close"><button class="linkish" type="submit">Close, nothing more needed</button></form></td></tr>`)}</tbody></table></div>`}`,
+  });
+}
+
 function done(msg: string | undefined): Safe {
   return msg === undefined ? raw('') : savedMessage();
 }
@@ -293,6 +334,9 @@ function leadsPage(
   return page({
     title: 'Leads', nav: d.nav(actor), wide: true,
     body: h`<div class="pagehead"><div><p class="eyebrow">Leads</p><h1>Leads</h1></div><p><a class="btn" href="#record-lead">Record a lead by hand</a></p></div>${done(msg)}
+      ${can(actor, 'lead.write', { type: 'lead', id: '__website_enquiries__', business_id: null })
+        ? h`<p class="help"><a href="/staff/enquiries">Website enquiries</a>: ${E.openEnquiryCount({ db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId }, actor)} waiting to be answered.</p>`
+        : raw('')}
       <div class="help">${rows.length} shown, newest first. A lead becomes a claim when every enquiry check is a yes.${why(h`A lead is not a second intake: a filled assessment, a call asked for and a referral are already
       leads, and this is where they are worked. <strong>There is no lead score</strong> —
       a score built on the estimate would rank the unknowns — and a lead converts only when every enquiry check is a

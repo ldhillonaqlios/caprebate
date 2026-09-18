@@ -1350,6 +1350,13 @@ converted — then **Details** (the lead, the enquiry gate, **Change the lead**,
 and what the assessment captured) and **Activity** (the timeline and tasks). **Quick actions** link to **Record an
 enquiry check**, **Log a call or add a follow-up** and **Convert — open the claim**.
 
+**Website enquiries (Phase 133j, 18 September 2026).** The website's **Request my estimate** form now reaches the back office.
+The Leads page says how many are waiting and links **Website enquiries** (`/staff/enquiries`), open to Admin and Sales. Each
+row shows who wrote, how to reach them, the property type and what they wrote. Press **Open as a lead** to record it as a
+lead (source Website) with the person as a contact on it, or **Close, nothing more needed**. Either happens once. Every
+person agreed to be contacted about their enquiry; that is not marketing consent. A person who finishes the assessment
+may also create their own client login, confirmed by email; nobody in the office needs to do anything for that.
+
 **What it is for**
 Where every possible claim is worked before it becomes one: its source, owner, next action and
 status, what the assessment captured, the four enquiry checks, and conversion. A referred lead

@@ -93,6 +93,8 @@ export type ServerOptions = {
    * wall clock through here and went red before September 2026, and one again from 31 December 2027.
    */
   now?: () => string;
+  /** PHASE 133j: the site's own address, for links sent by email. Absent is CAPREBATE_PUBLIC_ORIGIN, then http://localhost:8103. */
+  publicOrigin?: string;
 };
 
 export async function createApp(
@@ -129,7 +131,8 @@ export async function createApp(
     // THE WEB HALF FIRST. It returns 'not-mine' for anything it does not own,
     // so the JSON API below is unchanged and nothing is shadowed by accident.
     try {
-      if (await handleWeb({ app, store, ...(opts.referralForm === undefined ? {} : { referralForm: opts.referralForm }), ...(opts.names === undefined ? {} : { names: opts.names }) }, req, res) === 'handled') return;
+      const publicOrigin = opts.publicOrigin ?? process.env.CAPREBATE_PUBLIC_ORIGIN;
+      if (await handleWeb({ app, store, ...(opts.referralForm === undefined ? {} : { referralForm: opts.referralForm }), ...(opts.names === undefined ? {} : { names: opts.names }), ...(publicOrigin === undefined ? {} : { publicOrigin }) }, req, res) === 'handled') return;
     } catch (e) {
       // PHASE 133a: A REFUSED SCREEN IS STILL REFUSED — 403 — BUT AS A PAGE. A person who follows an address they may not
       // open gets the application's header and a sentence, not a line of JSON. The page names no object, so a refusal

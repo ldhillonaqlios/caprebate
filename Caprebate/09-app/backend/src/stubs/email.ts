@@ -36,7 +36,8 @@ export type OutboundMessage = {
    * COMPLIANCE_LETTER — CRM 8 of 10: a letter the compliance registers draft for a
    * rights request or a complaint. It reaches the outbox and nowhere else.
    */
-  kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER';
+  /** ACCOUNT_VERIFY — Phase 133j: the link that confirms a client's own sign-up. It carries a single-use token. */
+  kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER' | 'ACCOUNT_VERIFY';
   /**
    * The organisation the message is about, where there is one. CRM 1 of 10.
    * Optional because a staff password reset is about nobody's organisation —

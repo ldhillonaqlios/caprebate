@@ -203,8 +203,16 @@ describe('no page carries inline script or style, and the CSP is unchanged', () 
   test('the public pages, and the refusal page', async () => {
     for (const path of ['/', '/login', '/assessment']) {
       const r = await fetch(h.base + path, { redirect: 'manual' });
-      const body = await r.text();
+      let body = await r.text();
       if (r.status !== 200) continue;
+      /* PHASE 133j: `/` IS THE WEBSITE, and it carries exactly one script: its own, from this origin, as a file. Its CSP
+         is the back end's with `script-src 'self'` added and nothing else loosened. Every other rule still holds. */
+      if (path === '/') {
+        assert.equal(r.headers.get('content-security-policy'), CSP_BEFORE.replace("form-action", "script-src 'self'; form-action"),
+          '/ carries a policy other than the back end’s plus its own script');
+        assert.equal([...body.matchAll(/<script\b/gi)].length, 1, '/ carries more than its one script');
+        body = body.replace('<script src="/assets/site-page.js"></script>', '');
+      }
       for (const [re, what] of INLINE) assert.equal(re.test(body), false, `${path} carries ${what}`);
     }
     const refused = await as('accounting').get('/staff/organisations');

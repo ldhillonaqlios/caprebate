@@ -60,6 +60,9 @@ import {
   PROSPECT_EVENTS, REFERRAL_FORM, intakeReferral, referralFormOpen, clientShareChoices, recordShareConsentByClient, type ClientShareChoice,
 } from './introducers.ts';
 import { clientDeliverables, type ClientDeliverable } from './claim-record.ts';
+import { siteEdition, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from './public-site.ts';
+import { receiveEnquiry } from './enquiries.ts';
+import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -71,6 +74,11 @@ export type WebDeps = {
   referralForm?: { readonly enabled: boolean; readonly requires: string };
   /** PHASE 133c: the menu and portal name switches. Absent is `NAME_SWITCHES` in src/web/navigation.ts, both off. */
   names?: NameSwitches;
+  /**
+   * PHASE 133j: the site's own address, for a link sent by email (a client's sign-up). CONFIGURED, NEVER TAKEN FROM THE
+   * REQUEST'S Host header, which is whatever the sender typed. Absent is http://localhost:8103.
+   */
+  publicOrigin?: string;
 };
 
 /* ------------------------------------------------------------------ *
@@ -159,7 +167,7 @@ async function inContext(d: WebDeps, path: string, work: () => Promise<WebResult
 
 function nav(actor: Actor | undefined): Safe {
   return actor === undefined
-    ? h`<nav><a href="/assessment">Free assessment</a><a href="/login">Sign in</a></nav>`
+    ? h`<nav><a href="/assessment">Free assessment</a><a href="/login">Log in</a></nav>`
     // PHASE 133a: a signed-in person gets their application's header — the back office's for staff, the portal's for a client.
     : mayEnterBackOffice(actor) ? staffShell(actor) : portalShell(actor);
 }
@@ -213,7 +221,61 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   }
 
   /* ------------------------------------------------------ public site */
-  if (path === '/' && method === 'GET') { html(res, 200, home(actor)); return 'handled'; }
+  /* PHASE 133j: THE WEBSITE IS `Caprebate site.html`, served from the one file (src/web/public-site.ts) with its style
+     and script as two fixed assets. Its "Start your assessment" links come here, to /assessment, and its enquiry form
+     to /enquiry. With no site file beside the build, `/` is the back end's own home page, as before. */
+  if (path === '/assets/site-page.css' && method === 'GET') {
+    const site = siteEdition();
+    if (site !== undefined) { res.writeHead(200, CSS_HEADERS); res.end(site.css); return 'handled'; }
+  }
+  if (path === '/assets/site-page.js' && method === 'GET') {
+    const site = siteEdition();
+    if (site !== undefined) { res.writeHead(200, SITE_JS_HEADERS); res.end(site.js); return 'handled'; }
+  }
+  if (path === '/' && method === 'GET') {
+    const site = siteEdition();
+    if (site !== undefined) { res.writeHead(200, SITE_PAGE_HEADERS); res.end(site.html); return 'handled'; }
+    html(res, 200, home(actor)); return 'handled';
+  }
+  if (path === '/enquiry' && method === 'POST') {
+    const r = receiveEnquiry(d.app.deps, newId, await form(req));
+    if (!r.ok) {
+      html(res, 400, page({ title: 'Your enquiry was not sent', nav: nav(actor),
+        body: h`<h1>Your enquiry was not sent</h1><p class="err">${r.why}</p><p><a href="/#contact">Go back to the form</a></p>` }));
+      return 'handled';
+    }
+    html(res, 200, page({ title: 'Thank you', nav: nav(actor),
+      body: h`<h1>Thank you — that is with us.</h1><p>One of our team will reply within one working day, to the address you gave.</p>
+        <p>If you would like a figure now, <a href="/assessment">start the free assessment</a>. It takes a few minutes.</p>
+        <p><a href="/">Back to the website</a></p>` }));
+    return 'handled';
+  }
+
+  /* ------------------------------------------ a client's own login (PHASE 133j) */
+  if (path === '/account/create' && method === 'POST') {
+    const r = await requestSignup(d.app, d.publicOrigin ?? 'http://localhost:8103', await form(req));
+    if (!r.ok) { html(res, 400, simple('Your login was not created', r.why)); return 'handled'; }
+    html(res, 200, simple('Check your email',
+      'If that address can be given a login, we have sent it a link. Open the link to confirm the address and finish creating your login. It works once, for 24 hours.'));
+    return 'handled';
+  }
+  if (path === '/account/verify' && method === 'GET') {
+    const token = url.searchParams.get('token') ?? '';
+    if (!verifyOpen(d.app, token)) { html(res, 400, simple('This link is no longer valid', 'It works once, for 24 hours. Your assessment is still with us; telephone us and we will set up your login.')); return 'handled'; }
+    html(res, 200, page({ title: 'Confirm your login', nav: nav(actor),
+      body: h`<h1>Confirm your login</h1><p>Press the button to confirm your email address and create your login.</p>
+        <form method="post" action="/account/verify"><input type="hidden" name="token" value="${token}">
+        <button class="cta" type="submit">Confirm and create my login</button></form>` }));
+    return 'handled';
+  }
+  if (path === '/account/verify' && method === 'POST') {
+    const r = confirmSignup(d.app, (await form(req)).get('token') ?? '');
+    if (!r.ok) { html(res, 400, simple('Your login was not created', r.why)); return 'handled'; }
+    html(res, 200, page({ title: 'Your login is ready', nav: nav(actor),
+      body: h`<h1>Your login is ready.</h1><p>Sign in with the address and password you chose to follow your claim.</p>
+        <p><a class="cta" href="/login">Log in</a></p>` }));
+    return 'handled';
+  }
 
   /* ------------------------------------------------------- assessment */
   if (path === '/assessment' && method === 'GET') {
@@ -307,9 +369,11 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
         detail: { business: out.business_id, origin: 'ASSESSMENT', route: 'funnel_close' },
       });
       const booked = writeBookingAndContact(d, draft, { business_id: out.business_id }, 'funnel_close', newId);
+      // PHASE 133j: the offer of a login for this organisation, made once, here, and only here.
+      const offer = offerSignup(d.app, newId, out.business_id, out.assessment_id);
       // CRM 3 of 10: lead created → a first follow-up, waiting with Sales until somebody takes it.
       fireAutomation({ db: d.app.db, audit: d.app.audit, now, newId }, null, { trigger: 'LEAD_CREATED', lead_id: out.lead_id });
-      html(res, 200, submittedPage(out, booked, actor)); return 'handled';
+      html(res, 200, submittedPage(out, booked, actor, actor === undefined ? offer : undefined)); return 'handled';
     }
   }
 
@@ -336,7 +400,11 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   }
 
   /* ------------------------------------------------------------ login */
-  if (path === '/login' && method === 'GET') { html(res, 200, loginPage(undefined)); return 'handled'; }
+  if (path === '/login' && method === 'GET') {
+    // PHASE 133j: the website's "Log in" button, pressed by somebody already signed in, goes straight to their home.
+    if (actor !== undefined) { redirect(res, mayEnterBackOffice(actor) ? '/staff' : '/portal'); return 'handled'; }
+    html(res, 200, loginPage(undefined)); return 'handled';
+  }
   if (path === '/login' && method === 'POST') {
     const f = await form(req);
     try {
@@ -1123,7 +1191,7 @@ function closePage(
 
 function submittedPage(
   out: { business_id: string; assessment_id: string; low_pence: number | null; high_pence: number | null },
-  booked: { booked_at: string | null }, actor: Actor | undefined,
+  booked: { booked_at: string | null }, actor: Actor | undefined, offer?: string,
 ): string {
   return page({
     title: 'Thank you', nav: nav(actor),
@@ -1139,7 +1207,17 @@ function submittedPage(
             moment, or the time you picked had gone — and we would rather ring you to arrange one
             than lose your enquiry over it.</p>`}
       <p class="help">Your reference: <code>${out.assessment_id}</code>. Nothing has been looked up about your property.</p>
-      <p><a href="/login">Sign in to your claim</a></p>`,
+      ${offer === undefined ? h`<p><a href="/login">Log in to your claim</a></p>` : h`
+      <div class="pblock"><div class="pnum">Follow your claim online</div>
+        <p class="help">Create a login to see your claim, your call and your documents. We send a link to your email address
+        to confirm it; the login is created only when you open that link. This is optional.</p>
+        <form method="post" action="/account/create"><input type="hidden" name="offer" value="${offer}">
+          <label class="fl" for="signup-email">Your email address</label><input class="fi" id="signup-email" type="email" name="email" autocomplete="email" maxlength="254" required>
+          <label class="fl" for="signup-name">Your name</label><input class="fi" id="signup-name" name="display_name" autocomplete="name" maxlength="200" required>
+          <label class="fl" for="signup-password">Choose a password (at least ${MIN_PASSWORD} characters)</label><input class="fi" id="signup-password" type="password" name="password" autocomplete="new-password" minlength="${MIN_PASSWORD}" required>
+          <button class="cta" type="submit">Create my login</button>
+        </form>
+        <p class="help">Already have one? <a href="/login">Log in</a>.</p></div>`}`,
   });
 }
 

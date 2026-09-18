@@ -335,6 +335,44 @@
   .dark .handout .htag{color:var(--gold)}
   .dark .handout p:last-child{color:#333333}
   .dark .handout p:last-child a{color:var(--brand)}
+
+  /* PHASE 133j — the page's former inline styles, as classes. The back end serves this page under a
+     Content-Security-Policy with no unsafe-inline, so no element carries a style attribute. !important keeps
+     the precedence the inline style had. */
+  .u-m0{margin:0!important}
+  .u-band{background:var(--paper-2)!important;border-top:1px solid var(--line)!important;border-bottom:1px solid var(--line)!important}
+  .u-band-top{background:var(--paper-2)!important;border-top:1px solid var(--line)!important}
+  .u-w22{max-width:22ch!important}
+  .u-warnbox{border-color:#8a5300!important}
+  .u-warnbg{background:color-mix(in srgb, #8a5300 10%, var(--paper))!important}
+  .u-warn{color:#8a5300!important}
+  .u-draftlist{color:var(--ink-soft)!important;font-size:.86rem!important;padding-left:1.1rem!important;margin-bottom:.5rem!important}
+  .u-fine-ink{color:var(--ink-soft)!important;font-size:.82rem!important;max-width:70ch!important;margin-top:1.6rem!important}
+  .u-mist{color:#F2F8F6!important}
+  .u-fine-dark{color:#cfdcd7!important;font-size:.82rem!important;max-width:70ch!important}
+  .u-mt12{margin-top:1.2rem!important}
+  .u-mt10{margin-top:1rem!important}
+  .u-small-dark{font-size:.8rem!important;color:#cfdcd7!important}
+  .u-link-strong{color:var(--brand)!important;font-weight:600!important}
+  .u-fine-rule{color:#cfdcd7!important;font-size:.8rem!important;max-width:80ch!important;margin-top:2.4rem!important;padding-top:1.6rem!important;border-top:1px solid rgba(242,248,246,.12)!important}
+  .u-mb2{margin-bottom:2rem!important}
+  /* the Log in button, top right; beside the menu button on a phone */
+  .nav > .navlinks{margin-left:auto}
+  .nav-login{margin-left:1.4rem;padding:.6rem 1.2rem}
+  .navlinks a{white-space:nowrap}
+  /* Log in takes room the menu had, so below 1200px the menu folds into its button (at 900px before). Same rules as
+     the 900px block above, at the wider width. */
+  @media(max-width:1199px){
+    .navlinks{display:none}
+    .navlinks.open{display:flex;position:absolute;top:104px;left:0;right:0;flex-direction:column;background:var(--paper);
+      border-bottom:1px solid var(--line);padding:1.2rem clamp(1.2rem,4vw,2.6rem) 1.6rem;gap:1.1rem;align-items:flex-start}
+    .navtoggle{display:flex;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px}
+    .navtoggle span{width:24px;height:2px;background:var(--ink);transition:transform .25s,opacity .25s}
+    .nav-login{margin-left:auto;margin-right:.9rem}
+  }
+  /* the lead form's consent box */
+  .field.ck label{display:flex;gap:.6rem;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:var(--step--1);font-weight:400;color:var(--ink)}
+  .field.ck input{width:auto;padding:0;margin-top:.2rem}
 </style>
 </head>
 <body>
@@ -351,8 +389,9 @@
       <a href="#pricing">Pricing</a>
       <a href="#accountants">For accountants</a>
       <a href="#faq">FAQ</a>
-      <a href="#" onclick="launchAssessment();return false;" class="btn btn-fill">Start your assessment <span class="arr">&rarr;</span></a>
+      <a href="/assessment" data-assess class="btn btn-fill">Start your assessment <span class="arr">&rarr;</span></a>
     </nav>
+    <a href="/login" class="btn btn-ghost nav-login">Log in</a>
     <button class="navtoggle" id="navtoggle" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
 </header>
@@ -366,7 +405,7 @@
       <h1 class="reveal d2">There's tax relief <span class="accent">built into your building</span> you've never claimed.</h1>
       <p class="hero-lede reveal d3">Most healthcare property owners are sitting on a substantial, unclaimed tax saving — hidden in the fixtures and fittings of the building itself. We find it, value it, and recover it.</p>
       <div class="hero-ctas reveal d4">
-        <a href="#" onclick="launchAssessment();return false;" class="btn btn-fill btn-lg">Start your assessment <span class="arr">&rarr;</span></a>
+        <a href="/assessment" data-assess class="btn btn-fill btn-lg">Start your assessment <span class="arr">&rarr;</span></a>
         <a href="#how" class="btn btn-ghost btn-lg">See how it works</a>
       </div>
       <div class="hero-trust reveal d5">
@@ -391,7 +430,7 @@
       </div>
 
       <div class="w-block">
-        <div class="valrow"><span class="w-label" style="margin:0">Property value / spend</span><span class="valnum" id="valnum">&pound;1,500,000</span></div>
+        <div class="valrow"><span class="w-label u-m0">Property value / spend</span><span class="valnum" id="valnum">&pound;1,500,000</span></div>
         <input type="range" id="slider" min="100000" max="10000000" step="50000" value="1500000" aria-label="Property value">
         <div class="bounds"><span>&pound;100k</span><span>&pound;10m+</span></div>
       </div>
@@ -409,7 +448,7 @@
 
       <div class="result" id="result"></div>
 
-      <a href="#" id="wFull" class="btn btn-fill w-cta">See what my ceiling is built on <span class="arr">&rarr;</span></a>
+      <a href="/assessment" id="wFull" class="btn btn-fill w-cta">See what my ceiling is built on <span class="arr">&rarr;</span></a>
       <div class="w-foot">A pre-diligence ceiling, not an estimate of your claim — not tax advice or a guarantee. Sector yield bands are <strong>assessed, not independently calibrated</strong> (Rulebook I sector yields, awaiting CTA review). Rates current June 2026.</div>
     </div>
   </div>
@@ -450,7 +489,7 @@
 </section>
 
 <!-- ===== HOW IT WORKS (02) ===== -->
-<section id="how" style="background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+<section id="how" class="u-band">
   <div class="wrap">
     <div class="seclabel"><span class="no">02</span> How it works</div>
     <h2 class="sec-h">Four steps, <span class="accent">led by people.</span></h2>
@@ -507,7 +546,7 @@
 <section id="proof">
   <div class="wrap">
     <div class="seclabel"><span class="no">05</span> What it can be worth</div>
-    <h2 class="sec-h" style="max-width:22ch">Real relief, on spending <span class="accent">you've already made.</span></h2>
+    <h2 class="sec-h u-w22">Real relief, on spending <span class="accent">you've already made.</span></h2>
     <div class="proof-grid">
       <div class="proof"><div class="pf">&pound;1m</div><p>Annual Investment Allowance — qualifying spend up to this can be relieved at 100% in a single year.</p></div>
       <div class="proof"><div class="pf">Still owned</div><p>If you still own the property, a missed claim on a past purchase is not lost. It can usually be brought into a current return.</p></div>
@@ -521,7 +560,7 @@
 </section>
 
 <!-- ===== PRICING (06) ===== -->
-<section id="pricing" style="background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+<section id="pricing" class="u-band">
   <div class="wrap">
     <div class="seclabel"><span class="no">06</span> Pricing</div>
     <h2 class="sec-h">One percentage, <span class="accent">and we tell you what it's a percentage of.</span></h2>
@@ -540,10 +579,10 @@
       </div>
     </div>
 
-    <div class="draftbox" style="border-color:#8a5300;background:color-mix(in srgb, #8a5300 10%, var(--paper))">
-      <span class="dtag" style="color:#8a5300">Read this before you sign</span>
+    <div class="draftbox u-warnbox u-warnbg">
+      <span class="dtag u-warn">Read this before you sign</span>
       <h4>The fee is not capped by what you save in tax this year</h4>
-      <p>Capital allowances are usually claimed gradually, as writing-down allowances on a reducing balance at the rate in force for each period, sometimes over close to a decade, while our fee falls due at once, once the claim is agreed. So the tax you actually save in any single year can be, and often is, less than the fee itself. <strong>The fee is not capped by, and may exceed, the tax you save in year one.</strong> Your engagement letter sets out your own figures: the allowances identified, the fee that follows from them, and an illustration of how the tax saving unwinds over time. If any of that isn't clear, ask us; if you're unhappy with how it was explained, our <a href="#" onclick="return false;">complaints procedure</a> covers exactly this.</p>
+      <p>Capital allowances are usually claimed gradually, as writing-down allowances on a reducing balance at the rate in force for each period, sometimes over close to a decade, while our fee falls due at once, once the claim is agreed. So the tax you actually save in any single year can be, and often is, less than the fee itself. <strong>The fee is not capped by, and may exceed, the tax you save in year one.</strong> Your engagement letter sets out your own figures: the allowances identified, the fee that follows from them, and an illustration of how the tax saving unwinds over time. If any of that isn't clear, ask us; if you're unhappy with how it was explained, our <a href="/notices/">complaints procedure</a> covers exactly this.</p>
     </div>
 
     <div class="pricing-tiers">
@@ -558,18 +597,18 @@
       </div>
     </div>
 
-    <div class="draftbox" style="border-color:#8a5300">
-      <span class="dtag" style="color:#8a5300">DRAFT — NOT YET APPROVED</span>
+    <div class="draftbox u-warnbox">
+      <span class="dtag u-warn">DRAFT — NOT YET APPROVED</span>
       <h4>This page cannot go live as it stands</h4>
       <p>Three terms behind the cards above are not yet set, and this page states none of them:</p>
-      <ul style="color:var(--ink-soft);font-size:.86rem;padding-left:1.1rem;margin-bottom:.5rem">
+      <ul class="u-draftlist">
         <li><strong>The multi-site discount.</strong> Where a client has several properties we may agree a further discount, depending on the sites. How large that discount can be, and who approves it, have not been decided. <em>[When they are, one sentence goes under Card 1. Until then this page offers no discount figure.]</em></li>
         <li><strong>Three terms of the reduction clause (Card 3):</strong> what size of reduction triggers it, whether it applies when a client settles with HMRC, and for how long. <em>[Card 3 states none of the three until they are set.]</em></li>
         <li><strong>The break fee</strong> if a client withdraws after work has started. <em>[Its amount is not set. When it is, one sentence goes under Card 1.]</em></li>
       </ul>
     </div>
 
-    <p style="color:var(--ink-soft);font-size:.82rem;max-width:70ch;margin-top:1.6rem">The basis and the figure are agreed with you in writing before any paid work starts; the fee is 3% of the capital allowances identified, never of the tax saved; it follows the corrected figure if the allowances are later reduced, on the terms in the engagement letter; and no percentage is ever shown without saying what it's a percentage of.</p>
+    <p class="u-fine-ink">The basis and the figure are agreed with you in writing before any paid work starts; the fee is 3% of the capital allowances identified, never of the tax saved; it follows the corrected figure if the allowances are later reduced, on the terms in the engagement letter; and no percentage is ever shown without saying what it's a percentage of.</p>
   </div>
 </section>
 
@@ -578,8 +617,8 @@
   <div class="wrap">
     <div class="seclabel"><span class="no">07</span> For accountants</div>
     <span class="acc-audience">Written for referring accountants, not property owners</span>
-    <h2 style="max-width:22ch">Work you'd never get to yourself, without giving up the client.</h2>
-    <p class="lead-p" style="color:#F2F8F6">Embedded fixtures in commercial property are a specialist survey job, not a general-practice one. We do that piece, hand you a report you can file from, and you keep the client, the relationship and the fee for everything else.</p>
+    <h2 class="u-w22">Work you'd never get to yourself, without giving up the client.</h2>
+    <p class="lead-p u-mist">Embedded fixtures in commercial property are a specialist survey job, not a general-practice one. We do that piece, hand you a report you can file from, and you keep the client, the relationship and the fee for everything else.</p>
 
     <div class="acc-cards">
       <div class="acc-card"><h5>You keep the client</h5><p>We don't compete for the relationship. The report is built for you to review and file — or hand to a CTA — and the client stays yours.</p></div>
@@ -589,30 +628,30 @@
 
     <div class="acc-sub" id="acc-methodology">
       <h3>Methodology &amp; sign-off chain</h3>
-      <p class="lead-p" style="color:#F2F8F6">The short version of what happens between an entitlement estimate and a number your client can file: a survey, an apportionment and a report from us, and a filing position signed by you.</p>
+      <p class="lead-p u-mist">The short version of what happens between an entitlement estimate and a number your client can file: a survey, an apportionment and a report from us, and a filing position signed by you.</p>
       <div class="chain">
         <div class="chain-step"><span class="cno">i.</span><h5>Survey</h5><p>A surveyor inspects the property and identifies every qualifying embedded fixture, not a desktop guess.</p></div>
         <div class="chain-step"><span class="cno">ii.</span><h5>Apportionment</h5><p>Qualifying spend is apportioned against the purchase price on a just-and-reasonable basis under CAA 2001 s.562, referenced to the survey.</p></div>
         <div class="chain-step"><span class="cno">iii.</span><h5>Report to you</h5><p>A documented report sets out the figures, the assumptions and the caveats (entitlement, pooling history, election and notification requirements), ready for your review.</p></div>
         <div class="chain-step"><span class="cno">iv.</span><h5>You sign the filing position</h5><p>You decide what goes on the client's return and sign it. We don't. Where a client has no adviser of their own, the client remains responsible for the filing position and our report is an input to it.</p></div>
       </div>
-      <p style="color:#cfdcd7;font-size:.82rem;max-width:70ch;margin-top:1.2rem">Every online estimate a client sees before that point is explicitly labelled a <strong>pre-diligence ceiling</strong> — the most the sector band allows before any of this has happened — never a valuation and never advice. It can only move down from there, never up.</p>
+      <p class="u-fine-dark u-mt12">Every online estimate a client sees before that point is explicitly labelled a <strong>pre-diligence ceiling</strong> — the most the sector band allows before any of this has happened — never a valuation and never advice. It can only move down from there, never up.</p>
     </div>
 
     <div class="acc-sub" id="acc-partners">
       <h3>Referral partner programme</h3>
-      <p class="lead-p" style="color:#F2F8F6">What we're asking for, and what you get back.</p>
+      <p class="lead-p u-mist">What we're asking for, and what you get back.</p>
       <div class="acc-cards">
         <div class="acc-card"><h5>What you send us</h5><p>A client who owns healthcare property — care home, dental, GP, private hospital or supported living — that they bought or built. That's the only qualification.</p></div>
         <div class="acc-card"><h5>What we send back</h5><p>A filing-ready report and apportionment, a client who still thinks of you as their adviser, and — where we do the introduction — first sight of the next one.</p></div>
         <div class="acc-card"><h5>What it costs you</h5><p>Nothing. The client pays us 3% of the capital allowances we identify, invoiced. There's no cost to you for sending an enquiry our way.</p></div>
       </div>
-      <p style="color:#cfdcd7;font-size:.82rem;max-width:70ch;margin-top:1rem">We'll never approach a client you've introduced to us with anything outside this specific piece of work, and we won't contact them again after the claim is filed without asking you first.</p>
+      <p class="u-fine-dark u-mt10">We'll never approach a client you've introduced to us with anything outside this specific piece of work, and we won't contact them again after the claim is filed without asking you first.</p>
     </div>
 
     <div class="acc-sub" id="acc-handout">
       <h3>Something to hand your client</h3>
-      <p class="lead-p" style="color:#F2F8F6">A one-page, plain-English summary you can forward as-is — no sales pitch, no pressure.</p>
+      <p class="lead-p u-mist">A one-page, plain-English summary you can forward as-is — no sales pitch, no pressure.</p>
       <div class="handout">
         <span class="htag">Draft client hand-out</span>
         <h4>Is there unclaimed tax relief in your building?</h4>
@@ -622,19 +661,19 @@
           <li>We identify and value the allowances; your accountant or tax adviser signs the filing position.</li>
           <li>Our fee is 3% of the capital allowances we identify, not of the tax you save, and it can be more than the tax you save in the first year. If a proper look finds nothing worth claiming, you're told early, in writing.</li>
         </ul>
-        <p style="font-size:.8rem;color:#cfdcd7">This is not tax advice and no figure here is a guarantee. Capital allowances are a form of income or corporation tax relief on qualifying property expenditure — separate from capital gains tax. Ask your accountant, or <a href="#" onclick="launchAssessment();return false;" style="color:var(--brand);font-weight:600">start a free entitlement estimate</a>.</p>
+        <p class="u-small-dark">This is not tax advice and no figure here is a guarantee. Capital allowances are a form of income or corporation tax relief on qualifying property expenditure — separate from capital gains tax. Ask your accountant, or <a href="/assessment" data-assess class="u-link-strong">start a free entitlement estimate</a>.</p>
       </div>
     </div>
 
-    <p style="color:#cfdcd7;font-size:.8rem;max-width:80ch;margin-top:2.4rem;padding-top:1.6rem;border-top:1px solid rgba(242,248,246,.12)">We work alongside your own accountant or tax adviser on every claim, and they sign the filing position; this is not tax advice. Where a client has no adviser of their own, the client remains responsible for the filing position and our report is an input to it.</p>
+    <p class="u-fine-rule">We work alongside your own accountant or tax adviser on every claim, and they sign the filing position; this is not tax advice. Where a client has no adviser of their own, the client remains responsible for the filing position and our report is an input to it.</p>
   </div>
 </section>
 
 <!-- ===== FAQ (08) ===== -->
-<section id="faq" style="background:var(--paper-2);border-top:1px solid var(--line)">
+<section id="faq" class="u-band-top">
   <div class="wrap">
     <div class="seclabel"><span class="no">08</span> Questions, answered</div>
-    <h2 class="sec-h" style="margin-bottom:2rem">The honest answers.</h2>
+    <h2 class="sec-h u-mb2">The honest answers.</h2>
     <div class="faq">
       <details class="faq-item"><summary class="faq-q">Sounds too good to be true — is it legitimate?<span class="ic"></span></summary><div class="faq-a"><div><p>Entirely. Capital allowances are a <strong>statutory tax relief</strong> set out in the Capital Allowances Act 2001 — the government's own way of letting businesses write down what they spend on qualifying property. We don't create anything; we identify the relief you're already entitled to and document it properly.</p></div></div></details>
       <details class="faq-item"><summary class="faq-q">Will a claim trigger an HMRC enquiry?<span class="ic"></span></summary><div class="faq-a"><div><p>Ours are <strong>prepared to the standard of evidence HMRC expects</strong>: a surveyor's inspection and a just-and-reasonable apportionment, with the filing position signed by your own accountant or tax adviser. No one can promise how HMRC will respond to a particular claim.</p></div></div></details>
@@ -656,18 +695,19 @@
         <p class="lead-p">Send a few details and we'll come back with an honest, no-obligation view of what may be claimable — usually within one working day.</p>
         <div class="reassure"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 12l5 5L20 6"/></svg> No pressure. Any fee is stated in pounds before paid work starts.</div>
       </div>
-      <form id="leadform" novalidate>
-        <div class="field"><label for="name">Your name</label><input id="name" name="name" type="text" autocomplete="name"><span class="msg"></span></div>
-        <div class="field"><label for="firm">Practice / company</label><input id="firm" name="firm" type="text" autocomplete="organization"><span class="msg"></span></div>
-        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email"><span class="msg"></span></div>
-        <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" autocomplete="tel"><span class="msg"></span></div>
-        <div class="field full"><label for="ptype">Property type</label><select id="ptype" name="ptype"><option value="">Select&hellip;</option><option>Care home</option><option>Dental practice</option><option>GP / primary care</option><option>Private hospital / clinic</option><option>Supported living</option><option>Other healthcare property</option></select><span class="msg"></span></div>
-        <div class="field full"><label for="message">Anything you'd like to add (optional)</label><textarea id="message" name="message"></textarea></div>
+      <form id="leadform" action="/enquiry" method="post" novalidate>
+        <div class="field"><label for="name">Your name (required)</label><input id="name" name="name" type="text" autocomplete="name" maxlength="200" required><span class="msg"></span></div>
+        <div class="field"><label for="firm">Practice / company</label><input id="firm" name="firm" type="text" autocomplete="organization" maxlength="300"><span class="msg"></span></div>
+        <div class="field"><label for="email">Email (required)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" required><span class="msg"></span></div>
+        <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="40"><span class="msg"></span></div>
+        <div class="field full"><label for="ptype">Property type (required)</label><select id="ptype" name="ptype" required><option value="">Select&hellip;</option><option>Care home</option><option>Dental practice</option><option>GP / primary care</option><option>Private hospital / clinic</option><option>Supported living</option><option>Other healthcare property</option></select><span class="msg"></span></div>
+        <div class="field full"><label for="message">Anything you'd like to add (optional)</label><textarea id="message" name="message" maxlength="2000"></textarea></div>
+        <div class="field full ck"><label for="consent"><input id="consent" name="consent" type="checkbox" value="on" required> You may contact me about this enquiry (required). This is not marketing consent.</label><span class="msg"></span></div>
         <div class="form-submit">
           <button type="submit" class="btn btn-fill btn-lg">Request my estimate <span class="arr">&rarr;</span></button>
-          <span class="form-note">By submitting you agree to be contacted about your enquiry. We never share your details.</span>
+          <span class="form-note">We use these details only to answer your enquiry. We never share them.</span>
         </div>
-        <div class="form-done" id="formdone"><h4>Thank you — that's with us.</h4><p>One of our team will be in touch within one working day. <em>(Prototype — this form isn't connected yet.)</em></p></div>
+        <div class="form-done" id="formdone"><h4>Thank you — that's with us.</h4><p>One of our team will be in touch within one working day.</p></div>
       </form>
     </div>
   </div>
@@ -695,7 +735,7 @@
       </div>
     </div>
     <p class="disclaimer"><strong>Cap Rebate is a trading name of CAP REBATE LTD</strong>, a company registered in England and Wales, company number 17307313, registered office 1st Floor, 1-9 Castle Street, Hinckley, LE10 1DA. <strong>The trading name has not been cleared by a trade-mark search.</strong> Figures shown, including any figure from the on-page tool, are <strong>not a guarantee and not tax advice.</strong> The on-page tool returns a <strong>pre-diligence ceiling</strong> — the most the sector band allows before your property has been examined — and the sector yield bands behind it are <strong>assessed, not independently calibrated</strong>, pending chartered tax adviser review. Capital allowances are a form of income or corporation tax relief on qualifying property expenditure; they are distinct from capital gains tax. Any claim is prepared on the basis of a surveyor's inspection and apportionment; the filing position is signed by your own accountant or tax adviser, not by us, and we work alongside them. Eligibility and amounts depend on your circumstances and a full review. [Company registration, ICO and regulatory details to be added.]</p>
-    <div class="copy"><span>&copy; 2026 Cap Rebate. All rights reserved.</span><span>Built as a prototype.</span><span>Assessment coverage: England &amp; Wales.</span></div>
+    <div class="copy"><span>&copy; 2026 Cap Rebate. All rights reserved.</span><span>Assessment coverage: England &amp; Wales.</span></div>
   </div>
 </footer>
 
@@ -905,16 +945,21 @@ paintSlider(); compute();
 const faqs=document.querySelectorAll('.faq-item');
 faqs.forEach(d=>d.addEventListener('toggle',()=>{ if(d.open) faqs.forEach(o=>{ if(o!==d) o.open=false; }); }));
 
-/* ---------- contact form: validate + success (no backend) ---------- */
+/* ---------- contact form: validate, then post to the back end (PHASE 133j) ----------
+   Served by the back end, the page has no in-page assessment template, and a valid form is sent as an ordinary
+   post to /enquiry. Opened as a file, the template is there and the old in-page thank-you is shown instead. */
 const form=document.getElementById('leadform');
 function setErr(field,msg){ const f=field.closest('.field'); f.classList.toggle('err',!!msg); const m=f.querySelector('.msg'); if(m) m.textContent=msg||''; }
 form.addEventListener('submit',e=>{
-  e.preventDefault(); let ok=true;
-  const name=form.name, email=form.email, ptype=form.ptype;
+  let ok=true;
+  const name=form.elements.name, email=form.elements.email, ptype=form.elements.ptype, consent=form.elements.consent;
   if(!name.value.trim()){ setErr(name,'Please add your name'); ok=false; } else setErr(name,'');
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value)){ setErr(email,'Please add a valid email'); ok=false; } else setErr(email,'');
   if(!ptype.value){ setErr(ptype,'Please choose a property type'); ok=false; } else setErr(ptype,'');
-  if(!ok) return;
+  if(!consent.checked){ setErr(consent,'We need your permission to contact you about this'); ok=false; } else setErr(consent,'');
+  if(!ok){ e.preventDefault(); return; }
+  if(!document.getElementById('assessTpl')) return;
+  e.preventDefault();
   form.querySelectorAll('.field, .form-submit').forEach(el=>el.style.display='none');
   document.getElementById('formdone').classList.add('show');
 });
@@ -924,9 +969,10 @@ function buildAssessDoc(){
   var tpl=document.getElementById('assessTpl');
   return '<!DOCTYPE html><html lang="en-GB"><head><meta charset="UTF-8">'
     +'<meta name="viewport" content="width=device-width, initial-scale=1.0"><\/head>'
-    +'<body style="margin:0">'+tpl.innerHTML+'<\/body><\/html>';
+    +'<body class="u-m0">'+tpl.innerHTML+'<\/body><\/html>';
 }
 function launchAssessment(sector){
+  if(!document.getElementById('assessTpl')){ location.href='/assessment'; return; }
   var ov=document.getElementById('assessOverlay'), host=document.getElementById('assessHost');
   host.innerHTML='';
   var f=document.createElement('iframe');
@@ -945,20 +991,27 @@ function closeAssessment(){
   document.getElementById('assessHost').innerHTML='';
   document.documentElement.style.overflow='';
 }
+/* PHASE 133j: no inline handlers. A link marked data-assess opens the in-page tool when the page is a file, and is
+   an ordinary link to the back end's assessment when the page is served. */
+document.addEventListener('click',function(e){
+  var t=e.target&&e.target.closest?e.target:null; if(!t) return;
+  if(t.closest('[data-close-assess]')){ closeAssessment(); return; }
+  if(t.closest('[data-assess]')&&document.getElementById('assessTpl')){ e.preventDefault(); launchAssessment(); }
+});
 addEventListener('keydown',function(e){
   if(e.key==='Escape'){ var ov=document.getElementById('assessOverlay');
     if(ov&&ov.classList.contains('open')) closeAssessment(); }
 });
 /* warm hand-off: carry the hero estimator's chosen sector into the tool */
 (function(){ var wf=document.getElementById('wFull');
-  if(wf){ wf.addEventListener('click',function(e){ e.preventDefault();
+  if(wf){ wf.addEventListener('click',function(e){ if(!document.getElementById('assessTpl')) return; e.preventDefault();
     launchAssessment((typeof state!=='undefined'&&state.sector)?state.sector:''); }); } })();
 </script>
 
 <!-- ===== INTEGRATED ASSESSMENT (mounts the assessment app in an isolated overlay) ===== -->
 <div id="assessOverlay" class="assess-overlay" role="dialog" aria-modal="true" aria-label="Capital allowances assessment" aria-hidden="true">
   <div class="assess-bar">
-    <button class="assess-back" type="button" onclick="closeAssessment()"><span aria-hidden="true">&larr;</span> Back to site</button>
+    <button class="assess-back" type="button" data-close-assess><span aria-hidden="true">&larr;</span> Back to site</button>
     <span class="assess-brand"><img id="assessLogo" alt="Cap Rebate" width="100" height="67"><span>Assessment</span></span>
     <span class="assess-secure">Indicative only &middot; not tax advice</span>
   </div>
