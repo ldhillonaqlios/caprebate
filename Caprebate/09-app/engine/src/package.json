@@ -1,0 +1,1 @@
+{ "//": "Marks these .ts files as ES modules, so a host that compiles TypeScript (Vercel) keeps their named exports.", "type": "module" }
