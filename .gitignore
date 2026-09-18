@@ -6,6 +6,9 @@
 !/.gitattributes
 !/.devcontainer/
 !/README.md
+!/api/
+!/vercel.json
+!/package.json
 !/Caprebate site.html
 !/Caprebate/
 /Caprebate/*

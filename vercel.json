@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd Caprebate/09-app/backend && npm ci --omit=dev",
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "functions": {
+    "api/index.mjs": {
+      "includeFiles": "{Caprebate site.html,Caprebate/09-app/backend/src/**,Caprebate/09-app/backend/migrations/**,Caprebate/09-app/backend/node_modules/**,Caprebate/09-app/backend/package.json,Caprebate/09-app/engine/**,Caprebate/04-phase-work/phase3/**,Caprebate/04-phase-work/phase9/**,Caprebate/06-commercial-and-governance/**}",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+}
