@@ -32,7 +32,9 @@ import { APP_ROLES } from '../roles.ts';
 import { findById, hashToken } from '../users.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { staffShell, portalShell, opens, navContext } from './navigation.ts';
+import { staffShell, portalShell, opens, navContext, filterBar, LEAD_FILTERS } from './navigation.ts';
+import { settingsBody, settingsTiles } from './admin-tiles.ts';
+import { assertDashboard } from './dashboard.ts';
 import { refillForm, typedValues } from './refill.ts';
 import { badge, card, claimRef, emptyState, welcomeCard, why } from './components.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
@@ -231,6 +233,11 @@ export async function handleStaff(
   if (path === '/staff/welcome/dismiss' && method === 'POST') {
     dismissWelcome({ db, audit: d.app.audit, now }, actor);
     redirect(res, '/staff'); return 'handled';
+  }
+  /* ------------------------------------------ PHASE 135 · Settings, one page of tiles (Admin) */
+  if (path === '/staff/admin' && method === 'GET') {
+    const tiles = settingsTiles(actor, opens);
+    html(res, 200, page({ title: 'Settings', nav: nav(actor), wide: true, body: settingsBody(tiles) })); return 'handled';
   }
   if (path === '/staff/help' && method === 'GET') {
     const help = staffHelp(url.searchParams.get('screen') ?? 'B0');
@@ -773,9 +780,10 @@ function homePage(actor: Actor, work: T.MyWork, cards: Safe = raw(''), welcome: 
       <p class="help">Signed in as ${actor.role.toLowerCase()}. ${HOME_WORDS[actor.role] ?? ''}</p></div></div>
       ${welcome}
       ${cards}
+      ${opens(actor, assertDashboard) ? h`<p><a class="btn" href="/staff/dashboard">See the dashboard</a></p>` : raw('')}
       <div id="my-tasks">${myTasksBlock(work)}</div>
       <div class="gate">Emails and calendar invitations are not sent yet. They wait in the outbox at the foot of
-      <a href="/staff/settings">Settings</a>.${why(h`Outbound email and calendar invitations are stubbed in this build, and it is not hidden: both are
+      <a href="/staff/settings">Your account</a>.${why(h`Outbound email and calendar invitations are stubbed in this build, and it is not hidden: both are
       written to the outbox and neither leaves the building. ${STUB_NOTICE}`)}</div>
       <div class="gate">Times are UK time.${why(h`Greenwich Mean Time in winter and British Summer Time in summer, and the change is handled
       for you. Times are stored in UTC and converted for display, so nothing needs adjusting in March or October.`)}</div>`,
@@ -824,7 +832,8 @@ function assessmentsPage(actor: Actor, rows: readonly B.AssessmentRow[]): string
   return page({
     title: 'Filled assessments', nav: nav(actor), wide: true,
     body: h`
-      <h1>Filled assessments</h1>
+      <div class="pagehead"><div><p class="eyebrow">Leads</p><h1>Filled assessments</h1></div></div>
+      ${filterBar(actor, LEAD_FILTERS, '/staff/assessments')}
       <p class="help">${rows.length} submitted, newest first.</p>
       ${rows.length === 0
         ? h`<p class="help">Nothing has been submitted yet.</p>`
@@ -1050,9 +1059,9 @@ function settingsPage(
         'SELECT created_at, to_email, subject, kind, sent_at FROM outbox ORDER BY created_at DESC LIMIT 20')
     : [];
   return page({
-    title: 'Settings', nav: inBackOffice ? nav(actor) : portalShell(actor),
+    title: 'Your account', nav: inBackOffice ? nav(actor) : portalShell(actor),
     body: h`
-      <h1>Settings</h1>
+      <h1>Your account</h1>
       ${saved !== undefined ? h`<p class="help">Saved.</p>` : raw('')}
       ${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}
 

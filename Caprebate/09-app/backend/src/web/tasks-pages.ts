@@ -23,6 +23,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
+import { filterBar, TASK_FILTERS } from './navigation.ts';
 import { claimRef, savedMessage, why } from './components.ts';
 import * as T from './tasks.ts';
 import * as A from './automation.ts';
@@ -446,11 +447,10 @@ export function myTasksBlock(w: T.MyWork): Safe {
 function tasksListPage(d: TaskPageDeps, actor: Actor, w: T.MyWork, all: readonly T.TaskView[] | null, msg: string | undefined): string {
   return page({
     title: 'Tasks', nav: d.nav(actor), wide: true,
-    body: h`<h1>Tasks</h1>${saved(msg)}
-      <p class="help">A job a colleague does. A question the client answers is not a task — it is on the business page.
-      Overdue is judged against today’s date in the UK; a task with no due date is not overdue and not on time either.</p>
+    body: h`<h1>Tasks</h1>${filterBar(actor, TASK_FILTERS, all === null ? '/staff/tasks' : '/staff/tasks?view=all')}${saved(msg)}
+      <div class="help">A job a colleague does. A question for the client is on the client's page.${why(h`Overdue is judged against
+      today’s date in the UK. A task with no due date is not overdue, and not on time either.`)}</div>
       ${myTasksBlock(w)}
-      ${T.mayCreateTask(actor) ? h`<p><a href="/staff/tasks?view=all">Every open task</a> · <a href="/staff/next-actions">Claims breaking the one-next-action rule</a></p>` : raw('')}
       ${all === null ? raw('') : h`<div class="pblock"><div class="pnum">Every open task</div>${taskRows(all, '/staff/tasks', 'No open task.')}</div>`}`,
   });
 }
@@ -506,14 +506,14 @@ function breakersPage(d: TaskPageDeps, actor: Actor, b: T.Breakers): string {
       <td>${r.reading.breaks !== null ? h`<strong>${r.reading.sentence}</strong>` : r.reading.task === null ? raw('') : h`${r.reading.task.title} — ${dueCell(r.reading.task.due)}`}</td>
       <td>${r.waiting === undefined ? h`<span class="help">—</span>` : h`${who(r.waiting.who)} — ${r.waiting.why}`}</td><td>${claimRef(r.claim_ref)}</td></tr>`)}</tbody></table>`;
   return page({
-    title: 'Next actions', nav: d.nav(actor), wide: true,
-    body: h`<h1>The one-next-action rule</h1>
-      <p class="help">Every claim that has not closed or left the procedure has exactly one current next action, with an
-      owner and a due date. ${b.checked} open claim${b.checked === 1 ? '' : 's'} checked. Where both sides are waiting it
-      reads as ours — the engaged-client list’s own rule.</p>
-      <div class="pblock"><div class="pnum">Breaking the rule</div>
+    title: 'Claims with no next step', nav: d.nav(actor), wide: true,
+    body: h`<h1>Tasks</h1>${filterBar(actor, TASK_FILTERS, '/staff/next-actions')}
+      <div class="help">Every open claim needs one next step, with an owner and a date. ${b.checked} open claim${b.checked === 1 ? '' : 's'} checked.${
+        why(h`A claim that has not closed or left the procedure has exactly one current next action. Where both sides are
+        waiting, it counts as ours.`)}</div>
+      <div class="pblock"><div class="pnum">No next step, or no owner or date</div>
         ${b.breaking.length === 0 ? h`<p class="help">None.</p>` : rows(b.breaking)}</div>
-      <div class="pblock"><div class="pnum">Keeping it, with the next action overdue</div>
+      <div class="pblock"><div class="pnum">Next step overdue</div>
         ${b.overdue.length === 0 ? h`<p class="help">None.</p>` : rows(b.overdue)}</div>`,
   });
 }

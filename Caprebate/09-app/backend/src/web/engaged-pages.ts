@@ -1,5 +1,6 @@
 /**
- * THE ENGAGED-CLIENT LIST AND THE BUSINESS PAGE — routes and rendering.
+ * THE CLIENTS LIST'S ROUTE AND THE BUSINESS PAGE'S PANELS — routes and rendering. PHASE 135: the list itself is drawn by
+ * src/web/client-list.ts, the one list that replaced "Engaged clients" and "Organisations".
  *
  * Same shape as `handleStaff` and `portalRoutes`: it returns 'not-mine' for
  * anything it does not own, so nothing is shadowed by accident and the mounting
@@ -29,6 +30,7 @@ import { localStamp } from './localtime.ts';
 import { RANGE_QUALIFIER } from './shown-range.ts';
 import * as E from './engaged.ts';
 import * as R from './research.ts';
+import { clientList, clientListPage, type ClientSort } from './client-list.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -63,9 +65,11 @@ export async function handleEngaged(
   const db = d.app.db;
   const deps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
 
+  /* PHASE 135: THE ONE CLIENTS LIST (src/web/client-list.ts), gated as the organisations list was, so the view-only login
+     can read it. The engaged-client list it replaced is no longer drawn; `engagedClients` still serves its other readers. */
   if (path === '/staff/clients' && method === 'GET') {
-    const sort = url.searchParams.get('sort') ?? 'waiting';
-    html(res, 200, listPage(d, actor, E.engagedClients(db, actor), sort));
+    const sort: ClientSort = url.searchParams.get('sort') === 'name' ? 'name' : 'waiting';
+    html(res, 200, clientListPage(d.nav(actor), clientList(db, actor, sort), sort));
     return 'handled';
   }
 
@@ -154,116 +158,6 @@ export async function handleEngaged(
 
 function emptyToNull(v: string | null): string | null {
   return v === null || v.trim() === '' ? null : v.trim();
-}
-
-/* ------------------------------------------------------------------ *
- * THE LIST
- * ------------------------------------------------------------------ */
-
-/**
- * SORTABLE, AND THE DEFAULT SORT IS THE POINT OF THE SCREEN.
- *
- * "Waiting on" first, so the queue a person works down is the queue of things
- * they can act on. The other orders are there because a staff member asking
- * "who has not signed" and a staff member asking "whose research is stalled"
- * are asking different questions of the same list.
- *
- * SORTED IN CODE, NEVER IN SQL FROM A REQUEST VALUE. The parameter names a key
- * in a table below; it never reaches an ORDER BY. That is not a performance
- * decision — a sort key taken from a query string and concatenated into SQL is
- * the classic injection that parameterised queries do not protect against,
- * because an ORDER BY clause cannot be parameterised.
- */
-const SORTS: Readonly<Record<string, { label: string; cmp: (a: E.ClientRow, b: E.ClientRow) => number }>> =
-  Object.freeze({
-    waiting: {
-      label: 'Who it is waiting on',
-      cmp: (a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name),
-    },
-    name: { label: 'Business name', cmp: (a, b) => a.name.localeCompare(b.name) },
-    letter: {
-      label: 'Engagement letter',
-      cmp: (a, b) => LETTER_ORDER.indexOf(a.letter_state) - LETTER_ORDER.indexOf(b.letter_state)
-        || a.name.localeCompare(b.name),
-    },
-    research: {
-      label: 'Research',
-      cmp: (a, b) => RESEARCH_ORDER.indexOf(a.research) - RESEARCH_ORDER.indexOf(b.research)
-        || a.name.localeCompare(b.name),
-    },
-    missing: { label: 'Facts still missing', cmp: (a, b) => b.missing_facts - a.missing_facts || a.name.localeCompare(b.name) },
-  });
-
-const LETTER_ORDER = ['NONE', 'NOT_SENT', 'SENT', 'VIEWED', 'SIGNED'];
-const RESEARCH_ORDER: E.ResearchProgress[] = ['NOT_RUN', 'PART_RUN', 'COMPLETE'];
-
-/** Ours first, then the client's, then the finished ones. */
-function rank(r: E.ClientRow): number {
-  return r.waiting_on === 'US' ? 0 : r.waiting_on === 'CLIENT' ? 1 : 2;
-}
-
-function waitingCell(r: E.ClientRow): Safe {
-  if (r.waiting_on === 'US') {
-    return h`<strong>Us</strong><br><span class="say">${r.waiting_why}</span>`;
-  }
-  if (r.waiting_on === 'CLIENT') {
-    return h`The client<br><span class="say">${r.waiting_why}</span>`;
-  }
-  return h`<span class="help">Nobody</span><br><span class="say">${r.waiting_why}</span>`;
-}
-
-function yesNo(ready: boolean): Safe {
-  return ready ? h`ready` : h`<span class="help">not yet</span>`;
-}
-
-function listPage(d: EngagedDeps, actor: Actor, rows: readonly E.ClientRow[], sort: string): string {
-  const chosen = Object.prototype.hasOwnProperty.call(SORTS, sort) ? sort : 'waiting';
-  const sorted = [...rows].sort(SORTS[chosen]!.cmp);
-  const ours = sorted.filter((r) => r.waiting_on === 'US').length;
-  const theirs = sorted.filter((r) => r.waiting_on === 'CLIENT').length;
-
-  return page({
-    title: 'Engaged clients', nav: d.nav(actor), wide: true,
-    body: h`
-      <h1>Engaged clients</h1>
-      <p class="help">${sorted.length} in the pipeline.
-        <strong>${ours} waiting on us</strong>, ${theirs} waiting on the client,
-        ${sorted.length - ours - theirs} on neither.</p>
-      <p class="help">Sort by:
-        ${Object.entries(SORTS).map(([key, s]) => h`${key === chosen
-          ? h`<strong>${s.label}</strong>`
-          : h`<a href="/staff/clients?sort=${key}">${s.label}</a>`} · `)}</p>
-
-      ${sorted.length === 0
-        ? h`<p class="help">Nobody has come through the assessment yet.</p>`
-        : h`<table><thead><tr>
-            <th>Business</th><th>Waiting on</th><th>Engagement letter</th><th>Research</th>
-            <th>With the client</th><th>Still missing</th><th>Accountant pack</th>
-            <th>Surveyor pack</th><th>Stage</th></tr></thead>
-          <tbody>${sorted.map((r) => h`<tr>
-            <td><a href="/staff/clients/${r.business_id}">${r.name}</a><br>
-              <span class="help">${r.sector.replace(/_/g, ' ')}</span></td>
-            <td>${waitingCell(r)}</td>
-            <td>${r.letter_label}</td>
-            <td>${r.research_label}</td>
-            <td>${r.tasks_sent === 0
-              ? h`<span class="help">nothing</span>`
-              : h`${r.tasks_sent} question${r.tasks_sent === 1 ? '' : 's'}`}${
-                r.tasks_open > r.tasks_sent
-                  ? h`<br><span class="say">${r.tasks_open - r.tasks_sent} drafted, not sent</span>`
-                  : raw('')}</td>
-            <td>${r.missing_facts}</td>
-            <td>${yesNo(r.ready_for_accountant)}</td>
-            <td>${yesNo(r.ready_for_surveyor)}</td>
-            <td>${r.done ? h`done` : h`<span class="help">${r.stage_label}</span>`}</td>
-          </tr>`)}</tbody></table>`}
-
-      <div class="gate"><strong>“Waiting on” is not the stage.</strong> The stage is how far a claim has
-      got; this column is who is holding it up, and the two routinely disagree — a signed engagement
-      with three unanswered questions is waiting on the client, not on us. A question drafted here and
-      never sent to the client's portal counts as <strong>ours</strong>: nobody has asked them anything
-      yet.</div>`,
-  });
 }
 
 /* ------------------------------------------------------------------ *

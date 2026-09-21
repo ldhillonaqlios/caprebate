@@ -144,7 +144,11 @@ function clientPage(
       ], raw(''), legal === null ? raw('') : h`${legal}`)}
       ${card('Claims', claimTilesFor(org.claims, 'No claim yet. Open one from a property.', org.trading_name), { count: org.claims.length, id: 'claims' })}
       ${recordLayout(recordTabs(tabs), sidePanel(null, quick, p === null ? raw('') : card('Waiting on', h`
-        <p><strong>${waiting ?? ''}</strong> — ${p.row.waiting_why}</p>`)))}
-      <p><a href="${work === null ? '/staff/organisations' : '/staff/clients'}">Back to the list</a></p>`,
+        <p><strong>${waiting ?? ''}</strong> — ${p.row.waiting_why}</p>
+        <ul class="plain help"><li>Research: ${p.row.research_label}</li>
+          <li>With the client: ${p.row.tasks_sent} question${p.row.tasks_sent === 1 ? '' : 's'}</li>
+          <li>Accountant pack: ${p.row.ready_for_accountant ? 'ready' : 'not ready yet'}</li>
+          <li>Surveyor pack: ${p.row.ready_for_surveyor ? 'ready' : 'not ready yet'}</li></ul>`)))}
+      <p><a href="/staff/clients">Back to the list</a></p>`,
   });
 }

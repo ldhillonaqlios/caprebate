@@ -176,8 +176,8 @@ function firstClientLink(body: string): string | undefined {
  * THE LIST
  * ================================================================== */
 
-describe('the engaged-client list', () => {
-  test('a client who came through the funnel appears with every state the brief names', async () => {
+describe('the one Clients list, and the states the brief names (Phase 135 folded the engaged-client list into it)', () => {
+  test('a client who came through the funnel appears, and its page carries every state the brief names', async () => {
     const h = await boot();
     try {
       await h.runFunnel();
@@ -185,14 +185,16 @@ describe('the engaged-client list', () => {
       const list = await staff.req('/staff/clients');
       assert.equal(list.status, 200);
       assert.match(list.body, /Meadowcroft Care Limited/);
-      // The six states the brief lists, each present as a column or a value.
-      assert.match(list.body, /Engagement letter/);
-      assert.match(list.body, /Research/);
-      assert.match(list.body, /With the client/);
-      assert.match(list.body, /Still missing/);
-      assert.match(list.body, /Accountant pack/);
-      assert.match(list.body, /Surveyor pack/);
-      assert.ok(firstClientLink(list.body) !== undefined, 'no business is clickable');
+      assert.match(list.body, /<th>Waiting on<\/th>/);
+      const id = firstClientLink(list.body);
+      assert.ok(id !== undefined, 'no business is clickable');
+      // PHASE 135: the list keeps company, waiting on, status, owner and claims. The six states the brief lists are on the
+      // company's one page, as a highlight or in its "Waiting on" card.
+      const page = await staff.req(`/staff/clients/${id}`);
+      assert.equal(page.status, 200);
+      for (const state of [/Engagement letter/, /Research: /, /With the client: /, /Still missing/, /Accountant pack: /, /Surveyor pack: /]) {
+        assert.match(page.body, state);
+      }
     } finally { h.close(); }
   });
 
@@ -202,7 +204,7 @@ describe('the engaged-client list', () => {
       await h.runFunnel();
       const staff = await h.signIn('SALES');
       const list = await staff.req('/staff/clients');
-      assert.match(list.body, /<strong>Us<\/strong>/, 'a claim with no letter is not shown as ours');
+      assert.match(list.body, /<span class="badge b-warn">Us<\/span>/, 'a claim with no letter is not shown as ours');
       assert.match(list.body, /no engagement letter has been raised yet/);
     } finally { h.close(); }
   });

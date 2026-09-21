@@ -119,8 +119,11 @@ export async function handleCrm(
   const done = url.searchParams.get('done') ?? undefined;
 
   /* ---------------------------------------------------- organisations */
+  /* PHASE 135: the organisations list is the one Clients list now. The address stays alive and asks the gate it always
+     asked, so a login refused the list is refused here rather than sent on. */
   if (path === '/staff/organisations' && method === 'GET') {
-    html(res, 200, organisationsPage(d, actor, C.organisationList(db, actor)));
+    C.assertOrganisationSection(actor);
+    redirect(res, `/staff/clients${url.search}`);
     return 'handled';
   }
 
@@ -426,22 +429,6 @@ export function claimTilesFor(claims: readonly C.ClaimSummary[], empty = 'No cla
 /* ------------------------------------------------------------------ *
  * ORGANISATIONS
  * ------------------------------------------------------------------ */
-
-function organisationsPage(d: CrmPageDeps, actor: Actor, rows: readonly C.OrganisationRow[]): string {
-  return page({
-    title: 'Organisations', nav: d.nav(actor), wide: true,
-    body: h`<h1>Organisations</h1>
-      <p class="help">Every client organisation, with its properties and claims. ${rows.length} shown.
-      An organisation marked <strong>do not contact</strong> receives nothing: the outbox refuses it.</p>
-      ${rows.length === 0 ? h`<p class="empty">No organisations yet. An organisation is recorded when a client completes the assessment, or when a lead is recorded for it.</p>` : h`<table>
-        <thead><tr><th>Trading name</th><th>Legal name</th><th>Claimant type</th><th>Status</th><th>Owner</th>
-        <th>Properties</th><th>Claims</th></tr></thead>
-        <tbody>${rows.map((r) => h`<tr><td><a href="/staff/clients/${r.id}">${r.trading_name}</a></td>
-          <td>${r.legal_name}</td><td>${r.claimant_type}</td>
-          <td>${r.do_not_contact ? h`<strong>${r.client_status}</strong>` : h`${r.client_status}`}</td>
-          <td>${orNot(r.owner, 'nobody yet')}</td><td>${r.properties}</td><td>${r.claims}</td></tr>`)}</tbody></table>`}`,
-  });
-}
 
 function contactForm(action: string, business_id: string, c: C.ContactView | null, button: string): Safe {
   return h`<form method="post" action="${action}">

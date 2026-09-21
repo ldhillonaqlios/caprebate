@@ -45,8 +45,27 @@ const SECTIONS = [
   '/staff/pipeline', '/staff/clients', '/staff/organisations', '/staff/properties', '/staff/claims', '/staff/documents',
   '/staff/document-types', '/staff/introducers', '/staff/introducer-rewards', '/staff/survey', '/staff/finance',
   '/staff/calendar', '/staff/compliance', '/staff/admin-settings', '/staff/automation', '/staff/templates', '/staff/audit',
-  '/staff/users', '/staff/settings',
+  '/staff/users', '/staff/settings', '/staff/admin',
 ];
+
+/**
+ * PHASE 135 — A SECTION CAN BE OFF A LOGIN'S MENU AND STILL OPEN. Lakhbir asked for menus that list only what each login
+ * works in daily, so being allowed to open a section is no longer a reason to list it. The sections each login may open
+ * but is not shown are listed here BY HAND, from the verdict table in the Developer Spec — so a section that starts
+ * opening for a login, or drops off its menu, still turns this suite red.
+ */
+const OFF_MENU: Readonly<Record<Exclude<Login, 'client'>, readonly string[]>> = {
+  admin: ['/staff/dashboard', '/staff/next-actions', '/staff/assessments', '/staff/properties', '/staff/claims', '/staff/documents',
+    '/staff/document-types', '/staff/introducer-rewards', '/staff/compliance', '/staff/admin-settings', '/staff/automation',
+    '/staff/templates', '/staff/audit', '/staff/users'],
+  sales: ['/staff/dashboard', '/staff/next-actions', '/staff/assessments', '/staff/properties', '/staff/claims', '/staff/documents',
+    '/staff/document-types', '/staff/introducer-rewards', '/staff/survey', '/staff/admin-settings', '/staff/automation', '/staff/templates'],
+  accounting: ['/staff/dashboard', '/staff/documents', '/staff/introducers'],
+  surveying: ['/staff/dashboard', '/staff/assessments', '/staff/properties', '/staff/claims', '/staff/documents'],
+  readonly: ['/staff/dashboard', '/staff/tasks', '/staff/next-actions', '/staff/assessments', '/staff/properties', '/staff/claims',
+    '/staff/documents', '/staff/document-types', '/staff/introducers', '/staff/introducer-rewards', '/staff/calendar',
+    '/staff/admin-settings', '/staff/automation', '/staff/templates'],
+};
 
 async function boot(): Promise<{ made: Made; base: string; password: string; signIn(who: Login): Promise<Client> }> {
   const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-133a-')) });
@@ -129,7 +148,7 @@ const as = (who: Login): Client => clients.get(who) as Client;
 
 describe('the menu shows each login what it can open, and nothing it cannot', () => {
   for (const who of LOGINS.filter((l) => l !== 'client')) {
-    test(`${who}: every header link opens, and every section not in the header is refused`, async () => {
+    test(`${who}: every header link opens, and every section not in the header is refused unless it is one of this login's off-menu sections`, async () => {
       const home = await as(who).get('/staff');
       assert.equal(home.status, 200);
       const links = headerLinks(home.body);
@@ -138,10 +157,16 @@ describe('the menu shows each login what it can open, and nothing it cannot', ()
         const r = await as(who).get(href);
         assert.equal(r.status, 200, `${who}'s header links to ${href}, which answers ${r.status}`);
       }
+      const off = OFF_MENU[who as Exclude<Login, 'client'>];
       for (const path of SECTIONS) {
         if (links.includes(path)) continue;
         const r = await as(who).get(path);
-        assert.equal(r.status, 403, `${path} opens for ${who} (${r.status}) but is not in ${who}'s menu`);
+        if (off.includes(path)) { assert.equal(r.status, 200, `${path} is ${who}'s off-menu section, and answers ${r.status}`); continue; }
+        // Phase 135: the organisations list is the one Clients list; its address sends a login that may read it there.
+        if (path === '/staff/organisations' && links.includes('/staff/clients')) {
+          assert.equal(r.status, 303, `${path} for ${who}`); assert.equal(r.location, '/staff/clients'); continue;
+        }
+        assert.equal(r.status, 403, `${path} opens for ${who} (${r.status}) but is neither in ${who}'s menu nor off-menu by name`);
       }
     });
   }

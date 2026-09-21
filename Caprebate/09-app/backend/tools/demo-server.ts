@@ -19,6 +19,19 @@ const publicOrigin = process.env.CAPREBATE_PUBLIC_ORIGIN
 const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-demo-')), publicOrigin });
 const r = await seed(made.app.db, made.app.hasher, made.app.now);
 
+/* PHASE 135: A VIEW-ONLY LOGIN, IN THE DEMO ONLY. The seed is one user per role and gives the view-only role to nobody
+   (Phase 132e), so the demo had no way to see the back office as Read only. This launcher adds one, with the seed's
+   password; src/seed.ts is unchanged, so no other database gains a user. */
+{
+  const t = made.app.now();
+  const id = 'u-demo-readonly';
+  made.app.db.run(
+    'INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,NULL)',
+    [id, 'readonly@example.invalid', 'readonly@example.invalid', 'View-only Person', 'READ_ONLY', await made.app.hasher.hash(r.password), t, t],
+  );
+  r.users.push({ id, email: 'readonly@example.invalid', role: 'READ_ONLY' });
+}
+
 /* PHASE 133j: NOTHING IS EMAILED — the transport is the outbox stub. So this launcher, and only this launcher, prints
    each new outbox message to the terminal, so a person trying the sign-up can open the confirmation link. The demo's
    data is invented and lives in memory. */

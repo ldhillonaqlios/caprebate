@@ -72,7 +72,7 @@ export type WebDeps = {
   newId?: () => string;
   /** CRM 5 of 10: the public referral form's gate. Absent is `REFERRAL_FORM`, shipped off. */
   referralForm?: { readonly enabled: boolean; readonly requires: string };
-  /** PHASE 133c: the menu and portal name switches. Absent is `NAME_SWITCHES` in src/web/navigation.ts, both off. */
+  /** PHASE 133c: the portal name switch (the menu switch went in Phase 135). Absent is `NAME_SWITCHES` in src/web/navigation.ts, off. */
   names?: NameSwitches;
   /**
    * PHASE 133j: the site's own address, for a link sent by email (a client's sign-up). CONFIGURED, NEVER TAKEN FROM THE

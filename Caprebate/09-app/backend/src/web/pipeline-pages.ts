@@ -24,7 +24,7 @@ import { can, type Actor } from '../authz.ts';
 import { badge, brandName, claimRef, dataLink, fields, highlights, nextStepCard, recordLayout, recordTabs, savedMessage, sidePanel, why } from './components.ts';
 import { leadNextStep, plainNeed } from './next-step.ts';
 import { dueWords, ukDatesIn } from './localtime.ts';
-import { navContext } from './navigation.ts';
+import { navContext, filterBar, LEAD_FILTERS } from './navigation.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as C from './crm.ts';
 import * as L from './leads.ts';
@@ -333,7 +333,7 @@ function leadsPage(
 ): string {
   return page({
     title: 'Leads', nav: d.nav(actor), wide: true,
-    body: h`<div class="pagehead"><div><p class="eyebrow">Leads</p><h1>Leads</h1></div><p><a class="btn" href="#record-lead">Record a lead by hand</a></p></div>${done(msg)}
+    body: h`<div class="pagehead"><div><p class="eyebrow">Leads</p><h1>Leads</h1></div><p><a class="btn" href="#record-lead">Record a lead by hand</a></p></div>${filterBar(actor, LEAD_FILTERS, '/staff/leads')}${done(msg)}
       ${can(actor, 'lead.write', { type: 'lead', id: '__website_enquiries__', business_id: null })
         ? h`<p class="help"><a href="/staff/enquiries">Website enquiries</a>: ${E.openEnquiryCount({ db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId }, actor)} waiting to be answered.</p>`
         : raw('')}

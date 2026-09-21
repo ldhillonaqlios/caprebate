@@ -58,6 +58,8 @@ export const TEXT_PAIRINGS: readonly (readonly [text: string, ground: string])[]
   ['mut', 'white'], ['accent', 'white'], ['accent', 'mist'], ['on-accent', 'accent'],
   ['ok', 'white'], ['ok', 'mist'], ['ok', 'okbg'], ['warn', 'white'], ['warn', 'mist'], ['warn', 'warnbg'],
   ['stop', 'white'], ['stop', 'mist'], ['stop', 'stopbg'],
+  // PHASE 135: the Tasks tab's count when a task is overdue.
+  ['white', 'stop'],
 ]);
 
 const tokenCss = Object.entries(BRAND_TOKENS).map(([k, v]) => `--${k}:${v}`).join(';');
@@ -109,9 +111,9 @@ body.public .topline{padding:.9rem 1.5rem;max-width:74rem}
 .gsearch{display:flex;align-items:center;gap:0}
 .gsearch input{width:22rem;max-width:40vw;min-height:2.5rem;border:1px solid var(--line);border-right:0;border-radius:var(--radius) 0 0 var(--radius);padding:.35rem .7rem;font:inherit;background:var(--white)}
 .gsearch button{border-radius:0 var(--radius) var(--radius) 0;min-height:2.5rem}
-.taskcount{display:inline-flex;align-items:center;gap:.35rem;text-decoration:none;color:var(--ink);font-size:16px;padding:.3rem .6rem;border:1px solid var(--line);border-radius:999px;background:var(--white);white-space:nowrap}
-.taskcount .n{display:inline-grid;place-items:center;min-width:1.6rem;height:1.6rem;padding:0 .35rem;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:14px}
-.taskcount .overdue-n{color:var(--stop);font-weight:600}
+/* PHASE 135: the open-task count sits on the Tasks tab; red when any is overdue. */
+.tabcount{display:inline-grid;place-items:center;min-width:1.5rem;height:1.5rem;margin-left:.3rem;padding:0 .35rem;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:14px;line-height:1}
+.tabcount.late{background:var(--stop);color:var(--white)}
 .helplink{color:var(--ink);font-weight:600;font-size:16px}
 .usermenu{position:relative}
 .usermenu summary{color:var(--ink);font-weight:600;display:flex;align-items:center;gap:.45rem;cursor:pointer;list-style:none;padding:.25rem .4rem;border-radius:var(--radius);min-height:2.5rem}
@@ -177,6 +179,9 @@ details.why .whytext{display:block;color:var(--body);font-size:16px;border-left:
 .card-h .count{font-family:${BODY_STACK};font-size:16px;font-weight:600;color:var(--ink)}
 .cards{align-items:start;display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:1rem;margin:0 0 1rem}
 .cards>.card{margin:0}
+/* PHASE 135: a card's table wraps its long words (LOGIN_SUCCEEDED) rather than pushing the page sideways. */
+.cards>.card{min-width:0}
+.card table.compact td{overflow-wrap:anywhere;word-break:break-word}
 .card>h3:first-child{margin-top:0}
 .card .figbig{font-size:32px}
 .stat{font-size:32px;font-weight:700;line-height:1.1;margin:.2rem 0}
@@ -402,6 +407,18 @@ table.compact{margin:0}table.compact td{padding:.3rem .35rem}
 .guide h2{font-size:32px}.guide h3{font-size:24px}.guide h4{font-size:20px}
 .guide table{font-size:16px}
 
+/* PHASE 135: one tab, two views — a row of filters at the top of a list. */
+.viewbar{display:flex;flex-wrap:wrap;gap:.4rem;margin:.25rem 0 1rem}
+.viewbar a{display:inline-block;padding:.35rem .8rem;border:1px solid var(--line);border-radius:999px;background:var(--white);color:var(--ink);text-decoration:none;font-size:16px}
+.viewbar a:hover{background:var(--mist)}
+.viewbar a[aria-current="page"]{background:var(--mint);border-color:var(--ink);font-weight:700}
+/* PHASE 135: Admin's Settings — one tile per setup screen, the whole tile a link. */
+.settings-tiles .tile{padding:0}
+.settings-tiles .tilelink{display:block;padding:.9rem 1rem;color:var(--ink);text-decoration:none;height:100%}
+.settings-tiles .tilelink:hover{background:var(--mist)}
+.settings-tiles .tiledoes{display:block;margin-top:.3rem;color:var(--body);font-size:16px}
+.clientlist .rowname{font-weight:700}
+
 /* ---------------- SMALLER SCREENS ---------------- */
 @media (max-width:960px){
   .record{grid-template-columns:minmax(0,1fr)}
@@ -424,6 +441,14 @@ table.compact{margin:0}table.compact td{padding:.3rem .35rem}
   .menu-pop{right:auto;left:0}
   main,body.app main{padding:1rem .75rem 2.5rem}
   main table{display:block;overflow-x:auto;white-space:normal}
+  /* PHASE 135: a stacked list reads as one card per row on a phone, each cell labelled — no sideways scroll. */
+  main table.stack{display:table;overflow:visible;border:0;background:transparent}
+  table.stack thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  table.stack,table.stack tbody,table.stack tr,table.stack td{display:block;width:100%}
+  table.stack tr{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);margin:0 0 .75rem;padding:.5rem .75rem}
+  table.stack td{border:0;padding:.3rem 0;overflow-wrap:anywhere}
+  table.stack td[data-label]::before{content:attr(data-label);display:block;font-size:14px;font-weight:600;color:var(--body)}
+  table.stack td:first-child::before{display:none}
   dl{grid-template-columns:minmax(0,1fr)}
   dt{margin-top:.4rem}
   .stagebar ol{flex-direction:column;gap:.25rem;overflow:visible}

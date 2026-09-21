@@ -50,7 +50,7 @@ const LOGINS = ['admin', 'sales', 'accounting', 'surveying', 'readonly', 'client
 type Login = (typeof LOGINS)[number];
 const DUMP = process.env['CB_133C_DUMP'] === '1';
 
-async function boot(opts: { names?: { menu: boolean; portalSteps: boolean } } = {}): Promise<{ made: Made; base: string; signIn(who: Login): Promise<Client> }> {
+async function boot(opts: { names?: { portalSteps: boolean } } = {}): Promise<{ made: Made; base: string; signIn(who: Login): Promise<Client> }> {
   const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-133c-')), ...(opts.names === undefined ? {} : { names: opts.names }) });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const addr = made.server.address();
@@ -420,26 +420,21 @@ describe('a new user can use it', () => {
 });
 
 describe('the names — built, switched off, and both positions work', () => {
-  test('off, as shipped: the current menu names and the current step names', async () => {
-    const menu = (await as('sales').get('/staff')).body;
-    assert.match(menu, />Engaged clients<\/a>/);
-    assert.match(menu, />Next actions<\/a>/);
-    assert.match(menu, />Reward model<\/a>/);
+  test('off, as shipped: the menu carries Phase 135\'s names, and the current step names', async () => {
+    // PHASE 135: the menu names are no longer a switch. "Introducer fees" is the section's name; the other two proposed
+    // names no longer apply (Engaged clients became the one Clients list; Next actions became a filter on Tasks).
+    const menu = (await as('accounting').get('/staff')).body;
+    assert.match(menu, /<a href="\/staff\/introducer-rewards">Introducer fees<\/a>/);
+    assert.equal(/>Engaged clients<\/a>|>Reward model<\/a>|>Next actions<\/a>/.test(menu), false);
+    assert.match((await as('sales').get('/staff')).body, /<a href="\/staff\/clients">Clients<\/a>/);
     const portal = (await as('client').get('/portal')).body;
     assert.match(portal, /The engine runs → a narrowed estimate/);
     assert.equal(/1 Your estimate/.test(portal), false);
   });
 
-  test('on: the proposed menu names and step names, the same addresses, and still no avoid-list word', async () => {
-    const on = await boot({ names: { menu: true, portalSteps: true } });
+  test('on: the proposed step names, and still no avoid-list word', async () => {
+    const on = await boot({ names: { portalSteps: true } });
     try {
-      const sales = await on.signIn('sales');
-      const menu = (await sales.get('/staff')).body;
-      assert.match(menu, /<a href="\/staff\/clients">Client files<\/a>/);
-      assert.match(menu, /<a href="\/staff\/next-actions">Claims needing an owner<\/a>/);
-      assert.match(menu, /<a href="\/staff\/introducer-rewards">Introducer fees<\/a>/);
-      assert.equal(/>Engaged clients<\/a>|>Reward model<\/a>/.test(menu), false);
-      for (const p of ['/staff/clients', '/staff/next-actions', '/staff/introducer-rewards']) assert.equal((await sales.get(p)).status, 200, p);
       const portal = (await (await on.signIn('client')).get('/portal')).body;
       for (const name of ['1 Your estimate', '2 Engagement letter signed', '3 We research your property', '4 Expert sign-off', '5 Claim filed', '6 Aftercare']) {
         assert.ok(portal.includes(name), `the portal does not show "${name}"`);

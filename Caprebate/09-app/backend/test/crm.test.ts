@@ -804,7 +804,9 @@ describe('an organisation, a contact, a property and a linked claim — without 
       const users = db.get<{ n: number }>('SELECT COUNT(*) AS n FROM users')?.n;
       const staff = await h.signIn('SALES');
 
-      assert.match((await staff.req('/staff/organisations')).body, /Linked Records Limited/);
+      // Phase 135: the organisations list is the one Clients list; the old address sends the reader there.
+      assert.equal((await staff.req('/staff/organisations')).location, '/staff/clients');
+      assert.match((await staff.req('/staff/clients')).body, /Linked Records Limited/);
       // Phase 134: the organisation's address sends the reader to the one client page.
       assert.equal((await staff.req(`/staff/organisations/${id}`)).location, `/staff/clients/${id}`);
       assert.equal((await staff.req(`/staff/clients/${id}`)).status, 200);

@@ -85,8 +85,8 @@ export type ServerOptions = {
    * an open gate to prove the form works; nothing that runs outside a test does.
    */
   referralForm?: { readonly enabled: boolean; readonly requires: string };
-  /** PHASE 133c: the menu and portal name switches (B7, B9). Absent is `NAME_SWITCHES`, both off. A test passes both positions. */
-  names?: { readonly menu: boolean; readonly portalSteps: boolean };
+  /** PHASE 133c: the portal name switch (B9; the menu switch went in Phase 135). Absent is `NAME_SWITCHES`, off. A test passes both positions. */
+  names?: { readonly portalSteps: boolean };
   /**
    * THE CLOCK — Phase 132, 15 September 2026. Absent means the real one, as before. A test whose seed or fixtures
    * carry fixed calendar dates passes a fixed clock, so it reads the same on any day it runs: four tests read the

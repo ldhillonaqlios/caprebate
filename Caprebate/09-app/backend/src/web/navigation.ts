@@ -19,32 +19,30 @@
  *
  * A SCREEN A LOGIN MAY NOT OPEN IS STILL REFUSED, NOT MERELY HIDDEN: typing its address answers 403, now as a page.
  *
- * NOTHING HERE READS A FIGURE. The header counts my open tasks through `myWork`, which authorises every row it returns.
+ * NOTHING HERE READS A FIGURE. The Tasks tab counts my open tasks through `myWork`, which authorises every row it returns.
+ *
+ * PHASE 135, 21 September 2026 — A MENU IS A LOGIN'S DAILY WORK, NOT EVERYTHING IT MAY OPEN. Lakhbir found tabs repeating
+ * each other and a dozen entries under More. Each login's menu is now named in `MENUS`, More holds at most four, and a
+ * section off the menu still opens by its address for every login its gate admits. Both halves of the Phase 133a worry
+ * still hold: a listed section is still drawn only where its gate admits the login, and test/phase135.test.ts asserts
+ * every login's exact menu and every address's answer, so neither a menu nor a permission can drift unseen.
  */
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { Db } from '../db.ts';
-import type { Actor } from '../authz.ts';
+import { NotAuthorised, type Actor } from '../authz.ts';
 import type { AppRole } from '../roles.ts';
 import { h, raw, Safe } from './html.ts';
 import { assertBackOffice, assertSection } from './backoffice.ts';
-import { assertDashboard } from './dashboard.ts';
 import { searchGate } from './search.ts';
-import { myWork, nextActionsGate } from './tasks.ts';
+import { mayCreateTask, myWork, nextActionsGate } from './tasks.ts';
 import { assertLeadSection } from './leads.ts';
-import { assertOrganisationSection, assertPropertySection, pipelineBoardGate } from './crm.ts';
+import { assertOrganisationSection, pipelineBoardGate } from './crm.ts';
 import { claimListGate } from './lists.ts';
-import { assertClientsSection } from './engaged.ts';
-import { documentCentreGate, documentTypesGate } from './documents.ts';
 import { assertIntroducerSection, rewardModelGate } from './introducers.ts';
 import { assertSurveySection } from './surveyor.ts';
 import { assertFinanceSection } from './finance.ts';
-import { assertComplianceRead } from './compliance.ts';
-import { assertConfigurationRead } from './configuration.ts';
-import { automationGate } from './automation.ts';
-import { templatesGate } from './templates.ts';
-import { auditLogGate } from './audit-log.ts';
-import { usersGate } from './settings.ts';
+import { adminSettingsGate, SETTINGS_TILES } from './admin-tiles.ts';
 
 /* ------------------------------------------------------------------ *
  * THE REQUEST'S CONTEXT
@@ -75,34 +73,23 @@ export const navContext = new AsyncLocalStorage<NavContext>();
  * ------------------------------------------------------------------ */
 
 export type NameSwitches = {
-  /** B7: the proposed menu names below, instead of the current ones. */
-  readonly menu: boolean;
   /** B9: the proposed names for the client's six steps (src/web/portal-steps.ts), instead of the current ones. */
   readonly portalSteps: boolean;
 };
 
 /**
- * THE SWITCHES, AS SHIPPED: BOTH OFF. Which to switch on is a question for Lakhbir in CAPREBATE QUESTIONS, "The new names
- * and the client's step names - which do we switch on?". Turning either on is a one-word change here.
+ * THE SWITCH, AS SHIPPED: OFF. Which to switch on is a question for Lakhbir in CAPREBATE QUESTIONS, "The new names and the
+ * client's step names - which do we switch on?". Turning it on is a one-word change here.
+ *
+ * PHASE 135 — THE MENU NAMES ARE NO LONGER A SWITCH. Of the three proposed in Phase 133c, "Introducer fees" is now the
+ * section's name; "Client files" and "Claims needing an owner" no longer apply, because Engaged clients became the one
+ * Clients list and Next actions became a filter on Tasks. The `menu` switch went with them.
  */
-export const NAME_SWITCHES: NameSwitches = Object.freeze({ menu: false, portalSteps: false });
-
-/** THE MENU LABEL TABLE: each renamed section's current name and the proposed one. A section not listed keeps its name. */
-export const MENU_NAMES: readonly { readonly key: string; readonly current: string; readonly proposed: string }[] = Object.freeze([
-  { key: 'clients', current: 'Engaged clients', proposed: 'Client files' },
-  { key: 'next-actions', current: 'Next actions', proposed: 'Claims needing an owner' },
-  { key: 'introducer-rewards', current: 'Reward model', proposed: 'Introducer fees' },
-]);
+export const NAME_SWITCHES: NameSwitches = Object.freeze({ portalSteps: false });
 
 /** The switches this request reads. */
 export function nameSwitches(): NameSwitches {
   return navContext.getStore()?.names ?? NAME_SWITCHES;
-}
-
-/** A section's label under the menu switch. */
-export function sectionLabel(s: { readonly key: string; readonly label: string }, switches: NameSwitches = nameSwitches()): string {
-  if (!switches.menu) return s.label;
-  return MENU_NAMES.find((n) => n.key === s.key)?.proposed ?? s.label;
 }
 
 /* ------------------------------------------------------------------ *
@@ -113,49 +100,58 @@ export type Section = {
   readonly key: string;
   readonly href: string;
   readonly label: string;
-  /** The logins this section is a PRIMARY tab for. Anywhere else it may open, it sits under More. */
-  readonly primary: readonly AppRole[];
   /** THE SECTION'S OWN GATE — the function its route's store calls first. Throws when the login may not open it. */
   readonly gate: (actor: Actor) => void;
-  /** Addresses under this section that mark its tab as current. */
+  /** Addresses under this section that mark its tab as current: a filter of it, or an old address it absorbed. */
   readonly under?: readonly string[];
 };
 
 /**
- * EVERY BACK-OFFICE SECTION, in the order a login's tabs are drawn. The ORDER of primary tabs per login follows the
- * phase brief: Sales — Home, Leads, Organisations, Properties, Claims, Pipeline, Tasks, Introducers; Accounting — Home,
- * Finance (its invoices, fees and VAT), Claims, Tasks; Surveying — Home, Survey jobs (the review queue), Tasks; Admin —
- * Home, Users, Admin settings, Document types, Automation, Email templates, Compliance, Audit log; Read only — Home,
- * Pipeline, Claims, Leads, Dashboard.
+ * EVERY BACK-OFFICE SECTION a menu can name. PHASE 135: a section is listed once. Which login sees it, and where, is
+ * `MENUS` below — not this table — and a section on no menu still opens by its address for every login its gate admits.
  */
 export const SECTIONS: readonly Section[] = Object.freeze([
-  { key: 'home', href: '/staff', label: 'Home', primary: ['ADMIN', 'SALES', 'ACCOUNTING', 'SURVEYING', 'READ_ONLY'], gate: assertBackOffice },
-  { key: 'users', href: '/staff/users', label: 'Users', primary: ['ADMIN'], gate: usersGate },
-  { key: 'admin-settings', href: '/staff/admin-settings', label: 'Admin settings', primary: ['ADMIN'], gate: assertConfigurationRead },
-  { key: 'document-types', href: '/staff/document-types', label: 'Document types', primary: ['ADMIN'], gate: documentTypesGate },
-  { key: 'automation', href: '/staff/automation', label: 'Automation', primary: ['ADMIN'], gate: automationGate },
-  { key: 'templates', href: '/staff/templates', label: 'Email templates', primary: ['ADMIN'], gate: templatesGate },
-  { key: 'compliance', href: '/staff/compliance', label: 'Compliance', primary: ['ADMIN'], gate: assertComplianceRead },
-  { key: 'audit', href: '/staff/audit', label: 'Audit log', primary: ['ADMIN'], gate: auditLogGate },
-  { key: 'survey', href: '/staff/survey', label: 'Survey jobs', primary: ['SURVEYING'], gate: assertSurveySection },
-  { key: 'finance', href: '/staff/finance', label: 'Finance', primary: ['ACCOUNTING'], gate: assertFinanceSection },
-  { key: 'pipeline', href: '/staff/pipeline', label: 'Pipeline', primary: ['READ_ONLY'], gate: pipelineBoardGate },
-  { key: 'leads', href: '/staff/leads', label: 'Leads', primary: ['SALES', 'READ_ONLY'], gate: assertLeadSection },
-  { key: 'organisations', href: '/staff/organisations', label: 'Organisations', primary: ['SALES'], gate: assertOrganisationSection },
-  { key: 'properties', href: '/staff/properties', label: 'Properties', primary: ['SALES'], gate: assertPropertySection },
-  { key: 'claims', href: '/staff/claims', label: 'Claims', primary: ['SALES', 'ACCOUNTING', 'READ_ONLY'], gate: claimListGate },
-  { key: 'pipeline-sales', href: '/staff/pipeline', label: 'Pipeline', primary: ['SALES'], gate: pipelineBoardGate },
-  { key: 'dashboard', href: '/staff/dashboard', label: 'Dashboard', primary: ['READ_ONLY'], gate: assertDashboard },
-  { key: 'tasks', href: '/staff/tasks', label: 'Tasks', primary: ['SALES', 'ACCOUNTING', 'SURVEYING'], gate: assertBackOffice },
-  { key: 'introducers', href: '/staff/introducers', label: 'Introducers', primary: ['SALES'], gate: assertIntroducerSection },
-  { key: 'assessments', href: '/staff/assessments', label: 'Assessments', primary: [], gate: (a) => assertSection(a, 'assessment.read') },
-  { key: 'clients', href: '/staff/clients', label: 'Engaged clients', primary: [], gate: assertClientsSection },
-  { key: 'documents', href: '/staff/documents', label: 'Documents', primary: [], gate: documentCentreGate },
-  { key: 'calendar', href: '/staff/calendar', label: 'Calendar', primary: [], gate: (a) => assertSection(a, 'booking.read') },
-  { key: 'next-actions', href: '/staff/next-actions', label: 'Next actions', primary: [], gate: nextActionsGate },
-  { key: 'introducer-rewards', href: '/staff/introducer-rewards', label: 'Reward model', primary: [], gate: rewardModelGate },
-  { key: 'search', href: '/staff/search', label: 'Search', primary: [], gate: searchGate },
+  { key: 'home', href: '/staff', label: 'Home', gate: assertBackOffice },
+  { key: 'leads', href: '/staff/leads', label: 'Leads', gate: assertLeadSection, under: ['/staff/assessments'] },
+  { key: 'clients', href: '/staff/clients', label: 'Clients', gate: assertOrganisationSection, under: ['/staff/organisations'] },
+  { key: 'pipeline', href: '/staff/pipeline', label: 'Pipeline', gate: pipelineBoardGate },
+  { key: 'claims', href: '/staff/claims', label: 'Claims', gate: claimListGate },
+  { key: 'tasks', href: '/staff/tasks', label: 'Tasks', gate: assertBackOffice, under: ['/staff/next-actions'] },
+  { key: 'finance', href: '/staff/finance', label: 'Finance', gate: assertFinanceSection },
+  { key: 'survey', href: '/staff/survey', label: 'Survey jobs', gate: assertSurveySection },
+  { key: 'introducers', href: '/staff/introducers', label: 'Introducers', gate: assertIntroducerSection },
+  { key: 'introducer-rewards', href: '/staff/introducer-rewards', label: 'Introducer fees', gate: rewardModelGate },
+  { key: 'calendar', href: '/staff/calendar', label: 'Calendar', gate: (a) => assertSection(a, 'booking.read') },
+  { key: 'settings', href: '/staff/admin', label: 'Settings', gate: adminSettingsGate,
+    under: SETTINGS_TILES.map((t) => t.href) },
 ]);
+
+/**
+ * PHASE 135 — EACH LOGIN'S MENU, BY NAME. Lakhbir, 18 September 2026: the tabs repeated each other, and some logins had a
+ * dozen entries under More. A login's menu now lists the sections it does its daily job in — being allowed to open a
+ * section is not a reason to list it. The verdict for every section, and the reason for each, is the table "The menus"
+ * in 09-app/CAPREBATE-DEVELOPER-SPEC.md, section 2. `test/phase135.test.ts` asserts every menu exactly.
+ *
+ * THE MENU NEVER GRANTS OR REMOVES A PERMISSION. A listed section is still drawn only where its gate admits the login,
+ * and a section on no menu answers its address exactly as before.
+ */
+export const MENUS: Readonly<Partial<Record<AppRole, { readonly tabs: readonly string[]; readonly more: readonly string[] }>>> = Object.freeze({
+  SALES: { tabs: ['home', 'leads', 'clients', 'pipeline', 'tasks', 'introducers'], more: ['calendar'] },
+  // Claims where the brief put Clients: Accounting may not read the client record, and no permission changes here.
+  ACCOUNTING: { tabs: ['home', 'claims', 'finance', 'tasks'], more: ['introducer-rewards'] },
+  SURVEYING: { tabs: ['home', 'survey', 'tasks'], more: [] },
+  READ_ONLY: { tabs: ['home', 'leads', 'clients', 'pipeline'], more: [] },
+  ADMIN: { tabs: ['home', 'leads', 'clients', 'pipeline', 'tasks', 'finance', 'settings'], more: ['calendar', 'introducers', 'survey'] },
+});
+
+/** More holds at most this many entries, or it is not drawn. Checked when the module loads, so a fifth cannot ship. */
+export const MORE_LIMIT = 4;
+for (const [role, m] of Object.entries(MENUS)) {
+  if (m.more.length > MORE_LIMIT) throw new Error(`${role}'s More menu lists ${m.more.length} entries; the limit is ${MORE_LIMIT}`);
+  for (const key of [...m.tabs, ...m.more]) {
+    if (!SECTIONS.some((s) => s.key === key)) throw new Error(`${role}'s menu names ${key}, which is not a section`);
+  }
+}
 
 /** Whether a gate lets this login in. The gate throws `NotAuthorised`; anything else it throws is a defect and escapes. */
 export function opens(actor: Actor, gate: (actor: Actor) => void): boolean {
@@ -167,22 +163,14 @@ export function opens(actor: Actor, gate: (actor: Actor) => void): boolean {
 
 export type Tabs = { readonly primary: readonly Section[]; readonly more: readonly Section[] };
 
-/**
- * A LOGIN'S TABS. Primary first, in table order; then every other section it may open, alphabetically, under More —
- * each address once (the pipeline is a primary tab for two logins through two rows). Search is in the header, not a tab.
- */
-export function tabsFor(actor: Actor, switches: NameSwitches = nameSwitches()): Tabs {
-  const open = SECTIONS.filter((s) => opens(actor, s.gate)).map((s) => ({ ...s, label: sectionLabel(s, switches) }));
-  const primary = open.filter((s) => s.primary.includes(actor.role));
-  const hrefs = new Set(primary.map((s) => s.href));
-  const more: Section[] = [];
-  for (const s of open) {
-    if (hrefs.has(s.href) || s.key === 'search') continue;
-    hrefs.add(s.href);
-    more.push(s);
-  }
-  more.sort((a, b) => a.label.localeCompare(b.label));
-  return { primary, more };
+/** A LOGIN'S TABS: its menu, in the menu's order, each section only where its gate admits the login. */
+export function tabsFor(actor: Actor): Tabs {
+  const m = MENUS[actor.role];
+  if (m === undefined) return { primary: [], more: [] };
+  const pick = (keys: readonly string[]): Section[] => keys
+    .map((k) => SECTIONS.find((s) => s.key === k))
+    .filter((s): s is Section => s !== undefined && opens(actor, s.gate));
+  return { primary: pick(m.tabs), more: pick(m.more) };
 }
 
 /** Every address a login's menu links to — what the Phase 133a test opens. */
@@ -194,11 +182,44 @@ export function menuHrefs(actor: Actor): string[] {
   return [...new Set(out)];
 }
 
+/* ------------------------------------------------------------------ *
+ * FILTERS — ONE TAB, TWO VIEWS (PHASE 135)
+ * ------------------------------------------------------------------ */
+
+/**
+ * A ROW OF FILTERS AT THE TOP OF A LIST. Leads and filled assessments are one tab; so are tasks and the claims with no next
+ * step. Each view keeps its own address and its own gate, and a filter is drawn only where its gate admits the login —
+ * so no login is shown a link it would be refused.
+ */
+export type Filter = { readonly href: string; readonly label: string; readonly gate: (actor: Actor) => void };
+
+export function filterBar(actor: Actor, filters: readonly Filter[], current: string): Safe {
+  const shown = filters.filter((f) => opens(actor, f.gate));
+  if (shown.length < 2) return raw('');
+  return h`<nav class="viewbar" aria-label="Show">${shown.map((f) => f.href === current
+    ? h`<a href="${f.href}" aria-current="page">${f.label}</a>`
+    : h`<a href="${f.href}">${f.label}</a>`)}</nav>`;
+}
+
 function isCurrent(s: Section, path: string | null): boolean {
   if (path === null) return false;
   if (s.href === '/staff') return path === '/staff';
-  return path === s.href || path.startsWith(`${s.href}/`);
+  return [s.href, ...(s.under ?? [])].some((x) => path === x || path.startsWith(`${x}/`));
 }
+
+/** Leads: every lead, or the filled assessments — a filled assessment is a lead that came through the website. */
+export const LEAD_FILTERS: readonly Filter[] = Object.freeze([
+  { href: '/staff/leads', label: 'All leads', gate: assertLeadSection },
+  { href: '/staff/assessments', label: 'Filled assessments', gate: (a: Actor) => assertSection(a, 'assessment.read') },
+]);
+
+/** Tasks: mine, every open one, and the claims with no next step (the list that was "Next actions"). */
+export const TASK_FILTERS: readonly Filter[] = Object.freeze([
+  { href: '/staff/tasks', label: 'My tasks', gate: assertBackOffice },
+  { href: '/staff/tasks?view=all', label: 'Every open task',
+    gate: (a: Actor) => { if (!mayCreateTask(a)) throw new NotAuthorised('staff_task.create', 'staff_task'); } },
+  { href: '/staff/next-actions', label: 'Claims with no next step', gate: nextActionsGate },
+]);
 
 /* ------------------------------------------------------------------ *
  * THE SHELL
@@ -230,7 +251,7 @@ function signOut(): Safe {
 function userMenu(name: string, actor: Actor, settingsHref: string): Safe {
   return h`<details class="usermenu"><summary><span class="avatar" aria-hidden="true">${name.slice(0, 1).toUpperCase()}</span><span class="uname">${name}</span></summary>
     <div class="menu-pop"><p class="who">${name}<br><span class="help">${ROLE_WORDS[actor.role]}</span></p>
-    <a href="${settingsHref}">Settings</a>${signOut()}</div></details>`;
+    <a href="${settingsHref}">Your account</a>${signOut()}</div></details>`;
 }
 
 /** The back office's header and tabs, for a staff login. */
@@ -238,28 +259,34 @@ export function staffShell(actor: Actor): Shell {
   const ctx = navContext.getStore();
   const path = ctx?.path ?? null;
   const tabs = tabsFor(actor);
-  let taskLink: Safe = raw('');
-  if (ctx !== undefined) {
+  // PHASE 135: the open-task count sits on the Tasks tab. The header's "N open tasks" link opened the same page.
+  let taskCount: Safe = raw('');
+  if (ctx !== undefined && tabs.primary.some((s) => s.key === 'tasks')) {
     try {
       const w = myWork(ctx.db, actor, ctx.now());
       const open = w.tasks.length;
-      taskLink = h`<a class="taskcount" href="/staff/tasks"><span class="n">${open}</span> open ${open === 1 ? 'task' : 'tasks'}${
-        w.overdue > 0 ? h`, <span class="overdue-n">${w.overdue} overdue</span>` : raw('')}</a>`;
+      if (open > 0) {
+        taskCount = h` <span class="tabcount${w.overdue > 0 ? ' late' : ''}">${open}<span class="vh"> open${
+          w.overdue > 0 ? h`, ${w.overdue} overdue` : raw('')}</span></span>`;
+      }
     } catch (e) {
       if (!((e as { code?: string }).code === 'E_NOT_AUTHORISED' || (e instanceof Error && e.name === 'NotAuthorised'))) throw e;
     }
   }
   const search = opens(actor, searchGate)
     ? h`<form class="gsearch" method="get" action="/staff/search" role="search"><label class="vh" for="gsearch-q">Search</label>
-        <input id="gsearch-q" name="q" type="search" placeholder="Search organisations, claims, invoices…" minlength="2">
+        <input id="gsearch-q" name="q" type="search" placeholder="Search clients, claims, invoices…" minlength="2">
         <button type="submit">Search</button></form>`
     : raw('');
-  const tab = (s: Section): Safe => isCurrent(s, path)
-    ? h`<a href="${s.href}" aria-current="page">${s.label}</a>`
-    : h`<a href="${s.href}">${s.label}</a>`;
+  const tab = (s: Section): Safe => {
+    const extra = s.key === 'tasks' ? taskCount : raw('');
+    return isCurrent(s, path)
+      ? h`<a href="${s.href}" aria-current="page">${s.label}${extra}</a>`
+      : h`<a href="${s.href}">${s.label}${extra}</a>`;
+  };
   const moreCurrent = tabs.more.some((s) => isCurrent(s, path));
   const help = h`<a class="helplink" href="/staff/help?screen=${helpScreenFor(path ?? '/staff')}">Help</a>`;
-  const html = h`<div class="util">${search}${taskLink}${help}${userMenu(displayName(ctx?.db, actor), actor, '/staff/settings')}</div>
+  const html = h`<div class="util">${search}${help}${userMenu(displayName(ctx?.db, actor), actor, '/staff/settings')}</div>
     <nav class="appnav" aria-label="Sections">
       <ul class="tabs-main">${tabs.primary.map((s) => h`<li>${tab(s)}</li>`)}${tabs.more.length === 0 ? raw('') : h`<li class="more"><details${moreCurrent ? raw(' class="has-current"') : raw('')}><summary>More</summary>
         <ul>${tabs.more.map((s) => h`<li>${tab(s)}</li>`)}</ul></details></li>`}</ul></nav>`;
@@ -295,7 +322,7 @@ export const HELP_SCREENS: readonly (readonly [prefix: string, code: string])[] 
   ['/staff/pipeline', 'B21'], ['/staff/tasks', 'B22'], ['/staff/next-actions', 'B24'], ['/staff/automation', 'B25'],
   ['/staff/templates', 'B26'], ['/staff/document-types', 'B29'], ['/staff/documents', 'B44'], ['/staff/introducer-rewards', 'B32'],
   ['/staff/introducers', 'B30'], ['/staff/compliance', 'B33'], ['/staff/dashboard', 'B40'], ['/staff/search', 'B41'],
-  ['/staff/admin-settings', 'B43'], ['/staff/audit', 'B45'],
+  ['/staff/admin-settings', 'B43'], ['/staff/audit', 'B45'], ['/staff/admin', 'B46'],
 ]);
 
 export function helpScreenFor(path: string): string {

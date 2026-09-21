@@ -67,18 +67,33 @@ The screens were rearranged on 17 September 2026 so that each login has an easy 
 may see or do changed** — only where things sit.
 
 - **The header**, on every page: **Cap Rebate** (back to your home page), a **Search** box (the same search as `B41`),
-  a count of **your open tasks** with how many are overdue (it opens Tasks), **Help**, and your **name**, which opens a
-  small menu with **Settings** and **Sign out**.
-- **The tabs under it are your role's.** They show only the screens your role can open, so every tab works. The main
-  ones are in the row, and the rest are under **More**:
+  **Help**, and your **name**, which opens a small menu with **Your account** and **Sign out**.
+- **The tabs under it are your role's, and only the screens you work in every day (Phase 135, 21 September 2026).**
+  Lakhbir asked for tabs that do not repeat each other and a **More** menu that is not a dumping ground. So each role
+  has a short row of tabs; **More** holds at most four entries, and is not shown at all when there is nothing for it.
+  **The Tasks tab shows how many open tasks you have** — the number turns red when one is overdue. **No permission
+  changed**: a screen that is not on your tabs still opens by its address, or from a link on the page that leads to it.
 
-  | Role | Tabs in the row |
+  | Role | Tabs | More |
+  |---|---|---|
+  | Sales | Home, Leads, Clients, Pipeline, Tasks, Introducers | Calendar |
+  | Accounting | Home, Claims, Finance, Tasks | Introducer fees |
+  | Surveying | Home, Survey jobs, Tasks | — |
+  | Read only | Home, Leads, Clients, Pipeline | — |
+  | Admin | Home, Leads, Clients, Pipeline, Tasks, Finance, Settings | Calendar, Introducers, Survey jobs |
+
+  **Where the screens that left the tabs are now:**
+
+  | You used to open | Now |
   |---|---|
-  | Admin | Home, Users, Admin settings, Document types, Automation, Email templates, Compliance, Audit log |
-  | Sales | Home, Leads, Organisations, Properties, Claims, Pipeline, Tasks, Introducers |
-  | Accounting | Home, Finance (its invoices, fees and VAT), Claims, Tasks |
-  | Surveying | Home, Survey jobs (the review queue), Tasks |
-  | Read only | Home, Pipeline, Leads, Claims, Dashboard |
+  | Engaged clients, Organisations | **Clients** — one list of every company, name first |
+  | Assessments | **Leads**, then **Filled assessments** at the top of the list |
+  | Next actions | **Tasks**, then **Claims with no next step** at the top of the list |
+  | Dashboard | **Home**, then **See the dashboard** |
+  | Properties, Claims (Sales, Admin, Read only) | a company's page on **Clients**, the **Pipeline**, or **Search** |
+  | Documents | a company's page on **Clients** (Documents tab) |
+  | Users, Admin settings, Document types, Automation, Email templates, Compliance, Audit log, Reward model | Admin: **Settings**, one tile each. Admin settings is now the **Switches** tile, and Reward model is **Introducer fees** |
+  | Settings in the menu under your name | **Your account** — the same page |
 
 - **Home** (`B0`) opens with cards that answer "what do I do next" for your role, then **My tasks**.
 - **A record page** — a claim, an organisation, a property or a lead — has four parts: a **highlights** strip of the
@@ -143,10 +158,10 @@ may see or do changed** — only where things sit.
   label is joined to its field (Phase 133e).
   After a save, **Saved.** shows at the top of the page.
 - **"The data this page was built from"** is shown to Admin only.
-- **Two sets of new names are built and switched off**, waiting on Lakhbir: menu names (Engaged clients → **Client
-  files**, Next actions → **Claims needing an owner**, Reward model → **Introducer fees**) and the client's six step
-  names (**1 Your estimate**, **2 Engagement letter signed**, **3 We research your property**, **4 Expert sign-off**,
-  **5 Claim filed**, **6 Aftercare**). Until one is switched on, this guide uses the names you see.
+- **The client's six step names are built and switched off**, waiting on Lakhbir (**1 Your estimate**, **2 Engagement
+  letter signed**, **3 We research your property**, **4 Expert sign-off**, **5 Claim filed**, **6 Aftercare**). Until
+  they are switched on, this guide uses the names you see. *The menu names proposed beside them were settled by Phase
+  135: Reward model is now **Introducer fees**; Engaged clients and Next actions are no longer menu entries at all.*
 
 ## Contents
 
@@ -171,7 +186,7 @@ Screens are named by their heading. The web address follows on a small "Address:
 **The demo data must never be loaded into a live system.** Loading it creates one login per role, and all five share a published password (`change-this-seed-password`). For that reason, the command that loads it refuses to run unless someone sets `CAPREBATE_ALLOW_SEED=1` on purpose. Without it, the command stops with *"refusing to seed: set CAPREBATE_ALLOW_SEED=1 to confirm this is not production"*. The demo launcher stops too, with *"refusing to run: this launcher seeds invented data with a known password"*. The setting exists so that nobody can load invented data with a known password by forgetting a flag. On a live system nobody should ever set it.
 
 **Nothing leaves the building.**
-- **Email goes to the outbox and stays there.** A message queued from a template, a notice from an automation rule, or a letter from a compliance register is written to the outbox. Nothing sends it. You can read the outbox at the foot of your own Settings page, under "The outbox — what would have been sent". Every row reads **NOT SENT**, and the page says: "NOT SENT — outbound email is stubbed in this build. The message was written to the outbox. Calendar invitations go the same way, for the same reason."
+- **Email goes to the outbox and stays there.** A message queued from a template, a notice from an automation rule, or a letter from a compliance register is written to the outbox. Nothing sends it. You can read the outbox at the foot of **Your account** (the menu under your name), under "The outbox — what would have been sent". Every row reads **NOT SENT**, and the page says: "NOT SENT — outbound email is stubbed in this build. The message was written to the outbox. Calendar invitations go the same way, for the same reason."
 - **Nothing calls an outside register.** No connector to Companies House, the Land Registry or any other source exists. Running the research on a client records every source as not permitted yet, with the reason. The free lookups wait on a published privacy notice, and the paid ones wait on a signed engagement letter.
 - **No money moves and nothing is signed.** The finance screen says "RECORDED, NOT COLLECTED". The letter's signing records a state, and no signature provider is contacted.
 
@@ -373,7 +388,7 @@ Address: /staff/templates. The heading is **Email templates**.
 
 The message reads "A template may not carry [what it found]. Bank details are never sent from a template, and the invoice email waits on the invoice-fraud procedure." A merge field outside the six gets: "“{{first_name}}” is not a merge field. The merge fields are …".
 
-**Where queued messages are seen.** A template is used from a claim, under "Email a contact from a template" → **Queue to the outbox**. It then appears at the foot of **Settings**, under "The outbox — what would have been sent" (When · Kind · Subject · Sent), marked **NOT SENT**. An organisation marked do not contact is refused: "This organisation is marked do not contact. Nothing was queued — the outbox refuses it."
+**Where queued messages are seen.** A template is used from a claim, under "Email a contact from a template" → **Queue to the outbox**. It then appears at the foot of **Your account**, under "The outbox — what would have been sent" (When · Kind · Subject · Sent), marked **NOT SENT**. An organisation marked do not contact is refused: "This organisation is marked do not contact. Nothing was queued — the outbox refuses it."
 
 **Nothing is sent**, by anything, in this build.
 
@@ -681,7 +696,7 @@ under **Notices to the firm**, as queued or not queued, with the reason.
 
 **11. Emailing a contact.** On a claim, **Email a contact from a template**: choose **Template** and
 **To**, then press **Queue to the outbox**. Nothing leaves the building: the message waits in the outbox,
-marked NOT SENT, and you can read it at the foot of **Settings** under **The outbox — what would have
+marked NOT SENT, and you can read it at the foot of **Your account** under **The outbox — what would have
 been sent**.
 
 **12. Where the claim came from, and its team.** At the top of a claim, **Came from** and **Source**
@@ -867,7 +882,7 @@ progressing**. Press it and the page reads "No — we tell … nothing about you
 the portal is switched off for now: "You cannot turn this on from your portal yet. If you would like
 us to keep the firm informed, tell us and we will ask you properly."
 
-**Your account.** **Change your password, name or username** opens **Settings**, with **Save the name**,
+**Your account.** **Change your password, name or username** opens **Your account**, with **Save the name**,
 **Change the username** and a password form.
 
 ---
@@ -905,6 +920,12 @@ us to keep the firm informed, tell us and we will ask you properly."
 
 ### Training — `B0` the landing page
 
+**Phase 135, 21 September 2026 — shorter tabs.** The header no longer has an "open tasks" link: the count is on the
+**Tasks** tab. The dashboard is no longer a tab: **See the dashboard** is a button on Home. Each role's tabs are in the
+table at the top of this guide. *Observed on a freshly started demo, 21 September 2026:* Sales' tabs read Home, Leads,
+Clients, Pipeline, Tasks 9, Introducers, with **More** holding Calendar, and the 9 is red (3 overdue). Accounting's read
+Home, Claims, Finance, Tasks 2, with **More** holding Introducer fees. Read only has four tabs and no **More**.
+
 **What it is for**
 The first page every staff member sees — **Home**. It answers "what do I do next" for your role: a row of cards
 first, then your own work in one place — your tasks, overdue first, the claims you own and who each is waiting on,
@@ -927,12 +948,12 @@ Address: `/staff`
 **How to do the common job**
 1. Sign in. You arrive on **Home**, which says "Signed in as …" and what the page holds for your role.
 2. Read the cards. A heading that is a link opens the screen behind it; a stage on **My pipeline by stage** opens its column on the board.
-3. Read **My tasks**. The line above the table counts what is overdue, and overdue tasks come first. The header's task count says the same.
+3. Read **My tasks**. The line above the table counts what is overdue, and overdue tasks come first. The number on the **Tasks** tab says the same, and turns red when one is overdue.
 4. Press **Start** on a task you are beginning, and **Complete** when it is done.
 5. Read **My claims, their next actions, and who is waiting**. Where it says "waiting on us", the next move is yours.
 6. Check **Documents you asked a client for that have not arrived** and **Other questions you are waiting on a client to answer**, if they appear.
 7. Sales and Admin: read **Claims nobody owns that break the one-next-action rule**, and give each claim an owner, then its next action.
-8. Use **All my tasks** for the full list.
+8. Use **All my tasks** for the full list, and **See the dashboard** for the management figures (`B40`).
 
 **What it will refuse, and why**
 - A client signing in and opening this address is refused (**You cannot open this page**): the back office is for staff.
@@ -941,7 +962,7 @@ Address: `/staff`
 - Admin's **Recent audit events** card reads the audit log, so each visit to Admin's home is itself recorded as a reading of the log, exactly as opening **Audit log** is.
 
 **Try it on the demo**
-Sign in as Sales. *Observed on 17 September 2026* (the overdue count moves with the date): the header reads "8 open tasks, 2 overdue". **Today and overdue** reads 8 open, 2 overdue, 0 due
+Sign in as Sales. *Observed on 17 September 2026* (the overdue count moves with the date; since Phase 135 it is the number on the **Tasks** tab): the header read "8 open tasks, 2 overdue". **Today and overdue** reads 8 open, 2 overdue, 0 due
 today. **My tasks** reads "2 overdue."; the first row is "Call to talk through the range they were shown" on
 CR-2026-0001, "16 days overdue (1 Sep 2026)". "Chase the documents the signed letter asks for" reads "no due date —
 so it is not overdue, and it is not on time either". Further down, **Claims nobody owns that break the
@@ -958,6 +979,20 @@ when it arrives", "waiting with Accounting — nobody has taken it".
 ---
 
 ### Training — `B5`/`B6` engaged clients and the one client page
+
+**Phase 135, 21 September 2026 — one Clients list.** "Engaged clients" and "Organisations" were two lists of the same
+companies, each opening the same page. They are now one list, **Clients** (`/staff/clients`), a tab for Sales, Admin and
+Read only. Each row leads with the **company's name** (its legal name and sector in small text under it), then **Waiting
+on**, **Status**, **Owner** and **Claims**. **Waiting on us first** puts the companies waiting on us at the top; **A to Z**
+sorts by name. The old address `/staff/organisations` brings you here.
+- **Read only** can now open the list. It shows company, status, owner and claims; **Waiting on** is not shown, because it
+  is built from the research and the questions, which Read only may not read.
+- The columns the old list carried — engagement letter, research, questions with the client, still missing, and whether
+  the accountant and surveyor packs are ready — are on the company's page: the highlights, and the **Waiting on** card on
+  the right.
+- *Observed on a freshly started demo, 21 September 2026, as Sales:* "6 companies. 5 waiting on us, 0 waiting on the
+  client." The first row is **Aldergate Care Group Limited**, waiting on Us — "the engagement letter is drafted and has not
+  been sent". As Read only: "6 companies.", four columns, and Fenmoor Nursing Homes Limited's status reads Do not contact.
 
 **Phase 134, 18 September 2026 — one page per company.** A company used to have two pages: this one and the
 organisation page. It now has one, at `/staff/clients/{company}`, and the old organisation address opens it.
@@ -977,7 +1012,7 @@ organisation page. It now has one, at `/staff/clients/{company}`, and the old or
 Contacts, Properties, Documents and Details — and not the research or the notes. Accounting and Surveying are refused.
 
 **Try it on the demo** (as sales@example.invalid, on a freshly started demo, 18 September 2026)
-- Open **Organisations** and choose **Elverton Private Hospital Limited**. *Observed:* the address becomes
+- Open **Clients** (before Phase 135, **Organisations**) and choose **Elverton Private Hospital Limited**. *Observed:* the address becomes
   `/staff/clients/…`; the highlights read Claims 3, Status Active, Owner nobody yet, Waiting on Us, Engagement letter
   signed; three tiles read **main site** (Survey, CR-2026-0005), **main site** (Enquiry, CR-2026-0007) and **outpatient
   annexe** (Enquiry, CR-2026-0008); the tabs read Still missing 16 and Research 12.
@@ -1002,13 +1037,14 @@ what the client told us, which research sources have run, what is still missing 
 put to the client, and internal notes.
 
 **Who can open it**
-Admin and Sales, and nobody else: Accounting, Surveying, Read only and the client are refused the list, every business
-page and every action on it (paid research can carry the purchase price). Both roles read and write internal notes.
+Admin and Sales work here. Since Phase 135 Read only may open the list (without **Waiting on**) and, since Phase 134, a
+company's page without the research or the notes. Accounting, Surveying and the client are refused the list, every business
+page and every action on it (paid research can carry the purchase price). Admin and Sales read and write internal notes.
 
 Address: `/staff/clients` · one business: `/staff/clients/{business}`
 
 **Where things are**
-The list is one table, sorted by **Who it is waiting on** first. The business page opens with a highlights strip —
+The list is one table, sorted by **Waiting on us first** (Phase 135). The business page opens with a highlights strip —
 **Sector**, **Stage**, **Waiting on**, **Engagement letter**, **Research** and **Still missing** — then five tabs, one
 per numbered panel: **Questions and answers**, **Sources** (with how many are outstanding), **Still missing** (with the
 count), **Tasks** (the questions asked) and **Notes**. On the right: **Quick actions** — **Run the research**, **Ask for a
@@ -1016,7 +1052,7 @@ missing fact** and **Add a note**, each shown only when that control is on the p
 sentence.
 
 **How to do the common job**
-1. From **Engaged clients** (under **More** for Sales), open the business.
+1. From **Clients**, open the company.
 2. Read **Waiting on** on the right. If it is **Us**, choose **Ask for a missing fact** (or the **Still missing** tab).
 3. On a row, either press **Send to their portal** (with a due date if there is one), or open **Answer it here**, type
    what the client told you — or tick **They said they do not know** — and press **Record it**.
@@ -1032,7 +1068,7 @@ sentence.
   their facts stay on **Still missing** as questions. Nothing on the page can open either gate.
 
 **Try it on the demo** (as sales@example.invalid, on a freshly started demo)
-- **Engaged clients** reads "6 in the pipeline. 5 waiting on us, 0 waiting on the client, 1 on neither."
+- **Engaged clients** read "6 in the pipeline. 5 waiting on us, 0 waiting on the client, 1 on neither." (17 September 2026; since Phase 135 the one **Clients** list reads "6 companies. 5 waiting on us, 0 waiting on the client.")
 - Open **Corvale Supported Living Limited**. *Observed:* the highlights read Sector "supported living", Waiting on "Us",
   Engagement letter "signed", Research "not run", Still missing "16 facts"; the tabs read Sources 12, Still missing 16,
   Tasks 0, Notes 0; the quick actions are Run the research, Ask for a missing fact and Add a note.
@@ -1163,14 +1199,14 @@ quote it.*
 
 ### Training — `B11`/`B12` users and roles
 
-Address: /staff/users (Settings → "Users and roles")
+Address: /staff/users (the **Settings** tab → **Users**; or **Your account** → "Users and roles")
 
 **What it is for.** Giving staff and clients a login, changing what a person's role lets them do, and switching an account off. In the page's own words, those three things "are the whole of what administration is".
 
 **Who can open it.** Admin only. Everyone else gets "not authorised".
 
 **How to do the common job**
-1. Open **Settings**, then **Users and roles**.
+1. Open the **Settings** tab, then the **Users** tile.
 2. Under "Create a user", fill in "Username — an email address" and "Display name", and choose a "Role". For somebody who should only look, choose **READ_ONLY** (Phase 132e): they can read the work and change nothing, and they never see a value, money, a register or the audit log.
 3. Leave "Business — for a CLIENT account only" empty unless the account is a client's.
 4. Type an "Initial password — at least 12 characters" and press **Create**. Hand the password over yourself; nothing is emailed.
@@ -1202,6 +1238,9 @@ Address: /staff/users (Settings → "Users and roles")
 
 ### Training — `B13`/`B14` organisations
 
+**Phase 135, 21 September 2026.** There is no separate Organisations list any more: it is the one **Clients** list
+(`B5`), and `/staff/organisations` takes you there. Everything below about a company's record still holds, on its page.
+
 **Phase 134, 18 September 2026.** The **Organisations** list is unchanged, but each name now opens the **one client
 page** (`B5`/`B6`) — the organisation's own page and the business page were two pages for one company, and are now one.
 Everything below is on that page: the details under **Details**, contacts under **Contacts**, properties under
@@ -1226,7 +1265,7 @@ Admin and Sales. Accounting and Surveying are refused the section.
 Address: `/staff/organisations` · one organisation: `/staff/organisations/{organisation}`
 
 **How to do the common job**
-1. Open **Organisations** and choose a trading name.
+1. Open **Clients** and choose a company.
 2. To change details, use **Change these**, then **Save**. A derived fact shows "from the Companies House register record" and has no box.
 3. To add a person, fill in **Add a contact** — **Name**, **Job title**, **Contact type**, **Decision maker**, **Email**, **Telephone**, **Notes — internal, never shown to the client** — and press **Add contact**.
 4. To add a building, use **Add a property**: **Name of the site or building** and **Postcode**, then **Add property**.
@@ -1390,6 +1429,12 @@ no claim team. Signed in as the surveyor, the team shows only **Owner** and **Su
 
 ### Training — `B19`/`B20` leads
 
+**Phase 135, 21 September 2026 — filled assessments are leads.** At the top of the list, **All leads** and **Filled
+assessments** switch between the two views; the **Leads** tab stays marked on both. The filled-assessments list is the one
+that was **Assessments** (`/staff/assessments`, same address, same rule: Admin and Sales, and a surveyor, who is not
+shown **All leads**). *Observed on a freshly started demo, 21 September 2026, as Sales:* **Filled assessments** reads
+"6 submitted, newest first."
+
 **Where things are on the page (Phase 133a, 17 September 2026).** The leads list has **Filter, sort and save** beside it,
 the underlined headings (Date, Next action, Range shown) sort it, and **Record a lead by hand** at the top jumps to the
 form. A lead's page opens with its highlights — status, owner, source, next action, lead date, and the claim once
@@ -1494,6 +1539,10 @@ Assessment Engagement Sales User".
 
 ### Training — `B22` tasks
 
+**Phase 135, 21 September 2026.** The **Tasks** tab shows your open-task count (red when one is overdue), and the page
+opens with three views: **My tasks**, **Every open task** and **Claims with no next step** (the list that was **Next
+actions**, `B24`). Each is shown only to a role that may open it.
+
 **What it is for**
 The jobs colleagues do, each with an owner (or a team it waits with), a due date or none, an
 activity type, a priority, an optional repeat, and a status. A question put to a client is not a
@@ -1507,7 +1556,7 @@ complete their own.
 Address: `/staff/tasks` · one task: `/staff/tasks/{task}`
 
 **How to do the common job**
-1. Open **Tasks**. **My tasks** lists yours, overdue first. **Every open task** and **Claims breaking the one-next-action rule** link onward.
+1. Open **Tasks**. **My tasks** lists yours, overdue first. **Every open task** and **Claims with no next step**, at the top, switch the view.
 2. To add a task, use **Add a task** on the organisation, property, claim or lead page. Fill in **Task**, **Activity**, and an **Owner** or **Or the team it waits with**, plus **Due** if there is one. Press **Add the task**.
 3. Press **Start**, then **Complete**. A repeating task creates the next one when completed.
 4. To drop a task, open it and fill in **Cancel it — a task is never deleted, so say why**, then press **Cancel the task**.
@@ -1552,7 +1601,7 @@ Address: `/staff/claims/{claim}` (the panels)
 1. Under **Next action and tasks**, open **Set the next action**.
 2. Fill in **What happens next**, choose **Owner** and **Due**, and press **Set as the next action**.
 3. To email, go to **Email a contact from a template**: choose **Template** and **To**, and press **Queue to the outbox**.
-4. Read the result in **Settings** under **The outbox — what would have been sent**. It says NOT SENT.
+4. Read the result in **Your account** under **The outbox — what would have been sent**. It says NOT SENT.
 5. To keep a private remark, type it in **Add a note** and press **Save note**.
 
 **What it will refuse, and why**
@@ -1566,7 +1615,7 @@ Address: `/staff/claims/{claim}` (the panels)
 As Sales, on CR-2026-0002, set the next action "Send the engagement letter reminder" with no owner →
 **Next action not set**. Choose Sales User and 2026-09-18 → the header reads "Next action Send the
 engagement letter reminder due 2026-09-18". On CR-2026-0004, queue "What happens next on your claim"
-to Decision Maker Contact. **Settings** then lists "Dunmarrow Medical Practice Limited — the next step on your claim NOT SENT" (since Phase 134 a subject leads with the company).
+to Decision Maker Contact. **Your account** then lists "Dunmarrow Medical Practice Limited — the next step on your claim NOT SENT" (since Phase 134 a subject leads with the company).
 Add a contact to Fenmoor Nursing Homes Limited and try to email them from CR-2026-0006 → **Not queued**.
 
 **Check yourself**
@@ -1578,6 +1627,11 @@ Add a contact to Fenmoor Nursing Homes Limited and try to email them from CR-202
 
 ### Training — `B24` the one-next-action list
 
+**Phase 135, 21 September 2026.** This list is now a view of **Tasks**: open **Tasks**, then **Claims with no next step**.
+It is headed **Tasks**, and its two parts are **No next step, or no owner or date** and **Next step overdue**. *Observed on a
+freshly started demo, 21 September 2026, as Sales:* "9 open claims checked"; the first row is Brackenfell Dental
+Partnership LLP, "This claim has no next action."
+
 **What it is for**
 A single check on the whole pipeline. It lists every open claim breaking the rule "exactly one next
 action, with an owner and a due date", then the claims keeping the rule whose next action is
@@ -1586,13 +1640,13 @@ overdue. Each claim shows who it is waiting on.
 **Who can open it**
 Admin and Sales. Accounting and Surveying are refused.
 
-Address: `/staff/next-actions` (also linked from **Tasks** as **Claims breaking the one-next-action rule**)
+Address: `/staff/next-actions` (**Tasks** → **Claims with no next step**)
 
 **How to do the common job**
 1. Open the list from **Tasks**.
-2. Under **Breaking the rule**, read **The next action** column. It says what is wrong, for example "This claim has no next action…" or "The next action … has no due date."
+2. Under **No next step, or no owner or date**, read **The next action** column. It says what is wrong, for example "This claim has no next action…" or "The next action … has no due date."
 3. Open the claim and fix it under **Set the next action**.
-4. Under **Keeping it, with the next action overdue**, chase the owner or move the date.
+4. Under **Next step overdue**, chase the owner or move the date.
 
 **What it will refuse, and why**
 - The list itself changes nothing; you fix claims on the claim page.
@@ -1659,7 +1713,7 @@ Address: /staff/templates
 2. Use only the six merge fields, spelt exactly: {{contact_name}} {{organisation}} {{property_address}} {{claim_reference}} {{next_action}} {{due_date}}.
 3. Set "Active" and press **Save the template**.
 4. To use a template, open the claim and find "Email a contact from a template". Choose "Template" and "To", then press **Queue to the outbox**.
-5. Check it at the foot of **Settings**, under "The outbox — what would have been sent". It is marked **NOT SENT**.
+5. Check it at the foot of **Your account**, under "The outbox — what would have been sent". It is marked **NOT SENT**.
 
 **What it will refuse, and why**
 - Anything about invoices, payment or bank details, including the *shape* of a sort code or account number. For example: "A template may not carry a bank transfer. Bank details are never sent from a template, and the invoice email waits on the invoice-fraud procedure." Emails carrying bank details are how invoice fraud works.
@@ -1877,6 +1931,10 @@ Address: /staff/introducers/… (the duplicate firm's own page)
 
 ### Training — `B32` the reward model and fees
 
+**Phase 135, 21 September 2026 — now called Introducer fees.** Admin opens it from the **Settings** tab (the **Introducer
+fees** tile); Accounting from **More** → **Introducer fees**; Sales from the link on **Introducers**. The page and its rules
+are unchanged.
+
 Address: /staff/introducer-rewards
 
 **What it is for.** Records whether, and how, firms that refer clients are rewarded. The choice is Off, model A (no cash, firm-level reciprocity), model B (a fixed fee per successful claim, disclosed to the client) or, since Phase 132e, model C (10% of our fee as actually invoiced, to a registered accountancy firm, reversed if the fee is reduced under clause 13). It also lists any model B fees owed to firms, and model C's ledger of accruals and reversals.
@@ -1955,6 +2013,9 @@ Address: /staff/compliance/retention. This is a list, not a deleter. *Observed:*
 
 ### Training — `B40` the dashboard
 
+**Phase 135, 21 September 2026.** The dashboard is no longer a tab: press **See the dashboard** on **Home**. Phase 136
+moves its figures onto Home's tiles.
+
 **What it is for**
 A management view read fresh on every visit. It has tiles for the pipeline, estimate to outcome,
 the money, the work waiting, compliance clocks, and survey jobs. Nothing on it is stored, and a
@@ -1970,7 +2031,7 @@ All four staff roles, but each tile is drawn only for a role that may read every
 Address: `/staff/dashboard`
 
 **How to do the common job**
-1. Open **Dashboard**. The first line gives the UK date the figures are "as at".
+1. On **Home**, press **See the dashboard**. The first line gives the UK date the figures are "as at".
 2. Read each tile's figures, then the line under them saying what is counted apart ("counted apart, and never added in as nought").
 3. Read the sentence at the foot of each tile saying how it is worked out.
 4. Open the page behind a tile (Pipeline, Finance, Tasks) to act.
@@ -2205,6 +2266,43 @@ address: "not authorised".
 - *The log says a contact joined a claim's team. Which contact?* — The log gives ids, never a name; the claim page says who is on the team.
 - *Can Admin correct a wrong line?* — No. Nothing in the log is changed or deleted, and a change made outside the application shows as a broken chain.
 - *How do you know nobody has tampered with it?* — The page recomputes the chain on every visit and says whether it is intact.
+
+---
+
+### Training — `B46` Settings (Admin)
+
+*Written by Phase 135 on 21 September 2026. The exercise was run on a freshly started demo that day.*
+
+**What it is for**
+One page for everything Admin sets up, so the setup screens are not seven tabs of their own. Each tile opens one screen
+and says in a line what it is for.
+
+**Who can open it**
+Admin. It is Admin's last tab, **Settings**. Nobody else is given the page. The screens behind the tiles still open by
+their own addresses for whoever could open them before (Sales and Read only may still read the switches, the document
+types, the automation rules and the email templates).
+
+Address: `/staff/admin`
+
+**How to do the common job**
+1. Press the **Settings** tab.
+2. Press a tile: **Users**, **Switches** (the screen headed Admin settings, `B43`), **Document types**, **Automation**,
+   **Email templates**, **Compliance**, **Audit log** or **Introducer fees**.
+3. The **Settings** tab stays marked while you work on that screen. Press it to come back to the tiles.
+
+**What it will refuse, and why**
+- Anyone but Admin opening `/staff/admin`: **You cannot open this page**. The tiles are Admin's setup work.
+- A tile is drawn only where Admin may open the screen behind it, so no tile leads to a refusal.
+
+**Try it on the demo**
+Sign in as Admin and press **Settings**. *Observed on 21 September 2026:* eight tiles, in this order: Users ("Add a
+colleague, change their role, or stop their sign-in."), Switches, Document types, Automation, Email templates,
+Compliance, Audit log and Introducer fees ("What we pay firms that send us clients."). Press **Automation**: the page
+opens and the **Settings** tab is still marked.
+
+**Check yourself**
+- *Where is Admin settings now?* — **Settings** → **Switches**. The screen is the same.
+- *Your own password and the outbox?* — **Your account**, in the menu under your name. That was called Settings before.
 
 ---
 
