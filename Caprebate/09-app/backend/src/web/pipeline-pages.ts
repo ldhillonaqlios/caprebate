@@ -37,6 +37,7 @@ import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } 
 import { timelineIfPermitted } from './timeline.ts';
 import { referralBlock } from './introducers-pages.ts';
 import * as E from './enquiries.ts';
+import { leadSections, type CardDeps } from './lead-cards.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -110,7 +111,7 @@ export async function handlePipeline(
   }
   const enquiryAct = /^\/staff\/enquiries\/([A-Za-z0-9-]+)\/(lead|close)$/.exec(path);
   if (enquiryAct && method === 'POST') {
-    await form(req);
+    const fromCards = (await form(req)).get('back') === 'leads';
     const id = enquiryAct[1] ?? '';
     if (enquiryAct[2] === 'lead') {
       const r = E.enquiryToLead(deps, actor, id);
@@ -120,17 +121,29 @@ export async function handlePipeline(
     }
     const r = E.closeEnquiry(deps, actor, id);
     if (!r.ok) return d.problem(res, actor, 'Not closed', r.why, '/staff/enquiries');
-    redirect(res, '/staff/enquiries?done=closed');
+    // PHASE 137: closed from its card in the leads' New section, it returns there.
+    redirect(res, fromCards ? '/staff/leads?done=closed#leads-new' : '/staff/enquiries?done=closed');
     return 'handled';
   }
 
   /* ------------------------------------------------------------ leads */
   if (path === '/staff/leads' && method === 'GET') {
     // CRM 9 of 10: filtered, sorted and saved through src/web/lists.ts, each row still asked of `lead.read`.
-    const asked = requestParams(d.app, actor, 'LEADS', url.searchParams);
+    // PHASE 137: cards in four sections by default; `layout=list` is the table, for anyone who prefers it. Neither
+    // `layout` nor `done` is a filter, so neither is handed to the list to be reported as one it did not apply.
+    const asList = url.searchParams.get('layout') === 'list';
+    const q = new URLSearchParams(url.searchParams);
+    q.delete('layout');
+    q.delete('done');
+    const asked = requestParams(d.app, actor, 'LEADS', q);
     const v = LI.leadsList(db, actor, asked.params, asked.ignored);
-    html(res, 200, leadsPage(d, actor, v.rows, organisationsFor(db, actor), done,
-      listControls('LEADS', v, LI.viewsFor(db, actor, 'LEADS'), mayShareViews(actor), asked.view), sortHeading('LEADS', v)));
+    const keep: Record<string, string> = asList ? { layout: 'list' } : {};
+    const controls = listControls('LEADS', v, LI.viewsFor(db, actor, 'LEADS'), mayShareViews(actor), asked.view,
+      asList ? { keep } : { noSort: true });
+    const filtered = v.applied.length > 0 || asked.view !== null;
+    html(res, 200, asList
+      ? leadsPage(d, actor, v.rows, organisationsFor(db, actor), done, controls, sortHeading('LEADS', v, keep), filtered)
+      : leadCardsPage(d, actor, v.rows, organisationsFor(db, actor), done, controls, filtered));
     return 'handled';
   }
   if (path === '/staff/leads' && method === 'POST') {
@@ -166,6 +179,16 @@ export async function handlePipeline(
     return 'handled';
   }
 
+  // PHASE 137: "Log a call" from a lead's card.
+  const leadCall = /^\/staff\/leads\/([A-Za-z0-9-]+)\/call$/.exec(path);
+  if (leadCall && method === 'POST') {
+    const id = leadCall[1] ?? '';
+    const r = L.logLeadCall(deps, actor, id, posted(await form(req), ['spoke', 'note']));
+    if (!r.ok) return d.problem(res, actor, 'Call not saved', r.why, '/staff/leads', r.field);
+    redirect(res, `/staff/leads?done=called#lead-${id}`);
+    return 'handled';
+  }
+
   const lead = /^\/staff\/leads\/([A-Za-z0-9-]+)$/.exec(path);
   if (lead && method === 'GET') {
     const v = L.leadView(db, actor, lead[1] ?? '');
@@ -180,9 +203,12 @@ export async function handlePipeline(
   }
   if (lead && method === 'POST') {
     const id = lead[1] ?? '';
-    const r = L.updateLead(deps, actor, id, posted(await form(req), LEAD_FIELDS));
-    if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, `/staff/leads/${id}`);
-    redirect(res, `/staff/leads/${id}?done=saved`);
+    const f = await form(req);
+    // PHASE 137: "take it" and "Mark as lost" post from a card and return to the cards; `back` is one fixed word, never a path.
+    const fromCards = f.get('back') === 'leads';
+    const r = L.updateLead(deps, actor, id, posted(f, LEAD_FIELDS));
+    if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, fromCards ? '/staff/leads' : `/staff/leads/${id}`);
+    redirect(res, fromCards ? `/staff/leads?done=saved#lead-${id}` : `/staff/leads/${id}?done=saved`);
     return 'handled';
   }
 
@@ -327,33 +353,22 @@ export function enquiryBlock(
  * LEADS
  * ------------------------------------------------------------------ */
 
-function leadsPage(
-  d: PipelinePageDeps, actor: Actor, rows: readonly L.LeadRow[], orgs: readonly { id: string; name: string }[],
-  msg: string | undefined, controls: Safe = raw(''), sortBy: SortBy = (_k, l) => h`${l}`,
-): string {
-  return page({
-    title: 'Leads', nav: d.nav(actor), wide: true,
-    body: h`<div class="pagehead"><div><p class="eyebrow">Leads</p><h1>Leads</h1></div><p><a class="btn" href="#record-lead">Record a lead by hand</a></p></div>${filterBar(actor, LEAD_FILTERS, '/staff/leads')}${done(msg)}
+/** PHASE 137: the top of both leads layouts — the heading, the two lists, the saved message and the Cards / List view switch. */
+function leadsHead(d: PipelinePageDeps, actor: Actor, msg: string | undefined, asList: boolean, controls: Safe, filtered: boolean): Safe {
+  const deps = { db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId };
+  return h`<div class="pagehead"><div><p class="eyebrow">Leads</p><h1>Leads</h1></div><p><a class="btn" href="#record-lead">Record a lead by hand</a></p></div>${filterBar(actor, LEAD_FILTERS, '/staff/leads')}${done(msg)}
+      <div class="leadtools"><nav class="viewbar" aria-label="Layout">${asList
+        ? h`<a href="/staff/leads">Cards</a><a href="/staff/leads?layout=list" aria-current="page">List view</a>`
+        : h`<a href="/staff/leads" aria-current="page">Cards</a><a href="/staff/leads?layout=list">List view</a>`}</nav>
+      <details class="filterbox"${filtered ? raw(' open') : raw('')}><summary>Filter${filtered ? ' — on' : ''}</summary>${controls}</details></div>
       ${can(actor, 'lead.write', { type: 'lead', id: '__website_enquiries__', business_id: null })
-        ? h`<p class="help"><a href="/staff/enquiries">Website enquiries</a>: ${E.openEnquiryCount({ db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId }, actor)} waiting to be answered.</p>`
-        : raw('')}
-      <div class="help">${rows.length} shown, newest first. A lead becomes a claim when every enquiry check is a yes.${why(h`A lead is not a second intake: a filled assessment, a call asked for and a referral are already
-      leads, and this is where they are worked. <strong>There is no lead score</strong> —
-      a score built on the estimate would rank the unknowns — and a lead converts only when every enquiry check is a
-      recorded yes. Converting opens the claim.`)}</div>
-      <div class="listlayout">${controls}<div class="listmain">
-      ${rows.length === 0 ? h`<p class="empty">No leads yet. <a href="#record-lead">Record your first lead</a></p>` : h`<div class="tablewrap"><table>
-        <thead><tr><th>Organisation</th><th>Source</th><th>What made it a lead</th><th>${sortBy('newest', 'Date')}</th><th>Owner</th>
-        <th>Status</th><th>${sortBy('next_action', 'Next action')}</th><th>Claim</th><th>${sortBy('value', 'Range shown')}</th></tr></thead>
-        <tbody>${rows.map((r) => h`<tr><td><a href="/staff/leads/${r.id}">${r.organisation}</a>${
-          r.organisation_recorded ? raw('') : h`<br><span class="help">New enquiry</span>`}</td>
-          <td>${r.source}</td><td>${r.origin}</td><td class="when">${ukDatesIn(r.lead_date)}</td><td>${orNot(r.owner, '—')}</td>
-          <td>${r.status.label}</td><td>${orNot(r.next_action, '—')}</td>
-          <td>${r.claim === null ? h`<span class="help">—</span>` : h`<a href="/staff/claims/${r.claim.id}">Open the claim</a> ${claimRef(r.claim.claim_ref)}`}</td>
-          <td>${r.shown_range === undefined ? h`<span class="help">${r.range_note ?? 'not shown to this role'}</span>` : h`${r.shown_range}`}</td></tr>`)}</tbody></table></div>`}
-      </div></div>
+        ? h`<p class="help"><a href="/staff/enquiries">Website enquiries</a>: ${E.openEnquiryCount(deps, actor)} waiting to be answered.${
+          asList ? '' : ' They are at the top of New.'}</p>`
+        : raw('')}`;
+}
 
-      <div class="pblock" id="record-lead"><div class="pnum">Record a lead by hand</div>
+function recordLeadForm(d: PipelinePageDeps, orgs: readonly { id: string; name: string }[]): Safe {
+  return h`<div class="pblock" id="record-lead"><div class="pnum">Record a lead by hand</div>
         <div class="help">A referral, an event, an outbound call, or another property for an existing client.${why('A lead carries no person: an organisation’s contacts are recorded on the organisation.')}</div>
         <form method="post" action="/staff/leads">
           <label>An organisation already recorded <select name="business_id">${people(orgs, null, 'None. Name it below.')}</select></label>
@@ -364,7 +379,55 @@ function leadsPage(
           <label>Next action <input name="next_action" maxlength="300"></label>
           <p class="help">It becomes a task on the lead, yours to own.</p>
           <label>Due <input name="next_action_due" type="date"></label></details>
-          <button type="submit">Record the lead</button></form></div>`,
+          <button type="submit">Record the lead</button></form></div>`;
+}
+
+/**
+ * PHASE 137 — THE LEADS AS CARDS, IN FOUR SECTIONS (src/web/lead-cards.ts draws them). New is first and never folded;
+ * Closed is folded. Each card opens in place. The filters are behind one button, and the table is "List view".
+ */
+function leadCardsPage(
+  d: PipelinePageDeps, actor: Actor, rows: readonly LI.LeadListRow[], orgs: readonly { id: string; name: string }[],
+  msg: string | undefined, controls: Safe, filtered: boolean,
+): string {
+  const db = d.app.db;
+  const deps: C.CrmDeps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
+  const mayHandleEnquiries = can(actor, 'lead.write', { type: 'lead', id: '__website_enquiries__', business_id: null });
+  const cardDeps: CardDeps = {
+    actor, nowIso: nowIso(), mayAddTask: T.mayCreateTask(actor), mayHandleEnquiries,
+    view: (id) => { try { return L.leadView(db, actor, id); } catch { return undefined; } },
+  };
+  // A filter is a question about leads, so the enquiries — not leads yet — are drawn only on the unfiltered page.
+  const enquiries = mayHandleEnquiries && !filtered ? E.openEnquiries(deps, actor) : [];
+  return page({
+    title: 'Leads', nav: d.nav(actor), wide: true,
+    body: h`${leadsHead(d, actor, msg, false, controls, filtered)}
+      <div class="leadsecs">${leadSections(rows, enquiries, cardDeps)}</div>
+      ${recordLeadForm(d, orgs)}`,
+  });
+}
+
+function leadsPage(
+  d: PipelinePageDeps, actor: Actor, rows: readonly L.LeadRow[], orgs: readonly { id: string; name: string }[],
+  msg: string | undefined, controls: Safe = raw(''), sortBy: SortBy = (_k, l) => h`${l}`, filtered = false,
+): string {
+  return page({
+    title: 'Leads', nav: d.nav(actor), wide: true,
+    body: h`${leadsHead(d, actor, msg, true, controls, filtered)}
+      <div class="help">${rows.length} shown. A lead becomes a client when every answer before it is a yes.${why(h`A lead is not a second intake: a filled assessment, a call asked for and a referral are already
+      leads, and this is where they are worked. <strong>There is no lead score</strong> —
+      a score built on the estimate would rank the unknowns. Converting opens the claim.`)}</div>
+      ${rows.length === 0 ? h`<p class="empty">No leads yet. <a href="#record-lead">Record your first lead</a></p>` : h`<div class="tablewrap"><table class="stack">
+        <thead><tr><th>Company</th><th>Source</th><th>What made it a lead</th><th>${sortBy('newest', 'Date')}</th><th>Owner</th>
+        <th>Status</th><th>${sortBy('next_action', 'Next action')}</th><th>Claim</th><th>${sortBy('value', 'Range shown')}</th></tr></thead>
+        <tbody>${rows.map((r) => h`<tr><td><a href="/staff/leads/${r.id}">${r.organisation}</a>${
+          r.organisation_recorded ? raw('') : h`<br><span class="help">No company record yet</span>`}</td>
+          <td data-label="Source">${r.source}</td><td data-label="What made it a lead">${r.origin}</td><td class="when" data-label="Date">${ukDatesIn(r.lead_date)}</td><td data-label="Owner">${orNot(r.owner, '—')}</td>
+          <td data-label="Status">${r.status.label}</td><td data-label="Next action">${orNot(r.next_action, '—')}</td>
+          <td data-label="Claim">${r.claim === null ? h`<span class="help">—</span>` : h`<a href="/staff/claims/${r.claim.id}">Open the claim</a> ${claimRef(r.claim.claim_ref)}`}</td>
+          <td data-label="Range shown">${r.shown_range === undefined ? h`<span class="help">${r.range_note ?? 'not shown to this role'}</span>` : h`${r.shown_range}`}</td></tr>`)}</tbody></table></div>`}
+
+      ${recordLeadForm(d, orgs)}`,
   });
 }
 

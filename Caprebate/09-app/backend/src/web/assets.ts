@@ -431,6 +431,57 @@ table.compact{margin:0}table.compact td{padding:.3rem .35rem}
 .hometile.late{border-top-color:var(--stop)}
 .hometile.late .tileline.when{color:var(--stop);font-weight:700}
 
+/* PHASE 137: the leads as cards in four sections. A card is a <details>: its summary is the card, and it opens in place. */
+.leadtools{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.5rem 1rem;margin:0 0 .75rem}
+.leadtools .viewbar{margin:0}
+.filterbox{flex:1 1 100%}
+.filterbox>summary,.lc-act>summary{display:inline-block;cursor:pointer;list-style:none;padding:.4rem .9rem;border:1px solid var(--ink);border-radius:var(--radius);background:var(--white);color:var(--ink);font-weight:700}
+.filterbox>summary::-webkit-details-marker,.lc-act>summary::-webkit-details-marker,.leadcard>details>summary::-webkit-details-marker,.lc-fold>summary::-webkit-details-marker{display:none}
+.filterbox[open]>summary,.lc-act[open]>summary{background:var(--mint)}
+.filterbox>.filters{margin-top:.6rem;max-width:40rem}
+.leadsec{margin:0 0 1.5rem}
+.leadsec h2{font-size:24px;margin:0 0 .6rem;display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem}
+.lc-count{display:inline-block;min-width:2.2rem;padding:0 .5rem;border-radius:999px;background:var(--mint);color:var(--ink);font-size:18px;text-align:center}
+.lc-latecount{font-size:16px;color:var(--stop);font-weight:700}
+.lc-fold>summary{cursor:pointer;list-style:none;color:var(--ink);padding:0}
+.lc-fold>summary h2::after{content:"Show";font-size:16px;font-weight:400;color:var(--ink);text-decoration:underline}
+.lc-fold[open]>summary h2::after{content:"Hide"}
+.leadcards{list-style:none;margin:0;padding:0;display:grid;gap:.6rem}
+.leadcard{background:var(--white);border:1px solid var(--line);border-left:6px solid var(--mint);border-radius:var(--radius);box-shadow:var(--shadow);min-width:0;overflow-wrap:anywhere}
+.leadcard.late{border-left-color:var(--stop)}
+.leadcard>details>summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:.15rem 1.1rem;padding:.8rem 1rem;cursor:pointer;list-style:none;border-radius:var(--radius);color:var(--ink);font-weight:400;text-decoration:none}
+.leadcard>details[open]>summary{margin-bottom:0}
+.lc-fold>summary,.filterbox>summary,.lc-act>summary{text-decoration:none}
+.leadcard>details>summary:hover{background:var(--mist)}
+.lc-name{flex:1 1 100%;font-size:20px;font-weight:700;color:var(--ink)}
+.lc-line{font-size:16px;color:var(--body)}
+.lc-line.when{color:var(--stop);font-weight:700}
+.lc-line.nobody{font-weight:700;color:var(--ink)}
+.lc-open{margin-left:auto;font-size:16px;color:var(--ink);text-decoration:underline}
+.lc-hide{display:none}
+.leadcard>details[open]>summary .lc-show{display:none}
+.leadcard>details[open]>summary .lc-hide{display:inline}
+.lc-body{padding:0 1rem 1rem;border-top:1px solid var(--line)}
+.lc-parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1rem;margin-top:.8rem}
+.lc-part h3{font-size:18px;margin:0 0 .4rem}
+.lc-part p{margin:.25rem 0}
+dl.lc-facts{display:block;margin:0}
+.lc-facts dt{font-weight:600;margin-top:.35rem}
+.lc-facts dd{margin:0}
+.lc-checks{list-style:none;padding:0;margin:0}
+.lc-checks li{margin:.25rem 0}
+.lc-mark{display:inline-block;min-width:5.5rem;padding:0 .4rem;border-radius:.3rem;font-weight:700;font-size:14px;text-align:center}
+.lc-checks .yes .lc-mark{background:var(--okbg);color:var(--ok)}
+.lc-checks .no .lc-mark{background:var(--warnbg);color:var(--warn)}
+.lc-actions{margin-top:1rem;display:flex;flex-wrap:wrap;gap:.5rem;align-items:flex-start}
+.lc-actions h3{flex:1 1 100%;margin:0}
+.lc-act[open]{flex:1 1 100%}
+.lc-act form{margin-top:.5rem;max-width:32rem}
+.lc-act fieldset{border:1px solid var(--line);border-radius:var(--radius);padding:.4rem .8rem;margin:0 0 .5rem}
+.lc-off{display:inline-flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.lc-take{padding:0 1rem 1rem}
+.lc-full{margin:.9rem 0 0}
+
 /* ---------------- SMALLER SCREENS ---------------- */
 @media (max-width:960px){
   .record{grid-template-columns:minmax(0,1fr)}
@@ -469,6 +520,14 @@ table.compact{margin:0}table.compact td{padding:.3rem .35rem}
   .board>li,.board>li.empty-col{flex-basis:auto;width:100%}
   .cards{grid-template-columns:minmax(0,1fr)}
   .hometiles{grid-template-columns:minmax(0,1fr)}
+  /* PHASE 137: Home's Pipeline by stage row — two stage tiles to a row on a phone; every other row stays one. */
+  .hometiles.pairtiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+  .pairtiles .hometile .tilelink{padding:.6rem .65rem}
+  .pairtiles .hometile .tilename{font-size:16px}
+  .lc-open{flex:1 1 100%;margin-left:0}
+  .lc-take{padding:0 .75rem .75rem}
+  .leadcard>details>summary{padding:.7rem .75rem}
+  .lc-body{padding:0 .75rem .9rem}
   .typefacts{grid-template-columns:minmax(0,1fr)}
   .form-row{display:block}
   form label>input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),form label>select,form label>textarea{max-width:none}

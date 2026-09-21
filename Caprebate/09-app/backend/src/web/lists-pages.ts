@@ -119,8 +119,12 @@ function notAppliedWords(list: LI.ListKey, keys: readonly string[]): string {
 
 export function listControls(
   list: LI.ListKey, v: LI.ListView<unknown>, views: readonly LI.SavedView[], mayShare: boolean, current: string | null,
+  /** PHASE 137: `keep` rides along on every filter (the leads' List view); `noSort` leaves out the order, where a page has its own. */
+  opts: { readonly keep?: Readonly<Record<string, string>>; readonly noSort?: boolean } = {},
 ): Safe {
   const base = BASE[list];
+  const keep = Object.entries(opts.keep ?? {});
+  const clear = keep.length === 0 ? base : `${base}?${new URLSearchParams(keep).toString()}`;
   const now = new URLSearchParams(v.params);
   const field = (f: LI.FilterDef): Safe => {
     const value = now.get(f.key) ?? '';
@@ -135,11 +139,14 @@ export function listControls(
   };
   return h`<div class="pblock filters"><div class="pnum">Filter, sort and save</div>
     <form method="get" action="${base}">
+      ${keep.map(([k, x]) => h`<input type="hidden" name="${k}" value="${x}">`)}
       ${v.filters.map(field)}
-      <label>Order <select name="sort">${v.sorts.map((s) => h`<option value="${s.value}"${s.value === v.sort.key ? raw(' selected') : raw('')}>${s.label}</option>`)}</select></label>
-      <button type="submit">Show</button> <a href="${base}">Clear</a>
+      ${opts.noSort === true ? raw('') : h`<label>Order
+        <select name="sort">
+        ${v.sorts.map((s) => h`<option value="${s.value}"${s.value === v.sort.key ? raw(' selected') : raw('')}>${s.label}</option>`)}</select></label>`}
+      <button type="submit">Show</button> <a href="${clear}">Clear</a>
     </form>
-    <p class="help">${v.rows.length} of the ${v.read} you may read, ${v.sort.label.toLowerCase()}.${v.applied.length === 0 ? '' : ' Filtered by '}${
+    <p class="help">${v.rows.length} of the ${v.read} you may read${opts.noSort === true ? '' : `, ${v.sort.label.toLowerCase()}`}.${v.applied.length === 0 ? '' : ' Filtered by '}${
       v.applied.map((a, i) => h`${i === 0 ? '' : '; '}${a.label.toLowerCase()} — ${a.value}`)}${v.applied.length === 0 ? '' : '.'}
       ${current === null ? raw('') : h` <strong>A saved view.</strong>`}</p>
     ${v.said.length === 0 ? raw('') : h`<ul>${v.said.map((x) => h`<li class="help">${x}</li>`)}</ul>`}
@@ -165,11 +172,12 @@ export function listControls(
  */
 export type SortBy = (key: string, label: string) => Safe;
 
-export function sortHeading(list: LI.ListKey, v: LI.ListView<unknown>): SortBy {
+export function sortHeading(list: LI.ListKey, v: LI.ListView<unknown>, keep: Readonly<Record<string, string>> = {}): SortBy {
   return (key, label) => {
     if (!v.sorts.some((s) => s.value === key)) return h`${label}`;
     const q = new URLSearchParams(v.params);
     q.set('sort', key);
+    for (const [k, x] of Object.entries(keep)) q.set(k, x);
     return v.sort.key === key
       ? h`<a href="${BASE[list]}?${q.toString()}" aria-current="true">${label}</a> <span class="sorted">— sorted</span>`
       : h`<a href="${BASE[list]}?${q.toString()}">${label}</a>`;

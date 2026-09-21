@@ -391,7 +391,13 @@ export function claimsList(db: Db, actor: Actor, p: ListParams, ignored: readonl
  * ================================================================== */
 
 /** PHASE 136: `lead_at` is the lead's own instant, so Home can say how long a new lead has waited. */
-export type LeadListRow = LeadRow & { readonly priority: string; readonly lead_at: string };
+export type LeadListRow = LeadRow & {
+  readonly priority: string; readonly lead_at: string;
+  /** PHASE 137: the sector, in words, for the lead's card — the organisation's own, or the one recorded on the lead. */
+  readonly sector: string;
+  /** PHASE 137: the lead's owner by id, so the cards can offer "take it" only where there is nobody. */
+  readonly owner_id: string | null;
+};
 
 type LeadListDb = {
   id: string; business_id: string | null; assessment_id: string | null; origin: string; source: string; introducer_id: string | null;
@@ -487,6 +493,8 @@ export function leadsList(db: Db, actor: Actor, p: ListParams, ignored: readonly
         next_action: r.next_action, next_action_due: r.next_action_due,
         claim: r.claim_id === null || r.claim_ref === null ? null : { id: r.claim_id, claim_ref: r.claim_ref },
         priority: vocabLabel(db, 'PRIORITY', r.priority, 'not set'),
+        sector: words(SECTORS, r.business_sector ?? r.prospect_sector, 'Sector not recorded'),
+        owner_id: r.owner_id,
         // THE CRM FOLLOW-ON: a lead with no assessment has no range, which is not a range this role may not read.
         ...(range === undefined
           ? { range_note: r.business_id === null || r.assessment_id === null ? NO_RANGE_NO_ASSESSMENT : RANGE_NOT_SHOWN }

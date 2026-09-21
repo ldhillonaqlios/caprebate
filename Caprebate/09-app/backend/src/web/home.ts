@@ -30,7 +30,7 @@ import { financeDashboard } from './invoices.ts';
 import { assertFinanceSection } from './finance.ts';
 import { assertSurveySection, surveyorJobs } from './surveyor.ts';
 import { auditLogView } from './audit-log.ts';
-import { localDate } from './localtime.ts';
+import { isLateNewLead, waitedWords, workingDaysSince } from './working-days.ts';
 import * as T from './tasks.ts';
 import * as S from './settings.ts';
 
@@ -64,33 +64,12 @@ function plural(n: number, one: string, many: string): string {
 }
 
 /* ================================================================== *
- * WORKING DAYS — a new lead turns red once it has waited more than one
+ * WORKING DAYS — a new lead turns red once it has waited more than one.
+ * PHASE 137: the rule moved to src/web/working-days.ts, which knows the
+ * England and Wales bank holidays, so Home and Leads read one function.
  * ================================================================== */
 
-/**
- * WHOLE WORKING DAYS FROM THE UK DATE A LEAD ARRIVED TO TODAY: every Monday to Friday after the day it came in, up to and
- * including today. A lead in on Friday has waited one working day on Monday, and two — so red — on Tuesday. Bank
- * holidays are counted as working days, so after one a lead turns red a day early rather than a day late.
- */
-export function workingDaysSince(fromIso: string, nowIso: string): number {
-  const from = localDate(fromIso);
-  const to = localDate(nowIso);
-  if (from >= to) return 0;
-  let n = 0;
-  const d = new Date(`${from}T12:00:00Z`);
-  for (let i = 0; i < 400; i++) {
-    d.setUTCDate(d.getUTCDate() + 1);
-    const day = d.toISOString().slice(0, 10);
-    if (day > to) break;
-    const w = d.getUTCDay();
-    if (w !== 0 && w !== 6) n++;
-  }
-  return n;
-}
-
-export function waitedWords(days: number): string {
-  return days === 0 ? 'Came in today' : `Waiting ${plural(days, 'working day', 'working days')}`;
-}
+export { workingDaysSince, waitedWords } from './working-days.ts';
 
 /* ================================================================== *
  * DRAWING
@@ -104,12 +83,14 @@ function tile(t: HomeTile): Safe {
 }
 
 /** A row: its heading, then its tiles — or one line saying it is empty. */
-export function homeRow(id: string, title: string, tiles: readonly HomeTile[], empty: string, more?: { href: string; total: number }): Safe {
+export function homeRow(
+  id: string, title: string, tiles: readonly HomeTile[], empty: string, more?: { href: string; total: number }, listClass = '',
+): Safe {
   const shown = more !== undefined && more.total > tiles.length
     ? [...tiles, { href: more.href, name: 'See all', lines: [`${more.total} in all`] }]
     : tiles;
   return h`<section class="homerow" aria-labelledby="row-${id}"><h2 id="row-${id}">${title}</h2>${
-    shown.length === 0 ? h`<p class="empty">${empty}</p>` : h`<ul class="tiles hometiles">${shown.map(tile)}</ul>`}</section>`;
+    shown.length === 0 ? h`<p class="empty">${empty}</p>` : h`<ul class="tiles hometiles${listClass === '' ? '' : ` ${listClass}`}">${shown.map(tile)}</ul>`}</section>`;
 }
 
 function capped(tiles: readonly HomeTile[], href: string): { tiles: readonly HomeTile[]; more?: { href: string; total: number } } {
@@ -129,7 +110,7 @@ function leadsRows(actor: Actor, app: App, nowIso: string): Safe[] {
   const fresh = rows.filter((l) => l.status.key === 'NEW');
   const freshTiles: HomeTile[] = fresh.map((l) => {
     const days = workingDaysSince(l.lead_at, nowIso);
-    return { href: `/staff/leads/${l.id}`, name: short(l.organisation), lines: [`From ${short(l.source)}`, waitedWords(days)], late: days > 1 };
+    return { href: `/staff/leads/${l.id}`, name: short(l.organisation), lines: [`From ${short(l.source)}`, waitedWords(days)], late: isLateNewLead(l.lead_at, nowIso) };
   });
   const lateCount = freshTiles.filter((t) => t.late === true).length;
   const countTile: HomeTile = {
@@ -213,7 +194,8 @@ function pipelineRow(actor: Actor, app: App, nowIso: string): Safe[] {
     href: `/staff/claims?stage=${encodeURIComponent(col.key)}`, name: col.label, lines: [plural(col.cards.length, 'claim', 'claims')],
   }));
   if (board.on_hold.length > 0) tiles.push({ href: '/staff/claims?status=ON_HOLD', name: 'On hold', lines: [plural(board.on_hold.length, 'claim', 'claims')] });
-  return [homeRow('pipeline', 'Pipeline by stage', [...tiles, ...reportsTile(actor)], 'No claims yet.')];
+  // PHASE 137: two stage tiles to a row on a phone (class "pairtiles"); the other rows stay one to a row.
+  return [homeRow('pipeline', 'Pipeline by stage', [...tiles, ...reportsTile(actor)], 'No claims yet.', undefined, 'pairtiles')];
 }
 
 const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({

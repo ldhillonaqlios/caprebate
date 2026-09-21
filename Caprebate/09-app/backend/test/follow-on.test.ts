@@ -883,7 +883,8 @@ describe('the defects the guide found by running every exercise on the demo', ()
       const db = h.made.app.db;
       const d = dunmarrow(db);
       const sales = await h.signIn('sales');
-      const leads = await sales.get('/staff/leads');
+      // Phase 137: the range is a column of the leads' List view; the cards carry no range, by the no-lead-score rule.
+      const leads = await sales.get('/staff/leads?layout=list');
       assert.ok(leads.body.includes('no range — no assessment was filled in for this lead'));
       assert.equal(leads.body.includes('not shown to this role'), false, 'a lead with no range was said to be hidden');
 

@@ -45,7 +45,7 @@ import {
   recordOpened, type CheckKey, type EnquiryReading,
 } from './pipeline.ts';
 import { fireAutomation } from './automation.ts';
-import { insertTask } from './tasks.ts';
+import { createTask, insertTask, setTaskStatus } from './tasks.ts';
 import { mayTake, vocabLabel } from './vocabularies.ts';
 import {
   PROSPECT_EVENTS, REFERRAL_SOURCES, introducerChoices, introducerExists, leadReferral, onLeadConverted, type LeadReferral,
@@ -536,6 +536,36 @@ export function updateLead(d: CrmDeps, actor: Actor, id: string, input: Fields):
   });
   if (changed.includes('owner_id') && after.owner_id !== null) {
     fireAutomation(d, actor, { trigger: 'OWNER_CHANGED', lead_id: r.id });
+  }
+  return { ok: true, id: r.id };
+}
+
+/**
+ * LOG A CALL ON A LEAD — PHASE 137, the leads page's "Log a call" button. A call is a task of the kind Call, owned by the
+ * person who made it and completed as it is written, so it is on the lead's timeline like every other piece of work. A
+ * call where somebody answered is what "contacted" means, so a NEW lead becomes CONTACTED with it — through updateLead,
+ * the same write and the same audit line as choosing it by hand. A call nobody answered leaves the status alone.
+ */
+export function logLeadCall(d: CrmDeps, actor: Actor, id: string, input: Fields): WriteResult {
+  const r = loadLead(d.db, id);
+  authorise(actor, 'lead.write', leadObj(r));
+  if (r.status === 'CONVERTED') {
+    return { ok: false, why: 'This lead is already a client. Log the call on their claim instead.' };
+  }
+  const spoke = input['spoke'];
+  if (spoke !== 'yes' && spoke !== 'no') return { ok: false, why: 'Say whether you spoke to them.', field: 'spoke' };
+  const note = textField(input['note'] ?? null, 2000, 'What was said');
+  if (!note.ok) return note;
+  const made = createTask(d, actor, {
+    lead_id: r.id, owner_id: actor.id, activity_type: 'CALL', description: note.value,
+    title: spoke === 'yes' ? 'Call — spoke to them' : 'Call — no answer',
+  });
+  if (!made.ok) return made;
+  const closed = setTaskStatus(d, actor, made.id, 'COMPLETED', null);
+  if (!closed.ok) return closed;
+  if (spoke === 'yes' && r.status === 'NEW') {
+    const moved = updateLead(d, actor, r.id, { status: 'CONTACTED' });
+    if (!moved.ok) return moved;
   }
   return { ok: true, id: r.id };
 }

@@ -110,8 +110,9 @@ may see or do changed** — only where things sit.
   off any of them; each section is in a tab or the list. After you save something, the page opens on the tab or
   section you saved in.
 - **The pipeline** (`B21`) is a board: one column per stage, a card per claim. On a phone the columns stack.
-- **Claims and Leads** (`B17`, `B19`, `B42`) show the **Filter, sort and save** panel beside the list, and a column
-  heading that is underlined sorts the list by it.
+- **Claims** (`B17`, `B42`) show the **Filter, sort and save** panel beside the list, and a column heading that is
+  underlined sorts the list by it. **Leads** (`B19`) are cards in four sections since Phase 137; the same panel is behind
+  its **Filter** button, and the table is **List view**.
 - **A screen your role may not open** now shows a page headed **You cannot open this page**, with your own tabs and a
   button back to your home page. Wherever this guide says a screen answers "not authorised", that is the page you see.
   A data address (one ending `.json` or `.csv`) still answers `{"error":"not authorised"}`.
@@ -560,12 +561,23 @@ late (Phase 136; see `B0`):
   next step**, lists the claims with no owner or no next step; give each an owner, then its next action.
 - **Today and overdue** — tasks, client questions and document requests due today or late.
 - **Pipeline by stage** — how many claims sit at each stage; a tile opens that stage's claims. **Reports** is last.
+  On a phone these tiles are two to a row (Phase 137).
 - Your whole list — **My tasks**, your claims and who each is waiting on, and what you are waiting on from clients — is
   on the **Tasks** tab, with **Start** and **Complete** on each task.
 
 **2. Work your leads.** Open **Leads** (Address: `/staff/leads`). A lead is anything that might become a
 claim: a filled assessment, a call asked for, or a referral. There is no lead score, and a lead
 never carries a person's name — people are recorded as contacts on the organisation.
+
+*The page is cards in four sections (Phase 137).* **New — not contacted yet** is always first and never folded: work it
+first, starting with the red cards. **In progress** is Contacted and Qualified. **Later** is Nurture. **Closed**
+(Converted and Lost) is folded — press **Show**. Each card shows the company, its sector, where it came from, how long it
+has waited, who owns it and the next step. Press a card to open its details underneath: how to reach them, what the
+assessment captured, the four answers needed before they can be a client, and the buttons **Log a call**, **Email**
+(coming soon), **Add next action**, **Make them a client** and **Mark as lost** (it asks why). A card nobody owns shows
+one button instead: **Nobody owns this — take it**. A website enquiry nobody has answered is a card in New too, with
+**Open as a lead** and **Close, nothing more needed**. **Filter** opens the filters and saved views; **List view** is
+the old table.
 
 *Recording a lead by hand.* At the foot of the list, under **Record a lead by hand**, either choose
 **An organisation already recorded** or type **Or the organisation's name**. Then choose **Where it came from
@@ -939,7 +951,8 @@ Address: `/staff`
 **The rows**
 - **New leads** — a number first (how many leads nobody has contacted yet), then one tile per lead: the company, where
   it came from, and how long it has waited. Oldest first. A lead turns **red** once it has waited more than one working
-  day (Monday to Friday; a bank holiday is counted as a working day, so it goes red a day early rather than late).
+  day. A working day is Monday to Friday, not counting England and Wales bank holidays (Phase 137). The **Leads** page
+  uses exactly the same rule, so a lead red on Home is red there too.
 - **Existing leads — next actions** — one tile per lead we are working on: the company, its next step and when it is due.
   Red when late, or when it has no next step. The last tile, **Claims with no next step**, opens that list in **Tasks**.
 - **Today and overdue** — everything due today or already late: tasks (a lead's or a claim's next step is a task), and
@@ -1435,6 +1448,38 @@ no claim team. Signed in as the surveyor, the team shows only **Owner** and **Su
 
 ### Training — `B19`/`B20` leads
 
+**Phase 137, 21 September 2026 — leads are cards, in four sections, so a new one cannot get lost.** The page is no
+longer one long table. It has four sections, each with its count:
+
+| Section | Holds | Shown |
+|---|---|---|
+| **New — not contacted yet** | status New, and every website enquiry nobody has answered | always first, never folded |
+| **In progress** | Contacted and Qualified | open |
+| **Later** | Nurture | open |
+| **Closed** | Converted and Lost | folded — press **Show** |
+
+Each lead is a card: the company, its sector, where it came from, how long it has waited, its owner and its next step.
+Cards are in waiting order, the longest-waiting first — never by value, and no card shows a range. A **New** card turns
+**red** once it has waited more than one working day (Monday to Friday, not counting England and Wales bank holidays —
+the same rule as Home's New leads row). An **In progress** or **Later** card is red when its next step is late or it has
+none. Press a card to open it underneath: **How to reach them**, **What the assessment captured**, **Before they can be a
+client** (the four answers), and **What next** — **Log a call**, **Email** (coming soon, Phase 141), **Add next action**,
+**Make them a client** (only once every answer is a yes and the lead is Qualified) and **Mark as lost**, which asks why.
+**Open the full page** leads to the lead's own page, which is unchanged. A card nobody owns shows one button, **Nobody
+owns this — take it**, which makes you its owner.
+
+**Log a call** asks **Did you speak to them?** and **What was said**. It saves a completed Call task on the lead, which
+shows on its timeline. If they answered and the lead was New, it becomes Contacted and moves to In progress. A call
+nobody answered leaves it where it is.
+
+**Filter** opens the filters and saved views (the same panel as before; the order is always longest-waiting first on
+the cards). **List view** is the table, for anyone who prefers it; its filters and sortable headings stay in List view.
+On a phone the table's rows become cards too.
+
+*Observed on a freshly started demo, 21 September 2026, as Sales:* **New — not contacted yet 0** ("No new leads. Nothing
+is waiting for a first call."), **In progress 1** (Gorsebrook Invented Care Homes Limited, "Care homes · from Referral",
+"Owner: Sales User"), **Later 0**, **Closed 6**.
+
 **Phase 135, 21 September 2026 — filled assessments are leads.** At the top of the list, **All leads** and **Filled
 assessments** switch between the two views; the **Leads** tab stays marked on both. The filled-assessments list is the one
 that was **Assessments** (`/staff/assessments`, same address, same rule: Admin and Sales, and a surveyor, who is not
@@ -1461,9 +1506,10 @@ status, what the assessment captured, the four enquiry checks, and conversion. A
 also carries its firm and the client's answer about sharing progress.
 
 **Who can open it**
-Admin and Sales. Accounting, Surveying and the client are refused every lead page.
+Admin and Sales, and Read only, which sees the cards with no buttons and no website enquiries. Accounting, Surveying and
+the client are refused every lead page.
 
-Address: `/staff/leads` · one lead: `/staff/leads/{lead}`
+Address: `/staff/leads` (cards) · `/staff/leads?layout=list` (List view) · one lead: `/staff/leads/{lead}`
 
 **How to do the common job**
 1. Open **Leads** and choose one, or record one with **Record a lead by hand** → **Record the lead**.
@@ -1478,6 +1524,8 @@ Address: `/staff/leads` · one lead: `/staff/leads/{lead}`
 - Converting unqualified: "Only a qualified lead converts, and this one is contacted."
 - A referral with no organisation: "This lead has no organisation yet. The organisation is created by the assessment — send them the assessment, then link this lead to the organisation it creates."
 - Setting Converted by hand: "A lead converts by opening its claim — use Convert, which asks the enquiry gate again."
+- **Log a call** without saying whether you spoke to them: "Say whether you spoke to them."
+- **Mark as lost** with no reason chosen: "A lost lead carries its reason: choose one from the list."
 - A share answer not chosen: "Record what the client said — yes, no, or that they have withdrawn. Nothing is assumed."
 
 **Try it on the demo**
