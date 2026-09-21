@@ -17,6 +17,8 @@ import { can, type Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as LI from './lists.ts';
 import * as S from './search.ts';
+import { documentCentreGate } from './documents.ts';
+import { opens } from './navigation.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -195,6 +197,8 @@ function searchPage(d: ListPageDeps, actor: Actor, r: S.SearchResult): string {
     body: h`<h1>Search</h1>
       <form method="get" action="/staff/search"><label>Search for <input name="q" value="${r.term}" autofocus></label>
         <button type="submit">Search</button></form>
+      ${opens(actor, documentCentreGate) ? h`<p class="help">Looking for a file? Each company’s files are on its page, under Files.
+        <a href="/staff/documents">Find a document across every client</a>.</p>` : raw('')}
       ${r.note === null ? raw('') : h`<p class="help">${r.note}</p>`}
       ${kinds.map((k) => h`<div class="pblock"><div class="pnum">${S.KIND_LABELS[k]}</div><table><tbody>${
         r.hits.filter((x) => x.kind === k).map((x) => h`<tr><th><a href="${x.href}">${x.label}</a></th><td>${x.detail}</td></tr>`)}</tbody></table></div>`)}

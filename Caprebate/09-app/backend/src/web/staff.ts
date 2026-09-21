@@ -44,6 +44,7 @@ import * as S from './settings.ts';
 import * as B from './backoffice.ts';
 import { handleEngaged } from './engaged-pages.ts';
 import { handleClientPage } from './client-page.ts';
+import { handleClientFiles } from './client-files-pages.ts';
 import { handleSurveyor } from './surveyor-pages.ts';
 import { handleFinance } from './finance-pages.ts';
 import { handleCrm } from './crm-pages.ts';
@@ -301,6 +302,10 @@ export async function handleStaff(
     return 'handled';
   }
 
+  /* ------------------ SECTION 3 · the company's files, in folders, and a staff upload (Phase 140) */
+  const clientFiles = await handleClientFiles({ app: d.app, store: d.store, newId: d.newId, nav, problem }, req, res, url, method, actor, form, body);
+  if (clientFiles === 'handled') return 'handled';
+
   /* ------------------ SECTION 3 · the one client page, and a claim inside it (Phase 134) */
   const client = await handleClientPage({ app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor);
   if (client === 'handled') return 'handled';
@@ -347,7 +352,7 @@ export async function handleStaff(
 
   /* ---------- SECTION 9 · documents on the claim, types and requests (CRM 4 of 10) */
   const documents = await handleDocuments(
-    { app: d.app, store: d.store, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form,
+    { app: d.app, store: d.store, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form, body,
   );
   if (documents === 'handled') return 'handled';
 

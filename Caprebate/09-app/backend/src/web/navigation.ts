@@ -326,6 +326,8 @@ export const HELP_SCREENS: readonly (readonly [prefix: string, code: string])[] 
 ]);
 
 export function helpScreenFor(path: string): string {
+  // PHASE 140: a company's files have their own training section, inside the Clients address.
+  if (/^\/staff\/clients\/([A-Za-z0-9-]+)\/files$/.test(path)) return 'B47';
   for (const [prefix, code] of HELP_SCREENS) if (path === prefix || path.startsWith(`${prefix}/`)) return code;
   return 'B0';
 }

@@ -303,12 +303,14 @@ export type DocumentView = {
   failure_code: string | null; created_at: string;
   /** CRM 4 of 10: what this upload is a version of, and its number. Null for an upload no policy matched. */
   logical_document_id: string | null; version_no: number | null; type_label: string | null; seq: number | null;
+  /** PHASE 140: whether the original was kept (KEEP_ORIGINALS, off), and whether it has since been deleted. */
+  original_kept_at: string | null; original_deleted_at: string | null;
 };
 
 const DOCUMENT_SELECT =
   'SELECT d.id, d.business_id, d.filename, d.declared_type, d.doc_type, d.byte_size, d.sniffed_as, d.state, ' +
   'd.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, d.logical_document_id, d.version_no, ' +
-  't.label AS type_label, l.seq FROM documents d LEFT JOIN document_types t ON t.code = d.type_code ' +
+  'd.original_kept_at, d.original_deleted_at, t.label AS type_label, l.seq FROM documents d LEFT JOIN document_types t ON t.code = d.type_code ' +
   'LEFT JOIN logical_documents l ON l.id = d.logical_document_id ';
 
 export function documents(db: Db, actor: Actor, business_id: string): DocumentView[] {

@@ -19,11 +19,13 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
+import { authorise, type Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as D from './documents.ts';
 import { badge, claimRef, dataLink, savedMessage, sectionList, why, type RecordTab } from './components.ts';
 import type { FsObjectStore } from './objectstore.ts';
+import { openKeptOriginal, sweepOriginals } from './uploads.ts';
+import { readUpload, receiveFile } from './client-files-pages.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -117,6 +119,7 @@ export async function handleDocuments(
   d: DocumentPageDeps, req: IncomingMessage, res: ServerResponse, url: URL,
   method: string, actor: Actor,
   form: (r: IncomingMessage) => Promise<URLSearchParams>,
+  body: (r: IncomingMessage, max?: number) => Promise<Buffer>,
 ): Promise<WebResult> {
   const path = url.pathname;
   const db = d.app.db;
@@ -126,6 +129,14 @@ export async function handleDocuments(
 
   /* ------------------------------------------- the document centre (the CRM follow-on) */
   if (path === '/staff/documents' && method === 'GET') {
+    // PHASE 140: A COMPANY'S DOCUMENTS ARE IN ITS FILES. Asked for one company and nothing else, the reader is sent to that
+    // company's folder, which asks its own rules again. Anything else stays this list, reached from search — never a menu.
+    const only = [...url.searchParams.keys()];
+    const org = url.searchParams.get('organisation') ?? '';
+    if (only.length === 1 && only[0] === 'organisation' && /^[A-Za-z0-9-]+$/.test(org)) {
+      redirect(res, `/staff/clients/${org}/files`);
+      return 'handled';
+    }
     html(res, 200, centrePage(d, actor, D.documentCentre(db, actor, url.searchParams), url.searchParams.toString()));
     return 'handled';
   }
@@ -174,10 +185,28 @@ export async function handleDocuments(
    */
   const docDownload = /^\/staff\/documents\/([A-Za-z0-9-]+)\/download$/.exec(path);
   if (docDownload && method === 'GET') {
-    const r = D.requestOriginal(deps, actor, docDownload[1] ?? '');
+    const id = docDownload[1] ?? '';
+    const r = D.requestOriginal(deps, actor, id);
+    // PHASE 140: WHERE KEEP_ORIGINALS KEPT ONE, the newest kept original, decrypted, as a download — never shown in the
+    // page, never cached. Otherwise the plain answer, and a way back to what we took from it: never a broken link.
+    // Whatever has run out of time is deleted first, so an expired original is gone before anything is looked for.
+    await sweepOriginals({ db, store: d.store, now, audit: d.app.audit }, actor);
+    const version = D.keptVersionOf(db, id, now());
+    const kept = version === null ? null : await openKeptOriginal({ db, store: d.store, now, audit: d.app.audit }, actor, version);
+    if (kept !== null) {
+      const ext = kept.sniffed_as === 'pdf' ? 'pdf' : kept.sniffed_as === 'png' ? 'png' : kept.sniffed_as === 'jpeg' ? 'jpg' : 'bin';
+      const type = ext === 'pdf' ? 'application/pdf' : ext === 'png' ? 'image/png' : ext === 'jpg' ? 'image/jpeg' : 'application/octet-stream';
+      res.writeHead(200, {
+        'content-type': type, 'content-disposition': `attachment; filename="${kept.filename}.${ext}"`,
+        'x-content-type-options': 'nosniff', 'cache-control': 'no-store', 'referrer-policy': 'no-referrer',
+        'content-security-policy': "default-src 'none'; sandbox",
+      });
+      res.end(kept.bytes);
+      return 'handled';
+    }
     html(res, 410, page({
-      title: 'No original to serve', nav: d.nav(actor),
-      body: h`<h1>${r.label}: there is no original file, by design</h1><p>${D.ORIGINALS_NOTE}</p>`,
+      title: 'The original was deleted', nav: d.nav(actor),
+      body: h`<h1>${r.label}</h1><p>${D.ORIGINALS_NOTE}</p><p><a href="/staff/documents/${id}">See what we took from it</a></p>`,
     }));
     return 'handled';
   }
@@ -207,27 +236,36 @@ export async function handleDocuments(
     redirect(res, `/staff/documents/${r.document_id ?? ''}?done=unlinked`);
     return 'handled';
   }
+  // PHASE 140: A NEW VERSION, THE FILE WITH THE FORM — through `receiveFile`, the client's own path. No upload address.
   const docVersion = /^\/staff\/documents\/([A-Za-z0-9-]+)\/versions$/.exec(path);
   if (docVersion && method === 'POST') {
     const id = docVersion[1] ?? '';
-    const r = await D.startDocumentUpload({ ...deps, store: d.store }, actor, {
-      business_id: D.businessOfDocument(db, id), type_code: null, logical_document_id: id, request_id: null, claim_id: null,
-    });
-    if (!r.ok) return d.problem(res, actor, 'No upload link issued', r.why, `/staff/documents/${id}`);
-    html(res, 200, ticketPage(d, actor, r, `/staff/documents/${id}`));
+    const business_id = D.businessOfDocument(db, id);
+    // Asked before a byte of the body is read: a login that may not upload is refused, not told its file was malformed.
+    authorise(actor, 'document.upload', { type: 'business', id: business_id });
+    const up = await readUpload(req, body);
+    if (!up.ok) return d.problem(res, actor, 'Not uploaded', up.why, `/staff/documents/${id}`);
+    const r = await receiveFile(d, actor, { business_id, type_code: null, logical_document_id: id, request_id: null, claim_id: null }, up.bytes);
+    if (!r.ok) return d.problem(res, actor, 'Not uploaded', r.why, `/staff/documents/${id}`);
+    redirect(res, `/staff/documents/${id}?done=uploaded`);
     return 'handled';
   }
 
   /* ------------------------------------------------- on the claim page */
+  // PHASE 140: AN UPLOAD FROM THE CLAIM PAGE, THE FILE WITH THE FORM. Lands in the claim's own folder of the company's files.
   const claimUpload = /^\/staff\/claims\/([A-Za-z0-9-]+)\/documents$/.exec(path);
   if (claimUpload && method === 'POST') {
     const id = claimUpload[1] ?? '';
-    const f = await form(req);
-    const r = await D.startDocumentUpload({ ...deps, store: d.store }, actor, {
-      business_id: D.businessOfClaim(db, id), type_code: f.get('type_code'), logical_document_id: null, request_id: null, claim_id: id,
-    });
-    if (!r.ok) return d.problem(res, actor, 'No upload link issued', r.why, `/staff/claims/${id}`);
-    html(res, 200, ticketPage(d, actor, r, `/staff/claims/${id}`));
+    const business_id = D.businessOfClaim(db, id);
+    authorise(actor, 'document.upload', { type: 'business', id: business_id });
+    const up = await readUpload(req, body);
+    if (!up.ok) return d.problem(res, actor, 'Not uploaded', up.why, `/staff/claims/${id}`);
+    const r = await receiveFile(d, actor, {
+      business_id, type_code: up.fields.type_code ?? null, logical_document_id: null, request_id: null, claim_id: id,
+      shown_to_client: up.fields.shown_to_client === 'yes',
+    }, up.bytes);
+    if (!r.ok) return d.problem(res, actor, 'Not uploaded', r.why, `/staff/claims/${id}`);
+    redirect(res, `/staff/clients/${business_id}/files?folder=claim-${id}&done=uploaded`);
     return 'handled';
   }
   const claimLink = /^\/staff\/claims\/([A-Za-z0-9-]+)\/documents\/link$/.exec(path);
@@ -329,10 +367,13 @@ export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel |
       <label>Due <input name="due_on" type="date"></label>
       <button type="submit">Request it</button></form>` : raw('')}
 
-    ${p.may_upload && types.length > 0 ? h`<form method="post" action="/staff/claims/${claim_id}/documents">
-      <p><strong>Upload a document to this claim</strong> <span class="help">— through the same upload handler as the client's, and its name is derived</span></p>
-      <label>Document <select name="type_code">${types.map((t) => h`<option value="${t.code}">${t.label}</option>`)}</select></label>
-      <button type="submit">Get an upload link</button></form>` : raw('')}
+    ${p.may_upload && types.length > 0 ? h`<form method="post" action="/staff/claims/${claim_id}/documents" enctype="multipart/form-data" class="uploadbox">
+      <p><strong>Upload a file to this claim</strong></p>
+      <label class="dropzone" for="claim-file-${claim_id}"><span class="dropwords">Drop a file here, or tap to choose one</span>
+        <input id="claim-file-${claim_id}" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>
+      <label>What is it? <select name="type_code">${types.map((t) => h`<option value="${t.code}">${t.label}</option>`)}</select></label>
+      <label class="tickbox"><input type="checkbox" name="shown_to_client" value="yes"> Let the client see this file</label>
+      <button type="submit">Upload</button></form>` : raw('')}
 
     ${p.may_link && (p.linkable ?? []).length > 0 ? h`<form method="post" action="/staff/claims/${claim_id}/documents/link">
       <p><strong>Link one of the organisation's documents to this claim</strong></p>
@@ -373,11 +414,22 @@ function documentPageHtml(d: DocumentPageDeps, actor: Actor, p: D.DocumentPage, 
 
       <div class="pblock"><div class="pnum">Version history</div>
         <p class="help">${p.history}</p>
-        <table><thead><tr><th>Version</th><th>Uploaded</th><th>By</th><th>State</th><th>Receipt strip</th><th>The original</th><th>This version's deletion clock</th></tr></thead>
+        <table><thead><tr><th>Version</th><th>Sent</th><th>By</th><th>What happened</th><th>Read</th><th>The original</th><th>This version's deletion clock</th></tr></thead>
         <tbody>${p.versions.map((v) => h`<tr><td>${v.version_no ?? '—'}</td><td>${v.uploaded}</td><td>${v.by}</td><td>${v.state}</td>
           <td>${v.strip}</td><td>${v.original}</td><td>${clockCell(v.clock)}</td></tr>`)}</tbody></table>
-        <p class="help">${p.original}</p>
-        ${p.may_upload_version ? h`<form method="post" action="/staff/documents/${p.id}/versions"><button type="submit">Upload a new version</button></form>` : raw('')}
+        <p class="help">${p.original_href === undefined ? p.original : h`We kept the original. <a href="${p.original_href}">Open the original</a>`}</p>
+        ${p.may_upload_version ? h`<form method="post" action="/staff/documents/${p.id}/versions" enctype="multipart/form-data" class="uploadbox">
+          <label class="dropzone" for="version-file"><span class="dropwords">Drop the new version here, or tap to choose it</span>
+            <input id="version-file" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>
+          <button type="submit">Upload a new version</button></form>` : raw('')}
+      </div>
+
+      <div class="pblock"><div class="pnum">Who can see it</div>
+        <p>${p.shown_to_client ? badge('The client can see this', 'ok') : badge('Only Cap Rebate can see this')}</p>
+        ${p.may_show && !p.from_client ? h`<form method="post" action="/staff/documents/${p.id}/shown" class="inline">
+          <input type="hidden" name="shown_to_client" value="${p.shown_to_client ? 'no' : 'yes'}">
+          <button type="submit">${p.shown_to_client ? 'Hide it from the client' : 'Let the client see it'}</button></form>` : raw('')}
+        <p><a href="/staff/clients/${p.business_id}/files">All of this company’s files</a></p>
       </div>
 
       ${dataLink(actor, `/staff/documents/${p.id}/view.json`)}`,
@@ -448,17 +500,5 @@ function typesPage(d: DocumentPageDeps, actor: Actor, types: readonly D.TypeView
       a policy is bound by a migration, never on this page.</p>
       <p class="help">${types.length} ${types.length === 1 ? 'type' : 'types'}, grouped by who may read them.</p>
       ${sectionList('Document types, by who may read them', sections)}`,
-  });
-}
-
-function ticketPage(d: DocumentPageDeps, actor: Actor, r: Extract<D.Started, { ok: true }>, back: string): string {
-  return page({
-    title: 'Upload link', nav: d.nav(actor),
-    body: h`<h1>Upload link for version ${r.version_no}</h1>
-      <p>Send the file with an HTTP <code>PUT</code> to the address below. The link is scoped to this one upload, expires at
-      ${r.expires_at}, is used once, and is not stored or logged anywhere — it is shown to you once.</p>
-      <p><code>PUT ${r.url}&amp;doc=${r.doc_id}</code></p>
-      <div class="gate">The allow-list, the size cap, the content sniff and the receipt strip all run on the server, on the bytes that arrive.</div>
-      <p><a href="${back}">Back</a></p>`,
   });
 }

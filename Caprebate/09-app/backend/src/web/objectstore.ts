@@ -48,7 +48,14 @@ import { mkdirSync, existsSync, chmodSync, statSync } from 'node:fs';
 import { readFile, writeFile, unlink, mkdir, copyFile, access } from 'node:fs/promises';
 import { constants as FS } from 'node:fs';
 import { join, dirname, normalize, sep } from 'node:path';
-import type { ObjectStore, PresignedUpload } from './upload-handler-port.ts';
+import { durableKeyFor, retainedTextKeyFor, type ObjectStore, type PresignedUpload } from './upload-handler-port.ts';
+import { KEEP_ORIGINALS, keptDays, seal, unseal, type KeepOriginals } from './originals.ts';
+
+/** PHASE 140: where a kept original lives — the handler's durable prefix. The retained text beside it is not an original. */
+const DURABLE_PREFIX = durableKeyFor('');
+function isOriginalKey(key: string): boolean {
+  return key.startsWith(DURABLE_PREFIX) && !key.endsWith(retainedTextKeyFor('').slice(DURABLE_PREFIX.length));
+}
 
 /**
  * PERMISSIONS, and the honest version of "no execute permission".
@@ -83,6 +90,10 @@ export type FsObjectStoreOptions = {
   /** Injected so a test is deterministic; defaults to a fresh random secret. */
   secret?: Buffer;
   now?: () => string;
+  /** PHASE 140: the KEEP_ORIGINALS switch. Absent is the shipped switch, off. A test passes it on. */
+  originals?: KeepOriginals;
+  /** PHASE 140: the 32-byte key a kept original is encrypted with. Absent or wrong length: no original is ever kept. */
+  sealKey?: Buffer | null;
 };
 
 /** A key that would escape the root, or reach a parent, is refused outright. */
@@ -99,9 +110,14 @@ export class FsObjectStore implements ObjectStore {
   readonly root: string;
   readonly #secret: Buffer;
   readonly #now: () => string;
+  readonly #sealKey: Buffer | null;
+  /** PHASE 140: days a kept original lives, or null — KEEP_ORIGINALS is off in one of its three ways. Read by uploads.ts. */
+  readonly keptDays: number | null;
 
   constructor(opts: FsObjectStoreOptions) {
     this.root = opts.root;
+    this.#sealKey = opts.sealKey !== undefined && opts.sealKey !== null && opts.sealKey.length === 32 ? opts.sealKey : null;
+    this.keptDays = keptDays(opts.originals ?? KEEP_ORIGINALS, this.#sealKey);
     this.#secret = opts.secret ?? randomBytes(32);
     this.#now = opts.now ?? ((): string => new Date().toISOString());
     if (!existsSync(this.root)) mkdirSync(this.root, { recursive: true, mode: DIR_MODE });
@@ -128,11 +144,28 @@ export class FsObjectStore implements ObjectStore {
     return new Uint8Array(await readFile(this.#path(key)));
   }
 
+  /**
+   * The handler's only use of `copy` is promoting an original to durable storage (PROMOTION_RULE). PHASE 140: AN ORIGINAL
+   * IS NEVER WRITTEN THERE IN THE CLEAR. It is encrypted on the way, and with no key the copy is refused — the handler's
+   * own catch path then deletes the quarantined file, so a missing key can only ever mean less is kept, never more.
+   */
   async copy(from_key: string, to_key: string): Promise<void> {
     const to = this.#path(to_key);
     await mkdir(dirname(to), { recursive: true, mode: DIR_MODE });
-    await copyFile(this.#path(from_key), to);
+    if (isOriginalKey(to_key)) {
+      if (this.#sealKey === null) throw new Error('refusing to keep an original with no encryption key');
+      await writeFile(to, seal(this.#sealKey, await readFile(this.#path(from_key))), { mode: FILE_MODE });
+    } else {
+      await copyFile(this.#path(from_key), to);
+    }
     await this.#harden(to);
+  }
+
+  /** PHASE 140: a kept original, decrypted. Only src/web/uploads.ts calls this, after `document.read_original`. */
+  async openOriginal(key: string): Promise<Buffer> {
+    if (!isOriginalKey(key)) throw new Error('not an original');
+    if (this.#sealKey === null) throw new Error('no key to open a kept original');
+    return unseal(this.#sealKey, await readFile(this.#path(key)));
   }
 
   /**

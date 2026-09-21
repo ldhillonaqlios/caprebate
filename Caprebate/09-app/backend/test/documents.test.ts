@@ -177,6 +177,8 @@ const GRANTED: Readonly<Record<string, readonly AppRole[]>> = Object.freeze({
   'document.read_original': ['ADMIN', 'CLIENT'],
   'document.upload': ['ADMIN', 'SALES', 'CLIENT'],
   'document.link': ['ADMIN', 'SALES'],
+  // PHASE 140: whether the client can see a file — the two roles that upload one.
+  'document.show_to_client': ['ADMIN', 'SALES'],
   'document_type.read': ['ADMIN', 'SALES'],
   'document_type.write': ['ADMIN'],
   'document_request.read': ['ADMIN', 'SALES', 'CLIENT'],
@@ -189,7 +191,8 @@ function favourable(action: string, role: AppRole): Obj {
   if (action === 'document.upload') return { type: 'business', id: 'biz-1' };
   if (action.startsWith('document_type.')) return { type: 'document_type', id: '__document_types__' };
   if (action.startsWith('document_request.')) return { type: 'document_request', id: 'r-1', business_id: 'biz-1' };
-  return { type: 'document', id: 'd-1', business_id: 'biz-1', readers: 'CLAIM_EVIDENCE', carries_value: false, letter_signed: true, assigned_surveyor_ids: [`u-${role}`] };
+  // PHASE 140: shown to the client — the most favourable object says so; test/phase140.test.ts refuses the rest.
+  return { type: 'document', id: 'd-1', business_id: 'biz-1', readers: 'CLAIM_EVIDENCE', carries_value: false, letter_signed: true, assigned_surveyor_ids: [`u-${role}`], shown_to_client: true };
 }
 
 /** document.read, per reader class: who is admitted. Every other role is refused. */
@@ -218,7 +221,7 @@ describe('who may do what — the nine new actions, every role, and document.rea
   test('A REFUSAL PER ROLE PER SENSITIVITY: document.read admits each reader class’s roles, on the most favourable object, and refuses every other', () => {
     for (const r of READS) {
       for (const role of APP_ROLES.filter((r) => r !== 'READ_ONLY') /* Phase 132e: READ_ONLY is asserted rule by rule in test/authz.test.ts */) {
-        const o: Obj = { type: 'document', id: 'd-1', business_id: 'biz-1', readers: r.readers, carries_value: r.carries_value, letter_signed: r.letter_signed, assigned_surveyor_ids: [`u-${role}`] };
+        const o: Obj = { type: 'document', id: 'd-1', business_id: 'biz-1', readers: r.readers, carries_value: r.carries_value, letter_signed: r.letter_signed, assigned_surveyor_ids: [`u-${role}`], shown_to_client: true };
         assert.equal(can(actor(role, `u-${role}`, 'biz-1'), 'document.read', o), r.admitted.includes(role),
           `${role} on ${r.readers}${r.carries_value ? ' (carries a value)' : ''}${r.letter_signed ? '' : ' (letter unsigned)'}: expected ${r.admitted.includes(role) ? 'allowed' : 'REFUSED'}`);
       }
@@ -387,7 +390,7 @@ describe('versions — a new upload of the same document is a new version; nothi
       const c = await w.signIn('sales');
       const page = await c.req(`/staff/documents/${v1.logical_document_id}`);
       assert.equal(page.status, 200);
-      assert.equal(page.body.split('received: stripped, and the original deleted from quarantine').length - 1, 2, 'both versions are on the page');
+      assert.equal(page.body.split('Read — we kept what we need').length - 1, 2, 'both versions are on the page');
       assert.match(page.body, /Version history/);
 
       // Refused by the store, and by the table.
@@ -583,13 +586,18 @@ describe('over HTTP — end to end, and every role on every sensitivity', () => 
       const client = await w.signIn('client');
       const portal = await client.req('/portal');
       assert.equal(portal.status, 200);
-      assert.match(portal.body, /Get an upload link for this document/);
+      // PHASE 140: the file goes with the form, and no page shows an upload address.
+      assert.match(portal.body, /Send this file/);
+      assert.equal(/PUT /.test(portal.body), false, 'the portal shows an HTTP PUT address');
       assert.equal(portal.body.includes('<script>alert(1)</script>'), false, 'a request’s text is escaped in the portal');
       assert.match(portal.body, /&lt;script&gt;/);
 
       const ticket = await client.post('/portal/documents', { request: r.id });
       assert.equal(ticket.status, 200);
-      const m = /PUT (\/upload\/put\?token=[^&\s<]+)&amp;doc=([A-Za-z0-9-]+)/.exec(ticket.body);
+      // PHASE 140: the older two-step route still answers a caller that posts without a file — its page is a form, with
+      // no PUT address in it. The address is the form's own action; a PUT to it still works, for a caller that is not a browser.
+      assert.equal(/PUT /.test(ticket.body), false, 'the ticket page shows an HTTP PUT address');
+      const m = /action="(\/upload\/put\?token=[^&"]+)&(?:amp;)?doc=([A-Za-z0-9-]+)"/.exec(ticket.body);
       assert.ok(m, 'the ticket carries the one-use link');
       const put = `${m[1] ?? ''}&doc=${m[2] ?? ''}`;
       const bytes = pdfOf([['DEMISE AND TERM:', 'Annual rent 25000']], { compress: true });

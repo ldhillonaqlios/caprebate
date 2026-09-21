@@ -5,6 +5,7 @@
  *   npm run migrate      create or update caprebate.db
  *   npm run seed         invented data + one user per role
  *   npm run verify-audit recompute the audit log's hash chain; exit 1 if it is broken
+ *   node src/cli.ts sweep-originals   delete every kept original whose time is up (KEEP_ORIGINALS; off, so none)
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests
  */
@@ -14,6 +15,10 @@ import { seed } from './seed.ts';
 import { Db, migrate } from './db.ts';
 import { MIGRATIONS_DIR } from './app.ts';
 import { AuditLog } from './audit.ts';
+import { join } from 'node:path';
+import { FsObjectStore } from './web/objectstore.ts';
+import { sealKeyFromEnv } from './web/originals.ts';
+import { sweepOriginals } from './web/uploads.ts';
 
 const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';
 
@@ -63,7 +68,21 @@ async function main(): Promise<number> {
     }
   }
 
-  console.error('usage: node src/cli.ts <migrate|seed|verify-audit>');
+  if (cmd === 'sweep-originals') {
+    /* PHASE 140. KEEP_ORIGINALS is off, so no original is ever kept and this deletes nothing. It is here so the day the
+       switch goes on, a scheduled run of this one line is all the hosting needs to add. */
+    const db = new Db(DEFAULT_DB);
+    try {
+      const store = new FsObjectStore({ root: process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '.documents'), sealKey: sealKeyFromEnv() });
+      const n = await sweepOriginals({ db, store, now: () => new Date().toISOString(), audit: new AuditLog(db) }, null);
+      console.log(`${n} kept original${n === 1 ? '' : 's'} deleted because ${n === 1 ? 'its' : 'their'} time was up.`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  console.error('usage: node src/cli.ts <migrate|seed|verify-audit|sweep-originals>');
   return 1;
 }
 

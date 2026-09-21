@@ -43,11 +43,13 @@ import * as P from './portal.ts';
 import { FsObjectStore } from './objectstore.ts';
 import { acceptClientBytes, finishUpload, issuedJob } from './uploads.ts';
 import { singleFile } from './multipart.ts';
+import { readUpload, receiveFile } from './client-files-pages.ts';
+import { READ_AND_DELETED } from './originals.ts';
 import { receivableTypes, startDocumentUpload, type RequestView } from './documents.ts';
 import { handleStaff, handlePortalSettings } from './staff.ts';
 import { mayEnterBackOffice } from './backoffice.ts';
 import { navContext, staffShell, portalShell, type NameSwitches, type NavContext } from './navigation.ts';
-import { badge, breadcrumb, card, claimRef, clientStageBar, propertyIn, welcomeCard, why } from './components.ts';
+import { badge, breadcrumb, card, claimRef, clientStageBar, propertyIn, savedMessage, welcomeCard, why } from './components.ts';
 import { stepName } from './portal-steps.ts';
 import { clientSteps, type ClientStep } from './approvals.ts';
 import { clientStepsCard } from './approvals-pages.ts';
@@ -608,7 +610,7 @@ async function portalRoutes(
     // PHASE 139: the steps staff have told this client about — words and dates, and nothing behind them.
     const done = portalSteps(db, actor, business_id);
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
-      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, ...(welcome === undefined ? {} : { welcome }) }));
+      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(welcome === undefined ? {} : { welcome }) }));
     return 'handled';
   }
 
@@ -684,6 +686,20 @@ async function portalRoutes(
     }, now);
     if (!r.ok) { html(res, 400, simple('Not saved', r.why ?? 'that did not work')); return 'handled'; }
     redirect(res, '/portal'); return 'handled';
+  }
+
+  if (path === '/portal/documents' && method === 'POST' && /^multipart\/form-data\b/i.test(req.headers['content-type'] ?? '')) {
+    // PHASE 140: THE FILE COMES WITH THE FORM. One step, and exactly the path the upload address takes — the same
+    // single-use key, `acceptClientBytes` and `finishUpload` — so no page ever shows an HTTP PUT address.
+    const up = await readUpload(req, readBody);
+    if (!up.ok) { html(res, 400, simple('Not sent', up.why)); return 'handled'; }
+    const r = await receiveFile({ app: d.app, store: d.store, newId }, actor, {
+      business_id: P.progress(db, actor, business_id).business.id,
+      type_code: up.fields.type_code ?? null, logical_document_id: up.fields.document ?? null, request_id: up.fields.request ?? null, claim_id: null,
+    }, up.bytes);
+    if (!r.ok) { html(res, 400, simple('Not sent', r.why)); return 'handled'; }
+    redirect(res, '/portal?sent=1#documents');
+    return 'handled';
   }
 
   if (path === '/portal/documents' && method === 'POST') {
@@ -1339,7 +1355,7 @@ function portalPage(
   slots: ReturnType<typeof publicSlots>, nowIso: string,
   dlv: readonly ClientDeliverable[] = [],
   share: readonly ClientShareChoice[] = [],
-  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[] } = {},
+  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[]; readonly sent?: boolean } = {},
 ): string {
   const open = tks.filter((t) => t.state === 'OPEN');
   const asked = reqs.filter((r) => r.state === 'REQUESTED');
@@ -1403,9 +1419,11 @@ function portalPage(
           <div class="pblock" id="request-${r.id}">
             <p><strong>${r.type.label}</strong> — ${r.due.overdue ? h`<strong>${ukDatesIn(r.due.label)}</strong>` : h`${ukDatesIn(r.due.label)}`}</p>
             <div class="help">${why(h`<em>Why we are asking:</em> ${r.why}<br><em>What it holds up:</em> ${r.holds_up}`)}</div>
-            <form method="post" action="/portal/documents">
+            <form method="post" action="/portal/documents" enctype="multipart/form-data">
               <input type="hidden" name="request" value="${r.id}">
-              <button class="cta" type="submit">Get an upload link for this document</button>
+              <label class="dropzone" for="send-${r.id}"><span class="dropwords">Drop the file here, or tap to choose it</span>
+                <input id="send-${r.id}" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>
+              <button class="cta" type="submit">Send this file</button>
             </form>
             <p class="help">It is marked received when the file arrives and passes our checks. There is no button
             to say you have sent it.</p>
@@ -1472,14 +1490,17 @@ function portalPage(
       </section>
 
       <section class="card" id="documents"><div class="card-h"><h2>Documents</h2></div>
+      ${extra.sent === true ? savedMessage('Thank you. We have your file.') : raw('')}
       ${dcs.length === 0 ? h`<p class="help">Nothing uploaded yet.</p>` : h`
         <table><thead><tr><th>Document</th><th>Version</th><th>State</th><th></th></tr></thead><tbody>
         ${dcs.map((x) => h`<tr><td>${x.type_label === null ? x.filename : `${x.type_label} ${x.seq ?? ''}`}</td>
           <td>${x.version_no === null ? '—' : String(x.version_no)}</td>
           <td>${x.failure_code ?? x.state}</td>
           <td><a href="/portal/documents/${x.id}">What we did with it</a></td></tr>`)}</tbody></table>`}
-      <form method="post" action="/portal/documents">
-        <label class="fl">Send us a document</label>
+      <form method="post" action="/portal/documents" enctype="multipart/form-data">
+        <p class="fl"><strong>Send us a document</strong></p>
+        <label class="dropzone" for="send-file"><span class="dropwords">Drop a file here, or tap to choose one</span>
+          <input id="send-file" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>
         <label class="fl" for="send-type">What is it?</label>
         <select class="fi" id="send-type" name="type_code">${types.map((t) => h`<option value="${t.code}">${t.label}</option>`)}</select>
         ${versionable.length === 0 ? raw('') : h`<label class="fl" for="send-version">A new version of one you have already sent? (optional)</label>
@@ -1487,7 +1508,7 @@ function portalPage(
           versionable.map(([id, label]) => h`<option value="${id}">${label}</option>`)}</select>`}
         <p class="help">We name the file ourselves, so nothing personal is kept in its name. Nothing you send replaces
         an earlier version: each is kept as a version of its own.</p>
-        <button class="cta" type="submit">Get an upload link</button>
+        <button class="cta" type="submit">Send</button>
       </form></section>
 
       <section class="card"><div class="card-h"><h2>Your account</h2></div>
@@ -1591,11 +1612,8 @@ function uploadTicketPage(doc_id: string, url: string, expires_at: string): stri
         <input class="fi" id="upload-file" type="file" name="file" required>
         <button class="cta" type="submit">Send the file</button>
       </form>
-      <p class="help">This link works once, for this one document, until ${localStamp(expires_at)}. We do not keep a copy of it, so it
-      is shown only here.</p>
-      <details><summary>Not using a browser?</summary><p class="help">Send the file to the same address with an HTTP <code>PUT</code>:
-      <code>PUT ${url}&amp;doc=${doc_id}</code></p></details>
-      <p class="help">We check the file's type and size when it arrives, however it is sent.</p>
+      <p class="help">This link works once, for this one document, until ${localStamp(expires_at)}.</p>
+      <p class="help">We check the file's type and size when it arrives.</p>
       <p><a href="/portal">Back to your claim</a></p>`,
   });
 }
@@ -1618,7 +1636,7 @@ function documentPage(doc: P.DocumentView, trace: { contract_step: number; actio
       <tbody>${trace.map((e) => h`<tr><td>${e.contract_step}</td><td>${e.action}</td>
         <td>${e.outcome}</td><td class="when">${localStamp(e.at)}</td></tr>`)}</tbody></table>
 
-      <p><a href="/portal/documents/${doc.id}/download">Ask for the original</a></p>
+      <p class="help">${doc.original_kept_at === null || doc.original_deleted_at !== null ? READ_AND_DELETED : 'We have kept the original safely.'}</p>
       <p><a href="/portal">Back to your claim</a></p>`,
   });
 }

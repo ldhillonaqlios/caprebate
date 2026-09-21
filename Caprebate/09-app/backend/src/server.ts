@@ -31,6 +31,7 @@ import { toActor } from './users.ts';
 import { payloadFor, assertSurveySection } from './web/surveyor.ts';
 import { handleWeb, PayloadTooLarge, refusalAsPage, sendRefusalPage } from './web/router.ts';
 import { FsObjectStore } from './web/objectstore.ts';
+import { sealKeyFromEnv, type KeepOriginals } from './web/originals.ts';
 
 function readCookie(req: IncomingMessage, name: string): string | undefined {
   const raw = req.headers.cookie;
@@ -95,6 +96,10 @@ export type ServerOptions = {
   now?: () => string;
   /** PHASE 133j: the site's own address, for links sent by email. Absent is CAPREBATE_PUBLIC_ORIGIN, then http://localhost:8103. */
   publicOrigin?: string;
+  /** PHASE 140: the KEEP_ORIGINALS switch. Absent is `KEEP_ORIGINALS` in src/web/originals.ts, off. A test passes it on. */
+  keepOriginals?: KeepOriginals;
+  /** PHASE 140: the key a kept original is encrypted with. Absent is CAPREBATE_ORIGINALS_KEY; with neither, nothing is kept. */
+  sealKey?: Buffer | null;
 };
 
 export async function createApp(
@@ -105,6 +110,8 @@ export async function createApp(
   const store = new FsObjectStore({
     root: opts.documentRoot ?? process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '.documents'),
     now: app.now,
+    ...(opts.keepOriginals === undefined ? {} : { originals: opts.keepOriginals }),
+    sealKey: opts.sealKey === undefined ? sealKeyFromEnv() : opts.sealKey,
   });
 
   const server = createServer((req, res) => {

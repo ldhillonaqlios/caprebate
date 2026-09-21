@@ -50,7 +50,8 @@ import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { authorise, can, type Actor, type Obj } from '../authz.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
-import { localStamp } from './localtime.ts';
+import { localDate, localStamp, ukDate } from './localtime.ts';
+import { READ_AND_DELETED } from './originals.ts';
 import { RET7, type DocType, type UploadJob } from './upload-handler-port.ts';
 import { dueReading, type DueReading } from './tasks.ts';
 import { fireAutomation, type RunOutcome } from './automation.ts';
@@ -400,8 +401,41 @@ export function documentObj(db: Db, l: { id: string; business_id: string; reader
   return {
     type: 'document', id: l.id, business_id: l.business_id, readers: l.readers, carries_value: l.carries_value === 1,
     letter_signed: letterSigned(db, l.business_id), assigned_surveyor_ids: documentSurveyors(db, l.id, l.business_id),
-    released_to_client: releasedToClient(db, l.id),
+    released_to_client: releasedToClient(db, l.id), shown_to_client: shownToClient(db, l.id),
   };
+}
+
+/**
+ * PHASE 140 — CAN THE CLIENT SEE THIS FILE AT ALL? The latest row of `document_visibility` (migration 035) says, where
+ * there is one. Where there is none, a file the client sent is theirs to see, and a file staff sent is not — Lakhbir's
+ * default, "no". `clientDocument` in src/authz.ts reads this, and still applies every other rule on top of it.
+ */
+export function shownToClient(db: Db, logical_id: string): boolean {
+  const v = db.get<{ shown_to_client: number }>(
+    'SELECT shown_to_client FROM document_visibility WHERE logical_document_id = ? ORDER BY set_at DESC, rowid DESC LIMIT 1', [logical_id]);
+  if (v !== undefined) return v.shown_to_client === 1;
+  const by = db.get<{ role: string }>('SELECT u.role FROM logical_documents l JOIN users u ON u.id = l.created_by WHERE l.id = ?', [logical_id]);
+  return by?.role === 'CLIENT';
+}
+
+/**
+ * PHASE 140 — SHOW A FILE TO THE CLIENT, OR STOP SHOWING IT. Admin and Sales (`document.show_to_client`), on a document
+ * they may read. A new row each time, audited; nothing about the document itself changes.
+ */
+export function setShownToClient(d: DocDeps, actor: Actor, logical_id: string, shown: boolean): DocResult & { business_id?: string } {
+  const l = loadLogical(d.db, logical_id);
+  const obj = documentObj(d.db, l);
+  authorise(actor, 'document.read', obj);
+  authorise(actor, 'document.show_to_client', obj);
+  if (obj.shown_to_client === shown) return { ok: true, id: l.id, business_id: l.business_id };
+  const at = d.now();
+  d.db.run('INSERT INTO document_visibility (id, logical_document_id, shown_to_client, set_by, set_at) VALUES (?, ?, ?, ?, ?)',
+    [d.newId(), l.id, shown ? 1 : 0, actor.id, at]);
+  d.audit.append({
+    at, kind: shown ? 'DOCUMENT_SHOWN_TO_CLIENT' : 'DOCUMENT_HIDDEN_FROM_CLIENT', outcome: 'ALLOWED', actor_id: actor.id,
+    actor_role: actor.role, object_type: 'document', object_id: l.id, detail: { business: l.business_id },
+  });
+  return { ok: true, id: l.id, business_id: l.business_id };
 }
 
 /**
@@ -435,9 +469,10 @@ export function versionObj(db: Db, doc_id: string): DocObj | undefined {
     'SELECT id, business_id, logical_document_id FROM documents WHERE id = ?', [doc_id]);
   if (r === undefined) return undefined;
   if (r.logical_document_id !== null) return documentObj(db, loadLogical(db, r.logical_document_id));
+  const by = db.get<{ role: string }>('SELECT u.role FROM documents d JOIN users u ON u.id = d.uploaded_by WHERE d.id = ?', [r.id]);
   return {
     type: 'document', id: r.id, business_id: r.business_id, readers: 'CLAIM_TEAM', carries_value: false,
-    letter_signed: letterSigned(db, r.business_id), assigned_surveyor_ids: [],
+    letter_signed: letterSigned(db, r.business_id), assigned_surveyor_ids: [], shown_to_client: by?.role === 'CLIENT',
   };
 }
 
@@ -447,13 +482,15 @@ export function versionObj(db: Db, doc_id: string): DocObj | undefined {
 
 const VERSION_SELECT =
   'SELECT d.id, d.logical_document_id, d.version_no, d.type_code, d.retention_ref, d.request_id, d.state, d.doc_type, ' +
-  'd.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, u.role AS uploader_role FROM documents d ' +
+  'd.strip_recorded_at, d.quarantine_discharged_at, d.failure_code, d.created_at, u.role AS uploader_role, ' +
+  'd.original_kept_at, d.original_delete_after, d.original_deleted_at FROM documents d ' +
   'LEFT JOIN users u ON u.id = d.uploaded_by ';
 
 type VersionRow = {
   id: string; logical_document_id: string | null; version_no: number | null; type_code: string | null; retention_ref: string | null;
   request_id: string | null; state: string; doc_type: string | null; strip_recorded_at: string | null;
   quarantine_discharged_at: string | null; failure_code: string | null; created_at: string; uploader_role: string | null;
+  original_kept_at: string | null; original_delete_after: string | null; original_deleted_at: string | null;
 };
 
 export type VersionView = {
@@ -477,11 +514,15 @@ function versionView(r: VersionRow): VersionView {
     id: r.id, version_no: r.version_no, uploaded: localStamp(r.created_at),
     by: r.uploader_role === 'CLIENT' ? 'the client' : r.uploader_role === null ? 'nobody recorded' : `staff (${r.uploader_role.toLowerCase()})`,
     received,
-    state: r.failure_code !== null ? `refused by the upload handler — ${r.failure_code}`
-      : received ? 'received: stripped, and the original deleted from quarantine'
-        : 'not received yet: the file has not passed the receipt strip',
-    strip: r.strip_recorded_at === null ? 'not recorded' : `recorded ${localStamp(r.strip_recorded_at)}`,
-    original: r.quarantine_discharged_at === null ? 'not recorded as deleted' : `deleted from quarantine ${localStamp(r.quarantine_discharged_at)}, never copied to durable storage`,
+    // PHASE 140: in words a person reads. The codes are still on the row and in the handler's own record.
+    state: r.failure_code !== null ? `We could not use it (${r.failure_code})`
+      : received ? 'Read — we kept what we need'
+        : 'Not read yet',
+    strip: r.strip_recorded_at === null ? 'not read yet' : `read ${localStamp(r.strip_recorded_at)}`,
+    original: r.original_kept_at !== null
+      ? (r.original_deleted_at !== null ? `Kept, then deleted ${localStamp(r.original_deleted_at)}`
+        : `Kept safely until ${localStamp(r.original_delete_after ?? r.original_kept_at)}`)
+      : r.quarantine_discharged_at === null ? 'Not deleted yet' : `Deleted ${localStamp(r.quarantine_discharged_at)}, once we had read it`,
     clock: retentionReading(r.retention_ref),
     against_request: r.request_id !== null,
   };
@@ -501,6 +542,11 @@ export type StartArgs = {
   readonly request_id: string | null;
   /** Staff only: link a new document to this claim. */
   readonly claim_id: string | null;
+  /**
+   * PHASE 140, staff only: whether the client can see a NEW document. Absent is no — Lakhbir's default. A client's own
+   * upload is theirs to see by rule, and a new version keeps its document's answer.
+   */
+  readonly shown_to_client?: boolean;
 };
 
 export type Started =
@@ -583,6 +629,11 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
             'SELECT MAX(seq) AS m FROM logical_documents WHERE business_id = ? AND type_code = ?', [biz.id, t.code])?.m ?? 0) + 1;
           d.db.run('INSERT INTO logical_documents (id, business_id, type_code, seq, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)',
             [lid, biz.id, t.code, seq, actor.id, at]);
+          // PHASE 140: staff say, on every new document, whether the client can see it. The default is no.
+          if (actor.role !== 'CLIENT') {
+            d.db.run('INSERT INTO document_visibility (id, logical_document_id, shown_to_client, set_by, set_at) VALUES (?, ?, ?, ?, ?)',
+              [d.newId(), lid, a.shown_to_client === true ? 1 : 0, actor.id, at]);
+          }
           if (claimToLink !== null) {
             linkId = d.newId();
             d.db.run('INSERT INTO document_links (id, logical_document_id, claim_id, property_id, linked_by, linked_at) VALUES (?, ?, ?, NULL, ?, ?)',
@@ -606,7 +657,10 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
   d.audit.append({
     at, kind: 'DOCUMENT_VERSION_STARTED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'document', object_id: m.lid,
-    detail: { upload: b.doc_id, version: m.version_no, type: t.code, new_document: m.newDocument, request: request?.id ?? '(none)', business: biz.id },
+    detail: {
+      upload: b.doc_id, version: m.version_no, type: t.code, new_document: m.newDocument, request: request?.id ?? '(none)', business: biz.id,
+      ...(m.newDocument && actor.role !== 'CLIENT' ? { shown_to_client: a.shown_to_client === true } : {}),
+    },
   });
   if (m.linkId !== null && claimToLink !== null) {
     d.audit.append({
@@ -983,6 +1037,12 @@ export type DocumentPage = {
   readonly original: string;
   readonly may_link: boolean;
   readonly may_upload_version: boolean;
+  /** PHASE 140: the newest kept original, where one is kept and this reader may open it. */
+  readonly original_href?: string;
+  /** PHASE 140: whether the client can see this file, and whether this reader may change that. */
+  readonly shown_to_client: boolean;
+  readonly may_show: boolean;
+  readonly from_client: boolean;
   readonly linkable_claims?: readonly { readonly id: string; readonly claim_ref: string; readonly property: string | null }[];
 };
 
@@ -990,9 +1050,9 @@ export const HISTORY_NOTE =
   'Nothing overwrites. Every upload of this document is a version of its own, kept with its own deletion clock — the type’s clock at the ' +
   'moment it arrived. A version the handler refused is listed too.';
 
+/** PHASE 140: in words a person reads. `READ_AND_DELETED` (src/web/originals.ts) is the short form a folder shows. */
 export const ORIGINALS_NOTE =
-  'The original files no longer exist. Each was deleted from quarantine once the receipt strip had run and none was copied to durable ' +
-  'storage — what is kept is what was read out of it. That is the pipeline working, not a fault.';
+  'We read each file and then delete it. We keep what we took from it, not the file. That is on purpose, to keep as little as we can.';
 
 /**
  * ONE DOCUMENT AND ITS HISTORY — AND THE READ IS AUDITED, ALLOWED OR REFUSED, as
@@ -1035,6 +1095,10 @@ export function documentPage(d: { db: Db; audit: AuditLog; now: () => string }, 
     versions: d.db.all<VersionRow>(`${VERSION_SELECT}WHERE d.logical_document_id = ? ORDER BY d.version_no DESC`, [l.id]).map(versionView),
     history: HISTORY_NOTE, original: ORIGINALS_NOTE,
     may_link: mayLink, may_upload_version: mayUpload,
+    ...(keptVersionOf(d.db, l.id, d.now()) !== null && can(actor, 'document.read_original', obj) ? { original_href: `/staff/documents/${l.id}/download` } : {}),
+    shown_to_client: obj.shown_to_client === true,
+    may_show: actor.role !== 'CLIENT' && can(actor, 'document.show_to_client', obj),
+    from_client: d.db.get<{ role: string }>('SELECT u.role FROM users u WHERE u.id = (SELECT created_by FROM logical_documents WHERE id = ?)', [l.id])?.role === 'CLIENT',
     ...(mayLink ? {
       linkable_claims: d.db.all<{ id: string; claim_ref: string; property: string | null }>('SELECT c.id, c.claim_ref, p.label AS property FROM claims c LEFT JOIN properties p ON p.id = c.property_id WHERE c.business_id = ? ORDER BY c.claim_ref ASC', [l.business_id])
         .filter((c) => !linkedClaims.has(`/staff/claims/${c.id}`)),
@@ -1304,4 +1368,173 @@ export function documentCentreGate(actor: Actor): void {
  */
 export function documentTypesGate(actor: Actor): void {
   authorise(actor, 'document_type.read', TYPES_OBJ);
+}
+
+/* ================================================================== *
+ * 10 · THE CLIENT'S FILES — PHASE 140, 21 September 2026
+ *
+ * Lakhbir: "There is no folder icon which allows the user to see what the customer has uploaded, but also the ability to
+ * upload and save documents ourselves within the portal."
+ *
+ * ONE PLACE FOR A COMPANY'S FILES, IN FOLDERS: From the client, From Cap Rebate, Asked for (still waiting), and one folder
+ * per claim. A folder is a way of looking, not a place a file is put — a lease the client sent for one claim is in "From
+ * the client" and in that claim's folder. EVERY FILE IS STILL ASKED OF `document.read` ON ITS OWN, exactly as the claim
+ * panel asks, so a login sees in a folder only what it could open; the requests are shown only to
+ * `document_request.read`.
+ *
+ * WHAT WE READ FROM A FILE IS SAID IN COUNTS, NEVER IN ITS WORDS: the pages read, the parts kept, the parts taken out —
+ * from the upload handler's own record of each step (`document_events`). No route here reads what a file says.
+ * ================================================================== */
+
+export type FolderKey = 'client' | 'ours' | 'asked' | `claim-${string}`;
+
+export type FolderFile = {
+  readonly id: string;
+  /** "Lease 2" — a document is named by its type and number, never by the client's file name (N2). */
+  readonly name: string;
+  readonly type: string;
+  readonly href: string;
+  readonly from: 'CLIENT' | 'US';
+  /** "The client", or "Cap Rebate — <the person who sent it>". */
+  readonly sender: string;
+  /** The day the newest version arrived. */
+  readonly sent: string;
+  readonly versions: number;
+  /** What we read from it, in short lines a person can read. */
+  readonly read: readonly string[];
+  readonly state: 'READ' | 'WAITING' | 'REFUSED';
+  readonly shown_to_client: boolean;
+  /** A kept original this reader may open, or the words that say there is none. Never a broken link. */
+  readonly original: { readonly kept: true; readonly href: string | null } | { readonly kept: false; readonly words: string };
+  readonly claim_ids: readonly string[];
+};
+
+export type Folder = { readonly key: FolderKey; readonly name: string; readonly count: number; readonly ref?: string };
+
+export type ClientFolder = {
+  readonly business_id: string;
+  readonly company: string;
+  readonly folders: readonly Folder[];
+  readonly files: readonly FolderFile[];
+  /** Still waiting — the open requests, where this reader may read requests. */
+  readonly asked: readonly RequestView[] | null;
+  readonly claims: readonly { readonly id: string; readonly name: string; readonly ref: string }[];
+  readonly may_upload: boolean;
+  readonly may_show: boolean;
+  readonly upload_types: readonly { readonly code: string; readonly label: string }[];
+};
+
+type FolderVersionRow = {
+  id: string; version_no: number | null; created_at: string; state: string; strip_recorded_at: string | null;
+  quarantine_discharged_at: string | null; failure_code: string | null; original_kept_at: string | null;
+  original_delete_after: string | null; original_deleted_at: string | null;
+};
+
+const FAILURE_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  E_UPLOAD_REJECTED: 'We could not use it: it is not a kind of file we accept, or it is too big.',
+  E_UNRECOGNISED_DOC_TYPE: 'We could not use it: we could not tell what kind of document it is.',
+});
+
+function plural(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+/** What the handler recorded reading, in counts. Steps 4 and 5 of the receipt contract, as the handler wrote them. */
+function readLines(db: Db, v: FolderVersionRow): { state: FolderFile['state']; lines: string[] } {
+  if (v.failure_code !== null) {
+    return { state: 'REFUSED', lines: [FAILURE_WORDS[v.failure_code] ?? 'We could not use it. Ask for it again.'] };
+  }
+  if (v.strip_recorded_at === null || v.quarantine_discharged_at === null) return { state: 'WAITING', lines: ['Not read yet.'] };
+  const ev = new Map(db.all<{ contract_step: number; detail_json: string }>(
+    'SELECT contract_step, detail_json FROM document_events WHERE doc_id = ? AND contract_step IN (4, 5) AND outcome = ? ORDER BY at ASC',
+    [v.id, 'ok']).map((e) => [e.contract_step, JSON.parse(e.detail_json) as Record<string, unknown>] as const));
+  const pages = Number(ev.get(4)?.pages ?? NaN);
+  const kept = Number(ev.get(5)?.retained ?? NaN);
+  const removed = Array.isArray(ev.get(5)?.removed) ? (ev.get(5)?.removed as unknown[]).length : NaN;
+  const lines: string[] = [];
+  if (Number.isFinite(pages)) lines.push(`We read ${plural(pages, 'page', 'pages')}.`);
+  if (Number.isFinite(kept)) lines.push(kept === 0 ? 'We did not need to keep any of its text.' : `We kept ${plural(kept, 'part', 'parts')} of its text.`);
+  if (Number.isFinite(removed) && removed > 0) lines.push(`We took out ${plural(removed, 'part', 'parts')} we must not keep.`);
+  if (lines.length === 0) lines.push('We read it.');
+  return { state: 'READ', lines };
+}
+
+/**
+ * A COMPANY'S FILES, IN FOLDERS, FOR THIS READER. The caller has already read the company through the organisation's own
+ * rule and passes its claims as that read returned them, so a claim this reader may not see gets no folder.
+ */
+export function clientFolder(
+  d: { db: Db; now: () => string }, actor: Actor,
+  org: { id: string; trading_name: string; claims: readonly { id: string; property: string | null; claim_ref: string }[] },
+): ClientFolder {
+  const db = d.db;
+  const nowIso = d.now();
+  const logical = db.all<LogicalRow & { created_role: string | null; created_name: string | null }>(
+    'SELECT l.id, l.business_id, l.type_code, l.seq, l.created_at, t.label, t.readers, t.carries_value, t.handler_type, ' +
+      't.retention_ref AS type_retention, u.role AS created_role, u.display_name AS created_name FROM logical_documents l ' +
+      'JOIN document_types t ON t.code = l.type_code LEFT JOIN users u ON u.id = l.created_by WHERE l.business_id = ? ' +
+      'ORDER BY l.created_at DESC, l.seq DESC', [org.id]);
+  const claimIds = new Set(org.claims.map((c) => c.id));
+  const files: FolderFile[] = [];
+  for (const l of logical) {
+    const obj = documentObj(db, l);
+    if (!can(actor, 'document.read', obj)) continue;
+    const versions = db.all<FolderVersionRow>(
+      'SELECT id, version_no, created_at, state, strip_recorded_at, quarantine_discharged_at, failure_code, original_kept_at, ' +
+        'original_delete_after, original_deleted_at FROM documents WHERE logical_document_id = ? ORDER BY version_no DESC', [l.id]);
+    const newest = versions[0];
+    const shown = versions.find((v) => v.failure_code === null && v.strip_recorded_at !== null && v.quarantine_discharged_at !== null) ?? newest;
+    const read = shown === undefined ? { state: 'WAITING' as const, lines: ['Nothing has arrived yet.'] } : readLines(db, shown);
+    const kept = shown !== undefined && shown.original_kept_at !== null && shown.original_deleted_at === null
+      && shown.original_delete_after !== null && shown.original_delete_after > nowIso;
+    const linked = db.all<{ claim_id: string }>(
+      'SELECT k.claim_id FROM document_links k WHERE k.logical_document_id = ? AND k.unlinked_at IS NULL AND k.claim_id IS NOT NULL ' +
+        'UNION SELECT c.id FROM document_links k JOIN claims c ON c.property_id = k.property_id ' +
+        'WHERE k.logical_document_id = ? AND k.unlinked_at IS NULL AND k.property_id IS NOT NULL', [l.id, l.id])
+      .map((r) => r.claim_id).filter((id) => claimIds.has(id));
+    const fromClient = l.created_role === 'CLIENT';
+    files.push({
+      id: l.id, name: documentLabel(l.label, l.seq), type: l.label, href: `/staff/documents/${l.id}`,
+      from: fromClient ? 'CLIENT' : 'US',
+      sender: fromClient ? 'The client' : `Cap Rebate${l.created_name === null ? '' : ` — ${l.created_name}`}`,
+      sent: ukDate(localDate(newest?.created_at ?? l.created_at)), versions: versions.length,
+      read: read.lines, state: read.state, shown_to_client: obj.shown_to_client === true,
+      original: kept
+        ? { kept: true, href: can(actor, 'document.read_original', obj) ? `/staff/documents/${l.id}/download` : null }
+        : { kept: false, words: READ_AND_DELETED },
+      claim_ids: linked,
+    });
+  }
+  const reqObj = { type: 'document_request' as const, id: org.id, business_id: org.id };
+  const asked = can(actor, 'document_request.read', reqObj)
+    ? requestsFor(db, actor, { business_id: org.id }, nowIso).filter((r) => r.state === 'REQUESTED')
+    : null;
+  const claims = org.claims.map((c) => ({ id: c.id, name: c.property ?? 'Claim', ref: c.claim_ref }));
+  const folders: Folder[] = [
+    { key: 'client', name: 'From the client', count: files.filter((f) => f.from === 'CLIENT').length },
+    { key: 'ours', name: 'From Cap Rebate', count: files.filter((f) => f.from === 'US').length },
+    ...(asked === null ? [] : [{ key: 'asked' as const, name: 'Asked for — still waiting', count: asked.length }]),
+    ...claims.map((c) => ({ key: `claim-${c.id}` as const, name: c.name, ref: c.ref, count: files.filter((f) => f.claim_ids.includes(c.id)).length })),
+  ];
+  const mayUpload = actor.role !== 'CLIENT' && can(actor, 'document.upload', { type: 'business', id: org.id });
+  const mayShow = actor.role !== 'CLIENT' && can(actor, 'document.show_to_client', {
+    type: 'document', id: org.id, business_id: org.id, readers: 'CLAIM_TEAM', carries_value: false, letter_signed: false, assigned_surveyor_ids: [],
+  });
+  return {
+    business_id: org.id, company: org.trading_name, folders, files, asked, claims,
+    may_upload: mayUpload, may_show: mayShow, upload_types: mayUpload ? receivableTypes(db) : [],
+  };
+}
+
+/** How many files a reader may open on a company — the number beside the folder icon. The same rule as the folder. */
+export function clientFileCount(db: Db, actor: Actor, business_id: string): number {
+  return db.all<LogicalRow>(`${LOGICAL_SELECT}WHERE l.business_id = ?`, [business_id])
+    .filter((l) => can(actor, 'document.read', documentObj(db, l))).length;
+}
+
+/** The newest kept version of a document, for the route that opens an original. Null where none is kept. */
+export function keptVersionOf(db: Db, logical_id: string, nowIso: string): string | null {
+  return db.get<{ id: string }>(
+    'SELECT id FROM documents WHERE logical_document_id = ? AND original_kept_at IS NOT NULL AND original_deleted_at IS NULL ' +
+      'AND original_delete_after > ? ORDER BY version_no DESC LIMIT 1', [logical_id, nowIso])?.id ?? null;
 }

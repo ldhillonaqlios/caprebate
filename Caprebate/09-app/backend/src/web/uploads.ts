@@ -27,7 +27,7 @@ import { receiveByUpload } from './documents.ts';
 import {
   UPLOAD_LIMITS, UploadHandlerError, sniffAccepted, quarantineKeyFor,
   issueUploadUrl, recordUploadComplete, processUpload,
-  assertContractCovered, FAIL_CLOSED_SETTINGS, DOC_SPECS, HUMAN_READ_ONLY_TYPES,
+  assertContractCovered, FAIL_CLOSED_SETTINGS, DOC_SPECS, HUMAN_READ_ONLY_TYPES, durableKeyFor,
   type AuditEvent, type AuditSink, type DocType, type DocTypeClassifier,
   type TextExtractor, type UploadHandlerDeps, type UploadJob,
 } from './upload-handler-port.ts';
@@ -161,7 +161,11 @@ function handlerDeps(d: UploadDeps): UploadHandlerDeps {
     // (raw-file retention) and Q40 (the ingestion boundary) are both OPEN and
     // a build that quietly chose the permissive setting would be answering
     // them. Under these settings the raw file NEVER reaches the durable prefix.
-    settings: FAIL_CLOSED_SETTINGS,
+    // PHASE 140: KEEP_ORIGINALS (src/web/originals.ts), OFF. Only when it is on
+    // in all three of its ways does the handler get a period to keep a file
+    // for — and then it is the handler's own promotion rule that keeps it.
+    settings: d.store.keptDays === null ? FAIL_CLOSED_SETTINGS
+      : { ...FAIL_CLOSED_SETTINGS, grace_days_after_extraction: d.store.keptDays },
   };
 }
 
@@ -316,6 +320,59 @@ function persist(d: UploadDeps, job: UploadJob, discharged: boolean): void {
      discharged ? (job.quarantine.deleted_at ?? d.now()) : null,
      job.doc_id],
   );
+  // PHASE 140: WHERE THE HANDLER KEPT THE ORIGINAL, SAY SO AND SAY UNTIL WHEN. Only on a job that finished, only where
+  // the handler itself wrote the durable copy, and only while KEEP_ORIGINALS is on — so with it off this never runs.
+  const kept = job.quarantine.durable_written_at;
+  if (kept !== undefined && job.state !== 'FAILED' && d.store.keptDays !== null) {
+    const until = new Date(new Date(kept).getTime() + d.store.keptDays * 86_400_000).toISOString();
+    d.db.run('UPDATE documents SET original_kept_at = ?, original_delete_after = ? WHERE id = ? AND original_kept_at IS NULL',
+      [kept, until, job.doc_id]);
+  }
+}
+
+/**
+ * PHASE 140 — A KEPT ORIGINAL, OPENED. The caller has already asked `document.read_original` of the document. Returns the
+ * bytes and what they are, or null where nothing is kept: the switch was off when it arrived, it has been deleted, or its
+ * time is up (and then it is deleted now, before anything is served).
+ */
+export async function openKeptOriginal(
+  d: { db: Db; store: FsObjectStore; now: () => string; audit: AuditLog },
+  actor: { id: string; role: string }, doc_id: string,
+): Promise<{ bytes: Buffer; sniffed_as: string | null; filename: string } | null> {
+  await sweepOriginals(d, actor);
+  const r = d.db.get<{ original_kept_at: string | null; original_deleted_at: string | null; sniffed_as: string | null; filename: string; logical_document_id: string | null }>(
+    'SELECT original_kept_at, original_deleted_at, sniffed_as, filename, logical_document_id FROM documents WHERE id = ?', [doc_id]);
+  if (r === undefined || r.original_kept_at === null || r.original_deleted_at !== null) return null;
+  const bytes = await d.store.openOriginal(durableKeyFor(doc_id));
+  d.audit.append({
+    at: d.now(), kind: 'DOCUMENT_ORIGINAL_OPENED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+    object_type: 'document', object_id: r.logical_document_id ?? doc_id, detail: { version: doc_id },
+  });
+  return { bytes, sniffed_as: r.sniffed_as, filename: r.filename };
+}
+
+/**
+ * PHASE 140 — DELETE EVERY KEPT ORIGINAL WHOSE TIME IS UP. Runs whenever a folder or an original is opened, and from
+ * `node src/cli.ts sweep-originals`. It deletes, then records — a record written first would claim a deletion that had
+ * not happened. A file already gone is recorded as deleted: the time is up either way, and nothing is left to serve.
+ * Returns how many it deleted.
+ */
+export async function sweepOriginals(
+  d: { db: Db; store: FsObjectStore; now: () => string; audit: AuditLog },
+  actor: { id: string; role: string } | null,
+): Promise<number> {
+  const at = d.now();
+  const due = d.db.all<{ id: string; logical_document_id: string | null }>(
+    'SELECT id, logical_document_id FROM documents WHERE original_kept_at IS NOT NULL AND original_deleted_at IS NULL AND original_delete_after <= ?', [at]);
+  for (const r of due) {
+    try { await d.store.delete(durableKeyFor(r.id)); } catch { /* already gone: recorded below all the same */ }
+    d.db.run('UPDATE documents SET original_deleted_at = ? WHERE id = ? AND original_deleted_at IS NULL', [at, r.id]);
+    d.audit.append({
+      at, kind: 'DOCUMENT_ORIGINAL_DELETED', outcome: 'ALLOWED', actor_id: actor?.id ?? null, actor_role: actor?.role ?? null,
+      object_type: 'document', object_id: r.logical_document_id ?? r.id, detail: { version: r.id, why: 'its time was up' },
+    });
+  }
+  return due.length;
 }
 
 /**

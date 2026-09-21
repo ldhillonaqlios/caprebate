@@ -677,8 +677,16 @@ linked to the claim and the **Requests**. To ask the client for a document:
 
 The request is marked received only when the client's upload of that type passes the checks. There
 is no button for it. A request made in error can be taken back with **Withdraw — asked in error**
-while it is still open. **Documents** in the menu lists every document you may read, across every
-organisation and claim (`B44`).
+while it is still open.
+
+**7a. A company's files (Phase 140).** On a client's page, press **Files** at the top — the folder button with a number
+on it (the number is how many of the company's files you may open). The files are in folders: **From the client**,
+**From Cap Rebate**, **Asked for — still waiting**, and one folder for each claim. Each file shows its name, who sent it,
+the date, and what we read from it. To add one of your own, use **Upload a file**: drop the file on the box (or tap it
+to choose), say **What is it?** and **Which claim is it for?**, and tick **Let the client see this file** only if they
+should — **it is unticked, so the client cannot see it unless you tick it**. You can change your mind later with **Let
+the client see it** or **Hide it from the client**. There is no **Documents** menu any more: to look across every client,
+open **Search** and press **Find a document across every client** (`B44`). Training: `B47`.
 
 **8. Introducers, referrals and sharing progress.** **Introducers** (Address: `/staff/introducers`) lists
 the firms that refer clients. None of their people ever has a login.
@@ -727,7 +735,7 @@ recorded on the organisation as its accountant or adviser can join, and nobody o
 - **Finance**.
 - **Claims**: the reference and the client; the value reads "not shown to this role".
 - A claim's page: its **Documents** (the fee invoice and the signed letter only), **Money** (the claim's own invoices), and an activity timeline of "Financial events only". A claim at the invoice stage also shows **Our estimated fee** — the fee the finance view expects — until our fee is raised.
-- **Documents**: the documents Accounting may read, across every claim, and no others.
+- **Documents**: the documents Accounting may read, across every claim, and no others — from **Search**, **Find a document across every client** (there is no Documents menu since Phase 135).
 - **Search**: claim references and invoice numbers.
 - **Introducers**: each firm's name with **Fees invoiced** and **Fees paid**.
 
@@ -1903,6 +1911,9 @@ Address: `/staff/claims/{claim}` (the **Documents** panel)
 2. Under **Ask the client for a document — it goes to their portal, and only a type with a receipt policy can be asked for**, choose **Document**.
 3. Fill in **Why we need it**, **What it holds up** and, if there is one, **Due**.
 4. Press **Request it**. It shows under **Requests** as "requested — waiting on the client".
+   To add a file yourself, use **Upload a file to this claim** at the foot of the panel: drop the file (or tap to
+   choose), say what it is, tick **Let the client see this file** only if they should, and press **Upload**. You land
+   in the claim's folder of the company's files (`B47`).
 5. Wait for the client's upload; the request turns to "received, by an upload of the requested type".
 6. If you asked in error, press **Withdraw — asked in error** while it is still open.
 
@@ -1946,25 +1957,26 @@ Address: `/staff/documents/{document}`
 2. Read **Type**, **Who may read it**, **The receipt strip** and **The type's deletion clock today**.
 3. Under **Linked to**, see each claim or property. Press **End this link** to stop a link — it is ended, not deleted.
 4. Under **Version history**, read each version's row.
-5. To add a newer copy, press **Upload a new version**. It becomes version 2; version 1 stays.
+5. To add a newer copy, drop the file on the box under **Version history** (or tap it to choose) and press **Upload a new version**. It becomes version 2; version 1 stays.
+6. Under **Who can see it**, the page says **The client can see this** or **Only Cap Rebate can see this**. On a file we sent, press **Let the client see it** or **Hide it from the client** to change it (Admin and Sales).
 
 **What it will refuse, and why**
 - A role the type does not admit (for example Accounting, or a surveyor off the job, opening a lease) is refused, and the refusal is logged.
-- Asking for the original answers "That file no longer exists, by design". The original was deleted from quarantine once the checks ran, and nothing stored a copy.
+- Asking for the original (Admin) answers "We read each file and then delete it. We keep what we took from it, not the file." with **See what we took from it**. Keeping originals is switched off until Lakhbir and the data protection officer decide (see `B47`).
 - A new version of a different type: "a new version of … must be of the same type."
 - Ending a link twice: "that link has already been ended."
 
 **Try it on the demo**
 After the client's lease upload (`C6` exercise), as Sales open the lease from CR-2026-0003. **Who may read it**
 reads "Claim evidence — Admin, Sales, a surveyor on an assigned job, and the client". Version 1 is
-"the client", "received: stripped, and the original deleted from quarantine". Its deletion clock
+"the client", "Read — we kept what we need", and its original "Deleted …, once we had read it". Its deletion clock
 reads "RET-7 … DERIVED, NOT APPROVED … so no deletion date is computed". Signed in as Accounting, or
 as the surveyor, the same address is refused.
 
 **Check yourself**
 - *Why does the page name "the client" rather than a person?* — Versions record a role, never a name.
 - *A newer lease arrives. What happens to the old one?* — It stays as version 1; nothing overwrites.
-- *Can Admin download the original?* — No. It was deleted by design, and the download answers that it no longer exists.
+- *Can Admin download the original?* — Not today. It was deleted by design once read. If Lakhbir switches on keeping originals, Admin can open one until its time is up.
 
 ---
 
@@ -2356,7 +2368,8 @@ jobs. A client is refused; the portal is the client's list.
 Address: `/staff/documents`
 
 **How to do the common job**
-1. Open **Documents** in the menu.
+1. Open **Search** and press **Find a document across every client**. (Documents is on no menu since Phase 135. A
+   company's own files are on its page, under **Files** — `B47`; asking this list for one company alone takes you there.)
 2. Narrow the list with **Type**, **Organisation**, **Claim** and **State** (Received, Not received yet, or Refused), and choose an **Order**.
 3. Press **Show**. The line under the heading says how many are shown and what was filtered; **Clear** starts again.
 4. Open a document by its name to see its versions (`B28`).
@@ -2458,6 +2471,55 @@ opens and the **Settings** tab is still marked.
 
 ---
 
+### Training — `B47` the client's files
+
+**What it is for**
+Every file a company has sent us, and every file we have added, in one place — in folders. You can see what the
+client sent, add your own, and choose whether the client sees yours.
+
+**Who can open it**
+Admin and Sales see every file and can upload. Accounting sees only the files it may read (the fee invoice and the
+signed letter). The view-only login can look but not upload. A surveyor works from the survey job instead, and a client
+uses their own portal.
+
+Address: `/staff/clients/{company}/files` — or press **Files** at the top of the client's page.
+
+**How to do the common job**
+1. Open the client and press **Files** (the folder button; its number is how many files you may open).
+2. Press a folder: **From the client**, **From Cap Rebate**, **Asked for — still waiting**, or a claim's own folder.
+   **Show every file** puts them all back.
+3. Read a file's card: its name, who sent it, the date, and what we read from it ("We read 3 pages…").
+4. To add a file, under **Upload a file**: drop it on the box (or tap and choose it), pick **What is it?**, pick **Which
+   claim is it for?** (or leave "The whole company"), and tick **Let the client see this file** only if they should.
+   Press **Upload**. It lands in **From Cap Rebate**, already read.
+5. To change who sees one of our files later, press **Let the client see it** or **Hide it from the client** on its card.
+
+**What it will refuse, and why**
+- No file: "Choose a file first."
+- A kind of file we do not take: "We cannot take that kind of file. Send a PDF, a photo (JPEG or PNG), or a Word or Excel file."
+- A file too big: "That file is too big. The most we take is 50 MB."
+- A claim of another company: "Choose one of this company’s claims."
+- A login that may not upload (Accounting, a surveyor, the view-only login) is refused before anything is read.
+
+**Why the original says "Read and then deleted"**
+We read every file, keep what we need from it, and delete the file itself. That is our promise to keep as little as we
+can. Keeping the originals is built and switched off: Lakhbir and the data protection officer decide it, under the
+question *"Should we keep the files clients upload, or keep deleting them once read?"*. If it is switched on, a card
+shows **Open the original** to Admin, until the file's time is up; then it is deleted.
+
+**Try it on the demo**
+As Sales, open Elverton Private Hospital Limited and press **Files** — it reads 0. Upload any PDF as a **Fire risk
+assessment** for the main site, leaving the box unticked → "Uploaded. We have read it." and a card in **From Cap Rebate**
+reading "Only Cap Rebate can see this". Press **Let the client see it** → "The client can see that file now." Sign in as
+Corvale's client and send a lease from the portal; back as Sales, Corvale's **Files** shows it under **From the client**.
+
+**Check yourself**
+- *You upload a report and forget the tick. Can the client see it?* — No. The default is no; press **Let the client see it**.
+- *Can you open the lease the client sent?* — Not the file itself: it was read and deleted. The card says what we took from it.
+- *Where did the Documents menu go?* — A company's files are under **Files** on its page; **Search** finds a document across every client.
+
+---
+
 ### Training — `C6` the portal's CRM additions
 
 **Phase 139, 21 September 2026 — "What Cap Rebate has done".** Under **Your claims** the client now sees a card
@@ -2499,7 +2561,7 @@ Address: `/portal`
 **How to do the common job**
 1. Sign in as the client; you land on your claim page.
 2. Under **Questions we still need answered**, type an answer or tick **I don't know**, and press **Send this answer**.
-3. Under **Documents we have asked you for**, press **Get an upload link for this document**. On **Your upload link is ready**, press **Choose the file**, pick it, and press **Send the file**.
+3. Under **Documents we have asked you for**, drop the file on the box (or tap it and choose the file), and press **Send this file**. The page comes back with "Thank you. We have your file."
 4. Under **What we have issued to you**, read what has been issued, with its version and date.
 5. Under **The firm that referred you**, press **Stop telling … how my claim is progressing** to stop sharing.
 
@@ -2508,7 +2570,8 @@ Address: `/portal`
 - Stopping when nothing is shared: **Not changed** — "Nothing is being shared with that firm, so there is nothing to stop."
 - Saying yes from the portal (switched off): "You cannot turn this on from your portal yet. If you would like us to keep the firm informed, tell us and we will ask you properly."
 - Reusing an upload link: "That link has been used" — nothing is written twice.
-- Sending with no file chosen: **Not accepted** — "no file was attached. Choose the file and send it again."
+- Sending with no file chosen: the browser asks for one first; sent anyway, **Not sent** — "Choose a file first."
+- A kind of file we do not take: **Not sent** — "We cannot take that kind of file. Send a PDF, a photo (JPEG or PNG), or a Word or Excel file."
 
 **Try it on the demo**
 First, as Sales, put a question to Corvale from its business page and request the lease (`B27`).

@@ -236,6 +236,12 @@ export type AuditKind =
    */
   | 'FACT_APPROVED' | 'FACT_UNAPPROVED' | 'CLIENT_STEP_TOLD' | 'CLIENT_STEP_TAKEN_BACK'
   /**
+   * Phase 140, 21 September 2026: staff said whether the client can see one of the company's files; a kept original
+   * opened by a member of staff; a kept original deleted when its time was up. The document's id and the version's
+   * only — never a file name, never what the file says.
+   */
+  | 'DOCUMENT_SHOWN_TO_CLIENT' | 'DOCUMENT_HIDDEN_FROM_CLIENT' | 'DOCUMENT_ORIGINAL_OPENED' | 'DOCUMENT_ORIGINAL_DELETED'
+  /**
    * Phase 133j, 18 September 2026: the website's enquiry form received, and Sales opening an enquiry as a lead or
    * closing it; a person asking for their own client login after the assessment, and confirming it from the email.
    * Ids, the sector code and the decision only — never the name, the address or what the person wrote.

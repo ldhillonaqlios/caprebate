@@ -551,6 +551,32 @@ details.undo>summary{font-size:14px}
 .donelist li{padding:.3rem 0;border-top:1px solid var(--line)}
 .donelist li.rechecking{color:var(--warn)}
 .doneclaim{font-size:18px;margin:.8rem 0 .2rem}
+/* PHASE 140: the company's files. A folder button in the header with a count; folders as tiles; a file as a card; the drop
+   area IS the browser's own file picker, drawn large — no script, and a dropped file lands in it. Brand tokens only. */
+.filesbtn-row{margin:.6rem 0 0}
+.filesbtn{display:inline-flex;align-items:center;gap:.45rem;padding:.45rem .8rem;border:1px solid var(--ink);border-radius:var(--radius);background:var(--white);color:var(--ink);font-weight:700;text-decoration:none}
+.filesbtn:hover{background:var(--mist)}
+.filecount{display:inline-block;min-width:1.6rem;padding:0 .4rem;border-radius:999px;background:var(--ink);color:var(--white);text-align:center;font-size:14px;line-height:1.6}
+.fold-svg{flex:none}
+.foldertile{padding:0;border-top-color:var(--mut);display:flex;flex-direction:column}
+.foldertile.current{border-color:var(--ink);border-top-color:var(--ink)}
+.foldertile .tilelink{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem .5rem;padding:.75rem .9rem;color:var(--ink);text-decoration:none;flex:1 1 auto}
+.foldertile .tilelink:hover{background:var(--mist)}
+.foldertile .tilename{font-weight:700;font-size:18px;min-width:0;overflow-wrap:anywhere}
+.foldertile .tileline{flex:1 1 100%;color:var(--body);font-size:16px}
+.foldertile .tileref{margin:0;padding:0 .9rem .6rem}
+.filecard{border-top-color:var(--mut)}
+.filecard.refused,.filecard.late{border-top-color:var(--stop)}
+.filefrom{color:var(--body);font-size:16px}
+.fileread{margin:.3rem 0;padding-left:1.1rem}
+.uploadbox{margin:0 0 1rem}
+.uploadbox h2{margin-top:0}
+.dropzone{display:block;border:2px dashed var(--mut);border-radius:var(--radius);background:var(--mist);padding:1rem;margin:.4rem 0 .8rem;text-align:center;cursor:pointer}
+.dropzone:hover,.dropzone:focus-within{border-color:var(--ink)}
+.dropwords{display:block;font-weight:700;color:var(--ink);margin-bottom:.5rem}
+.dropzone input[type="file"]{display:block;width:100%;max-width:100%;min-height:3.5rem;box-sizing:border-box;padding:.6rem;background:var(--white);border:1px solid var(--line);border-radius:var(--radius)}
+.uploadbox .tickbox{display:flex;margin:.6rem 0 .8rem}
+a.small{font-size:16px;font-weight:400;margin-left:.5rem}
 
 /* ---------------- SMALLER SCREENS ---------------- */
 @media (max-width:960px){
@@ -613,6 +639,11 @@ details.undo>summary{font-size:14px}
   .tickform{display:block}
   .tickform>*{margin:.25rem 0}
   .tickform input,.tickform select{width:100%;max-width:none}
+  /* PHASE 140: folders two to a row on a phone; the drop area full width. */
+  .foldertiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+  .foldertile .tilelink{padding:.6rem .65rem}
+  .foldertile .tilename{font-size:16px}
+  .uploadbox select{width:100%;max-width:none}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 `;

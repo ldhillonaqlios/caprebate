@@ -45,6 +45,8 @@ import { claimTilesFor, organisationSections, renderClaim, type CrmPageDeps } fr
 import { askButton, businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4 } from './engaged-pages.ts';
 import { checksPanelIfPermitted } from './approvals.ts';
 import { checksBlock, checksSummary, STEP_ANCHOR } from './approvals-pages.ts';
+import { clientFolder } from './documents.ts';
+import { filesButton, folderTiles } from './client-files-pages.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -241,12 +243,16 @@ function clientPage(
     });
   }
 
+  /* PHASE 140: THE COMPANY'S FILES, AS FOLDERS. The same folders the Files page draws, each a tile that opens it there. */
+  const folder = clientFolder({ db, now: d.app.now }, actor, org);
+  const waitingFiles = folder.asked?.length ?? 0;
   sections.push({
-    key: 'client.documents', id: 'documents', kind: 'documents', heading: 'Documents',
-    count: org.documents.documents.length ?? 0,
-    status: (org.documents.documents.length ?? 0) > 0 ? 'DONE' : 'NOT_STARTED',
-    working: (org.documents.documents.length ?? 0) > 0 ? 'Nothing right now.' : 'No document yet.',
-    need: [], from: ['the client', 'the surveyor', 'our own letters'], body: s.documents,
+    key: 'client.documents', id: 'documents', kind: 'documents', heading: 'Files',
+    count: folder.files.length,
+    status: waitingFiles > 0 ? 'WAITING' : folder.files.length > 0 ? 'DONE' : 'NOT_STARTED',
+    working: waitingFiles > 0 ? `Waiting for ${waitingFiles} ${waitingFiles === 1 ? 'file' : 'files'} from the client.`
+      : folder.files.length > 0 ? 'Nothing right now.' : 'No file yet.',
+    need: [], from: ['the client', 'Cap Rebate'], body: folderTiles(folder),
   });
 
   const quick: QuickAction[] = [
@@ -267,7 +273,7 @@ function clientPage(
         { label: 'Owner', value: org.owner?.name ?? 'nobody yet' },
         waiting === null ? null : { label: 'Waiting on', value: waiting },
         p === null ? null : { label: 'Engagement letter', value: p.row.letter_label },
-      ], raw(''), legal === null ? raw('') : h`${legal}`)}
+      ], filesButton(org.id, folder.files.length), legal === null ? raw('') : h`${legal}`)}
       ${recordLayout(h`${sections.map((x) => section({ ...x, ...(openNow === x.id ? { open_now: true } : {}) }, ctx))}`, sidePanel(null, quick))}
       <p><a href="/staff/clients">Back to the list</a></p>`,
   });

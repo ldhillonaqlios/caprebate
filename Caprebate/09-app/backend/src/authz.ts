@@ -142,6 +142,11 @@ export type Obj =
       readonly assigned_surveyor_ids: readonly string[];
       /** CRM 6 of 10: an issued client report whose figure is released — see `clientDocument`. Absent is not true. */
       readonly released_to_client?: boolean;
+      /**
+       * PHASE 140: whether the client may see this file at all — theirs if they sent it, ours only once staff say so. Read by
+       * src/web/documents.ts (`shownToClient`). Absent is not true: a client is refused a document that does not say.
+       */
+      readonly shown_to_client?: boolean;
     }
   | { readonly type: 'document_type'; readonly id: string }
   | { readonly type: 'document_request'; readonly id: string; readonly business_id: string }
@@ -274,6 +279,8 @@ type DocumentFacts = {
    * src/web/documents.ts. Absent on every other document, and absent is not true.
    */
   released_to_client?: boolean;
+  /** PHASE 140: see the `document` object. Absent is not true. */
+  shown_to_client?: boolean;
 };
 
 /** Sales works the claim: its evidence, its team's papers and the letter. Not the fee invoice — `invoice.read` is not Sales's. */
@@ -294,8 +301,11 @@ const surveyorDocument = (a: Actor, o: DocumentFacts): boolean =>
  * and their own invoice, which carry the fee they agreed, they read.
  */
 const clientDocument = (a: Actor, o: DocumentFacts & { business_id: string }): boolean =>
-  ownBusiness(a, o) && (o.carries_value === false || o.readers === 'FINANCE' || o.readers === 'ENGAGEMENT_LETTER'
-    // CRM 6 of 10: the issued client report, once the tax adviser's sign-off record exists, and nothing else.
+  ownBusiness(a, o) && (
+    // PHASE 140: and never a file staff have not chosen to show them. A file the client sent is shown to them by rule.
+    (o.shown_to_client === true && (o.carries_value === false || o.readers === 'FINANCE' || o.readers === 'ENGAGEMENT_LETTER'))
+    // CRM 6 of 10: the issued client report, once the tax adviser's sign-off record exists, and nothing else. The release IS
+    // the decision to show it, so it is not asked a second time.
     || o.released_to_client === true);
 
 /**
@@ -703,6 +713,8 @@ const RULES: RuleTable = {
   'document.read_original': { ADMIN: always, CLIENT: clientDocument as Rule<ObjType> },
   'document.upload': { ADMIN: always, SALES: always, CLIENT: isOwnBusiness as Rule<ObjType> },
   'document.link': { ADMIN: always, SALES: always },
+  /** PHASE 140: whether the client can see a file — the two roles that upload one. Never the client, never a surveyor. */
+  'document.show_to_client': { ADMIN: always, SALES: always },
   'document_type.read': { ADMIN: always, SALES: always },
   'document_type.write': { ADMIN: always },
   'document_request.read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
@@ -1028,6 +1040,7 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'document.read_original': NO('the raw document store is ADMIN\'s and the client\'s own'),
   'document.upload': NO(WRITES),
   'document.link': NO(WRITES),
+  'document.show_to_client': NO(WRITES),
   'document_type.read': YES('the document types, as a setting'),
   'document_type.write': NO(WRITES),
   'document_request.read': YES('what has been asked of a client'),
