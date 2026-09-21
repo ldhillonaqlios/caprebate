@@ -1866,7 +1866,7 @@ Address: /staff/automation
 
 Address: /staff/templates
 
-**What it is for.** Standard wording for an email to one contact on a claim. The contact's details are filled in automatically, and the message is queued to the outbox. In this build nothing is ever sent.
+**What it is for.** Standard wording to start an email from. On a client's **Email** page, **Start from a template** fills in the subject and the message for the contact and claim chosen; you change anything before you save. In this build nothing is ever sent.
 
 **Who can open it.** Admin and Sales can read it; only Admin saves a template. Accounting, Surveying and clients are refused.
 
@@ -1874,25 +1874,25 @@ Address: /staff/templates
 1. Open **Add a template** and fill in "Label", "Subject" and "Body".
 2. Use only the six merge fields, spelt exactly: {{contact_name}} {{organisation}} {{property_address}} {{claim_reference}} {{next_action}} {{due_date}}.
 3. Set "Active" and press **Save the template**.
-4. To use a template, open the claim and find "Email a contact from a template". Choose "Template" and "To", then press **Queue to the outbox**.
-5. Check it at the foot of **Your account**, under "The outbox — what would have been sent". It is marked **NOT SENT**.
+4. To use a template, open the client and press **Email**. Open **Start from a template**, choose it and press **Use this template**.
+5. Check the subject and the message, change what you like, and press **Save the email**. The page says "Saved — emails are not being sent yet."
 
 **What it will refuse, and why**
 - Anything about invoices, payment or bank details, including the *shape* of a sort code or account number. For example: "A template may not carry a bank transfer. Bank details are never sent from a template, and the invoice email waits on the invoice-fraud procedure." Emails carrying bank details are how invoice fraud works.
 - Tipping-off words, for example "A template may not carry a reference to due diligence." Nothing a client reads may suggest they are under suspicion.
 - A merge field outside the six: "“{{first_name}}” is not a merge field. The merge fields are {{contact_name}}, …".
-- Queuing to an organisation marked do not contact: "Nothing was queued — the outbox refuses it."
+- Emailing a company marked do not contact: "You cannot email this company."
 
 **Try it on the demo**
 1. Add a template labelled *Payment reminder*, body *Dear {{contact_name}}, please send the payment by bank transfer.* *Observed:* "Template not saved — A template may not carry a bank transfer. …"
 2. Add *Welcome* with subject *Welcome, {{first_name}}*. *Observed:* "“{{first_name}}” is not a merge field. …"
 3. Add *Documents we still need*, body *Dear {{contact_name}}, for {{organisation}} we still need: {{next_action}}, by {{due_date}}.* *Observed:* it is saved and listed.
-4. Open claim **CR-2026-0004** (Dunmarrow Medical Practice Limited). Queue "What happens next on your claim" to "Decision Maker Contact". *Observed:* the Settings outbox shows TEMPLATE · "Dunmarrow Medical Practice Limited — the next step on your claim" · **NOT SENT** (since Phase 134 a subject leads with the company).
+4. Open **Dunmarrow Medical Practice Limited** and press **Email**. Start from "What happens next on your claim" for "Decision Maker Contact" and claim CR-2026-0004. *Observed:* the subject reads "Dunmarrow Medical Practice Limited — the next step on your claim" (since Phase 134 a subject leads with the company), and after **Save the email** the page says "Saved — emails are not being sent yet."
 
 **Check yourself**
 1. *Can a template include our bank details "just for this client"?* No. Any bank detail is refused, and details are confirmed on a channel other than email.
 2. *What does the client see where nobody recorded a due date?* A visible gap in square brackets, never a blank.
-3. *Where do you check what was "sent"?* The outbox at the foot of Settings. Everything there reads NOT SENT.
+3. *Where do you check what was saved?* Under **Emails to** the company on its Email page, and on its timeline. Nothing is sent yet.
 
 ---
 
