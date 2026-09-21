@@ -476,9 +476,10 @@ describe('reports with a period — the dashboard over a period is the reports s
       const sv = JSON.parse(s.body) as DB.Dashboard;
       assert.deepEqual(sv.tiles.map((t) => t.key), ['my_jobs']);
       assert.equal(sv.period.key, 'QUARTER');
-      const page = await (await h.signIn('sales')).get('/staff/dashboard?period=RANGE&from=2026-01-01&to=2026-12-31');
-      assert.match(page.body, /this is the reports screen/);
-      assert.match(page.body, /Read over <strong>1 Jan 2026 to 31 Dec 2026<\/strong>/);
+      const page = await (await h.signIn('sales')).get('/staff/reports?period=RANGE&from=2026-01-01&to=2026-12-31');
+      // PHASE 136: the page behind Home's Reports tile, in plainer words.
+      assert.match(page.body, /<h1>Reports<\/h1>/);
+      assert.match(page.body, /Showing <strong>1 Jan 2026 to 31 Dec 2026<\/strong>/);
     } finally { h.close(); }
   });
 });
@@ -858,12 +859,16 @@ describe('the defects the guide found by running every exercise on the demo', ()
       const brackenfell = db.get<{ id: string; claim_ref: string; owner_id: string | null }>(
         "SELECT c.id, c.claim_ref, c.owner_id FROM claims c JOIN businesses b ON b.id = c.business_id WHERE b.name = 'Brackenfell Dental Partnership LLP'");
       assert.ok(brackenfell && brackenfell.owner_id === null);
-      const heading = 'Claims nobody owns that break the one-next-action rule';
+      // PHASE 136: ONE PLACE FOR "WHAT NEXT". Home no longer repeats the list: its next-actions row links to Tasks' view
+      // "Claims with no next step", which carries the claim nobody owns — for Sales and Admin, and for nobody else.
+      const link = '<a class="tilelink" href="/staff/next-actions"><span class="tilename">Claims with no next step</span>';
       for (const role of ['sales', 'admin']) {
-        const page = await (await h.signIn(role)).get('/staff');
-        assert.ok(page.body.includes(heading) && page.body.includes(brackenfell.claim_ref), `${role}’s landing page`);
+        const as = await h.signIn(role);
+        assert.ok((await as.get('/staff')).body.includes(link), `${role}’s landing page links to the list`);
+        const list = await as.get('/staff/next-actions');
+        assert.ok(list.body.includes(brackenfell.claim_ref), `${role}’s list carries the unowned claim`);
       }
-      for (const role of ['accounting', 'surveying']) assert.equal((await (await h.signIn(role)).get('/staff')).body.includes(heading), false, role);
+      for (const role of ['accounting', 'surveying']) assert.equal((await (await h.signIn(role)).get('/staff')).body.includes(link), false, role);
       const sales = who(db, 'SALES');
       assert.ok(T.myWork(db, sales, h.made.app.now()).unowned_claims_breaking.some((c) => c.id === brackenfell.id));
       db.run('UPDATE claims SET owner_id = ? WHERE id = ?', [sales.id, brackenfell.id]);
@@ -899,7 +904,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
 
       const invoice = db.get<{ id: string }>('SELECT id FROM invoices WHERE claim_id = ? LIMIT 1', [d.assessed]);
       assert.ok(invoice);
-      for (const path of ['/staff/dashboard', `/staff/finance/${invoice.id}`, `/staff/claims/${d.atInvoice}`, `/staff/claims/${d.assessed}`]) {
+      for (const path of ['/staff/reports', `/staff/finance/${invoice.id}`, `/staff/claims/${d.atInvoice}`, `/staff/claims/${d.assessed}`]) {
         const r = await admin.get(path);
         assert.equal(r.status, 200, path);
         const identifiers = [...visible(r.body).matchAll(/\b([a-z]+[A-Z][a-zA-Z]+|CB_[A-Z]+(?:\.[A-Za-z_]+)?)\b/g)].map((m) => m[1]);

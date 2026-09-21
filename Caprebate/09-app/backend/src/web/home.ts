@@ -1,0 +1,297 @@
+/**
+ * HOME AS TILES — PHASE 136, 21 September 2026.
+ *
+ * Lakhbir, 18 September 2026: "tiles over heavy text, especially on the menu page. The menu page should flow: new leads,
+ * existing leads' next actions, today and overdue, pipeline by stage." This file draws exactly that, as rows of tiles:
+ *
+ *   Sales, Admin, Read only   1 New leads · 2 Existing leads — next actions · 3 Today and overdue · 4 Pipeline by stage
+ *   Admin, then               5 Users, Switches, Audit log, Refused sign-ins
+ *   Accounting                the three money tiles, then Today and overdue
+ *   Surveying                 the two job tiles, then Today and overdue
+ *
+ * The dashboard's figures are behind the "Reports" tile (/staff/reports), which ends the pipeline row, or the money or
+ * job row, for every login the dashboard's own gate admits.
+ *
+ * NOTHING HERE DECIDES WHO SEES WHAT. Every row reads through the store function its own screen reads — the leads list,
+ * the pipeline board, the finance view, the survey jobs, the audit log — each of which asks `can()` on every row. A row
+ * whose section refuses the login is not drawn; a row the login may see but that has nothing in it says so in one line,
+ * so empty is never mistaken for broken. No tile carries a claim's value, and no tile carries more than three lines.
+ */
+
+import type { App } from '../app.ts';
+import type { Actor } from '../authz.ts';
+import { h, raw, type Safe } from './html.ts';
+import { opens } from './navigation.ts';
+import { assertDashboard } from './dashboard.ts';
+import { assertLeadSection } from './leads.ts';
+import { leadsList, type LeadListRow } from './lists.ts';
+import { pipelineBoard, pipelineBoardGate } from './crm.ts';
+import { financeDashboard } from './invoices.ts';
+import { assertFinanceSection } from './finance.ts';
+import { assertSurveySection, surveyorJobs } from './surveyor.ts';
+import { auditLogView } from './audit-log.ts';
+import { localDate } from './localtime.ts';
+import * as T from './tasks.ts';
+import * as S from './settings.ts';
+
+/** One tile: a name and at most two more lines. `late` draws it red. */
+export type HomeTile = {
+  readonly href: string;
+  readonly name: string;
+  readonly lines: readonly string[];
+  readonly late?: boolean;
+  /** A count tile: the number is the name, drawn large. */
+  readonly count?: boolean;
+};
+
+/** Most tiles a row draws before its last tile becomes "See all". */
+export const ROW_LIMIT = 12;
+
+/** Text on a tile is cut to this many characters, so no tile runs past three lines at phone width. */
+const TILE_TEXT = 48;
+
+function short(s: string): string {
+  const t = s.replace(/\s+/g, ' ').trim();
+  if (t.length <= TILE_TEXT) return t;
+  const cut = t.slice(0, TILE_TEXT - 1);
+  const space = cut.lastIndexOf(' ');
+  // At the last whole word, and never leaving a comma or a dash dangling before the ellipsis.
+  return `${(space > TILE_TEXT / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:—–-]+$/, '')}…`;
+}
+
+function plural(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+/* ================================================================== *
+ * WORKING DAYS — a new lead turns red once it has waited more than one
+ * ================================================================== */
+
+/**
+ * WHOLE WORKING DAYS FROM THE UK DATE A LEAD ARRIVED TO TODAY: every Monday to Friday after the day it came in, up to and
+ * including today. A lead in on Friday has waited one working day on Monday, and two — so red — on Tuesday. Bank
+ * holidays are counted as working days, so after one a lead turns red a day early rather than a day late.
+ */
+export function workingDaysSince(fromIso: string, nowIso: string): number {
+  const from = localDate(fromIso);
+  const to = localDate(nowIso);
+  if (from >= to) return 0;
+  let n = 0;
+  const d = new Date(`${from}T12:00:00Z`);
+  for (let i = 0; i < 400; i++) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const day = d.toISOString().slice(0, 10);
+    if (day > to) break;
+    const w = d.getUTCDay();
+    if (w !== 0 && w !== 6) n++;
+  }
+  return n;
+}
+
+export function waitedWords(days: number): string {
+  return days === 0 ? 'Came in today' : `Waiting ${plural(days, 'working day', 'working days')}`;
+}
+
+/* ================================================================== *
+ * DRAWING
+ * ================================================================== */
+
+function tile(t: HomeTile): Safe {
+  const cls = `tile hometile${t.late === true ? ' late' : ''}${t.count === true ? ' counttile' : ''}`;
+  return h`<li class="${cls}"><a class="tilelink" href="${t.href}">${t.count === true
+    ? h`<span class="tilecount">${t.name}</span>` : h`<span class="tilename">${t.name}</span>`}${
+    t.lines.slice(0, 2).map((l, i) => h`<span class="tileline${i === t.lines.length - 1 && t.late === true ? ' when' : ''}">${l}</span>`)}</a></li>`;
+}
+
+/** A row: its heading, then its tiles — or one line saying it is empty. */
+export function homeRow(id: string, title: string, tiles: readonly HomeTile[], empty: string, more?: { href: string; total: number }): Safe {
+  const shown = more !== undefined && more.total > tiles.length
+    ? [...tiles, { href: more.href, name: 'See all', lines: [`${more.total} in all`] }]
+    : tiles;
+  return h`<section class="homerow" aria-labelledby="row-${id}"><h2 id="row-${id}">${title}</h2>${
+    shown.length === 0 ? h`<p class="empty">${empty}</p>` : h`<ul class="tiles hometiles">${shown.map(tile)}</ul>`}</section>`;
+}
+
+function capped(tiles: readonly HomeTile[], href: string): { tiles: readonly HomeTile[]; more?: { href: string; total: number } } {
+  return tiles.length <= ROW_LIMIT ? { tiles } : { tiles: tiles.slice(0, ROW_LIMIT - 1), more: { href, total: tiles.length } };
+}
+
+/* ================================================================== *
+ * THE ROWS
+ * ================================================================== */
+
+/** In progress: a lead somebody has contacted that is not yet a claim, and not lost. */
+const IN_PROGRESS = new Set(['CONTACTED', 'QUALIFIED', 'NURTURE']);
+
+function leadsRows(actor: Actor, app: App, nowIso: string): Safe[] {
+  if (!opens(actor, assertLeadSection)) return [];
+  const rows = leadsList(app.db, actor, { filters: {}, sort: 'age' }).rows.filter((l) => l.claim === null);
+  const fresh = rows.filter((l) => l.status.key === 'NEW');
+  const freshTiles: HomeTile[] = fresh.map((l) => {
+    const days = workingDaysSince(l.lead_at, nowIso);
+    return { href: `/staff/leads/${l.id}`, name: short(l.organisation), lines: [`From ${short(l.source)}`, waitedWords(days)], late: days > 1 };
+  });
+  const lateCount = freshTiles.filter((t) => t.late === true).length;
+  const countTile: HomeTile = {
+    href: '/staff/leads?status=NEW', name: String(fresh.length), count: true, late: lateCount > 0,
+    lines: [fresh.length === 1 ? 'new lead' : 'new leads', ...(lateCount > 0 ? [`${lateCount} waiting too long`] : [])],
+  };
+  const a = capped(freshTiles, '/staff/leads?status=NEW');
+  const newRow = homeRow('new-leads', 'New leads', fresh.length === 0 ? [] : [countTile, ...a.tiles], 'No new leads.', a.more);
+
+  const going = rows.filter((l) => IN_PROGRESS.has(l.status.key))
+    .sort((x, y) => (x.next_action_due ?? '9999-99-99').localeCompare(y.next_action_due ?? '9999-99-99'));
+  const goingTiles: HomeTile[] = going.map((l: LeadListRow) => {
+    const due = T.dueReading(l.next_action_due, nowIso);
+    return {
+      href: `/staff/leads/${l.id}`, name: short(l.organisation),
+      lines: l.next_action === null ? ['No next step yet — add one'] : [`Next: ${short(l.next_action)}`, due.state === 'NO_DUE_DATE' ? 'No due date' : due.label],
+      late: due.overdue || l.next_action === null,
+    };
+  });
+  const b = capped(goingTiles, '/staff/leads?sort=next_action');
+  // ONE PLACE FOR "WHAT NEXT" (Phase 135, carried): the claims with no next step are Tasks' own view — linked, not repeated.
+  const claimsLink: HomeTile[] = opens(actor, T.nextActionsGate)
+    ? [{ href: '/staff/next-actions', name: 'Claims with no next step', lines: ['Open the list in Tasks'] }] : [];
+  const nextRow = homeRow('next-actions', 'Existing leads — next actions', goingTiles.length === 0 ? [] : [...b.tiles, ...claimsLink],
+    'No leads in progress.', b.more);
+  // An empty lead list still offers the claims link, beneath the one line that says the row is empty.
+  const nextRowFinal = goingTiles.length === 0 && claimsLink.length > 0
+    ? h`<section class="homerow" aria-labelledby="row-next-actions"><h2 id="row-next-actions">Existing leads — next actions</h2>
+        <p class="empty">No leads in progress.</p><ul class="tiles hometiles">${claimsLink.map(tile)}</ul></section>`
+    : nextRow;
+  return [newRow, nextRowFinal];
+}
+
+type Dated = { readonly due_on: string; readonly late: boolean; readonly tile: HomeTile };
+
+/**
+ * TODAY AND OVERDUE — every task due today or late that the login may read (its own and its team's for Accounting and
+ * Surveying; every one it may read for the others, which covers the next actions of leads and claims, since each of those
+ * is a task), and the questions and document requests it put to clients that are due today or late. Late first.
+ */
+function todayRow(actor: Actor, app: App, nowIso: string): Safe {
+  const db = app.db;
+  const work = T.myWork(db, actor, nowIso);
+  const own = actor.role === 'ACCOUNTING' || actor.role === 'SURVEYING';
+  const tasks = own ? work.tasks.filter((t) => t.due.state === 'OVERDUE' || t.due.state === 'DUE_TODAY') : T.tasksDueByToday(db, actor, nowIso);
+  const items: Dated[] = [];
+  for (const t of tasks) {
+    const org = t.about.find((a) => a.kind === 'organisation') ?? t.about.find((a) => a.kind === 'lead');
+    items.push({
+      due_on: t.due_on ?? '', late: t.due.overdue,
+      tile: { href: `/staff/tasks/${t.id}`, name: short(org?.label ?? t.title), lines: [...(org === undefined ? [] : [short(t.title)]), t.due.label], late: t.due.overdue },
+    });
+  }
+  for (const q of work.questions_waiting) {
+    if (q.due.state !== 'OVERDUE' && q.due.state !== 'DUE_TODAY') continue;
+    items.push({
+      due_on: '', late: q.due.overdue,
+      tile: { href: `/staff/clients/${q.business_id}`, name: short(q.client), lines: [`Question: ${short(q.question)}`, q.due.label], late: q.due.overdue },
+    });
+  }
+  for (const r of work.document_requests_outstanding) {
+    if (r.due.state !== 'OVERDUE' && r.due.state !== 'DUE_TODAY') continue;
+    items.push({
+      due_on: '', late: r.due.overdue,
+      tile: { href: `/staff/clients/${r.business_id}`, name: short(r.client), lines: [`Document: ${short(r.type_label)}`, r.due.label], late: r.due.overdue },
+    });
+  }
+  const ordered = [...items.filter((x) => x.late), ...items.filter((x) => !x.late)].map((x) => x.tile);
+  const c = capped(ordered, '/staff/tasks');
+  return homeRow('today', 'Today and overdue', c.tiles, 'Nothing is due today, and nothing is late.', c.more);
+}
+
+function reportsTile(actor: Actor): HomeTile[] {
+  return opens(actor, assertDashboard) ? [{ href: '/staff/reports', name: 'Reports', lines: ['Figures by month, quarter or year'] }] : [];
+}
+
+function pipelineRow(actor: Actor, app: App, nowIso: string): Safe[] {
+  if (!opens(actor, pipelineBoardGate)) return [];
+  const board = pipelineBoard(app.db, actor, nowIso);
+  const tiles: HomeTile[] = board.columns.map((col) => ({
+    href: `/staff/claims?stage=${encodeURIComponent(col.key)}`, name: col.label, lines: [plural(col.cards.length, 'claim', 'claims')],
+  }));
+  if (board.on_hold.length > 0) tiles.push({ href: '/staff/claims?status=ON_HOLD', name: 'On hold', lines: [plural(board.on_hold.length, 'claim', 'claims')] });
+  return [homeRow('pipeline', 'Pipeline by stage', [...tiles, ...reportsTile(actor)], 'No claims yet.')];
+}
+
+const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  BELOW: 'Below the VAT limit',
+  INSIDE_MARGIN: 'Close to the VAT limit',
+  OVER: 'Over the VAT limit — tell Lakhbir',
+  CANNOT_SAY: 'Cannot tell — a setting is missing',
+});
+
+function moneyRow(actor: Actor, app: App, nowIso: string): Safe[] {
+  if (!opens(actor, assertFinanceSection)) return [];
+  const f = financeDashboard(app.db, actor, nowIso);
+  const band = f.vat.rolling.band;
+  const tiles: HomeTile[] = [
+    {
+      href: '/staff/finance#claim-invoices', name: 'Invoices due',
+      lines: [`${f.totals.outstanding} not yet paid`, f.totals.overdue_count === 0 ? 'None late' : `${f.totals.overdue} late (${plural(f.totals.overdue_count, 'invoice', 'invoices')})`],
+      late: f.totals.overdue_count > 0,
+    },
+    {
+      href: '/staff/finance#to-invoice', name: 'Fees to invoice',
+      lines: [f.expected.claims.length === 0 ? 'None waiting' : `${plural(f.expected.claims.length, 'claim', 'claims')} ready for our fee`],
+    },
+    {
+      href: '/staff/finance#vat-monitoring', name: 'VAT position',
+      lines: [VAT_WORDS[band] ?? band, `Last 12 months: ${f.vat.rolling.turnover}`], late: band === 'INSIDE_MARGIN' || band === 'OVER',
+    },
+  ];
+  return [homeRow('money', 'Money', [...tiles, ...reportsTile(actor)], 'Nothing to show.')];
+}
+
+function jobsRow(actor: Actor, app: App): Safe[] {
+  if (!opens(actor, assertSurveySection)) return [];
+  const jobs = surveyorJobs(app.db, actor);
+  const waiting = jobs.filter((j) => j.state === 'SEALED').length;
+  const tiles: HomeTile[] = [
+    { href: '/staff/survey', name: 'Waiting for your figures', lines: [waiting === 0 ? 'None waiting' : plural(waiting, 'job', 'jobs')] },
+    { href: '/staff/survey', name: 'All your survey jobs', lines: [plural(jobs.length, 'job', 'jobs'), `${jobs.length - waiting} with your figures in`] },
+  ];
+  return [homeRow('jobs', 'Survey jobs', [...tiles, ...reportsTile(actor)], 'No survey jobs.')];
+}
+
+function adminRow(actor: Actor, app: App): Safe[] {
+  if (actor.role !== 'ADMIN') return [];
+  const staff = S.staffList(app.db, actor);
+  const log = auditLogView({ db: app.db, audit: app.audit, now: app.now }, actor, new URLSearchParams());
+  const refusedSignIns = log.lines.filter((l) => l.kind === 'LOGIN_FAILED').length;
+  const tiles: HomeTile[] = [
+    { href: '/staff/users', name: 'Users', lines: [plural(staff.length, 'person can sign in', 'people can sign in')] },
+    { href: '/staff/admin-settings', name: 'Switches', lines: ['Turn features on or off'] },
+    {
+      href: '/staff/audit', name: 'Audit log', late: !log.chain.intact,
+      lines: [log.chain.intact ? 'Checked — nothing changed' : 'Problem found — tell Lakhbir'],
+    },
+    {
+      href: '/staff/audit?kind=LOGIN_FAILED', name: 'Refused sign-ins', late: refusedSignIns > 0,
+      lines: [refusedSignIns === 0 ? 'None lately' : `${refusedSignIns} lately`],
+    },
+  ];
+  return [homeRow('admin', 'Admin', tiles, 'Nothing to show.')];
+}
+
+/** EVERY ROW OF THIS LOGIN'S HOME, in Lakhbir's order. */
+export function homeRows(app: App, actor: Actor): Safe {
+  const nowIso = app.now();
+  const rows: Safe[] = [];
+  switch (actor.role) {
+    case 'ACCOUNTING':
+      rows.push(...moneyRow(actor, app, nowIso), todayRow(actor, app, nowIso));
+      break;
+    case 'SURVEYING':
+      rows.push(...jobsRow(actor, app), todayRow(actor, app, nowIso));
+      break;
+    case 'SALES': case 'ADMIN': case 'READ_ONLY':
+      rows.push(...leadsRows(actor, app, nowIso), todayRow(actor, app, nowIso), ...pipelineRow(actor, app, nowIso), ...adminRow(actor, app));
+      break;
+    default:
+      return raw('');
+  }
+  return h`${rows}`;
+}

@@ -42,6 +42,7 @@ import * as T from '../src/web/tasks.ts';
 import * as TL from '../src/web/timeline.ts';
 import * as E from '../src/web/engaged.ts';
 import { actor, fixedClock, testApp } from './helpers.ts';
+import { localDate } from '../src/web/localtime.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const SCRIPT = '<script>alert(1)</script><img src=x onerror=alert(2)>';
@@ -480,25 +481,36 @@ describe('overdue — stored in UTC, shown in UK time, and no due date is neithe
       assert.equal((await sales.post(`/staff/clients/${b1}/tasks/send`, {
         fact_id: '', question: 'Is the roof original?', why: 'we need it', holds_up: 'the survey', due_on: '2026-09-01',
       })).status, 303);
+      // PHASE 136: Home is rows of tiles. The overdue question is a red tile in "Today and overdue"; MY TASKS is on Tasks.
       const home = await sales.req('/staff');
       assert.equal(home.status, 200);
-      for (const want of ['My tasks', 'Call to talk through the range they were shown', 'OVERDUE', 'Is the roof original?']) {
-        assert.ok(home.body.includes(want), `the landing page does not show: ${want}`);
-      }
+      assert.match(home.body, /<li class="tile hometile late"><a class="tilelink" href="\/staff\/clients\/[^"]+"><span class="tilename">Aldergate Care Group Limited<\/span><span class="tileline">Question: Is the roof original\?<\/span>/,
+        'the landing page does not show the overdue question as a red tile');
       assert.ok((await sales.req('/staff/tasks')).body.includes('OVERDUE'), 'the owner’s list does not flag it');
       const claimPage = await sales.req(`/staff/claims/${b1claim}`);
       assert.ok(claimPage.body.includes('OVERDUE') && claimPage.body.includes('Is the roof original?'), 'the claim does not flag it');
 
-      for (const [who, title] of [
-        ['accounting', 'Record the part payment against the invoice when it arrives'],
-        ['surveying', 'Check the floor plans against the room schedule'],
-        ['admin', 'Record why this client asked not to be contacted'],
-      ] as const) {
-        const c = await h.signIn(who);
-        const r = await c.req('/staff');
+      // Every task a login may read that is due today or late is on its Home — its own and its team's for Accounting and
+      // Surveying, every one it may read for Sales, Admin and Read only — and a task not yet due is not.
+      const now = h.made.app.now();
+      for (const [who, role] of [['sales', 'SALES'], ['accounting', 'ACCOUNTING'], ['surveying', 'SURVEYING'], ['admin', 'ADMIN']] as const) {
+        const a = db.get<{ id: string }>('SELECT id FROM users WHERE role = ? LIMIT 1', [role]);
+        assert.ok(a);
+        const me: Actor = { id: a.id, role, business_id: null, disabled: false };
+        const due = role === 'ACCOUNTING' || role === 'SURVEYING'
+          ? T.myWork(db, me, now).tasks.filter((t) => t.due.state === 'OVERDUE' || t.due.state === 'DUE_TODAY')
+          : T.tasksDueByToday(db, me, now);
+        const r = await (await h.signIn(who)).req('/staff');
         assert.equal(r.status, 200, who);
-        assert.ok(r.body.includes('My tasks') && r.body.includes(title), `${who}’s landing page has no task of theirs`);
-        assert.equal(r.body.includes('Call to talk through the range they were shown'), false, `${who} saw Sales’s task`);
+        for (const t of due) assert.ok(r.body.includes(`href="/staff/tasks/${t.id}"`), `${who}’s Home is missing a task due by today: ${t.title}`);
+        const later = T.myWork(db, me, now).tasks.filter((t) => t.due.state === 'NOT_YET_DUE' || t.due.state === 'NO_DUE_DATE');
+        for (const t of later) assert.equal(r.body.includes(`href="/staff/tasks/${t.id}"`), false, `${who}’s Home shows a task not yet due: ${t.title}`);
+        assert.ok((await (await h.signIn(who)).req('/staff/tasks')).body.includes('My tasks'), `${who}: My tasks is on Tasks`);
+      }
+      const salesTasks = db.all<{ id: string }>("SELECT t.id FROM staff_tasks t JOIN users u ON u.id = t.owner_id WHERE u.role = 'SALES'");
+      for (const who of ['accounting', 'surveying'] as const) {
+        const body = (await (await h.signIn(who)).req('/staff')).body;
+        for (const t of salesTasks) assert.equal(body.includes(`href="/staff/tasks/${t.id}"`), false, `${who} saw Sales’s task`);
       }
       assert.equal((await (await h.signIn('client')).req('/staff')).status, 403);
     } finally { h.close(); }
@@ -742,7 +754,9 @@ describe('STORED CROSS-SITE SCRIPTING', () => {
       const salesId = db.get<{ id: string }>("SELECT id FROM users WHERE role = 'SALES' LIMIT 1")?.id ?? '';
       const sales = await h.signIn('sales');
       assert.equal((await sales.post('/staff/tasks', {
+        // PHASE 136: due today, so it is on Home's "Today and overdue" row, which is where Home draws a task now.
         claim_id: claim, title: SCRIPT, description: SCRIPT, activity_type: 'TASK', owner_id: salesId, back: `/staff/claims/${claim}`,
+        due_on: localDate(h.made.app.now()),
       })).status, 303);
       assert.equal((await sales.post(`/staff/claims/${claim}/notes`, { body: SCRIPT })).status, 303);
       const taskId = db.get<{ id: string }>('SELECT id FROM staff_tasks WHERE title = ?', [SCRIPT])?.id ?? '';

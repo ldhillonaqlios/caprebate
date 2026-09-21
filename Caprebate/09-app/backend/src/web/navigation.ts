@@ -111,7 +111,7 @@ export type Section = {
  * `MENUS` below — not this table — and a section on no menu still opens by its address for every login its gate admits.
  */
 export const SECTIONS: readonly Section[] = Object.freeze([
-  { key: 'home', href: '/staff', label: 'Home', gate: assertBackOffice },
+  { key: 'home', href: '/staff', label: 'Home', gate: assertBackOffice, under: ['/staff/reports'] },
   { key: 'leads', href: '/staff/leads', label: 'Leads', gate: assertLeadSection, under: ['/staff/assessments'] },
   { key: 'clients', href: '/staff/clients', label: 'Clients', gate: assertOrganisationSection, under: ['/staff/organisations'] },
   { key: 'pipeline', href: '/staff/pipeline', label: 'Pipeline', gate: pipelineBoardGate },
@@ -203,7 +203,7 @@ export function filterBar(actor: Actor, filters: readonly Filter[], current: str
 
 function isCurrent(s: Section, path: string | null): boolean {
   if (path === null) return false;
-  if (s.href === '/staff') return path === '/staff';
+  if (s.href === '/staff') return path === '/staff' || (s.under ?? []).some((x) => path === x || path.startsWith(`${x}/`));
   return [s.href, ...(s.under ?? [])].some((x) => path === x || path.startsWith(`${x}/`));
 }
 
@@ -321,7 +321,7 @@ export const HELP_SCREENS: readonly (readonly [prefix: string, code: string])[] 
   ['/staff/organisations', 'B13'], ['/staff/properties', 'B15'], ['/staff/claims', 'B17'], ['/staff/leads', 'B19'],
   ['/staff/pipeline', 'B21'], ['/staff/tasks', 'B22'], ['/staff/next-actions', 'B24'], ['/staff/automation', 'B25'],
   ['/staff/templates', 'B26'], ['/staff/document-types', 'B29'], ['/staff/documents', 'B44'], ['/staff/introducer-rewards', 'B32'],
-  ['/staff/introducers', 'B30'], ['/staff/compliance', 'B33'], ['/staff/dashboard', 'B40'], ['/staff/search', 'B41'],
+  ['/staff/introducers', 'B30'], ['/staff/compliance', 'B33'], ['/staff/dashboard', 'B40'], ['/staff/reports', 'B40'], ['/staff/search', 'B41'],
   ['/staff/admin-settings', 'B43'], ['/staff/audit', 'B45'], ['/staff/admin', 'B46'],
 ]);
 

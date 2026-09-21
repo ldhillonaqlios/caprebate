@@ -418,6 +418,18 @@ table.compact{margin:0}table.compact td{padding:.3rem .35rem}
 .settings-tiles .tilelink:hover{background:var(--mist)}
 .settings-tiles .tiledoes{display:block;margin-top:.3rem;color:var(--body);font-size:16px}
 .clientlist .rowname{font-weight:700}
+/* PHASE 136: Home as rows of tiles. The whole tile is a link; a late one is red at the top and on its last line. */
+.homerow{margin:0 0 1.4rem}
+.homerow>h2{font-size:24px;margin:0 0 .6rem}
+.hometiles{grid-template-columns:repeat(auto-fill,minmax(13rem,1fr))}
+.hometile{padding:0}
+.hometile .tilelink{display:block;padding:.8rem .9rem;color:var(--ink);text-decoration:none;height:100%}
+.hometile .tilelink:hover{background:var(--mist)}
+.hometile .tilename{display:block;font-weight:700;font-size:18px}
+.hometile .tileline{display:block;margin-top:.2rem;color:var(--body);font-size:16px}
+.hometile .tilecount{display:block;font-family:${HEADING_STACK};font-size:32px;font-weight:700;line-height:1.1}
+.hometile.late{border-top-color:var(--stop)}
+.hometile.late .tileline.when{color:var(--stop);font-weight:700}
 
 /* ---------------- SMALLER SCREENS ---------------- */
 @media (max-width:960px){
@@ -456,6 +468,7 @@ table.compact{margin:0}table.compact td{padding:.3rem .35rem}
   .board{flex-direction:column;overflow:visible}
   .board>li,.board>li.empty-col{flex-basis:auto;width:100%}
   .cards{grid-template-columns:minmax(0,1fr)}
+  .hometiles{grid-template-columns:minmax(0,1fr)}
   .typefacts{grid-template-columns:minmax(0,1fr)}
   .form-row{display:block}
   form label>input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),form label>select,form label>textarea{max-width:none}

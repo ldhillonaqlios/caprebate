@@ -293,7 +293,7 @@ describe('the dashboard over HTTP', () => {
       };
       for (const role of ['ADMIN', 'SALES', 'ACCOUNTING', 'SURVEYING']) {
         const get = await signIn(role);
-        const page = await get('/staff/dashboard');
+        const page = await get('/staff/reports');
         assert.equal(page.status, 200, `${role} could not open the dashboard`);
         const view = JSON.parse((await get('/staff/dashboard/view.json')).body) as { tiles: { key: string }[] };
         if (role === 'SURVEYING') {

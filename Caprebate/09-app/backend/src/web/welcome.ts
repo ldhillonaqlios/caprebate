@@ -40,7 +40,7 @@ export const WELCOME_JOBS: Readonly<Record<AppRole, readonly Job[]>> = Object.fr
   READ_ONLY: [
     { href: '/staff/pipeline', label: 'See the pipeline' },
     { href: '/staff/claims', label: 'Open a claim' },
-    { href: '/staff/dashboard', label: 'See the dashboard' },
+    { href: '/staff/reports', label: 'See the reports' },
   ],
   CLIENT: [
     { href: '/portal#waiting-on-you', label: 'See what we need from you' },

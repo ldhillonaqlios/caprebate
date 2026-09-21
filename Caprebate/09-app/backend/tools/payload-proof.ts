@@ -536,7 +536,8 @@ const adminDash = DB.dashboard(made.app.db, { id: adminUser.id, role: 'ADMIN', b
 const adminPounds = [...new Set(adminDash.tiles.filter((t) => t.group !== 'MY_JOBS')
   .flatMap((t) => t.lines.map((l) => l.value)).flatMap((v) => v.match(/£[\d,]+/g) ?? []))];
 console.log('=== CAPTURED: the management dashboard, as SURVEYING');
-for (const path of ['/staff/dashboard/view.json', '/staff/dashboard']) {
+// PHASE 136: the dashboard's page is /staff/reports (Home's Reports tile); /staff/dashboard itself now answers 303 to Home.
+for (const path of ['/staff/dashboard/view.json', '/staff/reports']) {
   const r = await req(path);
   const parsedBody = path.endsWith('.json') && r.status === 200 ? JSON.parse(r.body) as { tiles?: { key: string }[] } : null;
   const f = found(r.body, parsedBody);
@@ -657,7 +658,7 @@ for (const id of [claim.id, invoiceClaim.id]) {
 {
   const surveyorUser = made.app.db.get<{ id: string }>("SELECT id FROM users WHERE email_canonical = 'surveying@example.invalid'")!;
   const surveyorActor = { id: surveyorUser.id, role: 'SURVEYING' as const, business_id: null, disabled: false };
-  for (const path of ['/staff/documents/view.json', '/staff/documents', '/staff/dashboard/view.json?period=FINANCIAL_YEAR', '/staff/dashboard?period=RANGE&from=2026-01-01&to=2026-12-31']) {
+  for (const path of ['/staff/documents/view.json', '/staff/documents', '/staff/dashboard/view.json?period=FINANCIAL_YEAR', '/staff/reports?period=RANGE&from=2026-01-01&to=2026-12-31']) {
     const r = await req(path);
     const parsedBody = path.includes('.json') && r.status === 200 ? JSON.parse(r.body) as { rows?: { id: string }[]; tiles?: { key: string }[] } : null;
     const f = found(r.body, parsedBody);

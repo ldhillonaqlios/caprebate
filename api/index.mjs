@@ -22,7 +22,15 @@ async function build() {
     documentRoot: mkdtempSync(join(tmpdir(), 'cb-vercel-')),
     ...(publicOrigin === undefined ? {} : { publicOrigin }),
   });
-  await seed(made.app.db, made.app.hasher, made.app.now);
+  const r = await seed(made.app.db, made.app.hasher, made.app.now);
+  // PHASE 136: the view-only login, as tools/demo-server.ts adds it — here and in the demo only, never in src/seed.ts.
+  {
+    const t = made.app.now();
+    made.app.db.run(
+      'INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,NULL)',
+      ['u-demo-readonly', 'readonly@example.invalid', 'readonly@example.invalid', 'View-only Person', 'READ_ONLY', await made.app.hasher.hash(r.password), t, t],
+    );
+  }
   // No email is sent. The outbox (with a sign-up's confirmation link) goes to the function log, as the demo prints it.
   const shown = new Set();
   setInterval(() => {

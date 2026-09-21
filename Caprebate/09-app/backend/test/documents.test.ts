@@ -614,8 +614,10 @@ describe('over HTTP — end to end, and every role on every sensitivity', () => 
       const c = await w.signIn('sales');
       const home = await c.req('/staff');
       assert.equal(home.status, 200);
-      assert.match(home.body, /Documents you asked a client for that have not arrived/);
-      assert.match(home.body, /\d+ days overdue \(1 Jan 2020\)/); // Phase 133c: UK dates
+      // PHASE 136: Home draws the late request as a red tile in "Today and overdue"; the full list is on Tasks.
+      assert.match(home.body, /<li class="tile hometile late">[^]*?<span class="tileline">Document: [^<]+<\/span><span class="tileline when">\d+ days overdue \(1 Jan 2020\)<\/span>/); // Phase 133c: UK dates
+      const tasks = await c.req('/staff/tasks');
+      assert.match(tasks.body, /Documents you asked a client for that have not arrived/);
       const claim = await c.req(`/staff/claims/${w.job.claim}`);
       assert.equal(claim.status, 200);
       assert.match(claim.body, /1 OVERDUE/);

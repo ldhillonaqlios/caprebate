@@ -333,21 +333,22 @@ describe('a new user can use it', () => {
     assert.match(r.body, /<section class="tabpanel has-refusal" id="activity">/, 'the tab holding the form was not shown');
   });
 
-  test('the welcome card shows once, stays dismissed, and the dismissal is audited once', async () => {
-    const before1 = (await as('accounting').get('/staff')).body;
+  test('the welcome card shows once (on Help since Phase 136), stays dismissed, and the dismissal is audited once', async () => {
+    const before1 = (await as('accounting').get('/staff/help')).body;
     assert.match(before1, /Welcome to Cap Rebate/);
+    assert.equal(/Welcome to Cap Rebate/.test((await as('accounting').get('/staff')).body), false, 'Phase 136: the welcome is not on Home');
     for (const j of before1.matchAll(/<p class="jobs">([\s\S]*?)<\/p>/g)) {
       for (const a of (j[1] ?? '').matchAll(/href="([^"#]+)/g)) assert.equal((await as('accounting').get(a[1] ?? '')).status, 200, `a welcome job for accounting: ${a[1] ?? ''}`);
     }
     assert.equal((await as('accounting').post('/staff/welcome/dismiss', {})).status, 303);
-    assert.equal(/Welcome to Cap Rebate/.test((await as('accounting').get('/staff')).body), false, 'the card came back');
+    assert.equal(/Welcome to Cap Rebate/.test((await as('accounting').get('/staff/help')).body), false, 'the card came back');
     await as('accounting').post('/staff/welcome/dismiss', {});
-    assert.equal(/Welcome to Cap Rebate/.test((await as('accounting').get('/staff')).body), false);
+    assert.equal(/Welcome to Cap Rebate/.test((await as('accounting').get('/staff/help')).body), false);
     const n = h.made.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'WELCOME_DISMISSED' AND actor_id = (SELECT id FROM users WHERE email = 'accounting@example.invalid')");
     assert.equal(n?.n, 1);
-    assert.match((await as('sales').get('/staff')).body, /Welcome to Cap Rebate/, 'one person hiding it hid it for another');
+    assert.match((await as('sales').get('/staff/help')).body, /Welcome to Cap Rebate/, 'one person hiding it hid it for another');
     for (const who of ['admin', 'surveying', 'readonly', 'client'] as const) {
-      const home = (await as(who).get(who === 'client' ? '/portal' : '/staff')).body;
+      const home = (await as(who).get(who === 'client' ? '/portal' : '/staff/help')).body;
       for (const j of home.matchAll(/<p class="jobs">([\s\S]*?)<\/p>/g)) {
         for (const a of (j[1] ?? '').matchAll(/href="([^"#]+)/g)) assert.equal((await as(who).get(a[1] ?? '')).status, 200, `a welcome job for ${who}: ${a[1] ?? ''}`);
       }

@@ -390,7 +390,8 @@ export function claimsList(db: Db, actor: Actor, p: ListParams, ignored: readonl
  * 3 · THE LEADS LIST
  * ================================================================== */
 
-export type LeadListRow = LeadRow & { readonly priority: string };
+/** PHASE 136: `lead_at` is the lead's own instant, so Home can say how long a new lead has waited. */
+export type LeadListRow = LeadRow & { readonly priority: string; readonly lead_at: string };
 
 type LeadListDb = {
   id: string; business_id: string | null; assessment_id: string | null; origin: string; source: string; introducer_id: string | null;
@@ -480,7 +481,7 @@ export function leadsList(db: Db, actor: Actor, p: ListParams, ignored: readonly
         organisation_recorded: r.business_id !== null,
         source: vocabLabel(db, 'LEAD_SOURCE', r.source, r.source),
         origin: words(LEAD_ORIGINS, r.origin, r.origin),
-        lead_date: localStamp(r.lead_date),
+        lead_date: localStamp(r.lead_date), lead_at: r.lead_date,
         owner: r.owner_name,
         status: { key: r.status, label: words(LEAD_STATUSES, r.status, r.status) },
         next_action: r.next_action, next_action_due: r.next_action_due,

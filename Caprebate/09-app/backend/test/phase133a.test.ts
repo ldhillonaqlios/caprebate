@@ -40,8 +40,10 @@ type Login = (typeof LOGINS)[number];
 const CSP_BEFORE = "default-src 'none'; style-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
 
 /** EVERY BACK-OFFICE SECTION, listed here by hand from the routes — not read from the navigation it is testing. */
+// PHASE 136: '/staff/reports' stands where '/staff/dashboard' stood — the same page, under the same gate, behind Home's
+// Reports tile. The old address now answers 303 to Home, asserted in test/phase135.test.ts.
 const SECTIONS = [
-  '/staff', '/staff/dashboard', '/staff/search', '/staff/tasks', '/staff/next-actions', '/staff/assessments', '/staff/leads',
+  '/staff', '/staff/reports', '/staff/search', '/staff/tasks', '/staff/next-actions', '/staff/assessments', '/staff/leads',
   '/staff/pipeline', '/staff/clients', '/staff/organisations', '/staff/properties', '/staff/claims', '/staff/documents',
   '/staff/document-types', '/staff/introducers', '/staff/introducer-rewards', '/staff/survey', '/staff/finance',
   '/staff/calendar', '/staff/compliance', '/staff/admin-settings', '/staff/automation', '/staff/templates', '/staff/audit',
@@ -55,14 +57,14 @@ const SECTIONS = [
  * opening for a login, or drops off its menu, still turns this suite red.
  */
 const OFF_MENU: Readonly<Record<Exclude<Login, 'client'>, readonly string[]>> = {
-  admin: ['/staff/dashboard', '/staff/next-actions', '/staff/assessments', '/staff/properties', '/staff/claims', '/staff/documents',
+  admin: ['/staff/reports', '/staff/next-actions', '/staff/assessments', '/staff/properties', '/staff/claims', '/staff/documents',
     '/staff/document-types', '/staff/introducer-rewards', '/staff/compliance', '/staff/admin-settings', '/staff/automation',
     '/staff/templates', '/staff/audit', '/staff/users'],
-  sales: ['/staff/dashboard', '/staff/next-actions', '/staff/assessments', '/staff/properties', '/staff/claims', '/staff/documents',
+  sales: ['/staff/reports', '/staff/next-actions', '/staff/assessments', '/staff/properties', '/staff/claims', '/staff/documents',
     '/staff/document-types', '/staff/introducer-rewards', '/staff/survey', '/staff/admin-settings', '/staff/automation', '/staff/templates'],
-  accounting: ['/staff/dashboard', '/staff/documents', '/staff/introducers'],
-  surveying: ['/staff/dashboard', '/staff/assessments', '/staff/properties', '/staff/claims', '/staff/documents'],
-  readonly: ['/staff/dashboard', '/staff/tasks', '/staff/next-actions', '/staff/assessments', '/staff/properties', '/staff/claims',
+  accounting: ['/staff/reports', '/staff/documents', '/staff/introducers'],
+  surveying: ['/staff/reports', '/staff/assessments', '/staff/properties', '/staff/claims', '/staff/documents'],
+  readonly: ['/staff/reports', '/staff/tasks', '/staff/next-actions', '/staff/assessments', '/staff/properties', '/staff/claims',
     '/staff/documents', '/staff/document-types', '/staff/introducers', '/staff/introducer-rewards', '/staff/calendar',
     '/staff/admin-settings', '/staff/automation', '/staff/templates'],
 };

@@ -89,7 +89,7 @@ may see or do changed** — only where things sit.
   | Engaged clients, Organisations | **Clients** — one list of every company, name first |
   | Assessments | **Leads**, then **Filled assessments** at the top of the list |
   | Next actions | **Tasks**, then **Claims with no next step** at the top of the list |
-  | Dashboard | **Home**, then **See the dashboard** |
+  | Dashboard | **Home**, then the **Reports** tile (Phase 136) |
   | Properties, Claims (Sales, Admin, Read only) | a company's page on **Clients**, the **Pipeline**, or **Search** |
   | Documents | a company's page on **Clients** (Documents tab) |
   | Users, Admin settings, Document types, Automation, Email templates, Compliance, Audit log, Reward model | Admin: **Settings**, one tile each. Admin settings is now the **Switches** tile, and Reward model is **Introducer fees** |
@@ -134,8 +134,9 @@ may see or do changed** — only where things sit.
   **Yesterday, 12:32** for a recent one. A due date says how far off it is — **Due in 3 days (24 Sep 2026)**, **Due
   today (17 Sep 2026)**, **3 days overdue (14 Sep 2026)** — counted in UK days. What is stored does not change, and a date
   box still takes a date the way your browser shows it.
-- **Welcome.** The first time you open **Home** (or, for a client, the portal) a card headed **Welcome to Cap Rebate**
-  shows the three jobs your login does most, as buttons. **Hide this welcome** removes it for good, on any computer.
+- **Welcome.** Until you hide it, **Help** (or, for a client, the portal) opens with a card headed **Welcome to Cap Rebate**
+  showing the three jobs your login does most, as buttons. **Hide this welcome** removes it for good, on any computer.
+  (It was on Home until Phase 136.)
 - **Help.** **Help** at the top of every page opens this guide's training section for the screen you are on (Part 3),
   inside the system. A client's Help opens the guide's section on the portal, without the trainer's exercise.
 - **The next step first.** On a claim, the panel on the right starts with **Next step**: either a button **Move to …**,
@@ -920,61 +921,71 @@ us to keep the firm informed, tell us and we will ask you properly."
 
 ### Training — `B0` the landing page
 
-**Phase 135, 21 September 2026 — shorter tabs.** The header no longer has an "open tasks" link: the count is on the
-**Tasks** tab. The dashboard is no longer a tab: **See the dashboard** is a button on Home. Each role's tabs are in the
-table at the top of this guide. *Observed on a freshly started demo, 21 September 2026:* Sales' tabs read Home, Leads,
-Clients, Pipeline, Tasks 9, Introducers, with **More** holding Calendar, and the 9 is red (3 overdue). Accounting's read
-Home, Claims, Finance, Tasks 2, with **More** holding Introducer fees. Read only has four tabs and no **More**.
+**Phase 136, 21 September 2026 — Home is tiles.** Home is now rows of tiles and nothing else. Every tile is one click to
+the thing itself, and no tile holds more than three lines. A red tile is late. The welcome card moved to **Help**; your
+full task list is on **Tasks**; the dashboard's figures are the **Reports** tile.
 
 **What it is for**
-The first page every staff member sees — **Home**. It answers "what do I do next" for your role: a row of cards
-first, then your own work in one place — your tasks, overdue first, the claims you own and who each is waiting on,
-and anything you are waiting on a client for.
+The first page every staff member sees — **Home**. It answers "what do I do next", in the order Lakhbir set.
 
 **Who can open it**
 Admin, Sales, Accounting, Surveying and Read only. A client who tries is refused (a client lands on the portal
-instead). The cards differ by role, and each card is drawn only for a role that may open the screen it comes from:
+instead). The rows differ by role, and a row is drawn only for a role that may open the screen it comes from:
 
-| Role | Cards |
+| Role | Rows, top to bottom |
 |---|---|
-| Sales | My next actions · Today and overdue · My pipeline by stage · New leads |
-| Accounting | Invoices due and overdue · Fees waiting to be invoiced · The VAT position |
-| Surveying | Waiting for your review and figures · All your survey jobs |
-| Admin | Users · Settings and switches · Recent audit events · Refused |
-| Read only | The pipeline by stage · New leads |
+| Sales, Read only | New leads · Existing leads — next actions · Today and overdue · Pipeline by stage |
+| Admin | the same four, then Users · Switches · Audit log · Refused sign-ins |
+| Accounting | Invoices due · Fees to invoice · VAT position · Reports, then Today and overdue |
+| Surveying | Waiting for your figures · All your survey jobs · Reports, then Today and overdue |
 
 Address: `/staff`
 
+**The rows**
+- **New leads** — a number first (how many leads nobody has contacted yet), then one tile per lead: the company, where
+  it came from, and how long it has waited. Oldest first. A lead turns **red** once it has waited more than one working
+  day (Monday to Friday; a bank holiday is counted as a working day, so it goes red a day early rather than late).
+- **Existing leads — next actions** — one tile per lead we are working on: the company, its next step and when it is due.
+  Red when late, or when it has no next step. The last tile, **Claims with no next step**, opens that list in **Tasks**.
+- **Today and overdue** — everything due today or already late: tasks (a lead's or a claim's next step is a task), and
+  questions and document requests you sent a client. Late first, in red. Accounting and Surveying see their own and their
+  team's tasks; Sales, Admin and Read only see every task they may read.
+- **Pipeline by stage** — one tile per stage with its number of claims. A tile opens the list of those claims. The last
+  tile, **Reports**, opens the figures by month, quarter or year (`B40`).
+- **Admin** — **Users**, **Switches**, **Audit log** ("Checked — nothing changed", or in red "Problem found — tell
+  Lakhbir") and **Refused sign-ins** among the latest entries of the log.
+
+A row with nothing in it says so in one line — "No new leads." — so you can tell empty from broken.
+
 **How to do the common job**
-1. Sign in. You arrive on **Home**, which says "Signed in as …" and what the page holds for your role.
-2. Read the cards. A heading that is a link opens the screen behind it; a stage on **My pipeline by stage** opens its column on the board.
-3. Read **My tasks**. The line above the table counts what is overdue, and overdue tasks come first. The number on the **Tasks** tab says the same, and turns red when one is overdue.
-4. Press **Start** on a task you are beginning, and **Complete** when it is done.
-5. Read **My claims, their next actions, and who is waiting**. Where it says "waiting on us", the next move is yours.
-6. Check **Documents you asked a client for that have not arrived** and **Other questions you are waiting on a client to answer**, if they appear.
-7. Sales and Admin: read **Claims nobody owns that break the one-next-action rule**, and give each claim an owner, then its next action.
-8. Use **All my tasks** for the full list, and **See the dashboard** for the management figures (`B40`).
+1. Sign in. You arrive on **Home**.
+2. Start at the top: open each red tile first.
+3. Press a tile to open the lead, task, client or list behind it, and do the job there.
+4. Press **Claims with no next step** to give each claim an owner and a next step.
+5. For your whole task list, press the **Tasks** tab. Its number turns red when one of yours is late.
 
 **What it will refuse, and why**
 - A client signing in and opening this address is refused (**You cannot open this page**): the back office is for staff.
 - Anyone not signed in is sent to the **Sign in** page.
-- The landing page never widens what you may open. Each screen checks your role again, and the tabs show only what your role can open.
-- Admin's **Recent audit events** card reads the audit log, so each visit to Admin's home is itself recorded as a reading of the log, exactly as opening **Audit log** is.
+- Home never widens what you may open. Each tile's screen checks your role again, and a row you may not see is not drawn.
+- Admin's **Audit log** and **Refused sign-ins** tiles read the audit log, so each visit to Admin's Home is itself
+  recorded as a reading of the log, exactly as opening **Audit log** is.
 
 **Try it on the demo**
-Sign in as Sales. *Observed on 17 September 2026* (the overdue count moves with the date; since Phase 135 it is the number on the **Tasks** tab): the header read "8 open tasks, 2 overdue". **Today and overdue** reads 8 open, 2 overdue, 0 due
-today. **My tasks** reads "2 overdue."; the first row is "Call to talk through the range they were shown" on
-CR-2026-0001, "16 days overdue (1 Sep 2026)". "Chase the documents the signed letter asks for" reads "no due date —
-so it is not overdue, and it is not on time either". Further down, **Claims nobody owns that break the
-one-next-action rule** starts "CR-2026-0002 (Brackenfell Dental Partnership LLP) — This claim has no next action."
-Now sign in as Accounting: the tabs are Home, Finance, Claims and Tasks, the cards are about invoices, fees and VAT,
-and the unowned-claims list is not on its page. Its **My tasks** shows "Record the part payment against the invoice
-when it arrives", "waiting with Accounting — nobody has taken it".
+*Observed on a freshly started demo, 21 September 2026.* Sign in as Sales. **New leads** reads "No new leads." — the demo
+has none until you record one. **Existing leads — next actions** shows Gorsebrook Invented Care Homes Limited, "Next:
+Confirm who owns the building, and that we…" (a long step is cut at a whole word; open the tile for all of it), "Due in 3 days (24 Sep 2026)", then **Claims with
+no next step**. **Today and overdue** starts with a red Aldergate Care Group Limited tile, "Call to talk through the
+range they were shown", "20 days overdue (1 Sep 2026)". **Pipeline by stage** reads Enquiry 2 claims, Survey 3 claims,
+Invoice 1 claim; press **Survey** and the claims list shows the three at that stage. Now record a lead on **Leads**, go
+back to **Home**: it is under **New leads**, "Came in today", and the number reads 1. Sign in as Accounting: **Invoices
+due** is red, "£13,000 not yet paid", "£13,000 late (2 invoices)", and **Today and overdue** reads "Nothing is due
+today, and nothing is late."
 
 **Check yourself**
-- *A task shows no due date. Is it late?* — No. It is neither overdue nor on time; give it a date if it matters.
-- *A task says "waiting with Accounting". Who does it?* — Anyone in that team. It stays on the team's landing page until somebody takes it.
-- *As Sales, there is no Finance tab. Could you open Finance by typing its address?* — No. The tabs show only what your role can open, and the address itself is refused with **You cannot open this page**.
+- *A new lead came in on Friday. Is it red on Monday?* — No; it has waited one working day. On Tuesday it is.
+- *A row reads "No new leads." Is something broken?* — No. A broken or refused row is not drawn at all; an empty one says so.
+- *Where did My tasks go?* — To the **Tasks** tab. Home shows only what is due today or late.
 
 ---
 
@@ -2013,8 +2024,9 @@ Address: /staff/compliance/retention. This is a list, not a deleter. *Observed:*
 
 ### Training — `B40` the dashboard
 
-**Phase 135, 21 September 2026.** The dashboard is no longer a tab: press **See the dashboard** on **Home**. Phase 136
-moves its figures onto Home's tiles.
+**Phase 136, 21 September 2026 — now Reports.** Open it with the **Reports** tile on **Home** (at the end of the
+pipeline row, or of the money or survey-jobs row). The page is headed **Reports**, and each tile's "how it is read"
+sentence is behind **Why?**. The old address `/staff/dashboard` now takes you to **Home**.
 
 **What it is for**
 A management view read fresh on every visit. It has tiles for the pipeline, estimate to outcome,
@@ -2028,18 +2040,18 @@ All four staff roles, but each tile is drawn only for a role that may read every
 - Accounting sees **The money** only.
 - A surveyor sees **My survey jobs** only.
 
-Address: `/staff/dashboard`
+Address: `/staff/reports` (the figures as data: `/staff/dashboard/view.json`)
 
 **How to do the common job**
-1. On **Home**, press **See the dashboard**. The first line gives the UK date the figures are "as at".
+1. On **Home**, press **Reports**. The first line gives the UK date the figures are "as at".
 2. Read each tile's figures, then the line under them saying what is counted apart ("counted apart, and never added in as nought").
-3. Read the sentence at the foot of each tile saying how it is worked out.
+3. Press **Why?** at the foot of a tile for how it is worked out.
 4. Open the page behind a tile (Pipeline, Finance, Tasks) to act.
-5. **For a report over a period** — this is the reports screen, and there is no other — choose **Period**: This month, This quarter, A UK financial year — 1 April to 31 March, or From one UK date to another. Give **For a financial year, the year it starts in**, or **For a range, from** and **to**, where the choice asks. Press **Show**. **No period** puts the dashboard back as it was.
+5. **For a report over a period**, under **Pick a period**, choose **Period**: This month, This quarter, A UK financial year — 1 April to 31 March, or From one UK date to another. Give **For a financial year, the year it starts in**, or **For a range, from** and **to**, where the choice asks. Press **Show**. **No period** puts the figures back to as at today.
 6. Read the last line of each tile: a tile the period applies to says so, and one that counts what stands today ends "As at today — a count of what stands now, which the period chosen does not change."
 
 **What it will refuse, and why**
-- A tile your role may not read in full is not built for you at all: "A tile you do not see is not hidden from this page; it was never built for you."
+- A tile your role may not read in full is not built for you at all. **Why?** under the date says so: "Each figure is shown only to a role that may read every number in it."
 - A surveyor's tile never carries a figure of ours: "No figure of ours is on this tile, for anyone."
 - Unknowns are never added in. For example, "2 open claims carry no sealed estimate — counted apart, and never added in as nought".
 - A range that ends before it starts is not applied, and the page says why: "From and to: the range ends before it starts, so the tiles read with no period".
@@ -2053,8 +2065,8 @@ surveyor: only **My survey jobs** — "CR-2026-0006 · Survey · waiting for you
 "CR-2026-0004 · Survey · waiting for your figures" and "CR-2026-0008 · Invoice · your figures are
 committed".
 
-Now, as Sales, choose **This quarter** and press **Show**: "Read over this quarter, July to September
-2026, from 2026-07-01 to 2026-09-30 by the UK date." Choose **A UK financial year** with 2026:
+Now, as Sales, choose **This quarter** and press **Show**: "Showing this quarter, July to September
+2026, 1 Jul 2026 to 30 Sep 2026." *(Re-observed 21 September 2026, Phase 136.)* Choose **A UK financial year** with 2026:
 **Won and completed claim value** reads "Completed — closed in the UK financial year 1 April 2026 to
 31 March 2027 0 claims", while **Open pipeline value** still reads "8 claims" and "As at today". Choose
 **From one UK date to another**, from 2026-09-30 to 2026-09-01: the tiles read with no period, and

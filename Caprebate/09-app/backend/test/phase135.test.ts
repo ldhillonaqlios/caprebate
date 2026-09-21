@@ -48,8 +48,10 @@ const MENUS: Readonly<Record<Staff, { tabs: readonly string[]; more: readonly st
  * WHAT EACH ADDRESS ANSWERED EACH LOGIN BEFORE THIS PHASE, read off the pre-change build on 21 September 2026 with the
  * same seed: 200 opens, 403 refused. The menu change must not move one of them — except the two marked CHANGED.
  */
+// PHASE 136: '/staff/reports' stands where '/staff/dashboard' stood — the same page, under the same gate, behind Home's
+// Reports tile. The old address now answers 303 to Home, asserted in test/phase135.test.ts.
 const SECTIONS = [
-  '/staff', '/staff/dashboard', '/staff/search', '/staff/tasks', '/staff/next-actions', '/staff/assessments', '/staff/leads',
+  '/staff', '/staff/reports', '/staff/search', '/staff/tasks', '/staff/next-actions', '/staff/assessments', '/staff/leads',
   '/staff/pipeline', '/staff/clients', '/staff/organisations', '/staff/properties', '/staff/claims', '/staff/documents',
   '/staff/document-types', '/staff/introducers', '/staff/introducer-rewards', '/staff/survey', '/staff/finance',
   '/staff/calendar', '/staff/compliance', '/staff/admin-settings', '/staff/automation', '/staff/templates', '/staff/audit',
@@ -58,11 +60,11 @@ const SECTIONS = [
 const OPENED_BEFORE: Readonly<Record<Staff, readonly string[]>> = {
   admin: SECTIONS,
   sales: SECTIONS.filter((p) => !['/staff/finance', '/staff/compliance', '/staff/audit', '/staff/users'].includes(p)),
-  accounting: ['/staff', '/staff/dashboard', '/staff/search', '/staff/tasks', '/staff/claims', '/staff/documents', '/staff/introducers',
+  accounting: ['/staff', '/staff/reports', '/staff/search', '/staff/tasks', '/staff/claims', '/staff/documents', '/staff/introducers',
     '/staff/introducer-rewards', '/staff/finance', '/staff/settings'],
-  surveying: ['/staff', '/staff/dashboard', '/staff/search', '/staff/tasks', '/staff/assessments', '/staff/properties', '/staff/claims',
+  surveying: ['/staff', '/staff/reports', '/staff/search', '/staff/tasks', '/staff/assessments', '/staff/properties', '/staff/claims',
     '/staff/documents', '/staff/survey', '/staff/settings'],
-  readonly: ['/staff', '/staff/dashboard', '/staff/search', '/staff/tasks', '/staff/next-actions', '/staff/assessments', '/staff/leads',
+  readonly: ['/staff', '/staff/reports', '/staff/search', '/staff/tasks', '/staff/next-actions', '/staff/assessments', '/staff/leads',
     '/staff/pipeline', '/staff/organisations', '/staff/properties', '/staff/claims', '/staff/documents', '/staff/document-types',
     '/staff/introducers', '/staff/introducer-rewards', '/staff/calendar', '/staff/admin-settings', '/staff/automation',
     '/staff/templates', '/staff/settings'],
@@ -280,10 +282,18 @@ describe('Settings — Admin\'s one page of tiles', () => {
 });
 
 describe('the dashboard is reached from Home', () => {
-  test('every login that may open the dashboard has a button to it on Home', async () => {
+  // PHASE 136: the dashboard folded into Home. Its old address sends every login it admitted to Home (303), a bookmarked
+  // period goes to the same report behind the Reports tile, view.json answers as before, and the button is gone.
+  test('/staff/dashboard sends each login it admits to Home, and its figures are the Reports tile', async () => {
     for (const who of STAFF) {
+      const r = await as(who).get('/staff/dashboard');
+      assert.equal(r.status, 303, who);
+      assert.equal(r.location, '/staff', who);
+      assert.equal((await as(who).get('/staff/dashboard?period=MONTH')).location, '/staff/reports?period=MONTH', who);
+      assert.equal((await as(who).get('/staff/dashboard/view.json')).status, 200, `${who} view.json`);
       const home = (await as(who).get('/staff')).body;
-      assert.match(home, /<a class="btn" href="\/staff\/dashboard">See the dashboard<\/a>/, who);
+      assert.doesNotMatch(home, /See the dashboard/, who);
+      assert.match(home, /<a class="tilelink" href="\/staff\/reports"><span class="tilename">Reports<\/span>/, who);
     }
   });
 });

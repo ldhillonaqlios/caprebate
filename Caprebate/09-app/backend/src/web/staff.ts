@@ -34,18 +34,11 @@ import type { FsObjectStore } from './objectstore.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import { staffShell, portalShell, opens, navContext, filterBar, LEAD_FILTERS } from './navigation.ts';
 import { settingsBody, settingsTiles } from './admin-tiles.ts';
-import { assertDashboard } from './dashboard.ts';
+import { homeRows } from './home.ts';
 import { refillForm, typedValues } from './refill.ts';
-import { badge, card, claimRef, emptyState, welcomeCard, why } from './components.ts';
+import { welcomeCard, why } from './components.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
 import { staffHelp } from './help.ts';
-import { financeDashboard } from './invoices.ts';
-import { assertFinanceSection } from './finance.ts';
-import { BAND_WORDS } from './vat.ts';
-import { assertSurveySection, surveyorJobs } from './surveyor.ts';
-import { pipelineBoard, pipelineBoardGate } from './crm.ts';
-import { assertLeadSection } from './leads.ts';
-import { leadsList } from './lists.ts';
 import * as S from './settings.ts';
 import * as B from './backoffice.ts';
 import { handleEngaged } from './engaged-pages.ts';
@@ -54,7 +47,7 @@ import { handleSurveyor } from './surveyor-pages.ts';
 import { handleFinance } from './finance-pages.ts';
 import { handleCrm } from './crm-pages.ts';
 import { handlePipeline } from './pipeline-pages.ts';
-import { handleTasks, myTasksBlock } from './tasks-pages.ts';
+import { handleTasks } from './tasks-pages.ts';
 import { handleDocuments } from './documents-pages.ts';
 import { handleIntroducers } from './introducers-pages.ts';
 import { handleClaimRecord } from './claim-record-pages.ts';
@@ -62,7 +55,6 @@ import { handleCompliance } from './compliance-pages.ts';
 import { handleDashboard } from './dashboard-pages.ts';
 import { handleLists } from './lists-pages.ts';
 import { handleConfiguration } from './configuration-pages.ts';
-import * as T from './tasks.ts';
 import { setPhoto, clearPhoto, readPhoto, photoFor, PHOTO_HEADERS, IMAGE_LIMITS } from './avatar.ts';
 import {
   HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, addLocalDays, clockToMinutes, distinctMoments,
@@ -225,14 +217,13 @@ export async function handleStaff(
 
   /* ------------------------------------------------------------ home */
   if (path === '/staff' && method === 'GET') {
-    const welcome = welcomeShown(db, actor) ? welcomeCard(WELCOME_JOBS[actor.role], '/staff/welcome/dismiss') : raw('');
-    html(res, 200, homePage(actor, T.myWork(db, actor, now()), homeCards(d.app, actor), welcome)); return 'handled';
+    html(res, 200, homePage(actor, homeRows(d.app, actor))); return 'handled';
   }
 
   /* ------------------------------------------ PHASE 133c · the welcome card and Help */
   if (path === '/staff/welcome/dismiss' && method === 'POST') {
     dismissWelcome({ db, audit: d.app.audit, now }, actor);
-    redirect(res, '/staff'); return 'handled';
+    redirect(res, '/staff/help'); return 'handled';
   }
   /* ------------------------------------------ PHASE 135 · Settings, one page of tiles (Admin) */
   if (path === '/staff/admin' && method === 'GET') {
@@ -241,7 +232,10 @@ export async function handleStaff(
   }
   if (path === '/staff/help' && method === 'GET') {
     const help = staffHelp(url.searchParams.get('screen') ?? 'B0');
-    html(res, 200, page({ title: help.title, nav: nav(actor), wide: true, body: help.body })); return 'handled';
+    // PHASE 136: the welcome card lives here now, on Help's own landing section, until the person hides it.
+    const welcome = (url.searchParams.get('screen') ?? 'B0') === 'B0' && welcomeShown(db, actor)
+      ? welcomeCard(WELCOME_JOBS[actor.role], '/staff/welcome/dismiss') : raw('');
+    html(res, 200, page({ title: help.title, nav: nav(actor), wide: true, body: h`${welcome}${help.body}` })); return 'handled';
   }
 
   /* ------------------------------------------ SECTION 1 · assessments */
@@ -648,146 +642,16 @@ function currentSessionId(d: StaffDeps, req: IncomingMessage): string {
  * PAGES
  * ================================================================== */
 
-/**
- * THE LANDING PAGE — AND "MY TASKS" IS ON IT FOR EVERY STAFF ROLE (CRM 3 of 10).
- * What I own and what waits with my team, overdue first; for those who put
- * questions to clients, the ones past due; for a claim owner, the claims breaking
- * the one-next-action rule. Each list is built by src/web/tasks.ts through `can()`.
- */
 /* ------------------------------------------------------------------ *
- * HOME — PHASE 133a: "WHAT DO I DO NEXT", PER LOGIN
+ * HOME — PHASE 136: ROWS OF TILES, IN LAKHBIR'S ORDER (src/web/home.ts)
  * ------------------------------------------------------------------ */
 
 /**
- * THE CARDS AT THE TOP OF EACH LOGIN'S HOME. Each card is drawn only when its section's own gate lets the login in, and
- * each reads through the store function that section's screen reads — which authorises every row again. Nothing here
- * reads a figure a login's own screens do not already show it: Accounting's cards are the finance view's, the surveyor's
- * are its job list (which never carries our estimate), and no card on any home carries a claim's value.
- *
- * WHICH CARDS, PER LOGIN (the phase brief): Sales — my next actions, today's and overdue tasks, my pipeline by stage,
- * new leads; Accounting — invoices due and overdue, fees waiting to be invoiced, the VAT threshold position; Surveying —
- * claims waiting for review and sign; Admin — users, switches, recent audit events and anything refused; Read only —
- * the pipeline by stage and new leads. My tasks follows on every home, unchanged.
+ * The page is a heading and the rows. Nothing else: the "Signed in as" line, the welcome card (now on Help) and the two
+ * notes (the outbox is on Your account; UK time is in the guide) left the page, and the dashboard is the Reports tile.
  */
-function homeCards(app: App, actor: Actor): Safe {
-  const db = app.db;
-  const now = app.now();
-  const out: Safe[] = [];
-  const role = actor.role;
-
-  if (role === 'ACCOUNTING') {
-    if (opens(actor, assertFinanceSection)) {
-      const f = financeDashboard(db, actor, now);
-      const live = f.invoices.filter((v) => v.state.key !== 'CANCELLED' && v.money.outstanding_pence > 0);
-      live.sort((x, y) => (x.money.overdue === y.money.overdue ? (x.due_on ?? '9999').localeCompare(y.due_on ?? '9999') : x.money.overdue ? -1 : 1));
-      out.push(card('Invoices due and overdue', h`<div class="stat-row">
-          <div><span class="lab">Outstanding</span><span class="stat">${f.totals.outstanding}</span></div>
-          <div><span class="lab">Overdue</span><span class="stat${f.totals.overdue_count > 0 ? ' overdue' : ''}">${f.totals.overdue}</span>
-            <span class="help">${f.totals.overdue_count} ${f.totals.overdue_count === 1 ? 'invoice' : 'invoices'}</span></div></div>
-        ${f.totals.without_a_due_date === 0 ? raw('') : h`<p class="help">${f.totals.without_a_due_date} open ${f.totals.without_a_due_date === 1 ? 'invoice has' : 'invoices have'} no due date — never counted as overdue, and never as on time.</p>`}
-        ${live.length === 0 ? emptyState('Nothing is waiting to be paid.') : h`<ul class="plain">${live.slice(0, 5).map((v) => h`<li>
-          <a href="/staff/finance/${v.id}">${v.number ?? 'unnumbered'}</a> · ${v.client_name} · ${v.money.outstanding}
-          ${v.money.overdue ? badge('Overdue', 'stop') : badge(v.due_shown, 'plain')}</li>`)}</ul>`}`, { href: '/staff/finance#claim-invoices' }));
-      out.push(card('Fees waiting to be invoiced', f.expected.claims.length === 0
-        ? emptyState('No claim is at the invoice stage without our fee raised.')
-        : h`<ul class="plain">${f.expected.claims.slice(0, 5).map((e) => h`<li><a href="/staff/claims/${e.claim_id}">${e.client_name}</a> ${claimRef(e.claim_ref)}
-            <br><span class="help">expected ${e.expected} · earned ${e.expected_on ?? 'NO DATE'}</span></li>`)}</ul>
-          <p><a class="btn" href="/staff/finance#to-invoice">Raise our fee in Finance</a></p>`, { count: f.expected.claims.length, href: '/staff/finance#to-invoice' }));
-      const vat = f.vat;
-      out.push(card('The VAT position', h`<div class="stat-row"><div><span class="lab">Rolling twelve months</span><span class="stat">${vat.rolling.turnover}</span></div>
-          <div><span class="lab">Threshold</span><span class="stat">${vat.threshold?.shown ?? 'not set'}</span></div></div>
-        <p>${badge(BAND_WORDS[vat.rolling.band], vat.rolling.band === 'BELOW' ? 'ok' : vat.rolling.band === 'CANNOT_SAY' ? 'warn' : 'stop')}
-          <span class="help">${vat.rolling.from} to ${vat.rolling.to}</span></p>
-        ${vat.warning === null ? raw('') : h`<p class="flag">${vat.warning}</p>`}`, { href: '/staff/finance#vat-monitoring' }));
-    }
-  }
-
-  if (role === 'SURVEYING') {
-    if (opens(actor, assertSurveySection)) {
-      const jobs = surveyorJobs(db, actor);
-      const waiting = jobs.filter((j) => j.state === 'SEALED');
-      out.push(card('Waiting for your review and figures', waiting.length === 0 ? emptyState('No survey job is waiting for your figures.')
-        : h`<ul class="plain">${waiting.map((j) => h`<li><a href="/staff/survey/${j.job_id}#figures">${j.business_name}</a> · ${j.stage_label}
-            <br><span class="help">${j.rooms_counted} of ${j.rooms_total} room types counted</span></li>`)}</ul>`, { count: waiting.length, href: '/staff/survey' }));
-      out.push(card('All your survey jobs', h`<p class="stat">${jobs.length}</p><p class="help">${jobs.length - waiting.length} with your figures committed.</p>
-        <p><a class="btn" href="/staff/survey">Open the review queue</a></p>`, { href: '/staff/survey' }));
-    }
-  }
-
-  if (role === 'SALES' || role === 'READ_ONLY') {
-    if (role !== 'READ_ONLY') {
-      const w = T.myWork(db, actor, now);
-      out.push(card('My next actions', w.my_claims.length === 0 ? emptyState('You own no open claims yet.', { href: '/staff/claims', label: 'See all claims' })
-        : h`<ul class="plain">${w.my_claims.slice(0, 6).map((c) => h`<li><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} · ${c.stage}
-            ${c.overdue ? badge('Overdue', 'stop') : raw('')}<br><span class="help">${c.next_action}</span></li>`)}</ul>`, { count: w.my_claims.length }));
-      out.push(card('Today and overdue', h`<div class="stat-row"><div><span class="lab">My open tasks</span><span class="stat">${w.tasks.length}</span></div>
-          <div><span class="lab">Overdue</span><span class="stat${w.overdue > 0 ? ' overdue' : ''}">${w.overdue}</span></div>
-          <div><span class="lab">Due today</span><span class="stat">${w.tasks.filter((t) => t.due.state === 'DUE_TODAY').length}</span></div></div>
-        <p><a href="#my-tasks">See them below</a> · <a href="/staff/tasks">All my tasks</a></p>`));
-    }
-    if (opens(actor, pipelineBoardGate)) {
-      const board = pipelineBoard(db, actor, now);
-      const total = board.columns.reduce((n, c) => n + c.cards.length, 0);
-      out.push(card(role === 'SALES' ? 'My pipeline by stage' : 'The pipeline by stage', h`<table class="compact"><tbody>${board.columns.map((c) => h`<tr>
-          <td><a href="/staff/pipeline#stage-${c.key}">${c.label}</a></td><td class="num">${c.cards.length}</td></tr>`)}
-          ${board.on_hold.length === 0 ? raw('') : h`<tr><td><a href="/staff/pipeline#on-hold">On hold</a></td><td class="num">${board.on_hold.length}</td></tr>`}</tbody></table>`,
-        { count: `${total} open`, href: '/staff/pipeline' }));
-    }
-    if (opens(actor, assertLeadSection)) {
-      const leads = leadsList(db, actor, { filters: {}, sort: 'newest' }).rows.filter((l) => l.claim === null).slice(0, 5);
-      out.push(card('New leads', leads.length === 0 ? (role === 'READ_ONLY' ? emptyState('No leads yet.') : emptyState('No leads yet.', { href: '/staff/leads#record-lead', label: 'Record your first lead' }))
-        : h`<ul class="plain">${leads.map((l) => h`<li><a href="/staff/leads/${l.id}">${l.organisation}</a> · ${l.source}
-            <br><span class="help">${l.lead_date} · ${l.status.label}${l.owner === null ? ' · nobody owns it yet' : ` · ${l.owner}`}</span></li>`)}</ul>`, { href: '/staff/leads' }));
-    }
-  }
-
-  if (role === 'ADMIN') {
-    const staff = S.staffList(db, actor);
-    const byRole = APP_ROLES.map((r) => ({ r, n: staff.filter((x) => x.user.role === r).length })).filter((x) => x.n > 0);
-    out.push(card('Users', h`<table class="compact"><tbody>${byRole.map((x) => h`<tr><td>${x.r.replace('_', ' ').toLowerCase()}</td><td class="num">${x.n}</td></tr>`)}</tbody></table>
-      <p><a class="btn" href="/staff/users">Users and roles</a></p>`, { count: staff.length, href: '/staff/users' }));
-    out.push(card('Settings and switches', h`<ul class="quick">
-      <li><a href="/staff/admin-settings">Admin settings — lists, reasons, finance and compliance values</a></li>
-      <li><a href="/staff/document-types">Document types</a></li><li><a href="/staff/automation">Automation rules</a></li>
-      <li><a href="/staff/templates">Email templates</a></li><li><a href="/staff/introducer-rewards">The reward model</a></li></ul>
-      <p class="help">Some switches have no screen on purpose; the administrator guide lists them.</p>`));
-    const log = auditLogView({ db, audit: app.audit, now: app.now }, actor, new URLSearchParams());
-    const refused = log.lines.filter((l) => l.outcome === 'REFUSED');
-    out.push(card('Recent audit events', h`<p>${log.chain.intact ? badge('Chain intact', 'ok') : badge('Chain BROKEN', 'stop')}</p>
-      <table class="compact"><tbody>${log.lines.slice(0, 6).map((l) => h`<tr><td class="when">${l.at}</td><td>${l.kind}</td><td>${l.actor_role ?? ''}</td></tr>`)}</tbody></table>`,
-      { href: '/staff/audit' }));
-    out.push(card('Refused', refused.length === 0 ? emptyState(`Nothing refused in the last ${log.lines.length} events.`)
-      : h`<table class="compact"><tbody>${refused.slice(0, 6).map((l) => h`<tr class="overdue"><td class="when">${l.at}</td><td>${l.kind}</td><td>${l.actor_role ?? ''}</td></tr>`)}</tbody></table>
-        <p><a href="/staff/audit?outcome=REFUSED">Every refusal</a></p>`, { count: refused.length }));
-  }
-
-  return out.length === 0 ? raw('') : h`<div class="cards">${out}</div>`;
-}
-
-const HOME_WORDS: Readonly<Record<string, string>> = Object.freeze({
-  SALES: 'Your next actions, your tasks, the pipeline and new leads.',
-  ACCOUNTING: 'Invoices due and overdue, fees waiting to be invoiced, and the VAT position.',
-  SURVEYING: 'The survey jobs waiting for your review and figures, and your tasks.',
-  ADMIN: 'Users, settings and switches, and what the audit log has recorded.',
-  READ_ONLY: 'The pipeline and new leads. This login can look, and cannot change anything.',
-});
-
-function homePage(actor: Actor, work: T.MyWork, cards: Safe = raw(''), welcome: Safe = raw('')): string {
-  return page({
-    title: 'Home', nav: nav(actor), wide: true,
-    body: h`
-      <div class="pagehead"><div><p class="eyebrow">Back office</p><h1>Home</h1>
-      <p class="help">Signed in as ${actor.role.toLowerCase()}. ${HOME_WORDS[actor.role] ?? ''}</p></div></div>
-      ${welcome}
-      ${cards}
-      ${opens(actor, assertDashboard) ? h`<p><a class="btn" href="/staff/dashboard">See the dashboard</a></p>` : raw('')}
-      <div id="my-tasks">${myTasksBlock(work)}</div>
-      <div class="gate">Emails and calendar invitations are not sent yet. They wait in the outbox at the foot of
-      <a href="/staff/settings">Your account</a>.${why(h`Outbound email and calendar invitations are stubbed in this build, and it is not hidden: both are
-      written to the outbox and neither leaves the building. ${STUB_NOTICE}`)}</div>
-      <div class="gate">Times are UK time.${why(h`Greenwich Mean Time in winter and British Summer Time in summer, and the change is handled
-      for you. Times are stored in UTC and converted for display, so nothing needs adjusting in March or October.`)}</div>`,
-  });
+function homePage(actor: Actor, rows: Safe): string {
+  return page({ title: 'Home', nav: nav(actor), wide: true, body: h`<h1>Home</h1>${rows}` });
 }
 
 /**

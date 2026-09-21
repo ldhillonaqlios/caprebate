@@ -1047,6 +1047,17 @@ export function openTasks(db: Db, actor: Actor, nowIso: string, limit = 500): Ta
   ).filter((r) => can(actor, 'staff_task.read', taskObj(db, r))).map((r) => viewOf(db, actor, r, nowIso));
 }
 
+/**
+ * PHASE 136 — EVERY OPEN TASK DUE TODAY OR LATE THAT THE READER MAY READ, for Home's "Today and overdue" row. No section
+ * gate beyond the back office: each row is asked `staff_task.read`, so a login sees exactly the tasks it could open.
+ */
+export function tasksDueByToday(db: Db, actor: Actor, nowIso: string, limit = 200): TaskView[] {
+  return db.all<TaskDbRow>(
+    `${TASK_SELECT}WHERE t.status IN ('OPEN','IN_PROGRESS') AND t.due_on IS NOT NULL AND t.due_on <= ? ORDER BY t.due_on ASC, t.created_at ASC LIMIT ?`,
+    [localDate(nowIso), limit],
+  ).filter((r) => can(actor, 'staff_task.read', taskObj(db, r))).map((r) => viewOf(db, actor, r, nowIso));
+}
+
 export type TaskPage = {
   readonly task: TaskView;
   readonly owner_choices?: readonly { readonly id: string; readonly name: string; readonly role: string }[];
