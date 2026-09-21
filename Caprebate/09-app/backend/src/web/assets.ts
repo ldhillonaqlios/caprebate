@@ -556,6 +556,15 @@ details.undo>summary{font-size:14px}
 .filesbtn-row{margin:.6rem 0 0}
 .filesbtn{display:inline-flex;align-items:center;gap:.45rem;padding:.45rem .8rem;border:1px solid var(--ink);border-radius:var(--radius);background:var(--white);color:var(--ink);font-weight:700;text-decoration:none}
 .filesbtn:hover{background:var(--mist)}
+.filesbtn-row{display:flex;flex-wrap:wrap;gap:.5rem}
+.emailform{max-width:44rem}
+.emailform textarea.fi{min-height:12rem;resize:vertical}
+.emailfrom{margin:0 0 .4rem;word-break:break-word}
+.emailfiles{border:0;margin:0;padding:0;min-width:0}
+.emailfiles .tickbox{word-break:break-word}
+.emaillist{list-style:none;margin:0;padding:0;display:grid;gap:.6rem;max-width:44rem}
+.emaillist .tilename{word-break:break-word}
+.lc-email{margin:.4rem 0}
 .filecount{display:inline-block;min-width:1.6rem;padding:0 .4rem;border-radius:999px;background:var(--ink);color:var(--white);text-align:center;font-size:14px;line-height:1.6}
 .fold-svg{flex:none}
 .foldertile{padding:0;border-top-color:var(--mut);display:flex;flex-direction:column}

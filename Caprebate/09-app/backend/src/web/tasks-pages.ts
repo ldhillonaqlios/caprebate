@@ -28,6 +28,7 @@ import { claimRef, savedMessage, why } from './components.ts';
 import * as T from './tasks.ts';
 import * as A from './automation.ts';
 import * as M from './templates.ts';
+import { emailButton } from './free-email-pages.ts';
 import { addNote } from './engaged.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
 import type { Fields } from './crm.ts';
@@ -396,20 +397,19 @@ export function notesBlock(t: Timeline | undefined, action: string | null, claim
   </div>`;
 }
 
-/** MERGE A TEMPLATE FOR A CONTACT — to the outbox, not sent. */
+/**
+ * PHASE 141 — EMAIL FROM A CLAIM. The claim page no longer merges a template in place: it opens the company's Email page
+ * with this claim already chosen, where the email is typed freely and "Start from a template" fills the boxes. `contacts`
+ * is undefined for a login that may not write to the company, and then nothing is drawn.
+ */
 export function emailBlock(
-  claim_id: string, templates: readonly { id: string; label: string }[],
+  business_id: string, claim_id: string,
   contacts: readonly { id: string; name: string; email: string | null }[] | undefined,
 ): Safe {
-  if (templates.length === 0 || contacts === undefined) return raw('');
-  return h`<div class="pblock"><div class="pnum">Email a contact from a template</div>
-    <p class="help">Merged values are escaped. A value nobody recorded shows as a gap in square brackets, never as a blank.
-    It is written to the outbox and NOT SENT, and an organisation marked do not contact is refused.</p>
-    ${contacts.length === 0 ? h`<p class="help">No contact is recorded for this organisation.</p>` : h`
-    <form method="post" action="/staff/claims/${claim_id}/email">
-      <label>Template <select name="template_id">${templates.map((t) => h`<option value="${t.id}">${t.label}</option>`)}</select></label>
-      <label>To <select name="contact_id">${contacts.map((c) => h`<option value="${c.id}">${c.name}${c.email === null ? ' — no email address recorded' : ''}</option>`)}</select></label>
-      <button type="submit">Queue to the outbox</button></form>`}</div>`;
+  if (contacts === undefined) return raw('');
+  return h`<div class="pblock"><div class="pnum">Email</div>
+    <p class="filesbtn-row">${emailButton(`/staff/clients/${business_id}/email?claim=${claim_id}`)}</p>
+    <p class="help">Write to one of the company’s contacts. It goes on the company’s timeline, marked with this claim.</p></div>`;
 }
 
 /** MY TASKS — on the landing page, for every staff role. */

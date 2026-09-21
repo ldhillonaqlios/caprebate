@@ -129,7 +129,7 @@ const CHANNEL_WORDS: Readonly<Record<string, string>> = Object.freeze({
 
 const OUTBOX_WORDS: Readonly<Record<string, string>> = Object.freeze({
   CALENDAR_INVITE: 'A calendar invitation', NOTIFICATION: 'A notice to staff', TEMPLATE: 'An email from a template',
-  PASSWORD_RESET: 'A password reset', WELCOME: 'A welcome message',
+  PASSWORD_RESET: 'A password reset', WELCOME: 'A welcome message', FREE_TYPED: 'An email',
 });
 
 function w(map: Readonly<Record<string, string>>, k: string | null | undefined, none: string): string {
@@ -254,11 +254,12 @@ export function timelineFor(db: Db, actor: Actor, subject: TimelineSubject): Tim
       documents(db, actor, biz, add, orgScope);
       documentLinks(db, actor, subject, biz, add, orgScope, claimScope);
       engagement(db, biz, add, orgScope);
-      outbox(db, biz, add, orgScope);
+      outbox(db, biz, add, orgScope, claimScope);
     }
     records(db, subject, biz, add, orgScope);
     automation(db, subject, scope, add, claimScope, leadScope);
     if (subject.kind === 'lead') {
+      leadOutbox(db, subject.id, add, leadScope);
       for (const r of db.all<{ id: string; created_at: string }>('SELECT id, created_at FROM contacts WHERE lead_id = ?', [subject.id])) {
         if (!can(actor, 'contact.read', { type: 'contact', id: r.id, business_id: null })) continue;
         add({ at: r.created_at, category: 'CONTACT', audience: 'STAFF_ONLY', who: null, scope: leadScope,
@@ -468,11 +469,29 @@ function engagement(db: Db, biz: string, add: Add, scope: string): void {
   if (e.signed_at !== null) add({ at: e.signed_at, category: 'ENGAGEMENT', audience: 'CLIENT_SEES', who: null, scope, what: 'The engagement letter was signed' });
 }
 
-function outbox(db: Db, biz: string, add: Add, scope: string): void {
-  for (const o of db.all<{ created_at: string; kind: string; subject: string; sent_at: string | null }>(
-    'SELECT created_at, kind, subject, sent_at FROM outbox WHERE business_id = ? ORDER BY created_at', [biz])) {
-    add({ at: o.created_at, category: 'OUTBOX', audience: o.sent_at === null ? 'STAFF_ONLY' : 'CLIENT_SEES', who: null, scope,
-      what: `${w(OUTBOX_WORDS, o.kind, 'A message')}: “${o.subject}” — ${o.sent_at === null ? 'queued to the outbox and NOT SENT' : `sent ${localStamp(o.sent_at)}`}` });
+/**
+ * PHASE 141 — EVERY EMAIL IS ON THE COMPANY'S TIMELINE, tagged to its claim where one was picked, with who wrote it and
+ * who it went to. A lead's emails are on the lead's timeline (`leadOutbox`). An email that was not sent says so.
+ */
+type OutboxRow = { created_at: string; kind: string; subject: string; sent_at: string | null; claim_ref: string | null; who: string | null; to_name: string | null };
+const OUTBOX_SELECT = 'SELECT o.created_at, o.kind, o.subject, o.sent_at, c.claim_ref, u.display_name AS who, ct.full_name AS to_name FROM outbox o ' +
+  'LEFT JOIN claims c ON c.id = o.claim_id LEFT JOIN users u ON u.id = o.written_by LEFT JOIN contacts ct ON ct.id = o.contact_id ';
+
+function outboxWhat(o: OutboxRow): string {
+  return `${w(OUTBOX_WORDS, o.kind, 'A message')}${o.to_name === null ? '' : ` to ${o.to_name}`}: “${o.subject}” — ${
+    o.sent_at === null ? 'saved, not sent' : `sent ${localStamp(o.sent_at)}`}`;
+}
+
+function outbox(db: Db, biz: string, add: Add, scope: string, claimScope: (ref: string) => string): void {
+  for (const o of db.all<OutboxRow>(`${OUTBOX_SELECT}WHERE o.business_id = ? ORDER BY o.created_at`, [biz])) {
+    add({ at: o.created_at, category: 'OUTBOX', audience: o.sent_at === null ? 'STAFF_ONLY' : 'CLIENT_SEES', who: o.who,
+      scope: o.claim_ref === null ? scope : claimScope(o.claim_ref), what: outboxWhat(o) });
+  }
+}
+
+function leadOutbox(db: Db, lead_id: string, add: Add, scope: string): void {
+  for (const o of db.all<OutboxRow>(`${OUTBOX_SELECT}WHERE o.lead_id = ? AND o.business_id IS NULL ORDER BY o.created_at`, [lead_id])) {
+    add({ at: o.created_at, category: 'OUTBOX', audience: o.sent_at === null ? 'STAFF_ONLY' : 'CLIENT_SEES', who: o.who, scope, what: outboxWhat(o) });
   }
 }
 

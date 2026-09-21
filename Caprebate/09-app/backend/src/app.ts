@@ -77,7 +77,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
  * things fail that test today, and one of them is smaller than it was.
  */
 export const STUBS = Object.freeze([
-  { id: 'email', module: 'src/stubs/email.ts', what: 'outbound email — messages are written to the outbox table and shown on screen, labelled as not sent' },
+  { id: 'email', module: 'src/stubs/email.ts', what: 'outbound email — messages are written to the outbox table and shown on screen, labelled as not sent. Phase 141 built the real sender behind it (src/stubs/email-provider.ts, SMTP over TLS) and left it switched off (EMAIL_SENDING) until a provider is chosen, named in the privacy notice and clause 7, and the contactus@caprebate.com mailbox has SPF, DKIM and DMARC' },
   { id: 'registers', module: 'src/stubs/registers.ts', what: 'the register connectors — nothing is called; both gates are real and are reported honestly' },
   { id: 'signature', module: 'src/stubs/signature.ts', what: 'document signature — no provider is contacted and nothing is executed' },
   { id: 'text-extraction', module: 'src/web/uploads.ts', what: 'text extraction from the documents this build still cannot read — a SCANNED PDF (page images, no text operators: OCR), an ENCRYPTED PDF, LZW/ASCII85/JBIG2/CCITT-filtered content, .doc, .xlsx and .pptx. Each returns ONE MARKER LINE, so on those the receipt strip runs over a marker rather than over the document. NARROWED 9 September 2026 (Phase 113c): .docx, and PDFs whose text is in uncompressed or FlateDecode streams, ARE now read and ARE stripped — src/web/extract-text.ts' },

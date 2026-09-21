@@ -6,6 +6,7 @@
  *   npm run seed         invented data + one user per role
  *   npm run verify-audit recompute the audit log's hash chain; exit 1 if it is broken
  *   node src/cli.ts sweep-originals   delete every kept original whose time is up (KEEP_ORIGINALS; off, so none)
+ *   node src/cli.ts send-outbox       send every email saved while sending was on (EMAIL_SENDING; off, so none)
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests
  */
@@ -18,7 +19,8 @@ import { AuditLog } from './audit.ts';
 import { join } from 'node:path';
 import { FsObjectStore } from './web/objectstore.ts';
 import { sealKeyFromEnv } from './web/originals.ts';
-import { sweepOriginals } from './web/uploads.ts';
+import { openKeptOriginal, sweepOriginals } from './web/uploads.ts';
+import { EMAIL_SENDING, dispatchOutbox, smtpLoginFromEnv, smtpProvider } from './stubs/email-provider.ts';
 
 const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';
 
@@ -82,7 +84,27 @@ async function main(): Promise<number> {
     }
   }
 
-  console.error('usage: node src/cli.ts <migrate|seed|verify-audit|sweep-originals>');
+  if (cmd === 'send-outbox') {
+    /* PHASE 141. EMAIL_SENDING is off, so this sends nothing and says why. The day it is on, a scheduled run of this line
+       retries anything that could not be sent at the moment it was saved. */
+    const db = new Db(DEFAULT_DB);
+    try {
+      const login = smtpLoginFromEnv();
+      const store = new FsObjectStore({ root: process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '.documents'), sealKey: sealKeyFromEnv() });
+      const audit = new AuditLog(db);
+      const now = (): string => new Date().toISOString();
+      const r = await dispatchOutbox({ db, now }, EMAIL_SENDING, login, login === null ? null : smtpProvider(login), async (id) => {
+        const k = await openKeptOriginal({ db, store, now, audit }, { id: 'system', role: 'SYSTEM' }, id);
+        return k === null ? null : { filename: k.filename, content_type: 'application/octet-stream', bytes: k.bytes };
+      });
+      console.log(r.state === 'OFF' ? `Emails are not being sent yet:\n  ${r.missing.join('\n  ')}` : `${r.sent} sent, ${r.failed} not sent, ${r.refused} refused.`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  console.error('usage: node src/cli.ts <migrate|seed|verify-audit|sweep-originals|send-outbox>');
   return 1;
 }
 

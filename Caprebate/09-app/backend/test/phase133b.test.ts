@@ -159,7 +159,9 @@ describe('the five long screens are on the record layout', () => {
     assert.match(r.body, /<nav class="seclist" aria-label="[^"]+"><ul class="rtabs vtabs">/, 'no left-hand section list');
     const tabs = sound('/staff/admin-settings', r.body);
     const view = JSON.parse((await as('admin').get('/staff/admin-settings/view.json')).body) as { lists: unknown[]; reasons: unknown[] };
-    assert.equal(tabs.length, view.lists.length + view.reasons.length + 6, 'a list, a set of reasons or a summary has no section');
+    // PHASE 141: seven, not six — "Who emails come from" is a section of its own, before what a setting may not change.
+    assert.equal(tabs.length, view.lists.length + view.reasons.length + 7, 'a list, a set of reasons or a summary has no section');
+    assert.ok(tabs.includes('email-sender'), 'who emails come from has no section');
     assert.equal(tabs.at(-1), 'may-not-change', 'what a setting may not change is not the last section');
   });
 

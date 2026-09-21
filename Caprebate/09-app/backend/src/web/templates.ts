@@ -108,6 +108,35 @@ export function tipsOff(text: string): string | null {
 const PLACEHOLDER = /\{\{\s*([^{}]*?)\s*\}\}/g;
 
 /**
+ * PHASE 141 — WHY A FREE-TYPED EMAIL IS REFUSED, OR NULL. The same words and shapes a template is refused for: never bank
+ * details, never an invoice (it waits on the invoice-fraud procedure), and nothing that would tip somebody off. Typing an
+ * email yourself does not step round a rule a template is held to.
+ */
+export function freeTextRefusal(subject: string, body: string): string | null {
+  const all = `${subject}\n${body}`;
+  for (const [pattern, what] of REFUSED) {
+    if (pattern.test(all)) {
+      return `An email may not carry ${what}. Bank details are never sent by email from here, and invoices wait for the invoice-fraud checks.`;
+    }
+  }
+  return null;
+}
+
+/**
+ * PHASE 141 — A TEMPLATE MERGED AS PLAIN TEXT, to start a free-typed email from. The same values and the same visible gap
+ * for a value nobody recorded; nothing is escaped here because the text goes into a box to be edited, and the page
+ * escapes it when drawing it.
+ */
+export function mergePlain(text: string, v: MergeValues, subjectLine: boolean): string {
+  return text.replace(PLACEHOLDER, (_m, raw: string) => {
+    const name = raw.trim();
+    const value = v[name] ?? null;
+    if (value === null) return gapFor(name);
+    return subjectLine ? value.replace(/[\r\n]+/g, ' ') : value;
+  });
+}
+
+/**
  * WHY A TEMPLATE IS REFUSED, OR NULL. Asked when a template is written AND again
  * when it is merged — a row that reached the table some other way is refused at
  * the merge as well.

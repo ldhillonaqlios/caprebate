@@ -13,7 +13,9 @@ import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as CF from './configuration.ts';
-import { savedMessage, sectionList, type RecordTab } from './components.ts';
+import { savedMessage, sectionList, why, type RecordTab } from './components.ts';
+import { senderSetting, setSender } from './free-email.ts';
+import { EMAIL_SENDING, sendingMissing, smtpLoginFromEnv } from '../stubs/email-provider.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -95,6 +97,12 @@ export async function handleConfiguration(
     redirect(res, `${BASE}?done=changed${back('reasons', reason[1])}`);
     return 'handled';
   }
+  if (path === `${BASE}/email-sender` && method === 'POST') {
+    const r = setSender(deps, actor, fields(await form(req), ['display_name', 'address', 'reply_to']));
+    if (!r.ok) return d.problem(res, actor, 'Not changed', r.why, `${BASE}#email-sender`, r.field);
+    redirect(res, `${BASE}?done=changed#email-sender`);
+    return 'handled';
+  }
   if (path === `${BASE}/setting` && method === 'POST') {
     const r = CF.refuseSetting(deps, actor, (await form(req)).get('setting'));
     return d.problem(res, actor, 'Not a setting', r.why, BASE, r.field);
@@ -108,6 +116,26 @@ function activeSelect(active: boolean, disabled: boolean): Safe {
     // Split across lines: tools/lint-sql.cjs reads the HTML word for a drop-down after a backtick as SQL.
     : h`
       <select name="active"><option value="1"${active ? raw(' selected') : raw('')}>active</option><option value="0"${active ? raw('') : raw(' selected')}>retired</option></select>`;
+}
+
+/**
+ * PHASE 141 — WHO EVERY EMAIL COMES FROM, AS ONE SETTING. Read by the outbox for every email it writes. Admin changes it;
+ * Sales reads it. Whether emails are actually sent is not a setting: it is EMAIL_SENDING, in code, off until its three
+ * conditions are met.
+ */
+function senderSection(d: ConfigPageDeps, actor: Actor): RecordTab {
+  const s = senderSetting(d.app.db, actor);
+  const missing = sendingMissing(EMAIL_SENDING, smtpLoginFromEnv());
+  return { id: 'email-sender', label: 'Who emails come from', body: h`
+    <p><strong>${s.sender.from_header}</strong></p>
+    <p class="help">Replies go to ${s.sender.reply_to}.</p>
+    ${missing.length === 0 ? h`<p>Emails are being sent.</p>` : h`<p><strong>Emails are not being sent yet.</strong></p>
+      ${why(h`Before emails can go out: <ul>${missing.map((x) => h`<li>${x}</li>`)}</ul>`)}`}
+    ${s.may_write ? h`<form method="post" action="/staff/admin-settings/email-sender">
+      <label>Name people see <input name="display_name" required maxlength="80" value="${s.sender.display_name}"></label>
+      <label>Send from <input name="address" type="email" required maxlength="254" value="${s.sender.address}"></label>
+      <label>Replies go to <input name="reply_to" type="email" maxlength="254" value="${s.sender.reply_to}"></label>
+      <button type="submit">Save</button></form>` : raw('')}` };
 }
 
 /**
@@ -162,6 +190,7 @@ function settingsPage(d: ConfigPageDeps, actor: Actor, v: CF.ConfigurationView, 
         <p class="help">Dated rows, recorded with their source on <a href="/staff/compliance">the compliance page</a> — never edited in place.</p>
         <table><tbody>${v.compliance.map((s) => h`<tr><th>${s.setting}</th><td><strong>${s.label}</strong></td>
           <td class="help">${s.effective_from ?? ''} ${s.source ?? ''}</td></tr>`)}</tbody></table>` }]),
+    senderSection(d, actor),
     { id: 'may-not-change', label: 'What a setting may not change', body: h`
         <p class="help">Each of these is a rule, not a preference. It is refused by the store, by name, with the reason below — and the refusal is
         recorded. Asking changes nothing.</p>

@@ -50,6 +50,7 @@ import { CONVEYANCING_STRIP } from './conveyancing-strip.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
 import { MANDATORY_DOCUMENTS } from './mandatory-documents.ts';
 import { KEEP_ORIGINALS } from './originals.ts';
+import { EMAIL_SENDING } from '../stubs/email-provider.ts';
 import { FEE_CLAWBACK } from './claim-record.ts';
 import { DEFENCE_PACK_GENERATOR } from './defence-pack.ts';
 import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
@@ -162,6 +163,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'FEE_CONTROLS.break_and_abort', on: FEE_CONTROLS.break_and_abort.enabled, home: 'src/web/fee-controls.ts' },
     { switch: 'MANDATORY_DOCUMENTS', on: MANDATORY_DOCUMENTS.enabled, home: 'src/web/mandatory-documents.ts' },
     { switch: 'KEEP_ORIGINALS', on: KEEP_ORIGINALS.enabled, home: 'src/web/originals.ts' },
+    { switch: 'EMAIL_SENDING', on: EMAIL_SENDING.enabled, home: 'src/stubs/email-provider.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/web/defence-pack.ts' },
     { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/web/allowance-profit-comparison.ts' },
     { switch: 'FUNNEL_SWITCHES.breakeven_is_insufficient_profit', on: FUNNEL_SWITCHES.breakeven_is_insufficient_profit, home: 'src/web/funnel-session.ts' },

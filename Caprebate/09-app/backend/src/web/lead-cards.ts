@@ -21,7 +21,8 @@
  * details are the store's own `leadView` for that lead, and every button posts to a route that asks the server again.
  */
 
-import type { Actor } from '../authz.ts';
+import { can, type Actor } from '../authz.ts';
+import { emailButton } from './free-email-pages.ts';
 import { h, raw, type Safe } from './html.ts';
 import { plainNeed } from './next-step.ts';
 import { ukDatesIn } from './localtime.ts';
@@ -165,7 +166,7 @@ function actionsBlock(v: LeadView, d: CardDeps): Safe {
         <label><input type="radio" name="spoke" value="no"> No answer, or a message left</label></fieldset>
       <label>What was said <textarea name="note" maxlength="2000"></textarea></label>
       <button type="submit">Save the call</button></form></details>
-    <span class="lc-off"><button type="button" disabled>Email</button> <span class="help">Coming soon.</span></span>
+    ${can(d.actor, 'email.queue', { type: 'email', id: v.id, business_id: v.organisation.id ?? '' }) ? h`<p class="lc-email">${emailButton(`/staff/leads/${v.id}/email`)}</p>` : raw('')}
     ${d.mayAddTask ? h`<details class="lc-act"><summary>Add next action</summary><form method="post" action="/staff/tasks">
       <input type="hidden" name="lead_id" value="${v.id}"><input type="hidden" name="back" value="/staff/leads">
       <input type="hidden" name="owner_id" value="${d.actor.id}">

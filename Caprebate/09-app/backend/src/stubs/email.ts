@@ -37,7 +37,8 @@ export type OutboundMessage = {
    * rights request or a complaint. It reaches the outbox and nowhere else.
    */
   /** ACCOUNT_VERIFY — Phase 133j: the link that confirms a client's own sign-up. It carries a single-use token. */
-  kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER' | 'ACCOUNT_VERIFY';
+  /** FREE_TYPED — Phase 141: an email a member of staff typed themselves, to one of the company's contacts. */
+  kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER' | 'ACCOUNT_VERIFY' | 'FREE_TYPED';
   /**
    * The organisation the message is about, where there is one. CRM 1 of 10.
    * Optional because a staff password reset is about nobody's organisation —
@@ -45,6 +46,15 @@ export type OutboundMessage = {
    * DO_NOT_CONTACT refusal reads first.
    */
   business_id?: string | null;
+  /**
+   * PHASE 141 — what a free-typed email also records: the claim it is about (one of the company's own — a trigger holds
+   * it), the lead it was written from, the contact it went to, who wrote it, and the company's files it carries.
+   */
+  claim_id?: string | null;
+  lead_id?: string | null;
+  contact_id?: string | null;
+  written_by?: string | null;
+  attachments?: readonly { readonly logical_document_id: string; readonly document_id: string }[];
 };
 
 /**
@@ -101,7 +111,25 @@ export function isDoNotContact(db: Db, to_email: string, business_id: string | n
   return (byLogin?.n ?? 0) > 0;
 }
 
-export function outboxTransport(db: Db, ids: () => string, now: () => string): EmailTransport {
+/**
+ * PHASE 141 — WHO EVERY EMAIL COMES FROM, AS ONE SETTING. The latest row of `email_sender` (migration 036), which Admin
+ * changes on the admin settings screen. Migration 036 writes the first: "Cap Rebate", contactus@caprebate.com. No
+ * address is written in code; a database with no row at all is refused rather than given a default.
+ */
+export type Sender = { readonly display_name: string; readonly address: string; readonly reply_to: string; readonly from_header: string };
+
+export function currentSender(db: Db): Sender {
+  const r = db.get<{ display_name: string; address: string; reply_to: string }>(
+    'SELECT display_name, address, reply_to FROM email_sender ORDER BY set_at DESC, rowid DESC LIMIT 1');
+  if (r === undefined) throw new Error('no sender is set for email: migration 036 writes one');
+  return { ...r, from_header: `${r.display_name} <${r.address}>` };
+}
+
+/**
+ * THE OUTBOX. `sending` says whether sending is on at the moment a row is written (src/stubs/email-provider.ts); a row
+ * written while it is off is saved with `send_requested = 0` and is never sent later. It is off, so today every row is.
+ */
+export function outboxTransport(db: Db, ids: () => string, now: () => string, sending: () => boolean = () => false): EmailTransport {
   return {
     id: 'STUB',
     delivers: false,
@@ -110,11 +138,18 @@ export function outboxTransport(db: Db, ids: () => string, now: () => string): E
         return { id: null, delivered: false, refused: 'DO_NOT_CONTACT' };
       }
       const id = ids();
+      const from = currentSender(db);
+      const requested = sending() ? 1 : 0;
       db.run(
-        'INSERT INTO outbox (id, created_at, to_email, subject, body, kind, sent_at, transport, business_id) ' +
-          'VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?)',
-        [id, now(), m.to_email, m.subject, m.body, m.kind, 'STUB', m.business_id ?? null],
+        'INSERT INTO outbox (id, created_at, to_email, subject, body, kind, sent_at, transport, business_id, from_header, reply_to, ' +
+          'claim_id, lead_id, contact_id, written_by, send_requested) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [id, now(), m.to_email, m.subject, m.body, m.kind, 'STUB', m.business_id ?? null, from.from_header, from.reply_to,
+          m.claim_id ?? null, m.lead_id ?? null, m.contact_id ?? null, m.written_by ?? null, requested],
       );
+      for (const a of m.attachments ?? []) {
+        db.run('INSERT INTO outbox_attachments (id, outbox_id, logical_document_id, document_id) VALUES (?, ?, ?, ?)',
+          [ids(), id, a.logical_document_id, a.document_id]);
+      }
       // sent_at stays NULL. Nothing left the building, and the row says so.
       return { id, delivered: false, refused: null };
     },
@@ -124,3 +159,6 @@ export function outboxTransport(db: Db, ids: () => string, now: () => string): E
 /** The label a screen must show beside anything this transport produced. */
 export const STUB_NOTICE =
   'NOT SENT — outbound email is stubbed in this build. The message was written to the outbox.';
+
+/** PHASE 141 — what a person reads after saving an email while sending is off. Lakhbir's words. */
+export const SAVED_NOT_SENT = 'Saved — emails are not being sent yet.';

@@ -47,6 +47,7 @@ import { checksPanelIfPermitted } from './approvals.ts';
 import { checksBlock, checksSummary, STEP_ANCHOR } from './approvals-pages.ts';
 import { clientFolder } from './documents.ts';
 import { filesButton, folderTiles } from './client-files-pages.ts';
+import { emailButton } from './free-email-pages.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -132,6 +133,8 @@ function clientPage(
   const p = work?.page ?? null;
   const waiting = p === null ? null : p.row.waiting_on === 'US' ? 'Us' : p.row.waiting_on === 'CLIENT' ? 'The client' : 'Nobody';
   const ctx: SectionContext = { prefs: sectionPrefs(db, actor), back: `/staff/clients/${org.id}` };
+  // PHASE 141: THE EMAIL BUTTON, beside Files, for a login that may write to the company — Admin and Sales.
+  const mayEmail = can(actor, 'email.queue', { type: 'email', id: org.id, business_id: org.id });
   const openNow = note === 'saved' ? 'activity' : done === undefined ? undefined : OPEN_AFTER[done];
 
   /* WE NEED: every missing fact, in the section it belongs to, with the one-press ask where this login may ask. */
@@ -257,6 +260,7 @@ function clientPage(
 
   const quick: QuickAction[] = [
     ...s.quick,
+    ...(mayEmail ? [{ href: `/staff/clients/${org.id}/email`, label: 'Email the client' }] : []),
     ...(work !== null && work.sources.rate.allowed ? [{ href: '#sources', label: 'Run the research' }] : []),
     ...(p !== null && p.missing.length > 0 ? [{ href: '#questions', label: 'Ask the client for something' }] : []),
   ];
@@ -273,7 +277,7 @@ function clientPage(
         { label: 'Owner', value: org.owner?.name ?? 'nobody yet' },
         waiting === null ? null : { label: 'Waiting on', value: waiting },
         p === null ? null : { label: 'Engagement letter', value: p.row.letter_label },
-      ], filesButton(org.id, folder.files.length), legal === null ? raw('') : h`${legal}`)}
+      ], filesButton(org.id, folder.files.length, mayEmail ? emailButton(`/staff/clients/${org.id}/email`) : raw('')), legal === null ? raw('') : h`${legal}`)}
       ${recordLayout(h`${sections.map((x) => section({ ...x, ...(openNow === x.id ? { open_now: true } : {}) }, ctx))}`, sidePanel(null, quick))}
       <p><a href="/staff/clients">Back to the list</a></p>`,
   });

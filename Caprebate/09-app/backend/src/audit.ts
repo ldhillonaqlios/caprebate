@@ -242,6 +242,11 @@ export type AuditKind =
    */
   | 'DOCUMENT_SHOWN_TO_CLIENT' | 'DOCUMENT_HIDDEN_FROM_CLIENT' | 'DOCUMENT_ORIGINAL_OPENED' | 'DOCUMENT_ORIGINAL_DELETED'
   /**
+   * Phase 141, 21 September 2026: a member of staff saved a free-typed email to a company's contact, and Admin changed who
+   * every email comes from. Ids, a count of files and whether sending was on — never the subject, the body or an address.
+   */
+  | 'EMAIL_WRITTEN' | 'EMAIL_SENDER_SET'
+  /**
    * Phase 133j, 18 September 2026: the website's enquiry form received, and Sales opening an enquiry as a lead or
    * closing it; a person asking for their own client login after the assessment, and confirming it from the email.
    * Ids, the sector code and the decision only — never the name, the address or what the person wrote.

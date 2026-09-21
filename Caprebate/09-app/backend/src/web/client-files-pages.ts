@@ -56,9 +56,9 @@ export function folderIcon(): Safe {
 }
 
 /** The folder button in a client page's header: the icon, the word, and how many files this login may open. */
-export function filesButton(business_id: string, count: number): Safe {
+export function filesButton(business_id: string, count: number, beside: Safe = raw('')): Safe {
   return h`<p class="filesbtn-row"><a class="filesbtn" href="/staff/clients/${business_id}/files">${folderIcon()}<span>Files</span>
-    <span class="filecount" aria-label="${count} ${count === 1 ? 'file' : 'files'}">${count}</span></a></p>`;
+    <span class="filecount" aria-label="${count} ${count === 1 ? 'file' : 'files'}">${count}</span></a>${beside}</p>`;
 }
 
 const MAX_BODY = UPLOAD_LIMITS.max_bytes + 64 * 1024;

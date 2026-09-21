@@ -190,7 +190,7 @@ Screens are named by their heading. The web address follows on a small "Address:
 **The demo data must never be loaded into a live system.** Loading it creates one login per role, and all five share a published password (`change-this-seed-password`). For that reason, the command that loads it refuses to run unless someone sets `CAPREBATE_ALLOW_SEED=1` on purpose. Without it, the command stops with *"refusing to seed: set CAPREBATE_ALLOW_SEED=1 to confirm this is not production"*. The demo launcher stops too, with *"refusing to run: this launcher seeds invented data with a known password"*. The setting exists so that nobody can load invented data with a known password by forgetting a flag. On a live system nobody should ever set it.
 
 **Nothing leaves the building.**
-- **Email goes to the outbox and stays there.** A message queued from a template, a notice from an automation rule, or a letter from a compliance register is written to the outbox. Nothing sends it. You can read the outbox at the foot of **Your account** (the menu under your name), under "The outbox — what would have been sent". Every row reads **NOT SENT**, and the page says: "NOT SENT — outbound email is stubbed in this build. The message was written to the outbox. Calendar invitations go the same way, for the same reason."
+- **Email goes to the outbox and stays there.** An email typed on a client's **Email** page (Phase 141), a message queued from a template, a notice from an automation rule, or a letter from a compliance register is written to the outbox. Nothing sends it. You can read the outbox at the foot of **Your account** (the menu under your name), under "The outbox — what would have been sent". Every row reads **NOT SENT**, and the page says: "NOT SENT — outbound email is stubbed in this build. The message was written to the outbox. Calendar invitations go the same way, for the same reason." Every email says it is from **Cap Rebate <contactus@caprebate.com>**, and replies go to the same address. Sending is built and switched off until an email service is chosen, named in the privacy notice and the engagement letter, and the contactus@ mailbox is set up with its email security records. Until then the Email page says **"Saved — emails are not being sent yet."**
 - **Nothing calls an outside register.** No connector to Companies House, the Land Registry or any other source exists. Running the research on a client records every source as not permitted yet, with the reason. The free lookups wait on a published privacy notice, and the paid ones wait on a signed engagement letter.
 - **No money moves and nothing is signed.** The finance screen says "RECORDED, NOT COLLECTED". The letter's signing records a state, and no signature provider is contacted.
 
@@ -392,7 +392,9 @@ Address: /staff/templates. The heading is **Email templates**.
 
 The message reads "A template may not carry [what it found]. Bank details are never sent from a template, and the invoice email waits on the invoice-fraud procedure." A merge field outside the six gets: "“{{first_name}}” is not a merge field. The merge fields are …".
 
-**Where queued messages are seen.** A template is used from a claim, under "Email a contact from a template" → **Queue to the outbox**. It then appears at the foot of **Your account**, under "The outbox — what would have been sent" (When · Kind · Subject · Sent), marked **NOT SENT**. An organisation marked do not contact is refused: "This organisation is marked do not contact. Nothing was queued — the outbox refuses it."
+**Where a template is used.** Since Phase 141 a template is a place to start an email, not a separate form. On a client's **Email** page, open **Start from a template**, choose one and press **Use this template**: the subject and the message fill in, merged for the contact and the claim chosen, and you change anything before you save. The same refusals apply to an email you type yourself. Older messages queued from a claim appear at the foot of **Your account**, under "The outbox — what would have been sent" (When · Kind · Subject · Sent), marked **NOT SENT**. An organisation marked do not contact is refused: "This organisation is marked do not contact. Nothing was queued — the outbox refuses it."
+
+**Who emails come from.** On **Admin settings**, the section **Who emails come from** shows the sender — "Cap Rebate <contactus@caprebate.com>" — and where replies go. Admin can change the name, the address and the reply address and press **Save**; the old one is kept, so it is always known what an earlier email was sent under. Sales can read it. It is one setting: every email uses it, whatever wrote it. Whether emails are actually sent is not a setting — the same section says "Emails are not being sent yet" and, under **Why?**, what is still missing.
 
 **Nothing is sent**, by anything, in this build.
 
@@ -712,10 +714,11 @@ under **Notices to the firm**, as queued or not queued, with the reason.
 - To keep a set of filters, type a name in **Save these filters as** and press **Save view**. It appears under **Saved views**, and **Retire** removes it.
 - **Export these N rows as CSV** downloads the list with only the columns you may read, and the export is recorded.
 
-**11. Emailing a contact.** On a claim, **Email a contact from a template**: choose **Template** and
-**To**, then press **Queue to the outbox**. Nothing leaves the building: the message waits in the outbox,
-marked NOT SENT, and you can read it at the foot of **Your account** under **The outbox — what would have
-been sent**.
+**11. Emailing a client.** On the client's page press **Email** (beside **Files**), or **Email** on a lead card or a
+claim. Choose **To** — one of the company's contacts — and, if it is about one claim, **Which claim is it about?** Type a
+**Subject** and a **Message** (or open **Start from a template** first), tick any files to attach, and press **Save the
+email**. The page says **"Saved — emails are not being sent yet."** and lists it under **Emails to** the company; it is on
+the company's timeline too. Nothing leaves the building until sending is switched on.
 
 **12. Where the claim came from, and its team.** At the top of a claim, **Came from** and **Source**
 say how it began — its lead, or "no lead — this claim was opened by staff on a property" — and
@@ -1473,9 +1476,9 @@ stages and Closed, the current one filled in, and under it **Moving on from …:
 still needed. Then three tabs: **Details** (the claim, the team, the estimated fee, the overview, **The pipeline — the
 operating procedure's stages** with **Move the claim**, the facts, the four figures, the value and **Change the
 claim**), **Related** (documents and requests, money, contacts, deliverables and aftercare, with a count) and
-**Activity** (**Next action and tasks**, **Email a contact from a template**, the timeline and internal notes). On the
+**Activity** (**Next action and tasks**, **Email** — which opens the company's Email page with this claim chosen — the timeline and internal notes). On the
 right: **Next action**, and **Quick actions** — **Log a call or add a task**, **Set the next action**, **Request a
-document**, **Move the claim**, **Email a contact**, **Add a note** — each shown only when its form is on your page.
+document**, **Move the claim**, **Email the client**, **Add a note** — each shown only when its form is on your page.
 
 **What it is for**
 The claim is the unit of work: one organisation can have many properties, and one property many
@@ -1746,7 +1749,7 @@ ownership call" it reads "Cancelled — cancelled … by Sales User — Duplicat
 
 **What it is for**
 The working half of the claim page. **Next action and tasks** keeps the claim's one next action
-and its other tasks. **Email a contact from a template** queues a message. **Activity timeline** reads
+and its other tasks. **Email** opens the company's Email page with this claim chosen (see `B48`). **Activity timeline** reads
 what has already happened, and **Internal notes — never shown to the client** are kept apart from it.
 
 **Who can open it**
@@ -1759,8 +1762,8 @@ Address: `/staff/claims/{claim}` (the panels)
 **How to do the common job**
 1. Under **Next action and tasks**, open **Set the next action**.
 2. Fill in **What happens next**, choose **Owner** and **Due**, and press **Set as the next action**.
-3. To email, go to **Email a contact from a template**: choose **Template** and **To**, and press **Queue to the outbox**.
-4. Read the result in **Your account** under **The outbox — what would have been sent**. It says NOT SENT.
+3. To email, press **Email** under **Email**. The company's Email page opens with this claim chosen — see `B48`.
+4. After saving, the email is on the claim's timeline: "An email to … — saved, not sent".
 5. To keep a private remark, type it in **Add a note** and press **Save note**.
 
 **What it will refuse, and why**
@@ -1773,13 +1776,13 @@ Address: `/staff/claims/{claim}` (the panels)
 **Try it on the demo**
 As Sales, on CR-2026-0002, set the next action "Send the engagement letter reminder" with no owner →
 **Next action not set**. Choose Sales User and 2026-09-18 → the header reads "Next action Send the
-engagement letter reminder due 2026-09-18". On CR-2026-0004, queue "What happens next on your claim"
-to Decision Maker Contact. **Your account** then lists "Dunmarrow Medical Practice Limited — the next step on your claim NOT SENT" (since Phase 134 a subject leads with the company).
-Add a contact to Fenmoor Nursing Homes Limited and try to email them from CR-2026-0006 → **Not queued**.
+engagement letter reminder due 2026-09-18". On CR-2026-0004, press **Email**, start from "What happens next on your
+claim" for Decision Maker Contact and save it → "Saved — emails are not being sent yet." and the claim's timeline shows it.
+Open Fenmoor Nursing Homes Limited's **Email** page → "You cannot email this company." 
 
 **Check yourself**
 - *Where do you set the next action — "Change the claim" or "Next action and tasks"?* — **Next action and tasks** (or on a move).
-- *You queued an email. Has the client received it?* — No. Email is stubbed; it waits in the outbox, NOT SENT.
+- *You saved an email. Has the client received it?* — No. Sending is switched off; it is saved, and the page said so.
 - *Does the client see internal notes?* — Never. They are kept apart from the timeline too.
 
 ---
@@ -2517,6 +2520,60 @@ Corvale's client and send a lease from the portal; back as Sales, Corvale's **Fi
 - *You upload a report and forget the tick. Can the client see it?* — No. The default is no; press **Let the client see it**.
 - *Can you open the lease the client sent?* — Not the file itself: it was read and deleted. The card says what we took from it.
 - *Where did the Documents menu go?* — A company's files are under **Files** on its page; **Search** finds a document across every client.
+
+---
+
+### Training — `B48` emailing a client
+
+**What it is for**
+Writing your own email to a client — not only a template — from **Cap Rebate <contactus@caprebate.com>**, kept on the
+company's timeline.
+
+**Who can open it**
+Admin and Sales. Accounting, a surveyor, the view-only login and the client do not see the **Email** button and are
+refused the page.
+
+Address: `/staff/clients/{company}/email` — or press **Email** beside **Files** at the top of the client's page, on a
+lead card, or on a claim (the claim is then already chosen). From a lead: `/staff/leads/{lead}/email`.
+
+**How to do the common job**
+1. Press **Email**. The page shows who it is **From**. If sending is not on yet it says **"Emails are not being sent
+   yet."** — press **Why?** to see what is missing.
+2. Choose **To**. Only the company's contacts with an email address are listed; anybody left out is named underneath
+   with the reason. You cannot type an address: add the person as a contact first.
+3. If it is about one claim, choose it under **Which claim is it about?** — otherwise leave "The whole company".
+4. Type the **Subject** and the **Message**. To start from a template, open **Start from a template**, choose one and
+   press **Use this template**; then change what you like.
+5. Tick any files under **Attach files** (up to five). Only a file the client can already see can be sent — and while
+   we delete each file once read, none can be, and the page says so.
+6. Press **Save the email**. The page says **"Saved — emails are not being sent yet."** and lists it under **Emails to**
+   the company. It is on the company's timeline, marked with its claim.
+
+**What it will refuse, and why**
+- No contact chosen, or one who is not this company's: "Choose who it is to. It can only go to one of this company’s contacts with an email address."
+- No subject or no message: "Write a subject." · "Write the email."
+- Bank details, anything shaped like a sort code or account number, an invoice, or tipping-off words: "An email may not carry [what it found]. Bank details are never sent by email from here, and invoices wait for the invoice-fraud checks."
+- A claim of another company: "Choose one of this company’s claims."
+- A company marked do not contact: the page says "You cannot email this company." and a save is refused — "This company asked us not to contact them. Nothing was saved."
+- A refusal keeps what you typed, so you can fix it and save again.
+
+**Why it is not sent yet**
+Three things must be true first, and each is Lakhbir's to do: an email service chosen (the question *"Which email service
+should send our emails from contactus@caprebate.com?"*), that service named in the privacy notice and in the
+engagement letter, and the contactus@caprebate.com mailbox set up with its email security records (SPF, DKIM and DMARC).
+The sending is built; it is switched off until then. An email saved while it is off is never sent later by surprise.
+
+**Try it on the demo**
+As Sales, open Dunmarrow Medical Practice Limited and press **Email**. Choose a contact, choose a claim, type "Your
+survey date" and a message, and press **Save the email** → "Saved — emails are not being sent yet." Open the company's
+**Messages and activity** → "An email to … : “Your survey date” — saved, not sent", marked with the claim. Now type "our
+sort code is 12-34-56" in a message → **Not saved**, and your words are still there. Open Fenmoor Nursing Homes
+Limited's **Email** page → "You cannot email this company." As Admin, open **Admin settings** → **Who emails come from**.
+
+**Check yourself**
+- *Can you email someone who is not a contact?* — No. Add them as the company's contact first.
+- *Who does the client see the email from?* — Cap Rebate <contactus@caprebate.com>, and a reply goes there too.
+- *You saved an email today. When sending is switched on next month, will it go out?* — No. Only emails saved while sending is on are sent.
 
 ---
 

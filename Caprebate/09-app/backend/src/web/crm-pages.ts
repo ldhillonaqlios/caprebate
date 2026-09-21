@@ -791,7 +791,7 @@ function claimPage(
   const where = property === null ? null : [propertyIn(v.client.name, property.label), property.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
   const tasks = claimTasksBlock(v.id, v.tasks, taskChoices(db));
   const docs = claimDocumentsBlock(v.id, v.documents, false);
-  const email = emailBlock(v.id, x.templates, x.contacts);
+  const email = emailBlock(biz, v.id, x.contacts);
   const notes = notesBlock(v.timeline, x.may_note ? `/staff/claims/${v.id}/notes` : null);
   const pipe = pipelineBlock(v.id, v.pipeline, v.tasks?.may_set_next_action === true ? (v.tasks.owner_choices ?? []) : []);
   const quick: QuickAction[] = [
@@ -799,7 +799,7 @@ function claimPage(
     ...(tasks.html.includes('/next-action"') ? [{ href: '#claim-tasks', label: 'Set the next action' }] : []),
     ...(docs.html.includes('/document-requests"') ? [{ href: '#claim-documents', label: 'Request a document' }] : []),
     ...(pipe.html.includes('/stage"') ? [{ href: '#move', label: 'Move the claim' }] : []),
-    ...(email.html.includes('/email"') ? [{ href: '#claim-email', label: 'Email a contact' }] : []),
+    ...(email.html.includes('/email?claim=') ? [{ href: `/staff/clients/${biz}/email?claim=${v.id}`, label: 'Email the client' }] : []),
     ...(notes.html.includes('/notes"') ? [{ href: '#claim-notes', label: 'Add a note' }] : []),
   ];
   const nextAction = v.header === undefined ? null : v.header.next_action === null
