@@ -353,7 +353,8 @@ describe('the property and organisation pages — documents panels, a link form,
       const sales = await signIn('SALES');
       const org = JSON.parse((await sales.get(`/staff/properties/${prop.id}/view.json`)).body) as { documents?: unknown };
       assert.ok('documents' in org, 'the property view carries no documents panel');
-      assert.match((await sales.get(`/staff/clients/${job.business_id}`)).body, /<div class="pnum">Documents<\/div>/, 'the client page draws no documents panel');
+      // PHASE 138: the documents are a coloured section of their own, headed by the section rather than a panel heading.
+      assert.match((await sales.get(`/staff/clients/${job.business_id}`)).body, /<details class="sec sec-documents" id="documents"/, 'the client page draws no documents panel');
 
       const noteBefore = db.get<{ n: number }>('SELECT COUNT(*) AS n FROM internal_notes WHERE property_id = ?', [prop.id])?.n ?? 0;
       assert.equal((await sales.post(`/staff/properties/${prop.id}/notes`, { body: 'The boiler house is shared with the neighbour.' })).status, 303);

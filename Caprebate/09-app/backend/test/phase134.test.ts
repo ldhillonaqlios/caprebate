@@ -93,7 +93,9 @@ const as = (who: Login): Client => clients.get(who) as Client;
 
 /** The claim-tile list inside the "Claims" card. */
 function tiles(body: string, id: string): string[] {
-  const card = new RegExp(`<section class="card" id="${id}">([\\s\\S]*?)</section>`).exec(body)?.[1] ?? '';
+  // PHASE 138: the Claims card is now a coloured section (a <details>); its tiles are the first tile list after its id.
+  const card = new RegExp(`<section class="card" id="${id}">([\\s\\S]*?)</section>`).exec(body)?.[1]
+    ?? new RegExp(`<details class="sec sec-[a-z]+" id="${id}"[\\s\\S]*?(<ul class="tiles">[\\s\\S]*?</ul>)`).exec(body)?.[1] ?? '';
   return [...card.matchAll(/<li class="tile">([\s\S]*?)<\/li>/g)].map((m) => m[1] ?? '');
 }
 
@@ -126,9 +128,11 @@ describe('the seeded company with two properties and three claims', () => {
     assert.equal([...r.body.matchAll(/<div class="pnum">Everything with /g)].length, 1, 'not exactly one timeline');
     for (const c of mine) assert.ok(r.body.includes(`<span class="claimref">${c.claim_ref}</span>`));
     // The organisation's parts and the research half are both on the one page.
-    for (const tab of ['activity', 'tasks', 'missing', 'answers', 'sources', 'contacts', 'properties', 'documents', 'details']) {
-      assert.ok(r.body.includes(`class="tabpanel" id="${tab}"`), `no ${tab} tab`);
+    // PHASE 138: coloured sections, not tabs; the old anchors are kept, #tasks and #missing inside Questions for the client.
+    for (const tab of ['activity', 'questions', 'answers', 'sources', 'contacts', 'properties', 'documents', 'details']) {
+      assert.match(r.body, new RegExp(`<details class="sec sec-[a-z]+" id="${tab}"`), `no ${tab} section`);
     }
+    for (const inner of ['tasks', 'missing']) assert.ok(r.body.includes(`id="${inner}"`), `no #${inner}`);
   });
 
   test('a claim addressed under a company that is not its own is refused, as a claim that does not exist', async () => {

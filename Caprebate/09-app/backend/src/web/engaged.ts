@@ -422,7 +422,27 @@ export type MissingFact = {
   /** True where a task already exists asking for this fact. */
   readonly has_task: boolean;
   readonly task_state: 'OPEN' | 'ANSWERED' | 'WITHDRAWN' | null;
+  /**
+   * PHASE 138 — WHICH SECTION OF THE CLIENT PAGE ASKS FOR IT, AND WHERE IT COMES FROM, in words. Read from the same
+   * source and screen the pack attribution above reads, never typed per fact: Companies House describes the company;
+   * EPC, the valuation office, the care regulator and the land registry describe the property; the client's own answers
+   * are the property where the screen is the property or the works, and the claim's facts otherwise.
+   */
+  readonly section: 'company' | 'property' | 'facts';
+  readonly from: string;
 };
+
+/** PHASE 138: a register source's section on the client page, and its name in words. A source not here is the claim's facts. */
+const SECTION_BY_REGISTRY_SOURCE: Readonly<Record<string, { section: MissingFact['section']; from: string }>> = Object.freeze({
+  companies_house: { section: 'company', from: 'Companies House' },
+  epc: { section: 'property', from: 'the EPC register' },
+  voa: { section: 'property', from: 'the valuation office' },
+  cqc: { section: 'property', from: 'the care regulator' },
+  hmlr: { section: 'property', from: 'HM Land Registry' },
+});
+
+/** PHASE 138: the screens whose unanswered questions describe the property. Every other screen is the claim's facts. */
+const PROPERTY_SCREEN_GROUPS: readonly string[] = Object.freeze(['The property', 'Works']);
 
 /**
  * WHICH PACK A REGISTER FACT BLOCKS, BY THE SOURCE THAT WOULD SUPPLY IT.
@@ -596,6 +616,7 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
       blocks: known ? (BLOCKS_BY_REGISTRY_SOURCE[source] as Blocks) : 'BOTH',
       blocks_by_default: !known,
       has_task: t.has_task, task_state: t.task_state,
+      ...(SECTION_BY_REGISTRY_SOURCE[source] ?? { section: 'facts' as const, from: 'a public register' }),
     });
   }
 
@@ -622,6 +643,7 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
         blocks: known ? (BLOCKS_BY_SCREEN_GROUP[group] as Blocks) : 'BOTH',
         blocks_by_default: !known,
         has_task: t.has_task, task_state: t.task_state,
+        section: group !== null && PROPERTY_SCREEN_GROUPS.includes(group) ? 'property' : 'facts', from: 'the client',
       });
     }
   }
@@ -654,6 +676,7 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
         blocks: 'BOTH',
         blocks_by_default: true,
         has_task: t.has_task, task_state: t.task_state,
+        section: 'facts', from: 'our estimate engine',
       });
     }
   }
@@ -671,6 +694,7 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
       blocks: known ? (BLOCKS_BY_CASH_GATE[g] as Blocks) : 'BOTH',
       blocks_by_default: !known,
       has_task: t.has_task, task_state: t.task_state,
+      section: 'facts', from: 'the client',
     });
   }
 
@@ -1206,4 +1230,19 @@ export function businessPage(db: Db, actor: Actor, business_id: string): Busines
     may_read_notes: mayReadNotes,
     may_write: mayWrite,
   };
+}
+
+/**
+ * PHASE 138 — WHICH OF A CLAIM'S FACTS ARE ALREADY WITH THE CLIENT. The claim page's WE NEED lines ask the client through
+ * the same route as the company page (`sendTaskToPortal`), naming the claim and a fact id `claim_fact.<key>`. This reads
+ * the open questions back, so a fact already asked says "Asked — waiting" instead of offering a second ask. Asked of the
+ * same two rules the ask itself asks; a login refused either reads nothing.
+ */
+export function openClaimQuestions(db: Db, actor: Actor, business_id: string, claim_id: string): ReadonlySet<string> {
+  if (!can(actor, 'business.read', { type: 'business', id: business_id })
+    || !can(actor, 'internal_note.write', { type: 'internal_note', id: business_id, business_id })) return new Set();
+  return new Set(db.all<{ fact_id: string }>(
+    "SELECT fact_id FROM client_tasks WHERE business_id = ? AND claim_id = ? AND state = 'OPEN' AND fact_id IS NOT NULL",
+    [business_id, claim_id],
+  ).map((r) => r.fact_id));
 }

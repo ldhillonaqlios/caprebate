@@ -91,7 +91,7 @@ may see or do changed** — only where things sit.
   | Next actions | **Tasks**, then **Claims with no next step** at the top of the list |
   | Dashboard | **Home**, then the **Reports** tile (Phase 136) |
   | Properties, Claims (Sales, Admin, Read only) | a company's page on **Clients**, the **Pipeline**, or **Search** |
-  | Documents | a company's page on **Clients** (Documents tab) |
+  | Documents | a company's page on **Clients** (the Documents box, since Phase 138) |
   | Users, Admin settings, Document types, Automation, Email templates, Compliance, Audit log, Reward model | Admin: **Settings**, one tile each. Admin settings is now the **Switches** tile, and Reward model is **Introducer fees** |
   | Settings in the menu under your name | **Your account** — the same page |
 
@@ -103,6 +103,8 @@ may see or do changed** — only where things sit.
   **Details**, **Related** (with a count) and **Activity**; and on the right, the **Next step**, the **Next action** and **Quick actions**
   (for example **Log a call or add a task**, **Request a document**, **Move the claim**), each a link to the form further
   down. Every panel the page had before is still there, in one of the three tabs.
+  **Since Phase 138 (21 September 2026) a claim's page and a company's page have coloured boxes that open and close
+  instead of tabs** — see the training for `B5`/`B6` and `B17`/`B18`. A property and a lead keep their tabs.
 - **Five long screens followed on the same day (Phase 133b).** The **business page** (`B6`), the **survey job**
   (`B8`) and **Finance** (`B9`) now open with highlights, tabs and the right-hand panel like a record page — their tabs
   are named for what is in them rather than Details, Related and Activity. **Admin settings** (`B43`) and **Document
@@ -1000,6 +1002,40 @@ today, and nothing is late."
 
 ### Training — `B5`/`B6` engaged clients and the one client page
 
+**Phase 138, 21 September 2026 — coloured sections that open and close.** Lakhbir: the sections "all seem to blur into
+one". A company's page is now a column of **coloured boxes**, one per part of the work. Each box has a coloured strip
+down its left edge, a small picture and a word saying what kind of box it is — **Company**, **Property**, **Facts and
+figures**, **Documents**, **Money** or **Messages** — so you never have to rely on the colour alone. Beside the heading is
+a label saying where it stands: **Not started**, **Working on it**, **Waiting for the client** or **Done**.
+
+- **Press a box's heading to open or close it.** A box being worked on opens by itself; a box that is done starts
+  closed, so the page shows you what needs doing.
+- **Every box starts with the same three lines:**
+  - **Working on** — what is being done in this box right now.
+  - **We need** — the facts still missing. Press **Ask the client** beside one to put the question in their portal.
+    Once asked, it says **Asked — waiting**.
+  - **Coming from** — where the facts in this box come from: Companies House, the EPC register, HM Land Registry, the
+    care regulator, the client, the surveyor.
+- **The boxes, top to bottom:** Claims · Questions for the client · Messages and activity (tasks, the timeline and the
+  internal notes) · The company · Contacts (one card each) · Properties · Lookups · What the client told us · Documents.
+- **Make the page yours.** At the foot of each box: **keep this open for me** or **keep this closed for me**. The page
+  remembers it for you on any computer; nobody else's page changes. **Let the page decide** puts it back.
+- **What went, and where:** the "Waiting on" box on the right (who we are waiting on is at the top of the page, and the
+  rest is in each box's **Working on** line); the long explanations (now behind **Why?**); the columns you rarely need
+  (behind **More detail**, or **Every lookup in detail**). Nothing you may see was taken away.
+- **Answering a fact from a phone call:** open **Questions for the client**, then **Everything still missing … and answer
+  one from a call**, and use **Answer it here** on the fact.
+- *Try it on the demo* (as sales@example.invalid, on a freshly started demo, 21 September 2026). Open **Clients** and
+  choose **Elverton Private Hospital Limited**. *Observed:* nine boxes. **Claims 3** reads Working on it, and its Working on
+  line is "Next: Ask the surveyor when they can review the annexe drawings (Elverton Private Hospital Limited — main
+  site)." **Questions for the client** reads "Getting the accountant pack and the surveyor pack ready. 16 facts are still
+  missing and nobody has asked for them." **Contacts 0** is closed and reads Not started. **Lookups 12** reads Not started,
+  "12 lookups still to do." **What the client told us** reads Done, and is closed. Now press **keep this open for me** under
+  Contacts: *observed:* the page comes back at Contacts, open, saying "You keep this open." Press **Let the page decide**
+  to put it back.
+- *As Read only:* six boxes — Claims, Messages and activity (no notes), The company, Contacts, Properties, Documents —
+  and no **Ask the client** buttons.
+
 **Phase 135, 21 September 2026 — one Clients list.** "Engaged clients" and "Organisations" were two lists of the same
 companies, each opening the same page. They are now one list, **Clients** (`/staff/clients`), a tab for Sales, Admin and
 Read only. Each row leads with the **company's name** (its legal name and sector in small text under it), then **Waiting
@@ -1267,7 +1303,17 @@ Everything below is on that page: the details under **Details**, contacts under 
 **Properties**, documents under **Documents**, and tasks, the timeline and notes under **Timeline**. The old address,
 `/staff/organisations/{organisation}`, still works and takes you there.
 
-**Where things are on the page (Phase 133a, 17 September 2026).** The list is one table. An organisation's page opens
+**Phase 138, 21 September 2026 — the claim page is coloured boxes too**, the same as a company's page: **Stage and next
+move** (the next move stays in view; closing, holding, resuming and reopening are under **Other moves**, and the history
+under **Every move so far**), **The claim's facts** (its **We need** line asks the client for a missing fact about this
+claim — the answer comes back under the company's **Questions for the client**; recording a fact is under **Record a fact,
+a grant or an owner**), **Figures**, **The property**, **The team**, **Documents**, **Money**, **Aftercare** and **Messages
+and activity**. The fields that repeated the top of the page, and the copy of the company's contacts, are gone — The team
+links to the company's contacts. A surveyor sees no Money, no Figures and no Ask the client; Accounting sees Documents,
+Money and Messages and activity. *On the demo, as Sales:* open Elverton's **main site** claim; **The claim's facts** lists
+"The claimant, for tax" and "The acquisition date", each with **Ask the client**, then "and 5 more".
+
+**Where things were on the page (Phase 133a, 17 September 2026; the tabs are replaced by Phase 138's boxes).** The list is one table. An organisation's page opens
 with its highlights — client status, owner, sector, legal name, source — then three tabs: **Details** (the organisation
 and **Change these**), **Related** (contacts, properties, claims and documents, with a count) and **Activity** (tasks and
 follow-ups, the timeline and internal notes). **Quick actions** on the right link to **Log a call or add a follow-up**,

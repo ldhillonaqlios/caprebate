@@ -71,7 +71,8 @@ function tabLinks(body: string): string[] {
 function sound(path: string, body: string, expected?: readonly string[]): string[] {
   const tabs = tabLinks(body);
   if (expected !== undefined) assert.deepEqual(tabs, expected, `${path}: the tabs are not the ones expected`);
-  for (const t of tabs) assert.match(body, new RegExp(`<section class="tabpanel[^"]*" id="${t}">`), `${path}: the #${t} tab has no panel on the page`);
+  // PHASE 138: a panel is named by aria-label after its id, so the id is followed by a space or the tag's end.
+  for (const t of tabs) assert.match(body, new RegExp(`<section class="tabpanel[^"]*" id="${t}"[ >]`), `${path}: the #${t} tab has no panel on the page`);
   const ids = [...body.matchAll(/\sid="([^"]+)"/g)].map((x) => x[1] ?? '');
   const twice = ids.filter((id, i) => ids.indexOf(id) !== i);
   assert.deepEqual([...new Set(twice)], [], `${path}: an id is used more than once`);
@@ -81,7 +82,7 @@ function sound(path: string, body: string, expected?: readonly string[]): string
 
 /** The text of one panel, from its opening tag to the next panel or the end of the tab set. */
 function panel(body: string, id: string): string {
-  const start = body.indexOf(`id="${id}">`);
+  const start = body.search(new RegExp(`<section class="tabpanel[^"]*" id="${id}"[ >]`));
   assert.ok(start >= 0, `no panel #${id}`);
   const next = body.indexOf('<section class="tabpanel', start + 1);
   return body.slice(start, next < 0 ? undefined : next);
@@ -96,13 +97,20 @@ describe('the five long screens are on the record layout', () => {
     const path = `/staff/clients/${b.business_id}`;
     const r = await as('sales').get(path);
     assert.equal(r.status, 200);
-    sound(path, r.body, ['activity', 'tasks', 'missing', 'answers', 'sources', 'contacts', 'properties', 'documents', 'details']);
+    // PHASE 138: no tabs — coloured sections that open and close, in this order, each a <details> with its old anchor. The
+    // four working panels are inside them, under the section's heading; "Waiting on" is a highlight, and its card is gone.
+    const secs = [...r.body.matchAll(/<details class="sec sec-[a-z]+" id="([^"]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(secs, ['claims', 'questions', 'activity', 'details', 'contacts', 'properties', 'sources', 'answers', 'documents']);
+    for (const inner of ['tasks', 'missing', 'company-notes']) assert.match(r.body, new RegExp(`id="${inner}"`), `#${inner} is not on the page`);
+    const ids = [...r.body.matchAll(/\sid="([^"]+)"/g)].map((x) => x[1] ?? '');
+    assert.deepEqual([...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))], [], 'an id is used more than once');
+    assert.equal(/<script|\sstyle=|\son[a-z]+=/i.test(r.body), false, 'carries a script, a style attribute or a handler');
     assert.match(r.body, /<header class="highlights">/, 'no highlights panel');
     assert.match(r.body, /<aside class="side"/, 'no right-hand panel');
-    const n = ['answers', 'sources', 'missing', 'tasks', 'activity'];
-    ['1 · Questions and answers', '2 · Sources', '3 · What is still missing', '4 · Tasks', 'Internal notes — never shown to the client'].forEach((heading, i) =>
-      assert.ok(panel(r.body, n[i] ?? '').includes(heading), `panel "${heading}" is not in the #${n[i]} tab`));
-    assert.match(r.body, /<div class="card-h"><h2>Waiting on<\/h2>/, '"Waiting on" is not in the side panel');
+    assert.match(r.body, /<dt>Waiting on<\/dt>/, '"Waiting on" is not a highlight');
+    assert.match(r.body, /Internal notes — never shown to the client/);
+    assert.equal(/<div class="card-h"><h2>Waiting on<\/h2>/.test(r.body), false, 'the "Waiting on" card is still drawn');
+    assert.equal(/[0-9] · (Questions|Sources|What is still missing|Tasks)/.test(r.body), false, 'a numbered heading is still drawn');
   });
 
   test('the surveyor’s job workspace: six tabs, one per numbered section; Your figures is the quick action; no figure in the highlights', async () => {
@@ -113,7 +121,8 @@ describe('the five long screens are on the record layout', () => {
     assert.equal(r.status, 200);
     sound(path, r.body, ['property', 'rooms', 'rates', 'evidence', 'figures', 'record']);
     const n = ['property', 'rooms', 'rates', 'evidence', 'figures', 'record'];
-    ['1 · The property', '2 · The room schedule', '3 · The rates', '4 · The evidence', '5 · Your figures', '6 · The record'].forEach((heading, i) =>
+    // PHASE 138: numbered headings are plain words.
+    ['The property', 'The room schedule', 'The rates', 'The evidence', 'Your figures', 'The record'].forEach((heading, i) =>
       assert.ok(panel(r.body, n[i] ?? '').includes(`<h2>${heading}`), `section "${heading}" is not in the #${n[i]} tab`));
     const side = /<aside class="side"[\s\S]*?<\/aside>/.exec(r.body)?.[0] ?? '';
     assert.match(side, /<a href="#figures">Commit your figures<\/a>/, 'Your figures is not the quick action');
@@ -128,10 +137,11 @@ describe('the five long screens are on the record layout', () => {
     assert.equal(r.status, 200);
     sound('/staff/finance', r.body, ['money', 'vat', 'invoices', 'fees', 'settings', 'earlier']);
     const where: [string, string, string][] = [
-      ['money', 'money-by-month', '1 · The money, by month'], ['vat', 'vat-monitoring', '2 · VAT monitoring'],
-      ['invoices', 'to-invoice', '3 · Claims at the invoice stage'], ['invoices', 'claim-invoices', '4 · The claims’ invoices'],
-      ['fees', 'fee-controls', '5 · The fee controls'], ['settings', 'finance-settings', '6 · The finance settings'],
-      ['fees', 'introducer-fees', '7 · Fees to introducing firms'], ['earlier', 'earlier-invoices', '8 · Organisations’ invoices'],
+      // PHASE 138: numbered headings are plain words.
+      ['money', 'money-by-month', 'The money, by month'], ['vat', 'vat-monitoring', 'VAT monitoring'],
+      ['invoices', 'to-invoice', 'Claims at the invoice stage'], ['invoices', 'claim-invoices', 'The claims’ invoices'],
+      ['fees', 'fee-controls', 'The fee controls'], ['settings', 'finance-settings', 'The finance settings'],
+      ['fees', 'introducer-fees', 'Fees to introducing firms'], ['earlier', 'earlier-invoices', 'Organisations’ invoices'],
     ];
     for (const [tab, id, heading] of where) {
       assert.ok(panel(r.body, tab).includes(`<h2 id="${id}">${heading}`), `section "${heading}" has no id ${id} in the #${tab} tab`);

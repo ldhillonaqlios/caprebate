@@ -30,7 +30,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Actor } from '../authz.ts';
 import { can } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS } from './html.ts';
-import { card, claimName, highlights, recordLayout, recordTabs, savedMessage, sidePanel, type QuickAction, type RecordTab } from './components.ts';
+import { claimName, highlights, moreDetail, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, type Need, type QuickAction, type SectionContext, type SectionSpec } from './components.ts';
+import { sectionPrefs } from './sections.ts';
 import * as C from './crm.ts';
 import * as E from './engaged.ts';
 import * as R from './research.ts';
@@ -41,7 +42,7 @@ import { timelineIfPermitted } from './timeline.ts';
 import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { notesBlock, timelineBlock } from './tasks-pages.ts';
 import { claimTilesFor, organisationSections, renderClaim, type CrmPageDeps } from './crm-pages.ts';
-import { businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4 } from './engaged-pages.ts';
+import { askButton, businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4 } from './engaged-pages.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -93,6 +94,25 @@ const SAVED: Readonly<Record<string, string>> = Object.freeze({
   saved: 'Saved.', contact: 'The contact is saved.', task: 'The task is saved.',
 });
 
+/**
+ * PHASE 138 — WHICH SECTION A CHANGE WAS MADE IN. After a save the page is drawn again with `?done=`; the section the
+ * change was made in opens, whatever the person keeps, so they see what they just did.
+ */
+const OPEN_AFTER: Readonly<Record<string, string>> = Object.freeze({
+  saved: 'details', contact: 'contacts', task: 'activity', research: 'sources', retry: 'sources',
+  sent: 'questions', answered: 'questions', withdrawn: 'questions',
+});
+
+/** Where each fact comes from, once each, in the order first met. */
+function unique(xs: readonly string[]): string[] {
+  return [...new Set(xs)];
+}
+
+/**
+ * THE ONE CLIENT PAGE, PHASE 138: THE COMPANY'S SECTIONS, COLOURED, EACH OPENING AND CLOSING. What every section shows is
+ * the bloat cut in the Developer Spec (B5/B6). Each section is built only from a view this page already asked for, and
+ * only where that view exists — nothing here widens what a login may read.
+ */
 function clientPage(
   d: CrmPageDeps, actor: Actor, org: C.OrganisationView,
   work: { page: E.BusinessPage; sources: R.SourcesPanel } | null,
@@ -106,49 +126,132 @@ function clientPage(
   const claimChoices = org.claims.map((c) => ({ id: c.id, name: `${claimName(org.trading_name, c.property)} (${c.claim_ref})` }));
   const p = work?.page ?? null;
   const waiting = p === null ? null : p.row.waiting_on === 'US' ? 'Us' : p.row.waiting_on === 'CLIENT' ? 'The client' : 'Nobody';
+  const ctx: SectionContext = { prefs: sectionPrefs(db, actor), back: `/staff/clients/${org.id}` };
+  const openNow = note === 'saved' ? 'activity' : done === undefined ? undefined : OPEN_AFTER[done];
 
-  const tabs: RecordTab[] = [
-    { id: 'activity', label: 'Timeline', body: h`${s.tasks}
+  /* WE NEED: every missing fact, in the section it belongs to, with the one-press ask where this login may ask. */
+  const needsFor = (where: E.MissingFact['section']): Need[] => (p === null ? [] : p.missing.filter((m) => m.section === where).map((m) => ({
+    label: m.question,
+    ...(m.has_task ? { asked: true } : p.may_write ? { ask: askButton(org.id, m) } : {}),
+  })));
+  const fromFor = (where: E.MissingFact['section']): string[] => (p === null ? [] : p.missing.filter((m) => m.section === where).map((m) => m.from));
+
+  const sections: SectionSpec[] = [];
+  const nextClaim = org.claims.find((c) => c.next_action !== null);
+  sections.push({
+    key: 'client.claims', id: 'claims', kind: 'facts', heading: 'Claims', count: org.claims.length,
+    status: org.claims.length === 0 ? 'NOT_STARTED' : 'WORKING',
+    working: org.claims.length === 0 ? 'No claim yet. Open one from a property.'
+      : nextClaim === undefined ? 'Every claim needs a next step. Open a claim to set one.'
+        : `Next: ${nextClaim.next_action ?? ''}${nextClaim.property === null ? '' : ` (${nextClaim.property})`}.`,
+    need: [], from: ['the client', 'the surveyor'],
+    body: claimTilesFor(org.claims, 'No claim yet. Open one from a property.', org.trading_name),
+  });
+
+  if (p !== null && work !== null) {
+    const need = needsFor('facts');
+    const packs = p.row.ready_for_accountant && p.row.ready_for_surveyor ? 'Both packs are ready.'
+      : `Getting ${!p.row.ready_for_accountant && !p.row.ready_for_surveyor ? 'the accountant pack and the surveyor pack'
+        : !p.row.ready_for_accountant ? 'the accountant pack' : 'the surveyor pack'} ready.`;
+    sections.push({
+      key: 'client.questions', id: 'questions', kind: 'facts', heading: 'Questions for the client', count: p.tasks.length,
+      status: statusFromNeeds(need, p.tasks.length > 0 || p.qa.assessment_id !== null),
+      working: `${packs} ${p.row.waiting_why.charAt(0).toUpperCase()}${p.row.waiting_why.slice(1)}.`,
+      need, from: unique(['the client', ...fromFor('facts')]),
+      body: h`<div id="tasks">${panel4(p)}</div>
+        <div id="missing">${moreDetail(panel3(p, claimChoices), `Everything still missing (${p.missing.length}), and answer one from a call`)}</div>`,
+    });
+  }
+
+  const openQuestions = p?.tasks.filter((t) => t.state === 'OPEN').length ?? 0;
+  sections.push({
+    key: 'client.activity', id: 'activity', kind: 'messages', heading: 'Messages and activity',
+    status: openQuestions > 0 ? 'WAITING' : (timeline?.events.length ?? 0) > 0 ? 'WORKING' : 'NOT_STARTED',
+    working: openQuestions > 0 ? `${openQuestions} question${openQuestions === 1 ? '' : 's'} waiting for the client’s answer.`
+      : 'Keeping a record of every call, email and note.',
+    need: [], from: ['you and your team', 'the client'],
+    body: h`${s.tasks}
       ${timelineBlock(timeline, `Everything with ${org.trading_name}`)}
-      <div id="company-notes">${notesBlock(timeline, mayNote ? `/staff/clients/${org.id}/notes` : null, claimChoices)}</div>` },
-    ...(p === null || work === null ? [] : [
-      { id: 'tasks', label: 'Questions to the client', count: p.tasks.length, body: panel4(p) },
-      { id: 'missing', label: 'Still missing', count: p.missing.length, body: panel3(p, claimChoices) },
-      { id: 'answers', label: 'Their answers', body: panel1(p) },
-      { id: 'sources', label: 'Research', count: work.sources.outstanding, body: panel2(p, work.sources) },
-    ]),
-    { id: 'contacts', label: 'Contacts', ...(s.contact_count === undefined ? {} : { count: s.contact_count }), body: s.contacts },
-    { id: 'properties', label: 'Properties', count: org.properties.length, body: s.properties },
-    { id: 'documents', label: 'Documents', body: s.documents },
-    { id: 'details', label: 'Details', body: s.details },
-  ];
+      <div id="company-notes">${notesBlock(timeline, mayNote ? `/staff/clients/${org.id}/notes` : null, claimChoices)}</div>`,
+  });
+
+  const companyNeed = needsFor('company');
+  sections.push({
+    key: 'client.company', id: 'details', kind: 'company', heading: 'The company',
+    status: statusFromNeeds(companyNeed, true),
+    working: companyNeed.length > 0 ? 'Checking the company’s details.' : 'Nothing right now — the company’s details are in.',
+    need: companyNeed, from: unique(['Companies House', 'the client', ...fromFor('company')]), body: s.details,
+  });
+
+  sections.push({
+    key: 'client.contacts', id: 'contacts', kind: 'company', heading: 'Contacts',
+    ...(s.contact_count === undefined ? {} : { count: s.contact_count }),
+    status: (s.contact_count ?? 0) > 0 ? 'DONE' : 'NOT_STARTED',
+    working: (s.contact_count ?? 0) > 0 ? 'Nothing right now.' : 'Nobody is recorded yet. Add a contact.',
+    need: [], from: ['the client'], body: s.contacts,
+  });
+
+  const propertyNeed = needsFor('property');
+  sections.push({
+    key: 'client.properties', id: 'properties', kind: 'property', heading: 'Properties', count: org.properties.length,
+    status: statusFromNeeds(propertyNeed, org.properties.length > 0),
+    working: propertyNeed.length > 0 ? 'Finding the facts about the building.'
+      : org.properties.length === 0 ? 'No property yet. Add one.' : 'Nothing right now.',
+    need: propertyNeed,
+    from: unique(['the EPC register', 'HM Land Registry', 'the care regulator', 'the client', ...fromFor('property')]),
+    body: s.properties,
+  });
+
+  if (work !== null) {
+    const src = work.sources;
+    const looked = src.sources.some((x) => x.state === 'FIRED');
+    sections.push({
+      key: 'client.sources', id: 'sources', kind: 'facts', heading: 'Lookups', count: src.outstanding,
+      status: src.outstanding === 0 ? 'DONE' : looked ? 'WORKING' : 'NOT_STARTED',
+      working: src.outstanding === 0 ? 'Every lookup is done.'
+        : `${src.outstanding} lookup${src.outstanding === 1 ? '' : 's'} still to do.${src.rate.allowed ? '' : ' They cannot be run right now.'}`,
+      need: [], from: unique(src.sources.map((x) => x.publisher)), body: panel2(work.page, src),
+    });
+  }
+
+  if (p !== null) {
+    const answered = p.qa.assessment_id !== null;
+    sections.push({
+      key: 'client.answers', id: 'answers', kind: 'facts', heading: 'What the client told us',
+      status: answered ? 'DONE' : 'WAITING',
+      working: answered ? 'Nothing — their answers are in.' : 'Waiting for them to fill in the online questions.',
+      need: [], from: ['the client’s online questions'], body: panel1(p),
+    });
+  }
+
+  sections.push({
+    key: 'client.documents', id: 'documents', kind: 'documents', heading: 'Documents',
+    count: org.documents.documents.length ?? 0,
+    status: (org.documents.documents.length ?? 0) > 0 ? 'DONE' : 'NOT_STARTED',
+    working: (org.documents.documents.length ?? 0) > 0 ? 'Nothing right now.' : 'No document yet.',
+    need: [], from: ['the client', 'the surveyor', 'our own letters'], body: s.documents,
+  });
+
   const quick: QuickAction[] = [
     ...s.quick,
     ...(work !== null && work.sources.rate.allowed ? [{ href: '#sources', label: 'Run the research' }] : []),
-    ...(p !== null && p.missing.length > 0 ? [{ href: '#missing', label: 'Ask the client for something' }] : []),
+    ...(p !== null && p.missing.length > 0 ? [{ href: '#questions', label: 'Ask the client for something' }] : []),
   ];
   const legal = org.legal_name.value !== null && org.legal_name.value !== org.trading_name ? org.legal_name.display : null;
 
   return page({
     title: org.trading_name, nav: d.nav(actor), wide: true,
     body: h`
-      ${done !== undefined && DONE_WORDS[done] !== undefined ? h`<div class="gate">${DONE_WORDS[done]}</div>`
+      ${done !== undefined && DONE_WORDS[done] !== undefined ? savedMessage(DONE_WORDS[done])
         : done !== undefined && SAVED[done] !== undefined ? savedMessage(SAVED[done]) : raw('')}
       ${note === 'saved' ? savedMessage('Note saved. The client cannot see it.') : raw('')}
       ${highlights('Client', org.trading_name, [
-        { label: 'Claims', value: String(org.claims.length) },
         { label: 'Status', value: org.client_status.label },
         { label: 'Owner', value: org.owner?.name ?? 'nobody yet' },
         waiting === null ? null : { label: 'Waiting on', value: waiting },
         p === null ? null : { label: 'Engagement letter', value: p.row.letter_label },
       ], raw(''), legal === null ? raw('') : h`${legal}`)}
-      ${card('Claims', claimTilesFor(org.claims, 'No claim yet. Open one from a property.', org.trading_name), { count: org.claims.length, id: 'claims' })}
-      ${recordLayout(recordTabs(tabs), sidePanel(null, quick, p === null ? raw('') : card('Waiting on', h`
-        <p><strong>${waiting ?? ''}</strong> — ${p.row.waiting_why}</p>
-        <ul class="plain help"><li>Research: ${p.row.research_label}</li>
-          <li>With the client: ${p.row.tasks_sent} question${p.row.tasks_sent === 1 ? '' : 's'}</li>
-          <li>Accountant pack: ${p.row.ready_for_accountant ? 'ready' : 'not ready yet'}</li>
-          <li>Surveyor pack: ${p.row.ready_for_surveyor ? 'ready' : 'not ready yet'}</li></ul>`)))}
+      ${recordLayout(h`${sections.map((x) => section({ ...x, ...(openNow === x.id ? { open_now: true } : {}) }, ctx))}`, sidePanel(null, quick))}
       <p><a href="/staff/clients">Back to the list</a></p>`,
   });
 }

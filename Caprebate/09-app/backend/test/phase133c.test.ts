@@ -278,7 +278,7 @@ describe('what a person reads', () => {
     const claim = h.made.app.db.get<{ id: string }>("SELECT id FROM claims WHERE stage = 'SURVEY' LIMIT 1");
     assert.ok(claim);
     const cp = visible((await as('sales').get(`/staff/claims/${claim.id}`)).body);
-    assert.match(cp, /capital allowances facts/i);
+    assert.match(cp, /The claim’s facts/); // PHASE 138: the section's heading
     assert.match(cp, /not known/i, 'the claim’s facts do not show a not-known answer');
     assert.match(cp, /Allowances claimed before\? not known/, 'a deciding "not known" was hidden as an empty row');
     assert.equal(/Hold reason not on hold|Lost reason not lost/.test(cp), false);
@@ -330,7 +330,10 @@ describe('a new user can use it', () => {
     assert.match(inner, /name="due_on" type="date" value="2026-10-02"/);
     assert.match(inner, /<option value="HIGH" selected>/);
     assert.match(r.body, /<details open id="add-task">/, 'the form was left closed');
-    assert.match(r.body, /<section class="tabpanel has-refusal" id="activity">/, 'the tab holding the form was not shown');
+    // PHASE 138: the claim page has no tabs; the coloured section holding the form is opened instead.
+    const holder = /<details[^>]*\sid="activity"[^>]*>/.exec(r.body)?.[0] ?? '';
+    assert.match(holder, /class="sec sec-messages"/, 'the form is not in the Messages and activity section');
+    assert.match(holder, /\sopen[\s>]/, 'the section holding the form was not shown');
   });
 
   test('the welcome card shows once (on Help since Phase 136), stays dismissed, and the dismissal is audited once', async () => {

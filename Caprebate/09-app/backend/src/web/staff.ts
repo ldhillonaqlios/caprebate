@@ -38,6 +38,7 @@ import { homeRows } from './home.ts';
 import { refillForm, typedValues } from './refill.ts';
 import { welcomeCard, why } from './components.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
+import { keepSectionChoice } from './sections.ts';
 import { staffHelp } from './help.ts';
 import * as S from './settings.ts';
 import * as B from './backoffice.ts';
@@ -224,6 +225,15 @@ export async function handleStaff(
   if (path === '/staff/welcome/dismiss' && method === 'POST') {
     dismissWelcome({ db, audit: d.app.audit, now }, actor);
     redirect(res, '/staff/help'); return 'handled';
+  }
+  /* ------------------------------------------ PHASE 138 · a person keeps a page section open or closed */
+  if (path === '/staff/me/sections' && method === 'POST') {
+    const f = await form(req);
+    const r = keepSectionChoice({ db, audit: d.app.audit, now }, actor, {
+      section: f.get('section') ?? '', open: f.get('open') ?? '', back: f.get('back') ?? '', anchor: f.get('anchor') ?? '',
+    });
+    if (!r.ok) return problem(res, actor, 'Not kept', 'That choice could not be kept. Go back and try again.', '/staff');
+    redirect(res, r.to); return 'handled';
   }
   /* ------------------------------------------ PHASE 135 · Settings, one page of tiles (Admin) */
   if (path === '/staff/admin' && method === 'GET') {

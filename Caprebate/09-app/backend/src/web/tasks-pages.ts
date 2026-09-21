@@ -364,14 +364,15 @@ function scopeCell(scope: string): Safe {
 
 export function timelineBlock(t: Timeline | undefined, heading = 'Activity timeline'): Safe {
   if (t === undefined) return raw('');
+  // PHASE 138: the sentence about what the timeline is read from sits behind "Why?".
   return h`<div class="pblock"><div class="pnum">${heading}</div>
-    <p class="help">${t.read_not_log} Every time is UK time.</p>
+    <div class="help">${why(`${t.read_not_log} Every time is UK time.`)}</div>
     ${t.limited_to === undefined ? raw('') : h`<p class="help"><strong>${t.limited_to}</strong></p>`}
-    ${t.events.length === 0 ? h`<p class="help">Nothing is recorded yet that you may see.</p>` : h`<table>
+    ${t.events.length === 0 ? h`<p class="help">Nothing is recorded yet that you may see.</p>` : h`<table class="stack">
       <thead><tr><th>When</th><th>What happened</th><th>Who</th><th>Does the client see it?</th><th>Part of</th></tr></thead>
-      <tbody>${t.events.map((e) => h`<tr><td class="when">${e.when}</td><td>${e.what}</td>
-        <td>${e.who ?? h`<span class="help">—</span>`}</td>
-        <td>${e.audience === 'CLIENT_SEES' ? 'yes' : h`<span class="help">staff only</span>`}</td><td>${scopeCell(e.scope)}</td></tr>`)}</tbody></table>`}
+      <tbody>${t.events.map((e) => h`<tr><td class="when">${e.when}</td><td data-label="What happened">${e.what}</td>
+        <td data-label="Who">${e.who ?? h`<span class="help">—</span>`}</td>
+        <td data-label="Does the client see it?">${e.audience === 'CLIENT_SEES' ? 'yes' : h`<span class="help">staff only</span>`}</td><td data-label="Part of">${scopeCell(e.scope)}</td></tr>`)}</tbody></table>`}
   </div>`;
 }
 

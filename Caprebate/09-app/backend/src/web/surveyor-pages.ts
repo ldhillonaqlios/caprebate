@@ -291,12 +291,12 @@ function workspacePage(
         { label: 'Our estimate', value: released ? 'released' : 'withheld' },
       ])}
       ${recordLayout(recordTabs([
-        { id: 'property', label: '1 · The property', body: propertyPanel(w) },
-        { id: 'rooms', label: '2 · Rooms', body: roomsPanel(w) },
-        { id: 'rates', label: '3 · Rates', body: ratesPanel(w) },
-        { id: 'evidence', label: '4 · Evidence', body: evidencePanel(w) },
-        { id: 'figures', label: '5 · Your figures', body: figuresPanel(w) },
-        { id: 'record', label: '6 · The record', body: logPanel(d, w) },
+        { id: 'property', label: 'The property', body: propertyPanel(w) },
+        { id: 'rooms', label: 'Rooms', body: roomsPanel(w) },
+        { id: 'rates', label: 'Rates', body: ratesPanel(w) },
+        { id: 'evidence', label: 'Evidence', body: evidencePanel(w) },
+        { id: 'figures', label: 'Your figures', body: figuresPanel(w) },
+        { id: 'record', label: 'The record', body: logPanel(d, w) },
       ]), sidePanel(null, quick, quarantinePanel(d, w)))}
 
       <p><a href="/staff/survey">Back to the job list</a></p>
@@ -331,7 +331,7 @@ function quarantinePanel(d: SurveyorDeps, w: S.Workspace): Safe {
 function propertyPanel(w: S.Workspace): Safe {
   const p = w.payload;
   return h`
-    <h2>1 · The property</h2>
+    <h2>The property</h2>
     ${p.properties.length === 0
       ? h`<p class="help">No property has been recorded against this client.</p>`
       : h`<table><thead><tr><th>Site</th><th>Postcode</th></tr></thead>
@@ -355,12 +355,12 @@ function propertyPanel(w: S.Workspace): Safe {
 function roomsPanel(w: S.Workspace): Safe {
   const r = w.rooms;
   if (r.schedule === null) {
-    return h`<h2>2 · The room schedule</h2>
+    return h`<h2>The room schedule</h2>
       <p class="help">We hold no room schedule for this sector. That is a gap in our own list, not
         a statement about the building.</p>`;
   }
   return h`
-    <h2>2 · The room schedule, and the quantities</h2>
+    <h2>The room schedule, and the quantities</h2>
     <p class="help">What scales this sector: <strong>${r.schedule.scales_on}</strong>.
       ${r.counted} of ${r.rows.length} room types counted; ${r.uncounted} not yet.</p>
     ${r.schedule.note !== undefined ? h`<div class="gate">${r.schedule.note}</div>` : raw('')}
@@ -397,7 +397,7 @@ function roomsPanel(w: S.Workspace): Safe {
 
 function ratesPanel(w: S.Workspace): Safe {
   return h`
-    <h2>3 · The rates</h2>
+    <h2>The rates</h2>
     <p class="help">Ten tracked fields. Whatever you put here becomes <strong>your</strong> figure
       and is offered back to you on your next job in this sector, labelled as yours.</p>
     <div class="gate">${w.rates.no_defaults}</div>
@@ -452,7 +452,7 @@ function evidencePanel(w: S.Workspace): Safe {
   const e = w.evidence;
   const p = w.payload;
   return h`
-    <h2>4 · The evidence</h2>
+    <h2>The evidence</h2>
     <h3>Register data we hold</h3>
     ${p.register_records.length === 0
       ? h`<p class="help">None. No register connector exists in this build and both gates are shut,
@@ -516,7 +516,7 @@ function figuresPanel(w: S.Workspace): Safe {
   const est = w.payload.estimate;
 
   return h`
-    <h2>5 · Your figures</h2>
+    <h2>Your figures</h2>
     <div class="gate">${w.signature}</div>
     ${committed
       ? h`<p><strong>Committed.</strong> They are hashed, so they cannot be quietly rewritten, and
@@ -605,7 +605,7 @@ function figuresPanel(w: S.Workspace): Safe {
 function logPanel(d: SurveyorDeps, w: S.Workspace): Safe {
   const p = w.process;
   return h`
-    <h2>6 · The record</h2>
+    <h2>The record</h2>
     <p class="help">Verdict on this job: <strong>${p.verdict}</strong>.
       Chain ${p.chain_intact ? 'intact' : h`<strong>BROKEN — an entry has been removed, edited or reordered</strong>`}.
       ${p.denied_attempts} attempt${p.denied_attempts === 1 ? '' : 's'} to open the estimate before

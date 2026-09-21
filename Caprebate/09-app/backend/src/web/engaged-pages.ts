@@ -25,7 +25,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { card, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from './components.ts';
+import { card, highlights, moreDetail, recordLayout, recordTabs, sidePanel, why, type QuickAction } from './components.ts';
 import { localStamp } from './localtime.ts';
 import { RANGE_QUALIFIER } from './shown-range.ts';
 import * as E from './engaged.ts';
@@ -223,98 +223,81 @@ export function businessPageHtml(
   });
 }
 
-/* -------------------------------------------------- 1 · questions */
+/* ------------------------------------------ what the client told us
+ * PHASE 138: no numbered heading — the section around it names it. The sentences that explained the table sit behind
+ * "Why?"; every word of them is still on the page. */
 
 export function panel1(p: E.BusinessPage): Safe {
   const qa = p.qa;
   if (qa.assessment_id === null) {
-    return h`<h2>1 · Questions and answers</h2>
-      <p class="help">This client has not completed an assessment, so there is nothing they have told us yet.</p>`;
+    return h`<p class="empty">They have not filled in the online questions yet.</p>`;
   }
   return h`
-    <h2>1 · Questions and answers</h2>
-    <p class="help">${qa.rows.length} questions, in the order asked — ${qa.answered} answered,
-      ${qa.dont_know} answered “I don’t know”, ${qa.skipped} skipped.
-      <strong>A skipped question is a fact about the claim, not a blank</strong>, and “I don’t know”
-      is an answer in its own right. Neither is shown as an empty cell.</p>
-    <p class="help">Range shown to the client:
+    <div>${qa.rows.length} questions: ${qa.answered} answered, ${qa.dont_know} “I don’t know”, ${qa.skipped} skipped.${
+      why('A skipped question is a fact about the claim, not a blank, and “I don’t know” is an answer in its own right. Neither is shown as an empty cell.')}</div>
+    <div>The range they were shown:
       ${qa.range === null
-        ? h`<span class="help">withheld — our estimate is not released to this role until the survey is committed</span>`
-        : h`<strong>${qa.range}</strong>`}</p>
-    <table><thead><tr><th>#</th><th>Question</th><th>Answer</th></tr></thead>
+        ? h`<span class="help">not shown to you yet — it opens once the surveyor has sent their figures</span>`
+        : h`<strong>${qa.range}</strong>`}${why(h`${RANGE_QUALIFIER} The figure is read from the one place the client’s own screen reads, so the two cannot differ.`)}</div>
+    <table class="stack"><thead><tr><th>#</th><th>Question</th><th>Answer</th></tr></thead>
       <tbody>${qa.rows.map((x) => h`<tr class="${x.state.toLowerCase()}">
-        <td>${x.ord + 1}</td><td>${x.question_text}</td>
-        <td>${x.state === 'ANSWERED' ? h`${x.label}` : h`<em>${x.label}</em>`}</td>
-      </tr>`)}</tbody></table>
-    <div class="gate">${RANGE_QUALIFIER} The figure above is read from the one column the client's own
-    screen reads, so the two views of it cannot differ.</div>`;
+        <td>${x.ord + 1}</td><td data-label="Question">${x.question_text}</td>
+        <td data-label="Answer">${x.state === 'ANSWERED' ? h`${x.label}` : h`<em>${x.label}</em>`}</td>
+      </tr>`)}</tbody></table>`;
 }
 
-/* ---------------------------------------------------- 2 · sources */
+/* ------------------------------------------------------- the lookups */
 
+/** PHASE 138: the state of a lookup in plain words. "Fired" and "tier" are gone from what a person reads. */
 const STATE_WORDS: Readonly<Record<R.SourceState, string>> = Object.freeze({
-  FIRED: 'fired',
-  NOT_RUN: 'not run',
-  FAILED: 'failed',
-  NOT_PERMITTED_YET: 'not permitted yet',
+  FIRED: 'Looked up',
+  NOT_RUN: 'Not run yet',
+  FAILED: 'Did not work',
+  NOT_PERMITTED_YET: 'Not allowed yet',
 });
 
 export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
   return h`
-    <h2>2 · Sources — what has fired and what has not</h2>
+    <ul class="sources-now">
+      <li>Free lookups: ${s.free.open ? 'on.' : 'off until our privacy notice is published.'}</li>
+      <li>Paid lookups: ${s.engagement.signed
+        ? h`on — the engagement letter is signed${s.engagement.signed_at !== null ? h` (${s.engagement.signed_at.slice(0, 10)})` : raw('')}.`
+        : 'off until the engagement letter is signed.'}${why(h`A lookup that is not allowed yet is simply not made. Each fact it would give stays on the list as a question, and nothing is guessed. ${
+          s.free.open ? raw('') : h`Free lookups wait for this: ${s.free.requires}. Turning them on is a data protection decision, not a button on this page. `}${
+          s.engagement.signed ? raw('') : h`Paid lookups: ${s.engagement.why}. The server checks the signed letter itself — never this page.`}`)}</li>
+    </ul>
 
-    <div class="flag">
-      <strong>Two gates, and both are shut.</strong>
-      <p><strong>Free sources</strong> wait on the published privacy notice.
-        ${s.free.open
-          ? h`The notice is published and the gate is open.`
-          : h`It is not published: <em>${s.free.requires}</em>. That switch lives in the engine and
-             turning it on is a data protection decision, not a screen control — there is nothing on
-             this page that can open it.`}</p>
-      <p><strong>Paid sources</strong> wait on a signed engagement, checked on the server against the
-        record — never in this page. ${s.engagement.signed
-          ? h`It is signed${s.engagement.signed_at !== null ? h`, on ${s.engagement.signed_at.slice(0, 10)}` : raw('')}.`
-          : h`Today: ${s.engagement.why}.`}</p>
-      <p><strong>Nothing refuses and nothing throws.</strong> A source that may not be consulted is
-        simply not consulted, and every fact it would have supplied stays on the list below as a
-        question. No estimate fails, no screen errors, and nothing is guessed to stand in.</p>
-    </div>
-
-    <table><thead><tr>
-      <th>Source</th><th>Tier</th><th>State</th><th>Publisher</th><th>Licence</th>
-      <th>Retrieved</th><th>Why</th></tr></thead>
+    <table class="stack"><thead><tr><th>Where from</th><th>Status</th><th>What happened</th></tr></thead>
       <tbody>${s.sources.map((x) => h`<tr>
-        <td>${x.dataset}<br><span class="help">${x.source_id}</span></td>
-        <td>${x.tier === 'PAID' ? h`paid` : h`free`}${x.tier_settled
-          ? raw('')
-          : h`<br><span class="say">tier not settled — treated as paid</span>`}</td>
-        <td>${STATE_WORDS[x.state]}${x.attempts > 0 ? h`<br><span class="say">${x.attempts} attempt${x.attempts === 1 ? '' : 's'}</span>` : raw('')}</td>
-        <td>${x.publisher}</td>
-        <td>${x.licence_name}</td>
-        <td class="when">${x.retrieved_at ?? h`<span class="help">—</span>`}</td>
-        <td><span class="say">${x.detail}</span>${x.may_retry
-          ? h`<form method="post" action="/staff/clients/${p.business.id}/research/retry" class="inline">
+        <td>${x.dataset}</td>
+        <td data-label="Status">${STATE_WORDS[x.state]}${x.attempts > 1 ? h` <span class="help">(${x.attempts} tries)</span>` : raw('')}</td>
+        <td data-label="What happened"><span class="say">${x.detail}</span>${x.may_retry
+          ? h` <form method="post" action="/staff/clients/${p.business.id}/research/retry" class="inline">
                <input type="hidden" name="source_id" value="${x.source_id}">
-               <button class="linkish" type="submit">Retry this one</button></form>`
+               <button class="linkish" type="submit">Try this one again</button></form>`
           : raw('')}</td>
       </tr>`)}</tbody></table>
 
-    <p class="help">${s.outstanding} of ${s.sources.length} outstanding.
-      A source that has simply not run has <strong>no button of its own</strong>: the operator picks
-      the moment, not the calls. Only a source that <em>failed</em> can be retried, because retrying a
-      failure is not choosing which sources to consult.</p>
+    <p class="help">${s.outstanding} of ${s.sources.length} still to do.</p>
 
     ${s.rate.allowed
       ? h`<form method="post" action="/staff/clients/${p.business.id}/research">
            <button class="cta" type="submit">Run the research</button>
-           <span class="help"> — fires everything outstanding. Run ${s.rate.used} of
-           ${s.rate.limit} times for this client in the last hour.</span></form>`
-      : h`<div class="stop"><strong>Cannot run the research right now.</strong> ${s.rate.why}.</div>`}
+           <span class="help"> Runs everything still to do. Used ${s.rate.used} of ${s.rate.limit} times this hour.</span></form>`
+      : h`<div class="stop"><strong>You cannot run it right now.</strong> ${s.rate.why}.</div>`}
 
-    ${s.known_gaps.map((g) => h`<div class="gate"><strong>Known gap.</strong> ${g}</div>`)}`;
+    ${moreDetail(h`
+      <table class="stack"><thead><tr><th>Where from</th><th>Free or paid</th><th>Publisher</th><th>Licence</th><th>Read on</th></tr></thead>
+        <tbody>${s.sources.map((x) => h`<tr><td>${x.dataset}</td>
+          <td data-label="Free or paid">${x.tier === 'PAID' ? 'paid' : 'free'}${x.tier_settled ? raw('') : h`<br><span class="say">not settled yet — treated as paid</span>`}</td>
+          <td data-label="Publisher">${x.publisher}</td><td data-label="Licence">${x.licence_name}</td>
+          <td data-label="Read on" class="when">${x.retrieved_at ?? h`<span class="help">—</span>`}</td></tr>`)}</tbody></table>
+      <p class="help">A lookup that has not run has no button of its own: you choose when to run them all, not which ones.
+        Only one that did not work can be tried again.</p>
+      ${s.known_gaps.map((g) => h`<p class="help"><strong>Not known yet.</strong> ${g}</p>`)}`, 'Every lookup in detail')}`;
 }
 
-/* -------------------------------------------------- 3 · missing */
+/* ------------------------------------------------ what is still missing */
 
 const BLOCKS_WORDS: Readonly<Record<E.Blocks, string>> = Object.freeze({
   ACCOUNTANT: 'the accountant pack',
@@ -322,37 +305,39 @@ const BLOCKS_WORDS: Readonly<Record<E.Blocks, string>> = Object.freeze({
   BOTH: 'both packs',
 });
 
+/**
+ * PHASE 138 — THE WHOLE MISSING LIST, for the Questions section's "More detail". Each fact is ALSO a WE NEED line in the
+ * section it belongs to (src/web/client-page.ts); this is where a fact can be answered from a telephone call.
+ */
 export function panel3(p: E.BusinessPage, claims: readonly { readonly id: string; readonly name: string }[] = []): Safe {
   if (p.missing.length === 0) {
-    return h`<h2>3 · What is still missing</h2>
-      <p class="help">Nothing. Every fact the engine asks for is answered.</p>`;
+    return h`<p class="help">Nothing is missing. Every fact we ask for is answered.</p>`;
   }
   return h`
-    <h2>3 · What is still missing</h2>
-    <p class="help">${p.missing.length} outstanding.
-      <strong>This list is derived, not maintained.</strong> It is what the register layer says it
-      still has to ask for, plus every question the client did not answer, plus every cash gate the
-      engine reports as not established. Nothing here is a hand-written checklist, so nothing here can
-      drift out of step with the engine.</p>
-    <table><thead><tr>
-      <th>What is missing</th><th>Blocks</th><th>Why</th><th>Asked?</th><th>Ask for it</th>
+    <div class="help">${p.missing.length} still missing.${why('This list is worked out from what the lookups still lack, what the client did not answer, and what the estimate could not confirm. Nobody types it, so it cannot fall out of step. An unknown fact is asked, never guessed, and a missing fact is never filled in with the answer that would suit the client.')}</div>
+    <table class="stack"><thead><tr>
+      <th>What is missing</th><th>Holds up</th><th>Asked?</th><th>Ask for it</th>
     </tr></thead>
     <tbody>${p.missing.map((m) => h`<tr>
-      <td>${m.question}<br><span class="help">${m.origin} · ${m.fact_id}</span></td>
-      <td>${BLOCKS_WORDS[m.blocks]}${m.blocks_by_default
-        ? h`<br><span class="say">nothing recognised this fact, so it is listed against both</span>`
-        : raw('')}</td>
-      <td><span class="say">${m.why}</span></td>
-      <td>${m.has_task
+      <td>${m.question}<br><span class="help">from ${m.from}</span>${why(m.why)}</td>
+      <td data-label="Holds up">${BLOCKS_WORDS[m.blocks]}</td>
+      <td data-label="Asked?">${m.has_task
         ? h`${m.task_state === 'ANSWERED' ? h`answered` : h`asked`}`
         : h`<span class="help">not asked</span>`}</td>
-      <td>${m.has_task && m.task_state === 'ANSWERED'
+      <td data-label="Ask for it">${m.has_task && m.task_state === 'ANSWERED'
         ? h`<span class="help">—</span>`
         : askForms(p.business.id, m, claims)}</td>
-    </tr>`)}</tbody></table>
-    <div class="gate"><strong>An unknown fact is asked, never guessed.</strong> Nothing on this page
-    fills a gap with a plausible default, and nothing routes a missing fact to the answer that would
-    suit the client. That is non-negotiable N4, and it is why this list is long rather than short.</div>`;
+    </tr>`)}</tbody></table>`;
+}
+
+/** PHASE 138 — THE ONE-PRESS "ASK THE CLIENT" beside a WE NEED line. The same route and the same fields as the full form. */
+export function askButton(business_id: string, m: E.MissingFact): Safe {
+  return h`<form method="post" action="/staff/clients/${business_id}/tasks/send" class="inline">
+      <input type="hidden" name="fact_id" value="${m.fact_id}">
+      <input type="hidden" name="question" value="${m.question}">
+      <input type="hidden" name="why" value="We need this to finish your claim.">
+      <input type="hidden" name="holds_up" value="${BLOCKS_WORDS[m.blocks]}">
+      <button class="linkish" type="submit">Ask the client</button></form>`;
 }
 
 /**
@@ -392,35 +377,27 @@ function askForms(business_id: string, m: E.MissingFact, claims: readonly { read
     </details>`;
 }
 
-/* ---------------------------------------------------- 4 · tasks */
+/* ------------------------------------------- the questions we sent */
 
 export function panel4(p: E.BusinessPage): Safe {
   return h`
-    <h2>4 · Tasks</h2>
     ${p.tasks.length === 0
-      ? h`<p class="help">Nothing has been asked yet. Use the two controls on the Still missing tab.</p>`
-      : h`<table><thead><tr>
-          <th>Question</th><th>State</th><th>Answer</th><th>How we came to hold it</th><th>Asked in error?</th>
+      ? h`<p class="help">Nothing has been asked yet. Press “Ask the client” beside anything under We need.</p>`
+      : h`<table class="stack"><thead><tr>
+          <th>Question</th><th>Status</th><th>Answer</th><th>Who answered</th><th>Asked by mistake?</th>
           </tr></thead>
         <tbody>${p.tasks.map((t) => h`<tr class="${t.state === 'ANSWERED' && t.answer_state === 'DONT_KNOW' ? 'dont_know' : ''}">
           <td>${t.question}<br><span class="help">holds up ${t.holds_up}</span></td>
-          <td>${t.state.toLowerCase()}</td>
-          <td>${t.answer_state === 'DONT_KNOW'
+          <td data-label="Status">${t.state === 'OPEN' ? 'waiting for the client' : t.state.toLowerCase()}</td>
+          <td data-label="Answer">${t.answer_state === 'DONT_KNOW'
             ? h`<em>I don’t know — the client said so</em>`
             : t.answer !== null ? h`${t.answer}` : h`<span class="help">—</span>`}</td>
-          <td><span class="say">${t.provenance}</span>${t.answered_at !== null
+          <td data-label="Who answered"><span class="say">${t.provenance}</span>${t.answered_at !== null
             ? h`<br><span class="help">${localStamp(t.answered_at)}</span>` : raw('')}${t.withdrawn_at !== null
             ? h`<br><span class="help">${localStamp(t.withdrawn_at)}</span>` : raw('')}</td>
-          <td>${withdrawForm(p.business.id, t)}</td>
+          <td data-label="Asked by mistake?">${withdrawForm(p.business.id, t)}</td>
         </tr>`)}</tbody></table>`}
-    <div class="gate"><strong>Both routes write the same field.</strong> An answer the client typed in
-    their portal and an answer a staff member typed after telephoning them are the same fact, and the
-    record says which is which and who entered it. That difference is provenance, and provenance is
-    the discipline this whole system rests on.</div>
-    <div class="gate"><strong>Withdrawing is not deleting.</strong> It takes back a question that
-    should not have been asked, and the fact it was asking about goes straight back onto the Still missing tab as
-    not asked. An answered question cannot be withdrawn — the answer is a fact the client gave us
-    — and the refusal is on the record, not on whether a button was drawn.</div>`;
+    <div class="help">${why('An answer the client typed in their portal and one you typed after ringing them are the same fact; the record says which is which and who entered it. Withdrawing is not deleting: it takes back a question asked by mistake, and the fact goes back on the missing list. An answered question cannot be withdrawn — the answer is a fact the client gave us.')}</div>`;
 }
 
 /**
@@ -446,20 +423,14 @@ function withdrawForm(business_id: string, t: E.TaskView): Safe {
     </form>`;
 }
 
-/* ---------------------------------------------------- 5 · notes */
+/* ------------------------------------------------------ internal notes */
 
 function panel5(p: E.BusinessPage): Safe {
   if (!p.may_read_notes) {
-    return h`<h2>5 · Internal notes</h2>
-      <div class="gate">Your role cannot read internal notes. This is not a hidden panel — the rule
-      that refuses it is the same one the store asks before it reads, so there is nothing here that a
-      different screen would show you.</div>`;
+    return h`<div class="help">Your login cannot read internal notes.${why('The rule that refuses it is the one the store asks before it reads, so no other screen would show them to you.')}</div>`;
   }
   return h`
-    <h2>5 · Internal notes</h2>
-    <p class="help">Internal only. A note here cannot reach the client's portal or a surveyor's
-      session — not because no screen draws it, but because the rule that decides who may read a note
-      lists neither of them.</p>
+    <div class="help">Internal only — the client and the surveyor never see these.${why('Not because no screen draws them, but because the rule that decides who may read a note lists neither of them.')}</div>
     ${p.may_write
       ? h`<form method="post" action="/staff/clients/${p.business.id}/notes">
            <label class="fl" for="note">Add a note</label>
@@ -469,10 +440,10 @@ function panel5(p: E.BusinessPage): Safe {
       : raw('')}
     ${p.notes.length === 0
       ? h`<p class="help">No notes yet.</p>`
-      : h`<table><thead><tr><th>Note</th><th>Who</th><th>When</th></tr></thead>
+      : h`<table class="stack"><thead><tr><th>Note</th><th>Who</th><th>When</th></tr></thead>
         <tbody>${p.notes.map((n) => h`<tr>
           <td>${n.body}</td>
-          <td>${n.author_name ?? h`<span class="help">a deleted account</span>`}</td>
-          <td class="when">${localStamp(n.created_at)}</td>
+          <td data-label="Who">${n.author_name ?? h`<span class="help">a deleted account</span>`}</td>
+          <td data-label="When" class="when">${localStamp(n.created_at)}</td>
         </tr>`)}</tbody></table>`}`;
 }

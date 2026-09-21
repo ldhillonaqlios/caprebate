@@ -266,7 +266,7 @@ function listPage(
 
       ${recordLayout(recordTabs([
         { id: 'money', label: 'Money', body: h`
-      <h2 id="money-by-month">1 · The money, by month</h2>
+      <h2 id="money-by-month">The money, by month</h2>
       <p class="help">Invoiced ${v.totals.invoiced}; credit notes ${v.totals.credited}; received ${v.totals.received};
         outstanding ${v.totals.outstanding}; overdue ${v.totals.overdue} on ${v.totals.overdue_count} invoice${v.totals.overdue_count === 1 ? '' : 's'}.
         ${v.totals.without_a_due_date} open invoice${v.totals.without_a_due_date === 1 ? ' has' : 's have'} no due date — not overdue, and not on time either.</p>
@@ -275,13 +275,13 @@ function listPage(
 
       <div class="gate">${s.no_payments_note}</div>` },
         { id: 'vat', label: 'VAT', body: h`
-      <h2 id="vat-monitoring">2 · VAT monitoring</h2>
+      <h2 id="vat-monitoring">VAT monitoring</h2>
       ${vatBlock(v.vat)}
       <form method="post" action="/staff/finance/vat-check" id="vat-check"><p><button type="submit">Run the VAT check</button></p></form>
 
       <div class="gate">${s.vat_note}</div>` },
         { id: 'invoices', label: 'Invoices', count: v.invoices.length, body: h`
-      <h2 id="to-invoice">3 · Claims at the invoice stage with no invoice raised</h2>
+      <h2 id="to-invoice">Claims at the invoice stage with no invoice raised</h2>
       ${v.expected.claims.length === 0 ? h`<p class="help">No claim is waiting at the invoice stage.</p>` : h`
         <p class="help">Expected ${v.expected.total}${v.expected.without_a_fee > 0 ? h`; ${v.expected.without_a_fee} whose fee cannot be computed, counted apart` : raw('')}.
           Each claim’s finance task is the one the invoice stage raised — read here, and never a second.</p>
@@ -292,7 +292,7 @@ function listPage(
             <td>${c.may_raise ? h`<form method="post" action="/staff/finance/claims/${c.claim_id}/raise"><input type="hidden" name="kind" value="FEE">
               <button type="submit">Raise our fee</button></form>` : raw('')}</td><td>${claimRef(c.claim_ref)}</td></tr>`)}</tbody></table>`}
 
-      <h2 id="claim-invoices">4 · The claims’ invoices</h2>
+      <h2 id="claim-invoices">The claims’ invoices</h2>
       ${v.invoices.length === 0 ? h`<p class="help">No invoice is raised on any claim.</p>` : h`
         <table><thead><tr><th>Company</th><th>Number</th><th>For</th><th>Date</th><th>Amount</th><th>VAT</th><th>Invoice</th><th>Money</th><th>Outstanding</th><th>Due</th><th>Reference</th></tr></thead>
           <tbody>${v.invoices.map((i) => h`<tr><td>${i.client_name}</td><td><a href="/staff/finance/${i.id}">${i.number ?? 'unnumbered'}</a></td>
@@ -302,10 +302,10 @@ function listPage(
 
 ` },
         { id: 'fees', label: 'Fee controls and firms', body: h`
-      <h2 id="fee-controls">5 · The fee controls, and what the engagement letter says</h2>
+      <h2 id="fee-controls">The fee controls, and what the engagement letter says</h2>
       ${controlsBlock(v.controls)}
 
-      <h2 id="introducer-fees">7 · Fees to introducing firms</h2>
+      <h2 id="introducer-fees">Fees to introducing firms</h2>
       <p class="help">Model B’s fees — recorded, never paid from this view. Nothing here takes or sends money.</p>
       ${v.introducer_fees.length === 0 ? h`<p class="help">No fee to a firm is recorded. The reward model is switched off.</p>` : h`
         <table><thead><tr><th>Firm</th><th>Claim</th><th>Amount</th><th>Disclosed</th><th>State</th></tr></thead>
@@ -314,12 +314,12 @@ function listPage(
 
 ` },
         { id: 'settings', label: 'Settings', body: h`
-      <h2 id="finance-settings">6 · The finance settings</h2>
+      <h2 id="finance-settings">The finance settings</h2>
       ${settingsBlock(v)}
 
 ` },
         { id: 'earlier', label: 'Earlier invoices', count: s.rows.length, body: h`
-      <h2 id="earlier-invoices">8 · Organisations’ invoices from before invoices sat on the claim</h2>
+      <h2 id="earlier-invoices">Organisations’ invoices from before invoices sat on the claim</h2>
       <p class="help">${s.rows.length} client${s.rows.length === 1 ? '' : 's'}.
         ${s.raised} invoiced, ${s.paid} paid in full, ${s.outstanding} outstanding. Their states were typed; none is moved onto a claim,
         because which claim each was for was never recorded.</p>

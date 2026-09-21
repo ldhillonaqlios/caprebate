@@ -22,7 +22,7 @@ import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as D from './documents.ts';
-import { badge, claimRef, dataLink, savedMessage, sectionList, type RecordTab } from './components.ts';
+import { badge, claimRef, dataLink, savedMessage, sectionList, why, type RecordTab } from './components.ts';
 import type { FsObjectStore } from './objectstore.ts';
 
 export type WebResult = 'handled' | 'not-mine';
@@ -278,12 +278,14 @@ function dueCell(r: D.RequestView): Safe {
  * CRM 9 of 10. DOCUMENTS ON AN ORGANISATION OR A PROPERTY — the claim panel's table, drawn from a panel built for
  * this reader. A property's panel carries a form to link one of the organisation's documents to it.
  */
-export function placeDocumentsBlock(p: D.PlaceDocumentsPanel | undefined, property_id: string | null): Safe {
+export function placeDocumentsBlock(p: D.PlaceDocumentsPanel | undefined, property_id: string | null, heading = true): Safe {
   if (p === undefined) return raw('');
-  return h`<div class="pblock"><div class="pnum">Documents</div>
-    <p class="help">${property_id === null
+  // PHASE 138: inside a coloured section the section's own heading names it, so the block's heading is left out; the
+  // sentence that explained it sits behind "Why?".
+  return h`<div class="pblock">${heading ? h`<div class="pnum">Documents</div>` : raw('')}
+    <div class="help">${why(property_id === null
       ? 'Every document of this organisation you may read. A document is linked to its claims and properties on its own page.'
-      : 'The documents linked to this property that you may read. A lease or a plan belongs to the organisation and is linked here.'}</p>
+      : 'The documents linked to this property that you may read. A lease or a plan belongs to the organisation and is linked here.')}</div>
     ${p.documents.length === 0 ? h`<p class="help">No document you may read is here.</p>` : h`<table>
       <thead><tr><th>Document</th><th>Who may read it</th><th>Versions</th><th>Current version</th><th>Its deletion clock</th></tr></thead>
       <tbody>${p.documents.map((x) => h`<tr><td><a href="${x.href}">${x.label}</a></td><td class="help">${x.readers}</td>
@@ -297,21 +299,20 @@ export function placeDocumentsBlock(p: D.PlaceDocumentsPanel | undefined, proper
 }
 
 /** DOCUMENTS ON THE CLAIM. Drawn from `claimDocumentsPanel`, which built it for this reader. */
-export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel | undefined): Safe {
+export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel | undefined, heading = true): Safe {
   if (p === undefined) return raw('');
   const types = p.request_types ?? [];
-  return h`<div class="pblock"><div class="pnum">Documents</div>
-    <p class="help">A document belongs to the organisation and is linked to any number of its claims — one lease can serve two.
-    Every upload passes the receipt strip; nothing overwrites, and each version keeps its own deletion clock.</p>
+  return h`<div class="pblock">${heading ? h`<div class="pnum">Documents</div>` : raw('')}
+    <div class="help">${why('A document belongs to the company and can be linked to any number of its claims — one lease can serve two. Every upload goes through our safety checks; nothing is overwritten, and each version keeps its own deletion date.')}</div>
     ${p.documents.length === 0 ? h`<p class="help">No document is linked to this claim that you may read.</p>` : h`<table>
       <thead><tr><th>Document</th><th>Who may read it</th><th>Versions</th><th>Current version</th><th>Its deletion clock</th></tr></thead>
       <tbody>${p.documents.map((x) => h`<tr><td><a href="${x.href}">${x.label}</a></td><td class="help">${x.readers}</td>
         <td>${x.versions}</td><td>${x.current === null ? h`<span class="help">no version</span>` : h`version ${x.current.version_no ?? ''} — ${x.current.state}`}</td>
         <td>${x.current === null ? raw('') : clockCell(x.current.clock)}</td></tr>`)}</tbody></table>`}
 
-    ${p.requests === undefined ? raw('') : h`<p><strong>Requests</strong> — ${p.outstanding ?? 0} outstanding${
+    ${p.requests === undefined ? raw('') : h`<div><strong>Requests</strong> — ${p.outstanding ?? 0} outstanding${
       (p.overdue ?? 0) > 0 ? h`, <strong class="err">${p.overdue ?? 0} OVERDUE</strong>` : raw('')}.
-      <span class="help">A request is received when an upload of the requested type passes the receipt strip. There is no button for it.</span></p>
+      ${why('A request is marked received when an upload of that type passes our safety checks. There is no button for it.')}</div>
       ${p.requests.length === 0 ? h`<p class="help">No document has been requested on this claim.</p>` : h`<table>
         <thead><tr><th>Document</th><th>State</th><th>Due</th><th>Why</th><th>What it holds up</th><th></th></tr></thead>
         <tbody>${p.requests.map((r) => h`<tr class="${r.due.overdue ? 'overdue' : ''}"><td>${r.type.label}</td><td>${r.state_words}${

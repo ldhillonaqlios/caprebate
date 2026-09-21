@@ -17,6 +17,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, type Safe } from './html.ts';
+import { why } from './components.ts';
 import * as F from './claim-facts.ts';
 import * as R from './claim-record.ts';
 import { recordClientFilingConfirmation } from './client-filing.ts';
@@ -191,13 +192,15 @@ export function factsBlock(claim_id: string, facts: F.FactsPanel | ReleasedFacts
   if (facts === undefined) return raw('');
   if ('released_to_surveyor' in facts) {
     // THE CRM FOLLOW-ON: drawn as a table a surveyor reads, not as raw JSON. The same released list, and nothing added.
-    return h`<div class="pblock"><div class="pnum">The claim’s facts</div><p class="help">${facts.notice}</p>
+    return h`<div class="pblock"><p class="help">${facts.notice}</p>
       <table><tbody>${(Object.keys(facts.facts) as (keyof typeof facts.facts)[]).map((k) => h`<tr><th>${RELEASED_FACT_LABELS[k] ?? k}</th><td>${releasedValue(facts.facts[k])}</td></tr>`)}</tbody></table></div>`;
   }
   const p = facts;
   const w = p.amendment_window;
-  return h`<div class="pblock"><div class="pnum">The claim’s capital allowances facts</div>
-    <p class="help">Derived first, recorded only where nothing derives it. Every value says where it came from. Not known and never recorded read the same, and neither opens a gate.</p>
+  // PHASE 138: inside the claim page's "The claim's facts" section, which names it; the sentence behind "Why?"; the three
+  // recording forms behind one "Record a fact, a grant or an owner".
+  return h`<div class="pblock">
+    <div class="help">${why('We work a fact out from a public record first, and only type it in where nothing gives it. Every value says where it came from. “Not known” and “never recorded” are treated the same, and neither counts in the client’s favour.')}</div>
     <table><tbody>
       ${reading(p.claimant_type)}${reading(p.scottish_taxpayer)}${reading(p.jurisdiction)}${reading(p.acquisition_date)}
       ${reading(p.accounting_period.start)}${reading(p.accounting_period.end)}
@@ -226,7 +229,7 @@ export function factsBlock(claim_id: string, facts: F.FactsPanel | ReleasedFacts
     ${p.grants.lines.length === 0 ? h`<p class="help">None is recorded.</p>` : h`<table><tbody>${p.grants.lines.map((g) => h`<tr>
       <td>${g.kind}</td><td>${g.payer}</td><td>${g.amount} <span class="help">(${g.amount_basis})</span></td><td>${g.traced}${g.traced_elements === null ? '' : ` — ${g.traced_elements}`}</td>
       <td>${g.withdrawn ?? (p.may_record ? h`<form method="post" action="/staff/claims/${claim_id}/grants/${g.id}/withdraw" class="inline"><input name="reason" placeholder="why"><button type="submit">Withdraw</button></form>` : raw(''))}</td></tr>`)}</tbody></table>`}
-    ${!p.may_record ? raw('') : h`
+    ${!p.may_record ? raw('') : h`<details id="record-fact"><summary>Record a fact, a grant or an owner</summary>
       <form method="post" action="/staff/claims/${claim_id}/facts">
         <label>Fact <select name="fact_key">${Object.entries(F.FACTS).map(([k, v]) => h`<option value="${k}">${v.label}</option>`)}</select></label>
         <label>Answer <select name="answer"><option value="VALUE">This value</option><option value="UNKNOWN">Not known</option></select></label>
@@ -250,7 +253,7 @@ export function factsBlock(claim_id: string, facts: F.FactsPanel | ReleasedFacts
         <label>Ceased <input name="ceased_on" type="date"></label>
         <label>Claimed <select name="claimed"><option value="UNKNOWN">Not known</option><option value="YES">Yes</option><option value="NO">No</option></select></label>
         <label>Source <select name="source_id">${options(F.CAPTURE_SOURCES)}</select></label>
-        <button type="submit">Record the owner</button></form>`}
+        <button type="submit">Record the owner</button></form></details>`}
   </div>`;
 }
 
@@ -263,7 +266,7 @@ export function figuresBlock(claim_id: string, p: R.FiguresPanel | undefined): S
   if (p === undefined) return raw('');
   const rec = p.reconciliation;
   const form = p.signoff_form;
-  return h`<div class="pblock"><div class="pnum">The four figures</div><p class="help">${p.order}</p>
+  return h`<div class="pblock"><div class="help">${why(p.order)}</div>
     <table><tbody>
       <tr><td>A · the indicative estimate</td><td>${sealed(p.a_indicative, (a) => h`${a.figure} <span class="help">shown as ${a.shown_range} · sealed ${a.sealed} · ${a.hash}</span>`)}</td></tr>
       <tr><td>B · the researched estimate</td><td><span class="help">${p.b_researched.state} — ${p.b_researched.why}</span></td></tr>
@@ -319,7 +322,7 @@ export function deliverablesBlock(claim_id: string, p: R.DeliverablesPanel | und
 
 export function aftercareBlock(claim_id: string, p: R.AftercarePanel | undefined): Safe {
   if (p === undefined) return raw('');
-  return h`<div class="pblock"><div class="pnum">Aftercare</div>
+  return h`<div class="pblock">
     <h3>HMRC enquiries</h3>
     ${p.enquiries.length === 0 ? h`<p class="help">No enquiry is recorded.</p>` : h`<table><tbody>${p.enquiries.map((e) => h`<tr>
       <td>opened ${e.opened_on}</td><td>${e.open ? 'open' : h`closed ${e.closed_on ?? ''} — ${e.outcome ?? ''}${e.amended_figure === null ? '' : ` at ${e.amended_figure}`}`}</td><td>${e.note ?? ''}</td>

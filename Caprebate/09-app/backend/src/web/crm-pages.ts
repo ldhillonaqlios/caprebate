@@ -28,6 +28,7 @@ import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as C from './crm.ts';
+import type * as F from './claim-facts.ts';
 import type { PipelinePanel } from './pipeline.ts';
 import { enquiryBlock } from './pipeline-pages.ts';
 import { can } from '../authz.ts';
@@ -42,7 +43,10 @@ import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } 
 import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock } from './claim-record-pages.ts';
 import { opens } from './navigation.ts';
 import { assertClientsSection } from './engaged.ts';
-import { badge, brandName, breadcrumb, claimHref, claimName, claimRef, claimStageBar, claimTiles, dataLink, propertyIn, fields, highlights, nextStepCard, recordLayout, recordTabs, savedMessage, sidePanel, why, type QuickAction } from './components.ts';
+import { badge, brandName, breadcrumb, claimHref, claimName, claimRef, claimStageBar, claimTiles, dataLink, propertyIn, fields, highlights, moreDetail, nextStepCard, recordLayout, recordTabs, savedMessage, section, sidePanel, statusFromNeeds, why, type Need, type QuickAction, type SectionContext, type SectionSpec } from './components.ts';
+import { sectionPrefs } from './sections.ts';
+import { plainNeed } from './next-step.ts';
+import { openClaimQuestions } from './engaged.ts';
 import { claimNextStep } from './next-step.ts';
 import { dueWords, localStamp, ukDate } from './localtime.ts';
 import { navContext } from './navigation.ts';
@@ -360,7 +364,7 @@ function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonl
   // PHASE 133c (B2): the ten stages are drawn once, in the stage bar at the top of the page, so this panel no longer lists
   // them a second time. Everything the gate reads — the procedure's words, each need and its reading, what the client's
   // portal shows, the fee trigger and the claimable figure — is still here, behind "See everything this stage needs".
-  return h`<div class="pblock"><div class="pnum">Stage and moves</div>
+  return h`<div class="pblock">
     <p>Stage: <strong>${p.stage.label}</strong></p>
     ${p.hold === undefined ? raw('') : h`<p class="help">On hold — ${p.hold.reason ?? 'no reason recorded'}. It returns to ${p.hold.returns_to}.</p>`}
     ${p.steps.length === 0 ? h`<p class="help">No steps can be drawn for a stage that is not recognised.</p>`
@@ -389,6 +393,7 @@ function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonl
         <input type="hidden" name="kind" value="FORWARD"><input type="hidden" name="to" value="${m.forward.to}">
         <label>Note <input name="reason"></label>${nextActionFields(owners)}
         <button type="submit">Move to ${m.forward.label}${m.forward.open ? '' : ' (not ready yet)'}</button></form>`}
+      ${m.exits.length === 0 && !m.may_hold && m.resume === null && m.reopen.length === 0 ? raw('') : moreDetail(h`
       ${m.exits.length === 0 ? raw('') : h`<form method="post" action="/staff/claims/${id}/stage">
         <input type="hidden" name="kind" value="EXIT">
         <label>Exit to <select name="to">${m.exits.map((e) => h`<option value="${e.key}">${e.label}</option>`)}</select></label>
@@ -407,11 +412,11 @@ function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonl
         <input type="hidden" name="kind" value="REOPEN">
         <label>Reopen at <select name="to">${m.reopen.map((r) => h`<option value="${r.key}">${r.label}</option>`)}</select></label>
         <label>Reason <input name="reason" required></label>${nextActionFields(owners)}
-        <button type="submit">Reopen</button></form>`}`}
-    ${p.history === undefined ? raw('') : h`<h3>Every move</h3>${p.history.length === 0 ? h`<p class="help">No move is recorded.</p>`
-      : h`<table><thead><tr><th>When</th><th>What</th><th>From</th><th>To</th><th>Who</th><th>Reason</th></tr></thead>
-        <tbody>${p.history.map((x) => h`<tr><td>${x.at}</td><td>${x.what}</td><td>${x.from}</td><td>${x.to}</td><td>${x.who}</td>
-          <td>${x.reason ?? ''}${x.note === null ? raw('') : h`<br><span class="help">${x.note}</span>`}</td></tr>`)}</tbody></table>`}`}
+        <button type="submit">Reopen</button></form>`}`, 'Other moves: close it, put it on hold, resume or reopen')}`}
+    ${p.history === undefined ? raw('') : moreDetail(p.history.length === 0 ? h`<p class="help">No move is recorded.</p>`
+      : h`<table class="stack"><thead><tr><th>When</th><th>What</th><th>From</th><th>To</th><th>Who</th><th>Reason</th></tr></thead>
+        <tbody>${p.history.map((x) => h`<tr><td>${x.at}</td><td data-label="What">${x.what}</td><td data-label="From">${x.from}</td><td data-label="To">${x.to}</td><td data-label="Who">${x.who}</td>
+          <td data-label="Reason">${x.reason ?? ''}${x.note === null ? raw('') : h`<br><span class="help">${x.note}</span>`}</td></tr>`)}</tbody></table>`, 'Every move so far')}
   </div>`;
 }
 
@@ -472,7 +477,7 @@ export function organisationSections(
         ? h`<div class="gate"><strong>Do not contact.</strong> Nothing can be sent to this company or to any address it holds.${
           why('The outbox refuses it, and so does the database.')}</div>`
         : raw('')}
-      <div class="pblock"><div class="pnum">The company</div>${fields([
+      <div class="pblock">${fields([
         { label: 'Trading name', value: v.trading_name, why: 'The name the client gave us.' },
         // The claimant type decides the claim's route, so "not known" is an answer and stays.
         { label: 'Legal name', value: v.legal_name.value === null ? null : factCell(v.legal_name) },
@@ -508,31 +513,33 @@ export function organisationSections(
           <button type="submit">Save</button></form></details>` : raw('')}
       </div>`;
 
+  // PHASE 138: ONE CARD PER CONTACT instead of a nine-column table that scrolled sideways on a phone. The card shows what
+  // is used every week — name, job, email, telephone, next follow-up; the type, decision maker, last contact and notes sit
+  // under "More detail" on the card. The same fields, from the same view.
   const contacts = h`
-      <div class="pblock"><div class="pnum">Contacts</div>
+      <div class="pblock">
       ${v.contacts === null ? h`<p class="help">Contacts are not shown to this role.</p>` : h`
-        ${v.contacts.length === 0 ? h`<p class="help">No contact is recorded.</p>` : h`<table>
-          <thead><tr><th>Name</th><th>Job title</th><th>Type</th><th>Decision maker</th><th>Email</th><th>Telephone</th>
-          <th>Last contact</th><th>Next follow-up</th><th>Notes</th></tr></thead>
-          <tbody>${v.contacts.map((c) => h`<tr><td>${c.full_name}</td><td>${orNot(c.job_title)}</td><td>${c.contact_type.label}</td>
-            <td>${c.is_decision_maker.label}</td><td>${orNot(c.email)}</td><td>${orNot(c.phone)}</td>
-            <td><span class="help">${c.last_contact}</span></td>
-            <td>${c.next_follow_up_at !== null ? h`${c.next_follow_up_at}` : h`<span class="help">${c.follow_ups_open === 0
-              ? 'none yet' : 'one open, with no date'}</span>`}</td>
-            <td>${orNot(c.notes, 'none')}</td></tr>
-            ${v.may_write ? h`<tr><td colspan="9"><details><summary>Change ${c.full_name}</summary>
-              ${contactForm(`/staff/contacts/${c.id}`, v.id, c, 'Save contact')}</details></td></tr>` : raw('')}`)}</tbody></table>`}
+        ${v.contacts.length === 0 ? h`<p class="empty">No contact is recorded yet.</p>` : h`<ul class="contactcards">${v.contacts.map((c) => h`<li class="contactcard">
+          <p class="cname">${c.full_name}</p>
+          ${c.job_title === null || c.job_title === '' ? raw('') : h`<p class="help">${c.job_title}</p>`}
+          <p>${c.email === null || c.email === '' ? h`<span class="help">No email</span>` : h`${c.email}`}</p>
+          <p>${c.phone === null || c.phone === '' ? h`<span class="help">No telephone</span>` : h`${c.phone}`}</p>
+          <p class="help">Next follow-up: ${c.next_follow_up_at !== null ? h`${c.next_follow_up_at}` : c.follow_ups_open === 0 ? 'none yet' : 'one open, with no date'}</p>
+          ${moreDetail(h`<dl><dt>Type</dt><dd>${c.contact_type.label}</dd><dt>Decision maker</dt><dd>${c.is_decision_maker.label}</dd>
+            <dt>Last contact</dt><dd>${c.last_contact}</dd><dt>Notes</dt><dd>${orNot(c.notes, 'none')}</dd></dl>`)}
+          ${v.may_write ? h`<details><summary>Change ${c.full_name}</summary>
+            ${contactForm(`/staff/contacts/${c.id}`, v.id, c, 'Save contact')}</details>` : raw('')}</li>`)}</ul>`}
         ${v.may_write ? h`<details><summary>Add a contact</summary>
           <p class="help">A client's accountant or adviser is a contact, and never has a login.</p>
           ${contactForm(`/staff/organisations/${v.id}/contacts`, v.id, null, 'Add contact')}</details>` : raw('')}`}
       </div>`;
 
   const properties = h`
-      <div class="pblock"><div class="pnum">Properties</div>
-      ${v.properties.length === 0 ? h`<p class="help">No property is recorded.</p>` : h`<table>
+      <div class="pblock">
+      ${v.properties.length === 0 ? h`<p class="empty">No property is recorded yet.</p>` : h`<table class="stack">
         <thead><tr><th>Property</th><th>Postcode</th><th>Jurisdiction</th><th>Claims</th></tr></thead>
         <tbody>${v.properties.map((p) => h`<tr><td><a href="/staff/properties/${p.id}">${p.label}</a></td>
-          <td>${orNot(p.postcode)}</td><td>${p.jurisdiction}</td><td>${p.claims}</td></tr>`)}</tbody></table>`}
+          <td data-label="Postcode">${orNot(p.postcode)}</td><td data-label="Jurisdiction">${p.jurisdiction}</td><td data-label="Claims">${p.claims}</td></tr>`)}</tbody></table>`}
       ${v.may_write ? h`<details><summary>Add a property</summary>
         <form method="post" action="/staff/organisations/${v.id}/properties">
           <label>Name of the site or building <input name="label" required></label>
@@ -541,13 +548,13 @@ export function organisationSections(
       <p class="help">To open a claim, open the property and choose “Open claim”.</p>
       </div>`;
 
-  const tasks = x.owners === null ? raw('') : h`<div class="pblock" id="org-tasks"><div class="pnum">Tasks and follow-ups</div>${newTaskForm(
+  const tasks = x.owners === null ? raw('') : h`<div class="pblock" id="org-tasks">${newTaskForm(
     taskChoices(d.app.db), { business_id: v.id }, x.owners, `/staff/clients/${v.id}`, 'Add a task, or a follow-up with a contact',
     (v.contacts ?? []).map((c) => ({ id: c.id, name: c.full_name })))}</div>`;
 
   return {
     details, contacts, contact_count: v.contacts === null ? undefined : v.contacts.length, properties,
-    documents: placeDocumentsBlock(v.documents, null), tasks,
+    documents: placeDocumentsBlock(v.documents, null, false), tasks,
     quick: [
       ...(x.owners === null ? [] : [{ href: '#add-task', label: 'Log a call or add a follow-up' }]),
       ...(v.may_write ? [{ href: '#contacts', label: 'Add a contact' }, { href: '#properties', label: 'Add a property' }] : []),
@@ -703,7 +710,7 @@ function claimsPage(d: CrmPageDeps, actor: Actor, rows: readonly C.ClaimRow[], c
 function teamBlock(v: C.ClaimView): Safe {
   const t = v.team;
   if (t === undefined) return raw('');
-  return h`<div class="pblock"><div class="pnum">The claim team</div><dl>
+  return h`<div class="pblock"><dl>
     <dt>Owner</dt><dd>${orNot(t.owner, 'nobody yet')}</dd>
     <dt>Surveyor</dt><dd>${orNot(t.surveyor, 'none named')}${why(t.surveyor_reach)}</dd>
     ${t.tax_adviser === undefined ? raw('') : h`<dt>Tax adviser</dt><dd>${t.tax_adviser.state === 'RECORDED'
@@ -724,6 +731,25 @@ function teamBlock(v: C.ClaimView): Safe {
   </div>`;
 }
 
+/**
+ * PHASE 138 — A CLAIM FACT THE CLIENT CAN BE ASKED FOR, as a one-press ask. It posts to the company's own question route
+ * (`sendTaskToPortal`, which asks `business.read` and `internal_note.write` again), naming this claim; the answer comes
+ * back on the company page's Questions for the client, where it is recorded as the fact.
+ */
+function claimAsk(business_id: string, claim_id: string, fact_id: string, label: string): Safe {
+  return h`<form method="post" action="/staff/clients/${business_id}/tasks/send" class="inline">
+    <input type="hidden" name="fact_id" value="${fact_id}"><input type="hidden" name="claim_id" value="${claim_id}">
+    <input type="hidden" name="question" value="${`Can you tell us this: ${label}?`}">
+    <input type="hidden" name="why" value="We need this to finish your claim."><input type="hidden" name="holds_up" value="this claim">
+    <button class="linkish" type="submit">Ask the client</button></form>`;
+}
+
+/** The claim facts a client can tell us, in the order the facts table draws them. The rest are worked out, not asked. */
+function askableFacts(p: F.FactsPanel): readonly F.FactReading[] {
+  return [p.claimant_type, p.acquisition_date, p.accounting_period.start, p.accounting_period.end, p.taxable_profit.sufficient_profit,
+    p.allowance_headroom.position, p.election.exists, p.grants.exist, p.acquisition_costs.costs, p.buyer_alterations.made];
+}
+
 function claimPage(
   d: CrmPageDeps, actor: Actor, v: C.ClaimView, msg: string | undefined,
   x: {
@@ -732,14 +758,13 @@ function claimPage(
     may_note: boolean;
   },
 ): string {
-  const client = v.client.linkable ? h`<a href="/staff/clients/${v.client.business_id}">${v.client.name}</a>` : h`${v.client.name}`;
+  const db = d.app.db;
+  const biz = v.client.business_id;
   // PHASE 134: THE COMPANY IS THE FRAME. The heading is the company's name; the property and the reference sit under it.
   const property = v.header?.property ?? null;
   const where = property === null ? null : [propertyIn(v.client.name, property.label), property.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
-  /* PHASE 133a: THE RECORD PAGE — highlights, the stage bar, three tabs and a right-hand panel. EVERY PANEL THE PAGE DREW
-     BEFORE IS STILL DRAWN, in one of the tabs, from the same view; nothing is read that the view did not already carry. */
-  const tasks = claimTasksBlock(v.id, v.tasks, taskChoices(d.app.db));
-  const docs = claimDocumentsBlock(v.id, v.documents);
+  const tasks = claimTasksBlock(v.id, v.tasks, taskChoices(db));
+  const docs = claimDocumentsBlock(v.id, v.documents, false);
   const email = emailBlock(v.id, x.templates, x.contacts);
   const notes = notesBlock(v.timeline, x.may_note ? `/staff/claims/${v.id}/notes` : null);
   const pipe = pipelineBlock(v.id, v.pipeline, v.tasks?.may_set_next_action === true ? (v.tasks.owner_choices ?? []) : []);
@@ -751,102 +776,200 @@ function claimPage(
     ...(email.html.includes('/email"') ? [{ href: '#claim-email', label: 'Email a contact' }] : []),
     ...(notes.html.includes('/notes"') ? [{ href: '#claim-notes', label: 'Add a note' }] : []),
   ];
-  const related = (v.documents.documents.length) + (v.money?.length ?? 0) + (v.contacts?.length ?? 0);
   const nextAction = v.header === undefined ? null : v.header.next_action === null
     ? h`<p>${badge('None recorded', 'warn')}</p><p class="help">Every open claim has exactly one next action, with an owner and a due date.</p>`
     : h`<p><strong>${v.header.next_action}</strong></p>${v.header.next_action_due === null ? raw('') : h`<p class="help">${due(v.header.next_action_due)}</p>`}
         ${v.header.owner === null ? raw('') : h`<p class="help">${v.header.owner}</p>`}`;
   const step = v.pipeline === undefined ? null : claimNextStep(v.id, v.pipeline.gate, v.pipeline.moves, v.pipeline.hold);
+
+  /* PHASE 138: THE CLAIM'S SECTIONS. Each is built only from a part of the view this login was given, and only where the
+     view carries it — a surveyor's view carries the stage and the released facts, Accounting's the money. */
+  const ctx: SectionContext = { prefs: sectionPrefs(db, actor), back: v.client.linkable ? claimHref(biz, v.id) : `/staff/claims/${v.id}` };
+  const asked = openClaimQuestions(db, actor, biz, v.id);
+  const mayAsk = can(actor, 'internal_note.write', { type: 'internal_note', id: biz, business_id: biz });
+  const needFor = (fact_id: string, label: string): Need => (asked.has(fact_id) ? { label, asked: true }
+    : mayAsk ? { label, ask: claimAsk(biz, v.id, fact_id, label) } : { label });
+  const sections: SectionSpec[] = [];
+
+  if (v.pipeline !== undefined) {
+    const pl = v.pipeline;
+    const firstNeed = pl.gate?.needs.find((n) => !n.met);
+    const over = pl.stage.kind === 'CLOSED' || pl.stage.kind === 'EXIT';
+    sections.push({
+      key: 'claim.stage', id: 'move', kind: 'facts', heading: 'Stage and next move',
+      status: over ? 'DONE' : 'WORKING',
+      working: over ? `This claim is closed: ${pl.stage.label}.`
+        : pl.gate === undefined ? `Stage: ${pl.stage.label}.`
+          : pl.gate.open ? `Ready to move on from ${pl.gate.label}.` : `Getting ready to move on: ${plainNeed(firstNeed?.what ?? '').words}`,
+      need: [], from: ['our step-by-step procedure', 'you and your team'],
+      body: h`${v.overview === undefined ? raw('') : fields([
+          { label: 'Workstream', value: v.overview.workstream.label },
+          { label: 'Expected completion', value: v.overview.expected_completion === null ? null : ukDate(v.overview.expected_completion) },
+          { label: 'Hold reason', value: v.overview.hold_reason },
+          { label: 'Lost reason', value: v.overview.lost_reason },
+        ])}
+        ${pipe}
+        ${v.edit === undefined ? raw('') : h`<details id="change-claim"><summary>Change the owner, surveyor or priority</summary>
+          <div class="help">The stage is not changed here.${why('It moves through the steps of the procedure, above.')}</div>
+          <form method="post" action="/staff/claims/${v.id}">
+            <label>Owner <select name="owner_id">${people(v.edit.owners, v.edit.current.owner_id, 'nobody yet')}</select></label>
+            <label>Surveyor <select name="surveyor_id">${people(v.edit.surveyors, v.edit.current.surveyor_id, 'none named')}</select></label>
+            <label>Priority <select name="priority">${options(vocabulary(db, 'PRIORITY', v.edit.current.priority), v.edit.current.priority, 'not set')}</select></label>
+            <label>Workstream <select name="workstream">${options(C.WORKSTREAMS, v.edit.current.workstream, null)}</select></label>
+            <label>Property <select name="property_id">${people(v.edit.properties.map((p) => ({ id: p.id, name: p.label })), v.edit.current.property_id, 'none recorded')}</select></label>
+            <label>Expected completion <input name="expected_completion" type="date" value="${v.edit.current.expected_completion ?? ''}"></label>
+            <label>Hold reason <input name="hold_reason" value="${v.edit.current.hold_reason ?? ''}"></label>
+            <label>Lost reason <input name="lost_reason" value="${v.edit.current.lost_reason ?? ''}"></label>
+            <button type="submit">Save</button></form></details>`}`,
+    });
+  }
+
+  if (v.facts !== undefined) {
+    const f = v.facts;
+    if ('released_to_surveyor' in f) {
+      sections.push({
+        key: 'claim.facts', id: 'claim-facts', kind: 'facts', heading: 'The claim’s facts', status: 'DONE',
+        working: 'These are the facts released to you for the survey.', need: [], from: ['Cap Rebate'], body: factsBlock(v.id, f),
+      });
+    } else {
+      const need = askableFacts(f).filter((r) => !r.known).map((r) => needFor(`claim_fact.${r.key}`, r.label));
+      const known = askableFacts(f).filter((r) => r.source !== null).map((r) => r.source?.publisher ?? '');
+      sections.push({
+        key: 'claim.facts', id: 'claim-facts', kind: 'facts', heading: 'The claim’s facts',
+        status: statusFromNeeds(need, true),
+        working: need.length === 0 ? 'Nothing — every fact the tax rules need is in.' : 'Collecting the facts the tax rules need.',
+        need, from: [...new Set(['the client', ...known.filter((k) => k !== '')])], body: factsBlock(v.id, f),
+      });
+    }
+  }
+
+  if (v.figures !== undefined) {
+    const fg = v.figures;
+    const surveyed = fg.c_surveyor.state !== 'NOT_YET';
+    const signed = fg.d_adviser.state !== 'NOT_YET';
+    sections.push({
+      key: 'claim.figures', id: 'claim-figures', kind: 'facts', heading: 'Figures',
+      status: signed ? 'DONE' : surveyed ? 'WORKING' : 'NOT_STARTED',
+      working: signed ? 'Nothing — the tax adviser has signed the figure.'
+        : surveyed ? 'Waiting for the tax adviser to sign the figure off.' : 'Waiting for the surveyor’s figures.',
+      need: [], from: ['our estimate', 'the surveyor', 'the tax adviser'],
+      body: h`${figuresBlock(v.id, fg)}${v.value === undefined ? raw('') : h`<h3>The value</h3>${valuePanel(v.value)}`}`,
+    });
+  }
+
+  if (v.overview !== undefined) {
+    const o = v.overview;
+    const need: Need[] = [
+      ...(o.acquisition_date === null ? [needFor('property.acquisition_date', 'When the property was bought')] : []),
+      ...(o.tenure.known ? [] : [needFor('property.tenure', 'Whether the property is freehold or leasehold')]),
+      ...(o.existing_ca_claimed.known ? [] : [needFor('property.existing_ca_claimed', 'Whether allowances were claimed on it before')]),
+    ];
+    sections.push({
+      key: 'claim.property', id: 'claim-property', kind: 'property', heading: 'The property',
+      status: statusFromNeeds(need, true),
+      working: need.length === 0 ? 'Nothing right now.' : 'Finding the facts about the building.',
+      need, from: ['HM Land Registry', 'the EPC register', 'the client'],
+      body: h`${fields([
+          { label: 'Property', value: v.header?.property === null || v.header?.property === undefined ? null
+            : v.header.property.linkable ? h`<a href="/staff/properties/${v.header.property.id}">${v.header.property.label}</a>` : v.header.property.label },
+          { label: 'Acquired', value: o.acquisition_date === null ? null : ukDate(o.acquisition_date) },
+          { label: 'Acquisition price', value: o.acquisition_price },
+          { label: 'Tenure', value: o.tenure.label },
+          { label: 'Jurisdiction', value: o.jurisdiction },
+          // A fact that decides something: "not known" is an answer, and it stays.
+          { label: 'Allowances claimed before?', value: o.existing_ca_claimed.label, keep: true },
+        ])}`,
+    });
+  }
+
+  if (v.team !== undefined || v.origin !== undefined) {
+    const owned = v.team?.owner !== null && v.team?.owner !== undefined;
+    sections.push({
+      key: 'claim.team', id: 'claim-team', kind: 'company', heading: 'The team',
+      status: v.team === undefined || owned ? 'DONE' : 'WORKING',
+      working: v.team === undefined || owned ? 'Nothing right now.' : 'The claim needs an owner.',
+      need: [], from: ['you and your team', 'the client'],
+      body: h`${teamBlock(v)}
+        ${v.client.linkable ? h`<p><a href="/staff/clients/${biz}#contacts">See all of ${v.client.name}’s contacts</a></p>` : raw('')}
+        ${v.origin === undefined ? raw('') : moreDetail(fields([
+          { label: 'Came from', value: v.origin.lead === null ? 'Opened by staff'
+            : h`<a href="${v.origin.lead.href}">Its lead</a>`, why: v.origin.lead === null ? 'No lead: this claim was opened by staff on a property.' : v.origin.lead.origin },
+          { label: 'Source', value: v.origin.source.label, why: `From ${v.origin.source.from}.` },
+          v.origin.introducer === undefined ? null : { label: 'Introducer', value: v.origin.introducer === null ? null
+            : h`<a href="${v.origin.introducer.href}">${v.origin.introducer.firm_name}</a>` },
+        ]), 'Where this claim came from')}`,
+    });
+  }
+
+  {
+    const dp = v.documents;
+    const waitingFor = (dp.requests ?? []).filter((r) => r.state === 'REQUESTED');
+    sections.push({
+      key: 'claim.documents', id: 'claim-documents', kind: 'documents', heading: 'Documents', count: dp.documents.length,
+      status: waitingFor.length > 0 ? 'WAITING' : dp.documents.length > 0 ? 'DONE' : 'NOT_STARTED',
+      working: waitingFor.length > 0 ? `Waiting for ${waitingFor.length} document${waitingFor.length === 1 ? '' : 's'} from the client.`
+        : dp.documents.length > 0 ? 'Nothing right now.' : 'No document yet.',
+      need: waitingFor.map((r) => ({ label: r.type.label, asked: true })),
+      from: ['the client', 'the surveyor', 'our own letters'],
+      body: h`${docs}${v.deliverables === undefined ? raw('') : h`<div id="claim-deliverables">${moreDetail(deliverablesBlock(v.id, v.deliverables), 'The reports we deliver')}</div>`}`,
+    });
+  }
+
+  if (v.money !== undefined || v.estimated_fee !== undefined || v.fee_discounts !== undefined) {
+    const money = v.money ?? [];
+    sections.push({
+      key: 'claim.money', id: 'claim-money', kind: 'money', heading: 'Money', count: money.length,
+      status: money.length > 0 ? 'WORKING' : 'NOT_STARTED',
+      working: money.length > 0 ? `${money.length} invoice${money.length === 1 ? '' : 's'} on this claim.` : 'No invoice yet.',
+      need: [], from: ['our fee rules', 'our invoices'],
+      body: h`${v.estimated_fee === undefined ? raw('') : h`<h3>Our estimated fee</h3>
+          <p>${v.estimated_fee.known ? h`<strong>${v.estimated_fee.amount}</strong> — ${v.estimated_fee.reading}` : h`<strong>${v.estimated_fee.reading}</strong>`}</p>
+          <div class="${v.estimated_fee.gate.outcome === 'FIRE' ? 'flag' : 'help'}">${v.estimated_fee.gate.reading}.${why(h`${v.estimated_fee.gate.placeholder_caveat} ${v.estimated_fee.basis} No fee invoice is raised on this claim yet; once one is, it is listed below.`)}</div>`}
+        ${v.money === undefined ? raw('') : h`<h3>Invoices</h3>
+          ${money.length === 0 ? h`<div class="help">No invoice is raised on this claim.${why('This claim’s own invoices. Recorded here, not collected.')}</div>` : h`<table class="stack">
+            <thead><tr><th>Number</th><th>For</th><th>Amount</th><th>Invoice</th><th>Money</th><th>Outstanding</th><th>Due</th><th>VAT</th></tr></thead>
+            <tbody>${money.map((m) => h`<tr><td>${m.number ?? 'unnumbered'}</td><td data-label="For">${m.kind}</td><td data-label="Amount">${m.fee}</td><td data-label="Invoice">${m.invoice_status}</td>
+              <td data-label="Money">${m.payment_status}</td><td data-label="Outstanding">${m.outstanding}</td><td data-label="Due">${m.due}</td><td data-label="VAT">${m.vat_position}</td></tr>`)}</tbody></table>`}`}
+        ${v.fee_discounts === undefined ? raw('') : moreDetail(v.fee_discounts.length === 0
+          ? h`<p class="help">None proposed. A discount is never applied automatically; the largest discount and who approves it are not decided.</p>`
+          : h`<table class="stack"><thead><tr><th>Proposed</th><th>Why</th><th>Recorded</th><th>State</th></tr></thead><tbody>${v.fee_discounts.map((fd) => h`<tr>
+              <td>${fd.discount}</td><td data-label="Why">${fd.reason}</td><td data-label="Recorded" class="when">${fd.recorded}</td><td data-label="State"><strong>${fd.state === 'AWAITING_CEILING_AND_APPROVER' ? 'AWAITING THE DECISION' : 'NOT APPLIED'}</strong><br><span class="help">${fd.says}</span></td></tr>`)}</tbody></table>`, 'A multi-site discount')}`,
+    });
+  }
+
+  if (v.aftercare !== undefined) {
+    const a = v.aftercare;
+    sections.push({
+      key: 'claim.aftercare', id: 'claim-aftercare', kind: 'facts', heading: 'Aftercare',
+      status: a.enquiry_open ? 'WORKING' : a.enquiries.length > 0 ? 'DONE' : 'NOT_STARTED',
+      working: a.enquiry_open ? 'An HMRC enquiry is open.' : a.enquiries.length > 0 ? 'Nothing — the HMRC enquiry is closed.' : 'Nothing yet — this starts once the claim is filed.',
+      need: [], from: ['HMRC', 'the client'], body: aftercareBlock(v.id, a),
+    });
+  }
+
+  sections.push({
+    key: 'claim.activity', id: 'activity', kind: 'messages', heading: 'Messages and activity',
+    status: (v.timeline?.events.length ?? 0) > 0 ? 'WORKING' : 'NOT_STARTED',
+    working: v.tasks?.waiting === undefined ? 'Keeping a record of every call, email and note.' : `${v.tasks.waiting.why.charAt(0).toUpperCase()}${v.tasks.waiting.why.slice(1)}.`,
+    need: [], from: ['you and your team', 'the client'],
+    body: h`<div id="claim-tasks">${tasks}</div>
+      <div id="claim-email">${email}</div>
+      ${v.timeline === undefined || !v.client.linkable ? raw('') : h`<p><a href="/staff/clients/${biz}#activity">See everything for ${v.client.name}</a></p>`}
+      ${timelineBlock(v.timeline, 'This claim’s part of the company’s timeline')}
+      <div id="claim-notes">${notes}</div>`,
+  });
+
   return page({
     title: claimName(v.client.name, property?.label), nav: d.nav(actor), wide: true,
-    body: h`${breadcrumb([{ label: v.client.name, href: v.client.linkable ? `/staff/clients/${v.client.business_id}` : null }, { label: propertyIn(v.client.name, property?.label ?? null) ?? 'Claim' }])}${done(msg)}
+    body: h`${breadcrumb([{ label: v.client.name, href: v.client.linkable ? `/staff/clients/${biz}` : null }, { label: propertyIn(v.client.name, property?.label ?? null) ?? 'Claim' }])}${done(msg)}
       ${highlights('Claim', v.client.name, [
         v.header === undefined ? null : { label: 'Stage', value: v.header.stage.label },
         v.header === undefined ? null : { label: 'Owner', value: orNot(v.header.owner, 'nobody yet') },
-        v.header === undefined ? null : { label: 'Property', value: v.header.property === null ? 'none recorded' : v.header.property.label },
         v.overview === undefined ? null : { label: 'Priority', value: v.overview.priority.label },
         v.value === undefined ? null : { label: 'Value', value: v.value.established ? v.value.shown_range : 'no estimate yet' },
       ], raw(''), h`${where === null ? 'Claim' : `Claim on ${where}`} ${claimRef(v.claim_ref)}`)}
       ${v.pipeline === undefined ? raw('') : claimStageBar(v.pipeline.stage, v.pipeline.steps, v.pipeline.gate)}
-      ${recordLayout(recordTabs([
-        { id: 'details', label: 'Details', body: h`
-      <div class="pblock"><div class="pnum">The claim</div>${fields([
-        { label: 'Company', value: client },
-        v.header === undefined ? null : { label: 'Property', value: v.header.property === null ? null
-          : v.header.property.linkable ? h`<a href="/staff/properties/${v.header.property.id}">${v.header.property.label}</a>` : v.header.property.label },
-        v.header === undefined ? null : { label: 'Stage', value: v.header.stage.label },
-        v.header === undefined ? null : { label: 'Owner', value: v.header.owner },
-        v.header === undefined ? null : { label: 'Next action', value: v.header.next_action === null ? null
-          : h`${v.header.next_action}${v.header.next_action_due === null ? raw('') : h`<br><span class="help">${due(v.header.next_action_due)}</span>`}` },
-        v.value === undefined ? null : { label: 'Value', value: v.value.established ? v.value.shown_range : 'No estimate yet' },
-        v.origin === undefined ? null : { label: 'Came from', value: v.origin.lead === null ? 'Opened by staff'
-          : h`<a href="${v.origin.lead.href}">Its lead</a>`, why: v.origin.lead === null ? 'No lead: this claim was opened by staff on a property.' : v.origin.lead.origin },
-        v.origin === undefined ? null : { label: 'Source', value: v.origin.source.label, why: `From ${v.origin.source.from}.` },
-        { label: 'Reference', value: claimRef(v.claim_ref) },
-        v.origin?.introducer === undefined ? null : { label: 'Introducer', value: v.origin.introducer === null ? null
-          : h`<a href="${v.origin.introducer.href}">${v.origin.introducer.firm_name}</a>` },
-      ], v.edit === undefined ? undefined : { href: '#change-claim' })}</div>
-      ${teamBlock(v)}
-      ${v.estimated_fee === undefined ? raw('') : h`<div class="pblock"><div class="pnum">Our estimated fee</div>
-        <p>${v.estimated_fee.known ? h`<strong>${v.estimated_fee.amount}</strong> — ${v.estimated_fee.reading}` : h`<strong>${v.estimated_fee.reading}</strong>`}</p>
-        <p class="${v.estimated_fee.gate.outcome === 'FIRE' ? 'flag' : 'help'}">${v.estimated_fee.gate.reading}. <span class="help">${v.estimated_fee.gate.placeholder_caveat}</span></p>
-        <p class="help">${v.estimated_fee.basis} No fee invoice is raised on this claim yet; once one is, the money below carries it.</p></div>`}
-
-      ${v.fee_discounts === undefined ? raw('') : h`<div class="pblock"><div class="pnum">A multi-site discount</div>
-        ${v.fee_discounts.length === 0
-          ? h`<p class="help">None proposed. A discount is discretionary and never applied automatically; the largest discount and who approves it are not decided.</p>`
-          : h`<table><thead><tr><th>Proposed</th><th>Why</th><th>Recorded</th><th>State</th></tr></thead><tbody>${v.fee_discounts.map((x) => h`<tr>
-              <td>${x.discount}</td><td>${x.reason}</td><td class="when">${x.recorded}</td><td><strong>${x.state === 'AWAITING_CEILING_AND_APPROVER' ? 'AWAITING THE DECISION' : 'NOT APPLIED'}</strong><br><span class="help">${x.says}</span></td></tr>`)}</tbody></table>`}</div>`}
-      ${v.overview === undefined ? raw('') : h`<div class="pblock"><div class="pnum">Overview</div>${fields([
-        { label: 'Workstream', value: v.overview.workstream.label },
-        { label: 'Priority', value: v.overview.priority.label },
-        { label: 'Surveyor', value: v.overview.surveyor, why: v.overview.surveyor_reach },
-        { label: 'Acquired', value: v.overview.acquisition_date === null ? null : ukDate(v.overview.acquisition_date) },
-        { label: 'Acquisition price', value: v.overview.acquisition_price },
-        { label: 'Tenure', value: v.overview.tenure.label },
-        { label: 'Jurisdiction', value: v.overview.jurisdiction },
-        // A fact that decides something: "not known" is an answer, and it stays.
-        { label: 'Allowances claimed before?', value: v.overview.existing_ca_claimed.label, keep: true },
-        { label: 'Expected completion', value: v.overview.expected_completion === null ? null : ukDate(v.overview.expected_completion) },
-        { label: 'Hold reason', value: v.overview.hold_reason },
-        { label: 'Lost reason', value: v.overview.lost_reason },
-      ], v.edit === undefined ? undefined : { href: '#change-claim' })}</div>`}
-      <div id="move">${pipe}</div>
-      <div id="claim-facts">${factsBlock(v.id, v.facts)}</div>
-      <div id="claim-figures">${figuresBlock(v.id, v.figures)}</div>
-      ${v.value === undefined ? raw('') : h`<div class="pblock"><div class="pnum">The value</div>${valuePanel(v.value)}</div>`}
-      ${v.edit === undefined ? raw('') : h`<div class="pblock" id="change-claim"><div class="pnum">Change the claim</div>
-        <div class="help">The stage is not changed here.${why('It moves through the operating procedure’s gates, under Stage and moves above.')}</div>
-        <form method="post" action="/staff/claims/${v.id}">
-          <label>Owner <select name="owner_id">${people(v.edit.owners, v.edit.current.owner_id, 'nobody yet')}</select></label>
-          <label>Surveyor <select name="surveyor_id">${people(v.edit.surveyors, v.edit.current.surveyor_id, 'none named')}</select></label>
-          <label>Priority <select name="priority">${options(vocabulary(d.app.db, 'PRIORITY', v.edit.current.priority), v.edit.current.priority, 'not set')}</select></label>
-          <label>Workstream <select name="workstream">${options(C.WORKSTREAMS, v.edit.current.workstream, null)}</select></label>
-          <label>Property <select name="property_id">${people(v.edit.properties.map((p) => ({ id: p.id, name: p.label })), v.edit.current.property_id, 'none recorded')}</select></label>
-          <label>Expected completion <input name="expected_completion" type="date" value="${v.edit.current.expected_completion ?? ''}"></label>
-          <label>Hold reason <input name="hold_reason" value="${v.edit.current.hold_reason ?? ''}"></label>
-          <label>Lost reason <input name="lost_reason" value="${v.edit.current.lost_reason ?? ''}"></label>
-          <button type="submit">Save</button></form></div>`}` },
-        { id: 'related', label: 'Related', count: related, body: h`
-      <div id="claim-documents">${docs}</div>
-      ${v.money === undefined ? raw('') : h`<div class="pblock"><div class="pnum">Money</div>
-        <p class="help">This claim's own invoices. Recorded, not collected.</p>
-        ${v.money.length === 0 ? h`<p class="help">No invoice is raised on this claim.</p>` : h`<table>
-          <thead><tr><th>Number</th><th>For</th><th>Amount</th><th>Invoice</th><th>Money</th><th>Outstanding</th><th>Due</th><th>VAT</th></tr></thead>
-          <tbody>${v.money.map((m) => h`<tr><td>${m.number ?? 'unnumbered'}</td><td>${m.kind}</td><td>${m.fee}</td><td>${m.invoice_status}</td>
-            <td>${m.payment_status}</td><td>${m.outstanding}</td><td>${m.due}</td><td>${m.vat_position}</td></tr>`)}</tbody></table>`}</div>`}
-      ${v.contacts === undefined ? raw('') : h`<div class="pblock"><div class="pnum">The organisation's contacts</div>
-        ${v.contacts.length === 0 ? h`<p class="help">No contact is recorded.</p>` : h`<table><tbody>${
-          v.contacts.map((c) => h`<tr><td>${c.name}</td><td>${c.type}</td><td>decision maker: ${c.decision_maker}</td></tr>`)}</tbody></table>`}</div>`}
-      <div id="claim-deliverables">${deliverablesBlock(v.id, v.deliverables)}</div>
-      ${aftercareBlock(v.id, v.aftercare)}` },
-        { id: 'activity', label: 'Activity', body: h`
-      <div id="claim-tasks">${tasks}</div>
-      <div id="claim-email">${email}</div>
-      ${v.timeline === undefined || !v.client.linkable ? raw('') : h`<p><a href="/staff/clients/${v.client.business_id}#activity">See everything for ${v.client.name}</a></p>`}
-      ${timelineBlock(v.timeline, 'This claim’s part of the company’s timeline')}
-      <div id="claim-notes">${notes}</div>` },
-      ]), sidePanel(nextAction, quick, raw(''), step === null ? raw('') : nextStepCard(step)))}
+      ${recordLayout(h`${sections.map((sp) => section(sp, ctx))}`, sidePanel(nextAction, quick, raw(''), step === null ? raw('') : nextStepCard(step)))}
 
       ${dataLink(actor, `/staff/claims/${v.id}/view.json`)}`,
   });

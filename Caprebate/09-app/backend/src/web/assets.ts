@@ -482,6 +482,46 @@ dl.lc-facts{display:block;margin:0}
 .lc-take{padding:0 1rem 1rem}
 .lc-full{margin:.9rem 0 0}
 
+/* ---------------- PHASE 138 — COLOURED SECTIONS THAT OPEN AND CLOSE ---------------- */
+/* One colour per kind of section, from the brand tokens alone; each kind also carries an icon and a word, so colour is
+   never the only signal. The band is a strip down the left edge; Messages' is striped, so it differs in shape as well. */
+.sec{--band:var(--ink);position:relative;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);margin:0 0 1rem;box-shadow:var(--shadow)}
+.sec::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--band);border-radius:var(--radius) 0 0 var(--radius)}
+.sec-company{--band:var(--ink)}
+.sec-property{--band:var(--mint)}
+.sec-facts{--band:var(--ok)}
+.sec-documents{--band:var(--mut)}
+.sec-money{--band:var(--warn)}
+.sec-messages{--band:repeating-linear-gradient(180deg,var(--mint) 0 10px,var(--ink) 10px 20px)}
+.sec>summary{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .7rem;padding:.8rem 1rem .8rem 1.4rem;list-style:none;cursor:pointer;color:var(--ink);text-decoration:none;font-weight:400}
+.sec>summary::-webkit-details-marker{display:none}
+.sec>summary::after{content:"\\25B8";margin-left:auto;color:var(--ink);font-size:18px}
+.sec[open]>summary::after{content:"\\25BE"}
+.sec>summary:hover{background:var(--mist)}
+.secicon{display:inline-grid;place-items:center;width:2rem;height:2rem;border-radius:50%;background:var(--white);color:var(--ink);border:2px solid var(--line)}
+.sec-property .secicon{border-color:var(--ink)}
+.seckind{font-size:14px;font-weight:600;color:var(--body);min-width:6.5rem}
+.sec>summary h2{font-size:20px;margin:0;flex:1 1 10rem;line-height:1.3}
+.sec>summary h2 .count{font-family:${BODY_STACK};font-size:16px;font-weight:600;color:var(--body)}
+.secbody{padding:0 1rem 1rem 1.4rem}
+dl.three{display:grid;grid-template-columns:8rem minmax(0,1fr);gap:.3rem .8rem;margin:0 0 1rem;padding:.7rem .9rem;background:var(--mist);border-radius:var(--radius)}
+dl.three dt{font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
+dl.three dd{margin:0}
+.needs{margin:0;padding-left:1.1rem}
+.needs li{margin:.15rem 0}
+.needs form{display:inline}
+.sec .pblock{border:0;box-shadow:none;padding:0;margin:0 0 1rem;background:none}
+.sec .pnum{font-size:18px;border-bottom:0;padding-bottom:0;margin:1rem 0 .4rem}
+.secmem{margin:1rem 0 0;padding-top:.6rem;border-top:1px solid var(--line);font-size:14px;color:var(--body)}
+.secmem .linkish{font-size:14px}
+details.more>summary{font-weight:600;font-size:16px}
+details.more .moretext{padding:.3rem 0 0}
+.contactcards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.75rem}
+.contactcard{border:1px solid var(--line);border-radius:var(--radius);padding:.7rem .85rem;background:var(--white);overflow-wrap:anywhere}
+.contactcard .cname{font-weight:700;color:var(--ink);margin:0}
+.contactcard p{margin:.15rem 0}
+.sources-now{margin:0 0 .8rem;padding-left:1.1rem}
+
 /* ---------------- SMALLER SCREENS ---------------- */
 @media (max-width:960px){
   .record{grid-template-columns:minmax(0,1fr)}
@@ -530,6 +570,11 @@ dl.lc-facts{display:block;margin:0}
   .lc-body{padding:0 .75rem .9rem}
   .typefacts{grid-template-columns:minmax(0,1fr)}
   .form-row{display:block}
+  /* PHASE 138: the sections' three lines stack, and the summary wraps, at phone width. */
+  dl.three{grid-template-columns:minmax(0,1fr)}
+  .sec>summary{padding:.7rem .75rem .7rem 1.1rem}
+  .secbody{padding:0 .75rem .9rem 1.1rem}
+  .seckind{min-width:0}
   form label>input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),form label>select,form label>textarea{max-width:none}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}

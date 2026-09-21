@@ -227,6 +227,8 @@ export type AuditKind =
   | 'CASE_STAMPED' | 'DEFENCE_PACK_GENERATED'
   /** Phase 133c, 17 September 2026: a person hid the welcome card on their home page. The user's id only. */
   | 'WELCOME_DISMISSED'
+  /** Phase 138, 21 September 2026: a person kept a page section open or closed for themselves. The section's key only. */
+  | 'SECTION_PREFERENCE_SET'
   /**
    * Phase 133j, 18 September 2026: the website's enquiry form received, and Sales opening an enquiry as a lead or
    * closing it; a person asking for their own client login after the assessment, and confirming it from the email.

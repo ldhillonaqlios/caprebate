@@ -180,7 +180,9 @@ export function recordTabs(tabs: readonly RecordTab[]): Safe {
   if (tabs.length > MAX_TABS) throw new Error(`recordTabs: ${tabs.length} tabs, and the stylesheet marks at most ${MAX_TABS}`);
   return h`<div class="tabset"><ul class="rtabs">${tabs.map((t) => h`<li><a href="#${t.id}">${t.label}${
     t.count === undefined ? raw('') : h`<span class="count">${t.count}</span>`}</a></li>`)}</ul>
-    ${tabs.map((t) => h`<section class="tabpanel" id="${t.id}"><h2 class="panelhead">${t.label}</h2>${t.body}</section>`)}</div>`;
+    ${tabs.map((t) => h`<section class="tabpanel" id="${t.id}" aria-label="${t.label}">${t.body}</section>`)}</div>`;
+  // PHASE 138: no hidden heading any more. Each panel carried a visually hidden <h2> with the tab's name AND the panel's own
+  // heading, so a screen reader heard every name twice. The panel is named by aria-label instead.
 }
 
 /**
@@ -320,4 +322,132 @@ export function welcomeCard(jobs: readonly Job[], dismissAction: string): Safe {
     <p class="jobs">${jobs.map((j) => h`<a class="btn btn-primary" href="${j.href}">${j.label}</a>`)}</p>
     <p class="help">The Help link at the top of every page opens the training for the screen you are on.</p>
     <form method="post" action="${dismissAction}"><button type="submit" class="btn-quiet">Hide this welcome</button></form></section>`;
+}
+
+/* ================================================================== *
+ * PHASE 138 — ONE SECTION, COLOURED, THAT OPENS AND CLOSES. 21 September 2026. "Clean-up 5 of 11."
+ *
+ * Lakhbir, after using the test site: "The sections within the portal when looking at the clients all seem to blur into
+ * one. The different sections should be coloured, in collapsible boxes, and when we are working on a particular section
+ * it should show what we are working on, what data is needed and where the data is coming from."
+ *
+ * EVERY SECTION OF THE CLIENT PAGE AND THE CLAIM PAGE IS DRAWN BY `section`: a coloured band down the left edge, an icon
+ * and a word saying what kind of section it is (so colour is never the only signal), a heading, a status chip in words,
+ * and the same three lines first — WORKING ON, WE NEED, COMING FROM. It is a <details>, so it opens and closes with no
+ * script (the Content-Security-Policy allows none). A Done section starts closed and the section being worked on starts
+ * open; a person's own choice, kept on the server per person (src/web/sections.ts), wins over both. Nothing about it is
+ * ever in the address.
+ *
+ * LIKE EVERY COMPONENT HERE IT DECIDES NOTHING ABOUT WHO SEES WHAT: the caller passes only what its view already carries.
+ * ================================================================== */
+
+export type SectionKind = 'company' | 'property' | 'facts' | 'documents' | 'money' | 'messages';
+
+/** The word and the icon each kind carries beside its colour. The colours are in src/web/assets.ts, from brand tokens. */
+export const SECTION_KINDS: Readonly<Record<SectionKind, { readonly word: string; readonly icon: string }>> = Object.freeze({
+  company: { word: 'Company', icon: '<path d="M4 21V5h10v16M14 9h6v12M7 8h3M7 12h3M7 16h3M16.5 13h1.5M16.5 17h1.5M2 21h20"/>' },
+  property: { word: 'Property', icon: '<path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6"/>' },
+  facts: { word: 'Facts and figures', icon: '<path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8 12l2 2 4-4M8 17h8"/>' },
+  documents: { word: 'Documents', icon: '<path d="M6 3h8l4 4v14H6zM14 3v4h4M9 13h6M9 17h6"/>' },
+  money: { word: 'Money', icon: '<circle cx="12" cy="12" r="9"/><path d="M14.5 8.6A2.5 2.5 0 0 0 10 10v5.5h5.5M8.5 12.5h4"/>' },
+  messages: { word: 'Messages', icon: '<path d="M4 5h16v11H9l-5 4z"/>' },
+});
+
+export type SectionStatus = 'NOT_STARTED' | 'WORKING' | 'WAITING' | 'DONE';
+
+export const SECTION_STATUS_WORDS: Readonly<Record<SectionStatus, string>> = Object.freeze({
+  NOT_STARTED: 'Not started', WORKING: 'Working on it', WAITING: 'Waiting for the client', DONE: 'Done',
+});
+
+const STATUS_TONE: Readonly<Record<SectionStatus, Tone>> = Object.freeze({
+  NOT_STARTED: 'plain', WORKING: 'info', WAITING: 'warn', DONE: 'ok',
+});
+
+/**
+ * ONE THING STILL NEEDED. `ask` is the control that asks the client for it (a form that posts to a route which asks the
+ * server again), drawn only for a login that may ask; `asked` says a question is already with the client.
+ */
+export type Need = { readonly label: string; readonly ask?: Safe; readonly asked?: boolean };
+
+export type SectionSpec = {
+  /** The key a person's open-or-closed choice is kept under — one of SECTION_KEYS in src/web/sections.ts. */
+  readonly key: string;
+  /** The anchor. Unique on the page; the old tab ids are kept so every link and redirect still lands. */
+  readonly id: string;
+  readonly kind: SectionKind;
+  readonly heading: string;
+  readonly status: SectionStatus;
+  /** WORKING ON — what is being done in this section right now, in a short sentence. */
+  readonly working: string;
+  /** WE NEED — what is still missing; empty says "Nothing from the client". */
+  readonly need: readonly Need[];
+  /** COMING FROM — where the facts in this section come from. */
+  readonly from: readonly string[];
+  readonly count?: number;
+  readonly body: Safe;
+  /** Open whatever the status, because the page was just sent back here after a change in this section. */
+  readonly open_now?: boolean;
+};
+
+/** What a page passes to every section: the person's own choices, and the page's address for coming back after one. */
+export type SectionContext = { readonly prefs: ReadonlyMap<string, boolean>; readonly back: string | null };
+
+/** How many WE NEED lines are shown before the rest fold under "and N more". */
+export const NEEDS_SHOWN = 5;
+
+/** Open, or closed, when the page is drawn: a change just made here, then the person's choice, then the status. */
+export function sectionOpens(s: Pick<SectionSpec, 'key' | 'status' | 'open_now'>, prefs: ReadonlyMap<string, boolean>): boolean {
+  if (s.open_now === true) return true;
+  const mine = prefs.get(s.key);
+  if (mine !== undefined) return mine;
+  return s.status === 'WORKING' || s.status === 'WAITING';
+}
+
+function needLine(n: Need): Safe {
+  const label = n.label.charAt(0).toUpperCase() + n.label.slice(1);
+  return h`<li>${label}${n.asked === true ? h` ${badge('Asked — waiting', 'warn')}` : n.ask === undefined ? raw('') : h` ${n.ask}`}</li>`;
+}
+
+export function section(s: SectionSpec, ctx: SectionContext): Safe {
+  const k = SECTION_KINDS[s.kind];
+  const open = sectionOpens(s, ctx.prefs);
+  const mine = ctx.prefs.get(s.key);
+  // One line per thing needed: two sources asking the same question are one need (the first, which carries its ask).
+  const needs = s.need.filter((n, i) => s.need.findIndex((o) => o.label.trim().toLowerCase() === n.label.trim().toLowerCase()) === i);
+  const shown = needs.slice(0, NEEDS_SHOWN);
+  const rest = needs.slice(NEEDS_SHOWN);
+  const remember = ctx.back === null ? raw('') : h`<form method="post" action="/staff/me/sections" class="secmem">
+      <input type="hidden" name="section" value="${s.key}"><input type="hidden" name="back" value="${ctx.back}"><input type="hidden" name="anchor" value="${s.id}">
+      ${mine === undefined
+        ? h`<span>Next time:</span> <button class="linkish" type="submit" name="open" value="yes">keep this open for me</button>
+            · <button class="linkish" type="submit" name="open" value="no">keep this closed for me</button>`
+        : h`<span>You keep this ${mine ? 'open' : 'closed'}.</span> <button class="linkish" type="submit" name="open" value="auto">Let the page decide</button>`}
+    </form>`;
+  return h`<details class="sec sec-${s.kind}" id="${s.id}" data-section="${s.key}"${open ? raw(' open') : raw('')}>
+    <summary><span class="secicon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${raw(k.icon)}</svg></span>
+      <span class="seckind">${k.word}</span>
+      <h2>${s.heading}${s.count === undefined ? raw('') : h` <span class="count">${s.count}</span>`}</h2>
+      ${badge(SECTION_STATUS_WORDS[s.status], STATUS_TONE[s.status])}</summary>
+    <div class="secbody">
+      <dl class="three">
+        <dt>Working on</dt><dd>${s.working}</dd>
+        <dt>We need</dt><dd>${needs.length === 0 ? h`Nothing from the client.`
+          : h`<ul class="needs">${shown.map(needLine)}</ul>${rest.length === 0 ? raw('')
+            : h`<details class="more"><summary>and ${rest.length} more</summary><ul class="needs">${rest.map(needLine)}</ul></details>`}`}</dd>
+        <dt>Coming from</dt><dd>${s.from.length === 0 ? h`Our own records.` : s.from.join(', ')}</dd>
+      </dl>
+      ${s.body}
+      ${remember}
+    </div></details>`;
+}
+
+/** "MORE DETAIL" — what a person does not need every week, folded under one quiet line. No script. */
+export function moreDetail(body: Safe, label = 'More detail'): Safe {
+  return h`<details class="more"><summary>${label}</summary><div class="moretext">${body}</div></details>`;
+}
+
+/** A section's status from what it still needs: nothing left is Done, everything asked is Waiting, anything unasked is Working. */
+export function statusFromNeeds(need: readonly Need[], started: boolean): SectionStatus {
+  if (need.length === 0) return started ? 'DONE' : 'NOT_STARTED';
+  return need.every((n) => n.asked === true) ? 'WAITING' : 'WORKING';
 }

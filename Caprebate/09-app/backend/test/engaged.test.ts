@@ -189,10 +189,11 @@ describe('the one Clients list, and the states the brief names (Phase 135 folded
       const id = firstClientLink(list.body);
       assert.ok(id !== undefined, 'no business is clickable');
       // PHASE 135: the list keeps company, waiting on, status, owner and claims. The six states the brief lists are on the
-      // company's one page, as a highlight or in its "Waiting on" card.
+      // company's one page. PHASE 138: the "Waiting on" card is gone; each state is in the highlights or in the WORKING ON
+      // line of the section it belongs to — the lookups, the questions with the client, what is missing, the two packs.
       const page = await staff.req(`/staff/clients/${id}`);
       assert.equal(page.status, 200);
-      for (const state of [/Engagement letter/, /Research: /, /With the client: /, /Still missing/, /Accountant pack: /, /Surveyor pack: /]) {
+      for (const state of [/Engagement letter/, /lookups? still to do/, /Questions for the client/, /Everything still missing/, /accountant pack/, /surveyor pack/]) {
         assert.match(page.body, state);
       }
     } finally { h.close(); }
@@ -366,7 +367,7 @@ describe('panel 1 — questions and answers', () => {
       const { business_id } = await h.runFunnel();
       const staff = await h.signIn('SALES');
       const page = await staff.req(`/staff/clients/${business_id}`);
-      const shownOrder = [...page.body.matchAll(/<td>(\d+)<\/td><td>/g)].map((m) => Number(m[1]));
+      const shownOrder = [...page.body.matchAll(/<td>(\d+)<\/td><td data-label="Question">/g)].map((m) => Number(m[1]));
       const stored = h.app.db.all<{ ord: number }>(
         'SELECT ord FROM assessment_answers a JOIN assessments s ON s.id = a.assessment_id ' +
           'WHERE s.business_id = ? ORDER BY a.ord ASC', [business_id],
@@ -473,7 +474,7 @@ describe('panel 2 — sources, and the two gates', () => {
       const shown = [...figureBody.matchAll(/£[\d,]+/g)].map((m) => m[0]);
       assert.ok(shown.some((s) => page.body.includes(s)), 'the estimate stopped being shown');
       // And the facts a shut source would have supplied are still ASKED.
-      assert.match(page.body, /What is still missing/);
+      assert.match(page.body, /Everything still missing/);
     } finally { h.close(); }
   });
 
@@ -657,7 +658,7 @@ describe('panel 2 — sources, and the two gates', () => {
       const { business_id } = await h.runFunnel();
       const staff = await h.signIn('SALES');
       const page = await staff.req(`/staff/clients/${business_id}`);
-      assert.match(page.body, /Known gap/);
+      assert.match(page.body, /Not known yet/);
       assert.match(page.body, /address lookup/);
     } finally { h.close(); }
   });

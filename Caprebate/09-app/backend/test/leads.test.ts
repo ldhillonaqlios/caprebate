@@ -333,7 +333,7 @@ describe('leads over HTTP, on the seed', () => {
       const claim = /\/staff\/claims\/([A-Za-z0-9-]+)/.exec(converted.location ?? '')?.[1] ?? '';
       const page = await sales.req(`/staff/claims/${claim}`);
       assert.equal(page.status, 200);
-      assert.match(page.body, /Stage and moves/); // Phase 133c renamed the panel; the ten stages are the stage bar's
+      assert.match(page.body, /Stage and next move/); // Phase 133c renamed the panel, and Phase 138 made it a section; the ten stages are the stage bar's
       // A second claim for an existing client carries no assessment: the estimate belongs to the first.
       assert.equal(db.get<{ a: string | null }>('SELECT assessment_id AS a FROM claims WHERE id = ?', [claim])?.a, null);
       assert.equal(db.get<{ s: string }>('SELECT stage AS s FROM claims WHERE id = ?', [claim])?.s, 'ASSESSMENT');
