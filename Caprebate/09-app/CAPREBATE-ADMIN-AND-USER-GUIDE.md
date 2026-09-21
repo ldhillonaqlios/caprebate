@@ -553,20 +553,15 @@ you type its address: you see **You cannot open this page**. That is the system 
 
 ### U1 · Sales — a working day
 
-**1. Start on the landing page.** After signing in you are on **Home** (Address: `/staff`). Four cards come first:
-**My next actions**, **Today and overdue**, **My pipeline by stage** (each stage opens its column on the board) and
-**New leads**. Below them:
-- **My tasks** lists what you own and what is waiting with your team, overdue first. The line above
-  it counts them, for example "1 overdue." Each task has **Start** and **Complete** buttons.
-- **My claims, their next actions, and who is waiting** lists the claims you own, each with its next
-  action, its due date, and who the claim is waiting on — for example "waiting on us: 16 facts are
-  still missing and nobody has asked for them".
-- **Documents you asked a client for that have not arrived** and **Other questions you are waiting on
-  a client to answer** appear when you have something outstanding.
-- **Claims nobody owns that break the one-next-action rule** (Sales and Admin) lists each open claim
-  with no owner, and what is wrong with it — on the demo, "CR-2026-0002 (Brackenfell Dental
-  Partnership LLP) — This claim has no next action. … — give it an owner, then its next action".
-- **All my tasks** takes you to the full Tasks screen.
+**1. Start on the landing page.** After signing in you are on **Home** (Address: `/staff`) — rows of tiles, red when
+late (Phase 136; see `B0`):
+- **New leads** — leads nobody has contacted yet, oldest first. Contact a red one today.
+- **Existing leads — next actions** — each lead we are working on and its next step. Its last tile, **Claims with no
+  next step**, lists the claims with no owner or no next step; give each an owner, then its next action.
+- **Today and overdue** — tasks, client questions and document requests due today or late.
+- **Pipeline by stage** — how many claims sit at each stage; a tile opens that stage's claims. **Reports** is last.
+- Your whole list — **My tasks**, your claims and who each is waiting on, and what you are waiting on from clients — is
+  on the **Tasks** tab, with **Start** and **Complete** on each task.
 
 **2. Work your leads.** Open **Leads** (Address: `/staff/leads`). A lead is anything that might become a
 claim: a filled assessment, a call asked for, or a referral. There is no lead score, and a lead
@@ -814,8 +809,8 @@ section:
 5. **5 · Your figures** — the figures, the rates (each with the tick box **I looked at this field**), and **On what basis did you reach these?**, which is required. Press **Commit my figures — this releases our estimate to me**. If a client has read our figure to you, record it under **If the client has told you our figure** with **Record it**; that costs you nothing.
 6. **6 · The record** — every event, chained so that nothing can be quietly removed. Each attempt to open the estimate before commitment is kept as its own line.
 
-**Your tasks.** **My tasks** on the landing page and on **Tasks** — on the demo, "Check the floor plans
-against the room schedule", due 2026-09-18. Use **Start** and **Complete**.
+**Your tasks.** **My tasks** is on **Tasks**; one due today or late is also a red tile under **Today and overdue** on
+Home — on the demo, "Check the floor plans against the room schedule", due 2026-09-18. Use **Start** and **Complete**.
 
 **Your dashboard** has one tile, **My survey jobs**. Each job shows its stage, for example
 "CR-2026-0004 · Survey · waiting for your figures". No figure of ours is on it.
@@ -1661,7 +1656,7 @@ Address: `/staff/next-actions` (**Tasks** → **Claims with no next step**)
 
 **What it will refuse, and why**
 - The list itself changes nothing; you fix claims on the claim page.
-- A claim nobody owns is on no owner's list. It is on this list, and on the landing page of Sales and Admin under **Claims nobody owns that break the one-next-action rule**.
+- A claim nobody owns is on no owner's list. It is on this list, which Home's **Claims with no next step** tile opens for Sales and Admin (Phase 136).
 - "Where both sides are waiting it reads as ours" — the page counts a shared wait as ours, because that is the one we can act on.
 
 **Try it on the demo**
@@ -1775,8 +1770,8 @@ Address: `/staff/claims/{claim}` (the **Documents** panel)
 **Try it on the demo**
 As Sales, on CR-2026-0003, press **Request it** for "Lease, and any licence for alterations" with the
 two boxes empty → **Not requested**. Fill them in ("To confirm the tenure and the alterations licence",
-"The survey") with Due 2026-09-10 → **Requests — 1 outstanding, 1 OVERDUE**. Your landing page now
-shows **Documents you asked a client for that have not arrived**. Once the client's upload arrives
+"The survey") with Due 2026-09-10 → **Requests — 1 outstanding, 1 OVERDUE**. Your **Tasks** page now
+shows **Documents you asked a client for that have not arrived**, and Home shows the late request as a red tile. Once the client's upload arrives
 (see `C6`), the panel reads "Requests — 0 outstanding" and "received, by an upload of the requested
 type, version 1".
 
