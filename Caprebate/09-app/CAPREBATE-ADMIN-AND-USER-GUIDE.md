@@ -952,7 +952,8 @@ Address: `/staff`
 - **New leads** — a number first (how many leads nobody has contacted yet), then one tile per lead: the company, where
   it came from, and how long it has waited. Oldest first. A lead turns **red** once it has waited more than one working
   day. A working day is Monday to Friday, not counting England and Wales bank holidays (Phase 137). The **Leads** page
-  uses exactly the same rule, so a lead red on Home is red there too.
+  uses exactly the same rule, so a lead red on Home is red there too. An unanswered website enquiry is a tile here as
+  well (Admin and Sales), because it sits in the Leads page's New section; the number counts both.
 - **Existing leads — next actions** — one tile per lead we are working on: the company, its next step and when it is due.
   Red when late, or when it has no next step. The last tile, **Claims with no next step**, opens that list in **Tasks**.
 - **Today and overdue** — everything due today or already late: tasks (a lead's or a claim's next step is a task), and

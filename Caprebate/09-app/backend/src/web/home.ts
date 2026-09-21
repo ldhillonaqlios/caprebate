@@ -19,7 +19,8 @@
  */
 
 import type { App } from '../app.ts';
-import type { Actor } from '../authz.ts';
+import { can, type Actor } from '../authz.ts';
+import { openEnquiries } from './enquiries.ts';
 import { h, raw, type Safe } from './html.ts';
 import { opens } from './navigation.ts';
 import { assertDashboard } from './dashboard.ts';
@@ -108,17 +109,24 @@ function leadsRows(actor: Actor, app: App, nowIso: string): Safe[] {
   if (!opens(actor, assertLeadSection)) return [];
   const rows = leadsList(app.db, actor, { filters: {}, sort: 'age' }).rows.filter((l) => l.claim === null);
   const fresh = rows.filter((l) => l.status.key === 'NEW');
-  const freshTiles: HomeTile[] = fresh.map((l) => {
-    const days = workingDaysSince(l.lead_at, nowIso);
-    return { href: `/staff/leads/${l.id}`, name: short(l.organisation), lines: [`From ${short(l.source)}`, waitedWords(days)], late: isLateNewLead(l.lead_at, nowIso) };
-  });
+  // PHASE 137: an unanswered website enquiry is in the Leads page's New section, so it is here too — for the logins that
+  // may handle enquiries only — and Home and Leads count, order and colour New the same way.
+  const enquiries = can(actor, 'lead.write', { type: 'lead', id: '__website_enquiries__', business_id: null })
+    ? openEnquiries({ db: app.db, audit: app.audit, now: app.now, newId: () => '' }, actor) : [];
+  const waiting = [
+    ...fresh.map((l) => ({ at: l.lead_at, id: l.id, href: `/staff/leads/${l.id}`, name: l.organisation, from: `From ${short(l.source)}` })),
+    ...enquiries.map((e) => ({ at: e.created_at, id: e.id, href: `/staff/leads#enquiry-${e.id}`, name: e.firm ?? e.full_name, from: 'From the website form' })),
+  ].sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
+  const freshTiles: HomeTile[] = waiting.map((w) => ({
+    href: w.href, name: short(w.name), lines: [w.from, waitedWords(workingDaysSince(w.at, nowIso))], late: isLateNewLead(w.at, nowIso),
+  }));
   const lateCount = freshTiles.filter((t) => t.late === true).length;
   const countTile: HomeTile = {
-    href: '/staff/leads?status=NEW', name: String(fresh.length), count: true, late: lateCount > 0,
-    lines: [fresh.length === 1 ? 'new lead' : 'new leads', ...(lateCount > 0 ? [`${lateCount} waiting too long`] : [])],
+    href: '/staff/leads#leads-new', name: String(waiting.length), count: true, late: lateCount > 0,
+    lines: [waiting.length === 1 ? 'new lead' : 'new leads', ...(lateCount > 0 ? [`${lateCount} waiting too long`] : [])],
   };
-  const a = capped(freshTiles, '/staff/leads?status=NEW');
-  const newRow = homeRow('new-leads', 'New leads', fresh.length === 0 ? [] : [countTile, ...a.tiles], 'No new leads.', a.more);
+  const a = capped(freshTiles, '/staff/leads#leads-new');
+  const newRow = homeRow('new-leads', 'New leads', waiting.length === 0 ? [] : [countTile, ...a.tiles], 'No new leads.', a.more);
 
   const going = rows.filter((l) => IN_PROGRESS.has(l.status.key))
     .sort((x, y) => (x.next_action_due ?? '9999-99-99').localeCompare(y.next_action_due ?? '9999-99-99'));

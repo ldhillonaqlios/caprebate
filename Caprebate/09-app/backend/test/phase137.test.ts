@@ -8,7 +8,8 @@
  *                        folded. A website enquiry nobody has answered is in New, for the logins that work leads only.
  *   A CARD OPENS       → each card is a <details>: the summary carries the company, sector, source, how long it has
  *                        waited, owner and next step; the details carry how to reach them, the assessment, the checks.
- *   RED IS ONE RULE    → New turns red after more than one working day, and Home says exactly the same of the same lead.
+ *   RED IS ONE RULE    → New turns red after more than one working day, and Home says exactly the same of the same lead;
+ *                        Home's New leads row counts the same cards, website enquiries included.
  *   BANK HOLIDAYS      → a bank holiday is not a working day; the list fails this suite 90 days before it runs out.
  *   NOBODY OWNS IT     → one button, "Nobody owns this — take it", which makes the person pressing it the owner.
  *   LOG A CALL         → a completed Call task on the lead; a call where they answered makes a New lead Contacted.
@@ -190,6 +191,19 @@ describe('red is one rule, and Home agrees', () => {
     assert.match(tile('/staff/leads/l137-old'), /late/);
     assert.doesNotMatch(tile('/staff/leads/l137-fresh'), /late|missing/);
     assert.match(section(body, 'new'), /waiting too long/);
+  });
+});
+
+describe('Home and Leads count New the same way', () => {
+  test('Home\'s New leads count and "waiting too long" match the Leads page\'s New section, enquiry included', async () => {
+    const leads = section((await as('sales').get('/staff/leads')).body, 'new');
+    const home = (await as('sales').get('/staff')).body;
+    const row = /<section class="homerow" aria-labelledby="row-new-leads">([\s\S]*?)<\/section>/.exec(home)?.[1] ?? '';
+    const count = /<span class="tilecount">(\d+)<\/span>/.exec(row)?.[1];
+    assert.equal(count, /<span class="lc-count">(\d+)<\/span>/.exec(leads)?.[1]);
+    assert.equal(/(\d+) waiting too long/.exec(row)?.[1], /<span class="lc-latecount">(\d+) waiting too long/.exec(leads)?.[1]);
+    assert.match(row, /href="\/staff\/leads#enquiry-enq-137"/, 'the enquiry is on Home, by its id — nothing personal in the address');
+    assert.match(row, /href="\/staff\/leads#leads-new"/);
   });
 });
 

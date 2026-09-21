@@ -122,7 +122,7 @@ describe('the rows, in Lakhbir\'s order', () => {
 
   test('new leads: a count tile first, then oldest first, and red once a lead has waited more than one working day', async () => {
     const t = tiles(row((await as('sales').get('/staff')).body, 'new-leads'));
-    assert.equal(t[0]?.href, '/staff/leads?status=NEW');
+    assert.equal(t[0]?.href, '/staff/leads#leads-new'); // Phase 137: New section, enquiries included (was ?status=NEW)
     assert.match(t[0]?.lines[0] ?? '', /^\d+$/, 'the count tile leads the row');
     const names = t.slice(1).map((x) => x.lines[0]);
     const iOld = names.indexOf('Oldest Waiting Dental Limited');
