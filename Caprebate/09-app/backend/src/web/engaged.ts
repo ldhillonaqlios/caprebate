@@ -445,6 +445,19 @@ const SECTION_BY_REGISTRY_SOURCE: Readonly<Record<string, { section: MissingFact
 const PROPERTY_SCREEN_GROUPS: readonly string[] = Object.freeze(['The property', 'Works']);
 
 /**
+ * PHASE 139 — WHICH SECTION A FACT BELONGS TO, FROM THE FACT ITSELF. The same two readings the missing list makes — a
+ * register field by the source that supplies it, an assessment question by its screen — so an answered fact, which has
+ * left the missing list, is still put in the same place.
+ */
+export function sectionOfFact(fact_id: string): MissingFact['section'] {
+  const source = (REGISTRY.FIELDS as Record<string, { source?: string } | undefined>)[fact_id]?.source;
+  if (source !== undefined) return SECTION_BY_REGISTRY_SOURCE[source]?.section ?? 'facts';
+  const screen = screenOf(fact_id);
+  const group = screen === null ? null : SCREENS[screen].group;
+  return group !== null && PROPERTY_SCREEN_GROUPS.includes(group) ? 'property' : 'facts';
+}
+
+/**
  * WHICH PACK A REGISTER FACT BLOCKS, BY THE SOURCE THAT WOULD SUPPLY IT.
  *
  * Not per field: the source is what makes the attribution principled. EPC, the

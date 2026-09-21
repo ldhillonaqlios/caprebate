@@ -476,6 +476,8 @@ function seedRegisterRecords(db: Db, now: () => string, idOf: Map<string, string
   const b2 = idOf.get('b2');
   const b4 = idOf.get('b4');
   if (b2 === undefined || b4 === undefined) throw new Error('seed: businesses missing');
+  // Phase 139: a property register's record says which property it is about — Dunmarrow's main site, the one it describes.
+  const site = db.get<{ id: string }>('SELECT id FROM properties WHERE business_id = ? ORDER BY created_at ASC, rowid ASC LIMIT 1', [b4])?.id ?? null;
 
   ingestRegisterRecord(db, newId, now, b4, {
     sourceId: 'CQC', entityId: 'INVENTED-LOC-0001',
@@ -485,7 +487,7 @@ function seedRegisterRecords(db: Db, now: () => string, idOf: Map<string, string
       service_types: 'Doctors consultation service', registration_date: '2019-04-01',
       cqc_location_id: 'INVENTED-LOC-0001', cqc_provider_id: 'INVENTED-PRV-0001',
     },
-  });
+  }, { property_id: site });
 
   ingestRegisterRecord(db, newId, now, b4, {
     sourceId: 'EPC', entityId: 'INVENTED-RRN-0001',
@@ -494,7 +496,7 @@ function seedRegisterRecords(db: Db, now: () => string, idOf: Map<string, string
       epc_construction_age_band: '1996-2002', epc_tenure: 'Owner-occupied',
       epc_lodgement_date: '2023-06-12', epc_rrn: 'INVENTED-RRN-0001',
     },
-  });
+  }, { property_id: site });
 
   ingestRegisterRecord(db, newId, now, b2, {
     sourceId: 'CH_COMPANY', entityId: 'INVENTED-CO-0002',

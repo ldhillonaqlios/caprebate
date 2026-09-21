@@ -73,14 +73,16 @@ export function ingestRegisterRecord(
   now: () => string,
   business_id: string,
   rec: IngestedRecord,
+  /** Phase 139: the company's property a property register's record is about, where the lookup was keyed on one. */
+  opts: { readonly property_id?: string | null } = {},
 ): string {
   assertNoUnauthorisedName(rec); // N2. Fails closed on an unknown source.
 
   const id = ids();
   db.run(
-    'INSERT INTO register_records (id, business_id, source_id, entity_id, fields_json, obtained_at) ' +
-      'VALUES (?, ?, ?, ?, ?, ?)',
-    [id, business_id, rec.sourceId, rec.entityId, JSON.stringify(rec.fields), now()],
+    'INSERT INTO register_records (id, business_id, source_id, entity_id, fields_json, obtained_at, property_id) ' +
+      'VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [id, business_id, rec.sourceId, rec.entityId, JSON.stringify(rec.fields), now(), opts.property_id ?? null],
   );
   return id;
 }

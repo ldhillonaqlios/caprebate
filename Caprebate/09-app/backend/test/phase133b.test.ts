@@ -100,7 +100,8 @@ describe('the five long screens are on the record layout', () => {
     // PHASE 138: no tabs — coloured sections that open and close, in this order, each a <details> with its old anchor. The
     // four working panels are inside them, under the section's heading; "Waiting on" is a highlight, and its card is gone.
     const secs = [...r.body.matchAll(/<details class="sec sec-[a-z]+" id="([^"]+)"/g)].map((m) => m[1]);
-    assert.deepEqual(secs, ['claims', 'questions', 'activity', 'details', 'contacts', 'properties', 'sources', 'answers', 'documents']);
+    // PHASE 139: "Check and tell the client" follows the claims.
+    assert.deepEqual(secs, ['claims', 'checks', 'questions', 'activity', 'details', 'contacts', 'properties', 'sources', 'answers', 'documents']);
     for (const inner of ['tasks', 'missing', 'company-notes']) assert.match(r.body, new RegExp(`id="${inner}"`), `#${inner} is not on the page`);
     const ids = [...r.body.matchAll(/\sid="([^"]+)"/g)].map((x) => x[1] ?? '');
     assert.deepEqual([...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))], [], 'an id is used more than once');

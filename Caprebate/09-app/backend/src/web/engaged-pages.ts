@@ -30,6 +30,8 @@ import { localStamp } from './localtime.ts';
 import { RANGE_QUALIFIER } from './shown-range.ts';
 import * as E from './engaged.ts';
 import * as R from './research.ts';
+import * as A from './approvals.ts';
+import { STEP_ANCHOR } from './approvals-pages.ts';
 import { clientList, clientListPage, type ClientSort } from './client-list.ts';
 
 export type WebResult = 'handled' | 'not-mine';
@@ -92,6 +94,32 @@ export async function handleEngaged(
     const r = R.retryFailedSource(deps, actor, id, f.get('source_id') ?? '');
     if (!r.ok) return d.problem(res, actor, 'Not retried', r.why, `/staff/clients/${id}`);
     redirect(res, `/staff/clients/${id}?done=retry#sources`);
+    return 'handled';
+  }
+
+  /* ---- PHASE 139 · checked and approved, and telling the client ---- */
+  const checks = /^\/staff\/clients\/([A-Za-z0-9-]+)\/(checks\/approve|checks\/unapprove|steps\/tell|steps\/take-back)$/.exec(path);
+  if (checks && method === 'POST') {
+    const id = checks[1] ?? '';
+    const f = await form(req);
+    // Back to the page the form was on. A claim is named by id and must be this company's; anything else is the client page.
+    const backClaim = /^claim:([A-Za-z0-9-]+)$/.exec(f.get('back') ?? '')?.[1] ?? null;
+    const onClaim = backClaim !== null && db.get<{ id: string }>('SELECT id FROM claims WHERE id = ? AND business_id = ?', [backClaim, id]) !== undefined;
+    const page = onClaim ? `/staff/clients/${id}/claims/${backClaim ?? ''}` : `/staff/clients/${id}`;
+    // Back to the step the form was in, when it names one in the only shape a step's anchor has. Ids only.
+    const at = STEP_ANCHOR.test(f.get('at') ?? '') ? (f.get('at') ?? '') : null;
+    const anchor = at !== null ? `#${at}` : onClaim ? '#claim-checks' : '#checks';
+    const claim_id = emptyToNull(f.get('claim_id'));
+    const which = checks[2];
+    const r = which === 'checks/approve' ? A.approveFact(deps, actor, id, { ref: f.get('ref') ?? '', value: f.get('value') })
+      : which === 'checks/unapprove' ? A.unapproveFact(deps, actor, id, { ref: f.get('ref') ?? '', reason: f.get('reason') })
+        : which === 'steps/tell' ? A.tellClient(deps, actor, id, { step: f.get('step') ?? '', claim_id })
+          : A.takeStepBack(deps, actor, id, { step: f.get('step') ?? '', claim_id, reason: f.get('reason') });
+    const title = which === 'checks/approve' ? 'Not ticked' : which === 'checks/unapprove' ? 'Tick not taken off'
+      : which === 'steps/tell' ? 'The client was not told' : 'Not taken back';
+    if (!r.ok) return d.problem(res, actor, title, r.why, `${page}${anchor}`, r.field);
+    const saved = which === 'checks/approve' ? 'checked' : which === 'checks/unapprove' ? 'unchecked' : which === 'steps/tell' ? 'told' : 'takenback';
+    redirect(res, `${page}?done=${saved}${at === null ? '' : `&step=${at}`}${anchor}`);
     return 'handled';
   }
 
@@ -170,6 +198,10 @@ export const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
   sent: 'The question is in the client’s portal.',
   answered: 'Recorded — and the file says a member of staff entered it, not the client.',
   withdrawn: 'Withdrawn. The fact it was asking about is back on the missing list, and the record says who took it back.',
+  checked: 'Saved. The tick is recorded with your name and the time.',
+  unchecked: 'The tick is off. Your reason is kept with it.',
+  told: 'Done. The client’s portal now shows this step, with today’s date.',
+  takenback: 'Taken back. The client’s portal now says “Being re-checked”.',
 });
 
 /**

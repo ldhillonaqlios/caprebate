@@ -43,6 +43,8 @@ import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { notesBlock, timelineBlock } from './tasks-pages.ts';
 import { claimTilesFor, organisationSections, renderClaim, type CrmPageDeps } from './crm-pages.ts';
 import { askButton, businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4 } from './engaged-pages.ts';
+import { checksPanelIfPermitted } from './approvals.ts';
+import { checksBlock, checksSummary, STEP_ANCHOR } from './approvals-pages.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -64,7 +66,7 @@ export async function handleClientPage(
     const v = C.claimView(db, actor, inside[2] ?? '', { now: d.app.now() });
     // A claim addressed under a company that is not its own is not found, exactly as a claim that does not exist.
     if (v.client.business_id !== (inside[1] ?? '')) throw new NotFoundAsRefusal();
-    html(res, 200, renderClaim(d, actor, v, url.searchParams.get('done') ?? undefined));
+    html(res, 200, renderClaim(d, actor, v, url.searchParams.get('done') ?? undefined, url.searchParams.get('step') ?? undefined));
     return 'handled';
   }
 
@@ -85,7 +87,7 @@ export async function handleClientPage(
   // A login on neither is refused by the organisation's own read, as /staff/organisations/:id refused it.
   const org = C.organisationView(db, actor, id);
   const work = mayWork ? { page: E.businessPage(db, actor, id), sources: R.sourcesFor(db, actor, id) } : null;
-  html(res, 200, clientPage(d, actor, org, work, done, note));
+  html(res, 200, clientPage(d, actor, org, work, done, note, url.searchParams.get('step') ?? undefined));
   return 'handled';
 }
 
@@ -101,6 +103,7 @@ const SAVED: Readonly<Record<string, string>> = Object.freeze({
 const OPEN_AFTER: Readonly<Record<string, string>> = Object.freeze({
   saved: 'details', contact: 'contacts', task: 'activity', research: 'sources', retry: 'sources',
   sent: 'questions', answered: 'questions', withdrawn: 'questions',
+  checked: 'checks', unchecked: 'checks', told: 'checks', takenback: 'checks',
 });
 
 /** Where each fact comes from, once each, in the order first met. */
@@ -116,7 +119,7 @@ function unique(xs: readonly string[]): string[] {
 function clientPage(
   d: CrmPageDeps, actor: Actor, org: C.OrganisationView,
   work: { page: E.BusinessPage; sources: R.SourcesPanel } | null,
-  done: string | undefined, note: string | undefined,
+  done: string | undefined, note: string | undefined, step?: string,
 ): string {
   const db = d.app.db;
   const owners = mayCreateTask(actor) ? taskOwnerChoices(db) : null;
@@ -147,6 +150,20 @@ function clientPage(
     need: [], from: ['the client', 'the surveyor'],
     body: claimTilesFor(org.claims, 'No claim yet. Open one from a property.', org.trading_name),
   });
+
+  /* PHASE 139: WHERE EACH FACT CAME FROM, THE APPROVE BOX, AND TELLING THE CLIENT. Only for a login that checks facts. */
+  const checks = checksPanelIfPermitted(db, actor, org.id, d.app.now().slice(0, 10));
+  if (checks !== null) {
+    const all = [checks.company, ...checks.claims.flatMap((c) => c.steps)];
+    const sum = checksSummary(all);
+    sections.push({
+      key: 'client.checks', id: 'checks', kind: 'facts', heading: 'Check and tell the client',
+      ...(sum.count > 0 ? { count: sum.count } : {}),
+      status: sum.status, working: sum.working, need: [],
+      from: unique([...all.flatMap((s) => s.facts.map((f) => f.chip)), ...checks.unmatched.map((f) => f.chip)]),
+      body: checksBlock(checks, step !== undefined && STEP_ANCHOR.test(step) ? step : undefined),
+    });
+  }
 
   if (p !== null && work !== null) {
     const need = needsFor('facts');

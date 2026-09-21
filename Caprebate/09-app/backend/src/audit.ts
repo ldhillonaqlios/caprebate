@@ -230,6 +230,12 @@ export type AuditKind =
   /** Phase 138, 21 September 2026: a person kept a page section open or closed for themselves. The section's key only. */
   | 'SECTION_PREFERENCE_SET'
   /**
+   * Phase 139, 21 September 2026: a fact ticked as checked or the tick taken off; a step told to the client, or taken back
+   * by Admin. The fact's reference, the step's key and the claim's id only — never a value, and never the reason, which
+   * is in the row the event names.
+   */
+  | 'FACT_APPROVED' | 'FACT_UNAPPROVED' | 'CLIENT_STEP_TOLD' | 'CLIENT_STEP_TAKEN_BACK'
+  /**
    * Phase 133j, 18 September 2026: the website's enquiry form received, and Sales opening an enquiry as a lead or
    * closing it; a person asking for their own client login after the assessment, and confirming it from the email.
    * Ids, the sector code and the decision only — never the name, the address or what the person wrote.

@@ -521,6 +521,36 @@ details.more .moretext{padding:.3rem 0 0}
 .contactcard .cname{font-weight:700;color:var(--ink);margin:0}
 .contactcard p{margin:.15rem 0}
 .sources-now{margin:0 0 .8rem;padding-left:1.1rem}
+/* PHASE 139: checked and approved, and telling the client. Brand tokens only; a tick is a word as well as a mark. */
+.checkset .step{border:1px solid var(--line);border-radius:var(--radius);background:var(--white);padding:.75rem .9rem;margin:0 0 .8rem}
+.checkset .step-ready-to-tell{border-color:var(--ink)}
+.checkset .step-told{border-left:6px solid var(--ok)}
+.checkset .step-rechecking{border-left:6px solid var(--warn)}
+.stephead{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem}
+.stephead h3{margin:0;font-size:18px}
+.checkclaim{margin:1.2rem 0 0}
+.checkclaim .claimhead{font-size:18px;margin:0 0 .5rem}
+details.facts{margin-top:.5rem}
+details.facts>summary{font-weight:600;font-size:16px;color:var(--ink)}
+.checks{list-style:none;margin:.6rem 0 0;padding:0}
+.check{border-top:1px solid var(--line);padding:.55rem 0;overflow-wrap:anywhere}
+.check p{margin:.1rem 0}
+.check.ok .checkval{color:var(--body)}
+.chip{display:inline-block;padding:.02rem .5rem;border-radius:999px;font-size:14px;font-weight:600;background:var(--mist);color:var(--ink);border:1px solid var(--line);white-space:nowrap}
+.checkdo{margin-top:.3rem}
+.tickform{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem}
+.tickbox{display:inline-flex;align-items:center;gap:.45rem}
+.box{display:inline-block;width:1.1rem;height:1.1rem;border:2px solid var(--ink);border-radius:.2rem;background:var(--white);flex:none}
+.box.on{background:var(--ok);border-color:var(--ok);box-shadow:inset 0 0 0 2px var(--white)}
+.ticked{display:inline-flex;flex-wrap:wrap;align-items:center;gap:.45rem;font-weight:600;color:var(--ok)}
+.ticked .help{font-weight:400}
+details.undo{margin-top:.3rem}
+details.undo>summary{font-size:14px}
+.asfact{font-size:14px;font-weight:600}
+.donelist{list-style:none;margin:.2rem 0 .6rem;padding:0}
+.donelist li{padding:.3rem 0;border-top:1px solid var(--line)}
+.donelist li.rechecking{color:var(--warn)}
+.doneclaim{font-size:18px;margin:.8rem 0 .2rem}
 
 /* ---------------- SMALLER SCREENS ---------------- */
 @media (max-width:960px){
@@ -576,6 +606,13 @@ details.more .moretext{padding:.3rem 0 0}
   .secbody{padding:0 .75rem .9rem 1.1rem}
   .seckind{min-width:0}
   form label>input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),form label>select,form label>textarea{max-width:none}
+  /* PHASE 139: a long unbroken value in a list — a sign-off record's 64-character code — wraps instead of widening the page. */
+  dd{overflow-wrap:anywhere;min-width:0}
+  /* PHASE 139: a fact's tick and its box stack at phone width. */
+  .checkset .step{padding:.6rem .65rem}
+  .tickform{display:block}
+  .tickform>*{margin:.25rem 0}
+  .tickform input,.tickform select{width:100%;max-width:none}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 `;

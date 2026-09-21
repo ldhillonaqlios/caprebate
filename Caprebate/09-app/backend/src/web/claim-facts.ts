@@ -225,7 +225,8 @@ function rowValue(r: FactRow): string | null {
   return r.value_date ?? r.value_text ?? (r.value_pence === null ? null : String(r.value_pence));
 }
 
-function captured(facts: Map<string, FactRow>, key: string): FactReading {
+/** Phase 139: exported so the Approve box reads a recorded fact exactly as the facts panel does. */
+export function captured(facts: Map<string, FactRow>, key: string): FactReading {
   const def = FACTS[key];
   const label = def?.label ?? key;
   const r = facts.get(key);

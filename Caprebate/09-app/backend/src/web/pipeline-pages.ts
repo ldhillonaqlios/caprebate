@@ -21,7 +21,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import { can, type Actor } from '../authz.ts';
-import { badge, brandName, claimRef, dataLink, fields, highlights, nextStepCard, recordLayout, recordTabs, savedMessage, sidePanel, why } from './components.ts';
+import { badge, brandName, claimRef, dataLink, fields, highlights, nextStepCard, recordLayout, savedMessage, section, sidePanel, why, type Need, type SectionContext, type SectionSpec } from './components.ts';
+import { sectionPrefs } from './sections.ts';
 import { leadNextStep, plainNeed } from './next-step.ts';
 import { dueWords, ukDatesIn } from './localtime.ts';
 import { navContext, filterBar, LEAD_FILTERS } from './navigation.ts';
@@ -436,6 +437,11 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
     ? h`<a href="/staff/clients/${v.organisation.id}">${v.organisation.name}</a>` : h`${v.organisation.name}`;
   const step = leadNextStep({ open: v.enquiry.open, needs: v.enquiry.checks.map((c) => ({ what: c.label, met: c.passes })) },
     v.edit !== undefined && v.may_convert, v.may_write);
+  /* PHASE 139 (carried from 138): A LEAD'S PAGE AS SECTIONS. WE NEED is the enquiry checks not yet passed; the old tab ids
+     stay the anchors. */
+  const ctx: SectionContext = { prefs: sectionPrefs(d.app.db, actor), back: `/staff/leads/${v.id}` };
+  const leadNeed: Need[] = v.enquiry.checks.filter((c) => !c.passes).map((c) => ({ label: c.label }));
+  const converted = v.converted !== null;
   return page({
     title: v.organisation.name, nav: d.nav(actor), wide: true,
     body: h`${done(msg)}
@@ -447,9 +453,13 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
         { label: 'Lead date', value: ukDatesIn(v.lead_date) },
         v.converted === null ? null : { label: 'Converted to', value: h`<a href="/staff/claims/${v.converted.claim_id}">Open the claim</a> ${claimRef(v.converted.claim_ref)}` },
       ])}
-      ${recordLayout(recordTabs([
-        { id: 'details', label: 'Details', body: h`
-      <div class="pblock"><div class="pnum">The lead</div>${fields([
+      ${recordLayout(h`${([
+        { key: 'lead.details', id: 'details', kind: 'company', heading: 'The lead',
+          status: converted ? 'DONE' : 'WORKING',
+          working: converted ? 'Nothing — this lead is now a claim.' : leadNeed.length === 0 ? 'Every check is a yes. Convert it to open the claim.'
+            : 'Checking whether this is a claim we can take on.',
+          need: converted ? [] : leadNeed, from: ['the client', v.source.label], body: h`
+      <div class="pblock">${fields([
         { label: 'Organisation', value: org, ...(v.organisation.id === null ? { why: 'Not yet an organisation record. The assessment creates one.' } : {}) },
         { label: 'Sector', value: v.sector },
         { label: 'What made it a lead', value: v.origin.label },
@@ -471,7 +481,7 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
           why: 'Held on the lead until it has an organisation.' },
       ], v.edit !== undefined && v.may_write ? { href: '#change-lead' } : undefined)}</div>
 
-      <div class="pblock" id="enquiry-gate"><div class="pnum">The enquiry gate</div>
+      <div class="pblock" id="enquiry-gate"><div class="pnum">Can we take this on? The checks</div>
         ${enquiryBlock(v.enquiry, v.may_write ? `/staff/leads/${v.id}/checks` : null)}</div>
 
       ${v.edit === undefined || !v.may_write ? raw('') : h`<div class="pblock" id="change-lead"><div class="pnum">Change the lead</div>
@@ -501,7 +511,8 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
           <button type="submit">Convert and open the claim</button></form></div>`}
 
 ` },
-        { id: 'related', label: 'Related', body: h`
+        { key: 'lead.related', id: 'related', kind: 'facts', heading: 'Where it came from',
+          status: 'DONE', working: 'Nothing right now.', need: [], from: ['the assessment', 'the firm that referred them'], body: h`
       ${referralBlock(v.id, v.introducer)}
 
       <div class="pblock"><div class="pnum">What the assessment captured</div>
@@ -512,9 +523,11 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
       </div>
 
 ` },
-        { id: 'activity', label: 'Activity', body: h`
+        { key: 'lead.activity', id: 'activity', kind: 'messages', heading: 'Messages and activity',
+          status: tail.html.trim() === '' ? 'NOT_STARTED' : 'WORKING', working: 'Keeping a record of every call, email and follow-up.',
+          need: [], from: ['you and your team', 'the client'], body: h`
       ${tail}` },
-      ]), sidePanel(null, [
+      ] satisfies SectionSpec[]).map((sp) => section(sp, ctx))}`, sidePanel(null, [
         ...(v.may_write ? [{ href: '#enquiry-gate', label: 'Record an enquiry check' }] : []),
         ...(tail.html.includes('action="/staff/tasks"') ? [{ href: '#add-task', label: 'Log a call or add a follow-up' }] : []),
         ...(v.edit !== undefined && v.may_convert ? [{ href: '#convert', label: 'Convert — open the claim' }] : []),

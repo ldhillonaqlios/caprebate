@@ -333,12 +333,12 @@ describe('every page works with JavaScript switched off', () => {
     }
     const records = [`/staff/leads/${lead.id}`,
       ...(claim.property_id === null ? [] : [`/staff/properties/${claim.property_id}`])];
+    // Phase 139: a lead's page and the property page are coloured sections too, keeping the old tab ids as their anchors.
     for (const path of records) {
       const page = await as('sales').get(path);
       assert.equal(page.status, 200, path);
-      for (const tab of ['details', 'related', 'activity']) {
-        assert.ok(page.body.includes(`href="#${tab}"`), `${path}: no ${tab} tab`);
-        assert.ok(page.body.includes(`class="tabpanel" id="${tab}"`), `${path}: the ${tab} panel is not on the page`);
+      for (const id of ['details', 'related', 'activity']) {
+        assert.match(page.body, new RegExp(`<details class="sec sec-[a-z]+" id="${id}"`), `${path}: no ${id} section`);
       }
       assert.match(page.body, /<header class="highlights">/, `${path}: no highlights panel`);
       assert.match(page.body, /<aside class="side"/, `${path}: no right-hand panel`);

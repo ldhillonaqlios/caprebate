@@ -42,6 +42,8 @@ export type Obj =
   | { readonly type: 'internal_note'; readonly id: string; readonly business_id: string }
   | { readonly type: 'register_record'; readonly id: string; readonly business_id: string }
   | { readonly type: 'research'; readonly id: string; readonly business_id: string }
+  /** Phase 139: what staff have checked for a company and told its client — the approvals and the steps. */
+  | { readonly type: 'client_steps'; readonly id: string; readonly business_id: string }
   /**
    * A booking's organisation is null only while it belongs to a lead that has
    * none yet — a call asked for at the reasoned negative (migration 011). A
@@ -484,6 +486,16 @@ const RULES: RuleTable = {
   'research.run': { ADMIN: always, SALES: always },
   'research.read': { ADMIN: always, SALES: always },
   'register_record.read': { ADMIN: always, SALES: always, SURVEYING: always },
+  /*
+   * PHASE 139 — CHECKED AND APPROVED, AND TELLING THE CLIENT. Ticking a fact as checked, and pressing "Tell the client" on
+   * a step, are ADMIN's and SALES's — the people who work the client. TAKING A STEP BACK, after the client has been told,
+   * is ADMIN's alone. The client reads what it was told, on its own company, and nothing else: the view model
+   * (src/web/approvals.ts, `clientSteps`) carries a step's words and a date, never a fact, a value or a reason.
+   */
+  'fact.approve': { ADMIN: always, SALES: always },
+  'client_step.tell': { ADMIN: always, SALES: always },
+  'client_step.take_back': { ADMIN: always },
+  'client_step.read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
   'internal_note.read': { ADMIN: always, SALES: always },
   'internal_note.write': { ADMIN: always, SALES: always },
 
@@ -967,6 +979,10 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'research.run': NO('a write, and it could fire paid calls'),
   'research.read': NO('paid register research can carry the purchase price, an anchor; decided conservatively'),
   'register_record.read': YES('the free register records, as the surveyor reads'),
+  'fact.approve': NO(WRITES),
+  'client_step.tell': NO(WRITES),
+  'client_step.take_back': NO(WRITES),
+  'client_step.read': NO('the client\'s own view of what we told them; the checks behind it carry register values, decided conservatively'),
   'internal_note.read': NO('free text staff write for each other can carry a figure or a remark about a person; decided conservatively'),
   'internal_note.write': NO(WRITES),
   'invoice.read': NO('our fee is a percentage of the allowances identified, so a fee reveals the claim value'),

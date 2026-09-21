@@ -24,10 +24,14 @@ export const SECTION_KEYS: readonly string[] = Object.freeze([
   // the claim page
   'claim.stage', 'claim.facts', 'claim.figures', 'claim.property', 'claim.team', 'claim.documents', 'claim.money',
   'claim.aftercare', 'claim.activity',
+  // PHASE 139: checking facts and telling the client, on both pages; and the property page and a lead's page as sections
+  'client.checks', 'claim.checks',
+  'property.details', 'property.claims', 'property.activity',
+  'lead.details', 'lead.related', 'lead.activity',
 ]);
 
-/** The two page shapes a person is sent back to. Ids only — never a name, never a query. */
-const BACK = /^\/staff\/(clients\/[A-Za-z0-9-]+(\/claims\/[A-Za-z0-9-]+)?|claims\/[A-Za-z0-9-]+)$/;
+/** The page shapes a person is sent back to — the client, a claim, and since Phase 139 a property and a lead. Ids only. */
+const BACK = /^\/staff\/(clients\/[A-Za-z0-9-]+(\/claims\/[A-Za-z0-9-]+)?|claims\/[A-Za-z0-9-]+|properties\/[A-Za-z0-9-]+|leads\/[A-Za-z0-9-]+)$/;
 const ANCHOR = /^[a-z][a-z0-9-]{0,39}$/;
 
 export function sectionPrefs(db: Db, actor: Actor): ReadonlyMap<string, boolean> {
@@ -39,7 +43,7 @@ export type SectionChoice = { readonly section: string; readonly open: string; r
 
 /**
  * Keep a person's choice, and say where to send them. A key off the list, a choice that is not yes, no or auto, or an
- * address that is not one of the two pages is refused, and nothing is written.
+ * address that is not one of those pages is refused, and nothing is written.
  */
 export function keepSectionChoice(
   d: { db: Db; audit: AuditLog; now: () => string }, actor: Actor, c: SectionChoice,

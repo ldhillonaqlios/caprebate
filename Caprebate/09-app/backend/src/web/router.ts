@@ -26,7 +26,8 @@
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
-import { authorise, NotAuthorised, type Actor } from '../authz.ts';
+import { authorise, can, NotAuthorised, type Actor } from '../authz.ts';
+import type { Db } from '../db.ts';
 import { authenticate, login, logout, AuthError, SESSION_COOKIE_NAME, GENERIC_AUTH_FAILURE } from '../auth.ts';
 import { toActor } from '../users.ts';
 import { SITE_CSS, CSS_HEADERS, PNG_HEADERS } from './assets.ts';
@@ -48,6 +49,8 @@ import { mayEnterBackOffice } from './backoffice.ts';
 import { navContext, staffShell, portalShell, type NameSwitches, type NavContext } from './navigation.ts';
 import { badge, breadcrumb, card, claimRef, clientStageBar, propertyIn, welcomeCard, why } from './components.ts';
 import { stepName } from './portal-steps.ts';
+import { clientSteps, type ClientStep } from './approvals.ts';
+import { clientStepsCard } from './approvals-pages.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
 import { clientHelp } from './help.ts';
 import { nameSwitches } from './navigation.ts';
@@ -602,8 +605,10 @@ async function portalRoutes(
     const welcome = actor.role === 'CLIENT' && welcomeShown(db, actor) ? welcomeCard(WELCOME_JOBS.CLIENT, '/portal/welcome/dismiss') : undefined;
     // PHASE 134: every claim this company holds, each asked of `claim.progress_read`.
     const cls = P.claims(db, actor, business_id);
+    // PHASE 139: the steps staff have told this client about — words and dates, and nothing behind them.
+    const done = portalSteps(db, actor, business_id);
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
-      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, ...(welcome === undefined ? {} : { welcome }) }));
+      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, ...(welcome === undefined ? {} : { welcome }) }));
     return 'handled';
   }
 
@@ -618,7 +623,7 @@ async function portalRoutes(
         <p>It may have been typed wrongly.</p><p><a class="btn btn-primary" href="/portal">See your claims</a></p></div>` }));
       return 'handled';
     }
-    html(res, 200, portalClaimPage(actor, business, c, nameSwitches().portalSteps));
+    html(res, 200, portalClaimPage(actor, business, c, nameSwitches().portalSteps, portalSteps(db, actor, business_id)));
     return 'handled';
   }
 
@@ -1334,7 +1339,7 @@ function portalPage(
   slots: ReturnType<typeof publicSlots>, nowIso: string,
   dlv: readonly ClientDeliverable[] = [],
   share: readonly ClientShareChoice[] = [],
-  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[] } = {},
+  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[] } = {},
 ): string {
   const open = tks.filter((t) => t.state === 'OPEN');
   const asked = reqs.filter((r) => r.state === 'REQUESTED');
@@ -1352,6 +1357,7 @@ function portalPage(
         <p><a class="btn btn-primary" href="#appointment">Book a call</a> <a class="btn" href="#contact-us">Who to contact</a></p></header>
       ${extra.welcome ?? raw('')}
       ${cls.length === 0 ? raw('') : card('Your claims', portalClaimTiles(cls, named, business.name), { count: cls.length, id: 'your-claims' })}
+      ${clientStepsCard(extra.done ?? [], cls.map((c) => ({ id: c.id, name: propertyIn(business.name, c.property) ?? 'Your claim' })))}
       <section class="card" id="contact-us"><div class="card-h"><h2>How to contact us</h2></div>
         <p>To talk to us, ask for a call under <a href="#appointment">Your appointment</a>, or reply to any message we have
         sent you. If you are unhappy with anything we have done, our <a href="/notices/">public notices</a> say how to complain.</p>
@@ -1508,7 +1514,12 @@ function portalClaimTiles(cls: readonly P.PortalClaim[], named: boolean, company
 }
 
 /** PHASE 134 — ONE CLAIM'S PROGRESS, inside the company's portal. Questions, documents and messages stay on /portal. */
-function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, named: boolean): string {
+/** PHASE 139: the client's told steps, or none for a login that may not read them. Never a refusal on the portal's own page. */
+function portalSteps(db: Db, actor: Actor, business_id: string): ClientStep[] {
+  return can(actor, 'client_step.read', { type: 'client_steps', id: business_id, business_id }) ? clientSteps(db, actor, business_id) : [];
+}
+
+function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, named: boolean, done: readonly ClientStep[] = []): string {
   const property = propertyIn(business.name, c.property);
   const where = [property, c.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
   return page({
@@ -1524,6 +1535,7 @@ function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, n
             : c.progress.current === undefined ? h`<p>We will update this soon. Ask us if you need to know now.</p>`
               : h`<p>${c.progress.current.toTheClient}</p>`}
       </section>
+      ${clientStepsCard(done, [{ id: c.id, name: property ?? 'Your claim' }], c.id)}
       <section class="card"><div class="card-h"><h2>What we need from you</h2></div>
         <p>Questions, documents and messages for all your claims are in one place.</p>
         <p><a class="btn btn-primary" href="/portal#waiting-on-you">See what we need from you</a></p>

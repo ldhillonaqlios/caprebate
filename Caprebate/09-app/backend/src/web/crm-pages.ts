@@ -23,6 +23,8 @@
  * every derivation; this file draws what it returns.
  */
 
+import { checksPanelIfPermitted } from './approvals.ts';
+import { checksSummary, claimChecksBlock, STEP_ANCHOR } from './approvals-pages.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
@@ -43,7 +45,7 @@ import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } 
 import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock } from './claim-record-pages.ts';
 import { opens } from './navigation.ts';
 import { assertClientsSection } from './engaged.ts';
-import { badge, brandName, breadcrumb, claimHref, claimName, claimRef, claimStageBar, claimTiles, dataLink, propertyIn, fields, highlights, moreDetail, nextStepCard, recordLayout, recordTabs, savedMessage, section, sidePanel, statusFromNeeds, why, type Need, type QuickAction, type SectionContext, type SectionSpec } from './components.ts';
+import { badge, brandName, breadcrumb, claimHref, claimName, claimRef, claimStageBar, claimTiles, dataLink, propertyIn, fields, highlights, moreDetail, nextStepCard, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, why, type Need, type QuickAction, type SectionContext, type SectionSpec } from './components.ts';
 import { sectionPrefs } from './sections.ts';
 import { plainNeed } from './next-step.ts';
 import { openClaimQuestions } from './engaged.ts';
@@ -278,7 +280,7 @@ export async function handleCrm(
  * THE CLAIM PAGE, FOR A VIEW ALREADY AUTHORISED — PHASE 134. The same page is drawn at /staff/claims/:id and inside its
  * company's page at /staff/clients/:company/claims/:id (src/web/client-page.ts): the company is the frame either way.
  */
-export function renderClaim(d: CrmPageDeps, actor: Actor, v: C.ClaimView, done: string | undefined): string {
+export function renderClaim(d: CrmPageDeps, actor: Actor, v: C.ClaimView, done: string | undefined, step?: string): string {
   const db = d.app.db;
   const biz = v.client.business_id;
   const mayEmail = can(actor, 'email.queue', { type: 'email', id: v.id, business_id: biz });
@@ -289,6 +291,7 @@ export function renderClaim(d: CrmPageDeps, actor: Actor, v: C.ClaimView, done: 
     templates: mayEmail ? activeTemplates(db, actor) : [],
     contacts,
     may_note: can(actor, 'internal_note.write', { type: 'internal_note', id: biz, business_id: biz }),
+    ...(step !== undefined && STEP_ANCHOR.test(step) ? { step } : {}),
   });
 }
 
@@ -584,6 +587,15 @@ function propertyPage(
   d: CrmPageDeps, actor: Actor, v: C.PropertyView, msg: string | undefined,
   x: { timeline: Timeline | undefined; owners: readonly Owner[] | null; may_note: boolean },
 ): string {
+  /* PHASE 139 (carried from 138): THE PROPERTY PAGE AS SECTIONS, like the client and claim pages. The old tab ids stay
+     the anchors, so every link and redirect to #details, #related and #activity still lands. */
+  const ctx: SectionContext = { prefs: sectionPrefs(d.app.db, actor), back: `/staff/properties/${v.id}` };
+  const propNeed: Need[] = [
+    ...(v.acquisition_date === null ? [{ label: 'When the property was bought' }] : []),
+    ...(v.tenure.known ? [] : [{ label: 'Whether it is freehold or leasehold' }]),
+    ...(v.existing_ca_claimed.known ? [] : [{ label: 'Whether allowances were claimed on it before' }]),
+  ];
+  const events = x.timeline?.events.length ?? 0;
   return page({
     title: `${v.business.name} — ${v.label}`, nav: d.nav(actor), wide: true,
     body: h`${breadcrumb([{ label: v.business.name, href: v.business.linkable ? `/staff/clients/${v.business.id}` : null }, { label: v.label }])}${done(msg)}
@@ -596,9 +608,12 @@ function propertyPage(
       ])}
       <div class="help">${why('Survey status, date and surveyor belong to each claim, not to the building.')}</div>
 
-      ${recordLayout(recordTabs([
-        { id: 'details', label: 'Details', body: h`
-      <div class="pblock"><div class="pnum">The property</div>${fields([
+      ${recordLayout(h`${([
+        { key: 'property.details', id: 'details', kind: 'property', heading: 'The property',
+          status: statusFromNeeds(propNeed, true),
+          working: propNeed.length === 0 ? 'Nothing right now — the building’s details are in.' : 'Finding the facts about the building.',
+          need: propNeed, from: ['HM Land Registry', 'the EPC register', 'the client'], body: h`
+      <div class="pblock">${fields([
         { label: 'Address', value: [v.address_line_1, v.address_line_2, v.town].filter((x) => x !== null).join(', ') },
         { label: 'Postcode', value: v.postcode },
         // The jurisdiction and the prior-claim answers decide the claim, so "not known" is an answer and stays.
@@ -656,21 +671,30 @@ function propertyPage(
           <button type="submit">Save</button></form></div>` : raw('')}
 
 ` },
-        { id: 'related', label: 'Related', count: v.claims.length, body: h`
-      <div class="pblock"><div class="pnum">Claims on this property</div>${claimTilesFor(v.claims, undefined, v.business.name)}
+        { key: 'property.claims', id: 'related', kind: 'facts', heading: 'Claims on this property', count: v.claims.length,
+          status: v.claims.length === 0 ? 'NOT_STARTED' : 'WORKING',
+          working: v.claims.length === 0 ? 'No claim yet. Open one below.' : `${v.claims.length} claim${v.claims.length === 1 ? '' : 's'} on this building.`,
+          need: [], from: ['you and your team'], body: h`
+      <div class="pblock">${claimTilesFor(v.claims, undefined, v.business.name)}
       ${v.may_open_claim ? h`<form method="post" action="/staff/properties/${v.id}/claims">
         <label>Open a claim for <select name="workstream">${options(C.WORKSTREAMS, null, null)}</select></label>
         <button type="submit">Open claim</button></form>` : raw('')}
       </div>
-
+` },
+        { key: 'property.documents', id: 'documents', kind: 'documents', heading: 'Documents', count: v.documents.documents.length,
+          status: v.documents.documents.length > 0 ? 'DONE' : 'NOT_STARTED',
+          working: v.documents.documents.length > 0 ? 'Nothing right now.' : 'No document yet.',
+          need: [], from: ['the client', 'the surveyor', 'our own letters'], body: h`
       ${placeDocumentsBlock(v.documents, v.id)}
 ` },
-        { id: 'activity', label: 'Activity', body: h`
+        { key: 'property.activity', id: 'activity', kind: 'messages', heading: 'Messages and activity',
+          status: events > 0 ? 'WORKING' : 'NOT_STARTED', working: 'Keeping a record of every call, email and note.',
+          need: [], from: ['you and your team'], body: h`
       ${x.owners === null ? raw('') : h`<div class="pblock"><div class="pnum">Tasks on this property</div>${
         newTaskForm(taskChoices(d.app.db), { property_id: v.id }, x.owners, `/staff/properties/${v.id}`)}</div>`}
       ${timelineBlock(x.timeline)}
       <div id="property-notes">${notesBlock(x.timeline, x.may_note ? `/staff/properties/${v.id}/notes` : null)}</div>` },
-      ]), sidePanel(null, [
+      ] satisfies SectionSpec[]).map((sp) => section(sp, ctx))}`, sidePanel(null, [
         ...(x.owners === null ? [] : [{ href: '#add-task', label: 'Log a call or add a task' }]),
         ...(v.may_open_claim ? [{ href: '#related', label: 'Open a claim on this property' }] : []),
         ...(x.may_note ? [{ href: '#property-notes', label: 'Add a note' }] : []),
@@ -756,6 +780,8 @@ function claimPage(
     templates: readonly { id: string; label: string }[];
     contacts: readonly { id: string; name: string; email: string | null }[] | undefined;
     may_note: boolean;
+    /** Phase 139: the step just worked in, whose facts open. */
+    step?: string;
   },
 ): string {
   const db = d.app.db;
@@ -839,6 +865,23 @@ function claimPage(
         status: statusFromNeeds(need, true),
         working: need.length === 0 ? 'Nothing — every fact the tax rules need is in.' : 'Collecting the facts the tax rules need.',
         need, from: [...new Set(['the client', ...known.filter((k) => k !== '')])], body: factsBlock(v.id, f),
+      });
+    }
+  }
+
+  /* PHASE 139: this claim's steps — each fact with where it came from and a tick, and "Tell the client". */
+  {
+    const checks = checksPanelIfPermitted(db, actor, biz, d.app.now().slice(0, 10));
+    const mine = checks?.claims.find((c) => c.id === v.id);
+    if (checks !== null && mine !== undefined) {
+      const sum = checksSummary(mine.steps);
+      sections.push({
+        key: 'claim.checks', id: 'claim-checks', kind: 'facts', heading: 'Check and tell the client',
+        ...(sum.count > 0 ? { count: sum.count } : {}),
+        status: sum.status, working: sum.working, need: [],
+        from: [...new Set(mine.steps.flatMap((s) => s.facts.map((f) => f.chip)))],
+        body: claimChecksBlock(checks, v.id, x.step),
+        ...(msg === 'checked' || msg === 'unchecked' || msg === 'told' || msg === 'takenback' ? { open_now: true } : {}),
       });
     }
   }

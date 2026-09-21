@@ -1002,6 +1002,41 @@ today, and nothing is late."
 
 ### Training — `B5`/`B6` engaged clients and the one client page
 
+**Phase 139, 21 September 2026 — Check and tell the client.** Lakhbir: "there needs to be where the information has
+come from with a secondary approve box", and approving should tell the client "Cap Rebate has completed this". A new
+box, **Check and tell the client**, sits under **Claims**. Only Admin and Sales see it.
+
+- **Every fact says where it came from.** Each line has a small label — **Companies House**, **EPC register**, **HM
+  Land Registry**, **Care regulator**, **You told us** (the client's own answer in their portal), **Surveyor**, **Tax
+  adviser** — then what the fact is, its value, and the day it arrived.
+- **Tick it once you have checked it.** Press **Checked and approved** beside the fact. Your name and the time are kept.
+  To take a tick off, open **Take the tick off** and say why. A fact that is "not known" cannot be ticked — find it out
+  first.
+- **Facts are grouped into the client's steps**: the company's own step (**Company details checked**), then, for each
+  claim, **Property details checked**, **Tax details checked**, **Survey booked**, **Survey done**, **Figures checked by
+  a tax adviser** and **Report ready**. Each step's facts are folded under **Check the N facts**; after a tick the page
+  comes back to that step, open.
+- **Tell the client.** When every fact in a step is ticked and nothing is still missing, the step says **Ready to tell the
+  client** and a **Tell the client** button appears. Nothing is sent until you press it. Their portal then shows the
+  step as done, with the date — for example "Cap Rebate has checked your company details". It never shows a figure, a
+  value, a register record, a name or anything internal.
+- **Taking a step back — Admin only.** Open **Take this step back**, say why, and press **Take it back**. The client's
+  portal then says "being re-checked" — never your reason. When it is right again, press **Tell the client** again.
+- **A client's answer to a claim fact** (asked from a claim's **We need**) shows here with **You told us** and a box
+  holding their words in the form the tax rules need — a date, an amount or a choice. Check it, correct the box if
+  needed, and tick: that records the fact on the claim. You no longer re-type it under **Record a fact**.
+- **The research is unchanged.** **Run the research** still runs every lookup it may, in one press. There is no tick
+  beside a lookup: you check what came back, not the calls.
+- *Try it on the demo* (as sales@example.invalid, on a freshly started demo, 21 September 2026). Open **Clients**, then
+  **Dunmarrow Medical Practice Limited**. *Observed:* **Check and tell the client 7** reads Working on it — "Checking 7
+  steps. Tick each fact once checked." **Company details checked** says "Nothing has come in for this step yet. 3 still
+  missing". Under **main site**, **Property details checked** says "0 of 13 checked. 8 still missing"; open **Check the
+  13 facts** to see **EPC register** and **Care regulator** lines. **Survey booked** says "0 of 1 checked." Press
+  **Checked and approved** on its one fact: the page comes back with **Survey booked** reading **Ready to tell the
+  client**. Press **Tell the client**: it reads **Client told**, "Told the client on 21 Sep 2026 by Sales User".
+- *As Read only, Accounting or a surveyor:* no **Check and tell the client** box, and no tick anywhere.
+
+
 **Phase 138, 21 September 2026 — coloured sections that open and close.** Lakhbir: the sections "all seem to blur into
 one". A company's page is now a column of **coloured boxes**, one per part of the work. Each box has a coloured strip
 down its left edge, a small picture and a word saying what kind of box it is — **Company**, **Property**, **Facts and
@@ -1362,6 +1397,15 @@ came from a referral", with "read from the organisation’s leads, never typed h
 
 ### Training — `B15`/`B16` properties
 
+**Phase 139, 21 September 2026 — coloured boxes, like the client page.** A property's page is no longer tabs. It is
+four boxes, each starting with **Working on**, **We need** and **Coming from**: **The property** (its details; **We need**
+lists when it was bought, freehold or leasehold, and whether allowances were claimed before, while any is not known) ·
+**Claims on this property** (and **Open a claim for**) · **Documents** · **Messages and activity**. **keep this open for
+me** and **keep this closed for me** work here too. *On the demo* (as Sales): open **Dunmarrow Medical Practice Limited
+— main site** from the company's **Properties** box. *Observed:* **The property** reads Working on it, "Finding the facts
+about the building.", and **We need** lists "Whether allowances were claimed on it before".
+
+
 **Where things are on the page (Phase 133a, 17 September 2026).** A property's page opens with its highlights —
 organisation, postcode, jurisdiction, tenure, number of claims — then **Details** (the property, what the assessment
 captured, **Change the property**), **Related** (its claims, **Open a claim for**, its documents) and **Activity** (tasks,
@@ -1494,6 +1538,12 @@ no claim team. Signed in as the surveyor, the team shows only **Owner** and **Su
 ---
 
 ### Training — `B19`/`B20` leads
+
+**Phase 139, 21 September 2026 — a lead's own page as coloured boxes.** Opening a lead now shows three boxes instead of
+tabs: **The lead** (its details, **Can we take this on? The checks**, **Change the lead** and **Convert**; **We need**
+lists each check that is not yet a yes) · **Where it came from** · **Messages and activity**. Each starts with **Working
+on**, **We need** and **Coming from**, and remembers whether you keep it open.
+
 
 **Phase 137, 21 September 2026 — leads are cards, in four sections, so a new one cannot get lost.** The page is no
 longer one long table. It has four sections, each with its count:
@@ -2409,6 +2459,14 @@ opens and the **Settings** tab is still marked.
 ---
 
 ### Training — `C6` the portal's CRM additions
+
+**Phase 139, 21 September 2026 — "What Cap Rebate has done".** Under **Your claims** the client now sees a card
+listing each step we have told them about, with the date: "✓ Cap Rebate has checked your company details — 21 Sep 2026".
+A step Admin has taken back reads "↻ Your company details are being re-checked — since 21 Sep 2026", so it never just
+disappears. A claim's own page shows that claim's steps. Nothing appears until a member of staff presses **Tell the
+client**. *On the demo:* as client@example.invalid the card reads "Nothing yet. We will tick each step off here as we
+finish it." Tell the company step as Sales (see `B5`/`B6`) and reload: the line appears, with today's date.
+
 
 **Phase 134, 18 September 2026 — "Your claims".** The portal's one tab is **Your claims**. The page is headed with the
 company's name, and a **Your claims** card shows one tile per claim: the property, its town, how far it has got, and the
