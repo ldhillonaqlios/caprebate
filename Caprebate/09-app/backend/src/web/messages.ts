@@ -36,8 +36,17 @@ import { localStamp } from './localtime.ts';
 import { propertyIn } from './components.ts';
 import { workingDaysSince, LATE_AFTER_WORKING_DAYS } from './working-days.ts';
 import { documentObj } from './documents.ts';
+import { EMAIL_SENDING, sendingOn, smtpLoginFromEnv, type EmailSending, type SmtpLogin } from '../stubs/email-provider.ts';
+import { outboxTransport } from '../stubs/email.ts';
+import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from './automation.ts';
 
-export type MessageDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
+export type MessageDeps = {
+  db: Db; audit: AuditLog; now: () => string; newId: () => string;
+  /** PHASE 142a: the EMAIL_SENDING switch and the provider's login, for the new-message alert. Absent is the shipped switch, off. */
+  sending?: EmailSending; login?: SmtpLogin | null;
+  /** Where the site is, for the link in an alert. Absent: CAPREBATE_PUBLIC_ORIGIN, and with neither the email carries no link. */
+  origin?: string;
+};
 
 export type Thread = 'TEAM' | 'CLIENT';
 
@@ -267,7 +276,80 @@ export function postClientMessage(
     object_type: 'client_message', object_id: id,
     detail: { business: business_id, claim: claim_id, direction: fromClient ? 'FROM_CLIENT' : 'TO_CLIENT', files: files.length },
   });
+  alertNewMessage(d, id);
   return { ok: true, id };
+}
+
+/* ================================================================== *
+ * PHASE 142a — A NEW-MESSAGE ALERT. BUILT BEHIND EMAIL_SENDING, WHICH IS OFF.
+ * ================================================================== */
+
+export type AlertResult =
+  | { readonly state: 'OFF' }
+  | { readonly state: 'QUEUED'; readonly outbox: readonly string[] }
+  | { readonly state: 'NOT_QUEUED'; readonly why: 'DO_NOT_CONTACT' | 'NOBODY_TO_TELL' };
+
+/** The words of an alert. It says only that something is waiting — never the message, never who wrote it. */
+export function alertWords(to: 'STAFF' | 'CLIENT', company: string | null, business_id: string, origin: string | null): { subject: string; body: string } {
+  if (to === 'STAFF') {
+    const subject = noticeSubject('A client has sent a new message', company);
+    const link = `${origin ?? ''}/staff/clients/${business_id}?chat=client#chat`;
+    return { subject, body: `${subject}.\n\nRead it and reply in the back office: ${link}\n\nThe message is not in this email.` };
+  }
+  const subject = noticeSubject('You have a new message from Cap Rebate', company);
+  return {
+    subject,
+    body: 'There is a new message waiting for you in your Cap Rebate portal.\n\n' +
+      (origin === null ? 'Sign in to your portal to read it.' : `Sign in to read it: ${origin}/portal/messages`) +
+      '\n\nFor your privacy, we never put the message itself in an email.',
+  };
+}
+
+/**
+ * TELL THE OTHER SIDE THAT A MESSAGE IS WAITING. A client's message tells the company's owner — or, where it has none on
+ * Admin or Sales, every Sales login; our message tells each of the company's portal logins. The email says only that a
+ * message is waiting: never the words, and no name in the subject beyond what NOTICE_SUBJECT_LEADS_WITH_COMPANY allows.
+ *
+ * QUEUED ONLY WHILE SENDING IS ON, so every alert is saved with send_requested = 1 and nothing piles up "saved, not sent"
+ * while it is off — off, this returns OFF and writes nothing at all. The outbox refuses a do-not-contact company, as
+ * everywhere. Called after the message is written; an alert that cannot be queued never takes the message back.
+ */
+export function alertNewMessage(d: MessageDeps, message_id: string): AlertResult {
+  const cfg = d.sending ?? EMAIL_SENDING;
+  const login = d.login === undefined ? smtpLoginFromEnv() : d.login;
+  if (!sendingOn(cfg, login)) return { state: 'OFF' };
+  const m = d.db.get<{ business_id: string; direction: string; name: string; owner_id: string | null }>(
+    'SELECT m.business_id, m.direction, b.name, b.owner_id FROM client_messages m JOIN businesses b ON b.id = m.business_id WHERE m.id = ?', [message_id]);
+  if (m === undefined) return { state: 'NOT_QUEUED', why: 'NOBODY_TO_TELL' };
+  const to: 'STAFF' | 'CLIENT' = m.direction === 'FROM_CLIENT' ? 'STAFF' : 'CLIENT';
+  type Person = { id: string; email: string };
+  let people: Person[];
+  if (to === 'STAFF') {
+    const owner = m.owner_id === null ? undefined : d.db.get<Person>(
+      "SELECT id, email FROM users WHERE id = ? AND disabled_at IS NULL AND role IN ('ADMIN','SALES')", [m.owner_id]);
+    people = owner !== undefined ? [owner]
+      : d.db.all<Person>("SELECT id, email FROM users WHERE role = 'SALES' AND disabled_at IS NULL ORDER BY id");
+  } else {
+    people = d.db.all<Person>("SELECT id, email FROM users WHERE role = 'CLIENT' AND business_id = ? AND disabled_at IS NULL ORDER BY id", [m.business_id]);
+  }
+  if (people.length === 0) return { state: 'NOT_QUEUED', why: 'NOBODY_TO_TELL' };
+  const origin = d.origin ?? process.env.CAPREBATE_PUBLIC_ORIGIN ?? null;
+  const w = alertWords(to, NOTICE_SUBJECT_LEADS_WITH_COMPANY ? m.name : null, m.business_id, origin);
+  const transport = outboxTransport(d.db, d.newId, d.now, () => true);
+  const queued: string[] = [];
+  let refused = 0;
+  d.db.tx(() => {
+    for (const p of people) {
+      const r = transport.send({ to_email: p.email, subject: w.subject, body: w.body, kind: 'NOTIFICATION', business_id: m.business_id });
+      if (r.id === null) refused++; else queued.push(r.id);
+    }
+  });
+  d.audit.append({
+    at: d.now(), kind: 'CLIENT_MESSAGE_ALERT', outcome: queued.length > 0 ? 'ALLOWED' : 'REFUSED', actor_id: null, actor_role: null,
+    object_type: 'client_message', object_id: message_id,
+    detail: { business: m.business_id, to, users: people.map((p) => p.id), outbox: queued, refused },
+  });
+  return queued.length > 0 ? { state: 'QUEUED', outbox: queued } : { state: 'NOT_QUEUED', why: 'DO_NOT_CONTACT' };
 }
 
 /* ================================================================== *

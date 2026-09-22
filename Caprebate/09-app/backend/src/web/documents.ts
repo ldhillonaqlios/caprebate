@@ -159,6 +159,22 @@ const REPORT_NOT_DELIVERED =
  * RET-7 is not approved, and `deletionDueAt` in the ingestion module — and its rule that the EARLIER of two clocks
  * governs — is where a date would come from, and is unchanged.
  */
+/**
+ * PHASE 142a — ONE CLAIM'S TWO FILE DATES, as `ret7Limbs` reads them for a document and as the message clean-up job
+ * (src/web/message-retention.ts) reads them for a company's messages: the accounting period end (the latest
+ * ACCOUNTING_PERIOD_END fact, a VALUE only — UNKNOWN reads null, as no row does, N4) and the EARLIEST issue of the client
+ * report. Each YYYY-MM-DD, or null where not known. One reader, so the two can never disagree about a claim.
+ */
+export function claimFileDays(db: Db, claim_id: string): { period_end: string | null; report_first: string | null } {
+  const end = db.get<{ answer: string; value_date: string | null }>(
+    "SELECT answer, value_date FROM claim_facts WHERE claim_id = ? AND fact_key = 'ACCOUNTING_PERIOD_END' ORDER BY recorded_at DESC, rowid DESC LIMIT 1",
+    [claim_id]);
+  const report = db.get<{ first: string | null }>(
+    "SELECT MIN(issued_on) AS first FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' AND state IN ('ISSUED','SUPERSEDED')",
+    [claim_id]);
+  return { period_end: end !== undefined && end.answer === 'VALUE' ? end.value_date : null, report_first: report?.first ?? null };
+}
+
 export function ret7Limbs(db: Db, logical_document_id: string): Ret7Limbs {
   const claims = db.all<{ claim_id: string }>(
     'SELECT DISTINCT claim_id FROM document_links WHERE logical_document_id = ? AND unlinked_at IS NULL AND claim_id IS NOT NULL ORDER BY claim_id',
@@ -173,14 +189,7 @@ export function ret7Limbs(db: Db, logical_document_id: string): Ret7Limbs {
     };
   }
   const claim_id = claims[0]?.claim_id ?? '';
-  const end = db.get<{ answer: string; value_date: string | null }>(
-    "SELECT answer, value_date FROM claim_facts WHERE claim_id = ? AND fact_key = 'ACCOUNTING_PERIOD_END' ORDER BY recorded_at DESC, rowid DESC LIMIT 1",
-    [claim_id]);
-  const periodDay = end !== undefined && end.answer === 'VALUE' ? end.value_date : null;
-  const report = db.get<{ first: string | null }>(
-    "SELECT MIN(issued_on) AS first FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' AND state IN ('ISSUED','SUPERSEDED')",
-    [claim_id]);
-  const reportDay = report?.first ?? null;
+  const { period_end: periodDay, report_first: reportDay } = claimFileDays(db, claim_id);
   const negativeOnly = reportDay === null && db.get<{ n: number }>(
     "SELECT COUNT(*) AS n FROM claim_deliverables WHERE claim_id = ? AND kind = 'REASONED_NEGATIVE' AND state IN ('ISSUED','SUPERSEDED')",
     [claim_id])?.n !== 0;

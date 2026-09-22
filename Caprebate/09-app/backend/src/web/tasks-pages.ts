@@ -379,21 +379,28 @@ export function timelineBlock(t: Timeline | undefined, heading = 'Activity timel
 
 /**
  * INTERNAL NOTES, APART FROM THE TIMELINE — present only where `internal_note.read` put them in.
+ * PHASE 142a: ONE NAME FOR THE NOTES. They are the "Team only" thread of the company's Chat (Phase 142), so the claim page
+ * and the property page call them that too, with a link to the whole conversation. Each page still shows its own notes —
+ * a claim's, or a property's. `chat` is the company's id; with none, the link is not drawn.
  * PHASE 134: a note belongs to the COMPANY. On the company's page it may say which claim it is about — `claims` is the
  * choice, and "The company in general" is the default. The server checks the claim is the company's (`addNote`).
  */
-export function notesBlock(t: Timeline | undefined, action: string | null, claims: readonly { readonly id: string; readonly name: string }[] = []): Safe {
+export function notesBlock(
+  t: Timeline | undefined, action: string | null, claims: readonly { readonly id: string; readonly name: string }[] = [], chat: string | null = null,
+): Safe {
   if (t === undefined || t.internal_notes === undefined) return raw('');
-  return h`<div class="pblock"><div class="pnum">Internal notes — never shown to the client</div>
-    ${why('Kept apart from the activity timeline, in the data as well as on this page.')}
+  return h`<div class="pblock"><div class="pnum">Team only</div>
+    <p class="teamnote">Only your team sees this. The client never does.</p>
+    ${chat === null ? raw('') : h`<p><a href="/staff/clients/${chat}?chat=team#chat">See the whole team chat about this client</a></p>`}
+    ${why('These are the team’s notes about this page. They are also on the client’s Chat, under Team only. They are kept apart from the activity timeline, in the data as well as on this page.')}
     ${action === null ? raw('') : h`<form method="post" action="${action}">
       <label>Add a note <textarea name="body" rows="3"></textarea></label>${claims.length === 0 ? raw('') : h`
       <label>About which claim? <select name="claim_id"><option value="">The company in general</option>${
         claims.map((c) => h`<option value="${c.id}">${c.name}</option>`)}</select></label>`}<button type="submit">Save note</button></form>`}
-    ${t.internal_notes.length === 0 ? h`<p class="help">No notes yet.</p>` : h`<table>
+    ${t.internal_notes.length === 0 ? h`<p class="help">No notes yet.</p>` : h`<table class="stack">
       <thead><tr><th>Note</th><th>About</th><th>Who</th><th>When</th></tr></thead>
-      <tbody>${t.internal_notes.map((n) => h`<tr><td>${n.body}</td><td>${scopeCell(n.about)}</td>
-        <td>${n.who ?? h`<span class="help">a deleted account</span>`}</td><td class="when">${n.when}</td></tr>`)}</tbody></table>`}
+      <tbody>${t.internal_notes.map((n) => h`<tr><td data-label="Note">${n.body}</td><td data-label="About">${scopeCell(n.about)}</td>
+        <td data-label="Who">${n.who ?? h`<span class="help">a deleted account</span>`}</td><td class="when" data-label="When">${n.when}</td></tr>`)}</tbody></table>`}
   </div>`;
 }
 

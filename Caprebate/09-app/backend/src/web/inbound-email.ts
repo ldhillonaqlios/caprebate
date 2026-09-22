@@ -35,12 +35,18 @@ import { localStamp } from './localtime.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import { receiveFile } from './client-files-pages.ts';
 import { setShownToClient } from './documents.ts';
+import { alertNewMessage } from './messages.ts';
+import type { EmailSending, SmtpLogin } from '../stubs/email-provider.ts';
 import {
   INBOUND_EMAIL, parseEmail, readingMissing, readingOn,
   type ImapLogin, type InboundEmail, type Mailbox, type ParsedEmail, type RawEmail,
 } from '../stubs/email-inbound.ts';
 
-export type InboundDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
+export type InboundDeps = {
+  db: Db; audit: AuditLog; now: () => string; newId: () => string;
+  /** PHASE 142a: for the new-message alert a filed reply raises — off unless EMAIL_SENDING is on. */
+  sending?: EmailSending; login?: SmtpLogin | null; origin?: string;
+};
 
 type Outcome = 'FILED' | 'QUEUED' | 'DO_NOT_CONTACT';
 
@@ -103,6 +109,8 @@ export function ingest(d: InboundDeps, mail: RawEmail, parsed: ParsedEmail = par
     object_type: 'inbound_email', object_id: id,
     detail: { outcome: o, business: o === 'QUEUED' ? null : ours?.business_id ?? null, message, files: parsed.files.length },
   });
+  // PHASE 142a: a reply filed on a company's chat tells its owner, as a portal message does. Off unless sending is on.
+  if (o === 'FILED' && message !== null) alertNewMessage(d, message);
   return o;
 }
 

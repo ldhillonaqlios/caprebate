@@ -8,6 +8,7 @@
  *   node src/cli.ts sweep-originals   delete every kept original whose time is up (KEEP_ORIGINALS; off, so none)
  *   node src/cli.ts send-outbox       send every email saved while sending was on (EMAIL_SENDING; off, so none)
  *   node src/cli.ts read-mailbox      read new replies to contactus@caprebate.com, read-only (INBOUND_EMAIL; off, so none)
+ *   node src/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests
  */
@@ -24,6 +25,7 @@ import { openKeptOriginal, sweepOriginals } from './web/uploads.ts';
 import { EMAIL_SENDING, dispatchOutbox, smtpLoginFromEnv, smtpProvider } from './stubs/email-provider.ts';
 import { INBOUND_EMAIL, imapLoginFromEnv, imapMailbox } from './stubs/email-inbound.ts';
 import { readMailbox } from './web/inbound-email.ts';
+import { MESSAGE_RETENTION, sweepMessages } from './web/message-retention.ts';
 import { randomUUID } from 'node:crypto';
 
 const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';
@@ -82,6 +84,20 @@ async function main(): Promise<number> {
       const store = new FsObjectStore({ root: process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '.documents'), sealKey: sealKeyFromEnv() });
       const n = await sweepOriginals({ db, store, now: () => new Date().toISOString(), audit: new AuditLog(db) }, null);
       console.log(`${n} kept original${n === 1 ? '' : 's'} deleted because ${n === 1 ? 'its' : 'their'} time was up.`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  if (cmd === 'sweep-messages') {
+    /* PHASE 142a. MESSAGE_RETENTION is off, so this deletes nothing and says why. The day the data protection officer
+       sets the periods and it is switched on, a scheduled run of this one line applies them. */
+    const db = new Db(DEFAULT_DB);
+    try {
+      const r = sweepMessages({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() }, MESSAGE_RETENTION, null);
+      console.log(r.state === 'OFF' ? `Messages are not being cleaned up yet:\n  ${r.missing.join('\n  ')}`
+        : `${r.client_messages} client message${r.client_messages === 1 ? '' : 's'}, ${r.team_messages} team message${r.team_messages === 1 ? '' : 's'} and ${r.emails} emailed repl${r.emails === 1 ? 'y' : 'ies'} deleted because their time was up.`);
       return 0;
     } finally {
       db.close();

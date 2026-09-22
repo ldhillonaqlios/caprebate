@@ -16,6 +16,7 @@
  * NOTHING HERE DECIDES WHO SEES WHAT: src/web/messages.ts asks every rule on every read and write.
  */
 
+import { EMAIL_SENDING, sendingOn, smtpLoginFromEnv } from '../stubs/email-provider.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Db } from '../db.ts';
@@ -147,7 +148,9 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
         <textarea class="fi" id="client-body" name="body" required maxlength="${String(M.MAX_MESSAGE)}" rows="4"></textarea>
         ${claimPicker('client-claim', c.claims, false)}
         <button class="cta" type="submit">Send to the client</button>
-        <p class="help">They read it in their portal. We do not email them about it yet.</p></form>`}`,
+        <p class="help">${sendingOn(EMAIL_SENDING, smtpLoginFromEnv())
+          ? 'They read it in their portal. We email them to say a message is waiting — never the message itself.'
+          : 'They read it in their portal. We do not email them about it yet.'}</p></form>`}`,
   };
 }
 

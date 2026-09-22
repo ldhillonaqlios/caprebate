@@ -1760,7 +1760,9 @@ ownership call" it reads "Cancelled — cancelled … by Sales User — Duplicat
 **What it is for**
 The working half of the claim page. **Next action and tasks** keeps the claim's one next action
 and its other tasks. **Email** opens the company's Email page with this claim chosen (see `B48`). **Activity timeline** reads
-what has already happened, and **Internal notes — never shown to the client** are kept apart from it.
+what has already happened, and **Team only** — your team's notes on this claim, never shown to the client — is kept apart
+from it. Its link, **See the whole team chat about this client**, opens the company's Chat on **Team only** (Phase 142a;
+the property page has the same panel for a property's notes).
 
 **Who can open it**
 The next action: Admin and Sales. Email: Admin and Sales. Notes: Admin and Sales. Accounting sees a
@@ -2608,7 +2610,8 @@ replies we could not match: `/staff/replies`.
    team**, pick **About which claim?** if it is about one, and press **Send to the team**. Old notes are here, with who
    wrote them and when.
 3. **With the client**: type under **Write to {company}**, pick the claim if it is about one, and press **Send to the
-   client** → "Sent. The client will see it in their portal." We do not email them about it yet.
+   client** → "Sent. The client will see it in their portal." The line under the button says *"We do not email them
+   about it yet."* — the email is built, and waits for emails to be switched on (below).
 4. A file the client sent shows under their message. Press it to open the file's page. It is also in **Files**, under
    **From the client**, with **See the message it came with**.
 5. **Home** shows a red tile when a client has waited more than one working day for a reply: *"A message waiting for a
@@ -2623,6 +2626,20 @@ it does not answer one of our emails, or it comes from someone who is not one of
 never guess a company from the sender's address alone. A reply from a company marked do not contact is kept, and nothing
 is sent back.
 
+**Emails about new messages (switched off until emails can be sent — Phase 142a)**
+When emails are switched on, a new message sends one short email to the other side. The client's message emails the
+company's owner (or, if it has none, everyone in Sales): *"A client has sent a new message"*, with a link to the chat.
+Our message emails the client's portal login: *"You have a new message from Cap Rebate"* — sign in to read it. **The
+email never carries the message itself**, and nothing is emailed to a company marked do not contact. Today nothing is
+emailed and nothing waits to be sent; the line under **Send to the client** says so.
+
+**Old messages are cleaned up (switched off until the data protection officer decides — Phase 142a)**
+How long we keep messages on either tab is the data protection officer's question — *"How long do we keep client
+messages and the team chat?"*. The job that deletes old ones is built and switched off, and **nothing is deleted
+today**. When it is on, a company with a claim keeps its messages as long as the claim's records, and a company that
+never had a claim loses them a set time after its last message. A file sent with a message stays in **Files**. Nothing
+else can delete a message.
+
 **What it will refuse, and why**
 - An empty message: "Write a message first."
 - A message over 8,000 characters: "That message is too long. The most is 8,000 characters."
@@ -2630,7 +2647,7 @@ is sent back.
 - Writing to a company marked do not contact: "You cannot write to this company." — "This company asked us not to contact them. Nothing was sent." (The client can still write to us.)
 - In the portal, a file with no **What is the file?**: "Choose what the file is." — and what they typed is kept.
 - A client typing the address of any message that is not on their own chat — including a team message — gets "We cannot find that message".
-- Nobody can change or delete a message, in either tab.
+- Nobody can change or delete a message, in either tab. Only the clean-up job can delete an old one, and it is off.
 
 **Try it on the demo**
 Sign in as client@example.invalid, press **Messages**, type "When will you visit?" and press **Send**. Sign in as Sales:
@@ -2640,7 +2657,9 @@ team**. Back as the client, **Messages** shows a **1**; open it: your reply is t
 
 **Check yourself**
 - *Can the client ever see Team only?* — No. It is kept in a different place that the portal never reads.
-- *Where did the internal notes go?* — Nowhere. They are the Team only chat.
+- *Where did the internal notes go?* — Nowhere. They are the Team only chat. A claim page and a property page show their
+  own notes under **Team only**, with a link to the whole chat.
+- *Does the client get an email when I reply?* — Not yet. Emails are switched off; they read it in their portal.
 - *A client sent a lease with a message. Where is it?* — In their **Files**, under **From the client**, and on the message.
 - *A client wrote on Friday afternoon. When does it turn red on Home?* — On Tuesday: after more than one working day.
 

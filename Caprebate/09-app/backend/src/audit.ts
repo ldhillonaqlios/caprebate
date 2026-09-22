@@ -254,6 +254,12 @@ export type AuditKind =
    */
   | 'CLIENT_MESSAGE_WRITTEN' | 'INBOUND_EMAIL_RECEIVED' | 'INBOUND_EMAIL_FILED' | 'INBOUND_EMAIL_FILE_SAVED'
   /**
+   * Phase 142a, 22 September 2026: a run of the message clean-up job (MESSAGE_RETENTION, off) — every id it removed and
+   * the counts, never the words; and a new-message alert queued (EMAIL_SENDING, off) — the message, the outbox rows and
+   * who was told, by user id, never an address and never the words.
+   */
+  | 'MESSAGES_DELETED' | 'CLIENT_MESSAGE_ALERT'
+  /**
    * Phase 133j, 18 September 2026: the website's enquiry form received, and Sales opening an enquiry as a lead or
    * closing it; a person asking for their own client login after the assessment, and confirming it from the email.
    * Ids, the sector code and the decision only — never the name, the address or what the person wrote.

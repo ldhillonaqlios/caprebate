@@ -694,7 +694,7 @@ function propertyPage(
       ${x.owners === null ? raw('') : h`<div class="pblock"><div class="pnum">Tasks on this property</div>${
         newTaskForm(taskChoices(d.app.db), { property_id: v.id }, x.owners, `/staff/properties/${v.id}`)}</div>`}
       ${timelineBlock(x.timeline)}
-      <div id="property-notes">${notesBlock(x.timeline, x.may_note ? `/staff/properties/${v.id}/notes` : null)}</div>` },
+      <div id="property-notes">${notesBlock(x.timeline, x.may_note ? `/staff/properties/${v.id}/notes` : null, [], v.business.id)}</div>` },
       ] satisfies SectionSpec[]).map((sp) => section(sp, ctx))}`, sidePanel(null, [
         ...(x.owners === null ? [] : [{ href: '#add-task', label: 'Log a call or add a task' }]),
         ...(v.may_open_claim ? [{ href: '#related', label: 'Open a claim on this property' }] : []),
@@ -793,7 +793,7 @@ function claimPage(
   const tasks = claimTasksBlock(v.id, v.tasks, taskChoices(db));
   const docs = claimDocumentsBlock(v.id, v.documents, false);
   const email = emailBlock(biz, v.id, x.contacts);
-  const notes = notesBlock(v.timeline, x.may_note ? `/staff/claims/${v.id}/notes` : null);
+  const notes = notesBlock(v.timeline, x.may_note ? `/staff/claims/${v.id}/notes` : null, [], biz);
   const pipe = pipelineBlock(v.id, v.pipeline, v.tasks?.may_set_next_action === true ? (v.tasks.owner_choices ?? []) : []);
   const quick: QuickAction[] = [
     ...(tasks.html.includes('action="/staff/tasks"') ? [{ href: '#add-task', label: 'Log a call or add a task' }] : []),
