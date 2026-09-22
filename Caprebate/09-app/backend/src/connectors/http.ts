@@ -64,11 +64,12 @@ export type Fixture = {
  * given: a list of three answers the first three tries, then the last one again. An unrecorded path answers 404, so
  * a test that forgot a fixture sees a failure, not a pass. Every request is kept in `seen` for the test to read.
  */
-export function fixtureTransport(fixtures: Record<string, Fixture | readonly Fixture[]>): Transport & { seen: { url: string; method: string; headers: Record<string, string> }[] } {
+export function fixtureTransport(fixtures: Record<string, Fixture | readonly Fixture[]>): Transport & { seen: { url: string; method: string; headers: Record<string, string>; body?: string }[] } {
   const used = new Map<string, number>();
-  const seen: { url: string; method: string; headers: Record<string, string> }[] = [];
+  const seen: { url: string; method: string; headers: Record<string, string>; body?: string }[] = [];
   const t = async (url: string, init: Parameters<Transport>[1]): Promise<Response> => {
-    seen.push({ url, method: init.method, headers: init.headers });
+    /* Phase 146e: the body too, so a test can prove what a model was sent — and what it was not. */
+    seen.push({ url, method: init.method, headers: init.headers, ...(init.body === undefined ? {} : { body: init.body }) });
     const key = `${init.method} ${new URL(url).pathname}`;
     const entry = fixtures[key];
     const list: readonly Fixture[] = entry === undefined ? [{ status: 404, body: '{"errors":[{"error":"not recorded"}]}' }]
@@ -298,4 +299,78 @@ export async function callOutside(deps: CallDeps, req: CallRequest): Promise<Cal
       return finish({ outcome: 'NETWORK', status: null, body: null, headers: {}, attempts, why: `the service could not be reached (${msg})` });
     }
   }
+}
+
+/* ------------------------------------------------------------------ the adapter a supplier's own library calls */
+
+/** The shape of `fetch` a supplier's library (the Anthropic SDK) is handed in place of the platform's. */
+export type LibraryFetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+
+/** Why a library's call did not come back as an answer. Thrown into the library, which reports it as a failed call. */
+export class OutsideCallFailed extends Error {
+  readonly result: CallResult;
+  constructor(result: CallResult) {
+    super(result.why);
+    this.name = 'OutsideCallFailed';
+    this.result = result;
+  }
+}
+
+/** Headers of any shape a library hands `fetch`, as a plain record. */
+function headerRecord(h: RequestInit['headers'] | undefined): Record<string, string> {
+  if (h === undefined || h === null) return {};
+  if (h instanceof Headers) return Object.fromEntries(h.entries());
+  if (Array.isArray(h)) return Object.fromEntries(h.map(([k, v]) => [String(k).toLowerCase(), String(v)]));
+  return Object.fromEntries(Object.entries(h as Record<string, string>).map(([k, v]) => [k.toLowerCase(), String(v)]));
+}
+
+/**
+ * A `fetch` FOR A SUPPLIER'S LIBRARY THAT GOES THROUGH `callOutside`. Phase 146e, 22 September 2026.
+ *
+ * The Anthropic SDK makes its own HTTP calls. Handed this in place of the platform's `fetch`, every one of them
+ * becomes an ordinary `callOutside` call: the address from src/connectors/sources.ts (the host the library asked for is
+ * thrown away and only the path is kept), refused unless the path is one of `endpoints`, rate-limited, time-limited,
+ * capped, retried on 429 and 5xx only, and written to the audit chain like every other call. So the library is given
+ * no way out that this file does not control. Give the library NO RETRIES of its own: they would be retries of
+ * retries, and each one a second audit row for one decision.
+ *
+ * An answer, any status, goes back to the library as a Response, and the library reads it as it would. A call that
+ * never got an answer (refused, over our limit, timed out, cut off, too large) is thrown as OutsideCallFailed, which
+ * the library reports as a connection failure. `onResult` sees every CallResult either way.
+ */
+export function fetchThroughCallOutside(
+  deps: CallDeps,
+  fixed: Omit<CallRequest, 'endpoint' | 'params' | 'query' | 'method' | 'headers' | 'body'> & { readonly endpoints: readonly string[] },
+  onResult?: (r: CallResult) => void,
+): LibraryFetch {
+  return async (input, init) => {
+    const href = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    let path = '';
+    const query: Record<string, string> = {};
+    try {
+      const u = new URL(href);
+      path = u.pathname;
+      for (const [k, v] of u.searchParams) query[k] = v;
+    } catch { /* not a web address: refused below, as a path we do not allow */ }
+    const method = (init?.method ?? 'GET').toUpperCase();
+    const allowed = fixed.endpoints.includes(path) && (method === 'GET' || method === 'POST');
+    const body = typeof init?.body === 'string' ? init.body : undefined;
+    const result = allowed && (init?.body === undefined || init.body === null || body !== undefined)
+      ? await callOutside(deps, {
+          service_id: fixed.service_id, actor_id: fixed.actor_id, actor_role: fixed.actor_role ?? null,
+          claim_id: fixed.claim_id, gate: fixed.gate,
+          endpoint: path, query, method: method as 'GET' | 'POST', headers: headerRecord(init?.headers),
+          ...(body === undefined ? {} : { body }),
+        })
+      : await callOutside(deps, {
+          // Not a path we let this library use: refused here, and written down like any other refusal.
+          service_id: 'NOT_A_PERMITTED_PATH', endpoint: '/refused', actor_id: fixed.actor_id,
+          actor_role: fixed.actor_role ?? null, claim_id: fixed.claim_id, gate: fixed.gate,
+        });
+    onResult?.(result);
+    if (result.status === null || result.body === null) throw new OutsideCallFailed(result);
+    // The body is already decoded and complete, so a length or an encoding the service sent no longer describes it.
+    const headers = Object.fromEntries(Object.entries(result.headers).filter(([k]) => k !== 'content-encoding' && k !== 'content-length'));
+    return new Response(result.body, { status: result.status, headers });
+  };
 }

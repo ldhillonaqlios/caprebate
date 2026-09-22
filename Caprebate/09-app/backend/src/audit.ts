@@ -43,6 +43,14 @@ export type AuditKind =
    */
   | 'CONNECTOR_CALLED'
   /**
+   * Phase 146e, 22 September 2026: one reading of a client document by the Claude API (src/connectors/claude.ts),
+   * beside the CONNECTOR_CALLED row of the call itself. The document type, which segments were sent (kind and page,
+   * never their words), the model that answered, how much it read and wrote, and how many fields came back.
+   * NEVER THE TEXT — not what was sent and not what came back. DOCUMENT_PAGES_READ_BY_MODEL is the same for a scanned
+   * PDF's page images turned into text: the page numbers and the counts, never the words or the pictures.
+   */
+  | 'DOCUMENT_READ_BY_MODEL' | 'DOCUMENT_PAGES_READ_BY_MODEL'
+  /**
    * Phase 107. Two events that had no honest kind before it, and were nearly
    * logged as DOCUMENT_ACCESSED for want of one — which would have made the
    * document-access record, the one requirement DB-W1-T6 is about, unreadable.

@@ -22,7 +22,7 @@ import { randomUUID } from 'node:crypto';
 import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { FsObjectStore } from './objectstore.ts';
-import { extractPages } from './extract-text.ts';
+import { extractPages, isScanMarker, pdfPageImages, type ExtractedPage, type PageImage } from './extract-text.ts';
 import { receiveByUpload } from './documents.ts';
 import {
   UPLOAD_LIMITS, UploadHandlerError, sniffAccepted, quarantineKeyFor,
@@ -88,10 +88,20 @@ export function dbAuditSink(db: Db, id: () => string = randomUUID): AuditSink {
  * The name is `documentTextExtractor` rather than `plainTextExtractor` because
  * plain text is now the last of the three things it reads, not the only one.
  */
-export function documentTextExtractor(): TextExtractor {
+export function documentTextExtractor(readScan?: (images: PageImage[]) => Promise<ExtractedPage[] | null>): TextExtractor {
   return {
     async toPages(bytes: Uint8Array) {
-      return extractPages(bytes);
+      const pages = extractPages(bytes);
+      /* PHASE 146e — A SCAN, READ BY THE VISION PATH, WHEN THERE IS ONE. Only for the scan marker: an encrypted PDF,
+         an unreadable filter, a damaged .docx and every other format keep their marker whatever is passed here. The
+         pictures must all be liftable and the reading must come back whole, or the marker stands. What the reading
+         gives goes on to the SAME strip as any other text. With no reader — as shipped — this is exactly the
+         function it was before. */
+      if (readScan === undefined || !isScanMarker(pages)) return pages;
+      const images = pdfPageImages(bytes);
+      if (images === null) return pages;
+      const read = await readScan(images);
+      return read === null || read.length === 0 || read.some((p) => p.lines.length === 0) ? pages : read;
     },
   };
 }
@@ -133,6 +143,11 @@ export type UploadDeps = {
    * finished upload receives no request — the handler's own tests run without it.
    */
   audit?: AuditLog;
+  /**
+   * PHASE 146e. What reads a scanned PDF's page pictures as text — `readScannedPages` in src/connectors/claude.ts,
+   * behind its own switch. Absent, as shipped: a scan keeps its marker.
+   */
+  scan_reader?: (doc_id: string, images: PageImage[]) => Promise<ExtractedPage[] | null>;
 };
 
 /**
@@ -149,10 +164,11 @@ export type VersionColumns = {
   filename: string;
 };
 
-function handlerDeps(d: UploadDeps): UploadHandlerDeps {
+function handlerDeps(d: UploadDeps, doc_id?: string): UploadHandlerDeps {
+  const reader = d.scan_reader;
   return {
     store: d.store,
-    extractor: documentTextExtractor(),
+    extractor: documentTextExtractor(reader === undefined || doc_id === undefined ? undefined : (images) => reader(doc_id, images)),
     classifier: declaredTypeClassifier(),
     audit: dbAuditSink(d.db, d.newId ?? randomUUID),
     now: d.now,
@@ -254,7 +270,7 @@ export async function finishUpload(
   job: UploadJob,
   written_at: string,
 ): Promise<{ job: UploadJob; discharged: boolean; error?: UploadHandlerError; received_request?: string | null }> {
-  const deps = handlerDeps(d);
+  const deps = handlerDeps(d, job.doc_id);
   const received = await recordUploadComplete(deps, job, written_at);
   try {
     const r = await processUpload(deps, received);

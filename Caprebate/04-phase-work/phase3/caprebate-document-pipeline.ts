@@ -329,14 +329,19 @@ export const DOC_SPECS: readonly DocSpec[] = [
  * from the table it is handed as REVIEW REQUIRED. Only an explicit `false` switches
  * review off: an absent row is not a decision that nobody needs to look.
  *
- * ALL FALSE, AS SHIPPED. Which types warrant a person on every field is a decision
- * for whoever owns the extraction's error rate, not a build step.
+ * ALL FALSE, AS SHIPPED, UNTIL 22 SEPTEMBER 2026. Which types warrant a person on
+ * every field is a decision for whoever owns the extraction's error rate, not a
+ * build step — and Phase 146e was told to take one: FIRE_RISK_ASSESSMENT IS ON. A
+ * fire risk assessment can hold residents' health details (who needs help to leave
+ * the building, and why), so every field read from one is checked by a person
+ * before it stands, however confident the model was. The other eight are as they
+ * were. Recorded in 09-app/CAPREBATE-DEVELOPER-SPEC.md; test M1 holds the table.
  */
 export type ExtractableDocType = Exclude<DocType, 'CPSE_REPLIES' | 'SALE_CONTRACT'>;
 
 export const PERSON_REVIEW_BY_DOC_TYPE: Readonly<Record<ExtractableDocType, boolean>> = Object.freeze({
   PLANNING: false,
-  FIRE_RISK_ASSESSMENT: false,
+  FIRE_RISK_ASSESSMENT: true, // Phase 146e: residents' health details — a person checks every field
   OM_MANUAL: false,
   ASBESTOS_REGISTER: false,
   INSURANCE_REINSTATEMENT: false,

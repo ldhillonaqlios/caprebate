@@ -76,7 +76,7 @@ export function markerPages(reason: MarkerReason): ExtractedPage[] {
 }
 
 /** True when `pages` is a refusal rather than a reading. */
-export function isMarkerPages(pages: readonly ExtractedPage[]): boolean {
+export function isMarkerPages(pages: readonly { page: number; lines: readonly string[] }[]): boolean {
   return pages.length === 1
     && pages[0]!.lines.length === 1
     && pages[0]!.lines[0]!.startsWith(UNREADABLE_MARKER_PREFIX);
@@ -488,4 +488,118 @@ function decodeTextBytes(b: Buffer): string {
   if (b.length >= 2 && b[0] === 0xfe && b[1] === 0xff) return Buffer.from(b.subarray(2)).swap16().toString('utf16le');
   if (b.length >= 2 && b[0] === 0xff && b[1] === 0xfe) return b.subarray(2).toString('utf16le');
   return b.toString('latin1');
+}
+
+/* ================================================================== *
+ * SCANNED PDFS — THE PAGE PICTURES, FOR THE VISION PATH. Phase 146e.
+ *
+ * A scanned PDF is a picture per page and no text, so `extractPdf` returns the
+ * scan marker for it. The vision path (src/connectors/claude.ts, switched off on
+ * its own) can turn those pictures into text, and this is what hands it the
+ * pictures: the JPEG each page shows, LIFTED OUT OF THE FILE AS IT IS — a
+ * /DCTDecode image stream is a JPEG file already, so nothing is decoded,
+ * re-drawn or guessed.
+ *
+ * NULL, AND THE MARKER STAYS, WHENEVER THAT IS NOT CLEANLY TRUE: not a PDF, an
+ * encrypted one, a page with no JPEG picture on it (a JBIG2 or CCITT fax scan, a
+ * picture stored as raw pixels), a picture larger than we send. One page we
+ * cannot give is the whole document not given: a reading with a page missing
+ * would look complete.
+ * ================================================================== */
+
+export type PageImage = { page: number; media_type: 'image/jpeg'; data: Buffer };
+
+/** The largest page picture we send. A cautious cap, below what one image in one request may be. */
+export const MAX_PAGE_IMAGE_BYTES = 5 * 1024 * 1024;
+
+/** True when the pages are the marker `extractPdf` gives a PDF with no text — most likely a scan. Only that marker. */
+export function isScanMarker(pages: readonly { page: number; lines: readonly string[] }[]): boolean {
+  return isMarkerPages(pages) && pages[0]!.lines[0] === `${UNREADABLE_MARKER_PREFIX} ${PDF_NO_TEXT}]`;
+}
+
+export function pdfPageImages(bytes: Uint8Array): PageImage[] | null {
+  const buf = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (!startsWith(buf, [0x25, 0x50, 0x44, 0x46])) return null;
+  const s = buf.toString('latin1');
+  if (/\/Encrypt[\s/<[]/.test(s)) return null;
+  const objects = scanObjects(s);
+  const pages = pageObjectNums(s, objects);
+  if (pages.length === 0) return null;
+
+  const bodyOf = (num: number): string | null => {
+    const o = objects.get(num);
+    return o === undefined ? null : s.slice(o.start, o.end);
+  };
+  /** The text of a dictionary entry's `<< … >>`, balanced, or the body of the object it points to. */
+  const dictAfter = (body: string, key: string): string | null => {
+    const at = new RegExp(`/${key}\\s*`).exec(body);
+    if (at === null) return null;
+    const rest = body.slice(at.index + at[0].length);
+    const ref = /^(\d+)\s+\d+\s+R/.exec(rest);
+    if (ref !== null) return bodyOf(Number(ref[1]));
+    if (!rest.startsWith('<<')) return null;
+    let depth = 0;
+    for (let i = 0; i < rest.length - 1; i++) {
+      if (rest[i] === '<' && rest[i + 1] === '<') { depth++; i++; continue; }
+      if (rest[i] === '>' && rest[i + 1] === '>') { depth--; i++; if (depth === 0) return rest.slice(2, i - 1); }
+    }
+    return null;
+  };
+
+  const out: PageImage[] = [];
+  for (let i = 0; i < pages.length; i++) {
+    const page = bodyOf(pages[i]!);
+    const resources = page === null ? null : dictAfter(page, 'Resources');
+    const xobjects = resources === null ? null : dictAfter(resources, 'XObject');
+    if (xobjects === null) return null;
+    let best: Buffer | null = null;
+    for (const m of xobjects.matchAll(/\/[^\s/<>[\]()]+\s+(\d+)\s+\d+\s+R/g)) {
+      const o = objects.get(Number(m[1]));
+      if (o === undefined) continue;
+      const body = s.slice(o.start, o.end);
+      const opens = /\bstream(\r\n|\n|\r)/.exec(body);
+      if (opens === null) continue;
+      const dict = body.slice(0, opens.index);
+      if (!/\/Subtype\s*\/Image/.test(dict)) continue;
+      // Only a JPEG on its own. A JPEG that is also deflated, or any other filter, is not lifted.
+      const filters = [...dict.matchAll(/\/(DCTDecode|FlateDecode|LZWDecode|ASCII85Decode|ASCIIHexDecode|JBIG2Decode|CCITTFaxDecode|JPXDecode|RunLengthDecode)\b/g)].map((f) => f[1]);
+      if (filters.length !== 1 || filters[0] !== 'DCTDecode') continue;
+      const start = opens.index + opens[0].length;
+      const len = /\/Length\s+(\d+)(?!\s+\d+\s+R)/.exec(dict);
+      const end = len !== null ? start + Number(len[1]) : body.indexOf('endstream', start);
+      if (end <= start) continue;
+      const jpeg = Buffer.from(body.slice(start, end), 'latin1');
+      if (jpeg[0] !== 0xff || jpeg[1] !== 0xd8) continue;
+      if (best === null || jpeg.length > best.length) best = jpeg;
+    }
+    if (best === null || best.length > MAX_PAGE_IMAGE_BYTES) return null;
+    out.push({ page: i + 1, media_type: 'image/jpeg', data: best });
+  }
+  return out;
+}
+
+/** The page objects in page order: the page tree where it can be walked, file order where it cannot (as above). */
+function pageObjectNums(s: string, objects: Map<number, PdfObject>): number[] {
+  const isPage = (body: string) => /\/Type\s*\/Page(?![a-zA-Z])/.test(body);
+  const root = /\/Root\s+(\d+)\s+\d+\s+R/.exec(s);
+  const catalog = root === null ? undefined : objects.get(Number(root[1]));
+  const pagesRef = catalog === undefined ? null : /\/Pages\s+(\d+)\s+\d+\s+R/.exec(s.slice(catalog.start, catalog.end));
+  if (pagesRef !== null) {
+    const out: number[] = [];
+    const seen = new Set<number>();
+    const visit = (num: number, depth: number): void => {
+      if (depth > 32 || seen.has(num)) return;
+      seen.add(num);
+      const o = objects.get(num);
+      if (o === undefined) return;
+      const body = s.slice(o.start, o.end);
+      if (isPage(body)) { out.push(num); return; }
+      const kids = /\/Kids\s*\[([\s\S]*?)\]/.exec(body);
+      if (kids === null) return;
+      for (const k of kids[1]!.matchAll(/(\d+)\s+\d+\s+R/g)) visit(Number(k[1]), depth + 1);
+    };
+    visit(Number(pagesRef[1]), 0);
+    if (out.length > 0) return out;
+  }
+  return [...objects.values()].sort((a, b) => a.start - b.start).filter((o) => isPage(s.slice(o.start, o.end))).map((o) => o.num);
 }

@@ -641,7 +641,9 @@ test('H5 captureHumanRead refuses a document type that is not HUMAN_READ_ONLY', 
 });
 
 /* --- M: mandatory person review, per document type ---------------------- *
- * Phase 132, 14 September 2026. PERSON_REVIEW_BY_DOC_TYPE ships all false.
+ * Phase 132, 14 September 2026. PERSON_REVIEW_BY_DOC_TYPE shipped all false.
+ * Phase 146e, 22 September 2026: FIRE_RISK_ASSESSMENT is on (residents' health
+ * details); the other eight are off. M1 and M2 hold that.
  * ------------------------------------------------------------------------- */
 
 const FRA_SEGS: Segment[] = [{ kind: 'FINDINGS', heading: 'FINDINGS', text: 'x', page: 4 }];
@@ -650,25 +652,32 @@ const FRA_RAW: RawExtraction = [
   { field_id: 'fra_emergency_lighting', value: 'present', confidence: 0.5, page: 4, quote_ref: 'p4 "Lighting"' },
 ];
 
-test('M1 the person-review table is keyed by exactly the DOC_SPECS types, all false, and frozen', () => {
+test('M1 the person-review table is keyed by exactly the DOC_SPECS types, frozen, and ON FOR FIRE RISK ASSESSMENTS ALONE', () => {
   assert.deepEqual(Object.keys(PERSON_REVIEW_BY_DOC_TYPE).sort(), DOC_SPECS.map((s) => s.doc_type).sort());
-  assert.ok(Object.values(PERSON_REVIEW_BY_DOC_TYPE).every((v) => v === false), 'a type ships with person review on');
+  const on = Object.entries(PERSON_REVIEW_BY_DOC_TYPE).filter(([, v]) => v !== false).map(([k]) => k);
+  assert.deepEqual(on, ['FIRE_RISK_ASSESSMENT'], 'person review is on for a type other than fire risk assessments, or off for them');
+  assert.equal(PERSON_REVIEW_BY_DOC_TYPE.FIRE_RISK_ASSESSMENT, true);
   assert.equal(Object.isFrozen(PERSON_REVIEW_BY_DOC_TYPE), true);
   for (const t of HUMAN_READ_ONLY_TYPES) assert.equal(t in PERSON_REVIEW_BY_DOC_TYPE, false, `${t} never reaches extract()`);
 });
 
-test('M2 off, as shipped: an above-threshold field has no review, and the output is identical to a call with no table', () => {
+test('M2 off for a type: an above-threshold field has no review; and a call with no table is a call with the shipped one', () => {
   const byDefault = extract('doc-m2', 'FIRE_RISK_ASSESSMENT', FRA_SEGS, spyModel(FRA_RAW).fn, { at: AT, egress: [] });
   const explicit = extract('doc-m2', 'FIRE_RISK_ASSESSMENT', FRA_SEGS, spyModel(FRA_RAW).fn, { at: AT, egress: [] }, PERSON_REVIEW_BY_DOC_TYPE);
   assert.equal(JSON.stringify(byDefault), JSON.stringify(explicit));
-  const high = byDefault.fields.find((x) => x.field_id === 'fra_alarm_system_category')!;
+  assert.equal(byDefault.fields.find((x) => x.field_id === 'fra_alarm_system_category')!.needs_human_review, true,
+    'as shipped, a confident fire risk assessment field stood with no person checking it');
+  const offTable = { ...PERSON_REVIEW_BY_DOC_TYPE, FIRE_RISK_ASSESSMENT: false };
+  const off = extract('doc-m2', 'FIRE_RISK_ASSESSMENT', FRA_SEGS, spyModel(FRA_RAW).fn, { at: AT, egress: [] }, offTable);
+  const high = off.fields.find((x) => x.field_id === 'fra_alarm_system_category')!;
   assert.equal(high.needs_human_review, false);
-  assert.equal(byDefault.review.some((t) => t.field_id === 'fra_alarm_system_category'), false);
-  assert.equal(byDefault.review.length, 1, 'only the below-threshold field is reviewed');
+  assert.equal(off.review.some((t) => t.field_id === 'fra_alarm_system_category'), false);
+  assert.equal(off.review.length, 1, 'only the below-threshold field is reviewed');
 });
 
 test('M3 on for FIRE_RISK_ASSESSMENT: the above-threshold field gets a review, grade unchanged; the below-threshold field still has exactly one task', () => {
-  const off = extract('doc-m3', 'FIRE_RISK_ASSESSMENT', FRA_SEGS, spyModel(FRA_RAW).fn, { at: AT, egress: [] });
+  const off = extract('doc-m3', 'FIRE_RISK_ASSESSMENT', FRA_SEGS, spyModel(FRA_RAW).fn, { at: AT, egress: [] },
+    { ...PERSON_REVIEW_BY_DOC_TYPE, FIRE_RISK_ASSESSMENT: false });
   const on = extract('doc-m3', 'FIRE_RISK_ASSESSMENT', FRA_SEGS, spyModel(FRA_RAW).fn, { at: AT, egress: [] },
     { ...PERSON_REVIEW_BY_DOC_TYPE, FIRE_RISK_ASSESSMENT: true });
 
