@@ -289,6 +289,13 @@ const STATE_WORDS: Readonly<Record<R.SourceState, string>> = Object.freeze({
   NOT_PERMITTED_YET: 'Not allowed yet',
 });
 
+/** PHASE 146b: the lookups' own switches, in words. Every one is off today. */
+function switchWords(rows: readonly R.SourceRow[]): string {
+  const on = rows.filter((x) => x.switched_on).length;
+  if (on === 0) return 'none is switched on yet, so no lookup is made.';
+  return `${on} of ${rows.length} switched on.`;
+}
+
 export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
   return h`
     <ul class="sources-now">
@@ -298,6 +305,7 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
         : 'off until the engagement letter is signed.'}${why(h`A lookup that is not allowed yet is simply not made. Each fact it would give stays on the list as a question, and nothing is guessed. ${
           s.free.open ? raw('') : h`Free lookups wait for this: ${s.free.requires}. Turning them on is a data protection decision, not a button on this page. `}${
           s.engagement.signed ? raw('') : h`Paid lookups: ${s.engagement.why}. We check the signed letter on our system, not on this page.`}`)}</li>
+      <li>Each lookup's own switch: ${switchWords(s.sources)}${why(h`A lookup runs only when it is allowed and its own switch is on. The switches are set in the code, not on this page.`)}</li>
     </ul>
 
     <table class="stack"><thead><tr><th>Where from</th><th>Status</th><th>What happened</th></tr></thead>
@@ -320,9 +328,10 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
       : h`<div class="stop"><strong>You cannot run it right now.</strong> ${s.rate.why}.</div>`}
 
     ${moreDetail(h`
-      <table class="stack"><thead><tr><th>Where from</th><th>Free or paid</th><th>Publisher</th><th>Licence</th><th>Read on</th></tr></thead>
+      <table class="stack"><thead><tr><th>Where from</th><th>Free or paid</th><th>Switched on</th><th>Publisher</th><th>Licence</th><th>Read on</th></tr></thead>
         <tbody>${s.sources.map((x) => h`<tr><td>${x.dataset}</td>
           <td data-label="Free or paid">${x.tier === 'PAID' ? 'paid' : 'free'}${x.tier_settled ? raw('') : h`<br><span class="say">not sure if free or paid — treated as paid</span>`}</td>
+          <td data-label="Switched on">${x.switched_on ? 'yes' : 'not switched on'}</td>
           <td data-label="Publisher">${x.publisher}</td><td data-label="Licence">${x.licence_name}</td>
           <td data-label="Read on" class="when">${x.retrieved_at ?? h`<span class="help">—</span>`}</td></tr>`)}</tbody></table>
       <p class="help">A lookup that has not run has no button of its own: you choose when to run them all, not which ones.

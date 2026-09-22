@@ -1,27 +1,15 @@
 /**
- * STUB 3 of 3 — the register connectors.
+ * THE ONE DOOR REGISTER DATA ENTERS THE DATABASE BY — and, since Phase 146b (22 September 2026), only that.
  *
- * NOTHING FIRES. The engine makes zero network calls today and so does this:
- * the connectors do not exist, and this module is the named seam where they
- * will go. What IS real here is everything around them — the two gates, and
- * the name-exclusion check every record must pass before it is stored.
+ * The connector shape, the per-source switches, `gateStatus` and `planResearch` moved to
+ * src/connectors/registers.ts, and the one way to call outside is src/connectors/http.ts. They are re-exported
+ * below, unchanged, so every caller and every existing test reads the same functions as before.
  *
- * THE TWO GATES ARE REAL AND ARE NOT OURS TO OPEN.
+ * `ingestRegisterRecord` STAYS HERE, and this file keeps its name, because test/seed.test.ts asserts that this is
+ * the only file under src/ that writes register_records — one door, so the N2 check below guards every path in.
  *
- *   FREE sources are gated on a published privacy notice. CB_REGISTRY
- *   .precondition is `enabled:false` and its own `requires` string says why.
- *   Show that state; do not flip it; DO NOT BUILD A SECOND GATE. Turning it on
- *   is one boolean and it is the data protection decision, not a build step.
- *
- *   PAID sources are gated on a signed engagement asserted SERVER-SIDE, plus
- *   one operator click that then fires everything outstanding. The operator
- *   picks the moment, not the calls: there is deliberately no per-source
- *   confirmation.
- *
- * NOTHING REFUSES AND NOTHING THROWS when a gate is shut. A source that may not
- * be consulted is reported NOT_PERMITTED_YET and its facts stay unknown — which
- * is what N4 already requires of every unknown. A build in which a shut gate
- * makes an estimate fail, or a screen error, is built wrong.
+ * NOTHING FIRES YET. Every connector switch is off (REGISTER_SWITCHES), so no register is contacted by any code
+ * path; Phases 146c and 146d build the real connectors behind the shape, switched off.
  *
  * N2 — THE NAME EXCLUSION REGISTER — IS WIRED IN, NOT RESTATED.
  * caprebate-name-exclusion.ts is the rule. Every record passes through
@@ -36,29 +24,10 @@ import {
   type IngestedRecord,
 } from '../../../../04-phase-work/phase3/caprebate-name-exclusion.ts';
 
-export type Tier = 'FREE' | 'PAID';
-export type SourceState = 'NOT_RUN' | 'FIRED' | 'FAILED' | 'NOT_PERMITTED_YET';
-
-export type GateStatus = {
-  readonly free_enabled: boolean;
-  readonly free_requires: string;
-  readonly paid_requires_signed_engagement: true;
-};
-
-/**
- * Read off CB_REGISTRY rather than restated. The engine package is the
- * authority on whether the free gate is open, and there is exactly one of it.
- */
-export function gateStatus(registry: {
-  precondition?: { enabled?: unknown; requires?: unknown };
-}): GateStatus {
-  const pre = registry.precondition ?? {};
-  return {
-    free_enabled: pre.enabled === true,
-    free_requires: typeof pre.requires === 'string' ? pre.requires : '(not stated)',
-    paid_requires_signed_engagement: true,
-  };
-}
+export {
+  gateStatus, planResearch, STUB_NOTICE, REGISTER_SWITCHES, switchedOn,
+  type Tier, type SourceState, type GateStatus,
+} from '../connectors/registers.ts';
 
 /**
  * Store one register record. THE ONLY WAY register data enters the database.
@@ -86,37 +55,3 @@ export function ingestRegisterRecord(
   );
   return id;
 }
-
-/**
- * What a "Run the research" click would do — and today does not. Every source
- * outstanding is marked against its gate. NOTHING IS CALLED.
- */
-export function planResearch(
-  sources: readonly { source_id: string; tier: Tier; state: SourceState }[],
-  gates: GateStatus,
-  engagementSigned: boolean,
-): { source_id: string; next_state: SourceState; reason: string }[] {
-  return sources.map((s) => {
-    if (s.state === 'FIRED') return { source_id: s.source_id, next_state: 'FIRED', reason: 'already fired' };
-    if (s.tier === 'FREE' && !gates.free_enabled) {
-      return {
-        source_id: s.source_id, next_state: 'NOT_PERMITTED_YET',
-        reason: 'free sources are gated on a published privacy notice: ' + gates.free_requires,
-      };
-    }
-    if (s.tier === 'PAID' && !engagementSigned) {
-      return {
-        source_id: s.source_id, next_state: 'NOT_PERMITTED_YET',
-        reason: 'paid sources are gated on a signed engagement, asserted server-side',
-      };
-    }
-    // Permitted — and still not fired, because the connector does not exist.
-    return {
-      source_id: s.source_id, next_state: 'NOT_RUN',
-      reason: 'permitted, but the connector is not built in this release',
-    };
-  });
-}
-
-export const STUB_NOTICE =
-  'NOT CALLED — register connectors are stubbed in this build. No external source was contacted.';

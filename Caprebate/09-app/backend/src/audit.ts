@@ -24,6 +24,7 @@
 
 import { createHash } from 'node:crypto';
 import type { Db } from './db.ts';
+import { carriesSecret } from './secrets.ts';
 import { GENESIS } from '../../../04-phase-work/phase3/caprebate-anchor-quarantine.ts';
 
 export type AuditKind =
@@ -34,6 +35,13 @@ export type AuditKind =
   | 'USER_CREATED' | 'USER_UPDATED' | 'USER_DISABLED' | 'ROLE_ASSIGNED'
   | 'DOCUMENT_ACCESSED'
   | 'RESEARCH_FIRED'
+  /**
+   * Phase 146b, 22 September 2026: one call to an outside service, made through src/connectors/http.ts — the only
+   * way out. The service, the endpoint as a template, the NAMES of the query parameters (never their values), the
+   * result, the time taken, the tries, and both gates and the source's switch as they stood. Never a key, never a
+   * value typed into a search.
+   */
+  | 'CONNECTOR_CALLED'
   /**
    * Phase 107. Two events that had no honest kind before it, and were nearly
    * logged as DOCUMENT_ACCESSED for want of one — which would have made the
@@ -326,6 +334,10 @@ export function screenDetail(detail: Record<string, unknown>): void {
       }
     }
     const v = detail[key];
+    /* Phase 146b: a supplier key loaded from the key file (src/secrets.ts) never reaches the chain, under any key. */
+    if (v !== undefined && carriesSecret(typeof v === 'string' ? v : JSON.stringify(v) ?? '')) {
+      throw new AuditError(`audit detail '${key}' carries a supplier key — refused. Log that a key was used, never the key.`);
+    }
     if (typeof v === 'string' && v.includes('@')) {
       throw new AuditError(
         `audit detail '${key}' contains '@' and looks like an email address — refused. ` +

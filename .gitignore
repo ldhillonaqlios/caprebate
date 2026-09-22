@@ -41,3 +41,15 @@ dist/
 .env
 .env.*
 .tmp*/
+
+# Phase 146b: keys and certificates, anywhere in the tree. The key file lives OUTSIDE the repository
+# (~/.caprebate-secrets.env) and src/secrets.ts refuses one inside it; these lines stop a copy dropped
+# into the tree from being committed. The example, which holds names and no values, is the one exception.
+*.env
+*secret*
+*.p12
+*.pfx
+*.pem
+*.key
+!/Caprebate/09-app/backend/secrets.example.env
+!/Caprebate/09-app/backend/src/secrets.ts

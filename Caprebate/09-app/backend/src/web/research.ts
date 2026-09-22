@@ -59,6 +59,7 @@ import { authorise, can, type Actor } from '../authz.ts';
 import type { AuditLog } from '../audit.ts';
 import { registryGate, REGISTRY } from './engine.ts';
 import { SOURCES as REGISTER_SOURCES, LICENCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { switchedOn } from '../connectors/registers.ts';
 
 export type Tier = 'FREE' | 'PAID';
 export type SourceState = 'NOT_RUN' | 'FIRED' | 'FAILED' | 'NOT_PERMITTED_YET';
@@ -365,6 +366,12 @@ export type SourceRow = CatalogueEntry & {
    * no button at all, and there is a test that no such button is rendered.
    */
   readonly may_retry: boolean;
+  /**
+   * PHASE 146b: the source's own connector switch (REGISTER_SWITCHES in src/connectors/registers.ts). Every one is off.
+   * NOT A THIRD GATE: the gates say whether we may consult a source for this client; this says whether its connector
+   * is turned on at all. Shown on the panel in plain words ("not switched on").
+   */
+  readonly switched_on: boolean;
 };
 
 export type SourcesPanel = {
@@ -512,6 +519,7 @@ export function sourcesFor(db: Db, actor: Actor, business_id: string): SourcesPa
       failure_code: row?.failure_code ?? null,
       detail: resolved.state === 'FAILED' && row?.detail ? row.detail : resolved.detail,
       may_retry: resolved.state === 'FAILED',
+      switched_on: switchedOn(entry.source_id),
     };
   });
 
