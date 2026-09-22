@@ -336,7 +336,7 @@ function due(d: string | null | undefined): string {
 function valuePanel(v: C.ClaimValue): Safe {
   return v.established
     ? h`<dl><dt>The range the client was shown</dt><dd>${v.shown_range}</dd>
-        <dt>Estimated qualifying expenditure</dt><dd>${v.qualifying_expenditure}</dd>
+        <dt>Estimated spend that counts</dt><dd>${v.qualifying_expenditure}</dd>
         <dt>Indicative lifetime tax saving</dt><dd>${v.indicative_lifetime_saving}</dd></dl>`
     : h`<p class="help">No value yet — ${v.why}.</p>`;
 }
@@ -370,11 +370,11 @@ function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonl
   return h`<div class="pblock">
     <p>Stage: <strong>${p.stage.label}</strong></p>
     ${p.hold === undefined ? raw('') : h`<p class="help">On hold — ${p.hold.reason ?? 'no reason recorded'}. It returns to ${p.hold.returns_to}.</p>`}
-    ${p.steps.length === 0 ? h`<p class="help">No steps can be drawn for a stage that is not recognised.</p>`
-      : p.steps.some((s) => s.state === 'exited') ? h`<p class="help">It left the procedure at ${p.steps.find((s) => s.state === 'exited')?.label ?? ''}.</p>` : raw('')}
+    ${p.steps.length === 0 ? h`<p class="help">No step set yet — pick the claim’s step.</p>`
+      : p.steps.some((s) => s.state === 'exited') ? h`<p class="help">It left the steps at ${p.steps.find((s) => s.state === 'exited')?.label ?? ''}.</p>` : raw('')}
     ${p.gate === undefined && p.portal === undefined ? raw('') : h`<details id="stage-needs"><summary>See everything this stage needs</summary>
     ${p.gate === undefined ? raw('') : h`<h3>Moving on from ${p.gate.label}: ${p.gate.open ? badge('Ready', 'ok') : badge('Not ready yet')}</h3>
-      <p class="help">The procedure: “${brandName(p.gate.procedure_gate)}” Owner of the stage: ${brandName(p.gate.owner)}</p>
+      <p class="help">What this step needs: “${brandName(p.gate.procedure_gate)}” Who owns this step: ${brandName(p.gate.owner)}</p>
       <table><tbody>${p.gate.needs.map((n) => h`<tr><td>${n.met ? 'Done' : 'Still needed'}</td><td>${n.what}</td><td>${n.why}</td></tr>`)}</tbody></table>`}
     ${p.portal === undefined ? raw('') : h`<div class="help">The client’s page shows “${p.portal.shows}”.${why(h`${p.portal.this_claim_evidences === null ? 'This claim’s stage matches no step on the client’s page.'
         : `This claim’s stage matches “${p.portal.this_claim_evidences}” on the client’s page.`} A move raises the client’s step and never lowers it.`)}</div>`}
@@ -391,7 +391,7 @@ function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonl
     ${p.fee_trigger === undefined ? raw('') : h`<div class="help">When our fee is due: ${p.fee_trigger.reading}.${why(h`${
       p.fee_trigger.decided ? 'This is decided.' : 'This is the most cautious reading, while it is undecided.'} The open question: “${p.fee_trigger.question}”`)}</div>`}
     ${m === undefined ? raw('') : h`<h3>Move the claim</h3>
-      <div class="help">A move is checked again when you press the button.${why('Every move asks the gate on the server. A gate that is not ready refuses it, whatever this page shows.')}</div>
+      <div class="help">A move is checked again when you press the button.${why('Each step is checked before a claim can move on. If it is not ready, the move is refused.')}</div>
       ${m.forward === null ? raw('') : h`<form method="post" action="/staff/claims/${id}/stage">
         <input type="hidden" name="kind" value="FORWARD"><input type="hidden" name="to" value="${m.forward.to}">
         <label>Note <input name="reason"></label>${nextActionFields(owners)}
@@ -478,7 +478,7 @@ export function organisationSections(
   const details = h`
       ${v.client_status.do_not_contact
         ? h`<div class="gate"><strong>Do not contact.</strong> Nothing can be sent to this company or to any address it holds.${
-          why('The outbox refuses it, and so does the database.')}</div>`
+          why('Our system blocks every email to them.')}</div>`
         : raw('')}
       <div class="pblock">${fields([
         { label: 'Trading name', value: v.trading_name, why: 'The name the client gave us.' },
@@ -598,7 +598,7 @@ function propertyPage(
   ];
   const events = x.timeline?.events.length ?? 0;
   return page({
-    title: `${v.business.name} — ${v.label}`, nav: d.nav(actor), wide: true,
+    title: `${v.business.name} — ${propertyIn(v.business.name, v.label) ?? v.label}`, nav: d.nav(actor), wide: true,
     body: h`${breadcrumb([{ label: v.business.name, href: v.business.linkable ? `/staff/clients/${v.business.id}` : null }, { label: v.label }])}${done(msg)}
       ${highlights('Property', v.label, [
         { label: 'Company', value: v.business.linkable ? h`<a href="/staff/clients/${v.business.id}">${v.business.name}</a>` : v.business.name },
@@ -618,7 +618,7 @@ function propertyPage(
         { label: 'Address', value: [v.address_line_1, v.address_line_2, v.town].filter((x) => x !== null).join(', ') },
         { label: 'Postcode', value: v.postcode },
         // The jurisdiction and the prior-claim answers decide the claim, so "not known" is an answer and stays.
-        { label: 'Jurisdiction', value: v.jurisdiction.label, keep: true, ...(v.jurisdiction.why === '' ? {} : { why: `Not derived: ${v.jurisdiction.why}` }) },
+        { label: 'Jurisdiction', value: v.jurisdiction.label, keep: true, ...(v.jurisdiction.why === '' ? {} : { why: `Not worked out: ${v.jurisdiction.why}` }) },
         { label: 'Property type', value: v.property_type === null ? null : v.property_type_label },
         { label: 'Property use', value: v.property_use },
         { label: 'Tenure', value: v.tenure.label },
@@ -637,8 +637,8 @@ function propertyPage(
 
       <div class="pblock"><div class="pnum">What the client told us in the assessment</div>
       ${v.from_the_assessment.length === 0 ? h`<p class="help">Nothing in the assessment is matched to this property.</p>` : h`
-        <p class="help">Shown as the client gave it and never copied into the fields above: a month or a year is not a
-        date, and a round figure is not a price.</p>
+        <p class="help">Shown as the client gave it. It is not copied into the fields above. A month is not a date, and a
+        round figure is not a price.</p>
         <table><tbody>${v.from_the_assessment.map((a) => h`<tr><th>${a.question}</th><td>${a.answer}</td></tr>`)}</tbody></table>`}
       </div>
 
@@ -649,7 +649,7 @@ function propertyPage(
           <label>Address line 2 <input name="address_line_2" value="${v.address_line_2 ?? ''}"></label>
           <label>Town <input name="town" value="${v.town ?? ''}"></label>
           <label>Postcode <input name="postcode" value="${v.postcode ?? ''}"></label>
-          ${v.jurisdiction.derived ? h`<p class="help">The jurisdiction is derived from the postcode and is not asked.</p>`
+          ${v.jurisdiction.derived ? h`<p class="help">The jurisdiction comes from the postcode, so we do not ask.</p>`
             : h`<label>Jurisdiction
                 <select name="jurisdiction">${options(C.JURISDICTIONS, v.jurisdiction.value, 'not known')}</select></label>`}
           <label>Property type <select name="property_type">${options(vocabulary(d.app.db, 'PROPERTY_TYPE', v.property_type), v.property_type, 'not recorded')}</select></label>
@@ -739,10 +739,10 @@ function teamBlock(v: C.ClaimView): Safe {
     <dt>Owner</dt><dd>${orNot(t.owner, 'nobody yet')}</dd>
     <dt>Surveyor</dt><dd>${orNot(t.surveyor, 'none named')}${why(t.surveyor_reach)}</dd>
     ${t.tax_adviser === undefined ? raw('') : h`<dt>Tax adviser</dt><dd>${t.tax_adviser.state === 'RECORDED'
-      ? h`${t.tax_adviser.adviser}, ${t.tax_adviser.credential}<br><span class="help">signed off ${ukDate(t.tax_adviser.signed_on)}</span>${why(h`The sign-off record, signed on ${ukDate(t.tax_adviser.signed_on)} and recorded ${t.tax_adviser.recorded} — the adviser is on the claim as their record, never as a person.`)}`
+      ? h`${t.tax_adviser.adviser}, ${t.tax_adviser.credential}<br><span class="help">signed off ${ukDate(t.tax_adviser.signed_on)}</span>${why(h`The sign-off record, signed on ${ukDate(t.tax_adviser.signed_on)} and recorded ${t.tax_adviser.recorded} — we record the adviser’s sign-off, not the person.`)}`
       : h`Not signed off yet${why(t.tax_adviser.reading)}`}</dd>`}
     </dl>
-    ${t.contacts === undefined ? raw('') : h`<p><strong>The organisation’s accountant and adviser on this claim</strong></p>
+    ${t.contacts === undefined ? raw('') : h`<p><strong>The client’s accountant and adviser on this claim</strong></p>
       ${t.contacts.length === 0 ? h`<p class="help">Nobody is linked to this claim yet.</p>` : h`<table>
         <thead><tr><th>Contact</th><th>Type</th><th>On the team since</th><th></th></tr></thead>
         <tbody>${t.contacts.map((c) => h`<tr><td>${c.name}</td><td>${c.type}</td><td>${c.since} <span class="help">by ${c.linked_by}</span></td>
@@ -838,7 +838,7 @@ function claimPage(
         ])}
         ${pipe}
         ${v.edit === undefined ? raw('') : h`<details id="change-claim"><summary>Change the owner, surveyor or priority</summary>
-          <div class="help">The stage is not changed here.${why('It moves through the steps of the procedure, above.')}</div>
+          <div class="help">The stage is not changed here.${why('It moves through the steps above.')}</div>
           <form method="post" action="/staff/claims/${v.id}">
             <label>Owner <select name="owner_id">${people(v.edit.owners, v.edit.current.owner_id, 'nobody yet')}</select></label>
             <label>Surveyor <select name="surveyor_id">${people(v.edit.surveyors, v.edit.current.surveyor_id, 'none named')}</select></label>

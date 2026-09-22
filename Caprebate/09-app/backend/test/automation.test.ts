@@ -159,7 +159,7 @@ describe('the seeded rules are the full specification’s list, re-keyed onto th
         ['rule-stage-notify-owner', 'STAGE_ENTERED', null, 'NOTIFY_OWNER'],
         ['rule-owner-notify', 'OWNER_CHANGED', null, 'NOTIFY_OWNER'],
       ]);
-      for (const r of page.rules) assert.match(r.source, /full specification 14\.\d/, `${r.id} does not say where it came from`);
+      for (const r of page.rules) assert.match(r.source, /specification,? 14\.\d/, `${r.id} does not say where it came from`);
       assert.equal(page.may_write, false);
       assert.equal(A.rulesPage(app.db, actor('ADMIN')).may_write, true);
       for (const who of ['ACCOUNTING', 'SURVEYING'] as const) assert.throws(() => A.rulesPage(app.db, actor(who)), NotAuthorised);
@@ -351,7 +351,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
       }
       const unknown = A.createRule(deps(app), actor('ADMIN'), { label: 'x', trigger_event: 'STAGE_ENTERED', effect: 'DELETE_EVERYTHING' });
       assert.equal(unknown.ok, false);
-      if (!unknown.ok) assert.match(unknown.why, /not an effect a rule can have/);
+      if (!unknown.ok) assert.match(unknown.why, /A rule cannot do that/);
     } finally { app.close(); }
   });
 

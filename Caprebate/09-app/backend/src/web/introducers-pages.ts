@@ -256,9 +256,9 @@ function listPage(d: IntroducerPageDeps, actor: Actor, rows: readonly I.Introduc
     title: 'Introducers', nav: d.nav(actor), wide: true,
     body: h`<h1>Introducers</h1>${saved(msg)}
       <p class="help">A firm that refers clients to us — an accountancy practice above all. <strong>The people at a firm
-      are its contacts, and none of them has a login.</strong> Every figure on this page is read from the leads, the
-      claims, the invoices and the tasks each time it is drawn, and is stored nowhere. A value nobody knows is counted as
-      not known, never as nought.</p>
+      are its contacts, and none of them has a login.</strong> Every figure here is worked out fresh from the leads, the
+      claims, the invoices and the tasks. None is stored. A value nobody knows is shown as
+      not known, never as £0.</p>
       ${mayReward ? h`<p>The reward model: <strong>${I.REWARD_MODELS[model] ?? model}</strong> —
         <a href="/staff/introducer-rewards">the reward model and any fees</a></p>` : raw('')}
       ${rows.length === 0 ? h`<p class="help">No introducer is recorded.</p>` : h`<table>
@@ -278,9 +278,9 @@ function listPage(d: IntroducerPageDeps, actor: Actor, rows: readonly I.Introduc
           <td>${r.money === undefined ? h`<span class="help">not shown to this role</span>` : h`${r.money.fees_paid}`}</td></tr>`)}</tbody></table>`}
 
       ${!mayWrite ? raw('') : h`<div class="pblock"><div class="pnum">Record a referral</div>
-        <p class="help">It becomes a lead from the firm's own source, with the firm as its introducer. The lead holds the
-        client business's name and sector and no person: the person referring is a contact at the firm, and the client's
-        own people are recorded when the assessment creates their organisation.</p>
+        <p class="help">This makes a lead, with the firm as its introducer. The lead holds the client business's name and
+        sector, but no people. The person referring is saved as a contact at the firm. The client's own people are added
+        later, at the assessment.</p>
         <form method="post" action="/staff/referrals">
           <label>A firm already recorded <select name="introducer_id">${people(firms, null, 'none — name it below')}</select></label>
           <label>Or the firm's name <input name="firm_name"></label>
@@ -322,8 +322,8 @@ function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg:
   return page({
     title: v.firm_name, nav: d.nav(actor), wide: true,
     body: h`<h1>${v.firm_name}</h1>${saved(msg)}
-      <p class="help">An introducing firm. Nobody here has a login, and nothing about a client's claim reaches the firm
-      unless that client has said yes to sharing progress with it.</p>
+      <p class="help">A firm that refers clients to us. Nobody here has a login. The firm hears nothing about a client's claim
+      unless that client has said yes to sharing progress.</p>
       ${v.merged_into === undefined || v.merged_into === null ? raw('') : h`<div class="gate"><strong>Merged</strong> onto <a href="/staff/introducers/${v.merged_into.id}">${v.merged_into.name}</a>
         on ${v.merged_into.at}. Its leads, its people and its open tasks moved there; its closed tasks, any client’s answer on sharing
         progress and every notice stay here, as they were recorded.</div>`}
@@ -346,7 +346,7 @@ function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg:
         ${v.details.from_public_form ? h`<dt>Recorded by</dt><dd>the public referral form — check it is the firm it says</dd>` : raw('')}
       </dl></div>`}
 
-      <div class="pblock"><div class="pnum">What the firm has sent us — derived, never stored</div>
+      <div class="pblock"><div class="pnum">What the firm has sent us — worked out, never stored</div>
         ${v.pipeline === undefined ? raw('') : h`<dl>
           <dt>Leads referred</dt><dd>${String(v.pipeline.leads_referred)}</dd>
           <dt>Claims opened</dt><dd>${String(v.pipeline.claims_opened)}</dd>
@@ -406,8 +406,8 @@ function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg:
             <label>Owner <select name="owner_id">${people(e.owners, v.details?.owner?.id ?? null, 'choose')}</select></label>
             <label>Due <input name="due_on" type="date" required></label>
             <label>Note <input name="note"></label><button type="submit">Plan it</button></form>
-          <p class="help">The reward model is ${v.reward.model.label.toLowerCase()}. A CPD session, a co-branded one-pager
-          and priority turnaround can be logged only while it is model A.</p>`}</div>`}
+          <p class="help">The reward model is ${v.reward.model.label.toLowerCase()}. Model A must be on to log a CPD session,
+          a joint one-pager or faster turnaround.</p>`}</div>`}
 
       ${v.fees === undefined ? raw('') : h`<div class="pblock"><div class="pnum">Fees to this firm under reward model B</div>${feeTable(v.fees)}</div>`}
 
@@ -418,7 +418,7 @@ function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg:
           <label>Relationship owner <select name="owner_id">${people(e.owners, v.details.owner?.id ?? null, 'nobody yet')}</select></label>
           <label>Relationship started <input name="relationship_started_on" type="date" value="${v.details.relationship_started_on ?? ''}"></label>
           <label>Who receives progress notices <select name="notice_contact_id">${people(
-            firmPeople, contacts.find((c) => c.receives_notices)?.id ?? null, 'nobody — no notice can be queued')}</select></label>
+            firmPeople, contacts.find((c) => c.receives_notices)?.id ?? null, 'nobody — no notice can be sent')}</select></label>
           <label>Notes <textarea name="notes">${v.details.notes ?? ''}</textarea></label>
           <button type="submit">Save</button></form></div>`}
 
@@ -436,12 +436,12 @@ function rewardPage(d: IntroducerPageDeps, actor: Actor, v: I.RewardView, msg: s
     body: h`<h1>The introducer reward model</h1>${saved(msg)}
       <p>It is <strong>${v.model.label}</strong>${v.fee === null ? raw('') : h`, at ${v.fee} per successful claim`}.
         ${v.changed === null ? h`<span class="help">It has never been changed.</span>` : h`<span class="help">Last changed ${v.changed}.</span>`}</p>
-      <div class="gate"><strong>Both models are built, and both ship off.</strong> The referral network paper recommends
-        no cash to accountants — model A, firm-level reciprocity. Model B is a fixed fee per successful claim, paid to the
-        firm and never to a person, and nothing is payable until its disclosure to the client is recorded. Which, if either,
-        is Lakhbir's decision: “${v.question}”</div>
+      <div class="gate"><strong>Both models are built, and both start off.</strong> Our referral network paper says: no cash to accountants.
+        That is model A, where we give the firm something back. Model B is a fixed fee for each successful claim. It is paid
+        to the firm, never to a person. Nothing is paid until we record that the client was told about it. Which, if either,
+        is for Lakhbir to decide: “${v.question}”</div>
       ${v.clause_one_blanks.length === 0 ? h`<p class="help">Clause 1 of the engagement letter has no blank left.</p>`
-        : h`<p><strong>The switch refuses to leave off while clause 1 of the engagement letter is blank.</strong> It still reads:</p>
+        : h`<p><strong>This cannot be switched on while clause 1 of the engagement letter is blank.</strong> It still reads:</p>
           <ul>${v.clause_one_blanks.map((t) => h`<li><q class="letter-quote">${t}</q></li>`)}</ul>`}
       ${!v.may_switch ? raw('') : h`<div class="pblock"><div class="pnum">Switch it</div>
         <form method="post" action="/staff/introducer-rewards">
@@ -464,8 +464,8 @@ export function referralBlock(lead_id: string, r: I.LeadReferral | null): Safe {
     <p>Referred by ${r.introducer.linkable ? h`<a href="/staff/introducers/${r.introducer.id}">${r.introducer.name}</a>` : h`${r.introducer.name}`}.</p>
     ${s === undefined ? raw('') : h`
       <p>Does the client want progress shared with the firm? <strong>${s.label}</strong></p>
-      <p class="help">The client is the one asked, because the claim's progress is the client's. Until they say yes,
-      nothing about the claim is queued to the firm — and never asked counts exactly as no.</p>
+      <p class="help">We ask the client, because it is their claim. Until they say yes, nothing about the claim is
+      sent to the firm. Never asked counts the same as no.</p>
       ${!s.may_record ? raw('') : h`<form method="post" action="/staff/leads/${lead_id}/share-progress">
         <p>Read the client these words, then record what they said:</p>
         <blockquote>${s.current_wording.words}</blockquote>

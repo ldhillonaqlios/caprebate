@@ -21,12 +21,12 @@ type Row = { ref: string; section: string; period_years: number; trigger: readon
 /** What the determinations set. Drafted and derived both read DERIVED_NOT_APPROVED; none is set. */
 const DETERMINATIONS: readonly Row[] = [
   { ref: 'RET-1', section: '12.2, 12.6, 13.2', period_years: 6, trigger: [/claim_period_end/, /return_filed_at/, /enquiry_closed_at/, /where later/], open: /discovery windows/ },
-  { ref: 'RET-2', section: '12.3', period_years: 0, trigger: [/nil/, /RET-1/], open: /discovery windows/ },
+  { ref: 'RET-2', section: '12.3', period_years: 0, trigger: [/nil/, /tax records’ period/], open: /discovery windows/ },
   { ref: 'RET-3', section: '12.4', period_years: 6, trigger: [/verified_at/, /last backup copy’s expiry/], open: null },
   { ref: 'RET-4', section: '12.5', period_years: 6, trigger: [/responded_at/, /RET-6/], open: null },
   { ref: 'RET-5', section: '2.3', period_years: 6, trigger: [/closed_at/], open: null },
   { ref: 'RET-6', section: '3.3', period_years: 6, trigger: [/final response/], open: null },
-  { ref: 'RET-7', section: '4.3, 11, 13.2', period_years: 6, trigger: [/claim_period_end/, /report_delivered_at/], open: /where two apply/ },
+  { ref: 'RET-7', section: '4.3, 11, 13.2', period_years: 6, trigger: [/claim_period_end/, /report_delivered_at/], open: /which one wins/ },
 ];
 
 describe('RETENTION ROWS — each read against the determinations, none approved, the open questions left open', () => {
@@ -58,11 +58,11 @@ describe('RETENTION ROWS — each read against the determinations, none approved
         assert.equal(line?.ref, ref, kind);
         assert.equal(line?.state, 'DERIVED_NOT_APPROVED', kind);
         assert.deepEqual(line?.due, [], kind);
-        assert.match(line?.clock ?? '', /^RET-\d: 6 years from .*DERIVED, NOT APPROVED — .*drafted, not approved\. No date is computed\./, kind);
+        assert.match(line?.clock ?? '', /^Six years from .*Worked out by us — not yet approved by the data protection officer\. Drafted, not signed yet\. No deletion date set yet\./, kind);
         assert.doesNotMatch(line?.clock ?? '', /not set|UNSET/, `${kind} still says unset`);
       }
-      assert.match(lines.find((l) => l.kind === 'REGISTER_RECORDS')?.clock ?? '', /Still open for the officer: Should the retention rule name HMRC’s discovery windows/);
-      assert.match(lines.find((l) => l.kind === 'DOCUMENT_VERSIONS')?.clock ?? '', /Still open for the officer: Which retention clock decides when a client’s file is deleted, where two apply\?/);
+      assert.match(lines.find((l) => l.kind === 'REGISTER_RECORDS')?.clock ?? '', /Still to be decided by the data protection officer: Should tax records be kept for HMRC’s discovery windows/);
+      assert.match(lines.find((l) => l.kind === 'DOCUMENT_VERSIONS')?.clock ?? '', /Still to be decided by the data protection officer: Where two deletion dates apply to a client’s file, which one wins\?/);
     } finally { a.close(); }
   });
 });

@@ -108,7 +108,7 @@ describe('Phase 132, line 20 — the amendment window for a partnership with a c
         assert.match(read(yes).assumption ?? '', /s\.12AA\(5C\)/);
         assert.deepEqual([read(no).state, read(no).deadline], ['OPEN', '2027-01-31'], `${claimant}: NO`);
         assert.equal(read(absent).state, 'UNKNOWN', `${claimant}: a partner never recorded was a window`);
-        assert.match(read(absent).why, /whether any partner or member is a company is not established/);
+        assert.match(read(absent).why, /we do not know if any partner or member is a company/);
         assert.deepEqual(read(unknownRow), read(absent), `${claimant}: a fact recorded as NOT KNOWN did not read exactly as one never recorded`);
         // A later NOT KNOWN clears an earlier NO back to exactly the absent reading.
         CF.fact(app, no.id, KEY, null);
@@ -196,7 +196,7 @@ describe('Phase 132, line 20 — the amendment window for a partnership with a c
       post(no, { answer: 'VALUE', value: 'NO' });
 
       const tr = row(never);
-      assert.ok(tr.includes('files on the company deadline where that is earlier'), 'the row does not say a company partner puts the partnership on the company deadline');
+      assert.ok(tr.includes('the return is due on the company date where that is earlier'), 'the row does not say a company partner puts the partnership on the company deadline');
       assert.ok(tr.includes('open only if it is open on both dates'), 'the row does not say what not known does');
 
       assert.deepEqual({ ...stored(yes) }, { answer: 'VALUE', value_text: 'YES' });

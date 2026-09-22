@@ -151,7 +151,7 @@ function toRow(db: Db, r: JobDbRow): JobRow {
     // back to that stage and says so; an unknown stage is still not stage zero.
     stage_label: r.claim_id !== null
       ? anyStageLabel(r.claim_stage)
-      : `${stageOf(r.stage)?.label ?? 'stage not recognised'} — not yet on a claim`,
+      : `${stageOf(r.stage)?.label ?? 'stage unknown'} — not yet on a claim`,
     rooms_counted: counted, rooms_total: total,
     rates_recorded: rates, rates_total: RATE_FIELDS.length,
   };
@@ -262,8 +262,8 @@ export function payloadFor(d: Deps, actor: Actor, job_id: string): SurveyorPaylo
       quarantine: {
         state: r.state as 'SEALED' | 'COMMITTED_AND_RELEASED',
         notice:
-          'No estimate has been sealed for this job, so there is nothing to withhold and nothing ' +
-          'to release. Your figures are still recorded the same way.',
+          'This job has no locked estimate, so there is nothing to hold back or release. ' +
+          'Your figures are still saved the same way.',
         released_always: RELEASED_TO_SURVEYOR_ALWAYS,
       },
     };
@@ -398,9 +398,9 @@ export function platformDefaults(): number | null {
 }
 
 export const NO_PLATFORM_DEFAULTS =
-  'We have no default rate for this field in this sector. Our own price books cover neither ' +
-  'dental nor care homes, and putting a number here that nobody had derived would be worse ' +
-  'than an empty box — you would be checking our guess instead of making your own.';
+  'We have no default rate for this field in this sector. Our price books do not cover dental ' +
+  'practices or care homes. A made-up number would be worse than an empty box — you would ' +
+  'check our guess instead of making your own.';
 
 /**
  * The ten tracked field ids, from the module.
@@ -719,15 +719,15 @@ export function commitFigures(
   }
   if (pct === null) return { ok: false, why: 'The qualifying percentage is a number between 0 and 100.', field: 'qualifying_pct' };
   if (input.method_note.trim() === '') {
-    return { ok: false, why: 'Say what basis you reached these on. A commitment without a method is not evidence.', field: 'basis' };
+    return { ok: false, why: 'Say on what basis you reached these. Without a method, your figures are not evidence.', field: 'basis' };
   }
 
   const est = sealedEstimate(d.db, r.assessment_id);
   if (est === null) {
     return {
       ok: false,
-      why: 'No estimate has been sealed for this job, so there is nothing for a commitment to ' +
-        'release. Raise this with the office rather than working around it.',
+      why: 'This job has no locked estimate, so committing would release nothing. ' +
+        'Tell the office — do not work around it.',
     };
   }
 
@@ -960,13 +960,13 @@ export function amendFigures(
   if (input.reason.trim() === '') {
     return {
       ok: false,
-      why: 'Say why you are changing them. An unexplained change after seeing our estimate cannot be ' +
-        'told apart from anchoring drift, which is the thing this whole process exists to measure.',
+      why: 'Say why you are changing them. Without a reason, we cannot tell a real fix from ' +
+        'being pulled toward our estimate. That pull is what we are here to measure.',
     };
   }
 
   const est = sealedEstimate(d.db, r.assessment_id);
-  if (est === null) return { ok: false, why: 'There is no sealed estimate on this job to have been released.' };
+  if (est === null) return { ok: false, why: 'This job has no locked estimate, so nothing was released.' };
 
   const q = hydrateQuarantine(d.db, storedJob(r), est, d.now, 'system');
   try {
@@ -1015,7 +1015,7 @@ export function reportDisclosure(
     return { ok: false, why: 'Say what you were told and by whom. A bare flag is not evidence.', field: 'detail' };
   }
   const est = sealedEstimate(d.db, r.assessment_id);
-  if (est === null) return { ok: false, why: 'There is no sealed estimate on this job to have been disclosed.' };
+  if (est === null) return { ok: false, why: 'This job has no locked estimate, so there is no figure the client could have told you.' };
 
   const q = hydrateQuarantine(d.db, storedJob(r), est, d.now, 'system');
   q.reportClientDisclosure(actor.id, note.trim());
@@ -1123,9 +1123,8 @@ export function evidenceFor(db: Db, actor: Actor, job_id: string): Evidence {
     released_always: RELEASED_TO_SURVEYOR_ALWAYS,
     missing: missingFacts(db, actor, r.business_id).filter((f) => f.blocks !== 'ACCOUNTANT'),
     originals_note:
-      'The original files no longer exist. Each was deleted from quarantine once the receipt ' +
-      'strip had run and none was copied to durable storage — what we keep is the structured ' +
-      'information read out of it, which is above. That is the pipeline working, not a fault.',
+      'The original files are gone. We read each one, then deleted the file, and kept no copy. ' +
+      'What we keep is the information we read from it, shown above. That is how it should work.',
   };
 }
 
@@ -1153,10 +1152,10 @@ export type Workspace = {
  * not real just as plainly as a person is.
  */
 export const SIGNATURE_STUB =
-  'SIGN-OFF IS STUBBED IN THIS BUILD. There is no signature provider connected and nothing here ' +
-  'is an executed document. Committing your figures records them, hashes them so they cannot be ' +
-  'quietly rewritten, timestamps them and releases our estimate to you — which is what the anchor ' +
-  'quarantine actually turns on. A real signature is a separate thing and it is not built.';
+  'E-SIGNING IS NOT SWITCHED ON YET. No signature service is connected, and nothing here is a ' +
+  'signed document. Committing your figures saves them with the time and locks them in the audit ' +
+  'log, so no one can change them quietly. It also releases our estimate to you. ' +
+  'A real signature is a separate step, and it is not built yet.';
 
 export function workspace(d: Deps, actor: Actor, job_id: string): Workspace {
   const r = loadJob(d.db, actor, job_id);

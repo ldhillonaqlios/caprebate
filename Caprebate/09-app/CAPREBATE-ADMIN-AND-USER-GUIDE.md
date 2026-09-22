@@ -14,8 +14,8 @@ running application is right, and the disagreement is a defect in whichever docu
 
 **There is no real client, person, property or document anywhere in this system.** The six
 businesses in it are fictional, every postcode is from the `ZZ` range reserved for fiction, and every
-login shares one known password. **Nothing leaves the building**: an email is written to the outbox
-and labelled *not sent*, and no outside register or supplier is ever contacted. **It must not be put
+login shares one known password. **Nothing leaves the building**: an email is saved with the **emails waiting to
+send** and labelled *not sent yet*, and no outside register or supplier is ever contacted. **It must not be put
 on a public address, and no real client data may go into it**, until a developer has done the work in
 Developer Spec §5.
 
@@ -162,10 +162,14 @@ may see or do changed** — only where things sit.
   label is joined to its field (Phase 133e).
   After a save, **Saved.** shows at the top of the page.
 - **"The data this page was built from"** is shown to Admin only.
-- **The client's six step names are built and switched off**, waiting on Lakhbir (**1 Your estimate**, **2 Engagement
-  letter signed**, **3 We research your property**, **4 Expert sign-off**, **5 Claim filed**, **6 Aftercare**). Until
-  they are switched on, this guide uses the names you see. *The menu names proposed beside them were settled by Phase
-  135: Reward model is now **Introducer fees**; Engaged clients and Next actions are no longer menu entries at all.*
+- **The client's six step names are switched on since 22 September 2026 (Phase 144).** Lakhbir said "Switch on". A
+  client now reads **1 Your estimate**, **2 Engagement letter signed**, **3 We research your property**, **4 Expert
+  sign-off**, **5 Claim filed**, **6 Aftercare** in the portal, instead of the back office's stage names. Staff screens
+  keep the stage names. *The menu names proposed beside them were settled by Phase 135: Reward model is now
+  **Introducer fees**; Engaged clients and Next actions are no longer menu entries at all.*
+- **Plain words on every screen (Phase 144, 22 September 2026).** Every back-office and portal screen was rewritten to
+  read at about a 12-year-old level. The design words (outbox, gate, fired, derived, sealed, receipt strip, deletion
+  clock …) are gone from the screens; this guide now uses the words you see. See `B51`.
 
 ## Contents
 
@@ -185,14 +189,14 @@ Screens are named by their heading. The web address follows on a small "Address:
 
 ### A1 · Before anything
 
-**This is a prototype, and everything in it is invented.** The six businesses (Aldergate Care Group Limited, Brackenfell Dental Partnership LLP, Corvale Supported Living Limited, Dunmarrow Medical Practice Limited, Elverton Private Hospital Limited, Fenmoor Nursing Homes Limited) do not exist. Their people, properties, postcodes and figures are made up too. Do not put a real client, a real person or a real document into it. The foot of every page says: "Prototype build. No payment is taken anywhere in this system and no signature provider is connected."
+**This is a prototype, and everything in it is invented.** The six businesses (Aldergate Care Group Limited, Brackenfell Dental Partnership LLP, Corvale Supported Living Limited, Dunmarrow Medical Practice Limited, Elverton Private Hospital Limited, Fenmoor Nursing Homes Limited) do not exist. Their people, properties, postcodes and figures are made up too. Do not put a real client, a real person or a real document into it. The foot of every staff page says: "This is a test system. No payment is taken and no signature provider is connected."
 
 **The demo data must never be loaded into a live system.** Loading it creates one login per role, and all five share a published password (`change-this-seed-password`). For that reason, the command that loads it refuses to run unless someone sets `CAPREBATE_ALLOW_SEED=1` on purpose. Without it, the command stops with *"refusing to seed: set CAPREBATE_ALLOW_SEED=1 to confirm this is not production"*. The demo launcher stops too, with *"refusing to run: this launcher seeds invented data with a known password"*. The setting exists so that nobody can load invented data with a known password by forgetting a flag. On a live system nobody should ever set it.
 
 **Nothing leaves the building.**
-- **Email goes to the outbox and stays there.** An email typed on a client's **Email** page (Phase 141), a message queued from a template, a notice from an automation rule, or a letter from a compliance register is written to the outbox. Nothing sends it. You can read the outbox at the foot of **Your account** (the menu under your name), under "The outbox — what would have been sent". Every row reads **NOT SENT**, and the page says: "NOT SENT — outbound email is stubbed in this build. The message was written to the outbox. Calendar invitations go the same way, for the same reason." Every email says it is from **Cap Rebate <contactus@caprebate.com>**, and replies go to the same address. Sending is built and switched off until an email service is chosen, named in the privacy notice and the engagement letter, and the contactus@ mailbox is set up with its email security records. Until then the Email page says **"Saved — emails are not being sent yet."**
-- **Nothing calls an outside register.** No connector to Companies House, the Land Registry or any other source exists. Running the research on a client records every source as not permitted yet, with the reason. The free lookups wait on a published privacy notice, and the paid ones wait on a signed engagement letter.
-- **No money moves and nothing is signed.** The finance screen says "RECORDED, NOT COLLECTED". The letter's signing records a state, and no signature provider is contacted.
+- **Email is saved with the emails waiting to send, and stays there.** An email typed on a client's **Email** page (Phase 141), an email made from a template, a notice from an automation rule, or a letter from a compliance register is saved there. Nothing sends it. You can read the list at the foot of **Your account** (the menu under your name), under **"Emails waiting to send"**. Its columns are **When**, **What it is** (for example "From a template", "Typed by staff", "An alert", "Calendar invite"), **Subject** and **State**; every row's state reads **"Saved — not sent yet"**, and a company's own email has a link, **Open the Email page**. The page says: "Emails are not being sent yet. Each one is saved here until sending is switched on. Calendar invites wait here too. A company's own emails are on its Email page." Every email says it is from **Cap Rebate <contactus@caprebate.com>**, and replies go to the same address. Sending is built and switched off until an email service is chosen, named in the privacy notice and the engagement letter, and the contactus@ mailbox is set up with its email security records. Until then the Email page says **"Saved — emails are not being sent yet."**
+- **Nothing calls an outside register.** No connection to Companies House, the Land Registry or any other source is switched on. Running the research on a client records every lookup as not allowed yet or not switched on yet, with the reason. The free lookups wait on a published privacy notice, and the paid ones wait on a signed engagement letter.
+- **No money moves and nothing is signed.** The finance screen says "RECORDED, NOT COLLECTED". The letter's signing records a state: "Online signing is not switched on yet, and we never take payments here."
 
 ---
 
@@ -224,15 +228,15 @@ Address: /staff/users. The page heading is **Users and roles**; you reach it fro
 - "Business — for a CLIENT account only" (leave it empty for staff)
 - "Initial password — at least 12 characters"
 
-Then press **Create**. No welcome email is sent. The page explains that "the password is set here and handed over out of band", so give it to the person yourself.
+Then press **Create**. No welcome email is sent. The page explains: "Emails are not sent yet, so no welcome email goes out. Set the password here and give it to the person yourself, not by email."
 
-**Changing a role.** Under "Change somebody's role", choose the new role and press **Assign**. The page warns: "A role change is a privilege change: every session that user holds is revoked at once, and they sign in again under the new role." Your own account is not in that list.
+**Changing a role.** Under "Change somebody's role", choose the new role and press **Assign**. The page warns: "Changing a role signs that person out at once. They sign in again with the new role." Your own account is not in that list.
 
 **Disabling.** Press **Disable** on the person's row. Their live sessions end straight away, not at their next sign-in, and after that their sign-in fails with the usual "those details did not match". The page has no button to switch an account back on.
 
-**What an administrator may NOT do.** The page says it: "An administrator cannot change somebody's name, username or photograph — that is inside their account rather than about it, and a record edited that way reads as the person themselves." Each person changes their own details on their own Settings page. Nor may you change your own role or disable your own account. You cannot disable the last administrator either, because then nobody could ever create one again.
+**What an administrator may NOT do.** The page says it: "You cannot change someone's name, username or photo. Only they can, from their own account." Each person changes their own details on their own Settings page. Nor may you change your own role or disable your own account. You cannot disable the last administrator either, because then nobody could ever create one again.
 
-**Sign-in is rate limited.** Too many sign-ins for one address in a short time are refused with the same vague message. On the demo, the sixth quick sign-in as admin was refused. A signed-in session lasts at most eight hours.
+**Too many tries and you must wait.** The sign-in page says: "After too many tries you must wait a while. If sign-in fails, we do not say why." Too many sign-ins for one address in a short time are refused with the same vague message. On the demo, the sixth quick sign-in as admin was refused. A signed-in session lasts at most eight hours.
 
 ---
 
@@ -240,7 +244,7 @@ Then press **Create**. No welcome email is sent. The page explains that "the pas
 
 Address: /staff/admin-settings. The heading is **Admin settings**.
 
-The page opens: "Configurable where it is a preference, fixed where it is a rule. … A value is retired, never deleted, and its code never changes."
+The page opens: "You can change preferences here. Rules are fixed. … A value is retired, never deleted, and its code never changes."
 
 **The five lists:** Lead sources · Priorities · Task types · Property types · Introducer types.
 **The two reason lists:** "Why a lead is lost" · "Why a claim leaves the procedure".
@@ -254,7 +258,7 @@ Each value shows its Code, Label, State and, for the five lists, "Where it came 
 - **Nothing is ever deleted.** Old records name these codes, so a value is retired instead.
 - **Values the application writes itself cannot be retired.** Their row shows "written by the application — never retired" and the state "active — the application writes it", with no retire choice. If you try anyway, the answer is: "The application writes this value itself, so it is never retired."
   - Examples: the Website, Referral, Accountant, Adviser and Other lead sources, and the Normal priority.
-- **The stages are not a list.** Asking to add one is refused: "The stages are the operating procedure's ten, each with its gate and its exits. A stage is never added, removed or reordered by a setting."
+- **The stages are not a list.** Asking to add one is refused: "There are ten steps, each with its own check and ways out. No setting can add, remove or reorder a step."
 
 Below the lists, the page repeats (read only) the document types, the automation rules, how many templates there are, the finance settings and the compliance settings. Each carries a link to its own page, where it is changed.
 
@@ -262,26 +266,26 @@ Below the lists, the page repeats (read only) the document types, the automation
 
 | On the page | The reason it gives, in short |
 |---|---|
-| STAGE_GATE:ENQUIRY, :ASSESSMENT, :ENGAGEMENT, :DATA_GATHERING, :SURVEY, :VALUATION, :TAX_ADVISER_SIGNOFF, :REPORTS, :INVOICE, :DEFENCE_PACK | "A setting that could change a gate could step round it." |
-| STAGE_LIST | The ten stages are never added, removed or reordered by a setting |
-| FREE_REGISTER_GATE | Opens when the privacy notice is published — "one line of code, and not ours to turn" |
-| PAID_REGISTER_GATE | "a signed engagement asserted on the server, and an operator's click. No setting stands in for either." |
-| CTA_SWITCH: s185_plus_own_s25, urenco_provision_of, specialised_supported_housing, trade_not_s35, s187a_needs_entitled_owner, grant_traced_after_dwelling, connected_contributor_no_reduction, s538_carveout, s187a_6b_statements_route, fvr_requires_past_owner_claim, transaction_tax_in_base, grant_after_ceilings | "A tax adviser's switch stays off until a chartered tax adviser answers." |
-| FEE_CONTROL:above_benefit, :break_and_abort (the minimum fee is no longer a control: decided none, Phase 132e) | "A pricing policy an admin screen could flip would be decided by whoever found the screen." |
-| REWARD_MODEL | Switched on its own page, and refused there while clause 1 of the letter is blank |
-| FEE_CLAWBACK | Clause 13's clawback, off until its three blanks are answered |
-| FEE_TRIGGER | "When our fee is earned is Lakhbir's question, and the invoice stage waits on it in code." |
-| AML_IN_SCOPE | A dated, sourced compliance setting, recorded on the compliance page, "never a general setting" |
-| CLIENT_SHARE_GIVE | Waits on words the data protection officer agrees |
-| REFERRAL_FORM | Waits on a published privacy notice |
-| INVOICE_FRAUD_PROCEDURE | Lifting it "is a piece of work, not a setting" |
-| QUOTE_GAP_REVIEW_PCT | The 15% review threshold is a constant, not a setting |
-| RETENTION_PARAMETERS | "A retention period is the data protection officer's signature" |
-| ROLE_BOUNDARY | The six roles and what each may do are fixed in code; a seventh is a question for Lakhbir |
-| DOCUMENT_TYPE_RECEIPT_POLICY | Only a migration binds a receipt policy |
-| DOCUMENT_TYPE_CARRIES_VALUE_UNSET | A value-carrying type is never marked as carrying none |
-| FACT_KEYS, CAPTURE_SOURCES, PAYER_CLASSES | Each is a migration, not a list value |
-| RECIPROCITY_KINDS | Reward model A's three kinds are never values on the task-type list |
+| STAGE_GATE:ENQUIRY, :ASSESSMENT, :ENGAGEMENT, :DATA_GATHERING, :SURVEY, :VALUATION, :TAX_ADVISER_SIGNOFF, :REPORTS, :INVOICE, :DEFENCE_PACK | "Each step's check is built into the system and run at every move. A setting could get round it." |
+| STAGE_LIST | "No setting can add, remove or reorder a step." |
+| FREE_REGISTER_GATE | "No setting can turn on free lookups. They start when our privacy notice is published." |
+| PAID_REGISTER_GATE | "No setting can turn on paid lookups. They need a signed engagement letter and a person to click." |
+| CTA_SWITCH: s185_plus_own_s25, urenco_provision_of, specialised_supported_housing, trade_not_s35, s187a_needs_entitled_owner, grant_traced_after_dwelling, connected_contributor_no_reduction, s538_carveout, s187a_6b_statements_route, fvr_requires_past_owner_claim, transaction_tax_in_base, grant_after_ceilings | "A tax adviser's switch stays off until a chartered tax adviser answers. Changing it is their call and a system change, never a setting." |
+| FEE_CONTROL:above_benefit, :break_and_abort (the minimum fee is no longer a control: decided none, Phase 132e) | "A fee rule. If a setting could change our pricing, whoever found the setting would decide it." |
+| REWARD_MODEL | "An admin changes it on its own page, and not while clause 1 of the engagement letter is blank." |
+| FEE_CLAWBACK | "Clause 13's fee clawback stays off until its three blanks are filled in. It is a system change, not a setting." |
+| FEE_TRIGGER | "Lakhbir decided when our fee is earned: when our report is delivered for filing. This is built in, so no setting can change it." |
+| AML_IN_SCOPE | "That is set on the compliance page, with a date and a source. It is checked before we take on a client." |
+| CLIENT_SHARE_GIVE | "That waits on wording our data protection officer agrees." |
+| REFERRAL_FORM | "The public referral form waits on our privacy notice being published. It is not a setting." |
+| INVOICE_FRAUD_PROCEDURE | "Turning them on is a piece of work, not a setting." |
+| QUOTE_GAP_REVIEW_PCT | "The 15% review level is fixed in how we check quotes. It is not a setting." |
+| RETENTION_PARAMETERS | "How long we keep data is signed off by our data protection officer, then built into the system." |
+| ROLE_BOUNDARY | "The staff roles, and what each can do, are built in and checked on every request. A new or wider role is for Lakhbir to decide." |
+| DOCUMENT_TYPE_RECEIPT_POLICY | "Whether we keep a file, or read it and then delete it, is fixed for each document type. Only a system update changes it." |
+| DOCUMENT_TYPE_CARRIES_VALUE_UNSET | "A document type that can hold a claim value, a tax benefit or a fee is never marked as holding none." |
+| FACT_KEYS, CAPTURE_SOURCES, PAYER_CLASSES | Each is fixed, and a new one needs a system update — not a list value |
+| RECIPROCITY_KINDS | "The three things we give back to a firm under reward model A are fixed. They are only for tasks on a firm, and are not task types." |
 
 ---
 
@@ -289,7 +293,7 @@ Below the lists, the page repeats (read only) the document types, the automation
 
 Address: /staff/document-types. The heading is **Document types**.
 
-Each row shows: Type · From · Who may read it · Can carry a value · Receipt strip · Deletion clock · Active.
+Each type shows who may read it, whether it can carry a value, **What we do with the file**, **When it is deleted** and whether it is active. A badge reads **No deletion date set yet** or **Deletion rule chosen**.
 
 **What an Admin can change on a type:**
 - **The label.**
@@ -298,32 +302,32 @@ Each row shows: Type · From · Who may read it · Can carry a value · Receipt 
   - *The claim team* (Admin and Sales, and the client whose document it is)
   - *Finance* (Admin, Accounting, and the client)
   - *The engagement letter* (Admin, Sales and the client; Accounting once it is signed; never a surveyor)
-- **The deletion clock**: UNSET, or RET-7.
+- **When it is deleted**: **No deletion date set yet**, or **The 6-year rule for files a client sends** (the rule the design notes call RET-7).
 - **Whether the type is active or retired.**
 
 Press **Save** on the row.
 
-To add a type, use "Add a type": "Code", "Label", "Who may read it", "Can it carry a claim value, a tax benefit or a fee?" and "Deletion clock". Then press **Add the type**.
+To add a type, use "Add a type": "Code", "Label", "Who may read it", "Can it carry a claim value, a tax benefit or a fee?" and "When it is deleted". Then press **Add the type**.
 
 **What cannot be changed:**
 - **Nothing is deleted.** A type is retired instead.
-- **A type that can carry a value can never be marked as not carrying one.** Such a row offers only "can carry a value". Forced, the answer is: "a type that can carry a claim value, a tax benefit or a fee is never marked as not carrying one (N1)."
-- **A type that can carry a value can never be claim evidence**, because a surveyor reads claim evidence and must never see our figures: "a type that can carry a claim value, a tax benefit or a fee cannot be claim evidence: a surveyor would read it (N1)."
-- **The receipt policy is not on the page at all.** Only a developer's migration can bind one.
+- **A type that can carry a value can never be marked as not carrying one.** Such a row offers only "can carry a value". Forced, the answer is: "a type that can carry a claim value, a tax benefit or a fee is never marked as not carrying one."
+- **A type that can carry a value can never be claim evidence**, because a surveyor reads claim evidence and must never see our figures: "a type that can carry a claim value, a tax benefit or a fee cannot be claim evidence. A surveyor would read it."
+- **The rule for reading a type's files is not on the page at all.** The page says: "Only a type with a rule for reading its files can be sent or asked for. That rule is added in a system update, not on this page."
 
-**Why a type with no receipt policy cannot be received.** Every client upload is run through a "receipt strip": it takes out what must not be kept, and the original file is then deleted with evidence. That strip is different for each kind of document. For a type with no strip written, the page says: "No receipt policy — so an upload of this type cannot be received. The link is refused before it is issued, and it cannot be requested."
-- Of the twenty-five seeded types, eleven have a policy and fourteen do not; the fourteen include the engagement letter, accounts and Caprebate's fee invoice.
-- A type you add has none either: "A type added here has no receipt policy, so it can be recorded and configured but not received."
-- **Who decides a policy: the data protection officer**, under the open question *"Which receipt strip should each new document type carry before anyone may upload one?"* Then a developer binds it with one migration.
+**Why a type with no rule for reading its files cannot be sent.** Every file a client sends is read by us: we take out what we must not keep, save what we read, then delete the file and record that we did. The screen calls this **"What we did with the file"** (the design notes call it the receipt strip). It is different for each kind of document. For a type with no rule yet, the page says: "We have no rule yet for reading this kind of file, so we cannot accept one. You cannot send an upload link for it or ask for it. The data protection officer sets that rule. Until then, this type is listed but switched off."
+- Of the twenty-five seeded types, eleven have a rule and fourteen do not; the fourteen include the engagement letter, accounts and Caprebate's fee invoice.
+- A type you add has none either: "A type added here has no rule for reading its files yet, so nobody can send one."
+- **Who decides the rule: the data protection officer**, under the open question *"For each new document type, what do we keep when a file comes in? Nobody may upload one until this is decided."* Then a developer adds it in a system update.
 
-The clock RET-7 reads "DERIVED, NOT APPROVED — the data protection officer has not signed it, so no deletion date is computed."
+The 6-year rule reads: "Deleted 6 years after the later of two dates: the claim's period end, or when we sent the report. Worked out by us — not yet approved by the data protection officer, so no deletion date is set."
 
-**A recommended strip for each of the fourteen is recorded, and it changes nothing on this page.** Phase 129 wrote one recommendation per type, each with a one-line reason, for the data protection officer to approve or amend:
+**A suggested rule for each of the fourteen is recorded, and it changes nothing on this page.** Phase 129 wrote one recommendation per type, each with a one-line reason, for the data protection officer to approve or amend:
 - **keep whole** the five we produce: the engagement letter, our fee invoice, the survey report, the capital allowances report and claim documentation;
 - **remove the individuals and keep the figures** on six: the completion statement, a valuation, accounts, a tax computation, a contractor's invoices and plans;
 - **do not accept as uploads** survey photographs, correspondence and "other".
 
-Every one of the fourteen still reads "No receipt policy" and still cannot be uploaded or asked for. That stays true when a recommendation is approved, until a developer's migration binds the policy.
+Every one of the fourteen still reads "We have no rule yet for reading this kind of file" and still cannot be uploaded or asked for. A suggestion reads "Suggested by us — not yet approved by the data protection officer"; once approved it reads "Approved by the data protection officer, but not switched on yet". It stays unusable until a developer switches the rule on in a system update.
 
 ---
 
@@ -331,7 +335,7 @@ Every one of the fourteen still reads "No receipt policy" and still cannot be up
 
 Address: /staff/automation. The heading is **Automation rules**.
 
-"A trigger and an effect. Every rule that matches an event writes a run — it ran, or it did not and why."
+"Each rule says when it acts and what it does. Each time, it notes if it ran, or why not. A notice is saved with the emails waiting to send. It is not sent yet."
 
 **The five triggers:**
 - A lead is created
@@ -343,32 +347,32 @@ Address: /staff/automation. The heading is **Automation rules**.
 **The five effects:**
 - A task, from the rule's template
 - A follow-up date — a follow-up task, due in the days the rule gives
-- A notice to the owner — written to the outbox, and not sent
-- Information-request tasks — one per fact the derived missing list says nobody has asked for
+- A notice to the owner, added to the emails waiting to send
+- Tasks to ask for information — one for each missing fact nobody has asked for yet
 - A document request to the client — of a type something can receive, saying why and what it holds up
 
 Nine rules come seeded. Each has a **Change** link; to stop one, set "Active" to "no — retired". Rules are not deleted.
 
-**The forbidden effects, and why.** The page lists them at the top: "What no rule may do. Each is refused by the store with its reason, not missing from a form":
-- No rule may open the free register gate. It opens when the privacy notice is published, and the switch is the engine's, not a rule's.
-- No rule may open the paid gate. It is a signed engagement letter asserted on the server, and an operator's click.
-- No rule may record a signature.
-- No rule may move a claim. A move asks the stage's gate, and a person asks for the move.
-- No rule may record a confirmation a gate reads — that would move a claim past its gate by another door.
-- No rule may flip a tax adviser's switch.
-- No rule may fire a register call. / No rule may run the research. — "The operator picks the moment, not the calls."
-- No rule may send anywhere but the outbox — "A notice is written there, and nothing leaves the building." The page says it once; an email, a text message and a web hook are each still refused by name.
-- No rule may write to an organisation marked do not contact.
-- No rule may create an invoice email.
-- No rule may chase an invoice or a payment.
-- No rule may send our bank details, or change them.
+**The forbidden effects, and why.** The page lists them at the top: "What no rule may do. Each is refused, with the reason":
+- No rule can turn on free lookups. They start when our privacy notice is published.
+- No rule can turn on paid lookups. They need a signed engagement letter and a person to click.
+- No rule can record a signature. Only the client signs the engagement letter.
+- No rule can move a claim. A person moves it, and each step is checked first.
+- No rule can record a confirmation that a step checks. That would let a claim skip the check.
+- No rule can change a tax adviser's switch.
+- No rule can look up a register. / No rule can run the research. — "A person chooses when to do it."
+- No rule can send a message itself. — "It can only add a notice to the emails waiting to send." The page says it once; an email, a text message and a web hook are each still refused by name.
+- No rule can write to an organisation marked do not contact.
+- No rule can make an invoice email. That waits on our invoice-fraud procedure.
+- No rule can chase an invoice or a payment.
+- No rule can send or change our bank details.
 
 The reason behind all of them: a rule runs without a person looking. Anything that moves a claim past a check, speaks to a client or touches money must stay a human decision.
 
 **Reading what each rule did.** At the foot, "What the rules did" lists every run: When · Rule · Event · About · Result. The result is "ran — 1 task", or the reason it did not run. On the demo it read "No rule has run yet." until a lead was recorded.
 
 **A rule that asks a client for a document.** The effect "A document request to the client" is on the form, along with "Document asked for, for "a document request"". The code's rules for it are:
-- It may ask only for a type that has a receipt policy.
+- It may ask only for a type we can accept (one with a rule for reading its files).
 - Its "Task" box holds *why we need the document*, and "Task description" holds *what it holds up*. The client reads both.
 - It may not be triggered by "A document is requested", because it would then ask for ever.
 
@@ -376,23 +380,23 @@ The reason behind all of them: a rule runs without a person looking. Anything th
 
 ---
 
-### A6 · Email templates and the outbox (`B26`)
+### A6 · Email templates and the emails waiting to send (`B26`)
 
 Address: /staff/templates. The heading is **Email templates**.
 
 **Merge fields.** The page lists them: "{{contact_name}} {{organisation}} {{property_address}} {{claim_reference}} {{next_action}} {{due_date}} and no others."
-- A merged value is escaped, so nobody can slip code into an email.
+- "A merged value is shown as typed", so nobody can slip code into an email.
 - A value nobody recorded "shows as a gap in square brackets", never as a blank.
 
-**Refused content.** "Never bank details, never an invoice. A template carrying either is refused — the invoice email waits on the invoice-fraud procedure." In practice a template is refused if its label, subject or body carries:
+**Refused content.** "Never bank details, never an invoice. A template with either is refused. Invoices are not emailed until our invoice fraud checks are in place." In practice a template is refused if its label, subject or body carries:
 - the word invoice, or remittance, a fee note, a statement of account, or an amount due or outstanding;
 - a sort code, an account number, an IBAN, bank details, or anything **shaped** like a sort code, account number or IBAN;
 - payment details, a bank transfer, or where to pay;
 - the **tipping-off words**: money laundering, suspicion, the National Crime Agency, the nominated officer, due diligence, tipping off. Nothing a client reads may suggest anyone suspects them.
 
-The message reads "A template may not carry [what it found]. Bank details are never sent from a template, and the invoice email waits on the invoice-fraud procedure." A merge field outside the six gets: "“{{first_name}}” is not a merge field. The merge fields are …".
+The message reads "A template may not carry [what it found]. We never send bank details from a template. The invoice email waits until our invoice-fraud steps are in place." A merge field outside the six gets: "“{{first_name}}” is not a merge field. The merge fields are …".
 
-**Where a template is used.** Since Phase 141 a template is a place to start an email, not a separate form. On a client's **Email** page, open **Start from a template**, choose one and press **Use this template**: the subject and the message fill in, merged for the contact and the claim chosen, and you change anything before you save. The same refusals apply to an email you type yourself. Older messages queued from a claim appear at the foot of **Your account**, under "The outbox — what would have been sent" (When · Kind · Subject · Sent), marked **NOT SENT**. An organisation marked do not contact is refused: "This organisation is marked do not contact. Nothing was queued — the outbox refuses it."
+**Where a template is used.** Since Phase 141 a template is a place to start an email, not a separate form. On a client's **Email** page, open **Start from a template**, choose one and press **Use this template**: the subject and the message fill in, merged for the contact and the claim chosen, and you change anything before you save. The same refusals apply to an email you type yourself. Older messages saved from a claim appear at the foot of **Your account**, under "Emails waiting to send" (When · What it is · Subject · State), marked **Saved — not sent yet**. An organisation marked do not contact is refused: "This company is marked do not contact, so nothing was saved to send."
 
 **Who emails come from.** On **Admin settings**, the section **Who emails come from** shows the sender — "Cap Rebate <contactus@caprebate.com>" — and where replies go. Admin can change the name, the address and the reply address and press **Save**; the old one is kept, so it is always known what an earlier email was sent under. Sales can read it. It is one setting: every email uses it, whatever wrote it. Whether emails are actually sent is not a setting — the same section says "Emails are not being sent yet" and, under **Why?**, what is still missing.
 
@@ -418,14 +422,14 @@ The form says: "A new value is a new row, with the day it takes effect and where
 **The fee controls ship off.** Section "5 · The fee controls, and what the engagement letter says" shows:
 - our fee above the client's first-year saving — off;
 - **a minimum fee — "none — decided"**: the switched-off control that stood here is retired, because Lakhbir decided there is no minimum fee;
-- **a multi-site discount — discretionary, never applied automatically**: how large it may be and who approves it are "NOT DECIDED";
+- **a multi-site discount — "a choice, never taken off a fee by the system"**: how large it may be and who approves it are "NOT DECIDED";
 - the break fee and the abort fee — off.
 
 Each names the question it waits on. No screen turns them on; they are switches in code (see A10). There is no minimum job size at all: "Lakhbir decided so on 1 September 2026".
 
 **A multi-site discount is recorded, never applied.** On a claim, `POST /staff/claims/{id}/fee-discount` (Admin or Sales) records a discount as a share of our fee with the reason. The claim page's **A multi-site discount** panel lists it as **AWAITING THE DECISION** on the largest discount and who approves it. No invoice changes because of it, and nothing asks for a ceiling, because none is decided.
 
-**Blanks in the engagement letter are shown BLANK.** The break fee (clause 5) and the abort fee (clause 4) each read "BLANK IN THE ENGAGEMENT LETTER", with the clause's own placeholder quoted. **The payment terms are no longer blank** (Phase 132e): clause 4 reads "within 14 days of the date of the invoice", so an invoice raised today is due in 14 days — "within 14 days of the invoice, as clause 4 states". If the terms were ever blank again, the due date would read **UNSET**, and an invoice with no due date is never counted as overdue. The page gives the reason: "A term in the engagement letter is BLANK, and it is shown blank on purpose. A plausible number in a prototype becomes a number in a contract."
+**Blanks in the engagement letter are shown BLANK.** The break fee (clause 5) and the abort fee (clause 4) each read "BLANK IN THE ENGAGEMENT LETTER", with the clause's own placeholder quoted. **The payment terms are no longer blank** (Phase 132e): clause 4 reads "within 14 days of the date of the invoice", so an invoice raised today is due in 14 days — "within 14 days of the invoice, as clause 4 states". If the terms were ever blank again, the due date would read **No due date set yet**, and an invoice with no due date is never counted as overdue. The page gives the reason: "A term in the engagement letter is BLANK. We show it blank on purpose. A made-up number here could end up in a contract."
 
 **Nobody should type a number to fill a gap.** No field on the screen takes an invoice amount, a fee or a letter term, and that is deliberate. The answers belong to the people who own those decisions, and a guessed figure would quietly become a contract term.
 
@@ -436,13 +440,13 @@ Each names the question it waits on. No screen turns them on; they are switches 
 Address: /staff/introducer-rewards. The heading is **The introducer reward model**.
 
 It reads "It is Off — nothing is offered to an introducer." Three models are built and all ship off:
-- **Model A:** no cash, but firm-level reciprocity (a CPD session, a co-branded one-pager, priority turnaround).
-- **Model B:** a fixed, disclosed fee per successful claim, paid to the firm and never to a person. Nothing is payable until its disclosure to the client is recorded.
-- **Model C** (Phase 132e): **10% of our fee as actually invoiced**, to a registered accountancy firm that referred the claim — Lakhbir's answer. It accrues when our fee invoice is raised (never on a quote or an estimate), and if the fee is reduced under clause 13 a **reversing entry** is written; nothing is edited or deleted. Whether the client must be told, and how, is on the solicitor's list.
+- **Model A:** "no cash. We give the firm something back: a CPD session, a joint one-pager, or faster work".
+- **Model B:** a fixed fee for each successful claim, paid to the firm and never to a person. "Nothing is paid until we record that the client was told about it."
+- **Model C** (Phase 132e): **"a share of the fee we actually invoice"** — 10% — paid to a registered accountancy firm that referred the claim — Lakhbir's answer. It accrues when our fee invoice is raised (never on a quote or an estimate), and if the fee is reduced under clause 13 a **reversing entry** is written; nothing is edited or deleted. Whether the client must be told, and how, is on the solicitor's list.
 
-"Which, if either, is Lakhbir's decision: “Is anything paid to the accountant?”"
+"Which, if either, is for Lakhbir to decide: “Is anything paid to the accountant?”"
 
-**Switching.** Admin alone sees "Switch it": choose a "Model", enter "Model B's fee per successful claim, in pounds" and press **Save**. Accounting's view of the page has no switch. The switch "refuses to leave off while clause 1 of the engagement letter is blank", and the page quotes clause 1 as it still reads. On the demo, both A and B were refused with the heading "The reward model did not change".
+**Switching.** Admin alone sees "Switch it": choose a "Model", enter "Model B's fee per successful claim, in pounds" and press **Save**. Accounting's view of the page has no switch. The page says "This cannot be switched on while clause 1 of the engagement letter is blank.", and quotes clause 1 as it still reads. On the demo, both A and B were refused with the heading "The reward model did not change".
 
 "Fees to introducers" lists model B's fees. On the demo it said "No fee has accrued to any firm.", so the controls for recording a disclosure and a settlement could not be seen. By the rules, Admin or Sales records the disclosure, and Admin or Accounting marks a fee settled, never before the disclosure.
 
@@ -459,19 +463,19 @@ If the same firm has been recorded twice, open the copy's page. Under "Merge thi
 
 Address: /staff/compliance. The heading is **Compliance**.
 
-**Admin only.** "ADMIN holds this section today only because no other role can. There is no data protection officer role … Nothing here is reachable by Sales, Accounting, Surveying or a client."
+**Admin only.** "Only Admin can use this section today, because no other role can. There is no data protection officer login. … Sales, Accounting, Surveying and clients cannot reach anything here."
 
-**The one-person limitation.** Every register page carries this banner — the landing page, each register, S2, a contact's consent history and the retention list: "KNOWN LIMITATION — ONE PERSON TODAY. The procedures have the data protection officer decide and the controller countersign. There is no data protection officer role in this application and one Admin login types both names, so nothing here checks that two people were involved. The names typed are a record of what was said, not a control." In other words, the two-person check the procedures require is not enforced; one login can type both names.
+**The one-person limitation.** Every register page carries this banner — the landing page, each register, S2, a contact's consent history and the retention list: "KNOWN LIMITATION — ONE PERSON TODAY. The data protection officer should decide, and the controller should sign too. But there is no data protection officer login here. One Admin login types both names. So nothing checks that two people took part. The names are a note of who said what, not a check." In other words, the two-person check the procedures require is not enforced; one login can type both names.
 
 **Two things built beside the registers, both switched off.** A *data protection officer role* (see A2) would hold these registers and nothing else, so the officer could keep them without being able to add a salesperson or read the whole audit log. While it is off, the one-person banner stays true. A *per-disclosure log* would record each time a client's data goes to a recipient — the surveyor, the tax adviser, the client's own accountant, HMRC, or one of our processors — with when, which data, the lawful basis and who recorded it. It has no screen yet, records nothing while it is off, and never says "none" when the truth is that nothing is kept.
 
-- **Due diligence** (Address: /staff/compliance/aml). **Switched off.** "OFF — nothing here blocks a claim. The register can still be kept. Whether it must be is with the accountant and a solicitor." You can still record the nominated officer, the firm-wide risk assessment and checks. Company ownership data pulled from Companies House "does NOT stand for beneficial ownership" without a separate, dated decision.
-- **Rights requests** (/staff/compliance/rights). A person's request about their data, logged with one clock per right it engages (Art 15, 16, 17, 18, 21, 22A–22D). The deadline is **worked out each time you look, never stored**, and the arithmetic is printed. Where the law reads two ways, Caprebate works to the earlier date.
+- **Due diligence** (Address: /staff/compliance/aml). **Switched off.** "OFF — nothing here blocks a claim. The register can still be kept. Whether it must be is with the accountant and a solicitor." You can still record the nominated officer, the firm-wide risk assessment and checks. The Companies House list of people with significant control "does NOT stand for beneficial ownership": "To use an owner from it, record a separate, dated decision on the check."
+- **Rights requests** (/staff/compliance/rights). A person's request about their data, logged under "The rights it asks for — each has its own deadline" (Art 15, 16, 17, 18, 21, 22A–22D), with a **Deadlines** table of one row per right. The deadline is **worked out each time you look, never stored**, and the arithmetic is printed. Where the law reads two ways, Caprebate works to the earlier date.
 - **Complaints** (/staff/compliance/complaints). Classified on receipt, including whether it is a s.164A complaint, with an "Acknowledge by" date read from the date received.
 - **Breaches** (/staff/compliance/breaches). "Categories and counts, never names." The 72 hours are counted from the recorded moment of awareness. The description is refused if it carries bank details.
-- **S2 — the identity store** (/staff/compliance/identity). **There is no list.** "No list of names. A person is opened by person_ref, and every opening is audited. Every name search is logged, term and all." It is never exported and never searched by anything else.
+- **S2 — the identity store** (/staff/compliance/identity). **There is no list.** "No list of names. Each person is opened by their reference, and every opening is logged. Every name search is logged, with the words searched." It is never exported and never searched by anything else.
 - **Consent history** (/staff/compliance/consent/… for one contact). One history per contact: being contacted, marketing ("the box is never ticked for anyone"), and sharing progress with a referring firm ("never asked — nothing is shared").
-- **Retention** (/staff/compliance/retention). "A list, not a deleter. Nothing here deletes anything." Every clock is UNSET or "DERIVED, NOT APPROVED", so no deletion date is computed, and no delete is offered anywhere.
+- **Retention** (/staff/compliance/retention). The heading is **Retention — what is due for deletion**. "This list deletes nothing." Each row's **When it is deleted** says the rule in words, then **"No deletion date set yet"**, "No rule for this yet" or "Worked out by us — not yet approved by the data protection officer", so no deletion date is set, and nothing is deleted from anywhere.
 
 **The settings on the landing page** are dated and sourced: "Customer due diligence is in force" (Off) and "The insurance position" (No policy in force). A new value is recorded with **Record a new dated value**, and needs a value, a "Takes effect" date and "Where it comes from".
 
@@ -483,11 +487,11 @@ Each of these is built, tested and **shipped off**. None has a screen that turns
 
 | Switch | Where it is in code | What it does while off | Who decides, in plain words |
 |---|---|---|---|
-| **The free register gate** | `CB_REGISTRY.precondition` (`enabled: false`) — `09-app/engine/src/generated/shared.js`, about line 2899. This file is generated from the site file, so the change is made there and re-extracted, never in `generated/` | No free register lookup is permitted | Whoever publishes the privacy notice and links it from the address question. The code's own words: "a published privacy notice reachable from the address question" |
+| **The free register gate** (the screens say "free lookups") | `CB_REGISTRY.precondition` (`enabled: false`) — `09-app/engine/src/generated/shared.js`, about line 2899. This file is generated from the site file, so the change is made there and re-extracted, never in `generated/` | No free register lookup is permitted | Whoever publishes the privacy notice and links it from the address question. The code's own words: "a published privacy notice reachable from the address question" |
 | **The twelve tax adviser switches** | `CB_CTA` — `09-app/engine/src/generated/shared.js`, line 262. The names are listed in A3 | Each claim is worked out on today's reading. Nine of them would make claims bigger | **A chartered tax adviser**, one question at a time |
 | **The engagement fee gate** (found in the engine; not on the brief's list) | `CB_GATE_CONFIG` (`enabled: true` since Phase 132e, `jobs_per_year: 120`) — in the engine | **On, but it decides nothing yet**: no costing is injected, so every case is undetermined and no figure is withheld. The back office never quotes a fee to a client, and an earned fee is never withheld from an invoice by it | Lakhbir decided "Yes" and "120"; the costing is still an estimate |
 | **Break-even counted as too little profit** | `FUNNEL_SWITCHES.breakeven_is_insufficient_profit: false` — `09-app/backend/src/web/funnel-session.ts:216` | "Roughly break-even", "not sure" and never asked all read the same | The tax adviser: "Is 'roughly break-even' enough profit for the relief to bite on?" |
-| **The public referral form** | `REFERRAL_FORM` (`enabled: false`) — `src/web/introducers.ts:180` | The page does not exist: it answers as an unknown address | Whoever publishes a privacy notice telling a referred client what a firm passed to us |
+| **The public referral form** | `REFERRAL_FORM` (`enabled: false`) — `src/web/introducers.ts:180` | The page does not exist: it answers as an unknown address | Whoever publishes a privacy notice, linked from the referral form, telling a referred client what their firm sent us |
 | **A client saying yes to sharing from the portal** | `CLIENT_SHARE_GIVE` (`enabled: false`) — `src/web/introducers.ts:1089` | Clients can withdraw a yes in the portal but not give one; staff record a yes after asking | The data protection officer, by agreeing the words: "What must a referred client be told before we share their claim's progress with the firm that referred them?" |
 | **The fee controls** (two) | `FEE_CONTROLS` — `src/web/fee-controls.ts`: `above_benefit`, `break_and_abort`, each `enabled: false`. The minimum fee is no longer a switch: `MINIMUM_FEE_DECISION` records it decided none (Phase 132e) | The fee is not capped or adjusted, and no break or abort fee | A pricing decision. The code names the open questions ("Do we cap the fee, warn about it, or adjust the percentage?", "What is the break fee, and is there ever an abort fee or a fixed fee?") but not a person |
 | **Clause 13 fee clawback** | `FEE_CLAWBACK` (`enabled: false`) — `src/web/claim-record.ts` | A reduced claim raises nothing, and the audit says why | Answered (a) yes, and the time limit is now in the letter ("for so long as the claim remains open to enquiry"). Still waiting on clause 13's other two blanks — the trigger and settlements |
@@ -495,8 +499,8 @@ Each of these is built, tested and **shipped off**. None has a screen that turns
 | **The invoice-fraud procedure** | `INVOICE_FRAUD_PROCEDURE` (`in_force: false`) — `src/web/automation.ts:124` | No invoice email and no chasing email can exist | Signed off by the solicitor, the data protection officer and the developer. Even then, the invoice email is **new work**, not a flag |
 | **The data protection officer role** | `DPO_ROLE_SWITCH` (`enabled: false`) — `09-app/backend/src/authz.ts:1089` | Nobody can hold the role, and a forced assignment is refused | Lakhbir: "Do we need a compliance role separate from Admin?" |
 | **Company names kept on conveyancing uploads** | `CONVEYANCING_STRIP` (`enabled: false`) — `src/web/conveyancing-strip.ts:64` | Every party read off a sale contract or the pre-contract enquiry replies is kept only as its role, such as [SELLER] — companies included | The data protection officer: "May company names stay on conveyancing uploads if we strip the individuals?" |
-| **The per-disclosure log** | `DISCLOSURE_LOG` (`enabled: false`) — `src/web/disclosure-log.ts:61` | Nothing is recorded, and who has received a client's data reads NOT KEPT, never none | The data protection officer and the solicitor, by signing off the list "Who we pass client personal data on to" |
-| **The recommended receipt strips** | `RECEIPT_RECOMMENDATIONS` (`approved: false`) — `src/web/receipt-recommendations.ts:65` | Nothing changes: even approved, a type is received only once a migration binds its policy | The data protection officer: "Which receipt strip should each new document type carry before anyone may upload one?" |
+| **The per-disclosure log** | `DISCLOSURE_LOG` (`enabled: false`) — `src/web/disclosure-log.ts:61` | Nothing is recorded, and who has received a client's data reads "NOT KEPT — this log is switched off", never none | The data protection officer and the solicitor, by signing off the list "Who we pass client personal data on to" |
+| **The suggested rules for reading each document type** (the design notes call them receipt strips) | `RECEIPT_RECOMMENDATIONS` (`approved: false`) — `src/web/receipt-recommendations.ts:65` | Nothing changes: even approved, a type can be sent only once a system update switches its rule on | The data protection officer: "For each new document type, what do we keep when a file comes in? Nobody may upload one until this is decided." |
 | **Customer due diligence in force** — the exception | *Not a code constant.* `AML_IN_SCOPE` is a dated setting read by `src/web/compliance.ts` (`amlInScope`, about line 216) | Nothing blocks a claim. **Left off by Phase 132e** after Lakhbir's "we need to do AML check on every client": on, no claim could leave Engagement without a finished check, which blocks work. Keep a check for every client on the register now, with it off | The accountant and a solicitor: "Is AML supervision legally required for this business?" **Unlike the rest, an Admin can record a new dated value on the Compliance page** (demo-tested with a future date). It must only be recorded once that written answer exists, with the answer as its source |
 | **The reward model** — also an exception | Switched on its own page (B32), and refused there while clause 1 of the letter is blank — models A, B and, since Phase 132e, C (10% of our fee as invoiced) | Nothing is offered to an introducer | Lakhbir: "Is anything paid to the accountant?" |
 
@@ -508,18 +512,18 @@ Each of these is built, tested and **shipped off**. None has a screen that turns
 - sign-ins, failed sign-ins and rate limiting;
 - users created, roles assigned (from and to) and users disabled (with how many sessions ended);
 - rule, template and setting changes, and refused settings;
-- emails queued, document reads (allowed or refused), identity-store reads and searches;
+- emails saved to send, document reads (allowed or refused), identity-store reads and searches;
 - the refused reward-model switch.
 
 **What is never recorded.** A log line never holds a name, an email address, a note's words or an amount. The log refuses such details rather than blanking them out.
 
-**Append-only and hash-chained** (`src/audit.ts`). The database has triggers that stop any row being changed or deleted. Each row also carries a fingerprint (sha256) of itself plus the row before it, so removing or editing a row breaks the chain. That makes it tamper-evident, not tamper-proof: administrators are inside the trust boundary.
+**Nothing can be changed, and each line is linked to the one before** (`src/audit.ts`). The database has triggers that stop any row being changed or deleted. Each row also carries a fingerprint of itself plus the row before it, so removing or editing a row shows up as a problem. That makes it tamper-evident, not tamper-proof: administrators are inside the trust boundary.
 
-**Who reads it.** Admin alone, from **Audit log** in the menu. Every other role is refused with "not authorised". The page lists the newest 200 lines that match, newest first — # · When · Kind · Role · Who (id) · About · Outcome — and never what a line says in detail: "What a line says in detail is never shown here, and is not read to draw this page: a kind, the ids and the outcome are the record." Narrow it with **Kind** and **Outcome** and press **Show**. "Reading this page is itself a line in the log." The activity timeline on a claim, organisation, property or lead page shows part of the same record, in words, to whoever may read that page.
+**Who reads it.** Admin alone, from **Audit log** in the menu. Every other role is refused with "not authorised". The page lists the newest 200 lines that match, newest first — # · When · Kind · Role · Who (id) · About · Outcome — and never what a line says in detail: "The details of each line are never shown or read here. You see the kind, the ids and the outcome." Narrow it with **Kind** and **Outcome** and press **Show**. "Opening this page adds a line to the log." The activity timeline on a claim, organisation, property or lead page shows part of the same record, in words, to whoever may read that page.
 
 Address: /staff/audit
 
-**How to check the chain.** The top of the page says it on every visit — on the demo, for example, "The hash chain: Intact: all 9 entries recomputed from the genesis, each linked to the one before it." If a row had been changed outside the application, it names the entry where the chain breaks instead. **Without the server**, a developer runs `npm run verify-audit` in `09-app/backend` against the database file. It recomputes the whole chain, writes nothing, and prints "audit log intact: … entries, every hash recomputed from the genesis and every link to the previous entry checked." — or "AUDIT LOG BROKEN at entry …", and fails. `test/audit.test.ts` and `test/follow-on.test.ts` prove both answers. *(Until the CRM follow-on there was no page and no command, and only the tests ran the check.)*
+**How to check the log.** The top of the page says it on every visit — on the demo, for example, **"Audit log checked — nothing changed. All 9 records were checked, each against the one before it."** If a row had been changed outside the application, it says instead **"Audit log problem — a record was changed or removed. Tell the Admin now. The problem starts at record …"**. **Without the server**, a developer runs `npm run verify-audit` in `09-app/backend` against the database file. It recomputes the whole chain, writes nothing, and prints "audit log intact: … entries, every hash recomputed from the genesis and every link to the previous entry checked." — or "AUDIT LOG BROKEN at entry …", and fails. `test/audit.test.ts` and `test/follow-on.test.ts` prove both answers. *(Until the CRM follow-on there was no page and no command, and only the tests ran the check.)*
 
 ---
 
@@ -588,10 +592,10 @@ the old table.
 (required)**. Under **More options** are **Its sector**, the **Next action** (it becomes a task on the lead, yours to
 own) and its **Due** date. Press **Record the lead**.
 
-*The four enquiry checks.* Open the lead. Under **The enquiry gate** there are four checks:
+*The four enquiry checks.* Open the lead. Under **Can we take this on? The checks** there are four checks:
 1. The property is healthcare property in the UK — England and Wales at launch, Scotland second, Northern Ireland third.
 2. The client is a trading business — commercial means the client, not the building, so supported living is in.
-3. The enquirer is the owner, or acting with the owner's authority.
+3. The enquirer is the owner, or acts for the owner with their consent.
 4. There is no existing claim conflict.
 
 The table's columns are **Check · Answer · Last recorded · What we already hold**. The panel on the right says
@@ -615,12 +619,12 @@ assessment cannot convert until it is linked to the organisation the assessment 
 - Under **Contacts**, the **Add a contact** form (button **Add contact**) records a person: a
   decision maker, the finance contact, the client's accountant or an adviser. None of them ever gets
   a login.
-- Setting **Client status** to **Do not contact** is a control, not a label: nothing can be queued to
-  that organisation.
+- Setting **Client status** to **Do not contact** is a control, not a label: nothing can be saved to send to
+  that organisation ("Our system blocks every email to them.").
 - **Add a property** takes a **Name of the site or building** and a **Postcode** (button **Add property**).
 - On a property (Address: `/staff/properties/{property}`), use **Change the property** and **Save**. A
   previous owner or occupier is a company name or a role, never a person's name. Leave the price
-  blank if it is not known — nought is refused. **Open a claim for** plus **Open claim** starts
+  blank if it is not known — £0 is refused. **Open a claim for** plus **Open claim** starts
   another claim on the same building, at the Enquiry stage.
 
 **4. Moving a claim through the ten stages.** Open a claim (Address: `/staff/claims/{claim}`). The **stage bar** under
@@ -629,7 +633,7 @@ adviser sign-off, Client report and accountant report, Invoice, Defence pack —
 …: Ready** or **Not ready yet** with the first thing still needed. **Next step**, at the top of the panel on the right,
 is the quickest way: **Move to …** when the claim is ready, or the thing still needed and the button that deals with
 it. On the **Details** tab, **Stage and moves** holds every move; **See everything this stage needs** opens the full
-list, each need marked **Done** or **Still needed**. What each gate asks for, in plain words:
+list, each need marked **Done** or **Still needed**. What each step's check asks for, in plain words:
 
 | To leave… | …the system needs |
 |---|---|
@@ -640,15 +644,15 @@ list, each need marked **Done** or **Still needed**. What each gate asks for, in
 | Survey | the surveyor's own figures committed on a survey job on this claim |
 | Valuation | every grant or contribution traced to what it paid for, and a recorded confirmation |
 | Tax adviser sign-off | a sign-off record made while the claim is at this stage |
-| Client report and accountant report | the sign-off; both reports issued; the client's acceptance and the accountant's confirmation — **or, where the client has no accountant or tax adviser, the client's own written confirmation** (Phase 132e: they will file the amendment, the last day to amend as we state it, and that they remain responsible for the filing position; any of the three not a yes keeps it shut, and a client with an accountant on record goes the accountant's way); the amendment window open |
+| Client report and accountant report | the sign-off; both reports issued; the client's acceptance and the accountant's confirmation — **or, where the client has no accountant or tax adviser, the client's own written confirmation** (Phase 132e: "they will file the amendment, the last day to amend we gave them, and that what they put on their return is still their responsibility"; any of the three not a yes keeps it closed, and a client with an accountant on record goes the accountant's way); the amendment window open |
 | Invoice | the amendment window open; the fee trigger reached — **our report delivered for filing** (Phase 132e); our fee invoice raised on this claim and not credited in full |
 | Defence pack | the defence pack issued in the deliverables register — the claim then closes |
 
 Under **Move the claim**, press the **Move to …** button. When the claim is not ready the button itself
-says so, for example **Move to Assessment (not ready yet)**. The system checks the gate every
+says so, for example **Move to Assessment (not ready yet)**. The system checks the step every
 time, whatever the page showed. A refused move shows **Not moved** and the reason at the top of the form, for example:
-- "A claim moves one stage at a time, through each stage's gate. From Assessment the next stage is Engagement."
-- "Not ready to move on from Engagement yet. Still needed: A signed engagement letter, asserted on the server — the engagement letter is sent and not yet opened and is not signed."
+- "A claim moves one step at a time, and each step is checked. From Assessment the next step is Engagement."
+- "Not ready to move on from Engagement yet. Still needed: A signed engagement letter — the engagement letter is sent and not yet opened and is not signed."
 
 A move is also refused if the claim would be left without a next action with an owner and a due
 date. You can name one as you move: fill in **…and name the next action after it**. The other
@@ -673,11 +677,11 @@ shows as having no due date, never as on time. A task is never deleted. On its o
 **7. Documents, and asking a client for one.** On the claim's **Related** tab (or **Request a document** under
 **Quick actions**), the **Documents** panel lists what is
 linked to the claim and the **Requests**. To ask the client for a document:
-1. Under **Ask the client for a document — it goes to their portal, and only a type with a receipt policy can be asked for**, choose the **Document**.
+1. Under **Ask the client for a document — it goes to their portal. You can only ask for a type we can accept.**, choose the **Document**.
 2. Fill in **Why we need it** and **What it holds up**, and a **Due** date if there is one.
 3. Press **Request it**.
 
-The request is marked received only when the client's upload of that type passes the checks. There
+The request is marked received only when we have read the client's upload of that type ("Received — the file they sent is the answer."). There
 is no button for it. A request made in error can be taken back with **Withdraw — asked in error**
 while it is still open.
 
@@ -706,14 +710,15 @@ the firms that refer clients. None of their people ever has a login.
 On a referred lead, the section **The introducer, and sharing progress with it** asks: "Does the
 client want progress shared with the firm?" Read the client the words shown, choose **Their answer**
 (Yes, No or Withdrawn), and press **Record the answer**. Until the client says yes, nothing about the
-claim goes to the firm, and "never asked" counts exactly as no. Each notice that falls due is listed
-under **Notices to the firm**, as queued or not queued, with the reason.
+claim goes to the firm: "Never asked counts the same as no." Each notice that falls due is listed
+under **Notices to the firm**, as "waiting to send — NOT SENT, email is not switched on yet" or "not sent", with the reason
+(for example "not sent — the client has not agreed to share progress with this firm").
 
 **9. The claim's record: facts, figures, sign-off, deliverables and aftercare.**
 - **The claim's capital allowances facts**: each fact shows where it came from. To add one, choose the **Fact**, choose **Answer** (**This value** or **Not known**), give the **Value** and **Source**, then press **Record the fact**. Previous owners are added with **Record the owner** — "a company or a role, never a person". **Grants and contributions have their own box since Phase 143** — see `B50`: one question, **Did anyone else pay for any of this work?**, then **Add a grant or contribution**, one question at a time. The payer is a class such as "The NHS", never a name.
-- **The four figures**: A the indicative estimate, B the researched estimate, C the surveyor's committed figure, D the figure the tax adviser signed. Nothing here is typed; each is read from the record that sealed it.
+- **The four figures**: "A is the first estimate. B is the researched estimate. C is the surveyor's figure. D is the figure the tax adviser signed. Each is locked when it is set, and never edited." Nothing here is typed; each is read from the record that locked it.
 - **The sign-off** is a record, not a signature. It can only be made while the claim is at the tax adviser's sign-off stage.
-- **The deliverables register** tracks the five deliverables, and **Start a draft** begins one. The system never writes a report. A client report cannot be drafted before the sign-off is on record.
+- **The deliverables register** tracks the five documents, and **Start a draft** begins one. The system never writes a report: "We track these here, but we do not write them here." A report with a figure "cannot be drafted until the tax adviser's sign-off is recorded".
 - **Aftercare** holds **HMRC enquiries** (**Record an enquiry**), **Clause 13 — the fee on a reduced claim** (switched off), and **The election on a future sale**.
 
 **10. Search, lists, saved views and export.**
@@ -726,15 +731,15 @@ under **Notices to the firm**, as queued or not queued, with the reason.
 claim. Choose **To** — one of the company's contacts — and, if it is about one claim, **Which claim is it about?** Type a
 **Subject** and a **Message** (or open **Start from a template** first), tick any files to attach, and press **Save the
 email**. The page says **"Saved — emails are not being sent yet."** and lists it under **Emails to** the company; it is on
-the company's timeline too. Nothing leaves the building until sending is switched on.
+the company's timeline too. Nothing is sent until sending is switched on.
 
 **12. Where the claim came from, and its team.** At the top of a claim, **Came from** and **Source**
 say how it began — its lead, or "no lead — this claim was opened by staff on a property" — and
 **Introducer** names the firm that referred it, if one did. **The claim team** shows the **Owner**,
-the **Surveyor**, the **Tax adviser** as their sign-off record ("never as a person"), and the
-organisation's own accountant and adviser on this claim. To add one, choose them under **Add to the
-team** and press **Add**; **Take off the team** removes one, and the record stays. Only a contact
-recorded on the organisation as its accountant or adviser can join, and nobody on the team has a login.
+the **Surveyor**, the **Tax adviser** as their sign-off record ("we record the adviser's sign-off, not the person"), and,
+under **The client's accountant and adviser on this claim**, the organisation's own accountant and adviser. To add one, choose them under **Add to the
+team** and press **Add**; **Take off the team** removes one, and the record stays. "Only an accountant or adviser
+contact can join a claim's team", and nobody on the team has a login.
 
 ---
 
@@ -763,11 +768,11 @@ with an expected fee of £4,935 (3% of £164,500; it was £8,225 at 5%). Its **E
 report was delivered for filing, and the due date an invoice raised that day would carry; a claim with no report
 delivered reads **NO DATE** — never today. What a refusal looks like:
 - "Our fee is raised on a claim at the invoice stage, and this claim is at Survey." (seen on the demo)
-- "No figure signed off by the tax adviser is on record for this claim, and our fee derives from it. Nothing is raised."
-- A claim that has left the procedure is refused as well.
+- "The tax adviser has not signed off a figure for this claim. Our fee is worked out from it, so nothing is raised."
+- A claim that has stopped is refused as well — for example "This claim ended because it was too late to amend the tax return. The job stops before any fee is due, so no invoice is raised."
 
 **Sent or cancelled.** Open an invoice from **4 · The claims' invoices** (Address: `/staff/finance/{invoice}`).
-- **Record that it was sent**: give **Sent on** and press **Record as sent**. Invoices go by hand, by post or as the client asked — never as an email from this system. A date still to come is refused.
+- **Record that it was sent**: give **Sent on** and press **Record as sent**. "Sent by hand, by post or as the client asked. This system does not email invoices." A date still to come is refused.
 - **Cancel — raised in error, and not sent**: give **Why** and press **Cancel the invoice**. A sent invoice is refused: "A sent invoice is not cancelled — it went to the client, so it is credited, with a credit note." A cancelled number is never reused.
 
 **Credit notes.** A credit note is the only way a raised amount changes. Under **Credit notes — the
@@ -778,17 +783,17 @@ clause is blank in the letter.
 **Recording money received.** Money is recorded, never collected: there is no card processor and no
 bank feed.
 1. Under **Record money received**, give **The day it arrived** and **The amount that arrived, in pounds**.
-2. Answer **Did the client confirm our bank details on a channel other than email?** — or leave it at "not asked".
+2. Answer **Did the client check our bank details another way than email?** — or leave it at "not asked".
 3. Press **Record what arrived**.
 
 You cannot record more than is owed: "That is more than this invoice still asks for (£9,000).
 Record what arrived against what is owed, and nothing more." A wrong entry is voided with a reason
 (**Void**), never deleted.
 
-**Overdue, and why a due date can be unset.** Since Phase 132e the engagement letter's payment terms
+**Overdue, and why a due date can be not set yet.** Since Phase 132e the engagement letter's payment terms
 read "within 14 days of the date of the invoice", so an invoice is due 14 days after its date and is
-overdue the day after that. Were the terms blank, its due date would read "UNSET — clause 4 of the
-engagement letter leaves the payment terms blank, so no due date is set and none is assumed", and an
+overdue the day after that. Were the terms blank, its due date would read **No due date set yet**, with the reason (clause 4 of the
+engagement letter leaves the payment terms blank, so none is assumed), and an
 invoice with no due date is never counted as overdue, and never as on time either.
 
 **VAT monitoring.** **2 · VAT monitoring** shows:
@@ -799,7 +804,7 @@ invoice with no due date is never counted as overdue, and never as on time eithe
 - any single fee of £25,000 or more.
 
 **Run the VAT check** reads these figures. When they are inside the warning margin it raises one
-task for Accounting, never a second. It never changes an invoice. The finance settings themselves
+task for Accounting, never a second: "VAT: we may be near or over the VAT limit. Do the VAT check in Finance". It never changes an invoice. The finance settings themselves
 are Admin's to change.
 
 **The dashboard's money tiles.** **Estimated fees in the pipeline** and **Invoiced, paid, outstanding
@@ -808,15 +813,15 @@ on 0 invoices, with the note that 2 open invoices have no due date.
 
 **Export.** On **Claims**, **Export these 8 rows as CSV** gives you the columns Reference, Client and
 Opened. You cannot export leads. A filter on a column you cannot read, such as the stage, is not
-applied to the file, and the page says so beside the link: "The file does not apply stage — not
-columns you read."
+applied to the file, and the page says so beside the link: "The file does not apply stage — your role
+does not see those columns."
 
 ---
 
 ### U3 · Surveying
 
 **What reaches a surveyor.** Only what an assigned survey job reaches:
-- **Survey jobs** — on the demo, "3 jobs you can open. 2 awaiting your figures.", each with its **Stage** in the procedure's own words (Survey, Invoice);
+- **Survey jobs** — on the demo, "3 jobs you can open. 2 waiting for your figures.", each with its **Stage** in the procedure's own words (Survey, Invoice);
 - the properties and claims of those jobs only (3 shown);
 - your own tasks.
 
@@ -824,10 +829,9 @@ Organisations, leads, the pipeline, finance, introducers and export are refused.
 you see the stage and its steps, the claim's owner and surveyor, your own tasks, the facts your survey needs (never an amount, the
 tax position or our figures), and a timeline limited to your job.
 
-**Our estimate is never in your session.** It is not hidden on the screen — it is not in the data
-your session receives at all. The job list says: "Our estimate is not on these pages until your
-figures are in." It is released automatically the moment you commit your own figures, with nobody
-to ask.
+**Our estimate is never sent to you before your figures.** "It is not hidden on screen — we do not send it to you at
+all." The job list says: "Our estimate is not on these pages until your figures are in." "Once you commit your
+figures, you get it straight away. You do not need to ask anyone."
 
 **The workspace** (Address: `/staff/survey/{job}`) opens with a highlights strip — sector, stage, when the job was
 opened, rooms counted, rates recorded, whether **Your figures** are in, and whether **Our estimate** is *withheld* or
@@ -835,12 +839,12 @@ opened, rooms counted, rates recorded, whether **Your figures** are in, and whet
 **Amend your figures**), **Record the room counts** and **Record what the client told you** — and the **Our estimate**
 panel. The job from your home page's card opens straight on **5 · Your figures**. It has six tabs, one per numbered
 section:
-1. **1 · The property**, and **What the client told us** — "I don't know" and skipped answers are shown as such.
+1. **1 · The property**, and **What the client told us** — "I don't know" and skipped answers "are both shown as answers, not as blanks".
 2. **2 · The room schedule, and the quantities** — a count for each room type, with **Record**.
 3. **3 · The rates**.
 4. **4 · The evidence** — the register data held, the documents uploaded, and **What your pack is still waiting on**.
 5. **5 · Your figures** — the figures, the rates (each with the tick box **I looked at this field**), and **On what basis did you reach these?**, which is required. Press **Commit my figures — this releases our estimate to me**. If a client has read our figure to you, record it under **If the client has told you our figure** with **Record it**; that costs you nothing.
-6. **6 · The record** — every event, chained so that nothing can be quietly removed. Each attempt to open the estimate before commitment is kept as its own line.
+6. **6 · The record** — every event, "linked to the one before it in the audit log", so nothing can be quietly removed. Each attempt to open the estimate before commitment is kept as its own line.
 7. **Messages** (a seventh tab since 22 September 2026) — what the client and our team have written to each other on **With the client**. You can read it, not reply: ask Sales to pass on a question. You never see our team's own notes.
 
 **Your tasks.** **My tasks** is on **Tasks**; one due today or late is also a red tile under **Today and overdue** on
@@ -854,7 +858,9 @@ Home — on the demo, "Check the floor plans against the room schedule", due 202
 ### U4 · The client, in the portal
 
 After signing in, the client sees their own claim page, headed with their business's name
-(Address: `/portal`). Since 17 September 2026 it opens with a **stage bar** of the six steps below, and a card, **What
+(Address: `/portal`). Since 17 September 2026 it opens with a **stage bar** of six steps — since 22 September 2026
+(Phase 144) named **1 Your estimate**, **2 Engagement letter signed**, **3 We research your property**, **4 Expert
+sign-off**, **5 Claim filed** and **6 Aftercare** — and a card, **What
 we are waiting for from you**, listing each question and each document we have asked for (each a link down to its
 form), or "Nothing — we are working on your claim". **Since Phase 133c the order is**: **Book a call** and **Who to
 contact** at the top, then **How to contact us**; the stage bar; **The range you were shown**, with its basis
@@ -894,12 +900,15 @@ The next page, **Your upload link is ready**, has **Choose the file**: pick the 
 the file**. The link works once, and expires. Sending with nothing chosen answers **Not accepted** —
 "no file was attached. Choose the file and send it again."
 
-When the file arrives and passes the checks, the reply reads: "The file has passed the receipt strip,
-the original has been deleted from quarantine, and the request it answers is marked received." The
-request then shows as "✓ … received, version 1". There is no button to say you have sent something:
-the upload itself is what marks the request received. The link works once only. Nothing you send
-replaces an earlier version, and **what we did with it** shows each step. Asking for the original
-back answers "That file no longer exists, by design".
+When the file arrives and we have read it, the reply reads: "We read it, then deleted the file. What we asked you
+for is now marked received." The request then shows as "✓ … received, version 1". There is no button to say you have
+sent something: the upload itself is what marks the request received. The link works once only. Nothing you send
+replaces an earlier version. **What we did with it** opens the document's page: **Sent**, **Where it is** ("We have
+read it", "Not read yet" or "We could not use it"), **What it is**, **Kind of file**, **We read it**, **We deleted the
+file**, and under **What we did with it** plain counts such as "We read 3 pages." — never the file's words (since Phase
+144; the twelve-step table is gone). A file we could not use answers **Not accepted** — "We could not use this file, so
+we have deleted it. Please send another." Asking for the original back answers "That file no longer exists, by design":
+"We read it, then deleted the file. We did not keep a copy."
 
 **Documents we have issued to you.** **What we have issued to you** lists an issued reasoned negative,
 an issued s.203 notification, and a client report once its figure is released — each with its
@@ -925,16 +934,17 @@ us to keep the firm informed, tell us and we will ask you properly."
 - **Overdue, by the UK date.** Something is overdue when its due date is before today's date in the
   UK, and the page says so in words: "16 days overdue (1 Sep 2026)" (the count moves with the date). Something with no due date is
   never overdue and never on time: "no due date — so it is not overdue, and it is not on time either".
-- **A gate.** The check the system makes, every time, before a claim may leave a stage. Shut means at
-  least one need is not met, and the move is refused with the reason. The button on the page is a
-  courtesy, not a key.
-- **An exit.** A claim leaving the procedure early — for example "Declined at enquiry", "Reasoned
+- **A check** (the design notes say *gate*). What the system checks, every time, before a claim may leave a stage.
+  Not ready means at least one need is not met, and the move is refused with the reason. "Each step is checked before
+  a claim can move on — the button alone does not move it."
+- **Stopped** (the design notes say *an exit*). A claim ending early — for example "Declined at enquiry", "Reasoned
   negative report" or "Lost" — always with a listed reason. The record is kept, never deleted; only
   an Admin can bring it back.
 - **A hold.** A pause at one of the ten stages, always with a reason. The claim resumes at the stage it
   left, and nowhere else.
-- **The outbox, "NOT SENT".** Email is not connected in this build. Anything "sent" is written to the
-  outbox and marked NOT SENT. Nothing leaves the building.
+- **Emails waiting to send, "Saved — not sent yet".** Sending email is not switched on yet. Anything "sent" is saved
+  with the emails waiting to send (at the foot of **Your account**) and marked "Saved — not sent yet". Nothing leaves
+  the building.
 - **"Switched off".** Built, but deliberately not in use until a decision is made, with a named question
   behind it. Examples: the public referral form, the introducer reward model ("Off — nothing is
   offered to an introducer"), clause 13, the fee controls, and saying yes to sharing from the portal.
@@ -1171,14 +1181,15 @@ sentence.
    what the client told you — or tick **They said they do not know** — and press **Record it**.
 4. The page opens on the **Tasks** tab with the question listed. A question asked in error is withdrawn there with
    **Withdraw — asked in error**.
-5. **Run the research** is on the **Sources** tab. It fires everything outstanding; there is no button per source, and
-   only a source that failed can be retried.
+5. **Run the research** is on the **Sources** tab. It makes every lookup still to do, all at once; there is no button
+   per lookup, and "Only a lookup that did not work can be tried again." (**We tried that lookup again.**)
 
 **What it will refuse, and why**
 - Running the research more often than the limit allows: the button is replaced by "Cannot run the research right now."
 - Withdrawing an answered question: "answered — an answer is not withdrawn".
-- Paid sources before a signed engagement, and free sources before the privacy notice is published: not consulted, and
-  their facts stay on **Still missing** as questions. Nothing on the page can open either gate.
+- Paid lookups before a signed engagement letter, and free lookups before the privacy notice is published: not made
+  ("free lookups wait until our privacy notice is published", "paid lookups wait until the engagement letter is
+  signed"), and their facts stay on **Still missing** as questions. Nothing on the page can turn either on.
 
 **Try it on the demo** (as sales@example.invalid, on a freshly started demo)
 - **Engaged clients** read "6 in the pipeline. 5 waiting on us, 0 waiting on the client, 1 on neither." (17 September 2026; since Phase 135 the one **Clients** list reads "6 companies. 5 waiting on us, 0 waiting on the client.")
@@ -1192,8 +1203,8 @@ sentence.
 **Check yourself**
 - *The client answered on the telephone. Do you send them the question anyway?* — No. **Answer it here**; the record
   says you entered it on their behalf.
-- *Where is the button to run just the Companies House lookup?* — There is none. The operator picks the moment, not
-  the calls.
+- *Where is the button to run just the Companies House lookup?* — There is none. Press **Run the research**: "It runs
+  them all at once." A person chooses when.
 - *A question was sent to the wrong client. Delete it?* — No. **Withdraw — asked in error**; the fact goes back on
   Still missing and the record says who took it back.
 
@@ -1207,7 +1218,7 @@ on a freshly started demo that day and the results below are what it showed.*
 **What it is for**
 A surveyor's own jobs, and on each the six steps of a desktop survey: the property and what the client said, the room
 counts, the rates, the evidence, **your own figures**, and the record. **Our estimate is withheld until you commit your
-figures** — not hidden on the screen, but absent from what your session receives — and released automatically when you
+figures** — "It is not hidden on screen — we do not send it to you at all" — and you get it straight away when you
 do.
 
 **Who can open it**
@@ -1232,9 +1243,10 @@ figures**.
    quick action; an amendment needs a reason, and your original figures are kept.
 
 **What it will refuse, and why**
-- A commitment without a method: the form requires it — a figure with no stated basis is not evidence.
+- A commitment without a method: "Say on what basis you reached these. Without a method, your figures are not evidence."
 - A job not assigned to you: "This job is not assigned to you, so you cannot commit figures on it."
-- An amendment without a reason: refused; an unexplained change after release cannot be told apart from anchoring.
+- An amendment without a reason: refused — "Without a reason, we cannot tell a real fix from being pulled toward our
+  estimate."
 
 **Try it on the demo** (as surveying@example.invalid, on a freshly started demo)
 - **Home** → **Dunmarrow Medical Practice Limited** under **Waiting for your review and figures**. *Observed:* it opens
@@ -1244,7 +1256,7 @@ figures**.
 - On **2 · Rooms**, record 6 on the first room type. *Observed:* "Recorded.", the page opens on Rooms, and Rooms counted
   reads "1 of 8".
 - On **5 · Your figures**, commit £120,000, £400,000, £30,000 and 22 with the basis "From the floor plans and the room
-  counts." *Observed:* "Your figures are recorded and our estimate has been released to you."; Our estimate reads
+  counts." *Observed (wording since Phase 144):* "Your figures are saved and our estimate is now shown to you."; Our estimate reads
   "released", **Our estimate, now released** is on the tab, and the first quick action is now **Amend your figures**.
 
 **Check yourself**
@@ -1274,21 +1286,21 @@ Address: `/staff/finance` · one invoice: `/staff/finance/{invoice}`
 
 1. **Raise our fee.** On the **Invoices** tab, under **3 · Claims at the invoice stage with no invoice raised**, press **Raise our fee** on the claim's row. There is no amount to type: the fee comes from the tax adviser's signed-off figure, and the invoice takes the next number in the series.
 2. Open the invoice by its number under **4 · The claims' invoices**, on the same tab.
-3. **Record that it was sent**: give **Sent on** and press **Record as sent**. Invoices go by hand, by post or as the client asked — never as an email from this system.
+3. **Record that it was sent**: give **Sent on** and press **Record as sent**. "Sent by hand, by post or as the client asked. This system does not email invoices."
 4. **A credit note**: under **Credit notes — the only way a raised amount changes**, give **Why it is credited in full** and press **Credit what is left in full**. The amount is whatever is left, never typed.
 5. **Money received**: under **Record money received**, give **The day it arrived** and **The amount that arrived, in pounds**, answer the bank-details question (or leave it "not asked"), and press **Record what arrived**.
-6. Read **The money — read, never typed**: invoiced, credit notes, received and outstanding are all worked out, never typed.
+6. Read **The money — from the records, never typed in**: invoiced, credit notes, received and outstanding are all worked out, never typed.
 
 **What it will refuse, and why**
 - A claim not at the invoice stage: "Our fee is raised on a claim at the invoice stage, and this claim is at Survey."
-- No signed figure: "No figure signed off by the tax adviser is on record for this claim, and our fee derives from it. Nothing is raised."
+- No signed figure: "The tax adviser has not signed off a figure for this claim. Our fee is worked out from it, so nothing is raised."
 - Sent on a future day: "An invoice is recorded as sent once it has been — not on a day still to come."
 - Cancelling a sent invoice: "A sent invoice is not cancelled — it went to the client, so it is credited, with a credit note."
 - A credit with no reason: "Say why the invoice is credited." Crediting a second time: "This invoice is already credited in full."
 - More than is owed: "That is more than this invoice still asks for (£4,000). Record what arrived against what is owed, and nothing more." No amount: "Give the amount that arrived, in pounds."
-- Clause 13: "No clause 13 credit note is issued: switched off — …"
+- Clause 13: "No clause 13 credit note is issued: Switched off. Nothing happens when a claim is reduced until clause 13 is complete. …"
 - **No typed amounts.** Raising and crediting have no amount box, and an amount sent anyway is ignored.
-- **The due date is 14 days after the invoice date** now that clause 4 states it; it would read UNSET only if the payment terms were blank again.
+- **The due date is 14 days after the invoice date** now that clause 4 states it; it would read **No due date set yet** only if the payment terms were blank again.
 - Sales or Surveying opening or posting anything here: refused ("not authorised").
 
 **Try it on the demo** (as accounting@example.invalid, on a freshly started demo)
@@ -1314,7 +1326,7 @@ quote it.*
 
 Address: /staff/users (the **Settings** tab → **Users**; or **Your account** → "Users and roles")
 
-**What it is for.** Giving staff and clients a login, changing what a person's role lets them do, and switching an account off. In the page's own words, those three things "are the whole of what administration is".
+**What it is for.** Giving staff and clients a login, changing what a person's role lets them do, and switching an account off. In the page's own words: "Here you can add a user, change a role or turn an account off."
 
 **Who can open it.** Admin only. Everyone else gets "not authorised".
 
@@ -1331,7 +1343,7 @@ Address: /staff/users (the **Settings** tab → **Users**; or **Your account** �
 - "you cannot change your own role — ask another administrator": a demoted administrator could not put it back.
 - "you cannot disable your own account", and "that is the last administrator — create another before disabling this one": without an administrator, nobody can create one.
 - "a staff account cannot become a client account: a client belongs to one business and this one belongs to none".
-- Editing another person's name, username or photograph: there is no control for it at all, because it "reads as the person themselves".
+- Editing another person's name, username or photograph: there is no control for it at all — "You cannot change someone's name, username or photo. Only they can, from their own account."
 
 **Try it on the demo**
 1. Create **Trainee Seller**, `trainee@example.invalid`, role SALES, password `short`. *Observed:* "Not created — a password is at least 12 characters".
@@ -1342,7 +1354,7 @@ Address: /staff/users (the **Settings** tab → **Users**; or **Your account** �
 6. As admin, press **Disable**. *Observed:* the trainee's next click goes to Sign in, signing in says "those details did not match", and the row reads ACCOUNTING · disabled.
 
 **Check yourself**
-1. *A salesperson moves to Accounting. When does their Sales access stop?* The moment you press Assign; every session they hold is revoked.
+1. *A salesperson moves to Accounting. When does their Sales access stop?* The moment you press Assign: "Changing a role signs that person out at once."
 2. *A client's accountant asks for a login. What do you do?* Nothing on this page. The client's accountant never gets a login; they are a contact.
 3. *A colleague's display name is misspelt. Can you correct it?* No. They correct it on their own Settings page.
 4. *The data protection officer asks for a login of their own. Can you give one?* Not yet. The role is built but switched off, so it is not in the role list; it waits on Lakhbir's decision. Until then the registers stay with Admin.
@@ -1390,17 +1402,17 @@ Address: `/staff/organisations` · one organisation: `/staff/organisations/{orga
 
 **How to do the common job**
 1. Open **Clients** and choose a company.
-2. To change details, use **Change these**, then **Save**. A derived fact shows "from the Companies House register record" and has no box.
+2. To change details, use **Change these**, then **Save**. A fact from a better source shows "from the Companies House register record" and has no box.
 3. To add a person, fill in **Add a contact** — **Name**, **Job title**, **Contact type**, **Decision maker**, **Email**, **Telephone**, **Notes — internal, never shown to the client** — and press **Add contact**.
 4. To add a building, use **Add a property**: **Name of the site or building** and **Postcode**, then **Add property**.
 5. To stop all outgoing messages, set **Client status** to **Do not contact** and press **Save**.
 6. Read **Referred by**: the firms whose referrals became this organisation's leads, each with how many. It is read from the leads and never typed.
 
 **What it will refuse, and why**
-- A derived fact posted anyway: "The legal name is already known from the Companies House register record, so it is not asked again." A question is never asked twice.
+- A fact from a better source posted anyway: "The legal name is already known from the Companies House register record, so it is not asked again." A question is never asked twice.
 - A contact with no name: "A contact is a person, and needs a name."
 - A client's accountant or adviser is a contact and never gets a login — the page says so under **Add a contact**.
-- Anything queued to a **Do not contact** organisation is refused (see `B23`).
+- Anything saved to send to a **Do not contact** organisation is refused (see `B23`).
 
 **Try it on the demo**
 As Sales, open Brackenfell Dental Partnership LLP. **Legal name** reads "Brackenfell Dental Partnership
@@ -1413,7 +1425,7 @@ came from a referral", with "read from the organisation’s leads, never typed h
 **Check yourself**
 - *Why is there no box for Brackenfell's company number?* — It comes from the Companies House record, so it is not asked again.
 - *The client's accountant wants to log in. What do you do?* — Nothing: an accountant is a contact, never a user.
-- *What does "Do not contact" actually do?* — It stops anything being queued to that organisation or its people.
+- *What does "Do not contact" actually do?* — It stops anything being saved to send to that organisation or its people.
 - *A firm referred this organisation. Where do you type the firm's name?* — Nowhere on this page. **Referred by** is read from the organisation's leads; the referral is recorded on **Introducers**.
 
 ---
@@ -1452,21 +1464,21 @@ Address: `/staff/properties` · one property: `/staff/properties/{property}`
 4. To start another claim on this building, choose **Open a claim for** (a workstream) and press **Open claim**. It opens at the Enquiry stage.
 
 **What it will refuse, and why**
-- A person's name as previous owner or occupier: "The previous owner is recorded as a company name — ending Limited, Ltd, LLP, plc or CIC — or as a role such as INDIVIDUAL_NOT_RECORDED. It is never a person's name: a person named here would be a third party in the claim record."
-- A price of nought: "The acquisition price must be more than nothing — leave it blank if it is not known."
+- A person's name as previous owner or occupier: "The previous owner must be a company name. It ends Limited, Ltd, LLP, plc or CIC. Or type a role such as INDIVIDUAL_NOT_RECORDED. Never type a person's name here."
+- A price of £0: "The acquisition price must be more than nothing — leave it blank if it is not known."
 - A jurisdiction the postcode already answers: "The jurisdiction is already known from the postcode, so it is not asked again."
 - A prior-claim answer the client's own assessment already gives: there is no box — "Whether allowances were claimed before is known from the client’s own answer in the assessment and is not asked." — and one sent anyway is refused. None of the seeded properties has such an answer, so this is quoted from the code.
 
 **Try it on the demo**
 As Sales, open Dunmarrow Medical Practice Limited — main site. Under **Change the property**, type
 "Jane Smith" as the previous owner and press **Save**. **Not saved** appears with the sentence above.
-Note that **Jurisdiction** reads "not known — not derived: the ONS postcode table is not configured on
-this deployment". **Allowances claimed before?** reads "not known — nobody has established whether
+Note that **Jurisdiction** reads "not known", and its **Why?** says "Not worked out: the postcode lookup is not
+switched on yet, so we cannot tell the nation from the postcode". **Allowances claimed before?** reads "not known — nobody has established whether
 allowances were claimed on this property before".
 
 **Check yourself**
 - *The previous owner was a retired GP. What do you record?* — A role, not the name — for example INDIVIDUAL_NOT_RECORDED.
-- *You don't know the purchase price. What goes in the box?* — Nothing. Leave it blank; nought is refused.
+- *You don't know the purchase price. What goes in the box?* — Nothing. Leave it blank; £0 is refused.
 - *Where do survey dates live?* — On the claim, not on the building.
 - *The client said in the assessment that they had claimed before. Do you record it here?* — No. It is read from their answer. Anything a review finds about that earlier claim goes in **Prior claim information**.
 
@@ -1527,18 +1539,18 @@ Address: `/staff/claims` · one claim: `/staff/claims/{claim}`
 
 **What it will refuse, and why**
 - The same contact twice: "That contact is already on this claim’s team."
-- A contact of another type, such as the decision maker: "Only a contact recorded as the organisation’s accountant or adviser joins a claim’s team. Change the contact’s type first if that is what they are."
+- A contact of another type, such as the decision maker: "Only an accountant or adviser contact can join a claim’s team. If that is who they are, change the contact’s type first."
 - Taking someone off twice: **Not taken off the team** — "That contact has already been taken off this claim’s team."
 - A next action typed into **Change the claim**: "next action is a task now, with an owner and a due date. Set it in the claim’s next action panel."
 - A fact marked **This value** with no value: "A s.198 or s.199 election affects the property: choose one of the answers offered, or record it as not known."
-- A sign-off outside its stage: "A sign-off is recorded while the claim is at the tax adviser's sign-off."
-- A client report too early: "The client report states a figure, and no report stating a figure is drafted before the tax adviser's sign-off is on record."
+- A sign-off outside its stage: "A sign-off can only be recorded while the claim is with the tax adviser."
+- A client report too early: "The client report gives a figure. It cannot be drafted until the tax adviser's sign-off is recorded."
 - A reference is never reused, and a claim cannot be deleted.
 
 **Try it on the demo**
 As Sales, open CR-2026-0004 and record "A s.198 or s.199 election affects the property" as **Not
 known**, source "The client told us". The row now reads "not known Client · … by Sales User", and
-**The election, resolved** still reads "unresolved … not known does not pass". Then press **Start a
+**The election, resolved** still reads "unresolved … Not known does not pass". Then press **Start a
 draft** on the client report (sent directly): **Deliverable not recorded**, with the sentence above.
 
 Then open CR-2026-0008, Dunmarrow Medical Practice Limited's branch surgery, at the invoice stage.
@@ -1552,7 +1564,7 @@ already on this claim’s team." Sign in as Accounting and open CR-2026-0008: **
 no claim team. Signed in as the surveyor, the team shows only **Owner** and **Surveyor**.
 
 **Check yourself**
-- *You record a fact as "Not known". Does it open the Data gathering gate?* — No. Not known and never recorded read the same, and neither opens a gate.
+- *You record a fact as "Not known". Does it pass the Data gathering check?* — No. Not known and never recorded read the same, and neither passes a check.
 - *Can Accounting see the claim value?* — No; Accounting sees client, reference and money.
 - *Where do you change the stage?* — In the pipeline panel's **Move the claim**, never in **Change the claim**.
 - *The client's accountant is on the claim's team. Can they sign in?* — No. A contact on the team stays a contact, and nobody on it has a login.
@@ -1609,7 +1621,7 @@ shown **All leads**). *Observed on a freshly started demo, 21 September 2026, as
 **Where things are on the page (Phase 133a, 17 September 2026).** The leads list has **Filter, sort and save** beside it,
 the underlined headings (Date, Next action, Range shown) sort it, and **Record a lead by hand** at the top jumps to the
 form. A lead's page opens with its highlights — status, owner, source, next action, lead date, and the claim once
-converted — then **Details** (the lead, the enquiry gate, **Change the lead**, **Convert**), **Related** (the introducer
+converted — then **Details** (the lead, the enquiry checks, **Change the lead**, **Convert**), **Related** (the introducer
 and what the assessment captured) and **Activity** (the timeline and tasks). **Quick actions** link to **Record an
 enquiry check**, **Log a call or add a follow-up** and **Convert — open the claim**.
 
@@ -1633,7 +1645,7 @@ Address: `/staff/leads` (cards) · `/staff/leads?layout=list` (List view) · one
 
 **How to do the common job**
 1. Open **Leads** and choose one, or record one with **Record a lead by hand** → **Record the lead**.
-2. Under **The enquiry gate**, record each **Check** with an **Answer** and press **Record the check**.
+2. Under **Can we take this on? The checks**, record each **Check** with an **Answer** and press **Record the check**.
 3. When all four read Yes, the page says **Ready** "Every check is a yes." Under **Change the lead**, set **Status** to **Qualified** and **Save**.
 4. Press **Convert and open the claim**.
 5. On a referred lead, read the client the words under **The introducer, and sharing progress with it**, choose **Their answer**, and press **Record the answer**.
@@ -1643,7 +1655,7 @@ Address: `/staff/leads` (cards) · `/staff/leads?layout=list` (List view) · one
 - Qualifying too early: "A lead is qualified when every enquiry check is a recorded yes: …" followed by each check that fails.
 - Converting unqualified: "Only a qualified lead converts, and this one is contacted."
 - A referral with no organisation: "This lead has no organisation yet. The organisation is created by the assessment — send them the assessment, then link this lead to the organisation it creates."
-- Setting Converted by hand: "A lead converts by opening its claim — use Convert, which asks the enquiry gate again."
+- Setting Converted by hand: "To convert a lead, use Convert. It opens the claim and checks the enquiry again."
 - **Log a call** without saying whether you spoke to them: "Say whether you spoke to them."
 - **Mark as lost** with no reason chosen: "A lost lead carries its reason: choose one from the list."
 - A share answer not chosen: "Record what the client said — yes, no, or that they have withdrawn. Nothing is assumed."
@@ -1652,7 +1664,7 @@ Address: `/staff/leads` (cards) · `/staff/leads?layout=list` (List view) · one
 As Sales, open the lead Gorsebrook Invented Care Homes Limited. Two checks read Yes; ownership
 reads "Not known, by Sales User"; the claim-conflict check reads "never recorded" — and both of those
 read "not known". Set **Status** to **Qualified** → refused. Record ownership and claim conflict as
-Yes → the gate is open, and **Qualified** saves. Press **Convert and open the claim** → refused,
+Yes → every check is a yes, and **Qualified** saves. Press **Convert and open the claim** → refused,
 because the lead has no organisation yet.
 
 **Check yourself**
@@ -1665,13 +1677,14 @@ because the lead has no organisation yet.
 ### Training — `B21` the pipeline board
 
 **Where things are on the page (Phase 133a, 17 September 2026).** The board is a row of columns, one per stage, each
-headed with its name and count; a stage's owner and gate are under **Owner and gate**. Each claim is a card with its
-reference, client, property, owner, days since its last move, next action and the **Move to …** button. **On hold** and
-the exits are a second row below. On a phone the columns stack into a list.
+headed with its name and count; a stage's owner and what it needs are under **Owner and what this step needs**. Each
+claim is a card with its reference, client, property, owner, days since its last move, next action and the **Move to …**
+button. **On hold** and the claims that have stopped (**Stopped — the record is kept**) are a second row below. On a phone the columns stack into a list.
 
 **What it is for**
-Every claim on the procedure's ten stages, one column each, with a lane for claims on hold and the
-exits below. Each column shows who owns the stage and what its gate asks. Each card shows the
+Every claim on the ten steps, one column each, with a lane for claims on hold and the claims that
+have stopped below. The page says: "A claim moves one step at a time, and each move is checked when you press it."
+Each column shows who owns the step and what it needs. Each card shows the
 reference, client, property, owner, days since the last move, the next action and — for Admin and
 Sales — the range shown.
 
@@ -1683,17 +1696,17 @@ Address: `/staff/pipeline` · a move: posted from a card or the claim page
 
 **How to do the common job**
 1. Open **Pipeline** and find the card.
-2. Read the column's **The gate:** line.
+2. Read the column's **What this step needs:** line.
 3. Press the card's **Move to …** button. It asks for exactly the next stage.
 4. If the move is refused, open the claim: its pipeline panel lists each need with ✗ or ✓ and the reason.
 5. To exit or hold, use the claim page: **Close the claim here** (with **Exit to** and **Reason**; the record is kept) or **Put on hold** (with **Hold reason**).
 
 **What it will refuse, and why** (the page is headed **Not moved**)
-- A skipped stage: "A claim moves one stage at a time, through each stage's gate. From Assessment the next stage is Engagement."
-- A gate not ready: "Not ready to move on from Enquiry yet. Still needed: The property is healthcare property in the UK — England and Wales at launch, Scotland second, Northern Ireland third — not known — and a check that is not known does not pass; …"
-- No signed letter: "Not ready to move on from Engagement yet. Still needed: A signed engagement letter, asserted on the server — the engagement letter is sent and not yet opened and is not signed."
+- A skipped stage: "A claim moves one step at a time, and each step is checked. From Assessment the next step is Engagement."
+- A step not ready: "Not ready to move on from Enquiry yet. Still needed: The property is healthcare property in the UK — England and Wales at launch, Scotland second, Northern Ireland third — not known — and a check that is not known does not pass; …"
+- No signed letter: "Not ready to move on from Engagement yet. Still needed: A signed engagement letter — the engagement letter is sent and not yet opened and is not signed."
 - A hold with no reason: "A hold carries its reason — say why the claim is on hold."
-- No next action: "A claim moving to … keeps exactly one next action, with an owner and a due date, and this one does not: … Set the claim's next action first."
+- No next action: "A claim moving to … needs one next step, with an owner and a due date. This one has not: … Set the claim's next step first."
 - A claim on hold: "This claim is on hold. Resume it at the stage it was held at first."
 - Sales reopening, or a surveyor moving anything: refused ("not authorised").
 
@@ -1705,7 +1718,7 @@ the **Engagement** column now reads "Engagement · 2", and the claim's **Every m
 Assessment Engagement Sales User".
 
 **Check yourself**
-- *The card's button is there. Does that mean the move will work?* — No. The button is a courtesy; the gate is checked on every move.
+- *The card's button is there. Does that mean the move will work?* — No. "Each step is checked before a claim can move on — the button alone does not move it."
 - *A claim was declined at enquiry by mistake. Who can bring it back?* — Only an Admin, with a reason.
 - *Why can't a surveyor see the board?* — The board is Admin's and Sales'; a surveyor sees only their own jobs.
 
@@ -1784,8 +1797,8 @@ Address: `/staff/claims/{claim}` (the panels)
 - No owner: "A claim's next action has an owner: choose the person who will do it."
 - No date: "A claim's next action has a due date."
 - A closed or exited claim: "This claim has closed or left the procedure, and keeps no next action."
-- A do-not-contact organisation: **Not queued** — "This organisation is marked do not contact. Nothing was queued — the outbox refuses it."
-- Accounting and Surveying cannot set a next action, queue email or add a note.
+- A do-not-contact organisation: **Not sent** — "This company is marked do not contact, so nothing was saved to send."
+- Accounting and Surveying cannot set a next action, save an email or add a note.
 
 **Try it on the demo**
 As Sales, on CR-2026-0002, set the next action "Send the engagement letter reminder" with no owner →
@@ -1809,8 +1822,8 @@ freshly started demo, 21 September 2026, as Sales:* "9 open claims checked"; the
 Partnership LLP, "This claim has no next action."
 
 **What it is for**
-A single check on the whole pipeline. It lists every open claim breaking the rule "exactly one next
-action, with an owner and a due date", then the claims keeping the rule whose next action is
+A single check on the whole pipeline. It lists every open claim with no next step, owner or date ("Every claim still
+open has one next action."), then the claims keeping the rule whose next action is
 overdue. Each claim shows who it is waiting on.
 
 **Who can open it**
@@ -1827,7 +1840,7 @@ Address: `/staff/next-actions` (**Tasks** → **Claims with no next step**)
 **What it will refuse, and why**
 - The list itself changes nothing; you fix claims on the claim page.
 - A claim nobody owns is on no owner's list. It is on this list, which Home's **Claims with no next step** tile opens for Sales and Admin (Phase 136).
-- "Where both sides are waiting it reads as ours" — the page counts a shared wait as ours, because that is the one we can act on.
+- "If both sides are waiting, we count it as ours." — the page counts a shared wait as ours, because that is the one we can act on.
 
 **Try it on the demo**
 As Sales, open the list. "8 open claims checked"; **Breaking the rule** shows CR-2026-0002 ("This
@@ -1859,7 +1872,7 @@ Address: /staff/automation
 6. To stop a rule later, open **Change “…”**, set "Active" to "no — retired" and save. Rules are never deleted.
 
 **What it will refuse, and why**
-- The forbidden effects are not in the "Effect" list. If one is sent anyway, it is refused by name, for example "No rule may move a claim. A move asks the stage’s gate, and a person asks for the move." A rule runs unattended, so it may never move a claim, open a gate, record a signature, flip a tax adviser's switch, run the research, write to a do-not-contact organisation, send anything except to the outbox, or create or chase an invoice.
+- The forbidden effects are not in the "Effect" list. If one is sent anyway, it is refused by name, for example "No rule can move a claim. A person moves it, and each step is checked first." A rule runs unattended, so it may never move a claim, turn on lookups, record a signature, change a tax adviser's switch, run the research, write to a do-not-contact organisation, send a message itself (it can only add a notice to the emails waiting to send), or make or chase an invoice.
 - "Give the rule a label a person can read."
 - "Only a “stage entered” rule listens for a stage."
 - "A document request to the client" with no document chosen: "Choose the document the rule asks the client for." With one chosen, it saves (see Part 1, A5).
@@ -1870,8 +1883,8 @@ Address: /staff/automation
 3. Return to **Automation rules**. *Observed:* "What the rules did" shows *A new lead gets its first follow-up* · A lead is created · a lead · **ran — 1 task**.
 
 **Check yourself**
-1. *Can a rule tell the client their claim has moved stage?* No. A notice goes only to the claim's owner, into the outbox, and is not sent; no rule may move a claim or speak to a client.
-2. *Where do you see whether a rule fired?* Under "What the rules did", which shows either "ran" or why it did not.
+1. *Can a rule tell the client their claim has moved stage?* No. A notice goes only to the claim's owner, added to the emails waiting to send, and is not sent; no rule may move a claim or speak to a client.
+2. *Where do you see whether a rule ran?* Under "What the rules did", which shows either "ran" or why it did not.
 3. *A seeded rule is no longer wanted. How do you remove it?* Set "Active" to "no — retired". Rules are never deleted.
 
 ---
@@ -1892,7 +1905,7 @@ Address: /staff/templates
 5. Check the subject and the message, change what you like, and press **Save the email**. The page says "Saved — emails are not being sent yet."
 
 **What it will refuse, and why**
-- Anything about invoices, payment or bank details, including the *shape* of a sort code or account number. For example: "A template may not carry a bank transfer. Bank details are never sent from a template, and the invoice email waits on the invoice-fraud procedure." Emails carrying bank details are how invoice fraud works.
+- Anything about invoices, payment or bank details, including the *shape* of a sort code or account number. For example: "A template may not carry a bank transfer. We never send bank details from a template. The invoice email waits until our invoice-fraud steps are in place." Emails carrying bank details are how invoice fraud works.
 - Tipping-off words, for example "A template may not carry a reference to due diligence." Nothing a client reads may suggest they are under suspicion.
 - A merge field outside the six: "“{{first_name}}” is not a merge field. The merge fields are {{contact_name}}, …".
 - Emailing a company marked do not contact: "You cannot email this company."
@@ -1925,19 +1938,19 @@ Address: `/staff/claims/{claim}` (the **Documents** panel)
 
 **How to do the common job**
 1. Open the claim and scroll to **Documents**.
-2. Under **Ask the client for a document — it goes to their portal, and only a type with a receipt policy can be asked for**, choose **Document**.
+2. Under **Ask the client for a document — it goes to their portal. You can only ask for a type we can accept.**, choose **Document**.
 3. Fill in **Why we need it**, **What it holds up** and, if there is one, **Due**.
 4. Press **Request it**. It shows under **Requests** as "requested — waiting on the client".
    To add a file yourself, use **Upload a file to this claim** at the foot of the panel: drop the file (or tap to
    choose), say what it is, tick **Let the client see this file** only if they should, and press **Upload**. You land
    in the claim's folder of the company's files (`B47`).
-5. Wait for the client's upload; the request turns to "received, by an upload of the requested type".
+5. Wait for the client's upload; the request turns to "received — they sent it".
 6. If you asked in error, press **Withdraw — asked in error** while it is still open.
 
 **What it will refuse, and why**
-- Missing reasons: **Not requested** — "a request sent to a client has to say why the document is needed and what it holds up."
-- A type nothing can receive: the list offers only the eleven types with a receipt policy.
-- There is no "mark received" button anywhere: "A request is received when an upload of the requested type passes the receipt strip. There is no button for it."
+- Missing reasons: **Not requested** — "say why we need the document and what it holds up."
+- A type we cannot accept: the list offers only the eleven types with a rule for reading their files.
+- There is no "mark received" button anywhere: "A request is marked received when an upload of that type passes our safety checks. There is no button for it."
 - Withdrawing a received request: "that request has been received by an upload. The version that answered it stays on the record."
 
 **Try it on the demo**
@@ -1945,12 +1958,11 @@ As Sales, on CR-2026-0003, press **Request it** for "Lease, and any licence for 
 two boxes empty → **Not requested**. Fill them in ("To confirm the tenure and the alterations licence",
 "The survey") with Due 2026-09-10 → **Requests — 1 outstanding, 1 OVERDUE**. Your **Tasks** page now
 shows **Documents you asked a client for that have not arrived**, and Home shows the late request as a red tile. Once the client's upload arrives
-(see `C6`), the panel reads "Requests — 0 outstanding" and "received, by an upload of the requested
-type, version 1".
+(see `C6`), the panel reads "Requests — 0 outstanding" and "received — they sent it, version 1".
 
 **Check yourself**
 - *The client says they posted the lease. Can you tick it received?* — No; only the upload receives it.
-- *Why is "Capital allowances report" not in the request list?* — It has no receipt policy, so nothing can receive it.
+- *Why is "Capital allowances report" not in the request list?* — We have no rule yet for reading that kind of file, so we cannot accept one.
 - *A request's due date has passed. How is that shown?* — "3 days overdue (…)", counted in UK days.
 
 ---
@@ -1958,9 +1970,9 @@ type, version 1".
 ### Training — `B28` a document and its versions
 
 **What it is for**
-One document's own page. It shows the type, who may read it, the receipt strip applied, the type's
-deletion clock, every link to a claim or property, and every version — who uploaded it (a role,
-never a name), its state, and its own deletion clock. Nothing is ever overwritten.
+One document's own page. It shows the type, who may read it, **What we did with the file**, **When files of
+this type are deleted**, every link to a claim or property, and every version — who uploaded it (a role,
+never a name), its state, and **When this version is deleted**. "Nothing is overwritten. Each upload is its own version."
 
 **Who can open it**
 Decided by the document's type. Claim evidence such as a lease: Admin, Sales, a surveyor on an
@@ -1971,7 +1983,7 @@ Address: `/staff/documents/{document}`
 
 **How to do the common job**
 1. From the claim's **Documents** panel, open the document.
-2. Read **Type**, **Who may read it**, **The receipt strip** and **The type's deletion clock today**.
+2. Read **Type**, **Who may read it**, **What we did with the file** and **When files of this type are deleted**.
 3. Under **Linked to**, see each claim or property. Press **End this link** to stop a link — it is ended, not deleted.
 4. Under **Version history**, read each version's row.
 5. To add a newer copy, drop the file on the box under **Version history** (or tap it to choose) and press **Upload a new version**. It becomes version 2; version 1 stays.
@@ -1986,8 +1998,9 @@ Address: `/staff/documents/{document}`
 **Try it on the demo**
 After the client's lease upload (`C6` exercise), as Sales open the lease from CR-2026-0003. **Who may read it**
 reads "Claim evidence — Admin, Sales, a surveyor on an assigned job, and the client". Version 1 is
-"the client", "Read — we kept what we need", and its original "Deleted …, once we had read it". Its deletion clock
-reads "RET-7 … DERIVED, NOT APPROVED … so no deletion date is computed". Signed in as Accounting, or
+"the client", "Read — we kept what we need", and its original "Deleted …, once we had read it". Its **When this version
+is deleted** reads "Deleted 6 years after the later of two dates … Worked out by us — not yet approved by the data
+protection officer, so no deletion date is set". Signed in as Accounting, or
 as the surveyor, the same address is refused.
 
 **Check yourself**
@@ -2001,33 +2014,34 @@ as the surveyor, the same address is refused.
 
 Address: /staff/document-types
 
-**What it is for.** For each kind of document, it records who may read it, whether it can carry a claim value, a tax benefit or a fee, its deletion clock, and whether it is in use. It also shows whether an upload of that kind can be received at all.
+**What it is for.** For each kind of document, it records who may read it, whether it can carry a claim value, a tax benefit or a fee, when its files are deleted, and whether it is in use. It also shows whether we can accept that kind of file at all. The page says: "For each type: who may read it, when its files are deleted, and whether we can accept it. **No deletion date set yet** means just that. We never fill in a date for you."
 
 **Who can open it.** Admin and Sales can read it; only Admin saves. Accounting, Surveying and clients are refused.
 
 **How to do the common job**
-1. **Where things are (Phase 133b, 17 September 2026).** The types are grouped by who may read them, in a list down the left: **Claim evidence**, **The claim team**, **Finance**, **The engagement letter**, then **Add a type**. Each type is one line — its name, its code, and whether it can carry a value, its deletion clock and whether it is active. Press the line to open it.
-2. In the opened type, change **Label**, **Who may read it**, **Can it carry a value**, **Deletion clock** (UNSET or RET-7) or **State**, then press **Save** (the button names the type). The page opens again on the group the type now sits in.
-3. To add a type, choose **Add a type** in the list and fill in "Code" and "Label". Choose "Who may read it", "Can it carry a claim value, a tax benefit or a fee?" and "Deletion clock", then press **Add the type**.
-4. A new type has no receipt policy: it can be recorded but not received or requested, until the data protection officer decides a policy and a developer binds it.
+1. **Where things are (Phase 133b, 17 September 2026).** The types are grouped by who may read them, in a list down the left: **Claim evidence**, **The claim team**, **Finance**, **The engagement letter**, then **Add a type**. Each type is one line — its name, its code, and whether it can carry a value, its badge — **No deletion date set yet** or **Deletion rule chosen** — and whether it is active. Press the line to open it.
+2. In the opened type, change **Label**, **Who may read it**, **Can it carry a value**, **When it is deleted** (**No deletion date set yet**, or **The 6-year rule for files a client sends**) or **State**, then press **Save** (the button names the type). The page opens again on the group the type now sits in.
+3. To add a type, choose **Add a type** in the list and fill in "Code" and "Label". Choose "Who may read it", "Can it carry a claim value, a tax benefit or a fee?" and "When it is deleted", then press **Add the type**.
+4. A new type has no rule for reading its files: it can be listed but not sent or asked for, until the data protection officer decides the rule and a developer adds it in a system update.
 
 **What it will refuse, and why**
-- "a type that can carry a claim value, a tax benefit or a fee is never marked as not carrying one (N1)."
-- "a type that can carry a claim value, a tax benefit or a fee cannot be claim evidence: a surveyor would read it (N1)." A surveyor must never see our figures before committing their own.
-- Asking a client for a type with no receipt policy: "nothing could ever receive it. No receipt policy — so an upload of this type cannot be received. …"
-- There is no delete and no receipt-policy control on the page.
+- "a type that can carry a claim value, a tax benefit or a fee is never marked as not carrying one."
+- "a type that can carry a claim value, a tax benefit or a fee cannot be claim evidence. A surveyor would read it." A surveyor must never see our figures before committing their own.
+- Asking a client for a type with no rule for reading its files: "nothing could ever receive it. We have no rule yet for reading this kind of file, so we cannot accept one. …"
+- A deletion rule not on the list: "choose a deletion rule from the list, or choose “No deletion date set yet”."
+- There is no delete and no control for the reading rule on the page.
 
 **Try it on the demo**
 1. Open **Asbestos register** under Claim evidence, change its label to *Asbestos register and survey* and press Save. *Observed:* it is saved, and a claim's "Ask the client for a document" list shows the new name.
-2. Try to set **Caprebate's fee invoice** to "cannot". *Observed:* the row offers only "can carry a value"; when forced, "Type not changed — a type that can carry a claim value … is never marked as not carrying one (N1)."
-3. Add a type with Code *DILAPIDATIONS_SCHEDULE*, Label *Schedule of dilapidations*, readers **Claim evidence**, carries a value **yes**. *Observed:* "Type not added — … cannot be claim evidence: a surveyor would read it (N1)."
-4. Repeat with readers **The claim team**. *Observed:* it is added, showing "added by an administrator", "No receipt policy …" and "UNSET". It does not appear in a claim's request list, and a forced request was refused with "nothing could ever receive it."
+2. Try to set **Caprebate's fee invoice** to "cannot". *Observed:* the row offers only "can carry a value"; when forced, "Type not changed — a type that can carry a claim value … is never marked as not carrying one."
+3. Add a type with Code *DILAPIDATIONS_SCHEDULE*, Label *Schedule of dilapidations*, readers **Claim evidence**, carries a value **yes**. *Observed (wording since Phase 144):* "Type not added — … cannot be claim evidence. A surveyor would read it."
+4. Repeat with readers **The claim team**. *Observed (wording since Phase 144):* it is added, showing "added by an administrator", "We have no rule yet for reading this kind of file …" and "No deletion date set yet". It does not appear in a claim's request list, and a forced request was refused with "nothing could ever receive it."
 
 **Check yourself**
-1. *Why can't a client upload their engagement letter?* The type has no receipt policy. The data protection officer decides one, and only a developer's migration can bind it.
+1. *Why can't a client upload their engagement letter?* The type has no rule for reading its files. The data protection officer decides one, and only a developer's system update can switch it on.
 2. *Can the fee invoice be made readable by a surveyor?* No. A type that can carry a fee can never be claim evidence.
 3. *A type is obsolete. Delete it?* No. Set it to retired.
-4. *The data protection officer approves the recommended strip for accounts. Can a client upload accounts the next day?* No. Approval is recorded first; a developer then binds the policy with a migration, and only then does the type stop reading "No receipt policy".
+4. *The data protection officer approves the suggested rule for accounts. Can a client upload accounts the next day?* No. Approval is recorded first ("Approved by the data protection officer, but not switched on yet"); a developer then switches the rule on in a system update, and only then does the type stop reading "We have no rule yet for reading this kind of file".
 
 ---
 
@@ -2055,14 +2069,14 @@ Address: `/staff/introducers` · one firm: `/staff/introducers/{firm}`
 - A referral with no client business: **Referral not recorded** — "Name the client's business — a referral is about an organisation."
 - A firm with no name: "An introducer is a firm, and needs its name."
 - A planned contact with no date: "A planned contact has a date — the next contact is read from it."
-- Reciprocity while the reward model is off: "Reciprocity is logged only while reward model A is switched on…"
+- Logging what we give a firm while the reward model is off: "You can only log what we give back to a firm while reward model A is on…"
 
 **Try it on the demo**
 As Sales, add the firm "Hollowmere Invented Accountants LLP". Its page opens with "Leads referred 0"
-and "Estimated claim value: not known — no referred claim carries a sealed estimate". Record a
+and "Estimated claim value: not known — no referred claim has a locked estimate". Record a
 referral from "Quarrendon Invented Tax LLP" for "Hartwell Invented Dental Limited": the new lead shows
-**Introducer** Quarrendon Invented Tax LLP, and under **Notices to the firm**, "Referred not queued —
-the client's opt-in to share progress with this firm is not given". Sign in as Accounting: **Introducers**
+**Introducer** Quarrendon Invented Tax LLP, and under **Notices to the firm**, "Referred not sent —
+the client has not agreed to share progress with this firm". Sign in as Accounting: **Introducers**
 lists both firms with only **Fees invoiced** £0 and **Fees paid** £0 filled in.
 
 **Check yourself**
@@ -2117,7 +2131,7 @@ are unchanged.
 
 Address: /staff/introducer-rewards
 
-**What it is for.** Records whether, and how, firms that refer clients are rewarded. The choice is Off, model A (no cash, firm-level reciprocity), model B (a fixed fee per successful claim, disclosed to the client) or, since Phase 132e, model C (10% of our fee as actually invoiced, to a registered accountancy firm, reversed if the fee is reduced under clause 13). It also lists any model B fees owed to firms, and model C's ledger of accruals and reversals.
+**What it is for.** Records whether, and how, firms that refer clients are rewarded. The choice is Off, model A (no cash — we give the firm something back), model B (a fixed fee per successful claim, disclosed to the client) or, since Phase 132e, model C (10% of our fee as actually invoiced, to a registered accountancy firm, reversed if the fee is reduced under clause 13). It also lists any model B fees owed to firms, and model C's ledger of accruals and reversals.
 
 **Who can open it.** Admin, Sales and Accounting can read it. Only Admin sees "Switch it". Surveying and clients are refused.
 
@@ -2127,14 +2141,14 @@ Address: /staff/introducer-rewards
 3. Under model B, a fee appears in "Fees to introducers" when a referred claim closes. Sales or Admin records its disclosure to the client; only after that may Admin or Accounting mark it settled. (No fee exists on the demo, so these controls could not be seen.)
 
 **What it will refuse, and why**
-- Any change from Off while clause 1 is blank: "The reward model stays off while clause 1 of the engagement letter is blank — it still reads …". A reward the letter does not disclose to the client cannot be offered.
+- Any change from Off while clause 1 is blank: "Introducer fees stay off while clause 1 of the engagement letter is blank. It still reads …" A reward the letter does not disclose to the client cannot be offered.
 - Model B with no amount: "Model B is a fixed fee: give the amount paid to the firm per successful claim, in pounds." (from the code)
 - A fee marked paid before its disclosure is recorded (refused by the database).
 - Sales pressing Save is refused with "not authorised".
 
 **Try it on the demo**
-1. As admin, choose "B — a fixed, disclosed fee per successful claim, paid to the firm", enter 250 and press Save. *Observed:* "The reward model did not change — The reward model stays off while clause 1 of the engagement letter is blank — it still reads [Where the Client has none engaged, …]".
-2. Try "A — no cash: firm-level reciprocity …". *Observed:* the same refusal.
+1. As admin, choose "B — a fixed, disclosed fee per successful claim, paid to the firm", enter 250 and press Save. *Observed (wording since Phase 144):* "The reward model did not change — Introducer fees stay off while clause 1 of the engagement letter is blank. It still reads [Where the Client has none engaged, …]".
+2. Try "A — no cash. We give the firm something back …". *Observed:* the same refusal.
 3. Sign in as Accounting and open the page. *Observed:* it opens, shows "It is Off", and has no "Switch it" section.
 
 **Check yourself**
@@ -2160,13 +2174,13 @@ Address: /staff/compliance (links along the top: Compliance · Due diligence · 
 
 **What it will refuse, and why.** A value with no date: "Setting not recorded — Say from when it takes effect." A setting that cannot be dated cannot be checked later.
 
-**Try it on the demo.** Record "Customer due diligence is in force" = "On — ENGAGEMENT cannot complete without a finished check", taking effect 31/12/2026, with the source *Training exercise only*. *Observed:* saved; today's reading still says "Off — nothing blocks a claim". **Do this only on the demo.** On a live system, this value may only be recorded once the solicitor's written answer exists.
+**Try it on the demo.** Record "Customer due diligence is in force" = "On — a claim cannot pass the engagement step without a finished check", taking effect 31/12/2026, with the source *Training exercise only*. *Observed:* saved; today's reading still says "Off — nothing blocks a claim". **Do this only on the demo.** On a live system, this value may only be recorded once the solicitor's written answer exists.
 
 #### Due diligence
-Address: /staff/compliance/aml. It reads "OFF — nothing here blocks a claim. The register can still be kept." To keep the records anyway, use **Record an appointment** (the nominated officer), **Record a dated assessment** (the firm-wide risk assessment) and **Open a check** (choose the "Organisation" and "Kind of claimant"). *Observed:* the page opens with "Officers — None recorded", no risk assessment and "Checks — None." Company ownership data from Companies House does not count as proof of who owns the business.
+Address: /staff/compliance/aml. It reads "OFF — nothing here blocks a claim. The register can still be kept." To keep the records anyway, use **Record an appointment** (the nominated officer), **Record a dated assessment** (the firm-wide risk assessment) and **Open a check** (choose the "Organisation" and "Kind of claimant"). *Observed:* the page opens with "Officers — None recorded", no risk assessment and "Checks — None." The Companies House list of people with significant control "does NOT stand for beneficial ownership" — it does not count as proof of who owns the business.
 
 #### Rights requests
-Address: /staff/compliance/rights. Use **Log a request**: give "Received" (when it arrived, not when it was read), "How it arrived", their words, and tick each right under "The rights it engages — one clock each". *Try:* received 2026-09-10 09:30, dedicated address, Art 15. *Observed:* **RR-001**, earliest deadline **2026-10-09**. Its page shows the arithmetic ("one month beginning with 10 September 2026 ends 9 October 2026") and notes "on the alternative reading 10 October 2026; Caprebate works to the earlier".
+Address: /staff/compliance/rights. Use **Log a request**: give "Received" (when it arrived, not when it was read), "How it arrived", their words, and tick each right under "The rights it asks for — each has its own deadline". *Try:* received 2026-09-10 09:30, dedicated address, Art 15. *Observed:* **RR-001**, earliest deadline **2026-10-09**. Its **Deadlines** table shows the arithmetic ("one month beginning with 10 September 2026 ends 9 October 2026 (the cautious reading)") and notes "on the alternative reading 10 October 2026; Caprebate works to the earlier".
 
 #### Complaints
 Address: /staff/compliance/complaints. Use **Log a complaint**, and classify it "now, on receipt" (is it a s.164A complaint?). *Try:* received 2026-09-11 14:00 by post, "No — not a s.164A complaint". *Observed:* **CP-001**, Acknowledge by **2026-10-10**, "not acknowledged yet", OPEN.
@@ -2181,7 +2195,7 @@ Address: /staff/compliance/identity. There is no list of names. You can **Search
 Address: /staff/compliance/consent/… (for one contact). *Try:* the Decision Maker Contact at Dunmarrow Medical Practice Limited. *Observed:* Being contacted "not given"; Marketing "not given — the box is never ticked for anyone"; Sharing progress with a referring firm "never asked — nothing is shared". A new answer goes in with **Record an answer** (Which, Answer, and the version of the words they were asked).
 
 #### Retention
-Address: /staff/compliance/retention. This is a list, not a deleter. *Observed:* every row is UNSET or "DERIVED, NOT APPROVED" with "No date is computed". Staff tasks show 11 records and "no delete is offered", because the table refuses deletion by design.
+Address: /staff/compliance/retention. The heading is **Retention — what is due for deletion**, and "This list deletes nothing." *Observed (wording since Phase 144):* each row's **When it is deleted** says its rule in words — for example "Six years from our final answer to the complaint." — then "Worked out by us — not yet approved by the data protection officer", "No rule for this yet" or "No deletion date set yet", and ends "No deletion date set yet". The columns are Record · When it is deleted · Records · No date yet · Held · Past their date · Deleting. Staff tasks show 11 records and "Nothing is deleted from here", because the database blocks deleting them by design.
 
 **Check yourself**
 1. *Two names must sign off a breach decision. Does the system check two people did it?* No. One Admin login types both names; the names are a record, not a control.
@@ -2200,7 +2214,7 @@ sentence is behind **Why?**. The old address `/staff/dashboard` now takes you to
 **What it is for**
 A management view read fresh on every visit. It has tiles for the pipeline, estimate to outcome,
 the money, the work waiting, compliance clocks, and survey jobs. Nothing on it is stored, and a
-figure nobody can know yet is said in words, never shown as nought.
+figure nobody can know yet is said in words, never shown as £0 ("A figure not known yet is said, never shown as zero.").
 
 **Who can open it**
 All four staff roles, but each tile is drawn only for a role that may read every figure in it:
@@ -2213,17 +2227,17 @@ Address: `/staff/reports` (the figures as data: `/staff/dashboard/view.json`)
 
 **How to do the common job**
 1. On **Home**, press **Reports**. The first line gives the UK date the figures are "as at".
-2. Read each tile's figures, then the line under them saying what is counted apart ("counted apart, and never added in as nought").
+2. Read each tile's figures, then the line under them saying what is counted apart (for example "2 open claims have no estimate yet — not known, so not counted as £0").
 3. Press **Why?** at the foot of a tile for how it is worked out.
 4. Open the page behind a tile (Pipeline, Finance, Tasks) to act.
 5. **For a report over a period**, under **Pick a period**, choose **Period**: This month, This quarter, A UK financial year — 1 April to 31 March, or From one UK date to another. Give **For a financial year, the year it starts in**, or **For a range, from** and **to**, where the choice asks. Press **Show**. **No period** puts the figures back to as at today.
-6. Read the last line of each tile: a tile the period applies to says so, and one that counts what stands today ends "As at today — a count of what stands now, which the period chosen does not change."
+6. Read the last line of each tile: a tile the period applies to says so, and one that counts what stands today ends "As at today — a count of what is there now. The period chosen does not change it."
 
 **What it will refuse, and why**
 - A tile your role may not read in full is not built for you at all. **Why?** under the date says so: "Each figure is shown only to a role that may read every number in it."
 - A surveyor's tile never carries a figure of ours: "No figure of ours is on this tile, for anyone."
-- Unknowns are never added in. For example, "2 open claims carry no sealed estimate — counted apart, and never added in as nought".
-- A range that ends before it starts is not applied, and the page says why: "From and to: the range ends before it starts, so the tiles read with no period".
+- Unknowns are never added in. For example, "2 open claims have no estimate yet — not known, so not counted as £0".
+- A range that ends before it starts is not applied, and the page says why: "From and to: the end date is before the start date. No period was used".
 - A lost lead carries no date it was lost, so with a period chosen it is counted apart rather than placed in the period.
 
 **Try it on the demo**
@@ -2238,12 +2252,12 @@ Now, as Sales, choose **This quarter** and press **Show**: "Showing this quarter
 2026, 1 Jul 2026 to 30 Sep 2026." *(Re-observed 21 September 2026, Phase 136.)* Choose **A UK financial year** with 2026:
 **Won and completed claim value** reads "Completed — closed in the UK financial year 1 April 2026 to
 31 March 2027 0 claims", while **Open pipeline value** still reads "8 claims" and "As at today". Choose
-**From one UK date to another**, from 2026-09-30 to 2026-09-01: the tiles read with no period, and
+**From one UK date to another**, from 2026-09-30 to 2026-09-01: no period is used, and
 the page says why.
 
 **Check yourself**
 - *Why is Accounting's dashboard so short?* — It is drawn only with tiles whose every figure Accounting may read.
-- *Two invoices have no due date. Are they in "Overdue"?* — No; they are counted neither overdue nor on time.
+- *Two invoices have no due date. Are they in "Overdue"?* — No; they are "Not counted as overdue or on time".
 - *Is the pipeline value stored anywhere?* — No; it is read from the records every time.
 - *Where is the reports screen?* — This dashboard, with a period chosen. Nothing is stored for a report.
 
@@ -2320,7 +2334,7 @@ Address: `/staff/claims` · `/staff/leads` · export: `/staff/claims/export.csv`
 - A view with no name: "Give the view a name of up to 120 characters."
 - Exporting as a surveyor: refused.
 - A cell beginning with =, +, - or @ is neutralised in the export, so a spreadsheet never runs it.
-- A filter on a column you cannot read is not applied to the file. As Accounting, `/staff/claims?stage=SURVEY` says beside the link "The file does not apply stage — not columns you read.", and the export's record names it.
+- A filter on a column you cannot read is not applied to the file. As Accounting, `/staff/claims?stage=SURVEY` says beside the link "The file does not apply stage — your role does not see those columns.", and the export's record names it.
 
 **Try it on the demo**
 As Sales, show **Stage** = Survey: "3 shown". Add an unknown filter by hand (…&colour=red) and the
@@ -2354,14 +2368,14 @@ Address: /staff/admin-settings
 
 **What it will refuse, and why**
 - "The application writes this value itself, so it is never retired." The system itself relies on that value.
-- Adding a stage: "The stages are the operating procedure’s ten, each with its gate and its exits. A stage is never added, removed or reordered by a setting."
-- Any item under "What a setting may not change" (the last section), asked for with **Ask**, gets a page headed "Not a setting" with its reason, and the attempt is recorded. Gates, tax adviser switches, fee switches and role boundaries belong to their owners, not to whoever holds the admin login.
+- Adding a stage: "There are ten steps, each with its own check and ways out. No setting can add, remove or reorder a step."
+- Any item under "What a setting may not change" (the last section), asked for with **Ask**, gets a page headed "Not a setting" with its reason, and the attempt is recorded ("If you ask to change one, the system says no, gives the reason below and records that you asked."). The steps' checks, tax adviser switches, fee switches and role boundaries belong to their owners, not to whoever holds the admin login.
 
 **Try it on the demo**
 1. Under Lead sources, set **OUTBOUND** to retired and press Save. *Observed:* its state reads "retired", and the Leads page no longer offers Outbound.
 2. Relabel **WEBSITE** to *Our website*. *Observed:* saved, and Leads now shows "Our website". (It has no retire option; forced, it answered "The application writes this value itself, so it is never retired.")
 3. Under Property types, add Code *HOSPICE*, Label *Hospice*. *Observed:* added, active.
-4. Under "Ask to change one anyway", choose **FEE_TRIGGER** and press **Ask**. *Observed:* "Not a setting — When our fee is earned is Lakhbir’s question, and the invoice stage waits on it in code."
+4. Under "Ask to change one anyway", choose **FEE_TRIGGER** and press **Ask**. *Observed (wording since Phase 144):* "Not a setting — Lakhbir decided when our fee is earned: when our report is delivered for filing. This is built in, so no setting can change it."
 
 **Check yourself**
 1. *Why can a value be retired but never deleted?* Old records name its code; deleting it would leave those records pointing at nothing.
@@ -2388,23 +2402,23 @@ Address: `/staff/documents`
 1. Open **Search** and press **Find a document across every client**. (Documents is on no menu since Phase 135. A
    company's own files are on its page, under **Files** — `B47`; asking this list for one company alone takes you there.)
 2. Narrow the list with **Type**, **Organisation**, **Claim** and **State** (Received, Not received yet, or Refused), and choose an **Order**.
-3. Press **Show**. The line under the heading says how many are shown and what was filtered; **Clear** starts again.
+3. Press **Show**. The line under the heading — "All the documents you may open. Showing … of …" — says how many are shown and what was filtered; **Clear** starts again.
 4. Open a document by its name to see its versions (`B28`).
 
 **What it will refuse, and why**
-- A document you may not open is not on the list at all: "a document you may not open is not on this list."
+- A document you may not open is not on the list at all.
 - A choice the list does not offer is not applied, and says so — for example "Type: not one of the choices this list offers you, so it was not applied".
-- It never searches what a document says, and there is no export: "Never on this page, for anyone: what a document says — this list is of documents, and never searches their text; an export of documents — there is none, for anyone."
+- It never searches what a document says, and there is no export: "This page never offers: what a document says — this list never searches inside files; a download of all the documents — nobody can do this."
 
 **Try it on the demo**
-On a fresh demo every role's list reads "0 of the 0 you may read" and "No document you may read
+On a fresh demo every role's list reads "Showing 0 of 0" and "No document you may read
 matches." — nothing has been uploaded yet. Sign in as the client and send a fire risk assessment from
-the portal (`C6`). Then, as Sales, **Documents** reads "1 of the 1 you may read": "Fire risk assessment
-1 · Fire risk assessment · Corvale Supported Living Limited · on no claim · Received — a version has
-passed the receipt strip · version 1 … the client · 1". Choose **Type** Fire risk assessment, **State**
+the portal (`C6`). Then, as Sales, **Documents** reads "Showing 1 of 1": "Fire risk assessment
+1 · Fire risk assessment · Corvale Supported Living Limited · on no claim · Received — we have read at
+least one version · version 1 … the client · 1". Choose **Type** Fire risk assessment, **State**
 Received and **Order** Type, then number, and press **Show**: the line adds "filtered by type — Fire
 risk assessment; state — Received …". Signed in as Accounting, or as the surveyor, the list still reads
-"0 of the 0 you may read".
+"Showing 0 of 0".
 
 **Check yourself**
 - *Why does Accounting not see the fire risk assessment?* — It is claim evidence, and Accounting reads only the fee invoice and the signed letter.
@@ -2426,28 +2440,28 @@ Address: `/staff/audit`
 
 **How to do the common job**
 1. Open **Audit log** in the menu.
-2. Read **The hash chain** at the top: intact, or broken at a named entry.
+2. Read the line at the top: **Audit log checked — nothing changed**, or **Audit log problem — a record was changed or removed. Tell the Admin now.**, naming the record where the problem starts.
 3. Choose a **Kind**, for example CLAIM_TEAM_LINKED, and an **Outcome** (Allowed, Refused or Error), and press **Show**.
 4. Read each line: # · When · Kind · Role · Who (id) · About · Outcome.
 5. To check a database without the server, a developer runs `npm run verify-audit` (Part 1, A11).
 
 **What it will refuse, and why**
 - Any role but Admin: "not authorised".
-- A line's detail is never shown, and never read to draw the page — "a kind, the ids and the outcome are the record". The log holds no name, address, note or amount in any case.
-- A choice not in the lists is not applied, and says so: "Outcome: not allowed, refused or error, so it was not applied".
-- There is no edit and no delete, and reading the page is itself recorded.
+- A line's detail is never shown, and never read to draw the page — "The details of each line are never shown or read here. You see the kind, the ids and the outcome." The log holds no name, address, note or amount in any case.
+- A choice not in the lists is not used, and says so: "Outcome: not allowed, refused or error, so it was not used".
+- There is no edit and no delete, and "Opening this page adds a line to the log."
 
 **Try it on the demo**
-Do the claim-team exercise in `B17`/`B18` as Sales. Then sign in as Admin and open **Audit log**: "The
-hash chain: Intact: all … entries recomputed from the genesis, each linked to the one before it."
+Do the claim-team exercise in `B17`/`B18` as Sales. Then sign in as Admin and open **Audit log**: "Audit
+log checked — nothing changed. All … records were checked, each against the one before it."
 Choose **Kind** CLAIM_TEAM_LINKED and press **Show**: one line — "CLAIM_TEAM_LINKED · SALES · (an id) ·
 claim (an id) · Allowed" — and the accountant's name is nowhere on it. Sign in as Sales and open the
 address: "not authorised".
 
 **Check yourself**
 - *The log says a contact joined a claim's team. Which contact?* — The log gives ids, never a name; the claim page says who is on the team.
-- *Can Admin correct a wrong line?* — No. Nothing in the log is changed or deleted, and a change made outside the application shows as a broken chain.
-- *How do you know nobody has tampered with it?* — The page recomputes the chain on every visit and says whether it is intact.
+- *Can Admin correct a wrong line?* — No. Nothing in the log is changed or deleted, and a change made outside the application shows as "Audit log problem".
+- *How do you know nobody has tampered with it?* — The page checks every record against the one before it on every visit, and says "Audit log checked — nothing changed" or "Audit log problem".
 
 ---
 
@@ -2484,7 +2498,7 @@ opens and the **Settings** tab is still marked.
 
 **Check yourself**
 - *Where is Admin settings now?* — **Settings** → **Switches**. The screen is the same.
-- *Your own password and the outbox?* — **Your account**, in the menu under your name. That was called Settings before.
+- *Your own password and the emails waiting to send?* — **Your account**, in the menu under your name. That was called Settings before.
 
 ---
 
@@ -2712,13 +2726,86 @@ Address: `/staff/clients/{company}/claims/{claim}#claim-grants`.
 **What the line on each card means (Rulebook F)**
 - The NHS, a council, Homes England or the GLA, or another public body: *"This will reduce the claim on the items it
   paid for."*
-- An insurer: *"Insurance money after damage usually does not reduce the claim. Our tax adviser checks."*
+- An insurer: *"Insurance paid out after damage usually does not cut the claim. Our tax adviser checks."*
 - Anyone else — a landlord, a company in the group, a charity, a private person: *"This may reduce the claim on the
   items it paid for. Our tax adviser checks whether it does."*
 - Not known: *"This may reduce the claim on the items it paid for. We need to know who paid."*
 
 *On the demo, as Sales:* open any claim, answer **Yes** with **Who told us?** set to **The client told us**, and add the
 NHS paying £40,000 towards "the new treatment rooms", matched. The box shows one green card and **Matched £40,000**.
+
+---
+
+### Training — `B51` plain words on every screen
+
+*Written by Phase 144 on 22 September 2026.* Lakhbir, 18 September 2026: the back office "needs to be readable at a
+12-year-old level and to the point".
+
+**What it is for**
+Every back-office and portal screen was rewritten on 22 September 2026 so that it reads at about a 12-year-old level:
+short sentences, everyday words, and no words from our own design notes. **Nothing a role may see or do changed, and no
+rule changed** — only the words. This guide was brought into line the same day, so what it quotes is what you see.
+
+The old design words, and what the screens say now:
+
+| The old word | What the screen says now |
+|---|---|
+| fired (a lookup fired) | **looked up** — "3 lookups made", "looked up — we keep the answer and where it came from" |
+| tier, tiered | **free or paid** — "not sure if free or paid — treated as paid" |
+| provenance | **where this came from** |
+| derived | **worked out** — "Worked out by us — not yet approved by the data protection officer" |
+| gate | **check** — "Each step is checked before a claim can move on"; the lookups are "not allowed yet" |
+| receipt strip, receipt contract | **"we read it, then deleted the file"**; on a document, **What we did with the file** |
+| hash, hash chain, the chain | **audit log** — "Audit log checked — nothing changed"; an issued document's hash is its **fingerprint** |
+| payload | **the data we sent you** |
+| stub, stubbed | **not switched on yet** — "Signing online is not switched on yet" |
+| outbox, queued | **emails waiting to send** — "Saved — not sent yet", "Not sent" |
+| deletion clock | **When it is deleted** — a date, or **"No deletion date set yet"** |
+| UNSET, NOT_COVERED | **"No deletion date set yet"**, **"No due date set yet"**, **"No rule for this yet"** |
+| sealed | **locked** — "no open claim has an estimate", "the locked estimate" |
+| nought | **£0** — "not counted as £0" |
+| qualifying expenditure | **spend that counts** |
+| stage not recognised | **stage not known**, **no step set** |
+| exit, left the procedure | **stopped**, **ended** |
+| YYYY-MM-DD | "a date like 2026-03-31" |
+
+**Unknowns are still said, never shown as £0.** The rule the design notes call N4 — *not known is never counted as
+nothing* — is unchanged. Where a figure, a date or an answer is not known, the screen still says so in words ("not known
+yet", "No deletion date set yet", "not counted as £0"), and not known still passes no check.
+
+**The client's step names are switched on.** Clients now read the plain six in their portal: **1 Your estimate**,
+**2 Engagement letter signed**, **3 We research your property**, **4 Expert sign-off**, **5 Claim filed**,
+**6 Aftercare**. The back office keeps the ten stage names.
+
+**The client's document page is plain too.** Instead of a twelve-step table it says **Sent**, **Where it is**, **What it
+is**, **Kind of file**, **We read it**, **We deleted the file**, and counts such as "We read 3 pages." — never the file's
+words.
+
+**Who can open it**
+Everybody — this is how every screen reads, for every role and for the client. Nothing to switch on or off.
+
+**How to do the common job**
+1. Use the screens as before. Where this guide quotes a screen, the words now match.
+2. If an older note, email or training sheet uses an old word (outbox, gate, deletion clock …), find it on screen by the
+   new word in the table above.
+3. **If you see a word on a screen you do not understand, tell Lakhbir.** That is a fault in the wording, not in you.
+
+**What it refuses, and why**
+- Nothing new is refused. Every refusal says the same thing as before, in plainer words — for example "No rule can move
+  a claim. A person moves it, and each step is checked first."
+- **A check keeps the old words out.** `node 03-app/caprebate-plain-words-check.cjs` reads every screen file and fails if
+  one of the old design words comes back into anything a person reads. A developer runs it with the other checks; staff
+  need do nothing.
+
+**Check yourself**
+- *The guide used to say "the outbox". Where is it now?* — **Your account**, at the foot, under **Emails waiting to
+  send**. Nothing in it has been sent.
+- *A retention row says "No deletion date set yet". Does that mean it is kept for ever?* — No. It means no date has been
+  set; nothing is deleted on a date and nothing is promised kept.
+- *A claim has no estimate yet. Is it counted as £0 on Reports?* — No. It is counted apart, and the tile says so.
+- *A screen uses a word you do not understand. What do you do?* — Tell Lakhbir.
+
+---
 
 ### Training — `C6` the portal's CRM additions
 
@@ -2747,7 +2834,7 @@ client@example.invalid, **Your claims** shows one tile, **main site**. As admin,
 
 **Where things are on the page (Phase 133c, 17 September 2026).** The portal opens with the business's name and two
 buttons, **Book a call** and **Who to contact**; the **Welcome to Cap Rebate** card until the client hides it; **How to
-contact us**; the **stage bar** of the six client-facing steps; **The range you were shown**, with its basis underneath;
+contact us**; the **stage bar** of the six client-facing steps (**1 Your estimate** to **6 Aftercare**, switched on by Phase 144); **The range you were shown**, with its basis underneath;
 and **What we need from you** — each open question and each document we have asked for, linked to its form. Then the
 questions, the documents asked for, **What happens at each step** (behind **Show each step**), and every other section.
 **Help** at the top opens this section. (Until Phase 133c, **How to contact us** was at the foot and the card was headed
@@ -2801,8 +2888,8 @@ the client's answer as Yes. Sign in as the client:
 A public page where an accountancy practice could refer a client without signing in. It asks for:
 the practice, the person's name, email and telephone; the client business's name, sector, and
 postcode or its first half; what happened at the property and the year; and the practice's
-confirmation that its client agreed. **It is switched off**, until a privacy notice is published
-that tells a referred client what a firm passed to us.
+confirmation that its client agreed. **It is switched off**, until a privacy notice is published,
+linked from the referral form, that "tells a referred client what their firm sent us, why we may keep it, and how to object".
 
 **Who can open it**
 Nobody while it is off. When it is switched on: anyone, without signing in.
@@ -2829,7 +2916,7 @@ reveals that a form exists.
 
 **Check yourself**
 - *A practice says the referral link "doesn't work". Is something broken?* — No; the form is switched off and deliberately looks like a missing page.
-- *What must happen before it can be switched on?* — A published privacy notice telling referred clients what a firm passed to us.
+- *What must happen before it can be switched on?* — A published privacy notice, linked from the form, telling referred clients what their firm sent us.
 - *If a firm uses the form twice, is it attached to the existing firm?* — No; it makes a new firm row, which an Admin can merge.
 
 ---

@@ -280,7 +280,7 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
 
       const { claim } = readyToInvoice(app);
       raise(app, claim);
-      assert.match(why(claim), /already has a live fee invoice/);
+      assert.match(why(claim), /already has a fee invoice/);
 
       assert.equal(count(app.db, 'SELECT COUNT(*) AS n FROM invoices'), 1);
       assert.equal(count(app.db, "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'INVOICE_RAISED' AND outcome = 'REFUSED'"), 5);
@@ -316,7 +316,7 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
       for (const kind of ['FEE', 'BREAK_FEE', 'ABORT_FEE']) {
         const r = I.raiseInvoice(deps(app), ACC, outside.claim, { kind }, { controls: ALL_ON, letter: completedLetter() });
         assert.equal(r.ok, false, `${kind} was raised on a claim outside the amendment window`);
-        if (!r.ok) assert.match(r.why, /stops the job before a fee is incurred/);
+        if (!r.ok) assert.match(r.why, /job stops before any fee is due/);
       }
       for (const exit of ['CLIENT_WITHDREW', 'REASONED_NEGATIVE', 'CANCELLED', 'LOST', 'CLIENT_DID_NOT_PROCEED']) {
         const { claim } = readyToInvoice(app);
@@ -346,7 +346,7 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
       }
       const r = F.setStatuses({ db: app.db, audit: app.audit, now: app.now }, ACC, id, { invoice_status: 'SENT', payment_status: 'PAID' });
       assert.equal(r.ok, false);
-      if (!r.ok) assert.match(r.why, /never typed/);
+      if (!r.ok) assert.match(r.why, /cannot type a claim invoice’s state/);
       assert.throws(() => app.db.run('DELETE FROM invoices WHERE id = ?', [id]), /never deleted/);
       assert.equal(app.db.get<{ fee_pence: number }>('SELECT fee_pence FROM invoices WHERE id = ?', [id])?.fee_pence, 7_200_00);
     } finally { app.close(); }
@@ -388,10 +388,10 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
 
       const off = I.creditClause13(deps(app), ACC, id, {});
       assert.equal(off.ok, false);
-      if (!off.ok) assert.match(off.why, /switched off/);
+      if (!off.ok) assert.match(off.why, /switched off/i);
       const blank = I.creditClause13(deps(app), ACC, id, {}, { clawback: { enabled: true } });
       assert.equal(blank.ok, false);
-      if (!blank.ok) assert.match(blank.why, /clause 13 of the engagement letter still reads/);
+      if (!blank.ok) assert.match(blank.why, /clause 13 of the engagement letter still has gaps/);
       assert.equal(count(app.db, "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'FEE_CLAWBACK_NOT_APPLIED' AND outcome = 'REFUSED'"), 2);
 
       const rdeps = CF.recordDeps(app);
@@ -575,7 +575,7 @@ describe('2 · the fee controls: built, shipped off, and off is exactly today’
     assert.equal(Object.hasOwn(FC.FEE_CONTROLS, 'minimum_fee'), false, 'the retired minimum-fee control is back');
     assert.equal(FC.MINIMUM_FEE_DECISION.decided, 'NONE');
     assert.match(FC.MINIMUM_FEE_DECISION.answer, /flat fee of 3%/);
-    assert.match(FC.MINIMUM_FEE_DECISION.retired, /retired by Phase 132e/);
+    assert.match(FC.MINIMUM_FEE_DECISION.retired, /removed on 16 September 2026/);
     for (const [pence, sector] of [[50_000_00, 'dental'], [10_000_00, 'gp'], [1_000_00, null]] as const) {
       const f = FC.computeFee({ claim_value_pence: pence, sector, entity_type: null, tax_rate: null, pool_split_main_pence: null, pool_split_special_pence: null, period_start: null });
       assert.ok(f.ok);
@@ -588,7 +588,7 @@ describe('2 · the fee controls: built, shipped off, and off is exactly today’
   test('THE MULTI-SITE DISCOUNT IS DISCRETIONARY: no tiers, its ceiling and approver are named nulls, and computeFee never applies one', () => {
     const m = multiSiteDiscount();
     assert.deepEqual({ ...m }, { discretionary: true, fixed_tiers: null, largest_discount: null, approved_by: null, asked: 'the largest discount and who approves it', applied_automatically: false });
-    assert.match(FC.controlReadings().multi_site_discount, /never applied automatically/);
+    assert.match(FC.controlReadings().multi_site_discount, /never taken off a fee by the system/);
     assert.match(FC.controlReadings().multi_site_discount, /NOT DECIDED/);
   });
 
@@ -681,7 +681,7 @@ describe('3 · VAT monitoring: dated settings, the two tests, one task, and no i
       r = V.vatReading(app.db, app.now());
       assert.equal(r.rolling.undated_invoices, 1);
       assert.equal(r.rolling.turnover_pence, 70_000_00, 'an undated invoice was counted as a figure');
-      assert.match(r.rolling.basis, /counted apart, never as nought/);
+      assert.match(r.rolling.basis, /counted apart, never as £0/);
 
       const waiting = readyToInvoice(app, { figure: 900_000_00 });
       r = V.vatReading(app.db, app.now());

@@ -60,8 +60,8 @@ export const LEAD_STATUSES: Vocab = Object.freeze({
 /** What made it a lead — the thing that already existed. */
 export const LEAD_ORIGINS: Vocab = Object.freeze({
   ASSESSMENT: 'A filled assessment',
-  BOOKING: 'A call asked for at the funnel close',
-  GATED_EXIT: 'A call asked for at a reasoned negative',
+  BOOKING: 'A call asked for at the end of the assessment',
+  GATED_EXIT: 'A call asked for after the assessment said no',
   REFERRAL: 'A referral',
   STAFF: 'Recorded by staff',
 });
@@ -96,7 +96,7 @@ function dateField(v: string | null | undefined, what: string): Check<string | n
   if (v === null || v === undefined || v.trim() === '') return { ok: true, value: null };
   const t = v.trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || !Number.isFinite(Date.parse(`${t}T12:00:00.000Z`))) {
-    return { ok: false, why: `${what} must be a date, as YYYY-MM-DD.` };
+    return { ok: false, why: `${what} must be a date, like 2026-03-31.` };
   }
   return { ok: true, value: t };
 }
@@ -464,7 +464,7 @@ export function updateLead(d: CrmDeps, actor: Actor, id: string, input: Fields):
     typeof v === 'string' && mayTake(d.db, 'LEAD_SOURCE', v, r.source) ? { ok: true, value: v } : { ok: false, why: 'Choose where the lead came from.' });
   const status = take(input, 'status', r.status as string | null, (v): Check<string | null> =>
     typeof v === 'string' && (SETTABLE as readonly string[]).includes(v) ? { ok: true, value: v }
-      : v === 'CONVERTED' ? { ok: false, why: 'A lead converts by opening its claim — use Convert, which asks the enquiry gate again.' }
+      : v === 'CONVERTED' ? { ok: false, why: 'To convert a lead, use Convert. It opens the claim and checks the enquiry again.' }
         : { ok: false, why: 'The status is not one of the choices offered.' });
   const lostReason = take(input, 'lost_reason', r.lost_reason, (v) => textField(v, 60, 'The lost reason'));
   const lostNote = take(input, 'lost_note', r.lost_note, (v) => textField(v, 2000, 'The note'));
@@ -594,7 +594,7 @@ export function convertLead(d: CrmDeps, actor: Actor, id: string, input: Fields)
   if (!gate.open) {
     return {
       ok: false,
-      why: `The enquiry gate is not open: ${gate.checks.filter((c) => !c.passes).map((c) => `${c.label} — ${c.reading}`).join('; ')}.`,
+      why: `The enquiry checks are not all a yes yet: ${gate.checks.filter((c) => !c.passes).map((c) => `${c.label} — ${c.reading}`).join('; ')}.`,
     };
   }
 
@@ -649,7 +649,7 @@ export function convertLead(d: CrmDeps, actor: Actor, id: string, input: Fields)
       business_id: b.id, property_id, assessment_id, workstream, stage: 'ASSESSMENT',
       owner_id: r.owner_id, surveyor_id: null,
     });
-    recordOpened(d, actor, claim.id, 'ASSESSMENT', 'opened by converting a qualified lead; the enquiry gate was passed on the lead');
+    recordOpened(d, actor, claim.id, 'ASSESSMENT', 'opened by converting a lead that passed its enquiry checks');
     /* A LEAD THAT ARRIVED WITH NO ORGANISATION — a call asked for at the reasoned
        negative — holds its person and its call on the lead (migration 011, row
        E22). They move to the organisation now: the same rows, nothing re-keyed,

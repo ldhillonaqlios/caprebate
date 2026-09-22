@@ -128,6 +128,6 @@ export function mandatoryDocumentNeeds(
     const got = receivedOnClaim(db, c, req.type_code);
     return got === undefined
       ? { what, met: false, why: `no ${label.toLowerCase()} has been received on this claim or its property — a request is not a receipt` }
-      : { what, met: true, why: 'received by the upload handler: the receipt strip recorded and the original deleted from quarantine' };
+      : { what, met: true, why: 'received — we read it, then deleted the file' };
   });
 }

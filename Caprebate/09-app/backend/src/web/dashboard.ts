@@ -207,8 +207,8 @@ export type Period = { readonly key: PeriodKey; readonly from: string | null; re
 
 export const NO_PERIOD: Period = Object.freeze({ key: 'NONE', from: null, to: null, words: 'no period' });
 
-const PERIOD_APPLIED = 'The period chosen applies: only what happened inside it is counted, and anything with no date to place it by is counted apart.';
-const PERIOD_AS_AT = 'As at today — a count of what stands now, which the period chosen does not change.';
+const PERIOD_APPLIED = 'The period chosen applies. Only what happened in it is counted. Anything with no date is listed on its own.';
+const PERIOD_AS_AT = 'As at today — a count of what is there now. The period chosen does not change it.';
 
 function isUkDate(s: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
@@ -232,7 +232,7 @@ export function readPeriod(q: URLSearchParams, today: string): { period: Period;
   for (const k of new Set(q.keys())) if (!['period', 'fy', 'from', 'to'].includes(k)) said.push(`${k.slice(0, 40)}: not something the dashboard takes, so it was not applied`);
   const asked = (q.get('period') ?? '').trim();
   if (asked === '' || asked === 'NONE') return { period: NO_PERIOD, said };
-  if (!Object.hasOwn(PERIODS, asked)) { said.push('Period: not one of the periods offered, so the tiles read with no period'); return { period: NO_PERIOD, said }; }
+  if (!Object.hasOwn(PERIODS, asked)) { said.push('Period: not one we offer, so no period was used'); return { period: NO_PERIOD, said }; }
   const y = Number(today.slice(0, 4));
   const m = Number(today.slice(5, 7));
   if (asked === 'MONTH') {
@@ -262,8 +262,8 @@ export function readPeriod(q: URLSearchParams, today: string): { period: Period;
   }
   const from = (q.get('from') ?? '').trim();
   const to = (q.get('to') ?? '').trim();
-  if (!isUkDate(from) || !isUkDate(to)) { said.push('From and to: a range is two UK dates, as YYYY-MM-DD, so the tiles read with no period'); return { period: NO_PERIOD, said }; }
-  if (from > to) { said.push('From and to: the range ends before it starts, so the tiles read with no period'); return { period: NO_PERIOD, said }; }
+  if (!isUkDate(from) || !isUkDate(to)) { said.push('From and to: give two dates like 2026-03-31. No period was used'); return { period: NO_PERIOD, said }; }
+  if (from > to) { said.push('From and to: the end date is before the start date. No period was used'); return { period: NO_PERIOD, said }; }
   return { period: { key: 'RANGE', from, to, words: `${from} to ${to}` }, said };
 }
 
@@ -312,7 +312,7 @@ function finance(c: Ctx): FinanceDashboard {
 }
 
 const NO_ESTIMATE = (n: number): string =>
-  `${plural(n, 'open claim carries', 'open claims carry')} no sealed estimate — counted apart, and never added in as nought`;
+  `${plural(n, 'open claim has', 'open claims have')} no estimate yet — not known, so not counted as £0`;
 
 /* ================================================================== *
  * 3 · THE TILES
@@ -328,15 +328,15 @@ function openPipelineValue(c: Ctx): Built {
       { label: 'Open claims — at one of the ten stages, or on hold', value: plural(open.length, 'claim', 'claims') },
       {
         label: 'Estimated claim value of the open pipeline',
-        value: known.length === 0 ? 'not known — no open claim carries a sealed estimate'
+        value: known.length === 0 ? 'not known yet — no open claim has an estimate'
           : `${formatPence(known.reduce((a, v) => a + v, 0))} over ${plural(known.length, 'claim', 'claims')}`,
       },
     ],
     apart: [
       ...(open.length - known.length > 0 ? [NO_ESTIMATE(open.length - known.length)] : []),
-      ...(unknownStage > 0 ? [`${plural(unknownStage, 'claim has', 'claims have')} a stage nobody recognises — counted as neither open nor closed`] : []),
+      ...(unknownStage > 0 ? [`${plural(unknownStage, 'claim has', 'claims have')} a stage we do not know — counted as neither open nor closed`] : []),
     ],
-    basis: 'The sealed estimate’s qualifying expenditure — the indicative claim value the client was shown the range of — summed over every open claim, read afresh on every request.',
+    basis: 'The locked estimate of spend that counts, added up over every open claim. The client saw it as a range. Worked out fresh each time.',
   };
 }
 
@@ -346,11 +346,11 @@ function averageClaimValue(c: Ctx): Built {
   return {
     lines: [{
       label: 'Average estimated claim value, open claims',
-      value: known.length === 0 ? 'not known — no open claim carries a sealed estimate'
+      value: known.length === 0 ? 'not known yet — no open claim has an estimate'
         : `${formatPence(Math.round(known.reduce((a, v) => a + v, 0) / known.length))} over ${plural(known.length, 'claim', 'claims')}`,
     }],
     apart: open.length - known.length > 0 ? [NO_ESTIMATE(open.length - known.length)] : [],
-    basis: 'The mean of the sealed estimates’ qualifying expenditure over the open claims that carry one. A claim with no estimate is not in the divisor.',
+    basis: 'The average locked estimate of spend that counts, over the open claims that have one. A claim with no estimate is left out.',
   };
 }
 
@@ -389,10 +389,10 @@ function wonAndCompleted(c: Ctx): Built {
       }]),
     ],
     apart: [
-      ...(won.length - wonKnown.length > 0 ? [`${plural(won.length - wonKnown.length, 'won claim carries', 'won claims carry')} no sealed estimate — counted apart`] : []),
-      ...(completed.length - signed.length > 0 ? [`${plural(completed.length - signed.length, 'completed claim has', 'completed claims have')} no sign-off record to read a figure from — counted apart, never as nought`] : []),
+      ...(won.length - wonKnown.length > 0 ? [`${plural(won.length - wonKnown.length, 'won claim has', 'won claims have')} no estimate yet — not counted as £0`] : []),
+      ...(completed.length - signed.length > 0 ? [`${plural(completed.length - signed.length, 'completed claim has', 'completed claims have')} no sign-off yet, so no figure — not counted as £0`] : []),
     ],
-    basis: 'Won is a claim past the engagement gate — at data gathering or later, or on hold from there — and not exited; its value is the sealed estimate. Completed is CLOSED; its value is the tax adviser’s signed figure, the only figure that is not an estimate.',
+    basis: 'Won is a claim at data gathering or later, or on hold from there, that has not ended. Its value is the locked estimate. Completed means closed. Its value is the figure the tax adviser signed. It is the only figure that is not an estimate.',
   };
 }
 
@@ -413,12 +413,12 @@ function claimsByStage(c: Ctx): Built {
       ...line('On hold', all.filter((r) => r.stage === 'ON_HOLD'), true),
       ...line('Closed', all.filter((r) => r.stage === 'CLOSED'), true),
       ...EXITS.flatMap((e) => line(`Exit — ${e.label}`, all.filter((r) => r.stage === e.key), false)),
-      ...line('Stage not recognised', all.filter((r) => claimStage(r.stage).kind === 'UNKNOWN'), false),
+      ...line('Stage not known', all.filter((r) => claimStage(r.stage).kind === 'UNKNOWN'), false),
     ],
     apart: [],
     basis: mayValue
-      ? 'A count of claims at each of the operating procedure’s stages, with the sealed estimates summed beside it; a stage with none says so rather than showing a nought value.'
-      : 'A count of claims at each of the operating procedure’s stages.',
+      ? 'How many claims are at each stage, with their locked estimates added up. A stage with no estimate says so. It is not shown as £0.'
+      : 'How many claims are at each stage.',
   };
 }
 
@@ -434,7 +434,7 @@ function claimsByOwner(c: Ctx): Built {
     lines: [...by.values()].sort((a, b) => b.open - a.open || a.label.localeCompare(b.label))
       .map((x) => ({ label: x.label, value: `${plural(x.open, 'open claim', 'open claims')} · ${x.other} closed or exited` })),
     apart: [],
-    basis: 'Each claim counted once, under the person who owns it; a claim nobody owns is its own line.',
+    basis: 'Each claim is counted once, under the person who owns it. Claims nobody owns have their own line.',
   };
 }
 
@@ -450,7 +450,7 @@ function claimsByIntroducer(c: Ctx): Built {
       href: `/staff/introducers/${x.f.id}`,
     })),
     apart: read.length - referred.length > 0 ? [`${plural(read.length - referred.length, 'firm has', 'firms have')} referred nothing yet`] : [],
-    basis: 'Read by the same counts the introducer page shows for each firm — never a second count.',
+    basis: 'The same counts the introducer page shows for each firm.',
   };
 }
 
@@ -475,8 +475,8 @@ function leadsBySource(c: Ctx): Built {
       value: `${plural(x.total, 'lead', 'leads')} · ${x.converted} converted · ${x.lost} lost · conversion ${
         x.converted + x.lost === 0 ? 'not known — none decided yet' : `${pct(x.converted, x.converted + x.lost)} of those decided`}`,
     })),
-    apart: undecided > 0 ? [`${plural(undecided, 'lead is', 'leads are')} still open — neither converted nor lost, and in no conversion rate`] : [],
-    basis: 'Conversion is converted ÷ decided, where decided is converted or lost. A lead still being worked is not a failure, and is not in the divisor.',
+    apart: undecided > 0 ? [`${plural(undecided, 'lead is', 'leads are')} still open — not converted or lost, so left out of the rate`] : [],
+    basis: 'Conversion is converted ÷ decided. Decided means converted or lost. A lead still being worked is not a failure. It is left out.',
   };
 }
 
@@ -532,8 +532,8 @@ function daysToCompletion(c: Ctx): Built {
       }),
     ],
     apart: completed.length - spans.length > 0
-      ? [`${plural(completed.length - spans.length, 'completed claim has', 'completed claims have')} no lead, so no lead date — counted apart, never as nought days`] : [],
-    basis: 'Whole UK calendar days — the UK date, never a UTC difference. Lead to completion runs from the lead’s date to the day the claim closed; a stage’s stay runs from the move into it to the next move.',
+      ? [`${plural(completed.length - spans.length, 'completed claim has', 'completed claims have')} no lead, so no lead date — not counted as 0 days`] : [],
+    basis: 'Whole days, by the UK date. Lead to completion runs from the lead date to the day the claim closed. A stay in a stage runs from the move in to the next move.',
   };
 }
 
@@ -555,8 +555,8 @@ function expectedCompletion(c: Ctx): Built {
       })),
     ],
     apart: open.length - dated.length > 0
-      ? [`${plural(open.length - dated.length, 'open claim has', 'open claims have')} no expected completion date recorded — counted apart, never as this month`] : [],
-    basis: 'The expected completion date a person recorded on each open claim, against today’s UK date. A calendar quarter.',
+      ? [`${plural(open.length - dated.length, 'open claim has', 'open claims have')} no expected completion date — listed on its own, not counted as this month`] : [],
+    basis: 'The expected completion date set on each open claim, checked against today’s UK date. A quarter means a calendar quarter.',
   };
 }
 
@@ -595,8 +595,8 @@ function exitsAndLost(c: Ctx): Built {
       { label: 'Reasoned negatives — counted apart from the lost', value: plural(negatives, 'claim', 'claims') },
     ],
     apart: c.period.key === 'NONE' || leads.length === 0 ? []
-      : [`${plural(leads.length, 'lost lead carries', 'lost leads carry')} no date it was lost, so none is placed in ${c.period.words} — counted apart, never inside or outside it`],
-    basis: 'Every claim at an exit, with the reason recorded on the move that took it there, and every lost lead with its listed reason. A reasoned negative is the procedure working — there was no claim to make — and it is never counted as a lost opportunity.',
+      : [`${plural(leads.length, 'lost lead carries', 'lost leads carry')} no date it was lost, so none is placed in ${c.period.words} — listed on its own, not inside or outside it`],
+    basis: 'Each claim that ended early, with the reason given when it moved. Each lost lead, with its reason. A reasoned negative means there was no claim to make. It is never counted as lost work.',
   };
 }
 
@@ -608,10 +608,10 @@ function estimatedFees(c: Ctx): Built {
       { label: 'Their expected fees', value: f.expected.total },
     ],
     apart: [
-      ...(f.expected.without_a_fee > 0 ? [`${plural(f.expected.without_a_fee, 'of them has', 'of them have')} no fee that can be read yet — counted apart, never as nought`] : []),
-      'Before the invoice stage no fee is computed anywhere in this build, and this tile does not compute one: the fee derives from the tax adviser’s signed figure.',
+      ...(f.expected.without_a_fee > 0 ? [`${plural(f.expected.without_a_fee, 'of them has', 'of them have')} no fee that can be read yet — not counted as £0`] : []),
+      'No fee is worked out before the invoice stage. The fee comes from the figure the tax adviser signed.',
     ],
-    basis: 'The finance view’s own fees expected from claims at the invoice stage, read as that view reads them, and never recomputed here.',
+    basis: 'The fees the finance page expects from claims at the invoice stage. Taken from there, not worked out again.',
   };
 }
 
@@ -633,11 +633,11 @@ function money(c: Ctx): Built {
     ],
     apart: [
       ...(t.without_a_due_date > 0
-        ? [`${plural(t.without_a_due_date, 'open invoice has', 'open invoices have')} no due date — the letter’s payment terms are blank — and is counted neither overdue nor on time`] : []),
-      ...(c.period.key !== 'NONE' ? ['The first four lines are the totals as at today; the months below them are the period’s, as the finance view reads money — by calendar month.'] : []),
-      ...(partial.length > 0 ? [`${plural(partial.length, 'month is', 'months are')} only partly inside the period and ${partial.length === 1 ? 'is' : 'are'} shown whole — money is read by calendar month, never split by day`] : []),
+        ? [`${plural(t.without_a_due_date, 'open invoice has', 'open invoices have')} no due date because the letter has no payment terms. Not counted as overdue or on time`] : []),
+      ...(c.period.key !== 'NONE' ? ['The first four lines are totals as at today. The months below are for the period, by calendar month.'] : []),
+      ...(partial.length > 0 ? [`${plural(partial.length, 'month is', 'months are')} only partly inside the period and ${partial.length === 1 ? 'is' : 'are'} shown whole — money is counted by calendar month, never split by day`] : []),
     ],
-    basis: 'The finance view’s own totals, read as that view reads them. Money is recorded, never collected.',
+    basis: 'The totals from the finance page. Money is only recorded here, never taken.',
   };
 }
 
@@ -670,8 +670,8 @@ function reconciliationCases(c: Ctx): Built {
       ...tally((r) => `By category — ${r.variance_category === null ? 'not yet tagged' : words(VARIANCE_CATEGORIES, r.variance_category, r.variance_category)}`),
       ...tally((r) => `By sector — ${words(SECTORS, r.client_sector, r.client_sector)}`),
     ],
-    apart: withdrawn.length > 0 ? [`${plural(withdrawn.length, 'case was', 'cases were')} withdrawn with no claim — tracked here and kept out of every ratio, as the design says`] : [],
-    basis: 'One row per case in `claim_reconciliations`, the reconciliation design’s section 3 schema, tallied as its section 5 aggregate.',
+    apart: withdrawn.length > 0 ? [`${plural(withdrawn.length, 'case was', 'cases were')} withdrawn with no claim — shown here and left out of every average`] : [],
+    basis: 'One line per case where we compare the estimate with the outcome, counted by type and by sector.',
   };
 }
 
@@ -699,10 +699,10 @@ function reconciliationGaps(c: Ctx): Built {
       },
     ],
     apart: [
-      ...(quoteKnown < rows.length ? ['The quote gap is not known where the quote was the range shown and no single quoted figure is recorded (b_value_pence is NULL) — it is counted apart, never as nought, and each such case goes to the tax adviser’s review.'] : []),
-      ...(deliveryUnknown > 0 ? [`${plural(deliveryUnknown, 'case has', 'cases have')} no outcome yet, so no delivery gap — counted apart`] : []),
+      ...(quoteKnown < rows.length ? ['The quote gap is not known when the client saw a range and no single figure was quoted. It is not counted as 0. Each such case goes to the tax adviser to review.'] : []),
+      ...(deliveryUnknown > 0 ? [`${plural(deliveryUnknown, 'case has', 'cases have')} no outcome yet, so no delivery gap — not counted as 0`] : []),
     ],
-    basis: `Worked out case by case from the reconciliation’s own figures, and never stored. The review threshold is ${QUOTE_GAP_REVIEW_PCT}% — a constant, not a setting.`,
+    basis: `Worked out case by case, and never stored. The review line is ${QUOTE_GAP_REVIEW_PCT}% — a constant, not a setting.`,
   };
 }
 
@@ -722,7 +722,7 @@ function deliverables(c: Ctx): Built {
       })),
     ],
     apart: [],
-    basis: 'Read from the deliverables register itself for each claim at the reports stage — never a second count.',
+    basis: 'Read from each claim’s list of reports to send, for claims at the reports stage.',
   };
 }
 
@@ -742,8 +742,8 @@ function overdueTasks(c: Ctx): Built {
       { label: 'Not yet due', value: plural(count('NOT_YET_DUE'), 'task', 'tasks') },
       { label: 'Open claims with no next action', value: plural(breakers.breaking.length, 'claim', 'claims'), flag: breakers.breaking.length > 0, href: '/staff/next-actions' },
     ],
-    apart: count('NO_DUE_DATE') > 0 ? [`${plural(count('NO_DUE_DATE'), 'open task has', 'open tasks have')} no due date — counted apart, never as on time`] : [],
-    basis: 'Every open task, overdue or not against today’s UK date — never a UTC comparison — and the claims the one-next-action list shows breaking the rule.',
+    apart: count('NO_DUE_DATE') > 0 ? [`${plural(count('NO_DUE_DATE'), 'open task has', 'open tasks have')} no due date — listed on its own, not counted as on time`] : [],
+    basis: 'Every open task, checked against today’s UK date. Also the open claims with no next action.',
   };
 }
 
@@ -763,10 +763,10 @@ function outstandingClientRequests(c: Ctx): Built {
       { label: 'Documents asked for and not arrived', value: `${plural(requests.length, 'request', 'requests')} · ${overdue(requests)} overdue`, flag: overdue(requests) > 0 },
     ],
     apart: [
-      ...(undated > 0 ? [`${plural(undated, 'of them has', 'of them have')} no due date — counted apart, never as on time`] : []),
+      ...(undated > 0 ? [`${plural(undated, 'of them has', 'of them have')} no due date — listed on its own, not counted as on time`] : []),
       ...(unsent > 0 ? [`${plural(unsent, 'question has', 'questions have')} not been sent to the client’s portal yet — those wait on us, not on the client`] : []),
     ],
-    basis: 'Every open question and every document request still waiting, overdue or not by the UK date.',
+    basis: 'Every open question and document request, checked against the UK date.',
   };
 }
 
@@ -790,8 +790,8 @@ function compliance(c: Ctx): Built {
       ...(rights.length + complaints.length + inside.length + passed.length === 0 ? [{ label: 'Nothing waiting', value: 'no open rights request, unacknowledged complaint or breach inside its clock' }] : []),
     ],
     apart: unclassified.length > 0
-      ? [`${plural(unclassified.length, 'breach entry is', 'breach entries are')} not yet classified by the data protection officer — the 72 hours are shown on the entry as a conditional reading, never as running or not`] : [],
-    basis: 'Read from the rights register, the complaints log and the breach register themselves — never a count of its own. The earliest deadline first.',
+      ? [`${plural(unclassified.length, 'breach entry is', 'breach entries are')} not yet sorted by the data protection officer. Open the entry to see its 72 hours. They are not shown here as running or not`] : [],
+    basis: 'Read from the rights, complaints and breach lists. Soonest deadline first.',
   };
 }
 
@@ -887,7 +887,7 @@ export function dashboard(db: Db, actor: Actor, nowIso: string, period: Period =
         period: applies ? 'APPLIED' as const : 'AS_AT_TODAY' as const,
       };
     }),
-    note: 'Every figure here is read from the records on this request; nothing on this page is stored, and a figure nobody can know yet is said, not shown as nought.',
+    note: 'Every figure is read fresh from the records. Nothing here is stored. A figure not known yet is said, never shown as zero.',
     period, said,
   };
 }

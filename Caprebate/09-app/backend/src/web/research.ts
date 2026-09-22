@@ -199,6 +199,12 @@ export const REGISTRY_FIELD_OF: Readonly<Record<string, string>> = Object.freeze
  * name, so it is never post-signature — which is what keeps the free facts on
  * CH_COMPANY and HMLR_PPD free.
  */
+/** Display words for the post-signature field ids above. Words only: a field not listed shows its own id. */
+const FIELD_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  psc_name: 'the names of people with significant control',
+  proprietor_name_personal: 'the owner’s name on the title register',
+});
+
 export function postSignatureFieldsFor(source_id: string, nameExceptions: readonly string[]): readonly string[] {
   const key = REGISTRY_ID_OF[source_id];
   if (key === undefined) return [];
@@ -390,10 +396,11 @@ export type SourcesPanel = {
  * this panel says so rather than letting the row look complete.
  */
 export const KNOWN_GAPS: readonly string[] = Object.freeze([
-  'The paid address lookup (Homedata) now has a source register entry, but its supplier publishes no licence ' +
-    'name, no attribution wording, no cache window and no permission to reproduce its data in a client report, ' +
-    'an accountant pack or an HMRC pack. Until the supplier states them, a returned address is held as stale at ' +
-    'once and may appear in none of the three. Read against the supplier\'s published terms on 12 September 2026.',
+  'The paid address lookup (Homedata) has gaps in its terms. The supplier does not name its licence. ' +
+    'It does not say how to credit it or how long we may keep its data. ' +
+    'It does not let us copy its data into a client report, an accountant pack or an HMRC pack. ' +
+    'So a returned address counts as out of date at once, and may go in none of the three. ' +
+    'We checked the supplier\'s terms on 12 September 2026.',
 ]);
 
 /** The section gate, asked as an object question. See backoffice.ts. */
@@ -419,12 +426,12 @@ export function stateUnderGates(
      non-boolean — a "not sure" typed anywhere — would have opened the paid
      tier; and an absent record would have thrown. Both now read as unsigned. */
   const signed = engagement?.signed === true;
-  const engagementWhy = engagement?.why ?? 'no engagement record was handed in, so it is read as not signed';
+  const engagementWhy = engagement?.why ?? 'we have no engagement letter on record, so it counts as not signed';
   if (current === 'FIRED') {
-    return { state: 'FIRED', detail: 'fired, and the value it returned is held with its provenance' };
+    return { state: 'FIRED', detail: 'looked up — we keep the answer and where it came from' };
   }
   if (current === 'FAILED') {
-    return { state: 'FAILED', detail: 'the last attempt failed — it can be retried' };
+    return { state: 'FAILED', detail: 'the last try did not work — you can try it again' };
   }
   // THE HARDEST BLOCKER FIRST. Opening either gate would not make this source
   // fire, so naming a gate here would send an operator to wait for the wrong
@@ -432,20 +439,19 @@ export function stateUnderGates(
   if (entry.licence_gate !== null) {
     return {
       state: 'NOT_PERMITTED_YET',
-      detail: `we do not hold the ${entry.licence_gate} for ${entry.publisher}, so this is asked ` +
-        'instead — and publishing the privacy notice would not change that',
+      detail: `we do not hold the ${entry.licence_gate} for ${entry.publisher}, so we ask the client instead ` +
+        '— publishing the privacy notice would not change that',
     };
   }
   // CA2 (Phase 132f): a source carrying a post-signature field waits on the
   // signed engagement as well as its own tier's gate. Asked of the engine.
   const ca2Shut = !postSignatureOpen(entry, engagement);
-  const ca2Words = `${entry.post_signature_fields.join(' and ')} on this source is retrieved only after a signed ` +
-    'engagement, checked on the server (condition CA2 of the legitimate interests assessment), so before signature ' +
-    'this source is simply not consulted — ' + engagementWhy;
+  const ca2Words = `we look up ${entry.post_signature_fields.map((f) => FIELD_WORDS[f] ?? f).join(' and ')} ` +
+    'only once the engagement letter is signed. Until then this lookup is not made — ' + engagementWhy;
   if (entry.tier === 'FREE' && !free.open) {
     return {
       state: 'NOT_PERMITTED_YET',
-      detail: 'free sources wait on the published privacy notice: ' + free.requires +
+      detail: 'free lookups wait until our privacy notice is published: ' + free.requires +
         (ca2Shut ? `; and ${ca2Words}` : ''),
     };
   }
@@ -455,14 +461,14 @@ export function stateUnderGates(
   if (entry.tier === 'PAID' && (!signed || ca2Shut)) {
     return {
       state: 'NOT_PERMITTED_YET',
-      detail: 'paid sources wait on a signed engagement, checked on the server — ' + engagementWhy +
-        (entry.tier_settled ? '' : ' (and this source has not been tiered, so it waits for both gates)'),
+      detail: 'paid lookups wait until the engagement letter is signed — ' + engagementWhy +
+        (entry.tier_settled ? '' : ' (not sure if free or paid, so it is treated as paid and waits for both)'),
     };
   }
   // Permitted, and still not run — because the connector does not exist.
   return {
     state: 'NOT_RUN',
-    detail: 'permitted, and not run: no connector is built in this release, so nothing was contacted',
+    detail: 'allowed, but not switched on yet, so nothing was contacted',
   };
 }
 
@@ -649,9 +655,9 @@ export function runResearch(d: RunDeps, actor: Actor, business_id: string): RunO
   return {
     ok: true,
     why: fired === 0
-      ? 'Nothing was contacted. Every source is either waiting on a gate or has no connector built in ' +
-        'this release — and no fact was guessed to stand in for one.'
-      : `${fired} source${fired === 1 ? '' : 's'} fired.`,
+      ? 'Nothing was contacted. Each lookup is either not allowed yet or not switched on yet. ' +
+        'No fact was guessed to fill a gap.'
+      : `${fired} lookup${fired === 1 ? '' : 's'} made.`,
     considered: panel.sources.length, fired, not_permitted: notPermitted, failed,
   };
 }
@@ -673,13 +679,13 @@ export function retryFailedSource(
   const panel = sourcesFor(d.db, actor, business_id);
   const s = panel.sources.find((x) => x.source_id === source_id);
   if (s === undefined) {
-    return { ok: false, why: 'that is not a source this system consults', considered: 0, fired: 0, not_permitted: 0, failed: 0 };
+    return { ok: false, why: 'we do not use that lookup', considered: 0, fired: 0, not_permitted: 0, failed: 0 };
   }
   if (s.state !== 'FAILED') {
     return {
       ok: false,
-      why: 'only a source that FAILED can be retried. A source that has not run is not retried one at a ' +
-        'time — that is what “Run the research” is for, and the operator picks the moment, not the calls.',
+      why: 'Only a lookup that did not work can be tried again. ' +
+        'For the rest, press “Run the research”. It runs them all at once.',
       considered: 1, fired: 0, not_permitted: 0, failed: 0,
     };
   }

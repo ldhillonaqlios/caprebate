@@ -478,7 +478,7 @@ describe('line 1 — a multi-site discount entered on a claim is recorded, audit
       assert.equal(inv.fee_pence, Math.round(inv.claim_value_pence * 0.03), 'a recorded discount was applied to the fee');
       assert.equal(inv.fee_rate, 0.03);
       assert.match(inv.fee_basis, /none — decided: there is no minimum fee/);
-      assert.match(inv.fee_basis, /never applied automatically/);
+      assert.match(inv.fee_basis, /never taken off a fee by the system/);
       const views = FD.discountsFor(app.db, actor('ACCOUNTING'), claim);
       assert.equal(views.length, 1);
       assert.equal(views[0]?.state, 'AWAITING_CEILING_AND_APPROVER');

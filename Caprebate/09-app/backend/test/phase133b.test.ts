@@ -143,7 +143,7 @@ describe('the five long screens are on the record layout', () => {
       ['money', 'money-by-month', 'The money, by month'], ['vat', 'vat-monitoring', 'VAT monitoring'],
       ['invoices', 'to-invoice', 'Claims at the invoice stage'], ['invoices', 'claim-invoices', 'The claims’ invoices'],
       ['fees', 'fee-controls', 'The fee controls'], ['settings', 'finance-settings', 'The finance settings'],
-      ['fees', 'introducer-fees', 'Fees to introducing firms'], ['earlier', 'earlier-invoices', 'Organisations’ invoices'],
+      ['fees', 'introducer-fees', 'Fees to introducing firms'], ['earlier', 'earlier-invoices', 'Older invoices'],
     ];
     for (const [tab, id, heading] of where) {
       assert.ok(panel(r.body, tab).includes(`<h2 id="${id}">${heading}`), `section "${heading}" has no id ${id} in the #${tab} tab`);

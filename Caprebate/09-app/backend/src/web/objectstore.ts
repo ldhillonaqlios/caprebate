@@ -305,9 +305,9 @@ export async function assertNoStaticFileRoute(routerSource: string): Promise<voi
   for (const re of banned) {
     if (re.test(routerSource)) {
       throw new Error(
-        `DB-W1: the HTTP router contains ${String(re)}, which maps a request onto the filesystem. ` +
-          'Client documents are served only through an endpoint that authorises each request; ' +
-          'a static file route defeats that whatever the directory permissions say.',
+        `DB-W1: the web router contains ${String(re)}, which serves files straight from disk. ` +
+          'Client documents may only be served by a route that checks who is asking, every time. ' +
+          'A route that serves a folder gets round that check.',
       );
     }
   }

@@ -208,7 +208,7 @@ function controlsBlock(c: I.FinanceDashboard['controls']): Safe {
       <tr><th>The payment terms (clause 4)</th><td><strong>${c.letter.payment_terms}</strong></td></tr>
     </tbody></table>
     ${c.any_blank
-      ? h`<div class="gate"><strong>A term in the engagement letter is BLANK, and it is shown blank on purpose.</strong> A plausible number in a prototype becomes a number in a contract.</div>`
+      ? h`<div class="gate"><strong>A term in the engagement letter is BLANK. We show it blank on purpose.</strong> A made-up number here could end up in a contract.</div>`
       : raw('')}`;
 }
 
@@ -284,7 +284,7 @@ function listPage(
       <h2 id="to-invoice">Claims at the invoice stage with no invoice raised</h2>
       ${v.expected.claims.length === 0 ? h`<p class="help">No claim is waiting at the invoice stage.</p>` : h`
         <p class="help">Expected ${v.expected.total}${v.expected.without_a_fee > 0 ? h`; ${v.expected.without_a_fee} whose fee cannot be computed, counted apart` : raw('')}.
-          Each claim’s finance task is the one the invoice stage raised — read here, and never a second.</p>
+          Each claim’s finance task was made when it reached the invoice stage. We never make a second one.</p>
         <table><thead><tr><th>Company</th><th>At the invoice stage since</th><th>Expected fee</th><th>Earned on</th><th>Finance task</th><th></th><th>Reference</th></tr></thead>
           <tbody>${v.expected.claims.map((c) => h`<tr><td>${c.client_name}</td><td>${c.entered_invoice_on}</td><td>${c.expected}</td>
             <td>${c.expected_on === null ? h`<strong>NO DATE</strong><br><span class="help">${c.expected_on_reading}</span>` : h`${c.expected_on}${c.due_if_invoiced_on_delivery === null ? raw('') : h`<br><span class="help">due ${c.due_if_invoiced_on_delivery} if invoiced that day</span>`}`}</td>
@@ -298,7 +298,7 @@ function listPage(
           <tbody>${v.invoices.map((i) => h`<tr><td>${i.client_name}</td><td><a href="/staff/finance/${i.id}">${i.number ?? 'unnumbered'}</a></td>
             <td>${i.kind.label}</td><td>${i.invoice_date}</td><td>${i.fee}</td><td>${i.vat}</td><td>${i.state.label}</td>
             <td>${i.money.label}</td><td>${i.money.outstanding}</td>
-            <td>${i.due_on === null ? h`<strong>UNSET</strong>` : i.money.overdue ? h`<strong>${i.money.due.label}</strong>` : i.money.due.label}</td><td>${claimRef(i.claim.claim_ref)}</td></tr>`)}</tbody></table>`}
+            <td>${i.due_on === null ? h`<strong>No due date set yet</strong>` : i.money.overdue ? h`<strong>${i.money.due.label}</strong>` : i.money.due.label}</td><td>${claimRef(i.claim.claim_ref)}</td></tr>`)}</tbody></table>`}
 
 ` },
         { id: 'fees', label: 'Fee controls and firms', body: h`
@@ -319,10 +319,10 @@ function listPage(
 
 ` },
         { id: 'earlier', label: 'Earlier invoices', count: s.rows.length, body: h`
-      <h2 id="earlier-invoices">Organisations’ invoices from before invoices sat on the claim</h2>
+      <h2 id="earlier-invoices">Older invoices, from before invoices were linked to a claim</h2>
       <p class="help">${s.rows.length} client${s.rows.length === 1 ? '' : 's'}.
-        ${s.raised} invoiced, ${s.paid} paid in full, ${s.outstanding} outstanding. Their states were typed; none is moved onto a claim,
-        because which claim each was for was never recorded.</p>
+        ${s.raised} invoiced, ${s.paid} paid in full, ${s.outstanding} outstanding. Their states were typed in by hand. None is moved onto a claim,
+        because we never recorded which claim each was for.</p>
       ${s.rows.length === 0
         ? h`<p class="help">There are none.</p>`
         : h`<table><thead><tr>
@@ -341,9 +341,9 @@ function listPage(
         tax the client saves.</strong> On ${s.fee_exceeds_year_one} of these
         ${s.rows.length} clients it is more than the tax they would actually relieve in their first
         year${s.fee_undetermined > 0
-          ? h`, and on ${s.fee_undetermined} the model cannot say either way on the facts we hold`
+          ? h`, and on ${s.fee_undetermined} we cannot tell either way from what we know`
           : raw('')}. The allowances are not lost — they carry on relieving tax in later years —
-        but the fee falls due now. Open an invoice for the arithmetic.</div>
+        but the fee falls due now. Open an invoice to see the sums.</div>
 
 ` },
       ]), sidePanel(null, quick))}`,
@@ -417,29 +417,28 @@ function comparisonBlock(c: F.FeeVersusBenefit, fee: string): Safe {
                   disagreement is the finding.`}</strong></p>
 
           ${c.unknowns.length > 0
-            ? h`<h3>What is not known, and is bounded rather than guessed</h3>
+            ? h`<h3>What we do not know — shown as a range, not a guess</h3>
                <ul>${c.unknowns.map((u) => h`<li>${u}</li>`)}</ul>`
             : raw('')}
           ${c.assumptions.length > 0
-            ? h`<h3>What the model assumed</h3>
+            ? h`<h3>What we assumed</h3>
                <ul>${c.assumptions.map((a) => h`<li>${a}</li>`)}</ul>`
             : raw('')}`
         : h`<p class="help">The comparison cannot be computed for this client:
             ${c.why ?? 'no reason given'}.</p>
-           <p class="help">That is a missing fact, not a nil answer — nothing here has been
-             assumed to fill it.</p>`}
+           <p class="help">That is a missing fact, not £0. We have not assumed anything
+             to fill it.</p>`}
 
       ${noClaimBlock(c.recommendation_threshold)}
 
-      <div class="gate"><strong>The standing disclosure, and it applies to every client whether or
-        not this one trips the arithmetic:</strong> ${c.disclosure}</div>
+      <div class="gate"><strong>What we tell every client, whatever this client’s figures show:</strong> ${c.disclosure}</div>
 
-      <div class="gate"><strong>The amount above is untouched by any of this.</strong>
-        Capping the fee at the first-year benefit, and attaching a case-specific warning to it, are
-        two switches in the engine and <strong>both are off</strong>
+      <div class="gate"><strong>The fee above is not changed by any of this.</strong>
+        We could cap the fee at the client’s first-year saving, or add a warning for this client.
+        Each can be switched on, and <strong>both are off</strong>
         (cap: ${c.switches.cap ? 'on' : 'off'}; warning: ${c.switches.warn ? 'on' : 'off'}).
-        The comparison is computed and shown; the fee is the plain rate and this screen does not
-        change it. Turning either on is a business decision and is not a screen’s to make.</div>`;
+        We show the comparison, but the fee is the plain rate, and this screen does not
+        change it. Turning either on is a business decision for Lakhbir, not this screen.</div>`;
 }
 
 /* ------------------------------------------------------------------ *
@@ -464,7 +463,7 @@ function claimInvoicePage(d: FinanceDeps, actor: Actor, v: I.ClaimInvoiceView, s
           <tr><th>Amount</th><td><strong>${v.fee}</strong>${v.fee_rate === null ? raw('') : h` — ${v.fee_rate}`}</td></tr>
           <tr><th>VAT</th><td>${v.vat} — ${v.vat_position}</td></tr>
           <tr><th>State</th><td>${v.state.label}${v.sent_on === null ? raw('') : h`, on ${v.sent_on}`}</td></tr>
-          <tr><th>Due</th><td>${v.due_on === null ? h`<strong>UNSET</strong> — ${v.due_basis}` : h`${v.due_on} — ${v.money.due.label}`}</td></tr>
+          <tr><th>Due</th><td>${v.due_on === null ? h`<strong>No due date set yet</strong> — ${v.due_basis.replace(/^UNSET — /, '')}` : h`${v.due_on} — ${v.money.due.label}`}</td></tr>
           <tr><th>How the amount was reached</th><td>${v.fee_basis}</td></tr>
           ${v.cancelled === null ? raw('') : h`<tr><th>Cancelled</th><td>${v.cancelled}</td></tr>`}
         </tbody></table>
@@ -472,7 +471,7 @@ function claimInvoicePage(d: FinanceDeps, actor: Actor, v: I.ClaimInvoiceView, s
       ${v.fee_warning === null ? raw('') : h`<div class="gate"><strong>Warning written onto this invoice:</strong> ${v.fee_warning}</div>`}
 
       <div class="pblock">
-        <div class="pnum">The money — read, never typed</div>
+        <div class="pnum">The money — from the records, never typed in</div>
         <table><tbody>
           <tr><th>Invoiced, with VAT</th><td>${v.money.total}</td></tr>
           <tr><th>Credit notes</th><td>${v.money.credited}</td></tr>
@@ -482,8 +481,8 @@ function claimInvoicePage(d: FinanceDeps, actor: Actor, v: I.ClaimInvoiceView, s
       </div>
       ${v.money.unconfirmed_bank_details > 0
         ? h`<div class="gate"><strong>${v.money.unconfirmed_bank_details} record${v.money.unconfirmed_bank_details === 1 ? '' : 's'} of money received
-            carr${v.money.unconfirmed_bank_details === 1 ? 'ies' : 'y'} no confirmation that the client checked our bank details on a channel other than email.</strong>
-            Never asked and not known are read alike: neither is a confirmation.</div>`
+            ha${v.money.unconfirmed_bank_details === 1 ? 's' : 've'} no note that the client checked our bank details another way than email.</strong>
+            Never asked and not known count the same: neither means they checked.</div>`
         : raw('')}
       <div class="gate">${I.RECORDED_NOT_COLLECTED}</div>
 
@@ -505,7 +504,7 @@ function claimInvoicePage(d: FinanceDeps, actor: Actor, v: I.ClaimInvoiceView, s
           <p><label for="received_on">The day it arrived</label><input id="received_on" name="received_on" type="date"></p>
           <p><label for="amount">The amount that arrived, in pounds</label><input id="amount" name="amount"></p>
           <p>How: bank transfer — the only way we are paid.</p>
-          <p><label for="bank">Did the client confirm our bank details on a channel other than email?</label>
+          <p><label for="bank">Did the client check our bank details another way than email?</label>
             <select id="bank" name="bank_details_confirmed">
               <option value="">not asked</option>
               ${Object.entries(I.BANK_CONFIRMATIONS).map(([k, label]) => h`<option value="${k}">${label}</option>`)}
@@ -517,7 +516,7 @@ function claimInvoicePage(d: FinanceDeps, actor: Actor, v: I.ClaimInvoiceView, s
         <h2>Record that it was sent</h2>
         <form method="post" action="/staff/finance/${v.id}/sent">
           <p><label for="sent_on">Sent on</label><input id="sent_on" name="sent_on" type="date"></p>
-          <p class="help">Sent by hand, by post or as the client asked — never as an email from this system, which waits on the invoice-fraud procedure.</p>
+          <p class="help">Sent by hand, by post or as the client asked. This system does not email invoices. That waits on our invoice-fraud procedure.</p>
           <p><button type="submit">Record as sent</button></p>
         </form>` : raw('')}
 
@@ -557,7 +556,7 @@ function invoicePage(d: FinanceDeps, actor: Actor, r: F.FinanceRow): string {
     title: r.client_name, nav: d.nav(actor), wide: true,
     body: h`
       <h1>${r.client_name}</h1>
-      <p class="help">Invoice opened ${d.stamp(r.created_at)} — an organisation’s invoice from before invoices sat on the claim.</p>
+      <p class="help">Invoice opened ${d.stamp(r.created_at)} — an older invoice, from before invoices were linked to a claim.</p>
 
       <div class="pblock">
         <div class="pnum">The money</div>

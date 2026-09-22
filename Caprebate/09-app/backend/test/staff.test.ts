@@ -727,12 +727,12 @@ describe('one booking, two views', () => {
       assert.equal(BOOKING.booksASlot('email'), false, 'CB_BOOKING changed under this test');
       const staff = await h.signIn('SALES');
       const cal = await staff.req('/staff/calendar');
-      assert.match(cal.body, /Asked for something that does not book a moment/);
+      assert.match(cal.body, /Asked to hear from us another way, not by a call/);
       const id = h.app.db.get<{ id: string }>('SELECT id FROM bookings')?.id ?? '';
       const r = await staff.post(`/staff/calendar/${id}/schedule`,
         { starts_at: '2026-09-09T10:00:00.000Z', assigned_to: '' });
       assert.equal(r.status, 400);
-      assert.match(r.body, /does not book a moment/);
+      assert.match(r.body, /does not get a time\. Only a phone call can be given one\./);
     } finally { h.close(); }
   });
 
@@ -755,8 +755,8 @@ describe('one booking, two views', () => {
 
       // And the screen says so, rather than the comment saying so.
       const settings = await staff.req('/staff/settings');
-      assert.match(settings.body, /NOT SENT/);
-      assert.match(settings.body, /CALENDAR_INVITE/);
+      assert.match(settings.body, /<td>Saved — not sent yet<\/td>/);
+      assert.match(settings.body, /<td>Calendar invite<\/td>/);
     } finally { h.close(); }
   });
 });

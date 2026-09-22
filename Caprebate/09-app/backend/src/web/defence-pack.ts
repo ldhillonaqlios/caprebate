@@ -46,21 +46,21 @@ export const DEFENCE_PACK_GENERATOR: DefencePackSwitch = Object.freeze({
 });
 
 export const DEFENCE_PACK_OFF =
-  'The defence pack generator is switched off, so no manifest is built and nothing is written. It is switched on once ' +
-  `${DEFENCE_PACK_GENERATOR.waits_on} is done.`;
+  'Building a defence pack is not switched on yet. Nothing was built or saved. It is switched on after ' +
+  `${DEFENCE_PACK_GENERATOR.waits_on}.`;
 
 export type SectionKey =
   | 'SURVEYOR_COMMITMENT' | 'SOURCES' | 'RECONCILIATION' | 'SIGNOFF' | 'S203_POSITION' | 'ANCHOR_LOG' | 'DELIVERABLE_HASHES';
 
 /** The sections, in the order a manifest lists them. */
 export const DEFENCE_PACK_SECTIONS: Readonly<Record<SectionKey, string>> = Object.freeze({
-  SURVEYOR_COMMITMENT: 'The surveyor’s committed figures, sealed with their hash',
-  SOURCES: 'The source of every fact the claim’s gates read',
+  SURVEYOR_COMMITMENT: 'The surveyor’s committed figures, locked, with their fingerprint',
+  SOURCES: 'Where each fact the claim’s checks use came from',
   RECONCILIATION: 'The reconciliation snapshot',
   SIGNOFF: 'The tax adviser’s sign-off record',
   S203_POSITION: 'The s.203 position',
   ANCHOR_LOG: 'The anchor log for the claim’s survey jobs',
-  DELIVERABLE_HASHES: 'The issued deliverables and their hashes',
+  DELIVERABLE_HASHES: 'The documents we issued, and their fingerprints',
 });
 
 /** The facts the gates read and a pack must cite a source for. Each is PRESENT only on a recorded VALUE. */
@@ -98,7 +98,7 @@ export type DefencePackResult =
     };
 
 export const MANIFEST_NOTE =
-  'A manifest, not a pack: nothing is issued. The defence pack is recorded in the deliverables register by a person, with the hash of the pack as issued.';
+  'This is a list of contents, not the pack. Nothing is issued. A person records the pack when it is issued, with its fingerprint.';
 
 function section(key: SectionKey, present: boolean, why: string, refs: Section['refs'] = []): Section {
   return { key, label: DEFENCE_PACK_SECTIONS[key], state: present ? 'PRESENT' : 'MISSING', why, refs };
@@ -122,8 +122,8 @@ export function generateDefencePack(d: RecordDeps, actor: Actor, claim_id: strin
 
   const k = commitmentOnClaim(d.db, c.id);
   sections.push(k === undefined
-    ? section('SURVEYOR_COMMITMENT', false, 'no surveyor has committed figures on a survey job on this claim')
-    : section('SURVEYOR_COMMITMENT', true, 'the surveyor’s committed figures, sealed', [{ commitment: k.id, figures_hash: k.figures_hash }]));
+    ? section('SURVEYOR_COMMITMENT', false, 'No surveyor has committed figures on this claim yet.')
+    : section('SURVEYOR_COMMITMENT', true, 'the surveyor’s committed figures, locked', [{ commitment: k.id, figures_hash: k.figures_hash }]));
 
   // SOURCES — a VALUE is cited with its source; UNKNOWN and absent are the same "not known", citing no row.
   const facts = latestFacts(d.db, c.id);
@@ -135,33 +135,33 @@ export function generateDefencePack(d: RecordDeps, actor: Actor, claim_id: strin
     else cited.push({ fact_key: key, fact: r.id, source_id: r.source_id });
   }
   sections.push(notKnown.length === 0
-    ? section('SOURCES', true, 'every fact the gates read is recorded, each with its source', cited)
-    : section('SOURCES', false, `not known — recorded as not known or never recorded, which read the same: ${notKnown.join(', ')}`,
+    ? section('SOURCES', true, 'every fact the checks use is recorded, with where it came from', cited)
+    : section('SOURCES', false, `Not known yet. Not known and never asked count the same: ${notKnown.join(', ')}`,
       notKnown.map((key) => ({ fact_key: key, fact: null, source_id: null }))));
 
   const recon = d.db.get<{ id: string; snapshot_hash: string }>('SELECT id, snapshot_hash FROM claim_reconciliations WHERE claim_id = ?', [c.id]);
   sections.push(recon === undefined
-    ? section('RECONCILIATION', false, 'no reconciliation is open on this claim — it opens with the first sign-off record')
+    ? section('RECONCILIATION', false, 'No reconciliation yet. It starts when the first sign-off is recorded.')
     : section('RECONCILIATION', true, 'the reconciliation snapshot, fixed when it opened', [{ reconciliation: recon.id, snapshot_hash: recon.snapshot_hash }]));
 
   const s = latestSignOff(d.db, c.id);
   sections.push(s === undefined
-    ? section('SIGNOFF', false, 'no sign-off record exists for this claim')
+    ? section('SIGNOFF', false, 'No sign-off is recorded for this claim yet.')
     : section('SIGNOFF', true, 'the tax adviser’s latest sign-off record — a record, not a signature', [{ signoff: s.id, record_hash: s.record_hash }]));
 
   // S.203 — stated only on a known answer to whether an election affects the property.
   const election = facts.get('ELECTION_EXISTS');
   const answer = election !== undefined && election.answer === 'VALUE' ? (election.value_text ?? null) : null;
   if (answer === 'NO') {
-    sections.push(section('S203_POSITION', true, 'no s.198 or s.199 election affects the property, as recorded — so no s.203 notice is in point',
+    sections.push(section('S203_POSITION', true, 'No s.198 or s.199 election covers the property, as recorded. So no s.203 notice is needed.',
       [{ fact: election?.id ?? null, source_id: election?.source_id ?? null }]));
   } else if (answer === 'YES') {
     sections.push(deliverableIssued(d.db, c.id, 'S203_NOTIFICATION')
-      ? section('S203_POSITION', true, 'an election affects the property, and the s.203 notification is issued', [{ fact: election?.id ?? null, deliverable_kind: 'S203_NOTIFICATION' }])
-      : section('S203_POSITION', false, 'an election affects the property, and no s.203 notification is issued'));
+      ? section('S203_POSITION', true, 'An election covers the property. The s.203 notice is issued.', [{ fact: election?.id ?? null, deliverable_kind: 'S203_NOTIFICATION' }])
+      : section('S203_POSITION', false, 'An election covers the property. No s.203 notice is issued yet.'));
   } else {
     sections.push(section('S203_POSITION', false,
-      'whether an election affects the property is not known — recorded as not known or never recorded, which read the same — so the s.203 position cannot be stated'));
+      'We do not know if an election covers the property. Not known and never asked count the same. So we cannot say where s.203 stands.'));
   }
 
   const anchorCount = d.db.get<{ n: number }>(
@@ -169,8 +169,8 @@ export function generateDefencePack(d: RecordDeps, actor: Actor, claim_id: strin
   const anchorLast = d.db.get<{ seq: number; hash: string }>(
     'SELECT seq, hash FROM anchor_log WHERE job_id IN (SELECT id FROM surveyor_jobs WHERE claim_id = ?) ORDER BY seq DESC LIMIT 1', [c.id]);
   sections.push(anchorLast === undefined
-    ? section('ANCHOR_LOG', false, 'no anchor log entry exists for a survey job on this claim')
-    : section('ANCHOR_LOG', true, `${anchorCount} anchor log ${anchorCount === 1 ? 'entry' : 'entries'} for the claim’s survey jobs, the latest hashed into the chain`,
+    ? section('ANCHOR_LOG', false, 'No anchor log entry yet for a survey job on this claim.')
+    : section('ANCHOR_LOG', true, `${anchorCount} anchor log ${anchorCount === 1 ? 'entry' : 'entries'} for the claim’s survey jobs, the latest added to the audit log`,
       [{ entries: anchorCount, last_seq: anchorLast.seq, last_hash: anchorLast.hash }]));
 
   const delivered = d.db.all<{ id: string; kind: string; version: number; state: string; content_hash: string | null }>(
@@ -180,10 +180,10 @@ export function generateDefencePack(d: RecordDeps, actor: Actor, claim_id: strin
   const reportIssued = delivered.some((x) => x.kind === 'CLIENT_REPORT');
   const refs = delivered.map((x) => ({ deliverable: x.id, deliverable_kind: x.kind, version: x.version, content_hash: x.content_hash }));
   sections.push(!reportIssued
-    ? section('DELIVERABLE_HASHES', false, 'no client report is issued on this claim', refs)
+    ? section('DELIVERABLE_HASHES', false, 'No client report is issued on this claim yet.', refs)
     : unhashed.length > 0
-      ? section('DELIVERABLE_HASHES', false, `${unhashed.length} issued ${unhashed.length === 1 ? 'deliverable carries' : 'deliverables carry'} no hash, so what was issued is not known`, refs)
-      : section('DELIVERABLE_HASHES', true, 'every issued deliverable carries the hash of what was issued', refs));
+      ? section('DELIVERABLE_HASHES', false, `${unhashed.length} issued ${unhashed.length === 1 ? 'document has' : 'documents have'} no fingerprint, so we do not know what was issued`, refs)
+      : section('DELIVERABLE_HASHES', true, 'every issued document has a fingerprint of what was issued', refs));
 
   const at = d.now();
   const manifest: DefencePackManifest = {

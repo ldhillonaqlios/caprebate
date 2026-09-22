@@ -423,8 +423,8 @@ describe('a new user can use it', () => {
   });
 });
 
-describe('the names — built, switched off, and both positions work', () => {
-  test('off, as shipped: the menu carries Phase 135\'s names, and the current step names', async () => {
+describe('the names — built, switched on by Lakhbir (Phase 144), and both positions work', () => {
+  test('as shipped since Phase 144: the menu carries Phase 135\'s names, and the portal the plain step names', async () => {
     // PHASE 135: the menu names are no longer a switch. "Introducer fees" is the section's name; the other two proposed
     // names no longer apply (Engaged clients became the one Clients list; Next actions became a filter on Tasks).
     const menu = (await as('accounting').get('/staff')).body;
@@ -432,8 +432,17 @@ describe('the names — built, switched off, and both positions work', () => {
     assert.equal(/>Engaged clients<\/a>|>Reward model<\/a>|>Next actions<\/a>/.test(menu), false);
     assert.match((await as('sales').get('/staff')).body, /<a href="\/staff\/clients">Clients<\/a>/);
     const portal = (await as('client').get('/portal')).body;
-    assert.match(portal, /The engine runs → a narrowed estimate/);
-    assert.equal(/1 Your estimate/.test(portal), false);
+    assert.match(portal, /1 Your estimate/);
+    assert.equal(/The engine runs → a narrowed estimate/.test(portal), false);
+  });
+
+  test('off: the business flow\'s own step names come back', async () => {
+    const off = await boot({ names: { portalSteps: false } });
+    try {
+      const portal = (await (await off.signIn('client')).get('/portal')).body;
+      assert.match(portal, /The engine runs → a narrowed estimate/);
+      assert.equal(/1 Your estimate/.test(portal), false);
+    } finally { off.made.close(); }
   });
 
   test('on: the proposed step names, and still no avoid-list word', async () => {

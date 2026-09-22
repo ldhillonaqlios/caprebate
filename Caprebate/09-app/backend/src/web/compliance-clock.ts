@@ -275,7 +275,7 @@ export function limbClock(input: LimbClockInput): LimbClock {
 
   const oneMonth = monthsBeginningWith(relevant_time, 1);
   const notice = shift(oneMonth);
-  working.push(`one month beginning with ${spoken(relevant_time)} ends ${spoken(oneMonth.end)} (conservative rule, pack 2.5.3)`);
+  working.push(`one month beginning with ${spoken(relevant_time)} ends ${spoken(oneMonth.end)} (the cautious reading)`);
   if (days_not_counted > 0) {
     working.push(`+ ${days_not_counted} days not counted = ${spoken(notice.end)}; the extension-notice deadline moves with it (12A(5)(b)(ii))`);
   }
@@ -292,7 +292,7 @@ export function limbClock(input: LimbClockInput): LimbClock {
       extension_reading = `notice given ${spoken(i.extension_notified)}, after the deadline of ${spoken(notice.end)}: NOT AN EXTENSION (12A(4)(a))`;
     } else if (i.extension_ground === null) {
       extension_valid = false;
-      extension_reading = 'no ground recorded: an extension is available for the complexity or the number of the requests only (12A(3)) — NOT AN EXTENSION';
+      extension_reading = 'no reason recorded. An extension is only allowed for complex requests or many requests (12A(3)) — NOT AN EXTENSION';
     } else if (reasons === '') {
       extension_valid = false;
       extension_reading = 'the notice does not state the reasons for the delay (12A(4)(b)): NOT AN EXTENSION';

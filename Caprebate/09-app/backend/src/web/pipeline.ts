@@ -122,7 +122,7 @@ export const FEE_TRIGGER: {
 } = Object.freeze({
   reading: 'REPORT_DELIVERED_FOR_FILING',
   decided: true,
-  why: 'Lakhbir, answering the question: the fee is due when we complete the report and deliver it for filing — to the client or to their accountant — and delivery is deemed the trigger because no confirmation of filing will come',
+  why: 'Lakhbir decided: our fee is due when we finish the report and send it for filing, to the client or their accountant. Sending it counts, because nobody will confirm the filing.',
   question: FEE_TRIGGER_QUESTION,
 });
 
@@ -189,7 +189,7 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
   HMRC_PROCESSED_RELIEF: { stage: 'INVOICE', label: 'HMRC has processed the relief' },
   DEFENCE_PACK_COMPLETE: {
     stage: 'DEFENCE_PACK', label: 'The defence pack is complete against the checklist of records kept at each stage',
-    retired: 'The defence pack is complete when the deliverables register records it issued, with its hash — that is what the gate reads now, and a confirmation no longer stands in for it.',
+    retired: 'The defence pack now counts as done when we issue it from the reports list. This tick is no longer used.',
   },
 });
 
@@ -212,7 +212,7 @@ export type CheckKey = 'UK_HEALTHCARE_PROPERTY' | 'TRADING_CLIENT' | 'OWNER_OR_A
 export const ENQUIRY_CHECKS: Readonly<Record<CheckKey, string>> = Object.freeze({
   UK_HEALTHCARE_PROPERTY: 'The property is healthcare property in the UK — England and Wales at launch, Scotland second, Northern Ireland third',
   TRADING_CLIENT: 'The client is a trading business — commercial means the client, not the building, so supported living is in',
-  OWNER_OR_AUTHORISED: 'The enquirer is the owner, or acting with the owner’s authority',
+  OWNER_OR_AUTHORISED: 'The enquirer is the owner, or acts for the owner with their consent',
   NO_CLAIM_CONFLICT: 'There is no existing claim conflict',
 });
 
@@ -417,7 +417,7 @@ export function feeTriggerReached(db: Db, c: PipelineClaim, trigger: FeeTrigger 
       what: `The fee trigger is reached — ${FEE_TRIGGERS[trigger]}`,
       met: d !== null,
       why: d === null
-        ? 'no client report or computation pack is recorded as issued on this claim, so delivery for filing is not known — and not known is not reached'
+        ? 'no client report or computation pack is shown as issued yet. So sending it for filing is not known — and not known is not reached'
         : `${d.kind === 'CLIENT_REPORT' ? 'the client report' : 'the computation pack'} was issued on ${d.on}`,
     };
   }
@@ -490,7 +490,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
     case 'ENGAGEMENT': {
       // THE ONE ENGAGEMENT GATE. Server-side, against the record, on this request.
       const e = assertSignedEngagement(db, c.business_id);
-      needs.push({ what: 'A signed engagement letter, asserted on the server', met: e.signed, why: e.why });
+      needs.push({ what: 'A signed engagement letter', met: e.signed, why: e.why });
       // CRM 8 of 10: CUSTOMER DUE DILIGENCE, ONLY WHILE AML_IN_SCOPE IS ON. Off — as it ships, and as a setting nobody
       // recorded — nothing is asked here that was not asked before, and the gate is exactly today's.
       const cdd = cddGateNeed(db, c.business_id, opts.today ?? new Date().toISOString());
@@ -523,7 +523,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
     case 'VALUATION': {
       // CRM 6 of 10: every grant traced is a fact now; every rate sourced stays the surveyor's confirmation.
       const g = grantsTraced(db, c.id);
-      needs.push({ what: 'Every grant or contribution traced to cost elements', met: g.met, why: g.why }, confirmation(db, c, 'VALUATION_SIGNED'));
+      needs.push({ what: 'Every grant or contribution traced to the items it paid for', met: g.met, why: g.why }, confirmation(db, c, 'VALUATION_SIGNED'));
       break;
     }
     case 'TAX_ADVISER_SIGNOFF':
@@ -587,7 +587,7 @@ export type MoveKind = 'FORWARD' | 'EXIT' | 'HOLD' | 'RESUME' | 'REOPEN';
 
 export const MOVE_WORDS: Vocab = Object.freeze({
   FORWARD: 'Moved on', EXIT: 'Exited', HOLD: 'Put on hold', RESUME: 'Resumed', REOPEN: 'Reopened',
-  OPENED: 'Opened', CONVERTED: 'Converted to the procedure’s stages',
+  OPENED: 'Opened', CONVERTED: 'Moved over to the new steps',
 });
 
 export type MoveRequest = {
@@ -774,14 +774,14 @@ export function moveClaim(d: PipelineDeps, actor: Actor, claim_id: string, req: 
     if (s.kind !== 'PROCEDURE') {
       return refuse(d, actor, c, kind, to,
         s.kind === 'CLOSED' ? 'A closed claim does not move on. An admin may reopen it, with a reason.'
-          : s.kind === 'EXIT' ? `This claim left the procedure — ${s.label} — and keeps its record. An admin may reopen it, with a reason.`
+          : s.kind === 'EXIT' ? `This claim has stopped — ${s.label} — and keeps its record. An admin may reopen it, with a reason.`
             : s.kind === 'ON_HOLD' ? 'This claim is on hold. Resume it at the stage it was held at first.'
-              : 'This claim’s stage is not recognised. An admin may reopen it at the enquiry, with a reason.');
+              : 'This claim has no step set. An admin may reopen it at the enquiry, with a reason.');
     }
     const next = nextProcedureKey(s.key);
     if (to !== next) {
       return refuse(d, actor, c, kind, to,
-        `A claim moves one stage at a time, through each stage’s gate. From ${s.label} the next stage is ${stageLabel(next)}.`);
+        `A claim moves one step at a time, and each step is checked. From ${s.label} the next step is ${stageLabel(next)}.`);
     }
     // CRM 6 of 10: the gate reads the amendment window on the move's own clock.
     const g = gateOut(d.db, c, s.key, { ...opts, today: opts.today ?? d.now() });
@@ -798,23 +798,23 @@ export function moveClaim(d: PipelineDeps, actor: Actor, claim_id: string, req: 
 
   if (kind === 'EXIT') {
     const exit = exitStage(to);
-    if (exit === undefined) return refuse(d, actor, c, kind, to, 'Choose one of the procedure’s exits.', 'to');
+    if (exit === undefined) return refuse(d, actor, c, kind, to, 'Choose one of the ways a claim can close.', 'to');
     const at: ProcedureKey | null = s.kind === 'PROCEDURE' ? s.key
       : s.kind === 'ON_HOLD' && procedureStage(c.hold_return_stage) !== undefined ? (c.hold_return_stage as ProcedureKey) : null;
     if (at === null) {
       return refuse(d, actor, c, kind, to,
         s.kind === 'CLOSED' ? 'A closed claim has finished; it does not exit.'
-          : s.kind === 'EXIT' ? 'This claim has already left the procedure, and keeps that record.'
-            : 'This claim’s stage is not recognised, so no exit can be read from it. An admin may reopen it first.');
+          : s.kind === 'EXIT' ? 'This claim has already stopped, and keeps that record.'
+            : 'This claim has no step set, so it cannot be closed from here. An admin may reopen it first.');
     }
     if (exit.from !== 'ANY_OPEN' && !exit.from.includes(at)) {
       return refuse(d, actor, c, kind, to,
-        `${exit.label} is the procedure’s exit from ${exit.from.map((k) => stageLabel(k)).join(', ')}, and this claim is at ${stageLabel(at)}.`);
+        `${exit.label} can only be used from ${exit.from.map((k) => stageLabel(k)).join(', ')}, and this claim is at ${stageLabel(at)}.`);
     }
     const reason = d.db.get<ReasonRow>(
       "SELECT code, label, active FROM reason_lists WHERE list = 'CLAIM_EXIT' AND code = ?", [req.reason_code ?? '']);
     if (reason === undefined || reason.active !== 1) {
-      return refuse(d, actor, c, kind, to, 'An exit is reasoned: choose a reason from the list.', 'reason_code');
+      return refuse(d, actor, c, kind, to, 'Choose a reason from the list.', 'reason_code');
     }
     if (reason.code === 'OTHER' && note.value === null) {
       return refuse(d, actor, c, kind, to, '“Another reason” needs the reason written in the note.', 'reason');
@@ -826,7 +826,7 @@ export function moveClaim(d: PipelineDeps, actor: Actor, claim_id: string, req: 
 
   if (kind === 'HOLD') {
     if (s.kind !== 'PROCEDURE') {
-      return refuse(d, actor, c, kind, to, 'Only a claim at one of the procedure’s ten stages can be put on hold.');
+      return refuse(d, actor, c, kind, to, 'Only a claim at one of the ten steps can be put on hold.');
     }
     const reason = text(req.reason, 1000, 'The hold reason');
     if (!reason.ok) return refuse(d, actor, c, kind, to, reason.why, 'reason');
@@ -854,17 +854,17 @@ export function moveClaim(d: PipelineDeps, actor: Actor, claim_id: string, req: 
   }
 
   // REOPEN — ADMIN alone (authorised above), always with a reason.
-  if (note.value === null) return refuse(d, actor, c, kind, to, 'A reopen is reasoned: say why the claim is going back.', 'reason');
+  if (note.value === null) return refuse(d, actor, c, kind, to, 'Say why the claim is going back.', 'reason');
   const target = procedureStage(to);
-  if (target === undefined) return refuse(d, actor, c, kind, to, 'A claim reopens at one of the procedure’s ten stages.');
+  if (target === undefined) return refuse(d, actor, c, kind, to, 'A claim reopens at one of the ten steps.');
   const ti = PROCEDURE_KEYS.indexOf(target.key);
   const allowed = reopenTargets(d.db, c).includes(target.key);
   if (!allowed) {
     return refuse(d, actor, c, kind, to,
       s.kind === 'UNKNOWN'
-        ? 'A claim whose stage is not recognised reopens at the enquiry, and walks every gate from there.'
+        ? 'A claim with no step set reopens at the enquiry. Each step is checked again from there.'
         : s.kind === 'PROCEDURE' || s.kind === 'ON_HOLD'
-          ? 'A reopen moves a claim BACK. Moving it on is done one stage at a time, through the gates.'
+          ? 'A reopen moves a claim back. To move it on, go one step at a time, with each step checked.'
           : `A claim reopens no later than the furthest stage it reached; ${stageLabel(target.key)} is further.`);
   }
   void ti;
@@ -910,8 +910,8 @@ export function recordMilestone(
   if (!has(MILESTONES, milestone)) {
     return {
       ok: false,
-      why: 'That is not a confirmation this procedure records. The surveyor’s commitment and the tax adviser’s sign-off ' +
-        'are records of their own, and no confirmation stands in for either.',
+      why: 'That tick is not used here. The surveyor’s figures and the tax adviser’s sign-off ' +
+        'are records of their own. No tick stands in for either.',
     };
   }
   const m = MILESTONES[milestone];
@@ -1088,7 +1088,7 @@ export function pipelinePanel(db: Db, actor: Actor, c: PipelineClaim, opts: Gate
     ...base,
     ...(s.kind === 'ON_HOLD' ? { hold: { reason: c.hold_reason, returns_to: anyStageLabel(c.hold_return_stage) } } : {}),
     portal: {
-      shows: clientStage(business?.stage ?? '')?.label ?? 'a stage the portal does not recognise',
+      shows: clientStage(business?.stage ?? '')?.label ?? 'a step the client’s page does not show',
       this_claim_evidences: evidences === null ? null : (clientStage(evidences)?.label ?? evidences),
     },
     ...(gate === undefined ? {} : { gate }),

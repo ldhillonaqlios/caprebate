@@ -311,7 +311,7 @@ describe('document types — the CRM list, the Stage 2 list and the extraction s
         /constraint|UNIQUE|CHECK/i, 'a type added by an administrator cannot carry a receipt policy');
       assert.match(refused(D.updateType(deps(w), admin, 'DILAPIDATIONS', { carries_value: '0' })), /never marked as not carrying one/);
       assert.throws(() => db.run("UPDATE document_types SET carries_value = 0 WHERE code = 'DILAPIDATIONS'"), /never marked as not carrying one/);
-      assert.match(refused(D.updateType(deps(w), admin, 'INVOICE', { readers: 'CLAIM_EVIDENCE' })), /a surveyor would read it/);
+      assert.match(refused(D.updateType(deps(w), admin, 'INVOICE', { readers: 'CLAIM_EVIDENCE' })), /A surveyor would read it/);
       assert.throws(() => db.run("UPDATE document_types SET readers = 'CLAIM_EVIDENCE' WHERE code = 'INVOICE'"), /CHECK/i);
       assert.throws(() => db.run("DELETE FROM document_types WHERE code = 'DILAPIDATIONS'"), /never deleted/);
       const lines = db.all<{ kind: string; detail: string }>("SELECT kind, detail FROM audit_log WHERE kind LIKE 'DOCUMENT_TYPE_%'");
@@ -603,7 +603,7 @@ describe('over HTTP — end to end, and every role on every sensitivity', () => 
       const bytes = pdfOf([['DEMISE AND TERM:', 'Annual rent 25000']], { compress: true });
       const sent = await client.req(put, { method: 'PUT', body: bytes, headers: { 'content-type': 'application/pdf' } });
       assert.equal(sent.status, 200, sent.body);
-      assert.match(sent.body, /request it answers is marked received/);
+      assert.match(sent.body, /What we asked you for is now marked received/);
       assert.equal(D.requestState(db.get<{ state: string }>('SELECT state FROM client_tasks WHERE id = ?', [r.id])?.state ?? ''), 'RECEIVED');
       assert.deepEqual(eventsFor(db, m[2] ?? '').map((e) => e.contract_step), [1, 2, 3, 4, 5, 6, 7], 'the running application processed it, steps 3 to 7 included');
 

@@ -90,7 +90,7 @@ export type CapturedParty = {
 
 export type CaptureResult = { readonly ok: true; readonly parties: readonly CapturedParty[] } | { readonly ok: false; readonly why: string };
 
-export const TODAY_WHY = 'replaced by its role token — the human-capture rule as it stands: no name from a conveyancing upload is captured';
+export const TODAY_WHY = 'replaced by its role, such as [WITNESS]. For now we keep no name from a conveyancing upload';
 
 function roleToken(p: PartyOnDocument): string {
   if (p.role === 'TRANSACTION_PARTY') return p.side === undefined || p.side === null ? '[NAMED INDIVIDUAL]' : `[${p.side}]`;
@@ -119,24 +119,24 @@ function stripped(p: PartyOnDocument, why: string): CapturedParty {
 
 function onRead(p: PartyOnDocument, s: ConveyancingStrip): CapturedParty {
   if (p.role !== 'TRANSACTION_PARTY' || ALWAYS_NATURAL_PERSON_ROLES.includes(p.role)) {
-    return stripped(p, 'stripped: only a party to the transaction keeps a company name — a witness, a signatory, a fee earner or a guarantor is a person, or not needed');
+    return stripped(p, 'removed: only a party to the deal keeps a company name. A witness, signer, fee earner or guarantor is a person, or not needed');
   }
   const form: PartyLegalForm = p.form === undefined || p.form === null ? 'UNKNOWN' : p.form;
   const c = classifyPartyReference({ form, individuals_named_on_document: 0 });
   if (!s.kept_forms.includes(form)) {
     return stripped(p, form === 'UNKNOWN'
-      ? 'stripped: the legal form is not known — not known and never recorded read alike, and neither keeps a name (N4)'
-      : `stripped: ${form.replace(/_/g, ' ').toLowerCase()} is not a company or an LLP — ${c.reason}`);
+      ? 'removed: the kind of body is not known. Not known counts the same as not recorded, so no name is kept'
+      : `removed: ${form.replace(/_/g, ' ').toLowerCase()} is not a company or an LLP — ${c.reason}`);
   }
-  if (c.firm_name_is_personal_data) return stripped(p, `stripped: ${c.reason}`);
+  if (c.firm_name_is_personal_data) return stripped(p, `removed: ${c.reason}`);
   const name = p.name.trim();
-  if (name.length === 0) return stripped(p, 'stripped: no name was read');
+  if (name.length === 0) return stripped(p, 'removed: no name was read');
   if (CAPTURE_NAME_PATTERNS.some((re) => re.test(name))) {
-    return stripped(p, 'stripped: the name reads as a person’s to the capture backstop, so it is not kept — the data protection officer can say otherwise');
+    return stripped(p, 'removed: the name looks like a person’s, so we do not keep it. The data protection officer can change this');
   }
   const number = companyNumber(p.company_number);
   const numberWhy = p.company_number === undefined || p.company_number === null || p.company_number.trim() === ''
-    ? '' : number === null ? '; the registered number is not in Companies House’s shape and is dropped' : '';
+    ? '' : number === null ? '; the company number is not in Companies House’s shape, so it is dropped' : '';
   return { role_token: roleToken(p), company: name, company_number: number, why: `kept: ${c.reason}${numberWhy}` };
 }
 

@@ -171,7 +171,7 @@ export async function handleClaimRecord(
 /* A ROW MAY CARRY A SENTENCE SAYING WHAT THE FACT DOES — Phase 132, 15 September 2026. Without one it is drawn as before. */
 function reading(r: F.FactReading, says?: string): Safe {
   const src = r.source === null ? h`<span class="help">never recorded</span>`
-    : h`<span class="help">${r.source.publisher}${r.source.prov === null ? '' : ` · ${r.source.prov}`}${r.source.derived ? ' · derived' : ''} · ${r.source.locator}${
+    : h`<span class="help">${r.source.publisher}${r.source.derived ? ' · worked out' : ''} · ${r.source.locator}${
       r.source.recorded_at === null ? '' : ` · ${r.source.recorded_at}`}${r.source.recorded_by === null ? '' : ` by ${r.source.recorded_by}`}</span>`;
   const help = says === undefined ? raw('') : h`<br><span class="help">${says}</span>`;
   return h`<tr><td>${r.label}</td><td>${r.known ? r.display : h`<span class="help">${r.display}</span>`}</td><td>${src}${help}</td></tr>`;
@@ -187,8 +187,8 @@ const RELEASED_FACT_LABELS: Readonly<Record<string, string>> = Object.freeze({
   claimant_type: 'The claimant, for tax', jurisdiction: 'Jurisdiction of the property', acquisition_date: 'The acquisition date',
   election_exists: 'A s.198 or s.199 election affects the property', election_section: 'The section it was made under',
   election_notified_on: 'The date it was notified to HMRC', election_elements: 'The fixtures it covers',
-  prior_owner_chain: 'The chain of previous owners', grants_exist: 'A grant or contribution met any of the spend',
-  grants_traced: 'Each grant or contribution, and whether it is traced', buyer_alterations: 'The buyer made their own alterations to install plant',
+  prior_owner_chain: 'The previous owners, in order', grants_exist: 'Did anyone else pay for any of this work?',
+  grants_traced: 'Each grant, and whether it is matched to the items it paid for', buyer_alterations: 'The buyer made their own alterations to install plant',
 });
 
 /** One released value, in words: a reading's display, a list of rows, or not known — never a raw object. */
@@ -220,8 +220,8 @@ export function factsBlock(claim_id: string, facts: F.FactsPanel | ReleasedFacts
     <table><tbody>
       ${reading(p.claimant_type)}${reading(p.scottish_taxpayer)}${reading(p.jurisdiction)}${reading(p.acquisition_date)}
       ${reading(p.accounting_period.start)}${reading(p.accounting_period.end)}
-      ${reading(p.partnership_company_member, 'Read for a partnership or an LLP alone. A partnership with a company partner files on the company deadline where that is earlier (TMA 1970 s.12AA(5B)); not known treats the window as open only if it is open on both dates.')}
-      <tr><td>The amendment window</td><td>${w.state === 'UNKNOWN' ? h`<span class="help">${w.why}</span>` : w.why}</td><td><span class="help">${w.assumption ?? 'the engine’s amendment window rule'}</span></td></tr>
+      ${reading(p.partnership_company_member, 'Only for a partnership or an LLP. If a partner is a company, the return is due on the company date where that is earlier (TMA 1970 s.12AA(5B)). If this is not known, the window counts as open only if it is open on both dates.')}
+      <tr><td>The amendment window</td><td>${w.state === 'UNKNOWN' ? h`<span class="help">${w.why}</span>` : w.why}</td><td><span class="help">${w.assumption ?? 'our amendment window rule'}</span></td></tr>
       ${reading(p.taxable_profit.sufficient_profit)}
       <tr><td>The break-even switch</td><td>${p.taxable_profit.breakeven_switch.on ? 'on' : 'off'}</td><td><span class="help">${p.taxable_profit.breakeven_switch.question}</span></td></tr>
       ${reading(p.allowance_headroom.position)}${reading(p.allowance_headroom.amount)}
@@ -235,7 +235,7 @@ export function factsBlock(claim_id: string, facts: F.FactsPanel | ReleasedFacts
       ${reading(p.buyer_alterations.made)}${reading(p.buyer_alterations.amount)}
       <tr><td>${p.buyer_alterations.switch.name}</td><td>${p.buyer_alterations.switch.on ? 'on' : 'off'}</td><td><span class="help">${p.buyer_alterations.switch.says}</span></td></tr>
     </tbody></table>
-    <h3>The prior owner chain</h3>
+    <h3>Previous owners</h3>
     ${p.election.prior_owner_chain.length === 0 ? h`<p class="help">No owner is recorded.</p>` : h`<table><tbody>${p.election.prior_owner_chain.map((o) => h`<tr>
       <td>${o.position}</td><td>${o.owner}</td><td>${o.acquired_on ?? 'acquired: not known'} – ${o.ceased_on ?? 'ceased: not known'}</td><td>${o.claimed}</td>
       <td>${p.may_record ? h`<form method="post" action="/staff/claims/${claim_id}/owners/${o.id}/withdraw" class="inline"><button type="submit">Withdraw</button></form>` : raw('')}</td></tr>`)}</tbody></table>`}
@@ -243,7 +243,7 @@ export function factsBlock(claim_id: string, facts: F.FactsPanel | ReleasedFacts
       <form method="post" action="/staff/claims/${claim_id}/facts">
         <label>Fact <select name="fact_key">${Object.entries(F.FACTS).filter(([k]) => k !== 'GRANTS_EXIST').map(([k, v]) => h`<option value="${k}">${v.label}</option>`)}</select></label>
         <label>Answer <select name="answer"><option value="VALUE">This value</option><option value="UNKNOWN">Not known</option></select></label>
-        <label>Value <input name="value" placeholder="a date YYYY-MM-DD, pounds, or the choice’s key"></label>
+        <label>Value <input name="value" placeholder="a date like 2026-03-31, pounds, or a choice like YES"></label>
         <label>Source <select name="source_id">${options(F.CAPTURE_SOURCES)}</select></label>
         <label>Note <input name="note"></label>
         <button type="submit">Record the fact</button></form>
@@ -269,7 +269,7 @@ export function figuresBlock(claim_id: string, p: R.FiguresPanel | undefined): S
   const form = p.signoff_form;
   return h`<div class="pblock"><div class="help">${why(p.order)}</div>
     <table><tbody>
-      <tr><td>A · the indicative estimate</td><td>${sealed(p.a_indicative, (a) => h`${a.figure} <span class="help">shown as ${a.shown_range} · sealed ${a.sealed} · ${a.hash}</span>`)}</td></tr>
+      <tr><td>A · the indicative estimate</td><td>${sealed(p.a_indicative, (a) => h`${a.figure} <span class="help">shown as ${a.shown_range} · locked ${a.sealed} · ${a.hash}</span>`)}</td></tr>
       <tr><td>B · the researched estimate</td><td><span class="help">${p.b_researched.state} — ${p.b_researched.why}</span></td></tr>
       <tr><td>C · the surveyor’s committed figure</td><td>${sealed(p.c_surveyor, (c) => h`${c.qualifying_plant} qualifying plant <span class="help">building ${c.building} · land ${c.bare_land} · ${c.qualifying_pct} · committed ${c.committed} · ${c.hash}</span>`)}</td></tr>
       <tr><td>D · the figure the tax adviser signed</td><td>${sealed(p.d_adviser, (x) => h`${x.figure} <span class="help">signed on ${x.signed_on} by ${x.adviser} · ${x.hash}</span>`)}</td></tr>
@@ -291,7 +291,7 @@ export function figuresBlock(claim_id: string, p: R.FiguresPanel | undefined): S
         <fieldset><legend>Switch readings the adviser confirmed</legend>${form.switches.map((s) => h`<label><input type="checkbox" name="switch" value="${s.switch}"> ${s.switch} (${s.on ? 'on' : 'off'})</label>`)}</fieldset>
         <p class="help">${form.adviser_question}</p>
         <button type="submit">Record the sign-off</button></form>`}
-    ${rec === null ? h`<p class="help">The reconciliation opens with the first sign-off record.</p>` : h`<h3>The reconciliation — ${rec.case_id}, ${rec.status}</h3><dl>
+    ${rec === null ? h`<p class="help">The reconciliation starts when the first sign-off is recorded.</p>` : h`<h3>The reconciliation — ${rec.case_id}, ${rec.status}</h3><dl>
       <dt>A indicative</dt><dd>${rec.estimate_A_indicative.value} · ${rec.estimate_A_indicative.range} · engine ${rec.estimate_A_indicative.engine_version}</dd>
       <dt>B quoted</dt><dd>${rec.estimate_B_quoted.value} · ${rec.estimate_B_quoted.range}<br><span class="help">${rec.estimate_B_quoted.basis}</span></dd>
       <dt>The surveyor</dt><dd>${rec.surveyor_committed.value}</dd>
@@ -377,7 +377,7 @@ const PAYER_SUBJECT: Readonly<Record<string, string>> = Object.freeze({
 /** What this money does to the claim, by Rulebook F — before anything is saved, and on every card. */
 export function grantEffect(payer_key: string): string {
   if (F.PUBLIC_PAYERS.includes(payer_key)) return 'This will reduce the claim on the items it paid for.';
-  if (payer_key === 'insurer') return 'Insurance money after damage usually does not reduce the claim. Our tax adviser checks.';
+  if (payer_key === 'insurer') return 'Insurance paid out after damage usually does not cut the claim. Our tax adviser checks.';
   if (payer_key === 'UNKNOWN') return 'This may reduce the claim on the items it paid for. We need to know who paid.';
   return 'This may reduce the claim on the items it paid for. Our tax adviser checks whether it does.';
 }
@@ -496,7 +496,7 @@ function answerGrantsQuestion(
     if (can(actor, 'internal_note.write', { type: 'internal_note', id: biz, business_id: biz }) && !openClaimQuestions(d.app.db, actor, biz, id).has(GRANTS_FACT_ID)) {
       const sent = sendTaskToPortal(deps, actor, biz, {
         fact_id: GRANTS_FACT_ID, claim_id: id,
-        question: 'Did anyone else pay for any of the work on your building — for example the NHS, a council, a landlord or an insurer?',
+        question: 'Did anyone else pay for any of the work on your building? For example, the NHS, a council, a landlord or an insurer.',
         why: 'Money from someone else can change how much you can claim.', holds_up: 'this claim',
       });
       if (!sent.ok) return d.problem(res, actor, 'Answer saved, question not sent', sent.why, `/staff/claims/${id}${GRANTS_ANCHOR}`);

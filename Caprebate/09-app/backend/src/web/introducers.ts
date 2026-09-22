@@ -107,10 +107,10 @@ const CONTACT_THAT_COUNTS = ['CALL', 'EMAIL', 'MEETING', 'CPD_SESSION', 'CO_BRAN
 
 export const REWARD_MODELS: Vocab = Object.freeze({
   OFF: 'Off — nothing is offered to an introducer',
-  A_RECIPROCITY: 'A — no cash: firm-level reciprocity (a CPD session, a co-branded one-pager, priority turnaround)',
+  A_RECIPROCITY: 'A — no cash. We give the firm something back: a CPD session, a joint one-pager, or faster work',
   B_DISCLOSED_FEE: 'B — a fixed, disclosed fee per successful claim, paid to the firm',
   // Phase 132e: Lakhbir's answer. Built and switched off; refused while clause 1 of the letter is blank, as A and B are.
-  C_PERCENT_OF_INVOICED_FEE: 'C — a percentage of our fee as actually invoiced, to a registered accountancy firm that referred the claim; reversed if the fee is reduced under clause 13',
+  C_PERCENT_OF_INVOICED_FEE: 'C — a share of the fee we actually invoice, paid to a registered accountancy firm that referred the claim. Taken back if clause 13 cuts the fee',
 });
 
 /**
@@ -123,7 +123,7 @@ export const REWARD_MODELS: Vocab = Object.freeze({
  */
 export const REFERRAL_PERCENTAGE = Object.freeze({
   percent_bp: 1000,
-  source: 'Lakhbir, answering “Is anything paid to the accountant?”: an accountant registered as an introducer may be offered 10% of our fee',
+  source: 'Lakhbir’s answer to “Is anything paid to the accountant?”. An accountant registered as an introducer may be offered 10% of our fee',
 });
 
 export const REWARD_QUESTION = 'Is anything paid to the accountant?';
@@ -182,9 +182,9 @@ export const NOTICES: Readonly<Record<NoticeKey, { readonly label: string; reado
 });
 
 export const NOTICE_REASONS: Vocab = Object.freeze({
-  NO_OPT_IN: 'not queued — the client’s opt-in to share progress with this firm is not given',
-  NO_ADDRESS: 'not queued — nobody at the firm is named to receive notices, or they have no email address',
-  DO_NOT_CONTACT: 'not queued — the client is marked do not contact',
+  NO_OPT_IN: 'not sent — the client has not agreed to share progress with this firm',
+  NO_ADDRESS: 'not sent — nobody at the firm is named to get notices, or they have no email address',
+  DO_NOT_CONTACT: 'not sent — the client is marked do not contact',
 });
 
 /**
@@ -195,8 +195,8 @@ export const NOTICE_REASONS: Vocab = Object.freeze({
  */
 export const REFERRAL_FORM: { readonly enabled: boolean; readonly requires: string } = Object.freeze({
   enabled: false,
-  requires: 'a published privacy notice that tells a referred client what an introducing firm passed to us, ' +
-    'on what basis we hold it, and how to object — reachable from the referral form itself',
+  requires: 'a published privacy notice, linked from the referral form. It tells a referred client what their firm sent us, ' +
+    'why we may keep it, and how to object',
 });
 
 export function referralFormOpen(gate: { readonly enabled: boolean } = REFERRAL_FORM): boolean {
@@ -233,7 +233,7 @@ function dateField(v: string | null | undefined, what: string): Check<string | n
   if (v === null || v === undefined || v.trim() === '') return { ok: true, value: null };
   const t = v.trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || !Number.isFinite(Date.parse(`${t}T12:00:00.000Z`))) {
-    return { ok: false, why: `${what} must be a date, as YYYY-MM-DD.` };
+    return { ok: false, why: `${what} must be a date like 2026-03-31.` };
   }
   return { ok: true, value: t };
 }
@@ -371,11 +371,11 @@ function valueReading(db: Db, id: string): ValueReading {
   const known = live.filter((r) => r.q !== null);
   const sum = known.reduce((a, r) => a + (r.q ?? 0), 0);
   return {
-    estimated_allowances: known.length === 0 ? 'not known — no referred claim carries a sealed estimate' : formatPence(sum),
+    estimated_allowances: known.length === 0 ? 'not known — no referred claim has a locked estimate' : formatPence(sum),
     claims_with_estimate: known.length,
     claims_without_estimate: live.length - known.length,
-    basis: 'the qualifying expenditure of each sealed estimate, over the referred claims that have not left the procedure by an exit; ' +
-      'a claim with no estimate is counted apart and never as nought',
+    basis: 'the spend that counts in each locked estimate, for referred claims that are still going. ' +
+      'A claim with no estimate is counted apart, never as £0',
   };
 }
 
@@ -412,8 +412,8 @@ function moneyReading(db: Db, id: string): MoneyReading {
     fees_paid: formatPence(received),
     invoices_counted: rows.length,
     invoices_without_a_fee: rows.length - withFee.length,
-    basis: 'the referred claims’ own invoices, raised or sent, less their credit notes; and the money recorded as received ' +
-      'against them — recorded, never collected. A claim’s invoice always carries its fee (migration 016); one without would be counted apart, never as nought',
+    basis: 'the referred claims’ own invoices, raised or sent, less their credit notes, and the money recorded as received ' +
+      'against them. We record money; we never collect it. A claim’s invoice always has its fee. One without would be counted apart, never as £0',
   };
 }
 
@@ -832,7 +832,7 @@ function contactTaskValues(d: IntroducerDeps, firmId: string, input: Fields): Ch
   if (has(RECIPROCITY_ACTIVITY_TYPES, kind) && rewardSetting(d.db).model !== 'A_RECIPROCITY') {
     return {
       ok: false,
-      why: `Reciprocity is logged only while reward model A is switched on, and the reward model is ${words(REWARD_MODELS, rewardSetting(d.db).model, 'off').toLowerCase()}. ` +
+      why: `You can only log what we give back to a firm while reward model A is on. The reward model is ${words(REWARD_MODELS, rewardSetting(d.db).model, 'off').toLowerCase()}. ` +
         `Whether a firm is offered anything is the question “${REWARD_QUESTION}”.`,
     };
   }
@@ -1345,7 +1345,7 @@ export function leadReferral(db: Db, actor: Actor, lead: LeadForReferral): LeadR
         .map((n) => ({
           at: localStamp(n.at),
           notice: words(labels, n.notice, n.notice),
-          outcome: n.outcome === 'QUEUED' ? 'queued to the outbox — NOT SENT, outbound email is stubbed' : words(NOTICE_REASONS, n.reason, 'not queued'),
+          outcome: n.outcome === 'QUEUED' ? 'waiting to send — NOT SENT, email is not switched on yet' : words(NOTICE_REASONS, n.reason, 'not sent'),
         })),
     } : {}),
   };
@@ -1427,8 +1427,8 @@ export function setRewardModel(
       });
       return {
         ok: false,
-        why: `The reward model stays off while clause 1 of the engagement letter is blank — it still reads ${blanks.map((t) => t.text).join(' ')} ` +
-          `Whether anything is paid to an introducer is the question “${REWARD_QUESTION}”, and it is Lakhbir’s.`,
+        why: `Introducer fees stay off while clause 1 of the engagement letter is blank. It still reads ${blanks.map((t) => t.text).join(' ')} ` +
+          `Lakhbir decides whether we pay an introducer: “${REWARD_QUESTION}”.`,
       };
     }
   }
@@ -1547,7 +1547,7 @@ export function recordFeeSettled(d: IntroducerDeps, actor: Actor, fee_id: string
     record(d, actor, 'INTRODUCER_FEE_PAID', 'REFUSED', 'introducer_fee', r.id, {
       introducer: r.introducer_id, claim: r.claim_id, business: r.business_id, reason: 'NO_DISCLOSURE',
     });
-    return { ok: false, why: 'Nothing is payable to an introducer until the fee’s disclosure to the client is recorded as given.' };
+    return { ok: false, why: 'Nothing can be paid to an introducer until we record that the client was told about the fee.' };
   }
   const at = d.now();
   d.db.run("UPDATE introducer_fees SET state = 'PAID', paid_at = ?, paid_recorded_by = ?, updated_at = ? WHERE id = ?", [at, actor.id, at, r.id]);

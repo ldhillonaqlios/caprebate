@@ -719,7 +719,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
       const reads = count(db, "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'AUDIT_LOG_READ'");
       const page = await admin.get('/staff/audit?kind=LOGIN_SUCCEEDED');
       assert.equal(page.status, 200);
-      assert.match(page.body, /Intact: all [\d,]+ entries recomputed from the genesis/);
+      assert.match(page.body, /Audit log checked — nothing changed\. All [\d,]+ records were checked/);
       assert.equal(count(db, "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'AUDIT_LOG_READ'"), reads + 1, 'the read was not recorded');
       const v = (await import('../src/web/audit-log.ts')).auditLogView(deps(h.made), who(db, 'ADMIN'), new URLSearchParams({ kind: 'LOGIN_SUCCEEDED', outcome: 'SOMETIMES' }));
       assert.ok(v.lines.length >= 1 && v.lines.every((l) => l.kind === 'LOGIN_SUCCEEDED'));
@@ -732,7 +732,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
       // Changed outside the application — the triggers bypassed, as sqlite3 on the file would — and the page says so.
       db.execDdl('DROP TRIGGER audit_log_no_update');
       db.run("UPDATE audit_log SET outcome = 'REFUSED' WHERE seq = 1");
-      assert.match((await admin.get('/staff/audit')).body, /BROKEN at entry 1/);
+      assert.match((await admin.get('/staff/audit')).body, /Audit log problem — a record was changed or removed\. Tell the Admin now\. The problem starts at record 1\./);
     } finally { h.close(); }
   });
 
@@ -782,11 +782,11 @@ describe('the defects the guide found by running every exercise on the demo', ()
     try {
       const admin = await h.signIn('admin');
       const page = await admin.get('/staff/automation');
-      assert.equal(page.body.split('No rule may send anywhere but the outbox').length - 1, 1);
+      assert.equal(page.body.split('No rule can send a message itself').length - 1, 1);
       for (const effect of ['SEND_EMAIL', 'SEND_SMS', 'WEBHOOK']) {
         const r = await admin.post('/staff/automation', { label: 'x', trigger_event: 'LEAD_CREATED', effect, task_title: 'x', due_in_days: '1', assign_to: 'SUBJECT_OWNER' });
         assert.equal(r.status, 400, effect);
-        assert.match(r.body, /No rule may send anywhere but the outbox/, effect);
+        assert.match(r.body, /No rule can send a message itself/, effect);
       }
     } finally { h.close(); }
     const seedSource = readFileSync(join(BACKEND, 'src/seed.ts'), 'utf8');

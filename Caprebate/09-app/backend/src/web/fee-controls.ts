@@ -69,7 +69,7 @@ export const MINIMUM_FEE_DECISION = Object.freeze({
   by: 'Lakhbir',
   answer: 'yes, flat fee of 3% of the allowances for 1 or more properties',
   question: FLAT_FEE_QUESTION,
-  retired: 'the per-sector minimum fee control (CRM 7 of 10), switched off and never set, retired by Phase 132e on 16 September 2026',
+  retired: 'the old minimum fee for each sector. It was never switched on, and was removed on 16 September 2026',
 });
 export const BREAK_FEE_QUESTION = 'What is the break fee, and is there ever an abort fee or a fixed fee?';
 /** Added to CAPREBATE QUESTIONS under Lakhbir by CRM 7 of 10: clause 4's payment terms are blank. */
@@ -240,8 +240,8 @@ export function discountReading(): string {
   const m = multiSiteDiscount();
   const largest = m.largest_discount === null ? 'NOT DECIDED' : `${m.largest_discount}`;
   const approver = m.approved_by === null ? 'NOT DECIDED' : m.approved_by;
-  return `discretionary, never applied automatically — no discount is taken off any fee here; the largest discount (${largest}) ` +
-    `and who approves it (${approver}) are asked: “${m.asked}”. A discount a person enters is recorded and shown as awaiting that decision`;
+  return `a choice, never taken off a fee by the system. No discount is taken off any fee here. The largest discount (${largest}) ` +
+    `and who approves it (${approver}) are still asked: “${m.asked}”. A discount a person enters is recorded and shown as waiting on that decision`;
 }
 
 export type FeeOutcome =
@@ -311,7 +311,7 @@ export function computeFee(f: FeeFacts, controls: FeeControls = FEE_CONTROLS): F
   const readings = controlReadings(controls);
   const plain = feeDisplay(f.claim_value_pence / 100, null, {});
   if (!plain.render || plain.amount === null) {
-    return { ok: false, code: 'ENGINE_WITHHELD', why: plain.reason ?? 'the engine did not render a fee for this figure', readings };
+    return { ok: false, code: 'ENGINE_WITHHELD', why: plain.reason ?? 'we could not work out a fee for this figure', readings };
   }
   const rate = feeRate();
   const plainPence = Math.round(plain.amount * 100);
@@ -338,8 +338,8 @@ export function computeFee(f: FeeFacts, controls: FeeControls = FEE_CONTROLS): F
       if (c === undefined || !c.computed || !c.determined) {
         return {
           ok: false, code: 'ABOVE_BENEFIT_UNDETERMINED', readings,
-          why: `The first-year control is on (${ABOVE_BENEFIT_MODES[ab.mode]}), and it needs the client’s first-year saving as one figure — ` +
-            'which needs the marginal rate recorded and the pool split and period known. On the facts held it is a range, and a cap or a rate picked out of a range would be ours to choose. Nothing is raised.',
+          why: `The first-year check is on (${ABOVE_BENEFIT_MODES[ab.mode]}). It needs the client’s first-year saving as one figure. ` +
+            'For that we need their tax rate, the split of the spend and the period. We only have a range, and we will not pick a figure from it. Nothing is raised.',
         };
       }
       if (c.fee_exceeds_year_one_benefit === true) {
@@ -376,7 +376,7 @@ export type LetterFeeOutcome =
 export function letterFee(kind: LetterFeeKind, controls: FeeControls = FEE_CONTROLS, letter?: LetterSource): LetterFeeOutcome {
   const what = kind === 'BREAK_FEE' ? 'break fee' : 'abort fee';
   if (!controls.break_and_abort.enabled) {
-    return { ok: false, code: 'SWITCH_OFF', why: `No ${what} is raised: the break-and-abort switch is off, and “${BREAK_FEE_QUESTION}” is Lakhbir’s.` };
+    return { ok: false, code: 'SWITCH_OFF', why: `No ${what} is raised: break fees and abort fees are switched off, and “${BREAK_FEE_QUESTION}” is for Lakhbir to decide.` };
   }
   const term = kind === 'BREAK_FEE' ? letterFees(letter).break_fee : letterFees(letter).abort_fee;
   if (term.state === 'BLANK') return { ok: false, code: 'LETTER_BLANK', why: `No ${what} is raised. ${term.label}` };

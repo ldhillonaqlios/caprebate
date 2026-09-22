@@ -145,8 +145,8 @@ export function templateRefusal(t: { label: string; subject: string; body: strin
   const all = `${t.label}\n${t.subject}\n${t.body}`;
   for (const [pattern, what] of REFUSED) {
     if (pattern.test(all)) {
-      return `A template may not carry ${what}. Bank details are never sent from a template, and the invoice email waits on the ` +
-        'invoice-fraud procedure.';
+      return `A template may not carry ${what}. We never send bank details from a template. ` +
+        'The invoice email waits until our invoice-fraud steps are in place.';
     }
   }
   for (const m of all.matchAll(PLACEHOLDER)) {
@@ -339,7 +339,7 @@ export function queueTemplate(d: TemplateDeps, actor: Actor, claim_id: string, i
     to_email: ct.email, subject: companyFirst(subject.text, v.organisation ?? null), body: body.text, kind: 'TEMPLATE', business_id: c.business_id,
   });
   if (sent.id === null) {
-    return { ok: false, why: 'This organisation is marked do not contact. Nothing was queued — the outbox refuses it.' };
+    return { ok: false, why: 'This company is marked do not contact, so nothing was saved to send.' };
   }
   d.audit.append({
     at: d.now(), kind: 'EMAIL_QUEUED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,

@@ -89,7 +89,7 @@ const DENTAL: SectorRooms = {
  */
 const GP: SectorRooms = {
   sector: 'gp',
-  scales_on: 'the number of consulting, treatment and minor-operations rooms',
+  scales_on: 'how many rooms it has for seeing, treating and small operations',
   rooms: [
     { room_id: 'GP-R1', label: 'Consulting room', driver: 'per room' },
     { room_id: 'GP-R2', label: 'Treatment room', driver: 'per room' },
@@ -142,8 +142,8 @@ const SUPPORTED_LIVING: SectorRooms = {
   scales_on: 'the common parts, not the scheme',
   note:
     'Read this sector differently. Everything INSIDE a resident’s own home is excluded, wherever ' +
-    'the plant that serves it sits. Before any of this applies: is this supported living with ' +
-    'tenancies, or a registered care home with no separate tenancies? Get that wrong and the ' +
+    'the plant that serves it sits. First check: is this supported living, with tenancies? ' +
+    'Or is it a registered care home, with no separate tenancies? Get that wrong and the ' +
     'whole list is the wrong one.',
   rooms: [
     { room_id: 'SL-R1', label: 'Entrance lobby and circulation (common parts)', driver: 'per square metre' },
@@ -170,11 +170,11 @@ const SUPPORTED_LIVING: SectorRooms = {
  */
 const PRIVATE_HOSPITAL: SectorRooms = {
   sector: 'private_hospital',
-  scales_on: 'the number of theatres, intensive-care rooms, imaging rooms and sterile-services rooms',
+  scales_on: 'how many theatres, intensive care, scan and sterile rooms it has',
   note:
-    'Facility type gates this sector more than any other — a consulting-only clinic, a day-surgery ' +
-    'centre and a full acute hospital sit on a gradient. This is the full superset and most of it ' +
-    'will not exist below acute scale.',
+    'The kind of site matters most here. A small clinic and a big ' +
+    'hospital are very different. This is the full list. Most of it is only found in a ' +
+    'full hospital.',
   rooms: [
     { room_id: 'PH-R1', label: 'Consulting room (outpatient)', driver: 'per room' },
     { room_id: 'PH-R2', label: 'Operating theatre', driver: 'per room' },
@@ -191,8 +191,8 @@ const PRIVATE_HOSPITAL: SectorRooms = {
     {
       room_id: 'PH-R10', label: 'Hydrotherapy pool', driver: 'per building',
       caveat:
-        'Specialist rehabilitation only. A pool used in delivering rehabilitation is a different ' +
-        'case from an amenity pool — confirm genuine clinical use.',
+        'Specialist rehab only. A pool used to treat patients is not the same as a pool for leisure. ' +
+        'Check it is really used for treatment.',
     },
     { room_id: 'PH-R11', label: 'Reception and administration', driver: 'per room' },
     { room_id: 'PH-R12', label: 'Plant rooms', driver: 'per building' },
@@ -228,6 +228,6 @@ export function allRoomIds(): string[] {
 
 /** Where the item-level detail lives. Named on screen so nobody rebuilds it here. */
 export const SOURCE_DOCUMENT =
-  '04-phase-work/phase9/room-list-plain-english-v1.md — “What we think is in each room”, ' +
-  'version 1.0, 2 September 2026. It carries the item-level schedule, why we think each ' +
-  'fixture is there, and how sure we are. It is the document to mark up.';
+  'Our room list, “What we think is in each room”, ' +
+  'version 1.0, 2 September 2026. It lists each item, why we think it is there, ' +
+  'and how sure we are. Mark up that list, not this page.';

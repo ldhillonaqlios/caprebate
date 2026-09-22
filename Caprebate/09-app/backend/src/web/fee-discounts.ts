@@ -46,7 +46,7 @@ export function discountState(): { state: FeeDiscountView['state']; says: string
       says: `Recorded, not applied. It awaits the decision on ${m.asked} — neither is decided, so no discount is taken off any fee.`,
     };
   }
-  return { state: 'DECISION_RECORDED_NOT_APPLIED', says: 'Recorded, not applied. A discount is never taken off a fee automatically.' };
+  return { state: 'DECISION_RECORDED_NOT_APPLIED', says: 'Recorded, not applied. The system never takes a discount off a fee.' };
 }
 
 export function recordFeeDiscount(
@@ -61,7 +61,7 @@ export function recordFeeDiscount(
   const raw = (input['discount_percent'] ?? '').replace(/[%\s]/g, '');
   const pct = raw === '' ? Number.NaN : Number(raw);
   if (!Number.isFinite(pct) || pct <= 0 || pct > 100) {
-    return { ok: false, why: 'Give the discount as a share of our fee, as a percentage above nought and no more than 100.' };
+    return { ok: false, why: 'Give the discount as a share of our fee, as a percentage above 0 and no more than 100.' };
   }
   const bp = Math.round(pct * 100);
   if (bp < 1) return { ok: false, why: 'That discount rounds to nothing.' };

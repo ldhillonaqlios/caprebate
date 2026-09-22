@@ -108,9 +108,8 @@ describe('line 5 — the PSC list and the title register proprietor are post-sig
     for (const [label, eng] of [['unsigned', unsigned], ['not sure', unsure], ['null', null], ['absent', undefined]] as const) {
       const psc = R.stateUnderGates(entry('CH_PSC'), 'NOT_RUN', openFree, eng);
       assert.equal(psc.state, 'NOT_PERMITTED_YET', `CH_PSC opened on an engagement record that was ${label}`);
-      assert.match(psc.detail, /psc_name on this source is retrieved only after a signed engagement/);
-      assert.match(psc.detail, /CA2/);
-      assert.match(psc.detail, /not consulted/);
+      assert.match(psc.detail, /we look up the names of people with significant control only once the engagement letter is signed/);
+      assert.match(psc.detail, /Until then this lookup is not made/);
       /* The paid title register, by the same N4 line: a "not sure" used to read as truthy and open it. */
       assert.equal(R.stateUnderGates(entry('HMLR_TITLE'), 'NOT_RUN', openFree, eng).state, 'NOT_PERMITTED_YET', `HMLR_TITLE, ${label}`);
       /* The free facts are untouched. */
@@ -123,8 +122,8 @@ describe('line 5 — the PSC list and the title register proprietor are post-sig
     const r = R.stateUnderGates(entry('CH_PSC'), 'NOT_RUN', shutFree, unsigned);
     assert.equal(r.state, 'NOT_PERMITTED_YET');
     assert.match(r.detail, /privacy notice/);
-    assert.match(r.detail, /signed engagement/);
-    assert.equal(R.stateUnderGates(entry('CH_COMPANY'), 'NOT_RUN', shutFree, unsigned).detail.includes('signed engagement'), false);
+    assert.match(r.detail, /engagement letter is signed/);
+    assert.equal(R.stateUnderGates(entry('CH_COMPANY'), 'NOT_RUN', shutFree, unsigned).detail.includes('engagement letter is signed'), false);
     assert.equal(R.stateUnderGates(entry('CH_PSC'), 'FIRED', openFree, unsigned).state, 'FIRED');
   });
 
@@ -194,13 +193,13 @@ describe('line 12 — the engagement gate is handed phase9’s costing, and stop
     assert.equal(E.GATE.COME_BACK, 'we will come back to you with a price');
     assert.ok(g.threshold !== null && g.threshold > 4935 && g.shortfall !== null && g.shortfall > 0);
     assert.equal(g.cost_basis_is_a_placeholder, true);
-    assert.match(g.placeholder_caveat, /placeholder/);
+    assert.match(g.placeholder_caveat, /a guess for now/);
     /* The engine's whole quote agrees: no figure rendered, the reason is the routing sentence. */
     const q = E.feeQuote(164_500, null, { sector: 'gp' });
     assert.equal(q.render, false);
     assert.equal(q.amount, null);
     assert.equal(q.reason, E.GATE.COME_BACK);
-    assert.match(q.placeholder_caveat, /placeholder/);
+    assert.match(q.placeholder_caveat, /a guess for now/);
   });
 
   test('QUOTES ABOVE THE LINE: the same GP at £10,000, and a dental fee of £4,935, pass — with the caveat still on', () => {
@@ -209,7 +208,7 @@ describe('line 12 — the engagement gate is handed phase9’s costing, and stop
       assert.equal(g.outcome, 'PASS', `${sector} ${fee}`);
       assert.equal(g.withholds_quote, false);
       assert.equal(g.routes_to, null);
-      assert.match(g.placeholder_caveat, /placeholder/);
+      assert.match(g.placeholder_caveat, /a guess for now/);
     }
     const q = E.feeQuote(500_000, null, { sector: 'gp' });
     assert.equal(q.render, true);
@@ -229,7 +228,7 @@ describe('line 12 — the engagement gate is handed phase9’s costing, and stop
       assert.equal(g.withholds_quote, false);
       assert.equal(g.routes_to, null);
       assert.ok(g.missing.includes('jobs_per_year'));
-      assert.match(g.placeholder_caveat, /placeholder/);
+      assert.match(g.placeholder_caveat, /a guess for now/);
     }
   });
 
@@ -239,7 +238,7 @@ describe('line 12 — the engagement gate is handed phase9’s costing, and stop
       assert.equal(g.outcome, 'UNDETERMINED', String(fee));
       assert.equal(g.withholds_quote, false);
       assert.ok(g.missing.includes('expected_fee'));
-      assert.match(g.placeholder_caveat, /placeholder/);
+      assert.match(g.placeholder_caveat, /a guess for now/);
     }
   });
 
@@ -249,7 +248,7 @@ describe('line 12 — the engagement gate is handed phase9’s costing, and stop
       assert.equal(g.outcome, 'UNDETERMINED', String(sector));
       assert.equal(g.withholds_quote, false);
       assert.ok(g.missing.includes('sector'), String(sector));
-      assert.match(g.placeholder_caveat, /placeholder/);
+      assert.match(g.placeholder_caveat, /a guess for now/);
     }
   });
 
@@ -262,7 +261,7 @@ describe('line 12 — the engagement gate is handed phase9’s costing, and stop
       assert.equal(e.expected_pence, 493_500, 'the gate moved an earned fee');
       assert.equal(e.gate.outcome, 'FIRE');
       assert.equal(e.gate.routes_to, 'we will come back to you with a price');
-      assert.match(e.gate.placeholder_caveat, /placeholder/);
+      assert.match(e.gate.placeholder_caveat, /a guess for now/);
       assert.equal(V.expectedFees(m.app.db).find((x) => x.claim_id === c.id)?.gate.outcome, 'FIRE', 'the finance view’s list does not carry it');
       assert.equal(V.expectedFeeFor(m.app.db, { ...c, sector: 'dental' }).gate.outcome, 'PASS');
       assert.equal(V.expectedFeeFor(m.app.db, { ...c, sector: 'supported_living' }).gate.outcome, 'UNDETERMINED');
@@ -288,7 +287,7 @@ describe('line 12 — the engagement gate is handed phase9’s costing, and stop
       assert.equal(f.gate.outcome, 'FIRE');
       assert.equal(f.gate.quote_withheld, true);
       assert.match(f.gate.reading, /^WE WILL COME BACK TO YOU WITH A PRICE — /);
-      assert.match(f.gate.placeholder_caveat, /placeholder/);
+      assert.match(f.gate.placeholder_caveat, /a guess for now/);
     } finally { m.close(); }
   });
 });

@@ -230,9 +230,9 @@ export function gateCostingLoaded(): boolean {
  * estimated, not quoted, surveyor and tax adviser fees.
  */
 export const GATE_PLACEHOLDER_CAVEAT =
-  'An estimate, not a measured cost: the loaded cost behind this reading is computed on the overhead placeholder ' +
-  'and on estimated, not quoted, surveyor and tax adviser fees (04-phase-work/phase9/caprebate-job-economics.cjs), ' +
-  'at the volume Lakhbir gave for this year. If the year falls short of that volume, jobs that lose money pass.';
+  'An estimate, not a measured cost. Our overheads in it are a guess for now. ' +
+  'The surveyor and tax adviser fees are estimates, not quotes. It assumes the number of jobs Lakhbir gave ' +
+  'for this year. If we do fewer jobs than that, some jobs that lose money will pass.';
 
 export type FeeGateReading = GateDecision & { readonly placeholder_caveat: string; readonly costing_loaded: boolean };
 

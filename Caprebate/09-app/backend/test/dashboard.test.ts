@@ -191,7 +191,7 @@ describe('N4 — unknown is counted apart and never as nought', () => {
     const pa = tile(after, 'open_pipeline_value');
     assert.equal(lead(line(pa, /^Open claims/)), lead(line(pb, /^Open claims/)) + 1, 'the open claim was not counted');
     assert.equal(line(pa, /^Estimated claim value/), line(pb, /^Estimated claim value/), 'a claim with no estimate moved the value');
-    assert.equal(apartCount(pa, /no sealed estimate/), apartCount(pb, /no sealed estimate/) + 1, 'the claim with no estimate was not counted apart');
+    assert.equal(apartCount(pa, /no estimate yet — not known, so not counted as £0/), apartCount(pb, /no estimate yet — not known, so not counted as £0/) + 1, 'the claim with no estimate was not counted apart');
     assert.equal(line(tile(after, 'average_claim_value'), /^Average/), line(tile(before, 'average_claim_value'), /^Average/),
       'a claim with no estimate entered the average as nought');
 

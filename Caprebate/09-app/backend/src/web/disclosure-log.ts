@@ -62,8 +62,8 @@ export const DISCLOSURE_LOG: DisclosureLogSwitch = Object.freeze({
   enabled: false,
   in_force_from: null,
   waits_on:
-    'the data protection officer and the solicitor signing off “Who we pass client personal data on to”, whose recipients this log ' +
-    'records, and the first live disclosure — no surveyor or tax adviser is engaged and no claim is filed',
+    'the solicitor and the data protection officer to sign off our list of who gets client data. ' +
+    'That list says who this log records. It also waits for the first real disclosure: no surveyor or tax adviser is engaged yet, and no claim is filed',
 });
 
 type RecipientEntry = {
@@ -98,8 +98,8 @@ export const SOURCES_NOT_RECIPIENTS: Readonly<Record<string, string>> = Object.f
 });
 
 export const SOURCE_NOT_RECIPIENT =
-  'R5 — Companies House, HM Land Registry and the sector regulators are SOURCES, not recipients: we read from them and they ' +
-  'receive nothing, so no disclosure to one can be recorded.';
+  'R5 — Companies House, HM Land Registry and the sector regulators are places we read from. ' +
+  'We send them nothing, so there is nothing to record here.';
 
 export const OCCASIONS: Readonly<Record<Occasion, string>> = Object.freeze({
   VALUATION_INSTRUCTION: 'On instruction for a valuation',
@@ -136,7 +136,7 @@ export const DATA_CATEGORIES: Readonly<Record<DataCategory, string>> = Object.fr
 });
 
 export const DISCLOSURE_LOG_OFF =
-  'The per-disclosure log is switched off, so no disclosure is recorded. It is switched on once what it waits on is settled.';
+  'This log is switched off, so no disclosure is recorded. It is switched on once what it waits for is settled.';
 
 const LOG_OBJ: Obj = { type: 'compliance', id: '__disclosure_log__' };
 
@@ -206,7 +206,7 @@ export function recordDisclosure(d: DisclosureDeps, actor: Actor, input: Fields,
   if ((entry.kind === 'PROCESSOR') !== (basis === 'PROCESSOR_ON_INSTRUCTION')) {
     return { ok: false, why: entry.kind === 'PROCESSOR'
       ? 'a processor holds data on our instruction under Article 28 terms; that is the only basis its row can carry.'
-      : 'a recipient that is not our processor needs a lawful basis of its own: contract, legitimate interests, a legal obligation or consent.' };
+      : 'a recipient that is not our processor needs a lawful basis of its own. Choose one from the list — not the processor one.' };
   }
 
   const disclosed_at = (input['disclosed_at'] ?? '').trim();
@@ -218,7 +218,7 @@ export function recordDisclosure(d: DisclosureDeps, actor: Actor, input: Fields,
   const corrects_id = correctsIn === '' ? null : correctsIn;
   if (corrects_id !== null
     && d.db.get<{ business_id: string }>('SELECT business_id FROM disclosure_log WHERE id = ?', [corrects_id])?.business_id !== business_id) {
-    return { ok: false, why: 'a correction names a disclosure of the same organisation’s data.' };
+    return { ok: false, why: 'a correction must point to an earlier disclosure for this same organisation.' };
   }
 
   const id = d.newId();
@@ -252,8 +252,8 @@ export type DisclosureRow = {
 export type DisclosureReading = { readonly state: 'NOT_KEPT' | 'KEPT'; readonly label: string; readonly rows: readonly DisclosureRow[] };
 
 export const NOT_KEPT_LABEL =
-  'NOT KEPT — the per-disclosure log is switched off, so this application cannot say which recipients have received this ' +
-  'client’s data. That is not “none” (N4).';
+  'NOT KEPT — this log is switched off. So we cannot say who has received this client’s data. ' +
+  'That is not “none”: it is not known.';
 
 /**
  * WHO HAS RECEIVED ONE CLIENT'S DATA — the reading Article 15(1)(c) and Article 19 need. Off, it is NOT KEPT and lists
@@ -281,6 +281,6 @@ export function disclosuresFor(db: Db, actor: Actor, business_id: string, s: Dis
   }));
   const since = `since the log came into force on ${s.in_force_from}`;
   return rows.length === 0
-    ? { state: 'KEPT', label: `No disclosure of this client’s data is recorded ${since}. Before that date this log cannot say — that is not “none” (N4).`, rows }
+    ? { state: 'KEPT', label: `No disclosure of this client’s data is recorded ${since}. Before that date we cannot say. That is not “none”: it is not known.`, rows }
     : { state: 'KEPT', label: `${rows.length} ${rows.length === 1 ? 'disclosure' : 'disclosures'} of this client’s data recorded ${since}.`, rows };
 }

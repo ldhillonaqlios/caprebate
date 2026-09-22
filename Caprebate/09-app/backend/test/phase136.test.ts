@@ -139,7 +139,7 @@ describe('the rows, in Lakhbir\'s order', () => {
     for (const who of ['sales', 'admin'] as const) {
       const body = (await as(who).get('/staff')).body;
       assert.ok(tiles(row(body, 'next-actions')).some((x) => x.href === '/staff/next-actions'), who);
-      assert.doesNotMatch(body, /My next actions|Claims nobody owns that break/, who);
+      assert.doesNotMatch(body, /My next actions|Claims nobody owns with no next step/, who);
     }
   });
 

@@ -65,11 +65,11 @@ export type ExtractedPage = { page: number; lines: string[] };
 export const UNREADABLE_MARKER_PREFIX = '[unreadable document —';
 
 export type MarkerReason =
-  | 'the file is not one this build can read as text'
+  | 'we cannot read text from this kind of file yet'
   | 'this PDF is encrypted'
-  | 'this PDF carries no extractable text — it is most likely a scan, and no OCR is connected in this build'
-  | 'this PDF uses a content filter this build does not decode'
-  | 'this .docx could not be opened — the zip is malformed, or it holds no word/document.xml';
+  | 'this PDF has no text we can read — it is most likely a scan, and we cannot read scans yet'
+  | 'this PDF uses a filter we cannot read yet'
+  | 'this .docx could not be opened — it is damaged, or it is not really a Word file';
 
 export function markerPages(reason: MarkerReason): ExtractedPage[] {
   return [{ page: 1, lines: [`${UNREADABLE_MARKER_PREFIX} ${reason}]`] }];
@@ -128,7 +128,7 @@ function startsWith(buf: Buffer, magic: readonly number[]): boolean {
  * ------------------------------------------------------------------ */
 
 const DOCX_UNREADABLE: MarkerReason =
-  'this .docx could not be opened — the zip is malformed, or it holds no word/document.xml';
+  'this .docx could not be opened — it is damaged, or it is not really a Word file';
 
 export function extractOoxml(buf: Buffer): ExtractedPage[] {
   let xml: string;
@@ -147,7 +147,7 @@ export function extractOoxml(buf: Buffer): ExtractedPage[] {
  * PLAIN TEXT — the reading this module inherited, unchanged
  * ------------------------------------------------------------------ */
 
-const NOT_TEXT: MarkerReason = 'the file is not one this build can read as text';
+const NOT_TEXT: MarkerReason = 'we cannot read text from this kind of file yet';
 
 export function extractPlainText(buf: Buffer): ExtractedPage[] {
   const text = buf.toString('utf8');
@@ -169,8 +169,8 @@ export function extractPlainText(buf: Buffer): ExtractedPage[] {
  * ================================================================== */
 
 const PDF_NO_TEXT: MarkerReason =
-  'this PDF carries no extractable text — it is most likely a scan, and no OCR is connected in this build';
-const PDF_FILTER: MarkerReason = 'this PDF uses a content filter this build does not decode';
+  'this PDF has no text we can read — it is most likely a scan, and we cannot read scans yet';
+const PDF_FILTER: MarkerReason = 'this PDF uses a filter we cannot read yet';
 
 export function extractPdf(buf: Buffer): ExtractedPage[] {
   // latin1 keeps one character per byte, so every index into this string is a

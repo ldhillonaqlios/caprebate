@@ -171,17 +171,17 @@ function settingsPage(d: ConfigPageDeps, actor: Actor, v: CF.ConfigurationView, 
           <button type="submit">Add a reason</button></form>` : raw('')}
       ` })),
     ...(v.document_types === undefined ? [] : [{ id: 'summary-document-types', label: 'Document types', count: v.document_types.length, body: h`
-        <p class="help">Kept on <a href="/staff/document-types">the document types page</a>, with who may read each and its deletion clock.
-        A receipt policy is bound only by a migration, and a type that can carry a value is never marked as carrying none.</p>
-        <table><thead><tr><th>Type</th><th>Who may read it</th><th>Receipt strip</th><th>State</th></tr></thead><tbody>${v.document_types.map((t) => h`<tr>
+        <p class="help">Kept on <a href="/staff/document-types">the document types page</a>, with who can read each and when it is deleted.
+        Only a system update sets whether we keep a file. A type that can hold a value is never marked as holding none.</p>
+        <table><thead><tr><th>Type</th><th>Who may read it</th><th>Kept, or read then deleted</th><th>State</th></tr></thead><tbody>${v.document_types.map((t) => h`<tr>
           <td>${t.label} <code>${t.code}</code></td><td>${t.readers.label}</td><td class="help">${t.strip.label}</td><td>${t.active ? 'active' : 'retired'}</td></tr>`)}</tbody></table>` }]),
     ...(v.automation === undefined ? [] : [{ id: 'summary-automation', label: 'Automation rules', count: v.automation.rules.length, body: h`
-        <p class="help">Kept on <a href="/staff/automation">the automation page</a>, where what no rule may do is listed with its reason.</p>
+        <p class="help">Kept on <a href="/staff/automation">the automation page</a>, which lists what no rule can do, and why.</p>
         <table><thead><tr><th>Rule</th><th>When</th><th>Does</th><th>State</th></tr></thead><tbody>${v.automation.rules.map((r) => h`<tr>
           <td>${r.label}</td><td>${r.trigger.label}</td><td>${r.effect.label}</td><td>${r.active ? 'active' : 'retired'}</td></tr>`)}</tbody></table>` }]),
     ...(v.templates === undefined ? [] : [{ id: 'summary-templates', label: 'Email templates', count: v.templates.count, body: h`
         <p class="help">${v.templates.count} ${v.templates.count === 1 ? 'template' : 'templates'}, kept on <a href="/staff/templates">the templates page</a>.
-        Nothing a template writes leaves the outbox.</p>` }]),
+        Emails made from a template join the emails waiting to send.</p>` }]),
     ...(v.finance === undefined ? [] : [{ id: 'summary-finance', label: 'Finance settings', body: h`
         <p class="help">Dated rows, recorded with their source on <a href="/staff/finance">the finance page</a> — never edited in place.</p>
         <table><tbody>${v.finance.map((s) => h`<tr><th>${s.label}</th><td>${s.setting === null ? h`<strong>Not set</strong>` : h`${s.setting.value}`}</td>
@@ -192,8 +192,8 @@ function settingsPage(d: ConfigPageDeps, actor: Actor, v: CF.ConfigurationView, 
           <td class="help">${s.effective_from ?? ''} ${s.source ?? ''}</td></tr>`)}</tbody></table>` }]),
     senderSection(d, actor),
     { id: 'may-not-change', label: 'What a setting may not change', body: h`
-        <p class="help">Each of these is a rule, not a preference. It is refused by the store, by name, with the reason below — and the refusal is
-        recorded. Asking changes nothing.</p>
+        <p class="help">Each of these is a rule, not a preference. If you ask to change one, the system says no, gives the reason below and
+        records that you asked. Asking changes nothing.</p>
         <table><tbody>${v.forbidden.map((f) => h`<tr><th><code>${f.key}</code></th><td>${f.why}</td></tr>`)}</tbody></table>
         ${v.may_write ? h`<form method="post" action="/staff/admin-settings/setting">
           <label>Ask to change one anyway <select name="setting">${v.forbidden.map((f) => h`<option value="${f.key}">${f.key}</option>`)}</select></label>
@@ -203,9 +203,9 @@ function settingsPage(d: ConfigPageDeps, actor: Actor, v: CF.ConfigurationView, 
   return page({
     title: 'Admin settings', nav: d.nav(actor), wide: true,
     body: h`<h1>Admin settings</h1>${done === null ? raw('') : savedMessage()}
-      <p class="help"><strong>Configurable where it is a preference, fixed where it is a rule.</strong> The lists and the reasons are kept
-      here. A value is retired, never deleted, and its code never changes. What no setting may change is the last section,
-      and asking for one is refused by the store and recorded.</p>
+      <p class="help"><strong>You can change preferences here. Rules are fixed.</strong> The lists and the reasons are kept
+      here. A value is retired, never deleted, and its code never changes. The last section lists what no setting can change.
+      Asking to change one is refused and recorded.</p>
       ${sectionList('Sections of admin settings', sections)}`,
   });
 }

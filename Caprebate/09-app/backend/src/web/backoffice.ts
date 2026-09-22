@@ -172,6 +172,21 @@ export function contactForLead(db: Db, lead_id: string): ContactView {
   ));
 }
 
+/**
+ * PHASE 144: WHERE IN THE ASSESSMENT A CALL WAS ASKED FOR, IN WORDS. The stored value is a code (bookings.entry_point);
+ * a screen shows these words, never the code with its underscores swapped for spaces ("gated exit").
+ */
+export const ENTRY_POINT_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  funnel_close: 'the end of the assessment',
+  after_refined_range: 'after we narrowed the estimate',
+  gated_exit: 'the assessment saying there is no claim',
+});
+
+/** A booking's entry point in words; a code this list does not know is shown as it is stored. */
+export function entryPointWords(code: string): string {
+  return ENTRY_POINT_WORDS[code] ?? code;
+}
+
 type BookingChannelRow = { channel: string; sms_variant: string | null; entry_point: string };
 
 function contactOf(b: BookingChannelRow | undefined): ContactView {
@@ -479,8 +494,7 @@ export function scheduleBooking(
   if (!BOOKING.booksASlot(before.channel)) {
     return {
       ok: false,
-      why: `${before.channel_label} does not book a moment — CB_BOOKING says only the telephone does, ` +
-           'and the database refuses a time on any other channel.',
+      why: `${before.channel_label} does not get a time. Only a phone call can be given one.`,
     };
   }
 
@@ -534,8 +548,8 @@ export function scheduleBooking(
     body:
       `A telephone call has been ${before.starts_at === null ? 'arranged' : 'moved'} for ` +
       `${readable}, lasting ${SLOT_MINUTES} minutes.\n\n` +
-      'NOT SENT. Outbound email and calendar invitations are stubbed in this build: this message ' +
-      'and its invitation were written to the outbox table and nothing left the building.',
+      'Not sent yet. Emails and calendar invites are not switched on yet. ' +
+      'This message and its invite are saved with the emails waiting to send.',
     kind: 'CALENDAR_INVITE',
     // CRM 1 of 10: named, so a DO_NOT_CONTACT organisation is refused by id
     // and not only by whichever address happened to be on the row.

@@ -183,7 +183,7 @@ export async function handleTasks(
   if (email && method === 'POST') {
     const id = email[1] ?? '';
     const r = M.queueTemplate(deps, actor, id, posted(await form(req), ['template_id', 'contact_id']));
-    if (!r.ok) return d.problem(res, actor, 'Not queued', r.why, `/staff/claims/${id}`);
+    if (!r.ok) return d.problem(res, actor, 'Not sent', r.why, `/staff/claims/${id}`);
     redirect(res, `/staff/claims/${id}?done=${r.gaps.length === 0 ? 'queued' : 'queued-with-gaps'}`);
     return 'handled';
   }
@@ -262,7 +262,7 @@ function stageOptions(current: string | null): Safe {
 function saved(msg: string | undefined): Safe {
   if (msg === undefined) return raw('');
   if (msg === 'queued-with-gaps') {
-    return savedMessage('Saved to the outbox. It has not been sent. Some merge fields had nothing recorded and show as gaps in square brackets.');
+    return savedMessage('Saved — not sent yet. Some merge fields had nothing recorded. They show as gaps in square brackets.');
   }
   return savedMessage();
 }
@@ -336,21 +336,21 @@ export function claimTasksBlock(claim_id: string, p: T.ClaimTaskPanel | undefine
   const who = (w: string): string => (w === 'US' ? 'us' : w === 'CLIENT' ? 'the client' : 'nobody');
   return h`<div class="pblock"><div class="pnum">Next action and tasks</div>
     ${!na.required ? h`<p class="help">${na.sentence}</p>`
-      : na.breaks !== null ? h`<p class="err"><strong>This claim breaks the one-next-action rule.</strong> ${na.sentence}</p>`
+      : na.breaks !== null ? h`<p class="err"><strong>This claim needs one next step, with an owner and a date.</strong> ${na.sentence}</p>`
         : h`<p><strong>Next action:</strong> ${na.task?.title ?? ''} — ${na.task?.owner ?? ''}, ${na.task === null ? raw('') : dueCell(na.task.due)}</p>`}
-    ${p.waiting === undefined ? raw('') : h`<p class="help">Waiting on ${who(p.waiting.who)} — ${p.waiting.why}. Where both sides are waiting, it reads as ours: the engaged-client list’s own rule.</p>`}
+    ${p.waiting === undefined ? raw('') : h`<p class="help">Waiting on ${who(p.waiting.who)} — ${p.waiting.why}. If both sides are waiting, we count it as ours.</p>`}
     ${!p.may_set_next_action || p.owner_choices === undefined ? raw('') : h`<details><summary>Set the next action</summary>
       <form method="post" action="/staff/claims/${claim_id}/next-action">
         <label>What happens next <input name="title" required></label>
         <label>Owner <select name="owner_id">${ownerOptions(p.owner_choices, null, 'choose the person')}</select></label>
         <label>Due <input name="due_on" type="date" required></label>
         <button type="submit">Set as the next action</button></form>
-      <p class="help">The next action before it stays a task. A move to anything but closed or an exit is refused while the
-      claim has no next action with an owner and a due date.</p></details>`}
+      <p class="help">The old next action stays as a task. Until the claim has a next action with an owner
+      and a due date, it can only be closed or ended.</p></details>`}
     ${p.overdue_client_questions === undefined || p.overdue_client_questions.length === 0 ? raw('') : h`
       <p class="err"><strong>Client questions past their due date</strong></p>
       <ul>${p.overdue_client_questions.map((q) => h`<li class="overdue">“${q.question}” — <strong>OVERDUE</strong>, due ${q.due_on}${
-        q.sent ? '' : ' — drafted and never put to the client, so this one is ours'}</li>`)}</ul>`}
+        q.sent ? '' : ' — written but not sent to the client yet, so it waits on us'}</li>`)}</ul>`}
     ${taskRows(p.tasks, back, 'No task on this claim that you may see.')}
     ${p.may_add_task && p.owner_choices !== undefined ? newTaskForm(choices, { claim_id }, p.owner_choices, back) : raw('')}
   </div>`;
@@ -432,9 +432,9 @@ export function myTasksBlock(w: T.MyWork): Safe {
         r.claim === null ? h`<a href="/staff/clients/${r.business_id}">${r.client}</a>`
           : h`<a href="/staff/claims/${r.claim.id}">${r.claim.name}</a> ${claimRef(r.claim.claim_ref)}`}:
         ${r.type_label} — ${r.due.overdue ? h`<strong>${r.due.label}</strong>` : h`${r.due.label}`}</li>`)}</ul>`}
-    ${w.claims_without_next_action.length === 0 ? raw('') : h`<p><strong>Claims you own that break the one-next-action rule</strong></p>
+    ${w.claims_without_next_action.length === 0 ? raw('') : h`<p><strong>Claims you own with no next step, owner or date</strong></p>
       <ul>${w.claims_without_next_action.map((c) => h`<li><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} — ${c.sentence}</li>`)}</ul>`}
-    ${w.unowned_claims_breaking.length === 0 ? raw('') : h`<p><strong>Claims nobody owns that break the one-next-action rule</strong></p>
+    ${w.unowned_claims_breaking.length === 0 ? raw('') : h`<p><strong>Claims nobody owns with no next step, owner or date</strong></p>
       <ul>${w.unowned_claims_breaking.map((c) => h`<li><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} — ${c.sentence}
         <span class="help">— give it an owner, then its next action</span></li>`)}</ul>`}
     ${w.my_claims.length === 0 ? raw('') : h`<p><strong>My claims, their next actions, and who is waiting</strong></p>
@@ -517,8 +517,7 @@ function breakersPage(d: TaskPageDeps, actor: Actor, b: T.Breakers): string {
     title: 'Claims with no next step', nav: d.nav(actor), wide: true,
     body: h`<h1>Tasks</h1>${filterBar(actor, TASK_FILTERS, '/staff/next-actions')}
       <div class="help">Every open claim needs one next step, with an owner and a date. ${b.checked} open claim${b.checked === 1 ? '' : 's'} checked.${
-        why(h`A claim that has not closed or left the procedure has exactly one current next action. Where both sides are
-        waiting, it counts as ours.`)}</div>
+        why(h`Every claim still open has one next action. If both sides are waiting, we count it as ours.`)}</div>
       <div class="pblock"><div class="pnum">No next step, or no owner or date</div>
         ${b.breaking.length === 0 ? h`<p class="help">None.</p>` : rows(b.breaking)}</div>
       <div class="pblock"><div class="pnum">Next step overdue</div>
@@ -567,10 +566,9 @@ function rulesPageHtml(d: TaskPageDeps, actor: Actor, p: A.RulesPage, msg: strin
   return page({
     title: 'Automation', nav: d.nav(actor), wide: true,
     body: h`<h1>Automation rules</h1>${saved(msg)}
-      <p class="help">A trigger and an effect. Every rule that matches an event writes a run — it ran, or it did not and why.
-      A notice is written to the outbox and NOT SENT.</p>
-      <div class="gate"><strong>What no rule may do.</strong> Each is refused by the store with its reason, not missing from
-      a form:<ul>${distinctReasons(p.forbidden).map((why) => h`<li>${why}</li>`)}</ul></div>
+      <p class="help">Each rule says when it acts and what it does. Each time, it notes if it ran, or why not.
+      A notice is saved with the emails waiting to send. It is not sent yet.</p>
+      <div class="gate"><strong>What no rule may do.</strong> Each is refused, with the reason:<ul>${distinctReasons(p.forbidden).map((why) => h`<li>${why}</li>`)}</ul></div>
       <div class="pblock"><div class="pnum">The rules</div><table>
         <thead><tr><th>Rule</th><th>When</th><th>Does</th><th>Goes to</th><th>Active</th><th>Where it came from</th></tr></thead>
         <tbody>${p.rules.map((r) => h`<tr><td>${r.label}${r.task === null || r.task.title === null ? raw('') : h`<br><span class="help">“${r.task.title}”, due in ${r.task.due_in_days ?? 0} days</span>`}</td>
@@ -583,7 +581,7 @@ function rulesPageHtml(d: TaskPageDeps, actor: Actor, p: A.RulesPage, msg: strin
         ${p.runs.length === 0 ? h`<p class="help">No rule has run yet.</p>` : h`<table>
           <thead><tr><th>When</th><th>Rule</th><th>Event</th><th>About</th><th>Result</th></tr></thead>
           <tbody>${p.runs.map((r) => h`<tr><td class="when">${r.at}</td><td>${r.rule}</td><td>${r.trigger}</td><td>${r.about}</td>
-            <td>${r.ran ? h`ran${r.tasks_created > 0 ? h` — ${r.tasks_created} task${r.tasks_created === 1 ? '' : 's'}` : raw('')}${r.outbox ? ' — a notice queued, not sent' : ''}` : h`<strong>did not run</strong>`}${
+            <td>${r.ran ? h`ran${r.tasks_created > 0 ? h` — ${r.tasks_created} task${r.tasks_created === 1 ? '' : 's'}` : raw('')}${r.outbox ? ' — a notice saved, not sent yet' : ''}` : h`<strong>did not run</strong>`}${
               r.reason === null ? raw('') : h`<br><span class="help">${r.reason}</span>`}</td></tr>`)}</tbody></table>`}</div>`,
   });
 }
@@ -600,10 +598,10 @@ function templatesPageHtml(d: TaskPageDeps, actor: Actor, p: M.TemplatesPage, ms
   return page({
     title: 'Email templates', nav: d.nav(actor), wide: true,
     body: h`<h1>Email templates</h1>${saved(msg)}
-      <p class="help">The merge fields are ${fields} and no others. A merged value is escaped; a value nobody recorded shows as a
-      gap in square brackets. A merged email is written to the outbox and NOT SENT.</p>
-      <div class="gate"><strong>Never bank details, never an invoice.</strong> A template carrying either is refused — the invoice
-      email waits on the invoice-fraud procedure.</div>
+      <p class="help">The merge fields are ${fields} and no others. A merged value is shown as typed. A value nobody recorded shows as a
+      gap in square brackets. The email is saved to send later. It is not sent yet.</p>
+      <div class="gate"><strong>Never bank details, never an invoice.</strong> A template with either is refused. Invoices
+      are not emailed until our invoice fraud checks are in place.</div>
       ${p.templates.map((t) => h`<div class="pblock"><div class="pnum">${t.label}${t.active ? '' : ' — retired'}</div>
         <p><strong>${t.subject}</strong></p><pre>${t.body}</pre><p class="help">changed ${t.updated}</p>
         ${p.may_write ? h`<details><summary>Change it</summary>${form(`/staff/templates/${t.id}`, t)}</details>` : raw('')}</div>`)}

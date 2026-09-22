@@ -567,8 +567,8 @@ describe('panel 2 — sources, and the two gates', () => {
       // Posting the route directly, which is what a widened control would do.
       const r = await staff.post(`/staff/clients/${business_id}/research/retry`, { source_id: 'CQC' });
       assert.equal(r.status, 400);
-      assert.match(r.body, /only a source that FAILED can be retried/);
-      assert.match(r.body, /the operator picks the moment, not the calls/);
+      assert.match(r.body, /Only a lookup that did not work can be tried again/);
+      assert.match(r.body, /It runs them all at once/);
     } finally { h.close(); }
   });
 
@@ -609,7 +609,7 @@ describe('panel 2 — sources, and the two gates', () => {
     const r = R.stateUnderGates(untiered, 'NOT_RUN', openFree, unsigned);
     assert.equal(r.state, 'NOT_PERMITTED_YET',
       'an untiered source ran on the free gate alone');
-    assert.match(r.detail, /has not been tiered, so it waits for both gates/);
+    assert.match(r.detail, /not sure if free or paid, so it is treated as paid and waits for both/);
   });
 
   test('THE THIRD BLOCKER: a source we hold no licence for says THAT, not “waiting on the notice”', () => {
@@ -712,8 +712,8 @@ describe('panel 3 — what is still missing', () => {
       const gates = missing.filter((m) => m.origin === 'cash gate');
       assert.ok(gates.length > 0, 'the engine established every cash gate from a funnel that answered almost nothing');
       for (const g of gates) {
-        assert.match(g.why, /NOT ESTABLISHED/);
-        assert.match(g.why, /not the same as shut/);
+        assert.match(g.why, /not known yet/);
+        assert.match(g.why, /Not known is not the same as a fail/);
       }
     } finally { h.close(); }
   });
@@ -1324,7 +1324,7 @@ describe('panel 4 — withdrawing a question asked in error', () => {
       // control; the route reads the row and refuses.
       const refused = await staff.post(`/staff/clients/${business_id}/tasks/withdraw`, { task_id: id });
       assert.equal(refused.status, 400, 'an answered question was withdrawn');
-      assert.match(refused.body, /delete a fact the client gave us/);
+      assert.match(refused.body, /would delete what the client told us/);
 
       // AND THE ANSWER IS STILL THERE. That is the whole point of the refusal.
       const row = h.app.db.get<{ state: string; answer: string | null }>(
@@ -1704,7 +1704,7 @@ describe('the engine session is rebuilt from the funnel, not from three question
       const missing = E.missingFacts(h.app.db, sales, business_id);
       const said = missing.find((m) => m.fact_id === 'cash_gate.__engine_did_not_run');
       assert.ok(said !== undefined, 'a failed engine run was reported as nothing outstanding');
-      assert.match(said.question, /could not be run/);
+      assert.match(said.question, /could not run/);
       assert.equal(said.blocks, 'BOTH');
       // AND IT NAMES NO GATE. Reporting all four would be inventing findings.
       assert.equal(missing.some((m) => m.fact_id.startsWith('cash_gate.') && m.fact_id !== said.fact_id), false,

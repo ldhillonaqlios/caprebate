@@ -187,7 +187,7 @@ export function updateIncident(d: ComplianceDeps, actor: Actor, id: string, inpu
     next['is_personal_data_breach'] = Object.hasOwn(input, 'is_personal_data_breach')
       ? check(vocabField(input['is_personal_data_breach'], YES_NO, 'Whether it is a personal data breach')) : i.is_personal_data_breach;
     if (next['is_personal_data_breach'] !== null && next['classification_reason'] === null) {
-      return { ok: false, why: 'The classification carries its reason — it is the data protection officer’s decision, recorded in their words.' };
+      return { ok: false, why: 'Give the reason too. It is the data protection officer’s decision, in their words.' };
     }
     const annex = Object.hasOwn(input, 'annex_ref') ? check(textField(input['annex_ref'], 20, 'The annex reference')) : i.annex_ref;
     if (annex !== null && !/^ANX-\d{3,}$/.test(annex)) return { ok: false, why: 'An annex reference looks like ANX-001. The names stay in the restricted annex, never here.' };
@@ -265,21 +265,21 @@ export function recordDecision(d: ComplianceDeps, actor: Actor, id: string, inpu
       countersigned_by: text('countersigned_by', 200, 'Who countersigned'),
     };
     if (n.art33_decision !== null && (n.art33_reasoning === null || n.decided_by === null || n.decided_at === null)) {
-      return { ok: false, why: 'An Article 33 decision carries its reasoning — engaging the “unlikely to result in a risk” test — who decided, and when.' };
+      return { ok: false, why: 'An Article 33 decision needs its reasoning, who decided, and when. Say whether the “unlikely to result in a risk” test applies.' };
     }
-    if (n.art34_decision !== null && n.art34_reasoning === null) return { ok: false, why: 'An Article 34 decision carries its reasoning, even where Article 33 was not notified.' };
+    if (n.art34_decision !== null && n.art34_reasoning === null) return { ok: false, why: 'An Article 34 decision needs its reasoning. This applies even if Article 33 was not notified.' };
     if (n.art34_decision === 'NOT_COMMUNICATED_34_3_A' && n.fact_device_encrypted !== 'YES') {
-      return { ok: false, why: 'Article 34(3)(a) needs the data to have been unintelligible: encryption must be recorded as YES. Unknown, and not recorded, do not pass.' };
+      return { ok: false, why: 'Article 34(3)(a) needs the data to have been unreadable to anyone not allowed to see it. So encryption must be recorded as YES. Unknown or not recorded does not pass.' };
     }
     if (n.art34_decision === 'NOT_COMMUNICATED_34_3_B' && n.fact_recipient_confirmed_deletion !== 'YES') {
-      return { ok: false, why: 'Article 34(3)(b) needs the recipient’s confirmed deletion recorded as YES. Unknown, and not recorded, do not pass.' };
+      return { ok: false, why: 'Article 34(3)(b) needs the recipient’s deletion to be confirmed. Record it as YES. Unknown or not recorded does not pass.' };
     }
     if (n.art33_decision === 'NOTIFIED' && (n.notified_at === null || n.notified_recipient === null)) return { ok: false, why: 'A notification carries when and to whom.' };
     if (n.notified_at !== null && n.notified_at > deadline72h(i.awareness_at) && n.delay_reasons === null) {
-      return { ok: false, why: 'The notification was later than 72 hours from awareness: the reasons for the delay are mandatory.' };
+      return { ok: false, why: 'The notification came more than 72 hours after we became aware. You must give the reasons for the delay.' };
     }
     if (n.deputy_route_used === 1 && n.dpo_contact_attempts === null) {
-      return { ok: false, why: 'The deputy route opens only after the attempts to reach the data protection officer are logged on the entry.' };
+      return { ok: false, why: 'The deputy can decide only once the attempts to reach the data protection officer are logged.' };
     }
     const at = d.now();
     const values = [n.art33_decision, n.art33_reasoning, n.notified_at, n.notified_recipient, n.delay_reasons, n.art34_decision, n.art34_reasoning,
@@ -342,7 +342,7 @@ export function recordTold(d: ComplianceDeps, actor: Actor, id: string, input: F
     if (!has(TOLD_POSITIONS, position)) return { ok: false, why: 'Say whether they were told.' };
     if (position === 'NO_POLICY_IN_FORCE' && kind !== 'INSURER') return { ok: false, why: '“No policy in force” is the insurer’s row only.' };
     if (kind === 'INSURER' && position !== 'NO_POLICY_IN_FORCE' && settingReading(d.db, 'INSURANCE_POSITION', d.now()).value !== 'POLICY_IN_FORCE') {
-      return { ok: false, why: 'No insurance policy is recorded as in force, so the insurer row records no policy in force. Record the policy in the settings first.' };
+      return { ok: false, why: 'No insurance policy is recorded. So the insurer row says “No policy in force”. Record the policy in the settings first.' };
     }
     const told = check(momentField(input['told_at'], 'When they were told'));
     if ((position === 'TOLD') !== (told !== null)) return { ok: false, why: position === 'TOLD' ? 'Give when they were told.' : 'A time is given only for somebody told.' };
@@ -370,12 +370,12 @@ export function closeIncident(d: ComplianceDeps, actor: Actor, id: string): Writ
     const dec = d.db.get<DecisionRow>('SELECT * FROM breach_decisions WHERE incident_id = ?', [id]);
     const missing: string[] = [];
     if (i.kind === 'ATTEMPTED_INVOICE_FRAUD' && i.is_personal_data_breach === null) {
-      missing.push('the data protection officer’s classification of whether it is a personal data breach');
+      missing.push('the classification, from the data protection officer');
     }
     if (i.is_personal_data_breach !== 'NO') {
       if (dec?.art33_decision === null || dec === undefined) missing.push('the Article 33 decision, reasoned');
       if (dec?.art34_decision === null || dec === undefined) missing.push('the Article 34 decision, reasoned');
-      if (dec !== undefined && dec.art33_decision !== null && dec.countersigned_by === null) missing.push('the countersignature — on a decision to report and on a decision not to');
+      if (dec !== undefined && dec.art33_decision !== null && dec.countersigned_by === null) missing.push('the countersignature, on a decision to report or not to');
       if (dec?.art33_decision === 'NOTIFIED_IN_PHASES'
         && (d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM breach_notification_phases WHERE incident_id = ?', [id])?.n ?? 0) === 0) {
         missing.push('the notification phases');
@@ -402,7 +402,7 @@ export function article33Reading(i: IncidentRow, dec: DecisionRow | undefined, c
   if (i.kind === 'ATTEMPTED_INVOICE_FRAUD' && i.is_personal_data_breach === null) {
     return {
       deadline: deadline72h(i.awareness_at),
-      label: `Whether this is a personal data breach is the data protection officer’s classification, not yet given. IF it is, the 72 hours from awareness end ${localWhen(deadline72h(i.awareness_at))} — so ask now.`,
+      label: `Is this a personal data breach? The data protection officer has not classified it yet. If it is, the 72 hours from awareness end ${localWhen(deadline72h(i.awareness_at))} — so ask now.`,
     };
   }
   const latest = corrections.length === 0 ? null : (corrections[corrections.length - 1]?.corrected_to ?? null);
@@ -449,7 +449,7 @@ export function incidentView(db: Db, actor: Actor, id: string, nowIso: string): 
     told: db.all<{ recipient_kind: string; position: string; told_at: string | null; note: string | null }>(
       'SELECT recipient_kind, position, told_at, note FROM breach_other_notifications WHERE incident_id = ? ORDER BY recipient_kind', [id])
       .map((t) => ({ ...t, label: words(RECIPIENTS, t.recipient_kind, t.recipient_kind) })),
-    insurance: ins.value === null ? 'The insurance position is not recorded — an insurer is never recorded as told on silence.'
+    insurance: ins.value === null ? 'The insurance position is not recorded. We never record an insurer as told just because nothing was said.'
       : `${ins.label}, from ${ins.effective_from ?? ''}. Source: ${ins.source ?? ''}`,
     links: linksFor(db, 'BREACH', id), holds: holdsForEntry(db, 'incident_id', id), limitation: TWO_PERSON_LIMITATION, four_facts: FOUR_FACTS,
   };
@@ -490,13 +490,13 @@ export function icoAnswerSheet(db: Db, actor: Actor, id: string, nowIso: string)
   const blank = (x: string | null, why: string): string => x ?? NOT_SET(why);
   return {
     ref: i.incident_ref,
-    note: 'A TEMPLATE, drawn from this entry and the answer sheet’s standing answers. It is not stored and not sent. The form of the Information Commissioner\'s Office (from 30 September 2026, the Information Commission) cannot be saved part-way: ' +
-      'nobody opens it until every line below is true on the day. Name the regulator as the form’s current text does — check it on the day.',
+    note: 'A TEMPLATE, drawn from this entry and our standing answers. It is not stored and not sent. You can not save part of the form for the Information Commissioner\'s Office (from 30 September 2026, the Information Commission). ' +
+      'Do not open the form until every line below is true on the day. Name the regulator as the form does on the day.',
     sections: [
       { title: '1 · Who is reporting', lines: [
         { field: 'Organisation name', answer: 'CAP REBATE LTD, trading as Cap Rebate — the controller' },
         { field: 'Company number', answer: '17307313. Registered office: 1st Floor, 1-9 Castle Street, Hinckley, LE10 1DA' },
-        { field: 'Registration reference with the Information Commissioner\'s Office (from 30 September 2026, the Information Commission)', answer: NOT_SET('not yet registered — say so') },
+        { field: 'Our ref with the Information Commissioner\'s Office (from 30 September 2026, the Information Commission)', answer: NOT_SET('not yet registered — say so') },
         { field: 'Sector', answer: 'Professional services — tax and property consultancy. Not healthcare: no patient data is held' },
       ] },
       { title: '2 · What has happened', lines: [
@@ -514,7 +514,7 @@ export function icoAnswerSheet(db: Db, actor: Actor, id: string, nowIso: string)
       ] },
       { title: '4 · The people affected', lines: [
         { field: 'Likely consequences for them', answer: blank(i.likely_consequences, '“none” needs its reason') },
-        { field: 'Who they can be', answer: 'Clients and their named contacts; persons with significant control (RP-E1) and individual proprietors (RP-E2), who have had no contact with Cap Rebate; people named in documents clients uploaded (P2); professionals in a live matter' },
+        { field: 'Who they can be', answer: 'Clients and their named contacts. People with significant control. Individual proprietors. Neither of those two has had contact with Cap Rebate. People named in documents clients uploaded. Professionals in a live matter' },
         { field: 'Telling them (Article 34)', answer: dec?.art34_decision == null ? NOT_SET('decide, even if the decision is “not yet”') : `${words(ART34, dec.art34_decision, dec.art34_decision)} — ${dec.art34_reasoning ?? ''}` },
       ] },
       { title: '5 · What you are doing', lines: [
@@ -523,10 +523,10 @@ export function icoAnswerSheet(db: Db, actor: Actor, id: string, nowIso: string)
         ...STANDING_MEASURES,
       ] },
       { title: '6 · Who to contact, and who else you have told', lines: [
-        { field: 'Named contact', answer: 'Sadique Maskeen, Data Protection Officer — or, if he cannot be reached, the deputy who decides the breach, Lakhbir Dhillon — confirm on the day' },
-        { field: 'Email', answer: NOT_SET('no monitored data protection mailbox exists: give an address that is actually being read, and say which it is') },
+        { field: 'Named contact', answer: 'Sadique Maskeen, Data Protection Officer. If he cannot be reached: the breach deputy, Lakhbir Dhillon. Confirm on the day' },
+        { field: 'Email', answer: NOT_SET('no data protection mailbox is watched yet. Give an address that someone actually reads, and say which it is') },
         { field: 'Telephone', answer: NOT_SET('to confirm') },
-        { field: 'Data protection officer', answer: 'Designated, and the appointment is not in effect — say so plainly; do not give them as the operative DPO contact' },
+        { field: 'Data protection officer', answer: 'Designated, but the appointment is not in effect. Say so plainly. Do not give them as the data protection officer contact' },
         { field: 'Decision', answer: dec?.art33_decision == null ? NOT_SET('the Article 33 decision and its reasoning') : `${words(ART33, dec.art33_decision, dec.art33_decision)} — ${dec.art33_reasoning ?? ''}` },
         ...v.told.map((t) => ({ field: t.label, answer: `${words(TOLD_POSITIONS, t.position, t.position)}${t.told_at === null ? '' : `, ${localWhen(t.told_at)}`}` })),
         { field: 'Insurance', answer: v.insurance },

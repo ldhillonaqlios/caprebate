@@ -104,8 +104,8 @@ export type Timeline = {
 };
 
 export const READ_NOT_LOG =
-  'Assembled on this request from what is already recorded — bookings, questions, documents, research, stage moves, ' +
-  'tasks, invoices, the outbox and the audit log. There is no second log behind it.';
+  'Made fresh each time you open it, from what we already hold. That is bookings, questions, documents, research, ' +
+  'step moves, tasks, invoices, emails and the audit log. There is no second log behind it.';
 
 export const FINANCE_ONLY = 'Financial events only — the invoices and their states. Accounting reaches money and nothing else.';
 export const SURVEY_ONLY =
@@ -122,7 +122,7 @@ const RECORD_WORDS: Readonly<Record<string, string>> = Object.freeze({
   LEAD_CREATED: 'The lead was recorded',
   LEAD_UPDATED: 'The lead was changed',
   LEAD_CONVERTED: 'The lead converted, and its claim opened',
-  EMAIL_QUEUED: 'An email was merged from a template and queued to the outbox — not sent',
+  EMAIL_QUEUED: 'An email was made from a template and is waiting to send — not sent yet',
 });
 
 const CHANNEL_WORDS: Readonly<Record<string, string>> = Object.freeze({
@@ -274,7 +274,7 @@ export function timelineFor(db: Db, actor: Actor, subject: TimelineSubject): Tim
       'SELECT r.at, r.kind, r.considered, r.fired, r.not_permitted, r.failed, u.display_name AS who FROM research_runs r ' +
         'LEFT JOIN users u ON u.id = r.actor_id WHERE r.business_id = ? ORDER BY r.at', [biz])) {
       add({ at: r.at, category: 'RESEARCH', audience: 'STAFF_ONLY', who: r.who, scope: orgScope,
-        what: `${r.kind === 'RETRY' ? 'A failed source was retried' : 'The research was run'}: ${r.considered} sources considered, ${r.fired} fired, ${r.not_permitted} waiting on a gate, ${r.failed} failed` });
+        what: `${r.kind === 'RETRY' ? 'A failed source was retried' : 'The research was run'}: ${r.considered} sources in all, ${r.fired} looked up, ${r.not_permitted} waiting for a go-ahead, ${r.failed} failed` });
     }
   }
   // PHASE 142: THE THREAD WITH THE CLIENT, one line per message — who wrote, and which claim — never the words, which are
@@ -437,12 +437,12 @@ function documents(db: Db, actor: Actor, biz: string, add: Add, scope: string): 
     if (o === undefined || !can(actor, 'document.read', o)) continue;
     const type = doc.type_label !== null && doc.seq !== null
       ? `${doc.type_label} ${doc.seq}, version ${doc.version_no ?? ''}`
-      : (doc.doc_type ?? doc.declared_type ?? 'a type not declared').replace(/_/g, ' ');
+      : (doc.doc_type ?? doc.declared_type ?? 'type not given').replace(/_/g, ' ');
     add({ at: doc.created_at, category: 'DOCUMENT', audience: 'CLIENT_SEES', who: null, scope, what: `A document was uploaded — ${type}` });
     for (const e of db.all<{ at: string; contract_step: number; action: string; outcome: string }>(
       'SELECT at, contract_step, action, outcome FROM document_events WHERE doc_id = ? ORDER BY contract_step, at', [doc.id])) {
       add({ at: e.at, category: 'DOCUMENT', audience: 'STAFF_ONLY', who: null, scope,
-        what: `Receipt step ${e.contract_step} for the ${type}: ${e.action.replace(/_/g, ' ')} — ${e.outcome}` });
+        what: `Upload step ${e.contract_step} for the ${type}: ${e.action.replace(/_/g, ' ')} — ${e.outcome}` });
     }
   }
 }
@@ -642,7 +642,7 @@ function automation(
   const refs = new Map(scope.claims.map((c) => [c.id, c.claim_ref]));
   for (const r of rows) {
     const did = r.outcome === 'RAN'
-      ? `ran${r.tasks_created > 0 ? ` — ${r.tasks_created} task${r.tasks_created === 1 ? '' : 's'} created` : ''}${r.outbox_id === null ? '' : ' — a notice queued to the outbox, not sent'}`
+      ? `ran${r.tasks_created > 0 ? ` — ${r.tasks_created} task${r.tasks_created === 1 ? '' : 's'} created` : ''}${r.outbox_id === null ? '' : ' — a notice waiting to send, not sent yet'}`
       : 'did not run';
     add({ at: r.at, category: 'AUTOMATION', audience: 'STAFF_ONLY', who: 'an automation rule',
       scope: r.claim_id !== null ? claimScope(refs.get(r.claim_id) ?? 'a claim') : r.lead_id !== null ? leadScope : 'the company',
@@ -726,8 +726,8 @@ export function lastContactFor(db: Db, c: { id: string; email: string | null; la
     'SELECT MAX(sent_at) AS at FROM outbox WHERE sent_at IS NOT NULL AND lower(to_email) = lower(?)', [c.email])?.at ?? null;
   const candidates = [
     { at: task, source: 'a completed call, email or meeting task' },
-    { at: sent, source: 'a message the outbox sent' },
-    { at: c.last_contact_at, source: 'recorded by staff before the last contact was derived' },
+    { at: sent, source: 'an email we sent' },
+    { at: c.last_contact_at, source: 'recorded by staff before we worked it out from the timeline' },
   ].filter((x): x is { at: string; source: string } => x.at !== null);
   if (candidates.length === 0) return { at: null, label: NO_CONTACT_RECORDED, source: null };
   const latest = candidates.reduce((a, b) => (b.at > a.at ? b : a));

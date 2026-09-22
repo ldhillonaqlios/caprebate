@@ -79,14 +79,14 @@ export const PAYER_CLASSES: Vocab = Object.freeze({
   nhs: 'The NHS', local_authority: 'A local authority', homes_england_gla: 'Homes England or the GLA',
   other_public: 'Another public body', landlord_unconnected: 'A landlord not connected to the client',
   landlord_connected: 'A landlord connected to the client', group_company: 'A company in the client’s group',
-  charity: 'A charity', individual: 'An individual — not named here', insurer: 'An insurer', UNKNOWN: 'Not known',
+  charity: 'A charity', individual: 'A private person — not named here', insurer: 'An insurer', UNKNOWN: 'Not known',
 });
 
 export const AMOUNT_BASES: Vocab = Object.freeze({
-  agreement: 'The funding agreement', client_estimate: 'The client’s estimate', inferred: 'Inferred', UNKNOWN: 'Not known',
+  agreement: 'The funding agreement', client_estimate: 'The client’s estimate', inferred: 'Our own working-out', UNKNOWN: 'Not known',
 });
 
-export const TRACED: Vocab = Object.freeze({ YES: 'Traced to cost elements', NO: 'Not traced', UNKNOWN: 'Not known' });
+export const TRACED: Vocab = Object.freeze({ YES: 'Matched to the items it paid for', NO: 'Not matched yet', UNKNOWN: 'Not known' });
 
 type FactKind = 'date' | 'pence' | 'choice' | 'text';
 
@@ -112,7 +112,7 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
   AIA_HEADROOM_AMOUNT: { label: 'How much Annual Investment Allowance headroom is left', kind: 'pence' },
   POOL_SPLIT_MAIN: { label: 'Main pool additions', kind: 'pence' },
   POOL_SPLIT_SPECIAL: { label: 'Special rate pool additions', kind: 'pence' },
-  SBA_QUALIFYING_EXPENDITURE: { label: 'Structures and buildings allowance qualifying expenditure', kind: 'pence' },
+  SBA_QUALIFYING_EXPENDITURE: { label: 'Structures and buildings allowance: the spend that counts', kind: 'pence' },
   ELECTION_EXISTS: { label: 'A s.198 or s.199 election affects the property', kind: 'choice', choices: YES_NO },
   ELECTION_SECTION: {
     label: 'The section it was made under', kind: 'choice',
@@ -121,12 +121,12 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
   ELECTION_NOTIFIED_ON: { label: 'The date it was notified to HMRC', kind: 'date' },
   ELECTION_VALUE: { label: 'The value it fixes — a nominal figure is valid', kind: 'pence' },
   ELECTION_ELEMENTS: { label: 'The fixtures it covers, element by element', kind: 'text' },
-  ELECTION_TRIBUNAL_APPLIED_ON: { label: 'The date a tribunal application under s.187A(7)(a) was lodged', kind: 'date' },
+  ELECTION_TRIBUNAL_APPLIED_ON: { label: 'The date a tribunal application was made (s.187A(7)(a))', kind: 'date' },
   ELECTION_TRIBUNAL_STATUS: {
     label: 'Where that tribunal application stands', kind: 'choice',
     choices: Object.freeze({ UNDETERMINED: 'Lodged and not yet determined', DETERMINED: 'Determined' }),
   },
-  GRANTS_EXIST: { label: 'A grant or contribution met any of the spend', kind: 'choice', choices: YES_NO },
+  GRANTS_EXIST: { label: 'Did anyone else pay for any of this work?', kind: 'choice', choices: YES_NO },
   ACQUISITION_COSTS: { label: 'Incidental acquisition costs — legal and other fees', kind: 'pence' },
   TRANSACTION_TAX: { label: 'Land transaction tax paid on the purchase', kind: 'pence' },
   BUYER_ALTERATIONS: { label: 'The buyer made their own alterations to install plant', kind: 'choice', choices: YES_NO },
@@ -231,7 +231,7 @@ export function captured(facts: Map<string, FactRow>, key: string): FactReading 
   const label = def?.label ?? key;
   const r = facts.get(key);
   if (r === undefined) return unknown(key, label, true, null);
-  const src = registerSource(r.source_id, false, `claim_facts row ${r.id}`, r.recorded_at, r.recorder ?? 'a former user');
+  const src = registerSource(r.source_id, false, `record ${r.id}`, r.recorded_at, r.recorder ?? 'a former user');
   const value = rowValue(r);
   if (value === null) return unknown(key, label, true, src);
   const display = def?.kind === 'pence' && r.value_pence !== null ? formatPence(r.value_pence)
@@ -251,7 +251,7 @@ export function claimantTypeReading(db: Db, business_id: string): FactReading {
   const derived = t.source === 'the client’s own answer in the assessment';
   return {
     key: 'CLAIMANT_TYPE', label, known: true, value: t.value, display: CLAIMANT_TYPES[t.value] ?? t.value, capturable: false,
-    source: derived ? registerSource('CLIENT_ANSWER', false, 'the entity answer in the latest assessment', null, null)
+    source: derived ? registerSource('CLIENT_ANSWER', false, 'the client’s answer in the latest assessment', null, null)
       : staffSource('the organisation record'),
   };
 }
@@ -262,7 +262,7 @@ export function jurisdictionReading(db: Db, property_id: string | null, store?: 
   if (j.value === null) return unknown('JURISDICTION', label, false, null);
   return {
     key: 'JURISDICTION', label, known: true, value: j.value, display: j.label, capturable: false,
-    source: j.derived ? registerSource('ONS_POSTCODE', true, 'the property’s postcode, through src/web/postcode.ts', null, null)
+    source: j.derived ? registerSource('ONS_POSTCODE', true, 'the property’s postcode', null, null)
       : staffSource('the property record'),
   };
 }
@@ -292,7 +292,7 @@ export function sufficientProfitReading(db: Db, c: ClaimRow, facts: Map<string, 
         return {
           key: 'SUFFICIENT_PROFIT', label: def?.label ?? 'Taxable profit', known: true, value: key,
           display: def?.choices?.[key] ?? key, capturable: false,
-          source: registerSource('CLIENT_ANSWER', false, 'the profit follow-up in the assessment, mapped by src/web/funnel-session.ts', null, null),
+          source: registerSource('CLIENT_ANSWER', false, 'the client’s answer about profit in the assessment', null, null),
         };
       }
     }
@@ -346,13 +346,13 @@ export function amendmentWindowReading(db: Db, c: { business_id: string; propert
   if (startV === null || endV === null) missing.push('the accounting period');
   if (claimant === null) missing.push('the claimant type');
   if (missing.length > 0) {
-    return { state: 'UNKNOWN', deadline: null, assumption: null, why: `not known — ${missing.join(' and ')} ${missing.length === 1 ? 'is' : 'are'} not established, and a window that is not known does not pass` };
+    return { state: 'UNKNOWN', deadline: null, assumption: null, why: `Not known yet — we still need ${missing.join(' and ')}. A window we cannot work out does not pass.` };
   }
   if (claimant !== 'COMPANY' && !SELF_ASSESSMENT_CLAIMANTS.includes(claimant ?? '')) {
-    return { state: 'UNKNOWN', deadline: null, assumption: null, why: 'not known — a charity may file either way, so the engine’s rule cannot be chosen for it' };
+    return { state: 'UNKNOWN', deadline: null, assumption: null, why: 'Not known — a charity may file as a company or not, so we cannot pick the rule.' };
   }
   if ((acq.value ?? '') < (startV ?? '') || (acq.value ?? '') > (endV ?? '')) {
-    return { state: 'UNKNOWN', deadline: null, assumption: null, why: 'not known — the acquisition date is not inside the recorded accounting period, so that is not the period the spend falls in' };
+    return { state: 'UNKNOWN', deadline: null, assumption: null, why: 'Not known — the acquisition date is outside the accounting period recorded. So that is not the period the spend falls in.' };
   }
   // PHASE 132 — a partnership or LLP reads whether a partner or member is a company. A row recorded as NOT KNOWN
   // and no row read the same: null, which the engine receives as no answer (N4).
@@ -364,10 +364,10 @@ export function amendmentWindowReading(db: Db, c: { business_id: string; propert
   if (!w.known && w.ambiguous === true && w.deadlines !== undefined) {
     return {
       state: 'UNKNOWN', deadline: null, assumption: null,
-      why: `not known — whether any partner or member is a company is not established, and the window is open until ${w.deadlines.individual} if every partner is an individual but closed on ${w.deadlines.company} if one is a company (TMA 1970 s.12AA(5B) and s.12ABA(4)(b)); a window that is not known does not pass`,
+      why: `Not known — we do not know if any partner or member is a company. If no partner is a company, the window is open until ${w.deadlines.individual}. If one is a company, it closed on ${w.deadlines.company} (TMA 1970 s.12AA(5B) and s.12ABA(4)(b)). A window we cannot work out does not pass.`,
     };
   }
-  if (!w.known) return { state: 'UNKNOWN', deadline: null, assumption: null, why: 'not known — the engine could not read the period end as a date' };
+  if (!w.known) return { state: 'UNKNOWN', deadline: null, assumption: null, why: 'Not known — the period end could not be read as a date.' };
   return {
     state: w.in_time ? 'OPEN' : 'CLOSED', deadline: w.deadline,
     why: w.in_time ? `open until ${w.deadline}` : `closed on ${w.deadline}`,
@@ -377,20 +377,20 @@ export function amendmentWindowReading(db: Db, c: { business_id: string; propert
 
 /** The sentence beside a known window: which rule gave the date, and what it rests on. Phase 132. */
 function windowAssumption(claimant: string | null, w: Extract<EngineWindow, { known: true }>): string {
-  if (claimant === 'COMPANY') return 'the ordinary company rule: twelve months after the filing date — confirm the actual filing date with the accountant';
+  if (claimant === 'COMPANY') return 'The usual company rule: twelve months after the filing date. Check the real filing date with the accountant.';
   if (claimant !== 'LLP' && claimant !== 'PARTNERSHIP') {
-    return 'the ordinary self assessment rule: twelve months after the 31 January filing date — confirm the actual filing date with the accountant';
+    return 'The usual self assessment rule: twelve months after the 31 January filing date. Check the real filing date with the accountant.';
   }
   if (w.member === 'company' && w.company_date_later_not_applied === true) {
-    return 'a partner or member is a company, as recorded, and the company date (TMA 1970 s.12AA(5B)) would run later than the individual one for this year end; whether one company partner moves the whole partnership onto it is not yet settled, so the earlier, individual date is used — confirm with the accountant';
+    return 'A partner or member is a company, as recorded. For this year end, the company date is later than the individual date (TMA 1970 s.12AA(5B)). It is not settled if one company partner moves the whole partnership onto it. So we use the earlier, individual date. Check with the accountant.';
   }
   if (w.member === 'company') {
-    return 'a partner or member is a company, as recorded, so the return is due on the first anniversary of the period end (TMA 1970 s.12AA(5B) and s.12ABA(4)(b)) and can be amended for twelve months after that; a later filing date under s.12AA(5C), where the notice to file came more than nine months after the period end, is not assumed — confirm with the accountant';
+    return 'A partner or member is a company, as recorded. So the return is due one year after the period end, and can be amended for twelve months after that (TMA 1970 s.12AA(5B) and s.12ABA(4)(b)). We do not assume a later date under s.12AA(5C). That applies where the notice to file came more than nine months after the period end. Check with the accountant.';
   }
   if (w.member === 'not_known') {
-    return 'whether any partner or member is a company is not recorded; the window is the same on the individual date and on the company date (TMA 1970 s.12AA(5B)), so it does not turn on it — record the answer and confirm with the accountant';
+    return 'We have not recorded if any partner or member is a company. Here the window is the same on either date (TMA 1970 s.12AA(5B)), so it does not matter. Record the answer, and check with the accountant.';
   }
-  return 'the ordinary self assessment rule for a partnership whose members are all individuals, as recorded — confirm the actual filing date with the accountant';
+  return 'The usual self assessment rule. Every partner is an individual, as recorded. Check the real filing date with the accountant.';
 }
 
 /**
@@ -406,8 +406,8 @@ export function electionResolved(db: Db, c: { id: string; property_id: string | 
   const facts = latestFacts(db, c.id);
   const exists = facts.get('ELECTION_EXISTS');
   const answer = exists === undefined ? null : rowValue(exists);
-  if (answer === null) return { met: false, in_time: null, why: 'whether an election affects the property is not known — and not known does not pass' };
-  if (answer === 'NO') return { met: true, in_time: null, why: 'no election affects the property, as recorded' };
+  if (answer === null) return { met: false, in_time: null, why: 'We do not know if an election affects the property. Not known does not pass.' };
+  if (answer === 'NO') return { met: true, in_time: null, why: 'No election affects the property, as recorded.' };
   // s.201(1A): a tribunal application lodged in time and still UNDETERMINED disapplies the limit — only where BOTH its date
   // and that status are recorded. A status not known is not a pending application, and relieves nothing.
   const tribunalRow = facts.get('ELECTION_TRIBUNAL_APPLIED_ON');
@@ -417,18 +417,18 @@ export function electionResolved(db: Db, c: { id: string; property_id: string | 
   const need = ['ELECTION_SECTION', 'ELECTION_VALUE', 'ELECTION_ELEMENTS', ...(pending ? [] : ['ELECTION_NOTIFIED_ON'])]
     .filter((k) => { const r = facts.get(k); return r === undefined || rowValue(r) === null; })
     .map((k) => (FACTS[k]?.label ?? k).toLowerCase());
-  if (need.length > 0) return { met: false, in_time: null, why: `an election affects the property and is unresolved: not known — ${need.join('; ')}` };
+  if (need.length > 0) return { met: false, in_time: null, why: `An election affects the property, and it is not settled. Not known yet: ${need.join('; ')}.` };
   const acq = acquisitionDateReading(db, c.property_id);
   const notifiedRow = facts.get('ELECTION_NOTIFIED_ON');
   const notified = notifiedRow === undefined ? null : rowValue(notifiedRow);
   const inTime = acq.known ? electionNotifiedInTime(acq.value ?? '', notified, pending ? { applied_on: tribunalOn ?? '' } : null) : null;
-  if (inTime === null) return { met: false, in_time: null, why: 'the notice cannot be tested against the two-year limit of s.201(1): the acquisition date, or the date of the notice, is not known' };
-  if (!inTime) return { met: false, in_time: false, why: 'the election was notified outside the two-year limit of s.201(1), so it has no effect — a stop condition, not a pass' };
+  if (inTime === null) return { met: false, in_time: null, why: 'We cannot check the notice against the two-year limit (s.201(1)). The acquisition date, or the notice date, is not known.' };
+  if (!inTime) return { met: false, in_time: false, why: 'The election was notified after the two-year limit (s.201(1)), so it has no effect. The claim stops here — this is not a pass.' };
   return {
     met: true, in_time: true,
     why: pending
-      ? 'an election affects the property, its section, value and scope are recorded, and a tribunal application lodged in time is undetermined, which disapplies the two-year limit (s.201(1A))'
-      : 'an election affects the property, and its section, notice, value and scope are recorded, notified in time',
+      ? 'An election affects the property. Its section, value and scope are recorded. A tribunal application made in time is not decided yet. So the two-year limit does not apply (s.201(1A)).'
+      : 'An election affects the property. Its section, notice, value and scope are recorded, and it was notified in time.',
   };
 }
 
@@ -459,17 +459,17 @@ export function grantsTraced(db: Db, claim_id: string): { readonly met: boolean;
   const r = facts.get('GRANTS_EXIST');
   const answer = r === undefined ? null : rowValue(r);
   const active = grantRows(db, claim_id, true);
-  if (answer === null) return { met: false, why: 'whether a grant or contribution met any of the spend is not known — and not known does not pass' };
+  if (answer === null) return { met: false, why: 'We do not know yet if anyone else paid for this work. Not sure or not known never passes.' };
   if (answer === 'NO') {
     return active.length === 0
-      ? { met: true, why: 'no grant or contribution met the spend, as recorded' }
-      : { met: false, why: `the latest answer says no grant, and ${active.length} ${active.length === 1 ? 'is' : 'are'} still recorded — withdraw ${active.length === 1 ? 'it' : 'them'} or correct the answer` };
+      ? { met: true, why: 'Nobody else paid for this work, as recorded.' }
+      : { met: false, why: `The answer is No, but ${active.length} ${active.length === 1 ? 'grant is' : 'grants are'} still listed. Remove ${active.length === 1 ? 'it' : 'them'}, or change the answer.` };
   }
-  if (active.length === 0) return { met: false, why: 'a grant or contribution met some of the spend, and none is recorded yet' };
+  if (active.length === 0) return { met: false, why: 'The answer is Yes, but no grant is added yet. Add who paid.' };
   const untraced = active.filter((g) => g.traced !== 'YES').length;
   return untraced === 0
-    ? { met: true, why: `every grant or contribution — ${active.length} — is traced to its cost elements` }
-    : { met: false, why: `${untraced} of ${active.length} grants or contributions ${untraced === 1 ? 'is' : 'are'} not traced to cost elements` };
+    ? { met: true, why: `Every grant (${active.length}) is matched to the items it paid for.` }
+    : { met: false, why: `${untraced} of ${active.length} ${active.length === 1 ? 'grant is' : 'grants are'} not matched yet to the items paid for. A grant is never taken as a share of everything.` };
 }
 
 /* ================================================================== *
@@ -531,7 +531,7 @@ function ownerRows(db: Db, claim_id: string): OwnerLine[] {
     [claim_id]).map((o) => ({
     id: o.id, position: o.position, owner: OWNER_ROLE_TOKENS[o.owner] ?? o.owner, acquired_on: o.acquired_on, ceased_on: o.ceased_on,
     claimed: o.claimed === 'YES' ? 'claimed allowances' : o.claimed === 'NO' ? 'did not claim' : 'whether they claimed is not known',
-    source: registerSource(o.source_id, false, `claim_owner_chain row ${o.id}`, o.recorded_at, o.recorder ?? 'a former user'),
+    source: registerSource(o.source_id, false, `record ${o.id}`, o.recorded_at, o.recorder ?? 'a former user'),
   }));
 }
 
@@ -572,7 +572,7 @@ export function factsPanel(db: Db, actor: Actor, claim_id: string, todayIso: str
         id: g.id, kind: g.kind === 'GRANT' ? 'Grant' : 'Contribution', payer: PAYER_CLASSES[g.payer_class] ?? g.payer_class,
         amount: g.amount_pence === null ? NOT_KNOWN : formatPence(g.amount_pence), amount_basis: AMOUNT_BASES[g.amount_basis] ?? g.amount_basis,
         traced: TRACED[g.traced] ?? g.traced, traced_elements: g.traced_elements,
-        source: registerSource(g.source_id, false, `claim_grants row ${g.id}`, g.recorded_at, g.recorder ?? 'a former user'),
+        source: registerSource(g.source_id, false, `record ${g.id}`, g.recorded_at, g.recorder ?? 'a former user'),
         withdrawn: g.withdrawn_at === null ? null : `withdrawn ${localStamp(g.withdrawn_at)} — ${g.withdraw_reason ?? ''}`,
         payer_key: g.payer_class, amount_pence: g.amount_pence, traced_key: g.traced, note: g.note,
       })),
@@ -581,12 +581,12 @@ export function factsPanel(db: Db, actor: Actor, claim_id: string, todayIso: str
     acquisition_costs: {
       costs: captured(f, 'ACQUISITION_COSTS'), transaction_tax: captured(f, 'TRANSACTION_TAX'),
       switch: switchLine('transaction_tax_in_base',
-        'OFF — a land transaction tax recorded here is shown and NOT added to the consideration apportioned, until the tax adviser answers "When a building is bought, is the stamp duty part of the price we apportion?"'),
+        'Off. Land transaction tax recorded here is shown, but not added to the price we apportion. First the tax adviser must answer this. "When a building is bought, is the stamp duty part of the price we apportion?"'),
     },
     buyer_alterations: {
       made: captured(f, 'BUYER_ALTERATIONS'), amount: captured(f, 'BUYER_ALTERATIONS_AMOUNT'),
       switch: switchLine('s185_plus_own_s25',
-        'OFF — the buyer’s own alteration spend is shown and NOT added on top of an agreed figure, until the tax adviser answers "When someone buys a building, can they add their own alteration costs on top of an agreed figure?"'),
+        'Off. The buyer’s own alteration spend is shown, but not added on top of an agreed figure. First the tax adviser must answer this. "When someone buys a building, can they add their own alteration costs on top of an agreed figure?"'),
     },
     may_record: can(actor, 'claim_facts.record', obj),
   };
@@ -670,7 +670,7 @@ export function recordFact(d: FactDeps, actor: Actor, claim_id: string, input: F
   const c = factClaimFor(d, actor, claim_id);
   const key = input['fact_key'] ?? null;
   if (key === null || !Object.hasOwn(FACTS, key)) {
-    return { ok: false, field: 'fact_key', why: 'That is not a fact this claim records here. The claimant type, the jurisdiction and the acquisition date are recorded on the organisation and the property.' };
+    return { ok: false, field: 'fact_key', why: 'Choose a fact from the list. The claimant type is recorded on the organisation. The jurisdiction and acquisition date are on the property.' };
   }
   const def = FACTS[key] as FactDef;
   if (key === 'SUFFICIENT_PROFIT') {
@@ -682,7 +682,7 @@ export function recordFact(d: FactDeps, actor: Actor, claim_id: string, input: F
   const source = input['source_id'] ?? null;
   if (!has(CAPTURE_SOURCES, source)) return { ok: false, field: 'source_id', why: 'Say where this came from — the client, their document, the surveyor or the tax adviser.' };
   const answer = input['answer'] ?? null;
-  if (answer !== 'VALUE' && answer !== 'UNKNOWN') return { ok: false, field: 'answer', why: 'Give the fact, or record it as not known — not known is an answer, and it passes nothing.' };
+  if (answer !== 'VALUE' && answer !== 'UNKNOWN') return { ok: false, field: 'answer', why: 'Give the fact, or record it as not known. Not known is an answer, but it passes no check.' };
   const note = text(input['note'], 2000, 'The note');
   if (!note.ok) return note;
   let vText: string | null = null, vPence: number | null = null, vDate: string | null = null;
@@ -690,10 +690,10 @@ export function recordFact(d: FactDeps, actor: Actor, claim_id: string, input: F
     const raw = input['value'] ?? null;
     if (def.kind === 'date') {
       vDate = dateValue(raw);
-      if (vDate === null) return { ok: false, field: 'value', why: `${def.label} is a date, as YYYY-MM-DD — or record it as not known.` };
+      if (vDate === null) return { ok: false, field: 'value', why: `${def.label}: write a date like 2026-03-31, or record it as not known.` };
     } else if (def.kind === 'pence') {
       vPence = penceValue(raw);
-      if (vPence === null) return { ok: false, field: 'value', why: `${def.label} is an amount in pounds, more than nothing — or record it as not known. Nothing is ever written as zero.` };
+      if (vPence === null) return { ok: false, field: 'value', why: `${def.label}: write an amount in pounds, more than £0, or record it as not known. Not known is never saved as £0.` };
     } else if (def.kind === 'choice') {
       if (def.choices === undefined || !has(def.choices, raw)) return { ok: false, field: 'value', why: `${def.label}: choose one of the answers offered, or record it as not known.` };
       vText = raw;
@@ -740,19 +740,19 @@ export function grantFormClaim(db: Db, actor: Actor, claim_id: string): { readon
 export function recordGrant(d: FactDeps, actor: Actor, claim_id: string, input: Fields): FactResult {
   const c = factClaimFor(d, actor, claim_id);
   const kind = input['kind'] ?? null;
-  if (kind !== 'GRANT' && kind !== 'CONTRIBUTION') return { ok: false, field: 'kind', why: 'Say whether it is a grant or a contribution.' };
+  if (kind !== 'GRANT' && kind !== 'CONTRIBUTION') return { ok: false, field: 'kind', why: 'Say if it is a grant or another payment.' };
   const payer = input['payer_class'] ?? null;
-  if (!has(PAYER_CLASSES, payer)) return { ok: false, field: 'payer_class', why: 'Choose who paid it from the list — a class of payer, never a name. Not known is on the list.' };
+  if (!has(PAYER_CLASSES, payer)) return { ok: false, field: 'payer_class', why: 'Choose who paid from the list — never a name. Not known is on the list.' };
   const basis = input['amount_basis'] ?? 'UNKNOWN';
   if (!has(AMOUNT_BASES, basis)) return { ok: false, field: 'amount_basis', why: 'Choose where the amount came from, or not known.' };
   const rawAmount = input['amount'] ?? null;
   const amount = rawAmount === null || rawAmount.trim() === '' ? null : penceValue(rawAmount);
-  if (rawAmount !== null && rawAmount.trim() !== '' && amount === null) return { ok: false, field: 'amount', why: 'The amount is in pounds and more than nothing — leave it blank if it is not known.' };
+  if (rawAmount !== null && rawAmount.trim() !== '' && amount === null) return { ok: false, field: 'amount', why: 'Write the amount in pounds, more than £0 — or leave it blank if it is not known.' };
   const traced = input['traced'] ?? null;
-  if (!has(TRACED, traced)) return { ok: false, field: 'traced', why: 'Say whether it is traced to cost elements — yes, no or not known.' };
-  const elements = text(input['traced_elements'], 4000, 'The cost elements');
+  if (!has(TRACED, traced)) return { ok: false, field: 'traced', why: 'Say if it is matched to the items it paid for — yes, no or not sure.' };
+  const elements = text(input['traced_elements'], 4000, 'The list of items it paid for');
   if (!elements.ok) return elements;
-  if (traced === 'YES' && elements.value === null) return { ok: false, field: 'traced_elements', why: 'A grant is traced only with the cost elements it met written against it — do not pro-rate.' };
+  if (traced === 'YES' && elements.value === null) return { ok: false, field: 'traced_elements', why: 'To mark it matched, first write the items it paid for. Never take a share of everything.' };
   const source = input['source_id'] ?? null;
   if (!has(CAPTURE_SOURCES, source)) return { ok: false, field: 'source_id', why: 'Say where this came from.' };
   const note = text(input['note'], 2000, 'The note');
@@ -775,10 +775,10 @@ export function withdrawGrant(d: FactDeps, actor: Actor, claim_id: string, grant
   const c = factClaimFor(d, actor, claim_id);
   const g = d.db.get<{ id: string; withdrawn_at: string | null }>('SELECT id, withdrawn_at FROM claim_grants WHERE id = ? AND claim_id = ?', [grant_id, c.id]);
   if (g === undefined) throw new NotFoundAsRefusal();
-  if (g.withdrawn_at !== null) return { ok: false, why: 'That grant is already withdrawn, and keeps its record.' };
+  if (g.withdrawn_at !== null) return { ok: false, why: 'That grant is already removed. Its record is kept.' };
   const reason = text(reasonIn, 1000, 'The reason');
   if (!reason.ok) return reason;
-  if (reason.value === null) return { ok: false, field: 'reason', why: 'Say why the grant is withdrawn — it keeps its record.' };
+  if (reason.value === null) return { ok: false, field: 'reason', why: 'Say why you are removing the grant. Its record is kept.' };
   const at = d.now();
   d.db.run('UPDATE claim_grants SET withdrawn_by = ?, withdrawn_at = ?, withdraw_reason = ? WHERE id = ?', [actor.id, at, reason.value, g.id]);
   d.audit.append({
@@ -792,14 +792,14 @@ export function withdrawGrant(d: FactDeps, actor: Actor, claim_id: string, grant
 export function recordOwner(d: FactDeps, actor: Actor, claim_id: string, input: Fields): FactResult {
   const c = factClaimFor(d, actor, claim_id);
   const position = Number(input['position'] ?? '');
-  if (!Number.isInteger(position) || position < 1 || position > 20) return { ok: false, field: 'position', why: 'The position counts back from our client: 1 is the seller, 2 the owner before them.' };
+  if (!Number.isInteger(position) || position < 1 || position > 20) return { ok: false, field: 'position', why: 'Count back from our client: 1 is the seller, 2 is the owner before them.' };
   const owner = text(input['owner'], 300, 'The owner');
   if (!owner.ok) return owner;
   if (owner.value === null || !isCompanyOrRoleToken(owner.value)) {
     return {
       ok: false,
-      why: 'An owner is recorded as a company name — ending Limited, Ltd, LLP, plc or CIC — or as a role such as INDIVIDUAL_NOT_RECORDED. ' +
-        'It is never a person’s name: a person named here would be a third party in the claim record.',
+      why: 'Write a company name ending Limited, Ltd, LLP, plc or CIC. Or type a role, like INDIVIDUAL_NOT_RECORDED. ' +
+        'Never write a person’s name here. We do not keep other people’s names in the claim.',
     };
   }
   const rawAcq = input['acquired_on'] ?? null;
@@ -807,14 +807,14 @@ export function recordOwner(d: FactDeps, actor: Actor, claim_id: string, input: 
   const acquired = rawAcq === null || rawAcq.trim() === '' ? null : dateValue(rawAcq);
   const ceased = rawCeased === null || rawCeased.trim() === '' ? null : dateValue(rawCeased);
   if ((rawAcq !== null && rawAcq.trim() !== '' && acquired === null) || (rawCeased !== null && rawCeased.trim() !== '' && ceased === null)) {
-    return { ok: false, why: 'Dates are YYYY-MM-DD — leave one blank if it is not known.' };
+    return { ok: false, why: 'Write dates like 2026-03-31. Leave one blank if it is not known.' };
   }
   const claimed = input['claimed'] ?? null;
-  if (claimed !== 'YES' && claimed !== 'NO' && claimed !== 'UNKNOWN') return { ok: false, field: 'claimed', why: 'Say whether that owner claimed allowances — yes, no or not known.' };
+  if (claimed !== 'YES' && claimed !== 'NO' && claimed !== 'UNKNOWN') return { ok: false, field: 'claimed', why: 'Say if that owner claimed allowances — yes, no or not known.' };
   const source = input['source_id'] ?? null;
   if (!has(CAPTURE_SOURCES, source)) return { ok: false, field: 'source_id', why: 'Say where this came from.' };
   const taken = d.db.get<{ id: string }>('SELECT id FROM claim_owner_chain WHERE claim_id = ? AND position = ? AND withdrawn_at IS NULL', [c.id, position]);
-  if (taken !== undefined) return { ok: false, why: 'An owner is already recorded at that position. Withdraw it first — it keeps its record.' };
+  if (taken !== undefined) return { ok: false, why: 'An owner is already recorded at that position. Withdraw it first. Its record is kept.' };
   const id = d.newId();
   const at = d.now();
   d.db.run(
@@ -833,7 +833,7 @@ export function withdrawOwner(d: FactDeps, actor: Actor, claim_id: string, owner
   const c = factClaimFor(d, actor, claim_id);
   const o = d.db.get<{ id: string; withdrawn_at: string | null }>('SELECT id, withdrawn_at FROM claim_owner_chain WHERE id = ? AND claim_id = ?', [owner_id, c.id]);
   if (o === undefined) throw new NotFoundAsRefusal();
-  if (o.withdrawn_at !== null) return { ok: false, why: 'That owner is already withdrawn, and keeps its record.' };
+  if (o.withdrawn_at !== null) return { ok: false, why: 'That owner is already withdrawn. Its record is kept.' };
   const at = d.now();
   d.db.run('UPDATE claim_owner_chain SET withdrawn_by = ?, withdrawn_at = ? WHERE id = ?', [actor.id, at, o.id]);
   d.audit.append({

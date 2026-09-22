@@ -162,8 +162,8 @@ export function listControls(
       <button type="submit">Save view</button></form>
     ${v.may_export ? h`<p><a href="${base}/export.csv?${v.params}">Export these ${v.rows.length} rows as CSV</a>
       <span class="help">— only the columns you may read; the export is recorded.</span>${v.not_applied.length === 0 ? raw('') : h`
-      <br><strong>The file does not apply ${notAppliedWords(list, v.not_applied)}</strong> <span class="help">— not columns you read. A CSV
-      file cannot say so, so it is said here, and the export’s record names them.</span>`}</p>` : raw('')}
+      <br><strong>The file does not apply ${notAppliedWords(list, v.not_applied)}</strong> <span class="help">— your role does not see those columns.
+      The file cannot say so, so we say it here. The export record names them too.</span>`}</p>` : raw('')}
   </div>`;
 }
 

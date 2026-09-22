@@ -43,10 +43,10 @@ export type ClaimantGuide = { readonly label: string; readonly identify: string;
 export const CLAIMANT_GUIDE: Readonly<Record<string, ClaimantGuide>> = Object.freeze({
   LIMITED_COMPANY: {
     label: 'Limited company operator',
-    identify: 'The company — Companies House number, registered office, nature of business — and the individuals instructing.',
+    identify: 'The company and the people instructing us. Note its Companies House number, registered office and what it does.',
     verify: 'Against the Companies House register.',
-    owners: 'Identify the beneficial owners and take reasonable measures to verify them; where an owner is itself an entity, understand the structure.',
-    authority: 'The instructing individual’s authority to bind the company — a director.',
+    owners: 'Find out who the beneficial owners are, and take reasonable measures to check this. If an owner is itself a company or other body, understand the structure.',
+    authority: 'The person instructing us must have the right to act for the company — a director.',
   },
   GP_PARTNERSHIP: {
     label: 'Partnership of GPs',
@@ -58,21 +58,21 @@ export const CLAIMANT_GUIDE: Readonly<Record<string, ClaimantGuide>> = Object.fr
   SOLE_TRADER: {
     label: 'Sole-trader dentist',
     identify: 'The individual — there is no separate entity.',
-    verify: 'Standard individual identity verification: a passport or driving licence, and evidence of address.',
+    verify: 'A standard ID check: a passport or driving licence, and proof of address.',
     owners: 'Not applicable — the individual is the customer.',
     authority: 'The proprietor.',
   },
   CHARITY: {
     label: 'Charity',
-    identify: 'The charity — Charity Commission number and registered details — and the trustees or authorised officer instructing.',
+    identify: 'The charity, and the trustees or authorised officer who instruct us. Note its Charity Commission number and registered details.',
     verify: 'Against the Charity Commission register.',
-    owners: 'Identify the beneficial owners and take reasonable measures to verify them.',
+    owners: 'Find out who the beneficial owners are, and take reasonable measures to check this.',
     authority: 'A trustee or authorised officer.',
   },
   INDIVIDUAL_OWNER: {
     label: 'Property held personally by an individual',
     identify: 'The individual, as for a sole trader.',
-    verify: 'Individual identity verification; a Land Registry check that they are the legal owner is sensible practice, not an AML requirement.',
+    verify: 'A standard ID check. A Land Registry check that they own the property is good practice. It is not a money-laundering rule.',
     owners: 'Not applicable — the individual is the customer.',
     authority: 'The paper does not say.',
   },
@@ -93,7 +93,7 @@ export const AUTHORITY_BASES: Vocab = Object.freeze({
 export const BENEFICIAL_OWNERSHIP: Vocab = Object.freeze({
   RECORDED: 'Beneficial owners are recorded on this check', NOT_APPLICABLE_INDIVIDUAL: 'Not applicable — the customer is an individual',
 });
-export const ENTITY_STATUSES: Vocab = Object.freeze({ ACTIVE: 'Active and not in administration, liquidation or strike-off', NOT_ACTIVE: 'Not active', NOT_APPLICABLE: 'Not applicable — an individual' });
+export const ENTITY_STATUSES: Vocab = Object.freeze({ ACTIVE: 'Active — in no insolvency process or strike-off', NOT_ACTIVE: 'Not active', NOT_APPLICABLE: 'Not applicable — an individual' });
 export const SANCTIONS_RESULTS: Vocab = Object.freeze({ NO_MATCH: 'No match on the UK sanctions list', POSSIBLE_MATCH: 'A possible match' });
 export const OWNER_SOURCES: Vocab = Object.freeze({ EVIDENCE_DOCUMENT: 'An evidence document', PSC_PULL: 'The Companies House PSC pull, relied on by a dated decision' });
 export const PSC_DECISIONS: Vocab = Object.freeze({
@@ -102,12 +102,12 @@ export const PSC_DECISIONS: Vocab = Object.freeze({
 export const OFFICES: Vocab = Object.freeze({ NOMINATED_OFFICER: 'Nominated officer', COMPLIANCE_OFFICER: 'Compliance officer' });
 
 export const RISK_RATING_NOTE =
-  'The position paper sets no risk-rating scale, so none is offered here. Words, or nothing — and the scale is a question for the solicitor.';
+  'The position paper sets no risk-rating scale, so none is offered here. Use words, or leave it blank. The scale is a question for the solicitor.';
 
 /** Said wherever the pull is shown. */
 export const PSC_SEPARATION =
-  'Companies House PSC data is pulled for the allowance common-control test. It does NOT stand for beneficial ownership: an owner ' +
-  'taken from it needs a separate, dated decision on the check that cross-references the pull.';
+  'We pull the Companies House list of people with significant control (PSC). We use it for the common-control test. ' +
+  'It does NOT stand for beneficial ownership. To use an owner from it, record a separate, dated decision on the check.';
 
 function refused(e: unknown): string {
   const m = (e as Error).message ?? String(e);
@@ -268,7 +268,7 @@ export function updateCheck(d: ComplianceDeps, actor: Actor, id: string, input: 
     }
     if (next.authority_contact_id !== null
       && d.db.get<{ id: string }>('SELECT id FROM contacts WHERE id = ? AND business_id = ?', [next.authority_contact_id, c.business_id]) === undefined) {
-      return { ok: false, why: 'The person with authority to bind must be one of the organisation’s own contacts.' };
+      return { ok: false, why: 'The person with authority must be a contact of this organisation.' };
     }
     if (next.sanctions_screen !== null && next.sanctions_screened_on === null) return { ok: false, why: 'Give the date of the sanctions screen.' };
     const changed = CHECK_FIELDS.filter((k) => next[k] !== c[k]);
@@ -335,7 +335,7 @@ export function recordOwner(d: ComplianceDeps, actor: Actor, check_id: string, i
     if (c.state !== 'IN_PROGRESS') return { ok: false, why: 'An owner is recorded on an open check.' };
     const contact_id = (input['contact_id'] ?? '').trim();
     if (d.db.get<{ id: string }>('SELECT id FROM contacts WHERE id = ? AND business_id = ?', [contact_id, c.business_id]) === undefined) {
-      return { ok: false, why: 'A beneficial owner is one of the organisation’s own contacts — add them as a contact first, so there is one record of them.' };
+      return { ok: false, why: 'A beneficial owner must be a contact of this organisation. Add them as a contact first, so we hold one record of them.' };
     }
     const basis = check(requiredText(input['basis_of_control'], 1000, 'The ownership or control, as the evidence shows it'));
     const from = input['identified_from'] ?? null;
@@ -461,7 +461,7 @@ export function amlView(db: Db, actor: Actor, today: string): AmlView {
   return {
     in_scope: scope, in_force: inForce,
     effect: inForce
-      ? 'ON — a claim cannot leave ENGAGEMENT until a finished check is on record for its organisation.'
+      ? 'ON — a claim cannot pass the engagement step until its organisation has a finished check.'
       : 'OFF — nothing here blocks a claim. The register can still be kept. Whether it must be is with the accountant and a solicitor.',
     limitation: TWO_PERSON_LIMITATION,
     officers: db.all<{ id: string; office: string; who: string; appointed_on: string; ended_on: string | null; source: string }>(

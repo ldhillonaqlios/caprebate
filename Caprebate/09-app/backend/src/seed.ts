@@ -230,7 +230,7 @@ function seedClaimAtInvoice(
     'INSERT INTO tax_adviser_signoffs (id, claim_id, adviser, credential, signed_on, scope, method_note, switch_readings_json, ' +
       "figure_pence, commitment_id, kind, record_hash, recorded_by, recorded_at) VALUES (?, ?, 'CAPREBATE_CTA', 'Chartered Tax Adviser', " +
       "'2026-09-01', 'The branch surgery: plant and machinery allowances on the fit-out, invented for the seed.', " +
-      "'The surveyor''s committed figures, reviewed against the rulebooks; every switch as shipped.', '[]', ?, ?, 'RECORD_NOT_A_SIGNATURE', ?, ?, ?)",
+      "'The surveyor''s figures, checked against our rules. No setting changed.', '[]', ?, ?, 'RECORD_NOT_A_SIGNATURE', ?, ?, ?)",
     [signoff, claim.id, 16_450_000, commitment, 'd'.repeat(64), sales, now()]);
   move(at, 'REPORTS'); at = 'REPORTS';
   for (const [kind, type] of [['CLIENT_REPORT', 'CA_REPORT'], ['ACCOUNTANT_COMPUTATION_PACK', 'TAX_COMPUTATION']] as const) {
@@ -393,8 +393,8 @@ function seedPipeline(
           'publisher, licence_id) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)',
         [newId(), businessId, entry.source_id, entry.tier, 'NOT_PERMITTED_YET',
           entry.tier === 'FREE'
-            ? 'free sources are gated on a published privacy notice'
-            : 'paid sources are gated on a signed engagement, asserted server-side',
+            ? 'free lookups wait until our privacy notice is published'
+            : 'paid lookups wait until the engagement letter is signed',
           entry.publisher, entry.licence_id],
       );
     }

@@ -122,11 +122,11 @@ export function recommendationReading(db: Db, actor: Actor, type_code: string, r
     return { type_code, strip_now, recommended: null, state: 'NO_RECOMMENDATION', label: 'No recommendation is recorded for this type.' };
   }
   const recommended = { strip: found.strip, words: STRIP_WORDS[found.strip], modelled_on: found.modelled_on, reason: found.reason };
-  const still = strip_now.receivable ? '' : ` Until a migration binds a policy: ${NO_RECEIPT_POLICY}`;
+  const still = strip_now.receivable ? '' : ` Until we switch it on: ${NO_RECEIPT_POLICY}`;
   return rec.approved
-    ? { type_code, strip_now, recommended, state: 'APPROVED_NOT_BOUND', label: `Approved by the data protection officer, not yet bound.${still}` }
+    ? { type_code, strip_now, recommended, state: 'APPROVED_NOT_BOUND', label: `Approved by the data protection officer, but not switched on yet.${still}` }
     : {
         type_code, strip_now, recommended, state: 'RECOMMENDED_NOT_APPROVED',
-        label: `RECOMMENDED, NOT APPROVED — the data protection officer has not answered “${rec.question}”.${still}`,
+        label: `Suggested by us — not yet approved by the data protection officer.${still}`,
       };
 }

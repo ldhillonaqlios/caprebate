@@ -158,7 +158,7 @@ export function outboxTransport(db: Db, ids: () => string, now: () => string, se
 
 /** The label a screen must show beside anything this transport produced. */
 export const STUB_NOTICE =
-  'NOT SENT — outbound email is stubbed in this build. The message was written to the outbox.';
+  'Not sent yet — sending email is not switched on. It is saved in the emails waiting to send.';
 
 /** PHASE 141 — what a person reads after saving an email while sending is off. Lakhbir's words. */
 export const SAVED_NOT_SENT = 'Saved — emails are not being sent yet.';

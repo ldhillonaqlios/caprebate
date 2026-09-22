@@ -419,9 +419,9 @@ describe('line 5 — the deletion log carries the host’s backup cycle as a nam
       assert.equal(log.ref, 'RET-3');
       assert.equal(log.records, 3);
       assert.deepEqual(log.due, []);
-      assert.match(log.clock, /deletion complete everywhere — verified_at, or the last backup copy’s expiry/);
-      assert.match(log.clock, /NOT_SET/);
-      assert.match(log.delete, /refuses a DELETE by trigger/);
+      assert.match(log.clock, /Six years from the day a deletion is done everywhere: checked as done, or the last backup copy has run out\./);
+      assert.match(log.clock, /backup cycle is not set yet/);
+      assert.match(log.delete, /The database blocks deleting these/);
       assert.notEqual(S.RETENTION_PARAMETERS['RET-3']?.state, 'APPROVED');
     } finally { a.close(); }
   });
@@ -532,7 +532,7 @@ describe('line 6 — the raw-file record’s claim period end and report deliver
       CF.issue(a, negClaim, 'REASONED_NEGATIVE');
       const negative = D.ret7Limbs(a.db, negDoc);
       assert.equal(negative.report_delivered_at, null, 'a reasoned negative is not the report');
-      assert.match(negative.why, /reasoned negative/);
+      assert.match(negative.why, /a letter saying there is no claim/);
 
       const other = claimAt(a, org, 'REPORTS');
       const two = documentOn(a, org, [claim, other]);

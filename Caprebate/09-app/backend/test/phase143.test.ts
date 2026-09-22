@@ -200,7 +200,7 @@ describe('adding a grant, one question per step', () => {
     assert.match(nhs.body, /This will reduce the claim on the items it paid for\./);
     assert.match(nhs.body, /The NHS paid £40,000 towards the new treatment rooms\./);
     const ins = await as('sales').post(`/staff/claims/${claim}/grants/new`, { ...NHS, payer_class: 'insurer', kind: 'CONTRIBUTION', go: 'next', step: '4' });
-    assert.match(ins.body, /Insurance money after damage usually does not reduce the claim/);
+    assert.match(ins.body, /Insurance paid out after damage usually does not cut the claim/);
     assert.equal(/This will reduce the claim/.test(ins.body), false, 'insurance money was said to reduce the claim (F-R7)');
     const landlord = await as('sales').post(`/staff/claims/${claim}/grants/new`, { ...NHS, payer_class: 'landlord_connected', go: 'next', step: '4' });
     assert.match(landlord.body, /This may reduce the claim.*Our tax adviser checks whether it does\./);

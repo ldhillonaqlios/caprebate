@@ -90,16 +90,16 @@ export const NOTICE_ROUTES: Vocab = Object.freeze({ DIRECT_POST: 'By post, direc
 
 /** Section 4 of the Dashboard Data Specification — shown wherever S2 is. */
 export const S2_REFUSALS: readonly string[] = Object.freeze([
-  'N1 · No special category data — no setting, role or approval enables it.',
-  'N2 · No criminal offence data.',
-  'N3 · No planning representations, consultee responses or correspondence.',
-  'N4 · No name in S1 — the claim record, the register, the report or the defence pack.',
-  'N5 · No contact detail that is not printed on the document: nothing looked up, enriched, bought or inferred.',
-  'N6 · No marketing or prospecting use of S2.',
-  'N7 · No removed segment text.',
-  'N8 · No name inside a verbatim captured field.',
-  'N9 · No second copy of S2 anywhere — no export, spreadsheet, mail merge or attachment.',
-  'N10 · No client personal data in S2: the client’s own people are contacts.',
+  'No special category data, such as health. No setting, role or sign-off can allow it.',
+  'No criminal offence data.',
+  'No planning comments, replies from consultees or planning letters.',
+  'No name in the claim record, the register, the report or the defence pack.',
+  'No contact detail that is not printed on the document. We never look one up, add to one, buy one or guess one.',
+  'Never used for marketing or to find new clients.',
+  'No text we took out of a document.',
+  'No name inside a field we copied word for word.',
+  'No second copy anywhere. No export, spreadsheet, mail merge or attachment.',
+  'No client personal data here. The client’s own people are kept as contacts.',
 ]);
 
 function assertIdentityRead(actor: Actor, ref = '__identity_store__'): void {
@@ -117,12 +117,12 @@ export function recordPerson(d: ComplianceDeps, actor: Actor, input: Fields): Wr
     if (d.db.get<{ id: string }>('SELECT id FROM documents WHERE id = ?', [doc_id]) === undefined) return { ok: false, why: 'Name the document the person is printed on.' };
     const name = check(requiredText(input['name'], 200, 'The name, as it appears on the document'));
     const role = input['role'] ?? null;
-    if (!has(PERSON_ROLES, role)) return { ok: false, why: 'Choose the person’s role on the document. A person in running prose with no such role is not recorded here.' };
+    if (!has(PERSON_ROLES, role)) return { ok: false, why: 'Choose the person’s role on the document. Someone only mentioned in the text is not recorded here.' };
     const route = check(textField(input['contact_route'], 500, 'The contact route, as printed'));
     const kind = check(vocabField(input['contact_route_kind'], ROUTE_KINDS, 'What kind of route it is'));
     if ((route === null) !== (kind === null)) return { ok: false, why: 'A contact route is given with its kind, or neither is.' };
     if (input['route_printed_on_document'] !== 'YES' && route !== null) {
-      return { ok: false, why: 'Confirm the route is printed on the document. A route looked up, enriched or bought is never recorded (N5).' };
+      return { ok: false, why: 'Confirm this contact detail is printed on the document. We never record one we looked up, added to or bought.' };
     }
     const person_ref = opaqueRef('PR');
     const at = d.now();
@@ -190,15 +190,15 @@ export function readPerson(d: ComplianceDeps, actor: Actor, ref: string): Person
   return {
     person_ref: p.person_ref, name: p.name, role: words(PERSON_ROLES, p.role, p.role), contact_route: p.contact_route,
     contact_route_kind: p.contact_route_kind, route_group: ra ? 'R-A' : 'R-B',
-    route_group_label: ra ? 'R-A — a route is printed, so the exemption is not available: send the notice within one month' : 'R-B — no route printed',
+    route_group_label: ra ? 'A contact detail is printed, so the exemption does not apply. Send the notice within one month.' : 'No contact detail is printed',
     doc_id: p.doc_id, doc_type: p.doc_type, received_on: ukDay(p.doc_created),
     notice: p.notice_route === null ? 'No notice recorded' : `${p.notice_template ?? ''}, ${words(NOTICE_ROUTES, p.notice_route, p.notice_route)}, ${p.notice_sent_on ?? ''}`,
     exemption: p.exemption_article === null ? 'No exemption recorded' : `${p.exemption_article}: ${p.exemption_reason ?? ''}`,
-    retention: `RET-8 — the retention of the S1 record this row makes findable, and never later. That record’s clock: ${clock.label}`,
+    retention: `Kept as long as the claim record it points to, and never longer. That record’s deletion date: ${clock.label}`,
     holds: holdsFor(d.db, 'IDENTITY_PERSON', ref),
     rights_requests: d.db.all<{ id: string; ref: string }>('SELECT id, request_ref AS ref FROM rights_requests WHERE person_ref = ?', [ref]),
     complaints: d.db.all<{ id: string; ref: string }>('SELECT id, complaint_ref AS ref FROM complaints WHERE person_ref = ?', [ref]),
-    purpose: 'Held to discharge Article 14 and to answer rights requests — and for nothing else.',
+    purpose: 'Kept only to tell this person we hold their details (Article 14) and to answer their rights requests.',
     refusals: S2_REFUSALS,
   };
 }
@@ -261,14 +261,14 @@ export function consentHistory(db: Db, actor: Actor, contact_id: string): Consen
       'FROM contacts c LEFT JOIN businesses b ON b.id = c.business_id LEFT JOIN leads l ON l.id = c.lead_id LEFT JOIN introducers i ON i.id = c.introducer_id WHERE c.id = ?',
     [contact_id]);
   if (c === undefined) throw new NotFoundAsRefusal();
-  const capture = 'the words at capture were not recorded against the contact';
+  const capture = 'The words they were first asked were not recorded';
   const lines: ConsentLine[] = [
-    { at: c.created_at, kind: 'CONTACT', decision: c.contact_consent === 1 ? 'GIVEN' : 'NOT GIVEN', wording: capture, route: 'CAPTURE', source: 'the contact as captured' },
-    { at: c.created_at, kind: 'MARKETING', decision: c.marketing_optin === 1 ? 'GIVEN' : 'NOT GIVEN — the box is never ticked for anyone', wording: capture, route: 'CAPTURE', source: 'the contact as captured' },
+    { at: c.created_at, kind: 'CONTACT', decision: c.contact_consent === 1 ? 'GIVEN' : 'NOT GIVEN', wording: capture, route: 'CAPTURE', source: 'When the contact was added' },
+    { at: c.created_at, kind: 'MARKETING', decision: c.marketing_optin === 1 ? 'GIVEN' : 'NOT GIVEN — the box is never ticked for anyone', wording: capture, route: 'CAPTURE', source: 'When the contact was added' },
   ];
   for (const e of db.all<{ recorded_at: string; kind: string; decision: string; wording_version: string; route: string }>(
     'SELECT recorded_at, kind, decision, wording_version, route FROM consent_answers WHERE contact_id = ? ORDER BY rowid', [contact_id])) {
-    lines.push({ at: e.recorded_at, kind: e.kind, decision: e.decision, wording: e.wording_version, route: e.route, source: 'consent_answers' });
+    lines.push({ at: e.recorded_at, kind: e.kind, decision: e.decision, wording: e.wording_version, route: e.route, source: 'A recorded answer' });
   }
   const share = db.all<{ recorded_at: string; decision: string; wording_version: string; route: string; firm: string }>(
     'SELECT s.recorded_at, s.decision, s.wording_version, s.route, i.firm_name AS firm FROM introducer_share_consents s JOIN introducers i ON i.id = s.introducer_id ' +
@@ -276,7 +276,7 @@ export function consentHistory(db: Db, actor: Actor, contact_id: string): Consen
       'OR (s.lead_id IN (SELECT l.id FROM leads l WHERE l.business_id IS NOT NULL AND l.business_id = ?)) ORDER BY s.rowid',
     [c.business_id, c.lead_id, c.business_id]);
   for (const s of share) {
-    lines.push({ at: s.recorded_at, kind: `SHARE_WITH ${s.firm}`, decision: s.decision, wording: s.wording_version, route: s.route, source: 'introducer_share_consents — read where CRM 5 of 10 keeps it' });
+    lines.push({ at: s.recorded_at, kind: `SHARE_WITH ${s.firm}`, decision: s.decision, wording: s.wording_version, route: s.route, source: 'The referral’s share-progress answer' });
   }
   lines.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
   const latest = (kind: string): string => {
@@ -326,17 +326,19 @@ export function recordConsent(d: ComplianceDeps, actor: Actor, contact_id: strin
 export type ParameterState = 'UNSET' | 'DERIVED_NOT_APPROVED' | 'APPROVED';
 export type Parameter = {
   readonly ref: string; readonly period_years: number | null; readonly trigger: string; readonly state: ParameterState; readonly owner: string;
+  /** The same rule in plain words — what the retention screen shows. `trigger` stays the exact reference. */
+  readonly says: string;
   /** A question the determinations leave to the officer that could change this row. Stated, never decided here. */
   readonly open?: string;
 };
 
 /** Retention Determinations 7.1, 8 (Q60), 12.2 and 12.3 — RET-1 and RET-2 are drafted on the recommended answer to this. */
 const DISCOVERY_WINDOW_QUESTION =
-  'Should the retention rule name HMRC’s discovery windows instead of the 12-month enquiry window plus a margin? RET-1 and RET-2 are drafted on the answer yes; if it is no, RET-1 is the enquiry window alone and RET-2 has to be derived again.';
+  'Should tax records be kept for HMRC’s discovery windows? The other choice is the 12-month enquiry window plus a margin. The two tax rules assume yes. If no, the first uses the enquiry window alone, and the second must be worked out again.';
 
 /** Retention Determinations 11.4 point 3 and 13.4 — the officer's decision, not a drafting choice. */
 const WHICH_CLOCK_QUESTION =
-  'Which retention clock decides when a client’s file is deleted, where two apply? As built, the earlier of RET-1 and RET-7 governs; section 13.4 recommends the later. Section 8’s three points (legal hold, which event starts our clock, the discovery windows) could also change the number.';
+  'Where two deletion dates apply to a client’s file, which one wins? Today the earlier one does. Section 13.4 of the retention rules suggests the later one. Three points in section 8 could also change it: legal hold, which event starts the count, and the discovery windows.';
 
 /**
  * The determinations, as they stand. NOT ONE IS APPROVED; changing that is the data protection officer's signature, then one line here.
@@ -344,15 +346,18 @@ const WHICH_CLOCK_QUESTION =
  * DERIVED, NOT APPROVED. RET-5, RET-6 and RET-7 checked against sections 2.3, 3.3, 4.3, 11 and 13.2: period, trigger and state agree.
  */
 export const RETENTION_PARAMETERS: Readonly<Record<string, Parameter>> = Object.freeze({
-  'RET-1': { ref: 'RET-1', period_years: 6, trigger: 'the end of the accounting period or tax year — claim_period_end — or, where later, the close of the enquiry window for the return or amendment (return_filed_at) or of any enquiry opened into it (enquiry_closed_at)', state: 'DERIVED_NOT_APPROVED', owner: 'the tax adviser; the data protection officer approves the shape', open: DISCOVERY_WINDOW_QUESTION },
-  'RET-2': { ref: 'RET-2', period_years: 0, trigger: 'the close of RET-1 — nil: no margin after it', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer', open: DISCOVERY_WINDOW_QUESTION },
-  'RET-3': { ref: 'RET-3', period_years: 6, trigger: 'deletion complete everywhere — verified_at, or the last backup copy’s expiry', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer' },
-  'RET-4': { ref: 'RET-4', period_years: 6, trigger: 'the final response to the request — responded_at, never received_at — or, where a complaint followed, the complaint’s RET-6 expiry if that is later', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer' },
-  'RET-5': { ref: 'RET-5', period_years: 6, trigger: 'closed_at of the breach register entry', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer' },
-  'RET-6': { ref: 'RET-6', period_years: 6, trigger: 'the final response to the complaint — outcome_notified_at', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer' },
-  'RET-7': { ref: 'RET-7', period_years: 6, trigger: 'the later of claim_period_end and report_delivered_at', state: retentionReading('RET-7').state, owner: 'the data protection officer, with the tax adviser', open: WHICH_CLOCK_QUESTION },
-  'RET-8': { ref: 'RET-8', period_years: null, trigger: 'the retention of the S1 record the person_ref points at', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer' },
+  'RET-1': { ref: 'RET-1', period_years: 6, trigger: 'the end of the accounting period or tax year — claim_period_end — or, where later, the close of the enquiry window for the return or amendment (return_filed_at) or of any enquiry opened into it (enquiry_closed_at)', says: 'Six years from the end of the accounting period or tax year. If later, six years from when HMRC’s time to open an enquiry ends, or from when an enquiry closes.', state: 'DERIVED_NOT_APPROVED', owner: 'the tax adviser; the data protection officer approves the shape', open: DISCOVERY_WINDOW_QUESTION },
+  'RET-2': { ref: 'RET-2', period_years: 0, trigger: 'nil — no margin after the tax records’ period', says: 'No extra time after the tax records’ six years end.', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer', open: DISCOVERY_WINDOW_QUESTION },
+  'RET-3': { ref: 'RET-3', period_years: 6, trigger: 'verified_at, or the last backup copy’s expiry', says: 'Six years from the day a deletion is done everywhere: checked as done, or the last backup copy has run out.', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer' },
+  'RET-4': { ref: 'RET-4', period_years: 6, trigger: 'the final response to the request — responded_at, never received_at — or, where a complaint followed, the complaint’s RET-6 expiry if that is later', says: 'Six years from our final answer to the request, not from when it arrived. If a complaint followed and its date is later, that date.', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer' },
+  'RET-5': { ref: 'RET-5', period_years: 6, trigger: 'closed_at of the breach register entry', says: 'Six years from when the breach entry was closed.', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer' },
+  'RET-6': { ref: 'RET-6', period_years: 6, trigger: 'the final response to the complaint — outcome_notified_at', says: 'Six years from our final answer to the complaint.', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer' },
+  'RET-7': { ref: 'RET-7', period_years: 6, trigger: 'the later of claim_period_end and report_delivered_at', says: 'Six years from the claim period end or the day we sent the client report, whichever is later.', state: retentionReading('RET-7').state, owner: 'the data protection officer, with the tax adviser', open: WHICH_CLOCK_QUESTION },
+  'RET-8': { ref: 'RET-8', period_years: null, trigger: 'the retention of the S1 record the person_ref points at', says: 'Kept as long as the claim record it points to.', state: 'DERIVED_NOT_APPROVED', owner: 'the data protection officer' },
 });
+
+/** How the host's backup cycle reads on screen. */
+const BACKUP_CYCLE_WORDS: Readonly<Record<string, string>> = Object.freeze({ NOT_SET: 'not set yet', UNKNOWN: 'not known', SET: 'set' });
 
 type Kind = {
   readonly kind: string; readonly label: string; readonly table: string; readonly ref: string | null; readonly count: string;
@@ -360,35 +365,35 @@ type Kind = {
   readonly clockRows: string | null; readonly why_unset: string;
 };
 
-const NOT_COVERED = 'not covered by the Retention Determinations — UNSET until they cover it';
+const NOT_COVERED = 'No rule for this yet. Our retention rules do not cover it';
 
 export const RECORD_KINDS: readonly Kind[] = Object.freeze([
-  { kind: 'RIGHTS_REQUESTS', label: 'The rights-request register', table: 'rights_requests', ref: 'RET-4', count: 'SELECT COUNT(*) AS n FROM rights_requests', clockRows: null, why_unset: 'RET-4 is drafted, not approved' },
-  { kind: 'COMPLAINTS', label: 'The complaints log', table: 'complaints', ref: 'RET-6', count: 'SELECT COUNT(*) AS n FROM complaints', clockRows: 'SELECT id, outcome_notified_at AS starts FROM complaints', why_unset: 'RET-6 is derived and not approved' },
-  { kind: 'BREACH_INCIDENTS', label: 'The breach register', table: 'breach_incidents', ref: 'RET-5', count: 'SELECT COUNT(*) AS n FROM breach_incidents', clockRows: 'SELECT id, closed_at AS starts FROM breach_incidents', why_unset: 'RET-5 is derived and not approved' },
-  { kind: 'IDENTITY_PERSON', label: 'S2 — the identity store', table: 'identity_persons', ref: 'RET-8', count: 'SELECT COUNT(*) AS n FROM identity_persons', clockRows: null, why_unset: 'RET-8 inherits the S1 record’s clock, and RET-7 is not approved' },
-  { kind: 'IDENTITY_SEARCH_LOG', label: 'S2’s name-search log', table: 'identity_search_log', ref: null, count: 'SELECT COUNT(*) AS n FROM identity_search_log', clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'DOCUMENT_VERSIONS', label: 'Client document versions — listed as unscheduled, never due and never kept', table: 'documents', ref: 'RET-7', count: 'SELECT COUNT(*) AS n FROM documents WHERE logical_document_id IS NOT NULL', clockRows: null, why_unset: 'RET-7 is derived, not approved, so no date is computed; the two dates it needs are read per document from its claim — the accounting period end and the client report’s first issue — and shown below each, known or not known' },
-  { kind: 'LOGICAL_DOCUMENTS', label: 'Logical documents', table: 'logical_documents', ref: 'RET-7', count: 'SELECT COUNT(*) AS n FROM logical_documents', clockRows: null, why_unset: 'follows its versions' },
-  { kind: 'DOCUMENT_LINKS', label: 'Document links', table: 'document_links', ref: 'RET-7', count: 'SELECT COUNT(*) AS n FROM document_links', clockRows: null, why_unset: 'follows its versions' },
+  { kind: 'RIGHTS_REQUESTS', label: 'The rights-request register', table: 'rights_requests', ref: 'RET-4', count: 'SELECT COUNT(*) AS n FROM rights_requests', clockRows: null, why_unset: 'Drafted, not signed yet' },
+  { kind: 'COMPLAINTS', label: 'The complaints log', table: 'complaints', ref: 'RET-6', count: 'SELECT COUNT(*) AS n FROM complaints', clockRows: 'SELECT id, outcome_notified_at AS starts FROM complaints', why_unset: 'Not signed yet' },
+  { kind: 'BREACH_INCIDENTS', label: 'The breach register', table: 'breach_incidents', ref: 'RET-5', count: 'SELECT COUNT(*) AS n FROM breach_incidents', clockRows: 'SELECT id, closed_at AS starts FROM breach_incidents', why_unset: 'Not signed yet' },
+  { kind: 'IDENTITY_PERSON', label: 'S2 — people named on documents', table: 'identity_persons', ref: 'RET-8', count: 'SELECT COUNT(*) AS n FROM identity_persons', clockRows: null, why_unset: 'It follows the claim record’s date, and that rule is not signed yet' },
+  { kind: 'IDENTITY_SEARCH_LOG', label: 'The log of name searches in S2', table: 'identity_search_log', ref: null, count: 'SELECT COUNT(*) AS n FROM identity_search_log', clockRows: null, why_unset: NOT_COVERED },
+  { kind: 'DOCUMENT_VERSIONS', label: 'Client document versions — no date yet, so never due and never kept for ever', table: 'documents', ref: 'RET-7', count: 'SELECT COUNT(*) AS n FROM documents WHERE logical_document_id IS NOT NULL', clockRows: null, why_unset: 'Not signed yet, so no date is worked out. It needs two dates from each document’s claim. One is the accounting period end. The other is the day the client report was first sent. Each is shown as known or not known' },
+  { kind: 'LOGICAL_DOCUMENTS', label: 'Documents, with all their versions', table: 'logical_documents', ref: 'RET-7', count: 'SELECT COUNT(*) AS n FROM logical_documents', clockRows: null, why_unset: 'It follows its versions' },
+  { kind: 'DOCUMENT_LINKS', label: 'Document links', table: 'document_links', ref: 'RET-7', count: 'SELECT COUNT(*) AS n FROM document_links', clockRows: null, why_unset: 'It follows its versions' },
   // Phase 132 — migration 022. RET-3 needs `verified_at` and, where backups are pending, the last copy's expiry: no date is computed here.
-  { kind: 'DELETION_LOG', label: 'The deletion log — one entry per deletion, never a name', table: 'deletion_log', ref: 'RET-3', count: 'SELECT COUNT(*) AS n FROM deletion_log', clockRows: null, why_unset: `RET-3 is drafted, not approved, so no date is computed — and an entry with backups pending has none while the host’s backup cycle is ${BACKUP_CYCLE.state}` },
-  { kind: 'REGISTER_RECORDS', label: 'Register records — RP-E1 and RP-E2', table: 'register_records', ref: 'RET-1', count: 'SELECT COUNT(*) AS n FROM register_records', clockRows: null, why_unset: 'RET-1 and RET-2 are drafted, not approved' },
+  { kind: 'DELETION_LOG', label: 'The deletion log — one entry per deletion, never a name', table: 'deletion_log', ref: 'RET-3', count: 'SELECT COUNT(*) AS n FROM deletion_log', clockRows: null, why_unset: `Drafted, not signed yet, so no date is worked out. An entry still waiting on backups has no date while the host’s backup cycle is ${BACKUP_CYCLE_WORDS[BACKUP_CYCLE.state] ?? BACKUP_CYCLE.state}` },
+  { kind: 'REGISTER_RECORDS', label: 'Register records — people who control a company, and owners who are people', table: 'register_records', ref: 'RET-1', count: 'SELECT COUNT(*) AS n FROM register_records', clockRows: null, why_unset: 'Drafted, not signed yet' },
   { kind: 'LEADS_NEVER_CONVERTED', label: 'Leads that never convert, with a referral’s property basics', table: 'leads', ref: null, count: "SELECT COUNT(*) AS n FROM leads WHERE status <> 'CONVERTED'", clockRows: null, why_unset: NOT_COVERED },
   { kind: 'LEAD_PEOPLE', label: 'A lead’s person with no organisation', table: 'contacts', ref: null, count: 'SELECT COUNT(*) AS n FROM contacts WHERE lead_id IS NOT NULL AND business_id IS NULL', clockRows: null, why_unset: NOT_COVERED },
   { kind: 'STAFF_TASKS', label: 'Staff tasks', table: 'staff_tasks', ref: null, count: 'SELECT COUNT(*) AS n FROM staff_tasks', clockRows: null, why_unset: NOT_COVERED },
   { kind: 'LEAD_FOLLOW_UP_TASKS', label: 'Follow-up tasks on a lead that never converts', table: 'staff_tasks', ref: null, count: "SELECT COUNT(*) AS n FROM staff_tasks t JOIN leads l ON l.id = t.lead_id WHERE l.status <> 'CONVERTED'", clockRows: null, why_unset: NOT_COVERED },
   { kind: 'AUTOMATION_RUNS', label: 'Automation runs', table: 'automation_runs', ref: null, count: 'SELECT COUNT(*) AS n FROM automation_runs', clockRows: null, why_unset: NOT_COVERED },
-  { kind: 'OUTBOX_QUEUED', label: 'Outbox messages the rules, templates, notices and registers queue', table: 'outbox', ref: null, count: "SELECT COUNT(*) AS n FROM outbox WHERE kind IN ('NOTIFICATION','TEMPLATE','COMPLIANCE_LETTER')", clockRows: null, why_unset: NOT_COVERED },
+  { kind: 'OUTBOX_QUEUED', label: 'Emails we send from rules, templates, notices and registers', table: 'outbox', ref: null, count: "SELECT COUNT(*) AS n FROM outbox WHERE kind IN ('NOTIFICATION','TEMPLATE','COMPLIANCE_LETTER')", clockRows: null, why_unset: NOT_COVERED },
   { kind: 'INTRODUCERS', label: 'Introducing firms', table: 'introducers', ref: null, count: 'SELECT COUNT(*) AS n FROM introducers', clockRows: null, why_unset: NOT_COVERED },
   { kind: 'INTRODUCER_PEOPLE', label: 'The people at an introducing firm', table: 'contacts', ref: null, count: 'SELECT COUNT(*) AS n FROM contacts WHERE introducer_id IS NOT NULL', clockRows: null, why_unset: NOT_COVERED },
   { kind: 'SHARE_CONSENTS', label: 'The share-progress answers', table: 'introducer_share_consents', ref: null, count: 'SELECT COUNT(*) AS n FROM introducer_share_consents', clockRows: null, why_unset: NOT_COVERED },
   { kind: 'INTRODUCER_NOTICES', label: 'Stage notices to firms', table: 'introducer_notices', ref: null, count: 'SELECT COUNT(*) AS n FROM introducer_notices', clockRows: null, why_unset: NOT_COVERED },
   { kind: 'CONSENT_ANSWERS', label: 'The consent history', table: 'consent_answers', ref: null, count: 'SELECT COUNT(*) AS n FROM consent_answers', clockRows: null, why_unset: NOT_COVERED },
   // Phase 142a — the two chat threads. Their clean-up job is built and switched off (MESSAGE_RETENTION); the period is the officer's.
-  { kind: 'CLIENT_MESSAGE', label: 'Messages with the client — the portal’s Messages', table: 'client_messages', ref: null, count: 'SELECT COUNT(*) AS n FROM client_messages', clockRows: null, why_unset: `${NOT_COVERED}. Seven years, set by Lakhbir on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”) and applied by the clean-up job, which is on; the data protection officer has not yet approved it` },
-  { kind: 'TEAM_MESSAGE', label: 'Team-only messages — the internal notes', table: 'internal_notes', ref: null, count: 'SELECT COUNT(*) AS n FROM internal_notes', clockRows: null, why_unset: `${NOT_COVERED}. Seven years, set by Lakhbir on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”) and applied by the clean-up job, which is on; the data protection officer has not yet approved it` },
-  { kind: 'CDD_RECORDS', label: 'Customer due diligence records', table: 'cdd_checks', ref: null, count: 'SELECT COUNT(*) AS n FROM cdd_checks', clockRows: null, why_unset: `${NOT_COVERED}. The position paper’s five years from the end of the relationship is the Money Laundering Regulations’, and applies only if they do` },
+  { kind: 'CLIENT_MESSAGE', label: 'Messages with the client — the portal’s Messages', table: 'client_messages', ref: null, count: 'SELECT COUNT(*) AS n FROM client_messages', clockRows: null, why_unset: `${NOT_COVERED}. Lakhbir set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet` },
+  { kind: 'TEAM_MESSAGE', label: 'Team-only messages — the internal notes', table: 'internal_notes', ref: null, count: 'SELECT COUNT(*) AS n FROM internal_notes', clockRows: null, why_unset: `${NOT_COVERED}. Lakhbir set seven years on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”). The clean-up job is on and deletes them after that. The data protection officer has not approved it yet` },
+  { kind: 'CDD_RECORDS', label: 'Customer due diligence records', table: 'cdd_checks', ref: null, count: 'SELECT COUNT(*) AS n FROM cdd_checks', clockRows: null, why_unset: `${NOT_COVERED}. Our position paper says five years from the end of the client relationship. That comes from the Money Laundering Regulations, so it applies only if they apply to us` },
 ]);
 
 export type RetentionLine = {
@@ -441,16 +446,16 @@ export function retentionList(d: ComplianceDeps, actor: Actor, today: string, pa
     const p = k.ref === null ? null : (parameters[k.ref] ?? null);
     const refused = deleteRefusal(d.db, k.table);
     const del = refused === null
-      ? 'No delete is offered here: deletion is not automated, because whether client-document folders can be kept out of the host’s backup is still open.'
+      ? 'Nothing is deleted from here. Deleting is not automatic yet. We do not know yet if client folders can be kept out of the host’s backups.'
       : k.table === 'client_messages' || k.table === 'internal_notes'
-        ? `The table refuses a DELETE by trigger (${refused}) except from the message clean-up job, which is on and deletes by its own rule — so no delete is offered here.`
-        : `The table refuses a DELETE by trigger (${refused}), so no delete is offered — a deletion needs a decision about that trigger first.`;
+        ? 'The database blocks deleting these, except by the message clean-up job. That job is on and follows its own rule. Nothing is deleted from here.'
+        : 'The database blocks deleting these, so nothing is deleted from here. Someone must first decide about that block.';
     const held = liveHeldIds(d.db, k.kind);
     const limbs = k.kind === 'DOCUMENT_VERSIONS' ? { limbs: documentLimbs(d.db) } : {};
     if (p === null || p.state !== 'APPROVED' || p.period_years === null || k.clockRows === null) {
       return {
         kind: k.kind, label: k.label, ref: k.ref, state: p === null ? 'NOT_COVERED' : p.state,
-        clock: p === null ? `UNSET — ${k.why_unset}` : `${p.ref}: ${p.period_years === null ? 'no period' : `${p.period_years} years`} from ${p.trigger}. ${p.state === 'APPROVED' ? 'Approved, but this build does not record when this clock starts' : p.state === 'UNSET' ? 'UNSET' : 'DERIVED, NOT APPROVED'} — ${k.why_unset}. No date is computed.${p.open === undefined ? '' : ` Still open for the officer: ${p.open}`}`,
+        clock: p === null ? `No deletion date set yet. ${k.why_unset}.` : `${p.says} ${p.state === 'APPROVED' ? 'Approved, but we do not record when this count starts.' : p.state === 'UNSET' ? 'No rule set yet.' : 'Worked out by us — not yet approved by the data protection officer.'} ${k.why_unset}. No deletion date set yet.${p.open === undefined ? '' : ` Still to be decided by the data protection officer: ${p.open}`}`,
         records, unscheduled: records, held: held.size, due: [], delete: del, ...limbs,
       };
     }
@@ -464,7 +469,7 @@ export function retentionList(d: ComplianceDeps, actor: Actor, today: string, pa
     }
     return {
       kind: k.kind, label: k.label, ref: k.ref, state: 'APPROVED',
-      clock: `${p.ref}: ${p.period_years} years from ${p.trigger}. Approved.`, records, unscheduled, held: held.size, due, delete: del, ...limbs,
+      clock: `${p.says} Approved.`, records, unscheduled, held: held.size, due, delete: del, ...limbs,
     };
   });
   record(d, actor, 'RETENTION_LIST_READ', 'ALLOWED', 'compliance', 'retention', { kinds: lines.length, due: lines.reduce((n, l) => n + l.due.length, 0) });

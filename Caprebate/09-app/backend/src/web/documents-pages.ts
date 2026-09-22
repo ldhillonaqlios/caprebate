@@ -88,9 +88,8 @@ function centrePage(d: DocumentPageDeps, actor: Actor, v: D.DocumentCentre, quer
   return page({
     title: 'Documents', nav: d.nav(actor), wide: true,
     body: h`<h1>Documents</h1>
-      <p class="help">Every document you may read, across every organisation and claim — ${v.rows.length} of the ${v.read} you may read,
-      ${v.sort.label.toLowerCase()}${v.applied.length === 0 ? '' : ', filtered by '}${v.applied.map((a, i) => h`${i === 0 ? '' : '; '}${a.label.toLowerCase()} — ${a.value}`)}.
-      Each row is asked of the same rule the document’s own page asks: a document you may not open is not on this list.</p>
+      <p class="help">All the documents you may open. Showing ${v.rows.length} of ${v.read},
+      ${v.sort.label.toLowerCase()}${v.applied.length === 0 ? '' : ', filtered by '}${v.applied.map((a, i) => h`${i === 0 ? '' : '; '}${a.label.toLowerCase()} — ${a.value}`)}.</p>
       <form method="get" action="/staff/documents" class="pblock">
         ${v.filters.map(field)}
         <label>Order
@@ -106,7 +105,7 @@ function centrePage(d: DocumentPageDeps, actor: Actor, v: D.DocumentCentre, quer
           <td>${r.state.label}</td>
           <td>${r.newest === null ? h`<span class="help">no version</span>` : h`version ${r.newest.version_no ?? '—'}, ${r.newest.uploaded}<br><span class="help">${r.newest.by}</span>`}</td>
           <td>${r.versions}</td></tr>`)}</tbody></table>`}
-      <div class="gate"><strong>Never on this page, for anyone:</strong> ${v.never.join('; ')}.</div>
+      <div class="gate"><strong>This page never offers:</strong> ${v.never.join('; ')}.</div>
       ${dataLink(actor, `/staff/documents/view.json${query === '' ? '' : `?${query}`}`)}`,
   });
 }
@@ -305,7 +304,9 @@ export async function handleDocuments(
  * ------------------------------------------------------------------ */
 
 function clockCell(c: D.RetentionReading): Safe {
-  return c.state === 'UNSET' ? h`<span class="help"><strong>UNSET</strong> — ${c.label.replace(/^UNSET — /, '')}</span>` : h`<span class="help">${c.label}</span>`;
+  return c.state === 'UNSET'
+    ? h`<span class="help"><strong>No deletion date set yet.</strong> ${c.label.replace(/^No deletion date set yet\. /, '')}</span>`
+    : h`<span class="help">${c.label}</span>`;
 }
 
 function dueCell(r: D.RequestView): Safe {
@@ -325,7 +326,7 @@ export function placeDocumentsBlock(p: D.PlaceDocumentsPanel | undefined, proper
       ? 'Every document of this organisation you may read. A document is linked to its claims and properties on its own page.'
       : 'The documents linked to this property that you may read. A lease or a plan belongs to the organisation and is linked here.')}</div>
     ${p.documents.length === 0 ? h`<p class="help">No document you may read is here.</p>` : h`<table>
-      <thead><tr><th>Document</th><th>Who may read it</th><th>Versions</th><th>Current version</th><th>Its deletion clock</th></tr></thead>
+      <thead><tr><th>Document</th><th>Who may read it</th><th>Versions</th><th>Current version</th><th>When it is deleted</th></tr></thead>
       <tbody>${p.documents.map((x) => h`<tr><td><a href="${x.href}">${x.label}</a></td><td class="help">${x.readers}</td>
         <td>${x.versions}</td><td>${x.current === null ? h`<span class="help">no version</span>` : h`version ${x.current.version_no ?? ''} — ${x.current.state}`}</td>
         <td>${x.current === null ? raw('') : clockCell(x.current.clock)}</td></tr>`)}</tbody></table>`}
@@ -343,7 +344,7 @@ export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel |
   return h`<div class="pblock">${heading ? h`<div class="pnum">Documents</div>` : raw('')}
     <div class="help">${why('A document belongs to the company and can be linked to any number of its claims — one lease can serve two. Every upload goes through our safety checks; nothing is overwritten, and each version keeps its own deletion date.')}</div>
     ${p.documents.length === 0 ? h`<p class="help">No document is linked to this claim that you may read.</p>` : h`<table>
-      <thead><tr><th>Document</th><th>Who may read it</th><th>Versions</th><th>Current version</th><th>Its deletion clock</th></tr></thead>
+      <thead><tr><th>Document</th><th>Who may read it</th><th>Versions</th><th>Current version</th><th>When it is deleted</th></tr></thead>
       <tbody>${p.documents.map((x) => h`<tr><td><a href="${x.href}">${x.label}</a></td><td class="help">${x.readers}</td>
         <td>${x.versions}</td><td>${x.current === null ? h`<span class="help">no version</span>` : h`version ${x.current.version_no ?? ''} — ${x.current.state}`}</td>
         <td>${x.current === null ? raw('') : clockCell(x.current.clock)}</td></tr>`)}</tbody></table>`}
@@ -360,7 +361,7 @@ export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel |
             <button type="submit">Withdraw — asked in error</button></form>` : raw('')}</td></tr>`)}</tbody></table>`}`}
 
     ${p.may_request && types.length > 0 ? h`<form method="post" action="/staff/claims/${claim_id}/document-requests">
-      <p><strong>Ask the client for a document</strong> <span class="help">— it goes to their portal, and only a type with a receipt policy can be asked for</span></p>
+      <p><strong>Ask the client for a document</strong> <span class="help">— it goes to their portal. You can only ask for a type we can accept.</span></p>
       <label>Document <select name="type_code">${types.map((t) => h`<option value="${t.code}">${t.label}</option>`)}</select></label>
       <label>Why we need it <input name="why" required></label>
       <label>What it holds up <input name="holds_up" required></label>
@@ -397,12 +398,12 @@ function documentPageHtml(d: DocumentPageDeps, actor: Actor, p: D.DocumentPage, 
       <div class="pblock"><div class="pnum">The document</div><dl>
         <dt>Type</dt><dd>${p.type.label}</dd>
         <dt>Who may read it</dt><dd>${p.type.readers}</dd>
-        <dt>The receipt strip</dt><dd>${p.type.strip.label}</dd>
-        <dt>The type's deletion clock today</dt><dd>${clockCell(p.type.clock_now)}</dd>
+        <dt>What we did with the file</dt><dd>${p.type.strip.label}</dd>
+        <dt>When files of this type are deleted</dt><dd>${clockCell(p.type.clock_now)}</dd>
       </dl></div>
 
       <div class="pblock"><div class="pnum">Linked to</div>
-        ${p.links.length === 0 ? h`<p class="help">Linked to no claim and no property: it is the organisation's, and a surveyor on any of its jobs may read it if it is claim evidence.</p>` : h`<table>
+        ${p.links.length === 0 ? h`<p class="help">Not linked to a claim or a property. It belongs to the company. If it is claim evidence, a surveyor on any of its jobs may read it.</p>` : h`<table>
           <thead><tr><th>To</th><th>Linked</th><th>Ended</th><th></th></tr></thead>
           <tbody>${p.links.map((k) => h`<tr><td>${k.to}: ${k.href === null ? h`${k.label}` : h`<a href="${k.href}">${k.label}</a>`}${k.ref === undefined ? raw('') : h` ${claimRef(k.ref)}`}</td>
             <td>${k.linked}</td><td>${k.ended ?? h`<span class="help">still linked</span>`}</td>
@@ -414,7 +415,7 @@ function documentPageHtml(d: DocumentPageDeps, actor: Actor, p: D.DocumentPage, 
 
       <div class="pblock"><div class="pnum">Version history</div>
         <p class="help">${p.history}</p>
-        <table><thead><tr><th>Version</th><th>Sent</th><th>By</th><th>What happened</th><th>Read</th><th>The original</th><th>This version's deletion clock</th></tr></thead>
+        <table><thead><tr><th>Version</th><th>Sent</th><th>By</th><th>What happened</th><th>Read</th><th>The original</th><th>When this version is deleted</th></tr></thead>
         <tbody>${p.versions.map((v) => h`<tr><td>${v.version_no ?? '—'}</td><td>${v.uploaded}</td><td>${v.by}</td><td>${v.state}</td>
           <td>${v.strip}</td><td>${v.original}</td><td>${clockCell(v.clock)}</td></tr>`)}</tbody></table>
         <p class="help">${p.original_href === undefined ? p.original : h`We kept the original. <a href="${p.original_href}">Open the original</a>`}</p>
@@ -449,7 +450,7 @@ function readersAnchor(v: string | null): string {
  */
 function typesPage(d: DocumentPageDeps, actor: Actor, types: readonly D.TypeView[], mayWrite: boolean, msg: string | undefined): string {
   const readers = Object.entries(D.READERS);
-  const clocks = [['', 'UNSET'], ...Object.entries(D.RETENTION_REFS)] as const;
+  const clocks = [['', 'No deletion date set yet'], ...Object.entries(D.RETENTION_REFS)] as const;
   const groups = [...readers.map(([k]) => k), ...new Set(types.map((t) => t.readers.value).filter((k) => !Object.prototype.hasOwnProperty.call(D.READERS, k)))];
   /* ONE LINE PER TYPE, OPENING TO THE REST. The summary carries the name, the code and three badges in words; opened, a
      type shows where it came from, who may read it, the receipt strip and the deletion clock in full, and its form. A
@@ -458,21 +459,21 @@ function typesPage(d: DocumentPageDeps, actor: Actor, types: readonly D.TypeView
     ? h`<p class="help">No type is read by this group.</p>`
     : h`<ul class="typelist">${rows.map((t) => h`<li><details><summary><strong>${t.label}</strong> <code>${t.code}</code>
         ${badge(t.carries_value ? 'can carry a value' : 'carries no value', t.carries_value ? 'warn' : 'plain')}
-        ${badge(t.retention.ref === null ? 'deletion clock UNSET' : `deletion clock ${t.retention.ref}`, t.retention.ref === null ? 'stop' : 'plain')}
+        ${badge(t.retention.ref === null ? 'No deletion date set yet' : 'Deletion rule chosen', t.retention.ref === null ? 'stop' : 'plain')}
         ${badge(t.active ? 'active' : 'retired', t.active ? 'ok' : 'plain')}</summary>
         <dl class="typefacts">
           <dt>From</dt><dd>${t.source}</dd>
           <dt>Who may read it</dt><dd>${t.readers.label}</dd>
           <dt>Can carry a value</dt><dd>${t.carries_value ? 'yes — never a surveyor' : 'no'}</dd>
-          <dt>Receipt strip</dt><dd class="help">${t.strip.label}</dd>
-          <dt>Deletion clock</dt><dd>${clockCell(t.retention)}</dd>
+          <dt>What we do with the file</dt><dd class="help">${t.strip.label}</dd>
+          <dt>When it is deleted</dt><dd>${clockCell(t.retention)}</dd>
           <dt>Active</dt><dd>${t.active ? 'active' : 'retired'}</dd>
         </dl>
         ${mayWrite ? h`<form method="post" action="/staff/document-types/${t.code}" class="form-row">
           <label>Label <input name="label" value="${t.label}"></label>
           <label>Who may read it <select name="readers">${readers.map(([k, v]) => h`<option value="${k}"${t.readers.value === k ? raw(' selected') : raw('')}>${v}</option>`)}</select></label>
           <label>Can it carry a value <select name="carries_value">${t.carries_value ? h`<option value="1" selected>can carry a value</option>` : h`<option value="0" selected>cannot</option><option value="1">can carry a value</option>`}</select></label>
-          <label>Deletion clock <select name="retention_ref">${clocks.map(([k, v]) => h`<option value="${k}"${(t.retention.ref ?? '') === k ? raw(' selected') : raw('')}>${v}</option>`)}</select></label>
+          <label>When it is deleted <select name="retention_ref">${clocks.map(([k, v]) => h`<option value="${k}"${(t.retention.ref ?? '') === k ? raw(' selected') : raw('')}>${v}</option>`)}</select></label>
           <label>State <select name="active"><option value="1"${t.active ? raw(' selected') : raw('')}>active</option><option value="0"${t.active ? raw('') : raw(' selected')}>retired</option></select></label>
           <button type="submit">Save ${t.label}</button></form>` : raw('')}
       </details></li>`)}</ul>`;
@@ -480,24 +481,24 @@ function typesPage(d: DocumentPageDeps, actor: Actor, types: readonly D.TypeView
     ...groups.map((k) => {
       const rows = types.filter((t) => t.readers.value === k);
       const label = D.READERS[k]?.split(' — ')[0] ?? k;
-      return { id: `readers-${k.toLowerCase().replace(/_/g, '-')}`, label, count: rows.length, body: h`<p class="help">${D.READERS[k] ?? h`A reader value this build does not list: <code>${k}</code>.`}</p>${table(rows)}` };
+      return { id: `readers-${k.toLowerCase().replace(/_/g, '-')}`, label, count: rows.length, body: h`<p class="help">${D.READERS[k] ?? h`A reader group we do not know: <code>${k}</code>.`}</p>${table(rows)}` };
     }),
     ...(mayWrite ? [{ id: 'add-type', label: 'Add a type', body: h`
-        <p class="help">A type added here has no receipt policy, so it can be recorded and configured but not received. It can carry a value unless you say it cannot.</p>
+        <p class="help">A type added here has no rule for reading its files yet, so nobody can send one. It can carry a value unless you say it cannot.</p>
         <form method="post" action="/staff/document-types">
           <label>Code <input name="code" required pattern="[A-Z][A-Z0-9_]{1,59}"></label>
           <label>Label <input name="label" required></label>
           <label>Who may read it <select name="readers">${readers.map(([k, v]) => h`<option value="${k}">${v}</option>`)}</select></label>
           <label>Can it carry a claim value, a tax benefit or a fee? <select name="carries_value"><option value="1">yes, or we cannot say</option><option value="0">no</option></select></label>
-          <label>Deletion clock <select name="retention_ref">${clocks.map(([k, v]) => h`<option value="${k}">${v}</option>`)}</select></label>
+          <label>When it is deleted <select name="retention_ref">${clocks.map(([k, v]) => h`<option value="${k}">${v}</option>`)}</select></label>
           <button type="submit">Add the type</button></form>` }] : []),
   ];
   return page({
     title: 'Document types', nav: d.nav(actor), wide: true,
     body: h`<h1>Document types</h1>${saved(msg)}
-      <p class="help">Who may read each type, its deletion clock — <strong>UNSET</strong> is a state and is shown as one, never
-      filled in — and whether an upload of it can be received at all. Only a type with a receipt policy can be received or asked for;
-      a policy is bound by a migration, never on this page.</p>
+      <p class="help">For each type: who may read it, when its files are deleted, and whether we can accept it.
+      <strong>No deletion date set yet</strong> means just that. We never fill in a date for you.
+      Only a type with a rule for reading its files can be sent or asked for. That rule is added in a system update, not on this page.</p>
       <p class="help">${types.length} ${types.length === 1 ? 'type' : 'types'}, grouped by who may read them.</p>
       ${sectionList('Document types, by who may read them', sections)}`,
   });

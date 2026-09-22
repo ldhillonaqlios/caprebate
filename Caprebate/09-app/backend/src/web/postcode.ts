@@ -136,10 +136,10 @@ export const POSTCODE_GATE = Object.freeze({
     'Does the permission gate apply to a council-area lookup with no personal data in it?',
   answered: false,
   note:
-    'OPEN with the data protection officer. Until it is answered this stays false, ' +
-    'which costs nothing: the table is not configured, so the lookup is inert either ' +
-    'way. This is NOT a second gate — the only gate is CB_REGISTRY.precondition, and ' +
-    'this boolean says whether this lookup sits behind it.',
+    'Open with the data protection officer. Until it is answered this stays off. ' +
+    'That costs nothing: the postcode table is not set up, so the lookup does nothing yet. ' +
+    'This adds no new check. It only says whether this lookup waits for the privacy notice ' +
+    'like the other free lookups.',
 });
 
 /* ================================================================== *
@@ -178,15 +178,15 @@ export function resolveProperty(
   if (store === null) {
     return {
       postcode, authority: null, region: REGION_NOT_CAPTURED, region_derived: false,
-      why: 'the ONS postcode table is not configured on this deployment, so a council ' +
-           'area cannot be derived. The licence is cleared and the download is free — ' +
-           'see the ONS postcode table refresh procedure.',
+      why: 'the ONS postcode table is not set up here yet, so we cannot work out the council ' +
+           'area. The licence is cleared and the download is free — see the guide on ' +
+           'updating the ONS postcode table.',
     };
   }
   if (POSTCODE_GATE.gated) {
     return {
       postcode, authority: null, region: REGION_NOT_CAPTURED, region_derived: false,
-      why: 'this lookup is held behind the published-notice permission gate.',
+      why: 'this lookup waits until our privacy notice is published.',
     };
   }
   try {
@@ -230,7 +230,7 @@ export function explainLocationFor(
     return {
       ok: false, code: store === null ? 'E_TABLE_NOT_CONFIGURED' : 'E_NO_POSTCODE',
       message: store === null
-        ? 'the ONS postcode table is not configured on this deployment.'
+        ? 'the ONS postcode table is not set up here yet.'
         : 'no postcode is recorded for this property.',
     };
   }

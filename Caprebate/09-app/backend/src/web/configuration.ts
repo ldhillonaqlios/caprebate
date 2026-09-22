@@ -64,33 +64,33 @@ export function assertConfigurationRead(actor: Actor): void {
  * 1 · WHAT NO SETTING MAY CHANGE
  * ================================================================== */
 
-const GATE_WHY = 'A procedure stage’s gate is code in src/web/pipeline.ts, asked on the server at every move. A setting that could change a gate could step round it (disposition 20.1).';
-const CTA_WHY = 'A tax adviser’s switch stays off until a chartered tax adviser answers. Changing one is a line of code in the engine and the adviser’s decision — never a setting.';
-const FEE_WHY = 'A fee switch (src/web/fee-controls.ts). A pricing policy an admin screen could flip would be decided by whoever found the screen.';
+const GATE_WHY = 'Each step’s check is built into the system and run at every move. A setting could get round it.';
+const CTA_WHY = 'A tax adviser’s switch stays off until a chartered tax adviser answers. Changing it is their call and a system change, never a setting.';
+const FEE_WHY = 'A fee rule. If a setting could change our pricing, whoever found the setting would decide it.';
 
 export const FORBIDDEN_SETTINGS: Readonly<Record<string, string>> = Object.freeze({
   ...Object.fromEntries(PROCEDURE_KEYS.map((k) => [`STAGE_GATE:${k}`, `${anyStageLabel(k)} — ${GATE_WHY}`])),
-  STAGE_LIST: 'The stages are the operating procedure’s ten, each with its gate and its exits. A stage is never added, removed or reordered by a setting (disposition 20.1).',
-  FREE_REGISTER_GATE: 'The free register gate opens when the privacy notice is published — CB_REGISTRY.precondition, one line of code, and not ours to turn.',
-  PAID_REGISTER_GATE: 'The paid gate is a signed engagement asserted on the server, and an operator’s click. No setting stands in for either.',
+  STAGE_LIST: 'There are ten steps, each with its own check and ways out. No setting can add, remove or reorder a step.',
+  FREE_REGISTER_GATE: 'No setting can turn on free lookups. They start when our privacy notice is published.',
+  PAID_REGISTER_GATE: 'No setting can turn on paid lookups. They need a signed engagement letter and a person to click.',
   ...Object.fromEntries(ctaSwitchReadings().map((s) => [`CTA_SWITCH:${s.switch}`, CTA_WHY])),
   ...Object.fromEntries(Object.keys(FEE_CONTROLS).map((k) => [`FEE_CONTROL:${k}`, FEE_WHY])),
-  REWARD_MODEL: 'The introducer reward model is a fee switch. It is switched on its own page, by ADMIN, and refused there while clause 1 of the engagement letter is blank.',
-  FEE_CLAWBACK: 'Clause 13’s fee clawback is a fee switch, off until its three blanks are answered — a line of code, not a setting.',
-  FEE_TRIGGER: 'When our fee is earned was Lakhbir’s decision — when our report is delivered for filing (Phase 132e) — and the invoice stage reads it in code, never from a setting.',
-  AML_IN_SCOPE: 'Whether money laundering supervision applies is a dated, sourced compliance setting — a gate on ENGAGEMENT, recorded on the compliance page with its source, never a general setting.',
-  CLIENT_SHARE_GIVE: 'Whether a client may give the share-progress opt-in in the portal waits on words the data protection officer agrees. A switch in code.',
-  REFERRAL_FORM: 'The public referral form waits on a published privacy notice. A switch in code.',
-  INVOICE_FRAUD_PROCEDURE: 'The invoice email waits on the invoice-fraud procedure being in force, and lifting it is a piece of work, not a setting.',
-  QUOTE_GAP_REVIEW_PCT: 'The 15% review threshold is the reconciliation design’s constant, not a setting.',
-  RETENTION_PARAMETERS: 'A retention period is the data protection officer’s signature, and then one line of code.',
-  ROLE_BOUNDARY: 'The five roles, and what each may do, are src/authz.ts, asked on every request. A sixth role or a wider one is a question for Lakhbir — never a setting (disposition 20.4).',
-  DOCUMENT_TYPE_RECEIPT_POLICY: 'Only a migration binds a document type to a receipt policy (the document_types_fixed trigger).',
-  DOCUMENT_TYPE_CARRIES_VALUE_UNSET: 'A type that can carry a claim value, a tax benefit or a fee is never marked as carrying none (N1; the document_types_value_never_unset trigger).',
-  FACT_KEYS: 'A claim fact’s key is a migration and a reading, never a value on a list.',
-  CAPTURE_SOURCES: 'The four capture sources are a CHECK. A new one is a migration.',
-  PAYER_CLASSES: 'Rulebook F’s payer classes are a CHECK. A new one is a migration.',
-  RECIPROCITY_KINDS: 'Reward model A’s three reciprocity kinds are held by their own triggers — on a task on a firm, and only under model A — and are never values on the task-type list.',
+  REWARD_MODEL: 'The introducer reward model is a fee switch. An admin changes it on its own page, and not while clause 1 of the engagement letter is blank.',
+  FEE_CLAWBACK: 'Clause 13’s fee clawback stays off until its three blanks are filled in. It is a system change, not a setting.',
+  FEE_TRIGGER: 'Lakhbir decided when our fee is earned: when our report is delivered for filing. This is built in, so no setting can change it.',
+  AML_IN_SCOPE: 'Does money laundering supervision apply to us? That is set on the compliance page, with a date and a source. It is checked before we take on a client.',
+  CLIENT_SHARE_GIVE: 'Clients cannot yet agree to share progress in the portal. That waits on wording our data protection officer agrees.',
+  REFERRAL_FORM: 'The public referral form waits on our privacy notice being published. It is not a setting.',
+  INVOICE_FRAUD_PROCEDURE: 'Invoice emails wait on our invoice-fraud procedure being in force. Turning them on is a piece of work, not a setting.',
+  QUOTE_GAP_REVIEW_PCT: 'The 15% review level is fixed in how we check quotes. It is not a setting.',
+  RETENTION_PARAMETERS: 'How long we keep data is signed off by our data protection officer, then built into the system.',
+  ROLE_BOUNDARY: 'The staff roles, and what each can do, are built in and checked on every request. A new or wider role is for Lakhbir to decide.',
+  DOCUMENT_TYPE_RECEIPT_POLICY: 'Whether we keep a file, or read it and then delete it, is fixed for each document type. Only a system update changes it.',
+  DOCUMENT_TYPE_CARRIES_VALUE_UNSET: 'A document type that can hold a claim value, a tax benefit or a fee is never marked as holding none.',
+  FACT_KEYS: 'The facts we hold about a claim are built into the system. They are not a list you can edit.',
+  CAPTURE_SOURCES: 'The four ways we take in information are fixed. A new one needs a system update.',
+  PAYER_CLASSES: 'The payer types in Rulebook F are fixed. A new one needs a system update.',
+  RECIPROCITY_KINDS: 'The three things we give back to a firm under reward model A are fixed. They are only for tasks on a firm, and are not task types.',
 });
 
 /** Lists a person might ask for that are not configurable, each with the reason. */
@@ -101,7 +101,7 @@ const NOT_A_LIST: Readonly<Record<string, string>> = Object.freeze({
   FACT_KEY: FORBIDDEN_SETTINGS['FACT_KEYS'] ?? '',
   CAPTURE_SOURCE: FORBIDDEN_SETTINGS['CAPTURE_SOURCES'] ?? '',
   PAYER_CLASS: FORBIDDEN_SETTINGS['PAYER_CLASSES'] ?? '',
-  DOCUMENT_TYPE: 'Document types are kept on their own page, with their readers and their deletion clocks; only a migration binds one to a receipt policy.',
+  DOCUMENT_TYPE: 'Document types have their own page, with who can read each and when it is deleted. Only a system update sets whether we keep the file.',
 });
 
 /**
@@ -235,7 +235,7 @@ export function changeValue(d: ConfigDeps, actor: Actor, listRaw: string, code: 
   const active = activeRaw === null ? r.active : activeRaw === '0' || activeRaw === 'no' ? 0 : 1;
   if (active === 0 && r.fixed === 1) return { ok: false, why: 'The application writes this value itself, so it is never retired.', field: 'active' };
   if (active === 0 && r.active === 1 && list === 'PRIORITY' && priorityInUse(d.db, code)) {
-    return { ok: false, why: 'An active automation rule or an open recurring task gives its tasks this priority. Change those first, or the next task they make would be refused.' };
+    return { ok: false, why: 'An active rule or a repeating task uses this priority. Change those first, or their next task would be refused.' };
   }
   const fields = [...(label !== r.label ? ['label'] : []), ...(active !== r.active ? ['active'] : [])];
   if (fields.length === 0) return { ok: true, id: `${list}:${code}` };

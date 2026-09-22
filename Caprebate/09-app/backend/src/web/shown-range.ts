@@ -70,4 +70,4 @@ export function formatShownRange(r: ShownRange): string {
 /** The qualifier that travels with every one of these figures, in one place. */
 export const RANGE_QUALIFIER =
   'Indicative, and a ceiling rather than a forecast — built only from what the client told us. ' +
-  'Nothing has been looked up: no external call fires anywhere in this build.';
+  'Nothing has been looked up.';

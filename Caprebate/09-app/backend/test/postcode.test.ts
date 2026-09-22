@@ -82,7 +82,7 @@ describe('the store is a deployment artefact and is absent by default', () => {
     assert.equal(r.region, REGION_NOT_CAPTURED);
     assert.equal(r.region_derived, false);
     assert.equal(r.authority, null);
-    assert.match(r.why, /not configured on this deployment/);
+    assert.match(r.why, /not set up here yet/);
     /* And it says the fix is free, because the alternative reading — that
        this is blocked on a purchase like everything else here — is the
        mistake this whole module was built to correct. */
@@ -134,8 +134,8 @@ describe('there is no second permission gate', () => {
   test('the gate is a single boolean saying whether this sits behind the ONE gate', () => {
     assert.equal(POSTCODE_GATE.gated, false);
     assert.equal(POSTCODE_GATE.answered, false);
-    assert.match(POSTCODE_GATE.note, /NOT a second gate/);
-    assert.match(POSTCODE_GATE.note, /CB_REGISTRY\.precondition/);
+    assert.match(POSTCODE_GATE.note, /This adds no new check/);
+    assert.match(POSTCODE_GATE.note, /waits for the privacy notice/);
   });
 
   test('the registry gate is still shut and this did not open it', () => {
@@ -167,7 +167,7 @@ describe('the surveyor rate library is keyed on a real region', () => {
       { sector: 'DENTAL', region: REGION_NOT_CAPTURED });
     const n = regionContextFor('dental', 'M1 1AE');
     assert.equal(n.derived, false);
-    assert.match(n.why, /not configured/);
+    assert.match(n.why, /not set up here yet/);
     resetPostcodeStore();
   });
 

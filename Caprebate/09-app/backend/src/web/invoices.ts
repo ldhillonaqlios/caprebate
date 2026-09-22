@@ -375,7 +375,7 @@ export function claimMoneyLines(db: Db, actor: Actor, claim_id: string, nowIso: 
   return claimInvoices(db, actor, nowIso, { claim_id }).map((v) => ({
     number: v.number, kind: v.kind.label, invoice_status: v.state.label, payment_status: v.money.label,
     fee: v.fee, fee_pence: v.fee_pence, vat_position: v.vat_position, outstanding: v.money.outstanding,
-    due: v.due_on === null ? `${DUE_UNSET} — ${v.due_basis}` : v.money.due.label,
+    due: v.due_on === null ? `No due date set yet — ${v.due_basis.replace(/^UNSET — /, '')}` : v.money.due.label,
   }));
 }
 
@@ -423,7 +423,7 @@ export function raiseInvoice(d: InvoiceDeps, actor: Actor, claim_id: string, inp
   // SOP 9: "Claim outside the amendment window at any point up to this stage: job stops before the fee is incurred."
   if (s.key === 'OUTSIDE_AMENDMENT_WINDOW') {
     return refuse('OUTSIDE_AMENDMENT_WINDOW',
-      'This claim left the procedure outside the amendment window, and that exit stops the job before a fee is incurred (SOP 9). No invoice of any kind is raised on it.');
+      'This claim ended because it was too late to amend the tax return. The job stops before any fee is due, so no invoice is raised.');
   }
 
   let fee_pence: number;
@@ -443,11 +443,11 @@ export function raiseInvoice(d: InvoiceDeps, actor: Actor, claim_id: string, inp
     if (!trigger.met) return refuse('FEE_TRIGGER_NOT_REACHED', `${trigger.what}: ${trigger.why}. Our fee is not raised before it is earned.`);
     if (liveFeeInvoiceCount(d.db, c.id) > 0) {
       return refuse('LIVE_INVOICE_EXISTS',
-        'This claim already has a live fee invoice. A raised amount changes only by a credit note; another is raised only once that one is cancelled or credited in full.');
+        'This claim already has a fee invoice. To change it, issue a credit note. Raise a new one only once that one is cancelled or fully credited.');
     }
     const signoff = signOffSinceEntry(d.db, pc);
     if (signoff === undefined) {
-      return refuse('NO_SIGNED_FIGURE', 'No figure signed off by the tax adviser is on record for this claim, and our fee derives from it. Nothing is raised.');
+      return refuse('NO_SIGNED_FIGURE', 'The tax adviser has not signed off a figure for this claim. Our fee is worked out from it, so nothing is raised.');
     }
     figure = signoff.figure_pence;
     entity = claimantTypeForGate(d.db, c.business_id).value === 'COMPANY' ? 'company' : null;
@@ -481,7 +481,7 @@ export function raiseInvoice(d: InvoiceDeps, actor: Actor, claim_id: string, inp
   const due_on = terms.state === 'DAYS' ? addDaysToDate(today, terms.days) : null;
   const due_basis = terms.state === 'DAYS'
     ? `due ${terms.label}`
-    : `${DUE_UNSET} — ${terms.label} “${PAYMENT_TERMS_QUESTION}” is Lakhbir’s.`;
+    : `${DUE_UNSET} — ${terms.label} “${PAYMENT_TERMS_QUESTION}” is for Lakhbir to decide.`;
 
   const id = d.newId();
   d.db.tx(() => {
@@ -607,7 +607,7 @@ export function creditClause13(d: InvoiceDeps, actor: Actor, id: string, input: 
   const reading = clawbackReading({ ...(opts.clawback === undefined ? {} : { gate: opts.clawback }), ...(opts.letter === undefined ? {} : { openTerms: opts.letter.openTerms }) });
   if (!reading.applies) {
     record(d, actor, 'FEE_CLAWBACK_NOT_APPLIED', 'invoice', r.id, 'REFUSED', { reason: reading.reason, blanks: reading.blanks.length });
-    return { ok: false, why: `No clause 13 credit note is issued: ${reading.why}.` };
+    return { ok: false, why: `No clause 13 credit note is issued: ${reading.why.replace(/\.$/, '')}.` };
   }
   if (r.kind !== 'FEE' || r.invoice_status === 'CANCELLED') return { ok: false, why: 'Clause 13 reduces our fee on a raised invoice.' };
   const reduced = d.db.get<{ amended_figure_pence: number }>(
@@ -657,7 +657,7 @@ export function recordReceived(d: InvoiceDeps, actor: Actor, id: string, input: 
   }
   const confirmed = clean(input['bank_details_confirmed']);
   if (confirmed !== null && !Object.hasOwn(BANK_CONFIRMATIONS, confirmed)) {
-    return { ok: false, why: 'Say whether the client confirmed our bank details on a channel other than email — yes, no, or not known — or leave it unanswered.' };
+    return { ok: false, why: 'Did the client check our bank details another way than email? Say yes, no or not known, or leave it blank.' };
   }
   const pid = d.newId();
   d.db.tx(() => {

@@ -410,9 +410,9 @@ export function reEncodeAvatar(bytes: Uint8Array): {
   if (sniffed !== 'png') {
     throw new ImageError(
       'E_IMAGE_NOT_PNG',
-      `we accept PNG only. That is a ${sniffed.toUpperCase()}, and this build re-encodes every ` +
-        'photo rather than storing what was sent — which it can only do honestly for a format it ' +
-        'can decode. Save it as a PNG and try again.',
+      `we accept PNG only. That is a ${sniffed.toUpperCase()}. We redraw every photo rather than keep ` +
+        'what was sent, and we can only do that safely for a PNG. ' +
+        'Save it as a PNG and try again.',
     );
   }
   const decoded = decodePng(bytes);

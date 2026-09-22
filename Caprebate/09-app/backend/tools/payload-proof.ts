@@ -916,8 +916,8 @@ console.log('');
   console.log(`    /staff/documents/view.json as ADMIN: HTTP ${c.status}, the fee invoice listed ${rows.includes(invoiceDoc)}, the lease listed ${rows.includes(lease)}`);
   if (c.status !== 200 || !rows.includes(invoiceDoc) || !rows.includes(lease)) failures.push('the document centre as ADMIN did not list the fee invoice and the lease — the centre check is blind');
   const a = await req('/staff/audit');
-  console.log(`    /staff/audit as ADMIN: HTTP ${a.status}, the chain said intact ${/Intact:/.test(a.body)}`);
-  if (a.status !== 200 || !/Intact:/.test(a.body)) failures.push('the audit log as ADMIN did not open with its chain intact');
+  console.log(`    /staff/audit as ADMIN: HTTP ${a.status}, the audit log said nothing changed ${/Audit log checked — nothing changed/.test(a.body)}`);
+  if (a.status !== 200 || !/Audit log checked — nothing changed/.test(a.body)) failures.push('the audit log as ADMIN did not open saying nothing changed (Phase 144 wording; the chain check itself is unchanged)');
 }
 // PHASE 142 — THE TEAM THREAD NEVER REACHES THE PORTAL, AND NEITHER THREAD REACHES THE SURVEYOR. A team message with words
 // found nowhere else is written; the client's portal, every page of it, and the staff pages a client or a surveyor might

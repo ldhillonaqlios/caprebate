@@ -57,11 +57,11 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
   const kinds = d.db.all<{ kind: string }>('SELECT DISTINCT kind FROM audit_log ORDER BY kind ASC').map((r) => r.kind);
   const askedKind = (q.get('kind') ?? '').trim();
   const kind = askedKind === '' ? null : kinds.includes(askedKind) ? askedKind : null;
-  if (askedKind !== '' && kind === null) said.push('Kind: not a kind this log holds, so it was not applied');
+  if (askedKind !== '' && kind === null) said.push('Kind: not a kind in this log, so it was not used');
   const askedOutcome = (q.get('outcome') ?? '').trim();
   const outcome = askedOutcome === '' ? null : Object.hasOwn(AUDIT_OUTCOMES, askedOutcome) ? askedOutcome : null;
-  if (askedOutcome !== '' && outcome === null) said.push('Outcome: not allowed, refused or error, so it was not applied');
-  for (const k of new Set(q.keys())) if (k !== 'kind' && k !== 'outcome') said.push(`${k.slice(0, 40)}: not a filter this page offers, so it was not applied`);
+  if (askedOutcome !== '' && outcome === null) said.push('Outcome: not allowed, refused or error, so it was not used');
+  for (const k of new Set(q.keys())) if (k !== 'kind' && k !== 'outcome') said.push(`${k.slice(0, 40)}: not a filter on this page, so it was not used`);
 
   const entries = d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM audit_log')?.n ?? 0;
   const v = d.audit.verify();
@@ -83,11 +83,11 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
     chain: {
       intact: v.intact, broken_at: v.broken_at, entries,
       says: v.intact
-        ? `Intact: all ${entries.toLocaleString('en-GB')} entries recomputed from the genesis, each linked to the one before it.`
-        : `BROKEN at entry ${v.broken_at ?? '?'}: that entry’s hash, or its link to the one before it, does not recompute. Something outside the application has changed the log.`,
+        ? `Audit log checked — nothing changed. All ${entries.toLocaleString('en-GB')} records were checked, each against the one before it.`
+        : `Audit log problem — a record was changed or removed. Tell the Admin now. The problem starts at record ${v.broken_at ?? '?'}.`,
     },
     lines, kinds, applied: { kind, outcome }, said,
-    never: 'What a line says in detail is never shown here, and is not read to draw this page: a kind, the ids and the outcome are the record.',
+    never: 'The details of each line are never shown or read here. You see the kind, the ids and the outcome.',
     command: 'npm run verify-audit',
   };
 }

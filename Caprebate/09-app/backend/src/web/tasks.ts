@@ -89,7 +89,7 @@ export const TASK_ORIGINS: Vocab = Object.freeze({
 
 /** CRM 7 of 10: what a task about Caprebate itself is about. Migration 016's CHECK is the list. */
 export const COMPANY_SUBJECTS: Vocab = Object.freeze({
-  VAT_THRESHOLD: 'Cap Rebate’s own VAT position — the registration threshold',
+  VAT_THRESHOLD: 'Our own VAT — when we must register',
 });
 
 /** The teams a task may wait with while nobody has taken it. Never CLIENT. */
@@ -127,7 +127,7 @@ function dateField(v: string | null | undefined, what: string): Check<string | n
   const t = clean(v);
   if (t === null) return { ok: true, value: null };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || !Number.isFinite(Date.parse(`${t}T12:00:00.000Z`))) {
-    return { ok: false, why: `${what} must be a date, as YYYY-MM-DD.` };
+    return { ok: false, why: `${what} must be a date like 2026-03-31.` };
   }
   return { ok: true, value: t };
 }
@@ -759,8 +759,8 @@ export function nextActionRefusal(db: Db, claim_id: string, to: string): string 
   // The claim is not yet at `to`; its next action is asked about as it stands.
   const r = nextActionReading(db, { id: c.id, stage: null }, '1970-01-01T00:00:00.000Z');
   if (r.breaks === null) return null;
-  return `A claim moving to ${anyStageLabel(to)} keeps exactly one next action, with an owner and a due date, and this one does not: ` +
-    `${r.sentence} Set the claim’s next action first.`;
+  return `A claim moving to ${anyStageLabel(to)} needs one next step, with an owner and a due date. ` +
+    `This one has not: ${r.sentence} Set the claim’s next step first.`;
 }
 
 /**

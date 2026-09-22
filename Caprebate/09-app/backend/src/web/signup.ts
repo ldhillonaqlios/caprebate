@@ -105,7 +105,7 @@ export async function requestSignup(app: App, origin: string, f: URLSearchParams
   const sent = app.email.send({
     to_email: email, kind: 'ACCOUNT_VERIFY', business_id: row.business_id,
     subject: 'Confirm your Cap Rebate login',
-    body: `Confirm this address to finish creating your Cap Rebate login:\n\n${origin}/account/verify?token=${raw}\n\n` +
+    body: `Open the link below to finish your login.\n\n${origin}/account/verify?token=${raw}\n\n` +
       'The link works once, for 24 hours. If you did not ask for a login, you need do nothing.',
   });
   app.audit.append({ at: now, kind: 'CLIENT_SIGNUP_REQUESTED', outcome: sent.refused === null ? 'ALLOWED' : 'REFUSED',

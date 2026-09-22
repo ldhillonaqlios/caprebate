@@ -44,9 +44,9 @@ export { NotFoundAsRefusal };
 
 /** Said on every register page, in these words. */
 export const TWO_PERSON_LIMITATION =
-  'KNOWN LIMITATION — ONE PERSON TODAY. The procedures have the data protection officer decide and the controller ' +
-  'countersign. There is no data protection officer role in this application and one Admin login types both names, ' +
-  'so nothing here checks that two people were involved. The names typed are a record of what was said, not a control.';
+  'KNOWN LIMITATION — ONE PERSON TODAY. The data protection officer should decide, and the controller should sign too. ' +
+  'But there is no data protection officer login here. One Admin login types both names. ' +
+  'So nothing checks that two people took part. The names are a note of who said what, not a check.';
 
 /* ================================================================== *
  * 1 · THE GATE, AND SMALL THINGS
@@ -94,7 +94,7 @@ export function dateField(v: string | null | undefined, what: string): Check<str
   const t = v.trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || !Number.isFinite(Date.parse(`${t}T12:00:00.000Z`))
     || new Date(`${t}T12:00:00.000Z`).toISOString().slice(0, 10) !== t) {
-    return { ok: false, why: `${what} must be a date, as YYYY-MM-DD.` };
+    return { ok: false, why: `${what} must be a date, like 2026-03-31.` };
   }
   return { ok: true, value: t };
 }
@@ -123,7 +123,7 @@ export function momentField(v: string | null | undefined, what: string): Check<s
       return { ok: false, why: `${what}: that time did not exist in the UK — the clocks went forward over it.` };
     }
   }
-  return { ok: false, why: `${what} must be a date and a time, as YYYY-MM-DDTHH:MM (UK time).` };
+  return { ok: false, why: `${what} must be a date and a time, like 2026-03-31T14:30 (UK time).` };
 }
 
 export function vocabField(v: string | null | undefined, vocab: Vocab, what: string): Check<string | null> {
@@ -174,7 +174,7 @@ export const SETTINGS: Vocab = Object.freeze({
 });
 
 export const SETTING_VALUES: Readonly<Record<string, Vocab>> = Object.freeze({
-  AML_IN_SCOPE: Object.freeze({ false: 'Off — nothing blocks a claim', true: 'On — ENGAGEMENT cannot complete without a finished check' }),
+  AML_IN_SCOPE: Object.freeze({ false: 'Off — nothing blocks a claim', true: 'On — a claim cannot pass the engagement step without a finished check' }),
   INSURANCE_POSITION: Object.freeze({ NO_POLICY_IN_FORCE: 'No policy in force', POLICY_IN_FORCE: 'A policy is in force' }),
 });
 
@@ -280,7 +280,7 @@ export function setHold(d: ComplianceDeps, actor: Actor, input: Fields): WriteRe
   const hold_kind = input['hold_kind'] ?? null;
   if (!has(HOLD_KINDS, hold_kind)) return { ok: false, why: 'Choose a legal hold or a restriction.' };
   const record_kind = (input['record_kind'] ?? '').trim();
-  if (!/^[A-Z0-9_]{2,60}$/.test(record_kind)) return { ok: false, why: 'Name the kind of record held, in capitals.' };
+  if (!/^[A-Z0-9_]{2,60}$/.test(record_kind)) return { ok: false, why: 'Name the kind of record held, in capital letters.' };
   const record_id = requiredText(input['record_id'], 100, 'The record held');
   if (!record_id.ok) return record_id;
   const reason_kind = input['reason_kind'] ?? null;

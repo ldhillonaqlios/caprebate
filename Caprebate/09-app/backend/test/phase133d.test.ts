@@ -311,7 +311,7 @@ describe('D4: the ten forms draw a refusal beside its field', () => {
     assert.ok(type, 'the claim page offers no document request form to sales');
     const r = await as('sales').post(`/staff/claims/${c.id}/document-requests`, { type_code: type, why: '', holds_up: 'Kept 10' });
     assert.equal(r.status, 400);
-    assertBeside(r.body, 'why', /Not requested\.<\/strong> A request sent to a client/, 'a document request');
+    assertBeside(r.body, 'why', /Not requested\.<\/strong> Say why we need the document/, 'a document request');
   });
 });
 

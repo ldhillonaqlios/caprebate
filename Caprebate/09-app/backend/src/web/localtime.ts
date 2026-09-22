@@ -374,8 +374,7 @@ export function zoneNotice(nowIso: string): string {
   const t = Date.parse(nowIso);
   const p = localPartsOf(Number.isFinite(t) ? t : Date.now());
   return `All times on this screen are UK time (${p.abbrev} at the moment). ` +
-    'They are stored in UTC and converted for display, so they stay correct across the ' +
-    'March and October changes without anybody adjusting anything.';
+    'They stay right when the clocks change in March and October.';
 }
 
 /**

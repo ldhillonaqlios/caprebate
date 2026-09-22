@@ -298,7 +298,7 @@ function dateField(v: string | null, what: string): Check<string | null> {
   if (v === null || v.trim() === '') return { ok: true, value: null };
   const t = v.trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || !Number.isFinite(Date.parse(`${t}T12:00:00.000Z`))) {
-    return { ok: false, why: `${what} must be a date, as YYYY-MM-DD.` };
+    return { ok: false, why: `${what} must be a date, like 2026-03-31.` };
   }
   return { ok: true, value: t };
 }
@@ -510,13 +510,13 @@ export type JurisdictionReading = { readonly value: string | null; readonly deri
 export function derivedJurisdiction(postcode: string | null, store: PostcodeStore | null = postcodeStore()): JurisdictionReading {
   if (postcode === null || postcode.trim() === '') return { value: null, derived: false, why: 'no postcode is recorded' };
   if (store === null) {
-    return { value: null, derived: false, why: 'the ONS postcode table is not configured on this deployment, so the nation cannot be derived from the postcode' };
+    return { value: null, derived: false, why: 'the postcode lookup is not switched on yet, so we cannot tell the nation from the postcode' };
   }
-  if (POSTCODE_GATE.gated) return { value: null, derived: false, why: 'this lookup is held behind the published-notice permission gate' };
+  if (POSTCODE_GATE.gated) return { value: null, derived: false, why: 'this lookup waits until our privacy notice is published' };
   try {
     const { nation } = resolveServedAuthority(postcode, { store });
     const j = NATION_TO_JURISDICTION[nation];
-    return j === undefined ? { value: null, derived: false, why: 'the nation could not be derived' } : { value: j, derived: true, why: '' };
+    return j === undefined ? { value: null, derived: false, why: 'we could not tell the nation from the postcode' } : { value: j, derived: true, why: '' };
   } catch (e) {
     return { value: null, derived: false, why: (e as Error).message };
   }
@@ -606,7 +606,7 @@ export function backfillClaimFor(db: Db, now: () => string, newId: () => string,
       'INSERT INTO claim_stage_moves (id, claim_id, at, actor_id, actor_role, kind, from_stage, to_stage, reason_code, reason_text) ' +
         "VALUES (?, ?, ?, NULL, NULL, 'CONVERTED', ?, ?, NULL, ?)",
       [newId(), made.id, now(), legacy, placed,
-        'converted from the six-key vocabulary, placed no later than its records evidence'],
+        'moved over from the old stage list, at the step its records show'],
     );
   }
   return made;
@@ -719,7 +719,7 @@ function claimValue(db: Db, assessment_id: string | null): ClaimValue {
       'bare_land_pence, multiplier, indicative_lifetime_saving_pence FROM estimates WHERE assessment_id = ?',
     [assessment_id],
   );
-  if (e === undefined) return { established: false, why: 'no estimate has been sealed for this claim’s assessment' };
+  if (e === undefined) return { established: false, why: 'no estimate has been locked for this claim’s assessment' };
   const a = db.get<{ shown_low_pence: number | null; shown_high_pence: number | null }>(
     'SELECT shown_low_pence, shown_high_pence FROM assessments WHERE id = ?', [assessment_id]);
   return {
@@ -1060,7 +1060,7 @@ function contactValues(input: Fields, stored: ContactValues): Check<ContactValue
   if (Object.hasOwn(input, 'last_contact_at') || Object.hasOwn(input, 'next_follow_up_at')) {
     return {
       ok: false,
-      why: 'The last contact is derived from the timeline, and a follow-up is a task naming the contact — neither is typed in here.',
+      why: 'The last contact comes from the timeline. A follow-up is a task that names the contact. Neither is typed in here.',
     };
   }
   const name = take(input, 'full_name', stored.full_name as string | null, (v) => textField(v, 200, 'A name'));
@@ -1182,7 +1182,7 @@ function jurisdictionOf(r: { postcode: string | null; jurisdiction: string | nul
 } {
   const d = store === undefined ? derivedJurisdiction(r.postcode) : derivedJurisdiction(r.postcode, store);
   if (d.derived && d.value !== null) {
-    return { value: d.value, label: `${words(JURISDICTIONS, d.value, d.value)} — derived from the postcode`, derived: true, why: '' };
+    return { value: d.value, label: `${words(JURISDICTIONS, d.value, d.value)} — worked out from the postcode`, derived: true, why: '' };
   }
   if (r.jurisdiction !== null) {
     return { value: r.jurisdiction, label: `${words(JURISDICTIONS, r.jurisdiction, r.jurisdiction)} — recorded by staff`, derived: false, why: d.why };
@@ -1359,9 +1359,8 @@ function companyOrToken(what: string) {
       ? t
       : {
           ok: false,
-          why: `${what} is recorded as a company name — ending Limited, Ltd, LLP, plc or CIC — or as a role such as ` +
-            'INDIVIDUAL_NOT_RECORDED. It is never a person’s name: a person named here would be a third party in the ' +
-            'claim record.',
+          why: `${what} must be a company name. It ends Limited, Ltd, LLP, plc or CIC. ` +
+            'Or type a role such as INDIVIDUAL_NOT_RECORDED. Never type a person’s name here.',
         };
   };
 }
@@ -1672,8 +1671,8 @@ export function claimView(db: Db, actor: Actor, id: string, opts: { store?: Post
     priority: { value: r.priority, label: vocabLabel(db, 'PRIORITY', r.priority, 'not set') },
     surveyor: r.surveyor_name,
     surveyor_reach: assigned === 0
-      ? 'no surveyor can open this claim yet: a surveyor reaches a claim only through a survey job on it, and none is assigned'
-      : 'reachable by the surveyor assigned to a survey job on this claim',
+      ? 'no surveyor can open this claim yet — they need a survey job on it, and none is set up'
+      : 'the surveyor on this claim’s survey job can open it',
     hold_reason: r.hold_reason, lost_reason: r.lost_reason, expected_completion: r.expected_completion,
     acquisition_date: p?.acquisition_date ?? null,
     acquisition_price: p === undefined || p.acquisition_price_pence === null ? NOT_RECORDED : formatPence(p.acquisition_price_pence),
@@ -1930,7 +1929,7 @@ export function claimTeam(db: Db, actor: Actor, r: ClaimDbRow, obj: Extract<Obj,
   if (can(actor, 'claim_figures.read', { type: 'claim_figures', id: r.id, business_id: r.business_id })) {
     const s = latestSignOff(db, r.id);
     taxAdviser = s === undefined
-      ? { state: 'NOT_RECORDED', reading: 'no sign-off record yet — the tax adviser is on this claim as their record, and there is none' }
+      ? { state: 'NOT_RECORDED', reading: 'no sign-off yet — the tax adviser shows here once their sign-off is recorded' }
       : {
         state: 'RECORDED', adviser: s.adviser, credential: s.credential, signed_on: s.signed_on, recorded: localStamp(s.recorded_at),
         reading: `the sign-off record: ${s.adviser}, ${s.credential}, signed on ${s.signed_on}`,
@@ -1939,8 +1938,8 @@ export function claimTeam(db: Db, actor: Actor, r: ClaimDbRow, obj: Extract<Obj,
   return {
     owner: r.owner_name, surveyor: r.surveyor_name,
     surveyor_reach: obj.assigned_surveyor_ids.length === 0
-      ? 'no surveyor can open this claim yet: a surveyor reaches a claim only through a survey job on it, and none is assigned'
-      : 'reachable by the surveyor assigned to a survey job on this claim',
+      ? 'no surveyor can open this claim yet — they need a survey job on it, and none is set up'
+      : 'the surveyor on this claim’s survey job can open it',
     ...(contacts === undefined ? {} : { contacts }),
     ...(candidates === undefined ? {} : { candidates }),
     ...(taxAdviser === undefined ? {} : { tax_adviser: taxAdviser }),
@@ -1958,7 +1957,7 @@ export function linkClaimContact(d: CrmDeps, actor: Actor, claim_id: string, con
     return { ok: false, why: 'Choose one of this organisation’s own contacts — a claim’s team is drawn from the client’s contacts.' };
   }
   if (!TEAM_TYPES.includes(c.contact_type as typeof TEAM_TYPES[number])) {
-    return { ok: false, why: 'Only a contact recorded as the organisation’s accountant or adviser joins a claim’s team. Change the contact’s type first if that is what they are.' };
+    return { ok: false, why: 'Only an accountant or adviser contact can join a claim’s team. If that is who they are, change the contact’s type first.' };
   }
   if (d.db.get<{ id: string }>('SELECT id FROM claim_contacts WHERE claim_id = ? AND contact_id = ? AND unlinked_at IS NULL', [r.id, c.id]) !== undefined) {
     return { ok: false, why: 'That contact is already on this claim’s team.' };
@@ -2022,16 +2021,16 @@ function estimatedFee(db: Db, actor: Actor, r: { id: string; claim_ref: string; 
   const sector = db.get<{ sector: string | null }>('SELECT sector FROM businesses WHERE id = ?', [r.business_id])?.sector ?? null;
   const e = expectedFeeFor(db, { id: r.id, claim_ref: r.claim_ref, business_id: r.business_id, sector });
   const counted = r.stage === 'INVOICE';
-  const basis = 'Our fee as the finance view computes it: the fee controls applied to the tax adviser’s signed-off figure. Nothing here is typed, and the fee is agreed nowhere else.';
+  const basis = 'Our fee is worked out from the tax adviser’s signed-off figure, using our fee rules. Nobody types it in. It is not agreed anywhere else.';
   const g = e.gate;
   const gbp = (n: number | null): string => (n === null ? 'not known' : formatPence(Math.round(n * 100)));
   const gate = {
     outcome: g.outcome, routes_to: g.routes_to, quote_withheld: g.withholds_quote, placeholder_caveat: g.placeholder_caveat,
     reading: g.outcome === 'FIRE'
-      ? `${(g.routes_to ?? '').toUpperCase()} — the engagement gate fires: this fee is below the loaded cost plus the target margin (${gbp(g.threshold)}, short by ${gbp(g.shortfall)}), so no price is quoted automatically and a person prices the job`
+      ? `${(g.routes_to ?? '').toUpperCase()} — this fee is below our cost plus our margin (${gbp(g.threshold)}, short by ${gbp(g.shortfall)}). So no price is sent out: a person prices the job`
       : g.outcome === 'PASS'
-        ? `the engagement gate passes: this fee covers the loaded cost plus the target margin (${gbp(g.threshold)})`
-        : `the engagement gate is UNDETERMINED — ${g.missing.join(', ')} not known — so it neither passes nor fires`,
+        ? `this fee covers our cost plus our margin (${gbp(g.threshold)})`
+        : `we cannot check this fee yet — ${g.missing.join(', ')} not known. It has not passed and has not failed`,
   };
   return {
     estimated_fee: e.expected_pence === null

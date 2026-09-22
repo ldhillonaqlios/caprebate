@@ -207,10 +207,9 @@ function listPage(d: SurveyorDeps, actor: Actor, rows: readonly S.JobRow[]): str
     body: h`
       <h1>Survey jobs</h1>
       <p class="help">${rows.length} job${rows.length === 1 ? '' : 's'} you can open.
-        ${sealed} awaiting your figures.</p>
+        ${sealed} waiting for your figures.</p>
       ${rows.length === 0
-        ? h`<p class="help">Nothing is assigned to you. A job appears here once the office assigns
-            it — an unassigned job belongs to nobody, and that is the rule rather than a filter.</p>`
+        ? h`<p class="help">Nothing is assigned to you. A job shows here once the office gives it to you.</p>`
         : h`<table><thead><tr>
             <th>Business</th><th>Sector</th><th>Rooms counted</th><th>Rates recorded</th>
             <th>Your figures</th><th>Assigned to</th><th>Stage</th></tr></thead>
@@ -227,9 +226,8 @@ function listPage(d: SurveyorDeps, actor: Actor, rows: readonly S.JobRow[]): str
           </tr>`)}</tbody></table>`}
 
       <div class="gate"><strong>Our estimate is not on these pages until your figures are in.</strong>
-      That is not a screen hiding a number — the figure is not in the data your session receives at
-      all. Commit your figures and it is released automatically: there is no queue and nobody to
-      ask.</div>`,
+      It is not hidden on screen — we do not send it to you at all. Once you commit your figures,
+      you get it straight away. You do not need to ask anyone.</div>`,
   });
 }
 
@@ -239,15 +237,14 @@ function listPage(d: SurveyorDeps, actor: Actor, rows: readonly S.JobRow[]): str
 
 const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
   committed:
-    'Your figures are recorded and our estimate has been released to you. Both are below, and ' +
-    'the release is in the log with its timestamp.',
+    'Your figures are saved and our estimate is now shown to you. Both are below. ' +
+    'The log shows when it was released.',
   amended:
-    'Your amendment is recorded, with your reason. Your original committed figures are kept ' +
-    'unchanged beside it — that pair is what makes the drift measurement possible, and ' +
-    'overwriting them would destroy it.',
+    'Your change is saved, with your reason. Your first figures are kept as they were, next to it. ' +
+    'We compare the two, so we never overwrite the first ones.',
   disclosed:
-    'Recorded. This job now reads EXPOSED rather than CLEAN, and its rate overrides are excluded ' +
-    'from our calibration. That is the honest outcome and it costs you nothing.',
+    'Recorded. This job now reads EXPOSED, not CLEAN. Your rates on it are left out when we ' +
+    'tune our own rates. It costs you nothing.',
 });
 
 /**
@@ -320,12 +317,10 @@ function quarantinePanel(d: SurveyorDeps, w: S.Workspace): Safe {
             ${w.job.committed_at !== null ? h`on ${d.stamp(w.job.committed_at)}` : raw('')}
             and our estimate is on the Your figures tab.</p>`
         : h`<p><strong>Withheld.</strong> ${w.payload.quarantine.notice}</p>
-           <p class="help">It is not on this page and it is not in the data this page was built
-             from. You can check that yourself:
-             <a href="/staff/survey/${w.job.job_id}/payload.json">open the payload</a> and search
-             it. A screen that omitted a field would be presentation; this is the store refusing
-             it.</p>`}
-      <p class="help">What you always receive, whatever the state:
+           <p class="help">It is not on this page, and it is not in the data we sent you. You can
+             check: <a href="/staff/survey/${w.job.job_id}/payload.json">open the data we sent you</a>
+             and search it. We do not just hide it on screen — we never send it.</p>`}
+      <p class="help">What you always get:
         ${w.payload.quarantine.released_always.join(' · ')}.</p>
     </div>`;
 }
@@ -344,7 +339,7 @@ function propertyPanel(w: S.Workspace): Safe {
           </tr>`)}</tbody></table>`}
     <h3>What the client told us</h3>
     <p class="help">${p.answers.length} questions, in the order asked. A skipped question and an
-      “I don’t know” are answers in their own right and are shown as such, not as blanks.</p>
+      “I don’t know” are both shown as answers, not as blanks.</p>
     <table><thead><tr><th>#</th><th>Question</th><th>Answer</th></tr></thead>
       <tbody>${p.answers.map((a) => h`<tr>
         <td>${a.ord + 1}</td><td>${a.question_text}</td>
@@ -360,8 +355,8 @@ function roomsPanel(w: S.Workspace): Safe {
   const r = w.rooms;
   if (r.schedule === null) {
     return h`<h2>The room schedule</h2>
-      <p class="help">We hold no room schedule for this sector. That is a gap in our own list, not
-        a statement about the building.</p>`;
+      <p class="help">We have no room list for this sector yet. That is a gap in our list, not a
+        fact about the building.</p>`;
   }
   return h`
     <h2>The room schedule, and the quantities</h2>
@@ -390,10 +385,9 @@ function roomsPanel(w: S.Workspace): Safe {
           : raw('')}</td>
       </tr>`)}</tbody></table>
     <div class="gate"><strong>An empty box means “not counted”. It does not mean none.</strong>
-      Type 0 where there are none of something — the two are different survey findings and this
-      system keeps them apart. <br>We hold no counts of our own for any building: a count is a
-      fact about one property and we have not stood in this one. The item-level schedule behind
-      these room types — what we think is in each of them, why, and how sure we are — is
+      Type 0 where there are none. The two mean different things, and we keep them apart.
+      <br>We have no counts of our own for any building — we have not been inside this one.
+      Our item list for these rooms (what we think is in each, why, and how sure we are) is
       ${r.source}</div>`;
 }
 
@@ -406,13 +400,13 @@ function ratesPanel(w: S.Workspace): Safe {
       and is offered back to you on your next job in this sector, labelled as yours.</p>
     <div class="gate">${w.rates.no_defaults}</div>
     ${w.rates.context === null
-      ? h`<p class="help">This sector is not one the rate library models.</p>`
+      ? h`<p class="help">We have no rates for this sector.</p>`
       : w.rates.region_derived
         /* THE REGION IS DERIVED FROM THE PROPERTY'S POSTCODE. Phase 110. It is
            named on the screen rather than implied, because a surveyor needs to
            know which of their own past figures they are being shown. */
-        ? h`<p class="help">Your figures are proposed back to you for
-            <strong>${w.rates.context.region}</strong>, derived from this property’s postcode.
+        ? h`<p class="help">Your figures are offered back to you for
+            <strong>${w.rates.context.region}</strong>, worked out from this property’s postcode.
             Figures you gave on jobs in other regions are not offered here.</p>`
         /* AND WHERE IT IS NOT, THE REASON IS ON THE SCREEN AND NOT IN A LOG.
            Four different things can put us here — no postcode, no ingested
@@ -420,9 +414,9 @@ function ratesPanel(w: S.Workspace): Safe {
            Inner-London question — and they need four different people to do
            four different things. "region-not-captured" told a surveyor none
            of that. */
-        : h`<p class="help">Region is <strong>not captured for this job</strong>, so your figures
-            are proposed back to you across the whole country rather than by area. That is worth
-            knowing before you rely on a proposal.<br><span class="say">${w.rates.region_why}</span></p>`}
+        : h`<p class="help">Region is <strong>not known for this job</strong>, so your figures are
+            offered back from the whole country, not this area. Bear that in mind before you use
+            one.<br><span class="say">${w.rates.region_why}</span></p>`}
     <table><thead><tr>
       <th>Field</th><th>Unit</th><th>What we would pre-fill</th><th>Recorded on this job</th>
       </tr></thead>
@@ -445,9 +439,8 @@ function ratesPanel(w: S.Workspace): Safe {
           : h`<strong>${f.recorded.value}</strong> <span class="help">${f.recorded.outcome.toLowerCase()}</span>
              ${f.recorded.reason !== null ? h`<br><span class="say">${f.recorded.reason}</span>` : raw('')}`}</td>
       </tr>`)}</tbody></table>
-    <p class="help">A reason is required where a change is at or above the field’s materiality and
-      is not required below it. A note demanded on every one-per-cent nudge trains everybody to
-      type “n/a”, which destroys the thing the note is for.</p>`;
+    <p class="help">Give a reason when you change a field by enough to matter. Small changes need
+      no reason. If we asked every time, people would just type “n/a”.</p>`;
 }
 
 /* -------------------------------------------------------------- the evidence */
@@ -459,8 +452,8 @@ function evidencePanel(w: S.Workspace): Safe {
     <h2>The evidence</h2>
     <h3>Register data we hold</h3>
     ${p.register_records.length === 0
-      ? h`<p class="help">None. No register connector exists in this build and both gates are shut,
-          so nothing has been retrieved — which is the honest state rather than an empty table.</p>`
+      ? h`<p class="help">None yet. Register lookups are not allowed yet or not switched on yet,
+          so nothing has been looked up.</p>`
       : h`<table><thead><tr><th>Source</th><th>What it gave us</th></tr></thead>
           <tbody>${p.register_records.map((r) => h`<tr>
             <td>${r.source_id}</td>
@@ -471,13 +464,13 @@ function evidencePanel(w: S.Workspace): Safe {
     ${e.documents.length === 0
       ? h`<p class="help">None yet.</p>`
       : h`<table><thead><tr>
-          <th>File</th><th>Type</th><th>State</th><th>Receipt strip</th><th>Quarantine</th>
+          <th>File</th><th>Type</th><th>State</th><th>Read, then deleted</th><th>Released from holding</th>
           </tr></thead>
           <tbody>${e.documents.map((x) => h`<tr>
-            <td>${x.filename}</td><td>${x.doc_type ?? h`<span class="help">unclassified</span>`}</td>
+            <td>${x.filename}</td><td>${x.doc_type ?? h`<span class="help">type not known</span>`}</td>
             <td>${x.state}</td>
             <td>${x.strip_recorded_at ?? h`<span class="help">not recorded</span>`}</td>
-            <td>${x.quarantine_discharged_at ?? h`<span class="help">not discharged</span>`}</td>
+            <td>${x.quarantine_discharged_at ?? h`<span class="help">not yet</span>`}</td>
           </tr>`)}</tbody></table>`}
     <div class="gate">${e.originals_note}</div>
 
@@ -489,8 +482,8 @@ function evidencePanel(w: S.Workspace): Safe {
             <td>${m.question}</td>
             <td><span class="say">${m.why}</span></td>
             <td>${m.blocks === 'BOTH' ? 'both packs' : 'your pack'}${
-              m.blocks_by_default ? h`<br><span class="say">reported as blocking both because
-                nothing recognised it — over-reporting is recoverable, under-reporting is not</span>` : raw('')}</td>
+              m.blocks_by_default ? h`<br><span class="say">shown as holding up both, because we could not
+                tell which. Better to show too much than too little.</span>` : raw('')}</td>
           </tr>`)}</tbody></table>`}`;
 }
 
@@ -523,8 +516,8 @@ function figuresPanel(w: S.Workspace): Safe {
     <h2>Your figures</h2>
     <div class="gate">${w.signature}</div>
     ${committed
-      ? h`<p><strong>Committed.</strong> They are hashed, so they cannot be quietly rewritten, and
-          the release of our estimate is in the log below with its timestamp.</p>`
+      ? h`<p><strong>Committed.</strong> They are locked in the audit log, so no one can change
+          them quietly. The log below shows when our estimate was released.</p>`
       : w.may_commit
         ? h`<form method="post" action="/staff/survey/${w.job.job_id}/commit">
             <p><label for="a">Qualifying plant and machinery (£)</label>
@@ -545,14 +538,13 @@ function figuresPanel(w: S.Workspace): Safe {
               <input id="w-${f.field_id}" name="reason_${f.field_id}" size="30">
               <label><input type="checkbox" name="reviewed_${f.field_id}"> I looked at this field</label>
             </p>`)}
-            <p class="help">The box above each field is not ceremony. A figure you left alone
-              because you agreed with it and a figure you never opened look identical in the data
-              and mean opposite things, and nothing can tell them apart afterwards.</p>
+            <p class="help">Tick the box for each field you checked. Without it, a figure you
+              agreed with looks the same as one you never looked at.</p>
 
             <p><label for="m">On what basis did you reach these?</label>
               <input id="m" name="method_note" size="60" required></p>
-            <p class="help">Required. A commitment without a stated method is not evidence of
-              anything, and this is the sentence that is read back on a challenge.</p>
+            <p class="help">Required. Without it, your figures prove nothing. We read this back if
+              the claim is ever challenged.</p>
             <p><button type="submit">Commit my figures — this releases our estimate to me</button></p>
           </form>`
         : h`<p class="help">This job is not assigned to you, so you cannot commit figures on it.</p>`}
@@ -560,17 +552,16 @@ function figuresPanel(w: S.Workspace): Safe {
     ${est !== undefined
       ? h`<h3>Our estimate, now released</h3>
          <table><tbody>
-           <tr><th>Qualifying expenditure</th><td>${formatPence(est.qualifying_expenditure_pence)}</td></tr>
+           <tr><th>Spend that counts</th><td>${formatPence(est.qualifying_expenditure_pence)}</td></tr>
            <tr><th>Qualifying percentage</th><td>${Math.round(est.qualifying_pct * 1000) / 10}%</td></tr>
            <tr><th>Main pool</th><td>${formatPence(est.pool_split_main_pence)}</td></tr>
            <tr><th>Special rate pool</th><td>${formatPence(est.pool_split_special_pence)}</td></tr>
            <tr><th>Bare land</th><td>${formatPence(est.bare_land_pence)}</td></tr>
          </tbody></table>
-         <p class="help">You may amend your own figures after seeing this — you must be able to, if
-           it reveals a genuine error. Every change after release carries a mandatory reason,
-           because an unexplained one is indistinguishable from anchoring drift. <strong>Your
-           original committed figures are kept unchanged</strong>; the amendment sits beside them
-           in the log, and it is that pair the drift measurement reads.</p>
+         <p class="help">You may change your own figures after seeing this, if it shows a real
+           mistake. Every change now needs a reason. Without one, we cannot tell a fix from being
+           pulled toward our figure. <strong>Your first figures are kept as they were</strong>;
+           the change sits beside them in the log, and we compare the two.</p>
          ${w.may_commit
            ? h`<form method="post" action="/staff/survey/${w.job.job_id}/amend">
                <h4>Amend your figures</h4>
@@ -591,11 +582,10 @@ function figuresPanel(w: S.Workspace): Safe {
 
     ${w.may_commit
       ? h`<h3>If the client has told you our figure</h3>
-         <p class="help">We cannot stop that happening — a client who saw a range on our website can
-           read it down the telephone, and no control of ours reaches that conversation. What we can
-           do is record it. Telling us costs you nothing: it marks the job EXPOSED, which excludes
-           its rate overrides from our own calibration, and that is a statement about our data
-           rather than about your work.</p>
+         <p class="help">We cannot stop that. A client who saw a range on our website can read it
+           out to you on the phone. What we can do is record it. Telling us costs you nothing. It
+           marks the job EXPOSED, and your rates on it are left out when we tune our own. That is
+           about our data, not about your work.</p>
          <form method="post" action="/staff/survey/${w.job.job_id}/disclosure">
            <p><label for="dn">What were you told, and by whom?</label>
              <input id="dn" name="note" size="60" required></p>
@@ -611,10 +601,10 @@ function logPanel(d: SurveyorDeps, w: S.Workspace): Safe {
   return h`
     <h2>The record</h2>
     <p class="help">Verdict on this job: <strong>${p.verdict}</strong>.
-      Chain ${p.chain_intact ? 'intact' : h`<strong>BROKEN — an entry has been removed, edited or reordered</strong>`}.
+      Audit log ${p.chain_intact ? 'intact' : h`<strong>BROKEN — an entry has been removed, changed or moved</strong>`}.
       ${p.denied_attempts} attempt${p.denied_attempts === 1 ? '' : 's'} to open the estimate before
       commitment${p.client_disclosures > 0
-        ? h`, and ${p.client_disclosures} self-reported disclosure by the client` : raw('')}.</p>
+        ? h`, and ${p.client_disclosures} time${p.client_disclosures === 1 ? '' : 's'} you said the client told you our figure` : raw('')}.</p>
     ${p.drift !== null
       ? h`<p class="help">After release, ${p.drift.amendments} amendment${p.drift.amendments === 1 ? '' : 's'},
           of which ${p.drift.moved_toward_estimate} moved toward our estimate.</p>`
@@ -624,10 +614,9 @@ function logPanel(d: SurveyorDeps, w: S.Workspace): Safe {
         <td>${e.seq}</td><td>${e.kind.replace(/_/g, ' ').toLowerCase()}</td>
         <td class="when">${d.stamp(e.at)}</td><td>${e.actor}</td>
       </tr>`)}</tbody></table>
-    <div class="gate">Every line above is hash-chained to the one before it, and the chain is
-      recomputed from the stored rows rather than from the object that wrote them. A removed or
-      reordered entry shows up as a broken chain, and a denied attempt is kept because it is
-      evidence in its own right.</div>`;
+    <div class="gate">Each line above is linked to the one before it in the audit log. We check
+      the links from the saved rows. If a line is removed or moved, the log shows as broken. A
+      refused attempt is kept too, as evidence.</div>`;
 }
 
 /** A hidden label, for the per-row inputs in the room table. */

@@ -108,7 +108,7 @@ export const LEAD_SORTS: Vocab = Object.freeze({
 
 export const CLAIM_STATUSES: Vocab = Object.freeze({
   OPEN: 'At one of the ten stages', ON_HOLD: 'On hold', CLOSED: 'Closed', EXITED: 'Left the procedure by an exit',
-  UNKNOWN: 'Stage not recognised',
+  UNKNOWN: 'Stage not known',
 });
 
 const DEFAULT_SORT: Readonly<Record<ListKey, string>> = Object.freeze({ CLAIMS: 'company', LEADS: 'newest' });
@@ -136,7 +136,7 @@ export function readParams(list: ListKey, q: URLSearchParams): { params: ListPar
     const raw = (q.get(f.key) ?? '').trim();
     if (raw === '') continue;
     if (raw.length > 100) { ignored.push(`${f.label}: longer than any value it can have`); continue; }
-    if (f.kind === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(raw)) { ignored.push(`${f.label}: not a date, as YYYY-MM-DD`); continue; }
+    if (f.kind === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(raw)) { ignored.push(`${f.label}: not a date like 2026-03-31`); continue; }
     if (f.kind === 'money') {
       const pounds = raw.replace(/[£,\s]/g, '');
       if (!/^\d{1,12}$/.test(pounds)) { ignored.push(`${f.label}: not a whole number of pounds`); continue; }
@@ -313,7 +313,7 @@ export function claimsList(db: Db, actor: Actor, p: ListParams, ignored: readonl
   for (const f of CLAIM_FILTERS) {
     const v = p.filters[f.key];
     if (v === undefined) continue;
-    if (f.needs_working === true && shape === 'MONEY') { said.push(`${f.label}: not a column a reader of client and reference reads, so it was not applied`); notApplied.push(f.key); continue; }
+    if (f.needs_working === true && shape === 'MONEY') { said.push(`${f.label}: not a column your role sees, so it was not applied`); notApplied.push(f.key); continue; }
     if (f.needs_value === true && shape !== 'VALUE') { said.push(`${f.label}: the value is not shown to this role, so it was not applied`); notApplied.push(f.key); continue; }
     const before = rows;
     switch (f.key) {
@@ -338,7 +338,7 @@ export function claimsList(db: Db, actor: Actor, p: ListParams, ignored: readonl
     applied.push({ key: f.key, label: f.label, value: f.kind === 'choice' ? labelOf(f.key, v) : f.kind === 'money' ? `£${Number(v).toLocaleString('en-GB')}` : v });
   }
   if (valueUnknown > 0) {
-    said.push(`${valueUnknown} ${valueUnknown === 1 ? 'claim carries' : 'claims carry'} no sealed estimate and ${valueUnknown === 1 ? 'is' : 'are'} in no value filter — not known is not below or above a figure`);
+    said.push(`${valueUnknown} ${valueUnknown === 1 ? 'claim has' : 'claims have'} no estimate yet, so ${valueUnknown === 1 ? 'it is' : 'they are'} left out of the value filter. Not known is not above or below a figure`);
   }
 
   let sort = p.sort;

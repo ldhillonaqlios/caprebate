@@ -195,7 +195,7 @@ function emptyToNull(v: string | null): string | null {
 
 export const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
   research: 'The research was run. What it reached is below.',
-  retry: 'That source was retried.',
+  retry: 'We tried that lookup again.',
   sent: 'The question is in the client’s portal.',
   answered: 'Recorded — and the file says a member of staff entered it, not the client.',
   withdrawn: 'Withdrawn. The fact it was asking about is back on the missing list, and the record says who took it back.',
@@ -271,7 +271,7 @@ export function panel1(p: E.BusinessPage): Safe {
     <div>The range they were shown:
       ${qa.range === null
         ? h`<span class="help">not shown to you yet — it opens once the surveyor has sent their figures</span>`
-        : h`<strong>${qa.range}</strong>`}${why(h`${RANGE_QUALIFIER} The figure is read from the one place the client’s own screen reads, so the two cannot differ.`)}</div>
+        : h`<strong>${qa.range}</strong>`}${why(h`${RANGE_QUALIFIER} It is the same figure the client sees on their own screen.`)}</div>
     <table class="stack"><thead><tr><th>#</th><th>Question</th><th>Answer</th></tr></thead>
       <tbody>${qa.rows.map((x) => h`<tr class="${x.state.toLowerCase()}">
         <td>${x.ord + 1}</td><td data-label="Question">${x.question_text}</td>
@@ -297,7 +297,7 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
         ? h`on — the engagement letter is signed${s.engagement.signed_at !== null ? h` (${s.engagement.signed_at.slice(0, 10)})` : raw('')}.`
         : 'off until the engagement letter is signed.'}${why(h`A lookup that is not allowed yet is simply not made. Each fact it would give stays on the list as a question, and nothing is guessed. ${
           s.free.open ? raw('') : h`Free lookups wait for this: ${s.free.requires}. Turning them on is a data protection decision, not a button on this page. `}${
-          s.engagement.signed ? raw('') : h`Paid lookups: ${s.engagement.why}. The server checks the signed letter itself — never this page.`}`)}</li>
+          s.engagement.signed ? raw('') : h`Paid lookups: ${s.engagement.why}. We check the signed letter on our system, not on this page.`}`)}</li>
     </ul>
 
     <table class="stack"><thead><tr><th>Where from</th><th>Status</th><th>What happened</th></tr></thead>
@@ -322,7 +322,7 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
     ${moreDetail(h`
       <table class="stack"><thead><tr><th>Where from</th><th>Free or paid</th><th>Publisher</th><th>Licence</th><th>Read on</th></tr></thead>
         <tbody>${s.sources.map((x) => h`<tr><td>${x.dataset}</td>
-          <td data-label="Free or paid">${x.tier === 'PAID' ? 'paid' : 'free'}${x.tier_settled ? raw('') : h`<br><span class="say">not settled yet — treated as paid</span>`}</td>
+          <td data-label="Free or paid">${x.tier === 'PAID' ? 'paid' : 'free'}${x.tier_settled ? raw('') : h`<br><span class="say">not sure if free or paid — treated as paid</span>`}</td>
           <td data-label="Publisher">${x.publisher}</td><td data-label="Licence">${x.licence_name}</td>
           <td data-label="Read on" class="when">${x.retrieved_at ?? h`<span class="help">—</span>`}</td></tr>`)}</tbody></table>
       <p class="help">A lookup that has not run has no button of its own: you choose when to run them all, not which ones.
@@ -347,7 +347,7 @@ export function panel3(p: E.BusinessPage, claims: readonly { readonly id: string
     return h`<p class="help">Nothing is missing. Every fact we ask for is answered.</p>`;
   }
   return h`
-    <div class="help">${p.missing.length} still missing.${why('This list is worked out from what the lookups still lack, what the client did not answer, and what the estimate could not confirm. Nobody types it, so it cannot fall out of step. An unknown fact is asked, never guessed, and a missing fact is never filled in with the answer that would suit the client.')}</div>
+    <div class="help">${p.missing.length} still missing.${why('This list is worked out from what the lookups still lack, what the client did not answer, and what the estimate could not confirm. We work this list out from the facts; nobody edits it. An unknown fact is asked, never guessed, and a missing fact is never filled in with the answer that would suit the client.')}</div>
     <table class="stack"><thead><tr>
       <th>What is missing</th><th>Holds up</th><th>Asked?</th><th>Ask for it</th>
     </tr></thead>
@@ -460,10 +460,10 @@ function withdrawForm(business_id: string, t: E.TaskView): Safe {
 
 function panel5(p: E.BusinessPage): Safe {
   if (!p.may_read_notes) {
-    return h`<div class="help">Your login cannot read internal notes.${why('The rule that refuses it is the one the store asks before it reads, so no other screen would show them to you.')}</div>`;
+    return h`<div class="help">Your login cannot read internal notes.${why('No other screen will show them to you either.')}</div>`;
   }
   return h`
-    <div class="help">Internal only — the client and the surveyor never see these.${why('Not because no screen draws them, but because the rule that decides who may read a note lists neither of them.')}</div>
+    <div class="help">Internal only — the client and the surveyor never see these.${why('Their logins are not allowed to read notes at all.')}</div>
     ${p.may_write
       ? h`<form method="post" action="/staff/clients/${p.business.id}/notes">
            <label class="fl" for="note">Add a note</label>

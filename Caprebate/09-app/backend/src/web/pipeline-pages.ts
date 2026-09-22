@@ -370,7 +370,7 @@ function leadsHead(d: PipelinePageDeps, actor: Actor, msg: string | undefined, a
 
 function recordLeadForm(d: PipelinePageDeps, orgs: readonly { id: string; name: string }[]): Safe {
   return h`<div class="pblock" id="record-lead"><div class="pnum">Record a lead by hand</div>
-        <div class="help">A referral, an event, an outbound call, or another property for an existing client.${why('A lead carries no person: an organisation’s contacts are recorded on the organisation.')}</div>
+        <div class="help">A referral, an event, an outbound call, or another property for an existing client.${why('A lead names no person. Add the people as contacts on the organisation.')}</div>
         <form method="post" action="/staff/leads">
           <label>An organisation already recorded <select name="business_id">${people(orgs, null, 'None. Name it below.')}</select></label>
           <label>Or the organisation's name <input name="prospect_organisation"></label>
@@ -502,7 +502,7 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
           <button type="submit">Save</button></form></div>`}
 
       ${v.edit === undefined || !v.may_convert ? raw('') : h`<div class="pblock" id="convert"><div class="pnum">Convert — this opens the claim</div>
-        <div class="help">The checks are asked again when you press the button.${why('The claim opens at the assessment stage, on the organisation’s first property unless you name another, carrying the lead’s assessment.')}</div>
+        <div class="help">The checks are asked again when you press the button.${why('The claim opens at the assessment step, with the lead’s assessment. It uses the organisation’s first property, unless you pick another.')}</div>
         <form method="post" action="/staff/leads/${v.id}/convert">
           ${v.organisation.id !== null ? raw('') : h`<label>Link to the organisation the assessment created
             <select name="business_id">${people(v.edit.organisations, null, 'choose')}</select></label>`}
@@ -572,20 +572,20 @@ function boardPage(d: PipelinePageDeps, actor: Actor, b: C.Board, msg: string | 
   const open = b.columns.reduce((n, c) => n + c.cards.length, 0);
   return page({
     title: 'Pipeline', nav: d.nav(actor), wide: true,
-    body: h`<div class="pagehead"><div><p class="eyebrow">Claims</p><h1>Pipeline</h1></div><p class="help">${open} in the procedure · ${b.on_hold.length} on hold</p></div>${done(msg)}
-      <div class="help">A claim moves one stage at a time, and each move is checked when you press it.${why(h`The operating procedure's ten stages, enquiry to defence pack.
-      <strong>Every move asks that stage's gate on the server</strong> — the button is a courtesy, not a key. The fee
-      trigger is read at its most cautious, ${b.fee_trigger}, while it is undecided.`)}</div>
+    body: h`<div class="pagehead"><div><p class="eyebrow">Claims</p><h1>Pipeline</h1></div><p class="help">${open} in progress · ${b.on_hold.length} on hold</p></div>${done(msg)}
+      <div class="help">A claim moves one step at a time, and each move is checked when you press it.${why(h`There are ten steps, from enquiry to defence pack.
+      <strong>Each step is checked before a claim can move on</strong> — the button alone does not move it. Our fee is
+      due ${b.fee_trigger}.`)}</div>
       <ol class="board" aria-label="The pipeline, one column per stage">${b.columns.map((col) => column(`stage-${col.key}`, col.label, col.cards,
-        col.owner === '' && col.gate === '' ? raw('') : h`<details><summary>Owner and gate</summary>
+        col.owner === '' && col.gate === '' ? raw('') : h`<details><summary>Owner and what this step needs</summary>
           ${col.owner === '' ? raw('') : h`<p class="help">Owner: ${brandName(col.owner)}</p>`}
-          ${col.gate === '' ? raw('') : h`<p class="help">The gate: ${brandName(col.gate)}</p>`}</details>`))}</ol>
-      <ol class="board" aria-label="Claims on hold and claims that have left the procedure">
+          ${col.gate === '' ? raw('') : h`<p class="help">What this step needs: ${brandName(col.gate)}</p>`}</details>`))}</ol>
+      <ol class="board" aria-label="Claims on hold and claims that have stopped">
         ${column('on-hold', 'On hold', b.on_hold)}
-        ${exited.length === 0 ? h`<li class="empty-col"><h2 class="colhead"><span>Exits — the record is kept</span></h2><p class="none">No claim has exited.</p></li>`
+        ${exited.length === 0 ? h`<li class="empty-col"><h2 class="colhead"><span>Stopped — the record is kept</span></h2><p class="none">No claim has stopped.</p></li>`
           : exited.map((e) => column(`exit-${e.key}`, `Exit: ${e.label}`, e.cards))}
-        ${b.unrecognised.length === 0 ? raw('') : column('unrecognised', 'Stage not recognised', b.unrecognised,
-          h`<p class="help">Nobody has placed these claims in the procedure. An admin may reopen one at the enquiry.</p>`)}
+        ${b.unrecognised.length === 0 ? raw('') : column('unrecognised', 'No step set', b.unrecognised,
+          h`<p class="help">No step is set for these claims yet. An admin may reopen one at the enquiry.</p>`)}
       </ol>
       ${dataLink(actor, '/staff/pipeline/view.json')}`,
   });

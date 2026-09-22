@@ -47,7 +47,7 @@ import { acceptClientBytes, finishUpload, issuedJob } from './uploads.ts';
 import { singleFile } from './multipart.ts';
 import { readUpload, receiveFile } from './client-files-pages.ts';
 import { READ_AND_DELETED } from './originals.ts';
-import { receivableTypes, startDocumentUpload, type RequestView } from './documents.ts';
+import { receivableTypes, startDocumentUpload, readLines, type RequestView } from './documents.ts';
 import { handleStaff, handlePortalSettings } from './staff.ts';
 import { mayEnterBackOffice, NotFoundAsRefusal } from './backoffice.ts';
 import { navContext, staffShell, portalShell, type NameSwitches, type NavContext } from './navigation.ts';
@@ -477,7 +477,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     // quarantine that has already been discharged.
     const job = issuedJob(d.app.db, doc_id);
     if (job === null) {
-      html(res, 409, simple('That link has been used', 'The file this link was issued for has already been received and processed. Ask for a new link.'));
+      html(res, 409, simple('That link has been used', 'We already have the file for this link. Ask us for a new link.'));
       return 'handled';
     }
     let bytes: Buffer;
@@ -499,12 +499,12 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     // application wrote the bytes to quarantine and stopped here.
     const done = await finishUpload(deps, job, r.written_at);
     if (done.error !== undefined) {
-      html(res, 422, simple('Not accepted', `The upload handler refused the file (${done.error.code}). The copy held in quarantine has been deleted.`));
+      html(res, 422, simple('Not accepted', 'We could not use this file, so we have deleted it. Please send another.'));
       return 'handled';
     }
     html(res, 200, simple('Received', done.received_request === null || done.received_request === undefined
-      ? 'The file has passed the receipt strip, and the original has been deleted from quarantine.'
-      : 'The file has passed the receipt strip, the original has been deleted from quarantine, and the request it answers is marked received.'));
+      ? 'We read it, then deleted the file.'
+      : 'We read it, then deleted the file. What we asked you for is now marked received.'));
     return 'handled';
   }
 
@@ -678,8 +678,8 @@ async function portalRoutes(
     // STUBBED, AND IT SAYS SO. src/stubs/signature.ts contacts no provider.
     html(res, 501, simple(
       'Signing is not connected',
-      'There is no signature provider in this build and no payment processor anywhere in it. ' +
-      'The letter’s state machine is real; the act of signing is not wired to anything.'));
+      'Online signing is not switched on yet, and we never take payments here. ' +
+      'We record the letter’s progress, but signing is not connected to anything yet.'));
     return 'handled';
   }
 
@@ -758,8 +758,8 @@ async function portalRoutes(
   const docMatch = /^\/portal\/documents\/([A-Za-z0-9-]+)$/.exec(path);
   if (docMatch && method === 'GET') {
     const doc = P.document(db, actor, docMatch[1] ?? '');
-    const trace = P.documentTrace(db, actor, doc.id);
-    html(res, 200, documentPage(doc, trace));
+    // PHASE 144: the same plain counts the staff Files folder shows, from the same reader — never the handler's own step log.
+    html(res, 200, documentPage(doc, readLines(db, doc)));
     return 'handled';
   }
 
@@ -798,10 +798,9 @@ async function portalRoutes(
     });
     html(res, 410, simple(
       'That file no longer exists, by design',
-      'The original was deleted from quarantine once the receipt strip had run, and under the ' +
-      'settings this build uses it was never copied to durable storage. What we keep is the ' +
-      'structured information read out of it, not the file. The record of that deletion is on ' +
-      'the document’s own page.'));
+      'We read it, then deleted the file. We did not keep a copy. ' +
+      'We keep what we took from it, not the file. ' +
+      'The document’s own page shows when we deleted it.'));
     return 'handled';
   }
 
@@ -1028,16 +1027,15 @@ function home(actor: Actor | undefined): string {
     nav: nav(actor),
     body: h`
       <h1>There is tax relief built into your building.</h1>
-      <p>Cap Rebate establishes, on evidence, what capital allowances a healthcare property owner is
-      entitled to when buying, building or fitting out premises — and says so plainly, whether the
-      answer is large, small or nil.</p>
-      <p>Every apportionment is signed by a chartered surveyor and every filing position is reviewed
-      by a chartered tax adviser. We work alongside your accountant, who keeps the filing and the
-      client relationship. If there is no claim, we tell you early, in writing, and explain why.</p>
+      <p>Cap Rebate finds out, on evidence, what capital allowances you can claim when you buy, build
+      or fit out healthcare premises. We tell you plainly, whether the answer is large, small or nothing.</p>
+      <p>A chartered surveyor signs every split of costs. A chartered tax adviser checks every claim
+      before it is filed. We work alongside your accountant, who still files your return and looks after you.
+      If there is no claim, we tell you early, in writing, and explain why.</p>
       <p><a class="cta" href="/assessment">Start the free assessment</a></p>
-      <div class="gate">We do not look anything up about you from this page.${why(h`No external lookup runs anywhere in this
-      system yet. Free public-register lookups are ${gate.enabled ? 'switched on' : 'switched off'}, and they wait on this: ${gate.requires}.
-      Paid lookups wait on a signed engagement letter, checked on our server, and on a member of our team starting the research.`)}</div>`,
+      <div class="gate">We do not look anything up about you from this page.${why(h`We do not look anything up about anyone yet.
+      Free checks of public records are ${gate.enabled ? 'switched on' : 'switched off'}, and they wait on this: ${gate.requires}.
+      Paid checks wait until you have signed our engagement letter and one of our team starts the research.`)}</div>`,
   });
 }
 
@@ -1186,7 +1184,7 @@ function gatedExitPage(draft: Draft, actor: Actor | undefined): string {
       <h2>On these answers, there is likely little or no claim</h2>
       <p class="help">And here is exactly why — not a dead end, and not a soft no.</p>
       <div class="assumebox"><strong>The reason.</strong><p>${g.message ?? ''}</p></div>
-      <div class="assumebox"><strong>Still worth knowing.</strong><p>This says nothing about money you have spent since. Fit-out, refurbishment and plant you installed yourself are a separate claim on a separate basis.</p></div>
+      <div class="assumebox"><strong>Still worth knowing.</strong><p>This says nothing about money you have spent since. Work you paid for yourself, like a fit-out, a refurbishment or new plant, is a separate claim with its own rules.</p></div>
       <h2>${o.heading ?? ''}</h2>
       <p class="help">${o.body ?? ''}</p>
       <p><a class="cta" href="/assessment/close">Talk to someone →</a></p>`,
@@ -1207,9 +1205,8 @@ function gatedThankYouPage(booked: { booked_at: string | null }, actor: Actor | 
       ${booked.booked_at !== null
         ? h`<p>We have held <strong>${clockOf(booked.booked_at)}</strong> for your call.</p>
             <p class="help">The calendar invitation has not been sent yet.</p>`
-        : h`<p class="help">No specific time is held. Either the channel you chose does not book a
-            moment, or the time you picked had gone — and we would rather ring you to arrange one
-            than lose your enquiry over it.</p>`}
+        : h`<p class="help">No time is held yet. Either the way you chose to talk does not book a time,
+            or the time you picked had gone. We will ring you to arrange one.</p>`}
       <p class="help">Nothing has been looked up about you or your business.</p>`,
   });
 }
@@ -1258,9 +1255,9 @@ function closePage(
         <label class="ck"><input type="checkbox" name="marketing_optin"> Separately, you may send me occasional updates. (Optional, and never a condition of submitting.)</label>
         <button class="cta" type="submit">Send</button>
       </form>
-      <div class="gate">Only a telephone call books a set time. Text message and WhatsApp are not offered yet.${why(h`WhatsApp is a
-      third-party processor and it is not yet on our published list of processors, so we do not offer it. Email and the
-      telephone without a set time take your details, and we contact you.`)}</div>`,
+      <div class="gate">Only a telephone call books a set time. Text message and WhatsApp are not offered yet.${why(h`WhatsApp is run by
+      another firm. It is not yet on our public list of firms that handle your data, so we do not offer it.
+      If you choose email, or a call with no set time, we take your details and contact you.`)}</div>`,
   });
 }
 
@@ -1272,15 +1269,14 @@ function submittedPage(
     title: 'Thank you', nav: nav(actor),
     body: h`
       <h1>Thank you — that is with us.</h1>
-      <p>Your assessment has been recorded and the back office can see it. Somebody will be in touch
+      <p>We have your assessment, and our team can see it. Somebody will be in touch
       through the channel you chose.</p>
       <p>The range you were shown: <strong>${formatShownRange(out)}</strong>.</p>
       ${booked.booked_at !== null
         ? h`<p>We have held <strong>${clockOf(booked.booked_at)}</strong> for your call.</p>
             <p class="help">The calendar invitation has not been sent yet.</p>`
-        : h`<p class="help">No specific time is held. Either the channel you chose does not book a
-            moment, or the time you picked had gone — and we would rather ring you to arrange one
-            than lose your enquiry over it.</p>`}
+        : h`<p class="help">No time is held yet. Either the way you chose to talk does not book a time,
+            or the time you picked had gone. We will ring you to arrange one.</p>`}
       <p class="help">Your reference: <code>${out.assessment_id}</code>. Nothing has been looked up about your property.</p>
       ${offer === undefined ? h`<p><a href="/login">Log in to your claim</a></p>` : h`
       <div class="pblock"><div class="pnum">Follow your claim online</div>
@@ -1365,8 +1361,8 @@ function loginPage(error: string | undefined): string {
         <label class="fl" for="login-password">Password</label><input class="fi" id="login-password" type="password" name="password" autocomplete="current-password" required>
         <button class="cta" type="submit">Sign in</button>
       </form>
-      <p class="help">Sign-in is rate limited and failures are deliberately vague — we do not say
-      whether an address is known to us.</p>`,
+      <p class="help">After too many tries you must wait a while. If sign-in fails, we do not say why.
+      That way, nobody can find out who has a login.</p>`,
   });
 }
 
@@ -1475,9 +1471,8 @@ function portalPage(
         ? h`<details><summary>Show each step</summary><ul class="steps">${progress.steps.map((s) => h`
             <li class="${s.state}"><span class="lab">${stepName(s.stage, named)}</span><br>
             <span class="say">${s.stage.toTheClient}</span></li>`)}</ul></details>`
-        : h`<div class="flag">We cannot say where this claim is. Its recorded stage
-            (<code>${business.stage}</code>) is not one this page knows, and guessing would be
-            worse than saying so.</div>`}
+        : h`<div class="flag">We cannot show where this claim is right now, and we will not guess.
+            Ask us and we will tell you. <span class="help">(Step: <code>${business.stage}</code>)</span></div>`}
       </section>
 
       <section class="card"><div class="card-h"><h2>What we have issued to you</h2></div>
@@ -1533,7 +1528,7 @@ function portalPage(
         <table><thead><tr><th>Document</th><th>Version</th><th>State</th><th></th></tr></thead><tbody>
         ${dcs.map((x) => h`<tr><td>${x.type_label === null ? x.filename : `${x.type_label} ${x.seq ?? ''}`}</td>
           <td>${x.version_no === null ? '—' : String(x.version_no)}</td>
-          <td>${x.failure_code ?? x.state}</td>
+          <td>${x.failure_code !== null ? 'We could not use it' : x.strip_recorded_at !== null && x.quarantine_discharged_at !== null ? 'Read' : 'Not read yet'}</td>
           <td><a href="/portal/documents/${x.id}">What we did with it</a></td></tr>`)}</tbody></table>`}
       <form method="post" action="/portal/documents" enctype="multipart/form-data">
         <p class="fl"><strong>Send us a document</strong></p>
@@ -1617,12 +1612,12 @@ function letterPage(actor: Actor, business: P.Business, eng: P.EngagementView | 
       <p>Status: <strong>${eng === null ? 'not prepared' : eng.state.toLowerCase().replace('_', ' ')}</strong>.</p>
 
       <div class="flag"><strong>Some terms are not settled yet, so they are left blank on purpose.</strong>
-      ${letter.openTerms.length} of them. We will not issue the letter until they are.${why(h`Filling in a plausible figure would put a
-      number nobody has decided into a contract. These terms are CAP REBATE LTD’s to settle.`)}
+      ${letter.openTerms.length} of them. We will not issue the letter until they are.${why(h`If we guessed a figure, the contract would hold a
+      number nobody has agreed. These terms are CAP REBATE LTD’s to settle.`)}
       <ul>${letter.openTerms.map((t) => h`<li><strong>${t.clause}</strong> — <q class="letter-quote">${t.text}</q></li>`)}</ul></div>
 
-      ${letter.specimens.length > 0 ? h`<div class="flag"><strong>Specimen content still in this
-      template:</strong> ${letter.specimens.join('; ')}. It is illustrative and is not your figure.</div>` : raw('')}
+      ${letter.specimens.length > 0 ? h`<div class="flag"><strong>Sample wording still in this
+      letter:</strong> ${letter.specimens.join('; ')}. It is an example, not your figure.</div>` : raw('')}
 
       <div class="letter">${letter.paragraphs.map((p) => p.heading
         ? h`<p class="clause">${p.text}</p>`
@@ -1656,23 +1651,26 @@ function uploadTicketPage(doc_id: string, url: string, expires_at: string): stri
   });
 }
 
-function documentPage(doc: P.DocumentView, trace: { contract_step: number; action: string; outcome: string; at: string }[]): string {
+/**
+ * THE CLIENT'S OWN DOCUMENT PAGE. PHASE 144: what we read is said in the same plain counts the staff Files folder shows
+ * ("We read 3 pages."), from `readLines` — counts only, never the file's words, a note or a figure. Anything not known yet
+ * is said as not known, never left out.
+ */
+function documentPage(doc: P.DocumentView, read: { state: 'READ' | 'WAITING' | 'REFUSED'; lines: readonly string[] }): string {
   return page({
     title: doc.filename, body: h`
       <h1>${doc.type_label === null ? doc.filename : `${doc.type_label} ${doc.seq ?? ''} — version ${doc.version_no ?? ''}`}</h1>
       <table><tbody>
-        <tr><th>State</th><td>${doc.failure_code ?? doc.state}</td></tr>
-        <tr><th>Classified as</th><td>${doc.doc_type ?? 'not classified'}</td></tr>
-        <tr><th>Recognised format</th><td>${doc.sniffed_as ?? '—'} (from the bytes, not the file name)</td></tr>
-        ${doc.strip_recorded_at === null ? raw('') : h`<tr><th>Our checks finished</th><td>${localStamp(doc.strip_recorded_at)}</td></tr>`}
-        ${doc.quarantine_discharged_at === null ? raw('') : h`<tr><th>The original was deleted</th><td>${localStamp(doc.quarantine_discharged_at)}</td></tr>`}
+        <tr><th>Sent</th><td>${localStamp(doc.created_at)}</td></tr>
+        <tr><th>Where it is</th><td>${read.state === 'READ' ? 'We have read it' : read.state === 'REFUSED' ? 'We could not use it' : 'Not read yet'}</td></tr>
+        <tr><th>What it is</th><td>${doc.type_label ?? 'Not known yet'}</td></tr>
+        <tr><th>Kind of file</th><td>${doc.sniffed_as === null ? 'Not known yet' : `${doc.sniffed_as} (we checked the file itself, not its name)`}</td></tr>
+        <tr><th>We read it</th><td>${doc.strip_recorded_at === null ? 'Not yet' : localStamp(doc.strip_recorded_at)}</td></tr>
+        <tr><th>We deleted the file</th><td>${doc.quarantine_discharged_at === null ? 'Not yet' : localStamp(doc.quarantine_discharged_at)}</td></tr>
       </tbody></table>
 
-      <h3>What we did with it, step by step</h3>
-      <div class="help">Each line is one of the steps we take with every file.${why('Every line is written by the upload handler as it discharges one step of the twelve-step receipt contract. This page reports; it does not narrate.')}</div>
-      <table class="trace"><thead><tr><th>Step</th><th>Action</th><th>Outcome</th><th>At</th></tr></thead>
-      <tbody>${trace.map((e) => h`<tr><td>${e.contract_step}</td><td>${e.action}</td>
-        <td>${e.outcome}</td><td class="when">${localStamp(e.at)}</td></tr>`)}</tbody></table>
+      <h3>What we did with it</h3>
+      <ul>${read.lines.map((l) => h`<li>${l}</li>`)}</ul>
 
       <p class="help">${doc.original_kept_at === null || doc.original_deleted_at !== null ? READ_AND_DELETED : 'We have kept the original safely.'}</p>
       <p><a href="/portal">Back to your claim</a></p>`,

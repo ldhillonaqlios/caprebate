@@ -308,7 +308,7 @@ describe('the fee-versus-benefit comparison is shown, and it changes no figure',
     assert.match(r.body, /highest marginal rate for a company/);
     // Phase 132e: at 3% the two readings straddle the fee, so the page says they do not agree — the finding, not an answer.
     assert.match(r.body, /the readings do not agree, so there is no answer to give/);
-    assert.match(r.body, /The amount above is untouched by any of this/);
+    assert.match(r.body, /The fee above is not changed by any of this/);
     assert.match(r.body, /cap: off; warning: off/);
     // The standing disclosure, verbatim and not softened.
     assert.match(r.body, /not capped by, and may exceed, what you save in tax in a given year/);
@@ -323,8 +323,8 @@ describe('the fee-versus-benefit comparison is shown, and it changes no figure',
     const accounting = await it.signIn('ACCOUNTING');
     const r = await accounting.req(`/staff/finance/${it.invoice}`);
     assert.match(r.body, /cannot be computed for this client/);
-    assert.match(r.body, /no entity type is recorded/);
-    assert.match(r.body, /a missing fact, not a nil answer/);
+    assert.match(r.body, /we do not know yet if the client is a company or a partnership/);
+    assert.match(r.body, /a missing fact, not £0/);
   });
 
   test('a three-valued answer is rendered as three values, never collapsed to “no”', () => {

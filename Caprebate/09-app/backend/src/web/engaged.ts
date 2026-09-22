@@ -202,7 +202,7 @@ function clientRow(
 
   return {
     business_id: b.business_id, name: b.name, sector: b.sector, stage: b.stage,
-    stage_label: stageOf(b.stage)?.label ?? 'stage not recognised — see the claim',
+    stage_label: stageOf(b.stage)?.label ?? 'stage unknown — open the claim to check',
     letter_state: eng.letter_state,
     letter_label: LETTER_WORDS[eng.letter_state] ?? eng.letter_state,
     research, research_label: RESEARCH_WORDS[research],
@@ -625,7 +625,7 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
       fact_id: f,
       origin: 'register',
       question: spec?.retires ?? f,
-      why: askedWhy(t, derived.why[f] ?? layerWhy ?? 'the register layer has not supplied this'),
+      why: askedWhy(t, derived.why[f] ?? layerWhy ?? 'the public registers have not given us this'),
       blocks: known ? (BLOCKS_BY_REGISTRY_SOURCE[source] as Blocks) : 'BOTH',
       blocks_by_default: !known,
       has_task: t.has_task, task_state: t.task_state,
@@ -683,13 +683,13 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
       out.push({
         fact_id: 'cash_gate.__engine_did_not_run',
         origin: 'cash gate',
-        question: 'The estimate engine could not be run for this client, so the cash-timing gates were never checked.',
-        why: askedWhy(t, 'this is not a report that the gates are open, shut or unestablished — it is a ' +
-          'report that nothing checked them, and it needs a developer rather than a question to the client'),
+        question: 'Our estimate could not run for this client, so the cash-timing checks were not done.',
+        why: askedWhy(t, 'this does not mean the checks passed or failed. Nothing ran them. ' +
+          'A developer needs to fix this — do not ask the client'),
         blocks: 'BOTH',
         blocks_by_default: true,
         has_task: t.has_task, task_state: t.task_state,
-        section: 'facts', from: 'our estimate engine',
+        section: 'facts', from: 'our estimate',
       });
     }
   }
@@ -701,9 +701,9 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
     out.push({
       fact_id: `cash_gate.${g}`,
       origin: 'cash gate',
-      question: CASH_GATE_QUESTION[g] ?? `The cash gate “${g}” is not established.`,
-      why: askedWhy(t, 'the engine reports this gate as NOT ESTABLISHED — which is not the same as ' +
-        'shut, and must not be read as either open or shut'),
+      question: CASH_GATE_QUESTION[g] ?? `The cash-timing check “${g}” is not known yet.`,
+      why: askedWhy(t, 'our estimate could not settle this check, so it is not known yet. ' +
+        'Not known is not the same as a fail — do not read it as a pass or a fail'),
       blocks: known ? (BLOCKS_BY_CASH_GATE[g] as Blocks) : 'BOTH',
       blocks_by_default: !known,
       has_task: t.has_task, task_state: t.task_state,
@@ -935,7 +935,7 @@ export function sendTaskToPortal(
   // CRM 3 of 10: a question may be due. None is a choice, and it is not overdue (N4).
   const due = (args.due_on ?? '').trim();
   if (due !== '' && (!/^\d{4}-\d{2}-\d{2}$/.test(due) || !Number.isFinite(Date.parse(`${due}T12:00:00.000Z`)))) {
-    return { ok: false, why: 'the due date must be a date, as YYYY-MM-DD.' };
+    return { ok: false, why: 'the due date must be a date like 2026-03-31.' };
   }
 
   const id = d.newId();
@@ -1091,8 +1091,8 @@ export function withdrawTask(
   if (row.state !== 'OPEN') {
     return {
       ok: false,
-      why: 'that question has been answered. Withdrawing it would delete a fact the client gave us, ' +
-        'so the answer stays on the record — write an internal note saying it was asked in error.',
+      why: 'that question has been answered. Taking it back would delete what the client told us. ' +
+        'So the answer stays. Write a Team only note to say it was asked by mistake.',
     };
   }
 
@@ -1220,7 +1220,7 @@ export function businessPage(db: Db, actor: Actor, business_id: string): Busines
   return {
     business: {
       id: b.id, name: b.name, sector: b.sector, stage: b.stage,
-      stage_label: stageOf(b.stage)?.label ?? 'stage not recognised — see the claim',
+      stage_label: stageOf(b.stage)?.label ?? 'stage unknown — open the claim to check',
     },
     row: clientRow(db, actor, {
       business_id: b.id, name: b.name, sector: b.sector, stage: b.stage,

@@ -79,8 +79,8 @@ export const TRIGGERS: Vocab = Object.freeze({
 export const EFFECTS: Vocab = Object.freeze({
   CREATE_TASK: 'A task, from the rule’s template',
   FOLLOW_UP: 'A follow-up date — a follow-up task, due in the days the rule gives',
-  NOTIFY_OWNER: 'A notice to the owner — written to the outbox, and not sent',
-  INFORMATION_REQUEST_TASKS: 'Information-request tasks — one per fact the derived missing list says nobody has asked for',
+  NOTIFY_OWNER: 'A notice to the owner, added to the emails waiting to send',
+  INFORMATION_REQUEST_TASKS: 'Tasks to ask for information — one for each missing fact nobody has asked for yet',
   // CRM 9 of 10: raised through createDocumentRequest, the store a person uses, and never a second insert.
   REQUEST_DOCUMENT: 'A document request to the client — of a type something can receive, saying why and what it holds up',
 });
@@ -90,22 +90,22 @@ export const EFFECTS: Vocab = Object.freeze({
  * asks for one is told why rather than finding it missing from a list.
  */
 export const FORBIDDEN_EFFECTS: Vocab = Object.freeze({
-  OPEN_FREE_GATE: 'No rule may open the free register gate. It opens when the privacy notice is published, and the switch is the engine’s, not a rule’s.',
-  OPEN_PAID_GATE: 'No rule may open the paid gate. It is a signed engagement letter asserted on the server, and an operator’s click.',
-  SIGN_ENGAGEMENT: 'No rule may record a signature. The engagement letter is signed by the client, and the paid gate reads that record.',
-  MOVE_CLAIM: 'No rule may move a claim. A move asks the stage’s gate, and a person asks for the move.',
-  RECORD_CONFIRMATION: 'No rule may record a confirmation a gate reads — that would move a claim past its gate by another door.',
-  FLIP_CTA_SWITCH: 'No rule may flip a tax adviser’s switch. Each stays off until a chartered tax adviser answers, and changing one is a line of code, not a setting.',
-  FIRE_REGISTER_CALL: 'No rule may fire a register call. The operator picks the moment, not the calls.',
-  RUN_RESEARCH: 'No rule may run the research. The operator picks the moment, not the calls.',
-  SEND_EMAIL: 'No rule may send anywhere but the outbox. A notice is written there, and nothing leaves the building.',
-  SEND_SMS: 'No rule may send anywhere but the outbox.',
-  WEBHOOK: 'No rule may send anywhere but the outbox.',
-  WRITE_TO_DO_NOT_CONTACT: 'No rule may write to an organisation marked do not contact.',
-  INVOICE_EMAIL: 'No rule may create an invoice email. It waits on the invoice-fraud procedure (Developer Spec §5.1 item 6).',
+  OPEN_FREE_GATE: 'No rule can turn on free lookups. They start when our privacy notice is published.',
+  OPEN_PAID_GATE: 'No rule can turn on paid lookups. They need a signed engagement letter and a person to click.',
+  SIGN_ENGAGEMENT: 'No rule can record a signature. Only the client signs the engagement letter.',
+  MOVE_CLAIM: 'No rule can move a claim. A person moves it, and each step is checked first.',
+  RECORD_CONFIRMATION: 'No rule can record a confirmation that a step checks. That would let a claim skip the check.',
+  FLIP_CTA_SWITCH: 'No rule can change a tax adviser’s switch. Each stays off until a chartered tax adviser answers.',
+  FIRE_REGISTER_CALL: 'No rule can look up a register. A person chooses when to do it.',
+  RUN_RESEARCH: 'No rule can run the research. A person chooses when to do it.',
+  SEND_EMAIL: 'No rule can send a message itself. It can only add a notice to the emails waiting to send.',
+  SEND_SMS: 'No rule can send a message itself.',
+  WEBHOOK: 'No rule can send a message itself.',
+  WRITE_TO_DO_NOT_CONTACT: 'No rule can write to an organisation marked do not contact.',
+  INVOICE_EMAIL: 'No rule can make an invoice email. That waits on our invoice-fraud procedure.',
   // CRM 7 of 10: the two an invoice email would arrive as by another name.
-  INVOICE_REMINDER: 'No rule may chase an invoice or a payment. A reminder is an invoice email by another name, and it waits on the invoice-fraud procedure (Developer Spec §5.1 item 6).',
-  SEND_BANK_DETAILS: 'No rule may send our bank details, or change them. They are confirmed with the client on a channel other than email, and never changed because an email asked.',
+  INVOICE_REMINDER: 'No rule can chase an invoice or a payment. A reminder is an invoice email too. It waits on our invoice-fraud procedure.',
+  SEND_BANK_DETAILS: 'No rule can send or change our bank details. The client checks them with us another way than email. We never change them because an email asked.',
 });
 
 /**
@@ -124,8 +124,8 @@ export const FORBIDDEN_EFFECTS: Vocab = Object.freeze({
  */
 export const INVOICE_FRAUD_PROCEDURE: { readonly in_force: boolean; readonly where: string; readonly signoff: string } = Object.freeze({
   in_force: false,
-  where: 'SOP 9 of the standard operating procedures (08-monday-doc-exports/12552682457), a flagged DRAFT ADDITION written by CRM 7 of 10 on 11 September 2026',
-  signoff: 'entered for sign-off in FOR THE SOLICITOR, THE DPO AND THE DEVELOPER',
+  where: 'Section 9 of our operating procedures. It is marked as a DRAFT ADDITION, written on 11 September 2026',
+  signoff: 'the solicitor, the DPO and the developer still have to sign it off',
 });
 
 export const ASSIGN: Vocab = Object.freeze({
@@ -145,11 +145,11 @@ export const RUN_REASONS: Vocab = Object.freeze({
   NO_OWNER: 'nobody owns what the event is about, so there is nobody to tell',
   OWNER_MADE_THE_CHANGE: 'the owner made the change themselves, so there is nobody else to tell',
   OWNER_IS_NOT_STAFF: 'the owner is not a member of staff, and a rule only ever writes to staff',
-  NO_ONE_TO_READ_THE_MISSING_LIST: 'nobody who may read the missing list caused the event, so the list could not be derived',
-  NOTHING_MISSING: 'nothing on the derived missing list was left unasked',
+  NO_ONE_TO_READ_THE_MISSING_LIST: 'nobody who can see the missing list caused the event, so the list could not be worked out',
+  NOTHING_MISSING: 'everything on the missing list has already been asked for',
   EFFECT_NOT_ALLOWED: 'the rule names an effect no rule may have',
   NO_ONE_TO_RAISE_THE_REQUEST: 'nobody who may raise a document request caused the event, so no request was raised',
-  REQUEST_REFUSED: 'the document request store refused the request — a retired type, or one nothing can receive — and nothing was raised',
+  REQUEST_REFUSED: 'the document request was refused — the type is retired, or nothing can receive it — so nothing was raised',
   ERROR: 'the rule failed and wrote nothing; the event it followed stands',
 });
 
@@ -206,6 +206,24 @@ export type RuleView = {
   readonly request_type: string | null;
 };
 
+/**
+ * PHASE 144: WHERE EACH SEEDED RULE CAME FROM, IN PLAIN WORDS. Migration 012 stored each seeded rule's `source` in the
+ * words of the design notes ("It fires for…", "the DERIVED missing list", "the engagement gate"). A migration already
+ * run is never edited, so the screen shows these words for the nine seeded rules instead; the stored text is unchanged,
+ * and a rule an Admin adds shows its own.
+ */
+const SEEDED_RULE_WHY: Readonly<Record<string, string>> = Object.freeze({
+  'rule-lead-first-follow-up': 'Our specification, 14.1. A new lead gets an owner and a first follow-up. If the lead has no owner, it waits with Sales until someone takes it. This works for a lead with no company too.',
+  'rule-engaged-information-requests': 'Our specification, 14.2. A claim reaches data gathering only once the letter is signed. Then we ask for each fact nobody has asked for yet, one task each, from the list on the client page.',
+  'rule-survey-brief': 'Our specification, 14.3 and 14.4. When data gathering is done, the survey starts, and this is the next task. No visit is booked here: the survey starts at a desk.',
+  'rule-committed-valuation': 'Our specification, 14.5. A claim leaves the survey step only when the surveyor commits, so this task starts then.',
+  'rule-committed-reports': 'Our specification, 14.5. The report task that goes with the one above.',
+  'rule-reports-follow-up': 'Our specification, 14.6. When the client starts reading the report, we set a date to follow up.',
+  'rule-invoice-finance-task': 'Our specification, 14.7. At the invoice step, Accounting gets a task. It is never an invoice email.',
+  'rule-stage-notify-owner': 'Our specification, 14.9. When a claim moves on, its owner is told by email. It goes only to their own work address, and never about a company marked do not contact.',
+  'rule-owner-notify': 'Our specification, 14.9. When the owner changes, the new owner is told by email.',
+});
+
 function ruleView(db: Db, r: RuleDbRow): RuleView {
   const when = r.trigger_event === 'STAGE_ENTERED'
     ? `${words(TRIGGERS, r.trigger_event, r.trigger_event)}: ${r.trigger_stage === null ? 'any stage' : anyStageLabel(r.trigger_stage)}`
@@ -228,7 +246,7 @@ function ruleView(db: Db, r: RuleDbRow): RuleView {
     },
     attach_to: { key: r.attach_to, label: words(ATTACH, r.attach_to, r.attach_to) },
     active: r.active === 1,
-    source: r.source,
+    source: SEEDED_RULE_WHY[r.id] ?? r.source,
     updated: localStamp(r.updated_at),
     request_type: r.request_type,
   };
@@ -308,7 +326,7 @@ function ruleValues(db: Db, input: Fields, stored: RuleDbRow | null = null): Che
   if (!has(EFFECTS, effect)) {
     return {
       ok: false,
-      why: 'That is not an effect a rule can have. A rule creates a task, sets a follow-up, writes a notice to the outbox, or raises information-request tasks — and nothing else.',
+      why: 'A rule cannot do that. It can make a task, set a follow-up, send a notice to the owner, ask for information, or ask the client for a document.',
     };
   }
   const stage = clean(input['trigger_stage']);
@@ -667,7 +685,7 @@ function noticeWords(rule: RuleDbRow, e: AutomationEvent, s: Subject, company: s
       : s.task_id !== null ? `/staff/tasks/${s.task_id}` : '/staff';
   return {
     subject,
-    body: `${subject}.\n\nOpen it in the back office: ${href}\n\nWritten to the outbox by the rule “${rule.label}”. ${STUB_NOTICE}`,
+    body: `${subject}.\n\nOpen it in the back office: ${href}\n\nAdded to the emails waiting to send by the rule “${rule.label}”. ${STUB_NOTICE}`,
   };
 }
 

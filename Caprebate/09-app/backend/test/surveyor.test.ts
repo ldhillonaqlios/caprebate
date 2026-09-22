@@ -442,7 +442,7 @@ describe('after the release — the two things a surveyor may still do', () => {
       qualifying_pct: '27.1', method_note: '', reason: '',
     });
     assert.equal(r.status, 400);
-    assert.match(r.body, /anchoring drift/);
+    assert.match(r.body, /being pulled toward our estimate/);
     assert.equal(
       it.app.db.get<{ n: number }>(
         "SELECT COUNT(*) AS n FROM anchor_log WHERE kind = 'POST_RELEASE_AMENDMENT'")?.n, 0);
@@ -1107,8 +1107,8 @@ test('the workspace says the signature is stubbed, on the page AND in the payloa
   t.after(() => it.close());
   const surveyor = await it.signIn('SURVEYING');
   const page = await surveyor.req(`/staff/survey/${it.job}`);
-  assert.match(page.body, /SIGN-OFF IS STUBBED IN THIS BUILD/);
-  assert.match(page.body, /no signature provider connected/);
+  assert.match(page.body, /E-SIGNING IS NOT SWITCHED ON YET/);
+  assert.match(page.body, /No signature service is connected/);
   assert.match(page.body, /No payment is taken/); // Phase 133c: the footer's words, in plain English
 });
 

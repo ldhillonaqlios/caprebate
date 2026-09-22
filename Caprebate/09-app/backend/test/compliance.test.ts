@@ -479,7 +479,7 @@ describe('THE BREACH REGISTER — the four facts, no policy in force, and attemp
       assert.equal(withShape.ok, false, 'a sort code and an account number, by shape');
       const id = ok(B.openIncident(d, ADMIN, { ...base, kind: 'ATTEMPTED_INVOICE_FRAUD', claim_id: claim, fraud_attempted_on: '2026-09-07', description: 'A client was emailed new payment instructions.' }));
       assert.throws(() => a.db.run("UPDATE breach_incidents SET description = 'the sort code is on file' WHERE id = ?", [id]), /bank details/);
-      assert.match(B.incidentView(a.db, ADMIN, id, a.now()).clock.label, /classification, not yet given/);
+      assert.match(B.incidentView(a.db, ADMIN, id, a.now()).clock.label, /has not classified it yet/);
       ok(B.updateIncident(d, ADMIN, id, { remedial_action: 'Client warned by phone.', lessons_and_changes: 'None needed.' }));
       const close = B.closeIncident(d, ADMIN, id);
       assert.equal(close.ok, false);
@@ -545,8 +545,8 @@ describe('CONSENT — one history per contact, share-with-accountant folded in a
       a.db.run('INSERT INTO contacts (id, business_id, full_name, contact_consent, marketing_optin, created_at) VALUES (?, ?, ?, 1, 0, ?)', [contact, biz, 'Mo Manager', T0]);
       ok(S.recordConsent(d, ADMIN, contact, { kind: 'MARKETING', decision: 'WITHDRAWN', wording_version: 'MARKETING-1' }));
       const h = S.consentHistory(a.db, ADMIN, contact);
-      assert.ok(h.lines.some((l) => l.source.startsWith('introducer_share_consents') && l.decision === 'GIVEN'));
-      assert.ok(h.lines.some((l) => l.source === 'consent_answers' && l.decision === 'WITHDRAWN'));
+      assert.ok(h.lines.some((l) => l.source === 'The referral’s share-progress answer' && l.decision === 'GIVEN'));
+      assert.ok(h.lines.some((l) => l.source === 'A recorded answer' && l.decision === 'WITHDRAWN'));
       assert.equal(a.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM consent_answers')?.n, 1, 'the share answer is read, never copied');
     } finally { a.close(); }
   });
@@ -596,7 +596,7 @@ describe('RETENTION — UNSET shown as unset, the list not the deleter, and the 
       assert.ok(lines.every((l) => l.due.length === 0));
       assert.ok(lines.every((l) => l.state !== 'APPROVED'));
       for (const k of ['STAFF_TASKS', 'AUTOMATION_RUNS', 'DOCUMENT_VERSIONS', 'LOGICAL_DOCUMENTS', 'DOCUMENT_LINKS', 'IDENTITY_PERSON']) {
-        assert.match(lines.find((l) => l.kind === k)?.delete ?? '', /refuses a DELETE by trigger/, k);
+        assert.match(lines.find((l) => l.kind === k)?.delete ?? '', /The database blocks deleting these/, k);
       }
       for (const k of ['LEADS_NEVER_CONVERTED', 'LEAD_PEOPLE', 'LEAD_FOLLOW_UP_TASKS', 'OUTBOX_QUEUED', 'INTRODUCERS', 'INTRODUCER_PEOPLE', 'SHARE_CONSENTS', 'INTRODUCER_NOTICES']) {
         assert.equal(lines.find((l) => l.kind === k)?.state, 'NOT_COVERED', k);

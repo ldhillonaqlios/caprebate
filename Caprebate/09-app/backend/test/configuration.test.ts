@@ -262,7 +262,7 @@ describe('the lists — added, relabelled and retired, never deleted; a retired 
       assert.ok(rule.ok, rule.ok ? '' : rule.why);
       const r = CF.changeValue(d, ADMIN, 'PRIORITY', 'URGENT', { active: '0' });
       assert.equal(r.ok, false);
-      assert.match(r.ok ? '' : r.why, /automation rule/);
+      assert.match(r.ok ? '' : r.why, /An active rule or a repeating task uses this priority/);
       assert.equal(V.priorityRank(a.db)('URGENT') < V.priorityRank(a.db)('LOW'), true, 'a priority added last does not sort first');
 
       const lead = L.createLead(d, SALES, { prospect_organisation: 'Source Invented Limited', source: 'EVENT' });

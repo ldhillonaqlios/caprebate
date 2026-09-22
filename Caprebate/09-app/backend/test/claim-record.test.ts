@@ -609,15 +609,15 @@ describe('THE FOUR FIGURES — sealed and read from the record that sealed each;
       assert.equal(p.a_indicative.state, 'SEALED');
       assert.equal(p.a_indicative.state === 'SEALED' ? p.a_indicative.hash : '', 'e'.repeat(64));
       assert.equal(p.b_researched.state, 'NOT_PERMITTED_YET');
-      assert.match(p.b_researched.why, /free register gate is shut/);
-      assert.match(p.b_researched.why, /paid register gate is shut/);
+      assert.match(p.b_researched.why, /Free lookups are off/);
+      assert.match(p.b_researched.why, /Paid lookups wait/);
       assert.equal(p.c_surveyor.state, 'NOT_YET');
       assert.equal(p.d_adviser.state, 'NOT_YET');
       assert.equal(p.claimable_figure.released, false);
       app.db.run("INSERT INTO engagements (id, business_id, letter_state, signed_at, created_at) VALUES (?, ?, 'SIGNED', ?, ?)", [randomUUID(), org.business, T0, T0]);
       p = read();
       assert.equal(p.b_researched.state, 'NOT_PERMITTED_YET', 'a signed letter alone permitted the researched estimate');
-      assert.doesNotMatch(p.b_researched.why, /paid register gate is shut/);
+      assert.doesNotMatch(p.b_researched.why, /Paid lookups wait/);
       assert.equal('value' in p.b_researched || 'figure' in p.b_researched, false, 'B carried a figure');
 
       CF.commitmentOn(app, org.business, org.assessment, c);
@@ -819,7 +819,7 @@ describe('AFTERCARE — HMRC enquiries, clause 13 and the Disposal Note', () => 
       assert.equal(R.closeEnquiry(d, sales, c, id, { closed_on: '2026-09-04', outcome: 'AMENDED_UP', amended_figure: '1' }).ok, false, 'closed twice');
       assert.throws(() => app.db.run('DELETE FROM hmrc_enquiries'), /never deleted/);
       const panel = R.aftercarePanel(app.db, sales, c, { openTerms: [] });
-      assert.match(panel.correspondence, /cannot be received/);
+      assert.match(panel.correspondence, /cannot accept one/);
       assert.throws(() => R.openEnquiry(d, actor('ACCOUNTING'), c, { opened_on: '2026-09-01' }), NotAuthorised);
     } finally { app.close(); }
   });

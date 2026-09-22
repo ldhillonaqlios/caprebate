@@ -113,7 +113,7 @@ export type SettingView = {
 function viewOf(r: SettingRow): SettingView {
   return {
     key: r.setting, label: SETTINGS[r.setting] ?? r.setting, value: shown(r.setting, r.value), effective_from: r.effective_from,
-    source: r.source, recorded: r.recorder === null ? `written from its source by migration 016, ${localStamp(r.recorded_at)}` : `${localStamp(r.recorded_at)} by ${r.recorder}`,
+    source: r.source, recorded: r.recorder === null ? `set when the system was built, ${localStamp(r.recorded_at)}` : `${localStamp(r.recorded_at)} by ${r.recorder}`,
   };
 }
 
@@ -161,7 +161,7 @@ export function recordSetting(d: VatDeps, actor: Actor, input: Readonly<Record<s
     value = raw;
   } else if (setting === 'VAT_RATE' || setting === 'VAT_WARNING_FRACTION') {
     const n = raw.endsWith('%') ? Number(raw.slice(0, -1)) / 100 : Number(raw);
-    if (!Number.isFinite(n) || n <= 0 || n >= 1) return { ok: false, why: 'Give a share between nought and one — 0.75, or 75%.' };
+    if (!Number.isFinite(n) || n <= 0 || n >= 1) return { ok: false, why: 'Give a share above 0 and below 1, like 0.75 or 75%.' };
     value = String(Math.round(n * 10000) / 10000);
   } else {
     const pounds = Number(raw.replace(/[£,\s]/g, ''));
@@ -366,7 +366,7 @@ export function vatReading(db: Db, nowIso: string, opts: { controls?: FeeControl
   if (alarming(rollingBand)) parts.push(`Invoiced turnover over the rolling twelve months is ${formatPence(turnover)} — ${BAND_WORDS[rollingBand]}.`);
   if (alarming(forwardBand)) parts.push(`The fees expected from claims at the invoice stage come to ${formatPence(expectedPence)} — ${BAND_WORDS[forwardBand]} on the thirty-day test.`);
   if (single.length > 0) parts.push(`${single.length} single expected fee${single.length === 1 ? ' is' : 's are'} at or over ${formatPence(trigger)}: ${single.map((s) => `${s.claim_ref} (${s.expected})`).join(', ')}.`);
-  if (parts.length > 0) parts.push('Run the monthly check in the VAT threshold monitoring procedure, section 5, and decide — this reading changes nothing by itself.');
+  if (parts.length > 0) parts.push('Do the monthly VAT check (VAT procedure, section 5) and decide. This reading changes nothing by itself.');
 
   return {
     today,
@@ -376,14 +376,14 @@ export function vatReading(db: Db, nowIso: string, opts: { controls?: FeeControl
     rolling: {
       from, to: today, invoiced_pence: invoiced, credited_pence: credited, turnover_pence: turnover, turnover: formatPence(turnover),
       band: rollingBand, undated_invoices: undated,
-      basis: `claim invoices whose tax point — the invoice date, or the client report’s delivery if earlier — falls ${from} to ${today}, less the credit notes issued in the same months` +
-        (undated > 0 ? `; ${undated} organisation invoice${undated === 1 ? '' : 's'} from before invoices sat on the claim carr${undated === 1 ? 'ies' : 'y'} no date and ${undated === 1 ? 'is' : 'are'} counted apart, never as nought` : ''),
+      basis: `claim invoices dated ${from} to ${today}, less credit notes in the same months. An invoice counts from its date, or from when the client’s report was delivered if that was earlier` +
+        (undated > 0 ? `; ${undated} organisation invoice${undated === 1 ? '' : 's'} from before invoices sat on the claim carr${undated === 1 ? 'ies' : 'y'} no date and ${undated === 1 ? 'is' : 'are'} counted apart, never as £0` : ''),
     },
     forward: {
       expected_pence: expectedPence, expected: formatPence(expectedPence), claims_counted: counted.length,
       claims_without_a_fee: expected.length - counted.length, band: forwardBand,
-      basis: 'the fees expected from claims at the invoice stage with no live fee invoice — nothing records when each will be invoiced, so every one is counted as if it could fall inside the next thirty days' +
-        (expected.length > counted.length ? `; ${expected.length - counted.length} whose fee cannot be computed ${expected.length - counted.length === 1 ? 'is' : 'are'} counted apart, never as nought` : ''),
+      basis: 'the fees we expect from claims at the invoice stage that have no fee invoice yet. We do not know when each will be invoiced, so we count every one as if it could be in the next thirty days' +
+        (expected.length > counted.length ? `; ${expected.length - counted.length} whose fee cannot be computed ${expected.length - counted.length === 1 ? 'is' : 'are'} counted apart, never as £0` : ''),
     },
     single_engagements: single,
     needs_task: needs,
@@ -396,11 +396,11 @@ export function vatReading(db: Db, nowIso: string, opts: { controls?: FeeControl
  * 4 · THE TASK — ONE AT A TIME, THROUGH insertTask, WAITING WITH ACCOUNTING
  * ================================================================== */
 
-export const VAT_TASK_TITLE = 'VAT threshold: the monitoring reading is inside the warning margin — run the VAT check in the finance view';
+export const VAT_TASK_TITLE = 'VAT: we may be near or over the VAT limit. Do the VAT check in Finance';
 
 export const VAT_TASK_DESCRIPTION =
-  'Raised by the VAT monitoring in the finance view, which carries the reading. Work the VAT threshold monitoring procedure, section 5 and section 6, ' +
-  'and record what was decided. No invoice has been changed.';
+  'Raised by the VAT check in Finance, which shows the figures. Follow the VAT procedure, sections 5 and 6, ' +
+  'and record what you decided. No invoice has been changed.';
 
 export type VatTaskState = 'NOT_NEEDED' | 'ALREADY_OPEN' | 'CREATED';
 

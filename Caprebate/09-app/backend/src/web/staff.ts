@@ -69,7 +69,6 @@ import {
 } from './localtime.ts';
 import { singleFile } from './multipart.ts';
 import { RANGE_QUALIFIER } from './shown-range.ts';
-import { STUB_NOTICE } from '../stubs/email.ts';
 import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from './audit-log.ts';
 
 export type StaffDeps = {
@@ -691,9 +690,9 @@ function auditPage(actor: Actor, v: AuditLogView): string {
     title: 'Audit log', nav: nav(actor), wide: true,
     body: h`
       <h1>Audit log</h1>
-      <div class="${v.chain.intact ? 'gate' : 'flag'}"><strong>The hash chain:</strong> ${v.chain.says}</div>
-      <p class="help">${v.never} The newest ${AUDIT_PAGE_SIZE} lines that match are shown, newest first. To verify the chain without
-      the server, run <code>${v.command}</code> against the database file. Reading this page is itself a line in the log.</p>
+      <div class="${v.chain.intact ? 'gate' : 'flag'}"><strong>${v.chain.says}</strong></div>
+      <p class="help">${v.never} The newest ${AUDIT_PAGE_SIZE} lines that match are shown, newest first.
+      Opening this page adds a line to the log.</p>
       <form method="get" action="/staff/audit" class="pblock">
         <label>Kind
           <select name="kind"><option value="">any</option>${kinds}</select></label>
@@ -714,7 +713,7 @@ function auditPage(actor: Actor, v: AuditLogView): string {
 
 function contactCell(c: B.ContactView): Safe {
   return h`${c.label}${c.variant !== null ? h` (${c.variant})` : raw('')}
-    ${c.entry_point !== null ? h`<br><span class="help">asked at ${c.entry_point.replace(/_/g, ' ')}</span>` : raw('')}`;
+    ${c.entry_point !== null ? h`<br><span class="help">asked at ${B.entryPointWords(c.entry_point)}</span>` : raw('')}`;
 }
 
 function assessmentsPage(actor: Actor, rows: readonly B.AssessmentRow[]): string {
@@ -770,8 +769,7 @@ function assessmentPage(actor: Actor, a: B.AssessmentDetail): string {
         <td>${x.state === 'ANSWERED' ? h`${x.label}` : h`<em>${x.label}</em>`}</td>
       </tr>`)}</tbody></table>
 
-      <div class="gate">${RANGE_QUALIFIER} The figure above is read from the one column the client's
-      own screen reads, so the two views of it cannot differ.</div>
+      <div class="gate">${RANGE_QUALIFIER} It is the same figure the client sees on their own screen.</div>
       <p><a href="/staff/assessments">Back to the list</a></p>`,
   });
 }
@@ -781,7 +779,7 @@ function assessmentPage(actor: Actor, a: B.AssessmentDetail): string {
 function availabilityNote(a: B.CalendarView['availability']): Safe {
   if (a.available) {
     return h`<p class="help">${a.slots.length} free ${SLOT_MINUTES}-minute slots in this window,
-      derived from working times. <strong>That is the only source there is.</strong></p>`;
+      worked out from working times. <strong>Nothing else sets them.</strong></p>`;
   }
   return h`<div class="flag"><strong>No slots to offer.</strong> ${a.say}</div>`;
 }
@@ -823,14 +821,13 @@ function calendarPage(
               <td><a href="/staff/calendar/${b.id}">open</a></td></tr>`)}</tbody></table>`}`)}
 
       <h3>Asked for a call, no time yet</h3>
-      <p class="help">These came through the client's own journey and nobody re-entered them.
-      Only the telephone books a moment — CB_BOOKING is the authority and the database refuses a
-      time on any other channel.</p>
+      <p class="help">These came in from the client's own steps. Nobody typed them in again.
+      Only a phone call gets a time. No other way of reaching them can have one.</p>
       ${cal.awaiting.length === 0
         ? h`<p class="help">Nothing outstanding.</p>`
         : h`<table><thead><tr><th>Business</th><th>Asked at</th><th>Since</th><th></th></tr></thead>
           <tbody>${cal.awaiting.map((b) => h`<tr>
-            <td>${b.business_name}</td><td>${b.entry_point.replace(/_/g, ' ')}</td>
+            <td>${b.business_name}</td><td>${B.entryPointWords(b.entry_point)}</td>
             <td class="when">${stamp(b.created_at)}</td>
             <td><a href="/staff/calendar/${b.id}">give it a time</a></td></tr>`)}</tbody></table>`}
 
@@ -847,21 +844,20 @@ function calendarPage(
             <td class="when">${stamp(b.cancelled_at ?? '')}</td>
             <td><a href="/staff/calendar/${b.id}">open</a></td></tr>`)}</tbody></table>`}
 
-      <h3>Asked for something that does not book a moment</h3>
-      <p class="help">Email and text message capture and finish — CB_BOOKING's own words. They are
-      here because these people are waiting to hear from us too, and they are kept apart from the
-      list above so nobody goes looking for a slot that was never asked for.</p>
+      <h3>Asked to hear from us another way, not by a call</h3>
+      <p class="help">For email and text, we take the details and stop there. These people are
+      waiting to hear from us too. They are kept apart so nobody looks for a time they never asked for.</p>
       ${cal.capture_only.length === 0
         ? h`<p class="help">None.</p>`
         : h`<table><thead><tr><th>Business</th><th>Channel</th><th>Asked at</th><th>Since</th></tr></thead>
           <tbody>${cal.capture_only.map((b) => h`<tr>
             <td>${b.business_name}</td><td>${b.channel_label}</td>
-            <td>${b.entry_point.replace(/_/g, ' ')}</td>
+            <td>${B.entryPointWords(b.entry_point)}</td>
             <td class="when">${stamp(b.created_at)}</td></tr>`)}</tbody></table>`}
 
-      <div class="gate"><strong>Calendar invitations are stubbed.</strong> Scheduling a call writes
-      a message to the outbox and nothing is sent to anybody. ${staff.length === 0
-        ? 'No member of staff has working times set, so no slot can be offered anywhere in this system.'
+      <div class="gate"><strong>Calendar invites are not sent yet.</strong> Giving a call a time saves
+      an invite with the emails waiting to send. Nothing goes to anybody. ${staff.length === 0
+        ? 'No member of staff has working times set, so no time can be offered.'
         : `${staff.length} member(s) of staff have working times set.`}</div>`,
   });
 }
@@ -882,7 +878,7 @@ function bookingPage(
         : raw('')}
       <table><tbody>
         <tr><th>Channel</th><td>${b.channel_label}${b.sms_variant !== null ? h` (${b.sms_variant})` : raw('')}</td></tr>
-        <tr><th>Asked at</th><td>${b.entry_point.replace(/_/g, ' ')}</td></tr>
+        <tr><th>Asked at</th><td>${B.entryPointWords(b.entry_point)}</td></tr>
         <tr><th>Requested</th><td class="when">${stamp(b.created_at)}</td></tr>
         <tr><th>Booked for</th><td>${when(b.starts_at)}</td></tr>
         <tr><th>Assigned to</th><td>${b.assigned_name ?? 'nobody'}</td></tr>
@@ -928,6 +924,15 @@ function bookingPage(
 
 /* ------------------------------------------------------ settings pages */
 
+/** The kind of a waiting email, said in words. The stored kind is never shown. */
+const OUTBOX_KIND_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  TEMPLATE: 'From a template', FREE_TYPED: 'Typed by staff', NOTIFICATION: 'An alert', CALENDAR_INVITE: 'Calendar invite',
+  PASSWORD_RESET: 'Password reset', WELCOME: 'Welcome', COMPLIANCE_LETTER: 'Rights or complaint letter', ACCOUNT_VERIFY: 'Email address check',
+});
+
+/** The kinds a company's Email page lists (src/web/free-email.ts) — only these rows link there. */
+const ON_EMAIL_PAGE: readonly string[] = ['FREE_TYPED', 'TEMPLATE'];
+
 function settingsPage(
   d: StaffDeps, actor: Actor, base: string, saved: string | undefined, error: string | undefined,
 ): string {
@@ -944,8 +949,8 @@ function settingsPage(
      while still fetching it would be a screen omitting a field — the thing this
      application refuses to call a control. It is not read at all. */
   const outbox = inBackOffice
-    ? d.app.db.all<{ created_at: string; to_email: string; subject: string; kind: string; sent_at: string | null }>(
-        'SELECT created_at, to_email, subject, kind, sent_at FROM outbox ORDER BY created_at DESC LIMIT 20')
+    ? d.app.db.all<{ created_at: string; to_email: string; subject: string; kind: string; sent_at: string | null; business_id: string | null }>(
+        'SELECT created_at, to_email, subject, kind, sent_at, business_id FROM outbox ORDER BY created_at DESC LIMIT 20')
     : [];
   return page({
     title: 'Your account', nav: inBackOffice ? nav(actor) : portalShell(actor),
@@ -971,9 +976,7 @@ function settingsPage(
         <input class="fi" id="me-username" name="username" value="${p.user.email}" autocomplete="username" required>
         <button class="cta" type="submit">Change the username</button>
       </form>
-      <p class="help">Changing it signs this browser back in behind the scenes: a new session is
-      issued and the old one is revoked, because what a session identifies is now reachable by a
-      different name.</p>
+      <p class="help">Changing it signs this browser in again for you. Your old sign-in stops working.</p>
 
       <form method="post" action="${base}/password">
         <label class="fl" for="pw-current">Current password</label>
@@ -986,16 +989,12 @@ function settingsPage(
       </form>
 
       <h3>Your photograph</h3>
-      <p class="help">PNG only, up to ${Math.round(IMAGE_LIMITS.max_bytes / 1024 / 1024)} MB, stored at
-      no more than ${IMAGE_LIMITS.max_stored_dimension} pixels on the long edge.
-      <strong>Nothing you send is stored.</strong> The file is decoded to pixels and a new one is
-      written from those pixels, so every text chunk, colour profile and anything appended after the
-      end of the image is dropped by construction rather than by being stripped. That is why the
-      list is PNG alone: this build re-encodes what it can decode honestly, and it will not store a
-      file it has not rebuilt.</p>
+      <p class="help">PNG only, up to ${Math.round(IMAGE_LIMITS.max_bytes / 1024 / 1024)} MB, kept at
+      no more than ${IMAGE_LIMITS.max_stored_dimension} pixels on the long side.
+      <strong>Nothing you send is stored.</strong> We read the picture and save a fresh copy of it.
+      Anything else hidden in the file is left out. That is why we only take PNG.</p>
       <form method="post" action="${base}/photo" enctype="application/octet-stream">
-        <p class="help">Send the PNG as the body of a POST to <code>${base}/photo</code>.
-        The browser form below posts the bytes directly.</p>
+        <p class="help">Choose a PNG file, then press Upload.</p>
         <input class="fi" type="file" name="photo" accept="image/png">
         <button class="cta" type="submit">Upload</button>
       </form>
@@ -1003,19 +1002,16 @@ function settingsPage(
         <form method="post" action="${base}/photo/remove">
           <button class="cta" type="submit">Remove the photograph</button>
         </form>
-        <p class="help">Stored: ${p.photo.width}×${p.photo.height}, ${p.photo.byte_size} bytes,
-        re-encoded from a ${p.photo.source_format.toUpperCase()} of ${p.photo.source_bytes} bytes
+        <p class="help">Saved: ${p.photo.width}×${p.photo.height}, ${p.photo.byte_size} bytes.
+        Made from a ${p.photo.source_format.toUpperCase()} of ${p.photo.source_bytes} bytes
         on ${stamp(p.photo.updated_at)}.</p>`}
 
       ${inBackOffice ? h`<h3>Your working times</h3>
-      <p class="help"><strong>These are the booking system's only input.</strong> A slot outside them
-      is not offered anywhere — not on the calendar, and not on the client's own picker — and the
-      write path asks these hours again at the moment of saving, so a posted time that never
-      appeared on a screen is refused too.</p>
-      <p class="help"><strong>These hours are YOUR LOCAL HOURS — UK time.</strong> Nine to five means
-      nine to five in January and in July; the March and October changes are handled for you and you
-      never need to re-enter them. What is stored against a booking is the exact moment in UTC, which
-      is why a call arranged in June still reads correctly when it is looked at in December.</p>
+      <p class="help"><strong>Bookings only use these hours.</strong> No time outside them is offered,
+      on the calendar or on the client's own picker. A time outside them is refused when saved.</p>
+      <p class="help"><strong>These hours are UK time.</strong> Nine to five means nine to five all
+      year. The clock changes in March and October are done for you. A call booked in June still
+      shows the right time in December.</p>
       <form method="post" action="${base}/working-times">
         ${p.week.map((row) => h`<div class="pblock">
           <label class="ck"><input type="checkbox" name="d${row.weekday}_on"${row.set ? raw(' checked') : raw('')}>
@@ -1031,13 +1027,16 @@ function settingsPage(
       ${S.canAdminister(actor) ? h`<h3>Administration</h3>
         <p><a class="cta" href="/staff/users">Users and roles</a></p>` : raw('')}
 
-      <h3>The outbox — what would have been sent</h3>
-      <p class="help">${STUB_NOTICE} Calendar invitations go the same way, for the same reason.</p>
+      <h3>Emails waiting to send</h3>
+      <p class="help">Emails are not being sent yet. Each one is saved here until sending is switched on.
+      Calendar invites wait here too. A company's own emails are on its Email page.</p>
       ${outbox.length === 0
-        ? h`<p class="help">Nothing in the outbox.</p>`
-        : h`<table><thead><tr><th>When</th><th>Kind</th><th>Subject</th><th>Sent</th></tr></thead>
-          <tbody>${outbox.map((m) => h`<tr><td class="when">${stamp(m.created_at)}</td><td>${m.kind}</td>
-            <td>${m.subject}</td><td>${m.sent_at ?? 'NOT SENT'}</td></tr>`)}</tbody></table>`}`
+        ? h`<p class="help">No emails waiting.</p>`
+        : h`<table><thead><tr><th>When</th><th>What it is</th><th>Subject</th><th>State</th><th></th></tr></thead>
+          <tbody>${outbox.map((m) => h`<tr><td class="when">${stamp(m.created_at)}</td><td>${OUTBOX_KIND_WORDS[m.kind] ?? 'Other'}</td>
+            <td>${m.subject}</td><td>${m.sent_at === null ? 'Saved — not sent yet' : `Sent ${stamp(m.sent_at)}`}</td>
+            <td>${m.business_id !== null && ON_EMAIL_PAGE.includes(m.kind)
+              ? h`<a href="/staff/clients/${m.business_id}/email">Open the Email page</a>` : raw('')}</td></tr>`)}</tbody></table>`}`
       : h`<p><a href="/portal">Back to your claim</a></p>`}`,
   });
 }
@@ -1048,10 +1047,9 @@ function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | un
     body: h`
       <h1>Users and roles</h1>
       ${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}
-      <p class="help">Creating a user, changing a role and disabling an account are the whole of what
-      administration is. <strong>An administrator cannot change somebody's name, username or
-      photograph</strong> — that is inside their account rather than about it, and a record edited
-      that way reads as the person themselves.</p>
+      <p class="help">Here you can add a user, change a role or turn an account off.
+      <strong>You cannot change someone's name, username or photo.</strong> Only they can, from their
+      own account.</p>
 
       <table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Hours set</th><th>Photo</th><th>State</th><th></th></tr></thead>
       <tbody>${rows.map((r) => h`<tr>
@@ -1065,8 +1063,7 @@ function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | un
       </tr>`)}</tbody></table>
 
       <h3>Change somebody's role</h3>
-      <p class="help">A role change is a privilege change: every session that user holds is revoked
-      at once, and they sign in again under the new role.</p>
+      <p class="help">Changing a role signs that person out at once. They sign in again with the new role.</p>
       ${rows.filter((r) => !r.user.disabled && r.user.id !== actor.id).map((r) => h`
         <form method="post" action="/staff/users/${r.user.id}/role">
           <label class="fl">${r.user.display_name} — currently ${r.user.role}</label>
@@ -1090,9 +1087,8 @@ function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | un
         <input class="fi" id="new-user-password" type="password" name="password" autocomplete="new-password" required>
         <button class="cta" type="submit">Create</button>
       </form>
-      <div class="gate">A welcome message would be stubbed like everything else that leaves the
-      building, so the password is set here and handed over out of band rather than emailed to an
-      address nothing can reach.</div>
+      <div class="gate">Emails are not sent yet, so no welcome email goes out. Set the password
+      here and give it to the person yourself, not by email.</div>
       <p><a href="/staff/settings">Back to settings</a></p>`,
   });
 }

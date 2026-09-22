@@ -137,7 +137,7 @@ export const LETTERS: Readonly<Record<LetterKind, { readonly label: string; read
   RR_EXTENSION_NOTICE: { label: 'Give notice of an extension, with the reasons (Art 12A(3), (4))', register: 'RIGHTS_REQUEST', source: 'pack 2.5.5, Trap 3' },
   RR_REFUSAL: { label: 'Refuse, with reasons and the three onward routes (Art 12(4))', register: 'RIGHTS_REQUEST', source: 'pack 5.7' },
   RR_ACCESS_COVER: { label: 'Cover an access response, with both complaint rights (Art 15(1)(ea), (f))', register: 'RIGHTS_REQUEST', source: 'pack 1.4, 5.7' },
-  RR_OBJECTION_DECISION: { label: 'Decide an objection, on the person’s particular situation, with the onward routes (Art 21(1), 12(4))', register: 'RIGHTS_REQUEST', source: 'pack 2.3, 5.7' },
+  RR_OBJECTION_DECISION: { label: 'Decide an objection, on the person’s own situation, with the onward routes (Art 21(1), 12(4))', register: 'RIGHTS_REQUEST', source: 'pack 2.3, 5.7' },
 });
 
 export const LETTER_DRAFT_NOTE = 'DRAFT — NOT APPROVED. The wording is the pack’s and the procedure’s; nobody has signed it.';
@@ -152,7 +152,7 @@ function letterBody(kind: LetterKind, ref: string, receivedDay: string, extra: {
           'Thank you — we have received your complaint.', '',
           `We received it on ${receivedDay}. Your reference is ${ref}. Please quote it if you contact us again.`, '',
           'The person who handles data protection matters for Cap Rebate is dealing with it. We will look into what you have told us and write to you with the outcome. If it is going to take us a while, we will keep you updated rather than leave you waiting.', '',
-          ...(extra.asked === null ? [] : [`You also asked us to ${extra.asked}. We are treating that as a separate request about your data, with its own timescale — we will normally answer it within one month, and we will tell you if we need longer and why.`, '']),
+          ...(extra.asked === null ? [] : [`You also asked us to ${extra.asked}. We are treating that as a separate request about your data. It has its own timescale. We will normally answer it within one month. We will tell you if we need longer, and why.`, '']),
           'If at any point you are not satisfied with how we are handling this, you do not have to wait for us to finish. You can complain to the Information Commissioner (from 30 September 2026, the Information Commission) — their details are at ico.org.uk.', // DRAFT (Phase 132c wording, Block A), for the data protection officer
           ...sign,
         ].join('\n'),
@@ -234,7 +234,7 @@ export function queueLetter(d: ComplianceDeps, actor: Actor, entry_id: string, i
     if (kind === null || !Object.hasOwn(LETTERS, kind)) return { ok: false, why: 'Choose the letter.' };
     const k = kind as LetterKind;
     const to = check(requiredText(input['to_email'], 254, 'The address to reply to'));
-    if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(to)) return { ok: false, why: 'That is not an email address. A letter by post is printed from this page, not queued.' };
+    if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(to)) return { ok: false, why: 'That is not an email address. For a letter by post, print it from this page.' };
     const reasons = check(textField(input['reasons'], 4000, 'The reasons'));
     const asked = check(textField(input['asked'], 1000, 'What was asked'));
     if ((k === 'RR_EXTENSION_NOTICE' || k === 'RR_REFUSAL' || k === 'RR_OBJECTION_DECISION' || k === 'COMPLAINT_OUTCOME') && reasons === null) {
@@ -246,7 +246,7 @@ export function queueLetter(d: ComplianceDeps, actor: Actor, entry_id: string, i
     const sent = outboxTransport(d.db, d.newId, d.now).send({ to_email: to, subject: letter.subject, body: letter.body, kind: 'COMPLIANCE_LETTER', business_id: letter.business_id });
     if (sent.id === null) {
       record(d, actor, 'COMPLIANCE_LETTER_QUEUED', 'REFUSED', LETTERS[k].register === 'COMPLAINT' ? 'complaint' : 'rights_request', entry_id, { letter: k, reason: sent.refused });
-      return { ok: false, why: 'The outbox refused it: the organisation is marked do not contact. Send it by post.' };
+      return { ok: false, why: 'It was not added to the emails waiting to send: the organisation is marked do not contact. Send it by post.' };
     }
     record(d, actor, 'COMPLIANCE_LETTER_QUEUED', 'ALLOWED', LETTERS[k].register === 'COMPLAINT' ? 'complaint' : 'rights_request', entry_id, { letter: k, outbox: sent.id });
     return { ok: true, id: sent.id };
@@ -431,7 +431,7 @@ export function recordLimb(d: ComplianceDeps, actor: Actor, id: string, input: F
       decision_reasoning: text('decision_reasoning', 8000, 'Why'),
       undue_delay_assessment: text('undue_delay_assessment', 2000, 'The undue-delay assessment'),
     };
-    if (next.decision !== null && next.decision_reasoning === null) return { ok: false, why: 'A decision without reasoning is not a decision.' };
+    if (next.decision !== null && next.decision_reasoning === null) return { ok: false, why: 'Give the reasoning. A decision with no reasons does not count.' };
     limbClock(clockInput(r, next));
     const at = d.now();
     if (existing === undefined) {
@@ -605,7 +605,7 @@ export function classifyComplaint(d: ComplianceDeps, actor: Actor, id: string, i
   assertComplianceWrite(actor);
   return guarded(() => {
     const c = loadComplaint(d.db, id);
-    if (c.is_164a !== null) return { ok: false, why: 'This complaint was classified on receipt, and a classification is not revised once made.' };
+    if (c.is_164a !== null) return { ok: false, why: 'This complaint was classified when it arrived. A classification is never changed once made.' };
     const cls = check(classify(input));
     if (cls === null) return { ok: false, why: 'Choose the classification.' };
     const at = d.now();
@@ -717,7 +717,7 @@ export function complaintView(db: Db, actor: Actor, id: string): ComplaintView {
     links: linksFor(db, 'COMPLAINT', id), holds: holdsForEntry(db, 'complaint_id', id), limitation: TWO_PERSON_LIMITATION,
     letters: Object.entries(LETTERS).filter(([, v]) => v.register === 'COMPLAINT').map(([kind, v]) => ({ kind, label: v.label })),
     draft_note: LETTER_DRAFT_NOTE,
-    no_deadline_note: 'The response has no outer deadline — s.164A(4) says without undue delay — so the progress updates and the undue-delay assessment are what show it was met.',
+    no_deadline_note: 'There is no fixed last day for the answer. The law says “without undue delay” (s.164A(4)). The progress updates and the undue-delay assessment show we met it.',
   };
 }
 
@@ -744,7 +744,7 @@ export function complaintCount(db: Db, actor: Actor, from: string, to: string): 
     s164a: inside.filter((r) => r.is_164a === 'YES' || r.is_164a === 'BOTH').length,
     not_164a: inside.filter((r) => r.is_164a === 'NO').length,
     unclassified: inside.filter((r) => r.is_164a === null).length,
-    definition: 'A s.164A complaint is one classified on receipt as YES or BOTH, by the rule at pack 3.2, counted by the UK day it was received.',
+    definition: 'A s.164A complaint is one classified as YES or BOTH when it arrived. It is counted by the UK day it was received.',
   };
 }
 
@@ -758,7 +758,7 @@ export type SearchResult = { readonly hits: readonly SearchHit[]; readonly scope
 export const SEARCH_SCOPE: readonly string[] = Object.freeze([
   'contacts on an organisation', 'contacts on a lead with no organisation', 'people at an introducing firm',
   'staff tasks naming a contact found', 'document requests to an organisation found', 'client logins',
-  'the share-progress answers and the consent history of anyone found', 'the rights-request register', 'the complaints log',
+  'the share-progress and consent answers of anyone found', 'the rights-request register', 'the complaints log',
 ]);
 
 export function searchPerson(d: ComplianceDeps, actor: Actor, term: string): SearchResult {

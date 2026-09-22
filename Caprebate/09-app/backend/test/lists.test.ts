@@ -143,7 +143,7 @@ describe('the claims list — built forwards for its reader, filtered and sorted
     });
     const low = LI.claimsList(app.db, as('ADMIN'), LI.readParams('CLAIMS', q('value_min=0')).params);
     assert.equal(low.rows.some((r) => r.id === made.id), false, 'a claim with no estimate was counted as at least £0');
-    assert.ok(low.said.some((x) => /no sealed estimate and (is|are) in no value filter/.test(x)));
+    assert.ok(low.said.some((x) => /no estimate yet, so (it is|they are) left out of the value filter/.test(x)));
     const high = LI.claimsList(app.db, as('ADMIN'), LI.readParams('CLAIMS', q('value_max=999999999')).params);
     assert.equal(high.rows.some((r) => r.id === made.id), false, 'a claim with no estimate was counted as below a figure');
   });

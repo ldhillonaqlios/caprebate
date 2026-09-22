@@ -34,7 +34,7 @@ export type VocabList = 'LEAD_SOURCE' | 'PRIORITY' | 'ACTIVITY_TYPE' | 'PROPERTY
 export const VOCAB_LISTS: Readonly<Record<VocabList, { readonly label: string; readonly holds: string }>> = Object.freeze({
   LEAD_SOURCE: { label: 'Lead sources', holds: 'where a lead came from, and an organisation’s source' },
   PRIORITY: { label: 'Priorities', holds: 'a claim’s, a lead’s and a task’s priority — the later on the list, the higher' },
-  ACTIVITY_TYPE: { label: 'Task types', holds: 'what kind of activity a task is. The three reciprocity kinds of reward model A are not on it' },
+  ACTIVITY_TYPE: { label: 'Task types', holds: 'what kind of activity a task is. The three things we do for introducers in return are not on this list' },
   PROPERTY_TYPE: { label: 'Property types', holds: 'what kind of building a property is' },
   INTRODUCER_TYPE: { label: 'Introducer types', holds: 'what kind of firm an introducer is' },
 });

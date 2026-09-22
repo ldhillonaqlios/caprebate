@@ -84,19 +84,19 @@ export const READERS: Vocab = Object.freeze({
 });
 
 export const SOURCES: Vocab = Object.freeze({
-  CRM_SPECIFICATION: 'the CRM specification’s list',
-  STAGE_2_UPLOAD_LIST: 'the Stage 2 document upload list',
-  EXTRACTION_SPECS: 'the document pipeline’s extraction specifications',
+  CRM_SPECIFICATION: 'our first list of document types',
+  STAGE_2_UPLOAD_LIST: 'the Stage 2 upload list',
+  EXTRACTION_SPECS: 'our list of documents we read facts from',
   ADMIN: 'added by an administrator',
 });
 
 /** THE ONE READING for a type — or a version — with no deletion clock. Never a default, never "kept" (N4). */
 export const RETENTION_UNSET =
-  'UNSET — no deletion clock has been determined for this type. Nothing is deleted on a clock, and nothing is promised kept: ' +
-  'it is reported as unscheduled.';
+  'No deletion date set yet. Nothing is deleted on a date, and nothing is promised kept. ' +
+  'We list it as not scheduled.';
 
 /** The clocks a type may carry. RET-7 is the only one the Retention Procedure gives a client document. */
-export const RETENTION_REFS: Vocab = Object.freeze({ 'RET-7': 'RET-7 — the client uploaded document' });
+export const RETENTION_REFS: Vocab = Object.freeze({ 'RET-7': `The ${RET7.period_years}-year rule for files a client sends` });
 
 export type RetentionReading = {
   readonly ref: string | null;
@@ -115,13 +115,14 @@ export function retentionReading(ref: string | null | undefined): RetentionReadi
   if (ref === null || ref === undefined || !has(RETENTION_REFS, ref)) {
     return { ref: null, state: 'UNSET', computes_a_date: false, label: RETENTION_UNSET };
   }
-  const rule = `RET-7: ${RET7.period_years} years from ${RET7.trigger}`;
+  // RET7.trigger names the two dates in code words; the same two dates, said plainly.
+  const rule = `Deleted ${RET7.period_years} years after the later of two dates: the claim’s period end, or when we sent the report`;
   const approved: boolean = RET7.approved;
   return approved
-    ? { ref, state: 'APPROVED', computes_a_date: true, label: `${rule}. Approved — a date is computed once both dates are known, and not before.` }
+    ? { ref, state: 'APPROVED', computes_a_date: true, label: `${rule}. Approved. We set the date once both dates are known, and not before.` }
     : {
         ref, state: 'DERIVED_NOT_APPROVED', computes_a_date: false,
-        label: `${rule}. DERIVED, NOT APPROVED — the data protection officer has not signed it, so no deletion date is computed.`,
+        label: `${rule}. Worked out by us — not yet approved by the data protection officer, so no deletion date is set.`,
       };
 }
 
@@ -134,9 +135,9 @@ export type Ret7Limbs = {
 };
 
 const PERIOD_END_NOT_KNOWN =
-  'the claim’s accounting period end is not known — recorded as not known and never recorded read the same';
+  'the claim’s period end is not known yet (not known and never given count the same)';
 const REPORT_NOT_DELIVERED =
-  'no client report is issued on the claim, so the report’s delivery is not known — a draft is not a delivery';
+  'we have not sent the client report yet, so that date is not known — a draft does not count';
 
 /**
  * RET-7'S TWO DATES, READ FROM THE CLAIM — DERIVED, NOT STORED. Phase 132, 14 September 2026.
@@ -180,12 +181,12 @@ export function ret7Limbs(db: Db, logical_document_id: string): Ret7Limbs {
     'SELECT DISTINCT claim_id FROM document_links WHERE logical_document_id = ? AND unlinked_at IS NULL AND claim_id IS NOT NULL ORDER BY claim_id',
     [logical_document_id]);
   if (claims.length === 0) {
-    return { claim_period_end: null, report_delivered_at: null, why: 'the document is linked to no claim, so neither date can be read — both are not known' };
+    return { claim_period_end: null, report_delivered_at: null, why: 'the document is linked to no claim, so neither date is known' };
   }
   if (claims.length > 1) {
     return {
       claim_period_end: null, report_delivered_at: null,
-      why: `the document is linked to ${claims.length} claims, and which claim’s dates govern its clock is not decided here — both are not known`,
+      why: `the document is linked to ${claims.length} claims, and we have not decided whose dates count — both are not known`,
     };
   }
   const claim_id = claims[0]?.claim_id ?? '';
@@ -197,9 +198,9 @@ export function ret7Limbs(db: Db, logical_document_id: string): Ret7Limbs {
     claim_period_end: periodDay === null ? null : `${periodDay}T00:00:00.000Z`,
     report_delivered_at: reportDay === null ? null : `${reportDay}T00:00:00.000Z`,
     why: [
-      periodDay === null ? PERIOD_END_NOT_KNOWN : `the claim’s accounting period ends on ${periodDay}`,
+      periodDay === null ? PERIOD_END_NOT_KNOWN : `the claim’s period ends on ${periodDay}`,
       reportDay !== null ? `the client report was first issued on ${reportDay}`
-        : negativeOnly ? 'only a reasoned negative is issued on the claim, and it is not read as the report’s delivery — not known'
+        : negativeOnly ? 'we only sent a letter saying there is no claim. That does not count as the report, so the date is not known'
           : REPORT_NOT_DELIVERED,
     ].join('; '),
   };
@@ -214,15 +215,15 @@ export type StripReading = {
 };
 
 export const NO_RECEIPT_POLICY =
-  'No receipt policy — so an upload of this type cannot be received. The link is refused before it is issued, and it cannot be ' +
-  'requested. A policy is the data protection officer’s decision; until one exists this type is recorded and configurable, and switched off.';
+  'We have no rule yet for reading this kind of file, so we cannot accept one. You cannot send an upload link for it or ask for it. ' +
+  'The data protection officer sets that rule. Until then, this type is listed but switched off.';
 
 export function stripReading(handler_type: string | null): StripReading {
   if (handler_type === null) return { receivable: false, policy: null, label: NO_RECEIPT_POLICY };
   return {
     receivable: true, policy: handler_type,
-    label: `The receipt strip runs on every upload of this type, under the upload handler’s ${handler_type.replace(/_/g, ' ').toLowerCase()} ` +
-      'policy, before anything read out of it is written onward — and the original is deleted from quarantine with evidence.',
+    label: `We read every file of this type using our “${handler_type.replace(/_/g, ' ').toLowerCase()}” rules. ` +
+      'We take out what we must not keep before we save anything. Then we delete the file, and record that we did.',
   };
 }
 
@@ -286,15 +287,15 @@ function readTypeFields(input: Fields, current: TypeRow | null):
   const carriesIn = has(input as Vocab, 'carries_value') ? input['carries_value'] : null;
   const carries = carriesIn === '0' ? 0 : carriesIn === '1' ? 1 : (current === null ? 1 : current.carries_value);
   if (current !== null && current.carries_value === 1 && carries === 0) {
-    return { ok: false, why: 'a type that can carry a claim value, a tax benefit or a fee is never marked as not carrying one (N1).', field: 'carries_value' };
+    return { ok: false, why: 'a type that can carry a claim value, a tax benefit or a fee is never marked as not carrying one.', field: 'carries_value' };
   }
   if (carries === 1 && readers === 'CLAIM_EVIDENCE') {
-    return { ok: false, why: 'a type that can carry a claim value, a tax benefit or a fee cannot be claim evidence: a surveyor would read it (N1).', field: 'readers' };
+    return { ok: false, why: 'a type that can carry a claim value, a tax benefit or a fee cannot be claim evidence. A surveyor would read it.', field: 'readers' };
   }
   const retIn = has(input as Vocab, 'retention_ref') ? (input['retention_ref'] ?? '') : (current?.retention_ref ?? '');
   const retention = retIn === '' || retIn === 'UNSET' ? null : retIn;
   if (retention !== null && !has(RETENTION_REFS, retention)) {
-    return { ok: false, why: 'choose a deletion clock from the Retention Procedure’s list, or leave it UNSET.', field: 'retention_ref' };
+    return { ok: false, why: 'choose a deletion rule from the list, or choose “No deletion date set yet”.', field: 'retention_ref' };
   }
   const activeIn = has(input as Vocab, 'active') ? input['active'] : null;
   const active = activeIn === '0' ? 0 : activeIn === '1' ? 1 : (current?.active ?? 1);
@@ -524,7 +525,7 @@ function versionView(r: VersionRow): VersionView {
     by: r.uploader_role === 'CLIENT' ? 'the client' : r.uploader_role === null ? 'nobody recorded' : `staff (${r.uploader_role.toLowerCase()})`,
     received,
     // PHASE 140: in words a person reads. The codes are still on the row and in the handler's own record.
-    state: r.failure_code !== null ? `We could not use it (${r.failure_code})`
+    state: r.failure_code !== null ? (FAILURE_WORDS[r.failure_code] ?? 'We could not use it.')
       : received ? 'Read — we kept what we need'
         : 'Not read yet',
     strip: r.strip_recorded_at === null ? 'not read yet' : `read ${localStamp(r.strip_recorded_at)}`,
@@ -685,11 +686,11 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
  * ================================================================== */
 
 /** What a received request's answer says. The document is the answer; this sentence only says so. */
-export const RECEIVED_BY_UPLOAD = 'Received by upload — the document is the answer.';
+export const RECEIVED_BY_UPLOAD = 'Received — the file they sent is the answer.';
 
 /** The one sentence a click on a document request gets, in the portal and on the business page alike. */
 export const RECEIVED_ONLY_BY_UPLOAD =
-  'a document request is answered by uploading the document it asks for, and by nothing else — use the upload beside it.';
+  'you answer a document request by sending the document it asks for. Use the upload beside it.';
 
 /**
  * AFTER THE HANDLER HAS FINISHED, RECEIVE THE REQUEST THIS UPLOAD ANSWERS.
@@ -752,7 +753,7 @@ export function requestState(state: string): RequestState {
 
 export const REQUEST_WORDS: Readonly<Record<RequestState, string>> = Object.freeze({
   REQUESTED: 'requested — waiting on the client',
-  RECEIVED: 'received, by an upload of the requested type',
+  RECEIVED: 'received — they sent it',
   WITHDRAWN: 'withdrawn — asked in error',
 });
 
@@ -792,11 +793,11 @@ export function createDocumentRequest(
   const why = (i.why ?? '').trim();
   const holds = (i.holds_up ?? '').trim();
   if (why.length === 0 || holds.length === 0) {
-    return { ok: false, why: 'a request sent to a client has to say why the document is needed and what it holds up.', field: why.length === 0 ? 'why' : 'holds_up' };
+    return { ok: false, why: 'say why we need the document and what it holds up.', field: why.length === 0 ? 'why' : 'holds_up' };
   }
   const due = (i.due_on ?? '').trim();
   if (due !== '' && (!/^\d{4}-\d{2}-\d{2}$/.test(due) || !Number.isFinite(Date.parse(`${due}T12:00:00.000Z`)))) {
-    return { ok: false, why: 'the due date must be a date, as YYYY-MM-DD.', field: 'due_on' };
+    return { ok: false, why: 'the due date is not a real date. Pick one from the calendar.', field: 'due_on' };
   }
   const id = d.newId();
   const at = d.now();
@@ -1056,8 +1057,8 @@ export type DocumentPage = {
 };
 
 export const HISTORY_NOTE =
-  'Nothing overwrites. Every upload of this document is a version of its own, kept with its own deletion clock — the type’s clock at the ' +
-  'moment it arrived. A version the handler refused is listed too.';
+  'Nothing is overwritten. Each upload is its own version. Each keeps the deletion rule its type had when it arrived. ' +
+  'Uploads we could not use are listed too.';
 
 /** PHASE 140: in words a person reads. `READ_AND_DELETED` (src/web/originals.ts) is the short form a folder shows. */
 export const ORIGINALS_NOTE =
@@ -1224,9 +1225,9 @@ export function documentsOf(db: Db, actor: Actor, business_id: string): Document
  * ================================================================== */
 
 export const CENTRE_STATES: Vocab = Object.freeze({
-  RECEIVED: 'Received — a version has passed the receipt strip',
-  NOT_RECEIVED: 'Not received yet — no version has passed the receipt strip',
-  REFUSED: 'Refused — the upload handler refused its newest version, and none is received',
+  RECEIVED: 'Received — we have read at least one version',
+  NOT_RECEIVED: 'Not received yet — we have not read any version',
+  REFUSED: 'Refused — we could not use its newest version, and none is received',
 });
 
 export const CENTRE_SORTS: Vocab = Object.freeze({
@@ -1240,8 +1241,8 @@ export const CENTRE_FILTERS: readonly { readonly key: 'type' | 'organisation' | 
 ]);
 
 export const CENTRE_NEVER: readonly string[] = Object.freeze([
-  'what a document says — this list is of documents, and never searches their text',
-  'an export of documents — there is none, for anyone',
+  'what a document says — this list never searches inside files',
+  'a download of all the documents — nobody can do this',
 ]);
 
 export type CentreChoice = { readonly value: string; readonly label: string };
@@ -1450,8 +1451,15 @@ function plural(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-/** What the handler recorded reading, in counts. Steps 4 and 5 of the receipt contract, as the handler wrote them. */
-function readLines(db: Db, v: FolderVersionRow): { state: FolderFile['state']; lines: string[] } {
+/**
+ * What the handler recorded reading, in counts. Steps 4 and 5 of the receipt contract, as the handler wrote them.
+ * PHASE 144: exported so the portal's own document page says the same counts as the staff Files folder. It reads only
+ * the version's failure code, its two receipt times and the handler's page and part COUNTS — no words from the file, no
+ * note, no figure — so it is safe for the client who sent the file.
+ */
+export function readLines(
+  db: Db, v: Pick<FolderVersionRow, 'id' | 'failure_code' | 'strip_recorded_at' | 'quarantine_discharged_at'>,
+): { state: FolderFile['state']; lines: string[] } {
   if (v.failure_code !== null) {
     return { state: 'REFUSED', lines: [FAILURE_WORDS[v.failure_code] ?? 'We could not use it. Ask for it again.'] };
   }

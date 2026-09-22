@@ -92,16 +92,16 @@ export function filingRoute(db: Db, c: { id: string; business_id: string }, sinc
  * application reads it now, or null where the window is not known.
  */
 export function clientConfirmationNeed(db: Db, c: { id: string }, since: string, deadline: string | null): Need {
-  const what = 'The client confirmed in writing that they will file the amendment, the last day to amend as we state it, ' +
-    'and that they remain responsible for the filing position — the client’s own confirmation, not an accountant’s';
+  const what = 'The client confirmed in writing: they will file the amendment, the last day to amend we gave them, ' +
+    'and that what they put on their return is still their responsibility — the client’s own confirmation, not an accountant’s';
   const k = latestConfirmation(db, c.id, since);
   if (k === undefined) return { what, met: false, why: 'no client filing confirmation is recorded since the claim entered this stage' };
   const missing: string[] = [];
   if (k.will_file_amendment !== 'YES') missing.push('that they will file the amendment');
   if (k.last_day_acknowledged !== 'YES' || k.last_day_stated === null) missing.push('the last day to amend');
-  if (k.remains_responsible !== 'YES') missing.push('that they remain responsible for the filing position');
+  if (k.remains_responsible !== 'YES') missing.push('that what they put on their return is still their responsibility');
   if (missing.length > 0) {
-    return { what, met: false, why: `not confirmed as a yes — ${missing.join('; ')} (no, not sure and not given all leave this shut)` };
+    return { what, met: false, why: `not confirmed as a yes — ${missing.join('; ')} (no, not sure or blank all keep this closed)` };
   }
   if (deadline === null) {
     return { what, met: false, why: 'the amendment window is not known, so the last day the client confirmed cannot be checked against it' };
@@ -142,7 +142,7 @@ export function recordClientFilingConfirmation(
     values[f] = a;
   }
   const lastDay = (input['last_day_stated'] ?? '').trim();
-  if (lastDay !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(lastDay)) return { ok: false, why: 'The last day to amend is a date, as YYYY-MM-DD.' };
+  if (lastDay !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(lastDay)) return { ok: false, why: 'Give the last day to amend as a date, like 2026-03-31.' };
   const evidence = (input['written_evidence'] ?? '').trim();
   if (evidence.length < 2 || evidence.length > 1000) {
     return { ok: false, why: 'Say where the client’s written confirmation is — a signed form, or a dated email.' };

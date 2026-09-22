@@ -199,8 +199,8 @@ export type NoClaimReading = {
 };
 
 export const NO_CLAIM_FOR_TAX_ADVISER =
-  'FOR THE TAX ADVISER — AWAITING REVIEW. The engine reads “tax relief after our fee” as its five-year relief less ' +
-  'our fee. It refuses no work and moves no figure: the figures are shown and the client chooses.';
+  'FOR THE TAX ADVISER — AWAITING REVIEW. We take “tax relief after our fee” to mean the five-year relief less ' +
+  'our fee. This stops no work and changes no figure. We show the figures, and the client chooses.';
 
 function noClaim(readings: readonly { label: string; rate: number; threshold: RecommendationThreshold }[], whyNone?: string | null): NoClaimReading {
   const line = noClaimThreshold().relief_after_fee_below;
@@ -290,8 +290,8 @@ function compare(r: ComparisonFacts): FeeVersusBenefit {
     return {
       computed: false,
       why: rates.length === 0
-        ? 'no entity type is recorded on this invoice, and the marginal rate a claim relieves at ' +
-          'depends on it — a company and a partnership are not on the same scale'
+        ? 'we do not know yet if the client is a company or a partnership. ' +
+          'Their tax rate depends on it, so we cannot work this out'
         : first.comparison.why,
       readings: [], exceeds_year_one: null, exceeds_cumulative: null, breakeven_year_one: [],
       unknowns: first.comparison.unknowns.map(inWords), assumptions: first.comparison.assumptions.map(inWords),
@@ -344,9 +344,9 @@ function agree(vs: readonly (boolean | null)[]): boolean | null {
  * not reading the code, so a module's name becomes what it is; the rest of the sentence is the engine's, untouched.
  */
 const ENGINE_NAMES: readonly (readonly [RegExp, string])[] = [
-  [/\bthe same refusal CB_POOL makes\b/g, 'the same refusal the engine’s pool split rule makes'],
-  [/\s*\(CB_CTA\.[A-Za-z0-9_]+\)/g, ' (a tax adviser’s switch)'],
-  [/\bCB_[A-Z]+(?:\.[A-Za-z0-9_]+)?\b/g, 'the engine’s own rule'],
+  [/\bthe same refusal CB_POOL makes\b/g, 'the same reason we cannot split the pool'],
+  [/\s*\(CB_CTA\.[A-Za-z0-9_]+\)/g, ' (waiting on the tax adviser)'],
+  [/\bCB_[A-Z]+(?:\.[A-Za-z0-9_]+)?\b/g, 'our own rule'],
 ];
 
 export function inWords(s: string): string {
@@ -444,7 +444,7 @@ export function setStatuses(
   if (r.claim_id !== null) {
     return {
       ok: false,
-      why: 'A claim’s invoice records what happened — raised, sent, cancelled, a credit note, money received — and its payment state is read from those, never typed.',
+      why: 'You cannot type a claim invoice’s state. It shows what happened: raised, sent, cancelled, credited or paid.',
     };
   }
 

@@ -58,7 +58,7 @@ import { adminSettingsGate, SETTINGS_TILES } from './admin-tiles.ts';
  */
 export type NavContext = {
   readonly db: Db; readonly now: () => string; readonly path: string;
-  /** PHASE 133c: the two name switches for this request (B7, B9). Absent is `NAME_SWITCHES`, both off as shipped. */
+  /** PHASE 133c: the two name switches for this request (B7, B9). Absent is `NAME_SWITCHES` (portal steps on since Phase 144). */
   readonly names?: NameSwitches;
   /**
    * PHASE 133c: A REFUSED FORM KEEPS WHAT WAS TYPED (B6). The router records what a POST carried here, and `problem()` in
@@ -79,14 +79,15 @@ export type NameSwitches = {
 };
 
 /**
- * THE SWITCH, AS SHIPPED: OFF. Which to switch on is a question for Lakhbir in CAPREBATE QUESTIONS, "The new names and the
- * client's step names - which do we switch on?". Turning it on is a one-word change here.
+ * THE SWITCH: ON SINCE 22 SEPTEMBER 2026. Lakhbir answered CAPREBATE QUESTIONS, "The new names and the client's step
+ * names - which do we switch on?", in the Phase 144 chat: "Switch on". Clients read "1 Your estimate" to "6 Aftercare".
+ * (Shipped OFF by Phase 133c.) A test still passes both positions.
  *
  * PHASE 135 — THE MENU NAMES ARE NO LONGER A SWITCH. Of the three proposed in Phase 133c, "Introducer fees" is now the
  * section's name; "Client files" and "Claims needing an owner" no longer apply, because Engaged clients became the one
  * Clients list and Next actions became a filter on Tasks. The `menu` switch went with them.
  */
-export const NAME_SWITCHES: NameSwitches = Object.freeze({ portalSteps: false });
+export const NAME_SWITCHES: NameSwitches = Object.freeze({ portalSteps: true });
 
 /** The switches this request reads. */
 export function nameSwitches(): NameSwitches {

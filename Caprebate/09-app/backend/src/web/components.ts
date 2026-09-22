@@ -138,7 +138,7 @@ export function claimStageBar(
   const note = stage.kind === 'ON_HOLD' ? badge('On hold', 'warn')
     : stage.kind === 'EXIT' ? badge(`Left the procedure: ${stage.label}`, 'stop')
       : stage.kind === 'CLOSED' ? badge('Closed', 'ok')
-        : stage.kind === 'UNKNOWN' ? badge('Stage not recognised — nobody has placed this claim in the procedure', 'warn') : raw('');
+        : stage.kind === 'UNKNOWN' ? badge('Stage not known — nobody has given this claim a stage', 'warn') : raw('');
   const missing = gate?.needs.find((n) => !n.met);
   // PHASE 133c — "A STOP IS INFORMATION, NOT A FAILURE" (brand book slide 49). A gate that is not yet open reads "Not ready
   // yet" in a neutral badge, never "shut" in red; the first thing still needed is said in plain words (src/web/next-step.ts).

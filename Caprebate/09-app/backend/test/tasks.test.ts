@@ -358,7 +358,7 @@ describe('one next action per claim, with an owner and a due date', () => {
         const r = fwd(c);
         assert.equal(r.ok, false, 'a move left a claim without one next action with an owner and a due date');
         if (!r.ok) {
-          assert.match(r.why, /keeps exactly one next action, with an owner and a due date/);
+          assert.match(r.why, /needs one next step, with an owner and a due date/);
           assert.match(r.why, reason);
         }
         assert.equal(stageOf(app, c), 'ASSESSMENT', 'a refused move changed the stage');
