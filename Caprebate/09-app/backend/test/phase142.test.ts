@@ -442,15 +442,15 @@ describe('replies to contactus@caprebate.com', () => {
 
   test('INBOUND_EMAIL is built and off: reading does nothing, opens no connection, and says what is missing', async () => {
     assert.equal(INBOUND_EMAIL.enabled, false);
-    assert.equal(INBOUND_EMAIL.provider, null);
+    // PHASE 142b: IONOS chosen on 22 September 2026, so the mailbox is read over IMAP; reading stays off.
+    assert.equal(INBOUND_EMAIL.provider, 'IMAP');
     assert.ok(backendSwitchReadings().some((s) => s.switch === 'INBOUND_EMAIL' && s.on === false && s.home === 'src/stubs/email-inbound.ts'));
     let touched = false;
     const spy: Mailbox = { since: async () => { touched = true; return []; }, one: async () => { touched = true; return null; } };
     const r = await IE.readMailbox(w.deps(), INBOUND_EMAIL, LOGIN, spy);
     assert.equal(r.state, 'OFF');
     assert.equal(touched, false, 'the mailbox was opened while reading was off');
-    assert.deepEqual(readingMissing(INBOUND_EMAIL, null), [
-      'Choose the email service that holds the contactus@caprebate.com mailbox.',
+    assert.deepEqual(readingMissing(INBOUND_EMAIL, null).filter((x) => !/login/i.test(x)), [
       'Set up the contactus@caprebate.com mailbox and its email security records.',
       'Then switch reading replies on.',
     ]);

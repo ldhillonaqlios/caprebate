@@ -43,9 +43,10 @@ export type InboundEmail = {
   readonly question: string;
 };
 
+/** PHASE 142b: Lakhbir chose IONOS on 22 September 2026, so the mailbox is read over IMAP. Still off: the mailbox is not ready. */
 export const INBOUND_EMAIL: InboundEmail = Object.freeze({
   enabled: false,
-  provider: null,
+  provider: 'IMAP',
   mailbox_ready: false,
   question: EMAIL_PROVIDER_QUESTION,
 });

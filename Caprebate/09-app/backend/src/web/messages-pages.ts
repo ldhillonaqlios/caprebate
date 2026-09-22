@@ -68,6 +68,20 @@ function bubble(m: M.ThreadMessage, team: boolean, extra: Safe = raw('')): Safe 
 }
 
 /**
+ * PHASE 142b — THE THREAD WITH THE CLIENT, FOR THE SURVEYOR ON AN ASSIGNED JOB. Read only: no form, and nothing marked
+ * read. Lakhbir, 22 September 2026: the surveyor sees "With the client", never "Team only". Null for a login the rule
+ * does not admit, so the tab is not drawn at all.
+ */
+export function surveyorThreadPanel(db: Db, actor: Actor, business_id: string): Safe | null {
+  if (!can(actor, 'client_message.read', { type: 'client_message', id: business_id, business_id,
+    assigned_surveyor_ids: db.all<{ surveyor_id: string }>('SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL', [business_id]).map((r) => r.surveyor_id) })) return null;
+  const t = M.clientThread(db, actor, business_id);
+  return h`<h2>Messages with the client</h2>
+    <p class="help">What the client and our team have written to each other. You can read it, not reply. Ask Sales to pass on a question.</p>
+    ${t.messages.length === 0 ? h`<p class="empty">No messages yet.</p>` : h`<ol class="chat">${t.messages.map((m) => bubble(m, false))}</ol>`}`;
+}
+
+/**
  * PHASE 142 — THE FILES OF AN EMAILED REPLY THAT NOBODY HAS SAVED YET. One small form each: say what it is, and it is
  * fetched from the mailbox and saved to Files through the upload path. Only for Admin and Sales (`inbound_email.file`).
  */

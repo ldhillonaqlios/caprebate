@@ -61,9 +61,15 @@ export type EmailSending = {
 /** The title of the question under Lakhbir in CAPREBATE QUESTIONS. Quoted, not paraphrased. */
 export const EMAIL_PROVIDER_QUESTION = 'Which email service should send our emails from contactus@caprebate.com?';
 
+/**
+ * PHASE 142b: Lakhbir answered the question on 22 September 2026 — IONOS, from the contactus@caprebate.com mailbox — so the
+ * provider is SMTP through IONOS's own host. Still off: the mailbox and its email security records, and IONOS named in
+ * clause 7 of the engagement letter, are not yet true. IONOS is already "our email" in the privacy notice, but that
+ * notice is a draft nobody has approved, so `named_in_privacy_notice` stays false until it is published.
+ */
 export const EMAIL_SENDING: EmailSending = Object.freeze({
   enabled: false,
-  provider: null,
+  provider: 'SMTP',
   named_in_privacy_notice: false,
   named_in_engagement_letter: false,
   mailbox_and_dns_ready: false,

@@ -10,7 +10,7 @@
  *   "How long do we keep client messages and the team chat?"
  * A message deleted early cannot be brought back, so nothing deletes one until that is answered.
  *
- * OFF IS EXACTLY TODAY. With the shipped setting below, `messagesDue` returns nothing and `sweepMessages` deletes
+ * OFF WAS EXACTLY PHASE 142a's STATE. With the setting off, `messagesDue` returns nothing and `sweepMessages` deletes
  * nothing, writes nothing and returns OFF with what is missing, in plain words.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -72,12 +72,18 @@ export type MessageRetention = {
 /** The title of the question for the data protection officer in CAPREBATE QUESTIONS. Quoted, not paraphrased. */
 export const MESSAGE_RETENTION_QUESTION = 'How long do we keep client messages and the team chat?';
 
+/**
+ * PHASE 142b — ON. Lakhbir answered the question on 22 September 2026: messages are kept for seven years — from the claim
+ * file's clock on a company with a claim, and from the last message on one without (the recommended clocks, with seven
+ * years in place of six and of twelve months) — and asked for the job to be switched on now, before the data protection
+ * officer signs. The officer's approval is still asked for on the register FOR THE SOLICITOR, THE DPO AND THE DEVELOPER.
+ */
 export const MESSAGE_RETENTION: MessageRetention = Object.freeze({
-  enabled: false,
-  with_claim_years: null,
-  without_claim_months: null,
-  approved_by: null,
-  review_ref: null,
+  enabled: true,
+  with_claim_years: 7,
+  without_claim_months: 84,
+  approved_by: 'Lakhbir Dhillon',
+  review_ref: 'CAPREBATE QUESTIONS, "How long do we keep client messages and the team chat?", answered 22 September 2026',
   question: MESSAGE_RETENTION_QUESTION,
 });
 

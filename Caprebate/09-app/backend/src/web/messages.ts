@@ -90,7 +90,12 @@ export type TeamThreadView = {
   readonly may_write: boolean;
 };
 
-const clientObj = (business_id: string) => ({ type: 'client_message' as const, id: business_id, business_id });
+/** The thread's object, carrying the surveyors with an assigned survey job on the company — the only surveyors it admits. */
+const clientObj = (db: Db, business_id: string) => ({
+  type: 'client_message' as const, id: business_id, business_id,
+  assigned_surveyor_ids: db.all<{ surveyor_id: string }>(
+    'SELECT DISTINCT surveyor_id FROM surveyor_jobs WHERE business_id = ? AND surveyor_id IS NOT NULL', [business_id]).map((r) => r.surveyor_id),
+});
 const noteObj = (business_id: string) => ({ type: 'internal_note' as const, id: business_id, business_id });
 
 function company(db: Db, business_id: string): { id: string; name: string; dnc: boolean } {
@@ -123,7 +128,7 @@ function lastRead(db: Db, user_id: string, business_id: string, thread: Thread):
  */
 export function unreadCount(db: Db, actor: Actor, business_id: string, thread: Thread): number {
   if (thread === 'CLIENT') {
-    if (!can(actor, 'client_message.read', clientObj(business_id))) return 0;
+    if (!can(actor, 'client_message.read', clientObj(db, business_id))) return 0;
     const since = lastRead(db, actor.id, business_id, 'CLIENT');
     const direction = actor.role === 'CLIENT' ? 'TO_CLIENT' : 'FROM_CLIENT';
     return db.get<{ n: number }>(
@@ -201,13 +206,13 @@ function toMessage(db: Db, actor: Actor, company: string, r: MessageRow): Thread
  */
 export function clientThread(db: Db, actor: Actor, business_id: string): ClientThreadView {
   const b = company(db, business_id);
-  authorise(actor, 'client_message.read', clientObj(b.id));
+  authorise(actor, 'client_message.read', clientObj(db, b.id));
   const rows = db.all<MessageRow>(`${MESSAGE_SELECT}WHERE m.business_id = ? ORDER BY m.created_at ASC, m.rowid ASC`, [b.id]);
   return {
     business_id: b.id, company: b.name,
     messages: rows.map((r) => toMessage(db, actor, b.name, r)),
     unread: unreadCount(db, actor, b.id, 'CLIENT'),
-    may_write: can(actor, 'client_message.write', clientObj(b.id)),
+    may_write: can(actor, 'client_message.write', clientObj(db, b.id)),
     do_not_contact: b.dnc,
     claims: claimsOf(db, b.id, b.name),
   };
@@ -220,7 +225,7 @@ export function clientThread(db: Db, actor: Actor, business_id: string): ClientT
  */
 export function clientMessage(db: Db, actor: Actor, business_id: string, message_id: string): ThreadMessage {
   const b = company(db, business_id);
-  authorise(actor, 'client_message.read', clientObj(b.id));
+  authorise(actor, 'client_message.read', clientObj(db, b.id));
   const r = db.get<MessageRow>(`${MESSAGE_SELECT}WHERE m.id = ? AND m.business_id = ?`, [message_id, b.id]);
   if (r === undefined) throw new NotFoundAsRefusal();
   return toMessage(db, actor, b.name, r);
@@ -233,7 +238,7 @@ const DNC_WHY = 'This company asked us not to contact them. Nothing was sent.';
 /** Why a message cannot be sent, or null. Asked before any file is received, so a refusal leaves nothing behind. */
 export function messageRefusal(db: Db, actor: Actor, business_id: string, input: { body: string; claim_id: string | null }): string | null {
   const b = company(db, business_id);
-  authorise(actor, 'client_message.write', clientObj(b.id));
+  authorise(actor, 'client_message.write', clientObj(db, b.id));
   const text = input.body.trim();
   if (text.length === 0) return 'Write a message first.';
   if (text.length > MAX_MESSAGE) return `That message is too long. The most is ${MAX_MESSAGE.toLocaleString('en-GB')} characters.`;
@@ -405,7 +410,8 @@ export function clientMessagesWaiting(db: Db, actor: Actor, nowIso: string): Wai
       "WHERE m.direction = 'FROM_CLIENT' AND m.created_at > COALESCE((SELECT MAX(r.created_at) FROM client_messages r " +
       "WHERE r.business_id = m.business_id AND r.direction = 'TO_CLIENT'), '') GROUP BY m.business_id, b.name ORDER BY since ASC");
   return rows
-    .filter((r) => can(actor, 'client_message.read', clientObj(r.business_id)))
+    // A surveyor reads the thread but never answers it, so nothing on it waits for them.
+    .filter((r) => actor.role !== 'SURVEYING' && can(actor, 'client_message.read', clientObj(db, r.business_id)))
     .map((r) => {
       const days = workingDaysSince(r.since, nowIso);
       return { business_id: r.business_id, company: r.name, since: r.since, working_days: days, late: days > LATE_AFTER_WORKING_DAYS, count: r.n };

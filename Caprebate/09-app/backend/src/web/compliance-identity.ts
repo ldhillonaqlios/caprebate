@@ -386,8 +386,8 @@ export const RECORD_KINDS: readonly Kind[] = Object.freeze([
   { kind: 'INTRODUCER_NOTICES', label: 'Stage notices to firms', table: 'introducer_notices', ref: null, count: 'SELECT COUNT(*) AS n FROM introducer_notices', clockRows: null, why_unset: NOT_COVERED },
   { kind: 'CONSENT_ANSWERS', label: 'The consent history', table: 'consent_answers', ref: null, count: 'SELECT COUNT(*) AS n FROM consent_answers', clockRows: null, why_unset: NOT_COVERED },
   // Phase 142a — the two chat threads. Their clean-up job is built and switched off (MESSAGE_RETENTION); the period is the officer's.
-  { kind: 'CLIENT_MESSAGE', label: 'Messages with the client — the portal’s Messages', table: 'client_messages', ref: null, count: 'SELECT COUNT(*) AS n FROM client_messages', clockRows: null, why_unset: `${NOT_COVERED}. The officer is asked “${MESSAGE_RETENTION_QUESTION}”; the clean-up job that applies the answer is built and switched off` },
-  { kind: 'TEAM_MESSAGE', label: 'Team-only messages — the internal notes', table: 'internal_notes', ref: null, count: 'SELECT COUNT(*) AS n FROM internal_notes', clockRows: null, why_unset: `${NOT_COVERED}. The officer is asked “${MESSAGE_RETENTION_QUESTION}”; the clean-up job that applies the answer is built and switched off` },
+  { kind: 'CLIENT_MESSAGE', label: 'Messages with the client — the portal’s Messages', table: 'client_messages', ref: null, count: 'SELECT COUNT(*) AS n FROM client_messages', clockRows: null, why_unset: `${NOT_COVERED}. Seven years, set by Lakhbir on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”) and applied by the clean-up job, which is on; the data protection officer has not yet approved it` },
+  { kind: 'TEAM_MESSAGE', label: 'Team-only messages — the internal notes', table: 'internal_notes', ref: null, count: 'SELECT COUNT(*) AS n FROM internal_notes', clockRows: null, why_unset: `${NOT_COVERED}. Seven years, set by Lakhbir on 22 September 2026 (“${MESSAGE_RETENTION_QUESTION}”) and applied by the clean-up job, which is on; the data protection officer has not yet approved it` },
   { kind: 'CDD_RECORDS', label: 'Customer due diligence records', table: 'cdd_checks', ref: null, count: 'SELECT COUNT(*) AS n FROM cdd_checks', clockRows: null, why_unset: `${NOT_COVERED}. The position paper’s five years from the end of the relationship is the Money Laundering Regulations’, and applies only if they do` },
 ]);
 
@@ -443,7 +443,7 @@ export function retentionList(d: ComplianceDeps, actor: Actor, today: string, pa
     const del = refused === null
       ? 'No delete is offered here: deletion is not automated, because whether client-document folders can be kept out of the host’s backup is still open.'
       : k.table === 'client_messages' || k.table === 'internal_notes'
-        ? `The table refuses a DELETE by trigger (${refused}) except from the message clean-up job, which is switched off — so no delete is offered here.`
+        ? `The table refuses a DELETE by trigger (${refused}) except from the message clean-up job, which is on and deletes by its own rule — so no delete is offered here.`
         : `The table refuses a DELETE by trigger (${refused}), so no delete is offered — a deletion needs a decision about that trigger first.`;
     const held = liveHeldIds(d.db, k.kind);
     const limbs = k.kind === 'DOCUMENT_VERSIONS' ? { limbs: documentLimbs(d.db) } : {};

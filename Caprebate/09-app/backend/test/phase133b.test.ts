@@ -120,7 +120,8 @@ describe('the five long screens are on the record layout', () => {
     const path = `/staff/survey/${job.id}`;
     const r = await as('surveying').get(path);
     assert.equal(r.status, 200);
-    sound(path, r.body, ['property', 'rooms', 'rates', 'evidence', 'figures', 'record']);
+    // PHASE 142b: a seventh tab, Messages — the thread with the client, read only — on a job assigned to this surveyor.
+    sound(path, r.body, ['property', 'rooms', 'rates', 'evidence', 'figures', 'record', 'messages']);
     const n = ['property', 'rooms', 'rates', 'evidence', 'figures', 'record'];
     // PHASE 138: numbered headings are plain words.
     ['The property', 'The room schedule', 'The rates', 'The evidence', 'Your figures', 'The record'].forEach((heading, i) =>

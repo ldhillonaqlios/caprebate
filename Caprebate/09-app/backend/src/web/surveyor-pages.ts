@@ -38,6 +38,7 @@ import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import { dataLink, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from './components.ts';
 import * as S from './surveyor.ts';
 import { formatPence } from './shown-range.ts';
+import { surveyorThreadPanel } from './messages-pages.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -275,6 +276,8 @@ function workspacePage(
     w.rooms.schedule === null ? null : { href: '#rooms', label: 'Record the room counts' },
     { href: '#dn', label: 'Record what the client told you' },
   ].filter((q): q is QuickAction => q !== null);
+  // PHASE 142b: the thread with the client, read only, where the rule admits this login.
+  const chat = surveyorThreadPanel(d.app.db, actor, w.job.business_id);
   return page({
     title: w.job.business_name, nav: d.nav(actor), wide: true,
     body: h`
@@ -297,6 +300,7 @@ function workspacePage(
         { id: 'evidence', label: 'Evidence', body: evidencePanel(w) },
         { id: 'figures', label: 'Your figures', body: figuresPanel(w) },
         { id: 'record', label: 'The record', body: logPanel(d, w) },
+        ...(chat === null ? [] : [{ id: 'messages', label: 'Messages', body: chat }]),
       ]), sidePanel(null, quick, quarantinePanel(d, w)))}
 
       <p><a href="/staff/survey">Back to the job list</a></p>

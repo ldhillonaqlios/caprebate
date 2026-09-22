@@ -206,7 +206,7 @@ export type Obj =
    * contactus@caprebate.com. The "Team only" thread is the company's internal notes and stays `internal_note`: a
    * DIFFERENT object type in a DIFFERENT table, so no rule written for one can reach the other.
    */
-  | { readonly type: 'client_message'; readonly id: string; readonly business_id: string }
+  | { readonly type: 'client_message'; readonly id: string; readonly business_id: string; readonly assigned_surveyor_ids?: readonly string[] }
   | { readonly type: 'inbound_email'; readonly id: string };
 
 export type ObjType = Obj['type'];
@@ -517,12 +517,13 @@ const RULES: RuleTable = {
   'internal_note.write': { ADMIN: always, SALES: always },
   /*
    * PHASE 142 — THE THREAD WITH THE CLIENT. Admin and Sales, who work the client, and the client on its own company. The
-   * TEAM thread is `internal_note.*` above, and the client is on neither of its rows. THE SURVEYOR IS ON NO ROW OF EITHER
-   * THREAD: whether a surveyor should see one is Lakhbir's question ("Should the surveyor see a client's chat?"), and until
-   * it is answered the answer is no. Accounting is not on them either: its view is invoices, settled 6 September 2026.
+   * TEAM thread is `internal_note.*` above, and the client is on neither of its rows. THE SURVEYOR READS THE THREAD
+   * WITH THE CLIENT, AND NOTHING MORE: Lakhbir answered "Should the surveyor see a client's chat?" on 22 September 2026 —
+   * "With the client" only. A surveyor reads it on a company where they hold an assigned survey job (`throughAssignedJob`,
+   * failing closed on an object without the list), never writes on it, and is on no row of the TEAM thread. Accounting is not on them either: its view is invoices, settled 6 September 2026.
    * A REPLY BY EMAIL waits for Admin or Sales, who read the queue and file what the mailbox reader could not.
    */
-  'client_message.read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
+  'client_message.read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType>, SURVEYING: throughAssignedJob as Rule<ObjType> },
   'client_message.write': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
   'inbound_email.read': { ADMIN: always, SALES: always },
   'inbound_email.file': { ADMIN: always, SALES: always },

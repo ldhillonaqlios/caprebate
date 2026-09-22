@@ -841,6 +841,7 @@ section:
 4. **4 · The evidence** — the register data held, the documents uploaded, and **What your pack is still waiting on**.
 5. **5 · Your figures** — the figures, the rates (each with the tick box **I looked at this field**), and **On what basis did you reach these?**, which is required. Press **Commit my figures — this releases our estimate to me**. If a client has read our figure to you, record it under **If the client has told you our figure** with **Record it**; that costs you nothing.
 6. **6 · The record** — every event, chained so that nothing can be quietly removed. Each attempt to open the estimate before commitment is kept as its own line.
+7. **Messages** (a seventh tab since 22 September 2026) — what the client and our team have written to each other on **With the client**. You can read it, not reply: ask Sales to pass on a question. You never see our team's own notes.
 
 **Your tasks.** **My tasks** is on **Tasks**; one due today or late is also a red tile under **Today and overdue** on
 Home — on the demo, "Check the floor plans against the room schedule", due 2026-09-18. Use **Start** and **Complete**.
@@ -2597,8 +2598,9 @@ answers in their portal and can send a file with a message.
 
 **Who can open it**
 Admin and Sales, on the client's page, under **Chat**. The client sees only **With the client**, as **Messages** in their
-portal. Accounting, a surveyor and the view-only login see neither tab. (Whether a surveyor should see a chat is Lakhbir's
-question — *"Should the surveyor see a client's chat?"* — and until he answers, they do not.)
+portal. A surveyor reads **With the client** — never **Team only** — on a **Messages** tab of their survey job, for a
+company where they have a job, and cannot write on it (Lakhbir's answer, 22 September 2026). Accounting and the
+view-only login see neither tab.
 
 Address: `/staff/clients/{company}#chat` — **Team only** is `?chat=team`, **With the client** is `?chat=client`. Email
 replies we could not match: `/staff/replies`.
@@ -2633,11 +2635,10 @@ Our message emails the client's portal login: *"You have a new message from Cap 
 email never carries the message itself**, and nothing is emailed to a company marked do not contact. Today nothing is
 emailed and nothing waits to be sent; the line under **Send to the client** says so.
 
-**Old messages are cleaned up (switched off until the data protection officer decides — Phase 142a)**
-How long we keep messages on either tab is the data protection officer's question — *"How long do we keep client
-messages and the team chat?"*. The job that deletes old ones is built and switched off, and **nothing is deleted
-today**. When it is on, a company with a claim keeps its messages as long as the claim's records, and a company that
-never had a claim loses them a set time after its last message. A file sent with a message stays in **Files**. Nothing
+**Old messages are cleaned up after seven years (switched on 22 September 2026)**
+Lakhbir set the period: **seven years**. A company with a claim keeps its messages for seven years from the claim's
+own date (the later of its accounting period end and our report). A company that never had a claim keeps them for
+seven years after its last message. Nothing written today is due before 2033. A file sent with a message stays in **Files**. Nothing
 else can delete a message.
 
 **What it will refuse, and why**

@@ -429,14 +429,20 @@ describe('1 · files from the company’s folder', () => {
 describe('4 · EMAIL_SENDING — built, and off', () => {
   test('it ships off in all five ways, the case stamp reads it, and each missing thing is said in plain words', () => {
     assert.equal(EMAIL_SENDING.enabled, false);
-    assert.equal(EMAIL_SENDING.provider, null);
+    // PHASE 142b: Lakhbir chose IONOS on 22 September 2026, so the provider is set; sending stays off.
+    assert.equal(EMAIL_SENDING.provider, 'SMTP');
     assert.equal(EMAIL_SENDING.named_in_privacy_notice, false);
     assert.equal(EMAIL_SENDING.named_in_engagement_letter, false);
     assert.equal(EMAIL_SENDING.mailbox_and_dns_ready, false);
     assert.equal(EMAIL_SENDING.question, 'Which email service should send our emails from contactus@caprebate.com?');
     assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'EMAIL_SENDING'), { switch: 'EMAIL_SENDING', on: false, home: 'src/stubs/email-provider.ts' });
     assert.equal(sendingOn(EMAIL_SENDING, LOGIN), false);
-    assert.equal(sendingMissing(EMAIL_SENDING, null).length, 4);
+    assert.deepEqual(sendingMissing(EMAIL_SENDING, null), [
+      'Name that service in the privacy notice and in the engagement letter.',
+      'Set up the contactus@caprebate.com mailbox and its email security records.',
+      'Add the email service’s login to the server.',
+      'Then switch sending on.',
+    ]);
   });
 
   test('every condition fails closed — one missing, or not known, is off (N4: absent and unsure alike)', () => {

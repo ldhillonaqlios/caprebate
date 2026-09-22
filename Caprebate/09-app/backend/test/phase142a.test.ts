@@ -19,7 +19,7 @@ import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { createApp } from '../src/server.ts';
 import { seed } from '../src/seed.ts';
-import type { Actor } from '../src/authz.ts';
+import { can, type Actor } from '../src/authz.ts';
 import * as M from '../src/web/messages.ts';
 import * as IE from '../src/web/inbound-email.ts';
 import { addNote } from '../src/web/engaged.ts';
@@ -130,19 +130,32 @@ describe('1 · the message clean-up job is built and switched off', () => {
   before(async () => { w = await boot(); });
   after(() => w.close());
 
-  test('it ships off, in every way, and the case stamp says so', () => {
-    assert.equal(MESSAGE_RETENTION.enabled, false);
-    assert.equal(MESSAGE_RETENTION.with_claim_years, null);
-    assert.equal(MESSAGE_RETENTION.without_claim_months, null);
-    assert.equal(MESSAGE_RETENTION.approved_by, null);
+  test('PHASE 142b: it ships ON at seven years, as Lakhbir answered on 22 September 2026, and the case stamp says so', () => {
+    assert.equal(MESSAGE_RETENTION.enabled, true);
+    assert.equal(MESSAGE_RETENTION.with_claim_years, 7);
+    assert.equal(MESSAGE_RETENTION.without_claim_months, 84);
+    assert.equal(MESSAGE_RETENTION.approved_by, 'Lakhbir Dhillon');
+    assert.match(MESSAGE_RETENTION.review_ref ?? '', /answered 22 September 2026/);
     assert.equal(MESSAGE_RETENTION.question, 'How long do we keep client messages and the team chat?');
     assert.deepEqual(MESSAGE_RETENTION_RECOMMENDED, { with_claim_years: 6, without_claim_months: 12 });
-    assert.equal(retentionMissing(MESSAGE_RETENTION).length, 3);
+    assert.deepEqual(retentionMissing(MESSAGE_RETENTION), []);
+    assert.equal(retentionMissing({ ...MESSAGE_RETENTION, enabled: false, with_claim_years: null, without_claim_months: null, approved_by: null }).length, 3);
     assert.deepEqual(backendSwitchReadings().filter((x) => x.switch === 'MESSAGE_RETENTION'),
-      [{ switch: 'MESSAGE_RETENTION', on: false, home: 'src/web/message-retention.ts' }]);
+      [{ switch: 'MESSAGE_RETENTION', on: true, home: 'src/web/message-retention.ts' }]);
   });
 
-  test('OFF DELETES NOTHING — shipped, and each half-set way — even with every message decades old', () => {
+  test('PHASE 142b: as shipped, nothing written today is due — a company with no claim keeps everything for seven years', () => {
+    const p = prospect(w, 'Sevenyear Dental Limited');
+    w.clock.now = '2026-09-22T09:00:00.000Z';
+    assert.ok(M.postClientMessage(w.deps(), w.as('SALES'), p, { body: 'Phase 142b seven years', claim_id: null }).ok);
+    assert.deepEqual(messagesDue(w.made.app.db, MESSAGE_RETENTION, '2033-09-22T12:00:00.000Z').filter((r) => r.business_id === p), []);
+    const due = messagesDue(w.made.app.db, MESSAGE_RETENTION, '2033-09-23T09:00:00.000Z').filter((r) => r.business_id === p);
+    assert.equal(due.length, 1);
+    assert.equal(due[0]?.due_on, '2033-09-22');
+    w.clock.now = '2026-09-21T10:00:00.000Z';
+  });
+
+  test('OFF DELETES NOTHING — switched off, and each half-set way — even with every message decades old', () => {
     const d = w.deps();
     const p = prospect(w, 'Oldcastle Dental Limited');
     assert.ok(M.postClientMessage(d, w.as('SALES'), p, { body: 'Phase 142a words kept while off', claim_id: null }).ok);
@@ -153,7 +166,7 @@ describe('1 · the message clean-up job is built and switched off', () => {
     };
     w.clock.now = '2060-01-01T10:00:00.000Z';
     for (const cfg of [
-      MESSAGE_RETENTION,
+      { ...MESSAGE_RETENTION, enabled: false },
       { ...ON, enabled: false },
       { ...ON, with_claim_years: null, without_claim_months: null },
       { ...ON, approved_by: null },
@@ -503,5 +516,53 @@ describe('4 · the claim page and the property page call the notes "Team only", 
       const r = await client.get(path);
       assert.doesNotMatch(r.body, /Team only|Phase 142a note on the claim/, path);
     }
+  });
+});
+
+/* ================================================================== *
+ * 5 · PHASE 142b — THE SURVEYOR READS "WITH THE CLIENT" ON AN ASSIGNED JOB
+ * ================================================================== */
+
+describe('5 · Lakhbir, 22 September 2026: the surveyor sees "With the client" only, and only where they hold an assigned job', () => {
+  let w: World;
+  before(async () => { w = await boot(); });
+  after(() => w.close());
+
+  test('the rule: read on an assigned company, never on another, never with an object that does not carry the list; never write; never the team thread', () => {
+    const s = w.as('SURVEYING');
+    const obj = (ids?: string[]) => ({ type: 'client_message' as const, id: 'b', business_id: 'b', ...(ids === undefined ? {} : { assigned_surveyor_ids: ids }) });
+    assert.equal(can(s, 'client_message.read', obj([s.id])), true);
+    assert.equal(can(s, 'client_message.read', obj(['someone-else'])), false);
+    assert.equal(can(s, 'client_message.read', obj()), false, 'fails closed without the list');
+    assert.equal(can(s, 'client_message.write', obj([s.id])), false);
+    assert.equal(can(s, 'internal_note.read', { type: 'internal_note', id: 'b', business_id: 'b' }), false);
+    for (const role of ['ACCOUNTING', 'READ_ONLY']) assert.equal(can(w.as(role), 'client_message.read', obj([w.as(role).id])), false, role);
+  });
+
+  test('on the job page: a Messages tab with the client’s and our messages, read only — and never a team message', async () => {
+    const db = w.made.app.db;
+    const s = w.as('SURVEYING');
+    const job = db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM surveyor_jobs WHERE surveyor_id = ? LIMIT 1', [s.id]);
+    assert.ok(job, 'the seed gives the surveyor no job');
+    const d = w.deps();
+    assert.ok(M.postClientMessage(d, w.as('SALES'), job.business_id, { body: 'Phase 142b the survey is on Tuesday', claim_id: null }).ok);
+    assert.ok(addNote(d, w.as('SALES'), job.business_id, 'Phase 142b TEAM SECRET our range is 180k').ok);
+    const c = makeClient(w.base);
+    assert.equal((await c.post('/login', { email: 'surveying@example.invalid', password: w.password })).status, 303);
+    const r = await c.get(`/staff/survey/${job.id}`);
+    assert.equal(r.status, 200);
+    assert.match(r.body, /Messages with the client/);
+    assert.match(r.body, /Phase 142b the survey is on Tuesday/);
+    assert.doesNotMatch(r.body, /TEAM SECRET/);
+    assert.doesNotMatch(r.body, /action="\/staff\/clients\/[^"]+\/messages"/, 'the surveyor was given a form to write');
+    // Writing is refused on the server, whatever the page offers.
+    assert.equal((await c.post(`/staff/clients/${job.business_id}/messages`, { body: 'from the surveyor' })).status !== 303, true);
+    assert.equal(w.count("SELECT COUNT(*) AS n FROM client_messages WHERE body = 'from the surveyor'"), 0);
+    // Nothing waits for the surveyor on Home: they read, they do not answer.
+    assert.deepEqual(M.clientMessagesWaiting(db, s, w.clock.now), []);
+    // A company where the surveyor holds no job stays shut.
+    const other = db.get<{ id: string }>('SELECT id FROM businesses WHERE id NOT IN (SELECT business_id FROM surveyor_jobs WHERE surveyor_id = ?) LIMIT 1', [s.id]);
+    assert.ok(other);
+    assert.throws(() => M.clientThread(db, s, other.id));
   });
 });
