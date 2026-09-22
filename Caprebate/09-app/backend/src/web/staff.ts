@@ -927,7 +927,7 @@ function bookingPage(
 /** The kind of a waiting email, said in words. The stored kind is never shown. */
 const OUTBOX_KIND_WORDS: Readonly<Record<string, string>> = Object.freeze({
   TEMPLATE: 'From a template', FREE_TYPED: 'Typed by staff', NOTIFICATION: 'An alert', CALENDAR_INVITE: 'Calendar invite',
-  PASSWORD_RESET: 'Password reset', WELCOME: 'Welcome', COMPLIANCE_LETTER: 'Rights or complaint letter', ACCOUNT_VERIFY: 'Email address check',
+  PASSWORD_RESET: 'Password reset', WELCOME: 'Welcome', COMPLIANCE_LETTER: 'Rights or complaint letter', ACCOUNT_VERIFY: 'Email address check', SIGNED_LETTER: 'Signed letter',
 });
 
 /** The kinds a company's Email page lists (src/web/free-email.ts) — only these rows link there. */

@@ -23,7 +23,7 @@ import { badge, savedMessage, why } from './components.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import * as F from './free-email.ts';
 import { SAVED_NOT_SENT } from '../stubs/email.ts';
-import { EMAIL_SENDING, dispatchOutbox, smtpLoginFromEnv, smtpProvider, type EmailSending, type SmtpLogin } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, smtpLoginFromKeyFile, smtpProvider, type EmailSending, type SmtpLogin } from '../stubs/email-provider.ts';
 import { openKeptOriginal } from './uploads.ts';
 
 export type WebResult = 'handled' | 'not-mine';
@@ -71,7 +71,7 @@ export async function handleFreeEmail(
   if (!m) return 'not-mine';
   const subject: F.EmailSubject = { kind: m[1] === 'clients' ? 'company' : 'lead', id: m[2] ?? '' };
   const sending = d.sending ?? EMAIL_SENDING;
-  const login = d.login === undefined ? smtpLoginFromEnv() : d.login;
+  const login = d.login === undefined ? smtpLoginFromKeyFile() : d.login;
   const deps: F.EmailDeps = { db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId, sending, login };
 
   if (method === 'GET') {
@@ -95,7 +95,7 @@ export async function handleFreeEmail(
   let done = 'saved';
   if (r.requested) {
     // Sending is on: send this one now. A failure leaves it saved, with the reason, and the page says so.
-    const provider = login === null ? null : smtpProvider(login);
+    const provider = login === null ? null : smtpProvider(login, undefined, undefined, auditMailConnections(d.app.audit, d.app.now));
     const out = await dispatchOutbox({ db: d.app.db, now: d.app.now }, sending, login, provider, async (document_id) => {
       const kept = await openKeptOriginal({ db: d.app.db, store: d.store, now: d.app.now, audit: d.app.audit }, actor, document_id);
       if (kept === null) return null;

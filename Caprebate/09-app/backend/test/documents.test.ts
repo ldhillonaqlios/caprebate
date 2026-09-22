@@ -42,7 +42,7 @@ import * as PO from '../src/web/portal.ts';
 import { acceptClientBytes, finishUpload, eventsFor, issuedJob } from '../src/web/uploads.ts';
 import { DOC_SPECS, HUMAN_READ_ONLY_TYPES, RET7, quarantineKeyFor } from '../src/web/upload-handler-port.ts';
 import { pdfOf } from './document-fixtures.ts';
-import { actor } from './helpers.ts';
+import { actor, signatureRecordFor } from './helpers.ts';
 
 const T0 = '2026-09-08T12:00:00.000Z';
 const SCRIPT = '<script>alert(1)</script><img src=x onerror=alert(2)>';
@@ -664,6 +664,7 @@ describe('over HTTP — end to end, and every role on every sensitivity', () => 
       }
       // THE LETTER, SIGNED: now Accounting reads it, and a surveyor still does not.
       db.run("UPDATE engagements SET letter_state = 'SIGNED', signed_at = ? WHERE business_id = ?", [T0, w.job.business]);
+      signatureRecordFor(db, w.job.business, T0);
       assert.equal((await (await w.signIn('accounting')).req(`/staff/documents/${letter}`)).status, 200);
       assert.equal((await (await w.signIn('surveying')).req(`/staff/documents/${letter}`)).status, 403);
 

@@ -33,6 +33,23 @@
  * `node:tls`, tested against a fake server in test/phase141.test.ts. If Lakhbir picks a service with its own web API
  * instead, that is a second `EmailProvider` beside this one; nothing else changes.
  *
+ * PHASE 146f, 22 SEPTEMBER 2026 — POINTED AT IONOS, AND STILL OFF.
+ *
+ *   · THE LOGIN COMES FROM THE KEY FILE (src/secrets.ts), never the environment: IONOS_SMTP_HOST, _PORT, _USER and
+ *     _PASSWORD, read only through `loadSecrets().forOwner('IONOS_EMAIL')`. A host that is not an IONOS server is
+ *     refused as if there were no login, so a key file cannot quietly point our mail somewhere else.
+ *   · EACH CONNECTION WRITES ONE AUDIT ROW, MAIL_SERVER_CONNECTED: the service, what it was for, the outcome, the
+ *     server's reply code, how long it took. Never the password, never an address, never the server's words.
+ *     SMTP is not fetch, so it stays outside src/connectors/http.ts, as that file's own rule allows.
+ *   · BOUNCES. A refusal while sending is read by its code: 5xx is permanent (HARD) and 4xx is for now (SOFT, tried
+ *     again on the next run). A HARD bounce is written to email_bounces and the address to email_suppressions, and
+ *     nothing more is sent to it until a member of staff lifts it. A delivery report that arrives later is read by
+ *     the mailbox reader (src/web/inbound-email.ts) and recorded the same way — never filed as a reply.
+ *   · CALENDAR INVITES AND THE SIGNED LETTER travel as outbox_inline_files, attached like any other file.
+ *   · STILL OFF. The mailbox and its SPF, DKIM and DMARC records, and IONOS named in the privacy notice and in
+ *     clause 7 of the engagement letter, are not yet true. The invoice and bank-detail refusals in
+ *     src/web/free-email.ts are untouched.
+ *
  * THE RULES DO NOT MOVE WHEN IT IS ON. A do-not-contact company is asked again at the moment of sending, not only when
  * the email was saved. From and Reply-To come from the stored row, which was stamped from the one sender setting. An
  * attachment is sent only while its original is still kept; one that is gone stops the email, which is left unsent
@@ -41,8 +58,10 @@
 
 import { connect as tlsConnect } from 'node:tls';
 import type { Duplex } from 'node:stream';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import type { Db } from '../db.ts';
+import type { AuditLog } from '../audit.ts';
+import { processSecrets, type SecretStore } from '../secrets.ts';
 import { isDoNotContact } from './email.ts';
 
 export type EmailSending = {
@@ -76,16 +95,61 @@ export const EMAIL_SENDING: EmailSending = Object.freeze({
   question: EMAIL_PROVIDER_QUESTION,
 });
 
-/** The provider's login, from the environment. Never in code, never in the database. */
+/** The provider's login, from the key file. Never in code, never in the database, never in the environment. */
 export type SmtpLogin = { readonly host: string; readonly port: number; readonly user: string; readonly password: string };
 
-export function smtpLoginFromEnv(env: NodeJS.ProcessEnv = process.env): SmtpLogin | null {
-  const host = (env.CAPREBATE_SMTP_HOST ?? '').trim();
-  const user = (env.CAPREBATE_SMTP_USER ?? '').trim();
-  const password = env.CAPREBATE_SMTP_PASSWORD ?? '';
-  const port = Number((env.CAPREBATE_SMTP_PORT ?? '465').trim());
+/**
+ * AN IONOS MAIL SERVER, by its published names (smtp.ionos.co.uk, imap.ionos.co.uk and the same under .com, .de and
+ * the other IONOS domains). Anything else in the key file is refused as if there were no login.
+ */
+export const IONOS_HOST = /^(?:[a-z0-9-]+\.)*ionos\.(?:co\.uk|com|de|fr|es|it|mx|ca|at)$/;
+
+/** A host, port, user and password read from one owner's keys. Null when any is missing or the host is not IONOS. */
+export function mailLogin(
+  get: (name: string) => string | null, prefix: 'IONOS_SMTP' | 'IONOS_IMAP', defaultPort: number,
+): SmtpLogin | null {
+  const host = (get(`${prefix}_HOST`) ?? '').trim().toLowerCase();
+  const user = (get(`${prefix}_USER`) ?? '').trim();
+  const password = get(`${prefix}_PASSWORD`) ?? '';
+  const portText = (get(`${prefix}_PORT`) ?? '').trim();
+  const port = portText === '' ? defaultPort : Number(portText);
   if (host === '' || user === '' || password === '' || !Number.isInteger(port) || port < 1 || port > 65535) return null;
+  if (!IONOS_HOST.test(host)) return null;
   return { host, port, user, password };
+}
+
+/** PHASE 146f: the sending login, from the key file's IONOS_SMTP_* names. Port 465 (TLS from the start) by default. */
+export function smtpLoginFromKeyFile(store: SecretStore = processSecrets()): SmtpLogin | null {
+  const mine = store.forOwner('IONOS_EMAIL');
+  return mailLogin((n) => mine.get(n), 'IONOS_SMTP', 465);
+}
+
+/* ================================================================== *
+ * ONE AUDIT ROW PER CONNECTION
+ * ================================================================== */
+
+/** What one conversation with a mail server did. Never a password, an address, a host or the server's words. */
+export type MailConnection = {
+  readonly service: 'IONOS_SMTP' | 'IONOS_IMAP';
+  readonly purpose: 'SEND' | 'READ';
+  readonly outcome: 'OK' | 'REFUSED' | 'FAILED';
+  /** The server's three-digit reply code where there was one (SMTP), else null. */
+  readonly reply_code: number | null;
+  readonly messages: number;
+  readonly took_ms: number;
+};
+
+export type ConnectionRecorder = (c: MailConnection) => void;
+
+/** The recorder the application uses: one MAIL_SERVER_CONNECTED row in the audit chain for each connection. */
+export function auditMailConnections(audit: AuditLog, now: () => string): ConnectionRecorder {
+  return (c) => {
+    audit.append({
+      at: now(), kind: 'MAIL_SERVER_CONNECTED', outcome: c.outcome === 'OK' ? 'ALLOWED' : c.outcome === 'REFUSED' ? 'REFUSED' : 'ERROR',
+      actor_id: null, actor_role: 'SYSTEM', object_type: 'mail_server', object_id: c.service,
+      detail: { service: c.service, purpose: c.purpose, result: c.outcome, reply_code: c.reply_code, messages: c.messages, took_ms: c.took_ms },
+    });
+  };
 }
 
 /** What is still missing before emails can be sent — each in plain words. Empty means sending is on. */
@@ -175,7 +239,13 @@ export function buildMessage(e: Envelope, messageId: string): string {
  * THE PROVIDER — SMTP over TLS
  * ================================================================== */
 
-export type Delivered = { readonly ok: true; readonly ref: string } | { readonly ok: false; readonly why: string };
+/**
+ * `bounce` is set only when the server refused the recipient or the message: HARD for a 5xx reply (permanent), SOFT
+ * for a 4xx (try again later). A failure to connect at all is neither — it says nothing about the address.
+ */
+export type Delivered =
+  | { readonly ok: true; readonly ref: string }
+  | { readonly ok: false; readonly why: string; readonly bounce?: { readonly kind: 'HARD' | 'SOFT'; readonly status: string } };
 
 export interface EmailProvider {
   readonly id: string;
@@ -224,7 +294,9 @@ function replyReader(sock: Duplex): () => Promise<{ code: number; text: string }
   };
 }
 
-export function smtpProvider(login: SmtpLogin, connect: Connector = tlsConnector, timeoutMs = 30_000): EmailProvider {
+export function smtpProvider(
+  login: SmtpLogin, connect: Connector = tlsConnector, timeoutMs = 30_000, record?: ConnectionRecorder,
+): EmailProvider {
   return {
     id: 'SMTP',
     async deliver(e: Envelope): Promise<Delivered> {
@@ -233,28 +305,49 @@ export function smtpProvider(login: SmtpLogin, connect: Connector = tlsConnector
       if (/[\r\n<>\s]/.test(from) || /[\r\n<>\s]/.test(to)) return { ok: false, why: 'An address is not a plain email address.' };
       const domain = from.split('@')[1] ?? 'localhost';
       const messageId = `${randomBytes(16).toString('hex')}@${domain}`;
+      const started = Date.now();
+      let lastCode: number | null = null;
+      const done = (outcome: MailConnection['outcome'], messages: number): void => {
+        record?.({ service: 'IONOS_SMTP', purpose: 'SEND', outcome, reply_code: lastCode, messages, took_ms: Date.now() - started });
+      };
       const sock = connect(login);
       const timer = setTimeout(() => sock.destroy(new Error('timed out')), timeoutMs);
       const read = replyReader(sock);
       const say = (line: string): void => { sock.write(`${line}\r\n`); };
-      const step = async (line: string | null, want: number): Promise<string | null> => {
+      /** Null when the reply is the one wanted; else the code and the words, and whether it was the recipient's step. */
+      const step = async (line: string | null, want: number): Promise<{ code: number; text: string } | null> => {
         if (line !== null) say(line);
         const r = await read();
-        return Math.floor(r.code / 100) === Math.floor(want / 100) ? null : `${r.code} ${r.text}`;
+        if (r.code !== 0) lastCode = r.code;
+        return Math.floor(r.code / 100) === Math.floor(want / 100) ? null : r;
       };
       try {
-        const bad =
-          (await step(null, 220)) ??
-          (await step(`EHLO ${domain}`, 250)) ??
-          (await step(`AUTH PLAIN ${Buffer.from(`\0${login.user}\0${login.password}`, 'utf8').toString('base64')}`, 235)) ??
-          (await step(`MAIL FROM:<${from}>`, 250)) ??
-          (await step(`RCPT TO:<${to}>`, 250)) ??
-          (await step('DATA', 354)) ??
-          (await step(`${buildMessage(e, messageId)}\r\n.`, 250));
-        if (bad !== null) return { ok: false, why: `The mail server refused it: ${bad.slice(0, 200)}` };
+        const steps: [string | null, number, boolean][] = [
+          [null, 220, false],
+          [`EHLO ${domain}`, 250, false],
+          [`AUTH PLAIN ${Buffer.from(`\0${login.user}\0${login.password}`, 'utf8').toString('base64')}`, 235, false],
+          [`MAIL FROM:<${from}>`, 250, false],
+          [`RCPT TO:<${to}>`, 250, true],
+          ['DATA', 354, false],
+          [`${buildMessage(e, messageId)}\r\n.`, 250, true],
+        ];
+        for (const [line, want, aboutTheMessage] of steps) {
+          const bad = await step(line, want);
+          if (bad === null) continue;
+          done(bad.code === 0 ? 'FAILED' : 'REFUSED', 0);
+          const why = `The mail server refused it: ${`${bad.code} ${bad.text}`.slice(0, 200)}`;
+          // Only a refusal of the recipient or the message is a bounce. A refused login is our problem, not the address's.
+          if (aboutTheMessage && bad.code >= 400 && bad.code < 600) {
+            const enhanced = /\b([245]\.\d{1,3}\.\d{1,3})\b/.exec(bad.text)?.[1];
+            return { ok: false, why, bounce: { kind: bad.code >= 500 ? 'HARD' : 'SOFT', status: enhanced ?? String(bad.code) } };
+          }
+          return { ok: false, why };
+        }
         say('QUIT');
+        done('OK', 1);
         return { ok: true, ref: messageId };
       } catch (err) {
+        done('FAILED', 0);
         return { ok: false, why: `Could not reach the mail server: ${err instanceof Error ? err.message : String(err)}` };
       } finally {
         clearTimeout(timer);
@@ -262,6 +355,54 @@ export function smtpProvider(login: SmtpLogin, connect: Connector = tlsConnector
       }
     },
   };
+}
+
+/* ================================================================== *
+ * BOUNCES AND THE ADDRESSES THAT BOUNCED
+ * ================================================================== */
+
+/** True when this address bounced HARD and nobody has lifted it since. Asked at the moment of sending. */
+export function isSuppressed(db: Db, address: string): boolean {
+  const last = db.get<{ state: string }>(
+    'SELECT state FROM email_suppressions WHERE address_canonical = ? ORDER BY at DESC, rowid DESC LIMIT 1',
+    [addressOf(address).trim().toLowerCase()]);
+  return last?.state === 'BOUNCED';
+}
+
+/** Write a bounce; a HARD one also suppresses the address it was sent to. Returns the bounce's id. */
+export function recordBounce(
+  db: Db, now: () => string, outbox_id: string,
+  b: { readonly kind: 'HARD' | 'SOFT'; readonly status: string; readonly source: 'SMTP' | 'REPORT' },
+): string {
+  const id = randomUUID();
+  const at = now();
+  const status = /^[0-9.]{3,12}$/.test(b.status) ? b.status : b.kind === 'HARD' ? '5.0.0' : '4.0.0';
+  db.run('INSERT INTO email_bounces (id, outbox_id, kind, source, status, at) VALUES (?, ?, ?, ?, ?, ?)', [id, outbox_id, b.kind, b.source, status, at]);
+  if (b.kind === 'HARD') {
+    const to = db.get<{ to_email: string }>('SELECT to_email FROM outbox WHERE id = ?', [outbox_id])?.to_email;
+    const canonical = to === undefined ? '' : addressOf(to).trim().toLowerCase();
+    if (/^[^@\s]+@[^@\s]+$/.test(canonical) && !isSuppressed(db, canonical)) {
+      db.run('INSERT INTO email_suppressions (id, address_canonical, state, bounce_id, set_by, at) VALUES (?, ?, ?, ?, NULL, ?)',
+        [randomUUID(), canonical, 'BOUNCED', id, at]);
+    }
+  }
+  return id;
+}
+
+/** A member of staff says the address works again. A new row; the bounce stays on record. */
+export function liftSuppression(db: Db, now: () => string, address: string, by_user_id: string): boolean {
+  const canonical = addressOf(address).trim().toLowerCase();
+  if (!isSuppressed(db, canonical)) return false;
+  db.run('INSERT INTO email_suppressions (id, address_canonical, state, bounce_id, set_by, at) VALUES (?, ?, ?, NULL, ?, ?)',
+    [randomUUID(), canonical, 'LIFTED', by_user_id, now()]);
+  return true;
+}
+
+/** The calendar invitations and signed letters an email carries, in order. */
+export function inlineFilesOf(db: Db, outbox_id: string): Attachment[] {
+  return db.all<{ filename: string; content_type: string; bytes: Uint8Array }>(
+    'SELECT filename, content_type, bytes FROM outbox_inline_files WHERE outbox_id = ? ORDER BY part_no', [outbox_id])
+    .map((f) => ({ filename: f.filename, content_type: f.content_type, bytes: new Uint8Array(f.bytes) }));
 }
 
 /* ================================================================== *
@@ -295,6 +436,7 @@ export async function dispatchOutbox(
   for (const r of rows) {
     const fail = (why: string): void => { d.db.run('UPDATE outbox SET last_error = ? WHERE id = ?', [why, r.id]); };
     if (isDoNotContact(d.db, r.to_email, r.business_id)) { refused++; fail('This company is marked do not contact. It was not sent.'); continue; }
+    if (isSuppressed(d.db, r.to_email)) { refused++; fail('An earlier email to this address bounced, so it was not sent.'); continue; }
     if (r.from_header === null || r.reply_to === null) { failed++; fail('It has no sender recorded, so it was not sent.'); continue; }
     const files: Attachment[] = [];
     let missing = false;
@@ -304,6 +446,7 @@ export async function dispatchOutbox(
       files.push(f);
     }
     if (missing) { failed++; fail('A file it carries is no longer kept, so it was not sent.'); continue; }
+    files.push(...inlineFilesOf(d.db, r.id));
     const out = await provider.deliver({
       from_header: r.from_header, reply_to: r.reply_to, to: r.to_email, subject: r.subject, body: r.body,
       attachments: files, date: new Date(d.now()),
@@ -314,6 +457,7 @@ export async function dispatchOutbox(
     } else {
       failed++;
       fail(out.why);
+      if (out.bounce !== undefined) recordBounce(d.db, d.now, r.id, { ...out.bounce, source: 'SMTP' });
     }
   }
   return { state: 'RAN', sent, failed, refused };

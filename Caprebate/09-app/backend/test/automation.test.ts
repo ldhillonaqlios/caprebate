@@ -40,7 +40,7 @@ import * as M from '../src/web/templates.ts';
 import * as E from '../src/web/engaged.ts';
 import { registryGate, feeGuard } from '../src/web/engine.ts';
 import { localDate } from '../src/web/localtime.ts';
-import { actor, testApp } from './helpers.ts';
+import { actor, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 import * as R from '../src/web/claim-record.ts';
 
@@ -109,6 +109,7 @@ function confirm(app: App, claim: string, milestone: string): void {
 function letter(app: App, business: string): void {
   app.db.run('INSERT INTO engagements (id, business_id, letter_state, signed_at, created_at) VALUES (?, ?, ?, ?, ?)',
     [randomUUID(), business, 'SIGNED', T0, T0]);
+  signatureRecordFor(app.db, business, T0);
 }
 
 function commitOn(app: App, org: Org, claim: string): void {
@@ -234,6 +235,7 @@ describe('stage entered and owner changed', () => {
       const claim = app.db.get<{ id: string }>('SELECT id FROM claims WHERE business_id = ? AND stage = ?', [b2, 'ENGAGEMENT'])?.id ?? '';
       assert.notEqual(claim, '');
       app.db.run("UPDATE engagements SET letter_state = 'SIGNED', signed_at = ? WHERE business_id = ?", [T0, b2]);
+      signatureRecordFor(app.db, b2, T0);
       assert.equal(T.setNextAction(deps(app), sales, claim, { title: 'Start gathering the data', owner_id: sales.id, due_on: '2026-12-31' }).ok, true);
 
       const expected = E.missingFacts(app.db, sales, b2).filter((m) => !m.has_task);

@@ -131,7 +131,7 @@ const CHANNEL_WORDS: Readonly<Record<string, string>> = Object.freeze({
 
 const OUTBOX_WORDS: Readonly<Record<string, string>> = Object.freeze({
   CALENDAR_INVITE: 'A calendar invitation', NOTIFICATION: 'A notice to staff', TEMPLATE: 'An email from a template',
-  PASSWORD_RESET: 'A password reset', WELCOME: 'A welcome message', FREE_TYPED: 'An email',
+  PASSWORD_RESET: 'A password reset', WELCOME: 'A welcome message', FREE_TYPED: 'An email', SIGNED_LETTER: 'The signed engagement letter',
 });
 
 function w(map: Readonly<Record<string, string>>, k: string | null | undefined, none: string): string {

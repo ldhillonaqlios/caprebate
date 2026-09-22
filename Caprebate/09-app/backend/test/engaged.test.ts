@@ -28,7 +28,7 @@ import { join } from 'node:path';
 import { createApp } from '../src/server.ts';
 import { APP_ROLES, type AppRole } from '../src/roles.ts';
 import { can } from '../src/authz.ts';
-import { actor as makeActor } from './helpers.ts';
+import { actor as makeActor, signatureRecordFor } from './helpers.ts';
 import * as E from '../src/web/engaged.ts';
 import * as R from '../src/web/research.ts';
 import {
@@ -446,6 +446,9 @@ describe('panel 2 — sources, and the two gates', () => {
       assert.equal(sent.letter_state, 'SENT');
 
       h.app.db.run('UPDATE engagements SET letter_state = ?, signed_at = ? WHERE id = ?', ['SIGNED', T, 'e1']);
+      // PHASE 146f: SIGNED alone is no longer signed — the gate reads the signature record.
+      assert.equal(R.assertSignedEngagement(h.app.db, business_id).signed, false);
+      signatureRecordFor(h.app.db, business_id, T);
       const signed = R.assertSignedEngagement(h.app.db, business_id);
       assert.equal(signed.signed, true);
       assert.equal(signed.signed_at, T);

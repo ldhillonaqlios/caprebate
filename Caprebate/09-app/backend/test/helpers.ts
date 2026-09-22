@@ -3,6 +3,20 @@ import { buildApp, type App } from '../src/app.ts';
 import type { PasswordHasher } from '../src/password.ts';
 import type { Actor } from '../src/authz.ts';
 import type { AppRole } from '../src/roles.ts';
+import { randomUUID } from 'node:crypto';
+import type { Db } from '../src/db.ts';
+import { AuditLog } from '../src/audit.ts';
+import { seedSignatureRecord } from '../src/web/signing.ts';
+
+/**
+ * PHASE 146f: A LETTER A FIXTURE MARKS SIGNED ALSO NEEDS ITS SIGNATURE RECORD, because assertSignedEngagement now
+ * reads the record (src/web/signing.ts). Writes one marked SEED if the engagement has none. Idempotent.
+ */
+export function signatureRecordFor(db: Db, business_id: string, at: string): void {
+  const has = db.get<{ n: number }>(
+    'SELECT COUNT(*) AS n FROM engagement_signatures s JOIN engagements e ON e.id = s.engagement_id WHERE e.business_id = ?', [business_id])?.n ?? 0;
+  if (has === 0) seedSignatureRecord({ db, audit: new AuditLog(db), now: () => at, newId: randomUUID }, business_id, at);
+}
 
 /**
  * NOT A PASSWORD HASHER. It is a marker so a test can prove that what a

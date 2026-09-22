@@ -32,7 +32,8 @@
 
 import { connect as tlsConnect } from 'node:tls';
 import type { Duplex } from 'node:stream';
-import { EMAIL_PROVIDER_QUESTION } from './email-provider.ts';
+import { processSecrets, type SecretStore } from '../secrets.ts';
+import { EMAIL_PROVIDER_QUESTION, mailLogin, type ConnectionRecorder } from './email-provider.ts';
 
 export type InboundEmail = {
   readonly enabled: boolean;
@@ -51,16 +52,16 @@ export const INBOUND_EMAIL: InboundEmail = Object.freeze({
   question: EMAIL_PROVIDER_QUESTION,
 });
 
-/** The mailbox login, from the environment. Never in code, never in the database. */
+/** The mailbox login, from the key file. Never in code, never in the database, never in the environment. */
 export type ImapLogin = { readonly host: string; readonly port: number; readonly user: string; readonly password: string };
 
-export function imapLoginFromEnv(env: NodeJS.ProcessEnv = process.env): ImapLogin | null {
-  const host = (env.CAPREBATE_IMAP_HOST ?? '').trim();
-  const user = (env.CAPREBATE_IMAP_USER ?? '').trim();
-  const password = env.CAPREBATE_IMAP_PASSWORD ?? '';
-  const port = Number((env.CAPREBATE_IMAP_PORT ?? '993').trim());
-  if (host === '' || user === '' || password === '' || !Number.isInteger(port) || port < 1 || port > 65535) return null;
-  return { host, port, user, password };
+/**
+ * PHASE 146f: the key file's IONOS_IMAP_* names, read only through `loadSecrets().forOwner('IONOS_MAILBOX')`. Port 993
+ * by default. A host that is not an IONOS server is refused as if there were no login (IONOS_HOST).
+ */
+export function imapLoginFromKeyFile(store: SecretStore = processSecrets()): ImapLogin | null {
+  const mine = store.forOwner('IONOS_MAILBOX');
+  return mailLogin((n) => mine.get(n), 'IONOS_IMAP', 993);
 }
 
 /** What is still missing before replies can be read in — each in plain words. Empty means it is on. */
@@ -198,6 +199,33 @@ export function parseEmail(raw: Uint8Array): ParsedEmail {
 }
 
 /* ================================================================== *
+ * A DELIVERY REPORT — PHASE 146f
+ * ================================================================== */
+
+/**
+ * A BOUNCE THAT ARRIVES LATER. When a server accepts an email and then cannot deliver it, it sends a delivery report
+ * back to contactus@ (RFC 3464: multipart/report, report-type=delivery-status). It is not a reply, and it is never
+ * filed on a company's chat. What is read: whether delivery FAILED (a HARD bounce, status 5.x.x) or is DELAYED (SOFT,
+ * 4.x.x), and the Message-ID of the email of ours it is about — from the returned headers inside the report, never
+ * from the report's own headers. Nothing else in it is kept.
+ */
+export type BounceReport = { readonly kind: 'HARD' | 'SOFT'; readonly status: string; readonly original_message_id: string | null };
+
+export function parseBounceReport(raw: Uint8Array): BounceReport | null {
+  const all = Buffer.from(raw).toString('latin1');
+  const top = splitHead(all);
+  const type = headers(top.head).get('content-type') ?? '';
+  if (!/^multipart\/report\b/i.test(type) || !/report-type\s*=\s*"?delivery-status"?/i.test(type)) return null;
+  const body = top.body.replace(/\r?\n[ \t]+/g, ' ');
+  const action = /^Action:\s*(failed|delayed)\b/im.exec(body)?.[1]?.toLowerCase();
+  if (action === undefined) return null;
+  const status = /^Status:\s*([245]\.\d{1,3}\.\d{1,3})\b/im.exec(body)?.[1] ?? (action === 'failed' ? '5.0.0' : '4.0.0');
+  const kind = action === 'failed' && status.startsWith('5') ? 'HARD' : 'SOFT';
+  const mid = /^Message-ID:\s*<([^<>\s]+)>/im.exec(body)?.[1] ?? null;
+  return { kind, status, original_message_id: mid };
+}
+
+/* ================================================================== *
  * THE MAILBOX — IMAP, read-only
  * ================================================================== */
 
@@ -284,11 +312,17 @@ class ImapSession {
 }
 
 /** THE READ-ONLY IMAP MAILBOX. Each call opens, reads and closes: nothing is held open between runs. */
-export function imapMailbox(login: ImapLogin, connect: ImapConnector = tlsImap, timeoutMs = 30_000): Mailbox {
+export function imapMailbox(
+  login: ImapLogin, connect: ImapConnector = tlsImap, timeoutMs = 30_000, record?: ConnectionRecorder,
+): Mailbox {
   const session = async <T>(work: (s: ImapSession) => Promise<T>): Promise<T> => {
+    const started = Date.now();
     const sock = connect(login);
     const timer = setTimeout(() => sock.destroy(new Error('timed out')), timeoutMs);
     const s = new ImapSession(sock);
+    // PHASE 146f: one audit row per connection — the outcome and how many messages came back, never the login.
+    let outcome: 'OK' | 'REFUSED' | 'FAILED' = 'FAILED';
+    let messages = 0;
     try {
       const hello = await s.line();
       if (hello === null || !/^\* (OK|PREAUTH)\b/i.test(hello)) throw new Error('the mail server did not say hello');
@@ -297,10 +331,16 @@ export function imapMailbox(login: ImapLogin, connect: ImapConnector = tlsImap, 
       if (!(await s.run('EXAMINE INBOX')).ok) throw new Error('the inbox could not be opened');
       const out = await work(s);
       await s.run('LOGOUT');
+      outcome = 'OK';
+      messages = Array.isArray(out) ? out.length : out === null ? 0 : 1;
       return out;
+    } catch (err) {
+      if (err instanceof Error && /refused the login|could not be opened|could not be searched/.test(err.message)) outcome = 'REFUSED';
+      throw err;
     } finally {
       clearTimeout(timer);
       s.end();
+      record?.({ service: 'IONOS_IMAP', purpose: 'READ', outcome, reply_code: null, messages, took_ms: Date.now() - started });
     }
   };
   const fetchUids = async (s: ImapSession, uids: number[]): Promise<RawEmail[]> => {

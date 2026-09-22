@@ -17,6 +17,7 @@ import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import type { EmailTransport } from '../stubs/email.ts';
 import { STUB_NOTICE } from '../stubs/email.ts';
+import { bookingInviteFile } from './booking-invite.ts';
 import { authorise, can, type Actor } from '../authz.ts';
 import { BOOKING } from './engine.ts';
 import { localWhen } from './localtime.ts';
@@ -531,7 +532,8 @@ export function moveOwnBooking(
     );
   });
 
-  notify(d, before.business_id, args.starts_at, 'moved');
+  notify(d, before.business_id, args.starts_at, 'moved',
+    { booking_id: before.id, was_starts_at: before.starts_at, was_ends_at: before.starts_at === null ? null : new Date(Date.parse(before.starts_at) + SLOT_MINUTES * 60_000).toISOString() });
   d.audit.append({
     at: now, kind: 'BOOKING_MOVED', outcome: 'ALLOWED',
     actor_id: actor.id, actor_role: actor.role,
@@ -569,7 +571,8 @@ export function releaseOwnBooking(
     );
   });
 
-  notify(d, before.business_id, null, 'released');
+  notify(d, before.business_id, null, 'released',
+    { booking_id: before.id, was_starts_at: before.starts_at, was_ends_at: before.starts_at === null ? null : new Date(Date.parse(before.starts_at) + SLOT_MINUTES * 60_000).toISOString() });
   d.audit.append({
     at: now, kind: 'BOOKING_MOVED', outcome: 'ALLOWED',
     actor_id: actor.id, actor_role: actor.role,
@@ -609,7 +612,8 @@ export function cancelOwnBooking(
     );
   });
 
-  notify(d, before.business_id, null, 'cancelled');
+  notify(d, before.business_id, null, 'cancelled',
+    { booking_id: before.id, was_starts_at: before.starts_at, was_ends_at: before.starts_at === null ? null : new Date(Date.parse(before.starts_at) + SLOT_MINUTES * 60_000).toISOString() });
   d.audit.append({
     at: now, kind: 'BOOKING_CANCELLED', outcome: 'ALLOWED',
     actor_id: actor.id, actor_role: actor.role,
@@ -630,11 +634,22 @@ export function cancelOwnBooking(
  */
 function notify(
   d: MoveDeps, business_id: string, startsAt: string | null, what: 'moved' | 'released' | 'cancelled',
+  call?: { booking_id: string; was_starts_at: string | null; was_ends_at: string | null },
 ): void {
   const business = d.db.get<{ contact_email: string | null; name: string }>(
     'SELECT contact_email, name FROM businesses WHERE id = ?', [business_id],
   );
   const readable = startsAt === null ? null : localWhen(startsAt);
+  /* PHASE 146f: THE INVITATION. Moved: a new REQUEST, the same UID, a higher SEQUENCE, so it replaces the old one in
+     the client's calendar. Given back or cancelled: a CANCEL for the time they held. No time held, no invitation. */
+  const invite = call === undefined ? null
+    : what === 'moved' && startsAt !== null
+      ? bookingInviteFile(d.db, d.now, { booking_id: call.booking_id, method: 'REQUEST', starts_at: startsAt,
+        ends_at: new Date(Date.parse(startsAt) + SLOT_MINUTES * 60_000).toISOString(), to: business?.contact_email })
+      : what !== 'moved' && call.was_starts_at !== null && call.was_ends_at !== null
+        ? bookingInviteFile(d.db, d.now, { booking_id: call.booking_id, method: 'CANCEL', starts_at: call.was_starts_at,
+          ends_at: call.was_ends_at, to: business?.contact_email })
+        : null;
   d.email.send({
     to_email: business?.contact_email ?? 'no-address-recorded@example.invalid',
     subject: what === 'moved'
@@ -655,5 +670,6 @@ function notify(
     kind: 'CALENDAR_INVITE',
     // CRM 1 of 10: named, so a DO_NOT_CONTACT organisation is refused by id.
     business_id,
+    ...(invite === null ? {} : { inline_files: [invite] }),
   });
 }

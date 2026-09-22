@@ -43,6 +43,7 @@ import {
 import { localWhen } from './localtime.ts';
 import type { AuditLog } from '../audit.ts';
 import type { EmailTransport } from '../stubs/email.ts';
+import { bookingInviteFile } from './booking-invite.ts';
 
 export class BackOfficeError extends Error {
   readonly code: string;
@@ -542,6 +543,10 @@ export function scheduleBooking(
   // morning is the exact defect that phase went looking for, and slicing the
   // ISO string was how it survived here after the screens were fixed.
   const readable = localWhen(args.starts_at);
+  // PHASE 146f: the invitation itself, a standard .ics, carried by the same email (src/stubs/calendar.ts).
+  const invite = bookingInviteFile(d.db, d.now, {
+    booking_id: before.id, method: 'REQUEST', starts_at: args.starts_at, ends_at: ends, to: business?.contact_email,
+  });
   d.email.send({
     to_email: business?.contact_email ?? 'no-address-recorded@example.invalid',
     subject: `Your call with Cap Rebate — ${readable}`,
@@ -554,6 +559,7 @@ export function scheduleBooking(
     // CRM 1 of 10: named, so a DO_NOT_CONTACT organisation is refused by id
     // and not only by whichever address happened to be on the row.
     business_id: before.business_id,
+    ...(invite === null ? {} : { inline_files: [invite] }),
   });
 
   d.audit.append({

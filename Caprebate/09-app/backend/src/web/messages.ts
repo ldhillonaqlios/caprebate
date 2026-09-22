@@ -36,7 +36,7 @@ import { localStamp } from './localtime.ts';
 import { propertyIn } from './components.ts';
 import { workingDaysSince, LATE_AFTER_WORKING_DAYS } from './working-days.ts';
 import { documentObj } from './documents.ts';
-import { EMAIL_SENDING, sendingOn, smtpLoginFromEnv, type EmailSending, type SmtpLogin } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type EmailSending, type SmtpLogin } from '../stubs/email-provider.ts';
 import { outboxTransport } from '../stubs/email.ts';
 import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from './automation.ts';
 
@@ -321,7 +321,7 @@ export function alertWords(to: 'STAFF' | 'CLIENT', company: string | null, busin
  */
 export function alertNewMessage(d: MessageDeps, message_id: string): AlertResult {
   const cfg = d.sending ?? EMAIL_SENDING;
-  const login = d.login === undefined ? smtpLoginFromEnv() : d.login;
+  const login = d.login === undefined ? smtpLoginFromKeyFile() : d.login;
   if (!sendingOn(cfg, login)) return { state: 'OFF' };
   const m = d.db.get<{ business_id: string; direction: string; name: string; owner_id: string | null }>(
     'SELECT m.business_id, m.direction, b.name, b.owner_id FROM client_messages m JOIN businesses b ON b.id = m.business_id WHERE m.id = ?', [message_id]);

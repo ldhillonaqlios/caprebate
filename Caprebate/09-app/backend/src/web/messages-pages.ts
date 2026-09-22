@@ -16,7 +16,7 @@
  * NOTHING HERE DECIDES WHO SEES WHAT: src/web/messages.ts asks every rule on every read and write.
  */
 
-import { EMAIL_SENDING, sendingOn, smtpLoginFromEnv } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING, auditMailConnections, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Db } from '../db.ts';
@@ -27,7 +27,7 @@ import type { FsObjectStore } from './objectstore.ts';
 import * as M from './messages.ts';
 import * as IE from './inbound-email.ts';
 import { page } from './html.ts';
-import { imapLoginFromEnv, imapMailbox, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../stubs/email-inbound.ts';
+import { imapLoginFromKeyFile, imapMailbox, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../stubs/email-inbound.ts';
 import { receiveFile } from './client-files-pages.ts';
 import { boundaryOf, parseMultipart, type Part } from './multipart.ts';
 import { UPLOAD_LIMITS } from './upload-handler-port.ts';
@@ -162,7 +162,7 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
         <textarea class="fi" id="client-body" name="body" required maxlength="${String(M.MAX_MESSAGE)}" rows="4"></textarea>
         ${claimPicker('client-claim', c.claims, false)}
         <button class="cta" type="submit">Send to the client</button>
-        <p class="help">${sendingOn(EMAIL_SENDING, smtpLoginFromEnv())
+        <p class="help">${sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile())
           ? 'They read it in their portal. We email them to say a message is waiting — never the message itself.'
           : 'They read it in their portal. We do not email them about it yet.'}</p></form>`}`,
   };
@@ -188,8 +188,9 @@ function html(res: ServerResponse, status: number, body: string): void {
 /** The mailbox, where reading replies is on and a login is set; otherwise null, and nothing is fetched. */
 function mailboxFor(d: StaffMessageDeps): Mailbox | null {
   if (d.mailbox !== undefined) return d.mailbox;
-  const login = imapLoginFromEnv();
-  return readingOn(d.inbound ?? INBOUND_EMAIL, login) && login !== null ? imapMailbox(login) : null;
+  const login = imapLoginFromKeyFile();
+  return readingOn(d.inbound ?? INBOUND_EMAIL, login) && login !== null
+    ? imapMailbox(login, undefined, undefined, auditMailConnections(d.app.audit, d.app.now)) : null;
 }
 
 export async function handleStaffMessages(

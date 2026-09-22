@@ -497,10 +497,10 @@ describe('replies to contactus@caprebate.com', () => {
     const f = await fakeImap(mails);
     try {
       const r = await IE.readMailbox(w.deps(), ON, LOGIN, imapMailbox(LOGIN, () => netConnect(f.port, '127.0.0.1')));
-      assert.deepEqual(r, { state: 'RAN', read: 1, filed: 1, queued: 0, do_not_contact: 0 });
+      assert.deepEqual(r, { state: 'RAN', read: 1, filed: 1, queued: 0, do_not_contact: 0, bounces: 0 });
       // Read again: nothing new, nothing doubled.
       const again = await IE.readMailbox(w.deps(), ON, LOGIN, imapMailbox(LOGIN, () => netConnect(f.port, '127.0.0.1')));
-      assert.deepEqual(again, { state: 'RAN', read: 0, filed: 0, queued: 0, do_not_contact: 0 });
+      assert.deepEqual(again, { state: 'RAN', read: 0, filed: 0, queued: 0, do_not_contact: 0, bounces: 0 });
     } finally {
       f.server.close();
     }

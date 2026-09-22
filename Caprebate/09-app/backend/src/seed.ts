@@ -31,6 +31,8 @@
 import type { Db } from './db.ts';
 import type { PasswordHasher } from './password.ts';
 import { createUser, newId } from './users.ts';
+import { AuditLog } from './audit.ts';
+import { seedSignatureRecord } from './web/signing.ts';
 import { ingestRegisterRecord } from './stubs/registers.ts';
 import type { AppRole } from './roles.ts';
 import { catalogue } from './web/research.ts';
@@ -337,6 +339,8 @@ function seedPipeline(
       'INSERT INTO engagements (id, business_id, letter_state, signed_at, created_at) VALUES (?, ?, ?, ?, ?)',
       [newId(), get(k), state, state === 'SIGNED' ? t : null, t],
     );
+    // PHASE 146f: assertSignedEngagement reads the signature record, so a seeded signed letter carries one — marked SEED.
+    if (state === 'SIGNED') seedSignatureRecord({ db, audit: new AuditLog(db), now: () => t, newId }, get(k), t);
   }
 
   // An assessment for every business, each with a handful of answers that show

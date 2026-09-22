@@ -60,6 +60,7 @@ import type { AuditLog } from '../audit.ts';
 import { registryGate, REGISTRY } from './engine.ts';
 import { SOURCES as REGISTER_SOURCES, LICENCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
 import { switchedOn } from '../connectors/registers.ts';
+import { checkSignature } from './signing.ts';
 
 export type Tier = 'FREE' | 'PAID';
 export type SourceState = 'NOT_RUN' | 'FIRED' | 'FAILED' | 'NOT_PERMITTED_YET';
@@ -312,6 +313,12 @@ export type SignedEngagement = {
  * the same words, because "there is no such client" is not a thing this
  * function should be able to tell a caller apart from "that client has not
  * signed".
+ *
+ * PHASE 146f: IT READS THE SIGNATURE RECORD, NOT ONLY THE STATE. A letter marked
+ * SIGNED counts only when engagement_signatures holds its record, the record
+ * matches its own fingerprint, and the audit chain carries that fingerprint
+ * (checkSignature, src/web/signing.ts). A state flipped by hand, or a record
+ * edited afterwards, is NOT SIGNED — and says why.
  */
 export function assertSignedEngagement(db: Db, business_id: string): SignedEngagement {
   const row = db.get<{ letter_state: string; signed_at: string | null }>(
@@ -330,6 +337,11 @@ export function assertSignedEngagement(db: Db, business_id: string): SignedEngag
       signed: false, letter_state: state, signed_at: null,
       why: `the engagement letter is ${LETTER_WORDS[state] ?? state.toLowerCase()} and is not signed`,
     };
+  }
+  const eng = db.get<{ id: string }>('SELECT id FROM engagements WHERE business_id = ?', [business_id]);
+  const record = eng === undefined ? { ok: false as const, why: 'no engagement letter has been raised for this client yet' } : checkSignature(db, eng.id);
+  if (!record.ok) {
+    return { signed: false, letter_state: 'SIGNED', signed_at: null, why: record.why };
   }
   return {
     signed: true, letter_state: 'SIGNED', signed_at: row.signed_at,

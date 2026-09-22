@@ -254,3 +254,14 @@ export function loadSecrets(opts: { env?: Record<string, string | undefined>; re
     return makeStore('UNREADABLE', 'The key file is there but could not be read.', new Map(), false);
   }
 }
+
+/**
+ * PHASE 146f: THE STORE A RUNNING PROCESS USES — the key file, except under the test runner. `node --test` sets
+ * NODE_TEST_CONTEXT, and there the answer is the empty store, so no suite ever reads this machine's key file and every
+ * suite passes the same with no key and no network (the integration phases' rule 3). CAPREBATE_LIVE_SMOKE=1 is the
+ * one way past it, as it is for http.ts.
+ */
+export function processSecrets(env: Record<string, string | undefined> = process.env): SecretStore {
+  if (env.NODE_TEST_CONTEXT !== undefined && env.CAPREBATE_LIVE_SMOKE !== '1') return emptySecrets('the test runner never reads the key file');
+  return loadSecrets({ env });
+}

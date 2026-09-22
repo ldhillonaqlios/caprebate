@@ -40,7 +40,7 @@ import * as I from '../src/web/introducers.ts';
 import * as L from '../src/web/leads.ts';
 import * as P from '../src/web/pipeline.ts';
 import * as T from '../src/web/tasks.ts';
-import { actor, testApp } from './helpers.ts';
+import { actor, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
@@ -121,6 +121,7 @@ function engage(a: App, claim: string, biz: string): P.MoveResult {
     'INSERT INTO engagements (id, business_id, letter_state, signed_at, created_at) VALUES (?, ?, ?, ?, ?) ' +
       'ON CONFLICT(business_id) DO UPDATE SET letter_state = excluded.letter_state, signed_at = excluded.signed_at',
     [randomUUID(), biz, 'SIGNED', T0, T0]);
+  signatureRecordFor(a.db, biz, T0);
   return P.moveClaim(deps(a), SALES, claim, {
     kind: 'FORWARD', to: 'DATA_GATHERING', next_action: { title: 'Gather the data', owner_id: 'u-SALES', due_on: '2026-12-31' },
   });

@@ -37,7 +37,7 @@ import * as C from '../src/web/crm.ts';
 import * as P from '../src/web/pipeline.ts';
 import * as S from '../src/web/stages.ts';
 import * as T from '../src/web/tasks.ts';
-import { actor, testApp } from './helpers.ts';
+import { actor, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
@@ -119,6 +119,7 @@ function letter(app: App, business: string, state: 'NOT_SENT' | 'SENT' | 'VIEWED
     'INSERT INTO engagements (id, business_id, letter_state, signed_at, created_at) VALUES (?, ?, ?, ?, ?) ' +
       'ON CONFLICT(business_id) DO UPDATE SET letter_state = excluded.letter_state, signed_at = excluded.signed_at',
     [randomUUID(), business, state, state === 'SIGNED' ? T0 : null, T0]);
+  if (state === 'SIGNED') signatureRecordFor(app.db, business, T0);
 }
 
 function commitOn(app: App, org: Org, claim: string | null): void {

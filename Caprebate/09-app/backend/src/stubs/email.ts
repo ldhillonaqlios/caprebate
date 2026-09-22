@@ -8,6 +8,7 @@
  * to the application. Nothing else in the codebase mentions email delivery.
  */
 
+import { createHash } from 'node:crypto';
 import type { Db } from '../db.ts';
 
 /**
@@ -38,7 +39,8 @@ export type OutboundMessage = {
    */
   /** ACCOUNT_VERIFY — Phase 133j: the link that confirms a client's own sign-up. It carries a single-use token. */
   /** FREE_TYPED — Phase 141: an email a member of staff typed themselves, to one of the company's contacts. */
-  kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER' | 'ACCOUNT_VERIFY' | 'FREE_TYPED';
+  /** SIGNED_LETTER — Phase 146f: the client's own copy of the engagement letter they signed, as a PDF. */
+  kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER' | 'ACCOUNT_VERIFY' | 'FREE_TYPED' | 'SIGNED_LETTER';
   /**
    * The organisation the message is about, where there is one. CRM 1 of 10.
    * Optional because a staff password reset is about nobody's organisation —
@@ -55,6 +57,17 @@ export type OutboundMessage = {
   contact_id?: string | null;
   written_by?: string | null;
   attachments?: readonly { readonly logical_document_id: string; readonly document_id: string }[];
+  /**
+   * PHASE 146f — a file made for this email that is not one of the company's documents: the calendar invitation
+   * (.ics, src/stubs/calendar.ts) or the signed engagement letter (.pdf). Stored with the email, sent with it.
+   */
+  inline_files?: readonly InlineFile[];
+};
+
+export type InlineFile = {
+  readonly filename: string;
+  readonly content_type: 'text/calendar; method=REQUEST; charset=utf-8' | 'text/calendar; method=CANCEL; charset=utf-8' | 'application/pdf';
+  readonly bytes: Uint8Array;
 };
 
 /**
@@ -150,6 +163,10 @@ export function outboxTransport(db: Db, ids: () => string, now: () => string, se
         db.run('INSERT INTO outbox_attachments (id, outbox_id, logical_document_id, document_id) VALUES (?, ?, ?, ?)',
           [ids(), id, a.logical_document_id, a.document_id]);
       }
+      (m.inline_files ?? []).forEach((f, i) => {
+        db.run('INSERT INTO outbox_inline_files (id, outbox_id, part_no, filename, content_type, bytes, sha256) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [ids(), id, i + 1, f.filename, f.content_type, f.bytes, createHash('sha256').update(f.bytes).digest('hex')]);
+      });
       // sent_at stays NULL. Nothing left the building, and the row says so.
       return { id, delivered: false, refused: null };
     },

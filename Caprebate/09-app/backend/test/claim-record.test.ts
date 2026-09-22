@@ -51,7 +51,7 @@ import * as F from '../src/web/claim-facts.ts';
 import * as R from '../src/web/claim-record.ts';
 import * as D from '../src/web/documents.ts';
 import * as T from '../src/web/tasks.ts';
-import { actor, scalars, testApp } from './helpers.ts';
+import { actor, scalars, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
@@ -615,6 +615,7 @@ describe('THE FOUR FIGURES — sealed and read from the record that sealed each;
       assert.equal(p.d_adviser.state, 'NOT_YET');
       assert.equal(p.claimable_figure.released, false);
       app.db.run("INSERT INTO engagements (id, business_id, letter_state, signed_at, created_at) VALUES (?, ?, 'SIGNED', ?, ?)", [randomUUID(), org.business, T0, T0]);
+      signatureRecordFor(app.db, org.business, T0);
       p = read();
       assert.equal(p.b_researched.state, 'NOT_PERMITTED_YET', 'a signed letter alone permitted the researched estimate');
       assert.doesNotMatch(p.b_researched.why, /Paid lookups wait/);

@@ -237,7 +237,7 @@ would be too easy to forget a flag. On a live system, nobody should ever set it.
   **"Emails waiting to send"**. The columns are **When**, **What it is**, **Subject** and **State**. **What it is** reads,
   for example, "From a template", "Typed by staff", "An alert" or "Calendar invite". Every row's state reads **"Saved —
   not sent yet"**. A company's own email has a link, **Open the Email page**. The page says: "Emails are not being sent
-  yet. Each one is saved here until sending is switched on. Calendar invites wait here too. A company's own emails are on
+  yet. Each one is saved here until sending is switched on. Calendar invites wait here too. Each one carries a calendar file, so it can go in any calendar. A company's own emails are on
   its Email page."
 
   Every email says it is from **Cap Rebate <contactus@caprebate.com>**. Replies go to the same address. Sending is built,
@@ -253,8 +253,9 @@ would be too easy to forget a flag. On a live system, nobody should ever set it.
   on. You can still run the research on a client. Each lookup is then noted as not allowed yet, or not switched on yet.
   The reason is noted too. The free lookups wait for a published privacy notice. The paid ones wait for a signed
   engagement letter.
-- **No money moves and nothing is signed.** The finance screen says "RECORDED, NOT COLLECTED". Signing the letter only
-  notes a state. That state reads: "Online signing is not switched on yet, and we never take payments here."
+- **No money moves and nothing is signed.** The finance screen says "RECORDED, NOT COLLECTED". The client can read
+  the letter and fill in the Sign box. Signing is not switched on yet, so pressing Sign says so. When it is on, the
+  client types their name and role, ticks a box and presses Sign. We keep a record, and they get a copy by email.
 
 ---
 

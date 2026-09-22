@@ -35,9 +35,11 @@
  * substituted where the record supplies a real one, and MARKED where it does
  * not. Neither is silent.
  *
- * SIGNING IS STUBBED. `src/stubs/signature.ts` contacts no provider and
- * executes nothing. The screen says so; the state machine (NOT_SENT → SENT →
- * VIEWED → SIGNED) is real and lives in the `engagements` table.
+ * SIGNING IS BUILT IN SINCE PHASE 146f, AND SWITCHED OFF: src/web/signing.ts.
+ * The state machine (NOT_SENT → SENT → VIEWED → SIGNED) lives in the
+ * `engagements` table, and SIGNED counts only with its signature record
+ * (engagement_signatures). A letter with a term still in square brackets is
+ * never signed, whatever the switch says.
  */
 
 import { readFileSync } from 'node:fs';

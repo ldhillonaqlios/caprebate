@@ -51,6 +51,16 @@ export type AuditKind =
    */
   | 'DOCUMENT_READ_BY_MODEL' | 'DOCUMENT_PAGES_READ_BY_MODEL'
   /**
+   * Phase 146f, 22 September 2026. MAIL_SERVER_CONNECTED is one conversation with the IONOS mail server, sending or
+   * reading: the service, what for, the outcome, the reply code, how many messages, how long. Never a password, an
+   * address or the server's words. EMAIL_BOUNCED is one email the server would not deliver: HARD or SOFT, and the
+   * code. ENGAGEMENT_SIGNED is the built-in signature (src/web/signing.ts): the signature record's own SHA-256, the
+   * SHA-256 of the exact letter shown and of the signed PDF, and the session's id. The signer's name, role and
+   * address are in the signature record, which this row's hash binds; they are not written here, because no log
+   * line carries a name (the rule at the top of this file).
+   */
+  | 'MAIL_SERVER_CONNECTED' | 'EMAIL_BOUNCED' | 'ENGAGEMENT_SIGNED'
+  /**
    * Phase 107. Two events that had no honest kind before it, and were nearly
    * logged as DOCUMENT_ACCESSED for want of one — which would have made the
    * document-access record, the one requirement DB-W1-T6 is about, unreadable.

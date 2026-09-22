@@ -40,6 +40,7 @@ import {
 } from './assessment.ts';
 import { loadLetter } from './letter.ts';
 import * as P from './portal.ts';
+import { ENGAGEMENT_SIGNING, shownLetter, signEngagement, signingMissing } from './signing.ts';
 import { portalMessagesBody, readPortalSend, sendFromPortal } from './messages-pages.ts';
 import { clientMessage, type ThreadMessage as MessageView } from './messages.ts';
 import { FsObjectStore } from './objectstore.ts';
@@ -59,6 +60,8 @@ import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
 import { clientHelp } from './help.ts';
 import { nameSwitches } from './navigation.ts';
 import { publicSlots, isBookable, SLOT_MINUTES } from './schedule.ts';
+import { bookingInviteFile } from './booking-invite.ts';
+import { ga4MeasurementId, sitePolicy, withMeasurementId } from '../analytics.ts';
 import { localStamp, localWhen, ukDate, ukDatesIn, zoneNotice } from './localtime.ts';
 import { formatPence, formatShownRange, toPence, RANGE_QUALIFIER } from './shown-range.ts';
 import { linkBookingToLead, SECTORS } from './leads.ts';
@@ -67,7 +70,7 @@ import {
   PROSPECT_EVENTS, REFERRAL_FORM, intakeReferral, referralFormOpen, clientShareChoices, recordShareConsentByClient, type ClientShareChoice,
 } from './introducers.ts';
 import { clientDeliverables, type ClientDeliverable } from './claim-record.ts';
-import { siteEdition, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from './public-site.ts';
+import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from './public-site.ts';
 import { receiveEnquiry } from './enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
 
@@ -241,7 +244,13 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   }
   if (path === '/' && method === 'GET') {
     const site = siteEdition();
-    if (site !== undefined) { res.writeHead(200, SITE_PAGE_HEADERS); res.end(site.html); return 'handled'; }
+    if (site !== undefined) {
+      // PHASE 146f: the analytics measurement id comes from the key file, not the file (src/analytics.ts). None, no change.
+      const ga = ga4MeasurementId();
+      res.writeHead(200, ga === null ? SITE_PAGE_HEADERS : { ...SITE_PAGE_HEADERS, 'content-security-policy': sitePolicy(SITE_PAGE_CSP, ga) });
+      res.end(withMeasurementId(site.html, ga));
+      return 'handled';
+    }
     html(res, 200, home(actor)); return 'handled';
   }
   if (path === '/enquiry' && method === 'POST') {
@@ -457,7 +466,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* ----------------------------------------------------------- portal */
   if (path === '/portal' || path.startsWith('/portal/')) {
     if (actor === undefined) { redirect(res, '/login'); return 'handled'; }
-    return inContext(d, path, () => portalRoutes(d, req, res, url, method, actor, newId));
+    return inContext(d, path, () => portalRoutes(d, req, res, url, method, actor, newId, session?.session_id ?? null));
   }
 
   /* ------------------------------------------- the upload write itself */
@@ -517,7 +526,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
 
 async function portalRoutes(
   d: WebDeps, req: IncomingMessage, res: ServerResponse, url: URL,
-  method: string, actor: Actor, newId: () => string,
+  method: string, actor: Actor, newId: () => string, session_id: string | null = null,
 ): Promise<WebResult> {
   const db = d.app.db;
   const now = d.app.now;
@@ -674,12 +683,25 @@ async function portalRoutes(
     return 'handled';
   }
 
+  /* PHASE 146f: THE BUILT-IN SIGNATURE (src/web/signing.ts). Every check is there, on the record: the switch
+     (ENGAGEMENT_SIGNING, off), the letter complete, sent and not yet signed, a full name, a role, the tick, and the
+     fingerprint of the letter the page drew. A refusal is a page the client reads, with what they typed kept. */
   if (path === '/portal/letter/sign' && method === 'POST') {
-    // STUBBED, AND IT SAYS SO. src/stubs/signature.ts contacts no provider.
-    html(res, 501, simple(
-      'Signing is not connected',
-      'Online signing is not switched on yet, and we never take payments here. ' +
-      'We record the letter’s progress, but signing is not connected to anything yet.'));
+    const f = await form(req);
+    const { business } = P.progress(db, actor, business_id);
+    const typed = { full_name: f.get('full_name') ?? '', role: f.get('signer_role') ?? '' };
+    const r = session_id === null
+      ? { ok: false as const, why: 'Please sign in again, then sign the letter.' }
+      : signEngagement({ db, audit: d.app.audit, email: d.app.email, now, newId }, actor, business_id, {
+        ...typed, authorised: f.get('authorised') === 'on', letter_sha256: f.get('letter_sha256') ?? '',
+      }, { ip: clientIp(req), session_id });
+    if (!r.ok) {
+      html(res, 400, letterPage(actor, business, P.engagement(db, actor, business_id), r.why, typed));
+      return 'handled';
+    }
+    html(res, 200, page({ title: 'Letter signed', nav: nav(actor), body: h`<h1>Thank you — the letter is signed</h1>
+      <p>We have recorded your signature. A copy of the signed letter, with a signature page, is saved to be emailed to you.</p>
+      <p><a class="cta" href="/portal">Back to your claims</a></p>` }));
     return 'handled';
   }
 
@@ -962,6 +984,27 @@ function writeBookingAndContact(
   // it without one — so its booking points at the lead instead, and conversion
   // hands the lead its booking once the organisation exists.
   if (business_id !== null) linkBookingToLead(d.app.db, business_id, booking_id, at);
+  /* PHASE 146f: A CALL GIVEN A TIME HERE GETS ITS INVITATION TOO, like one given a time by staff or moved by the
+     client — the same email, the same .ics, the same switch (EMAIL_SENDING, off). With no email address recorded,
+     nothing is written: the call still stands, and staff reach them the way they asked. */
+  if (starts !== null && ends !== null) {
+    const to = business_id !== null
+      ? d.app.db.get<{ e: string | null }>('SELECT contact_email AS e FROM businesses WHERE id = ?', [business_id])?.e ?? null
+      : null;
+    const invite = bookingInviteFile(d.app.db, d.app.now, { booking_id, method: 'REQUEST', starts_at: starts, ends_at: ends, to });
+    if (invite !== null && to !== null) {
+      d.app.email.send({
+        to_email: to,
+        subject: `Your call with Cap Rebate — ${localWhen(starts)}`,
+        body: `A telephone call has been arranged for ${localWhen(starts)}, lasting ${SLOT_MINUTES} minutes.\n\n` +
+          'Not sent yet. Emails and calendar invites are not switched on yet. ' +
+          'This message and its invite are saved with the emails waiting to send.',
+        kind: 'CALENDAR_INVITE',
+        business_id,
+        inline_files: [invite],
+      });
+    }
+  }
   return { booked_at: starts };
 }
 
@@ -1598,36 +1641,62 @@ function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, n
   });
 }
 
-function letterPage(actor: Actor, business: P.Business, eng: P.EngagementView | null): string {
+/**
+ * PHASE 146f: THE ADDRESS A SIGNATURE CAME FROM. The socket's own address; behind a host's proxy, the first address in
+ * X-Forwarded-For, but only when CAPREBATE_TRUST_PROXY=1 says a proxy we trust set it — otherwise anyone could type one.
+ */
+function clientIp(req: IncomingMessage): string {
+  if (process.env.CAPREBATE_TRUST_PROXY === '1') {
+    const fwd = req.headers['x-forwarded-for'];
+    const first = (Array.isArray(fwd) ? fwd[0] : fwd)?.split(',')[0]?.trim();
+    if (first !== undefined && first !== '') return first;
+  }
+  return req.socket.remoteAddress ?? 'unknown';
+}
+
+function letterPage(
+  actor: Actor, business: P.Business, eng: P.EngagementView | null,
+  problem?: string, typed?: { full_name: string; role: string },
+): string {
   // The record's number travels with its name. Absent is omitted, never passed as undefined; a blank is passed and
   // letter.ts treats it as absent — the specimen stays and is flagged, never read as the client's (N4).
-  const letter = loadLetter({
+  const shown = shownLetter(business);
+  const openTerms = loadLetter({
     clientName: business.name,
     ...(business.company_number === undefined || business.company_number === null ? {} : { companyNumber: business.company_number }),
   });
+  const missing = signingMissing(ENGAGEMENT_SIGNING, shown);
+  const canSign = eng !== null && (eng.state === 'SENT' || eng.state === 'VIEWED');
   return page({
     title: 'Engagement letter', nav: nav(actor),
     body: h`
       <h1>Engagement letter</h1>
       <p>Status: <strong>${eng === null ? 'not prepared' : eng.state.toLowerCase().replace('_', ' ')}</strong>.</p>
+      ${problem === undefined ? raw('') : h`<p class="err">${problem}</p>`}
 
-      <div class="flag"><strong>Some terms are not settled yet, so they are left blank on purpose.</strong>
-      ${letter.openTerms.length} of them. We will not issue the letter until they are.${why(h`If we guessed a figure, the contract would hold a
+      ${openTerms.openTerms.length > 0 ? h`<div class="flag"><strong>Some terms are not settled yet, so they are left blank on purpose.</strong>
+      ${openTerms.openTerms.length} of them. We will not issue the letter until they are.${why(h`If we guessed a figure, the contract would hold a
       number nobody has agreed. These terms are CAP REBATE LTD’s to settle.`)}
-      <ul>${letter.openTerms.map((t) => h`<li><strong>${t.clause}</strong> — <q class="letter-quote">${t.text}</q></li>`)}</ul></div>
+      <ul>${openTerms.openTerms.map((t) => h`<li><strong>${t.clause}</strong> — <q class="letter-quote">${t.text}</q></li>`)}</ul></div>` : raw('')}
 
-      ${letter.specimens.length > 0 ? h`<div class="flag"><strong>Sample wording still in this
-      letter:</strong> ${letter.specimens.join('; ')}. It is an example, not your figure.</div>` : raw('')}
+      ${openTerms.specimens.length > 0 ? h`<div class="flag"><strong>Sample wording still in this
+      letter:</strong> ${openTerms.specimens.join('; ')}. It is an example, not your figure.</div>` : raw('')}
 
-      <div class="letter">${letter.paragraphs.map((p) => p.heading
+      <div class="letter">${shown.paragraphs.map((p) => p.heading
         ? h`<p class="clause">${p.text}</p>`
         : h`<p>${p.text}</p>`)}</div>
 
-      <form method="post" action="/portal/letter/sign">
-        <button class="cta" type="submit">Sign this letter</button>
+      ${eng !== null && eng.state === 'SIGNED' ? h`<p><strong>You signed this letter${eng.signed_at === null ? '' : ` on ${localWhen(eng.signed_at)}`}.</strong></p>` : canSign ? h`
+      <form method="post" action="/portal/letter/sign" class="sign">
+        <h2>Sign the letter</h2>
+        <input type="hidden" name="letter_sha256" value="${shown.sha256}">
+        <label>Your full name <input name="full_name" required maxlength="200" autocomplete="name" value="${typed?.full_name ?? ''}"></label>
+        <label>Your role in the business <input name="signer_role" required maxlength="120" autocomplete="organization-title" value="${typed?.role ?? ''}"></label>
+        <label class="ck"><input type="checkbox" name="authorised" required> I confirm I may sign this letter for ${business.name}.</label>
+        <button class="cta" type="submit">Sign</button>
       </form>
-      <div class="gate">Pressing Sign records that you signed.${why(h`It is not yet connected to an electronic signature service,
-      and we never take a payment here. Whether the letter was sent, viewed and signed is recorded as it happens.`)}</div>`,
+      ${missing.length === 0 ? raw('') : h`<div class="gate">Signing is not switched on yet.${why(h`${missing.join(' ')}`)}</div>`}` : raw('')}
+      <div class="gate">When you sign, we keep a record of it.${why(h`We keep your name, your role and the time. We keep the internet address you signed from. We keep a fingerprint of this exact letter. You get a copy of the signed letter by email. We never take a payment here.`)}</div>`,
   });
 }
 

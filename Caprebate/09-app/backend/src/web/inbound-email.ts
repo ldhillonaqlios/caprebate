@@ -37,8 +37,9 @@ import { receiveFile } from './client-files-pages.ts';
 import { setShownToClient } from './documents.ts';
 import { alertNewMessage } from './messages.ts';
 import type { EmailSending, SmtpLogin } from '../stubs/email-provider.ts';
+import { recordBounce } from '../stubs/email-provider.ts';
 import {
-  INBOUND_EMAIL, parseEmail, readingMissing, readingOn,
+  INBOUND_EMAIL, parseBounceReport, parseEmail, readingMissing, readingOn,
   type ImapLogin, type InboundEmail, type Mailbox, type ParsedEmail, type RawEmail,
 } from '../stubs/email-inbound.ts';
 
@@ -48,7 +49,7 @@ export type InboundDeps = {
   sending?: EmailSending; login?: SmtpLogin | null; origin?: string;
 };
 
-type Outcome = 'FILED' | 'QUEUED' | 'DO_NOT_CONTACT';
+type Outcome = 'FILED' | 'QUEUED' | 'DO_NOT_CONTACT' | 'BOUNCE';
 
 /** The Message-ID we stamped, as a reply names it: without the angle brackets. */
 function ourEmail(db: Db, answers: readonly string[]): { id: string; business_id: string; claim_id: string | null } | null {
@@ -74,6 +75,28 @@ function contactOf(db: Db, business_id: string, address: string): string | null 
 export function ingest(d: InboundDeps, mail: RawEmail, parsed: ParsedEmail = parseEmail(mail.raw)): Outcome | null {
   const uid = String(mail.uid);
   if (d.db.get('SELECT id FROM inbound_email WHERE mailbox_uid = ?', [uid]) !== undefined) return null;
+  if (d.db.get('SELECT id FROM inbound_bounce_notices WHERE mailbox_uid = ?', [uid]) !== undefined) return null;
+  /* PHASE 146f: A DELIVERY REPORT IS NOT A REPLY. It is matched to the email of ours it names, recorded as a bounce, and
+     never filed on a chat or queued for staff. A HARD one stops further email to that address. */
+  const report = parseBounceReport(mail.raw);
+  if (report !== null) {
+    const at = d.now();
+    const ours = report.original_message_id === null ? undefined
+      : d.db.get<{ id: string }>('SELECT id FROM outbox WHERE provider_ref = ? AND sent_at IS NOT NULL', [report.original_message_id]);
+    const id = d.newId();
+    let bounce: string | null = null;
+    d.db.tx(() => {
+      if (ours !== undefined) bounce = recordBounce(d.db, d.now, ours.id, { kind: report.kind, status: report.status, source: 'REPORT' });
+      d.db.run('INSERT INTO inbound_bounce_notices (id, mailbox_uid, received_at, matched_outbox_id, bounce_id) VALUES (?, ?, ?, ?, ?)',
+        [id, uid, at, ours?.id ?? null, bounce]);
+    });
+    d.audit.append({
+      at, kind: 'EMAIL_BOUNCED', outcome: 'ALLOWED', actor_id: null, actor_role: 'SYSTEM',
+      object_type: 'outbox', object_id: ours?.id ?? null,
+      detail: { source: 'REPORT', bounce: report.kind, status: report.status, matched: ours !== undefined },
+    });
+    return 'BOUNCE';
+  }
   const ours = ourEmail(d.db, parsed.answers);
   const contact = ours === null ? null : contactOf(d.db, ours.business_id, parsed.from_address);
   const id = d.newId();
@@ -116,20 +139,22 @@ export function ingest(d: InboundDeps, mail: RawEmail, parsed: ParsedEmail = par
 
 export type ReadResult =
   | { readonly state: 'OFF'; readonly missing: readonly string[] }
-  | { readonly state: 'RAN'; readonly read: number; readonly filed: number; readonly queued: number; readonly do_not_contact: number };
+  | { readonly state: 'RAN'; readonly read: number; readonly filed: number; readonly queued: number; readonly do_not_contact: number; readonly bounces: number };
 
 /** READ EVERY NEW REPLY. OFF returns at once and opens no connection. */
 export async function readMailbox(d: InboundDeps, cfg: InboundEmail, login: ImapLogin | null, mailbox: Mailbox | null): Promise<ReadResult> {
   if (!readingOn(cfg, login) || mailbox === null) return { state: 'OFF', missing: readingMissing(cfg, login) };
-  const last = d.db.get<{ n: number | null }>('SELECT MAX(CAST(mailbox_uid AS INTEGER)) AS n FROM inbound_email')?.n ?? 0;
-  let read = 0, filed = 0, queued = 0, dnc = 0;
+  const last = d.db.get<{ n: number | null }>(
+    'SELECT MAX(n) AS n FROM (SELECT MAX(CAST(mailbox_uid AS INTEGER)) AS n FROM inbound_email ' +
+      'UNION ALL SELECT MAX(CAST(mailbox_uid AS INTEGER)) FROM inbound_bounce_notices)')?.n ?? 0;
+  let read = 0, filed = 0, queued = 0, dnc = 0, bounced = 0;
   for (const m of await mailbox.since(last)) {
     const o = ingest(d, m);
     if (o === null) continue;
     read++;
-    if (o === 'FILED') filed++; else if (o === 'QUEUED') queued++; else dnc++;
+    if (o === 'FILED') filed++; else if (o === 'QUEUED') queued++; else if (o === 'BOUNCE') bounced++; else dnc++;
   }
-  return { state: 'RAN', read, filed, queued, do_not_contact: dnc };
+  return { state: 'RAN', read, filed, queued, do_not_contact: dnc, bounces: bounced };
 }
 
 /* ================================================================== *

@@ -1,7 +1,7 @@
 {
   "generatedBy": "09-app/engine/tools/extract.cjs",
   "source": "Caprebate site.html",
-  "sourceSha256": "11cd117736ae512f791e765d7b55ab9573e15721253bc5877616ab736e5feef7",
+  "sourceSha256": "40b72ec1f9745dca11c5886218a07b46188a4f2385377c7307b08532d7387b35",
   "sharedModules": [
     "CB_PLANT",
     "CB_CTA",

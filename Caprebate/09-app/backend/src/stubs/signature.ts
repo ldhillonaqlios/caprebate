@@ -1,14 +1,19 @@
 /**
- * STUB 2 of 3 — document signature.
+ * STUB 2 of 3 — document signature. REPLACED FOR THE ENGAGEMENT LETTER BY PHASE 146f, 22 September 2026.
  *
- * Records that a signature was requested and lets a test mark it signed. It
- * does NOT talk to a signature provider and does not pretend the result is
- * legally executed.
+ * The stub provider that lived here (`stubSignatureProvider`, which contacted nothing and executed nothing) is gone.
+ * Lakhbir decided the engagement letter is signed inside the application, so the signature is built in:
+ * src/web/signing.ts — the client types their full name and role, ticks that they may sign for the business, and
+ * presses Sign; the record, its fingerprint in the audit chain and a signed PDF are kept. It is switched off
+ * (ENGAGEMENT_SIGNING) until our solicitor confirms a typed name suits the letter and the letter's open terms are
+ * settled.
  *
- * WHAT MUST NOT BE BUILT ON TOP OF THIS: a signed engagement is what gates the
- * PAID register calls, and that assertion is SERVER-SIDE. `assertSignedEngagement`
- * belongs to Phase 106 and reads the engagements table; it must never read a
- * value this stub returned to a browser.
+ * WHAT IS LEFT HERE is the interface, for any other document a signature provider might one day carry, and the
+ * built-in provider's description of itself. The surveyor's "commit figures" is not a signature and never was.
+ *
+ * WHAT MUST NOT BE BUILT ON TOP OF THIS: a signed engagement is what gates the PAID register calls, and that
+ * assertion is SERVER-SIDE. `assertSignedEngagement` (src/web/research.ts) reads the engagements table and the
+ * signature record; it must never read a value returned to a browser.
  */
 
 export type SignatureRequest = { document_id: string; business_id: string };
@@ -19,14 +24,19 @@ export type SignatureProvider = {
   request(r: SignatureRequest): SignatureResult;
 };
 
-export function stubSignatureProvider(ids: () => string): SignatureProvider {
+/**
+ * THE BUILT-IN PROVIDER, AS AN APPLICATION PART. It sends nothing anywhere: a signature happens when the client signs
+ * in the portal (signEngagement), never because the back office asked for one. So `request` records that the letter
+ * is waiting for the client and says that nothing has been executed by the request itself.
+ */
+export function builtInSignatureProvider(ids: () => string): SignatureProvider {
   return {
-    id: 'STUB',
-    request(r: SignatureRequest): SignatureResult {
-      return { provider: 'STUB', reference: ids(), executed: false };
+    id: 'BUILT_IN',
+    request(_r: SignatureRequest): SignatureResult {
+      return { provider: 'BUILT_IN', reference: ids(), executed: false };
     },
   };
 }
 
-export const STUB_NOTICE =
-  'NOT EXECUTED — document signature is stubbed in this build. No provider was contacted.';
+export const SIGNATURE_NOTICE =
+  'The client signs in their portal. Signing is built in and not switched on yet.';

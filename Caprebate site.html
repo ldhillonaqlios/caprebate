@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- PHASE 146f: the Google Analytics measurement id. CONFIGURATION, NOT CODE: empty in this file, and filled in by the
+     back end from the key file (GA4_MEASUREMENT_ID) when it serves the page. Empty means no analytics and no cookie choice. -->
+<meta name="cb-ga4-measurement-id" content="">
 <title>Cap Rebate — Capital Allowances for Healthcare Property</title>
 <style>
   /* CAP REBATE — PHASE 133d. The brand book's tokens (09-app/backend/src/web/assets.ts). Cap Ink and Body Grey carry
@@ -373,6 +376,14 @@
   /* the lead form's consent box */
   .field.ck label{display:flex;gap:.6rem;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:var(--step--1);font-weight:400;color:var(--ink)}
   .field.ck input{width:auto;padding:0;margin-top:.2rem}
+  /* PHASE 146f: the cookie choice. Two buttons of the same size and weight: saying no is as easy as saying yes. */
+  .consent{position:fixed;left:1rem;right:1rem;bottom:1rem;z-index:60;max-width:40rem;margin:0 auto;background:var(--paper);color:var(--ink);
+    border:1px solid var(--line);border-radius:14px;padding:1rem 1.2rem;box-shadow:0 10px 30px rgba(0,0,0,.12);font-size:var(--step--1)}
+  .consent[hidden]{display:none}
+  .consent p{margin:0 0 .8rem}
+  .consent-actions{display:flex;flex-wrap:wrap;gap:.6rem}
+  .consent-actions .btn{flex:1 1 12rem;padding:.7rem 1.3rem}
+  .foot-cookies{background:none;border:0;padding:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}
 </style>
 </head>
 <body>
@@ -714,6 +725,20 @@
 </section>
 
 <!-- ===== FOOTER ===== -->
+<!-- ===== PHASE 146f: THE COOKIE CHOICE =====
+     Shown only when a measurement id is configured and the visitor has not chosen yet. Nothing that tracks loads until
+     they press Accept; Refuse is the same size, in the same place, and needs one press. The choice is kept in this
+     browser, and "Cookie settings" at the foot of the page brings it back. -->
+<div id="cbConsent" class="consent" role="region" aria-label="Cookies on this website" hidden>
+  <p><strong>Can we count visits to this website?</strong> We would like to use Google Analytics cookies to see how people
+  use our assessment, so we can make it clearer. They are off unless you say yes. We never send your name, your business,
+  your address or your figure. <a href="/notices/#cookies">How we use cookies</a>.</p>
+  <div class="consent-actions">
+    <button type="button" class="btn btn-fill" data-consent="accepted">Accept analytics cookies</button>
+    <button type="button" class="btn btn-fill" data-consent="refused">Refuse analytics cookies</button>
+  </div>
+</div>
+
 <footer>
   <div class="wrap">
     <div class="foot-top">
@@ -735,17 +760,20 @@
       </div>
     </div>
     <p class="disclaimer"><strong>Cap Rebate is a trading name of CAP REBATE LTD</strong>, a company registered in England and Wales, company number 17307313, registered office 1st Floor, 1-9 Castle Street, Hinckley, LE10 1DA. <strong>The trading name has not been cleared by a trade-mark search.</strong> Figures shown, including any figure from the on-page tool, are <strong>not a guarantee and not tax advice.</strong> The on-page tool returns a <strong>pre-diligence ceiling</strong> — the most the sector band allows before your property has been examined — and the sector yield bands behind it are <strong>assessed, not independently calibrated</strong>, pending chartered tax adviser review. Capital allowances are a form of income or corporation tax relief on qualifying property expenditure; they are distinct from capital gains tax. Any claim is prepared on the basis of a surveyor's inspection and apportionment; the filing position is signed by your own accountant or tax adviser, or by you if you have neither, and never by us. Eligibility and amounts depend on your circumstances and a full review. [Company registration, ICO and regulatory details to be added.]</p>
-    <div class="copy"><span>&copy; 2026 Cap Rebate. All rights reserved.</span><span>Assessment coverage: England &amp; Wales.</span></div>
+    <div class="copy"><span>&copy; 2026 Cap Rebate. All rights reserved.</span><span>Assessment coverage: England &amp; Wales.</span><button type="button" class="foot-cookies" data-cookie-settings hidden>Cookie settings</button></div>
   </div>
 </footer>
 
 <script>
-/* ===== CB_TRACK - THE ONE ANALYTICS WRAPPER. BUILT OFF, NO CALL SITES ========
+/* ===== CB_TRACK - THE ONE ANALYTICS WRAPPER. BUILT OFF; ON ONLY AFTER CONSENT ==
    PHASE 132, 14 September 2026 (second site builder). Board item 12552691720,
    "Set up analytics & tracking", PARKED on purpose until the website goes live
    (the WordPress rebuild, item 12937209644). Built now so it goes in with the
    site rather than being retrofitted, and switched OFF: enabled is false, there
-   is no measurement id and no sink, NOTHING CALLS IT, and no tag is loaded.
+   is no measurement id and no sink, and no tag is loaded.
+   PHASE 146f, 22 September 2026: the Measurement Plan's ten events now have call
+   sites, inside the in-page assessment, and SITE_CONSENT below switches this on
+   only when a measurement id is configured AND the visitor pressed Accept.
 
    THE SPECIFICATION is the Measurement Plan, 08-monday-doc-exports/12552691720,
    section 5. 5.1: every event goes through this one function, the only code
@@ -845,7 +873,7 @@ var CB_TRACK = (function(){
   /* The GA4 tag and its sink. Does nothing while enabled is false or no
      measurement id is set, and nothing calls it. 5.5: no automatic page views,
      Google Signals and ad personalisation off. Consent must be given before this
-     is ever called (5.5); that wiring waits on the site. */
+     is ever called (5.5): SITE_CONSENT, below, is the only caller. */
   function load(doc, win){
     if(CONFIG.enabled !== true || typeof CONFIG.measurement_id !== "string" || !/^G-[A-Z0-9]+$/.test(CONFIG.measurement_id)) return false;
     win.dataLayer = win.dataLayer || [];
@@ -863,6 +891,72 @@ var CB_TRACK = (function(){
   return { CONFIG:CONFIG, EVENTS:EVENTS, PARAMS:PARAMS, NEVER_SEND:NEVER_SEND, refusal:refusal, track:track, load:load };
 })();
 /* ===== end CB_TRACK ===== */
+
+/* ===== SITE_CONSENT - THE COOKIE CHOICE. PHASE 146f, 22 September 2026 ========
+   Google Analytics loads ONLY after the visitor presses Accept, and only when a
+   measurement id is configured (the cb-ga4-measurement-id meta tag, which the back
+   end fills from the key file - never a value in this file). Refusing is one press,
+   the same size as accepting. The choice is kept in this browser (localStorage,
+   which is strictly necessary to remember a no) and "Cookie settings" brings the
+   choice back. Refusing after accepting stops sending at once and removes the
+   analytics cookies. It never loads on a page after the engagement: the portal and
+   the back office are refused by path here, and none of their views names CB_TRACK
+   (the allow-list check, C1). Not a CB_ module: it is page code, not engine.
+   ============================================================================ */
+var SITE_CONSENT = (function(){
+  var KEY = "cb_analytics_choice_v1";
+  var AFTER_ENGAGEMENT = /^\/(portal|staff|account|login|backoffice)(\/|$)/;
+  function measurementId(){
+    var m = document.querySelector('meta[name="cb-ga4-measurement-id"]');
+    var v = m ? (m.getAttribute("content") || "").trim() : "";
+    return /^G-[A-Z0-9]+$/.test(v) ? v : null;
+  }
+  function allowedHere(){ return !AFTER_ENGAGEMENT.test(location.pathname); }
+  function read(){ try{ var v = localStorage.getItem(KEY); return v === "accepted" || v === "refused" ? v : null; }catch(e){ return null; } }
+  function keep(v){ try{ localStorage.setItem(KEY, v); }catch(e){} }
+  function show(on){ var el = document.getElementById("cbConsent"); if(el) el.hidden = !on; }
+  function start(){
+    var id = measurementId();
+    if(id === null || !allowedHere() || CB_TRACK.CONFIG.enabled === true) return false;
+    CB_TRACK.CONFIG.measurement_id = id;
+    CB_TRACK.CONFIG.enabled = true;
+    return CB_TRACK.load(document, window);
+  }
+  function stop(){
+    CB_TRACK.CONFIG.enabled = false;
+    CB_TRACK.CONFIG.sink = null;
+    /* the analytics cookies, on this host and its parent domain */
+    document.cookie.split(";").forEach(function(c){
+      var name = c.split("=")[0].trim();
+      if(/^_ga(_|$)/.test(name)){
+        var host = location.hostname, parent = host.replace(/^[^.]+\./, "");
+        [host, "." + host, "." + parent].forEach(function(dom){
+          document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=" + dom;
+        });
+        document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+      }
+    });
+  }
+  function choose(v){
+    if(v !== "accepted" && v !== "refused") return;
+    keep(v); show(false);
+    if(v === "accepted") start(); else stop();
+  }
+  function init(){
+    if(measurementId() === null || !allowedHere()) return;
+    var settings = document.querySelector("[data-cookie-settings]");
+    if(settings){ settings.hidden = false; settings.addEventListener("click", function(){ show(true); }); }
+    document.querySelectorAll("[data-consent]").forEach(function(b){
+      b.addEventListener("click", function(){ choose(b.getAttribute("data-consent")); });
+    });
+    var c = read();
+    if(c === "accepted") start();
+    else if(c === null) show(true);
+  }
+  return { KEY:KEY, init:init, choose:choose, read:read, measurementId:measurementId };
+})();
+SITE_CONSENT.init();
+/* ===== end SITE_CONSENT ===== */
 
 /* ---------- nav: scroll state + mobile toggle ---------- */
 const hdr=document.getElementById('hdr');
@@ -14083,6 +14177,61 @@ var FN = (function(){
   var step = 0;                       /* index into CB_FUNNEL.SCREENS */
   var phase = "questions";            /* questions | figure | contact | slot | account | done | exit */
 
+  /* ---------------------------------------------- analytics call sites
+     PHASE 146f. The Measurement Plan's ten events (5.2), each a literal call to
+     the page's one wrapper, CB_TRACK, which lives in the page around this frame.
+     The wrapper sends nothing unless the visitor accepted analytics cookies, and
+     drops anything off the plan's lists. No answer, name, address or figure is
+     ever passed. step_id carries only the slugs the plan names, for the two
+     screens they clearly fit (5.9 item 3 asks the developer to confirm the rest
+     against this flow and add them to the plan); the others send the step's
+     number alone. The plan's sector names are not the engine's, so they are
+     mapped here and the list does not bend. */
+  var FLOW = "2026-09-a";
+  var STEP_ID = { Q2:"property_basics", Q3:"spend" };
+  var PLAN_SECTOR = { care_homes:"care_home", dental:"dental", gp:"gp_primary_care",
+                      supported_living:"supported_living", private_hospital:"private_hospital" };
+  var lastStep = -1, lastPhase = null;
+  function trackerPage(){ try{ var P = window.parent; return (P && P !== window && P.CB_TRACK) ? P : null; }catch(e){ return null; } }
+  function sectorNow(){ var p = S.properties && S.properties[0]; return p ? (PLAN_SECTOR[p.sector] || null) : null; }
+  function tStart(){ var P = trackerPage(); if(P) P.CB_TRACK.track("assessment_start", { entry_channel: "other", flow_version: FLOW }); }
+  function tSector(v){ var P = trackerPage(), sec = PLAN_SECTOR[v]; if(P && sec) P.CB_TRACK.track("assessment_sector_selected", { sector: sec, flow_version: FLOW }); }
+  function tView(){
+    var P = trackerPage(); if(!P) return;
+    var sid = STEP_ID[CB_FUNNEL.SCREENS[step]], n = step + 1;
+    if(sid) P.CB_TRACK.track("assessment_step_view", { step_id: sid, step_index: n, flow_version: FLOW });
+    else P.CB_TRACK.track("assessment_step_view", { step_index: n, flow_version: FLOW });
+  }
+  function tComplete(){
+    var P = trackerPage(); if(!P) return;
+    var sid = STEP_ID[CB_FUNNEL.SCREENS[step]], n = step + 1;
+    if(sid) P.CB_TRACK.track("assessment_step_complete", { step_id: sid, step_index: n, flow_version: FLOW });
+    else P.CB_TRACK.track("assessment_step_complete", { step_index: n, flow_version: FLOW });
+  }
+  function tBack(){
+    var P = trackerPage(); if(!P) return;
+    var sid = STEP_ID[CB_FUNNEL.SCREENS[step]];
+    if(sid) P.CB_TRACK.track("assessment_step_back", { step_id: sid });
+    else P.CB_TRACK.track("assessment_step_back", {});
+  }
+  function tSaved(){ var P = trackerPage(); if(P) P.CB_TRACK.track("assessment_save_resume", { step_id: "result", action: "save" }); }
+  function tFigure(){
+    var P = trackerPage(), sec = sectorNow(); if(!P) return;
+    if(sec) P.CB_TRACK.track("assessment_figure_shown", { sector: sec, flow_version: FLOW });
+    else P.CB_TRACK.track("assessment_figure_shown", { flow_version: FLOW });
+  }
+  function tSuppressed(){
+    var P = trackerPage(), sec = sectorNow(); if(!P) return;
+    if(sec) P.CB_TRACK.track("assessment_figure_suppressed", { sector: sec, suppression_reason: "other" });
+    else P.CB_TRACK.track("assessment_figure_suppressed", { suppression_reason: "other" });
+  }
+  function tEngage(){
+    var P = trackerPage(), sec = sectorNow(); if(!P) return;
+    if(sec) P.CB_TRACK.track("assessment_engagement_click", { sector: sec, flow_version: FLOW });
+    else P.CB_TRACK.track("assessment_engagement_click", { flow_version: FLOW });
+  }
+  function tError(){ var P = trackerPage(); if(P) P.CB_TRACK.track("assessment_error", { error_code: "handled_error" }); }
+
   function el(id){ return document.getElementById(id); }
   function esc(x){ return String(x==null?"":x)
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -14387,8 +14536,10 @@ var FN = (function(){
       var id = CB_FUNNEL.SCREENS[step];
       pct = Math.round(step / CB_FUNNEL.SCREENS.length * 100);
       label = "Step " + (step+1) + " of " + CB_FUNNEL.SCREENS.length;
-      html = ({ Q1:screenQ1, Q1a:screenQ1a, Q1b:screenQ1b,
-                Q1c:screenQ1c, Q2:screenQ2, Q3:screenQ3 })[id]();
+      try{
+        html = ({ Q1:screenQ1, Q1a:screenQ1a, Q1b:screenQ1b,
+                  Q1c:screenQ1c, Q2:screenQ2, Q3:screenQ3 })[id]();
+      }catch(e){ tError(); throw e; }
       html += '<div class="nav">'
         + (step>0 ? '<button class="back" onclick="FN.back()">\u2190 Back</button>' : '')
         + '<button class="cta" onclick="FN.next()">'+(step===CB_FUNNEL.SCREENS.length-1?"See my figure":"Continue")+' \u2192</button></div>';
@@ -14400,6 +14551,12 @@ var FN = (function(){
                 account:screenAccount, done:screenDone, exit:screenExit })[phase]();
     }
 
+    /* counted once each time a screen is reached, not on every redraw while it is being answered */
+    if(phase === "questions" && (lastPhase !== "questions" || lastStep !== step)) tView();
+    if(phase === "figure" && lastPhase !== "figure") tFigure();
+    if(phase === "exit" && lastPhase !== "exit") tSuppressed();
+    lastPhase = phase; lastStep = step;
+
     chrome(label, pct);
     el("selector").style.display = "none";
     st.style.display = "";
@@ -14408,10 +14565,10 @@ var FN = (function(){
   }
 
   return {
-    start:function(){ S = CB_FUNNEL.blankState(); step = 0; phase = "questions"; draw(); },
+    start:function(){ S = CB_FUNNEL.blankState(); step = 0; phase = "questions"; lastStep = -1; lastPhase = null; tStart(); draw(); },
     restart:function(){ this.start(); },
     state:function(){ return S; },
-    go:function(p){ phase = p; draw(); },
+    go:function(p){ if(phase === "figure" && p === "contact") tEngage(); phase = p; draw(); },
 
     set:function(k,v){ S[k] = v; draw(); },
     setTrigger:function(t){
@@ -14420,7 +14577,7 @@ var FN = (function(){
       if(S.properties[0]) S.properties[0].trigger = t;
       draw();
     },
-    setProp:function(i,k,v){ S.properties[i][k] = v; draw(); },
+    setProp:function(i,k,v){ if(k === "sector" && S.properties[i][k] !== v) tSector(v); S.properties[i][k] = v; draw(); },
     setNum:function(i,k,v){
       var n = parseFloat(String(v).replace(/[^0-9.]/g,""));
       S.properties[i][k] = isNaN(n) ? null : n;
@@ -14442,8 +14599,9 @@ var FN = (function(){
     },
     removeProperty:function(i){ S.properties.splice(i,1); draw(); },
 
-    back:function(){ if(step>0){ step--; draw(); } },
+    back:function(){ if(step>0){ tBack(); step--; draw(); } },
     next:function(){
+      tComplete();
       /* The one gate left in the front door. */
       if(CB_FUNNEL.SCREENS[step] === "Q1b" && CB_FRONTDOOR.gateQ1b(S).gated){
         phase = "exit"; draw(); return;
@@ -14460,6 +14618,7 @@ var FN = (function(){
     },
     finish:function(created){
       S.account.created = !!created; S.account.skipped = !created;
+      if(created) tSaved();
       phase = "done"; draw();
     }
   };

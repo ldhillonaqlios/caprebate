@@ -27,7 +27,11 @@
         A2 every CB_TRACK.track( call is a literal event with a literal
            parameter object, the event is on 5.2, each key is one that event
            may carry, none is on 5.4, and each literal value is allowed by 5.3;
-        A3 no call site today: the wrapper ships with none (item parked).
+        A3 CHANGED ON PURPOSE BY PHASE 146f (22 September 2026). It said "no
+           call site today"; Phase 146f added the call sites for the plan's ten
+           events. It now says: the call sites name EVERY 5.2 event and nothing
+           else, and every one sits inside the in-page assessment (the
+           template), never in the page around it.
      B  THE WRAPPER, loaded from the site's own text in a sandbox:
         B1 it ships off: enabled false, mode production, no id, no sink;
         B2 its lists are exactly the plan's 5.2, 5.3 and 5.4 - a code edit
@@ -44,6 +48,20 @@
            that shows B3's "no tag" is the switch and not a broken loader.
      C  THE PORTAL. No 09-app/backend/src/web/*.ts view names CB_TRACK or
         reaches gtag: the post-engagement pages load no tag (5.1).
+     D  THE COOKIE CHOICE (Phase 146f), run in a sandbox from the site's own
+        SITE_CONSENT and CB_TRACK text:
+        D1 the file carries no measurement id - it is configuration, filled in
+           by the back end from the key file - and with none, no choice is
+           shown and nothing loads;
+        D2 with an id and no choice yet, the choice is shown and no tag loads;
+        D3 Refuse: no tag, the choice is kept, and a reload loads nothing and
+           does not ask again;
+        D4 Accept: exactly one tag; a reload with "accepted" loads it without
+           asking;
+        D5 on a page after the engagement (/portal/...) nothing is shown or
+           loaded, whatever was chosen;
+        D6 Refuse is as easy as Accept: two buttons, the same class, side by
+           side in the same block.
 
    RUN
      node 03-app/caprebate-analytics-allowlist-check.cjs
@@ -204,7 +222,21 @@ function runChecks(tree) {
     }
   });
   is("A2", "every CB_TRACK.track( call site is literal and on the lists (5.2, 5.3, 5.4)", callProblems.length === 0, callProblems.join("; "));
-  is("A3", "no call site today - the wrapper ships with none while the item is parked", callCount === 0, callCount + " call site(s) found");
+  /* A3, changed on purpose by Phase 146f: the ten events, all of them, only them, and only inside the assessment. */
+  const sites = [];
+  files.forEach(f => { let m; CALL.lastIndex = 0; while ((m = CALL.exec(f.text))) {
+    const ev = /^\s*(["'])([^"']*)\1/.exec(f.text.slice(m.index + m[0].length));
+    sites.push({ file: f.name, at: m.index, event: ev ? ev[2] : null });
+  } });
+  const tplA = tree.site.indexOf('<template id="assessTpl"'), tplB = tplA < 0 ? -1 : tree.site.indexOf("</template>", tplA);
+  const seen = [...new Set(sites.map(x => x.event).filter(Boolean))].sort();
+  const want = Object.keys(PLAN_EVENTS).sort();
+  const outside = sites.filter(x => x.file !== tree.siteName || tplA < 0 || x.at < tplA || x.at > tplB);
+  is("A3", "the call sites name every one of the plan's ten events and nothing else, all inside the in-page assessment (" + callCount + " call sites)",
+     JSON.stringify(seen) === JSON.stringify(want) && outside.length === 0,
+     "events with no call site: " + want.filter(e => seen.indexOf(e) === -1).join(", ") +
+     "; events not on 5.2: " + seen.filter(e => want.indexOf(e) === -1).join(", ") +
+     "; outside the assessment: " + outside.map(x => x.file + "@" + x.at).join(", "));
 
   /* --- B: the wrapper --- */
   if (!T) {
@@ -291,6 +323,63 @@ function runChecks(tree) {
   tree.ts.forEach(f => { const re = /CB_TRACK|\bgtag\b|\bdataLayer\b|googletagmanager/g; let m; while ((m = re.exec(f.text))) portal.push(f.name + ":" + lineOf(f.text, m.index) + " " + m[0]); });
   is("C1", "no post-engagement portal view names CB_TRACK or reaches a tag (" + tree.ts.length + " views scanned)", portal.length === 0, portal.join("; "));
 
+  /* --- D: the cookie choice --- */
+  const C_START = "/* ===== SITE_CONSENT - THE COOKIE CHOICE", C_END = "/* ===== end SITE_CONSENT ===== */";
+  const ca = tree.site.indexOf(C_START), cb = ca < 0 ? -1 : tree.site.indexOf(C_END, ca);
+  const metaM = /<meta name="cb-ga4-measurement-id" content="([^"]*)">/.exec(tree.site);
+  if (ca < 0 || cb < 0 || !w) {
+    is("D0", "the cookie choice (SITE_CONSENT) is in the site file", false, "no SITE_CONSENT block");
+  } else {
+    const consentText = tree.site.slice(ca, cb + C_END.length);
+    /* a page, faked just far enough: the meta tag, the choice block, its buttons, cookies, storage, the path */
+    const run = (opts) => {
+      const scripts = [];
+      const banner = { hidden: true };
+      const settings = { hidden: true, addEventListener() {} };
+      const buttons = ["accepted", "refused"].map(v => ({ v, h: null, getAttribute() { return v; }, addEventListener(_e, h) { this.h = h; } }));
+      const store = opts.store;
+      const doc = {
+        cookie: "",
+        querySelector(sel) {
+          if (sel === 'meta[name="cb-ga4-measurement-id"]') return { getAttribute() { return opts.id; } };
+          if (sel === "[data-cookie-settings]") return settings;
+          return null;
+        },
+        querySelectorAll(sel) { return sel === "[data-consent]" ? buttons : []; },
+        getElementById(id) { return id === "cbConsent" ? banner : null; },
+        createElement(t) { const el = { tag: t }; scripts.push(el); return el; },
+        head: { appendChild() {} }
+      };
+      const win = {};
+      const ctx = vm.createContext({ document: doc, window: win, location: { pathname: opts.path || "/", hostname: "caprebate.com" },
+        localStorage: { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } }, console });
+      vm.runInContext(w.text + "\n" + consentText + "\n;this.__T = CB_TRACK; this.__C = SITE_CONSENT;", ctx);
+      if (opts.press) { const b = buttons.find(x => x.v === opts.press); if (b && b.h) b.h(); }
+      return { scripts: scripts.length, shown: banner.hidden === false, store, T: ctx.__T, C: ctx.__C };
+    };
+    const noId = run({ id: metaM ? metaM[1] : "", store: {} });
+    is("D1", "the file carries no measurement id (configuration, not code), and with none no choice is shown and nothing loads",
+       !!metaM && metaM[1] === "" && noId.scripts === 0 && noId.shown === false, JSON.stringify({ meta: metaM && metaM[1], scripts: noId.scripts, shown: noId.shown }));
+    const fresh2 = run({ id: "G-TEST123", store: {} });
+    is("D2", "with an id and no choice yet, the choice is shown and no tag loads", fresh2.shown === true && fresh2.scripts === 0,
+       JSON.stringify({ shown: fresh2.shown, scripts: fresh2.scripts }));
+    const s3 = {}; const refused = run({ id: "G-TEST123", store: s3, press: "refused" }); const reload3 = run({ id: "G-TEST123", store: s3 });
+    is("D3", "Refuse: no tag, the choice is kept, and a reload loads nothing and does not ask again",
+       refused.scripts === 0 && s3.cb_analytics_choice_v1 === "refused" && reload3.scripts === 0 && reload3.shown === false,
+       JSON.stringify({ refused: refused.scripts, kept: s3, reload: { scripts: reload3.scripts, shown: reload3.shown } }));
+    const s4 = {}; const accepted = run({ id: "G-TEST123", store: s4, press: "accepted" }); const reload4 = run({ id: "G-TEST123", store: s4 });
+    is("D4", "Accept: exactly one tag; a reload with the choice kept loads it without asking",
+       accepted.scripts === 1 && s4.cb_analytics_choice_v1 === "accepted" && reload4.scripts === 1 && reload4.shown === false,
+       JSON.stringify({ accepted: accepted.scripts, kept: s4, reload: { scripts: reload4.scripts, shown: reload4.shown } }));
+    const portalRun = run({ id: "G-TEST123", store: { cb_analytics_choice_v1: "accepted" }, path: "/portal/letter" });
+    is("D5", "on a page after the engagement nothing is shown or loaded, whatever was chosen", portalRun.scripts === 0 && portalRun.shown === false,
+       JSON.stringify({ scripts: portalRun.scripts, shown: portalRun.shown }));
+    const blockM = /<div id="cbConsent"[\s\S]*?<div class="consent-actions">([\s\S]*?)<\/div>/.exec(tree.site);
+    const btns = blockM ? [...blockM[1].matchAll(/<button type="button" class="([^"]+)" data-consent="(accepted|refused)">/g)] : [];
+    is("D6", "Refuse is as easy as Accept: two buttons, the same class, side by side",
+       btns.length === 2 && btns[0][1] === btns[1][1] && btns.map(b => b[2]).sort().join() === "accepted,refused", JSON.stringify(btns.map(b => [b[1], b[2]])));
+  }
+
   return results;
 }
 
@@ -318,7 +407,13 @@ function selfTest() {
     ["a call site in a portal view", Object.assign({}, clean, { ts: clean.ts.concat([{ name: "09-app/backend/src/web/planted.ts", text: "CB_TRACK.track('assessment_start', {});" }]) }), ["C1"]],
     ["the wrapper switched on by default", Object.assign({}, clean, { site: inWrapper("{ enabled:false,", "{ enabled:true,") }), ["B1", "B3"]],
     /* the event's own key list still drops a postcode, so only B2c can see this */
-    ["the never-send list emptied", Object.assign({}, clean, { site: inWrapper("var NEVER_SEND = [", "var NEVER_SEND = [];var __unused = [") }), ["B2c"]]
+    ["the never-send list emptied", Object.assign({}, clean, { site: inWrapper("var NEVER_SEND = [", "var NEVER_SEND = [];var __unused = [") }), ["B2c"]],
+    /* Phase 146f: the changed A3, and the cookie choice */
+    ["one of the ten events with no call site", Object.assign({}, clean, { site: inWrapper('P.CB_TRACK.track("assessment_error", { error_code: "handled_error" });', "void 0;") }), ["A3"]],
+    ["a call site outside the assessment", Object.assign({}, clean, { site: plantInPage('CB_TRACK.track("assessment_start", { entry_channel: "direct" });') }), ["A3"]],
+    ["a measurement id written into the file", Object.assign({}, clean, { site: inWrapper('<meta name="cb-ga4-measurement-id" content="">', '<meta name="cb-ga4-measurement-id" content="G-PLANTED1">') }), ["D1"]],
+    ["the tag loaded before any choice", Object.assign({}, clean, { site: inWrapper("else if(c === null) show(true);", "else if(c === null){ show(true); start(); }") }), ["D2"]],
+    ["Refuse made smaller than Accept", Object.assign({}, clean, { site: inWrapper('class="btn btn-fill" data-consent="refused"', 'class="btn btn-ghost" data-consent="refused"') }), ["D6"]]
   ];
   let bad = 0;
   controls.forEach(([what, tree, mustFail]) => {
