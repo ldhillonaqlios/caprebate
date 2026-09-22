@@ -126,11 +126,12 @@ and anyone holding it can re-derive every number from what it publishes. **A fig
 defect. A figure with no To is either a dead end to delete or a missing link to find.** The references
 are generated with the figure; Q-RT-37 asks how you want them written.
 
-**Whose judgement is it.** Grade `D` is chartered-surveyor sign-off. Grade `E` is CTA sign-off. This
+**Whose judgement is it.** Grade `D` is chartered-surveyor sign-off. Grade `E` is sign-off by whoever signs the filing position under clause 1 _(Phase 146a, 22 Sep 2026: this said "Grade `E` is CTA sign-off")_. This
 is the *surveyor's* report, so `[SURVEYOR]` sections are, with named exceptions, the `D`-grade fields.
-Where a field is genuinely `E` — a CTA filing-position call, not a valuation call — that is stated and
+Where a field is genuinely `E` — a filing-position call for whoever signs the filing position under clause 1 of the engagement letter (the client's accountant or tax adviser, or the client if there is neither), not a valuation call — that is stated and
 the field is routed to the accountant/CTA report
 (`Build-Prep-Report-Pack-and-Hand-off-Specification.md` §4.2) rather than smuggled in here.
+_(Phase 146a, 22 Sep 2026: this said "a CTA filing-position call". Grade E goes to whoever signs the filing position under clause 1, not to a tax adviser Caprebate engages per case — the engine's routing since Phase 146. Words changed only; nothing removed.)_
 
 **Sector scope.** Shared core (§1.A–§1.I) plus five sector extensions (§3.1–§3.5). This template
 carries the shared core in full and flags where a sector block plugs in. Populate only the block for
@@ -945,8 +946,8 @@ necessarily this wording.
 
 **The s.203 notification position** (`Build-Prep-Report-Pack-and-Hand-off-Specification.md` §4.3) is a
 mandatory section in both the client report and the accountant/CTA report, triggered by an election
-found in diligence or a s.200(4) reduction in the chain. **It is a CTA filing-position statement, not a
-valuation matter**, and is deliberately not reproduced here — duplicating it in the surveyor's document
+found in diligence or a s.200(4) reduction in the chain. **It is a filing-position statement for whoever signs the filing position under clause 1, not a
+valuation matter** _(Phase 146a, 22 Sep 2026: this said "a CTA filing-position statement")_, and is deliberately not reproduced here — duplicating it in the surveyor's document
 would blur the professional-boundary line this template exists to keep sharp. Cross-refer; do not
 answer it here.
 

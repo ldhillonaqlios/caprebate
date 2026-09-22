@@ -279,7 +279,7 @@ accountant and every introducer have no login**.
 | 8.17 | Expected completion date | ADOPTED | CRM 1, `claims.expected_completion` |
 | 8.18 | Claim owner | ADOPTED | CRM 1, `claims.owner_id` |
 | 8.19 | Surveyor | ADOPTED WITH A RULE | CRM 1, `claims.surveyor_id` — see 6.20 |
-| 8.20 | Technical / analysis owner | QUESTION | **"Do we need a login for anyone beyond the five roles — a manager, a technical reviewer, or a read-only viewer?"** |
+| 8.20 | Technical / analysis owner | QUESTION | **"Do we need a login for anyone beyond the five roles — a manager, a technical reviewer, or a read-only viewer?"** (Word question 39, “Do we need extra logins, like a manager, tax reviewer or view-only user?”) |
 | 8.21 | Tax / accounting owner | ADOPTED WITH A RULE | **The chartered tax adviser has no login; their sign-off is a record** naming who, when and on what (CRM 6). The client's accountant is a contact (CRM 1) |
 | 8.22 | Priority | ADOPTED WITH A RULE | CRM 1, `claims.priority` — LOW, NORMAL, HIGH, validated in code rather than by a database CHECK so CRM 9 can make it configurable without rebuilding the table. **Unset reads "not set"** |
 | 8.23 | Next action | ADOPTED WITH A RULE | CRM 1, `claims.next_action` and `next_action_due`; **CRM 3 enforces exactly one, with an owner and a due date**. *Built by CRM 3 of 10 (E23, E27): the next action is the claim's flagged open staff task; both columns are carried into tasks and retired by migration 012; a stage move that would leave an open claim without one is refused* |
@@ -478,12 +478,12 @@ payload proof covers the dashboard response. **Built by CRM 9 of 10, 12 Septembe
 | # | Specification line | Mark | Where, or the rule |
 |---|---|---|---|
 | 17.1 | Administrator | ALREADY BUILT | ADMIN — `src/roles.ts`, `src/authz.ts` |
-| 17.2 | Management: full operational visibility plus reporting | QUESTION | "Do we need a login for anyone beyond the five roles — a manager, a technical reviewer, or a read-only viewer?" |
+| 17.2 | Management: full operational visibility plus reporting | QUESTION | "Do we need a login for anyone beyond the five roles — a manager, a technical reviewer, or a read-only viewer?" (Word question 39, “Do we need extra logins, like a manager, tax reviewer or view-only user?”) |
 | 17.3 | Business Development / Sales, with limited financial visibility as configured | ALREADY BUILT | SALES — reads the estimate, **refused the invoice** (`invoice.read` is ADMIN and ACCOUNTING). Not configurable: a role's boundary is not a setting (20.4) |
 | 17.4 | Surveyor: assigned properties, surveys, documents **and relevant claim information** | REJECTED | **N1, the anchor quarantine.** SURVEYING reaches an assigned job's inputs and never an estimate-derived figure — not the claim value, the tax benefit, the fee or a pipeline value. CRM 1 extends the same rule to properties and claims, and the payload proof covers both |
-| 17.5 | Technical / Tax Team | QUESTION | "Do we need a login for anyone beyond the five roles — a manager, a technical reviewer, or a read-only viewer?" |
+| 17.5 | Technical / Tax Team | QUESTION | "Do we need a login for anyone beyond the five roles — a manager, a technical reviewer, or a read-only viewer?" (Word question 39, “Do we need extra logins, like a manager, tax reviewer or view-only user?”) |
 | 17.6 | Finance: financial records, invoices and payment status | ALREADY BUILT | ACCOUNTING — **money only: no join to answers, register data, notes, surveyor workings or the estimate**, in the rule table and in the shape of the finance tables (`test/finance.test.ts`) |
-| 17.7 | Read-only | QUESTION | "Do we need a login for anyone beyond the five roles — a manager, a technical reviewer, or a read-only viewer?" |
+| 17.7 | Read-only | QUESTION | "Do we need a login for anyone beyond the five roles — a manager, a technical reviewer, or a read-only viewer?" (Word question 39, “Do we need extra logins, like a manager, tax reviewer or view-only user?”) |
 | 17.8 | Role-based, with record-level restrictions where necessary | ALREADY BUILT | `can(actor, action, object)` **authorises the specific object**, not a type — `src/authz.ts`, `test/authz.test.ts` |
 
 ## 18 · Audit trail, security and data protection
@@ -665,7 +665,7 @@ migration 019, `test/configuration.test.ts` and the payload proof; the decisions
 | 29.3 | What information is mandatory before a claim moves to each stage? | ADOPTED WITH A RULE | **The procedure's gates** — and no required field forces a guess (N4). CRM 2 |
 | 29.4 | Who is responsible for each stage? | ADOPTED WITH A RULE | The procedure names the owner of each stage; CRM 2 records it and CRM 3 makes it the next action's owner. *Recorded by CRM 2 of 10: each stage's `owner` in `src/web/stages.ts` is the SOP's own "Owner:" line, tested against the procedure's file, and shown on the board and the claim page* |
 | 29.5 | Which documents are mandatory at each stage? | ADOPTED WITH A RULE | **The Stage 2 document upload list.** CRM 4 *Found not built by CRM 10 of 10; built and SWITCHED OFF by the CRM follow-on:* a need on the gate out of DATA_GATHERING — a received document of each type required, its conditions read from the claim's facts — shipped off, off exactly today's gate. Which documents are mandatory, and at which stage, is Lakhbir's: **"Which of the Stage 2 documents are mandatory, and at which stage?"** (Part R, E153) |
-| 29.6 | Email provider and calendar system | QUESTION | "Are the business mailboxes going on IONOS, where the mail already points, or on Microsoft 365, which the runbook assumes?" |
+| 29.6 | Email provider and calendar system | QUESTION | "Are the business mailboxes going on IONOS, where the mail already points, or on Microsoft 365, which the runbook assumes?" (Word question 4, “Should the business email inboxes be set up on IONOS or Microsoft 365?”) |
 | 29.7 | Accounting / invoicing platform | ADOPTED WITH A RULE | **An export seam; nothing waits on the choice** — 13.13. CRM 10 |
 | 29.8 | Will clients / accountants need portal access? | REJECTED | **For the accountant: no login, by decision.** For the client the answer is already yes and running — see 25.6 |
 | 29.9 | What data must be imported from existing spreadsheets or systems? | ADOPTED WITH A RULE | **There is no real client data anywhere, so the answer is nothing to import.** CRM 10 puts that to Lakhbir as a one-line confirmation |
@@ -1033,20 +1033,22 @@ CRM 3 builds "my tasks" on the landing page for every staff role and CRM 9 build
 
 # PART F — QUESTIONS THIS TABLE RAISED
 
+_Phase 146a, 22 September 2026: every question is asked and answered in the Word questions document (Caprebate_Questions.docx), which is the source of truth since 22 September 2026. Each title below is the one it was written under in the monday.com CAPREBATE QUESTIONS document, now background only; the Word number and title beside it are where the answer is. The CRM fold check (A2) accepts a title found in either, and checks that the Word number and title agree._
+
 | Title in CAPREBATE QUESTIONS | Under | Rows |
 |---|---|---|
-| **"Do we need a login for anyone beyond the five roles — a manager, a technical reviewer, or a read-only viewer?"** | Lakhbir | 8.20, 17.2, 17.5, 17.7 |
-| **"When is our fee earned — when the client accepts the report, when their accountant files the amended return, or when HMRC processes the relief?"** — added by CRM 2 of 10 | Lakhbir | 9.15, 9.16, E17 |
-| **"Which receipt strip should each new document type carry before anyone may upload one?"** — added by CRM 4 of 10 | The data protection officer | 11.2, 11.3, E34, E158 |
-| **"May company names stay on conveyancing uploads if we strip the individuals?"** — cited by Phase 129 | The data protection officer | E156 |
-| **"Is anything paid to the accountant?"** — added by CRM 5 of 10 | Lakhbir | 12.10, B4.7, E51 |
-| **"What must a referred client be told before we share their claim's progress with the firm that referred them?"** — added by CRM 5 of 10 | The data protection officer | B4.6, E53, E54 |
-| **"May the chartered tax adviser's own name be kept on the claim's sign-off record, or only their firm and credential?"** — added by CRM 6 of 10 | The data protection officer | B2.13, E66 |
-| **"How long does a client have to pay our invoice?"** — added by CRM 7 of 10 | Lakhbir | 13.6, E87 |
-| **"Do we need a compliance role separate from Admin?"** — added by CRM 8 of 10 | Lakhbir | B3.10, E94, E157 |
-| **"If money laundering supervision applies to us, what risk-rating scale do we use for a client, and which kinds of claimant must a check cover?"** — added by CRM 8 of 10, for the solicitor; *its title corrected here by CRM 10 of 10 (E141)* | Lakhbir | B3.1, E97 |
-| **"Is it right that there is no existing client data to import?"** — added by CRM 10 of 10 | Lakhbir | 29.9, E142 |
-| **"Which of the Stage 2 documents are mandatory, and at which stage?"** — added by the CRM follow-on | Lakhbir | 29.5, E153 |
+| **"Do we need a login for anyone beyond the five roles — a manager, a technical reviewer, or a read-only viewer?"** (Word question 39, “Do we need extra logins, like a manager, tax reviewer or view-only user?”) | Lakhbir | 8.20, 17.2, 17.5, 17.7 |
+| **"When is our fee earned — when the client accepts the report, when their accountant files the amended return, or when HMRC processes the relief?"** (Word question 41, “At what point has the client's fee been earned?”) — added by CRM 2 of 10 | Lakhbir | 9.15, 9.16, E17 |
+| **"Which receipt strip should each new document type carry before anyone may upload one?"** (Word question 167, “What should be removed from each of 14 new document types before upload?”) — added by CRM 4 of 10 | The data protection officer | 11.2, 11.3, E34, E158 |
+| **"May company names stay on conveyancing uploads if we strip the individuals?"** (Word question 160, “On property sale papers, may we keep company names but remove people's names?”) — cited by Phase 129 | The data protection officer | E156 |
+| **"Is anything paid to the accountant?"** (Word question 42, “Do we pay anything to an accountant who sends us a client?”) — added by CRM 5 of 10 | Lakhbir | 12.10, B4.7, E51 |
+| **"What must a referred client be told before we share their claim's progress with the firm that referred them?"** (Word question 168, “What must referred clients be told before we update the referring firm on their claim?”) — added by CRM 5 of 10 | The data protection officer | B4.6, E53, E54 |
+| **"May the chartered tax adviser's own name be kept on the claim's sign-off record, or only their firm and credential?"** (Word question 169, “May we keep the tax adviser's own name on a claim's sign-off record?”) — added by CRM 6 of 10 | The data protection officer | B2.13, E66 |
+| **"How long does a client have to pay our invoice?"** (Word question 43, “How many days does a client have to pay our invoice?”) — added by CRM 7 of 10 | Lakhbir | 13.6, E87 |
+| **"Do we need a compliance role separate from Admin?"** (Word question 44, “Do we need a separate login for data protection work?”) — added by CRM 8 of 10 | Lakhbir | B3.10, E94, E157 |
+| **"If money laundering supervision applies to us, what risk-rating scale do we use for a client, and which kinds of claimant must a check cover?"** (Word question 45, “If anti-money-laundering rules apply, how do we rate client risk?”) — added by CRM 8 of 10, for the solicitor; *its title corrected here by CRM 10 of 10 (E141)* | Lakhbir | B3.1, E97 |
+| **"Is it right that there is no existing client data to import?"** (Word question 46, “Is it true we have no existing client records to bring in?”) — added by CRM 10 of 10 | Lakhbir | 29.9, E142 |
+| **"Which of the Stage 2 documents are mandatory, and at which stage?"** (Word question 47, “Which client documents must arrive before a claim moves on?”) — added by the CRM follow-on | Lakhbir | 29.5, E153 |
 
 Every other QUESTION row cites a question that already exists under that title.
 

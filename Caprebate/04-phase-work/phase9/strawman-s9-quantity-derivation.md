@@ -602,7 +602,8 @@ following points — it does not attempt to push through them with an assumption
    ventilation/IPS, dental chair fixture-vs-chattel, radiation shielding). A resolved quantity for
    one of these rows is still only a **count of installations**; whether those installations sit in
    `MP` or `SR`, or are a fixture at all, is untouched by this model and stays exactly where the
-   source modules already put it — surveyor and CTA sign-off, never defaulted (Module 00 §5, the
+   source modules already put it — surveyor sign-off and the filing-position signer's under clause 1, never
+   defaulted _(Phase 146a, 22 Sep 2026: this said "surveyor and CTA sign-off")_ (Module 00 §5, the
    `APPORTION` note in `Build-Prep-05` §5 Stage 4b).
 5. **Any coefficient in §6 that has not yet been supplied.** Not a temporary default pending
    calibration — an absence, flagged, until someone with authority to set it (a chartered surveyor

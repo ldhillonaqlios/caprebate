@@ -9,8 +9,13 @@
  *   A  THE DISPOSITION TABLE (09-app/CAPREBATE-CRM-DISPOSITION.md)
  *      A1 every row carries exactly one mark;
  *      A2 every QUESTION row, every title in Part F, and every quoted title in
- *         Developer Spec §5.3 exists in CAPREBATE QUESTIONS under exactly that
- *         title - read from the register check's snapshot of the document;
+ *         Developer Spec §5.3 exists under exactly that title in the monday.com
+ *         CAPREBATE QUESTIONS document OR in the Word questions document
+ *         (Caprebate_Questions.docx, the source of truth since 22 Sep 2026) -
+ *         read from the snapshot: hub-questions.md and hub-questions-word.txt,
+ *         the Word document's Heading 2 texts. And every pointer written
+ *         (Word question N, "<title>") must name question N by its own title
+ *         (Phase 146a, 22 Sep 2026);
  *      A3 every ADOPTED row is named, by its exact id or an explicit range, in
  *         the Rows cell of an evidence part (G onwards) - no prefix, no "7.x";
  *      A4 every REJECTED row names the rule or the decision it breaks;
@@ -48,6 +53,7 @@ const P = {
   snapshotDir: path.join(ROOT, '03-app/signoff-snapshot'),
 };
 P.questions = path.join(P.snapshotDir, 'hub-questions.md');
+P.questionsWord = path.join(P.snapshotDir, 'hub-questions-word.txt');
 P.plan = path.join(P.snapshotDir, 'hub-action-plan.md');
 P.snapshotMeta = path.join(P.snapshotDir, 'snapshot.json');
 
@@ -80,7 +86,7 @@ function walk(dir) {
 }
 
 function loadInputs() {
-  const missing = Object.entries({ table: P.table, spec: P.spec, guide: P.guide, questions: P.questions, plan: P.plan, snapshotMeta: P.snapshotMeta })
+  const missing = Object.entries({ table: P.table, spec: P.spec, guide: P.guide, questions: P.questions, questionsWord: P.questionsWord, plan: P.plan, snapshotMeta: P.snapshotMeta })
     .filter(([, f]) => !fs.existsSync(f)).map(([k, f]) => `${k}: ${path.relative(ROOT, f)}`);
   if (missing.length) return { cannot: `missing: ${missing.join('; ')}` };
   let meta;
@@ -105,6 +111,7 @@ function loadInputs() {
     spec: fs.readFileSync(P.spec, 'utf8'),
     guide: fs.readFileSync(P.guide, 'utf8'),
     questions: fs.readFileSync(P.questions, 'utf8'),
+    questionsWord: fs.readFileSync(P.questionsWord, 'utf8'),
     plan: fs.readFileSync(P.plan, 'utf8'),
     codeText, testFiles,
   };
@@ -157,6 +164,14 @@ function expandIds(rowsCell, allIds) {
 function questionTitles(questions) {
   return new Set(questions.split('\n').filter((l) => /^#{2,3} /.test(l)).map((l) => norm(l.replace(/^#+ /, ''))));
 }
+// the Word questions document's Heading 2 texts, one per line, "N) <title>": number -> title
+function wordQuestions(text) {
+  const byNo = new Map();
+  for (const l of text.split('\n')) { const m = l.match(/^(\d+)\)\s*(.*\S)/); if (m) byNo.set(Number(m[1]), m[2]); }
+  return byNo;
+}
+// every "(Word question N, "<title>")" pointer in a cell
+const wordPointers = (s) => [...s.matchAll(/Word question (\d+), ["“]([^"”]+)["”]/g)].map((m) => ({ no: Number(m[1]), title: m[2] }));
 const quoted = (s) => [...s.matchAll(/["“]([^"”]{12,})["”]/g)].map((m) => m[1]);
 
 // every test() / it() / describe() title in the back end's test files, unescaped
@@ -181,7 +196,16 @@ function testHeadings(testText) {
 function checkA(inp) {
   const fails = [];
   const { rows, evidence, partF } = parseTable(inp.table);
-  const titles = questionTitles(inp.questions);
+  // a title is found if it is in EITHER document (Phase 146a): the monday.com one is background only
+  // since 22 Sep 2026 but the older citations were written against it; the Word one is the source
+  const word = wordQuestions(inp.questionsWord);
+  const titles = new Set([...questionTitles(inp.questions), ...[...word.values()].map(norm)]);
+  const pointerFails = (cell, where) => {
+    for (const p of wordPointers(cell)) {
+      if (!word.has(p.no)) fails.push(`A2 ${where} points at Word question ${p.no}, which the Word questions document does not have`);
+      else if (norm(word.get(p.no)) !== norm(p.title)) fails.push(`A2 ${where} points at Word question ${p.no} as "${p.title}", but question ${p.no} is "${word.get(p.no)}"`);
+    }
+  };
   const allIds = rows.map((r) => r.id);
   // A1
   for (const r of rows.filter((x) => x.part === 'A')) {
@@ -192,13 +216,18 @@ function checkA(inp) {
   for (const r of rows.filter((x) => x.mark === 'QUESTION')) {
     const q = quoted(r.last);
     if (!q.length) fails.push(`A2 row ${r.id} is a QUESTION and quotes no title`);
-    for (const t of q) if (!titles.has(norm(t))) fails.push(`A2 row ${r.id} cites a question not in CAPREBATE QUESTIONS under that title: "${t}"`);
+    for (const t of q) if (!titles.has(norm(t))) fails.push(`A2 row ${r.id} cites a question in neither questions document under that title: "${t}"`);
+    pointerFails(r.last, `row ${r.id}`);
   }
-  for (const f of partF) for (const t of quoted(f.cell)) if (!titles.has(norm(t))) fails.push(`A2 Part F (line ${f.line}) cites a question not in CAPREBATE QUESTIONS: "${t}"`);
+  for (const f of partF) {
+    for (const t of quoted(f.cell)) if (!titles.has(norm(t))) fails.push(`A2 Part F (line ${f.line}) cites a question in neither questions document: "${t}"`);
+    pointerFails(f.cell, `Part F (line ${f.line})`);
+  }
   const s53 = sliceSection(inp.spec, /^## 5\.3 /m, /^## 5\.4 /m);
   for (const line of s53.split('\n').filter((l) => l.startsWith('|'))) {
     const first = cellsOf(line)[0] || '';
-    for (const t of quoted(first)) if (!titles.has(norm(t))) fails.push(`A2 Developer Spec §5.3 cites a question not in CAPREBATE QUESTIONS: "${t}"`);
+    for (const t of quoted(first)) if (!titles.has(norm(t))) fails.push(`A2 Developer Spec §5.3 cites a question in neither questions document: "${t}"`);
+    pointerFails(first, 'Developer Spec §5.3');
   }
   // A3
   const covered = new Set();
@@ -465,11 +494,35 @@ function splitTitle(inp) {
   return `${a} … ${b}`;
 }
 
+// Phase 146a: a new Part F row quoting a title, planted under the table's header row, in memory only
+function plantPartF(table, title) {
+  return table.replace(/(^# PART F\b[\s\S]*?^\|\s*-[-|\s]*\|\s*$)/m, `$1\n| **"${title}"** — planted by the self-test | Lakhbir | 8.20 |`);
+}
+// a Word question's number and title, chosen from the snapshot so the control never goes stale:
+// one whose title nothing in the monday.com document carries (so only the Word snapshot can find it)
+function wordOnly(inp) {
+  const mon = questionTitles(inp.questions);
+  for (const l of inp.questionsWord.split('\n')) {
+    const m = l.match(/^(\d+)\)\s*(.*\S)/);
+    if (m && m[2].length >= 12 && !/["“”]/.test(m[2]) && !mon.has(norm(m[2]))) return { no: Number(m[1]), title: m[2], line: l };
+  }
+  return null;
+}
+
 function selfTest(inp) {
   const base = runAll(inp);
   const baseCount = (k) => base[k].fails.length;
   const controls = [
     ['A3 an evidence row removed', 'A', (x) => ({ ...x, table: x.table.replace(/^\| 1\.4, 1\.5, .*$/m, '') })],
+    // Phase 146a: the Word questions document is read, and a pointer's number must name its own title
+    ['A2 a Word-only title cited, then changed in the Word snapshot', 'A', (x) => {
+      const w = wordOnly(x); if (!w) return x;
+      return { ...x, table: plantPartF(x.table, w.title), questionsWord: x.questionsWord.replace(w.line, `${w.no}) ${w.title} CHANGED BY THE SELF-TEST`) };
+    }],
+    ['A2 a Word pointer whose number names another question', 'A', (x) => ({ ...x, table: x.table.replace(/Word question 39,/, 'Word question 40,') })],
+    ['A2 a Word pointer at a number the Word document does not have', 'A', (x) => ({ ...x, spec: x.spec.replace(/Word question 154,/, 'Word question 9999,') })],
+    // the monday.com control below is kept: the table's older citations are monday.com titles, and a
+    // title found in neither document must still go red
     ['A2 a question title changed in the snapshot', 'A', (x) => ({ ...x, questions: x.questions.replace(/^## Do we need a login for anyone beyond the five roles/m, '## Do we need a login for somebody') })],
     ['A4 a rejected row stripped of its rule', 'A', (x) => ({ ...x, table: x.table.replace(/(\| 25\.10 \|[^|]*\| REJECTED \|)[^\n]*/, '$1 because |') })],
     ['A5 an identifier in the evidence renamed', 'A', (x) => ({ ...x, table: x.table.replace('`nextClaimRef`', '`nextClaimRefX`') })],
@@ -508,15 +561,34 @@ function selfTest(inp) {
     }],
   ];
   let ok = true;
+  // Phase 146a: controls that must HOLD - a planted citation each source can find adds no failure.
+  // Without these, a check that failed every title would pass every control above.
+  const holds = [
+    ['A2 accepts a title found only in the Word questions document', 'A', (x) => { const w = wordOnly(x); return w ? { ...x, table: plantPartF(x.table, w.title) } : x; }],
+    ['A2 accepts a title found only in the monday.com document', 'A', (x) => {
+      const word = new Set([...wordQuestions(x.questionsWord).values()].map(norm));
+      const t = x.questions.split('\n').filter((l) => /^## /.test(l)).map((l) => l.replace(/^#+ /, '').trim())
+        .find((l) => l.length >= 12 && !/["“”]/.test(l) && !word.has(norm(l)));
+      return t ? { ...x, table: plantPartF(x.table, t) } : x;
+    }],
+    ['A2 accepts a correct Word pointer', 'A', (x) => { const w = wordOnly(x); return w ? { ...x, table: plantPartF(x.table, `${w.title}" (Word question ${w.no}, “${w.title}`) } : x; }],
+  ];
+  for (const [name, k, mutate] of holds) {
+    const m = mutate(inp);
+    const changed = m.table !== inp.table;
+    const held = changed && runAll(m)[k].fails.length === baseCount(k);
+    console.log(`${held ? 'HOLDS AS REQUIRED' : 'DID NOT HOLD     '}  ${name}${changed ? '' : '  (the plant matched nothing - the control itself is broken)'}`);
+    if (!held) ok = false;
+  }
   for (const [name, k, mutate] of controls) {
     const m = mutate(inp);
-    const changed = m.table !== inp.table || m.spec !== inp.spec || m.guide !== inp.guide || m.questions !== inp.questions || m.readText !== inp.readText;
+    const changed = m.table !== inp.table || m.spec !== inp.spec || m.guide !== inp.guide || m.questions !== inp.questions || m.questionsWord !== inp.questionsWord || m.readText !== inp.readText;
     const r = runAll(m)[k].fails.length;
     const held = changed && r > baseCount(k);
     console.log(`${held ? 'FAILS AS REQUIRED' : 'DID NOT FAIL     '}  ${name}${changed ? '' : '  (the mutation matched nothing - the control itself is broken)'}`);
     if (!held) ok = false;
   }
-  console.log(ok ? '\nSELF-TEST: every negative control failed as required.' : '\nSELF-TEST FAILED: a control did not go red.');
+  console.log(ok ? '\nSELF-TEST: every negative control failed as required, and every acceptance control held.' : '\nSELF-TEST FAILED: a control did not go red, or an acceptance control did not hold.');
   return ok ? 0 : 1;
 }
 

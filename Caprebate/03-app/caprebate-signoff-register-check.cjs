@@ -143,6 +143,20 @@ five files. Every one of them is a read; nothing here writes to the board.
      register-solicitor-dpo-developer.md
      hub-action-plan.md  hub-questions.md  hub-phase-history.md
 
+2A. THE WORD QUESTIONS DOCUMENT (Phase 146a, 22 Sep 2026). Since 22 Sep 2026
+   Caprebate_Questions.docx is the source of truth for questions and answers;
+   the monday.com CAPREBATE QUESTIONS document is background only. It is not on
+   Monday, so it is read from disk, not through the connector:
+     Mac   /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/
+           Caprebate_Questions.docx
+   Save its Heading 2 texts, one per line and exactly as written ("N) <title>"),
+   as   signoff-snapshot/hub-questions-word.txt   - with python-docx:
+     python3 -c "import docx,sys; d=docx.Document(sys.argv[1]); print('\\n'.join(
+       p.text.strip() for p in d.paragraphs if p.style.name=='Heading 2'))" \\
+       "<the path above>" > 03-app/signoff-snapshot/hub-questions-word.txt
+   The CRM fold check's A2 reads it, and refuses to run (exit 2) without it.
+   Count the lines against the Heading 2 count you expect.
+
 3. WRITE signoff-snapshot/snapshot.json:
      { "capturedAt": "<ISO 8601, UTC>", "capturedBy": "Phase NNN",
        "machine": "<this machine>", "how": "monday MCP" }
@@ -775,6 +789,10 @@ if (noEvidence.length) {
 const HUB_DOCS = [
   { file: "hub-action-plan.md", name: "CAPREBATE ACTION PLAN", policy: "live" },
   { file: "hub-questions.md", name: "CAPREBATE QUESTIONS", policy: "live" },
+  /* Phase 146a, 22 Sep 2026: the Word questions document's Heading 2 texts. This check never read
+     question TITLES - the CRM fold check's A2 does - so this only brings the live questions
+     document into the figure scan beside the monday.com one it replaced as the source of truth. */
+  { file: "hub-questions-word.txt", name: "THE WORD QUESTIONS DOCUMENT (its headings)", policy: "live" },
   { file: "hub-phase-history.md", name: "PHASE HISTORY", policy: "chronicle",
     why: "its own title says THIS IS AN ARCHIVE, NOT A RUNBOOK" },
   { file: "register-accountant.md", name: "FOR THE ACCOUNTANT", policy: "live" },

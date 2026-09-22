@@ -51,10 +51,11 @@ this document is a defect in this document, not a shortcut.**
 **Whose judgement is it.** The confidence grade table draws a hard line: grade `D` is chartered-
 surveyor sign-off, grade `E` is CTA (chartered tax adviser) sign-off. This is the *surveyor's* report,
 so `[SURVEYOR]` sections below are, with a few named exceptions, the `D`-grade fields. Where a field is
-genuinely `E`-grade — a CTA filing-position call, not a valuation call — that is stated explicitly and
+genuinely `E`-grade — a filing-position call for whoever signs the filing position under clause 1 of the engagement letter (the client's accountant or tax adviser, or the client if there is neither), not a valuation call — that is stated explicitly and
 the field is flagged for the accountant/CTA report (`Build-Prep-Report-Pack-and-Hand-off-Specification.md`
 §4.2) rather than smuggled into this document as if it were the surveyor's to decide. Blurring that line
 was never asked for and would not help either professional.
+_(Phase 146a, 22 Sep 2026: this said "a CTA filing-position call". Grade E goes to whoever signs the filing position under clause 1, not to a tax adviser Caprebate engages per case — the engine's routing since Phase 146. Words changed only; nothing removed.)_
 
 **Sector scope.** The consolidated schema runs one shared core (§1.A–§1.I) plus five sector
 extensions (§3.1–§3.5: Care Homes, Dental, Supported Living, GP/Primary Care, Private Hospitals). This
@@ -625,7 +626,7 @@ narrative framing shapes how every number above is read.
 
 **The s.203 notification position** (`Build-Prep-Report-Pack-and-Hand-off-Specification.md` §4.3) is a
 mandatory section in both the client report and the accountant/CTA report, triggered by an election
-found in diligence or a s.200(4) reduction in the chain. It is a CTA filing-position statement, not a
+found in diligence or a s.200(4) reduction in the chain. It is a filing-position statement for whoever signs the filing position under clause 1 _(Phase 146a, 22 Sep 2026: this said "a CTA filing-position statement")_, not a
 valuation matter, and is deliberately **not** reproduced as a section here — duplicating it in the
 surveyor's document would blur exactly the professional-boundary line this template is built to keep
 sharp. Cross-refer to it; do not answer it here.
