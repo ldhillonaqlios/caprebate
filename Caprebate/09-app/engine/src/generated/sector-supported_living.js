@@ -117,7 +117,7 @@ const Q = [
   onSet:(s,v)=>{ s.is_taxpayer=v; if(v==="unsure") pushFlag(s,"Confirm charitable / taxpayer status"); },
   gate:(s)=> s.is_taxpayer==="no" ? {type:"neg",code:"REASONED NEGATIVE · non-taxpayer",
      msg:"Because the claimant is a charity, CIC or other body that doesn\u2019t pay UK income or corporation tax, there\u2019s no tax for capital allowances to reduce \u2014 so a claim isn\u2019t available to it. This is common in supported housing, and it\u2019s the honest answer.",
-     pivot:"Two things still matter: the <strong>for-profit investor that owns the building</strong> may be the taxpayer in the chain (with a small, common-parts claim); and if a <strong>company</strong> converted a derelict or contaminated building, <strong>Land Remediation Relief</strong> may be worth more than allowances ever would."} : null },
+     pivot:"Two things still matter: the <strong>for-profit investor that owns the building</strong> may be the taxpayer in the chain (with a small, common-parts claim); and if a <strong>company</strong> bought land that was already contaminated, and didn\u2019t cause it, <strong>Land Remediation Relief</strong> may be worth checking \u2014 though it is a relief against a company\u2019s taxable profit, so it helps little where there is little profit."} : null },
 
  {id:"S3", group:"About the business", type:"single",
   ask:"Does the business use the cash basis, or normal (accruals) accounting?",
@@ -190,10 +190,10 @@ const Q = [
      self-contained homes stop too - the reading before the E-1/E-2 fix. */
   gate:(s)=> (CB_CTA.self_contained_flats_stop && s.dwelling_setting==="dh_multi_selfcontained") ? {type:"neg",code:"REASONED NEGATIVE \u00b7 the homes are dwellings",
      msg:"Because every home in this building is a self-contained dwelling, this assessment treats the building as dwellings throughout, and on that reading there\u2019s little or no capital allowances claim \u2014 we won\u2019t suggest otherwise. This is a switched position that stands only if a chartered tax adviser has answered it that way.",
-     pivot:"Worth knowing: for a <strong>company</strong> that converted a <strong>derelict or contaminated</strong> building, <strong>Land Remediation Relief</strong> (an additional 50% deduction on top of the normal deduction, 150% in all) often delivers far more than allowances would."}
+     pivot:"Worth knowing: for a <strong>company</strong> that bought land that was already <strong>contaminated</strong>, and didn\u2019t cause it, <strong>Land Remediation Relief</strong> (an additional 50% deduction on top of the normal deduction, 150% in all) may apply. It has strict tests of its own: grant-funded cost, a short lease, or contamination caused by the company or someone connected to it each rule it out."}
    : s.dwelling_setting==="single_dwelling" ? {type:"neg",code:"REASONED NEGATIVE \u00b7 the property is a dwelling",
      msg:"Because the whole property is residents\u2019 homes, the dwelling-house rules mean there\u2019s little or no capital allowances claim here \u2014 and we won\u2019t suggest otherwise.",
-     pivot:"Worth knowing: for a <strong>company</strong> that converted a <strong>derelict or contaminated</strong> building, <strong>Land Remediation Relief</strong> (an additional 50% deduction on top of the normal deduction, 150% in all) often delivers far more than allowances would; and items <strong>inside</strong> the homes may qualify for <strong>Replacement of Domestic Items Relief</strong>, a different route for your accountant."} : null },
+     pivot:"Worth knowing: for a <strong>company</strong> that bought land that was already <strong>contaminated</strong>, and didn\u2019t cause it, <strong>Land Remediation Relief</strong> (an additional 50% deduction on top of the normal deduction, 150% in all) may apply. It has strict tests of its own: grant-funded cost, a short lease, or contamination caused by the company or someone connected to it each rule it out; and items <strong>inside</strong> the homes may qualify for <strong>Replacement of Domestic Items Relief</strong>, a different route for your accountant."} : null },
 
  /* LG-1 (Phase 129, 12 Sep 2026) - CB_CTA.shared_lounge_claimable. INVISIBLE
     while the switch is off, so the flow is unchanged question for question.
@@ -272,7 +272,7 @@ const Q = [
 
  {id:"S10c", group:"What happened", type:"single",
   ask:"Did the project involve a derelict, contaminated or brownfield building \u2014 for example removing asbestos \u2014 that you acquired in that state?",
-  help:"This is often the most valuable relief in supported housing. A company can claim an additional 50% deduction on top of the normal deduction (150% in all) for cleaning up contamination or dereliction it didn\u2019t cause \u2014 a separate relief, not restricted by the dwelling-house rules, so it can be worth far more than the (small or nil) allowances claim.",
+  help:"A company can claim an additional 50% deduction on top of the normal deduction (150% in all) for cleaning up contamination that was already there when it bought the land, and that it didn\u2019t cause. It is a separate relief with strict tests of its own: grant-funded cost, a lease shorter than seven years, or contamination caused by the company or someone connected to it each rule it out. Asbestos counts only where it is causing harm, and land counts as derelict only if it has stood out of use for many years.",
   opts:[["yes","Yes"],["no","No"],["unsure","Not sure"]],
   showIf:(s)=> s.claimant_type==="company" && s.trigger.length>0,
   onSet:(s,v)=>{ if(v==="yes") s.lrr=true; } },

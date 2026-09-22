@@ -15,7 +15,9 @@
  *         the Rows cell of an evidence part (G onwards) - no prefix, no "7.x";
  *      A4 every REJECTED row names the rule or the decision it breaks;
  *      A5 every file and every identifier an evidence part names exists, and
- *         every italic test title in the closing part is a real test's title.
+ *         every italic test title in EVERY evidence part (G onwards) is in a real
+ *         test's title - a title written with "…" as fragments, all in one title
+ *         (every part since Phase 146, 22 Sep 2026; the closing part alone before).
  *   B  THE ROUTES - every route the back end registers appears in the
  *      Developer Spec (§2 or §3.1), read out of the source, not a list.
  *   C  §4's LINE REFERENCES - every `file:NN` in section 4 lands on a line that
@@ -157,6 +159,25 @@ function questionTitles(questions) {
 }
 const quoted = (s) => [...s.matchAll(/["“]([^"”]{12,})["”]/g)].map((m) => m[1]);
 
+// every test() / it() / describe() title in the back end's test files, unescaped
+function testTitles(testText) {
+  const out = [];
+  for (const m of testText.matchAll(/\b(?:test|it|describe)\(\s*(['"`])((?:\\.|(?!\1)[^\\])*)\1/g)) {
+    out.push(m[2].replace(/\\(.)/g, '$1'));
+  }
+  return out;
+}
+// the capitalised section headings a test file's comments name (" * STAFF TASKS", " * SURVEYOR REACH —
+// BY THE JOB'S CLAIM ..."): the evidence cites a section by its heading, and a heading counts only
+// when the cited text is the start of a comment line written in capitals, not anywhere in a body
+function testHeadings(testText) {
+  const out = [];
+  for (const m of testText.matchAll(/^[ \t]*\*[ \t]+([A-Z0-9][A-Z0-9 '’,:()—–&/.-]{3,}.*)$/gm)) {
+    if (/^[A-Z0-9 '’,:()—–&/.-]{4,}/.test(m[1]) && m[1].slice(0, 4) === m[1].slice(0, 4).toUpperCase()) out.push(m[1].trim());
+  }
+  return out;
+}
+
 function checkA(inp) {
   const fails = [];
   const { rows, evidence, partF } = parseTable(inp.table);
@@ -203,9 +224,10 @@ function checkA(inp) {
   // A4
   for (const r of rows.filter((x) => x.mark === 'REJECTED')) if (!RULE.test(r.last)) fails.push(`A4 row ${r.id} is REJECTED and names no rule or decision`);
   // A5
-  const closing = evidence.length ? evidence[evidence.length - 1].part : '';
   const allCode = [...inp.codeText.values()].join('\n');
-  const testText = inp.testFiles.map((f) => inp.codeText.get(f)).join('\n');
+  const allTests = inp.testFiles.map((f) => inp.codeText.get(f)).join('\n');
+  const testTitleList = testTitles(allTests);
+  const headingList = testHeadings(allTests);
   for (const e of evidence) {
     const toks = [...(e.built + ' ' + e.proved).matchAll(/`([^`]+)`/g)].map((m) => m[1].trim());
     for (const t of toks) {
@@ -226,10 +248,19 @@ function checkA(inp) {
         if (!found) fails.push(`A5 Part ${e.part} line ${e.line}: \`${id}\` is in no source, migration, test or tool file`);
       }
     }
-    if (e.part === closing) {
-      for (const m of e.proved.matchAll(/(?<![*\w])\*([^*]{6,}?)\*(?![*\w])/g)) {
-        const title = m[1].trim();
-        if (!testText.includes(title)) fails.push(`A5 Part ${e.part} line ${e.line}: no test is titled *${title}*`);
+    // Every evidence part, not only the closing one (Phase 146, 22 Sep 2026: until then the titles
+    // in Parts G to P were never read, and eleven of them named no test while the check was green).
+    // A title is matched against the TITLES of the tests, not the whole test text, so a phrase that
+    // happens to sit in a test's body no longer passes. A title written with "…" is a set of
+    // fragments, and every fragment must be in ONE test title. A title written wholly in capitals may
+    // instead name a section heading of a test file, matched from the start of the heading line.
+    for (const m of e.proved.matchAll(/(?<![*\w])\*([^*]{6,}?)\*(?![*\w])/g)) {
+      const title = m[1].trim();
+      const frags = title.split(/…|\.\.\./).map((f) => f.trim()).filter((f) => f.length);
+      if (!frags.length) continue;
+      const isHeading = frags.length === 1 && title === title.toUpperCase() && headingList.some((h) => h === title || h.startsWith(title + ' ') || h.startsWith(title + ','));
+      if (!isHeading && !testTitleList.some((t) => frags.every((f) => t.includes(f)))) {
+        fails.push(`A5 Part ${e.part} line ${e.line}: no test is titled *${title}*${frags.length > 1 ? ` (${frags.length} fragments, not all in one title)` : ''}`);
       }
     }
   }
@@ -413,6 +444,27 @@ function replaceAtRef(spec, r, from, to) {
   return i < 0 ? spec : spec.slice(0, i) + to + spec.slice(i + from.length);
 }
 
+// append a planted cell to the Proved-by column of the first evidence row in the named part
+function plantInPart(table, part, cell) {
+  const lines = table.split('\n');
+  let cur = '';
+  for (let i = 0; i < lines.length; i++) {
+    const pm = lines[i].match(/^# PART ([A-Z])\b/); if (pm) cur = pm[1];
+    if (cur === part && /^\|/.test(lines[i]) && cellsOf(lines[i]).length === 3 && !/^\|\s*(Rows|What)\b|^\|\s*-/.test(lines[i])) {
+      lines[i] = lines[i].replace(/\|\s*$/, ' ' + cell.replace(/^\|\s*/, '').replace(/\s*\|$/, '') + ' |');
+      return lines.join('\n');
+    }
+  }
+  return table;
+}
+// two fragments, each the start of a DIFFERENT real test title, joined with "…"
+function splitTitle(inp) {
+  const t = testTitles(inp.testFiles.map((f) => inp.codeText.get(f)).join('\n')).filter((x) => x.length > 30 && !/\*/.test(x));
+  const a = t[0].slice(0, 20).trim();
+  const b = t.find((x) => !x.includes(a)).slice(0, 20).trim();
+  return `${a} … ${b}`;
+}
+
 function selfTest(inp) {
   const base = runAll(inp);
   const baseCount = (k) => base[k].fails.length;
@@ -421,6 +473,10 @@ function selfTest(inp) {
     ['A2 a question title changed in the snapshot', 'A', (x) => ({ ...x, questions: x.questions.replace(/^## Do we need a login for anyone beyond the five roles/m, '## Do we need a login for somebody') })],
     ['A4 a rejected row stripped of its rule', 'A', (x) => ({ ...x, table: x.table.replace(/(\| 25\.10 \|[^|]*\| REJECTED \|)[^\n]*/, '$1 because |') })],
     ['A5 an identifier in the evidence renamed', 'A', (x) => ({ ...x, table: x.table.replace('`nextClaimRef`', '`nextClaimRefX`') })],
+    // Phase 146: a stale test title in an EARLY evidence part (Part G), and a fragment title whose
+    // fragments are each in some test but not all in one - both must go red.
+    ['A5 a stale test title in an early part (G)', 'A', (x) => ({ ...x, table: plantInPart(x.table, 'G', '| *a test title that no test carries, planted by the self-test* |') })],
+    ['A5 a fragment title split across two tests', 'A', (x) => ({ ...x, table: plantInPart(x.table, 'H', '| *' + splitTitle(x) + '* |') })],
     ['A1 a mark removed', 'A', (x) => ({ ...x, table: x.table.replace(/(\| 1\.2 \|[^|]*\|) ADOPTED \|/, '$1 built |') })],
     // every mention renamed, not one line dropped: the same route is described in §2 and in §3.1,
     // and a control that removed only one of them stayed green (found by this self-test, 12 Sep 2026)

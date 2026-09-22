@@ -28,6 +28,14 @@
    120 jobs a year is shown because it is the volume Lakhbir gave for the
    engagement gate; 25 and 100 are kept because the papers use them.
 
+   PHASE 146 (22 September 2026) - TWO FEE-DEPENDENT FIGURES THE 3% RE-RUN
+   DID NOT PRODUCE. Phase 132e re-ran the worked example at 3% and found that
+   job loses money, so the 5% "one nil abort wipes out N jobs" figure had no 3%
+   counterpart for any job. The section at the end prints it for the dental
+   jobs that DO pay their way at the engine's rate, and the allowances below
+   which the break fee is larger than the whole fee the client would have paid.
+   Both read FEE_RATE from the engine; the 5% column is the record only.
+
    WHAT THE MODEL DOES NOT HOLD, AND THIS FILE DOES NOT INVENT
      - How the internal hours split across the pipeline. The model carries one
        figure per job. So the "research run, surveyor not instructed" stage is
@@ -155,5 +163,37 @@ console.log("  Surveyor instructed, we are liable for the survey: " + gbp(dst.su
   " / " + gbp(995) + " / " + gbp(995 + dst.lines.surveyor));
 console.log("  Survey delivered, tax adviser not yet: " + gbp(dst.survey_delivered_tax_adviser_not_yet) +
   " / " + gbp(995) + " / " + gbp(995 + dst.lines.surveyor));
+
+console.log("");
+console.log("=== PHASE 146 — WHERE A DENTAL JOB DOES PAY ITS WAY AT THE ENGINE RATE (surveyor visit) ===");
+const abortAfterSurvey = dst.survey_delivered_tax_adviser_not_yet;
+for (const jobs of [120, 100, 25]) {
+  const c = M.loadedCost("dental", "SURVEYOR_VISIT", jobs, {});
+  const beAllow = c.loaded / FEE_RATE;
+  const bePrice = beAllow / DENTAL_YIELD_MIDPOINT;
+  console.log("  at " + jobs + " jobs/yr: a completed job breaks even at " + gbp(beAllow) + " of allowances (about " +
+    gbp(bePrice) + " purchase price at the 22.5% dental midpoint)");
+}
+for (const price of [750000, 1000000, 1500000]) {
+  const al = M.allowancesFromPurchasePrice(price, DENTAL_YIELD_MIDPOINT);
+  const f = M.feeOnAllowances(al, FEE_RATE);
+  const parts = [120, 100, 25].map(function (jobs) {
+    const m = f - M.loadedCost("dental", "SURVEYOR_VISIT", jobs, {}).loaded;
+    return jobs + " jobs/yr margin " + gbp(m) + (m > 0 ? ", one nil abort = " + (abortAfterSurvey / m).toFixed(1) + " jobs" : ", no margin");
+  });
+  console.log("  " + gbp(price) + " purchase, allowances " + gbp(al) + ", fee " + gbp(f) + ": " + parts.join("; "));
+}
+console.log("");
+console.log("=== PHASE 146 — BELOW WHAT ALLOWANCES IS THE BREAK FEE LARGER THAN THE WHOLE FEE? (engine rate; 5% record) ===");
+for (const sec of M.SECTORS) {
+  const st = stages(sec, "SURVEYOR_VISIT");
+  const after = PROPOSED_BREAK_FEE + st.lines.surveyor;
+  console.log("  " + LABEL[sec] + ": £995 alone exceeds the fee below " + gbp(PROPOSED_BREAK_FEE / FEE_RATE) +
+    " (5%: " + gbp(PROPOSED_BREAK_FEE / 0.05) + "); £995 plus the surveyor at cost (" + gbp(after) + ") exceeds it below " +
+    gbp(after / FEE_RATE) + " (5%: " + gbp(after / 0.05) + ")");
+}
+console.log("  Worked example: after survey the break fee of " + gbp(PROPOSED_BREAK_FEE + dst.lines.surveyor) + " is " +
+  Math.round(100 * (PROPOSED_BREAK_FEE + dst.lines.surveyor) / fee) + "% of the " + gbp(fee) + " fee (at 5% it was " +
+  Math.round(100 * (PROPOSED_BREAK_FEE + dst.lines.surveyor) / M.feeOnAllowances(allowances, 0.05)) + "% of " + gbp(M.feeOnAllowances(allowances, 0.05)) + ")");
 
 module.exports = { stages, FEE_RATE, PROPOSED_BREAK_FEE };

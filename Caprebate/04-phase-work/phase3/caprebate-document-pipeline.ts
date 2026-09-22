@@ -283,7 +283,9 @@ export const DOC_SPECS: readonly DocSpec[] = [
     // s.532 removes base before anything else is calculated (item 12902240772
     // §4). This spec emits NO derived deduction figure: whether the funding
     // was payable for specific items is Rulebook F's tracing judgement, and
-    // it goes to a CTA review task, not to a computed value here.
+    // it is made under that rulebook, not computed here. (Until 22 Sep 2026 this
+    // said it went to a CTA review task; Caprebate has no per-case tax adviser
+    // under clause 1 of the engagement letter — see REVIEWER below.)
     permitted_segments: ['FUNDING_TERMS', 'FUNDING_SCHEDULE'],
     fields: [
       f('grant_funder_name', 'NARRATIVE', ['FUNDING_TERMS'], 'the funding body, not an individual'),
@@ -296,7 +298,8 @@ export const DOC_SPECS: readonly DocSpec[] = [
     ],
     why: 's.532 removes base before anything else is calculated, and the error direction here is over-claim. The ' +
       'facts of the funding are extractable; whether the money is traceable to particular expenditure is not, and ' +
-      'is routed to the tax adviser. The model returns the amount and the words; a CTA review task returns the deduction.',
+      'is Rulebook F\'s tracing judgement. The model returns the amount and the words; the deduction is decided under Rulebook F, ' +
+      'and the filing position is signed by whoever clause 1 of the engagement letter names.',
   },
 ];
 
@@ -583,9 +586,20 @@ export type ExtractionResult = {
   not_found: string[];
 };
 
+/* WHO A REVIEW TASK GOES TO (Phase 146, 22 Sep 2026). A GATE field went to 'CTA'
+   until then. Caprebate has no tax adviser who could take it: under clause 1 of the
+   engagement letter the filing position is signed by the client's own accountant or
+   tax adviser, or by the client; the route through a chartered tax adviser of ours
+   is bracketed and not available, because none is appointed. The one tax adviser
+   the business plans to engage is a one-off, fixed-fee review of the rulebooks — not
+   per client, and given no client data (the one-off engagement process, section 3,
+   step 5). So a per-document review task has nobody to reach there. Confirming what a
+   lease or contract says, against its locator, is reading a document: it is ours,
+   done by an analyst, and the rulebooks then apply the law to what was confirmed.
+   Test P16b fails on the old routing. */
 const REVIEWER: Record<FieldSpec['consequence'], ReviewTask['asked_of']> = {
   APPORTIONMENT: 'SURVEYOR',
-  GATE: 'CTA',
+  GATE: 'ANALYST',
   TAXONOMY: 'ANALYST',
   NARRATIVE: 'ANALYST',
 };

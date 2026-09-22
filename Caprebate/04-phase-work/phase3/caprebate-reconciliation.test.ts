@@ -222,15 +222,17 @@ test('R13 a D-grade surveyor field asks for confirmation and blocks until it com
   assert.match(res.captures[0].question, /may draft and may never finalise/);
 });
 
-test('R14 an E-grade CTA field routes to the CTA, not the surveyor', () => {
+test('R14 an E-grade field routes to whoever signs the filing position, not the surveyor and not a tax adviser we do not have (Phase 146)', () => {
   __resetIds();
   const r = reg();
   const cta = record<string>(r, { entity_id: 'J1', field_id: 'ch_sba_s270cf_personal_care_tested', source_id: 'CTA', retrieval: ret({ method: 'MANUAL', locator: 'CTA note 2026-08-21' }), value: 'TESTED_AVAILABLE' }) as AnyCell;
   const spec: FieldSpec = { ...GRANT, field_id: 'ch_sba_s270cf_personal_care_tested', kind: 'enum', tolerance: {}, question: 'Has s.270CF been tested?' };
   const res = reconcileField(spec, 'J1', [cta], { clock });
   assert.equal(res.confidence.grade, 'E');
-  assert.equal(res.captures[0].asked_of, 'CTA');
-  assert.match(res.captures[0].question, /CTA filing-position judgement/);
+  assert.equal(res.captures[0].asked_of, 'FILING_SIGNER');
+  assert.match(res.captures[0].question, /filing-position judgement for whoever signs the filing position/);
+  assert.match(res.captures[0].question, /or the client if there is neither/);
+  assert.doesNotMatch(res.captures[0].question, /\bCTA\b/);
 });
 
 test('R15 the engine never settles a conflict itself; settling requires a human and a note', () => {

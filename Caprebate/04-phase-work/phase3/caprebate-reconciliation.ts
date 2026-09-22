@@ -26,7 +26,12 @@ import {
 
 export type FieldKind = 'numeric' | 'currency' | 'enum' | 'bool' | 'date' | 'text' | 'ref';
 
-export type Audience = 'CLIENT' | 'SURVEYOR' | 'CTA' | 'SYSTEM';
+// FILING_SIGNER (Phase 146, 22 Sep 2026): whoever signs the filing position under clause 1 of the
+// engagement letter - the client's accountant or tax adviser, or the client where there is neither.
+// An E-grade field is a filing-position judgement and goes there; until Phase 146 it went to 'CTA',
+// a per-case tax adviser Caprebate does not have. 'CTA' stays a member because a tax adviser's note
+// is still a SOURCE (source_id 'CTA') and a settled_by on records written before the change.
+export type Audience = 'CLIENT' | 'SURVEYOR' | 'CTA' | 'FILING_SIGNER' | 'SYSTEM';
 
 export type Tolerance = {
   /** Fractional, e.g. 0.02 = 2%. Applied to the smaller of the pair. */
@@ -516,9 +521,9 @@ export function reconcileField(
   if (grade === 'D' || grade === 'E') {
     captures.push(
       mkCapture(
-        'JUDGEMENT_REQUIRED', grade === 'E' ? 'CTA' : 'SURVEYOR', 1, [asOption(chosen)], null,
+        'JUDGEMENT_REQUIRED', grade === 'E' ? 'FILING_SIGNER' : 'SURVEYOR', 1, [asOption(chosen)], null,
         `${spec.question} Drafted at ${String(chosen.value)}${spec.unit ? ' ' + spec.unit : ''}. ` +
-          `Confirm or amend — ${grade === 'E' ? 'a CTA filing-position judgement' : 'a chartered-surveyor judgement'}, ` +
+          `Confirm or amend — ${grade === 'E' ? 'a filing-position judgement for whoever signs the filing position (the client\'s accountant or tax adviser, or the client if there is neither)' : 'a chartered-surveyor judgement'}, ` +
           'which AI may draft and may never finalise.',
       ),
     );
@@ -585,7 +590,7 @@ export function reconcile(
         r.confidence.basis === 'ABSENT' ? 'not captured'
           : r.confidence.basis === 'UNKNOWN' ? 'client does not know; not yet established'
             : r.confidence.basis === 'CONTESTED' ? 'sources disagree; unresolved'
-              : r.confidence.grade === 'E' ? 'CTA sign-off outstanding'
+              : r.confidence.grade === 'E' ? 'filing-position sign-off outstanding'
                 : r.confidence.grade === 'D' ? 'surveyor sign-off outstanding'
                   : 'gate held on an uncorroborated C-grade source (I-17)',
     }));

@@ -69,7 +69,7 @@ test('T1 an FRA for a different property in the group → MISMATCH, no claims, a
   assert.equal(gated.extraction, null);
   assert.deepEqual(gated.claims, [], 'a mismatched document contributes no claims');
   assert.equal(gated.review.length, 1, 'the mismatch routes to review — it is a human call, not a discard');
-  assert.equal(gated.review[0].asked_of, 'CTA');
+  assert.equal(gated.review[0].asked_of, 'ANALYST');
   assert.ok(gated.review[0].question.includes('Oakwood'), 'the review names the property actually found');
 });
 
@@ -211,7 +211,7 @@ test('T5 the property gate applies to a Phase 14 document type exactly as it doe
   assert.equal(m.calls(), 0, 'a building regs certificate for another property is never sent to the model either');
   assert.deepEqual(gated.claims, [], 'and it contributes no claims, same as any other mismatched type');
   assert.equal(gated.review.length, 1);
-  assert.equal(gated.review[0].asked_of, 'CTA');
+  assert.equal(gated.review[0].asked_of, 'ANALYST');
 });
 
 /* ------------------------------------------------------------------ *
@@ -246,7 +246,7 @@ test('a MATCH below the GATE threshold (0.95) raises its own review task, unlike
   assert.equal(pm.best_confidence, 0.6);
   const review = propertyReviewTask(pm, 'FIRE_RISK_ASSESSMENT');
   assert.ok(review);
-  assert.equal(review!.asked_of, 'CTA');
+  assert.equal(review!.asked_of, 'ANALYST');
   assert.ok(review!.question.includes(String(GATE_THRESHOLD * 100).slice(0, 2)));
 });
 

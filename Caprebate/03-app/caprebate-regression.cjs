@@ -2267,7 +2267,7 @@ if (startSuite("J", "Phase 13 — document_property_match")) {
     check("J1 — an FRA for a different property in the group is MISMATCH", gatedMismatch.property_match.outcome, "MISMATCH");
     check("J1 — no claims are written", gatedMismatch.claims, []);
     check("J1 — the model is never called on a mismatched document", modelCalls, 0);
-    check("J1 — a review task is raised, asked of the CTA", gatedMismatch.review.length > 0 && gatedMismatch.review[0].asked_of, "CTA");
+    check("J1 — a review task is raised, asked of our analyst, not a tax adviser we do not have (Phase 146)", gatedMismatch.review.length > 0 && gatedMismatch.review[0].asked_of, "ANALYST");
 
     /* J2 — an O&M schedule with no address */
     const gatedNotStated = DPM.extractWithPropertyGate(
@@ -4562,6 +4562,21 @@ if (startSuite("R", "Phase 77 — realised benefit vs the fee")) {
     check("R12 — an unincorporated additional-rate client on main-pool plant does not",
       CB_BENEFIT.compare(200000 * CB_FEE.RATE, uninc).fee_exceeds_year_one_benefit,
       false);
+
+    /* Phase 146, 22 Sep 2026. "A company on main-pool plant clears the fee" is
+       true at 25% and 26.5%, NOT at the small profits rate. From April 2026 the
+       main pool writes down at 14%, and 14% x 19% = 2.66%, below a 3% fee - so
+       a small company on pure main-pool plant is behind in year one. Pinned so
+       nobody restates the narrower finding as true of every company. */
+    const smallCompany = CB_BENEFIT.assess({
+      main: 200000, special: 0, tax_rate: CB_RATES.rangeFor("company")[0],
+      period_start: "2026-04-01", is_company: true, years: 5
+    });
+    const csm = CB_BENEFIT.compare(200000 * CB_FEE.RATE, smallCompany);
+    check("R12 — but a 19% company on main-pool plant from April 2026 does not: 2.66%, below 3% (Phase 146)",
+      [csm.fee_exceeds_year_one_benefit,
+       Math.round(csm.breakeven_fee_rate_year_one * 10000) / 10000],
+      [true, Math.round(CB_RATES.WDA.main_from_2026 * CB_RATES.rangeFor("company")[0] * 10000) / 10000]);
   })();
 }
 

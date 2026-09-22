@@ -243,14 +243,45 @@ test('P15 a below-threshold field raises a review task naming the page and the q
   assert.match(t.question, /p12 cl\.4\.3/);
 });
 
-test('P16 review routing follows consequence: GATE to the CTA, TAXONOMY to an analyst', () => {
+test('P16 review routing follows consequence: GATE to an analyst, TAXONOMY to an analyst', () => {
   const gate: RawExtraction = [{ field_id: 'lease_repairing_basis', value: 'FRI', confidence: 0.5, page: 2, quote_ref: 'p2' }];
   const rg = extract('d', 'LEASE', [{ kind: 'COVENANTS', heading: 'COVENANTS', text: 'x', page: 2 }], spyModel(gate).fn, { at: AT, egress: [] });
-  assert.equal(rg.review[0].asked_of, 'CTA');
+  assert.equal(rg.review[0].asked_of, 'ANALYST');
 
   const tax: RawExtraction = [{ field_id: 'fra_alarm_system_category', value: 'L1', confidence: 0.5, page: 4, quote_ref: 'p4' }];
   const rt = extract('d', 'FIRE_RISK_ASSESSMENT', [{ kind: 'FINDINGS', heading: 'FINDINGS', text: 'x', page: 4 }], spyModel(tax).fn, { at: AT, egress: [] });
   assert.equal(rt.review[0].asked_of, 'ANALYST');
+});
+
+/* Phase 146, 22 Sep 2026. Caprebate has no tax adviser who could take a per-document
+   review task: under clause 1 of the engagement letter the filing position is signed by
+   the client's own accountant or adviser, or the client, and our own chartered tax
+   adviser route is bracketed and unavailable; the one tax adviser we plan to engage is a
+   one-off rules review that is given no client data. Until this date every GATE field
+   was routed to 'CTA'. This test fails on that routing: run against the .bak-phase146
+   copy of the pipeline it goes red on the first GATE field it reaches. */
+test('P16b no review task raised from a client document is asked of a tax adviser — every GATE field, both routes', () => {
+  let gateFields = 0;
+  for (const spec of DOC_SPECS) {
+    for (const fs of spec.fields.filter((x) => x.consequence === 'GATE')) {
+      gateFields++;
+      const segs: Segment[] = [{ kind: fs.from[0]!, heading: fs.from[0]!, text: 'x', page: 3 }];
+      // Below threshold: the low-confidence route.
+      const low = extract('d', spec.doc_type, segs,
+        spyModel([{ field_id: fs.field_id, value: 'v', confidence: 0.5, page: 3, quote_ref: 'p3' }]).fn,
+        { at: AT, egress: [] }, { [spec.doc_type]: false });
+      assert.equal(low.review.length, 1, `${spec.doc_type}.${fs.field_id} below threshold raises one task`);
+      assert.notEqual(low.review[0]!.asked_of, 'CTA', `${spec.doc_type}.${fs.field_id}: no per-case tax adviser exists under clause 1`);
+      assert.equal(low.review[0]!.asked_of, 'ANALYST', `${spec.doc_type}.${fs.field_id}: confirming what the document says is ours`);
+      // At or above threshold, with person review on for the type: the person-review route.
+      const high = extract('d', spec.doc_type, segs,
+        spyModel([{ field_id: fs.field_id, value: 'v', confidence: 0.99, page: 3, quote_ref: 'p3' }]).fn,
+        { at: AT, egress: [] }, { [spec.doc_type]: true });
+      assert.equal(high.review.length, 1, `${spec.doc_type}.${fs.field_id} under person review raises one task`);
+      assert.equal(high.review[0]!.asked_of, 'ANALYST', `${spec.doc_type}.${fs.field_id}: person review goes to an analyst`);
+    }
+  }
+  assert.ok(gateFields > 0, 'the specs carry GATE fields, so this test is not vacuous');
 });
 
 test('P17 a field the model did not find is NOT_FOUND, never guessed', () => {

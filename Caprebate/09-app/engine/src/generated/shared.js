@@ -1894,13 +1894,13 @@ var CB_ELECTION = (function(){
 
     if(s && s.return_in_time === true && !reduced)
       return { required:false, position:"return_being_amended",
-               statement:"The affected return is still open and is being amended, so the correction is made through the amendment rather than by a s.203 notice. Confirm with the accountant that no earlier closed period is affected." };
+               statement:"The affected return is still open and is being amended, so the correction is made through the amendment rather than by a s.203 notice. Confirm with whoever signs the filing position \u2014 the client\u2019s accountant or tax adviser, or the client if there is neither \u2014 that no earlier closed period is affected." };
 
     return { required:null, position:"notification_may_be_required",
              trigger: reduced ? "a later election in the chain has reduced an earlier one under s.200(4)"
                               : "an election has been identified that fixes the qualifying expenditure on the fixtures",
              statement:"A return already filed may have become incorrect as a result. s.203 requires notice to HMRC within three months of becoming aware, and awareness runs from the date this report is issued. The notification is made by the client — through their accountant or tax adviser where one is engaged; otherwise the client is responsible for making it. Penalties for failure arise under TMA 1970 s.98.",
-             action:"Confirm with the accountant which filed periods are affected, and diary the three months from the issue date of the report." };
+             action:"Confirm with whoever signs the filing position \u2014 the client\u2019s accountant or tax adviser, or the client if there is neither \u2014 which filed periods are affected, and diary the three months from the issue date of the report." };
   }
 
   /* Apply the assessment to the qualifying-expenditure range. */

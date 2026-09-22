@@ -72,7 +72,7 @@ const Q = [
   onSet:(s,v)=>{ s.dwelling_setting = (v==="tenants")? "single_dwelling" : v; s.living=v;
      if(v==="self_contained") s.assumptions.push("self-contained extra-care/sheltered flats \u2014 dwelling-houses (CA11520), common-parts/care-staff areas only, and additionally barred from SBA on the residual structure by CA92800 (E-13)"); },
   gate:(s)=> s.living==="tenants" ? {type:"neg",code:"RE-ROUTE → SUPPORTED LIVING",
-     msg:"From your answer this looks like supported living rather than a registered care home. The treatment is different \u2014 often there\u2019s little or no plant-and-machinery claim, because the homes are dwellings let to tenants. The honest answer here is frequently \u2018no\u2019. The exception worth checking: if you\u2019re a company that converted a derelict or contaminated building, Land Remediation Relief may be worth more than allowances.",
+     msg:"From your answer this looks like supported living rather than a registered care home. The treatment is different \u2014 often there\u2019s little or no plant-and-machinery claim, because the homes are dwellings let to tenants. The honest answer here is frequently \u2018no\u2019. One thing worth checking: if you\u2019re a company that bought land that was already contaminated, and you didn\u2019t cause it, Land Remediation Relief may apply. It is a separate relief with strict tests of its own.",
      pivot:"We\u2019d switch you to the supported-living assessment to give you a straight answer."} : null },
 
  {id:"Q1", group:"About the business", type:"single",

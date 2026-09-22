@@ -237,6 +237,10 @@ export function matchProperty(
  * 4. Review — MISMATCH is a human call, never a silent discard
  * ------------------------------------------------------------------ */
 
+// Asked of ANALYST, not CTA (Phase 146, 22 Sep 2026). Whether a document is about this job's property
+// is a fact our own analyst checks, and under clause 1 of the engagement letter Caprebate has no
+// per-case tax adviser to ask: the one-off rules review sees no client data. A tax adviser was
+// named here until Phase 146, the same defect Phase 146 fixed in the document pipeline's GATE routing.
 export function propertyReviewTask(m: PropertyMatchResult, doc_type: DocType): ReviewTask | null {
   if (m.outcome === 'MISMATCH') {
     const first = m.other_properties[0];
@@ -248,7 +252,7 @@ export function propertyReviewTask(m: PropertyMatchResult, doc_type: DocType): R
       threshold: GATE_THRESHOLD,
       page: first ? first.page : 0,
       quote_ref: first ? first.quote_ref : '(no locator)',
-      asked_of: 'CTA',
+      asked_of: 'ANALYST',
       question:
         `This ${doc_type} (document ${m.doc_id}) identifies ${m.other_properties.length === 1 ? 'a property' : 'properties'} ` +
         `— ${m.other_properties.map((p) => p.raw_text).join('; ')} — that does not match this job's subject property. ` +
@@ -266,7 +270,7 @@ export function propertyReviewTask(m: PropertyMatchResult, doc_type: DocType): R
       threshold: GATE_THRESHOLD,
       page: best ? best.page : 0,
       quote_ref: best ? best.quote_ref : '(no locator)',
-      asked_of: 'CTA',
+      asked_of: 'ANALYST',
       question:
         `This ${doc_type} (document ${m.doc_id}) was read as matching the subject property at only ` +
         `${Math.round((m.best_confidence ?? 0) * 100)}% confidence, below the ${Math.round(GATE_THRESHOLD * 100)}% ` +
