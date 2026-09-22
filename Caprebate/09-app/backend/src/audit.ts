@@ -247,6 +247,13 @@ export type AuditKind =
    */
   | 'EMAIL_WRITTEN' | 'EMAIL_SENDER_SET'
   /**
+   * Phase 142, 22 September 2026: a message written on a company's "With the client" thread — by staff or by the client —
+   * and a reply to contactus@caprebate.com read in by the mailbox reader, filed by staff from the queue, or one of its
+   * files saved to the company's Files. Ids, the direction, a count of files and the outcome — never the words, never an
+   * address. (A "Team only" message is an internal note and keeps its own kind, INTERNAL_NOTE_ADDED.)
+   */
+  | 'CLIENT_MESSAGE_WRITTEN' | 'INBOUND_EMAIL_RECEIVED' | 'INBOUND_EMAIL_FILED' | 'INBOUND_EMAIL_FILE_SAVED'
+  /**
    * Phase 133j, 18 September 2026: the website's enquiry form received, and Sales opening an enquiry as a lead or
    * closing it; a person asking for their own client login after the assessment, and confirming it from the email.
    * Ids, the sector code and the decision only — never the name, the address or what the person wrote.

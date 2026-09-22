@@ -51,6 +51,7 @@ import { FEE_CONTROLS } from './fee-controls.ts';
 import { MANDATORY_DOCUMENTS } from './mandatory-documents.ts';
 import { KEEP_ORIGINALS } from './originals.ts';
 import { EMAIL_SENDING } from '../stubs/email-provider.ts';
+import { INBOUND_EMAIL } from '../stubs/email-inbound.ts';
 import { FEE_CLAWBACK } from './claim-record.ts';
 import { DEFENCE_PACK_GENERATOR } from './defence-pack.ts';
 import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
@@ -134,6 +135,8 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   FEE_CONTROLS.break_and_abort the break and abort fees                        src/web/fee-controls.ts
  *   MANDATORY_DOCUMENTS          the documents a gate requires                   src/web/mandatory-documents.ts
  *   KEEP_ORIGINALS               keeping the file a client sent (Phase 140)      src/web/originals.ts
+ *   EMAIL_SENDING                sending email from contactus@ (Phase 141)       src/stubs/email-provider.ts
+ *   INBOUND_EMAIL                reading replies to contactus@ (Phase 142)       src/stubs/email-inbound.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/web/defence-pack.ts
  *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/web/allowance-profit-comparison.ts
  *   FUNNEL_SWITCHES.breakeven_is_insufficient_profit
@@ -164,6 +167,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'MANDATORY_DOCUMENTS', on: MANDATORY_DOCUMENTS.enabled, home: 'src/web/mandatory-documents.ts' },
     { switch: 'KEEP_ORIGINALS', on: KEEP_ORIGINALS.enabled, home: 'src/web/originals.ts' },
     { switch: 'EMAIL_SENDING', on: EMAIL_SENDING.enabled, home: 'src/stubs/email-provider.ts' },
+    { switch: 'INBOUND_EMAIL', on: INBOUND_EMAIL.enabled, home: 'src/stubs/email-inbound.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/web/defence-pack.ts' },
     { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/web/allowance-profit-comparison.ts' },
     { switch: 'FUNNEL_SWITCHES.breakeven_is_insufficient_profit', on: FUNNEL_SWITCHES.breakeven_is_insufficient_profit, home: 'src/web/funnel-session.ts' },

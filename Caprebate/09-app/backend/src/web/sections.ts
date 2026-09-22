@@ -21,6 +21,8 @@ export const SECTION_KEYS: readonly string[] = Object.freeze([
   // the client page
   'client.claims', 'client.questions', 'client.activity', 'client.company', 'client.contacts', 'client.properties',
   'client.sources', 'client.answers', 'client.documents',
+  // PHASE 142: the two chat threads, as one section with two tabs
+  'client.chat',
   // the claim page
   'claim.stage', 'claim.facts', 'claim.figures', 'claim.property', 'claim.team', 'claim.documents', 'claim.money',
   'claim.aftercare', 'claim.activity',

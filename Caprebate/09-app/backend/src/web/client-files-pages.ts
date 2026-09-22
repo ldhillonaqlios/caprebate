@@ -185,6 +185,7 @@ function fileCard(f: D.FolderFile, mayShow: boolean, folder: string | null): Saf
   return h`<li class="tile filecard${f.state === 'REFUSED' ? ' refused' : ''}">
     <p class="tilename"><a href="${f.href}">${f.name}</a></p>
     <p class="filefrom">${f.sender} · ${f.sent}${f.versions > 1 ? ` · ${f.versions} versions` : ''}</p>
+    ${f.message_href === undefined ? raw('') : h`<p><a href="${f.message_href}">See the message it came with</a></p>`}
     <p>${f.original.kept
       ? (f.original.href === null ? h`<span class="help">We kept the original. Only Admin can open it.</span>` : h`<a href="${f.original.href}">Open the original</a>`)
       : h`<span class="help">${f.original.words}</span>`}</p>

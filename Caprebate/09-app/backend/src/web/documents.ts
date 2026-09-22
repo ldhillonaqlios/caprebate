@@ -1407,6 +1407,8 @@ export type FolderFile = {
   /** A kept original this reader may open, or the words that say there is none. Never a broken link. */
   readonly original: { readonly kept: true; readonly href: string | null } | { readonly kept: false; readonly words: string };
   readonly claim_ids: readonly string[];
+  /** PHASE 142: the message this file came with, on the thread with the client — a link back to it. Absent otherwise. */
+  readonly message_href?: string;
 };
 
 export type Folder = { readonly key: FolderKey; readonly name: string; readonly count: number; readonly ref?: string };
@@ -1492,7 +1494,11 @@ export function clientFolder(
         'UNION SELECT c.id FROM document_links k JOIN claims c ON c.property_id = k.property_id ' +
         'WHERE k.logical_document_id = ? AND k.unlinked_at IS NULL AND k.property_id IS NOT NULL', [l.id, l.id])
       .map((r) => r.claim_id).filter((id) => claimIds.has(id));
-    const fromClient = l.created_role === 'CLIENT';
+    // PHASE 142: a file that came with a message from the client is the client's, whoever pressed the button that saved it
+    // (a reply by email is saved by a member of staff, once they have said what the file is).
+    const msg = db.get<{ id: string; direction: string }>(
+      'SELECT m.id, m.direction FROM client_message_files f JOIN client_messages m ON m.id = f.message_id WHERE f.logical_document_id = ?', [l.id]);
+    const fromClient = l.created_role === 'CLIENT' || msg?.direction === 'FROM_CLIENT';
     files.push({
       id: l.id, name: documentLabel(l.label, l.seq), type: l.label, href: `/staff/documents/${l.id}`,
       from: fromClient ? 'CLIENT' : 'US',
@@ -1503,6 +1509,7 @@ export function clientFolder(
         ? { kept: true, href: can(actor, 'document.read_original', obj) ? `/staff/documents/${l.id}/download` : null }
         : { kept: false, words: READ_AND_DELETED },
       claim_ids: linked,
+      ...(msg === undefined ? {} : { message_href: `/staff/clients/${org.id}?chat=client#msg-${msg.id}` }),
     });
   }
   const reqObj = { type: 'document_request' as const, id: org.id, business_id: org.id };

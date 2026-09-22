@@ -7,6 +7,7 @@
  *   npm run verify-audit recompute the audit log's hash chain; exit 1 if it is broken
  *   node src/cli.ts sweep-originals   delete every kept original whose time is up (KEEP_ORIGINALS; off, so none)
  *   node src/cli.ts send-outbox       send every email saved while sending was on (EMAIL_SENDING; off, so none)
+ *   node src/cli.ts read-mailbox      read new replies to contactus@caprebate.com, read-only (INBOUND_EMAIL; off, so none)
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests
  */
@@ -21,6 +22,9 @@ import { FsObjectStore } from './web/objectstore.ts';
 import { sealKeyFromEnv } from './web/originals.ts';
 import { openKeptOriginal, sweepOriginals } from './web/uploads.ts';
 import { EMAIL_SENDING, dispatchOutbox, smtpLoginFromEnv, smtpProvider } from './stubs/email-provider.ts';
+import { INBOUND_EMAIL, imapLoginFromEnv, imapMailbox } from './stubs/email-inbound.ts';
+import { readMailbox } from './web/inbound-email.ts';
+import { randomUUID } from 'node:crypto';
 
 const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';
 
@@ -104,7 +108,23 @@ async function main(): Promise<number> {
     }
   }
 
-  console.error('usage: node src/cli.ts <migrate|seed|verify-audit|sweep-originals|send-outbox>');
+  if (cmd === 'read-mailbox') {
+    /* PHASE 142. INBOUND_EMAIL is off, so this reads nothing and says why. The day it is on, a scheduled run of this line
+       files each reply that answers one of our emails onto its company's chat, and queues the rest for staff. */
+    const db = new Db(DEFAULT_DB);
+    try {
+      const login = imapLoginFromEnv();
+      const r = await readMailbox({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() },
+        INBOUND_EMAIL, login, login === null ? null : imapMailbox(login));
+      console.log(r.state === 'OFF' ? `Replies are not being read yet:\n  ${r.missing.join('\n  ')}`
+        : `${r.read} read: ${r.filed} filed, ${r.do_not_contact} from a company marked do not contact (recorded, nothing sent), ${r.queued} waiting for staff.`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  console.error('usage: node src/cli.ts <migrate|seed|verify-audit|sweep-originals|send-outbox|read-mailbox>');
   return 1;
 }
 

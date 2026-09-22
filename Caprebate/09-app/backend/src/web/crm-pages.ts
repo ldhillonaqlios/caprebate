@@ -561,7 +561,8 @@ export function organisationSections(
     quick: [
       ...(x.owners === null ? [] : [{ href: '#add-task', label: 'Log a call or add a follow-up' }]),
       ...(v.may_write ? [{ href: '#contacts', label: 'Add a contact' }, { href: '#properties', label: 'Add a property' }] : []),
-      ...(x.may_note ? [{ href: '#company-notes', label: 'Add a note' }] : []),
+      // PHASE 142: a note is a message on the company's "Team only" chat.
+      ...(x.may_note ? [{ href: `/staff/clients/${v.id}?chat=team#chat`, label: 'Message your team' }] : []),
     ],
   };
 }

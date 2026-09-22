@@ -177,7 +177,8 @@ export async function handleEngaged(
     // PHASE 134: a note belongs to the company, and may say which of its claims it is about.
     const r = E.addNote(deps, actor, id, f.get('body') ?? '', { claim_id: emptyToNull(f.get('claim_id')) });
     if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, `/staff/clients/${id}`);
-    redirect(res, `/staff/clients/${id}?note=saved#activity`);
+    // PHASE 142: back to the "Team only" chat, where the note now reads as the newest message.
+    redirect(res, `/staff/clients/${id}?chat=team&note=saved#chat`);
     return 'handled';
   }
 

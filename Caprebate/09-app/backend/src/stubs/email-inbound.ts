@@ -1,0 +1,326 @@
+/**
+ * INBOUND_EMAIL — READING REPLIES TO contactus@caprebate.com. BUILT, AND SWITCHED OFF. Phase 142, 22 September 2026.
+ *
+ * Phase 141 wrote the design into the Developer Spec (B48, "Where replies to contactus@ will land"); this builds it.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * WHY IT IS OFF
+ *
+ * There is no mailbox to read. contactus@caprebate.com has to exist first, with its email security records — a board item
+ * for Lakhbir, "Create the contactus@caprebate.com mailbox and check its email security records" — and which service
+ * hosts it is the same question Phase 141 put to him: "Which email service should send our emails from
+ * contactus@caprebate.com?". The recommendation there is IONOS, the host the privacy notice already names, so this reader
+ * speaks IMAP, which IONOS offers. OFF IS EXACTLY TODAY: `readMailbox` returns OFF without opening a connection.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ON, AND WHAT IT DOES
+ *
+ * READ-ONLY. It opens the inbox with EXAMINE, which cannot change a message, and fetches with BODY.PEEK, which does not
+ * even mark one read. It never deletes, moves or flags anything: the mailbox stays exactly as the mail program sees it.
+ * It remembers the last message number it read in (`inbound_email.mailbox_uid`) and reads only newer ones.
+ *
+ * WHAT IS KEPT: who it is from, the subject, and THE TEXT PART ONLY. No HTML is kept. A file in the email is counted (its
+ * type and size, never its name) and left in the mailbox until a member of staff says what it is — then that one file is
+ * read from the mailbox again and goes through the upload path every file takes (src/web/inbound-email.ts).
+ *
+ * The filing rule lives in src/web/inbound-email.ts: matched by the Message-ID we sent, from one of the company's
+ * contacts, or else to a staff queue. Never by the sender's address alone.
+ *
+ * A small, dependency-free IMAP client over `node:tls`, tested against a fake server in test/phase142.test.ts, in the
+ * same way Phase 141's SMTP client is.
+ */
+
+import { connect as tlsConnect } from 'node:tls';
+import type { Duplex } from 'node:stream';
+import { EMAIL_PROVIDER_QUESTION } from './email-provider.ts';
+
+export type InboundEmail = {
+  readonly enabled: boolean;
+  /** The mailbox's protocol, by the id of its reader. Null until the provider is chosen. */
+  readonly provider: 'IMAP' | null;
+  /** contactus@caprebate.com exists, and SPF, DKIM and DMARC are set on caprebate.com. */
+  readonly mailbox_ready: boolean;
+  readonly question: string;
+};
+
+export const INBOUND_EMAIL: InboundEmail = Object.freeze({
+  enabled: false,
+  provider: null,
+  mailbox_ready: false,
+  question: EMAIL_PROVIDER_QUESTION,
+});
+
+/** The mailbox login, from the environment. Never in code, never in the database. */
+export type ImapLogin = { readonly host: string; readonly port: number; readonly user: string; readonly password: string };
+
+export function imapLoginFromEnv(env: NodeJS.ProcessEnv = process.env): ImapLogin | null {
+  const host = (env.CAPREBATE_IMAP_HOST ?? '').trim();
+  const user = (env.CAPREBATE_IMAP_USER ?? '').trim();
+  const password = env.CAPREBATE_IMAP_PASSWORD ?? '';
+  const port = Number((env.CAPREBATE_IMAP_PORT ?? '993').trim());
+  if (host === '' || user === '' || password === '' || !Number.isInteger(port) || port < 1 || port > 65535) return null;
+  return { host, port, user, password };
+}
+
+/** What is still missing before replies can be read in — each in plain words. Empty means it is on. */
+export function readingMissing(cfg: InboundEmail, login: ImapLogin | null): string[] {
+  const out: string[] = [];
+  if (cfg.provider === null) out.push('Choose the email service that holds the contactus@caprebate.com mailbox.');
+  if (cfg.mailbox_ready !== true) out.push('Set up the contactus@caprebate.com mailbox and its email security records.');
+  if (cfg.provider !== null && login === null) out.push('Add the mailbox’s login to the server.');
+  if (cfg.enabled !== true) out.push('Then switch reading replies on.');
+  return out;
+}
+
+export function readingOn(cfg: InboundEmail, login: ImapLogin | null): boolean {
+  return readingMissing(cfg, login).length === 0;
+}
+
+/* ================================================================== *
+ * READING AN EMAIL — the headers we match on, the text part, and the files counted
+ * ================================================================== */
+
+export type EmailFile = { readonly content_type: string; readonly bytes: Uint8Array };
+
+export type ParsedEmail = {
+  readonly message_id: string | null;
+  /** Every Message-ID named in In-Reply-To and References, without the angle brackets. */
+  readonly answers: readonly string[];
+  readonly from_address: string;
+  readonly subject: string;
+  readonly text: string;
+  readonly files: readonly EmailFile[];
+};
+
+const MAX_TEXT = 20000;
+
+function splitHead(raw: string): { head: string; body: string } {
+  const i = raw.search(/\r?\n\r?\n/);
+  if (i < 0) return { head: raw, body: '' };
+  const m = /\r?\n\r?\n/.exec(raw.slice(i));
+  return { head: raw.slice(0, i), body: raw.slice(i + (m?.[0].length ?? 2)) };
+}
+
+/** Headers, unfolded, names lower-cased. A repeated header keeps its first value. */
+function headers(head: string): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const line of head.replace(/\r?\n[ \t]+/g, ' ').split(/\r?\n/)) {
+    const c = line.indexOf(':');
+    if (c <= 0) continue;
+    const k = line.slice(0, c).trim().toLowerCase();
+    if (!out.has(k)) out.set(k, line.slice(c + 1).trim());
+  }
+  return out;
+}
+
+/** A header's parameter — boundary, charset — quoted or not. */
+function param(value: string, name: string): string | null {
+  const m = new RegExp(`(?:^|;)\\s*${name}\\s*=\\s*(?:"([^"]*)"|([^;\\s]+))`, 'i').exec(value);
+  return m === null ? null : (m[1] ?? m[2] ?? null);
+}
+
+function decodeBody(body: string, encoding: string): Buffer {
+  const e = encoding.trim().toLowerCase();
+  if (e === 'base64') return Buffer.from(body.replace(/[^A-Za-z0-9+/=]/g, ''), 'base64');
+  if (e === 'quoted-printable') {
+    const bytes: number[] = [];
+    const s = body.replace(/=\r?\n/g, '');
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i] ?? '';
+      if (ch === '=' && /^[0-9A-Fa-f]{2}$/.test(s.slice(i + 1, i + 3))) { bytes.push(parseInt(s.slice(i + 1, i + 3), 16)); i += 2; } else bytes.push(s.charCodeAt(i) & 0xff);
+    }
+    return Buffer.from(bytes);
+  }
+  return Buffer.from(body, 'latin1');
+}
+
+function asText(bytes: Buffer, charset: string | null): string {
+  const c = (charset ?? 'utf-8').toLowerCase();
+  try { return new TextDecoder(c === 'us-ascii' ? 'utf-8' : c).decode(bytes); } catch { return bytes.toString('utf8'); }
+}
+
+/** An encoded header word (RFC 2047), base64 or Q, as a person reads it. */
+function headerText(v: string): string {
+  return v.replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, (_m, cs: string, enc: string, data: string) => {
+    const bytes = enc.toUpperCase() === 'B' ? Buffer.from(data, 'base64')
+      : decodeBody(data.replace(/_/g, ' '), 'quoted-printable');
+    return asText(bytes, cs);
+  }).replace(/\s+/g, ' ').trim();
+}
+
+function ids(v: string | undefined): string[] {
+  return [...(v ?? '').matchAll(/<([^<>\s]+)>/g)].map((m) => m[1] ?? '').filter((x) => x !== '');
+}
+
+/**
+ * READ ONE EMAIL. The first text/plain part is the message; every part that is a file is counted and kept in memory only
+ * for as long as the caller needs it. HTML is never kept. Nested parts are followed to a depth of five.
+ */
+export function parseEmail(raw: Uint8Array): ParsedEmail {
+  const all = Buffer.from(raw).toString('latin1');
+  const top = splitHead(all);
+  const h0 = headers(top.head);
+  let text: string | null = null;
+  const files: EmailFile[] = [];
+  const walk = (head: Map<string, string>, body: string, depth: number): void => {
+    const type = head.get('content-type') ?? 'text/plain';
+    const kind = type.split(';')[0]?.trim().toLowerCase() ?? 'text/plain';
+    const disposition = (head.get('content-disposition') ?? '').toLowerCase();
+    if (kind.startsWith('multipart/') && depth < 5) {
+      const b = param(type, 'boundary');
+      if (b === null) return;
+      for (const piece of body.split(`--${b}`).slice(1)) {
+        if (piece.startsWith('--')) break;
+        const p = splitHead(piece.replace(/^\r?\n/, ''));
+        walk(headers(p.head), p.body, depth + 1);
+      }
+      return;
+    }
+    const bytes = decodeBody(body, head.get('content-transfer-encoding') ?? '7bit');
+    if (kind === 'text/plain' && !disposition.startsWith('attachment') && text === null) {
+      text = asText(bytes, param(type, 'charset'));
+    } else if (disposition.startsWith('attachment') || !kind.startsWith('text/')) {
+      files.push({ content_type: kind.slice(0, 120), bytes: new Uint8Array(bytes) });
+    }
+  };
+  walk(h0, top.body, 0);
+  const from = h0.get('from') ?? '';
+  const addr = /<([^<>\s]+@[^<>\s]+)>/.exec(from)?.[1] ?? /([^\s<>"]+@[^\s<>"]+)/.exec(from)?.[1] ?? '';
+  return {
+    message_id: ids(h0.get('message-id'))[0] ?? null,
+    answers: [...new Set([...ids(h0.get('in-reply-to')), ...ids(h0.get('references'))])],
+    from_address: addr.toLowerCase().slice(0, 254),
+    subject: headerText(h0.get('subject') ?? '').slice(0, 998),
+    text: ((text as string | null) ?? '').replace(/\r\n/g, '\n').trim().slice(0, MAX_TEXT),
+    files,
+  };
+}
+
+/* ================================================================== *
+ * THE MAILBOX — IMAP, read-only
+ * ================================================================== */
+
+export type RawEmail = { readonly uid: number; readonly raw: Uint8Array };
+
+export interface Mailbox {
+  /** Every message with a number above `after`, oldest first. Read-only. */
+  since(after: number): Promise<RawEmail[]>;
+  /** One message by its number, or null if it is no longer there. Read-only. */
+  one(uid: number): Promise<RawEmail | null>;
+}
+
+/** A connection to the mail server. Production opens TLS; a test hands in its own socket. */
+export type ImapConnector = (login: ImapLogin) => Duplex;
+
+const tlsImap: ImapConnector = (login) => tlsConnect({ host: login.host, port: login.port, servername: login.host });
+
+/** An IMAP string, quoted, with no line break — a login cannot smuggle a second command. */
+function quoted(s: string): string {
+  return `"${s.replace(/[\r\n]/g, '').replace(/(["\\])/g, '\\$1')}"`;
+}
+
+/**
+ * ONE CONVERSATION WITH THE SERVER. Reads tagged replies, and the literals ({n} then n bytes) a FETCH returns.
+ */
+class ImapSession {
+  #sock: Duplex;
+  #buf = Buffer.alloc(0);
+  #wake: (() => void) | null = null;
+  #ended = false;
+  #tag = 0;
+
+  constructor(sock: Duplex) {
+    this.#sock = sock;
+    sock.on('data', (c: Buffer) => { this.#buf = Buffer.concat([this.#buf, c]); this.#wake?.(); });
+    const end = (): void => { this.#ended = true; this.#wake?.(); };
+    sock.on('end', end); sock.on('close', end); sock.on('error', end);
+  }
+
+  async #more(): Promise<boolean> {
+    if (this.#ended) return false;
+    await new Promise<void>((r) => { this.#wake = r; });
+    this.#wake = null;
+    return true;
+  }
+
+  /** One line, without its CRLF; null if the connection ended. */
+  async line(): Promise<string | null> {
+    for (;;) {
+      const i = this.#buf.indexOf('\r\n');
+      if (i >= 0) { const l = this.#buf.subarray(0, i).toString('latin1'); this.#buf = this.#buf.subarray(i + 2); return l; }
+      if (!(await this.#more())) return null;
+    }
+  }
+
+  async bytes(n: number): Promise<Buffer | null> {
+    while (this.#buf.length < n) if (!(await this.#more())) return null;
+    const b = this.#buf.subarray(0, n);
+    this.#buf = this.#buf.subarray(n);
+    return Buffer.from(b);
+  }
+
+  /** Send a command; collect untagged lines, and literals, until its tagged reply. */
+  async run(command: string): Promise<{ ok: boolean; lines: string[]; literals: { uid: number; bytes: Buffer }[] }> {
+    const tag = `c${++this.#tag}`;
+    this.#sock.write(`${tag} ${command}\r\n`);
+    const lines: string[] = [];
+    const literals: { uid: number; bytes: Buffer }[] = [];
+    for (;;) {
+      const l = await this.line();
+      if (l === null) return { ok: false, lines, literals };
+      if (l.startsWith(`${tag} `)) return { ok: /^\S+ OK\b/i.test(l), lines, literals };
+      const lit = /\{(\d+)\}$/.exec(l);
+      if (lit !== null) {
+        const b = await this.bytes(Number(lit[1]));
+        if (b === null) return { ok: false, lines, literals };
+        literals.push({ uid: Number(/UID (\d+)/i.exec(l)?.[1] ?? NaN), bytes: b });
+      }
+      lines.push(l);
+    }
+  }
+
+  end(): void { this.#sock.end(); }
+}
+
+/** THE READ-ONLY IMAP MAILBOX. Each call opens, reads and closes: nothing is held open between runs. */
+export function imapMailbox(login: ImapLogin, connect: ImapConnector = tlsImap, timeoutMs = 30_000): Mailbox {
+  const session = async <T>(work: (s: ImapSession) => Promise<T>): Promise<T> => {
+    const sock = connect(login);
+    const timer = setTimeout(() => sock.destroy(new Error('timed out')), timeoutMs);
+    const s = new ImapSession(sock);
+    try {
+      const hello = await s.line();
+      if (hello === null || !/^\* (OK|PREAUTH)\b/i.test(hello)) throw new Error('the mail server did not say hello');
+      if (!(await s.run(`LOGIN ${quoted(login.user)} ${quoted(login.password)}`)).ok) throw new Error('the mailbox refused the login');
+      // EXAMINE, NOT SELECT: the inbox is opened read-only, so nothing in it can change.
+      if (!(await s.run('EXAMINE INBOX')).ok) throw new Error('the inbox could not be opened');
+      const out = await work(s);
+      await s.run('LOGOUT');
+      return out;
+    } finally {
+      clearTimeout(timer);
+      s.end();
+    }
+  };
+  const fetchUids = async (s: ImapSession, uids: number[]): Promise<RawEmail[]> => {
+    const out: RawEmail[] = [];
+    for (const uid of uids) {
+      // BODY.PEEK: reading it does not even mark it read.
+      const r = await s.run(`UID FETCH ${uid} (UID BODY.PEEK[])`);
+      const got = r.literals[0];
+      if (r.ok && got !== undefined) out.push({ uid: Number.isFinite(got.uid) ? got.uid : uid, raw: new Uint8Array(got.bytes) });
+    }
+    return out;
+  };
+  return {
+    since: (after) => session(async (s) => {
+      const r = await s.run(`UID SEARCH UID ${after + 1}:*`);
+      if (!r.ok) throw new Error('the inbox could not be searched');
+      // "n:*" always includes the newest message, even one at or below n — so the list is filtered here.
+      const uids = r.lines.filter((l) => /^\* SEARCH\b/i.test(l)).flatMap((l) => l.replace(/^\* SEARCH/i, '').trim().split(/\s+/))
+        .map(Number).filter((n) => Number.isInteger(n) && n > after).sort((a, b) => a - b);
+      return fetchUids(s, uids);
+    }),
+    one: (uid) => session(async (s) => (await fetchUids(s, [uid]))[0] ?? null),
+  };
+}

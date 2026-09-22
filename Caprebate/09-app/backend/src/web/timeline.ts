@@ -68,7 +68,9 @@ export type Audience = 'CLIENT_SEES' | 'STAFF_ONLY';
 
 export type Category =
   | 'BOOKING' | 'CLIENT_QUESTION' | 'DOCUMENT' | 'ENGAGEMENT' | 'RESEARCH' | 'STAGE' | 'CONFIRMATION' | 'ENQUIRY'
-  | 'TASK' | 'SURVEY' | 'FINANCE' | 'OUTBOX' | 'RECORD' | 'AUTOMATION' | 'CONTACT';
+  | 'TASK' | 'SURVEY' | 'FINANCE' | 'OUTBOX' | 'RECORD' | 'AUTOMATION' | 'CONTACT'
+  /** PHASE 142: a message on the thread with the client. Never a team message — those are the notes, kept apart. */
+  | 'MESSAGE';
 
 export type TimelineEvent = {
   /** Stored UTC, for sorting and for the wire. */
@@ -274,6 +276,11 @@ export function timelineFor(db: Db, actor: Actor, subject: TimelineSubject): Tim
       add({ at: r.at, category: 'RESEARCH', audience: 'STAFF_ONLY', who: r.who, scope: orgScope,
         what: `${r.kind === 'RETRY' ? 'A failed source was retried' : 'The research was run'}: ${r.considered} sources considered, ${r.fired} fired, ${r.not_permitted} waiting on a gate, ${r.failed} failed` });
     }
+  }
+  // PHASE 142: THE THREAD WITH THE CLIENT, one line per message — who wrote, and which claim — never the words, which are
+  // on the Chat tab. Only for a login that may read that thread.
+  if (orgLevel && biz !== null && can(actor, 'client_message.read', { type: 'client_message', id: biz, business_id: biz })) {
+    clientMessages(db, subject, biz, add, orgScope, claimScope);
   }
   if (finance && biz !== null) invoices(db, subject.kind, scope.claims, biz, add, orgScope, claimScope);
 
@@ -486,6 +493,27 @@ function outbox(db: Db, biz: string, add: Add, scope: string, claimScope: (ref: 
   for (const o of db.all<OutboxRow>(`${OUTBOX_SELECT}WHERE o.business_id = ? ORDER BY o.created_at`, [biz])) {
     add({ at: o.created_at, category: 'OUTBOX', audience: o.sent_at === null ? 'STAFF_ONLY' : 'CLIENT_SEES', who: o.who,
       scope: o.claim_ref === null ? scope : claimScope(o.claim_ref), what: outboxWhat(o) });
+  }
+}
+
+/**
+ * PHASE 142 — EVERY MESSAGE ON THE THREAD WITH THE CLIENT IS ON THE COMPANY'S TIMELINE, tagged to its claim where it was.
+ * A reply that came by email reads "A reply from <contact>", as the Developer Spec's B48 set it.
+ */
+function clientMessages(db: Db, subject: TimelineSubject, biz: string, add: Add, scope: string, claimScope: (ref: string) => string): void {
+  type Row = { created_at: string; direction: string; source: string; who: string | null; contact: string | null; claim_ref: string | null; files: number };
+  const select = 'SELECT m.created_at, m.direction, m.source, u.display_name AS who, ct.full_name AS contact, c.claim_ref, ' +
+    '(SELECT COUNT(*) FROM client_message_files f WHERE f.message_id = m.id) AS files FROM client_messages m ' +
+    'LEFT JOIN users u ON u.id = m.author_id LEFT JOIN contacts ct ON ct.id = m.contact_id LEFT JOIN claims c ON c.id = m.claim_id ';
+  const rows = subject.kind === 'claim'
+    ? db.all<Row>(`${select}WHERE m.business_id = ? AND (m.claim_id = ? OR m.claim_id IS NULL) ORDER BY m.created_at`, [biz, subject.id])
+    : db.all<Row>(`${select}WHERE m.business_id = ? ORDER BY m.created_at`, [biz]);
+  for (const m of rows) {
+    const files = m.files === 0 ? '' : ` — with ${m.files} ${m.files === 1 ? 'file' : 'files'}`;
+    const what = m.source === 'EMAIL' ? `A reply from ${m.contact ?? 'the client'}, by email${files}`
+      : m.direction === 'FROM_CLIENT' ? `The client sent a message in their portal${files}` : 'We sent the client a message in their portal';
+    add({ at: m.created_at, category: 'MESSAGE', audience: 'CLIENT_SEES', who: m.source === 'EMAIL' ? m.contact : m.who,
+      scope: m.claim_ref === null ? scope : claimScope(m.claim_ref), what });
   }
 }
 

@@ -40,6 +40,8 @@ import {
 } from './assessment.ts';
 import { loadLetter } from './letter.ts';
 import * as P from './portal.ts';
+import { portalMessagesBody, readPortalSend, sendFromPortal } from './messages-pages.ts';
+import { clientMessage, type ThreadMessage as MessageView } from './messages.ts';
 import { FsObjectStore } from './objectstore.ts';
 import { acceptClientBytes, finishUpload, issuedJob } from './uploads.ts';
 import { singleFile } from './multipart.ts';
@@ -47,7 +49,7 @@ import { readUpload, receiveFile } from './client-files-pages.ts';
 import { READ_AND_DELETED } from './originals.ts';
 import { receivableTypes, startDocumentUpload, type RequestView } from './documents.ts';
 import { handleStaff, handlePortalSettings } from './staff.ts';
-import { mayEnterBackOffice } from './backoffice.ts';
+import { mayEnterBackOffice, NotFoundAsRefusal } from './backoffice.ts';
 import { navContext, staffShell, portalShell, type NameSwitches, type NavContext } from './navigation.ts';
 import { badge, breadcrumb, card, claimRef, clientStageBar, propertyIn, savedMessage, welcomeCard, why } from './components.ts';
 import { stepName } from './portal-steps.ts';
@@ -611,6 +613,41 @@ async function portalRoutes(
     const done = portalSteps(db, actor, business_id);
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
       publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(welcome === undefined ? {} : { welcome }) }));
+    return 'handled';
+  }
+
+  /* PHASE 142: MESSAGES — the thread with the client, and nothing else. `business_id` is the session's for a client, so a
+     client only ever reads and writes their own company's thread; every read and write is asked of the rule table again. */
+  if (path === '/portal/messages' && method === 'GET') {
+    const m = portalMessagesBody({ app: d.app, newId }, actor, business_id, url.searchParams.get('done'));
+    html(res, 200, page({ title: m.title, nav: nav(actor), wide: true, body: m.body }));
+    return 'handled';
+  }
+  if (path === '/portal/messages' && method === 'POST') {
+    const got = await readPortalSend(req, form, readBody);
+    const r = got.ok ? await sendFromPortal({ app: d.app, store: d.store, newId }, actor, business_id, got.send) : got;
+    if (!r.ok) {
+      // Drawn again with what they typed, so a refusal never costs a long message. Nothing was sent.
+      const m = portalMessagesBody({ app: d.app, newId }, actor, business_id, null, { why: r.why, body: got.ok ? got.send.body : '' });
+      html(res, 400, page({ title: m.title, nav: nav(actor), wide: true, body: m.body }));
+      return 'handled';
+    }
+    redirect(res, `/portal/messages?done=${r.with_file ? 'file' : 'sent'}#thread`);
+    return 'handled';
+  }
+  const oneMessage = /^\/portal\/messages\/([A-Za-z0-9-]+)$/.exec(path);
+  if (oneMessage && method === 'GET') {
+    let msg: MessageView | null = null;
+    try { msg = clientMessage(db, actor, business_id, oneMessage[1] ?? ''); } catch (e) { if (!(e instanceof NotFoundAsRefusal)) throw e; }
+    if (msg === null) {
+      // A team message, another company's message and an id that does not exist all answer the same.
+      html(res, 404, page({ title: 'Message not found', nav: nav(actor), wide: true, body: h`<div class="card"><h1>We cannot find that message</h1>
+        <p>It may have been typed wrongly.</p><p><a class="btn btn-primary" href="/portal/messages">See your messages</a></p></div>` }));
+      return 'handled';
+    }
+    html(res, 200, page({ title: 'Message', nav: nav(actor), wide: true, body: h`<div class="card"><p class="msgmeta"><strong>${msg.who}</strong> · ${msg.when}</p>
+      <p class="msgbody">${msg.body}</p>${msg.files.length === 0 ? raw('') : h`<ul class="msgfiles">${msg.files.map((f) => h`<li><a href="${f.href}">${f.name}</a></li>`)}</ul>`}
+      <p><a href="/portal/messages#msg-${msg.id}">See it in your messages</a></p></div>` }));
     return 'handled';
   }
 
@@ -1370,13 +1407,14 @@ function portalPage(
        explanations sit behind "What happens at each step". Every section Phase 133a drew is still on the page. */
     body: h`
       <header class="highlights"><p class="eyebrow">${cls.length === 1 ? 'Your claim' : 'Your claims'}</p><h1>${business.name}</h1>
-        <p><a class="btn btn-primary" href="#appointment">Book a call</a> <a class="btn" href="#contact-us">Who to contact</a></p></header>
+        <p><a class="btn btn-primary" href="/portal/messages">Send us a message</a> <a class="btn" href="#appointment">Book a call</a></p></header>
       ${extra.welcome ?? raw('')}
       ${cls.length === 0 ? raw('') : card('Your claims', portalClaimTiles(cls, named, business.name), { count: cls.length, id: 'your-claims' })}
       ${clientStepsCard(extra.done ?? [], cls.map((c) => ({ id: c.id, name: propertyIn(business.name, c.property) ?? 'Your claim' })))}
       <section class="card" id="contact-us"><div class="card-h"><h2>How to contact us</h2></div>
-        <p>To talk to us, ask for a call under <a href="#appointment">Your appointment</a>, or reply to any message we have
-        sent you. If you are unhappy with anything we have done, our <a href="/notices/">public notices</a> say how to complain.</p>
+        <p>Write to us under <a href="/portal/messages">Messages</a> — you can send a file there too — or ask for a call under
+        <a href="#appointment">Your appointment</a>. If you are unhappy with anything we have done, our
+        <a href="/notices/">public notices</a> say how to complain.</p>
       </section>
       ${cls.length === 0 && progress.known ? clientStageBar(progress.steps.map((s) => ({ label: stepName(s.stage, named), state: s.state }))) : raw('')}
 

@@ -65,6 +65,7 @@ import * as F from '../src/web/claim-facts.ts';
 import { RELEASED_FACTS_TO_SURVEYOR } from '../src/payload.ts';
 import * as DB from '../src/web/dashboard.ts';
 import { can as canForProof } from '../src/authz.ts';
+import { addNote } from '../src/web/engaged.ts';
 
 const made = await createApp(':memory:', {
   documentRoot: mkdtempSync(join(tmpdir(), 'cb-payload-proof-')),
@@ -917,6 +918,55 @@ console.log('');
   const a = await req('/staff/audit');
   console.log(`    /staff/audit as ADMIN: HTTP ${a.status}, the chain said intact ${/Intact:/.test(a.body)}`);
   if (a.status !== 200 || !/Intact:/.test(a.body)) failures.push('the audit log as ADMIN did not open with its chain intact');
+}
+// PHASE 142 — THE TEAM THREAD NEVER REACHES THE PORTAL, AND NEITHER THREAD REACHES THE SURVEYOR. A team message with words
+// found nowhere else is written; the client's portal, every page of it, and the staff pages a client or a surveyor might
+// type, are fetched and searched as raw text for those words. The control: the same words ARE on Admin's page.
+{
+  const clientUser = made.app.db.get<{ id: string; business_id: string }>("SELECT id, business_id FROM users WHERE role = 'CLIENT'")!;
+  const salesUser = made.app.db.get<{ id: string }>("SELECT id FROM users WHERE role = 'SALES'")!;
+  const SECRET = `TEAM-ONLY-PROOF-${randomUUID()}`;
+  const note = addNote({ db: made.app.db, audit: made.app.audit, now: made.app.now, newId: randomUUID },
+    { id: salesUser.id, role: 'SALES', business_id: null, disabled: false }, clientUser.business_id, `${SECRET} staff only`);
+  if (!note.ok) failures.push('the proof could not write its team message');
+  const session = async (who: string): Promise<(path: string) => Promise<{ status: number; body: string }>> => {
+    let jar = '';
+    const go = async (path: string, init: RequestInit = {}) => {
+      const headers = { ...(init.headers as Record<string, string> | undefined) };
+      if (jar) headers['cookie'] = jar;
+      const r = await fetch(base + path, { redirect: 'manual', ...init, headers });
+      const set = r.headers.getSetCookie();
+      if (set.length) jar = set.map((x) => x.split(';')[0]).join('; ');
+      return { status: r.status, body: await r.text() };
+    };
+    await go('/login', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ email: `${who}@example.invalid`, password: s.password }).toString() });
+    return (path) => go(path);
+  };
+  const biz = clientUser.business_id;
+  const noteId = note.ok ? note.id : 'none';
+  const claimPaths = made.app.db.all<{ id: string }>('SELECT id FROM claims WHERE business_id = ?', [biz]).map((r) => `/portal/claims/${r.id}`);
+  const asClient = await session('client');
+  console.log('=== PHASE 142: the team thread, searched on the wire as CLIENT and as SURVEYING');
+  for (const path of ['/portal', '/portal/messages', '/portal/help', '/portal/letter', ...claimPaths, `/portal/messages/${noteId}`,
+    `/staff/clients/${biz}?chat=team`, `/staff/clients/${biz}?chat=client`]) {
+    const r = await asClient(path);
+    const hit = r.body.includes(SECRET);
+    console.log(`    as CLIENT     ${path.slice(0, 60).padEnd(60)} HTTP ${r.status}  team words found ${hit}`);
+    if (hit) failures.push(`${path} carried a team message to the client`);
+    if (path === `/portal/messages/${noteId}` && r.status !== 404) failures.push('a team message asked for by id did not answer 404 to the client');
+  }
+  const asSurveyor = await session('surveying');
+  for (const path of [`/staff/clients/${biz}?chat=team`, `/staff/clients/${biz}?chat=client`, '/staff/replies']) {
+    const r = await asSurveyor(path);
+    const hit = r.body.includes(SECRET) || /class="chattabs"/.test(r.body);
+    console.log(`    as SURVEYING  ${path.slice(0, 60).padEnd(60)} HTTP ${r.status}  a thread found ${hit}`);
+    if (hit) failures.push(`${path} showed a chat thread to the surveyor`);
+  }
+  const asAdmin = await session('admin');
+  const control = await asAdmin(`/staff/clients/${biz}?chat=team`);
+  console.log(`    as ADMIN      the team tab: HTTP ${control.status}  team words found ${control.body.includes(SECRET)} (must be true — the control)`);
+  if (control.status !== 200 || !control.body.includes(SECRET)) failures.push('the team words are not on Admin’s page either — the search above proves nothing');
 }
 console.log('');
 console.log('=== THE FIRST 900 BYTES OF THE SURVEYOR PAYLOAD, VERBATIM');

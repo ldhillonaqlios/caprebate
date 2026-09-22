@@ -111,8 +111,8 @@ describe('one section component, on both pages', () => {
     const r = await as('sales').get(`/staff/clients/${biz}`);
     assert.equal(r.status, 200);
     const all = sections(r.body);
-    // Phase 139 added "Check and tell the client" after the claims.
-    assert.deepEqual(all.map((x) => x.id), ['claims', 'checks', 'questions', 'activity', 'details', 'contacts', 'properties', 'sources', 'answers', 'documents']);
+    // Phase 139 added "Check and tell the client" after the claims; Phase 142 added "Chat" before the activity.
+    assert.deepEqual(all.map((x) => x.id), ['claims', 'checks', 'questions', 'chat', 'activity', 'details', 'contacts', 'properties', 'sources', 'answers', 'documents']);
     const words: Record<string, string> = { company: 'Company', property: 'Property', facts: 'Facts and figures', documents: 'Documents', money: 'Money', messages: 'Messages' };
     for (const x of all) {
       assert.match(x.html, /<span class="secicon" aria-hidden="true"><svg /, `#${x.id} has no icon`);

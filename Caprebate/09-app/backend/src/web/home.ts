@@ -33,6 +33,8 @@ import { assertSurveySection, surveyorJobs } from './surveyor.ts';
 import { auditLogView } from './audit-log.ts';
 import { isLateNewLead, waitedWords, workingDaysSince } from './working-days.ts';
 import * as T from './tasks.ts';
+import * as M from './messages.ts';
+import * as IE from './inbound-email.ts';
 import * as S from './settings.ts';
 
 /** One tile: a name and at most two more lines. `late` draws it red. */
@@ -185,6 +187,21 @@ function todayRow(actor: Actor, app: App, nowIso: string): Safe {
       due_on: '', late: r.due.overdue,
       tile: { href: `/staff/clients/${r.business_id}`, name: short(r.client), lines: [`Document: ${short(r.type_label)}`, r.due.label], late: r.due.overdue },
     });
+  }
+  // PHASE 142: A CLIENT WAITING FOR A REPLY on the company's chat for more than one working day. Only for a login that may
+  // read that thread; a message waiting less than that is not late and not "due", so it is not on this row.
+  for (const m of M.clientMessagesWaiting(db, actor, nowIso)) {
+    if (!m.late) continue;
+    items.push({
+      due_on: '', late: true,
+      tile: { href: `/staff/clients/${m.business_id}?chat=client#chat`, name: short(m.company),
+        lines: [m.count === 1 ? 'A message waiting for a reply' : `${m.count} messages waiting for a reply`, waitedWords(m.working_days)], late: true },
+    });
+  }
+  // PHASE 142: EMAIL REPLIES THE MAILBOX READER COULD NOT FILE, for Admin and Sales. One tile, with the number.
+  if (IE.mayReadQueue(actor)) {
+    const q = IE.replyQueue(db, actor);
+    if (q.length > 0) items.push({ due_on: '', late: true, tile: { href: '/staff/replies', name: 'Email replies to sort', lines: [`${q.length} waiting — choose the company`], late: true } });
   }
   const ordered = [...items.filter((x) => x.late), ...items.filter((x) => !x.late)].map((x) => x.tile);
   const c = capped(ordered, '/staff/tasks');

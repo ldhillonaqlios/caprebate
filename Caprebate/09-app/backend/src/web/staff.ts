@@ -46,6 +46,7 @@ import { handleEngaged } from './engaged-pages.ts';
 import { handleClientPage } from './client-page.ts';
 import { handleClientFiles } from './client-files-pages.ts';
 import { handleFreeEmail } from './free-email-pages.ts';
+import { handleStaffMessages } from './messages-pages.ts';
 import { handleSurveyor } from './surveyor-pages.ts';
 import { handleFinance } from './finance-pages.ts';
 import { handleCrm } from './crm-pages.ts';
@@ -306,6 +307,10 @@ export async function handleStaff(
   /* ------------------ SECTION 3 · a free-typed email to a company or a lead (Phase 141) */
   const freeEmail = await handleFreeEmail({ app: d.app, store: d.store, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
   if (freeEmail === 'handled') return 'handled';
+
+  /* ------------------ SECTION 3 · writing to the client on the company's chat, and email replies to sort (Phase 142) */
+  const chat = await handleStaffMessages({ app: d.app, store: d.store, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
+  if (chat === 'handled') return 'handled';
 
   /* ------------------ SECTION 3 · the company's files, in folders, and a staff upload (Phase 140) */
   const clientFiles = await handleClientFiles({ app: d.app, store: d.store, newId: d.newId, nav, problem }, req, res, url, method, actor, form, body);

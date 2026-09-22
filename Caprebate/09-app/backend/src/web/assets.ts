@@ -586,6 +586,26 @@ details.undo>summary{font-size:14px}
 .dropzone input[type="file"]{display:block;width:100%;max-width:100%;min-height:3.5rem;box-sizing:border-box;padding:.6rem;background:var(--white);border:1px solid var(--line);border-radius:var(--radius)}
 .uploadbox .tickbox{display:flex;margin:.6rem 0 .8rem}
 a.small{font-size:16px;font-weight:400;margin-left:.5rem}
+/* PHASE 142: chat on every client. Two tabs ("Team only", "With the client") that are plain links — no script; a message is
+   a bubble, ours or theirs on the right, the other side's on the left; the box to write in sits under the thread. The
+   "Team only" tab is drawn in a warning colour so nobody mistakes it for the thread the client reads. Brand tokens only. */
+.chattabs{display:flex;flex-wrap:wrap;gap:.4rem;margin:0 0 .8rem;padding:0;list-style:none}
+.chattabs a{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .8rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--white);color:var(--ink);font-weight:700;text-decoration:none}
+.chattabs a[aria-current="page"]{border-color:var(--ink);background:var(--mist)}
+.chattabs .unread{display:inline-block;min-width:1.5rem;padding:0 .4rem;border-radius:999px;background:var(--ink);color:var(--white);text-align:center;font-size:14px;line-height:1.6}
+.teamnote{border-left:4px solid var(--warn);background:var(--warnbg);color:var(--warn);padding:.4rem .7rem;margin:0 0 .8rem;font-weight:600}
+.chat{list-style:none;margin:0 0 1rem;padding:0;display:flex;flex-direction:column;gap:.6rem;max-width:44rem}
+.msg{align-self:flex-start;max-width:min(36rem,92%);padding:.55rem .8rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--white);overflow-wrap:anywhere}
+.msg.mine{align-self:flex-end;background:var(--mist)}
+.msg.team{border-left:4px solid var(--warn)}
+.msgmeta{margin:0 0 .25rem;font-size:14px;color:var(--body)}
+.msgmeta strong{color:var(--ink)}
+.msgbody{margin:0;white-space:pre-wrap}
+.msgfiles{margin:.35rem 0 0;padding-left:1.1rem}
+.msgabout{margin:.25rem 0 0;font-size:14px;color:var(--body)}
+.chatform{max-width:44rem}
+.chatform textarea.fi{min-height:6rem;resize:vertical}
+.chatfile{border:0;margin:.4rem 0;padding:0;min-width:0}
 
 /* ---------------- SMALLER SCREENS ---------------- */
 @media (max-width:960px){

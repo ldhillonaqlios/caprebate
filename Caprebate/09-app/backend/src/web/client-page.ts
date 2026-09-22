@@ -12,8 +12,9 @@
  *   the heading     the trading name, and the legal name underneath in small text
  *   Claims          one tile per claim — property and town, stage, next action, the reference as a small grey label —
  *                   each opening the claim INSIDE this page, at /staff/clients/:id/claims/:claim, under a breadcrumb
- *   Timeline        ONE timeline for the company, every claim's events in it, each saying which claim it is about; the
- *                   internal notes beside it, each note optionally tagged with a claim
+ *   Timeline        ONE timeline for the company, every claim's events in it, each saying which claim it is about
+ *   Chat            PHASE 142: two tabs — "Team only", which is the internal notes as a conversation, each message
+ *                   optionally tagged with a claim, and "With the client", the thread the client reads in the portal
  *   the rest        contacts, properties, documents, the details; and for a login that works the research, the questions
  *                   put to the client, what is still missing, their answers and the research
  *
@@ -40,7 +41,9 @@ import { NotFoundAsRefusal } from './backoffice.ts';
 import { opens } from './navigation.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
-import { notesBlock, timelineBlock } from './tasks-pages.ts';
+import { timelineBlock } from './tasks-pages.ts';
+import { chatBlock } from './messages-pages.ts';
+import * as M from './messages.ts';
 import { claimTilesFor, organisationSections, renderClaim, type CrmPageDeps } from './crm-pages.ts';
 import { askButton, businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4 } from './engaged-pages.ts';
 import { checksPanelIfPermitted } from './approvals.ts';
@@ -90,7 +93,7 @@ export async function handleClientPage(
   // A login on neither is refused by the organisation's own read, as /staff/organisations/:id refused it.
   const org = C.organisationView(db, actor, id);
   const work = mayWork ? { page: E.businessPage(db, actor, id), sources: R.sourcesFor(db, actor, id) } : null;
-  html(res, 200, clientPage(d, actor, org, work, done, note, url.searchParams.get('step') ?? undefined));
+  html(res, 200, clientPage(d, actor, org, work, done, note, url.searchParams.get('step') ?? undefined, url.searchParams.get('chat')));
   return 'handled';
 }
 
@@ -122,7 +125,7 @@ function unique(xs: readonly string[]): string[] {
 function clientPage(
   d: CrmPageDeps, actor: Actor, org: C.OrganisationView,
   work: { page: E.BusinessPage; sources: R.SourcesPanel } | null,
-  done: string | undefined, note: string | undefined, step?: string,
+  done: string | undefined, note: string | undefined, step?: string, chat: string | null = null,
 ): string {
   const db = d.app.db;
   const owners = mayCreateTask(actor) ? taskOwnerChoices(db) : null;
@@ -135,7 +138,8 @@ function clientPage(
   const ctx: SectionContext = { prefs: sectionPrefs(db, actor), back: `/staff/clients/${org.id}` };
   // PHASE 141: THE EMAIL BUTTON, beside Files, for a login that may write to the company — Admin and Sales.
   const mayEmail = can(actor, 'email.queue', { type: 'email', id: org.id, business_id: org.id });
-  const openNow = note === 'saved' ? 'activity' : done === undefined ? undefined : OPEN_AFTER[done];
+  // PHASE 142: a note saved, a message sent, or a chat tab pressed opens the Chat section.
+  const openNow = note === 'saved' || done === 'message' || done === 'saved-file' || chat !== null ? 'chat' : done === undefined ? undefined : OPEN_AFTER[done];
 
   /* WE NEED: every missing fact, in the section it belongs to, with the one-press ask where this login may ask. */
   const needsFor = (where: E.MissingFact['section']): Need[] => (p === null ? [] : p.missing.filter((m) => m.section === where).map((m) => ({
@@ -185,16 +189,32 @@ function clientPage(
     });
   }
 
+  /* PHASE 142: CHAT — "Team only" (the company's notes, as a conversation) and "With the client" (the portal's Messages),
+     two tabs, each with its unread number. Drawn only for a login that may read one of the two. */
+  const chatNow = chatBlock({ app: d.app, newId: d.newId }, actor, org.id, chat, note === 'saved' ? 'note' : done === 'message' || done === 'saved-file' ? done : undefined);
+  if (chatNow !== null) {
+    const waitingOnUs = M.clientMessagesWaiting(db, actor, d.app.now()).find((w) => w.business_id === org.id);
+    sections.push({
+      key: 'client.chat', id: 'chat', kind: 'messages', heading: 'Chat',
+      ...(chatNow.unread > 0 ? { count: chatNow.unread } : {}),
+      // "Waiting" on a section means waiting for the CLIENT; a client waiting for US is work, so it reads "Working on it".
+      status: waitingOnUs !== undefined || chatNow.unread > 0 || chatNow.started ? 'WORKING' : 'NOT_STARTED',
+      working: waitingOnUs !== undefined ? 'The client is waiting for a reply.' : chatNow.unread > 0 ? 'There are new messages to read.' : 'Talk to your team, or to the client.',
+      need: [], from: ['your team', 'the client'],
+      // The notes' old anchor is kept, so every link to #company-notes still lands on the team's chat.
+      body: h`<div id="company-notes">${chatNow.body}</div>`,
+    });
+  }
+
   const openQuestions = p?.tasks.filter((t) => t.state === 'OPEN').length ?? 0;
   sections.push({
-    key: 'client.activity', id: 'activity', kind: 'messages', heading: 'Messages and activity',
+    key: 'client.activity', id: 'activity', kind: 'messages', heading: 'Activity',
     status: openQuestions > 0 ? 'WAITING' : (timeline?.events.length ?? 0) > 0 ? 'WORKING' : 'NOT_STARTED',
     working: openQuestions > 0 ? `${openQuestions} question${openQuestions === 1 ? '' : 's'} waiting for the client’s answer.`
-      : 'Keeping a record of every call, email and note.',
+      : 'Keeping a record of every call, email and message.',
     need: [], from: ['you and your team', 'the client'],
     body: h`${s.tasks}
-      ${timelineBlock(timeline, `Everything with ${org.trading_name}`)}
-      <div id="company-notes">${notesBlock(timeline, mayNote ? `/staff/clients/${org.id}/notes` : null, claimChoices)}</div>`,
+      ${timelineBlock(timeline, `Everything with ${org.trading_name}`)}`,
   });
 
   const companyNeed = needsFor('company');
@@ -271,7 +291,6 @@ function clientPage(
     body: h`
       ${done !== undefined && DONE_WORDS[done] !== undefined ? savedMessage(DONE_WORDS[done])
         : done !== undefined && SAVED[done] !== undefined ? savedMessage(SAVED[done]) : raw('')}
-      ${note === 'saved' ? savedMessage('Note saved. The client cannot see it.') : raw('')}
       ${highlights('Client', org.trading_name, [
         { label: 'Status', value: org.client_status.label },
         { label: 'Owner', value: org.owner?.name ?? 'nobody yet' },

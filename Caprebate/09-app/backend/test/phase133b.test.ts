@@ -100,8 +100,8 @@ describe('the five long screens are on the record layout', () => {
     // PHASE 138: no tabs — coloured sections that open and close, in this order, each a <details> with its old anchor. The
     // four working panels are inside them, under the section's heading; "Waiting on" is a highlight, and its card is gone.
     const secs = [...r.body.matchAll(/<details class="sec sec-[a-z]+" id="([^"]+)"/g)].map((m) => m[1]);
-    // PHASE 139: "Check and tell the client" follows the claims.
-    assert.deepEqual(secs, ['claims', 'checks', 'questions', 'activity', 'details', 'contacts', 'properties', 'sources', 'answers', 'documents']);
+    // PHASE 139: "Check and tell the client" follows the claims. PHASE 142: "Chat" — the notes, as "Team only" — before the activity.
+    assert.deepEqual(secs, ['claims', 'checks', 'questions', 'chat', 'activity', 'details', 'contacts', 'properties', 'sources', 'answers', 'documents']);
     for (const inner of ['tasks', 'missing', 'company-notes']) assert.match(r.body, new RegExp(`id="${inner}"`), `#${inner} is not on the page`);
     const ids = [...r.body.matchAll(/\sid="([^"]+)"/g)].map((x) => x[1] ?? '');
     assert.deepEqual([...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))], [], 'an id is used more than once');
@@ -109,7 +109,7 @@ describe('the five long screens are on the record layout', () => {
     assert.match(r.body, /<header class="highlights">/, 'no highlights panel');
     assert.match(r.body, /<aside class="side"/, 'no right-hand panel');
     assert.match(r.body, /<dt>Waiting on<\/dt>/, '"Waiting on" is not a highlight');
-    assert.match(r.body, /Internal notes — never shown to the client/);
+    assert.match(r.body, /Only your team sees this\. The client never does\./);
     assert.equal(/<div class="card-h"><h2>Waiting on<\/h2>/.test(r.body), false, 'the "Waiting on" card is still drawn');
     assert.equal(/[0-9] · (Questions|Sources|What is still missing|Tasks)/.test(r.body), false, 'a numbered heading is still drawn');
   });

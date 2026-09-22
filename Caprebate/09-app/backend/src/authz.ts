@@ -200,7 +200,14 @@ export type Obj =
    */
   | { readonly type: 'saved_view'; readonly id: string; readonly owner_id: string; readonly shared: boolean }
   /** CRM 9 of 10. The admin settings screen: the configurable lists and the reasons. Nothing on it reaches a rule. */
-  | { readonly type: 'configuration'; readonly id: string };
+  | { readonly type: 'configuration'; readonly id: string }
+  /**
+   * PHASE 142. A message on a company's "With the client" thread — the portal's Messages — and a reply that reached
+   * contactus@caprebate.com. The "Team only" thread is the company's internal notes and stays `internal_note`: a
+   * DIFFERENT object type in a DIFFERENT table, so no rule written for one can reach the other.
+   */
+  | { readonly type: 'client_message'; readonly id: string; readonly business_id: string }
+  | { readonly type: 'inbound_email'; readonly id: string };
 
 export type ObjType = Obj['type'];
 
@@ -508,6 +515,17 @@ const RULES: RuleTable = {
   'client_step.read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
   'internal_note.read': { ADMIN: always, SALES: always },
   'internal_note.write': { ADMIN: always, SALES: always },
+  /*
+   * PHASE 142 — THE THREAD WITH THE CLIENT. Admin and Sales, who work the client, and the client on its own company. The
+   * TEAM thread is `internal_note.*` above, and the client is on neither of its rows. THE SURVEYOR IS ON NO ROW OF EITHER
+   * THREAD: whether a surveyor should see one is Lakhbir's question ("Should the surveyor see a client's chat?"), and until
+   * it is answered the answer is no. Accounting is not on them either: its view is invoices, settled 6 September 2026.
+   * A REPLY BY EMAIL waits for Admin or Sales, who read the queue and file what the mailbox reader could not.
+   */
+  'client_message.read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
+  'client_message.write': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
+  'inbound_email.read': { ADMIN: always, SALES: always },
+  'inbound_email.file': { ADMIN: always, SALES: always },
 
   /* --- Caprebate's own finance --- */
   'invoice.read': { ADMIN: always, ACCOUNTING: always },
@@ -997,6 +1015,10 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'client_step.read': NO('the client\'s own view of what we told them; the checks behind it carry register values, decided conservatively'),
   'internal_note.read': NO('free text staff write for each other can carry a figure or a remark about a person; decided conservatively'),
   'internal_note.write': NO(WRITES),
+  'client_message.read': NO('what a client writes to us can carry a figure or a remark about a person; decided conservatively, as the team thread is'),
+  'client_message.write': NO(WRITES),
+  'inbound_email.read': NO('an email a client sent us, before it is filed; decided conservatively, as the team thread is'),
+  'inbound_email.file': NO(WRITES),
   'invoice.read': NO('our fee is a percentage of the allowances identified, so a fee reveals the claim value'),
   'invoice.write': NO(WRITES),
   'invoice.raise': NO(WRITES),

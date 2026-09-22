@@ -690,6 +690,14 @@ should — **it is unticked, so the client cannot see it unless you tick it**. Y
 the client see it** or **Hide it from the client**. There is no **Documents** menu any more: to look across every client,
 open **Search** and press **Find a document across every client** (`B44`). Training: `B47`.
 
+**7b. Chat — with your team, and with the client (Phase 142).** On a client's page, open **Chat**. It has two tabs.
+**Team only** is for you and your colleagues: the client never sees it (it is where the internal notes always were, and
+every old note is in it). **With the client** is the conversation the client sees in their portal, under **Messages**. A
+number on a tab is how many messages you have not read. Type in the box, choose **About which claim?** if it is about
+one, and press **Send to the team** or **Send to the client**. When a client sends a file with a message it is saved in
+their **Files**, under **From the client**, with a link back to the message. A client who has waited more than one
+working day for a reply is a red tile on **Home**. Training: `B49`.
+
 **8. Introducers, referrals and sharing progress.** **Introducers** (Address: `/staff/introducers`) lists
 the firms that refer clients. None of their people ever has a login.
 - **Record a referral** takes the firm, the person referring, and the client business's name and basics. It creates a lead with the firm as its introducer.
@@ -1062,8 +1070,9 @@ a label saying where it stands: **Not started**, **Working on it**, **Waiting fo
     Once asked, it says **Asked — waiting**.
   - **Coming from** — where the facts in this box come from: Companies House, the EPC register, HM Land Registry, the
     care regulator, the client, the surveyor.
-- **The boxes, top to bottom:** Claims · Questions for the client · Messages and activity (tasks, the timeline and the
-  internal notes) · The company · Contacts (one card each) · Properties · Lookups · What the client told us · Documents.
+- **The boxes, top to bottom:** Claims · Check and tell the client · Questions for the client · **Chat** (Phase 142: two
+  tabs, **Team only** — the internal notes — and **With the client**; see `B49`) · Activity (tasks and the timeline) ·
+  The company · Contacts (one card each) · Properties · Lookups · What the client told us · Files.
 - **Make the page yours.** At the foot of each box: **keep this open for me** or **keep this closed for me**. The page
   remembers it for you on any computer; nobody else's page changes. **Let the page decide** puts it back.
 - **What went, and where:** the "Waiting on" box on the right (who we are waiting on is at the top of the page, and the
@@ -1120,8 +1129,9 @@ Contacts, Properties, Documents and Details — and not the research or the note
   annexe** (Enquiry, CR-2026-0008); the tabs read Still missing 16 and Research 12.
 - Press **outpatient annexe**. *Observed:* "Elverton Private Hospital Limited › outpatient annexe" at the top, the
   heading is the company's name, and "Claim on outpatient annexe, Nowhere Town CR-2026-0008" under it.
-- Back on the company, add a note, choose the annexe under **About which claim?** and press **Save note**. *Observed:*
-  "Note saved. The client cannot see it." and the note's **About** reads "outpatient annexe CR-2026-0008".
+- Back on the company, open **Chat** → **Team only**, write a message, choose the annexe under **About which claim?** and
+  press **Send to the team**. *Observed (Phase 142):* "Saved. Only your team can see it." and the message reads "About
+  outpatient annexe (CR-2026-0008)".
 
 **Check yourself**
 - *Where do you find everything said to a company with three claims?* — On its one page, under **Timeline**.
@@ -2566,7 +2576,7 @@ The sending is built; it is switched off until then. An email saved while it is 
 **Try it on the demo**
 As Sales, open Dunmarrow Medical Practice Limited and press **Email**. Choose a contact, choose a claim, type "Your
 survey date" and a message, and press **Save the email** → "Saved — emails are not being sent yet." Open the company's
-**Messages and activity** → "An email to … : “Your survey date” — saved, not sent", marked with the claim. Now type "our
+**Activity** → "An email to … : “Your survey date” — saved, not sent", marked with the claim. Now type "our
 sort code is 12-34-56" in a message → **Not saved**, and your words are still there. Open Fenmoor Nursing Homes
 Limited's **Email** page → "You cannot email this company." As Admin, open **Admin settings** → **Who emails come from**.
 
@@ -2577,7 +2587,73 @@ Limited's **Email** page → "You cannot email this company." As Admin, open **A
 
 ---
 
+### Training — `B49` chat with your team and with the client
+
+**What it is for**
+Talking about a client in one place: to each other, where the client never sees it, and to the client, who reads and
+answers in their portal and can send a file with a message.
+
+**Who can open it**
+Admin and Sales, on the client's page, under **Chat**. The client sees only **With the client**, as **Messages** in their
+portal. Accounting, a surveyor and the view-only login see neither tab. (Whether a surveyor should see a chat is Lakhbir's
+question — *"Should the surveyor see a client's chat?"* — and until he answers, they do not.)
+
+Address: `/staff/clients/{company}#chat` — **Team only** is `?chat=team`, **With the client** is `?chat=client`. Email
+replies we could not match: `/staff/replies`.
+
+**How to do the common job**
+1. Open the client and press **Chat**. If the client has written something you have not read, it opens on **With the
+   client**; otherwise on **Team only**. A number on a tab is how many messages you have not read.
+2. **Team only**: read the yellow line — *"Only your team sees this. The client never does."* Type under **Write to your
+   team**, pick **About which claim?** if it is about one, and press **Send to the team**. Old notes are here, with who
+   wrote them and when.
+3. **With the client**: type under **Write to {company}**, pick the claim if it is about one, and press **Send to the
+   client** → "Sent. The client will see it in their portal." We do not email them about it yet.
+4. A file the client sent shows under their message. Press it to open the file's page. It is also in **Files**, under
+   **From the client**, with **See the message it came with**.
+5. **Home** shows a red tile when a client has waited more than one working day for a reply: *"A message waiting for a
+   reply · Waiting 2 working days"*. Press it, answer, and the tile goes.
+
+**Email replies (switched off until the mailbox exists)**
+When a client replies to an email we sent from contactus@caprebate.com, the reply will appear on **With the client** as
+*"{contact}, by email"*, and on the timeline as *"A reply from {contact}"*. If the email came with a file, the message
+says so: choose **What is it?** beside each file and press **Save to Files**. A reply we cannot match to a company —
+it does not answer one of our emails, or it comes from someone who is not one of that company's contacts — waits on
+**Email replies to sort** (a red tile on Home): read it, choose **Which company is it from?**, and press **File it**. We
+never guess a company from the sender's address alone. A reply from a company marked do not contact is kept, and nothing
+is sent back.
+
+**What it will refuse, and why**
+- An empty message: "Write a message first."
+- A message over 8,000 characters: "That message is too long. The most is 8,000 characters."
+- A claim of another company: "Choose one of this company’s claims."
+- Writing to a company marked do not contact: "You cannot write to this company." — "This company asked us not to contact them. Nothing was sent." (The client can still write to us.)
+- In the portal, a file with no **What is the file?**: "Choose what the file is." — and what they typed is kept.
+- A client typing the address of any message that is not on their own chat — including a team message — gets "We cannot find that message".
+- Nobody can change or delete a message, in either tab.
+
+**Try it on the demo**
+Sign in as client@example.invalid, press **Messages**, type "When will you visit?" and press **Send**. Sign in as Sales:
+open Corvale Supported Living Limited → **Chat**. It opens on **With the client**, with a **1** on the tab. Reply "Next
+Tuesday at ten" → **Send to the client**. Press **Team only**, write "Check clause 4 of their lease" → **Send to the
+team**. Back as the client, **Messages** shows a **1**; open it: your reply is there, and the team message is not.
+
+**Check yourself**
+- *Can the client ever see Team only?* — No. It is kept in a different place that the portal never reads.
+- *Where did the internal notes go?* — Nowhere. They are the Team only chat.
+- *A client sent a lease with a message. Where is it?* — In their **Files**, under **From the client**, and on the message.
+- *A client wrote on Friday afternoon. When does it turn red on Home?* — On Tuesday: after more than one working day.
+
+---
+
 ### Training — `C6` the portal's CRM additions
+
+**Phase 142, 22 September 2026 — "Messages".** The portal has a second tab, **Messages**, with a number when we have
+written something the client has not read. At the top of the portal the first button is now **Send us a message**. On
+**Messages** the client reads what we wrote and writes back; they can choose which claim it is about, and send one file
+with it — they say **What is the file?** — which is saved in their documents. Nobody else can read it. They never see our
+team's own chat. *On the demo:* as client@example.invalid press **Messages**, type "When will you visit?" and press
+**Send** → "Sent. We will reply here." As Sales, open Corvale → **Chat** → **With the client**; the message is there.
 
 **Phase 139, 21 September 2026 — "What Cap Rebate has done".** Under **Your claims** the client now sees a card
 listing each step we have told them about, with the date: "✓ Cap Rebate has checked your company details — 21 Sep 2026".

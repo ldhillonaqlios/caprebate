@@ -28,6 +28,7 @@
  * every login's exact menu and every address's answer, so neither a menu nor a permission can drift unseen.
  */
 
+import { unreadCount } from './messages.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { Db } from '../db.ts';
 import { NotAuthorised, type Actor } from '../authz.ts';
@@ -301,9 +302,16 @@ export function portalShell(actor: Actor): Shell {
   const ctx = navContext.getStore();
   const name = displayName(ctx?.db, actor);
   const current = ctx?.path === '/portal' || (ctx?.path ?? '').startsWith('/portal/claims/');
+  // PHASE 142: MESSAGES, with how many of ours the client has not read. Only for the client, on their own company.
+  const onMessages = ctx?.path === '/portal/messages' || (ctx?.path ?? '').startsWith('/portal/messages/');
+  const unread = ctx?.db !== undefined && actor.role === 'CLIENT' && actor.business_id !== null && !onMessages
+    ? unreadCount(ctx.db, actor, actor.business_id, 'CLIENT') : 0;
+  const messages = h`<a href="/portal/messages"${onMessages ? raw(' aria-current="page"') : raw('')}>Messages${
+    unread > 0 ? h` <span class="tabcount" aria-label="${unread} not read">${unread}</span>` : raw('')}</a>`;
   const html = h`<div class="util"><a class="helplink" href="/portal/help">Help</a>${userMenu(name, actor, '/portal/settings')}</div>
     <nav class="appnav portalnav" aria-label="Sections"><ul class="tabs-main"><li>${current
-      ? h`<a href="/portal" aria-current="page">Your claims</a>` : h`<a href="/portal">Your claims</a>`}</li></ul></nav>`;
+      ? h`<a href="/portal" aria-current="page">Your claims</a>` : h`<a href="/portal">Your claims</a>`}</li>${
+      actor.role === 'CLIENT' ? h`<li>${messages}</li>` : raw('')}</ul></nav>`;
   return new Shell(html.html, '/portal');
 }
 
@@ -323,6 +331,8 @@ export const HELP_SCREENS: readonly (readonly [prefix: string, code: string])[] 
   ['/staff/templates', 'B26'], ['/staff/document-types', 'B29'], ['/staff/documents', 'B44'], ['/staff/introducer-rewards', 'B32'],
   ['/staff/introducers', 'B30'], ['/staff/compliance', 'B33'], ['/staff/dashboard', 'B40'], ['/staff/reports', 'B40'], ['/staff/search', 'B41'],
   ['/staff/admin-settings', 'B43'], ['/staff/audit', 'B45'], ['/staff/admin', 'B46'],
+  // PHASE 142: email replies to sort are part of the chat's training section.
+  ['/staff/replies', 'B49'],
 ]);
 
 export function helpScreenFor(path: string): string {
