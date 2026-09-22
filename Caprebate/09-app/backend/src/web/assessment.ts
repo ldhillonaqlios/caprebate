@@ -9,6 +9,13 @@
  * character it stands for is used, because this file escapes on output. That
  * is the only difference, and it renders identically.
  *
+ * PHASE 144a, 22 September 2026 — PLAIN WORDS, CHANGED IN BOTH PLACES AT ONCE.
+ * Three help lines (Q1, Q1a and the cosmetic-work note) were split into shorter
+ * sentences, the same words in this file and in the site's renderer; nothing
+ * they say changed. Q1's question itself is NOT changed: its wording could
+ * change what a client answers, so a plainer version is with the tax adviser
+ * in FOR THE ACCOUNTANT first. The plain-words check now reads this file.
+ *
  * WHAT IS DIFFERENT, AND WHY IT HAD TO BE
  *
  * The site keeps the funnel state in a JavaScript variable and redraws with
@@ -48,12 +55,12 @@ export const SCREENS: Readonly<Record<ScreenId, {
   Q1: {
     group: 'About any earlier claim',
     heading: 'Have you already made a capital allowances claim on the fixtures in this building — the plant, wiring, heating and similar?',
-    help: 'We mean the fixed things in the fabric of the building. Not equipment you bought and could take with you, and not ordinary repairs — those are different claims, and having made them doesn’t affect this one.',
+    help: 'We mean the fixed things in the fabric of the building. Not equipment you bought and could take with you. Not ordinary repairs either. Those are different claims, and having made them doesn’t affect this one.',
   },
   Q1a: {
     group: 'About any earlier claim',
     heading: 'Do you know whether a previous owner ever claimed on them?',
-    help: 'Most people don’t, and that’s fine — it doesn’t stop a claim. It’s often the opposite: for purchases since April 2014, a seller who claimed is usually what makes your own claim possible.',
+    help: 'Most people don’t, and that’s fine — it doesn’t stop a claim. Often it’s the opposite. For purchases since April 2014, a seller who claimed is usually what makes your own claim possible.',
   },
   Q1b: {
     group: 'Your tax position',
@@ -107,7 +114,7 @@ export const OPTIONS = Object.freeze({
  * because it tells the client something AGAINST our own interest.
  */
 export const COSMETIC_NOTE =
-  'Worth knowing: cosmetic work is usually a repair rather than a capital improvement. ' +
+  'Worth knowing: cosmetic work usually counts as a repair. A repair is not a capital improvement. ' +
   'That is often better for you — it comes off your tax bill straight away — but it is a ' +
   'different claim from this one.';
 

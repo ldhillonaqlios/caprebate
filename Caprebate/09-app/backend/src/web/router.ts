@@ -1472,7 +1472,7 @@ function portalPage(
             <li class="${s.state}"><span class="lab">${stepName(s.stage, named)}</span><br>
             <span class="say">${s.stage.toTheClient}</span></li>`)}</ul></details>`
         : h`<div class="flag">We cannot show where this claim is right now, and we will not guess.
-            Ask us and we will tell you. <span class="help">(Step: <code>${business.stage}</code>)</span></div>`}
+            Ask us and we will tell you. <span class="help">${P.stageInWords(business.stage)}</span></div>`}
       </section>
 
       <section class="card"><div class="card-h"><h2>What we have issued to you</h2></div>

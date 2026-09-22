@@ -599,8 +599,8 @@ function propertyPage(
   const events = x.timeline?.events.length ?? 0;
   return page({
     title: `${v.business.name} — ${propertyIn(v.business.name, v.label) ?? v.label}`, nav: d.nav(actor), wide: true,
-    body: h`${breadcrumb([{ label: v.business.name, href: v.business.linkable ? `/staff/clients/${v.business.id}` : null }, { label: v.label }])}${done(msg)}
-      ${highlights('Property', v.label, [
+    body: h`${breadcrumb([{ label: v.business.name, href: v.business.linkable ? `/staff/clients/${v.business.id}` : null }, { label: propertyIn(v.business.name, v.label) ?? v.label }])}${done(msg)}
+      ${highlights('Property', propertyIn(v.business.name, v.label) ?? v.label, [
         { label: 'Company', value: v.business.linkable ? h`<a href="/staff/clients/${v.business.id}">${v.business.name}</a>` : v.business.name },
         { label: 'Postcode', value: orNot(v.postcode) },
         { label: 'Jurisdiction', value: v.jurisdiction.label },

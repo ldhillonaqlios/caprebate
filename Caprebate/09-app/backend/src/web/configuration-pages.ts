@@ -194,9 +194,9 @@ function settingsPage(d: ConfigPageDeps, actor: Actor, v: CF.ConfigurationView, 
     { id: 'may-not-change', label: 'What a setting may not change', body: h`
         <p class="help">Each of these is a rule, not a preference. If you ask to change one, the system says no, gives the reason below and
         records that you asked. Asking changes nothing.</p>
-        <table><tbody>${v.forbidden.map((f) => h`<tr><th><code>${f.key}</code></th><td>${f.why}</td></tr>`)}</tbody></table>
+        <table><tbody>${v.forbidden.map((f) => h`<tr><th>${f.label}</th><td>${f.why}</td></tr>`)}</tbody></table>
         ${v.may_write ? h`<form method="post" action="/staff/admin-settings/setting">
-          <label>Ask to change one anyway <select name="setting">${v.forbidden.map((f) => h`<option value="${f.key}">${f.key}</option>`)}</select></label>
+          <label>Ask to change one anyway <select name="setting">${v.forbidden.map((f) => h`<option value="${f.key}">${f.label}</option>`)}</select></label>
           <button type="submit">Ask</button></form>` : raw('')}
       ` },
   ];

@@ -274,7 +274,7 @@ describe('stage entered and owner changed', () => {
       assert.equal(fwd(app, sales, v, 'VALUATION').ok, true);
       assert.deepEqual(automated(v).map((t) => t.title), [
         'Prepare the client report and the accountant report',
-        "Prepare the valuation under the surveyor's measured record, every rate sourced",
+        "Prepare the valuation from the surveyor's measured record, with a source for every rate",
       ]);
       assert.ok(automated(v).every((t) => t.owner_role === 'SALES'), 'a claim with no owner put its task on nobody');
 

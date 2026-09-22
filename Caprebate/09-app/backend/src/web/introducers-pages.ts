@@ -436,9 +436,10 @@ function rewardPage(d: IntroducerPageDeps, actor: Actor, v: I.RewardView, msg: s
     body: h`<h1>The introducer reward model</h1>${saved(msg)}
       <p>It is <strong>${v.model.label}</strong>${v.fee === null ? raw('') : h`, at ${v.fee} per successful claim`}.
         ${v.changed === null ? h`<span class="help">It has never been changed.</span>` : h`<span class="help">Last changed ${v.changed}.</span>`}</p>
-      <div class="gate"><strong>Both models are built, and both start off.</strong> Our referral network paper says: no cash to accountants.
+      <div class="gate"><strong>Three models are built. The reward starts as Off.</strong> Our referral network paper says: no cash to accountants.
         That is model A, where we give the firm something back. Model B is a fixed fee for each successful claim. It is paid
-        to the firm, never to a person. Nothing is paid until we record that the client was told about it. Which, if either,
+        to the firm, never to a person. Model C is a share of the fee we invoice. It is paid to a registered accountancy
+        firm that referred the claim. Nothing is paid until we record that the client was told about it. Which one, if any,
         is for Lakhbir to decide: “${v.question}”</div>
       ${v.clause_one_blanks.length === 0 ? h`<p class="help">Clause 1 of the engagement letter has no blank left.</p>`
         : h`<p><strong>This cannot be switched on while clause 1 of the engagement letter is blank.</strong> It still reads:</p>

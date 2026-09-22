@@ -4721,14 +4721,14 @@ var CB_FRONTDOOR = (function(){
 
     { id:"F1", type:"choice",
       ask:"Have you already made a capital allowances claim on the fixtures in this building — the plant, wiring, heating and similar?",
-      help:"We mean the fixed things in the fabric of the building. Not equipment you bought and could take with you, and not ordinary repairs — those are different claims and having made them does not affect this one.",
+      help:"We mean the fixed things in the fabric of the building. Not equipment you bought and could take with you. Not ordinary repairs either. Those are different claims, and having made them does not affect this one.",
       options:["yes","no","not sure"],
       gates:true, derived:null,
       onSet:function(s,v){ s.own_prior_claim = v; } },
 
     { id:"F1b", type:"choice",
       ask:"Do you know whether a previous owner ever claimed on them?",
-      help:"Most people don't, and that is fine — it does not stop a claim. It is often the opposite: for purchases since April 2014 a seller who claimed is usually what makes your own claim possible.",
+      help:"Most people don't, and that is fine — it does not stop a claim. Often it is the opposite. For purchases since April 2014, a seller who claimed is usually what makes your own claim possible.",
       options:["yes","no","don't know"],
       gates:false, derived:null,
       onSet:function(s,v){

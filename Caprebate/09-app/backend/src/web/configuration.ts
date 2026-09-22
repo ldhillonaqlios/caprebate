@@ -93,6 +93,45 @@ export const FORBIDDEN_SETTINGS: Readonly<Record<string, string>> = Object.freez
   RECIPROCITY_KINDS: 'The three things we give back to a firm under reward model A are fixed. They are only for tasks on a firm, and are not task types.',
 });
 
+/**
+ * PHASE 144a — THE NAME A PERSON READS FOR EACH OF THOSE SETTINGS. The key (STAGE_GATE:INVOICE, FEE_TRIGGER …) is
+ * still the value a form posts and the store records; the screen shows this label instead of the key.
+ */
+const SETTING_LABELS: Readonly<Record<string, string>> = Object.freeze({
+  STAGE_LIST: 'The ten steps of a claim',
+  FREE_REGISTER_GATE: 'Turning on free lookups',
+  PAID_REGISTER_GATE: 'Turning on paid lookups',
+  REWARD_MODEL: 'The introducer reward model',
+  FEE_CLAWBACK: 'Taking back a fee (clause 13)',
+  FEE_TRIGGER: 'When our fee is earned',
+  AML_IN_SCOPE: 'Money laundering checks',
+  CLIENT_SHARE_GIVE: 'Clients agreeing to share progress',
+  REFERRAL_FORM: 'The public referral form',
+  INVOICE_FRAUD_PROCEDURE: 'Sending invoices by email',
+  QUOTE_GAP_REVIEW_PCT: 'The 15% level for checking quotes',
+  RETENTION_PARAMETERS: 'How long we keep data',
+  ROLE_BOUNDARY: 'Staff roles and what each can do',
+  DOCUMENT_TYPE_RECEIPT_POLICY: 'Keeping a file or deleting it, for each document type',
+  DOCUMENT_TYPE_CARRIES_VALUE_UNSET: 'Document types that can hold a value',
+  FACT_KEYS: 'The facts we hold about a claim',
+  CAPTURE_SOURCES: 'The ways we take in information',
+  PAYER_CLASSES: 'The payer types in Rulebook F',
+  RECIPROCITY_KINDS: 'What we give back to a firm',
+});
+const FEE_CONTROL_LABELS: Readonly<Record<string, string>> = Object.freeze({
+  above_benefit: 'Fee rule: when our fee is more than the tax saved',
+  break_and_abort: 'Fee rule: a claim that is stopped part way',
+});
+
+/** The plain name of a setting no screen may move. Never the key itself, unless a new key has no label yet. */
+export function settingLabel(key: string): string {
+  const [kind, rest] = key.includes(':') ? [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)] : [key, ''];
+  if (kind === 'STAGE_GATE') return `The check at the step "${anyStageLabel(rest)}"`;
+  if (kind === 'CTA_SWITCH') return `Tax adviser’s switch: ${rest.replace(/_/g, ' ')}`;
+  if (kind === 'FEE_CONTROL') return FEE_CONTROL_LABELS[rest] ?? `Fee rule: ${rest.replace(/_/g, ' ')}`;
+  return SETTING_LABELS[key] ?? key.toLowerCase().replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+}
+
 /** Lists a person might ask for that are not configurable, each with the reason. */
 const NOT_A_LIST: Readonly<Record<string, string>> = Object.freeze({
   STAGE: FORBIDDEN_SETTINGS['STAGE_LIST'] ?? '',
@@ -140,7 +179,7 @@ export type ConfigurationView = {
   readonly templates?: { readonly count: number };
   readonly finance?: SettingsView['current'];
   readonly compliance?: readonly SettingReading[];
-  readonly forbidden: readonly { readonly key: string; readonly why: string }[];
+  readonly forbidden: readonly { readonly key: string; readonly label: string; readonly why: string }[];
   readonly may_write: boolean;
 };
 
@@ -167,7 +206,7 @@ export function configurationView(db: Db, actor: Actor, today: string): Configur
     ...(canTemplates ? { templates: { count: templatesPage(db, actor).templates.length } } : {}),
     ...(canFinance ? { finance: settingsView(db, actor, today).current } : {}),
     ...(canCompliance ? { compliance: [settingReading(db, 'AML_IN_SCOPE', today), settingReading(db, 'INSURANCE_POSITION', today)] } : {}),
-    forbidden: Object.entries(FORBIDDEN_SETTINGS).map(([key, why]) => ({ key, why })),
+    forbidden: Object.entries(FORBIDDEN_SETTINGS).map(([key, why]) => ({ key, label: settingLabel(key), why })),
     may_write: can(actor, 'configuration.write', OBJ),
   };
 }

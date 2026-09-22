@@ -812,4 +812,4 @@ export function searchPerson(d: ComplianceDeps, actor: Actor, term: string): Sea
 }
 
 export const S2_NOTE =
-  'This search does not reach inside a document. A person printed on one is in S2, the identity store — searched separately, where every search is logged.';
+  'This search does not look inside documents. A person printed on a document is kept in People named on documents. It has its own search, and every search there is logged.';

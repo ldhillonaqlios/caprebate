@@ -5974,14 +5974,14 @@ var CB_FRONTDOOR = (function(){
 
     { id:"F1", type:"choice",
       ask:"Have you already made a capital allowances claim on the fixtures in this building — the plant, wiring, heating and similar?",
-      help:"We mean the fixed things in the fabric of the building. Not equipment you bought and could take with you, and not ordinary repairs — those are different claims and having made them does not affect this one.",
+      help:"We mean the fixed things in the fabric of the building. Not equipment you bought and could take with you. Not ordinary repairs either. Those are different claims, and having made them does not affect this one.",
       options:["yes","no","not sure"],
       gates:true, derived:null,
       onSet:function(s,v){ s.own_prior_claim = v; } },
 
     { id:"F1b", type:"choice",
       ask:"Do you know whether a previous owner ever claimed on them?",
-      help:"Most people don't, and that is fine — it does not stop a claim. It is often the opposite: for purchases since April 2014 a seller who claimed is usually what makes your own claim possible.",
+      help:"Most people don't, and that is fine — it does not stop a claim. Often it is the opposite. For purchases since April 2014, a seller who claimed is usually what makes your own claim possible.",
       options:["yes","no","don't know"],
       gates:false, derived:null,
       onSet:function(s,v){
@@ -14103,7 +14103,7 @@ var FN = (function(){
   function screenQ1(){
     return '<div class="group">About any earlier claim</div>'
       + '<h2>Have you already made a capital allowances claim on the fixtures in this building &mdash; the plant, wiring, heating and similar?</h2>'
-      + '<p class="help">We mean the fixed things in the fabric of the building. Not equipment you bought and could take with you, and not ordinary repairs &mdash; those are different claims, and having made them doesn\u2019t affect this one.</p>'
+      + '<p class="help">We mean the fixed things in the fabric of the building. Not equipment you bought and could take with you. Not ordinary repairs either. Those are different claims, and having made them doesn\u2019t affect this one.</p>'
       + ["yes","no","not sure"].map(function(v){
           return opt(v, v==="yes"?"Yes":v==="no"?"No":"Not sure",
             S.own_prior_claim===v, "FN.set('own_prior_claim','"+v+"')"); }).join("");
@@ -14112,7 +14112,7 @@ var FN = (function(){
   function screenQ1a(){
     return '<div class="group">About any earlier claim</div>'
       + '<h2>Do you know whether a previous owner ever claimed on them?</h2>'
-      + '<p class="help">Most people don\u2019t, and that\u2019s fine &mdash; it doesn\u2019t stop a claim. It\u2019s often the opposite: for purchases since April 2014, a seller who claimed is usually what makes your own claim possible.</p>'
+      + '<p class="help">Most people don\u2019t, and that\u2019s fine &mdash; it doesn\u2019t stop a claim. Often it\u2019s the opposite. For purchases since April 2014, a seller who claimed is usually what makes your own claim possible.</p>'
       + [["yes","Yes"],["no","No"],["dont_know","Don\u2019t know"]].map(function(o){
           return opt(o[0], o[1], S.previous_owner_claimed===o[0],
             "FN.set('previous_owner_claimed','"+o[0]+"')"); }).join("");
@@ -14245,7 +14245,7 @@ var FN = (function(){
               + '<label class="ck"><input type="checkbox" '+(p.works_year_unknown?"checked":"")
               + ' onchange="FN.setProp('+i+',\'works_year_unknown\',this.checked)"> I don\u2019t know</label>';
             if(p.works_type === "cosmetic")
-              h += '<p class="help"><strong>Worth knowing:</strong> cosmetic work is usually a repair rather than a capital improvement. That is often <em>better</em> for you &mdash; it comes off your tax bill straight away &mdash; but it is a different claim from this one.</p>';
+              h += '<p class="help"><strong>Worth knowing:</strong> cosmetic work usually counts as a repair. A repair is not a capital improvement. That is often <em>better</em> for you &mdash; it comes off your tax bill straight away &mdash; but it is a different claim from this one.</p>';
           }
           return h + '</div>'; }).join("");
   }

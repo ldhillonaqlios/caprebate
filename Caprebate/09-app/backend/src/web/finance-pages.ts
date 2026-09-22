@@ -433,12 +433,27 @@ function comparisonBlock(c: F.FeeVersusBenefit, fee: string): Safe {
 
       <div class="gate"><strong>What we tell every client, whatever this client’s figures show:</strong> ${c.disclosure}</div>
 
-      <div class="gate"><strong>The fee above is not changed by any of this.</strong>
+      ${feeSwitchesBox(c.switches, c.amount_untouched)}`;
+}
+
+/**
+ * PHASE 144a — THE FEE-CAP BOX READS THE TWO SWITCHES. It said "both are off" in fixed words whatever the switches
+ * said; now each sentence is chosen by the switch it describes, so the words cannot disagree with the brackets.
+ */
+export function feeSwitchesBox(s: { readonly cap: boolean; readonly warn: boolean }, untouched: boolean): Safe {
+  const state = s.cap && s.warn ? h`<strong>both are on</strong>`
+    : s.cap ? h`<strong>the cap is on and the warning is off</strong>`
+    : s.warn ? h`<strong>the warning is on and the cap is off</strong>`
+    : h`<strong>both are off</strong>`;
+  const head = untouched ? h`<strong>The fee above is not changed by any of this.</strong>`
+    : h`<strong>The fee above is not the plain rate. A fee switch has changed it.</strong>`;
+  const fee = untouched ? h`We show the comparison, but the fee is the plain rate, and this screen does not change it.`
+    : h`We show the comparison. This screen does not change the fee itself.`;
+  return h`<div class="gate">${head}
         We could cap the fee at the client’s first-year saving, or add a warning for this client.
-        Each can be switched on, and <strong>both are off</strong>
-        (cap: ${c.switches.cap ? 'on' : 'off'}; warning: ${c.switches.warn ? 'on' : 'off'}).
-        We show the comparison, but the fee is the plain rate, and this screen does not
-        change it. Turning either on is a business decision for Lakhbir, not this screen.</div>`;
+        Each can be switched on, and ${state}
+        (cap: ${s.cap ? 'on' : 'off'}; warning: ${s.warn ? 'on' : 'off'}).
+        ${fee} Turning either on or off is a business decision for Lakhbir, not this screen.</div>`;
 }
 
 /* ------------------------------------------------------------------ *

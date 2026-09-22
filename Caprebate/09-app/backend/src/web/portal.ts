@@ -22,7 +22,6 @@ import { BOOKING } from './engine.ts';
 import { localWhen } from './localtime.ts';
 import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES, isBookable } from './schedule.ts';
 import { claimStage, clientStageFor, progressFor, type Progress } from './stages.ts';
-import { eventsFor } from './uploads.ts';
 import { RECEIVED_ONLY_BY_UPLOAD, requestsFor, versionObj, type RequestView } from './documents.ts';
 
 export type Business = {
@@ -342,10 +341,17 @@ export function document(db: Db, actor: Actor, doc_id: string): DocumentView {
   return row;
 }
 
-/** The RECEIPT_CONTRACT trace for one document, authorised the same way. */
-export function documentTrace(db: Db, actor: Actor, doc_id: string): ReturnType<typeof eventsFor> {
-  document(db, actor, doc_id);
-  return eventsFor(db, doc_id);
+/**
+ * PHASE 144a — THE STEP IN WORDS, where the portal cannot place a claim. It showed the stored step code in a code
+ * box; a client reads a sentence instead, and never the code.
+ */
+export function stageInWords(key: string | null): string {
+  if (key === null || key.trim() === '') return 'No step is recorded yet.';
+  const r = claimStage(key);
+  if (r.kind === 'EXIT') return 'Our records show the claim has stopped.';
+  if (r.kind === 'ON_HOLD') return 'Our records show the claim is on hold.';
+  if (r.kind === 'UNKNOWN') return 'Our records show a step we do not recognise.';
+  return `Our records show the step “${r.label}”.`;
 }
 
 /* ============================================================================ *

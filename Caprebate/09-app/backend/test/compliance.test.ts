@@ -381,7 +381,7 @@ describe('THE RIGHTS-REQUEST REGISTER — the pack’s four worked computations,
       const firmHits = R.searchPerson(d, ADMIN, 'pat partner').hits;
       assert.ok(firmHits.some((h) => h.how === 'at an introducing firm'), JSON.stringify(firmHits));
       assert.ok(firm.length > 0);
-      assert.ok(R.searchPerson(d, ADMIN, 'nobody-here').s2_note.includes('S2'));
+      assert.ok(R.searchPerson(d, ADMIN, 'nobody-here').s2_note.includes('People named on documents'));
       const line = a.audit.entries().filter((e) => e.kind === 'RIGHTS_SEARCH_RUN').at(-1);
       assert.ok(line !== undefined && !JSON.stringify(line.detail).toLowerCase().includes('robin'), 'the audit line never carries the term');
     } finally { a.close(); }

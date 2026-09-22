@@ -65,7 +65,7 @@ function done(msg: string | undefined): Safe {
 function subnav(): Safe {
   return h`<p><a href="/staff/compliance">Compliance</a> · <a href="/staff/compliance/aml">Due diligence</a> ·
     <a href="/staff/compliance/rights">Rights requests</a> · <a href="/staff/compliance/complaints">Complaints</a> ·
-    <a href="/staff/compliance/breaches">Breaches</a> · <a href="/staff/compliance/identity">S2 — identity store</a> ·
+    <a href="/staff/compliance/breaches">Breaches</a> · <a href="/staff/compliance/identity">People named on documents</a> ·
     <a href="/staff/compliance/retention">Retention</a></p>`;
 }
 
@@ -255,7 +255,7 @@ export function searchPage(nav: Nav, term: string, s: SearchResult): string {
   return page({
     title: 'Search for a person', nav, wide: true,
     body: h`<h1>Search: ${term}</h1>${subnav()}
-      <p class="help">Searched: ${s.scope.join('; ')}.</p><p class="flag">${s.s2_note} <a href="/staff/compliance/identity">Search S2</a>.</p>
+      <p class="help">Searched: ${s.scope.join('; ')}.</p><p class="flag">${s.s2_note} <a href="/staff/compliance/identity">Search the names</a>.</p>
       ${s.hits.length === 0 ? h`<p>Nothing found in the stores above.</p>` : h`<table><thead><tr><th>Store</th><th>How</th><th>What</th></tr></thead><tbody>
         ${s.hits.map((x) => h`<tr><td>${x.store}</td><td>${x.how}</td><td>${x.link === null ? x.label : h`<a href="${x.link}">${x.label}</a>`}</td></tr>`)}</tbody></table>`}`,
   });
@@ -386,14 +386,14 @@ export function icoSheetPage(nav: Nav, ref: string, sections: readonly SheetSect
 
 export function identityPage(nav: Nav, counts: { people: number; route_a: number; route_b: number; notices: number; exemptions: number; searches: number }, found: readonly { person_ref: string; role: string; doc_id: string }[] | null, msg?: string): string {
   return page({
-    title: 'S2 — the identity store', nav, wide: true,
-    body: h`<h1>S2 — the identity store</h1>${subnav()}${done(msg)}${limitation()}
+    title: 'People named on documents', nav, wide: true,
+    body: h`<h1>People named on documents</h1>${subnav()}${done(msg)}${limitation()}
       <p class="flag">No list of names. Each person is opened by their reference, and every opening is logged. Every name search is logged, with the words searched.
       Never exported, never in any other search, never used for marketing.</p>
       <p>${String(counts.people)} people — ${String(counts.route_a)} with a contact detail printed, ${String(counts.route_b)} without;
       ${String(counts.notices)} notices sent; ${String(counts.exemptions)} exemptions recorded; ${String(counts.searches)} searches logged.</p>
       <ul>${S2_REFUSALS.map((r) => h`<li class="help">${r}</li>`)}</ul>
-      ${form('/staff/compliance/identity/search', 'Search S2 — logged', input('Part of a name', 'term'))}
+      ${form('/staff/compliance/identity/search', 'Search names — every search is logged', input('Part of a name', 'term'))}
       ${found === null ? raw('') : found.length === 0 ? h`<p>No match.</p>` : h`<ul>${found.map((f) => h`<li><a href="/staff/compliance/identity/${f.person_ref}">${f.person_ref}</a> — ${f.role}, document ${f.doc_id}</li>`)}</ul>`}
       ${form('/staff/compliance/identity', 'Record a person printed on a document', h`
         ${input('Document id', 'doc_id')} ${input('Name, as it appears on the document', 'name')} ${choose('Role on the document', 'role', PERSON_ROLES)}
