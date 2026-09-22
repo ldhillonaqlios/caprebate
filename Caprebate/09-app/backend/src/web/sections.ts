@@ -30,6 +30,8 @@ export const SECTION_KEYS: readonly string[] = Object.freeze([
   'client.checks', 'claim.checks',
   'property.details', 'property.claims', 'property.activity',
   'lead.details', 'lead.related', 'lead.activity',
+  // PHASE 143: grants and contributions, out of the claim's facts into a section of its own
+  'claim.grants',
 ]);
 
 /** The page shapes a person is sent back to — the client, a claim, and since Phase 139 a property and a lead. Ids only. */

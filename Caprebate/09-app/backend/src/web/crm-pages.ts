@@ -42,7 +42,7 @@ import { claimDocumentsBlock, placeDocumentsBlock } from './documents-pages.ts';
 import * as LI from './lists.ts';
 import { taskChoices, vocabulary } from './vocabularies.ts';
 import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from './lists-pages.ts';
-import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock } from './claim-record-pages.ts';
+import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock } from './claim-record-pages.ts';
 import { opens } from './navigation.ts';
 import { assertClientsSection } from './engaged.ts';
 import { badge, brandName, breadcrumb, claimHref, claimName, claimRef, claimStageBar, claimTiles, dataLink, propertyIn, fields, highlights, moreDetail, nextStepCard, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, why, type Need, type QuickAction, type SectionContext, type SectionSpec } from './components.ts';
@@ -772,7 +772,8 @@ function claimAsk(business_id: string, claim_id: string, fact_id: string, label:
 /** The claim facts a client can tell us, in the order the facts table draws them. The rest are worked out, not asked. */
 function askableFacts(p: F.FactsPanel): readonly F.FactReading[] {
   return [p.claimant_type, p.acquisition_date, p.accounting_period.start, p.accounting_period.end, p.taxable_profit.sufficient_profit,
-    p.allowance_headroom.position, p.election.exists, p.grants.exist, p.acquisition_costs.costs, p.buyer_alterations.made];
+    p.allowance_headroom.position, p.election.exists, p.acquisition_costs.costs, p.buyer_alterations.made];
+  // PHASE 143: whether anyone else paid is asked in its own section, "Grants and contributions", and not twice.
 }
 
 function claimPage(
@@ -868,6 +869,31 @@ function claimPage(
         need, from: [...new Set(['the client', ...known.filter((k) => k !== '')])], body: factsBlock(v.id, f),
       });
     }
+  }
+
+  /* PHASE 143: GRANTS AND CONTRIBUTIONS, a section of its own. The same facts panel, so Admin and Sales alone; a
+     surveyor's released list and Accounting's page never build it. Done only when the valuation check it feeds is met. */
+  if (v.facts !== undefined && !('released_to_surveyor' in v.facts)) {
+    const f = v.facts;
+    const g = f.grants;
+    const active = g.lines.filter((l) => l.withdrawn === null);
+    const unmatched = active.filter((l) => l.traced_key !== 'YES').length;
+    const answer = g.exist.known ? g.exist.value : null;
+    const askedIt = asked.has('claim_fact.GRANTS_EXIST');
+    const need = g.exist.known ? [] : [needFor('claim_fact.GRANTS_EXIST', 'Whether anyone else paid for any of this work')];
+    sections.push({
+      key: 'claim.grants', id: 'claim-grants', kind: 'facts', heading: 'Grants and contributions',
+      ...(active.length > 0 ? { count: active.length } : {}),
+      status: g.traced.met ? 'DONE' : need.length > 0 && askedIt ? 'WAITING' : 'WORKING',
+      working: g.traced.met ? (answer === 'NO' ? 'Nothing — nobody else paid for this work.' : `Nothing — every one is matched to the items it paid for.`)
+        : answer === null ? (askedIt ? 'Waiting for the client to tell us whether anyone else paid.' : 'Finding out whether anyone else paid for this work.')
+          : answer === 'NO' ? 'The answer is No, but some are still listed.'
+            : active.length === 0 ? 'Adding who paid, and how much.'
+              : `Matching ${unmatched} to the items ${unmatched === 1 ? 'it' : 'they'} paid for.`,
+      need, from: ['the client', 'the funding agreement', 'our tax adviser'],
+      body: grantsBlock(v.id, f, askedIt),
+      ...(msg === 'grants' ? { open_now: true } : {}),
+    });
   }
 
   /* PHASE 139: this claim's steps — each fact with where it came from and a tick, and "Tell the client". */

@@ -606,6 +606,42 @@ a.small{font-size:16px;font-weight:400;margin-left:.5rem}
 .chatform{max-width:44rem}
 .chatform textarea.fi{min-height:6rem;resize:vertical}
 .chatfile{border:0;margin:.4rem 0;padding:0;min-width:0}
+/* PHASE 143: grants and contributions. One question with three answers; three totals; a card per grant with who paid in
+   large type and a chip in words (never colour alone); a pop-up that asks why before a grant is removed (the popover
+   attribute, so no script); and the step-by-step form, one question per page. Brand tokens only. */
+.gask{background:var(--mist);border:1px solid var(--line);border-radius:var(--radius);padding:.8rem 1rem;margin:0 0 1rem}
+.gask h3{margin:0 0 .4rem;font-size:22px}
+.gask p{margin:.3rem 0}
+.gyesno label{display:block;margin:.4rem 0}
+.gbtns{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:.6rem 0}
+.gbtns button{min-width:6rem}
+.gtotals .stat{font-size:28px}
+.gcards{grid-template-columns:repeat(auto-fill,minmax(17rem,1fr))}
+.gcard{border-top-color:var(--warn)}
+.gcard.matched{border-top-color:var(--ok)}
+.gcard .gwho{font-family:${HEADING_STACK};font-size:22px;font-weight:700;color:var(--ink);margin:0}
+.gcard .gamt{font-size:20px;font-weight:700;margin:.1rem 0 .3rem}
+.gcard .gline{font-size:16px}
+.gchips .badge{white-space:normal;overflow-wrap:anywhere;max-width:100%}
+.gactions{margin:.5rem 0 0}
+.gpop{border:1px solid var(--ink);border-radius:var(--radius);background:var(--white);color:var(--ink);padding:1rem;max-width:min(28rem,calc(100vw - 2rem));box-shadow:var(--shadow)}
+.gpop::backdrop{background:rgba(17,17,17,.35)}
+.gpop h3{margin-top:0}
+.gpop textarea{width:100%;min-height:5rem;box-sizing:border-box}
+.gadd{margin:.4rem 0 .8rem}
+.gremoved{padding-left:1.1rem}
+.gwizard{max-width:44rem}
+.gwizard fieldset{border:0;margin:0 0 .8rem;padding:0;min-width:0}
+.gwizard legend h2,.gwizard>form>h2{margin:.2rem 0 .6rem}
+.gwizard .opts{display:grid;gap:.4rem;margin:.3rem 0 .6rem}
+.gwizard textarea{width:100%;min-height:6rem;box-sizing:border-box}
+.gsteps{display:flex;flex-wrap:wrap;gap:.3rem;list-style:none;margin:0 0 .3rem;padding:0}
+.gsteps li{flex:1 1 7rem;padding:.3rem .5rem;border-top:4px solid var(--line);font-size:14px;color:var(--body)}
+.gsteps li.done{border-top-color:var(--ok)}
+.gsteps li.now{border-top-color:var(--ink);color:var(--ink);font-weight:700}
+.geffect{font-size:18px;margin:.8rem 0}
+.gchange{margin:.4rem 0 0}
+.lede{font-size:20px;margin:-.4rem 0 1rem;color:var(--body)}
 
 /* ---------------- SMALLER SCREENS ---------------- */
 @media (max-width:960px){
@@ -673,6 +709,11 @@ a.small{font-size:16px;font-weight:400;margin-left:.5rem}
   .foldertile .tilelink{padding:.6rem .65rem}
   .foldertile .tilename{font-size:16px}
   .uploadbox select{width:100%;max-width:none}
+  /* PHASE 143: the grant cards one to a row, the totals stacked, the steps two to a row on a phone. */
+  .gcards{grid-template-columns:minmax(0,1fr)}
+  .gtotals{gap:.6rem 1.2rem}
+  .gsteps li{flex:1 1 40%}
+  .gbtns button{flex:1 1 auto}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 `;

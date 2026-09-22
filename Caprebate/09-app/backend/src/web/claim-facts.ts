@@ -479,6 +479,9 @@ export function grantsTraced(db: Db, claim_id: string): { readonly met: boolean;
 export type GrantLine = {
   readonly id: string; readonly kind: string; readonly payer: string; readonly amount: string; readonly amount_basis: string;
   readonly traced: string; readonly traced_elements: string | null; readonly source: FactSource; readonly withdrawn: string | null;
+  /* PHASE 143, 22 September 2026 — the same row's stored keys, so the grants section can total and word it. Read only;
+     nothing here is written, and the surveyor's released list never reaches this type. */
+  readonly payer_key: string; readonly amount_pence: number | null; readonly traced_key: string; readonly note: string | null;
 };
 
 export type OwnerLine = {
@@ -571,6 +574,7 @@ export function factsPanel(db: Db, actor: Actor, claim_id: string, todayIso: str
         traced: TRACED[g.traced] ?? g.traced, traced_elements: g.traced_elements,
         source: registerSource(g.source_id, false, `claim_grants row ${g.id}`, g.recorded_at, g.recorder ?? 'a former user'),
         withdrawn: g.withdrawn_at === null ? null : `withdrawn ${localStamp(g.withdrawn_at)} — ${g.withdraw_reason ?? ''}`,
+        payer_key: g.payer_class, amount_pence: g.amount_pence, traced_key: g.traced, note: g.note,
       })),
       traced: grantsTraced(db, c.id),
     },
@@ -712,6 +716,24 @@ export function recordFact(d: FactDeps, actor: Actor, claim_id: string, input: F
     object_type: 'claim', object_id: c.id, detail: { fact: key, answer, source, business: c.business_id },
   });
   return { ok: true, id };
+}
+
+/**
+ * RULEBOOK F's PUBLIC BODIES among the payer classes — F-R8: the Crown, any government, any public or local authority.
+ * Money from one of these reduces the claim on what it met, with no exception but insurance. Money from anyone else
+ * may not (F-R9, F-R10), insurance money after damage does not (F-R7), and a payer not known is not treated as either.
+ */
+export const PUBLIC_PAYERS: readonly string[] = Object.freeze(['nhs', 'local_authority', 'homes_england_gla', 'other_public']);
+
+/**
+ * PHASE 143 — the step-by-step "Add a grant" pages draw nothing a login may not record. The same authorisation
+ * recordGrant runs, asked before a step is drawn; the company's name is for the heading (the client is the company).
+ */
+export function grantFormClaim(db: Db, actor: Actor, claim_id: string): { readonly id: string; readonly business_id: string; readonly company: string } {
+  const c = loadFactClaim(db, claim_id);
+  authorise(actor, 'claim_facts.record', factsObj(db, c));
+  const b = db.get<{ name: string }>('SELECT name FROM businesses WHERE id = ?', [c.business_id]);
+  return { id: c.id, business_id: c.business_id, company: b?.name ?? 'This company' };
 }
 
 /** RECORD A GRANT OR CONTRIBUTION. A payer class, never a name; traced only with the elements written. */

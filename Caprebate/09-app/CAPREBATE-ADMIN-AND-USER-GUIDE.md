@@ -710,7 +710,7 @@ claim goes to the firm, and "never asked" counts exactly as no. Each notice that
 under **Notices to the firm**, as queued or not queued, with the reason.
 
 **9. The claim's record: facts, figures, sign-off, deliverables and aftercare.**
-- **The claim's capital allowances facts**: each fact shows where it came from. To add one, choose the **Fact**, choose **Answer** (**This value** or **Not known**), give the **Value** and **Source**, then press **Record the fact**. Grants are added with **Record the grant**; the payer is a class such as "The NHS", never a name. Previous owners are added with **Record the owner** — "a company or a role, never a person".
+- **The claim's capital allowances facts**: each fact shows where it came from. To add one, choose the **Fact**, choose **Answer** (**This value** or **Not known**), give the **Value** and **Source**, then press **Record the fact**. Previous owners are added with **Record the owner** — "a company or a role, never a person". **Grants and contributions have their own box since Phase 143** — see `B50`: one question, **Did anyone else pay for any of this work?**, then **Add a grant or contribution**, one question at a time. The payer is a class such as "The NHS", never a name.
 - **The four figures**: A the indicative estimate, B the researched estimate, C the surveyor's committed figure, D the figure the tax adviser signed. Nothing here is typed; each is read from the record that sealed it.
 - **The sign-off** is a record, not a signature. It can only be made while the claim is at the tax adviser's sign-off stage.
 - **The deliverables register** tracks the five deliverables, and **Start a draft** begins one. The system never writes a report. A client report cannot be drafted before the sign-off is on record.
@@ -1365,7 +1365,8 @@ move** (the next move stays in view; closing, holding, resuming and reopening ar
 under **Every move so far**), **The claim's facts** (its **We need** line asks the client for a missing fact about this
 claim — the answer comes back under the company's **Questions for the client**; recording a fact is under **Record a fact,
 a grant or an owner**), **Figures**, **The property**, **The team**, **Documents**, **Money**, **Aftercare** and **Messages
-and activity**. The fields that repeated the top of the page, and the copy of the company's contacts, are gone — The team
+and activity**. **Phase 143, 22 September 2026: Grants and contributions is a box of its own**, straight after The claim's
+facts, and **Record a fact, a grant or an owner** is now **Record a fact or an owner** — see `B50`. The fields that repeated the top of the page, and the copy of the company's contacts, are gone — The team
 links to the company's contacts. A surveyor sees no Money, no Figures and no Ask the client; Accounting sees Documents,
 Money and Messages and activity. *On the demo, as Sales:* open Elverton's **main site** claim; **The claim's facts** lists
 "The claimant, for tax" and "The acquisition date", each with **Ask the client**, then "and 5 more".
@@ -2665,6 +2666,59 @@ team**. Back as the client, **Messages** shows a **1**; open it: your reply is t
 - *A client wrote on Friday afternoon. When does it turn red on Home?* — On Tuesday: after more than one working day.
 
 ---
+
+### Training — `B50` grants and contributions
+
+**What it is for**
+Recording whether anyone else — the NHS, a council, a landlord, an insurer — paid for any of the work on the building,
+how much, and what it paid for. Money from someone else can bring the claim down on the items it paid for, so the
+claim cannot move on from valuation until this is answered and every grant is matched.
+
+**Who can open it**
+Admin and Sales, on a claim's page, in the box **Grants and contributions**. A surveyor, Accounting and the view-only
+login never see it. The client never sees this box; when you press **Not sure**, the client is asked the question in
+their portal.
+
+Address: `/staff/clients/{company}/claims/{claim}#claim-grants`.
+
+**How to do the common job**
+1. Open the claim and find **Grants and contributions**. At the top: **Did anyone else pay for any of this work?**
+2. Choose **Who told us?**, then press **Yes**, **No** or **Not sure**.
+   - **No** — nothing else to do. The box says *"Done"*.
+   - **Not sure** — this is never taken as No. The client gets the question *"Did anyone else pay for any of the work on
+     your building?"* in their portal, and the box shows **Asked the client — waiting**. Their answer comes back under
+     the company's **Questions for the client**.
+   - **Yes** — press **Add a grant or contribution**.
+3. **Add a grant or contribution** asks four questions, one per page: **Who paid?** (and whether it was a grant or
+   another payment); **How much did they pay, and how do we know?** (leave the amount blank if nobody knows — it is
+   never taken as nothing); **What did it pay for?**; **Have you matched it to the items it paid for?** Press **Next**
+   after each, or **Back**.
+4. **Check it, then save** shows the card as it will look and what it does to the claim, in one line — for example
+   *"This will reduce the claim on the items it paid for."* Press **Save it**, or **Change** any step.
+5. Each grant is then a card: who paid, how much, one plain line (*"The NHS paid £40,000 towards the new treatment
+   rooms."*), where the figure came from, and **Matched to the items it paid for** or **Not matched yet**. The totals
+   above the cards are **Grants in total**, **Matched** and **Not matched yet**. An amount nobody knows is counted
+   apart — *"and 1 with the amount not known"*.
+6. To take one off, press **Remove** on its card, write **Why are you removing it?** and press **Remove it**. It moves
+   to **Removed** at the bottom of the box, with your reason. Nothing is deleted.
+
+**What it refuses, and why**
+- An answer without **Who told us?** — every fact says where it came from.
+- **Matched** without saying what it paid for — the page takes you back to **What did it pay for?**. A grant is taken
+  off the items it paid for, never as a share of everything.
+- **Remove** without a reason — the record stays in the history, and the reason says why.
+- A private person's name — choose **A private person**; we do not write their name.
+
+**What the line on each card means (Rulebook F)**
+- The NHS, a council, Homes England or the GLA, or another public body: *"This will reduce the claim on the items it
+  paid for."*
+- An insurer: *"Insurance money after damage usually does not reduce the claim. Our tax adviser checks."*
+- Anyone else — a landlord, a company in the group, a charity, a private person: *"This may reduce the claim on the
+  items it paid for. Our tax adviser checks whether it does."*
+- Not known: *"This may reduce the claim on the items it paid for. We need to know who paid."*
+
+*On the demo, as Sales:* open any claim, answer **Yes** with **Who told us?** set to **The client told us**, and add the
+NHS paying £40,000 towards "the new treatment rooms", matched. The box shows one green card and **Matched £40,000**.
 
 ### Training — `C6` the portal's CRM additions
 

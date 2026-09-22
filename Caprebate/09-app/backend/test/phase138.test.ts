@@ -148,7 +148,8 @@ describe('one section component, on both pages', () => {
     const hl = /<header class="highlights">[\s\S]*?<\/header>/.exec(r.body)?.[0] ?? '';
     assert.equal(/<dt>Property<\/dt>/.test(hl), false, 'the highlights repeat the property');
     assert.match(sec(r.body, 'move').html, /Every move so far/, 'the move history is not behind "More detail"');
-    assert.match(sec(r.body, 'claim-facts').html, /<details id="record-fact"><summary>Record a fact, a grant or an owner<\/summary>/);
+    // PHASE 143: grants and contributions left this fold for a section of their own (test/phase143.test.ts).
+    assert.match(sec(r.body, 'claim-facts').html, /<details id="record-fact"><summary>Record a fact or an owner<\/summary>/);
   });
 
   test('THE BLOAT CUT: no "Waiting on" card, no hidden tab heading, no numbered heading', async () => {
