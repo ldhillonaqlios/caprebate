@@ -750,6 +750,12 @@
           "id": "13068010579",
           "how": "prose",
           "why": "Built and switched on in the prototype by Phase 133c, 17 Sep 2026 (the name switches built and off), and moved from Ready - Claude can build. The same entry as 13067753922, extended in the Phase 133c note at the end of the register with two more developer questions; the names are asked of Lakhbir in CAPREBATE QUESTIONS."
+        },
+        {
+          "ref": "SDP-P37 Anthropic, the Claude API, as the company that reads client documents",
+          "id": "13104177605",
+          "how": "prose",
+          "why": "Built and switched off by Phase 146e, 22 Sep 2026: the document reader and the scanned-page path, both off, every call refused until the data protection officer approves the provider and its terms and a director signs. Moved from Ready - Claude can build. The Phase 146e note at the end of the register names it; the two decisions are Word questions."
         }
       ],
       "mentions": [
