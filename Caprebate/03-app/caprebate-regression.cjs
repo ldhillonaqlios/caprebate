@@ -3286,6 +3286,54 @@ if (startSuite("O", "Phase 67 — condensed front door, derivation layer")) {
       [e.gated.indexOf("rateable_value") === -1, e.values.rateable_value === undefined],
       [true, true]);
 
+    /* --- O3a: THE LAND REGISTRY'S WORDS TRAVEL WITH THE SENTENCE ---------
+       PHASE 146h, 23 September 2026.
+
+       derive() writes "Our records show you paid {v} for this property" into
+       provenance.price_paid.confirm. The records are HM Land Registry's Price
+       Paid Data, whose Open Government Licence PRESCRIBES a credit and says it
+       must appear verbatim — and until this phase the provenance carried none,
+       so any screen that drew the sentence would have drawn it uncredited.
+       Nothing draws it yet, which is why this is a correction and not a breach,
+       and this check is what stops it becoming one.
+
+       THE YEAR IS A FIXED 2021. It is the year HM Land Registry's own guidance
+       prints whatever year you read it in, and a build that substituted the
+       current year would publish a credit the licence does not prescribe. It
+       has gone missing from this line once already.
+
+       AND THE FIELD THAT MUST *NOT* CARRY IT. `tenure` is on the same source in
+       this map, and at the address question it is answered by the title
+       register rather than by Price Paid. A credit on a field that did not come
+       from that dataset is a false statement of origin, which is worse than a
+       missing one — so this asserts the absence as hard as the presence. */
+    /* THE WORDS ARE WRITTEN OUT HERE, not read from the thing being tested. An assertion that compares the module
+       to itself passes on a copy where both sides are undefined, which is exactly what a pre-change run proved. */
+    const HMLR_WORDS =
+      "Contains HM Land Registry data \u00a9 Crown copyright and database right 2021. " +
+      "This data is licensed under the Open Government Licence v3.0.";
+
+    check("O3a — the sentence about the price paid carries HM Land Registry's prescribed words, 2021 included",
+      [e.provenance.price_paid.attribution, e.provenance.completion_date.attribution],
+      [HMLR_WORDS, HMLR_WORDS]);
+
+    check("O3a — and the layer names the words once, so the two fields cannot drift apart",
+      CB_REGISTRY.HMLR_PPD_ATTRIBUTION, HMLR_WORDS);
+
+    /* Asserted across EVERY field that derived, rather than against a list of names: a field added to the map
+       tomorrow is covered the day it is added, and one that stops deriving cannot make this pass by vanishing. */
+    check("O3a — the two Price Paid fields carry the credit and NO other derived field does",
+      Object.keys(e.provenance).filter(function(f){ return e.provenance[f].attribution !== null; }).sort(),
+      ["completion_date", "price_paid"]);
+
+    check("O3a — and every other derived field says null rather than leaving the reader to guess",
+      Object.keys(e.provenance).every(function(f){ return "attribution" in e.provenance[f]; }), true);
+
+    check("O3a — the sentence itself is unchanged, and the words sit beside it rather than inside it",
+      [e.provenance.price_paid.confirm.indexOf("Our records show you paid 450000") === 0,
+       e.provenance.price_paid.confirm.indexOf("Crown copyright") === -1],
+      [true, true]);
+
     /* A register that returns nothing costs a question, not an answer. */
     const thin = CB_REGISTRY.derive({ hmlr:{} }, {nation:"england"});
     check("O4 — an empty register response falls back to asking, never to a default",

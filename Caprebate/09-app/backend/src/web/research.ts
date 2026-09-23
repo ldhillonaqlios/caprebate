@@ -63,6 +63,7 @@ import { switchedOn, runConnector, REGISTER_SWITCHES, type Bundle, type Connecto
 import type { Transport, RateLimiter } from '../connectors/http.ts';
 import type { SecretStore } from '../secrets.ts';
 import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../connectors/free-registers.ts';
+import type { PickQuery } from '../connectors/matching.ts';
 import { PAID_CONNECTORS, PAID_ORDER, totalBeforePence, pounds } from '../connectors/paid-registers.ts';
 import { ingestRegisterRecord } from '../stubs/registers.ts';
 import { postcodeStore } from './postcode.ts';
@@ -725,6 +726,17 @@ export async function consultAllowed(
   d: RunDeps, actor: Actor, business_id: string,
   decided: readonly { readonly entry: CatalogueEntry; readonly state: SourceState; readonly detail: string }[],
   gates: { readonly free_gate_open: boolean; readonly engagement_signed: boolean },
+  /**
+   * PHASE 146h — THE BACK-OFFICE PICK, AND IT IS THE ONLY THING THAT MAY SET THIS. One entry per source, carrying
+   * either a `review` hook (hand me the ranked list) or a `chosen` key (a person picked this one). Absent — which is
+   * every ordinary click — the query a connector is handed is exactly the query it was handed before this phase, and
+   * there is a test that walks every builder and asserts neither key is on it.
+   *
+   * IT OPENS NOTHING. A pick reaches a connector through the same `decided` list as any other lookup, so the two
+   * gates and the source's own switch have already had their say above. src/web/match-review.ts adds one more
+   * condition on top — a signed engagement, whatever the source's tier — and it asserts that itself.
+   */
+  picks?: Readonly<Record<string, PickQuery>>,
 ): Promise<SourceOutcome[]> {
   const out: SourceOutcome[] = [];
   const subject = researchSubject(d.db, business_id);
@@ -755,7 +767,12 @@ export async function consultAllowed(
       secrets: null,
     };
     const query = built.query(subject, earlier, o.postcodeStore === undefined ? postcodeStore() : o.postcodeStore);
-    const run = await runConnector(built.connector, ctx, query, { state: 'NOT_RUN', detail: x.detail }, o.secrets, switches);
+    /* The pick's two keys are added to the query the builder made, rather than passed through every builder: a
+       builder's job is to say what to ask the register about this client, and a pick does not change that — it
+       changes what is done with the candidates the register comes back with. */
+    const pick = picks?.[x.entry.source_id];
+    const asked = pick === undefined ? query : { ...(query as Record<string, unknown>), ...pick };
+    const run = await runConnector(built.connector, ctx, asked, { state: 'NOT_RUN', detail: x.detail }, o.secrets, switches);
     if (run.state === 'FIRED' && run.bundle !== null) earlier.set(x.entry.source_id, run.bundle);
     out.push({
       entry: x.entry, state: run.state, detail: run.detail,

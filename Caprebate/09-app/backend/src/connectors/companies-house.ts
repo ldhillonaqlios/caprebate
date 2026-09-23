@@ -42,9 +42,9 @@
 import type { OwnerSecrets } from '../secrets.ts';
 import type { CallResult } from './http.ts';
 import { defineSteppedConnector, type Bundle, type LookupResult, type StepRequest } from './registers.ts';
-import { matchCompanyName, MATCH_THRESHOLDS } from './matching.ts';
+import { matchCompanyName, applyPick, pickedNote, PICK_GONE_WHY, MATCH_THRESHOLDS, type PickQuery } from './matching.ts';
 
-export type CompanyQuery = { readonly name: string; readonly company_number: string | null };
+export type CompanyQuery = { readonly name: string; readonly company_number: string | null } & PickQuery;
 export type PscQuery = { readonly company_number: string | null };
 
 /** A company number as Companies House writes it: eight characters, digits or a two-letter prefix and six digits. */
@@ -200,15 +200,25 @@ export const companiesHouse = defineSteppedConnector<CompanyQuery>({
         return n !== null && t !== null ? [{ name: t, payload: n }] : [];
       });
       const m = matchCompanyName(q.name, candidates, MATCH_THRESHOLDS.CH_COMPANY);
-      if (m.status !== 'ACCEPT' || m.best === null) {
+      /* PHASE 146h: the REVIEW band's list to the back office, or a person's choice back, keyed on the COMPANY
+         NUMBER — which is what this lookup reads a profile by, so a choice names a company and not a row. */
+      const pick = applyPick(m, q, { profile: 'CH_COMPANY', register: 'Companies House', keyOf: (n) => n });
+      if (pick.kind === 'GONE') {
+        return { kind: 'NOT_MATCHED', code: 'MATCH_REVIEW', why: PICK_GONE_WHY, calls };
+      }
+      if (pick.kind === 'CHOSEN') {
+        number = pick.best.candidate.payload;
+        how = pickedNote(pick.best.score, 'Companies House');
+      } else if (m.status !== 'ACCEPT' || m.best === null) {
         return {
           kind: 'NOT_MATCHED',
           code: m.status === 'REVIEW' ? 'MATCH_REVIEW' : m.status === 'INSUFFICIENT_INPUT' ? 'INSUFFICIENT_INPUT' : 'NO_MATCH',
           why: `${m.why} — which is not evidence of a sole trader, only that no company matched the name`, calls,
         };
+      } else {
+        number = m.best.candidate.payload;
+        how = `by name, scoring ${(m.top_score ?? 0).toFixed(2)}`;
       }
-      number = m.best.candidate.payload;
-      how = `by name, scoring ${(m.top_score ?? 0).toFixed(2)}`;
     }
 
     const profileCall = await call({ endpoint: '/company/{company_number}', params: { company_number: number } });

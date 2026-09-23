@@ -33,6 +33,8 @@ import * as R from './research.ts';
 import * as A from './approvals.ts';
 import { STEP_ANCHOR } from './approvals-pages.ts';
 import { clientList, clientListPage, type ClientSort } from './client-list.ts';
+import * as MR from './match-review.ts';
+import { pickPage } from './match-review-pages.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -94,6 +96,32 @@ export async function handleEngaged(
     const r = await R.retryFailedSource({ ...deps, outside: { transport: d.app.outside, secrets: d.app.secrets } }, actor, id, f.get('source_id') ?? '');
     if (!r.ok) return d.problem(res, actor, 'Not retried', r.why, `/staff/clients/${id}`);
     redirect(res, `/staff/clients/${id}?done=retry#sources`);
+    return 'handled';
+  }
+
+  /* ---- PHASE 146h · a person's pick for a close match ----
+     BOTH ARE POSTS, AND THE FIRST ONE IS A POST ON PURPOSE. Showing the list fetches it from the register again —
+     that is a call outside, an audit row and, on a paid lookup, money. A GET that did all three would be a page a
+     crawler, a preloading browser or a back button could spend money on. */
+  const pick = /^\/staff\/clients\/([A-Za-z0-9-]+)\/research\/pick$/.exec(path);
+  if (pick && method === 'POST') {
+    const id = pick[1] ?? '';
+    const f = await form(req);
+    const p = E.businessPage(db, actor, id);
+    const offer = await MR.offerPick({ ...deps, outside: { transport: d.app.outside, secrets: d.app.secrets } }, actor, id, f.get('source_id') ?? '');
+    html(res, 200, pickPage(d.nav(actor), id, p.business.name, offer));
+    return 'handled';
+  }
+
+  const chose = /^\/staff\/clients\/([A-Za-z0-9-]+)\/research\/pick\/choose$/.exec(path);
+  if (chose && method === 'POST') {
+    const id = chose[1] ?? '';
+    const f = await form(req);
+    const key = (f.get('chosen_key') ?? '').trim();
+    const r = await MR.takePick({ ...deps, outside: { transport: d.app.outside, secrets: d.app.secrets } }, actor, id,
+      f.get('source_id') ?? '', key === '' ? null : key);
+    if (!r.ok) return d.problem(res, actor, 'Nothing was chosen', r.why, `/staff/clients/${id}#sources`);
+    redirect(res, `/staff/clients/${id}?done=${r.stored ? 'picked' : 'picked-none'}#sources`);
     return 'handled';
   }
 
@@ -196,6 +224,8 @@ function emptyToNull(v: string | null): string | null {
 export const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
   research: 'The research was run. What it reached is below.',
   retry: 'We tried that lookup again.',
+  picked: 'Chosen. We keep what that entry says, and the file says a person chose it.',
+  'picked-none': 'Noted — none of them is this building. Nothing was kept, and those questions stay asked.',
   sent: 'The question is in the client’s portal.',
   answered: 'Recorded — and the file says a member of staff entered it, not the client.',
   withdrawn: 'Withdrawn. The fact it was asking about is back on the missing list, and the record says who took it back.',
@@ -296,6 +326,17 @@ function switchWords(rows: readonly R.SourceRow[]): string {
   return `${on} of ${rows.length} switched on.`;
 }
 
+/**
+ * PHASE 146h: MAY THIS ROW OFFER A LIST? The three conditions this page can see, and the page decides none of them —
+ * src/web/match-review.ts asserts every one again, server-side, on the request the button makes. A button drawn by
+ * mistake would be refused there; a button NOT drawn is simply a control a person cannot see, which is why the test
+ * for this asserts the server's refusal and not the button's absence.
+ */
+function mayPick(x: R.SourceRow, s: R.SourcesPanel): boolean {
+  return x.state === 'FAILED' && x.failure_code === MR.PICKABLE_FAILURE_CODE
+    && s.engagement.signed && MR.pickSwitchedOn();
+}
+
 export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
   return h`
     <ul class="sources-now">
@@ -316,6 +357,13 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
           ? h` <form method="post" action="/staff/clients/${p.business.id}/research/retry" class="inline">
                <input type="hidden" name="source_id" value="${x.source_id}">
                <button class="linkish" type="submit">Try this one again</button></form>`
+          : raw('')}${/* PHASE 146h: a close match is the one failure a person can resolve rather than retry —
+                         retrying it would only find the same entries and score them the same way again. The
+                         button shows only where the lookup itself said the band was REVIEW, only once the
+                         engagement letter is signed, and only while the pick is switched on. */
+          mayPick(x, s) ? h` <form method="post" action="/staff/clients/${p.business.id}/research/pick" class="inline">
+               <input type="hidden" name="source_id" value="${x.source_id}">
+               <button class="linkish" type="submit">Choose which one it is</button></form>`
           : raw('')}</td>
       </tr>`)}</tbody></table>
 

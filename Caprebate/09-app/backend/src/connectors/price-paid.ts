@@ -26,7 +26,10 @@
 
 import type { CallResult } from './http.ts';
 import { defineSteppedConnector, type LookupResult } from './registers.ts';
-import { addressFromLines, matchAddress, MATCH_THRESHOLDS, postcodeKey, type Candidate, type MeasureHook } from './matching.ts';
+import {
+  addressFromLines, matchAddress, applyPick, pickedNote, PICK_GONE_WHY, MATCH_THRESHOLDS, postcodeKey,
+  type Candidate, type MeasureHook, type PickQuery,
+} from './matching.ts';
 import { jurisSource, type Nation, type TypedProperty } from './nations.ts';
 import { REGISTRY } from '../web/engine.ts';
 import { LICENCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
@@ -35,7 +38,7 @@ export type PricePaidQuery = {
   readonly property: TypedProperty | null; readonly nation: Nation | null; readonly sector: string | null;
   /** The 200-property measurement only (tools/match-measure.ts). Never set by the research flow. */
   readonly measure?: MeasureHook;
-};
+} & PickQuery;
 
 /** HM Land Registry's prescribed words, read from the licence register. Never retyped. */
 export const PRICE_PAID_ATTRIBUTION: string = LICENCES.find((l) => l.licence_id === 'HMLR_PPD')?.attribution_text ?? '';
@@ -129,15 +132,23 @@ export const pricePaid = defineSteppedConnector<PricePaidQuery>({
     const m = matchAddress(typed, candidates, MATCH_THRESHOLDS.HMLR_PPD, 'HM Land Registry’s sale prices',
       (a, b) => (b.date > a.date ? b : a));
     q.measure?.({ profile: 'HMLR_PPD', match: m, top_address: m.top?.candidate.address ?? null });
-    if (m.status !== 'ACCEPT' || m.best === null) {
+    /* PHASE 146h: the REVIEW band's list to the back office, or a person's choice back, keyed on the transaction id
+       — HM Land Registry's own key for one sale. Outside that band this does nothing. */
+    const pick = applyPick(m, q, {
+      profile: 'HMLR_PPD', register: 'HM Land Registry’s sale prices', keyOf: (sale) => sale.id,
+    });
+    if (pick.kind === 'GONE') return { kind: 'NOT_MATCHED', code: 'MATCH_REVIEW', why: PICK_GONE_WHY, calls };
+    const took = pick.kind === 'CHOSEN' ? pick.best : m.best;
+    const how = pick.kind === 'CHOSEN' ? pickedNote(pick.best.score, 'HM Land Registry’s sale prices') : m.why;
+    if (took === null || (pick.kind !== 'CHOSEN' && m.status !== 'ACCEPT')) {
       return { kind: 'NOT_MATCHED', code: m.status === 'REVIEW' ? 'MATCH_REVIEW' : m.status === 'INSUFFICIENT_INPUT' ? 'INSUFFICIENT_INPUT' : 'NO_MATCH', why: m.why, calls };
     }
-    const sale = m.best.candidate.payload;
+    const sale = took.candidate.payload;
     const fields = saleFields(sale);
     return {
       kind: 'READ', calls,
       bundle: { records: [{ sourceId: 'HMLR_PPD', entityId: sale.id, fields }], facts: { ...fields, attribution: PRICE_PAID_ATTRIBUTION } },
-      note: `looked up — ${m.why}, and we keep the latest sale at that address and where it came from. ${PRICE_PAID_ATTRIBUTION}`,
+      note: `looked up — ${how}, and we keep the latest sale at that address and where it came from. ${PRICE_PAID_ATTRIBUTION}`,
     };
   },
 });

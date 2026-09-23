@@ -260,7 +260,17 @@ export function scoreCandidate(subject: NormalizedAddress, candidate: Normalized
   return maxPossible === 0 ? 0 : total / maxPossible;
 }
 
-export type Candidate<T> = { readonly address: RawAddress; readonly payload: T };
+export type Candidate<T> = {
+  readonly address: RawAddress;
+  readonly payload: T;
+  /**
+   * PHASE 146h: what a person reads to tell this candidate from the next one, where the register's own address lines
+   * are not what distinguishes them — a company name, for instance. Absent, `candidateLabel` writes the address out.
+   * IT IS NEVER STORED AND NEVER LOGGED: it exists for the back-office pick, which holds it for one request (A.8
+   * point 8), and for nothing else.
+   */
+  readonly label?: string;
+};
 export type Scored<T> = { readonly candidate: Candidate<T>; readonly score: number };
 
 export type MatchResult<T> = {
@@ -273,6 +283,13 @@ export type MatchResult<T> = {
    * whether the top candidate was the right one.
    */
   readonly top: Scored<T> | null;
+  /**
+   * PHASE 146h: EVERY SCORED CANDIDATE, BEST FIRST. IN MEMORY ONLY, exactly as `top` is, and for one more reader:
+   * the back-office pick (src/web/match-review.ts), where a person chooses one of them or none. No connector keeps
+   * it, nothing writes it to the database, and no audit row carries it — a candidate's address lines are the
+   * register's, under its own notice, and A.8 point 8 says they are not stored or logged.
+   */
+  readonly ranked: readonly Scored<T>[];
   /** How many candidates were scored. The candidates themselves are not handed on: nothing keeps them. */
   readonly scored: number;
   readonly top_score: number | null;
@@ -282,24 +299,25 @@ export type MatchResult<T> = {
 
 function classify<T>(scored: Scored<T>[], t: Thresholds, what: string): MatchResult<T> {
   if (scored.length === 0) {
-    return { status: 'REJECT', best: null, top: null, scored: 0, top_score: null, why: `nothing on ${what} matched` };
+    return { status: 'REJECT', best: null, top: null, ranked: [], scored: 0, top_score: null, why: `nothing on ${what} matched` };
   }
   scored.sort((a, b) => b.score - a.score);
   const top = scored[0] as Scored<T>;
   const tied = scored.filter((s) => s.score === top.score).length > 1;
   const pct = top.score.toFixed(2);
+  const of = { top, ranked: scored, scored: scored.length, top_score: top.score };
   if (top.score >= t.accept && !tied) {
-    return { status: 'ACCEPT', best: top, top, scored: scored.length, top_score: top.score, why: `matched on ${what}, scoring ${pct}` };
+    return { status: 'ACCEPT', best: top, ...of, why: `matched on ${what}, scoring ${pct}` };
   }
   if (top.score >= t.accept && tied) {
-    return { status: 'REVIEW', best: null, top, scored: scored.length, top_score: top.score,
+    return { status: 'REVIEW', best: null, ...of,
       why: `more than one entry on ${what} matched equally well (${pct}), so none was chosen` };
   }
   if (top.score >= t.review) {
-    return { status: 'REVIEW', best: null, top, scored: scored.length, top_score: top.score,
+    return { status: 'REVIEW', best: null, ...of,
       why: `the closest entry on ${what} scored ${pct}, below the ${t.accept.toFixed(2)} we accept, so a person must choose` };
   }
-  return { status: 'REJECT', best: null, top, scored: scored.length, top_score: top.score,
+  return { status: 'REJECT', best: null, ...of,
     why: `the closest entry on ${what} scored only ${pct}, so nothing matched` };
 }
 
@@ -314,7 +332,7 @@ export function matchAddress<T>(
 ): MatchResult<T> {
   const subject = normalizeAddress(subjectRaw);
   if (subject.postcodeKey === '') {
-    return { status: 'INSUFFICIENT_INPUT', best: null, top: null, scored: 0, top_score: null, why: 'there is no postcode we can read, so no lookup was matched' };
+    return { status: 'INSUFFICIENT_INPUT', best: null, top: null, ranked: [], scored: 0, top_score: null, why: 'there is no postcode we can read, so no lookup was matched' };
   }
   const byAddress = new Map<string, Candidate<T>>();
   for (const c of candidates) {
@@ -357,9 +375,9 @@ export function matchCompanyName<T>(
   typed: string | null | undefined, candidates: readonly { readonly name: string; readonly payload: T }[], t: Thresholds,
 ): MatchResult<T> {
   if (normalizeCompanyName(typed) === '') {
-    return { status: 'INSUFFICIENT_INPUT', best: null, top: null, scored: 0, top_score: null, why: 'there is no business name we can search on' };
+    return { status: 'INSUFFICIENT_INPUT', best: null, top: null, ranked: [], scored: 0, top_score: null, why: 'there is no business name we can search on' };
   }
-  const scored = candidates.map((c) => ({ candidate: { address: {}, payload: c.payload }, score: scoreCompanyName(typed ?? '', c.name) }));
+  const scored = candidates.map((c) => ({ candidate: { address: {}, payload: c.payload, label: c.name }, score: scoreCompanyName(typed ?? '', c.name) }));
   return classify(scored, t, 'Companies House');
 }
 
@@ -376,3 +394,140 @@ export type MeasureHook = (seen: {
   /** The top candidate's address as the register wrote it — for the person judging the match. */
   readonly top_address: RawAddress | null;
 }) => void;
+
+/* ================================================================== *
+ * 6 · A PERSON'S PICK FOR A CLOSE MATCH — the S10 spec, A.2 step 4 and A.8 point 7
+ *
+ * Phase 146h, 23 September 2026.
+ *
+ * A.2 step 4 says of the REVIEW band: "never auto-selected. Full candidate list (all postcode-blocked candidates,
+ * ranked) is surfaced to ops/surveyor for manual pick. Nothing is written until a human resolves it." Until this
+ * phase there was nowhere to surface it to, so a REVIEW ended the lookup and kept nothing.
+ *
+ * THE BAND IS THE WHOLE RULE, AND IT IS THE ONE THING NOT TO WIDEN. Only a REVIEW is offered and only a REVIEW may be
+ * picked from. A REJECT means nothing at the postcode came close and a person choosing from it would be choosing
+ * between wrong answers; an ACCEPT is already decided; INSUFFICIENT_INPUT and NOT_COVERED never scored anything. So
+ * `applyPick` returns NOT_PICKING for every status but REVIEW, whatever the caller asked for.
+ *
+ * WHEN IT MAY BE OFFERED AT ALL is not this file's to say. A.8 point 7 rules out showing a prospect other buildings'
+ * records, so the pick is a BACK-OFFICE thing and it waits for a signed engagement. That gate is asserted in
+ * src/web/match-review.ts, server-side, against the record — the same place and the same way as the paid tier's.
+ *
+ * NOTHING HERE IS KEPT. The offer is built from `ranked`, which lives for the length of one request. What a pick
+ * writes is the chosen candidate's own permitted fields, through the one door, and the choice itself: who, when, and
+ * the score. Never the list, never a candidate's address lines (A.8 point 8).
+ * ================================================================== */
+
+/** One candidate as a person reads it. Held for one request and then gone. */
+export type ReviewCandidate = {
+  /** The candidate's own key in the register — a certificate number, a location id, a transaction id, a company number. */
+  readonly key: string;
+  readonly score: number;
+  /** What tells it apart from the next one, in the register's own words. */
+  readonly label: string;
+  /** Which sub-register it came from, where a lookup searches more than one. Null where there is only one. */
+  readonly register: string | null;
+};
+
+/** What a connector hands the back office when a match lands in the REVIEW band. Set by the pick and by nothing else. */
+export type ReviewHook = (offer: {
+  readonly profile: MatchProfile;
+  readonly register: string | null;
+  readonly candidates: readonly ReviewCandidate[];
+  readonly why: string;
+}) => void;
+
+/**
+ * THE TWO THINGS A PICK ADDS TO A LOOKUP'S QUERY, and the research flow sets NEITHER — exactly as it sets no
+ * `measure` hook. A test walks every query FREE_CONNECTORS and PAID_CONNECTORS build for an ordinary click and
+ * asserts that both are absent.
+ */
+export type PickQuery = {
+  /** Called with the ranked list when the match is REVIEW and no choice has been made. */
+  readonly review?: ReviewHook;
+  /** A candidate's `key`, when a person has chosen one. Null or absent is not a choice. */
+  readonly chosen?: string | null;
+  /**
+   * Called with what the chosen candidate scored ON THIS FETCH, when `chosen` was found. It is how the score reaches
+   * the record of the decision without a third lookup — the alternative was fetching the same list again purely to
+   * read a number off it, which is a call to the supplier for nothing.
+   *
+   * THE SCORE IS THIS FETCH'S, NOT THE ONE THE PERSON WAS SHOWN, and the two can differ if the register answered
+   * differently in between. This one is the honest figure: it belongs to the candidate actually being stored.
+   */
+  readonly picked?: (p: { readonly key: string; readonly score: number }) => void;
+};
+
+export type PickOutcome<T> =
+  /** A person's choice, found in the list the register gave us on THIS request. */
+  | { readonly kind: 'CHOSEN'; readonly best: Scored<T> }
+  /**
+   * A choice was made and the register no longer offers it. The lookup keeps NOTHING: between the list being shown
+   * and the choice being made the register answered differently, and the candidate a person actually looked at is
+   * not the one we would be storing. Taking the nearest one instead would be the auto-selection A.2 step 4 forbids.
+   */
+  | { readonly kind: 'GONE' }
+  /** No choice to apply. The caller goes on exactly as it did before this phase. */
+  | { readonly kind: 'NOT_PICKING' };
+
+/** The register's own words for one candidate, built from the lines it gave us. Read on a screen; never stored. */
+export function candidateLabel<T>(c: Candidate<T>): string {
+  if (typeof c.label === 'string' && c.label.trim() !== '') return c.label.trim();
+  const a = c.address;
+  const parts = [a.saon, a.paon, a.street, a.locality, a.town, a.postcode]
+    .map((p) => (typeof p === 'string' ? p.trim() : ''))
+    .filter((p) => p !== '');
+  return parts.length === 0 ? 'an entry with no address' : parts.join(', ');
+}
+
+/**
+ * OFFER THE LIST, OR APPLY THE CHOICE. Called by every connector that scores candidates, at the point where it would
+ * otherwise return NOT_MATCHED.
+ *
+ * `keyOf` is the candidate's own key in the register. It must be the key the connector would fetch the record BY, so
+ * that a choice names a record rather than a position in a list: a list re-fetched on the next request may be in a
+ * different order, and an index would then choose a different building.
+ */
+export function applyPick<T>(
+  m: MatchResult<T>,
+  q: PickQuery | undefined,
+  what: {
+    readonly profile: MatchProfile;
+    /** Where the whole list came from, where one search produced it. */
+    readonly register?: string | null;
+    readonly keyOf: (payload: T) => string;
+    /** Where THIS candidate came from, where a lookup pools several registers (the energy certificates do). */
+    readonly registerOf?: (payload: T) => string | null;
+  },
+): PickOutcome<T> {
+  if (m.status !== 'REVIEW') return { kind: 'NOT_PICKING' };
+  const chosen = typeof q?.chosen === 'string' && q.chosen.trim() !== '' ? q.chosen.trim() : null;
+  if (chosen === null) {
+    q?.review?.({
+      profile: what.profile,
+      register: what.register ?? null,
+      why: m.why,
+      candidates: m.ranked.map((s) => ({
+        key: what.keyOf(s.candidate.payload), score: s.score,
+        label: candidateLabel(s.candidate),
+        register: what.registerOf?.(s.candidate.payload) ?? what.register ?? null,
+      })),
+    });
+    return { kind: 'NOT_PICKING' };
+  }
+  const found = m.ranked.find((s) => what.keyOf(s.candidate.payload) === chosen);
+  if (found === undefined) return { kind: 'GONE' };
+  q?.picked?.({ key: chosen, score: found.score });
+  return { kind: 'CHOSEN', best: found };
+}
+
+/** The words a lookup reports when a person chose it, with the score they were shown. */
+export function pickedNote(score: number, what: string): string {
+  return `a person in the back office chose this one from ${what}, where it scored ${score.toFixed(2)} — ` +
+    'it was not close enough for us to choose it ourselves';
+}
+
+/** The words a lookup reports when the chosen entry is no longer there. */
+export const PICK_GONE_WHY =
+  'the entry that was chosen is no longer on the register’s list for this address, so nothing was kept. ' +
+  'Look at the list again and choose from what is there now';

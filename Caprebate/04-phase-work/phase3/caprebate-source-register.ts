@@ -804,13 +804,28 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'https://get-energy-performance-data.communities.gov.uk/api-technical-documentation',
       'https://get-energy-performance-data.communities.gov.uk/making-a-request',
       'https://raw.githubusercontent.com/communitiesuk/epb-data-warehouse/main/api/api.yml',
+      /* PHASE 146h, 23 September 2026 — THE TWO CODE ENDPOINTS, read the same day, which are how the domestic age
+         band and tenure stop being letters and numbers and become facts. */
+      'https://get-energy-performance-data.communities.gov.uk/api-technical-documentation/codes',
+      'https://get-energy-performance-data.communities.gov.uk/api-technical-documentation/codes-info',
     ],
     read_on: '2026-09-23',
     findings:
       'A bearer token. "6000 requests every 5 minutes per originating IP address", then 429. Data "for buildings in ' +
       'England and Wales". /api/{domestic,non-domestic,display}/search by postcode, uprn or address; "no certificates ' +
       'found" is 404. Search results carry no floor area or building type; /api/certificate?certificate_number= does, ' +
-      'under keys that vary with the certificate\'s schema. Domestic age band and tenure are codes.',
+      'under keys that vary with the certificate\'s schema. Domestic age band and tenure are codes. ' +
+      'PHASE 146h, 23 Sep 2026, THE CODE LISTS, which decode them: GET /api/codes takes no parameter and answers ' +
+      '{"data":["built_form","construction_age_band"]} - "a list of codes currently available", and the page gives ' +
+      'only those two as examples rather than the whole list, so a code it does not name is asked for and not ' +
+      'assumed. GET /api/codes/info takes code (REQUIRED, "one of the codes provided by the /api/codes/ endpoint"), ' +
+      'key ("the key found as a value in EPC data") and schemaVersion ("the EPC schema version"), both optional, and ' +
+      'answers {"data":[{"key":"NR","values":[{"value":"Detached","schemaVersion":"RdSAP-Schema-17.0",' +
+      '"assessmentType":"RdSAP"}]}]}. NEITHER PAGE SAYS WHICH CERTIFICATE FIELDS ARE CODED - that is read off the ' +
+      'certificates themselves: a domestic certificate carries tenure as a single coded value at the top level and ' +
+      'construction_age_band as a code on EACH of sap_building_parts[], and its schema_type ("RdSAP-Schema-21.0.1") ' +
+      'is the schemaVersion to ask for. The same key means different things under different schema versions, so a ' +
+      'value returned for another version is not used and the field is left out instead.',
   },
   {
     source_id: 'HMLR_PPD',

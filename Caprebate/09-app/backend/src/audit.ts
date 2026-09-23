@@ -304,6 +304,14 @@ export type AuditKind =
    * closing it; a person asking for their own client login after the assessment, and confirming it from the email.
    * Ids, the sector code and the decision only — never the name, the address or what the person wrote.
    */
+  /**
+   * Phase 146h, 23 September 2026: one person resolving one close-but-not-certain register match
+   * (src/web/match-review.ts). The lookup, whether anything was chosen, what the matcher scored it, the confidence
+   * grade the choice mints, and whether a record was stored. NEVER THE CANDIDATE, NEVER ITS LABEL: what a person
+   * read on the way to the decision is the register's own address line, and A.8 point 8 says it is neither stored
+   * nor logged. Who made it is the row's own actor.
+   */
+  | 'REGISTER_MATCH_PICKED'
   | 'WEBSITE_ENQUIRY_RECEIVED' | 'WEBSITE_ENQUIRY_HANDLED'
   | 'CLIENT_SIGNUP_REQUESTED' | 'CLIENT_SIGNUP_VERIFIED'
   | 'AUTHORISATION_REFUSED';

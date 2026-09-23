@@ -61,6 +61,7 @@ import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
 import { FUNNEL_SWITCHES } from './funnel-session.ts';
 import { REGISTER_SWITCHES } from '../connectors/registers.ts';
 import { CLAUDE_SWITCHES } from '../connectors/claude.ts';
+import { PICK_SWITCHES } from './match-review.ts';
 
 function sha256(v: unknown): string {
   return createHash('sha256').update(_canonical(v)).digest('hex');
@@ -184,7 +185,8 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
 }
 
 /**
- * THE CONNECTOR SWITCHES — ONE PER LOOKUP, AND THE DOCUMENT READER'S TWO. Phase 146c, 23 September 2026.
+ * THE CONNECTOR SWITCHES — ONE PER LOOKUP, THE DOCUMENT READER'S TWO, AND THE PICK'S. Phase 146c, 23 September 2026;
+ * the pick's added by Phase 146h.
  *
  * They are frozen maps of booleans, not `enabled:` flags, so the grep test in test/phase132-records.test.ts cannot see
  * them — the same reason FUNNEL_SWITCHES is stamped by its own key. Every key of REGISTER_SWITCHES
@@ -201,6 +203,12 @@ export function connectorSwitchReadings(): readonly BackendSwitchReading[] {
     })),
     ...(Object.keys(CLAUDE_SWITCHES) as (keyof typeof CLAUDE_SWITCHES)[]).sort().map((k) => ({
       switch: `CLAUDE_SWITCHES.${k}`, on: CLAUDE_SWITCHES[k] === true, home: 'src/connectors/claude.ts',
+    })),
+    /* PHASE 146h: a person's pick for a close match. Its own map, because what it turns on is not a connector but a
+       screen that shows one client's staff a handful of other buildings' register entries — a different decision
+       with a different owner. Read here so a claim's stamp says whether a figure on it could have been picked. */
+    ...Object.keys(PICK_SWITCHES).sort().map((k) => ({
+      switch: `PICK_SWITCHES.${k}`, on: PICK_SWITCHES[k] === true, home: 'src/web/match-review.ts',
     })),
   ];
 }

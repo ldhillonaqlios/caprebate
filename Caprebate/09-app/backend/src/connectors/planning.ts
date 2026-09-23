@@ -27,14 +27,17 @@
 
 import type { CallResult } from './http.ts';
 import { defineSteppedConnector, type LookupResult, type StepRequest } from './registers.ts';
-import { addressFromLines, matchAddress, MATCH_THRESHOLDS, postcodeKey, type Candidate, type MatchResult, type MeasureHook } from './matching.ts';
+import {
+  addressFromLines, matchAddress, applyPick, pickedNote, PICK_GONE_WHY, MATCH_THRESHOLDS, postcodeKey,
+  type Candidate, type MatchResult, type MeasureHook, type PickQuery, type Scored,
+} from './matching.ts';
 import { jurisSource, type Nation, type TypedProperty } from './nations.ts';
 
 export type PlanningQuery = {
   readonly property: TypedProperty | null; readonly nation: Nation | null;
   /** The 200-property measurement only (tools/match-measure.ts). Never set by the research flow. */
   readonly measure?: MeasureHook;
-};
+} & PickQuery;
 
 /** The identifier PlanIt's owner asks for: who we are and how to reach us. Our business mailbox, never a person's. */
 export const PLANIT_USER_AGENT = 'CapRebate register lookups (contactus@caprebate.com)';
@@ -95,15 +98,41 @@ export function applicationFields(a: Application): Record<string, unknown> {
   return f;
 }
 
-function kept(m: MatchResult<Application[]>, where: string, calls: CallResult[]): LookupResult {
-  const apps = [...(m.best?.candidate.payload ?? [])]
+/**
+ * PHASE 146h: `took` is the candidate we are keeping and `why` says how we came by it — an ACCEPT's own words, or a
+ * person's pick. It used to take the whole match and read `m.best`, which could only ever be an ACCEPT.
+ */
+function kept(took: Scored<Application[]>, why: string, where: string, calls: CallResult[]): LookupResult {
+  const apps = [...took.candidate.payload]
     .sort((a, b) => (b.received ?? '').localeCompare(a.received ?? ''))
     .slice(0, PLANNING_MAX_KEPT);
   const records = apps.map((a) => ({ sourceId: 'PLANNING', entityId: a.reference, fields: applicationFields(a) }));
   return {
     kind: 'READ', calls, bundle: { records, facts: { planning_applications: records.length } },
-    note: `looked up on ${where} — ${m.why}, and we keep ${records.length} planning ${records.length === 1 ? 'application' : 'applications'} and where they came from`,
+    note: `looked up on ${where} — ${why}, and we keep ${records.length} planning ${records.length === 1 ? 'application' : 'applications'} and where they came from`,
   };
+}
+
+/**
+ * A CANDIDATE'S KEY ON EITHER PLANNING SERVICE: the reference of the FIRST application at that address, because
+ * applications at one address are merged into one candidate. It is stable for one request, which is what a pick
+ * needs, and it is a reference the register itself published rather than a position in a list.
+ */
+const planningKey = (apps: Application[]): string => apps[0]?.reference ?? '';
+
+/**
+ * PHASE 146h: THE TWO SERVICES ARE ASKED IN ORDER AND A PICK BELONGS TO ONE OF THEM. A choice made from
+ * planning.data.gov.uk's list must not be looked for in PlanIt's, so the pick is applied per service and a key that
+ * is not in THIS service's list is simply not a choice here — the next service is asked as it always was. Only when
+ * a choice was made and neither service holds it does the lookup report that it has gone.
+ */
+function pickOn(
+  m: MatchResult<Application[]>, q: PlanningQuery, where: string, calls: CallResult[],
+): LookupResult | null {
+  const pick = applyPick(m, q, { profile: 'PLANNING', register: where, keyOf: planningKey });
+  if (pick.kind === 'CHOSEN') return kept(pick.best, pickedNote(pick.best.score, where), where, calls);
+  if (m.status === 'ACCEPT' && m.best !== null) return kept(m.best, m.why, where, calls);
+  return null;
 }
 
 export const planning = defineSteppedConnector<PlanningQuery>({
@@ -127,7 +156,8 @@ export const planning = defineSteppedConnector<PlanningQuery>({
       const cands = pdRows.flatMap((e) => { const o = obj(e); const c = o === null ? null : fromPlanningData(o, pc); return c === null ? [] : [c]; });
       const m = matchAddress(typed, cands, MATCH_THRESHOLDS.PLANNING, 'planning.data.gov.uk', merge);
       q.measure?.({ profile: 'PLANNING', register: 'planning.data.gov.uk', match: m, top_address: m.top?.candidate.address ?? null });
-      if (m.status === 'ACCEPT') return kept(m, 'planning.data.gov.uk', calls);
+      const done = pickOn(m, q, 'planning.data.gov.uk', calls);
+      if (done !== null) return done;
     }
 
     // 2 · PlanIt, within its owner's one request a minute.
@@ -141,7 +171,12 @@ export const planning = defineSteppedConnector<PlanningQuery>({
     const cands = piRows.flatMap((r) => { const o = obj(r); const c = o === null ? null : fromPlanIt(o); return c === null ? [] : [c]; });
     const m = matchAddress(typed, cands, MATCH_THRESHOLDS.PLANNING, 'PlanIt', merge);
     q.measure?.({ profile: 'PLANNING', register: 'PlanIt', match: m, top_address: m.top?.candidate.address ?? null });
-    if (m.status === 'ACCEPT') return kept(m, 'PlanIt', calls);
+    const done = pickOn(m, q, 'PlanIt', calls);
+    if (done !== null) return done;
+    /* A choice was made and neither service's list still holds it. Nothing is kept, and the words say to look again
+       rather than leaving it reading like a plain no-match. */
+    const chose = typeof q.chosen === 'string' && q.chosen.trim() !== '';
+    if (chose) return { kind: 'NOT_MATCHED', code: 'MATCH_REVIEW', why: PICK_GONE_WHY, calls };
     return { kind: 'NOT_MATCHED', code: m.status === 'REVIEW' ? 'MATCH_REVIEW' : m.status === 'INSUFFICIENT_INPUT' ? 'INSUFFICIENT_INPUT' : 'NO_MATCH', why: m.why, calls };
   },
 });

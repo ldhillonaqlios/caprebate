@@ -66,14 +66,17 @@
 import type { OwnerSecrets } from '../secrets.ts';
 import type { CallResult } from './http.ts';
 import { defineSteppedConnector, type Bundle, type LookupResult, type StepRequest } from './registers.ts';
-import { addressFromLines, matchAddress, MATCH_THRESHOLDS, postcodeKey, type Candidate, type MeasureHook } from './matching.ts';
+import {
+  addressFromLines, matchAddress, applyPick, pickedNote, PICK_GONE_WHY, MATCH_THRESHOLDS, postcodeKey,
+  type Candidate, type MeasureHook, type PickQuery,
+} from './matching.ts';
 import type { TypedProperty } from './nations.ts';
 
 export type HomedataQuery = {
   readonly property: TypedProperty | null;
   /** The 200-property measurement only (tools/match-measure.ts). Never set by the research flow. */
   readonly measure?: MeasureHook;
-};
+} & PickQuery;
 
 /**
  * THE SLUGS THIS CONNECTOR MAY ASK FOR, AND NO OTHERS.
@@ -239,14 +242,21 @@ export const homedataAddress = defineSteppedConnector<HomedataQuery>({
     const typed = addressFromLines([q.property.address_line_1, q.property.address_line_2], q.property.postcode, q.property.town);
     const m = matchAddress(typed, candidates, MATCH_THRESHOLDS.EPC, 'the paid address lookup');
     q.measure?.({ profile: 'EPC', register: 'homedata', match: m, top_address: m.top?.candidate.address ?? null });
-    if (m.status !== 'ACCEPT' || m.best === null) {
+    /* PHASE 146h: the REVIEW band's list to the back office, or a person's choice back, keyed on the UPRN — the key
+       the detail call is made BY. This lookup is paid and already waits on a signed engagement, which is the same
+       gate the pick waits on, so nothing here widens when the pick may be offered. */
+    const pick = applyPick(m, q, { profile: 'EPC', register: 'the paid address lookup', keyOf: (u) => u });
+    if (pick.kind === 'GONE') return { kind: 'NOT_MATCHED', code: 'MATCH_REVIEW', why: PICK_GONE_WHY, calls };
+    const took = pick.kind === 'CHOSEN' ? pick.best : m.best;
+    const how = pick.kind === 'CHOSEN' ? pickedNote(pick.best.score, 'the paid address lookup') : m.why;
+    if (took === null || (pick.kind !== 'CHOSEN' && m.status !== 'ACCEPT')) {
       return {
         kind: 'NOT_MATCHED',
         code: m.status === 'REVIEW' ? 'MATCH_REVIEW' : m.status === 'INSUFFICIENT_INPUT' ? 'INSUFFICIENT_INPUT' : 'NO_MATCH',
         why: m.why, calls,
       };
     }
-    const uprn = m.best.candidate.payload;
+    const uprn = took.candidate.payload;
 
     // 2 · the matched property's address fields and coordinates, and the penny title pre-check. Named slugs, summed
     //     weights, no tier.
@@ -273,7 +283,7 @@ export const homedataAddress = defineSteppedConnector<HomedataQuery>({
       : ' It found no registered title, so buying one would spend £7 on nothing.';
     return {
       kind: 'READ', bundle, calls,
-      note: `looked up — ${m.why}, and we keep the property's identifier, its address and where it came from.${coords}${title}`,
+      note: `looked up — ${how}, and we keep the property's identifier, its address and where it came from.${coords}${title}`,
     };
   },
 });

@@ -32,6 +32,7 @@ import * as R from '../src/web/research.ts';
 import * as E from '../src/web/engaged.ts';
 import { REGISTRY, registryGate } from '../src/web/engine.ts';
 import { connectorSwitchReadings } from '../src/web/case-stamp.ts';
+import { PICK_SWITCHES } from '../src/web/match-review.ts';
 import { CLAUDE_SWITCHES } from '../src/connectors/claude.ts';
 import { buildApp, STUBS } from '../src/app.ts';
 import { seed } from '../src/seed.ts';
@@ -754,10 +755,15 @@ describe('only fields both registers permit; the supplier docs recorded and date
     app.close();
   });
 
-  test('EVERY SWITCH IS STILL OFF, AND THE CASE STAMP READS EVERY ONE — each lookup’s and the document reader’s', () => {
+  /* PHASE 146h, 23 September 2026 adds a THIRD map to this reading: PICK_SWITCHES, a person's pick for a close
+     match (src/web/match-review.ts). It is not a connector switch and is deliberately not in REGISTER_SWITCHES, so
+     the count below carries it by name rather than by accident. */
+  test('EVERY SWITCH IS STILL OFF, AND THE CASE STAMP READS EVERY ONE — each lookup’s, the document reader’s and the pick’s', () => {
     for (const [k, v] of Object.entries(C.REGISTER_SWITCHES)) assert.equal(v, false, k);
     const readings = connectorSwitchReadings();
-    assert.equal(readings.length, Object.keys(C.REGISTER_SWITCHES).length + Object.keys(CLAUDE_SWITCHES).length);
+    assert.equal(readings.length,
+      Object.keys(C.REGISTER_SWITCHES).length + Object.keys(CLAUDE_SWITCHES).length + Object.keys(PICK_SWITCHES).length);
+    for (const k of Object.keys(PICK_SWITCHES)) assert.ok(readings.some((r) => r.switch === `PICK_SWITCHES.${k}` && r.on === false), k);
     for (const k of Object.keys(C.REGISTER_SWITCHES)) assert.ok(readings.some((r) => r.switch === `REGISTER_SWITCHES.${k}` && r.on === false), k);
     for (const k of Object.keys(CLAUDE_SWITCHES)) assert.ok(readings.some((r) => r.switch === `CLAUDE_SWITCHES.${k}` && r.on === false), k);
     const stamp = readFileSync(join(SRC, 'web', 'case-stamp.ts'), 'utf8');

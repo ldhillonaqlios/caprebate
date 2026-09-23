@@ -39,7 +39,10 @@
 import type { OwnerSecrets } from '../secrets.ts';
 import type { CallResult } from './http.ts';
 import { defineSteppedConnector, type LookupResult, type StepRequest } from './registers.ts';
-import { addressFromLines, matchAddress, MATCH_THRESHOLDS, postcodeKey, type Candidate, type MeasureHook } from './matching.ts';
+import {
+  addressFromLines, matchAddress, applyPick, pickedNote, PICK_GONE_WHY, MATCH_THRESHOLDS, postcodeKey,
+  type Candidate, type MeasureHook, type PickQuery,
+} from './matching.ts';
 import { jurisSource, type Nation, type TypedProperty } from './nations.ts';
 
 export type CqcQuery = {
@@ -52,7 +55,7 @@ export type CqcQuery = {
   readonly company_number: string | null;
   /** The 200-property measurement only (tools/match-measure.ts). Never set by the research flow. */
   readonly measure?: MeasureHook;
-};
+} & PickQuery;
 
 /** How many pages of a council area's locations we read at most, and how many to a page. */
 export const CQC_PAGE_SIZE = 1000;
@@ -157,10 +160,19 @@ export const cqc = defineSteppedConnector<CqcQuery>({
     const typed = addressFromLines([q.property.address_line_1, q.property.address_line_2], q.property.postcode, q.property.town);
     const m = matchAddress(typed, candidates, MATCH_THRESHOLDS.CQC, 'the care regulator');
     q.measure?.({ profile: 'CQC', match: m, top_address: m.top?.candidate.address ?? null });
-    if (m.status !== 'ACCEPT' || m.best === null) {
+    /* PHASE 146h: a REVIEW's ranked list goes to the back office, or a person's choice comes back in it, keyed on
+       the location id — the key this lookup reads a registration BY. Outside the REVIEW band this does nothing. */
+    const pick = applyPick(m, q, {
+      profile: 'CQC', register: 'the care regulator',
+      keyOf: (l) => String(l['locationId'] ?? ''),
+    });
+    if (pick.kind === 'GONE') return { kind: 'NOT_MATCHED', code: 'MATCH_REVIEW', why: PICK_GONE_WHY, calls };
+    const took = pick.kind === 'CHOSEN' ? pick.best : m.best;
+    const how = pick.kind === 'CHOSEN' ? pickedNote(pick.best.score, 'the care regulator') : m.why;
+    if (took === null || (pick.kind !== 'CHOSEN' && m.status !== 'ACCEPT')) {
       return { kind: 'NOT_MATCHED', code: m.status === 'REVIEW' ? 'MATCH_REVIEW' : m.status === 'INSUFFICIENT_INPUT' ? 'INSUFFICIENT_INPUT' : 'NO_MATCH', why: m.why, calls };
     }
-    const fields = locationFields(m.best.candidate.payload);
+    const fields = locationFields(took.candidate.payload);
     if (fields === null) return { kind: 'UNREADABLE', call: calls[calls.length - 1] as CallResult, calls };
 
     // 4: the provider, for its Companies House number — compared, never kept.
@@ -179,7 +191,7 @@ export const cqc = defineSteppedConnector<CqcQuery>({
     return {
       kind: 'READ', calls,
       bundle: { records: [{ sourceId: 'CQC', entityId: String(fields['cqc_location_id']), fields }], facts: fields },
-      note: `looked up — ${m.why}, and we keep the registration and where it came from.${providerNote}`,
+      note: `looked up — ${how}, and we keep the registration and where it came from.${providerNote}`,
     };
   },
 });

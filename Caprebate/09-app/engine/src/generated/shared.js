@@ -4124,6 +4124,42 @@ var CB_REGISTRY = (function(){
      --------------------------------------------------------------------------- */
   var RESIDENTIAL_SECTORS = ["supported_living"];
 
+  /* -------------------------------------------------------------------------
+     THE LAND REGISTRY'S OWN WORDS, AND WHY THEY SIT HERE — PHASE 146h,
+     23 September 2026.
+
+     "Our records show you paid {v} for this property. Is that right?" is a
+     sentence about somebody's house, and the records are not ours. They are HM
+     Land Registry's Price Paid Data, published under the Open Government
+     Licence, and that licence PRESCRIBES the credit and says it must appear
+     verbatim. Until this phase derive() handed the sentence out with no
+     attribution at all, and nothing drew it — which is the only reason this is
+     a correction rather than a breach.
+
+     THE YEAR IS A FIXED 2021 AND IS NOT A PLACEHOLDER. HM Land Registry's own
+     guidance writes the line that way whatever year you read it in, and a build
+     that "helpfully" substituted the current year would be publishing a credit
+     the licence does not prescribe. The line was written without it until
+     Phase 146c put it back.
+
+     IT IS COPIED HERE AND CHECKED AGAINST ITS SOURCE, rather than read from it.
+     This file is a browser script and the licence register is TypeScript that
+     no browser loads, so there is no import to make. What there is instead is a
+     test: the back end reads BOTH — this constant through the extracted engine
+     package, and LICENCES[HMLR_PPD].attribution_text — and fails if the two
+     ever differ by a character. A copy nothing compares is how the year went
+     missing the first time.
+
+     ONLY THE TWO PRICE PAID FIELDS CARRY IT. `tenure` is on the same source in
+     this map and is NOT given the line, because at the address question tenure
+     is answered by the title register and not by Price Paid. A credit on a
+     field that did not come from that dataset would be a false statement of
+     origin, which is a worse fault than a missing one.
+     ------------------------------------------------------------------------- */
+  var HMLR_PPD_ATTRIBUTION =
+    "Contains HM Land Registry data \u00a9 Crown copyright and database right 2021. " +
+    "This data is licensed under the Open Government Licence v3.0.";
+
   function sourceCoversSector(spec, sector){
     if(!spec.residentialOnly) return true;
     if(!sector) return false;   /* unknown sector never assumes coverage */
@@ -4134,11 +4170,13 @@ var CB_REGISTRY = (function(){
     price_paid: {
       source:"hmlr", jurisdictional:"price_paid", residentialOnly:true,
       retires:"when did you buy the property, and for how much",
+      attribution:HMLR_PPD_ATTRIBUTION,
       confirm:"Our records show you paid {v} for this property. Is that right?" },
 
     completion_date: {
       source:"hmlr", jurisdictional:"price_paid", residentialOnly:true,
       retires:"the completion date that starts the two-year period",
+      attribution:HMLR_PPD_ATTRIBUTION,
       confirm:"and that the sale completed on {v}?" },
 
     tenure: {
@@ -4346,7 +4384,13 @@ var CB_REGISTRY = (function(){
       }
 
       out.values[f] = v;
-      out.provenance[f] = { source:srcId, label:src.label, confirm:spec.confirm.replace("{v}", String(v)) };
+      /* PHASE 146h: the provenance carries the publisher's prescribed credit where the field has one, so a screen
+         that draws the sentence has the words beside it and cannot draw one without the other. `attribution` is
+         null, never absent and never "", for a field whose source prescribes none — a reader testing for it gets
+         an answer either way. */
+      out.provenance[f] = { source:srcId, label:src.label,
+                            attribution: spec.attribution || null,
+                            confirm:spec.confirm.replace("{v}", String(v)) };
     });
 
     return out;
@@ -4361,6 +4405,7 @@ var CB_REGISTRY = (function(){
 
   return { precondition:precondition, SOURCES:SOURCES, FIELDS:FIELDS,
            RESIDENTIAL_SECTORS:RESIDENTIAL_SECTORS,
+           HMLR_PPD_ATTRIBUTION:HMLR_PPD_ATTRIBUTION,
            sourceCoversSector:sourceCoversSector,
            classifyField:classifyField, derive:derive, retired:retired,
            sectorFromServiceType:sectorFromServiceType };

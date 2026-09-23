@@ -1,0 +1,4 @@
+{"data":[
+ {"certificateNumber":"1111-0000-0000-0000-0011","addressLine1":"Unit 3 Riverside Business Park","addressLine2":"Kelso Place","addressLine3":null,"addressLine4":null,"postTown":"Nowhere","postcode":"ZZ3 3ZZ","council":"Nowhere","constituency":"Nowhere","currentEnergyEfficiencyBand":"C","registrationDate":"2025-04-04","uprn":999999999951,"schemaType":"RdSAP-Schema-21.0.1"},
+ {"certificateNumber":"1111-0000-0000-0000-0012","addressLine1":"Unit 5 Riverside Business Park","addressLine2":"Kelso Place","addressLine3":null,"addressLine4":null,"postTown":"Nowhere","postcode":"ZZ3 3ZZ","council":"Nowhere","constituency":"Nowhere","currentEnergyEfficiencyBand":"D","registrationDate":"2024-01-09","uprn":999999999952,"schemaType":"RdSAP-Schema-19.0"}
+],"pagination":{"totalRecords":2,"currentPage":1,"totalPages":1,"nextPage":null,"prevPage":null,"pageSize":100}}
