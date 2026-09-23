@@ -45,6 +45,7 @@ import {
   minutesToClock, type WorkingTime, type WorkingTimeInput,
 } from './schedule.ts';
 import { photoFor, type PhotoRecord } from './avatar.ts';
+import { liftSuppression } from '../stubs/email-provider.ts';
 
 export class SettingsError extends Error {
   readonly code: string;
@@ -437,4 +438,65 @@ export function disableUser(d: Deps, actor: Actor, target_id: string): User {
  */
 export function usersGate(actor: Actor): void {
   authorise(actor, 'user.list', { type: 'user', id: actor.id, role: actor.role });
+}
+
+/* ================================================================== *
+ * ADDRESSES WE CANNOT EMAIL — PHASE 146g, 23 September 2026
+ *
+ * Phase 146f recorded bounces and stopped sending to an address that bounced
+ * for good, and `liftSuppression` (src/stubs/email-provider.ts) was written for
+ * a member of staff to say the address works again — with no screen to say it
+ * from. So an address stopped for good was stopped for ever, and the only way
+ * back was somebody with the database file.
+ *
+ * ADMIN ONLY, and a lift is a NEW ROW. Nothing is edited and nothing is
+ * deleted: the bounce stays on record, and the lift sits after it with who
+ * lifted it and when. Lifting an address that is not stopped does nothing and
+ * says so — it is not an error, because two people pressing the same button is
+ * not a fault.
+ * ================================================================== */
+
+export type StoppedAddress = {
+  readonly address: string;
+  /** When it was stopped. */
+  readonly at: string;
+  /** The server's code — "550", "5.1.1". Never the server's words. */
+  readonly status: string;
+  /** What the message was, so a person can see which one bounced. Never its body. */
+  readonly subject: string | null;
+};
+
+/** Every address nothing more is sent to, newest first. The state is the address's NEWEST row. */
+export function stoppedAddresses(db: Db, actor: Actor): StoppedAddress[] {
+  authorise(actor, 'user.list', { type: 'user', id: actor.id, role: actor.role });
+  return db.all<{ address: string; at: string; status: string | null; subject: string | null }>(
+    'SELECT s.address_canonical AS address, s.at AS at, b.status AS status, o.subject AS subject ' +
+      'FROM email_suppressions s ' +
+      'LEFT JOIN email_bounces b ON b.id = s.bounce_id ' +
+      'LEFT JOIN outbox o ON o.id = b.outbox_id ' +
+      'WHERE s.state = ? AND s.id = (SELECT id FROM email_suppressions x ' +
+      'WHERE x.address_canonical = s.address_canonical ORDER BY x.at DESC, x.rowid DESC LIMIT 1) ' +
+      'ORDER BY s.at DESC',
+    ['BOUNCED'],
+  ).map((r) => ({ address: r.address, at: r.at, status: r.status ?? 'not recorded', subject: r.subject }));
+}
+
+/**
+ * A MEMBER OF STAFF SAYS AN ADDRESS WORKS AGAIN. Returns whether anything changed, so the screen can say either
+ * "that address can be emailed again" or "that address was not stopped" — and neither is an error.
+ */
+export function liftStoppedAddress(
+  d: { db: Db; audit: AuditLog; now: () => string }, actor: Actor, address: string,
+): { readonly lifted: boolean; readonly address: string } {
+  authorise(actor, 'user.list', { type: 'user', id: actor.id, role: actor.role });
+  const typed = address.trim();
+  const lifted = liftSuppression(d.db, d.now, typed, actor.id);
+  d.audit.append({
+    at: d.now(), kind: 'EMAIL_ADDRESS_LIFTED', outcome: lifted ? 'ALLOWED' : 'REFUSED',
+    actor_id: actor.id, actor_role: actor.role, object_type: 'outbox', object_id: null,
+    // The address is the thing being lifted and it is already in email_suppressions; the log line carries no name
+    // and no address, only whether a lift happened. Which address it was is the row the lift wrote.
+    detail: { lifted, why: lifted ? 'a member of staff said the address works again' : 'that address was not stopped' },
+  });
+  return { lifted, address: typed };
 }

@@ -34,7 +34,7 @@ import * as C from './crm.ts';
 import * as D from './documents.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import { singleFile } from './multipart.ts';
-import { acceptClientBytes, finishUpload, issuedJob, sweepOriginals } from './uploads.ts';
+import { acceptClientBytes, finishUpload, issuedJob, sweepOriginals, readerFor } from './uploads.ts';
 import { UPLOAD_LIMITS, sniffAccepted } from './upload-handler-port.ts';
 import { NO_DUE_DATE } from './tasks.ts';
 
@@ -84,7 +84,11 @@ export async function receiveFile(
   const token = new URL(b.url, 'http://localhost').searchParams.get('token') ?? '';
   const job = issuedJob(db, b.doc_id);
   if (job === null) return { ok: false, why: 'Something went wrong. Try again.' };
-  const deps = { db, store: d.store, now, actor: actor.id, newId: d.newId, audit: d.app.audit };
+  /* PHASE 146g: `reading` carries the process's key store and transport to steps 9 and 10 of the receipt contract.
+     It switches nothing on — CLAUDE_SWITCHES.DOCUMENT_READING is false — and with it off a finished upload behaves
+     exactly as it did before. args.business_id is the client whose gates are recorded on the reading's audit row. */
+  const deps = { db, store: d.store, now, actor: actor.id, newId: d.newId, audit: d.app.audit,
+    reading: readerFor(d.app, args.business_id, actor.role) };
   const r = await acceptClientBytes(deps, { doc_id: b.doc_id, token, bytes });
   if (!r.ok) return { ok: false, why: r.status === 413 ? TOO_BIG : r.status === 415 ? NOT_ACCEPTED : 'Something went wrong. Try again.' };
   const done = await finishUpload(deps, job, r.written_at);

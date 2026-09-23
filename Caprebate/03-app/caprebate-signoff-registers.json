@@ -4,8 +4,8 @@
   "_how_it_stays_honest": "The check FAILS when a register's text contains a board id this file does not classify, and FAILS when this file names an id the register's text no longer contains. So it cannot quietly go stale: adding an entry to a register without recording it here is a red run, and so is deleting one.",
   "_entry_shapes_in_use": "Two, and the second exists because of a tooling limit recorded in COORDINATES: a row in the register's Appendix 3 index table, or a prose note declaring an entry. A row cannot be added to an existing Monday table through the document API, so every entry added after a register's table was built is declared in prose beside it. SV-S7, SV-S8, SDP-L3, SDP-V3, SDP-L4, SDP-L5, SDP-P5 to SDP-P8 and SDP-V4 are all of that second kind. Since 15 September 2026 (Phase 132d) every entry code in all three registers carries its register's prefix - SV- for FOR THE SURVEYOR, ACC- for FOR THE ACCOUNTANT, SDP- for FOR THE SOLICITOR, THE DPO AND THE DEVELOPER - in the registers themselves and in the refs here; the check matches board ids and counts, never a ref's code.",
   "version": "1.0",
-  "written": "2026-09-23",
-  "writtenBy": "Phase 146d",
+  "written": "23 September 2026",
+  "writtenBy": "Phase 146g",
   "board": 18422317809,
   "awaitingLabel": "Built - awaiting sign-off",
   "_boardIds": "A board id looks exactly like an item id, and every register's Appendix 3 opens by naming the board. These are boards, and the check skips them rather than asking anybody to classify them as entries.",
@@ -774,6 +774,12 @@
           "id": "13104189485",
           "how": "prose",
           "why": "The third of Phase 146d’s three entries on the same board item. Neither blocks anything while both lookups are switched off and neither has a key."
+        },
+        {
+          "ref": "SDP-V9 the one page a developer reads before opening an account, and what the build needs from a host",
+          "id": "13104163090",
+          "how": "prose",
+          "why": "Added by Phase 146g, 23 Sep 2026, and moved from Ready - Claude can build. The one page at the top of section 3.2 of the Developer Spec: every outside service's account, key name, switch, precondition, cost and smoke test, read from the code; and what any host must provide, recommending none. Declared in prose in the Phase 146g note at the end of the register, because a row cannot be added to an existing Monday table through the document API."
         }
       ],
       "mentions": [

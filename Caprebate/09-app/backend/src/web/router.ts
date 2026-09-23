@@ -44,7 +44,7 @@ import { ENGAGEMENT_SIGNING, shownLetter, signEngagement, signingMissing } from 
 import { portalMessagesBody, readPortalSend, sendFromPortal } from './messages-pages.ts';
 import { clientMessage, type ThreadMessage as MessageView } from './messages.ts';
 import { FsObjectStore } from './objectstore.ts';
-import { acceptClientBytes, finishUpload, issuedJob } from './uploads.ts';
+import { acceptClientBytes, finishUpload, issuedJob, readerFor } from './uploads.ts';
 import { singleFile } from './multipart.ts';
 import { readUpload, receiveFile } from './client-files-pages.ts';
 import { READ_AND_DELETED } from './originals.ts';
@@ -501,7 +501,12 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     } else {
       file = new Uint8Array(bytes);
     }
-    const deps = { db: d.app.db, store: d.store, now, actor: actor.id, newId, audit: d.app.audit };
+    /* PHASE 146g: `reading` carries the process's key store and transport to steps 9 and 10 of the receipt contract,
+       which nothing in src/ reached until this phase. It switches nothing on — CLAUDE_SWITCHES.DOCUMENT_READING is
+       false — and with it off a finished upload behaves exactly as it did before. The document's own business is
+       whose gates the reading's audit row records; `P.document` above has already authorised this actor on it. */
+    const deps = { db: d.app.db, store: d.store, now, actor: actor.id, newId, audit: d.app.audit,
+      reading: readerFor(d.app, job.entity_id, actor.role) };
     const r = await acceptClientBytes(deps, { doc_id, token, bytes: file });
     if (!r.ok) { html(res, r.status, simple('Not accepted', r.why)); return 'handled'; }
     // CRM 4 of 10: STEPS 3 TO 7, ON THIS REQUEST. Until today the running

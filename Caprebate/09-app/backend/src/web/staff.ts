@@ -448,6 +448,17 @@ export async function handleStaff(
     redirect(res, '/staff/users?done=disabled'); return 'handled';
   }
 
+  /* ---------------------------------- PHASE 146g · addresses we cannot email */
+  if (path === '/staff/email-addresses' && method === 'GET') {
+    html(res, 200, stoppedAddressesPage(actor, S.stoppedAddresses(db, actor), url.searchParams.get('done') ?? undefined));
+    return 'handled';
+  }
+  if (path === '/staff/email-addresses/lift' && method === 'POST') {
+    const f = await form(req);
+    const r = S.liftStoppedAddress({ db, audit: d.app.audit, now }, actor, f.get('address') ?? '');
+    redirect(res, `/staff/email-addresses?done=${r.lifted ? 'lifted' : 'not-stopped'}`); return 'handled';
+  }
+
   return 'not-mine';
 }
 
@@ -948,10 +959,18 @@ function settingsPage(
      It holds messages addressed to every client, so drawing it conditionally
      while still fetching it would be a screen omitting a field — the thing this
      application refuses to call a control. It is not read at all. */
+  /* PHASE 146g: AND WHETHER IT BOUNCED. Phase 146f recorded bounces and nothing showed them, so an email the
+     server would not deliver looked exactly like one that had not been sent yet. The newest bounce for each
+     message, its kind and the server's CODE — never the server's words. */
   const outbox = inBackOffice
-    ? d.app.db.all<{ created_at: string; to_email: string; subject: string; kind: string; sent_at: string | null; business_id: string | null }>(
-        'SELECT created_at, to_email, subject, kind, sent_at, business_id FROM outbox ORDER BY created_at DESC LIMIT 20')
+    ? d.app.db.all<{ created_at: string; to_email: string; subject: string; kind: string; sent_at: string | null;
+      business_id: string | null; bounce_kind: string | null; bounce_status: string | null }>(
+      'SELECT o.created_at, o.to_email, o.subject, o.kind, o.sent_at, o.business_id, ' +
+        'b.kind AS bounce_kind, b.status AS bounce_status FROM outbox o ' +
+        'LEFT JOIN email_bounces b ON b.id = (SELECT id FROM email_bounces x WHERE x.outbox_id = o.id ' +
+        'ORDER BY x.at DESC, x.rowid DESC LIMIT 1) ORDER BY o.created_at DESC LIMIT 20')
     : [];
+  const stopped = inBackOffice && S.canAdminister(actor) ? S.stoppedAddresses(d.app.db, actor).length : 0;
   return page({
     title: 'Your account', nav: inBackOffice ? nav(actor) : portalShell(actor),
     body: h`
@@ -1025,7 +1044,9 @@ function settingsPage(
       </form>
 
       ${S.canAdminister(actor) ? h`<h3>Administration</h3>
-        <p><a class="cta" href="/staff/users">Users and roles</a></p>` : raw('')}
+        <p><a class="cta" href="/staff/users">Users and roles</a></p>
+        <p><a class="cta" href="/staff/email-addresses">Addresses we cannot email</a>${stopped === 0
+          ? raw('') : h` — ${stopped} stopped`}</p>` : raw('')}
 
       <h3>Emails waiting to send</h3>
       <p class="help">Emails are not being sent yet. Each one is saved here until sending is switched on.
@@ -1034,10 +1055,47 @@ function settingsPage(
         ? h`<p class="help">No emails waiting.</p>`
         : h`<table><thead><tr><th>When</th><th>What it is</th><th>Subject</th><th>State</th><th></th></tr></thead>
           <tbody>${outbox.map((m) => h`<tr><td class="when">${stamp(m.created_at)}</td><td>${OUTBOX_KIND_WORDS[m.kind] ?? 'Other'}</td>
-            <td>${m.subject}</td><td>${m.sent_at === null ? 'Saved — not sent yet' : `Sent ${stamp(m.sent_at)}`}</td>
+            <td>${m.subject}</td><td>${m.bounce_kind === 'HARD'
+              ? h`<strong>Came back — that address does not work</strong> (code ${m.bounce_status ?? 'not recorded'})`
+              : m.bounce_kind === 'SOFT'
+                ? h`Came back — try again later (code ${m.bounce_status ?? 'not recorded'})`
+                : m.sent_at === null ? h`Saved — not sent yet` : h`Sent ${stamp(m.sent_at)}`}</td>
             <td>${m.business_id !== null && ON_EMAIL_PAGE.includes(m.kind)
               ? h`<a href="/staff/clients/${m.business_id}/email">Open the Email page</a>` : raw('')}</td></tr>`)}</tbody></table>`}`
       : h`<p><a href="/portal">Back to your claim</a></p>`}`,
+  });
+}
+
+/**
+ * ADDRESSES WE CANNOT EMAIL — PHASE 146g, 23 September 2026. Admin only.
+ *
+ * An address the mail server refused for good is stopped, and nothing more is sent to it. That was built by Phase
+ * 146f with no way back: `liftSuppression` existed and no screen called it. This is the screen.
+ *
+ * A LIFT IS A NEW ROW, not an edit. The bounce stays on record and so does the stop; the lift sits after them with
+ * who pressed the button and when. Pressing it for an address that is not stopped is not an error and says so.
+ */
+function stoppedAddressesPage(actor: Actor, rows: readonly S.StoppedAddress[], done: string | undefined): string {
+  return page({
+    title: 'Addresses we cannot email', nav: nav(actor), wide: true,
+    body: h`
+      <h1>Addresses we cannot email</h1>
+      ${done === 'lifted' ? h`<p class="help">Done. We can email that address again.</p>`
+        : done === 'not-stopped' ? h`<p class="help">That address was not stopped, so nothing changed.</p>` : raw('')}
+      <p class="help">An email came back saying the address does not work, so we stopped sending to it.
+      <strong>Check with the person first.</strong> If they tell you the address is right, or they give you a new
+      one, press the button. Nothing is deleted: the bounce stays on record, and so does your lift.</p>
+      ${rows.length === 0
+        ? h`<p class="help">No addresses are stopped.</p>`
+        : h`<table><thead><tr><th>Address</th><th>Stopped</th><th>Code</th><th>The email</th><th></th></tr></thead>
+          <tbody>${rows.map((r) => h`<tr>
+            <td>${r.address}</td><td class="when">${stamp(r.at)}</td><td>${r.status}</td>
+            <td>${r.subject ?? 'not recorded'}</td>
+            <td><form method="post" action="/staff/email-addresses/lift" class="inline">
+              <input type="hidden" name="address" value="${r.address}">
+              <button class="linkish" type="submit">This address works again</button></form></td>
+          </tr>`)}</tbody></table>`}
+      <p><a href="/staff/settings">Back to your account</a></p>`,
   });
 }
 

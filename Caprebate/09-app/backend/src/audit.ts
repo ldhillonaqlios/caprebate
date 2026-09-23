@@ -51,6 +51,14 @@ export type AuditKind =
    */
   | 'DOCUMENT_READ_BY_MODEL' | 'DOCUMENT_PAGES_READ_BY_MODEL'
   /**
+   * Phase 146g, 23 September 2026: WHAT LEFT THE BUILDING, once per document, written by the upload flow
+   * (src/web/uploads.ts) from the pipeline's own egress record when steps 9 and 10 run. The payload's fingerprint,
+   * the KIND and PAGE of each segment sent and each segment the strip dropped with its reason, and the fields asked
+   * for. NEVER A WORD OF THE DOCUMENT. It is the answer to "what exactly did you send", and it is the pipeline's
+   * record rather than the reader's: the reader's own row is DOCUMENT_READ_BY_MODEL, beside it.
+   */
+  | 'DOCUMENT_SENT_TO_MODEL'
+  /**
    * Phase 146f, 22 September 2026. MAIL_SERVER_CONNECTED is one conversation with the IONOS mail server, sending or
    * reading: the service, what for, the outcome, the reply code, how many messages, how long. Never a password, an
    * address or the server's words. EMAIL_BOUNCED is one email the server would not deliver: HARD or SOFT, and the
@@ -60,6 +68,12 @@ export type AuditKind =
    * line carries a name (the rule at the top of this file).
    */
   | 'MAIL_SERVER_CONNECTED' | 'EMAIL_BOUNCED' | 'ENGAGEMENT_SIGNED'
+  /**
+   * Phase 146g, 23 September 2026. A member of staff said an address that bounced for good works again
+   * (src/web/settings.ts). Whether a lift happened, and nothing else: the address itself is the new row in
+   * email_suppressions, which carries who lifted it and when. No log line carries an address.
+   */
+  | 'EMAIL_ADDRESS_LIFTED'
   /**
    * Phase 107. Two events that had no honest kind before it, and were nearly
    * logged as DOCUMENT_ACCESSED for want of one — which would have made the

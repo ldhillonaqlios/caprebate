@@ -3556,3 +3556,43 @@ the form while signed out gets the same answer as the made-up address. Nothing s
   Admin can merge.
 
 ---
+
+### Training — `B52` addresses we cannot email
+
+**What it is for**
+Sometimes an email comes back. The mail server says the address does not work. When that happens we stop sending to
+that address. Nothing more goes to it. This page lists those addresses, and lets you start again.
+
+**Who can open it**
+Admin only. Open **Your account**. The link is under **Administration**.
+
+**How to do the common job**
+1. Open **Your account**, then **Addresses we cannot email**.
+2. Look at the list. Each row shows four things. The address. The day we stopped it. The code the mail
+   server gave. And the subject of the email that came back.
+3. **Ring the person or ask a colleague first.** They may have a new address, or they may tell you the one we have
+   is right.
+4. If the address is fine, press **This address works again**.
+5. The page says "Done. We can email that address again."
+
+**What it refuses, and why**
+- Nothing is deleted. The email that came back stays on record, and so does the stop. Your lift is a new line under
+  them, with your name and the time. That way we can always see what happened and who said what.
+- Press the button for an address that was never stopped and nothing changes. The page says "That address was
+  not stopped, so nothing changed." That is not a fault. Two people may press the same button. That is fine.
+- Only Admin can open this page or press the button.
+
+**What you will see on the other page**
+On **Your account**, under **Emails waiting to send**, an email that came back now says so:
+- **Came back — that address does not work**, with the code. Nothing more goes to that address.
+- **Came back — try again later**, with the code. That one is usually a full mailbox. We try again.
+
+**Check yourself**
+- *An email to a client came back. Can I just send it again?* — No. Ask them for the right address first. Then lift
+  the old one, or add the new one to their record.
+- *I lifted an address by mistake. Have I lost the record?* — No. Nothing is deleted. The stop and the lift are both
+  on the list of what happened.
+- *Where do I find this page?* — Open **Your account**. Look under **Administration**. The link says
+  **Addresses we cannot email**.
+
+---

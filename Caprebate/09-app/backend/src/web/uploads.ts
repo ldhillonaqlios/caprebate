@@ -24,9 +24,18 @@ import type { AuditLog } from '../audit.ts';
 import { FsObjectStore } from './objectstore.ts';
 import { extractPages, isScanMarker, pdfPageImages, type ExtractedPage, type PageImage } from './extract-text.ts';
 import { receiveByUpload } from './documents.ts';
+import { ingestRegisterRecord } from '../stubs/registers.ts';
+import { freeGate, assertSignedEngagement } from './research.ts';
+import type { RateLimiter, Transport, GateSnapshot } from '../connectors/http.ts';
+import type { SecretStore } from '../secrets.ts';
+import {
+  CLAUDE_SWITCHES, claudeReadiness, prepareClaudeModel, readScannedPages,
+  type ClaudeContext, type ClaudeSwitches, type ModelRead,
+} from '../connectors/claude.ts';
+import type { EgressEntry } from '../../../../04-phase-work/phase3/caprebate-document-pipeline.ts';
 import {
   UPLOAD_LIMITS, UploadHandlerError, sniffAccepted, quarantineKeyFor,
-  issueUploadUrl, recordUploadComplete, processUpload,
+  issueUploadUrl, recordUploadComplete, processUpload, openTransparency, runExtraction, writeClaims,
   assertContractCovered, FAIL_CLOSED_SETTINGS, DOC_SPECS, HUMAN_READ_ONLY_TYPES, durableKeyFor,
   type AuditEvent, type AuditSink, type DocType, type DocTypeClassifier,
   type TextExtractor, type UploadHandlerDeps, type UploadJob,
@@ -146,8 +155,63 @@ export type UploadDeps = {
   /**
    * PHASE 146e. What reads a scanned PDF's page pictures as text — `readScannedPages` in src/connectors/claude.ts,
    * behind its own switch. Absent, as shipped: a scan keeps its marker.
+   *
+   * PHASE 146g: A CALLER NO LONGER HAS TO BUILD THIS. Given `reading` below, it is derived from it — and ONLY while
+   * SCANNED_PAGES is on, which is the whole of the rule. Passing one here still wins, so a test can supply its own.
    */
   scan_reader?: (doc_id: string, images: PageImage[]) => Promise<ExtractedPage[] | null>;
+  /**
+   * PHASE 146g. HOW A FINISHED UPLOAD REACHES THE DOCUMENT READER — the transport (the live one, or recorded answers
+   * in a test), the key file read at start-up, and the switches. ABSENT, OR WITH DOCUMENT_READING OFF, A FINISHED
+   * UPLOAD BEHAVES EXACTLY AS IT DID BEFORE THIS PHASE: steps 9 and 10 of the receipt contract do not run, nothing is
+   * sent anywhere, and every field the document would have answered stays ASKED of the client (N4).
+   *
+   * It opens no gate. Reading a client's own document is not a register lookup and neither gate governs it; what
+   * governs it is the switch, the key, and the data protection officer's approval of the provider and the transfer —
+   * which src/connectors/sources.ts still refuses (CLAUDE_DOCUMENTS is region US, `international_transfer_approved`
+   * false). The snapshot below is recorded on the call's audit row and decides nothing.
+   */
+  reading?: UploadReading;
+};
+
+/**
+ * PHASE 146g. THE ONE PLACE A ROUTE BUILDS A READER, so the two upload routes cannot drift apart. It is handed the
+ * process's own key store and transport and reads the gates as they stand, for the audit row and for nothing else.
+ *
+ * Passing this does NOT switch reading on. `CLAUDE_SWITCHES.DOCUMENT_READING` is false, so every upload that goes
+ * through here behaves exactly as it did before this phase.
+ */
+export function readerFor(
+  app: { db: Db; secrets: SecretStore; outside: Transport },
+  business_id: string,
+  actor_role: string | null,
+): UploadReading {
+  return {
+    transport: app.outside, secrets: app.secrets, actor_role,
+    gate: {
+      free_gate_open: freeGate().open,
+      engagement_signed: assertSignedEngagement(app.db, business_id).signed,
+      switched_on: CLAUDE_SWITCHES.DOCUMENT_READING,
+    },
+  };
+}
+
+/** PHASE 146g. See `UploadDeps.reading`. The same shape as `ResearchOutside` (src/web/research.ts), for the same reason. */
+export type UploadReading = {
+  readonly transport: Transport;
+  readonly secrets: SecretStore;
+  /** CLAUDE_SWITCHES unless a test passes its own. */
+  readonly switches?: ClaudeSwitches;
+  readonly limiter?: RateLimiter;
+  readonly sleep?: (ms: number) => Promise<void>;
+  /** Tests only: a service's policy with some values changed. Passed through to src/connectors/http.ts. */
+  readonly policy_override?: ClaudeContext['deps']['policy_override'];
+  /** Who is running this, for the audit row. The upload's own actor id is `UploadDeps.actor`. */
+  readonly actor_role?: string | null;
+  /** The two gates as they stood, for the audit row only. Neither decides whether a document is read. */
+  readonly gate?: GateSnapshot;
+  /** Whether the two conditional CLIENT_DOC fields name an organisation. Neither is ever inferred from a document. */
+  readonly discriminants?: { readonly funder_is_body?: boolean; readonly issuing_body_is_organisation?: boolean };
 };
 
 /**
@@ -164,8 +228,52 @@ export type VersionColumns = {
   filename: string;
 };
 
+/**
+ * PHASE 146g. THE CONTEXT EVERY READING CALL RUNS IN, or null where there is nothing to read with. Built once, from
+ * `UploadDeps.reading`, so the page reader and the field reader cannot end up on two different key stores.
+ */
+function readingContext(d: UploadDeps): ClaudeContext | null {
+  const r = d.reading;
+  if (r === undefined) return null;
+  return {
+    deps: {
+      audit: audit_of(d), now: d.now, transport: r.transport,
+      ...(r.limiter === undefined ? {} : { limiter: r.limiter }),
+      ...(r.sleep === undefined ? {} : { sleep: r.sleep }),
+      ...(r.policy_override === undefined ? {} : { policy_override: r.policy_override }),
+    },
+    secrets: r.secrets,
+    switches: r.switches ?? CLAUDE_SWITCHES,
+    actor_id: d.actor,
+    actor_role: r.actor_role ?? null,
+    claim_id: null,
+    gate: r.gate ?? { free_gate_open: false, engagement_signed: false, switched_on: false },
+  };
+}
+
+/**
+ * The audit log every reading writes to. `UploadDeps.audit` is optional because the handler's own tests run without
+ * one; a reading cannot, because an unlogged call to an outside service is the one thing Phase 146b forbids. So a
+ * caller that supplies `reading` and no `audit` gets no reading at all — see `readAndClaim`.
+ */
+function audit_of(d: UploadDeps): AuditLog {
+  if (d.audit === undefined) throw new UploadHandlerError('E_JOB_NOT_COMPLETE', 'no audit log', {});
+  return d.audit;
+}
+
+/** PHASE 146g. The page reader, and ONLY while SCANNED_PAGES is on. Off, a scan keeps its marker, exactly as before. */
+function scanReaderFrom(d: UploadDeps): UploadDeps['scan_reader'] {
+  if (d.scan_reader !== undefined) return d.scan_reader;
+  if (d.reading === undefined || d.audit === undefined) return undefined;
+  const switches = d.reading.switches ?? CLAUDE_SWITCHES;
+  if (switches.SCANNED_PAGES !== true) return undefined;
+  const ctx = readingContext(d);
+  if (ctx === null) return undefined;
+  return async (doc_id, images) => (await readScannedPages(ctx, doc_id, images)).pages;
+}
+
 function handlerDeps(d: UploadDeps, doc_id?: string): UploadHandlerDeps {
-  const reader = d.scan_reader;
+  const reader = scanReaderFrom(d);
   return {
     store: d.store,
     extractor: documentTextExtractor(reader === undefined || doc_id === undefined ? undefined : (images) => reader(doc_id, images)),
@@ -269,17 +377,25 @@ export async function finishUpload(
   d: UploadDeps,
   job: UploadJob,
   written_at: string,
-): Promise<{ job: UploadJob; discharged: boolean; error?: UploadHandlerError; received_request?: string | null }> {
+): Promise<{
+  job: UploadJob; discharged: boolean; error?: UploadHandlerError; received_request?: string | null;
+  /** PHASE 146g: what steps 9 and 10 did, or the reason they did not run. Never absent, so a caller cannot read silence as success. */
+  reading?: ReadingOutcome;
+}> {
   const deps = handlerDeps(d, job.doc_id);
   const received = await recordUploadComplete(deps, job, written_at);
   try {
     const r = await processUpload(deps, received);
+    // PHASE 146g: STEPS 9 AND 10, ON THIS REQUEST, AND ONLY BEHIND THE SWITCH. Before the row is written, so the
+    // state the screen reads is the state the job actually reached. Switched off it returns at once and changes
+    // nothing — not the row, not the audit log, and not one byte sent anywhere.
+    const reading = await readAndClaim(d, deps, r.job);
     persist(d, r.job, r.discharged);
     // CRM 4 of 10: ONLY NOW, with the strip and the discharge on the row, may a
     // document request be received — and `receiveByUpload` reads both off the row
     // rather than taking this function's word for them.
     const request = d.audit === undefined ? null : receiveByUpload({ db: d.db, audit: d.audit, now: d.now }, r.job.doc_id);
-    return { job: r.job, discharged: r.discharged, received_request: request };
+    return { job: r.job, discharged: r.discharged, received_request: request, reading };
   } catch (e) {
     // A REFUSED UPLOAD IS A NORMAL OUTCOME, NOT A CRASH. The handler has
     // already discharged the quarantine on its own catch path (G2); what is
@@ -290,6 +406,148 @@ export async function finishUpload(
       return { job: received, discharged: false, error: e };
     }
     throw e;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * STEPS 9 AND 10 — PHASE 146g, 23 September 2026.
+ *
+ * THE UPLOAD FLOW NEVER RAN STEP 9. `runExtraction` and `writeClaims` were exported by the port and called from
+ * nowhere in src/: every upload stopped at TRIAGED, with the strip done and nothing read. Phase 146e built the real
+ * reader and left it with no caller. This is the caller.
+ *
+ * WHAT IT DOES NOT DO, AND THIS IS THE WHOLE OF THE SAFETY OF IT:
+ *
+ *   · SWITCHED OFF, IT DOES NOTHING AT ALL. `CLAUDE_SWITCHES.DOCUMENT_READING` is false, so every upload behaves
+ *     exactly as it did before this phase: the job stays at TRIAGED, no row changes, no audit row is written and
+ *     nothing leaves the building. The switch is read through `claudeReadiness`, which is the same function the
+ *     reader itself reads it through — there is no second reading of the switch.
+ *   · A READING THAT DID NOT HAPPEN CHANGES NOTHING. No key, the transfer unapproved, a refusal, a time-out, an
+ *     answer we cannot read: the job stays at TRIAGED and every field the document would have answered stays ASKED
+ *     of the client. Never a zero, never a guess, never a screen error (N4).
+ *   · A DOCUMENT A PERSON MUST READ IS NOT SENT. `CPSE_REPLIES` and `SALE_CONTRACT` have no model spec;
+ *     `runExtraction` refuses them, and so does this, one step earlier and for the same reason.
+ *   · NOTHING THROWS OUT OF HERE. A refused claim — an uncatalogued field, a conditional field with no
+ *     discriminant — is an outcome, recorded and reported, not a failed upload. The file has already been read and
+ *     deleted by then; failing the request would tell the client to send it again for no reason.
+ *   · THE CLAIMS ENTER BY THE ONE DOOR. `ingestRegisterRecord` (src/stubs/registers.ts), where the name exclusion
+ *     register is checked, as every register record does. There is no second way in for a document's facts.
+ * ------------------------------------------------------------------ */
+
+export type ReadingState =
+  | 'NOT_WIRED'       // no reader was given to this call at all
+  | 'SWITCHED_OFF'    // DOCUMENT_READING is false — the shipped state
+  | 'NOT_CONFIGURED'  // switched on, and the key file has no ANTHROPIC_API_KEY
+  | 'HUMAN_ONLY'      // the type has no model spec: a person reads it
+  | 'NOT_READY'       // the job did not reach step 9 (no type, no receipt, or a state before TRIAGED)
+  | 'NOT_READ'        // it was sent, or could not be, and nothing came back we could use
+  | 'NOT_WRITTEN'     // it was read, and the claims were refused before they were written
+  | 'CLAIMED';        // read and written
+
+export type ReadingOutcome = {
+  readonly state: ReadingState;
+  /** In plain words. No key, and nothing from the document. */
+  readonly why: string;
+  readonly fields: number;
+  readonly not_found: number;
+  readonly claims: number;
+  /** What the reader itself reported, where a call was made. */
+  readonly read: ModelRead | null;
+};
+
+const NOTHING = (state: ReadingState, why: string, read: ModelRead | null = null): ReadingOutcome =>
+  ({ state, why, fields: 0, not_found: 0, claims: 0, read });
+
+async function readAndClaim(d: UploadDeps, deps: UploadHandlerDeps, job: UploadJob): Promise<ReadingOutcome> {
+  if (d.reading === undefined) return NOTHING('NOT_WIRED', 'nothing was read: this upload was not given a document reader');
+  if (d.audit === undefined) {
+    return NOTHING('NOT_WIRED', 'nothing was read: a reading is written down or it does not happen, and this upload has no audit log');
+  }
+  const ready = claudeReadiness('DOCUMENT_READING', d.reading.secrets, d.reading.switches ?? CLAUDE_SWITCHES);
+  if (ready.state !== 'READY') return NOTHING(ready.state === 'SWITCHED_OFF' ? 'SWITCHED_OFF' : 'NOT_CONFIGURED', `nothing was read: ${ready.why}`);
+
+  const type = job.doc_type;
+  if (type === undefined || type === null || job.receipt === undefined || job.state !== 'DISCHARGED') {
+    return NOTHING('NOT_READY', 'nothing was read: this upload did not get as far as the step that reads it');
+  }
+  const ctx = readingContext(d);
+  if (ctx === null) return NOTHING('NOT_WIRED', 'nothing was read: this upload was not given a document reader');
+
+  /* STEP 8 FIRST, AND IT HAD NO CALLER EITHER. `processUpload` ends at DISCHARGED; `openTransparency` is a separate
+     export of the port and nothing in src/ called it, so the contract's step 8 was as unreached as steps 9 and 10 —
+     and step 9 asserts TRIAGED, so it cannot run without it. It runs for EVERY document that gets this far, the two
+     a person reads included: the transparency record is about what we hold, not about who reads it.
+     THE PEOPLE LIST IS EMPTY, and that is a fact about this build rather than a gap in it: the receipt strip has
+     already run, the name exclusion register has already refused every person's name, and this build identifies
+     nobody in a client document. A person identified later is added to the record by whoever identified them, which
+     is what the Article 14(3)(a) month and `assertTransparencyRecordComplete` are for.
+     IT RUNS INSIDE THE SWITCH, ON PURPOSE. Running it outside would change what a finished upload does with reading
+     switched off, and this phase's first rule is that it must not. */
+  try {
+    await openTransparency(deps, job, []);
+  } catch (e) {
+    return NOTHING('NOT_READY', `nothing was read: the record of what we hold could not be opened, ${whyRefused(e)}`);
+  }
+  if (HUMAN_READ_ONLY_TYPES.includes(type)) {
+    return NOTHING('HUMAN_ONLY', 'nothing was sent: this kind of document is read by a person, never by a model');
+  }
+
+  let read: ModelRead;
+  try {
+    const prepared = await prepareClaudeModel(ctx, job.doc_id, type, job.receipt.retained);
+    read = prepared.read;
+    if (read.state !== 'READ') {
+      // N4. Nothing advances, so every field this document would have answered is still asked of the client.
+      return NOTHING('NOT_READ', read.why, read);
+    }
+    const egress: EgressEntry[] = [];
+    await runExtraction(deps, job, { kind: 'MODEL', model: prepared.model, egress });
+    writeEgressRow(d.audit, d, job, egress);
+  } catch (e) {
+    return NOTHING('NOT_READ', `nothing was kept from this document: ${whyRefused(e)}`);
+  }
+
+  const extraction = job.extraction;
+  const fields = extraction?.fields.length ?? 0;
+  const not_found = extraction?.not_found.length ?? 0;
+  try {
+    await writeClaims(deps, job, d.reading.discriminants ?? {}, async (claims) => {
+      if (claims.length === 0) return;
+      const values: Record<string, unknown> = {};
+      for (const c of claims as readonly { field_id: string; value: unknown }[]) values[c.field_id] = c.value;
+      ingestRegisterRecord(d.db, d.newId ?? randomUUID, d.now, job.entity_id,
+        { sourceId: 'CLIENT_DOC', entityId: job.doc_id, fields: values });
+    });
+  } catch (e) {
+    return { state: 'NOT_WRITTEN', why: `this document was read and nothing was kept from it: ${whyRefused(e)}`, fields, not_found, claims: 0, read };
+  }
+  return { state: 'CLAIMED', why: `read: ${fields} answered, ${not_found} still asked`, fields, not_found, claims: job.claims?.length ?? 0, read };
+}
+
+/** In plain words, and never a key, a path or a word of the document. The code is enough for a developer. */
+function whyRefused(e: unknown): string {
+  if (e instanceof UploadHandlerError) return `refused (${e.code})`;
+  const code = (e as { code?: unknown } | null)?.code;
+  return typeof code === 'string' ? `refused (${code})` : 'it was refused';
+}
+
+/**
+ * WHAT LEFT THE BUILDING, ONCE PER DOCUMENT. The pipeline's own egress record, which is the answer to "what did you
+ * send": the payload's fingerprint, and the KIND and PAGE of each segment sent and each dropped. NEVER THE TEXT.
+ */
+function writeEgressRow(audit: AuditLog, d: UploadDeps, job: UploadJob, egress: readonly EgressEntry[]): void {
+  for (const e of egress) {
+    try {
+      audit.append({
+        at: d.now(), kind: 'DOCUMENT_SENT_TO_MODEL', outcome: 'ALLOWED',
+        actor_id: d.actor, actor_role: d.reading?.actor_role ?? null, object_type: 'document', object_id: e.doc_id,
+        detail: {
+          doc_type: e.doc_type, payload_hash: e.payload_hash,
+          sent: e.segments_sent, dropped: e.segments_dropped, fields_requested: e.fields_requested,
+          job_id: job.job_id,
+        },
+      });
+    } catch { /* the reading is not undone because the note about it could not be written */ }
   }
 }
 

@@ -259,9 +259,14 @@ describe('what is stubbed is a short list, and it is stated', () => {
   /* FOUR, NOT THREE, SINCE 9 SEPTEMBER 2026 (Phase 108). The fourth —
      text extraction — declared itself a stub in its own file and appeared in
      no list, which is the failure this assertion exists to catch. */
-  test('exactly four stubs, each one named module behind an interface', () => {
+  /* PHASE 146g, 23 September 2026: FIVE. `document-reading` was added because Phase 146e built the real reader for a
+     client document and left it with no caller in src/ at all — the upload flow ended at DISCHARGED and never ran
+     steps 8, 9 or 10 of the receipt contract — so a developer watching an upload finish could reasonably have
+     concluded that uploads were read. They are not. The count is asserted so that a row cannot be quietly dropped:
+     a list that got shorter without anything being built is the failure this list exists to prevent. */
+  test('exactly five stubs, each one named module behind an interface', () => {
     assert.deepEqual(STUBS.map((s) => s.id).sort(),
-      ['email', 'registers', 'signature', 'text-extraction']);
+      ['document-reading', 'email', 'registers', 'signature', 'text-extraction']);
   });
 
   /* Every entry names a module that is on disk. A stub list pointing at a file
