@@ -20,8 +20,12 @@
  * anything is kept. Anything short of that leaves the question asked (N4).
  *
  * NOT BUILT, AND SAYING SO: the Welsh care regulator (Care Inspectorate Wales) and the Scottish one (the Care
- * Inspectorate) — `NOT_BUILT` below; the valuation office, which we hold no licence for; and the paid lookups, which are
- * Phase 146d's.
+ * Inspectorate) — `NOT_BUILT` below; and the valuation office, which we hold no licence for.
+ *
+ * THE PAID LOOKUPS ARE NOW BUILT, and they live in their own map: PAID_CONNECTORS in src/connectors/paid-registers.ts
+ * (Phase 146d). `consultAllowed` reads both maps. They are separate because the two tiers are gated differently — a
+ * free lookup waits on a published privacy notice, a paid one on a signed engagement and an operator's click — and
+ * putting them in one map would make the two look like one kind of thing with a flag on it.
  */
 
 import type { RegisterConnector, Bundle } from './registers.ts';
@@ -79,7 +83,16 @@ export const FREE_CONNECTORS: Readonly<Record<string, Built<unknown>>> = Object.
       };
     },
   }),
-  EPC: built<EpcQuery>({ connector: epc, query: (s, e) => ({ property: s.property, nation: nationOf(s, e), sector: s.sector }) }),
+  /* PHASE 146d, item 9: `uprn` is the paid address lookup's, where it ran first on this click and matched — it
+     turns this lookup's address match into an exact one. It is absent on every click today, because that lookup is
+     off and waits on a signed engagement in any case. */
+  EPC: built<EpcQuery>({
+    connector: epc,
+    query: (s, e) => {
+      const found = e.get('HOMEDATA_ADDRESS')?.facts['uprn'];
+      return { property: s.property, nation: nationOf(s, e), sector: s.sector, uprn: typeof found === 'string' ? found : null };
+    },
+  }),
   HMLR_PPD: built<PricePaidQuery>({ connector: pricePaid, query: (s, e) => ({ property: s.property, nation: nationOf(s, e), sector: s.sector }) }),
   PLANNING: built<PlanningQuery>({ connector: planning, query: (s, e) => ({ property: s.property, nation: nationOf(s, e) }) }),
 });

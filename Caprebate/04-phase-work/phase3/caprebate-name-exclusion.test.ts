@@ -14,24 +14,39 @@ import {
 
 /* --- the register loads and is internally consistent ---------------- */
 
-test('R1 the eleven REGISTER sources are still one per subitem 1-11, no gaps, no duplicates', () => {
+test('R1 the eleven ORIGINAL register sources are still one per subitem 1-11, no gaps, no duplicates', () => {
   // Unchanged in substance. Phase 41 added CLIENT_DOC at subitem 13 (12 is
   // this test suite), so the assertion now names the register sources
   // explicitly rather than taking whatever is in the array. The original
   // guarantee — eleven register entries, contiguous, no duplicates — is
   // exactly what is still being asserted.
+  //
+  // PHASE 146d, 23 September 2026 adds HOMEDATA_ADDRESS at subitem 14 — the
+  // paid address lookup, which had no entry at all and therefore could not
+  // have written a field. The eleven original entries are untouched, so this
+  // test keeps its shape and excludes the later additions by name rather than
+  // widening its expected list, which is how it stays a test of the eleven.
+  const later = ['CLIENT_DOC', 'HOMEDATA_ADDRESS'];
   const subitems = NAME_EXCLUSION_POLICY
-    .filter((p) => p.sourceId !== 'CLIENT_DOC')
+    .filter((p) => !later.includes(p.sourceId))
     .map((p) => p.subitem)
     .sort((a, b) => a - b);
   assert.deepEqual(subitems, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
 });
 
-test('R1b CLIENT_DOC is present, is the only non-register source, and sits at subitem 13', () => {
+test('R1b CLIENT_DOC is still the only non-register source; the paid address lookup is a register source, added at subitem 14', () => {
   const clientDoc = NAME_EXCLUSION_POLICY.filter((p) => p.sourceId === 'CLIENT_DOC');
   assert.equal(clientDoc.length, 1);
   assert.equal(clientDoc[0].subitem, 13, 'subitem 12 is the test suite and is deliberately not reused');
-  assert.equal(NAME_EXCLUSION_POLICY.length, 12);
+  // Phase 146d: thirteen entries. HOMEDATA_ADDRESS IS a register — a paid one —
+  // so CLIENT_DOC remains the one entry describing documents a client sends in.
+  const homedata = NAME_EXCLUSION_POLICY.filter((p) => p.sourceId === 'HOMEDATA_ADDRESS');
+  assert.equal(homedata.length, 1);
+  assert.equal(homedata[0].subitem, 14);
+  assert.equal(NAME_EXCLUSION_POLICY.length, 13);
+  // Every subitem is still unique: a number is never reused.
+  const numbers = NAME_EXCLUSION_POLICY.map((p) => p.subitem);
+  assert.equal(new Set(numbers).size, numbers.length);
 });
 
 test('R2 exactly two sources carry a documented exception — CH_PSC and HMLR_TITLE', () => {

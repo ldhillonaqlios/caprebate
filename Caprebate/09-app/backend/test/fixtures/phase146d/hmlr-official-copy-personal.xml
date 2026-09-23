@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body>
+  <OfficialCopyTitleKnownResponse>
+    <OfficialCopy>
+      <TitleNumber>ZZ654321</TitleNumber>
+      <ClassOfTitle>Leasehold</ClassOfTitle>
+      <LeaseTerm>125 years from 1 January 1999</LeaseTerm>
+      <AmountOrValueStated>&#163;480,000</AmountOrValueStated>
+      <RegistrationDate>2011-02-03</RegistrationDate>
+      <Proprietorship>
+        <ProprietorKind>Individual</ProprietorKind>
+        <ProprietorName>AN INVENTED PERSON</ProprietorName>
+      </Proprietorship>
+    </OfficialCopy>
+  </OfficialCopyTitleKnownResponse>
+</soap:Body></soap:Envelope>

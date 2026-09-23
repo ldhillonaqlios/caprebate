@@ -44,6 +44,18 @@ export type CallPolicy = {
   readonly max_bytes: number;
   /** Tries in all, including the first. Retries happen only on 429 and 5xx. */
   readonly max_attempts: number;
+  /**
+   * PHASE 146d: WHAT ONE CALL COSTS US, IN PENCE, where the publisher prices its calls. Absent on a free service —
+   * absent means "this service does not charge", never "we do not know", and a test checks that every PAID row has
+   * one. It goes on the audit row (`cost_pence`) beside the charge the supplier reports, so a cost report is built
+   * from what was actually spent rather than from a price list somebody retyped.
+   *
+   * Homedata's is a WEIGHT, not a fixed price: its calls cost a number of tokens that depends on the path and the
+   * slugs asked for, at 100 tokens to the pound, so one token is one penny (its pricing page, read 23 September
+   * 2026). `cost_pence` here is the cheapest call on the row; the connector works out the real figure per call and
+   * puts it on the audit row.
+   */
+  readonly cost_pence?: number;
 };
 
 const FIVE_MIN = 5 * 60 * 1000;
@@ -108,17 +120,75 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
   },
   HOMEDATA_ADDRESS: {
     service_id: 'HOMEDATA_ADDRESS', register_source: 'HOMEDATA_ADDRESS',
+    /* PHASE 146d, 23 September 2026 — SETTLED ON A LIVE RESPONSE, NOT ON THE PROSE, because the supplier's own pages
+       disagree with each other. Its endpoint reference states "Base URL: https://api.homedata.co.uk/api" while every
+       worked example on the same page omits the /api. Both forms are routed — a path that cannot exist answers 404
+       under either, a real one answers 403 for the missing key — so neither a 403 nor a 404 on a metered path settles
+       it. WHAT SETTLES IT IS THE ONE CALL THAT NEEDS NO KEY: the supplier documents /ping and /health as open, and
+       GET https://api.homedata.co.uk/ping answered 200 {"status":"ok"} while /api/ping answered 404
+       RESOURCE_NOT_FOUND. Its published OpenAPI document (https://api.homedata.co.uk/schema/yaml/, also open) declares
+       all 155 of its paths without the prefix. So the base is the host alone and every path this connector sends
+       begins "/address/…" or "/property/…". The source register's endpoint was corrected to match. */
     base_url: 'https://api.homedata.co.uk', region: 'UK', international_transfer_approved: false,
-    rate: { limit: 100, window_ms: FIVE_MIN }, rate_basis: 'not published; each call costs money, so cautious',
+    /* PHASE 146d: STILL UNPUBLISHED. The supplier's pricing page states only "Rate limits are applied per API key.
+       Exceeding the limit returns HTTP 429 — requests are not queued, retry with backoff" and "a 429 costs nothing".
+       No number appears on it, on the authentication page or in the OpenAPI document, all read 23 September 2026, and
+       the coverage matrix is "available on request". So the cautious 100 in five minutes stays a guess of ours and
+       says so. The retry does better than a guess: http.ts honours the Retry-After the supplier sends. */
+    rate: { limit: 100, window_ms: FIVE_MIN }, rate_bucket: 'HOMEDATA',
+    rate_basis: 'NOT PUBLISHED: the pricing, authentication and endpoint pages and the OpenAPI document (all read ' +
+      '23 Sep 2026) state that limits are per API key and answer 429, and give no number anywhere. The coverage ' +
+      'matrix is "available on request" too. 100 in five minutes is OUR cautious guess, not the supplier\u2019s figure',
     timeout_ms: 10_000, max_bytes: 1 * MB, max_attempts: 2,
+    /* The cheapest call on this row: /address/postcode/{postcode}/ at 2 tokens, and 100 tokens = £1. */
+    cost_pence: 2,
+  },
+  HOMEDATA_PLANNING: {
+    /* PHASE 146d: THE SAME SUPPLIER, THE SAME KEY, A DIFFERENT REGISTER SOURCE. Homedata can answer planning too, by
+       UPRN, and item 18 of this phase says to build that route, leave it switched off and NOT decide whether it
+       replaces PlanIt — which stays the source of record. Its own row because `register_source` is what ties a
+       service to the register of what we consult, and this one is PLANNING; its own bucket is Homedata's, because
+       one API key is what the supplier limits. 5 tokens: the planning_history slug's published weight. */
+    service_id: 'HOMEDATA_PLANNING', register_source: 'PLANNING',
+    base_url: 'https://api.homedata.co.uk', region: 'UK', international_transfer_approved: false,
+    rate: { limit: 100, window_ms: FIVE_MIN }, rate_bucket: 'HOMEDATA',
+    rate_basis: 'NOT PUBLISHED, as for the address lookup: per API key, 429, no number given anywhere (read 23 Sep 2026)',
+    timeout_ms: 10_000, max_bytes: 2 * MB, max_attempts: 2,
+    cost_pence: 5,
   },
   HMLR_TITLE: {
+    /* PHASE 146d, 23 September 2026 — THE LIVE BUSINESS GATEWAY. Phase 146b left this row with no address, so every
+       call was refused. The address is HM Land Registry's own, published in the Business Gateway developer pack
+       (landregistry.github.io/bgtechdoc, read 23 September 2026) and recorded in SUPPLIER_DOCS. Having the address
+       does NOT make a call possible: the Gateway needs a user account AND the client certificate HM Land Registry
+       issues under the network access agreement, both of which are the developer's to obtain and install, and the
+       switch is off. What it changes is that a refusal now says "no certificate" rather than "no address" — the
+       first is true and actionable, the second was true only because nobody had looked it up.
+
+       THE BASE IS THE HOST ALONE, NOT A SERVICE PREFIX, because the Gateway serves two families on one host and this
+       connector uses both: the REST services under /bg2 (live) and /bg2test (test), and the SOAP services under
+       /b2b/BGSoapEngine (live) and /b2b/BGStubService (test). Those four prefixes are published; the WSDL path of
+       each individual SOAP service is not, and comes with the developer pack under the network access agreement.
+       src/connectors/hmlr-title.ts names which of its paths are published and which the developer must confirm. */
     service_id: 'HMLR_TITLE', register_source: 'HMLR_TITLE',
-    /* The Business Gateway's live and test addresses are the developer's to confirm under the network access
-       agreement (Phase 146d). Until then there is no address, and http.ts refuses every call. */
-    base_url: null, region: 'UK', international_transfer_approved: false,
-    rate: { limit: 30, window_ms: FIVE_MIN }, rate_basis: 'about £7 a title, so kept low on purpose',
+    base_url: 'https://businessgateway.landregistry.gov.uk', region: 'UK', international_transfer_approved: false,
+    rate: { limit: 30, window_ms: FIVE_MIN }, rate_bucket: 'HMLR_TITLE',
+    rate_basis: 'not published in the developer pack (read 23 Sep 2026); about £7 a title, so kept low on purpose',
     timeout_ms: 30_000, max_bytes: 2 * MB, max_attempts: 2,
+    /* HM Land Registry's fee for an official copy of the register, in pence. The published fee, not an estimate. */
+    cost_pence: 700,
+  },
+  HMLR_TITLE_TEST: {
+    /* PHASE 146d: THE VENDOR TEST ENVIRONMENT, which is where this connector is built and proved. Same certificate,
+       same user account, same shapes, invented titles and no fee. It shares HMLR_TITLE's window so a test run cannot
+       be used to make more calls than we allow ourselves in all. `cost_pence` is 0 because the test environment
+       charges nothing — and that is a fact about it, not an unknown. */
+    service_id: 'HMLR_TITLE_TEST', register_source: 'HMLR_TITLE',
+    base_url: 'https://bgtest.landregistry.gov.uk', region: 'UK', international_transfer_approved: false,
+    rate: { limit: 30, window_ms: FIVE_MIN }, rate_bucket: 'HMLR_TITLE',
+    rate_basis: 'the vendor test environment; the same cautious limit as the live one',
+    timeout_ms: 30_000, max_bytes: 2 * MB, max_attempts: 2,
+    cost_pence: 0,
   },
   CLAUDE_DOCUMENTS: {
     service_id: 'CLAUDE_DOCUMENTS', register_source: null,

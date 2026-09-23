@@ -534,7 +534,17 @@ function selfTest(inp) {
     // every mention renamed, not one line dropped: the same route is described in §2 and in §3.1,
     // and a control that removed only one of them stayed green (found by this self-test, 12 Sep 2026)
     ['B a route the spec describes removed', 'B', (x) => ({ ...x, spec: x.spec.split('/staff/next-actions').join('/staff/nowhere-described') })],
-    ['C a line reference shifted', 'C', (x) => ({ ...x, spec: x.spec.replace('`src/app.ts:79`', '`src/app.ts:78`') })],
+    /* PHASE 146d, 23 September 2026 — THIS CONTROL WAS BROKEN AND SAID SO ONLY WHEN SOMEBODY RAN THE SELF-TEST.
+       It mutated the literal `src/app.ts:79`, and the spec has said `src/app.ts:99` since some earlier phase moved
+       it, so the mutation matched nothing and the control could not go red. The self-test caught it — that is the
+       self-test working — but it had been failing for a while before Phase 146d ran it.
+       IT NOW PICKS A LIVE REFERENCE, exactly as the site, package, phase9 and phase3 controls beneath it already do,
+       and for the reason the comment above them gives in terms: "a literal line number would go stale and prove
+       nothing". The pick is a back-end reference carrying a line number, which is what the stale literal was one of. */
+    ['C a line reference shifted', 'C', (x) => {
+      const r = goodRef(x, (y) => y.form === 'back end' && !y.prose && /:\d+$/.test(y.token));
+      return r ? { ...x, spec: replaceAtRef(x.spec, r, '`' + r.token + '`', '`' + `${r.file}:${r.lineNo + 1}` + '`') } : x;
+    }],
     ['D a training section dropped', 'D', (x) => ({ ...x, guide: x.guide.replace(/^### Training — `B41`.*$/m, '### Search') })],
     // Phase 132g: the forms outside the back end. Their line numbers move while other work edits the
     // site and re-extracts the package, so each control plants its fault in a reference that lands

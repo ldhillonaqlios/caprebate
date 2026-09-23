@@ -29,8 +29,10 @@
  * run without the fixture transport cannot reach the internet by accident. Every test passes `fixtureTransport`.
  */
 
+import { request as httpsRequest, Agent as HttpsAgent } from 'node:https';
+import { readFileSync } from 'node:fs';
 import type { AuditLog } from '../audit.ts';
-import { redactSecrets } from '../secrets.ts';
+import { redactSecrets, type OwnerSecrets } from '../secrets.ts';
 import { CALL_POLICIES, type CallPolicy } from './sources.ts';
 
 /** The shape of `fetch` this file needs. The live one is the platform's; a test's replays recorded answers. */
@@ -48,6 +50,85 @@ export const liveTransport: Transport = Object.assign(
   (url: string, init: Parameters<Transport>[1]) => fetch(url, { ...init, redirect: 'error' }),
   { [LIVE_MARK]: true },
 );
+
+/* ------------------------------------------------------------------ the certificate-carrying transport */
+
+/**
+ * A TRANSPORT THAT PRESENTS A CLIENT CERTIFICATE. Phase 146d, 23 September 2026.
+ *
+ * WHY IT HAS TO EXIST. HM Land Registry's Business Gateway will not talk to us over an ordinary connection: it needs
+ * the client certificate HM Land Registry issues under the network access agreement, presented when the connection is
+ * made, as well as a user name and password on every request (its developer pack, read 23 September 2026). `fetch`
+ * has no way to present one — there is no option for it in the standard — so a call made with `fetch` cannot reach
+ * the Gateway at all, whatever else is right.
+ *
+ * WHY IT IS IN THIS FILE. Phase 146b's rule is that this is the only file under src/ that may call outside, and a
+ * test walks src/ and fails on any other. That rule is worth more than the tidiness of a separate file, so the one
+ * place that needs `node:https` is here, beside `fetch`, under the same time limits, the same rate limit, the same
+ * size cap and the same audit row. `callOutside` does not know which transport it was handed.
+ *
+ * THE CERTIFICATE FILE IS NEVER READ INTO THE REPOSITORY AND NEVER PRINTED. The key file holds its PATH and its
+ * passphrase (src/secrets.ts); the file itself stays where the developer installed it. A missing or unreadable
+ * certificate is a STATE, reported in plain words as a refused call — never a throw and never a screen error — and
+ * the words name the key by NAME, never a value.
+ *
+ * IT IS MARKED LIVE, like `liveTransport`, so a suite that reached for it by accident is refused under `node --test`.
+ */
+export type CertificateTransportState =
+  | { readonly ok: true; readonly transport: Transport }
+  | { readonly ok: false; readonly why: string };
+
+/** The bits of the certificate this transport needs, by NAME. Read from the key file; neither value is ever printed. */
+export function certificatePaths(secrets: OwnerSecrets | null): { path: string | null; passphrase: string | null } {
+  return {
+    path: secrets?.get('HMLR_BG_CERT_PATH') ?? null,
+    passphrase: secrets?.get('HMLR_BG_CERT_PASSPHRASE') ?? null,
+  };
+}
+
+/**
+ * Build one. `readFile` is injectable so a test can prove the refusals and the wiring without a real certificate;
+ * nothing else passes it.
+ */
+export function certificateTransport(
+  secrets: OwnerSecrets | null,
+  readFile: (p: string) => Buffer = (p) => readFileSync(p),
+): CertificateTransportState {
+  const { path, passphrase } = certificatePaths(secrets);
+  if (path === null) {
+    return { ok: false, why: 'the key file has no HMLR_BG_CERT_PATH, so the Land Registry certificate cannot be presented' };
+  }
+  if (passphrase === null) {
+    return { ok: false, why: 'the key file has no HMLR_BG_CERT_PASSPHRASE, so the Land Registry certificate cannot be opened' };
+  }
+  let pfx: Buffer;
+  try { pfx = readFile(path); } catch {
+    // The PATH is not printed: it is a value from the key file like any other.
+    return { ok: false, why: 'the Land Registry certificate file named by HMLR_BG_CERT_PATH could not be read' };
+  }
+  const agent = new HttpsAgent({ pfx, passphrase, keepAlive: false });
+  const t: Transport = (url, init) => new Promise<Response>((resolve, reject) => {
+    const req = httpsRequest(url, { method: init.method, headers: init.headers, agent }, (res) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (c: Buffer) => chunks.push(c));
+      res.on('end', () => {
+        const headers = new Headers();
+        for (const [k, v] of Object.entries(res.headers)) {
+          if (typeof v === 'string') headers.set(k, v);
+          else if (Array.isArray(v)) headers.set(k, v.join(', '));
+        }
+        resolve(new Response(Buffer.concat(chunks), { status: res.statusCode ?? 0, headers }));
+      });
+      res.on('error', reject);
+    });
+    req.on('error', reject);
+    // callOutside's own time limit aborts us, exactly as it aborts `fetch`.
+    init.signal.addEventListener('abort', () => { req.destroy(new DOMException('aborted', 'AbortError')); }, { once: true });
+    if (init.body !== undefined) req.write(init.body);
+    req.end();
+  });
+  return { ok: true, transport: Object.assign(t, { [LIVE_MARK]: true }) };
+}
 
 /** A recorded answer, shaped from the supplier's published documentation. */
 export type Fixture = {
@@ -154,6 +235,30 @@ export type CallResult = {
   readonly attempts: number;
   /** In plain words; no key, no value from the query. */
   readonly why: string;
+  /**
+   * PHASE 146d: WHAT THIS ONE CALL COST, AND WHETHER ANYBODY CHARGED US FOR IT.
+   *
+   * `charged` is the boolean item 11 of this phase asks for, and it is there because without it a cost report counts
+   * failures and overstates what we spent. A call that was refused before it left, was over our own limit, timed out,
+   * or came back 404 or 500 has charged === false, and a report adds nothing for it.
+   *
+   * `cost_pence` is null ONLY when we genuinely do not know, which is N4 applied to money: a cost nobody reported is
+   * not a cost of zero. `cost_basis` says where the figure came from, so the two can never be confused:
+   *
+   *   'supplier'     the service told us, on this response. Homedata sends X-Tokens-Charged on a wallet key
+   *                  (100 tokens = £1, so one token is one penny). This is the only basis that is evidence.
+   *   'price_list'   the service served a response and publishes a fixed price for it, which src/connectors/
+   *                  sources.ts carries (HM Land Registry: £7 an official copy). Our reading of its price list.
+   *   'not_billed'   nothing was served, and the service says it does not bill for that. Homedata: "any 4xx other
+   *                  than a 402 and any 5xx is never billed", and a debit taken before a failure is refunded.
+   *   'free'         the service does not charge at all (every free register).
+   *   'unknown'      a paid service answered and neither told us nor publishes a price. cost_pence is null.
+   */
+  readonly charged: boolean;
+  readonly cost_pence: number | null;
+  readonly cost_basis: 'supplier' | 'price_list' | 'not_billed' | 'free' | 'unknown';
+  /** What the supplier says is left on our balance, where it says. Homedata's X-Tokens-Balance, in tokens (= pence). */
+  readonly balance_pence: number | null;
 };
 
 export type CallDeps = {
@@ -220,6 +325,28 @@ function retryAfterMs(h: string | null): number | null {
 }
 
 /**
+ * WHAT A RESPONSE SAYS IT COST. Phase 146d.
+ *
+ * Homedata's authentication page, read 23 September 2026: "Wallet keys receive the X-Tokens-* pair and no rate-limit
+ * headers at all; quota keys receive the X-RateLimit-* family instead. You will not see both." SO THE CHARGE HEADER
+ * MAY SIMPLY NOT BE THERE, and when it is not, this returns null rather than 0 — a quota key's calls are paid for in
+ * a different currency, not for nothing. `x-call-weight` is read as well because that is the header the live service
+ * actually sends today on an unauthenticated call; both are the same number of tokens, and one penny each.
+ */
+export function chargeFromHeaders(h: Headers | Record<string, string>): { charged_pence: number | null; balance_pence: number | null } {
+  const get = (k: string): string | null => (h instanceof Headers ? h.get(k) : (h[k] ?? h[k.toLowerCase()] ?? null));
+  const num = (v: string | null): number | null => {
+    if (v === null) return null;
+    const n = Number(v.trim());
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+  return {
+    charged_pence: num(get('x-tokens-charged')) ?? num(get('x-call-weight')),
+    balance_pence: num(get('x-tokens-balance')),
+  };
+}
+
+/**
  * MAKE ONE CALL. Never throws. Writes exactly one audit row.
  */
 export async function callOutside(deps: CallDeps, req: CallRequest): Promise<CallResult> {
@@ -231,7 +358,23 @@ export async function callOutside(deps: CallDeps, req: CallRequest): Promise<Cal
   const method = req.method ?? 'GET';
   const queryKeys = Object.keys(req.query ?? {}).sort();
 
-  const finish = (r: Omit<CallResult, 'latency_ms'>): CallResult => {
+  const finish = (raw: Omit<CallResult, 'latency_ms' | 'charged' | 'cost_pence' | 'cost_basis' | 'balance_pence'>): CallResult => {
+    /* PHASE 146d: WHAT IT COST, WORKED OUT ONCE, HERE, FOR EVERY CALL — so no connector can forget to record it and
+       no two connectors can disagree about how. The supplier's own figure wins wherever it sends one. */
+    const said = chargeFromHeaders(raw.headers);
+    const listed = policy?.cost_pence;
+    const served = raw.outcome === 'OK';
+    const cost: Pick<CallResult, 'charged' | 'cost_pence' | 'cost_basis' | 'balance_pence'> =
+      said.charged_pence !== null
+        ? { charged: said.charged_pence > 0, cost_pence: said.charged_pence, cost_basis: 'supplier', balance_pence: said.balance_pence }
+      : listed === undefined || listed === 0
+        ? { charged: false, cost_pence: 0, cost_basis: 'free', balance_pence: said.balance_pence }
+      : served
+        ? { charged: true, cost_pence: listed, cost_basis: 'price_list', balance_pence: said.balance_pence }
+      : raw.status === 402
+        ? { charged: false, cost_pence: null, cost_basis: 'unknown', balance_pence: said.balance_pence }
+        : { charged: false, cost_pence: 0, cost_basis: 'not_billed', balance_pence: said.balance_pence };
+    const r = { ...raw, ...cost };
     const result = { ...r, why: redactSecrets(r.why), latency_ms: Math.max(0, clock() - started) };
     try {
       deps.audit.append({
@@ -243,6 +386,9 @@ export async function callOutside(deps: CallDeps, req: CallRequest): Promise<Cal
           service: req.service_id, endpoint: req.endpoint, method, query_keys: queryKeys,
           result: r.outcome, status: r.status, latency_ms: result.latency_ms, attempts: r.attempts,
           region: policy?.region ?? null,
+          /* Phase 146d, item 11: the charge and the boolean beside it. A cost report reads `charged` first and adds
+             `cost_pence` only where it is true, so a run of failures reports nothing spent, which is the truth. */
+          charged: r.charged, cost_pence: r.cost_pence, cost_basis: r.cost_basis,
           free_gate_open: req.gate.free_gate_open, engagement_signed: req.gate.engagement_signed, switched_on: req.gate.switched_on,
         },
       });

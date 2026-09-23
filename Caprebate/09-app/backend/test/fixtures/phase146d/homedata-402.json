@@ -1,0 +1,2 @@
+{ "error": { "code": "INSUFFICIENT_TOKENS", "message": "Not enough tokens.", "status": 402 },
+  "required": 6, "available": 1, "topup_url": "https://example.invalid/billing" }

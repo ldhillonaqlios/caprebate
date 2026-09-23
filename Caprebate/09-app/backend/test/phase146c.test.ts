@@ -173,7 +173,7 @@ describe('Companies House: search, profile, filing history — PSC only after si
     const r = await seed(app.db, app.hasher, app.now);
     assert.ok(rec);
     assert.doesNotThrow(() => R.storeResearchOutcomes({ db: app.db, audit: app.audit, now: app.now, newId }, r.businesses[0]!.id,
-      [{ entry: R.catalogue().find((e) => e.source_id === 'CH_COMPANY')!, state: 'FIRED', detail: run.detail, retrieved_at: run.retrieved_at ?? null, failure_code: null, bundle: run.bundle }], app.now()));
+      [{ entry: R.catalogue().find((e) => e.source_id === 'CH_COMPANY')!, state: 'FIRED', detail: run.detail, retrieved_at: run.retrieved_at ?? null, failure_code: null, bundle: run.bundle, cost_pence: run.cost_pence }], app.now()));
     app.close();
   });
 

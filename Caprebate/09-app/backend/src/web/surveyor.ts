@@ -240,6 +240,13 @@ function inputsFor(db: Db, r: JobDbRow): JobInputs {
  */
 export const REGISTER_AMOUNTS_WITHHELD: Readonly<Record<string, readonly string[]>> = Object.freeze({
   HMLR_PPD: Object.freeze(['price_paid']),
+  /* PHASE 146d: THE TITLE REGISTER'S PRICE IS THE SAME KIND OF NUMBER AND WAITS THE SAME WAY. An official copy
+     records the price paid, or the value stated where no price was paid, and either is an amount agreed between a
+     buyer and a seller — a number a surveyor could anchor on as readily as our own. It is left out of the
+     surveyor's job; the tenure, the dates and the title number still go. This matters MORE here than it does for
+     the free sale-price lookup, not less: this is the source that carries a price for COMMERCIAL property, which
+     is the four sectors a surveyor is most often valuing. */
+  HMLR_TITLE: Object.freeze(['price_paid']),
 });
 
 function withoutAmounts(source_id: string, fields: unknown): unknown {

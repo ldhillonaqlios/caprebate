@@ -327,6 +327,12 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
            <span class="help"> Runs everything still to do. Used ${s.rate.used} of ${s.rate.limit} times this hour.</span></form>`
       : h`<div class="stop"><strong>You cannot run it right now.</strong> ${s.rate.why}.</div>`}
 
+    ${/* PHASE 146d: what it will cost, before the button is pressed, and what the last press did cost. The first is
+          our reading of the suppliers' price lists and says so; the second is their own figure off their own
+          answers. They sit together on purpose: if they ever differ, that difference is the thing worth seeing. */
+      h`<p class="help"><strong>What it costs.</strong> ${s.cost_before_words}${s.cost_last_words === null
+        ? raw('') : h` ${s.cost_last_words}`}</p>`}
+
     ${moreDetail(h`
       <table class="stack"><thead><tr><th>Where from</th><th>Free or paid</th><th>Switched on</th><th>Publisher</th><th>Licence</th><th>Read on</th></tr></thead>
         <tbody>${s.sources.map((x) => h`<tr><td>${x.dataset}</td>

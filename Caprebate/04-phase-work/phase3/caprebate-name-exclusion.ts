@@ -227,9 +227,17 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     publisher: 'HM Land Registry',
     datasetLabel: 'Title register (official copy)',
     riskLevel: 'standard',
+    /* PHASE 146d, 23 September 2026 — `price_paid`, `transaction_date` AND `prior_owner_count` ADDED, and their
+       absence was a real defect rather than a tightening. The whole reason this £7 lookup exists is that HM Land
+       Registry's FREE sale-price data is residential only, so for a care home, a dental practice, a surgery or a
+       hospital the official copy of the register is the only source of a price paid there is. The register row
+       described the lookup without permitting the one field it is bought for: any connector writing it would have
+       been refused at the one door as an unclassified field. Neither is a name: a price is a sum of money, a date
+       is a date, and a prior-owner COUNT is a number — the former proprietors' names stay excluded below, and the
+       count is why it is a count. */
     keptFields: [
       'title_number', 'tenure', 'proprietor_company_number', 'proprietor_name_company',
-      'lease_term_*', 'restriction_*',
+      'lease_term_*', 'restriction_*', 'price_paid', 'transaction_date', 'prior_owner_count',
     ],
     excludedNameFields: ['former_proprietor_name', 'former_proprietor_*', 'charge_holder_individual_*'],
     nameExceptions: [
@@ -290,15 +298,22 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     publisher: 'Local planning authority / PlanIt / planning.data.gov.uk',
     datasetLabel: 'Planning applications',
     riskLevel: 'highest',
+    /* Phase 146d adds `planning_uprn`, which the source register has always permitted and this one did not keep —
+       so a planning record carrying the property's own identifier would have been refused at the one door as an
+       unclassified field. It is the least personal thing on the row: it names a building. */
     keptFields: [
       'planning_reference', 'planning_decision', 'planning_decision_date',
-      'planning_received_date', 'planning_description',
+      'planning_received_date', 'planning_description', 'planning_uprn',
     ],
+    /* Phase 146d, 23 September 2026 — see the note. The patterns end in a bare '*' rather than '_*' BECAUSE THE
+       FIELD PlanIt ACTUALLY SENDS IS `case_officer`, with nothing after it: 'case_officer_*' would have matched
+       every spelling except the real one. A glob is only as good as the name it was written against. */
     excludedNameFields: [
       'applicant_name', 'applicant_*', 'agent_name', 'agent_*',
       'objector_name', 'objector_*', 'neighbour_name', 'neighbour_*',
       'consultee_name', 'consultee_*',
       'comment_*', 'correspondence_*',
+      'officer*', 'case_officer*',
     ],
     nameExceptions: [],
     note:
@@ -312,7 +327,27 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       "one place a register record carries data about people (objectors, " +
       "neighbours) who have no connection whatsoever to Caprebate’s " +
       "client or to the claim (LIA §4.4, Class D) — no legitimate interest " +
-      "is claimed in it and none should be.",
+      "is claimed in it and none should be. " +
+      "PHASE 146d, 23 SEPTEMBER 2026 ADDS 'officer_*' AND 'case_officer_*': " +
+      "a case officer is a named local-authority employee and belongs to " +
+      "exactly that class. BOTH candidate suppliers carry one. Homedata's " +
+      "/planning/search/ says in its own documentation that it returns " +
+      "'case officer details'; and PlanIt — the source of record today — " +
+      "carries case_officer, applicant_name, agent_name and agent_address " +
+      "inside the other_fields object of its answer, which was read from a " +
+      "live PlanIt response on 23 September 2026 rather than assumed. So " +
+      "this risk did not arrive with the paid supplier; it was already " +
+      "here, and nothing had barred it. The connector reads named keys and " +
+      "never other_fields, so nothing has leaked; these patterns are the " +
+      "second line. AND ONE THING THIS NOTE MUST NOT BE READ AS SAYING: " +
+      "'planning_description' IS free text and MAY carry a name. It is " +
+      "kept, deliberately, for the reasons set out above PLANNING in " +
+      "caprebate-source-register.ts — it is the authority's account of the " +
+      "WORKS, on a statutory public register, and it is kept only for a " +
+      "record that matched the client's own property. NO BEST-EFFORT NAME " +
+      "FILTER IS BUILT FOR IT, because the rule two sentences up forbids " +
+      "exactly that. The data protection officer is asked to confirm the " +
+      "reading.",
   },
   {
     // Subitem 10.
@@ -337,6 +372,41 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     excludedNameFields: ['trustee_name', 'trustee_*'],
     nameExceptions: [],
     note: 'Charity number, status and structure only. Trustee names excluded.',
+  },
+  {
+    /**
+     * Board item 13003875907. ADDED BY PHASE 146d, 23 September 2026 — and until it was added, nothing from the paid
+     * address lookup could be written at all: `findPolicy` fails closed on a source it does not know, so the one
+     * door would have refused every record with E_UNKNOWN_SOURCE. That is the register working as designed, and it
+     * is why the entry comes with the connector rather than after it.
+     *
+     * THE LOWEST-RISK ROW IN THIS REGISTER, and it is worth saying why so that nobody later widens it by analogy.
+     * This lookup returns an identifier, an address line, a postcode and a point on the ground. It has no
+     * proprietor, no occupier, no resident and no free text of any kind. The supplier sells a great deal more about
+     * the same property — who lives in the area, what crime is recorded near it, how deprived the neighbourhood is —
+     * and the connector never asks for any of it: it requests named slugs, never the supplier's bundles, and there
+     * is a test that it never requests a bundle. The exclusions below are therefore about the SUPPLIER'S catalogue
+     * rather than about this endpoint's answer, which is the right way round for a paid reseller whose product may
+     * grow between one release and the next.
+     *
+     * THE ADDRESS LINE IS THE CLIENT'S OWN PROPERTY'S ADDRESS, which we already hold because somebody typed it in.
+     * It is not a person's address: this system's clients are trading businesses, and a lookup is only ever made
+     * after that business has signed an engagement letter with us.
+     */
+    sourceId: 'HOMEDATA_ADDRESS',
+    subitem: 14,
+    publisher: 'Homedata (supplier); underlying data Ordnance Survey AddressBase and Royal Mail PAF',
+    datasetLabel: 'Paid address lookup — identifier, address line, postcode, coordinates',
+    riskLevel: 'standard',
+    keptFields: ['uprn', 'address_line', 'postcode', 'latitude', 'longitude'],
+    excludedNameFields: ['*_name', 'occupier_*', 'resident_*', 'owner_*', 'proprietor_*'],
+    nameExceptions: [],
+    note:
+      'Four facts about a building and nothing about anybody in it. The coordinates are here because the spatial ' +
+      'screen (board item 12830181761) is geometry-keyed and nothing else in the register supplies a coordinate; a ' +
+      'point on the ground identifies a building, which is what this register is about. USRN, TOID and UDPRN are ' +
+      'excluded in the source register by an explicit decision rather than by omission — nothing reads one, and an ' +
+      'identifier held for no purpose is data held for no purpose.',
   },
   {
     // Subitem 13. Added by Phase 41 (board item 12928074627). Subitem 12 is

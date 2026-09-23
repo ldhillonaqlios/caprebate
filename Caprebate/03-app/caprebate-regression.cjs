@@ -6402,9 +6402,15 @@ if (startSuite("Y", "Phase 132 — N2, the engine registry against the name-excl
       Object.keys(SRC).reduce((bad, k) => bad.concat((SRC[k].permitted || []).filter(f =>
         !(POLICY_IDS_OF[k] || []).some(id => codeOf(id, (POLICY_FIELD[id] || {})[f] || f, { proprietorType: "individual" }) === "passed"))
         .map(f => k + "." + f)), []), []);
-    check("Y5 — an unknown source is refused outright, and so are the two ids only the back end's map carries (recorded)",
+    /* AMENDED PHASE 146d, 23 September 2026. This recorded THREE refusals; it now records two and one pass, and
+       the change is a gap closing rather than a rule loosening. HOMEDATA_ADDRESS had no entry in the name
+       exclusion register at all, so `findPolicy` failed closed on it — correct behaviour, and it meant the paid
+       address lookup could not have written a single field. Phase 146d built that lookup and added its entry, so
+       its own `postcode` now passes, as it must for the connector to work. CIW still has none, because there is
+       no Welsh connector to write anything; an unknown source is still refused outright. */
+    check("Y5 — an unknown source is refused outright; so is the Welsh regulator, which nothing writes; the paid address lookup now has a policy and its own field passes",
       [codeOf("experian", "anything"), codeOf(BACKEND_ONLY_IDS.cqc[0], "registration_status"), codeOf(BACKEND_ONLY_IDS.homedata[0], "postcode")],
-      ["E_UNKNOWN_SOURCE", "E_UNKNOWN_SOURCE", "E_UNKNOWN_SOURCE"]);
+      ["E_UNKNOWN_SOURCE", "E_UNKNOWN_SOURCE", "passed"]);
     check("Y6 — an uncatalogued field is refused, never assumed safe",
       [codeOf("HMLR_TITLE", "vendor_solicitor_name"), codeOf("CH_PSC", "director_name")],
       ["E_UNCLASSIFIED_FIELD", "E_UNCLASSIFIED_FIELD"]);

@@ -4,8 +4,8 @@
   "_how_it_stays_honest": "The check FAILS when a register's text contains a board id this file does not classify, and FAILS when this file names an id the register's text no longer contains. So it cannot quietly go stale: adding an entry to a register without recording it here is a red run, and so is deleting one.",
   "_entry_shapes_in_use": "Two, and the second exists because of a tooling limit recorded in COORDINATES: a row in the register's Appendix 3 index table, or a prose note declaring an entry. A row cannot be added to an existing Monday table through the document API, so every entry added after a register's table was built is declared in prose beside it. SV-S7, SV-S8, SDP-L3, SDP-V3, SDP-L4, SDP-L5, SDP-P5 to SDP-P8 and SDP-V4 are all of that second kind. Since 15 September 2026 (Phase 132d) every entry code in all three registers carries its register's prefix - SV- for FOR THE SURVEYOR, ACC- for FOR THE ACCOUNTANT, SDP- for FOR THE SOLICITOR, THE DPO AND THE DEVELOPER - in the registers themselves and in the refs here; the check matches board ids and counts, never a ref's code.",
   "version": "1.0",
-  "written": "2026-09-09",
-  "writtenBy": "Phase 113g",
+  "written": "2026-09-23",
+  "writtenBy": "Phase 146d",
   "board": 18422317809,
   "awaitingLabel": "Built - awaiting sign-off",
   "_boardIds": "A board id looks exactly like an item id, and every register's Appendix 3 opens by naming the board. These are boards, and the check skips them rather than asking anybody to classify them as entries.",
@@ -756,6 +756,24 @@
           "id": "13104177605",
           "how": "prose",
           "why": "Built and switched off by Phase 146e, 22 Sep 2026: the document reader and the scanned-page path, both off, every call refused until the data protection officer approves the provider and its terms and a director signs. Moved from Ready - Claude can build. The Phase 146e note at the end of the register names it; the two decisions are Word questions."
+        },
+        {
+          "ref": "SDP-L22 onward supply of HM Land Registry title information to the client’s accountant",
+          "id": "13104189485",
+          "how": "prose",
+          "why": "Built and switched off by Phase 146d, 23 Sep 2026: the paid address lookup and HM Land Registry’s title register, both gated on a signed engagement and one operator click, and both switched off on top of that. Moved from Ready - Claude can build. THREE entries on ONE board item, one for each person this register serves, all named in the Phase 146d note at the end of the register; each decision is a Word question."
+        },
+        {
+          "ref": "SDP-P38 the planning description, which is free text and may carry a name, kept rather than dropped",
+          "id": "13104189485",
+          "how": "prose",
+          "why": "The second of Phase 146d’s three entries on the same board item. It also records the case-officer fields now barred on both planning sources — the free one carried them too, which nobody had noticed."
+        },
+        {
+          "ref": "SDP-V8 the two Business Gateway service addresses and the paid supplier’s response shapes, both unconfirmed",
+          "id": "13104189485",
+          "how": "prose",
+          "why": "The third of Phase 146d’s three entries on the same board item. Neither blocks anything while both lookups are switched off and neither has a key."
         }
       ],
       "mentions": [

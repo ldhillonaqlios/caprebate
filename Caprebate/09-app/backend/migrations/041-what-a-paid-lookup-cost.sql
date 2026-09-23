@@ -1,0 +1,22 @@
+-- ===========================================================================
+-- 041 — WHAT A PAID LOOKUP ACTUALLY COST.   Phase 146d, 23 September 2026
+--
+-- Lakhbir's rule of 4 September 2026 is that a member of staff picks the moment and every paid lookup then runs at
+-- once. This phase built the two we pay for, and the rule that goes with the button is that the screen says what it
+-- WILL cost before it is pressed and what it DID cost after.
+--
+-- The first figure is a price list and is worked out fresh each time the page is drawn, so it is not stored. The
+-- second is a fact about a click that has already happened, so it has to be. It goes here, on the run's own row.
+--
+--   research_runs.cost_pence   what this click spent, in pence, added up from the calls it made — and ONLY from
+--                              calls whose answer said we were charged. A lookup that was refused, timed out or came
+--                              back an error adds nothing, because the suppliers' own terms are that they do not
+--                              bill for those. So a run of three failures stores 0, which is the truth.
+--
+-- NULL IS NOT ZERO, AND THAT IS WHY THE COLUMN HAS NO DEFAULT OF 0 FOR OLD ROWS. Every row written before today was
+-- written when no connector existed and nothing could be spent — but "nothing was spent" and "nobody recorded what
+-- was spent" are different facts, and only one of them is safe to add up in a report. Old rows are left NULL and a
+-- report leaves them out rather than counting them as free (N4, applied to money).
+-- ===========================================================================
+
+ALTER TABLE research_runs ADD COLUMN cost_pence INTEGER;

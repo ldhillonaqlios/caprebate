@@ -1,0 +1,10 @@
+{
+  "uprn": 100091234567,
+  "address": {
+    "address_line": "12 Invented Road, Nowhere",
+    "postcode": "ZZ1 1ZZ",
+    "latitude": 52.123456,
+    "longitude": -1.234567
+  },
+  "lr_title": null
+}

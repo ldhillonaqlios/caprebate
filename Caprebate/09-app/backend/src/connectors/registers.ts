@@ -130,6 +130,11 @@ export const REGISTER_SWITCHES: Readonly<Record<string, boolean>> = Object.freez
   HOMEDATA_ADDRESS: false,
   HMLR_TITLE: false,
   BCIS: false,
+  /* PHASE 146d, item 18: the paid planning route, built beside PlanIt and NOT chosen. It is not a row on the
+     research panel — the register source it reads for is PLANNING, and PlanIt is still the source of record for
+     that row — so it is a switch with no catalogue entry, which is exactly what "built and not chosen" looks like.
+     Turning it on is a decision for Lakhbir and it is written up for him. */
+  HOMEDATA_PLANNING: false,
 });
 
 /** Only `true` is on. An absent source, and anything else, is off. */
@@ -308,18 +313,31 @@ export type ConnectorRun = {
   readonly failure_code?: string | null;
   /** Phase 146c: when the publisher's answer was read — set on FIRED only, from the clock, never invented. */
   readonly retrieved_at?: string | null;
+  /**
+   * PHASE 146d: WHAT THIS LOOKUP SPENT, in pence, added up from EVERY call it made — not only the last one. A
+   * stepped lookup makes several calls and each one may or may not be charged, so the sum has to be taken where the
+   * whole list is, which is here. Only a call that says it was charged counts: a refusal, a time-out or an error
+   * adds nothing, because the suppliers' own terms are that they do not bill for those. A charge nobody reported is
+   * null on the call and is left out rather than counted as free (N4 applied to money).
+   */
+  readonly cost_pence: number;
 };
 
 /**
  * RUN ONE CONNECTOR, SAFELY. `gateDecision` is what `stateUnderGates` said for this source, this client, this click;
  * anything but NOT_RUN there means the gate is shut and nothing is sent.
  */
+/** What a list of calls cost, counting only the ones that say they were charged. */
+export function spentOn(calls: readonly CallResult[]): number {
+  return calls.reduce((n, c) => (c.charged && c.cost_pence !== null ? n + c.cost_pence : n), 0);
+}
+
 export async function runConnector<Q>(
   c: RegisterConnector<Q>, ctx: ConnectorContext, query: Q,
   gateDecision: { readonly state: SourceState; readonly detail: string },
   secrets: SecretStore, switches: Readonly<Record<string, boolean>> = REGISTER_SWITCHES,
 ): Promise<ConnectorRun> {
-  const base = { source_id: c.source_id, bundle: null, call: null } as const;
+  const base = { source_id: c.source_id, bundle: null, call: null, cost_pence: 0 } as const;
   if (gateDecision.state !== 'NOT_RUN') {
     return { ...base, state: gateDecision.state, readiness: 'GATE_SHUT', detail: gateDecision.detail };
   }
@@ -332,17 +350,17 @@ export async function runConnector<Q>(
     switch (r.kind) {
       case 'READ':
         return { source_id: c.source_id, state: 'FIRED', readiness: 'READY', detail: r.note, bundle: r.bundle,
-          call: r.calls[r.calls.length - 1] ?? null, failure_code: null, retrieved_at: ctx.deps.now() };
+          call: r.calls[r.calls.length - 1] ?? null, failure_code: null, retrieved_at: ctx.deps.now(), cost_pence: spentOn(r.calls) };
       case 'CALL_FAILED':
         return { source_id: c.source_id, state: 'FAILED', readiness: 'READY', detail: `the lookup did not work: ${r.call.why}`,
-          bundle: null, call: r.call, failure_code: r.call.outcome };
+          bundle: null, call: r.call, failure_code: r.call.outcome, cost_pence: spentOn(r.calls) };
       case 'UNREADABLE':
         return { source_id: c.source_id, state: 'FAILED', readiness: 'READY', detail: 'the lookup answered, but not in a form we could read',
-          bundle: null, call: r.call, failure_code: 'UNREADABLE' };
+          bundle: null, call: r.call, failure_code: 'UNREADABLE', cost_pence: spentOn(r.calls) };
       case 'NOT_MATCHED':
         return { source_id: c.source_id, state: 'FAILED', readiness: 'READY',
           detail: `${r.why}. So the question stays asked. Check the name, number or address on the client's record and try again`,
-          bundle: null, call: r.calls[r.calls.length - 1] ?? null, failure_code: r.code };
+          bundle: null, call: r.calls[r.calls.length - 1] ?? null, failure_code: r.code, cost_pence: spentOn(r.calls) };
       case 'NOT_COVERED':
         return { ...base, state: 'NOT_RUN', readiness: 'READY', detail: `${r.why}, so nothing was contacted and the question is asked` };
     }

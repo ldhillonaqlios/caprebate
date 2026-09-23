@@ -51,6 +51,20 @@ export type SecretKey = {
   readonly phase: string;
   /** In plain words, what it is and where it comes from. */
   readonly what: string;
+  /**
+   * PHASE 146d: OTHER NAMES THE SAME KEY IS WRITTEN UNDER IN A KEY FILE THAT ALREADY EXISTS.
+   *
+   * A key file line whose name no connector owns is IGNORED — deliberately, so that a stray line cannot be read as a
+   * key — and the ignoring is silent, which is the right behaviour for a stray line and the wrong one for a key
+   * somebody typed under a name we did not expect. That happened: the key file on the Mac names the Land Registry
+   * certificate HMLR_BG_CERTIFICATE_PATH, the code read HMLR_BG_CERT_PATH, and the line sat there doing nothing
+   * while the connector reported that no certificate was installed. Both were right and the two never met.
+   *
+   * An alias is read as the canonical name. THE CANONICAL NAME IS STILL THE ONE THE CODE ASKS FOR and the one
+   * secrets.example.env lists; an alias is a spelling we accept, not a second key. Where a file holds both, the
+   * canonical one wins — a file that disagrees with itself is not resolved in favour of the older spelling.
+   */
+  readonly aliases?: readonly string[];
 };
 
 /**
@@ -77,7 +91,7 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'HOMEDATA_API_KEY', owner: 'HOMEDATA_ADDRESS', secret: true, phase: '146d', what: 'the Homedata address lookup key' },
   { name: 'HMLR_BG_USERNAME', owner: 'HMLR_TITLE', secret: true, phase: '146d', what: 'the Land Registry Business Gateway user name' },
   { name: 'HMLR_BG_PASSWORD', owner: 'HMLR_TITLE', secret: true, phase: '146d', what: 'the Land Registry Business Gateway password' },
-  { name: 'HMLR_BG_CERT_PATH', owner: 'HMLR_TITLE', secret: true, phase: '146d', what: 'where the Business Gateway client certificate (a .p12 file) is installed' },
+  { name: 'HMLR_BG_CERT_PATH', owner: 'HMLR_TITLE', secret: true, phase: '146d', what: 'where the Business Gateway client certificate (a .p12 file) is installed', aliases: ['HMLR_BG_CERTIFICATE_PATH'] },
   { name: 'HMLR_BG_CERT_PASSPHRASE', owner: 'HMLR_TITLE', secret: true, phase: '146d', what: 'the passphrase of that certificate' },
   { name: 'IONOS_SMTP_HOST', owner: 'IONOS_EMAIL', secret: true, phase: '146f', what: 'the IONOS server that sends email' },
   { name: 'IONOS_SMTP_PORT', owner: 'IONOS_EMAIL', secret: true, phase: '146f', what: 'its port' },
@@ -193,9 +207,23 @@ export function parseSecretsFile(text: string): Map<string, string> {
 
 const OWNED = new Map(SECRET_KEYS.map((k) => [k.name, k] as const));
 
+/** Every accepted spelling, to the key it means. A canonical name maps to itself. */
+export const KEY_OF_NAME: ReadonlyMap<string, string> = new Map(
+  SECRET_KEYS.flatMap((k) => [[k.name, k.name] as const, ...(k.aliases ?? []).map((a) => [a, k.name] as const)]),
+);
+
 function makeStore(state: SecretsState, why: string, values: Map<string, string>, readable_by_others: boolean): SecretStore {
-  const known = new Map([...values].filter(([k]) => OWNED.has(k)));
-  const unknown = [...values.keys()].filter((k) => !OWNED.has(k)).sort();
+  /* An alias is folded onto the canonical name as the file is read, so nothing downstream — the connectors, the
+     missing-key words, the names() listing — knows that a file used a different spelling. A canonical line already
+     present is never overwritten by an alias. */
+  const known = new Map<string, string>();
+  for (const [name, v] of values) {
+    const canonical = KEY_OF_NAME.get(name);
+    if (canonical === undefined) continue;
+    if (canonical !== name && known.has(canonical)) continue;
+    if (canonical === name || !values.has(canonical)) known.set(canonical, v);
+  }
+  const unknown = [...values.keys()].filter((k) => !KEY_OF_NAME.has(k)).sort();
   for (const [k, v] of known) if (OWNED.get(k)?.secret === true && v.length >= MIN_REDACT) REGISTERED.add(v);
   const shown = (): string => `secrets (${state}): ${[...known.keys()].sort().join(', ') || 'none'}`;
   const store: SecretStore & { toString(): string; toJSON(): unknown } = {

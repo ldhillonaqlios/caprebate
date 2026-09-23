@@ -1,0 +1,8 @@
+{
+  "postcode": "ZZ1 1ZZ",
+  "addresses": [
+    { "uprn": 100091234567, "building_number": "12", "thoroughfare": "Invented Road", "post_town": "Nowhere", "postcode": "ZZ1 1ZZ" },
+    { "uprn": 100091234568, "building_number": "14", "thoroughfare": "Invented Road", "post_town": "Nowhere", "postcode": "ZZ1 1ZZ" },
+    { "uprn": 100091234569, "building_number": "16", "thoroughfare": "Invented Road", "post_town": "Nowhere", "postcode": "ZZ1 1ZZ" }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "uprn": 100091234567,
+  "address": {
+    "address_line": "12 Invented Road, Nowhere",
+    "postcode": "ZZ1 1ZZ",
+    "latitude": 52.123456,
+    "longitude": -1.234567,
+    "usrn": 20900001,
+    "toid": "osgb1000000000001",
+    "udprn": 99000001
+  },
+  "lr_title": {
+    "title_number": "ZZ123456",
+    "tenure": "Freehold",
+    "restrictions": [
+      { "text": "No disposition of the registered estate by the proprietor is to be registered without a certificate." }
+    ]
+  }
+}

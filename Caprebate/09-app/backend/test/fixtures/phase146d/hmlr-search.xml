@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body>
+  <SearchByPropertyDescriptionResponse>
+    <Results>
+      <PropertyDescription>
+        <TitleNumber>ZZ123456</TitleNumber>
+        <Tenure>Freehold</Tenure>
+        <Address>12 Invented Road, Nowhere, ZZ1 1ZZ</Address>
+      </PropertyDescription>
+    </Results>
+  </SearchByPropertyDescriptionResponse>
+</soap:Body></soap:Envelope>

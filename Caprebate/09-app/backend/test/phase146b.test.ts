@@ -290,11 +290,16 @@ describe('one way to call outside, and every call is written down', () => {
     app.close();
   });
 
-  test('refused before anything is sent: no address yet, outside the UK and EU unapproved, not in the list, and a live call from a test', async () => {
+  test('refused before anything is sent: no address, outside the UK and EU unapproved, not in the list, and a live call from a test', async () => {
     const t = fixtureTransport({});
     const { app, d, rows } = await deps(t);
     const call = (service_id: string, dd: CallDeps = d) => callOutside(dd, { service_id, endpoint: '/x', actor_id: null, claim_id: null, gate: SHUT });
-    assert.match((await call('HMLR_TITLE')).why, /address is not confirmed/);
+    /* PHASE 146d: THE SPECIMEN MOVED, AND THE RULE DID NOT. This line used to ask HMLR_TITLE, whose row carried no
+       address because nobody had looked one up. Phase 146d looked it up — HM Land Registry publishes the Business
+       Gateway's live and test addresses — so no row in the list has a null address any more, which is the point.
+       The refusal itself still has to work, so it is now asked of a row whose address is taken away for this one
+       call. That tests the mechanism rather than an accident of configuration. */
+    assert.match((await call('EPC', { ...d, policy_override: { base_url: null } })).why, /address is not confirmed/);
     assert.match((await call('CLAUDE_DOCUMENTS')).why, /outside the UK and EU/);
     assert.match((await call('NOBODY')).why, /not in the list/);
     const live = await call('EPC', { ...d, transport: liveTransport, env: { NODE_TEST_CONTEXT: 'child-v8' } });

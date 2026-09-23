@@ -1,0 +1,12 @@
+{
+  "uprn": 100091234567,
+  "planning_history": {
+    "applications": [
+      { "reference": "ZZ/2019/0456", "status": "Approved", "decision_date": "2019-08-14",
+        "submitted_date": "2019-05-02", "description": "Single storey rear extension to form treatment room.",
+        "case_officer": "A Person", "applicant_name": "A Person" },
+      { "reference": "ZZ/2021/0987", "status": "Approved", "decision_date": "2021-03-09",
+        "submitted_date": "2021-01-11", "description": "Installation of air source heat pump." }
+    ]
+  }
+}

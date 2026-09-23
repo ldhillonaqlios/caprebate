@@ -451,13 +451,25 @@ export const SOURCES: readonly Source[] = [
     licence_id: 'HMLR_TITLE',
     default_prov: 'API',
     max_grade: 'A',
+    /* PHASE 146d, 23 September 2026 — `price_paid`, `transaction_date` and `prior_owner_count` added. THE ROW
+       DESCRIBED THIS LOOKUP WITHOUT PERMITTING THE FIELD IT IS BOUGHT FOR. An official copy of the register records
+       the price paid, or the value stated where no price was paid, for every disposition since April 2000 —
+       commercial included — and that is the ONLY source of a price paid for four of our five sectors, because HM
+       Land Registry's free Price Paid Data is residential sales only. Without these three the connector's records
+       would have been refused at the one door as unclassified fields. The prior-owner CHAIN is kept as a count:
+       how many earlier proprietors the register records, never who they were — `former_proprietor_*` stays
+       excluded. */
     permitted_fields: [
       'title_number', 'tenure', 'proprietor_name_personal', 'proprietor_company_number',
-      'lease_term_*', 'restriction_*',
+      'lease_term_*', 'restriction_*', 'price_paid', 'transaction_date', 'prior_owner_count',
     ],
     excluded_fields: ['charge_holder_individual_*', 'former_proprietor_*'],
     personal_name_exceptions: ['proprietor_name_personal'],
-    endpoint: 'https://api.landregistry.gov.uk',
+    /* PHASE 146d: the Business Gateway's published live address, from HM Land Registry's own developer pack (read
+       23 September 2026). The vendor test environment is https://bgtest.landregistry.gov.uk. Reaching either needs
+       a Business Gateway account AND the client certificate HM Land Registry issues under the network access
+       agreement, both of which are the developer's to obtain. */
+    endpoint: 'https://businessgateway.landregistry.gov.uk',
   },
   {
     source_id: 'CQC',
@@ -521,8 +533,39 @@ export const SOURCES: readonly Source[] = [
     endpoint: null,
   },
   {
-    // HIGHEST RISK SOURCE (subitem 12818304906). The whitelist is deliberately tiny and
-    // contains no free-text field that could carry a third party's name.
+    /**
+     * HIGHEST RISK SOURCE (subitem 12818304906). The whitelist is deliberately tiny.
+     *
+     * WHAT THIS COMMENT USED TO SAY, AND WHY IT WAS WRONG (corrected by Phase 146d, 23 September 2026). It said the
+     * whitelist "contains no free-text field that could carry a third party's name". IT DOES: `planning_description`
+     * is free text, and a planning description routinely carries a surname — "Erection of a rear extension for Mr
+     * Smith" is an ordinary way for an authority to write one. A comment that says a risk is absent is worse than no
+     * comment at all, because the next reader stops looking.
+     *
+     * THE FIELD IS KEPT ALL THE SAME, AND HERE IS THE REASONING, so that this is a decision on the record rather
+     * than an oversight with a nicer comment on it. The name exclusion register excludes `comment_*` and
+     * `correspondence_*` WHOLESALE and states the rule behind it: "the rule for a free-text field that MAY carry a
+     * name is exclusion of the whole field, never a best-effort filter." That rule was written about text produced
+     * BY third parties ABOUT themselves — objectors and neighbours, people with no connection whatsoever to the
+     * client or the claim, in whom no legitimate interest is claimed. A description is a different thing in every
+     * respect that matters: it is written by the authority, about the WORKS, on a statutory public register, and —
+     * because a planning record is kept only when it matched THE CLIENT'S OWN PROPERTY at ACCEPT — any applicant it
+     * names is overwhelmingly the client or their agent, not a stranger. It is also the single most useful planning
+     * fact this system has: what was built, and when, is what a capital allowances claim turns on.
+     *
+     * SO THE POSITION IS: the field stays, the comment tells the truth about it, and the data protection officer is
+     * asked to confirm that reading rather than being left to discover it. No best-effort name filter is built, and
+     * none should be — that is the one thing the register's own rule forbids outright.
+     *
+     * `officer*` AND `case_officer*` ARE EXCLUDED (Phase 146d). A case officer is a named council employee who is
+     * not our client and has no connection to the claim. Nothing we call today returns one into a kept field, but
+     * BOTH candidate suppliers publish one: Homedata's /planning/search/ documents that it returns "case officer
+     * details", and PlanIt's own answer carries `case_officer`, `applicant_name`, `agent_name` and `agent_address`
+     * inside its `other_fields` object — checked on a live PlanIt response on 23 September 2026, so this is not an
+     * assumption that the risk arrived with the paid supplier. It was already there. The connector reads named keys
+     * only and never touches `other_fields`, so nothing leaks today; these patterns are the second line, for the day
+     * somebody reads one field more.
+     */
     source_id: 'PLANNING',
     publisher: 'Local planning authority / planning.data.gov.uk',
     dataset: 'Planning applications',
@@ -533,7 +576,11 @@ export const SOURCES: readonly Source[] = [
       'planning_reference', 'planning_decision', 'planning_decision_date',
       'planning_received_date', 'planning_description', 'planning_uprn',
     ],
-    excluded_fields: ['applicant_*', 'agent_*', 'objector_*', 'neighbour_*', 'comment_*', 'consultee_*', 'correspondence_*'],
+    excluded_fields: [
+      'applicant_*', 'agent_*', 'objector_*', 'neighbour_*', 'comment_*', 'consultee_*', 'correspondence_*',
+      // Phase 146d: a bare '*', because the field PlanIt sends is `case_officer` with nothing after it.
+      'officer*', 'case_officer*',
+    ],
     personal_name_exceptions: NO_NAMES,
     endpoint: 'https://www.planit.org.uk/api',
   },
@@ -587,14 +634,40 @@ export const SOURCES: readonly Source[] = [
      */
     source_id: 'HOMEDATA_ADDRESS',
     publisher: 'Homedata (supplier); underlying data Ordnance Survey AddressBase and Royal Mail PAF, as the supplier states',
-    dataset: 'Address search and retrieve — UPRN, address line, postcode',
+    dataset: 'Address search and retrieve — UPRN, address line, postcode, coordinates',
     licence_id: 'HOMEDATA_TERMS',
     default_prov: 'API',
     max_grade: 'B',
-    permitted_fields: ['uprn', 'address_line', 'postcode'],
-    excluded_fields: ['*_name', 'occupier_*', 'resident_*', 'owner_*', 'proprietor_*'],
+    /**
+     * PHASE 146d, 23 September 2026 — LATITUDE AND LONGITUDE ADDED, and it is a fix rather than an extension.
+     *
+     * The spatial screen (board item 12830181761 — the check that two records are about the same building) is
+     * geometry-keyed, and its own specification says the coordinates come from THIS lookup. NOTHING ELSE IN THIS
+     * REGISTER SUPPLIES A COORDINATE AT ALL: every other row is an identifier, an area, a date or a status. So while
+     * this whitelist stopped at three fields, the screen could not be fed by anything, and a contamination check
+     * that cannot run is not a check.
+     *
+     * A COORDINATE IS NOT PERSONAL DATA HERE. It is a point on the ground identifying a building, which is what this
+     * whole register is about; it says nothing about who is inside it. The rows that WOULD say that — `occupier_*`
+     * and `resident_*` — are excluded below and are the reason this connector asks for named slugs and never for one
+     * of the supplier's bundles.
+     *
+     * USRN, TOID AND UDPRN ARE DECIDED AND EXCLUDED, rather than left unmentioned. USRN identifies a street, TOID an
+     * Ordnance Survey map feature and UDPRN a Royal Mail delivery point. Each is a real identifier and each would be
+     * another key we could match on one day — but nothing in this build reads one, an identifier nobody uses is data
+     * held for no purpose, and the supplier publishes no permission to hold its identifiers at all. If something
+     * later needs one, it is added here with the reason, which is the point of naming them now.
+     */
+    permitted_fields: ['uprn', 'address_line', 'postcode', 'latitude', 'longitude'],
+    excluded_fields: ['*_name', 'occupier_*', 'resident_*', 'owner_*', 'proprietor_*', 'usrn', 'toid', 'udprn'],
     personal_name_exceptions: NO_NAMES,
-    endpoint: 'https://api.homedata.co.uk/api/address/',
+    /* PHASE 146d: CORRECTED FROM https://api.homedata.co.uk/api/address/ ON A LIVE RESPONSE, 23 September 2026. The
+       supplier's endpoint reference states "Base URL: https://api.homedata.co.uk/api" while every worked example on
+       the same page omits the /api, so the documentation could not settle it. The open, unauthenticated /ping did:
+       GET https://api.homedata.co.uk/ping answered 200 and /api/ping answered 404, and the supplier's public
+       OpenAPI document declares all 155 of its paths without the prefix. The /api form IS still routed — it is an
+       alias — but the root is the canonical one and is the one we call. */
+    endpoint: 'https://api.homedata.co.uk/address/',
   },
   {
     source_id: 'CLIENT_ANSWER',
@@ -756,7 +829,11 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
   },
   {
     source_id: 'PLANNING',
-    api_base: ['https://www.planning.data.gov.uk', 'https://www.planit.org.uk'],
+    /* PHASE 146d adds api.homedata.co.uk as a THIRD address this source can be asked at — built, switched off, and
+       not chosen. PlanIt remains the source of record; see src/connectors/homedata-planning.ts for why the choice is
+       not a build decision. An address listed here is how a service row stays tied to its register source when the
+       source has more than one publisher, which planning has had since Phase 146c. */
+    api_base: ['https://www.planning.data.gov.uk', 'https://www.planit.org.uk', 'https://api.homedata.co.uk'],
     docs: [
       'https://www.planning.data.gov.uk/docs',
       'https://www.planning.data.gov.uk/dataset/planning-application',
@@ -769,7 +846,90 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'incomplete and is not yet ready for use"; only "polite rate-limiting" is asked. PlanIt: no key; ' +
       '/api/applics/json?pcode=&krad=; "one request to the /api/applics endpoint every minute", about 300 a day, and ' +
       'an identifier with an email address in the User-Agent (requests without one are blocked); "No attribution is ' +
-      'necessary"; its owner writes that "it would not be wise to base any commercial services on the API".',
+      'necessary"; its owner writes that "it would not be wise to base any commercial services on the API". ' +
+      'PHASE 146d, 23 Sep 2026, FROM A LIVE PlanIt RESPONSE rather than from its documentation: a record\u2019s ' +
+      'own keys carry no officer and no applicant, but its other_fields object carries case_officer, ' +
+      'applicant_name, agent_name, agent_address and comment_url. The connector reads named keys and never ' +
+      'other_fields, so none of it is read; officer_* and case_officer_* are now excluded on the row as well. ' +
+      'PlanIt also REQUIRES the postcode with its space: SW1A2AA answers 400 "No location found", SW1A 2AA ' +
+      'answers 200, and postcodeKey already produces the spaced form. Homedata is a third possible publisher for ' +
+      'this source: its planning_history slug (5 tokens) is keyed by UPRN, and its /planning/search/ endpoint is ' +
+      'NOT used because its own documentation says that one returns "case officer details".',
+  },
+  {
+    /* PHASE 146d, 23 September 2026. `api_base` is the host alone: settled on a LIVE response rather than on the
+       prose, because the prose contradicts itself. */
+    source_id: 'HOMEDATA_ADDRESS',
+    api_base: ['https://api.homedata.co.uk'],
+    docs: [
+      'https://homedata.co.uk/docs',
+      'https://homedata.co.uk/docs/authentication',
+      'https://homedata.co.uk/docs/endpoints',
+      'https://homedata.co.uk/docs/pricing',
+      'https://api.homedata.co.uk/schema/yaml/',
+    ],
+    read_on: '2026-09-23',
+    findings:
+      'THE BASE URL IS THE HOST, NOT host + /api. The endpoint reference states "Base URL: ' +
+      'https://api.homedata.co.uk/api" while every worked example on the same page omits the /api, and both forms ' +
+      'are routed, so neither the documentation nor a 403 settled it. The open endpoints did: /ping answered 200 ' +
+      'and /api/ping answered 404, and the public OpenAPI document declares all 155 paths without the prefix. ' +
+      'AUTHENTICATION is "Authorization: Api-Key <key>" and the page says in terms "Use Api-Key prefix, not ' +
+      'Bearer"; a key may also go in the query string, which we do not do. PRICES: 100 tokens = £1, so a token is ' +
+      'a penny. /address/postcode/{postcode}/ and /address/find/ are 2; /property/{uprn}/ discovery is 1; the ' +
+      '?with= slugs are address 5, lr_title 1, lr_title_full 10, dimensions 1, construction 1, council_tax 3, ' +
+      'title_boundary 5, risks 7, planning_history 5; a ?with= chain costs the SUM of its slugs. The TIERS ' +
+      '/base/ 10, /core/ 25 and /complete/ 50 are NOT used: core carries crime and demographics and complete adds ' +
+      'deprivation, which this register excludes under occupier_* and resident_*. BILLING: "there is no monthly ' +
+      'allowance and nothing resets"; "any 4xx other than a 402 and any 5xx is never billed" and a debit taken ' +
+      'before a failure is refunded; a 402 keeps the base charge and its body carries required, available and a ' +
+      'topup_url; an organisation\u2019s first ever payment is matched 100%, once. THE COST HEADERS DEPEND ON THE ' +
+      'KIND OF KEY, which matters: "Wallet keys receive the X-Tokens-* pair and no rate-limit headers at all; ' +
+      'quota keys receive the X-RateLimit-* family instead. You will not see both." So X-Tokens-Charged may simply ' +
+      'be absent, and an absent charge is recorded as unknown rather than as nothing. The live service also sends ' +
+      'x-call-weight, which we read as the same figure. RATE LIMITS ARE NOT PUBLISHED ANYWHERE: per API key, 429, ' +
+      'honour Retry-After, and "a 429 costs nothing" — no number on the pricing, authentication or endpoint pages ' +
+      'or in the OpenAPI document, and the coverage matrix is "available on request". THE PLAYGROUND NEEDS AN ' +
+      'ACCOUNT: /developer/playground redirects to a log-in page and the live-demo page says "Create an account to ' +
+      'run them against your own key", so no fixture could be captured from it and none was. RESPONSE SHAPES ARE ' +
+      'NOT PUBLISHED AT ALL: every response in the OpenAPI document reads "200: No response body", so the field ' +
+      'names the connector reads come from the endpoint reference\u2019s prose, the readers are deliberately ' +
+      'tolerant, and THE FIRST LIVE CALL MUST CONFIRM THE SHAPE. Two further inconsistencies, recorded so nobody ' +
+      're-derives them: /address/find/ is described on the pricing and endpoint pages but is absent from the ' +
+      'OpenAPI document; and /properties/{uprn}/ (plural) is a deprecated alias of /property/{uprn}/. The ' +
+      'marketing prose also still offers "bonus tokens with an optional monthly subscription", which is a ' +
+      'subscription, not an allowance, and does not contradict "nothing resets". Its planning_history slug is ' +
+      'named on the pricing page but does not appear in the module list the deprecated plural endpoint publishes, ' +
+      'so that one slug is taken from the price list and must be confirmed on the first discovery call.',
+  },
+  {
+    /* PHASE 146d, 23 September 2026. Nothing here can be called without the network access agreement, so every
+       line below is from HM Land Registry's own public developer pack rather than from a response. */
+    source_id: 'HMLR_TITLE',
+    api_base: ['https://businessgateway.landregistry.gov.uk', 'https://bgtest.landregistry.gov.uk'],
+    docs: [
+      'https://www.gov.uk/guidance/hm-land-registry-business-gateway',
+      'https://landregistry.github.io/bgtechdoc/rest/get_started/developer_guide/',
+      'https://landregistry.github.io/bgtechdoc/get_started/vendor_testing_guide/',
+      'https://landregistry.github.io/bg-dev-pack-redesign/find-a-service-api/',
+    ],
+    read_on: '2026-09-23',
+    findings:
+      'TWO ENVIRONMENTS ON TWO HOSTS: live businessgateway.landregistry.gov.uk, test bgtest.landregistry.gov.uk. ' +
+      'Two families on each: REST under /bg2 (live) and /bg2test (test), SOAP under /b2b/BGSoapEngine (live) and ' +
+      '/b2b/BGStubService (test). AUTHENTICATION IS TWO THINGS AT ONCE — "An active Business Gateway user account ' +
+      'is required" for Basic authentication, AND "A valid SSL certificate, issued by Business Gateway, is ' +
+      'required" as a client certificate on the connection. fetch cannot present a client certificate, which is ' +
+      'why src/connectors/http.ts carries a certificate-bearing transport. THE SERVICES WE NEED: "Search by ' +
+      'Property Description" (SOAP) — "find out the title number and tenure of a property based on the address ' +
+      'supplied"; "Official Copy Title Known" (SOAP) — "order an official copy of the register"; and, published ' +
+      'with its exact path, GET /s1/v1/titles/{title_number}/official-copies/availability (REST), which "Returns ' +
+      'the OC1 document availability" and is free to ask, so it is asked before the fee is spent. ' +
+      'GET /s2/v1/titles/{title_number}/registered-proprietor-names (REST) is published too. WHAT IS NOT ' +
+      'PUBLISHED: the WSDL path of any individual SOAP service — those come with the developer pack under the ' +
+      'network access agreement — and any rate limit. The SOAP paths in src/connectors/hmlr-title.ts are built ' +
+      'from the one SOAP address HM Land Registry does publish and ARE MARKED UNCONFIRMED; a question is open with ' +
+      'the developer. Nothing turns on the guess while the switch is off and no certificate is installed.',
   },
   {
     source_id: 'ONS_POSTCODE',

@@ -63,6 +63,7 @@ import { switchedOn, runConnector, REGISTER_SWITCHES, type Bundle, type Connecto
 import type { Transport, RateLimiter } from '../connectors/http.ts';
 import type { SecretStore } from '../secrets.ts';
 import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../connectors/free-registers.ts';
+import { PAID_CONNECTORS, PAID_ORDER, totalBeforePence, pounds } from '../connectors/paid-registers.ts';
 import { ingestRegisterRecord } from '../stubs/registers.ts';
 import { postcodeStore } from './postcode.ts';
 import type { PostcodeStore } from './postcode-port.ts';
@@ -405,6 +406,23 @@ export type SourcesPanel = {
    * stated rather than hidden. See `KNOWN_GAPS`.
    */
   readonly known_gaps: readonly string[];
+  /**
+   * PHASE 146d, ITEM 3 — WHAT THIS CLICK WOULD COST, SHOWN BEFORE IT IS CLICKED.
+   *
+   * Every paid lookup that is outstanding AND switched on, at its supplier's published price. It is a PRICE LIST and
+   * the words say so, because the figure shown afterwards is a different thing: that one comes off the suppliers'
+   * own responses. Today it is 0 and the words say nothing would be spent — every paid switch is off, and a lookup
+   * that cannot run cannot cost anything.
+   */
+  readonly cost_before_pence: number;
+  readonly cost_before_words: string;
+  /**
+   * AND WHAT THE LAST CLICK DID COST, in the same panel, because the two belong beside each other: a price list and
+   * the bill. Null when nothing has been run for this client, or when the last run predates this column — which is
+   * NOT the same as nothing having been spent, and the words say which.
+   */
+  readonly cost_last_pence: number | null;
+  readonly cost_last_words: string | null;
 };
 
 /**
@@ -436,7 +454,13 @@ export const KNOWN_GAPS: readonly string[] = Object.freeze([
  * register's attribution lines are for reports and packs (attributionsFor in the source register), where they are
  * already printed.
  */
-export const ATTRIBUTION_SHOWN_WITH: readonly string[] = Object.freeze(['HMLR_PPD']);
+/*
+ * PHASE 146d ADDS THE TITLE REGISTER. Its licence in the register requires attribution and prescribes the words
+ * ("Contains HM Land Registry data © Crown copyright and database right."), and a bought official copy draws on a
+ * screen exactly as a sale price does — so the words go with it there, read from the licence register and never
+ * retyped, for the same reason Price Paid's are.
+ */
+export const ATTRIBUTION_SHOWN_WITH: readonly string[] = Object.freeze(['HMLR_PPD', 'HMLR_TITLE']);
 
 export function registerAttribution(source_id: string): string | null {
   if (!ATTRIBUTION_SHOWN_WITH.includes(source_id)) return null;
@@ -558,12 +582,28 @@ export function sourcesFor(db: Db, actor: Actor, business_id: string): SourcesPa
     };
   });
 
+  const outstandingPaid = sources.filter((s) => s.state !== 'FIRED').map((s) => s.source_id);
+  const before = totalBeforePence(outstandingPaid, (id) => switchedOn(id));
+  const last = db.get<{ cost_pence: number | null; at: string }>(
+    'SELECT cost_pence, at FROM research_runs WHERE business_id = ? ORDER BY at DESC, rowid DESC LIMIT 1',
+    [business_id],
+  );
   return {
     free, engagement, sources,
     outstanding: sources.filter((s) => s.state !== 'FIRED').length,
     would_fire: sources.filter((s) => s.state === 'NOT_RUN' || s.state === 'FAILED').length,
     rate: rateState(db, business_id, actor),
     known_gaps: KNOWN_GAPS,
+    cost_before_pence: before,
+    cost_before_words: before === 0
+      ? 'This will not cost anything. The lookups we pay for are not switched on.'
+      : `This will cost about ${pounds(before)}, at the prices the suppliers publish. ` +
+        'We show what it actually cost once it has run.',
+    cost_last_pence: last?.cost_pence ?? null,
+    cost_last_words: last === undefined ? null
+      : last.cost_pence === null ? 'The last time it was run, we did not record what it cost.'
+      : last.cost_pence === 0 ? 'The last time it was run, nothing was spent.'
+      : `The last time it was run it cost ${pounds(last.cost_pence)}, which is what the suppliers charged us.`,
   };
 }
 
@@ -645,6 +685,13 @@ export type RunOutcome = {
   readonly fired: number;
   readonly not_permitted: number;
   readonly failed: number;
+  /**
+   * PHASE 146d, ITEM 3 — WHAT IT ACTUALLY COST, IN PENCE, AND IT IS THE SUPPLIERS' FIGURE RATHER THAN OURS.
+   * Added up from the calls, counting only those that came back saying they were charged. The price list shown
+   * before the click is NOT carried forward into it: if the two differ, the difference is the thing worth seeing.
+   */
+  readonly cost_pence: number;
+  readonly cost_words: string;
 };
 
 /** One source's decision under the gates, and — Phase 146c — what its connector did, if it was allowed to run. */
@@ -655,6 +702,8 @@ export type SourceOutcome = {
   readonly retrieved_at: string | null;
   readonly failure_code: string | null;
   readonly bundle: Bundle | null;
+  /** PHASE 146d: what this lookup spent, in pence, from the calls it made. 0 for a free one and for one that failed. */
+  readonly cost_pence: number;
 };
 
 /**
@@ -682,8 +731,12 @@ export async function consultAllowed(
   const earlier = new Map<string, Bundle>();
   const order = runOrder(decided.map((x) => x.entry.source_id));
   for (const x of [...decided].sort((a, b) => order.indexOf(a.entry.source_id) - order.indexOf(b.entry.source_id))) {
-    const keep: SourceOutcome = { entry: x.entry, state: x.state, detail: x.detail, retrieved_at: null, failure_code: null, bundle: null };
-    const built = FREE_CONNECTORS[x.entry.source_id];
+    const keep: SourceOutcome = { entry: x.entry, state: x.state, detail: x.detail, retrieved_at: null, failure_code: null, bundle: null, cost_pence: 0 };
+    /* PHASE 146d: THE PAID LOOKUPS SIT BESIDE THE FREE ONES HERE AND NOWHERE ELSE. One map or the other answers for a
+       source; a source in neither has no connector in this build and says so. The gate has already been decided
+       above — a paid source reaches this line only when the engagement letter is signed, and that is not re-decided
+       here any more than the free gate is. */
+    const built = FREE_CONNECTORS[x.entry.source_id] ?? PAID_CONNECTORS[x.entry.source_id];
     if (x.state !== 'NOT_RUN' || d.outside === undefined) { out.push(keep); continue; }
     if (built === undefined) {
       out.push({ ...keep, detail: NOT_BUILT[x.entry.source_id] ?? keep.detail });
@@ -709,6 +762,12 @@ export async function consultAllowed(
       retrieved_at: run.state === 'FIRED' ? (run.retrieved_at ?? null) : null,
       failure_code: run.state === 'FAILED' ? (run.failure_code ?? 'ERROR') : null,
       bundle: run.state === 'FIRED' ? run.bundle : null,
+      /* PHASE 146d, ITEM 11: WHAT THIS LOOKUP ACTUALLY COST, ADDED UP FROM THE CALLS IT MADE — and only from calls
+         that say they were charged. A call that was refused, timed out or came back an error has `charged: false`
+         and adds nothing, so a lookup that failed three times reports nothing spent, which is the truth and is what
+         the supplier's own terms say ("any 4xx other than a 402 and any 5xx is never billed"). A charge we could
+         not read at all is null, never 0, and is left out of the sum rather than counted as free. */
+      cost_pence: run.cost_pence,
     });
   }
   return out;
@@ -774,7 +833,7 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
       object_type: 'research', object_id: business_id,
       detail: { what: 'research_run', used: rate.used, limit: rate.limit },
     });
-    return { ok: false, why: rate.why, considered: 0, fired: 0, not_permitted: 0, failed: 0 };
+    return { ok: false, why: rate.why, considered: 0, fired: 0, not_permitted: 0, failed: 0, cost_pence: 0, cost_words: 'Nothing was spent.' };
   }
 
   const free = freeGate();
@@ -790,14 +849,16 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
   const fired = outcomes.filter((o) => o.state === 'FIRED').length;
   const notPermitted = outcomes.filter((o) => o.state === 'NOT_PERMITTED_YET').length;
   const failed = outcomes.filter((o) => o.state === 'FAILED').length;
+  /* ITEM 3's SECOND HALF: the actual cost, off the calls, not off the price list. */
+  const spent = outcomes.reduce((n, o) => n + o.cost_pence, 0);
   const at = d.now();
 
   d.db.tx(() => {
     storeResearchOutcomes(d, business_id, outcomes, at);
     d.db.run(
       'INSERT INTO research_runs (id, business_id, actor_id, at, considered, fired, ' +
-        'not_permitted, failed, kind, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)',
-      [d.newId(), business_id, actor.id, at, panel.sources.length, fired, notPermitted, failed, 'RUN'],
+        'not_permitted, failed, kind, source_id, cost_pence) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)',
+      [d.newId(), business_id, actor.id, at, panel.sources.length, fired, notPermitted, failed, 'RUN', spent],
     );
   });
 
@@ -806,7 +867,7 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
     actor_id: actor.id, actor_role: actor.role,
     object_type: 'research', object_id: business_id,
     detail: {
-      considered: panel.sources.length, fired, not_permitted: notPermitted, failed,
+      considered: panel.sources.length, fired, not_permitted: notPermitted, failed, cost_pence: spent,
       free_gate_open: free.open, engagement_signed: engagement.signed,
     },
   });
@@ -822,6 +883,8 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
       : `${fired} lookup${fired === 1 ? '' : 's'} made.` +
         (failed === 0 ? '' : ` ${failed} did not work, and you can try each of them again.`),
     considered: panel.sources.length, fired, not_permitted: notPermitted, failed,
+    cost_pence: spent,
+    cost_words: spent === 0 ? 'Nothing was spent.' : `${pounds(spent)} was spent, which is what the suppliers charged us.`,
   };
 }
 
@@ -844,14 +907,14 @@ export async function retryFailedSource(
   const panel = sourcesFor(d.db, actor, business_id);
   const s = panel.sources.find((x) => x.source_id === source_id);
   if (s === undefined) {
-    return { ok: false, why: 'we do not use that lookup', considered: 0, fired: 0, not_permitted: 0, failed: 0 };
+    return { ok: false, why: 'we do not use that lookup', considered: 0, fired: 0, not_permitted: 0, failed: 0, cost_pence: 0, cost_words: 'Nothing was spent.' };
   }
   if (s.state !== 'FAILED') {
     return {
       ok: false,
       why: 'Only a lookup that did not work can be tried again. ' +
         'For the rest, press “Run the research”. It runs them all at once.',
-      considered: 1, fired: 0, not_permitted: 0, failed: 0,
+      considered: 1, fired: 0, not_permitted: 0, failed: 0, cost_pence: 0, cost_words: 'Nothing was spent.',
     };
   }
 
@@ -867,10 +930,10 @@ export async function retryFailedSource(
     storeResearchOutcomes(d, business_id, [outcome], at);
     d.db.run(
       'INSERT INTO research_runs (id, business_id, actor_id, at, considered, fired, ' +
-        'not_permitted, failed, kind, source_id) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?)',
+        'not_permitted, failed, kind, source_id, cost_pence) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)',
       [d.newId(), business_id, actor.id, at, outcome.state === 'FIRED' ? 1 : 0,
        outcome.state === 'NOT_PERMITTED_YET' ? 1 : 0, outcome.state === 'FAILED' ? 1 : 0,
-       'RETRY', source_id],
+       'RETRY', source_id, outcome.cost_pence],
     );
   });
 
@@ -886,6 +949,8 @@ export async function retryFailedSource(
     fired: outcome.state === 'FIRED' ? 1 : 0,
     not_permitted: outcome.state === 'NOT_PERMITTED_YET' ? 1 : 0,
     failed: outcome.state === 'FAILED' ? 1 : 0,
+    cost_pence: outcome.cost_pence,
+    cost_words: outcome.cost_pence === 0 ? 'Nothing was spent.' : `${pounds(outcome.cost_pence)} was spent, which is what the supplier charged us.`,
   };
 }
 

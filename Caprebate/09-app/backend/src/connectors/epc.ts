@@ -20,6 +20,25 @@
  *   3. /api/certificate?certificate_number=… for the accepted one. A search result carries no floor area and no
  *      building type — only the certificate does.
  *
+ * ───────────────────────────────────────────────────────────────────────────
+ * A UPRN IS AN EXACT KEY, AND A POSTCODE IS NOT (Phase 146d, item 9)
+ *
+ * Steps 1 and 2 above exist because a postcode search returns every certificate in the postcode and we then have to
+ * work out which one is our client's, by splitting addresses and scoring them at thresholds nobody has measured.
+ * That is the weakest link in this lookup and it is the reason its grade is capped.
+ *
+ * The energy certificate service also searches BY UPRN — its own documentation lists `uprn` beside `postcode` and
+ * `address` as a search parameter. A UPRN is Ordnance Survey's identifier for one addressable property, so a search
+ * on it returns that property's certificates and nobody else's. WHERE WE HAVE ONE, IT IS TREATED AS AN EXACT KEY:
+ * no scoring, no threshold, no REVIEW — exactly as a company number already is for Companies House, where a number
+ * on the client's record means no name search is made at all. The address is still read, because the certificate is
+ * still fetched by its number, but the CHOICE of certificate is no longer a guess.
+ *
+ * WHERE A UPRN SEARCH FINDS NOTHING, THE LOOKUP DOES NOT FALL BACK TO THE POSTCODE. A UPRN that returns no
+ * certificate means this property has none — that is an answer, and a good one. Widening to the postcode after it
+ * would be choosing a weaker key because the stronger one told us something we did not want to hear, which is how a
+ * neighbour's certificate ends up in a client's claim file.
+ *
  * WHAT IS KEPT: the floor area, the building type (a non-domestic certificate's `property_type`, a domestic one's
  * `dwelling_type`), the date it was registered, and its number. NOT KEPT: any address line (the register's addresses
  * are under an Ordnance Survey and Royal Mail notice), the UPRN, the energy assessor (a person), and the domestic
@@ -35,6 +54,12 @@ import { jurisSource, type Nation, type TypedProperty } from './nations.ts';
 
 export type EpcQuery = {
   readonly property: TypedProperty | null; readonly nation: Nation | null; readonly sector: string | null;
+  /**
+   * PHASE 146d, ITEM 9 — THE PAID LOOKUP'S UPRN, WHERE IT RAN FIRST ON THIS CLICK AND MATCHED. Null otherwise, and
+   * null is the ordinary case: the paid address lookup is switched off and, even switched on, fires only after a
+   * signed engagement. A UPRN turns this lookup's weakest step into its strongest — see `bySearchKey` below.
+   */
+  readonly uprn?: string | null;
   /** The 200-property measurement only (tools/match-measure.ts). Never set by the research flow. */
   readonly measure?: MeasureHook;
 };
@@ -47,6 +72,11 @@ export function registersFor(sector: string | null): readonly EpcRegister[] {
 }
 
 type Hit = { readonly certificate_number: string; readonly registered: string; readonly register: EpcRegister };
+
+/** A UPRN as a search key, or null. Digits only; anything else is not one and is not sent. */
+export function searchByUprn(uprn: string | null | undefined): string | null {
+  return typeof uprn === 'string' && /^\d{1,14}$/.test(uprn) ? uprn : null;
+}
 
 const bearer = (s: OwnerSecrets | null): Record<string, string> => ({ authorization: `Bearer ${s?.get('EPC_API_TOKEN') ?? ''}` });
 
@@ -90,9 +120,13 @@ export const epc = defineSteppedConnector<EpcQuery>({
     const calls: CallResult[] = [];
     const call = async (r: StepRequest): Promise<CallResult> => { const c = await step({ ...r, headers: bearer(secrets) }); calls.push(c); return c; };
 
+    const exact = searchByUprn(q.uprn);
     const candidates: Candidate<Hit>[] = [];
     for (const register of registersFor(q.sector)) {
-      const c = await call({ endpoint: `/api/${register}/search`, query: { postcode: pc, page_size: '100' } });
+      const c = await call({
+        endpoint: `/api/${register}/search`,
+        query: exact === null ? { postcode: pc, page_size: '100' } : { uprn: exact, page_size: '100' },
+      });
       if (c.status === 404) continue; // "No certificates found": no candidates, not an error.
       if (c.outcome !== 'OK' || c.body === null) return { kind: 'CALL_FAILED', call: c, calls };
       const body = json(c.body);
@@ -107,14 +141,32 @@ export const epc = defineSteppedConnector<EpcQuery>({
         });
       }
     }
-    const typed = addressFromLines([q.property.address_line_1, q.property.address_line_2], q.property.postcode, q.property.town);
-    const m = matchAddress(typed, candidates, MATCH_THRESHOLDS.EPC, 'the energy certificate register',
-      (a, b) => (b.registered > a.registered ? b : a));
-    q.measure?.({ profile: 'EPC', register: registersFor(q.sector).join('+'), match: m, top_address: m.top?.candidate.address ?? null });
-    if (m.status !== 'ACCEPT' || m.best === null) {
-      return { kind: 'NOT_MATCHED', code: m.status === 'REVIEW' ? 'MATCH_REVIEW' : m.status === 'INSUFFICIENT_INPUT' ? 'INSUFFICIENT_INPUT' : 'NO_MATCH', why: m.why, calls };
+    /* THE EXACT KEY SHORT-CIRCUITS THE SCORING. Everything the search returned is this property's, because the
+       property is what we searched on, so the only thing left to choose is WHICH of its certificates — the latest,
+       as it always is. No threshold is consulted and the measurement hook is not fed a score it did not produce. */
+    let hit: Hit;
+    let how: string;
+    if (exact !== null) {
+      if (candidates.length === 0) {
+        return {
+          kind: 'NOT_MATCHED', code: 'NO_MATCH', calls,
+          why: 'the energy certificate register holds no certificate for this property. We looked it up by the ' +
+            'property\u2019s own number. So this is about this property. It is not a near miss',
+        };
+      }
+      hit = candidates.map((c) => c.payload).reduce((a, b) => (b.registered > a.registered ? b : a));
+      how = 'we looked it up by the property\u2019s own number, which is an exact match';
+    } else {
+      const typed = addressFromLines([q.property.address_line_1, q.property.address_line_2], q.property.postcode, q.property.town);
+      const m = matchAddress(typed, candidates, MATCH_THRESHOLDS.EPC, 'the energy certificate register',
+        (a, b) => (b.registered > a.registered ? b : a));
+      q.measure?.({ profile: 'EPC', register: registersFor(q.sector).join('+'), match: m, top_address: m.top?.candidate.address ?? null });
+      if (m.status !== 'ACCEPT' || m.best === null) {
+        return { kind: 'NOT_MATCHED', code: m.status === 'REVIEW' ? 'MATCH_REVIEW' : m.status === 'INSUFFICIENT_INPUT' ? 'INSUFFICIENT_INPUT' : 'NO_MATCH', why: m.why, calls };
+      }
+      hit = m.best.candidate.payload;
+      how = m.why;
     }
-    const hit = m.best.candidate.payload;
     const cert = await call({ endpoint: '/api/certificate', query: { certificate_number: hit.certificate_number } });
     if (cert.outcome !== 'OK' || cert.body === null) return { kind: 'CALL_FAILED', call: cert, calls };
     const data = obj(json(cert.body)?.['data']);
@@ -124,7 +176,7 @@ export const epc = defineSteppedConnector<EpcQuery>({
     return {
       kind: 'READ', calls,
       bundle: { records: [{ sourceId: 'EPC', entityId: hit.certificate_number, fields }], facts: fields },
-      note: `looked up — ${m.why}, and we keep the certificate’s figures and where they came from.${got}`,
+      note: `looked up — ${how}, and we keep the certificate’s figures and where they came from.${got}`,
     };
   },
 });
