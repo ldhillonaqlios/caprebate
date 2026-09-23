@@ -56,6 +56,10 @@ import { RET7, type DocType, type UploadJob } from './upload-handler-port.ts';
 import { dueReading, type DueReading } from './tasks.ts';
 import { fireAutomation, type RunOutcome } from './automation.ts';
 import { beginUpload } from './uploads.ts';
+import {
+  isVouchAnswer, readingsFor, vouchedFieldFor, vouchesFor, vouchView, writeVouch,
+  type ReadingView, type VouchView,
+} from './document-reading.ts';
 import type { FsObjectStore } from './objectstore.ts';
 
 export type DocDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
@@ -1054,6 +1058,14 @@ export type DocumentPage = {
   readonly may_show: boolean;
   readonly from_client: boolean;
   readonly linkable_claims?: readonly { readonly id: string; readonly claim_ref: string; readonly property: string | null }[];
+  /**
+   * PHASE 146i. The question a person must answer before one of the two conditional fields can be kept, where this
+   * kind of document has one. Null on every other type, and null for the client, who never sees this page.
+   */
+  readonly vouch: VouchView | null;
+  /** PHASE 146i. What happened each time we read a version of this document, newest first. Staff only, and empty
+   *  until reading documents is switched on — which is a reading that never started, and not a reading. */
+  readonly readings: readonly ReadingView[];
 };
 
 export const HISTORY_NOTE =
@@ -1096,6 +1108,9 @@ export function documentPage(d: { db: Db; audit: AuditLog; now: () => string }, 
     : { id: k.id, to: 'property', label: k.property_label ?? 'a property', href: `/staff/properties/${k.property_id ?? ''}`, linked: localStamp(k.linked_at), ended: k.unlinked_at === null ? null : localStamp(k.unlinked_at) });
   const mayLink = can(actor, 'document.link', obj);
   const mayUpload = actor.role !== 'CLIENT' && can(actor, 'document.upload', { type: 'business', id: l.business_id }) && l.handler_type !== null;
+  /* PHASE 146i. Both are staff's. The client's own page says what we did with their file in the words it already
+     used; the question about a name, and why our reader could not read something, are ours. */
+  const staff = actor.role !== 'CLIENT';
   const linkedClaims = new Set(links.filter((k) => k.to === 'claim' && k.ended === null).map((k) => k.href));
   return {
     id: l.id, label: documentLabel(l.label, l.seq), business_id: l.business_id,
@@ -1113,8 +1128,56 @@ export function documentPage(d: { db: Db; audit: AuditLog; now: () => string }, 
       linkable_claims: d.db.all<{ id: string; claim_ref: string; property: string | null }>('SELECT c.id, c.claim_ref, p.label AS property FROM claims c LEFT JOIN properties p ON p.id = c.property_id WHERE c.business_id = ? ORDER BY c.claim_ref ASC', [l.business_id])
         .filter((c) => !linkedClaims.has(`/staff/claims/${c.id}`)),
     } : {}),
+    vouch: staff
+      ? vouchView(d.db, l.id, l.handler_type, can(actor, 'document.vouch', obj), localStamp, (u) => personWords(d.db, u))
+      : null,
+    readings: staff ? readingsFor(d.db, l.id, localStamp) : [],
     ...(nowIso === '' ? {} : {}),
   };
+}
+
+/**
+ * PHASE 146i — WHO ANSWERED, IN THE SAME WORDS A VERSION'S ROW USES. A role, never a name: the back office does not
+ * show one person's name to another in a record like this, and the audit log already carries who it was.
+ */
+function personWords(db: Db, user_id: string): string {
+  const role = db.get<{ role: string }>('SELECT role FROM users WHERE id = ?', [user_id])?.role;
+  return role === undefined ? 'nobody recorded' : role === 'CLIENT' ? 'the client' : `staff (${role.toLowerCase()})`;
+}
+
+/**
+ * PHASE 146i — A PERSON SAYS WHETHER A NAME BELONGS TO AN ORGANISATION.
+ *
+ * Two CLIENT_DOC fields are kept on that footing alone, and `assertClaimsWritable` refuses both unless a caller
+ * asserts it. It cannot be read off the document — that is what the control is for — so it is asked here, of the
+ * two roles that work the client, and never of the client, who would be vouching for their own document.
+ *
+ * A LATER ANSWER REPLACES AN EARLIER ONE, and the audit log keeps every one of them with what it replaced. Only
+ * `yes` keeps the field; `no`, `not sure` and an unanswered question are the same decision and none of them
+ * becomes a blank, a guess or a pass (N4).
+ *
+ * IT CHANGES NOTHING ALREADY READ. The file has been read and deleted by the time anybody is looking at this page,
+ * so an answer governs the NEXT reading of this document and never the last one.
+ */
+export function vouchDocumentField(
+  d: DocDeps, actor: Actor, id: string, field_id: string, answer: string | null,
+): { readonly ok: true } | { readonly ok: false; readonly why: string } {
+  const l = loadLogical(d.db, id);
+  authorise(actor, 'document.vouch', documentObj(d.db, l));
+  const f = vouchedFieldFor(l.handler_type);
+  if (f === null || f.field_id !== field_id) {
+    return { ok: false, why: 'There is nothing to answer on this kind of file.' };
+  }
+  if (!isVouchAnswer(answer)) return { ok: false, why: 'Choose yes, no, or not sure.' };
+  const was = vouchesFor(d.db, l.id).find((v) => v.field_id === field_id)?.answer ?? null;
+  writeVouch(d.db, d.newId, d.now(), l.id, field_id, answer, actor.id);
+  d.audit.append({
+    at: d.now(), kind: 'DOCUMENT_FIELD_VOUCHED', outcome: 'ALLOWED',
+    actor_id: actor.id, actor_role: actor.role, object_type: 'document', object_id: l.id,
+    // The field and the answer. NEVER THE VALUE: the name this answer is about is one the register refuses to hold.
+    detail: { field_id, answer, was, kept: answer === 'yes' },
+  });
+  return { ok: true };
 }
 
 function staffMayOpen(db: Db, actor: Actor, k: LinkView): boolean {

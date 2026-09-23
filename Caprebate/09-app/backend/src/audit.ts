@@ -312,6 +312,14 @@ export type AuditKind =
    * nor logged. Who made it is the row's own actor.
    */
   | 'REGISTER_MATCH_PICKED'
+  /**
+   * Phase 146i, 23 September 2026: one person answering, for one document, whether a name belongs to an
+   * organisation rather than to somebody (src/web/document-reading.ts). Two CLIENT_DOC fields are kept on that
+   * footing alone and the register cannot check it, because it classifies by field name and never sees a value.
+   * The row carries the field, the answer and what it replaced. NEVER THE NAME ITSELF: the answer is about a value
+   * this build refuses to log, and the document it came from has already been read and deleted.
+   */
+  | 'DOCUMENT_FIELD_VOUCHED'
   | 'WEBSITE_ENQUIRY_RECEIVED' | 'WEBSITE_ENQUIRY_HANDLED'
   | 'CLIENT_SIGNUP_REQUESTED' | 'CLIENT_SIGNUP_VERIFIED'
   | 'AUTHORISATION_REFUSED';

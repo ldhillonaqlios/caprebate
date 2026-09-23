@@ -734,6 +734,13 @@ const RULES: RuleTable = {
   'document.link': { ADMIN: always, SALES: always },
   /** PHASE 140: whether the client can see a file — the two roles that upload one. Never the client, never a surveyor. */
   'document.show_to_client': { ADMIN: always, SALES: always },
+  /**
+   * PHASE 146i: saying whether a name on a document belongs to an organisation rather than to somebody. Two
+   * CLIENT_DOC fields are kept on that footing alone and it cannot be inferred from the document, so it is a
+   * person's answer. THE TWO ROLES THAT WORK THE CLIENT AND NOBODY ELSE — not a surveyor, not Accounting, and
+   * never the client, who would be vouching for their own document.
+   */
+  'document.vouch': { ADMIN: always, SALES: always },
   'document_type.read': { ADMIN: always, SALES: always },
   'document_type.write': { ADMIN: always },
   'document_request.read': { ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType> },
@@ -1064,6 +1071,7 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'document.upload': NO(WRITES),
   'document.link': NO(WRITES),
   'document.show_to_client': NO(WRITES),
+  'document.vouch': NO(WRITES),
   'document_type.read': YES('the document types, as a setting'),
   'document_type.write': NO(WRITES),
   'document_request.read': YES('what has been asked of a client'),

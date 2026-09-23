@@ -33,6 +33,8 @@ import {
   type ClaudeContext, type ClaudeSwitches, type ModelRead,
 } from '../connectors/claude.ts';
 import type { EgressEntry } from '../../../../04-phase-work/phase3/caprebate-document-pipeline.ts';
+import type { ClientDocDiscriminants } from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
+import { discriminantsFor, recordReading, VOUCHED_FIELDS } from './document-reading.ts';
 import {
   UPLOAD_LIMITS, UploadHandlerError, sniffAccepted, quarantineKeyFor,
   issueUploadUrl, recordUploadComplete, processUpload, openTransparency, runExtraction, writeClaims,
@@ -210,8 +212,14 @@ export type UploadReading = {
   readonly actor_role?: string | null;
   /** The two gates as they stood, for the audit row only. Neither decides whether a document is read. */
   readonly gate?: GateSnapshot;
-  /** Whether the two conditional CLIENT_DOC fields name an organisation. Neither is ever inferred from a document. */
-  readonly discriminants?: { readonly funder_is_body?: boolean; readonly issuing_body_is_organisation?: boolean };
+  /**
+   * Whether the two conditional CLIENT_DOC fields name an organisation. Neither is ever inferred from a document.
+   *
+   * PHASE 146i: A CALLER NO LONGER HAS TO SUPPLY THIS EITHER, and no route does. Left out, the answers a person
+   * recorded on the document's own page are read instead (`discriminantsFor`, src/web/document-reading.ts).
+   * Passing one here still wins, so a test can say what a person said without writing a row.
+   */
+  readonly discriminants?: ClientDocDiscriminants;
 };
 
 /**
@@ -390,6 +398,13 @@ export async function finishUpload(
     // state the screen reads is the state the job actually reached. Switched off it returns at once and changes
     // nothing — not the row, not the audit log, and not one byte sent anywhere.
     const reading = await readAndClaim(d, deps, r.job);
+    /* PHASE 146i: AND NOW SOMEBODY CAN SEE WHAT IT DID. One row per reading that actually started — never for a
+       reading that was switched off or was never wired in, because with the switch off a finished upload must
+       behave exactly as it did before Phase 146g, and a row is a difference. */
+    recordReading(d.db, d.newId ?? randomUUID, d.now(), r.job.doc_id, {
+      state: reading.state, why: reading.why,
+      fields: reading.fields, not_found: reading.not_found, left_out: reading.left_out.length,
+    });
     persist(d, r.job, r.discharged);
     // CRM 4 of 10: ONLY NOW, with the strip and the discharge on the row, may a
     // document request be received — and `receiveByUpload` reads both off the row
@@ -451,12 +466,45 @@ export type ReadingOutcome = {
   readonly fields: number;
   readonly not_found: number;
   readonly claims: number;
+  /**
+   * PHASE 146i. The field ids the document DID answer and that were still not kept, because nobody has vouched
+   * that the value names an organisation. Each one stays asked of the client, exactly as an absent one does (N4).
+   */
+  readonly left_out: readonly string[];
   /** What the reader itself reported, where a call was made. */
   readonly read: ModelRead | null;
 };
 
 const NOTHING = (state: ReadingState, why: string, read: ModelRead | null = null): ReadingOutcome =>
-  ({ state, why, fields: 0, not_found: 0, claims: 0, read });
+  ({ state, why, fields: 0, not_found: 0, claims: 0, left_out: [], read });
+
+/* ------------------------------------------------------------------ *
+ * PHASE 146i — ONE UNVOUCHED FIELD NO LONGER DISCARDS THE OTHERS.
+ *
+ * `assertClaimsWritable` throws on a conditional field whose discriminant is not true, and it throws BEFORE the
+ * write, which is right: it is one refusal for one set of claims, and half a write is worse than none. The
+ * consequence was that a grant funding agreement — which has six fields, one of them conditional — kept NOTHING
+ * unless somebody had vouched for the funder's name, and until this phase nobody could.
+ *
+ * So the unvouched field is taken out of the extraction HERE, before the claims are built. The ingestion module's
+ * refusal is untouched and still fires on anything that reaches it unvouched; what reaches it is a set of claims
+ * this function has already made writable. The field that came out is reported, not swallowed: it is still ASKED
+ * of the client, like every fact a document did not answer.
+ * ------------------------------------------------------------------ */
+
+function leaveOutUnvouched(job: UploadJob, vouched: ClientDocDiscriminants): string[] {
+  const extraction = job.extraction;
+  if (extraction === undefined) return [];
+  const out: string[] = [];
+  for (const f of VOUCHED_FIELDS) {
+    if (vouched[f.flag] === true) continue;
+    const i = extraction.fields.findIndex((x) => x.field_id === f.field_id);
+    if (i < 0) continue;
+    extraction.fields.splice(i, 1);
+    out.push(f.field_id);
+  }
+  return out;
+}
 
 async function readAndClaim(d: UploadDeps, deps: UploadHandlerDeps, job: UploadJob): Promise<ReadingOutcome> {
   if (d.reading === undefined) return NOTHING('NOT_WIRED', 'nothing was read: this upload was not given a document reader');
@@ -507,11 +555,17 @@ async function readAndClaim(d: UploadDeps, deps: UploadHandlerDeps, job: UploadJ
     return NOTHING('NOT_READ', `nothing was kept from this document: ${whyRefused(e)}`);
   }
 
+  /* PHASE 146i. What a person said about the two fields nobody can vouch for, from the document's own page — or
+     what a caller said instead, which is how a test says it without writing a row. An unvouched field comes out of
+     the extraction here so that the rest of the document's claims survive. */
+  const vouched = d.reading.discriminants ?? discriminantsFor(d.db, job.doc_id);
+  const left_out = leaveOutUnvouched(job, vouched);
+
   const extraction = job.extraction;
   const fields = extraction?.fields.length ?? 0;
   const not_found = extraction?.not_found.length ?? 0;
   try {
-    await writeClaims(deps, job, d.reading.discriminants ?? {}, async (claims) => {
+    await writeClaims(deps, job, vouched, async (claims) => {
       if (claims.length === 0) return;
       const values: Record<string, unknown> = {};
       for (const c of claims as readonly { field_id: string; value: unknown }[]) values[c.field_id] = c.value;
@@ -519,9 +573,20 @@ async function readAndClaim(d: UploadDeps, deps: UploadHandlerDeps, job: UploadJ
         { sourceId: 'CLIENT_DOC', entityId: job.doc_id, fields: values });
     });
   } catch (e) {
-    return { state: 'NOT_WRITTEN', why: `this document was read and nothing was kept from it: ${whyRefused(e)}`, fields, not_found, claims: 0, read };
+    return { state: 'NOT_WRITTEN', why: `this document was read and nothing was kept from it: ${whyRefused(e)}`, fields, not_found, claims: 0, left_out, read };
   }
-  return { state: 'CLAIMED', why: `read: ${fields} answered, ${not_found} still asked`, fields, not_found, claims: job.claims?.length ?? 0, read };
+  return {
+    state: 'CLAIMED',
+    why: `read: ${fields} answered, ${not_found} still asked${leftOutWords(left_out)}`,
+    fields, not_found, claims: job.claims?.length ?? 0, left_out, read,
+  };
+}
+
+/** PHASE 146i. What was left out for want of a person's answer, said in the same sentence and in the same words. */
+function leftOutWords(left_out: readonly string[]): string {
+  if (left_out.length === 0) return '';
+  const what = left_out.map((id) => VOUCHED_FIELDS.find((f) => f.field_id === id)?.what ?? id).join(', ');
+  return `. We left out ${what}, because nobody has told us it is an organisation`;
 }
 
 /** In plain words, and never a key, a path or a word of the document. The code is enough for a developer. */

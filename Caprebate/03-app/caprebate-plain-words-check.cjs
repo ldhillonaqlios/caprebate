@@ -89,6 +89,8 @@ const EXEMPT_TEXT = [
      adviser (Phase 144a): "Have you already claimed capital allowances on this building's fixtures, such as its
      wiring or heating?" */
   /^Have you already made a capital allowances claim on the fixtures in this building — the plant, wiring, heating and similar\?$/,
+  /* Phase 146i: nothing. The model instructions in src/connectors/claude.ts are exempt BY NAME, not by their
+     opening words - see EXEMPT_CONSTS below. */
   /* Phase 146b: planResearch's reasons and the register STUB_NOTICE (src/connectors/registers.ts), moved there word for
      word from src/stubs/registers.ts. No screen shows them — the research panel's words are stateUnderGates's, in
      src/web/research.ts — and test/seed.test.ts reads them exactly, and must pass unchanged. */
@@ -97,6 +99,21 @@ const EXEMPT_TEXT = [
   /^paid sources are gated on a signed engagement, asserted server-side$/,
   /^NOT CALLED — register connectors are stubbed in this build\./,
 ];
+
+/* WHAT A MODEL IS TOLD, AND NO PERSON EVER READS. Phase 146i.
+   src/connectors/claude.ts is read from this phase, because its reasons - why a document could not be read - now
+   reach the staff document page. Two of its strings are not reasons and are not for a person: they are the
+   instructions the model itself is given, and they are written for a model. They are exempt BY NAME rather than by
+   their opening words, so that a plainer sentence in the same file is still checked and a renamed constant loses
+   its exemption rather than keeping it by accident.
+   Keyed on the file's own name: the same constant name in another file is NOT exempt. */
+const EXEMPT_CONSTS = new Map([
+  ['claude.ts', new Set(['EXTRACTION_SYSTEM', 'PAGES_SYSTEM'])],
+]);
+
+function exemptConst(label, name) {
+  return (EXEMPT_CONSTS.get(path.basename(label)) || new Set()).has(name);
+}
 
 /* ------------------------------------------------------- the plain-words list */
 function loadSwaps(voiceFile) {
@@ -201,6 +218,8 @@ function readFile(file, label) {
     return literalText(node);
   };
   const visit = (node) => {
+    // Phase 146i: a constant exempt by name in this file is not read at all - not its text, not its parts.
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && exemptConst(label, node.name.text)) return;
     let text = literalText(node);
     if (text === null && ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.PlusToken
       && !(ts.isBinaryExpression(node.parent) && node.parent.operatorToken.kind === ts.SyntaxKind.PlusToken)) {
@@ -378,7 +397,10 @@ const EXTRA = [path.join(WEB, '..', 'seed.ts'),
   /* Phase 146c: the free registers' connectors and the matcher — each lookup's result, in words, is what the research
      panel shows beside it */
   ...['free-registers.ts', 'matching.ts', 'companies-house.ts', 'cqc.ts', 'epc.ts', 'price-paid.ts', 'planning.ts', 'postcode.ts', 'nations.ts']
-    .map((f) => path.join(WEB, '..', 'connectors', f))];
+    .map((f) => path.join(WEB, '..', 'connectors', f)),
+  /* Phase 146i: the document reader's reasons - why a file could not be read - now reach the staff document page,
+     which is the change Phase 146g's point 6 was waiting on. Its two model instructions are exempt by name. */
+  path.join(WEB, '..', 'connectors', 'claude.ts')];
 
 function screenFiles(suffix) {
   const all = fs.readdirSync(WEB).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f)).sort().map((f) => path.join(WEB, f)).concat(EXTRA);
@@ -481,6 +503,31 @@ function selfTest() {
     const ok = fails.length > 0; if (!ok) bad++;
     console.log(`${ok ? 'CAUGHT ' : 'MISSED '} planted help-content-banned${ok ? ` - ${fails[0].why}` : ''}`);
   }
+  /* Phase 146i: the model instructions in src/connectors/claude.ts are exempt BY NAME. Four cases: the exemption
+     holds for each of the two constants, a plain string elsewhere in the SAME file is still read, and the same
+     constant name in ANOTHER file is not exempt at all. */
+  const BANNED_IN_A_CONST = "export const NAME = 'The gate is shut and the tier is not settled.';\n";
+  for (const which of ['EXTRACTION_SYSTEM', 'PAGES_SYSTEM']) {
+    const f = path.join(dir, 'claude.ts');
+    fs.writeFileSync(f, BANNED_IN_A_CONST.replace('NAME', which));
+    const { fails } = run([{ file: f, label: 'claude.ts' }], voice);
+    const ok = fails.length === 0; if (!ok) bad++;
+    console.log(`${ok ? 'CLEAN  ' : 'FALSE  '} control claude-${which}${ok ? '' : ` - ${fails[0].why}`}`);
+  }
+  {
+    const f = path.join(dir, 'claude.ts');
+    fs.writeFileSync(f, `${BANNED_IN_A_CONST.replace('NAME', 'PAGES_SYSTEM')}export const WHY = 'This lookup has already fired.';\n`);
+    const { fails } = run([{ file: f, label: 'claude.ts' }], voice);
+    const ok = fails.length === 1 && /fired/.test(fails[0].why); if (!ok) bad++;
+    console.log(`${ok ? 'CAUGHT ' : 'MISSED '} planted claude-beside-an-exempt-const${ok ? ` - ${fails[0].why}` : ''}`);
+  }
+  {
+    const f = path.join(dir, 'elsewhere.ts');
+    fs.writeFileSync(f, BANNED_IN_A_CONST.replace('NAME', 'PAGES_SYSTEM'));
+    const { fails } = run([{ file: f, label: 'elsewhere.ts' }], voice);
+    const ok = fails.length > 0; if (!ok) bad++;
+    console.log(`${ok ? 'CAUGHT ' : 'MISSED '} planted same-name-in-another-file${ok ? ` - ${fails[0].why}` : ''}`);
+  }
   // the list itself must carry the words the brief names
   const words = loadSwaps(voice).map((s) => s.word);
   for (const w of ['fired', 'tier', 'provenance', 'derived', 'gate', 'receipt strip', 'hash', 'chain', 'N4', 'payload', 'stub', 'outbox', 'deletion clock']) {
@@ -508,7 +555,8 @@ function main(argv) {
   }
   const readFrom = suffix ? files.filter((f) => f.file.endsWith(suffix)).length : 0;
   console.log(`plain words check - ${files.length} ${argv.includes('--guide') ? 'guide' : 'screen and guide'} files${suffix ? ` (${readFrom} read from their ${suffix} copy)` : ''}, ${strings.length} strings a person reads`);
-  console.log(`exempt by name: ${[...EXEMPT_FILES.keys()].join(', ')}; ${EXEMPT_TEXT.length} signed sentences`);
+  console.log(`exempt by name: ${[...EXEMPT_FILES.keys()].join(', ')}; ${EXEMPT_TEXT.length} signed sentences; `
+    + `${[...EXEMPT_CONSTS].map(([f, n]) => `${f} (${[...n].join(', ')})`).join('; ')}`);
   for (const f of fails) console.log(`FAIL ${f.file}:${f.line}  ${f.why}\n       ${f.text.replace(new RegExp(HOLE, 'g'), '{…}').slice(0, 220)}`);
   console.log(fails.length === 0 ? `GREEN - no banned word, no sentence above grade ${MAX_GRADE} on a screen or above grade ${GUIDE_GRADE} in the guide` : `RED - ${fails.length} failure(s)`);
   return fails.length === 0 ? 0 : 1;

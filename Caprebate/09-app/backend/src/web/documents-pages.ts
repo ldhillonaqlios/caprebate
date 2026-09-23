@@ -25,6 +25,7 @@ import * as D from './documents.ts';
 import { badge, claimRef, dataLink, savedMessage, sectionList, why, type RecordTab } from './components.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import { openKeptOriginal, sweepOriginals } from './uploads.ts';
+import { ANSWER_WORDS, LEFT_OUT_NOTE, VOUCH_ANSWERS } from './document-reading.ts';
 import { readUpload, receiveFile } from './client-files-pages.ts';
 
 export type WebResult = 'handled' | 'not-mine';
@@ -207,6 +208,20 @@ export async function handleDocuments(
       title: 'The original was deleted', nav: d.nav(actor),
       body: h`<h1>${r.label}</h1><p>${D.ORIGINALS_NOTE}</p><p><a href="/staff/documents/${id}">See what we took from it</a></p>`,
     }));
+    return 'handled';
+  }
+  /**
+   * PHASE 146i — A PERSON SAYS WHETHER A NAME BELONGS TO AN ORGANISATION. One button per answer, so there is no
+   * drop-down to leave on its first value and no script. `vouchDocumentField` authorises it and decides everything
+   * about it; this route carries the posted answer and nothing else.
+   */
+  const docVouch = /^\/staff\/documents\/([A-Za-z0-9-]+)\/vouch$/.exec(path);
+  if (docVouch && method === 'POST') {
+    const id = docVouch[1] ?? '';
+    const f = await form(req);
+    const r = D.vouchDocumentField(deps, actor, id, f.get('field_id') ?? '', f.get('answer'));
+    if (!r.ok) return d.problem(res, actor, 'Not answered', r.why, `/staff/documents/${id}`);
+    redirect(res, `/staff/documents/${id}?done=answered`);
     return 'handled';
   }
   const docLink = /^\/staff\/documents\/([A-Za-z0-9-]+)\/links$/.exec(path);
@@ -425,6 +440,9 @@ function documentPageHtml(d: DocumentPageDeps, actor: Actor, p: D.DocumentPage, 
           <button type="submit">Upload a new version</button></form>` : raw('')}
       </div>
 
+      ${readingBlock(p)}
+      ${vouchBlock(p)}
+
       <div class="pblock"><div class="pnum">Who can see it</div>
         <p>${p.shown_to_client ? badge('The client can see this', 'ok') : badge('Only Cap Rebate can see this')}</p>
         ${p.may_show && !p.from_client ? h`<form method="post" action="/staff/documents/${p.id}/shown" class="inline">
@@ -435,6 +453,44 @@ function documentPageHtml(d: DocumentPageDeps, actor: Actor, p: D.DocumentPage, 
 
       ${dataLink(actor, `/staff/documents/${p.id}/view.json`)}`,
   });
+}
+
+/**
+ * PHASE 146i — WHAT HAPPENED WHEN WE READ IT, ON A SCREEN AT LAST.
+ *
+ * `finishUpload` has reported this since Phase 146g and nothing drew it, so a file that came back unreadable looked
+ * exactly like one nobody had asked about. THE EMPTY CASE IS DRAWN TOO, and that is the point: "we have not tried"
+ * and "we tried and could not" are different facts and a blank space says neither.
+ *
+ * STAFF ONLY. `documentPage` returns no rows at all to the client, and never a word of the document to anybody.
+ */
+function readingBlock(p: D.DocumentPage): Safe {
+  return h`<div class="pblock"><div class="pnum">What happened when we read it</div>
+    ${p.readings.length === 0
+      ? h`<p class="help">We have not tried to read this file. Reading files is not switched on yet.</p>`
+      : h`<table><thead><tr><th>Version</th><th>When</th><th>What happened</th><th>Why</th></tr></thead>
+          <tbody>${p.readings.map((r) => h`<tr><td>${r.version_no ?? '—'}</td><td>${r.at}</td>
+            <td>${r.worked ? badge(r.label, 'ok') : badge(r.label)}</td><td>${r.why}</td></tr>`)}</tbody></table>`}
+    <p class="help">Only Cap Rebate sees this. The client is not shown it.</p></div>`;
+}
+
+/**
+ * PHASE 146i — THE ONE THING ONLY A PERSON CAN SAY, on the two kinds of file that need it. Every other kind draws
+ * nothing, because there is nothing about it anybody could be asked.
+ */
+function vouchBlock(p: D.DocumentPage): Safe {
+  const v = p.vouch;
+  if (v === null) return raw('');
+  return h`<div class="pblock"><div class="pnum">One thing only a person can say</div>
+    <p><strong>${v.question}</strong></p>
+    <p>${v.answer === null
+      ? h`Nobody has answered yet. ${v.effect}`
+      : h`${ANSWER_WORDS[v.answer]} — ${v.by}, ${v.answered}. ${v.effect}`}</p>
+    <p class="help">We keep ${v.what} only if the answer is yes. ${LEFT_OUT_NOTE}</p>
+    ${v.may_answer ? h`<form method="post" action="/staff/documents/${p.id}/vouch" class="inline">
+      <input type="hidden" name="field_id" value="${v.field_id}">
+      ${VOUCH_ANSWERS.map((a) => h`<button type="submit" name="answer" value="${a}">${ANSWER_WORDS[a]}</button>`)}
+    </form>` : raw('')}</div>`;
 }
 
 /** PHASE 133b — after a save, land on the section the type now sits in; a value the vocabulary does not list lands at the top. */
