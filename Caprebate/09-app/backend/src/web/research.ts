@@ -59,7 +59,13 @@ import { authorise, can, type Actor } from '../authz.ts';
 import type { AuditLog } from '../audit.ts';
 import { registryGate, REGISTRY } from './engine.ts';
 import { SOURCES as REGISTER_SOURCES, LICENCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
-import { switchedOn } from '../connectors/registers.ts';
+import { switchedOn, runConnector, REGISTER_SWITCHES, type Bundle, type ConnectorContext } from '../connectors/registers.ts';
+import type { Transport, RateLimiter } from '../connectors/http.ts';
+import type { SecretStore } from '../secrets.ts';
+import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../connectors/free-registers.ts';
+import { ingestRegisterRecord } from '../stubs/registers.ts';
+import { postcodeStore } from './postcode.ts';
+import type { PostcodeStore } from './postcode-port.ts';
 import { checkSignature } from './signing.ts';
 
 export type Tier = 'FREE' | 'PAID';
@@ -422,6 +428,22 @@ export const KNOWN_GAPS: readonly string[] = Object.freeze([
     'We checked the supplier\'s terms on 12 September 2026.',
 ]);
 
+/**
+ * PHASE 146c: THE ATTRIBUTION THAT GOES WITH A REGISTER'S DATA, WORD FOR WORD, WHEREVER A SCREEN SHOWS IT.
+ *
+ * HM Land Registry prescribes the words for Price Paid Data and says they "must appear verbatim"; they are read from
+ * the licence register, never retyped. Only the sources listed here carry a line on a screen today. The rest of the
+ * register's attribution lines are for reports and packs (attributionsFor in the source register), where they are
+ * already printed.
+ */
+export const ATTRIBUTION_SHOWN_WITH: readonly string[] = Object.freeze(['HMLR_PPD']);
+
+export function registerAttribution(source_id: string): string | null {
+  if (!ATTRIBUTION_SHOWN_WITH.includes(source_id)) return null;
+  const src = REGISTER_SOURCES.find((s) => s.source_id === source_id);
+  return LICENCES.find((l) => l.licence_id === src?.licence_id)?.attribution_text ?? null;
+}
+
 /** The section gate, asked as an object question. See backoffice.ts. */
 const RESEARCH_SECTION = '__research_section__';
 
@@ -484,7 +506,8 @@ export function stateUnderGates(
         (entry.tier_settled ? '' : ' (not sure if free or paid, so it is treated as paid and waits for both)'),
     };
   }
-  // Permitted, and still not run — because the connector does not exist.
+  // Permitted. Whether its connector runs is the switch's and the key's to say (Phase 146c: `consultAllowed`); until
+  // one does, it is NOT_RUN with this as the reason.
   return {
     state: 'NOT_RUN',
     detail: 'allowed, but not switched on yet, so nothing was contacted',
@@ -595,6 +618,24 @@ export type RunDeps = {
   audit: AuditLog;
   now: () => string;
   newId: () => string;
+  /**
+   * PHASE 146c: HOW A PERMITTED, SWITCHED-ON LOOKUP REACHES OUTSIDE — the transport (the live one, or recorded answers
+   * in a test), the key file read at start-up, and the switches. ABSENT, NOTHING IS CONTACTED: every permitted lookup
+   * stays NOT_RUN, exactly as before this phase. It opens no gate — the gates are decided above it, by
+   * `stateUnderGates`, and a lookup the gates do not allow is never handed to a connector.
+   */
+  outside?: ResearchOutside;
+};
+
+export type ResearchOutside = {
+  readonly transport: Transport;
+  readonly secrets: SecretStore;
+  /** REGISTER_SWITCHES unless a test passes its own. */
+  readonly switches?: Readonly<Record<string, boolean>>;
+  readonly limiter?: RateLimiter;
+  readonly sleep?: (ms: number) => Promise<void>;
+  /** The ONS postcode table; `postcodeStore()` unless a test passes one. */
+  readonly postcodeStore?: PostcodeStore | null;
 };
 
 export type RunOutcome = {
@@ -605,6 +646,103 @@ export type RunOutcome = {
   readonly not_permitted: number;
   readonly failed: number;
 };
+
+/** One source's decision under the gates, and — Phase 146c — what its connector did, if it was allowed to run. */
+export type SourceOutcome = {
+  readonly entry: CatalogueEntry;
+  readonly state: SourceState;
+  readonly detail: string;
+  readonly retrieved_at: string | null;
+  readonly failure_code: string | null;
+  readonly bundle: Bundle | null;
+};
+
+/**
+ * THE CONNECTORS, RUN ONLY FOR WHAT THE GATES ALLOWED. Phase 146c, 23 September 2026.
+ *
+ * `decided` is what `stateUnderGates` said for each source on this click. A source the gates did not allow is passed
+ * through untouched — no connector is asked, nothing is sent. A source they allowed (NOT_RUN) is handed to its
+ * connector through `runConnector`, which checks the switch, then the key, then makes the calls, then reads them:
+ * FIRED with the time the answer was read, FAILED with a reason, or still NOT_RUN and saying why. A source with no
+ * connector in this build (the Welsh care regulator, the valuation office, the paid lookups until Phase 146d) stays
+ * NOT_RUN and says so.
+ *
+ * Exported so a test can hand it an allowed decision directly. It does not decide a gate and cannot open one: while
+ * CB_REGISTRY.precondition is false, `runResearch` never passes it a free source as allowed.
+ *
+ * Nothing here writes: the calls happen first, outside any transaction, and the caller stores what came back.
+ */
+export async function consultAllowed(
+  d: RunDeps, actor: Actor, business_id: string,
+  decided: readonly { readonly entry: CatalogueEntry; readonly state: SourceState; readonly detail: string }[],
+  gates: { readonly free_gate_open: boolean; readonly engagement_signed: boolean },
+): Promise<SourceOutcome[]> {
+  const out: SourceOutcome[] = [];
+  const subject = researchSubject(d.db, business_id);
+  const earlier = new Map<string, Bundle>();
+  const order = runOrder(decided.map((x) => x.entry.source_id));
+  for (const x of [...decided].sort((a, b) => order.indexOf(a.entry.source_id) - order.indexOf(b.entry.source_id))) {
+    const keep: SourceOutcome = { entry: x.entry, state: x.state, detail: x.detail, retrieved_at: null, failure_code: null, bundle: null };
+    const built = FREE_CONNECTORS[x.entry.source_id];
+    if (x.state !== 'NOT_RUN' || d.outside === undefined) { out.push(keep); continue; }
+    if (built === undefined) {
+      out.push({ ...keep, detail: NOT_BUILT[x.entry.source_id] ?? keep.detail });
+      continue;
+    }
+    const o = d.outside;
+    const switches = o.switches ?? REGISTER_SWITCHES;
+    const ctx: ConnectorContext = {
+      deps: {
+        audit: d.audit, now: d.now, transport: o.transport,
+        ...(o.limiter === undefined ? {} : { limiter: o.limiter }),
+        ...(o.sleep === undefined ? {} : { sleep: o.sleep }),
+      },
+      actor_id: actor.id, actor_role: actor.role, claim_id: null,
+      gate: { ...gates, switched_on: switchedOn(x.entry.source_id, switches) },
+      secrets: null,
+    };
+    const query = built.query(subject, earlier, o.postcodeStore === undefined ? postcodeStore() : o.postcodeStore);
+    const run = await runConnector(built.connector, ctx, query, { state: 'NOT_RUN', detail: x.detail }, o.secrets, switches);
+    if (run.state === 'FIRED' && run.bundle !== null) earlier.set(x.entry.source_id, run.bundle);
+    out.push({
+      entry: x.entry, state: run.state, detail: run.detail,
+      retrieved_at: run.state === 'FIRED' ? (run.retrieved_at ?? null) : null,
+      failure_code: run.state === 'FAILED' ? (run.failure_code ?? 'ERROR') : null,
+      bundle: run.state === 'FIRED' ? run.bundle : null,
+    });
+  }
+  return out;
+}
+
+/**
+ * STORE WHAT THE CONNECTORS CAME BACK WITH — inside the caller's transaction. Exported so a test can store an allowed
+ * lookup's outcome as `runResearch` does; nothing else calls it.
+ *
+ * Every record goes through `ingestRegisterRecord`, the one door, where N2 is checked: a field the name exclusion
+ * register does not keep throws, and the transaction takes everything back with it, the state rows included. A record
+ * already held for the same entity is not written twice and not overwritten: a fact somebody has checked and approved
+ * (Phase 139) does not change under them because the register was asked again.
+ */
+export function storeResearchOutcomes(d: RunDeps, business_id: string, outcomes: readonly SourceOutcome[], at: string): void {
+  const property_id = researchSubject(d.db, business_id).property?.id ?? null;
+  for (const o of outcomes) {
+    let detail = o.detail;
+    if (o.state === 'FIRED' && o.bundle !== null) {
+      let kept = 0;
+      for (const rec of o.bundle.records) {
+        const held = d.db.get<{ id: string }>(
+          'SELECT id FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id = ?',
+          [business_id, rec.sourceId, rec.entityId],
+        );
+        if (held !== undefined) continue;
+        ingestRegisterRecord(d.db, d.newId, d.now, business_id, rec, { property_id });
+        kept++;
+      }
+      if (o.bundle.records.length > 0 && kept === 0) detail += ' We already held this record, so it was kept as it was.';
+    }
+    upsertSource(d, business_id, o.entry, o.state, detail, at, o);
+  }
+}
 
 /**
  * "RUN THE RESEARCH" — one button, everything outstanding.
@@ -617,14 +755,14 @@ export type RunOutcome = {
  *   · it does not throw when a gate is shut. A source that may not be consulted
  *     is recorded NOT_PERMITTED_YET with the reason and the run continues.
  *
- * WHAT ACTUALLY HAPPENS TODAY: nothing is contacted, because no connector
- * exists. Every permitted source is recorded NOT_RUN with that as the reason.
- * `fired` therefore comes back 0 and the screen says so. A build that wrote
- * FIRED here — with a fabricated timestamp against a call nobody made — would
- * put a false provenance record into a claim file, which is the worst thing
- * this system could do.
+ * PHASE 146c: A PERMITTED LOOKUP NOW RUNS ITS CONNECTOR — through `consultAllowed`, and only when it is switched on and
+ * its key is in the key file. FIRED is written only for a lookup that was actually made and read, with the time it was
+ * read; FAILED with the reason. WHAT HAPPENS TODAY IS STILL NOTHING: the free gate is shut (CB_REGISTRY.precondition),
+ * every switch is off and the key file holds no register key, so every lookup is NOT_PERMITTED_YET or NOT_RUN, `fired`
+ * comes back 0 and the screen says so. A build that wrote FIRED against a call nobody made would put a false
+ * provenance record into a claim file, which is the worst thing this system could do.
  */
-export function runResearch(d: RunDeps, actor: Actor, business_id: string): RunOutcome {
+export async function runResearch(d: RunDeps, actor: Actor, business_id: string): Promise<RunOutcome> {
   assertResearchSection(actor, 'research.run');
   authorise(actor, 'research.run', { type: 'research', id: business_id, business_id });
 
@@ -643,18 +781,19 @@ export function runResearch(d: RunDeps, actor: Actor, business_id: string): RunO
   const engagement = assertSignedEngagement(d.db, business_id);
   const panel = sourcesFor(d.db, actor, business_id);
 
-  let fired = 0; let notPermitted = 0; let failed = 0;
+  const decided = panel.sources.filter((s) => s.state !== 'FIRED').map((s) => ({
+    entry: s, ...stateUnderGates(s, s.state === 'FAILED' ? 'NOT_RUN' : s.state, free, engagement),
+  }));
+  const outcomes = await consultAllowed(d, actor, business_id, decided,
+    { free_gate_open: free.open, engagement_signed: engagement.signed === true });
+
+  const fired = outcomes.filter((o) => o.state === 'FIRED').length;
+  const notPermitted = outcomes.filter((o) => o.state === 'NOT_PERMITTED_YET').length;
+  const failed = outcomes.filter((o) => o.state === 'FAILED').length;
   const at = d.now();
 
   d.db.tx(() => {
-    for (const s of panel.sources) {
-      if (s.state === 'FIRED') continue;
-      const resolved = stateUnderGates(s, s.state === 'FAILED' ? 'NOT_RUN' : s.state, free, engagement);
-      if (resolved.state === 'NOT_PERMITTED_YET') notPermitted++;
-      else if (resolved.state === 'FAILED') failed++;
-      // A permitted source stays NOT_RUN. Nothing fires; see the header.
-      upsertSource(d, business_id, s, resolved.state, resolved.detail, at);
-    }
+    storeResearchOutcomes(d, business_id, outcomes, at);
     d.db.run(
       'INSERT INTO research_runs (id, business_id, actor_id, at, considered, fired, ' +
         'not_permitted, failed, kind, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)',
@@ -667,7 +806,7 @@ export function runResearch(d: RunDeps, actor: Actor, business_id: string): RunO
     actor_id: actor.id, actor_role: actor.role,
     object_type: 'research', object_id: business_id,
     detail: {
-      considered: panel.sources.length, fired, not_permitted: notPermitted,
+      considered: panel.sources.length, fired, not_permitted: notPermitted, failed,
       free_gate_open: free.open, engagement_signed: engagement.signed,
     },
   });
@@ -675,9 +814,13 @@ export function runResearch(d: RunDeps, actor: Actor, business_id: string): RunO
   return {
     ok: true,
     why: fired === 0
-      ? 'Nothing was contacted. Each lookup is either not allowed yet or not switched on yet. ' +
-        'No fact was guessed to fill a gap.'
-      : `${fired} lookup${fired === 1 ? '' : 's'} made.`,
+      ? (failed === 0
+        ? 'Nothing was contacted. Each lookup is either not allowed yet or not switched on yet. ' +
+          'No fact was guessed to fill a gap.'
+        : `No lookup gave us an answer. ${failed} did not work, and you can try each of them again. ` +
+          'No fact was guessed to fill a gap.')
+      : `${fired} lookup${fired === 1 ? '' : 's'} made.` +
+        (failed === 0 ? '' : ` ${failed} did not work, and you can try each of them again.`),
     considered: panel.sources.length, fired, not_permitted: notPermitted, failed,
   };
 }
@@ -689,10 +832,12 @@ export function runResearch(d: RunDeps, actor: Actor, business_id: string): RunO
  * simply not run, which is the case the brief forbids a per-source control for.
  * So the exception cannot be widened by calling this function with a different
  * argument: the state is checked against the record, not taken from the request.
+ *
+ * PHASE 146c: the retry runs the source's connector again, through the same `consultAllowed`, under the same gates.
  */
-export function retryFailedSource(
+export async function retryFailedSource(
   d: RunDeps, actor: Actor, business_id: string, source_id: string,
-): RunOutcome {
+): Promise<RunOutcome> {
   assertResearchSection(actor, 'research.run');
   authorise(actor, 'research.run', { type: 'research', id: business_id, business_id });
 
@@ -713,14 +858,18 @@ export function retryFailedSource(
   const free = freeGate();
   const engagement = assertSignedEngagement(d.db, business_id);
   const resolved = stateUnderGates(s, 'NOT_RUN', free, engagement);
+  const [o] = await consultAllowed(d, actor, business_id, [{ entry: s, ...resolved }],
+    { free_gate_open: free.open, engagement_signed: engagement.signed === true });
+  const outcome = o as SourceOutcome;
   const at = d.now();
 
   d.db.tx(() => {
-    upsertSource(d, business_id, s, resolved.state, resolved.detail, at);
+    storeResearchOutcomes(d, business_id, [outcome], at);
     d.db.run(
       'INSERT INTO research_runs (id, business_id, actor_id, at, considered, fired, ' +
-        'not_permitted, failed, kind, source_id) VALUES (?, ?, ?, ?, 1, 0, ?, 0, ?, ?)',
-      [d.newId(), business_id, actor.id, at, resolved.state === 'NOT_PERMITTED_YET' ? 1 : 0,
+        'not_permitted, failed, kind, source_id) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?)',
+      [d.newId(), business_id, actor.id, at, outcome.state === 'FIRED' ? 1 : 0,
+       outcome.state === 'NOT_PERMITTED_YET' ? 1 : 0, outcome.state === 'FAILED' ? 1 : 0,
        'RETRY', source_id],
     );
   });
@@ -729,25 +878,35 @@ export function retryFailedSource(
     at, kind: 'RESEARCH_FIRED', outcome: 'ALLOWED',
     actor_id: actor.id, actor_role: actor.role,
     object_type: 'research', object_id: business_id,
-    detail: { retry: source_id, resulting_state: resolved.state },
+    detail: { retry: source_id, resulting_state: outcome.state },
   });
 
-  return { ok: true, why: resolved.detail, considered: 1, fired: 0, not_permitted: 0, failed: 0 };
+  return {
+    ok: true, why: outcome.detail, considered: 1,
+    fired: outcome.state === 'FIRED' ? 1 : 0,
+    not_permitted: outcome.state === 'NOT_PERMITTED_YET' ? 1 : 0,
+    failed: outcome.state === 'FAILED' ? 1 : 0,
+  };
 }
 
 /**
  * Write a source's state, carrying the provenance shape.
  *
  * PUBLISHER AND LICENCE ARE WRITTEN ON EVERY UPDATE, not only on a fire, so
- * that a row always says which publisher it is about. `retrieved_at` is NOT
- * written here and stays null: it is the moment a publisher's value was read,
- * and nothing has read one. Filling it with `now()` would be inventing a
- * retrieval, which is the one thing the source register exists to prevent.
+ * that a row always says which publisher it is about.
+ *
+ * PHASE 146c: `fired_at` and `retrieved_at` are written for a FIRED lookup only — `fired_at` the moment of this click,
+ * `retrieved_at` the moment the connector read the publisher's answer, which `runConnector` took from the clock when
+ * it read it. For any other state both are left as they were: nothing has read a value, and filling them with `now()`
+ * would invent a retrieval, which is the one thing the source register exists to prevent. `failure_code` is written
+ * for a FAILED lookup and cleared for any other.
  */
 function upsertSource(
   d: RunDeps, business_id: string, entry: CatalogueEntry,
   state: SourceState, detail: string, at: string,
+  read: { readonly retrieved_at: string | null; readonly failure_code: string | null } = { retrieved_at: null, failure_code: null },
 ): void {
+  const fired = state === 'FIRED' && read.retrieved_at !== null;
   const existing = d.db.get<{ id: string; attempts: number }>(
     'SELECT id, attempts FROM research_sources WHERE business_id = ? AND source_id = ?',
     [business_id, entry.source_id],
@@ -756,17 +915,19 @@ function upsertSource(
     d.db.run(
       'INSERT INTO research_sources (id, business_id, source_id, tier, state, fired_at, detail, ' +
         'publisher, licence_id, retrieved_at, failure_code, attempts) ' +
-        'VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL, NULL, ?)',
-      [d.newId(), business_id, entry.source_id, entry.tier, state, detail,
-       entry.publisher, entry.licence_id, state === 'NOT_PERMITTED_YET' ? 0 : 1],
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [d.newId(), business_id, entry.source_id, entry.tier, state, fired ? at : null, detail,
+       entry.publisher, entry.licence_id, fired ? read.retrieved_at : null,
+       state === 'FAILED' ? read.failure_code : null, state === 'NOT_PERMITTED_YET' ? 0 : 1],
     );
     return;
   }
   d.db.run(
-    'UPDATE research_sources SET tier = ?, state = ?, detail = ?, publisher = ?, licence_id = ?, ' +
-      'attempts = ? WHERE id = ?',
+    'UPDATE research_sources SET tier = ?, state = ?, detail = ?, publisher = ?, licence_id = ?, attempts = ?, ' +
+      'failure_code = ?' + (fired ? ', fired_at = ?, retrieved_at = ?' : '') + ' WHERE id = ?',
     [entry.tier, state, detail, entry.publisher, entry.licence_id,
-     existing.attempts + (state === 'NOT_PERMITTED_YET' ? 0 : 1), existing.id],
+     existing.attempts + (state === 'NOT_PERMITTED_YET' ? 0 : 1),
+     state === 'FAILED' ? read.failure_code : null,
+     ...(fired ? [at, read.retrieved_at] : []), existing.id],
   );
-  void at;
 }

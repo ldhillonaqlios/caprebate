@@ -1,0 +1,3 @@
+{"kind":"search#companies","total_results":1,"items_per_page":20,"start_index":0,"items":[
+ {"kind":"searchresults#company","company_number":"08888881","title":"ALTOGETHER DIFFERENT TRADING LIMITED","company_status":"active","company_type":"ltd","address_snippet":"9 Far Away, ZZ8 8ZZ","links":{"self":"/company/08888881"}}
+]}

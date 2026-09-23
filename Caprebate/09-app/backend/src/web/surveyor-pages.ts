@@ -37,6 +37,7 @@ import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import { dataLink, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from './components.ts';
 import * as S from './surveyor.ts';
+import { registerAttribution } from './research.ts';
 import { formatPence } from './shown-range.ts';
 import { surveyorThreadPanel } from './messages-pages.ts';
 
@@ -457,7 +458,8 @@ function evidencePanel(w: S.Workspace): Safe {
       : h`<table><thead><tr><th>Source</th><th>What it gave us</th></tr></thead>
           <tbody>${p.register_records.map((r) => h`<tr>
             <td>${r.source_id}</td>
-            <td><span class="say">${fieldList(r.fields)}</span></td>
+            <td><span class="say">${fieldList(r.fields)}</span>${registerAttribution(r.source_id) === null ? raw('')
+              : h`<p class="help">${registerAttribution(r.source_id)}</p>`}</td>
           </tr>`)}</tbody></table>`}
 
     <h3>Documents the client uploaded</h3>

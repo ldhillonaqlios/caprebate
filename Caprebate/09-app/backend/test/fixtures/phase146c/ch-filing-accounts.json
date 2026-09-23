@@ -1,0 +1,4 @@
+{"filing_history_status":"filing-history-available","items_per_page":5,"start_index":0,"total_count":2,"items":[
+ {"category":"accounts","type":"AA","date":"2025-12-10","description":"accounts-with-accounts-type-total-exemption-full","description_values":{"made_up_date":"2025-03-31"},"paper_filed":false,"pages":9,"barcode":"XZINVENT","transaction_id":"MzAwMDAwMDAwMGludmVudGVk","links":{"self":"/company/09999991/filing-history/MzAwMDAwMDAwMGludmVudGVk","document_metadata":"https://document-api.company-information.service.gov.uk/document/INVENTED-DOC-1"}},
+ {"category":"accounts","type":"AA","date":"2024-12-02","description":"accounts-with-accounts-type-total-exemption-full","description_values":{"made_up_date":"2024-03-31"},"paper_filed":false,"links":{"document_metadata":"https://document-api.company-information.service.gov.uk/document/INVENTED-DOC-0"}}
+]}

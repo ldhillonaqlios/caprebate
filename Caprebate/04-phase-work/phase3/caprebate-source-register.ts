@@ -202,13 +202,17 @@ export const LICENCES: readonly Licence[] = [
     name: 'HM Land Registry Price Paid Data licence',
     publisher_of_licence: 'HM Land Registry',
     attribution_required: true,
+    /* Phase 146c, 23 September 2026: HM Land Registry's prescribed words, read that day from GOV.UK's "Price Paid Data"
+       guidance — the year is a fixed 2021, not a placeholder, and the line before this phase left it out. */
     attribution_text:
-      'Contains HM Land Registry data © Crown copyright and database right. ' +
+      'Contains HM Land Registry data © Crown copyright and database right 2021. ' +
       'This data is licensed under the Open Government Licence v3.0.',
     redistribution: { client_report: true, accountant_report: true, hmrc_pack: true, internal: true },
     cache_max_age_days: 90,
     legal_review_required: false,
-    notes: 'Attribution wording is prescribed by HMLR and must appear verbatim.',
+    notes: 'Attribution wording is prescribed by HMLR and must appear verbatim, 2021 included. The address fields are ' +
+      'Royal Mail and Ordnance Survey data, which HMLR says may be used "to display for the purpose of providing ' +
+      'residential property price information services" — we use them to match an address and keep none of them.',
   },
   {
     licence_id: 'HMLR_TITLE',
@@ -230,9 +234,16 @@ export const LICENCES: readonly Licence[] = [
     attribution_required: true,
     attribution_text: 'Information from the Care Quality Commission, used under the CQC syndication terms.',
     redistribution: { client_report: true, accountant_report: true, hmrc_pack: true, internal: true },
-    cache_max_age_days: 30,
+    /* 0 IS OUR REFUSAL, NOT CQC'S FIGURE (Phase 146c, 23 September 2026). This said 30 days, and nobody had confirmed
+       it. The window stays 0 — a value is out of date the moment it is held and is looked up again before it drives
+       anything — until the solicitor answers how current CQC data must be when we use it. Null would mean "no limit",
+       an unconfirmed fact asserted the permissive way (N4). */
+    cache_max_age_days: 0,
     legal_review_required: true,
-    notes: 'FLAG: syndication terms carry a currency obligation. Solicitor/DPO to confirm the cache window.',
+    notes: 'FLAG: the syndication terms were thought to carry a currency obligation; the solicitor/DPO confirms the cache ' +
+      'window, and until then it is 0. Read 23 Sep 2026: the current developer portal publishes no terms for the API ' +
+      '(its product lists none), and CQC\'s "Using CQC data" page says the data is under the Open Government Licence, ' +
+      'is "updated daily", and asks users to "acknowledge on your site or service that you are using CQC information".',
   },
   {
     licence_id: 'EPC_ENGLAND_WALES',
@@ -492,7 +503,10 @@ export const SOURCES: readonly Source[] = [
     // the old host now 301s here. Coverage is England & Wales ONLY — the service
     // itself directs Scotland to the Scottish EPC Register, and Northern Ireland
     // is on the separate EPB NI register. Neither is in this register yet.
-    endpoint: 'https://get-energy-performance-data.communities.gov.uk',
+    // Phase 146c, 23 September 2026: this was the service's WEBSITE. The API is
+    // its own host, and the register carries the address a call goes to — as it
+    // does for Companies House and CQC. The website is in SUPPLIER_DOCS below.
+    endpoint: 'https://api.get-energy-performance-data.communities.gov.uk',
   },
   {
     source_id: 'VOA',
@@ -641,6 +655,134 @@ export const SOURCES: readonly Source[] = [
     excluded_fields: [],
     personal_name_exceptions: NO_NAMES,
     endpoint: null,
+  },
+];
+
+/* ------------------------------------------------------------------ *
+ * 3a. What each supplier publishes, and when we read it — Phase 146c.
+ *
+ *     Every connector built in Phase 146c (09-app/backend/src/connectors/)
+ *     was built against the documentation below, read on the date given.
+ *     A connector's fields, paths and limits come from these pages and from
+ *     nowhere else; when a supplier changes them, this is the list to re-read
+ *     and re-date. `api_base` is every address a connector for the source
+ *     calls — 09-app/backend/src/connectors/sources.ts holds one row for each,
+ *     and a test checks that every row there is listed here.
+ *     `findings` records what the pages DO NOT say as carefully as what they
+ *     do: an unpublished limit or term is written as unpublished, never
+ *     guessed.
+ * ------------------------------------------------------------------ */
+
+export type SupplierDocs = {
+  source_id: string;
+  api_base: readonly string[];
+  docs: readonly string[];
+  read_on: string;
+  findings: string;
+};
+
+export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
+  {
+    source_id: 'CH_COMPANY',
+    api_base: ['https://api.company-information.service.gov.uk', 'https://document-api.company-information.service.gov.uk'],
+    docs: [
+      'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/search/search-companies',
+      'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/company-profile/company-profile',
+      'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/filing-history/list',
+      'https://developer-specs.company-information.service.gov.uk/document-api/resources/documentmetadata',
+      'https://developer-specs.company-information.service.gov.uk/guides/rateLimiting',
+      'https://developer.company-information.service.gov.uk/authentication',
+    ],
+    read_on: '2026-09-23',
+    findings:
+      'HTTP Basic, the key as the user name and an empty password. "Up to 600 requests within a five-minute period", ' +
+      'then 429. accounts.last_accounts.made_up_to is deprecated for period_end_on. An iXBRL copy of a filing is an ' +
+      'application/xhtml+xml resource in the Document API metadata. NO FILLETED FLAG is published anywhere: a small ' +
+      'company\'s accounts type does not say whether the profit and loss account was left off.',
+  },
+  {
+    source_id: 'CH_PSC',
+    api_base: ['https://api.company-information.service.gov.uk'],
+    docs: ['https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/persons-with-significant-control/list'],
+    read_on: '2026-09-23',
+    findings:
+      'items[] of kind, name, natures_of_control, ceased_on (and name_elements, notified_on, links). Parameters ' +
+      'items_per_page, start_index, register_view. A super-secure entry carries no name.',
+  },
+  {
+    source_id: 'CQC',
+    api_base: ['https://api.service.cqc.org.uk'],
+    docs: [
+      'https://api-portal.service.cqc.org.uk/api-details#api=syndication',
+      'https://www.cqc.org.uk/about-us/transparency/using-cqc-data',
+    ],
+    read_on: '2026-09-23',
+    findings:
+      'Base /public/v1, the Ocp-Apim-Subscription-Key header, subscription required. /locations has NO POSTCODE FILTER ' +
+      '(it filters by local authority, service type, region and others) and its items carry only locationId, ' +
+      'locationName and postalCode. No rate limit is published on the current portal. No API terms are published ' +
+      '(the product lists none); the data is under the Open Government Licence and is "updated daily". A location\'s ' +
+      'regulated activities and a provider carry named contacts, which are never read.',
+  },
+  {
+    source_id: 'EPC',
+    api_base: ['https://api.get-energy-performance-data.communities.gov.uk'],
+    docs: [
+      'https://get-energy-performance-data.communities.gov.uk/api-technical-documentation',
+      'https://get-energy-performance-data.communities.gov.uk/making-a-request',
+      'https://raw.githubusercontent.com/communitiesuk/epb-data-warehouse/main/api/api.yml',
+    ],
+    read_on: '2026-09-23',
+    findings:
+      'A bearer token. "6000 requests every 5 minutes per originating IP address", then 429. Data "for buildings in ' +
+      'England and Wales". /api/{domestic,non-domestic,display}/search by postcode, uprn or address; "no certificates ' +
+      'found" is 404. Search results carry no floor area or building type; /api/certificate?certificate_number= does, ' +
+      'under keys that vary with the certificate\'s schema. Domestic age band and tenure are codes.',
+  },
+  {
+    source_id: 'HMLR_PPD',
+    api_base: ['https://landregistry.data.gov.uk'],
+    docs: [
+      'https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads',
+      'https://www.gov.uk/guidance/about-the-price-paid-data',
+      'https://landregistry.data.gov.uk/app/doc/ppd',
+    ],
+    read_on: '2026-09-23',
+    findings:
+      'No key. /data/ppi/transaction-record.json?propertyAddress.postcode= returns result.items[] with pricePaid, ' +
+      'transactionDate ("Thu, 19 Sep 2013"), estateType, propertyType, newBuild, transactionId and propertyAddress. ' +
+      '"All residential property sales in England and Wales that are sold for value". The attribution line is fixed ' +
+      'at 2021. No rate limit is published.',
+  },
+  {
+    source_id: 'PLANNING',
+    api_base: ['https://www.planning.data.gov.uk', 'https://www.planit.org.uk'],
+    docs: [
+      'https://www.planning.data.gov.uk/docs',
+      'https://www.planning.data.gov.uk/dataset/planning-application',
+      'https://www.planit.org.uk/api/',
+      'https://www.planit.org.uk/faq/',
+    ],
+    read_on: '2026-09-23',
+    findings:
+      'planning.data.gov.uk: no key; /entity.json?dataset=planning-application&q=<postcode>; the dataset "is ' +
+      'incomplete and is not yet ready for use"; only "polite rate-limiting" is asked. PlanIt: no key; ' +
+      '/api/applics/json?pcode=&krad=; "one request to the /api/applics endpoint every minute", about 300 a day, and ' +
+      'an identifier with an email address in the User-Agent (requests without one are blocked); "No attribution is ' +
+      'necessary"; its owner writes that "it would not be wise to base any commercial services on the API".',
+  },
+  {
+    source_id: 'ONS_POSTCODE',
+    api_base: [],
+    docs: [
+      'https://www.arcgis.com/home/item.html?id=9e5a92a3cfb14dc7ad43d6ea7a7b8c7f',
+      'https://www.ons.gov.uk/methodology/geography/licences',
+    ],
+    read_on: '2026-09-23',
+    findings:
+      'August 2026 is the current release; its columns are lad26cd and ctry26cd (the ingest already reads either by ' +
+      'pattern). ONS also publishes it as a hosted table with a query API, which we do not use: the table is read on ' +
+      'our own server. Three attribution lines (OS, Royal Mail, ONS). Northern Ireland needs a separate licence.',
   },
 ];
 

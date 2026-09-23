@@ -62,6 +62,7 @@ function factLine(f: CheckFact, b: Back, mayApprove: boolean): Safe {
   return h`<li class="check${f.approved !== null ? ' ok' : ''}">
     <p class="checkwhat"><span class="chip">${f.chip}</span> <strong>${f.label}</strong></p>
     <p class="checkval">${f.value}${f.arrived === null ? raw('') : h` <span class="when">· arrived ${ukDate(f.arrived)}</span>`}</p>
+    ${f.attribution ? h`<p class="help">${f.attribution}</p>` : raw('')}
     ${f.untick === null ? raw('') : h`<p class="help">Tick taken off by ${f.untick.by}, ${localStamp(f.untick.at)}: ${f.untick.reason}</p>`}
     <div class="checkdo">${tick}</div></li>`;
 }

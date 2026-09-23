@@ -36,6 +36,7 @@ import { authorise, can, type Actor } from '../authz.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
 import { claimName } from './components.ts';
 import { missingFacts, sectionOfFact } from './engaged.ts';
+import { registerAttribution } from './research.ts';
 import { FACTS, captured, factsPanel, latestFacts, recordFact, type FactReading } from './claim-facts.ts';
 import type { ProcedureKey } from './stages.ts';
 
@@ -144,6 +145,8 @@ export type CheckFact = {
   /** Staff only. Never handed to anything the portal draws. */
   readonly value: string;
   readonly chip: string;
+  /** Phase 146c: the words the register's licence says must go with its data, verbatim (HM Land Registry's sale prices). */
+  readonly attribution?: string | null;
   /** When it arrived — the record's own time. Null only where nothing recorded one. */
   readonly arrived: string | null;
   readonly approved: { readonly by: string; readonly at: string } | null;
@@ -240,7 +243,7 @@ function registerFacts(db: Db, business_id: string, claims: readonly ClaimRow[])
       out.push({
         ref: `reg.${r.id}.${field}`, step: company ? 'COMPANY' : claim === null ? null : 'PROPERTY', claim_id: claim?.id ?? null,
         label: fieldWords(field), value: known ? String(v) : 'not known', chip: REGISTER_CHIPS[r.source_id] ?? 'A public register',
-        arrived: r.obtained_at, known,
+        attribution: registerAttribution(r.source_id), arrived: r.obtained_at, known,
       });
     }
   }

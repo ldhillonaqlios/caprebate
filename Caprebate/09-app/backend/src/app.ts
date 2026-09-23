@@ -16,6 +16,8 @@ import { outboxTransport, type EmailTransport } from './stubs/email.ts';
 import { builtInSignatureProvider, type SignatureProvider } from './stubs/signature.ts';
 import { newId } from './users.ts';
 import { primeTimingDefence, type Deps } from './auth.ts';
+import { processSecrets, type SecretStore } from './secrets.ts';
+import { liveTransport, type Transport } from './connectors/http.ts';
 
 export const MIGRATIONS_DIR = join(import.meta.dirname, '..', 'migrations');
 
@@ -25,6 +27,18 @@ export type App = {
   hasher: PasswordHasher;
   email: EmailTransport;
   signature: SignatureProvider;
+  /**
+   * PHASE 146c: THE KEY FILE, READ ONCE, AT START-UP. `processSecrets()` — the file outside the repository, or the
+   * empty store under the test runner — so every connector reads the same store for the life of the process and no
+   * request reads the disk. A key changed in the file takes effect on the next start. Nothing prints it: the store
+   * prints as names only (src/secrets.ts).
+   */
+  secrets: SecretStore;
+  /**
+   * PHASE 146c: HOW A CONNECTOR REACHES OUTSIDE — the platform's fetch, through src/connectors/http.ts, which refuses a
+   * live call under the test runner. A test passes recorded answers (fixtureTransport) instead.
+   */
+  outside: Transport;
   now: () => string;
   deps: Deps;
   close(): void;
@@ -35,6 +49,10 @@ export type BuildOptions = {
   hasher?: PasswordHasher;
   now?: () => string;
   migrationsDir?: string;
+  /** Tests only: keys given in memory (secretsFromValues). A running process reads the key file. */
+  secrets?: SecretStore;
+  /** Tests only: recorded answers in place of the live transport. */
+  outside?: Transport;
 };
 
 export async function buildApp(opts: BuildOptions = {}): Promise<App> {
@@ -46,11 +64,13 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
   const audit = new AuditLog(db);
   const email = outboxTransport(db, newId, now);
   const signature = builtInSignatureProvider(newId);
+  const secrets = opts.secrets ?? processSecrets();
+  const outside = opts.outside ?? liveTransport;
 
   await primeTimingDefence(hasher);
 
   const deps: Deps = { db, audit, hasher, now };
-  return { db, audit, hasher, email, signature, now, deps, close: () => db.close() };
+  return { db, audit, hasher, email, signature, secrets, outside, now, deps, close: () => db.close() };
 }
 
 /**
@@ -78,7 +98,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
  */
 export const STUBS = Object.freeze([
   { id: 'email', module: 'src/stubs/email.ts', what: 'outbound email and calendar invitations — messages are written to the outbox table and shown on screen, labelled as not sent. Phase 141 built the real sender behind it (src/stubs/email-provider.ts, SMTP over TLS) and Phase 146f pointed it at IONOS: the login comes from the key file (IONOS_SMTP_*, and IONOS_IMAP_* for the reply reader), each connection writes one audit row, bounces are recorded and a hard bounce stops further email to that address, and every booked, moved or cancelled call carries a standard .ics invitation (src/stubs/calendar.ts). It stays switched off (EMAIL_SENDING) until the contactus@caprebate.com mailbox has SPF, DKIM and DMARC and the privacy notice and clause 7 name IONOS' },
-  { id: 'registers', module: 'src/connectors/registers.ts', what: 'the register connectors — nothing is called. Phase 146b built what every connector stands on and left each one switched off: the shape (configured, fetch, toBundle) and a switch per lookup, REGISTER_SWITCHES, every one off and shown on the research panel as "not switched on"; the one way to call outside, src/connectors/http.ts (time limits, retries on 429 and 5xx only, our own rate limit, a size cap, one audit row per call); and the key file, src/secrets.ts, read from outside the code folder. No real connector is built yet — Phases 146c and 146d build them. Both gates are real and are reported honestly; register data still enters by one door, ingestRegisterRecord in src/stubs/registers.ts' },
+  { id: 'registers', module: 'src/connectors/registers.ts', what: 'the register connectors — nothing is called. Phase 146b built what every connector stands on and left each one switched off: the shape (configured, fetch, toBundle, lookup) and a switch per lookup, REGISTER_SWITCHES, every one off and shown on the research panel as "not switched on"; the one way to call outside, src/connectors/http.ts (time limits, retries on 429 and 5xx only, our own rate limit, a size cap, one audit row per call); and the key file, src/secrets.ts, read from outside the code folder, once, at start-up (App.secrets). Phase 146c built the free registers for real and left every one switched off: Companies House (companies-house.ts: search, profile, filing history, and people with significant control only after a signed engagement), the Care Quality Commission (cqc.ts: England only, searched by council area because its API has no postcode filter), energy certificates (epc.ts), HM Land Registry sale prices (price-paid.ts: supported living only, with its attribution word for word), planning (planning.ts: planning.data.gov.uk, then PlanIt), and the ONS postcode table (postcode.ts: on this server, no call), each matched to the typed address by src/connectors/matching.ts at thresholds not yet measured. "Run the research" runs them only when the free gate is open, which it is not. The Welsh and Scottish care regulators have no connector; the paid lookups are Phase 146d\u2019s. Both gates are real and are reported honestly; register data still enters by one door, ingestRegisterRecord in src/stubs/registers.ts' },
   { id: 'signature', module: 'src/web/signing.ts', what: 'the engagement letter signature — BUILT IN by Phase 146f and switched off (ENGAGEMENT_SIGNING): the client types their full name and role, confirms they may sign for the business and presses Sign; the name, role, business, time, IP address, session and the SHA-256 of the exact letter shown are kept in engagement_signatures with a signed PDF, the record’s fingerprint goes into the audit chain, the client is emailed a copy, and assertSignedEngagement reads the record. Off until our solicitor confirms a typed name suits the letter and the letter’s open terms are settled' },
   { id: 'text-extraction', module: 'src/web/uploads.ts', what: 'text extraction from the documents this build still cannot read — a SCANNED PDF (page images, no text operators: OCR), an ENCRYPTED PDF, LZW/ASCII85/JBIG2/CCITT-filtered content, .doc, .xlsx and .pptx. Each returns ONE MARKER LINE, so on those the receipt strip runs over a marker rather than over the document. NARROWED 9 September 2026 (Phase 113c): .docx, and PDFs whose text is in uncompressed or FlateDecode streams, ARE now read and ARE stripped — src/web/extract-text.ts' },
 ]);

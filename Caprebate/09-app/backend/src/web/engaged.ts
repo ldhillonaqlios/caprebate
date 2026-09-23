@@ -59,6 +59,7 @@ import { formatShownRange } from './shown-range.ts';
 import { stage as stageOf } from './stages.ts';
 import { answerLabel, NotFoundAsRefusal } from './backoffice.ts';
 import { RECEIVED_ONLY_BY_UPLOAD } from './documents.ts';
+import { DERIVE_FIELD_OF } from '../connectors/free-registers.ts';
 import {
   assertSignedEngagement, catalogue, LETTER_WORDS, REGISTRY_ID_OF, type SignedEngagement,
 } from './research.ts';
@@ -723,21 +724,35 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
  * meet — the same pattern as roles.ts, and for the same reason: one tested
  * mapping beats a cast at every call site.
  *
- * IT IS EMPTY TODAY, and correctly so — no connector exists, so nothing has
- * been ingested. `derive` handles an empty bundle by asking for everything,
- * which is the honest answer and not a special case.
+ * PHASE 146c: THE FIELD NAMES ARE TWO VOCABULARIES TOO, and until this phase
+ * they were merged as they stood — so a stored `epc_total_floor_area_m2` never
+ * reached derive()'s `floor_area_m2`, and only `incorporation_date`, the one name
+ * the two share, would have. Each field now goes through DERIVE_FIELD_OF
+ * (src/connectors/free-registers.ts), which maps only a field both sides permit;
+ * a field it does not list reaches derive() under no name at all. derive() is
+ * still switched off (CB_REGISTRY.precondition), so what the screen shows today
+ * does not change.
+ *
+ * IT IS FILLED ONLY BY WHAT A CONNECTOR READ AND THE ONE DOOR ACCEPTED, or by the
+ * seed's invented records. `derive` handles an empty bundle by asking for
+ * everything, which is the honest answer and not a special case.
  */
 export function registerBundle(db: Db, business_id: string): Record<string, Record<string, unknown>> {
   const bundle: Record<string, Record<string, unknown>> = {};
   for (const r of db.all<{ source_id: string; fields_json: string }>(
-    'SELECT source_id, fields_json FROM register_records WHERE business_id = ?', [business_id],
+    'SELECT source_id, fields_json FROM register_records WHERE business_id = ? ORDER BY obtained_at ASC, id ASC', [business_id],
   )) {
     const key = REGISTRY_ID_OF[r.source_id];
-    if (key === undefined) continue; // a source the derivation layer does not read
+    const names = DERIVE_FIELD_OF[r.source_id];
+    if (key === undefined || names === undefined) continue; // a source the derivation layer does not read
     let fields: Record<string, unknown>;
     try { fields = JSON.parse(r.fields_json) as Record<string, unknown>; }
     catch { continue; }
-    bundle[key] = { ...(bundle[key] ?? {}), ...fields };
+    const mapped: Record<string, unknown> = {};
+    for (const [from, to] of Object.entries(names)) {
+      if (Object.prototype.hasOwnProperty.call(fields, from)) mapped[to] = fields[from];
+    }
+    bundle[key] = { ...(bundle[key] ?? {}), ...mapped };
   }
   return bundle;
 }

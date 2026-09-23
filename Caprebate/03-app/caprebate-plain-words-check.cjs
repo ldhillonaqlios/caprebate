@@ -374,7 +374,11 @@ const EXTRA = [path.join(WEB, '..', 'seed.ts'),
   /* the email service's words, which the Settings and Email pages show; the other stubs' words reach no screen */
   path.join(WEB, '..', 'stubs', 'email.ts'), path.join(WEB, '..', 'stubs', 'email-provider.ts'), path.join(WEB, '..', 'stubs', 'email-inbound.ts'),
   /* Phase 146b: the connectors' words — why a lookup did not run or did not work — reach the research panel */
-  path.join(WEB, '..', 'connectors', 'registers.ts'), path.join(WEB, '..', 'connectors', 'http.ts'), path.join(WEB, '..', 'secrets.ts')];
+  path.join(WEB, '..', 'connectors', 'registers.ts'), path.join(WEB, '..', 'connectors', 'http.ts'), path.join(WEB, '..', 'secrets.ts'),
+  /* Phase 146c: the free registers' connectors and the matcher — each lookup's result, in words, is what the research
+     panel shows beside it */
+  ...['free-registers.ts', 'matching.ts', 'companies-house.ts', 'cqc.ts', 'epc.ts', 'price-paid.ts', 'planning.ts', 'postcode.ts', 'nations.ts']
+    .map((f) => path.join(WEB, '..', 'connectors', f))];
 
 function screenFiles(suffix) {
   const all = fs.readdirSync(WEB).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f)).sort().map((f) => path.join(WEB, f)).concat(EXTRA);

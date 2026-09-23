@@ -1,0 +1,17 @@
+{"format":"linked-data-api","version":"0.2","result":{"_about":"http://landregistry.data.gov.uk/data/ppi/transaction-record.json?propertyAddress.postcode=ZZ3%203ZZ","itemsPerPage":200,"page":0,"startIndex":1,"type":["http://purl.org/linked-data/api/vocab#Page"],"items":[
+ {"_about":"http://landregistry.data.gov.uk/data/ppi/transaction/INVENTED-TX-0001/current","transactionId":"INVENTED-TX-0001","pricePaid":310000,"transactionDate":"Fri, 13 Mar 2015","newBuild":false,
+  "estateType":{"_about":"http://landregistry.data.gov.uk/def/common/freehold","prefLabel":[{"_value":"Freehold","_lang":"en"}]},
+  "propertyType":{"_about":"http://landregistry.data.gov.uk/def/common/detached","prefLabel":[{"_value":"detached","_lang":"en"}]},
+  "recordStatus":{"_about":"http://landregistry.data.gov.uk/def/ppi/add"},
+  "transactionCategory":{"_about":"http://landregistry.data.gov.uk/def/ppi/standardPricePaidTransaction"},
+  "propertyAddress":{"paon":"5","street":"INVENTED CLOSE","town":"NOWHERE","district":"NOWHERE","county":"NOWHERE","postcode":"ZZ3 3ZZ"}},
+ {"_about":"http://landregistry.data.gov.uk/data/ppi/transaction/INVENTED-TX-0002/current","transactionId":"INVENTED-TX-0002","pricePaid":465000,"transactionDate":"Mon, 11 Oct 2021","newBuild":false,
+  "estateType":{"_about":"http://landregistry.data.gov.uk/def/common/freehold","prefLabel":[{"_value":"Freehold","_lang":"en"}]},
+  "propertyType":{"_about":"http://landregistry.data.gov.uk/def/common/detached","prefLabel":[{"_value":"detached","_lang":"en"}]},
+  "transactionCategory":{"_about":"http://landregistry.data.gov.uk/def/ppi/additionalPricePaidTransaction"},
+  "propertyAddress":{"paon":"5","street":"INVENTED CLOSE","town":"NOWHERE","postcode":"ZZ3 3ZZ"}},
+ {"_about":"http://landregistry.data.gov.uk/data/ppi/transaction/INVENTED-TX-0003/current","transactionId":"INVENTED-TX-0003","pricePaid":299950,"transactionDate":"Tue, 02 Jul 2024","newBuild":false,
+  "estateType":{"_about":"http://landregistry.data.gov.uk/def/common/leasehold","prefLabel":[{"_value":"Leasehold","_lang":"en"}]},
+  "propertyType":{"_about":"http://landregistry.data.gov.uk/def/common/semi-detached","prefLabel":[{"_value":"semi-detached","_lang":"en"}]},
+  "propertyAddress":{"paon":"7","street":"INVENTED CLOSE","town":"NOWHERE","postcode":"ZZ3 3ZZ"}}
+]}}

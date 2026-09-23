@@ -81,7 +81,7 @@ export async function handleEngaged(
   const run = /^\/staff\/clients\/([A-Za-z0-9-]+)\/research$/.exec(path);
   if (run && method === 'POST') {
     const id = run[1] ?? '';
-    const r = R.runResearch(deps, actor, id);
+    const r = await R.runResearch({ ...deps, outside: { transport: d.app.outside, secrets: d.app.secrets } }, actor, id);
     if (!r.ok) return d.problem(res, actor, 'Not run', r.why, `/staff/clients/${id}`);
     redirect(res, `/staff/clients/${id}?done=research#sources`);
     return 'handled';
@@ -91,7 +91,7 @@ export async function handleEngaged(
   if (retry && method === 'POST') {
     const id = retry[1] ?? '';
     const f = await form(req);
-    const r = R.retryFailedSource(deps, actor, id, f.get('source_id') ?? '');
+    const r = await R.retryFailedSource({ ...deps, outside: { transport: d.app.outside, secrets: d.app.secrets } }, actor, id, f.get('source_id') ?? '');
     if (!r.ok) return d.problem(res, actor, 'Not retried', r.why, `/staff/clients/${id}`);
     redirect(res, `/staff/clients/${id}?done=retry#sources`);
     return 'handled';

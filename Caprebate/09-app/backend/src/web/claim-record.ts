@@ -848,6 +848,7 @@ export function recordDeliverable(d: RecordDeps, actor: Actor, claim_id: string,
       detail: {
         stamp: stamp.id, deliverable: draft.id, deliverable_kind: kind, stamp_hash: stamp.stamp_hash,
         cta_switches: stamp.stamp.cta_switches.length, backend_switches: stamp.stamp.backend_switches.length,
+        connector_switches: stamp.stamp.connector_switches.length,
         signoffs: stamp.stamp.signoffs.length, business: c.business_id,
       },
     });

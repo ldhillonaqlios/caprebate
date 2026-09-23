@@ -1,0 +1,5 @@
+{"total":3,"page":1,"totalPages":1,"perPage":1000,"firstPageUri":"/locations?page=1&perPage=1000","lastPageUri":"/locations?page=1&perPage=1000","uri":"/locations?page=1&perPage=1000","locations":[
+ {"locationId":"1-INVENTED01","locationName":"Invented Care Home","postalCode":"ZZ1 1ZZ"},
+ {"locationId":"1-INVENTED02","locationName":"Invented Day Centre","postalCode":"ZZ1 1ZZ"},
+ {"locationId":"1-INVENTED03","locationName":"Elsewhere Surgery","postalCode":"ZZ9 9ZZ"}
+]}

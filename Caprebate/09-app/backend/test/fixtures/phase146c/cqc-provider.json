@@ -1,0 +1,3 @@
+{"providerId":"1-INVPROV01","locationIds":["1-INVENTED01"],"organisationType":"Provider","ownershipType":"Organisation","type":"Social Care Org","name":"Zedford Care Homes Limited","registrationStatus":"Registered","registrationDate":"2011-06-01","companiesHouseNumber":"09999991","postalAddressLine1":"12 Invented Road","postalAddressTownCity":"Nowhere","postalCode":"ZZ1 1ZZ","localAuthority":"Nowhere",
+ "contacts":[{"personTitle":"Mx","personGivenName":"Invented","personFamilyName":"Director","personRoles":["Nominated Individual"]}],
+ "regulatedActivities":[{"name":"Accommodation for persons who require nursing or personal care","code":"RA2","nominatedIndividual":{"personTitle":"Mx","personGivenName":"Invented","personFamilyName":"Director"}}]}

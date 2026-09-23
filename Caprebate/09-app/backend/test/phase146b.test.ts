@@ -23,7 +23,7 @@ import { CALL_POLICIES } from '../src/connectors/sources.ts';
 import * as C from '../src/connectors/registers.ts';
 import * as S from '../src/stubs/registers.ts';
 import { AuditLog, AuditError } from '../src/audit.ts';
-import { SOURCES as REGISTER_SOURCES } from '../../../04-phase-work/phase3/caprebate-source-register.ts';
+import { SOURCES as REGISTER_SOURCES, SUPPLIER_DOCS } from '../../../04-phase-work/phase3/caprebate-source-register.ts';
 import * as R from '../src/web/research.ts';
 import * as E from '../src/web/engaged.ts';
 import { panel2 } from '../src/web/engaged-pages.ts';
@@ -325,7 +325,11 @@ describe('one way to call outside, and every call is written down', () => {
       if (p.register_source === null || p.base_url === null) continue;
       const src = REGISTER_SOURCES.find((s) => s.source_id === p.register_source);
       assert.ok(src?.endpoint, `${p.service_id}: no register endpoint`);
-      assert.equal(domain(p.base_url), domain(src.endpoint), `${p.service_id} is not on the register source’s domain`);
+      // Phase 146c, on purpose: a source can be asked at a second publisher's address (PLANNING is PlanIt AND
+      // planning.data.gov.uk). Such an address must be written, exactly, in the source register's SUPPLIER_DOCS for
+      // that source — so it is still tied to the register, one address at a time, and nothing else widens.
+      const listed = SUPPLIER_DOCS.find((d) => d.source_id === p.register_source)?.api_base.includes(p.base_url) === true;
+      assert.ok(domain(p.base_url) === domain(src.endpoint) || listed, `${p.service_id} is not on the register source’s domain`);
     }
   });
 });

@@ -1,0 +1,4 @@
+{"locationId":"1-INVENTED01","providerId":"1-INVPROV01","organisationType":"Location","type":"Social Care Org","name":"Invented Care Home","registrationStatus":"Registered","registrationDate":"2014-06-01","deregistrationDate":"","careHome":"Y","postalAddressLine1":"12 Invented Road","postalAddressLine2":"","postalAddressTownCity":"Nowhere","postalAddressCounty":"","region":"Nowhere Region","postalCode":"ZZ1 1ZZ","uprn":"999999999901","numberOfBeds":40,"localAuthority":"Nowhere","mainPhoneNumber":"01000000000",
+ "regulatedActivities":[{"name":"Accommodation for persons who require nursing or personal care","code":"RA2","contacts":[{"personTitle":"Mx","personGivenName":"Invented","personFamilyName":"Manager","personRoles":["Registered Manager"]}]}],
+ "gacServiceTypes":[{"name":"Care home service with nursing","description":"Care home service with nursing"}],
+ "specialisms":[{"name":"Dementia"},{"name":"Physical disabilities"}]}

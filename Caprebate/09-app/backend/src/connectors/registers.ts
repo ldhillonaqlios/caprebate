@@ -173,7 +173,40 @@ export interface RegisterConnector<Q> {
   fetch(ctx: ConnectorContext, query: Q): Promise<CallResult>;
   /** Null when the answer cannot be read. Never a guessed or zero value for a fact the answer did not give. */
   toBundle(body: string, query: Q): Bundle | null;
+  /**
+   * PHASE 146c: THE WHOLE LOOKUP, which may be several calls — a search, then the one record that matched. A connector
+   * that makes one call gets this from `fetch` and `toBundle`; a connector built with `defineSteppedConnector` writes
+   * its own. `runConnector` calls this, and only after the gate, the switch and the key.
+   */
+  lookup(ctx: ConnectorContext, query: Q): Promise<LookupResult>;
 }
+
+/**
+ * WHAT A LOOKUP CAME TO. Phase 146c. Five endings, and only READ keeps anything.
+ *
+ *   READ          the register answered and we could read it: records for the one door, facts for the claim.
+ *                 A READ with no record is still a READ — Companies House holding no accounts that can be read by a
+ *                 machine is an ordinary answer, not an error.
+ *   CALL_FAILED   a call did not come back as an answer we could use (refused, over our limit, timed out, an error).
+ *   UNREADABLE    it answered, but not in a form we could read.
+ *   NOT_MATCHED   it answered, but nothing matched this client closely enough (src/connectors/matching.ts), or there
+ *                 was nothing to search on. The fact stays asked. NO MATCH IS NOT A SOLE TRADER.
+ *   NOT_COVERED   this register does not cover this property — a Scottish address for the energy certificates, a care
+ *                 home for residential sale prices — so nothing was sent and the fact is asked.
+ */
+export type LookupResult =
+  | { readonly kind: 'READ'; readonly bundle: Bundle; readonly calls: readonly CallResult[]; readonly note: string }
+  | { readonly kind: 'CALL_FAILED'; readonly call: CallResult; readonly calls: readonly CallResult[] }
+  | { readonly kind: 'UNREADABLE'; readonly call: CallResult; readonly calls: readonly CallResult[] }
+  | { readonly kind: 'NOT_MATCHED'; readonly code: 'NO_MATCH' | 'MATCH_REVIEW' | 'INSUFFICIENT_INPUT'; readonly why: string; readonly calls: readonly CallResult[] }
+  | { readonly kind: 'NOT_COVERED'; readonly why: string };
+
+/**
+ * One call a stepped connector makes: everything but what `callOutside` fills in from the context. `service_id` is
+ * the connector's own unless it names one of the services the connector declared in `also` (Companies House's
+ * Document API, beside its Public Data API); any other is refused before anything is sent.
+ */
+export type StepRequest = Omit<CallRequest, 'service_id' | 'actor_id' | 'actor_role' | 'claim_id' | 'gate'> & { readonly service_id?: string };
 
 /**
  * A connector from its parts: which keys it needs, and how a query becomes one call. `configured()` and `fetch()`
@@ -188,6 +221,13 @@ export function defineConnector<Q>(spec: {
   readonly request: (query: Q, secrets: OwnerSecrets | null) => Omit<CallRequest, 'service_id' | 'actor_id' | 'actor_role' | 'claim_id' | 'gate'>;
   readonly toBundle: (body: string, query: Q) => Bundle | null;
 }): RegisterConnector<Q> {
+  const one = (ctx: ConnectorContext, query: Q): Promise<CallResult> => {
+    const r = spec.request(query, ctx.secrets);
+    return callOutside(ctx.deps, {
+      ...r, service_id: spec.service_id,
+      actor_id: ctx.actor_id, actor_role: ctx.actor_role ?? null, claim_id: ctx.claim_id, gate: ctx.gate,
+    });
+  };
   return {
     source_id: spec.source_id,
     service_id: spec.service_id,
@@ -201,14 +241,58 @@ export function defineConnector<Q>(spec: {
         ? { state: 'READY', why: 'switched on, and its key is in place' }
         : { state: 'NOT_CONFIGURED', why: `not set up yet: the key file has no ${missing.join(' or ')}` };
     },
-    fetch(ctx, query) {
-      const r = spec.request(query, ctx.secrets);
-      return callOutside(ctx.deps, {
-        ...r, service_id: spec.service_id,
-        actor_id: ctx.actor_id, actor_role: ctx.actor_role ?? null, claim_id: ctx.claim_id, gate: ctx.gate,
-      });
-    },
+    fetch: one,
     toBundle: spec.toBundle,
+    async lookup(ctx, query) {
+      const call = await one(ctx, query);
+      if (call.outcome !== 'OK' || call.body === null) return { kind: 'CALL_FAILED', call, calls: [call] };
+      const bundle = spec.toBundle(call.body, query);
+      return bundle === null ? { kind: 'UNREADABLE', call, calls: [call] }
+        : { kind: 'READ', bundle, calls: [call], note: 'looked up — we keep the answer and where it came from' };
+    },
+  };
+}
+
+/**
+ * PHASE 146c: A CONNECTOR WHOSE LOOKUP IS SEVERAL CALLS — a search on the typed postcode or name, a match scored
+ * against it, then the one record that matched. Every call still goes through `callOutside` (one audit row each), with
+ * this connector's service, and nothing else can be named: `step` takes a path, never an address.
+ *
+ * `fetch` and `toBundle` are there for the shape's sake: `fetch` makes the lookup's FIRST call, and `toBundle` reads
+ * nothing (a stepped connector reads its answers inside `lookup`, where it knows which call each one came from).
+ */
+export function defineSteppedConnector<Q>(spec: {
+  readonly source_id: string;
+  readonly service_id: string;
+  readonly owner: SecretOwner | null;
+  readonly needs: readonly string[];
+  /** Other rows of src/connectors/sources.ts this connector may call, beside its own. */
+  readonly also?: readonly string[];
+  /** The first call, for `fetch`. */
+  readonly first: (query: Q, secrets: OwnerSecrets | null) => StepRequest;
+  readonly lookup: (step: (r: StepRequest) => Promise<CallResult>, query: Q, secrets: OwnerSecrets | null) => Promise<LookupResult>;
+}): RegisterConnector<Q> {
+  const one = defineConnector<Q>({
+    source_id: spec.source_id, service_id: spec.service_id, owner: spec.owner, needs: spec.needs,
+    request: (q, s) => { const { service_id: _ignored, ...r } = spec.first(q, s); return r; }, toBundle: () => null,
+  });
+  const allowed = new Set([spec.service_id, ...(spec.also ?? [])]);
+  return {
+    ...one,
+    lookup(ctx, query) {
+      const step = (r: StepRequest): Promise<CallResult> => {
+        const { service_id, ...rest } = r;
+        const service = service_id ?? spec.service_id;
+        return callOutside(ctx.deps, {
+          ...rest,
+          // A service this connector did not declare is sent to a name that is in no list, so callOutside refuses it
+          // and writes the refusal down like any other.
+          service_id: allowed.has(service) ? service : 'NOT_DECLARED_BY_THIS_CONNECTOR',
+          actor_id: ctx.actor_id, actor_role: ctx.actor_role ?? null, claim_id: ctx.claim_id, gate: ctx.gate,
+        });
+      };
+      return spec.lookup(step, query, ctx.secrets);
+    },
   };
 }
 
@@ -218,7 +302,12 @@ export type ConnectorRun = {
   readonly readiness: Readiness['state'] | 'GATE_SHUT';
   readonly detail: string;
   readonly bundle: Bundle | null;
+  /** The last call made, or null when none was. */
   readonly call: CallResult | null;
+  /** Phase 146c: why it FAILED, as a short code the panel keeps (a call's outcome, UNREADABLE, NO_MATCH …); null otherwise. */
+  readonly failure_code?: string | null;
+  /** Phase 146c: when the publisher's answer was read — set on FIRED only, from the clock, never invented. */
+  readonly retrieved_at?: string | null;
 };
 
 /**
@@ -239,16 +328,25 @@ export async function runConnector<Q>(
     return { ...base, state: 'NOT_RUN', readiness: ready.state, detail: `allowed, but ${ready.why}, so nothing was contacted` };
   }
   try {
-    const call = await c.fetch({ ...ctx, secrets: c.owner === null ? null : secrets.forOwner(c.owner) }, query);
-    if (call.outcome !== 'OK' || call.body === null) {
-      return { source_id: c.source_id, state: 'FAILED', readiness: 'READY', detail: `the lookup did not work: ${call.why}`, bundle: null, call };
+    const r = await c.lookup({ ...ctx, secrets: c.owner === null ? null : secrets.forOwner(c.owner) }, query);
+    switch (r.kind) {
+      case 'READ':
+        return { source_id: c.source_id, state: 'FIRED', readiness: 'READY', detail: r.note, bundle: r.bundle,
+          call: r.calls[r.calls.length - 1] ?? null, failure_code: null, retrieved_at: ctx.deps.now() };
+      case 'CALL_FAILED':
+        return { source_id: c.source_id, state: 'FAILED', readiness: 'READY', detail: `the lookup did not work: ${r.call.why}`,
+          bundle: null, call: r.call, failure_code: r.call.outcome };
+      case 'UNREADABLE':
+        return { source_id: c.source_id, state: 'FAILED', readiness: 'READY', detail: 'the lookup answered, but not in a form we could read',
+          bundle: null, call: r.call, failure_code: 'UNREADABLE' };
+      case 'NOT_MATCHED':
+        return { source_id: c.source_id, state: 'FAILED', readiness: 'READY',
+          detail: `${r.why}. So the question stays asked. Check the name, number or address on the client's record and try again`,
+          bundle: null, call: r.calls[r.calls.length - 1] ?? null, failure_code: r.code };
+      case 'NOT_COVERED':
+        return { ...base, state: 'NOT_RUN', readiness: 'READY', detail: `${r.why}, so nothing was contacted and the question is asked` };
     }
-    const bundle = c.toBundle(call.body, query);
-    if (bundle === null) {
-      return { source_id: c.source_id, state: 'FAILED', readiness: 'READY', detail: 'the lookup answered, but not in a form we could read', bundle: null, call };
-    }
-    return { source_id: c.source_id, state: 'FIRED', readiness: 'READY', detail: 'looked up — we keep the answer and where it came from', bundle, call };
   } catch {
-    return { ...base, state: 'FAILED', readiness: 'READY', detail: 'the lookup did not work, and nothing was kept' };
+    return { ...base, state: 'FAILED', readiness: 'READY', detail: 'the lookup did not work, and nothing was kept', failure_code: 'ERROR' };
   }
 }

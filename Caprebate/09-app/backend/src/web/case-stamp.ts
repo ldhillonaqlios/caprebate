@@ -20,8 +20,9 @@
  * every kind, written by `recordDeliverable` in the same transaction that issues
  * it: the engine version (NULL reads "not known", never a default), the rulebook
  * module versions, EVERY CB_CTA switch and its position, the free register gate,
- * every back-end switch and its position, each sign-off record with its hash, the
- * estimate's hash and the head of the anchor log. Hashed, and never changed.
+ * every back-end switch and its position, every connector switch (Phase 146c), each
+ * sign-off record with its hash, the estimate's hash and the head of the anchor log.
+ * Hashed, and never changed.
  *
  * ALWAYS ON. It is record-keeping and relieves nothing, so there is no switch to
  * wait on — a stamp that could be turned off would be a record that could be
@@ -58,6 +59,8 @@ import { FEE_CLAWBACK } from './claim-record.ts';
 import { DEFENCE_PACK_GENERATOR } from './defence-pack.ts';
 import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
 import { FUNNEL_SWITCHES } from './funnel-session.ts';
+import { REGISTER_SWITCHES } from '../connectors/registers.ts';
+import { CLAUDE_SWITCHES } from '../connectors/claude.ts';
 
 function sha256(v: unknown): string {
   return createHash('sha256').update(_canonical(v)).digest('hex');
@@ -180,6 +183,28 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
   ];
 }
 
+/**
+ * THE CONNECTOR SWITCHES — ONE PER LOOKUP, AND THE DOCUMENT READER'S TWO. Phase 146c, 23 September 2026.
+ *
+ * They are frozen maps of booleans, not `enabled:` flags, so the grep test in test/phase132-records.test.ts cannot see
+ * them — the same reason FUNNEL_SWITCHES is stamped by its own key. Every key of REGISTER_SWITCHES
+ * (src/connectors/registers.ts) and of CLAUDE_SWITCHES (src/connectors/claude.ts) is read here, so a lookup added to
+ * either map is stamped the day it is added, and test/phase146c.test.ts counts them against the maps.
+ *
+ * A switch says whether a connector is turned on at all. It is not a gate: the free gate is stamped beside it as
+ * `registry_free_enabled`, and both are needed to know whether a figure on this claim could have come from a register.
+ */
+export function connectorSwitchReadings(): readonly BackendSwitchReading[] {
+  return [
+    ...Object.keys(REGISTER_SWITCHES).sort().map((k) => ({
+      switch: `REGISTER_SWITCHES.${k}`, on: REGISTER_SWITCHES[k] === true, home: 'src/connectors/registers.ts',
+    })),
+    ...(Object.keys(CLAUDE_SWITCHES) as (keyof typeof CLAUDE_SWITCHES)[]).sort().map((k) => ({
+      switch: `CLAUDE_SWITCHES.${k}`, on: CLAUDE_SWITCHES[k] === true, home: 'src/connectors/claude.ts',
+    })),
+  ];
+}
+
 /* ================================================================== *
  * 4 · THE STAMP
  * ================================================================== */
@@ -192,6 +217,8 @@ export type CaseStamp = {
   readonly cta_switches: readonly { readonly switch: string; readonly on: boolean }[];
   readonly registry_free_enabled: boolean;
   readonly backend_switches: readonly BackendSwitchReading[];
+  /** Phase 146c: every connector switch — each register lookup's, and the document reader's. */
+  readonly connector_switches: readonly BackendSwitchReading[];
   readonly signoffs: readonly { readonly id: string; readonly record_hash: string }[];
   readonly estimate_hash: string | null;
   readonly anchor_log_head_hash: string | null;
@@ -216,6 +243,7 @@ export function caseStamp(db: Db, claim_id: string): CaseStamp {
     cta_switches: ctaSwitchReadings(),
     registry_free_enabled: registryGate().enabled,
     backend_switches: backendSwitchReadings(),
+    connector_switches: connectorSwitchReadings(),
     signoffs: db.all<{ id: string; record_hash: string }>(
       'SELECT id, record_hash FROM tax_adviser_signoffs WHERE claim_id = ? ORDER BY recorded_at ASC, rowid ASC', [c.id]),
     estimate_hash: estimate?.estimate_hash ?? null,
@@ -246,7 +274,10 @@ export function writeCaseStamp(
   db: Db, input: { id: string; claim_id: string; deliverable_id: string; stamped_by: string; stamped_at: string },
 ): { readonly id: string; readonly stamp_hash: string; readonly stamp: CaseStamp } {
   const stamp = caseStamp(db, input.claim_id);
-  const switch_readings = { cta: stamp.cta_switches, registry_free_enabled: stamp.registry_free_enabled, backend: stamp.backend_switches };
+  const switch_readings = {
+    cta: stamp.cta_switches, registry_free_enabled: stamp.registry_free_enabled, backend: stamp.backend_switches,
+    connectors: stamp.connector_switches,
+  };
   const row = {
     ...input, engine_version: stamp.engine_version, rulebook_modules: stamp.rulebook_modules, switch_readings,
     signoff_refs: stamp.signoffs, estimate_hash: stamp.estimate_hash, anchor_log_head_hash: stamp.anchor_log_head_hash,

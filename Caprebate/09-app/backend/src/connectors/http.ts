@@ -14,7 +14,8 @@
  *     time-out or a broken connection is not retried either: it is reported, and the source can be tried again from
  *     the research panel, which is where a person decides.
  *   · OUR OWN RATE LIMIT per service, below the publisher's (Companies House: 600 in 5 minutes). Over it, the call
- *     is not made and says so.
+ *     is not made and says so. Phase 146c: two rows can share one window (`rate_bucket` — Companies House's two APIs
+ *     share the key's limit), and a row can carry a daily cap as well (`daily_limit` — PlanIt asks for about 300 a day).
  *   · A SIZE CAP on every answer. A larger one is dropped unread past the cap.
  *   · ONE AUDIT ROW PER CALL, whatever happened: the service, the endpoint AS A TEMPLATE ("/company/{number}", never
  *     the number or a name typed into a search), the names of the query parameters but NEVER THEIR VALUES, who
@@ -96,6 +97,11 @@ export class RateLimiter {
   readonly #calls = new Map<string, number[]>();
   readonly #clock: () => number;
   constructor(clock: () => number = Date.now) { this.#clock = clock; }
+  /** Phase 146c: whether a slot is free, without taking it. */
+  peek(key: string, limit: number, window_ms: number): boolean {
+    const now = this.#clock();
+    return (this.#calls.get(key) ?? []).filter((t) => now - t < window_ms).length < limit;
+  }
   /** Takes a slot if there is one. False means over the limit: do not call. */
   take(service_id: string, limit: number, window_ms: number): boolean {
     const now = this.#clock();
@@ -108,6 +114,7 @@ export class RateLimiter {
 }
 
 const PROCESS_LIMITER = new RateLimiter();
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /* ------------------------------------------------------------------ the call */
 
@@ -256,9 +263,16 @@ export async function callOutside(deps: CallDeps, req: CallRequest): Promise<Cal
   }
   const path = fill(req.endpoint, req.params ?? {});
   if (path === null || !path.startsWith('/')) return refuse('REFUSED', 'the lookup is missing something it needs, so it was not made');
-  if (!(deps.limiter ?? PROCESS_LIMITER).take(policy.service_id, policy.rate.limit, policy.rate.window_ms)) {
+  const limiter = deps.limiter ?? PROCESS_LIMITER;
+  const bucket = policy.rate_bucket ?? policy.service_id;
+  // Phase 146c: the daily cap first, so a call refused by the short window does not use a day's slot.
+  if (policy.daily_limit !== undefined && !limiter.peek(`${bucket}:day`, policy.daily_limit, DAY_MS)) {
+    return refuse('RATE_LIMITED', 'we have made as many calls to this service today as its publisher asks; try again tomorrow');
+  }
+  if (!limiter.take(bucket, policy.rate.limit, policy.rate.window_ms)) {
     return refuse('RATE_LIMITED', 'we have made as many calls to this service as we allow ourselves for now; try again later');
   }
+  if (policy.daily_limit !== undefined) limiter.take(`${bucket}:day`, policy.daily_limit, DAY_MS);
 
   const url = new URL(policy.base_url + path);
   for (const [k, v] of Object.entries(req.query ?? {})) url.searchParams.set(k, v);

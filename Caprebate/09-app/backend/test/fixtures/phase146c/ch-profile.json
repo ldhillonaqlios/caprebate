@@ -1,0 +1,4 @@
+{"company_name":"ZEDFORD CARE HOMES LIMITED","company_number":"09999991","company_status":"active","type":"ltd","date_of_creation":"2011-05-03","sic_codes":["87100","87300"],"has_charges":false,"jurisdiction":"england-wales",
+ "accounts":{"accounting_reference_date":{"day":31,"month":3},"last_accounts":{"made_up_to":"2025-03-31","period_end_on":"2025-03-31","period_start_on":"2024-04-01","type":"total-exemption-full"},"next_due":"2026-12-31","overdue":false},
+ "registered_office_address":{"address_line_1":"12 Invented Road","locality":"Nowhere","postal_code":"ZZ1 1ZZ"},
+ "links":{"self":"/company/09999991","filing_history":"/company/09999991/filing-history","officers":"/company/09999991/officers","persons_with_significant_control":"/company/09999991/persons-with-significant-control"}}

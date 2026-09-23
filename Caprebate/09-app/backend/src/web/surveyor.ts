@@ -224,11 +224,28 @@ function inputsFor(db: Db, r: JobDbRow): JobInputs {
     register_records: db.all<{ source_id: string; fields_json: string }>(
       'SELECT source_id, fields_json FROM register_records WHERE business_id = ? ORDER BY source_id ASC',
       [r.business_id],
-    ).map((x) => ({ source_id: x.source_id, fields: safeParse(x.fields_json) })),
+    ).map((x) => ({ source_id: x.source_id, fields: withoutAmounts(x.source_id, safeParse(x.fields_json)) })),
     properties: db.all<{ label: string; postcode: string | null }>(
       'SELECT label, postcode FROM properties WHERE business_id = ? ORDER BY label ASC', [r.business_id],
     ),
   };
+}
+
+/**
+ * PHASE 146c: A PRICE A REGISTER GIVES IS NOT A SURVEYOR'S INPUT. Before this phase no register could give one; the sale
+ * price lookup (HM Land Registry's Price Paid Data) now can. "An amount agreed between buyer and seller is a number a
+ * surveyor could anchor on as readily as our own, so it waits with our estimate" — the rule CRM 6 wrote for the claim's
+ * facts (RELEASED_FACTS_TO_SURVEYOR in src/payload.ts), applied here to the register records the same way: the field
+ * is left out of the surveyor's job, never read into it. The rest of the record — the date, the tenure — still goes.
+ */
+export const REGISTER_AMOUNTS_WITHHELD: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  HMLR_PPD: Object.freeze(['price_paid']),
+});
+
+function withoutAmounts(source_id: string, fields: unknown): unknown {
+  const drop = REGISTER_AMOUNTS_WITHHELD[source_id];
+  if (drop === undefined || fields === null || typeof fields !== 'object') return fields;
+  return Object.fromEntries(Object.entries(fields as Record<string, unknown>).filter(([k]) => !drop.includes(k)));
 }
 
 function safeParse(s: string): unknown {

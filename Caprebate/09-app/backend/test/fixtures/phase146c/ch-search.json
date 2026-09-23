@@ -1,0 +1,5 @@
+{"kind":"search#companies","total_results":3,"items_per_page":20,"start_index":0,"items":[
+ {"kind":"searchresults#company","company_number":"09999991","title":"ZEDFORD CARE HOMES LIMITED","company_status":"active","company_type":"ltd","date_of_creation":"2011-05-03","address_snippet":"12 Invented Road, Nowhere, ZZ1 1ZZ","address":{"address_line_1":"12 Invented Road","locality":"Nowhere","postal_code":"ZZ1 1ZZ"},"links":{"self":"/company/09999991"}},
+ {"kind":"searchresults#company","company_number":"09999992","title":"ZEDFORD HOLDINGS LIMITED","company_status":"active","company_type":"ltd","date_of_creation":"2009-01-12","address_snippet":"1 Other Street, Elsewhere, ZZ9 9ZZ","address":{"postal_code":"ZZ9 9ZZ"},"links":{"self":"/company/09999992"}},
+ {"kind":"searchresults#company","company_number":"09999993","title":"ZEDFORD DENTAL LLP","company_status":"dissolved","company_type":"llp","date_of_creation":"2003-07-01","address_snippet":"3 Other Street, Elsewhere, ZZ9 9ZZ","address":{"postal_code":"ZZ9 9ZZ"},"links":{"self":"/company/09999993"}}
+]}
