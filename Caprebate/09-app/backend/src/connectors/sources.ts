@@ -190,6 +190,20 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     timeout_ms: 30_000, max_bytes: 2 * MB, max_attempts: 2,
     cost_pence: 0,
   },
+  HMLR_INSPIRE: {
+    /* PHASE 150, 24 September 2026 — HM Land Registry's INSPIRE Index Polygons, one .zip of GML per local authority,
+       from the download page read that day (SUPPLIER_DOCS in the source register). No key. A FILE, NOT A LOOKUP: the
+       only thing sent is the council's name, never anything about a client, and the polygon is found on our own
+       server. So the limits are about politeness and size, not cost. The files are not small and their size is not
+       published: a city council's runs to many megabytes zipped, so the cap is generous and the time limit long.
+       One download a council a month is all the data ever needs (it is republished on the first Sunday of the month). */
+    service_id: 'HMLR_INSPIRE', register_source: 'HMLR_INSPIRE',
+    base_url: 'https://use-land-property-data.service.gov.uk', region: 'UK', international_transfer_approved: false,
+    rate: { limit: 5, window_ms: FIVE_MIN }, daily_limit: 40,
+    rate_basis: 'NOT PUBLISHED on the dataset, download, guidance or API pages (read 24 Sep 2026); five in five ' +
+      'minutes and forty a day is OUR cautious guess for whole-file downloads',
+    timeout_ms: 300_000, max_bytes: 400 * MB, max_attempts: 2,
+  },
   CLAUDE_DOCUMENTS: {
     service_id: 'CLAUDE_DOCUMENTS', register_source: null,
     base_url: 'https://api.anthropic.com', region: 'US', international_transfer_approved: false,
@@ -210,4 +224,5 @@ export const SERVICE_OF_SOURCE: Readonly<Record<string, string>> = Object.freeze
   PLANNING: 'PLANNING',
   HOMEDATA_ADDRESS: 'HOMEDATA_ADDRESS',
   HMLR_TITLE: 'HMLR_TITLE',
+  HMLR_INSPIRE: 'HMLR_INSPIRE',
 });

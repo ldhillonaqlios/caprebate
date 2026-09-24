@@ -215,6 +215,29 @@ export const LICENCES: readonly Licence[] = [
       'residential property price information services" — we use them to match an address and keep none of them.',
   },
   {
+    /* PHASE 150, 24 September 2026: HM Land Registry's INSPIRE Index Polygons. Both statements are word for word from
+       its conditions of use, read that day at https://use-land-property-data.service.gov.uk/datasets/inspire (the
+       same words 04-phase-work/phase9/caprebate-boundary-import.ts has carried since 16 September). The
+       "[year of supply or date of publication]" placeholder is HM Land Registry's own. client_report is FALSE
+       although the licence would allow it with both statements: Lakhbir's decision of 15 September 2026 keeps
+       boundary maps out of client reports, and the boundary module's CURRENT_LICENCE_PERMISSION holds it there. */
+    licence_id: 'HMLR_INSPIRE',
+    name: 'Open Government Licence v3.0, with HM Land Registry and Ordnance Survey attribution (INSPIRE Index Polygons)',
+    publisher_of_licence: 'HM Land Registry',
+    attribution_required: true,
+    attribution_text:
+      'This information is subject to Crown copyright and database rights [year of supply or date of publication] ' +
+      'and is reproduced with the permission of HM Land Registry. The polygons (including the associated geometry, ' +
+      'namely x, y co-ordinates) are subject to Crown copyright and database rights [year of supply or date of ' +
+      'publication] Ordnance Survey AC0000851063.',
+    redistribution: { client_report: false, accountant_report: false, hmrc_pack: false, internal: true },
+    cache_max_age_days: 35,
+    legal_review_required: false,
+    notes: 'Free under the OGL. Republished on the first Sunday of each month, showing the previous month, so a copy ' +
+      'is kept no longer than about five weeks. Freehold only. A site area worked out from a polygon is for our own ' +
+      'checks; the polygon, a map of it or its coordinates stay out of every outgoing report.',
+  },
+  {
     licence_id: 'HMLR_TITLE',
     name: 'HM Land Registry official copy / title register',
     publisher_of_licence: 'HM Land Registry',
@@ -545,6 +568,23 @@ export const SOURCES: readonly Source[] = [
        a Business Gateway account AND the client certificate HM Land Registry issues under the network access
        agreement, both of which are the developer's to obtain. */
     endpoint: 'https://businessgateway.landregistry.gov.uk',
+  },
+  {
+    /* PHASE 150, 24 September 2026: the land boundary. One GML file per local authority, downloaded whole, and the
+       polygon found by a point inside it (findInspirePolygonForPoint in 04-phase-work/phase9/caprebate-boundary-
+       import.ts). The polygons carry no title number and no name, so nothing personal can arrive from this source.
+       B, not A: HM Land Registry says the extent of a title "cannot be established" from these polygons. The
+       fetcher is 09-app/backend/src/connectors/inspire.ts, and it is switched off. */
+    source_id: 'HMLR_INSPIRE',
+    publisher: 'HM Land Registry',
+    dataset: 'INSPIRE Index Polygons',
+    licence_id: 'HMLR_INSPIRE',
+    default_prov: 'API',
+    max_grade: 'B',
+    permitted_fields: ['site_area_m2', 'inspire_id'],
+    excluded_fields: ['*_name', 'title_number'],
+    personal_name_exceptions: NO_NAMES,
+    endpoint: 'https://use-land-property-data.service.gov.uk',
   },
   {
     source_id: 'CQC',
@@ -1020,6 +1060,34 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'network access agreement — and any rate limit. The SOAP paths in src/connectors/hmlr-title.ts are built ' +
       'from the one SOAP address HM Land Registry does publish and ARE MARKED UNCONFIRMED; a question is open with ' +
       'the developer. Nothing turns on the guess while the switch is off and no certificate is installed.',
+  },
+  {
+    /* PHASE 150, 24 September 2026. Pages only: no polygon file, no map and no service was downloaded or called. */
+    source_id: 'HMLR_INSPIRE',
+    api_base: ['https://use-land-property-data.service.gov.uk'],
+    docs: [
+      'https://use-land-property-data.service.gov.uk/datasets/inspire',
+      'https://use-land-property-data.service.gov.uk/datasets/inspire/download',
+      'https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance',
+      'https://use-land-property-data.service.gov.uk/api-information',
+    ],
+    read_on: '2026-09-24',
+    findings:
+      'NO KEY AND NO ACCOUNT. The download page lists 318 local authorities (published 6 September 2026), each a ' +
+      'link of the form /datasets/inspire/download/<Council_Name>.zip with underscores for spaces, under the words ' +
+      '"By downloading these datasets, you are agreeing to the OGL conditions of use". The API page lists the ' +
+      'datasets its key reaches (company ownership, National Polygon Service, restrictive covenants, registered ' +
+      'leases) and INSPIRE is NOT one of them, so no key is used. "The files are published as GML files"; "The ' +
+      'dataset is updated on the first Sunday of each month and shows data from the previous month"; "If a polygon ' +
+      'is on the boundary between local authorities, it will appear in both local authority data files"; freehold ' +
+      'only; "The extent of the land contained in any registered title cannot be established from the INSPIRE ' +
+      'Index Polygons". NOT PUBLISHED on any page read: the element names inside the GML, the name of the file ' +
+      'inside the zip, a file size, and any rate limit. THE WEBSITE ANSWERS A FIRST VISIT WITH A 302 TO ITSELF ' +
+      'THAT SETS A COOKIE (a plain request without cookies loops; with a cookie jar the pages answer 200). Whether ' +
+      'the .zip links do the same, or redirect to another host, was NOT checked, because that means requesting a ' +
+      'file. Our transport refuses every redirect, so if they do, the first download fails and says so rather ' +
+      'than following it. The reader in src/connectors/inspire.ts is therefore tolerant of the element names and ' +
+      'strict about everything else, and THE FIRST ALLOWED DOWNLOAD MUST CONFIRM THE SHAPE.',
   },
   {
     source_id: 'ONS_POSTCODE',

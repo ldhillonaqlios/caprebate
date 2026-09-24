@@ -102,6 +102,10 @@ const TIER_BY_SOURCE: Readonly<Record<string, Tier>> = Object.freeze({
   VOA: 'FREE',
   PLANNING: 'FREE',
   ONS_POSTCODE: 'FREE',
+  /* PHASE 150, 24 September 2026: HM Land Registry's INSPIRE Index Polygons, free open data under the OGL like its
+     Price Paid Data, and the land-boundary counterpart of "OS" in the documents' tier 1. Only a council's name is
+     sent, never anything about the client. */
+  HMLR_INSPIRE: 'FREE',
   /* Tier 2 — paid, gated on a signed engagement. */
   HMLR_TITLE: 'PAID',
   BCIS: 'PAID',

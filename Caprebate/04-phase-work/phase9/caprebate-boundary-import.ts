@@ -100,7 +100,12 @@ export type BoundaryImportErrorCode =
   // Phase 133 (17 September 2026): spatial join, point -> INSPIRE polygon (§14).
   | 'E_INVALID_POINT'
   | 'E_NO_FREEHOLD_POLYGON'
-  | 'E_AMBIGUOUS_POLYGON';
+  | 'E_AMBIGUOUS_POLYGON'
+  // Phase 150 (24 September 2026): the real fetcher, 09-app/backend/src/connectors/inspire.ts, built and switched off.
+  | 'E_FETCHING_SWITCHED_OFF'
+  | 'E_FETCH_REFUSED'
+  | 'E_FETCH_FAILED'
+  | 'E_FILE_UNREADABLE';
 
 export class BoundaryImportError extends Error {
   code: BoundaryImportErrorCode;
@@ -464,10 +469,11 @@ function permissionFor(
  *
  * WHAT THIS DOES NOT DO. It does not switch fetching on. Nothing in this file
  * fetches: DEFAULT_FETCHER still always refuses, and BOUNDARY_FETCHING_SWITCHED_ON
- * (§10) is still false. Switching fetching on still needs (1) the data
- * protection officer's answer on the small, logged test lookup, and (2) a
- * developer to write and review a real fetcher. Building footprints still wait
- * on Ordnance Survey.
+ * (§10) is still false. Switching fetching on needs only the data protection
+ * officer's answer on the small, logged test lookup: the real fetcher of HM Land
+ * Registry's INSPIRE Index Polygons was built, and left switched off, by Phase
+ * 150 (24 September 2026) at 09-app/backend/src/connectors/inspire.ts. Building
+ * footprints still wait on Ordnance Survey.
  */
 export const CURRENT_LICENCE_PERMISSION: LicencePermission = {
   outcome: 'INTERNAL_CALCULATION_ONLY',
@@ -485,7 +491,7 @@ export const CURRENT_LICENCE_PERMISSION: LicencePermission = {
     'Board item 12830205914. Internal calculation only: a site area may be worked out from a land ' +
     'boundary for our own checks, and the boundary itself (a map, an image or its coordinates) may not ' +
     'appear in a client report. Fetching stays off — it still needs the data protection officer\'s ' +
-    'answer on the test lookup and a developer-written fetcher.',
+    'answer on the test lookup. The fetcher itself was built, switched off, by Phase 150 on 24 September 2026.',
 };
 
 // Guard: the written-out fields above must say exactly what the outcome says.
@@ -581,7 +587,7 @@ export function checkBoundaryUse(
     purpose,
     reason:
       'Refused: fetching land boundaries is switched off. It still needs the data protection ' +
-      "officer's answer on the small, logged test lookup, and a developer to write and review the fetcher.",
+      "officer's answer on the small, logged test lookup.",
   };
 }
 
@@ -808,11 +814,17 @@ export type RawBoundaryPayload = {
 export type BoundaryFetcher = (item: BoundaryFetchPlanItem) => Promise<RawBoundaryPayload>;
 
 /**
- * Phase 132e. A named, readable statement that fetching is OFF. It is a record
- * for people and for checkBoundaryUse's reason, not a switch: setting it to
- * true would fetch nothing, because DEFAULT_FETCHER below still always throws.
- * Fetching needs the data protection officer's answer on the test lookup and
- * a developer-written fetcher, neither of which exists on 16 September 2026.
+ * Phase 132e. A named, readable statement that fetching is OFF, read by
+ * checkBoundaryUse's reason.
+ *
+ * PHASE 150 (24 September 2026) MADE IT A REAL SWITCH. The real fetcher,
+ * 09-app/backend/src/connectors/inspire.ts, reads this constant before it does
+ * anything, and while it is false it refuses (E_FETCHING_SWITCHED_OFF) with
+ * nothing sent. DEFAULT_FETCHER below is unchanged and still always throws, so
+ * with no fetcher injected, setting this true would still fetch nothing.
+ * Turning fetching on is this one word plus injecting that fetcher, and it
+ * waits on the data protection officer's answer to "Can we make a few small,
+ * logged test lookups to check a data connector works?".
  */
 export const BOUNDARY_FETCHING_SWITCHED_ON = false as const;
 
@@ -874,7 +886,7 @@ function emptyStub<T>(dataset_id: string, notes: string): ReferenceTableStub<T> 
   return Object.freeze({ dataset_id, loaded: false, rows: Object.freeze([]) as readonly T[], notes });
 }
 
-/** Empty. No data pulled. Populate only once the licence clears and a real fetcher is implemented and reviewed. */
+/** Empty. No data pulled, and none is kept here: the Phase 150 fetcher reads a council's file for one point and keeps only that polygon. */
 export const HMLR_INSPIRE_INDEX_POLYGON_TABLE: ReferenceTableStub<unknown> = emptyStub(
   'HMLR_INSPIRE_INDEX_POLYGON',
   'Empty stub — board item 12830205914 licence pending. No live rows have ever been loaded here.',

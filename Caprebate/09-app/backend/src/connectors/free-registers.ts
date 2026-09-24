@@ -115,6 +115,10 @@ export const NOT_BUILT: Readonly<Record<string, string>> = Object.freeze({
     'Neither publishes an API like the English regulator’s, so we ask the client instead. Nothing was contacted',
   VOA: 'allowed, but there is no connector for the valuation office in this build, because we do not hold its licence. ' +
     'Nothing was contacted',
+  /* PHASE 150: the land boundary has its own connector, src/connectors/inspire.ts, which reads a whole council's file
+     for one point. It is not run by this button, and it is switched off. */
+  HMLR_INSPIRE: 'allowed, but the land boundary is not looked up by this button. It comes from a whole council\u2019s file, ' +
+    'read by its own connector, which is switched off. Nothing was contacted',
 });
 
 /* ================================================================== *

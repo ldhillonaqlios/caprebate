@@ -400,7 +400,10 @@ const EXTRA = [path.join(WEB, '..', 'seed.ts'),
     .map((f) => path.join(WEB, '..', 'connectors', f)),
   /* Phase 146i: the document reader's reasons - why a file could not be read - now reach the staff document page,
      which is the change Phase 146g's point 6 was waiting on. Its two model instructions are exempt by name. */
-  path.join(WEB, '..', 'connectors', 'claude.ts')];
+  path.join(WEB, '..', 'connectors', 'claude.ts'),
+  /* Phase 150: the land boundary fetcher's refusals. Nothing shows them yet, but they are written for a person
+     (why the site area was not worked out), so they are held to the same grade before a screen is wired to them. */
+  path.join(WEB, '..', 'connectors', 'inspire.ts')];
 
 function screenFiles(suffix) {
   const all = fs.readdirSync(WEB).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f)).sort().map((f) => path.join(WEB, f)).concat(EXTRA);

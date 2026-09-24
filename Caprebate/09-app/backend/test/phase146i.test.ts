@@ -508,8 +508,14 @@ describe('when a reading does not work, a screen says so', () => {
   test('I22 — every reading of every version is listed, newest first', async () => {
     const w = await boot();
     const first = await run(w, { switches: ON });
+    /* Phase 150: one minute after the reading the run made, never a fixed instant. A fixed '2026-09-24T09:00' was newer
+       than the run's own reading only while the wall clock was earlier than that, so this test went red on its
+       own at 09:00 on 24 September 2026. */
+    const made = w.app.db.all<{ at: string }>('SELECT at FROM document_readings WHERE document_id = ? ORDER BY at DESC', [first.doc_id])[0]?.at;
+    assert.ok(made, 'the run made a reading');
+    const later = new Date(Date.parse(made) + 60_000).toISOString();
     w.app.db.run('INSERT INTO document_readings (id, document_id, at, state, why, fields, not_found, left_out) VALUES (?,?,?,?,?,?,?,?)',
-      [randomUUID(), first.doc_id, '2026-09-24T09:00:00.000Z', 'NOT_READ', 'we could not reach the service', 0, 0, 0]);
+      [randomUUID(), first.doc_id, later, 'NOT_READ', 'we could not reach the service', 0, 0, 0]);
     const p = D.documentPage({ db: w.app.db, audit: w.app.audit, now: w.app.now }, admin(), first.logical_id, 'page', T);
     assert.equal(p.readings.length, 2);
     assert.equal(p.readings[0]?.why, 'we could not reach the service', 'newest first');

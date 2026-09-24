@@ -47,6 +47,7 @@
 import type { IngestedRecord } from '../../../../04-phase-work/phase3/caprebate-name-exclusion.ts';
 import type { OwnerSecrets, SecretOwner, SecretStore } from '../secrets.ts';
 import { callOutside, type CallDeps, type CallRequest, type CallResult, type GateSnapshot } from './http.ts';
+import { BOUNDARY_FETCHING_SWITCHED_ON } from '../../../../04-phase-work/phase9/caprebate-boundary-import.ts';
 
 export type Tier = 'FREE' | 'PAID';
 export type SourceState = 'NOT_RUN' | 'FIRED' | 'FAILED' | 'NOT_PERMITTED_YET';
@@ -135,6 +136,10 @@ export const REGISTER_SWITCHES: Readonly<Record<string, boolean>> = Object.freez
      that row — so it is a switch with no catalogue entry, which is exactly what "built and not chosen" looks like.
      Turning it on is a decision for Lakhbir and it is written up for him. */
   HOMEDATA_PLANNING: false,
+  /* PHASE 150, 24 September 2026: the land boundary. NOT A SECOND SWITCH — it IS the boundary module's own
+     BOUNDARY_FETCHING_SWITCHED_ON, read here so the research panel shows the same answer the fetcher obeys
+     (src/connectors/inspire.ts). It is false. */
+  HMLR_INSPIRE: BOUNDARY_FETCHING_SWITCHED_ON,
 });
 
 /** Only `true` is on. An absent source, and anything else, is off. */

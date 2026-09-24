@@ -134,6 +134,8 @@ export function certificateTransport(
 export type Fixture = {
   readonly status: number;
   readonly body: string;
+  /** PHASE 150: answer these bytes instead of `body` — a recorded file, which is not text. */
+  readonly bytes?: Uint8Array;
   readonly headers?: Record<string, string>;
   /** Wait this long before answering; with a short time limit this is how a time-out is tested. */
   readonly delay_ms?: number;
@@ -166,7 +168,7 @@ export function fixtureTransport(fixtures: Record<string, Fixture | readonly Fix
       });
     }
     if (f.network_error === true) throw new TypeError('fetch failed: connection reset');
-    return new Response(f.body, { status: f.status, headers: f.headers ?? { 'content-type': 'application/json' } });
+    return new Response(f.bytes !== undefined ? new Uint8Array(f.bytes) : f.body, { status: f.status, headers: f.headers ?? { 'content-type': 'application/json' } });
   };
   return Object.assign(t, { seen });
 }
@@ -217,6 +219,12 @@ export type CallRequest = {
   readonly method?: 'GET' | 'POST';
   readonly headers?: Record<string, string>;
   readonly body?: string;
+  /**
+   * PHASE 150: KEEP THE ANSWER AS BYTES. A file (HM Land Registry's INSPIRE .zip) is not text, and turning it into a
+   * string would corrupt it. With this set, a successful answer comes back in `bytes` and `body` is '' — never null,
+   * because null is how every caller recognises a call that got no answer. Every other rule is unchanged.
+   */
+  readonly as_bytes?: true;
   /** Who clicked. Null for a job nobody clicked. */
   readonly actor_id: string | null;
   readonly actor_role?: string | null;
@@ -231,6 +239,8 @@ export type CallResult = {
   readonly status: number | null;
   readonly body: string | null;
   readonly headers: Record<string, string>;
+  /** PHASE 150: the answer's bytes, only when the request asked `as_bytes` and the answer was read. */
+  readonly bytes?: Buffer;
   readonly latency_ms: number;
   readonly attempts: number;
   /** In plain words; no key, no value from the query. */
@@ -299,10 +309,10 @@ export function policyRefusal(p: CallPolicy | undefined): string | null {
   return null;
 }
 
-async function readCapped(res: Response, max: number): Promise<{ text: string; over: boolean }> {
+async function readCapped(res: Response, max: number, asBytes = false): Promise<{ text: string; bytes: Buffer; over: boolean }> {
   const declared = Number(res.headers.get('content-length') ?? 'NaN');
-  if (Number.isFinite(declared) && declared > max) { await res.body?.cancel(); return { text: '', over: true }; }
-  if (res.body === null) return { text: '', over: false };
+  if (Number.isFinite(declared) && declared > max) { await res.body?.cancel(); return { text: '', bytes: Buffer.alloc(0), over: true }; }
+  if (res.body === null) return { text: '', bytes: Buffer.alloc(0), over: false };
   const reader = res.body.getReader();
   const chunks: Uint8Array[] = [];
   let n = 0;
@@ -310,10 +320,12 @@ async function readCapped(res: Response, max: number): Promise<{ text: string; o
     const { done, value } = await reader.read();
     if (done) break;
     n += value.byteLength;
-    if (n > max) { await reader.cancel(); return { text: '', over: true }; }
+    if (n > max) { await reader.cancel(); return { text: '', bytes: Buffer.alloc(0), over: true }; }
     chunks.push(value);
   }
-  return { text: Buffer.concat(chunks).toString('utf8'), over: false };
+  const bytes = Buffer.concat(chunks);
+  // A file kept as bytes is never also decoded: a large one would be held twice, once as nonsense text.
+  return { text: asBytes ? '' : bytes.toString('utf8'), bytes, over: false };
 }
 
 function retryAfterMs(h: string | null): number | null {
@@ -440,13 +452,16 @@ export async function callOutside(deps: CallDeps, req: CallRequest): Promise<Cal
         await sleep(wait);
         continue;
       }
-      const read = await readCapped(res, policy.max_bytes);
+      const read = await readCapped(res, policy.max_bytes, req.as_bytes === true);
       clearTimeout(timer);
       const headers = Object.fromEntries(res.headers.entries());
       if (read.over) {
         return finish({ outcome: 'TOO_LARGE', status: res.status, body: null, headers, attempts, why: `the answer was larger than the ${policy.max_bytes} bytes we accept, so it was not kept` });
       }
       if (res.status >= 200 && res.status < 300) {
+        if (req.as_bytes === true) {
+          return finish({ outcome: 'OK', status: res.status, body: '', bytes: read.bytes, headers, attempts, why: 'looked up' });
+        }
         return finish({ outcome: 'OK', status: res.status, body: read.text, headers, attempts, why: 'looked up' });
       }
       return finish({ outcome: 'HTTP_ERROR', status: res.status, body: read.text, headers, attempts, why: `the service answered ${res.status}` });
