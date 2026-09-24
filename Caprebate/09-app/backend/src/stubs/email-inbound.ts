@@ -48,7 +48,9 @@ export type InboundEmail = {
 export const INBOUND_EMAIL: InboundEmail = Object.freeze({
   enabled: false,
   provider: 'IMAP',
-  mailbox_ready: false,
+  /* True since 24 September 2026: contact@ exists and Sadique Maskeen reads it (Word questions 216 and 217, closed).
+     Reading replies stays OFF until its IMAP login is in the key file and the switch is turned on. */
+  mailbox_ready: true,
   question: EMAIL_PROVIDER_QUESTION,
 });
 

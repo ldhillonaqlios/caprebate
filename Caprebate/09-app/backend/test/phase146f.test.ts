@@ -142,7 +142,7 @@ describe('1 · the logins come from the key file, and only an IONOS host is acce
   });
   test('it is still off: EMAIL_SENDING and INBOUND_EMAIL are false, and a key file alone turns nothing on', () => {
     assert.equal(EMAIL_SENDING.enabled, false);
-    assert.equal(EMAIL_SENDING.mailbox_and_dns_ready, false);
+    assert.equal(EMAIL_SENDING.mailbox_and_dns_ready, true, 'the mailbox is read and the test email arrived (24 Sep 2026)');
     assert.equal(EMAIL_SENDING.named_in_engagement_letter, false);
   });
 });

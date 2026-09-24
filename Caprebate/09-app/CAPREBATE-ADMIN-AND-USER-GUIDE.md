@@ -3167,12 +3167,9 @@ can also press it on a lead card. You can press it on a claim too, and then that
 - A refusal keeps what you typed. You can fix it and save again.
 
 **Why it is not sent yet**
-The email service is chosen: IONOS. The mailbox contact@caprebate.co.uk is set up. So are its safety
-records. Three things must still be true first. Each one is for Lakhbir to do.
+The email service is chosen: IONOS. The mailbox contact@caprebate.co.uk is set up, and Sadique reads it. A test
+email reached Lakhbir on 24 September 2026. One thing must still be true first, and it is for Lakhbir to do:
 - Name IONOS in the privacy notice and in the engagement letter.
-- Say who reads contact@caprebate.co.uk.
-- Send one test email first. The question is *"May we send you one test email from contact@caprebate.co.uk before
-  email sending is switched on?"*
 
 The sending is built. It stays switched off until then. An email saved while it is off will never go out later by
 surprise.

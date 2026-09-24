@@ -95,7 +95,12 @@ export const EMAIL_SENDING: EmailSending = Object.freeze({
   provider: 'SMTP',
   named_in_privacy_notice: false,
   named_in_engagement_letter: false,
-  mailbox_and_dns_ready: false,
+  /* TRUE SINCE 24 SEPTEMBER 2026 (the afternoon): the mailbox exists, its SPF, DKIM and DMARC records are published,
+     Sadique Maskeen reads it (Word question 216, closed), and the one test email (Word question 217, closed) was sent
+     by smtpProvider to Lakhbir and arrived. It landed in junk at first: a new domain, and whether IONOS signs with DKIM
+     is still to be checked in its control panel. Sending stays OFF: the privacy notice and the engagement letter must
+     name IONOS first, and then the switch. */
+  mailbox_and_dns_ready: true,
   question: EMAIL_PROVIDER_QUESTION,
 });
 

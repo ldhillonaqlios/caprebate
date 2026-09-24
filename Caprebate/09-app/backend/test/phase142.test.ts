@@ -451,7 +451,6 @@ describe('replies to contact@caprebate.co.uk', () => {
     assert.equal(r.state, 'OFF');
     assert.equal(touched, false, 'the mailbox was opened while reading was off');
     assert.deepEqual(readingMissing(INBOUND_EMAIL, null).filter((x) => !/login/i.test(x)), [
-      'Say who reads contact@caprebate.co.uk, and send one test email from it.',
       'Then switch reading replies on.',
     ]);
   });

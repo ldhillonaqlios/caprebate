@@ -434,13 +434,13 @@ describe('4 · EMAIL_SENDING — built, and off', () => {
     assert.equal(EMAIL_SENDING.provider, 'SMTP');
     assert.equal(EMAIL_SENDING.named_in_privacy_notice, false);
     assert.equal(EMAIL_SENDING.named_in_engagement_letter, false);
-    assert.equal(EMAIL_SENDING.mailbox_and_dns_ready, false);
+    // 24 Sep 2026: the mailbox is read (216) and the test email arrived (217). Sending stays off.
+    assert.equal(EMAIL_SENDING.mailbox_and_dns_ready, true);
     assert.equal(EMAIL_SENDING.question, 'May we send you one test email from contact@caprebate.co.uk before email sending is switched on?');
     assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'EMAIL_SENDING'), { switch: 'EMAIL_SENDING', on: false, home: 'src/stubs/email-provider.ts' });
     assert.equal(sendingOn(EMAIL_SENDING, LOGIN), false);
     assert.deepEqual(sendingMissing(EMAIL_SENDING, null), [
       'Name that service in the privacy notice and in the engagement letter.',
-      'Say who reads contact@caprebate.co.uk, and send one test email from it.',
       'Add the email service’s login to the server.',
       'Then switch sending on.',
     ]);
