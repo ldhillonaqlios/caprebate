@@ -259,40 +259,41 @@ const SECTOR_INVARIANT_SURVEYOR = {
 const PARAMS = {
 
   /* ------------------------------------------------------------------------
-     THE ONE THE PHASE NAMED, AND IT IS STRUCTURALLY DIFFERENT FROM THE OTHERS.
+     THE ADDRESS LOOKUP (Homedata). A COST OF A SIGNED JOB, ONCE PER PROPERTY.
 
-     Homedata is the address lookup. It is the ONLY per-claim cost incurred
-     BEFORE a client signs anything — every other cost in this file falls on the
-     far side of the engagement letter, where we already know we have a job.
+     REWRITTEN 24 SEPTEMBER 2026 BY PHASE 147. Until then this comment, the
+     function that reads it and section 6 of the .md modelled the lookup as the
+     one cost spent BEFORE a client signs: fired per property on every enquiry,
+     charged four times over to the one enquiry in four that converts, and
+     offered as a reason to cap the property count on the free tier. Lakhbir's
+     rule of 4 September 2026 ended that premise, and the 17 September note that
+     said so left the code beneath it untouched. The old text is in
+     caprebate-job-economics.cjs.bak-phase147.
 
-     AND IT FIRES PER PROPERTY, NOT PER ENQUIRY. A multi-property enquiry fires
-     one lookup per property before the gate. So an enquirer with eleven care
-     homes who never signs costs us eleven lookups and returns nothing.
+     WHEN IT IS SPENT. A paid call fires only after the engagement letter is
+     signed (assertSignedEngagement, server side) and a member of staff clicks
+     Run the research. The connector that spends it is built and switched off:
+     09-app/backend/src/connectors/homedata.ts (Phase 146d). So an enquiry that
+     never signs cannot have cost a lookup, and this is a direct cost of a job
+     that has landed, beside the £50 data line. It is NOT a loading on the
+     enquiries that failed, and nothing here charges it to them.
 
-     WHAT THE ANSWER WOULD CHANGE, stated before it is known so the answer
-     cannot be quietly absorbed:
-       - at a low per-lookup price it is a rounding error on the £50 data line
-         and nothing changes;
-       - at a high one it is a REAL number multiplied by the failed-enquiry
-         ratio (three failures per conversion) and by the property count, and it
-         belongs in the failed-enquiry drag rather than in the direct cost —
-         because it is spent on enquiries that never become jobs;
-       - at a high one it also becomes an argument for a property-count cap on
-         the free tier, which is a product decision nobody has taken.
+     WHAT OUR LOOKUP COSTS: 8 tokens, 8p a property - 2 for the postcode search,
+     5 for the address, 1 for the title pre-check. The connector computes it
+     (homedataCostPence()) from the price list read on 23 September 2026. The
+     SUPPLIER'S find-then-retrieve is 7 tokens, 7p; that is not what we call.
 
-     Note the interaction with the free-call rule: free API calls fire once the
-     client has given permission, which is BEFORE signature. If Homedata is a
-     paid call it does not belong in that tier at all, and the two-tier model
-     already says paid calls fire only after signature on an operator click. So
-     a nonzero answer here may mean the address lookup moves tiers, which is a
-     bigger change than a cost line. Raised as Q93.
-
-     17 Sep 2026 (Phase 133): Homedata now publishes a price - pay as you go,
-     100 tokens = £1, no free allowance; a find-then-retrieve lookup is 7 tokens,
-     7p. This stays null all the same: whether a paid lookup is used at launch is
-     undecided (CAPREBATE QUESTIONS, "Do we need a paid address lookup at launch,
-     or do we match the address the client types..."), and under the 4 Sep rule
-     a paid call fires only after signature. Suite D pins null on purpose.
+     WHY IT STAYS NULL - and the reason is the thing that changed, not the blank.
+     Not because the lookup might fire before signature: it cannot. And no
+     longer because nobody has decided to buy one: Lakhbir answered "yes, use
+     Homedata" on 22 September 2026 (Word question 36, "Do we need a paid
+     address lookup at launch, or just use the typed address?"). It stays null
+     because 8p is a LIST PRICE read off a web page, not a price on an account:
+     no account is open, no token has been bought, and the price question (Word
+     question 35, "How much does a Homedata address lookup cost us each time?")
+     carries an unsigned answer. The value goes in when the first top-up and the
+     first real lookup's X-Call-Weight confirm it. Until then it is unknown, and
+     unknown is not zero. Suite D pins null and proves the two differ.
      ------------------------------------------------------------------------ */
   homedata_cost_per_lookup: null,
 
@@ -413,7 +414,7 @@ function overheadPerJob(jobsPerYear, opts) {
      conversionRate         default 1-in-4
      overheadPerYear        default the £60,000 PLACEHOLDER
      includeFounderSalary   default false; true adds £60,000
-     properties             property count, for the pre-signature cost
+     properties             property count of the signed job, for the lookup
      homedataCostPerLookup  supply to model it; omit and it stays unknown
    --------------------------------------------------------------------------- */
 function loadedCost(sectorId, routeId, jobsPerYear, opts) {
@@ -421,7 +422,7 @@ function loadedCost(sectorId, routeId, jobsPerYear, opts) {
   const direct = directCost(sectorId, routeId);
   const drag = failedEnquiryDrag(routeId, o);
   const oh = overheadPerJob(jobsPerYear, o);
-  const pre = preSignatureCost(o);
+  const lookup = addressLookupCost(o);
 
   return {
     sector: sectorId,
@@ -438,14 +439,16 @@ function loadedCost(sectorId, routeId, jobsPerYear, opts) {
     overhead_per_job: oh,
     marginal: direct + drag,
 
-    /* The headline. Complete EXCEPT for the pre-signature cost, which is
+    /* The headline. Complete EXCEPT for the address lookup, which is
        reported separately and flagged rather than folded in silently. */
     loaded: direct + drag + oh,
 
     /* Never added into `loaded` while it is unknown. When it IS known the
-       caller gets loaded_including_pre_signature and can use it. */
-    pre_signature: pre,
-    loaded_including_pre_signature: pre.known ? direct + drag + oh + pre.cost : null,
+       caller gets loaded_including_address_lookup and can use it. It is added
+       once per property of THIS job - never through the failed-enquiry drag,
+       because an enquiry that did not sign cannot have spent it. */
+    address_lookup: lookup,
+    loaded_including_address_lookup: lookup.known ? direct + drag + oh + lookup.cost : null,
 
     includes_founder_salary: !!o.includeFounderSalary,
     overhead_basis: isNum(o.overheadPerYear) ? o.overheadPerYear
@@ -455,13 +458,25 @@ function loadedCost(sectorId, routeId, jobsPerYear, opts) {
 }
 
 /* -----------------------------------------------------------------------------
-   THE PRE-SIGNATURE COST — the Homedata line.
+   THE ADDRESS LOOKUP — the Homedata line. Whose cost: OURS, on a SIGNED job.
+
+   Was preSignatureCost() until 24 September 2026 (Phase 147). The name and its
+   explanation asserted a cost spent before a client signs, which Lakhbir's rule
+   of 4 September 2026 makes impossible; see PARAMS.homedata_cost_per_lookup.
+
+   cost_per_conversion WAS REMOVED, NOT RELABELLED. It divided the lookup by the
+   conversion rate to charge it to the three enquiries in four that fail - four
+   times the truth, for enquiries that cannot have cost a lookup. It was not
+   kept as a what-if for a world where the gate moves: that world is a decision
+   nobody has taken and the 4 September rule forbids, a figure that exists gets
+   quoted, and if the rule ever changes the cost is re-modelled from the rule
+   as then written, not from a number kept warm here. Suite D asserts it is gone.
 
    Returns known:false when the per-lookup price is not supplied. It does NOT
    return 0 and it does NOT throw. Unknown is not a branch: a caller that reads
    .cost without checking .known gets undefined, not a free lookup.
    --------------------------------------------------------------------------- */
-function preSignatureCost(opts) {
+function addressLookupCost(opts) {
   const o = opts || {};
   const properties = isNum(o.properties) ? o.properties : 1;
   if (!pos(properties) || properties !== Math.floor(properties)) {
@@ -472,31 +487,33 @@ function preSignatureCost(opts) {
   const per = isNum(o.homedataCostPerLookup) ? o.homedataCostPerLookup
             : PARAMS.homedata_cost_per_lookup;
 
+  const when = "after the engagement letter is signed, when a member of staff "+
+               "clicks Run the research: once per property of the signed job";
+
   if (!isNum(per)) {
     return {
       known: false,
       parameter: "homedata_cost_per_lookup",
       properties: properties,
       lookups: properties,
-      why: "what Homedata costs per lookup is not known. It is the only "+
-           "per-claim cost incurred before a client signs anything, and a "+
-           "multi-property enquiry fires one lookup per property before the "+
-           "gate. Raised as Q93.",
-      /* deliberately absent: cost, cost_per_conversion */
+      when: when,
+      why: "what one address lookup costs us is not confirmed. Our lookup is "+
+           "8 tokens (8p) at Homedata's list price read 23 September 2026, but "+
+           "no account is open and no lookup has been bought, so the price is "+
+           "unknown rather than zero. See the Word question \"How much does a "+
+           "Homedata address lookup cost us each time?\".",
+      /* deliberately absent: cost */
     };
   }
 
-  const conv = isNum(o.conversionRate) ? o.conversionRate : MODELLING.conversion_rate;
   return {
     known: true,
     parameter: "homedata_cost_per_lookup",
     per_lookup: per,
     properties: properties,
     lookups: properties,
-    cost: per * properties,
-    /* What it really costs per job that LANDS, because it is spent on the
-       enquiries that fail too. This is the number that matters. */
-    cost_per_conversion: (per * properties) / conv
+    when: when,
+    cost: per * properties
   };
 }
 
@@ -563,13 +580,13 @@ function breakEvenAllowances(sectorId, routeId, jobsPerYear, feeRate, opts) {
     break_even_allowances_at_margin: atMargin,
     target_margin: margin,
 
-    /* Same figure with the pre-signature cost included, or null while the
+    /* Same figure with the address lookup included, or null while the
        Homedata price is unknown. Never silently equal to the line above. */
-    break_even_allowances_including_pre_signature:
-      c.loaded_including_pre_signature === null
-        ? null : c.loaded_including_pre_signature / feeRate,
+    break_even_allowances_including_address_lookup:
+      c.loaded_including_address_lookup === null
+        ? null : c.loaded_including_address_lookup / feeRate,
 
-    pre_signature_known: c.pre_signature.known,
+    address_lookup_known: c.address_lookup.known,
     overhead_is_placeholder: c.overhead_is_placeholder
   };
 }
@@ -1267,7 +1284,7 @@ function effectiveRateOnLifetimeRelief(fee, allowances, taxRate) {
    wrote. It is wrong for a gate: a missing annual volume is a fact about the
    business, not a programming error, and a gate that throws on it takes a
    screen down. So this returns {known:false} naming the parameter, exactly as
-   preSignatureCost() does for the Homedata price. Unknown is not a branch.
+   addressLookupCost() does for the Homedata price. Unknown is not a branch.
    ============================================================================= */
 
 /* The gate's own settings, as far as they are arithmetic rather than policy.
@@ -1373,8 +1390,8 @@ function costingForGate(sectorId, routeId, jobsPerYear, opts) {
     includes_founder_salary: c.includes_founder_salary,
 
     /* Never folded in silently. Same rule as loadedCost(). */
-    pre_signature_known: c.pre_signature.known,
-    loaded_including_pre_signature: c.loaded_including_pre_signature
+    address_lookup_known: c.address_lookup.known,
+    loaded_including_address_lookup: c.loaded_including_address_lookup
   };
 }
 
@@ -1399,7 +1416,7 @@ module.exports = {
   FEE_DECISION,
 
   surveyorCost, ctaCost, internalCost,
-  directCost, failedEnquiryDrag, overheadPerJob, preSignatureCost, loadedCost,
+  directCost, failedEnquiryDrag, overheadPerJob, addressLookupCost, loadedCost,
 
   breakEvenAllowances, breakEvenPurchasePrice, reportsBasisChange,
   routeDecision, classifyBand,

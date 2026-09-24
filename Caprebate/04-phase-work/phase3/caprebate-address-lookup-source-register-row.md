@@ -28,7 +28,7 @@ Every page below was read on **12 September 2026**.
 - **Whether we may pass it on.** Clause 4 says we may not "Resell or redistribute our data without authorisation".
 - **How far it can be trusted.** Clause 6 says the data is "provided 'as is'", with no promise that it is accurate, complete or current.
 - **Law and exit.** Clause 11: the law of England and Wales. Clause 10: either side may end the agreement on 30 days' notice. Clause 13 gives the legal contact as legal@homedata.co.uk.
-- **What one lookup uses.** A search costs 2 tokens and the full address costs 5, so a find-then-retrieve lookup costs 7 tokens — **7p**, at "100 tokens = £1". _(Corrected 17 September 2026, Phase 133: this said the free plan carries 100 tokens a month, about fourteen lookups, and Starter is £49 a month for 4,500 tokens. Homedata's pricing page, read on 17 September 2026, is pay as you go: no plans, no subscription, no free monthly allowance, tokens that never expire, and a matched first top-up.)_
+- **What one lookup uses.** A search costs 2 tokens and the full address costs 5, so a find-then-retrieve lookup costs 7 tokens — **7p**, at "100 tokens = £1". _(Corrected 17 September 2026, Phase 133: this said the free plan carries 100 tokens a month, about fourteen lookups, and Starter is £49 a month for 4,500 tokens. Homedata's pricing page, read on 17 September 2026, is pay as you go: no plans, no subscription, no free monthly allowance, tokens that never expire, and a matched first top-up.)_ _(Corrected 24 September 2026, Phase 147 — this line is about **the supplier's** find-then-retrieve, and 7 tokens is still right for that. **Our** lookup is a different call and costs **8 tokens, 8p a property**: 2 for the postcode search, 5 for the address and 1 for the check on whether the property has a registered title. That is what the connector built on 23 September 2026 spends, `homedataCostPence()` in `09-app/backend/src/connectors/homedata.ts`. A five-property claim costs 40p, not 35p.)_
 
 ## What the supplier does not publish
 
@@ -62,6 +62,8 @@ Each of these is recorded as **NOT PUBLISHED**. None has been guessed.
 The row can be written today, and it is ready as a tested change to the register. **The four unpublished facts need one email to the supplier, sent when the account is opened.** That makes this a question for Lakhbir, not a build.
 
 **One thing to weigh first.** Lakhbir's answer under the Homedata cost question says his previous company never used Homedata: it took the address from the customer and matched it against Companies House and other public sources. He also agreed with building the front of the funnel on a plain typed postcode and address. If the address lookup is not used at launch, the gap closes with a note that it is not used, and nobody needs to email the supplier.
+
+**Settled 22 September 2026 — the lookup is used, so the email is needed.** Lakhbir answered the question "Do we need a paid address lookup at launch, or just use the typed address?" in chat: "yes, use Homedata. It runs only after a client has signed, when a staff member starts the research." So the gap does not close as "not used". The four unpublished facts above still wait on the email, which goes when the account is opened, and they stay refusals until then. _(Added 24 September 2026 by Phase 147.)_
 
 ### Draft email to the supplier — NOT SENT
 

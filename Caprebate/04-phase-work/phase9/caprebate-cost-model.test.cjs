@@ -198,6 +198,9 @@ test("A2 every licensed or purchased table ships empty and says why", () => {
   assert.equal(M.CB_CONTRACT_SIZE_ADJUSTMENT.valid_to, null);
   assert.deepEqual(M.CB_VOA_OBSOLESCENCE.scales, {});
   assert.deepEqual(M.CB_CIBSE_PLANT_LIVES.lives_years, {});
+  /* Phase 147: the CIBSE table names the licence that keeps it empty. */
+  assert.equal(M.CB_CIBSE_PLANT_LIVES.loaded, false);
+  assert.match(M.CB_CIBSE_PLANT_LIVES.licence, /^NOT CLEARED - licence CIBSE_KNOWLEDGE/);
   assert.deepEqual(M.CB_VOA_BUILDING_OBSOLESCENCE.scales, {});
 });
 

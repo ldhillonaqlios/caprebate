@@ -313,11 +313,22 @@ const CB_VOA_OBSOLESCENCE = emptyTable(
 
 /* LEG-E5b. CIBSE expected plant lives, in years, per element. A SEPARATE
    SOURCE from the VOA scales with its own terms - clearing one does not clear
-   the other, and E5 needs both. EMPTY. */
+   the other, and E5 needs both. EMPTY.
+
+   PHASE 147, 24 SEPTEMBER 2026 - the source now has an owner and its terms are
+   read: licence CIBSE_KNOWLEDGE in 04-phase-work/phase3/caprebate-source-
+   register.ts, research in caprebate-cibse-plant-lives-source-register-row.md
+   beside it. The current edition is Guide M11 Appendix 11.A1 (June 2026), free
+   to download, but CIBSE grants it for the sole use of the person who downloads
+   it; putting its lives into a report a client pays for needs CIBSE's
+   permission. So this stays EMPTY and the completeness gate stays OFF. And the
+   surveyor's ruling comes first: if a whole-building obsolescence scale may not
+   be applied per plant element, E5 does not ship and this table is not needed. */
 const CB_CIBSE_PLANT_LIVES = emptyTable(
   "CB_CIBSE_PLANT_LIVES",
-  "CIBSE Guide M - indicative economic life of plant",
-  "NOT CLEARED - separate source from the VOA scales",
+  "CIBSE Guide M11 Appendix 11.A1 - economic life expectancy tables (June 2026 edition)",
+  "NOT CLEARED - licence CIBSE_KNOWLEDGE (phase3 source register): sole use of the downloader; " +
+    "reproduction for sale needs CIBSE permission. Separate source from the VOA scales",
   { lives_years: {} }
 );
 

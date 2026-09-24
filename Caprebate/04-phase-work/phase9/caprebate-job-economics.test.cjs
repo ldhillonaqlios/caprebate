@@ -292,6 +292,13 @@ test("C8 a bad marginal tax rate is refused", () => {
 
 /* ===========================================================================
    SUITE D — the Homedata parameter. UNKNOWN IS NOT A BRANCH.
+
+   Rewritten 24 September 2026 by Phase 147. The address lookup is a cost of a
+   SIGNED job, once per property (Lakhbir's rule of 4 September 2026: a paid
+   call fires only after the letter is signed and a member of staff clicks).
+   It was modelled as a cost spent before signature and charged four times
+   over to the enquiries that fail. D6 and D11 hold the correction; D1 to D5,
+   D7 and D8 still hold the null, and still prove null and zero differ.
    =========================================================================== */
 
 test("D1 the parameter exists, is named, and has no value", () => {
@@ -300,21 +307,25 @@ test("D1 the parameter exists, is named, and has no value", () => {
 });
 
 test("D2 not supplied — the cost is flagged unknown and is NOT zero", () => {
-  const p = M.preSignatureCost({ properties: 1 });
+  const p = M.addressLookupCost({ properties: 1 });
   assert.equal(p.known, false);
   assert.equal(p.parameter, "homedata_cost_per_lookup");
   /* The property that matters: reading .cost gives undefined, never 0. */
   assert.equal(p.cost, undefined);
   assert.notEqual(p.cost, 0);
-  assert.ok(/Q93/.test(p.why));
+  /* It names the question that holds the price, by its title... */
+  assert.ok(/How much does a Homedata address lookup cost us each time\?/.test(p.why));
+  /* ...and it no longer gives the dead reason for the blank. */
+  assert.ok(!/before a client signs|before the gate|Q93/.test(p.why));
+  assert.ok(/after the engagement letter is signed/.test(p.when));
 });
 
 test("D3 explicitly undefined behaves identically to not supplied", () => {
   /* The state of every caller who never passed the option at all. A suite that
      covers only one of these leaves the other silently uncovered. */
-  const a = M.preSignatureCost({ properties: 3 });
-  const b = M.preSignatureCost({ properties: 3, homedataCostPerLookup: undefined });
-  const c = M.preSignatureCost({ properties: 3, homedataCostPerLookup: null });
+  const a = M.addressLookupCost({ properties: 3 });
+  const b = M.addressLookupCost({ properties: 3, homedataCostPerLookup: undefined });
+  const c = M.addressLookupCost({ properties: 3, homedataCostPerLookup: null });
   assert.equal(a.known, false);
   assert.equal(b.known, false);
   assert.equal(c.known, false);
@@ -322,48 +333,57 @@ test("D3 explicitly undefined behaves identically to not supplied", () => {
   assert.deepEqual(Object.keys(a).sort(), Object.keys(c).sort());
 });
 
-test("D4 loaded cost never folds an unknown pre-signature cost into the headline", () => {
+test("D4 loaded cost never folds an unknown address lookup into the headline", () => {
   const c = M.loadedCost("dental", "DESK_ONLY", 100, { properties: 11 });
-  assert.equal(c.pre_signature.known, false);
-  assert.equal(c.loaded_including_pre_signature, null);
+  assert.equal(c.address_lookup.known, false);
+  assert.equal(c.loaded_including_address_lookup, null);
   /* And the headline is unchanged by the unknown, rather than nudged by it. */
   assert.equal(c.loaded, M.loadedCost("dental", "DESK_ONLY", 100, {}).loaded);
 });
 
-test("D5 the break-even including pre-signature stays null while it is unknown", () => {
+test("D5 the break-even including the address lookup stays null while it is unknown", () => {
   const b = M.breakEvenAllowances("dental", "DESK_ONLY", 100, RATE, { properties: 4 });
-  assert.equal(b.pre_signature_known, false);
-  assert.equal(b.break_even_allowances_including_pre_signature, null);
+  assert.equal(b.address_lookup_known, false);
+  assert.equal(b.break_even_allowances_including_address_lookup, null);
   /* Never silently equal to the figure that excludes it. */
-  assert.notEqual(b.break_even_allowances_including_pre_signature,
+  assert.notEqual(b.break_even_allowances_including_address_lookup,
                   b.break_even_allowances);
 });
 
-test("D6 supplied — it fires once per property, and per conversion it is 4x", () => {
-  const p = M.preSignatureCost({ properties: 11, homedataCostPerLookup: 2.5 });
+test("D6 supplied — once per property of the signed job, and nothing charged to enquiries that failed", () => {
+  const p = M.addressLookupCost({ properties: 11, homedataCostPerLookup: 2.5 });
   assert.equal(p.known, true);
   assert.equal(p.lookups, 11);
   assert.equal(p.cost, 27.5);
-  /* Three enquiries fail for every one that lands, so the real cost per job
-     that lands is four times the lookup cost. */
-  assert.equal(p.cost_per_conversion, 110);
+  /* The old model divided this by the conversion rate - 4x the truth, charged
+     to enquiries that never signed and so cannot have spent a lookup. Gone,
+     not relabelled, and the conversion rate does not move the figure. */
+  assert.ok(!("cost_per_conversion" in p));
+  const atOneInTen = M.addressLookupCost({ properties: 11, homedataCostPerLookup: 2.5,
+                                          conversionRate: 0.1 });
+  assert.equal(atOneInTen.cost, 27.5);
+  /* And the failed-enquiry drag is untouched by the lookup price. */
+  const withLookup = M.loadedCost("dental", "SURVEYOR_VISIT", 100,
+                                  { properties: 11, homedataCostPerLookup: 2.5 });
+  const without = M.loadedCost("dental", "SURVEYOR_VISIT", 100, {});
+  assert.equal(withLookup.failed_enquiry_drag, without.failed_enquiry_drag);
 });
 
 test("D7 supplied — it flows through to loaded cost and to break-even", () => {
   const c = M.loadedCost("dental", "DESK_ONLY", 100, { properties: 2, homedataCostPerLookup: 3 });
-  assert.equal(c.pre_signature.known, true);
-  assert.equal(c.loaded_including_pre_signature, c.loaded + 6);
+  assert.equal(c.address_lookup.known, true);
+  assert.equal(c.loaded_including_address_lookup, c.loaded + 6);
   const b = M.breakEvenAllowances("dental", "DESK_ONLY", 100, RATE,
                                   { properties: 2, homedataCostPerLookup: 3 });
-  assert.equal(b.pre_signature_known, true);
-  assert.ok(b.break_even_allowances_including_pre_signature > b.break_even_allowances);
+  assert.equal(b.address_lookup_known, true);
+  assert.ok(b.break_even_allowances_including_address_lookup > b.break_even_allowances);
 });
 
 test("D8 a zero cost per lookup is KNOWN and is not the same as unknown", () => {
   /* The distinction the whole rule rests on: "free" is an answer, "we have not
      asked" is not, and they must not collapse into each other. */
-  const zero = M.preSignatureCost({ properties: 5, homedataCostPerLookup: 0 });
-  const unknown = M.preSignatureCost({ properties: 5 });
+  const zero = M.addressLookupCost({ properties: 5, homedataCostPerLookup: 0 });
+  const unknown = M.addressLookupCost({ properties: 5 });
   assert.equal(zero.known, true);
   assert.equal(zero.cost, 0);
   assert.equal(unknown.known, false);
@@ -371,9 +391,24 @@ test("D8 a zero cost per lookup is KNOWN and is not the same as unknown", () => 
 });
 
 test("D9 a nonsensical property count is refused rather than coerced", () => {
-  assert.equal(codeOf(() => M.preSignatureCost({ properties: 0 })), "E_BAD_PROPERTY_COUNT");
-  assert.equal(codeOf(() => M.preSignatureCost({ properties: 2.5 })), "E_BAD_PROPERTY_COUNT");
-  assert.equal(codeOf(() => M.preSignatureCost({ properties: -1 })), "E_BAD_PROPERTY_COUNT");
+  assert.equal(codeOf(() => M.addressLookupCost({ properties: 0 })), "E_BAD_PROPERTY_COUNT");
+  assert.equal(codeOf(() => M.addressLookupCost({ properties: 2.5 })), "E_BAD_PROPERTY_COUNT");
+  assert.equal(codeOf(() => M.addressLookupCost({ properties: -1 })), "E_BAD_PROPERTY_COUNT");
+});
+
+test("D11 nothing in the module still calls the lookup a pre-signature cost", () => {
+  /* Phase 147. The name was the claim, so the name is what is tested. */
+  assert.equal(M.preSignatureCost, undefined);
+  const keysOf = o => JSON.stringify(Object.keys(o));
+  const opts = { properties: 2, homedataCostPerLookup: 3 };
+  for (const o of [M.loadedCost("dental", "DESK_ONLY", 100, opts),
+                   M.breakEvenAllowances("dental", "DESK_ONLY", 100, RATE, opts),
+                   M.costingForGate("dental", "SURVEYOR_VISIT", 120, opts)]) {
+    assert.ok(!/pre_signature/.test(keysOf(o)), keysOf(o));
+  }
+  assert.equal(M.costingForGate("dental", "SURVEYOR_VISIT", 120, opts)
+                 .loaded_including_address_lookup,
+               M.costingForGate("dental", "SURVEYOR_VISIT", 120, {}).loaded + 6);
 });
 
 test("D10 the other unpriced parameters are named and empty too", () => {

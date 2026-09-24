@@ -398,6 +398,32 @@ test('T-HD2 the address lookup may not be reproduced outward, and writes only it
   assert.throws(() => record(r, { entity_id: 'J1', field_id: 'floor_area_m2', source_id: 'HOMEDATA_ADDRESS', retrieval: ret(), value: 1 }));
 });
 
+/* --- CIBSE plant lives (Phase 147, 24 September 2026) --------------- */
+
+test('T-CB1 the CIBSE licence holds every unpublished term as a refusal, not a default', () => {
+  const lic = LICENCES.find((l) => l.licence_id === 'CIBSE_KNOWLEDGE')!;
+  assert.ok(lic, 'the CIBSE licence is registered');
+  assert.equal(lic.cache_max_age_days, 0, 'null would assert "no limit", which CIBSE never published');
+  assert.equal(lic.legal_review_required, true);
+  assert.equal(lic.attribution_required, true);
+  assert.match(lic.attribution_text ?? '', /^NOT PUBLISHED/);
+  assert.match(lic.name, /sole use of the downloader/);
+});
+
+test('T-CB2 no channel is open, internal included: the only published grant is to one person', () => {
+  const lic = LICENCES.find((l) => l.licence_id === 'CIBSE_KNOWLEDGE')!;
+  for (const ch of ['client_report', 'accountant_report', 'hmrc_pack', 'internal'] as const) {
+    assert.equal(lic.redistribution[ch], false, `${ch} is open without CIBSE's permission`);
+  }
+});
+
+test('T-CB3 no source can mint a cell from CIBSE yet — the row is written with its loader', () => {
+  assert.equal(SOURCES.some((s) => s.licence_id === 'CIBSE_KNOWLEDGE'), false,
+    'a CIBSE source row would put an untiered, unswitched lookup on the research panel');
+  const r = reg();
+  assert.throws(() => record(r, { entity_id: 'J1', field_id: 'expected_life_years', source_id: 'CIBSE_PLANT_LIVES', retrieval: ret(), value: 20 }));
+});
+
 /* --- The planning endpoint (Phase 132, 14 September 2026) ---------- */
 
 test('T-PL1 the PLANNING endpoint is PlanIt on its www host', () => {

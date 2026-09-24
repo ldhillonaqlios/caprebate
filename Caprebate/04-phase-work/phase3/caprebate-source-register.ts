@@ -379,6 +379,72 @@ export const LICENCES: readonly Licence[] = [
       '/data/postcode says Scotland is covered. Confirm all of it with legal@homedata.co.uk on opening the account.',
   },
   {
+    /**
+     * CIBSE PLANT LIVES — the source nobody owned. Board item "CIBSE plant lives"; written 24 September 2026
+     * by Phase 147. The research is 04-phase-work/phase3/caprebate-cibse-plant-lives-source-register-row.md.
+     *
+     * WHAT IT WOULD FEED. CB_CIBSE_PLANT_LIVES in 04-phase-work/phase9/caprebate-cost-model.cjs: the expected
+     * life of each plant element, read by LEG-E5 (per-element depreciation) and by ATP-F-3 (the crosswalk
+     * completeness gate). THAT TABLE STAYS EMPTY AND BOTH GATES STAY OFF. This entry records the terms, not data.
+     *
+     * WHAT CIBSE PUBLISHES, read 24 September 2026 from its own pages as archived in June and July 2026 (the
+     * live site answered 503 and then "HTTP Error 500.30 - ASP.NET Core app failed to start" that morning):
+     *   - The tables are "Indicative Economic Life Expectancy (2026)", published June 2026: a zip holding
+     *     Guide M11 Appendix 11.A1 (economic life expectancy tables, PDF), Appendix 11.A2 (worked examples,
+     *     PDF) and an Excel tool. Standard rate FREE, member rate FREE. It supersedes the January 2020
+     *     supplement (Appendix 12.A1 of Guide M 2014), which NBS lists as withdrawn. Lives are "Reference
+     *     Service Life" in years, aligned to RICS NRM 3 and SFG20, and healthcare-specific assets appear
+     *     for the first time.
+     *   - The guide the tables belong to is "Guide M11 Life cycle (2023)", September 2023, 22 pages, ISBN
+     *     9781914543746: PDF £20.00 + VAT standard rate, FREE to members; book £25.00 + VAT, £12.50 + VAT
+     *     to members.
+     *   - The download notice: "supplied by CIBSE for the sole use of the person making the download".
+     *   - Knowledge FAQs: downloaded files "are for the use of the downloader only. They may not be
+     *     duplicated or circulated in any form for use by others, for re-sale or for any other purpose";
+     *     reproducing content "in a text for sale" is allowed "for a cost, and only with our permission",
+     *     via PLSclear.
+     *   - Website terms: CIBSE material is protected by the Copyright, Designs and Patents Act 1988 AND the
+     *     Copyright and Rights in Databases Regulations 1997; written requests go to the Head of Knowledge.
+     *
+     * WHAT IT DOES NOT PUBLISH, AND THIS ENTRY HOLDS AS A REFUSAL, NEVER A DEFAULT
+     *   - whether a report a client pays for is "a text for sale": treated as one, so every outward
+     *     channel is false;
+     *   - whether using a life in a calculation, without printing the table, is reproduction: treated as
+     *     reproduction;
+     *   - whether a table loaded into a system that several staff use is "circulated ... for use by
+     *     others": treated as circulation, so even INTERNAL is false until CIBSE says otherwise. This is
+     *     stricter than BCIS_COMMERCIAL on purpose: BCIS sells a subscription for business use, and CIBSE's
+     *     only published grant is to one person;
+     *   - the PLSclear price: quoted per request, not published;
+     *   - attribution wording: none published. `attribution_text` is a NOT PUBLISHED marker;
+     *   - how long a loaded edition may be relied on: none published. 0 days is OUR refusal, not theirs;
+     *   - the "CIBSE copyright" section of the Fair Use Policy page the terms point to: NOT READ — the live
+     *     site was down and the page is not archived.
+     *
+     * NO SOURCES ROW YET, ON PURPOSE. In this register every external row is a lookup that the research panel
+     * lists and a member of staff fires, and it must carry a tier and a switch. This is a reference table
+     * loaded once, under a licence we do not hold. Its SOURCES row is written with its loader, if the table
+     * is ever loaded; until then no cell can be minted from it at all.
+     */
+    licence_id: 'CIBSE_KNOWLEDGE',
+    name: 'CIBSE Knowledge Portal terms — download for the sole use of the downloader; NO BUSINESS OR RESALE LICENCE PUBLISHED',
+    publisher_of_licence: 'Chartered Institution of Building Services Engineers (CIBSE)',
+    attribution_required: true,
+    attribution_text:
+      'NOT PUBLISHED — CIBSE publishes no attribution line for its life expectancy tables. ' +
+      'Nothing from this source may appear in a report until CIBSE grants permission and states one.',
+    redistribution: { client_report: false, accountant_report: false, hmrc_pack: false, internal: false },
+    cache_max_age_days: 0,
+    legal_review_required: true,
+    notes:
+      'Read 24 Sep 2026 (Phase 147) from CIBSE\'s own pages as archived 11 Jun, 15 Jun and 6-7 Jul 2026. The June 2026 ' +
+      'life tables are free to download; the Guide M11 PDF is £20 + VAT, free to members. The grant is to the person ' +
+      'who downloads, for their own use; reproduction in a text for sale needs CIBSE\'s permission via PLSclear, at a ' +
+      'price not published. Every channel false, internal included, and 0 days, are our refusals, not CIBSE\'s terms. ' +
+      'A surveyor must first rule whether a whole-building obsolescence scale may be applied per plant element at all; ' +
+      'if not, per-element depreciation does not ship and these lives are not needed.',
+  },
+  {
     licence_id: 'CAPREBATE_OWN',
     name: 'Caprebate own work product',
     publisher_of_licence: 'Caprebate',

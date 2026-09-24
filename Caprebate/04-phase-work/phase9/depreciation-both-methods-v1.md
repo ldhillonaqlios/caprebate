@@ -211,7 +211,7 @@ judgement?** We suspect the latter and would rather be told.
 | Step | Who |
 |---|---|
 | VOA obsolescence scales cleared and retrieved | Solicitor/DPO |
-| CIBSE terms cleared — **and an item raised for them; none exists** | Solicitor/DPO |
+| CIBSE terms cleared — **an item now exists: "CIBSE plant lives" (24 Sep 2026, Phase 147). The terms are read and held as refusals in the licence CIBSE_KNOWLEDGE; the download and permission request are Word question 213** | Solicitor/DPO |
 | **Whether PAFOAS may be applied per plant element at all** (Q-DEP-1) | **Surveyor** — ask this first; it may retire the other rows |
 | **Which method, per element or whole building** (Q-DEP-2) | **Surveyor** — new row; this choice did not exist before |
 | The crosswalk, `assertCrosswalkComplete`, the monotonicity and ordinal checks | Developer |
