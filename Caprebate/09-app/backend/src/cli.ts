@@ -9,6 +9,7 @@
  *   node src/cli.ts send-outbox       send every email saved while sending was on (EMAIL_SENDING; off, so none)
  *   node src/cli.ts read-mailbox      read new replies to contact@caprebate.co.uk, read-only (INBOUND_EMAIL; off, so none)
  *   node src/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
+ *   node src/cli.ts sweep-land-boundaries   delete every kept land boundary file past the licence's 35 days
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests
  */
@@ -26,6 +27,7 @@ import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, smtpLoginFromKeyFi
 import { INBOUND_EMAIL, imapLoginFromKeyFile, imapMailbox } from './stubs/email-inbound.ts';
 import { readMailbox } from './web/inbound-email.ts';
 import { MESSAGE_RETENTION, sweepMessages } from './web/message-retention.ts';
+import { inspireStoreFromEnv, INSPIRE_KEEP_DAYS } from './connectors/inspire-store.ts';
 import { randomUUID } from 'node:crypto';
 import { liveTransport } from './connectors/http.ts';
 import { smokeOne, SMOKE_SOURCES, SMOKE_DEFAULTS } from './connectors/smoke.ts';
@@ -106,6 +108,20 @@ async function main(): Promise<number> {
     } finally {
       db.close();
     }
+  }
+
+  if (cmd === 'sweep-land-boundaries') {
+    /* PHASE 151a. A kept council file is deleted when it is next asked for after its time; this deletes the ones
+       nobody asks for again, so none outlives the licence's days. With no store set up, nothing is kept and nothing is
+       deleted. A daily scheduled run of this one line is all the hosting needs to add. */
+    const store = inspireStoreFromEnv();
+    if (store === null) {
+      console.log('No land boundary store is set up (CAPREBATE_INSPIRE_STORE_DIR), so no file is kept and none was deleted.');
+      return 0;
+    }
+    const n = store.sweep(new Date().toISOString());
+    console.log(`${n} land boundary file${n === 1 ? '' : 's'} deleted because ${n === 1 ? 'it was' : 'they were'} kept longer than ${INSPIRE_KEEP_DAYS} days.`);
+    return 0;
   }
 
   if (cmd === 'send-outbox') {
@@ -201,7 +217,7 @@ async function main(): Promise<number> {
     }
   }
 
-  console.error('usage: node src/cli.ts <migrate|seed|verify-audit|sweep-originals|sweep-messages|send-outbox|read-mailbox|smoke>');
+  console.error('usage: node src/cli.ts <migrate|seed|verify-audit|sweep-originals|sweep-messages|sweep-land-boundaries|send-outbox|read-mailbox|smoke>');
   return 1;
 }
 

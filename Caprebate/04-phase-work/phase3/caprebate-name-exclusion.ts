@@ -398,7 +398,8 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     publisher: 'Homedata (supplier); underlying data Ordnance Survey AddressBase and Royal Mail PAF',
     datasetLabel: 'Paid address lookup — identifier, address line, postcode, coordinates',
     riskLevel: 'standard',
-    keptFields: ['uprn', 'address_line', 'postcode', 'latitude', 'longitude'],
+    // Phase 151a: easting and northing, the supplier's British National Grid point for the same building.
+    keptFields: ['uprn', 'address_line', 'postcode', 'latitude', 'longitude', 'easting', 'northing'],
     excludedNameFields: ['*_name', 'occupier_*', 'resident_*', 'owner_*', 'proprietor_*'],
     nameExceptions: [],
     note:
@@ -407,6 +408,30 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'point on the ground identifies a building, which is what this register is about. USRN, TOID and UDPRN are ' +
       'excluded in the source register by an explicit decision rather than by omission — nothing reads one, and an ' +
       'identifier held for no purpose is data held for no purpose.',
+  },
+  {
+    /*
+     * PHASE 151a, 24 September 2026 — HM LAND REGISTRY'S LAND BOUNDARY (INSPIRE Index Polygons). Without an entry the
+     * one door would refuse the site area with E_UNKNOWN_SOURCE, so the entry comes with the function that writes it
+     * (09-app/backend/src/connectors/site-area.ts), as HOMEDATA_ADDRESS's did.
+     *
+     * NOTHING PERSONAL CAN ARRIVE. The polygons carry no title number and no name — only an INSPIRE ID and a shape
+     * (SUPPLIER_DOCS, HMLR_INSPIRE). What is kept is the area worked out from the shape, its confidence grade, and the
+     * polygon's identifier. The shape itself, a map of it and its coordinates are never kept: the boundary module's
+     * CURRENT_LICENCE_PERMISSION keeps them out of every report, and nothing writes them here.
+     */
+    sourceId: 'HMLR_INSPIRE',
+    subitem: 15,
+    publisher: 'HM Land Registry',
+    datasetLabel: 'INSPIRE Index Polygons — the site area worked out from a land boundary',
+    riskLevel: 'standard',
+    keptFields: ['site_area_m2', 'site_area_m2_grade', 'inspire_id'],
+    excludedNameFields: ['*_name', 'proprietor_*', 'owner_*', 'title_number'],
+    nameExceptions: [],
+    note:
+      'An area, its grade and a polygon identifier, and nothing about anybody. HM Land Registry\'s INSPIRE polygons ' +
+      'carry no title number and no proprietor. The title number is excluded as well as the names because it leads ' +
+      'straight to the register\'s proprietor, and nothing here needs it.',
   },
   {
     // Subitem 13. Added by Phase 41 (board item 12928074627). Subitem 12 is

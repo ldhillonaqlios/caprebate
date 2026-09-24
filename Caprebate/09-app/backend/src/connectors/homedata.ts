@@ -178,6 +178,14 @@ export function addressFields(a: Record<string, unknown>, uprn: string, fallback
   const lat = num(a['latitude'] ?? a['lat']);
   const lon = num(a['longitude'] ?? a['lng'] ?? a['lon']);
   if (lat !== null && lon !== null && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) { f.latitude = lat; f.longitude = lon; }
+  /* PHASE 151a: THE SAME POINT IN BRITISH NATIONAL GRID, where the answer gives it. Homedata's schema publishes `easting` and
+     `northing` (property_lite); the land boundary lookup (src/connectors/site-area.ts) needs exactly that, and Homedata
+     labels its latitude and longitude WGS84, which Ordnance Survey's exact conversion does not take. Kept only as a
+     pair, and only inside Great Britain's national grid; whether the address slug carries them, the first allowed
+     lookup will show. */
+  const e = num(a['easting']);
+  const n = num(a['northing']);
+  if (e !== null && n !== null && e >= 0 && n >= 0 && e <= 700_000 && n <= 1_300_000) { f.easting = e; f.northing = n; }
   return f;
 }
 

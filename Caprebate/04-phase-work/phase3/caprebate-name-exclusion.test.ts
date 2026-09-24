@@ -26,7 +26,8 @@ test('R1 the eleven ORIGINAL register sources are still one per subitem 1-11, no
   // have written a field. The eleven original entries are untouched, so this
   // test keeps its shape and excludes the later additions by name rather than
   // widening its expected list, which is how it stays a test of the eleven.
-  const later = ['CLIENT_DOC', 'HOMEDATA_ADDRESS'];
+  // PHASE 151a, 24 September 2026 adds HMLR_INSPIRE at subitem 15 the same way.
+  const later = ['CLIENT_DOC', 'HOMEDATA_ADDRESS', 'HMLR_INSPIRE'];
   const subitems = NAME_EXCLUSION_POLICY
     .filter((p) => !later.includes(p.sourceId))
     .map((p) => p.subitem)
@@ -43,7 +44,12 @@ test('R1b CLIENT_DOC is still the only non-register source; the paid address loo
   const homedata = NAME_EXCLUSION_POLICY.filter((p) => p.sourceId === 'HOMEDATA_ADDRESS');
   assert.equal(homedata.length, 1);
   assert.equal(homedata[0].subitem, 14);
-  assert.equal(NAME_EXCLUSION_POLICY.length, 13);
+  // Phase 151a: fourteen. The land boundary is a register source too, at subitem 15, and keeps no name.
+  const inspire = NAME_EXCLUSION_POLICY.filter((p) => p.sourceId === 'HMLR_INSPIRE');
+  assert.equal(inspire.length, 1);
+  assert.equal(inspire[0].subitem, 15);
+  assert.deepEqual(inspire[0].nameExceptions, []);
+  assert.equal(NAME_EXCLUSION_POLICY.length, 14);
   // Every subitem is still unique: a number is never reused.
   const numbers = NAME_EXCLUSION_POLICY.map((p) => p.subitem);
   assert.equal(new Set(numbers).size, numbers.length);

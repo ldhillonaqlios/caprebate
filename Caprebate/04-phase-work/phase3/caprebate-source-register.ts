@@ -671,7 +671,8 @@ export const SOURCES: readonly Source[] = [
     licence_id: 'HMLR_INSPIRE',
     default_prov: 'API',
     max_grade: 'B',
-    permitted_fields: ['site_area_m2', 'inspire_id'],
+    /* Phase 151a: site_area_m2_grade — the area's confidence grade, stored beside it, never better than max_grade. */
+    permitted_fields: ['site_area_m2', 'site_area_m2_grade', 'inspire_id'],
     excluded_fields: ['*_name', 'title_number'],
     personal_name_exceptions: NO_NAMES,
     endpoint: 'https://use-land-property-data.service.gov.uk',
@@ -863,7 +864,10 @@ export const SOURCES: readonly Source[] = [
      * held for no purpose, and the supplier publishes no permission to hold its identifiers at all. If something
      * later needs one, it is added here with the reason, which is the point of naming them now.
      */
-    permitted_fields: ['uprn', 'address_line', 'postcode', 'latitude', 'longitude'],
+    /* Phase 151a: easting and northing, published in Homedata's own schema (property_lite, read 24 September 2026). They
+       are the British National Grid point the land boundary lookup needs, with no conversion — Homedata labels its
+       latitude and longitude WGS84, which the exact conversion (OSTN15, from ETRS89) does not take. */
+    permitted_fields: ['uprn', 'address_line', 'postcode', 'latitude', 'longitude', 'easting', 'northing'],
     excluded_fields: ['*_name', 'occupier_*', 'resident_*', 'owner_*', 'proprietor_*', 'usrn', 'toid', 'udprn'],
     personal_name_exceptions: NO_NAMES,
     /* PHASE 146d: CORRECTED FROM https://api.homedata.co.uk/api/address/ ON A LIVE RESPONSE, 23 September 2026. The
@@ -1174,6 +1178,9 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'https://use-land-property-data.service.gov.uk/datasets/inspire/download',
       'https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance',
       'https://use-land-property-data.service.gov.uk/api-information',
+      /* Phase 151a, the same day: the two lists the council table is derived from, and Ordnance Survey's conversion. */
+      'https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/LAD_APR_2025_UK_NC_v2/FeatureServer/0',
+      'https://docs.os.uk/more-than-maps/a-guide-to-coordinate-systems-in-great-britain/from-one-coordinate-system-to-another-geodetic-transformations/national-grid-transformation-ostn15-etrs89-osgb36',
     ],
     read_on: '2026-09-24',
     findings:
@@ -1191,7 +1198,14 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'the .zip links do the same, or redirect to another host, was NOT checked, because that means requesting a ' +
       'file. Our transport refuses every redirect, so if they do, the first download fails and says so rather ' +
       'than following it. The reader in src/connectors/inspire.ts is therefore tolerant of the element names and ' +
-      'strict about everything else, and THE FIRST ALLOWED DOWNLOAD MUST CONFIRM THE SHAPE.',
+      'strict about everything else, and THE FIRST ALLOWED DOWNLOAD MUST CONFIRM THE SHAPE. ' +
+      'PHASE 151a: ONS\'s "Local Authority Districts (April 2025) Names and Codes in the UK" was read from the ' +
+      'feature service above (361 rows, 318 of them England and Wales, the same count as HM Land Registry\'s ' +
+      'files; no 2026 names-and-codes list was on the portal). 310 councils pair with a file by name alone; the ' +
+      'eight left over are paired by hand in src/connectors/inspire-councils.ts with the reason (Hull, Rutland, ' +
+      'Durham, the City of London, St Albans, Newcastle, North Yorkshire, King\'s Lynn). Ordnance Survey\'s guide: ' +
+      'OSTN15\'s shifts "cover Britain at a resolution of one kilometre" and are applied "by a bilinear ' +
+      'interpolation"; a Helmert-type conversion is good to "only about 3 metres". No OSTN15 file was downloaded.',
   },
   {
     source_id: 'POSTCODES_IO',

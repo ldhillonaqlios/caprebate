@@ -4,7 +4,8 @@
  *
  * WHAT IT IS. The real `BoundaryFetcher` that 04-phase-work/phase9/caprebate-boundary-import.ts has waited for since
  * Phase 78. That module's DEFAULT_FETCHER always throws, and it still does: this fetcher is used only when a caller
- * injects it into `fetchAndImportBoundary`, and nothing under src/ does yet. Given a council's file and a British
+ * injects it into `fetchAndImportBoundary`, and since Phase 151a exactly one does — src/connectors/site-area.ts, which
+ * works out a property's site area from it, switched off by the same word. Given a council's file and a British
  * National Grid point for the property, it:
  *
  *   1. refuses at once while BOUNDARY_FETCHING_SWITCHED_ON is false — before any call, any audit row, anything;
@@ -47,6 +48,7 @@ import {
 } from '../../../../04-phase-work/phase9/caprebate-boundary-import.ts';
 import { callOutside, type CallDeps, type GateSnapshot } from './http.ts';
 import { INSPIRE_AUTHORITY_FILES } from './inspire-authorities.ts';
+import { inspireReleaseOf, type InspireFileStore } from './inspire-store.ts';
 
 export const INSPIRE_SERVICE_ID = 'HMLR_INSPIRE';
 /** The published link, as a template. The audit row records this, never the council's name. */
@@ -68,6 +70,12 @@ export type InspireFetchInput = {
   readonly claim_id: string | null;
   /** The gates as they stood, for the audit row. `switched_on` is filled in here, from the switch. */
   readonly gate: Omit<GateSnapshot, 'switched_on'>;
+  /**
+   * Phase 151a. Where a council's file is kept for the month (src/connectors/inspire-store.ts). Given, a kept copy of
+   * this council's current release is read instead of downloading again, and a fresh download is kept. Absent or
+   * null, every lookup downloads. Consulted only after every refusal above has passed, so it cannot fire anything.
+   */
+  readonly file_store?: InspireFileStore | null;
   /**
    * TESTS ONLY. Absent, the fetcher reads BOUNDARY_FETCHING_SWITCHED_ON, which is false. A test in
    * test/phase150.test.ts fails if any file under src/ other than this one names the fetcher, so no caller can pass it.
@@ -112,17 +120,27 @@ export function inspireBoundaryFetcher(input: InspireFetchInput): BoundaryFetche
       refuse('E_INVALID_POINT', 'The property has no usable easting and northing, so there is nothing to look for. Nothing was sent.');
     }
 
-    const result = await callOutside(input.deps, {
-      service_id: INSPIRE_SERVICE_ID, endpoint: INSPIRE_ENDPOINT, params: { file },
-      headers: { accept: 'application/zip, application/octet-stream' }, as_bytes: true,
-      actor_id: input.actor_id, actor_role: input.actor_role ?? null, claim_id: input.claim_id,
-      gate: { ...input.gate, switched_on: true },
-    });
-    if (result.outcome !== 'OK' || result.bytes === undefined) {
-      refuse('E_FETCH_FAILED', `The land boundary file was not downloaded: ${result.why}.`, { outcome: result.outcome, status: result.status });
+    /* PHASE 151a: ONE FILE A COUNCIL A MONTH. A kept copy of this council's current release serves every property in
+       it; only a miss downloads, and a download that opens is kept. A kept file that will not open is dropped. */
+    const now = input.deps.now();
+    const release = inspireReleaseOf(now);
+    let bytes = input.file_store?.get(file, release, now) ?? null;
+    const fromStore = bytes !== null;
+    if (bytes === null) {
+      const result = await callOutside(input.deps, {
+        service_id: INSPIRE_SERVICE_ID, endpoint: INSPIRE_ENDPOINT, params: { file },
+        headers: { accept: 'application/zip, application/octet-stream' }, as_bytes: true,
+        actor_id: input.actor_id, actor_role: input.actor_role ?? null, claim_id: input.claim_id,
+        gate: { ...input.gate, switched_on: true },
+      });
+      if (result.outcome !== 'OK' || result.bytes === undefined) {
+        refuse('E_FETCH_FAILED', `The land boundary file was not downloaded: ${result.why}.`, { outcome: result.outcome, status: result.status });
+      }
+      bytes = result.bytes as Buffer;
     }
 
-    const gml = unzipOneGml(result.bytes as Buffer);
+    const gml = unzipOneGml(bytes);
+    if (!fromStore) input.file_store?.put(file, release, bytes, now);
     const read = readInspireGml(gml, point as { easting: number; northing: number });
     if (read.features === 0) refuse('E_FILE_UNREADABLE', 'The land boundary file holds no polygon we could find.');
     if (read.unreadable > 0) {

@@ -81,9 +81,14 @@ describe('Phase 150: the land boundary fetcher cannot fire while the switch is o
   });
 
   test('no file under src/ except the fetcher\'s own names it, so nothing can pass the tests-only switch', () => {
+    /* PHASE 151a: ONE CALLER, BY NAME. src/connectors/site-area.ts injects the fetcher into fetchAndImportBoundary —
+       that is its job — and it may pass the switch on only as its own tests-only input, never as a literal true. */
     const naming = walk(SRC).filter((p) => p.endsWith('.ts') && !p.endsWith('/connectors/inspire.ts'))
       .filter((p) => /inspireBoundaryFetcher|switched_on\s*:\s*true[\s\S]{0,200}local_authority_file/.test(readFileSync(p, 'utf8')));
-    assert.deepEqual(naming, []);
+    assert.deepEqual(naming.map((p) => p.slice(SRC.length + 1)), ['connectors/site-area.ts']);
+    const caller = readFileSync(join(SRC, 'connectors', 'site-area.ts'), 'utf8');
+    assert.doesNotMatch(caller, /switched_on\s*:\s*true/, 'the site area function switches the fetcher on itself');
+    assert.match(caller, /input\.switched_on \?\? BOUNDARY_FETCHING_SWITCHED_ON/, 'the site area function does not read the switch');
   });
 });
 

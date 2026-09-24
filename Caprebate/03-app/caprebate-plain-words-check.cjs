@@ -403,7 +403,10 @@ const EXTRA = [path.join(WEB, '..', 'seed.ts'),
   path.join(WEB, '..', 'connectors', 'claude.ts'),
   /* Phase 150: the land boundary fetcher's refusals. Nothing shows them yet, but they are written for a person
      (why the site area was not worked out), so they are held to the same grade before a screen is wired to them. */
-  path.join(WEB, '..', 'connectors', 'inspire.ts')];
+  path.join(WEB, '..', 'connectors', 'inspire.ts'),
+  /* Phase 151a: the site area function and the two things it refuses on - a council with no file, a point that
+     cannot be converted exactly. Nothing shows them yet; they are written for a person all the same. */
+  ...['site-area.ts', 'inspire-councils.ts', 'ostn15.ts'].map((f) => path.join(WEB, '..', 'connectors', f))];
 
 function screenFiles(suffix) {
   const all = fs.readdirSync(WEB).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f)).sort().map((f) => path.join(WEB, f)).concat(EXTRA);
