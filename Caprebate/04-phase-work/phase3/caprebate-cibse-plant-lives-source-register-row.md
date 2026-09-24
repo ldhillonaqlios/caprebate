@@ -50,7 +50,18 @@ Each of these is held as **NOT PUBLISHED**. None has been guessed.
 4. **What PLSclear charges.** It quotes each request. No price is published.
 5. **Attribution wording.** None is published.
 6. **How long a loaded edition may be relied on.** None is published. We hold it as 0 days, which is our refusal, not their figure.
-7. **The "CIBSE copyright" section of the Fair Use Policy page**, which the terms point to. **Not read**: the live site was down and the page is not archived. It may answer 1 to 3. It has to be read before anything is bought or asked.
+7. **The "CIBSE copyright" section of the Fair Use Policy page**, which the terms point to. **Read on 24 September 2026 by the sweep** (see below). It confirms our readings of 1 to 3 and loosens none of them.
+
+## What the Fair Use Policy says (added 24 September 2026)
+
+The page is `cibse.org/knowledge/about-knowledge-portal/fair-use-policy`. **It is no longer on CIBSE's live site**: it is not among the 3,703 pages in CIBSE's sitemap, and the old address gives 404. CIBSE's live terms and conditions still point to it. So it was read as the Internet Archive last captured it, on **29 May 2022**. It is CIBSE's own wording, but it is not a page CIBSE publishes today, and CIBSE's reply to a permission request governs over it.
+
+- Downloads are for members' "personal use", and "only for the benefit of the person entitled".
+- Copying up to 10% of a work (or one chapter) is allowed, "BUT ONLY for your personal use".
+- Not allowed: distributing CIBSE content to third parties "in any format or for any purpose without express permission", and "use of CIBSE documents for re-use, re-sale or other gain, promotion or benefit to a third party".
+- Requests for other use go to CIBSE's Knowledge Manager.
+
+**What it settles.** (1) A report a client pays for is at least "other gain" and a "benefit to a third party", so our reading that it needs permission stands. (2) A life used in a paid calculation is re-use for gain whether or not the table is printed, so our reading stands. (3) Several staff using one download is distribution beyond "the person entitled", so internal use stays refused. **Nothing is loosened.** Items 4 to 6 are still not published.
 
 ## The register row
 
@@ -77,7 +88,7 @@ Written into `caprebate-source-register.ts` as the licence `CIBSE_KNOWLEDGE`, an
 
 1. **The surveyor's ruling**: may a whole-building obsolescence scale be applied per plant element at all? It is in FOR THE SURVEYOR. **Ask it first.** A "no" ends this, and nobody needs to download or ask anything.
 2. **Lakhbir's decision**: whether to download the tables and ask CIBSE for permission. It is the Word question above, with the price and the licence in it.
-3. **The solicitor or DPO**: to read CIBSE's reply, and the Fair Use Policy page, against the three points CIBSE does not publish.
+3. **The solicitor or DPO**: to read CIBSE's reply against the three points above. The Fair Use Policy was read on 24 September 2026 and confirmed our readings; CIBSE's reply governs over it.
 
 ### Draft permission request to CIBSE — NOT SENT
 

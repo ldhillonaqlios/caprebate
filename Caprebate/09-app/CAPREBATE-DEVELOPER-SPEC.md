@@ -251,7 +251,7 @@ every outcome names a row that exists afterwards or a refusal that happened.
 - **STUBBED** There is no signature provider. *Sign off* here means the surveyor **commits** figures with a method note, which is recorded, hashed and timestamped — and which is the thing the quarantine actually turns on. It is not an executed document and the workspace does not pretend it is.
 - **The blank-field control — always on, Phase 132.** One field in ten on each job is shown **with nothing in it**: no platform proposal and not the surveyor's own library figure either, with a line saying the gap is deliberate. `isBlankControl` in `04-phase-work/phase3/caprebate-surveyor-crm.ts` picks the field from the job and field ids, so the arm can be rebuilt from the job id. The figure is still the job's rate, in `surveyor_rate_events` with `blank_control` set; **on a commitment, on a CLEAN job, with the review box ticked**, it is also one row in `surveyor_control_observations`, which is never changed. An EXPOSED job writes no control row and the commitment goes ahead. It has no switch because it cannot be added later to jobs that were already shown a pre-fill.
 - **The "I looked at this field" box starts unticked — Phase 132.** Ticked by default, it recorded every field nobody touched as reviewed. A box left unticked and a posted "not sure" both read as not reviewed (N4).
-- **Test** `test/surveyor.test.ts` (42 assertions) and `tools/payload-proof.ts`.
+- **Test** `test/surveyor.test.ts` (count: `cd 09-app/backend && node --test test/surveyor.test.ts`) and `tools/payload-proof.ts`.
 
 ### UC-B8 · Everyone sets their own working times
 - **Flow** Staff set their own hours; ADMIN and SALES read everyone's because the calendar cannot offer a slot otherwise; ACCOUNTING and SURVEYING read only their own; CLIENT reads none.
@@ -1015,7 +1015,7 @@ upload and save documents ourselves within the portal."*
 - **Must never** Show a client a file staff did not choose to show; read an upload's body before asking `document.upload`;
   keep an original in the clear, or without a period, or past it; show an upload address; read what a file says onto a
   screen.
-- **Accept** `test/phase140.test.ts` (17 tests); `04-phase-work/phase140/proofs/phase140-mutations.log` breaks seven of
+- **Accept** `test/phase140.test.ts` (count: `node --test test/phase140.test.ts`); `04-phase-work/phase140/proofs/phase140-mutations.log` breaks seven of
   these rules one at a time and each turns a named test red.
 
 ### `B48` — free-typed email to a client, from contactus@caprebate.com — Phase 141
@@ -2583,7 +2583,7 @@ commitment** — no override, no support ticket, nobody to ask.
 > are right. **A build that releases the estimate early does not weaken a
 > control — it destroys the evidence.**
 
-**Owner** `04-phase-work/phase3/caprebate-anchor-quarantine.ts` (27 assertions).
+**Owner** `04-phase-work/phase3/caprebate-anchor-quarantine.ts` (count: `node --test caprebate-anchor-quarantine.test.ts` in phase3).
 **Assembler** `09-app/backend/src/payload.ts` — it builds the surveyor's object
 **forwards from what the quarantine released**, never by reading everything and
 deleting.
@@ -2673,8 +2673,8 @@ ways, because the failure is silent:
 > is the TTL, not the strip. **Nothing anywhere produces a redacted copy.** That
 > sentence was wrong in the codebase for two phases.
 
-**Owner** `04-phase-work/phase3/caprebate-client-doc-ingestion.ts` (90 assertions).
-**Consumer** `caprebate-upload-handler.ts` (39 assertions), called on the request
+**Owner** `04-phase-work/phase3/caprebate-client-doc-ingestion.ts` (count: `node --test caprebate-client-doc-ingestion.test.ts` in phase3).
+**Consumer** `caprebate-upload-handler.ts` (count: `node --test caprebate-upload-handler.test.ts`), called on the request
 path and not only at start-up.
 
 **Accept:** `assertContractCovered()` is green; the handler claims exactly as many

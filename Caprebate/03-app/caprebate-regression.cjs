@@ -2045,7 +2045,7 @@ if (startSuite("H", "Phase 8 — prepared patches, gated on the CTA")) {
 
          phase9/caprebate-cost-model.cjs
 
-     and its own 51 assertions in caprebate-cost-model.test.cjs, which are
+     and its own assertions in caprebate-cost-model.test.cjs, which are
      run separately with `node --test`. This suite does NOT duplicate them.
      It asserts the three things that are this harness's business:
 

@@ -418,8 +418,15 @@ export const LICENCES: readonly Licence[] = [
      *   - the PLSclear price: quoted per request, not published;
      *   - attribution wording: none published. `attribution_text` is a NOT PUBLISHED marker;
      *   - how long a loaded edition may be relied on: none published. 0 days is OUR refusal, not theirs;
-     *   - the "CIBSE copyright" section of the Fair Use Policy page the terms point to: NOT READ — the live
-     *     site was down and the page is not archived.
+     *   - the "CIBSE copyright" section of the Fair Use Policy page the terms point to: READ 24 Sep 2026 by
+     *     the sweep, as archived on 29 May 2022 (cibse.org/knowledge/about-knowledge-portal/fair-use-policy).
+     *     The live site no longer has the page - it is not in CIBSE's 3,703-page sitemap - though the live
+     *     terms still point to it. It CONFIRMS all three readings above and loosens none: downloads are "for
+     *     their personal use" and "only for the benefit of the person entitled"; copying up to 10% is allowed
+     *     "BUT ONLY for your personal use"; and "use of CIBSE documents for re-use, re-sale or other gain,
+     *     promotion or benefit to a third party" is a breach, as is distributing content "in any format or
+     *     for any purpose without express permission". A paid report is other gain; staff sharing one
+     *     download is distribution. Permission requests go to CIBSE's Knowledge Manager.
      *
      * NO SOURCES ROW YET, ON PURPOSE. In this register every external row is a lookup that the research panel
      * lists and a member of staff fires, and it must carry a tier and a switch. This is a reference table
@@ -442,7 +449,9 @@ export const LICENCES: readonly Licence[] = [
       'who downloads, for their own use; reproduction in a text for sale needs CIBSE\'s permission via PLSclear, at a ' +
       'price not published. Every channel false, internal included, and 0 days, are our refusals, not CIBSE\'s terms. ' +
       'A surveyor must first rule whether a whole-building obsolescence scale may be applied per plant element at all; ' +
-      'if not, per-element depreciation does not ship and these lives are not needed.',
+      'if not, per-element depreciation does not ship and these lives are not needed. ' +
+      'CIBSE\'s Fair Use Policy (archived 29 May 2022, read 24 Sep 2026; gone from the live site) confirms every ' +
+      'refusal: personal use only, and no re-use for other gain or for the benefit of a third party without permission.',
   },
   {
     licence_id: 'CAPREBATE_OWN',

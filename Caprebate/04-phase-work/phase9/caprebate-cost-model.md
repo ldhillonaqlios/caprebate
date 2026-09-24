@@ -14,7 +14,7 @@
 Files:
 
 - `phase9/caprebate-cost-model.cjs` — the model
-- `phase9/caprebate-cost-model.test.cjs` — 51 assertions, all passing
+- `phase9/caprebate-cost-model.test.cjs` — its own tests, fifty-one when this pass wrote it and one hundred and twenty-nine on 24 September 2026; count them with `node --test caprebate-cost-model.test.cjs` from inside phase9
 - Suite I in `caprebate-regression.cjs` — 9 assertions + 3 xfails
 
 Harness after this pass: **216 pass / 0 fail / 14 xfail / 0 xpass** (was 207 / 0 / 11).

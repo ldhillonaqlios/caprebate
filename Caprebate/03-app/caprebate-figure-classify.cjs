@@ -133,6 +133,13 @@ const PASS_RE = /(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d{2,5})\s*(?:pass(?:ing|es|ed)?
      7. Anything under minFigure (50 by default) - per-file counts by design.
      8. A figure in a table cell whose noun is only in the column header
         ("| Site harness | 1252 |").
+     9. A count for ONE FILE, whatever its size or shape - "`x.test.ts` (90
+        assertions)", "`y.test.cjs` - 51 assertions, all passing". The checker
+        derives only the five totals, so it has nothing to compare a per-file
+        figure with: at best it lands in NO MARKER and is never failed. The
+        24 September 2026 sweep found five such figures stale in the Developer
+        Spec and the cost model (42, 90, 39 and 51 twice) and replaced each
+        with the command that counts it. Nothing here will catch the next one.
    AND THE BETTER FIX IS NOT HERE: a table of evidence should carry the COMMAND,
    not the number, so there is no figure to go stale (COORDINATES says so). */
 
