@@ -12,7 +12,7 @@
        03-app/caprebate-notices-page.html
        03-app/caprebate-complaint-form.html
        00-START-HERE/"Caprebate — Blockers & What Unblocks Them.html"
-                                        (INTERNAL — FONT and COLOUR only)
+                                        (INTERNAL — FONT, COLOUR and MAIL only)
 
      FONT    no web font: no Google Fonts link, no @import, no Newsreader or
              Spline Sans; every font-family is the brand's heading or body stack
@@ -34,8 +34,13 @@
              byte for byte, as a data: URI at 100 px or wider
      DATES   (site) the display-edge script turns an ISO day into a UK date and
              leaves an id, an invalid date and an input's value alone
+     MAIL    (all four, Phase 151) no caprebate.com anywhere - the business is on
+             caprebate.co.uk; every address on the domain is one of the three
+             IONOS mailboxes (contact@, data.protection@, security@); the site
+             shows contact@, the notices page and the complaint form show
+             data.protection@. A .bak-phase151 copy of any of the four goes RED
 
-   THE FOURTH FILE IS INTERNAL, AND ONLY TWO CHECKS APPLY TO IT.
+   THE FOURTH FILE IS INTERNAL, AND ONLY THREE CHECKS APPLY TO IT (FONT, COLOUR, MAIL).
      The blockers page is written for Lakhbir and is read by nobody outside the
      business, so NAME DOES NOT APPLY - its title still says "Caprebate" and that
      is deliberate, not a miss. Nor do MINT, VOICE, LOGO or DATES: it carries no
@@ -123,6 +128,29 @@ function rgbOf(hex) {
   return [0, 2, 4].map((i) => parseInt(f.slice(i, i + 2), 16)).join(",");
 }
 
+/* The three mailboxes that exist (IONOS, confirmed by Lakhbir 24 Sep 2026), and what each is for.
+   contact@          general, the sending address, thank-you screens, complaints about the service
+   data.protection@  the data protection officer, the privacy notice, the notices page
+   security@         breach reports                                                            */
+const MAILBOXES = ["contact@caprebate.co.uk", "data.protection@caprebate.co.uk", "security@caprebate.co.uk"];
+/* The address each public file must show a reader. */
+const MAIL_REQUIRED = { site: "contact@caprebate.co.uk", notices: "data.protection@caprebate.co.uk", form: "data.protection@caprebate.co.uk" };
+
+/* MAIL1 the old domain anywhere in the file - text, a link, a canonical tag or a script;
+   MAIL2 an address on our domain that is not one of the three mailboxes;
+   MAIL3 a public file that does not show a reader the address it needs. Comments are not read. */
+function mailFindings(kind, h) {
+  const out = [];
+  const old = /caprebate\.com(?![a-z0-9])/i.exec(h);
+  if (old) out.push({ id: "MAIL1", msg: `the old domain caprebate.com: …${h.slice(Math.max(0, old.index - 50), old.index + 30).replace(/\s+/g, " ")}…` });
+  for (const m of h.matchAll(/[A-Za-z0-9._%+-]+@caprebate\.co\.uk/gi)) {
+    if (!MAILBOXES.includes(m[0].toLowerCase())) out.push({ id: "MAIL2", msg: `an address that is not one of our three mailboxes: ${m[0]}` });
+  }
+  const want = MAIL_REQUIRED[kind];
+  if (want && !h.toLowerCase().includes(want)) out.push({ id: "MAIL3", msg: `the ${kind} file does not show ${want}` });
+  return out;
+}
+
 /* ---------------------------------------------------------------- the checks, one list per file */
 function checkFile(kind, html, B) {
   const fails = [];
@@ -156,7 +184,12 @@ function checkFile(kind, html, B) {
     }
   }
 
-  /* The blockers page is internal: FONT and COLOUR are the whole of its contract.
+  /* MAIL - Phase 151, 24 Sep 2026 (Word answers 3, 13, 24, 44, 186 and 211). The business is on
+     caprebate.co.uk and its three mailboxes are on IONOS. It applies to all four files, the internal
+     one included: an old address on the blockers page sends Lakhbir to a mailbox nobody reads. */
+  for (const f of mailFindings(kind, h)) fail(f.id, f.msg);
+
+  /* The blockers page is internal: FONT, COLOUR and MAIL are the whole of its contract.
      NAME in particular does NOT apply - its title still carries the old spelling on purpose. */
   if (kind === "blockers") return fails;
 
@@ -272,6 +305,13 @@ function selfTest(B) {
        and its title still says "Caprebate". The same title on a public file is a NAME1. */
     ["blockers", blockers, "the blockers page keeping its old title without a NAME failure", null],
     ["notices", notices.replace("<title>", "<title>Caprebate "), "the same old spelling on a PUBLIC file", "NAME1"],
+    /* Part D (Phase 151). The domain and the three mailboxes. */
+    ["site", site.replace("</footer>", '<a href="https://caprebate.com/">caprebate.com</a></footer>'), "the old domain back on the site", "MAIL1"],
+    ["notices", notices.replace('rel="canonical" href="https://caprebate.co.uk/', 'rel="canonical" href="https://caprebate.com/'), "the old domain in the canonical tag", "MAIL1"],
+    ["blockers", blockers.replace("</body>", "<p>privacy@caprebate.com</p></body>"), "the old domain on the internal page", "MAIL1"],
+    ["site", site.replace("</footer>", "<p>hello@caprebate.co.uk</p></footer>"), "an address that is not one of the three", "MAIL2"],
+    ["site", site.split("contact@caprebate.co.uk").join("[an address]"), "the site without contact@", "MAIL3"],
+    ["notices", notices.split("data.protection@caprebate.co.uk").join("[NOT SET — dedicated data protection address]"), "the notices page without data.protection@", "MAIL3"],
   ];
   let bad = 0;
   console.log("\nbrand check — self-test\n");

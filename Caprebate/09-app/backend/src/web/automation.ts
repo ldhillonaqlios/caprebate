@@ -658,8 +658,13 @@ function informationRequests(d: AutomationDeps, actor: Actor | null, rule: RuleD
  *   OFF  the subject says what happened and ends with the reference: "A claim is now at Survey (CR-2026-0004)".
  *   ON   the subject leads with the company: "Dunmarrow Medical Practice Limited — a claim is now at Survey (CR-2026-0004)".
  * Turning it on is this one line. test/phase134.test.ts proves both readings.
+ *
+ * PHASE 151, 24 September 2026: ANSWERED AND ON. Lakhbir, Word answer 71 (closed that day): yes, staff emails name the
+ * client company in the subject. Nothing is sent while EMAIL_SENDING is off, so today it changes the words of what is
+ * saved to the outbox and nothing else. It applies to emails to OUR STAFF only: an alert to a client never carries it
+ * (src/web/messages.ts).
  */
-export const NOTICE_SUBJECT_LEADS_WITH_COMPANY = false;
+export const NOTICE_SUBJECT_LEADS_WITH_COMPANY = true;
 
 /** The two readings of the switch, as one pure function: the company in front, or the words as they are. */
 export function noticeSubject(what: string, company: string | null): string {

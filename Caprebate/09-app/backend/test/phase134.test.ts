@@ -325,8 +325,8 @@ describe('EMAIL SUBJECTS lead with the company', () => {
       '{{organisation}} — the next step on your claim');
   });
 
-  test('a staff notice: built both ways, and OFF until Lakhbir answers — the reference ends it, and no company is named', () => {
-    assert.equal(NOTICE_SUBJECT_LEADS_WITH_COMPANY, false, 'the switch was turned on without an answer in CAPREBATE QUESTIONS');
+  test('a staff notice: built both ways, and ON since Lakhbir answered (Word answer 71, Phase 151) — the company leads the subject', () => {
+    assert.equal(NOTICE_SUBJECT_LEADS_WITH_COMPANY, true, 'Lakhbir answered yes on 24 September 2026: staff emails name the company');
     assert.equal(noticeSubject('A claim is now at Survey (CR-2026-0004)', null), 'A claim is now at Survey (CR-2026-0004)');
     assert.equal(noticeSubject('A claim is now at Survey (CR-2026-0004)', 'Dunmarrow Medical Practice Limited'),
       'Dunmarrow Medical Practice Limited — a claim is now at Survey (CR-2026-0004)');

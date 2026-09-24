@@ -552,25 +552,30 @@ describe('CONSENT — one history per contact, share-with-accountant folded in a
     } finally { a.close(); }
   });
 
-  test('a client withdraws in the portal and the next notice is not queued; giving is switched off; never asked stays no row and offers nothing', async () => {
+  test('a client withdraws in the portal and the next notice is not queued; giving off is refused; never asked stays no row — and giving ships ON since Word answer 168', async () => {
     const a = await app();
     try {
       const idep = { db: a.db, audit: a.audit, now: a.now, newId: randomUUID };
       const { lead, biz, claim } = referredClaim(a);
       const client = actor('CLIENT', clientUser(a, biz), biz);
+      // Phase 151: Lakhbir answered — ask the client's permission from their portal. The switch ships on; the off branch
+      // below is still proved, by passing the switch off.
+      assert.equal(I.CLIENT_SHARE_GIVE.enabled, true);
+      assert.equal(I.clientShareChoices(a.db, client, biz)[0]?.can_give, true, 'giving from the portal is on');
+      const OFF = { enabled: false };
       // never asked
-      const never = I.clientShareChoices(a.db, client, biz);
+      const never = I.clientShareChoices(a.db, client, biz, OFF);
       assert.equal(never[0]?.state, 'NEVER_ASKED');
       assert.equal(never[0]?.can_withdraw, false);
       assert.equal(never[0]?.can_give, false, 'giving ships off');
-      assert.equal(I.recordShareConsentByClient(idep, client, biz, { introducer_id: never[0]?.introducer_id ?? '', decision: 'WITHDRAWN', wording_version: I.CURRENT_SHARE_WORDING }).ok, false);
-      assert.equal(I.recordShareConsentByClient(idep, client, biz, { introducer_id: never[0]?.introducer_id ?? '', decision: 'GIVEN', wording_version: I.CURRENT_SHARE_WORDING }).ok, false, 'switched off');
+      assert.equal(I.recordShareConsentByClient(idep, client, biz, { introducer_id: never[0]?.introducer_id ?? '', decision: 'WITHDRAWN', wording_version: I.CURRENT_SHARE_WORDING }, OFF).ok, false);
+      assert.equal(I.recordShareConsentByClient(idep, client, biz, { introducer_id: never[0]?.introducer_id ?? '', decision: 'GIVEN', wording_version: I.CURRENT_SHARE_WORDING }, OFF).ok, false, 'switched off');
       assert.equal(a.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM introducer_share_consents WHERE route = 'CLIENT_PORTAL'")?.n, 0);
 
       ok(I.recordShareConsent(idep, SALES, lead, { decision: 'GIVEN', wording_version: I.CURRENT_SHARE_WORDING }));
-      const yes = I.clientShareChoices(a.db, client, biz)[0];
+      const yes = I.clientShareChoices(a.db, client, biz, OFF)[0];
       assert.equal(yes?.can_withdraw, true);
-      ok(I.recordShareConsentByClient(idep, client, biz, { introducer_id: yes?.introducer_id ?? '', decision: 'WITHDRAWN', wording_version: I.CURRENT_SHARE_WORDING }));
+      ok(I.recordShareConsentByClient(idep, client, biz, { introducer_id: yes?.introducer_id ?? '', decision: 'WITHDRAWN', wording_version: I.CURRENT_SHARE_WORDING }, OFF));
       assert.equal(engage(a, claim, biz).ok, true);
       const engaged = a.db.all<{ outcome: string; reason: string | null }>("SELECT outcome, reason FROM introducer_notices WHERE lead_id = ? AND notice = 'ENGAGED'", [lead]);
       assert.deepEqual(engaged.map((n) => [n.outcome, n.reason]), [['NOT_QUEUED', 'NO_OPT_IN']], 'the withdrawal stopped the next notice');

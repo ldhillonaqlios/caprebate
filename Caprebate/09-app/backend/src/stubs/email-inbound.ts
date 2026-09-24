@@ -1,15 +1,15 @@
 /**
- * INBOUND_EMAIL — READING REPLIES TO contactus@caprebate.com. BUILT, AND SWITCHED OFF. Phase 142, 22 September 2026.
+ * INBOUND_EMAIL — READING REPLIES TO contact@caprebate.co.uk. BUILT, AND SWITCHED OFF. Phase 142, 22 September 2026.
  *
- * Phase 141 wrote the design into the Developer Spec (B48, "Where replies to contactus@ will land"); this builds it.
+ * Phase 141 wrote the design into the Developer Spec (B48, "Where replies to contact@ will land"); this builds it.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WHY IT IS OFF
  *
- * There is no mailbox to read. contactus@caprebate.com has to exist first, with its email security records — a board item
- * for Lakhbir, "Create the contactus@caprebate.com mailbox and check its email security records" — and which service
+ * There is no mailbox to read. contact@caprebate.co.uk has to exist first, with its email security records — a board item
+ * for Lakhbir, "Create the contact@caprebate.co.uk mailbox and check its email security records" — and which service
  * hosts it is the same question Phase 141 put to him: "Which email service should send our emails from
- * contactus@caprebate.com?". The recommendation there is IONOS, the host the privacy notice already names, so this reader
+ * contact@caprebate.co.uk?". The recommendation there is IONOS, the host the privacy notice already names, so this reader
  * speaks IMAP, which IONOS offers. OFF IS EXACTLY TODAY: `readMailbox` returns OFF without opening a connection.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ export type InboundEmail = {
   readonly enabled: boolean;
   /** The mailbox's protocol, by the id of its reader. Null until the provider is chosen. */
   readonly provider: 'IMAP' | null;
-  /** contactus@caprebate.com exists, and SPF, DKIM and DMARC are set on caprebate.com. */
+  /** contact@caprebate.co.uk exists, and SPF, DKIM and DMARC are set on caprebate.co.uk. */
   readonly mailbox_ready: boolean;
   readonly question: string;
 };
@@ -67,8 +67,8 @@ export function imapLoginFromKeyFile(store: SecretStore = processSecrets()): Ima
 /** What is still missing before replies can be read in — each in plain words. Empty means it is on. */
 export function readingMissing(cfg: InboundEmail, login: ImapLogin | null): string[] {
   const out: string[] = [];
-  if (cfg.provider === null) out.push('Choose the email service that holds the contactus@caprebate.com mailbox.');
-  if (cfg.mailbox_ready !== true) out.push('Set up the contactus@caprebate.com mailbox and its email security records.');
+  if (cfg.provider === null) out.push('Choose the email service that holds the contact@caprebate.co.uk mailbox.');
+  if (cfg.mailbox_ready !== true) out.push('Say who reads contact@caprebate.co.uk, and send one test email from it.');
   if (cfg.provider !== null && login === null) out.push('Add the mailbox’s login to the server.');
   if (cfg.enabled !== true) out.push('Then switch reading replies on.');
   return out;
@@ -204,7 +204,7 @@ export function parseEmail(raw: Uint8Array): ParsedEmail {
 
 /**
  * A BOUNCE THAT ARRIVES LATER. When a server accepts an email and then cannot deliver it, it sends a delivery report
- * back to contactus@ (RFC 3464: multipart/report, report-type=delivery-status). It is not a reply, and it is never
+ * back to contact@ (RFC 3464: multipart/report, report-type=delivery-status). It is not a reply, and it is never
  * filed on a company's chat. What is read: whether delivery FAILED (a HARD bounce, status 5.x.x) or is DELAYED (SOFT,
  * 4.x.x), and the Message-ID of the email of ours it is about — from the returned headers inside the report, never
  * from the report's own headers. Nothing else in it is kept.

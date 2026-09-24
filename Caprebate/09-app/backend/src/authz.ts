@@ -18,6 +18,7 @@
  */
 
 import { DPO_ROLE, type AppRole } from './roles.ts';
+import { customRoleOf, type BorrowableRole } from './custom-roles.ts';
 
 export type Actor = {
   readonly id: string;
@@ -34,6 +35,8 @@ export type Actor = {
  */
 export type Obj =
   | { readonly type: 'user'; readonly id: string; readonly role: AppRole }
+  /** Phase 151: a role the super admin made, or 'new' before it exists. */
+  | { readonly type: 'role'; readonly id: string }
   | { readonly type: 'business'; readonly id: string }
   | { readonly type: 'assessment'; readonly id: string; readonly business_id: string }
   | { readonly type: 'answer'; readonly id: string; readonly business_id: string }
@@ -203,7 +206,7 @@ export type Obj =
   | { readonly type: 'configuration'; readonly id: string }
   /**
    * PHASE 142. A message on a company's "With the client" thread — the portal's Messages — and a reply that reached
-   * contactus@caprebate.com. The "Team only" thread is the company's internal notes and stays `internal_note`: a
+   * contact@caprebate.co.uk. The "Team only" thread is the company's internal notes and stays `internal_note`: a
    * DIFFERENT object type in a DIFFERENT table, so no rule written for one can reach the other.
    */
   | { readonly type: 'client_message'; readonly id: string; readonly business_id: string; readonly assigned_surveyor_ids?: readonly string[] }
@@ -375,6 +378,8 @@ const RULES: RuleTable = {
   'user.disable': { ADMIN: always },
   'user.assign_role': { ADMIN: always },
   'user.list': { ADMIN: always },
+  /* Phase 151: making and changing roles (src/custom-roles.ts). The super admin's alone, and never grantable. */
+  'role.manage': { ADMIN: always },
 
   /* --- every user may read and edit THEMSELVES, and nobody else. --- */
   'user.read_self': {
@@ -998,6 +1003,7 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'user.update': NO(WRITES),
   'user.disable': NO(WRITES),
   'user.assign_role': NO(WRITES),
+  'role.manage': NO(WRITES),
   'user.list': NO('the staff list is other people\'s accounts; user administration is ADMIN\'s'),
   'user.read_self': YES('its own account, as every login reads', self as Rule<ObjType>),
   'user.change_own_password': YES('its own password only — a login must be able to rotate it; no business record changes', self as Rule<ObjType>),
@@ -1205,6 +1211,9 @@ export function can(actor: Actor, action: string, object: Obj): boolean {
   if ((actor.role as string) === DPO_ROLE) return canAsDpo(actor, action, object);
   // Phase 132e: the view-only role is decided by its own explicit table and by nothing below.
   if (actor.role === 'READ_ONLY') return canAsReadOnly(actor, action, object);
+  // Phase 151: a role the super admin made borrows each rule from a built-in staff role, and is decided by it here.
+  const made = customRoleOf(actor.role as string);
+  if (made !== undefined) return canAsCustomRole(actor, action, object, made.grants);
 
   const forAction = Object.prototype.hasOwnProperty.call(RULES, action)
     ? RULES[action as Action]
@@ -1214,6 +1223,27 @@ export function can(actor: Actor, action: string, object: Obj): boolean {
   const rule = forAction[actor.role];
   if (rule === undefined) return false; // role not listed for this action
 
+  return rule(actor, object as Extract<Obj, { type: ObjType }>) === true;
+}
+
+/**
+ * PHASE 151: WHETHER A BUILT-IN STAFF ROLE HOLDS AN ACTION. The one fact about this table the role editor needs, so
+ * that a made role can only borrow a rule that exists (src/custom-roles.ts, roleRefusal).
+ */
+export function builtInHolds(action: string, role: BorrowableRole): boolean {
+  if (!Object.prototype.hasOwnProperty.call(RULES, action)) return false;
+  return RULES[action as Action]?.[role] !== undefined;
+}
+
+/**
+ * A made role's decision: the action must be granted, and the borrowed role's own test must pass on THIS object —
+ * deny by default, as `can` is. A grant naming a rule the table no longer has is a refusal, not a pass.
+ */
+function canAsCustomRole(actor: Actor, action: string, object: Obj, grants: readonly { readonly action: string; readonly as_role: BorrowableRole }[]): boolean {
+  const g = grants.find((x) => x.action === action);
+  if (g === undefined || !Object.prototype.hasOwnProperty.call(RULES, action)) return false;
+  const rule = RULES[action as Action]?.[g.as_role];
+  if (rule === undefined) return false;
   return rule(actor, object as Extract<Obj, { type: ObjType }>) === true;
 }
 

@@ -40,7 +40,7 @@ export type PlanningQuery = {
 } & PickQuery;
 
 /** The identifier PlanIt's owner asks for: who we are and how to reach us. Our business mailbox, never a person's. */
-export const PLANIT_USER_AGENT = 'CapRebate register lookups (contactus@caprebate.com)';
+export const PLANIT_USER_AGENT = 'CapRebate register lookups (contact@caprebate.co.uk)';
 /** The circle PlanIt searches around the postcode's centre, in kilometres. Candidates at another postcode are dropped. */
 export const PLANIT_RADIUS_KM = '0.2';
 /** How many applications at a matched address we keep, the most recent first. */

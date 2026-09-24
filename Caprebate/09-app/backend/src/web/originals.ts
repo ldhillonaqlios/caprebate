@@ -10,6 +10,9 @@
  * both documents. That is Lakhbir's decision with the data protection officer, not a build choice, so it is put to him
  * in CAPREBATE QUESTIONS under exactly this title:
  *   "Should we keep the files clients upload, or keep deleting them once read?"
+ * PHASE 151, 24 September 2026: ANSWERED — KEEP THEM (Word answer 48, closed). The switch STAYS OFF: keeping needs a
+ * keep-until period and a list of who may open them, and the privacy notice must say both first. That is the follow-up,
+ * quoted below as KEEP_ORIGINALS_QUESTION: "How long do we keep the files clients upload, and who may open them?"
  *
  * OFF IS EXACTLY TODAY. With `enabled: false` the upload handler runs on FAIL_CLOSED_SETTINGS as it always has, every
  * original is deleted once read, and the three `documents.original_*` columns (migration 035) stay empty.
@@ -45,7 +48,7 @@ export type KeepOriginals = {
 };
 
 /** The title of the question under Lakhbir in CAPREBATE QUESTIONS. Quoted, not paraphrased. */
-export const KEEP_ORIGINALS_QUESTION = 'Should we keep the files clients upload, or keep deleting them once read?';
+export const KEEP_ORIGINALS_QUESTION = 'How long do we keep the files clients upload, and who may open them?';
 
 export const KEEP_ORIGINALS: KeepOriginals = Object.freeze({
   enabled: false,

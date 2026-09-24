@@ -20,6 +20,7 @@
  */
 
 import type { Role as QuarantineRole } from '../../../04-phase-work/phase3/caprebate-anchor-quarantine.ts';
+import { canSurvey, customRoleOf, isCustomRoleKey } from './custom-roles.ts';
 
 /**
  * PHASE 132e, 16 September 2026: A SIXTH ROLE, READ_ONLY — "One main log in for
@@ -62,7 +63,14 @@ const TO_QUARANTINE: Readonly<Record<AppRole, QuarantineRole>> = {
 };
 
 export function toQuarantineRole(role: AppRole): QuarantineRole {
-  return TO_QUARANTINE[role];
+  if (Object.prototype.hasOwnProperty.call(TO_QUARANTINE, role)) return TO_QUARANTINE[role];
+  /* PHASE 151: A ROLE THE SUPER ADMIN MADE (src/custom-roles.ts). It is sent to the quarantine as the SURVEYOR — the
+     sealed estimate withheld — unless it holds `estimate.read` itself, which a role that can survey never may. So a
+     made role cannot reach the estimate through the survey workspace's payload that it could not read directly. And a
+     role nobody knows is the surveyor too: the conservative mapping, as READ_ONLY's is. */
+  const made = customRoleOf(role as string);
+  if (made !== undefined && !canSurvey(made.grants) && made.grants.some((g) => g.action === 'estimate.read')) return 'CLIENT_MANAGER';
+  return 'SURVEYOR';
 }
 
 /**
@@ -83,5 +91,6 @@ export const DPO_ROLE = 'DPO' as const;
 export const STAFF_ROLES: readonly AppRole[] = ['ADMIN', 'SALES', 'ACCOUNTING', 'SURVEYING', 'READ_ONLY'];
 
 export function isStaff(role: AppRole): boolean {
-  return STAFF_ROLES.includes(role);
+  // Phase 151: a role the super admin made is a staff role; it can never borrow a client's rule.
+  return STAFF_ROLES.includes(role) || isCustomRoleKey(role as string);
 }

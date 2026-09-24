@@ -312,8 +312,8 @@ describe('stage entered and owner changed', () => {
         "SELECT subject, kind, sent_at, transport, business_id FROM outbox WHERE to_email = 'admin@example.invalid' ORDER BY created_at");
       assert.equal(notices.length, 2);
       for (const x of notices) {
-        // Phase 134: the notice ends with the reference; it leads with the company only once Lakhbir switches that on.
-        assert.match(x.subject, /^You now own a claim \(CR-\d{4}-\d{4}\)$/);
+        // Phase 134: the notice ends with the reference. Phase 151: it leads with the company (Word answer 71).
+        assert.match(x.subject, /^.+ — you now own a claim \(CR-\d{4}-\d{4}\)$/);
         assert.deepEqual([x.kind, x.sent_at, x.transport, x.business_id], ['NOTIFICATION', null, 'STUB', org.business]);
       }
       const before = count(app.db, 'SELECT COUNT(*) AS n FROM outbox');
@@ -323,7 +323,7 @@ describe('stage entered and owner changed', () => {
         "SELECT reason FROM automation_runs WHERE rule_id = 'rule-stage-notify-owner' AND claim_id = ? ORDER BY at DESC, rowid DESC LIMIT 1", [own])?.reason,
       'OWNER_MADE_THE_CHANGE');
       assert.equal(fwd(app, actor('SALES'), theirs, 'ENGAGEMENT').ok, true);
-      assert.match(app.db.get<{ subject: string }>('SELECT subject FROM outbox ORDER BY created_at DESC, rowid DESC LIMIT 1')?.subject ?? '', /^A claim is now at Engagement \(CR-\d{4}-\d{4}\)$/);
+      assert.match(app.db.get<{ subject: string }>('SELECT subject FROM outbox ORDER BY created_at DESC, rowid DESC LIMIT 1')?.subject ?? '', /^.+ — a claim is now at Engagement \(CR-\d{4}-\d{4}\)$/);
     } finally { app.close(); }
   });
 });

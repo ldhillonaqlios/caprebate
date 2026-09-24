@@ -365,12 +365,12 @@ describe('Home: a client message waiting more than one working day', () => {
 });
 
 /* ================================================================== *
- * 6 · REPLIES TO contactus@caprebate.com
+ * 6 · REPLIES TO contact@caprebate.co.uk
  * ================================================================== */
 
 function rawEmail(o: { from: string; inReplyTo?: string; text: string; file?: Uint8Array; id?: string }): Uint8Array {
   const b = 'cb-test-boundary';
-  const head = [`From: A Person <${o.from}>`, 'To: Cap Rebate <contactus@caprebate.com>', 'Subject: =?UTF-8?B?UmU6IFlvdXIgY2xhaW0=?=',
+  const head = [`From: A Person <${o.from}>`, 'To: Cap Rebate <contact@caprebate.co.uk>', 'Subject: =?UTF-8?B?UmU6IFlvdXIgY2xhaW0=?=',
     `Message-ID: <${o.id ?? randomUUID()}@example.invalid>`, ...(o.inReplyTo === undefined ? [] : [`In-Reply-To: <${o.inReplyTo}>`, `References: <${o.inReplyTo}>`]),
     'MIME-Version: 1.0'];
   if (o.file === undefined) return new Uint8Array(Buffer.from([...head, 'Content-Type: text/plain; charset=utf-8', '', o.text].join('\r\n'), 'utf8'));
@@ -383,10 +383,10 @@ function rawEmail(o: { from: string; inReplyTo?: string; text: string; file?: Ui
 
 /** An email we sent: in the outbox, sent, with the Message-ID the provider gave it. */
 function sentEmail(w: World, business_id: string, contact: { id: string; email: string }, claim_id: string | null): string {
-  const ref = `${randomBytes(8).toString('hex')}@caprebate.com`;
+  const ref = `${randomBytes(8).toString('hex')}@caprebate.co.uk`;
   w.made.app.db.run(
     'INSERT INTO outbox (id, created_at, to_email, subject, body, kind, transport, business_id, contact_id, claim_id, from_header, reply_to, send_requested, sent_at, provider_ref) ' +
-      "VALUES (?, ?, ?, 'About your claim', 'Hello', 'FREE_EMAIL', 'SMTP', ?, ?, ?, 'Cap Rebate <contactus@caprebate.com>', 'contactus@caprebate.com', 1, ?, ?)",
+      "VALUES (?, ?, ?, 'About your claim', 'Hello', 'FREE_EMAIL', 'SMTP', ?, ?, ?, 'Cap Rebate <contact@caprebate.co.uk>', 'contact@caprebate.co.uk', 1, ?, ?)",
     [randomUUID(), w.clock.now, contact.email, business_id, contact.id, claim_id, w.clock.now, ref]);
   return ref;
 }
@@ -433,9 +433,9 @@ async function fakeImap(mails: Map<number, Uint8Array>): Promise<{ server: Serve
 }
 
 const ON: InboundEmail = Object.freeze({ enabled: true, provider: 'IMAP', mailbox_ready: true, question: INBOUND_EMAIL.question });
-const LOGIN = Object.freeze({ host: '127.0.0.1', port: 1, user: 'contactus@caprebate.com', password: 'not "a" real\\password' });
+const LOGIN = Object.freeze({ host: '127.0.0.1', port: 1, user: 'contact@caprebate.co.uk', password: 'not "a" real\\password' });
 
-describe('replies to contactus@caprebate.com', () => {
+describe('replies to contact@caprebate.co.uk', () => {
   let w: World;
   before(async () => { w = await boot(); });
   after(() => w.close());
@@ -451,17 +451,17 @@ describe('replies to contactus@caprebate.com', () => {
     assert.equal(r.state, 'OFF');
     assert.equal(touched, false, 'the mailbox was opened while reading was off');
     assert.deepEqual(readingMissing(INBOUND_EMAIL, null).filter((x) => !/login/i.test(x)), [
-      'Set up the contactus@caprebate.com mailbox and its email security records.',
+      'Say who reads contact@caprebate.co.uk, and send one test email from it.',
       'Then switch reading replies on.',
     ]);
   });
 
   test('the text part only: HTML is never kept, a file is counted, a header word is decoded', () => {
-    const p = parseEmail(rawEmail({ from: 'X@Example.Invalid', inReplyTo: 'abc@caprebate.com', text: 'Thanks = great', file: PDF() }));
+    const p = parseEmail(rawEmail({ from: 'X@Example.Invalid', inReplyTo: 'abc@caprebate.co.uk', text: 'Thanks = great', file: PDF() }));
     assert.equal(p.text, 'Thanks = great');
     assert.equal(p.subject, 'Re: Your claim');
     assert.equal(p.from_address, 'x@example.invalid');
-    assert.deepEqual(p.answers, ['abc@caprebate.com']);
+    assert.deepEqual(p.answers, ['abc@caprebate.co.uk']);
     assert.equal(p.files.length, 1);
     assert.equal(p.files[0]?.content_type, 'application/pdf');
     assert.equal(JSON.stringify(p).includes('HTML-NEVER-KEPT'), false);
@@ -483,7 +483,7 @@ describe('replies to contactus@caprebate.com', () => {
       assert.match(all, /BODY\.PEEK\[\]/);
       assert.equal(/\b(SELECT|STORE|COPY|MOVE|EXPUNGE|APPEND|DELETE)\b/i.test(all.replace(/LOGIN .*/g, '')), false, all);
       // The login is quoted: a quote or a backslash in the password cannot end the string early.
-      assert.ok(f.commands.some((c) => c.endsWith('LOGIN "contactus@caprebate.com" "not \\"a\\" real\\\\password"')));
+      assert.ok(f.commands.some((c) => c.endsWith('LOGIN "contact@caprebate.co.uk" "not \\"a\\" real\\\\password"')));
     } finally {
       f.server.close();
     }

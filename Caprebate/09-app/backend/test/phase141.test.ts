@@ -1,11 +1,11 @@
 /**
- * PHASE 141 — FREE-TYPED EMAIL TO A CLIENT, FROM contactus@caprebate.com. "Back office and portal clean-up, 8 of 11."
+ * PHASE 141 — FREE-TYPED EMAIL TO A CLIENT, FROM contact@caprebate.co.uk. "Back office and portal clean-up, 8 of 11."
  * 21 September 2026.
  *
  *   1 · an Email button on the client page, on a lead card and on a claim page; To is one of the company's contacts,
  *       never a typed address; subject and body typed freely; a template only fills the boxes; files from the company's
  *       folder, only where the client may see them and the original is kept
- *   2 · From and Reply-To "Cap Rebate <contactus@caprebate.com>" on EVERY email, held in one setting (email_sender)
+ *   2 · From and Reply-To "Cap Rebate <contact@caprebate.co.uk>" on EVERY email, held in one setting (email_sender)
  *   3 · every email on the company's timeline, tagged to its claim; a do-not-contact company refused
  *   4 · EMAIL_SENDING built and switched off: "Saved — emails are not being sent yet"; the SMTP adapter proved against a
  *       fake mail server; a row saved while off is never sent later; do-not-contact asked again at sending
@@ -111,7 +111,7 @@ const ON: EmailSending = Object.freeze({
   enabled: true, provider: 'SMTP', named_in_privacy_notice: true, named_in_engagement_letter: true, mailbox_and_dns_ready: true,
   question: EMAIL_PROVIDER_QUESTION,
 });
-const LOGIN: SmtpLogin = Object.freeze({ host: '127.0.0.1', port: 1, user: 'contactus@caprebate.com', password: 'not-a-real-password' });
+const LOGIN: SmtpLogin = Object.freeze({ host: '127.0.0.1', port: 1, user: 'contact@caprebate.co.uk', password: 'not-a-real-password' });
 
 /** A fake mail server: records the conversation and the message, answers as a real one would. */
 async function fakeSmtp(opts: { refuseRcpt?: boolean } = {}): Promise<{ server: Server; port: number; seen: { lines: string[]; data: string[] } }> {
@@ -153,12 +153,12 @@ const noFiles = async (): Promise<null> => null;
 /* ================================================================== */
 
 describe('2 · one sender, on every email, held in one setting', () => {
-  test('the first sender is Cap Rebate <contactus@caprebate.com>, From and Reply-To, and it is a row, not code', async () => {
+  test('the first sender is Cap Rebate <contact@caprebate.co.uk>, From and Reply-To, and it is a row, not code', async () => {
     const w = await boot();
     try {
       const s = currentSender(w.made.app.db);
-      assert.equal(s.from_header, 'Cap Rebate <contactus@caprebate.com>');
-      assert.equal(s.reply_to, 'contactus@caprebate.com');
+      assert.equal(s.from_header, 'Cap Rebate <contact@caprebate.co.uk>');
+      assert.equal(s.reply_to, 'contact@caprebate.co.uk');
       assert.throws(() => w.made.app.db.run("UPDATE email_sender SET address = 'x@example.invalid'"), /never edited/);
       assert.throws(() => w.made.app.db.run('DELETE FROM email_sender'), /never deleted/);
     } finally { w.close(); }
@@ -176,8 +176,8 @@ describe('2 · one sender, on every email, held in one setting', () => {
       const rows = db.all<{ from_header: string | null; reply_to: string | null }>('SELECT from_header, reply_to FROM outbox');
       assert.ok(rows.length >= 2);
       for (const x of rows) {
-        assert.equal(x.from_header, 'Cap Rebate <contactus@caprebate.com>');
-        assert.equal(x.reply_to, 'contactus@caprebate.com');
+        assert.equal(x.from_header, 'Cap Rebate <contact@caprebate.co.uk>');
+        assert.equal(x.reply_to, 'contact@caprebate.co.uk');
       }
     } finally { w.close(); }
   });
@@ -188,14 +188,15 @@ describe('2 · one sender, on every email, held in one setting', () => {
       const admin = await w.signIn('admin');
       const page = await admin.get('/staff/admin-settings');
       assert.match(page.body, /id="email-sender"/);
-      assert.match(page.body, /Cap Rebate &lt;contactus@caprebate.com&gt;/);
-      const r = await admin.post('/staff/admin-settings/email-sender', { display_name: 'Cap Rebate Team', address: 'hello@caprebate.com', reply_to: 'contactus@caprebate.com' });
+      assert.match(page.body, /Cap Rebate &lt;contact@caprebate.co.uk&gt;/);
+      const r = await admin.post('/staff/admin-settings/email-sender', { display_name: 'Cap Rebate Team', address: 'hello@caprebate.co.uk', reply_to: 'contact@caprebate.co.uk' });
       assert.equal(r.status, 303);
-      assert.equal(currentSender(w.made.app.db).from_header, 'Cap Rebate Team <hello@caprebate.com>');
-      assert.equal(w.made.app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM email_sender')?.n, 2, 'the old sender was not kept');
+      assert.equal(currentSender(w.made.app.db).from_header, 'Cap Rebate Team <hello@caprebate.co.uk>');
+      /* Three since Phase 151: migration 036's first sender, migration 044's move to caprebate.co.uk, and this change. */
+      assert.equal(w.made.app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM email_sender')?.n, 3, 'the old sender was not kept');
       const sales = await w.signIn('sales');
       assert.equal((await sales.post('/staff/admin-settings/email-sender', { display_name: 'X', address: 'x@example.invalid' })).status, 403);
-      assert.equal(currentSender(w.made.app.db).address, 'hello@caprebate.com');
+      assert.equal(currentSender(w.made.app.db).address, 'hello@caprebate.co.uk');
       assert.throws(() => F.setSender(w.deps(), w.as('SALES'), { display_name: 'X', address: 'x@example.invalid' }), NotAuthorised);
       const bad = F.setSender(w.deps(), w.as('ADMIN'), { display_name: 'X', address: 'not an address' });
       assert.equal(bad.ok, false);
@@ -232,7 +233,7 @@ describe('1 · the Email button and the form', () => {
       const r = await c.get(`/staff/clients/${w.biz}/email`);
       assert.equal(r.status, 200);
       assert.match(r.body, /<h1>Email Dunmarrow/);
-      assert.match(r.body, /Cap Rebate &lt;contactus@caprebate.com&gt;/);
+      assert.match(r.body, /Cap Rebate &lt;contact@caprebate.co.uk&gt;/);
       assert.match(r.body, /Emails are not being sent yet/);
       assert.match(r.body, /Save the email/);
       for (const x of w.contacts) assert.ok(r.body.includes(`value="${x.id}"`), 'a contact was not offered');
@@ -434,12 +435,12 @@ describe('4 · EMAIL_SENDING — built, and off', () => {
     assert.equal(EMAIL_SENDING.named_in_privacy_notice, false);
     assert.equal(EMAIL_SENDING.named_in_engagement_letter, false);
     assert.equal(EMAIL_SENDING.mailbox_and_dns_ready, false);
-    assert.equal(EMAIL_SENDING.question, 'Which email service should send our emails from contactus@caprebate.com?');
+    assert.equal(EMAIL_SENDING.question, 'May we send you one test email from contact@caprebate.co.uk before email sending is switched on?');
     assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'EMAIL_SENDING'), { switch: 'EMAIL_SENDING', on: false, home: 'src/stubs/email-provider.ts' });
     assert.equal(sendingOn(EMAIL_SENDING, LOGIN), false);
     assert.deepEqual(sendingMissing(EMAIL_SENDING, null), [
       'Name that service in the privacy notice and in the engagement letter.',
-      'Set up the contactus@caprebate.com mailbox and its email security records.',
+      'Say who reads contact@caprebate.co.uk, and send one test email from it.',
       'Add the email service’s login to the server.',
       'Then switch sending on.',
     ]);
@@ -479,12 +480,12 @@ describe('4 · EMAIL_SENDING — built, and off', () => {
       assert.ok(saved.ok && saved.requested);
       const r = await dispatchOutbox({ db: w.made.app.db, now: w.made.app.now }, ON, LOGIN, smtpProvider(LOGIN, plain(smtp.port)), noFiles);
       assert.deepEqual(r, { state: 'RAN', sent: 1, failed: 0, refused: 0 });
-      assert.ok(smtp.seen.lines.includes('MAIL FROM:<contactus@caprebate.com>'));
+      assert.ok(smtp.seen.lines.includes('MAIL FROM:<contact@caprebate.co.uk>'));
       assert.ok(smtp.seen.lines.includes(`RCPT TO:<${to.email}>`));
       assert.ok(smtp.seen.lines.some((l) => l.startsWith('AUTH PLAIN ')));
       const msg = smtp.seen.data[0] ?? '';
-      assert.match(msg, /^From: Cap Rebate <contactus@caprebate.com>$/m);
-      assert.match(msg, /^Reply-To: contactus@caprebate.com$/m);
+      assert.match(msg, /^From: Cap Rebate <contact@caprebate.co.uk>$/m);
+      assert.match(msg, /^Reply-To: contact@caprebate.co.uk$/m);
       assert.match(msg, new RegExp(`^To: ${to.email}$`, 'm'));
       assert.match(msg, /^Subject: =\?UTF-8\?B\?/m, 'a subject beyond plain ASCII was not encoded');
       const row = w.made.app.db.get<{ sent_at: string | null; transport: string; provider_ref: string | null }>('SELECT sent_at, transport, provider_ref FROM outbox WHERE id = ?', [saved.id]);
@@ -540,9 +541,9 @@ describe('4 · EMAIL_SENDING — built, and off', () => {
 
   test('a message cannot carry a smuggled header, and its body is base64 so no line starts with a dot', () => {
     const m = buildMessage({
-      from_header: 'Cap Rebate <contactus@caprebate.com>', reply_to: 'contactus@caprebate.com', to: 'a@example.invalid',
+      from_header: 'Cap Rebate <contact@caprebate.co.uk>', reply_to: 'contact@caprebate.co.uk', to: 'a@example.invalid',
       subject: 'Hi\r\nBcc: evil@example.invalid', body: '.\n..', attachments: [], date: new Date('2026-09-21T10:00:00Z'),
-    }, 'id@caprebate.com');
+    }, 'id@caprebate.co.uk');
     assert.doesNotMatch(m, /^Bcc:/m);
     assert.match(m, /^Subject: Hi Bcc: evil@example.invalid$/m);
     assert.doesNotMatch(m.split('\r\n\r\n').slice(1).join('\n'), /^\./m);

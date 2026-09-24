@@ -1,5 +1,5 @@
 /**
- * REPLIES TO contactus@caprebate.com, ONTO THE COMPANY'S CHAT AND TIMELINE. Phase 142, 22 September 2026 — carried from
+ * REPLIES TO contact@caprebate.co.uk, ONTO THE COMPANY'S CHAT AND TIMELINE. Phase 142, 22 September 2026 — carried from
  * Phase 141, whose Developer Spec B48 set out where a reply would land. The mailbox reader is src/stubs/email-inbound.ts,
  * switched off (INBOUND_EMAIL) until the mailbox exists.
  *

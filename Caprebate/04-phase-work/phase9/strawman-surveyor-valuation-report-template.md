@@ -282,7 +282,7 @@ derived, so this document does not present any of them as a starting draft. What
 | Statutory authority | `[AUTO]` | `authority` column, same CSV — e.g. CAA 2001 s.33A(5)(a) |
 | Unit / quantity basis | `[AUTO]` | `unit`, `quantity_basis` columns, same CSV |
 | Quantity | `[SURVEYOR]` | measured or estimated on inspection — blank |
-| Unit cost (BCIS/Spon's rate, dated and versioned) | `[SURVEYOR]` | priced from the licensed cost library on inspection — blank |
+| Unit cost (BCIS rate, dated and versioned — BCIS is the cost source since 24 Sep 2026; Spon's is not used) | `[SURVEYOR]` | priced from the licensed cost library on inspection — blank |
 | Total cost, this element | `[SURVEYOR]` | derived from the two blank cells above once entered — blank |
 | Qualifying percentage | `[SURVEYOR]` | **see boxed note below — always blank** |
 | Notes / basis for the % | `[SURVEYOR]` | blank |

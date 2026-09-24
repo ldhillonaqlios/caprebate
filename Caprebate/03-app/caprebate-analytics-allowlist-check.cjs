@@ -351,7 +351,7 @@ function runChecks(tree) {
         head: { appendChild() {} }
       };
       const win = {};
-      const ctx = vm.createContext({ document: doc, window: win, location: { pathname: opts.path || "/", hostname: "caprebate.com" },
+      const ctx = vm.createContext({ document: doc, window: win, location: { pathname: opts.path || "/", hostname: "caprebate.co.uk" },
         localStorage: { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } }, console });
       vm.runInContext(w.text + "\n" + consentText + "\n;this.__T = CB_TRACK; this.__C = SITE_CONSENT;", ctx);
       if (opts.press) { const b = buttons.find(x => x.v === opts.press); if (b && b.h) b.h(); }

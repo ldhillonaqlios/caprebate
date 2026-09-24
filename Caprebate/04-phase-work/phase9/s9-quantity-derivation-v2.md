@@ -632,7 +632,8 @@ priced and decided rather than left to drift.
 ## 9. Internal sanity check against published price books — outcome only
 
 Caprebate holds three commercially licensed price books (Spon's M&E 2021 and 2022, Spon's
-A&B 2024). **They are used here as an internal check on our own reasoning and nothing more.** No
+A&B 2024). **Since 24 September 2026 (Word answers 6 and 8) BCIS is the cost source and these three
+books are kept where they are, unused.** **They are used here as an internal check on our own reasoning and nothing more.** No
 rate, table or figure from any of them is transcribed into this document, the repo, the taxonomy or
 the source register, for three reasons: their provenance in this business is unestablished; item
 12830181420 requires publisher, licence and retrieval timestamp on every field written; and **a rate

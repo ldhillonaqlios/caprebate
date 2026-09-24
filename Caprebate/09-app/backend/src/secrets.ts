@@ -40,7 +40,7 @@ import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
 /** Who a key belongs to: the connector that may read it. */
 export type SecretOwner =
   | 'CLAUDE_DOCUMENTS' | 'COMPANIES_HOUSE' | 'CQC' | 'EPC' | 'HOMEDATA_ADDRESS' | 'HMLR_TITLE'
-  | 'IONOS_EMAIL' | 'IONOS_MAILBOX' | 'GOOGLE_ANALYTICS';
+  | 'IONOS_EMAIL' | 'IONOS_MAILBOX' | 'GOOGLE_ANALYTICS' | 'VERIFF_IDV';
 
 export type SecretKey = {
   readonly name: string;
@@ -102,6 +102,8 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'IONOS_IMAP_USER', owner: 'IONOS_MAILBOX', secret: true, phase: '146f', what: 'the mailbox that is read' },
   { name: 'IONOS_IMAP_PASSWORD', owner: 'IONOS_MAILBOX', secret: true, phase: '146f', what: 'that mailbox’s password' },
   { name: 'GA4_MEASUREMENT_ID', owner: 'GOOGLE_ANALYTICS', secret: false, phase: '146f', what: 'the Google Analytics measurement id (public: it is printed in every page)' },
+  { name: 'VERIFF_API_KEY', owner: 'VERIFF_IDV', secret: true, phase: '151', what: 'the Veriff identity check API key, from its account page' },
+  { name: 'VERIFF_SHARED_SECRET', owner: 'VERIFF_IDV', secret: true, phase: '151', what: 'the Veriff shared secret that signs its results' },
 ]);
 
 export type SecretsState = 'LOADED' | 'NO_FILE' | 'REFUSED_INSIDE_REPOSITORY' | 'UNREADABLE';

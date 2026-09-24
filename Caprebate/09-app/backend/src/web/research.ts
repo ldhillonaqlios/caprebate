@@ -106,6 +106,8 @@ const TIER_BY_SOURCE: Readonly<Record<string, Tier>> = Object.freeze({
      Price Paid Data, and the land-boundary counterpart of "OS" in the documents' tier 1. Only a council's name is
      sent, never anything about the client. */
   HMLR_INSPIRE: 'FREE',
+  /* Phase 151: the free postcode check at the address question (src/connectors/postcode-check.ts). Not run by the button. */
+  POSTCODES_IO: 'FREE',
   /* Tier 2 — paid, gated on a signed engagement. */
   HMLR_TITLE: 'PAID',
   BCIS: 'PAID',

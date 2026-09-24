@@ -31,8 +31,13 @@
              prelimsFactor(). This item is marked blocked on the VOA licence and
              that block is queried on the board.
      LEG-E3  needs the VOA professional fee scale. Genuinely licensed.
-     LEG-E4  needs a commercial cost library (Spon's / BCIS). NOT a licence
-             question - a purchase, board item 12804374406.
+     LEG-E4  needs a commercial cost library: BCIS, chosen over Spon's on
+             24 September 2026 (Word answers 6 and 8). No Spon's book is
+             bought. It IS a licence question after all: BCIS's licence
+             (Annex One of its terms of sale, read by Phase 151) grants
+             internal use to named users and extracts to clients only - see
+             BCIS_COMMERCIAL in phase3's source register. Which BCIS product
+             and order form: Word question 218. Board item 12804374406.
      LEG-E5  needs VOA obsolescence scales (licensed) AND CIBSE plant lives
              (a separate source with its own terms). Two tables, two sources.
      BASIS   needs nothing. It is a switch. It is complete and it is live.
@@ -190,7 +195,9 @@ const BUILDING_TYPE = { STANDARD: "standard", HIGHLY_SERVICED: "highly_serviced"
    94 against a national mean of 100 - i.e. building in Cardiff costs about 6%
    less than the national mean, so a national rate applied to a Cardiff property
    overstates replacement cost by about 6%. EMPTY - these are priced data from
-   Spon's or BCIS and we have not bought either.
+   BCIS (the cost source since 24 September 2026, Word answers 6 and 8; Spon's
+   is not bought), loaded only once Word question 218 names the product and its
+   order form shows the licence covers this use.
 
    THE BASE IS DECLARED, NOT ASSUMED. Corrected 14 September 2026 (Phase 132).
    This stub used to carry "mean: 100" and the factor was raw / mean. That is
@@ -211,8 +218,8 @@ const BUILDING_TYPE = { STANDARD: "standard", HIGHLY_SERVICED: "highly_serviced"
    (E_LOCATION_MEAN_DEPRECATED) rather than being read the old way. */
 const CB_LOCATION_FACTORS = emptyTable(
   "CB_LOCATION_FACTORS",
-  "Spon's Architects & Builders Price Book / BCIS location factors",
-  "NOT PURCHASED - board item 12804374406 (approx GBP 330)",
+  "BCIS location factors (BCIS chosen over Spon's, Word answers 6 and 8)",
+  "NOT LOADED - BCIS product and licence to confirm, Word question 218; board item 12804374406",
   { price_source: null, index_base: null, factors: {} }
 );
 
@@ -250,7 +257,7 @@ const PRICE_SOURCE_ENTRY_SHAPE = {
 const CB_PRICE_SOURCES = emptyTable(
   "CB_PRICE_SOURCES",
   "Caprebate register of price books - one entry per book, recorded from each book's own preamble",
-  "NOT PURCHASED - describes the books of board item 12804374406; nothing can be recorded until they are bought and read",
+  "NOT LOADED - BCIS (Word answers 6 and 8, board item 12804374406); nothing can be recorded until the BCIS product is named (Word question 218) and its own preamble read",
   { sources: {} }
 );
 
@@ -290,8 +297,8 @@ const CB_PRICE_SOURCES = emptyTable(
    EMPTY - same purchase. */
 const CB_CONTRACT_SIZE_ADJUSTMENT = emptyTable(
   "CB_CONTRACT_SIZE_ADJUSTMENT",
-  "Spon's / BCIS contract size adjustment",
-  "NOT PURCHASED - board item 12804374406",
+  "BCIS contract size adjustment, if the chosen BCIS product publishes one",
+  "NOT LOADED - Word question 218; board item 12804374406",
   {
     assumed_contract_value: null,
     quoted_as: null,        /* "percentage_adjustment" | "factor" */
@@ -914,11 +921,16 @@ function feesFactor(input, opts) {
    assumed contract value and a much larger or smaller job does not carry those
    unit rates.
 
-   NOT A LICENCE PROBLEM. This one is blocked on a PURCHASE - Spon's or BCIS,
-   board item 12804374406, about GBP 330. That is a different kind of block: no
-   solicitor, no clearance, no negotiation. Someone buys a book. Worth
-   separating on the board, because it can be cleared this week by anyone with
-   a card, whereas the VOA items cannot be cleared by us at all.
+   CORRECTED 24 SEPTEMBER 2026 (Phase 151): BCIS, NOT SPON'S, AND A LICENCE AS
+   WELL AS A PURCHASE. Lakhbir chose BCIS (Word answers 6 and 8); no Spon's book
+   is bought. This paragraph used to say the block was a purchase only, about
+   GBP 330, with no licence question. BCIS is a subscription, not a book, and its
+   licence (Annex One of its terms of sale) grants internal use to named users
+   and extracts to clients only: BCIS_COMMERCIAL in phase3's source register
+   holds every term it does not publish as a refusal. Which product, and its
+   order form, is Word question 218; board item 12804374406. The Spon's
+   paragraphs below record what Spon's said; BCIS's own guidance on applying
+   its factors is read when its product is named.
 
    WHERE IT LANDS, AND THE SOURCE IS EXPLICIT ABOUT THIS. Spon's Architects' and
    Builders' Price Book states of its own location and contract-size adjustments

@@ -204,6 +204,30 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
       'minutes and forty a day is OUR cautious guess for whole-file downloads',
     timeout_ms: 300_000, max_bytes: 400 * MB, max_attempts: 2,
   },
+  POSTCODES_IO: {
+    /* PHASE 151, 24 September 2026 — the free postcode check at the address question (src/connectors/postcode-check.ts),
+       BUILT AND SWITCHED OFF behind the free-tier gate. No key. Only a postcode is sent. Its documentation (read that
+       day, SUPPLIER_DOCS) publishes no rate limit and no hosting location; UK below is the service's own country (Ideal
+       Postcodes Ltd), and a postcode is not personal data. */
+    service_id: 'POSTCODES_IO', register_source: 'POSTCODES_IO',
+    base_url: 'https://api.postcodes.io', region: 'UK', international_transfer_approved: false,
+    rate: { limit: 60, window_ms: 60 * 1000 },
+    rate_basis: 'NOT PUBLISHED on postcodes.io/docs (read 24 Sep 2026); sixty a minute is OUR cautious guess - one a visitor, at the address question',
+    timeout_ms: 5_000, max_bytes: 64 * 1024, max_attempts: 2,
+  },
+  VERIFF_IDV: {
+    /* PHASE 151, 24 September 2026 — Veriff, the online identity check for the money-laundering rules
+       (src/connectors/identity-check.ts), BUILT AND SWITCHED OFF. A PROCESSOR, not a register source, like the Claude
+       API: it holds the client's ID and selfie for us. An Estonian company, so the EU. Its address and the session
+       call are from devdocs.veriff.com (read 24 Sep 2026). ITS PRICE IS IN US DOLLARS: US$0.80 a check on the
+       Essential plan (veriff.com/pricing, read the same day). 80 below is that published figure in US CENTS, not
+       pence, until a plan is chosen and a sterling invoice confirms it. */
+    service_id: 'VERIFF_IDV', register_source: null,
+    base_url: 'https://stationapi.veriff.com', region: 'EU', international_transfer_approved: false,
+    rate: { limit: 20, window_ms: 60 * 1000 },
+    rate_basis: 'NOT PUBLISHED on the pages read 24 Sep 2026; twenty a minute is OUR cautious guess - a check is started by a person, one at a time',
+    timeout_ms: 20_000, max_bytes: 256 * 1024, max_attempts: 2, cost_pence: 80,
+  },
   CLAUDE_DOCUMENTS: {
     service_id: 'CLAUDE_DOCUMENTS', register_source: null,
     base_url: 'https://api.anthropic.com', region: 'US', international_transfer_approved: false,

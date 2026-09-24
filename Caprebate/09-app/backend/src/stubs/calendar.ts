@@ -9,7 +9,7 @@
  * WHAT IS SENT. One iCalendar object (RFC 5545) with METHOD:REQUEST for a call booked or moved, and METHOD:CANCEL for
  * a call cancelled or a time given back (RFC 5546). Every calendar that reads email reads it — IONOS, Outlook, Apple,
  * Google — with no account of ours in any of them. There is NO TWO-WAY SYNC: nothing reads a calendar, and a reply
- * to the invitation lands in the contactus@ mailbox like any other email.
+ * to the invitation lands in the contact@ mailbox like any other email.
  *
  * ONE UID PER BOOKING, AND A SEQUENCE THAT ONLY GOES UP. The UID is the booking's id; SEQUENCE is how many times the
  * booking has changed (booking_changes). So a moved call replaces the old one in the client's calendar rather than
@@ -90,7 +90,7 @@ export function buildIcs(i: Invite): string {
     'CALSCALE:GREGORIAN',
     `METHOD:${i.method}`,
     'BEGIN:VEVENT',
-    `UID:booking-${i.booking_id}@caprebate.com`,
+    `UID:booking-${i.booking_id}@caprebate.co.uk`,
     `SEQUENCE:${i.sequence}`,
     `DTSTAMP:${icsTime(i.stamp)}`,
     `DTSTART:${icsTime(i.starts_at)}`,

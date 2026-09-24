@@ -40,15 +40,21 @@ const path = require("path");
 const APP_DIR = __dirname;
 const ROOT = path.join(APP_DIR, "..");
 
-const PAGE_FILE = path.join(APP_DIR, "caprebate-notices-page.html");
-const FORM_FILE = path.join(APP_DIR, "caprebate-complaint-form.html");
-const PRIVACY_NOTICE = path.join(
+/* --page, --form and --privacy point the check at another copy (Phase 151): a
+   .bak-phase151 copy of any of the three must go RED on S17. */
+const argOf = k => { const i = process.argv.indexOf(k); return i >= 0 ? process.argv[i + 1] : null; };
+const PAGE_FILE = argOf("--page") || path.join(APP_DIR, "caprebate-notices-page.html");
+const FORM_FILE = argOf("--form") || path.join(APP_DIR, "caprebate-complaint-form.html");
+const PRIVACY_NOTICE = argOf("--privacy") || path.join(
   ROOT, "08-monday-doc-exports",
   "12818279787__Section-1-Who-we-are-and-how-to-contact-us.md"
 );
 
 const LIVE = process.argv.includes("--live");
-const CANON = "https://caprebate.com/notices/";
+/* caprebate.co.uk since Phase 151 (Word answers 3, 13, 186 and 211): the business
+   is on caprebate.co.uk, and caprebate.com is to redirect to it (HOST §9.1). */
+const CANON = "https://caprebate.co.uk/notices/";
+const DP_MAIL = "data.protection@caprebate.co.uk";
 
 const page = fs.readFileSync(PAGE_FILE, "utf8");
 const form = fs.readFileSync(FORM_FILE, "utf8");
@@ -298,7 +304,7 @@ check("S12", "§3.1 block E · s.164A pack §4.3",
 /* --- §2 · the URL, and the rules that keep it stable --------------------- */
 
 check("S13", "§2 rule 1 / §9.1",
-  pageBody.includes(CANON) && /rel="canonical"[^>]*href="https:\/\/caprebate\.com\/notices\/"/.test(page),
+  pageBody.includes(CANON) && /rel="canonical"[^>]*href="https:\/\/caprebate\.co\.uk\/notices\/"/.test(page),
   "the canonical URL is declared and appears in body text a reader could copy off a printout");
 
 /* --- §9 test 11 · the privacy notice carries the full URL as text -------- */
@@ -382,6 +388,28 @@ check("S16", "Privacy Notice v1.4 §6",
     : "no recipients-list placeholder; \"Who else sees it\" names HM Revenue and Customs and all "
       + processors.length + " processors the notice names (" + processors.join(", ") + ")");
 
+/* --- Phase 151 · the domain and the data protection address ------------- */
+
+/* Added 24 September 2026 (Phase 151).  The business is on caprebate.co.uk and
+   the data protection officer's mailbox, data.protection@caprebate.co.uk, exists
+   on IONOS (Word answers 3, 13, 44, 186 and 211).  The page and the printable
+   form must give a reader that address, as a link they can use, and neither they
+   nor the privacy notice may carry the old domain anywhere a reader or a search
+   engine could pick it up. */
+const mailProblems = [];
+for (const [name, body] of [["page", pageBody], ["form", formBody], ["privacy notice", pn || ""]]) {
+  if (/caprebate\.com(?![a-z0-9])/i.test(body)) mailProblems.push("the " + name + " still carries caprebate.com");
+}
+for (const [name, body] of [["page", pageBody], ["form", formBody]]) {
+  if (!body.includes('href="mailto:' + DP_MAIL + '"')) mailProblems.push("the " + name + " gives no mailto link to " + DP_MAIL);
+  if (/\[NOT SET — dedicated data protection address\]/.test(body)) mailProblems.push("the " + name + " still prints the data protection address as NOT SET");
+}
+if (pn !== null && !pn.includes(DP_MAIL)) mailProblems.push("the privacy notice does not give " + DP_MAIL);
+check("S17", "Phase 151 · Word answers 3, 13, 44, 186, 211",
+  mailProblems.length === 0,
+  mailProblems.length ? mailProblems.join("; ")
+    : "no caprebate.com in the page, the form or the privacy notice; both give " + DP_MAIL + " as a mailto link, and the notice names it");
+
 /* === THE FACTS NOBODY HAS SUPPLIED YET =================================== */
 
 /* Harvest from the RENDERED source only.  The file header explains the
@@ -402,7 +430,7 @@ const unique = [...new Set(placeholders)];
 /* === HOST-SIDE, NAMED AND NEVER ASSERTED ================================= */
 
 const HOST_ONLY = [
-  ["§9.1",  "caprebate.com/notices/ returns 200, and caprebate.co.uk/notices/ 301s to it"],
+  ["§9.1",  "caprebate.co.uk/notices/ returns 200, and caprebate.com/notices/ 301s to it"],
   ["§9.3",  "robots.txt does not disallow the path — check the DEPLOYED file, not the intended one"],
   ["§9.4",  "Settings → Reading → 'Discourage search engines from indexing this site' is UNTICKED"],
   ["§9.4",  "the page is excluded by name from any SEO or privacy plugin's legal-page noindex rule"],

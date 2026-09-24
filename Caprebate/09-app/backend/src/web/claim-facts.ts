@@ -137,6 +137,9 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
   PARTNERSHIP_HAS_COMPANY_MEMBER: {
     label: 'A partner or LLP member is a company — which puts the partnership return on the company filing date', kind: 'choice', choices: YES_NO,
   },
+  /* Phase 151 — whether the sale contract and the CPSE replies must arrive (Word answer 47, question 220). Migration
+     045 adds the key. */
+  BOUGHT_THE_BUILDING: { label: 'The client bought the building, rather than built or refitted it', kind: 'choice', choices: YES_NO },
 });
 
 /* ================================================================== *

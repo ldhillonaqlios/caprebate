@@ -55,6 +55,8 @@ import { MESSAGE_RETENTION } from './message-retention.ts';
 import { EMAIL_SENDING } from '../stubs/email-provider.ts';
 import { ENGAGEMENT_SIGNING } from './signing.ts';
 import { INBOUND_EMAIL } from '../stubs/email-inbound.ts';
+import { IDENTITY_CHECK } from '../connectors/identity-check.ts';
+import { POSTCODE_CHECK } from '../connectors/postcode-check.ts';
 import { FEE_CLAWBACK } from './claim-record.ts';
 import { DEFENCE_PACK_GENERATOR } from './defence-pack.ts';
 import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
@@ -141,8 +143,10 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   FEE_CONTROLS.break_and_abort the break and abort fees                        src/web/fee-controls.ts
  *   MANDATORY_DOCUMENTS          the documents a gate requires                   src/web/mandatory-documents.ts
  *   KEEP_ORIGINALS               keeping the file a client sent (Phase 140)      src/web/originals.ts
- *   EMAIL_SENDING                sending email from contactus@ (Phase 141)       src/stubs/email-provider.ts
- *   INBOUND_EMAIL                reading replies to contactus@ (Phase 142)       src/stubs/email-inbound.ts
+ *   EMAIL_SENDING                sending email from contact@ (Phase 141)       src/stubs/email-provider.ts
+ *   INBOUND_EMAIL                reading replies to contact@ (Phase 142)       src/stubs/email-inbound.ts
+ *   IDENTITY_CHECK               the online identity check (Phase 151)          src/connectors/identity-check.ts
+ *   POSTCODE_CHECK               the free postcode check (Phase 151)            src/connectors/postcode-check.ts
  *   ENGAGEMENT_SIGNING           the built-in letter signature (Phase 146f)      src/web/signing.ts
  *   MESSAGE_RETENTION            the message clean-up job (Phase 142a)           src/web/message-retention.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/web/defence-pack.ts
@@ -176,6 +180,8 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'KEEP_ORIGINALS', on: KEEP_ORIGINALS.enabled, home: 'src/web/originals.ts' },
     { switch: 'EMAIL_SENDING', on: EMAIL_SENDING.enabled, home: 'src/stubs/email-provider.ts' },
     { switch: 'INBOUND_EMAIL', on: INBOUND_EMAIL.enabled, home: 'src/stubs/email-inbound.ts' },
+    { switch: 'IDENTITY_CHECK', on: IDENTITY_CHECK.enabled, home: 'src/connectors/identity-check.ts' },
+    { switch: 'POSTCODE_CHECK', on: POSTCODE_CHECK.enabled, home: 'src/connectors/postcode-check.ts' },
     { switch: 'ENGAGEMENT_SIGNING', on: ENGAGEMENT_SIGNING.enabled, home: 'src/web/signing.ts' },
     { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/web/message-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/web/defence-pack.ts' },

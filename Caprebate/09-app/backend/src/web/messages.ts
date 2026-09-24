@@ -339,7 +339,8 @@ export function alertNewMessage(d: MessageDeps, message_id: string): AlertResult
   }
   if (people.length === 0) return { state: 'NOT_QUEUED', why: 'NOBODY_TO_TELL' };
   const origin = d.origin ?? process.env.CAPREBATE_PUBLIC_ORIGIN ?? null;
-  const w = alertWords(to, NOTICE_SUBJECT_LEADS_WITH_COMPANY ? m.name : null, m.business_id, origin);
+  // Phase 151: the company leads the subject of an email to OUR STAFF only (Word answer 71), never one to a client.
+  const w = alertWords(to, to === 'STAFF' && NOTICE_SUBJECT_LEADS_WITH_COMPANY ? m.name : null, m.business_id, origin);
   const transport = outboxTransport(d.db, d.newId, d.now, () => true);
   const queued: string[] = [];
   let refused = 0;

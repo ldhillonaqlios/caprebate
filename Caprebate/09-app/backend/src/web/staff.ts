@@ -445,6 +445,17 @@ export async function handleStaff(
       if (e instanceof S.SettingsError) return problem(res, actor, 'Not disabled', e.message, '/staff/users');
       throw e;
     }
+    /* PHASE 151 (Word answer 166, closed 24 September 2026): a leaver's photo is deleted when their account is disabled
+       — the row and the file, by the same clearPhoto a person uses on their own, which fails rather than report a file
+       gone that is still on disk. Only once the account is disabled: a refused disable deletes nothing. */
+    const hadPhoto = photoFor(db, disableMatch[1] ?? '') !== undefined;
+    await clearPhoto({ db, store: d.store }, disableMatch[1] ?? '');
+    if (hadPhoto) {
+      d.app.audit.append({
+        at: now(), kind: 'USER_UPDATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+        object_type: 'user', object_id: disableMatch[1] ?? '', detail: { photo_deleted: true, because: 'ACCOUNT_DISABLED' },
+      });
+    }
     redirect(res, '/staff/users?done=disabled'); return 'handled';
   }
 

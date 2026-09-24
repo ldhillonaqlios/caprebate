@@ -1,9 +1,9 @@
 /**
- * FREE-TYPED EMAIL TO A CLIENT, FROM contactus@caprebate.com — THE STORE. Phase 141, 21 September 2026.
+ * FREE-TYPED EMAIL TO A CLIENT, FROM contact@caprebate.co.uk — THE STORE. Phase 141, 21 September 2026.
  * "Back office and portal clean-up, 8 of 11."
  *
  * Lakhbir, 18 September 2026: "When on a client page there needs to be the ability to free-type emails, which should
- * come from contactus@caprebate.com."
+ * come from contact@caprebate.co.uk."
  *
  * The pages are src/web/free-email-pages.ts. The sending switch and the mail adapter are src/stubs/email-provider.ts.
  *

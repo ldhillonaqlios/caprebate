@@ -140,6 +140,8 @@ export const REGISTER_SWITCHES: Readonly<Record<string, boolean>> = Object.freez
      BOUNDARY_FETCHING_SWITCHED_ON, read here so the research panel shows the same answer the fetcher obeys
      (src/connectors/inspire.ts). It is false. */
   HMLR_INSPIRE: BOUNDARY_FETCHING_SWITCHED_ON,
+  /* Phase 151: the postcode check at the address question has its own switch, POSTCODE_CHECK, off. Never run by the button. */
+  POSTCODES_IO: false,
 });
 
 /** Only `true` is on. An absent source, and anything else, is off. */

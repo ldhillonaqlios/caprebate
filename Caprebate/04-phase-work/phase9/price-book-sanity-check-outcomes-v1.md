@@ -4,6 +4,9 @@
 **Books consulted:** Spon's Mechanical & Electrical Services Price Book 2021 and 2022; Spon's
 Architects' and Builders' Price Book 2024 (AECOM). All held on the Caprebate Desktop.
 
+**Note, 24 September 2026 (Phase 151):** BCIS is now the cost source (Word answers 6 and 8). These three books are kept
+where they are, unused; nothing is bought from Spon's.
+
 ---
 
 ## The rule this document obeys

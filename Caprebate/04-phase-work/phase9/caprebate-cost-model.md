@@ -193,6 +193,10 @@ table and flips only the scale gate gets a refusal, not a lower fee.
 
 ## 4. LEG-E4 — location and contract size
 
+**Corrected 24 September 2026 (Phase 151): the source is BCIS, and it is a licence question as well as a purchase.**
+Lakhbir chose BCIS over Spon's (Word answers 6 and 8); no Spon's book is bought. BCIS's licence (Annex One of its terms of
+sale) is held in phase3's source register as `BCIS_COMMERCIAL`, every unpublished term a refusal, and which BCIS product
+was agreed is Word question 218. The paragraph below is how it read before, when the choice was open:
 **This is not a licence problem, and the board should say so.** LEG-E4 is blocked on a **purchase** —
 Spon's or BCIS, item 12804374406, about £330. That is a different kind of block from E2/E3/E5: no
 solicitor, no clearance, no negotiation, no counterparty. Someone buys a book. It can be cleared this
@@ -495,7 +499,7 @@ the valuation basis is D.
 | `leg_e2_oncosts_by_price_source` (Phase 132) | the books bought, each entry in `CB_PRICE_SOURCES` recorded from its own preamble, and a `price_source` on every residual-path job; the alternative to the row above, never with it (§4.3) | Lakhbir (books); Surveyor (which rule) | "Stop counting site overheads twice in the cost build-up" |
 | `leg_e3_voa_fee_scale` | VOA licence, then the band table loaded — **and since 12 September 2026 only together with `leg_e3_building_type_adder`**, or it refuses | Solicitor/DPO | 12804380489 |
 | `leg_e3_building_type_adder` (F-1) | the same VOA licence, the adder table loaded, and a building type recorded on every residual-path job; switched on together with `leg_e3_voa_fee_scale` (§3.1) | Solicitor/DPO (licence); Surveyor (building type) | 12927234375 |
-| `leg_e4_location_and_contract_size` | Spon's or BCIS **purchased** (~£330); since Phase 132 also the location table's `index_base` and `price_source` declared, and the book's `rates_priced_at_key` recorded, and a contract value on every job | Lakhbir | 12804374406 |
+| `leg_e4_location_and_contract_size` | BCIS subscribed and its product named (Word question 218; BCIS chosen over Spon's, Word answers 6 and 8); since Phase 132 also the location table's `index_base` and `price_source` declared, and the book's `rates_priced_at_key` recorded, and a contract value on every job | Lakhbir | 12804374406 |
 | `leg_e4_contract_size_outside_window` (Phase 132) | the surveyor accepting "hold at the nearer limit" for contracts outside the book's window, knowing above it overstates and below it understates (§4.3) | Surveyor | "Adjust building costs for where the property is and how big the job is" |
 | `leg_e5_per_element_depreciation` | VOA licence **and** CIBSE terms | Solicitor/DPO | 12804317685 |
 | valuation basis | a named surveyor to set it | Surveyor | 12804374838 |

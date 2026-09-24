@@ -713,7 +713,7 @@
         <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="40"><span class="msg"></span></div>
         <div class="field full"><label for="ptype">Property type (required)</label><select id="ptype" name="ptype" required><option value="">Select&hellip;</option><option>Care home</option><option>Dental practice</option><option>GP / primary care</option><option>Private hospital / clinic</option><option>Supported living</option><option>Other healthcare property</option></select><span class="msg"></span></div>
         <div class="field full"><label for="message">Anything you'd like to add (optional)</label><textarea id="message" name="message" maxlength="2000"></textarea></div>
-        <div class="field full ck"><label for="consent"><input id="consent" name="consent" type="checkbox" value="on" required> You may contact me about this enquiry (required). This is not marketing consent.</label><span class="msg"></span></div>
+        <p class="field full form-privacy">Sending this form asks us to reply to you. You do not need to tick anything. <a href="/privacy/">How we use your details</a>.</p>
         <div class="form-submit">
           <button type="submit" class="btn btn-fill btn-lg">Request my estimate <span class="arr">&rarr;</span></button>
           <span class="form-note">We use these details only to answer your enquiry. We never share them.</span>
@@ -756,7 +756,7 @@
       </div>
       <div class="footcol">
         <h5>Get in touch</h5>
-        <a href="#contact">Request an estimate</a><a href="mailto:hello@caprebate.com">hello@caprebate.com</a><a href="tel:+44">+44 (0)00 0000 0000</a>
+        <a href="#contact">Request an estimate</a><a href="mailto:contact@caprebate.co.uk">contact@caprebate.co.uk</a><a href="tel:+44">+44 (0)00 0000 0000</a>
       </div>
     </div>
     <p class="disclaimer"><strong>Cap Rebate is a trading name of CAP REBATE LTD</strong>, a company registered in England and Wales, company number 17307313, registered office 1st Floor, 1-9 Castle Street, Hinckley, LE10 1DA. <strong>The trading name has not been cleared by a trade-mark search.</strong> Figures shown, including any figure from the on-page tool, are <strong>not a guarantee and not tax advice.</strong> The on-page tool returns a <strong>pre-diligence ceiling</strong> — the most the sector band allows before your property has been examined — and the sector yield bands behind it are <strong>assessed, not independently calibrated</strong>, pending chartered tax adviser review. Capital allowances are a form of income or corporation tax relief on qualifying property expenditure; they are distinct from capital gains tax. Any claim is prepared on the basis of a surveyor's inspection and apportionment; the filing position is signed by your own accountant or tax adviser, or by you if you have neither, and never by us. Eligibility and amounts depend on your circumstances and a full review. [Company registration, ICO and regulatory details to be added.]</p>
@@ -1046,11 +1046,10 @@ const form=document.getElementById('leadform');
 function setErr(field,msg){ const f=field.closest('.field'); f.classList.toggle('err',!!msg); const m=f.querySelector('.msg'); if(m) m.textContent=msg||''; }
 form.addEventListener('submit',e=>{
   let ok=true;
-  const name=form.elements.name, email=form.elements.email, ptype=form.elements.ptype, consent=form.elements.consent;
+  const name=form.elements.name, email=form.elements.email, ptype=form.elements.ptype;
   if(!name.value.trim()){ setErr(name,'Please add your name'); ok=false; } else setErr(name,'');
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value)){ setErr(email,'Please add a valid email'); ok=false; } else setErr(email,'');
   if(!ptype.value){ setErr(ptype,'Please choose a property type'); ok=false; } else setErr(ptype,'');
-  if(!consent.checked){ setErr(consent,'We need your permission to contact you about this'); ok=false; } else setErr(consent,'');
   if(!ok){ e.preventDefault(); return; }
   if(!document.getElementById('assessTpl')) return;
   e.preventDefault();

@@ -1104,9 +1104,12 @@ export function recordShareConsent(d: IntroducerDeps, actor: Actor, lead_id: str
  * GIVING FROM THE PORTAL IS BUILT AND SHIPS OFF. The words a referred client must be
  * told are not agreed; until they are, a yes is still recorded by staff, who ask.
  */
+/* PHASE 151, 24 September 2026: ANSWERED AND ON. Lakhbir, Word answer 168 (closed that day): ask the client's
+   permission before updating the firm that referred them, with a request from the client's own portal. So giving from
+   the portal is switched on; a staff-recorded yes still works beside it, and nothing is shared without a yes. */
 export const CLIENT_SHARE_GIVE: { readonly enabled: boolean; readonly requires: string } = Object.freeze({
-  enabled: false,
-  requires: 'the answer to “What must a referred client be told before we share their claim’s progress with the firm that referred them?”',
+  enabled: true,
+  requires: 'Answered: the client says yes or no in their own portal first.',
 });
 
 export type ClientShareChoice = {

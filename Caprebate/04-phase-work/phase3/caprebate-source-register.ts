@@ -292,18 +292,72 @@ export const LICENCES: readonly Licence[] = [
     notes: 'Summary valuation and floor area only. Ratepayer name excluded at source (12818314296).',
   },
   {
+    /**
+     * BCIS — THE COST SOURCE, INSTEAD OF SPON'S. Lakhbir chose BCIS over the Spon's price books (Word answers 6 and 8,
+     * closed 24 September 2026); no Spon's book is bought, and the three Spon's PDFs in
+     * 07-reference-and-benchmarks/price-books stay where they are, unused. Rewritten 24 September 2026 by Phase 151
+     * in the shape of CIBSE_KNOWLEDGE below. The research is 04-phase-work/phase3/caprebate-bcis-source-register-row.md.
+     *
+     * WHAT IT WOULD FEED. The LEG-E4 tables in 04-phase-work/phase9/caprebate-cost-model.cjs - CB_LOCATION_FACTORS,
+     * CB_CONTRACT_SIZE_ADJUSTMENT, CB_PRICE_SOURCES - and the bcis_* fields of the BCIS source row. ALL STAY EMPTY AND
+     * THE GATE STAYS OFF until Word question 218 ("Which BCIS product did you agree to, and does its licence let our
+     * software use its rates?") is answered with the product and its order form. This entry records the terms.
+     *
+     * WHAT BCIS PUBLISHES, read 24 September 2026 from bcis.co.uk/terms-conditions-of-sale/ (last updated 9 April
+     * 2026), Annex One "Special Conditions for BCIS Subscription", which covers every BCIS data product (CapX, OpX,
+     * TotX, ProtX, location factors, tender price indices, average prices) except Rebuild Plus (Annex Two). The
+     * archived BCIS Online terms of 17 June 2024 match it on every point below. The licensor is Building Cost
+     * Information Service Ltd, not RICS itself.
+     *   - cl. 2.1: a non-exclusive, non-transferable, revocable licence for the Subscription Term.
+     *   - cl. 2.1(b)-(c): the Data and edited copies may be stored on the subscriber's own systems and shared with its
+     *     licensed users there. cl. 2.3(a),(b),(d),(e): each user is a named employee with their own login, no more
+     *     users than the order states, working from the office on the order. cl. 2.3(j): no automated harvesting.
+     *   - cl. 2.1(d): extracts of the Data may be sent to the subscriber's customers or clients, where they relate to
+     *     projects created in the service and are reasonably necessary to advise in the normal course of business.
+     *     cl. 2.2 and 2.3(h): nothing else is redistributed.
+     *   - cl. 7.3: any display credits BCIS "wherever technically and commercially feasible". No wording is given.
+     *     cl. 7.4 adds Ordnance Survey and Royal Mail copyright notices without saying whether output must carry them.
+     *   - cl. 9.1-9.2: the term is 12 months unless the order says otherwise, renewing unless either side gives 30
+     *     days' notice; on expiry the Data and edited copies are deleted immediately, except Derived Data (data changed
+     *     so far it cannot be traced back to BCIS or used in its place).
+     *   - cl. 4.1 audit for a year after expiry; cl. 8.1 the Data is confidential, disclosable where law or a regulator
+     *     requires (cl. 8.2(c)); general terms cl. 13.6: the services are for information only and "should not be
+     *     used as conclusive, complete or authoritative".
+     *
+     * WHAT IT DOES NOT PUBLISH, AND THIS ENTRY HOLDS AS A REFUSAL, NEVER A DEFAULT
+     *   - attribution wording: none. `attribution_text` is a NOT PUBLISHED marker;
+     *   - the client's accountant: the grant is to "customers or clients" only, so accountant_report is false;
+     *   - HMRC: not mentioned. Only disclosure the law requires (cl. 8.2(c)) is possible, and nothing permits a
+     *     voluntary pack, so hmrc_pack is false;
+     *   - whether a figure our engine computes from BCIS rates and prints in a client's report is an "extract ...
+     *     relating to projects created in the service": treated as NOT, so client_report is false until BCIS
+     *     confirms it in writing, and a figure carried to a report must be Derived Data or not carry at all;
+     *   - whether staff who can see a BCIS figure in the back office are all named licensed users: INTERNAL IS TRUE
+     *     ONLY ON THAT CONDITION, which the order form (question 218) must show before anything is loaded;
+     *   - an API or data-feed licence: none published (the developer portal says only to email for access), so the
+     *     BCIS source row keeps `endpoint: null` and nothing is fetched;
+     *   - any freshness period for a loaded edition: none. 365 days is the published subscription term, not a
+     *     freshness rule, and expiry means deletion, not staleness;
+     *   - prices: none published; BCIS sells by demonstration and quote. Permissions and licensing:
+     *     contactbcis@bcis.co.uk; API access: api@bcis.co.uk.
+     */
     licence_id: 'BCIS_COMMERCIAL',
-    name: 'BCIS subscription licence (RICS)',
-    publisher_of_licence: 'RICS / BCIS',
+    name: 'BCIS subscription licence — Annex One of BCIS Ltd\'s terms of sale; named users, extracts to clients only; NO ATTRIBUTION WORDING, NO ACCOUNTANT OR HMRC GRANT PUBLISHED',
+    publisher_of_licence: 'Building Cost Information Service Ltd (BCIS, owned by RICS)',
     attribution_required: true,
-    attribution_text: 'Elemental cost data sourced from BCIS (RICS) under subscription licence.',
+    attribution_text:
+      'NOT PUBLISHED — BCIS\'s licence (Annex One, cl. 7.3) requires a credit to BCIS wherever feasible but gives no wording. ' +
+      'Nothing from this source may appear in a report until BCIS states the wording and confirms the use.',
     redistribution: { client_report: false, accountant_report: false, hmrc_pack: false, internal: true },
-    cache_max_age_days: 90,
+    cache_max_age_days: 365,
     legal_review_required: true,
     notes:
-      'Rates may be USED to compute, but the underlying rate table may not be reproduced. ' +
-      'FLAG: whether a derived £/m2 printed in the CAVR counts as reproduction is a licence ' +
-      'question for the solicitor, not an engineering judgement.',
+      'Read 24 Sep 2026 (Phase 151) from bcis.co.uk/terms-conditions-of-sale/ (updated 9 Apr 2026), Annex One. Internal use ' +
+      'is granted to named licensed users only (cl. 2.1(b)-(c), 2.3); extracts may go to clients where they relate to ' +
+      'projects created in the service (cl. 2.1(d)); nothing else may be redistributed (cl. 2.2). client_report false, ' +
+      'accountant_report false and hmrc_pack false are our refusals where BCIS publishes no grant; 365 days is the ' +
+      'subscription term, and on expiry the data is deleted (cl. 9.2). Rates may be USED to compute, but the underlying ' +
+      'rate table may not be reproduced. Which BCIS product was agreed, and its order form, is Word question 218.',
   },
   {
     licence_id: 'CLIENT_SUPPLIED',
@@ -475,6 +529,42 @@ export const LICENCES: readonly Licence[] = [
       'if not, per-element depreciation does not ship and these lives are not needed. ' +
       'CIBSE\'s Fair Use Policy (archived 29 May 2022, read 24 Sep 2026; gone from the live site) confirms every ' +
       'refusal: personal use only, and no re-use for other gain or for the benefit of a third party without permission.',
+  },
+  {
+    /**
+     * POSTCODES.IO — THE FREE CHECK AT THE ADDRESS QUESTION. Phase 151, 24 September 2026 (Word answers 16, 17, 35 and
+     * 36). The research is 04-phase-work/phase151/free-address-lookup.md.
+     *
+     * NO FREE ADDRESS LIST EXISTS FOR A COMMERCIAL SERVICE. Read that day: getAddress.io ceased on 4 February 2026 after
+     * losing a High Court database-right case, and its lookup returns 404; Ideal Postcodes' free credits are "for testing
+     * and evaluation" only; OS Places counts nothing towards the OS Data Hub's free allowance and its trial excludes live
+     * use; Loqate and findAddress.io are trials. So the free thing at the address question is a POSTCODE CHECK, not an
+     * address list: the client types their postcode, this confirms it exists and gives the council area, region and
+     * country, and the client types the building and street themselves. The paid address lookup (Homedata) still runs
+     * after signing, when staff start the research.
+     *
+     * WHAT IT PUBLISHES (postcodes.io/docs/overview and /docs/licences, read 24 Sep 2026): no key; GB data under the OS
+     * OpenData licence and the Open Government Licence; for Northern Ireland "BT" postcodes "Commercial use requires a
+     * licence from NI Land & Property Services" — SO THE CONNECTOR REFUSES A BT POSTCODE; the attribution lines below.
+     * WHAT IT DOES NOT PUBLISH: a rate limit, a service level, or where it is hosted. Only a postcode is ever sent.
+     */
+    licence_id: 'POSTCODES_IO_OPEN',
+    name: 'Postcodes.io — OS OpenData and ONS data under the Open Government Licence v3.0; Northern Ireland excluded for commercial use',
+    publisher_of_licence: 'Postcodes.io (Ideal Postcodes Ltd), for Ordnance Survey, Royal Mail, ONS and National Records of Scotland',
+    attribution_required: true,
+    attribution_text:
+      'Contains OS data © Crown copyright and database right [year]. ' +
+      'Contains Royal Mail data © Royal Mail copyright and database right [year]. ' +
+      'Source: Office for National Statistics licensed under the Open Government Licence v.3.0. ' +
+      'Contains National Records of Scotland data © Crown copyright and database right [year].',
+    redistribution: { client_report: true, accountant_report: true, hmrc_pack: true, internal: true },
+    cache_max_age_days: 120,
+    legal_review_required: false,
+    notes:
+      'Read 24 Sep 2026 (Phase 151). Free, no key, commercial use allowed in Great Britain. A BT (Northern Ireland) postcode ' +
+      'needs a Land and Property Services licence for commercial use and is refused. No address lines and no UPRN: it ' +
+      'checks a postcode, it does not list addresses. No rate limit or service level is published. 120 days matches the ' +
+      'ONS postcode table the data comes from, which is republished quarterly.',
   },
   {
     licence_id: 'CAPREBATE_OWN',
@@ -844,6 +934,20 @@ export const SOURCES: readonly Source[] = [
     personal_name_exceptions: NO_NAMES,
     endpoint: null,
   },
+  {
+    /** Phase 151, 24 September 2026. The free postcode check at the address question. See POSTCODES_IO_OPEN. */
+    source_id: 'POSTCODES_IO',
+    publisher: 'Postcodes.io',
+    dataset: 'Postcode lookup (ONS Postcode Directory and OS Code-Point Open)',
+    licence_id: 'POSTCODES_IO_OPEN',
+    default_prov: 'API',
+    /* B, not A: a service built on the ONS table, not the ONS table itself — the same reasoning as HOMEDATA_ADDRESS. */
+    max_grade: 'B',
+    permitted_fields: ['pio_postcode', 'pio_admin_district', 'pio_region', 'pio_country'],
+    excluded_fields: ['*_name_of_person', 'occupier_*', 'resident_*'],
+    personal_name_exceptions: NO_NAMES,
+    endpoint: 'https://api.postcodes.io',
+  },
 ];
 
 /* ------------------------------------------------------------------ *
@@ -1088,6 +1192,17 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'file. Our transport refuses every redirect, so if they do, the first download fails and says so rather ' +
       'than following it. The reader in src/connectors/inspire.ts is therefore tolerant of the element names and ' +
       'strict about everything else, and THE FIRST ALLOWED DOWNLOAD MUST CONFIRM THE SHAPE.',
+  },
+  {
+    source_id: 'POSTCODES_IO',
+    api_base: ['https://api.postcodes.io'],
+    docs: ['https://postcodes.io/docs/overview', 'https://postcodes.io/docs/licences'],
+    read_on: '2026-09-24',
+    findings:
+      'GET /postcodes/{postcode}, no authentication. 200 with {status, result:{postcode, admin_district, region, country, ' +
+      'latitude, longitude, codes{...}}}; 404 with {status:404, error:"Postcode not found"} (a live call confirmed the shape ' +
+      'on 24 Sep 2026). No address lines and no UPRN. GB under OS OpenData and the OGL; BT postcodes need an LPS licence ' +
+      'for commercial use. No rate limit, service level or hosting location published.',
   },
   {
     source_id: 'ONS_POSTCODE',

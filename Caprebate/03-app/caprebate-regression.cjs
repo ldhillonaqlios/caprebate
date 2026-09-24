@@ -2073,8 +2073,9 @@ if (startSuite("H", "Phase 8 — prepared patches, gated on the CTA")) {
                           closing comment on the item. The change removes a
                           multiplier and reproduces no VOA data.
      LEG-E3  12804380489  VOA licence — genuinely so; the fee scale IS the data.
-     LEG-E4  12804374707  a PURCHASE, not a licence — Spon's/BCIS, item
-                          12804374406, about GBP 330.
+     LEG-E4  12804374707  BCIS (chosen over Spon's, 24 Sep 2026) — a
+                          subscription AND a licence: Word question 218,
+                          item 12804374406.
      LEG-E5  12804317685  TWO sources — VOA obsolescence scales AND CIBSE plant
                           lives. Clearing the VOA licence alone does not
                           unblock it.
@@ -2205,7 +2206,7 @@ if (startSuite("I", "Phase 9 — prepared cost model, gated on licence and purch
     check("I7 — the shipped engine carries the LEG-E4 location factor",
       /location_factor|CB_LOCATION_FACTORS/.test(siteSrc), true,
       { xfail: "LEG-E4 12804374707 — prepared, not shipped; blocked on the cost " +
-               "library PURCHASE 12804374406, which is not a licence question" });
+               "library, BCIS: its product and licence are Word question 218 (item 12804374406)" });
 
     check("I8 — the shipped engine carries the valuation basis switch",
       /valuation_basis|replacement_new/.test(siteSrc), true,
@@ -2834,12 +2835,9 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
                                    than the repo, because the page is the thing
                                    a client reads and it is the assertion that
                                    would matter if only one survived.
-       · the domain              — NOT MOVED. caprebate.com is live on
-                                   IONOS with a mailbox and is named in the
-                                   statutory /notices/ specification. Changing
-                                   it on the page before the domain itself is
-                                   decided would advertise an address that
-                                   receives no mail. See M2b. */
+       · the domain              — MOVED, 24 September 2026 (Phase 151),
+                                   to caprebate.co.uk, where the three IONOS
+                                   mailboxes are. See M2b. */
   check("M2 — the site carries no legacy brand name",
     (src.match(/Ledgerstone|Health Tax Partners/g) || []).length, 0);
 
@@ -2857,12 +2855,12 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
     /Cap Rebate/.test(src) && siteStrings.filter(s => /Caprebate/.test(s)).length === 0, true);
 
   /* M2b — REPLACED 3 September 2026 (Phase 76 sweep), as its own comment
-     instructed. The assertion above held the footer on caprebate.com
+     instructed. The assertion above held the footer on the .com domain
      "until the domain decision is taken". THE DOMAIN DECISION IS NOW TAKEN:
      Lakhbir answered the trading-name question on 3 September ("look at
      everything to do with the business and change it to Caprebate"), and the
      domain was verified INDEPENDENTLY BY DNS on the same day rather than
-     inherited from the earlier check — caprebate.com and caprebate.co.uk both
+     inherited from the earlier check — caprebate.co.uk and caprebate.com both
      resolve to 217.160.0.189, both carry MX to mx00/mx01.ionos.co.uk, both
      carry an IONOS SPF record, and both sit on ui-dns nameservers. So the page
      no longer advertises an address on a domain that is not ours.
@@ -2874,8 +2872,13 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
   check("M2b — no legacy domain survives in the client-facing page",
     /healthtaxpartners\.(?:com|co\.uk)/.test(src), false);
 
+  /* AMENDED PHASE 151, 24 September 2026. The business is on caprebate.co.uk,
+     not caprebate.com (Word answers 3, 13, 186 and 211), and its contact
+     mailbox, contact@caprebate.co.uk, exists on IONOS. Still ONE check, so the
+     suite's count does not move: the page shows the .co.uk address and carries
+     no caprebate.com anywhere. */
   check("M2b — the contact address is on the decided domain",
-    /caprebate\.com/.test(src), true);
+    /contact@caprebate\.co\.uk/.test(src) && !/caprebate\.com/.test(src), true);
 
   /* Q49 was ANSWERED by Lakhbir on 1 Sep 2026 — "just say Health Tax
      Partners", incorporating this week — so Phase 62 removed the clearance

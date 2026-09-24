@@ -615,7 +615,11 @@ describe('the prior-claim position, derived', () => {
 describe('mandatory documents at a stage — built, and switched off', () => {
   test('MANDATORY DOCUMENTS SHIP OFF: off, the gate out of DATA_GATHERING is exactly today’s, and the question it waits on is named by its title', async () => {
     assert.equal(MD.MANDATORY_DOCUMENTS.enabled, false);
-    assert.equal(MD.MANDATORY_DOCUMENTS_QUESTION, 'Which of the Stage 2 documents are mandatory, and at which stage?');
+    /* Phase 151: the question it waited on (Word 47) was answered; it now waits on 220 and 223, named by their titles. */
+    assert.equal(MD.MANDATORY_DOCUMENTS_QUESTION, 'Do the sale contract and the CPSE replies have to arrive only when the client bought the building?');
+    assert.equal(MD.MANDATORY_DOCUMENTS_ALSO_WAITS_ON, 'May we accept tax returns and tax computations as uploads, and what must be removed from them?');
+    assert.deepEqual(MD.MANDATORY_DOCUMENTS.requires.map((r) => `${r.type_code}:${r.condition}`),
+      ['SALE_CONTRACT:BOUGHT', 'CPSE_REPLIES:BOUGHT', 'TAX_RETURN:ALWAYS', 'TAX_COMPUTATION:ALWAYS']);
     const h = await boot();
     try {
       const db = h.made.app.db;
@@ -635,7 +639,16 @@ describe('mandatory documents at a stage — built, and switched off', () => {
     const h = await boot();
     try {
       const db = h.made.app.db;
-      const on: MD.MandatoryDocuments = { ...MD.MANDATORY_DOCUMENTS, enabled: true };
+      /* Phase 151: the machinery is tested on the list this switch carried until Lakhbir's answer, as a fixture — two of
+         his four documents (the tax return and computation) cannot be received until Word question 223 is answered, so
+         his list cannot open the gate on the demo. His list is tested in the next test. */
+      const on: MD.MandatoryDocuments = {
+        ...MD.MANDATORY_DOCUMENTS, enabled: true,
+        requires: [
+          { type_code: 'FIRE_RISK_ASSESSMENT', condition: 'ALWAYS' }, { type_code: 'GRANT_FUNDING_AGREEMENT', condition: 'GRANT_FUNDED' },
+          { type_code: 'SALE_CONTRACT', condition: 'ELECTION_MADE' }, { type_code: 'LEASE', condition: 'LEASEHOLD' },
+        ],
+      };
       const sales = who(db, 'SALES');
       const admin = who(db, 'ADMIN');
       const d = deps(h.made);
@@ -676,6 +689,40 @@ describe('mandatory documents at a stage — built, and switched off', () => {
       assert.equal(P.gateOut(db, pc(), 'DATA_GATHERING', { mandatoryDocuments: on }).open, true);
       const moved = move();
       assert.equal(moved.ok, true, moved.ok ? '' : moved.why);
+    } finally { h.close(); }
+  });
+
+  test('LAKHBIR’S LIST, SWITCHED ON (Phase 151): the sale contract and the CPSE replies only when the client bought the building — not known and never recorded read alike — and the tax return and computation on every claim', async () => {
+    const h = await boot();
+    try {
+      const db = h.made.app.db;
+      const on: MD.MandatoryDocuments = { ...MD.MANDATORY_DOCUMENTS, enabled: true };
+      const sales = who(db, 'SALES');
+      const d = deps(h.made);
+      const c = db.get<{ id: string; property_id: string }>(
+        "SELECT c.id, c.property_id FROM claims c JOIN businesses b ON b.id = c.business_id WHERE b.name = 'Corvale Supported Living Limited'");
+      assert.ok(c);
+      const pc = P.loadPipelineClaim(db, c.id);
+      const need = (label: RegExp) => { const n = MD.mandatoryDocumentNeeds(db, pc, on).find((x) => label.test(x.what)); assert.ok(n, String(label)); return n; };
+      assert.ok(db.get("SELECT code FROM document_types WHERE code = 'TAX_RETURN'"), 'migration 045 adds the tax return type');
+      assert.equal(need(/^Tax return/).met, false);
+      assert.equal(need(/^Tax computation/).met, false);
+      // N4 — ASSERT BOTH: never recorded, then recorded as not known. The same need, and neither passes.
+      const neverRecorded = need(/^Sale or purchase contract/);
+      assert.equal(neverRecorded.met, false);
+      assert.match(neverRecorded.why, /whether the client bought the building is not known/);
+      assert.equal(F.recordFact(d, sales, c.id, { fact_key: 'BOUGHT_THE_BUILDING', answer: 'UNKNOWN', value: null, source_id: 'CLIENT_ANSWER', note: null }).ok, true);
+      assert.deepEqual(need(/^Sale or purchase contract/), neverRecorded);
+      assert.equal(need(/^Pre-contract enquiry replies/).met, false);
+      // Recorded NO: a client who built or refitted is excused both.
+      assert.equal(F.recordFact(d, sales, c.id, { fact_key: 'BOUGHT_THE_BUILDING', answer: 'VALUE', value: 'NO', source_id: 'CLIENT_ANSWER', note: null }).ok, true);
+      assert.equal(need(/^Sale or purchase contract/).met, true);
+      assert.equal(need(/^Pre-contract enquiry replies/).met, true);
+      assert.match(need(/^Pre-contract enquiry replies/).why, /did not buy the building/);
+      // Recorded YES: both are needed again.
+      assert.equal(F.recordFact(d, sales, c.id, { fact_key: 'BOUGHT_THE_BUILDING', answer: 'VALUE', value: 'YES', source_id: 'CLIENT_ANSWER', note: null }).ok, true);
+      assert.equal(need(/^Sale or purchase contract/).met, false);
+      assert.equal(P.gateOut(db, P.loadPipelineClaim(db, c.id), 'DATA_GATHERING', { mandatoryDocuments: on }).open, false);
     } finally { h.close(); }
   });
 });

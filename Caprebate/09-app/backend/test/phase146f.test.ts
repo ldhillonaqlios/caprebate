@@ -53,7 +53,7 @@ const ON: EmailSending = Object.freeze({
   enabled: true, provider: 'SMTP', named_in_privacy_notice: true, named_in_engagement_letter: true, mailbox_and_dns_ready: true,
   question: EMAIL_PROVIDER_QUESTION,
 });
-const LOGIN: SmtpLogin = Object.freeze({ host: '127.0.0.1', port: 1, user: 'contactus@caprebate.com', password: 'fake-password-146f-xyz' });
+const LOGIN: SmtpLogin = Object.freeze({ host: '127.0.0.1', port: 1, user: 'contact@caprebate.co.uk', password: 'fake-password-146f-xyz' });
 const noFiles = async (): Promise<null> => null;
 
 async function boot(): Promise<{ made: Awaited<ReturnType<typeof createApp>>; base: string; s: Awaited<ReturnType<typeof seed>>; clock: { now: string } }> {
@@ -100,13 +100,13 @@ const plain = (port: number) => () => netConnect(port, '127.0.0.1');
 
 describe('1 · the logins come from the key file, and only an IONOS host is accepted', () => {
   const full = {
-    IONOS_SMTP_HOST: 'smtp.ionos.co.uk', IONOS_SMTP_PORT: '465', IONOS_SMTP_USER: 'contactus@caprebate.com', IONOS_SMTP_PASSWORD: 'smtp-pass-146f-abc',
-    IONOS_IMAP_HOST: 'imap.ionos.co.uk', IONOS_IMAP_PORT: '993', IONOS_IMAP_USER: 'contactus@caprebate.com', IONOS_IMAP_PASSWORD: 'imap-pass-146f-abc',
+    IONOS_SMTP_HOST: 'smtp.ionos.co.uk', IONOS_SMTP_PORT: '465', IONOS_SMTP_USER: 'contact@caprebate.co.uk', IONOS_SMTP_PASSWORD: 'smtp-pass-146f-abc',
+    IONOS_IMAP_HOST: 'imap.ionos.co.uk', IONOS_IMAP_PORT: '993', IONOS_IMAP_USER: 'contact@caprebate.co.uk', IONOS_IMAP_PASSWORD: 'imap-pass-146f-abc',
   };
   test('sending reads IONOS_SMTP_* through the IONOS_EMAIL owner; reading reads IONOS_IMAP_* through IONOS_MAILBOX', () => {
     const store = secretsFromValues(full);
-    assert.deepEqual(smtpLoginFromKeyFile(store), { host: 'smtp.ionos.co.uk', port: 465, user: 'contactus@caprebate.com', password: 'smtp-pass-146f-abc' });
-    assert.deepEqual(imapLoginFromKeyFile(store), { host: 'imap.ionos.co.uk', port: 993, user: 'contactus@caprebate.com', password: 'imap-pass-146f-abc' });
+    assert.deepEqual(smtpLoginFromKeyFile(store), { host: 'smtp.ionos.co.uk', port: 465, user: 'contact@caprebate.co.uk', password: 'smtp-pass-146f-abc' });
+    assert.deepEqual(imapLoginFromKeyFile(store), { host: 'imap.ionos.co.uk', port: 993, user: 'contact@caprebate.co.uk', password: 'imap-pass-146f-abc' });
     // each owner reads only its own: the sender cannot see the mailbox password, nor the reader the sender's
     assert.equal(store.forOwner('IONOS_EMAIL').get('IONOS_IMAP_PASSWORD'), null);
     assert.equal(store.forOwner('IONOS_MAILBOX').get('IONOS_SMTP_PASSWORD'), null);
@@ -123,8 +123,8 @@ describe('1 · the logins come from the key file, and only an IONOS host is acce
   test('the old environment names are not read any more, and the test runner never reads this machine’s key file', () => {
     const before = { ...process.env };
     try {
-      process.env.CAPREBATE_SMTP_HOST = 'smtp.ionos.co.uk'; process.env.CAPREBATE_SMTP_USER = 'x@caprebate.com'; process.env.CAPREBATE_SMTP_PASSWORD = 'env-pass-146f';
-      process.env.CAPREBATE_IMAP_HOST = 'imap.ionos.co.uk'; process.env.CAPREBATE_IMAP_USER = 'x@caprebate.com'; process.env.CAPREBATE_IMAP_PASSWORD = 'env-pass-146f';
+      process.env.CAPREBATE_SMTP_HOST = 'smtp.ionos.co.uk'; process.env.CAPREBATE_SMTP_USER = 'x@caprebate.co.uk'; process.env.CAPREBATE_SMTP_PASSWORD = 'env-pass-146f';
+      process.env.CAPREBATE_IMAP_HOST = 'imap.ionos.co.uk'; process.env.CAPREBATE_IMAP_USER = 'x@caprebate.co.uk'; process.env.CAPREBATE_IMAP_PASSWORD = 'env-pass-146f';
       assert.equal(smtpLoginFromKeyFile(), null);
       assert.equal(imapLoginFromKeyFile(), null);
       assert.equal(processSecrets().state, 'NO_FILE');
@@ -135,7 +135,7 @@ describe('1 · the logins come from the key file, and only an IONOS host is acce
     // off the test runner, the same function reads the file named by CAPREBATE_SECRETS
     const dir = mkdtempSync(join(tmpdir(), 'cb-146f-keys-'));
     const f = join(dir, 'keys.env');
-    writeFileSync(f, 'IONOS_SMTP_HOST=smtp.ionos.co.uk\nIONOS_SMTP_USER=contactus@caprebate.com\nIONOS_SMTP_PASSWORD=file-pass-146f\n', { mode: 0o600 });
+    writeFileSync(f, 'IONOS_SMTP_HOST=smtp.ionos.co.uk\nIONOS_SMTP_USER=contact@caprebate.co.uk\nIONOS_SMTP_PASSWORD=file-pass-146f\n', { mode: 0o600 });
     const store = processSecrets({ CAPREBATE_SECRETS: f });
     assert.equal(store.state, 'LOADED');
     assert.equal(smtpLoginFromKeyFile(store)?.host, 'smtp.ionos.co.uk');
@@ -210,17 +210,17 @@ describe('2 · 3 · one audit row per connection, and bounces', () => {
     const send = outboxTransport(db, randomUUID, w.made.app.now, () => true);
     const biz = w.s.businesses[0]?.id ?? '';
     const m = send.send({ to_email: 'nobody@example.org', subject: 'One', body: 'x', kind: 'NOTIFICATION', business_id: biz });
-    db.run('UPDATE outbox SET sent_at = ?, transport = ?, provider_ref = ? WHERE id = ?', [T0, 'SMTP', 'abc123@caprebate.com', m.id]);
+    db.run('UPDATE outbox SET sent_at = ?, transport = ?, provider_ref = ? WHERE id = ?', [T0, 'SMTP', 'abc123@caprebate.co.uk', m.id]);
     const report = [
-      'From: Mail Delivery System <MAILER-DAEMON@ionos.co.uk>', 'To: contactus@caprebate.com', 'Subject: Undelivered Mail Returned to Sender',
+      'From: Mail Delivery System <MAILER-DAEMON@ionos.co.uk>', 'To: contact@caprebate.co.uk', 'Subject: Undelivered Mail Returned to Sender',
       'Message-ID: <report-1@ionos.co.uk>', 'MIME-Version: 1.0', 'Content-Type: multipart/report; report-type=delivery-status; boundary="B"', '',
       '--B', 'Content-Type: text/plain', '', 'Your message could not be delivered.', '',
       '--B', 'Content-Type: message/delivery-status', '', 'Reporting-MTA: dns; mx.ionos.co.uk', '', 'Final-Recipient: rfc822; nobody@example.org',
       'Action: failed', 'Status: 5.1.1', '',
-      '--B', 'Content-Type: text/rfc822-headers', '', 'Message-ID: <abc123@caprebate.com>', 'Subject: One', '', '--B--', '',
+      '--B', 'Content-Type: text/rfc822-headers', '', 'Message-ID: <abc123@caprebate.co.uk>', 'Subject: One', '', '--B--', '',
     ].join('\r\n');
     const raw = new Uint8Array(Buffer.from(report));
-    assert.deepEqual(parseBounceReport(raw), { kind: 'HARD', status: '5.1.1', original_message_id: 'abc123@caprebate.com' });
+    assert.deepEqual(parseBounceReport(raw), { kind: 'HARD', status: '5.1.1', original_message_id: 'abc123@caprebate.co.uk' });
     const d = { db, audit: w.made.app.audit, now: w.made.app.now, newId: randomUUID };
     assert.equal(ingest(d, { uid: 7, raw }), 'BOUNCE');
     assert.equal(ingest(d, { uid: 7, raw }), null, 'read in twice');
@@ -238,15 +238,15 @@ describe('4 · a standard .ics on every booked, moved or cancelled call', () => 
   const invite = {
     method: 'REQUEST' as const, booking_id: 'b-1', sequence: 2, starts_at: '2026-10-01T09:00:00.000Z', ends_at: '2026-10-01T09:30:00.000Z',
     stamp: T0, summary: 'Your call with Cap Rebate', description: 'Line one; a comma, and\na second line',
-    location: 'By telephone', organizer: { name: 'Cap Rebate', address: 'contactus@caprebate.com' }, attendee: 'client@example.org',
+    location: 'By telephone', organizer: { name: 'Cap Rebate', address: 'contact@caprebate.co.uk' }, attendee: 'client@example.org',
   };
   test('it is RFC 5545: CRLF lines no longer than 75 octets, UTC times, escaped text, one UID per booking', () => {
     const ics = buildIcs(invite);
     assert.ok(ics.endsWith('\r\n'));
     assert.equal(/[^\r]\n/.test(ics), false, 'a bare line feed');
     for (const line of ics.split('\r\n')) assert.ok(Buffer.byteLength(line, 'utf8') <= 75, line);
-    for (const want of ['BEGIN:VCALENDAR', 'METHOD:REQUEST', 'UID:booking-b-1@caprebate.com', 'SEQUENCE:2', 'DTSTART:20261001T090000Z',
-      'DTEND:20261001T093000Z', 'STATUS:CONFIRMED', 'ORGANIZER;CN="Cap Rebate":mailto:contactus@caprebate.com', 'END:VCALENDAR']) {
+    for (const want of ['BEGIN:VCALENDAR', 'METHOD:REQUEST', 'UID:booking-b-1@caprebate.co.uk', 'SEQUENCE:2', 'DTSTART:20261001T090000Z',
+      'DTEND:20261001T093000Z', 'STATUS:CONFIRMED', 'ORGANIZER;CN="Cap Rebate":mailto:contact@caprebate.co.uk', 'END:VCALENDAR']) {
       assert.ok(ics.split('\r\n').includes(want), want);
     }
     assert.match(ics, /DESCRIPTION:Line one\\; a comma\\, and\\na second line/);

@@ -33,6 +33,8 @@ export type AuditKind =
   | 'PASSWORD_CHANGED' | 'PASSWORD_RESET_REQUESTED' | 'PASSWORD_RESET_COMPLETED'
   | 'RATE_LIMITED'
   | 'USER_CREATED' | 'USER_UPDATED' | 'USER_DISABLED' | 'ROLE_ASSIGNED'
+  /** Phase 151: a role the super admin made, changed, or tried to make and was refused (src/web/role-editor.ts). */
+  | 'ROLE_CREATED' | 'ROLE_CHANGED' | 'ROLE_REFUSED'
   | 'DOCUMENT_ACCESSED'
   | 'RESEARCH_FIRED'
   /**
@@ -288,7 +290,7 @@ export type AuditKind =
   | 'EMAIL_WRITTEN' | 'EMAIL_SENDER_SET'
   /**
    * Phase 142, 22 September 2026: a message written on a company's "With the client" thread — by staff or by the client —
-   * and a reply to contactus@caprebate.com read in by the mailbox reader, filed by staff from the queue, or one of its
+   * and a reply to contact@caprebate.co.uk read in by the mailbox reader, filed by staff from the queue, or one of its
    * files saved to the company's Files. Ids, the direction, a count of files and the outcome — never the words, never an
    * address. (A "Team only" message is an internal note and keeps its own kind, INTERNAL_NOTE_ADDED.)
    */

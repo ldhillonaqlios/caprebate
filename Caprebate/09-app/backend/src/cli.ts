@@ -7,7 +7,7 @@
  *   npm run verify-audit recompute the audit log's hash chain; exit 1 if it is broken
  *   node src/cli.ts sweep-originals   delete every kept original whose time is up (KEEP_ORIGINALS; off, so none)
  *   node src/cli.ts send-outbox       send every email saved while sending was on (EMAIL_SENDING; off, so none)
- *   node src/cli.ts read-mailbox      read new replies to contactus@caprebate.com, read-only (INBOUND_EMAIL; off, so none)
+ *   node src/cli.ts read-mailbox      read new replies to contact@caprebate.co.uk, read-only (INBOUND_EMAIL; off, so none)
  *   node src/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests

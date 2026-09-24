@@ -119,6 +119,9 @@ export const NOT_BUILT: Readonly<Record<string, string>> = Object.freeze({
      for one point. It is not run by this button, and it is switched off. */
   HMLR_INSPIRE: 'allowed, but the land boundary is not looked up by this button. It comes from a whole council\u2019s file, ' +
     'read by its own connector, which is switched off. Nothing was contacted',
+  /* PHASE 151: the free postcode check belongs to the address question the client answers, not to this button. */
+  POSTCODES_IO: 'allowed, but the postcode check is made at the address question, when the client types their postcode, ' +
+    'not by this button. It is switched off. Nothing was contacted',
 });
 
 /* ================================================================== *

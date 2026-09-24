@@ -126,14 +126,17 @@ export function isDoNotContact(db: Db, to_email: string, business_id: string | n
 
 /**
  * PHASE 141 — WHO EVERY EMAIL COMES FROM, AS ONE SETTING. The latest row of `email_sender` (migration 036), which Admin
- * changes on the admin settings screen. Migration 036 writes the first: "Cap Rebate", contactus@caprebate.com. No
+ * changes on the admin settings screen. Migration 036 writes the first: "Cap Rebate", contact@caprebate.co.uk. No
  * address is written in code; a database with no row at all is refused rather than given a default.
  */
 export type Sender = { readonly display_name: string; readonly address: string; readonly reply_to: string; readonly from_header: string };
 
 export function currentSender(db: Db): Sender {
+  /* PHASE 151: THE NEWEST ROW WINS, BY WHEN IT WAS WRITTEN, NOT BY THE DATE IT CARRIES. A change is a new row and the
+     table is never edited, so the last row written is the last decision. Ordering on set_at let a migration's dated row
+     (044, 24 September 2026) outrank a change an administrator made later on a server whose clock read earlier. */
   const r = db.get<{ display_name: string; address: string; reply_to: string }>(
-    'SELECT display_name, address, reply_to FROM email_sender ORDER BY set_at DESC, rowid DESC LIMIT 1');
+    'SELECT display_name, address, reply_to FROM email_sender ORDER BY rowid DESC LIMIT 1');
   if (r === undefined) throw new Error('no sender is set for email: migration 036 writes one');
   return { ...r, from_header: `${r.display_name} <${r.address}>` };
 }

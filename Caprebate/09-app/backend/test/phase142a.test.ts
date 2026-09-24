@@ -117,9 +117,9 @@ const ON: MessageRetention = Object.freeze({
 
 const SENDING_ON: EmailSending = Object.freeze({
   enabled: true, provider: 'SMTP', named_in_privacy_notice: true, named_in_engagement_letter: true, mailbox_and_dns_ready: true,
-  question: 'Which email service should send our emails from contactus@caprebate.com?',
+  question: 'May we send you one test email from contact@caprebate.co.uk before email sending is switched on?',
 });
-const LOGIN = Object.freeze({ host: 'smtp.example.invalid', port: 465, user: 'contactus@caprebate.com', password: 'x' });
+const LOGIN = Object.freeze({ host: 'smtp.example.invalid', port: 465, user: 'contact@caprebate.co.uk', password: 'x' });
 
 /* ================================================================== *
  * 1 · MESSAGE_RETENTION — BUILT, AND SWITCHED OFF
@@ -438,7 +438,8 @@ describe('3 · a new message tells the other side — only while sending is on',
     assert.equal(n.length, 1);
     assert.equal(n[0]?.to_email, 'sales@example.invalid');
     assert.equal(n[0]?.send_requested, 1);
-    assert.equal(n[0]?.subject, 'A client has sent a new message', 'the subject carries more than the switch allows');
+    // Phase 151: an email to our staff leads with the company (Word answer 71); one to a client never does.
+    assert.equal(n[0]?.subject, 'Corvale Supported Living Limited — a client has sent a new message', 'the subject carries more than the switch allows');
     assert.match(n[0]?.body ?? '', /https:\/\/caprebate\.example\.invalid\/staff\/clients\/[A-Za-z0-9-]+\?chat=client#chat/);
 
     const b = M.postClientMessage(on, w.as('SALES'), w.corvale, { body: 'Phase 142a secret words from us', claim_id: null });
@@ -449,7 +450,8 @@ describe('3 · a new message tells the other side — only while sending is on',
     assert.equal(n[1]?.subject, 'You have a new message from Cap Rebate');
     assert.match(n[1]?.body ?? '', /waiting for you in your Cap Rebate portal/);
     assert.match(n[1]?.body ?? '', /\/portal\/messages/);
-    for (const x of n) assert.doesNotMatch(`${x.subject} ${x.body}`, /secret words|Corvale/, 'an alert carried the words or the name');
+    for (const x of n) assert.doesNotMatch(`${x.subject} ${x.body}`, /secret words/, 'an alert carried the words');
+    assert.doesNotMatch(`${n[1]?.subject} ${n[1]?.body}`, /Corvale/, 'an alert to the client carried the company name');
     const audit = w.made.app.audit.entries().filter((e) => e.kind === 'CLIENT_MESSAGE_ALERT');
     assert.equal(audit.length, 2);
     for (const e of audit) assert.doesNotMatch(JSON.stringify(e.detail), /secret words|@example\.invalid/);

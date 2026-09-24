@@ -283,7 +283,15 @@ const PARAMS = {
      (homedataCostPence()) from the price list read on 23 September 2026. The
      SUPPLIER'S find-then-retrieve is 7 tokens, 7p; that is not what we call.
 
-     WHY IT STAYS NULL - and the reason is the thing that changed, not the blank.
+     SET TO THE LIST PRICE, 24 SEPTEMBER 2026 (Phase 151). Lakhbir called the
+     price nominal (Word answer 35, closed that day), so the 8p list price now
+     stands as the value, MARKED AS A LIST PRICE in
+     homedata_cost_per_lookup_basis and in every result that reads it. It is
+     still not a price on an account: the first top-up and the first real
+     lookup's X-Call-Weight confirm it or correct it. The paragraph below is
+     how the blank was explained until then.
+
+     WHY IT STAYED NULL - and the reason is the thing that changed, not the blank.
      Not because the lookup might fire before signature: it cannot. And no
      longer because nobody has decided to buy one: Lakhbir answered "yes, use
      Homedata" on 22 September 2026 (Word question 36, "Do we need a paid
@@ -295,7 +303,9 @@ const PARAMS = {
      first real lookup's X-Call-Weight confirm it. Until then it is unknown, and
      unknown is not zero. Suite D pins null and proves the two differ.
      ------------------------------------------------------------------------ */
-  homedata_cost_per_lookup: null,
+  homedata_cost_per_lookup: 0.08,
+  /* What the figure above is. "list price" until an account confirms it. */
+  homedata_cost_per_lookup_basis: "list price: 8 tokens at Homedata's published 100 tokens = GBP 1, read 23 September 2026; not a price on an account",
 
   /* The real overhead. £60,000 is the placeholder inherited from the Phase 1
      options paper and named there as a placeholder. It contains no founder
@@ -484,8 +494,10 @@ function addressLookupCost(opts) {
          { given: o.properties });
   }
 
-  const per = isNum(o.homedataCostPerLookup) ? o.homedataCostPerLookup
-            : PARAMS.homedata_cost_per_lookup;
+  const supplied = isNum(o.homedataCostPerLookup);
+  const per = supplied ? o.homedataCostPerLookup : PARAMS.homedata_cost_per_lookup;
+  /* Phase 151: say which it is - a figure the caller supplied, or the list price. */
+  const basis = supplied ? "supplied" : PARAMS.homedata_cost_per_lookup_basis;
 
   const when = "after the engagement letter is signed, when a member of staff "+
                "clicks Run the research: once per property of the signed job";
@@ -510,6 +522,7 @@ function addressLookupCost(opts) {
     known: true,
     parameter: "homedata_cost_per_lookup",
     per_lookup: per,
+    basis: basis,
     properties: properties,
     lookups: properties,
     when: when,

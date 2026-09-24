@@ -30,6 +30,7 @@
  * three a user would notice.
  */
 
+import { isCustomRoleKey } from '../custom-roles.ts';
 import type { Db } from '../db.ts';
 import { authorise, can, type Actor } from '../authz.ts';
 import { APP_ROLES, isAppRole, type AppRole } from '../roles.ts';
@@ -361,8 +362,13 @@ export function assignRole(d: Deps, actor: Actor, target_id: string, role: strin
   if (target === undefined) throw new SettingsError('E_NO_USER', 'no such user');
   authorise(actor, 'user.assign_role', { type: 'user', id: target.id, role: target.role });
 
-  if (!isAppRole(role)) {
-    throw new SettingsError('E_BAD_ROLE', `a role is one of ${APP_ROLES.join(', ')}`);
+  // Phase 151: or a role the super admin made (src/custom-roles.ts) — a staff role, so never on a client account.
+  const made = isCustomRoleKey(role);
+  if (!isAppRole(role) && !made) {
+    throw new SettingsError('E_BAD_ROLE', `a role is one of ${APP_ROLES.join(', ')}, or one the super admin made`);
+  }
+  if (made && target.business_id !== null) {
+    throw new SettingsError('E_STAFF_BUSINESS', 'a client account cannot be given a staff role while it belongs to a business');
   }
   if (role === 'CLIENT' && target.business_id === null) {
     throw new SettingsError('E_NO_BUSINESS',
@@ -377,7 +383,7 @@ export function assignRole(d: Deps, actor: Actor, target_id: string, role: strin
     // their own role afterwards, and if they were the only one, nobody can.
     throw new SettingsError('E_SELF_ROLE', 'you cannot change your own role — ask another administrator');
   }
-  storeAssignRole(d.db, d.now, target.id, role);
+  storeAssignRole(d.db, d.now, target.id, role as AppRole);
   d.audit.append({
     at: d.now(), kind: 'ROLE_ASSIGNED', outcome: 'ALLOWED',
     actor_id: actor.id, actor_role: actor.role,

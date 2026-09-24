@@ -370,7 +370,7 @@ describe('4 · KEEP_ORIGINALS — built, and switched off', () => {
   test('SHIPPED OFF, and stamped: off in the source, no kept days on the store, and the case stamp reads it', async () => {
     assert.equal(KEEP_ORIGINALS.enabled, false);
     assert.equal(KEEP_ORIGINALS.retention_days, null);
-    assert.equal(KEEP_ORIGINALS.question, 'Should we keep the files clients upload, or keep deleting them once read?');
+    assert.equal(KEEP_ORIGINALS.question, 'How long do we keep the files clients upload, and who may open them?');
     assert.deepEqual(backendSwitchReadings().filter((x) => x.switch === 'KEEP_ORIGINALS'), [{ switch: 'KEEP_ORIGINALS', on: false, home: 'src/web/originals.ts' }]);
     const w = await boot();
     try { assert.equal(w.made.store.keptDays, null); } finally { w.close(); }

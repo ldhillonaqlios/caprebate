@@ -36,7 +36,7 @@ import type { Db } from '../db.ts';
 import type { Need } from './pipeline.ts';
 import { latestFacts } from './claim-facts.ts';
 
-export type DocumentCondition = 'ALWAYS' | 'GRANT_FUNDED' | 'ELECTION_MADE' | 'LEASEHOLD';
+export type DocumentCondition = 'ALWAYS' | 'GRANT_FUNDED' | 'ELECTION_MADE' | 'LEASEHOLD' | 'BOUGHT';
 
 export type MandatoryDocuments = {
   readonly enabled: boolean;
@@ -45,25 +45,33 @@ export type MandatoryDocuments = {
   readonly requires: readonly { readonly type_code: string; readonly condition: DocumentCondition }[];
 };
 
-/** The title of the question under Lakhbir in CAPREBATE QUESTIONS. Quoted, not paraphrased. */
-export const MANDATORY_DOCUMENTS_QUESTION = 'Which of the Stage 2 documents are mandatory, and at which stage?';
+/**
+ * PHASE 151, 24 September 2026: the question this switch waited on was answered — Word answer 47, "the sale contract,
+ * the CPSE replies, the tax returns and the tax computations" — and closed. It now waits on the two follow-ups, quoted
+ * by their titles: 220 below, and 223 in MANDATORY_DOCUMENTS_ALSO_WAITS_ON.
+ */
+export const MANDATORY_DOCUMENTS_QUESTION = 'Do the sale contract and the CPSE replies have to arrive only when the client bought the building?';
+export const MANDATORY_DOCUMENTS_ALSO_WAITS_ON = 'May we accept tax returns and tax computations as uploads, and what must be removed from them?';
 
 /**
- * THE RECOMMENDATION, SHIPPED OFF. Four of the ten: the one the list says every client holds, and the three whose condition
- * is a fact this build already holds. The other six — O&M manuals, the asbestos register, the pre-contract enquiry replies,
- * the contractor's cost breakdown, the insurance reinstatement valuation and the Building Regulations certificate — are
- * asked for and never made a condition of the gate, because their conditions (a refurbishment, a building older than
- * 2000, a purchase, invoices existing) are facts nothing records yet. The question puts all ten.
+ * LAKHBIR'S LIST, SHIPPED OFF (Word answer 47, Phase 151). Four documents: the sale contract and the CPSE replies ONLY
+ * WHEN THE CLIENT BOUGHT THE BUILDING — the claim's own fact BOUGHT_THE_BUILDING (migration 045), our recommendation in
+ * question 220, because a client who built or refitted has neither — and the tax return and the tax computation on
+ * every claim. It stays off until 220 is answered and until 223 says the two tax documents may be uploaded and what must
+ * be removed from them: today neither has a receipt policy, so neither can be received, and switching this on would
+ * stop every claim at the gate. Until Phase 151 the list was our own recommendation: the fire risk assessment always,
+ * the grant funding agreement where grant-funded, the sale contract where an election was made, and the lease where
+ * leasehold (caprebate's .bak-phase151 copy keeps it).
  */
 export const MANDATORY_DOCUMENTS: MandatoryDocuments = Object.freeze({
   enabled: false,
   stage: 'DATA_GATHERING',
   question: MANDATORY_DOCUMENTS_QUESTION,
   requires: Object.freeze([
-    Object.freeze({ type_code: 'FIRE_RISK_ASSESSMENT', condition: 'ALWAYS' as const }),
-    Object.freeze({ type_code: 'GRANT_FUNDING_AGREEMENT', condition: 'GRANT_FUNDED' as const }),
-    Object.freeze({ type_code: 'SALE_CONTRACT', condition: 'ELECTION_MADE' as const }),
-    Object.freeze({ type_code: 'LEASE', condition: 'LEASEHOLD' as const }),
+    Object.freeze({ type_code: 'SALE_CONTRACT', condition: 'BOUGHT' as const }),
+    Object.freeze({ type_code: 'CPSE_REPLIES', condition: 'BOUGHT' as const }),
+    Object.freeze({ type_code: 'TAX_RETURN', condition: 'ALWAYS' as const }),
+    Object.freeze({ type_code: 'TAX_COMPUTATION', condition: 'ALWAYS' as const }),
   ]),
 });
 
@@ -72,6 +80,7 @@ export const CONDITION_WORDS: Readonly<Record<DocumentCondition, string>> = Obje
   GRANT_FUNDED: 'where any spend was grant-funded — the claim’s own fact',
   ELECTION_MADE: 'where a s.198 or s.199 election affects the property — the claim’s own fact',
   LEASEHOLD: 'where the property is leasehold — the property’s tenure',
+  BOUGHT: 'where the client bought the building — the claim’s own fact',
 });
 
 type Applies = { readonly applies: true } | { readonly applies: false; readonly known: boolean; readonly why: string };
@@ -83,16 +92,25 @@ function choiceFact(db: Db, claim_id: string, key: string): string | null {
 
 function applies(db: Db, c: { id: string; property_id: string | null }, condition: DocumentCondition): Applies {
   if (condition === 'ALWAYS') return { applies: true };
-  if (condition === 'GRANT_FUNDED' || condition === 'ELECTION_MADE') {
-    const key = condition === 'GRANT_FUNDED' ? 'GRANTS_EXIST' : 'ELECTION_EXISTS';
+  if (condition === 'GRANT_FUNDED' || condition === 'ELECTION_MADE' || condition === 'BOUGHT') {
+    const key = condition === 'GRANT_FUNDED' ? 'GRANTS_EXIST' : condition === 'ELECTION_MADE' ? 'ELECTION_EXISTS' : 'BOUGHT_THE_BUILDING';
     const v = choiceFact(db, c.id, key);
     if (v === 'YES') return { applies: true };
-    if (v === 'NO') return { applies: false, known: true, why: condition === 'GRANT_FUNDED' ? 'no spend was grant-funded, as recorded' : 'no election affects the property, as recorded' };
+    if (v === 'NO') {
+      return {
+        applies: false, known: true,
+        why: condition === 'GRANT_FUNDED' ? 'no spend was grant-funded, as recorded'
+          : condition === 'ELECTION_MADE' ? 'no election affects the property, as recorded'
+          : 'the client did not buy the building, as recorded',
+      };
+    }
     return {
       applies: false, known: false,
       why: condition === 'GRANT_FUNDED'
         ? 'whether any spend was grant-funded is not known — record it on the facts panel; not known does not pass'
-        : 'whether an election affects the property is not known — record it on the facts panel; not known does not pass',
+        : condition === 'ELECTION_MADE'
+          ? 'whether an election affects the property is not known — record it on the facts panel; not known does not pass'
+          : 'whether the client bought the building is not known — record it on the facts panel; not known does not pass',
     };
   }
   const tenure = c.property_id === null ? null

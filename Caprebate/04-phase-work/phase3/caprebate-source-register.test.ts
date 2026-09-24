@@ -463,3 +463,33 @@ test('T-CQ1 the CQC endpoint is the current Syndication host, never the keyless 
   const text = readFileSync(join(import.meta.dirname, 'caprebate-source-register.ts'), 'utf8');
   assert.equal(/\/\/api\.cqc\.org\.uk/.test(text), false, 'the legacy keyless CQC host appears in the register file');
 });
+
+/* --- BCIS, the cost source (Phase 151, 24 September 2026) ------------------
+   Lakhbir chose BCIS over Spon's (Word answers 6 and 8). Its licence was read
+   from BCIS Ltd's terms of sale, Annex One, and every term it does not publish
+   is held as a refusal, as CIBSE's are. */
+
+test('T-BC1 the BCIS licence holds every unpublished term as a refusal, not a default', () => {
+  const lic = LICENCES.find((l) => l.licence_id === 'BCIS_COMMERCIAL')!;
+  assert.ok(lic, 'the BCIS licence is registered');
+  assert.equal(lic.legal_review_required, true);
+  assert.equal(lic.attribution_required, true);
+  assert.match(lic.attribution_text ?? '', /^NOT PUBLISHED/, 'BCIS publishes no credit wording');
+  assert.match(lic.name, /Annex One/);
+  assert.equal(lic.cache_max_age_days, 365, 'the published subscription term, not "no limit"');
+});
+
+test('T-BC2 only internal use is open, because only named licensed users are granted it', () => {
+  const lic = LICENCES.find((l) => l.licence_id === 'BCIS_COMMERCIAL')!;
+  for (const ch of ['client_report', 'accountant_report', 'hmrc_pack'] as const) {
+    assert.equal(lic.redistribution[ch], false, `${ch} is open without a published BCIS grant`);
+  }
+  assert.equal(lic.redistribution.internal, true);
+  assert.match(lic.notes, /question 218/);
+});
+
+test('T-BC3 BCIS stays a source with no endpoint: no API licence is published, so nothing is fetched', () => {
+  const src = SOURCES.find((s) => s.source_id === 'BCIS')!;
+  assert.equal(src.endpoint, null);
+  assert.equal(src.licence_id, 'BCIS_COMMERCIAL');
+});

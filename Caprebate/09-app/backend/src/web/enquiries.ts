@@ -60,7 +60,10 @@ export function receiveEnquiry(auth: Deps, newId: () => string, f: URLSearchPara
   if (email === null || email === undefined || !EMAIL.test(email)) return { ok: false, why: 'We need an email address we can reply to.' };
   if (!Object.prototype.hasOwnProperty.call(PROPERTY_TYPES, ptype)) return { ok: false, why: 'Choose the type of property.' };
   if (firm === undefined || phone === undefined || message === undefined) return { ok: false, why: 'One of the answers is longer than the form allows.' };
-  if (f.get('consent') !== 'on') return { ok: false, why: 'We need your permission to contact you about this enquiry. It is not marketing consent.' };
+  /* PHASE 151 (Word answer 164, closed 24 September 2026): NO TICK. The form's required "you may contact me" box is
+     replaced by a statement and a link to the privacy notice: a person who sends an enquiry has asked to be answered, and
+     a tick box would misdescribe the basis as consent. `contact_consent` stays 1 — it records that the person asked to be
+     contacted about this enquiry, by sending it — and is never marketing consent. */
   if (!rateLimit(auth, 'enquiry:' + hashToken(email.toLowerCase()), ENQUIRY_LIMIT)) {
     auth.audit.append({ at: auth.now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'website_enquiry' } });
     return { ok: false, why: 'We have already received several enquiries from this address. We will be in touch.' };

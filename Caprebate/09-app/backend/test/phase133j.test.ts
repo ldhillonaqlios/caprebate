@@ -156,7 +156,7 @@ describe('the website is served at / by the back end', () => {
 
 describe('the website enquiry form', () => {
   const good = { name: 'Enquiring Person', firm: 'Harbour Dental Limited', email: 'enquirer@example.invalid', phone: '01632 960222',
-    ptype: 'Dental practice', message: 'We bought the building in 2022.', consent: 'on' };
+    ptype: 'Dental practice', message: 'We bought the building in 2022.' };
 
   test('a complete enquiry is kept, and the audit line names nobody', async () => {
     const r = await makeClient(base).post('/enquiry', good);
@@ -169,9 +169,9 @@ describe('the website enquiry form', () => {
     assert.deepEqual(JSON.parse(line?.detail ?? '{}'), { sector: 'dental' });
   });
 
-  test('without consent, a name, a real address or a listed property type, nothing is kept', async () => {
+  test('without a name, a real address or a listed property type, nothing is kept — and no tick is asked for (Phase 151)', async () => {
     const before = made.app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM website_enquiries')?.n;
-    for (const bad of [{ consent: '' }, { name: '' }, { email: 'not-an-address' }, { ptype: 'Castle' }, { message: 'x'.repeat(2001) }]) {
+    for (const bad of [{ name: '' }, { email: 'not-an-address' }, { ptype: 'Castle' }, { message: 'x'.repeat(2001) }]) {
       const r = await makeClient(base).post('/enquiry', { ...good, email: 'other@example.invalid', ...bad });
       assert.equal(r.status, 400, JSON.stringify(bad));
     }

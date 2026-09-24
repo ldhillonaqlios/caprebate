@@ -211,7 +211,7 @@ export type RetentionDeps = { db: Db; audit: AuditLog; now: () => string; newId:
 const CATEGORY: Readonly<Record<DueRecord['kind'], string>> = Object.freeze({
   CLIENT_MESSAGE: 'a message on the thread with the client',
   TEAM_MESSAGE: 'a message on the team-only thread',
-  INBOUND_EMAIL: 'an emailed reply to contactus@',
+  INBOUND_EMAIL: 'an emailed reply to contact@',
 });
 
 /**

@@ -240,12 +240,12 @@ would be too easy to forget a flag. On a live system, nobody should ever set it.
   yet. Each one is saved here until sending is switched on. Calendar invites wait here too. Each one carries a calendar file, so it can go in any calendar. A company's own emails are on
   its Email page."
 
-  Every email says it is from **Cap Rebate <contactus@caprebate.com>**. Replies go to the same address. Sending is built,
+  Every email says it is from **Cap Rebate <contact@caprebate.co.uk>**. Replies go to the same address. Sending is built,
   but it is switched off. It stays off until all of these are done:
   - an email service is chosen;
   - it is named in our privacy notice;
   - it is named in the engagement letter;
-  - the contactus@ mailbox is set up;
+  - the contact@ mailbox is set up;
   - the mailbox's email safety records are in place.
 
   Until then, the Email page says **"Saved — emails are not being sent yet."**
@@ -596,7 +596,7 @@ are under "Emails waiting to send" (When · What it is · Subject · State), mar
 organisation marked do not contact is refused. The message is: "This company is marked do not contact, so nothing was saved to send."
 
 **Who emails come from.** On **Admin settings**, the section **Who emails come from** shows the sender. That is "Cap
-Rebate <contactus@caprebate.com>". It also shows where replies go. Admin can change the name, the address and the reply
+Rebate <contact@caprebate.co.uk>". It also shows where replies go. Admin can change the name, the address and the reply
 address, then press **Save**. The old one is kept. So you always know who an earlier email was sent from. Sales can read
 it. It is one setting, and every email uses it, whatever wrote it. Whether emails are really sent is not a setting. The
 same section says "Emails are not being sent yet". Under **Why?**, it says what is still missing.
@@ -783,7 +783,7 @@ below has answered.
 | **The engagement fee check** (found in the engine) | `CB_GATE_CONFIG` (`enabled: true`, `jobs_per_year: 120`) — in the engine | **On, but it decides nothing yet.** No costing is put in, so every case is not yet known. No figure is held back. The back office never quotes a fee to a client. This check never holds back an earned fee from an invoice | Lakhbir decided "Yes" and "120". The costing is still an estimate |
 | **Break-even counted as too little profit** | `FUNNEL_SWITCHES.breakeven_is_insufficient_profit: false` — `09-app/backend/src/web/funnel-session.ts:216` | "Roughly break-even", "not sure" and never asked all read the same | The tax adviser. They are asked: is roughly break-even enough profit? Is it enough for the relief to bite on? |
 | **The public referral form** | `REFERRAL_FORM` (`enabled: false`) — `src/web/introducers.ts:180` | The page does not exist. It answers as an unknown address | Whoever publishes a privacy notice for it. It must be linked from the referral form. It must tell a client what their firm sent us |
-| **A client saying yes to sharing, from the portal** | `CLIENT_SHARE_GIVE` (`enabled: false`) — `src/web/introducers.ts:1089` | Clients can take back a yes in the portal, but not give one. Staff record a yes after asking | The data protection officer, by agreeing the words. They must say what a client is told before we share their claim's progress with the firm that sent them |
+| **A client saying yes to sharing, from the portal** | `CLIENT_SHARE_GIVE` (`enabled: true` since 24 September 2026) — `src/web/introducers.ts` | Switched on. Clients give or take back a yes in their portal. Staff can still record a yes after asking | Lakhbir decided it: ask the client first, from their portal |
 | **The fee controls** (two) | `FEE_CONTROLS` — `src/web/fee-controls.ts`: `above_benefit`, `break_and_abort`, each `enabled: false`. The minimum fee is no longer a switch. `MINIMUM_FEE_DECISION` records that it is decided as none | The fee is not capped or changed. There is no break fee and no abort fee | A pricing choice. The code names two open questions, but not a person. One asks: do we cap the fee, warn about it, or adjust the percentage? The other asks: what is the break fee, and is there ever an abort fee or a fixed fee? |
 | **Clause 13 fee clawback** | `FEE_CLAWBACK` (`enabled: false`) — `src/web/claim-record.ts` | A smaller claim raises nothing. The audit log says why | Part (a) is answered yes. The time limit is now in the letter. It reads "for so long as the claim remains open to enquiry". It still waits on clause 13's other two blanks. They are the trigger and settlements |
 | **The fee trigger** — decided | `FEE_TRIGGER` (`reading: 'REPORT_DELIVERED_FOR_FILING'`, `decided: true`) — `src/web/pipeline.ts` | Our fee is earned when our report is delivered for filing. It goes to the client or their accountant. The system reads this from the list of what we have sent. That means the client report or computation pack, on the day it was sent. If nothing was sent, the fee is not earned yet | Decided by Lakhbir. Nothing here says we file the tax return. Nothing says we sign the filing position |
@@ -3101,9 +3101,9 @@ Address: `/staff/clients/{company}/files` — or press **Files** at the top of t
 **Why the original says "Read and then deleted"**
 
 We read every file and keep what we need from it. Then we delete the file itself. That is our promise to keep as
-little as we can. We have built a way to keep the originals, but it is switched off. Lakhbir and the data protection
-officer will decide. The question they must answer is:
-- *"Should we keep the files clients upload, or keep deleting them once read?"*
+little as we can. We have built a way to keep the originals, but it is switched off. Lakhbir has said to keep them. He
+must still say how long, and who may open them. The question is:
+- *"How long do we keep the files clients upload, and who may open them?"*
 
 If they switch it on, Admin sees **Open the original** on a card. That lasts until the file's time is up. Then the
 file is deleted.
@@ -3128,7 +3128,7 @@ see that file now." Now sign in as Corvale's client and send a lease from the po
 ### Training — `B48` emailing a client
 
 **What it is for**
-Writing your own email to a client, not just a template. It comes from **Cap Rebate <contactus@caprebate.com>**. It is
+Writing your own email to a client, not just a template. It comes from **Cap Rebate <contact@caprebate.co.uk>**. It is
 kept on the company's timeline.
 
 **Who can open it**
@@ -3166,11 +3166,12 @@ can also press it on a lead card. You can press it on a claim too, and then that
 - A refusal keeps what you typed. You can fix it and save again.
 
 **Why it is not sent yet**
-Three things must be true first. Each one is for Lakhbir to do.
-- Choose an email service. The question is *"Which email service should send our emails from
-  contactus@caprebate.com?"*
-- Name that service in the privacy notice and in the engagement letter.
-- Set up the contactus@caprebate.com mailbox. It needs its email security records (SPF, DKIM and DMARC).
+The email service is chosen: IONOS. The mailbox contact@caprebate.co.uk is set up. So are its safety
+records. Three things must still be true first. Each one is for Lakhbir to do.
+- Name IONOS in the privacy notice and in the engagement letter.
+- Say who reads contact@caprebate.co.uk.
+- Send one test email first. The question is *"May we send you one test email from contact@caprebate.co.uk before
+  email sending is switched on?"*
 
 The sending is built. It stays switched off until then. An email saved while it is off will never go out later by
 surprise.
@@ -3185,7 +3186,7 @@ Now type "our sort code is 12-34-56" in a message. You see **Not saved**, and yo
 
 **Check yourself**
 - *Can you email someone who is not a contact?* — No. Add them as the company's contact first.
-- *Who does the client see the email from?* — Cap Rebate <contactus@caprebate.com>. A reply goes there too.
+- *Who does the client see the email from?* — Cap Rebate <contact@caprebate.co.uk>. A reply goes there too.
 - *You saved an email today. Sending is switched on next month. Will it go out?* — No. Only emails saved while sending
   is on are sent.
 
@@ -3224,7 +3225,7 @@ Email replies we could not match: `/staff/replies`.
 
 **Email replies (switched off until the mailbox exists)**
 
-A client may reply to an email we sent from contactus@caprebate.com. The reply will then show on **With the client**.
+A client may reply to an email we sent from contact@caprebate.co.uk. The reply will then show on **With the client**.
 It shows as *"{contact}, by email"*. On the timeline it shows as *"A reply from {contact}"*. Did the email come with a
 file? Then the message says so. Choose **What is it?** beside each file and press **Save to Files**.
 

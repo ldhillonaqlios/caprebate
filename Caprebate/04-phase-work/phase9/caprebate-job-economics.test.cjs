@@ -301,12 +301,28 @@ test("C8 a bad marginal tax rate is refused", () => {
    D7 and D8 still hold the null, and still prove null and zero differ.
    =========================================================================== */
 
-test("D1 the parameter exists, is named, and has no value", () => {
+/* Phase 151, 24 September 2026: the parameter now holds the 8p LIST PRICE,
+   marked as one (Word answer 35 called the price nominal). The unknown path is
+   still the rule - a price nobody has read is unknown, not zero - so D2 to D5
+   and D8 run it with the parameter emptied for the length of the test. */
+function withUnknownPrice(fn) {
+  const was = M.PARAMS.homedata_cost_per_lookup;
+  M.PARAMS.homedata_cost_per_lookup = null;
+  try { return fn(); } finally { M.PARAMS.homedata_cost_per_lookup = was; }
+}
+
+test("D1 the parameter exists, is named, and holds the 8p list price, marked as a list price", () => {
   assert.ok("homedata_cost_per_lookup" in M.PARAMS);
-  assert.equal(M.PARAMS.homedata_cost_per_lookup, null);
+  assert.equal(M.PARAMS.homedata_cost_per_lookup, 0.08);
+  assert.match(M.PARAMS.homedata_cost_per_lookup_basis, /^list price/);
+  const p = M.addressLookupCost({ properties: 11 });
+  assert.equal(p.known, true);
+  assert.equal(Math.round(p.cost * 100), 88, "eleven properties, 88p");
+  assert.match(p.basis, /^list price/, "a result read from the list price says so");
+  assert.equal(M.addressLookupCost({ properties: 1, homedataCostPerLookup: 0.07 }).basis, "supplied");
 });
 
-test("D2 not supplied — the cost is flagged unknown and is NOT zero", () => {
+test("D2 not supplied — the cost is flagged unknown and is NOT zero", () => { withUnknownPrice(() => {
   const p = M.addressLookupCost({ properties: 1 });
   assert.equal(p.known, false);
   assert.equal(p.parameter, "homedata_cost_per_lookup");
@@ -318,9 +334,10 @@ test("D2 not supplied — the cost is flagged unknown and is NOT zero", () => {
   /* ...and it no longer gives the dead reason for the blank. */
   assert.ok(!/before a client signs|before the gate|Q93/.test(p.why));
   assert.ok(/after the engagement letter is signed/.test(p.when));
+  });
 });
 
-test("D3 explicitly undefined behaves identically to not supplied", () => {
+test("D3 explicitly undefined behaves identically to not supplied", () => { withUnknownPrice(() => {
   /* The state of every caller who never passed the option at all. A suite that
      covers only one of these leaves the other silently uncovered. */
   const a = M.addressLookupCost({ properties: 3 });
@@ -331,23 +348,26 @@ test("D3 explicitly undefined behaves identically to not supplied", () => {
   assert.equal(c.known, false);
   assert.deepEqual(Object.keys(a).sort(), Object.keys(b).sort());
   assert.deepEqual(Object.keys(a).sort(), Object.keys(c).sort());
+  });
 });
 
-test("D4 loaded cost never folds an unknown address lookup into the headline", () => {
+test("D4 loaded cost never folds an unknown address lookup into the headline", () => { withUnknownPrice(() => {
   const c = M.loadedCost("dental", "DESK_ONLY", 100, { properties: 11 });
   assert.equal(c.address_lookup.known, false);
   assert.equal(c.loaded_including_address_lookup, null);
   /* And the headline is unchanged by the unknown, rather than nudged by it. */
   assert.equal(c.loaded, M.loadedCost("dental", "DESK_ONLY", 100, {}).loaded);
+  });
 });
 
-test("D5 the break-even including the address lookup stays null while it is unknown", () => {
+test("D5 the break-even including the address lookup stays null while it is unknown", () => { withUnknownPrice(() => {
   const b = M.breakEvenAllowances("dental", "DESK_ONLY", 100, RATE, { properties: 4 });
   assert.equal(b.address_lookup_known, false);
   assert.equal(b.break_even_allowances_including_address_lookup, null);
   /* Never silently equal to the figure that excludes it. */
   assert.notEqual(b.break_even_allowances_including_address_lookup,
                   b.break_even_allowances);
+  });
 });
 
 test("D6 supplied — once per property of the signed job, and nothing charged to enquiries that failed", () => {
@@ -379,7 +399,7 @@ test("D7 supplied — it flows through to loaded cost and to break-even", () => 
   assert.ok(b.break_even_allowances_including_address_lookup > b.break_even_allowances);
 });
 
-test("D8 a zero cost per lookup is KNOWN and is not the same as unknown", () => {
+test("D8 a zero cost per lookup is KNOWN and is not the same as unknown", () => { withUnknownPrice(() => {
   /* The distinction the whole rule rests on: "free" is an answer, "we have not
      asked" is not, and they must not collapse into each other. */
   const zero = M.addressLookupCost({ properties: 5, homedataCostPerLookup: 0 });
@@ -388,6 +408,7 @@ test("D8 a zero cost per lookup is KNOWN and is not the same as unknown", () => 
   assert.equal(zero.cost, 0);
   assert.equal(unknown.known, false);
   assert.notEqual(zero.known, unknown.known);
+  });
 });
 
 test("D9 a nonsensical property count is refused rather than coerced", () => {

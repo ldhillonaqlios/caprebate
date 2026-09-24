@@ -221,7 +221,7 @@ export async function handleStaffMessages(
       title: 'Email replies to sort', nav: d.nav(actor), wide: true,
       body: h`<h1>Email replies to sort</h1>
         ${done === 'filed' ? savedMessage('Filed. It is on the company’s chat now.') : raw('')}
-        ${inbound.enabled ? raw('') : h`<div class="gate" role="note"><strong>We are not reading replies yet.</strong> The contactus@caprebate.com mailbox is not set up.</div>`}
+        ${inbound.enabled ? raw('') : h`<div class="gate" role="note"><strong>We are not reading replies yet.</strong> The contact@caprebate.co.uk mailbox is not set up.</div>`}
         <p class="help">We could not tell which company sent these. Read each one, then choose the company.</p>
         ${q.length === 0 ? h`<p class="empty">Nothing to sort.</p>` : h`<ul class="emaillist">${q.map((e) => h`<li class="tile">
           <p class="tilename">${e.subject === '' ? '(no subject)' : e.subject}</p>
