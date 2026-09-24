@@ -92,7 +92,49 @@
    ten files" are everywhere and mostly per-file counts, and the noise would
    bury the REVIEW list a human is asked to read. That is the remaining blind
    spot, and it is written down here rather than discovered later. */
-const PASS_RE = /(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d{2,5})\s*(?:pass(?:ing|es|ed)?\b|\/\s*0\s*fail\b|\/\s*0\s*\/\s*\d+\b|(?:assertions?|tests?)\s+pass(?:ing|es|ed)?\b|(?:assertions?|tests?)\s*,\s*0\s+fail(?:s|ures?)?\b|assertions\b)/g;
+/* A SIXTH SHAPE, AND THE SIXTH TIME THIS FILE HAS BEEN FOUND BLIND - the near
+   neighbour of the fifth. (Phase 148, 24 September 2026, found by PROBING the
+   matcher rather than by reading this comment.) The fifth shape let
+   "assertions|tests" sit between the figure and "pass", and nothing let a word
+   sit before THEM. So "N assertions pass" was seen and "N engine assertions
+   pass", "N site-harness assertions pass", "N back end tests pass" and "N phase9
+   assertions pass" were INVISIBLE - not reviewed, invisible - and the last is
+   the natural way this corpus writes a suite's figure. Nothing was escaping
+   through it on 24 Sep 2026: a grep of the live documents for that shape found
+   only Phase 148's own prompt quoting it. It was a hole in the guard, not a
+   stale figure loose in the corpus.
+   Added: ONE TO THREE words between the figure and "assertions|tests" when a
+   pass verb (or ", 0 fail") follows - a word is letters, digits, "-" or "_",
+   so "phase9" and "site-harness" count, and "of N" counts as a word, so "N of M
+   assertions pass" reads both figures. It is a LOOKAHEAD, so it consumes
+   nothing after the figure and a second figure inside the gap ("N of M") is
+   still matched on its own. The prompt said "N of N assertions pass" was
+   invisible too; it was not - the SECOND figure was already seen, so the case
+   only hid a first figure that differed from the second. Both are now seen.
+   Bare "N engine assertions" with no verb is NOT added - see the list below. */
+const PASS_RE = /(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d{2,5})\s*(?:pass(?:ing|es|ed)?\b|\/\s*0\s*fail\b|\/\s*0\s*\/\s*\d+\b|(?:assertions?|tests?)\s+pass(?:ing|es|ed)?\b|(?:assertions?|tests?)\s*,\s*0\s+fail(?:s|ures?)?\b|assertions\b|(?=(?:(?:of\s+\d[\d,]*|[A-Za-z][\w-]*)\s+){1,3}(?:assertions?|tests?)(?:\s+pass(?:ing|es|ed)?\b|\s*,\s*0\s+fail(?:s|ures?)?\b)))/g;
+
+/* THE BLIND SPOTS THIS MATCHER STILL HAS, written down so the next sweep reads
+   them here instead of finding them. (Listed by Phase 148, 24 September 2026.
+   The sweep is told to read this comment; keep it true.)
+     1. A bare "N tests" with no verb - "385 tests across ten files". Left out on
+        purpose by the fifth shape: mostly per-file counts, and the noise would
+        bury the REVIEW list.
+     2. A bare "N <word> assertions" with no verb - "all 1,132 engine assertions
+        already are TypeScript". The fifth shape sees bare "N assertions"; the
+        sixth needs a verb, so a word before a verbless noun is still unseen.
+     3. More than three words between the figure and its noun - "N of the site
+        harness's assertions pass".
+     4. The figure AFTER its noun or verb - "assertions passing: N", "passes: N",
+        "the site harness: N". Every shape reads left to right from the figure.
+     5. A figure written in words - "twelve hundred assertions pass".
+     6. A present-tense marker hard-wrapped away from its figure INSIDE a fence
+        (see the unit rules below): fenced lines are read one at a time.
+     7. Anything under minFigure (50 by default) - per-file counts by design.
+     8. A figure in a table cell whose noun is only in the column header
+        ("| Site harness | 1252 |").
+   AND THE BETTER FIX IS NOT HERE: a table of evidence should carry the COMMAND,
+   not the number, so there is no figure to go stale (COORDINATES says so). */
 
 /* AND A SUM ON THE LINE IS A PRESENT-TENSE MARKER, for the same reason a runnable
    command is. A line saying "it was 1,806 passing assertions - 719 + 385 + 324 +
@@ -393,8 +435,8 @@ function classifyText(text, live, opts) {
   return out;
 }
 
-/* --self-test — PHASE 113j. Nine cases, each a piece of text and the bucket its
-   figure must land in. THE FIGURES ARE BUILT AT RUN TIME, NEVER WRITTEN AS
+/* --self-test — PHASE 113j. Each case is a piece of text and the bucket its
+   figure must land in (nine at Phase 113j; count them, do not read a number here). THE FIGURES ARE BUILT AT RUN TIME, NEVER WRITTEN AS
    LITERALS: the drift checker walks this very file, and a stale figure typed
    beside a marker here would fail the check this test exists to protect.
 
@@ -453,7 +495,32 @@ function selfTest(C) {
       r => where(r, 1000 + 132) === "review"],
     ["bare 'N tests' is deliberately NOT a shape - the written-down blind spot stays exactly as wide as the comment says",
       "the suite holds " + (300 + 47) + " tests across ten files.",
-      r => where(r, 300 + 47) === "neither"]
+      r => where(r, 300 + 47) === "neither"],
+    /* PHASE 148, 24 September 2026 - the sixth shape. Each of the first seven is
+       a line the Phase 148 prompt listed, with its figure built at run time; each
+       MUST be SEEN (review - none carries a marker), and against .bak-phase148 the
+       five with a word before the noun land "neither" and fail. The two before
+       them were already seen and are kept as the fifth shape's regression. */
+    ...[["", " assertions pass."], ["", " tests pass."], ["", " engine assertions pass."],
+        ["", " site-harness assertions pass."], ["", " back end tests pass."],
+        ["All ", " site-harness assertions pass."], ["", " phase9 assertions pass"]]
+      .map(([pre, post]) => ["sixth shape: '" + pre + "N" + post + "' is SEEN - review, not invisible",
+        pre + (1000 + 246) + post, r => where(r, 1000 + 246) === "review"]),
+    ["sixth shape: 'N of M assertions pass' sees BOTH figures - the first one used to be invisible",
+      (1000 + 246) + " of " + (1000 + 250) + " assertions pass.",
+      r => where(r, 1000 + 246) === "review" && where(r, 1000 + 250) === "review"],
+    ["sixth shape: a word before 'tests, 0 failures' is seen too",
+      (1000 + 246) + " engine tests, 0 failures.", r => where(r, 1000 + 246) === "review"],
+    ["sixth shape: a marker still makes it a live claim - 'reports N site-harness assertions passing' FAILS",
+      "The run reports " + (1000 + 246) + " site-harness assertions passing.", r => where(r, 1000 + 246) === "fail"],
+    ["sixth shape, clean control: the TRUE figure written the same way reports nothing at all",
+      "All " + TRUE_SITE + " site-harness assertions pass, and the run reports " + TRUE_SITE + " engine assertions passing.",
+      r => r.failures.length === 0 && r.review.length === 0],
+    ["sixth shape, the old-value marker still binds: 'was N engine assertions pass' is history",
+      "it was " + (1000 + 246) + " engine assertions pass before suite W.", r => where(r, 1000 + 246) === "neither" && r.retired >= 1],
+    ["blind spot 2 stays exactly as wide as the comment says: a verbless 'N engine assertions' is NOT seen",
+      "all " + (1000 + 132).toLocaleString("en-GB") + " engine assertions already are TypeScript.",
+      r => where(r, 1000 + 132) === "neither"]
   ];
   console.log("CLASSIFIER SELF-TEST — each case is text and the bucket its figure must land in");
   let ok = 0;

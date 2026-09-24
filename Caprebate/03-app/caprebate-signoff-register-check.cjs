@@ -33,6 +33,9 @@
               says finished and shows nothing. Phase 113c found one. CHECK 2
               would never catch it, because such an item is on a
               register-eligible status and simply has no evidence.
+              A DOCUMENT COLUMN IS READ ON text AND value (Phase 148): its
+              text is always "", and until then this check could not see a
+              document at all while printing that it looked for one.
      SECTION 5 is not a check of the registers at all. It reports what the six
               Monday documents assert about the harness pass-counts, using the
               disk drift checker's own classification, because that checker
@@ -84,6 +87,7 @@
      node 03-app/caprebate-signoff-register-check.cjs --max-age-hours 72
      node 03-app/caprebate-signoff-register-check.cjs --snapshot <dir>
      node 03-app/caprebate-signoff-register-check.cjs --self-test
+     node 03-app/caprebate-signoff-register-check.cjs --self-test --against <an older copy>
    --------------------------------------------------------------------------- */
 
 const fs = require("fs");
@@ -121,7 +125,18 @@ five files. Every one of them is a read; nothing here writes to the board.
        items_page(limit:500) { cursor items { id name group { title }
          updates(limit:1) { id }
          column_values(ids:["status","file_mm4ws3m7","doc_mm6b6y15",
-                            "doc_mm6nrqrn","doc_mm6p2bcx"]) { id text } } } } }
+                            "doc_mm6nrqrn","doc_mm6p2bcx"])
+           { id text ... on DocValue { value } } } } } }
+
+   WHY THE THREE DOCUMENT COLUMNS ALSO ASK FOR value (Phase 148, 24 Sep 2026).
+   A document column's text is ALWAYS "" - even when a document is attached.
+   The document is only in value, as {"files":[{"objectId":...,"linkToFile":
+   ...}]}. Proved 23 Sep 2026 on all six hub items: text "", value carrying the
+   document. Until Phase 148 this plan asked for text alone, so CHECK 4 said it
+   looked for a document and never once could see one. "... on DocValue" asks
+   for value on the three document columns only; status and the file column
+   keep text, and the file column's text is what carries a file. A snapshot
+   whose document columns carry no value field is REFUSED (exit 2), not read.
 
    Save the whole result, unedited, as   signoff-snapshot/board.json
    If cursor comes back non-null the board has outgrown one page: page it and
@@ -173,6 +188,9 @@ if (flag("--refresh-plan")) { console.log(REFRESH_PLAN.trim()); process.exit(0);
    green for a day while blind to the two most-quoted numbers in the corpus, and
    green again while blind to a third shape. So the seven ways this file is
    supposed to fail are not a story told once in a phase record - they are run.
+   AND ONE WAY IT IS SUPPOSED TO PASS (control 5a, Phase 148): an item whose only
+   evidence is a document. A check that cannot pass the case it claims to accept
+   is as blind as one that cannot fail.
 
    `--self-test` copies the snapshot AND the manifest into a temporary folder,
    breaks one thing in each copy, runs THIS FILE against the broken copy as a
@@ -201,7 +219,13 @@ if (flag("--self-test")) {
     r.entries.map(e => e.id).concat(r.mentions.map(m => m.id))));
   const unclassifiedId = String((items0.find(i => !inManifest.has(String(i.id))) || items0[0]).id);
 
-  function scenario(name, mutate, expects) {
+  /* --against <another copy of this file> runs every scenario against THAT copy,
+     so a new control can be shown to fail on the code before the change - the
+     same thing the classifier's own --self-test --against does (Phase 148). */
+  const CHILD = value("--against") ? path.resolve(value("--against")) : __filename;
+  if (CHILD !== __filename) console.log("running the scenarios against " + CHILD + "\n");
+
+  function scenario(name, mutate, expects, forbids) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "caprebate-selftest-"));
     for (const f of fs.readdirSync(src)) fs.copyFileSync(path.join(src, f), path.join(dir, f));
     const manPath = path.join(dir, "manifest.json");
@@ -209,13 +233,16 @@ if (flag("--self-test")) {
     mutate(dir, manPath);
     let out;
     try {
-      out = execFileSync(process.execPath, [__filename, "--snapshot", dir, "--manifest", manPath, "--no-figures"],
+      out = execFileSync(process.execPath, [CHILD, "--snapshot", dir, "--manifest", manPath, "--no-figures"],
         { encoding: "utf8", maxBuffer: 32 * 1024 * 1024, stdio: ["ignore", "pipe", "pipe"] });
     } catch (e) { out = String((e.stdout || "") + (e.stderr || "")); }
-    const missing = expects.filter(x => !out.includes(x));
+    const missing = expects.filter(x => !out.includes(x))
+      .concat((forbids || []).filter(x => out.includes(x)).map(x => "NOT " + x));
     console.log((missing.length ? "  ✘ " : "  ✔ ") + name);
     if (missing.length) {
-      for (const m of missing) console.log("        expected the output to contain: " + JSON.stringify(m));
+      for (const m of missing) console.log(m.startsWith("NOT ")
+        ? "        expected the output NOT to contain: " + JSON.stringify(m.slice(4))
+        : "        expected the output to contain: " + JSON.stringify(m));
       console.log("        ---- what it actually printed ----");
       console.log(out.split(/\n/).map(l => "        " + l).join("\n"));
     }
@@ -230,7 +257,7 @@ if (flag("--self-test")) {
         things the scenarios below break. */
   let baseline;
   try {
-    baseline = execFileSync(process.execPath, [__filename, "--snapshot", src, "--manifest", manifestSrc, "--no-figures"],
+    baseline = execFileSync(process.execPath, [CHILD, "--snapshot", src, "--manifest", manifestSrc, "--no-figures"],
       { encoding: "utf8", maxBuffer: 32 * 1024 * 1024, stdio: ["ignore", "pipe", "pipe"] });
   } catch (e) { baseline = String((e.stdout || "") + (e.stderr || "")); }
   const baseClean = ["no longer contains", "moved off the status it expects", "does not classify",
@@ -292,10 +319,80 @@ if (flag("--self-test")) {
       const items = ((j.boards || j.data.boards)[0]).items_page.items;
       const t = items.find(i => String(i.id) === String(awItem.id));
       t.updates = [];
-      for (const c of t.column_values) if (c.id !== "status") c.text = "";
+      for (const c of t.column_values) if (c.id !== "status") {
+        c.text = "";
+        if (Object.prototype.hasOwnProperty.call(c, "value")) c.value = null;
+      }
       fs.writeFileSync(p2, JSON.stringify(j));
     },
     ["with no update, no file and no document", String(awItem.id)]));
+
+  /* 5a. A DOCUMENT AND NOTHING ELSE IS EVIDENCE - Phase 148, 24 September 2026.
+        The control 5 above could never prove the document arm, because it strips
+        everything at once. This is the same item with its update and its file
+        taken away and ONE document attached the way monday.com returns it:
+        text "", the document in value. It MUST pass. Until Phase 148 CHECK 4 read
+        text alone and named this item as having no evidence, which is what
+        --against .bak-phase148 shows. The run must also have REACHED CHECK 4, or
+        a refusal (exit 2) would pass this vacuously. */
+  results.push(scenario(
+    "a document alone is evidence: an awaiting item with a document, no file and no update passes CHECK 4",
+    (dir) => {
+      const p2 = path.join(dir, "board.json");
+      const j = JSON.parse(fs.readFileSync(p2, "utf8"));
+      const items = ((j.boards || j.data.boards)[0]).items_page.items;
+      const t = items.find(i => String(i.id) === String(awItem.id));
+      t.updates = [];
+      for (const c of t.column_values) if (c.id !== "status") {
+        c.text = "";
+        if (/^doc_/.test(c.id)) c.value = null;
+      }
+      const d = t.column_values.find(c => c.id === "doc_mm6b6y15");
+      d.value = JSON.stringify({ files: [{ name: "SELF-TEST document", fileType: "MONDAY_DOC",
+        objectId: 1, linkToFile: "https://example.invalid/self-test" }] });
+      fs.writeFileSync(p2, JSON.stringify(j));
+    },
+    ["CHECK 4 — evidence on the awaiting items", " 0 have none of the three"],
+    ["with no update, no file and no document"]));
+
+  /* 5b. A CLEARED DOCUMENT COLUMN IS NOT A DOCUMENT. The live board carries five
+        columns whose value is {"clear_all":true,...} and 210 whose value is
+        {"files":[]}: a value being present is not a document being attached. The
+        same item, no update, no file, and its three document columns in exactly
+        those empty shapes, MUST fail and be named. */
+  results.push(scenario(
+    "a cleared document column is not evidence: {\"clear_all\":true} and {\"files\":[]} with no update and no file fail CHECK 4",
+    (dir) => {
+      const p2 = path.join(dir, "board.json");
+      const j = JSON.parse(fs.readFileSync(p2, "utf8"));
+      const items = ((j.boards || j.data.boards)[0]).items_page.items;
+      const t = items.find(i => String(i.id) === String(awItem.id));
+      t.updates = [];
+      const empties = [JSON.stringify({ clear_all: true, changed_at: "2026-09-05T12:53:20.411Z" }),
+                       JSON.stringify({ files: [] }), null];
+      let k = 0;
+      for (const c of t.column_values) if (c.id !== "status") {
+        c.text = "";
+        if (/^doc_/.test(c.id)) c.value = empties[k++ % empties.length];
+      }
+      fs.writeFileSync(p2, JSON.stringify(j));
+    },
+    ["with no update, no file and no document", String(awItem.id)]));
+
+  /* 5c. A SNAPSHOT TAKEN WITH THE OLD QUERY IS REFUSED. Every document column
+        loses its value field - the shape every snapshot had until Phase 148 -
+        and the run must refuse (exit 2) rather than read "" and report. */
+  results.push(scenario(
+    "an old-shape snapshot: document columns with no value field are refused, not read",
+    (dir) => {
+      const p2 = path.join(dir, "board.json");
+      const j = JSON.parse(fs.readFileSync(p2, "utf8"));
+      for (const it of ((j.boards || j.data.boards)[0]).items_page.items) {
+        for (const c of it.column_values) if (/^doc_/.test(c.id)) delete c.value;
+      }
+      fs.writeFileSync(p2, JSON.stringify(j));
+    },
+    ["CANNOT CHECK", "taken with the old query"]));
 
   /* 6. THE TALLY NOT SUMMING — CHECK 1's whole point. */
   results.push(scenario(
@@ -352,7 +449,7 @@ if (flag("--self-test")) {
     const run = fake => {
       try {
         return { code: 0, out: execFileSync(process.execPath,
-          [__filename, "--snapshot", snap, "--manifest", manPath, "--drift-checker", fake],
+          [CHILD, "--snapshot", snap, "--manifest", manPath, "--drift-checker", fake],
           { encoding: "utf8", maxBuffer: 32 * 1024 * 1024, stdio: ["ignore", "pipe", "pipe"] }) };
       } catch (e) {
         return { code: typeof e.status === "number" ? e.status : -1, out: String((e.stdout || "") + (e.stderr || "")) };
@@ -449,6 +546,45 @@ const col = (item, id) => {
   const c = (item.column_values || []).find(c => c.id === id);
   return (c && c.text) || "";
 };
+
+/* A DOCUMENT COLUMN IS READ ON BOTH FIELDS. (Phase 148, 24 September 2026.)
+   monday.com returns a document column's `text` as "" whatever is attached; the
+   document is in `value`. col() reads text alone, so until Phase 148 CHECK 4
+   printed that it looked for a document and could not have seen one. EITHER
+   field filled counts - not value alone, so a column that ever does carry text
+   is not lost.
+   A VALUE IS A DOCUMENT ONLY IF IT CARRIES ONE: {"files":[...]} with at least one
+   entry. The live board, 24 Sep 2026, returned value in four shapes - null,
+   {"files":[]} (210 columns), {"clear_all":true,"changed_at":...} (5, columns
+   cleared on 5 Sep) and {"files":[{...}]} (7). The first draft of this counted
+   "any other value" as a document and so would have passed a CLEARED column as
+   evidence. Anything unrecognised is NOT evidence: a false "no evidence" is
+   investigated, a false pass is not. */
+const DOC_COLS = ["doc_mm6b6y15", "doc_mm6nrqrn", "doc_mm6p2bcx"];
+const docCol = (item, id) => {
+  const c = (item.column_values || []).find(c => c.id === id);
+  if (!c) return false;
+  if (String(c.text || "").trim() !== "") return true;
+  let parsed = c.value;
+  if (typeof parsed === "string") {
+    try { parsed = JSON.parse(parsed); } catch (e) { return false; }
+  }
+  return !!(parsed && typeof parsed === "object" && Array.isArray(parsed.files) && parsed.files.length > 0);
+};
+/* AND A SNAPSHOT TAKEN THE OLD WAY IS REFUSED, NOT READ. A board.json whose
+   document columns carry no `value` field at all was taken with the pre-Phase 148
+   query, and reading it would put CHECK 4 straight back where it was: printing
+   that it looked for a document it cannot see. */
+{
+  const oldShape = board.items.filter(it => (it.column_values || [])
+    .some(c => DOC_COLS.includes(c.id) && !Object.prototype.hasOwnProperty.call(c, "value")));
+  if (oldShape.length) {
+    refuse("board.json's document columns carry no `value` field (" + oldShape.length + " of "
+      + board.items.length + " items), so it was taken with the old query.\n"
+      + "  A document column's text is always \"\"; without value CHECK 4 cannot see a document.\n"
+      + "  Re-capture it with the query in step 1 below.");
+  }
+}
 const AWAITING = manifest.awaitingLabel;
 
 const statusOf = new Map();
@@ -724,14 +860,23 @@ if (wrongClaims.length) {
 }
 
 /* CHECK 4 — the board says finished and shows nothing. */
-const EVIDENCE_COLS = ["file_mm4ws3m7", "doc_mm6b6y15", "doc_mm6nrqrn", "doc_mm6p2bcx"];
+const FILE_COL = "file_mm4ws3m7";
 const byId = new Map(board.items.map(i => [String(i.id), i]));
 const noEvidence = [];
+/* How many awaiting items carry each kind, so a run SHOWS that every arm can
+   see something rather than only that the sum was non-zero. An item is counted
+   once under each kind it carries. */
+const evidenceSeen = { update: 0, file: 0, document: 0, documentOnly: 0 };
 for (const id of awaitingIds) {
   const it = byId.get(id);
   const hasUpdate = Array.isArray(it.updates) && it.updates.length > 0;
-  const hasAsset = EVIDENCE_COLS.some(c => col(it, c).trim() !== "");
-  if (!hasUpdate && !hasAsset) noEvidence.push(id);
+  const hasFile = col(it, FILE_COL).trim() !== "";
+  const hasDoc = DOC_COLS.some(c => docCol(it, c));
+  if (hasUpdate) evidenceSeen.update++;
+  if (hasFile) evidenceSeen.file++;
+  if (hasDoc) evidenceSeen.document++;
+  if (hasDoc && !hasUpdate && !hasFile) evidenceSeen.documentOnly++;
+  if (!hasUpdate && !hasFile && !hasDoc) noEvidence.push(id);
 }
 if (noEvidence.length) {
   fail("CHECK 4 — items at \"" + AWAITING + "\" with no update, no file and no document",
@@ -927,6 +1072,11 @@ console.log("    the board's own standing blind spot is unchanged by this file."
 console.log("  · Whether an item at \"" + AWAITING + "\" is genuinely finished. CHECK 4");
 console.log("    asks only whether the board shows ANY evidence - one update is enough to");
 console.log("    pass it, and an update saying nothing useful passes it too.");
+console.log("  · Whether what CHECK 4 finds is about THIS item, or is any good. It asks");
+console.log("    whether the board SHOWS something - an update, a file, a document - and");
+console.log("    never what that something says. One update of any content passes it, and so");
+console.log("    does a file or a document that belongs to other work. (Worked out by hand by");
+console.log("    the sweep of 23 Sep 2026; printed here since Phase 148.)");
 console.log("  · Whether the entry/mention judgement in the manifest is right. It is a");
 console.log("    recorded human decision, re-checked only in the sense that an id nobody");
 console.log("    has classified fails the run.");
@@ -973,6 +1123,9 @@ console.log("");
 console.log("CHECK 4 — evidence on the awaiting items");
 console.log("  " + awaitingIds.length + " checked for an update, a file or a document; "
   + noEvidence.length + " have none of the three");
+console.log("  carrying an update " + evidenceSeen.update + " · a file " + evidenceSeen.file
+  + " · a document " + evidenceSeen.document + " (" + evidenceSeen.documentOnly
+  + " with a document and nothing else)");
 console.log("");
 
 console.log("SECTION 5 — what the Monday documents assert about the harness figures");
