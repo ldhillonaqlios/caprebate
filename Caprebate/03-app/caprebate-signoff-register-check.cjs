@@ -169,8 +169,14 @@ five files. Every one of them is a read; nothing here writes to the board.
      python3 -c "import docx,sys; d=docx.Document(sys.argv[1]); print('\\n'.join(
        p.text.strip() for p in d.paragraphs if p.style.name=='Heading 2'))" \\
        "<the path above>" > 03-app/signoff-snapshot/hub-questions-word.txt
+   THEN APPEND THE CLOSED ONES (24 Sep 2026). A question whose answer is
+   definitive is moved to "Caprebate_Questions - answered and closed.docx",
+   beside the file above, keeping its number and title. Numbers are never
+   reused, so a document citing a closed question by number is still right:
+   run the same command on that file with >> instead of >. Without it, A2
+   fails every citation of a closed question.
    The CRM fold check's A2 reads it, and refuses to run (exit 2) without it.
-   Count the lines against the Heading 2 count you expect.
+   Count the lines against the two documents' Heading 2 counts added together.
 
 3. WRITE signoff-snapshot/snapshot.json:
      { "capturedAt": "<ISO 8601, UTC>", "capturedBy": "Phase NNN",
