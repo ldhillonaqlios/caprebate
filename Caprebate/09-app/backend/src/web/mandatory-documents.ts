@@ -50,8 +50,12 @@ export type MandatoryDocuments = {
  * the CPSE replies, the tax returns and the tax computations" — and closed. It now waits on the two follow-ups, quoted
  * by their titles: 220 below, and 223 in MANDATORY_DOCUMENTS_ALSO_WAITS_ON.
  */
-export const MANDATORY_DOCUMENTS_QUESTION = 'Do the sale contract and the CPSE replies have to arrive only when the client bought the building?';
-export const MANDATORY_DOCUMENTS_ALSO_WAITS_ON = 'May we accept tax returns and tax computations as uploads, and what must be removed from them?';
+export const MANDATORY_DOCUMENTS_QUESTION = 'May we accept tax returns and tax computations as uploads, and what must be removed from them?';
+/* 24 September 2026: question 220 was answered yes (the sale contract and CPSE only when the client bought the building,
+   as built) and closed; the data protection officer said yes to the uploads under 223, which stays open for what must be
+   removed. WHAT STILL KEEPS THIS OFF is buildable: neither tax document has a receipt policy in the upload handler, so
+   neither can be received, and switching this on now would stop every claim at the gate (Phase 151b). */
+export const MANDATORY_DOCUMENTS_ALSO_WAITS_ON = 'a receipt policy for the tax return and the tax computation in the upload handler';
 
 /**
  * LAKHBIR'S LIST, SHIPPED OFF (Word answer 47, Phase 151). Four documents: the sale contract and the CPSE replies ONLY

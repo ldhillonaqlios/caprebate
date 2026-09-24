@@ -3101,11 +3101,12 @@ Address: `/staff/clients/{company}/files` — or press **Files** at the top of t
 **Why the original says "Read and then deleted"**
 
 We read every file and keep what we need from it. Then we delete the file itself. That is our promise to keep as
-little as we can. We have built a way to keep the originals, but it is switched off. Lakhbir has said to keep them. He
-must still say how long, and who may open them. The question is:
+little as we can. We have built a way to keep the originals, but it is switched off. Lakhbir has said to keep them for
+seven years. Admin, Sales and our privacy officer may see them. The officer must agree first. The
+question is:
 - *"How long do we keep the files clients upload, and who may open them?"*
 
-If they switch it on, Admin sees **Open the original** on a card. That lasts until the file's time is up. Then the
+If they switch it on, Admin and Sales see **Open the original** on a card. That lasts until the file's time is up. Then the
 file is deleted.
 
 **Try it on the demo**

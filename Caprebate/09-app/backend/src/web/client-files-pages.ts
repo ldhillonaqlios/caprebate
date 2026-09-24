@@ -191,7 +191,7 @@ function fileCard(f: D.FolderFile, mayShow: boolean, folder: string | null): Saf
     <p class="filefrom">${f.sender} · ${f.sent}${f.versions > 1 ? ` · ${f.versions} versions` : ''}</p>
     ${f.message_href === undefined ? raw('') : h`<p><a href="${f.message_href}">See the message it came with</a></p>`}
     <p>${f.original.kept
-      ? (f.original.href === null ? h`<span class="help">We kept the original. Only Admin can open it.</span>` : h`<a href="${f.original.href}">Open the original</a>`)
+      ? (f.original.href === null ? h`<span class="help">We kept the original. Only Admin, Sales and the data protection officer can open it.</span>` : h`<a href="${f.original.href}">Open the original</a>`)
       : h`<span class="help">${f.original.words}</span>`}</p>
     <ul class="fileread">${f.read.map((line) => h`<li>${line}</li>`)}</ul>
     <p>${f.shown_to_client ? badge('The client can see this', 'ok') : badge('Only Cap Rebate can see this')}</p>

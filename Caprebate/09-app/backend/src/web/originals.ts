@@ -33,7 +33,8 @@
  *      original without it — see `seal` below and FsObjectStore.copy.
  *
  * A kept original is ENCRYPTED (AES-256-GCM, a fresh nonce per file), OUTSIDE THE WEB ROOT (the store has no route
- * that maps a path onto it), opened only through `document.read_original` — Admin, and the client on their own — and
+ * that maps a path onto it), opened only through `document.read_original` — Admin, Sales (on the documents Sales may
+ * read) and the data protection officer since 24 September 2026 (Word question 219), and the client on their own — and
  * DELETED when its days are up, by `sweepOriginals`, which runs whenever the folder or the original is opened and from
  * `node src/cli.ts sweep-originals`.
  */
@@ -50,9 +51,13 @@ export type KeepOriginals = {
 /** The title of the question under Lakhbir in CAPREBATE QUESTIONS. Quoted, not paraphrased. */
 export const KEEP_ORIGINALS_QUESTION = 'How long do we keep the files clients upload, and who may open them?';
 
+/* 24 September 2026, Lakhbir in chat (Word question 219, recorded; still open for the data protection officer to
+   approve): keep them 7 years, and Sales, Admin and the data protection officer may open them. 7 years from the day
+   the file was read is 2,557 days (two leap days in any seven years from 2026). THE SWITCH STAYS OFF until the officer
+   approves and the privacy notice says both; `keptDays` reads no period while it is off. */
 export const KEEP_ORIGINALS: KeepOriginals = Object.freeze({
   enabled: false,
-  retention_days: null,
+  retention_days: 2557,
   question: KEEP_ORIGINALS_QUESTION,
 });
 

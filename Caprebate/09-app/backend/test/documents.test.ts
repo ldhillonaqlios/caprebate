@@ -174,7 +174,7 @@ function plain<V>(v: V): V {
  * ================================================================== */
 
 const GRANTED: Readonly<Record<string, readonly AppRole[]>> = Object.freeze({
-  'document.read_original': ['ADMIN', 'CLIENT'],
+  'document.read_original': ['ADMIN', 'SALES', 'CLIENT'],
   'document.upload': ['ADMIN', 'SALES', 'CLIENT'],
   'document.link': ['ADMIN', 'SALES'],
   // PHASE 140: whether the client can see a file — the two roles that upload one.
@@ -660,7 +660,8 @@ describe('over HTTP — end to end, and every role on every sensitivity', () => 
         const types = await c.req('/staff/document-types');
         assert.equal(types.status, ['admin', 'sales'].includes(who) ? 200 : 403, `${who} on the document types`);
         const original = await c.req(`/staff/documents/${lease}/download`);
-        assert.equal(original.status, who === 'admin' ? 410 : 403, `${who} on the original`);
+        // Word question 219 (24 Sep 2026): Sales may open a kept original too. None is kept here, so both get 410.
+        assert.equal(original.status, ['admin', 'sales'].includes(who) ? 410 : 403, `${who} on the original`);
       }
       // THE LETTER, SIGNED: now Accounting reads it, and a surveyor still does not.
       db.run("UPDATE engagements SET letter_state = 'SIGNED', signed_at = ? WHERE business_id = ?", [T0, w.job.business]);

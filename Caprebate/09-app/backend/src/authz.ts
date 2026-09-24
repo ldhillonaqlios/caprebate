@@ -734,7 +734,9 @@ const RULES: RuleTable = {
     SURVEYING: surveyorDocument as Rule<ObjType>,
     CLIENT: clientDocument as Rule<ObjType>,
   },
-  'document.read_original': { ADMIN: always, CLIENT: clientDocument as Rule<ObjType> },
+  /* 24 September 2026, Word question 219: Sales, Admin and the data protection officer may open a kept original. Sales
+     on the same documents it may read, never the fee invoice. Kept originals exist only while KEEP_ORIGINALS is on. */
+  'document.read_original': { ADMIN: always, SALES: salesDocument as Rule<ObjType>, CLIENT: clientDocument as Rule<ObjType> },
   'document.upload': { ADMIN: always, SALES: always, CLIENT: isOwnBusiness as Rule<ObjType> },
   'document.link': { ADMIN: always, SALES: always },
   /** PHASE 140: whether the client can see a file — the two roles that upload one. Never the client, never a surveyor. */
@@ -1175,6 +1177,8 @@ const DPO_RULES: Readonly<Record<string, Rule<ObjType>>> = Object.freeze({
   'compliance.identity_read': always,
   'compliance.identity_write': always,
   'disclosure.read': always,
+  // 24 September 2026, Word question 219: the officer may open a kept original.
+  'document.read_original': always,
 });
 
 /** The actions a DPO would hold, and only those. Every one is a registered action. */

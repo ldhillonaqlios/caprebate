@@ -369,7 +369,7 @@ describe('5 · /staff/documents is on no menu, and sends a company’s reader to
 describe('4 · KEEP_ORIGINALS — built, and switched off', () => {
   test('SHIPPED OFF, and stamped: off in the source, no kept days on the store, and the case stamp reads it', async () => {
     assert.equal(KEEP_ORIGINALS.enabled, false);
-    assert.equal(KEEP_ORIGINALS.retention_days, null);
+    assert.equal(KEEP_ORIGINALS.retention_days, 2557, 'Lakhbir: 7 years (Word question 219); off until the officer approves');
     assert.equal(KEEP_ORIGINALS.question, 'How long do we keep the files clients upload, and who may open them?');
     assert.deepEqual(backendSwitchReadings().filter((x) => x.switch === 'KEEP_ORIGINALS'), [{ switch: 'KEEP_ORIGINALS', on: false, home: 'src/web/originals.ts' }]);
     const w = await boot();
@@ -428,9 +428,11 @@ describe('4 · KEEP_ORIGINALS — built, and switched off', () => {
       assert.equal(got.type, 'application/pdf');
       assert.ok(got.bytes.equals(Buffer.from(bytes)), 'Admin got the original back, byte for byte');
       assert.equal(db.get<{ n: number }>("SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'DOCUMENT_ORIGINAL_OPENED'")?.n, 1);
+      // Word question 219 (24 Sep 2026): Sales, Admin and the data protection officer may open a kept original.
       const sales = await w.signIn('sales');
-      assert.equal((await sales.req(`/staff/documents/${lid}/download`)).status, 403, 'Sales opened an original');
-      assert.match((await sales.req(`/staff/clients/${w.business}/files`)).body, /We kept the original. Only Admin can open it./);
+      assert.equal((await sales.req(`/staff/documents/${lid}/download`)).status, 200, 'Sales could not open an original');
+      const accounting = await w.signIn('accounting');
+      assert.equal((await accounting.req(`/staff/documents/${lid}/download`)).status, 403, 'Accounting opened an original');
 
       // Its days are up: the next opening deletes it first, and says so.
       w.clock.now = '2026-10-22T10:00:00.000Z';

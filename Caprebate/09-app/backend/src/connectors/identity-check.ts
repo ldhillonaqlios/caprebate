@@ -19,10 +19,13 @@
  * The research is 04-phase-work/phase151/identity-check-providers.md.
  *
  * WHY IT IS OFF, AND WHAT TURNS IT ON. `IDENTITY_CHECK.enabled` ships false. `identityCheckMissing` lists what must be
- * true first, in plain words, and every one is a person's decision, not Claude's:
- *   1. customer due diligence in force at all — the setting AML_IN_SCOPE, which waits on Word questions 10 (is
- *      supervision required) and 45;
- *   2. the provider chosen — Veriff is built, and the choice is Lakhbir's;
+ * true first, in plain words, and every one is a person's decision, not Claude's.
+ *   CHANGED 24 September 2026, Lakhbir in chat: we do not need to be supervised for anti-money-laundering, "however we
+ *   still check for identity" (Word question 10, recorded; the accountant confirms the supervision point). So the
+ *   identity check NO LONGER WAITS ON the customer-due-diligence setting AML_IN_SCOPE: every client's identity is
+ *   checked either way. And Lakhbir chose Veriff (Word question 225, closed).
+ *   1. (removed: customer due diligence in force)
+ *   2. the provider chosen — Veriff, Lakhbir's choice;
  *   3. the provider named as a processor in the privacy notice AND in clause 7 of the engagement letter (the Phase 115
  *      rule: nothing carries client data through a processor the client was not told about);
  *   4. its two keys in the key file (VERIFF_API_KEY, VERIFF_SHARED_SECRET), never in code;
@@ -63,8 +66,9 @@ export type IdentityCheckConfig = {
   readonly question: string;
 };
 
+/** The question that chose the provider, closed 24 September 2026: Veriff. Quoted by its title. */
 export const IDENTITY_CHECK_QUESTION =
-  'Does the law require us to be supervised for anti-money-laundering?';
+  'Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD?';
 
 export const IDENTITY_CHECK: IdentityCheckConfig = Object.freeze({
   enabled: false,
@@ -75,9 +79,8 @@ export const IDENTITY_CHECK: IdentityCheckConfig = Object.freeze({
 });
 
 /** What must be true before a check can be sent, each in plain words. Empty means it can be sent. */
-export function identityCheckMissing(cfg: IdentityCheckConfig, secrets: SecretStore, amlInForce: boolean): string[] {
+export function identityCheckMissing(cfg: IdentityCheckConfig, secrets: SecretStore): string[] {
   const out: string[] = [];
-  if (!amlInForce) out.push('Customer checks for the money-laundering rules are not switched on.');
   if (cfg.provider === null) out.push('Choose the identity check service.');
   if (cfg.named_in_privacy_notice !== true || cfg.named_in_engagement_letter !== true) {
     out.push('Name that service in the privacy notice and in the engagement letter.');
@@ -101,7 +104,6 @@ export type IdentityStartInput = {
   readonly callback_url: string;
   readonly actor_id: string;
   readonly actor_role: string;
-  readonly aml_in_force: boolean;
   readonly deps: CallDeps;
   readonly secrets: SecretStore;
   /** TESTS ONLY. Absent, the configuration above governs, and it is off. */
@@ -114,7 +116,7 @@ export type IdentityStartInput = {
  */
 export async function startIdentityCheck(i: IdentityStartInput): Promise<IdentityStart> {
   const cfg = i.config ?? IDENTITY_CHECK;
-  const missing = identityCheckMissing(cfg, i.secrets, i.aml_in_force);
+  const missing = identityCheckMissing(cfg, i.secrets);
   if (missing.length > 0) return { state: 'NOT_SENT', why: missing.join(' ') };
   const first = i.first_name.trim();
   const last = i.last_name.trim();

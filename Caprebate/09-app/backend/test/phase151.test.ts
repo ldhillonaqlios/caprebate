@@ -59,7 +59,7 @@ async function rig(fixtures: Record<string, Fixture | readonly Fixture[]> = { [`
   const calls = () => app.db.all<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'CONNECTOR_CALLED' ORDER BY seq");
   const input = (over: Record<string, unknown> = {}) => ({
     first_name: 'Ada', last_name: 'Invented', check_ref: 'cdd-151', callback_url: 'https://backoffice.example.invalid/hooks/identity-check',
-    actor_id: 'u-ADMIN', actor_role: 'ADMIN', aml_in_force: true, deps, secrets: secretsFromValues(KEYS), config: ON, ...over,
+    actor_id: 'u-ADMIN', actor_role: 'ADMIN', deps, secrets: secretsFromValues(KEYS), config: ON, ...over,
   });
   return { t, calls, input };
 }
@@ -70,7 +70,7 @@ describe('1 · the online identity check is built for real and switched off', ()
   test('it ships off, the stamp reads its switch, and it quotes the open supervision question by its title', () => {
     assert.equal(IDENTITY_CHECK.enabled, false);
     assert.equal(IDENTITY_CHECK.provider, 'VERIFF');
-    assert.equal(IDENTITY_CHECK_QUESTION, 'Does the law require us to be supervised for anti-money-laundering?');
+    assert.equal(IDENTITY_CHECK_QUESTION, 'Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD?');
     const s = backendSwitchReadings().find((r) => r.switch === 'IDENTITY_CHECK');
     assert.ok(s, 'the case stamp does not read the identity check switch');
     assert.equal(s.on, false);
@@ -78,20 +78,21 @@ describe('1 · the online identity check is built for real and switched off', ()
 
   test('as shipped it sends nothing and writes no call to the audit log — and says, in words, everything that is missing', async () => {
     const r = await rig();
-    const out = await startIdentityCheck(r.input({ config: undefined, secrets: emptySecrets(), aml_in_force: false }));
+    const out = await startIdentityCheck(r.input({ config: undefined, secrets: emptySecrets() }));
     assert.equal(out.state, 'NOT_SENT');
     assert.equal(r.t.seen.length, 0, 'a request was made while the check was off');
     assert.equal(r.calls().length, 0, 'an audit row of a call was written while the check was off');
     const why = out.state === 'NOT_SENT' ? out.why : '';
-    for (const want of [/money-laundering rules are not switched on/, /privacy notice and in the engagement letter/, /keys to the server/, /switch the identity check on/]) {
+    for (const want of [/privacy notice and in the engagement letter/, /keys to the server/, /switch the identity check on/]) {
       assert.match(why, want);
     }
+    // Word question 10 (24 Sep 2026): identity is checked whether or not money-laundering supervision applies.
+    assert.doesNotMatch(why, /money-laundering/);
   });
 
-  test('each precondition alone keeps it off: the money-laundering setting, the two papers, the keys, the switch', async () => {
+  test('each precondition alone keeps it off: the two papers, the keys, the switch', async () => {
     const r = await rig();
     const cases: [string, Record<string, unknown>][] = [
-      ['the money-laundering checks off', { aml_in_force: false }],
       ['not named in the privacy notice', { config: { ...ON, named_in_privacy_notice: false } }],
       ['not named in the engagement letter', { config: { ...ON, named_in_engagement_letter: false } }],
       ['no keys', { secrets: emptySecrets() }],
@@ -138,7 +139,7 @@ describe('1 · the online identity check is built for real and switched off', ()
     assert.equal(p.region, 'EU');
     assert.equal(p.register_source, null);
     assert.deepEqual(SECRET_KEYS.filter((k) => k.owner === 'VERIFF_IDV').map((k) => k.name), ['VERIFF_API_KEY', 'VERIFF_SHARED_SECRET']);
-    assert.deepEqual(identityCheckMissing(ON, secretsFromValues(KEYS), true), []);
+    assert.deepEqual(identityCheckMissing(ON, secretsFromValues(KEYS)), []);
   });
 });
 

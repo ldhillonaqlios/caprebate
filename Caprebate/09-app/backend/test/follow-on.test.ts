@@ -616,8 +616,8 @@ describe('mandatory documents at a stage — built, and switched off', () => {
   test('MANDATORY DOCUMENTS SHIP OFF: off, the gate out of DATA_GATHERING is exactly today’s, and the question it waits on is named by its title', async () => {
     assert.equal(MD.MANDATORY_DOCUMENTS.enabled, false);
     /* Phase 151: the question it waited on (Word 47) was answered; it now waits on 220 and 223, named by their titles. */
-    assert.equal(MD.MANDATORY_DOCUMENTS_QUESTION, 'Do the sale contract and the CPSE replies have to arrive only when the client bought the building?');
-    assert.equal(MD.MANDATORY_DOCUMENTS_ALSO_WAITS_ON, 'May we accept tax returns and tax computations as uploads, and what must be removed from them?');
+    assert.equal(MD.MANDATORY_DOCUMENTS_QUESTION, 'May we accept tax returns and tax computations as uploads, and what must be removed from them?');
+    assert.match(MD.MANDATORY_DOCUMENTS_ALSO_WAITS_ON, /receipt policy/);
     assert.deepEqual(MD.MANDATORY_DOCUMENTS.requires.map((r) => `${r.type_code}:${r.condition}`),
       ['SALE_CONTRACT:BOUGHT', 'CPSE_REPLIES:BOUGHT', 'TAX_RETURN:ALWAYS', 'TAX_COMPUTATION:ALWAYS']);
     const h = await boot();
