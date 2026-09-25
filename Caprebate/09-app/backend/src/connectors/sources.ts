@@ -215,18 +215,20 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     rate_basis: 'NOT PUBLISHED on postcodes.io/docs (read 24 Sep 2026); sixty a minute is OUR cautious guess - one a visitor, at the address question',
     timeout_ms: 5_000, max_bytes: 64 * 1024, max_attempts: 2,
   },
-  VERIFF_IDV: {
-    /* PHASE 151, 24 September 2026 — Veriff, the online identity check for the money-laundering rules
-       (src/connectors/identity-check.ts), BUILT AND SWITCHED OFF. A PROCESSOR, not a register source, like the Claude
-       API: it holds the client's ID and selfie for us. An Estonian company, so the EU. Its address and the session
-       call are from devdocs.veriff.com (read 24 Sep 2026). ITS PRICE IS IN US DOLLARS: US$0.80 a check on the
-       Essential plan (veriff.com/pricing, read the same day). 80 below is that published figure in US CENTS, not
-       pence, until a plan is chosen and a sterling invoice confirms it. */
-    service_id: 'VERIFF_IDV', register_source: null,
-    base_url: 'https://stationapi.veriff.com', region: 'EU', international_transfer_approved: false,
+  DIDIT_IDV: {
+    /* PHASE 151f, 25 September 2026 — Didit, the online identity check for the money-laundering rules
+       (src/connectors/identity-check.ts), BUILT AND SWITCHED OFF, in place of Veriff (Phase 151) on Lakhbir's
+       instruction. A PROCESSOR, not a register source, like the Claude API: it holds the client's ID and selfie for us.
+       Processed and stored in the EU (AWS) by default, docs.didit.me/getting-started/security-compliance. Its address,
+       the session call and its rate limit are from docs.didit.me/sessions-api/create-session (all read 25 Sep 2026).
+       ITS PRICE IS IN US DOLLARS: the first 500 full checks a month are free, then US$0.33 a check
+       (didit.me/pricing). 33 below is that published figure in US CENTS, not pence, and it is the price AFTER the
+       free 500: a cost read from here overstates a month under 500, never understates one. */
+    service_id: 'DIDIT_IDV', register_source: null,
+    base_url: 'https://verification.didit.me', region: 'EU', international_transfer_approved: false,
     rate: { limit: 20, window_ms: 60 * 1000 },
-    rate_basis: 'NOT PUBLISHED on the pages read 24 Sep 2026; twenty a minute is OUR cautious guess - a check is started by a person, one at a time',
-    timeout_ms: 20_000, max_bytes: 256 * 1024, max_attempts: 2, cost_pence: 80,
+    rate_basis: 'Didit publishes 600 a minute for creating sessions (read 25 Sep 2026); twenty a minute is OUR cautious limit - a check is started by a person, one at a time',
+    timeout_ms: 20_000, max_bytes: 256 * 1024, max_attempts: 2, cost_pence: 33,
   },
   CLAUDE_DOCUMENTS: {
     service_id: 'CLAUDE_DOCUMENTS', register_source: null,

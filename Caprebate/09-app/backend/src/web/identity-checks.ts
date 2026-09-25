@@ -1,14 +1,15 @@
 /**
  * THE ONLINE IDENTITY CHECK, WIRED IN — SENDING ONE, AND RECEIVING THE SIGNED RESULT. Phase 151b, 25 September 2026.
  *
- * WHAT WAS DECIDED. Lakhbir chose Veriff (Word question 225, closed 24 September 2026). Identity is checked whether or
+ * WHAT WAS DECIDED. Lakhbir chose Veriff (Word question 225, closed 24 September 2026), and on 25 September 2026 switched
+ * to Didit, which is free for 500 checks a month (Phase 151f; the reasons are in the connector). Identity is checked whether or
  * not money-laundering supervision applies (Word question 10, recorded 24 September 2026, Lakhbir in chat: "we still
  * check for identity"), so NOTHING HERE READS AML_IN_SCOPE: a check can be sent for any client, from the client's own
  * record or from an open customer due diligence check.
  *
  * THE CONNECTOR IS src/connectors/identity-check.ts (Phase 151), and it decides whether anything leaves this server:
  * `startIdentityCheck` refuses before any call while `identityCheckMissing` lists anything — the service named in the
- * privacy notice and in clause 7 of the engagement letter, its two keys in the key file, and the IDENTITY_CHECK switch,
+ * privacy notice and in clause 7 of the engagement letter, its three entries in the key file, and the IDENTITY_CHECK switch,
  * which ships false. OFF, A PERSON WHO PRESSES "SEND" IS TOLD, IN WORDS, WHAT IS STILL MISSING, AND NOTHING IS SENT.
  * This file adds no second switch and no second gate.
  *
@@ -18,8 +19,11 @@
  *                          in the audit log. What is kept is migration 047's identity_checks row: whose check, from
  *                          where, the service's session id and the link the client follows, who sent it and when.
  *   receiveIdentityResult  the route the service calls, POST /hooks/identity-check, with no login (the service has
- *                          none). The body is believed only when its signature holds (`readIdentityDecision`): A BAD
- *                          OR MISSING SIGNATURE IS REFUSED, AUDITED AS IDENTITY_RESULT_REFUSED, AND NOTHING IS WRITTEN.
+ *                          none; the address is set in Didit's console). The body is believed only when a signature
+ *                          holds and it is under five minutes old (`readIdentityDecision`): A BAD OR MISSING SIGNATURE,
+ *                          OR A STALE ONE, IS REFUSED, AUDITED AS IDENTITY_RESULT_REFUSED, AND NOTHING IS WRITTEN. A
+ *                          signed word that the check is still under way, or about something other than a check's
+ *                          status, is acknowledged and not kept (IDENTITY_RESULT_NOT_KEPT): it is not a result.
  *                          So is a signed result for a session we never sent. A result that holds is kept as OUR OWN
  *                          COPY (identity_check_results, append-only: the decision's fields, the SHA-256 of the exact
  *                          body, never a name, a document number or an image — `identityResultCopy`), because the
@@ -42,14 +46,14 @@ import { h, raw, type Safe } from './html.ts';
 import { localWhen } from './localtime.ts';
 import { assertComplianceRead, assertComplianceWrite, complianceObj, record, type ComplianceDeps } from './compliance.ts';
 import {
-  IDENTITY_CHECK, identityCheckMissing, identityResultCopy, readIdentityDecision, startIdentityCheck,
-  type IdentityCheckConfig, type IdentityOutcome,
+  IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, readIdentityDecision, startIdentityCheck,
+  type IdentityCheckConfig, type IdentityOutcome, type IdentitySignature,
 } from '../connectors/identity-check.ts';
 
-/** Where the service sends its result. Mounted in src/web/router.ts, outside the login. */
+/** Where the service sends its result: set as the webhook address in Didit's console. Mounted in src/web/router.ts, outside the login. */
 export const IDENTITY_HOOK_PATH = '/hooks/identity-check';
-/** The header the service signs its result in (Veriff's own name for it). */
-export const IDENTITY_SIGNATURE_HEADER = 'x-hmac-signature';
+/** The headers the service signs its result with (Didit's own names for them), as Node lower-cases them. */
+export const IDENTITY_SIGNATURE_HEADERS = Object.freeze({ v2: 'x-signature-v2', raw: 'x-signature', timestamp: 'x-timestamp' } as const);
 /** A result is a small JSON body. Anything larger is refused before it is read. */
 export const IDENTITY_HOOK_MAX_BYTES = 64 * 1024;
 
@@ -68,11 +72,6 @@ export function identityCheckReadiness(app: App, config: IdentityCheckConfig = I
   return { on: missing.length === 0, missing };
 }
 
-/** The site's own address, for the link the service calls back on. Configured, never taken from a request. */
-function publicOrigin(): string {
-  return process.env['CAPREBATE_PUBLIC_ORIGIN'] ?? 'http://localhost:8103';
-}
-
 export type SendInput = {
   readonly business_id: string;
   readonly contact_id: string;
@@ -84,10 +83,10 @@ export type SendResult = { readonly ok: true; readonly id: string; readonly link
 
 /**
  * Send one identity check. compliance.write only. OFF AS SHIPPED: the connector refuses before any call, and the person
- * is told what is missing. `opts` is for tests only — a configuration switched on, and the address the result comes to.
+ * is told what is missing. `opts` is for tests only — a configuration switched on.
  */
 export async function sendIdentityCheck(
-  d: IdentityDeps, actor: Actor, input: SendInput, opts: { readonly config?: IdentityCheckConfig; readonly origin?: string } = {},
+  d: IdentityDeps, actor: Actor, input: SendInput, opts: { readonly config?: IdentityCheckConfig } = {},
 ): Promise<SendResult> {
   assertComplianceWrite(actor);
   const db = d.app.db;
@@ -104,7 +103,6 @@ export async function sendIdentityCheck(
   const id = d.newId();
   const out = await startIdentityCheck({
     first_name: input.first_name, last_name: input.last_name, check_ref: id,
-    callback_url: `${opts.origin ?? publicOrigin()}${IDENTITY_HOOK_PATH}`,
     actor_id: actor.id, actor_role: actor.role,
     deps: { audit: d.app.audit, now: d.app.now, transport: d.app.outside },
     secrets: d.app.secrets,
@@ -116,7 +114,7 @@ export async function sendIdentityCheck(
   }
   db.run(
     'INSERT INTO identity_checks (id, business_id, contact_id, cdd_check_id, provider, session_id, link, sent_by, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, input.business_id, input.contact_id, input.cdd_check_id, 'VERIFF', out.session_id, out.link, actor.id, d.app.now()]);
+    [id, input.business_id, input.contact_id, input.cdd_check_id, 'DIDIT', out.session_id, out.link, actor.id, d.app.now()]);
   record(cd, actor, 'IDENTITY_CHECK_SENT', 'ALLOWED', 'identity_check', id, { business: input.business_id, contact: input.contact_id, cdd_check: input.cdd_check_id });
   return { ok: true, id, link: out.link };
 }
@@ -124,15 +122,29 @@ export async function sendIdentityCheck(
 export type ReceiveResult = { readonly status: 200 | 401 | 404; readonly outcome: IdentityOutcome | null };
 
 /**
- * One result from the service. Believed only when the signature holds; refused and audited otherwise, with nothing
- * written. A signed result for a session we never sent is refused the same way. The row it writes is our copy.
+ * One result from the service. Believed only when a signature holds and it is fresh; refused and audited otherwise,
+ * with nothing written. A signed result for a session we never sent is refused the same way. A signed word that the
+ * check is still under way, or about something else, is acknowledged and not kept. The row it writes is our copy.
  */
-export function receiveIdentityResult(app: App, newId: () => string, rawBody: string, signature: string | null): ReceiveResult {
+export function receiveIdentityResult(app: App, newId: () => string, rawBody: string, sig: IdentitySignature): ReceiveResult {
   const cd: ComplianceDeps = { db: app.db, audit: app.audit, now: app.now, newId };
-  const read = readIdentityDecision(rawBody, signature, app.secrets);
+  const read = readIdentityDecision(rawBody, sig, app.secrets, Date.parse(app.now()));
   if (read.state === 'REFUSED') {
     record(cd, null, 'IDENTITY_RESULT_REFUSED', 'REFUSED', 'identity_check', 'unknown', { why: read.why });
     return { status: 401, outcome: null };
+  }
+  if (read.state === 'IGNORED') {
+    record(cd, null, 'IDENTITY_RESULT_NOT_KEPT', 'ALLOWED', 'identity_check', 'unknown', { why: read.why });
+    return { status: 200, outcome: null };
+  }
+  if (read.state === 'UNDER_WAY') {
+    const known = app.db.get<{ id: string }>('SELECT id FROM identity_checks WHERE session_id = ?', [read.session_id]);
+    if (known === undefined) {
+      record(cd, null, 'IDENTITY_RESULT_REFUSED', 'REFUSED', 'identity_check', 'unknown', { why: 'the result names no check we sent' });
+      return { status: 404, outcome: null };
+    }
+    record(cd, null, 'IDENTITY_RESULT_NOT_KEPT', 'ALLOWED', 'identity_check', known.id, { why: 'the check is still under way', status: read.status });
+    return { status: 200, outcome: null };
   }
   const check = app.db.get<{ id: string; business_id: string; cdd_check_id: string | null }>(
     'SELECT id, business_id, cdd_check_id FROM identity_checks WHERE session_id = ?', [read.session_id]);
@@ -152,7 +164,7 @@ export function receiveIdentityResult(app: App, newId: () => string, rawBody: st
 
 /** The sentence a PASS writes into an open check's "How it was verified", when that is still empty. */
 export function passEvidenceSentence(day: string): string {
-  return `Online identity check with Veriff: passed on ${day}. Our copy of the result is kept with the check.`;
+  return `Online identity check with ${IDENTITY_PROVIDER_NAME}: passed on ${day}. Our copy of the result is kept with the check.`;
 }
 
 function recordPassAsEvidence(cd: ComplianceDeps, cdd_check_id: string, day: string): void {
@@ -206,7 +218,7 @@ export function identityPanel(app: App, actor: Actor, where: { readonly business
   const mayWrite = can(actor, 'compliance.write', complianceObj());
   const action = where.cdd_check_id !== undefined ? `/staff/compliance/aml/checks/${where.cdd_check_id}/identity` : '/staff/compliance/identity-checks';
   return h`<div id="identity-check">
-    <p class="help">We send the person a link. They photograph their ID and take a selfie on their phone, and Veriff tells us the result. Their photographs never come to us.</p>
+    <p class="help">We send the person a link. They photograph their ID and take a selfie on their phone, and ${IDENTITY_PROVIDER_NAME} tells us the result. Their photographs never come to us.</p>
     ${ready.on ? raw('') : h`<p class="help"><strong>Switched off.</strong> Nothing is sent until these are done: ${ready.missing.join(' ')}</p>`}
     ${lines.length === 0 ? h`<p class="help">No identity check has been sent.</p>` : h`<table><thead><tr><th>Person</th><th>Sent</th><th>Result</th><th>Link for the client</th></tr></thead><tbody>
       ${lines.map((l) => h`<tr><td>${l.contact}</td><td>${l.sent}</td><td>${l.outcome_words}${l.result_at === null ? '' : `, ${localWhen(l.result_at)}`}</td><td><a href="${l.link}">Their link</a></td></tr>`)}</tbody></table>`}

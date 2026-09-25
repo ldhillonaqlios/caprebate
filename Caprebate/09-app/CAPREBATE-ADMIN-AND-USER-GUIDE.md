@@ -3613,15 +3613,15 @@ On **Your account**, under **Emails waiting to send**, an email that came back n
 ### Training — `B53` the online identity check
 
 **What it is for**
-We check who our clients are. Veriff does the check. We send the person a link. They take a photo of their ID and a
-selfie on their phone. Veriff tells us the result. We keep our own copy of the result. We never get their photos.
+We check who our clients are. Didit does the check. We send the person a link. They take a photo of their ID and a
+selfie on their phone. Didit tells us the result. We keep our own copy of the result. We never get their photos.
 
 **Who can open it**
 Admin. It sits in two places. One is the client's page, under **Identity check**. The other is a due diligence check,
 under **Online identity check**. Other logins do not see it.
 
 **It is switched off today**
-Nothing is sent yet. The box says what must happen first. Veriff must be named in our privacy notice and our letter.
+Nothing is sent yet. The box says what must happen first. Didit must be named in our privacy notice and our letter.
 Its keys must be on the server. Then someone turns it on. We check identity for every client. It does not wait for
 the money laundering setting.
 
@@ -3634,17 +3634,20 @@ the money laundering setting.
    **The client did not finish it**.
 
 **What happens with a pass**
-A pass on a due diligence check fills in **How it was verified**. It says Veriff passed them, and the day. You still
+A pass on a due diligence check fills in **How it was verified**. It says Didit passed them, and the day. You still
 finish the check yourself. A pass never finishes it for you.
 
 **What it refuses, and why**
-- A result we cannot prove came from Veriff. Each result comes signed. A bad signature is refused and logged.
+- A result we cannot prove came from Didit. Each result comes signed. A bad signature is refused and logged.
+- A result more than five minutes old. It could be an old one sent again, so it is refused too.
 - A result for a check we never sent. It is refused too.
 - A person who is not a contact of this client. Add them as a contact first.
 - A due diligence check that is finished. Send it from the client's page instead.
 
 **Check yourself**
-- *The result says "A person must look at it". Is that a fail?* — No. Veriff was not sure. Look at it and decide.
+- *The result says "A person must look at it". Is that a fail?* — No. Didit was not sure. Look at it and decide.
+- *The list still says "No result yet", but the client says they started.* — That is right. Didit tells us when they
+  start. We only show the answer at the end.
 - *Do we keep a copy of their passport?* — No. We keep the result, the kind of ID and its country. Nothing else.
 
 ---

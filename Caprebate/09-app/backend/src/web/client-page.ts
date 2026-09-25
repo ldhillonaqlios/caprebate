@@ -52,6 +52,7 @@ import { clientFolder } from './documents.ts';
 import { filesButton, folderTiles } from './client-files-pages.ts';
 import { emailButton } from './free-email-pages.ts';
 import { identityChecks, identityPanel } from './identity-checks.ts';
+import { IDENTITY_PROVIDER_NAME } from '../connectors/identity-check.ts';
 import { complianceObj } from './compliance.ts';
 
 export type WebResult = 'handled' | 'not-mine';
@@ -246,7 +247,7 @@ function clientPage(
       key: 'client.identity', id: 'identity', kind: 'company', heading: 'Identity check', count: idLines.length,
       status: passed ? 'DONE' : idLines.length > 0 ? 'WAITING' : 'NOT_STARTED',
       working: passed ? 'Nothing right now.' : idLines.length > 0 ? 'Waiting for the result.' : 'No identity check has been sent.',
-      need: [], from: ['Veriff'],
+      need: [], from: [IDENTITY_PROVIDER_NAME],
       body: identityPanel(d.app, actor, { business_id: org.id },
         db.all<{ id: string; full_name: string }>('SELECT id, full_name FROM contacts WHERE business_id = ? ORDER BY full_name', [org.id])),
     });

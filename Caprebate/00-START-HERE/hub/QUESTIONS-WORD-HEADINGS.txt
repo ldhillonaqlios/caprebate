@@ -128,7 +128,6 @@
 163) How do we check who someone is when a stranger asks what we hold about them?
 165) Is the review of our notices-page position due now that the brand name is settled?
 167) What should be removed from each of 14 new document types before upload?
-170) Can we make a few small, logged test lookups to check a data connector works?
 171) Does the website need Google Analytics, or can we count visitors ourselves?
 172) Which AI provider reads client documents, and on what terms?
 174) Should rare 20-year and 15-year cases be handled by a legal hold, not by keeping every file?
@@ -227,3 +226,4 @@
 217) May we send you one test email from contact@caprebate.co.uk before email sending is switched on?
 220) Do the sale contract and the CPSE replies have to arrive only when the client bought the building?
 225) Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD?
+170) Can we make a few small, logged test lookups to check a data connector works?

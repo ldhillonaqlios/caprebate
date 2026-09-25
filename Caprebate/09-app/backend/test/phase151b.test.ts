@@ -25,7 +25,7 @@ import { fixtureTransport, type Fixture } from '../src/connectors/http.ts';
 import { secretsFromValues } from '../src/secrets.ts';
 import { IDENTITY_CHECK, IDENTITY_SESSION_ENDPOINT, type IdentityCheckConfig } from '../src/connectors/identity-check.ts';
 import {
-  IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADER, identityChecks, identityPassed, passEvidenceSentence, receiveIdentityResult, sendIdentityCheck,
+  IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, identityChecks, identityPassed, passEvidenceSentence, receiveIdentityResult, sendIdentityCheck,
 } from '../src/web/identity-checks.ts';
 import { checkView } from '../src/web/compliance-aml.ts';
 import type { Db } from '../src/db.ts';
@@ -85,23 +85,27 @@ async function world() {
  * 1 · THE ONLINE IDENTITY CHECK, WIRED IN
  * ================================================================== */
 
-const KEYS = { VERIFF_API_KEY: 'test-veriff-key-not-real-151b', VERIFF_SHARED_SECRET: 'test-veriff-secret-not-real-151b' };
+const KEYS = { DIDIT_API_KEY: 'test-didit-key-not-real-151b', DIDIT_WEBHOOK_SECRET: 'test-didit-secret-not-real-151b', DIDIT_WORKFLOW_ID: '11111111-2222-3333-4444-151b00000000' };
 const ON: IdentityCheckConfig = Object.freeze({ ...IDENTITY_CHECK, enabled: true, named_in_privacy_notice: true, named_in_engagement_letter: true });
 const SESSION = 'a1b2c3d4-0000-4000-8000-151b00000001';
 const SESSION_OK: Fixture = {
   status: 201,
-  body: JSON.stringify({ status: 'success', verification: { id: SESSION, url: 'https://alchemy.veriff.com/v/invented-151b', status: 'created' } }),
+  body: JSON.stringify({ session_id: SESSION, session_number: 2, session_token: 'INVENTED151B', url: 'https://verify.didit.me/en/session/INVENTED151B', status: 'Not Started' }),
 };
-const sign = (body: string, secret = KEYS.VERIFF_SHARED_SECRET) => createHmac('sha256', secret).update(body, 'utf8').digest('hex');
-/* Shaped from Veriff's decision webhook (devdocs.veriff.com, read 24 September 2026), INVENTED, and deliberately carrying
-   the person and the document number, so the test can prove neither is kept. */
+const sign = (body: string, secret = KEYS.DIDIT_WEBHOOK_SECRET) => createHmac('sha256', secret).update(body, 'utf8').digest('hex');
+/* The time each signed result carries: the world's own fixed clock, 2026-09-25T10:00:00Z, in Unix seconds. */
+const nowTs = () => String(Date.parse('2026-09-25T10:00:00.000Z') / 1000);
+const sig = (body: string, secret?: string) => ({ raw: sign(body, secret), v2: null, timestamp: nowTs() });
+/* Shaped from Didit's webhook (docs.didit.me/integration/webhooks, read 25 September 2026, Phase 151f), INVENTED, and
+   deliberately carrying the person and the document number, so the test can prove neither is kept. */
 const decision = (status: string, check_ref: string, session = SESSION) => JSON.stringify({
-  status: 'success',
-  verification: {
-    id: session, status, code: status === 'approved' ? 9001 : 9102, reason: null, reasonCode: null, vendorData: check_ref,
-    decisionTime: '2026-09-25T10:05:00.000Z', acceptanceTime: '2026-09-25T10:01:00.000Z',
-    person: { firstName: 'Invented', lastName: 'Signatory', dateOfBirth: '1970-01-01', idNumber: 'INVENTED-ID-151B' },
-    document: { number: 'INVENTED-DOC-151B', type: 'PASSPORT', country: 'GB', validUntil: '2030-01-01' },
+  event_id: 'e0000000-0000-4000-8000-151b00000001', webhook_type: 'status.updated', environment: 'sandbox',
+  session_id: session, status, vendor_data: check_ref, created_at: 1790330700, timestamp: 1790330700,
+  decision: {
+    id_verifications: [{ node_id: 'n1', status: status === 'Approved' ? 'Approved' : 'Declined', document_type: 'Passport', issuing_state: 'GBR',
+      first_name: 'Invented', last_name: 'Signatory', date_of_birth: '1970-01-01', document_number: 'INVENTED-DOC-151B', personal_number: 'INVENTED-ID-151B' }],
+    liveness_checks: [{ node_id: 'n2', status: 'Approved' }],
+    face_matches: [{ node_id: 'n3', status: 'Approved' }],
   },
 });
 
@@ -152,12 +156,13 @@ describe('1 · the online identity check is wired in — and off as shipped', ()
       const c = aContact(w.db);
       const r = await sendIdentityCheck({ app: w.app, newId: () => 'idc-151b-1' }, w.admin,
         { business_id: c.business_id, contact_id: c.id, cdd_check_id: null, first_name: 'Ada', last_name: 'Invented' },
-        { config: ON, origin: 'https://backoffice.example.invalid' });
+        { config: ON });
       assert.equal(r.ok, true, r.ok ? '' : r.why);
       const row = w.db.get<Record<string, unknown>>('SELECT * FROM identity_checks WHERE id = ?', ['idc-151b-1']);
       assert.ok(row);
       assert.equal(row['session_id'], SESSION);
-      assert.equal(row['link'], 'https://alchemy.veriff.com/v/invented-151b');
+      assert.equal(row['link'], 'https://verify.didit.me/en/session/INVENTED151B');
+      assert.equal(row['provider'], 'DIDIT');
       assert.ok(!JSON.stringify(row).includes('Ada') && !JSON.stringify(row).includes('Invented'), 'a name was kept');
       assert.equal(w.audit('IDENTITY_CHECK_SENT').length, 1);
       assert.ok(!w.audit('IDENTITY_CHECK_SENT')[0]!.detail.includes('Ada'));
@@ -188,7 +193,7 @@ describe('1 · the signed result: believed only when signed, kept as our own cop
     w.db.run("INSERT INTO cdd_checks (id, business_id, claim_id, claimant_type, claimant_type_note, state, created_by, created_at, updated_at) VALUES ('cdd-151b', ?, NULL, 'LIMITED_COMPANY', NULL, 'IN_PROGRESS', ?, '2026-09-25T09:00:00.000Z', '2026-09-25T09:00:00.000Z')",
       [c.business_id, w.admin.id]);
     const r = await sendIdentityCheck({ app: w.app, newId: () => 'idc-151b-2' }, w.admin,
-      { business_id: c.business_id, contact_id: c.id, cdd_check_id: 'cdd-151b', first_name: 'Ada', last_name: 'Invented' }, { config: ON, origin: 'https://backoffice.example.invalid' });
+      { business_id: c.business_id, contact_id: c.id, cdd_check_id: 'cdd-151b', first_name: 'Ada', last_name: 'Invented' }, { config: ON });
     assert.equal(r.ok, true, r.ok ? '' : r.why);
     let n = 0;
     return { ...w, c, newId: () => `res-${++n}` };
@@ -197,17 +202,18 @@ describe('1 · the signed result: believed only when signed, kept as our own cop
   test('an approved result that is signed is kept — the decision only, never the person or the document number', async () => {
     const w = await sent();
     try {
-      const body = decision('approved', 'idc-151b-2');
-      const r = receiveIdentityResult(w.app, w.newId, body, sign(body));
+      const body = decision('Approved', 'idc-151b-2');
+      const r = receiveIdentityResult(w.app, w.newId, body, sig(body));
       assert.deepEqual(r, { status: 200, outcome: 'PASS' });
       const row = w.db.get<{ outcome: string; provider_status: string; result_json: string; body_sha256: string }>('SELECT outcome, provider_status, result_json, body_sha256 FROM identity_check_results');
       assert.ok(row);
       assert.equal(row.outcome, 'PASS');
-      assert.equal(row.provider_status, 'approved');
+      assert.equal(row.provider_status, 'Approved');
       assert.equal(row.body_sha256.length, 64);
       const copy = JSON.parse(row.result_json) as Record<string, unknown>;
-      assert.equal(copy['document_type'], 'PASSPORT');
-      assert.equal(copy['document_country'], 'GB');
+      assert.equal(copy['document_type'], 'Passport');
+      assert.equal(copy['document_country'], 'GBR');
+      assert.equal(copy['liveness_status'], 'Approved');
       for (const never of ['Invented', 'Signatory', '1970-01-01', 'INVENTED-ID-151B', 'INVENTED-DOC-151B']) {
         assert.ok(!row.result_json.includes(never), `our copy kept ${never}`);
         assert.ok(!JSON.stringify(w.audit('IDENTITY_RESULT_RECEIVED')).includes(never), `the audit log kept ${never}`);
@@ -219,8 +225,8 @@ describe('1 · the signed result: believed only when signed, kept as our own cop
     const w = await sent();
     try {
       assert.ok(checkView(w.db, w.admin, 'cdd-151b').missing.includes('how it was verified'));
-      const body = decision('approved', 'idc-151b-2');
-      receiveIdentityResult(w.app, w.newId, body, sign(body));
+      const body = decision('Approved', 'idc-151b-2');
+      receiveIdentityResult(w.app, w.newId, body, sig(body));
       assert.equal(identityPassed(w.db, 'cdd-151b'), true);
       const c = w.db.get<{ verification_method: string | null; state: string }>('SELECT verification_method, state FROM cdd_checks WHERE id = ?', ['cdd-151b']);
       assert.equal(c?.verification_method, passEvidenceSentence('2026-09-25'));
@@ -233,9 +239,9 @@ describe('1 · the signed result: believed only when signed, kept as our own cop
   test('a declined, a “try again” and an unknown status are never a pass, and never fill the evidence (N4)', async () => {
     const w = await sent();
     try {
-      for (const [status, want] of [['declined', 'FAIL'], ['resubmission_requested', 'REFER'], ['something_new', 'REFER'], ['abandoned', 'NOT_COMPLETED']] as const) {
+      for (const [status, want] of [['Declined', 'FAIL'], ['Resubmitted', 'REFER'], ['something_new', 'REFER'], ['Abandoned', 'NOT_COMPLETED']] as const) {
         const body = decision(status, 'idc-151b-2');
-        assert.equal(receiveIdentityResult(w.app, w.newId, body, sign(body)).outcome, want, status);
+        assert.equal(receiveIdentityResult(w.app, w.newId, body, sig(body)).outcome, want, status);
       }
       assert.equal(identityPassed(w.db, 'cdd-151b'), false);
       assert.equal(w.db.get<{ v: string | null }>('SELECT verification_method AS v FROM cdd_checks WHERE id = ?', ['cdd-151b'])?.v, null);
@@ -246,9 +252,9 @@ describe('1 · the signed result: believed only when signed, kept as our own cop
   test('a bad, missing or wrong-secret signature is refused, audited, and writes nothing — even on “approved”', async () => {
     const w = await sent();
     try {
-      const body = decision('approved', 'idc-151b-2');
-      for (const sig of [null, '', 'zz', sign(body, 'another-secret'), sign(`${body} `)]) {
-        assert.deepEqual(receiveIdentityResult(w.app, w.newId, body, sig), { status: 401, outcome: null }, String(sig));
+      const body = decision('Approved', 'idc-151b-2');
+      for (const s of [null, '', 'zz', sign(body, 'another-secret'), sign(`${body} `)]) {
+        assert.deepEqual(receiveIdentityResult(w.app, w.newId, body, { raw: s, v2: null, timestamp: nowTs() }), { status: 401, outcome: null }, String(s));
       }
       assert.equal(w.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM identity_check_results')?.n, 0);
       assert.equal(w.audit('IDENTITY_RESULT_REFUSED').length, 5);
@@ -259,10 +265,10 @@ describe('1 · the signed result: believed only when signed, kept as our own cop
   test('a signed result for a check we never sent, or naming another check, is refused and writes nothing', async () => {
     const w = await sent();
     try {
-      const stranger = decision('approved', 'idc-151b-2', 'no-such-session');
-      assert.equal(receiveIdentityResult(w.app, w.newId, stranger, sign(stranger)).status, 404);
-      const crossed = decision('approved', 'some-other-check');
-      assert.equal(receiveIdentityResult(w.app, w.newId, crossed, sign(crossed)).status, 404);
+      const stranger = decision('Approved', 'idc-151b-2', 'no-such-session');
+      assert.equal(receiveIdentityResult(w.app, w.newId, stranger, sig(stranger)).status, 404);
+      const crossed = decision('Approved', 'some-other-check');
+      assert.equal(receiveIdentityResult(w.app, w.newId, crossed, sig(crossed)).status, 404);
       assert.equal(w.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM identity_check_results')?.n, 0);
     } finally { w.close(); }
   });
@@ -270,12 +276,12 @@ describe('1 · the signed result: believed only when signed, kept as our own cop
   test('ON THE WIRE: the route needs no login, refuses a bad signature with 401, and accepts a good one', async () => {
     const w = await sent();
     try {
-      const body = decision('approved', 'idc-151b-2');
+      const body = decision('Approved', 'idc-151b-2');
       const anon = client(w.base);
-      const bad = await anon.raw(IDENTITY_HOOK_PATH, body, { 'content-type': 'application/json', [IDENTITY_SIGNATURE_HEADER]: sign(body, 'wrong') });
+      const bad = await anon.raw(IDENTITY_HOOK_PATH, body, { 'content-type': 'application/json', [IDENTITY_SIGNATURE_HEADERS.raw]: sign(body, 'wrong'), [IDENTITY_SIGNATURE_HEADERS.timestamp]: nowTs() });
       assert.equal(bad.status, 401);
       assert.equal(bad.body, 'refused');
-      const good = await anon.raw(IDENTITY_HOOK_PATH, body, { 'content-type': 'application/json', [IDENTITY_SIGNATURE_HEADER]: sign(body) });
+      const good = await anon.raw(IDENTITY_HOOK_PATH, body, { 'content-type': 'application/json', [IDENTITY_SIGNATURE_HEADERS.raw]: sign(body), [IDENTITY_SIGNATURE_HEADERS.timestamp]: nowTs() });
       assert.equal(good.status, 200);
       assert.equal(identityPassed(w.db, 'cdd-151b'), true);
     } finally { w.close(); }
@@ -286,8 +292,8 @@ describe('1 · the signed result: believed only when signed, kept as our own cop
     try {
       assert.throws(() => w.db.run("INSERT INTO identity_check_results (id, identity_check_id, outcome, provider_status, decided_at, received_at, body_sha256, result_json) VALUES ('r', 'idc-151b-2', 'PASS', 'approved', NULL, '2026-09-25', ?, ?)",
         ['0'.repeat(64), JSON.stringify({ person: { firstName: 'x' } })]), /never the person/);
-      const body = decision('approved', 'idc-151b-2');
-      receiveIdentityResult(w.app, w.newId, body, sign(body));
+      const body = decision('Approved', 'idc-151b-2');
+      receiveIdentityResult(w.app, w.newId, body, sig(body));
       assert.throws(() => w.db.run("UPDATE identity_check_results SET outcome = 'FAIL'"), /never changes/);
       assert.throws(() => w.db.run('DELETE FROM identity_check_results'), /kept as evidence/);
       assert.throws(() => w.db.run('DELETE FROM identity_checks'), /kept as evidence/);

@@ -483,10 +483,10 @@ THE TRACKER - node 03-app/caprebate-tracker.cjs, the ONLY way to change it
   files files_on_disk document claimed_by cta_answer_status cta_severity notes.
   files is what was attached on monday.com; files_on_disk is where each one is
   in the tree. THE FILE ON DISK IS THE FILE - nothing is re-attached anywhere.
-  THREE ATTACHMENTS HAD NO COPY ON DISK on 25 Sep 2026, all on Done items in Z:
-  12851716945 and 12851784946 (one assessment page, twice) and 12819698301
-  (the Stage 1 question leverage tiers). They read "NOT ON DISK - only on
-  monday.com": Lakhbir can download them while the account lasts.
+  EVERY ATTACHMENT IS ON DISK. The three that were only on monday.com were
+  downloaded by Lakhbir on 25 Sep 2026 and filed: the assessment page in
+  _archive/superseded/, the Stage 1 question leverage tiers in
+  02-modules-and-build-prep/.
 
 GROUPS - seven, in the tracker's group column, matched on the WHOLE TEXT:
   00 · START HERE
@@ -527,10 +527,9 @@ STATUS LABELS - the ten, exactly as written; the tracker refuses any other.
   phase. READ THE ANSWER LINES AND THE TWO PARAGRAPHS UNDER THEM, EVERY SWEEP.
 
 OWNER TYPES - the six:  Claude . CTA . Lakhbir . Surveyor . Solicitor/DPO .
-  Developer.  A SEVENTH VALUE, "Director (CAP REBATE LTD)", is on eight items in
-  the 25 Sep 2026 export and in no record before it; the owner counts of 24 Sep
-  show those eight under Lakhbir. It is kept as found; the tracker check prints
-  it and does not fail it. Lakhbir decides whether it stays.
+  Developer.  "Director (CAP REBATE LTD)" was on eight items in the 25 Sep 2026
+  export; Lakhbir said "leave as lakhbir and not director" the same day, so
+  they are Lakhbir's again and the tracker check refuses that value.
   Never re-create "Working on it" / "Done" / "Stuck" here. The owner says who
   ACTS: "Ready - Lakhbir action" owned by Claude is a contradiction (one
   corrected 10 Sep; the tracker now refuses it). The five APPLICATION roles -
@@ -1001,6 +1000,66 @@ check; the register check and the CRM fold check. Commit and push.
 ```
 
 
+## PHASE 151g — the test lookups Lakhbir allowed: the smoke test keeps his five conditions
+
+ **Model: Opus. Written 25 September 2026 by Phase 151f.** Tracker row: "Phase 151g - the test lookups Lakhbir allowed" in 05 · FOR DEVELOPMENT. Runs after 151e, before the sweep.
+
+ **Why this exists.** Lakhbir answered "Can we make a few small, logged test lookups to check a data connector works?" on 25 September 2026: yes, on five conditions (Word question 170, now in the closed document). The live smoke test already exists (Phase 146g, `CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE>`), but it enforces none of the five: it only prints a warning, keeps its audit row in a database in memory that vanishes, and would take a client's postcode if one were typed.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
+a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
+branch main. On the Mac the working copy is Development/, one level above the
+tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
+Allowances/Business Development/Development. git pull, then git log --oneline.
+OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
+INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
+COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
+plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
+already there stops you) and clear it at the end; retag what you touch in the
+tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
+write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+═══════════════════════════════════
+
+Mac copy. Take a .bak-phase151g sibling of every file you change. Tracker row:
+"Phase 151g - the test lookups Lakhbir allowed" (find its id with list --group
+DEVELOPMENT). Read first: 09-app/backend/src/connectors/smoke.ts, the `smoke`
+command in src/cli.ts, and Word question 170 in the closed questions document.
+
+THE FIVE CONDITIONS, LAKHBIR'S WORDS: no more than three lookups per connector
+each time it is switched on; never a client's property; keep only pass or
+fail, the time and the connector; log who ran it and why; never use it to show
+the product to clients. Build each into the smoke command, so it is enforced
+and not only printed:
+1. WHO AND WHY. --who and --why are required, and refused when empty.
+2. A LOG THAT OUTLIVES THE RUN, KEEPING ONLY WHAT HE SAID. One line per lookup
+   in a file outside the repository (CAPREBATE_TEST_LOOKUP_LOG, default
+   ~/.caprebate-test-lookups.jsonl; refuse a path inside the tree, the way
+   src/secrets.ts refuses a key file there): the connector, the time, PASS or
+   NO, who and why. Never the values asked, never the answer.
+3. THREE PER CONNECTOR, EACH TIME IT IS SWITCHED ON. Count a connector's lines
+   since the last "switched on" line for it, and refuse a fourth. A person
+   records a switch-on with a command of its own (who, why), which is also the
+   only way the count starts again.
+4. NEVER A CLIENT'S PROPERTY. With CAPREBATE_DB set, refuse a postcode, company
+   number or company name that matches any business or property held there;
+   without it, refuse anything but the public defaults in SMOKE_DEFAULTS unless
+   --not-a-client is given, and log that it was.
+5. NOT A DEMONSTRATION. Say so on every run; the why is logged. Change the
+   printed warning: the question is answered, and the command now says which
+   conditions it applies.
+Tests on an invented log in a temporary folder, no network: each condition
+refused and each allowed, proved red on the pre-change code. Update the
+Developer Spec's one-page table (the smoke test column), the guide if it names
+the command, and the officer's register note of 25 Sep 2026.
+
+CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
+inside their folders; the drift checker and its negative control; the plain-
+words check; the tracker check; the register check and the CRM fold check.
+Commit and push.
+```
+
 ## PHASE 152 — Sweep and stress-test (the recurring one, always last)
 
 
@@ -1457,12 +1516,13 @@ WHEN DONE
 
 ## 6 · What Claude is building next
 
- **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 25 September 2026 by Phase 151d: two items, and no orphan.** Taking back a pick (146j), and the test website (151e). Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
+ **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 25 September 2026 by Phase 151f: three items, and no orphan.** Taking back a pick (146j), the test website (151e), and the test lookups Lakhbir allowed (151g). Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
 
 
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
 |  Claude |  Taking back a pick |  A person who chose the wrong building from a close-match list cannot undo it: the record is stored, the lookup reads as fired and the screen will not offer the list again. Written by Phase 146h, which built the one-way door and said so |
+|  Claude |  The test lookups Lakhbir allowed (Phase 151g) |  He said yes to small, logged test lookups on five conditions; the smoke test that makes them exists and enforces none of the five yet |
 |  Claude |  The test website: why every page fails, and what it shows to anyone (Phase 151e) |  Every page of the test website answers a server error, and it serves every committed file to anyone who asks by path. Written by Phase 151d, which found both while keeping the hub private. What it may show is Lakhbir's decision, in the Word questions document |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

@@ -40,9 +40,9 @@ const STATUS = ['Ready - Claude can build', 'Ready - Lakhbir action', 'Built - a
 // A subitem's status was a different column with five labels of its own; most subitems carry none.
 const SUB_STATUS = ['', 'Working on it', 'Done', 'Stuck', 'Drafted, not approved', 'Waiting on someone else'];
 // The six owner types, exactly. A seventh value, "Director (CAP REBATE LTD)", was on eight items in the
-// 25 Sep 2026 export and in no record before it; it is kept as found, and flagged by `check`, not refused.
+// 25 Sep 2026 export; Lakhbir said the same day "leave as lakhbir and not director", so those eight are Lakhbir's
+// again (Phase 151f) and the value is refused like any other that is not one of the six.
 const OWNER = ['Claude', 'CTA', 'Lakhbir', 'Surveyor', 'Solicitor/DPO', 'Developer'];
-const OWNER_FOUND = ['Director (CAP REBATE LTD)'];
 const GROUPS = ['00 · START HERE', '01 · FOR LAKHBIR — decisions, appointments, company, governance',
   '02 · FOR THE TAX ADVISER — rulebooks, switches, tax sign-off', '03 · FOR THE ACCOUNTANT — the referral channel',
   '04 · FOR THE SURVEYOR — valuation, quantities, calibration', '05 · FOR DEVELOPMENT — engine, data layer, build, hosting',
@@ -155,10 +155,7 @@ function check(t, mdText) {
       if (!SUB_STATUS.includes(r.status)) fails.push(`subitem ${r.board_id} has status "${r.status}", not one of a subitem's five`);
     } else {
       if (!STATUS.includes(r.status)) fails.push(`${r.board_id} has status "${r.status}", not one of the ten labels`);
-      if (!OWNER.includes(r.owner_type)) {
-        if (OWNER_FOUND.includes(r.owner_type)) warns.push(r.board_id);
-        else fails.push(`${r.board_id} has owner type "${r.owner_type}", not one of the six`);
-      }
+      if (!OWNER.includes(r.owner_type)) fails.push(`${r.board_id} has owner type "${r.owner_type}", not one of the six`);
       if (!GROUPS.includes(r.group)) fails.push(`${r.board_id} is in group "${r.group}", not one of the seven`);
       if (r.status === 'Ready - Lakhbir action' && r.owner_type === 'Claude') fails.push(`${r.board_id} is "Ready - Lakhbir action" and owned by Claude - a contradiction (COORDINATES)`);
       if (r.status === 'Working on it' && !r.claimed_by) fails.push(`${r.board_id} is "Working on it" and nobody has claimed it`);
@@ -185,7 +182,6 @@ function main() {
     const { fails, warns } = check(t, fs.existsSync(MD) ? fs.readFileSync(MD, 'utf8') : '');
     const items = t.recs.filter((r) => !r.parent_id).length;
     console.log(`THE TRACKER CHECK - ${items} items, ${t.recs.length - items} subitems`);
-    if (warns.length) console.log(`  note: ${warns.length} item(s) carry the owner type "${OWNER_FOUND[0]}", which is not one of the six (found in the 25 Sep 2026 export; ACTION-PLAN.md, COORDINATES): ${warns.join(', ')}`);
     for (const f of fails) console.log('  FAIL ' + f);
     console.log(fails.length ? `RED - ${fails.length} failure(s).` : 'GREEN.');
     process.exit(fails.length ? 1 : 0);
@@ -251,6 +247,7 @@ function selfTest() {
   const firstItem = (c) => c.recs.find((r) => !r.parent_id);
   planted('a status that is not one of the ten', (c) => { firstItem(c).status = 'Stuck'; });
   planted('an owner type that is not one of the six', (c) => { firstItem(c).owner_type = 'Nobody'; });
+  planted('the retired "Director (CAP REBATE LTD)" owner type', (c) => { firstItem(c).owner_type = 'Director (CAP REBATE LTD)'; });
   planted('two rows with one id', (c) => { c.recs[1].board_id = c.recs[0].board_id; });
   planted('a subitem whose parent is gone', (c) => { c.recs.find((r) => r.parent_id).parent_id = '99999999999'; });
   planted('a name over 255 characters', (c) => { firstItem(c).name = 'x'.repeat(256); });

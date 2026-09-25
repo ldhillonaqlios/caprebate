@@ -5,7 +5,7 @@
  * answers shaped from the supplier's published documents, INVENTED, with no key and no network; every switch is
  * proved off as shipped.
  *
- *   1 · the online identity check (Veriff), built and switched off inside the anti-money-laundering check
+ *   1 · the online identity check (Veriff until Phase 151f, now Didit), built and switched off inside the anti-money-laundering check
  *   2 · roles a super admin can make, and the hard limits no role may break
  *   3 · the free postcode check at the address question (Postcodes.io), built and switched off behind the free gate
  *   4 · the smaller decisions: a leaver's photo deleted when their account is disabled
@@ -19,7 +19,7 @@ import { CALL_POLICIES } from '../src/connectors/sources.ts';
 import { emptySecrets, secretsFromValues, SECRET_KEYS } from '../src/secrets.ts';
 import {
   IDENTITY_CHECK, IDENTITY_CHECK_QUESTION, IDENTITY_SESSION_ENDPOINT, identityCheckMissing, readIdentityDecision,
-  signatureHolds, startIdentityCheck, VERIFF_STATUS_OUTCOME, type IdentityCheckConfig,
+  signatureHolds, startIdentityCheck, DIDIT_STATUS_OUTCOME, type IdentityCheckConfig,
 } from '../src/connectors/identity-check.ts';
 import { backendSwitchReadings } from '../src/web/case-stamp.ts';
 import { testApp } from './helpers.ts';
@@ -43,12 +43,12 @@ import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../../../0
  * 1 · THE ONLINE IDENTITY CHECK
  * ================================================================== */
 
-const KEYS = { VERIFF_API_KEY: 'test-veriff-key-not-real-000', VERIFF_SHARED_SECRET: 'test-veriff-secret-not-real-000' };
+const KEYS = { DIDIT_API_KEY: 'test-didit-key-not-real-000', DIDIT_WEBHOOK_SECRET: 'test-didit-secret-not-real-000', DIDIT_WORKFLOW_ID: '11111111-2222-3333-4444-151f00000000' };
 const ON: IdentityCheckConfig = Object.freeze({ ...IDENTITY_CHECK, enabled: true, named_in_privacy_notice: true, named_in_engagement_letter: true });
-/* Shaped from devdocs.veriff.com/apidocs/v1sessions (read 24 September 2026). Invented values. */
+/* Shaped from docs.didit.me/sessions-api/create-session (read 25 September 2026, Phase 151f). Invented values. */
 const SESSION_OK: Fixture = {
   status: 201,
-  body: JSON.stringify({ status: 'success', verification: { id: 'f04bdb47-d3be-4b28-b028-a652feb060b5', url: 'https://alchemy.veriff.com/v/invented-token', vendorData: 'cdd-151', status: 'created' } }),
+  body: JSON.stringify({ session_id: 'f04bdb47-d3be-4b28-b028-a652feb060b5', session_number: 1, session_token: 'INVENTED0001', url: 'https://verify.didit.me/en/session/INVENTED0001', vendor_data: 'cdd-151', status: 'Not Started', workflow_id: '11111111-2222-3333-4444-151f00000000' }),
   headers: { 'content-type': 'application/json' },
 };
 
@@ -58,18 +58,22 @@ async function rig(fixtures: Record<string, Fixture | readonly Fixture[]> = { [`
   const deps: CallDeps = { audit: app.audit, now: app.now, transport: t, limiter: new RateLimiter(), sleep: async () => { /* no wait */ } };
   const calls = () => app.db.all<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'CONNECTOR_CALLED' ORDER BY seq");
   const input = (over: Record<string, unknown> = {}) => ({
-    first_name: 'Ada', last_name: 'Invented', check_ref: 'cdd-151', callback_url: 'https://backoffice.example.invalid/hooks/identity-check',
+    first_name: 'Ada', last_name: 'Invented', check_ref: 'cdd-151',
     actor_id: 'u-ADMIN', actor_role: 'ADMIN', deps, secrets: secretsFromValues(KEYS), config: ON, ...over,
   });
   return { t, calls, input };
 }
 
-const sign = (body: string, secret = KEYS.VERIFF_SHARED_SECRET) => createHmac('sha256', secret).update(body, 'utf8').digest('hex');
+const sign = (body: string, secret = KEYS.DIDIT_WEBHOOK_SECRET) => createHmac('sha256', secret).update(body, 'utf8').digest('hex');
+/* Didit dates each result; a fixed clock and a timestamp at it, so freshness is never the reason a test passes. */
+const NOW_MS = Date.parse('2026-09-25T10:00:00.000Z');
+const TS = String(NOW_MS / 1000);
+const sig = (body: string, secret?: string) => ({ raw: sign(body, secret), v2: null, timestamp: TS });
 
 describe('1 · the online identity check is built for real and switched off', () => {
   test('it ships off, the stamp reads its switch, and it quotes the open supervision question by its title', () => {
     assert.equal(IDENTITY_CHECK.enabled, false);
-    assert.equal(IDENTITY_CHECK.provider, 'VERIFF');
+    assert.equal(IDENTITY_CHECK.provider, 'DIDIT');
     assert.equal(IDENTITY_CHECK_QUESTION, 'Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD?');
     const s = backendSwitchReadings().find((r) => r.switch === 'IDENTITY_CHECK');
     assert.ok(s, 'the case stamp does not read the identity check switch');
@@ -96,7 +100,8 @@ describe('1 · the online identity check is built for real and switched off', ()
       ['not named in the privacy notice', { config: { ...ON, named_in_privacy_notice: false } }],
       ['not named in the engagement letter', { config: { ...ON, named_in_engagement_letter: false } }],
       ['no keys', { secrets: emptySecrets() }],
-      ['only one key', { secrets: secretsFromValues({ VERIFF_API_KEY: KEYS.VERIFF_API_KEY }) }],
+      ['only the key', { secrets: secretsFromValues({ DIDIT_API_KEY: KEYS.DIDIT_API_KEY }) }],
+      ['no workflow id', { secrets: secretsFromValues({ DIDIT_API_KEY: KEYS.DIDIT_API_KEY, DIDIT_WEBHOOK_SECRET: KEYS.DIDIT_WEBHOOK_SECRET }) }],
       ['the switch off', { config: { ...ON, enabled: false } }],
     ];
     for (const [what, over] of cases) {
@@ -106,75 +111,77 @@ describe('1 · the online identity check is built for real and switched off', ()
     assert.equal(r.t.seen.length, 0);
   });
 
-  test('switched on for a test, it sends the two names and our reference — nothing else — and returns the link', async () => {
+  test('switched on for a test, it sends the check we set up, our reference and the two names — nothing else — and returns the link', async () => {
     const r = await rig();
     const out = await startIdentityCheck(r.input());
     assert.equal(out.state, 'SENT');
-    assert.equal(out.state === 'SENT' ? out.link : '', 'https://alchemy.veriff.com/v/invented-token');
+    assert.equal(out.state === 'SENT' ? out.link : '', 'https://verify.didit.me/en/session/INVENTED0001');
     assert.equal(r.t.seen.length, 1);
     const sent = r.t.seen[0]!;
-    assert.equal(new URL(sent.url).origin, 'https://stationapi.veriff.com');
-    assert.equal(sent.headers['X-AUTH-CLIENT'], KEYS.VERIFF_API_KEY);
-    const body = JSON.parse(sent.body ?? '{}') as { verification: Record<string, unknown> };
-    assert.deepEqual(Object.keys(body.verification).sort(), ['callback', 'person', 'vendorData']);
-    assert.deepEqual(body.verification['person'], { firstName: 'Ada', lastName: 'Invented' });
+    assert.equal(new URL(sent.url).origin, 'https://verification.didit.me');
+    assert.equal(sent.headers['x-api-key'], KEYS.DIDIT_API_KEY);
+    const body = JSON.parse(sent.body ?? '{}') as Record<string, unknown>;
+    assert.deepEqual(Object.keys(body).sort(), ['expected_details', 'language', 'vendor_data', 'workflow_id']);
+    assert.equal(body['workflow_id'], KEYS.DIDIT_WORKFLOW_ID);
+    assert.equal(body['vendor_data'], 'cdd-151');
+    assert.deepEqual(body['expected_details'], { first_name: 'Ada', last_name: 'Invented' });
     const detail = JSON.parse(r.calls()[0]!.detail) as Record<string, unknown>;
-    assert.equal(detail['service'], 'VERIFF_IDV');
-    assert.ok(!JSON.stringify(detail).includes(KEYS.VERIFF_API_KEY), 'the key reached the audit log');
+    assert.equal(detail['service'], 'DIDIT_IDV');
+    assert.ok(!JSON.stringify(detail).includes(KEYS.DIDIT_API_KEY), 'the key reached the audit log');
     assert.ok(!JSON.stringify(detail).includes('Invented'), 'a name reached the audit log');
   });
 
   test('a failed call, an unreadable answer and an answer with no link are each NOT_SENT, never a link', async () => {
-    for (const f of [{ status: 500, body: '{}' }, { status: 201, body: 'not json' }, { status: 201, body: '{"verification":{"id":"x"}}' },
-      { status: 201, body: '{"verification":{"id":"x","url":"http://insecure.example"}}' }] as Fixture[]) {
+    for (const f of [{ status: 500, body: '{}' }, { status: 201, body: 'not json' }, { status: 201, body: '{"session_id":"x"}' },
+      { status: 201, body: '{"session_id":"x","url":"http://insecure.example"}' }, { status: 201, body: '{"session_id":"","url":"https://verify.didit.me/x"}' }] as Fixture[]) {
       const r = await rig({ [`POST ${IDENTITY_SESSION_ENDPOINT}`]: f });
       assert.equal((await startIdentityCheck(r.input())).state, 'NOT_SENT', f.body);
     }
   });
 
   test('the service is a processor in the EU on our list of places we may call, and its keys are named in the key file only', () => {
-    const p = CALL_POLICIES['VERIFF_IDV'];
+    const p = CALL_POLICIES['DIDIT_IDV'];
     assert.ok(p);
-    assert.equal(p.base_url, 'https://stationapi.veriff.com');
+    assert.equal(p.base_url, 'https://verification.didit.me');
     assert.equal(p.region, 'EU');
     assert.equal(p.register_source, null);
-    assert.deepEqual(SECRET_KEYS.filter((k) => k.owner === 'VERIFF_IDV').map((k) => k.name), ['VERIFF_API_KEY', 'VERIFF_SHARED_SECRET']);
+    assert.deepEqual(SECRET_KEYS.filter((k) => k.owner === 'DIDIT_IDV').map((k) => k.name), ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
     assert.deepEqual(identityCheckMissing(ON, secretsFromValues(KEYS)), []);
   });
 });
 
 describe('1 · a result is believed only when it is signed, and an unknown is never a pass (N4)', () => {
   const secrets = secretsFromValues(KEYS);
-  const decision = (status: unknown) => JSON.stringify({ status: 'success', verification: { id: 'sess-1', status, vendorData: 'cdd-151', decisionTime: '2026-09-24T10:00:00.000Z' } });
+  const decision = (status: unknown) => JSON.stringify({ webhook_type: 'status.updated', session_id: 'sess-1', status, vendor_data: 'cdd-151', created_at: 1790330400, timestamp: 1790330400 });
 
   test('each documented status maps to its answer when signed', () => {
-    for (const [status, want] of Object.entries(VERIFF_STATUS_OUTCOME)) {
+    for (const [status, want] of Object.entries(DIDIT_STATUS_OUTCOME)) {
       const b = decision(status);
-      const d = readIdentityDecision(b, sign(b), secrets);
+      const d = readIdentityDecision(b, sig(b), secrets, NOW_MS);
       assert.equal(d.state, 'READ', status);
       assert.equal(d.state === 'READ' ? d.outcome : '', want, status);
     }
-    const ok = decision('approved');
-    const d = readIdentityDecision(ok, sign(ok), secrets);
+    const ok = decision('Approved');
+    const d = readIdentityDecision(ok, sig(ok), secrets, NOW_MS);
     assert.equal(d.state === 'READ' ? d.check_ref : '', 'cdd-151');
   });
 
   test('an unknown status, a missing one, or a number is REFER — never PASS', () => {
-    for (const status of ['approved_maybe', '', undefined, 9001, null]) {
+    for (const status of ['Approved_maybe', 'approved', '', undefined, 9001, null]) {
       const b = decision(status);
-      const d = readIdentityDecision(b, sign(b), secrets);
+      const d = readIdentityDecision(b, sig(b), secrets, NOW_MS);
       assert.equal(d.state, 'READ');
       assert.equal(d.state === 'READ' ? d.outcome : '', 'REFER', String(status));
     }
   });
 
   test('a bad, missing or wrong-secret signature is refused outright, even on an "approved" body', () => {
-    const b = decision('approved');
-    for (const sig of [null, undefined, '', 'zz', sign(b, 'another-secret-entirely'), sign(b + ' ')]) {
-      assert.equal(readIdentityDecision(b, sig, secrets).state, 'REFUSED', String(sig));
+    const b = decision('Approved');
+    for (const s of [null, '', 'zz', sign(b, 'another-secret-entirely'), sign(b + ' ')]) {
+      assert.equal(readIdentityDecision(b, { raw: s, v2: null, timestamp: TS }, secrets, NOW_MS).state, 'REFUSED', String(s));
     }
-    assert.equal(readIdentityDecision(b, sign(b), emptySecrets()).state, 'REFUSED', 'no shared secret must not mean "anything goes"');
-    assert.equal(signatureHolds(b, sign(b).toUpperCase(), KEYS.VERIFF_SHARED_SECRET), true, 'hex case is not a difference');
+    assert.equal(readIdentityDecision(b, sig(b), emptySecrets(), NOW_MS).state, 'REFUSED', 'no shared secret must not mean "anything goes"');
+    assert.equal(signatureHolds(b, { raw: sign(b).toUpperCase(), v2: null, timestamp: TS }, KEYS.DIDIT_WEBHOOK_SECRET), true, 'hex case is not a difference');
   });
 });
 

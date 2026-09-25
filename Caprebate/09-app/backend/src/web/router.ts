@@ -74,7 +74,7 @@ import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from '
 import { receiveEnquiry } from './enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
 import { ANSWER_MYSELF_LABEL, checkedLine, checkPropertyPostcodes, lookupsOffered, recordLookupsDeclined, type KeptCheck } from './address-check.ts';
-import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADER, receiveIdentityResult } from './identity-checks.ts';
+import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult } from './identity-checks.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -260,8 +260,11 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
      The answer is a status and nothing else: the service reads no page, and a refusal says nothing about why. */
   if (path === IDENTITY_HOOK_PATH && method === 'POST') {
     const raw0 = (await readBody(req, IDENTITY_HOOK_MAX_BYTES)).toString('utf8');
-    const sig = req.headers[IDENTITY_SIGNATURE_HEADER];
-    const r = receiveIdentityResult(d.app, newId, raw0, typeof sig === 'string' ? sig : null);
+    // PHASE 151f: Didit signs with two headers and dates the result; any may be missing, and then nothing is believed.
+    const one = (name: string): string | null => { const v = req.headers[name]; return typeof v === 'string' ? v : null; };
+    const r = receiveIdentityResult(d.app, newId, raw0, {
+      v2: one(IDENTITY_SIGNATURE_HEADERS.v2), raw: one(IDENTITY_SIGNATURE_HEADERS.raw), timestamp: one(IDENTITY_SIGNATURE_HEADERS.timestamp),
+    });
     res.writeHead(r.status, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
     res.end(r.status === 200 ? 'ok' : 'refused');
     return 'handled';
