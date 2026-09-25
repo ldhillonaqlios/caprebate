@@ -1,0 +1,5 @@
+# Phase 151d, 25 September 2026. The test deploy (vercel.json: outputDirectory ".") serves every
+# uploaded file publicly, so anything listed here is never uploaded to Vercel at all.
+# The hub is the project's own working papers - the action plan, the phase history, the three
+# sign-off registers, the tracker and its comments - and nothing in the application reads it.
+/Caprebate/00-START-HERE/hub/

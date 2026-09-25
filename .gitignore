@@ -4,6 +4,7 @@
 /*
 !/.gitignore
 !/.gitattributes
+!/.vercelignore
 !/.devcontainer/
 !/README.md
 !/api/
@@ -25,6 +26,14 @@
 !/Caprebate/06-commercial-and-governance/
 /Caprebate/06-commercial-and-governance/*
 !/Caprebate/06-commercial-and-governance/Caprebate Engagement Letter.docx
+# Phase 151d, 25 Sep 2026: monday.com was dropped, so the plan, the phase history, the three
+# sign-off registers, the tracker (the old board) and the claim lock are files, committed here.
+# .vercelignore keeps this folder OUT of the test deploy, which serves committed files publicly.
+!/Caprebate/00-START-HERE/
+/Caprebate/00-START-HERE/*
+!/Caprebate/00-START-HERE/hub/
+!/Caprebate/00-START-HERE/hub/*.md
+!/Caprebate/00-START-HERE/hub/*.csv
 
 # never, anywhere
 *.bak*
