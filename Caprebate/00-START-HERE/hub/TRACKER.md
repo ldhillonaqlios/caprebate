@@ -361,6 +361,7 @@
 
 - File: `08-monday-doc-exports/12818279787__Section-1-Who-we-are-and-how-to-contact-us.md`
 - Note 2026-09-25 (Phase 151d, closing Phase 151c): Phase 151c added a dated draft section naming Veriff and Postcodes.io for the data protection officer, with the line the notice at the address question must carry about 'answer it myself'; the empty file entry the board carried since 24 Sep is gone. Gaps the files do not settle are in square brackets for the officer. Still Built - awaiting sign-off (SDP-P10).
+- Note 2026-09-25 (Phase 151f, later): Lakhbir, 25 Sep 2026: the officer approves the Didit entry. Recorded in the draft section; Didit's company filled from its terms. The lawful basis, the selfie (Article 9), retention and Didit's own use of pseudonymised data still need his written answers, and the notice is still a draft, not published.
 
 ### CRM 7 of 10 — the invoice-fraud procedure drafted into SOP 9: the invoice email waits on its sign-off
 
