@@ -57,17 +57,30 @@
    does not classify, and on any manifest id the register no longer names, so
    the manifest cannot go quietly stale in either direction.
 
-   HOW IT GETS ITS DATA, AND WHY THERE IS NO LIVE MODE.
+   WHERE IT GETS ITS DATA - SINCE PHASE 151d, 25 SEPTEMBER 2026, FROM FILES.
 
-   The board and the three registers are on monday.com. There is no monday.com
-   API token on either machine - Phase 87 had to make two MCP calls per document
-   for want of one - so a `fetch` straight to the API would be dead code that
-   has never run, in a check whose whole point is that it can fail. Instead this
-   reads a SNAPSHOT that a phase captures through the Monday connector it
-   already has, in `03-app/signoff-snapshot/`, and it REFUSES TO RUN (exit 2) on
-   a snapshot older than a day. A stale snapshot passing quietly would be worse
-   than no check at all. `--refresh-plan` prints the exact calls to take a new
-   one.
+   Until that day the board and the registers were on monday.com, and this read
+   a SNAPSHOT of them captured through the connector into 03-app/signoff-
+   snapshot/, refusing (exit 2) one older than a day, because a capture of a
+   live board goes stale. monday.com was dropped on 25 September 2026 (Lakhbir
+   became a guest on the account and every connector call failed), and every
+   thing it held became a file in 00-START-HERE/hub/:
+     TRACKER.csv            the board - one row per item and subitem, by id
+     COMMENTS-ARCHIVE.md    the 1,272 comments it carried, by item - a record
+     FOR-THE-*.md           the three registers
+     ACTION-PLAN.md, PHASE-HISTORY.md, QUESTIONS-BACKGROUND.md, and
+     QUESTIONS-WORD-HEADINGS.txt (the Word questions document's headings)
+   A file in the repository IS the document, so there is nothing to go stale:
+   the age refusal and the five-call refresh plan are gone. What remains is the
+   Word headings file, built from the two Word documents, which live outside
+   the repository - `--word-headings` prints how.
+   CHECK 1 has changed meaning with the source. A CSV has no items_count of its
+   own to disagree with, so CHECK 1 now asserts that every item carries one of
+   the ten status labels, exactly as written, and that the tally sums to the
+   items. CHECK 4 reads an update as a dated note in the row OR a comment in
+   COMMENTS-ARCHIVE.md, a file as a files cell that names a file ON DISK, and a
+   document as the document cell - "re-attach a file" disappeared with
+   monday.com: the file on disk is the file.
 
    EXIT CODES
      0  every check passed. If SECTION 5 was not run (--no-figures, or the four
@@ -76,16 +89,15 @@
         inside the drift checker's own run: SECTION 5 is then NOT RUN, the red
         suite is named, and the run fails rather than check anything against a
         red run's pass-counts (Phase 132, 14 September 2026).
-     2  the check could not run: no snapshot, a stale snapshot, or a snapshot it
-        cannot parse. NOT the same as green, and not the same as a failure.
+     2  the check could not run: a hub file missing, or a TRACKER.csv it cannot
+        read. NOT the same as green, and not the same as a failure.
 
    USAGE
      node 03-app/caprebate-signoff-register-check.cjs
      node 03-app/caprebate-signoff-register-check.cjs --no-figures
      node 03-app/caprebate-signoff-register-check.cjs --drift-checker <file>
-     node 03-app/caprebate-signoff-register-check.cjs --refresh-plan
-     node 03-app/caprebate-signoff-register-check.cjs --max-age-hours 72
-     node 03-app/caprebate-signoff-register-check.cjs --snapshot <dir>
+     node 03-app/caprebate-signoff-register-check.cjs --word-headings
+     node 03-app/caprebate-signoff-register-check.cjs --hub <dir>
      node 03-app/caprebate-signoff-register-check.cjs --self-test
      node 03-app/caprebate-signoff-register-check.cjs --self-test --against <an older copy>
    --------------------------------------------------------------------------- */
@@ -104,91 +116,74 @@ const value = (n, d) => {
   return eq ? eq.split("=").slice(1).join("=") : d;
 };
 
-const SNAP_DIR = path.resolve(value("--snapshot", path.join(APP_DIR, "signoff-snapshot")));
+/* the hub folder; --snapshot is still accepted, for a command written before Phase 151d */
+const SNAP_DIR = path.resolve(value("--hub", value("--snapshot", path.join(ROOT, "00-START-HERE", "hub"))));
 const MANIFEST = path.resolve(value("--manifest", path.join(APP_DIR, "caprebate-signoff-registers.json")));
-const MAX_AGE_HOURS = parseFloat(value("--max-age-hours", "24"));
 /* The drift checker section 5 takes its suite totals from. Only ever changed by
    --self-test's control 7, which feeds a stand-in that prints a red run. */
 const DRIFT_CHECKER = path.resolve(value("--drift-checker", path.join(APP_DIR, "caprebate-figure-drift.cjs")));
 
-/* --- the refresh plan --------------------------------------------------- */
+/* --- the Word headings --------------------------------------------------- */
 
 const REFRESH_PLAN = `
-HOW TO REFRESH THE SNAPSHOT — five calls through the Monday connector, then
-five files. Every one of them is a read; nothing here writes to the board.
+HOW TO REBUILD 00-START-HERE/hub/QUESTIONS-WORD-HEADINGS.txt - the one input
+this check and the CRM fold check read that is NOT in the repository's own
+files. Everything else is a file in 00-START-HERE/hub/ since Phase 151d (25 Sep
+2026, when monday.com was dropped), and there is nothing else to refresh.
 
-1. THE BOARD, in ONE call, tallied in code afterwards. This is the call
-   COORDINATES prescribes, plus the four evidence columns CHECK 4 needs:
+Since 22 Sep 2026 Caprebate_Questions.docx is the source of truth for questions
+and answers. It lives in Lakhbir's OneDrive, not in the repository:
+  Mac   /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/
+        Health Capital Allowances/Caprebate_Questions.docx
+        (moved there from the OneDrive root on 25 Sep 2026 at 08:55, with the
+        closed document beside it; look for it by name if it moves again)
+READ THE CLOUD COPY, AS AMENDMENT 2 OF THE STANDING INSTRUCTION SAYS: copy the
+cloud item to a new name in the same folder, let it sync down, and run the
+commands below on that copy. The Mac file has been out of step with the cloud
+before, silently.
 
-   all_monday_api query:
-     query { boards(ids:[18422317809]) { items_count
-       items_page(limit:500) { cursor items { id name group { title }
-         updates(limit:1) { id }
-         column_values(ids:["status","file_mm4ws3m7","doc_mm6b6y15",
-                            "doc_mm6nrqrn","doc_mm6p2bcx"])
-           { id text ... on DocValue { value } } } } } }
-
-   WHY THE THREE DOCUMENT COLUMNS ALSO ASK FOR value (Phase 148, 24 Sep 2026).
-   A document column's text is ALWAYS "" - even when a document is attached.
-   The document is only in value, as {"files":[{"objectId":...,"linkToFile":
-   ...}]}. Proved 23 Sep 2026 on all six hub items: text "", value carrying the
-   document. Until Phase 148 this plan asked for text alone, so CHECK 4 said it
-   looked for a document and never once could see one. "... on DocValue" asks
-   for value on the three document columns only; status and the file column
-   keep text, and the file column's text is what carries a file. A snapshot
-   whose document columns carry no value field is REFUSED (exit 2), not read.
-
-   Save the whole result, unedited, as   signoff-snapshot/board.json
-   If cursor comes back non-null the board has outgrown one page: page it and
-   concatenate, or this check will silently be reading part of the board.
-
-2. THE THREE REGISTERS and the three other hub documents, one call each -
-   a multi-id array returns NOTHING:
-
-     read_docs  type: object_ids  ids: ["18429783853"]   FOR THE ACCOUNTANT
-     read_docs  type: object_ids  ids: ["18429784582"]   FOR THE SURVEYOR
-     read_docs  type: object_ids  ids: ["18429855060"]   FOR THE SOLICITOR/DPO/DEV
-     read_docs  type: object_ids  ids: ["18429698457"]   CAPREBATE ACTION PLAN
-     read_docs  type: object_ids  ids: ["18429697811"]   CAPREBATE QUESTIONS
-     read_docs  type: object_ids  ids: ["18427857409"]   PHASE HISTORY
-
-   Take .data[0].blocks_as_markdown from each - it is the WHOLE document on
-   every page, unlike \`blocks\`, which paginates - and save them as
-     register-accountant.md  register-surveyor.md
-     register-solicitor-dpo-developer.md
-     hub-action-plan.md  hub-questions.md  hub-phase-history.md
-
-2A. THE WORD QUESTIONS DOCUMENT (Phase 146a, 22 Sep 2026). Since 22 Sep 2026
-   Caprebate_Questions.docx is the source of truth for questions and answers;
-   the monday.com CAPREBATE QUESTIONS document is background only. It is not on
-   Monday, so it is read from disk, not through the connector:
-     Mac   /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/
-           Health Capital Allowances/Caprebate_Questions.docx
-           (moved there from the OneDrive root on 25 Sep 2026 at 08:55, with
-           the closed document beside it; the cloud item and its link did
-           not change - look for it by name if it moves again)
-   Save its Heading 2 texts, one per line and exactly as written ("N) <title>"),
-   as   signoff-snapshot/hub-questions-word.txt   - with python-docx:
+1. The open document's Heading 2 texts, one per line and exactly as written
+   ("N) <title>"), with python-docx:
      python3 -c "import docx,sys; d=docx.Document(sys.argv[1]); print('\\n'.join(
        p.text.strip() for p in d.paragraphs if p.style.name=='Heading 2'))" \\
-       "<the path above>" > 03-app/signoff-snapshot/hub-questions-word.txt
-   THEN APPEND THE CLOSED ONES (24 Sep 2026). A question whose answer is
-   definitive is moved to "Caprebate_Questions - answered and closed.docx",
-   beside the file above, keeping its number and title. Numbers are never
-   reused, so a document citing a closed question by number is still right:
-   run the same command on that file with >> instead of >. Without it, A2
-   fails every citation of a closed question.
-   The CRM fold check's A2 reads it, and refuses to run (exit 2) without it.
-   Count the lines against the two documents' Heading 2 counts added together.
-
-3. WRITE signoff-snapshot/snapshot.json:
-     { "capturedAt": "<ISO 8601, UTC>", "capturedBy": "Phase NNN",
-       "machine": "<this machine>", "how": "monday MCP" }
-   capturedAt is what the age check reads. A snapshot with no snapshot.json,
-   or an unparseable date in it, is refused rather than trusted.
+       "<the copy>" > 00-START-HERE/hub/QUESTIONS-WORD-HEADINGS.txt
+2. THEN APPEND THE CLOSED ONES. A question whose answer is definitive is moved
+   to "Caprebate_Questions - answered and closed.docx", beside the file above,
+   keeping its number and title. Numbers are never reused, so a document citing
+   a closed question by number is still right: run the same command on that
+   file with >> instead of >. Without it, A2 fails every citation of a closed
+   question.
+3. Count the lines against the two documents' Heading 2 counts added together,
+   and commit the file.
+The CRM fold check's A2 reads it, and refuses to run (exit 2) without it.
 `;
 
-if (flag("--refresh-plan")) { console.log(REFRESH_PLAN.trim()); process.exit(0); }
+if (flag("--word-headings") || flag("--refresh-plan")) { console.log(REFRESH_PLAN.trim()); process.exit(0); }
+
+/* --- reading the hub (Phase 151d) ---------------------------------------- */
+
+const tracker = require(path.join(APP_DIR, "caprebate-tracker.cjs"));
+/* THE BOARD, FROM TRACKER.csv. Items only - a subitem is a row with a parent, and the registers
+   never housed one. `comments` is how many comments COMMENTS-ARCHIVE.md holds for the item. */
+function readHubBoard(dir, refuseWith) {
+  const csvPath = path.join(dir, "TRACKER.csv");
+  if (!fs.existsSync(csvPath)) refuseWith("no tracker at " + csvPath);
+  const rows = tracker.parseCSV(fs.readFileSync(csvPath, "utf8"));
+  const head = rows.shift() || [];
+  if (head.join(",") !== tracker.HEAD.join(",")) {
+    refuseWith("TRACKER.csv's header is not the tracker's (" + head.slice(0, 5).join(",") + " ...), so it is not read.\n"
+      + "  Expected: " + tracker.HEAD.join(","));
+  }
+  const commentsPath = path.join(dir, "COMMENTS-ARCHIVE.md");
+  if (!fs.existsSync(commentsPath)) refuseWith("no comments archive at " + commentsPath);
+  const comments = new Map();
+  for (const m of fs.readFileSync(commentsPath, "utf8").matchAll(/^`(\d+)` · (\d+) comments?$/gm)) comments.set(m[1], +m[2]);
+  const recs = rows.filter(r => r.length > 1).map(r => Object.fromEntries(head.map((h, i) => [h, r[i] || ""])));
+  const items = recs.filter(r => !r.parent_id).map(r => ({
+    id: r.board_id, name: r.name, status: r.status, files: r.files, filesOnDisk: r.files_on_disk,
+    document: r.document, notes: r.notes, comments: comments.get(r.board_id) || 0 }));
+  return { itemsCount: items.length, items, statuses: tracker.STATUS };
+}
 
 /* --- THE NEGATIVE CONTROLS ----------------------------------------------
 
@@ -215,9 +210,8 @@ if (flag("--self-test")) {
   const { execFileSync } = require("child_process");
   const src = SNAP_DIR;
   const manifestSrc = MANIFEST;
-  const board0 = JSON.parse(fs.readFileSync(path.join(src, "board.json"), "utf8"));
-  const items0 = ((board0.boards || board0.data.boards)[0]).items_page.items;
-  const textOf = (it, id) => { const c = (it.column_values || []).find(c => c.id === id); return (c && c.text) || ""; };
+  const items0 = readHubBoard(src, (why) => { console.log("CANNOT SELF-TEST — " + why); process.exit(2); }).items;
+  const textOf = (it, id) => (id === "status" ? it.status : "");
   const man0 = JSON.parse(fs.readFileSync(manifestSrc, "utf8"));
   const AW = man0.awaitingLabel;
   const doneItem = items0.find(i => textOf(i, "status") === "Done");
@@ -227,6 +221,25 @@ if (flag("--self-test")) {
   const inManifest = new Set(man0.registers.flatMap(r =>
     r.entries.map(e => e.id).concat(r.mentions.map(m => m.id))));
   const unclassifiedId = String((items0.find(i => !inManifest.has(String(i.id))) || items0[0]).id);
+  /* A scenario edits TRACKER.csv and COMMENTS-ARCHIVE.md in a copy of the hub, through the
+     tracker's own reader and writer, so a planted row is exactly the shape a real one is. */
+  const editTracker = (dir, f) => {
+    const p2 = path.join(dir, "TRACKER.csv");
+    const rows = tracker.parseCSV(fs.readFileSync(p2, "utf8"));
+    const head = rows.shift();
+    const recs = rows.filter(r => r.length > 1).map(r => Object.fromEntries(head.map((h, i) => [h, r[i] || ""])));
+    f(recs, head);
+    fs.writeFileSync(p2, tracker.toCSV(head, recs));
+  };
+  const dropComments = (dir, id) => {
+    const p2 = path.join(dir, "COMMENTS-ARCHIVE.md");
+    fs.writeFileSync(p2, fs.readFileSync(p2, "utf8").replace(new RegExp("^`" + id + "` · \\d+ comments?$", "m"), "`" + id + "` · (comments removed by the self-test)"));
+  };
+  /* strip every kind of evidence from the awaiting item: no note, no comment, no file, no document */
+  const stripEvidence = (dir) => {
+    editTracker(dir, recs => { const t = recs.find(r => r.board_id === String(awItem.id)); t.notes = ""; t.files = ""; t.files_on_disk = ""; t.document = ""; });
+    dropComments(dir, String(awItem.id));
+  };
 
   /* --against <another copy of this file> runs every scenario against THAT copy,
      so a new control can be shown to fail on the code before the change - the
@@ -236,13 +249,13 @@ if (flag("--self-test")) {
 
   function scenario(name, mutate, expects, forbids) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "caprebate-selftest-"));
-    for (const f of fs.readdirSync(src)) fs.copyFileSync(path.join(src, f), path.join(dir, f));
+    for (const f of fs.readdirSync(src)) if (!/\.bak/.test(f)) fs.copyFileSync(path.join(src, f), path.join(dir, f));
     const manPath = path.join(dir, "manifest.json");
     fs.copyFileSync(manifestSrc, manPath);
     mutate(dir, manPath);
     let out;
     try {
-      out = execFileSync(process.execPath, [CHILD, "--snapshot", dir, "--manifest", manPath, "--no-figures"],
+      out = execFileSync(process.execPath, [CHILD, "--hub", dir, "--snapshot", dir, "--manifest", manPath, "--no-figures"],
         { encoding: "utf8", maxBuffer: 32 * 1024 * 1024, stdio: ["ignore", "pipe", "pipe"] });
     } catch (e) { out = String((e.stdout || "") + (e.stderr || "")); }
     const missing = expects.filter(x => !out.includes(x))
@@ -266,15 +279,15 @@ if (flag("--self-test")) {
         things the scenarios below break. */
   let baseline;
   try {
-    baseline = execFileSync(process.execPath, [CHILD, "--snapshot", src, "--manifest", manifestSrc, "--no-figures"],
+    baseline = execFileSync(process.execPath, [CHILD, "--hub", src, "--snapshot", src, "--manifest", manifestSrc, "--no-figures"],
       { encoding: "utf8", maxBuffer: 32 * 1024 * 1024, stdio: ["ignore", "pipe", "pipe"] });
   } catch (e) { baseline = String((e.stdout || "") + (e.stderr || "")); }
   const baseClean = ["no longer contains", "moved off the status it expects", "does not classify",
-                     "with no update, no file and no document", "does not sum to items_count",
+                     "with no update, no file and no document", "not one of the ten status labels",
                      "a suite is red inside the drift checker's run"]
                      .filter(x => baseline.includes(x));
   console.log((baseClean.length ? "  ✘ " : "  ✔ ")
-    + "baseline: the unbroken snapshot does not already report the seven failures below");
+    + "baseline: the unbroken hub does not already report the failures below");
   for (const x of baseClean) console.log("        baseline already says: " + JSON.stringify(x));
   results.push(baseClean.length === 0);
 
@@ -319,101 +332,58 @@ if (flag("--self-test")) {
     },
     ["stated count or split is wrong", "999"]));
 
-  /* 5. AN AWAITING ITEM WITH NO EVIDENCE AT ALL — the one CHECK 2 cannot see. */
+  /* 5. AN AWAITING ITEM WITH NO EVIDENCE AT ALL — the one CHECK 2 cannot see.
+        (Phase 151d: no note, no comment in the archive, no file and no document.) */
   results.push(scenario(
     "no evidence: an awaiting item with no update, no file and no document",
-    (dir) => {
-      const p2 = path.join(dir, "board.json");
-      const j = JSON.parse(fs.readFileSync(p2, "utf8"));
-      const items = ((j.boards || j.data.boards)[0]).items_page.items;
-      const t = items.find(i => String(i.id) === String(awItem.id));
-      t.updates = [];
-      for (const c of t.column_values) if (c.id !== "status") {
-        c.text = "";
-        if (Object.prototype.hasOwnProperty.call(c, "value")) c.value = null;
-      }
-      fs.writeFileSync(p2, JSON.stringify(j));
-    },
+    (dir) => stripEvidence(dir),
     ["with no update, no file and no document", String(awItem.id)]));
 
-  /* 5a. A DOCUMENT AND NOTHING ELSE IS EVIDENCE - Phase 148, 24 September 2026.
-        The control 5 above could never prove the document arm, because it strips
-        everything at once. This is the same item with its update and its file
-        taken away and ONE document attached the way monday.com returns it:
-        text "", the document in value. It MUST pass. Until Phase 148 CHECK 4 read
-        text alone and named this item as having no evidence, which is what
-        --against .bak-phase148 shows. The run must also have REACHED CHECK 4, or
-        a refusal (exit 2) would pass this vacuously. */
+  /* 5a. A DOCUMENT AND NOTHING ELSE IS EVIDENCE - Phase 148, 24 September 2026, re-cut by Phase
+        151d for the tracker. The item with every other kind of evidence taken away and ONE document
+        named in its document cell MUST pass - and the run must have REACHED CHECK 4, or a refusal
+        (exit 2) would pass this vacuously. */
   results.push(scenario(
     "a document alone is evidence: an awaiting item with a document, no file and no update passes CHECK 4",
     (dir) => {
-      const p2 = path.join(dir, "board.json");
-      const j = JSON.parse(fs.readFileSync(p2, "utf8"));
-      const items = ((j.boards || j.data.boards)[0]).items_page.items;
-      const t = items.find(i => String(i.id) === String(awItem.id));
-      t.updates = [];
-      for (const c of t.column_values) if (c.id !== "status") {
-        c.text = "";
-        if (/^doc_/.test(c.id)) c.value = null;
-      }
-      const d = t.column_values.find(c => c.id === "doc_mm6b6y15");
-      d.value = JSON.stringify({ files: [{ name: "SELF-TEST document", fileType: "MONDAY_DOC",
-        objectId: 1, linkToFile: "https://example.invalid/self-test" }] });
-      fs.writeFileSync(p2, JSON.stringify(j));
+      stripEvidence(dir);
+      editTracker(dir, recs => { recs.find(r => r.board_id === String(awItem.id)).document = "00-START-HERE/hub/SELF-TEST-document.md"; });
     },
     ["CHECK 4 — evidence on the awaiting items", " 0 have none of the three"],
     ["with no update, no file and no document"]));
 
-  /* 5b. A CLEARED DOCUMENT COLUMN IS NOT A DOCUMENT. The live board carries five
-        columns whose value is {"clear_all":true,...} and 210 whose value is
-        {"files":[]}: a value being present is not a document being attached. The
-        same item, no update, no file, and its three document columns in exactly
-        those empty shapes, MUST fail and be named. */
+  /* 5b. A FILE THAT IS NOT ON DISK IS NOT EVIDENCE - Phase 151d. On monday.com a file was whatever
+        the Files column held; now the file on disk is the file, and three attachments on the board
+        on 25 Sep 2026 had no copy on disk. The same item, no note, no comment, no document, and a
+        files cell naming a file that does not exist, MUST fail and be named. (It replaces Phase
+        148's cleared-document control: a document column's four shapes left with monday.com.) */
   results.push(scenario(
-    "a cleared document column is not evidence: {\"clear_all\":true} and {\"files\":[]} with no update and no file fail CHECK 4",
+    "a file that is not on disk is not evidence: an awaiting item whose only file cannot be found fails CHECK 4",
     (dir) => {
-      const p2 = path.join(dir, "board.json");
-      const j = JSON.parse(fs.readFileSync(p2, "utf8"));
-      const items = ((j.boards || j.data.boards)[0]).items_page.items;
-      const t = items.find(i => String(i.id) === String(awItem.id));
-      t.updates = [];
-      const empties = [JSON.stringify({ clear_all: true, changed_at: "2026-09-05T12:53:20.411Z" }),
-                       JSON.stringify({ files: [] }), null];
-      let k = 0;
-      for (const c of t.column_values) if (c.id !== "status") {
-        c.text = "";
-        if (/^doc_/.test(c.id)) c.value = empties[k++ % empties.length];
-      }
-      fs.writeFileSync(p2, JSON.stringify(j));
+      stripEvidence(dir);
+      editTracker(dir, recs => { const t = recs.find(r => r.board_id === String(awItem.id));
+        t.files = "SELF-TEST-gone.md"; t.files_on_disk = "NOT ON DISK - only on monday.com"; });
     },
     ["with no update, no file and no document", String(awItem.id)]));
 
-  /* 5c. A SNAPSHOT TAKEN WITH THE OLD QUERY IS REFUSED. Every document column
-        loses its value field - the shape every snapshot had until Phase 148 -
-        and the run must refuse (exit 2) rather than read "" and report. */
+  /* 5c. A TRACKER THAT IS NOT THE TRACKER IS REFUSED (exit 2), not read - Phase 151d, in place of
+        Phase 148's old-query refusal. A CSV with its columns renamed or reordered would read every
+        status as "" and report every item as unlabelled, which is a finding about the file, not
+        about the board. */
   results.push(scenario(
-    "an old-shape snapshot: document columns with no value field are refused, not read",
+    "a tracker whose header is not the tracker's is refused, not read",
     (dir) => {
-      const p2 = path.join(dir, "board.json");
-      const j = JSON.parse(fs.readFileSync(p2, "utf8"));
-      for (const it of ((j.boards || j.data.boards)[0]).items_page.items) {
-        for (const c of it.column_values) if (/^doc_/.test(c.id)) delete c.value;
-      }
-      fs.writeFileSync(p2, JSON.stringify(j));
+      const p2 = path.join(dir, "TRACKER.csv");
+      fs.writeFileSync(p2, fs.readFileSync(p2, "utf8").replace(/^board_id,parent_id,/, "id,parent,"));
     },
-    ["CANNOT CHECK", "taken with the old query"]));
+    ["CANNOT CHECK", "header is not the tracker's"]));
 
-  /* 6. THE TALLY NOT SUMMING — CHECK 1's whole point. */
+  /* 6. AN ITEM OFF THE TEN LABELS — CHECK 1's point since Phase 151d. On monday.com a label that did
+        not exist could not be written; in a CSV anything can be typed. */
   results.push(scenario(
-    "the tally does not sum: items_count and the statuses disagree",
-    (dir) => {
-      const p2 = path.join(dir, "board.json");
-      const j = JSON.parse(fs.readFileSync(p2, "utf8"));
-      const b = (j.boards || j.data.boards)[0];
-      b.items_count = b.items_count + 3;
-      fs.writeFileSync(p2, JSON.stringify(j));
-    },
-    ["does not sum to items_count", "THEY DISAGREE"]));
+    "a status that is not one of the ten labels: CHECK 1 names the item",
+    (dir) => editTracker(dir, recs => { recs.find(r => r.board_id === String(doneItem.id)).status = "Stuck"; }),
+    ["not one of the ten status labels", String(doneItem.id)]));
 
   /* 7. A RED SUITE INSIDE THE DRIFT CHECKER'S RUN — Phase 132, line 16,
         14 September 2026. The drift checker exits 1 for a stale figure AND for a
@@ -458,7 +428,7 @@ if (flag("--self-test")) {
     const run = fake => {
       try {
         return { code: 0, out: execFileSync(process.execPath,
-          [CHILD, "--snapshot", snap, "--manifest", manPath, "--drift-checker", fake],
+          [CHILD, "--hub", snap, "--snapshot", snap, "--manifest", manPath, "--drift-checker", fake],
           { encoding: "utf8", maxBuffer: 32 * 1024 * 1024, stdio: ["ignore", "pipe", "pipe"] }) };
       } catch (e) {
         return { code: typeof e.status === "number" ? e.status : -1, out: String((e.stdout || "") + (e.stderr || "")) };
@@ -493,7 +463,8 @@ if (flag("--self-test")) {
 
 function refuse(why) {
   console.error("CANNOT CHECK — " + why);
-  console.error(REFRESH_PLAN.trim());
+  console.error("  The hub is 00-START-HERE/hub/ (Phase 151d). The Word headings file is rebuilt as");
+  console.error("  node 03-app/caprebate-signoff-register-check.cjs --word-headings  prints.");
   process.exit(2);
 }
 
@@ -505,108 +476,37 @@ function loadJSON(p, label) {
 
 const manifest = loadJSON(MANIFEST, "manifest");
 
-/* The board file is whatever the connector returned, saved unedited, so accept
-   the two shapes it comes back in - bare {boards:[...]} and a GraphQL
-   {data:{boards:[...]}} envelope - and refuse anything else BY NAME rather than
-   crashing on undefined. */
-function readBoard(raw) {
-  const boards = (raw && raw.boards) || (raw && raw.data && raw.data.boards);
-  if (!Array.isArray(boards) || !boards.length) {
-    refuse("board.json has no boards array. Expected the result of the call in the refresh plan, saved unedited.");
-  }
-  const b = boards[0];
-  const page = b.items_page || {};
-  if (!Array.isArray(page.items)) refuse("board.json has no items_page.items array.");
-  if (page.cursor) {
-    refuse("board.json carries a non-null items_page cursor, so it is only PART of the board.\n"
-      + "  Page it and concatenate before checking anything - a partial board makes every\n"
-      + "  count below wrong in the same direction.");
-  }
-  if (typeof b.items_count !== "number") refuse("board.json has no items_count, so CHECK 1 cannot run.");
-  return { itemsCount: b.items_count, items: page.items };
-}
-
-const boardRaw = loadJSON(path.join(SNAP_DIR, "board.json"), "board.json");
-const board = readBoard(boardRaw);
-
-const meta = loadJSON(path.join(SNAP_DIR, "snapshot.json"), "snapshot.json");
-const capturedAt = new Date(meta.capturedAt || "");
-if (isNaN(capturedAt.getTime())) refuse("snapshot.json has no usable capturedAt date.");
-const ageHours = (Date.now() - capturedAt.getTime()) / 36e5;
-if (ageHours > MAX_AGE_HOURS) {
-  refuse("the snapshot is " + ageHours.toFixed(1) + " hours old and the limit is "
-    + MAX_AGE_HOURS + ".\n  A stale snapshot passing quietly is worse than no check, so this is refused\n"
-    + "  rather than reported. Re-capture it, or pass --max-age-hours if you truly mean\n"
-    + "  to check an old capture and will say so in whatever you write.");
-}
-if (ageHours < -1) refuse("snapshot.json's capturedAt is in the future by "
-  + (-ageHours).toFixed(1) + " hours. Fix the clock or the file.");
+const board = readHubBoard(SNAP_DIR, refuse);
 
 const docText = {};
 for (const r of manifest.registers) {
   const p = path.join(SNAP_DIR, r.snapshotFile);
-  if (!fs.existsSync(p)) refuse("no snapshot of " + r.name + " at " + p);
+  if (!fs.existsSync(p)) refuse("no copy of " + r.name + " at " + p);
   docText[r.key] = fs.readFileSync(p, "utf8");
 }
 
 /* --- the board, tallied in code ---------------------------------------- */
 
-const col = (item, id) => {
-  const c = (item.column_values || []).find(c => c.id === id);
-  return (c && c.text) || "";
-};
-
-/* A DOCUMENT COLUMN IS READ ON BOTH FIELDS. (Phase 148, 24 September 2026.)
-   monday.com returns a document column's `text` as "" whatever is attached; the
-   document is in `value`. col() reads text alone, so until Phase 148 CHECK 4
-   printed that it looked for a document and could not have seen one. EITHER
-   field filled counts - not value alone, so a column that ever does carry text
-   is not lost.
-   A VALUE IS A DOCUMENT ONLY IF IT CARRIES ONE: {"files":[...]} with at least one
-   entry. The live board, 24 Sep 2026, returned value in four shapes - null,
-   {"files":[]} (210 columns), {"clear_all":true,"changed_at":...} (5, columns
-   cleared on 5 Sep) and {"files":[{...}]} (7). The first draft of this counted
-   "any other value" as a document and so would have passed a CLEARED column as
-   evidence. Anything unrecognised is NOT evidence: a false "no evidence" is
-   investigated, a false pass is not. */
-const DOC_COLS = ["doc_mm6b6y15", "doc_mm6nrqrn", "doc_mm6p2bcx"];
-const docCol = (item, id) => {
-  const c = (item.column_values || []).find(c => c.id === id);
-  if (!c) return false;
-  if (String(c.text || "").trim() !== "") return true;
-  let parsed = c.value;
-  if (typeof parsed === "string") {
-    try { parsed = JSON.parse(parsed); } catch (e) { return false; }
-  }
-  return !!(parsed && typeof parsed === "object" && Array.isArray(parsed.files) && parsed.files.length > 0);
-};
-/* AND A SNAPSHOT TAKEN THE OLD WAY IS REFUSED, NOT READ. A board.json whose
-   document columns carry no `value` field at all was taken with the pre-Phase 148
-   query, and reading it would put CHECK 4 straight back where it was: printing
-   that it looked for a document it cannot see. */
-{
-  const oldShape = board.items.filter(it => (it.column_values || [])
-    .some(c => DOC_COLS.includes(c.id) && !Object.prototype.hasOwnProperty.call(c, "value")));
-  if (oldShape.length) {
-    refuse("board.json's document columns carry no `value` field (" + oldShape.length + " of "
-      + board.items.length + " items), so it was taken with the old query.\n"
-      + "  A document column's text is always \"\"; without value CHECK 4 cannot see a document.\n"
-      + "  Re-capture it with the query in step 1 below.");
-  }
-}
+/* THE THREE KINDS OF EVIDENCE, FROM THE TRACKER (Phase 151d). On monday.com a document column's text was
+   always "" and the document sat in value, in four shapes (Phase 148); that is gone with monday.com. A
+   document is now a filled document cell. A FILE COUNTS ONLY IF IT IS ON DISK: files_on_disk names where
+   each attached file is, and "NOT ON DISK" (or a path that does not exist) is not evidence. */
+const onDisk = (p) => fs.existsSync(path.join(ROOT, p));
+const hasFileOnDisk = (it) => it.files.trim() !== "" && it.filesOnDisk.split(" ; ").some(p => p && !/^NOT ON DISK/.test(p) && onDisk(p));
 const AWAITING = manifest.awaitingLabel;
 
 const statusOf = new Map();
 const nameOf = new Map();
 const tally = new Map();
 for (const it of board.items) {
-  const s = col(it, "status") || "(blank)";
+  const s = it.status || "(blank)";
   statusOf.set(String(it.id), s);
   nameOf.set(String(it.id), it.name);
   tally.set(s, (tally.get(s) || 0) + 1);
 }
 const tallySum = [...tally.values()].reduce((a, b) => a + b, 0);
-const awaitingIds = board.items.filter(i => col(i, "status") === AWAITING).map(i => String(i.id));
+const awaitingIds = board.items.filter(i => i.status === AWAITING).map(i => String(i.id));
+const offLabel = board.items.filter(i => !board.statuses.includes(i.status));
 
 /* --- the registers, adjudicated ---------------------------------------- */
 
@@ -641,14 +541,13 @@ function fail(check, lines) { failures.push({ check, lines: [].concat(lines) });
 
 /* CHECK 1 */
 const check1 = [];
-if (tallySum !== board.itemsCount) {
-  fail("CHECK 1 — the status tally does not sum to items_count", [
-    "items_count says " + board.itemsCount + "; the statuses tally to " + tallySum + ".",
-    "WHICH IS WRONG: items_count is the board's own count of live items, and the tally",
-    "counts what one items_page call returned. A shortfall in the tally almost always",
-    "means the page did not return everything - check items_page.cursor first. A",
-    "shortfall in items_count means the snapshot was taken mid-write."
-  ]);
+if (tallySum !== board.itemsCount || offLabel.length) {
+  fail("CHECK 1 — items whose status is not one of the ten status labels", [
+    "TRACKER.csv holds " + board.itemsCount + " items; the statuses tally to " + tallySum + ".",
+    "Every item must carry one of the ten labels exactly as written (COORDINATES, and",
+    "03-app/caprebate-tracker.cjs). On monday.com a label that did not exist could not be",
+    "written; in a CSV anything can be typed, so this is where it is caught."
+  ].concat(offLabel.map(i => "    " + i.id + "  \"" + i.status + "\"  " + i.name.slice(0, 80))));
 }
 
 /* CHECK 2 */
@@ -869,7 +768,6 @@ if (wrongClaims.length) {
 }
 
 /* CHECK 4 — the board says finished and shows nothing. */
-const FILE_COL = "file_mm4ws3m7";
 const byId = new Map(board.items.map(i => [String(i.id), i]));
 const noEvidence = [];
 /* How many awaiting items carry each kind, so a run SHOWS that every arm can
@@ -878,9 +776,9 @@ const noEvidence = [];
 const evidenceSeen = { update: 0, file: 0, document: 0, documentOnly: 0 };
 for (const id of awaitingIds) {
   const it = byId.get(id);
-  const hasUpdate = Array.isArray(it.updates) && it.updates.length > 0;
-  const hasFile = col(it, FILE_COL).trim() !== "";
-  const hasDoc = DOC_COLS.some(c => docCol(it, c));
+  const hasUpdate = it.notes.trim() !== "" || it.comments > 0;
+  const hasFile = hasFileOnDisk(it);
+  const hasDoc = it.document.trim() !== "";
   if (hasUpdate) evidenceSeen.update++;
   if (hasFile) evidenceSeen.file++;
   if (hasDoc) evidenceSeen.document++;
@@ -940,18 +838,25 @@ if (noEvidence.length) {
    green. That is a defect in the shared classifier, on disk as much as here,
    and it is recorded as its own job rather than patched in one caller. */
 
+/* Phase 151d: the hub files. The monday.com questions document is BACKGROUND ONLY since 22 Sep 2026 and
+   frozen as exported on 25 Sep 2026, so it is a record now, like PHASE HISTORY; so are the comments.
+   TRACKER.md is rendered from TRACKER.csv and is live. */
 const HUB_DOCS = [
-  { file: "hub-action-plan.md", name: "CAPREBATE ACTION PLAN", policy: "live" },
-  { file: "hub-questions.md", name: "CAPREBATE QUESTIONS", policy: "live" },
+  { file: "ACTION-PLAN.md", name: "THE ACTION PLAN", policy: "live" },
+  { file: "QUESTIONS-BACKGROUND.md", name: "THE monday.com QUESTIONS DOCUMENT (background)", policy: "chronicle",
+    why: "background only since 22 Sep 2026, frozen as exported on 25 Sep 2026" },
   /* Phase 146a, 22 Sep 2026: the Word questions document's Heading 2 texts. This check never read
      question TITLES - the CRM fold check's A2 does - so this only brings the live questions
      document into the figure scan beside the monday.com one it replaced as the source of truth. */
-  { file: "hub-questions-word.txt", name: "THE WORD QUESTIONS DOCUMENT (its headings)", policy: "live" },
-  { file: "hub-phase-history.md", name: "PHASE HISTORY", policy: "chronicle",
+  { file: "QUESTIONS-WORD-HEADINGS.txt", name: "THE WORD QUESTIONS DOCUMENT (its headings)", policy: "live" },
+  { file: "PHASE-HISTORY.md", name: "PHASE HISTORY", policy: "chronicle",
     why: "its own title says THIS IS AN ARCHIVE, NOT A RUNBOOK" },
-  { file: "register-accountant.md", name: "FOR THE ACCOUNTANT", policy: "live" },
-  { file: "register-surveyor.md", name: "FOR THE SURVEYOR", policy: "live" },
-  { file: "register-solicitor-dpo-developer.md", name: "FOR THE SOLICITOR, THE DPO AND THE DEVELOPER", policy: "live" }
+  { file: "COMMENTS-ARCHIVE.md", name: "THE COMMENTS ARCHIVE", policy: "chronicle",
+    why: "every comment monday.com carried, dated, never edited" },
+  { file: "TRACKER.md", name: "THE TRACKER", policy: "live" },
+  { file: "FOR-THE-ACCOUNTANT.md", name: "FOR THE ACCOUNTANT", policy: "live" },
+  { file: "FOR-THE-SURVEYOR.md", name: "FOR THE SURVEYOR", policy: "live" },
+  { file: "FOR-THE-SOLICITOR-DPO-DEVELOPER.md", name: "FOR THE SOLICITOR, THE DPO AND THE DEVELOPER", policy: "live" }
 ];
 const DISCLAIMS = /re-?deriv|never quote|do not quote|don't quote|last-known figures|not facts/i;
 
@@ -1019,7 +924,7 @@ let section5 = null;
       section5 = { skipped: "a suite is red inside the drift checker's run, so its pass-counts are not figures to check anything against ("
         + (named.length ? named.join("; ") : "no suite named") + ")" };
       fail("SECTION 5 — NOT RUN: a suite is red inside the drift checker's run",
-        ["Its pass-counts are not figures to check a Monday document against, so nothing in",
+        ["Its pass-counts are not figures to check a hub document against, so nothing in",
          "section 5 was checked. Make the suite green, then run this again."]
           .concat(named.length ? named.map(n => "    " + n)
             : ["    the drift checker said a suite is red and named none - run it on its own"]));
@@ -1057,7 +962,7 @@ let section5 = null;
     }
     const liveWrong = section5.docs.filter(d => d.claims && d.claims.length);
     if (liveWrong.length) {
-      fail("SECTION 5 — a Monday document asserts a stale harness figure as current fact",
+      fail("SECTION 5 — a hub document asserts a stale harness figure as current fact",
         liveWrong.flatMap(d => ["    " + d.name].concat(d.claims.map(c =>
           "        line " + c.line + "   figure(s) " + c.figures.join(", ") + "\n            " + c.text))));
     }
@@ -1067,22 +972,21 @@ let section5 = null;
 /* --- the report --------------------------------------------------------- */
 
 console.log("CAPREBATE SIGN-OFF REGISTER CHECK");
-console.log("Snapshot   " + SNAP_DIR);
-console.log("           captured " + capturedAt.toISOString() + " by " + (meta.capturedBy || "(unrecorded)")
-  + " on " + (meta.machine || "(unrecorded machine)") + " — " + ageHours.toFixed(1) + "h old");
+console.log("Hub        " + SNAP_DIR);
+console.log("           TRACKER.csv, COMMENTS-ARCHIVE.md and the three registers - files, not a capture (Phase 151d)");
 console.log("Manifest   " + path.relative(ROOT, MANIFEST) + " v" + manifest.version
   + ", written " + manifest.written + " by " + manifest.writtenBy);
 console.log("");
 console.log("WHAT THIS CHECK CANNOT SEE — say this alongside any green run:");
 console.log("  · Whether a register ENTRY is well written, complete, or answerable. It");
 console.log("    checks that the item is named, not that the page is any good.");
-console.log("  · Anything about SUBITEMS. They are not returned by an item-level fetch and");
-console.log("    the board's own standing blind spot is unchanged by this file.");
+console.log("  · Anything about SUBITEMS. The registers house items only; a subitem's row in");
+console.log("    TRACKER.csv is read by the tracker's own check, not by this one.");
 console.log("  · Whether an item at \"" + AWAITING + "\" is genuinely finished. CHECK 4");
-console.log("    asks only whether the board shows ANY evidence - one update is enough to");
+console.log("    asks only whether the tracker shows ANY evidence - one update is enough to");
 console.log("    pass it, and an update saying nothing useful passes it too.");
 console.log("  · Whether what CHECK 4 finds is about THIS item, or is any good. It asks");
-console.log("    whether the board SHOWS something - an update, a file, a document - and");
+console.log("    whether the tracker SHOWS something - a note or comment, a file, a document - and");
 console.log("    never what that something says. One update of any content passes it, and so");
 console.log("    does a file or a document that belongs to other work. (Worked out by hand by");
 console.log("    the sweep of 23 Sep 2026; printed here since Phase 148.)");
@@ -1092,8 +996,8 @@ console.log("    has classified fails the run.");
 console.log("");
 
 console.log("CHECK 1 — the board, tallied in code");
-console.log("  items_count " + board.itemsCount + "; statuses tally to " + tallySum
-  + (tallySum === board.itemsCount ? "  ✔ they agree" : "  ✘ THEY DISAGREE"));
+console.log("  " + board.itemsCount + " items in TRACKER.csv; statuses tally to " + tallySum + ", "
+  + offLabel.length + " off the ten labels" + (tallySum === board.itemsCount && !offLabel.length ? "  ✔" : "  ✘ THEY DISAGREE"));
 for (const [s, n] of [...tally.entries()].sort((a, b) => b[1] - a[1])) {
   console.log("    " + String(n).padStart(4) + "  " + s);
 }
@@ -1130,14 +1034,14 @@ for (const c of notAdjudicated) console.log("        " + derived[c.register].nam
 console.log("");
 
 console.log("CHECK 4 — evidence on the awaiting items");
-console.log("  " + awaitingIds.length + " checked for an update, a file or a document; "
+console.log("  " + awaitingIds.length + " checked for an update (a note or a comment), a file on disk or a document; "
   + noEvidence.length + " have none of the three");
 console.log("  carrying an update " + evidenceSeen.update + " · a file " + evidenceSeen.file
   + " · a document " + evidenceSeen.document + " (" + evidenceSeen.documentOnly
   + " with a document and nothing else)");
 console.log("");
 
-console.log("SECTION 5 — what the Monday documents assert about the harness figures");
+console.log("SECTION 5 — what the hub documents assert about the harness figures");
 if (section5.skipped) {
   console.log("  NOT RUN: " + section5.skipped);
   console.log("  Not the same as passing. Nothing below was checked.");
@@ -1160,11 +1064,11 @@ if (!failures.length) {
   console.log("OK — every item at \"" + AWAITING + "\" appears in exactly one register, every");
   console.log("register's stated count matches the board, every awaiting item shows some");
   if (section5.skipped) {
-    /* NOT "no Monday document asserts a stale figure" when nothing looked. */
-    console.log("evidence. SECTION 5 WAS NOT RUN, so whether a Monday document asserts a stale");
+    /* NOT "no hub document asserts a stale figure" when nothing looked. */
+    console.log("evidence. SECTION 5 WAS NOT RUN, so whether a hub document asserts a stale");
     console.log("harness figure as fact was NOT checked: " + section5.skipped + ".");
   } else {
-    console.log("evidence, and no Monday document asserts a stale harness figure as fact.");
+    console.log("evidence, and no hub document asserts a stale harness figure as fact.");
   }
   process.exit(0);
 }

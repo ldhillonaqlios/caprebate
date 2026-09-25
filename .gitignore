@@ -34,6 +34,7 @@
 !/Caprebate/00-START-HERE/hub/
 !/Caprebate/00-START-HERE/hub/*.md
 !/Caprebate/00-START-HERE/hub/*.csv
+!/Caprebate/00-START-HERE/hub/*.txt
 
 # never, anywhere
 *.bak*

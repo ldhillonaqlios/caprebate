@@ -55,6 +55,8 @@ npm run check        # lint:sql, typecheck, the whole test suite
 Node 24 or later. `node:sqlite` and TypeScript type-stripping are both used
 without a build step, so there is no bundler and no transpile stage to configure.
 
+**Where the project's own papers live, since 25 September 2026 (Phase 151d).** monday.com was dropped that day. The action plan, the phase history, the three sign-off registers and the task list are files in `00-START-HERE/hub/` in this repository: `ACTION-PLAN.md`, `PHASE-HISTORY.md`, `FOR-THE-ACCOUNTANT.md`, `FOR-THE-SURVEYOR.md`, `FOR-THE-SOLICITOR-DPO-DEVELOPER.md` and `TRACKER.csv` (read `TRACKER.md`). A "board item" named in this document is a row of the tracker, found by the same number, and a file this document says is attached to one is on disk where the tracker's `files_on_disk` says. This document itself is the file `09-app/CAPREBATE-DEVELOPER-SPEC.md`, and nothing is re-attached anywhere. "CAPREBATE QUESTIONS" means the Word questions document, Caprebate_Questions.docx, which Lakhbir holds; the old monday.com one is `00-START-HERE/hub/QUESTIONS-BACKGROUND.md`, background only. **The test website serves every committed file to anyone**, so `.vercelignore` keeps `00-START-HERE/hub/` off it (Phase 151e, and Word question 229, for the rest).
+
 **Four documents, in this order, and then this one is the map.**
 
 | # | Read | Why |

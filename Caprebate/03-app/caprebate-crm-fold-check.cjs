@@ -12,8 +12,9 @@
  *         Developer Spec §5.3 exists under exactly that title in the monday.com
  *         CAPREBATE QUESTIONS document OR in the Word questions document
  *         (Caprebate_Questions.docx, the source of truth since 22 Sep 2026) -
- *         read from the snapshot: hub-questions.md and hub-questions-word.txt,
- *         the Word document's Heading 2 texts. And every pointer written
+ *         read from the hub (00-START-HERE/hub/, since Phase 151d): QUESTIONS-
+ *         BACKGROUND.md and QUESTIONS-WORD-HEADINGS.txt, the Word document's
+ *         Heading 2 texts. And every pointer written
  *         (Word question N, "<title>") must name question N by its own title
  *         (Phase 146a, 22 Sep 2026);
  *      A3 every ADOPTED row is named, by its exact id or an explicit range, in
@@ -33,8 +34,14 @@
  *
  *   node 03-app/caprebate-crm-fold-check.cjs              exit 0 green, 1 on any failure
  *   node 03-app/caprebate-crm-fold-check.cjs --self-test  every negative control must fail
- *   exit 2 means it COULD NOT RUN (a file missing, or the questions snapshot older
- *   than a day) - which is not the same as green.
+ *   exit 2 means it COULD NOT RUN (a file missing) - which is not the same as green.
+ *
+ * WHERE IT READS, SINCE PHASE 151d (25 September 2026). monday.com was dropped that day, and the
+ * action plan and the monday.com questions document became files in 00-START-HERE/hub/. Until then this
+ * read a SNAPSHOT of them in 03-app/signoff-snapshot/ and refused one older than a day, because a
+ * capture of a live document goes stale. A file in the repository IS the document, so there is nothing
+ * to go stale and the age refusal is gone. The Word headings file is still built from the two Word
+ * documents - `node 03-app/caprebate-signoff-register-check.cjs --word-headings` prints how.
  *
  * Plain Node, no dependencies, so it runs on both machines the way the drift
  * checker does. It reads; it writes nothing.
@@ -50,12 +57,11 @@ const P = {
   guide: path.join(ROOT, '09-app/CAPREBATE-ADMIN-AND-USER-GUIDE.md'),
   backend: path.join(ROOT, '09-app/backend'),
   engineGen: path.join(ROOT, '09-app/engine/src/generated'),
-  snapshotDir: path.join(ROOT, '03-app/signoff-snapshot'),
+  hub: path.join(ROOT, '00-START-HERE/hub'),
 };
-P.questions = path.join(P.snapshotDir, 'hub-questions.md');
-P.questionsWord = path.join(P.snapshotDir, 'hub-questions-word.txt');
-P.plan = path.join(P.snapshotDir, 'hub-action-plan.md');
-P.snapshotMeta = path.join(P.snapshotDir, 'snapshot.json');
+P.questions = path.join(P.hub, 'QUESTIONS-BACKGROUND.md');
+P.questionsWord = path.join(P.hub, 'QUESTIONS-WORD-HEADINGS.txt');
+P.plan = path.join(P.hub, 'ACTION-PLAN.md');
 
 const MARKS = ['ALREADY BUILT', 'ADOPTED WITH A RULE', 'ADOPTED', 'REJECTED', 'QUESTION'];
 const RULE = /\bN[1-4]\b|13\([abc]\)|five roles|no login|by decision|decided|decision|Developer Spec|operating procedure|procedure's|anchor quarantine|derives from the engine|desktop-first|W\d+\b|a sixth is a question/i;
@@ -86,15 +92,9 @@ function walk(dir) {
 }
 
 function loadInputs() {
-  const missing = Object.entries({ table: P.table, spec: P.spec, guide: P.guide, questions: P.questions, questionsWord: P.questionsWord, plan: P.plan, snapshotMeta: P.snapshotMeta })
+  const missing = Object.entries({ table: P.table, spec: P.spec, guide: P.guide, questions: P.questions, questionsWord: P.questionsWord, plan: P.plan })
     .filter(([, f]) => !fs.existsSync(f)).map(([k, f]) => `${k}: ${path.relative(ROOT, f)}`);
-  if (missing.length) return { cannot: `missing: ${missing.join('; ')}` };
-  let meta;
-  try { meta = JSON.parse(fs.readFileSync(P.snapshotMeta, 'utf8')); } catch { return { cannot: 'snapshot.json unreadable' }; }
-  const at = Date.parse(meta.capturedAt);
-  if (!Number.isFinite(at)) return { cannot: 'snapshot.json has no parseable capturedAt' };
-  const ageH = (Date.now() - at) / 36e5;
-  if (ageH > 24) return { cannot: `the questions snapshot is ${ageH.toFixed(1)} hours old - refresh it (node 03-app/caprebate-signoff-register-check.cjs --refresh-plan)` };
+  if (missing.length) return { cannot: `missing: ${missing.join('; ')}${fs.existsSync(P.questionsWord) ? '' : ' (the Word headings: node 03-app/caprebate-signoff-register-check.cjs --word-headings)'}` };
   const code = walk(path.join(P.backend, 'src')).concat(walk(path.join(P.backend, 'migrations')), walk(path.join(P.backend, 'test')), walk(path.join(P.backend, 'tools')), walk(P.engineGen))
     .filter((f) => /\.(ts|sql|cjs|js)$/.test(f));
   const codeText = new Map(code.map((f) => [f, fs.readFileSync(f, 'utf8')]));
@@ -234,7 +234,7 @@ function checkA(inp) {
   for (const e of evidence) for (const id of expandIds(e.rowsCell, allIds)) covered.add(id);
   // A row found NOT built is not a failure while it is CARRIED into a phase that still exists:
   //   **CARRIED — "<the phase's title>"**   in its last cell, and that title in a heading of the
-  // action plan's snapshot. When the phase runs and deletes itself, the row must have its evidence.
+  // action plan (hub/ACTION-PLAN.md). When the phase runs and deletes itself, the row must have its evidence.
   const planHeadings = inp.plan.split('\n').filter((l) => /^#{1,3} /.test(l)).map(norm);
   const carried = [];
   for (const r of rows.filter((x) => x.mark === 'ADOPTED' || x.mark === 'ADOPTED WITH A RULE')) {
@@ -498,8 +498,8 @@ function splitTitle(inp) {
 function plantPartF(table, title) {
   return table.replace(/(^# PART F\b[\s\S]*?^\|\s*-[-|\s]*\|\s*$)/m, `$1\n| **"${title}"** — planted by the self-test | Lakhbir | 8.20 |`);
 }
-// a Word question's number and title, chosen from the snapshot so the control never goes stale:
-// one whose title nothing in the monday.com document carries (so only the Word snapshot can find it)
+// a Word question's number and title, chosen from the headings file so the control never goes stale:
+// one whose title nothing in the monday.com document carries (so only the Word headings file can find it)
 function wordOnly(inp) {
   const mon = questionTitles(inp.questions);
   for (const l of inp.questionsWord.split('\n')) {
@@ -515,7 +515,7 @@ function selfTest(inp) {
   const controls = [
     ['A3 an evidence row removed', 'A', (x) => ({ ...x, table: x.table.replace(/^\| 1\.4, 1\.5, .*$/m, '') })],
     // Phase 146a: the Word questions document is read, and a pointer's number must name its own title
-    ['A2 a Word-only title cited, then changed in the Word snapshot', 'A', (x) => {
+    ['A2 a Word-only title cited, then changed in the Word headings file', 'A', (x) => {
       const w = wordOnly(x); if (!w) return x;
       return { ...x, table: plantPartF(x.table, w.title), questionsWord: x.questionsWord.replace(w.line, `${w.no}) ${w.title} CHANGED BY THE SELF-TEST`) };
     }],
@@ -523,7 +523,7 @@ function selfTest(inp) {
     ['A2 a Word pointer at a number the Word document does not have', 'A', (x) => ({ ...x, spec: x.spec.replace(/Word question 154,/, 'Word question 9999,') })],
     // the monday.com control below is kept: the table's older citations are monday.com titles, and a
     // title found in neither document must still go red
-    ['A2 a question title changed in the snapshot', 'A', (x) => ({ ...x, questions: x.questions.replace(/^## Do we need a login for anyone beyond the five roles/m, '## Do we need a login for somebody') })],
+    ['A2 a question title changed in the background questions document', 'A', (x) => ({ ...x, questions: x.questions.replace(/^## Do we need a login for anyone beyond the five roles/m, '## Do we need a login for somebody') })],
     ['A4 a rejected row stripped of its rule', 'A', (x) => ({ ...x, table: x.table.replace(/(\| 25\.10 \|[^|]*\| REJECTED \|)[^\n]*/, '$1 because |') })],
     ['A5 an identifier in the evidence renamed', 'A', (x) => ({ ...x, table: x.table.replace('`nextClaimRef`', '`nextClaimRefX`') })],
     // Phase 146: a stale test title in an EARLY evidence part (Part G), and a fragment title whose

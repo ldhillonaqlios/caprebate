@@ -1,0 +1,229 @@
+2) Did you send the two hosting questions, or did the host say yes?
+5) Where do Microsoft, monday.com and IONOS actually store our data?
+10) Does the law require us to be supervised for anti-money-laundering?
+11) Should we send the Valuation Office and Ordnance Survey emails?
+23) What do we charge for help when a client sells a property?
+31) Have we actually registered with the Information Commissioner (the UK data protection regulator)?
+32) Should we buy the British Standards our equipment-counting model relies on?
+33) What is our break fee, and do we charge an abort fee or a fixed fee?
+34) If HMRC cuts a claim after we are paid, how much do we refund?
+37) Who owns the address data, what are the rules, and how long can we keep it?
+38) Who updates the postcode table every three months?
+42) Do we pay anything to an accountant who sends us a client?
+45) If anti-money-laundering rules apply, how do we rate client risk?
+51) Who wrote the unsigned answer to the stamp-duty question?
+52) Can we keep using 13 region names taken from a price book we have put aside?
+55) How many hours should a surveyor have to tell us about a data breach, and how?
+56) Who decides a data rights request or complaint when the officer is away or is the subject?
+59) Once we charge VAT, should the fee comparison include VAT for clients who cannot reclaim it?
+62) How likely and how costly is our free, unlimited help if HMRC checks a claim?
+63) Does the new CRM layout work for each login, and what would you change?
+69) Is "Saddique" in the rate card Sadique Maskeen, and who approves the rate card?
+187) Do the four draft documents go to the surveyor as they are, or with two passages taken out?
+188) Should we delete the other competitor calculator, a 2017 fee spreadsheet?
+191) Should our job cost model still count a tax adviser's review on every surveyor job?
+192) When you said "data is stored for 7 years", whose copy did you mean?
+196) Should clause 7 of our engagement letter name IONOS, or say our email company is named in the privacy notice?
+197) May we rely on PlanIt, a free planning website run by one volunteer, in a paid service?
+202) Should we pay for planning history, or keep the free one that asks us to go slowly?
+205) The key file is missing the password for the Land Registry certificate. Can you add it?
+212) There is an old copy of this questions document on your Desktop. May we delete it?
+213) Should we get CIBSE's plant life tables, and ask CIBSE for permission to use them in client reports?
+215) Does the director of CAP REBATE LTD agree the business decisions you make for the company?
+218) Which BCIS product did you agree to, and does its licence let our software use its rates?
+219) How long do we keep the files clients upload, and who may open them?
+227) May the site area we work out from a land boundary go in a client's report?
+228) Now monday.com has gone, should all our working documents be kept in our private code store?
+229) Should the test website stop showing our files to anyone who has the link?
+72) When buying a building, can the buyer add their own fitting costs on top of an agreed value?
+73) If the seller was never allowed to claim, does the pooling rule still apply?
+74) Is there a third way to fix the value of fixtures that we are missing?
+75) Does the two-year clock start from our client's purchase or an earlier owner's?
+76) In supported living, which shared areas, like a shared lounge, can be claimed?
+77) Can a high-care scheme fall outside the rule about homes altogether?
+78) If a landlord and tenant are connected, does the landlord's payment reduce the tenant's claim?
+79) If a grant only paid for parts that can never be claimed, does it reduce the claim?
+80) If a past owner only had a claim because someone else paid, do the limits apply?
+81) Do installation and commissioning costs count as claimable along with the equipment itself?
+82) When a building is bought, should stamp duty and legal fees be included in the price?
+83) For a grant-funded purchase with a cap, does the grant come off before or after the cap?
+84) If money was spent after the year end the client gave, can we move the year forward?
+85) Does the loss relief cap apply when losses are set against the same business's profits?
+86) In supported living, does a landlord's payment come off before or after the shared-areas share?
+87) If a client has already sold the property, can they still claim anything?
+88) For partnerships, how long can the tax return be changed, and how do partners benefit?
+89) Is there any way to get overpayment relief if costs were never pooled?
+90) If a tax return is being checked by HMRC, can we offer the longer change window?
+91) What evidence proves that a previous buyer made no election on fixture values?
+92) After the change window closes, can tax relief still give cash back?
+94) If an election was not sent with the first tax return, is it still valid?
+95) Does a missing tax reference make an election invalid, or can it be fixed?
+96) Is an election made under the wrong section of the law still valid?
+97) Does an election have to be signed to be valid?
+98) What happens if an election sets too high a value from the start?
+99) Are fixtures not listed in an election still covered by it?
+100) If our work shows a client's past tax return was wrong, who must tell HMRC?
+101) When a landlord grants a new lease for a lump sum, which tax rule applies?
+102) In clinical buildings, which drains count for tax relief and which do not?
+103) How much of a building's wiring counts as an electrical system?
+104) Do suspended ceilings qualify for tax relief?
+105) Do fire doors, fire-proof walls and similar fire protection qualify for tax relief?
+106) Does clinical equipment that lasts under two years qualify for tax relief?
+107) Can we rule out treating a whole healthcare building as equipment?
+108) Is a private social housing provider a public body for tax relief rules?
+109) How should we split a grant when we cannot tell what it paid for?
+110) Is a warning enough when claiming relief might force a grant to be repaid?
+111) What does the dental funding rules' statement on premises grants mean?
+112) Is land clean-up tax relief reduced if the clean-up was paid for by a grant?
+113) How far back should we search a building's ownership history before stopping?
+114) When a figure is uncertain, should we hide it or show a range starting at zero?
+115) If a client says they 'roughly break even', do they have enough profit?
+198) When Companies House says a client is an LLP, what kind of business should our estimate treat it as?
+226) Can a client's answer about VAT on their building work tell us whether they can reclaim VAT on our fee?
+116) Would you send a client to us, and what would stop you?
+117) Do you want a fee for sending clients, and what must you tell them?
+118) Who sends the corrected tax return to HMRC: you or us?
+119) Should the client deal with us directly, or should you stay in charge?
+120) Are the four documents we ask for the right ones, and easy to get?
+121) In what format would you like us to send our results?
+122) How much of our evidence pack do you actually want to receive?
+123) Is our way of working out the deadline to correct a return right?
+124) When in your year is a good or bad time to talk to you?
+125) If HMRC questions a claim, who does the client phone?
+126) What would make you look bad in front of your client?
+127) Has another capital allowances firm contacted you before, and what happened?
+128) Do we need to be supervised under anti-money-laundering rules?
+129) Can you value a building safely without ever visiting it?
+130) When can a video walkthrough replace a site visit?
+131) Should the site-visit decision use our hidden estimate or the price paid?
+132) Which way of valuing the building and land should we use?
+133) Which shared areas in care homes count as part of someone's home?
+134) How do we tell clinical ventilation from ordinary building ventilation?
+135) Where do emergency lighting and six other items fit in our list?
+136) Are we adding site running costs twice to every job?
+137) How must we adjust our rebuild cost before comparing it with insurance?
+138) Are our five sector percentage ranges anywhere near right?
+139) How close must our results be to a real past claim to pass?
+140) Is our list of rooms complete and correct?
+141) Which items should be counted by room, and which by floor area?
+142) How should we reduce equipment value for its age?
+143) What must a surveyor's report include as a minimum?
+144) What are we confidently getting wrong?
+145) What should we assume about planning permission when valuing the land?
+146) How much of a job's value is usually the land?
+147) Which cost index should turn today's prices back to the purchase date?
+148) Should an operating theatre be counted as one room or several?
+149) How big a gap is too big in our blind test?
+150) Can you tell like-for-like replacement from a site visit?
+151) Would you sign our declaration that you are not just rubber-stamping?
+152) Does a desk review cost more for bigger building types?
+153) Which London boroughs should count as Inner London?
+199) Should the surveyor see the price a property last sold for before they commit their figures?
+203) Can we use a measured floor area when a building has no energy certificate?
+155) Can the host leave our two client-document folders out of its backups?
+157) Exactly who can run the website, including the host's own staff?
+159) Must personal names be removed from an upload before it is stored, or just after?
+160) On property sale papers, may we keep company names but remove people's names?
+161) Can our council-area lookup from a postcode run before the privacy notice is published?
+162) May we ask our client to pass our privacy notice to a stranger named in our records?
+163) How do we check who someone is when a stranger asks what we hold about them?
+165) Is the review of our notices-page position due now that the brand name is settled?
+167) What should be removed from each of 14 new document types before upload?
+170) Can we make a few small, logged test lookups to check a data connector works?
+171) Does the website need Google Analytics, or can we count visitors ourselves?
+172) Which AI provider reads client documents, and on what terms?
+174) Should rare 20-year and 15-year cases be handled by a legal hold, not by keeping every file?
+176) Should our keep-until rule name HMRC's longer look-back windows instead of relying on a margin?
+177) How should our data protection letters be signed before the officer's appointment is signed?
+178) How often should someone who complained get updates, and when should it be finished?
+179) Will Caprebate ever charge a fee when someone asks for their data?
+181) Once the back office is live, which breach record is the official one?
+182) When someone enquires for a company, what is our legal reason for holding their details?
+183) Where will the healthcare property list come from, and can we use it for marketing?
+184) What written permission must CAP REBATE LTD give Lakhbir to decide on data breaches?
+190) How long do we keep client messages and the team chat?
+193) Can a scanned page be sent to the AI company whole, before we remove anyone's details?
+194) Is a typed name, with a tick to say they may sign for the business, a good enough signature on our engagement letter?
+195) How should our privacy notice name Google, now that the website will use Google Analytics?
+200) May we run our address-matching test on 200 real addresses?
+201) How up to date must information from the care regulator be when we use it?
+204) May we buy our contamination checks from one company instead of four free government ones?
+206) A planning description can mention somebody's name. Should we still keep it?
+207) Two things only someone with the supplier's own pack or a live key can confirm
+208) What should we call the first four screens of our online estimate when we count how many people reach each one?
+209) May a member of our team see a few nearby buildings' register entries to settle one address?
+210) May a member of our team say that a name on a client's document belongs to an organisation and not a person?
+221) You wrote "store all data" and "document all data". Do you mean we stop removing people's names from uploaded documents?
+222) How long do we keep a closed website enquiry before it is deleted?
+223) May we accept tax returns and tax computations as uploads, and what must be removed from them?
+224) May we submit a client's amended tax return for them, with their written permission, and what must our letter say?
+1) What do we do when our fee is more than the client saves in year one?
+3) Has the privacy email inbox been set up, and is someone reading it?
+4) Should the business email inboxes be set up on IONOS or Microsoft 365?
+6) Should we buy the Spon's price books, or ask the surveyor first?
+7) Should we increase the time estimate for the tax adviser's first review?
+8) Where did the Spon's price books on our computer come from?
+9) Should we keep the competitor's calculator program now we have studied it?
+12) What does our promise to call back within "24 working hours" mean?
+13) What phone number should go on the thank-you screen?
+14) How late can clients move their call, and can they cancel it?
+15) When a client skips making an account, what exactly do they skip?
+16) How much does a Homedata address lookup cost each time?
+17) What should clients type their address into instead of a paid lookup?
+18) Is it worth taking on very small claims at all?
+19) How small must a claim be before we advise the client not to claim?
+20) Should clients get one tax summary or two?
+21) May we use Scottish building energy certificate data?
+22) How much free help do we give if HMRC checks a claim?
+24) Who deals with complaints about our service, and about you?
+25) What needs to happen before we start working in Scotland?
+26) Should we switch on the money-losing job check, and how many jobs this year?
+27) How big should the discount be for clients with many sites?
+28) Where should the fee bands on the price list now start and stop?
+29) Are we legally allowed to use the name Caprebate?
+30) Is setting up the company delayed for a short time or a long time?
+35) How much does a Homedata address lookup cost us each time?
+36) Do we need a paid address lookup at launch, or just use the typed address?
+39) Do we need extra logins, like a manager, tax reviewer or view-only user?
+40) Should the Accounting login be able to see the Clients list?
+41) At what point has the client's fee been earned?
+43) How many days does a client have to pay our invoice?
+44) Do we need a separate login for data protection work?
+46) Is it true we have no existing client records to bring in?
+47) Which client documents must arrive before a claim moves on?
+48) Should we keep the files clients upload, or delete them after reading?
+49) Is our fee now a flat 3% of the allowances we find, with no minimum and no bands?
+50) Should the rates rulebook and the Scottish tax addendum go into this tax adviser review?
+53) Can we switch on automatic site area from Land Registry boundaries without waiting for Ordnance Survey?
+54) Is the monday.com user Sadique Maskeen our data protection officer, and should he get access?
+57) If a client has no accountant, who confirms the claim fits their tax return?
+58) Should we keep Microsoft 365 audit records past six months, and accept a monday.com gap?
+60) How big can a multi-site discount be, who approves it, and do the old add-ons stay?
+61) For the £1,000 no-claim test, do we count five years of relief, and include VAT?
+64) Should we switch on the new, clearer names for the client's claim steps?
+65) Is our fee 3% or 5%? The brand book says both.
+66) Can we say we submit the claim for the client? The brand book says both yes and no.
+67) Who will supply the missing brand pieces, and who looks after the brand?
+68) Is CAP REBATE LTD, company number 17307313, the company that signs our client letters?
+70) Should the task board have a "Director" owner for tasks only the company can do?
+71) Should emails to our own staff name the client company in the subject line?
+186) Which email service should send our emails from contactus@caprebate.com?
+189) Should the surveyor see a client's chat?
+211) Is our email address and website caprebate.com or caprebate.co.uk?
+214) The competitor's calculator program is still kept, outside the project folder. Is that where you want it?
+93) In a Scottish sale, which date starts our time limits?
+154) Should WordPress replace our whole system, or sit beside it?
+156) May we briefly check two public register names without saving them?
+158) Is the backup risk serious enough that we must first ask the Information Commissioner?
+164) Should the required "consent" tick box on the contact form be removed?
+166) How long do we keep a staff member's photo after they leave?
+168) What must referred clients be told before we update the referring firm on their claim?
+169) May we keep the tax adviser's own name on a claim's sign-off record?
+173) When two keep-until dates apply to a client's file, which one wins?
+175) Does our six-year clock start when we deliver our report, or when the return is filed?
+180) Should people be able to skip the automatic lookups and answer the questions themselves?
+185) How long do we keep a website enquiry that never becomes a claim?
+216) Who reads our three mailboxes, and which one takes complaints?
+217) May we send you one test email from contact@caprebate.co.uk before email sending is switched on?
+220) Do the sale contract and the CPSE replies have to arrive only when the client bought the building?
+225) Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD?

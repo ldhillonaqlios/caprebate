@@ -123,7 +123,7 @@ function compareTwins(root, names) {
 }
 /* WHAT THE WALK NEVER READS. The three comments beside the corpus walk, further down this file, give the
    reason for each entry: a capture is not a claim. Declared here because the self-test below reads it. */
-const SKIP_DIR = /[\\/](_archive|08-monday-doc-exports|signoff-snapshot|node_modules|\.git)[\\/]|[\\/]04-phase-work[\\/][^\\/]+[\\/]proofs[\\/]/;
+const SKIP_DIR = /[\\/](_archive|08-monday-doc-exports|signoff-snapshot|node_modules|\.git)[\\/]|[\\/]04-phase-work[\\/][^\\/]+[\\/]proofs[\\/]|[\\/]00-START-HERE[\\/]hub[\\/]/;
 
 function twinSelfTest() {
   const os = require("os");
@@ -159,6 +159,16 @@ function twinSelfTest() {
     !skipped(`${sep}09-app${sep}proofs${sep}something.md`)]);
   cases.push(["the module suites under 04-phase-work are NOT skipped",
     !skipped(`${sep}04-phase-work${sep}phase9${sep}caprebate-cost-model.md`)]);
+  /* PHASE 151d — THE WALK SKIPS 00-START-HERE/hub/, AND ONLY THAT FOLDER OF 00-START-HERE. The plan, the
+     phase history, the registers, the tracker and the comments became files there on 25 Sep 2026, when
+     monday.com was dropped. They are read by the register check's section 5, under its own live-or-
+     chronicle policy; this walk has no such policy and went red on 450 dated records the day they arrived. */
+  cases.push(["the hub folder is skipped",
+    skipped(`${sep}Caprebate${sep}00-START-HERE${sep}hub${sep}ACTION-PLAN.md`)]);
+  cases.push(["the rest of 00-START-HERE is NOT skipped",
+    !skipped(`${sep}Caprebate${sep}00-START-HERE${sep}Caprebate-Notices-Page-Host-Checklist.md`)]);
+  cases.push(["a folder named hub anywhere else is NOT skipped",
+    !skipped(`${sep}Caprebate${sep}09-app${sep}hub${sep}notes.md`)]);
   let ok = 0;
   for (const [name, good] of cases) { console.log((good ? "  ✔ " : "  ✘ ") + name); if (good) ok++; }
   console.log("\n" + ok + " of " + cases.length + " guard cases held" + (ok === cases.length ? "." : " - " + (cases.length - ok) + " FAILED."));
@@ -410,8 +420,18 @@ if (redSuites.length) {
    already made twice above. A phase's PROSE still gets read: only `proofs/` is
    skipped, so `proof-record.md` beside it is checked exactly as before.
    (Phase 133e, 17 September 2026.) */
+/* 00-START-HERE/hub/ HOLDS THE PROJECT'S OWN WORKING PAPERS SINCE 25 SEPTEMBER 2026 - the action plan, the
+   phase history, the three sign-off registers, the tracker and the comments monday.com carried - and is
+   skipped HERE, on purpose, because another check reads it. Until that day these were monday.com documents,
+   captured into signoff-snapshot/ and read by caprebate-signoff-register-check.cjs's section 5, which
+   judges each file under its own policy: PHASE HISTORY and the comments are chronicle, a block that
+   disclaims quotation is chronicle, everything else is a live claim. This walk has one policy for every
+   file, and on the day the hub arrived it went from green to 450 findings, every one a dated record. Two
+   checks reading one file under two policies would give two verdicts; ONE CHECK OWNS THE HUB, and it is
+   section 5. Nothing else in 00-START-HERE is skipped. (Phase 151d, 25 September 2026.)
+   signoff-snapshot/ itself is retired the same day - no check reads it - and stays skipped. */
 /* SKIP_DIR is declared near the top of this file, because the stray-copy self-test reads it and runs
-   before this point. The reasoning for each folder it skips is the three comments directly above. */
+   before this point. The reasoning for each folder it skips is the four comments directly above. */
 const SKIP_FILE = /\.bak(-[\w.]+)?$|\.pre-[\w.]+\.bak$/;
 const READ_EXT = /\.(md|html|txt|cjs|js|ts)$/;
 
