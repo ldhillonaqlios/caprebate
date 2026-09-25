@@ -10285,3 +10285,20 @@ NEW node 03-app/caprebate-cash-route-proof.cjs       7 of 7 hold
 -  A Didit account, the workflow in its console, the webhook address, and the three key-file entries — Ready - Lakhbir action (or the developer, on the live server) — the Developer Spec, "Built by Phase 151f".
 -  Ten temporary copies of the questions documents from today's two writes, each named "DELETE - ..." at the top of Health Capital Allowances — Ready - Lakhbir action: delete them; none is a document.
 -  **A slip, recorded:** this phase first ran Phase 151d's check script, which writes into `04-phase-work/phase151d/proofs/`, so that folder's outputs are this phase's first run, not 151d's own (151d's figures are in its record above; the folder is not in git). The script now has a 151f copy writing to its own folder. Nothing to build.
+
+
+## PHASE 151h — the online identity check switched on for testing, with the papers waived and saying so (25 September 2026, Opus, Mac copy, Lakhbir's MacBook Pro)
+
+ **Lakhbir, in the chat: "switch it on we are still in a testing enviroment"**, after the officer approved the Didit entry and all three Didit entries were in the key file. Claimed in `hub/CLAIM.md` (099ce73) and cleared at the close. Every changed file has a `.bak-phase151h` sibling.
+
+### DONE — with the evidence
+
+-  **On, honestly.** `IDENTITY_CHECK.enabled` is true. `named_in_privacy_notice` and `named_in_engagement_letter` stay **false**, because the notice is an unpublished draft and clause 7 names Didit only in a comment. A new `papers_waived_for_testing` (true) and `waiver_record` (who, when, his words) let a check be sent anyway. While they do, the identity panel shows "Testing only. Our privacy notice and our engagement letter do not name Didit yet. Check yourself or a colleague who agrees. Never check a client.", and `IDENTITY_CHECK_SENT` carries `papers_waived_for_testing: true`. The panel says "Not ready" (not "Switched off") when something such as a key is missing. With the keys on the Mac, `identityCheckMissing` is empty: a check can be sent from the back end there.
+-  **Tests.** New `test/phase151h.test.ts` (four): ships on and waived with a record; with keys the shipped configuration sends and the audit row says so; the panel's warning; and THE GATE STILL WORKS — waiver off with the papers undone, nothing is sent. The earlier identity tests now name their configuration as "papers done, nothing waived". 67 of 67 across the four identity files. **Proved red** in a worktree of 099ce73: the old code cannot load the file; the new code with only the switch and the waiver put back to off fails the three "on" tests while "the gate still works" passes.
+-  **Words.** The guide's B53 ("It is on for testing only"), Help rebuilt, the Developer Spec's two rows and a section "Built by Phase 151h".
+-  **Checks at the close** (`04-phase-work/phase151h/tools/run-checks.sh`, outputs in `proofs/`): `npm run check` 1,554 pass / 0 fail across 80 files; the site harness 1,273 / 0 / 4 xfail in both modes; phase3 438; phase9 398: 3,663 in all. The drift checker green after the Spec's two figures were brought up to date (`drift-after-figures.txt`); its negative control exits 1; plain words, tracker, CRM fold and register checks green with their self-tests; payload proof PASS.
+
+### NOT DONE — each with its home
+
+-  **Where Didit sends its results** — BUILDABLE — added to Phase 151e as line 3. The address is `https://<public host>/hooks/identity-check`, but no host can take one today: the test deploy answers 500 there, has no Didit keys, and seeds a fresh in-memory database each cold start, so a result could never match a check sent elsewhere.
+-  The papers: the notice published naming Didit, and clause 7 — waiting on the officer's written answers (lawful basis, the selfie, retention, Didit's own use of pseudonymised data) and on Lakhbir's choice for clause 7 (his authority as director, or a solicitor) — SDP-P10 and SDP-L3. Then the waiver goes back to false.

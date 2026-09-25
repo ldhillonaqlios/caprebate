@@ -3620,10 +3620,11 @@ selfie on their phone. Didit tells us the result. We keep our own copy of the re
 Admin. It sits in two places. One is the client's page, under **Identity check**. The other is a due diligence check,
 under **Online identity check**. Other logins do not see it.
 
-**It is switched off today**
-Nothing is sent yet. The box says what must happen first. Didit must be named in our privacy notice and our letter.
-Its keys must be on the server. Then someone turns it on. We check identity for every client. It does not wait for
-the money laundering setting.
+**It is on for testing only**
+It is switched on so we can try it. But our privacy notice and our letter do not name Didit yet. So the box says
+**Testing only**. Check yourself, or a colleague who agrees. Never check a client until the box has gone. If the box
+says **Not ready**, it lists what is missing, such as the keys on the server. We check identity for every client. It
+does not wait for the money laundering setting.
 
 **How to do the common job**
 1. Open the client's page and find **Identity check**. Or open their due diligence check.

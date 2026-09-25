@@ -46,8 +46,8 @@ import { h, raw, type Safe } from './html.ts';
 import { localWhen } from './localtime.ts';
 import { assertComplianceRead, assertComplianceWrite, complianceObj, record, type ComplianceDeps } from './compliance.ts';
 import {
-  IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, readIdentityDecision, startIdentityCheck,
-  type IdentityCheckConfig, type IdentityOutcome, type IdentitySignature,
+  IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, identityTestingWarning, readIdentityDecision,
+  sentUnderTestingWaiver, startIdentityCheck, type IdentityCheckConfig, type IdentityOutcome, type IdentitySignature,
 } from '../connectors/identity-check.ts';
 
 /** Where the service sends its result: set as the webhook address in Didit's console. Mounted in src/web/router.ts, outside the login. */
@@ -115,7 +115,11 @@ export async function sendIdentityCheck(
   db.run(
     'INSERT INTO identity_checks (id, business_id, contact_id, cdd_check_id, provider, session_id, link, sent_by, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [id, input.business_id, input.contact_id, input.cdd_check_id, 'DIDIT', out.session_id, out.link, actor.id, d.app.now()]);
-  record(cd, actor, 'IDENTITY_CHECK_SENT', 'ALLOWED', 'identity_check', id, { business: input.business_id, contact: input.contact_id, cdd_check: input.cdd_check_id });
+  record(cd, actor, 'IDENTITY_CHECK_SENT', 'ALLOWED', 'identity_check', id, {
+    business: input.business_id, contact: input.contact_id, cdd_check: input.cdd_check_id,
+    // Phase 151h: a check sent before the papers name the service says so, in the row that records it
+    ...(sentUnderTestingWaiver(opts.config ?? IDENTITY_CHECK) ? { papers_waived_for_testing: true } : {}),
+  });
   return { ok: true, id, link: out.link };
 }
 
@@ -215,11 +219,13 @@ export function identityPanel(app: App, actor: Actor, where: { readonly business
   assertComplianceRead(actor);
   const lines = identityChecks(app.db, where.cdd_check_id !== undefined ? { cdd_check_id: where.cdd_check_id } : { business_id: where.business_id });
   const ready = identityCheckReadiness(app);
+  const testing = identityTestingWarning(IDENTITY_CHECK);
   const mayWrite = can(actor, 'compliance.write', complianceObj());
   const action = where.cdd_check_id !== undefined ? `/staff/compliance/aml/checks/${where.cdd_check_id}/identity` : '/staff/compliance/identity-checks';
   return h`<div id="identity-check">
     <p class="help">We send the person a link. They photograph their ID and take a selfie on their phone, and ${IDENTITY_PROVIDER_NAME} tells us the result. Their photographs never come to us.</p>
-    ${ready.on ? raw('') : h`<p class="help"><strong>Switched off.</strong> Nothing is sent until these are done: ${ready.missing.join(' ')}</p>`}
+    ${ready.on ? raw('') : h`<p class="help"><strong>Not ready.</strong> Nothing is sent until these are done: ${ready.missing.join(' ')}</p>`}
+    ${testing === null ? raw('') : h`<p class="err" id="identity-testing-only"><strong>${testing}</strong></p>`}
     ${lines.length === 0 ? h`<p class="help">No identity check has been sent.</p>` : h`<table><thead><tr><th>Person</th><th>Sent</th><th>Result</th><th>Link for the client</th></tr></thead><tbody>
       ${lines.map((l) => h`<tr><td>${l.contact}</td><td>${l.sent}</td><td>${l.outcome_words}${l.result_at === null ? '' : `, ${localWhen(l.result_at)}`}</td><td><a href="${l.link}">Their link</a></td></tr>`)}</tbody></table>`}
     ${!mayWrite || contacts.length === 0 ? raw('') : h`<form method="post" action="${action}">

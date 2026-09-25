@@ -993,6 +993,21 @@ anyone" (its id is in the tracker; find it with list --group DEVELOPMENT).
    entirely, the function bundle included, so a file the function reads must
    stay. Prove on the new deploy: every file kept off answers something other
    than 200, the site still works, and the payload proof still holds.
+3. WHERE DIDIT SENDS ITS RESULTS (added by Phase 151h, 25 Sep 2026). The
+   identity check is on for testing, and Didit posts each result to the
+   webhook address set in its console: https://<public host>/hooks/identity-
+   check. Today there is no host that can take one. The test deploy answers
+   500 on that path (line 1). And even working, it could not match a result:
+   it has no Didit keys (they are only in the Mac's key file), and it seeds a
+   new in-memory database on every cold start, so a check sent from one place
+   is not in the database that receives the result (404). A check and its
+   result must go through the same server and the same database. Make that
+   true for the test environment - the keys as Vercel environment settings
+   the back end reads, and a database that persists; or a documented way to
+   run the back end on the Mac behind a public https tunnel - and write the
+   exact webhook address into the Developer Spec's "Built by Phase 151h".
+   Prove it with a signed, invented result posted to the address (a 200 and a
+   row), never with a real person's check.
 
 CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
 inside their folders; the drift checker and its negative control; the tracker

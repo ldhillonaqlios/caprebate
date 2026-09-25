@@ -86,7 +86,8 @@ async function world() {
  * ================================================================== */
 
 const KEYS = { DIDIT_API_KEY: 'test-didit-key-not-real-151b', DIDIT_WEBHOOK_SECRET: 'test-didit-secret-not-real-151b', DIDIT_WORKFLOW_ID: '11111111-2222-3333-4444-151b00000000' };
-const ON: IdentityCheckConfig = Object.freeze({ ...IDENTITY_CHECK, enabled: true, named_in_privacy_notice: true, named_in_engagement_letter: true });
+/* The papers done and nothing waived (Phase 151h shipped a testing waiver; these tests are about the gate itself). */
+const ON: IdentityCheckConfig = Object.freeze({ ...IDENTITY_CHECK, enabled: true, named_in_privacy_notice: true, named_in_engagement_letter: true, papers_waived_for_testing: false, waiver_record: null });
 const SESSION = 'a1b2c3d4-0000-4000-8000-151b00000001';
 const SESSION_OK: Fixture = {
   status: 201,
@@ -116,8 +117,8 @@ function aContact(db: Db) {
   return c;
 }
 
-describe('1 · the online identity check is wired in — and off as shipped', () => {
-  test('as shipped, pressing Send sends nothing, keeps no row, and says in words what is missing — without waiting on AML_IN_SCOPE', async () => {
+describe('1 · the online identity check is wired in — on for testing, and sending nothing without its keys', () => {
+  test('as shipped and with no keys, pressing Send sends nothing, keeps no row, and says in words what is missing — without waiting on AML_IN_SCOPE', async () => {
     const w = await world();
     try {
       const t = fixtureTransport({ [`POST ${IDENTITY_SESSION_ENDPOINT}`]: SESSION_OK });
@@ -127,7 +128,7 @@ describe('1 · the online identity check is wired in — and off as shipped', ()
       const r = await admin.post('/staff/compliance/identity-checks', { business_id: c.business_id, contact_id: c.id, first_name: 'Ada', last_name: 'Invented' });
       assert.equal(r.status, 400, r.body.slice(0, 300));
       assert.match(r.body, /Not sent/);
-      assert.match(r.body, /privacy notice and in the engagement letter/);
+      assert.match(r.body, /keys to the server/);
       assert.doesNotMatch(r.body, /money-laundering supervision|AML_IN_SCOPE/);
       assert.equal(t.seen.length, 0, 'a request left the server while the check was off');
       assert.equal(w.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM identity_checks')?.n, 0);

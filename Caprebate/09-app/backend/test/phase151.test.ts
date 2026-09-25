@@ -44,7 +44,8 @@ import { SOURCES as REGISTER_SOURCES, LICENCES, SUPPLIER_DOCS } from '../../../0
  * ================================================================== */
 
 const KEYS = { DIDIT_API_KEY: 'test-didit-key-not-real-000', DIDIT_WEBHOOK_SECRET: 'test-didit-secret-not-real-000', DIDIT_WORKFLOW_ID: '11111111-2222-3333-4444-151f00000000' };
-const ON: IdentityCheckConfig = Object.freeze({ ...IDENTITY_CHECK, enabled: true, named_in_privacy_notice: true, named_in_engagement_letter: true });
+/* The papers done and nothing waived (Phase 151h shipped a testing waiver; these tests are about the gate itself). */
+const ON: IdentityCheckConfig = Object.freeze({ ...IDENTITY_CHECK, enabled: true, named_in_privacy_notice: true, named_in_engagement_letter: true, papers_waived_for_testing: false, waiver_record: null });
 /* Shaped from docs.didit.me/sessions-api/create-session (read 25 September 2026, Phase 151f). Invented values. */
 const SESSION_OK: Fixture = {
   status: 201,
@@ -71,25 +72,25 @@ const TS = String(NOW_MS / 1000);
 const sig = (body: string, secret?: string) => ({ raw: sign(body, secret), v2: null, timestamp: TS });
 
 describe('1 · the online identity check is built for real and switched off', () => {
-  test('it ships off, the stamp reads its switch, and it quotes the open supervision question by its title', () => {
-    assert.equal(IDENTITY_CHECK.enabled, false);
+  test('it ships ON for testing (Phase 151h), the stamp reads its switch, and it quotes the supervision question by its title', () => {
+    assert.equal(IDENTITY_CHECK.enabled, true);
     assert.equal(IDENTITY_CHECK.provider, 'DIDIT');
     assert.equal(IDENTITY_CHECK_QUESTION, 'Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD?');
     const s = backendSwitchReadings().find((r) => r.switch === 'IDENTITY_CHECK');
     assert.ok(s, 'the case stamp does not read the identity check switch');
-    assert.equal(s.on, false);
+    assert.equal(s.on, true);
   });
 
-  test('as shipped it sends nothing and writes no call to the audit log — and says, in words, everything that is missing', async () => {
+  test('as shipped, with no keys (as under the test runner), it sends nothing, writes no call, and says the keys are missing', async () => {
     const r = await rig();
     const out = await startIdentityCheck(r.input({ config: undefined, secrets: emptySecrets() }));
     assert.equal(out.state, 'NOT_SENT');
     assert.equal(r.t.seen.length, 0, 'a request was made while the check was off');
     assert.equal(r.calls().length, 0, 'an audit row of a call was written while the check was off');
     const why = out.state === 'NOT_SENT' ? out.why : '';
-    for (const want of [/privacy notice and in the engagement letter/, /keys to the server/, /switch the identity check on/]) {
-      assert.match(why, want);
-    }
+    assert.match(why, /keys to the server/);
+    // Phase 151h: the switch is on and the papers are waived for testing, so neither is named as missing
+    assert.doesNotMatch(why, /privacy notice|switch the identity check on/);
     // Word question 10 (24 Sep 2026): identity is checked whether or not money-laundering supervision applies.
     assert.doesNotMatch(why, /money-laundering/);
   });

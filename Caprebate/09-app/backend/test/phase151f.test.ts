@@ -26,7 +26,8 @@ import {
 import { identityPassed, passEvidenceSentence, receiveIdentityResult, sendIdentityCheck } from '../src/web/identity-checks.ts';
 
 const KEYS = { DIDIT_API_KEY: 'test-didit-key-not-real-151f', DIDIT_WEBHOOK_SECRET: 'test-didit-secret-not-real-151f', DIDIT_WORKFLOW_ID: '11111111-2222-3333-4444-151f00000001' };
-const ON: IdentityCheckConfig = Object.freeze({ ...IDENTITY_CHECK, enabled: true, named_in_privacy_notice: true, named_in_engagement_letter: true });
+/* The papers done and nothing waived (Phase 151h shipped a testing waiver; these tests are about the gate itself). */
+const ON: IdentityCheckConfig = Object.freeze({ ...IDENTITY_CHECK, enabled: true, named_in_privacy_notice: true, named_in_engagement_letter: true, papers_waived_for_testing: false, waiver_record: null });
 const NOW = '2026-09-25T10:00:00.000Z';
 const NOW_MS = Date.parse(NOW);
 const TS = String(NOW_MS / 1000);
@@ -39,10 +40,10 @@ const reordered = (status: string, check_ref = 'idc-151f') =>
   `{ "status": "${status}", "vendor_data": "${check_ref}", "webhook_type": "status.updated", "session_id": "${SESSION}", "created_at": 1790330400,
      "metadata": { "zeta": 1, "alpha": "Zoë Ångström" } }`;
 
-describe('151f · the connector is Didit, and still off as shipped', () => {
+describe('151f · the connector is Didit (switched on for testing by Phase 151h)', () => {
   test('the provider is Didit, the switch is off, and the key file names three entries — the workflow id is not a secret', () => {
     assert.equal(IDENTITY_CHECK.provider, 'DIDIT');
-    assert.equal(IDENTITY_CHECK.enabled, false);
+    assert.equal(IDENTITY_CHECK.enabled, true);
     assert.equal(IDENTITY_PROVIDER_NAME, 'Didit');
     const mine = SECRET_KEYS.filter((k) => k.owner === 'DIDIT_IDV');
     assert.deepEqual(mine.map((k) => [k.name, k.secret]), [['DIDIT_API_KEY', true], ['DIDIT_WEBHOOK_SECRET', true], ['DIDIT_WORKFLOW_ID', false]]);
@@ -180,7 +181,7 @@ describe('151f · migration 053: Didit is a provider, Veriff stays valid, and Di
     } finally { w.close(); }
   });
 
-  test('switched off, sending stays refused with no keys — nothing about the switch changed', async () => {
+  test('with no keys, sending stays refused and says so', async () => {
     const w = await world();
     try {
       w.app.secrets = emptySecrets();
@@ -188,7 +189,7 @@ describe('151f · migration 053: Didit is a provider, Veriff stays valid, and Di
       const admin = { id: w.db.get<{ id: string }>("SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1")!.id, role: 'ADMIN', business_id: null, disabled: false } as Actor;
       const r = await sendIdentityCheck({ app: w.app, newId: () => 'x' }, admin, { business_id: c.business_id, contact_id: c.id, cdd_check_id: null, first_name: 'A', last_name: 'B' });
       assert.equal(r.ok, false);
-      assert.match(r.ok ? '' : r.why, /privacy notice and in the engagement letter/);
+      assert.match(r.ok ? '' : r.why, /keys to the server/);
     } finally { w.close(); }
   });
 });

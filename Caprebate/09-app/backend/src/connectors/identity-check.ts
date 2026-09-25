@@ -24,6 +24,17 @@
  * 2026), so nothing here reads AML_IN_SCOPE.
  * OFF, NOTHING LEAVES THIS SERVER: `startIdentityCheck` refuses before any call, any audit row of a call, anything.
  *
+ * SWITCHED ON FOR TESTING — Phase 151h, 25 September 2026, Lakhbir in chat: "switch it on we are still in a testing
+ * enviroment". The Didit account is live and its three entries are in the key file. The officer approved the Didit
+ * entry of the privacy notice the same day (relayed by Lakhbir), BUT THE PAPERS ARE NOT DONE: the notice is still a
+ * draft, not published, and clause 7 of the engagement letter names Didit only in a comment. So `enabled` is true, the
+ * two `named_in_*` flags stay FALSE because they are false, and `papers_waived_for_testing` records the decision to
+ * test before the papers are done, with who and when in `waiver_record`. While it is waived and the papers are not
+ * done, every screen that can send a check says, in words, that it is for testing only and never for a client
+ * (`identityTestingWarning`), and every check sent is audited as sent under the waiver.
+ * BEFORE A REAL CLIENT IS CHECKED: publish the notice naming Didit, put Didit into clause 7, set both `named_in_*` to
+ * true, and set `papers_waived_for_testing` to false. The waiver is never a substitute for the papers.
+ *
  * WHAT IS SENT. The check we set up (its workflow id), an opaque reference to our check, and the first and last name
  * of the person, as the name Didit should expect to find on the document. Never an address, a company, a claim, a
  * figure, an email or a phone number. The client's documents and selfie go from their phone to Didit, never through us.
@@ -62,6 +73,13 @@ export type IdentityCheckConfig = {
   readonly named_in_privacy_notice: boolean;
   /** The provider is named as a processor in clause 7 of the engagement letter. */
   readonly named_in_engagement_letter: boolean;
+  /**
+   * TESTING ONLY. A person's decision to send checks before the two papers above name the provider. It never makes
+   * either paper true: it only stops their absence refusing the call, and while it does, the screens say so.
+   */
+  readonly papers_waived_for_testing: boolean;
+  /** Who waived the papers, when, and in what words. Null when nothing is waived. */
+  readonly waiver_record: string | null;
   /** The Word question that chose the provider, quoted by its title. */
   readonly question: string;
 };
@@ -77,10 +95,12 @@ export const IDENTITY_CHECK_QUESTION =
 export const IDENTITY_PROVIDER_NAME = 'Didit';
 
 export const IDENTITY_CHECK: IdentityCheckConfig = Object.freeze({
-  enabled: false,
+  enabled: true,
   provider: 'DIDIT',
   named_in_privacy_notice: false,
   named_in_engagement_letter: false,
+  papers_waived_for_testing: true,
+  waiver_record: 'Lakhbir Dhillon, director, 25 September 2026, in the chat with Claude: "switch it on we are still in a testing enviroment". The privacy notice is a draft. It is not published. Clause 7 names Didit only in a comment.',
   question: IDENTITY_CHECK_QUESTION,
 });
 
@@ -91,13 +111,25 @@ export const IDENTITY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECR
 export function identityCheckMissing(cfg: IdentityCheckConfig, secrets: SecretStore): string[] {
   const out: string[] = [];
   if (cfg.provider === null) out.push('Choose the identity check service.');
-  if (cfg.named_in_privacy_notice !== true || cfg.named_in_engagement_letter !== true) {
+  if ((cfg.named_in_privacy_notice !== true || cfg.named_in_engagement_letter !== true) && cfg.papers_waived_for_testing !== true) {
     out.push('Name that service in the privacy notice and in the engagement letter.');
   }
   const mine = secrets.forOwner('DIDIT_IDV');
   if (!IDENTITY_KEYS.every((k) => mine.has(k))) out.push('Add the identity check service’s keys to the server.');
   if (cfg.enabled !== true) out.push('Then switch the identity check on.');
   return out;
+}
+
+/** True when checks may be sent only because the papers are waived for testing: the papers do not name the service. */
+export function sentUnderTestingWaiver(cfg: IdentityCheckConfig): boolean {
+  return cfg.papers_waived_for_testing === true && (cfg.named_in_privacy_notice !== true || cfg.named_in_engagement_letter !== true);
+}
+
+/** The words every screen that can send a check shows while it would be sent under the waiver. Null otherwise. */
+export function identityTestingWarning(cfg: IdentityCheckConfig): string | null {
+  return sentUnderTestingWaiver(cfg)
+    ? `Testing only. Our privacy notice and our engagement letter do not name ${IDENTITY_PROVIDER_NAME} yet. Check yourself or a colleague who agrees. Never check a client.`
+    : null;
 }
 
 export type IdentityStart =
