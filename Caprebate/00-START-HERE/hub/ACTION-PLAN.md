@@ -943,8 +943,11 @@ Tracker row: "Phase 146j - taking back a pick" (13117648493).
 
 CHECKS - npm run check; the site harness (both modes), the extraction
 verifier and extract --check; phase3 and phase9 from inside their folders;
-the drift checker; the plain-words check; the CRM fold check; payload-proof.
-Commit and push.
+the drift checker, its negative control (--fast --expect 999,998,997,996 MUST
+exit 1, on its own line) and its self-test; the plain-words check; the tracker
+check; the register check and the CRM fold check, and both self-tests;
+payload-proof. Write the record with the CLOSING CHECK, clear hub/CLAIM.md,
+commit and push.
 ```
 
 ## PHASE 151e — the test website: why every page fails, and what it shows to anyone
