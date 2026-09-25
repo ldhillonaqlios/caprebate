@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
-| Done | 262 |
-| Working on it | 1 |
+| Done | 263 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -611,10 +611,11 @@
 `13093310525` · **Ready - Lakhbir action** · owner Lakhbir
 
 
-### Keys: Claude API and IONOS sending done (24 Sep, in Health Capital Allowances > Private - keys). Left: Companies House, CQC, EPC, Homedata, Land Registry Business Gateway, Veriff, IONOS reading, Google Analytics
+### Keys: Claude API and IONOS sending done (24 Sep, in Health Capital Allowances > Private - keys). Left: Companies House, CQC, EPC, Homedata, Veriff, IONOS reading, Google Analytics
 
 `13104162940` · **Ready - Lakhbir action** · owner Lakhbir
 
+- Note 2026-09-25 (Phase 146k): Land Registry Business Gateway taken off this list: the title register is looked up by hand, not by the API (Lakhbir, 25 Sep 2026); its details were removed from the key file.
 
 ### DELETE: the folder 'DELETE - Cap allowance (competitor calculator program)' in Development, and the files marked DELETE in your OneDrive root and in Health Capital Allowances
 
@@ -1318,8 +1319,9 @@
 
 ### Phase 146k - the title register by hand: HM Land Registry's title register looked up manually, not through Business Gateway
 
-`13133268305` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
+`13133268305` · **Done** · owner Claude
 
+- Note 2026-09-25 (Phase 146k): Built: Business Gateway retired from the click (PAID_RETIRED, keys marked retired, gone from the example); the title register recorded by hand on the property page and taken back with a reason. test/phase146k.test.ts, 12 tests; record in PHASE HISTORY.
 
 ---
 

@@ -445,7 +445,27 @@ export type SourceRow = CatalogueEntry & {
    * the pick row, so it stays on the panel after the next run rewrites the lookup's own line. Null where none was.
    */
   readonly taken_back: { readonly at: string; readonly reason: string; readonly look_again: readonly string[] } | null;
+  /**
+   * PHASE 146k: TRUE FOR A SOURCE A PERSON LOOKS UP BY HAND, which "Run the research" never consults — today the title
+   * register only (`BY_HAND`). It shows as "Looked up" once a person has recorded it, and as still to do until then.
+   */
+  readonly by_hand: boolean;
 };
+
+/**
+ * PHASE 146k — THE SOURCES A PERSON LOOKS UP BY HAND, AND WHERE THEY RECORD WHAT THEY FOUND. Lakhbir, 25 September
+ * 2026: HM Land Registry's title register "will be done manually and not via API". The Business Gateway connector
+ * (src/connectors/hmlr-title.ts) is retired from the click; a person buys the official copy and records it on the
+ * property page (src/web/title-by-hand.ts). The row stays on the panel — it is still a source of the claim's facts,
+ * still paid, and still after signing — but no button consults it, and it never costs the click anything.
+ */
+export const BY_HAND: Readonly<Record<string, { readonly todo: string; readonly done: string }>> = Object.freeze({
+  HMLR_TITLE: {
+    todo: 'Done by hand, not by a lookup. After the letter is signed, buy the title register from HM Land Registry. ' +
+      'Then type in what it says on the property page.',
+    done: 'Recorded by hand from the official copy of the title register, on the property page.',
+  },
+});
 
 export type SourcesPanel = {
   readonly free: FreeGate;
@@ -665,6 +685,20 @@ export function sourcesFor(
     const row = stored.get(entry.source_id);
     const current = (row?.state ?? 'NOT_RUN') as SourceState;
     const resolved = stateUnderGates(entry, current, free, engagement, lookupsDeclined(db, business_id));
+    /* PHASE 146k: a source looked up by hand is "looked up" once a person has recorded it, and still to do until then —
+       read off what is held, never off a row a click wrote. Before signing it waits like any paid source. */
+    const hand = BY_HAND[entry.source_id];
+    if (hand !== undefined) {
+      const held = db.get<{ obtained_at: string }>(
+        "SELECT obtained_at FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id LIKE 'by-hand:%' ORDER BY obtained_at DESC LIMIT 1",
+        [business_id, entry.source_id]);
+      const state: SourceState = held !== undefined ? 'FIRED' : resolved.state === 'NOT_PERMITTED_YET' ? 'NOT_PERMITTED_YET' : 'NOT_RUN';
+      return {
+        ...entry, state, fired_at: held?.obtained_at ?? null, retrieved_at: held?.obtained_at ?? null, attempts: 0, failure_code: null,
+        detail: held !== undefined ? hand.done : state === 'NOT_PERMITTED_YET' ? resolved.detail : hand.todo,
+        may_retry: false, switched_on: false, picked: false, taken_back: null, by_hand: true,
+      };
+    }
     return {
       ...entry,
       state: resolved.state,
@@ -677,6 +711,7 @@ export function sourcesFor(
       switched_on: switchedOn(entry.source_id),
       picked: picked.has(entry.source_id) && resolved.state === 'FIRED',
       taken_back: takenBack.get(entry.source_id) ?? null,
+      by_hand: false,
     };
   });
 
@@ -689,7 +724,7 @@ export function sourcesFor(
   return {
     free, engagement, sources,
     outstanding: sources.filter((s) => s.state !== 'FIRED').length,
-    would_fire: sources.filter((s) => s.state === 'NOT_RUN' || s.state === 'FAILED').length,
+    would_fire: sources.filter((s) => !s.by_hand && (s.state === 'NOT_RUN' || s.state === 'FAILED')).length,
     rate: rateState(db, business_id, actor),
     known_gaps: KNOWN_GAPS,
     cost_before_pence: before,
@@ -966,7 +1001,8 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
   const engagement = assertSignedEngagement(d.db, business_id);
   const panel = sourcesFor(d.db, actor, business_id);
 
-  const decided = panel.sources.filter((s) => s.state !== 'FIRED').map((s) => ({
+  // PHASE 146k: a source looked up by hand is never consulted by the click.
+  const decided = panel.sources.filter((s) => s.state !== 'FIRED' && !s.by_hand).map((s) => ({
     entry: s, ...stateUnderGates(s, s.state === 'FAILED' ? 'NOT_RUN' : s.state, free, engagement, lookupsDeclined(d.db, business_id)),
   }));
   const outcomes = await consultAllowed(d, actor, business_id, decided,

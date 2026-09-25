@@ -1127,6 +1127,19 @@ after that phase.
    A PROTOTYPE WHOSE ANCHOR QUARANTINE HAS QUIETLY STOPPED HOLDING IS WORSE THAN
    NO PROTOTYPE. The payload proof must find no estimate field as surveyor AND
    all seven as admin - the second half is its negative control.
+   TWO WORD QUESTIONS LAKHBIR'S 25 SEP DECISION ANSWERED (Phase 146k). He said
+   the Land Registry title register "will be done manually and not via API"
+   and took the Business Gateway details out of the key file. So Word question
+   205 ("The key file is missing the password for the Land Registry
+   certificate. Can you add it?") is answered: no certificate is needed. Move
+   it, the AMENDMENT 2 way, to the closed document with "Recorded answer (25
+   Sep 2026, Lakhbir, in the chat): the title register is done by hand, not
+   via the API" and a Closed line naming Phase 146k. And Word question 207
+   ("Two things only someone with the supplier's own pack or a live key can
+   confirm") loses its Business Gateway half: add a Recorded answer saying so,
+   and leave it open for the Homedata half. BUILDABLE - it is only the Word
+   procedure in COORDINATES, which Phase 146k did not run. Rebuild
+   QUESTIONS-WORD-HEADINGS.txt afterwards.
    AND ONE TEST THAT FAILS UNDER LOAD AND NOT ON ITS OWN (Phase 146j, 25 Sep
    2026): test/phase151c.test.ts, "0 when every point agrees ... 1 when one
    point is 2 mm out", runs tools/ostn15-verify.ts as a child process. In one

@@ -512,7 +512,8 @@ describe('the live smoke test says whether a service took our call, and nothing 
 
   test('G22 — every source with a connector is on the list, and nothing else is', () => {
     assert.deepEqual(Object.keys(SMOKE_SOURCES).sort(),
-      ['CH_COMPANY', 'CH_PSC', 'CQC', 'EPC', 'HMLR_PPD', 'HMLR_TITLE', 'HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING', 'ONS_POSTCODE', 'PLANNING']);
+      // Phase 146k: no HMLR_TITLE — the title register is looked up by hand, and its connector is retired.
+      ['CH_COMPANY', 'CH_PSC', 'CQC', 'EPC', 'HMLR_PPD', 'HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING', 'ONS_POSTCODE', 'PLANNING']);
     assert.equal(SMOKE_SOURCES['HOMEDATA_PLANNING'], 'not chosen', 'built and not chosen is still smoke-testable');
   });
 

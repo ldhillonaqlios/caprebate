@@ -332,6 +332,12 @@ export type AuditKind =
    */
   | 'REGISTER_MATCH_TAKEN_BACK' | 'DOCUMENT_FIELD_VOUCH_WITHDRAWN'
   /**
+   * Phase 146k, 25 September 2026: HM Land Registry's title register is looked up by hand (src/web/title-by-hand.ts).
+   * TITLE_RECORDED_BY_HAND: a person recorded what the official copy says — the property, and WHICH facts were given,
+   * never their values. TITLE_BY_HAND_TAKEN_BACK: that entry taken back, with the reason and what to look at again.
+   */
+  | 'TITLE_RECORDED_BY_HAND' | 'TITLE_BY_HAND_TAKEN_BACK'
+  /**
    * Phase 151b, 25 September 2026: the online identity check (src/web/identity-checks.ts). A check sent, or not sent and
    * why in words; the outside service's signed result received, or refused because its signature did not hold or it
    * named no check we sent. Ids, the outcome and the service's status word only — NEVER a name, a document number, a

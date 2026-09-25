@@ -129,6 +129,8 @@ export const REGISTER_SWITCHES: Readonly<Record<string, boolean>> = Object.freez
   PLANNING: false,
   ONS_POSTCODE: false,
   HOMEDATA_ADDRESS: false,
+  /* PHASE 146k: RETIRED. The title register is looked up by hand (src/web/title-by-hand.ts); its connector is in
+     PAID_RETIRED, in no map a click reads, so this switch turns nothing on. It stays so a case stamp reads as before. */
   HMLR_TITLE: false,
   BCIS: false,
   /* PHASE 146d, item 18: the paid planning route, built beside PlanIt and NOT chosen. It is not a row on the

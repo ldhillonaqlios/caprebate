@@ -5,6 +5,10 @@
  *   HOMEDATA_ADDRESS   the paid address lookup — a UPRN, an address, a postcode and coordinates, plus the penny
  *                      title pre-check                                          src/connectors/homedata.ts
  *   HMLR_TITLE         HM Land Registry's title register, about £7 a title      src/connectors/hmlr-title.ts
+ *                      RETIRED FROM THE CLICK BY PHASE 146k (25 September 2026): Lakhbir decided the title register is
+ *                      looked up by hand, and took the Business Gateway details out of the key file. It is in
+ *                      `PAID_RETIRED` below, not in `PAID_CONNECTORS`, and src/web/title-by-hand.ts is where a person
+ *                      records what the official copy says.
  *   HOMEDATA_PLANNING  planning by UPRN — built beside PlanIt, not chosen, and not a row on the research panel
  *                                                                               src/connectors/homedata-planning.ts
  *
@@ -63,6 +67,16 @@ export const PAID_CONNECTORS: Readonly<Record<string, Built<unknown>>> = Object.
     query: (s) => ({ property: s.property }),
     before_pence: homedataCostPence(HOMEDATA_SLUGS),
   }),
+});
+
+/**
+ * PHASE 146k — RETIRED, NOT DELETED. HM Land Registry's title register is looked up BY HAND (Lakhbir, 25 September
+ * 2026), and the Business Gateway user name, password and certificate are no longer in the key file or in
+ * secrets.example.env. So no click runs this, and switching `REGISTER_SWITCHES.HMLR_TITLE` on changes nothing: a source
+ * in neither map has no connector in this build. The code and its recorded-answer tests stay, so that reversing the
+ * decision is putting this entry back in the map above and the four key names back in src/secrets.ts — not a rewrite.
+ */
+export const PAID_RETIRED: Readonly<Record<string, Built<unknown>>> = Object.freeze({
   HMLR_TITLE: built<TitleQuery>({
     connector: hmlrTitle,
     query: (s, e) => ({ property: s.property, nation: nationOf(s, e), pre_check: preCheckFrom(e) }),

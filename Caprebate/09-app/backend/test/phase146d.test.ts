@@ -21,7 +21,7 @@ import * as C from '../src/connectors/registers.ts';
 import { homedataAddress, isTierPath, homedataCostPence, addressFields, preCheckOf, uprnOf, HOMEDATA_SLUGS, HOMEDATA_TIER_PATHS } from '../src/connectors/homedata.ts';
 import { hmlrTitle, registerFields, soapText, amount, registerDate, priorOwnerCount, SOAP_PREFIX, REST_PREFIX } from '../src/connectors/hmlr-title.ts';
 import { homedataPlanning, applicationFields } from '../src/connectors/homedata-planning.ts';
-import { PAID_CONNECTORS, PAID_NOT_CHOSEN, totalBeforePence, pounds, preCheckFrom, uprnFrom } from '../src/connectors/paid-registers.ts';
+import { PAID_CONNECTORS, PAID_NOT_CHOSEN, PAID_RETIRED, totalBeforePence, pounds, preCheckFrom, uprnFrom } from '../src/connectors/paid-registers.ts';
 import { FREE_CONNECTORS } from '../src/connectors/free-registers.ts';
 import { epc } from '../src/connectors/epc.ts';
 import { secretsFromValues, emptySecrets, SECRET_KEYS, parseSecretsFile, KEY_OF_NAME } from '../src/secrets.ts';
@@ -433,11 +433,11 @@ describe('the title register: the price four of five sectors have no other sourc
  * ================================================================== */
 
 describe('the cost, shown before the click from a price list and after it from the suppliers’ own answers', () => {
-  test('BEFORE: the sum of the published weights, plus £7 a title — and 0 while the switches are off', () => {
+  test('BEFORE: the sum of the published weights — and, since Phase 146k, never the £7 title, which a person buys by hand', () => {
     assert.equal(homedataCostPence(HOMEDATA_SLUGS), 8, 'the postcode search (2) plus address (5) plus lr_title (1)');
-    assert.equal(CALL_POLICIES['HMLR_TITLE']?.cost_pence, 700);
+    assert.equal(CALL_POLICIES['HMLR_TITLE']?.cost_pence, 700, 'the retired connector keeps its price list');
     const both = ['HOMEDATA_ADDRESS', 'HMLR_TITLE'];
-    assert.equal(totalBeforePence(both, () => true), 708);
+    assert.equal(totalBeforePence(both, () => true), 8, 'the retired title register was priced into the click');
     assert.equal(totalBeforePence(both, (id) => C.switchedOn(id)), 0, 'a switched-off lookup was priced');
     assert.equal(pounds(8), '8p');
     assert.equal(pounds(708), '£7.08');
@@ -612,10 +612,13 @@ describe('the paid map beside the free one, every switch off, and BCIS unbuilt a
     const research = readFileSync(join(SRC, 'web', 'research.ts'), 'utf8');
     assert.match(research, /FREE_CONNECTORS\[x\.entry\.source_id\] \?\? PAID_CONNECTORS\[x\.entry\.source_id\]/);
     for (const id of ['HOMEDATA_ADDRESS', 'HMLR_TITLE']) {
-      assert.ok(PAID_CONNECTORS[id], id);
       assert.equal(FREE_CONNECTORS[id], undefined, `${id} is in the free map`);
       assert.equal(R.catalogue().find((e) => e.source_id === id)?.tier, 'PAID', id);
     }
+    assert.ok(PAID_CONNECTORS['HOMEDATA_ADDRESS']);
+    // Phase 146k: the title register is looked up by hand. Its connector is retired, in no map a click reads.
+    assert.equal(PAID_CONNECTORS['HMLR_TITLE'], undefined, 'the retired title register is still on the click');
+    assert.ok(PAID_RETIRED['HMLR_TITLE'], 'the retired connector was deleted rather than retired');
     // The address lookup runs first: everything else is keyed on what it finds.
     assert.equal(Object.keys(PAID_CONNECTORS)[0], 'HOMEDATA_ADDRESS');
   });

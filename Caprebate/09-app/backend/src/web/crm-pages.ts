@@ -53,6 +53,7 @@ import { claimNextStep } from './next-step.ts';
 import { dueWords, localStamp, ukDate } from './localtime.ts';
 import { navContext } from './navigation.ts';
 import * as SI from './site-area-inputs.ts';
+import * as TH from './title-by-hand.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };
 
@@ -210,6 +211,7 @@ export async function handleCrm(
       may_note: can(actor, 'internal_note.write', { type: 'internal_note', id: v.business.id, business_id: v.business.id }),
       // PHASE 151c: the site area's point and councils. Everyone who reads the property reads it; the forms are Admin's or Sales's, after signing.
       site: SI.sitePointView(db, actor, v.id),
+      title: TH.titleByHandView(db, actor, v.id),
     }));
     return 'handled';
   }
@@ -238,6 +240,29 @@ export async function handleCrm(
     const r = SI.addNeighbourCouncil(deps, actor, id, (await form(req)).get('lad_code'));
     if (!r.ok) return d.problem(res, actor, 'The council was not added', r.why, `/staff/properties/${id}#site-point`);
     redirect(res, `/staff/properties/${id}?done=site-council#site-point`);
+    return 'handled';
+  }
+
+  /* PHASE 146k: THE TITLE REGISTER, BY HAND (src/web/title-by-hand.ts). Admin or Sales, once the letter is signed —
+     both asked there, on the server. Recording it sends nothing anywhere; taking it back asks why. */
+  const titleHand = /^\/staff\/properties\/([A-Za-z0-9-]+)\/title-register(\/take-back)?$/.exec(path);
+  if (titleHand && method === 'POST') {
+    const id = titleHand[1] ?? '';
+    const f = await form(req);
+    const r = titleHand[2] === undefined
+      ? TH.recordTitleByHand(deps, actor, id, {
+        title_number: f.get('title_number'), tenure: f.get('tenure'), price_paid: f.get('price_paid'),
+        transaction_date: f.get('transaction_date'), restriction_count: f.get('restriction_count'),
+        proprietor_company_number: f.get('proprietor_company_number'), prior_owner_count: f.get('prior_owner_count'),
+      })
+      : TH.takeBackTitleByHand(deps, actor, id, f.get('reason'));
+    if (!r.ok) return d.problem(res, actor, titleHand[2] === undefined ? 'Not saved' : 'Not taken back', r.why, `/staff/properties/${id}#title-register`, r.field);
+    if (titleHand[2] !== undefined && (r.look_again ?? []).length > 0) {
+      html(res, 200, page({ title: 'Taken back', nav: d.nav(actor), body: h`<h1>Taken back</h1><p class="say">${r.why}</p>
+        <ul>${(r.look_again ?? []).map((l) => h`<li>${l.words}</li>`)}</ul><p><a href="/staff/properties/${id}#title-register">Back to the property</a></p>` }));
+      return 'handled';
+    }
+    redirect(res, `/staff/properties/${id}?done=${titleHand[2] === undefined ? 'title-recorded' : 'title-taken-back'}#title-register`);
     return 'handled';
   }
 
@@ -635,9 +660,36 @@ function sitePointBlock(id: string, s: SI.SitePointView): Safe {
   </div>`;
 }
 
+/**
+ * PHASE 146k: THE TITLE REGISTER, BY HAND. What stands, with who typed it and when; entries taken back, with why; and,
+ * for Admin or Sales once the letter is signed, the form — or the take-back, where one stands.
+ */
+function titleBlock(id: string, t: TH.TitleByHandView): Safe {
+  return h`<div class="pblock" id="title-register"><div class="pnum">The title register, by hand</div>
+    <div class="help">We do not look the title register up by computer. Buy the official copy from HM Land Registry
+    and type in what it says.${why('Only the facts below are kept. We never type an owner’s name: where the owner is a person, leave it out. Where the owner is a company, its company number is enough.')}</div>
+    ${t.standing === null ? h`<p class="help">Nothing recorded yet.</p>` : h`${fields(t.standing.lines.map((l) => ({ label: l.label, value: l.value, keep: true })))}
+      <p class="help">Entered by hand by ${t.standing.by}, ${ukDate(t.standing.at)}.</p>`}
+    ${t.taken_back.map((x) => h`<p class="help">Title ${x.title_number} was taken back by ${x.by}, ${ukDate(x.at)}: ${x.reason}</p>`)}
+    ${!t.may_record ? (t.why_not === null ? raw('') : h`<p class="help">${t.why_not}</p>`)
+      : t.standing !== null ? h`<details class="undo"><summary>Take this back</summary>
+        <form method="post" action="/staff/properties/${id}/title-register/take-back">
+          <label>Why? <input name="reason" required maxlength="2000"></label> <button type="submit">Take it back</button></form></details>`
+      : h`<form method="post" action="/staff/properties/${id}/title-register">
+        <label>Title number <input name="title_number" required autocomplete="off"></label>
+        <label>Freehold or leasehold <select name="tenure"><option value="">Not stated</option><option value="freehold">Freehold</option><option value="leasehold">Leasehold</option></select></label>
+        <label>Price paid, in pounds <input name="price_paid" inputmode="decimal" autocomplete="off"></label>
+        <label>Date of that price <input name="transaction_date" type="date"></label>
+        <label>How many restrictions <input name="restriction_count" inputmode="numeric" autocomplete="off"></label>
+        <label>Owner’s company number, if the owner is a company <input name="proprietor_company_number" autocomplete="off"></label>
+        <label>How many earlier owners it names <input name="prior_owner_count" inputmode="numeric" autocomplete="off"></label>
+        <button type="submit">Save</button></form>`}
+  </div>`;
+}
+
 function propertyPage(
   d: CrmPageDeps, actor: Actor, v: C.PropertyView, msg: string | undefined,
-  x: { timeline: Timeline | undefined; owners: readonly Owner[] | null; may_note: boolean; site?: SI.SitePointView | null },
+  x: { timeline: Timeline | undefined; owners: readonly Owner[] | null; may_note: boolean; site?: SI.SitePointView | null; title?: TH.TitleByHandView | null },
 ): string {
   /* PHASE 139 (carried from 138): THE PROPERTY PAGE AS SECTIONS, like the client and claim pages. The old tab ids stay
      the anchors, so every link and redirect to #details, #related and #activity still lands. */
@@ -722,6 +774,7 @@ function propertyPage(
           value; fill one in only to change it.</p>
           <button type="submit">Save</button></form></div>` : raw('')}
       ${x.site === undefined || x.site === null ? raw('') : sitePointBlock(v.id, x.site)}
+      ${x.title === undefined || x.title === null ? raw('') : titleBlock(v.id, x.title)}
 ` },
         { key: 'property.claims', id: 'related', kind: 'facts', heading: 'Claims on this property', count: v.claims.length,
           status: v.claims.length === 0 ? 'NOT_STARTED' : 'WORKING',

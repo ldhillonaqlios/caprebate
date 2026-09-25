@@ -65,6 +65,13 @@ export type SecretKey = {
    * canonical one wins — a file that disagrees with itself is not resolved in favour of the older spelling.
    */
   readonly aliases?: readonly string[];
+  /**
+   * PHASE 146k: THE PHASE THAT RETIRED THIS KEY, where one did. A retired key is not asked for — secrets.example.env
+   * leaves it out, and a test holds that — because nothing a click runs reads it. It stays in this list only so that
+   * the retired connector that owned it (PAID_RETIRED in src/connectors/paid-registers.ts) still reads its own key in
+   * its recorded-answer tests, and so reversing the decision is deleting this one word, not re-typing four keys.
+   */
+  readonly retired?: string;
 };
 
 /**
@@ -78,9 +85,11 @@ export type SecretKey = {
  *     get-energy-performance-data.communities.gov.uk. Its API is api.get-energy-performance-data.communities.gov.uk
  *     and takes ONE bearer token, "found on your my account page when you are logged in to the service" (GOV.UK One
  *     Login). The old service's e-mail-plus-key pair is not needed, so there is one EPC name, not two.
- *   · HM Land Registry Business Gateway — a user name and password on every request, over a TLS connection made
- *     with the client certificate HM Land Registry issues under the network access agreement (a PKCS#12 file and
- *     its passphrase). The certificate FILE stays where the developer installs it; the key file holds its path.
+ *   · HM Land Registry Business Gateway — RETIRED BY PHASE 146k (25 September 2026). Lakhbir decided the title register
+ *     is looked up by hand, and took its four details out of the key file. Its four names (HMLR_BG_USERNAME,
+ *     HMLR_BG_PASSWORD, HMLR_BG_CERT_PATH with the alias HMLR_BG_CERTIFICATE_PATH, HMLR_BG_CERT_PASSPHRASE) are marked
+ *     `retired` below and are no longer in secrets.example.env. Nothing a click runs reads them: the connector that
+ *     did is kept, retired, in PAID_RETIRED (src/connectors/paid-registers.ts).
  *   · IONOS — SMTP for sending and IMAP for reading replies, each a host, port, user and password.
  */
 export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
@@ -89,10 +98,10 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'CQC_SUBSCRIPTION_KEY', owner: 'CQC', secret: true, phase: '146c', what: 'the CQC API subscription key' },
   { name: 'EPC_API_TOKEN', owner: 'EPC', secret: true, phase: '146c', what: 'the energy certificate service’s bearer token, from its account page' },
   { name: 'HOMEDATA_API_KEY', owner: 'HOMEDATA_ADDRESS', secret: true, phase: '146d', what: 'the Homedata address lookup key' },
-  { name: 'HMLR_BG_USERNAME', owner: 'HMLR_TITLE', secret: true, phase: '146d', what: 'the Land Registry Business Gateway user name' },
-  { name: 'HMLR_BG_PASSWORD', owner: 'HMLR_TITLE', secret: true, phase: '146d', what: 'the Land Registry Business Gateway password' },
-  { name: 'HMLR_BG_CERT_PATH', owner: 'HMLR_TITLE', secret: true, phase: '146d', what: 'where the Business Gateway client certificate (a .p12 file) is installed', aliases: ['HMLR_BG_CERTIFICATE_PATH'] },
-  { name: 'HMLR_BG_CERT_PASSPHRASE', owner: 'HMLR_TITLE', secret: true, phase: '146d', what: 'the passphrase of that certificate' },
+  { name: 'HMLR_BG_USERNAME', owner: 'HMLR_TITLE', secret: true, phase: '146d', retired: '146k', what: 'the Land Registry Business Gateway user name' },
+  { name: 'HMLR_BG_PASSWORD', owner: 'HMLR_TITLE', secret: true, phase: '146d', retired: '146k', what: 'the Land Registry Business Gateway password' },
+  { name: 'HMLR_BG_CERT_PATH', owner: 'HMLR_TITLE', secret: true, phase: '146d', retired: '146k', what: 'where the Business Gateway client certificate (a .p12 file) is installed', aliases: ['HMLR_BG_CERTIFICATE_PATH'] },
+  { name: 'HMLR_BG_CERT_PASSPHRASE', owner: 'HMLR_TITLE', secret: true, phase: '146d', retired: '146k', what: 'the passphrase of that certificate' },
   { name: 'IONOS_SMTP_HOST', owner: 'IONOS_EMAIL', secret: true, phase: '146f', what: 'the IONOS server that sends email' },
   { name: 'IONOS_SMTP_PORT', owner: 'IONOS_EMAIL', secret: true, phase: '146f', what: 'its port' },
   { name: 'IONOS_SMTP_USER', owner: 'IONOS_EMAIL', secret: true, phase: '146f', what: 'the mailbox that sends' },

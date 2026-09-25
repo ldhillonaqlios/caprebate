@@ -99,6 +99,7 @@ describe('the key file is read from outside the repository, and each key goes on
     assert.equal(s.forOwner('EPC').get('COMPANIES_HOUSE_API_KEY'), null, 'the EPC connector read Companies House’s key');
     assert.equal(s.forOwner('CQC').get('EPC_API_TOKEN'), null);
     assert.equal(s.forOwner('EPC').get('NOT_OURS'), null);
+    // Phase 146k: the Business Gateway's four keys are retired — still owned by its retired connector, never asked for.
     assert.deepEqual(s.forOwner('HMLR_TITLE').missing(), ['HMLR_BG_USERNAME', 'HMLR_BG_PASSWORD', 'HMLR_BG_CERT_PATH', 'HMLR_BG_CERT_PASSPHRASE']);
     rmSync(dir, { recursive: true });
   });
@@ -161,10 +162,15 @@ describe('the key file is read from outside the repository, and each key goes on
   test('secrets.example.env lists every key name, in order, and holds no value', () => {
     const text = readFileSync(join(BACKEND, 'secrets.example.env'), 'utf8');
     const lines = text.split('\n').filter((l) => /^[A-Z]/.test(l));
-    assert.deepEqual(lines.map((l) => l.split('=')[0]), SECRET_KEYS.map((k) => k.name));
+    // Phase 146k: every key a click can read, and no retired one.
+    assert.deepEqual(lines.map((l) => l.split('=')[0]), SECRET_KEYS.filter((k) => k.retired === undefined).map((k) => k.name));
+    assert.deepEqual(SECRET_KEYS.filter((k) => k.retired !== undefined).map((k) => k.name),
+      ['HMLR_BG_USERNAME', 'HMLR_BG_PASSWORD', 'HMLR_BG_CERT_PATH', 'HMLR_BG_CERT_PASSPHRASE']);
     for (const l of lines) assert.match(l, /^[A-Z0-9_]+=$/, `a value in the example: ${l.split('=')[0]}`);
+    // Phase 146k: no Business Gateway name is asked for any more.
+    assert.equal(lines.some((l) => l.startsWith('HMLR_BG_')), false, 'the example still asks for a Business Gateway key');
     for (const need of ['ANTHROPIC_API_KEY', 'COMPANIES_HOUSE_API_KEY', 'CQC_SUBSCRIPTION_KEY', 'EPC_API_TOKEN', 'HOMEDATA_API_KEY',
-      'HMLR_BG_USERNAME', 'IONOS_SMTP_HOST', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'IONOS_SMTP_PASSWORD', 'GA4_MEASUREMENT_ID']) {
+      'IONOS_SMTP_HOST', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'IONOS_SMTP_PASSWORD', 'GA4_MEASUREMENT_ID']) {
       assert.ok(lines.some((l) => l.startsWith(need + '=')), need);
     }
   });

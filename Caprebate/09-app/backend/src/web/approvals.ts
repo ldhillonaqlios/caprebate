@@ -227,8 +227,8 @@ type RawFact = Omit<CheckFact, 'approved' | 'untick' | 'approvable' | 'why_not'>
 
 function registerFacts(db: Db, business_id: string, claims: readonly ClaimRow[]): RawFact[] {
   const out: RawFact[] = [];
-  for (const r of db.all<{ id: string; source_id: string; fields_json: string; obtained_at: string; property_id: string | null }>(
-    'SELECT id, source_id, fields_json, obtained_at, property_id FROM register_records WHERE business_id = ? ORDER BY obtained_at ASC, id ASC',
+  for (const r of db.all<{ id: string; source_id: string; entity_id: string; fields_json: string; obtained_at: string; property_id: string | null }>(
+    'SELECT id, source_id, entity_id, fields_json, obtained_at, property_id FROM register_records WHERE business_id = ? ORDER BY obtained_at ASC, id ASC',
     [business_id])) {
     let fields: Record<string, unknown>;
     try { fields = JSON.parse(r.fields_json) as Record<string, unknown>; } catch { continue; }
@@ -242,7 +242,9 @@ function registerFacts(db: Db, business_id: string, claims: readonly ClaimRow[])
       const known = v !== null && v !== undefined && String(v).trim() !== '';
       out.push({
         ref: `reg.${r.id}.${field}`, step: company ? 'COMPANY' : claim === null ? null : 'PROPERTY', claim_id: claim?.id ?? null,
-        label: fieldWords(field), value: known ? String(v) : 'not known', chip: REGISTER_CHIPS[r.source_id] ?? 'A public register',
+        label: fieldWords(field), value: known ? String(v) : 'not known',
+        // PHASE 146k: a record a person typed from the official copy says so, so nobody ticks it as if a lookup made it.
+        chip: `${REGISTER_CHIPS[r.source_id] ?? 'A public register'}${r.entity_id.startsWith('by-hand:') ? ', entered by hand' : ''}`,
         attribution: registerAttribution(r.source_id), arrived: r.obtained_at, known,
       });
     }
