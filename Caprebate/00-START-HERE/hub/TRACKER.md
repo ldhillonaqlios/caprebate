@@ -1296,6 +1296,7 @@
 
 - Note 2026-09-25 (Phase 151f): Done: the identity check is Didit's, still switched off; migration 053; the papers and the Word questions updated. Record in PHASE-HISTORY.md.
 - Note 2026-09-25 (Phase 151f, later): Lakhbir, 25 Sep 2026: the Didit account is live and DIDIT_API_KEY is in the key file (its label was renamed to that exact name so it is read; checked by name only). Still missing: DIDIT_WEBHOOK_SECRET and DIDIT_WORKFLOW_ID. The check stays off until the officer and the solicitor approve the papers.
+- Note 2026-09-25 (Phase 151f, later): Lakhbir, 25 Sep 2026: all three Didit entries are in the key file and read (checked by name only). Only the papers (officer and solicitor) and the switch remain.
 
 ### Phase 151g - the test lookups Lakhbir allowed: the smoke test keeps his five conditions
 
