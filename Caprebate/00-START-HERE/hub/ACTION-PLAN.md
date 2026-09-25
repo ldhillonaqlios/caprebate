@@ -1008,6 +1008,14 @@ anyone" (its id is in the tracker; find it with list --group DEVELOPMENT).
    website's database is in memory, so a result matches only while the same
    running copy is up; make it persist (or say plainly on the panel that a
    result may be lost), and prove it with a signed, invented result, as below.
+   PROVED ONCE, 25 SEP 2026: Lakhbir checked himself on the test website and
+   it showed Passed - the same running copy sent and received. Persistence is
+   still what makes it reliable.
+4. THE EMPTY PANEL (added 25 Sep 2026). On a client with no contacts the
+   identity panel shows no form and says nothing, so a person cannot tell how
+   to send a check. Say, in plain words, to add the person as a contact of
+   this client first (with a link to that form); a test, proved red first;
+   the guide's B53 and Help to match.
    WHERE DIDIT SENDS ITS RESULTS (added by Phase 151h, 25 Sep 2026). The
    identity check is on for testing, and Didit posts each result to the
    webhook address set in its console: https://<public host>/hooks/identity-
