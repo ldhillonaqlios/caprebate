@@ -2,7 +2,7 @@
 
  **THIS IS THE DOCUMENT TO WORK FROM. **The phase prompts sit at the top, ready to copy and paste. Everything below them is the plan itself: what the business is, what is genuinely finished, what is stuck and on whom, the order to work in, and an honest list of what we do not know.
 
- **Where everything lives, since 25 September 2026: in files, and monday.com is gone.** On 25 September 2026 Lakhbir became a guest on the monday.com account that held this project, and every monday.com call began to fail ("the account admin must enable 'Public Hosted MCP'"). He decided to drop monday.com that day. **Phase 151d exported everything it held, checked it complete, and made it files in `00-START-HERE/hub/`**, committed to the repository so `git pull` brings them to either machine: this plan (`ACTION-PLAN.md`); `PHASE-HISTORY.md`, which records what every completed phase actually did and is an archive, not a runbook; the three live registers of everything waiting on a named person's signature (`FOR-THE-ACCOUNTANT.md`, `FOR-THE-SURVEYOR.md`, `FOR-THE-SOLICITOR-DPO-DEVELOPER.md`); the board, as `TRACKER.csv` (read `TRACKER.md`, and change it only with `node 03-app/caprebate-tracker.cjs`); the comments the board carried, as `COMMENTS-ARCHIVE.md`; the old monday.com questions document, as `QUESTIONS-BACKGROUND.md` (background only); and the lock, `CLAIM.md`. The exports themselves are kept unedited in `_archive/`. **Every open question and every answer is in the Word document Caprebate_Questions.docx**, in Lakhbir's OneDrive (Health Capital Allowances folder): the source of truth for questions and answers (Lakhbir, 22 September 2026), read and written as AMENDMENT 2 says. Where this plan says "the question that unblocks it", the question is in the Word document. **Where older text below says "the board", read the tracker; where it says a board item, read its row, found by the same id.**
+ **Where everything lives, since 25 September 2026: in files, and monday.com is gone.** On 25 September 2026 Lakhbir became a guest on the monday.com account that held this project, and every monday.com call began to fail ("the account admin must enable 'Public Hosted MCP'"). He decided to drop monday.com that day. **Phase 151d exported everything it held, checked it complete, and made it files in `00-START-HERE/hub/`**, committed to the repository: this plan (`ACTION-PLAN.md`); `PHASE-HISTORY.md`, which records what every completed phase actually did and is an archive, not a runbook; the three live registers of everything waiting on a named person's signature (`FOR-THE-ACCOUNTANT.md`, `FOR-THE-SURVEYOR.md`, `FOR-THE-SOLICITOR-DPO-DEVELOPER.md`); the board, as `TRACKER.csv` (read `TRACKER.md`, and change it only with `node 03-app/caprebate-tracker.cjs`); the comments the board carried, as `COMMENTS-ARCHIVE.md`; the old monday.com questions document, as `QUESTIONS-BACKGROUND.md` (background only); and the lock, `CLAIM.md`. The exports themselves are kept unedited in `_archive/`. **Every open question and every answer is in the Word document Caprebate_Questions.docx**, in Lakhbir's OneDrive (Health Capital Allowances folder): the source of truth for questions and answers (Lakhbir, 22 September 2026), read and written as AMENDMENT 2 says. Where this plan says "the question that unblocks it", the question is in the Word document. **Where older text below says "the board", read the tracker; where it says a board item, read its row, found by the same id.**
 
 
 ---
@@ -455,7 +455,7 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   25 Sep 2026: on the deploy of the commit that added it, hub/CLAIM.md was not
   served while the Developer Spec, one folder over, was. ANYTHING ELSE ADDED TO
   THE .gitignore ALLOW-LIST IS PUBLIC unless .vercelignore names it too (Word
-  questions 228 and 229).
+  question 229).
 
 THE LOCK - hub/CLAIM.md replaces monday.com's "Claimed by (machine)" column
   Before a phase starts: write the phase, the machine and the time there,
@@ -572,56 +572,49 @@ SUBITEMS - rows with a parent_id. Their status is a DIFFERENT column with five
 COORDINATES, CONTINUED - the second of two blocks, rewritten 25 Sep 2026 by
 Phase 151d for files.
 
-DISK - TWO COPIES OF THE TREE, AND GIT BETWEEN THEM
-  Acer  "C:/Users/L.Dhillon/OneDrive - IT Roadway/Desktop/Caprebate"
+DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   Mac   "/Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
          Allowances/Business Development/Development/Caprebate"
-  Both contain spaces - quote them. They are in two OneDrive accounts and do NOT
-  sync with each other. THE MAC COPY IS CURRENT: Phases 115 to 151d and every
-  sweep since ran there. Say in your record which copy you used.
-  GIT PULL ON THE ACER BRINGS EVERYTHING IN THE REPOSITORY: the code, the site
-  file, the checks, and since Phase 151d the whole hub - the plan, the phase
-  history, the registers, the tracker, the comments and the lock. Development/
-  (one level above the tree) is the working copy on the Mac; remote
-  github.com/ldhillonaqlios/caprebate (private), branch main, one commit per
-  phase since Phase 134. Read "git log --oneline" at the start of a phase: a
-  commit you do not recognise is another session.
-  WHAT GIT DOES NOT BRING. Its .gitignore is an ALLOW-LIST: the site file,
-  09-app/, 03-app/, 04-phase-work/phase3 and phase9, the six Module files and
-  the fixture taxonomy, the engagement letter, and 00-START-HERE/hub/ - never
-  the other documents, board exports, .bak files, databases or keys. So the
-  rulebooks, the policies, 08-monday-doc-exports and the rest reached the Acer
-  only through monday.com, and nothing brings them now. Until Lakhbir answers
-  Word question 228, work on the Mac. The Acer copy's documents are stale, and
-  ITS harness still reads the module files from 03-app/ - do not delete them
-  there until that copy is brought level.
+  It contains spaces - quote it. Every phase runs here. The Acer copy
+  ("C:/Users/L.Dhillon/OneDrive - IT Roadway/Desktop/Caprebate", in another
+  OneDrive account) is no longer used, and nothing needs bringing level with it
+  (Word question 228, closed 25 Sep 2026). Older text that mentions the Acer,
+  its junctions, its node or its stale copies is history.
+  OneDrive backs up the whole tree. Development/ (one level above the tree) is
+  also a git working copy (its .git file points at /Users/lakhbir/code/
+  caprebate.git): remote github.com/ldhillonaqlios/caprebate (private), branch
+  main, one commit per phase since Phase 134. Read "git log --oneline" at the
+  start of a phase: a commit you do not recognise is another session.
+  WHAT GIT HOLDS. Its .gitignore is an ALLOW-LIST: the site file, 09-app/,
+  03-app/, 04-phase-work/phase3 and phase9, the six Module files and the
+  fixture taxonomy, the engagement letter, and 00-START-HERE/hub/ - never the
+  other documents, board exports, .bak files, databases or keys. They live in
+  OneDrive only, on purpose, in case one ever holds a real client's data.
   08-monday-doc-exports/ holds THE LIVE COPY of every document that was
   attached to a board item, as <item id>__<name>.md (Phase 87 exported them and
   cleared the doc columns). The tracker's files_on_disk says which file is
   whose. A name ending .bak-phaseNN is a dated backup: never edit one.
   The tree: 00- to 08-, 09-app/, _archive/ and README-file-index.md. Nothing
   numbered may be renamed.
-  THE ENGINE, "Caprebate site.html", IS ONE LEVEL ABOVE THE TREE on both
-  machines (the Desktop on the Acer, Development/ on the Mac), and is copied
+  THE ENGINE, "Caprebate site.html", IS ONE LEVEL ABOVE THE TREE, in
+  Development/, and is copied
   byte for byte into 09-app/engine/src/generated/. Change the site file and
   re-run the extractor; never hand-edit generated/.
-  03-app/phase3 and 03-app/phase9 are NTFS JUNCTIONS into 04-phase-work on the
-  Acer and EMPTY FOLDERS on the Mac. The harness traverses them and falls back
-  to ../04-phase-work when they are empty.
+  03-app/phase3 and 03-app/phase9 are EMPTY FOLDERS (on the Acer they were
+  junctions). The harness traverses them and falls back to ../04-phase-work.
   THE MODULE FILES: the six Module-*.md files and Caprebate-Fixture-Taxonomy-
   v1.csv live ONLY in 02-modules-and-build-prep/ on the Mac, read there by the
-  harness and the phase9 cost-model test since Phase 132g. LOOK ONE LEVEL UP: a
-  full copy of the competitor program is kept in Development/Cap allowance,
-  outside the tree and outside git, and Lakhbir wants it kept (Word questions 9
-  and 214). Do not report it deleted.
+  harness and the phase9 cost-model test since Phase 132g. THE COMPETITOR
+  PROGRAM'S FULL COPY, which Lakhbir wanted kept in Development/Cap allowance
+  (Word questions 9 and 214), WAS NOT THERE, NOR ANYWHERE ELSE IN ONEDRIVE, on
+  25 Sep 2026; Phase 151d's sweep did not touch it. Lakhbir has been asked.
   KEYS live only in ~/.caprebate-secrets.env, outside the repository (names in
   09-app/backend/secrets.example.env); src/secrets.ts refuses a key file inside
   the tree, and .gitignore ignores *.env, *secret*, *.p12, *.pfx, *.pem and
   *.key anywhere. Check the key file BY NAME ONLY - never print a value.
   src/connectors/http.ts is the only file under src/ that may call fetch, and
   test/phase146b.test.ts fails on any other.
-  node  Acer: C:/Users/L.Dhillon/node-portable/node-v24.16.0-win-x64, NOT on
-        PATH. Mac: on PATH (Homebrew).
+  node  on PATH (Homebrew).
   A DOCX ZIP may use BACKSLASH entry paths: the engagement letter's is
   "word\document.xml" and the seven policy templates' are not. Match both. To
   EDIT one, rewrite that single entry and keep every other entry's bytes and
@@ -1000,8 +993,7 @@ anyone" (its id is in the tracker; find it with list --group DEVELOPMENT).
    deploy through .vercelignore. .vercelignore takes a file out of the upload
    entirely, the function bundle included, so a file the function reads must
    stay. Prove on the new deploy: every file kept off answers something other
-   than 200, the site still works, and the payload proof still holds. Then
-   answer Word question 228 in the plan's DISK paragraph if Lakhbir has.
+   than 200, the site still works, and the payload proof still holds.
 
 CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
 inside their folders; the drift checker and its negative control; the tracker
@@ -1075,15 +1067,13 @@ after that phase.
    fifty-one Done items carried pages saying DRAFT, NOT APPROVED or NOT IN
    FORCE. A draft at Done is invisible to every register.
 
-2. CROSS-REFERENCE AGAINST THE DISK. There are TWO copies of the tree, in two
-   OneDrive accounts, and they do not sync with each other - both paths are in
-   COORDINATES, and both contain spaces, so quote them.
-   SAY IN YOUR RECORD WHICH COPY YOU READ AND WHAT THE SUITES PRINTED THERE.
-   git brings the code and the hub to the Acer, and nothing brings the other
-   documents (COORDINATES, DISK); a total LOWER than the last phase recorded is
-   a stale copy, not a regression.
-   03-app/phase3 and 03-app/phase9 are NTFS junctions on the Acer and EMPTY
-   FOLDERS on the Mac. VERIFY BY TRAVERSING, NOT BY READING THE LINK TEXT.
+2. CROSS-REFERENCE AGAINST THE DISK. One copy of the tree, on the Mac, since
+   25 Sep 2026 (the Acer is retired); its path is in COORDINATES and contains
+   spaces, so quote it. SAY IN YOUR RECORD WHAT THE SUITES PRINTED. A total
+   LOWER than the last phase recorded is a finding: look for a lost file or a
+   deleted test before calling it anything else.
+   03-app/phase3 and 03-app/phase9 are EMPTY FOLDERS; the suites live in
+   04-phase-work. VERIFY BY TRAVERSING, NOT BY READING THE LINK TEXT.
    READ THE FILES, NOT THE FILE LIST. On 6 Sep a finished engagement letter sat
    unread while six documents said it did not exist; on 10 Sep seven "DRAFT
    TEMPLATE" policies sat unread in the same folder, on no board item.

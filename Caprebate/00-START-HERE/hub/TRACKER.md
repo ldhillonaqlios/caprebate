@@ -39,6 +39,7 @@
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-09-25 (Phase 151d): The plan is now 00-START-HERE/hub/ACTION-PLAN.md, and the lock is 00-START-HERE/hub/CLAIM.md, not this row's claim. Phase 151c's claim, left here when monday.com access was lost, is cleared.
+- Note 2026-09-25 (Phase 151d, later): Lakhbir, 25 Sep 2026: leave monday.com (his to do in monday.com); the Acer is retired, only the Mac - the plan's DISK paragraph says so.
 
 ### ❓ CAPREBATE QUESTIONS — every open question, and who has to answer it
 
@@ -46,6 +47,7 @@
 
 - Document: 00-START-HERE/hub/QUESTIONS-BACKGROUND.md (background only; the questions live in Caprebate_Questions.docx)
 - Note 2026-09-25 (Phase 151d): Phase 151d recorded 16 answers as read (117 to 127, 129, 130, 145, 152, 153) and added questions 228 and 229 for Lakhbir, proved in the cloud byte for byte. The headings are in hub/QUESTIONS-WORD-HEADINGS.txt.
+- Note 2026-09-25 (Phase 151d, later): Lakhbir, 25 Sep 2026: the Acer is retired, only the Mac. Question 228 closed and moved to the closed document; proved in the cloud byte for byte.
 
 ### 🧾 FOR THE ACCOUNTANT — everything waiting on your sign-off
 

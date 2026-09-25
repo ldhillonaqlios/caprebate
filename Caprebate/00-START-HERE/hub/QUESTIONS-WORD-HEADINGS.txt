@@ -33,7 +33,6 @@
 218) Which BCIS product did you agree to, and does its licence let our software use its rates?
 219) How long do we keep the files clients upload, and who may open them?
 227) May the site area we work out from a land boundary go in a client's report?
-228) Now monday.com has gone, should all our working documents be kept in our private code store?
 229) Should the test website stop showing our files to anyone who has the link?
 72) When buying a building, can the buyer add their own fitting costs on top of an agreed value?
 73) If the seller was never allowed to claim, does the pooling rule still apply?
@@ -211,6 +210,7 @@
 189) Should the surveyor see a client's chat?
 211) Is our email address and website caprebate.com or caprebate.co.uk?
 214) The competitor's calculator program is still kept, outside the project folder. Is that where you want it?
+228) Now monday.com has gone, should all our working documents be kept in our private code store?
 93) In a Scottish sale, which date starts our time limits?
 154) Should WordPress replace our whole system, or sit beside it?
 156) May we briefly check two public register names without saving them?
