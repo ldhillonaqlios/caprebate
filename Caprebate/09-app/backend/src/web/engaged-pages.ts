@@ -125,6 +125,19 @@ export async function handleEngaged(
     return 'handled';
   }
 
+  /* ---- PHASE 146j · taking a pick back ----
+     A separate act on the lookup's own row, with a reason — not a second pick screen. The form carries the lookup and
+     the reason and nothing else: which record goes is read from the pick, on the server. It calls nothing outside. */
+  const takeBack = /^\/staff\/clients\/([A-Za-z0-9-]+)\/research\/pick\/take-back$/.exec(path);
+  if (takeBack && method === 'POST') {
+    const id = takeBack[1] ?? '';
+    const f = await form(req);
+    const r = MR.takeBackPick(deps, actor, id, f.get('source_id') ?? '', f.get('reason'));
+    if (!r.ok) return d.problem(res, actor, 'Not taken back', r.why, `/staff/clients/${id}#sources`, r.field);
+    redirect(res, `/staff/clients/${id}?done=pick-taken-back#sources`);
+    return 'handled';
+  }
+
   /* ---- PHASE 139 · checked and approved, and telling the client ---- */
   const checks = /^\/staff\/clients\/([A-Za-z0-9-]+)\/(checks\/approve|checks\/unapprove|steps\/tell|steps\/take-back)$/.exec(path);
   if (checks && method === 'POST') {
@@ -226,6 +239,7 @@ export const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
   retry: 'We tried that lookup again.',
   picked: 'Chosen. We keep what that entry says, and the file says a person chose it.',
   'picked-none': 'Noted — none of them is this building. Nothing was kept, and those questions stay asked.',
+  'pick-taken-back': 'Taken back. The entry that was chosen is gone and your reason is kept with it. The lookup’s own line says what to look at again.',
   sent: 'The question is in the client’s portal.',
   answered: 'Recorded — and the file says a member of staff entered it, not the client.',
   withdrawn: 'Withdrawn. The fact it was asking about is back on the missing list, and the record says who took it back.',
@@ -368,6 +382,16 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
           mayPick(x, s) ? h` <form method="post" action="/staff/clients/${p.business.id}/research/pick" class="inline">
                <input type="hidden" name="source_id" value="${x.source_id}">
                <button class="linkish" type="submit">Choose which one it is</button></form>`
+          : raw('')}${/* PHASE 146j: a person's choice that stands can be taken back, with a reason. Drawn only where the
+                         choice kept a record and the letter is signed; src/web/match-review.ts asserts both again. */
+          x.taken_back === null ? raw('') : h`<br><span class="help">A choice here was taken back ${localStamp(x.taken_back.at)}: ${x.taken_back.reason}${
+            x.taken_back.look_again.length === 0 ? '' : `. Still to look at again: ${x.taken_back.look_again.join(', ')}`}.</span>`}${
+          x.picked && s.engagement.signed ? h` <details class="undo"><summary>Take this choice back</summary>
+               <form method="post" action="/staff/clients/${p.business.id}/research/pick/take-back">
+               <input type="hidden" name="source_id" value="${x.source_id}">
+               <label>Why? <input name="reason" required maxlength="2000"></label>
+               <button type="submit">Take it back</button>
+               <span class="help"> We take out the entry that was chosen, keep your reason, and the list can be looked at again.</span></form></details>`
           : raw('')}</td>
       </tr>`)}</tbody></table>
 

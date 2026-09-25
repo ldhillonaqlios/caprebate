@@ -28,10 +28,11 @@ import * as M from './messages.ts';
 import * as IE from './inbound-email.ts';
 import { page } from './html.ts';
 import { imapLoginFromKeyFile, imapMailbox, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../stubs/email-inbound.ts';
-import { receiveFile } from './client-files-pages.ts';
+import { earlyQuestions, receiveFile } from './client-files-pages.ts';
 import { boundaryOf, parseMultipart, type Part } from './multipart.ts';
 import { UPLOAD_LIMITS } from './upload-handler-port.ts';
-import { receivableTypes } from './documents.ts';
+import { earlyQuestionsFor, receivableTypes } from './documents.ts';
+import { earlyVouchesFrom } from './document-reading.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -85,7 +86,9 @@ export function surveyorThreadPanel(db: Db, actor: Actor, business_id: string): 
  * PHASE 142 — THE FILES OF AN EMAILED REPLY THAT NOBODY HAS SAVED YET. One small form each: say what it is, and it is
  * fetched from the mailbox and saved to Files through the upload path. Only for Admin and Sales (`inbound_email.file`).
  */
-function emailedFiles(db: Db, actor: Actor, m: M.ThreadMessage, types: readonly { code: string; label: string }[]): Safe {
+function emailedFiles(
+  db: Db, actor: Actor, m: M.ThreadMessage, types: readonly { code: string; label: string; handler_type: string | null }[], business_id: string,
+): Safe {
   if (!m.by_email) return raw('');
   const files = IE.unsavedFiles(db, actor, m.id);
   if (files.length === 0) return raw('');
@@ -94,6 +97,8 @@ function emailedFiles(db: Db, actor: Actor, m: M.ThreadMessage, types: readonly 
       <span>${f.label}</span>
       <label class="vh" for="ef-${f.id}">What is it?</label>
       <select class="fi" id="ef-${f.id}" name="type_code" required><option value="">What is it?</option>${types.map((t) => h`<option value="${t.code}">${t.label}</option>`)}</select>
+      ${/* PHASE 146j: the question about a name, asked where staff say what the file is, so the first reading can keep it. */
+        earlyQuestions(earlyQuestionsFor(actor, business_id, types), `ef-${f.id}`)}
       <button type="submit">Save to Files</button></form>`)}</div>`;
 }
 
@@ -154,7 +159,7 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
     tab, unread, started, body: h`${top}
     ${done === 'message' ? savedMessage('Sent. The client will see it in their portal.') : raw('')}
     ${done === 'saved-file' ? savedMessage('Saved to Files, under From the client.') : raw('')}
-    ${c.messages.length === 0 ? h`<p class="empty">No messages with ${c.company} yet.</p>` : h`<ol class="chat">${c.messages.map((m) => bubble(m, false, emailedFiles(db, actor, m, types)))}</ol>`}
+    ${c.messages.length === 0 ? h`<p class="empty">No messages with ${c.company} yet.</p>` : h`<ol class="chat">${c.messages.map((m) => bubble(m, false, emailedFiles(db, actor, m, types, business_id)))}</ol>`}
     ${!c.may_write ? raw('') : c.do_not_contact
       ? h`<div class="gate" role="note"><strong>You cannot write to this company.</strong> They asked us not to contact them.</div>`
       : h`<form method="post" action="/staff/clients/${business_id}/messages" class="pblock chatform">
@@ -247,7 +252,8 @@ export async function handleStaffMessages(
   const save = /^\/staff\/replies\/files\/([A-Za-z0-9-]+)$/.exec(path);
   if (save && method === 'POST') {
     const f = await form(req);
-    const r = await IE.saveEmailedFile({ app: d.app, store: d.store, newId: d.newId }, actor, save[1] ?? '', f.get('type_code') ?? '', mailboxFor(d));
+    const r = await IE.saveEmailedFile({ app: d.app, store: d.store, newId: d.newId }, actor, save[1] ?? '', f.get('type_code') ?? '', mailboxFor(d),
+      earlyVouchesFrom((n) => f.get(n)));
     if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, '/staff');
     redirect(res, `/staff/clients/${r.business_id}?chat=client&done=saved-file#chat`);
     return 'handled';

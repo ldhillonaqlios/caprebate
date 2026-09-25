@@ -57,9 +57,11 @@ import { dueReading, type DueReading } from './tasks.ts';
 import { fireAutomation, type RunOutcome } from './automation.ts';
 import { beginUpload } from './uploads.ts';
 import {
-  isVouchAnswer, readingsFor, vouchedFieldFor, vouchesFor, vouchView, writeVouch,
-  type ReadingView, type VouchView,
+  adoptRequestVouch, earlyVouchQuestions, isVouchAnswer, readingsFor, vouchedFieldFor, vouchesFor, vouchKeeps, vouchView, writeRequestVouch, writeVouch,
+  type ReadingView, type VouchAnswer, type VouchView,
 } from './document-reading.ts';
+import { removeRegisterField } from '../stubs/registers.ts';
+import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from './take-back.ts';
 import type { FsObjectStore } from './objectstore.ts';
 
 export type DocDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
@@ -277,9 +279,24 @@ export function mayWriteTypes(actor: Actor): boolean {
 }
 
 /** What an upload may be, and what may be asked for: active, with a receipt policy. A vocabulary, not a record. */
-export function receivableTypes(db: Db): { code: string; label: string }[] {
-  return db.all<{ code: string; label: string }>(
-    'SELECT code, label FROM document_types WHERE active = 1 AND handler_type IS NOT NULL ORDER BY ord ASC, code ASC');
+export function receivableTypes(db: Db): { code: string; label: string; handler_type: string | null }[] {
+  // PHASE 146j: with the kind of document each type is read as, so a form can ask the question that type needs.
+  return db.all<{ code: string; label: string; handler_type: string | null }>(
+    'SELECT code, label, handler_type FROM document_types WHERE active = 1 AND handler_type IS NOT NULL ORDER BY ord ASC, code ASC');
+}
+
+/**
+ * PHASE 146j: THE QUESTIONS A TYPE-CHOOSING FORM ASKS, for a login that may answer them — and none for anybody else,
+ * the client included. The client never vouches for their own document.
+ */
+export function earlyQuestionsFor(
+  actor: Actor, business_id: string, types: readonly { readonly code: string; readonly label: string; readonly handler_type: string | null }[],
+): readonly { readonly field_id: string; readonly question: string; readonly types: readonly string[] }[] {
+  if (actor.role === 'CLIENT') return [];
+  const probe: DocObj = {
+    type: 'document', id: '__new__', business_id, readers: 'CLAIM_TEAM', carries_value: true, letter_signed: false, assigned_surveyor_ids: [],
+  };
+  return can(actor, 'document.vouch', probe) ? earlyVouchQuestions(types) : [];
 }
 
 function readTypeFields(input: Fields, current: TypeRow | null):
@@ -562,6 +579,13 @@ export type StartArgs = {
    * upload is theirs to see by rule, and a new version keeps its document's answer.
    */
   readonly shown_to_client?: boolean;
+  /**
+   * PHASE 146j, staff only: the answer to the one question a person must answer about a name on this kind of document,
+   * given on the upload form where the type is chosen — so the FIRST reading can keep the name. Written as the new
+   * document's answer, the same row the page shows and changes. Ignored for a type that asks no question, for a login
+   * that may not answer it, and where the document already has an answer: the page's answer governs.
+   */
+  readonly early_vouch?: readonly { readonly field_id: string; readonly answer: VouchAnswer }[];
 };
 
 export type Started =
@@ -629,6 +653,7 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
 
   const handlerType = t.handler_type;
   let made: { lid: string; seq: number; version_no: number; newDocument: boolean; linkId: string | null } | null = null;
+  let early: EarlyVouch | null = null;
   const b = await beginUpload(
     { db: d.db, store: d.store, now: d.now, actor: actor.id, newId: d.newId },
     {
@@ -655,6 +680,11 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
               [linkId, lid, claimToLink, actor.id, at]);
           }
         }
+        /* PHASE 146j: THE QUESTION, ANSWERED BEFORE THE FIRST READING — in the same transaction as the row, so the reading
+           this upload is about to start reads it. The upload form's own answer first; failing that, the request's, adopted
+           by this document. Neither where the document already has an answer: the page's answer governs. */
+        early = recordEarlyVouch(d, actor, lid, handlerType, biz.id, t, a.early_vouch ?? [],
+          request?.id ?? (logical === null ? openRequestFor(d.db, biz.id, t.code)?.id ?? null : null), at);
         const version_no = (d.db.get<{ m: number | null }>(
           'SELECT MAX(version_no) AS m FROM documents WHERE logical_document_id = ?', [lid])?.m ?? 0) + 1;
         made = { lid, seq, version_no, newDocument: logical === null, linkId };
@@ -683,7 +713,71 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
       object_type: 'document', object_id: m.lid, detail: { link: m.linkId, claim: claimToLink, via: linkVia ?? 'STAFF', business: biz.id },
     });
   }
+  const e = early as EarlyVouch | null;
+  if (e !== null) {
+    d.audit.append({
+      at, kind: 'DOCUMENT_FIELD_VOUCHED', outcome: 'ALLOWED', actor_id: e.by, actor_role: e.by === actor.id ? actor.role : null,
+      object_type: 'document', object_id: m.lid,
+      // Where it was given, and for a request's answer, which request. NEVER THE VALUE.
+      detail: { field_id: e.field_id, answer: e.answer, was: null, kept: e.answer === 'yes', asked_on: e.asked_on, request: e.request ?? '(none)' },
+    });
+  }
   return { ok: true, doc_id: b.doc_id, logical_document_id: m.lid, version_no: m.version_no, url: b.url, expires_at: b.expires_at, job: b.job };
+}
+
+/* ------------------------------------------------------------------ *
+ * PHASE 146j — THE EARLY ANSWER, WRITTEN OR ADOPTED
+ * ------------------------------------------------------------------ */
+
+type EarlyVouch = {
+  readonly field_id: string; readonly answer: VouchAnswer; readonly by: string;
+  readonly asked_on: 'UPLOAD' | 'REQUEST'; readonly request: string | null;
+};
+
+/**
+ * Inside the upload's transaction. The type decides which question there is; none, and nothing happens. The page's
+ * answer governs: where this document already has one, nothing is written or adopted. Otherwise the upload form's
+ * answer is written, if a login that may answer gave one; failing that, the request's answer is adopted — the same
+ * row, now the document's. Returns what happened, for the audit line written once the upload has committed.
+ */
+function recordEarlyVouch(
+  d: DocDeps, actor: Actor, logical_document_id: string, handler_type: string, business_id: string, t: TypeRow,
+  answers: readonly { readonly field_id: string; readonly answer: VouchAnswer }[], request_id: string | null, at: string,
+): EarlyVouch | null {
+  const f = vouchedFieldFor(handler_type);
+  if (f === null) return null;
+  if (vouchesFor(d.db, logical_document_id).some((v) => v.field_id === f.field_id)) return null;
+  const given = answers.find((x) => x.field_id === f.field_id) ?? null;
+  if (given !== null && isVouchAnswer(given.answer) && mayVouchFor(actor, business_id, t)) {
+    writeVouch(d.db, d.newId, at, logical_document_id, f.field_id, given.answer, actor.id, 'UPLOAD');
+    return { field_id: f.field_id, answer: given.answer, by: actor.id, asked_on: 'UPLOAD', request: null };
+  }
+  if (request_id === null) return null;
+  const adopted = adoptRequestVouch(d.db, request_id, logical_document_id, f.field_id);
+  if (adopted === null) return null;
+  const by = d.db.get<{ answered_by: string }>(
+    'SELECT answered_by FROM document_field_vouches WHERE request_id = ? AND field_id = ?', [request_id, f.field_id])?.answered_by ?? actor.id;
+  return { field_id: f.field_id, answer: adopted, by, asked_on: 'REQUEST', request: request_id };
+}
+
+/** May this login answer the question about a name, for a document of this type that does not exist yet? */
+function mayVouchFor(actor: Actor, business_id: string, t: TypeRow): boolean {
+  return can(actor, 'document.vouch', {
+    type: 'document', id: '__new__', business_id, readers: t.readers, carries_value: t.carries_value === 1,
+    letter_signed: false, assigned_surveyor_ids: [],
+  });
+}
+
+/**
+ * THE OPEN REQUEST AN UPLOAD OF THIS TYPE ANSWERS, where none was named: the earliest due first, and one with no due
+ * date after those that have one. `receiveByUpload` receives this one, and an upload adopts its early answer — the
+ * same rule in one place, so the answer read is always the request's that is received.
+ */
+function openRequestFor(db: Db, business_id: string, type_code: string): { id: string; claim_id: string | null } | undefined {
+  return db.get<{ id: string; claim_id: string | null }>(
+    "SELECT id, claim_id FROM client_tasks WHERE business_id = ? AND kind = 'DOCUMENT' AND requested_type = ? AND state = 'OPEN' " +
+      'ORDER BY due_on IS NULL, due_on ASC, created_at ASC, id ASC LIMIT 1',
+    [business_id, type_code]);
 }
 
 /* ================================================================== *
@@ -722,10 +816,7 @@ export function receiveByUpload(d: { db: Db; audit: AuditLog; now: () => string 
   const req = v.request_id !== null
     ? d.db.get<{ id: string; claim_id: string | null }>(
       "SELECT id, claim_id FROM client_tasks WHERE id = ? AND kind = 'DOCUMENT' AND state = 'OPEN'", [v.request_id])
-    : d.db.get<{ id: string; claim_id: string | null }>(
-      "SELECT id, claim_id FROM client_tasks WHERE business_id = ? AND kind = 'DOCUMENT' AND requested_type = ? AND state = 'OPEN' " +
-        'ORDER BY due_on IS NULL, due_on ASC, created_at ASC, id ASC LIMIT 1',
-      [v.business_id, v.type_code]);
+    : openRequestFor(d.db, v.business_id, v.type_code);
   if (req === undefined) return null;
   const at = d.now();
   const changed = d.db.tx(() => {
@@ -769,6 +860,12 @@ export type RequestInput = {
   readonly why: string | null;
   readonly holds_up: string | null;
   readonly due_on: string | null;
+  /**
+   * PHASE 146j: the answer to the question about a name, where the type asks one — given here, where the type is
+   * chosen, so the first reading of what the client sends can keep it. Written against the request and adopted by the
+   * document that answers it. Ignored for a type that asks none, and for a login that may not answer it.
+   */
+  readonly early_vouch?: readonly { readonly field_id: string; readonly answer: VouchAnswer }[];
 };
 
 /**
@@ -816,6 +913,17 @@ export function createDocumentRequest(
       object_type: 'client_task', object_id: id,
       detail: { business: biz.id, claim: claim ?? '(none)', type: t.code, due: due === '' ? '(none)' : due },
     });
+    /* PHASE 146j: the question about a name, answered where the type is chosen. */
+    const f = t.handler_type === null ? null : vouchedFieldFor(t.handler_type);
+    const given = f === null ? null : (i.early_vouch ?? []).find((x) => x.field_id === f.field_id) ?? null;
+    if (f !== null && given !== null && isVouchAnswer(given.answer) && mayVouchFor(actor, biz.id, t)) {
+      writeRequestVouch(d.db, d.newId, at, id, f.field_id, given.answer, actor.id);
+      d.audit.append({
+        at, kind: 'DOCUMENT_FIELD_VOUCHED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+        object_type: 'client_task', object_id: id,
+        detail: { field_id: f.field_id, answer: given.answer, was: null, kept: given.answer === 'yes', asked_on: 'REQUEST', request: id },
+      });
+    }
   });
   const runs = fireAutomation({ db: d.db, audit: d.audit, now: d.now, newId: d.newId }, actor, {
     trigger: 'DOCUMENT_REQUESTED', business_id: biz.id, claim_id: claim,
@@ -850,13 +958,15 @@ export function withdrawDocumentRequest(d: DocDeps, actor: Actor, id: string): D
 const REQUEST_SELECT =
   'SELECT ct.id, ct.business_id, ct.claim_id, c.claim_ref, ct.requested_type, t.label AS type_label, ct.state, ct.why, ct.holds_up, ' +
   'ct.due_on, ct.created_at, ct.withdrawn_at, ct.answered_at, ab.display_name AS asked_by, d.logical_document_id AS received_document, ' +
-  'd.version_no AS received_version FROM client_tasks ct JOIN document_types t ON t.code = ct.requested_type ' +
+  'd.version_no AS received_version, (SELECT v.answer FROM document_field_vouches v WHERE v.request_id = ct.id LIMIT 1) AS early_answer ' +
+  'FROM client_tasks ct JOIN document_types t ON t.code = ct.requested_type ' +
   'LEFT JOIN claims c ON c.id = ct.claim_id LEFT JOIN users ab ON ab.id = ct.asked_by LEFT JOIN documents d ON d.id = ct.received_document_id ';
 
 type RequestRow = {
   id: string; business_id: string; claim_id: string | null; claim_ref: string | null; requested_type: string; type_label: string;
   state: string; why: string; holds_up: string; due_on: string | null; created_at: string; withdrawn_at: string | null;
   answered_at: string | null; asked_by: string | null; received_document: string | null; received_version: number | null;
+  early_answer: string | null;
 };
 
 export type RequestView = {
@@ -871,6 +981,8 @@ export type RequestView = {
   readonly asked: string;
   readonly asked_by: string | null;
   readonly received: { readonly document_id: string; readonly version_no: number | null; readonly at: string } | null;
+  /** PHASE 146j: the answer given on the request to the question about a name, where there was one. */
+  readonly early_answer: VouchAnswer | null;
 };
 
 function requestView(r: RequestRow, nowIso: string): RequestView {
@@ -884,6 +996,7 @@ function requestView(r: RequestRow, nowIso: string): RequestView {
     received: state === 'RECEIVED' && r.received_document !== null
       ? { document_id: r.received_document, version_no: r.received_version, at: r.answered_at === null ? '' : localStamp(r.answered_at) }
       : null,
+    early_answer: isVouchAnswer(r.early_answer) ? r.early_answer : null,
   };
 }
 
@@ -986,8 +1099,10 @@ export type ClaimDocumentsPanel = {
   readonly may_request: boolean;
   readonly may_link: boolean;
   readonly may_upload: boolean;
-  readonly request_types?: readonly { readonly code: string; readonly label: string }[];
+  readonly request_types?: readonly { readonly code: string; readonly label: string; readonly handler_type: string | null }[];
   readonly linkable?: readonly { readonly id: string; readonly label: string }[];
+  /** PHASE 146j: the question about a name, asked on the request and upload forms where the type is chosen. */
+  readonly early_questions?: readonly { readonly field_id: string; readonly question: string; readonly types: readonly string[] }[];
 };
 
 /**
@@ -1022,7 +1137,7 @@ export function claimDocumentsPanel(db: Db, actor: Actor, claim: { id: string; b
       overdue: requests.filter((r) => r.due.overdue).length,
     }),
     may_request: mayRequest, may_link: mayLink, may_upload: mayUpload,
-    ...(mayRequest || mayUpload ? { request_types: receivableTypes(db) } : {}),
+    ...(mayRequest || mayUpload ? { request_types: receivableTypes(db), early_questions: earlyQuestionsFor(actor, claim.business_id, receivableTypes(db)) } : {}),
     ...(linkable === null ? {} : { linkable }),
   };
 }
@@ -1170,7 +1285,15 @@ export function vouchDocumentField(
     return { ok: false, why: 'There is nothing to answer on this kind of file.' };
   }
   if (!isVouchAnswer(answer)) return { ok: false, why: 'Choose yes, no, or not sure.' };
-  const was = vouchesFor(d.db, l.id).find((v) => v.field_id === field_id)?.answer ?? null;
+  const row = vouchesFor(d.db, l.id).find((v) => v.field_id === field_id);
+  const was = row?.answer ?? null;
+  /* PHASE 146j: A YES THAT HAS KEPT A NAME IS NOT TURNED INTO A NO BY A BUTTON. Changing the answer changes nothing
+     already written, so a plain "No" here would leave the name in the file with nothing saying it was withdrawn.
+     Taking the yes back is its own act, which asks why and takes the name out (`withdrawVouch`). */
+  if (vouchKeeps(row) && answer !== 'yes' && keptIn(d.db, l.id, l.business_id, field_id).length > 0) {
+    return { ok: false, why: `The yes has already let us keep ${f.what}. Use “Take the yes back” on this page instead — it asks why, ` +
+      'and takes the name out of what we kept.' };
+  }
   writeVouch(d.db, d.newId, d.now(), l.id, field_id, answer, actor.id);
   d.audit.append({
     at: d.now(), kind: 'DOCUMENT_FIELD_VOUCHED', outcome: 'ALLOWED',
@@ -1179,6 +1302,98 @@ export function vouchDocumentField(
     detail: { field_id, answer, was, kept: answer === 'yes' },
   });
   return { ok: true };
+}
+
+/* ------------------------------------------------------------------ *
+ * PHASE 146j — TAKING A YES BACK
+ * ------------------------------------------------------------------ */
+
+type KeptRecord = { id: string; source_id: string; obtained_at: string; property_id: string | null };
+
+/**
+ * THE RECORDS A YES LET THIS FIELD INTO: one CLIENT_DOC record per reading of a version of this document, keyed on the
+ * version, and only those that carry the field. Found through the document's own versions — never by what a record
+ * says.
+ */
+function keptIn(db: Db, logical_document_id: string, business_id: string, field_id: string): KeptRecord[] {
+  return db.all<KeptRecord & { fields_json: string }>(
+    "SELECT r.id, r.source_id, r.obtained_at, r.property_id, r.fields_json FROM register_records r JOIN documents v ON v.id = r.entity_id " +
+      "WHERE r.source_id = 'CLIENT_DOC' AND r.business_id = ? AND v.logical_document_id = ? ORDER BY r.obtained_at ASC, r.id ASC",
+    [business_id, logical_document_id],
+  ).filter((r) => {
+    try { return Object.prototype.hasOwnProperty.call(JSON.parse(r.fields_json) as object, field_id); } catch { return false; }
+  }).map(({ fields_json: _f, ...r }) => r);
+}
+
+export type WithdrawResult =
+  | { readonly ok: true; readonly removed_from: number; readonly look_again: readonly LookAgain[]; readonly why: string }
+  | { readonly ok: false; readonly why: string; readonly field?: 'reason' };
+
+/**
+ * TAKE A YES BACK, WITH A REASON. The same shape as taking back a pick (src/web/match-review.ts) and Phase 139's tick:
+ * its own act, asking why, keeping the reason.
+ *
+ *   · it takes THAT FIELD, AND NO OTHER, out of every record the yes let it into (`removeRegisterField`, the one door
+ *     out), and leaves every other fact the reading kept exactly as it was;
+ *   · it refuses, and says so, where a person has checked and approved that fact (Phase 139) — the tick comes off
+ *     first, by its own act and with its own reason;
+ *   · it keeps the answer, marked withdrawn, with who, when and why — so the next reading leaves the field out, and
+ *     the row still says it was a yes;
+ *   · it lists what was worked out from the field while it stood, and does not un-derive it silently;
+ *   · and it writes DOCUMENT_FIELD_VOUCH_WITHDRAWN, carrying the reason and never the name.
+ *
+ * Only Admin and Sales, as for the answer itself (`document.vouch`).
+ */
+export function withdrawVouch(
+  d: DocDeps, actor: Actor, id: string, field_id: string, reasonIn: string | null,
+): WithdrawResult {
+  const l = loadLogical(d.db, id);
+  authorise(actor, 'document.vouch', documentObj(d.db, l));
+  const f = vouchedFieldFor(l.handler_type);
+  if (f === null || f.field_id !== field_id) return { ok: false, why: 'There is nothing to take back on this kind of file.' };
+  const row = vouchesFor(d.db, l.id).find((v) => v.field_id === field_id);
+  if (!vouchKeeps(row)) return { ok: false, why: 'There is no yes standing on this question, so there is nothing to take back.' };
+
+  const kept = keptIn(d.db, l.id, l.business_id, field_id);
+  const approved = kept.filter((r) => approvedFieldsOf(d.db, l.business_id, r.id, field_id).length > 0);
+  if (approved.length > 0) {
+    return { ok: false, why: `A person has checked and approved ${f.what}, as we kept it. We do not take it out from under them. ` +
+      'Take the tick off first, on the checks panel, with your reason — then take the yes back.' };
+  }
+  const why = takeBackReason(reasonIn);
+  if (!why.ok) return { ok: false, why: why.why, field: 'reason' };
+
+  // What was worked out from the field while it stood, once per kind across every record it went into.
+  const seen = new Map<string, LookAgain>();
+  for (const r of kept) {
+    for (const x of lookAgainAfter(d.db, l.business_id, r, field_id)) {
+      const had = seen.get(x.kind);
+      seen.set(x.kind, had === undefined || had.count < x.count ? x : had);
+    }
+  }
+  const look = [...seen.values()];
+  const at = d.now();
+  d.db.tx(() => {
+    for (const r of kept) {
+      if (!removeRegisterField(d.db, l.business_id, r.id, field_id)) throw new Error('a field the yes kept was not taken out');
+    }
+    d.db.run(
+      'UPDATE document_field_vouches SET withdrawn_at = ?, withdrawn_by = ?, withdrawn_reason = ? WHERE logical_document_id = ? AND field_id = ?',
+      [at, actor.id, why.reason, l.id, field_id]);
+    d.audit.append({
+      at, kind: 'DOCUMENT_FIELD_VOUCH_WITHDRAWN', outcome: 'ALLOWED',
+      actor_id: actor.id, actor_role: actor.role, object_type: 'document', object_id: l.id,
+      // The field, the reason, how many records it came out of, and what to look at again. NEVER THE NAME.
+      detail: { field_id, reason: why.reason, records: kept.length, look_again: lookAgainJson(look) },
+    });
+  });
+  return {
+    ok: true, removed_from: kept.length, look_again: look,
+    why: (kept.length === 0
+      ? `Taken back. We had not kept ${f.what} from any reading yet, so there was nothing to take out. `
+      : `Taken back. We took ${f.what} out of what we kept from ${kept.length === 1 ? 'the reading' : `${kept.length} readings`}, and nothing else. `) +
+      'Your reason is kept, and the next reading leaves it out. ' + lookAgainSummary(look),
+  };
 }
 
 function staffMayOpen(db: Db, actor: Actor, k: LinkView): boolean {
@@ -1497,7 +1712,9 @@ export type ClientFolder = {
   readonly claims: readonly { readonly id: string; readonly name: string; readonly ref: string }[];
   readonly may_upload: boolean;
   readonly may_show: boolean;
-  readonly upload_types: readonly { readonly code: string; readonly label: string }[];
+  readonly upload_types: readonly { readonly code: string; readonly label: string; readonly handler_type: string | null }[];
+  /** PHASE 146j: the question about a name, asked on the upload form where the type is chosen. */
+  readonly early_questions: readonly { readonly field_id: string; readonly question: string; readonly types: readonly string[] }[];
 };
 
 type FolderVersionRow = {
@@ -1611,6 +1828,7 @@ export function clientFolder(
   return {
     business_id: org.id, company: org.trading_name, folders, files, asked, claims,
     may_upload: mayUpload, may_show: mayShow, upload_types: mayUpload ? receivableTypes(db) : [],
+    early_questions: mayUpload ? earlyQuestionsFor(actor, org.id, receivableTypes(db)) : [],
   };
 }
 

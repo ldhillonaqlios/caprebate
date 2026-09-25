@@ -25,8 +25,8 @@ import * as D from './documents.ts';
 import { badge, claimRef, dataLink, savedMessage, sectionList, why, type RecordTab } from './components.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import { openKeptOriginal, sweepOriginals } from './uploads.ts';
-import { ANSWER_WORDS, LEFT_OUT_NOTE, VOUCH_ANSWERS } from './document-reading.ts';
-import { readUpload, receiveFile } from './client-files-pages.ts';
+import { ANSWER_WORDS, LEFT_OUT_NOTE, VOUCH_ANSWERS, earlyVouchesFrom } from './document-reading.ts';
+import { earlyQuestions, readUpload, receiveFile } from './client-files-pages.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -224,6 +224,25 @@ export async function handleDocuments(
     redirect(res, `/staff/documents/${id}?done=answered`);
     return 'handled';
   }
+  /**
+   * PHASE 146j — TAKING A YES BACK. Its own act, with a reason, like taking a tick off. `withdrawVouch` authorises it,
+   * finds what the yes let in and takes that one field out; this route carries the field and the reason, nothing else.
+   * The result page says what to look at again, because a redirect would lose it.
+   */
+  const docWithdraw = /^\/staff\/documents\/([A-Za-z0-9-]+)\/vouch\/withdraw$/.exec(path);
+  if (docWithdraw && method === 'POST') {
+    const id = docWithdraw[1] ?? '';
+    const f = await form(req);
+    const r = D.withdrawVouch(deps, actor, id, f.get('field_id') ?? '', f.get('reason'));
+    if (!r.ok) return d.problem(res, actor, 'Not taken back', r.why, `/staff/documents/${id}`, r.field);
+    html(res, 200, page({
+      title: 'The yes was taken back', nav: d.nav(actor),
+      body: h`<h1>The yes was taken back</h1><p class="say">${r.why}</p>
+        ${r.look_again.length === 0 ? raw('') : h`<ul>${r.look_again.map((x) => h`<li>${x.words}</li>`)}</ul>`}
+        <p><a href="/staff/documents/${id}">Back to the file</a></p>`,
+    }));
+    return 'handled';
+  }
   const docLink = /^\/staff\/documents\/([A-Za-z0-9-]+)\/links$/.exec(path);
   if (docLink && method === 'POST') {
     const id = docLink[1] ?? '';
@@ -277,6 +296,8 @@ export async function handleDocuments(
     const r = await receiveFile(d, actor, {
       business_id, type_code: up.fields.type_code ?? null, logical_document_id: null, request_id: null, claim_id: id,
       shown_to_client: up.fields.shown_to_client === 'yes',
+      // PHASE 146j: the question about a name, answered where the type is chosen.
+      early_vouch: earlyVouchesFrom((n) => up.fields[n]),
     }, up.bytes);
     if (!r.ok) return d.problem(res, actor, 'Not uploaded', r.why, `/staff/claims/${id}`);
     redirect(res, `/staff/clients/${business_id}/files?folder=claim-${id}&done=uploaded`);
@@ -298,6 +319,9 @@ export async function handleDocuments(
     const r = D.createDocumentRequest(deps, actor, {
       business_id: D.businessOfClaim(db, id), claim_id: id, type_code: f.get('type_code'),
       why: f.get('why'), holds_up: f.get('holds_up'), due_on: f.get('due_on'),
+      // PHASE 146j: the question about a name, answered where the type is chosen — kept with the request, and taken
+      // up by the file that answers it before that file is read.
+      early_vouch: earlyVouchesFrom((n) => f.get(n)),
     });
     if (!r.ok) return d.problem(res, actor, 'Not requested', r.why, `/staff/claims/${id}`, r.field);
     redirect(res, `/staff/claims/${id}?done=requested`);
@@ -371,7 +395,7 @@ export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel |
         <thead><tr><th>Document</th><th>State</th><th>Due</th><th>Why</th><th>What it holds up</th><th></th></tr></thead>
         <tbody>${p.requests.map((r) => h`<tr class="${r.due.overdue ? 'overdue' : ''}"><td>${r.type.label}</td><td>${r.state_words}${
           r.received === null ? raw('') : h`<br><a href="/staff/documents/${r.received.document_id}">version ${r.received.version_no ?? ''}</a>`}</td>
-          <td>${dueCell(r)}</td><td>${r.why}</td><td>${r.holds_up}</td>
+          <td>${dueCell(r)}</td><td>${r.why}${r.early_answer === null ? raw('') : h`<br><span class="help">About the name on it, you said: ${ANSWER_WORDS[r.early_answer]}.</span>`}</td><td>${r.holds_up}</td>
           <td>${r.state === 'REQUESTED' && p.may_request ? h`<form method="post" action="/staff/document-requests/${r.id}/withdraw" class="inline">
             <button type="submit">Withdraw — asked in error</button></form>` : raw('')}</td></tr>`)}</tbody></table>`}`}
 
@@ -381,6 +405,7 @@ export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel |
       <label>Why we need it <input name="why" required></label>
       <label>What it holds up <input name="holds_up" required></label>
       <label>Due <input name="due_on" type="date"></label>
+      ${earlyQuestions(p.early_questions, `rq-${claim_id}`)}
       <button type="submit">Request it</button></form>` : raw('')}
 
     ${p.may_upload && types.length > 0 ? h`<form method="post" action="/staff/claims/${claim_id}/documents" enctype="multipart/form-data" class="uploadbox">
@@ -389,6 +414,7 @@ export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel |
         <input id="claim-file-${claim_id}" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>
       <label>What is it? <select name="type_code">${types.map((t) => h`<option value="${t.code}">${t.label}</option>`)}</select></label>
       <label class="tickbox"><input type="checkbox" name="shown_to_client" value="yes"> Let the client see this file</label>
+      ${earlyQuestions(p.early_questions, `cu-${claim_id}`)}
       <button type="submit">Upload</button></form>` : raw('')}
 
     ${p.may_link && (p.linkable ?? []).length > 0 ? h`<form method="post" action="/staff/claims/${claim_id}/documents/link">
@@ -485,12 +511,20 @@ function vouchBlock(p: D.DocumentPage): Safe {
     <p><strong>${v.question}</strong></p>
     <p>${v.answer === null
       ? h`Nobody has answered yet. ${v.effect}`
-      : h`${ANSWER_WORDS[v.answer]} — ${v.by}, ${v.answered}. ${v.effect}`}</p>
+      : h`${ANSWER_WORDS[v.answer]} — ${v.by}, ${v.answered}${v.asked_on === null ? '' : `, ${v.asked_on}`}. ${v.effect}`}</p>
+    ${v.withdrawn === null ? raw('') : h`<p class="help">The yes was taken back by ${v.withdrawn.by}, ${v.withdrawn.at}: ${v.withdrawn.reason}</p>`}
     <p class="help">We keep ${v.what} only if the answer is yes. ${LEFT_OUT_NOTE}</p>
     ${v.may_answer ? h`<form method="post" action="/staff/documents/${p.id}/vouch" class="inline">
       <input type="hidden" name="field_id" value="${v.field_id}">
       ${VOUCH_ANSWERS.map((a) => h`<button type="submit" name="answer" value="${a}">${ANSWER_WORDS[a]}</button>`)}
-    </form>` : raw('')}</div>`;
+    </form>` : raw('')}
+    ${/* PHASE 146j: a yes that stands is taken back by its own act, with a reason — and that takes the name out of
+          what we kept. The plain No button will not do it once a name has been kept. */
+      v.may_withdraw ? h`<details class="undo"><summary>Take the yes back</summary>
+      <form method="post" action="/staff/documents/${p.id}/vouch/withdraw">
+        <input type="hidden" name="field_id" value="${v.field_id}">
+        <label>Why? <input name="reason" required maxlength="2000"></label> <button type="submit">Take it back</button>
+        <span class="help"> We take ${v.what} out of what we kept from this file, and nothing else. Your reason is kept.</span></form></details>` : raw('')}</div>`;
 }
 
 /** PHASE 133b — after a save, land on the section the type now sits in; a value the vocabulary does not list lands at the top. */

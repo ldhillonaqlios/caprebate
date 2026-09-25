@@ -41,6 +41,24 @@
  * must behave exactly as it did before Phase 146g, and a row is a difference.
  *
  * NEVER A WORD OF THE DOCUMENT, on the screen or in the row. What is kept is a state, a count and a reason.
+ *
+ * ------------------------------------------------------------------------------------------------------------
+ * 3 · PHASE 146j, 25 September 2026 — THE TWO ONE-WAY DOORS 146i LEFT, CLOSED THE WAY A PICK IS TAKEN BACK
+ *
+ * (a) A YES CAN BE TAKEN BACK. A 'yes' lets the next reading keep the name, through `ingestRegisterRecord`, as part
+ *     of that version's CLIENT_DOC record. Changing the answer to 'no' afterwards changed nothing already written.
+ *     Now a 'yes' that has kept something is taken back by its own act, which asks why (`withdrawVouch` in
+ *     src/web/documents.ts): it takes THAT FIELD, AND NO OTHER, out of every record it went into, and leaves the
+ *     answer on its row with who withdrew it, when and why. A withdrawn yes keeps nothing, exactly as a 'no' does, and
+ *     the row still says it was a yes. The plain buttons will not turn a yes that kept something into a 'no'.
+ *
+ * (b) THE QUESTION IS ASKED BEFORE THE FIRST READING. The document's page exists only once the file has been read
+ *     and deleted, so the first reading of a grant funding agreement always left the funder's name out. The staff
+ *     upload forms and the document request now ask it where the type is chosen. IT IS STILL ONE STORE: the upload
+ *     writes the same row against the document it creates, and a request writes it against itself, to be ADOPTED —
+ *     the same row, its document filled in — by the document that answers the request, before that document is
+ *     read. The page's answer governs: where the document already has one, an earlier answer is not adopted and
+ *     does not replace it, and whatever is on the page afterwards is what the next reading reads.
  */
 
 import type { Db } from '../db.ts';
@@ -101,19 +119,34 @@ export function vouchedFieldById(field_id: string): VouchedField | null {
  * 2 · READING AND WRITING A PERSON'S ANSWER
  * ================================================================== */
 
+/** PHASE 146j: where the answer that stands was given. */
+export type AskedOn = 'PAGE' | 'UPLOAD' | 'REQUEST';
+
 export type VouchRow = {
   readonly field_id: string;
   readonly answer: VouchAnswer;
   readonly answered_by: string;
   readonly answered_at: string;
+  /** PHASE 146j. */
+  readonly asked_on: AskedOn;
+  /** PHASE 146j: a yes taken back — who, when and why. All null unless it was. */
+  readonly withdrawn_at: string | null;
+  readonly withdrawn_by: string | null;
+  readonly withdrawn_reason: string | null;
 };
 
 /** Every answer recorded against one logical document. Usually none or one: no type carries two of these fields. */
 export function vouchesFor(db: Db, logical_document_id: string): readonly VouchRow[] {
   return db.all<VouchRow>(
-    'SELECT field_id, answer, answered_by, answered_at FROM document_field_vouches WHERE logical_document_id = ? ORDER BY field_id',
+    'SELECT field_id, answer, answered_by, answered_at, asked_on, withdrawn_at, withdrawn_by, withdrawn_reason ' +
+      'FROM document_field_vouches WHERE logical_document_id = ? ORDER BY field_id',
     [logical_document_id],
   );
+}
+
+/** PHASE 146j: ONLY A YES THAT STANDS KEEPS ANYTHING. A withdrawn yes is left out exactly as a 'no' is (N4). */
+export function vouchKeeps(v: Pick<VouchRow, 'answer' | 'withdrawn_at'> | null | undefined): boolean {
+  return v !== null && v !== undefined && v.answer === 'yes' && v.withdrawn_at === null;
 }
 
 /**
@@ -128,7 +161,7 @@ export function discriminantsFor(db: Db, doc_id: string): ClientDocDiscriminants
   if (logical === null || logical === undefined) return {};
   const out: { -readonly [K in keyof ClientDocDiscriminants]: boolean } = {};
   for (const v of vouchesFor(db, logical)) {
-    if (v.answer !== 'yes') continue;
+    if (!vouchKeeps(v)) continue;
     const f = vouchedFieldById(v.field_id);
     if (f !== null) out[f.flag] = true;
   }
@@ -138,18 +171,95 @@ export function discriminantsFor(db: Db, doc_id: string): ClientDocDiscriminants
 /**
  * THE ROW ITSELF, AND NOTHING ELSE. Who may answer, and the note in the audit log, are `vouchDocumentField`'s in
  * src/web/documents.ts — the one place that authorises anything about a document. A later answer replaces an
- * earlier one; the audit log keeps every one of them, in order, with who gave it.
+ * earlier one; the audit log keeps every one of them, in order, with who gave it. PHASE 146j: a new answer clears a
+ * withdrawal — the withdrawal is on the chain, and the answer that stands is the one just given.
  */
 export function writeVouch(
   db: Db, newId: () => string, at: string,
   logical_document_id: string, field_id: string, answer: VouchAnswer, answered_by: string,
+  asked_on: Exclude<AskedOn, 'REQUEST'> = 'PAGE',
 ): void {
   db.run(
-    'INSERT INTO document_field_vouches (id, logical_document_id, field_id, answer, answered_by, answered_at) '
-      + 'VALUES (?,?,?,?,?,?) ON CONFLICT (logical_document_id, field_id) DO UPDATE SET '
-      + 'answer = excluded.answer, answered_by = excluded.answered_by, answered_at = excluded.answered_at',
-    [newId(), logical_document_id, field_id, answer, answered_by, at],
+    'INSERT INTO document_field_vouches (id, logical_document_id, field_id, answer, answered_by, answered_at, asked_on) '
+      + 'VALUES (?,?,?,?,?,?,?) ON CONFLICT (logical_document_id, field_id) DO UPDATE SET '
+      + 'answer = excluded.answer, answered_by = excluded.answered_by, answered_at = excluded.answered_at, '
+      + 'asked_on = excluded.asked_on, withdrawn_at = NULL, withdrawn_by = NULL, withdrawn_reason = NULL',
+    [newId(), logical_document_id, field_id, answer, answered_by, at, asked_on],
   );
+}
+
+/* ================================================================== *
+ * 2a · ASKED BEFORE THE FIRST READING — Phase 146j
+ * ================================================================== */
+
+/** The form field an early answer arrives in, one per vouched field: `vouch_grant_funder_name`, `vouch_brc_issuing_body`. */
+export const EARLY_VOUCH_PREFIX = 'vouch_';
+
+/**
+ * THE EARLY ANSWERS ON A FORM, one per vouched field that was answered. The form cannot know which type will be chosen
+ * — it runs no script — so it may carry an answer to each question; the server keeps only the one belonging to the
+ * type chosen (`recordEarlyVouch` and `createDocumentRequest` in src/web/documents.ts). An empty or unknown value is
+ * NO ANSWER, never a 'no': the question is then asked on the page, as it always was.
+ */
+export function earlyVouchesFrom(
+  get: (name: string) => string | null | undefined,
+): readonly { readonly field_id: string; readonly answer: VouchAnswer }[] {
+  const out: { field_id: string; answer: VouchAnswer }[] = [];
+  for (const f of VOUCHED_FIELDS) {
+    const v = get(`${EARLY_VOUCH_PREFIX}${f.field_id}`);
+    if (isVouchAnswer(v)) out.push({ field_id: f.field_id, answer: v });
+  }
+  return out;
+}
+
+/** A request's early answer, written against the request. One per request and field; a second replaces the first. */
+export function writeRequestVouch(
+  db: Db, newId: () => string, at: string, request_id: string, field_id: string, answer: VouchAnswer, answered_by: string,
+): void {
+  db.run(
+    'INSERT INTO document_field_vouches (id, request_id, field_id, answer, answered_by, answered_at, asked_on) '
+      + "VALUES (?,?,?,?,?,?,'REQUEST') ON CONFLICT (request_id, field_id) DO UPDATE SET "
+      + 'answer = excluded.answer, answered_by = excluded.answered_by, answered_at = excluded.answered_at',
+    [newId(), request_id, field_id, answer, answered_by, at],
+  );
+}
+
+/**
+ * THE SAME ROW, ADOPTED BY THE DOCUMENT THAT ANSWERS THE REQUEST — before that document is read. Nothing is copied:
+ * the row's document is filled in and it becomes the document's answer. Where the document already has an answer to
+ * this question, that one governs and the request's is left where it was. Returns the answer adopted, or null.
+ */
+export function adoptRequestVouch(
+  db: Db, request_id: string, logical_document_id: string, field_id: string,
+): VouchAnswer | null {
+  const n = db.run(
+    'UPDATE document_field_vouches SET logical_document_id = ? WHERE request_id = ? AND field_id = ? AND logical_document_id IS NULL '
+      + 'AND NOT EXISTS (SELECT 1 FROM document_field_vouches v WHERE v.logical_document_id = ? AND v.field_id = ?)',
+    [logical_document_id, request_id, field_id, logical_document_id, field_id],
+  ).changes;
+  if (n !== 1) return null;
+  return db.get<{ answer: VouchAnswer }>(
+    'SELECT answer FROM document_field_vouches WHERE request_id = ? AND field_id = ?', [request_id, field_id])?.answer ?? null;
+}
+
+/** A request's early answer, where one was given — for the request's own line. Null where none was. */
+export function requestVouch(db: Db, request_id: string): { readonly field_id: string; readonly answer: VouchAnswer } | null {
+  return db.get<{ field_id: string; answer: VouchAnswer }>(
+    'SELECT field_id, answer FROM document_field_vouches WHERE request_id = ? ORDER BY field_id LIMIT 1', [request_id]) ?? null;
+}
+
+/**
+ * THE QUESTIONS A TYPE LIST CARRIES, for a form that lets a person choose the type. One per vouched field, naming the
+ * types it belongs to in their own labels; none where no listed type carries one. The form runs no script, so each is
+ * drawn as "If it is a …" and only the one belonging to the type chosen is read.
+ */
+export function earlyVouchQuestions(
+  types: readonly { readonly code: string; readonly label: string; readonly handler_type: string | null }[],
+): readonly { readonly field_id: string; readonly question: string; readonly types: readonly string[] }[] {
+  return VOUCHED_FIELDS.map((f) => ({
+    field_id: f.field_id, question: f.question,
+    types: types.filter((t) => t.handler_type === f.doc_type).map((t) => t.label),
+  })).filter((q) => q.types.length > 0);
 }
 
 /* ================================================================== *
@@ -240,17 +350,29 @@ export type VouchView = {
   /** What this answer does, in words. Three of the four possible answers do the same thing. */
   readonly effect: string;
   readonly may_answer: boolean;
+  /** PHASE 146j: where the answer was given, in words. Null where nobody has answered. */
+  readonly asked_on: string | null;
+  /** PHASE 146j: a yes taken back — by whom, when and why. Null unless it was. */
+  readonly withdrawn: { readonly by: string; readonly at: string; readonly reason: string } | null;
+  /** PHASE 146j: a yes that stands can be taken back, by somebody who may answer. */
+  readonly may_withdraw: boolean;
 };
 
 /** What a `no`, a `not_sure` and an unanswered question all do, said once. */
 export const LEFT_OUT_NOTE =
-  'Answer this before the file is sent. We cannot add it to a file we have read and deleted.';
+  'Answer it when you upload the file or ask the client for it. We cannot add it to a file we have read and deleted.';
 
-export function vouchEffect(answer: VouchAnswer | null): string {
+export function vouchEffect(answer: VouchAnswer | null, withdrawn = false): string {
+  if (answer === 'yes' && withdrawn) return 'The yes was taken back, so we leave it out.';
   if (answer === 'yes') return 'We keep it.';
   if (answer === null) return 'We leave it out until somebody answers.';
   return 'We leave it out.';
 }
+
+/** PHASE 146j: where the answer was given, in words. */
+export const ASKED_ON_WORDS: Readonly<Record<AskedOn, string>> = Object.freeze({
+  PAGE: 'on this page', UPLOAD: 'when the file was uploaded', REQUEST: 'when the client was asked for it',
+});
 
 /**
  * THE PANEL, OR NOTHING. Only a type that carries one of the two fields has a question to ask; every other document
@@ -263,6 +385,8 @@ export function vouchView(
   const f = vouchedFieldFor(doc_type);
   if (f === null) return null;
   const row = vouchesFor(db, logical_document_id).find((v) => v.field_id === f.field_id) ?? null;
+  const withdrawn = row !== null && row.withdrawn_at !== null && row.withdrawn_by !== null && row.withdrawn_reason !== null
+    ? { by: roleOf(row.withdrawn_by), at: stamp(row.withdrawn_at), reason: row.withdrawn_reason } : null;
   return {
     field_id: f.field_id,
     question: f.question,
@@ -270,7 +394,10 @@ export function vouchView(
     answer: row === null ? null : row.answer,
     answered: row === null ? null : stamp(row.answered_at),
     by: row === null ? null : roleOf(row.answered_by),
-    effect: vouchEffect(row === null ? null : row.answer),
+    effect: vouchEffect(row === null ? null : row.answer, withdrawn !== null),
     may_answer,
+    asked_on: row === null ? null : ASKED_ON_WORDS[row.asked_on] ?? null,
+    withdrawn,
+    may_withdraw: may_answer && vouchKeeps(row),
   };
 }

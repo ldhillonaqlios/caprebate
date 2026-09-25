@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
-| Done | 261 |
-| Working on it | 1 |
+| Done | 262 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1254,8 +1254,9 @@
 
 ### Phase 146j — taking back a pick: undoing a close match a person chose, and the record that says it was undone
 
-`13117648493` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
+`13117648493` · **Done** · owner Claude
 
+- Note 2026-09-25 (Phase 146j): Built: a pick taken back with a reason (one record removed through record_id, lookup back to MATCH_REVIEW, pick row kept); a yes taken back (that field only); the question asked on upload and request forms. test/phase146j.test.ts, 29 tests; record in PHASE HISTORY.
 
 ### A person's pick for a close match — built and switched off, waiting on the data protection officer (Word question 209)
 

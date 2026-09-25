@@ -24,9 +24,16 @@ function scoreWords(score: number): string {
   return score.toFixed(2);
 }
 
-function candidateRow(business_id: string, source_id: string, c: { key: string; score: number; label: string; register: string | null }): Safe {
+function candidateRow(
+  business_id: string, source_id: string, c: { key: string; score: number; label: string; register: string | null },
+  takenBack: PickOffer['taken_back'],
+): Safe {
+  /* PHASE 146j: the entry chosen before and taken back is marked, with why — so it is not chosen again by mistake. It is
+     still offered: the reason may have been wrong, and marking is not deciding. */
+  const was = takenBack !== null && takenBack.chosen_key === c.key;
   return h`<tr>
-    <td>${c.label}${c.register === null ? raw('') : h`<br><span class="help">from ${c.register}</span>`}</td>
+    <td>${c.label}${c.register === null ? raw('') : h`<br><span class="help">from ${c.register}</span>`}${was
+      ? h`<br><span class="say">Chosen before and taken back, ${localStamp(takenBack.taken_back_at)}: ${takenBack.reason}</span>` : raw('')}</td>
     <td data-label="How close" class="when">${scoreWords(c.score)}</td>
     <td data-label="Choose"><form method="post" action="/staff/clients/${business_id}/research/pick/choose" class="inline">
       <input type="hidden" name="source_id" value="${source_id}">
@@ -51,7 +58,7 @@ export function pickPage(nav: Safe, business_id: string, business_name: string, 
         : 'They chose one of these.'} ${localStamp(already.picked_at)}. Choosing again replaces it.</p>`}
 
       <table class="stack"><thead><tr><th>What the register holds</th><th>How close</th><th>Choose</th></tr></thead>
-        <tbody>${offer.candidates.map((c) => candidateRow(business_id, offer.source_id, c))}</tbody></table>
+        <tbody>${offer.candidates.map((c) => candidateRow(business_id, offer.source_id, c, offer.taken_back))}</tbody></table>
 
       <form method="post" action="/staff/clients/${business_id}/research/pick/choose">
         <input type="hidden" name="source_id" value="${offer.source_id}">

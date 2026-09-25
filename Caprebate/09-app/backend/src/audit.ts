@@ -323,6 +323,15 @@ export type AuditKind =
    */
   | 'DOCUMENT_FIELD_VOUCHED'
   /**
+   * Phase 146j, 25 September 2026: the two one-way doors of Phases 146h and 146i, given a way back, each with its own
+   * kind beside the one that opened it. REGISTER_MATCH_TAKEN_BACK: a person's pick for a close match taken back — the
+   * lookup, the reason in their own words, that the one record the pick wrote was removed, and what must be looked at
+   * again as kinds and counts. DOCUMENT_FIELD_VOUCH_WITHDRAWN: a 'yes' about a name on a client document taken back —
+   * the field, the reason, and how many records the field was taken out of. NEVER THE ENTRY, THE NAME OR THE VALUE,
+   * and the reason passes the same screen as every other detail (src/web/take-back.ts refuses one that would not).
+   */
+  | 'REGISTER_MATCH_TAKEN_BACK' | 'DOCUMENT_FIELD_VOUCH_WITHDRAWN'
+  /**
    * Phase 151b, 25 September 2026: the online identity check (src/web/identity-checks.ts). A check sent, or not sent and
    * why in words; the outside service's signed result received, or refused because its signature did not hold or it
    * named no check we sent. Ids, the outcome and the service's status word only — NEVER a name, a document number, a

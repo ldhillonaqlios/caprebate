@@ -869,87 +869,6 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 146j — taking back a pick: undoing a close match a person chose, and the record that says it was undone
-
- **Model: Opus. Written 23 September 2026 by Phase 146h.** One thing Phase 146h built a one-way door into and did not finish. Board item: "Phase 146j — taking back a pick" in 05 · FOR DEVELOPMENT. Runs after 146i, before the sweep.
-
- **Why this exists.** Phase 146h let a person choose, from a ranked list, which register entry is the client's building where the match was close and not certain. The choice stores one register record. THERE IS NO WAY BACK. Once the record lands the lookup reads FIRED, leaves the REVIEW band, and the screen that offered the list refuses to offer it again — correctly, because there is nothing left to choose between. So a person who picked the wrong building has put another building's floor area, age band or sale price into a claim file and cannot take it out. Saying "none of them" is undoable; saying "this one" is not.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
-═══════════════════════════════════
-
-THE RULES FOR EVERY INTEGRATION PHASE apply (Phase 146b's record in PHASE
-HISTORY): build it real and switch it off; keys only in
-~/.caprebate-secrets.env; tests on recorded fixtures with no key and no
-network; the two gates and N4 hold. Phase 146h's record says what exists.
-
-THE WORK - Mac copy. Take a .bak-phase146j sibling of every file you change.
-Tracker row: "Phase 146j - taking back a pick" (13117648493).
-
-1. TAKING BACK A PICK. A person picked one entry from the close-match list
-   (src/web/match-review.ts, PICK_SWITCHES.MATCH_REVIEW_PICK, off) and it was
-   the wrong building. Today nothing can undo it: the lookup is FIRED, it is
-   out of the REVIEW band, and pickState refuses. Build the way back, and it
-   is NOT a second pick screen. It is the shape Phase 139 already uses for a
-   fact somebody ticked: a separate act, on the row, that ASKS WHY and keeps
-   the reason. Taking one back removes the register_records row that pick
-   wrote - and ONLY that row, found through register_match_picks.record_id,
-   never by re-deriving which record it must have been - puts the lookup back
-   to FAILED with code MATCH_REVIEW so the list can be offered again, and
-   leaves the pick row with the reason and who took it back rather than
-   deleting it. A decision that was made and reversed is two facts, not none.
-   Its own audit kind beside REGISTER_MATCH_PICKED, carrying the reason.
-   Only a person who can run the research, and only while the engagement is
-   signed - the same conditions as the pick, asserted the same way.
-   TWO THINGS TO GET RIGHT. A record another lookup would have written anyway,
-   or one a person has already checked and approved (Phase 139), must not
-   vanish under them: check before removing and say so plainly if it cannot
-   be removed. And anything derived FROM that record while it stood is not
-   this phase's to un-derive silently - work out what reads it, and say in the
-   record what a person must look at again.
-
-2. THE SAME QUESTION FOR THE DOCUMENT READER - AND 146i LEFT TWO. Phase 146i
-   built the person's answer (src/web/document-reading.ts, migration 043,
-   document_field_vouches, route POST /staff/documents/{id}/vouch). Both of
-   these are one-way doors of the same shape as point 1, so close them the
-   same way here rather than building a second mechanism.
-   (a) TAKING A YES BACK AFTER IT KEPT A NAME. A 'yes' lets the next reading
-   keep grant_funder_name or brc_issuing_body, through ingestRegisterRecord,
-   as part of that document's CLIENT_DOC record. Changing the answer to 'no'
-   afterwards changes nothing already written: the row stands and nothing says
-   it was withdrawn. Withdrawing a vouch must remove that field from the
-   record it went into - that field and no other - and leave the answer with
-   its reason and who withdrew it, on its own audit kind.
-   (b) ASKING THE QUESTION BEFORE THE FIRST READING, NOT AFTER IT. The answer
-   is asked on the document's page, which exists only once the file has been
-   read and deleted - so the FIRST reading of a grant funding agreement always
-   leaves the funder's name out, and getting it needs the client to send the
-   document again. Ask it where the type is already chosen (the staff upload
-   form and the document request), keep the page's answer as the one that
-   governs, and do not turn it into a second store.
-
-CHECKS - npm run check; the site harness (both modes), the extraction
-verifier and extract --check; phase3 and phase9 from inside their folders;
-the drift checker, its negative control (--fast --expect 999,998,997,996 MUST
-exit 1, on its own line) and its self-test; the plain-words check; the tracker
-check; the register check and the CRM fold check, and both self-tests;
-payload-proof. Write the record with the CLOSING CHECK, clear hub/CLAIM.md,
-commit and push.
-```
-
 ## PHASE 151e — the test website: why every page fails, and what it shows to anyone
 
  **Model: Opus. Written 25 September 2026 by Phase 151d.** Tracker row: "Phase 151e - the test website: why every page fails, and what it shows to anyone" in 05 · FOR DEVELOPMENT. Runs after 146j, before the sweep.
@@ -1208,6 +1127,16 @@ after that phase.
    A PROTOTYPE WHOSE ANCHOR QUARANTINE HAS QUIETLY STOPPED HOLDING IS WORSE THAN
    NO PROTOTYPE. The payload proof must find no estimate field as surveyor AND
    all seven as admin - the second half is its negative control.
+   AND ONE TEST THAT FAILS UNDER LOAD AND NOT ON ITS OWN (Phase 146j, 25 Sep
+   2026): test/phase151c.test.ts, "0 when every point agrees ... 1 when one
+   point is 2 mm out", runs tools/ostn15-verify.ts as a child process. In one
+   full npm run check it took 180 s and came back with status null - killed at
+   its time limit AFTER printing the right answer - while it passed in the run
+   before and in 6 s on its own. BUILDABLE: find the child process's time limit
+   in that test, prove the flake with the clock grid or a loaded run, and make
+   it wait long enough (or run the tool in-process) so a slow machine cannot
+   read as a wrong answer. Prove the fix cannot hide a real failure: the 2 mm
+   case must still exit 1.
 
 3a. THREE HOMEDATA FIGURES THAT WENT STALE, AND THE SHAPE THEY WENT STALE IN.
    A supplier's published price, read once and never re-read, is a sweep
@@ -1557,12 +1486,11 @@ WHEN DONE
 
 ## 6 · What Claude is building next
 
- **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 25 September 2026 by Phase 151f: three items, and no orphan.** Taking back a pick (146j), the test website (151e), and the test lookups Lakhbir allowed (151g). Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
+ **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 25 September 2026 by Phase 146j: two items, and no orphan.** The test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
 
 
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
-|  Claude |  Taking back a pick |  A person who chose the wrong building from a close-match list cannot undo it: the record is stored, the lookup reads as fired and the screen will not offer the list again. Written by Phase 146h, which built the one-way door and said so |
 |  Claude |  The test lookups Lakhbir allowed (Phase 151g) |  He said yes to small, logged test lookups on five conditions; the smoke test that makes them exists and enforces none of the five yet |
 |  Claude |  The test website: why every page fails, and what it shows to anyone (Phase 151e) |  Lines 1 and 2 are done (it starts again, and it shows no file of ours); line 3 is half done: Didit's keys are read behind a password of its own, and a check and its result are not yet on one database. Written by Phase 151d. What it may show is Lakhbir's decision, in the Word questions document |
 

@@ -1750,7 +1750,7 @@ Name:                                  Date:
 
  **It blocks nothing.** With the switch off the system behaves exactly as it did before this phase: a close match keeps nothing, and every question it would have answered stays asked. Nothing refuses and nothing throws.
 
- **One thing this screen deliberately does not do, so that it is on the record rather than discovered.** A pick that has stored a record **cannot be taken back on that screen** — once the record lands the lookup leaves the REVIEW band and the list is not offered again. Undoing one is a different act with a different shape, and it is written up as its own piece of work ("Phase 146j — taking back a pick", board item 13117648493) rather than half-built here.
+ **A wrong pick can be taken back (Phase 146j, 25 September 2026).** A pick that has stored a record is not undone on the screen that offered the list — once the record lands the lookup leaves the REVIEW band. It is taken back by its own act, on the lookup's line, which **asks why**. Taking it back removes the one entry that pick kept and nothing else, puts the lookup back so the list can be looked at again, and **keeps the pick on the record** with who took it back, when and why — a decision made and reversed is two facts, not none. It is refused, in words, where a person has already checked and approved a fact from that entry, and it lists anything worked out from the entry while it stood rather than quietly undoing it. The reason goes on the audit chain. It needs no switch of its own and changes nothing about the question above: it only ever takes information out.
 
 ### Added 23 September 2026 by Phase 146i — one entry more, SDP-P39
 
@@ -1767,6 +1767,12 @@ Name:                                  Date:
 -  **The name itself is never written down and never logged.** The record says which field, which answer, who gave it and what it replaced. Everything else about that value stays where the name exclusion register already put it.
 
 -  **It governs the next reading, never the last one.** A document is read once and then deleted, so an answer cannot be applied backwards to a file that has already gone.
+
+ **Two things Phase 146j added on 25 September 2026, both inside the same question.**
+
+-  **A yes can be taken back.** Changing a yes to no used to change nothing already kept. Now a yes that has let a name in is taken back by its own act, which asks why: it takes that one name out of everything we kept from the document, and nothing else, and the record keeps the yes, marked taken back, with who and why. The reason goes on the audit chain; the name never does.
+
+-  **The question can be answered earlier.** Because the document is read and deleted before its own page exists, the first reading always left the name out. So the same question is now also asked where a member of staff says what kind of document it is — when they upload it, or when they ask the client for it. **It is the same answer, by the same two roles, kept in the same place and logged the same way**, and the document's own page can change it. What is new is only the timing: on a request, a member of staff can answer before the document has arrived — for example because they already know the grant came from the NHS. If that timing changes your answer to the question below, say so there.
 
  **The decision is yours.** May a member of our team make that call at all? The alternative is that we never keep either name and both fields come off the keep list. It blocks nothing either way: reading client documents is switched off (`CLAUDE_SWITCHES.DOCUMENT_READING`), so no answer given today reaches anything.
 

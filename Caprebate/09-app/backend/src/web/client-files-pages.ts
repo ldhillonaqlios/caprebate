@@ -37,6 +37,7 @@ import { singleFile } from './multipart.ts';
 import { acceptClientBytes, finishUpload, issuedJob, sweepOriginals, readerFor } from './uploads.ts';
 import { UPLOAD_LIMITS, sniffAccepted } from './upload-handler-port.ts';
 import { NO_DUE_DATE } from './tasks.ts';
+import { ANSWER_WORDS, EARLY_VOUCH_PREFIX, VOUCH_ANSWERS, earlyVouchesFrom } from './document-reading.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -162,6 +163,8 @@ export async function handleClientFiles(
     const r = await receiveFile(d, actor, {
       business_id: org.id, type_code: up.fields.type_code ?? null, logical_document_id: null, request_id: null,
       claim_id: claim === '' ? null : claim, shown_to_client: up.fields.shown_to_client === 'yes',
+      // PHASE 146j: the question about a name, answered on this form so the first reading can keep it.
+      early_vouch: earlyVouchesFrom((n) => up.fields[n]),
     }, up.bytes);
     if (!r.ok) return d.problem(res, actor, 'Not uploaded', r.why, back);
     redirect(res, `${back}?folder=ours&done=uploaded`);
@@ -213,6 +216,7 @@ function uploadForm(f: D.ClientFolder): Safe {
     ${f.claims.length === 0 ? raw('') : h`<label class="fl" for="upload-claim">Which claim is it for?</label>
       <select class="fi" id="upload-claim" name="claim_id"><option value="">The whole company</option>${f.claims.map((c) => h`<option value="${c.id}">${propertyIn(f.company, c.name) ?? c.name} (${c.ref})</option>`)}</select>`}
     <label class="tickbox"><input type="checkbox" name="shown_to_client" value="yes"> Let the client see this file</label>
+    ${earlyQuestions(f.early_questions, `up-${f.business_id}`)}
     <button class="cta" type="submit">Upload</button>
     <div class="help">${why('Your file goes through the same safety checks as a client’s. We read it, keep what we need, and delete the original. The client cannot see it unless you tick the box.')}</div>
   </form>`;
@@ -253,4 +257,22 @@ function folderPage(d: ClientFilesDeps, actor: Actor, f: D.ClientFolder, key: st
       ${list}
       <p><a href="/staff/clients/${f.business_id}">Back to ${f.company}</a></p>`,
   });
+}
+
+/**
+ * PHASE 146j — THE QUESTION ABOUT A NAME, ASKED WHERE THE TYPE IS CHOSEN. The upload forms and the request form draw
+ * this; each question says which kinds of file it is about, because the form runs no script and cannot hide it until a
+ * type is picked. Only the answer that belongs to the type chosen is kept. "Leave it for now" sends nothing, and the
+ * question is then asked on the file's own page, as before — it is never read as a no.
+ */
+export function earlyQuestions(
+  qs: readonly { readonly field_id: string; readonly question: string; readonly types: readonly string[] }[] | undefined, idp: string,
+): Safe {
+  if (qs === undefined || qs.length === 0) return raw('');
+  return h`<fieldset class="early"><legend>Only if it is one of these</legend>
+    ${qs.map((q) => h`<p><strong>If it is ${q.types.join(' or ')}:</strong> ${q.question}</p>
+      <p class="choices">${VOUCH_ANSWERS.map((a) => h`<label class="tickbox"><input type="radio" id="${idp}-${q.field_id}-${a}" name="${EARLY_VOUCH_PREFIX}${q.field_id}" value="${a}"> ${ANSWER_WORDS[a]}</label>`)}
+        <label class="tickbox"><input type="radio" name="${EARLY_VOUCH_PREFIX}${q.field_id}" value="" checked> Leave it for now</label></p>`)}
+    <p class="help">Only yes lets us keep the name the first time we read the file. You can change it later on the file’s own page.</p>
+  </fieldset>`;
 }

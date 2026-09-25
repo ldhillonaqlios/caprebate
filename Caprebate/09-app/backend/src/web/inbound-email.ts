@@ -35,6 +35,7 @@ import { localStamp } from './localtime.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import { receiveFile } from './client-files-pages.ts';
 import { setShownToClient } from './documents.ts';
+import type { VouchAnswer } from './document-reading.ts';
 import { alertNewMessage } from './messages.ts';
 import type { EmailSending, SmtpLogin } from '../stubs/email-provider.ts';
 import { recordBounce } from '../stubs/email-provider.ts';
@@ -258,6 +259,8 @@ export function unsavedFiles(db: Db, actor: Actor, message_id: string): EmailedF
  */
 export async function saveEmailedFile(
   d: { app: App; store: FsObjectStore; newId: () => string }, actor: Actor, file_id: string, type_code: string, mailbox: Mailbox | null,
+  /** PHASE 146j: the answer to the question about a name, given where staff say what the file is. */
+  early_vouch: readonly { readonly field_id: string; readonly answer: VouchAnswer }[] = [],
 ): Promise<{ ok: true; business_id: string } | { ok: false; why: string }> {
   authorise(actor, 'inbound_email.file', { type: 'inbound_email', id: file_id });
   const db = d.app.db;
@@ -274,7 +277,7 @@ export async function saveEmailedFile(
   try { got = await mailbox.one(Number(f.uid)); } catch { return { ok: false, why: 'We cannot reach the mailbox right now. Try again later.' }; }
   const part = got === null ? undefined : parseEmail(got.raw).files[f.part_no - 1];
   if (part === undefined) return { ok: false, why: 'That email is no longer in the mailbox, so the file cannot be fetched.' };
-  const r = await receiveFile(d, actor, { business_id: f.business_id, type_code, logical_document_id: null, request_id: null, claim_id: f.claim_id }, part.bytes);
+  const r = await receiveFile(d, actor, { business_id: f.business_id, type_code, logical_document_id: null, request_id: null, claim_id: f.claim_id, early_vouch }, part.bytes);
   if (!r.ok) return r;
   const at = d.app.now();
   db.tx(() => {

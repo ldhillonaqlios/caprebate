@@ -95,6 +95,7 @@ import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../connec
 import type { PickQuery } from '../connectors/matching.ts';
 import { PAID_CONNECTORS, PAID_ORDER, totalBeforePence, pounds } from '../connectors/paid-registers.ts';
 import { ingestRegisterRecord } from '../stubs/registers.ts';
+import { lookAgainShort } from './take-back.ts';
 import { postcodeStore } from './postcode.ts';
 import type { PostcodeStore } from './postcode-port.ts';
 import { checkSignature } from './signing.ts';
@@ -432,6 +433,18 @@ export type SourceRow = CatalogueEntry & {
    * is turned on at all. Shown on the panel in plain words ("not switched on").
    */
   readonly switched_on: boolean;
+  /**
+   * PHASE 146j: TRUE WHERE A PERSON CHOSE THIS LOOKUP'S ENTRY FROM A CLOSE-MATCH LIST AND THAT CHOICE STILL STANDS, with
+   * the record it wrote still held. Read off `register_match_picks`, never off the request. It is what lets the panel
+   * offer "Take this choice back" on this row and no other — and src/web/match-review.ts asserts every condition again
+   * on the request that button makes.
+   */
+  readonly picked: boolean;
+  /**
+   * PHASE 146j: the latest choice on this lookup that was TAKEN BACK — when, why, and what to look at again — read off
+   * the pick row, so it stays on the panel after the next run rewrites the lookup's own line. Null where none was.
+   */
+  readonly taken_back: { readonly at: string; readonly reason: string; readonly look_again: readonly string[] } | null;
 };
 
 export type SourcesPanel = {
@@ -635,6 +648,19 @@ export function sourcesFor(
     ).map((r) => [r.source_id, r] as const),
   );
 
+  /* PHASE 146j: the lookups whose entry a person chose, where that choice stands and its record is still held. */
+  const picked = new Set(db.all<{ source_id: string }>(
+    'SELECT source_id FROM register_match_picks WHERE business_id = ? AND taken_back_at IS NULL ' +
+      'AND chosen_key IS NOT NULL AND record_id IS NOT NULL',
+    [business_id],
+  ).map((r) => r.source_id));
+  const takenBack = new Map<string, { at: string; reason: string; look_again: string[] }>();
+  for (const r of db.all<{ source_id: string; taken_back_at: string; taken_back_reason: string; look_again_json: string | null }>(
+    'SELECT source_id, taken_back_at, taken_back_reason, look_again_json FROM register_match_picks ' +
+      'WHERE business_id = ? AND taken_back_at IS NOT NULL ORDER BY taken_back_at ASC, rowid ASC',
+    [business_id],
+  )) takenBack.set(r.source_id, { at: r.taken_back_at, reason: r.taken_back_reason, look_again: lookAgainShort(r.look_again_json) });
+
   const sources = catalogue().map((entry) => {
     const row = stored.get(entry.source_id);
     const current = (row?.state ?? 'NOT_RUN') as SourceState;
@@ -649,6 +675,8 @@ export function sourcesFor(
       detail: resolved.state === 'FAILED' && row?.detail ? row.detail : resolved.detail,
       may_retry: resolved.state === 'FAILED',
       switched_on: switchedOn(entry.source_id),
+      picked: picked.has(entry.source_id) && resolved.state === 'FIRED',
+      taken_back: takenBack.get(entry.source_id) ?? null,
     };
   });
 

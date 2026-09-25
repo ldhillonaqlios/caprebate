@@ -55,3 +55,44 @@ export function ingestRegisterRecord(
   );
   return id;
 }
+
+/* ------------------------------------------------------------------ *
+ * AND THE ONE DOOR OUT — Phase 146j, 25 September 2026.
+ *
+ * Two decisions a person makes put register data in: choosing one entry from a close-match list (Phase 146h) and
+ * saying a name on a client document belongs to an organisation (Phase 146i). Both can now be taken back, and taking
+ * one back takes out what it put in — so, like the way in, the way out is in this file and nowhere else, and
+ * test/phase146j.test.ts asserts it. Neither function decides WHETHER something may be removed: that is the caller's,
+ * who has already checked that nobody approved it and that this decision is what wrote it. These only do it, and
+ * refuse to do more than they were asked.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Remove ONE register record, named by its own id and its client. Returns whether a row went. It never finds a row
+ * by what it says — the caller names the row a decision recorded, never one it re-derived.
+ */
+export function removeRegisterRecord(db: Db, business_id: string, record_id: string): boolean {
+  return db.run('DELETE FROM register_records WHERE id = ? AND business_id = ?', [record_id, business_id]).changes === 1;
+}
+
+/**
+ * Remove ONE FIELD from one register record, and no other. The rest of the record is written back exactly as it
+ * was. Returns false, and changes nothing, where the record is not this client's, cannot be read, or does not carry
+ * the field. Taking a field out can add no name, so N2 has nothing to check on the way out.
+ */
+export function removeRegisterField(db: Db, business_id: string, record_id: string, field_id: string): boolean {
+  const r = db.get<{ fields_json: string }>(
+    'SELECT fields_json FROM register_records WHERE id = ? AND business_id = ?', [record_id, business_id]);
+  if (r === undefined) return false;
+  let fields: Record<string, unknown>;
+  try {
+    const v = JSON.parse(r.fields_json) as unknown;
+    if (v === null || typeof v !== 'object' || Array.isArray(v)) return false;
+    fields = v as Record<string, unknown>;
+  } catch { return false; }
+  if (!Object.prototype.hasOwnProperty.call(fields, field_id)) return false;
+  const { [field_id]: _gone, ...rest } = fields;
+  db.run('UPDATE register_records SET fields_json = ? WHERE id = ? AND business_id = ?',
+    [JSON.stringify(rest), record_id, business_id]);
+  return true;
+}
