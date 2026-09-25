@@ -163,7 +163,10 @@ five files. Every one of them is a read; nothing here writes to the board.
    the monday.com CAPREBATE QUESTIONS document is background only. It is not on
    Monday, so it is read from disk, not through the connector:
      Mac   /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/
-           Caprebate_Questions.docx
+           Health Capital Allowances/Caprebate_Questions.docx
+           (moved there from the OneDrive root on 25 Sep 2026 at 08:55, with
+           the closed document beside it; the cloud item and its link did
+           not change - look for it by name if it moves again)
    Save its Heading 2 texts, one per line and exactly as written ("N) <title>"),
    as   signoff-snapshot/hub-questions-word.txt   - with python-docx:
      python3 -c "import docx,sys; d=docx.Document(sys.argv[1]); print('\\n'.join(
