@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 3 |
+| Ready - Claude can build | 2 |
 | Ready - Lakhbir action | 35 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 1 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
 | Done | 261 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1254,7 +1254,7 @@
 
 ### Phase 146j — taking back a pick: undoing a close match a person chose, and the record that says it was undone
 
-`13117648493` · **Ready - Claude can build** · owner Claude
+`13117648493` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
 
 
 ### A person's pick for a close match — built and switched off, waiting on the data protection officer (Word question 209)
