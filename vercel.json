@@ -5,7 +5,7 @@
   "outputDirectory": ".",
   "functions": {
     "api/index.mjs": {
-      "includeFiles": "{Caprebate site.html,Caprebate/**,node_modules/@node-rs/**}",
+      "includeFiles": "{Caprebate site.html,Caprebate/**,node_modules/**}",
       "maxDuration": 30
     }
   },

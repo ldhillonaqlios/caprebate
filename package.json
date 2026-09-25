@@ -6,6 +6,7 @@
     "node": "24.x"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.127.0",
     "@node-rs/argon2": "2.2.0"
   }
 }

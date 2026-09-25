@@ -10302,3 +10302,20 @@ NEW node 03-app/caprebate-cash-route-proof.cjs       7 of 7 hold
 
 -  **Where Didit sends its results** — BUILDABLE — added to Phase 151e as line 3. The address is `https://<public host>/hooks/identity-check`, but no host can take one today: the test deploy answers 500 there, has no Didit keys, and seeds a fresh in-memory database each cold start, so a result could never match a check sent elsewhere.
 -  The papers: the notice published naming Didit, and clause 7 — waiting on the officer's written answers (lawful basis, the selfie, retention, Didit's own use of pseudonymised data) and on Lakhbir's choice for clause 7 (his authority as director, or a solicitor) — SDP-P10 and SDP-L3. Then the waiver goes back to false.
+
+
+## PHASE 151e, LINE 1 — why every page of the test website failed (25 September 2026, Opus, Mac copy, Lakhbir's MacBook Pro)
+
+ **Lakhbir: "check why test site is broken".** Line 1 of Phase 151e only; lines 2 (what the website shows, waiting on Word question 229) and 3 (where Didit sends its results) stay in the plan. Claimed (7238c91) and cleared at the close. `.bak-phase151e` siblings of every changed file.
+
+### DONE — with the evidence
+
+-  **The cause, reproduced.** `api/index.mjs` works on the Mac, because `09-app/backend/node_modules` is there. On a clean git checkout with only the root's dependencies installed (`npm install --omit=dev`, which is what vercel.json runs), every request threw `ERR_MODULE_NOT_FOUND: Cannot find package '@anthropic-ai/sdk' imported from src/connectors/claude.ts`. Phase 146e (1fcf4cd, 22 September 2026) added the Claude API library to the back end's package.json and not to the root's. Nothing else the application imports was missing (scanned: the back end, the engine, phase3, phase9, api).
+-  **The fix.** The root `package.json` pins `@anthropic-ai/sdk` at 0.127.0, the version the back end runs; `vercel.json`'s function carries `node_modules/**` instead of only `@node-rs/**`, because the library brings its own packages (standardwebhooks, json-schema-to-ts and theirs). On the same clean checkout with the fix: `/` 200, `/login` 200, `/hooks/identity-check` 401 (a result with no signature, refused as it should be).
+-  **The guard.** `test/phase151e.test.ts`: every outside package imported is a root dependency, pinned at the back end's installed version, and carried by the function. Proved red on the pre-change root files (it names `@anthropic-ai/sdk`), green after.
+-  **Checks** (`04-phase-work/phase151e/tools/run-checks.sh`, outputs in its `proofs/`): `npm run check` 1,557 pass / 0 fail across 81 files; the site harness 1,273 / 0 / 4 xfail in both modes; phase3 438; phase9 398: 3,666 in all. Drift green after the Spec's two figures were updated; its negative control exits 1; plain words, tracker, CRM fold and register checks green with their self-tests; payload proof PASS. The live deploy was checked after the push (below).
+
+### NOT DONE — each with its home
+
+-  What the test website shows to anyone — BLOCKED on Lakhbir — Word question 229; Phase 151e line 2.
+-  Where Didit sends its results — BUILDABLE — Phase 151e line 3. The test website now starts, but it still has no Didit keys and a fresh database on each cold start.

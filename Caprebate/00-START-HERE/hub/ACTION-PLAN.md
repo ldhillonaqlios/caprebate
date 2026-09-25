@@ -970,7 +970,11 @@ Mac copy. Take a .bak-phase151e sibling of every file you change. Tracker row:
 "Phase 151e - the test website: why every page fails, and what it shows to
 anyone" (its id is in the tracker; find it with list --group DEVELOPMENT).
 
-1. WHY EVERY PAGE FAILS. api/index.mjs imports the back end's server.ts and
+1. DONE 25 SEP 2026 (Phase 151e, line 1; PHASE HISTORY has the record): the
+   root package.json lacked the Claude API library Phase 146e added to the back
+   end, so the function could not start; fixed, and test/phase151e.test.ts
+   keeps it fixed. The text below is kept for the record.
+   WHY EVERY PAGE FAILS. api/index.mjs imports the back end's server.ts and
    seed.ts and seeds invented data on a cold start; vercel.json rewrites every
    path to it. Reproduce the failure first, then fix it: call the handler
    locally the way Vercel does (a request and a response object), with the
