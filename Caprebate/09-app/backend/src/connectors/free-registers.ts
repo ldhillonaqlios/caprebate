@@ -116,9 +116,10 @@ export const NOT_BUILT: Readonly<Record<string, string>> = Object.freeze({
   VOA: 'allowed, but there is no connector for the valuation office in this build, because we do not hold its licence. ' +
     'Nothing was contacted',
   /* PHASE 150: the land boundary has its own connector, src/connectors/inspire.ts, which reads a whole council's file
-     for one point. It is not run by this button, and it is switched off. */
-  HMLR_INSPIRE: 'allowed, but the land boundary is not looked up by this button. It comes from a whole council\u2019s file, ' +
-    'read by its own connector, which is switched off. Nothing was contacted',
+     for one point. PHASE 151c: this button now runs it, as its own step for each property (src/web/site-area-run.ts),
+     not as one lookup for the client — so this row points at the site area lines, which say what happened. */
+  HMLR_INSPIRE: 'allowed. The land boundary is read for each property by its own step of this button, and the site area ' +
+    'lines above say what happened. It is switched off. Nothing was contacted',
   /* PHASE 151: the free postcode check belongs to the address question the client answers, not to this button. */
   POSTCODES_IO: 'allowed, but the postcode check is made at the address question, when the client types their postcode, ' +
     'not by this button. It is switched off. Nothing was contacted',

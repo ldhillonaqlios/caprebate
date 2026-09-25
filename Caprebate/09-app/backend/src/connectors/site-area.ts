@@ -26,10 +26,11 @@
  * polygon's identifier. The boundary module's CURRENT_LICENCE_PERMISSION keeps a boundary out of every client report
  * and this function gives no way round it.
  *
- * NOTHING CALLS THIS YET, AND NOTHING CAN FIRE IT: the switch is false and there is no route or screen. Turning it on
- * is the one word in the boundary module, once the data protection officer answers "Can we make a few small, logged
- * test lookups to check a data connector works?" — then a caller (the research run after signing) passes the
- * postcode's council and the point.
+ * ITS ONE CALLER IS THE RESEARCH RUN AFTER SIGNING (Phase 151c, src/web/site-area-run.ts): "Run the research" works
+ * out each property's site area on the same click, passing the postcode's council, any neighbouring council a person
+ * added, and the point a person entered or Homedata's own easting and northing. NOTHING CAN FIRE IT TODAY: the switch
+ * is false. Turning it on is the one word in the boundary module, once the data protection officer answers "Can we
+ * make a few small, logged test lookups to check a data connector works?".
  */
 import type { Db } from '../db.ts';
 import {
@@ -187,35 +188,48 @@ function acrossFiles(fetchers: readonly { readonly council: string; readonly fet
   };
 }
 
+/** Everything checked, and nothing yet read or sent: what the download needs. */
+export type SiteAreaReady = {
+  readonly point: { readonly easting: number; readonly northing: number };
+  readonly councils: readonly { readonly lad_code: string; readonly council: string; readonly file: string }[];
+  readonly names: readonly string[];
+  /** The sentence that says which councils' files are (or would be) read. */
+  readonly which: string;
+  readonly entity_id: string;
+};
+
 /**
- * THE FUNCTION. Works out a property's site area from HM Land Registry's land boundary and stores it through the one
- * door. Never throws for a lookup that could not be made or did not find one: every such case is a state with a
- * plain reason, and the site area stays asked.
+ * EVERY CHECK BEFORE THE DOWNLOAD, AND NOTHING ELSE. Phase 151c split this out of `siteAreaFromLandBoundary`, unchanged
+ * and in the same order, so the research panel can say what the next click would do without sending anything: the
+ * switch, the use, the property, the point, the councils, and a site area already held. It reads the database and
+ * nothing outside it. An outcome is a reason to stop; `ready` is everything the download needs.
  */
-export async function siteAreaFromLandBoundary(d: SiteAreaDeps, input: SiteAreaInput): Promise<SiteAreaOutcome> {
+export function planSiteArea(d: Pick<SiteAreaDeps, 'db' | 'grid'>, input: SiteAreaInput):
+  { readonly ready: false; readonly outcome: SiteAreaOutcome } | ({ readonly ready: true } & SiteAreaReady) {
+  const stop = (o: SiteAreaOutcome) => ({ ready: false as const, outcome: o });
   const on = input.switched_on ?? BOUNDARY_FETCHING_SWITCHED_ON;
   if (on !== true) {
-    return outcome('SWITCHED_OFF',
+    return stop(outcome('SWITCHED_OFF',
       'Working out the site area from HM Land Registry\'s land boundaries is switched off. It waits on one answer from ' +
-      'the data protection officer, about small test lookups. Nothing was read or sent, and the site area stays asked.');
+      'the data protection officer, about small test lookups. Nothing was read or sent, and the site area stays asked.'));
   }
   const use = checkBoundaryUse('INTERNAL_CALCULATION');
-  if (!use.permitted) return outcome('NOT_PERMITTED', use.reason);
+  if (!use.permitted) return stop(outcome('NOT_PERMITTED', use.reason));
 
   const property = d.db.get<{ id: string }>('SELECT id FROM properties WHERE id = ? AND business_id = ?', [input.property_id, input.business_id]);
-  if (property === undefined) return outcome('NOT_PERMITTED', 'That property is not one of this company\'s, so nothing was looked up.');
+  if (property === undefined) return stop(outcome('NOT_PERMITTED', 'That property is not one of this company\'s, so nothing was looked up.'));
 
   const point = pointInBritishNationalGrid(input.point, d.grid);
-  if (!point.ok) return outcome('NO_POINT', point.why);
+  if (!point.ok) return stop(outcome('NO_POINT', point.why));
 
   const councils: { lad_code: string; council: string; file: string }[] = [];
   for (const code of input.lad_codes) {
     const c = inspireFileForLad(code);
-    if (!c.ok) return outcome('NO_COUNCIL', `${c.why} Nothing was sent, and the site area stays asked.`);
+    if (!c.ok) return stop(outcome('NO_COUNCIL', `${c.why} Nothing was sent, and the site area stays asked.`));
     if (!councils.some((x) => x.file === c.file)) councils.push(c);
   }
   if (councils.length === 0) {
-    return outcome('NO_COUNCIL', 'We do not know which council the property is in, so we cannot tell which land boundary file to read. The site area stays asked.');
+    return stop(outcome('NO_COUNCIL', 'We do not know which council the property is in, so we cannot tell which land boundary file to read. The site area stays asked.'));
   }
   const names = councils.map((c) => c.council);
   const which = councils.length === 1
@@ -228,8 +242,20 @@ export async function siteAreaFromLandBoundary(d: SiteAreaDeps, input: SiteAreaI
     [input.business_id, SITE_AREA_SOURCE_ID, entity_id],
   );
   if (held !== undefined) {
-    return outcome('ALREADY_HELD', 'We already hold a site area from the land boundary for this property, so it was kept as it was and nothing was read.', { record_id: held.id });
+    return stop(outcome('ALREADY_HELD', 'We already hold a site area from the land boundary for this property, so it was kept as it was and nothing was read.', { record_id: held.id }));
   }
+  return { ready: true, point: { easting: point.easting, northing: point.northing }, councils, names, which, entity_id };
+}
+
+/**
+ * THE FUNCTION. Works out a property's site area from HM Land Registry's land boundary and stores it through the one
+ * door. Never throws for a lookup that could not be made or did not find one: every such case is a state with a
+ * plain reason, and the site area stays asked.
+ */
+export async function siteAreaFromLandBoundary(d: SiteAreaDeps, input: SiteAreaInput): Promise<SiteAreaOutcome> {
+  const plan = planSiteArea(d, input);
+  if (!plan.ready) return plan.outcome;
+  const { point, councils, names, which, entity_id } = plan;
 
   const found = { id: null as string | null };
   const fetchers = councils.map((c) => ({

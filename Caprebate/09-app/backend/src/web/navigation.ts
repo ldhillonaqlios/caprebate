@@ -39,7 +39,7 @@ import { searchGate } from './search.ts';
 import { mayCreateTask, myWork, nextActionsGate } from './tasks.ts';
 import { assertLeadSection } from './leads.ts';
 import { pipelineBoardGate } from './crm.ts';
-import { clientsAreaGate } from './billing.ts';
+import { billingViewFor, clientsAreaGate } from './billing.ts';
 import { claimListGate } from './lists.ts';
 import { assertIntroducerSection, rewardModelGate } from './introducers.ts';
 import { assertSurveySection } from './surveyor.ts';
@@ -290,7 +290,7 @@ export function staffShell(actor: Actor): Shell {
       : h`<a href="${s.href}">${s.label}${extra}</a>`;
   };
   const moreCurrent = tabs.more.some((s) => isCurrent(s, path));
-  const help = h`<a class="helplink" href="/staff/help?screen=${helpScreenFor(path ?? '/staff')}">Help</a>`;
+  const help = h`<a class="helplink" href="/staff/help?screen=${helpScreenFor(path ?? '/staff', actor)}">Help</a>`;
   const html = h`<div class="util">${search}${help}${userMenu(displayName(ctx?.db, actor), actor, '/staff/settings')}</div>
     <nav class="appnav" aria-label="Sections">
       <ul class="tabs-main">${tabs.primary.map((s) => h`<li>${tab(s)}</li>`)}${tabs.more.length === 0 ? raw('') : h`<li class="more"><details${moreCurrent ? raw(' class="has-current"') : raw('')}><summary>More</summary>
@@ -341,9 +341,13 @@ export const HELP_SCREENS: readonly (readonly [prefix: string, code: string])[] 
   ['/staff/replies', 'B49'],
 ]);
 
-export function helpScreenFor(path: string): string {
+export function helpScreenFor(path: string, actor?: Actor): string {
   // PHASE 140: a company's files have their own training section, inside the Clients address.
   if (/^\/staff\/clients\/([A-Za-z0-9-]+)\/files$/.test(path)) return 'B47';
+  /* PHASE 151c: THE SAME ADDRESS, A DIFFERENT SCREEN. A login that reads the billing view of the Clients tab rather than
+     the client record (Accounting, src/web/billing.ts) is trained in B55, not B5 — so the link asks who is looking, not
+     only where. The same question the Clients tab itself asks (`billingViewFor`), never a role name. */
+  if (actor !== undefined && (path === '/staff/clients' || path.startsWith('/staff/clients/')) && billingViewFor(actor)) return 'B55';
   for (const [prefix, code] of HELP_SCREENS) if (path === prefix || path.startsWith(`${prefix}/`)) return code;
   return 'B0';
 }

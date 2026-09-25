@@ -52,6 +52,7 @@ import { openClaimQuestions } from './engaged.ts';
 import { claimNextStep } from './next-step.ts';
 import { dueWords, localStamp, ukDate } from './localtime.ts';
 import { navContext } from './navigation.ts';
+import * as SI from './site-area-inputs.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };
 
@@ -207,6 +208,8 @@ export async function handleCrm(
       owners: mayCreateTask(actor) ? taskOwnerChoices(db) : null,
       // CRM 9 of 10: a note may name a property (migration 012), and the property page now offers it.
       may_note: can(actor, 'internal_note.write', { type: 'internal_note', id: v.business.id, business_id: v.business.id }),
+      // PHASE 151c: the site area's point and councils. Everyone who reads the property reads it; the forms are Admin's or Sales's, after signing.
+      site: SI.sitePointView(db, actor, v.id),
     }));
     return 'handled';
   }
@@ -215,6 +218,26 @@ export async function handleCrm(
     const r = C.updateProperty(deps, actor, id, posted(await form(req), PROPERTY_FIELDS));
     if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, `/staff/properties/${id}`);
     redirect(res, `/staff/properties/${id}?done=saved`);
+    return 'handled';
+  }
+
+  /* PHASE 151c: THE SITE AREA'S POINT AND A NEIGHBOURING COUNCIL (src/web/site-area-inputs.ts). Admin or Sales, only once
+     the engagement letter is signed — both asked there, on the server. Saving sends nothing anywhere. */
+  const sitePoint = /^\/staff\/properties\/([A-Za-z0-9-]+)\/site-point$/.exec(path);
+  if (sitePoint && method === 'POST') {
+    const id = sitePoint[1] ?? '';
+    const f = await form(req);
+    const r = SI.enterSitePoint(deps, actor, id, { easting: f.get('easting'), northing: f.get('northing') });
+    if (!r.ok) return d.problem(res, actor, 'The point was not saved', r.why, `/staff/properties/${id}#site-point`);
+    redirect(res, `/staff/properties/${id}?done=site-point#site-point`);
+    return 'handled';
+  }
+  const siteCouncil = /^\/staff\/properties\/([A-Za-z0-9-]+)\/site-council$/.exec(path);
+  if (siteCouncil && method === 'POST') {
+    const id = siteCouncil[1] ?? '';
+    const r = SI.addNeighbourCouncil(deps, actor, id, (await form(req)).get('lad_code'));
+    if (!r.ok) return d.problem(res, actor, 'The council was not added', r.why, `/staff/properties/${id}#site-point`);
+    redirect(res, `/staff/properties/${id}?done=site-council#site-point`);
     return 'handled';
   }
 
@@ -584,9 +607,37 @@ function propertiesPage(d: CrmPageDeps, actor: Actor, rows: readonly C.PropertyR
   });
 }
 
+/**
+ * PHASE 151c: WHERE THE SITE IS, FOR ITS AREA. The point the land boundary is read at, and the councils whose files are
+ * read, with who entered each and when; and, for Admin or Sales once the letter is signed, the two forms.
+ */
+function sitePointBlock(id: string, s: SI.SitePointView): Safe {
+  const pointWords = s.point !== null
+    ? `Easting ${s.point.easting}, northing ${s.point.northing}. Entered by ${s.point.by}, ${ukDate(s.point.at)}.`
+    : s.homedata_point ? 'The easting and northing from the paid address lookup.' : 'Not known yet.';
+  return h`<div class="pblock" id="site-point"><div class="pnum">Where the site is, for its area</div>
+    <div class="help">We work out the site's area from HM Land Registry's land boundary, at one point on the site, when
+    the research is run. The boundary is for our own checks and never goes in a report.${why('A point is an easting and a northing in metres, as on an Ordnance Survey map. A point you enter here is used before the one from the paid address lookup. A site on the line between two councils can be in either council’s file, so add the other council and both are read.')}</div>
+    ${fields([
+      { label: 'The point', value: pointWords, keep: true },
+      { label: 'Council from the postcode', value: 'name' in s.own_council ? s.own_council.name : `Not known: ${s.own_council.why}`, keep: true },
+      { label: 'Councils added', value: s.councils.length === 0 ? null : s.councils.map((c) => `${c.name} (added by ${c.by}, ${ukDate(c.at)})`).join('; ') },
+    ])}
+    ${s.may_enter ? h`
+      <form method="post" action="/staff/properties/${id}/site-point">
+        <label>Easting, in metres <input name="easting" inputmode="decimal" autocomplete="off" required></label>
+        <label>Northing, in metres <input name="northing" inputmode="decimal" autocomplete="off" required></label>
+        <button type="submit">Save the point</button></form>
+      <form method="post" action="/staff/properties/${id}/site-council">
+        <label>Also read this council's file <select name="lad_code">${s.choices.map((c) => h`<option value="${c.lad_code}">${c.name}</option>`)}</select></label>
+        <button type="submit">Add the council</button></form>`
+      : s.why_not === null ? raw('') : h`<p class="help">${s.why_not}</p>`}
+  </div>`;
+}
+
 function propertyPage(
   d: CrmPageDeps, actor: Actor, v: C.PropertyView, msg: string | undefined,
-  x: { timeline: Timeline | undefined; owners: readonly Owner[] | null; may_note: boolean },
+  x: { timeline: Timeline | undefined; owners: readonly Owner[] | null; may_note: boolean; site?: SI.SitePointView | null },
 ): string {
   /* PHASE 139 (carried from 138): THE PROPERTY PAGE AS SECTIONS, like the client and claim pages. The old tab ids stay
      the anchors, so every link and redirect to #details, #related and #activity still lands. */
@@ -670,7 +721,7 @@ function propertyPage(
           <p class="help">Occupier, previous owner and price are left blank here so that saving the form never re-types a
           value; fill one in only to change it.</p>
           <button type="submit">Save</button></form></div>` : raw('')}
-
+      ${x.site === undefined || x.site === null ? raw('') : sitePointBlock(v.id, x.site)}
 ` },
         { key: 'property.claims', id: 'related', kind: 'facts', heading: 'Claims on this property', count: v.claims.length,
           status: v.claims.length === 0 ? 'NOT_STARTED' : 'WORKING',

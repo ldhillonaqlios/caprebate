@@ -233,9 +233,14 @@ export const LICENCES: readonly Licence[] = [
     redistribution: { client_report: false, accountant_report: false, hmrc_pack: false, internal: true },
     cache_max_age_days: 35,
     legal_review_required: false,
+    /* PHASE 151c, 25 September 2026: the boundary module's checkBoundaryUse said the site AREA "may be reported"
+       while this row says client_report false for the whole source. Lakhbir's decision of 15 September settles the
+       map, not the number, so the number stays in with everything else here — for our own checks — until he answers
+       the Word question "May the site area we work out from a land boundary go in a client's report?". Both now say so. */
     notes: 'Free under the OGL. Republished on the first Sunday of each month, showing the previous month, so a copy ' +
       'is kept no longer than about five weeks. Freehold only. A site area worked out from a polygon is for our own ' +
-      'checks; the polygon, a map of it or its coordinates stay out of every outgoing report.',
+      'checks, and so stays out of every outgoing report with the polygon, a map of it and its coordinates, until ' +
+      'Lakhbir decides whether the number itself may go in a client report.',
   },
   {
     licence_id: 'HMLR_TITLE',

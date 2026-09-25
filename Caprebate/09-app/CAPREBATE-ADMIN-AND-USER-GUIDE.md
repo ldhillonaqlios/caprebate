@@ -1966,7 +1966,22 @@ Note that **Jurisdiction** reads "not known". Its **Why?** says "Not worked out"
 switched on yet. So we cannot tell the nation from the postcode. **Allowances claimed before?** reads "not known".
 It says nobody has found out yet whether allowances were claimed on this property before.
 
+**Where the site is, for its area**
+The property box has a part called **Where the site is, for its area**. We can work out the size of the site from
+the Land Registry's map of land boundaries. We look at one point on the site. The part shows that point and the
+councils whose map files we read.
+- **The point** is an easting and a northing, in metres. You can read them off an Ordnance Survey map. If the paid
+  address lookup gave one, we use it. A point you type is used first.
+- **Councils added** is for a site on the line between two councils. The site may be in either council's file.
+  Choose the other council and press **Add the council**. Then both files are read.
+- Only Admin and Sales can type these, and only once the letter is signed. Before that, the part says so. We keep
+  who typed each one and when. You cannot change a point. To fix one, type the right point. The newest is used.
+- Saving looks nothing up. The research run does that, and it is switched off for now. The research panel has one
+  line for each property. It says what happened, or why nothing did.
+
 **Check yourself**
+- *The site sits on the line between two councils. What do you do?* — Add the other council under **Where the site
+  is, for its area**. Both councils' files are then read.
 - *The previous owner was a retired GP. What do you record?* — A role, not the name. For example, INDIVIDUAL_NOT_RECORDED.
 - *You don't know the purchase price. What goes in the box?* — Nothing. Leave it blank; £0 is refused.
 - *Where do survey dates live?* — On the claim, not on the building.
@@ -3725,6 +3740,12 @@ and the care regulator. The panel says **Yes**, **No** or **Not checked**.
 - **Yes** means the register lists them as someone who can sign, such as a current director.
 - **No** means the register does not list them that way. It is not a warning. You can ask the client.
 We never keep the names we read. The client never sees this line.
+
+**The site area**
+The research run also finds the size of each site. It uses the Land Registry's land boundaries. The panel has a
+line for each property, starting **Site area**. It says the area, or why there is none yet. It may be switched off, or
+waiting for the letter or the privacy notice. It may need a point or a council. You add those on the property page.
+The area is for our own checks. It does not go in a client report.
 
 **Check yourself**
 - *The panel says "Not looked up" for every free lookup. Is something broken?* — No. The client chose to answer

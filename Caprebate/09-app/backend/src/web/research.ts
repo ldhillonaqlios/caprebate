@@ -70,6 +70,16 @@
  * An outcome where nothing happened (off, not allowed) is shown on the panel and never stored, so no row and "not
  * checked" read alike. A YES or NO already kept for this engagement is not asked again. The panel carries one line in
  * words per register (`signatory` on SourcesPanel); it is a staff page, and nothing here reaches the client.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * THE SITE AREA FROM THE LAND BOUNDARY — PHASE 151c, 25 September 2026
+ *
+ * "Run the research" is now the one caller of `siteAreaFromLandBoundary` (src/connectors/site-area.ts), through
+ * src/web/site-area-run.ts: ONE MORE STEP after the check of who signed, for each of the client's properties, with the
+ * postcode's council, any neighbouring council a person added, and the point a person entered or Homedata's own. It
+ * waits on the signed letter, the free gate and the client's own choice, as read here, and above them on the boundary
+ * switch, which is off. The panel carries one line in words per property (`site_area` on SourcesPanel), drawn without
+ * any call outside. The land boundary's own row in the table points at those lines.
  */
 
 import type { Db } from '../db.ts';
@@ -92,6 +102,7 @@ import {
   checkSignatory, notYet, outcome as signatoryOutcome, signatoryWords, SIGNATORY_SOURCES,
   type SignatoryGates, type SignatoryOutcome, type SignatoryReason, type SignatoryResult, type SignatorySource,
 } from '../connectors/signatory-check.ts';
+import { runSiteAreas, siteAreaLines, storeSiteAreaRuns, type SiteAreaLine, type SiteAreaSetup } from './site-area-run.ts';
 
 export type Tier = 'FREE' | 'PAID';
 export type SourceState = 'NOT_RUN' | 'FIRED' | 'FAILED' | 'NOT_PERMITTED_YET';
@@ -458,6 +469,11 @@ export type SourcesPanel = {
    * in a role that can sign — one line in words per register. Staff only. Never a name.
    */
   readonly signatory: readonly SignatoryLine[];
+  /**
+   * PHASE 151c: the site area from HM Land Registry's land boundary — one line in words per property, for every state
+   * it can be in (src/web/site-area-run.ts). Never a polygon or a coordinate.
+   */
+  readonly site_area: readonly SiteAreaLine[];
 };
 
 /** One register's line on the research panel: the result and its words, and when it was checked (null if never). */
@@ -597,7 +613,11 @@ export function stateUnderGates(
  * the table alone would show a shorter list every time a source was added, and
  * the shortening would look exactly like nothing being wrong.
  */
-export function sourcesFor(db: Db, actor: Actor, business_id: string): SourcesPanel {
+export function sourcesFor(
+  db: Db, actor: Actor, business_id: string,
+  /** PHASE 151c: where the site area's grid, store and postcode table come from. Absent: the server's own settings. */
+  opts: { readonly site?: SiteAreaSetup } = {},
+): SourcesPanel {
   assertResearchSection(actor, 'research.read');
   authorise(actor, 'research.read', { type: 'research', id: business_id, business_id });
 
@@ -655,6 +675,8 @@ export function sourcesFor(db: Db, actor: Actor, business_id: string): SourcesPa
       : last.cost_pence === 0 ? 'The last time it was run, nothing was spent.'
       : `The last time it was run it cost ${pounds(last.cost_pence)}, which is what the suppliers charged us.`,
     signatory: signatoryLines(db, business_id, { free_gate_open: free.open, engagement_signed: engagement.signed === true }),
+    site_area: siteAreaLines(db, business_id,
+      { free_gate_open: free.open, engagement_signed: engagement.signed === true, declined: lookupsDeclined(db, business_id) }, opts.site ?? {}),
   };
 }
 
@@ -727,6 +749,11 @@ export type ResearchOutside = {
   readonly sleep?: (ms: number) => Promise<void>;
   /** The ONS postcode table; `postcodeStore()` unless a test passes one. */
   readonly postcodeStore?: PostcodeStore | null;
+  /**
+   * PHASE 151c: the site area's grid, store and — TESTS ONLY — the boundary switch. Absent: CAPREBATE_OSTN15_FILE,
+   * CAPREBATE_INSPIRE_STORE_DIR and BOUNDARY_FETCHING_SWITCHED_ON, which is false.
+   */
+  readonly site?: SiteAreaSetup;
 };
 
 export type RunOutcome = {
@@ -745,6 +772,8 @@ export type RunOutcome = {
   readonly cost_words: string;
   /** PHASE 151b: what the check of who signed came to on this click, one line per register asked. Never a name. */
   readonly signatory?: readonly SignatoryLine[];
+  /** PHASE 151c: what the site area came to on this click, one line per property. */
+  readonly site_area?: readonly SiteAreaLine[];
 };
 
 /** One source's decision under the gates, and — Phase 146c — what its connector did, if it was allowed to run. */
@@ -917,6 +946,18 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
   /* PHASE 151b: ONE MORE STEP — who signed, checked against the registers, under the same gates and switches. */
   const signatory = await runSignatoryCheck(d, actor, business_id,
     { free_gate_open: free.open, engagement_signed: engagement.signed === true }, outcomes);
+  /* PHASE 151c: AND ONE MORE — the site area from the land boundary, for each property, under the same gates, after
+     signing, and switched off. Nothing refuses and nothing throws: every outcome is a line in words. */
+  const o = d.outside;
+  const site = await runSiteAreas(d, actor, business_id,
+    { free_gate_open: free.open, engagement_signed: engagement.signed === true, declined: lookupsDeclined(d.db, business_id) },
+    o === undefined ? undefined : {
+      transport: o.transport,
+      ...(o.limiter === undefined ? {} : { limiter: o.limiter }),
+      ...(o.sleep === undefined ? {} : { sleep: o.sleep }),
+    },
+    { ...(o?.postcodeStore === undefined ? {} : { postcodeStore: o.postcodeStore }), ...(o?.site ?? {}) });
+  const areas = site.filter((l) => l.state === 'STORED').length;
 
   const fired = outcomes.filter((o) => o.state === 'FIRED').length;
   const notPermitted = outcomes.filter((o) => o.state === 'NOT_PERMITTED_YET').length;
@@ -934,6 +975,7 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
       [d.newId(), business_id, actor.id, at, panel.sources.length, fired, notPermitted, failed, 'RUN', spent],
     );
     checked = storeSignatoryChecks(d, actor, business_id, signatory, at);
+    storeSiteAreaRuns(d, actor, business_id, site, at);
   });
   auditSignatoryChecks(d, actor, business_id, checked, at);
 
@@ -943,24 +985,27 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
     object_type: 'research', object_id: business_id,
     detail: {
       considered: panel.sources.length, fired, not_permitted: notPermitted, failed, cost_pence: spent,
-      free_gate_open: free.open, engagement_signed: engagement.signed,
+      free_gate_open: free.open, engagement_signed: engagement.signed, site_areas_stored: areas,
     },
   });
 
   return {
     ok: true,
-    why: fired === 0
+    why: (fired === 0 && areas === 0
       ? (failed === 0
         ? 'Nothing was contacted. Each lookup is either not allowed yet or not switched on yet. ' +
           'No fact was guessed to fill a gap.'
         : `No lookup gave us an answer. ${failed} did not work, and you can try each of them again. ` +
           'No fact was guessed to fill a gap.')
-      : `${fired} lookup${fired === 1 ? '' : 's'} made.` +
-        (failed === 0 ? '' : ` ${failed} did not work, and you can try each of them again.`),
+      : (fired === 0 ? '' : `${fired} lookup${fired === 1 ? '' : 's'} made.`) +
+        (failed === 0 ? '' : ` ${failed} did not work, and you can try each of them again.`) +
+        /* PHASE 151c: a site area worked out on this click is said beside the lookups. */
+        (areas === 0 ? '' : ` ${areas === 1 ? 'One site area was' : `${areas} site areas were`} worked out from the land boundary.`)).trim(),
     considered: panel.sources.length, fired, not_permitted: notPermitted, failed,
     cost_pence: spent,
     cost_words: spent === 0 ? 'Nothing was spent.' : `${pounds(spent)} was spent, which is what the suppliers charged us.`,
     signatory: signatory.outcomes.map((o) => ({ source: o.source, result: o.result, words: o.words, checked_at: o.kept ? at : null })),
+    site_area: site.map(({ kept: _kept, ...line }) => line),
   };
 }
 

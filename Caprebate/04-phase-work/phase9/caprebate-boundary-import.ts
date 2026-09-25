@@ -575,10 +575,16 @@ export function checkBoundaryUse(
       : {
           permitted: false,
           purpose,
+          /* PHASE 151c, 25 September 2026. This said "a site area worked out from it may be reported", while the
+             source register's HMLR_INSPIRE licence row says client_report false for everything from this source,
+             the site area included. Lakhbir's decision of 15 September 2026 (decision_record above) settles the
+             map — it stays out — and "internal calculation only"; it does not say whether the NUMBER may go in a
+             client report. So both now say the same, the safe way round, and the number waits on his answer to the
+             Word question "May the site area we work out from a land boundary go in a client's report?". */
           reason:
             'Refused: boundary maps stay out of client reports. The boundary may be used for internal ' +
-            'calculation only; a site area worked out from it may be reported, but not the map, an image of ' +
-            'it or its coordinates.',
+            'calculation only. A site area worked out from it is for our own checks too, until Lakhbir decides ' +
+            'whether the number may go in a client report. The map, an image of it and its coordinates never may.',
         };
   }
   // purpose === 'FETCH'

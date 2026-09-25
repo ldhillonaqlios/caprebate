@@ -338,6 +338,12 @@ export type AuditKind =
   | 'SIGNATORY_CHECKED'
   /** Phase 151b (Word answer 180): a person chose to answer the property questions themselves instead of the lookups. */
   | 'LOOKUPS_DECLINED'
+  /**
+   * Phase 151c: a person entering, on the property page, the point the site area is looked for at (a British National
+   * Grid easting and northing), or a neighbouring council whose land boundary file must also be read. The property,
+   * the kind, and for a council its ONS code. The point's figures are kept in site_area_inputs, not here.
+   */
+  | 'SITE_POINT_ENTERED' | 'SITE_COUNCIL_ADDED'
   | 'WEBSITE_ENQUIRY_RECEIVED' | 'WEBSITE_ENQUIRY_HANDLED'
   | 'CLIENT_SIGNUP_REQUESTED' | 'CLIENT_SIGNUP_VERIFIED'
   | 'AUTHORISATION_REFUSED';
