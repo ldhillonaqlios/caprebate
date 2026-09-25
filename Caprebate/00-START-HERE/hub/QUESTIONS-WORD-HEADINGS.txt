@@ -33,7 +33,6 @@
 218) Which BCIS product did you agree to, and does its licence let our software use its rates?
 219) How long do we keep the files clients upload, and who may open them?
 227) May the site area we work out from a land boundary go in a client's report?
-229) Should the test website stop showing our files to anyone who has the link?
 72) When buying a building, can the buyer add their own fitting costs on top of an agreed value?
 73) If the seller was never allowed to claim, does the pooling rule still apply?
 74) Is there a third way to fix the value of fixtures that we are missing?
@@ -227,3 +226,4 @@
 220) Do the sale contract and the CPSE replies have to arrive only when the client bought the building?
 225) Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD?
 170) Can we make a few small, logged test lookups to check a data connector works?
+229) Should the test website stop showing our files to anyone who has the link?

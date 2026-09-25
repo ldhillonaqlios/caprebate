@@ -1292,6 +1292,7 @@
 - Note 2026-09-25 (Phase 151d): Written by Phase 151d: every page of the test website answers a server error (the deploy of 43f674b already did), and the website serves every committed file to anyone. Line 1 is buildable; line 2 waits on Word question 229.
 - Note 2026-09-25 (Phase 151h): Phase 151h added line 3: where Didit sends its results. No host can take one today (500 on the test deploy, no keys there, a fresh database each cold start).
 - Note 2026-09-25 (Phase 151e): Line 1 DONE 25 Sep 2026: the root package.json lacked @anthropic-ai/sdk (added to the back end by Phase 146e), so the function could not start. Fixed; test/phase151e.test.ts guards it. Lines 2 and 3 remain.
+- Note 2026-09-25 (Phase 151e): Lines 2 and 3 (first half) DONE 25 Sep 2026: the test website serves no file of ours (229 yes), and reads Didit's keys from its settings only behind CAPREBATE_TEST_PASSWORD. Left: a check and its result on one database.
 
 ### Phase 151f - switch the online identity check from Veriff to Didit
 

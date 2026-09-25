@@ -258,6 +258,21 @@ export function emptySecrets(why = 'no key file is in use'): SecretStore {
   return makeStore('NO_FILE', why, new Map(), false);
 }
 
+/**
+ * PHASE 151e (line 3), 25 September 2026: THE TEST WEBSITE'S KEYS, FROM ITS OWN SETTINGS. The test deployment on
+ * Vercel has no key file and cannot have one; its settings arrive as environment variables. This reads ONLY the names
+ * it is given, from those variables, and nothing else in the environment. It is called by the test deployment's entry
+ * point (api/index.mjs), and only when that deployment has a password of its own; a live server reads the key file.
+ */
+export function secretsFromEnvironment(env: Record<string, string | undefined>, names: readonly string[]): SecretStore {
+  const values = new Map<string, string>();
+  for (const n of names) {
+    const v = (env[n] ?? '').trim();
+    if (v !== '') values.set(n, v);
+  }
+  return makeStore('LOADED', 'keys read from the test website’s own settings', values, false);
+}
+
 /** A store from values in memory. Tests only — a live process reads the file. */
 export function secretsFromValues(values: Record<string, string>): SecretStore {
   return makeStore('LOADED', 'keys given in memory (a test)', new Map(Object.entries(values)), false);

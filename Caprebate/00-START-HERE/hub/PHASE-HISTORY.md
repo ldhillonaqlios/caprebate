@@ -10319,3 +10319,23 @@ NEW node 03-app/caprebate-cash-route-proof.cjs       7 of 7 hold
 
 -  What the test website shows to anyone — BLOCKED on Lakhbir — Word question 229; Phase 151e line 2.
 -  Where Didit sends its results — BUILDABLE — Phase 151e line 3. The test website now starts, but it still has no Didit keys and a fresh database on each cold start.
+
+
+## PHASE 151e, LINES 2 AND 3 — the test website shows no file of ours; Didit's keys behind a password of its own (25 September 2026, Opus, Mac copy, Lakhbir's MacBook Pro)
+
+ **Lakhbir answered Word question 229 "yes", and asked to test Didit on the test website.** Claimed (6455d50) and cleared at the close. `.bak-phase151e` siblings of every changed file (`test/phase151e.test.ts.bak-phase151e2` for the second change to that file).
+
+### DONE — with the evidence
+
+-  **Line 2: the test website serves no file of ours.** `vercel.json`'s `outputDirectory` is `public/` (holding only `robots.txt`, `Disallow: /`), not `.`: every page comes from the application, which serves the site, its assets and every route itself. The live check after the deploy is below.
+-  **Line 3, first half: Didit's keys from the website's settings, never behind the public password.** Every seeded login's password was the seed password, which sits in `src/seed.ts` — a file anyone could download from the test website until line 2. So `api/index.mjs` now has `configureTestDeploy`: with `CAPREBATE_TEST_PASSWORD` set (twelve characters or more), every login moves to it and the seed password stops working, and then — only then — `DIDIT_API_KEY`, `DIDIT_WEBHOOK_SECRET` and `DIDIT_WORKFLOW_ID`, and no other name, are read from the settings (`secretsFromEnvironment`, new in `src/secrets.ts`). Without it, no key is read whatever the settings hold. It logs what it did, never a value. Claude did not and does not enter keys into Vercel: Lakhbir sets the four settings himself.
+-  **Tests.** Five more in `test/phase151e.test.ts` (eight in all). Red on the pre-change code (the new function does not exist); a loader that read every variable fails two of them; with the fix, eight of eight.
+-  **Word question 229** recorded ("Yes.") and moved to the closed document with a Closed line, the Amendment 2 way (read copies matched the Mac files; a pre-write copy matched; both cloud items matched what was sent afterwards). Headings: 156 open and 73 closed.
+-  **Words.** COORDINATES (the test website paragraph), the sweep's step 6, Phase 151e's lines 2 and 3 marked, section 6's row; the Developer Spec's §0 note and a section "Built by Phase 151e, lines 2 and 3" with the four settings and the test webhook address.
+-  **Checks** (`04-phase-work/phase151e/tools/run-checks.sh`, in its `proofs/`): `npm run check` 1,562 pass / 0 fail across 81 files; the site harness 1,273 / 0 / 4 xfail in both modes; phase3 438; phase9 398: 3,671 in all. Drift green after the Spec's figures (`drift-after-figures.txt`); its negative control exits 1; plain words, tracker and register checks green with their self-tests; the CRM fold check green after one §4 line reference moved (`loadSecrets`); payload proof PASS.
+
+### NOT DONE — each with its home
+
+-  A check and its result on one database on the test website: its database is in memory, so a result matches only while the same running copy is up — BUILDABLE — Phase 151e line 3, what is left of it.
+-  The four settings in Vercel (`CAPREBATE_TEST_PASSWORD`, `DIDIT_API_KEY`, `DIDIT_WEBHOOK_SECRET`, `DIDIT_WORKFLOW_ID`), and Didit's webhook set to `https://caprebate-test.vercel.app/hooks/identity-check` — Ready - Lakhbir action.
+-  Ten more temporary copies of the questions documents ("DELETE - ..." at the top of Health Capital Allowances; five from the 229 write) — Ready - Lakhbir action: delete them.

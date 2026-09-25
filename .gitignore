@@ -5,6 +5,9 @@
 !/.gitignore
 !/.gitattributes
 !/.vercelignore
+!/public/
+/public/*
+!/public/robots.txt
 !/.devcontainer/
 !/README.md
 !/api/

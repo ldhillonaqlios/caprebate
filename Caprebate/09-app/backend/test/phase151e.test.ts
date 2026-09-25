@@ -77,3 +77,93 @@ describe('151e · the test website installs everything the application imports',
     }
   });
 });
+
+/* ================================================================== *
+ * LINES 2 AND 3, 25 September 2026 — Lakhbir answered Word question 229 "yes": the test website stops showing our
+ * files. And Didit on the test website: its keys read from the website's own settings, but ONLY behind a password
+ * of its own, because the seed's password is in a file anyone could download.
+ * ================================================================== */
+import { randomBytes as rb151e } from 'node:crypto';
+import { mkdtempSync as mkd151e } from 'node:fs';
+import { tmpdir as tmp151e } from 'node:os';
+import { createApp } from '../src/server.ts';
+import { seed, SEED_PASSWORD } from '../src/seed.ts';
+import { secretsFromEnvironment } from '../src/secrets.ts';
+import { IDENTITY_CHECK, identityCheckMissing } from '../src/connectors/identity-check.ts';
+
+type Configure = (made: Awaited<ReturnType<typeof createApp>>, env: Record<string, string | undefined>) =>
+  Promise<{ readonly password_changed: boolean; readonly keys_loaded: readonly string[]; readonly why: string }>;
+async function entry(): Promise<{ configureTestDeploy: Configure; TEST_DEPLOY_KEYS: readonly string[] }> {
+  const url = new URL('../../../../api/index.mjs', import.meta.url).href;
+  return (await import(url)) as { configureTestDeploy: Configure; TEST_DEPLOY_KEYS: readonly string[] };
+}
+const DIDIT_ENV = { DIDIT_API_KEY: 'test-didit-key-not-real-151e', DIDIT_WEBHOOK_SECRET: 'test-didit-secret-not-real-151e', DIDIT_WORKFLOW_ID: '11111111-2222-3333-4444-151e00000001' };
+async function made151e() {
+  const made = await createApp(':memory:', { documentRoot: mkd151e(join(tmp151e(), 'cb-151e-')), now: () => '2026-09-25T10:00:00.000Z', sealKey: rb151e(32) });
+  await seed(made.app.db, made.app.hasher, made.app.now);
+  return made;
+}
+const hashes = (made: Awaited<ReturnType<typeof createApp>>) => made.app.db.all<{ email: string; password_hash: string }>('SELECT email, password_hash FROM users');
+
+describe('151e line 2 · the test website shows no file of ours (Word question 229, answered yes)', () => {
+  test('vercel.json serves nothing from the repository: its output folder is public/, which holds robots.txt alone, closed to crawlers', () => {
+    const v = JSON.parse(read(join(REPO, 'vercel.json'))) as { outputDirectory: string };
+    assert.equal(v.outputDirectory, 'public', 'with "." every committed file is served to anyone');
+    assert.deepEqual(readdirSync(join(REPO, 'public')).filter((f) => f !== '.DS_Store'), ['robots.txt']);
+    assert.match(read(join(REPO, 'public', 'robots.txt')), /^User-agent: \*\nDisallow: \/\n?$/);
+    assert.match(read(join(REPO, '.gitignore')), /^!\/public\/robots\.txt$/m);
+  });
+});
+
+describe('151e line 3 · Didit on the test website: keys from its settings, and only behind a password of its own', () => {
+  test('secretsFromEnvironment reads the names it is given and nothing else, and ignores an empty one', () => {
+    const s = secretsFromEnvironment({ ...DIDIT_ENV, HOMEDATA_API_KEY: 'x', DIDIT_WORKFLOW_ID: '' }, ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
+    const mine = s.forOwner('DIDIT_IDV');
+    assert.equal(mine.has('DIDIT_API_KEY'), true);
+    assert.equal(mine.has('DIDIT_WORKFLOW_ID'), false, 'an empty value is not a key');
+    assert.equal(s.forOwner('HOMEDATA_ADDRESS').has('HOMEDATA_API_KEY'), false, 'a name it was not given was read');
+    assert.ok(!String(s).includes(DIDIT_ENV.DIDIT_API_KEY), 'the store printed a key');
+  });
+
+  test('with no password of its own, the Didit keys are NOT loaded even when they are in the settings, and the seed password stands', async () => {
+    const { configureTestDeploy } = await entry();
+    const made = await made151e();
+    try {
+      const before = hashes(made);
+      const r = await configureTestDeploy(made, { ...DIDIT_ENV });
+      assert.equal(r.password_changed, false);
+      assert.deepEqual(r.keys_loaded, []);
+      assert.match(r.why, /password/);
+      assert.deepEqual(hashes(made), before);
+      assert.notDeepEqual(identityCheckMissing(IDENTITY_CHECK, made.app.secrets), [], 'real keys behind the public password');
+    } finally { made.close(); }
+  });
+
+  test('a password shorter than twelve characters is refused the same way: nothing changes, no key is loaded', async () => {
+    const { configureTestDeploy } = await entry();
+    const made = await made151e();
+    try {
+      const r = await configureTestDeploy(made, { ...DIDIT_ENV, CAPREBATE_TEST_PASSWORD: 'short' });
+      assert.equal(r.password_changed, false);
+      assert.deepEqual(r.keys_loaded, []);
+    } finally { made.close(); }
+  });
+
+  test('with its own password: every login moves to it, the seed password stops working, and the three Didit keys — only those — are read', async () => {
+    const { configureTestDeploy, TEST_DEPLOY_KEYS } = await entry();
+    const made = await made151e();
+    try {
+      const pw = 'an-invented-test-password-151e';
+      const r = await configureTestDeploy(made, { ...DIDIT_ENV, HOMEDATA_API_KEY: 'must-not-load', CAPREBATE_TEST_PASSWORD: pw });
+      assert.equal(r.password_changed, true);
+      assert.deepEqual([...r.keys_loaded].sort(), ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
+      assert.deepEqual([...TEST_DEPLOY_KEYS].sort(), ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
+      for (const u of hashes(made)) {
+        assert.equal(await made.app.hasher.verify(u.password_hash, pw), true, `${u.email} did not move to the test password`);
+        assert.equal(await made.app.hasher.verify(u.password_hash, SEED_PASSWORD), false, `${u.email} still takes the public seed password`);
+      }
+      assert.deepEqual(identityCheckMissing(IDENTITY_CHECK, made.app.secrets), []);
+      assert.equal(made.app.secrets.forOwner('HOMEDATA_ADDRESS').has('HOMEDATA_API_KEY'), false);
+    } finally { made.close(); }
+  });
+});

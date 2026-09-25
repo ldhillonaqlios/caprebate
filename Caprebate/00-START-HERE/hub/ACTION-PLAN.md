@@ -450,12 +450,15 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   The exports as they came off monday.com (the plan, the history, the three
   registers, the questions document, and Health_Capital_1790331783.xlsx, the
   board with every comment) are kept unedited in Caprebate/_archive/.
-  THE TEST WEBSITE SERVES EVERY COMMITTED FILE TO ANYONE (vercel.json:
-  outputDirectory "."), so /.vercelignore keeps hub/ off every deploy. Proved
-  25 Sep 2026: on the deploy of the commit that added it, hub/CLAIM.md was not
-  served while the Developer Spec, one folder over, was. ANYTHING ELSE ADDED TO
-  THE .gitignore ALLOW-LIST IS PUBLIC unless .vercelignore names it too (Word
-  question 229).
+  THE TEST WEBSITE SERVES NO FILE OF OURS since Phase 151e (Lakhbir answered
+  Word question 229 "yes", 25 Sep 2026): vercel.json's outputDirectory is
+  public/, which holds robots.txt alone, and every page comes from the
+  application itself. Until then it was "." and every committed file was
+  public; SETTING IT BACK TO "." PUBLISHES THE WHOLE STORE AGAIN.
+  /.vercelignore still keeps hub/ out of the upload. The test website's logins
+  take CAPREBATE_TEST_PASSWORD from its settings, and only when that is set
+  are DIDIT_API_KEY, DIDIT_WEBHOOK_SECRET and DIDIT_WORKFLOW_ID read from its
+  settings too (api/index.mjs, configureTestDeploy).
 
 THE LOCK - hub/CLAIM.md replaces monday.com's "Claimed by (machine)" column
   Before a phase starts: write the phase, the machine and the time there,
@@ -987,7 +990,9 @@ anyone" (its id is in the tracker; find it with list --group DEVELOPMENT).
    deploy's own URL still answers). A test that would have caught it, proved
    red on the pre-change code. After the push: "/" answers 200 and the login
    page renders.
-2. WHAT THE WEBSITE SHOWS - ONLY IF LAKHBIR ANSWERS WORD QUESTION 229 "YES".
+2. DONE 25 SEP 2026 (Lakhbir answered 229 "yes"; PHASE HISTORY has the
+   record): outputDirectory public/, robots.txt alone; the text below is kept.
+   WHAT THE WEBSITE SHOWS - ONLY IF LAKHBIR ANSWERS WORD QUESTION 229 "YES".
    Until then this line is BLOCKED on that question, and the phase closes
    without it. If yes: list what the website must serve itself (the site
    file, the back end's assets) and what the function reads at run time (the
@@ -997,7 +1002,13 @@ anyone" (its id is in the tracker; find it with list --group DEVELOPMENT).
    entirely, the function bundle included, so a file the function reads must
    stay. Prove on the new deploy: every file kept off answers something other
    than 200, the site still works, and the payload proof still holds.
-3. WHERE DIDIT SENDS ITS RESULTS (added by Phase 151h, 25 Sep 2026). The
+3. HALF DONE 25 SEP 2026: the test website reads the three Didit keys from
+   its settings, and only behind a password of its own (CAPREBATE_TEST_
+   PASSWORD). STILL TO DO: a check and its result on one database. The test
+   website's database is in memory, so a result matches only while the same
+   running copy is up; make it persist (or say plainly on the panel that a
+   result may be lost), and prove it with a signed, invented result, as below.
+   WHERE DIDIT SENDS ITS RESULTS (added by Phase 151h, 25 Sep 2026). The
    identity check is on for testing, and Didit posts each result to the
    webhook address set in its console: https://<public host>/hooks/identity-
    check. Today there is no host that can take one. The test deploy answers
@@ -1231,8 +1242,8 @@ after that phase.
 6. KNOWN, AND NOT BLOCKERS. The traps are in COORDINATES; read them before
    your first write. The costliest now: a negative control run through a pipe
    reports the pipe's exit code; node --test from the root does not run; a
-   DOCX zip may use backslash entry paths; anything added to the .gitignore
-   allow-list is served by the test website unless .vercelignore names it.
+   DOCX zip may use backslash entry paths; vercel.json's outputDirectory set
+   back to "." would publish every committed file on the test website.
 
 THE PATTERN TO HUNT, in thirteen variants, because each pass finds a different one.
  (i)   Complete on its own terms, silently incomplete on the next person's. WHEN A
@@ -1542,7 +1553,7 @@ WHEN DONE
 | --- | --- | --- |
 |  Claude |  Taking back a pick |  A person who chose the wrong building from a close-match list cannot undo it: the record is stored, the lookup reads as fired and the screen will not offer the list again. Written by Phase 146h, which built the one-way door and said so |
 |  Claude |  The test lookups Lakhbir allowed (Phase 151g) |  He said yes to small, logged test lookups on five conditions; the smoke test that makes them exists and enforces none of the five yet |
-|  Claude |  The test website: why every page fails, and what it shows to anyone (Phase 151e) |  Every page of the test website answers a server error, and it serves every committed file to anyone who asks by path. Written by Phase 151d, which found both while keeping the hub private. What it may show is Lakhbir's decision, in the Word questions document |
+|  Claude |  The test website: why every page fails, and what it shows to anyone (Phase 151e) |  Lines 1 and 2 are done (it starts again, and it shows no file of ours); line 3 is half done: Didit's keys are read behind a password of its own, and a check and its result are not yet on one database. Written by Phase 151d. What it may show is Lakhbir's decision, in the Word questions document |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 
