@@ -52,12 +52,31 @@
  * the engine through `postSignatureFieldsFor` / `postSignatureOpen`, never a
  * second list here. The free facts on the same publishers — CH_COMPANY and
  * HMLR_PPD — are untouched.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * WHO SIGNED, AND WHETHER THE REGISTER SAYS THEY MAY — PHASE 151b, 25 September 2026
+ *
+ * Word question 156, for the data protection officer: "May we briefly check two public register names without saving
+ * them?" Answer, closed 24 September 2026: "Yes – best to check who signs and if they have authority". So "Run the
+ * research" makes ONE MORE STEP after the lookups: `runSignatoryCheck` reads the name typed on the signed engagement
+ * letter (engagement_signatures.signer_name, migration 040) on the server, and hands it to `checkSignatory`
+ * (src/connectors/signatory-check.ts), which compares it in memory with the Companies House officers list and the care
+ * regulator's registered manager and nominated individual. What comes back is a register, YES, NO or NOT_CHECKED, and
+ * a reason code — never a name — and `storeSignatoryChecks` keeps exactly that in signatory_checks (migration 050),
+ * with a SIGNATORY_CHECKED audit row carrying the register and the result.
+ *
+ * IT RUNS UNDER THE LOOKUPS' OWN GATES AND SWITCHES, NOT NEW ONES: the free gate (both registers are free), the signed
+ * engagement asserted here, the source's own switch (CH_COMPANY, CQC) and its key — so it is off today, with them.
+ * An outcome where nothing happened (off, not allowed) is shown on the panel and never stored, so no row and "not
+ * checked" read alike. A YES or NO already kept for this engagement is not asked again. The panel carries one line in
+ * words per register (`signatory` on SourcesPanel); it is a staff page, and nothing here reaches the client.
  */
 
 import type { Db } from '../db.ts';
 import { authorise, can, type Actor } from '../authz.ts';
 import type { AuditLog } from '../audit.ts';
 import { registryGate, REGISTRY } from './engine.ts';
+import { DECLINED_LINE, lookupsDeclined } from './address-check.ts';
 import { SOURCES as REGISTER_SOURCES, LICENCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
 import { switchedOn, runConnector, REGISTER_SWITCHES, type Bundle, type ConnectorContext } from '../connectors/registers.ts';
 import type { Transport, RateLimiter } from '../connectors/http.ts';
@@ -69,6 +88,10 @@ import { ingestRegisterRecord } from '../stubs/registers.ts';
 import { postcodeStore } from './postcode.ts';
 import type { PostcodeStore } from './postcode-port.ts';
 import { checkSignature } from './signing.ts';
+import {
+  checkSignatory, notYet, outcome as signatoryOutcome, signatoryWords, SIGNATORY_SOURCES,
+  type SignatoryGates, type SignatoryOutcome, type SignatoryReason, type SignatoryResult, type SignatorySource,
+} from '../connectors/signatory-check.ts';
 
 export type Tier = 'FREE' | 'PAID';
 export type SourceState = 'NOT_RUN' | 'FIRED' | 'FAILED' | 'NOT_PERMITTED_YET';
@@ -430,6 +453,19 @@ export type SourcesPanel = {
    */
   readonly cost_last_pence: number | null;
   readonly cost_last_words: string | null;
+  /**
+   * PHASE 151b (Word answer 156): whether the person who signed the engagement letter appears on each public register
+   * in a role that can sign — one line in words per register. Staff only. Never a name.
+   */
+  readonly signatory: readonly SignatoryLine[];
+};
+
+/** One register's line on the research panel: the result and its words, and when it was checked (null if never). */
+export type SignatoryLine = {
+  readonly source: SignatorySource;
+  readonly result: SignatoryResult;
+  readonly words: string;
+  readonly checked_at: string | null;
 };
 
 /**
@@ -492,6 +528,8 @@ export function assertResearchSection(actor: Actor, action: 'research.read' | 'r
  */
 export function stateUnderGates(
   entry: CatalogueEntry, current: SourceState, free: FreeGate, engagement: SignedEngagement | null | undefined,
+  /** PHASE 151b (Word answer 180): the client chose to answer the property questions themselves. Absent is not a no. */
+  declined = false,
 ): { state: SourceState; detail: string } {
   /* N4 (Phase 132f). Only a record saying `signed === true` is a signed
      engagement. This used to read `!engagement.signed`, under which a truthy
@@ -520,6 +558,11 @@ export function stateUnderGates(
   const ca2Shut = !postSignatureOpen(entry, engagement);
   const ca2Words = `we look up ${entry.post_signature_fields.map((f) => FIELD_WORDS[f] ?? f).join(' and ')} ` +
     'only once the engagement letter is signed. Until then this lookup is not made — ' + engagementWhy;
+  // PHASE 151b: a client who asked us to leave the lookups alone is not looked up in the free registers. A person asks
+  // them instead. (The paid lookups after signing are the engagement's own, and are not what the choice was about.)
+  if (entry.tier === 'FREE' && declined) {
+    return { state: 'NOT_PERMITTED_YET', detail: DECLINED_LINE };
+  }
   if (entry.tier === 'FREE' && !free.open) {
     return {
       state: 'NOT_PERMITTED_YET',
@@ -575,7 +618,7 @@ export function sourcesFor(db: Db, actor: Actor, business_id: string): SourcesPa
   const sources = catalogue().map((entry) => {
     const row = stored.get(entry.source_id);
     const current = (row?.state ?? 'NOT_RUN') as SourceState;
-    const resolved = stateUnderGates(entry, current, free, engagement);
+    const resolved = stateUnderGates(entry, current, free, engagement, lookupsDeclined(db, business_id));
     return {
       ...entry,
       state: resolved.state,
@@ -611,6 +654,7 @@ export function sourcesFor(db: Db, actor: Actor, business_id: string): SourcesPa
       : last.cost_pence === null ? 'The last time it was run, we did not record what it cost.'
       : last.cost_pence === 0 ? 'The last time it was run, nothing was spent.'
       : `The last time it was run it cost ${pounds(last.cost_pence)}, which is what the suppliers charged us.`,
+    signatory: signatoryLines(db, business_id, { free_gate_open: free.open, engagement_signed: engagement.signed === true }),
   };
 }
 
@@ -699,6 +743,8 @@ export type RunOutcome = {
    */
   readonly cost_pence: number;
   readonly cost_words: string;
+  /** PHASE 151b: what the check of who signed came to on this click, one line per register asked. Never a name. */
+  readonly signatory?: readonly SignatoryLine[];
 };
 
 /** One source's decision under the gates, and — Phase 146c — what its connector did, if it was allowed to run. */
@@ -864,10 +910,13 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
   const panel = sourcesFor(d.db, actor, business_id);
 
   const decided = panel.sources.filter((s) => s.state !== 'FIRED').map((s) => ({
-    entry: s, ...stateUnderGates(s, s.state === 'FAILED' ? 'NOT_RUN' : s.state, free, engagement),
+    entry: s, ...stateUnderGates(s, s.state === 'FAILED' ? 'NOT_RUN' : s.state, free, engagement, lookupsDeclined(d.db, business_id)),
   }));
   const outcomes = await consultAllowed(d, actor, business_id, decided,
     { free_gate_open: free.open, engagement_signed: engagement.signed === true });
+  /* PHASE 151b: ONE MORE STEP — who signed, checked against the registers, under the same gates and switches. */
+  const signatory = await runSignatoryCheck(d, actor, business_id,
+    { free_gate_open: free.open, engagement_signed: engagement.signed === true }, outcomes);
 
   const fired = outcomes.filter((o) => o.state === 'FIRED').length;
   const notPermitted = outcomes.filter((o) => o.state === 'NOT_PERMITTED_YET').length;
@@ -876,6 +925,7 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
   const spent = outcomes.reduce((n, o) => n + o.cost_pence, 0);
   const at = d.now();
 
+  let checked: readonly SignatoryOutcome[] = [];
   d.db.tx(() => {
     storeResearchOutcomes(d, business_id, outcomes, at);
     d.db.run(
@@ -883,7 +933,9 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
         'not_permitted, failed, kind, source_id, cost_pence) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)',
       [d.newId(), business_id, actor.id, at, panel.sources.length, fired, notPermitted, failed, 'RUN', spent],
     );
+    checked = storeSignatoryChecks(d, actor, business_id, signatory, at);
   });
+  auditSignatoryChecks(d, actor, business_id, checked, at);
 
   d.audit.append({
     at, kind: 'RESEARCH_FIRED', outcome: 'ALLOWED',
@@ -908,7 +960,131 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
     considered: panel.sources.length, fired, not_permitted: notPermitted, failed,
     cost_pence: spent,
     cost_words: spent === 0 ? 'Nothing was spent.' : `${pounds(spent)} was spent, which is what the suppliers charged us.`,
+    signatory: signatory.outcomes.map((o) => ({ source: o.source, result: o.result, words: o.words, checked_at: o.kept ? at : null })),
   };
+}
+
+/* ================================================================== *
+ * WHO SIGNED, AND WHETHER THE REGISTER SAYS THEY MAY — Phase 151b, Word answer 156
+ * ================================================================== */
+
+export type SignatoryRun = {
+  /** The engagement whose signer was checked; null when there is no signed letter to check against. */
+  readonly engagement_id: string | null;
+  /** One per register asked on this click. A register already answered YES or NO for this engagement is not asked. */
+  readonly outcomes: readonly SignatoryOutcome[];
+};
+
+/** The latest register record of one source for this client, as its fields. Null when none is held or it cannot be read. */
+function heldFields(db: Db, business_id: string, source_id: string): Record<string, unknown> | null {
+  const r = db.get<{ fields_json: string }>(
+    'SELECT fields_json FROM register_records WHERE business_id = ? AND source_id = ? ORDER BY obtained_at DESC, rowid DESC LIMIT 1',
+    [business_id, source_id]);
+  if (r === undefined) return null;
+  try {
+    const v = JSON.parse(r.fields_json) as unknown;
+    return v !== null && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : null;
+  } catch { return null; }
+}
+
+const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim() : null);
+
+/**
+ * THE CHECK, ON THIS CLICK. Exported so a test can hand it open gates, as `consultAllowed` is; `runResearch` passes the
+ * gates as they stand, which today are shut. The signer's name is read here, on the server, from the signature record
+ * the engagement check has just verified, and goes no further than `checkSignatory`'s memory. `outcomes` is what the
+ * lookups found on the same click: a company number or care registration found there is used, else one held from
+ * an earlier run, else the one on the client's record.
+ */
+export async function runSignatoryCheck(
+  d: RunDeps, actor: Actor, business_id: string, gates: SignatoryGates, outcomes: readonly SourceOutcome[] = [],
+): Promise<SignatoryRun> {
+  const signed = gates.engagement_signed === true
+    ? d.db.get<{ engagement_id: string; signer_name: string }>(
+      'SELECT s.engagement_id, s.signer_name FROM engagement_signatures s JOIN engagements e ON e.id = s.engagement_id WHERE e.business_id = ?',
+      [business_id])
+    : undefined;
+  const engagement_id = signed?.engagement_id ?? null;
+  const answered = new Set(engagement_id === null ? [] : d.db.all<{ source: string }>(
+    "SELECT DISTINCT source FROM signatory_checks WHERE engagement_id = ? AND result IN ('YES','NO')", [engagement_id]).map((r) => r.source));
+  const todo = SIGNATORY_SOURCES.filter((s) => !answered.has(s));
+  if (d.outside === undefined) {
+    // No way out was handed in, so nothing can be contacted: the same as switched off, and nothing is kept.
+    return { engagement_id, outcomes: todo.map((s) => signatoryOutcome(s, notYet(s, gates) ?? 'SWITCHED_OFF')) };
+  }
+  const o = d.outside;
+  const found = (source_id: string): Record<string, unknown> | null =>
+    outcomes.find((x) => x.entry.source_id === source_id && x.state === 'FIRED')?.bundle?.facts as Record<string, unknown> | undefined
+      ?? heldFields(d.db, business_id, source_id);
+  const subject = researchSubject(d.db, business_id);
+  const cqcHeld = found('CQC');
+  /* Loaded when the check runs, not when this file loads: crm.ts imports this file, and a load-time import back would
+     be a cycle that leaves the navigation's gates unset while the app starts. */
+  const { claimantTypeForGate } = await import('./crm.ts');
+  const checked = await checkSignatory(
+    {
+      deps: {
+        audit: d.audit, now: d.now, transport: o.transport,
+        ...(o.limiter === undefined ? {} : { limiter: o.limiter }),
+        ...(o.sleep === undefined ? {} : { sleep: o.sleep }),
+      },
+      actor_id: actor.id, actor_role: actor.role, claim_id: null,
+    },
+    {
+      signer_name: signed?.signer_name ?? null,
+      claimant_type: claimantTypeForGate(d.db, business_id).value,
+      company_number: subject.company_number ?? text(found('CH_COMPANY')?.['company_number']),
+      cqc_location_id: text(cqcHeld?.['cqc_location_id']),
+      cqc_provider_id: text(cqcHeld?.['cqc_provider_id']),
+    },
+    gates, o.secrets, o.switches ?? REGISTER_SWITCHES, todo,
+  );
+  return { engagement_id, outcomes: checked };
+}
+
+/**
+ * KEEP ONLY YES OR NO — inside the caller's transaction. One row per register that was asked and got as far as the
+ * register, or stopped for a reason worth keeping; an outcome where nothing happened is not written. Returns what it
+ * wrote, for the audit rows the caller appends after the transaction.
+ */
+export function storeSignatoryChecks(d: RunDeps, actor: Actor, business_id: string, run: SignatoryRun, at: string): SignatoryOutcome[] {
+  if (run.engagement_id === null) return [];
+  const kept = run.outcomes.filter((o) => o.kept);
+  for (const o of kept) {
+    d.db.run(
+      'INSERT INTO signatory_checks (id, business_id, engagement_id, source, result, reason, checked_at, checked_by) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [d.newId(), business_id, run.engagement_id, o.source, o.result, o.reason, at, actor.id],
+    );
+  }
+  return kept;
+}
+
+/** The audit rows: SIGNATORY_CHECKED, the register and the result only. */
+export function auditSignatoryChecks(d: RunDeps, actor: Actor, business_id: string, kept: readonly SignatoryOutcome[], at: string): void {
+  for (const o of kept) {
+    d.audit.append({
+      at, kind: 'SIGNATORY_CHECKED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+      object_type: 'research', object_id: business_id, detail: { source: o.source, result: o.result },
+    });
+  }
+}
+
+/**
+ * THE PANEL'S LINES: the latest kept check for each register, in words; where none is kept, why not, worked out from
+ * the gates and switches as they stand now — so an absent row and "not checked" say the same thing.
+ */
+export function signatoryLines(db: Db, business_id: string, gates: SignatoryGates): SignatoryLine[] {
+  return SIGNATORY_SOURCES.map((source) => {
+    const row = db.get<{ result: string; reason: string; checked_at: string }>(
+      'SELECT result, reason, checked_at FROM signatory_checks WHERE business_id = ? AND source = ? ORDER BY checked_at DESC, rowid DESC LIMIT 1',
+      [business_id, source]);
+    if (row !== undefined) {
+      return { source, result: row.result as SignatoryResult, words: signatoryWords(source, row.reason as SignatoryReason), checked_at: row.checked_at };
+    }
+    const o = signatoryOutcome(source, notYet(source, gates) ?? 'NOT_RUN_YET');
+    return { source, result: o.result, words: o.words, checked_at: null };
+  });
 }
 
 /**
@@ -943,7 +1119,7 @@ export async function retryFailedSource(
 
   const free = freeGate();
   const engagement = assertSignedEngagement(d.db, business_id);
-  const resolved = stateUnderGates(s, 'NOT_RUN', free, engagement);
+  const resolved = stateUnderGates(s, 'NOT_RUN', free, engagement, lookupsDeclined(d.db, business_id));
   const [o] = await consultAllowed(d, actor, business_id, [{ entry: s, ...resolved }],
     { free_gate_open: free.open, engagement_signed: engagement.signed === true });
   const outcome = o as SourceOutcome;

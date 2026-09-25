@@ -613,11 +613,13 @@ describe('the prior-claim position, derived', () => {
  * ================================================================== */
 
 describe('mandatory documents at a stage — built, and switched off', () => {
-  test('MANDATORY DOCUMENTS SHIP OFF: off, the gate out of DATA_GATHERING is exactly today’s, and the question it waits on is named by its title', async () => {
-    assert.equal(MD.MANDATORY_DOCUMENTS.enabled, false);
+  test('MANDATORY DOCUMENTS: switched on in Phase 151b; off, the gate out of DATA_GATHERING is exactly what it was, and the question it waited on is named by its title', async () => {
+    // Phase 151b: ON — Word question 220 is closed and the officer said yes to the tax uploads (223), whose receipt
+    // policies now exist. Everything below still proves that OFF is exactly the gate as it was.
+    assert.equal(MD.MANDATORY_DOCUMENTS.enabled, true);
     /* Phase 151: the question it waited on (Word 47) was answered; it now waits on 220 and 223, named by their titles. */
     assert.equal(MD.MANDATORY_DOCUMENTS_QUESTION, 'May we accept tax returns and tax computations as uploads, and what must be removed from them?');
-    assert.match(MD.MANDATORY_DOCUMENTS_ALSO_WAITS_ON, /receipt policy/);
+    assert.match(MD.MANDATORY_DOCUMENTS_ALSO_WAITS_ON, /nothing now/);
     assert.deepEqual(MD.MANDATORY_DOCUMENTS.requires.map((r) => `${r.type_code}:${r.condition}`),
       ['SALE_CONTRACT:BOUGHT', 'CPSE_REPLIES:BOUGHT', 'TAX_RETURN:ALWAYS', 'TAX_COMPUTATION:ALWAYS']);
     const h = await boot();
@@ -627,11 +629,13 @@ describe('mandatory documents at a stage — built, and switched off', () => {
       assert.ok(corvale);
       const pc = P.loadPipelineClaim(db, corvale.id);
       assert.equal(pc.stage, 'DATA_GATHERING');
-      const shipped = P.gateOut(db, pc, 'DATA_GATHERING');
       const off = P.gateOut(db, pc, 'DATA_GATHERING', { mandatoryDocuments: { ...MD.MANDATORY_DOCUMENTS, enabled: false } });
-      assert.deepEqual(shipped, off);
-      assert.deepEqual(shipped.needs.map((n) => n.what), ['No unresolved s.198 or s.199 election', P.MILESTONES.DATA_GATHERING_COMPLETE.label]);
-      assert.deepEqual(MD.mandatoryDocumentNeeds(db, pc), []);
+      assert.deepEqual(off.needs.map((n) => n.what), ['No unresolved s.198 or s.199 election', P.MILESTONES.DATA_GATHERING_COMPLETE.label]);
+      assert.deepEqual(MD.mandatoryDocumentNeeds(db, pc, { ...MD.MANDATORY_DOCUMENTS, enabled: false }), []);
+      // On, as shipped: the four documents are needed on top — and nothing else changes.
+      const shipped = P.gateOut(db, pc, 'DATA_GATHERING');
+      assert.deepEqual(shipped.needs.slice(0, 2).map((n) => n.what), off.needs.map((n) => n.what));
+      assert.equal(shipped.needs.length, off.needs.length + 4);
     } finally { h.close(); }
   });
 
@@ -659,7 +663,7 @@ describe('mandatory documents at a stage — built, and switched off', () => {
       assert.equal(F.recordFact(d, sales, c.id, { fact_key: 'ELECTION_EXISTS', answer: 'VALUE', value: 'NO', source_id: 'CLIENT_DOC', note: null }).ok, true);
       assert.equal(P.recordMilestone(d, sales, c.id, 'DATA_GATHERING_COMPLETE', null).ok, true);
       const pc = () => P.loadPipelineClaim(db, c.id);
-      assert.equal(P.gateOut(db, pc(), 'DATA_GATHERING').open, true, 'off, the gate is open on the same records — both ways');
+      assert.equal(P.gateOut(db, pc(), 'DATA_GATHERING', { mandatoryDocuments: { ...MD.MANDATORY_DOCUMENTS, enabled: false } }).open, true, 'off, the gate is open on the same records — both ways');
 
       const need = (label: RegExp) => { const n = P.gateOut(db, pc(), 'DATA_GATHERING', { mandatoryDocuments: on }).needs.find((x) => label.test(x.what)); assert.ok(n, String(label)); return n; };
       assert.equal(P.gateOut(db, pc(), 'DATA_GATHERING', { mandatoryDocuments: on }).open, false);

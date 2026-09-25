@@ -73,6 +73,8 @@ import { clientDeliverables, type ClientDeliverable } from './claim-record.ts';
 import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from './public-site.ts';
 import { receiveEnquiry } from './enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
+import { ANSWER_MYSELF_LABEL, checkedLine, checkPropertyPostcodes, lookupsOffered, recordLookupsDeclined, type KeptCheck } from './address-check.ts';
+import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADER, receiveIdentityResult } from './identity-checks.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -253,6 +255,17 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     }
     html(res, 200, home(actor)); return 'handled';
   }
+  /* PHASE 151b: THE IDENTITY CHECK'S SIGNED RESULT. The service has no login, so this sits outside it — and believes
+     nothing it is sent unless the signature holds (src/web/identity-checks.ts). A bad signature is refused and audited.
+     The answer is a status and nothing else: the service reads no page, and a refusal says nothing about why. */
+  if (path === IDENTITY_HOOK_PATH && method === 'POST') {
+    const raw0 = (await readBody(req, IDENTITY_HOOK_MAX_BYTES)).toString('utf8');
+    const sig = req.headers[IDENTITY_SIGNATURE_HEADER];
+    const r = receiveIdentityResult(d.app, newId, raw0, typeof sig === 'string' ? sig : null);
+    res.writeHead(r.status, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
+    res.end(r.status === 200 ? 'ok' : 'refused');
+    return 'handled';
+  }
   if (path === '/enquiry' && method === 'POST') {
     const r = receiveEnquiry(d.app.deps, newId, await form(req));
     if (!r.ok) {
@@ -313,7 +326,19 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     }
     if (method === 'GET') { html(res, 200, screenPage(draft, id, actor)); return 'handled'; }
     if (method === 'POST') {
-      applyScreen(draft, id, await form(req));
+      const posted = await form(req);
+      applyScreen(draft, id, posted);
+      /* PHASE 151b: THE POSTCODE CHECK, ON THIS SERVER, when the property screen is saved (src/web/address-check.ts).
+         Off — as shipped — or failed, nothing is kept and the question is exactly the typed address. And "answer it
+         myself" (Word answer 180), offered only where the lookups could run, which today they cannot. */
+      if (id === 'Q2') {
+        const st = draft.state as Record<string, unknown>;
+        if (lookupsOffered()) st['lookups_declined'] = posted.get('lookups_declined') === 'on';
+        else delete st['lookups_declined'];
+        const props = (st['properties'] ?? []) as Record<string, unknown>[];
+        const kept = await checkPropertyPostcodes(d.app, props, st['lookups_declined'] === true);
+        props.forEach((p, i) => { const k = kept[i] ?? null; if (k === null) delete p['postcode_checked']; else p['postcode_checked'] = k; });
+      }
       draft.screen = id;
       saveDraft(d.app.db, draft, now);
       const to = nextScreen(draft.state, id);
@@ -376,6 +401,8 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
         html(res, 200, gatedThankYouPage(closed.written, actor)); return 'handled';
       }
       const out = submit(d.app.db, draft, now, newId);
+      // PHASE 151b (Word answer 180): the client asked us to leave the lookups alone. Kept with their organisation.
+      if ((draft.state as Record<string, unknown>)['lookups_declined'] === true) recordLookupsDeclined({ db: d.app.db, audit: d.app.audit, now }, out.business_id);
       // CRM 2 of 10: the funnel records a LEAD, and the claim waits for the
       // enquiry gate. There is no actor — a prospect has no account — and the
       // detail carries ids only.
@@ -1137,6 +1164,7 @@ function screenFields(draft: Draft, id: ScreenId): Safe {
       return h`<div class="pblock"><div class="pnum">Property ${i + 1}</div>
         <label class="fl">Where is it?</label>
         <input class="fi" name="p${i}_address" value="${p.address ?? ''}" placeholder="e.g. Meadowcroft House, LE2 3QP">
+        ${p.postcode_checked !== undefined && p.postcode_checked !== null ? h`<p class="help">${checkedLine(p.postcode_checked as KeptCheck)}</p>` : raw('')}
         <label class="fl">What kind of business operates here?</label>
         ${radios(`p${i}_sector`, Object.keys(sectors).map((k) => ({ value: k, label: sectors[k] ?? k })), p.sector)}
         <label class="fl">Which kind of legal entity holds it?</label>
@@ -1152,7 +1180,8 @@ function screenFields(draft: Draft, id: ScreenId): Safe {
           <label class="ck"><input type="checkbox" name="p${i}_date_unknown"${p.date_unknown === true ? raw(' checked') : raw('')}> I don’t know</label>` : raw('')}
       </div>`;
     })}
-    <label class="ck"><input type="checkbox" name="add_property"> Add another property</label>`;
+    <label class="ck"><input type="checkbox" name="add_property"> Add another property</label>
+    ${lookupsOffered() ? h`<label class="ck"><input type="checkbox" name="lookups_declined"${s.lookups_declined === true ? raw(' checked') : raw('')}> ${ANSWER_MYSELF_LABEL}</label>` : raw('')}`;
   }
   // Q3
   return h`${props.map((p, i) => {

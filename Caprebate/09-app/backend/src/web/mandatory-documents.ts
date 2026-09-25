@@ -1,5 +1,22 @@
 /**
- * MANDATORY DOCUMENTS AT A STAGE — BUILT, AND SWITCHED OFF. The CRM follow-on, 12 September 2026.
+ * MANDATORY DOCUMENTS AT A STAGE — BUILT, AND SWITCHED ON IN PHASE 151b. The CRM follow-on, 12 September 2026.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * SWITCHED ON, 25 SEPTEMBER 2026 (Phase 151b)
+ *
+ * Lakhbir's four documents (Word answer 47) must now arrive before a claim leaves DATA_GATHERING. Everything the switch
+ * waited on is settled. Word question 220 is closed: yes, the sale contract and the CPSE replies are asked only when the
+ * client bought the building, as built. Word question 223 was answered yes by the data protection officer on
+ * 24 September 2026: clients may upload tax returns and tax computations, and until the officer says what must be
+ * removed, the figures and the company details are kept and individuals' names, addresses and tax references removed.
+ * The one thing still missing was buildable, and Phase 151b built it: a receipt policy for each tax document in the
+ * upload handler, bound by migration 049. So each of the four can now be received, and a claim is never held at the
+ * gate by a document nobody can upload — test/phase151b-documents.test.ts proves that for each of the four.
+ *
+ * What did NOT change: a fact not known and a fact never recorded still excuse nothing (N4). Whether the client bought
+ * the building must be recorded as YES or NO before the sale contract and the CPSE replies are excused.
+ *
+ * The rest of this header is as it was written while the switch was off, and says why it was built that way.
  *
  * The scope is 09-app/CAPREBATE-CRM-DISPOSITION.md, row 29.5, and Part R. The gate that reads it is the gate out of
  * DATA_GATHERING in src/web/pipeline.ts.
@@ -55,20 +72,22 @@ export const MANDATORY_DOCUMENTS_QUESTION = 'May we accept tax returns and tax c
    as built) and closed; the data protection officer said yes to the uploads under 223, which stays open for what must be
    removed. WHAT STILL KEEPS THIS OFF is buildable: neither tax document has a receipt policy in the upload handler, so
    neither can be received, and switching this on now would stop every claim at the gate (Phase 151b). */
-export const MANDATORY_DOCUMENTS_ALSO_WAITS_ON = 'a receipt policy for the tax return and the tax computation in the upload handler';
+/* 25 September 2026, Phase 151b: built — a receipt policy for each tax document, bound by migration 049 — so the switch is
+   on and waits on nothing. Question 223 stays open only for what must be removed; until the officer answers that, the
+   rule quoted in the header above applies, and changing it is a change to the receipt policies, not to this switch. */
+export const MANDATORY_DOCUMENTS_ALSO_WAITS_ON = 'nothing now: the receipt policy for the tax return and the tax computation in the upload handler was built in Phase 151b';
 
 /**
- * LAKHBIR'S LIST, SHIPPED OFF (Word answer 47, Phase 151). Four documents: the sale contract and the CPSE replies ONLY
- * WHEN THE CLIENT BOUGHT THE BUILDING — the claim's own fact BOUGHT_THE_BUILDING (migration 045), our recommendation in
- * question 220, because a client who built or refitted has neither — and the tax return and the tax computation on
- * every claim. It stays off until 220 is answered and until 223 says the two tax documents may be uploaded and what must
- * be removed from them: today neither has a receipt policy, so neither can be received, and switching this on would
- * stop every claim at the gate. Until Phase 151 the list was our own recommendation: the fire risk assessment always,
- * the grant funding agreement where grant-funded, the sale contract where an election was made, and the lease where
- * leasehold (caprebate's .bak-phase151 copy keeps it).
+ * LAKHBIR'S LIST (Word answer 47, Phase 151), SWITCHED ON IN PHASE 151b. Four documents: the sale contract and the CPSE
+ * replies ONLY WHEN THE CLIENT BOUGHT THE BUILDING — the claim's own fact BOUGHT_THE_BUILDING (migration 045), because a
+ * client who built or refitted has neither (Word question 220, closed yes) — and the tax return and the tax computation
+ * on every claim. It shipped off in Phase 151 because neither tax document could be received; Phase 151b gave each a
+ * receipt policy (migration 049), so it is on. Until Phase 151 the list was our own recommendation: the fire risk
+ * assessment always, the grant funding agreement where grant-funded, the sale contract where an election was made, and
+ * the lease where leasehold (caprebate's .bak-phase151 copy keeps it).
  */
 export const MANDATORY_DOCUMENTS: MandatoryDocuments = Object.freeze({
-  enabled: false,
+  enabled: true,
   stage: 'DATA_GATHERING',
   question: MANDATORY_DOCUMENTS_QUESTION,
   requires: Object.freeze([

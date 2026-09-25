@@ -29,12 +29,20 @@
  *   Z*  the host's backup cycle as a named blank on every deletion, no restore
  *       without the DPO's approval, and RET-3's clock — which a cycle not known
  *       and a cycle never set both leave with no date (N4)
+ *
+ * Added by Phase 151b, 25 Sep 2026:
+ *   Y7 (rewritten) and Y9-Y12  Word answer 173 — where two retention periods
+ *       apply, the LATER keep-until date governs
+ *   C10-C14  the tax return and the tax computation, received under receipt
+ *       policies of their own (Word question 223, answered yes by the data
+ *       protection officer on 24 September 2026)
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   DOC_SPECS, HUMAN_CAPTURE_SPECS, HUMAN_READ_ONLY_TYPES, NEVER_TO_MODEL,
+  segment, classifyHeading, sanitise,
   type DocType, type Segment,
 } from './caprebate-document-pipeline.ts';
 import { NameExclusionError } from './caprebate-name-exclusion.ts';
@@ -70,6 +78,8 @@ const ALL_TYPES: readonly DocType[] = [
   'INSURANCE_REINSTATEMENT', 'LEASE', 'CONTRACTOR_COST_BREAKDOWN',
   'BUILDING_REGS_COMPLETION', 'GRANT_FUNDING_AGREEMENT',
   'CPSE_REPLIES', 'SALE_CONTRACT',
+  // Phase 151b, Word question 223
+  'TAX_RETURN', 'TAX_COMPUTATION',
 ];
 
 const seg = (kind: Segment['kind'], heading: string, page = 1, text = 'body'): Segment =>
@@ -79,8 +89,8 @@ const seg = (kind: Segment['kind'], heading: string, page = 1, text = 'body'): S
  * C — the receipt policy, derived from the field sets
  * ================================================================== */
 
-test('C1 every document type has a receipt policy, and there are exactly eleven', () => {
-  assert.equal(CLIENT_DOC_RECEIPT_POLICY.length, 11);
+test('C1 every document type has a receipt policy, and there are exactly thirteen (eleven until Phase 151b)', () => {
+  assert.equal(CLIENT_DOC_RECEIPT_POLICY.length, 13);
   for (const t of ALL_TYPES) assert.ok(receiptPolicyFor(t), `no policy for ${t}`);
 });
 
@@ -150,20 +160,42 @@ test('C7 NO FIELD IN ANY OF THE ELEVEN SPECIFICATIONS IS A PERSON\'S NAME — as
     if (allowed.has(f)) continue;
     assert.ok(!nameish.test(f), `field '${f}' looks like a person-name field — Phase 40 §5.4 no longer holds`);
   }
-  // 44 on the model path across the nine DOC_SPECS, 9 on the human path
+  // 57 on the model path across the eleven DOC_SPECS, 9 on the human path
   // across the two HUMAN_CAPTURE_SPECS. Pinned so that a spec gaining a field
   // fails here and forces the field-by-field check to be re-run by a person,
   // rather than the regex above being trusted to have thought of everything.
-  assert.equal(DOC_SPECS.reduce((a, s) => a + s.fields.length, 0), 44);
+  // Phase 151b re-ran it for the thirteen tax fields (44 + 13): six on the
+  // return, seven on the computation — dates, sums of money, lists of sums by
+  // pool, and one company number. None is a name or a tax reference.
+  assert.equal(DOC_SPECS.reduce((a, s) => a + s.fields.length, 0), 57);
   assert.equal(HUMAN_CAPTURE_SPECS.reduce((a, s) => a + s.fields.length, 0), 9);
-  assert.equal(fields.length, 53, 'the field count changed — re-run the field-by-field check before touching this number');
+  assert.equal(fields.length, 66, 'the field count changed — re-run the field-by-field check before touching this number');
 });
 
-test('C8 every spec field is on the CLIENT_DOC keep list, so no live field fails closed in production', () => {
+/*
+ * PHASE 151b: THE THIRTEEN TAX FIELDS ARE NOT ON THE REGISTER'S KEEP LIST YET.
+ * The CLIENT_DOC entry in caprebate-name-exclusion.ts enumerates every spec
+ * field literally, so that a new field must EARN its way on. That file is not
+ * part of Phase 151b's change, so the tax fields are not on it, and a claim
+ * carrying one is refused as unclassified — the register doing its job, not a
+ * bypass. Nothing reaches that point today: reading a document by model is
+ * switched off in the back end, and receiving a tax return does not need it.
+ * C8 holds every other field; C8b holds the refusal, so the day the register
+ * lists them C8b fails and this exception list must be emptied.
+ */
+/* PHASE 151b, later the same day: the register now lists the thirteen tax fields (caprebate-name-exclusion.ts, the
+   CLIENT_DOC entry), so nothing waits on it any more. The set is kept, as the list C8b reads. */
+const TAX_FIELDS = new Set(
+  DOC_SPECS.filter((s) => s.doc_type === 'TAX_RETURN' || s.doc_type === 'TAX_COMPUTATION')
+    .flatMap((s) => s.fields.map((f) => f.field_id)),
+);
+
+test('C8 every spec field is on the CLIENT_DOC keep list, so no live field fails closed in production — the tax fields included', () => {
   const fields = [
     ...DOC_SPECS.flatMap((s) => s.fields.map((f) => f.field_id)),
     ...HUMAN_CAPTURE_SPECS.flatMap((s) => s.fields.map((f) => f.field_id)),
   ];
+  assert.equal(fields.length, 66);
   // grant_funder_name and brc_issuing_body need their discriminants; supply both.
   assert.doesNotThrow(() =>
     assertClaimsWritable(
@@ -173,11 +205,195 @@ test('C8 every spec field is on the CLIENT_DOC keep list, so no live field fails
   );
 });
 
+test('C8b the thirteen tax fields are on the register by name — and none is a name or a tax reference', () => {
+  assert.equal(TAX_FIELDS.size, 13);
+  for (const field_id of TAX_FIELDS) {
+    assert.doesNotThrow(() => assertClaimsWritable([{ field_id, source_id: 'CLIENT_DOC' }]), field_id);
+    assert.doesNotMatch(field_id, /name|utr|tax_ref|nino|national_insurance|address/i, `${field_id} looks like a person's detail`);
+  }
+  // THE NEGATIVE CONTROL: a tax field the register does NOT list is still refused — the register is not bypassed.
+  assert.throws(
+    () => assertClaimsWritable([{ field_id: 'taxret_taxpayer_name', source_id: 'CLIENT_DOC' }]),
+    (e: unknown) => e instanceof NameExclusionError,
+  );
+});
+
 test('C9 the two HUMAN_READ_ONLY types are the only ones in whole-document mode, and they say why', () => {
   const whole = CLIENT_DOC_RECEIPT_POLICY.filter((p) => p.mode === 'WHOLE_DOCUMENT_PENDING_HUMAN_READ');
   assert.deepEqual(whole.map((p) => p.doc_type).sort(), [...HUMAN_READ_ONLY_TYPES].sort());
   for (const p of whole) {
     assert.match(p.why, /HONEST WEAKNESS|same honest weakness/i, 'the weaker mode must be named as weaker in the policy itself');
+  }
+});
+
+/* ================================================================== *
+ * C10-C14 — THE TAX RETURN AND THE TAX COMPUTATION (Phase 151b)
+ *
+ * Word question 223. The data protection officer, 24 September 2026: clients
+ * may upload both; until the officer says what must be removed, keep the
+ * figures and the company details and remove individuals' names, addresses
+ * and tax references. Every fixture below is INVENTED — the names, the
+ * numbers and the references. QQ is the prefix HMRC never issues.
+ * ================================================================== */
+
+/** A company's corporation tax return, CT600-shaped. */
+const CT600_PAGES = [
+  { page: 1, lines: [
+    'COMPANY INFORMATION',
+    'Company name Brightwater Invented Care Limited',
+    'Company registration number 09876543',
+    'Company tax reference 1234567890',
+    'RETURN PERIOD',
+    'From 1 April 2025 to 31 March 2026',
+    'UTR:',
+    'Reference 9999999999, not labelled as the company’s own',
+  ] },
+  { page: 2, lines: [
+    'PROFITS BEFORE OTHER DEDUCTIONS AND RELIEFS',
+    'Trading profits 412,300',
+    'CAPITAL ALLOWANCES AND BALANCING CHARGES',
+    'Annual investment allowance 180,000',
+    'Main pool writing-down allowance 21,400',
+  ] },
+  { page: 3, lines: [
+    'DECLARATION',
+    'I declare that the information I have given on this return is correct and complete.',
+    'Name Jane Inventedperson   Status Director',
+    'AGENT DETAILS',
+    'Invented & Co, Chartered Accountants, contact Peter Madeupname, 7 Fictional Street',
+  ] },
+];
+
+/** A sole trader's self assessment return: the taxpayer IS a person. */
+const SOLE_TRADER_PAGES = [
+  { page: 1, lines: [
+    'YOUR PERSONAL DETAILS',
+    'Name Samuel Inventedname',
+    'Address 12 Madeup Road, Nowhereton, ZZ1 1ZZ',
+    'National Insurance number QQ 12 34 56 C',
+    'Unique Taxpayer Reference 5555566666',
+    'BUSINESS DETAILS',
+    'Business name Samuel Inventedname Dental Practice',
+    'Business address 3 Fictional Parade, ZZ2 2ZZ',
+  ] },
+  { page: 2, lines: [
+    'CAPITAL ALLOWANCES',
+    'Annual investment allowance 64,000',
+    'Special rate pool writing-down allowance 3,100',
+    'CALCULATING YOUR TAXABLE PROFIT OR LOSS',
+    'Net business profit for tax purposes 88,200 for the year to 5 April 2026',
+  ] },
+  { page: 3, lines: [
+    'SIGNATURE AND DATE',
+    'Signed S Inventedname, 30 January 2027',
+    'DECLARATION',
+    'I declare that the information I have given is correct and complete.',
+  ] },
+];
+
+/** An accountant's tax computation, with a person named INSIDE a kept section. */
+const COMPUTATION_PAGES = [
+  { page: 1, lines: [
+    'TAX COMPUTATION FOR THE YEAR ENDED 31 MARCH 2026',
+    'Adjusted trading profit 412,300',
+    'PREPARED BY INVENTED ACCOUNTANTS LLP',
+    'Reviewed by Priya Madeupname ACA',
+  ] },
+  { page: 2, lines: [
+    'MAIN POOL',
+    'Balance brought forward 96,000; additions 40,000; carried forward 114,080',
+    'SPECIAL RATE POOL',
+    'Balance brought forward 30,000; carried forward 28,200',
+    'SINGLE ASSET POOL',
+    'Director’s car (Mr Inventedname) 18,000 — private use 25 per cent',
+  ] },
+];
+
+const PEOPLE = /Inventedperson|Madeupname|Inventedname|Madeup Road|Fictional|QQ 12 34 56 C|5555566666|9999999999/;
+const retainedText = (r: { retained: Segment[] }) => JSON.stringify(r.retained.map((x) => [x.heading, x.text]));
+
+test('C10 the two tax types are SPEC_DERIVED, keep exactly their spec\'s three segments, and keep none of the segments about people', () => {
+  for (const t of ['TAX_RETURN', 'TAX_COMPUTATION'] as const) {
+    const p = receiptPolicyFor(t);
+    assert.equal(p.mode, 'SPEC_DERIVED');
+    assert.deepEqual([...p.retained_segments].sort(), ['CAPITAL_ALLOWANCES_COMPUTATION', 'TAX_ENTITY_DETAILS', 'TAX_PROFIT_COMPUTATION']);
+    for (const k of ['TAXPAYER_PERSONAL_DETAILS', 'DECLARATION', 'SIGNATORIES', 'AGENT_DETAILS', 'UNCLASSIFIED'] as const) {
+      assert.equal(p.retained_segments.includes(k), false, `${t} keeps ${k}`);
+      assert.ok(NEVER_TO_MODEL.includes(k), `${k} is not on NEVER_TO_MODEL`);
+    }
+  }
+});
+
+test('C11 A COMPANY\'S RETURN: the company details, the profits and the allowances are kept; the declaration, the agent and an unlabelled reference go', () => {
+  const r = applyReceiptPolicy('CT-1', 'TAX_RETURN', segment(CT600_PAGES));
+  assert.deepEqual(r.retained.map((x) => x.kind),
+    ['TAX_ENTITY_DETAILS', 'TAX_ENTITY_DETAILS', 'TAX_PROFIT_COMPUTATION', 'CAPITAL_ALLOWANCES_COMPUTATION']);
+  assert.deepEqual(r.removed.map((x) => [x.kind, x.reason]), [
+    ['UNCLASSIFIED', 'UNCLASSIFIED_FAILS_CLOSED'],
+    ['DECLARATION', 'NO_FIELD_NEEDS_IT'],
+    ['AGENT_DETAILS', 'NO_FIELD_NEEDS_IT'],
+  ]);
+  const kept = retainedText(r);
+  // The company's own details, its own tax reference included — the legal-form test (C14).
+  assert.match(kept, /Brightwater Invented Care Limited/);
+  assert.match(kept, /09876543/);
+  assert.match(kept, /Company tax reference 1234567890/);
+  assert.match(kept, /412,300/);
+  assert.match(kept, /180,000/);
+  // Nobody: not the director who signed, not the agent, not the reference that could be anyone's.
+  assert.doesNotMatch(kept, PEOPLE);
+  assert.equal(r.removed.some((x) => 'text' in x), false);
+});
+
+test('C12 A SOLE TRADER\'S RETURN — THE HARD CASE: the figures survive; the name, the business name, both addresses, the National Insurance number and the tax reference do not', () => {
+  const r = applyReceiptPolicy('SA-1', 'TAX_RETURN', segment(SOLE_TRADER_PAGES));
+  assert.deepEqual(r.retained.map((x) => x.kind), ['CAPITAL_ALLOWANCES_COMPUTATION', 'TAX_PROFIT_COMPUTATION']);
+  assert.deepEqual(r.removed.map((x) => x.kind),
+    ['TAXPAYER_PERSONAL_DETAILS', 'TAXPAYER_PERSONAL_DETAILS', 'SIGNATORIES', 'DECLARATION']);
+  const kept = retainedText(r);
+  assert.match(kept, /64,000/);
+  assert.match(kept, /88,200/);
+  assert.doesNotMatch(kept, PEOPLE);
+  assert.doesNotMatch(kept, /Samuel|Dental Practice|ZZ1|ZZ2/);
+  // And the policy says so in plain terms, where a person triaging it will read it.
+  assert.match(receiptPolicyFor('TAX_RETURN').why, /SOLE TRADER/);
+  assert.match(receiptPolicyFor('TAX_RETURN').why, /What survives is the period, the profit and the allowances/);
+});
+
+test('C13 A TAX COMPUTATION: the preparer goes and the pools stay — and a name written INSIDE a kept pool is kept, which the policy admits and the model boundary refuses', () => {
+  const r = applyReceiptPolicy('TC-1', 'TAX_COMPUTATION', segment(COMPUTATION_PAGES));
+  assert.deepEqual(r.retained.map((x) => x.kind), ['TAX_PROFIT_COMPUTATION', 'CAPITAL_ALLOWANCES_COMPUTATION',
+    'CAPITAL_ALLOWANCES_COMPUTATION', 'CAPITAL_ALLOWANCES_COMPUTATION']);
+  assert.deepEqual(r.removed.map((x) => [x.kind, x.reason]), [['SIGNATORIES', 'NO_FIELD_NEEDS_IT']]);
+  const kept = retainedText(r);
+  assert.match(kept, /carried forward 114,080/);
+  assert.doesNotMatch(kept, /Priya|Invented Accountants/);
+  // THE HONEST WEAKNESS, asserted rather than hidden: the director's car line is in a kept section.
+  assert.match(kept, /Mr Inventedname/);
+  assert.match(receiptPolicyFor('TAX_COMPUTATION').why, /HONEST WEAKNESS/);
+  // ...and the model boundary drops that one section, and only that one.
+  const s = sanitise('TC-1', 'TAX_COMPUTATION', r.retained);
+  assert.equal(JSON.stringify(s.payload).includes('Inventedname'), false);
+  assert.deepEqual(s.dropped.map((d) => d.heading), ['SINGLE ASSET POOL']);
+  assert.equal(s.payload.segments.length, 3);
+});
+
+test('C14 THE COMPANY\'S OWN TAX REFERENCE IS A COMPANY DETAIL: the legal-form test says a company is not a person and a sole trader is', () => {
+  // The decision rests on the register's test, applied unchanged (section 2).
+  assert.equal(classifyPartyReference({ form: 'BODY_CORPORATE', individuals_named_on_document: 0 }).firm_name_is_personal_data, false);
+  assert.equal(classifyPartyReference({ form: 'LLP', individuals_named_on_document: 0 }).firm_name_is_personal_data, false);
+  assert.equal(classifyPartyReference({ form: 'SOLE_TRADER', individuals_named_on_document: 0 }).firm_name_is_personal_data, true);
+  assert.equal(classifyPartyReference({ form: 'UNKNOWN', individuals_named_on_document: 0 }).firm_name_is_personal_data, true);
+  // Only a heading that NAMES THE COMPANY keeps a reference; one that cannot say whose it is goes.
+  assert.equal(classifyHeading('Company tax reference:'), 'TAX_ENTITY_DETAILS');
+  assert.equal(classifyHeading('Tax reference:'), 'UNCLASSIFIED');
+  assert.equal(classifyHeading('UTR:'), 'UNCLASSIFIED');
+  assert.equal(classifyHeading('National Insurance number:'), 'TAXPAYER_PERSONAL_DETAILS');
+  // And no field extracts a tax reference of anybody's.
+  for (const t of ['TAX_RETURN', 'TAX_COMPUTATION'] as const) {
+    for (const f of DOC_SPECS.find((x) => x.doc_type === t)!.fields) {
+      assert.doesNotMatch(f.field_id, /utr|tax_ref|reference|insurance|nino|name/, `${f.field_id} extracts an identifier`);
+    }
   }
 });
 
@@ -997,20 +1213,22 @@ test('Y6 the answer does NOT reach every document — A14-D4 still deletes the n
   assert.match(CONDITION_D4_STATUS.q56_closes_first_route, /only/);
 });
 
-test('Y7 where two clocks are known the EARLIER governs — fail closed for a retention rule is sooner', () => {
+test('Y7 WORD ANSWER 173 — where two clocks are known the LATER governs: the file is kept until both periods have ended', () => {
+  // Until 24 September 2026 this test held the opposite (the earlier date won).
+  // Word answer 173: "use the later of the two keep-until dates".
   const s: IngestionSettings = {
     ...FAIL_CLOSED_SETTINGS, raw_file_retention: 'RETAIN_FOR_DEFENCE_PERIOD', ret7_approved: true,
   };
   const limbs = { claim_period_end: '2026-03-31T00:00:00.000Z', report_delivered_at: '2026-09-01T00:00:00.000Z' };
-  // RET-7 says 2032-09-01. A defence pack sealed earlier than that governs...
+  // RET-7 says 2032-09-01. A defence pack that ends sooner does NOT cut the file short...
   assert.equal(
     deletionDueAt(rawFile({ ...limbs, defence_period_ends_at: '2030-01-31T00:00:00.000Z' }), s),
-    '2030-01-31T00:00:00.000Z',
+    '2032-09-01T00:00:00.000Z',
   );
-  // ...and a defence pack running longer does NOT extend the file past RET-7.
+  // ...and a defence pack running longer DOES keep the file past RET-7.
   assert.equal(
     deletionDueAt(rawFile({ ...limbs, defence_period_ends_at: '2040-01-31T00:00:00.000Z' }), s),
-    '2032-09-01T00:00:00.000Z',
+    '2040-01-31T00:00:00.000Z',
   );
 });
 
@@ -1024,6 +1242,72 @@ test('Y8 RET-7 records its instruments AND what it excluded, so the DPO can put 
   assert.ok(RET7.excluded.some((e) => /20-year/.test(e)));
   assert.ok(RET7.excluded.some((e) => /14B/.test(e)));
   assert.ok(RET7.excluded.every((e) => /legal hold/i.test(e)));
+});
+
+/* ------------------------------------------------------------------ *
+ * Y9-Y12 — WORD ANSWER 173 (closed 24 September 2026), Phase 151b.
+ * Both clocks known: the later, whichever order they come in. One known:
+ * that one. Neither: no date, surfaced. And the A14-D4 fallback, which is
+ * not two retention periods, is untouched.
+ * ------------------------------------------------------------------ */
+
+const LONG: IngestionSettings = {
+  ...FAIL_CLOSED_SETTINGS, raw_file_retention: 'RETAIN_FOR_DEFENCE_PERIOD', ret7_approved: true,
+};
+/* Invented dates. RET-7 from these limbs is 2031-06-30 (six years from the later limb, the report). */
+const Y_LIMBS = { claim_period_end: '2024-12-31T00:00:00.000Z', report_delivered_at: '2025-06-30T00:00:00.000Z' };
+
+test('Y9 BOTH KNOWN, EACH ORDER — the later of the two keep-until dates, whether it is the defence pack\'s or RET-7\'s', () => {
+  assert.equal(ret7DueAt(rawFile(Y_LIMBS)), '2031-06-30T00:00:00.000Z');
+  // The defence pack ends first: RET-7 governs.
+  assert.equal(deletionDueAt(rawFile({ ...Y_LIMBS, defence_period_ends_at: '2029-04-05T00:00:00.000Z' }), LONG),
+    '2031-06-30T00:00:00.000Z');
+  // RET-7 ends first: the defence pack governs.
+  assert.equal(deletionDueAt(rawFile({ ...Y_LIMBS, defence_period_ends_at: '2033-11-15T00:00:00.000Z' }), LONG),
+    '2033-11-15T00:00:00.000Z');
+  // The same day: that day.
+  assert.equal(deletionDueAt(rawFile({ ...Y_LIMBS, defence_period_ends_at: '2031-06-30T00:00:00.000Z' }), LONG),
+    '2031-06-30T00:00:00.000Z');
+  // And the file is not overdue on a day between the two dates.
+  const between = rawFile({ ...Y_LIMBS, defence_period_ends_at: '2029-04-05T00:00:00.000Z' });
+  assert.doesNotThrow(() => assertNoOverdueUndeleted([between], '2030-01-01T00:00:00.000Z', LONG),
+    'a file still inside one of its two periods is not overdue');
+});
+
+test('Y10 ONE KNOWN — that one governs, and an unapproved RET-7 is not known, so it lengthens nothing (N4)', () => {
+  // Only the defence pack's date.
+  assert.equal(deletionDueAt(rawFile({ defence_period_ends_at: '2029-04-05T00:00:00.000Z' }), LONG), '2029-04-05T00:00:00.000Z');
+  // Only RET-7 (one limb missing means RET-7 is not known either).
+  assert.equal(deletionDueAt(rawFile(Y_LIMBS), LONG), '2031-06-30T00:00:00.000Z');
+  assert.equal(deletionDueAt(rawFile({ claim_period_end: Y_LIMBS.claim_period_end, defence_period_ends_at: '2029-04-05T00:00:00.000Z' }), LONG),
+    '2029-04-05T00:00:00.000Z');
+  // RET-7 NOT APPROVED: its later date is not used. Not approved and not supplied behave alike.
+  const unapproved: IngestionSettings = { ...LONG, ret7_approved: false };
+  assert.equal(deletionDueAt(rawFile({ ...Y_LIMBS, defence_period_ends_at: '2029-04-05T00:00:00.000Z' }), unapproved),
+    '2029-04-05T00:00:00.000Z');
+  assert.equal(deletionDueAt(rawFile({ defence_period_ends_at: '2029-04-05T00:00:00.000Z' }), unapproved), '2029-04-05T00:00:00.000Z');
+});
+
+test('Y11 NEITHER KNOWN — no date at all, and the file is surfaced, never kept forever in silence', () => {
+  const rec = rawFile({ extraction_completed_at: '2026-09-05T09:00:00.000Z' });
+  assert.equal(deletionDueAt(rec, LONG), null);
+  assert.equal(deletionDueAt(rawFile({ claim_period_end: Y_LIMBS.claim_period_end }), LONG), null);
+  assert.equal(sweepForDeletion([rec], '2026-10-01T09:00:00.000Z', LONG).undeletable.length, 1);
+  assert.throws(
+    () => assertNoOverdueUndeleted([rec], '2026-10-01T09:00:00.000Z', LONG),
+    (e: unknown) => e instanceof ClientDocIngestionError && /NO COMPUTABLE DELETION/.test(e.message),
+  );
+});
+
+test('Y12 answer 173 does not reach the A14-D4 fallback — a file that lost no-basis content still goes on the extraction clock', () => {
+  const rec = rawFile({
+    ...Y_LIMBS, no_basis_content_in_original: true,
+    extraction_completed_at: '2026-09-05T09:00:00.000Z', defence_period_ends_at: '2033-11-15T00:00:00.000Z',
+  });
+  assert.equal(deletionDueAt(rec, LONG), '2026-09-05T09:00:00.000Z');
+  // And the default rule is untouched: the extraction clock, whatever else is known.
+  assert.equal(deletionDueAt(rawFile({ ...Y_LIMBS, extraction_completed_at: '2026-09-05T09:00:00.000Z',
+    defence_period_ends_at: '2033-11-15T00:00:00.000Z' }), FAIL_CLOSED_SETTINGS), '2026-09-05T09:00:00.000Z');
 });
 
 /* ================================================================== *

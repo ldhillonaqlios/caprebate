@@ -985,6 +985,7 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/search/search-companies',
       'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/company-profile/company-profile',
       'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/filing-history/list',
+      'https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/officers/list', // Phase 151b (Word answer 156, read 25 September 2026): names read in memory for the signatory check, never kept
       'https://developer-specs.company-information.service.gov.uk/document-api/resources/documentmetadata',
       'https://developer-specs.company-information.service.gov.uk/guides/rateLimiting',
       'https://developer.company-information.service.gov.uk/authentication',

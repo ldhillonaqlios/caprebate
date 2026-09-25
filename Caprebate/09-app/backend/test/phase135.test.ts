@@ -38,7 +38,8 @@ type Staff = (typeof STAFF)[number];
 /** THE TARGET MENUS — the Developer Spec's table "The menus", section 2. Tabs in order, then More in order. */
 const MENUS: Readonly<Record<Staff, { tabs: readonly string[]; more: readonly string[] }>> = {
   sales: { tabs: ['Home', 'Leads', 'Clients', 'Pipeline', 'Tasks', 'Introducers'], more: ['Calendar'] },
-  accounting: { tabs: ['Home', 'Claims', 'Finance', 'Tasks'], more: ['Introducer fees'] },
+  // PHASE 151b (Word answer 40): Accounting's Clients tab — its billing view of the clients area (src/web/billing.ts).
+  accounting: { tabs: ['Home', 'Clients', 'Claims', 'Finance', 'Tasks'], more: ['Introducer fees'] },
   surveying: { tabs: ['Home', 'Survey jobs', 'Tasks'], more: [] },
   readonly: { tabs: ['Home', 'Leads', 'Clients', 'Pipeline'], more: [] },
   admin: { tabs: ['Home', 'Leads', 'Clients', 'Pipeline', 'Tasks', 'Finance', 'Settings'], more: ['Calendar', 'Introducers', 'Survey jobs'] },
@@ -178,6 +179,9 @@ describe('the menu grants nothing and removes nothing', () => {
         const before = OPENED_BEFORE[who].includes(path);
         if (path === '/staff/clients' && who === 'readonly') {
           assert.equal(r.status, 200, 'CHANGED: the one Clients list opens for Read only (brief item 7)');
+        } else if (path === '/staff/clients' && who === 'accounting') {
+          // PHASE 151b, Word answer 40: Accounting's billing view of the clients area — and the record stays refused.
+          assert.equal(r.status, 200, 'CHANGED by Phase 151b: the clients area opens for Accounting, as its billing view');
         } else if (path === '/staff/organisations' && before) {
           assert.equal(r.status, 303, `CHANGED: ${path} for ${who} sends the reader to the one list`);
           assert.equal(r.location, '/staff/clients');

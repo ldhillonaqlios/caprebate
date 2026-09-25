@@ -441,7 +441,7 @@ for (const route of [
   { label: 'record a fact', path: `/staff/claims/${claim.id}/facts`, post: { fact_key: 'GRANTS_EXIST', answer: 'VALUE', value: 'NO', source_id: 'SURVEYOR' } },
   { label: 'record a grant', path: `/staff/claims/${claim.id}/grants`, post: { kind: 'GRANT', payer_class: 'nhs', traced: 'NO', source_id: 'SURVEYOR' } },
   { label: 'record an owner', path: `/staff/claims/${claim.id}/owners`, post: { position: '1', owner: 'UNKNOWN', claimed: 'UNKNOWN', source_id: 'SURVEYOR' } },
-  { label: 'record a sign-off', path: `/staff/claims/${claim.id}/signoff`, post: { adviser: 'CAPREBATE_CTA', credential: 'x', signed_on: '2026-09-01', scope: 'x', method_note: 'x', figure: '1' } },
+  { label: 'record a sign-off', path: `/staff/claims/${claim.id}/signoff`, post: { adviser: 'Invented Tax Advisers LLP', credential: 'x', signed_on: '2026-09-01', scope: 'x', method_note: 'x', figure: '1' } },
   { label: 'draft a deliverable', path: `/staff/claims/${claim.id}/deliverables`, post: { kind: 'REASONED_NEGATIVE', action: 'DRAFT' } },
   { label: 'record a filing', path: `/staff/claims/${claim.id}/reconciliation/filing`, post: { filed_on: '2026-09-01' } },
   { label: 'open an enquiry', path: `/staff/claims/${claim.id}/enquiries`, post: { opened_on: '2026-09-01' } },

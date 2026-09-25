@@ -282,7 +282,7 @@ export function figuresBlock(claim_id: string, p: R.FiguresPanel | undefined): S
       <dt>Recorded</dt><dd>${p.signoff.recorded} · ${p.signoff.record_hash}</dd></dl>`}
     ${form === undefined ? raw('') : !form.open ? h`<p class="help">Record the sign-off: ${form.why}.</p>` : h`
       <form method="post" action="/staff/claims/${claim_id}/signoff"><h3>Record the tax adviser’s sign-off</h3>
-        <label>Adviser — a firm, or <select name="adviser"><option value="">(type a firm instead)</option>${options(form.adviser_tokens)}</select></label>
+        <label>The adviser’s firm, as registered <input name="adviser" placeholder="e.g. Example Tax Advisers LLP"></label>
         <label>Credential <input name="credential"></label>
         <label>Signed on <input name="signed_on" type="date"></label>
         <label>Scope <textarea name="scope"></textarea></label>

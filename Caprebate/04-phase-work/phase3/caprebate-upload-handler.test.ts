@@ -16,6 +16,8 @@
  *   S*   the scheduled sweeps, which are the backstop for all of the above
  *   C*   CONTRACT_COVERAGE — the handler IS the contract, asserted
  *   P*   PROMOTION_RULE, and that it is recorded as a default not a decision
+ *   TX*  Phase 151b — the tax return and the tax computation are received
+ *        through the same twelve steps, with nothing in this handler changed
  *
  * The test double for ObjectStore is deliberately strict: it records every
  * call in order, refuses a get() on a key it never wrote, and can be told to
@@ -721,4 +723,61 @@ test('G1c — an A14-D4-affected document is NOT promoted, even under the long r
   // The settings-only question is unchanged — the configuration does promote.
   assert.equal(shouldPromoteRawFile(longRule), true);
   assert.match(PROMOTION_RULE.d4_carve_out, /NO_LAWFUL_BASIS/);
+});
+
+/* ------------------------------------------------------------------ *
+ * TX — THE TAX RETURN AND THE TAX COMPUTATION (Phase 151b, 25 Sep 2026)
+ *
+ * Word question 223: the data protection officer said yes to both as uploads
+ * on 24 September 2026. The handler needed no change: a type is handled when
+ * it has a spec, and the strip is the ingestion module's receipt policy. What
+ * these tests prove is that each is now RECEIVED — classified, stripped, its
+ * kept text written and its quarantine file deleted — and that until then
+ * each was refused at step 3. Invented names and figures throughout.
+ * ------------------------------------------------------------------ */
+
+const TAX_RETURN_PAGES = [
+  { page: 1, lines: ['COMPANY INFORMATION', 'Company registration number 09876543', 'YOUR PERSONAL DETAILS', 'Name Jane Inventedperson', 'National Insurance number QQ 12 34 56 C'] },
+  { page: 2, lines: ['CAPITAL ALLOWANCES', 'Annual investment allowance 180,000', 'DECLARATION', 'Signed Jane Inventedperson, Director'] },
+];
+const TAX_COMPUTATION_PAGES = [
+  { page: 1, lines: ['TAX COMPUTATION FOR THE YEAR ENDED 31 MARCH 2026', 'Adjusted trading profit 412,300', 'PREPARED BY INVENTED ACCOUNTANTS LLP', 'Reviewed by Priya Madeupname'] },
+  { page: 2, lines: ['MAIN POOL', 'Carried forward 114,080'] },
+];
+
+for (const [t, pages, kept] of [
+  ['TAX_RETURN', TAX_RETURN_PAGES, /180,000/],
+  ['TAX_COMPUTATION', TAX_COMPUTATION_PAGES, /114,080/],
+] as const) {
+  test(`TX1 — a ${t} is RECEIVED: classified, stripped, its kept text written, and the uploaded file deleted`, async () => {
+    const d = deps({ classifier: new FixedClassifier(t), extractor: new FakeExtractor(pages) });
+    let job = await runToReceived(d, t);
+    const r = await processUpload(d, job);
+    job = r.job;
+    assert.equal(r.discharged, true);
+    assert.equal(job.state, 'DISCHARGED');
+    assert.equal(job.doc_type, t);
+    assert.equal(job.receipt?.mode, 'SPEC_DERIVED');
+    assert.ok(job.quarantine.deleted_at, 'the unredacted file is gone');
+    const text = d.store.text.get(retainedTextKeyFor(job.doc_id)) ?? '';
+    assert.match(text, kept);
+    assert.doesNotMatch(text, /Inventedperson|Madeupname|QQ 12 34 56 C|Invented Accountants/);
+    const step5 = d.audit.find(5);
+    assert.equal(JSON.stringify(step5?.detail).includes('Inventedperson'), false, 'the audit trail never carries the text');
+  });
+}
+
+test('TX2 — a tax field goes through the name exclusion register and is written, now the register lists it (Phase 151b)', async () => {
+  const d = deps({ classifier: new FixedClassifier('TAX_COMPUTATION'), extractor: new FakeExtractor(TAX_COMPUTATION_PAGES) });
+  let job = await runToReceived(d, 'TAX_COMPUTATION');
+  job = (await processUpload(d, job)).job;
+  job = await openTransparency(d, job, []);
+  const model: ModelFn = (): RawExtraction => [
+    { field_id: 'taxcomp_main_pool_balance_pence', value: 11408000, confidence: 0.99, page: 2, quote_ref: 'p2 "Carried forward"' },
+  ];
+  job = await runExtraction(d, job, { kind: 'MODEL', model, egress: [] });
+  assert.equal(job.state, 'EXTRACTED');
+  let called = false;
+  await writeClaims(d, job, {}, async () => { called = true; });
+  assert.equal(called, true, 'a listed tax field was not written');
 });

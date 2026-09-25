@@ -460,7 +460,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     sourceId: 'CLIENT_DOC',
     subitem: 13,
     publisher: 'The client — portal upload or email attachment',
-    datasetLabel: 'Client-supplied transaction and building documents (eleven types)',
+    datasetLabel: 'Client-supplied transaction, building and tax documents (thirteen types)',
     riskLevel: 'highest',
     // Exactly the field_ids of DOC_SPECS and HUMAN_CAPTURE_SPECS, enumerated
     // literally rather than imported, for the reason Part E gives: a spec that
@@ -503,6 +503,17 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'cpse_ca_reply_text', 'cpse_election_reference', 'cpse_replies_date',
       // SALE_CONTRACT — human capture only
       'contract_date', 'contract_consideration_pence', 'contract_schedule_index',
+      // PHASE 151b, 25 September 2026 — THE TAX RETURN AND THE TAX COMPUTATION. The data protection officer said yes to
+      // both as uploads (Word question 223, 24 September 2026), and until the officer says otherwise they are treated
+      // like the other financial documents: the figures and the company's details are kept; individuals' names,
+      // addresses and tax references are removed on receipt (caprebate-client-doc-ingestion.ts). Every field below is
+      // a date, a company number, a sum of money or a set of figures by pool — none a name, none a tax reference.
+      // TAX_RETURN
+      'taxret_period_start', 'taxret_period_end', 'taxret_company_number', 'taxret_taxable_profit_pence',
+      'taxret_capital_allowances_by_pool', 'taxret_aia_claimed_pence',
+      // TAX_COMPUTATION
+      'taxcomp_period_start', 'taxcomp_period_end', 'taxcomp_taxable_profit_pence', 'taxcomp_capital_allowances_by_pool',
+      'taxcomp_main_pool_balance_pence', 'taxcomp_special_rate_pool_balance_pence', 'taxcomp_aia_claimed_pence',
     ],
     // No spec has any of these fields today. They are listed because the roles
     // EXIST on the face of the documents (Phase 40 §4.2 works them through type
@@ -557,7 +568,9 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       "must be true, which is the fail-closed reading while the question is open. " +
       "Everything else on the keep list is a date, a reference, a measurement, a " +
       "sum of money, or a description of works. No field in any of the eleven " +
-      "specifications is a person's name — Phase 40 §5.4, checked field by field.",
+      "specifications is a person's name — Phase 40 §5.4, checked field by field. " +
+      "Phase 151b added the tax return and the tax computation, thirteen types in all: their thirteen fields are " +
+      "dates, a company number, sums and figures by pool, and none is a name or a tax reference.",
   },
 ];
 

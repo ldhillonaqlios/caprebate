@@ -62,7 +62,7 @@ function signedClaim(app: App): string {
   CF.commitmentOn(app, business, assessment, made.id);
   const d = CF.recordDeps(app);
   const r = R.recordSignOff(d, actor('SALES'), made.id, {
-    adviser: 'CAPREBATE_CTA', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
+    adviser: 'Invented Tax Advisers LLP', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
     method_note: 'reviewed against the rulebooks', figure: '100000', confirmed_switches: 'transaction_tax_in_base,grant_after_ceilings',
   });
   assert.equal(r.ok, true, r.ok ? '' : r.why);

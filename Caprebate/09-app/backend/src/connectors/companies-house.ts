@@ -26,8 +26,21 @@
  *   filing-history or document call does not undo the profile: the company facts are kept, and the panel says the
  *   filings could not be read.
  *
- * The officers endpoint is never called (the name exclusion register, CH_COMPANY's note), and no director or secretary
- * field is read from any answer.
+ * No director or secretary field is read from any of the four answers above, and none is ever kept (the name
+ * exclusion register, CH_COMPANY's excluded fields `officer_*`, `director_*`, `secretary_*`).
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * THE OFFICERS LIST — READ IN MEMORY, NEVER KEPT. Phase 151b, 25 September 2026.
+ *
+ * Word question 156, for the data protection officer: "May we briefly check two public register names without saving
+ * them?" Answer, closed 24 September 2026: "Yes – best to check who signs and if they have authority". So
+ * `companiesHouseOfficers` below reads /company/{company_number}/officers (the published officers list, its address
+ * in the source register's SUPPLIER_DOCS) for ONE purpose: does the person who signed our engagement letter appear on
+ * it as a current director, or an LLP's designated member? It is handed a test (`isSigner`, from
+ * src/connectors/signatory-check.ts) and asks it of each officer's name; it keeps only the answer, YES or NO and a
+ * reason code. NO NAME LEAVES THIS LOOKUP: its bundle has no records (so nothing can reach the one door) and its facts
+ * are two codes. The officers endpoint's address is recorded on the audit row as a template, as every call's is.
+ * It is CH_COMPANY's switch that turns it on — no switch of its own — so it is off with the lookups.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * PEOPLE WITH SIGNIFICANT CONTROL (CH_PSC) — name exception 1, condition CA2
@@ -43,6 +56,7 @@ import type { OwnerSecrets } from '../secrets.ts';
 import type { CallResult } from './http.ts';
 import { defineSteppedConnector, type Bundle, type LookupResult, type StepRequest } from './registers.ts';
 import { matchCompanyName, applyPick, pickedNote, PICK_GONE_WHY, MATCH_THRESHOLDS, type PickQuery } from './matching.ts';
+import type { SignerTest } from './signatory-check.ts';
 
 export type CompanyQuery = { readonly name: string; readonly company_number: string | null } & PickQuery;
 export type PscQuery = { readonly company_number: string | null };
@@ -300,6 +314,81 @@ export const companiesHousePsc = defineSteppedConnector<PscQuery>({
         ? 'looked up — Companies House lists no person with significant control for this company'
         : `looked up — we keep ${records.length} ${records.length === 1 ? 'entry' : 'entries'} for the common-control test, and where they came from` +
           (unnamed > 0 ? `. ${unnamed} more ${unnamed === 1 ? 'is' : 'are'} listed with no name we can keep, so a person must check the common-control test` : ''),
+    };
+  },
+});
+
+/* ------------------------------------------------------------------ the officers, read in memory only (Phase 151b) */
+
+export type OfficersQuery = {
+  readonly company_number: string | null;
+  /** Word answer 156: the one question asked of each officer's name. The name goes no further than this call. */
+  readonly isSigner: SignerTest;
+};
+
+/** The roles that can sign for the business: a company's director, an LLP's designated member. Nothing else. */
+export const CH_ROLES_THAT_CAN_SIGN: Readonly<Record<string, 'CURRENT_DIRECTOR' | 'DESIGNATED_MEMBER'>> = Object.freeze({
+  director: 'CURRENT_DIRECTOR',
+  'llp-designated-member': 'DESIGNATED_MEMBER',
+});
+export const CH_OFFICERS_PAGE_SIZE = 100;
+/** Five pages of a hundred. A company with more officers than that is a person's to check. */
+export const CH_OFFICERS_MAX_PAGES = 5;
+
+export const companiesHouseOfficers = defineSteppedConnector<OfficersQuery>({
+  source_id: 'CH_COMPANY', service_id: 'COMPANIES_HOUSE', owner: 'COMPANIES_HOUSE', needs: ['COMPANIES_HOUSE_API_KEY'],
+  first: (q, s) => ({
+    endpoint: '/company/{company_number}/officers', params: { company_number: companyNumberOf(q.company_number) ?? '' },
+    query: { items_per_page: String(CH_OFFICERS_PAGE_SIZE), start_index: '0' }, headers: basic(s),
+  }),
+  async lookup(step, q, secrets): Promise<LookupResult> {
+    const number = companyNumberOf(q.company_number);
+    if (number === null) {
+      return { kind: 'NOT_MATCHED', code: 'INSUFFICIENT_INPUT', why: 'we hold no company number for this client, so there is nothing to look up', calls: [] };
+    }
+    const calls: CallResult[] = [];
+    let can: 'CURRENT_DIRECTOR' | 'DESIGNATED_MEMBER' | null = null;
+    let left = false;
+    let otherRole = false;
+    for (let page = 0; page < CH_OFFICERS_MAX_PAGES && can === null; page++) {
+      const c = await step({
+        endpoint: '/company/{company_number}/officers', params: { company_number: number },
+        query: { items_per_page: String(CH_OFFICERS_PAGE_SIZE), start_index: String(page * CH_OFFICERS_PAGE_SIZE) }, headers: basic(secrets),
+      });
+      calls.push(c);
+      if (c.outcome !== 'OK' || c.body === null) {
+        if (c.status === 404) return { kind: 'NOT_MATCHED', code: 'NO_MATCH', why: 'Companies House holds no company with that number', calls };
+        return fail(c, calls);
+      }
+      const body = json(c.body);
+      if (body === null || !Array.isArray(body['items'])) return { kind: 'UNREADABLE', call: c, calls };
+      const items = (body['items'] as unknown[]).map(obj);
+      for (const i of items) {
+        if (i === null) continue;
+        const el = obj(i['name_elements']);
+        // Asked, never kept: the test answers true or false, and the name is dropped with the answer.
+        const same = q.isSigner({ whole: str(i['name']), surname: str(el?.['surname']), forenames: [str(el?.['forename']), str(el?.['other_forenames'])].filter((x): x is string => x !== null).join(' ') || null });
+        if (!same) continue;
+        // A date the officer left, where there is one, means they have left. An unknown role is not a role that signs (N4).
+        if (str(i['resigned_on']) !== null) { left = true; continue; }
+        const role = CH_ROLES_THAT_CAN_SIGN[str(i['officer_role']) ?? ''];
+        if (role === undefined) { otherRole = true; continue; }
+        can = role;
+        break;
+      }
+      if (can !== null) break;
+      const total = typeof body['total_results'] === 'number' ? body['total_results'] : null;
+      const seen = page * CH_OFFICERS_PAGE_SIZE + items.length;
+      if (items.length < CH_OFFICERS_PAGE_SIZE || (total !== null && seen >= total)) break;
+      if (page === CH_OFFICERS_MAX_PAGES - 1) {
+        return { kind: 'NOT_MATCHED', code: 'MATCH_REVIEW', why: 'Companies House lists more officers than we read in one go', calls };
+      }
+    }
+    const reason = can ?? (otherRole ? 'ROLE_CANNOT_SIGN' : left ? 'RESIGNED' : 'NOT_LISTED');
+    return {
+      kind: 'READ', calls,
+      bundle: { records: [], facts: { signatory_result: can === null ? 'NO' : 'YES', signatory_reason: reason } },
+      note: 'looked up — we kept only yes or no, and no name',
     };
   },
 });

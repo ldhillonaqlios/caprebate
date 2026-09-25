@@ -180,15 +180,22 @@ export type SignoffView = {
 export const SIGNATURE_NOTICE =
   'Signing online is not switched on yet — this is a record, not a signature. Nothing was signed here.';
 
-/** Who a sign-off may name — a firm, or one of these roles. Never a person's name until the question below is answered. */
+/**
+ * THE THREE ROLES A SIGN-OFF COULD NAME UNTIL 25 SEPTEMBER 2026 — KEPT ONLY TO READ OLDER RECORDS. Phase 151b: Word
+ * answer 169, "May we keep the tax adviser's own name on a claim's sign-off record?", closed 24 September 2026 by the
+ * data protection officer's side: "Company name i think is best". So the record keeps the adviser's FIRM — its name as
+ * registered, ending Limited, LLP or plc — and neither the person's name nor a role in place of the firm.
+ * `recordSignOff` accepts a firm only; a record already written with one of these roles still reads in words.
+ */
 export const ADVISER_TOKENS: Vocab = Object.freeze({
   CAPREBATE_CTA: 'Cap Rebate’s own chartered tax adviser',
   CLIENT_TAX_ADVISER: 'The client’s own tax adviser',
   CLIENT_ACCOUNTANT: 'The client’s own accountant',
 });
 
+/** Shown beside the form. Was the open question's title until Word answer 169 closed it (Phase 151b). */
 export const ADVISER_NAME_QUESTION =
-  'May the chartered tax adviser’s own name be kept on the claim’s sign-off record, or only their firm and credential?';
+  'We keep the adviser’s firm on this record, not the person’s name. Write the firm as registered, ending Limited, LLP or plc.';
 
 function signoffView(s: SignoffRow): SignoffView {
   let readings: { switch: string; on: boolean }[] = [];
@@ -327,11 +334,11 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
   if (k === undefined) return { ok: false, why: 'The surveyor has not committed figures on this claim, so there is nothing to sign off.' };
   const adviser = text(input['adviser'], 300, 'The adviser');
   if (!adviser.ok) return adviser;
-  if (adviser.value === null || !(has(ADVISER_TOKENS, adviser.value) || (isCompanyOrRoleToken(adviser.value) && !has(OWNER_ROLE_TOKENS, adviser.value)))) {
+  // PHASE 151b, Word answer 169: the FIRM, and only the firm — not a role in its place, and never a person's name.
+  if (adviser.value === null || has(ADVISER_TOKENS, adviser.value) || !isCompanyOrRoleToken(adviser.value) || has(OWNER_ROLE_TOKENS, adviser.value)) {
     return {
       ok: false,
-      why: 'Record the adviser’s firm, a name ending Limited, LLP or plc. Or choose one of the roles offered. Not a person’s name. ' +
-        `The data protection officer still has to answer: “${ADVISER_NAME_QUESTION}”`,
+      why: 'Record the adviser’s firm, as registered: a name ending Limited, LLP or plc. Not a person’s name.',
     };
   }
   const credential = text(input['credential'], 300, 'The credential');

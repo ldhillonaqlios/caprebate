@@ -428,6 +428,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       // CRM 6 of 10: the confirmation alone no longer passes — the election is a fact, and never asked is not resolved.
       assert.equal(fwd(app, 'SALES', c, 'SURVEY').ok, false, 'a confirmation stood in for the election');
       CF.noElection(app, c);
+      CF.mustArriveDocuments(app, org.business, c); // Phase 151b: the documents that must arrive are switched on
       assert.equal(fwd(app, 'SALES', c, 'SURVEY').ok, true);
 
       // A reopen back to the stage invalidates what was confirmed before it.

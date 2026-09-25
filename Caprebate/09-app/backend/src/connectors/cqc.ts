@@ -31,6 +31,14 @@
  * NOT ENGLAND, NOT ASKED. Wales is Care Inspectorate Wales's and Scotland the Care Inspectorate's; neither has a
  * connector in this build, and the research panel says so (`NOT_BUILT` in src/connectors/free-registers.ts).
  *
+ * THE NAMED PEOPLE — READ IN MEMORY, NEVER KEPT. Phase 151b, 25 September 2026. Word question 156, for the data
+ * protection officer: "May we briefly check two public register names without saving them?" Answer, closed
+ * 24 September 2026: "Yes – best to check who signs and if they have authority". `cqcNamedPeople` below reads a
+ * location's registered manager and a provider's nominated individual for ONE question, asked by
+ * src/connectors/signatory-check.ts: is the person who signed our engagement letter one of them? It keeps only YES or
+ * NO and a reason code — its bundle has no records, so nothing reaches the one door. It is CQC's own switch that turns
+ * it on, so it is off with the lookup above. The lookup above still never reads either name.
+ *
  * THE CACHE WINDOW STAYS 0. CQC's licence entry (CQC_SYNDICATION in the source register) holds 0 days until the
  * solicitor answers how current CQC data must be when we use it: a value is out of date the moment it is held and is
  * looked up again before it drives anything.
@@ -44,6 +52,7 @@ import {
   type Candidate, type MeasureHook, type PickQuery,
 } from './matching.ts';
 import { jurisSource, type Nation, type TypedProperty } from './nations.ts';
+import type { SignerTest } from './signatory-check.ts';
 
 export type CqcQuery = {
   readonly property: TypedProperty | null;
@@ -192,6 +201,86 @@ export const cqc = defineSteppedConnector<CqcQuery>({
       kind: 'READ', calls,
       bundle: { records: [{ sourceId: 'CQC', entityId: String(fields['cqc_location_id']), fields }], facts: fields },
       note: `looked up — ${how}, and we keep the registration and where it came from.${providerNote}`,
+    };
+  },
+});
+
+/* ------------------------------------------------------------------ the named people, read in memory only (Phase 151b) */
+
+export type CqcPeopleQuery = {
+  readonly location_id: string | null;
+  readonly provider_id: string | null;
+  /** Word answer 156: the one question asked of each named person. The name goes no further than this call. */
+  readonly isSigner: SignerTest;
+};
+
+type Person = { personGivenName?: unknown; personFamilyName?: unknown; personRoles?: unknown };
+
+const hasRole = (p: Person, role: string): boolean =>
+  Array.isArray(p.personRoles) && p.personRoles.some((r) => typeof r === 'string' && r.trim().toLowerCase() === role);
+
+/** Every person the answer names in `role`, as the test is asked about them. An entry with no role is not in it (N4). */
+function named(activities: unknown, role: 'registered manager' | 'nominated individual'): Person[] {
+  if (!Array.isArray(activities)) return [];
+  const out: Person[] = [];
+  for (const a of activities) {
+    if (a === null || typeof a !== 'object') continue;
+    const ra = a as { contacts?: unknown; nominatedIndividual?: unknown };
+    if (Array.isArray(ra.contacts)) {
+      for (const c of ra.contacts) if (c !== null && typeof c === 'object' && hasRole(c as Person, role)) out.push(c as Person);
+    }
+    // The provider's regulated activities carry the nominated individual in a field of its own, with no role list.
+    if (role === 'nominated individual' && ra.nominatedIndividual !== null && typeof ra.nominatedIndividual === 'object') out.push(ra.nominatedIndividual as Person);
+  }
+  return out;
+}
+
+const signerIn = (people: Person[], test: SignerTest): boolean =>
+  people.some((p) => test({ whole: null, surname: str(p.personFamilyName), forenames: str(p.personGivenName) }));
+
+export const cqcNamedPeople = defineSteppedConnector<CqcPeopleQuery>({
+  source_id: 'CQC', service_id: 'CQC', owner: 'CQC', needs: ['CQC_SUBSCRIPTION_KEY'],
+  first: (q, s) => (q.location_id !== null
+    ? { endpoint: '/public/v1/locations/{location_id}', params: { location_id: q.location_id }, headers: key(s) }
+    : { endpoint: '/public/v1/providers/{provider_id}', params: { provider_id: q.provider_id ?? '' }, headers: key(s) }),
+  async lookup(step, q, secrets): Promise<LookupResult> {
+    const location = str(q.location_id);
+    let provider = str(q.provider_id);
+    if (location === null && provider === null) {
+      return { kind: 'NOT_MATCHED', code: 'INSUFFICIENT_INPUT', why: 'we hold no care regulator registration for this client', calls: [] };
+    }
+    const calls: CallResult[] = [];
+    const call = async (r: StepRequest): Promise<CallResult> => { const c = await step({ ...r, headers: key(secrets) }); calls.push(c); return c; };
+    // An answer we can read, or the ending the lookup stops on.
+    const read = (c: CallResult): { readonly end: LookupResult } | { readonly body: Record<string, unknown> } => {
+      if (c.outcome !== 'OK' || c.body === null) {
+        return c.status === 404
+          ? { end: { kind: 'NOT_MATCHED', code: 'NO_MATCH', why: 'the care regulator holds no record under the number we hold', calls } }
+          : { end: { kind: 'CALL_FAILED', call: c, calls } };
+      }
+      const body = json(c.body);
+      return body === null ? { end: { kind: 'UNREADABLE', call: c, calls } } : { body };
+    };
+    const yes = (reason: 'REGISTERED_MANAGER' | 'NOMINATED_INDIVIDUAL'): LookupResult => ({
+      kind: 'READ', calls, bundle: { records: [], facts: { signatory_result: 'YES', signatory_reason: reason } },
+      note: 'looked up — we kept only yes or no, and no name',
+    });
+
+    if (location !== null) {
+      const l = read(await call({ endpoint: '/public/v1/locations/{location_id}', params: { location_id: location } }));
+      if ('end' in l) return l.end;
+      if (signerIn(named(l.body['regulatedActivities'], 'registered manager'), q.isSigner)) return yes('REGISTERED_MANAGER');
+      provider = provider ?? str(l.body['providerId']);
+    }
+    if (provider !== null) {
+      const p = read(await call({ endpoint: '/public/v1/providers/{provider_id}', params: { provider_id: provider } }));
+      if ('end' in p) return p.end;
+      const people = [...named(p.body['regulatedActivities'], 'nominated individual'), ...named([{ contacts: p.body['contacts'] }], 'nominated individual')];
+      if (signerIn(people, q.isSigner)) return yes('NOMINATED_INDIVIDUAL');
+    }
+    return {
+      kind: 'READ', calls, bundle: { records: [], facts: { signatory_result: 'NO', signatory_reason: 'NOT_LISTED' } },
+      note: 'looked up — we kept only yes or no, and no name',
     };
   },
 });

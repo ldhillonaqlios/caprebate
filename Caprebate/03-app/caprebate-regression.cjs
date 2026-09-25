@@ -2356,7 +2356,10 @@ if (startSuite("K", "Phase 14 — BUILDING_REGS_COMPLETION and GRANT_FUNDING_AGR
 
     /* K1 — the two ungated types are specified, and CPSE_REPLIES / SALE_CONTRACT are not */
     const types = PIPE.DOC_SPECS.map(d => d.doc_type).sort();
-    check("K1 — nine document types now have a spec", types.length, 9);
+    /* Phase 151b: the tax return and the tax computation have specs of their own (Word question 223) — eleven. */
+    check("K1 — eleven document types now have a spec", types.length, 11);
+    check("K1 — TAX_RETURN and TAX_COMPUTATION are specified (Phase 151b)",
+      types.indexOf("TAX_RETURN") >= 0 && types.indexOf("TAX_COMPUTATION") >= 0, true);
     check("K1 — BUILDING_REGS_COMPLETION is specified", types.indexOf("BUILDING_REGS_COMPLETION") >= 0, true);
     check("K1 — GRANT_FUNDING_AGREEMENT is specified", types.indexOf("GRANT_FUNDING_AGREEMENT") >= 0, true);
     check("K1 — CPSE_REPLIES stays gated on the DPIA's party-identity question, not built",
@@ -7934,6 +7937,160 @@ if (startSuite("AG", "Phase 132j — the polluter question in care homes, dental
       A.back(); A.back(); const backAt = A.at(); A.answer("no"); const s = A.S();
       return [lrrOn, at23, backAt, A.at() !== p + "23", s.lrr, "lrr_removed_by_polluter" in s, "lrr_polluter" in s, s.assumptions.indexOf(LRR_MSG)]; })),
     FOUR.map(([sec, p]) => [true, p + "23", p + "10c", true, false, false, false, -1]));
+}
+
+
+/* =============================================================================
+   SUITE AH — PHASE 151b. VAT in the £1,000 no-claim test. Word question 61.
+
+   DECIDED by Lakhbir Dhillon, question 61 closed 24 September 2026: "The relief
+   is calculated over the 5 years – and must include VAT". Closed as: measure
+   the relief over five years, and include VAT where the client cannot reclaim
+   it. The tax adviser reviews the wording.
+
+   WHAT THIS SUITE PROVES, AND IT IS FIVE THINGS.
+     VT1  We are NOT VAT-registered, as shipped: the test is exactly what it was
+          before, whatever the client's VAT position - no VAT exists to count.
+     VT2  Registered, and the client CANNOT reclaim: VAT is counted, and on a
+          worked example it moves the verdict across the £1,000 line
+          (£30,000 of special-rate allowances, a company at 25%: £1,995.72 of
+          five-year relief; £900 fee leaves £1,095.72, at or above; £900 plus
+          £180 VAT leaves £915.72, below).
+     VT3  Registered, and the client CAN reclaim: VAT is not counted.
+     VT4  Registered, and the client's position NOT KNOWN - "not sure" AND
+          never given (and null, "unsure", "mixed") - is UNDETERMINED with a
+          plain reason: never "do not claim", never a pass, and the forms give
+          identical reports (N4). A registered flag with no rate is the same.
+     VT5  Nothing else moves, five years is still the measure, and the new
+          wording is marked for the tax adviser.
+
+   REGISTRATION IS SWITCHED ON ONLY INSIDE withVat(), which puts the shipped
+   values back in `finally` - the mutate-and-restore NCT6 uses for the gate.
+   Written so that against a site with no VAT handling every new check FAILS
+   rather than the harness dying.
+   ============================================================================= */
+if (startSuite("AH", "Phase 151b — VAT in the £1,000 no-claim test")) {
+  const safe = fn => { try { return fn(); } catch (e) { return "threw: " + e.message; } };
+  const NC = r => (r && r.recommendation_threshold) || {};
+  const gbp = n => (n < 0 ? "-" : "") + "£" + Math.round(Math.abs(n)).toLocaleString("en-GB");
+  const J = JSON.stringify;
+  const r2 = n => (typeof n === "number") ? Math.round(n * 100) / 100 : n;
+  const V = () => CB_FEE.NO_CLAIM_VAT;
+  const withVat = (registered, rate, fn) => {
+    const v = V();
+    if (!v || typeof v !== "object") return "no CB_FEE.NO_CLAIM_VAT";
+    const keep = { we_are_vat_registered: v.we_are_vat_registered, vat_rate: v.vat_rate };
+    try { v.we_are_vat_registered = registered; v.vat_rate = rate; return fn(); }
+    catch (e) { return "threw: " + e.message; }
+    finally { v.we_are_vat_registered = keep.we_are_vat_registered; v.vat_rate = keep.vat_rate; }
+  };
+  const SP = a => ({ main: 0, special: a, period_start: "2026-04-01", is_company: true });
+  const at = (a, clientVat, omitKey) => {
+    const ctx = SP(a); if (!omitKey) ctx.client_vat = clientVat;
+    return CB_FEE.display(a, 0.25, ctx);
+  };
+  const facts = t => [t.outcome, t.fires, r2(t.fee), r2(t.fee_counted), r2(t.relief_after_fee)];
+  const UNKNOWN = [["\"not sure\"", "not sure", false], ["never given (no key)", undefined, true],
+                   ["undefined", undefined, false], ["null", null, false], ["\"unsure\"", "unsure", false], ["\"mixed\"", "mixed", false]];
+
+  /* --- VT1: not registered, as shipped: unchanged from today -------------- */
+  check("VT1 — the setting ships NOT registered, with the rate as data (20%), decided under question 61",
+    safe(() => [V().we_are_vat_registered, V().vat_rate, V().question, V().decided_by]),
+    [false, 0.2, 61, "Lakhbir Dhillon"]);
+  /* The report records the position it was given (vat.client_vat_position);
+     everything else in it must be the same as with no position at all. */
+  const noPos = t => { const c = Object.assign({}, t); c.vat = Object.assign({}, t.vat); delete c.vat.client_vat_position; return J(c); };
+  check("VT1 — not registered: every client VAT position gives the same test as no position at all, for a case that fires and one that does not, and each report says no VAT was counted because we are not registered",
+    safe(() => [20000, 30000].map(a => {
+      const base = noPos(NC(at(a, undefined, true)));
+      return ["cannot_reclaim", "can_reclaim", "not sure", null].map(x => noPos(NC(at(a, x))) === base &&
+        NC(at(a, x)).vat.treatment === "NOT_REGISTERED_NO_VAT" && NC(at(a, x)).fee_counted === NC(at(a, x)).fee); })),
+    [[true, true, true, true], [true, true, true, true]]);
+  check("VT1 — not registered: £30,000 counts the £900 fee alone and stays at or above £1,000 (£1,095.72), even for a client who cannot reclaim VAT",
+    safe(() => { const t = NC(at(30000, "cannot_reclaim")); return facts(t).concat([t.vat && t.vat.treatment, t.vat && t.vat.vat]); }),
+    ["AT_OR_ABOVE_THRESHOLD", false, 900, 900, 1095.72, "NOT_REGISTERED_NO_VAT", 0]);
+  check("VT1 — not registered: the £20,000 message is word for word the Phase 132e sentence, with no mention of VAT, and the report says why",
+    safe(() => { const t = NC(at(20000, "cannot_reclaim"));
+      return t.message === "On these figures the tax relief to you over the first 5 years is about " + gbp(t.relief) +
+        ", our fee is £600, and the relief left after our fee is " + gbp(t.relief_after_fee) + ". That is below £1,000, so we would " +
+        "not normally recommend making this claim. The choice is yours: we will still do the work if you want to go ahead."
+        && !/VAT/.test(t.message) && t.vat.treatment === "NOT_REGISTERED_NO_VAT"; }),
+    true);
+
+  /* --- VT2: registered + cannot reclaim: VAT counted, verdict flips -------- */
+  check("VT2 — registered, client cannot reclaim: £30,000 — fee £900 plus VAT £180 is £1,080 counted; relief after it £915.72, BELOW £1,000, so it fires",
+    withVat(true, 0.20, () => { const t = NC(at(30000, "cannot_reclaim"));
+      return facts(t).concat([t.vat.treatment, t.vat.vat, r2(t.relief)]); }),
+    ["BELOW_THRESHOLD", true, 900, 1080, 915.72, "COUNTED_CLIENT_CANNOT_RECLAIM", 180, 1995.72]);
+  check("VT2 — the worked example flips across the line: the same case not registered is AT OR ABOVE, registered and not reclaimable is BELOW",
+    [safe(() => NC(at(30000, "cannot_reclaim")).outcome), withVat(true, 0.20, () => NC(at(30000, "cannot_reclaim")).outcome)],
+    ["AT_OR_ABOVE_THRESHOLD", "BELOW_THRESHOLD"]);
+  check("VT2 — the message states the fee, the VAT and the total, and the relief left after both",
+    withVat(true, 0.20, () => { const m = NC(at(30000, "cannot_reclaim")).message || "";
+      return [m.indexOf("our fee is £900 plus VAT of £180, which you cannot reclaim, so £1,080 in all") >= 0,
+              m.indexOf("the relief left after our fee and its VAT is £916") >= 0, /The choice is yours/.test(m)]; }),
+    [true, true, true]);
+  check("VT2 — fee x (1 + rate), to the penny, read from the rate as data (a 5% rate counts £45 on £900)",
+    withVat(true, 0.05, () => { const t = NC(at(30000, "cannot_reclaim")); return [t.vat.vat, r2(t.fee_counted), t.outcome]; }),
+    [45, 945, "AT_OR_ABOVE_THRESHOLD"]);
+
+  /* --- VT3: registered + can reclaim: not counted -------------------------- */
+  check("VT3 — registered, client CAN reclaim: £30,000 counts the £900 fee alone and stays at or above (£1,095.72)",
+    withVat(true, 0.20, () => { const t = NC(at(30000, "can_reclaim")); return facts(t).concat([t.vat.treatment, t.vat.vat]); }),
+    ["AT_OR_ABOVE_THRESHOLD", false, 900, 900, 1095.72, "NOT_COUNTED_CLIENT_CAN_RECLAIM", 0]);
+  check("VT3 — registered, client can reclaim, £20,000: the relief after fee is the fee-only figure, and the message says the VAT is reclaimable and not counted",
+    withVat(true, 0.20, () => { const t = NC(at(20000, "can_reclaim"));
+      return [t.outcome, r2(t.fee_counted), r2(t.relief_after_fee), /£600 plus VAT, which you can reclaim and so is not counted here/.test(t.message || "")]; }),
+    ["BELOW_THRESHOLD", 600, 730.48, true]);
+
+  /* --- VT4: registered + not known: UNDETERMINED, never "do not claim" (N4) - */
+  check("VT4 — registered, client's VAT position not known: \"not sure\", never given, undefined, null, \"unsure\" and \"mixed\" are all UNDETERMINED on a case that would fire (£20,000) and on one that would pass (£30,000)",
+    withVat(true, 0.20, () => [20000, 30000].map(a => UNKNOWN.map(([, x, omit]) => NC(at(a, x, omit)).outcome))),
+    [UNKNOWN.map(() => "UNDETERMINED"), UNKNOWN.map(() => "UNDETERMINED")]);
+  check("VT4 — and none of them fires, prints a message, or is read as a figure: fires false, message null, fee counted and relief after fee null",
+    withVat(true, 0.20, () => [20000, 30000].map(a => UNKNOWN.map(([, x, omit]) => { const t = NC(at(a, x, omit));
+      return [t.fires, t.message, t.fee_counted, t.relief_after_fee, t.vat.client_vat_position, t.vat.vat]; }))),
+    [0, 1].map(() => UNKNOWN.map(() => [false, null, null, null, "not_known", null])));
+  check("VT4 — \"not sure\" and never given give IDENTICAL reports, field by field, and so does every other unknown form",
+    withVat(true, 0.20, () => [20000, 30000].map(a => { const base = J(NC(at(a, "not sure")));
+      return UNKNOWN.map(([, x, omit]) => J(NC(at(a, x, omit))) === base); })),
+    [UNKNOWN.map(() => true), UNKNOWN.map(() => true)]);
+  check("VT4 — the reason is plain: we do not know whether the client can reclaim VAT on our fee, and we do not tell them not to claim",
+    withVat(true, 0.20, () => { const w = NC(at(20000, "not sure")).why || "";
+      return [/do not know whether you can reclaim the VAT on our fee/.test(w), /we do not tell you not to claim/.test(w), /CB_/.test(w)]; }),
+    [true, true, false]);
+  check("VT4 — a registered flag with no usable VAT rate is not a rate of nil: UNDETERMINED, even for a client who cannot reclaim",
+    [withVat(true, null, () => { const t = NC(at(30000, "cannot_reclaim")); return [t.outcome, t.fires, t.fee_counted, /no VAT rate is set/.test(t.why || "")]; }),
+     withVat(true, "not sure", () => NC(at(30000, "cannot_reclaim")).outcome)],
+    [["UNDETERMINED", false, null, true], "UNDETERMINED"]);
+  check("VT4 — the unknowns still behave as before this phase where the relief or the fee is itself unknown (the older reason wins)",
+    withVat(true, 0.20, () => [/no fee for this case yet/.test(NC(CB_FEE.display(null, 0.25, { client_vat: "not sure" })).why || ""),
+      /tax relief for this case is not known exactly/.test(NC(CB_FEE.display(20000, "not sure", Object.assign(SP(20000), { client_vat: "not sure" }))).why || "")]),
+    [true, true]);
+
+  /* --- VT5: nothing else moves; five years; marked for the adviser -------- */
+  check("VT5 — registered and counting VAT moves no figure: render, amount, reason, readings and the benefit comparison are those of the unregistered call",
+    (function(){
+      const plain = safe(() => at(30000, "cannot_reclaim"));
+      const vat = withVat(true, 0.20, () => at(30000, "cannot_reclaim"));
+      const strip = o => { if (!o || typeof o !== "object") return String(o); const c = Object.assign({}, o); delete c.recommendation_threshold; return J(c); };
+      return [strip(vat) === strip(plain), vat && vat.amount, vat && vat.render, NC(vat).refuses_work, NC(vat).withholds_quote, NC(vat).moves_figure];
+    })(),
+    [true, 900, true, false, false, false]);
+  check("VT5 — five years was already the measure and still is: the relief is CB_BENEFIT's five-year cumulative relief, with or without VAT",
+    [CB_BENEFIT.HORIZON, safe(() => NC(at(30000, "cannot_reclaim")).horizon_years),
+     withVat(true, 0.20, () => { const t = NC(at(30000, "cannot_reclaim")); return [t.horizon_years, t.relief_basis]; })],
+    [5, 5, [5, "cumulative_benefit"]]);
+  check("VT5 — the direct call takes the client's VAT position as its fourth argument, and three arguments are unchanged",
+    [withVat(true, 0.20, () => CB_FEE.recommendationThreshold(900, { computed: true, determined: true, cumulative_benefit: 1995.72, horizon_years: 5 }, false, "cannot_reclaim").outcome),
+     withVat(true, 0.20, () => CB_FEE.recommendationThreshold(900, { computed: true, determined: true, cumulative_benefit: 1995.72, horizon_years: 5 }, false).outcome),
+     safe(() => CB_FEE.recommendationThreshold(900, { computed: true, determined: true, cumulative_benefit: 1995.72, horizon_years: 5 }).outcome)],
+    ["BELOW_THRESHOLD", "UNDETERMINED", "AT_OR_ABOVE_THRESHOLD"]);
+  check("VT5 — the VAT wording is marked for the tax adviser, in the metadata and in the code comment",
+    [safe(() => V().awaiting_tax_adviser_review), safe(() => NC(at(30000, "cannot_reclaim")).vat.awaiting_tax_adviser_review),
+     (function(){ const s = src.slice(src.indexOf("var CB_FEE"), src.indexOf("var CB_FEEGUARD")); const i = s.indexOf("VAT IN THE NO-CLAIM TEST");
+       return i >= 0 && /AWAITING THE TAX ADVISER'S REVIEW/.test(s.slice(i)) && /NEW CLIENT-FACING WORDING, AWAITING THE TAX ADVISER'S REVIEW/.test(s.slice(i)); })()],
+    [true, true, true]);
 }
 
 

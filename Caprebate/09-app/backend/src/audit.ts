@@ -322,6 +322,22 @@ export type AuditKind =
    * this build refuses to log, and the document it came from has already been read and deleted.
    */
   | 'DOCUMENT_FIELD_VOUCHED'
+  /**
+   * Phase 151b, 25 September 2026: the online identity check (src/web/identity-checks.ts). A check sent, or not sent and
+   * why in words; the outside service's signed result received, or refused because its signature did not hold or it
+   * named no check we sent. Ids, the outcome and the service's status word only — NEVER a name, a document number, a
+   * date of birth or an image. What the service tells us is kept in the check's own row, not here.
+   */
+  | 'IDENTITY_CHECK_SENT' | 'IDENTITY_CHECK_NOT_SENT' | 'IDENTITY_RESULT_RECEIVED' | 'IDENTITY_RESULT_REFUSED'
+  /** Phase 151b: Accounting recording that it chased an unpaid invoice — the invoice, the day and how. Never the words. */
+  | 'INVOICE_CHASED'
+  /**
+   * Phase 151b (Word answer 156): whether the person who signed the engagement letter appears on a public register as
+   * able to act for the client. The source and YES, NO or NOT_CHECKED only — never a name read from the register.
+   */
+  | 'SIGNATORY_CHECKED'
+  /** Phase 151b (Word answer 180): a person chose to answer the property questions themselves instead of the lookups. */
+  | 'LOOKUPS_DECLINED'
   | 'WEBSITE_ENQUIRY_RECEIVED' | 'WEBSITE_ENQUIRY_HANDLED'
   | 'CLIENT_SIGNUP_REQUESTED' | 'CLIENT_SIGNUP_VERIFIED'
   | 'AUTHORISATION_REFUSED';

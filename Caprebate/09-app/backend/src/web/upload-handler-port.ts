@@ -83,8 +83,9 @@ export {
 export type { BackupCycle, BackupCycleState, RestoreApproval, DeletionLogEntryClock } from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
 
 /**
- * Phase 132. The deletion clock itself — and its rule that where two clocks are known the EARLIER governs — as the
- * ingestion module states it, so the RET-7 dates src/web/documents.ts reads can be proved against the one function that
+ * Phase 132. The deletion clock itself — and its rule that where two clocks are known the LATER governs (Word answer
+ * 173, 24 September 2026; it was the earlier until Phase 151b) — as the ingestion module states it, so the RET-7
+ * dates src/web/documents.ts reads can be proved against the one function that
  * would turn them into a date. Nothing in src/ calls it: RET-7 is not approved.
  */
 export { deletionDueAt } from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';

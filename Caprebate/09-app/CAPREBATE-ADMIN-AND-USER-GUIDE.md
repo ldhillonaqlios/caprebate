@@ -3595,3 +3595,139 @@ On **Your account**, under **Emails waiting to send**, an email that came back n
   **Addresses we cannot email**.
 
 ---
+### Training — `B53` the online identity check
+
+**What it is for**
+We check who our clients are. Veriff does the check. We send the person a link. They take a photo of their ID and a
+selfie on their phone. Veriff tells us the result. We keep our own copy of the result. We never get their photos.
+
+**Who can open it**
+Admin. It sits in two places. One is the client's page, under **Identity check**. The other is a due diligence check,
+under **Online identity check**. Other logins do not see it.
+
+**It is switched off today**
+Nothing is sent yet. The box says what must happen first. Veriff must be named in our privacy notice and our letter.
+Its keys must be on the server. Then someone turns it on. We check identity for every client. It does not wait for
+the money laundering setting.
+
+**How to do the common job**
+1. Open the client's page and find **Identity check**. Or open their due diligence check.
+2. Choose **Who to check**. Type their first and last name as they are on their ID.
+3. Press **Send an identity check**.
+4. The page shows their link. Send it to them yourself.
+5. The result shows in the list when it comes back. It says **Passed**, **Failed**, **A person must look at it** or
+   **The client did not finish it**.
+
+**What happens with a pass**
+A pass on a due diligence check fills in **How it was verified**. It says Veriff passed them, and the day. You still
+finish the check yourself. A pass never finishes it for you.
+
+**What it refuses, and why**
+- A result we cannot prove came from Veriff. Each result comes signed. A bad signature is refused and logged.
+- A result for a check we never sent. It is refused too.
+- A person who is not a contact of this client. Add them as a contact first.
+- A due diligence check that is finished. Send it from the client's page instead.
+
+**Check yourself**
+- *The result says "A person must look at it". Is that a fail?* — No. Veriff was not sure. Look at it and decide.
+- *Do we keep a copy of their passport?* — No. We keep the result, the kind of ID and its country. Nothing else.
+
+---
+### Training — `B54` roles you make
+
+**What it is for**
+We have four roles of our own: Admin, Sales, Accounting and Surveying. Some people need a mix. Here the super admin makes a new
+role. You choose what it can see and do.
+
+**Who can open it**
+The super admin only. Open **Users**, then **Make or change a role**. The address is `/staff/admin/roles`.
+
+**How to do the common job**
+1. Press **Make a role**. Give it a name.
+2. The things a role can do are grouped by area, like **Money** or **Claims**.
+3. For each one, choose **No**, or which of our roles to copy. For example, **Like Accounting**.
+4. Press **Make the role**.
+5. Go back to **Users**. The new role is in the list of roles. Give it to a person.
+
+**How the choices work**
+Each choice works just as it does for the role you copy. So "See a survey job, like Surveying" means only the jobs
+given to that person.
+
+**What it refuses, and why**
+- A role that can survey and also see our estimate. The surveyor never sees the estimate.
+- Adding people, giving roles or making roles. Only the super admin does those.
+- A name we already use.
+- Retiring a role someone still has. Give them another role first.
+Each refusal is one plain sentence. It is also kept in the audit log.
+
+**Changing and retiring**
+Open a role to change it. Everyone with it signs in again. **Retire this role** stops it being given again. It is
+kept, so the audit log still makes sense.
+
+**Check yourself**
+- *Can I change what Sales can do here?* — No. Our own roles stay as they are. Make a new role instead.
+
+---
+### Training — `B55` Accounting's clients page
+
+**What it is for**
+Accounting raises our invoices, chases them and records payment. The **Clients** tab shows what it needs for that.
+
+**Who can open it**
+Accounting sees this page. Admin and Sales see the full client page instead.
+
+**What you see**
+The list shows each client with something to bill. It shows how many claims wait for an invoice. It shows what is
+owed, how much is late, and when you last chased. Open a client to see:
+- **Who to contact**, with email and phone.
+- **Waiting for an invoice**, with our fee and your task.
+- **Invoices**, with what is owed, when it is due, and every chase.
+
+**How you are told to raise an invoice**
+When a claim reaches the invoice step, you get a task. It says "Raise the invoice for this claim". The claim also
+shows under **Waiting for an invoice**.
+
+**How to chase an invoice**
+1. Open the client. Find the invoice.
+2. Chase them in the usual way, by phone or email.
+3. Fill in the day and how you chased. Add a short note if it helps.
+4. Press **Record the chase**.
+
+**How to record a payment**
+Open the invoice from the client page. Record the money received there, as before.
+
+**What it refuses, and why**
+- Chasing a paid invoice. Only money still owed can be chased.
+- A chase dated after today.
+- Nothing is sent for you. A chase is something you did. We do not email reminders yet.
+
+**Check yourself**
+- *Can Accounting read the client's notes?* — No. This page shows billing only.
+
+---
+### Training — `B56` the address question and the research panel
+
+**What it is for**
+The client types their address in the online questions. Two new things sit there. Both are switched off today.
+
+**The postcode check**
+When it is on, we check the postcode on our own server. The line under the address says where the postcode is. If
+the check fails, nothing changes. The client just types their address, as now.
+
+**Answer it myself**
+When the lookups are on, the client can tick a box. It says they will answer the property questions themselves.
+Then we do not look them up in public records. The research panel says so for each free lookup: "Not looked up".
+Ask the client those questions instead.
+
+**Who signed the letter**
+When the lookups are on and the letter is signed, the research run checks who signed. It looks at Companies House
+and the care regulator. The panel says **Yes**, **No** or **Not checked**.
+- **Yes** means the register lists them as someone who can sign, such as a current director.
+- **No** means the register does not list them that way. It is not a warning. You can ask the client.
+We never keep the names we read. The client never sees this line.
+
+**Check yourself**
+- *The panel says "Not looked up" for every free lookup. Is something broken?* — No. The client chose to answer
+  the questions themselves.
+
+---

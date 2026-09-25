@@ -51,6 +51,8 @@ import { checksBlock, checksSummary, STEP_ANCHOR } from './approvals-pages.ts';
 import { clientFolder } from './documents.ts';
 import { filesButton, folderTiles } from './client-files-pages.ts';
 import { emailButton } from './free-email-pages.ts';
+import { identityChecks, identityPanel } from './identity-checks.ts';
+import { complianceObj } from './compliance.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -100,6 +102,7 @@ export async function handleClientPage(
 /** The words shown after a change. Each is said once, at the top of the page. */
 const SAVED: Readonly<Record<string, string>> = Object.freeze({
   saved: 'Saved.', contact: 'The contact is saved.', task: 'The task is saved.',
+  'identity-sent': 'The identity check was sent. Give the person their link, in Identity check below.',
 });
 
 /**
@@ -110,6 +113,7 @@ const OPEN_AFTER: Readonly<Record<string, string>> = Object.freeze({
   saved: 'details', contact: 'contacts', task: 'activity', research: 'sources', retry: 'sources',
   sent: 'questions', answered: 'questions', withdrawn: 'questions',
   checked: 'checks', unchecked: 'checks', told: 'checks', takenback: 'checks',
+  'identity-sent': 'identity',
 });
 
 /** Where each fact comes from, once each, in the order first met. */
@@ -232,6 +236,21 @@ function clientPage(
     working: (s.contact_count ?? 0) > 0 ? 'Nothing right now.' : 'Nobody is recorded yet. Add a contact.',
     need: [], from: ['the client'], body: s.contacts,
   });
+
+  /* PHASE 151b: THE ONLINE IDENTITY CHECK, for a login that keeps the registers (compliance.read; sending is
+     compliance.write). Sent from here or from an open due diligence check, and switched off with IDENTITY_CHECK. */
+  if (can(actor, 'compliance.read', complianceObj())) {
+    const idLines = identityChecks(db, { business_id: org.id });
+    const passed = idLines.some((l) => l.outcome === 'PASS');
+    sections.push({
+      key: 'client.identity', id: 'identity', kind: 'company', heading: 'Identity check', count: idLines.length,
+      status: passed ? 'DONE' : idLines.length > 0 ? 'WAITING' : 'NOT_STARTED',
+      working: passed ? 'Nothing right now.' : idLines.length > 0 ? 'Waiting for the result.' : 'No identity check has been sent.',
+      need: [], from: ['Veriff'],
+      body: identityPanel(d.app, actor, { business_id: org.id },
+        db.all<{ id: string; full_name: string }>('SELECT id, full_name FROM contacts WHERE business_id = ? ORDER BY full_name', [org.id])),
+    });
+  }
 
   const propertyNeed = needsFor('property');
   sections.push({

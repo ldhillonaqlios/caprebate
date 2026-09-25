@@ -29,6 +29,9 @@ import type { App } from '../app.ts';
 import { type Actor } from '../authz.ts';
 import { changeOwnPassword, SESSION_COOKIE_NAME, AuthError } from '../auth.ts';
 import { APP_ROLES } from '../roles.ts';
+import { handleRoleEditor, madeRoleChoices } from './role-editor-pages.ts';
+import { handleBilling } from './billing.ts';
+import { customRoleOf } from '../custom-roles.ts';
 import { findById, hashToken } from '../users.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
@@ -303,6 +306,10 @@ export async function handleStaff(
     return 'handled';
   }
 
+  /* ------------------------------------------------ PHASE 151b · Accounting's clients area, and chasing an invoice */
+  const billing = await handleBilling({ app: d.app, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
+  if (billing === 'handled') return 'handled';
+
   /* ------------------ SECTION 3 · a free-typed email to a company or a lead (Phase 141) */
   const freeEmail = await handleFreeEmail({ app: d.app, store: d.store, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
   if (freeEmail === 'handled') return 'handled';
@@ -401,9 +408,13 @@ export async function handleStaff(
     return 'handled';
   }
 
+  /* ------------------------------------------------ PHASE 151b · SUPER ADMIN ONLY · the roles they make */
+  const roles = await handleRoleEditor({ app: d.app, nav, problem }, req, res, url, method, actor, form);
+  if (roles === 'handled') return 'handled';
+
   /* ------------------------------------------------ ADMIN ONLY · users */
   if (path === '/staff/users' && method === 'GET') {
-    html(res, 200, usersPage(actor, S.staffList(db, actor), undefined)); return 'handled';
+    html(res, 200, usersPage(actor, S.staffList(db, actor), undefined, madeRoleChoices(d.app, actor))); return 'handled';
   }
 
   if (path === '/staff/users/create' && method === 'POST') {
@@ -1110,7 +1121,16 @@ function stoppedAddressesPage(actor: Actor, rows: readonly S.StoppedAddress[], d
   });
 }
 
-function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | undefined): string {
+/** A role as a person reads it: a built-in role's own word, or the name the super admin gave a made one. */
+function roleName(role: string): string {
+  return customRoleOf(role)?.name ?? role;
+}
+
+function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | undefined,
+  made: readonly { key: string; name: string }[] = []): string {
+  // PHASE 151b: the roles the super admin made are offered beside the built-in ones, by their own names.
+  const staffOnly = made.map((m) => ({ value: m.key, label: m.name }));
+  const all = [...APP_ROLES.map((r) => ({ value: r as string, label: r as string })), ...staffOnly];
   return page({
     title: 'Users and roles', nav: nav(actor), wide: true,
     body: h`
@@ -1122,7 +1142,7 @@ function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | un
 
       <table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Hours set</th><th>Photo</th><th>State</th><th></th></tr></thead>
       <tbody>${rows.map((r) => h`<tr>
-        <td>${r.user.display_name}</td><td>${r.user.email}</td><td>${r.user.role}</td>
+        <td>${r.user.display_name}</td><td>${r.user.email}</td><td>${roleName(r.user.role)}</td>
         <td>${r.working_periods === 0 ? h`<span class="help">none</span>` : r.working_periods}</td>
         <td>${r.has_photo ? 'yes' : 'no'}</td>
         <td>${r.user.disabled ? 'disabled' : 'active'}</td>
@@ -1131,13 +1151,15 @@ function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | un
             <button class="linkish" type="submit">Disable</button></form>`}</td>
       </tr>`)}</tbody></table>
 
+      <p><a href="/staff/admin/roles">Make or change a role</a> — a mix of what our own roles can do, for somebody who needs it.</p>
+
       <h3>Change somebody's role</h3>
       <p class="help">Changing a role signs that person out at once. They sign in again with the new role.</p>
       ${rows.filter((r) => !r.user.disabled && r.user.id !== actor.id).map((r) => h`
         <form method="post" action="/staff/users/${r.user.id}/role">
-          <label class="fl">${r.user.display_name} — currently ${r.user.role}</label>
-          <div class="opts">${APP_ROLES.map((role) => h`
-            <label class="opt"><input type="radio" name="role" value="${role}"${role === r.user.role ? raw(' checked') : raw('')}> ${role}</label>`)}</div>
+          <label class="fl">${r.user.display_name} — currently ${roleName(r.user.role)}</label>
+          <div class="opts">${all.map((role) => h`
+            <label class="opt"><input type="radio" name="role" value="${role.value}"${role.value === r.user.role ? raw(' checked') : raw('')}> ${role.label}</label>`)}</div>
           <button class="cta" type="submit">Assign</button>
         </form>`)}
 
@@ -1148,8 +1170,8 @@ function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | un
         <label class="fl" for="new-user-display-name">Display name</label>
         <input class="fi" id="new-user-display-name" name="display_name" required>
         <label class="fl">Role</label>
-        <div class="opts">${APP_ROLES.map((role) => h`
-          <label class="opt"><input type="radio" name="role" value="${role}"> ${role}</label>`)}</div>
+        <div class="opts">${all.map((role) => h`
+          <label class="opt"><input type="radio" name="role" value="${role.value}"> ${role.label}</label>`)}</div>
         <label class="fl" for="new-user-business">Business — for a CLIENT account only</label>
         <input class="fi" id="new-user-business" name="business_id" placeholder="leave empty for a staff account">
         <label class="fl" for="new-user-password">Initial password — at least 12 characters</label>

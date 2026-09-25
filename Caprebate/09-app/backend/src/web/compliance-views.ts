@@ -58,8 +58,13 @@ function limitation(): Safe {
   return h`<div class="flag">${TWO_PERSON_LIMITATION}</div>`;
 }
 
+/** PHASE 151b: a result that needs a sentence rather than its code word. Anything else is shown as before. */
+const DONE_SENTENCES: Readonly<Record<string, string>> = Object.freeze({
+  'identity-sent': 'The identity check was sent. Give the person their link, below.',
+});
+
 function done(msg: string | undefined): Safe {
-  return msg === undefined ? raw('') : h`<p class="help">✓ ${msg}</p>`;
+  return msg === undefined ? raw('') : h`<p class="help">✓ ${DONE_SENTENCES[msg] ?? msg}</p>`;
 }
 
 function subnav(): Safe {
@@ -141,7 +146,7 @@ export function amlPage(nav: Nav, v: AmlView, organisations: readonly { id: stri
   });
 }
 
-export function checkPage(nav: Nav, v: CheckView, msg?: string): string {
+export function checkPage(nav: Nav, v: CheckView, msg?: string, identity: Safe = raw('')): string {
   const c = v.check;
   const open = c.state === 'IN_PROGRESS';
   return page({
@@ -165,6 +170,7 @@ export function checkPage(nav: Nav, v: CheckView, msg?: string): string {
         <p class="help">${'The position paper sets no risk-rating scale, so none is offered. Words, or nothing.'}</p>
         ${input('Risk rating', 'risk_rating', c.risk_rating)} ${area('Why', 'risk_rating_basis', c.risk_rating_basis)}
         ${input('Checked on', 'checked_on', c.checked_on, 'date')}`) : raw('')}
+      <h3>Online identity check</h3>${identity}
       <h3>The PSC pull</h3><p>${v.psc_pull.reading}</p>
       ${v.psc_decisions.map((p) => h`<p class="help">${PSC_DECISIONS[p.decision] ?? p.decision}, ${p.decided_on}: ${p.reasoning}</p>`)}
       ${open ? form(`/staff/compliance/aml/checks/${c.id}/psc-decisions`, 'Record a dated decision on the pull', h`

@@ -4,6 +4,9 @@
  *
  * The central tests are P4-P9: a spy model records EVERYTHING it is handed, and
  * the objector's name and address must not appear anywhere in it.
+ *
+ * Phase 151b, 25 September 2026: TX1-TX6 — the tax return and the tax
+ * computation (Word question 223). P21 now counts eleven specs.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -320,11 +323,12 @@ test('P20 an extracted VALUE that looks like a person is refused on the way out'
 
 /* --- per document type ------------------------------------------------- */
 
-test('P21 all nine document types have a spec, a why, and at least three fields', () => {
+test('P21 all eleven document types have a spec, a why, and at least three fields (nine until Phase 151b added the two tax documents)', () => {
   const types = DOC_SPECS.map((d) => d.doc_type).sort();
   assert.deepEqual(types, [
     'ASBESTOS_REGISTER', 'BUILDING_REGS_COMPLETION', 'CONTRACTOR_COST_BREAKDOWN', 'FIRE_RISK_ASSESSMENT',
     'GRANT_FUNDING_AGREEMENT', 'INSURANCE_REINSTATEMENT', 'LEASE', 'OM_MANUAL', 'PLANNING',
+    'TAX_COMPUTATION', 'TAX_RETURN',
   ]);
   for (const d of DOC_SPECS) {
     assert.ok(d.fields.length >= 3, `${d.doc_type} has too few fields`);
@@ -729,4 +733,107 @@ test('M6 fail closed: a type missing from a passed table reads as REVIEW REQUIRE
   assert.equal(JSON.stringify(absent), JSON.stringify(on), 'an absent row switched review off');
   assert.equal(JSON.stringify(undefinedValue), JSON.stringify(absent), 'absent and undefined behaved differently');
   assert.equal(absent.fields.find((x) => x.field_id === 'fra_alarm_system_category')!.needs_human_review, true);
+});
+
+/* --- TX: the tax return and the tax computation (Phase 151b) ------------ *
+ * Word question 223, answered yes by the data protection officer on 24
+ * September 2026: keep the figures and the company details, remove the
+ * individuals. Every name, number and reference below is INVENTED.
+ * ------------------------------------------------------------------------- */
+
+test('TX1 a person\'s details and the declaration are NEVER sent to a model — nine kinds on NEVER_TO_MODEL now, not seven', () => {
+  assert.ok(NEVER_TO_MODEL.includes('TAXPAYER_PERSONAL_DETAILS'));
+  assert.ok(NEVER_TO_MODEL.includes('DECLARATION'));
+  assert.equal(NEVER_TO_MODEL.length, 9);
+  for (const t of ['TAX_RETURN', 'TAX_COMPUTATION'] as const) {
+    assert.deepEqual([...specFor(t).permitted_segments].sort(),
+      ['CAPITAL_ALLOWANCES_COMPUTATION', 'TAX_ENTITY_DETAILS', 'TAX_PROFIT_COMPUTATION']);
+  }
+});
+
+test('TX2 the heading rules: a person\'s details and the declaration win over a figure in the same heading, and nothing the earlier eleven types used changes kind', () => {
+  const cases: [string, string][] = [
+    ['YOUR PERSONAL DETAILS', 'TAXPAYER_PERSONAL_DETAILS'],
+    ['BUSINESS DETAILS', 'TAXPAYER_PERSONAL_DETAILS'],
+    ['National Insurance number:', 'TAXPAYER_PERSONAL_DETAILS'],
+    ["DIRECTORS' DETAILS", 'TAXPAYER_PERSONAL_DETAILS'],
+    ['Your name and address — capital allowances claimed', 'TAXPAYER_PERSONAL_DETAILS'],
+    ['DECLARATION', 'DECLARATION'],
+    ['Declaration: profits and capital allowances', 'DECLARATION'],
+    ['PREPARED BY INVENTED ACCOUNTANTS LLP', 'SIGNATORIES'],
+    ['TAX AGENT', 'AGENT_DETAILS'],
+    ['COMPANY INFORMATION', 'TAX_ENTITY_DETAILS'],
+    ['Company tax reference:', 'TAX_ENTITY_DETAILS'],
+    ['RETURN PERIOD', 'TAX_ENTITY_DETAILS'],
+    ['Tax reference:', 'UNCLASSIFIED'],
+    ['TAX COMPUTATION FOR THE YEAR ENDED 31 MARCH 2026', 'TAX_PROFIT_COMPUTATION'],
+    ['CALCULATING YOUR TAXABLE PROFIT OR LOSS', 'TAX_PROFIT_COMPUTATION'],
+    ['CAPITAL ALLOWANCES AND BALANCING CHARGES', 'CAPITAL_ALLOWANCES_COMPUTATION'],
+    ['SPECIAL RATE POOL', 'CAPITAL_ALLOWANCES_COMPUTATION'],
+    ['ANNUAL INVESTMENT ALLOWANCE', 'CAPITAL_ALLOWANCES_COMPUTATION'],
+  ];
+  for (const [h, k] of cases) assert.equal(classifyHeading(h), k, h);
+  // Headings the earlier types rely on keep their kind: the tax rules come LAST.
+  const unchanged: [string, string][] = [
+    ['Declared value', 'VALUATION'], ['Particulars', 'DEMISE_AND_TERM'], ['Plant schedule', 'PLANT_SCHEDULE'],
+    ['Cost breakdown', 'COST_SCHEDULE'], ['Grant funding agreement', 'FUNDING_TERMS'], ['DESCRIPTION OF DEVELOPMENT', 'PROPOSAL_DESCRIPTION'],
+  ];
+  for (const [h, k] of unchanged) assert.equal(classifyHeading(h), k, h);
+});
+
+test('TX3 no tax field is a name or a tax reference, and none routes to a surveyor — a surveyor may not read either document', () => {
+  for (const t of ['TAX_RETURN', 'TAX_COMPUTATION'] as const) {
+    const spec = specFor(t);
+    assert.ok(spec.fields.length >= 3);
+    for (const f of spec.fields) {
+      assert.doesNotMatch(f.field_id, /name|utr|reference|insurance|nino|signatory|agent|person/, f.field_id);
+      assert.notEqual(f.consequence, 'APPORTIONMENT', `${f.field_id} would send a review task to a surveyor`);
+    }
+  }
+  const ids = (t: 'TAX_RETURN' | 'TAX_COMPUTATION') => specFor(t).fields.map((f) => f.field_id);
+  // What a claim needs, and each is there.
+  for (const id of ['taxret_period_end', 'taxret_taxable_profit_pence', 'taxret_capital_allowances_by_pool', 'taxret_aia_claimed_pence'])
+    assert.ok(ids('TAX_RETURN').includes(id), id);
+  for (const id of ['taxcomp_period_end', 'taxcomp_main_pool_balance_pence', 'taxcomp_special_rate_pool_balance_pence', 'taxcomp_aia_claimed_pence', 'taxcomp_taxable_profit_pence'])
+    assert.ok(ids('TAX_COMPUTATION').includes(id), id);
+});
+
+test('TX4 SPY MODEL, a company\'s return: the figures reach the model; the director who signed, the agent and the declaration do not', () => {
+  const pages = [
+    { page: 1, lines: ['COMPANY INFORMATION', 'Company registration number 09876543', 'RETURN PERIOD', 'From 1 April 2025 to 31 March 2026'] },
+    { page: 2, lines: ['CAPITAL ALLOWANCES AND BALANCING CHARGES', 'Annual investment allowance 180,000'] },
+    { page: 3, lines: ['DECLARATION', 'Name Jane Inventedperson, Director', 'AGENT DETAILS', 'Peter Madeupname of Invented & Co'] },
+  ];
+  const spy = spyModel([
+    { field_id: 'taxret_aia_claimed_pence', value: 18000000, confidence: 0.98, page: 2, quote_ref: 'p2 "Annual investment allowance"' },
+    { field_id: 'taxret_company_number', value: '09876543', confidence: 0.99, page: 1, quote_ref: 'p1 "Company registration number"' },
+  ]);
+  const r = extract('ct-tx4', 'TAX_RETURN', segment(pages), spy.fn, { at: AT, egress: [] });
+  const sent = spy.asText();
+  assert.match(sent, /180,000/);
+  assert.doesNotMatch(sent, /Inventedperson|Madeupname|Invented & Co/);
+  assert.deepEqual(r.dropped.map((d) => d.kind).sort(), ['AGENT_DETAILS', 'DECLARATION']);
+  assert.deepEqual(r.fields.map((f) => f.field_id).sort(), ['taxret_aia_claimed_pence', 'taxret_company_number']);
+  assert.equal(r.fields.every((f) => f.grade === 'B'), true);
+  assert.ok(r.not_found.includes('taxret_taxable_profit_pence'), 'what the return did not give is not found, never guessed');
+});
+
+test('TX5 SPY MODEL, a sole trader\'s return: only the figures leave the building', () => {
+  const pages = [
+    { page: 1, lines: ['YOUR PERSONAL DETAILS', 'Name Samuel Inventedname', 'National Insurance number QQ 12 34 56 C', 'BUSINESS DETAILS', 'Business name Samuel Inventedname Dental'] },
+    { page: 2, lines: ['CAPITAL ALLOWANCES', 'Annual investment allowance 64,000', 'CALCULATING YOUR TAXABLE PROFIT OR LOSS', 'Net profit 88,200'] },
+  ];
+  const spy = spyModel([]);
+  extract('sa-tx5', 'TAX_RETURN', segment(pages), spy.fn, { at: AT, egress: [] });
+  const sent = spy.asText();
+  assert.match(sent, /64,000/);
+  assert.match(sent, /88,200/);
+  assert.doesNotMatch(sent, /Samuel|Inventedname|QQ 12 34 56 C|Dental/);
+});
+
+test('TX6 the tax types are model types, not human-read-only, and person review is OFF for both until somebody decides otherwise', () => {
+  for (const t of ['TAX_RETURN', 'TAX_COMPUTATION'] as const) {
+    assert.equal(HUMAN_READ_ONLY_TYPES.includes(t), false);
+    assert.equal(PERSON_REVIEW_BY_DOC_TYPE[t], false);
+  }
 });

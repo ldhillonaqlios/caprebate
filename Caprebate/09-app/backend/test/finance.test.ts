@@ -185,9 +185,12 @@ describe('each refusal, proved at the rule and again over HTTP', () => {
     assert.equal(can(a, 'register_record.read', { type: 'register_record', id: 'r', business_id: 'biz-1' }), false);
     const it = await boot();
     t.after(() => it.close());
-    // Reached only through the engaged-client page, which this role cannot open.
+    // Reached only through the engaged-client page, which this role cannot open. PHASE 151b: /staff/clients answers
+    // Accounting now, as its billing view (Word answer 40) — and that view carries no register data.
     const accounting = await it.signIn('ACCOUNTING');
-    assert.equal((await accounting.req('/staff/clients')).status, 403);
+    const clients = await accounting.req('/staff/clients');
+    assert.equal(clients.status, 200);
+    assert.doesNotMatch(clients.body, /Lookups|Companies House|energy certificate|Run the research/);
   });
 
   test('the internal notes — and the note’s own text is nowhere in any response it gets', async (t) => {

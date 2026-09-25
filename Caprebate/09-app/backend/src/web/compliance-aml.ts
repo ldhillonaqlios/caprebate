@@ -33,6 +33,7 @@ import {
   TWO_PERSON_LIMITATION, settingReading, ukDay, vocabField, words,
   type Check, type ComplianceDeps, type Fields, type SettingReading, type Vocab, type WriteResult,
 } from './compliance.ts';
+import { identityPassed } from './identity-checks.ts';
 
 /* ================================================================== *
  * 1 · THE VOCABULARIES — the paper's own, section 5
@@ -370,7 +371,8 @@ export function recordOwner(d: ComplianceDeps, actor: Actor, check_id: string, i
 export function missingForCompletion(db: Db, c: CheckRow): string[] {
   const out: string[] = [];
   if (c.identified === null) out.push('what was identified');
-  if (c.verification_method === null) out.push('how it was verified');
+  // PHASE 151b: a PASS from the online identity check is evidence of how identity was verified (it also fills the field).
+  if (c.verification_method === null && !identityPassed(db, c.id)) out.push('how it was verified');
   if (c.evidence_document_id === null && c.register_ref === null) out.push('the evidence document or the register number');
   if (c.beneficial_ownership === null) out.push('the beneficial ownership position');
   if (c.beneficial_ownership === 'RECORDED'

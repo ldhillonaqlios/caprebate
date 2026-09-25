@@ -161,8 +161,9 @@ const REPORT_NOT_DELIVERED =
  *
  * NULL, WITH ITS REASON, where the document is linked to no claim (a property link names no claim), to more than one
  * (which claim's dates govern is not decided here), or where a date is not known. NOTHING HERE COMPUTES A DELETION DATE:
- * RET-7 is not approved, and `deletionDueAt` in the ingestion module — and its rule that the EARLIER of two clocks
- * governs — is where a date would come from, and is unchanged.
+ * RET-7 is not approved, and `deletionDueAt` in the ingestion module is where a date would come from. Its rule where two
+ * clocks are known is that the LATER governs — the file is kept until both periods have ended (Word answer 173, closed
+ * 24 September 2026; until Phase 151b it took the earlier).
  */
 /**
  * PHASE 142a — ONE CLAIM'S TWO FILE DATES, as `ret7Limbs` reads them for a document and as the message clean-up job

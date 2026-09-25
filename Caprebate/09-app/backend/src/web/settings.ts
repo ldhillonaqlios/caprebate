@@ -306,8 +306,13 @@ export async function createStaffUser(
 ): Promise<User> {
   authorise(actor, 'user.create', { type: 'user', id: 'new', role: 'SALES' });
 
-  if (!isAppRole(args.role)) {
-    throw new SettingsError('E_BAD_ROLE', `a role is one of ${APP_ROLES.join(', ')}`, 'role');
+  // PHASE 151b: or a role the super admin made — a staff role, so the account belongs to no business (checked below).
+  const madeRole = isCustomRoleKey(args.role);
+  if (!isAppRole(args.role) && !madeRole) {
+    throw new SettingsError('E_BAD_ROLE', `a role is one of ${APP_ROLES.join(', ')}, or one the super admin made`, 'role');
+  }
+  if (madeRole && (args.business_id ?? '') !== '') {
+    throw new SettingsError('E_STAFF_BUSINESS', 'a staff account belongs to no business: leave the business empty', 'business_id');
   }
   const email = args.email.trim();
   if (email.length < 3 || !email.includes('@') || /\s/.test(email)) {
@@ -334,7 +339,8 @@ export async function createStaffUser(
   }
 
   const created = createUser(d.db, d.now, {
-    email, display_name: name, role: args.role,
+    // A made role is held by users.role's own reference to `roles` (migration 046), as assignRole stores one.
+    email, display_name: name, role: args.role as AppRole,
     password_hash: await d.hash(args.password),
     business_id: args.role === 'CLIENT' ? (args.business_id ?? null) : null,
   });

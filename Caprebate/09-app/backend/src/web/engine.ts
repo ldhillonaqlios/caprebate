@@ -145,12 +145,33 @@ export type RecommendationThreshold = {
   readonly relief_basis: string;
   readonly horizon_years: number | null;
   readonly fee: number | null;
+  /** Phase 151b — what the test took off the relief: the fee, plus VAT only where VAT is counted. Null where not known. */
+  readonly fee_counted: number | null;
+  /** Phase 151b — how VAT on our fee was treated in this reading, and why. */
+  readonly vat: NoClaimVatReading;
   readonly relief_after_fee: number | null;
   readonly message: string | null;
   readonly refuses_work: false;
   readonly withholds_quote: false;
   readonly moves_figure: false;
   readonly client_chooses: true;
+  readonly awaiting_tax_adviser_review: boolean;
+};
+
+/**
+ * PHASE 151b, 25 September 2026 — VAT IN THE NO-CLAIM TEST (Word question 61, Lakhbir, closed 24 September 2026:
+ * "The relief is calculated over the 5 years – and must include VAT"). Transcribed from CB_FEE's `vat` report.
+ * VAT is on OUR fee and exists only once we are VAT-registered; it is counted only where the client cannot reclaim
+ * it; a client whose position is not known ("not sure" and absent alike) is UNDETERMINED, never told not to claim.
+ */
+export type NoClaimVatReading = {
+  readonly we_are_vat_registered: boolean;
+  readonly vat_rate: number | null;
+  readonly client_vat_position: 'can_reclaim' | 'cannot_reclaim' | 'not_known';
+  readonly treatment: 'NOT_REGISTERED_NO_VAT' | 'COUNTED_CLIENT_CANNOT_RECLAIM' | 'NOT_COUNTED_CLIENT_CAN_RECLAIM' | 'UNDETERMINED';
+  readonly known: boolean;
+  readonly vat: number | null;
+  readonly why: string | null;
   readonly awaiting_tax_adviser_review: boolean;
 };
 
@@ -161,6 +182,11 @@ export type BenefitContext = {
   period_start?: string | null;
   is_company?: boolean;
   profits?: number | null;
+  /**
+   * PHASE 151b — the client's VAT position ON OUR FEE: 'can_reclaim' or 'cannot_reclaim'. Anything else, absent
+   * included, is not known, and the engine treats them all alike (N4). Data the caller passes, not a question.
+   */
+  client_vat?: string | null;
 };
 
 /**
@@ -274,12 +300,27 @@ export function feeQuote(
   return { ...withGateCosting(over, () => fn(allowances, taxRate, ctx)), placeholder_caveat: GATE_PLACEHOLDER_CAVEAT };
 }
 
-/** CB_FEE.NO_CLAIM_THRESHOLD's line, read. NaN where the engine does not carry it — never a default. */
-export function noClaimThreshold(): { readonly relief_after_fee_below: number; readonly awaiting_tax_adviser_review: boolean } {
+/**
+ * CB_FEE.NO_CLAIM_THRESHOLD's line, read. NaN where the engine does not carry it — never a default.
+ *
+ * PHASE 151b — and CB_FEE.NO_CLAIM_VAT, read the same way: registered only where the engine says `true` (an absent
+ * setting is not a registration), the rate only where it is a positive number (null otherwise, never 0). Read, not
+ * decided: whether VAT is counted for a given client is the engine's, on each reading.
+ */
+export function noClaimThreshold(): {
+  readonly relief_after_fee_below: number; readonly awaiting_tax_adviser_review: boolean;
+  readonly vat: { readonly we_are_vat_registered: boolean; readonly vat_rate: number | null; readonly awaiting_tax_adviser_review: boolean };
+} {
   const t = (FEE as { NO_CLAIM_THRESHOLD?: { relief_after_fee_below?: unknown; awaiting_tax_adviser_review?: unknown } }).NO_CLAIM_THRESHOLD;
+  const v = (FEE as { NO_CLAIM_VAT?: { we_are_vat_registered?: unknown; vat_rate?: unknown; awaiting_tax_adviser_review?: unknown } }).NO_CLAIM_VAT;
   return {
     relief_after_fee_below: typeof t?.relief_after_fee_below === 'number' ? t.relief_after_fee_below : Number.NaN,
     awaiting_tax_adviser_review: t?.awaiting_tax_adviser_review !== false,
+    vat: {
+      we_are_vat_registered: v?.we_are_vat_registered === true,
+      vat_rate: typeof v?.vat_rate === 'number' && Number.isFinite(v.vat_rate) && v.vat_rate > 0 ? v.vat_rate : null,
+      awaiting_tax_adviser_review: v?.awaiting_tax_adviser_review !== false,
+    },
   };
 }
 

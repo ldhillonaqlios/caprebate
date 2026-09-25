@@ -178,3 +178,28 @@ export function claimInvoiceRow(
   allocateNumber(app.db, 'INVOICE', id, null, by, at);
   return id;
 }
+
+/**
+ * PHASE 151b — THE DOCUMENTS THAT MUST ARRIVE, ARRIVED. MANDATORY_DOCUMENTS is on (src/web/mandatory-documents.ts), so a
+ * claim leaves DATA_GATHERING only once the client's tax return and tax computation are received, and the sale
+ * contract and CPSE replies too where the client bought the building. A test that is about something else walks its
+ * claim past the gate with this: the client did not buy the building (recorded NO, which excuses those two), and a
+ * received tax return and tax computation linked to the claim — rows as the one handler leaves them: stripped,
+ * discharged, not failed. test/phase151b-documents.test.ts proves the real uploads open the gate; this only stands in.
+ */
+export function mustArriveDocuments(app: FixtureApp, business: string, claim: string, who = 'u-SALES'): void {
+  fact(app, claim, 'BOUGHT_THE_BUILDING', 'NO', 'CLIENT_ANSWER');
+  const at = app.now();
+  for (const type_code of ['TAX_RETURN', 'TAX_COMPUTATION']) {
+    const seq = (app.db.get<{ n: number }>('SELECT COALESCE(MAX(seq), 0) AS n FROM logical_documents WHERE business_id = ? AND type_code = ?', [business, type_code])?.n ?? 0) + 1;
+    const logical = `ld-must-${type_code}-${claim}`;
+    app.db.run('INSERT INTO logical_documents (id, business_id, type_code, seq, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [logical, business, type_code, seq, who, at]);
+    app.db.run(
+      'INSERT INTO documents (id, business_id, uploaded_by, filename, state, strip_recorded_at, quarantine_discharged_at, created_at, logical_document_id, version_no, type_code) ' +
+        "VALUES (?, ?, ?, ?, 'STORED', ?, ?, ?, ?, 1, ?)",
+      [`d-must-${type_code}-${claim}`, business, who, `${type_code.toLowerCase().replace(/_/g, '-')}-${seq}-version-1`, at, at, at, logical, type_code]);
+    app.db.run('INSERT INTO document_links (id, logical_document_id, claim_id, property_id, linked_by, linked_at) VALUES (?, ?, ?, NULL, ?, ?)',
+      [`dl-must-${type_code}-${claim}`, logical, claim, who, at]);
+  }
+}

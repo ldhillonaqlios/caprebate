@@ -1215,8 +1215,13 @@ describe('panel 5 — internal notes', () => {
     try {
       const { business_id } = await h.runFunnel();
       const acc = await h.signIn('ACCOUNTING');
-      assert.equal((await acc.req('/staff/clients')).status, 403);
-      assert.equal((await acc.req(`/staff/clients/${business_id}`)).status, 403);
+      // PHASE 151b (Word answer 40): Accounting opens the clients area now — as its BILLING view, never the business
+      // page. So the addresses answer, and still carry none of the client's tax affairs, answers or lookups.
+      for (const path of ['/staff/clients', `/staff/clients/${business_id}`]) {
+        const r = await acc.req(path);
+        assert.equal(r.status, 200, path);
+        for (const never of [/What the client told us/, /Lookups/, /Run the research/, /Questions for the client/]) assert.doesNotMatch(r.body, never, path);
+      }
       // It still reaches the back office and its own section, so this is a
       // scoped refusal and not a broken account.
       assert.equal((await acc.req('/staff')).status, 200);

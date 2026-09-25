@@ -32,6 +32,17 @@
  * L1 and L2 are the controls that matter. L4 is pattern matching and pattern
  * matching is never complete — it is the last line, not the first.
  * ============================================================================
+ *
+ * PHASE 151b, 25 September 2026 — THE TAX RETURN AND THE TAX COMPUTATION.
+ * Word question 223. The data protection officer, relayed by Lakhbir on 24
+ * September 2026: "yes, clients may upload tax returns and tax computations."
+ * What must be removed from them is still open, and until the officer says
+ * otherwise they are treated like the other financial documents: keep the
+ * figures and the company details, and remove individuals' names, addresses
+ * and tax references. So both types join DocType with a spec of their own
+ * (section 2), three segment kinds that may be kept and two that never are
+ * (section 1), and heading rules that find them (section 3). The receipt
+ * policies that strip them on arrival are in caprebate-client-doc-ingestion.ts.
  */
 
 import { createHash } from 'node:crypto';
@@ -64,7 +75,12 @@ export type DocType =
   // send either to a model: the type exists so an upload is never silently
   // unhandled, but there is no model-facing spec for it to run against.
   | 'CPSE_REPLIES'
-  | 'SALE_CONTRACT';
+  | 'SALE_CONTRACT'
+  // Phase 151b (Word question 223, answered yes on 24 September 2026). Both
+  // are MODEL-EXTRACTABLE, like the nine above: every field in their specs is
+  // a date, a number or a sum of money, and none is a person's.
+  | 'TAX_RETURN'
+  | 'TAX_COMPUTATION';
 
 /** Never reach extract()/sanitise()/callModel() — see section 9, captureHumanRead(). */
 export const HUMAN_READ_ONLY_TYPES: readonly DocType[] = ['CPSE_REPLIES', 'SALE_CONTRACT'];
@@ -85,6 +101,13 @@ export type SegmentKind =
   | 'CERTIFICATE_BODY'
   | 'FUNDING_TERMS'
   | 'FUNDING_SCHEDULE'
+  // Phase 151b — the tax return and the tax computation. The company details
+  // are a COMPANY's only: its name, its company number, its own tax reference
+  // and the period. Only a heading that names the company lands here; a
+  // heading about a person ("your details", "business details") never does.
+  | 'TAX_ENTITY_DETAILS'
+  | 'TAX_PROFIT_COMPUTATION'
+  | 'CAPITAL_ALLOWANCES_COMPUTATION'
   // NEVER permitted, anywhere, for any document type
   | 'REPRESENTATIONS'
   | 'CONSULTEE_RESPONSES'
@@ -92,12 +115,18 @@ export type SegmentKind =
   | 'APPLICANT_DETAILS'
   | 'AGENT_DETAILS'
   | 'SIGNATORIES'
+  // Phase 151b. An individual's own details on a tax return: a sole trader's,
+  // a partner's or a director's name, home address, National Insurance number
+  // and personal tax reference. And the declaration a person signs.
+  | 'TAXPAYER_PERSONAL_DETAILS'
+  | 'DECLARATION'
   | 'UNCLASSIFIED';
 
 /**
  * Never sent to a model. Not for any document type, not with any flag, not
  * with any override. UNCLASSIFIED is on the list because "we could not tell
- * what this section was" must fail closed.
+ * what this section was" must fail closed. Phase 151b added the two kinds a
+ * tax return carries about people: nine kinds, where there had been seven.
  */
 export const NEVER_TO_MODEL: readonly SegmentKind[] = [
   'REPRESENTATIONS',
@@ -106,6 +135,8 @@ export const NEVER_TO_MODEL: readonly SegmentKind[] = [
   'APPLICANT_DETAILS',
   'AGENT_DETAILS',
   'SIGNATORIES',
+  'TAXPAYER_PERSONAL_DETAILS',
+  'DECLARATION',
   'UNCLASSIFIED',
 ];
 
@@ -301,6 +332,70 @@ export const DOC_SPECS: readonly DocSpec[] = [
       'is Rulebook F\'s tracing judgement. The model returns the amount and the words; the deduction is decided under Rulebook F, ' +
       'and the filing position is signed by whoever clause 1 of the engagement letter names.',
   },
+  /*
+   * THE TAX RETURN AND THE TAX COMPUTATION — Phase 151b, 25 September 2026.
+   * Word question 223: the data protection officer said yes to the uploads on
+   * 24 September 2026; what must be removed stays open, and until the officer
+   * says otherwise the figures and the company details are kept and the
+   * individuals are removed. The fields are ONLY what a claim reads from them:
+   * the period, the taxable profit, what the return already claims by pool,
+   * the annual investment allowance used, and the two pool balances.
+   *
+   * NO FIELD HERE IS A NAME OR A TAX REFERENCE — not the company's name, not
+   * its UTR, not a person's. The company details are KEPT as text on receipt
+   * (the segment TAX_ENTITY_DETAILS), because the officer's rule keeps them;
+   * but nothing a claim computes needs them, so nothing extracts them. The one
+   * identifier extracted is the company number, which ties the return to the
+   * claimant, and which only a company or an LLP has.
+   *
+   * WHY NONE IS 'APPORTIONMENT'. That consequence routes a review task to a
+   * SURVEYOR (REVIEWER, section 6), and a surveyor may not read either type:
+   * both carry value, so their readers are the claim team (migrations 013 and
+   * 045). The figures are GATE fields: they decide whether the allowances can
+   * be used this period and how much of the annual investment allowance is
+   * left, which is a branch, not a surveyed figure. Same threshold, 0.95.
+   */
+  {
+    doc_type: 'TAX_RETURN',
+    permitted_segments: ['TAX_ENTITY_DETAILS', 'TAX_PROFIT_COMPUTATION', 'CAPITAL_ALLOWANCES_COMPUTATION'],
+    fields: [
+      f('taxret_period_start', 'GATE', ['TAX_ENTITY_DETAILS', 'TAX_PROFIT_COMPUTATION'], 'the first day of the period the return covers'),
+      f('taxret_period_end', 'GATE', ['TAX_ENTITY_DETAILS', 'TAX_PROFIT_COMPUTATION'],
+        'the last day of that period — the claim\'s ACCOUNTING_PERIOD_END is checked against it'),
+      f('taxret_company_number', 'NARRATIVE', ['TAX_ENTITY_DETAILS'],
+        'a company or LLP only: a sole trader has none, and the field is then not found, never guessed. A number, never a name'),
+      f('taxret_taxable_profit_pence', 'GATE', ['TAX_PROFIT_COMPUTATION'],
+        'integer pence, a loss negative — whether the allowances can be used this period'),
+      f('taxret_capital_allowances_by_pool', 'GATE', ['CAPITAL_ALLOWANCES_COMPUTATION'],
+        'list: pool (main, special rate, single asset), allowance (AIA, writing-down, first-year), amount in pence — what the return already claims, so nothing is claimed twice'),
+      f('taxret_aia_claimed_pence', 'GATE', ['CAPITAL_ALLOWANCES_COMPUTATION'],
+        'the annual investment allowance the return already uses — AIA headroom is what is left'),
+    ],
+    why: 'What the client has already told HMRC for the period: the profit the allowances would be set against, and the ' +
+      'allowances already claimed. A claim that ignores either can claim twice or claim what cannot be used. The ' +
+      'company details are kept as text; the people on the return — the taxpayer where it is a sole trader, the ' +
+      'directors, the preparer and whoever signs the declaration — are not kept at all.',
+  },
+  {
+    doc_type: 'TAX_COMPUTATION',
+    permitted_segments: ['TAX_ENTITY_DETAILS', 'TAX_PROFIT_COMPUTATION', 'CAPITAL_ALLOWANCES_COMPUTATION'],
+    fields: [
+      f('taxcomp_period_start', 'GATE', ['TAX_ENTITY_DETAILS', 'TAX_PROFIT_COMPUTATION', 'CAPITAL_ALLOWANCES_COMPUTATION']),
+      f('taxcomp_period_end', 'GATE', ['TAX_ENTITY_DETAILS', 'TAX_PROFIT_COMPUTATION', 'CAPITAL_ALLOWANCES_COMPUTATION'],
+        'a computation is usually titled with it — "for the year ended 31 March 2026"'),
+      f('taxcomp_taxable_profit_pence', 'GATE', ['TAX_PROFIT_COMPUTATION'], 'integer pence, a loss negative'),
+      f('taxcomp_capital_allowances_by_pool', 'GATE', ['CAPITAL_ALLOWANCES_COMPUTATION'],
+        'list: pool, allowance, amount in pence, as the computation sets it out'),
+      f('taxcomp_main_pool_balance_pence', 'GATE', ['CAPITAL_ALLOWANCES_COMPUTATION'],
+        'the main pool\'s written-down value carried forward — the pool the claim\'s additions join'),
+      f('taxcomp_special_rate_pool_balance_pence', 'GATE', ['CAPITAL_ALLOWANCES_COMPUTATION'],
+        'the special rate pool\'s written-down value carried forward — integral features and long-life assets join it'),
+      f('taxcomp_aia_claimed_pence', 'GATE', ['CAPITAL_ALLOWANCES_COMPUTATION']),
+    ],
+    why: 'The pool figures and the profit position are the claim\'s inputs: the balances the new additions join, the ' +
+      'annual investment allowance already used, and the profit it is set against. The preparer\'s name, and an ' +
+      'individual taxpayer\'s tax reference or National Insurance number, are not needed and are not kept.',
+  },
 ];
 
 /**
@@ -336,6 +431,9 @@ export const DOC_SPECS: readonly DocSpec[] = [
  * the building, and why), so every field read from one is checked by a person
  * before it stands, however confident the model was. The other eight are as they
  * were. Recorded in 09-app/CAPREBATE-DEVELOPER-SPEC.md; test M1 holds the table.
+ * Phase 151b added the tax return and the tax computation, OFF: whether a person
+ * checks every figure read from them is the same kind of decision, and nobody has
+ * taken it.
  */
 export type ExtractableDocType = Exclude<DocType, 'CPSE_REPLIES' | 'SALE_CONTRACT'>;
 
@@ -349,6 +447,10 @@ export const PERSON_REVIEW_BY_DOC_TYPE: Readonly<Record<ExtractableDocType, bool
   CONTRACTOR_COST_BREAKDOWN: false,
   BUILDING_REGS_COMPLETION: false,
   GRANT_FUNDING_AGREEMENT: false,
+  // Phase 151b. Off, as every type is until somebody who owns the error rate
+  // decides otherwise — Phase 146e's rule for this table. Not decided here.
+  TAX_RETURN: false,
+  TAX_COMPUTATION: false,
 });
 
 export function specFor(t: DocType): DocSpec {
@@ -375,6 +477,17 @@ const HEADING_RULES: { kind: SegmentKind; patterns: RegExp[] }[] = [
   { kind: 'APPLICANT_DETAILS', patterns: [/applicant/i, /\bowner\s+details/i] },
   { kind: 'AGENT_DETAILS', patterns: [/\bagent\b/i] },
   { kind: 'SIGNATORIES', patterns: [/signed/i, /signatur/i, /prepared\s+by/i, /assessor\s+details/i, /surveyor\s+details/i] },
+  // Phase 151b. A person's own details on a tax return, and the declaration.
+  // Narrow on purpose: each names a person or a person's identifier. "Business
+  // details" is here because on a sole trader's return the business name and
+  // address ARE the person's. A bare "Tax reference" or "UTR" heading matches
+  // nothing and falls to UNCLASSIFIED — it cannot say whose it is, so it goes.
+  { kind: 'TAXPAYER_PERSONAL_DETAILS', patterns: [
+    /personal\s+details/i, /\byour\s+(personal\s+)?(details|name|address)/i, /\btaxpayer'?s?\s+(details|name|address)/i,
+    /national\s+insurance/i, /\bnino\b/i, /\b(director|partner|member|proprietor)s?'?s?'?\s+(details|names?|address)/i,
+    /\b(home|residential|private)\s+address/i, /business\s+details/i, /date\s+of\s+birth/i,
+  ] },
+  { kind: 'DECLARATION', patterns: [/declaration/i, /\bi\s+declare\b/i] },
   { kind: 'PROPOSAL_DESCRIPTION', patterns: [/proposal/i, /description\s+of\s+develop/i, /\bproposed\s+develop/i] },
   { kind: 'DECISION', patterns: [/decision/i, /notice\s+of\s+grant/i, /permission/i] },
   { kind: 'CONDITIONS', patterns: [/condition/i] },
@@ -389,6 +502,22 @@ const HEADING_RULES: { kind: SegmentKind; patterns: RegExp[] }[] = [
   { kind: 'CERTIFICATE_BODY', patterns: [/completion\s+certificate/i, /building\s+regulations?/i, /certificate\s+of\s+completion/i, /certificate\s+reference/i] },
   { kind: 'FUNDING_TERMS', patterns: [/funding\s+(agreement|terms)/i, /grant\s+(agreement|terms|conditions)/i, /grant\s+funding/i, /clawback/i] },
   { kind: 'FUNDING_SCHEDULE', patterns: [/itemised\s+schedule/i, /schedule\s+of\s+(works|items|expenditure)/i, /funding\s+schedule/i] },
+  // Phase 151b — the tax return and the tax computation. LAST, so that no
+  // heading any of the eleven earlier types already used changes kind.
+  { kind: 'CAPITAL_ALLOWANCES_COMPUTATION', patterns: [
+    /capital\s+allowances?/i, /(main|special\s+rate|single\s+asset)\s+pool/i, /annual\s+investment\s+allowance/i,
+    /\baia\b/i, /writing[- ]down\s+allowance/i, /first[- ]year\s+allowance/i, /full\s+expensing/i,
+    /balancing\s+(charge|allowance)/i, /structures\s+and\s+buildings/i,
+  ] },
+  { kind: 'TAX_PROFIT_COMPUTATION', patterns: [
+    /tax\s+computation/i, /computation\s+of\s+(taxable\s+)?(profits?|tax)/i, /taxable\s+(total\s+)?profits?/i,
+    /trading\s+(profits?|income|losses?)/i, /adjusted\s+(trading\s+)?profits?/i, /chargeable\s+profits?/i,
+    /profits?\s+(before|chargeable)/i, /tax\s+calculation/i, /\bturnover\b/i,
+  ] },
+  { kind: 'TAX_ENTITY_DETAILS', patterns: [
+    /\bcompany\s+(information|details|name|registration|number)/i, /\bcompany'?s?\s+(tax\s+reference|unique\s+taxpayer|utr)/i,
+    /return\s+period/i, /accounting\s+period/i, /period\s+covered/i,
+  ] },
 ];
 
 export function classifyHeading(heading: string): SegmentKind {

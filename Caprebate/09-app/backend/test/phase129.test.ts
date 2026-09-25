@@ -335,6 +335,9 @@ describe('line 10 — a data protection officer role — defined, scoped to the 
 const FOURTEEN = ['ACCOUNTS', 'CA_REPORT', 'CLAIM_DOCUMENTATION', 'COMPLETION_STATEMENT', 'CONTRACTOR_INVOICE', 'CORRESPONDENCE', 'ENGAGEMENT_LETTER',
   'INVOICE', 'OTHER', 'PLANS', 'SURVEY_PHOTOS', 'SURVEY_REPORT', 'TAX_COMPUTATION', 'VALUATION'];
 
+/** Phase 151b: the fourteen less the tax computation, which has its own receipt policy now (Word question 223). */
+const STILL_UNBOUND = FOURTEEN.filter((c) => c !== 'TAX_COMPUTATION');
+
 describe('line 13 — a recommended receipt strip per new document type — recorded, not approved, binding nothing', () => {
   test('RECEIPT STRIP RECOMMENDATIONS: one for each of the fourteen types with no receipt policy, each with its reason, identical in the module and in migration 021 — recorded, not approved', async () => {
     assert.equal(RR.RECEIPT_RECOMMENDATIONS.approved, false);
@@ -342,7 +345,8 @@ describe('line 13 — a recommended receipt strip per new document type — reco
     const a = await app();
     try {
       const unbound = a.db.all<{ code: string }>("SELECT code FROM document_types WHERE handler_type IS NULL AND source = 'CRM_SPECIFICATION' ORDER BY code").map((x) => x.code);
-      assert.deepEqual(unbound, FOURTEEN);
+      // Phase 151b: the tax computation has its own receipt policy now (Word question 223); its recommendation stays as the record.
+      assert.deepEqual(unbound, FOURTEEN.filter((c) => c !== 'TAX_COMPUTATION'));
       assert.deepEqual(RR.RECEIPT_RECOMMENDATIONS.types.map((t) => t.type_code).sort(), FOURTEEN);
       const by = (s: RR.RecommendedStrip) => RR.RECEIPT_RECOMMENDATIONS.types.filter((t) => t.strip === s).map((t) => t.type_code).sort();
       assert.deepEqual(by('KEEP_WHOLE'), ['CA_REPORT', 'CLAIM_DOCUMENTATION', 'ENGAGEMENT_LETTER', 'INVOICE', 'SURVEY_REPORT']);
@@ -373,7 +377,9 @@ describe('line 13 — a recommended receipt strip per new document type — reco
       const d: D.DocDeps & { store: FsObjectStore } = { db: a.db, audit: a.audit, now: a.now, newId: randomUUID, store: {} as unknown as FsObjectStore };
       const approved: RR.ReceiptRecommendations = { ...RR.RECEIPT_RECOMMENDATIONS, approved: true };
       for (const rec of [RR.RECEIPT_RECOMMENDATIONS, approved]) {
-        for (const code of FOURTEEN) {
+        // Phase 151b: the tax computation is bound now and reads BOUND — asserted just below.
+        assert.equal(RR.recommendationReading(a.db, SALES, 'TAX_COMPUTATION', rec).state, 'BOUND');
+        for (const code of STILL_UNBOUND) {
           const reading = RR.recommendationReading(a.db, SALES, code, rec);
           assert.equal(reading.strip_now.receivable, false, `${code} became receivable`);
           assert.equal(reading.strip_now.label, D.NO_RECEIPT_POLICY);
@@ -383,10 +389,10 @@ describe('line 13 — a recommended receipt strip per new document type — reco
         }
       }
       const types = D.typeList(a.db, SALES);
-      for (const code of FOURTEEN) assert.equal(types.find((t) => t.code === code)?.strip.label, D.NO_RECEIPT_POLICY);
-      assert.deepEqual(D.receivableTypes(a.db).map((t) => t.code).filter((c) => FOURTEEN.includes(c)), []);
+      for (const code of STILL_UNBOUND) assert.equal(types.find((t) => t.code === code)?.strip.label, D.NO_RECEIPT_POLICY);
+      assert.deepEqual(D.receivableTypes(a.db).map((t) => t.code).filter((c) => STILL_UNBOUND.includes(c)), []);
       const docs = count(a, 'SELECT COUNT(*) AS n FROM documents');
-      for (const code of FOURTEEN) {
+      for (const code of STILL_UNBOUND) {
         const r = await D.startDocumentUpload(d, ADMIN, { business_id: biz, type_code: code, logical_document_id: null, request_id: null, claim_id: null });
         assert.deepEqual(r, { ok: false, why: D.NO_RECEIPT_POLICY }, `${code}: an upload was not refused before a link`);
         const q = D.createDocumentRequest(d, ADMIN, { business_id: biz, claim_id: null, type_code: code, why: 'x', holds_up: 'y', due_on: null });

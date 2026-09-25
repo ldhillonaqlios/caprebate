@@ -38,7 +38,8 @@ import { assertBackOffice, assertSection } from './backoffice.ts';
 import { searchGate } from './search.ts';
 import { mayCreateTask, myWork, nextActionsGate } from './tasks.ts';
 import { assertLeadSection } from './leads.ts';
-import { assertOrganisationSection, pipelineBoardGate } from './crm.ts';
+import { pipelineBoardGate } from './crm.ts';
+import { clientsAreaGate } from './billing.ts';
 import { claimListGate } from './lists.ts';
 import { assertIntroducerSection, rewardModelGate } from './introducers.ts';
 import { assertSurveySection } from './surveyor.ts';
@@ -115,7 +116,8 @@ export type Section = {
 export const SECTIONS: readonly Section[] = Object.freeze([
   { key: 'home', href: '/staff', label: 'Home', gate: assertBackOffice, under: ['/staff/reports'] },
   { key: 'leads', href: '/staff/leads', label: 'Leads', gate: assertLeadSection, under: ['/staff/assessments'] },
-  { key: 'clients', href: '/staff/clients', label: 'Clients', gate: assertOrganisationSection, under: ['/staff/organisations'] },
+  // PHASE 151b: the whole record (Admin, Sales, read-only) or Accounting's billing view of it (src/web/billing.ts).
+  { key: 'clients', href: '/staff/clients', label: 'Clients', gate: clientsAreaGate, under: ['/staff/organisations'] },
   { key: 'pipeline', href: '/staff/pipeline', label: 'Pipeline', gate: pipelineBoardGate },
   { key: 'claims', href: '/staff/claims', label: 'Claims', gate: claimListGate },
   { key: 'tasks', href: '/staff/tasks', label: 'Tasks', gate: assertBackOffice, under: ['/staff/next-actions'] },
@@ -139,8 +141,9 @@ export const SECTIONS: readonly Section[] = Object.freeze([
  */
 export const MENUS: Readonly<Partial<Record<AppRole, { readonly tabs: readonly string[]; readonly more: readonly string[] }>>> = Object.freeze({
   SALES: { tabs: ['home', 'leads', 'clients', 'pipeline', 'tasks', 'introducers'], more: ['calendar'] },
-  // Claims where the brief put Clients: Accounting may not read the client record, and no permission changes here.
-  ACCOUNTING: { tabs: ['home', 'claims', 'finance', 'tasks'], more: ['introducer-rewards'] },
+  // PHASE 151b (Word answer 40, closed 24 September 2026): Clients, as the brief asked — Accounting's billing view of it:
+  // who to chase, what waits for an invoice, what is owed. Not the client record, which it still may not read.
+  ACCOUNTING: { tabs: ['home', 'clients', 'claims', 'finance', 'tasks'], more: ['introducer-rewards'] },
   SURVEYING: { tabs: ['home', 'survey', 'tasks'], more: [] },
   READ_ONLY: { tabs: ['home', 'leads', 'clients', 'pipeline'], more: [] },
   ADMIN: { tabs: ['home', 'leads', 'clients', 'pipeline', 'tasks', 'finance', 'settings'], more: ['calendar', 'introducers', 'survey'] },
@@ -331,6 +334,8 @@ export const HELP_SCREENS: readonly (readonly [prefix: string, code: string])[] 
   ['/staff/pipeline', 'B21'], ['/staff/tasks', 'B22'], ['/staff/next-actions', 'B24'], ['/staff/automation', 'B25'],
   ['/staff/templates', 'B26'], ['/staff/document-types', 'B29'], ['/staff/documents', 'B44'], ['/staff/introducer-rewards', 'B32'],
   ['/staff/introducers', 'B30'], ['/staff/compliance', 'B33'], ['/staff/dashboard', 'B40'], ['/staff/reports', 'B40'], ['/staff/search', 'B41'],
+  // PHASE 151b: the roles the super admin makes, before '/staff/admin' so the longer address wins.
+  ['/staff/admin/roles', 'B54'],
   ['/staff/admin-settings', 'B43'], ['/staff/audit', 'B45'], ['/staff/admin', 'B46'],
   // PHASE 142: email replies to sort are part of the chat's training section.
   ['/staff/replies', 'B49'],

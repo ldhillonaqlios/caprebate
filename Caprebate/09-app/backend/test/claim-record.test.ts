@@ -117,7 +117,7 @@ function signedClaim(app: App, org: Org, figure = '2400000'): string {
   const c = claimAt(app, org, 'TAX_ADVISER_SIGNOFF');
   CF.commitmentOn(app, org.business, org.assessment, c);
   const r = R.recordSignOff(CF.recordDeps(app), actor('SALES'), c, {
-    adviser: 'CAPREBATE_CTA', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
+    adviser: 'Invented Tax Advisers LLP', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
     method_note: 'reviewed against the rulebooks', figure, confirmed_switches: 'transaction_tax_in_base,grant_after_ceilings',
   });
   assert.equal(r.ok, true, r.ok ? '' : r.why);
@@ -359,6 +359,7 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
       const org = organisation(app);
       const c = claimAt(app, org, 'DATA_GATHERING');
       confirm(app, c, 'DATA_GATHERING_COMPLETE');
+      CF.mustArriveDocuments(app, org.business, c); // Phase 151b: so what shuts the gate below is the election alone
       const resolved = () => F.electionResolved(app.db, { id: c, property_id: org.property }).met;
       assert.equal(resolved(), false, 'ABSENT passed');
       assert.equal(fwd(app, 'SALES', c, 'SURVEY').ok, false);
@@ -518,7 +519,7 @@ describe('THE SIGN-OFF RECORD — a record, not a signature, and the gate opens 
       const org = organisation(app);
       const d = CF.recordDeps(app);
       const base = {
-        adviser: 'CAPREBATE_CTA', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
+        adviser: 'Invented Tax Advisers LLP', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
         method_note: 'reviewed', figure: '2400000', confirmed_switches: '',
       };
       const early = claimAt(app, org, 'VALUATION');
@@ -574,7 +575,7 @@ describe('THE SIGN-OFF RECORD — a record, not a signature, and the gate opens 
 
       const d = CF.recordDeps(app);
       const sign = () => R.recordSignOff(d, actor('SALES'), c, {
-        adviser: 'CAPREBATE_CTA', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the claim', method_note: 'reviewed', figure: '1000',
+        adviser: 'Invented Tax Advisers LLP', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the claim', method_note: 'reviewed', figure: '1000',
       });
       assert.equal(sign().ok, true);
       assert.equal(fwd(app, 'SALES', c, 'REPORTS').ok, true);
@@ -623,7 +624,7 @@ describe('THE FOUR FIGURES — sealed and read from the record that sealed each;
 
       CF.commitmentOn(app, org.business, org.assessment, c);
       assert.equal(R.recordSignOff(CF.recordDeps(app), actor('SALES'), c, {
-        adviser: 'CAPREBATE_CTA', credential: 'CTA', signed_on: '2026-09-01', scope: 's', method_note: 'm', figure: '240000',
+        adviser: 'Invented Tax Advisers LLP', credential: 'CTA', signed_on: '2026-09-01', scope: 's', method_note: 'm', figure: '240000',
       }).ok, true);
       p = read();
       assert.equal(p.c_surveyor.state, 'SEALED');
@@ -936,7 +937,7 @@ describe('OVER HTTP — every staff-supplied value escaped, every route refused 
           [`/staff/claims/${claim}/facts`, { fact_key: 'GRANTS_EXIST', answer: 'VALUE', value: 'NO', source_id: 'CTA' }],
           [`/staff/claims/${claim}/grants`, { kind: 'GRANT', payer_class: 'nhs', traced: 'NO', source_id: 'CTA' }],
           [`/staff/claims/${claim}/owners`, { position: '1', owner: 'UNKNOWN', claimed: 'UNKNOWN', source_id: 'CTA' }],
-          [`/staff/claims/${claim}/signoff`, { adviser: 'CAPREBATE_CTA', credential: 'x', signed_on: '2026-09-01', scope: 'x', method_note: 'x', figure: '1' }],
+          [`/staff/claims/${claim}/signoff`, { adviser: 'Invented Tax Advisers LLP', credential: 'x', signed_on: '2026-09-01', scope: 'x', method_note: 'x', figure: '1' }],
           [`/staff/claims/${claim}/deliverables`, { kind: 'REASONED_NEGATIVE', action: 'DRAFT' }],
           [`/staff/claims/${claim}/enquiries`, { opened_on: '2026-09-01' }],
         ] as const) {

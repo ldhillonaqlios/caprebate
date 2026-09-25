@@ -35,7 +35,8 @@
  *   1. NO FIELD IN ANY OF THE ELEVEN SPECIFICATIONS IS A PERSON'S NAME.
  *      Re-checked field by field against DOC_SPECS and HUMAN_CAPTURE_SPECS for
  *      this module — test C7 asserts it mechanically rather than trusting the
- *      reading. So the parties clause, the execution block and the
+ *      reading. (Thirteen since Phase 151b added the tax return and the tax
+ *      computation, re-checked the same way: still none.) So the parties clause, the execution block and the
  *      representations are needed by NOTHING downstream, and removing them on
  *      receipt costs the extraction exactly nothing.
  *
@@ -745,8 +746,8 @@ export const NO_LAWFUL_BASIS_ROLES: readonly PersonRole[] = ['PLANNING_OBJECTOR_
  * The question asked of every segment kind is: does any field in this
  * document type's specification come from it? If no field needs it, it goes.
  *
- * That question has a mechanical answer for the nine model-extractable types,
- * because DocSpec.permitted_segments already IS the answer, and test C1
+ * That question has a mechanical answer for the nine model-extractable types
+ * (eleven since Phase 151b), because DocSpec.permitted_segments already IS the answer, and test C1
  * asserts the derivation rather than trusting this table. It has no mechanical
  * answer for the two HUMAN_READ_ONLY types, and section 3.2 says so plainly
  * instead of inventing one.
@@ -949,6 +950,86 @@ export const CLIENT_DOC_RECEIPT_POLICY: readonly ClientDocReceiptPolicy[] = [
       'says so in a note — Phase 40 §4.2 records that the note is enforced nowhere. It is now, by the ' +
       'funder_is_body discriminant in assertClaimsWritable(). grant_purpose_description is captured VERBATIM, so ' +
       'the human-capture rule in section 5 applies to it even on the model path.',
+  },
+  /*
+   * THE TAX RETURN AND THE TAX COMPUTATION — Phase 151b, 25 September 2026.
+   *
+   * Word question 223. The data protection officer, relayed by Lakhbir on 24
+   * September 2026: "yes, clients may upload tax returns and tax computations.
+   * Still open: what must be removed from them. Until the officer says
+   * otherwise we will treat them like the other financial documents: keep the
+   * figures and the company details, and remove individuals' names, addresses
+   * and tax references." These two entries are that rule, in the same shape as
+   * every other SPEC_DERIVED type: what is kept is exactly the spec's permitted
+   * segments, and everything else is removed on receipt.
+   *
+   * THE COMPANY'S OWN TAX REFERENCE IS A COMPANY DETAIL, AND IS KEPT. Decided
+   * here from the legal-form test in section 2 (classifyPartyReference) and the
+   * name exclusion register it applies unchanged: for a BODY_CORPORATE or an
+   * LLP "the name identifies a legal entity, not a natural person", and the
+   * register already keeps a company's own identifier (company_number on the
+   * Companies House entry). A company's UTR identifies the company in exactly
+   * the way its number does, so it stays with the company details. A sole
+   * trader's UTR is the opposite case, for the reason the register gives for a
+   * sole trader's trading name: there is no legal identity separate from the
+   * individual, so the reference IS the person's. It is removed. Because the
+   * strip reads headings and cannot see legal form, only a heading that names
+   * the COMPANY lands in TAX_ENTITY_DETAILS; a bare "Tax reference" or "UTR"
+   * heading is UNCLASSIFIED and goes, since it cannot say whose it is. No
+   * field extracts any tax reference: nothing a claim computes needs one.
+   */
+  {
+    doc_type: 'TAX_RETURN',
+    mode: 'SPEC_DERIVED',
+    retained_segments: specDerivedSegments('TAX_RETURN'),
+    roles_to_triage: [
+      {
+        role: 'TRANSACTION_PARTY', frequency: 'sometimes',
+        note:
+          'the taxpayer. A company is not a data subject; a sole trader, and each partner on a partnership return, ' +
+          'always is — their name, home address, National Insurance number and tax reference are in the personal ' +
+          'details, which are not kept',
+      },
+      { role: 'INDIVIDUAL_SIGNATORY', frequency: 'always', note: 'whoever signs the declaration — a director, the taxpayer, or someone they authorise' },
+      { role: 'AGENT_OR_REPRESENTATIVE', frequency: 'usually', note: 'the accountant or tax agent who prepared it. The firm is not a data subject; a named individual at it is' },
+      { role: 'PERSON_NAMED_IN_PROSE', frequency: 'sometimes', note: 'a director or partner named anywhere else on the return' },
+    ],
+    why:
+      'Kept: the company details (the company\'s name, its company number, its own tax reference and the period), the ' +
+      'profits and the capital allowances claimed, pool by pool. Removed on receipt: every individual\'s name, address, ' +
+      'National Insurance number and personal tax reference, the preparer, the signature and the declaration. ' +
+      'A SOLE TRADER\'S RETURN IS THE HARD CASE, BECAUSE THE TAXPAYER IS A PERSON. What survives is the period, the ' +
+      'profit and the allowances, which are figures about the business. What does not survive is everything that says ' +
+      'who they are: their name, their business name (which is their name), their address, their National Insurance ' +
+      'number and their tax reference — all under personal or business-details headings, none of which is kept. ' +
+      'The figures are still about one person\'s income, and keeping them is the officer\'s rule until question 223 ' +
+      'says otherwise. HONEST WEAKNESS: the strip reads headings, so a name written inside a kept section — a figure ' +
+      'labelled with a partner\'s name — is kept as text. The model boundary\'s name check refuses such a section before ' +
+      'any model sees it, and no field can hold a name, but neither removes it from the kept text.',
+  },
+  {
+    doc_type: 'TAX_COMPUTATION',
+    mode: 'SPEC_DERIVED',
+    retained_segments: specDerivedSegments('TAX_COMPUTATION'),
+    roles_to_triage: [
+      { role: 'AGENT_OR_REPRESENTATIVE', frequency: 'usually', note: 'the preparer — named in a "prepared by" line, which is not kept' },
+      { role: 'TRANSACTION_PARTY', frequency: 'sometimes', note: 'the taxpayer, where a sole trader or a partner — then always a person' },
+      { role: 'INDIVIDUAL_SIGNATORY', frequency: 'sometimes', note: 'where a director or the taxpayer signs to approve it' },
+      {
+        role: 'PERSON_NAMED_IN_PROSE', frequency: 'sometimes',
+        note:
+          'a director\'s car in a single asset pool, a director\'s loan, a named benefit in kind — a person can be ' +
+          'named inside the figures themselves',
+      },
+    ],
+    why:
+      'Kept: the pool figures — each pool\'s balance, the annual investment allowance used, the allowances claimed — ' +
+      'the profit position, and the company details. Removed on receipt: the preparer\'s name, any signature or ' +
+      'approval, and an individual taxpayer\'s name, address, tax reference and National Insurance number. For a sole ' +
+      'trader the same line holds as on the return: the figures stay, and nothing that says who they are does. ' +
+      'HONEST WEAKNESS, the same as the return\'s and sharper here: a private-use asset is often labelled with the ' +
+      'person who uses it ("director\'s car"), inside the capital allowances section that is kept. The strip cannot ' +
+      'see it; the model boundary refuses such a section, and no field holds a name.',
   },
   {
     doc_type: 'CPSE_REPLIES',
@@ -1990,15 +2071,28 @@ export function deletionDueAt(rec: RawFileRecord, settings: IngestionSettings): 
       if (rec.no_basis_content_in_original) return extractionClock();
       const supplied = rec.defence_period_ends_at ?? null;
       const ret7 = settings.ret7_approved ? ret7DueAt(rec) : null;
-      // Where both clocks are known they are not reconciled in prose: the
-      // file goes on the EARLIER. Not because the shorter is the better
-      // derivation, but because a file sitting under two rules is held under
-      // the one that expires first, and fail-closed for a retention rule is
-      // sooner. Where only one is known it governs; where neither is, null
-      // reaches assertNoOverdueUndeleted rather than becoming a silent
-      // forever.
+      // WHERE BOTH CLOCKS ARE KNOWN, THE LATER ONE GOVERNS. Word answer 173,
+      // closed 24 September 2026: "Where two retention periods apply to a
+      // client file, use the later of the two keep-until dates. The file
+      // should be retained until both applicable retention periods have
+      // expired." Until then this took the EARLIER, on the footing that a
+      // file under two rules is held under the one that runs out first and
+      // that fail-closed for a retention rule is sooner. The answer rejects
+      // that footing: each period exists because somebody may need the file
+      // until it ends — the defence pack for an enquiry, RET-7 for the
+      // discovery windows — so deleting at the first end defeats the second.
+      // Phase 151b made the change; tests Y7 and Y9-Y12 hold it.
+      //
+      // Unchanged, and still a different rule: where only one clock is known
+      // it governs, and where neither is, null reaches assertNoOverdueUndeleted
+      // rather than becoming a silent forever. An unapproved RET-7 is not
+      // known (N4) and so cannot lengthen anything. And the A14-D4 fallback
+      // above — a file that lost no-basis content goes on the extraction
+      // clock — is not two retention periods at all: it is a lawful-basis
+      // condition removing the long clock for that file, and answer 173 does
+      // not reach it.
       if (supplied && ret7) {
-        return new Date(Math.min(new Date(supplied).getTime(), new Date(ret7).getTime())).toISOString();
+        return new Date(Math.max(new Date(supplied).getTime(), new Date(ret7).getTime())).toISOString();
       }
       return supplied ?? ret7;
     }

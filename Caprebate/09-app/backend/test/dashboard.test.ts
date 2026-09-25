@@ -380,7 +380,7 @@ describe('the reconciliation tiles — the quote gap said not known, the varianc
     const c = claimAt('TAX_ADVISER_SIGNOFF');
     CF.commitmentOn(app, business, assessment, c);
     const signed = R.recordSignOff(CF.recordDeps(app), actor('SALES'), c, {
-      adviser: 'CAPREBATE_CTA', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
+      adviser: 'Invented Tax Advisers LLP', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
       method_note: 'reviewed against the rulebooks', figure: '2400000', confirmed_switches: 'transaction_tax_in_base,grant_after_ceilings',
     });
     assert.equal(signed.ok, true, signed.ok ? '' : signed.why);

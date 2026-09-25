@@ -332,7 +332,7 @@ describe('line 2 — the defence pack generator — built, and switched off', ()
       const claim = claimAt(a, org, 'TAX_ADVISER_SIGNOFF');
       CF.commitmentOn(a, org.business, org.assessment, claim);
       ok(R.recordSignOff(CF.recordDeps(a), SALES, claim, {
-        adviser: 'CAPREBATE_CTA', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
+        adviser: 'Invented Tax Advisers LLP', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
         method_note: 'reviewed against the rulebooks', figure: '2400000', confirmed_switches: '',
       }));
       for (const [key, value] of [['ACCOUNTING_PERIOD_START', '2025-01-01'], ['ACCOUNTING_PERIOD_END', '2025-12-31'], ['ELECTION_EXISTS', 'NO'], ['GRANTS_EXIST', 'NO']] as const) {
@@ -542,7 +542,7 @@ describe('line 6 — the raw-file record’s claim period end and report deliver
     } finally { a.close(); }
   });
 
-  test('THE DATES FED TO THE INGESTION MODULE’S CLOCK: 31 March 2027 and 15 September 2027 give 15 September 2033 with RET-7 approved — the EARLIER of two clocks still governs — and as shipped, unapproved, nothing is computed', async () => {
+  test('THE DATES FED TO THE INGESTION MODULE’S CLOCK: 31 March 2027 and 15 September 2027 give 15 September 2033 with RET-7 approved — the LATER of two clocks governs (Word answer 173, Phase 151b) — and as shipped, unapproved, nothing is computed', async () => {
     const a = await app();
     try {
       const org = organisation(a);
@@ -564,8 +564,9 @@ describe('line 6 — the raw-file record’s claim period end and report deliver
       };
       const approved: IngestionSettings = { ...FAIL_CLOSED_SETTINGS, raw_file_retention: 'RETAIN_FOR_DEFENCE_PERIOD', ret7_approved: true };
       assert.equal(deletionDueAt(rec, approved), '2033-09-15T00:00:00.000Z', 'six years from the later of the two dates');
-      assert.equal(deletionDueAt({ ...rec, defence_period_ends_at: '2030-01-31T00:00:00.000Z' }, approved), '2030-01-31T00:00:00.000Z', 'an earlier defence-pack clock governs');
-      assert.equal(deletionDueAt({ ...rec, defence_period_ends_at: '2040-01-31T00:00:00.000Z' }, approved), '2033-09-15T00:00:00.000Z', 'a later one does not extend RET-7');
+      // Phase 151b, Word answer 173: where two keep-until dates apply, the file is kept until both have passed.
+      assert.equal(deletionDueAt({ ...rec, defence_period_ends_at: '2030-01-31T00:00:00.000Z' }, approved), '2033-09-15T00:00:00.000Z', 'an earlier defence-pack clock no longer cuts RET-7 short');
+      assert.equal(deletionDueAt({ ...rec, defence_period_ends_at: '2040-01-31T00:00:00.000Z' }, approved), '2040-01-31T00:00:00.000Z', 'a later defence-pack clock keeps the file longer');
 
       assert.equal(RET7.approved, false);
       assert.equal(deletionDueAt(rec, { ...FAIL_CLOSED_SETTINGS, raw_file_retention: 'RETAIN_FOR_DEFENCE_PERIOD' }), null, 'unapproved, the dates compute nothing');

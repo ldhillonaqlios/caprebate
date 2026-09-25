@@ -6410,7 +6410,7 @@ var CB_FEE = (function(){
                comparison:comparison, warning:null,
                capped:false, uncapped_amount:null,
                gate:CB_GATE.assess({ fee:null, sector:ctx && ctx.sector }),
-               recommendation_threshold:recommendationThreshold(null, comparison, false) };
+               recommendation_threshold:recommendationThreshold(null, comparison, false, ctx && ctx.client_vat) };
     }
 
     /* Switch (a). Caps ONLY where the benefit model is determined: capping
@@ -6441,8 +6441,12 @@ var CB_FEE = (function(){
 
     /* PHASE 132e — THE NO-CLAIM THRESHOLD. Assessed on `amount`, the fee that
        would actually be quoted, for the gate's reason above. It adds a report
-       and changes nothing else: not the amount, not render, not the reason. */
-    var threshold = recommendationThreshold(amount, comparison, gate.withholds_quote);
+       and changes nothing else: not the amount, not render, not the reason.
+       PHASE 151b (question 61): ctx.client_vat, the client's VAT position on
+       our fee ("can_reclaim" / "cannot_reclaim"; anything else is not known),
+       is handed on so the test can count VAT where it must. It is data the
+       caller passes, not a question on the screen; see NO_CLAIM_VAT below. */
+    var threshold = recommendationThreshold(amount, comparison, gate.withholds_quote, ctx && ctx.client_vat);
 
     if(gate.withholds_quote){
       /* The one behavioural change the switch buys. No figure is rendered;
@@ -6506,24 +6510,141 @@ var CB_FEE = (function(){
     awaiting_tax_adviser_review: true
   };
 
-  function recommendationThreshold(fee, comparison, quoteWithheld){
+  /* ---------------------------------------------------------------------------
+     VAT IN THE NO-CLAIM TEST.  PHASE 151b, 25 September 2026.  Word question 61.
+
+     DECIDED. Lakhbir Dhillon, question 61 "For the £1,000 no-claim test, do we
+     count five years of relief, and include VAT?", closed 24 September 2026:
+     "The relief is calculated over the 5 years – and must include VAT". Closed
+     as: measure the relief over five years, and include VAT where the client
+     cannot reclaim it. The tax adviser reviews the wording.
+
+     FIVE YEARS WAS ALREADY THE MEASURE AND IS NOT TOUCHED HERE. Phase 132e read
+     "tax relief after our fee" as CB_BENEFIT's cumulative_benefit, whose
+     horizon is CB_BENEFIT.HORIZON = 5 (above, "THE NO-CLAIM THRESHOLD"). The
+     answer to question 61 confirms that reading; nothing below changes it.
+
+     WHAT VAT IS COUNTED, AND ONLY THEN. VAT is on OUR FEE, and it exists only
+     once WE are VAT-registered. So the fee counted in the no-claim test is:
+       - we are NOT registered (today): the fee. There is no VAT to count, and
+         the client's own VAT position does not matter. The test behaves
+         exactly as it did before this phase, byte for byte.
+       - we ARE registered and the client CANNOT reclaim VAT: the fee plus VAT
+         at vat_rate, to the penny. That VAT is a real cost to the client, so
+         it comes off their relief with the fee.
+       - we ARE registered and the client CAN reclaim VAT: the fee alone. VAT
+         the client gets back is not a cost to them.
+       - we ARE registered and the client's VAT position is NOT KNOWN: no
+         figure. The test comes back UNDETERMINED with a plain reason, exactly
+         as an unknown tax rate or pool split does above.
+
+     UNKNOWN IS NOT A BRANCH (N4), AGAIN. The client's VAT position reaches this
+     module as `ctx.client_vat` and only two values are known: "can_reclaim" and
+     "cannot_reclaim". "not sure", an absent key, null, "" and anything else
+     (a partial-exemption "mixed" included — how much of our VAT such a client
+     recovers is itself not known) all take ONE line of code to "not_known", so
+     they give identical reports. Not known is never read as "can reclaim" (that
+     would count no VAT and make the relief look bigger) and never read as
+     "cannot reclaim" (that would count VAT the client may get back and could
+     tell them not to claim on a guess). Nor is a registered flag with no usable
+     rate read as a rate of nil: that too is UNDETERMINED.
+
+     THE CLIENT'S VAT POSITION IS DATA THE CALLER PASSES, NOT A NEW QUESTION.
+     The five flows already ask whether VAT on the SPENDING can be reclaimed
+     (care homes Q18, dental D18, supported living S18, GP G19). That is a
+     question about the client's capital spend, and whether its answer can
+     stand for VAT on OUR FEE is a tax reading this phase does not make: it is
+     not wired, and it is for the tax adviser. Until it is, `ctx.client_vat`
+     is passed by whoever calls CB_FEE.display, and a caller that passes
+     nothing gets "not known" - which, while we are not registered, changes
+     nothing at all.
+
+     THE RATE IS DATA. 20% is the UK standard rate of VAT (GOV.UK, "VAT rates").
+     The back end keeps its own dated VAT_RATE finance setting for invoices; on
+     the day we register, the two are set together.
+
+     THE SENTENCES BELOW THAT MENTION VAT ARE NEW CLIENT-FACING WORDING AND ARE
+     AWAITING THE TAX ADVISER'S REVIEW, as NO_CLAIM_THRESHOLD's are, and say so
+     in their own metadata (awaiting_tax_adviser_review). While we are not
+     registered none of them can be printed.
+     --------------------------------------------------------------------------- */
+  var NO_CLAIM_VAT = {
+    we_are_vat_registered: false,      /* the back end's VAT_NOTE: "Cap Rebate is not VAT registered" */
+    vat_rate: 0.20,                    /* UK standard rate, GOV.UK "VAT rates" */
+    client_positions: ["can_reclaim", "cannot_reclaim"],   /* anything else is not known */
+    counted_when: "we are VAT-registered and the client cannot reclaim VAT",
+    decided_by: "Lakhbir Dhillon",
+    question: 61,
+    decision_read: "2026-09-24",
+    built: "2026-09-25",
+    awaiting_tax_adviser_review: true
+  };
+
+  /* The VAT the no-claim test counts on `fee`, and why. One line decides the
+     client's position; every value that is not one of the two known ones is
+     "not_known", so "not sure" and absent cannot come apart. */
+  function vatInNoClaim(fee, clientVat){
+    var cfg = NO_CLAIM_VAT;
+    var position = (clientVat === "can_reclaim" || clientVat === "cannot_reclaim") ? clientVat : "not_known";
+    var feeKnown = typeof fee === "number" && isFinite(fee);
+    var registered = cfg.we_are_vat_registered === true;
+    var rateKnown = typeof cfg.vat_rate === "number" && isFinite(cfg.vat_rate) && cfg.vat_rate > 0;
+    var out = { we_are_vat_registered: registered, vat_rate: registered && rateKnown ? cfg.vat_rate : null,
+                client_vat_position: position, treatment: null, known: true, vat: null, why: null,
+                awaiting_tax_adviser_review: cfg.awaiting_tax_adviser_review };
+    if(!registered){
+      out.treatment = "NOT_REGISTERED_NO_VAT";
+      out.vat = feeKnown ? 0 : null;
+    } else if(!rateKnown){
+      out.treatment = "UNDETERMINED"; out.known = false;
+      out.why = "we are VAT-registered but no VAT rate is set, so the VAT on our fee cannot be worked out and is never treated as nil";
+    } else if(position === "cannot_reclaim"){
+      out.treatment = "COUNTED_CLIENT_CANNOT_RECLAIM";
+      out.vat = feeKnown ? Math.round(fee * cfg.vat_rate * 100) / 100 : null;
+    } else if(position === "can_reclaim"){
+      out.treatment = "NOT_COUNTED_CLIENT_CAN_RECLAIM";
+      out.vat = feeKnown ? 0 : null;
+    } else {
+      out.treatment = "UNDETERMINED"; out.known = false;
+      out.why = "we do not know whether you can reclaim the VAT on our fee, so the relief after our fee and its VAT " +
+                "cannot be worked out. It is not guessed either way, and we do not tell you not to claim";
+    }
+    return out;
+  }
+
+  function recommendationThreshold(fee, comparison, quoteWithheld, clientVat){
     var c = comparison || {};
     var line = NO_CLAIM_THRESHOLD.relief_after_fee_below;
     var feeKnown = typeof fee === "number" && isFinite(fee);
     var reliefKnown = c.computed === true && c.determined === true &&
                       typeof c.cumulative_benefit === "number" && isFinite(c.cumulative_benefit);
-    var determined = feeKnown && reliefKnown;
+    /* PHASE 151b — the VAT on our fee, where there is any to count (above). */
+    var v = vatInNoClaim(fee, clientVat);
+    var determined = feeKnown && reliefKnown && v.known;
     var relief = reliefKnown ? c.cumulative_benefit : null;
-    var after = determined ? relief - fee : null;
+    var counted = (feeKnown && v.known) ? fee + v.vat : null;
+    var after = determined ? relief - counted : null;
     var fires = determined && after < line;
 
     function gbp(n){ return (n < 0 ? "-" : "") + "£" + Math.round(Math.abs(n)).toLocaleString("en-GB"); }
 
+    /* The fee as the message states it. Unchanged wherever no VAT is in play,
+       which is every case while we are not registered. The two VAT clauses are
+       NEW CLIENT-FACING WORDING, AWAITING THE TAX ADVISER'S REVIEW (Phase 151b). */
+    var feeWords = gbp(fee);
+    var afterWords = "after our fee";
+    if(v.treatment === "COUNTED_CLIENT_CANNOT_RECLAIM" && feeKnown){
+      feeWords = gbp(fee) + " plus VAT of " + gbp(v.vat) + ", which you cannot reclaim, so " + gbp(counted) + " in all";
+      afterWords = "after our fee and its VAT";
+    } else if(v.treatment === "NOT_COUNTED_CLIENT_CAN_RECLAIM" && feeKnown){
+      feeWords = gbp(fee) + " plus VAT, which you can reclaim and so is not counted here";
+    }
+
     var message = null;
     if(fires && !quoteWithheld){
       message = "On these figures the tax relief to you over the first " + c.horizon_years +
-        " years is about " + gbp(relief) + ", our fee is " + gbp(fee) + ", and the relief left " +
-        "after our fee is " + gbp(after) + ". That is below " + gbp(line) + ", so we would " +
+        " years is about " + gbp(relief) + ", our fee is " + feeWords + ", and the relief left " +
+        afterWords + " is " + gbp(after) + ". That is below " + gbp(line) + ", so we would " +
         "not normally recommend making this claim. The choice is yours: we will still " +
         "do the work if you want to go ahead.";
     }
@@ -6534,13 +6655,20 @@ var CB_FEE = (function(){
       fires: fires,
       why: !determined
         ? (!feeKnown ? "there is no fee for this case yet, so the relief after our fee cannot be worked out"
-                     : "the tax relief for this case is not known exactly, so it is not compared with the threshold and is never treated as nil")
+                     : !reliefKnown ? "the tax relief for this case is not known exactly, so it is not compared with the threshold and is never treated as nil"
+                                    : v.why)
         : null,
       threshold: line,
       relief: relief,
       relief_basis: NO_CLAIM_THRESHOLD.relief_basis,
       horizon_years: reliefKnown ? c.horizon_years : null,
       fee: feeKnown ? fee : null,
+      /* PHASE 151b. `fee` above stays the fee before VAT, as every caller has
+         read it since Phase 132e; `fee_counted` is what the test took off the
+         relief (the fee, plus VAT only where it is counted), and `vat` says
+         how VAT was treated and why. */
+      fee_counted: counted,
+      vat: v,
       relief_after_fee: after,
       /* Printed only where a quote is shown. Where the engagement gate has
          withheld the quote the fee is not printed here either; the outcome
@@ -6557,6 +6685,7 @@ var CB_FEE = (function(){
   return { RATE:RATE, readings:readings, display:display, DISCLOSURE:DISCLOSURE,
            MULTI_SITE_DISCOUNT:MULTI_SITE_DISCOUNT,
            NO_CLAIM_THRESHOLD:NO_CLAIM_THRESHOLD,
+           NO_CLAIM_VAT:NO_CLAIM_VAT,
            recommendationThreshold:recommendationThreshold };
 })();
 

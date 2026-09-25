@@ -347,6 +347,7 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
           s.free.open ? raw('') : h`Free lookups wait for this: ${s.free.requires}. Turning them on is a data protection decision, not a button on this page. `}${
           s.engagement.signed ? raw('') : h`Paid lookups: ${s.engagement.why}. We check the signed letter on our system, not on this page.`}`)}</li>
       <li>Each lookup's own switch: ${switchWords(s.sources)}${why(h`A lookup runs only when it is allowed and its own switch is on. The switches are set in the code, not on this page.`)}</li>
+      ${s.signatory.map((l) => h`<li>Who signed, checked with ${l.source === 'CQC' ? 'the care regulator' : 'Companies House'}: ${l.words}</li>`)}
     </ul>
 
     <table class="stack"><thead><tr><th>Where from</th><th>Status</th><th>What happened</th></tr></thead>

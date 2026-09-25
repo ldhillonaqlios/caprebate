@@ -253,7 +253,8 @@ describe('document types — the CRM list, the Stage 2 list and the extraction s
       const types = D.typeList(w.made.app.db, w.staff('SALES'));
       const codes = types.map((t) => t.code);
       const handler = [...DOC_SPECS.map((s) => s.doc_type as string), ...(HUMAN_READ_ONLY_TYPES as readonly string[])];
-      assert.equal(new Set(handler).size, 11, 'the handler handles eleven document types');
+      // Phase 151b: the tax return and the tax computation have receipt policies of their own (Word question 223).
+      assert.equal(new Set(handler).size, 13, 'the handler handles thirteen document types');
       for (const h of handler) {
         const matches = types.filter((t) => t.strip.policy === h);
         assert.equal(matches.length, 1, `exactly one type is received under the ${h} receipt policy`);
@@ -265,7 +266,7 @@ describe('document types — the CRM list, the Stage 2 list and the extraction s
         'PLANS', 'SURVEY_PHOTOS', 'SURVEY_REPORT', 'CA_REPORT', 'CLAIM_DOCUMENTATION', 'CORRESPONDENCE', 'OTHER'];
       for (const c of [...stage2, 'PLANNING', ...crm]) assert.ok(codes.includes(c), `${c} is seeded`);
       assert.equal(types.find((t) => t.code === 'SALE_CONTRACT')?.label.includes('purchase contract'), true, 'the CRM list’s purchase contract is merged into the sale contract');
-      for (const c of crm) {
+      for (const c of crm.filter((x) => x !== 'TAX_COMPUTATION')) {
         const t = types.find((x) => x.code === c);
         assert.equal(t?.strip.receivable, false, `${c} has no receipt policy`);
         assert.equal(t?.strip.label, D.NO_RECEIPT_POLICY);
@@ -330,7 +331,7 @@ describe('the receipt strip still runs over every new type — and a type with n
     try {
       const db = w.made.app.db;
       const receivable = D.receivableTypes(db);
-      assert.equal(receivable.length, 11);
+      assert.equal(receivable.length, 13); // Phase 151b: the tax return and the tax computation
       for (const t of receivable) {
         const r = await upload(w, w.client, { business_id: w.client.business_id ?? '', type_code: t.code });
         const s = ok(r.started);
@@ -346,7 +347,7 @@ describe('the receipt strip still runs over every new type — and a type with n
         await assert.rejects(() => w.made.store.get(quarantineKeyFor(s.doc_id)), `${t.code}: the quarantine object is gone`);
       }
       const unreceivable = D.typeList(db, w.staff('ADMIN')).filter((t) => !t.strip.receivable);
-      assert.ok(unreceivable.length >= 14);
+      assert.ok(unreceivable.length >= 13); // Phase 151b: the tax computation left the unbound fourteen
       const before = db.get<{ n: number }>('SELECT COUNT(*) AS n FROM documents')?.n;
       for (const t of unreceivable) {
         const r = await D.startDocumentUpload(deps(w), w.client, { business_id: w.client.business_id ?? '', type_code: t.code, logical_document_id: null, request_id: null, claim_id: null });

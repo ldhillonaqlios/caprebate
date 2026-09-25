@@ -183,3 +183,24 @@ export function readIdentityDecision(rawBody: string, signature: string | null |
     decided_at: typeof v.decisionTime === 'string' ? v.decisionTime : null,
   };
 }
+
+/**
+ * OUR OWN COPY OF A RESULT — Phase 151b, 25 September 2026. The decision's own fields and nothing about the person:
+ * its status, code, reason and reason code, its decision and acceptance times, and the TYPE and COUNTRY of the document
+ * checked. Never a name, a date of birth, a document number, an address, an image or a media link. Read only from a
+ * body whose signature has already held (`readIdentityDecision`); an unreadable body gives an empty copy.
+ * Migration 047 refuses a copy that carries a person or a document number, so this reader cannot quietly widen.
+ */
+export function identityResultCopy(rawBody: string): Record<string, string | number | null> {
+  let body: unknown;
+  try { body = JSON.parse(rawBody); } catch { return {}; }
+  const v = (body as { verification?: Record<string, unknown> }).verification ?? {};
+  const doc = (typeof v['document'] === 'object' && v['document'] !== null ? v['document'] : {}) as Record<string, unknown>;
+  const s = (x: unknown): string | null => (typeof x === 'string' && x.length <= 200 ? x : null);
+  const n = (x: unknown): number | null => (typeof x === 'number' && Number.isFinite(x) ? x : null);
+  return {
+    status: s(v['status']), code: n(v['code']), reason: s(v['reason']), reason_code: n(v['reasonCode']),
+    decision_time: s(v['decisionTime']), acceptance_time: s(v['acceptanceTime']),
+    document_type: s(doc['type']), document_country: s(doc['country']),
+  };
+}

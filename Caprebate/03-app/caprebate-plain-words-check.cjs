@@ -84,6 +84,9 @@ const EXEMPT_TEXT = [
   /^May we tell \u2063? ?how your claim is progressing\?|^May we tell \{firm\} how your claim is progressing\?/,
   /* a question's title in CAPREBATE QUESTIONS, quoted exactly so the two stay one question (src/web/postcode.ts) */
   /^Does the permission gate apply to a council-area lookup with no personal data in it\?$/,
+  /* Phase 151b: a question's title in the Word questions document (closed 24 September 2026), quoted exactly by
+     src/connectors/identity-check.ts and asserted word for word by test/phase151.test.ts. No screen shows it. */
+  /^Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD\?$/,
   /* the assessment's first question (src/web/assessment.ts SCREENS.Q1, and the site's screenQ1, word for word). Its
      wording could change what a client answers, so a plainer version waits in FOR THE ACCOUNTANT for the tax
      adviser (Phase 144a): "Have you already claimed capital allowances on this building's fixtures, such as its
@@ -406,7 +409,11 @@ const EXTRA = [path.join(WEB, '..', 'seed.ts'),
   path.join(WEB, '..', 'connectors', 'inspire.ts'),
   /* Phase 151a: the site area function and the two things it refuses on - a council with no file, a point that
      cannot be converted exactly. Nothing shows them yet; they are written for a person all the same. */
-  ...['site-area.ts', 'inspire-councils.ts', 'ostn15.ts'].map((f) => path.join(WEB, '..', 'connectors', f))];
+  ...['site-area.ts', 'inspire-councils.ts', 'ostn15.ts'].map((f) => path.join(WEB, '..', 'connectors', f)),
+  /* Phase 151b: the identity check's list of what is missing shows on the client page and the due diligence check; the
+     postcode check's reasons and the signatory check's lines are written for a person, and the signatory lines reach
+     the research panel. */
+  ...['identity-check.ts', 'postcode-check.ts', 'signatory-check.ts'].map((f) => path.join(WEB, '..', 'connectors', f))];
 
 function screenFiles(suffix) {
   const all = fs.readdirSync(WEB).filter((f) => /\.ts$/.test(f) && !EXEMPT_FILES.has(f)).sort().map((f) => path.join(WEB, f)).concat(EXTRA);

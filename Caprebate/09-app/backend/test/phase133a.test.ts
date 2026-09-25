@@ -165,7 +165,8 @@ describe('the menu shows each login what it can open, and nothing it cannot', ()
         const r = await as(who).get(path);
         if (off.includes(path)) { assert.equal(r.status, 200, `${path} is ${who}'s off-menu section, and answers ${r.status}`); continue; }
         // Phase 135: the organisations list is the one Clients list; its address sends a login that may read it there.
-        if (path === '/staff/organisations' && links.includes('/staff/clients')) {
+        // Phase 151b: Accounting's Clients tab is its billing view (Word answer 40); the organisations list stays refused to it.
+        if (path === '/staff/organisations' && links.includes('/staff/clients') && who !== 'accounting') {
           assert.equal(r.status, 303, `${path} for ${who}`); assert.equal(r.location, '/staff/clients'); continue;
         }
         assert.equal(r.status, 403, `${path} opens for ${who} (${r.status}) but is neither in ${who}'s menu nor off-menu by name`);

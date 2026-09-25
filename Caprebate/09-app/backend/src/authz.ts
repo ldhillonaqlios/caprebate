@@ -611,6 +611,15 @@ const RULES: RuleTable = {
    * CLIENT IS ON NONE OF THEM. The portal is unchanged by this phase.
    * ------------------------------------------------------------------------ */
   'organisation.read': { ADMIN: always, SALES: always },
+  /**
+   * PHASE 151b — THE CLIENTS AREA, AS ACCOUNTING READS IT. Word answer 40 (closed 24 September 2026): Accounting should
+   * see the clients area, so it is told to raise the invoice, chases it and records payment. NOT `organisation.read`:
+   * the whole record carries the notes, the research, the answers and where the client came from, and opening it to
+   * Accounting failed fifteen tests that guard those boundaries. This is the billing view of the same area
+   * (src/web/billing.ts): each client's name, the people to chase and how to reach them, the claims waiting for an
+   * invoice, and the invoices with every chase. Read only.
+   */
+  'client_billing.read': { ADMIN: always, ACCOUNTING: always },
   'organisation.write': { ADMIN: always, SALES: always },
   'contact.read': { ADMIN: always, SALES: always },
   'contact.write': { ADMIN: always, SALES: always },
@@ -1046,6 +1055,7 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'surveyor_job.commit': NO(WRITES),
   'surveyor_job.assign': NO(WRITES),
   'organisation.read': YES('the organisation record'),
+  'client_billing.read': NO('money, and who to chase for it — Accounting’s'),
   'organisation.write': NO(WRITES),
   'contact.read': YES('a contact, one at a time on screen; there is no export (list.export is no)'),
   'contact.write': NO(WRITES),

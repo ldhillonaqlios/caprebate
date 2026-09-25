@@ -18,6 +18,7 @@ import * as R from './compliance-rights.ts';
 import * as B from './compliance-breach.ts';
 import * as S from './compliance-identity.ts';
 import * as V from './compliance-views.ts';
+import { identityPanel, sendIdentityCheck } from './identity-checks.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -125,7 +126,24 @@ export async function handleCompliance(
     return back(r, 'Check not opened', r.ok ? `/staff/compliance/aml/checks/${r.id}?done=opened` : '', '/staff/compliance/aml');
   }
   const oneCheck = m(`/aml/checks/${ID}`);
-  if (oneCheck && method === 'GET') return html(res, V.checkPage(nav, A.checkView(db, actor, oneCheck[1] ?? ''), msg));
+  if (oneCheck && method === 'GET') {
+    const v = A.checkView(db, actor, oneCheck[1] ?? '');
+    // PHASE 151b: the online identity check, sent from this check while it is open.
+    return html(res, V.checkPage(nav, v, msg, identityPanel(d.app, actor, { business_id: v.check.business_id, cdd_check_id: v.check.id }, v.contacts)));
+  }
+  /* PHASE 151b · THE ONLINE IDENTITY CHECK: sent from a due diligence check, or from the client's page. compliance.write,
+     asserted inside sendIdentityCheck. Off with IDENTITY_CHECK: the refusal says, in words, what is still missing. */
+  const sendFromCheck = m(`/aml/checks/${ID}/identity`);
+  if ((sendFromCheck || path === '/staff/compliance/identity-checks') && method === 'POST') {
+    const f = posted(await form(req));
+    const business_id = f['business_id'] ?? '';
+    const cdd = sendFromCheck ? (sendFromCheck[1] ?? '') : null;
+    const at = cdd !== null ? `/staff/compliance/aml/checks/${cdd}` : `/staff/clients/${business_id}`;
+    const r = await sendIdentityCheck({ app: d.app, newId: d.newId }, actor, {
+      business_id, contact_id: f['contact_id'] ?? '', cdd_check_id: cdd, first_name: f['first_name'] ?? '', last_name: f['last_name'] ?? '',
+    });
+    return r.ok ? redirect(res, cdd !== null ? `${at}?done=identity-sent` : `${at}?done=identity-sent#identity`) : d.problem(res, actor, 'Identity check not sent', r.why, at);
+  }
   const checkAct = m(`/aml/checks/${ID}(|/owners|/psc-decisions|/complete|/withdraw)`);
   if (checkAct && method === 'POST') {
     const id = checkAct[1] ?? '';

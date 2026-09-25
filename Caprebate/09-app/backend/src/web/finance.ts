@@ -58,7 +58,7 @@ import { authorise, can, type Actor } from '../authz.ts';
 import type { AuditLog } from '../audit.ts';
 import {
   feeDisplay, feeGuard, feeRate, marginalRateRange, noClaimThreshold,
-  type EntityKey, type FeeComparison, type RecommendationThreshold,
+  type EntityKey, type FeeComparison, type NoClaimVatReading, type RecommendationThreshold,
 } from './engine.ts';
 import { formatPence } from './shown-range.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
@@ -187,6 +187,16 @@ export type FeeVersusBenefit = {
  * and fires; AT_OR_ABOVE_THRESHOLD only where every reading is determined and none fires; otherwise UNDETERMINED.
  * No reading at all — no entity type, so no rate — is UNDETERMINED. An unknown relief is never nil relief, so an
  * unknown never tells anyone not to claim (N4).
+ *
+ * PHASE 151b, 25 September 2026 — VAT. Word question 61, Lakhbir, closed 24 September 2026: "The relief is
+ * calculated over the 5 years – and must include VAT". The five years was already the measure (CB_BENEFIT's horizon)
+ * and is unchanged. The VAT rule is the ENGINE'S (CB_FEE.NO_CLAIM_VAT), and this file only says what it did:
+ *   · we are not VAT-registered (today) — there is no VAT on our fee, and the test is exactly what it was;
+ *   · registered, and the client cannot reclaim VAT — the fee plus VAT is what comes off the relief;
+ *   · registered, and the client can reclaim it — the fee alone;
+ *   · registered, and the client's position not known — UNDETERMINED, never "do not claim".
+ * NO INVOICE RECORDS THE CLIENT'S VAT POSITION ON OUR FEE, so nothing here passes one, and while we are not registered
+ * that changes nothing. `ComparisonFacts.client_vat` is there for a caller that does know it.
  */
 export type NoClaimReading = {
   readonly outcome: RecommendationThreshold['outcome'];
@@ -195,12 +205,48 @@ export type NoClaimReading = {
   readonly readings: readonly { readonly label: string; readonly rate: number; readonly threshold: RecommendationThreshold }[];
   readonly why: string | null;
   readonly for_the_tax_adviser: string;
+  /** Phase 151b — how VAT on our fee was treated in this test, read off the engine, in words for the finance view. */
+  readonly vat: NoClaimVatWords;
   readonly refuses_work: false;
 };
 
+export type NoClaimVatWords = {
+  readonly we_are_vat_registered: boolean;
+  readonly vat_rate: number | null;
+  /** The engine's treatment on the readings, where they agree; null where there is no reading or they differ. */
+  readonly treatment: NoClaimVatReading['treatment'] | null;
+  readonly in_words: string;
+  readonly awaiting_tax_adviser_review: boolean;
+};
+
+/* The sentence the tax adviser reviews. Phase 151b added the VAT sentence (question 61); the rest is Phase 132f's. */
 export const NO_CLAIM_FOR_TAX_ADVISER =
   'FOR THE TAX ADVISER — AWAITING REVIEW. We take “tax relief after our fee” to mean the five-year relief less ' +
-  'our fee. This stops no work and changes no figure. We show the figures, and the client chooses.';
+  'our fee. VAT on our fee is counted only when we are VAT-registered and the client cannot reclaim it; a client ' +
+  'who can reclaim it is measured on the fee alone; and where we do not know whether the client can reclaim it, the ' +
+  'test is not determined and never tells the client not to claim. This stops no work and changes no figure. We ' +
+  'show the figures, and the client chooses.';
+
+function vatWords(readings: readonly { threshold: RecommendationThreshold }[]): NoClaimVatWords {
+  const s = noClaimThreshold().vat;
+  const ts = [...new Set(readings.map((r) => r.threshold.vat?.treatment ?? null))];
+  const treatment = ts.length === 1 ? ts[0] ?? null : null;
+  const pct = s.vat_rate === null ? null : `${Math.round(s.vat_rate * 10000) / 100}%`;
+  const in_words = !s.we_are_vat_registered
+    ? 'We are not VAT-registered, so there is no VAT on our fee and none is counted in this test.'
+    : treatment === 'COUNTED_CLIENT_CANNOT_RECLAIM'
+      ? `We are VAT-registered and the client cannot reclaim VAT, so our fee plus VAT at ${pct} is counted in this test.`
+      : treatment === 'NOT_COUNTED_CLIENT_CAN_RECLAIM'
+        ? 'We are VAT-registered and the client can reclaim VAT, so our fee is counted without VAT.'
+        : pct === null
+          ? 'We are VAT-registered but no VAT rate is set, so the test is not determined.'
+          : 'We are VAT-registered. We do not know if the client can reclaim VAT on our fee. So the test is not ' +
+            'determined, and it does not tell the client not to claim.';
+  return {
+    we_are_vat_registered: s.we_are_vat_registered, vat_rate: s.vat_rate, treatment, in_words,
+    awaiting_tax_adviser_review: s.awaiting_tax_adviser_review,
+  };
+}
 
 function noClaim(readings: readonly { label: string; rate: number; threshold: RecommendationThreshold }[], whyNone?: string | null): NoClaimReading {
   const line = noClaimThreshold().relief_after_fee_below;
@@ -214,6 +260,7 @@ function noClaim(readings: readonly { label: string; rate: number; threshold: Re
       : readings.length === 0 ? (whyNone ?? 'no marginal rate can be read for this client, so the relief is not known and is never treated as nil')
         : readings.find((r) => !r.threshold.determined)?.threshold.why ?? 'the readings at the two ends of the rate band do not agree',
     for_the_tax_adviser: NO_CLAIM_FOR_TAX_ADVISER,
+    vat: vatWords(readings),
     refuses_work: false,
   };
 }
@@ -249,6 +296,12 @@ function pounds(p: number | null): number | null {
 export type ComparisonFacts = {
   readonly claim_value_pence: number | null; readonly entity_type: string | null; readonly tax_rate: number | null;
   readonly pool_split_main_pence: number | null; readonly pool_split_special_pence: number | null; readonly period_start: string | null;
+  /**
+   * PHASE 151b — the client's VAT position ON OUR FEE ('can_reclaim' / 'cannot_reclaim'), where a caller knows it.
+   * No invoice records it, so it is normally absent, and absent is "not known" — which counts for nothing while we are
+   * not VAT-registered, and is UNDETERMINED (never "do not claim") once we are.
+   */
+  readonly client_vat?: string | null;
 };
 
 /**
@@ -268,6 +321,7 @@ function compare(r: ComparisonFacts): FeeVersusBenefit {
     period_start: r.period_start,
     is_company: r.entity_type === 'company',
     profits: null,
+    client_vat: r.client_vat ?? null,
   };
 
   /* The rates to run at. A recorded one is a fact; otherwise both ends. */

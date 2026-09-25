@@ -387,6 +387,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
       step('DATA_GATHERING');
       confirm(app, c, 'DATA_GATHERING_COMPLETE');
       CF.noElection(app, c);
+      CF.mustArriveDocuments(app, org.business, c); // Phase 151b: the documents that must arrive are switched on
       step('SURVEY');
       commitOn(app, org, c);
       step('VALUATION');
@@ -395,7 +396,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
       step('TAX_ADVISER_SIGNOFF');
       // CRM 6 of 10: the sign-off RECORD, written through the store a person uses — not a date on the claim.
       const signed = R.recordSignOff(CF.recordDeps(app), actor('SALES'), c, {
-        adviser: 'CAPREBATE_CTA', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
+        adviser: 'Invented Tax Advisers LLP', credential: 'Chartered Tax Adviser', signed_on: '2026-09-01', scope: 'the whole claim',
         method_note: 'reviewed against the rulebooks', figure: '1000', confirmed_switches: '',
       });
       assert.equal(signed.ok, true, signed.ok ? '' : signed.why);
