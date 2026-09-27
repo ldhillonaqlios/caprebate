@@ -1132,7 +1132,7 @@ after that phase.
    afterwards.
    FIRST, PROVE WORD QUESTION 230 REACHED THE CLOUD (Phase 151e, 27 Sep 2026).
    It was written into the Mac file at 09:35 ("Can the test website keep its
-   records in a database that lasts?", under Lakhbir, after 227), and eight
+   records in a database that lasts?", under Lakhbir, after 227), and fifteen
    minutes later the cloud item still held the document without it: the
    Mac-to-cloud fault AMENDMENT 2 describes had come back. Copy the cloud item
    down and look for heading 230. If it is there, done. If it is not, the Mac
