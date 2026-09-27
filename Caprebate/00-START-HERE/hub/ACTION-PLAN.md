@@ -869,11 +869,11 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 151e — the test website: why every page fails, and what it shows to anyone
+## PHASE 151e — the test website: a check and its result on one database, and the empty identity panel
 
- **Model: Opus. Written 25 September 2026 by Phase 151d.** Tracker row: "Phase 151e - the test website: why every page fails, and what it shows to anyone" in 05 · FOR DEVELOPMENT. Runs after 146j, before the sweep.
+ **Model: Opus. Written 25 September 2026 by Phase 151d; restated 27 September 2026 with only what is left.** Tracker row: "Phase 151e - the test website: why every page fails, and what it shows to anyone" in 05 · FOR DEVELOPMENT (its id is 13133268301). Runs next, before Phase 151g and the sweep.
 
- **Why this exists.** Phase 151d found two things about caprebate-test.vercel.app while making sure the hub stayed private, and neither fitted in its own scope. **Every page answers "500 A server error has occurred — FUNCTION_INVOCATION_FAILED"**: the home page, the login and the staff pages, on 25 September 2026, before and after Phase 151d's first push, so the deploy of Phase 151c's commit 43f674b already failed. And **the website serves every committed file to anyone who asks for it by path**: the whole Developer Spec came back with no login. The data in it is invented, so no client's data is exposed, but the second is Lakhbir's decision (Word question 229) and the first is ours to fix.
+ **Why this exists, and what is already done.** Lines 1 and 2 ran on 25 September 2026 and are in PHASE HISTORY: every page failed because the root package.json lacked the Claude API library (fixed, with a test), and the website no longer serves any file of ours (Word question 229, "yes"). Line 3's first half ran the same day: the test website reads the three Didit keys from its Vercel settings, only behind a password of its own, and Didit's webhook points at https://caprebate-test.vercel.app/hooks/identity-check. Lakhbir checked himself and it showed Passed — **but only because the same running copy sent the check and received the result.** The database is still in memory and every cold start seeds a new one, so a result that arrives at another copy is refused (no check to match). Two things are left.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -891,74 +891,53 @@ tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
 write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
 ═══════════════════════════════════
 
-Mac copy. Take a .bak-phase151e sibling of every file you change. Tracker row:
-"Phase 151e - the test website: why every page fails, and what it shows to
-anyone" (its id is in the tracker; find it with list --group DEVELOPMENT).
+Mac copy. Take a .bak-phase151e3 sibling of every file you change (the plain
+.bak-phase151e copies belong to lines 1-3 and are not overwritten). Tracker
+row 13133268301. Nothing real goes on the test website: invented data only,
+and no real person's identity check is used as a test.
 
-1. DONE 25 SEP 2026 (Phase 151e, line 1; PHASE HISTORY has the record): the
-   root package.json lacked the Claude API library Phase 146e added to the back
-   end, so the function could not start; fixed, and test/phase151e.test.ts
-   keeps it fixed. The text below is kept for the record.
-   WHY EVERY PAGE FAILS. api/index.mjs imports the back end's server.ts and
-   seed.ts and seeds invented data on a cold start; vercel.json rewrites every
-   path to it. Reproduce the failure first, then fix it: call the handler
-   locally the way Vercel does (a request and a response object), with the
-   same Node version (package.json engines) and the same environment. The
-   Vercel connector could not read this project's deployments or logs on
-   25 Sep 2026 (403, "You don't have permission to list the deployment"), so
-   if it cannot be reproduced locally, ask Lakhbir for the function log of
-   one failed request - do not guess. Find the first commit whose deploy
-   fails (GitHub's deployment statuses carry each deploy's target URL, and a
-   deploy's own URL still answers). A test that would have caught it, proved
-   red on the pre-change code. After the push: "/" answers 200 and the login
-   page renders.
-2. DONE 25 SEP 2026 (Lakhbir answered 229 "yes"; PHASE HISTORY has the
-   record): outputDirectory public/, robots.txt alone; the text below is kept.
-   WHAT THE WEBSITE SHOWS - ONLY IF LAKHBIR ANSWERS WORD QUESTION 229 "YES".
-   Until then this line is BLOCKED on that question, and the phase closes
-   without it. If yes: list what the website must serve itself (the site
-   file, the back end's assets) and what the function reads at run time (the
-   engagement letter, the module files, whatever server.ts and seed.ts
-   open - read them, do not guess), and keep everything else off every
-   deploy through .vercelignore. .vercelignore takes a file out of the upload
-   entirely, the function bundle included, so a file the function reads must
-   stay. Prove on the new deploy: every file kept off answers something other
-   than 200, the site still works, and the payload proof still holds.
-3. HALF DONE 25 SEP 2026: the test website reads the three Didit keys from
-   its settings, and only behind a password of its own (CAPREBATE_TEST_
-   PASSWORD). STILL TO DO: a check and its result on one database. The test
-   website's database is in memory, so a result matches only while the same
-   running copy is up; make it persist (or say plainly on the panel that a
-   result may be lost), and prove it with a signed, invented result, as below.
-   PROVED ONCE, 25 SEP 2026: Lakhbir checked himself on the test website and
-   it showed Passed - the same running copy sent and received. Persistence is
-   still what makes it reliable.
-4. THE EMPTY PANEL (added 25 Sep 2026). On a client with no contacts the
-   identity panel shows no form and says nothing, so a person cannot tell how
-   to send a check. Say, in plain words, to add the person as a contact of
-   this client first (with a link to that form); a test, proved red first;
-   the guide's B53 and Help to match.
-   WHERE DIDIT SENDS ITS RESULTS (added by Phase 151h, 25 Sep 2026). The
-   identity check is on for testing, and Didit posts each result to the
-   webhook address set in its console: https://<public host>/hooks/identity-
-   check. Today there is no host that can take one. The test deploy answers
-   500 on that path (line 1). And even working, it could not match a result:
-   it has no Didit keys (they are only in the Mac's key file), and it seeds a
-   new in-memory database on every cold start, so a check sent from one place
-   is not in the database that receives the result (404). A check and its
-   result must go through the same server and the same database. Make that
-   true for the test environment - the keys as Vercel environment settings
-   the back end reads, and a database that persists; or a documented way to
-   run the back end on the Mac behind a public https tunnel - and write the
-   exact webhook address into the Developer Spec's "Built by Phase 151h".
-   Prove it with a signed, invented result posted to the address (a 200 and a
-   row), never with a real person's check.
+1. A CHECK AND ITS RESULT ON ONE DATABASE. api/index.mjs (at Development/,
+   beside vercel.json) builds the whole application on createApp(':memory:')
+   and seeds it on every cold start; the back end is SQLite through
+   node:sqlite (src/db.ts). On Vercel a function's disk is temporary, so a
+   file there does not survive either. READ BEFORE CHOOSING, and choose the
+   smallest thing that is true:
+   (a) PERSIST: a database the function reaches from every copy. Read what
+       Vercel offers today for a function (its docs, not memory) and what
+       src/db.ts would have to change. If it needs an account, a key or
+       money, it is Lakhbir's to open: build it switched off, write the
+       settings it needs into the Developer Spec's one page and the "Built
+       by Phase 151e" section, ask him in the Word questions document under
+       his name (the AMENDMENT 2 way), and set the row to Ready - Lakhbir
+       action. Keys go only in Vercel's settings or ~/.caprebate-secrets.env.
+   (b) SAY SO, WHATEVER (a) BECOMES: on the identity panel and on the result
+       it receives, when the server is running on an in-memory database,
+       say in plain words that a result may arrive at a copy that has
+       forgotten the check, and what to do (send it again). The words come
+       from the server's own knowledge of its database, never from a flag a
+       page sets. A result that finds no check to match must still be
+       refused and logged as it is today - never matched to the nearest.
+   Prove whichever you build with a SIGNED, INVENTED result posted to
+   /hooks/identity-check (a 200 and a row where it should match; the
+   refusal where it should not), on recorded answers with no network, and
+   a test proved red on the pre-change code.
 
-CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
-inside their folders; the drift checker and its negative control; the tracker
-check; the register check and the CRM fold check. Commit and push.
+2. THE EMPTY IDENTITY PANEL. On a client with no contacts the identity panel
+   shows no form and says nothing, so a person cannot tell how to send a
+   check (found by Lakhbir on 25 Sep 2026: Dunmarrow Medical Practice was the
+   only invented client with contacts). Say in plain words to add the person
+   as a contact of this client first, with a link to that form. A test,
+   proved red first. The guide's B53 and the Help text to match.
+
+CHECKS - npm run check; the site harness (both modes), the extraction
+verifier and extract --check; phase3 and phase9 from inside their folders;
+the drift checker, its negative control (--fast --expect 999,998,997,996 MUST
+exit 1, on its own line) and its self-test; the plain-words check; the tracker
+check; the register check and the CRM fold check, and both self-tests;
+payload-proof. After the push, check the live test website: "/" answers 200
+and the login page renders. Write the record with the CLOSING CHECK, clear
+hub/CLAIM.md, commit and push.
 ```
-
 
 ## PHASE 151g — the test lookups Lakhbir allowed: the smoke test keeps his five conditions
 
