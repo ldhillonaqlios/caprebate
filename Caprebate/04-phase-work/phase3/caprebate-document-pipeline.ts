@@ -80,10 +80,15 @@ export type DocType =
   // are MODEL-EXTRACTABLE, like the nine above: every field in their specs is
   // a date, a number or a sum of money, and none is a person's.
   | 'TAX_RETURN'
-  | 'TAX_COMPUTATION';
+  | 'TAX_COMPUTATION'
+  // Phase 146l (Lakhbir, 25 and 27 September 2026): HM Land Registry's title register is looked up BY HAND — a person
+  // buys the official copy of the register and the title plan and uploads them. HUMAN-READ-ONLY, like CPSE_REPLIES and
+  // SALE_CONTRACT: the proprietorship register names an owner who holds the property personally, and a charge can name
+  // an individual lender, so no model reads it. A person reads it and records the facts on the property page.
+  | 'TITLE_REGISTER';
 
 /** Never reach extract()/sanitise()/callModel() — see section 9, captureHumanRead(). */
-export const HUMAN_READ_ONLY_TYPES: readonly DocType[] = ['CPSE_REPLIES', 'SALE_CONTRACT'];
+export const HUMAN_READ_ONLY_TYPES: readonly DocType[] = ['CPSE_REPLIES', 'SALE_CONTRACT', 'TITLE_REGISTER'];
 
 export type SegmentKind =
   // Permitted, per document type
@@ -435,7 +440,7 @@ export const DOC_SPECS: readonly DocSpec[] = [
  * checks every figure read from them is the same kind of decision, and nobody has
  * taken it.
  */
-export type ExtractableDocType = Exclude<DocType, 'CPSE_REPLIES' | 'SALE_CONTRACT'>;
+export type ExtractableDocType = Exclude<DocType, 'CPSE_REPLIES' | 'SALE_CONTRACT' | 'TITLE_REGISTER'>;
 
 export const PERSON_REVIEW_BY_DOC_TYPE: Readonly<Record<ExtractableDocType, boolean>> = Object.freeze({
   PLANNING: false,
@@ -926,7 +931,7 @@ export function toClaims(entity_id: string, r: ExtractionResult, retrieved_at: s
 }
 
 /* ------------------------------------------------------------------ *
- * 9. Human-read-only document types — CPSE_REPLIES and SALE_CONTRACT
+ * 9. Human-read-only document types — CPSE_REPLIES and SALE_CONTRACT, and since Phase 146l TITLE_REGISTER
  *
  * Item 12902240772 §8: neither gate (DPIA, lease-party) is a reason to leave
  * an upload of one of these two unprocessed. The interim position is that a
@@ -986,6 +991,23 @@ export const HUMAN_CAPTURE_SPECS: readonly HumanCaptureDocSpec[] = [
     ],
     why: 'A valid election caps the fixtures claim and no valuation can lift it. This spec emits no election_present ' +
       'boolean and no elected_amount — validity is a legal conclusion a person reaches, never an extraction.',
+  },
+  {
+    doc_type: 'TITLE_REGISTER',
+    gate: 'Lakhbir, 25 and 27 September 2026 — the title register is looked up by hand, not by the API',
+    fields: [
+      h('oc_title_number', 'NARRATIVE', 'as the register writes it, for example WYK123456'),
+      h('oc_tenure', 'TAXONOMY', 'freehold or leasehold, from the class of title'),
+      h('oc_price_paid_pence', 'GATE', 'the price paid or value stated in the proprietorship register — for four of the five sectors the only source of what the building sold for'),
+      h('oc_price_paid_date', 'GATE', 'the date that price is stated for'),
+      h('oc_restriction_count', 'NARRATIVE', 'how many restrictions the register carries — a count, never their wording'),
+      h('oc_proprietor_company_number', 'NARRATIVE', 'where the owner is a company, its registered number. Where the owner is a person, nothing: a name is never captured'),
+      h('oc_prior_owner_count', 'NARRATIVE', 'how many earlier owners the register names — a count, never a name'),
+    ],
+    why: 'The same facts the retired Business Gateway lookup kept, less the one it could keep under Exception 2 — a ' +
+      'personal owner\'s name — because a person reading a copy is not the register handing us a marked field. In the ' +
+      'back end a person types these on the property page (src/web/title-by-hand.ts), where they are stored as the ' +
+      'register source HMLR_TITLE, marked as entered by hand.',
   },
 ];
 

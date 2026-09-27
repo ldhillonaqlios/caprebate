@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
-| Done | 263 |
-| Working on it | 1 |
+| Done | 264 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1325,8 +1325,9 @@
 
 ### Phase 146l - the title register's documents uploaded by hand: the official copy and title plan as a document type staff upload, beside what they type
 
-`13133268306` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
+`13133268306` · **Done** · owner Claude
 
+- Note 2026-09-27 (Phase 146l): Built: TITLE_REGISTER document type (official copy and title plan), read by a person, never a model; migration 056; upload box on the property page. test/phase146l.test.ts; record in PHASE HISTORY.
 
 ---
 

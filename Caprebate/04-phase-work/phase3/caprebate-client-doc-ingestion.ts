@@ -36,7 +36,8 @@
  *      Re-checked field by field against DOC_SPECS and HUMAN_CAPTURE_SPECS for
  *      this module — test C7 asserts it mechanically rather than trusting the
  *      reading. (Thirteen since Phase 151b added the tax return and the tax
- *      computation, re-checked the same way: still none.) So the parties clause, the execution block and the
+ *      computation, re-checked the same way: still none. Fourteen since Phase 146l
+ *      added the Land Registry official copy, read by a person: still none.) So the parties clause, the execution block and the
  *      representations are needed by NOTHING downstream, and removing them on
  *      receipt costs the extraction exactly nothing.
  *
@@ -749,7 +750,7 @@ export const NO_LAWFUL_BASIS_ROLES: readonly PersonRole[] = ['PLANNING_OBJECTOR_
  * That question has a mechanical answer for the nine model-extractable types
  * (eleven since Phase 151b), because DocSpec.permitted_segments already IS the answer, and test C1
  * asserts the derivation rather than trusting this table. It has no mechanical
- * answer for the two HUMAN_READ_ONLY types, and section 3.2 says so plainly
+ * answer for the HUMAN_READ_ONLY types (three since Phase 146l), and section 3.2 says so plainly
  * instead of inventing one.
  * ------------------------------------------------------------------ */
 
@@ -1074,6 +1075,27 @@ export const CLIENT_DOC_RECEIPT_POLICY: readonly ClientDocReceiptPolicy[] = [
       'Same honest weakness as CPSE_REPLIES, and the higher-population of the two: the witnesses are always ' +
       'natural persons and the execution block is the point of the document. contract_schedule_index is captured ' +
       'in full deliberately, which means the human capture rule in section 5 is the operative control here.',
+  },
+  /* PHASE 146l (Lakhbir, 25 and 27 September 2026): the official copy of HM Land Registry's title register and the
+     title plan, bought and uploaded by a person, because the title register is looked up by hand, not by the API. */
+  {
+    doc_type: 'TITLE_REGISTER',
+    mode: 'WHOLE_DOCUMENT_PENDING_HUMAN_READ',
+    retained_segments: [],
+    roles_to_triage: [
+      { role: 'TRANSACTION_PARTY', frequency: 'sometimes', note: 'the registered owner, when the property is held personally — the proprietorship register gives their name and an address for service' },
+      {
+        role: 'PERSON_NAMED_IN_PROSE', frequency: 'sometimes',
+        note: 'an individual lender named in the charges register, the person a restriction benefits, or an earlier owner named in an entry',
+      },
+    ],
+    why:
+      'Same honest weakness as CPSE_REPLIES: a person has to read the whole copy, so a spec-derived strip is not ' +
+      'available, and the three NEVER_RETAINED_ON_RECEIPT kinds are still removed. Most official copies we buy name a ' +
+      'company as owner and a bank as lender, and neither is a data subject; the case that is not is a property held ' +
+      'personally, where the owner\'s name and address are in the proprietorship register. The compensating controls ' +
+      'are the capture rule (the facts are typed on the property page, which has no box for a person\'s name) and the ' +
+      'retention clock. The title plan is a map and names nobody.',
   },
 ];
 

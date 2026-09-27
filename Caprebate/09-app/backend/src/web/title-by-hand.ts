@@ -223,7 +223,20 @@ export type TitleByHandView = {
   readonly may_record: boolean;
   /** Why not, for somebody who holds the right while the letter is unsigned. Null otherwise. */
   readonly why_not: string | null;
+  /**
+   * PHASE 146l: the official copies and title plans uploaded for this client (document type TITLE_REGISTER), newest
+   * first — the paperwork the typed facts come from. Uploading one is the ordinary upload path, and it is read by a
+   * person, never a model.
+   */
+  readonly copies: readonly { readonly id: string; readonly label: string; readonly at: string }[];
+  /** PHASE 146l: whether this login may upload one, which is the ordinary `document.upload` right. */
+  readonly may_upload: boolean;
+  /** The client the property belongs to, for the upload box. */
+  readonly business_id: string;
 };
+
+/** PHASE 146l: the document type an official copy is uploaded as (migration 056). */
+export const OFFICIAL_COPY_TYPE = 'TITLE_REGISTER';
 
 const LABELS: Readonly<Record<string, string>> = Object.freeze({
   title_number: 'Title number', tenure: 'Freehold or leasehold', price_paid: 'Price paid', transaction_date: 'Date of that price',
@@ -267,7 +280,13 @@ export function titleByHandView(db: Db, actor: Actor, property_id: string): Titl
     [p.id]).map((t) => ({ title_number: t.title_number, by: nameOf(db, t.taken_back_by), at: t.taken_back_at, reason: t.taken_back_reason }));
   const mayWrite = can(actor, 'property.write', writeObj(p));
   const signed = assertSignedEngagement(db, p.business_id);
+  const copies = db.all<{ id: string; seq: number; created_at: string }>(
+    'SELECT id, seq, created_at FROM logical_documents WHERE business_id = ? AND type_code = ? ORDER BY created_at DESC, seq DESC',
+    [p.business_id, OFFICIAL_COPY_TYPE]).map((c) => ({ id: c.id, label: `Official copy ${c.seq}`, at: c.created_at }));
   return {
+    copies,
+    may_upload: can(actor, 'document.upload', { type: 'business', id: p.business_id }),
+    business_id: p.business_id,
     standing: s === undefined ? null : { lines, by, at },
     taken_back: taken,
     may_record: mayWrite && signed.signed === true,

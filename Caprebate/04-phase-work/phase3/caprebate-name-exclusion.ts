@@ -460,7 +460,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     sourceId: 'CLIENT_DOC',
     subitem: 13,
     publisher: 'The client — portal upload or email attachment',
-    datasetLabel: 'Client-supplied transaction, building and tax documents (thirteen types)',
+    datasetLabel: 'Client-supplied transaction, building and tax documents, and the Land Registry official copy (fourteen types)',
     riskLevel: 'highest',
     // Exactly the field_ids of DOC_SPECS and HUMAN_CAPTURE_SPECS, enumerated
     // literally rather than imported, for the reason Part E gives: a spec that
@@ -514,6 +514,12 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       // TAX_COMPUTATION
       'taxcomp_period_start', 'taxcomp_period_end', 'taxcomp_taxable_profit_pence', 'taxcomp_capital_allowances_by_pool',
       'taxcomp_main_pool_balance_pence', 'taxcomp_special_rate_pool_balance_pence', 'taxcomp_aia_claimed_pence',
+      // PHASE 146l, 27 September 2026 — THE OFFICIAL COPY OF THE TITLE REGISTER, read by a person (HUMAN_CAPTURE_SPECS).
+      // A title number, a tenure, a price and its date, and three counts or a company number. No name: a personal
+      // owner's name is never captured from an uploaded copy, and CLIENT_DOC still takes no name exception.
+      // TITLE_REGISTER
+      'oc_title_number', 'oc_tenure', 'oc_price_paid_pence', 'oc_price_paid_date', 'oc_restriction_count',
+      'oc_proprietor_company_number', 'oc_prior_owner_count',
     ],
     // No spec has any of these fields today. They are listed because the roles
     // EXIST on the face of the documents (Phase 40 §4.2 works them through type
@@ -570,7 +576,9 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       "sum of money, or a description of works. No field in any of the eleven " +
       "specifications is a person's name — Phase 40 §5.4, checked field by field. " +
       "Phase 151b added the tax return and the tax computation, thirteen types in all: their thirteen fields are " +
-      "dates, a company number, sums and figures by pool, and none is a name or a tax reference.",
+      "dates, a company number, sums and figures by pool, and none is a name or a tax reference. " +
+      "Phase 146l added the official copy of the Land Registry title register, read by a person, fourteen types in " +
+      "all: its seven fields are a title number, a tenure, a price and its date, a company number and two counts.",
   },
 ];
 

@@ -254,7 +254,8 @@ describe('document types — the CRM list, the Stage 2 list and the extraction s
       const codes = types.map((t) => t.code);
       const handler = [...DOC_SPECS.map((s) => s.doc_type as string), ...(HUMAN_READ_ONLY_TYPES as readonly string[])];
       // Phase 151b: the tax return and the tax computation have receipt policies of their own (Word question 223).
-      assert.equal(new Set(handler).size, 13, 'the handler handles thirteen document types');
+      // Phase 146l: and the Land Registry official copy, read by a person (migration 056).
+      assert.equal(new Set(handler).size, 14, 'the handler handles fourteen document types');
       for (const h of handler) {
         const matches = types.filter((t) => t.strip.policy === h);
         assert.equal(matches.length, 1, `exactly one type is received under the ${h} receipt policy`);
@@ -331,7 +332,7 @@ describe('the receipt strip still runs over every new type — and a type with n
     try {
       const db = w.made.app.db;
       const receivable = D.receivableTypes(db);
-      assert.equal(receivable.length, 13); // Phase 151b: the tax return and the tax computation
+      assert.equal(receivable.length, 14); // Phase 151b: the tax return and the tax computation; Phase 146l: the official copy
       for (const t of receivable) {
         const r = await upload(w, w.client, { business_id: w.client.business_id ?? '', type_code: t.code });
         const s = ok(r.started);

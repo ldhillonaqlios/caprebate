@@ -666,8 +666,15 @@ function sitePointBlock(id: string, s: SI.SitePointView): Safe {
  */
 function titleBlock(id: string, t: TH.TitleByHandView): Safe {
   return h`<div class="pblock" id="title-register"><div class="pnum">The title register, by hand</div>
-    <div class="help">We do not look the title register up by computer. Buy the official copy from HM Land Registry
-    and type in what it says.${why('Only the facts below are kept. We never type an owner’s name: where the owner is a person, leave it out. Where the owner is a company, its company number is enough.')}</div>
+    <div class="help">We do not look the title register up by computer. Buy the official copy and the title plan from
+    HM Land Registry, upload them, and type in what they say.${why('Only the facts below are kept. We never type an owner’s name: where the owner is a person, leave it out. Where the owner is a company, its company number is enough. A person reads the upload. Our reader never does.')}</div>
+    ${t.copies.length === 0 ? h`<p class="help">No official copy uploaded yet.</p>`
+      : h`<p>Uploaded: ${t.copies.map((c, i) => h`${i === 0 ? '' : ', '}<a href="/staff/documents/${c.id}">${c.label}</a> (${ukDate(c.at)})`)}</p>`}
+    ${t.may_upload ? h`<form method="post" action="/staff/clients/${t.business_id}/files" enctype="multipart/form-data" class="uploadbox">
+      <input type="hidden" name="type_code" value="${TH.OFFICIAL_COPY_TYPE}">
+      <label class="dropzone" for="oc-file-${id}"><span class="dropwords">Upload the official copy or the title plan</span>
+        <input id="oc-file-${id}" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg"></label>
+      <button type="submit">Upload</button></form>` : raw('')}
     ${t.standing === null ? h`<p class="help">Nothing recorded yet.</p>` : h`${fields(t.standing.lines.map((l) => ({ label: l.label, value: l.value, keep: true })))}
       <p class="help">Entered by hand by ${t.standing.by}, ${ukDate(t.standing.at)}.</p>`}
     ${t.taken_back.map((x) => h`<p class="help">Title ${x.title_number} was taken back by ${x.by}, ${ukDate(x.at)}: ${x.reason}</p>`)}

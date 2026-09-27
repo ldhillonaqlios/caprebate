@@ -78,6 +78,8 @@ const ALL_TYPES: readonly DocType[] = [
   'INSURANCE_REINSTATEMENT', 'LEASE', 'CONTRACTOR_COST_BREAKDOWN',
   'BUILDING_REGS_COMPLETION', 'GRANT_FUNDING_AGREEMENT',
   'CPSE_REPLIES', 'SALE_CONTRACT',
+  // Phase 146l: the Land Registry official copy, read by a person.
+  'TITLE_REGISTER',
   // Phase 151b, Word question 223
   'TAX_RETURN', 'TAX_COMPUTATION',
 ];
@@ -90,7 +92,7 @@ const seg = (kind: Segment['kind'], heading: string, page = 1, text = 'body'): S
  * ================================================================== */
 
 test('C1 every document type has a receipt policy, and there are exactly thirteen (eleven until Phase 151b)', () => {
-  assert.equal(CLIENT_DOC_RECEIPT_POLICY.length, 13);
+  assert.equal(CLIENT_DOC_RECEIPT_POLICY.length, 14); // fourteen since Phase 146l: the Land Registry official copy
   for (const t of ALL_TYPES) assert.ok(receiptPolicyFor(t), `no policy for ${t}`);
 });
 
@@ -168,8 +170,10 @@ test('C7 NO FIELD IN ANY OF THE ELEVEN SPECIFICATIONS IS A PERSON\'S NAME — as
   // return, seven on the computation — dates, sums of money, lists of sums by
   // pool, and one company number. None is a name or a tax reference.
   assert.equal(DOC_SPECS.reduce((a, s) => a + s.fields.length, 0), 57);
-  assert.equal(HUMAN_CAPTURE_SPECS.reduce((a, s) => a + s.fields.length, 0), 9);
-  assert.equal(fields.length, 66, 'the field count changed — re-run the field-by-field check before touching this number');
+  // Phase 146l re-ran it for the seven official-copy fields (9 + 7 = 16 on the human path): a title number, a tenure,
+  // a price, its date, a company number and two counts. None is a name, an address or a personal reference.
+  assert.equal(HUMAN_CAPTURE_SPECS.reduce((a, s) => a + s.fields.length, 0), 16);
+  assert.equal(fields.length, 73, 'the field count changed — re-run the field-by-field check before touching this number');
 });
 
 /*
@@ -195,7 +199,7 @@ test('C8 every spec field is on the CLIENT_DOC keep list, so no live field fails
     ...DOC_SPECS.flatMap((s) => s.fields.map((f) => f.field_id)),
     ...HUMAN_CAPTURE_SPECS.flatMap((s) => s.fields.map((f) => f.field_id)),
   ];
-  assert.equal(fields.length, 66);
+  assert.equal(fields.length, 73);
   // grant_funder_name and brc_issuing_body need their discriminants; supply both.
   assert.doesNotThrow(() =>
     assertClaimsWritable(
@@ -1403,4 +1407,27 @@ test('Z5 a cycle SET at zero days — the folders excluded — is the one positi
   assert.deepEqual(ev, { ...EVIDENCE, backups_pending: false, backup_cycle_days: 0, backup_copies_expire_at: null });
   assert.equal(ret3DueAt({ verified_at: '2026-09-06T09:00:00.000Z', backups_pending: false, backup_cycle_days: 0, backup_copies_expire_at: null }),
     '2032-09-06T09:00:00.000Z');
+});
+
+/* ================================================================== *
+ * PHASE 146l — THE OFFICIAL COPY OF THE LAND REGISTRY TITLE REGISTER
+ * ================================================================== */
+
+test('L1 the official copy is read by a person, never a model; its capture has no name in it; its receipt policy says why it is weaker', () => {
+  assert.equal(HUMAN_READ_ONLY_TYPES.includes('TITLE_REGISTER'), true);
+  assert.equal(DOC_SPECS.some((s) => s.doc_type === 'TITLE_REGISTER'), false, 'the official copy has a model-facing spec');
+  const cap = HUMAN_CAPTURE_SPECS.find((s) => s.doc_type === 'TITLE_REGISTER');
+  assert.deepEqual(cap?.fields.map((f) => f.field_id), [
+    'oc_title_number', 'oc_tenure', 'oc_price_paid_pence', 'oc_price_paid_date', 'oc_restriction_count',
+    'oc_proprietor_company_number', 'oc_prior_owner_count',
+  ]);
+  for (const f of cap?.fields ?? []) assert.doesNotMatch(f.field_id, /name|address|personal/, f.field_id);
+  // every one is writable under CLIENT_DOC, and a personal owner's name offered anyway is refused by the register
+  assert.doesNotThrow(() => assertClaimsWritable((cap?.fields ?? []).map((f) => ({ field_id: f.field_id, source_id: 'CLIENT_DOC' }))));
+  assert.throws(() => assertClaimsWritable([{ field_id: 'oc_proprietor_name_personal', source_id: 'CLIENT_DOC' }]),
+    (e: unknown) => e instanceof NameExclusionError);
+  const policy = receiptPolicyFor('TITLE_REGISTER');
+  assert.equal(policy.mode, 'WHOLE_DOCUMENT_PENDING_HUMAN_READ');
+  assert.deepEqual(policy.roles_to_triage.map((r) => r.role), ['TRANSACTION_PARTY', 'PERSON_NAMED_IN_PROSE']);
+  assert.match(policy.why, /honest weakness/i);
 });

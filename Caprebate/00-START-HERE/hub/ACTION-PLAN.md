@@ -1133,12 +1133,21 @@ after that phase.
    205 ("The key file is missing the password for the Land Registry
    certificate. Can you add it?") is answered: no certificate is needed. Move
    it, the AMENDMENT 2 way, to the closed document with "Recorded answer (25
-   Sep 2026, Lakhbir, in the chat): the title register is done by hand, not
-   via the API" and a Closed line naming Phase 146k. And Word question 207
+   and 27 Sep 2026, Lakhbir, in the chat): the title register is done by
+   hand, not via the API - a person gets the official copy and title plan,
+   types in what they say and uploads them. The certificate still needed is
+   that paperwork, not the Business Gateway client certificate, so its
+   password is not needed" and a Closed line naming Phases 146k and 146l. And Word question 207
    ("Two things only someone with the supplier's own pack or a live key can
    confirm") loses its Business Gateway half: add a Recorded answer saying so,
    and leave it open for the Homedata half. BUILDABLE - it is only the Word
-   procedure in COORDINATES, which Phase 146k did not run. Rebuild
+   procedure in COORDINATES, which Phase 146k did not run. AND ADD ONE
+   QUESTION for the data protection officer, the Word document's own layout,
+   from the note of 27 Sep 2026 under SDP-L22 (Phase 146l): "May we keep an
+   uploaded Land Registry official copy that names a private owner?" -
+   staff now upload the official copy and title plan; it is read by a
+   person, kept whole until read, never sent to the document reader; our
+   suggestion is yes, because it is the evidence behind the price. Rebuild
    QUESTIONS-WORD-HEADINGS.txt afterwards.
    AND ONE TEST THAT FAILS UNDER LOAD AND NOT ON ITS OWN (Phase 146j, 25 Sep
    2026): test/phase151c.test.ts, "0 when every point agrees ... 1 when one
