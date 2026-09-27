@@ -74,6 +74,10 @@ function send(res: ServerResponse, status: number, body: unknown): void {
 }
 
 export type ServerOptions = {
+  /** PHASE 151e (line 4): the token of a remote database named by `location` (src/db.ts). Absent for memory and file. */
+  dbAuthToken?: string;
+  /** Tests only: see BuildOptions.dbEngine. */
+  dbEngine?: 'node:sqlite' | 'libsql';
   /**
    * Where client documents live. OUTSIDE THE WEB ROOT — which is trivially
    * true here because this application has no static file route at all, and
@@ -106,7 +110,10 @@ export async function createApp(
   location = ':memory:',
   opts: ServerOptions = {},
 ): Promise<{ server: ReturnType<typeof createServer>; close: () => void; app: Awaited<ReturnType<typeof buildApp>>; store: FsObjectStore }> {
-  const app = await buildApp({ location, ...(opts.now === undefined ? {} : { now: opts.now }) });
+  const app = await buildApp({
+    location, ...(opts.now === undefined ? {} : { now: opts.now }), ...(opts.dbAuthToken === undefined ? {} : { dbAuthToken: opts.dbAuthToken }),
+    ...(opts.dbEngine === undefined ? {} : { dbEngine: opts.dbEngine }),
+  });
   const store = new FsObjectStore({
     root: opts.documentRoot ?? process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '.documents'),
     now: app.now,

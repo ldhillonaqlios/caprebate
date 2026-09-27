@@ -266,7 +266,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       v2: one(IDENTITY_SIGNATURE_HEADERS.v2), raw: one(IDENTITY_SIGNATURE_HEADERS.raw), timestamp: one(IDENTITY_SIGNATURE_HEADERS.timestamp),
     });
     res.writeHead(r.status, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
-    res.end(r.status === 200 ? 'ok' : 'refused');
+    res.end(r.status === 200 ? 'ok' : r.note === undefined ? 'refused' : `refused. ${r.note}`);
     return 'handled';
   }
   if (path === '/enquiry' && method === 'POST') {

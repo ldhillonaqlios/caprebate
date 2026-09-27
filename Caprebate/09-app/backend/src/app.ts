@@ -47,6 +47,10 @@ export type App = {
 
 export type BuildOptions = {
   location?: string;
+  /** PHASE 151e (line 4): a remote database's token (src/db.ts). The caller reads it from settings; absent for memory and file. */
+  dbAuthToken?: string;
+  /** Tests only: open a memory or file database through libsql, to prove the application runs on it (src/db.ts). */
+  dbEngine?: 'node:sqlite' | 'libsql';
   hasher?: PasswordHasher;
   now?: () => string;
   migrationsDir?: string;
@@ -57,7 +61,9 @@ export type BuildOptions = {
 };
 
 export async function buildApp(opts: BuildOptions = {}): Promise<App> {
-  const db = new Db(opts.location ?? ':memory:');
+  const db = new Db(opts.location ?? ':memory:', {
+    ...(opts.dbAuthToken === undefined ? {} : { authToken: opts.dbAuthToken }), ...(opts.dbEngine === undefined ? {} : { engine: opts.dbEngine }),
+  });
   migrate(db, opts.migrationsDir ?? MIGRATIONS_DIR);
   loadCustomRoles(db); // Phase 151: the roles the super admin made, for can()
 

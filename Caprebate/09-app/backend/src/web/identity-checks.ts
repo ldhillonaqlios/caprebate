@@ -123,7 +123,28 @@ export async function sendIdentityCheck(
   return { ok: true, id, link: out.link };
 }
 
-export type ReceiveResult = { readonly status: 200 | 401 | 404; readonly outcome: IdentityOutcome | null };
+/**
+ * PHASE 151e (line 4), 27 September 2026 — SAYING SO, WHEN THIS SERVER FORGETS.
+ *
+ * On a database in memory (the test website until it is given a lasting one, and the demo), a check is kept only by the
+ * copy of the server that sent it. A restart forgets it, and on Vercel a second copy never saw it. A result that arrives
+ * at such a copy finds no check and is REFUSED, exactly as before: it is never matched to the nearest. These words say
+ * that, and what to do. They come from `app.db.kind`, the server's own knowledge of its database, and from nothing a
+ * page or a request can set. On a file or a remote database they are null and nothing is shown.
+ */
+export const FORGETFUL_DATABASE_WORDS =
+  'This website keeps its records in memory only. It forgets them when it restarts, and more than one copy of it can run at once. ' +
+  'So a result can reach a copy that never saw the check. That copy turns the result away, and it does not show here. ' +
+  'If no result shows a few minutes after the person has finished, send the check again.';
+/** Said with a refused result when this server keeps its records in memory: in the audit log and in the answer to the service. */
+export const FORGOTTEN_CHECK_WORDS =
+  'This server keeps its records in memory only. The check may have been sent from a copy that has forgotten it. Send the check again.';
+
+export function forgetfulDatabaseWarning(app: App): string | null {
+  return app.db.kind === 'memory' ? FORGETFUL_DATABASE_WORDS : null;
+}
+
+export type ReceiveResult = { readonly status: 200 | 401 | 404; readonly outcome: IdentityOutcome | null; readonly note?: string };
 
 /**
  * One result from the service. Believed only when a signature holds and it is fresh; refused and audited otherwise,
@@ -143,19 +164,13 @@ export function receiveIdentityResult(app: App, newId: () => string, rawBody: st
   }
   if (read.state === 'UNDER_WAY') {
     const known = app.db.get<{ id: string }>('SELECT id FROM identity_checks WHERE session_id = ?', [read.session_id]);
-    if (known === undefined) {
-      record(cd, null, 'IDENTITY_RESULT_REFUSED', 'REFUSED', 'identity_check', 'unknown', { why: 'the result names no check we sent' });
-      return { status: 404, outcome: null };
-    }
+    if (known === undefined) return noCheckToMatch(app, cd);
     record(cd, null, 'IDENTITY_RESULT_NOT_KEPT', 'ALLOWED', 'identity_check', known.id, { why: 'the check is still under way', status: read.status });
     return { status: 200, outcome: null };
   }
   const check = app.db.get<{ id: string; business_id: string; cdd_check_id: string | null }>(
     'SELECT id, business_id, cdd_check_id FROM identity_checks WHERE session_id = ?', [read.session_id]);
-  if (check === undefined || (read.check_ref !== null && read.check_ref !== check.id)) {
-    record(cd, null, 'IDENTITY_RESULT_REFUSED', 'REFUSED', 'identity_check', 'unknown', { why: 'the result names no check we sent' });
-    return { status: 404, outcome: null };
-  }
+  if (check === undefined || (read.check_ref !== null && read.check_ref !== check.id)) return noCheckToMatch(app, cd);
   const at = app.now();
   app.db.run(
     'INSERT INTO identity_check_results (id, identity_check_id, outcome, provider_status, decided_at, received_at, body_sha256, result_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -164,6 +179,19 @@ export function receiveIdentityResult(app: App, newId: () => string, rawBody: st
   record(cd, null, 'IDENTITY_RESULT_RECEIVED', 'ALLOWED', 'identity_check', check.id, { business: check.business_id, outcome: read.outcome, status: read.status });
   if (read.outcome === 'PASS' && check.cdd_check_id !== null) recordPassAsEvidence(cd, check.cdd_check_id, (read.decided_at ?? at).slice(0, 10));
   return { status: 200, outcome: read.outcome };
+}
+
+/**
+ * A signed result that names no check we sent: REFUSED, AUDITED, NOTHING WRITTEN, and never matched to the nearest check.
+ * On a database in memory the refusal also says why that may be, and what to do (Phase 151e, line 4).
+ */
+function noCheckToMatch(app: App, cd: ComplianceDeps): ReceiveResult {
+  const forgetful = forgetfulDatabaseWarning(app) !== null;
+  record(cd, null, 'IDENTITY_RESULT_REFUSED', 'REFUSED', 'identity_check', 'unknown', {
+    why: 'the result names no check we sent',
+    ...(forgetful ? { database: 'in memory', what_to_do: FORGOTTEN_CHECK_WORDS } : {}),
+  });
+  return { status: 404, outcome: null, ...(forgetful ? { note: FORGOTTEN_CHECK_WORDS } : {}) };
 }
 
 /** The sentence a PASS writes into an open check's "How it was verified", when that is still empty. */
@@ -209,6 +237,13 @@ export function identityChecks(db: App['db'], where: { readonly business_id?: st
 }
 
 /**
+ * PHASE 151e (line 5), 27 September 2026: a client with no contacts showed no form and said nothing, so nobody could tell
+ * how to send a check (Lakhbir, 25 September 2026). A check goes only to a contact of the client, so the panel says so,
+ * with a link to the form that adds one.
+ */
+export const NO_CONTACTS_WORDS = 'A check goes to a contact of this client. Add the person as a contact first, then come back here to send it.';
+
+/**
  * THE PANEL, on the client's page and on a due diligence check. Shown to a person who may read the registers
  * (compliance.read); the form only to one who may write them (compliance.write). Off, the form still shows — and the
  * panel says, in the connector's own words, what must happen before anything is sent.
@@ -220,14 +255,17 @@ export function identityPanel(app: App, actor: Actor, where: { readonly business
   const lines = identityChecks(app.db, where.cdd_check_id !== undefined ? { cdd_check_id: where.cdd_check_id } : { business_id: where.business_id });
   const ready = identityCheckReadiness(app);
   const testing = identityTestingWarning(IDENTITY_CHECK);
+  const forgetful = forgetfulDatabaseWarning(app);
   const mayWrite = can(actor, 'compliance.write', complianceObj());
   const action = where.cdd_check_id !== undefined ? `/staff/compliance/aml/checks/${where.cdd_check_id}/identity` : '/staff/compliance/identity-checks';
   return h`<div id="identity-check">
     <p class="help">We send the person a link. They photograph their ID and take a selfie on their phone, and ${IDENTITY_PROVIDER_NAME} tells us the result. Their photographs never come to us.</p>
     ${ready.on ? raw('') : h`<p class="help"><strong>Not ready.</strong> Nothing is sent until these are done: ${ready.missing.join(' ')}</p>`}
     ${testing === null ? raw('') : h`<p class="err" id="identity-testing-only"><strong>${testing}</strong></p>`}
+    ${forgetful === null ? raw('') : h`<p class="help" id="identity-forgetful-database"><strong>Records kept in memory.</strong> ${forgetful}</p>`}
     ${lines.length === 0 ? h`<p class="help">No identity check has been sent.</p>` : h`<table><thead><tr><th>Person</th><th>Sent</th><th>Result</th><th>Link for the client</th></tr></thead><tbody>
       ${lines.map((l) => h`<tr><td>${l.contact}</td><td>${l.sent}</td><td>${l.outcome_words}${l.result_at === null ? '' : `, ${localWhen(l.result_at)}`}</td><td><a href="${l.link}">Their link</a></td></tr>`)}</tbody></table>`}
+    ${mayWrite && contacts.length === 0 ? h`<p class="help" id="identity-no-contacts"><strong>Nobody to check yet.</strong> ${NO_CONTACTS_WORDS} <a href="/staff/clients/${where.business_id}#contacts">Add a contact</a></p>` : raw('')}
     ${!mayWrite || contacts.length === 0 ? raw('') : h`<form method="post" action="${action}">
       <input type="hidden" name="business_id" value="${where.business_id}">
       <label class="fl" for="idc-contact">Who to check</label>

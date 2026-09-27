@@ -3634,6 +3634,16 @@ does not wait for the money laundering setting.
 5. The result shows in the list when it comes back. It says **Passed**, **Failed**, **A person must look at it** or
    **The client did not finish it**.
 
+**If the box says Nobody to check yet**
+A check only goes to a contact of this client. This client has none yet. Press **Add a contact** in the box. It takes
+you to the **Contacts** part of the same page. Add the person there, then come back and send the check.
+
+**If the box says Records kept in memory**
+The test website can forget things. It keeps its records in memory, and it forgets them when it restarts. More than
+one copy of it can run at once, too. So a result can reach a copy that never saw the check. That copy turns it away.
+If no result shows a few minutes after the person has finished, send the check again. The box goes once the website
+keeps its records in a lasting database.
+
 **What happens with a pass**
 A pass on a due diligence check fills in **How it was verified**. It says Didit passed them, and the day. You still
 finish the check yourself. A pass never finishes it for you.
@@ -3643,6 +3653,8 @@ finish the check yourself. A pass never finishes it for you.
 - A result more than five minutes old. It could be an old one sent again, so it is refused too.
 - A result for a check we never sent. It is refused too.
 - A person who is not a contact of this client. Add them as a contact first.
+- A result for a check this copy of the website has forgotten. It is refused like any other. It is never matched to
+  the nearest check.
 - A due diligence check that is finished. Send it from the client's page instead.
 
 **Check yourself**

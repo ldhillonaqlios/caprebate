@@ -5,6 +5,13 @@
  * users and clients, and answers every request with the same server. Nothing is kept: a new instance starts from
  * the seed again, and the data lives only as long as the instance does. Real data never goes here.
  *
+ * PHASE 151e (line 4), 27 September 2026: ONE DATABASE FOR EVERY COPY, SWITCHED OFF UNTIL LAKHBIR OPENS IT. A check
+ * sent from one copy and its result received by another met two different memories, and the result was refused. With
+ * CAPREBATE_DB_URL and CAPREBATE_DB_TOKEN in the website's settings (or TURSO_DATABASE_URL and TURSO_AUTH_TOKEN, the
+ * names Vercel's Turso integration gives them; a Turso database, through Vercel's Marketplace),
+ * AND the test password set, every copy uses that one database: the seed runs only when it is empty. Without all
+ * three, nothing changes, and the identity panel says the records are kept in memory (src/web/identity-checks.ts).
+ *
  * The code runs as TypeScript directly, as it does everywhere else (Node 24 strips the types).
  */
 import { mkdtempSync } from 'node:fs';
@@ -18,26 +25,23 @@ async function build() {
   const { seed } = await import('../Caprebate/09-app/backend/src/seed.ts');
   const host = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;
   const publicOrigin = process.env.CAPREBATE_PUBLIC_ORIGIN ?? (host ? `https://${host}` : undefined);
-  const made = await createApp(':memory:', {
+  const lasting = lastingDatabase(process.env);
+  console.log(`test deployment: ${lasting.why}`);
+  const made = await createApp(lasting.location, {
     documentRoot: mkdtempSync(join(tmpdir(), 'cb-vercel-')),
     ...(publicOrigin === undefined ? {} : { publicOrigin }),
+    ...(lasting.authToken === undefined ? {} : { dbAuthToken: lasting.authToken }),
   });
-  const r = await seed(made.app.db, made.app.hasher, made.app.now);
-  // PHASE 136: the view-only login, as tools/demo-server.ts adds it — here and in the demo only, never in src/seed.ts.
-  {
-    const t = made.app.now();
-    made.app.db.run(
-      'INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,NULL)',
-      ['u-demo-readonly', 'readonly@example.invalid', 'readonly@example.invalid', 'View-only Person', 'READ_ONLY', await made.app.hasher.hash(r.password), t, t],
-    );
-  }
+  const since = made.app.now();
+  await seedOnce(made, seed);
   // PHASE 151e (line 3): a password of its own, and then - only then - the Didit keys from the website's settings.
   const t151e = await configureTestDeploy(made, process.env);
   console.log(`test deployment: ${t151e.why}`);
   // No email is sent. The outbox (with a sign-up's confirmation link) goes to the function log, as the demo prints it.
   const shown = new Set();
   setInterval(() => {
-    for (const m of made.app.db.all('SELECT id, to_email, subject, body FROM outbox ORDER BY created_at')) {
+    // Only what this copy's life has put there: on a lasting database, the older messages were printed before.
+    for (const m of made.app.db.all('SELECT id, to_email, subject, body FROM outbox WHERE created_at >= ? ORDER BY created_at', [since])) {
       if (shown.has(m.id)) continue;
       shown.add(m.id);
       console.log(`--- outbox (not sent) to ${m.to_email}: ${m.subject}\n${m.body}\n---`);
@@ -74,8 +78,52 @@ export async function configureTestDeploy(made, env) {
   return { password_changed: true, keys_loaded: loaded, why: `every login now uses the test password; keys read: ${loaded.join(', ') || 'none'}` };
 }
 
+/**
+ * PHASE 151e (line 4): the database this deployment uses. A lasting one only when its address, its token AND the test
+ * password are all set: a database that outlives the instance must never sit behind the seed password, which was
+ * public until line 2. Anything less is memory, as before. It says what it chose - never the address and never the token.
+ */
+export const LASTING_DATABASE_KEYS = Object.freeze(['CAPREBATE_DB_URL', 'CAPREBATE_DB_TOKEN']);
+/** The names Vercel's Turso integration gives the same two settings (docs.turso.tech/integrations/vercel, 27 Sep 2026). Ours win. */
+export const TURSO_INTEGRATION_KEYS = Object.freeze(['TURSO_DATABASE_URL', 'TURSO_AUTH_TOKEN']);
+
+export function lastingDatabase(env) {
+  const pick = (ours, theirs) => ((env[ours] ?? '').trim() || (env[theirs] ?? '').trim());
+  const url = pick('CAPREBATE_DB_URL', 'TURSO_DATABASE_URL');
+  const token = pick('CAPREBATE_DB_TOKEN', 'TURSO_AUTH_TOKEN');
+  const pw = (env.CAPREBATE_TEST_PASSWORD ?? '').trim();
+  if (url === '' && token === '') return { location: ':memory:', why: 'no lasting database is set, so the records are kept in memory' };
+  if (url === '' || token === '') return { location: ':memory:', why: 'a lasting database needs both its address and its token, so the records are kept in memory' };
+  if (pw.length < 12) return { location: ':memory:', why: 'a lasting database is used only behind the test password, so the records are kept in memory' };
+  if (!/^(libsql|https):\/\//.test(url)) return { location: ':memory:', why: 'the lasting database address must start libsql:// or https://, so the records are kept in memory' };
+  return { location: url, authToken: token, why: 'the records are kept in the lasting database' };
+}
+
+/**
+ * The seed and the view-only login, ONLY on an empty database: on a lasting one the second cold start finds them there.
+ * Two copies starting at once on an empty database can both try; the one that loses finds the seed there and goes on.
+ */
+export async function seedOnce(made, seed) {
+  const count = () => Number(made.app.db.get('SELECT COUNT(*) AS n FROM users')?.n ?? 0);
+  if (count() > 0) return { seeded: false };
+  try {
+    const r = await seed(made.app.db, made.app.hasher, made.app.now);
+    // PHASE 136: the view-only login, as tools/demo-server.ts adds it — here and in the demo only, never in src/seed.ts.
+    const t = made.app.now();
+    made.app.db.run(
+      'INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,NULL)',
+      ['u-demo-readonly', 'readonly@example.invalid', 'readonly@example.invalid', 'View-only Person', 'READ_ONLY', await made.app.hasher.hash(r.password), t, t],
+    );
+    return { seeded: true };
+  } catch (e) {
+    if (made.app.db.kind !== 'memory' && count() > 0) return { seeded: false };
+    throw e;
+  }
+}
+
 export default async function handler(req, res) {
-  ready ??= build();
+  // A copy whose start failed (a lasting database that could not be reached, say) tries again on the next request.
+  ready ??= build().catch((e) => { ready = undefined; throw e; });
   const listener = await ready;
   return listener(req, res);
 }

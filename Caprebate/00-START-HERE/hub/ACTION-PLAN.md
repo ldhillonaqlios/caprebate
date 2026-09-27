@@ -459,6 +459,12 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   take CAPREBATE_TEST_PASSWORD from its settings, and only when that is set
   are DIDIT_API_KEY, DIDIT_WEBHOOK_SECRET and DIDIT_WORKFLOW_ID read from its
   settings too (api/index.mjs, configureTestDeploy).
+  ITS RECORDS ARE IN MEMORY until a lasting database is set (Phase 151e, 27
+  Sep 2026): with TURSO_DATABASE_URL and TURSO_AUTH_TOKEN (what Vercel's
+  Turso integration adds; CAPREBATE_DB_URL and CAPREBATE_DB_TOKEN win) AND
+  the test password, every copy uses one Turso database and the seed runs
+  only when it is empty (lastingDatabase, seedOnce). Word question 230 asks
+  Lakhbir to open it. Uploaded documents stay on a temporary disk: Phase 151i.
 
 THE LOCK - hub/CLAIM.md replaces monday.com's "Claimed by (machine)" column
   Before a phase starts: write the phase, the machine and the time there,
@@ -869,79 +875,9 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 151e — the test website: a check and its result on one database, and the empty identity panel
-
- **Model: Opus. Written 25 September 2026 by Phase 151d; restated 27 September 2026 with only what is left.** Tracker row: "Phase 151e - the test website: why every page fails, and what it shows to anyone" in 05 · FOR DEVELOPMENT (its id is 13133268301). Runs next, before Phase 151g and the sweep.
-
- **Why this exists, and what is already done.** Lines 1 and 2 ran on 25 September 2026 and are in PHASE HISTORY: every page failed because the root package.json lacked the Claude API library (fixed, with a test), and the website no longer serves any file of ours (Word question 229, "yes"). Line 3's first half ran the same day: the test website reads the three Didit keys from its Vercel settings, only behind a password of its own, and Didit's webhook points at https://caprebate-test.vercel.app/hooks/identity-check. Lakhbir checked himself and it showed Passed — **but only because the same running copy sent the check and received the result.** The database is still in memory and every cold start seeds a new one, so a result that arrives at another copy is refused (no check to match). Two things are left.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
-═══════════════════════════════════
-
-Mac copy. Take a .bak-phase151e3 sibling of every file you change (the plain
-.bak-phase151e copies belong to lines 1-3 and are not overwritten). Tracker
-row 13133268301. Nothing real goes on the test website: invented data only,
-and no real person's identity check is used as a test.
-
-1. A CHECK AND ITS RESULT ON ONE DATABASE. api/index.mjs (at Development/,
-   beside vercel.json) builds the whole application on createApp(':memory:')
-   and seeds it on every cold start; the back end is SQLite through
-   node:sqlite (src/db.ts). On Vercel a function's disk is temporary, so a
-   file there does not survive either. READ BEFORE CHOOSING, and choose the
-   smallest thing that is true:
-   (a) PERSIST: a database the function reaches from every copy. Read what
-       Vercel offers today for a function (its docs, not memory) and what
-       src/db.ts would have to change. If it needs an account, a key or
-       money, it is Lakhbir's to open: build it switched off, write the
-       settings it needs into the Developer Spec's one page and the "Built
-       by Phase 151e" section, ask him in the Word questions document under
-       his name (the AMENDMENT 2 way), and set the row to Ready - Lakhbir
-       action. Keys go only in Vercel's settings or ~/.caprebate-secrets.env.
-   (b) SAY SO, WHATEVER (a) BECOMES: on the identity panel and on the result
-       it receives, when the server is running on an in-memory database,
-       say in plain words that a result may arrive at a copy that has
-       forgotten the check, and what to do (send it again). The words come
-       from the server's own knowledge of its database, never from a flag a
-       page sets. A result that finds no check to match must still be
-       refused and logged as it is today - never matched to the nearest.
-   Prove whichever you build with a SIGNED, INVENTED result posted to
-   /hooks/identity-check (a 200 and a row where it should match; the
-   refusal where it should not), on recorded answers with no network, and
-   a test proved red on the pre-change code.
-
-2. THE EMPTY IDENTITY PANEL. On a client with no contacts the identity panel
-   shows no form and says nothing, so a person cannot tell how to send a
-   check (found by Lakhbir on 25 Sep 2026: Dunmarrow Medical Practice was the
-   only invented client with contacts). Say in plain words to add the person
-   as a contact of this client first, with a link to that form. A test,
-   proved red first. The guide's B53 and the Help text to match.
-
-CHECKS - npm run check; the site harness (both modes), the extraction
-verifier and extract --check; phase3 and phase9 from inside their folders;
-the drift checker, its negative control (--fast --expect 999,998,997,996 MUST
-exit 1, on its own line) and its self-test; the plain-words check; the tracker
-check; the register check and the CRM fold check, and both self-tests;
-payload-proof. After the push, check the live test website: "/" answers 200
-and the login page renders. Write the record with the CLOSING CHECK, clear
-hub/CLAIM.md, commit and push.
-```
-
 ## PHASE 151g — the test lookups Lakhbir allowed: the smoke test keeps his five conditions
 
- **Model: Opus. Written 25 September 2026 by Phase 151f.** Tracker row: "Phase 151g - the test lookups Lakhbir allowed" in 05 · FOR DEVELOPMENT. Runs after 151e, before the sweep.
+ **Model: Opus. Written 25 September 2026 by Phase 151f.** Tracker row: "Phase 151g - the test lookups Lakhbir allowed" in 05 · FOR DEVELOPMENT. Runs next, then 151i, then the sweep.
 
  **Why this exists.** Lakhbir answered "Can we make a few small, logged test lookups to check a data connector works?" on 25 September 2026: yes, on five conditions (Word question 170, now in the closed document). The live smoke test already exists (Phase 146g, `CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE>`), but it enforces none of the five: it only prints a warning, keeps its audit row in a database in memory that vanishes, and would take a client's postcode if one were typed.
 
@@ -997,6 +933,71 @@ CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
 inside their folders; the drift checker and its negative control; the plain-
 words check; the tracker check; the register check and the CRM fold check.
 Commit and push.
+```
+
+## PHASE 151i — the test website's uploaded documents on a store every copy reaches, switched off
+
+ **Model: Opus. Written 27 September 2026 by Phase 151e (lines 4 and 5).** Tracker row: "Phase 151i - the test website's uploaded documents on a store every copy reaches" in 05 · FOR DEVELOPMENT. Runs after 151g, before the sweep.
+
+ **Why this exists.** Phase 151e gave the test website a lasting database, built and switched off until Lakhbir opens a Turso database through Vercel (Word question 230). Its records will then outlive a copy of the website; its uploaded documents will not. `api/index.mjs` still hands the object store a folder on the function's temporary disk, so a document uploaded through one copy is missing from the next, while its row says it is there. Nobody has to answer anything for the code: build it and switch it off.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
+a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
+branch main. On the Mac the working copy is Development/, one level above the
+tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
+Allowances/Business Development/Development. git pull, then git log --oneline.
+OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
+INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
+COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
+plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
+already there stops you) and clear it at the end; retag what you touch in the
+tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
+write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+═══════════════════════════════════
+
+Mac copy. Take a .bak-phase151i sibling of every file you change. Tracker row:
+"Phase 151i - the test website's uploaded documents on a store every copy
+reaches" (find its id with list --group DEVELOPMENT). Nothing real goes on the
+test website: invented data only. Read first: the ObjectStore port
+(src/web/upload-handler-port.ts), FsObjectStore (src/web/objectstore.ts), the
+"Built by Phase 151e, lines 4 and 5" section of the Developer Spec, and
+api/index.mjs (lastingDatabase, documentRoot).
+
+1. READ BEFORE CHOOSING. What Vercel offers a function for files today (its
+   docs, not memory: Blob, private stores, the SDK and its token or OIDC), and
+   what the ObjectStore port asks of a store (write, read, keys, sealed
+   originals, the retained text). The port is synchronous or not - find out;
+   do not change its callers to suit a store.
+2. BUILD IT SWITCHED OFF. A store every copy reaches, used by api/index.mjs
+   ONLY when the lasting database is in use AND its own setting is present
+   (the way lastingDatabase needs its address, its token and the test
+   password). Anything less keeps today's temporary folder. Client documents
+   stay PRIVATE: never a public URL, served only through the route that
+   authorises each request, as the security baseline says. Keys only in
+   Vercel's settings or ~/.caprebate-secrets.env.
+3. IF IT NEEDS AN ACCOUNT, A STORE OR MONEY, it is Lakhbir's: write the setting
+   into the Developer Spec's one page and a "Built by Phase 151i" section, and
+   ask him in the Word questions document under his name, the AMENDMENT 2 way
+   (read question 230's answer first - it may already cover it).
+4. THE AUDIT LOG ON A SHARED DATABASE (Phase 151e). AuditLog.append
+   (src/audit.ts) reads the last hash and the next number, then writes: two
+   copies appending at once on one database collide on seq (its key), and
+   one request fails - the chain cannot fork, but the request is lost. Make
+   the read and the write one step (a transaction that takes the write lock
+   first, or retry on the key clash with a fresh read), with a test of two
+   Db handles on one file appending in turn and interleaved, and
+   verify-audit still intact. Do not change what a hash covers.
+Tests on recorded answers, no network: a document written through one copy is
+read through another; switched off, nothing changes; a document is never
+reachable without the authorising route. Proved red on the pre-change code.
+
+CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
+inside their folders; the drift checker and its negative control (on its own
+line); the plain-words check; the tracker check; the register check and the
+CRM fold check; payload-proof. Commit and push; check the live test website:
+"/" answers 200 and the login page renders.
 ```
 
 ## PHASE 152 — Sweep and stress-test (the recurring one, always last)
@@ -1129,6 +1130,15 @@ after that phase.
    from a Land Registry official copy go in the client's accountant's pack?"
    (yes; register entry SDP-L22). Rebuild QUESTIONS-WORD-HEADINGS.txt
    afterwards.
+   FIRST, PROVE WORD QUESTION 230 REACHED THE CLOUD (Phase 151e, 27 Sep 2026).
+   It was written into the Mac file at 09:35 ("Can the test website keep its
+   records in a database that lasts?", under Lakhbir, after 227), and eight
+   minutes later the cloud item still held the document without it: the
+   Mac-to-cloud fault AMENDMENT 2 describes had come back. Copy the cloud item
+   down and look for heading 230. If it is there, done. If it is not, the Mac
+   file still carries it (its .bak-phase151e3 sibling is the document before):
+   merge 230 into the CLOUD copy the AMENDMENT 2 way, never the Mac file over
+   it, and look for a OneDrive conflict copy beside it. BUILDABLE.
    AND ONE TEST THAT FAILS UNDER LOAD AND NOT ON ITS OWN (Phase 146j, 25 Sep
    2026): test/phase151c.test.ts, "0 when every point agrees ... 1 when one
    point is 2 mm out", runs tools/ostn15-verify.ts as a child process. In one
@@ -1488,13 +1498,13 @@ WHEN DONE
 
 ## 6 · What Claude is building next
 
- **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 25 September 2026 by Phase 146j: two items, and no orphan.** The test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
+ **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 27 September 2026 by Phase 151e (lines 4 and 5): two items, and no orphan.** The test lookups Lakhbir allowed (151g), and the test website's uploaded documents on a store every copy reaches (151i). The test website's row (151e) is finished on Claude's side and waits on Lakhbir opening a Turso database (Word question 230). Until 27 September this read: the test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
 
 
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
 |  Claude |  The test lookups Lakhbir allowed (Phase 151g) |  He said yes to small, logged test lookups on five conditions; the smoke test that makes them exists and enforces none of the five yet |
-|  Claude |  The test website: why every page fails, and what it shows to anyone (Phase 151e) |  Lines 1 and 2 are done (it starts again, and it shows no file of ours); line 3 is half done: Didit's keys are read behind a password of its own, and a check and its result are not yet on one database. Written by Phase 151d. What it may show is Lakhbir's decision, in the Word questions document |
+|  Claude |  The test website's uploaded documents on a store every copy reaches (Phase 151i) |  Written by Phase 151e on 27 September 2026: once the test website has its lasting database, its uploaded documents would still sit on each copy's temporary disk; and the audit log's next number on a shared database. Build it and switch it off |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 
