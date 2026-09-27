@@ -420,11 +420,12 @@ describe('the title register: the price four of five sectors have no other sourc
     assert.match(words ?? '', /HM Land Registry/);
   });
 
-  test('ONWARD SUPPLY TO THE ACCOUNTANT IS THE SOLICITOR’S TO OPEN, AND THE REGISTER STILL SAYS SO', () => {
+  test('ONWARD SUPPLY TO THE ACCOUNTANT WAS THE SOLICITOR’S TO OPEN, AND THE SOLICITOR OPENED IT (Phase 146m)', () => {
     const licence = LICENCES.find((l) => l.licence_id === 'HMLR_TITLE')!;
-    assert.equal(licence.redistribution.client_report, false);
-    assert.equal(licence.legal_review_required, true);
-    assert.match(licence.notes, /solicitor confirmation/);
+    assert.equal(licence.redistribution.client_report, false, 'the client report was not asked about and stays shut');
+    assert.equal(licence.redistribution.accountant_report, true);
+    assert.equal(licence.legal_review_required, false);
+    assert.match(licence.notes, /solicitor answered yes/);
   });
 });
 

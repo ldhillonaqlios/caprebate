@@ -1832,3 +1832,12 @@ Name:                                  Date:
 -  **For the data protection officer.** An official copy usually names a company as owner and a bank as lender, and neither is a person. But **a property held personally names its owner, with an address for service**, and a charge or a restriction can name an individual. So the copy is **never read by our document reader** — a person reads it — and it is kept whole until that person has read it, less the three kinds of content every upload loses on receipt, under the same retention clock as every client document. That is the weaker way of keeping a document, and its own rules say so. The facts typed from it never include a name. **What we ask:** are you content for us to hold an uploaded official copy in that way, or should staff upload it only where the owner is a company? Until you say otherwise, both are allowed, because the copy is the evidence behind the price in the claim.
 
 -  **For the solicitor.** Nothing new: whether the figures from it may go in the accountant's pack is SDP-L22's question above.
+
+ **SDP-L22 — ANSWERED BY THE SOLICITOR, AND THE OFFICER'S NOTE OF 27 SEPTEMBER ANSWERED TOO (27 September 2026, relayed by Lakhbir; Phase 146m).**
+
+-  **The solicitor: yes.** A figure taken from an HM Land Registry official copy — the price paid, the tenure, the title number — may go in the pack for the client's own accountant. The source register's licence for the title register no longer awaits legal review (`legal_review_required` is false and its note records the answer). The pack supporting an HMRC claim was already open under the licence and stays so. **The client's own report stays shut**: it was not asked about.
+
+-  **The data protection officer: yes.** We may keep an uploaded official copy that names a private owner, held as Phase 146l built it: read by a person and never by our document reader, kept whole until read less the three kinds every upload loses, under the same retention clock, with no name ever typed from it.
+
+-  **What stays open on the same board item** ("Phase 146d — the paid lookups built for real and switched off", 13104189485): SDP-P38 (the planning description, for the officer) and what is left of SDP-V8 (the address supplier's answers, for the developer). The item stays at Built — awaiting sign-off for those.
+

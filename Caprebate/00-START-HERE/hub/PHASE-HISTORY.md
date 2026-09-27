@@ -10412,3 +10412,22 @@ NEW node 03-app/caprebate-cash-route-proof.cjs       7 of 7 hold
  **Step 4B.** Items at "Ready - Claude can build": Phase 151e and Phase 151g, each with its own section. No orphans.
 
  **Commit:** `Phase 146l: the Land Registry official copy can be uploaded, read by a person, beside the typed facts` — pushed to `main` on github.com/ldhillonaqlios/caprebate.
+
+## PHASE 146m — the two Land Registry answers, relayed by Lakhbir: the official copy kept, and title figures in the accountant's pack (27 September 2026, Opus, Mac copy, Lakhbir's MacBook Pro)
+
+ **Lakhbir, in the chat, 27 September 2026: "May we keep an uploaded official copy that names a private owner? - yes" and "Can title figures go in the accountant's pack? - yes".** Asked whether these were his own decisions or the professionals' answers, he said he was **relaying theirs** — the data protection officer's and the solicitor's. Claimed (4e026df) under tracker row 13133268307, now Done; the claim is cleared. `.bak-phase146m` siblings of every changed file.
+
+### DONE — with the evidence
+
+-  **The solicitor's yes, acted on.** The source register's licence for the title register (`04-phase-work/phase3/caprebate-source-register.ts`, `HMLR_TITLE`) no longer awaits legal review: `legal_review_required` is false and its note records the answer, who relayed it and the register entry. The licence already permitted the accountant's pack and the HMRC pack; the **client report stays shut**, because it was not asked about. `T28` (phase3) and the Phase 146d onward-supply test now hold the new position — the list awaiting clearance is BCIS, CQC and Homedata; the accountant and HMRC channels open; the client report shut — and **both go red against the pre-change licence**. The retired connector's header says the same.
+-  **The officer's yes, recorded.** Nothing in the code needed changing: uploading an official copy was already allowed (Phase 146l) and stays held as built — read by a person, never the document reader.
+-  **Paperwork.** FOR THE SOLICITOR, THE DPO AND THE DEVELOPER: SDP-L22 marked answered by the solicitor, and the officer's note of 27 September answered. The board item that houses SDP-L22 (13104189485) stays at Built — awaiting sign-off for SDP-P38 and what is left of SDP-V8, with a note saying so. The Developer Spec's three flags (the one page, the Tier 2 row, the solicitor's licence flags) say the accountant's pack is cleared. The sweep's instruction now says to write both questions, with their relayed answers, straight into the closed Word document.
+-  **The checks, re-derived at the close:** `npm run check` exit 0 — 1606 pass / 0 fail across 84 files; the site harness 1273 / 0 / 4 xfail in both modes; phase3 439; phase9 398 — 3,716 in all, unchanged, because two tests changed and none was added. Extraction verifier, `extract --check`, the drift checker and its self-test green, its negative control exit 1; plain words, tracker, register and CRM fold checks green with their self-tests; payload proof PASS.
+
+### NOT DONE — each with its home
+
+-  Both answers are not yet in the Word document (neither question was ever in it) — BUILDABLE (the Word procedure) — in the sweep (Phase 152), step 3, in terms, beside questions 205 and 207.
+
+ **Step 4B.** Items at "Ready - Claude can build": Phase 151e and Phase 151g, each with its own section. No orphans.
+
+ **Commit:** `Phase 146m: the two Land Registry answers relayed — the official copy kept, title figures in the accountant's pack` — pushed to `main` on github.com/ldhillonaqlios/caprebate.

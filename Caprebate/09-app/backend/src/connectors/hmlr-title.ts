@@ -25,10 +25,10 @@
  * (REGISTER_AMOUNTS_WITHHELD in src/web/surveyor.ts) so that a surveyor cannot anchor on it. The rest of the record —
  * the tenure, the dates, the title number — goes to them as usual.
  *
- * ONWARD SUPPLY TO THE CLIENT'S ACCOUNTANT IS SHUT. The HMLR_TITLE licence in the source register has
- * `legal_review_required: true` and its note says the accountant-report position "needs solicitor confirmation". Until
- * the solicitor answers, nothing from this source reaches an accountant pack, and that is the register's refusal, not
- * a setting here.
+ * ONWARD SUPPLY TO THE CLIENT'S ACCOUNTANT — OPEN SINCE PHASE 146m (27 September 2026). The solicitor answered yes,
+ * relayed by Lakhbir, and the HMLR_TITLE licence in the source register no longer awaits legal review. The client
+ * report stays shut: it was not asked about. The licence is the register's, not a setting here — and since Phase 146k
+ * this connector is retired: the copy is bought, typed and uploaded by hand.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * THE THREE STEPS, AND WHICH PATHS ARE PUBLISHED AND WHICH ARE NOT

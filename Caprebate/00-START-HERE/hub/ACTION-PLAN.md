@@ -1141,14 +1141,15 @@ after that phase.
    ("Two things only someone with the supplier's own pack or a live key can
    confirm") loses its Business Gateway half: add a Recorded answer saying so,
    and leave it open for the Homedata half. BUILDABLE - it is only the Word
-   procedure in COORDINATES, which Phase 146k did not run. AND ADD ONE
-   QUESTION for the data protection officer, the Word document's own layout,
-   from the note of 27 Sep 2026 under SDP-L22 (Phase 146l): "May we keep an
-   uploaded Land Registry official copy that names a private owner?" -
-   staff now upload the official copy and title plan; it is read by a
-   person, kept whole until read, never sent to the document reader; our
-   suggestion is yes, because it is the evidence behind the price. Rebuild
-   QUESTIONS-WORD-HEADINGS.txt afterwards.
+   procedure in COORDINATES, which Phase 146k did not run. AND RECORD TWO
+   ANSWERS THAT NEVER HAD A WORD QUESTION (Phase 146m, 27 Sep 2026, both
+   relayed by Lakhbir): write each, the Word document's own layout, straight
+   into the CLOSED document with its Recorded answer and a Closed line - the
+   data protection officer's "May we keep an uploaded Land Registry official
+   copy that names a private owner?" (yes) and the solicitor's "May figures
+   from a Land Registry official copy go in the client's accountant's pack?"
+   (yes; register entry SDP-L22). Rebuild QUESTIONS-WORD-HEADINGS.txt
+   afterwards.
    AND ONE TEST THAT FAILS UNDER LOAD AND NOT ON ITS OWN (Phase 146j, 25 Sep
    2026): test/phase151c.test.ts, "0 when every point agrees ... 1 when one
    point is 2 mm out", runs tools/ostn15-verify.ts as a child process. In one

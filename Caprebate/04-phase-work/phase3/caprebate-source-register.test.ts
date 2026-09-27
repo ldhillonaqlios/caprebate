@@ -306,7 +306,11 @@ test('T27 a licence-restricted figure is caught before it reaches the client rep
 test('T28 sources awaiting solicitor/DPO licence clearance are listed, not assumed clear', () => {
   const r = reg();
   const ids = r.awaitingLegalReview().map((s) => s.source_id).sort();
-  assert.deepEqual(ids, ['BCIS', 'CQC', 'HMLR_TITLE', 'HOMEDATA_ADDRESS']);
+  // Phase 146m: HMLR_TITLE cleared — the solicitor said yes to the accountant's pack (relayed by Lakhbir, 27 Sep 2026).
+  assert.deepEqual(ids, ['BCIS', 'CQC', 'HOMEDATA_ADDRESS']);
+  const lic = LICENCES.find((l) => l.licence_id === 'HMLR_TITLE')!;
+  assert.deepEqual([lic.redistribution.accountant_report, lic.redistribution.hmrc_pack, lic.redistribution.client_report], [true, true, false],
+    'the answer opened the accountant pack, and nothing it was not asked about');
 });
 
 test('T29 every registered source resolves to a registered licence', () => {

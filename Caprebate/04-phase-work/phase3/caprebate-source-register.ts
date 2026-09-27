@@ -250,10 +250,12 @@ export const LICENCES: readonly Licence[] = [
     attribution_text: 'Contains HM Land Registry data © Crown copyright and database right.',
     redistribution: { client_report: false, accountant_report: true, hmrc_pack: true, internal: true },
     cache_max_age_days: 30,
-    legal_review_required: true,
+    legal_review_required: false,
     notes:
-      'Purchased official copies. Onward supply to a third party is restricted. FLAG: the ' +
-      'redistribution position for the accountant report needs solicitor confirmation.',
+      'Purchased official copies. Onward supply to a third party is restricted. CLEARED 27 September 2026: the ' +
+      'solicitor answered yes — a figure from an official copy may go in the pack for the client\'s own accountant ' +
+      '(relayed by Lakhbir; register entry SDP-L22). Since Phase 146k/146l the copy is bought, typed and uploaded ' +
+      'by hand; the licence is the same. Not in the client report: that channel was not asked and stays shut.'
   },
   {
     licence_id: 'CQC_SYNDICATION',

@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
-| Done | 264 |
-| Working on it | 1 |
+| Done | 265 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1247,6 +1247,7 @@
 
 `13104189485` · **Built - awaiting sign-off** · owner Claude
 
+- Note 2026-09-27 (Phase 146m): SDP-L22 answered: the solicitor said yes to title figures in the accountant's pack (relayed by Lakhbir, 27 Sep 2026); licence flag cleared. SDP-P38 and SDP-V8's address half still open, so the item stays.
 
 ### Phase 146g — the developer handover: every account, key, switch and hosting requirement in one place
 
@@ -1331,8 +1332,9 @@
 
 ### Phase 146m - the Land Registry answers relayed: the officer keeps the official copy, the solicitor lets title figures into the accountant's pack
 
-`13133268307` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
+`13133268307` · **Done** · owner Claude
 
+- Note 2026-09-27 (Phase 146m): Done: HMLR_TITLE licence cleared (solicitor yes, relayed); official copy kept (officer yes, relayed); SDP-L22 answered. Record in PHASE HISTORY.
 
 ---
 
