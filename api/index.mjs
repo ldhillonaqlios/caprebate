@@ -169,7 +169,7 @@ export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_00
   } catch (e) {
     // PHASE 151i follow-up 3: a first start cut off while it built the tables leaves one table made and not recorded,
     // and every later start stops on it. Say what to do, not only what broke.
-    const halfBuilt = /already exists/i.test(String(e?.message ?? '')) ? HALF_BUILT_WORDS : '';
+    const halfBuilt = /already exists|duplicate column/i.test(String(e?.message ?? '')) ? HALF_BUILT_WORDS : '';
     return memory(`the lasting database could not be opened (${reason(e)})${halfBuilt}, so the records are kept in memory`);
   }
   try {
@@ -196,7 +196,7 @@ export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_00
  * Never more than 200 characters of it.
  */
 /** PHASE 151i follow-up 3: what to do when a first start was cut off while it built the tables (seen 28 Sep 2026). */
-export const HALF_BUILT_WORDS = ': a first start was cut off while it built the tables - empty the database in Turso and redeploy';
+export const HALF_BUILT_WORDS = ': the tables were left part built - empty the database in Turso and redeploy';
 
 export function openFailure(e, lasting) {
   const code = String(e?.code ?? '').trim() || String(e?.name ?? '').trim() || 'an error';
@@ -211,6 +211,36 @@ export function openFailure(e, lasting) {
     .replace(/\s+/g, ' ').trim()
     .slice(0, 200);
   return words === '' || words === code ? code : `${code}: ${words}`;
+}
+
+/**
+ * PHASE 151i follow-up 4, 28 September 2026: THE LASTING DATABASE IS BUILT ONCE, WHILE VERCEL BUILDS THE DEPLOY.
+ * On the live website, 11:46 and 11:50: two copies started within a second of each other on the same empty Turso
+ * database, and both ran the migrations and the seed. One added a column the other then added again ("duplicate column
+ * name: legal_name"); the seed was left part done. So the tables and the seed are made by ONE process, the deploy's
+ * build (vercel.json's buildCommand runs Caprebate/09-app/backend/tools/prepare-lasting.mjs), before any copy starts.
+ * The copies then find the database finished, and their own migrate and seedOnce do nothing.
+ * IT NEVER STOPS A DEPLOY: whatever happens it says why (never the address or the token), and a copy that then finds the
+ * database unfinished runs on memory, as before.
+ */
+export async function prepareLasting(createApp, seed, lasting, opts = {}) {
+  if (lasting.authToken === undefined) return { prepared: false, why: `nothing to prepare, because ${lasting.why}` };
+  let made;
+  try {
+    made = await createApp(lasting.location, { ...opts, dbAuthToken: lasting.authToken });
+  } catch (e) {
+    const halfBuilt = /already exists|duplicate column/i.test(String(e?.message ?? '')) ? HALF_BUILT_WORDS : '';
+    return { prepared: false, why: `the lasting database could not be built (${openFailure(e, lasting)})${halfBuilt}` };
+  }
+  try {
+    const s = await seedOnce(made, seed);
+    if (!s.complete) return { prepared: false, why: 'the lasting database holds a seed that never finished: empty it in Turso and redeploy' };
+    return { prepared: true, why: s.seeded ? 'the lasting database is built and seeded (its first time)' : 'the lasting database was already built; its tables are up to date' };
+  } catch (e) {
+    return { prepared: false, why: `the lasting database could not be seeded (${openFailure(e, lasting)})` };
+  } finally {
+    try { made.close(); } catch { /* already gone */ }
+  }
 }
 
 /**

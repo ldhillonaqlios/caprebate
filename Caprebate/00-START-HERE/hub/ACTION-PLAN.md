@@ -1207,6 +1207,14 @@ after that phase.
    way through the MIGRATIONS by vercel.json's own maxDuration of 30 s (now
    300, Phase 151i follow-up 3), leaving claim_facts made and unrecorded.
    Lakhbir empties the Turso database and redeploys; then prove 230 and 231.
+   HE DID (a new database, 11:4x), AND IT HALF-BUILT AGAIN FOR ANOTHER REASON:
+   copies started in pairs within a second (11:46:09.38 and .70; 11:50:02
+   and :06), both migrated and seeded the empty database ("duplicate column
+   name: legal_name"; then "a seed that never finished" at 12:00:45). Since
+   Phase 151i follow-up 4 the deploy's BUILD makes the tables and the seed
+   once (vercel.json buildCommand, tools/prepare-lasting.mjs, prepareLasting)
+   before any copy starts. Read the build log's "build:" line on the next
+   deploy after he empties it again.
    AND A MIGRATION AND ITS RECORD AS ONE STEP (same day): migrate() in
    src/db.ts runs a file, then records it, so a start cut off between the
    two leaves this state again. Make each file and its schema_migrations row
@@ -1214,7 +1222,9 @@ after that phase.
    foreign keys off and run their own BEGIN/COMMIT, so a wrapping
    transaction cannot simply be added; read every file first. Prove it with a
    migration cut off part way on a file database, and the next start
-   finishing it. BUILDABLE.
+   finishing it. AND a copy still migrates and seeds an empty database itself
+   when the build step could not reach it: once the build step is proved,
+   decide whether a copy should only ever open. BUILDABLE.
    AND THE FIRST REQUEST AFTER EVERY DEPLOY TIMES OUT (Phases 151j and 151i,
    28 Sep 2026): "/" answered 504 after 30 s on the new copy's first start,
    twice running; every request after it answered 200 in under half a

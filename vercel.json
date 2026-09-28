@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm install --omit=dev",
-  "buildCommand": "",
+  "buildCommand": "node Caprebate/09-app/backend/tools/prepare-lasting.mjs",
   "outputDirectory": "public",
   "functions": {
     "api/index.mjs": {

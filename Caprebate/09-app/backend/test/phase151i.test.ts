@@ -499,7 +499,7 @@ describe('151i follow-up 3 · a first start cut off while it built the tables', 
   // The live test website, 28 Sep 2026, 11:28: "the lasting database could not be opened (Error: Hrana(Api("SQLite input
   // error: table claim_facts already exists (at offset 13)"))), so the records are kept in memory". vercel.json's own
   // limit of 30 seconds had stopped the first start part way through the migrations.
-  test('the log line says what to do: empty the database in Turso and redeploy', async () => {
+  test('the log line says what to do: the tables were left part built - empty the database in Turso and redeploy', async () => {
     const { openLasting } = await entry();
     const lasting = { location: 'libsql://invented-151i.turso.io', authToken: 'invented-token-151i', why: 'x' };
     const failing = (async (loc: string, o: object) => {
@@ -509,12 +509,66 @@ describe('151i follow-up 3 · a first start cut off while it built the tables', 
     const o = await openLasting(failing, seed, lasting, { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151i-half-')), now: () => NOW }, 0);
     try {
       assert.equal(o.lasting, false);
-      assert.match(o.why, /table claim_facts already exists .*\): a first start was cut off while it built the tables - empty the database in Turso and redeploy, so the records are kept in memory$/);
+      assert.match(o.why, /table claim_facts already exists .*\): the tables were left part built - empty the database in Turso and redeploy, so the records are kept in memory$/);
     } finally { o.made.close(); }
   });
 
   test('the website\'s time limit leaves a first start room: 300 seconds, the most Vercel\'s Hobby plan allows (read 28 Sep 2026)', () => {
     const v = JSON.parse(readFileSync(join(REPO, 'vercel.json'), 'utf8')) as { functions: Record<string, { maxDuration?: number }> };
     assert.equal(v.functions['api/index.mjs']?.maxDuration, 300);
+  });
+});
+
+describe('151i follow-up 4 · the lasting database is built once, while Vercel builds the deploy', () => {
+  // The live website, 28 Sep 2026: copies started in pairs (11:46:09.38 and .70; 11:50:02 and :06) on one empty Turso
+  // database and both migrated and seeded - "duplicate column name: legal_name", then "a seed that never finished".
+  type Prep = { prepareLasting: (c: typeof createApp, s: typeof seed, l: Lasting, o?: object) => Promise<{ prepared: boolean; why: string }> };
+  const stand = () => ({ location: join(mkdtempSync(join(tmpdir(), 'cb-151i-prep-')), 'turso-stand-in.db'), authToken: 'invented-token-151i-prep', why: 'the records are kept in the lasting database' });
+  const opts = () => ({ documentRoot: mkdtempSync(join(tmpdir(), 'cb-151i-prep-docs-')), now: () => NOW });
+
+  test('the build makes the tables and the seed once; a second build and every copy after it find them finished and add nothing', async () => {
+    const { prepareLasting, openLasting } = (await entry()) as unknown as Prep & EntryPoint;
+    const l = stand();
+    const first = await prepareLasting(createApp, seed, l, opts());
+    assert.deepEqual(first, { prepared: true, why: 'the lasting database is built and seeded (its first time)' });
+    const again = await prepareLasting(createApp, seed, l, opts());
+    assert.deepEqual(again, { prepared: true, why: 'the lasting database was already built; its tables are up to date' });
+    // Two copies starting together now both find it finished: nothing to migrate, nothing to seed, no collision.
+    const [a, b] = await Promise.all([openLasting(createApp, seed, l, opts(), 0), openLasting(createApp, seed, l, opts(), 0)]);
+    try {
+      for (const o of [a, b]) {
+        assert.equal(o.lasting, true);
+        assert.doesNotMatch(o.why, /seeded now/);
+      }
+      assert.ok((a.made.app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM users')?.n ?? 0) > 0);
+    } finally { a.made.close(); b.made.close(); }
+  });
+
+  test('with no lasting database it does nothing; a database that cannot be built is reported without its address or token', async () => {
+    const { prepareLasting } = (await entry()) as unknown as Prep;
+    const none = await prepareLasting(createApp, seed, { location: ':memory:', why: 'no lasting database is set, so the records are kept in memory' }, opts());
+    assert.deepEqual(none, { prepared: false, why: 'nothing to prepare, because no lasting database is set, so the records are kept in memory' });
+    const l = { location: 'libsql://invented-151i-prep.turso.io', authToken: 'invented-token-151i-prep', why: 'x' };
+    const failing = (async () => { throw Object.assign(new Error('Hrana(Api("SQLite error: duplicate column name: legal_name"))'), { code: '' }); }) as unknown as typeof createApp;
+    const r = await prepareLasting(failing, seed, l, opts());
+    assert.equal(r.prepared, false);
+    assert.match(r.why, /duplicate column name: legal_name.*the tables were left part built - empty the database in Turso and redeploy$/);
+    assert.equal(r.why.includes('invented-151i-prep') || r.why.includes('invented-token'), false);
+  });
+
+  test('vercel.json runs the build step, which sits outside api/ (every file there is a public address) and always exits 0', async () => {
+    const v = JSON.parse(readFileSync(join(REPO, 'vercel.json'), 'utf8')) as { buildCommand: string };
+    assert.equal(v.buildCommand, 'node Caprebate/09-app/backend/tools/prepare-lasting.mjs');
+    assert.deepEqual(readdirSync(join(REPO, 'api')).filter((f) => !f.includes('.bak')), ['index.mjs'], 'a second file in api/ would be a public address');
+    const env = { ...process.env };
+    for (const k of ['CAPREBATE_DB_URL', 'CAPREBATE_DB_TOKEN', 'TURSO_DATABASE_URL', 'TURSO_AUTH_TOKEN', 'CAPREBATE_TEST_PASSWORD']) delete env[k];
+    const r = await new Promise<{ code: number | null; out: string }>((resolve) => {
+      const p = spawn(process.execPath, [join(HERE, 'tools', 'prepare-lasting.mjs')], { cwd: REPO, env, stdio: ['ignore', 'pipe', 'pipe'] });
+      let out = '';
+      p.stdout.on('data', (d: Buffer) => { out += d.toString(); });
+      p.on('exit', (code) => resolve({ code, out }));
+    });
+    assert.equal(r.code, 0, r.out);
+    assert.match(r.out, /^build: nothing to prepare, because no lasting database is set/);
   });
 });
