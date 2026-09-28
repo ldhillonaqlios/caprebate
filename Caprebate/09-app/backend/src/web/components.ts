@@ -225,6 +225,19 @@ export function recordLayout(main: Safe, side: Safe): Safe {
  * used to sit under it moves in here. It is a <details>, so it needs no script, and with the stylesheet off it reads as
  * the sentence it always was. Nothing is removed: the words are still on the page.
  */
+/**
+ * PHASE 153 (28 September 2026) - THE PRIVACY NOTICE AT THE ADDRESS QUESTION, BUILT AND SWITCHED OFF.
+ * The free register lookups rest on legitimate interests, and CB_REGISTRY.precondition says they wait on "a published
+ * privacy notice reachable from the address question". This is that link. It is drawn only while that same switch is
+ * on - there is no second gate - and it informs; it asks nothing (no tick box: the basis is legitimate interests, not
+ * consent - standing rule 13(b)). The site file's funnel draws the same words (noticeAtAddress, harness Suite Q7).
+ */
+export function noticeAtAddress(gate: { readonly enabled: boolean }): Safe {
+  if (gate.enabled !== true) return raw('');
+  return h`<p class="help" id="q2-notice">We check the address against free public records, so we can fill in some answers for you.
+    <a href="/notices/" target="_blank" rel="noopener">Our privacy notice</a> says what we look up, why, and your rights.</p>`;
+}
+
 export function why(text: Safe | string): Safe {
   return h`<details class="why"><summary>Why?</summary><span class="whytext">${text}</span></details>`;
 }

@@ -95,9 +95,15 @@
    shipped engine and asserts they agree.
 
    UNKNOWN IS NOT A BRANCH. A parameter with no value NEVER becomes 0, a
-   midpoint, or a pass. Read PARAMS.homedata_cost_per_lookup below: it is null,
-   reading it through cost functions yields a result flagged known:false, and
-   nothing silently treats a missing cost as a free one.
+   midpoint, or a pass. Read PARAMS.homedata_cost_per_lookup below: while it
+   was null, reading it through cost functions yielded a result flagged
+   known:false, and nothing silently treated a missing cost as a free one.
+   (Updated 28 September 2026, Phase 153: since Phase 151, 24 September 2026,
+   it is 0.08 - Homedata's 8p list price, not a price on an account - and
+   homedata_cost_per_lookup_basis says so in every result that reads it. The
+   reader still returns known:false for a value that is not a number. The
+   rule still shows in PARAMS.overhead_per_year and
+   PARAMS.surveyor_review_and_sign_quote, which are null.)
 
    RUN THE TESTS
      node --test caprebate-job-economics.test.cjs

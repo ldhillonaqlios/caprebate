@@ -28,9 +28,11 @@
  * ───────────────────────────────────────────────────────────────────────────
  * AND A SECOND THING THE PROTOTYPE MUST NOT DO QUIETLY
  *
- * The .docx is a SPECIMEN. It names "Oakfield Care Group" and quotes an
- * indicative range of £27,788–£73,125 — a fictional client and an illustrative
- * figure. Rendering it unchanged into a real client's portal would show them
+ * The .docx is a SPECIMEN. It names "Quenmoor Care Group" and quotes an
+ * indicative range of £27,788–£73,125 — an invented client and an illustrative
+ * figure. (Until Phase 153, 28 September 2026, the specimen was "Oakfield Care
+ * Group", company number 09183422, and that number is a real, dissolved
+ * company's. Name and number were both replaced in the .docx itself.) Rendering it unchanged into a real client's portal would show them
  * somebody else's name in their own contract. So the specimen values are
  * substituted where the record supplies a real one, and MARKED where it does
  * not. Neither is silent.
@@ -69,22 +71,25 @@ export type Letter = {
 };
 
 /** The specimen client and figures baked into the template. */
-const SPECIMEN_CLIENT = 'Oakfield Care Group';
+const SPECIMEN_CLIENT = 'Quenmoor Care Group';
 /**
- * The same specimen WITH its suffix. The letter says "Oakfield Care Group Ltd" in
+ * The same specimen WITH its suffix. The letter says "Quenmoor Care Group Ltd" in
  * three places; substituting only the bare name turned a record called
  * "Test Care Ltd" into "Test Care Ltd Ltd". The longer form is replaced first.
  */
-const SPECIMEN_CLIENT_WITH_SUFFIX = 'Oakfield Care Group Ltd';
+const SPECIMEN_CLIENT_WITH_SUFFIX = 'Quenmoor Care Group Ltd';
 /**
- * THE SPECIMEN COMPANY NUMBER, and it is not fictional. 09183422 is on the
- * Companies House register as BEYOND BEAUTY (BIGGLESWADE) LIMITED, dissolved
- * 14 May 2019 (checked 12 September 2026, Phase 129). Until this constant
- * existed the portal replaced the specimen NAME and left this number standing,
- * so a real client's letter named them "under company number 09183422".
- * Substituted where the record supplies a number; FLAGGED where it does not.
+ * THE SPECIMEN COMPANY NUMBER. Invented since Phase 153 (28 September 2026):
+ * 98604417 is not on the Companies House register (its page answered 404 that
+ * day), and the register's numbers run nowhere near 98 million. The number it
+ * replaced, 09183422, was not fictional: it is BEYOND BEAUTY (BIGGLESWADE)
+ * LIMITED, dissolved 14 May 2019 (checked 12 September 2026, Phase 129). Until
+ * this constant existed the portal replaced the specimen NAME and left the
+ * number standing, so a real client's letter named them "under company number
+ * 09183422". Substituted where the record supplies a number; FLAGGED where it
+ * does not — an invented number is still not the client's.
  */
-const SPECIMEN_COMPANY_NUMBER = '09183422';
+const SPECIMEN_COMPANY_NUMBER = '98604417';
 const SPECIMEN_RANGE = '£27,788–£73,125';
 
 /**

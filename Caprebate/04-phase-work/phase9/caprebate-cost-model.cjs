@@ -215,7 +215,10 @@ const BUILDING_TYPE = { STANDARD: "standard", HIGHLY_SERVICED: "highly_serviced"
 
    and the factor is factors[property] / factors[where the rates are priced],
    both read from this one table. A table still carrying a bare mean refuses
-   (E_LOCATION_MEAN_DEPRECATED) rather than being read the old way. */
+   (E_LOCATION_MEAN_DEPRECATED) rather than being read the old way.
+   (Updated 28 September 2026, Phase 153: BCIS publishes its factors against a
+   UK mean of 100, which is basis "national_mean" with the UK mean as the base
+   row - read from BCIS's own page; see the LEG-E4 note. The stub stays empty.) */
 const CB_LOCATION_FACTORS = emptyTable(
   "CB_LOCATION_FACTORS",
   "BCIS location factors (BCIS chosen over Spon's, Word answers 6 and 8)",
@@ -983,6 +986,24 @@ function feesFactor(input, opts) {
                                       books, or declare different bases
      E_RATES_PRICING_LOCATION_MISSING the book does not say where its rates are priced
 
+   CHECKED AGAINST BCIS, 28 SEPTEMBER 2026 (Phase 153). The declared base
+   was designed against Spon's (Outer London = 1.00); BCIS, not Spon's, is
+   being bought (Word question 218, "Which BCIS product did you agree to, and
+   does its licence let our software use its rates?", open). BCIS's own public
+   page says: "All of our location factors are set in relation to a UK mean
+   factor of 100", available for regions, counties or districts and searchable
+   by postcode or local authority name
+   (https://www.bcis.co.uk/insight/bcis-basics-using-location-factors-in-construction/).
+   That is the national_mean basis above, base row the UK mean at 100. So the
+   design needed no change to take a BCIS table: the price source is an id,
+   not a book's name, and nothing here hard-codes Outer London. Tests D30 to
+   D34 prove it on an INVENTED BCIS-shaped table. Only this refusal's message
+   was reworded to name BCIS's base. Not settled, and not built: whether the
+   BCIS product has a contract-size scale in the shape CB_CONTRACT_SIZE_
+   ADJUSTMENT takes. A 2015 RICS/BCIS tutorial lists a "Contract sum" tender
+   price study, but its shape is not public. With this gate on, the location
+   factor still needs that table loaded. That waits on the purchase.
+
    AND AN ABSENT CONTRACT VALUE IS NO LONGER A PASS (Phase 132, N4). Until this
    date a job with no contract_value took a contract-size factor of 1 and a
    flag (LEG_E4_NO_CONTRACT_SIZE) - "not stated" became "exactly the book's
@@ -1041,8 +1062,9 @@ function locationAndContractSizeFactor(input, opts) {
   if (!indexBaseWellFormed(base)) {
     fail("E_LOCATION_INDEX_BASE_MISSING",
       "the location table must declare index_base as { basis: 'outer_london' | " +
-      "'national_mean' | 'publisher_other', base_key, base_value }. Spon's is " +
-      "indexed to Outer London = 1.00, other books to a national mean of 100; " +
+      "'national_mean' | 'publisher_other', base_key, base_value }. BCIS says " +
+      "its location factors are set against a UK mean of 100 (national_mean); " +
+      "Spon's is indexed to Outer London = 1.00; " +
       "reading one as the other is out by a factor of a hundred and still " +
       "returns a number.",
       { table: "CB_LOCATION_FACTORS", declared_by: "location_table",

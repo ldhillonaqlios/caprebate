@@ -765,6 +765,8 @@ Signed .............................  Date ..........................
 
 ### ACC-D1 · The review pack — every open question, one per line
 
+ **Corrected 28 September 2026 (Phase 153) — the counts in the table below are from 13 September and are now out of date.** Rulebook I, the table of tax rates behind every relief figure, joined this review with its seven questions (decided on Lakhbir's answer read 15 September, added to the pack on 16 September; Word question 50, closed 24 September). Re-derived in code from the tracker today: **fifty-three questions recorded — forty-nine open, two recorded as answered, two superseded — so fifty-one are put to you: fifteen blockers, twenty-eight high and eight standard** (the one unrated line is one of the two superseded). The three-day estimate for your first review (Word question 7, closed) was set when the pack held forty-six; it stands, with the note that complicated property structures may need more time. The hiring documents now carry the same correction.
+
 |  **What it is** |  **Forty-six questions**, each one a separate tracked line with its own answer state, drawn from rulebooks A to F. Each carries the statutory citation trail behind it and where it lands in the engine. **This is the actual scope of the fixed-fee review.** |
 | --- | --- |
 |  **What state it is in** |  Counted from the board on 13 September 2026: **forty-two open, two recorded as answered — from our own reading of the statute, and we would still like those two confirmed — and two superseded**. One was superseded because the statute contradicted its premise; the other was reframed into a question that is still open. **That leaves forty-four put to you****. Not one of the forty-six has been answered by a qualified adviser.** Seven carry a provisional view from the director, recorded on the line and labelled as provisional.
@@ -1158,7 +1160,7 @@ supervised
 
  **Nothing in this register's Sections A to F has changed and nothing new is being asked of you.** This note exists because an earlier note in this document told you not to quote a revenue figure from two named documents, and that instruction is now wrong.
 
- **What happened.** Five documents priced jobs on _5% of the tax saved_ — the base the fee-basis options paper recommended and which Q55 did not choose. On 8 September they were banned from quotation; on 9 September they were rebuilt on **5% of the capital allowances identified**, which is what we charge. **The rate card, the fee-basis paper, the business plan and both minimum-fee papers are all now current**, and the paragraph above has been corrected.
+ **What happened.** Five documents priced jobs on _5% of the tax saved_ — the base the fee-basis options paper recommended and which Q55 did not choose. On 8 September they were banned from quotation; on 9 September they were rebuilt on **5% of the capital allowances identified**, which is what we charge. **The rate card, the fee-basis paper, the business plan and both minimum-fee papers are all now current**, and the paragraph above has been corrected. _(Updated 28 September 2026, Phase 153: that was true on 9 September. Since then the fee has become a flat **3%** of the capital allowances identified, so "5% … which is what we charge" is history, not the current charge; the rate card and the papers now say 3%. The old extra charges are Word question 235, "Do the old extra charges stay: the add-on for complicated jobs and the £1,500 manual-handling charge?".)_
 
  **The one thing in it that is a question for a tax adviser rather than for us**, and it is raised here rather than in Section A because it is a commercial point with a tax shape rather than a reading of the legislation:
 
@@ -1596,3 +1598,15 @@ Signed .............................  Date ..........................
 
  **One question for you, in the Word questions document:** whether the client's answer about VAT on their building works can stand for whether they can reclaim VAT on our fee. Until you answer, the engine does not connect the two.
  **28 September 2026 (the Phase 152 sweep): one clash for the tax adviser, and no new entry.** Rulebook A, section 4, keeps the word "refund" to W1 and W4, and says W2 (the window closed, the property still owned) only reduces tax over time. The estimate says "refund" on W2 as well, when the client says the claim creates a loss and that the loss is carried back to the year before; Module 00 agrees with the estimate, and the rulebook never mentions losses. It was never asked. It is now Word question 237, "When a claim through the pool creates a loss that is carried back, may we tell the client part of it comes back as a refund?", and the rulebook carries a dated note beside the sentence. Nothing in the estimate changes until it is answered.
+
+
+## Phase 153, 28 September 2026 — dated lines on four entries; nothing moved in or out
+
+-  **ACC-D1, the review pack.** Fifty-three questions, fifty-one put to the tax adviser — see the correction at the top of ACC-D1, re-derived in code. The hiring pack, the decision pack, the rulebooks export, the business plan (ACC-H2) and the Blockers page now carry the same count; the three-day estimate stands.
+-  **ACC-B4, Rulebook C.** Section 8.1 said "I have not read TMA 1970 s.12ABA". The section was read in full on 24 August; a dated correction now sits beside the sentence. What remains is the tax adviser's confirmation of the partnership amendment window and its flow-through to partners' returns.
+-  **ACC-H1, the standard operating procedures.** Step ~273 no longer says the connectors are not built: they are built and switched off. The title register is bought and read by hand (Phase 146k), still only after a signed engagement letter.
+-  **ACC-H2, the business plan.** "Forty-four" questions is now fifty-three recorded, fifty-one put to the adviser.
+-  **The fee.** The note of 9 September ("5% … which is what we charge") now carries a dated line: the fee is a flat 3% of the capital allowances identified; the old extra charges are an open question for Lakhbir.
+-  **The tax adviser's switches.** The extraction verifier now counts twenty-four, every one off; which way each one moves a claim is being re-counted in Phase 153a.
+
+ **This register's size is unchanged by Phase 153**: no item moved into or out of it. The count is the register check's.

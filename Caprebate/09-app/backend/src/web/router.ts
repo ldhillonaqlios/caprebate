@@ -55,7 +55,7 @@ import { receivableTypes, startDocumentUpload, readLines, type RequestView } fro
 import { handleStaff, handlePortalSettings } from './staff.ts';
 import { mayEnterBackOffice, NotFoundAsRefusal } from './backoffice.ts';
 import { navContext, staffShell, portalShell, type NameSwitches, type NavContext } from './navigation.ts';
-import { badge, breadcrumb, card, claimRef, clientStageBar, propertyIn, savedMessage, welcomeCard, why } from './components.ts';
+import { badge, breadcrumb, card, claimRef, clientStageBar, noticeAtAddress, propertyIn, savedMessage, welcomeCard, why } from './components.ts';
 import { stepName } from './portal-steps.ts';
 import { clientSteps, type ClientStep } from './approvals.ts';
 import { clientStepsCard } from './approvals-pages.ts';
@@ -1286,7 +1286,7 @@ function screenFields(draft: Draft, id: ScreenId): Safe {
     const sectors = FUNNEL.SECTOR_LABEL as Record<string, string>;
     const entities = FUNNEL.ENTITY_LABEL as Record<string, string>;
     const triggers = FUNNEL.TRIGGER_LABEL as Record<string, string>;
-    return h`${props.map((p, i) => {
+    return h`${noticeAtAddress(registryGate())}${props.map((p, i) => {
       const f = FRONTDOOR.spendFieldsFor(p.trigger) as { label?: string; dateLabel?: string } | null;
       return h`<div class="pblock"><div class="pnum">Property ${i + 1}</div>
         <label class="fl">Where is it?</label>

@@ -2883,6 +2883,11 @@ if (startSuite("M", "Phase 53 — handover invariants")) {
   check("M2b — the contact address is on the decided domain",
     /contact@caprebate\.co\.uk/.test(src) && !/caprebate\.com/.test(src), true);
 
+  /* ADDED PHASE 153, 28 September 2026. Both thank-you screens printed "Email: [ PLACEHOLDER ]" after the
+     mailbox was live and read (Word questions 3 and 216). Fails on any site file before this phase. */
+  check("M2c — the thank-you screens print the live contact address, not a placeholder",
+    !/\[ PLACEHOLDER \]/.test(src) && (src.match(/<strong>Email:<\/strong> <a href=\"mailto:contact@caprebate\.co\.uk\">/g) || []).length === 2, true);
+
   /* Q49 was ANSWERED by Lakhbir on 1 Sep 2026 — "just say Health Tax
      Partners", incorporating this week — so Phase 62 removed the clearance
      qualifier from the site and the sample report. The qualifier was TRUE on
@@ -4115,6 +4120,53 @@ if (startSuite("Q", "Phase 72 — the funnel, wired in")) {
      The funnel passes no declared processors, so it must not render. */
   check("Q6 — the contact screen renders no undeclared processor channel",
     /renderableChannels\(\[\]\)/.test(src), true);
+
+  /* --- Q7: the privacy notice at the address question (PHASE 153) ------
+     Tracker item 12955356558, 28 September 2026. The free lookups rest on
+     legitimate interests, whose condition is a published notice reachable
+     from the address question (CB_REGISTRY.precondition.requires). The link
+     is drawn at Q2 only while that same switch is on - no second gate - and
+     with no tick box, because the basis is informed, not consented (standing
+     rule 13(b)). FN is DOM code, so it is lifted here from the SITE FILE's
+     own text with the smallest stub that works (as the gated-exit renderer
+     proof does), in both --package and site mode: this is page text, not
+     engine arithmetic. Q7 FAILS on "Caprebate site.html.bak-phase153". */
+  (function(){
+    const layerAt = src.indexOf("var CB_PLANT"), layerEnd = src.indexOf("/* ===== care_homes", layerAt);
+    const fnAt = src.indexOf("var FN = (function(){"), fnEnd = src.indexOf("\n})();", fnAt);
+    const nodes = {};
+    const doc = { getElementById: id => nodes[id] || (nodes[id] = { id, style: {}, textContent: "", innerHTML: "", scrollTop: 0 }) };
+    let L = null;
+    try {
+      L = new Function("document", src.slice(layerAt, layerEnd) + "\n;" + src.slice(fnAt, fnEnd + "\n})();".length) +
+        "\n;return { FN: FN, CB_REGISTRY: CB_REGISTRY };")(doc);
+    } catch (e) { L = null; }
+    /* Q1 -> Q1a -> Q1b -> Q1c -> Q2, the address question, with the switch as given; restored at once. */
+    function atAddress(on) {
+      if (!L) return "";
+      const was = L.CB_REGISTRY.precondition.enabled;
+      L.CB_REGISTRY.precondition.enabled = on;
+      try {
+        L.FN.start(); L.FN.set("is_uk_taxpayer", "yes"); L.FN.next(); L.FN.next(); L.FN.next();
+        L.FN.setTrigger("purchase"); L.FN.next();
+        return nodes.stage ? nodes.stage.innerHTML : "";
+      } finally { L.CB_REGISTRY.precondition.enabled = was; }
+    }
+    const off = atAddress(false), on = atAddress(true);
+    const link = /<a href="\/notices\/"[^>]*>/;
+    check("Q7 — the funnel renderer lifts from the site file and reaches the address question",
+      [L !== null, /Where is it\?/.test(off), /Where is it\?/.test(on)], [true, true, true]);
+    check("Q7 — the switch ships off, so the address question draws no link to /notices/",
+      [L && L.CB_REGISTRY.precondition.enabled, link.test(off), /q2-notice/.test(off)], [false, false, false]);
+    check("Q7 — with the same switch on, the address question links to /notices/, above the address box",
+      [link.test(on), on.indexOf('href="/notices/"') >= 0 && on.indexOf('href="/notices/"') < on.indexOf("Where is it?")],
+      [true, true]);
+    check("Q7 — it informs and asks nothing: no tick box is added at the address question",
+      (on.match(/type="checkbox"/g) || []).length, (off.match(/type="checkbox"/g) || []).length);
+    check("Q7 — the gate is CB_REGISTRY.precondition itself: the link is drawn under its enabled flag and nowhere else",
+      /function noticeAtAddress\(\)\{\s*if\(!\(CB_REGISTRY\.precondition && CB_REGISTRY\.precondition\.enabled === true\)\) return '';/.test(src),
+      true);
+  })();
 }
 
 /* =============================================================================

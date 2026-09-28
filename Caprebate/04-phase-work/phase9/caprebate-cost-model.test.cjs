@@ -21,7 +21,9 @@
    The one exception is 94-against-a-national-mean-of-100 for Cardiff, which is
    the worked example written on the board item itself and is used here only as
    a shape check. The Outer-London tables and every price-book entry added by
-   Phase 132 are invented, and describe no real book.
+   Phase 132 are invented, and describe no real book. (Updated 28 September
+   2026, Phase 153: so is the BCIS-shaped table of D30 to D34 - it copies only
+   BCIS's published base, a UK mean of 100, and holds no BCIS figure.)
 
    Nothing in this file may be promoted to a default. When the real tables land
    they go in the module's empty stubs, not here, and these fixtures stay
@@ -1232,6 +1234,153 @@ test("D29 interpolateScale's outside option defaults to refuse, rejects an unkno
       M.feesFactor(job, ON(Object.assign({ leg_e4_contract_size_outside_window: true }, E3_BOTH))),
       M.feesFactor(job, ON(E3_BOTH)));
   }
+});
+
+/* -----------------------------------------------------------------------
+   D30 to D34 — PHASE 153 (28 September 2026). DOES THE DECLARED BASE TAKE A
+   BCIS TABLE? Phase 132 built the declared base against Spon's (Outer London
+   = 1.00). BCIS, not Spon's, is being bought (Word question 218, "Which BCIS
+   product did you agree to, and does its licence let our software use its
+   rates?", open). BCIS's own page says "All of our location factors are set
+   in relation to a UK mean factor of 100", for regions, counties or districts
+   (https://www.bcis.co.uk/insight/bcis-basics-using-location-factors-in-construction/).
+
+   THE TABLE BELOW IS INVENTED. It is shaped like BCIS's (a UK mean row at 100,
+   district-level keys, rates at the UK mean) and it holds NO BCIS figure: the
+   keys name no real place and every number is made up. The contract-size
+   half still uses the invented CONTRACT_SIZE_FIXTURE at its 0% point, because
+   the shape of BCIS's contract-size data is not public.
+   ----------------------------------------------------------------------- */
+
+const BCIS_SHAPED_ID = "invented_bcis_shaped_book";
+const UK_MEAN_BASE = { basis: "national_mean", base_key: "uk_mean", base_value: 100 };
+const bcisShapedTable = () => ({
+  table_id: "CB_LOCATION_FACTORS",
+  source: "INVENTED BCIS-SHAPED FIXTURE - not BCIS data; every key and number is made up",
+  licence: "n/a - fixture", loaded: true, verified_at: "2026-09-28",
+  price_source: BCIS_SHAPED_ID, index_base: UK_MEAN_BASE,
+  factors: { uk_mean: 100, invented_district_dear: 108, invented_district_cheap: 92,
+             invented_district_at_mean: 100 }
+});
+const BCIS_SHAPED_ENTRY = {
+  label: "INVENTED BCIS-SHAPED BOOK - describes no real product", rates_include_oncosts: null,
+  index_base: UK_MEAN_BASE, rates_priced_at_key: "uk_mean"
+};
+const SPONS_SHAPED_ID = "invented_spons_shaped_book";
+const SPONS_SHAPED_ENTRY = {
+  label: "INVENTED OUTER-LONDON-BASED BOOK - not Spon's", rates_include_oncosts: null,
+  index_base: OUTER_LONDON_BASE, rates_priced_at_key: "outer_london"
+};
+const bcisTables = locTable => tablesWith({
+  CB_LOCATION_FACTORS: locTable || bcisShapedTable(),
+  CB_PRICE_SOURCES: withSources({ [BCIS_SHAPED_ID]: BCIS_SHAPED_ENTRY, [SPONS_SHAPED_ID]: SPONS_SHAPED_ENTRY })
+});
+const BCIS_LOC = extra => Object.assign({ location_key: "invented_district_cheap",
+  price_source: BCIS_SHAPED_ID, contract_value: 3000000 }, extra);
+
+test("D30 a table declared on BCIS's base (UK mean = 100) is ACCEPTED, and moves rates priced at the UK mean", () => {
+  const at = key => locFactor(BCIS_LOC({ location_key: key }), bcisTables());
+  const cheap = at("invented_district_cheap");
+  assert.equal(cheap.applied, true);
+  assert.equal(near(cheap.location_factor, 0.92), true);
+  assert.equal(near(cheap.factor, 0.92), true);           /* contract size neutral at 3,000,000 */
+  assert.deepEqual(cheap.index_base, UK_MEAN_BASE);
+  assert.equal(cheap.price_source, BCIS_SHAPED_ID);
+  assert.equal(cheap.rates_priced_at_key, "uk_mean");
+  assert.equal(cheap.rates_priced_at_index, 100);
+  assert.equal(near(at("invented_district_dear").location_factor, 1.08), true);
+  assert.equal(at("invented_district_at_mean").location_factor, 1);
+  assert.equal(at("uk_mean").location_factor, 1);
+  /* not read on the wrong scale: a factor near 1, not near 0.0092 or 92 */
+  assert.ok(cheap.location_factor > 0.5 && cheap.location_factor < 2);
+
+  /* and through the residual model: applied once, to the total */
+  const job = { purchase_consideration: 2000000, land_value_estimate: 600000,
+    location_key: "invented_district_dear", price_source: BCIS_SHAPED_ID, contract_value: 3000000,
+    elements: [{ element_ref: "plant", pool: "main", qty: 1, rate: 1000000 }] };
+  const r = M.residualApportionment(job, { gates: E4_ON, tables: bcisTables() });
+  assert.equal(near(r.cost_plan.location_factor_applied_once, 1.08), true);
+  assert.equal(near(r.components.A, 1000000 * 1.08 * 1.18 * 1.15, 1e-6), true);
+  for (const l of r.lines) assert.equal("location_factor" in l, false);
+});
+
+test("D31 a table from a DIFFERENT book is refused where BCIS is expected, and a BCIS table under another book's rates is refused", () => {
+  /* an Outer-London-based (Spon's-shaped) table fed to a job priced from the BCIS-shaped book */
+  const spTable = outerLondonTable(SPONS_SHAPED_ID);
+  const fed = errWhole(() => locFactor(BCIS_LOC({ location_key: "wales" }), bcisTables(spTable)));
+  assert.equal(fed.code, "E_LOCATION_INDEX_BASE_MISMATCH");
+  assert.equal(fed.detail.reason, "different_source");
+  assert.equal(fed.detail.table_price_source, SPONS_SHAPED_ID);
+  assert.equal(fed.detail.rates_price_source, BCIS_SHAPED_ID);
+
+  /* the same Outer-London table relabelled as the BCIS-shaped book's: the book's base disagrees */
+  const relabelled = errWhole(() => locFactor(BCIS_LOC({ location_key: "wales" }),
+    bcisTables(outerLondonTable(BCIS_SHAPED_ID))));
+  assert.equal(relabelled.code, "E_LOCATION_INDEX_BASE_MISMATCH");
+  assert.equal(relabelled.detail.reason, "different_base");
+  assert.deepEqual(relabelled.detail.rates_index_base, UK_MEAN_BASE);
+  assert.deepEqual(relabelled.detail.table_index_base, OUTER_LONDON_BASE);
+
+  /* the other way round: the BCIS-shaped table under a job priced from the Outer-London book */
+  const reverse = errWhole(() => locFactor(BCIS_LOC({ price_source: SPONS_SHAPED_ID }), bcisTables()));
+  assert.equal(reverse.code, "E_LOCATION_INDEX_BASE_MISMATCH");
+  assert.equal(reverse.detail.reason, "different_source");
+
+  /* a BCIS-shaped table that claims an Outer-London base it does not hold */
+  const claimsOL = Object.assign(bcisShapedTable(), { index_base: OUTER_LONDON_BASE });
+  assert.equal(codeOf(() => locFactor(BCIS_LOC(), bcisTables(claimsOL))), "E_LOCATION_BASE_NOT_IN_TABLE");
+});
+
+test("D32 a BCIS-shaped table with a MISSING base is refused, whichever side fails to declare it", () => {
+  for (const bad of [null, undefined, {}, { basis: "uk_mean", base_key: "uk_mean", base_value: 100 },
+                     { basis: "national_mean", base_key: "unsure", base_value: 100 },
+                     { basis: "national_mean", base_key: "uk_mean" }]) {
+    const t = Object.assign(bcisShapedTable(), { index_base: bad });
+    const e = errWhole(() => locFactor(BCIS_LOC(), bcisTables(t)));
+    assert.equal(e.code, "E_LOCATION_INDEX_BASE_MISSING", JSON.stringify(bad));
+    assert.equal(e.detail.declared_by, "location_table");
+  }
+  const { index_base: _gone, ...tableNoBase } = bcisShapedTable();
+  assert.equal(codeOf(() => locFactor(BCIS_LOC(), bcisTables(tableNoBase))), "E_LOCATION_INDEX_BASE_MISSING");
+
+  /* the book entry must declare it too */
+  const noBookBase = tablesWith({ CB_LOCATION_FACTORS: bcisShapedTable(),
+    CB_PRICE_SOURCES: withSources({ [BCIS_SHAPED_ID]: Object.assign({}, BCIS_SHAPED_ENTRY, { index_base: null }) }) });
+  const fromBook = errWhole(() => locFactor(BCIS_LOC(), noBookBase));
+  assert.equal(fromBook.code, "E_LOCATION_INDEX_BASE_MISSING");
+  assert.equal(fromBook.detail.declared_by, "price_source");
+
+  /* a units slip: BCIS's base written as 1.00 when the table holds 100 */
+  const slip = Object.assign(bcisShapedTable(),
+    { index_base: { basis: "national_mean", base_key: "uk_mean", base_value: 1.00 } });
+  assert.equal(codeOf(() => locFactor(BCIS_LOC(), bcisTables(slip))), "E_LOCATION_BASE_NOT_IN_TABLE");
+});
+
+test("D33 a BCIS-shaped table carrying a BARE MEAN (undeclared) is refused, not divided by it", () => {
+  const bare = { table_id: "CB_LOCATION_FACTORS", source: "INVENTED BCIS-SHAPED FIXTURE - not BCIS data",
+    licence: "n/a - fixture", loaded: true, verified_at: "2026-09-28", mean: 100,
+    factors: { invented_district_cheap: 92, invented_district_dear: 108 } };
+  const e = errWhole(() => locFactor(BCIS_LOC(), bcisTables(bare)));
+  assert.equal(e.code, "E_LOCATION_MEAN_DEPRECATED");
+  assert.equal(e.detail.mean, 100);
+  /* a mean left beside a declared BCIS base refuses too */
+  assert.equal(codeOf(() => locFactor(BCIS_LOC(), bcisTables(Object.assign(bcisShapedTable(), { mean: 100 })))),
+    "E_LOCATION_MEAN_DEPRECATED");
+});
+
+test("D34 with a BCIS-shaped table loaded, the shipped gate is still OFF and nothing moves; the shipped stub is empty and names BCIS and Word question 218", () => {
+  assert.equal(M.CB_P9_GATES.leg_e4_location_and_contract_size, false);
+  const off = M.locationAndContractSizeFactor(BCIS_LOC(), { tables: bcisTables() });
+  assert.equal(off.applied, false);
+  assert.equal(off.factor, 1);
+  assert.ok(off.flags.includes("LEG_E4_NO_REGIONAL_ADJUSTMENT"));
+  assert.deepEqual(M.CB_LOCATION_FACTORS.factors, {});
+  assert.equal(M.CB_LOCATION_FACTORS.loaded, false);
+  assert.match(M.CB_LOCATION_FACTORS.source, /BCIS/);
+  assert.match(M.CB_LOCATION_FACTORS.licence, /218/);
+  /* the refusal for a missing base names BCIS's published base */
+  const t = Object.assign(bcisShapedTable(), { index_base: null });
+  assert.match(errWhole(() => locFactor(BCIS_LOC(), bcisTables(t))).message, /BCIS.*UK mean of 100/);
 });
 
 /* =============================================================================

@@ -14530,10 +14530,27 @@ var FN = (function(){
     return h + '</div>';
   }
 
+  /* PHASE 153 (line 9, tracker item 12955356558), 28 September 2026. THE PRIVACY
+     NOTICE, LINKED AT THE ADDRESS QUESTION. The free register lookups rest on
+     legitimate interests, and the assessment's condition is a published notice
+     reachable from this question (CB_REGISTRY.precondition.requires). So the
+     link is drawn here, on the question itself, and ONLY while that same switch
+     is on: no second gate. While the notice is not published the switch is off,
+     nothing is looked up, and a link to a page that is not live is not drawn.
+     It INFORMS; it asks nothing. There is no tick box, on purpose: the basis is
+     legitimate interests, not consent (standing rule 13(b)). New tab, so the
+     answers already given stay where they are. */
+  function noticeAtAddress(){
+    if(!(CB_REGISTRY.precondition && CB_REGISTRY.precondition.enabled === true)) return '';
+    return '<p class="help" id="q2-notice">We check the address against free public records, so we can fill in some answers for you. '
+      + '<a href="/notices/" target="_blank" rel="noopener">Our privacy notice</a> says what we look up, why, and your rights.</p>';
+  }
+
   function screenQ2(){
     return '<div class="group">The property</div>'
       + '<h2>Tell us about the property.</h2>'
       + '<p class="help">You can add as many as you like. Each one is its own claim and its own set of checks &mdash; and one engagement covers all of them.</p>'
+      + noticeAtAddress()
       + S.properties.map(propertyBlock).join("")
       + '<button class="addp" onclick="FN.addProperty()">+ Add another property</button>';
   }
@@ -14674,6 +14691,8 @@ var FN = (function(){
   }
 
   function screenDone(){
+    /* PHASE 153, 28 September 2026: both thank-you screens printed a bracketed placeholder for the email address. The mailbox
+       contact@caprebate.co.uk exists on IONOS and is read (Word questions 3 and 216, closed 24 Sep), so it is printed. */
     /* AFTER A GATED EXIT THE THANK-YOU PRINTS NO CEILING. The prospect was shown
        no figure and no assessment was recorded, so there is neither to repeat -
        as gatedThankYouPage in the back end's router does. Corrected 12 September
@@ -14681,7 +14700,7 @@ var FN = (function(){
     if(CB_FRONTDOOR.gateQ1b(S).gated === true)
       return '<div class="rung">Thank you</div><h2>Thank you &mdash; that is with us.</h2>'
         + '<p class="help">One of our advisers will contact you <strong>within one working day</strong> on the channel you chose.</p>'
-        + '<div class="contactbox"><strong>Email:</strong> [ PLACEHOLDER ]</div>'
+        + '<div class="contactbox"><strong>Email:</strong> <a href="mailto:contact@caprebate.co.uk">contact@caprebate.co.uk</a></div>'
         + '<button class="cta ghost" onclick="FN.restart()">Start again</button>';
     var f = CB_FUNNEL.figure(S);
     return '<div class="rung">Thank you</div><h2>Thank you &mdash; we\u2019ll be in touch.</h2>'
@@ -14691,7 +14710,7 @@ var FN = (function(){
           + esc(CB_FUNNEL.SECTOR_LABEL[p.sector]||"sector not given")+'</li>'; }).join("")
       + '<li>Indicative ceiling: <strong>'+money(f.total)+'</strong>, on the assumptions shown earlier</li>'
       + '</ul></div>'
-      + '<div class="contactbox"><strong>Email:</strong> [ PLACEHOLDER ]</div>'
+      + '<div class="contactbox"><strong>Email:</strong> <a href="mailto:contact@caprebate.co.uk">contact@caprebate.co.uk</a></div>'
       + '<button class="cta ghost" onclick="FN.restart()">Start again</button>';
   }
 

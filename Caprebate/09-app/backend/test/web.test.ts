@@ -456,23 +456,23 @@ test('the engagement letter is read from the docx and its open terms are shown, 
   // NO NUMBER IS INVENTED. Every open term still reads as a placeholder.
   for (const t of L.openTerms) assert.match(t.text, /^\[/);
   // The specimen client name is substituted; the specimen figure is flagged.
-  assert.ok(!L.paragraphs.some((p) => p.text.includes('Oakfield Care Group')));
+  assert.ok(!L.paragraphs.some((p) => p.text.includes('Quenmoor Care Group')));
   assert.ok(L.specimens.some((s) => s.includes('27,788')));
-  // THE SPECIMEN NUMBER IS A REAL COMPANY'S (dissolved; checked 12 Sep 2026). No record number:
-  // it stays and is FLAGGED. And the suffix is not doubled.
-  assert.ok(L.specimens.some((s) => s.includes('09183422')), 'an absent company number is flagged, not passed off');
+  // THE SPECIMEN NUMBER IS INVENTED since Phase 153 (until then it was a real, dissolved company's,
+  // 09183422). No record number: it stays and is FLAGGED. And the suffix is not doubled.
+  assert.ok(L.specimens.some((s) => s.includes('98604417')), 'an absent company number is flagged, not passed off');
   assert.ok(!L.paragraphs.some((p) => p.text.includes('Ltd Ltd')), 'the specimen suffix is not doubled');
 });
 
 test('the engagement letter replaces the specimen company NUMBER as well as the name', () => {
   const N = loadLetter({ clientName: 'Test Care Ltd', companyNumber: '12345678' });
-  assert.ok(!N.paragraphs.some((p) => p.text.includes('09183422')), 'the specimen number is gone');
+  assert.ok(!N.paragraphs.some((p) => p.text.includes('98604417')), 'the specimen number is gone');
   assert.ok(N.paragraphs.some((p) => p.text.includes('company number 12345678')), 'the record number is rendered');
   assert.ok(N.paragraphs.some((p) => p.text.includes('Test Care Ltd (Company No. 12345678)')));
-  assert.ok(!N.specimens.some((s) => s.includes('09183422')));
+  assert.ok(!N.specimens.some((s) => s.includes('98604417')));
   // Blank is absent (N4): the specimen is flagged, never silently kept as the client's.
   const B = loadLetter({ clientName: 'Test Care Ltd', companyNumber: '   ' });
-  assert.ok(B.specimens.some((s) => s.includes('09183422')));
+  assert.ok(B.specimens.some((s) => s.includes('98604417')));
 });
 
 test('output is escaped, and the gates are reported shut', () => {

@@ -401,11 +401,6 @@
           "why": "Built by Phase 133d, 17 Sep 2026, and moved from Ready - Claude can build. The letter now names the adviser Cap Rebate, which waits on the solicitor; housed under SDP-L3 as the phase prompt asked, rather than as a new entry, in the Phase 133d note at the end of the register, which also describes the developer's side (required words, refusals beside the field, the stage bar)."
         },
         {
-          "ref": "SDP-L4 the clawback clause",
-          "id": "12984730922",
-          "how": "prose"
-        },
-        {
           "ref": "SDP-L5 who signs the filing position",
           "id": "12984726624",
           "how": "prose"
@@ -792,6 +787,12 @@
           "id": "13118508369",
           "how": "prose",
           "why": "Added by Phase 146i, 23 Sep 2026. Two CLIENT_DOC fields — grant_funder_name and brc_issuing_body — are kept only on the footing that the value names an organisation, the name exclusion register cannot check it because it classifies by field name and never sees a value, and until this phase nobody could supply the answer, so both kinds of document kept nothing at all. A person answers it now on the document's own page; only a yes keeps the field. Whether that is a member of staff's call to make is the data protection officer's, and Word question 210 is where the answer goes. Declared in prose in the Phase 146i note at the end of the register, because a row cannot be added to an existing Monday table through the document API."
+        },
+        {
+          "ref": "SDP-P40 keep client uploads for seven years, and who may open them",
+          "id": "13092540283",
+          "how": "prose",
+          "why": "Added by Phase 153, 28 Sep 2026: Lakhbir answered Word question 219 on 24 Sep, so the item waits on the officer, not on him. Built and switched off; the privacy notice's two lines are drafted in SDP-P10 Section 7."
         }
       ],
       "mentions": [
@@ -814,6 +815,12 @@
         {
           "id": "12955088177",
           "why": "Six years on a client uploaded document. Closed by Phase 129 on 12 Sep 2026 into the retention determinations item, which is SDP-P3; the SDP-P1 heading stays in the text as a record and the Phase 129 note says it is folded into SDP-P3. Not an entry. (Was entry \"P1 six years on a client's uploaded document\".)"
+        },
+        {
+          "ref": "SDP-L4 the clawback clause",
+          "id": "12984730922",
+          "how": "prose",
+          "why": "Moved out of this register by Phase 153, 28 Sep 2026: the item is at Ready - Lakhbir action because two of clause 13's bracketed terms are his decision (Word question 34). The entry stays in the text as the record of what the solicitor will be asked once he answers."
         }
       ]
     }

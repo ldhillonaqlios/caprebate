@@ -940,11 +940,9 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 153 — five decisions carried into the documents that never heard of them, and the rows that say more than is true
+## PHASE 153a — the grant trace, the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations
 
- **Model: Opus. Written 28 September 2026 by the Phase 152 sweep.** Tracker row: "Phase 153 - five decisions carried into the documents that never heard of them, and the rows that say more than is true" (13133268312, in 05 · FOR DEVELOPMENT). Runs next, then the sweep.
-
- **Why this exists.** The Phase 152 sweep read every item, subitem and document the tracker names. Five decisions of 22 to 25 September never reached the documents written before them — the data protection mailbox is live and read, monday.com was dropped, the Claude API reads uploaded documents, the title register is done by hand, and BCIS was chosen over Spon's — so about forty documents still say the opposite, several of them papers the data protection officer or the solicitor is being asked to sign. None of this needs anybody to answer anything. The sweep fixed what was one command each (the tracker rows) and wrote the rest here, line by line, with where it found each one. **Test every line against its file before you write: a line number moves, and a premise the sweep read quickly can be wrong.**
+ **Model: Opus. Written 28 September 2026 by Phase 153.** Tracker row: "Phase 153a - what Phase 153 found and could build but did not ..." (13133268314, in 05 · FOR DEVELOPMENT). Runs next, then the sweep. **Why this exists.** Phase 153 carried five decisions into about fifty documents; its agents found six more things nobody has to answer anything for. Each is buildable today, so under AMENDMENT 1 each goes in a phase, not a sentence. **Test every line against its file first.**
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -962,217 +960,67 @@ tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
 write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
 ═══════════════════════════════════
 
-Mac copy. Take a .bak-phase153 sibling of every file you change. Paths are
-from Caprebate/; "08/" is 08-monday-doc-exports/, "SDP" is
-hub/FOR-THE-SOLICITOR-DPO-DEVELOPER.md. Every document here that waits on a
-signature stays at "Built - awaiting sign-off" in its one register: bring its
-TEXT up to date and add a dated line to its register entry saying what
-changed. Never change what a person decided; change only what the decisions
-since have made untrue. READ EACH FILE BEFORE YOU EDIT IT - the sweep's line
-numbers are where it read them on 28 Sep 2026. A document whose change you
-cannot make without a person's answer: leave it, and name the Word question.
+Mac copy. A .bak-phase153a sibling of every file you change.
 
-1. THE DATA PROTECTION MAILBOX IS LIVE AND READ. data.protection@caprebate.
-   co.uk exists on IONOS (Word question 3, closed) and Sadique Maskeen reads
-   all three mailboxes (question 216, closed). Still "NOT SET", "not proven
-   to exist" or "no dedicated address" in: the officer's instrument
-   (08/12927221812__Instrument-of-appointment-...md, s.8.1 and s.4.3; and
-   its B-6, if Word question 69 answers it - read that answer first); the
-   retention procedure (12818099921: readiness R1, s.5.2); the breach
-   communications pack (12927894775: lines ~84, 176, and the templates'
-   "[CONTACT ADDRESS - NOT SET" ~438); the Article 14 assessment's letters
-   (12927987812, ~875, 982, 1013); the response letters' header
-   (12927850552, ~115); the rights-request and complaints pack (12927908435,
-   ~42, 492); the complaints process (12552700588, ~98, 106); the ICO answer
-   sheet (12927942615, ~146, 195); SDP ~698-700; the supplier breach duties
-   (06-commercial-and-governance/Caprebate-Supplier-Breach-Notification-
-   Duties-v1.md, ~96). Keep the notices page's own "[NOT SET" markers that
-   are real unknowns (the ICO reference, dates): only the address is known.
-2. MONDAY.COM WAS DROPPED ON 25 SEP 2026. Wherever it is "in use today", a
-   processor that "holds client data today", or the home of the breach
-   register ("monday.com board 18429145787"): the PUBLIC notices page
-   (03-app/caprebate-notices-page.html ~368 and ~387 - then run the notices,
-   brand and plain-words checks); the privacy notice draft (08/12818279787_
-   _Section-1-...md, section 6 ~208-234); the recipients list (06-.../
-   Caprebate-Recipients-of-Client-Personal-Data-v1.md P2, and P5 "the
-   WordPress host", with no rows for Didit or Postcodes.io); SDP ~928 and
-   ~1108; the breach procedure's operative addendum (12927581028, A2.1
-   ~835); the continuity plan (12552682536, the register and a recovery row
-   for monday.com); the rules-defect plan (12927557335); the officer's
-   instrument; the rights-request pack; the four-facts paper's M4
-   (12927683763; Word question 58 closed "no Microsoft 365 audit"); the
-   Cyber Essentials pack (12552681921: Appendix C.3, and Appendix B's "runs
-   locally, no production hosting" - the test website is on Vercel, and
-   since Phase 151j every staff login has a second step); the supplier
-   breach duties (~143, and its "WordPress host" row 25). WHERE THE BREACH
-   REGISTER NOW LIVES IS NOT DECIDED - Word question 181 is open: say that,
-   and point at it; do not choose.
-3. THE CLAUDE API READS UPLOADED DOCUMENTS (Word question 172; built by
-   Phase 146e, 13104177605). "No model is wired in" / "no extraction model is
-   chosen" in: the document pipeline impact assessment (12910861459, ~170
-   and Gate A ~269, and "the rest of the WordPress platform" ~114); the
-   ingestion minimisation export (08/12928074627__18429188333__0.-THE-ONE-
-   THING...md); the breach procedure; the Article 14 assessment; the ICO
-   answer sheet; the supplier breach duties' s.2A.
-4. THE TITLE REGISTER IS DONE BY HAND (Phase 146k) AND THE SOLICITOR SAID
-   YES TO THE ACCOUNTANT'S PACK (SDP-L22, 27 Sep; Word question 234,
-   closed). 09-app/CAPREBATE-DEVELOPER-SPEC.md s.4 row 3 (~2084, "Install
-   the Business Gateway certificate") and row 3a ("the four HMLR_BG_* names",
-   "onward supply ... stays shut"), the Tier 2 table's requirements column
-   (~1994), and ~2095 calling the officer's role Lakhbir's decision when
-   ~2909 says it is decided - then run the drift and CRM fold checks; the
-   standard operating procedures (12552682457: ~273 "the connectors are not
-   built", and the title register on the operator's click); the licensing
-   review (12818265662, the title register row ~48); the supplier register
-   (12552700455: Homedata as "valuation data" - it is the address lookup and
-   its valuations are never used - the Business Gateway, "CRM vendor tbc",
-   and no Microsoft, IONOS, Anthropic, Didit or BCIS). The tracker row
-   13104189485's name still puts the title register on the click, and its
-   owner is Claude at a sign-off label: rename it and set the owner to the
-   register's person.
-5. BCIS WAS CHOSEN OVER SPON'S (24 Sep 2026; Word question 218 open on which
-   BCIS product). Dated notes on the surveyor register's SV-S6 and SV-S8;
-   13004035199's name ("waits only on the surveyor's answer" - Q52 and Q218
-   gate it too); 12804374707 (a note: its blocker is BCIS and Q218, not
-   "Spon's, £330"); 12804374406's only file is the Spon's blind re-run
-   protocol - rewrite it as a BCIS draft, marked as waiting on Q218.
-6. THE FEE IS A FLAT 3%, AND OTHER FIGURES THAT MOVED. FOR-THE-ACCOUNTANT.md
-   ~1161 ("rebuilt on 5% ... which is what we charge ... all now current":
-   a dated line, never a rewrite of the history); 09-app/CAPREBATE-CRM-
-   DISPOSITION.md 8.13 (~275) and ~664 ("Five per cent ... decided 3
-   September"); the brand guidelines (12552682538, ~373 and ~377);
-   04-phase-work/phase9/caprebate-job-economics.cjs's header ~97-99 (says
-   homedata_cost_per_lookup is null; line ~306 sets 0.08 since Phase 151 -
-   run phase9); the rate card (12804368154): its banner says the multi-site
-   discount is decided while s.5.1, s.5.2, s.10 and ~246/259 say it is not,
-   and "Saddique" 29 times (Word question 69 - read its answer); the
-   add-ons wait on new Word question 235. Rulebook C s.8.1 (~316, ~380: "I
-   have not read TMA 1970 s.12ABA") - 12851600794 closed that gap: correct
-   it through Rulebook C's row, 12830037336. The session record's s.9 open
-   questions (02-modules-and-build-prep/Caprebate-Session-Record-and-Build-
-   Sequence-v1.md ~270, the Homedata free tier; and the Scotland item).
-   F-15 grant_fraction (12852269899, Done, "remainder documented as future
-   work"; Module 00 ~545 "payer-class and traced-elements structure remain
-   absent"): check whether Phase 143's grants screen closed it; update
-   Module 00, or open a row.
-7. THE ENGAGEMENT LETTER'S WORD COMMENTS AND ITS SPECIMEN (12984545390). The
-   clause 7 comment's "[its company name and country, for the solicitor to
-   confirm ...]" and "[for the solicitor to confirm]": the privacy notice
-   filled both on 25 Sep (08/12818279787_..., ~532: Didit Identity Spain,
-   S.L., its Data Processing Addendum) - fill them as a proposal for the
-   solicitor. The specimen "Oakfield Care Group ... 09183422" is a REAL,
-   dissolved company (SDP ~1350): replace it with an invented one. The DOCX
-   uses BACKSLASH entry paths - rewrite that single entry, keep every other
-   entry's bytes and NAME, check every CRC, and run the back end's letter
-   tests and the portal renderer. The bracketed choices in clauses 1, 5, 7
-   and 13 are Word questions 33, 34 and 196 - leave them. The tracker note's
-   "Article 28 terms with Veriff": Didit.
-8. SMALLER, EACH ONE A READ AND A LINE. The anti-money-laundering paper
-   (12830178449, s.7 ~207-217: "Apply ID" was APLYiD, Word question 225;
-   record the Didit build); ACTION-PLAN.md s.8 (~1607: the site no longer
-   says "within 4 years", "No win, no fee" or "From £5,000" - grep the site
-   file to prove it, then correct the paragraph); the Developer Spec ~3015
-   (the mailboxes question, closed); the audit log determination
-   (12949297803: "WordPress is the whole back end"); the data specification
-   (12948738680: its heading); the CRM 8 row 13032264597 and SDP ~1348 (the
-   officer's login: Word question 44 closed, "no separate login for now");
-   the brand work row 13069114161 and SDP ~1472 (a) and (b), overtaken on 18
-   Sep; the governance policies (12552682456): fill the [VERIFY] placeholders
-   B4 (the systems in use) and B6 (the drafted retention periods) from what
-   is decided - leave the solicitor's; the solicitor brief (12927233337):
-   its name describes a drafting job done on 29 Aug, it says no solicitor is
-   instructed while answers are recorded from "the solicitor" (Word question
-   224, SDP-L22), and its money-laundering framing ("we expect yes")
-   predates Lakhbir's answer to question 10 - rename it, and write a Word
-   question for Lakhbir: which solicitor gave the answers of 27 Sep, and are
-   they instructed?
-9. TRACKER ROWS WHOSE LABEL IS NOT WHAT IS IN THE WAY - read each, retag,
-   note. 13092540283 (keep client uploads 7 years: Lakhbir answered question
-   219, so it waits on the officer - Built - awaiting sign-off, in the
-   officer's register, with the privacy notice's two lines drafted: the 7
-   years, and who may open them); 12927091743 (the British Standards: Word
-   question 32's recorded answer is "Surveyor" - Parked, trigger "the
-   surveyor call is held"); 12818132946 (surveyor step 3 - Parked on the
-   same trigger as step 2); 12949133180 (the host backup email: its deadline
-   of 2 Sep has passed and it goes when the developers propose a host -
-   Parked, deadline cleared); 12984730922 (the clawback clause is Word
-   question 34, a decision: Ready - Lakhbir action); 12955356558 (the link to
-   /notices/ at the address question: the site links it only for complaints
-   and cookies - build it hidden behind the precondition that already
-   exists, CB_REGISTRY.precondition, and say so); 12927091742 (question 187:
-   prepare the two redacted straw-men copies so the answer is a one-word
-   choice); 12552682452 (point its files at 08/12927233704__Corporation-
-   Tax-registration-content.md); 12984553034 (a note: question 33's partial
-   answer, "abort fee nil", and the break fee "£995 per property?");
-   13003875907 and 12830173693 (one email closes both: cross-link them);
-   the files columns that point only at _archive/superseded/ (12830166288,
-   12804317757, 12819676756, 12552691606; and 12830181812 at the first
-   solicitor brief - v2 is on 12927233337); the four "Drafted, not
-   approved" subitems 12552667541, 12552667614, 12552667618, 12552667621
-   (their live text is Parts A-D of 08/12552682456__Item-1-Governance-
-   Policies.md); S10, the matching spec (12819677135, Done): its 200-
-   property measurement has no row - create one at the label that names
-   what stops it (tools/match-measure.ts --run refuses until the officer
-   answers Word question 200, "May we run our address-matching test on 200
-   real addresses?" - so it is Blocked - question, and says so).
-10. THE SAME QUESTION ASKED TWICE (the sweep's pattern xii). Open pairs in
-   the Word document: 10 and 128 (money-laundering supervision); 139 and
-   149 (how close a blind test must be); 118 and 224 (who files the amended
-   return); 42 and 117 (a fee to a referring accountant); 197 and 202
-   (PlanIt); 171 and 195 (Google Analytics); 159 and 221 (names in
-   uploads); 59 and 226 (VAT on our fee); 51 and 82 (stamp duty); 2 with
-   155 and 157 (the hosting questions); 76 and 133; 131 and 199. Open
-   against closed: 62 (22), 222 (185), 191 (7), 69 (54), 196 (3, 4, 186,
-   216). And question 5 still asks where monday.com stores our data. For
-   each: read both, and where one's answer settles the other, record it the
-   AMENDMENT 2 way and close it; where both are open, add to the later one
-   "Same subject as question N - one answer does both". The AMENDMENT 2 way,
-   and the trap in COORDINATES: write the file in place, never mv it.
-
-11. THE TAX ADVISER'S REVIEW IS 53 QUESTIONS, NOT 46. Word question 50
-   (closed 24 Sep) put Rulebook I into this review, and its seven lines
-   (I-Q1 to I-Q7) are under the review pack, 12830043701. Re-derived in code
-   by the Phase 152 sweep from TRACKER.csv: 53 lines - 49 open, 2 answered,
-   2 superseded; 15 BLOCKER, 28 HIGH, 9 STANDARD, 1 not rated. Every copy of
-   the old count still says 46 recorded, 44 put to the adviser, 15 blockers,
-   23 high and 7 standard: FOR-THE-ACCOUNTANT.md (~768-774), the hiring pack
-   (08/12818112998__Hiring-the-tax-adviser.md, and the draft letter inside
-   it), the decision pack and the rulebooks export (08/12830043701__...),
-   the surveyor walkthrough (08/12818132946__...), README-file-index.md,
-   00-START-HERE/"Caprebate — Blockers & What Unblocks Them.html", and this
-   plan. Re-derive the counts in code first (they move), SEARCH THE WHOLE
-   CORPUS for "forty-six", "46", "44 put", "forty-four", "twenty-three" near
-   the pack - not only these files - and correct each with a dated line; the
-   3-day estimate (Word question 7) was set for 46: say so, do not re-price.
-
-12. THE TWO LICENCE-BLOCKED ROWS OWNED BY CLAUDE - IS ANYTHING AROUND THEM
-   BUILDABLE NOW? (added by the Phase 152 follow-up, at Lakhbir's request,
-   28 Sep 2026: the standing rule is build it and switch it off.) The
-   sweep's read of their comments: both are ALREADY built and off, and only
-   data is missing - check that, then do the one thing left.
-   (a) "Replace the flat 15% professional fees with a proper scale"
-   (12804380489): the banded scale (gate leg_e3_voa_fee_scale) and the
-   building-type adders (Phase 129) are built, interlocked, OFF, with empty
-   tables in the phase9 cost model. The bands ARE the Valuation Office's
-   data, so nothing more is buildable before its licence (the enquiry is
-   12933604947), and because the scale is regressive (jobs under about
-   £750k go up) it also needs the tax adviser. Prove the gates are off and
-   the tables empty by running phase9, and write that on the row.
-   (b) "Adjust building costs for where the property is and how big the job
-   is" (12804374707): built OFF by Phase 132 with a DECLARED index base,
-   designed against Spon's (Outer London = 1.00). Spon's is not being bought;
-   BCIS is (Word question 218, the product not yet named). BUILDABLE NOW:
-   read what BCIS publishes about its location factors (its own public
-   pages; do not guess the base) and prove, with an INVENTED BCIS-shaped
-   table in a test, that the model accepts a table declared on BCIS's base
-   and still refuses a table from a different book, a missing base and a
-   bare mean. If the design fits only Spon's, generalise it, switched off,
-   with tests that fail on the model from before. Then re-point the row and
-   its comments from Spon's to BCIS (line 5 of this phase touches the same
-   row - do both at once). The real factors still wait on the purchase.
+1. F-15'S REMAINDER - THE GRANT TRACE, BUILT AND SWITCHED OFF (12852269899,
+   Done with "remainder documented as future work"). Phase 153 checked: the
+   back end has claim_grants (migration 015, CRM 6 of 10) with a payer type
+   and a FREE-TEXT list of what each grant paid for, used only by the check to
+   leave the valuation stage. No figure is computed from it; the site's
+   engine still cuts the claim by one grant_fraction; the list is not linked
+   to the fixture taxonomy's cost items; nothing checks the payer type.
+   Build, behind a new switch that ships OFF: a grant traced to named
+   taxonomy elements reduces only those elements' qualifying expenditure,
+   an untraced grant keeps today's grant_fraction route, and the payer class
+   is validated against a closed list. N4 applies: an unknown trace is
+   untraced, never zero. Tests both ways, red on the code before. Then a
+   dated line in Module 00 (~545, "payer-class and traced-elements structure
+   remain absent") - run the harness and the drift checker after, as the
+   Module files are read by both. Whether grants reduce qualifying
+   expenditure element by element is the tax adviser's to confirm: add the
+   switch to the tax adviser's register and a Word question if none exists.
+2. THE 24 TAX ADVISER SWITCHES - WHICH WAY EACH ONE MOVES A CLAIM. The
+   Blockers page (00-START-HERE/"Caprebate — Blockers & What Unblocks
+   Them.html") said "nine of the twelve make claims bigger, one only
+   smaller"; verify-extraction.cjs now counts 24. Derive the direction of
+   each IN CODE (switch it on alone against a fixed set of states and compare
+   the cash figure, the way the cash route proof's --moves-from does), write
+   the split into the page and FOR THE ACCOUNTANT, and say how it was counted.
+3. RECOVERY ROWS FOR THE SYSTEMS IN USE. The continuity plan (08/
+   12552682536__Business-Continuity-and-Disaster-Recovery-Plan.md) has no
+   recovery rows for the test website (Vercel, its Turso database and Blob
+   store), GitHub, IONOS mail, or the back office. Draft them in the plan's
+   own format, each target marked "proposed - Sadique Maskeen, as plan owner,
+   to set", from what COORDINATES says about each; add a dated line to the
+   plan's register entry.
+4. THE SOP'S OWNER-NAME EXCEPTION. The standard operating procedures (08/
+   12552682457__..., step 3 ~283) keep a Land Registry owner-name exception,
+   while the by-hand title form (Phase 146k/146l) has no box for a name and
+   the officer said yes on 27 Sep to keeping an official copy that names a
+   private owner, read by a person and never by the document reader (Word
+   question 233, closed). Read both and make the SOP say what the system
+   does.
+5. THE TRANSFER WORDING (PL-P17). The breach communications pack (08/
+   12927894775) and the Article 14 assessment (08/12927987812) both mark
+   their letters' transfer paragraph "to be redrafted from the updated
+   recipients list" after monday.com was dropped. Redraft it from 06-.../
+   Caprebate-Recipients-of-Client-Personal-Data-v1.md (v1.3) as a proposal
+   for the officer; add the dated line to both register entries.
+6. THE SESSION RECORD'S s.9 ITEM 4 (02-modules-and-build-prep/Caprebate-
+   Session-Record-and-Build-Sequence-v1.md): "advise vs support" reads as
+   decided (the hybrid model, 28 Aug, brand guidelines 3.5). Confirm from the
+   source and add a dated line, or leave it and say why.
+7. A FLAKY TEST. test/phase152.test.ts:94, "a real sign-up request is sent
+   and blanked", failed at least three times on 28 Sep while several suites
+   ran at once ("Cannot read properties of undefined (reading 'body')"); alone
+   it passes 10 of 10, and Phase 153's clean full run passed 1,791. Find what
+   it reads that is not there under load (an email not yet in the outbox?),
+   make it wait for the thing itself rather than for time, and prove the fix
+   the Phase 152 way: fail it deliberately under the old wait, then hold under
+   30 busy processes (see how Phase 152 proved the grid tool's test).
 
 When every line is done: run every check in COORDINATES, re-derive the
-figures, update the three registers you touched, and write the record.
+figures, update the registers you touched, and write the record.
 ```
 
 
@@ -1337,7 +1185,7 @@ after that phase.
        contradicted a second time by the supplier's own words: "there is no
        monthly allowance and nothing resets". A fact corrected once is not a
        fact that stays correct.
-   (d) Phase 152 found the shape twice more, both now Phase 153 line 6: the
+   (d) Phase 152 found the shape twice more, both corrected by Phase 153: the
        session record's s.9 still asking whether unauthenticated searches
        count against the 100 a month, and a phase9 header calling the price
        null that the code sets to 0.08.
@@ -1610,6 +1458,7 @@ WHEN DONE
 |  **14** |  **Look once at the test website: is it on Turso, and does a file stay put?** (added 28 September 2026 by the Phase 152 sweep) |  Sign in at caprebate-test.vercel.app and open any client's Identity check. If there is no box saying "Records kept in memory", the records are in the lasting database. Then upload an invented file as one person and open it as another. Tell us what you saw. Or, in Vercel, read the function log's lines that begin "test deployment:". We cannot see either: the connector reaches no project of yours |  5 min |  Closing Word questions 230 and 231 |
 |  **15** |  **Delete the DELETE files on the OneDrive web page, not the Mac** (added 28 September 2026 by the Phase 152 sweep) |  In OneDrive on the web, Health Capital Allowances: the folder "DELETE - files to delete (sweep 25 Sep 2026)" (143 MB) and the files whose names begin "DELETE -". The folder was deleted on the Mac on 25 September and is still in the cloud, so deleting there did not reach OneDrive |  5 min |  A folder that holds only the live documents and their dated backups |
 |  **16** |  **Answer three new questions** (added 28 September 2026 by the Phase 152 sweep) |  235: do the old extra charges stay - the add-on for complicated jobs and the £1,500 manual-handling charge? (question 60's answer covered the discount, not these). 236: two tasks are marked done with nothing on file - startup funding and the back-end developer meeting. Were they done? And 237 is for the tax adviser, when one is engaged: may the estimate say "refund" when a claim through the pool creates a loss that is carried back? |  10 min |  The rate card; two task records; whether the estimate or the rulebook is corrected |
+|  **17** |  **Three one-word answers, and who the solicitor is** (added 28 September 2026 by Phase 153) |  238: which solicitor gave the answers of 24 and 27 September (filing a client's return; title figures in the accountant's pack), and are they formally instructed? 187: send the surveyor the four drafts as they are, or the two copies with the pre-fill rule and the 63/46/80 figures withheld - the copies are ready. 34: the clawback clause's two bracketed terms (any reduction or only a large one; whether a settlement the client accepts counts) - the clause now waits on you, not the solicitor. |  10 min |  The solicitor's answers counted as advice; the surveyor pack sent; clause 13 finished |
 
  **Corrected 13 September 2026 by the Phase 130 sweep, because a row cannot be added to the table above.** Row 3 says both emails are drafted and attached and only need reading and a yes. The Valuation Office one does not yet carry the rewritten question 6 that a later addendum wrote, and the brief to the solicitor, in the list above the table, asks for a company number and registered office that do not exist. Both went back to Claude at Ready - Claude can build and are the first lines of Phase 131; each returns here when it can be sent as written. **One thing arrives here instead:** the address lookup's licence facts, which one drafted email to the supplier settles. **And the first paid surveyor review is parked** until the free call has been held, which its own notes say must come first.
 
@@ -1653,9 +1502,9 @@ WHEN DONE
 
  **One number in our own paperwork is wrong and an adviser will find it.** The hiring documents and the draft engagement letter say "42 questions" and "13 blockers"; the review pack actually holds **46** tracked lines. **If the letter is signed as drafted, the contracted scope will not match the pack.** The register says so on its own face rather than leaving it to be discovered.
 
- **Corrected 14 September 2026 by Phase 131.** The review pack's count was re-derived from the board: 46 questions recorded, two of them superseded, so 44 are put to the adviser, 15 of them blockers. The two tax adviser packs now say so. The hiring documents and the rulebooks question pack's Part 4 still say 42 and 13; correcting them is Phase 132a, line 1, and FOR THE ACCOUNTANT says so on its own face.
+ **Corrected 14 September 2026 by Phase 131.** The review pack's count was re-derived from the board: 46 questions recorded, two of them superseded, so 44 are put to the adviser, 15 of them blockers. The two tax adviser packs now say so. The hiring documents and the rulebooks question pack's Part 4 still say 42 and 13; correcting them is Phase 132a, line 1, and FOR THE ACCOUNTANT says so on its own face. **Corrected again 28 September 2026 by Phase 153: the pack is now 53 lines.** Word question 50 (closed 24 September) put Rulebook I's seven questions into this review. Re-derived in code from TRACKER.csv (the subitems of the review pack, by `cta_answer_status` and `cta_severity`): **53 recorded — 49 open, 2 answered, 2 superseded — so 51 are put to the adviser: 15 blockers, 28 high and 8 standard** (the one unrated line is superseded). The three-day estimate (Word question 7, closed) was set when the pack was 46; it is kept, with the note that complicated property structures may need more time, and is not re-priced here.
 
- **Also open on this side, and still unanswered: whether anti-money-laundering supervision is legally required.** Our reading is that it probably is, and operating unsupervised where supervision is required is a criminal offence rather than a compliance gap. Lakhbir's account of his previous firm is recorded under "Does the law require us to be supervised for anti-money-laundering?" (24 September 2026): no supervision was needed there, and clients were checked by ID and facial recognition through Apyid after HMRC fined that firm for missing checks. **That is about checki****n****g clients, and i****t ****does not answer whether we must be su****p****e****r****vised** - another firm's position is not ours. The question stays open, put to the accountant ("Do we need to be supervised under anti-money-laundering rules?") and separately to a solicitor. What his account does add is a build: an outside identity check the client completes online, which Phase 151 researches and builds switched off.
+ **Also open on this side, and still unanswered: whether anti-money-laundering supervision is legally required.** Our reading is that it probably is, and operating unsupervised where supervision is required is a criminal offence rather than a compliance gap. Lakhbir's account of his previous firm is recorded under "Does the law require us to be supervised for anti-money-laundering?" (24 September 2026): no supervision was needed there, and clients were checked by ID and facial recognition through Apyid after HMRC fined that firm for missing checks. **That is about checki****n****g clients, and i****t ****does not answer whether we must be su****p****e****r****vised** - another firm's position is not ours. The question stays open, put to the accountant ("Do we need to be supervised under anti-money-laundering rules?") and separately to a solicitor. What his account does add is a build: an outside identity check the client completes online, which Phase 151 researches and builds switched off. **Updated 28 September 2026 (Phase 153):** Lakhbir answered in the chat on 24 September, "no, we do not need to be supervised; we still check every client's identity" — recorded under that question, which stays open until the accountant confirms. The identity check was built for Veriff (Phase 151) and moved to **Didit** at his word on 25 September (Phase 151f), switched off; "Apyid" is APLYiD, the service his previous firm used (Word question 225).
 
 
 ---
@@ -1681,12 +1530,12 @@ WHEN DONE
 
 ## 6 · What Claude is building next
 
- **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 by the Phase 152 sweep: one item, Phase 153, covered by its own section.** The sweep read every item, subitem and document and found five decisions of 22 to 25 September that never reached about forty documents, plus tracker rows whose labels say more than is true; nobody has to answer anything for any of it, so it is Phase 153, and the sweep (now 154) runs after it. Until the sweep this read: empty, and no orphan. Recovery codes (151m) ran on 28 September 2026 and are Done. The land boundary's first download as a test lookup (151l) is built: `smoke HMLR_INSPIRE`, and running it is Lakhbir's (section 3, row 13). Sign-in hardening (151k) ran on 28 September 2026 and is Done. The test website's uploaded documents on a store every copy reaches (151i) are built; seeing them work is Lakhbir's (section 3, row 14).
+ **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 at the close of Phase 153: one item, Phase 153a, covered by its own section.** Phase 153 carried the five decisions of 22 to 25 September into about fifty documents and corrected the rows whose labels said more than was true (its record is in PHASE HISTORY); what it found and could build but did not — the grant trace, the direction of the 24 tax adviser switches, recovery rows for the systems in use, and three document reconciliations — is Phase 153a, and the sweep (154) runs after it. Before Phase 153 this read: one item, Phase 153. Until the sweep this read: empty, and no orphan. Recovery codes (151m) ran on 28 September 2026 and are Done. The land boundary's first download as a test lookup (151l) is built: `smoke HMLR_INSPIRE`, and running it is Lakhbir's (section 3, row 13). Sign-in hardening (151k) ran on 28 September 2026 and is Done. The test website's uploaded documents on a store every copy reaches (151i) are built; seeing them work is Lakhbir's (section 3, row 14).
 
 
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
-|  Claude |  Phase 153 — five decisions carried into the documents that never heard of them, and the rows that say more than is true (13133268312) |  The Phase 152 sweep found it; nobody has to answer anything first |
+|  Claude |  Phase 153a — the grant trace, the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations (13133268314) |  Phase 153 found it; nobody has to answer anything first |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 
@@ -1777,7 +1626,7 @@ _ |
 
 ### Things we think are wrong and have not fixed
 
- **Added 14 September 2026 by Phase 131 — the website promises clients something the law does not give them.** The site's own copy says a client can "typically reach back and amend tax returns within 4 years". That is false for every kind of client we serve: an individual or a partnership can amend only until twelve months after the filing date, a company can make a capital allowances claim only until one year after its filing date, and the four-year overpayment relief cannot be used for a missed claim. The same copy still says "No win, no fee", "From £5,000" and "Our fee comes only from what we recover", which contradict the decided fee of a flat 3% of the capital allowances identified (5% when this note was written) and the break fee in clause 5; it says a chartered tax adviser signs off the filing position, which clause 1 does not promise; and it describes land remediation relief as "an extra 150% deduction" where the extra is 50%. None of it is live, because the site is not hosted. Correcting the copy is Phase 132 line 17, and the papers that say the four-year claim was already fixed are Phase 132a line 7.
+ **Added 14 September 2026 by Phase 131, and CORRECTED 28 September 2026 by Phase 153 — the website no longer promises clients what the law does not give them.** In September the site's own copy said a client could "typically reach back and amend tax returns within 4 years" (false for every client we serve: a company can make a capital allowances claim only until one year after its filing date, an individual or partnership twelve months after theirs, and the four-year overpayment relief cannot be used for a missed claim); it also said "No win, no fee", "From £5,000" and "Our fee comes only from what we recover", said a chartered tax adviser signs off the filing position, and called land remediation relief "an extra 150% deduction". **None of that is in the site file now** — grepped on 28 September 2026: "within 4 years", "reach back", "No win, no fee", "From £5,000", "£5,000", "Our fee comes only from", "signs off the filing" and "extra 150" each occur 0 times in `Caprebate site.html`, and every mention of land remediation relief says "an additional 50% deduction … (150% in all)". Phase 132 line 17 corrected the copy. What was true then and is not now: "none of it is live, because the site is not hosted" — the test website has been live at caprebate-test.vercel.app since September, which is why the correction mattered. Nothing is left open here.
 
 
  **The 18% preliminaries double count.** Our own arithmetic error, and it inflates every job. The gate that removes it is built and switched off, and it waits only on the surveyor saying where preliminaries sit - not on a licence, and not on a replacement test of the allowance cap, which a run on 12 September 2026 showed it does not need.
