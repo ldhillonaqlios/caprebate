@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 3 |
+| Ready - Claude can build | 2 |
 | Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
 | Done | 267 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1343,7 +1343,7 @@
 
 ### Phase 151i - the test website's uploaded documents on a store every copy reaches
 
-`13133268308` · **Ready - Claude can build** · owner Claude
+`13133268308` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
 
 - Note 2026-09-27 (Phase 151e): Written by Phase 151e (lines 4-5): with the lasting database on, uploaded documents would still sit on each copy's temporary disk. Build a store every copy reaches, switched off.
 
