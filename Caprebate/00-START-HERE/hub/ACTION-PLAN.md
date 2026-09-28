@@ -1187,6 +1187,14 @@ after that phase.
    "test deployment:" line about documents, upload an invented file through
    one sign-in, open its folder again after a redeploy, record the answer
    and close 231 naming Phase 151i. BUILDABLE.
+   AND THE FIRST REQUEST AFTER EVERY DEPLOY TIMES OUT (Phases 151j and 151i,
+   28 Sep 2026): "/" answered 504 after 30 s on the new copy's first start,
+   twice running; every request after it answered 200 in under half a
+   second. Nothing gave it a home until 151i. Measure the cold start on
+   memory (migrations, the seed's password hashes, the site file) with
+   api/index.mjs's build() timed step by step on the Mac, make it finish
+   well inside vercel.json's maxDuration, and prove it on the live site after
+   the push: the FIRST request to "/" answers 200. BUILDABLE.
    AND ONE BLIND SPOT IN THE CRM FOLD CHECK (Phase 151e line 6, 28 Sep 2026):
    a §4 reference whose line number is missing ("`src/web/crm.ts:`") passed
    check C silently until a person saw it. Make C fail on a path with a
