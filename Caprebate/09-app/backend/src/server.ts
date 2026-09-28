@@ -81,6 +81,8 @@ export type ServerOptions = {
   dbEngine?: 'node:sqlite' | 'libsql';
   /** PHASE 151j: see BuildOptions.twoFactor. Absent is 'staff'. */
   twoFactor?: 'staff' | 'off';
+  /** PHASE 151i follow-up 5: see BuildOptions.schema. Absent builds the tables, as always. */
+  schema?: 'apply' | 'require-built';
   /**
    * Where client documents live. OUTSIDE THE WEB ROOT — which is trivially
    * true here because this application has no static file route at all, and
@@ -123,6 +125,7 @@ export async function createApp(
     location, ...(opts.now === undefined ? {} : { now: opts.now }), ...(opts.dbAuthToken === undefined ? {} : { dbAuthToken: opts.dbAuthToken }),
     ...(opts.dbEngine === undefined ? {} : { dbEngine: opts.dbEngine }),
     ...(opts.twoFactor === undefined ? {} : { twoFactor: opts.twoFactor }),
+    ...(opts.schema === undefined ? {} : { schema: opts.schema }),
   });
   const kept = {
     now: app.now,

@@ -158,6 +158,17 @@ export class Db {
 }
 
 /**
+ * PHASE 151i follow-up 5, 28 September 2026: the migrations NOT yet applied here, read and never written. A copy of the
+ * test website opens its lasting database with `schema: 'require-built'` (src/app.ts) and refuses one with any left,
+ * because on 28 Sep 2026 two copies building one empty database at once left it half built, twice.
+ */
+export function pendingMigrations(db: Db, dir: string): string[] {
+  const has = db.get("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'schema_migrations'") !== undefined;
+  const done = new Set(has ? db.all<{ filename: string }>('SELECT filename FROM schema_migrations').map((r) => r.filename) : []);
+  return readdirSync(dir).filter((f) => f.endsWith('.sql')).sort().filter((f) => !done.has(f));
+}
+
+/**
  * Migrations, applied in filename order and recorded so they run once.
  *
  * Deliberately dumb: no down-migrations, no checksums-with-auto-repair. A

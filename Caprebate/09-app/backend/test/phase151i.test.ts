@@ -152,6 +152,9 @@ describe('151i · 1 · a document written through one copy is read through anoth
     const shared = async () => ({ sharedDocuments: { client: await SO.vercelBlobClient({}, blob.sdk), linkSecret: SO.uploadLinkSecret(INVENTED_DB_TOKEN) } });
     const oa = optsFor('a');
     const ob = optsFor('b');
+    // Follow-up 5: the deploy's build step makes the tables and the seed; the copies only open them.
+    const { prepareLasting } = (await entry()) as unknown as { prepareLasting: (c: typeof createApp, s: typeof seed, l: Lasting, o?: object) => Promise<{ prepared: boolean }> };
+    assert.equal((await prepareLasting(createApp, seed, lasting, { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151i-build-')), twoFactor: 'off', now: () => NOW })).prepared, true);
     const A = await openLasting(createApp, seed, lasting, oa, 0, await shared());
     const B = await openLasting(createApp, seed, lasting, ob, 0, await shared());
     const listen = async (m: typeof A.made) => {
@@ -346,7 +349,7 @@ describe('151i · 3 · switched off, nothing changes', () => {
     const build = src.slice(src.indexOf('async function build()'), src.indexOf('export async function configureTestDeploy'));
     assert.match(build, /sharedDocumentStore\(process\.env, lasting\)/);
     assert.match(build, /openLasting\(createApp, seed, lasting, \{[\s\S]*?\}, 10_000, await sharedDocumentOptions\(docs, lasting\)\)/);
-    assert.match(src, /createApp\(lasting\.location, \{ \.\.\.opts, \.\.\.lastingOnly, dbAuthToken: lasting\.authToken \}\)/);
+    assert.match(src, /createApp\(lasting\.location, \{ \.\.\.opts, \.\.\.lastingOnly, dbAuthToken: lasting\.authToken, schema: 'require-built' \}\)/);
     assert.match(src, /const made = await createApp\(':memory:', opts\);/, 'memory must never get the shared store');
   });
 });
@@ -499,7 +502,7 @@ describe('151i follow-up 3 · a first start cut off while it built the tables', 
   // The live test website, 28 Sep 2026, 11:28: "the lasting database could not be opened (Error: Hrana(Api("SQLite input
   // error: table claim_facts already exists (at offset 13)"))), so the records are kept in memory". vercel.json's own
   // limit of 30 seconds had stopped the first start part way through the migrations.
-  test('the log line says what to do: the tables were left part built - empty the database in Turso and redeploy', async () => {
+  test('the log line says what to do: the tables were left part built - redeploy, and the build empties it', async () => {
     const { openLasting } = await entry();
     const lasting = { location: 'libsql://invented-151i.turso.io', authToken: 'invented-token-151i', why: 'x' };
     const failing = (async (loc: string, o: object) => {
@@ -509,7 +512,7 @@ describe('151i follow-up 3 · a first start cut off while it built the tables', 
     const o = await openLasting(failing, seed, lasting, { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151i-half-')), now: () => NOW }, 0);
     try {
       assert.equal(o.lasting, false);
-      assert.match(o.why, /table claim_facts already exists .*\): the tables were left part built - empty the database in Turso and redeploy, so the records are kept in memory$/);
+      assert.match(o.why, /table claim_facts already exists .*\): the tables were left part built - redeploy, and the build empties the database and builds it again, so the records are kept in memory$/);
     } finally { o.made.close(); }
   });
 
@@ -550,9 +553,11 @@ describe('151i follow-up 4 · the lasting database is built once, while Vercel b
     assert.deepEqual(none, { prepared: false, why: 'nothing to prepare, because no lasting database is set, so the records are kept in memory' });
     const l = { location: 'libsql://invented-151i-prep.turso.io', authToken: 'invented-token-151i-prep', why: 'x' };
     const failing = (async () => { throw Object.assign(new Error('Hrana(Api("SQLite error: duplicate column name: legal_name"))'), { code: '' }); }) as unknown as typeof createApp;
-    const r = await prepareLasting(failing, seed, l, opts());
+    // Follow-up 5: the build empties it and tries once more; a local file stands in for the database, never the network.
+    const local = join(mkdtempSync(join(tmpdir(), 'cb-151i-prep-empty-')), 'stand-in.db');
+    const r = await (prepareLasting as unknown as (c: typeof createApp, s: typeof seed, l: Lasting, o: object, openDb: () => Db) => Promise<{ prepared: boolean; why: string }>)(failing, seed, l, opts(), () => new Db(local));
     assert.equal(r.prepared, false);
-    assert.match(r.why, /duplicate column name: legal_name.*the tables were left part built - empty the database in Turso and redeploy$/);
+    assert.match(r.why, /^the lasting database could not be built \(Error: Hrana\(Api\("SQLite error: duplicate column name: legal_name"\)\)\)$/);
     assert.equal(r.why.includes('invented-151i-prep') || r.why.includes('invented-token'), false);
   });
 
@@ -570,5 +575,88 @@ describe('151i follow-up 4 · the lasting database is built once, while Vercel b
     });
     assert.equal(r.code, 0, r.out);
     assert.match(r.out, /^build: nothing to prepare, because no lasting database is set/);
+  });
+});
+
+describe('151i follow-up 5 · the build empties a half-built test database and builds it again; a copy only opens a finished one', () => {
+  // Lakhbir, 28 Sep 2026, asked: "Build step empties it". Every case on a local file: no network, invented data only.
+  type Prep = {
+    prepareLasting: (c: typeof createApp, s: typeof seed, l: Lasting, o?: object, openDb?: (l: Lasting) => Db) => Promise<{ prepared: boolean; why: string }>;
+  };
+  const at = () => {
+    const location = join(mkdtempSync(join(tmpdir(), 'cb-151i-f5-')), 'turso-stand-in.db');
+    return { location, authToken: 'invented-token-151i-f5', why: 'the records are kept in the lasting database' };
+  };
+  const o = () => ({ documentRoot: mkdtempSync(join(tmpdir(), 'cb-151i-f5-docs-')), now: () => NOW });
+  const local = (l: Lasting) => new Db(l.location);
+  const count = (file: string, sql: string) => { const d = new Db(file); try { return Number(d.get<{ n: number }>(sql)?.n ?? 0); } finally { d.close(); } };
+  const USERS = 'SELECT COUNT(*) AS n FROM users';
+
+  test('tables left part built (a migration made and not recorded, as on the live site): emptied, built and seeded', async () => {
+    const { prepareLasting, openLasting } = (await entry()) as unknown as Prep & EntryPoint;
+    const l = at();
+    (await createApp(l.location, o())).close();                       // the tables, and no seed: a first start cut off
+    const d = new Db(l.location);
+    d.run("DELETE FROM schema_migrations WHERE filename = '009-crm-backbone.sql'");  // 009 made and not recorded
+    d.close();
+    const r = await prepareLasting(createApp, seed, l, o(), local);
+    assert.deepEqual(r, { prepared: true, why: 'the lasting database was left part built, so it was emptied, built and seeded' });
+    const opened = await openLasting(createApp, seed, l, o(), 0);
+    try { assert.equal(opened.lasting, true); } finally { opened.made.close(); }
+  });
+
+  test('a seed left part written: emptied and seeded again, once', async () => {
+    const { prepareLasting } = (await entry()) as unknown as Prep;
+    const l = at();
+    await prepareLasting(createApp, seed, l, o(), local);
+    const d = new Db(l.location);
+    d.run("DELETE FROM users WHERE id = 'u-demo-readonly'");            // the last row a finished seed writes
+    d.close();
+    const r = await prepareLasting(createApp, seed, l, o(), local);
+    assert.deepEqual(r, { prepared: true, why: 'the lasting database was left part built, so it was emptied, built and seeded' });
+    assert.equal(count(l.location, "SELECT COUNT(*) AS n FROM users WHERE id = 'u-demo-readonly'"), 1);
+  });
+
+  test('a FINISHED database is never emptied, even when a table step fails on it - it is reported and left as it was', async () => {
+    const { prepareLasting } = (await entry()) as unknown as Prep;
+    const l = at();
+    await prepareLasting(createApp, seed, l, o(), local);
+    const before = count(l.location, USERS);
+    const d = new Db(l.location);
+    d.run("DELETE FROM schema_migrations WHERE filename = '009-crm-backbone.sql'");
+    d.close();
+    const r = await prepareLasting(createApp, seed, l, o(), local);
+    assert.equal(r.prepared, false);
+    assert.match(r.why, /duplicate column name: legal_name.*and it was not emptied: its seed finished, so it may hold what people typed, and a finished database is never emptied$/);
+    assert.equal(count(l.location, USERS), before, 'a finished database lost its records');
+  });
+
+  test('a seed that fails part way says why, instead of only "never finished"', async () => {
+    const { prepareLasting } = (await entry()) as unknown as Prep;
+    const l = at();
+    const failingSeed = (async (db: Db) => {
+      db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at) VALUES ('u-151i-f5','f5@example.invalid','f5@example.invalid','Invented Person','ADMIN','x',?,?)", [NOW, NOW]);
+      throw new Error('invented seed failure 151i');
+    }) as unknown as typeof seed;
+    const r = await prepareLasting(createApp, failingSeed, l, o(), local);
+    assert.deepEqual(r, { prepared: false, why: 'the lasting database was emptied and built again, and its seed still did not finish (Error: invented seed failure 151i)' });
+  });
+
+  test('a copy builds and seeds nothing: an empty database, or one with tables and no seed, is refused, written to not at all, and the log says to redeploy', async () => {
+    const { openLasting } = (await entry()) as unknown as EntryPoint;
+    const l = at();
+    const empty = await openLasting(createApp, seed, l, o(), 0);
+    try {
+      assert.equal(empty.lasting, false);
+      assert.match(empty.why, /^the lasting database is not built yet: redeploy, and the build builds it \(the database is not built: \d+ of its table steps are missing\)\. Until then the records are kept in memory$/);
+    } finally { empty.made.close(); }
+    assert.equal(count(l.location, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table'"), 0, 'a copy built a table');
+    (await createApp(l.location, o())).close();                        // tables, no seed
+    const bare = await openLasting(createApp, seed, l, o(), 0);
+    try {
+      assert.equal(bare.lasting, false);
+      assert.match(bare.why, /not built yet: redeploy, and the build builds it \(its tables are there and its invented records are not\)/);
+    } finally { bare.made.close(); }
+    assert.equal(count(l.location, USERS), 0, 'a copy seeded the lasting database');
   });
 });

@@ -10,7 +10,7 @@
 
 import { loadCustomRoles } from './custom-roles.ts';
 import { join } from 'node:path';
-import { Db, migrate } from './db.ts';
+import { Db, migrate, pendingMigrations } from './db.ts';
 import { AuditLog } from './audit.ts';
 import { defaultHasher, type PasswordHasher } from './password.ts';
 import { outboxTransport, type EmailTransport } from './stubs/email.ts';
@@ -56,6 +56,12 @@ export type BuildOptions = {
   hasher?: PasswordHasher;
   now?: () => string;
   migrationsDir?: string;
+  /**
+   * PHASE 151i follow-up 5: 'apply' (absent) builds the tables, as always. 'require-built' builds nothing and refuses a
+   * database with a migration left (code E_NOT_BUILT): how a copy of the test website opens its lasting database, which
+   * only the deploy's build step builds (api/index.mjs, prepareLasting).
+   */
+  schema?: 'apply' | 'require-built';
   /** Tests only: keys given in memory (secretsFromValues). A running process reads the key file. */
   secrets?: SecretStore;
   /** Tests only: recorded answers in place of the live transport. */
@@ -66,7 +72,15 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
   const db = new Db(opts.location ?? ':memory:', {
     ...(opts.dbAuthToken === undefined ? {} : { authToken: opts.dbAuthToken }), ...(opts.dbEngine === undefined ? {} : { engine: opts.dbEngine }),
   });
-  migrate(db, opts.migrationsDir ?? MIGRATIONS_DIR);
+  if (opts.schema === 'require-built') {
+    const left = pendingMigrations(db, opts.migrationsDir ?? MIGRATIONS_DIR);
+    if (left.length > 0) {
+      db.close();
+      throw Object.assign(new Error(`the database is not built: ${left.length} of its table steps are missing`), { code: 'E_NOT_BUILT' });
+    }
+  } else {
+    migrate(db, opts.migrationsDir ?? MIGRATIONS_DIR);
+  }
   loadCustomRoles(db); // Phase 151: the roles the super admin made, for can()
 
   const now = opts.now ?? ((): string => new Date().toISOString());

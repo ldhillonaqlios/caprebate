@@ -1351,6 +1351,7 @@
 - Note 2026-09-28 (Phase 151i): The live log said Turso 'could not be opened ()': set, but failing, and libsql leaves an error's code empty. The log now prints the library's words (address and token cut out). The Blob store stayed off, as designed, because the lasting database was not in use.
 - Note 2026-09-28 (Phase 151i): The reason, read on the live site 11:28: 'table claim_facts already exists' - the first start on Turso was stopped part way through the migrations by vercel.json's own 30 s limit. Now 300 s (Hobby's most). Lakhbir to empty the Turso database and redeploy.
 - Note 2026-09-28 (Phase 151i): Second Turso database half built too: copies started in pairs and both migrated and seeded it. Now built once by the deploy's build step (tools/prepare-lasting.mjs). Lakhbir to empty it once more and redeploy.
+- Note 2026-09-28 (Phase 151i): The new Turso database was half seeded too (copies racing). Lakhbir chose: the build step empties a half-built test database and builds it again; copies never build or seed it. Built. Lakhbir to redeploy with a build.
 
 ### Phase 151j - sign-in: forgot password, temporary passwords, two-factor by email code or authenticator app
 

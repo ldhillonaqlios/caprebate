@@ -1215,6 +1215,14 @@ after that phase.
    once (vercel.json buildCommand, tools/prepare-lasting.mjs, prepareLasting)
    before any copy starts. Read the build log's "build:" line on the next
    deploy after he empties it again.
+   THE NEW DATABASE (database-aero-nest, us-east-1) WAS HALF SEEDED TOO
+   (12:32: "a seed that never finished"). Lakhbir chose, in the chat: the
+   build step empties it. Since follow-up 5 the build empties a HALF-BUILT
+   database and builds it again (never a finished one), and a copy never
+   builds or seeds - it opens with schema 'require-built' or uses memory.
+   He only redeploys. Read the runtime "test deployment:" lines after it:
+   "the records are kept in the lasting database" and "uploaded documents
+   are kept in the private document store".
    AND A MIGRATION AND ITS RECORD AS ONE STEP (same day): migrate() in
    src/db.ts runs a file, then records it, so a start cut off between the
    two leaves this state again. Make each file and its schema_migrations row
@@ -1222,9 +1230,8 @@ after that phase.
    foreign keys off and run their own BEGIN/COMMIT, so a wrapping
    transaction cannot simply be added; read every file first. Prove it with a
    migration cut off part way on a file database, and the next start
-   finishing it. AND a copy still migrates and seeds an empty database itself
-   when the build step could not reach it: once the build step is proved,
-   decide whether a copy should only ever open. BUILDABLE.
+   finishing it. BUILDABLE. (A copy building the database itself when the
+   build could not reach it: done by follow-up 5 - a copy only opens.)
    AND THE FIRST REQUEST AFTER EVERY DEPLOY TIMES OUT (Phases 151j and 151i,
    28 Sep 2026): "/" answered 504 after 30 s on the new copy's first start,
    twice running; every request after it answered 200 in under half a

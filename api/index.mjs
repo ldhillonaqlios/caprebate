@@ -155,6 +155,7 @@ export function documentsWhy(docs, lastingInUse) {
  * `waitMs` is how long a copy waits for another copy that is seeding the same empty database at the same moment.
  */
 export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_000, lastingOnly = {}) {
+  void waitMs; // PHASE 151i follow-up 5: a copy no longer waits for another copy's seed - it never seeds a lasting database
   const memory = async (why) => {
     const made = await createApp(':memory:', opts);
     await seedOnce(made, seed);
@@ -165,26 +166,22 @@ export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_00
   let made;
   try {
     // PHASE 151i: `lastingOnly` (the shared document store) goes with the lasting database and never with memory.
-    made = await createApp(lasting.location, { ...opts, ...lastingOnly, dbAuthToken: lasting.authToken });
+    // PHASE 151i follow-up 5: 'require-built' - a copy builds no table; the deploy's build step does (prepareLasting).
+    made = await createApp(lasting.location, { ...opts, ...lastingOnly, dbAuthToken: lasting.authToken, schema: 'require-built' });
   } catch (e) {
-    // PHASE 151i follow-up 3: a first start cut off while it built the tables leaves one table made and not recorded,
-    // and every later start stops on it. Say what to do, not only what broke.
+    if (e?.code === 'E_NOT_BUILT') return memory(`${NOT_BUILT_WORDS} (${String(e.message)}). Until then the records are kept in memory`);
+    // PHASE 151i follow-up 3: say what to do, not only what broke.
     const halfBuilt = /already exists|duplicate column/i.test(String(e?.message ?? '')) ? HALF_BUILT_WORDS : '';
     return memory(`the lasting database could not be opened (${reason(e)})${halfBuilt}, so the records are kept in memory`);
   }
-  try {
-    let s = await seedOnce(made, seed);
-    for (let waited = 0; !s.complete && waited < waitMs; waited += 1000) {
-      await new Promise((r) => setTimeout(r, 1000));
-      s = await seedOnce(made, seed);
-    }
-    if (s.complete) return { made, lasting: true, why: `${lasting.why}${s.seeded ? ' (seeded now, on its first start)' : ''}` };
-    made.close();
-    return memory('the lasting database holds a seed that never finished: empty it in Turso and redeploy. Until then the records are kept in memory');
-  } catch (e) {
-    try { made.close(); } catch { /* already gone */ }
-    return memory(`the lasting database could not be seeded (${reason(e)}), so the records are kept in memory`);
-  }
+  // PHASE 151i follow-up 5: a copy NEVER seeds a lasting database. Two copies seeding one empty database at once each
+  // fail on the other's rows and both give up, which left it half seeded on 28 Sep 2026. It only reads where it stands.
+  const state = seedState(made);
+  if (state === 'complete') return { made, lasting: true, why: lasting.why };
+  made.close();
+  return memory(state === 'empty'
+    ? `${NOT_BUILT_WORDS} (its tables are there and its invented records are not). Until then the records are kept in memory`
+    : `the lasting database holds a seed that never finished${HALF_BUILT_WORDS}. Until then the records are kept in memory`);
 }
 
 /**
@@ -196,7 +193,16 @@ export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_00
  * Never more than 200 characters of it.
  */
 /** PHASE 151i follow-up 3: what to do when a first start was cut off while it built the tables (seen 28 Sep 2026). */
-export const HALF_BUILT_WORDS = ': the tables were left part built - empty the database in Turso and redeploy';
+export const HALF_BUILT_WORDS = ': the tables were left part built - redeploy, and the build empties the database and builds it again';
+/** PHASE 151i follow-up 5: a copy found the lasting database not built, which only the deploy's build step does. */
+export const NOT_BUILT_WORDS = 'the lasting database is not built yet: redeploy, and the build builds it';
+
+/** Where a database's invented seed stands, read only: 'empty', 'complete' (the view-only login is written last), or 'part'. */
+export function seedState(made) {
+  const n = Number(made.app.db.get('SELECT COUNT(*) AS n FROM users')?.n ?? 0);
+  if (n === 0) return 'empty';
+  return made.app.db.get("SELECT id FROM users WHERE id = 'u-demo-readonly'") !== undefined ? 'complete' : 'part';
+}
 
 export function openFailure(e, lasting) {
   const code = String(e?.code ?? '').trim() || String(e?.name ?? '').trim() || 'an error';
@@ -223,24 +229,89 @@ export function openFailure(e, lasting) {
  * IT NEVER STOPS A DEPLOY: whatever happens it says why (never the address or the token), and a copy that then finds the
  * database unfinished runs on memory, as before.
  */
-export async function prepareLasting(createApp, seed, lasting, opts = {}) {
+export async function prepareLasting(createApp, seed, lasting, opts = {}, openDb = undefined) {
   if (lasting.authToken === undefined) return { prepared: false, why: `nothing to prepare, because ${lasting.why}` };
-  let made;
+  // PHASE 151i follow-up 5 (Lakhbir, 28 Sep 2026: "build step empties it"): a database left HALF BUILT - its tables part
+  // made, or its invented seed part written - is emptied and built again, once. No copy has ever run on a half-built
+  // database (each refuses it and uses memory), so nothing anybody typed is in it. A finished one is never emptied.
+  let emptied = false;
+  for (let round = 1; round <= 2; round++) {
+    let made;
+    try {
+      made = await createApp(lasting.location, { ...opts, dbAuthToken: lasting.authToken });
+    } catch (e) {
+      if (round === 1 && /already exists|duplicate column/i.test(String(e?.message ?? ''))) {
+        const r = await emptyLasting(lasting, openDb);
+        if (r.emptied) { emptied = true; continue; }
+        return { prepared: false, why: `the lasting database could not be built (${openFailure(e, lasting)}), and it was not emptied: ${r.why}` };
+      }
+      return { prepared: false, why: `the lasting database could not be built (${openFailure(e, lasting)})` };
+    }
+    let s;
+    try {
+      s = await seedOnce(made, seed);
+    } catch (e) {
+      s = { seeded: false, complete: false, error: e };
+    } finally {
+      try { made.close(); } catch { /* already gone */ }
+    }
+    if (s.complete) {
+      const why = emptied ? 'the lasting database was left part built, so it was emptied, built and seeded'
+        : s.seeded ? 'the lasting database is built and seeded (its first time)' : 'the lasting database was already built; its tables are up to date';
+      return { prepared: true, why };
+    }
+    const why = s.error === undefined ? '' : ` (${openFailure(s.error, lasting)})`;
+    if (round === 1) {
+      const r = await emptyLasting(lasting, openDb);
+      if (r.emptied) { emptied = true; continue; }
+      return { prepared: false, why: `the lasting database holds a seed that never finished${why}, and it was not emptied: ${r.why}` };
+    }
+    return { prepared: false, why: `the lasting database was emptied and built again, and its seed still did not finish${why}` };
+  }
+  return { prepared: false, why: 'the lasting database could not be prepared' };
+}
+
+/**
+ * PHASE 151i follow-up 5: EMPTY A HALF-BUILT TEST DATABASE - every view and table, in one batch with foreign keys off
+ * (a table dropped with them on is deleted row by row first, and a child row would stop it). REFUSES a database whose
+ * seed finished (its view-only login is there): that one may hold what people typed, and is never emptied here.
+ */
+export async function emptyLasting(lasting, openDb = undefined) {
+  let db;
   try {
-    made = await createApp(lasting.location, { ...opts, dbAuthToken: lasting.authToken });
+    // `openDb` is for the tests (a local file, never the network); absent, the lasting database itself.
+    db = openDb === undefined
+      ? new (await import('../Caprebate/09-app/backend/src/db.ts')).Db(lasting.location, { authToken: lasting.authToken })
+      : openDb(lasting);
   } catch (e) {
-    const halfBuilt = /already exists|duplicate column/i.test(String(e?.message ?? '')) ? HALF_BUILT_WORDS : '';
-    return { prepared: false, why: `the lasting database could not be built (${openFailure(e, lasting)})${halfBuilt}` };
+    return { emptied: false, why: `it could not be opened (${openFailure(e, lasting)})` };
   }
   try {
-    const s = await seedOnce(made, seed);
-    if (!s.complete) return { prepared: false, why: 'the lasting database holds a seed that never finished: empty it in Turso and redeploy' };
-    return { prepared: true, why: s.seeded ? 'the lasting database is built and seeded (its first time)' : 'the lasting database was already built; its tables are up to date' };
+    return emptyHalfBuilt(db);
   } catch (e) {
-    return { prepared: false, why: `the lasting database could not be seeded (${openFailure(e, lasting)})` };
+    return { emptied: false, why: `emptying it failed (${openFailure(e, lasting)})` };
   } finally {
-    try { made.close(); } catch { /* already gone */ }
+    try { db.close(); } catch { /* already gone */ }
   }
+}
+
+export function emptyHalfBuilt(db) {
+  const hasUsers = db.get("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'users'") !== undefined;
+  if (hasUsers && db.get("SELECT id FROM users WHERE id = 'u-demo-readonly'") !== undefined) {
+    return { emptied: false, why: 'its seed finished, so it may hold what people typed, and a finished database is never emptied' };
+  }
+  const q = (name) => `"${String(name).replace(/"/g, '""')}"`;
+  for (let pass = 0; pass < 3; pass++) {
+    const objs = db.all("SELECT type, name FROM sqlite_master WHERE type IN ('view', 'table') AND name NOT LIKE 'sqlite_%'");
+    if (objs.length === 0) break;
+    const drops = [...objs.filter((o) => o.type === 'view').map((o) => `DROP VIEW IF EXISTS ${q(o.name)};`),
+      ...objs.filter((o) => o.type === 'table').map((o) => `DROP TABLE IF EXISTS ${q(o.name)};`)];
+    db.execDdl(`PRAGMA foreign_keys = OFF;\n${drops.join('\n')}\nPRAGMA foreign_keys = ON;`);
+  }
+  const left = db.all("SELECT name FROM sqlite_master WHERE type IN ('view', 'table') AND name NOT LIKE 'sqlite_%'");
+  if (left.length > 0) return { emptied: false, why: `${left.length} tables could not be dropped` };
+  if (db.get("SELECT name FROM sqlite_master WHERE name = 'sqlite_sequence'") !== undefined) db.run('DELETE FROM sqlite_sequence');
+  return { emptied: true, why: 'emptied' };
 }
 
 /**
@@ -263,7 +334,8 @@ export async function seedOnce(made, seed) {
     );
     return { seeded: true, complete: true };
   } catch (e) {
-    if (made.app.db.kind !== 'memory' && count() > 0) return { seeded: false, complete: complete() };
+    // PHASE 151i follow-up 5: the error goes back with the answer, so a seed that failed part way says why.
+    if (made.app.db.kind !== 'memory' && count() > 0) return { seeded: false, complete: complete(), error: e };
     throw e;
   }
 }

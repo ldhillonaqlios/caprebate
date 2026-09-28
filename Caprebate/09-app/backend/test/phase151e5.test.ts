@@ -28,6 +28,7 @@ type Lasting = { location: string; authToken?: string; why: string };
 async function entry() {
   return (await import(new URL('../../../../api/index.mjs', import.meta.url).href)) as {
     openLasting: (c: typeof createApp, s: typeof seed, l: Lasting, o: object, waitMs?: number) => Promise<Opened>;
+    prepareLasting: (c: typeof createApp, s: typeof seed, l: Lasting, o?: object) => Promise<{ prepared: boolean; why: string }>;
     seedOnce: (made: Made, s: typeof seed) => Promise<{ seeded: boolean; complete: boolean }>;
   };
 }
@@ -81,14 +82,17 @@ describe('151e line 7 · 2 · the test website opens its lasting database, or fa
     } finally { o.made.close(); }
   });
 
-  test('the first start seeds the lasting database; the next start finds it there and seeds nothing', async () => {
-    const { openLasting } = await entry();
+  // PHASE 151i follow-up 5: a copy no longer builds or seeds the lasting database - two copies doing it at once left it
+  // half built on 28 Sep 2026. The deploy's build step does it (prepareLasting); a copy only opens a finished one.
+  test('the build seeds the lasting database; every start after it finds it there and seeds nothing', async () => {
+    const { openLasting, prepareLasting } = await entry();
     const file = join(mkdtempSync(join(tmpdir(), 'cb-151e5-db-')), 'turso-stand-in.db');
+    assert.equal((await prepareLasting(createApp, seed, lastingAt(file), opts())).prepared, true);
     const first = await openLasting(createApp, seed, lastingAt(file), opts(), 0);
     let n = 0;
     try {
       assert.equal(first.lasting, true);
-      assert.match(first.why, /seeded now/);
+      assert.doesNotMatch(first.why, /seeded now/);
       n = users(first.made);
     } finally { first.made.close(); }
     const second = await openLasting(createApp, seed, lastingAt(file), opts(), 0);
@@ -100,17 +104,19 @@ describe('151e line 7 · 2 · the test website opens its lasting database, or fa
   });
 
   test('a seed a first start never finished: memory, and it says what to do - it never tries to finish half a seed', async () => {
-    const { openLasting } = await entry();
+    const { openLasting, prepareLasting } = await entry();
     const file = join(mkdtempSync(join(tmpdir(), 'cb-151e5-db-')), 'cut-off.db');
-    const first = await openLasting(createApp, seed, lastingAt(file), opts(), 0);
-    first.made.app.db.run("DELETE FROM users WHERE id = 'u-demo-readonly'"); // the last row a finished seed writes
-    const before = users(first.made);
-    first.made.close();
+    await prepareLasting(createApp, seed, lastingAt(file), opts());
+    const first = await createApp(file, opts());
+    first.app.db.run("DELETE FROM users WHERE id = 'u-demo-readonly'"); // the last row a finished seed writes
+    const before = users(first);
+    first.close();
     const again = await openLasting(createApp, seed, lastingAt(file), opts(), 0);
     try {
       assert.equal(again.lasting, false);
       assert.equal(again.made.app.db.kind, 'memory');
-      assert.match(again.why, /never finished: empty it in Turso and redeploy/);
+      // Phase 151i follow-up 5: the build step, not a person, empties it now; the copy still never touches it.
+      assert.match(again.why, /never finished: the tables were left part built - redeploy, and the build empties the database and builds it again/);
     } finally { again.made.close(); }
     const look = await createApp(file, opts());
     try { assert.equal(users(look), before, 'something was written to the half-seeded database'); } finally { look.close(); }
