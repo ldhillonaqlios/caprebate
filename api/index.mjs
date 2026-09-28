@@ -25,15 +25,13 @@ async function build() {
   const { seed } = await import('../Caprebate/09-app/backend/src/seed.ts');
   const host = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;
   const publicOrigin = process.env.CAPREBATE_PUBLIC_ORIGIN ?? (host ? `https://${host}` : undefined);
-  const lasting = lastingDatabase(process.env);
-  console.log(`test deployment: ${lasting.why}`);
-  const made = await createApp(lasting.location, {
+  const since = new Date().toISOString();
+  const opened = await openLasting(createApp, seed, lastingDatabase(process.env), {
     documentRoot: mkdtempSync(join(tmpdir(), 'cb-vercel-')),
     ...(publicOrigin === undefined ? {} : { publicOrigin }),
-    ...(lasting.authToken === undefined ? {} : { dbAuthToken: lasting.authToken }),
   });
-  const since = made.app.now();
-  await seedOnce(made, seed);
+  const made = opened.made;
+  console.log(`test deployment: ${opened.why}`);
   // PHASE 151e (line 3): a password of its own, and then - only then - the Didit keys from the website's settings.
   const t151e = await configureTestDeploy(made, process.env);
   console.log(`test deployment: ${t151e.why}`);
@@ -100,12 +98,50 @@ export function lastingDatabase(env) {
 }
 
 /**
+ * PHASE 151e (line 7), 28 September 2026: THE TEST WEBSITE NEVER GOES DOWN FOR ITS DATABASE. Open the lasting database
+ * when it is set; if it cannot be opened, or holds a seed that never finished (a first start cut off by the time
+ * limit), use memory as before, and say why - never the address and never the token (only an error's code or name).
+ * `waitMs` is how long a copy waits for another copy that is seeding the same empty database at the same moment.
+ */
+export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_000) {
+  const memory = async (why) => {
+    const made = await createApp(':memory:', opts);
+    await seedOnce(made, seed);
+    return { made, lasting: false, why };
+  };
+  if (lasting.authToken === undefined) return memory(lasting.why);
+  const reason = (e) => String(e?.code ?? e?.name ?? 'an error');
+  let made;
+  try {
+    made = await createApp(lasting.location, { ...opts, dbAuthToken: lasting.authToken });
+  } catch (e) {
+    return memory(`the lasting database could not be opened (${reason(e)}), so the records are kept in memory`);
+  }
+  try {
+    let s = await seedOnce(made, seed);
+    for (let waited = 0; !s.complete && waited < waitMs; waited += 1000) {
+      await new Promise((r) => setTimeout(r, 1000));
+      s = await seedOnce(made, seed);
+    }
+    if (s.complete) return { made, lasting: true, why: `${lasting.why}${s.seeded ? ' (seeded now, on its first start)' : ''}` };
+    made.close();
+    return memory('the lasting database holds a seed that never finished: empty it in Turso and redeploy. Until then the records are kept in memory');
+  } catch (e) {
+    try { made.close(); } catch { /* already gone */ }
+    return memory(`the lasting database could not be seeded (${reason(e)}), so the records are kept in memory`);
+  }
+}
+
+/**
  * The seed and the view-only login, ONLY on an empty database: on a lasting one the second cold start finds them there.
  * Two copies starting at once on an empty database can both try; the one that loses finds the seed there and goes on.
+ * `complete` says the seed FINISHED: the view-only login is written last, so a database with users and without it holds
+ * a seed that was cut off part way, and nothing here tries to finish it (half a seed run twice is worse than none).
  */
 export async function seedOnce(made, seed) {
   const count = () => Number(made.app.db.get('SELECT COUNT(*) AS n FROM users')?.n ?? 0);
-  if (count() > 0) return { seeded: false };
+  const complete = () => made.app.db.get("SELECT id FROM users WHERE id = 'u-demo-readonly'") !== undefined;
+  if (count() > 0) return { seeded: false, complete: complete() };
   try {
     const r = await seed(made.app.db, made.app.hasher, made.app.now);
     // PHASE 136: the view-only login, as tools/demo-server.ts adds it — here and in the demo only, never in src/seed.ts.
@@ -114,9 +150,9 @@ export async function seedOnce(made, seed) {
       'INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,NULL)',
       ['u-demo-readonly', 'readonly@example.invalid', 'readonly@example.invalid', 'View-only Person', 'READ_ONLY', await made.app.hasher.hash(r.password), t, t],
     );
-    return { seeded: true };
+    return { seeded: true, complete: true };
   } catch (e) {
-    if (made.app.db.kind !== 'memory' && count() > 0) return { seeded: false };
+    if (made.app.db.kind !== 'memory' && count() > 0) return { seeded: false, complete: complete() };
     throw e;
   }
 }

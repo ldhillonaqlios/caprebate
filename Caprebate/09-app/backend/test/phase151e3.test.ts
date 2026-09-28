@@ -32,6 +32,18 @@ import { Db, dbKind } from '../src/db.ts';
 import { fixtureTransport, type Fixture } from '../src/connectors/http.ts';
 import { secretsFromValues } from '../src/secrets.ts';
 import { IDENTITY_CHECK, IDENTITY_SESSION_ENDPOINT, type IdentityCheckConfig } from '../src/connectors/identity-check.ts';
+
+/**
+ * A CLIENT WITH NO CONTACT, INVENTED FOR THE TEST. Since Phase 151e line 7 every seeded client has a contact, so the
+ * state a real client can still be in (one made before line 6, say) is made here, the way the seed writes a client.
+ */
+function bareClient(db: Pick<import('../src/db.ts').Db, 'run'>): { id: string } {
+  const id = `b-bare-${Math.random().toString(36).slice(2)}`;
+  db.run('INSERT INTO businesses (id, name, sector, stage, contact_email, contact_phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [id, 'Invented Bare Client Limited', 'care_homes', 'ASSESSMENT_SUBMITTED', null, null, '2026-09-28T09:00:00.000Z']);
+  return { id };
+}
+
 import {
   FORGETFUL_DATABASE_WORDS, FORGOTTEN_CHECK_WORDS, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, NO_CONTACTS_WORDS,
   identityChecks, identityPanel, sendIdentityCheck,
@@ -192,7 +204,7 @@ type Lasting = { location: string; authToken?: string; why: string };
 async function entry() {
   return (await import(new URL('../../../../api/index.mjs', import.meta.url).href)) as {
     lastingDatabase: (env: Record<string, string | undefined>) => Lasting;
-    seedOnce: (made: Made, s: typeof seed) => Promise<{ seeded: boolean }>;
+    seedOnce: (made: Made, s: typeof seed) => Promise<{ seeded: boolean; complete: boolean }>;
     LASTING_DATABASE_KEYS: readonly string[];
   };
 }
@@ -240,13 +252,13 @@ describe('151e line 4a · the test website uses a lasting database only when it 
     const users = (m: Made) => m.app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM users')?.n;
     const first = await createApp(file, { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e3-')), now: () => NOW, sealKey: randomBytes(32) });
     try {
-      assert.deepEqual(await seedOnce(first, seed), { seeded: true });
+      assert.deepEqual(await seedOnce(first, seed), { seeded: true, complete: true });
       assert.ok(first.app.db.get("SELECT id FROM users WHERE id = 'u-demo-readonly'"), 'the view-only login is missing');
     } finally { first.close(); }
     const second = await createApp(file, { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e3-')), now: () => NOW, sealKey: randomBytes(32) });
     try {
       const before = users(second);
-      assert.deepEqual(await seedOnce(second, seed), { seeded: false });
+      assert.deepEqual(await seedOnce(second, seed), { seeded: false, complete: true });
       assert.equal(users(second), before);
     } finally { second.close(); }
   });
@@ -255,7 +267,8 @@ describe('151e line 4a · the test website uses a lasting database only when it 
     const src = readFileSync(new URL('../../../../api/index.mjs', import.meta.url), 'utf8');
     assert.match(src, /lastingDatabase\(process\.env\)/);
     assert.match(src, /dbAuthToken: lasting\.authToken/);
-    assert.doesNotMatch(src, /createApp\(':memory:'/, 'the entry point still builds on memory whatever it is given');
+    // Phase 151e line 7: memory is now the FALLBACK inside openLasting, so the build must go through it with the settings
+    assert.match(src, /openLasting\(createApp, seed, lastingDatabase\(process\.env\)/, 'the entry point builds on memory whatever it is given');
   });
 });
 
@@ -323,8 +336,7 @@ describe('151e line 5 · a client with no contacts: the panel says to add the pe
     try {
       await seed(w.made.app.db, w.made.app.hasher, w.made.app.now);
       const db = w.made.app.db;
-      const bare = db.get<{ id: string }>('SELECT id FROM businesses b WHERE NOT EXISTS (SELECT 1 FROM contacts c WHERE c.business_id = b.id) ORDER BY id LIMIT 1');
-      assert.ok(bare, 'the seed has no client without contacts');
+      const bare = bareClient(db);
       const html = String(identityPanel(w.made.app, adminOf(db), { business_id: bare.id }, []));
       assert.match(html, /id="identity-no-contacts"/);
       assert.ok(html.includes(NO_CONTACTS_WORDS));
@@ -355,7 +367,7 @@ describe('151e line 5 · a client with no contacts: the panel says to add the pe
     try {
       await seed(w.made.app.db, w.made.app.hasher, w.made.app.now);
       const db = w.made.app.db;
-      const bare = db.get<{ id: string }>('SELECT id FROM businesses b WHERE NOT EXISTS (SELECT 1 FROM contacts c WHERE c.business_id = b.id) ORDER BY id LIMIT 1')!;
+      const bare = bareClient(db);
       const sales = { id: 'u-x', role: 'SALES', business_id: null, disabled: false } as Actor;
       assert.equal(String(identityPanel(w.made.app, sales, { business_id: bare.id }, [])), '');
     } finally { close(w); }

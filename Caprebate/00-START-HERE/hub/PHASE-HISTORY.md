@@ -10484,3 +10484,27 @@ NEW node 03-app/caprebate-cash-route-proof.cjs       7 of 7 hold
  **Step 4B.** Items at "Ready - Claude can build": Phase 151g and Phase 151i, each with its own section. No orphans.
 
  **Commit:** `Phase 151e line 6: contact details are required - no client without a way to reach them, flagged until fixed, and an identity check only to someone we can reach` — pushed to `main` on github.com/ldhillonaqlios/caprebate.
+
+## PHASE 151e, LINE 7 — an invented contact on every seeded client; Turso, set up with Lakhbir (28 September 2026, Opus, Mac copy, Lakhbir's MacBook Pro)
+
+ **Lakhbir, in the chat, 28 September 2026: "yes add an invented contact to each seeded client" and "set up Turso".** Claimed (7197964) under tracker row 13133268301, now at Ready - Lakhbir action, owned by Lakhbir: opening the Turso database through Vercel is an account and a provider's terms, so it is his, and was handed to him in the chat with the steps. The claim is cleared. `.bak-phase151e5` siblings of every changed file.
+
+### DONE — with the evidence
+
+-  **The seed.** `seedAContactForEveryClient`, last in `seed`, gives each client with no contact an invented "Main Contact": `contact@<key>.example.invalid` and 01632 960001. Five clients gain one; Dunmarrow keeps its two. No seeded client is flagged by line 6's rule any more. The six tests that needed a client with no contact now make their own (`bareClient`), the state a real client made before line 6 can still be in.
+-  **The test website never goes down for its database** (`openLasting`): Turso opened when set; if it cannot be opened, or holds a seed that a cut-off first start never finished, memory as before, with the reason in the log as an error's code or name only. A copy meeting another copy's seed in progress waits up to ten seconds. `seedOnce` now also says whether the seed finished (the view-only login is written last).
+-  **Measured, and written for Lakhbir and the developer:** a first start makes about 60 statements and 57 schema steps, then about 380 seed statements, each a round trip to Turso — so the database goes in AWS us-east-1, beside Vercel's default function region, or the first start can pass the 30-second limit.
+-  **Tests, `test/phase151e5.test.ts`** (run it to count them), every one red on the pre-change seed and entry point: every seeded client reachable and every added contact invented; memory when nothing is set; memory with a reason that names neither address nor token when Turso cannot be opened; a first start that seeds and a second that does not; a half seed refused, reported, and left untouched. `phase151e3.test.ts`'s entry-point test now requires the build to go through `openLasting` with the website's settings.
+-  **Turso's price**, read on its pricing page: a free plan at $0, no card, 100 databases, 5 GB, 500 million rows read and 10 million written a month.
+-  **The checks, re-derived at the close:** `npm run check` exit 0; the site harness the same in both modes, 0 fail, 4 xfail; phase3 and phase9 green; the drift checker's total **3,750** (after the two Developer Spec figures the new tests moved were updated); extraction verifier and `extract --check` exit 0; the drift self-test green and its negative control exit 1; plain words, brand, tracker, register and CRM fold checks green with their self-tests; payload proof PASS; the gated-exit proof 14 of 14.
+-  **Paperwork.** The Developer Spec ("Built by Phase 151e, line 7"; line 6's seed sentence corrected; the one page's Turso row names the region; two figures); COORDINATES; the file index; a tracker note.
+
+### NOT DONE — each with its home
+
+-  Opening Turso in Vercel (Storage, Turso, region us-east-1, connected to caprebate-test), then a redeploy — BLOCKED on Lakhbir (an account and a provider's terms) — Word question 230, answered "set up Turso" in the chat; the steps are in the chat and the Developer Spec's one page.
+-  Proving the live test website runs on Turso once he has — BUILDABLE the moment he says it is done — added to the sweep (Phase 152), step 3, beside question 230: log in, look at a client's Identity check for the "Records kept in memory" box (gone means Turso), then record and close 230.
+-  Word question 230 is still not in the cloud copy (checked 08:48 on 28 Sep 2026, 23 hours after the write) — BUILDABLE — already in the sweep, step 3, now with the recorded answer to write.
+
+ **Step 4B.** Items at "Ready - Claude can build": Phase 151g and Phase 151i, each with its own section. No orphans.
+
+ **Commit:** `Phase 151e line 7: an invented contact on every seeded client; the test website opens Turso when set and never goes down for it` — pushed to `main` on github.com/ldhillonaqlios/caprebate.

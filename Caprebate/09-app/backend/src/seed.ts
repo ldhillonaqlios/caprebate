@@ -150,7 +150,29 @@ export async function seed(db: Db, hasher: PasswordHasher, now: () => string): P
   seedCrm(db, now, idOf, out.users);
   seedTasks(db, now, idOf, out.users);
   seedClaimAtInvoice(db, now, idOf, out.users);
+  seedAContactForEveryClient(db, now, idOf);
   return out;
+}
+
+/**
+ * PHASE 151e (line 7), 28 September 2026 — EVERY INVENTED CLIENT HAS A CONTACT WE CAN REACH. Contact details are not
+ * optional (line 6), so a client with none is flagged; Lakhbir asked for one invented contact on each seeded client
+ * that had none, so the demo and the test website show clients as they should be. Dunmarrow keeps its two. A CHANNEL,
+ * not a person, as everywhere in this file: a role name and a role mailbox, and a number in Ofcom's drama range.
+ */
+function seedAContactForEveryClient(db: Db, now: () => string, idOf: Map<string, string>): void {
+  const t = now();
+  for (const b of BUSINESSES) {
+    const id = idOf.get(b.key);
+    if (id === undefined) throw new Error(`seed: ${b.key} missing`);
+    if ((db.get<{ n: number }>('SELECT COUNT(*) AS n FROM contacts WHERE business_id = ?', [id])?.n ?? 0) > 0) continue;
+    db.run(
+      'INSERT INTO contacts (id, business_id, full_name, job_role, job_role_other, contact_consent, marketing_optin, ' +
+        'created_at, contact_type, is_decision_maker, email, phone, updated_at) ' +
+        'VALUES (?, ?, ?, NULL, NULL, 0, 0, ?, ?, ?, ?, ?, ?)',
+      [newId(), id, 'Main Contact', t, 'DECISION_MAKER', 1, `contact@${b.key}.example.invalid`, '01632 960001', t],
+    );
+  }
 }
 
 /**

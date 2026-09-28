@@ -27,6 +27,18 @@ import { identityPanel, sendIdentityCheck, UNREACHABLE_CONTACT_WORDS } from '../
 import * as C from '../src/web/crm.ts';
 import { contactValueProblem } from '../src/web/router.ts';
 
+/**
+ * A CLIENT WITH NO CONTACT, INVENTED FOR THE TEST. Since Phase 151e line 7 every seeded client has a contact, so the
+ * state a real client can still be in (one made before line 6, say) is made here, the way the seed writes a client.
+ */
+function bareClient(db: Pick<import('../src/db.ts').Db, 'run'>): { id: string } {
+  const id = `b-bare-${Math.random().toString(36).slice(2)}`;
+  db.run('INSERT INTO businesses (id, name, sector, stage, contact_email, contact_phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [id, 'Invented Bare Client Limited', 'care_homes', 'ASSESSMENT_SUBMITTED', null, null, '2026-09-28T09:00:00.000Z']);
+  return { id };
+}
+
+
 const NOW = '2026-09-28T10:00:00.000Z';
 
 async function world() {
@@ -132,7 +144,7 @@ describe('151e line 6 · 2 · a client with no contact we can reach is flagged, 
   test('flagged on its page until one of its contacts has an email address or a telephone number', async () => {
     const w = await world();
     try {
-      const bare = w.db.get<{ id: string }>('SELECT id FROM businesses b WHERE NOT EXISTS (SELECT 1 FROM contacts c WHERE c.business_id = b.id) ORDER BY id LIMIT 1')!;
+      const bare = bareClient(w.db);
       const staff = w.client();
       assert.equal((await staff.post('/login', { email: 'admin@example.invalid', password: SEED_PASSWORD })).status, 303);
       const flagged = await staff.req(`/staff/clients/${bare.id}`);
@@ -151,7 +163,7 @@ describe('151e line 6 · 2 · a client with no contact we can reach is flagged, 
   test('clearing the only email and telephone a client has is refused; with another way to reach them, it is allowed', async () => {
     const w = await world();
     try {
-      const bare = w.db.get<{ id: string }>('SELECT id FROM businesses b WHERE NOT EXISTS (SELECT 1 FROM contacts c WHERE c.business_id = b.id) ORDER BY id LIMIT 1')!;
+      const bare = bareClient(w.db);
       const one = C.addContact(w.deps, w.admin, bare.id, { full_name: 'Invented Only', email: 'only@example.invalid' });
       assert.ok(one.ok);
       const refused = C.updateContact(w.deps, w.admin, one.id, { email: '', phone: '' });
@@ -180,7 +192,7 @@ describe('151e line 6 · 3 · an identity check goes only to a contact with an e
       const t = fixtureTransport({ [`POST ${IDENTITY_SESSION_ENDPOINT}`]: { status: 201, body: JSON.stringify({ session_id: 's-151e4', url: 'https://verify.didit.me/en/session/INVENTED151E4', status: 'Not Started' }) } });
       w.made.app.outside = t;
       w.made.app.secrets = secretsFromValues(KEYS);
-      const bare = w.db.get<{ id: string }>('SELECT id FROM businesses b WHERE NOT EXISTS (SELECT 1 FROM contacts c WHERE c.business_id = b.id) ORDER BY id LIMIT 1')!;
+      const bare = bareClient(w.db);
       const nobody = C.addContact(w.deps, w.admin, bare.id, { full_name: 'Invented Nobody' });
       assert.ok(nobody.ok);
       const r = await sendIdentityCheck({ app: w.made.app, newId: () => 'idc-151e4' }, w.admin,
@@ -195,7 +207,7 @@ describe('151e line 6 · 3 · an identity check goes only to a contact with an e
   test('the panel offers only the contacts we can reach, and names the others with what to add', async () => {
     const w = await world();
     try {
-      const bare = w.db.get<{ id: string }>('SELECT id FROM businesses b WHERE NOT EXISTS (SELECT 1 FROM contacts c WHERE c.business_id = b.id) ORDER BY id LIMIT 1')!;
+      const bare = bareClient(w.db);
       const nobody = C.addContact(w.deps, w.admin, bare.id, { full_name: 'Invented Nobody' });
       assert.ok(nobody.ok);
       const list = () => w.db.all<{ id: string; full_name: string }>('SELECT id, full_name FROM contacts WHERE business_id = ? ORDER BY full_name', [bare.id]);

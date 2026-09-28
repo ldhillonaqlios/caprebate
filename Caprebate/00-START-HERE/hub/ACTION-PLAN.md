@@ -463,8 +463,11 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   Sep 2026): with TURSO_DATABASE_URL and TURSO_AUTH_TOKEN (what Vercel's
   Turso integration adds; CAPREBATE_DB_URL and CAPREBATE_DB_TOKEN win) AND
   the test password, every copy uses one Turso database and the seed runs
-  only when it is empty (lastingDatabase, seedOnce). Word question 230 asks
-  Lakhbir to open it. Uploaded documents stay on a temporary disk: Phase 151i.
+  only when it is empty (lastingDatabase, seedOnce). If it cannot be opened,
+  or holds a seed that never finished, the site runs on memory and the log
+  says why (openLasting, Phase 151e line 7). Put it in AWS us-east-1, beside
+  the function. Lakhbir said "set up Turso" on 28 Sep 2026 (Word question
+  230). Uploaded documents stay on a temporary disk: Phase 151i.
 
 THE LOCK - hub/CLAIM.md replaces monday.com's "Claimed by (machine)" column
   Before a phase starts: write the phase, the machine and the time there,
@@ -1139,7 +1142,14 @@ after that phase.
    down and look for heading 230. If it is there, done. If it is not, the Mac
    file still carries it (its .bak-phase151e3 sibling is the document before):
    merge 230 into the CLOUD copy the AMENDMENT 2 way, never the Mac file over
-   it, and look for a OneDrive conflict copy beside it. BUILDABLE.
+   it, and look for a OneDrive conflict copy beside it. STILL NOT IN THE CLOUD
+   AT 08:48 ON 28 SEP (23 hours on): OneDrive on the Mac is not uploading it.
+   THEN RECORD LAKHBIR'S ANSWER: "Recorded answer (28 Sep 2026, Lakhbir, in
+   the chat): set up Turso" - and, once the test website runs on it (Phase
+   151e line 7's record says whether it does - if not, prove it: sign in on
+   the test website and open a client's Identity check; no "Records kept in
+   memory" box means Turso), move 230 to the closed
+   document with a Closed line naming Phase 151e lines 4 to 7. BUILDABLE.
    AND ONE BLIND SPOT IN THE CRM FOLD CHECK (Phase 151e line 6, 28 Sep 2026):
    a §4 reference whose line number is missing ("`src/web/crm.ts:`") passed
    check C silently until a person saw it. Make C fail on a path with a
