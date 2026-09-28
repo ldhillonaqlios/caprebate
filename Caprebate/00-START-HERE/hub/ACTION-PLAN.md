@@ -1202,6 +1202,19 @@ after that phase.
    keeps its own memory, so a sign-in's second step can land on a copy that
    never saw it and be refused ("That sign-in has timed out"), as it was at
    11:07:15 and 11:07:33.
+   READ AT 11:28 (the new line): "Hrana(Api("SQLite input error: table
+   claim_facts already exists"))". The first start on Turso was stopped part
+   way through the MIGRATIONS by vercel.json's own maxDuration of 30 s (now
+   300, Phase 151i follow-up 3), leaving claim_facts made and unrecorded.
+   Lakhbir empties the Turso database and redeploys; then prove 230 and 231.
+   AND A MIGRATION AND ITS RECORD AS ONE STEP (same day): migrate() in
+   src/db.ts runs a file, then records it, so a start cut off between the
+   two leaves this state again. Make each file and its schema_migrations row
+   land together or not at all. CAREFUL: 007, 011, 014, 018 and others turn
+   foreign keys off and run their own BEGIN/COMMIT, so a wrapping
+   transaction cannot simply be added; read every file first. Prove it with a
+   migration cut off part way on a file database, and the next start
+   finishing it. BUILDABLE.
    AND THE FIRST REQUEST AFTER EVERY DEPLOY TIMES OUT (Phases 151j and 151i,
    28 Sep 2026): "/" answered 504 after 30 s on the new copy's first start,
    twice running; every request after it answered 200 in under half a

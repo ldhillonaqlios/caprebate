@@ -167,7 +167,10 @@ export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_00
     // PHASE 151i: `lastingOnly` (the shared document store) goes with the lasting database and never with memory.
     made = await createApp(lasting.location, { ...opts, ...lastingOnly, dbAuthToken: lasting.authToken });
   } catch (e) {
-    return memory(`the lasting database could not be opened (${reason(e)}), so the records are kept in memory`);
+    // PHASE 151i follow-up 3: a first start cut off while it built the tables leaves one table made and not recorded,
+    // and every later start stops on it. Say what to do, not only what broke.
+    const halfBuilt = /already exists/i.test(String(e?.message ?? '')) ? HALF_BUILT_WORDS : '';
+    return memory(`the lasting database could not be opened (${reason(e)})${halfBuilt}, so the records are kept in memory`);
   }
   try {
     let s = await seedOnce(made, seed);
@@ -192,6 +195,9 @@ export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_00
  * of the address, its host name and the token is cut out, and anything else shaped like a token or an address.
  * Never more than 200 characters of it.
  */
+/** PHASE 151i follow-up 3: what to do when a first start was cut off while it built the tables (seen 28 Sep 2026). */
+export const HALF_BUILT_WORDS = ': a first start was cut off while it built the tables - empty the database in Turso and redeploy';
+
 export function openFailure(e, lasting) {
   const code = String(e?.code ?? '').trim() || String(e?.name ?? '').trim() || 'an error';
   let words = String(e?.message ?? '');

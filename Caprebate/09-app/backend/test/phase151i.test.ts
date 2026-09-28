@@ -494,3 +494,27 @@ describe('151i follow-up · why the lasting database would not open, in the libr
     } finally { o.made.close(); }
   });
 });
+
+describe('151i follow-up 3 · a first start cut off while it built the tables', () => {
+  // The live test website, 28 Sep 2026, 11:28: "the lasting database could not be opened (Error: Hrana(Api("SQLite input
+  // error: table claim_facts already exists (at offset 13)"))), so the records are kept in memory". vercel.json's own
+  // limit of 30 seconds had stopped the first start part way through the migrations.
+  test('the log line says what to do: empty the database in Turso and redeploy', async () => {
+    const { openLasting } = await entry();
+    const lasting = { location: 'libsql://invented-151i.turso.io', authToken: 'invented-token-151i', why: 'x' };
+    const failing = (async (loc: string, o: object) => {
+      if (loc !== ':memory:') throw Object.assign(new Error('Hrana(Api("SQLite input error: table claim_facts already exists (at offset 13)"))'), { code: '' });
+      return createApp(loc, o);
+    }) as typeof createApp;
+    const o = await openLasting(failing, seed, lasting, { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151i-half-')), now: () => NOW }, 0);
+    try {
+      assert.equal(o.lasting, false);
+      assert.match(o.why, /table claim_facts already exists .*\): a first start was cut off while it built the tables - empty the database in Turso and redeploy, so the records are kept in memory$/);
+    } finally { o.made.close(); }
+  });
+
+  test('the website\'s time limit leaves a first start room: 300 seconds, the most Vercel\'s Hobby plan allows (read 28 Sep 2026)', () => {
+    const v = JSON.parse(readFileSync(join(REPO, 'vercel.json'), 'utf8')) as { functions: Record<string, { maxDuration?: number }> };
+    assert.equal(v.functions['api/index.mjs']?.maxDuration, 300);
+  });
+});
