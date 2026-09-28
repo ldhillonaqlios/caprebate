@@ -2560,9 +2560,9 @@ decides what each person can see, on the server, in `can()`).
 
 **For the developer, as Phase 151j left it — and Phase 151k built all four, below:** the JSON API could not complete a
 second step; the authenticator secret was stored as text; an emailed code or reset link stayed in the outbox body; and
-the screenshot tool stopped at the step page. **Still true:** there are no recovery codes: a person who loses their
-phone asks the super user to reset their second step (Lakhbir is asked, in the Word questions document, whether he
-wants them).
+the screenshot tool stopped at the step page. **Still true:** there are no recovery codes yet: a person who loses their
+phone asks the super user to reset their second step. Lakhbir said **yes** to recovery codes on 28 September 2026
+(Word question 232, closed), and Phase 151m builds them.
 
 - Tests: `test/phase151j.test.ts`, run `cd 09-app/backend && node --test test/phase151j.test.ts` to count them.
 

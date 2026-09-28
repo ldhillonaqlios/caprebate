@@ -35,7 +35,6 @@
 227) May the site area we work out from a land boundary go in a client's report?
 230) Can the test website keep its records in a database that lasts?
 231) Can the test website keep uploaded files in a private store on Vercel?
-232) Do you want recovery codes, so a person who loses their phone can still sign in?
 72) When buying a building, can the buyer add their own fitting costs on top of an agreed value?
 73) If the seller was never allowed to claim, does the pooling rule still apply?
 74) Is there a third way to fix the value of fixtures that we are missing?
@@ -230,3 +229,4 @@
 225) Which online identity check should clients use for the money-laundering rules: Veriff, Credas or APLYiD?
 170) Can we make a few small, logged test lookups to check a data connector works?
 229) Should the test website stop showing our files to anyone who has the link?
+232) Do you want recovery codes, so a person who loses their phone can still sign in?
