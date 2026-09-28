@@ -7,7 +7,7 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 2 |
-| Ready - Lakhbir action | 36 |
+| Ready - Lakhbir action | 35 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 1 |
 | Blocked - licence or purchase | 5 |
@@ -15,13 +15,13 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
 | Done | 265 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
-| Claude | 233 |
+| Claude | 234 |
 | CTA | 45 |
-| Lakhbir | 74 |
+| Lakhbir | 73 |
 | Surveyor | 9 |
 | Solicitor/DPO | 57 |
 | Developer | 20 |
@@ -1290,7 +1290,7 @@
 
 ### Phase 151e - the test website: why every page fails, and what it shows to anyone
 
-`13133268301` · **Ready - Lakhbir action** · owner Lakhbir
+`13133268301` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
 
 - Note 2026-09-25 (Phase 151d): Written by Phase 151d: every page of the test website answers a server error (the deploy of 43f674b already did), and the website serves every committed file to anyone. Line 1 is buildable; line 2 waits on Word question 229.
 - Note 2026-09-25 (Phase 151h): Phase 151h added line 3: where Didit sends its results. No host can take one today (500 on the test deploy, no keys there, a fresh database each cold start).
