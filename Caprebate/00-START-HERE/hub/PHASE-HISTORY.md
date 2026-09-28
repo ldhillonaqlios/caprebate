@@ -10508,3 +10508,28 @@ NEW node 03-app/caprebate-cash-route-proof.cjs       7 of 7 hold
  **Step 4B.** Items at "Ready - Claude can build": Phase 151g and Phase 151i, each with its own section. No orphans.
 
  **Commit:** `Phase 151e line 7: an invented contact on every seeded client; the test website opens Turso when set and never goes down for it` — pushed to `main` on github.com/ldhillonaqlios/caprebate.
+
+## PHASE 151j — sign-in: forgot password, temporary passwords, a second step (28 September 2026, Opus, Mac copy, Lakhbir's MacBook Pro)
+
+ **Lakhbir, in the chat, 28 September 2026:** users should be able to press "forgot password" and be emailed a link; there should be two-factor authentication; the super user should create accounts with a temporary password, and at first sign-in the person creates their own and sets up their second step; and the super user assigns the role, which limits what each person sees. **Asked, he chose:** the second step is an email code or an authenticator app (no text messages, so no SMS supplier); a temporary password shown once; every staff login must use a second step and a client may. Claimed (bb6e7e4, 4b91d4e) under tracker row 13133268309, now Done; the claim is cleared. `.bak-phase151j` siblings of every changed file.
+
+### DONE — with the evidence
+
+-  **What already existed, re-derived from the code:** the super user already created accounts with a role and changed or disabled them, and `can()` already limits each role on the server; `src/auth.ts` already had single-use reset tokens with no screen. Built on those, not beside them.
+-  **Enforced where a session is made.** `login()` now checks the password (`verifyPassword`), asks `nextSignInStep` what is left — a temporary password to replace, a second step to set up or to give — and refuses with `E_SECOND_STEP` while anything is, so `/api/login` cannot go round it. The website walks the steps (`src/web/sign-in.ts`, migration 057's `sign_in_steps`, an httpOnly `cb_step` cookie); only a finished step issues a session.
+-  **The second step.** An authenticator app (`src/totp.ts`, RFC 6238, proved on the RFC's own vectors; a QR code drawn by `uqr` 0.1.3, pinned at the root too; a code used once) or a six-digit emailed code (a hash, ten minutes). Five wrong codes end the sign-in. Staff change theirs from the user menu (`/staff/two-factor`) and cannot turn it off; a client turns it on or off at `/portal/two-factor`.
+-  **Temporary passwords and the super user's buttons.** Creating a user makes a 16-character temporary password with no look-alike characters, shown once, good for 7 days; nobody types a password there any more. Each row has **New temporary password** and **Reset second step**; each ends that person's sessions. An expired temporary password is refused with its own words.
+-  **A forgotten password.** `/login/forgot` and `/login/reset`: a link on the sign-in page, the same answer for any address, a link good once for 30 minutes, the second step still asked afterwards, a temporary password replaced by it.
+-  **The test website** keeps a password a person chose: `configureTestDeploy` moves only logins still on the public seed password.
+-  **Tests, `test/phase151j.test.ts`** (run it to count them), on the default application: 18 behaviour tests all red on the pre-change code (the changed files put back in a scratch copy, the new constants as literals), each for its own reason; the three code tests are proved on the RFC's vectors. The 46 older test files that sign in with a password alone, `test/helpers.ts`'s `testApp` and `tools/payload-proof.ts` now build with `twoFactor: 'off'`, each saying so; two older tests now expect the temporary-password page after creating a user.
+-  **The checks, re-derived at the close:** `npm run check` exit 0; the site harness the same in both modes, 0 fail, 4 xfail; phase3 and phase9 green; the drift checker's total **3,771**, after the two Developer Spec figures were updated; extraction verifier and `extract --check` exit 0; the drift self-test green and its negative control exit 1; plain words (screens and guide, after four sentences were shortened), brand, tracker, register and CRM fold checks green with their self-tests — the fold check after eleven new routes were described in the route tables and three §4 references moved; payload proof PASS; the gated-exit proof 14 of 14.
+-  **Paperwork.** The guide (A-section on users and sign-in, `B11`, and a new `B55` on signing in) and Help, rebuilt; the Developer Spec ("Built by Phase 151j", the route tables, figures, references); the insurance answer sheet's "MFA / Cyber Essentials" line; COORDINATES; the file index.
+
+### NOT DONE — each with its home
+
+-  The JSON API cannot complete a second step; the authenticator secret is stored as text; an emailed code or reset link stays in the outbox body; the screenshot tool (`crawl-shots.mjs`) stops at the step page — BUILDABLE — new Phase 151k, written and inserted before the sweep, with its tracker row (13133268310).
+-  Recovery codes (a way in without the phone) were not asked for — a person who loses their phone asks the super user to reset their second step — BUILDABLE only if wanted: Phase 151k asks Lakhbir first, in the Word questions document.
+
+ **Step 4B.** Items at "Ready - Claude can build": Phase 151g, Phase 151i and Phase 151k, each with its own section. No orphans.
+
+ **Commit:** `Phase 151j: sign-in - forgot password, temporary passwords from the super user, and a second step (email code or authenticator app) for every staff login` — pushed to `main` on github.com/ldhillonaqlios/caprebate.

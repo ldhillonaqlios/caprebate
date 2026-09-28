@@ -51,6 +51,8 @@ export type BuildOptions = {
   dbAuthToken?: string;
   /** Tests only: open a memory or file database through libsql, to prove the application runs on it (src/db.ts). */
   dbEngine?: 'node:sqlite' | 'libsql';
+  /** PHASE 151j: who must give a second factor. Absent is 'staff', the rule. 'off' is for the older tests only. */
+  twoFactor?: 'staff' | 'off';
   hasher?: PasswordHasher;
   now?: () => string;
   migrationsDir?: string;
@@ -77,7 +79,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
 
   await primeTimingDefence(hasher);
 
-  const deps: Deps = { db, audit, hasher, now };
+  const deps: Deps = { db, audit, hasher, now, twoFactor: opts.twoFactor === 'off' ? 'OFF' : 'STAFF' };
   return { db, audit, hasher, email, signature, secrets, outside, now, deps, close: () => db.close() };
 }
 

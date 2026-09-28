@@ -302,7 +302,11 @@ export function staffList(db: Db, actor: Actor): StaffRow[] {
 export async function createStaffUser(
   d: { db: Db; audit: AuditLog; now: () => string; hash(plain: string): Promise<string> },
   actor: Actor,
-  args: { email: string; display_name: string; role: string; password: string; business_id?: string | null },
+  args: {
+    email: string; display_name: string; role: string; password: string; business_id?: string | null;
+    /** PHASE 151j: the password is a temporary one, good until this time; the person chooses their own at first sign-in. */
+    temporary_until?: string;
+  },
 ): Promise<User> {
   authorise(actor, 'user.create', { type: 'user', id: 'new', role: 'SALES' });
 
@@ -344,11 +348,14 @@ export async function createStaffUser(
     password_hash: await d.hash(args.password),
     business_id: args.role === 'CLIENT' ? (args.business_id ?? null) : null,
   });
+  if (args.temporary_until !== undefined) {
+    d.db.run('UPDATE users SET password_temporary_until = ? WHERE id = ?', [args.temporary_until, created.id]);
+  }
   d.audit.append({
     at: d.now(), kind: 'USER_CREATED', outcome: 'ALLOWED',
     actor_id: actor.id, actor_role: actor.role,
     object_type: 'user', object_id: created.id,
-    detail: { role: created.role },
+    detail: { role: created.role, ...(args.temporary_until === undefined ? {} : { temporary_until: args.temporary_until }) },
   });
   return created;
 }

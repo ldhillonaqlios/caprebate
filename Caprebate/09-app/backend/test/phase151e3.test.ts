@@ -18,6 +18,8 @@
  *       On two memories the result is still REFUSED, audited, and nothing is written.
  *   5   a client with no contacts: the panel says to add the person as a contact first, with a link to that form.
  */
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac, randomBytes } from 'node:crypto';
@@ -74,7 +76,7 @@ type Copy = { made: Made; base: string; post: (body: string, headers: Record<str
 
 /** One copy of the application - what one Vercel instance is - listening, with recorded answers and invented keys. */
 async function copy(location: string, opts: { engine?: 'node:sqlite' | 'libsql' } = {}): Promise<Copy> {
-  const made = await createApp(location, {
+  const made = await createApp(location, { twoFactor: 'off',
     documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e3-')), now: () => NOW, sealKey: randomBytes(32),
     ...(opts.engine === undefined ? {} : { dbEngine: opts.engine }),
   });
@@ -147,7 +149,7 @@ describe('151e line 4a · a check sent from one copy, and its signed result rece
 
   test('libsql runs every migration and the whole seed, as node:sqlite does: the same tables, and the same counts', async () => {
     const counts = async (engine: 'node:sqlite' | 'libsql') => {
-      const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e3-')), now: () => NOW, sealKey: randomBytes(32), dbEngine: engine });
+      const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e3-')), now: () => NOW, sealKey: randomBytes(32), dbEngine: engine });
       try {
         await seed(made.app.db, made.app.hasher, made.app.now);
         const tables = made.app.db.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name").map((t) => t.name);
@@ -250,12 +252,12 @@ describe('151e line 4a · the test website uses a lasting database only when it 
     const { seedOnce } = await entry();
     const file = join(mkdtempSync(join(tmpdir(), 'cb-151e3-seed-')), 'lasting.db');
     const users = (m: Made) => m.app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM users')?.n;
-    const first = await createApp(file, { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e3-')), now: () => NOW, sealKey: randomBytes(32) });
+    const first = await createApp(file, { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e3-')), now: () => NOW, sealKey: randomBytes(32) });
     try {
       assert.deepEqual(await seedOnce(first, seed), { seeded: true, complete: true });
       assert.ok(first.app.db.get("SELECT id FROM users WHERE id = 'u-demo-readonly'"), 'the view-only login is missing');
     } finally { first.close(); }
-    const second = await createApp(file, { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e3-')), now: () => NOW, sealKey: randomBytes(32) });
+    const second = await createApp(file, { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e3-')), now: () => NOW, sealKey: randomBytes(32) });
     try {
       const before = users(second);
       assert.deepEqual(await seedOnce(second, seed), { seeded: false, complete: true });

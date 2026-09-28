@@ -11,6 +11,8 @@
  *   3 · the postcode check at the address question, and "answer it myself" (Word answer 180)
  *   4 · the tax adviser's firm on the sign-off record (Word answer 169)
  */
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac, randomBytes } from 'node:crypto';
@@ -68,7 +70,7 @@ function client(base: string) {
 }
 
 async function world() {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151b-')), now: () => '2026-09-25T10:00:00.000Z', sealKey: randomBytes(32) });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-151b-')), now: () => '2026-09-25T10:00:00.000Z', sealKey: randomBytes(32) });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const addr = made.server.address();
   const base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;
@@ -366,7 +368,9 @@ describe('2 · the role editor’s screens: every choice in words, grouped, borr
       assert.match((await admin.get('/staff/users')).body, /<td>Bookkeeper<\/td>/, 'the users page shows the made role by its name');
       // A new staff user can be created straight into a made role.
       const created = await admin.post('/staff/users/create', { email: 'keeper2@example.invalid', display_name: 'Second Keeper', role: 'ROLE_BOOKKEEPER', password: 'a-long-enough-password' });
-      assert.equal(created.status, 303, created.body.slice(0, 300));
+      // Phase 151j: creating a user now shows the temporary password once, instead of going back to the list
+      assert.equal(created.status, 200, created.body.slice(0, 300));
+      assert.match(created.body, /id="temporary-password"/);
     } finally { w.close(); }
   });
 

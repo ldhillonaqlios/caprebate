@@ -468,6 +468,12 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   says why (openLasting, Phase 151e line 7). Put it in AWS us-east-1, beside
   the function. Lakhbir said "set up Turso" on 28 Sep 2026 (Word question
   230). Uploaded documents stay on a temporary disk: Phase 151i.
+  SIGNING IN (Phase 151j, 28 Sep 2026): every staff login gives a second
+  step (an authenticator app or an email code); a client may; a new account
+  gets a temporary password shown once (7 days). login() itself refuses
+  while a step is left. createApp(..., { twoFactor: 'off' }) is for the older
+  test files and tools/payload-proof.ts ONLY - never src/ or api/. On the
+  test website emails are not sent, so use the authenticator app there.
 
 THE LOCK - hub/CLAIM.md replaces monday.com's "Claimed by (machine)" column
   Before a phase starts: write the phase, the machine and the time there,
@@ -1004,6 +1010,68 @@ CRM fold check; payload-proof. Commit and push; check the live test website:
 "/" answers 200 and the login page renders.
 ```
 
+## PHASE 151k — sign-in hardening: the API's steps, the app secret at rest, codes out of the outbox, the screenshot tool
+
+ **Model: Opus. Written 28 September 2026 by Phase 151j.** Tracker row: "Phase 151k - sign-in hardening" in 05 · FOR DEVELOPMENT. Runs after 151i, before the sweep.
+
+ **Why this exists.** Phase 151j built the second step Lakhbir asked for (an email code or an authenticator app; every staff login; a client may) and temporary passwords. It left four things the Developer Spec's "Built by Phase 151j" section names, none waiting on anybody: build them.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
+a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
+branch main. On the Mac the working copy is Development/, one level above the
+tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
+Allowances/Business Development/Development. git pull, then git log --oneline.
+OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
+INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
+COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
+plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
+already there stops you) and clear it at the end; retag what you touch in the
+tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
+write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+═══════════════════════════════════
+
+Mac copy. Take a .bak-phase151k sibling of every file you change. Tracker row:
+"Phase 151k - sign-in hardening" (find its id with list --group DEVELOPMENT).
+Read first: src/web/sign-in.ts, src/auth.ts (login, nextSignInStep,
+startSession), src/totp.ts, the "Built by Phase 151j" section of the Developer
+Spec, and test/phase151j.test.ts. Invented people only; no network.
+
+1. THE JSON API'S STEPS. /api/login refuses with E_SECOND_STEP today. Give it
+   /api/login/step routes on the SAME functions sign-in.ts uses (never a
+   second implementation): the password answers 202 with the step and a
+   step token (never a session), then new-password / method / code / resend,
+   and a session only when the last step is done. Same limits: 15 minutes,
+   5 wrong codes, a code once. The website's steps unchanged.
+2. THE APP SECRET AT REST. users.mfa_secret and sign_in_steps.pending_secret
+   are text. Seal them with a key read the way src/secrets.ts reads keys
+   (CAPREBATE_MFA_KEY; never a key file inside the tree), AES-256-GCM, and
+   read either form so nothing set up today stops working; a sealed value
+   without the key refuses in words. Built so that with no key set it stays
+   as today, and the Developer Spec's one page names the key.
+3. CODES AND LINKS OUT OF THE OUTBOX. A sign-in code or a reset link sits in
+   outbox.body for good. Once a message of those two kinds has been SENT
+   (EMAIL_SENDING on), blank its body to a fixed sentence, keeping who, when
+   and the kind; while sending is off (the test website prints it to the
+   function log) leave it, and say so in the spec.
+4. THE SCREENSHOT TOOL. 04-phase-work/phase144/tools/crawl-shots.mjs signs
+   in with a password and now stops at the step page. Give it the second
+   step for the demo's invented logins (the demo prints what it needs to the
+   console; never a real person's account), or say plainly which screens it
+   can no longer reach.
+Recovery codes (a way in without the phone) were not asked for: do not build
+them; ask Lakhbir in the Word questions document under his name.
+Tests for each, proved red on the pre-change code.
+
+CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
+inside their folders; the drift checker and its negative control (on its own
+line); the plain-words check; the tracker check; the register check and the
+CRM fold check; payload-proof. Commit and push; check the live test website:
+"/" answers 200 and the login page renders with its "Forgotten your password?"
+link.
+```
+
 ## PHASE 152 — Sweep and stress-test (the recurring one, always last)
 
 
@@ -1520,6 +1588,7 @@ WHEN DONE
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
 |  Claude |  The test lookups Lakhbir allowed (Phase 151g) |  He said yes to small, logged test lookups on five conditions; the smoke test that makes them exists and enforces none of the five yet |
+|  Claude |  Sign-in hardening: the API's steps, the app secret at rest, codes out of the outbox, the screenshot tool (Phase 151k) |  Written by Phase 151j on 28 September 2026: four things the second step left, none waiting on anybody |
 |  Claude |  The test website's uploaded documents on a store every copy reaches (Phase 151i) |  Written by Phase 151e on 27 September 2026: once the test website has its lasting database, its uploaded documents would still sit on each copy's temporary disk; and the audit log's next number on a shared database. Build it and switch it off |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

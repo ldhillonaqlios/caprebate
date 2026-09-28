@@ -26,6 +26,8 @@
  * supplied, succeeds. A refusal that could not have been a success proves nothing.
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, readdirSync } from 'node:fs';
@@ -372,7 +374,7 @@ async function serve(opts: { referralForm?: { enabled: boolean; requires: string
   post(path: string, fields: Record<string, string>, cookie?: string): Promise<{ status: number; body: string; cookie: string }>;
   get(path: string, cookie?: string): Promise<{ status: number; body: string }>;
 }> {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-intro-')), ...opts });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-intro-')), ...opts });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const addr = made.server.address();
   const base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;

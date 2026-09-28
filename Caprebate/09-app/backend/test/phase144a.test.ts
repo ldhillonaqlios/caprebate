@@ -10,6 +10,8 @@
  *   3  migration 039 changes a seeded row only while it holds the seeded words;
  *   4  the six small things, and the property page's breadcrumb.
  */
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, readdirSync, copyFileSync, mkdirSync } from 'node:fs';
@@ -35,7 +37,7 @@ type Res = { status: number; body: string };
 type Client = { req(path: string): Promise<Res>; post(path: string, f: Record<string, string>): Promise<Res> };
 
 async function boot(): Promise<{ close(): void; signIn(who: string): Promise<Client>; db: Db }> {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-144a-')), now: () => '2026-09-22T10:00:00.000Z', sealKey: randomBytes(32) });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-144a-')), now: () => '2026-09-22T10:00:00.000Z', sealKey: randomBytes(32) });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const addr = made.server.address();
   const base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;

@@ -2,6 +2,8 @@
  * Authentication. Every rule in auth.ts has an assertion here, and the ones
  * that matter most are the negatives: what is REFUSED, and what never leaves.
  */
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -184,7 +186,7 @@ describe('password reset', () => {
 
   test('an expired token is refused', async () => {
     let t = Date.UTC(2026, 8, 8, 12, 0, 0);
-    const app = await (await import('../src/app.ts')).buildApp({
+    const app = await (await import('../src/app.ts')).buildApp({ twoFactor: 'off',
       hasher: fakeHasher(), now: () => new Date(t).toISOString(),
     });
     const u = createUser(app.db, app.now, {

@@ -17,6 +17,8 @@
  *   "add the property page's" note route                    → THE PROPERTY AND ORGANISATION PAGES
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { copyFileSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
@@ -322,7 +324,7 @@ describe('the lead’s next action — retired into a task, as the claim’s was
 
 describe('the property and organisation pages — documents panels, a link form, and a note on a property', () => {
   test('sales links a document to a property and adds a note there; a surveyor may do neither, and accounting cannot open the property', async () => {
-    const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-lists-')) });
+    const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-lists-')) });
     await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
     try {
       const addr = made.server.address();

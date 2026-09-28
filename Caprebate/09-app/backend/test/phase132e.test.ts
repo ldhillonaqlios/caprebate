@@ -11,6 +11,8 @@
  * THE CLOCK IS PASSED, NOT READ, everywhere in this file: the seed carries fixed
  * dates, so every app here is built on `fixedClock()`.
  */
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -43,7 +45,7 @@ type Client = { get(path: string): Promise<Res>; post(path: string, fields: Reco
 type Made = Awaited<ReturnType<typeof createApp>>;
 
 async function boot(): Promise<{ made: Made; password: string; signIn(email: string): Promise<Client>; close(): void }> {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-132e-')), now: fixedClock() });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-132e-')), now: fixedClock() });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const base = `http://127.0.0.1:${(made.server.address() as { port: number }).port}`;
   const s = await seed(made.app.db, made.app.hasher, made.app.now);

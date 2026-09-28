@@ -11,6 +11,8 @@
  *   5 · /staff/documents is on no menu; asked for one company it sends the reader to that company's files
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
@@ -78,7 +80,7 @@ type World = {
 async function boot(opts: { keep?: boolean; key?: boolean; days?: number | null } = {}): Promise<World> {
   const root = mkdtempSync(join(tmpdir(), 'cb-140-'));
   const clock = { now: '2026-09-21T10:00:00.000Z' };
-  const made = await createApp(':memory:', {
+  const made = await createApp(':memory:', { twoFactor: 'off',
     documentRoot: root, now: () => clock.now,
     ...(opts.keep === true ? { keepOriginals: { enabled: true, retention_days: opts.days === undefined ? 30 : opts.days, question: KEEP_ORIGINALS_QUESTION } } : {}),
     sealKey: opts.key === false ? null : randomBytes(32),

@@ -256,7 +256,7 @@ function signOut(): Safe {
 function userMenu(name: string, actor: Actor, settingsHref: string): Safe {
   return h`<details class="usermenu"><summary><span class="avatar" aria-hidden="true">${name.slice(0, 1).toUpperCase()}</span><span class="uname">${name}</span></summary>
     <div class="menu-pop"><p class="who">${name}<br><span class="help">${ROLE_WORDS[actor.role]}</span></p>
-    <a href="${settingsHref}">Your account</a>${signOut()}</div></details>`;
+    <a href="${settingsHref}">Your account</a><a href="${settingsHref.startsWith('/portal') ? '/portal/two-factor' : '/staff/two-factor'}">Your second step</a>${signOut()}</div></details>`;
 }
 
 /** The back office's header and tabs, for a staff login. */

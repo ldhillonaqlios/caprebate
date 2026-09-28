@@ -17,6 +17,8 @@
  *   "show finance_settings and compliance_settings"         → THE SCREEN, OVER HTTP
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -515,7 +517,7 @@ describe('migration 019 — the rebuilt tables keep every trigger, and the repla
 
 describe('the admin settings screen — the lists, the reasons, the folded screens, and the finance and compliance settings', () => {
   test('ADMIN sees and writes it all; SALES reads the lists alone; ACCOUNTING and SURVEYING are refused; the refusal route records and changes nothing', async () => {
-    const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-config-')) });
+    const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-config-')) });
     await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
     try {
       const addr = made.server.address();

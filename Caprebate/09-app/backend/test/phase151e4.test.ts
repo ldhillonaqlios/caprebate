@@ -10,6 +10,8 @@
  *   3  an identity check goes only to a contact with an email address or a telephone number.
  * Invented people only, recorded answers, no network.
  */
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
@@ -42,7 +44,7 @@ function bareClient(db: Pick<import('../src/db.ts').Db, 'run'>): { id: string } 
 const NOW = '2026-09-28T10:00:00.000Z';
 
 async function world() {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e4-')), now: () => NOW, sealKey: randomBytes(32) });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-151e4-')), now: () => NOW, sealKey: randomBytes(32) });
   await seed(made.app.db, made.app.hasher, made.app.now);
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const a = made.server.address();

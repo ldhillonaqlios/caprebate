@@ -38,7 +38,9 @@ export function fixedClock(): () => string {
 }
 
 export async function testApp(hasher?: PasswordHasher): Promise<App> {
-  return buildApp({ hasher: hasher ?? fakeHasher(), now: fixedClock() });
+  // PHASE 151j: the unit tests sign in with a password alone, so the second step is off here, and said so. It is
+  // proved on the default (every staff login must) in test/phase151j.test.ts.
+  return buildApp({ hasher: hasher ?? fakeHasher(), now: fixedClock(), twoFactor: 'off' });
 }
 
 export function actor(role: AppRole, id = `u-${role}`, business_id: string | null = null): Actor {

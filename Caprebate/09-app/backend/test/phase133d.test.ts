@@ -25,6 +25,8 @@ type RequiredModule = {
 };
 const required = async (): Promise<RequiredModule> => (await import(`../src/web/${'required'}.ts`)) as unknown as RequiredModule;
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -45,7 +47,7 @@ let base = '';
 const clients = new Map<Login, Client>();
 
 before(async () => {
-  made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-133d-')) });
+  made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-133d-')) });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const addr = made.server.address();
   base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;

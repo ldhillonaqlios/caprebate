@@ -21,6 +21,8 @@
  * Written against HTTP, so it fails against the .bak-phase138 copies.
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import * as C151e4 from '../src/web/crm.ts';
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -83,7 +85,7 @@ let claim = '';      // a claim of a company, with a surveyor job
 let surveyed = '';   // a claim assigned to the seeded surveyor
 
 before(async () => {
-  made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-138-')) });
+  made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-138-')) });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const addr = made.server.address();
   base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;

@@ -5,6 +5,8 @@
  * Limited — main site" gave the tab "Dunmarrow Medical Practice Limited — Dunmarrow Medical Practice Limited — main
  * site". The company is said once, then the property ("main site"), through propertyIn in src/web/components.ts.
  */
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -43,7 +45,7 @@ describe('phase 144 · the property page’s tab title names the company once, t
   let password = '';
   before(async () => {
     const clock = { now: '2026-09-22T10:00:00.000Z' };
-    made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-144-')), now: () => clock.now, sealKey: randomBytes(32) });
+    made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-144-')), now: () => clock.now, sealKey: randomBytes(32) });
     await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
     const addr = made.server.address();
     base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;

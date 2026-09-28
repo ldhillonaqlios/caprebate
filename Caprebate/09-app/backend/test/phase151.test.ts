@@ -10,6 +10,8 @@
  *   3 · the free postcode check at the address question (Postcodes.io), built and switched off behind the free gate
  *   4 · the smaller decisions: a leaver's photo deleted when their account is disabled
  */
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
@@ -211,7 +213,7 @@ function client(base: string) {
 }
 
 async function world() {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151-')), now: () => '2026-09-24T10:00:00.000Z', sealKey: randomBytes(32) });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-151-')), now: () => '2026-09-24T10:00:00.000Z', sealKey: randomBytes(32) });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const addr = made.server.address();
   const base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;

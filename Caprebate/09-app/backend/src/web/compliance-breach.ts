@@ -480,7 +480,8 @@ export const STANDING_MEASURES: readonly SheetLine[] = Object.freeze([
   { field: 'Device encryption', answer: 'NOT ESTABLISHED — state as it is on the day' },
   { field: 'Document-store access logging', answer: 'NOT ESTABLISHED — state as it is on the day' },
   { field: 'Monitored data protection address', answer: 'NOT SET — state as it is on the day' },
-  { field: 'MFA / Cyber Essentials', answer: 'Readiness pack drafted; not implemented — state as it is on the day' },
+  // Phase 151j, 28 Sep 2026: the second step at sign-in is built; Cyber Essentials is still a readiness pack.
+  { field: 'MFA / Cyber Essentials', answer: 'Every staff login has a second step. Cyber Essentials is not certified — state as it is on the day' },
 ]);
 
 export function icoAnswerSheet(db: Db, actor: Actor, id: string, nowIso: string): { ref: string; sections: readonly SheetSection[]; note: string } {

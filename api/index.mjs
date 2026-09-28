@@ -55,7 +55,7 @@ async function build() {
  * website until line 2 closed that. Real keys behind that password would let anyone send identity checks on
  * Lakhbir's Didit account. So:
  *   CAPREBATE_TEST_PASSWORD set (twelve characters or more)
- *       every login this deployment seeded moves to that password, and the seed password stops working; and then
+ *       every login still on the seed password moves to that password, and the seed password stops working; and then
  *       the Didit keys are read from the website's settings (TEST_DEPLOY_KEYS, those three and no other name).
  *   not set, or shorter
  *       nothing changes and NO key is read, whatever the settings hold. The identity panel says the keys are missing.
@@ -69,7 +69,14 @@ export async function configureTestDeploy(made, env) {
     return { password_changed: false, keys_loaded: [], why: 'no test password of twelve characters or more is set, so the seed logins stand and no key is read' };
   }
   const hash = await made.app.hasher.hash(pw);
-  made.app.db.run('UPDATE users SET password_hash = ?', [hash]);
+  // PHASE 151j: only the logins STILL ON THE PUBLIC SEED PASSWORD move. On a lasting database a person may have chosen
+  // their own password (or been given a temporary one); every cold start overwrote it until 28 Sep 2026.
+  const { SEED_PASSWORD } = await import('../Caprebate/09-app/backend/src/seed.ts');
+  for (const u of made.app.db.all('SELECT id, password_hash FROM users')) {
+    if (await made.app.hasher.verify(u.password_hash, SEED_PASSWORD)) {
+      made.app.db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, u.id]);
+    }
+  }
   const { secretsFromEnvironment } = await import('../Caprebate/09-app/backend/src/secrets.ts');
   made.app.secrets = secretsFromEnvironment(env, TEST_DEPLOY_KEYS);
   const loaded = TEST_DEPLOY_KEYS.filter((k) => (env[k] ?? '').trim() !== '');

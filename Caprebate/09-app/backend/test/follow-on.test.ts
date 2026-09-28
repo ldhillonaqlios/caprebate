@@ -18,6 +18,8 @@
  * calls the store and never the page is how (a) and (e) went unnoticed.
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
@@ -65,7 +67,7 @@ const BACKEND = join(import.meta.dirname, '..');
  * clock raising the seeded fee returned 400 before September 2026. The same fixed clock testApp() uses.
  */
 async function boot(): Promise<{ made: Made; signIn(who: string): Promise<Client>; close(): void }> {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-follow-on-')), now: fixedClock() });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-follow-on-')), now: fixedClock() });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const port = (made.server.address() as { port: number }).port;
   const base = `http://127.0.0.1:${port}`;

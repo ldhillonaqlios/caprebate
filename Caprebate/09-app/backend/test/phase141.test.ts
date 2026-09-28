@@ -11,6 +11,8 @@
  *       fake mail server; a row saved while off is never sent later; do-not-contact asked again at sending
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -68,7 +70,7 @@ type World = {
 
 async function boot(opts: { keep?: boolean } = {}): Promise<World> {
   const clock = { now: '2026-09-21T10:00:00.000Z' };
-  const made = await createApp(':memory:', {
+  const made = await createApp(':memory:', { twoFactor: 'off',
     documentRoot: mkdtempSync(join(tmpdir(), 'cb-141-')), now: () => clock.now,
     ...(opts.keep === true ? { keepOriginals: { enabled: true, retention_days: 30, question: KEEP_ORIGINALS_QUESTION } } : {}),
     sealKey: randomBytes(32),

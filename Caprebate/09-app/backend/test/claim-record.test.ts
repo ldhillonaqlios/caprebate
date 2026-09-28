@@ -33,6 +33,8 @@
  * supplied, succeeds. A refusal that could not have been a success proves nothing.
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync } from 'node:fs';
@@ -897,7 +899,7 @@ describe('AFTERCARE — HMRC enquiries, clause 13 and the Disposal Note', () => 
 
 describe('OVER HTTP — every staff-supplied value escaped, every route refused to the roles not granted it', () => {
   test('a script recorded as a fact is drawn escaped on the claim page; a surveyor and an accountant are refused every new route and write nothing', async () => {
-    const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-claim-record-')) });
+    const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-claim-record-')) });
     await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
     try {
       const addr = made.server.address();

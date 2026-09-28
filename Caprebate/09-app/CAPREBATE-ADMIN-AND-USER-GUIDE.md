@@ -293,10 +293,14 @@ Address: /staff/users. The page heading is **Users and roles**. You reach it fro
 - "Display name"
 - "Role"
 - "Business — for a CLIENT account only" (leave it empty for staff)
-- "Initial password — at least 12 characters"
 
-Then press **Create**. No welcome email is sent. The page says why: "Emails are not sent yet, so no welcome email goes
-out. Set the password here and give it to the person yourself, not by email."
+Then press **Create**. You do not type a password. We make a **temporary password** and show it to you once. Give it to
+the person yourself, in person or by telephone, not by email. It works for 7 days. When they first sign in, they choose
+their own password. Staff then set up their second step.
+
+**A new temporary password, or a lost phone.** Each row has two buttons for this. One is **New temporary password**. The
+other is **Reset second step**. A new temporary password signs them out and replaces their password. Resetting the second step signs them out
+too. They set it up again the next time they sign in.
 
 **Changing a role.** Find "Change somebody's role". Choose the new role and press **Assign**. The page warns you:
 "Changing a role signs that person out at once. They sign in again with the new role." Your own account is not in that
@@ -314,6 +318,14 @@ new one.
 **Too many tries, and you must wait.** The sign-in page says: "After too many tries you must wait a while. If sign-in
 fails, we do not say why." Too many tries for one address in a short time are refused. The message is just as vague. On
 the demo, the sixth quick sign-in as admin was refused. Once you sign in, you stay signed in for eight hours at most.
+
+**A forgotten password.** On the sign-in page, press **Forgotten your password?** Type your email address. We email you a
+link. It works once, for 30 minutes. The page says the same thing for any address, so nobody can use it to find out who
+has a login.
+
+**The second step.** Every staff login needs one, each time you sign in. After your password, you give a six-number code.
+It comes from an authenticator app on your phone, or in an email. You choose which the first time. A client may turn it
+on in their portal. See `B55`.
 
 ---
 
@@ -1824,21 +1836,22 @@ Address: /staff/users (the **Settings** tab → **Users**; or **Your account** �
 1. Open the **Settings** tab, then the **Users** tile.
 2. Under "Create a user", fill in "Username — an email address" and "Display name". Choose a "Role". For someone who should only look, pick **READ_ONLY**. They can read the work and change nothing. They never see a value, money, a register or the audit log.
 3. Leave "Business — for a CLIENT account only" empty unless the account is a client's.
-4. Type an "Initial password — at least 12 characters" and press **Create**. Hand the password over yourself; nothing is emailed.
+4. Press **Create**. The next page shows a **temporary password**, once. Hand it over yourself; nothing is emailed. It works for 7 days.
 5. To change a role, go to "Change somebody's role" and find the person. Choose the role and press **Assign**. All their sessions end at once.
 6. To switch someone off, press **Disable** on their row. Their sessions end at once. There is no button to switch them back on.
 
 **What it will refuse, and why**
-- "a password is at least 12 characters".
+- A username that is taken, or does not look like an email address.
 - Changing your own role. You must ask another admin. A demoted admin could not put it back.
 - Disabling your own account. It says "you cannot disable your own account". Disabling the last admin is refused too: create another admin first. Without an admin, nobody can create one.
 - Turning a staff account into a client account. A client belongs to one business, and a staff account belongs to none.
 - Editing another person's name, username or photograph. There is no control for it at all. The page says: "You cannot change someone's name, username or photo. Only they can, from their own account."
 
 **Try it on the demo**
-1. Create **Trainee Seller**, `trainee@example.invalid`, role SALES, password `short`. *Observed:* "Not created — a password is at least 12 characters".
-2. Repeat with `training-password-1`. *Observed:* back on the users page; the row reads Trainee Seller · SALES · active.
-3. In the second browser, sign in as the trainee and open **Leads**. *Observed:* the Leads page opens.
+1. Create **Trainee Seller**, `trainee@example.invalid`, role SALES. *Observed:* the next page shows a temporary password. Copy it.
+2. Open **Users** again. *Observed:* the row reads Trainee Seller · SALES · active.
+3. In the second browser, sign in as the trainee. Use the temporary password. Choose a password of your own. Set up the
+   second step (see `B55`). Then open **Leads**. *Observed:* the Leads page opens.
 4. As admin, **Assign** ACCOUNTING to the trainee. Refresh the trainee's Leads page. *Observed:* sent to Sign in.
 5. Sign the trainee in again. *Observed:* Leads now answers "not authorised"; Finance opens.
 6. As admin, press **Disable**. *Observed:* the trainee's next click goes to Sign in. Signing in says "those details did not match". The row reads ACCOUNTING · disabled.
@@ -3670,6 +3683,38 @@ finish the check yourself. A pass never finishes it for you.
 - *The list still says "No result yet", but the client says they started.* — That is right. Didit tells us when they
   start. We only show the answer at the end.
 - *Do we keep a copy of their passport?* — No. We keep the result, the kind of ID and its country. Nothing else.
+
+---
+### Training — `B55` signing in: your password and your second step
+
+**What it is for**
+It keeps our clients' records safe. A password alone is not enough for a staff login. You also give a six-number code
+each time. Someone who learns your password still cannot get in.
+
+**Who can open it**
+Everyone who signs in. Every staff login must use a second step. A client may choose to, in their portal.
+
+**How to do the common job**
+1. Sign in with your email address and password.
+2. The first time, choose **An authenticator app on my phone** or **An email**. The app is safest.
+3. For the app, scan the picture with Google Authenticator or Microsoft Authenticator. You can type the key instead.
+4. Type the six numbers and press **Continue**. You are in.
+5. Next time, type the six numbers your app shows, or the ones in the email.
+6. To change it, open your name at the top right, then **Your second step**.
+
+**If you were given a temporary password**
+Sign in with it. You then choose your own password. Use at least 12 characters. A temporary password works for 7 days.
+
+**What it refuses, and why**
+- A wrong code. After 5 wrong codes you must sign in again.
+- A code used once already. Wait for the next one.
+- A temporary password more than 7 days old. Ask your administrator for a new one.
+- Turning the second step off, for staff. Only a client can turn it off.
+
+**Check yourself**
+- *I lost my phone. What now?* Ask your administrator. They can reset it. Then you set it up again.
+- *I forgot my password. What now?* Press **Forgotten your password?** on the sign-in page. We email you a link.
+- *Does the email code work on the test website?* Not yet. Emails are not sent there. Use the authenticator app.
 
 ---
 ### Training — `B54` roles you make

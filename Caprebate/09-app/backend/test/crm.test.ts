@@ -21,6 +21,8 @@
  * calls. The view models are called directly where the claim is about a rule.
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -115,7 +117,7 @@ async function bootFunnel(): Promise<{
   made: Made; close(): void; signIn(role: AppRole): Promise<Client>;
   runFunnel(name: string, q2?: Record<string, string>): Promise<string>;
 }> {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-crm-')) });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-crm-')) });
   const base = await listen(made);
   const hash = await made.app.hasher.hash(PASSWORD);
   for (const role of APP_ROLES.filter((r) => r !== 'CLIENT')) {
@@ -172,7 +174,7 @@ async function bootFunnel(): Promise<{
 
 /** The seeded demonstration data, served, with the seed's own sign-ins. */
 async function bootSeeded(): Promise<{ made: Made; close(): void; signIn(who: string): Promise<Client> }> {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-crm-seed-')) });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-crm-seed-')) });
   const base = await listen(made);
   const s = await seed(made.app.db, made.app.hasher, made.app.now);
   return {

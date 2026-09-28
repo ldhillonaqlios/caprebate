@@ -31,6 +31,9 @@ export type AuditKind =
   | 'LOGIN_SUCCEEDED' | 'LOGIN_FAILED' | 'LOGOUT'
   | 'SESSION_ROTATED' | 'SESSION_REVOKED'
   | 'PASSWORD_CHANGED' | 'PASSWORD_RESET_REQUESTED' | 'PASSWORD_RESET_COMPLETED'
+  /** Phase 151j: the steps between a right password and a session (src/web/sign-in.ts), and the super user's part. */
+  | 'SIGN_IN_STEP_STARTED' | 'SIGN_IN_STEP_REFUSED' | 'SIGN_IN_CODE_SENT'
+  | 'TWO_FACTOR_SET_UP' | 'TWO_FACTOR_REMOVED' | 'TEMPORARY_PASSWORD_ISSUED'
   | 'RATE_LIMITED'
   | 'USER_CREATED' | 'USER_UPDATED' | 'USER_DISABLED' | 'ROLE_ASSIGNED'
   /** Phase 151: a role the super admin made, changed, or tried to make and was refused (src/web/role-editor.ts). */

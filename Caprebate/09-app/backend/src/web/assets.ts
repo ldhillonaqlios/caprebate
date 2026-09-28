@@ -258,6 +258,9 @@ button.opt:hover{border-color:var(--ink);background:var(--white)}
 .stop{border:1px solid #ebc0c0;background:var(--stopbg);color:var(--stop);border-radius:var(--radius);padding:.8rem 1rem;margin:1rem 0}
 .gate{border:1px dashed var(--line);background:var(--white);border-radius:var(--radius);padding:.8rem 1rem;margin:1rem 0;color:var(--body);font-size:16px}
 .ok{color:var(--ok)}
+/* Phase 151j: the QR code an authenticator app scans at sign-in, drawn as SVG by the server */
+.qr{max-width:220px;margin:12px 0}
+.qr svg{width:100%;height:auto;display:block}
 .refusal{max-width:40rem;margin:2rem auto;border-left:4px solid var(--ink)}
 .overdue{color:var(--stop)}
 tr.overdue td:first-child{border-left:3px solid var(--stop)}

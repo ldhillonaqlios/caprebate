@@ -11,6 +11,9 @@
  *     user" — the second is an account-enumeration oracle, and so is a login
  *     that returns faster for an unknown address than for a wrong password.
  *   A reset token is single-use and expiring, and only its HASH is stored.
+ *   PHASE 151j: A PASSWORD ALONE NEVER OPENS A STAFF ACCOUNT. `login` issues a session only when nothing is left to
+ *     do; a temporary password, or a second factor to set up or give, is a step, and `login` refuses with
+ *     E_SECOND_STEP rather than skip it. The website walks the steps (src/web/sign-in.ts); nothing else may.
  */
 
 import { randomBytes } from 'node:crypto';
@@ -46,11 +49,22 @@ export const SESSION_COOKIE_NAME = 'cb_session';
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const RESET_TTL_MS = 30 * 60 * 1000;
 
+/**
+ * PHASE 151j — WHO MUST GIVE A SECOND FACTOR. Lakhbir, 28 September 2026: every staff login; a client may choose to.
+ *   STAFF   the rule, and the default: a staff login with no second factor set up must set one up at sign-in.
+ *   OFF     no second step for anyone, and a temporary password is not asked to change - the setting the older
+ *           test files pass, each saying so, because they test other things through a password sign-in. Never set
+ *           in src/, api/ or a tool a person runs to use the system.
+ */
+export type TwoFactorPolicy = 'STAFF' | 'OFF';
+
 export type Deps = {
   db: Db;
   audit: AuditLog;
   hasher: PasswordHasher;
   now: () => string;
+  /** PHASE 151j. Absent is STAFF: the safe reading of a Deps built by hand. */
+  twoFactor?: TwoFactorPolicy;
   /** Injected so a test can make a token predictable without weakening the real one. */
   randomToken?: () => string;
 };
@@ -100,6 +114,68 @@ export function rateLimit(d: Deps, bucket: string, limit: number): boolean {
 export type LoginResult = { user: User; cookie: SessionCookie; session_id: string };
 
 export async function login(d: Deps, email: string, password: string): Promise<LoginResult> {
+  const found = await verifyPassword(d, email, password);
+  // PHASE 151j: a password alone never skips a step. The website walks them (src/web/sign-in.ts).
+  const step = nextSignInStep(d, found.id);
+  if (step !== null) {
+    d.audit.append({
+      at: d.now(), kind: 'SIGN_IN_STEP_REFUSED', outcome: 'REFUSED', actor_id: found.id, actor_role: found.role,
+      detail: { step, where: 'login' },
+    });
+    throw new AuthError('E_SECOND_STEP', SECOND_STEP_NEEDED);
+  }
+  return startSession(d, found, {});
+}
+
+/** What a caller that cannot walk the steps is told, once the password was right. */
+export const SECOND_STEP_NEEDED = 'Sign in on the website: this account has another step to finish first.';
+
+/**
+ * The session, once every step is done. Only `login` and src/web/sign-in.ts call it, and the latter only at the end
+ * of a finished step.
+ */
+export function startSession(d: Deps, user: User, detail: Record<string, unknown>): LoginResult {
+  const { cookie, session_id } = issueSession(d, user.id);
+  d.audit.append({
+    at: d.now(), kind: 'LOGIN_SUCCEEDED', outcome: 'ALLOWED',
+    actor_id: user.id, actor_role: user.role,
+    object_type: 'session', object_id: session_id, detail,
+  });
+  return { user, cookie, session_id };
+}
+
+/**
+ * PHASE 151j — WHAT IS STILL TO DO BEFORE A SESSION, for a person whose password was right.
+ *   NEW_PASSWORD   their password is a temporary one the super user gave them
+ *   SETUP          they must give a second factor and have none set up (every staff login, under STAFF)
+ *   VERIFY         they have one: an emailed code, or their authenticator app
+ *   null           nothing: a session may be issued
+ * A temporary password past its date is refused outright, with its own words: the password was right, so this
+ * answers nothing about who has an account.
+ */
+export type SignInStep = 'NEW_PASSWORD' | 'SETUP' | 'VERIFY';
+export const TEMPORARY_PASSWORD_EXPIRED = 'Your temporary password has expired. Ask your administrator for a new one.';
+
+export function nextSignInStep(d: Deps, user_id: string): SignInStep | null {
+  const r = d.db.get<{ role: string; password_temporary_until: string | null; mfa_method: string | null }>(
+    'SELECT role, password_temporary_until, mfa_method FROM users WHERE id = ?', [user_id]);
+  if (r === undefined) throw new AuthError('E_AUTH_FAILED', GENERIC_AUTH_FAILURE);
+  if ((d.twoFactor ?? 'STAFF') === 'OFF') return null;
+  if (r.password_temporary_until !== null) {
+    if (Date.parse(r.password_temporary_until) <= Date.parse(d.now())) {
+      throw new AuthError('E_TEMPORARY_EXPIRED', TEMPORARY_PASSWORD_EXPIRED);
+    }
+    return 'NEW_PASSWORD';
+  }
+  if (r.mfa_method !== null) return 'VERIFY';
+  return r.role === 'CLIENT' ? null : 'SETUP';
+}
+
+/**
+ * The password, checked: rate-limited, the same time for an unknown address, the one generic failure, and a weak
+ * stored hash upgraded. It issues NOTHING — a session comes from `login` or from the steps.
+ */
+export async function verifyPassword(d: Deps, email: string, password: string): Promise<User> {
   // The bucket is the email, which IS personal data — so it is HASHED before it
   // becomes a key, and the key never reaches a log line.
   const bucket = 'login:' + hashToken(email.trim().toLowerCase());
@@ -127,13 +203,6 @@ export async function login(d: Deps, email: string, password: string): Promise<L
     throw new AuthError('E_AUTH_FAILED', GENERIC_AUTH_FAILURE);
   }
 
-  const { cookie, session_id } = issueSession(d, found.id);
-  d.audit.append({
-    at: d.now(), kind: 'LOGIN_SUCCEEDED', outcome: 'ALLOWED',
-    actor_id: found.id, actor_role: found.role,
-    object_type: 'session', object_id: session_id, detail: {},
-  });
-
   // A weak stored hash is upgraded on the one occasion the plaintext is in hand.
   if (d.hasher.needsRehash(found.password_hash)) {
     setPasswordHash(d.db, d.now, found.id, await d.hasher.hash(password));
@@ -141,7 +210,7 @@ export async function login(d: Deps, email: string, password: string): Promise<L
 
   const { password_hash: _drop, ...user } = found;
   void _drop;
-  return { user, cookie, session_id };
+  return user;
 }
 
 /**
@@ -305,6 +374,8 @@ export async function completePasswordReset(d: Deps, rawToken: string, next: str
   d.db.tx(() => {
     d.db.run('UPDATE password_reset_tokens SET used_at = ? WHERE id = ?', [d.now(), row.id]);
     setPasswordHash(d.db, d.now, row.user_id, hash);
+    // PHASE 151j: a password the person chose replaces a temporary one. The second factor stays as it was.
+    d.db.run('UPDATE users SET password_temporary_until = NULL WHERE id = ?', [row.user_id]);
   });
   revokeAllSessions(d, row.user_id, 'PASSWORD_RESET');
   d.audit.append({

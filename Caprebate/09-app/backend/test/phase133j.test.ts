@@ -8,6 +8,8 @@
  * This drives the real application: the site served at `/`, its enquiry form, Sales working the enquiry, and a
  * person who finishes the assessment creating their own login and confirming it by email.
  */
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
@@ -48,7 +50,7 @@ function makeClient(base: string) {
 let made: Awaited<ReturnType<typeof createApp>>;
 let base = '';
 before(async () => {
-  made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-133j-')), publicOrigin: ORIGIN });
+  made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-133j-')), publicOrigin: ORIGIN });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const addr = made.server.address();
   base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;

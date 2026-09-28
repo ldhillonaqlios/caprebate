@@ -78,6 +78,8 @@ export type ServerOptions = {
   dbAuthToken?: string;
   /** Tests only: see BuildOptions.dbEngine. */
   dbEngine?: 'node:sqlite' | 'libsql';
+  /** PHASE 151j: see BuildOptions.twoFactor. Absent is 'staff'. */
+  twoFactor?: 'staff' | 'off';
   /**
    * Where client documents live. OUTSIDE THE WEB ROOT — which is trivially
    * true here because this application has no static file route at all, and
@@ -113,6 +115,7 @@ export async function createApp(
   const app = await buildApp({
     location, ...(opts.now === undefined ? {} : { now: opts.now }), ...(opts.dbAuthToken === undefined ? {} : { dbAuthToken: opts.dbAuthToken }),
     ...(opts.dbEngine === undefined ? {} : { dbEngine: opts.dbEngine }),
+    ...(opts.twoFactor === undefined ? {} : { twoFactor: opts.twoFactor }),
   });
   const store = new FsObjectStore({
     root: opts.documentRoot ?? process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '.documents'),

@@ -25,6 +25,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import * as SI from './sign-in.ts';
 import type { App } from '../app.ts';
 import { type Actor } from '../authz.ts';
 import { changeOwnPassword, SESSION_COOKIE_NAME, AuthError } from '../auth.ts';
@@ -419,13 +420,18 @@ export async function handleStaff(
 
   if (path === '/staff/users/create' && method === 'POST') {
     const f = await form(req);
+    /* PHASE 151j (Lakhbir, 28 Sep 2026): the system makes a TEMPORARY password, shown once, here, to hand over. The
+       person chooses their own at their first sign-in, and sets up their second step. Nobody types a password here. */
+    const password = SI.temporaryPassword();
+    const until = SI.temporaryUntil(now());
+    let created;
     try {
-      await S.createStaffUser(
+      created = await S.createStaffUser(
         { db, audit: d.app.audit, now, hash: (p) => d.app.hasher.hash(p) },
         actor,
         {
           email: f.get('email') ?? '', display_name: f.get('display_name') ?? '',
-          role: f.get('role') ?? '', password: f.get('password') ?? '',
+          role: f.get('role') ?? '', password, temporary_until: until,
           business_id: f.get('business_id'),
         },
       );
@@ -433,7 +439,20 @@ export async function handleStaff(
       if (e instanceof S.SettingsError) return problem(res, actor, 'Not created', e.message, '/staff/users', e.field);
       throw e;
     }
-    redirect(res, '/staff/users?done=created'); return 'handled';
+    html(res, 200, temporaryPasswordPage(actor, created.display_name, created.email, roleName(created.role), password, until, true)); return 'handled';
+  }
+
+  /* PHASE 151j: the super user gives somebody a new temporary password (a forgotten one, or none to hand), or clears
+     their second step (a lost phone). Either ends their sessions. */
+  const tempMatch = /^\/staff\/users\/([A-Za-z0-9-]+)\/temporary-password$/.exec(path);
+  if (tempMatch && method === 'POST') {
+    const r = await SI.issueTemporaryPassword(d.app, actor, tempMatch[1] ?? '');
+    html(res, 200, temporaryPasswordPage(actor, r.user.display_name, r.user.email, roleName(r.user.role), r.password, r.until, false)); return 'handled';
+  }
+  const mfaMatch = /^\/staff\/users\/([A-Za-z0-9-]+)\/reset-two-factor$/.exec(path);
+  if (mfaMatch && method === 'POST') {
+    SI.resetTwoFactor(d.app, actor, mfaMatch[1] ?? '');
+    redirect(res, '/staff/users?done=two-factor'); return 'handled';
   }
 
   const roleMatch = /^\/staff\/users\/([A-Za-z0-9-]+)\/role$/.exec(path);
@@ -1126,6 +1145,26 @@ function roleName(role: string): string {
   return customRoleOf(role)?.name ?? role;
 }
 
+/** PHASE 151j: the temporary password, shown ONCE, to be handed over by the super user. Never stored in clear. */
+function temporaryPasswordPage(actor: Actor, name: string, email: string, role: string, password: string, until: string, isNew: boolean): string {
+  return page({
+    title: 'Temporary password', nav: nav(actor),
+    body: h`
+      <h1>${isNew ? `${name}’s account is ready` : `A new temporary password for ${name}`}</h1>
+      <p>Give ${name} these sign-in details yourself — in person or by telephone, not by email.</p>
+      <table><tbody>
+        <tr><th>Username</th><td><code>${email}</code></td></tr>
+        <tr><th>Temporary password</th><td><strong><code id="temporary-password">${password}</code></strong></td></tr>
+        <tr><th>Role</th><td>${role}</td></tr>
+        <tr><th>Works until</th><td>${localWhen(until)}</td></tr>
+      </tbody></table>
+      <div class="gate"><strong>This password is shown once.</strong> We do not keep it, so it cannot be shown again. If it
+      is lost, give a new temporary password from the Users page.</div>
+      <p class="help">When ${name} first signs in, they choose their own password${role === 'CLIENT' ? '' : ' and set up their second step: an authenticator app or an email code'}.</p>
+      <p><a href="/staff/users">Back to users</a></p>`,
+  });
+}
+
 function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | undefined,
   made: readonly { key: string; name: string }[] = []): string {
   // PHASE 151b: the roles the super admin made are offered beside the built-in ones, by their own names.
@@ -1148,7 +1187,11 @@ function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | un
         <td>${r.user.disabled ? 'disabled' : 'active'}</td>
         <td>${r.user.disabled ? raw('') : h`
           <form method="post" action="/staff/users/${r.user.id}/disable" class="inline">
-            <button class="linkish" type="submit">Disable</button></form>`}</td>
+            <button class="linkish" type="submit">Disable</button></form>
+          <form method="post" action="/staff/users/${r.user.id}/temporary-password" class="inline">
+            <button class="linkish" type="submit">New temporary password</button></form>
+          <form method="post" action="/staff/users/${r.user.id}/reset-two-factor" class="inline">
+            <button class="linkish" type="submit">Reset second step</button></form>`}</td>
       </tr>`)}</tbody></table>
 
       <p><a href="/staff/admin/roles">Make or change a role</a> — a mix of what our own roles can do, for somebody who needs it.</p>
@@ -1174,12 +1217,11 @@ function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | un
           <label class="opt"><input type="radio" name="role" value="${role.value}"> ${role.label}</label>`)}</div>
         <label class="fl" for="new-user-business">Business — for a CLIENT account only</label>
         <input class="fi" id="new-user-business" name="business_id" placeholder="leave empty for a staff account">
-        <label class="fl" for="new-user-password">Initial password — at least 12 characters</label>
-        <input class="fi" id="new-user-password" type="password" name="password" autocomplete="new-password" required>
         <button class="cta" type="submit">Create</button>
       </form>
-      <div class="gate">Emails are not sent yet, so no welcome email goes out. Set the password
-      here and give it to the person yourself, not by email.</div>
+      <div class="gate">We make a temporary password for the new person and show it to you once. Give it to them
+      yourself, not by email. It works for ${SI.TEMPORARY_PASSWORD_DAYS} days. When they first sign in, they choose their own
+      password and set up their second step.</div>
       <p><a href="/staff/settings">Back to settings</a></p>`,
   });
 }

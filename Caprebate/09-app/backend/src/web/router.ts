@@ -28,7 +28,9 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import { authorise, can, NotAuthorised, type Actor } from '../authz.ts';
 import type { Db } from '../db.ts';
-import { authenticate, login, logout, AuthError, SESSION_COOKIE_NAME, GENERIC_AUTH_FAILURE } from '../auth.ts';
+import { authenticate, logout, AuthError, SESSION_COOKIE_NAME, GENERIC_AUTH_FAILURE, TEMPORARY_PASSWORD_EXPIRED,
+  requestPasswordReset, completePasswordReset, type LoginResult } from '../auth.ts';
+import * as SI from './sign-in.ts';
 import { toActor } from '../users.ts';
 import { SITE_CSS, CSS_HEADERS, PNG_HEADERS } from './assets.ts';
 import { LOGO_INK_PNG } from './brand-logo.ts';
@@ -454,22 +456,104 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/login' && method === 'POST') {
     const f = await form(req);
     try {
-      const r = await login(d.app.deps, f.get('email') ?? '', f.get('password') ?? '');
-      res.setHeader('set-cookie',
-        `${r.cookie.name}=${r.cookie.value}; HttpOnly; Secure; SameSite=Lax; Path=/; Expires=${new Date(r.cookie.expires).toUTCString()}`);
-      // WHERE A SIGN-IN LANDS IS NAVIGATION, NOT A CONTROL — and it is still
-      // asked of `can()` rather than of the role, so there is one place that
-      // knows who the back office is for. Both destinations authorise
-      // themselves; a client sent to /staff would be refused rather than shown
-      // a page, which is why getting this wrong would be untidy and not unsafe.
-      redirect(res, mayEnterBackOffice(toActor(r.user)) ? '/staff' : '/portal');
+      // PHASE 151j: the password first, then the steps it still needs - a session only when none is left.
+      const r = await SI.beginSignIn(d.app, f.get('email') ?? '', f.get('password') ?? '');
+      if (r.kind === 'STEP') {
+        res.setHeader('set-cookie', stepCookie(r.token));
+        redirect(res, '/login/step'); return 'handled';
+      }
+      signedIn(res, r.login);
       return 'handled';
     } catch (e) {
       // GENERIC, ALWAYS. Never "no such user" — and `login` has already paid
       // for a password verification against a real hash so the timing does not
-      // answer the question either.
+      // answer the question either. The one exception is a temporary password past its date: the password was RIGHT,
+      // so saying so tells nobody anything they did not already know.
+      if (e instanceof AuthError && e.code === 'E_TEMPORARY_EXPIRED') { html(res, 401, loginPage(TEMPORARY_PASSWORD_EXPIRED)); return 'handled'; }
       if (e instanceof AuthError) { html(res, 401, loginPage(GENERIC_AUTH_FAILURE)); return 'handled'; }
       throw e;
+    }
+  }
+
+  /* PHASE 151j — THE STEPS BETWEEN A RIGHT PASSWORD AND A SESSION (src/web/sign-in.ts). */
+  if (path === '/login/step' && method === 'GET') {
+    const body = SI.stepPage(d.app, cookie(req, SI.STEP_COOKIE));
+    if (body === undefined) { res.setHeader('set-cookie', stepCookie(null)); html(res, 200, loginPage(SI.STEP_GONE)); return 'handled'; }
+    html(res, 200, body); return 'handled';
+  }
+  const stepAction = /^\/login\/step\/(password|method|code|resend)$/.exec(path);
+  if (stepAction && method === 'POST') {
+    const f = await form(req);
+    const raw0 = cookie(req, SI.STEP_COOKIE);
+    const which = stepAction[1];
+    const r = which === 'password' ? await SI.submitNewPassword(d.app, raw0, f.get('password') ?? '', f.get('again') ?? '')
+      : which === 'method' ? SI.chooseMethod(d.app, raw0, f.get('method') ?? '')
+      : which === 'code' ? SI.submitCode(d.app, raw0, f.get('code') ?? '')
+      : SI.resendCode(d.app, raw0);
+    if (r.kind === 'SESSION') { res.setHeader('set-cookie', [stepCookie(null), sessionCookie(r.login)]); redirectHome(res, r.login); return 'handled'; }
+    if (r.kind === 'ACCOUNT_DONE') {
+      res.setHeader('set-cookie', stepCookie(null));
+      redirect(res, actor?.role === 'CLIENT' ? '/portal/two-factor?done=set' : '/staff/two-factor?done=set'); return 'handled';
+    }
+    if (r.kind === 'GONE') { res.setHeader('set-cookie', stepCookie(null)); html(res, 401, loginPage(r.why)); return 'handled'; }
+    const page0 = SI.stepPage(d.app, raw0, r.kind === 'ERROR' ? r.why : undefined, r.kind === 'STEP' ? r.note : undefined);
+    if (page0 === undefined) { res.setHeader('set-cookie', stepCookie(null)); html(res, 401, loginPage(SI.STEP_GONE)); return 'handled'; }
+    html(res, r.kind === 'ERROR' ? 400 : 200, page0); return 'handled';
+  }
+
+  /* PHASE 151j — A FORGOTTEN PASSWORD: an emailed link, single-use, 30 minutes (src/auth.ts). The page says the same
+     thing whether or not the address has an account, so it cannot be used to find out who has one. */
+  if (path === '/login/forgot' && method === 'GET') { html(res, 200, forgotPage(undefined)); return 'handled'; }
+  if (path === '/login/forgot' && method === 'POST') {
+    const email = ((await form(req)).get('email') ?? '').trim();
+    const r = requestPasswordReset(d.app.deps, email);
+    if (r.user !== undefined && r.plaintextToken !== undefined) {
+      d.app.email.send({
+        to_email: r.user.email, kind: 'PASSWORD_RESET',
+        subject: 'Reset your Cap Rebate password',
+        body: `Somebody asked to reset the password for this Cap Rebate login. To choose a new one, open this link:\n\n` +
+          `${d.publicOrigin ?? 'http://localhost:8103'}/login/reset?token=${r.plaintextToken}\n\n` +
+          'The link works once, for 30 minutes. If you did not ask, you need do nothing: your password has not changed.',
+      });
+    }
+    html(res, 200, forgotPage(FORGOT_SENT)); return 'handled';
+  }
+  if (path === '/login/reset' && method === 'GET') {
+    html(res, 200, resetPage(url.searchParams.get('token') ?? '', undefined)); return 'handled';
+  }
+  if (path === '/login/reset' && method === 'POST') {
+    const f = await form(req);
+    const tok = f.get('token') ?? '';
+    const next = f.get('password') ?? '';
+    if (next.length < SI.MIN_PASSWORD || next.length > 1024) { html(res, 400, resetPage(tok, `Choose a password of at least ${SI.MIN_PASSWORD} characters.`)); return 'handled'; }
+    if (next !== (f.get('again') ?? '')) { html(res, 400, resetPage(tok, 'The two passwords are not the same. Type it again.')); return 'handled'; }
+    try {
+      await completePasswordReset(d.app.deps, tok, next);
+    } catch (e) {
+      if (e instanceof AuthError) { html(res, 400, forgotPage(undefined, 'That reset link has expired or has been used. Ask for a new one below.')); return 'handled'; }
+      throw e;
+    }
+    html(res, 200, loginPage(undefined, 'Your password has been changed. Sign in with it now.')); return 'handled';
+  }
+
+  /* PHASE 151j — A PERSON'S OWN SECOND STEP: set it up, change it, or (a client only) turn it off. A client's page is
+     under /portal and a member of staff's under /staff, so each header links only inside its own application. */
+  const own = /^\/(staff|portal)\/two-factor(\/change|\/off)?$/.exec(path);
+  if (own) {
+    if (actor === undefined) { redirect(res, '/login'); return 'handled'; }
+    const home = actor.role === 'CLIENT' ? '/portal/two-factor' : '/staff/two-factor';
+    if (`/${own[1]}/two-factor` !== home) { redirect(res, home); return 'handled'; }
+    if (own[2] === undefined && method === 'GET') {
+      html(res, 200, twoFactorPage(actor, home, SI.ownTwoFactor(d.app, actor), url.searchParams.get('done'), undefined)); return 'handled';
+    }
+    if (own[2] === '/change' && method === 'POST') {
+      res.setHeader('set-cookie', stepCookie(SI.startAccountSetup(d.app, actor)));
+      redirect(res, '/login/step'); return 'handled';
+    }
+    if (own[2] === '/off' && method === 'POST') {
+      const r = SI.removeOwnTwoFactor(d.app, actor);
+      if (!r.ok) { html(res, 400, twoFactorPage(actor, home, SI.ownTwoFactor(d.app, actor), null, r.why)); return 'handled'; }
+      redirect(res, `${home}?done=off`); return 'handled';
     }
   }
   if (path === '/logout' && method === 'POST') {
@@ -1448,17 +1532,89 @@ function movePanel(
     </details>`;
 }
 
-function loginPage(error: string | undefined): string {
+/* PHASE 151j: the cookies of a sign-in - the part-way step's, and the session's. */
+function stepCookie(token: string | null): string {
+  return token === null ? `${SI.STEP_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`
+    : `${SI.STEP_COOKIE}=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${Math.floor(SI.STEP_TTL_MS / 1000)}`;
+}
+function sessionCookie(r: LoginResult): string {
+  return `${r.cookie.name}=${r.cookie.value}; HttpOnly; Secure; SameSite=Lax; Path=/; Expires=${new Date(r.cookie.expires).toUTCString()}`;
+}
+/*
+ * WHERE A SIGN-IN LANDS IS NAVIGATION, NOT A CONTROL — and it is still asked of `can()` rather than of the role, so
+ * there is one place that knows who the back office is for. Both destinations authorise themselves; a client sent to
+ * /staff would be refused rather than shown a page, which is why getting this wrong would be untidy and not unsafe.
+ */
+function redirectHome(res: ServerResponse, r: LoginResult): void {
+  redirect(res, mayEnterBackOffice(toActor(r.user)) ? '/staff' : '/portal');
+}
+function signedIn(res: ServerResponse, r: LoginResult): void {
+  res.setHeader('set-cookie', sessionCookie(r));
+  redirectHome(res, r);
+}
+
+const FORGOT_SENT = 'If that address has a Cap Rebate login, we have sent it a link to choose a new password. It works for 30 minutes.';
+
+function forgotPage(sent: string | undefined, error?: string): string {
+  return page({
+    title: 'Forgotten password',
+    body: h`
+      <h1>Forgotten your password?</h1>
+      ${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}
+      ${sent !== undefined ? h`<p class="ok">${sent}</p>` : raw('')}
+      <p class="help">Type the email address you sign in with. We will email you a link to choose a new password.</p>
+      <form method="post" action="/login/forgot">
+        <label class="fl" for="forgot-email">Email</label><input class="fi" id="forgot-email" type="email" name="email" autocomplete="username" required>
+        <button class="cta" type="submit">Email me a link</button>
+      </form>
+      <p class="help"><a href="/login">Back to sign in</a></p>`,
+  });
+}
+
+function resetPage(tok: string, error: string | undefined): string {
+  return page({
+    title: 'Choose a new password',
+    body: h`
+      <h1>Choose a new password</h1>
+      ${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}
+      <p class="help">Use at least ${SI.MIN_PASSWORD} characters. Your second step, if you have one, stays as it is.</p>
+      <form method="post" action="/login/reset">
+        <input type="hidden" name="token" value="${tok}">
+        <label class="fl" for="reset-new">New password</label><input class="fi" id="reset-new" type="password" name="password" autocomplete="new-password" required>
+        <label class="fl" for="reset-again">Type it again</label><input class="fi" id="reset-again" type="password" name="again" autocomplete="new-password" required>
+        <button class="cta" type="submit">Save my new password</button>
+      </form>`,
+  });
+}
+
+function twoFactorPage(actor: Actor, home: string, method: SI.Method | null, done: string | null, error: string | undefined): string {
+  const words = method === 'APP' ? 'an authenticator app' : method === 'EMAIL' ? 'a code sent to your email' : 'nothing yet';
+  return page({
+    title: 'Your second step', nav: nav(actor),
+    body: h`
+      <h1>Your second step</h1>
+      ${done === 'set' ? h`<p class="ok">Your second step is set up.</p>` : done === 'off' ? h`<p class="ok">Your second step is turned off.</p>` : raw('')}
+      ${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}
+      <p>When you sign in, after your password you use: <strong>${words}</strong>.</p>
+      <form method="post" action="${home}/change"><button class="cta" type="submit">${method === null ? 'Set it up' : 'Change it'}</button></form>
+      ${actor.role === 'CLIENT' && method !== null ? h`<form method="post" action="${home}/off"><button class="linkish" type="submit">Turn it off</button></form>` : raw('')}
+      ${actor.role === 'CLIENT' ? raw('') : h`<p class="help">Every staff login needs a second step, so it cannot be turned off.</p>`}`,
+  });
+}
+
+function loginPage(error: string | undefined, note?: string): string {
   return page({
     title: 'Sign in',
     body: h`
       <h1>Sign in</h1>
       ${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}
+      ${note !== undefined ? h`<p class="ok">${note}</p>` : raw('')}
       <form method="post" action="/login">
         <label class="fl" for="login-email">Email</label><input class="fi" id="login-email" type="email" name="email" autocomplete="username" required>
         <label class="fl" for="login-password">Password</label><input class="fi" id="login-password" type="password" name="password" autocomplete="current-password" required>
         <button class="cta" type="submit">Sign in</button>
       </form>
+      <p><a href="/login/forgot">Forgotten your password?</a></p>
       <p class="help">After too many tries you must wait a while. If sign-in fails, we do not say why.
       That way, nobody can find out who has a login.</p>`,
   });

@@ -23,6 +23,8 @@
  *   N4 — "assert both"                              → no due date; a cancelled call and silence
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { copyFileSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs';
@@ -171,7 +173,7 @@ function makeClient(base: string): Client {
  * dates; on the wall clock a task due 1 September 2026 was not yet OVERDUE before then. The same fixed clock testApp() uses.
  */
 async function bootSeeded(): Promise<{ made: Made; close(): void; signIn(who: string): Promise<Client> }> {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-tasks-')), now: fixedClock() });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-tasks-')), now: fixedClock() });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const addr = made.server.address();
   const base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;

@@ -29,6 +29,8 @@ type NextStepModule = {
 const assets = async (): Promise<AssetsModule> => (await import('../src/web/assets.ts')) as unknown as AssetsModule;
 const nextStep = async (): Promise<NextStepModule> => (await import(`../src/web/${'next-step'}.ts`)) as unknown as NextStepModule;
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
@@ -51,7 +53,7 @@ type Login = (typeof LOGINS)[number];
 const DUMP = process.env['CB_133C_DUMP'] === '1';
 
 async function boot(opts: { names?: { portalSteps: boolean } } = {}): Promise<{ made: Made; base: string; signIn(who: Login): Promise<Client> }> {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-133c-')), ...(opts.names === undefined ? {} : { names: opts.names }) });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-133c-')), ...(opts.names === undefined ? {} : { names: opts.names }) });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const addr = made.server.address();
   const base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;

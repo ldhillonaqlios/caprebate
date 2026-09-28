@@ -17,6 +17,8 @@
  *   "MY WORK on the landing page for every staff role"       → MY WORK
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -273,7 +275,7 @@ describe('every tile is a query', () => {
 
 describe('the dashboard over HTTP', () => {
   test('every staff role opens the page; the surveyor’s view.json holds its jobs alone; accounting’s holds the money alone', async () => {
-    const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-dashboard-')) });
+    const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-dashboard-')) });
     await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
     try {
       const addr = made.server.address();

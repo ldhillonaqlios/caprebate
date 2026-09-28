@@ -15,6 +15,8 @@
  *   4. THE WORDS THAT DISAGREED — the licence row and checkBoundaryUse now both keep the site area for our own checks.
  *   8. ACCOUNTING'S HELP LINK — the Clients tab names B55 for a login that sees the billing view.
  */
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, createWriteStream } from 'node:fs';
@@ -86,7 +88,7 @@ function client(base: string) {
 
 let clock = 0;
 async function world(opts: { listen?: boolean } = {}) {
-  const made = await createApp(':memory:', {
+  const made = await createApp(':memory:', { twoFactor: 'off',
     documentRoot: mkdtempSync(join(tmpdir(), 'cb-151c-')), sealKey: randomBytes(32),
     now: () => new Date(Date.parse(NOW) + clock++ * 1000).toISOString(),
   });

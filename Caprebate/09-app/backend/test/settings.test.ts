@@ -16,6 +16,8 @@
  * the day a sixth role is added this suite covers it or fails.
  */
 
+/* PHASE 151j: this file tests other things through a password sign-in, so it builds the application with
+   twoFactor: 'off'. The second step itself is proved in test/phase151j.test.ts, on the default (staff must). */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -43,7 +45,7 @@ async function boot(): Promise<{
   base: string;
 }> {
   const docsRoot = mkdtempSync(join(tmpdir(), 'cb-settings-'));
-  const made = await createApp(':memory:', { documentRoot: docsRoot });
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: docsRoot });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const addr = made.server.address();
   const port = typeof addr === 'object' && addr !== null ? addr.port : 0;
@@ -158,7 +160,9 @@ describe('ADMIN ONLY, and it is the endpoint that refuses', () => {
         email: 'new.person@example.invalid', display_name: 'New Person',
         role: 'SALES', password: 'a-perfectly-long-password',
       });
-      assert.equal(made.status, 303);
+      // Phase 151j: the page shows the temporary password once (the password posted here is ignored)
+      assert.equal(made.status, 200);
+      assert.match(made.body, /id="temporary-password"/);
       const created = h.app.db.get<{ id: string; role: string }>(
         'SELECT id, role FROM users WHERE email_canonical = ?', ['new.person@example.invalid']);
       assert.ok(created !== undefined, 'the user was not created');
