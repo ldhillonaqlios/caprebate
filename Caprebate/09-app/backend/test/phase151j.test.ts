@@ -18,7 +18,7 @@ import { join } from 'node:path';
 
 import { createApp } from '../src/server.ts';
 import { seed, SEED_PASSWORD } from '../src/seed.ts';
-import { SECOND_STEP_NEEDED, TEMPORARY_PASSWORD_EXPIRED } from '../src/auth.ts';
+import { login, SECOND_STEP_NEEDED, TEMPORARY_PASSWORD_EXPIRED } from '../src/auth.ts';
 import { base32Decode, base32Encode, codeAt, hotp, stepAt, verifyCode } from '../src/totp.ts';
 import { MAX_WRONG_CODES, STEP_GONE, TOO_MANY_CODES, WRONG_CODE } from '../src/web/sign-in.ts';
 
@@ -205,9 +205,14 @@ describe('151j · every staff login gives a second step; a password alone opens 
     try {
       const r = await fetch(`${w.base}/api/login`, { method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email: 'admin@example.invalid', password: SEED_PASSWORD }) });
-      assert.equal(r.status, 401);
-      assert.equal((await r.json() as { error: string }).error, SECOND_STEP_NEEDED);
+      // PHASE 151k: the API now walks the same steps (test/phase151k.test.ts) - the password answers 202 with the step
+      // still to do. What this test guards is unchanged: no session on a password alone.
+      assert.equal(r.status, 202);
+      assert.equal((await r.json() as { step: string }).step, 'SETUP');
       assert.equal(r.headers.getSetCookie().length, 0, 'the API issued a session on a password alone');
+      // and login() itself, which walks no step, still refuses
+      const e = await login(w.made.app.deps, 'admin@example.invalid', SEED_PASSWORD).catch((x: unknown) => x);
+      assert.equal((e as { message?: string }).message, SECOND_STEP_NEEDED);
     } finally { w.close(); }
   });
 

@@ -40,7 +40,9 @@ export type OutboundMessage = {
   /** ACCOUNT_VERIFY — Phase 133j: the link that confirms a client's own sign-up. It carries a single-use token. */
   /** FREE_TYPED — Phase 141: an email a member of staff typed themselves, to one of the company's contacts. */
   /** SIGNED_LETTER — Phase 146f: the client's own copy of the engagement letter they signed, as a PDF. */
-  kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER' | 'ACCOUNT_VERIFY' | 'FREE_TYPED' | 'SIGNED_LETTER';
+  /** SIGN_IN_CODE — Phase 151k: a six-digit sign-in code (src/web/sign-in.ts). With PASSWORD_RESET, its words are taken
+   *  out of the outbox once it has really been sent (src/stubs/email-provider.ts, blankSentSecrets). */
+  kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER' | 'ACCOUNT_VERIFY' | 'FREE_TYPED' | 'SIGNED_LETTER' | 'SIGN_IN_CODE';
   /**
    * The organisation the message is about, where there is one. CRM 1 of 10.
    * Optional because a staff password reset is about nobody's organisation —

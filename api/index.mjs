@@ -65,12 +65,14 @@ async function build() {
  * Lakhbir's Didit account. So:
  *   CAPREBATE_TEST_PASSWORD set (twelve characters or more)
  *       every login still on the seed password moves to that password, and the seed password stops working; and then
- *       the Didit keys are read from the website's settings (TEST_DEPLOY_KEYS, those three and no other name).
+ *       the Didit keys are read from the website's settings (TEST_DEPLOY_KEYS, those three and no other name) -
+ *       and, since Phase 151k, CAPREBATE_MFA_KEY, which seals each person's authenticator app secret
+ *       (Caprebate/09-app/backend/src/mfa-seal.ts). Unset, the secret is kept as text, as before.
  *   not set, or shorter
  *       nothing changes and NO key is read, whatever the settings hold. The identity panel says the keys are missing.
  * It prints what it did - never a password and never a key.
  */
-export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
+export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'CAPREBATE_MFA_KEY']);
 
 export async function configureTestDeploy(made, env) {
   const pw = (env.CAPREBATE_TEST_PASSWORD ?? '').trim();

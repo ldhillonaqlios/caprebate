@@ -34,6 +34,8 @@ export type AuditKind =
   /** Phase 151j: the steps between a right password and a session (src/web/sign-in.ts), and the super user's part. */
   | 'SIGN_IN_STEP_STARTED' | 'SIGN_IN_STEP_REFUSED' | 'SIGN_IN_CODE_SENT'
   | 'TWO_FACTOR_SET_UP' | 'TWO_FACTOR_REMOVED' | 'TEMPORARY_PASSWORD_ISSUED'
+  /* PHASE 151k: `node src/cli.ts seal-app-secrets` sealed the app secrets still kept as text - a count, never a secret. */
+  | 'APP_SECRETS_SEALED'
   | 'RATE_LIMITED'
   | 'USER_CREATED' | 'USER_UPDATED' | 'USER_DISABLED' | 'ROLE_ASSIGNED'
   /** Phase 151: a role the super admin made, changed, or tried to make and was refused (src/web/role-editor.ts). */

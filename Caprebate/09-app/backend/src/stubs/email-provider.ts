@@ -428,6 +428,25 @@ type Waiting = {
 };
 
 /**
+ * PHASE 151k — A SIGN-IN CODE OR A RESET LINK IS NOT KEPT ONCE IT HAS GONE. Until it is sent its body is the email; once
+ * it has really been sent (this file, `dispatchOutbox`, which only runs while EMAIL_SENDING is on) the code or the link
+ * in it would otherwise sit in `outbox.body` for good, readable by anybody who can read the database. So the body of a
+ * SENT email of these kinds is replaced by this one sentence, and who it went to, when, the subject and the kind stay.
+ * Migration 058 lets exactly this edit through the outbox's never-edited rule and no other.
+ * WHILE SENDING IS OFF NOTHING HERE RUNS: a row saved then is never sent, and on the test website it is the only way to
+ * read a sign-in code or a reset link (api/index.mjs prints the outbox to the function log). The Developer Spec says so.
+ */
+export const SENT_SECRET_KINDS: readonly string[] = Object.freeze(['SIGN_IN_CODE', 'PASSWORD_RESET']);
+export const SENT_SECRET_BODY = 'This email held a sign-in code or a password reset link. It was sent, and then its words were removed so the code or link is not kept.';
+
+export function blankSentSecrets(db: Db, outbox_id: string): boolean {
+  const r = db.run(
+    "UPDATE outbox SET body = ? WHERE id = ? AND sent_at IS NOT NULL AND kind IN ('SIGN_IN_CODE', 'PASSWORD_RESET') AND body <> ?",
+    [SENT_SECRET_BODY, outbox_id, SENT_SECRET_BODY]);
+  return r.changes > 0;
+}
+
+/**
  * SEND EVERY EMAIL THAT WAS SAVED WHILE SENDING WAS ON AND HAS NOT GONE — or one of them, by id. OFF returns at once
  * and touches nothing. `open` returns an attachment's bytes, or null when its original is no longer kept.
  */
@@ -462,6 +481,7 @@ export async function dispatchOutbox(
     });
     if (out.ok) {
       d.db.run('UPDATE outbox SET sent_at = ?, transport = ?, provider_ref = ?, last_error = NULL WHERE id = ?', [d.now(), provider.id, out.ref, r.id]);
+      blankSentSecrets(d.db, r.id);
       sent++;
     } else {
       failed++;

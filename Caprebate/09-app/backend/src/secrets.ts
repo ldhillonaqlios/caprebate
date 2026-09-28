@@ -40,7 +40,9 @@ import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
 /** Who a key belongs to: the connector that may read it. */
 export type SecretOwner =
   | 'CLAUDE_DOCUMENTS' | 'COMPANIES_HOUSE' | 'CQC' | 'EPC' | 'HOMEDATA_ADDRESS' | 'HMLR_TITLE'
-  | 'IONOS_EMAIL' | 'IONOS_MAILBOX' | 'GOOGLE_ANALYTICS' | 'DIDIT_IDV';
+  | 'IONOS_EMAIL' | 'IONOS_MAILBOX' | 'GOOGLE_ANALYTICS' | 'DIDIT_IDV'
+  /** PHASE 151k: not a connector - the sign-in's own key, which seals each person's authenticator app secret. */
+  | 'SIGN_IN';
 
 export type SecretKey = {
   readonly name: string;
@@ -114,6 +116,7 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'DIDIT_API_KEY', owner: 'DIDIT_IDV', secret: true, phase: '151f', what: 'the Didit identity check API key, from its console' },
   { name: 'DIDIT_WEBHOOK_SECRET', owner: 'DIDIT_IDV', secret: true, phase: '151f', what: 'the Didit webhook secret that signs its results' },
   { name: 'DIDIT_WORKFLOW_ID', owner: 'DIDIT_IDV', secret: false, phase: '151f', what: 'the id of the check set up in the Didit console (not secret)' },
+  { name: 'CAPREBATE_MFA_KEY', owner: 'SIGN_IN', secret: true, phase: '151k', what: 'the key that seals each person’s authenticator app secret: 32 random bytes, as base64 (src/mfa-seal.ts)' },
 ]);
 
 export type SecretsState = 'LOADED' | 'NO_FILE' | 'REFUSED_INSIDE_REPOSITORY' | 'UNREADABLE';

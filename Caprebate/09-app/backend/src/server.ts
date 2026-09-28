@@ -26,7 +26,8 @@ import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { buildApp, STUBS } from './app.ts';
 import { authorise, can, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj } from './authz.ts';
-import { authenticate, login, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAILURE } from './auth.ts';
+import { authenticate, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAILURE, type LoginResult } from './auth.ts';
+import * as SI from './web/sign-in.ts';
 import { toActor } from './users.ts';
 import { payloadFor, assertSurveySection } from './web/surveyor.ts';
 import { handleWeb, PayloadTooLarge, refusalAsPage, sendRefusalPage } from './web/router.ts';
@@ -176,17 +177,53 @@ export async function createApp(
       return send(res, 200, { ok: true, stubs: STUBS });
     }
 
+    /* PHASE 151k — THE JSON API WALKS THE SAME STEPS AS THE WEBSITE, through the same functions (src/web/sign-in.ts).
+       The password answers 202 with what is still to do and a step token, NEVER a session; each step is a POST to
+       /api/login/step/<new-password | method | code | resend> carrying that token in the body (never the address);
+       POST /api/login/step with only the token says where the step stands. A session - the cookie and 200 - comes only
+       when the last step is done. The limits are the website's, because they are the same rows: 15 minutes a sign-in,
+       5 wrong codes, a code once. */
+    const sessionCookie = (r: LoginResult): string =>
+      `${r.cookie.name}=${r.cookie.value}; HttpOnly; Secure; SameSite=Strict; Path=/; Expires=${new Date(r.cookie.expires).toUTCString()}`;
+    const stepAnswer = (status: number, token: string, extra: Record<string, unknown> = {}): void => {
+      const v = SI.describeStep(app, token);
+      if (v === undefined) return send(res, 401, { error: SI.STEP_GONE });
+      // The step token goes back only in the body, to the caller that holds it already or has just earned it.
+      send(res, status, { ...extra, step: v.step, needs: v.needs, method: v.method, sent_to: v.sent_to,
+        app_key: v.app_key, otpauth_uri: v.otpauth_uri, expires_at: v.expires_at, step_token: token,
+        ...(v.refused === null ? {} : { error: v.refused }) });
+    };
+
     if (path === '/api/login' && req.method === 'POST') {
       const body = await readJson(req);
       const email = typeof body.email === 'string' ? body.email : '';
       const password = typeof body.password === 'string' ? body.password : '';
-      const r = await login(app.deps, email, password);
-      res.setHeader(
-        'set-cookie',
-        `${r.cookie.name}=${r.cookie.value}; HttpOnly; Secure; SameSite=Strict; Path=/; Expires=${new Date(r.cookie.expires).toUTCString()}`,
-      );
+      const r = await SI.beginSignIn(app, email, password); // the password, rate-limited and generic, as ever
+      if (r.kind === 'STEP') return stepAnswer(202, r.token);
+      res.setHeader('set-cookie', sessionCookie(r.login));
       // The user, never the hash — `User` has no such field to leak.
-      return send(res, 200, { user: r.user });
+      return send(res, 200, { user: r.login.user });
+    }
+
+    const apiStep = /^\/api\/login\/step(?:\/(new-password|method|code|resend))?$/.exec(path);
+    if (apiStep && req.method === 'POST') {
+      const body = await readJson(req);
+      const str = (k: string): string => (typeof body[k] === 'string' ? body[k] as string : '');
+      const token = str('step_token');
+      const which = apiStep[1];
+      if (which === undefined) return stepAnswer(202, token);
+      const r = which === 'new-password' ? await SI.submitNewPassword(app, token, str('password'), typeof body.again === 'string' ? body.again : str('password'))
+        : which === 'method' ? SI.chooseMethod(app, token, str('method'))
+        : which === 'code' ? SI.submitCode(app, token, str('code'))
+        : SI.resendCode(app, token);
+      if (r.kind === 'SESSION') {
+        res.setHeader('set-cookie', sessionCookie(r.login));
+        return send(res, 200, { user: r.login.user });
+      }
+      if (r.kind === 'ACCOUNT_DONE') return send(res, 200, { done: true });
+      if (r.kind === 'GONE') return send(res, 401, { error: r.why });
+      if (r.kind === 'ERROR') return stepAnswer(400, token, { error: r.why });
+      return stepAnswer(202, token, r.note === undefined ? {} : { note: r.note });
     }
 
     if (actor === undefined || session === undefined) {

@@ -18,6 +18,16 @@
  * WHAT IS NEVER KEPT OR PRINTED: a password, a code, a token or an app's secret, in any log line or audit row. An
  * emailed code is kept only as a hash, for ten minutes. The app's secret is shown to the person once, as a QR code
  * and as text, while they set it up.
+ *
+ * PHASE 151k, 28 September 2026:
+ *   - THE JSON API WALKS THE SAME STEPS. `/api/login` and `/api/login/step/...` (src/server.ts) call these same
+ *     functions, with the step's token in the request body instead of the `cb_step` cookie; `describeStep` says what a
+ *     step needs, for the page and for the API alike. There is no second implementation.
+ *   - THE APP'S SECRET IS SEALED where a key is set (src/mfa-seal.ts, CAPREBATE_MFA_KEY): in `pending_secret` while
+ *     it is set up and in `users.mfa_secret` after. A text secret from before still works, and is sealed the next time
+ *     it signs somebody in.
+ *   - A SIGN-IN CODE'S EMAIL HAS ITS OWN KIND, SIGN_IN_CODE, so that once it has really been sent its words can be
+ *     taken out of the outbox (src/stubs/email-provider.ts, blankSentSecrets).
  */
 import { randomBytes, randomInt } from 'node:crypto';
 import { renderSVG } from 'uqr';
@@ -29,6 +39,7 @@ import {
 } from '../auth.ts';
 import { findById, hashToken, newId, type User } from '../users.ts';
 import { grouped, newSecret, otpauthUri, verifyCode } from '../totp.ts';
+import { isSealed, mfaKeyFrom, openSecret, sealSecret } from '../mfa-seal.ts';
 import { h, page, raw } from './html.ts';
 
 export const STEP_COOKIE = 'cb_step';
@@ -107,7 +118,7 @@ function sendCode(app: App, row: StepRow, user: User): StepResult {
   app.db.run('UPDATE sign_in_steps SET code_hash = ?, code_expires_at = ?, codes_sent = codes_sent + 1 WHERE id = ?',
     [hashToken(`${row.id}:${code}`), new Date(Date.parse(at) + CODE_TTL_MS).toISOString(), row.id]);
   const sent = app.email.send({
-    to_email: user.email, kind: 'NOTIFICATION',
+    to_email: user.email, kind: 'SIGN_IN_CODE',
     subject: 'Your Cap Rebate sign-in code',
     body: `Your Cap Rebate sign-in code is ${code}.\n\nIt works once, for 10 minutes. ` +
       'If you did not try to sign in, somebody may have your password: change it, and tell your administrator.',
@@ -166,8 +177,15 @@ export function chooseMethod(app: App, raw0: string | undefined, method: string)
   const { row, user } = open;
   if (row.step !== 'SETUP') return { kind: 'STEP' };
   if (method !== 'EMAIL' && method !== 'APP') return { kind: 'ERROR', why: 'Choose how you would like to get your code.' };
+  // PHASE 151k: the new secret is sealed before it is written, where a key is set; a key that is set and not right refuses.
+  let pending: string | null = null;
+  if (method === 'APP') {
+    const sealed = sealSecret(mfaKeyFrom(app.secrets), user.id, newSecret());
+    if (!sealed.ok) return { kind: 'ERROR', why: sealed.why };
+    pending = sealed.stored;
+  }
   app.db.run('UPDATE sign_in_steps SET pending_method = ?, pending_secret = ?, code_hash = NULL, code_expires_at = NULL, attempts = 0 WHERE id = ?',
-    [method, method === 'APP' ? newSecret() : null, row.id]);
+    [method, pending, row.id]);
   if (method === 'EMAIL') return sendCode(app, loadById(app, row.id)!, user);
   return { kind: 'STEP' };
 }
@@ -189,6 +207,20 @@ export function submitCode(app: App, raw0: string | undefined, code: string): St
   const s = security(app, user.id);
   const method = row.step === 'SETUP' ? row.pending_method : s?.mfa_method ?? null;
   if (method === null || s === undefined) return { kind: 'ERROR', why: 'Choose how you would like to get your code.' };
+  // PHASE 151k: the app's secret, opened BEFORE a code is counted - a server that cannot open it is not the person's
+  // wrong code. A sealed secret with no key, or the wrong key, refuses in words.
+  const key = mfaKeyFrom(app.secrets);
+  const stored = method === 'APP' ? (row.step === 'SETUP' ? row.pending_secret : s.mfa_secret) : null;
+  let secret: string | null = null;
+  if (stored !== null) {
+    const opened = openSecret(key, user.id, stored);
+    if (!opened.ok) {
+      app.audit.append({ at: app.now(), kind: 'SIGN_IN_STEP_REFUSED', outcome: 'REFUSED', actor_id: user.id, actor_role: user.role,
+        object_type: 'sign_in_step', object_id: row.id, detail: { reason: 'app_secret_not_opened' } });
+      return { kind: 'ERROR', why: opened.why };
+    }
+    secret = opened.secret;
+  }
   app.db.run('UPDATE sign_in_steps SET attempts = attempts + 1 WHERE id = ?', [row.id]);
   if (row.attempts + 1 > MAX_WRONG_CODES) {
     finishRow(app, row);
@@ -204,7 +236,6 @@ export function submitCode(app: App, raw0: string | undefined, code: string): St
       && row.code_hash === hashToken(`${row.id}:${given}`);
     if (!good) return { kind: 'ERROR', why: WRONG_CODE };
   } else {
-    const secret = row.step === 'SETUP' ? row.pending_secret : s.mfa_secret;
     appStep = secret === null ? null : verifyCode(secret, given, nowMs, row.step === 'SETUP' ? null : s.mfa_last_step);
     if (appStep === null) return { kind: 'ERROR', why: WRONG_CODE };
   }
@@ -215,6 +246,11 @@ export function submitCode(app: App, raw0: string | undefined, code: string): St
       object_type: 'user', object_id: user.id, detail: { method, purpose: row.purpose } });
   } else if (appStep !== null) {
     app.db.run('UPDATE users SET mfa_last_step = ? WHERE id = ?', [appStep, user.id]);
+    // PHASE 151k: a secret kept as text from before a key was set is sealed now, on the one occasion it is in hand.
+    if (key.state === 'KEY' && stored !== null && !isSealed(stored) && secret !== null) {
+      const sealed = sealSecret(key, user.id, secret);
+      if (sealed.ok) app.db.run('UPDATE users SET mfa_secret = ? WHERE id = ?', [sealed.stored, user.id]);
+    }
   }
   return advance(app, row, user, { second_factor: method });
 }
@@ -299,50 +335,92 @@ function masked(email: string): string {
   return `${local.slice(0, 1)}•••@${domain}`;
 }
 
-export function stepPage(app: App, raw0: string | undefined, error?: string, note?: string): string | undefined {
+/**
+ * PHASE 151k — WHAT A STEP NEEDS NEXT, ONCE, for the page below and for the JSON API (src/server.ts). Undefined when the
+ * token opens no step. `needs` is what the person does now:
+ *   CHOOSE_PASSWORD   type a password of their own, twice
+ *   CHOOSE_METHOD     choose EMAIL or APP
+ *   ADD_APP           add the key to their app (shown here, once, while they set it up), then give a code from it
+ *   GIVE_CODE         give the code from their email or their app
+ * `refused` is set when the app's secret cannot be opened on this server (src/mfa-seal.ts); it is said in words.
+ */
+export type StepView = {
+  readonly step: SignInStep;
+  readonly needs: 'CHOOSE_PASSWORD' | 'CHOOSE_METHOD' | 'ADD_APP' | 'GIVE_CODE';
+  /** The method being set up (SETUP), or the one the person has (VERIFY). */
+  readonly method: Method | null;
+  /** Where an emailed code goes (CHOOSE_METHOD) or went (GIVE_CODE by email), with most of the address hidden. */
+  readonly sent_to: string | null;
+  /** ADD_APP only: the app's key, and the address a QR code carries. */
+  readonly app_key: string | null;
+  readonly otpauth_uri: string | null;
+  readonly role: User['role'];
+  readonly expires_at: string;
+  readonly refused: string | null;
+};
+
+export function describeStep(app: App, raw0: string | undefined): StepView | undefined {
   const open = openFor(app, raw0);
   if (open === undefined) return undefined;
   const { row, user } = open;
-  const msg = h`${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}${note !== undefined ? h`<p class="ok">${note}</p>` : raw('')}`;
+  const base = { step: row.step, role: user.role, expires_at: row.expires_at, sent_to: null, app_key: null, otpauth_uri: null, refused: null };
+  if (row.step === 'NEW_PASSWORD') return { ...base, needs: 'CHOOSE_PASSWORD', method: null };
+  if (row.step === 'SETUP' && row.pending_method === null) return { ...base, needs: 'CHOOSE_METHOD', method: null, sent_to: masked(user.email) };
+  if (row.step === 'SETUP' && row.pending_method === 'APP' && row.pending_secret !== null) {
+    const opened = openSecret(mfaKeyFrom(app.secrets), user.id, row.pending_secret);
+    if (!opened.ok) return { ...base, needs: 'ADD_APP', method: 'APP', refused: opened.why };
+    return { ...base, needs: 'ADD_APP', method: 'APP', app_key: grouped(opened.secret), otpauth_uri: otpauthUri(ISSUER, user.email, opened.secret) };
+  }
+  const method = row.step === 'SETUP' ? row.pending_method : security(app, user.id)?.mfa_method ?? null;
+  return { ...base, needs: 'GIVE_CODE', method, sent_to: method === 'EMAIL' ? masked(user.email) : null };
+}
+
+export function stepPage(app: App, raw0: string | undefined, error?: string, note?: string): string | undefined {
+  const v = describeStep(app, raw0);
+  if (v === undefined) return undefined;
+  const why = error ?? v.refused ?? undefined;
+  const msg = h`${why !== undefined ? h`<p class="err">${why}</p>` : raw('')}${note !== undefined ? h`<p class="ok">${note}</p>` : raw('')}`;
   const codeForm = (label: string) => h`<form method="post" action="/login/step/code">
       <label class="fl" for="step-code">${label}</label>
       <input class="fi" id="step-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" required>
       <button class="cta" type="submit">Continue</button></form>`;
   const resend = h`<form method="post" action="/login/step/resend" class="inline"><button class="linkish" type="submit">Send me a new code</button></form>`;
+  const useEmail = h`<form method="post" action="/login/step/method"><input type="hidden" name="method" value="EMAIL">
+        <button class="linkish" type="submit">Use an email code instead</button></form>`;
   let body;
-  if (row.step === 'NEW_PASSWORD') {
+  if (v.needs === 'CHOOSE_PASSWORD') {
     body = h`<h1>Choose your own password</h1>${msg}
       <p class="help">You signed in with a temporary password. Choose your own now. Use at least ${MIN_PASSWORD} characters.</p>
       <form method="post" action="/login/step/password">
         <label class="fl" for="step-new">New password</label><input class="fi" id="step-new" type="password" name="password" autocomplete="new-password" required>
         <label class="fl" for="step-again">Type it again</label><input class="fi" id="step-again" type="password" name="again" autocomplete="new-password" required>
         <button class="cta" type="submit">Save my password</button></form>`;
-  } else if (row.step === 'SETUP' && row.pending_method === null) {
+  } else if (v.needs === 'CHOOSE_METHOD') {
     body = h`<h1>Set up your second step</h1>${msg}
-      <p class="help">${user.role === 'CLIENT' ? 'A second step keeps your account safe, even if someone learns your password.'
+      <p class="help">${v.role === 'CLIENT' ? 'A second step keeps your account safe, even if someone learns your password.'
         : 'Every staff login needs a second step. It keeps our clients’ records safe, even if someone learns your password.'}</p>
       <form method="post" action="/login/step/method">
         <label class="fl">How would you like to get your code?</label>
         <div class="opts">
           <label class="opt"><input type="radio" name="method" value="APP" checked> An authenticator app on my phone (safest)</label>
-          <label class="opt"><input type="radio" name="method" value="EMAIL"> An email to ${masked(user.email)}</label>
+          <label class="opt"><input type="radio" name="method" value="EMAIL"> An email to ${v.sent_to ?? ''}</label>
         </div>
         <button class="cta" type="submit">Continue</button></form>`;
-  } else if (row.step === 'SETUP' && row.pending_method === 'APP' && row.pending_secret !== null) {
-    const uri = otpauthUri(ISSUER, user.email, row.pending_secret);
-    body = h`<h1>Add Cap Rebate to your authenticator app</h1>${msg}
+  } else if (v.needs === 'ADD_APP') {
+    body = v.app_key === null || v.otpauth_uri === null
+      ? h`<h1>Add Cap Rebate to your authenticator app</h1>${msg}${useEmail}`
+      : h`<h1>Add Cap Rebate to your authenticator app</h1>${msg}
       <ol class="help"><li>Open your authenticator app. Google Authenticator and Microsoft Authenticator both work.</li>
         <li>Add an account, and scan this code with your phone.</li>
         <li>Type the six numbers your app shows.</li></ol>
-      <div class="qr">${raw(renderSVG(uri))}</div>
-      <p class="help">Cannot scan it? Type this key into the app instead: <strong><code>${grouped(row.pending_secret)}</code></strong></p>
+      <div class="qr">${raw(renderSVG(v.otpauth_uri))}</div>
+      <p class="help">Cannot scan it? Type this key into the app instead: <strong><code>${v.app_key}</code></strong></p>
       ${codeForm('The six numbers from your app')}
-      <form method="post" action="/login/step/method"><input type="hidden" name="method" value="EMAIL">
-        <button class="linkish" type="submit">Use an email code instead</button></form>`;
+      ${useEmail}`;
   } else {
-    const byEmail = row.step === 'SETUP' ? row.pending_method === 'EMAIL' : security(app, user.id)?.mfa_method === 'EMAIL';
-    body = h`<h1>${row.step === 'SETUP' ? 'Check your email' : 'Your second step'}</h1>${msg}
-      <p class="help">${byEmail ? `We sent a six-number code to ${masked(user.email)}. It works for 10 minutes.`
+    const byEmail = v.method === 'EMAIL';
+    body = h`<h1>${v.step === 'SETUP' ? 'Check your email' : 'Your second step'}</h1>${msg}
+      <p class="help">${byEmail ? `We sent a six-number code to ${v.sent_to ?? ''}. It works for 10 minutes.`
         : 'Open your authenticator app and type the six numbers it shows for Cap Rebate.'}</p>
       ${codeForm(byEmail ? 'The code from the email' : 'The six numbers from your app')}
       ${byEmail ? resend : raw('')}

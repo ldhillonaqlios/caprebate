@@ -13,7 +13,8 @@
  *   A reset token is single-use and expiring, and only its HASH is stored.
  *   PHASE 151j: A PASSWORD ALONE NEVER OPENS A STAFF ACCOUNT. `login` issues a session only when nothing is left to
  *     do; a temporary password, or a second factor to set up or give, is a step, and `login` refuses with
- *     E_SECOND_STEP rather than skip it. The website walks the steps (src/web/sign-in.ts); nothing else may.
+ *     E_SECOND_STEP rather than skip it. The steps are walked only by src/web/sign-in.ts - by the website and, since
+ *     Phase 151k, by the JSON API's /api/login and /api/login/step routes (src/server.ts), on the same functions.
  */
 
 import { randomBytes } from 'node:crypto';
@@ -115,7 +116,7 @@ export type LoginResult = { user: User; cookie: SessionCookie; session_id: strin
 
 export async function login(d: Deps, email: string, password: string): Promise<LoginResult> {
   const found = await verifyPassword(d, email, password);
-  // PHASE 151j: a password alone never skips a step. The website walks them (src/web/sign-in.ts).
+  // PHASE 151j: a password alone never skips a step. Only src/web/sign-in.ts walks them (the website and the JSON API).
   const step = nextSignInStep(d, found.id);
   if (step !== null) {
     d.audit.append({

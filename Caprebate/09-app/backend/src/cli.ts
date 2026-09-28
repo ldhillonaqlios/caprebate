@@ -10,6 +10,7 @@
  *   node src/cli.ts read-mailbox      read new replies to contact@caprebate.co.uk, read-only (INBOUND_EMAIL; off, so none)
  *   node src/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
  *   node src/cli.ts sweep-land-boundaries   delete every kept land boundary file past the licence's 35 days
+ *   node src/cli.ts seal-app-secrets  seal every authenticator app secret still kept as text (CAPREBATE_MFA_KEY, Phase 151k)
  *   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who W --why Y   one logged test lookup (Phase 151g)
  *   node src/cli.ts smoke-switched-on <SOURCE> --who W --why Y   record a switch-on; the count of three starts again
  *   npm start            the server
@@ -34,6 +35,7 @@ import { randomUUID } from 'node:crypto';
 import { liveTransport } from './connectors/http.ts';
 import { runSmokeCommand, runSwitchedOnCommand } from './connectors/test-lookups.ts';
 import { processSecrets } from './secrets.ts';
+import { mfaKeyFrom, MFA_KEY_NAME, sealTextSecrets } from './mfa-seal.ts';
 import { postcodeStore } from './web/postcode.ts';
 
 const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';
@@ -106,6 +108,23 @@ async function main(): Promise<number> {
       const r = sweepMessages({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() }, MESSAGE_RETENTION, null);
       console.log(r.state === 'OFF' ? `Messages are not being cleaned up yet:\n  ${r.missing.join('\n  ')}`
         : `${r.client_messages} client message${r.client_messages === 1 ? '' : 's'}, ${r.team_messages} team message${r.team_messages === 1 ? '' : 's'} and ${r.emails} emailed repl${r.emails === 1 ? 'y' : 'ies'} deleted because their time was up.`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  if (cmd === 'seal-app-secrets') {
+    /* PHASE 151k. The key comes from the key file (src/secrets.ts), never from this command line. With no key set nothing
+       changes; a key that is not right changes nothing and says so. Never prints a secret or the key. */
+    const k = mfaKeyFrom(processSecrets());
+    const db = new Db(DEFAULT_DB);
+    try {
+      const r = sealTextSecrets(db, k);
+      if (r.state === 'NONE') { console.log(`No ${MFA_KEY_NAME} is set in the key file, so nothing was sealed. App secrets stay as text.`); return 0; }
+      if (r.state === 'BAD') { console.error(`${MFA_KEY_NAME} is set but is not 32 bytes written as base64, so nothing was sealed.`); return 1; }
+      new AuditLog(db).append({ at: new Date().toISOString(), kind: 'APP_SECRETS_SEALED', outcome: 'ALLOWED', detail: { count: r.sealed } });
+      console.log(`${r.sealed} authenticator app secret${r.sealed === 1 ? '' : 's'} sealed. Any already sealed were left as they were.`);
       return 0;
     } finally {
       db.close();

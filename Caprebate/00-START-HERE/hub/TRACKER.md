@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
-| Done | 267 |
-| Working on it | 1 |
+| Done | 268 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1361,8 +1361,9 @@
 
 ### Phase 151k - sign-in hardening: the API's steps, the app secret at rest, codes out of the outbox, the screenshot tool
 
-`13133268310` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
+`13133268310` · **Done** · owner Claude
 
+- Note 2026-09-28 (Phase 151k): DONE 28 Sep 2026: /api/login answers 202 + a step token and /api/login/step/... walk the same sign-in.ts functions; the app secret sealed with CAPREBATE_MFA_KEY (unset = text, as before); a SENT sign-in code or reset link loses its outbox body (migration 058); the screenshot tool signs demo logins in (tools/demo-sign-in.ts). test/phase151k.test.ts, 21 of 27 red on the pre-change code. Recovery codes asked as Word question 232.
 
 ---
 

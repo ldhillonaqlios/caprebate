@@ -157,7 +157,8 @@ describe('151e line 3 · Didit on the test website: keys from its settings, and 
       const r = await configureTestDeploy(made, { ...DIDIT_ENV, HOMEDATA_API_KEY: 'must-not-load', CAPREBATE_TEST_PASSWORD: pw });
       assert.equal(r.password_changed, true);
       assert.deepEqual([...r.keys_loaded].sort(), ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
-      assert.deepEqual([...TEST_DEPLOY_KEYS].sort(), ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
+      // PHASE 151k added the fourth: the key that seals the authenticator app secret (src/mfa-seal.ts).
+      assert.deepEqual([...TEST_DEPLOY_KEYS].sort(), ['CAPREBATE_MFA_KEY', 'DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
       for (const u of hashes(made)) {
         assert.equal(await made.app.hasher.verify(u.password_hash, pw), true, `${u.email} did not move to the test password`);
         assert.equal(await made.app.hasher.verify(u.password_hash, SEED_PASSWORD), false, `${u.email} still takes the public seed password`);
