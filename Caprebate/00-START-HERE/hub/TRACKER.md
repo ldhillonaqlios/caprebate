@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 1 |
 | Ready - Lakhbir action | 37 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
 | Done | 267 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1361,7 +1361,7 @@
 
 ### Phase 151k - sign-in hardening: the API's steps, the app secret at rest, codes out of the outbox, the screenshot tool
 
-`13133268310` · **Ready - Claude can build** · owner Claude
+`13133268310` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
 
 
 ---
