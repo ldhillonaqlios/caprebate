@@ -27,6 +27,7 @@ import { join } from 'node:path';
 let ready;
 
 async function build() {
+  const started = Date.now(); // PHASE 152: how long this copy took to start, printed below
   const { createApp } = await import('../Caprebate/09-app/backend/src/server.ts');
   const { seed } = await import('../Caprebate/09-app/backend/src/seed.ts');
   const host = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;
@@ -54,6 +55,11 @@ async function build() {
       console.log(`--- outbox (not sent) to ${m.to_email}: ${m.subject}\n${m.body}\n---`);
     }
   }, 1000).unref();
+  // PHASE 152 (the sweep, 28 September 2026): the first request after a deploy answered 504 twice on 28 September, when a
+  // copy still built the lasting database itself under a 30-second limit. Since Phase 151i follow-ups 3 to 5 the deploy's
+  // build does that and a copy only opens it (13 database calls, measured); on memory the whole start takes under a
+  // second on the Mac. This line lets the function log say what a real start took, instead of anyone guessing.
+  console.log(`test deployment: this copy started in ${Date.now() - started} ms`);
   return made.server.listeners('request')[0];
 }
 

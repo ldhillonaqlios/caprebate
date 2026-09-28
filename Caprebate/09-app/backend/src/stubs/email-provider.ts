@@ -436,12 +436,16 @@ type Waiting = {
  * WHILE SENDING IS OFF NOTHING HERE RUNS: a row saved then is never sent, and on the test website it is the only way to
  * read a sign-in code or a reset link (api/index.mjs prints the outbox to the function log). The Developer Spec says so.
  */
-export const SENT_SECRET_KINDS: readonly string[] = Object.freeze(['SIGN_IN_CODE', 'PASSWORD_RESET']);
-export const SENT_SECRET_BODY = 'This email held a sign-in code or a password reset link. It was sent, and then its words were removed so the code or link is not kept.';
+/* Phase 152 (the sweep, 28 September 2026): ACCOUNT_VERIFY too. The email that confirms a new client login carries a
+   link that works once and for 24 hours (src/web/signup.ts), the same sort of secret; only its hash is kept in
+   client_signups, so the link still works after its words leave the outbox. The sentence now names all three.
+   Migration 060 lets this sentence through for the three kinds; a row 058 blanked keeps 058's sentence for good. */
+export const SENT_SECRET_KINDS: readonly string[] = Object.freeze(['SIGN_IN_CODE', 'PASSWORD_RESET', 'ACCOUNT_VERIFY']);
+export const SENT_SECRET_BODY = 'This email held a sign-in code or a one-use link. It was sent, and then its words were removed so the code or link is not kept.';
 
 export function blankSentSecrets(db: Db, outbox_id: string): boolean {
   const r = db.run(
-    "UPDATE outbox SET body = ? WHERE id = ? AND sent_at IS NOT NULL AND kind IN ('SIGN_IN_CODE', 'PASSWORD_RESET') AND body <> ?",
+    "UPDATE outbox SET body = ? WHERE id = ? AND sent_at IS NOT NULL AND kind IN ('SIGN_IN_CODE', 'PASSWORD_RESET', 'ACCOUNT_VERIFY') AND body <> ?",
     [SENT_SECRET_BODY, outbox_id, SENT_SECRET_BODY]);
   return r.changes > 0;
 }

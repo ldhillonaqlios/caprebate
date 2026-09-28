@@ -371,6 +371,10 @@ function checkB(inp) {
 // reference is `file:NN`, or `:NN` after a file in the same cell, or - the prose form §4 uses for
 // phase3 - "`name` at line NN" / "`name` at NN" after a file in the same cell.
 const C_FILE = /^(src\/[^\s:]+\.ts|Caprebate site\.html|\d\d-[^\s:]+\.(?:ts|js|cjs|mjs|html|sql))(?::(\d+))?$/;
+// Phase 152 (28 September 2026): a file with a colon and NO clean line number after it - "`src/web/crm.ts:`",
+// "`src/web/crm.ts:12a`", "`src/web/crm.ts: 12`" - matched neither C_FILE nor the `:NN` form, so the reference
+// vanished and C passed it silently until a person saw it (Phase 151e line 6). Each is now a failure of its own.
+const C_FILE_BROKEN = /^(src\/[^\s:]+\.ts|Caprebate site\.html|\d\d-[^\s:]+\.(?:ts|js|cjs|mjs|html|sql)):(?!\d+$)/;
 const C_FORMS = ['back end', 'site', 'package', 'phase9', 'phase3', 'other'];
 function formOf(file) {
   if (file.startsWith('src/')) return { form: 'back end', abs: path.join(P.backend, file) };
@@ -386,7 +390,7 @@ function formOf(file) {
 // number had no name beside it: `file:NN` each (read, and not checkable)
 function refsOfC(spec) {
   const s4 = sliceSection(spec, /^# 4 · /m, /^# 5 · /m);
-  const refs = []; const unnamed = [];
+  const refs = []; const unnamed = []; const broken = [];
   for (const line of s4.split('\n')) {
     for (const cell of line.startsWith('|') ? cellsOf(line) : [line]) {
       let file = null;
@@ -395,6 +399,7 @@ function refsOfC(spec) {
       toks.forEach((tk, i) => {
         const fm = tk.t.match(C_FILE);
         const lm = tk.t.match(/^:(\d+)$/);
+        if (C_FILE_BROKEN.test(tk.t)) broken.push(tk.t);
         if (fm) { file = fm[1]; fileAt.push([tk.at, file]); }
         const lineNo = fm && fm[2] ? +fm[2] : lm ? +lm[1] : null;
         if (lineNo === null || !file) return;
@@ -417,7 +422,7 @@ function refsOfC(spec) {
       }
     }
   }
-  return { refs, unnamed };
+  return { refs, unnamed, broken };
 }
 
 function readRefText(inp, r) {
@@ -427,7 +432,8 @@ function readRefText(inp, r) {
 
 function checkC(inp) {
   const fails = [];
-  const { refs, unnamed } = refsOfC(inp.spec);
+  const { refs, unnamed, broken } = refsOfC(inp.spec);
+  for (const t of broken) fails.push(`C §4 cites \`${t}\`: a file and a colon with no line number after it - write the number, or drop the colon`);
   const forms = Object.fromEntries(C_FORMS.map((f) => [f, 0]));
   for (const r of refs) {
     forms[r.form]++;
@@ -544,6 +550,11 @@ function selfTest(inp) {
     ['C a line reference shifted', 'C', (x) => {
       const r = goodRef(x, (y) => y.form === 'back end' && !y.prose && /:\d+$/.test(y.token));
       return r ? { ...x, spec: replaceAtRef(x.spec, r, '`' + r.token + '`', '`' + `${r.file}:${r.lineNo + 1}` + '`') } : x;
+    }],
+    // Phase 152: the colon with no number (Phase 151e line 6), which C passed silently until a person saw it.
+    ['C a line reference with its number missing ("`src/…ts:`")', 'C', (x) => {
+      const r = goodRef(x, (y) => y.form === 'back end' && !y.prose && /:\d+$/.test(y.token));
+      return r ? { ...x, spec: replaceAtRef(x.spec, r, '`' + r.token + '`', '`' + `${r.file}:` + '`') } : x;
     }],
     ['D a training section dropped', 'D', (x) => ({ ...x, guide: x.guide.replace(/^### Training — `B41`.*$/m, '### Search') })],
     // Phase 132g: the forms outside the back end. Their line numbers move while other work edits the

@@ -174,7 +174,48 @@ export function pendingMigrations(db: Db, dir: string): string[] {
  * Deliberately dumb: no down-migrations, no checksums-with-auto-repair. A
  * migration that has run is recorded; a new one runs; anything else is a
  * person's decision, not a framework's.
+ *
+ * PHASE 152 (the sweep, 28 September 2026): A FILE AND ITS RECORD LAND TOGETHER OR NOT AT ALL. Until now a file ran,
+ * and THEN its schema_migrations row was written, so a start cut off between the two left the file's tables made and
+ * unrecorded - and every later start failed on them ("table claim_facts already exists", the test website's first
+ * start on Turso, 28 Sep 2026, stopped by a 30-second limit). Now the record is written inside the same transaction as
+ * the file's own statements, so a cut-off start leaves either both or neither, and the next start finishes the job.
+ * Two shapes, and only two:
+ *   - a PLAIN file: it and its record run in one transaction here (Db.tx);
+ *   - a file that RUNS ITS OWN TRANSACTION (007, 011, 014, 016 to 019, 049, 053, 054, 056): `PRAGMA foreign_keys = OFF;`,
+ *     a line `BEGIN;`, its body, a line `COMMIT;`, `PRAGMA foreign_keys = ON;`. The pragma cannot change inside a
+ *     transaction and a transaction cannot begin inside another, so it is split at its own BEGIN and COMMIT: the pragma
+ *     runs outside, the body AND the record run in one transaction, and the closing pragma always runs after.
+ * Anything else - two BEGINs, a COMMIT with no BEGIN, a transaction statement in a plain file, anything but the one
+ * pragma around a file's own transaction - is REFUSED with a sentence, never guessed at.
  */
+const OWN_BEGIN = /^BEGIN;[ \t]*$/gm;
+const OWN_COMMIT = /^COMMIT;[ \t]*$/gm;
+const TXN_STATEMENT = /^[ \t]*(?:BEGIN(?:[ \t]+(?:TRANSACTION|IMMEDIATE|DEFERRED|EXCLUSIVE))?[ \t]*;|COMMIT\b|ROLLBACK\b|SAVEPOINT\b|RELEASE\b|END[ \t]+TRANSACTION\b)/im;
+const withoutComments = (sql: string): string => sql.split('\n').map((l) => l.replace(/--.*$/, '').trim()).filter((l) => l !== '').join(' ');
+
+export function splitMigration(filename: string, sql: string): { pre: string; body: string; post: string } | null {
+  const begins = [...sql.matchAll(OWN_BEGIN)];
+  const commits = [...sql.matchAll(OWN_COMMIT)];
+  const refuse = (why: string): never => {
+    throw new Error(`Migration ${filename} was not run: ${why} Nothing from it was applied.`);
+  };
+  if (begins.length === 0 && commits.length === 0) {
+    if (TXN_STATEMENT.test(sql)) refuse('it has a transaction statement of its own but not the one shape this runner knows (a line "BEGIN;" and a line "COMMIT;").');
+    return null;
+  }
+  if (begins.length !== 1 || commits.length !== 1) refuse(`it has ${begins.length} "BEGIN;" line(s) and ${commits.length} "COMMIT;" line(s); a file that runs its own transaction has exactly one of each.`);
+  const b = begins[0]!; const c = commits[0]!;
+  if (b.index! > c.index!) refuse('its "COMMIT;" line comes before its "BEGIN;" line.');
+  const pre = sql.slice(0, b.index!);
+  const body = sql.slice(b.index! + b[0].length, c.index!);
+  const post = sql.slice(c.index! + c[0].length);
+  if (!/^(?:PRAGMA foreign_keys = OFF;)?$/.test(withoutComments(pre))) refuse('before its "BEGIN;" line there is something other than "PRAGMA foreign_keys = OFF;".');
+  if (!/^(?:PRAGMA foreign_keys = ON;)?$/.test(withoutComments(post))) refuse('after its "COMMIT;" line there is something other than "PRAGMA foreign_keys = ON;".');
+  if (TXN_STATEMENT.test(body)) refuse('it has a second transaction statement inside its own transaction.');
+  return { pre, body, post };
+}
+
 export function migrate(db: Db, dir: string): string[] {
   db.execDdl(
     'CREATE TABLE IF NOT EXISTS schema_migrations (' +
@@ -186,11 +227,21 @@ export function migrate(db: Db, dir: string): string[] {
   const applied: string[] = [];
   for (const f of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
     if (done.has(f)) continue;
-    db.execDdl(readFileSync(join(dir, f), 'utf8'));
-    db.run('INSERT INTO schema_migrations (filename, applied_at) VALUES (?, ?)', [
-      f,
-      new Date().toISOString(),
-    ]);
+    const sql = readFileSync(join(dir, f), 'utf8');
+    const parts = splitMigration(f, sql);
+    const record = (): void => {
+      db.run('INSERT INTO schema_migrations (filename, applied_at) VALUES (?, ?)', [f, new Date().toISOString()]);
+    };
+    if (parts === null) {
+      db.tx(() => { db.execDdl(sql); record(); });
+    } else {
+      db.execDdl(parts.pre);
+      try {
+        db.tx(() => { db.execDdl(parts.body); record(); });
+      } finally {
+        db.execDdl(parts.post);
+      }
+    }
     applied.push(f);
   }
   return applied;

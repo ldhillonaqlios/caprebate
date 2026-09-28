@@ -138,9 +138,12 @@ and answers. It lives in Lakhbir's OneDrive, not in the repository:
         (moved there from the OneDrive root on 25 Sep 2026 at 08:55, with the
         closed document beside it; look for it by name if it moves again)
 READ THE CLOUD COPY, AS AMENDMENT 2 OF THE STANDING INSTRUCTION SAYS: copy the
-cloud item to a new name in the same folder, let it sync down, and run the
-commands below on that copy. The Mac file has been out of step with the cloud
-before, silently.
+cloud ITEM - by its id, and check first that the item still carries the name
+Caprebate_Questions.docx - to a new name in the same folder, let it sync down,
+and run the commands below on that copy. (Phase 152, 28 Sep 2026: from 25 to 28
+Sep the item his link opens was named .bak-phase151e3, because a backup was
+made by moving the file, and four phases read that backup as "the cloud copy".
+Make a backup with cp, never mv, and write the file in place.)
 
 1. The open document's Heading 2 texts, one per line and exactly as written
    ("N) <title>"), with python-docx:

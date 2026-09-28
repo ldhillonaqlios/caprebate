@@ -354,39 +354,51 @@ data protection officer. Number it one above the HIGHEST number already used,
 wherever that sits: numbers are never reused or renumbered, because answers
 are discussed by number. Phase 146 added 186 to 190 on 22 Sep 2026.
 
-WHERE IT IS AND HOW TO EDIT IT SAFELY (rewritten 24 Sep 2026)
-  THE CLOUD COPY IS THE DOCUMENT. It is Caprebate_Questions.docx in Lakhbir's
-  OneDrive, in the Health Capital Allowances folder since 08:55 on 25 Sep 2026
-  (it was in the root before; the item and its link did not move with it, and
-  the closed document sits beside it): Microsoft 365 connector, drive
-  b!W41wb3ul9kWs7vuWtYvVPVjSKVUQtx5Am22Z3VRpClxUxJroNP8-TqaJLU1eo1aq, item
-  01MGXUCTLKJIP4DY6BJZGL7KO5ZTZZABK3 - the item his link opens. Lakhbir and
-  the officer type into it online.
-  THE MAC FILE WAS NOT A SAFE WAY IN FROM ABOUT 22 SEP 2026, AND ON THE
-  AFTERNOON OF 24 SEP IT WORKED AGAIN. Phases 151c and 151d (25 Sep) wrote
-  through it after proving the cloud copy identical, and proved the write. /Users/lakhbir/Library/CloudStorage/
-  OneDrive-AqliosLTD/Caprebate_Questions.docx stopped reaching the cloud:
-  every Claude edit from 22 to 24 Sep sat on the Mac only, while 127 answers
-  were typed into the cloud copy. At 14:27 on 24 Sep (Phase 151) a write to
-  the Mac file reached the cloud item within two minutes, proved by copying
-  the cloud item down and comparing byte for byte. STILL VERIFY EVERY WRITE
-  THAT WAY: the fault was silent, and a silent fault can come back. Verified
-  again on 25 Sep (Phase 151b): the Mac write reached the cloud byte for byte.
-  Read  the cloud copy, never the disk: sharepoint_copy_item it to a new name
-        in the same folder (the copy syncs down to the Mac within a minute,
-        byte for byte), then read that with python-docx. read_resource gives
-        the text only, through a PDF conversion.
+WHERE IT IS AND HOW TO EDIT IT SAFELY (rewritten 24 Sep 2026; corrected 28
+Sep 2026 by the Phase 152 sweep)
+  THE CLOUD ITEM IS THE DOCUMENT - THE ITEM, NOT THE NAME. It is
+  Caprebate_Questions.docx in Lakhbir's OneDrive, Health Capital Allowances
+  folder (folder item 01MGXUCTLLJJYYJPPZVZHISE2ISV4RLKP6): Microsoft 365
+  connector, drive b!W41wb3ul9kWs7vuWtYvVPVjSKVUQtx5Am22Z3VRpClxUxJroNP8-
+  TqaJLU1eo1aq, item 01MGXUCTLKJIP4DY6BJZGL7KO5ZTZZABK3 - the item his link
+  opens, where he and the officer type. The closed document beside it is
+  item 01MGXUCTIA3HHQAUXJ2JCIIXWRUKNXO7BI (no link to it is recorded).
+  READ THE FOLDER FIRST: read_resource on file:///<drive>/<folder item>
+  lists every name with its item id. Check that the item above still
+  carries the name Caprebate_Questions.docx before you trust any copy of it.
+  WHAT WENT WRONG FROM 25 TO 28 SEP 2026, SO IT IS NOT REPEATED. A phase made
+  its backup by MOVING the Mac file (mv Caprebate_Questions.docx
+  Caprebate_Questions.docx.bak-phase151e3) and wrote a new file in its
+  place. OneDrive followed the move: the linked item was RENAMED to the
+  backup, and the new file became a second item. So his link opened a frozen
+  backup, every Claude write reached only the second item, and four phases
+  copied the linked item down, found it "still the document from before
+  230", and reported a Mac-to-cloud fault that never existed - the Mac file
+  reached the cloud every time. Phase 152 renamed the second item "DELETE -
+  Caprebate_Questions (a second item ...)", gave the linked item its name
+  back, and wrote the document into it, proved byte for byte. THE RULE: take
+  a backup with cp, NEVER mv, and write the new document INTO the existing
+  Mac file (cp new.docx Caprebate_Questions.docx keeps the same file, so the
+  same item; ls -i shows the same number before and after).
+  Read  copy the ITEM, by id, to a new name in the same folder
+        (sharepoint_copy_item; the copy syncs down to the Mac within a
+        minute), then read that with python-docx. read_resource on the item
+        gives the text only, through a PDF conversion.
   Edit  build the new body with python-docx (deep-copy an existing question's
         eight paragraphs and change the text of their runs), then put ONLY
         word/document.xml back into the ORIGINAL zip, keeping every other
         entry as it was: python-docx's own save drops two empty relationship
         files. Build zip entries from a fresh ZipFile for each output:
         writestr(info) changes the info it is given.
-  Write to the cloud item itself, so the link and version history stay:
-        sharepoint_update_file, or an upload through the OneDrive web page.
-        Immediately before, compare the cloud copy with the one you merged
-        from. If it changed, somebody is typing: stop and merge again.
-  Then  copy the cloud item down again and cmp it with what you sent.
+  Check immediately before writing, copy the item down again and compare it
+        with the file you built from. If it changed, somebody is typing:
+        stop and merge again.
+  Write into the Mac file in place, as above - it reaches the item within a
+        minute (proved 28 Sep 2026). sharepoint_update_file also writes the
+        item itself, but it takes the whole file as base64 in one call.
+  Then  copy the ITEM down again and cmp it with what you sent; look in the
+        folder listing for a OneDrive conflict copy; move the temporary
+        copies to the recycle bin (sharepoint_delete_item).
 
 ANSWERED QUESTIONS LEAVE THE DOCUMENT (Lakhbir, 24 Sep 2026). When an answer is
 DEFINITIVE: build it or put it in a phase; move the question, unchanged, to
@@ -476,6 +488,13 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   Every Blob call is private and a public store refuses it; no Blob address
   is kept. Word question 231 asks Lakhbir. The audit log reads the chain's
   end once and retries a clash on seq; Db.tx begins IMMEDIATE.
+  WHAT CLAUDE CAN SEE OF IT (Phase 152): the Vercel connector's only team,
+  ldhillonaqlios, holds no projects - caprebate-test is not found there - so
+  its logs are Lakhbir's to read. GitHub keeps each deploy's status and own
+  address (gh api repos/ldhillonaqlios/caprebate/deployments, then its
+  /statuses); that address is behind Vercel's sign-in. The public address is
+  https://caprebate-test.vercel.app. Each copy logs "test deployment: this
+  copy started in N ms".
   SIGNING IN (Phase 151j, 28 Sep 2026): every staff login gives a second
   step (an authenticator app or an email code); a client may; a new account
   gets a temporary password shown once (7 days). login() itself refuses
@@ -643,15 +662,21 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   THE MODULE FILES: the six Module-*.md files and Caprebate-Fixture-Taxonomy-
   v1.csv live ONLY in 02-modules-and-build-prep/ on the Mac, read there by the
   harness and the phase9 cost-model test since Phase 132g. THE COMPETITOR
-  PROGRAM'S FULL COPY, which Lakhbir wanted kept in Development/Cap allowance
-  (Word questions 9 and 214), WAS NOT THERE, NOR ANYWHERE ELSE IN ONEDRIVE, on
-  25 Sep 2026; Phase 151d's sweep did not touch it. Lakhbir has been asked.
+  PROGRAM'S FULL COPY (Word questions 9 and 214) WAS DELETED AS NOT NEEDED
+  (Lakhbir, 25 Sep 2026, Phase 151f); nothing reads it. Phase 151f wrote that
+  this block said so, and it did not until the Phase 152 sweep.
   KEYS live only in ~/.caprebate-secrets.env, outside the repository (names in
   09-app/backend/secrets.example.env); src/secrets.ts refuses a key file inside
   the tree, and .gitignore ignores *.env, *secret*, *.p12, *.pfx, *.pem and
   *.key anywhere. Check the key file BY NAME ONLY - never print a value.
   src/connectors/http.ts is the only file under src/ that may call fetch, and
   test/phase146b.test.ts fails on any other.
+  A MIGRATION AND ITS RECORD LAND TOGETHER (Phase 152, src/db.ts migrate and
+  splitMigration). A plain file runs in one transaction with its
+  schema_migrations row. A file that needs its own transaction (foreign keys
+  off) has ONE shape: "PRAGMA foreign_keys = OFF;", a line "BEGIN;", the
+  body, a line "COMMIT;", "PRAGMA foreign_keys = ON;" - anything else is
+  refused with a sentence and nothing from it lands.
   THE TEST LOOKUP LOG (Phase 151g) is ~/.caprebate-test-lookups.jsonl, or
   CAPREBATE_TEST_LOOKUP_LOG - outside the repository, refused inside it. The
   smoke command keeps Lakhbir's five conditions there (Word question 170):
@@ -729,7 +754,10 @@ command that counts it, never the number.
                                                       names question N by its own title (146a).
                                                       A row CARRIED to a phase is listed, not
                                                       failed, only while that phase's heading
-                                                      is in this document.
+                                                      is in this document. C fails on a file
+                                                      with a colon and no line number after it
+                                                      ("`src/web/crm.ts:`"), which it passed
+                                                      silently until Phase 152.
   node 03-app/caprebate-notices-acceptance.cjs        structural checks only; green is only that.
                                                       --live also fails while a fact is unset
   cd 09-app/backend && CAPREBATE_ALLOW_SEED=1 node tools/payload-proof.ts
@@ -912,7 +940,217 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 152 — Sweep and stress-test (the recurring one, always last)
+## PHASE 153 — five decisions carried into the documents that never heard of them, and the rows that say more than is true
+
+ **Model: Opus. Written 28 September 2026 by the Phase 152 sweep.** Tracker row: "Phase 153 - five decisions carried into the documents that never heard of them, and the rows that say more than is true" (13133268312, in 05 · FOR DEVELOPMENT). Runs next, then the sweep.
+
+ **Why this exists.** The Phase 152 sweep read every item, subitem and document the tracker names. Five decisions of 22 to 25 September never reached the documents written before them — the data protection mailbox is live and read, monday.com was dropped, the Claude API reads uploaded documents, the title register is done by hand, and BCIS was chosen over Spon's — so about forty documents still say the opposite, several of them papers the data protection officer or the solicitor is being asked to sign. None of this needs anybody to answer anything. The sweep fixed what was one command each (the tracker rows) and wrote the rest here, line by line, with where it found each one. **Test every line against its file before you write: a line number moves, and a premise the sweep read quickly can be wrong.**
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
+a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
+branch main. On the Mac the working copy is Development/, one level above the
+tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
+Allowances/Business Development/Development. git pull, then git log --oneline.
+OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
+INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
+COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
+plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
+already there stops you) and clear it at the end; retag what you touch in the
+tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
+write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+═══════════════════════════════════
+
+Mac copy. Take a .bak-phase153 sibling of every file you change. Paths are
+from Caprebate/; "08/" is 08-monday-doc-exports/, "SDP" is
+hub/FOR-THE-SOLICITOR-DPO-DEVELOPER.md. Every document here that waits on a
+signature stays at "Built - awaiting sign-off" in its one register: bring its
+TEXT up to date and add a dated line to its register entry saying what
+changed. Never change what a person decided; change only what the decisions
+since have made untrue. READ EACH FILE BEFORE YOU EDIT IT - the sweep's line
+numbers are where it read them on 28 Sep 2026. A document whose change you
+cannot make without a person's answer: leave it, and name the Word question.
+
+1. THE DATA PROTECTION MAILBOX IS LIVE AND READ. data.protection@caprebate.
+   co.uk exists on IONOS (Word question 3, closed) and Sadique Maskeen reads
+   all three mailboxes (question 216, closed). Still "NOT SET", "not proven
+   to exist" or "no dedicated address" in: the officer's instrument
+   (08/12927221812__Instrument-of-appointment-...md, s.8.1 and s.4.3; and
+   its B-6, if Word question 69 answers it - read that answer first); the
+   retention procedure (12818099921: readiness R1, s.5.2); the breach
+   communications pack (12927894775: lines ~84, 176, and the templates'
+   "[CONTACT ADDRESS - NOT SET" ~438); the Article 14 assessment's letters
+   (12927987812, ~875, 982, 1013); the response letters' header
+   (12927850552, ~115); the rights-request and complaints pack (12927908435,
+   ~42, 492); the complaints process (12552700588, ~98, 106); the ICO answer
+   sheet (12927942615, ~146, 195); SDP ~698-700; the supplier breach duties
+   (06-commercial-and-governance/Caprebate-Supplier-Breach-Notification-
+   Duties-v1.md, ~96). Keep the notices page's own "[NOT SET" markers that
+   are real unknowns (the ICO reference, dates): only the address is known.
+2. MONDAY.COM WAS DROPPED ON 25 SEP 2026. Wherever it is "in use today", a
+   processor that "holds client data today", or the home of the breach
+   register ("monday.com board 18429145787"): the PUBLIC notices page
+   (03-app/caprebate-notices-page.html ~368 and ~387 - then run the notices,
+   brand and plain-words checks); the privacy notice draft (08/12818279787_
+   _Section-1-...md, section 6 ~208-234); the recipients list (06-.../
+   Caprebate-Recipients-of-Client-Personal-Data-v1.md P2, and P5 "the
+   WordPress host", with no rows for Didit or Postcodes.io); SDP ~928 and
+   ~1108; the breach procedure's operative addendum (12927581028, A2.1
+   ~835); the continuity plan (12552682536, the register and a recovery row
+   for monday.com); the rules-defect plan (12927557335); the officer's
+   instrument; the rights-request pack; the four-facts paper's M4
+   (12927683763; Word question 58 closed "no Microsoft 365 audit"); the
+   Cyber Essentials pack (12552681921: Appendix C.3, and Appendix B's "runs
+   locally, no production hosting" - the test website is on Vercel, and
+   since Phase 151j every staff login has a second step); the supplier
+   breach duties (~143, and its "WordPress host" row 25). WHERE THE BREACH
+   REGISTER NOW LIVES IS NOT DECIDED - Word question 181 is open: say that,
+   and point at it; do not choose.
+3. THE CLAUDE API READS UPLOADED DOCUMENTS (Word question 172; built by
+   Phase 146e, 13104177605). "No model is wired in" / "no extraction model is
+   chosen" in: the document pipeline impact assessment (12910861459, ~170
+   and Gate A ~269, and "the rest of the WordPress platform" ~114); the
+   ingestion minimisation export (08/12928074627__18429188333__0.-THE-ONE-
+   THING...md); the breach procedure; the Article 14 assessment; the ICO
+   answer sheet; the supplier breach duties' s.2A.
+4. THE TITLE REGISTER IS DONE BY HAND (Phase 146k) AND THE SOLICITOR SAID
+   YES TO THE ACCOUNTANT'S PACK (SDP-L22, 27 Sep; Word question 234,
+   closed). 09-app/CAPREBATE-DEVELOPER-SPEC.md s.4 row 3 (~2084, "Install
+   the Business Gateway certificate") and row 3a ("the four HMLR_BG_* names",
+   "onward supply ... stays shut"), the Tier 2 table's requirements column
+   (~1994), and ~2095 calling the officer's role Lakhbir's decision when
+   ~2909 says it is decided - then run the drift and CRM fold checks; the
+   standard operating procedures (12552682457: ~273 "the connectors are not
+   built", and the title register on the operator's click); the licensing
+   review (12818265662, the title register row ~48); the supplier register
+   (12552700455: Homedata as "valuation data" - it is the address lookup and
+   its valuations are never used - the Business Gateway, "CRM vendor tbc",
+   and no Microsoft, IONOS, Anthropic, Didit or BCIS). The tracker row
+   13104189485's name still puts the title register on the click, and its
+   owner is Claude at a sign-off label: rename it and set the owner to the
+   register's person.
+5. BCIS WAS CHOSEN OVER SPON'S (24 Sep 2026; Word question 218 open on which
+   BCIS product). Dated notes on the surveyor register's SV-S6 and SV-S8;
+   13004035199's name ("waits only on the surveyor's answer" - Q52 and Q218
+   gate it too); 12804374707 (a note: its blocker is BCIS and Q218, not
+   "Spon's, £330"); 12804374406's only file is the Spon's blind re-run
+   protocol - rewrite it as a BCIS draft, marked as waiting on Q218.
+6. THE FEE IS A FLAT 3%, AND OTHER FIGURES THAT MOVED. FOR-THE-ACCOUNTANT.md
+   ~1161 ("rebuilt on 5% ... which is what we charge ... all now current":
+   a dated line, never a rewrite of the history); 09-app/CAPREBATE-CRM-
+   DISPOSITION.md 8.13 (~275) and ~664 ("Five per cent ... decided 3
+   September"); the brand guidelines (12552682538, ~373 and ~377);
+   04-phase-work/phase9/caprebate-job-economics.cjs's header ~97-99 (says
+   homedata_cost_per_lookup is null; line ~306 sets 0.08 since Phase 151 -
+   run phase9); the rate card (12804368154): its banner says the multi-site
+   discount is decided while s.5.1, s.5.2, s.10 and ~246/259 say it is not,
+   and "Saddique" 29 times (Word question 69 - read its answer); the
+   add-ons wait on new Word question 235. Rulebook C s.8.1 (~316, ~380: "I
+   have not read TMA 1970 s.12ABA") - 12851600794 closed that gap: correct
+   it through Rulebook C's row, 12830037336. The session record's s.9 open
+   questions (02-modules-and-build-prep/Caprebate-Session-Record-and-Build-
+   Sequence-v1.md ~270, the Homedata free tier; and the Scotland item).
+   F-15 grant_fraction (12852269899, Done, "remainder documented as future
+   work"; Module 00 ~545 "payer-class and traced-elements structure remain
+   absent"): check whether Phase 143's grants screen closed it; update
+   Module 00, or open a row.
+7. THE ENGAGEMENT LETTER'S WORD COMMENTS AND ITS SPECIMEN (12984545390). The
+   clause 7 comment's "[its company name and country, for the solicitor to
+   confirm ...]" and "[for the solicitor to confirm]": the privacy notice
+   filled both on 25 Sep (08/12818279787_..., ~532: Didit Identity Spain,
+   S.L., its Data Processing Addendum) - fill them as a proposal for the
+   solicitor. The specimen "Oakfield Care Group ... 09183422" is a REAL,
+   dissolved company (SDP ~1350): replace it with an invented one. The DOCX
+   uses BACKSLASH entry paths - rewrite that single entry, keep every other
+   entry's bytes and NAME, check every CRC, and run the back end's letter
+   tests and the portal renderer. The bracketed choices in clauses 1, 5, 7
+   and 13 are Word questions 33, 34 and 196 - leave them. The tracker note's
+   "Article 28 terms with Veriff": Didit.
+8. SMALLER, EACH ONE A READ AND A LINE. The anti-money-laundering paper
+   (12830178449, s.7 ~207-217: "Apply ID" was APLYiD, Word question 225;
+   record the Didit build); ACTION-PLAN.md s.8 (~1607: the site no longer
+   says "within 4 years", "No win, no fee" or "From £5,000" - grep the site
+   file to prove it, then correct the paragraph); the Developer Spec ~3015
+   (the mailboxes question, closed); the audit log determination
+   (12949297803: "WordPress is the whole back end"); the data specification
+   (12948738680: its heading); the CRM 8 row 13032264597 and SDP ~1348 (the
+   officer's login: Word question 44 closed, "no separate login for now");
+   the brand work row 13069114161 and SDP ~1472 (a) and (b), overtaken on 18
+   Sep; the governance policies (12552682456): fill the [VERIFY] placeholders
+   B4 (the systems in use) and B6 (the drafted retention periods) from what
+   is decided - leave the solicitor's; the solicitor brief (12927233337):
+   its name describes a drafting job done on 29 Aug, it says no solicitor is
+   instructed while answers are recorded from "the solicitor" (Word question
+   224, SDP-L22), and its money-laundering framing ("we expect yes")
+   predates Lakhbir's answer to question 10 - rename it, and write a Word
+   question for Lakhbir: which solicitor gave the answers of 27 Sep, and are
+   they instructed?
+9. TRACKER ROWS WHOSE LABEL IS NOT WHAT IS IN THE WAY - read each, retag,
+   note. 13092540283 (keep client uploads 7 years: Lakhbir answered question
+   219, so it waits on the officer - Built - awaiting sign-off, in the
+   officer's register, with the privacy notice's two lines drafted: the 7
+   years, and who may open them); 12927091743 (the British Standards: Word
+   question 32's recorded answer is "Surveyor" - Parked, trigger "the
+   surveyor call is held"); 12818132946 (surveyor step 3 - Parked on the
+   same trigger as step 2); 12949133180 (the host backup email: its deadline
+   of 2 Sep has passed and it goes when the developers propose a host -
+   Parked, deadline cleared); 12984730922 (the clawback clause is Word
+   question 34, a decision: Ready - Lakhbir action); 12955356558 (the link to
+   /notices/ at the address question: the site links it only for complaints
+   and cookies - build it hidden behind the precondition that already
+   exists, CB_REGISTRY.precondition, and say so); 12927091742 (question 187:
+   prepare the two redacted straw-men copies so the answer is a one-word
+   choice); 12552682452 (point its files at 08/12927233704__Corporation-
+   Tax-registration-content.md); 12984553034 (a note: question 33's partial
+   answer, "abort fee nil", and the break fee "£995 per property?");
+   13003875907 and 12830173693 (one email closes both: cross-link them);
+   the files columns that point only at _archive/superseded/ (12830166288,
+   12804317757, 12819676756, 12552691606; and 12830181812 at the first
+   solicitor brief - v2 is on 12927233337); the four "Drafted, not
+   approved" subitems 12552667541, 12552667614, 12552667618, 12552667621
+   (their live text is Parts A-D of 08/12552682456__Item-1-Governance-
+   Policies.md); S10, the matching spec (12819677135, Done): its 200-
+   property measurement has no row - create one at the label that names
+   what stops it (tools/match-measure.ts --run refuses until the officer
+   answers Word question 200, "May we run our address-matching test on 200
+   real addresses?" - so it is Blocked - question, and says so).
+10. THE SAME QUESTION ASKED TWICE (the sweep's pattern xii). Open pairs in
+   the Word document: 10 and 128 (money-laundering supervision); 139 and
+   149 (how close a blind test must be); 118 and 224 (who files the amended
+   return); 42 and 117 (a fee to a referring accountant); 197 and 202
+   (PlanIt); 171 and 195 (Google Analytics); 159 and 221 (names in
+   uploads); 59 and 226 (VAT on our fee); 51 and 82 (stamp duty); 2 with
+   155 and 157 (the hosting questions); 76 and 133; 131 and 199. Open
+   against closed: 62 (22), 222 (185), 191 (7), 69 (54), 196 (3, 4, 186,
+   216). And question 5 still asks where monday.com stores our data. For
+   each: read both, and where one's answer settles the other, record it the
+   AMENDMENT 2 way and close it; where both are open, add to the later one
+   "Same subject as question N - one answer does both". The AMENDMENT 2 way,
+   and the trap in COORDINATES: write the file in place, never mv it.
+
+11. THE TAX ADVISER'S REVIEW IS 53 QUESTIONS, NOT 46. Word question 50
+   (closed 24 Sep) put Rulebook I into this review, and its seven lines
+   (I-Q1 to I-Q7) are under the review pack, 12830043701. Re-derived in code
+   by the Phase 152 sweep from TRACKER.csv: 53 lines - 49 open, 2 answered,
+   2 superseded; 15 BLOCKER, 28 HIGH, 9 STANDARD, 1 not rated. Every copy of
+   the old count still says 46 recorded, 44 put to the adviser, 15 blockers,
+   23 high and 7 standard: FOR-THE-ACCOUNTANT.md (~768-774), the hiring pack
+   (08/12818112998__Hiring-the-tax-adviser.md, and the draft letter inside
+   it), the decision pack and the rulebooks export (08/12830043701__...),
+   the surveyor walkthrough (08/12818132946__...), README-file-index.md,
+   00-START-HERE/"Caprebate — Blockers & What Unblocks Them.html", and this
+   plan. Re-derive the counts in code first (they move), SEARCH THE WHOLE
+   CORPUS for "forty-six", "46", "44 put", "forty-four", "twenty-three" near
+   the pack - not only these files - and correct each with a dated line; the
+   3-day estimate (Word question 7) was set for 46: say so, do not re-price.
+
+When every line is done: run every check in COORDINATES, re-derive the
+figures, update the three registers you touched, and write the record.
+```
+
+
+## PHASE 154 — Sweep and stress-test (the recurring one, always last)
 
 
  **Model: Opus.** **This is the one section that is never deleted.** It renumbers itself forward each time it runs and stays at the bottom of this list.
@@ -1019,145 +1257,42 @@ after that phase.
    A PROTOTYPE WHOSE ANCHOR QUARANTINE HAS QUIETLY STOPPED HOLDING IS WORSE THAN
    NO PROTOTYPE. The payload proof must find no estimate field as surveyor AND
    all seven as admin - the second half is its negative control.
-   TWO WORD QUESTIONS LAKHBIR'S 25 SEP DECISION ANSWERED (Phase 146k). He said
-   the Land Registry title register "will be done manually and not via API"
-   and took the Business Gateway details out of the key file. So Word question
-   205 ("The key file is missing the password for the Land Registry
-   certificate. Can you add it?") is answered: no certificate is needed. Move
-   it, the AMENDMENT 2 way, to the closed document with "Recorded answer (25
-   and 27 Sep 2026, Lakhbir, in the chat): the title register is done by
-   hand, not via the API - a person gets the official copy and title plan,
-   types in what they say and uploads them. The certificate still needed is
-   that paperwork, not the Business Gateway client certificate, so its
-   password is not needed" and a Closed line naming Phases 146k and 146l. And Word question 207
-   ("Two things only someone with the supplier's own pack or a live key can
-   confirm") loses its Business Gateway half: add a Recorded answer saying so,
-   and leave it open for the Homedata half. BUILDABLE - it is only the Word
-   procedure in COORDINATES, which Phase 146k did not run. AND RECORD TWO
-   ANSWERS THAT NEVER HAD A WORD QUESTION (Phase 146m, 27 Sep 2026, both
-   relayed by Lakhbir): write each, the Word document's own layout, straight
-   into the CLOSED document with its Recorded answer and a Closed line - the
-   data protection officer's "May we keep an uploaded Land Registry official
-   copy that names a private owner?" (yes) and the solicitor's "May figures
-   from a Land Registry official copy go in the client's accountant's pack?"
-   (yes; register entry SDP-L22). Rebuild QUESTIONS-WORD-HEADINGS.txt
-   afterwards.
-   FIRST, PROVE WORD QUESTION 230 REACHED THE CLOUD (Phase 151e, 27 Sep 2026).
-   It was written into the Mac file at 09:35 ("Can the test website keep its
-   records in a database that lasts?", under Lakhbir, after 227), and fifteen
-   minutes later the cloud item still held the document without it: the
-   Mac-to-cloud fault AMENDMENT 2 describes had come back. Copy the cloud item
-   down and look for heading 230. If it is there, done. If it is not, the Mac
-   file still carries it (its .bak-phase151e3 sibling is the document before):
-   merge 230 into the CLOUD copy the AMENDMENT 2 way, never the Mac file over
-   it, and look for a OneDrive conflict copy beside it. STILL NOT IN THE CLOUD
-   AT 08:48 ON 28 SEP (23 hours on): OneDrive on the Mac is not uploading it.
-   THEN RECORD LAKHBIR'S ANSWER: "Recorded answer (28 Sep 2026, Lakhbir, in
-   the chat): set up Turso" - and, once the test website runs on it (Phase
-   151e line 7's record says whether it does - if not, prove it: sign in on
-   the test website and open a client's Identity check; no "Records kept in
-   memory" box means Turso), move 230 to the closed
-   document with a Closed line naming Phase 151e lines 4 to 7. BUILDABLE.
-   AND WORD QUESTION 231 THE SAME WAY (Phase 151i, 28 Sep 2026): "Can the
-   test website keep uploaded files in a private store on Vercel?", written
-   into the Mac file after 230 at 10:54 while the cloud copy still held the
-   document from before 230 (proved byte for byte at 10:53; its
-   .bak-phase151i sibling is the document with 230 and without 231). Prove
-   it reached the cloud, or merge it in with 230. When Lakhbir answers and
-   connects a PRIVATE Blob store: redeploy, read the function log's
-   "test deployment:" line about documents, upload an invented file through
-   one sign-in, open its folder again after a redeploy, record the answer
-   and close 231 naming Phase 151i. BUILDABLE.
-   ANSWER RECORDED (28 Sep 2026, Lakhbir, in the chat): the store is
-   created, Private, and redeployed - written under 231 in the Mac file (the
-   cloud copy, checked at 11:07, still held the document from before 230).
-   What is left to prove before 231 closes: BLOB_STORE_ID on the project
-   (connected), Turso on, the log line "uploaded documents are kept in the
-   private document store", and an invented file opening in a second copy.
-   READ AT 11:07 ON 28 SEP (Lakhbir, the function log): "the lasting
-   database could not be opened (), so the records are kept in memory" -
-   Turso IS set and failed to open, and the reason was blank (libsql's error
-   code is empty). The log now prints the library's words, address and token
-   cut out (openFailure, api/index.mjs). Read that line after the next start,
-   fix what it names, and only then prove 230 and 231. Until then each copy
-   keeps its own memory, so a sign-in's second step can land on a copy that
-   never saw it and be refused ("That sign-in has timed out"), as it was at
-   11:07:15 and 11:07:33.
-   READ AT 11:28 (the new line): "Hrana(Api("SQLite input error: table
-   claim_facts already exists"))". The first start on Turso was stopped part
-   way through the MIGRATIONS by vercel.json's own maxDuration of 30 s (now
-   300, Phase 151i follow-up 3), leaving claim_facts made and unrecorded.
-   Lakhbir empties the Turso database and redeploys; then prove 230 and 231.
-   HE DID (a new database, 11:4x), AND IT HALF-BUILT AGAIN FOR ANOTHER REASON:
-   copies started in pairs within a second (11:46:09.38 and .70; 11:50:02
-   and :06), both migrated and seeded the empty database ("duplicate column
-   name: legal_name"; then "a seed that never finished" at 12:00:45). Since
-   Phase 151i follow-up 4 the deploy's BUILD makes the tables and the seed
-   once (vercel.json buildCommand, tools/prepare-lasting.mjs, prepareLasting)
-   before any copy starts. Read the build log's "build:" line on the next
-   deploy after he empties it again.
-   THE NEW DATABASE (database-aero-nest, us-east-1) WAS HALF SEEDED TOO
-   (12:32: "a seed that never finished"). Lakhbir chose, in the chat: the
-   build step empties it. Since follow-up 5 the build empties a HALF-BUILT
-   database and builds it again (never a finished one), and a copy never
-   builds or seeds - it opens with schema 'require-built' or uses memory.
-   He only redeploys. Read the runtime "test deployment:" lines after it:
-   "the records are kept in the lasting database" and "uploaded documents
-   are kept in the private document store".
-   AND A MIGRATION AND ITS RECORD AS ONE STEP (same day): migrate() in
-   src/db.ts runs a file, then records it, so a start cut off between the
-   two leaves this state again. Make each file and its schema_migrations row
-   land together or not at all. CAREFUL: 007, 011, 014, 018 and others turn
-   foreign keys off and run their own BEGIN/COMMIT, so a wrapping
-   transaction cannot simply be added; read every file first. Prove it with a
-   migration cut off part way on a file database, and the next start
-   finishing it. BUILDABLE. (A copy building the database itself when the
-   build could not reach it: done by follow-up 5 - a copy only opens.)
-   AND WORD QUESTION 232 THE SAME WAY AS 230 AND 231 (Phase 151k, 28 Sep
-   2026): "Do you want recovery codes, so a person who loses their phone can
-   still sign in?", under Lakhbir after 231, written into the Mac file at
-   14:31 while the cloud copy (copied down at 14:30) was still byte for byte
-   the document from before 230. Its .bak-phase151k sibling is the document
-   with 230 and 231 and without 232. Prove it reached the cloud, or merge it
-   in with 230 and 231. ANSWERED "yes" (28 Sep 2026, Lakhbir, in the chat)
-   and CLOSED the same afternoon by the Phase 151k follow-up: in the Mac
-   files 232 has moved to the closed document with its recorded answer and
-   "Closed" line (both .bak-phase151k-followup siblings are the documents
-   before the move; both cloud copies, copied down at 14:41, were unchanged:
-   the open one still the document from before 230, the closed one byte for
-   byte the Mac file). So the merge now carries the CLOSED document too:
-   230 and 231 into the open cloud copy, 232 into the closed one. The build
-   is done (Phase 151m, 28 Sep 2026); the merge is still this sweep's.
-   BUILDABLE.
-   AND THE SIGN-UP CONFIRMATION LINK (Phase 151k): Phase 151k blanks a SENT
-   sign-in code or reset link in the outbox (SENT_SECRET_KINDS, migration
-   058), as it was asked. An ACCOUNT_VERIFY email carries a single-use link
-   too and was not asked for. Read src/web/signup.ts: if the link is
-   single-use and expiring, add ACCOUNT_VERIFY to blankSentSecrets and to a
-   new migration's trigger, with a test that fails first. BUILDABLE.
-   AND THE FIRST REQUEST AFTER EVERY DEPLOY TIMES OUT (Phases 151j and 151i,
-   28 Sep 2026): "/" answered 504 after 30 s on the new copy's first start,
-   twice running; every request after it answered 200 in under half a
-   second. Nothing gave it a home until 151i. Measure the cold start on
-   memory (migrations, the seed's password hashes, the site file) with
-   api/index.mjs's build() timed step by step on the Mac, make it finish
-   well inside vercel.json's maxDuration, and prove it on the live site after
-   the push: the FIRST request to "/" answers 200. BUILDABLE.
-   AND ONE BLIND SPOT IN THE CRM FOLD CHECK (Phase 151e line 6, 28 Sep 2026):
-   a §4 reference whose line number is missing ("`src/web/crm.ts:`") passed
-   check C silently until a person saw it. Make C fail on a path with a
-   colon and no number, and prove it with a planted case in --self-test.
-   BUILDABLE.
-   AND ONE TEST THAT FAILS UNDER LOAD AND NOT ON ITS OWN (Phase 146j, 25 Sep
-   2026): test/phase151c.test.ts, "0 when every point agrees ... 1 when one
-   point is 2 mm out", runs tools/ostn15-verify.ts as a child process. In one
-   full npm run check it took 180 s and came back with status null - killed at
-   its time limit AFTER printing the right answer - while it passed in the run
-   before and in 6 s on its own. BUILDABLE: find the child process's time limit
-   in that test, prove the flake with the clock grid or a loaded run, and make
-   it wait long enough (or run the tool in-process) so a slow machine cannot
-   read as a wrong answer. Prove the fix cannot hide a real failure: the 2 mm
-   case must still exit 1.
+   THE QUESTIONS DOCUMENT NEVER FELL OUT OF STEP WITH THE CLOUD - ITS LINK DID
+   (Phase 152, 28 Sep 2026). From 25 to 28 Sep four phases copied down the
+   item Lakhbir's link opens (COORDINATES, AMENDMENT 2) and found it "still
+   the document from before 230". It was: a backup had been made by MOVING
+   the Mac file, so that item had become Caprebate_Questions.docx.bak-
+   phase151e3, and every write after went to a second, new item. Phase 152
+   gave the linked item its name back and wrote the document into it, proved
+   byte for byte; the second item is now named "DELETE - Caprebate_Questions
+   (a second item 25-28 Sep ...)". EVERY SWEEP: read the folder listing
+   first and check that the item in COORDINATES still carries the name
+   Caprebate_Questions.docx, and the closed document's item likewise. Read
+   the listing for DELETE files too: deletions made on the Mac on 25 Sep
+   never reached OneDrive (the DELETE row, 13053370722).
+   STILL OPEN, AND ONLY LAKHBIR CAN CLOSE THEM:
+     Word question 230 ("set up Turso", recorded 28 Sep): prove the test
+     website runs on it. He signs in there and opens a client's Identity
+     check - no "Records kept in memory" box means Turso - or reads the
+     function log's "test deployment:" lines. Claude cannot: the Vercel
+     connector's only team holds no projects, and signing in there is his.
+     When he says which, close 230 naming Phase 151e lines 4 to 7 and Phase
+     151i follow-ups 3 to 5.
+     Word question 231 (the private Blob store, recorded 28 Sep): the same,
+     plus the log line "uploaded documents are kept in the private document
+     store" and an invented file uploaded through one sign-in opening in
+     another after a redeploy. Then close 231 naming Phase 151i.
+   Each copy of the test website now logs "test deployment: this copy
+   started in N ms" (Phase 152): read it whenever the log is read. The first
+   request after a deploy answered 200 in about 5 s on 28 Sep; if one ever
+   answers 504 again, time build() step by step as Phase 152's record does.
+   DONE BY PHASE 152, SO NOT REPEATED: Word question 205 closed, 207's Land
+   Registry half recorded, 233 and 234 (the two answers that never had a
+   question) written and closed, 230's answer recorded; the sign-up
+   confirmation link out of the outbox (migration 060); a migration and its
+   record as one step (src/db.ts, splitMigration); the CRM fold check's colon
+   with no line number; the grid tool's test no longer reads a slow machine
+   as a wrong answer.
 
 3a. THREE HOMEDATA FIGURES THAT WENT STALE, AND THE SHAPE THEY WENT STALE IN.
    A supplier's published price, read once and never re-read, is a sweep
@@ -1176,6 +1311,10 @@ after that phase.
        contradicted a second time by the supplier's own words: "there is no
        monthly allowance and nothing resets". A fact corrected once is not a
        fact that stays correct.
+   (d) Phase 152 found the shape twice more, both now Phase 153 line 6: the
+       session record's s.9 still asking whether unauthenticated searches
+       count against the 100 a month, and a phase9 header calling the price
+       null that the code sets to 0.08.
 4. TEST EVERY ITEM AGAINST FIVE OUTCOMES: (a) genuinely complete - prove it with
    a file or a test; (b) Claude can do it now - it goes INTO A PHASE, per
    AMENDMENT 1, not onto the board alone; (c) blocked on a person - a question
@@ -1217,6 +1356,11 @@ THE PATTERN TO HUNT, in thirteen variants, because each pass finds a different o
        FIRST, THEN OPEN THE .docx FILES.
  (iv)  An option offered to a human as a live choice the system cannot perform.
  (v)   An operation that reports success and does nothing. Read every write back.
+       AND READ BACK THE RIGHT THING: from 25 to 28 Sep a read-back of "the
+       cloud copy" read the right NAME's old item - a backup made by mv had
+       carried the item away - so four phases reported a fault that did not
+       exist and missed the one that did (Phase 152). Check what a copy is
+       OF, not what it is called.
  (vi)  A CHECK THAT CANNOT FAIL beside one that can - and its quieter cousins: a
        check that can fail but is blind to the exact phrasing it guards, and a
        NEGATIVE CONTROL THAT NO LONGER RUNS AS WRITTEN.
@@ -1437,6 +1581,9 @@ WHEN DONE
 |  **12** |  The remaining ten — Homedata trial, cyber security, hardware, brand and online presence, analytics, mailbox provisioning, the business-request template, surveyor steps 2 and 3, and the legal clearance to use government valuation data commercially
  |  Real, but none of them gates anything else today |  — |  — |
 |  **13** |  **Run the land boundary's first download** (added 28 September 2026 by Phase 151l) |  The tool is built and keeps your five conditions. From 09-app/backend: first `node src/cli.ts smoke-switched-on HMLR_INSPIRE --who "<you>" --why "<reason>"`, then `CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE --who "<you>" --why "<reason>"`. It downloads Westminster's file and looks for 70 Whitehall; nothing about a client leaves, and nothing is kept but one line of PASS or NO. You may name someone else to run it. Switching the fetcher on is a separate decision, and yours |  10 min, plus the download |  Proof that HM Land Registry's file reads, which is what switching on the site area waits for |
+|  **14** |  **Look once at the test website: is it on Turso, and does a file stay put?** (added 28 September 2026 by the Phase 152 sweep) |  Sign in at caprebate-test.vercel.app and open any client's Identity check. If there is no box saying "Records kept in memory", the records are in the lasting database. Then upload an invented file as one person and open it as another. Tell us what you saw. Or, in Vercel, read the function log's lines that begin "test deployment:". We cannot see either: the connector reaches no project of yours |  5 min |  Closing Word questions 230 and 231 |
+|  **15** |  **Delete the DELETE files on the OneDrive web page, not the Mac** (added 28 September 2026 by the Phase 152 sweep) |  In OneDrive on the web, Health Capital Allowances: the folder "DELETE - files to delete (sweep 25 Sep 2026)" (143 MB) and the files whose names begin "DELETE -". The folder was deleted on the Mac on 25 September and is still in the cloud, so deleting there did not reach OneDrive |  5 min |  A folder that holds only the live documents and their dated backups |
+|  **16** |  **Answer three new questions** (added 28 September 2026 by the Phase 152 sweep) |  235: do the old extra charges stay - the add-on for complicated jobs and the £1,500 manual-handling charge? (question 60's answer covered the discount, not these). 236: two tasks are marked done with nothing on file - startup funding and the back-end developer meeting. Were they done? And 237 is for the tax adviser, when one is engaged: may the estimate say "refund" when a claim through the pool creates a loss that is carried back? |  10 min |  The rate card; two task records; whether the estimate or the rulebook is corrected |
 
  **Corrected 13 September 2026 by the Phase 130 sweep, because a row cannot be added to the table above.** Row 3 says both emails are drafted and attached and only need reading and a yes. The Valuation Office one does not yet carry the rewritten question 6 that a later addendum wrote, and the brief to the solicitor, in the list above the table, asks for a company number and registered office that do not exist. Both went back to Claude at Ready - Claude can build and are the first lines of Phase 131; each returns here when it can be sent as written. **One thing arrives here instead:** the address lookup's licence facts, which one drafted email to the supplier settles. **And the first paid surveyor review is parked** until the free call has been held, which its own notes say must come first.
 
@@ -1508,12 +1655,12 @@ WHEN DONE
 
 ## 6 · What Claude is building next
 
- **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 by Phase 151m: empty, and no orphan.** Nothing is waiting for Claude to build; the sweep is next. Recovery codes (151m) ran on 28 September 2026 and are Done. Until Phase 151m closed this read one item: 151m. The land boundary's first download as a test lookup (151l) is built: `smoke HMLR_INSPIRE`, and running it is Lakhbir's (section 3, row 13). Until Phase 151l closed this read two items: 151l, then 151m. Sign-in hardening (151k) ran on 28 September 2026 and is Done. Until then this read two items: 151k, then 151l. The test website's uploaded documents on a store every copy reaches (151i) are built and switched off, and wait on Lakhbir connecting a private Blob store (Word question 231). Until Phase 151i closed this read three items, 151i first. The test lookups Lakhbir allowed (151g) are built. The test website's row (151e) is finished on Claude's side and waits on Lakhbir opening a Turso database (Word question 230). Until 27 September this read: the test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
+ **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 by the Phase 152 sweep: one item, Phase 153, covered by its own section.** The sweep read every item, subitem and document and found five decisions of 22 to 25 September that never reached about forty documents, plus tracker rows whose labels say more than is true; nobody has to answer anything for any of it, so it is Phase 153, and the sweep (now 154) runs after it. Until the sweep this read: empty, and no orphan. Recovery codes (151m) ran on 28 September 2026 and are Done. The land boundary's first download as a test lookup (151l) is built: `smoke HMLR_INSPIRE`, and running it is Lakhbir's (section 3, row 13). Sign-in hardening (151k) ran on 28 September 2026 and is Done. The test website's uploaded documents on a store every copy reaches (151i) are built; seeing them work is Lakhbir's (section 3, row 14).
 
 
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
-|  — |  Nothing: the queue is empty (re-derived by Phase 151m, 28 September 2026) |  Recovery codes were the last item, and Phase 151m built them |
+|  Claude |  Phase 153 — five decisions carried into the documents that never heard of them, and the rows that say more than is true (13133268312) |  The Phase 152 sweep found it; nobody has to answer anything first |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 

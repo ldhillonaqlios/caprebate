@@ -399,7 +399,22 @@ describe('Phase 151c, line 3: tools/ostn15-verify.ts on a generated, invented fu
     const p = projectNationalGrid(lat, lon, GRS80);
     return { e: Math.round((p.easting + se(p.easting)) * 1000) / 1000, n: Math.round((p.northing + sn(p.northing)) * 1000) / 1000, east_km: p.easting / 1000 };
   };
-  const tool = (g: string, i: string, o: string) => spawnSync(process.execPath, [join(BACKEND, 'tools', 'ostn15-verify.ts'), g, i, o], { encoding: 'utf8', timeout: 120_000 });
+  /* Phase 152 (28 September 2026): each run reads the whole 876,951-point grid. Alone that takes about 2 s; in one
+     full `npm run check` on 25 September it took 180 s, was killed at the old 120 s limit AFTER printing the right
+     answer, and came back with status null - which `assert.equal(status, 0)` reported as a wrong answer. So the
+     limit is now 15 minutes, far past any machine that is merely slow, and a run that is stopped at its limit says
+     THAT, in words, instead of being compared as an exit code. It cannot hide a real failure: a run that finishes is
+     judged by its exit code exactly as before, and the 2 mm case must still exit 1. CB_OSTN15_TOOL_LIMIT_MS exists
+     only so the proof can shorten the limit and watch a stop be reported as a stop. */
+  const LIMIT_MS = Number(process.env.CB_OSTN15_TOOL_LIMIT_MS) || 15 * 60_000;
+  const tool = (g: string, i: string, o: string) => {
+    const t0 = Date.now();
+    const r = spawnSync(process.execPath, [join(BACKEND, 'tools', 'ostn15-verify.ts'), g, i, o], { encoding: 'utf8', timeout: LIMIT_MS });
+    if (r.status === null) {
+      assert.fail(`tools/ostn15-verify.ts was STOPPED at its time limit (${LIMIT_MS} ms, ran ${Date.now() - t0} ms, signal ${r.signal}) - a slow machine, not a wrong answer. What it printed first: ${(r.stdout + r.stderr).trim().slice(0, 300)}`);
+    }
+    return r;
+  };
   const inFile = join(dir, 'in.txt');
   const outFile = (name: string, bump = 0, drop = false) => {
     const f = join(dir, name);

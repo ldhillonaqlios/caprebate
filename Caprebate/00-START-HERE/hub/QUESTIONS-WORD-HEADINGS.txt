@@ -26,7 +26,6 @@
 196) Should clause 7 of our engagement letter name IONOS, or say our email company is named in the privacy notice?
 197) May we rely on PlanIt, a free planning website run by one volunteer, in a paid service?
 202) Should we pay for planning history, or keep the free one that asks us to go slowly?
-205) The key file is missing the password for the Land Registry certificate. Can you add it?
 212) There is an old copy of this questions document on your Desktop. May we delete it?
 213) Should we get CIBSE's plant life tables, and ask CIBSE for permission to use them in client reports?
 215) Does the director of CAP REBATE LTD agree the business decisions you make for the company?
@@ -35,6 +34,8 @@
 227) May the site area we work out from a land boundary go in a client's report?
 230) Can the test website keep its records in a database that lasts?
 231) Can the test website keep uploaded files in a private store on Vercel?
+235) Do the old extra charges stay: the add-on for complicated jobs and the £1,500 manual-handling charge?
+236) Two tasks are marked done with nothing on file: startup funding and the back-end developer meeting. Were they done?
 72) When buying a building, can the buyer add their own fitting costs on top of an agreed value?
 73) If the seller was never allowed to claim, does the pooling rule still apply?
 74) Is there a third way to fix the value of fixtures that we are missing?
@@ -80,6 +81,7 @@
 115) If a client says they 'roughly break even', do they have enough profit?
 198) When Companies House says a client is an LLP, what kind of business should our estimate treat it as?
 226) Can a client's answer about VAT on their building work tell us whether they can reclaim VAT on our fee?
+237) When a claim through the pool creates a loss that is carried back, may we tell the client part of it comes back as a refund?
 116) Would you send a client to us, and what would stop you?
 117) Do you want a fee for sending clients, and what must you tell them?
 118) Who sends the corrected tax return to HMRC: you or us?
@@ -211,6 +213,7 @@
 211) Is our email address and website caprebate.com or caprebate.co.uk?
 214) The competitor's calculator program is still kept, outside the project folder. Is that where you want it?
 228) Now monday.com has gone, should all our working documents be kept in our private code store?
+205) The key file is missing the password for the Land Registry certificate. Can you add it?
 93) In a Scottish sale, which date starts our time limits?
 154) Should WordPress replace our whole system, or sit beside it?
 156) May we briefly check two public register names without saving them?
@@ -230,3 +233,5 @@
 170) Can we make a few small, logged test lookups to check a data connector works?
 229) Should the test website stop showing our files to anyone who has the link?
 232) Do you want recovery codes, so a person who loses their phone can still sign in?
+233) May we keep an uploaded Land Registry official copy that names a private owner?
+234) May figures from a Land Registry official copy go in the client's accountant's pack?
