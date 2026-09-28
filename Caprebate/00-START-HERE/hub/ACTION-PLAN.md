@@ -1187,6 +1187,12 @@ after that phase.
    "test deployment:" line about documents, upload an invented file through
    one sign-in, open its folder again after a redeploy, record the answer
    and close 231 naming Phase 151i. BUILDABLE.
+   ANSWER RECORDED (28 Sep 2026, Lakhbir, in the chat): the store is
+   created, Private, and redeployed - written under 231 in the Mac file (the
+   cloud copy, checked at 11:07, still held the document from before 230).
+   What is left to prove before 231 closes: BLOB_STORE_ID on the project
+   (connected), Turso on, the log line "uploaded documents are kept in the
+   private document store", and an invented file opening in a second copy.
    AND THE FIRST REQUEST AFTER EVERY DEPLOY TIMES OUT (Phases 151j and 151i,
    28 Sep 2026): "/" answered 504 after 30 s on the new copy's first start,
    twice running; every request after it answered 200 in under half a
