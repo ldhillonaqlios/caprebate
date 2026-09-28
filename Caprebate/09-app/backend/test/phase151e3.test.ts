@@ -270,7 +270,8 @@ describe('151e line 4a · the test website uses a lasting database only when it 
     assert.match(src, /lastingDatabase\(process\.env\)/);
     assert.match(src, /dbAuthToken: lasting\.authToken/);
     // Phase 151e line 7: memory is now the FALLBACK inside openLasting, so the build must go through it with the settings
-    assert.match(src, /openLasting\(createApp, seed, lastingDatabase\(process\.env\)/, 'the entry point builds on memory whatever it is given');
+    // Phase 151i: the settings are read once into `lasting`, which the document store's switch reads too.
+    assert.match(src, /const lasting = lastingDatabase\(process\.env\);[\s\S]*?openLasting\(createApp, seed, lasting, /, 'the entry point builds on memory whatever it is given');
   });
 });
 

@@ -141,7 +141,8 @@ export class FsObjectStore implements ObjectStore {
   }
 
   async get(key: string): Promise<Uint8Array> {
-    return new Uint8Array(await readFile(this.#path(key)));
+    assertSafeKey(key);
+    return this.readBytes(key);
   }
 
   /**
@@ -150,22 +151,22 @@ export class FsObjectStore implements ObjectStore {
    * own catch path then deletes the quarantined file, so a missing key can only ever mean less is kept, never more.
    */
   async copy(from_key: string, to_key: string): Promise<void> {
-    const to = this.#path(to_key);
-    await mkdir(dirname(to), { recursive: true, mode: DIR_MODE });
+    assertSafeKey(from_key);
+    assertSafeKey(to_key);
     if (isOriginalKey(to_key)) {
       if (this.#sealKey === null) throw new Error('refusing to keep an original with no encryption key');
-      await writeFile(to, seal(this.#sealKey, await readFile(this.#path(from_key))), { mode: FILE_MODE });
+      await this.writeBytes(to_key, seal(this.#sealKey, await this.readBytes(from_key)));
     } else {
-      await copyFile(this.#path(from_key), to);
+      await this.copyBytes(from_key, to_key);
     }
-    await this.#harden(to);
   }
 
   /** PHASE 140: a kept original, decrypted. Only src/web/uploads.ts calls this, after `document.read_original`. */
   async openOriginal(key: string): Promise<Buffer> {
     if (!isOriginalKey(key)) throw new Error('not an original');
     if (this.#sealKey === null) throw new Error('no key to open a kept original');
-    return unseal(this.#sealKey, await readFile(this.#path(key)));
+    assertSafeKey(key);
+    return unseal(this.#sealKey, await this.readBytes(key));
   }
 
   /**
@@ -180,22 +181,13 @@ export class FsObjectStore implements ObjectStore {
    * QuarantineObject undischarged for the sweeper to find.
    */
   async delete(key: string): Promise<void> {
-    await unlink(this.#path(key));
-    // Prove it. A store that cannot evidence a deletion cannot host the
-    // quarantine prefix — the port calls that a procurement fact.
-    try {
-      await access(this.#path(key), FS.F_OK);
-    } catch {
-      return; // gone, as required
-    }
-    throw new Error(`object still readable after delete: ${key}`);
+    assertSafeKey(key);
+    await this.removeProven(key);
   }
 
   async putText(key: string, body: string): Promise<void> {
-    const p = this.#path(key);
-    await mkdir(dirname(p), { recursive: true, mode: DIR_MODE });
-    await writeFile(p, body, { encoding: 'utf8', mode: FILE_MODE });
-    await this.#harden(p);
+    assertSafeKey(key);
+    await this.writeBytes(key, Buffer.from(body, 'utf8'));
   }
 
   /* ------------------------------------------------- the capability, minted */
@@ -242,10 +234,52 @@ export class FsObjectStore implements ObjectStore {
    * client file ends up written by a path that skipped the size check.
    */
   async putClientBytes(key: string, bytes: Uint8Array): Promise<void> {
+    assertSafeKey(key);
+    await this.writeBytes(key, bytes);
+  }
+
+  /* ------------------------------------------------ where the bytes go
+   * PHASE 151i, 28 September 2026. Everything above decides WHAT happens to a document: the key checked, an original
+   * sealed before it is kept and refused without a key, a deletion proved, a write capability scoped to one key. The
+   * four steps below are only WHERE the bytes go, and they are all a store may change. Here it is a folder on this
+   * machine, exactly as before; src/web/shared-objectstore.ts puts them in a private Vercel Blob store every copy of the
+   * test website reaches, and inherits every rule above unchanged. Each step is given a key the public method above
+   * has already checked. */
+
+  /** One object's bytes. A missing object throws: it is never an empty file. */
+  protected async readBytes(key: string): Promise<Uint8Array> {
+    return new Uint8Array(await readFile(this.#path(key)));
+  }
+
+  /** Write (or replace) one object, owner read/write only. */
+  protected async writeBytes(key: string, bytes: Uint8Array): Promise<void> {
     const p = this.#path(key);
     await mkdir(dirname(p), { recursive: true, mode: DIR_MODE });
     await writeFile(p, bytes, { mode: FILE_MODE });
     await this.#harden(p);
+  }
+
+  /** Copy one object to another key, as it is. */
+  protected async copyBytes(from_key: string, to_key: string): Promise<void> {
+    const to = this.#path(to_key);
+    await mkdir(dirname(to), { recursive: true, mode: DIR_MODE });
+    await copyFile(this.#path(from_key), to);
+    await this.#harden(to);
+  }
+
+  /**
+   * Delete one object, then PROVE it is gone, and throw if it is not. A missing object throws too: it is not a
+   * successful deletion (see `delete` above). A store that cannot evidence a deletion cannot host the quarantine
+   * prefix — the port calls that a procurement fact.
+   */
+  protected async removeProven(key: string): Promise<void> {
+    await unlink(this.#path(key));
+    try {
+      await access(this.#path(key), FS.F_OK);
+    } catch {
+      return; // gone, as required
+    }
+    throw new Error(`object still readable after delete: ${key}`);
   }
 
   async #harden(p: string): Promise<void> {

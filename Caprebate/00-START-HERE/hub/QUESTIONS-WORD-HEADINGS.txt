@@ -34,6 +34,7 @@
 219) How long do we keep the files clients upload, and who may open them?
 227) May the site area we work out from a land boundary go in a client's report?
 230) Can the test website keep its records in a database that lasts?
+231) Can the test website keep uploaded files in a private store on Vercel?
 72) When buying a building, can the buyer add their own fitting costs on top of an agreed value?
 73) If the seller was never allowed to claim, does the pooling rule still apply?
 74) Is there a third way to fix the value of fixtures that we are missing?

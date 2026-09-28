@@ -31,6 +31,7 @@ import { toActor } from './users.ts';
 import { payloadFor, assertSurveySection } from './web/surveyor.ts';
 import { handleWeb, PayloadTooLarge, refusalAsPage, sendRefusalPage } from './web/router.ts';
 import { FsObjectStore } from './web/objectstore.ts';
+import { SharedObjectStore, type BlobClient } from './web/shared-objectstore.ts';
 import { sealKeyFromEnv, type KeepOriginals } from './web/originals.ts';
 
 function readCookie(req: IncomingMessage, name: string): string | undefined {
@@ -87,6 +88,12 @@ export type ServerOptions = {
    */
   documentRoot?: string;
   /**
+   * PHASE 151i: ONE PRIVATE STORE FOR EVERY COPY, instead of `documentRoot`. Absent is the folder, as before. Only
+   * api/index.mjs passes it, and only when the lasting database is in use and a Blob store is connected
+   * (src/web/shared-objectstore.ts says why and how it stays private).
+   */
+  sharedDocuments?: { readonly client: BlobClient; readonly linkSecret: Buffer };
+  /**
    * THE PUBLIC REFERRAL FORM'S SWITCH — CRM 5 of 10. Absent means the shipped
    * gate, `REFERRAL_FORM` in src/web/introducers.ts, which is off. A test passes
    * an open gate to prove the form works; nothing that runs outside a test does.
@@ -117,12 +124,14 @@ export async function createApp(
     ...(opts.dbEngine === undefined ? {} : { dbEngine: opts.dbEngine }),
     ...(opts.twoFactor === undefined ? {} : { twoFactor: opts.twoFactor }),
   });
-  const store = new FsObjectStore({
-    root: opts.documentRoot ?? process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '.documents'),
+  const kept = {
     now: app.now,
     ...(opts.keepOriginals === undefined ? {} : { originals: opts.keepOriginals }),
     sealKey: opts.sealKey === undefined ? sealKeyFromEnv() : opts.sealKey,
-  });
+  };
+  const store: FsObjectStore = opts.sharedDocuments === undefined
+    ? new FsObjectStore({ root: opts.documentRoot ?? process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '.documents'), ...kept })
+    : new SharedObjectStore({ ...kept, client: opts.sharedDocuments.client, linkSecret: opts.sharedDocuments.linkSecret });
 
   const server = createServer((req, res) => {
     void handle(req, res).catch((e: unknown) => {

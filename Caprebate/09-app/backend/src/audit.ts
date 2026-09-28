@@ -440,6 +440,15 @@ export function screenDetail(detail: Record<string, unknown>): void {
   }
 }
 
+/** PHASE 151i: how many times an append reads the chain again after another copy took its number. */
+export const APPEND_ATTEMPTS = 20;
+
+/** Another writer took this row's place: SQLite's and libSQL's words for a clash on audit_log's key. */
+function isSeqClash(err: unknown): boolean {
+  const m = String((err as { message?: unknown } | null)?.message ?? '');
+  return /UNIQUE constraint failed: audit_log\.seq\b/.test(m);
+}
+
 export class AuditLog {
   #db: Db;
   constructor(db: Db) { this.#db = db; }
@@ -457,34 +466,47 @@ export class AuditLog {
     const detail = e.detail ?? {};
     screenDetail(detail);
 
-    const last = this.#db.get<{ hash: string }>(
-      'SELECT hash FROM audit_log ORDER BY seq DESC LIMIT 1',
-    );
-    const prev_hash = last ? last.hash : GENESIS;
-    const seqRow = this.#db.get<{ n: number }>('SELECT COALESCE(MAX(seq),0) + 1 AS n FROM audit_log');
-    const seq = seqRow ? seqRow.n : 1;
+    /* PHASE 151i, 28 September 2026 — TWO COPIES ON ONE DATABASE. The test website's copies share one lasting database
+       (Phase 151e), so two can append at once. Until today this read the last hash and then, in a SECOND statement,
+       the next number: a row written between the two gave a new row the right number and the wrong previous hash (a
+       broken chain), and a row written between the reads and the write took this row's number, so the insert hit
+       seq's key and the request was lost. Now ONE statement reads both from the same row, and a clash on seq —
+       another copy got there first — is read again and retried. The key on seq is what keeps the chain from forking:
+       two rows can never claim the same place. What a hash covers is unchanged. */
+    for (let attempt = 1; ; attempt++) {
+      const last = this.#db.get<{ seq: number; hash: string }>(
+        'SELECT seq, hash FROM audit_log ORDER BY seq DESC LIMIT 1',
+      );
+      const prev_hash = last ? last.hash : GENESIS;
+      const seq = last ? Number(last.seq) + 1 : 1;
 
-    const body = {
-      seq,
-      kind: e.kind,
-      at: e.at,
-      actor_id: e.actor_id ?? null,
-      actor_role: e.actor_role ?? null,
-      object_type: e.object_type ?? null,
-      object_id: e.object_id ?? null,
-      outcome: e.outcome,
-      detail,
-      prev_hash,
-    };
-    const hash = createHash('sha256').update(canonical(body)).digest('hex');
+      const body = {
+        seq,
+        kind: e.kind,
+        at: e.at,
+        actor_id: e.actor_id ?? null,
+        actor_role: e.actor_role ?? null,
+        object_type: e.object_type ?? null,
+        object_id: e.object_id ?? null,
+        outcome: e.outcome,
+        detail,
+        prev_hash,
+      };
+      const hash = createHash('sha256').update(canonical(body)).digest('hex');
 
-    this.#db.run(
-      'INSERT INTO audit_log (seq, at, kind, actor_id, actor_role, object_type, object_id, outcome, detail, prev_hash, hash) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [seq, body.at, body.kind, body.actor_id, body.actor_role, body.object_type, body.object_id,
-        body.outcome, JSON.stringify(detail), prev_hash, hash],
-    );
-    return { ...body, hash };
+      try {
+        this.#db.run(
+          'INSERT INTO audit_log (seq, at, kind, actor_id, actor_role, object_type, object_id, outcome, detail, prev_hash, hash) ' +
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [seq, body.at, body.kind, body.actor_id, body.actor_role, body.object_type, body.object_id,
+            body.outcome, JSON.stringify(detail), prev_hash, hash],
+        );
+      } catch (err) {
+        if (attempt < APPEND_ATTEMPTS && isSeqClash(err)) continue;
+        throw err;
+      }
+      return { ...body, hash };
+    }
   }
 
   entries(): AuditEntry[] {

@@ -467,7 +467,15 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   or holds a seed that never finished, the site runs on memory and the log
   says why (openLasting, Phase 151e line 7). Put it in AWS us-east-1, beside
   the function. Lakhbir said "set up Turso" on 28 Sep 2026 (Word question
-  230). Uploaded documents stay on a temporary disk: Phase 151i.
+  230).
+  UPLOADED DOCUMENTS (Phase 151i, 28 Sep 2026): with the lasting database IN
+  USE (it opened) AND a private Vercel Blob store connected (BLOB_STORE_ID,
+  or a token: CAPREBATE_BLOB_TOKEN wins over BLOB_READ_WRITE_TOKEN), every
+  copy keeps them in that one store (src/web/shared-objectstore.ts;
+  sharedDocumentStore in api/index.mjs); anything less, the temporary disk.
+  Every Blob call is private and a public store refuses it; no Blob address
+  is kept. Word question 231 asks Lakhbir. The audit log reads the chain's
+  end once and retries a clash on seq; Db.tx begins IMMEDIATE.
   SIGNING IN (Phase 151j, 28 Sep 2026): every staff login gives a second
   step (an authenticator app or an email code); a client may; a new account
   gets a temporary password shown once (7 days). login() itself refuses
@@ -891,74 +899,9 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 151i — the test website's uploaded documents on a store every copy reaches, switched off
-
- **Model: Opus. Written 27 September 2026 by Phase 151e (lines 4 and 5).** Tracker row: "Phase 151i - the test website's uploaded documents on a store every copy reaches" in 05 · FOR DEVELOPMENT. Runs next, then 151k, then 151l, then the sweep.
-
- **Why this exists.** Phase 151e gave the test website a lasting database, built and switched off until Lakhbir opens a Turso database through Vercel (Word question 230). Its records will then outlive a copy of the website; its uploaded documents will not. `api/index.mjs` still hands the object store a folder on the function's temporary disk, so a document uploaded through one copy is missing from the next, while its row says it is there. Nobody has to answer anything for the code: build it and switch it off.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
-═══════════════════════════════════
-
-Mac copy. Take a .bak-phase151i sibling of every file you change. Tracker row:
-"Phase 151i - the test website's uploaded documents on a store every copy
-reaches" (find its id with list --group DEVELOPMENT). Nothing real goes on the
-test website: invented data only. Read first: the ObjectStore port
-(src/web/upload-handler-port.ts), FsObjectStore (src/web/objectstore.ts), the
-"Built by Phase 151e, lines 4 and 5" section of the Developer Spec, and
-api/index.mjs (lastingDatabase, documentRoot).
-
-1. READ BEFORE CHOOSING. What Vercel offers a function for files today (its
-   docs, not memory: Blob, private stores, the SDK and its token or OIDC), and
-   what the ObjectStore port asks of a store (write, read, keys, sealed
-   originals, the retained text). The port is synchronous or not - find out;
-   do not change its callers to suit a store.
-2. BUILD IT SWITCHED OFF. A store every copy reaches, used by api/index.mjs
-   ONLY when the lasting database is in use AND its own setting is present
-   (the way lastingDatabase needs its address, its token and the test
-   password). Anything less keeps today's temporary folder. Client documents
-   stay PRIVATE: never a public URL, served only through the route that
-   authorises each request, as the security baseline says. Keys only in
-   Vercel's settings or ~/.caprebate-secrets.env.
-3. IF IT NEEDS AN ACCOUNT, A STORE OR MONEY, it is Lakhbir's: write the setting
-   into the Developer Spec's one page and a "Built by Phase 151i" section, and
-   ask him in the Word questions document under his name, the AMENDMENT 2 way
-   (read question 230's answer first - it may already cover it).
-4. THE AUDIT LOG ON A SHARED DATABASE (Phase 151e). AuditLog.append
-   (src/audit.ts) reads the last hash and the next number, then writes: two
-   copies appending at once on one database collide on seq (its key), and
-   one request fails - the chain cannot fork, but the request is lost. Make
-   the read and the write one step (a transaction that takes the write lock
-   first, or retry on the key clash with a fresh read), with a test of two
-   Db handles on one file appending in turn and interleaved, and
-   verify-audit still intact. Do not change what a hash covers.
-Tests on recorded answers, no network: a document written through one copy is
-read through another; switched off, nothing changes; a document is never
-reachable without the authorising route. Proved red on the pre-change code.
-
-CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
-inside their folders; the drift checker and its negative control (on its own
-line); the plain-words check; the tracker check; the register check and the
-CRM fold check; payload-proof. Commit and push; check the live test website:
-"/" answers 200 and the login page renders.
-```
-
 ## PHASE 151k — sign-in hardening: the API's steps, the app secret at rest, codes out of the outbox, the screenshot tool
 
- **Model: Opus. Written 28 September 2026 by Phase 151j.** Tracker row: "Phase 151k - sign-in hardening" in 05 · FOR DEVELOPMENT. Runs after 151i, then 151l, then the sweep.
+ **Model: Opus. Written 28 September 2026 by Phase 151j.** Tracker row: "Phase 151k - sign-in hardening" in 05 · FOR DEVELOPMENT. Runs next, then 151l, then the sweep.
 
  **Why this exists.** Phase 151j built the second step Lakhbir asked for (an email code or an authenticator app; every staff login; a client may) and temporary passwords. It left four things the Developer Spec's "Built by Phase 151j" section names, none waiting on anybody: build them.
 
@@ -1234,6 +1177,16 @@ after that phase.
    the test website and open a client's Identity check; no "Records kept in
    memory" box means Turso), move 230 to the closed
    document with a Closed line naming Phase 151e lines 4 to 7. BUILDABLE.
+   AND WORD QUESTION 231 THE SAME WAY (Phase 151i, 28 Sep 2026): "Can the
+   test website keep uploaded files in a private store on Vercel?", written
+   into the Mac file after 230 at 10:54 while the cloud copy still held the
+   document from before 230 (proved byte for byte at 10:53; its
+   .bak-phase151i sibling is the document with 230 and without 231). Prove
+   it reached the cloud, or merge it in with 230. When Lakhbir answers and
+   connects a PRIVATE Blob store: redeploy, read the function log's
+   "test deployment:" line about documents, upload an invented file through
+   one sign-in, open its folder again after a redeploy, record the answer
+   and close 231 naming Phase 151i. BUILDABLE.
    AND ONE BLIND SPOT IN THE CRM FOLD CHECK (Phase 151e line 6, 28 Sep 2026):
    a §4 reference whose line number is missing ("`src/web/crm.ts:`") passed
    check C silently until a person saw it. Make C fail on a path with a
@@ -1598,13 +1551,12 @@ WHEN DONE
 
 ## 6 · What Claude is building next
 
- **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 by Phase 151g: three items, and no orphan.** The test website's uploaded documents on a store every copy reaches (151i), sign-in hardening (151k), and the land boundary's first download as a test lookup (151l). The test lookups Lakhbir allowed (151g) are built. The test website's row (151e) is finished on Claude's side and waits on Lakhbir opening a Turso database (Word question 230). Until 27 September this read: the test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
+ **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 by Phase 151i: two items, and no orphan.** Sign-in hardening (151k), and the land boundary's first download as a test lookup (151l). The test website's uploaded documents on a store every copy reaches (151i) are built and switched off, and wait on Lakhbir connecting a private Blob store (Word question 231). Until Phase 151i closed this read three items, 151i first. The test lookups Lakhbir allowed (151g) are built. The test website's row (151e) is finished on Claude's side and waits on Lakhbir opening a Turso database (Word question 230). Until 27 September this read: the test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
 
 
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
 |  Claude |  Sign-in hardening: the API's steps, the app secret at rest, codes out of the outbox, the screenshot tool (Phase 151k) |  Written by Phase 151j on 28 September 2026: four things the second step left, none waiting on anybody |
-|  Claude |  The test website's uploaded documents on a store every copy reaches (Phase 151i) |  Written by Phase 151e on 27 September 2026: once the test website has its lasting database, its uploaded documents would still sit on each copy's temporary disk; and the audit log's next number on a shared database. Build it and switch it off |
 |  Claude |  The land boundary's first download, as a test lookup under Lakhbir's five conditions (Phase 151l) |  Written by Phase 151g on 28 September 2026: the question the fetcher waited on is answered, and its first download must keep the same five conditions, which the smoke command does not cover |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

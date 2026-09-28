@@ -7,7 +7,7 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 2 |
-| Ready - Lakhbir action | 36 |
+| Ready - Lakhbir action | 37 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 0 |
 | Blocked - licence or purchase | 5 |
@@ -15,13 +15,13 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
 | Done | 267 |
-| Working on it | 1 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
-| Claude | 236 |
+| Claude | 235 |
 | CTA | 45 |
-| Lakhbir | 74 |
+| Lakhbir | 75 |
 | Surveyor | 9 |
 | Solicitor/DPO | 56 |
 | Developer | 20 |
@@ -1343,9 +1343,10 @@
 
 ### Phase 151i - the test website's uploaded documents on a store every copy reaches
 
-`13133268308` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
+`13133268308` · **Ready - Lakhbir action** · owner Lakhbir
 
 - Note 2026-09-27 (Phase 151e): Written by Phase 151e (lines 4-5): with the lasting database on, uploaded documents would still sit on each copy's temporary disk. Build a store every copy reaches, switched off.
+- Note 2026-09-28 (Phase 151i): Built and switched off: uploaded documents go to one private Vercel Blob store when the lasting database is in use and a store is connected; the audit log survives two copies appending. Waits on Lakhbir connecting a private Blob store (Word question 231).
 
 ### Phase 151j - sign-in: forgot password, temporary passwords, two-factor by email code or authenticator app
 

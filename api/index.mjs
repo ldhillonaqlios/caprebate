@@ -12,6 +12,12 @@
  * AND the test password set, every copy uses that one database: the seed runs only when it is empty. Without all
  * three, nothing changes, and the identity panel says the records are kept in memory (src/web/identity-checks.ts).
  *
+ * PHASE 151i, 28 September 2026: ONE PRIVATE DOCUMENT STORE FOR EVERY COPY, SWITCHED OFF UNTIL LAKHBIR CONNECTS ONE.
+ * With the lasting database IN USE (not merely set: a copy that fell back to memory keeps the folder) AND a private
+ * Vercel Blob store connected (BLOB_STORE_ID, which Vercel adds with its OIDC token, or a read-write token:
+ * CAPREBATE_BLOB_TOKEN, else BLOB_READ_WRITE_TOKEN), uploaded documents go to that store (sharedDocumentStore,
+ * src/web/shared-objectstore.ts). Anything less keeps a folder on this copy's temporary disk, as before.
+ *
  * The code runs as TypeScript directly, as it does everywhere else (Node 24 strips the types).
  */
 import { mkdtempSync } from 'node:fs';
@@ -26,12 +32,15 @@ async function build() {
   const host = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;
   const publicOrigin = process.env.CAPREBATE_PUBLIC_ORIGIN ?? (host ? `https://${host}` : undefined);
   const since = new Date().toISOString();
-  const opened = await openLasting(createApp, seed, lastingDatabase(process.env), {
+  const lasting = lastingDatabase(process.env);
+  const docs = sharedDocumentStore(process.env, lasting);
+  const opened = await openLasting(createApp, seed, lasting, {
     documentRoot: mkdtempSync(join(tmpdir(), 'cb-vercel-')),
     ...(publicOrigin === undefined ? {} : { publicOrigin }),
-  });
+  }, 10_000, await sharedDocumentOptions(docs, lasting));
   const made = opened.made;
   console.log(`test deployment: ${opened.why}`);
+  console.log(`test deployment: ${documentsWhy(docs, opened.lasting)}`);
   // PHASE 151e (line 3): a password of its own, and then - only then - the Didit keys from the website's settings.
   const t151e = await configureTestDeploy(made, process.env);
   console.log(`test deployment: ${t151e.why}`);
@@ -105,12 +114,47 @@ export function lastingDatabase(env) {
 }
 
 /**
+ * PHASE 151i, 28 September 2026: WHERE UPLOADED DOCUMENTS GO. A shared store only beside a lasting database: a store
+ * that outlives a copy must never sit behind the public seed password, and documents in a lasting store whose rows
+ * died with a copy's memory would be orphans nobody could find or delete. So, like lastingDatabase, it needs its own
+ * setting AND the lasting database's three. It says what it chose - never a token and never the store's id.
+ *   BLOB_STORE_ID                              a store connected to the project; the SDK signs in with Vercel's OIDC
+ *   CAPREBATE_BLOB_TOKEN, else BLOB_READ_WRITE_TOKEN   a read-write token (outside Vercel, or a store not connected)
+ */
+export const SHARED_DOCUMENT_KEYS = Object.freeze(['CAPREBATE_BLOB_TOKEN', 'BLOB_READ_WRITE_TOKEN', 'BLOB_STORE_ID']);
+
+export function sharedDocumentStore(env, lasting) {
+  const token = (env.CAPREBATE_BLOB_TOKEN ?? '').trim() || (env.BLOB_READ_WRITE_TOKEN ?? '').trim();
+  const storeId = (env.BLOB_STORE_ID ?? '').trim();
+  const folder = (why) => ({ shared: false, why: `${why}, so uploaded documents stay on this copy's temporary disk` });
+  if (token === '' && storeId === '') return folder('no document store is set');
+  if (lasting.authToken === undefined) return folder('a document store is used only beside the lasting database');
+  return token === ''
+    ? { shared: true, why: 'uploaded documents are kept in the private document store, signed in by Vercel' }
+    : { shared: true, token, why: 'uploaded documents are kept in the private document store, signed in by its token' };
+}
+
+/** The createApp options for the shared store, or none. @vercel/blob is loaded only here, only when it is used. */
+export async function sharedDocumentOptions(docs, lasting, sdk) {
+  if (!docs.shared || lasting.authToken === undefined) return {};
+  const { vercelBlobClient, uploadLinkSecret } = await import('../Caprebate/09-app/backend/src/web/shared-objectstore.ts');
+  const client = await vercelBlobClient(docs.token === undefined ? {} : { token: docs.token }, sdk);
+  return { sharedDocuments: { client, linkSecret: uploadLinkSecret(lasting.authToken) } };
+}
+
+/** What the log says about documents: the store only when the lasting database actually opened. */
+export function documentsWhy(docs, lastingInUse) {
+  if (docs.shared && !lastingInUse) return 'the lasting database is not in use, so uploaded documents stay on this copy\'s temporary disk';
+  return docs.why;
+}
+
+/**
  * PHASE 151e (line 7), 28 September 2026: THE TEST WEBSITE NEVER GOES DOWN FOR ITS DATABASE. Open the lasting database
  * when it is set; if it cannot be opened, or holds a seed that never finished (a first start cut off by the time
  * limit), use memory as before, and say why - never the address and never the token (only an error's code or name).
  * `waitMs` is how long a copy waits for another copy that is seeding the same empty database at the same moment.
  */
-export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_000) {
+export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_000, lastingOnly = {}) {
   const memory = async (why) => {
     const made = await createApp(':memory:', opts);
     await seedOnce(made, seed);
@@ -120,7 +164,8 @@ export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_00
   const reason = (e) => String(e?.code ?? e?.name ?? 'an error');
   let made;
   try {
-    made = await createApp(lasting.location, { ...opts, dbAuthToken: lasting.authToken });
+    // PHASE 151i: `lastingOnly` (the shared document store) goes with the lasting database and never with memory.
+    made = await createApp(lasting.location, { ...opts, ...lastingOnly, dbAuthToken: lasting.authToken });
   } catch (e) {
     return memory(`the lasting database could not be opened (${reason(e)}), so the records are kept in memory`);
   }

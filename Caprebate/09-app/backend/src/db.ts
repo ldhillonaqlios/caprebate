@@ -36,6 +36,8 @@ export type Row = Record<string, unknown>;
  * every one of those calls. The package is loaded only when it is asked for, so memory and file never touch it.
  */
 export type DbKind = 'memory' | 'file' | 'remote';
+/** PHASE 151i: how long a handle on a file waits for another handle's write lock. */
+export const BUSY_TIMEOUT_MS = 5000;
 export type DbOptions = {
   /** The remote database's token. Read from the website's settings or the key file by the caller, never from here. */
   readonly authToken?: string;
@@ -104,6 +106,9 @@ export class Db {
     this.#db.exec('PRAGMA foreign_keys = ON');
     // A remote database keeps its own journal; the setting is this machine's only.
     if (this.kind !== 'remote') this.#db.exec('PRAGMA journal_mode = WAL');
+    // PHASE 151i: a second handle on the same file waits this long for another's write lock, rather than failing at
+    // once. A remote database's server does its own waiting.
+    if (this.kind === 'file') this.#db.exec(`PRAGMA busy_timeout = ${BUSY_TIMEOUT_MS}`);
   }
 
   /** Schema only. Never accepts caller data — migrations and DDL exclusively. */
@@ -126,9 +131,17 @@ export class Db {
     return this.engine === 'node:sqlite' ? rows : rows.map(asNodeSqliteRow);
   }
 
-  /** All-or-nothing. A partial write of an audited action is worse than none. */
+  /**
+   * All-or-nothing. A partial write of an audited action is worse than none.
+   *
+   * PHASE 151i, 28 September 2026: IMMEDIATE, so the write lock is taken FIRST. With a plain BEGIN, a transaction
+   * that read the audit chain's end and then wrote could meet a row another copy of the server had added in between
+   * (the test website's copies share one database since Phase 151e): on a file its write fails, and the whole
+   * audited action is lost. Holding the lock from the start, every other writer waits until this one commits, and
+   * reads what it wrote. libSQL's own client asks for a write transaction the same way.
+   */
   tx<T>(fn: () => T): T {
-    this.#db.exec('BEGIN');
+    this.#db.exec('BEGIN IMMEDIATE');
     try {
       const out = fn();
       this.#db.exec('COMMIT');
