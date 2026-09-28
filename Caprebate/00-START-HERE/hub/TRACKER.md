@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 38 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
 | Done | 268 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1369,7 +1369,7 @@
 
 ### Phase 151m - recovery codes: ten one-use codes, shown once, so a person who loses their phone can still sign in
 
-`13133268311` · **Ready - Claude can build** · owner Claude
+`13133268311` · **Working on it** · owner Claude · **CLAIMED BY Mac (lakhbir)**
 
 - Note 2026-09-28 (Phase 151k follow-up): Lakhbir answered yes to recovery codes on 28 Sep 2026 (Word question 232, closed). Written as Phase 151m, after 151l and before the sweep.
 
