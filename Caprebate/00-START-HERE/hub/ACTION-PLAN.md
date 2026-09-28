@@ -1145,6 +1145,32 @@ cannot make without a person's answer: leave it, and name the Word question.
    the pack - not only these files - and correct each with a dated line; the
    3-day estimate (Word question 7) was set for 46: say so, do not re-price.
 
+12. THE TWO LICENCE-BLOCKED ROWS OWNED BY CLAUDE - IS ANYTHING AROUND THEM
+   BUILDABLE NOW? (added by the Phase 152 follow-up, at Lakhbir's request,
+   28 Sep 2026: the standing rule is build it and switch it off.) The
+   sweep's read of their comments: both are ALREADY built and off, and only
+   data is missing - check that, then do the one thing left.
+   (a) "Replace the flat 15% professional fees with a proper scale"
+   (12804380489): the banded scale (gate leg_e3_voa_fee_scale) and the
+   building-type adders (Phase 129) are built, interlocked, OFF, with empty
+   tables in the phase9 cost model. The bands ARE the Valuation Office's
+   data, so nothing more is buildable before its licence (the enquiry is
+   12933604947), and because the scale is regressive (jobs under about
+   £750k go up) it also needs the tax adviser. Prove the gates are off and
+   the tables empty by running phase9, and write that on the row.
+   (b) "Adjust building costs for where the property is and how big the job
+   is" (12804374707): built OFF by Phase 132 with a DECLARED index base,
+   designed against Spon's (Outer London = 1.00). Spon's is not being bought;
+   BCIS is (Word question 218, the product not yet named). BUILDABLE NOW:
+   read what BCIS publishes about its location factors (its own public
+   pages; do not guess the base) and prove, with an INVENTED BCIS-shaped
+   table in a test, that the model accepts a table declared on BCIS's base
+   and still refuses a table from a different book, a missing base and a
+   bare mean. If the design fits only Spon's, generalise it, switched off,
+   with tests that fail on the model from before. Then re-point the row and
+   its comments from Spon's to BCIS (line 5 of this phase touches the same
+   row - do both at once). The real factors still wait on the purchase.
+
 When every line is done: run every check in COORDINATES, re-derive the
 figures, update the three registers you touched, and write the record.
 ```

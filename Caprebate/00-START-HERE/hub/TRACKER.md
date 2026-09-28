@@ -1055,6 +1055,7 @@
 
 `12804374707` · **Blocked - licence or purchase** · owner Claude
 
+- Note 2026-09-28 (Phase 152 follow-up): Checked at Lakhbir's request: built OFF by Phase 132 with a declared index base, designed against Spon's. Spon's is not being bought; BCIS is (Word question 218). Whether the model takes a BCIS-shaped table is untested, and buildable now: Phase 153 line 12(b).
 
 ### Build the calibration set from surveyor overrides — the only honest evidence about whether the pre-fills are right
 
@@ -1135,6 +1136,7 @@
 
 `12804380489` · **Blocked - licence or purchase** · owner Claude
 
+- Note 2026-09-28 (Phase 152 follow-up): Checked at Lakhbir's request (build it and switch it off?): already built and OFF - the banded scale and the building-type adders, interlocked, empty tables. The bands are the Valuation Office's data, so nothing more is buildable before its licence (12933604947); and the scale raises fees on jobs under about £750k, so it needs the tax adviser too. Phase 153 line 12(a) proves it and writes it here.
 
 ### Pull in the government valuation database (waiting on the licence)
 
@@ -1391,6 +1393,7 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md (the Phase 153 section)
 - Note 2026-09-28 (Phase 152 (sweep)): Written by the Phase 152 sweep: ten lines - the data protection mailbox, monday.com, the Claude API, the title register by hand, BCIS, the fee and other moved figures, the engagement letter's comments and specimen, smaller reads, tracker rows whose label is not what is in the way, and questions asked twice. Nobody has to answer anything first.
 - Note 2026-09-28 (Phase 152 (sweep)): An eleventh line: the tax adviser's review is 53 questions (Rulebook I's seven joined it, Word question 50), and every copy of the old count still says 46.
+- Note 2026-09-28 (Phase 152 follow-up): A twelfth line, added by the Phase 152 follow-up at Lakhbir's request: the two licence-blocked rows Claude owns - prove the fee scale is built and off, and test the location adjustment on an invented BCIS-shaped table, generalising it (off) if it only fits Spon's.
 
 ---
 
