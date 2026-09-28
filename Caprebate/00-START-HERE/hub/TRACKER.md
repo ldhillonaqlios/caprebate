@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 3 |
+| Ready - Claude can build | 2 |
 | Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 1 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
 | Done | 266 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1311,7 +1311,7 @@
 
 ### Phase 151g - the test lookups Lakhbir allowed: the smoke test keeps his five conditions
 
-`13133268303` · **Ready - Claude can build** · owner Claude
+`13133268303` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
 
 - Note 2026-09-25 (Phase 151f): Written by Phase 151f: Lakhbir said yes to small, logged test lookups on five conditions (Word question 170, closed 25 Sep 2026); the smoke test (Phase 146g) must enforce them.
 
