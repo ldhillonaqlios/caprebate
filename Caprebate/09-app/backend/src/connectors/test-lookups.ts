@@ -33,6 +33,11 @@
  * cannot be read line for line (so the count cannot be known) refuses, because an unknown count is not a count under
  * three. A lookup that throws is still logged, as NO, before the error goes on.
  *
+ * PHASE 151l, 28 SEPTEMBER 2026: THE LAND BOUNDARY IS A SOURCE HERE TOO. `smoke HMLR_INSPIRE` downloads one council's
+ * file under the same five conditions, on the same log, through the same refusals below — only the values asked about
+ * (a point and a council, not a company and a postcode) and the call itself are src/connectors/boundary-test-lookup.ts's.
+ * `smoke-switched-on HMLR_INSPIRE` starts its count of three like any other connector's.
+ *
  * NOTHING HERE READS THE KEY FILE OR REACHES THE NETWORK. The caller hands in the transport and the key store:
  * src/cli.ts hands in the live ones, and the tests hand in recorded answers.
  */
@@ -48,6 +53,16 @@ import { isInside, repositoryRoot, type SecretStore } from '../secrets.ts';
 import type { Transport } from './http.ts';
 import type { PostcodeStore } from '../web/postcode-port.ts';
 import { smokeOne, SMOKE_DEFAULTS, SMOKE_SOURCES, type SmokeValues } from './smoke.ts';
+import {
+  BOUNDARY_TEST_DEFAULTS, BOUNDARY_TEST_SOURCE, boundaryClientMatchIn, boundaryTestOne, boundaryValuesFrom, notTheBoundaryDefaults,
+} from './boundary-test-lookup.ts';
+
+/**
+ * EVERY CONNECTOR A TEST LOOKUP CAN BE RUN FOR: the registers the smoke test knows, and (Phase 151l) the land boundary
+ * download. One list, so `smoke` and `smoke-switched-on` can never disagree about what a connector is.
+ */
+export const TEST_LOOKUP_SOURCES: readonly string[] = Object.freeze([...Object.keys(SMOKE_SOURCES), BOUNDARY_TEST_SOURCE]);
+const isTestLookupSource = (s: string): boolean => TEST_LOOKUP_SOURCES.includes(s);
 
 /** Condition 1, in Lakhbir's number. */
 export const TEST_LOOKUPS_PER_SWITCH_ON = 3;
@@ -244,22 +259,25 @@ export function notTheDefaults(v: SmokeValues): string[] {
   return out;
 }
 
-/** Condition 2 without a database: the defaults, or --not-a-client said out loud. */
-function clientCheck(env: Record<string, string | undefined>, v: SmokeValues, not_a_client: boolean): ClientCheck {
+/**
+ * CONDITION 2, ONCE, FOR EVERY CONNECTOR. With CAPREBATE_DB, the connector's own `matchIn` compares its values with what
+ * the database holds (a register's: clientMatchIn; the land boundary's: boundaryClientMatchIn). Without it, the fields
+ * `changed` from the public defaults are refused unless --not-a-client was said out loud.
+ */
+function clientCheck(env: Record<string, string | undefined>, matchIn: (db: Db) => ClientCheck, changed: readonly string[], not_a_client: boolean): ClientCheck {
   const location = (env.CAPREBATE_DB ?? '').trim();
   if (location !== '') {
     if (!existsSync(location)) return { ok: false, why: `CAPREBATE_DB names ${location}, which is not there, so it is not known that these values are nobody's` };
     let db: Db | null = null;
     try {
       db = new Db(location);
-      return clientMatchIn(db, v);
+      return matchIn(db);
     } catch (e: unknown) {
       return { ok: false, why: `CAPREBATE_DB could not be opened (${e instanceof Error ? e.message : String(e)}), so it is not known that these values are nobody's` };
     } finally {
       db?.close();
     }
   }
-  const changed = notTheDefaults(v);
   if (changed.length > 0 && !not_a_client) {
     return { ok: false, why: `the ${changed.join(', ')} ${changed.length === 1 ? 'is' : 'are'} not the public test value, and with no CAPREBATE_DB there is nothing to check it against. Set CAPREBATE_DB, or give --not-a-client to say it belongs to nobody we act for (the log will say you did)` };
   }
@@ -302,7 +320,8 @@ function whoAndWhy(argv: readonly string[]): { who: string; why: string } | stri
   return { who, why };
 }
 
-const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--not-a-client]';
+const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--not-a-client]\n' +
+  `       CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke ${BOUNDARY_TEST_SOURCE} --who "<name>" --why "<reason>" [--easting E --northing N] [--council <ONS code or HM Land Registry file name>] [--not-a-client]`;
 const SWITCH_USAGE = 'usage: node src/cli.ts smoke-switched-on <SOURCE> --who "<name>" --why "<reason>"';
 
 /**
@@ -311,9 +330,9 @@ const SWITCH_USAGE = 'usage: node src/cli.ts smoke-switched-on <SOURCE> --who "<
  */
 export function runSwitchedOnCommand(argv: readonly string[], env: Record<string, string | undefined>, d: CommandDeps): number {
   const source_id = (argv[0] ?? '').toUpperCase();
-  if (source_id === '' || source_id.startsWith('--') || SMOKE_SOURCES[source_id] === undefined) {
+  if (source_id === '' || source_id.startsWith('--') || !isTestLookupSource(source_id)) {
     d.err(SWITCH_USAGE);
-    d.err(`sources: ${Object.keys(SMOKE_SOURCES).join(', ')}`);
+    d.err(`sources: ${TEST_LOOKUP_SOURCES.join(', ')}`);
     return 1;
   }
   const ww = whoAndWhy(argv);
@@ -336,9 +355,9 @@ export function runSwitchedOnCommand(argv: readonly string[], env: Record<string
  */
 export async function runSmokeCommand(argv: readonly string[], env: Record<string, string | undefined>, d: SmokeCommandDeps): Promise<number> {
   const source_id = (argv[0] ?? '').toUpperCase();
-  if (source_id === '' || source_id.startsWith('--') || SMOKE_SOURCES[source_id] === undefined) {
+  if (source_id === '' || source_id.startsWith('--') || !isTestLookupSource(source_id)) {
     d.err(SMOKE_USAGE);
-    d.err(`sources: ${Object.keys(SMOKE_SOURCES).join(', ')}`);
+    d.err(`sources: ${TEST_LOOKUP_SOURCES.join(', ')}`);
     return 1;
   }
 
@@ -368,40 +387,69 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
     return 1;
   }
 
-  const values: SmokeValues = {
-    company_number: flag(argv, 'company-number') ?? SMOKE_DEFAULTS.company_number,
-    company_name: flag(argv, 'company-name') ?? SMOKE_DEFAULTS.company_name,
-    address_line_1: flag(argv, 'address') ?? SMOKE_DEFAULTS.address_line_1,
-    town: flag(argv, 'town') ?? SMOKE_DEFAULTS.town,
-    postcode: flag(argv, 'postcode') ?? SMOKE_DEFAULTS.postcode,
-  };
+  /* THE VALUES AND THE CALL are the only things that differ between a register and the land boundary. Everything
+     above this line, and the log line below, is the same code for both. */
   const not_a_client = argv.includes('--not-a-client');
-  const client = clientCheck(env, values, not_a_client);
-  if (!client.ok) { d.err(`refused: never a client’s property — ${client.why}.`); return 1; }
+  let ask: string;
+  let call: (audit: AuditLog) => Promise<'PASS' | 'NO'>;
+  if (source_id === BOUNDARY_TEST_SOURCE) {
+    const bv = boundaryValuesFrom(argv);
+    if (typeof bv === 'string') { d.err(`refused: ${bv}.`); return 1; }
+    const client = clientCheck(env, (db) => boundaryClientMatchIn(db, bv), notTheBoundaryDefaults(bv), not_a_client);
+    if (!client.ok) { d.err(`refused: never a client’s property — ${client.why}.`); return 1; }
+    const isDefault = notTheBoundaryDefaults(bv).length === 0;
+    ask = `downloading ${bv.council}'s land boundary file and looking in it for ${isDefault ? `the public test point (${BOUNDARY_TEST_DEFAULTS.source})` : 'the point you typed'}.\n` +
+      'Only the council\'s name leaves this computer; the point stays here, and the file and the polygon are thrown away after the run.\n';
+    call = async (audit) => {
+      const r = await boundaryTestOne(bv, { audit, now: d.now, transport: d.transport, ...(d.sleep === undefined ? {} : { sleep: d.sleep }) });
+      const result = r.accepted ? 'PASS' : 'NO';
+      d.out(`${result}  ${BOUNDARY_TEST_SOURCE} (free, a file)`);
+      d.out(`  ${r.why}.`);
+      d.out(`  stage reached: ${r.stage}`);
+      d.out('\nA PASS means the file downloaded, every polygon in it was read (so its shape is one our reader reads), and the');
+      d.out('polygon holding the point was found. It says nothing more: nothing was kept and no site area was worked out.');
+      return result;
+    };
+  } else {
+    const values: SmokeValues = {
+      company_number: flag(argv, 'company-number') ?? SMOKE_DEFAULTS.company_number,
+      company_name: flag(argv, 'company-name') ?? SMOKE_DEFAULTS.company_name,
+      address_line_1: flag(argv, 'address') ?? SMOKE_DEFAULTS.address_line_1,
+      town: flag(argv, 'town') ?? SMOKE_DEFAULTS.town,
+      postcode: flag(argv, 'postcode') ?? SMOKE_DEFAULTS.postcode,
+    };
+    const client = clientCheck(env, (db) => clientMatchIn(db, values), notTheDefaults(values), not_a_client);
+    if (!client.ok) { d.err(`refused: never a client’s property — ${client.why}.`); return 1; }
+    ask = `asking ${source_id} about ${values.company_name} (${values.company_number}), ${values.postcode}\n`;
+    call = async (audit) => {
+      const r = await smokeOne(source_id, values, {
+        audit, now: d.now, transport: d.transport, secrets: d.secrets,
+        ...(d.postcodeStore === undefined ? {} : { postcodeStore: d.postcodeStore }),
+        ...(d.sleep === undefined ? {} : { sleep: d.sleep }),
+      });
+      const result = r.accepted ? 'PASS' : 'NO';
+      d.out(`${result}  ${r.source_id} (${r.tier})`);
+      d.out(`  ${r.accepted ? 'the service took our call' : 'the service did not take our call'}: ${r.why}`);
+      d.out(`  lookup: ${r.outcome}${r.call === null ? '  (no call was made)' : `  call: ${r.call.outcome}${r.call.status === null ? '' : ` ${r.call.status}`} after ${r.call.attempts} ${r.call.attempts === 1 ? 'try' : 'tries'}`}`);
+      if (r.cost_pence !== null && r.cost_pence > 0) d.out(`  it cost ${r.cost_pence}p`);
+      d.out('\nA PASS means the address, the key and the account are right. It does NOT mean the register holds');
+      d.out('anything about what you asked: "nothing matched" is still a pass.');
+      return result;
+    };
+  }
 
   const cannot = writable(log.path);
   if (cannot !== null) { d.err(`refused: ${cannot}`); return 1; }
 
   d.out(`test lookup ${count.used + 1} of ${TEST_LOOKUPS_PER_SWITCH_ON} for ${source_id} since it was switched on at ${count.since.at}`);
-  d.out(`asking ${source_id} about ${values.company_name} (${values.company_number}), ${values.postcode}\n`);
+  d.out(ask);
 
   // An audit log of its own, in memory: the call writes its row like any other and the answer is thrown away with it.
   const db = new Db(':memory:');
   let result: 'PASS' | 'NO' = 'NO';
   try {
     migrate(db, MIGRATIONS_DIR);
-    const r = await smokeOne(source_id, values, {
-      audit: new AuditLog(db), now: d.now, transport: d.transport, secrets: d.secrets,
-      ...(d.postcodeStore === undefined ? {} : { postcodeStore: d.postcodeStore }),
-      ...(d.sleep === undefined ? {} : { sleep: d.sleep }),
-    });
-    result = r.accepted ? 'PASS' : 'NO';
-    d.out(`${result}  ${r.source_id} (${r.tier})`);
-    d.out(`  ${r.accepted ? 'the service took our call' : 'the service did not take our call'}: ${r.why}`);
-    d.out(`  lookup: ${r.outcome}${r.call === null ? '  (no call was made)' : `  call: ${r.call.outcome}${r.call.status === null ? '' : ` ${r.call.status}`} after ${r.call.attempts} ${r.call.attempts === 1 ? 'try' : 'tries'}`}`);
-    if (r.cost_pence !== null && r.cost_pence > 0) d.out(`  it cost ${r.cost_pence}p`);
-    d.out('\nA PASS means the address, the key and the account are right. It does NOT mean the register holds');
-    d.out('anything about what you asked: "nothing matched" is still a pass.');
+    result = await call(new AuditLog(db));
   } finally {
     db.close();
     append(log.path, lookupLine(source_id, d.now(), result, ww.who, ww.why, not_a_client));

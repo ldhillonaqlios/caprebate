@@ -7,7 +7,7 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 1 |
-| Ready - Lakhbir action | 37 |
+| Ready - Lakhbir action | 38 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 0 |
 | Blocked - licence or purchase | 5 |
@@ -15,13 +15,13 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
 | Done | 268 |
-| Working on it | 1 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
-| Claude | 236 |
+| Claude | 235 |
 | CTA | 45 |
-| Lakhbir | 75 |
+| Lakhbir | 76 |
 | Surveyor | 9 |
 | Solicitor/DPO | 56 |
 | Developer | 20 |
@@ -1136,12 +1136,13 @@
 - File: `08-monday-doc-exports/12830205481__Developer-Handoff-Pack-the-index.md`
 - File: `08-monday-doc-exports/12830205481__Activation-Test-Plan.md`
 
-### Land boundary maps for site size - fetcher built and switched off 24 Sep 2026. The test-lookups question is answered (25 Sep); its first download as a test lookup under the five conditions is Phase 151l
+### Land boundary maps for site size - fetcher built and switched off 24 Sep 2026; its first download is a test lookup under the five conditions (smoke HMLR_INSPIRE, built 28 Sep 2026). Lakhbir, or a person he names, runs it; switching it on is Lakhbir's
 
-`12830205914` · **Working on it** · owner Claude · Lakhbir Dhillon · **CLAIMED BY Lakhbirs-MacBook-Pro.local (Mac)**
+`12830205914` · **Ready - Lakhbir action** · owner Lakhbir · Lakhbir Dhillon
 
 - File: `08-monday-doc-exports/12830205914__Pull-in-land-boundary-maps-to-get-site-size-waiting-on-the-licence.md`
 - Note 2026-09-28 (Phase 151g): Word question 170 was answered on 25 Sep 2026 (yes, on five conditions) and Phase 151g built the conditions into the smoke command, which does not cover a boundary download. The first download, as a test lookup under the same conditions and confirming the GML shape, is Phase 151l. Switching the fetcher on stays Lakhbir's.
+- Note 2026-09-28 (Phase 151l): Phase 151l built the first download as a test lookup: smoke HMLR_INSPIRE, in the smoke command, under the same five conditions and log (src/connectors/boundary-test-lookup.ts, test/phase151l.test.ts). Default: City of Westminster's file, looking for 70 Whitehall's published grid reference. Nothing has been downloaded yet. In the way: Lakhbir, or a person he names, records the switch-on (smoke-switched-on HMLR_INSPIRE) and runs it; switching the fetcher on for the application stays his.
 
 ### DPO: may we make a test lookup to prove a data connector works?
 

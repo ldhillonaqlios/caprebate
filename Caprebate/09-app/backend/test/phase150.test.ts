@@ -85,10 +85,21 @@ describe('Phase 150: the land boundary fetcher cannot fire while the switch is o
        that is its job — and it may pass the switch on only as its own tests-only input, never as a literal true. */
     const naming = walk(SRC).filter((p) => p.endsWith('.ts') && !p.endsWith('/connectors/inspire.ts'))
       .filter((p) => /inspireBoundaryFetcher|switched_on\s*:\s*true[\s\S]{0,200}local_authority_file/.test(readFileSync(p, 'utf8')));
-    assert.deepEqual(naming.map((p) => p.slice(SRC.length + 1)), ['connectors/site-area.ts']);
+    /* PHASE 151l: AND ONE MORE, BY NAME. src/connectors/boundary-test-lookup.ts is the land boundary's test lookup, and it
+       switches the fetcher on for ONE call in a command a person typed (`smoke HMLR_INSPIRE`), the way smokeOne turns one
+       register on. It may do that in exactly one place, and only the smoke command may reach it. */
+    assert.deepEqual(naming.map((p) => p.slice(SRC.length + 1)).sort(), ['connectors/boundary-test-lookup.ts', 'connectors/site-area.ts']);
     const caller = readFileSync(join(SRC, 'connectors', 'site-area.ts'), 'utf8');
     assert.doesNotMatch(caller, /switched_on\s*:\s*true/, 'the site area function switches the fetcher on itself');
     assert.match(caller, /input\.switched_on \?\? BOUNDARY_FETCHING_SWITCHED_ON/, 'the site area function does not read the switch');
+    const test = readFileSync(join(SRC, 'connectors', 'boundary-test-lookup.ts'), 'utf8');
+    assert.equal(test.match(/switched_on\s*:\s*true/g)?.length, 1, 'the test lookup switches the fetcher on in more than one place');
+    const one = test.slice(test.indexOf('export async function boundaryTestOne'));
+    assert.match(one, /switched_on\s*:\s*true/, 'the test lookup switches the fetcher on outside boundaryTestOne');
+    assert.doesNotMatch(test, /import\s*\{[^}]*BOUNDARY_FETCHING_SWITCHED_ON/, 'the test lookup imports the shipped switch');
+    const reaching = walk(SRC).filter((p) => p.endsWith('.ts') && !p.endsWith('/connectors/boundary-test-lookup.ts'))
+      .filter((p) => /from\s*['"][^'"]*boundary-test-lookup(?:\.ts)?['"]|import\(\s*['"][^'"]*boundary-test-lookup/.test(readFileSync(p, 'utf8')));
+    assert.deepEqual(reaching.map((p) => p.slice(SRC.length + 1)), ['connectors/test-lookups.ts'], 'something other than the smoke command reaches the test lookup');
   });
 });
 

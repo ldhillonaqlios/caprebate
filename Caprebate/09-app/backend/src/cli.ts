@@ -13,6 +13,7 @@
  *   node src/cli.ts seal-app-secrets  seal every authenticator app secret still kept as text (CAPREBATE_MFA_KEY, Phase 151k)
  *   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who W --why Y   one logged test lookup (Phase 151g)
  *   node src/cli.ts smoke-switched-on <SOURCE> --who W --why Y   record a switch-on; the count of three starts again
+ *   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE --who W --why Y   one council's land boundary file, the same way (Phase 151l)
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests
  */

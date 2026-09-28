@@ -29,8 +29,9 @@
  * ITS ONE CALLER IS THE RESEARCH RUN AFTER SIGNING (Phase 151c, src/web/site-area-run.ts): "Run the research" works
  * out each property's site area on the same click, passing the postcode's council, any neighbouring council a person
  * added, and the point a person entered or Homedata's own easting and northing. NOTHING CAN FIRE IT TODAY: the switch
- * is false. Turning it on is the one word in the boundary module, once the data protection officer answers "Can we
- * make a few small, logged test lookups to check a data connector works?".
+ * is false. Turning it on is the one word in the boundary module, and it is Lakhbir's. "Can we make a few small, logged
+ * test lookups to check a data connector works?" was answered on 25 September 2026, and the first download, as a test
+ * lookup under its five conditions, is `smoke HMLR_INSPIRE` (Phase 151l, src/connectors/boundary-test-lookup.ts).
  */
 import type { Db } from '../db.ts';
 import {
@@ -210,8 +211,8 @@ export function planSiteArea(d: Pick<SiteAreaDeps, 'db' | 'grid'>, input: SiteAr
   const on = input.switched_on ?? BOUNDARY_FETCHING_SWITCHED_ON;
   if (on !== true) {
     return stop(outcome('SWITCHED_OFF',
-      'Working out the site area from HM Land Registry\'s land boundaries is switched off. It waits on one answer from ' +
-      'the data protection officer, about small test lookups. Nothing was read or sent, and the site area stays asked.'));
+      'Working out the site area from HM Land Registry\'s land boundaries is switched off. Only Lakhbir can switch it ' +
+      'on. A test download checks the file first. Nothing was read or sent, and the site area stays asked.'));
   }
   const use = checkBoundaryUse('INTERNAL_CALCULATION');
   if (!use.permitted) return stop(outcome('NOT_PERMITTED', use.reason));

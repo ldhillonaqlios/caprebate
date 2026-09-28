@@ -469,11 +469,16 @@ function permissionFor(
  *
  * WHAT THIS DOES NOT DO. It does not switch fetching on. Nothing in this file
  * fetches: DEFAULT_FETCHER still always refuses, and BOUNDARY_FETCHING_SWITCHED_ON
- * (§10) is still false. Switching fetching on needs only the data protection
- * officer's answer on the small, logged test lookup: the real fetcher of HM Land
- * Registry's INSPIRE Index Polygons was built, and left switched off, by Phase
- * 150 (24 September 2026) at 09-app/backend/src/connectors/inspire.ts. Building
- * footprints still wait on Ordnance Survey.
+ * (§10) is still false. The real fetcher of HM Land Registry's INSPIRE Index
+ * Polygons was built, and left switched off, by Phase 150 (24 September 2026)
+ * at 09-app/backend/src/connectors/inspire.ts. The data protection officer's
+ * question on small, logged test lookups was answered by Lakhbir on 25
+ * September 2026 (yes, on five conditions), and Phase 151l (28 September 2026)
+ * built the first download as a test lookup under them: `smoke HMLR_INSPIRE`
+ * in the back end, which switches the fetcher on for its one call and never
+ * touches this module. Switching fetching on for the application is Lakhbir's
+ * decision; a PASS from that test lookup, which proves the file's shape, comes
+ * first. Building footprints still wait on Ordnance Survey.
  */
 export const CURRENT_LICENCE_PERMISSION: LicencePermission = {
   outcome: 'INTERNAL_CALCULATION_ONLY',
@@ -828,9 +833,10 @@ export type BoundaryFetcher = (item: BoundaryFetchPlanItem) => Promise<RawBounda
  * anything, and while it is false it refuses (E_FETCHING_SWITCHED_OFF) with
  * nothing sent. DEFAULT_FETCHER below is unchanged and still always throws, so
  * with no fetcher injected, setting this true would still fetch nothing.
- * Turning fetching on is this one word plus injecting that fetcher, and it
- * waits on the data protection officer's answer to "Can we make a few small,
- * logged test lookups to check a data connector works?".
+ * Turning fetching on is this one word plus injecting that fetcher. "Can we
+ * make a few small, logged test lookups to check a data connector works?" was
+ * answered on 25 September 2026; the first download runs as a test lookup
+ * (Phase 151l, `smoke HMLR_INSPIRE`), and turning this on is Lakhbir's.
  */
 export const BOUNDARY_FETCHING_SWITCHED_ON = false as const;
 

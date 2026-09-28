@@ -906,79 +906,9 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 151l — the land boundary's first download, as a test lookup under Lakhbir's five conditions
-
- **Model: Opus. Written 28 September 2026 by Phase 151g.** Tracker row: "Land boundary maps for site size" (12830205914) in 05 · FOR DEVELOPMENT. Runs next (151k ran on 28 September 2026), then 151m, then the sweep.
-
- **Why this exists.** The land boundary fetcher (Phase 150, wired by 151a and 151c) is built and switched off, and its tracker row and the Developer Spec's one page said it waited only on "Can we make a few small, logged test lookups to check a data connector works?" (Word question 170). Lakhbir answered yes on 25 September 2026, on five conditions, and Phase 151g built them into the smoke command (`src/connectors/test-lookups.ts`). But the smoke command does not cover the boundary download (the one page says "No smoke test: a download is a file, not a lookup"), and the one page also says "the first allowed download must confirm the shape" of HM Land Registry's GML, whose element names are not published. So the first download has no tool that keeps the five conditions. Nobody has to answer anything to build one.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
-═══════════════════════════════════
-
-Mac copy. Take a .bak-phase151l sibling of every file you change. Tracker row:
-"Land boundary maps for site size" (12830205914). Read first:
-src/connectors/test-lookups.ts and the "Built by Phase 151g" section of the
-Developer Spec; src/connectors/inspire.ts (inspireBoundaryFetcher) and
-src/connectors/site-area.ts; BOUNDARY_FETCHING_SWITCHED_ON and
-fetchAndImportBoundary in 04-phase-work/phase9/caprebate-boundary-import.ts;
-the HM Land Registry INSPIRE row of the Developer Spec's one page.
-
-1. A BOUNDARY TEST LOOKUP UNDER THE SAME FIVE CONDITIONS, on the SAME log and
-   the SAME refusals (--who and --why; three per switch-on, counted from a
-   smoke-switched-on line for HMLR_INSPIRE; never a client's property; only
-   the connector, the time, PASS or NO, who and why; never a demonstration).
-   Reuse runSmokeCommand's checks - do not write a second set. Either make
-   HMLR_INSPIRE a source the smoke command accepts, or give it a command of
-   its own that calls the same functions; say which and why.
-2. PUBLIC VALUES ONLY. The default is a public building with a published
-   British National Grid easting and northing and its council (70 Whitehall,
-   Westminster, like SMOKE_DEFAULTS; take its easting and northing from a
-   published source and cite it). Only the council's name leaves; the point
-   stays here. A typed point or council goes through condition 2 as a
-   postcode does (CAPREBATE_DB, else --not-a-client, logged).
-3. WHAT A PASS MEANS: the council's file downloaded, every polygon in it read
-   by the existing reader (which refuses the whole file on one it cannot read
-   - that is the shape check the one page asks for), and the polygon holding
-   the point found. A PASS says nothing more. The downloaded file and the
-   polygon are thrown away after the run: not kept in
-   CAPREBATE_INSPIRE_STORE_DIR, not stored through the one door.
-   BOUNDARY_FETCHING_SWITCHED_ON STAYS FALSE: this turns the fetcher on for
-   one call in a command a person typed, the way smokeOne does for a
-   register, and a test proves the shipped constant is untouched.
-4. Tests on invented fixtures and an invented log in a temporary folder, no
-   network: each condition refused and allowed for the boundary, a PASS, a
-   NO on a file whose shape the reader refuses; red on the pre-change code.
-5. PAPERWORK. The one page's INSPIRE row: the "what must be true first" cell
-   (Phase 151g already says question 170 is answered and points here; say
-   the tool is built) and the "Smoke test" cell. The comment above
-   BOUNDARY_FETCHING_SWITCHED_ON in phase9 that says switching on "needs only
-   the data protection officer's answer". The officer's register (FOR THE
-   SOLICITOR, THE DPO AND THE DEVELOPER), a dated note. Retag 12830205914 by
-   what is in the way when you close: switching it on is Lakhbir's, and the
-   test download itself is his or a named person's to run.
-
-CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
-inside their folders; the drift checker and its negative control (on its own
-line); the plain-words check; the tracker check; the register check and the
-CRM fold check. Commit and push.
-```
-
 ## PHASE 151m — recovery codes: ten one-use codes, so a person who loses their phone can still sign in
 
- **Model: Opus. Written 28 September 2026 by the Phase 151k follow-up.** Tracker row: "Phase 151m - recovery codes" (13133268311) in 05 · FOR DEVELOPMENT. Runs after 151l, before the sweep.
+ **Model: Opus. Written 28 September 2026 by the Phase 151k follow-up.** Tracker row: "Phase 151m - recovery codes" (13133268311) in 05 · FOR DEVELOPMENT. Runs next (151l ran on 28 September 2026), then the sweep.
 
  **Why this exists.** Phase 151k asked Lakhbir "Do you want recovery codes, so a person who loses their phone can still sign in?" (Word question 232), recommending not yet. He answered **yes** in the chat on 28 September 2026, and the question is closed. Today a person who loses their phone must ask the super user to reset their second step. Nobody has to answer anything more to build this.
 
@@ -1573,6 +1503,7 @@ WHEN DONE
 |  **11** |  **Do the information governance training and record it** |  The duty is on the board and the record is what evidences it |  1 hr |  A control the data protection position asserts |
 |  **12** |  The remaining ten — Homedata trial, cyber security, hardware, brand and online presence, analytics, mailbox provisioning, the business-request template, surveyor steps 2 and 3, and the legal clearance to use government valuation data commercially
  |  Real, but none of them gates anything else today |  — |  — |
+|  **13** |  **Run the land boundary's first download** (added 28 September 2026 by Phase 151l) |  The tool is built and keeps your five conditions. From 09-app/backend: first `node src/cli.ts smoke-switched-on HMLR_INSPIRE --who "<you>" --why "<reason>"`, then `CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE --who "<you>" --why "<reason>"`. It downloads Westminster's file and looks for 70 Whitehall; nothing about a client leaves, and nothing is kept but one line of PASS or NO. You may name someone else to run it. Switching the fetcher on is a separate decision, and yours |  10 min, plus the download |  Proof that HM Land Registry's file reads, which is what switching on the site area waits for |
 
  **Corrected 13 September 2026 by the Phase 130 sweep, because a row cannot be added to the table above.** Row 3 says both emails are drafted and attached and only need reading and a yes. The Valuation Office one does not yet carry the rewritten question 6 that a later addendum wrote, and the brief to the solicitor, in the list above the table, asks for a company number and registered office that do not exist. Both went back to Claude at Ready - Claude can build and are the first lines of Phase 131; each returns here when it can be sent as written. **One thing arrives here instead:** the address lookup's licence facts, which one drafted email to the supplier settles. **And the first paid surveyor review is parked** until the free call has been held, which its own notes say must come first.
 
@@ -1644,12 +1575,11 @@ WHEN DONE
 
 ## 6 · What Claude is building next
 
- **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 by the Phase 151k follow-up: two items, and no orphan.** The land boundary's first download as a test lookup (151l), then recovery codes (151m), which Lakhbir said yes to that afternoon (Word question 232). Sign-in hardening (151k) ran on 28 September 2026 and is Done. Until then this read two items: 151k, then 151l. The test website's uploaded documents on a store every copy reaches (151i) are built and switched off, and wait on Lakhbir connecting a private Blob store (Word question 231). Until Phase 151i closed this read three items, 151i first. The test lookups Lakhbir allowed (151g) are built. The test website's row (151e) is finished on Claude's side and waits on Lakhbir opening a Turso database (Word question 230). Until 27 September this read: the test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
+ **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 by Phase 151l: one item, and no orphan.** Recovery codes (151m), which Lakhbir said yes to that afternoon (Word question 232). The land boundary's first download as a test lookup (151l) is built: `smoke HMLR_INSPIRE`, and running it is Lakhbir's (section 3, row 13). Until Phase 151l closed this read two items: 151l, then 151m. Sign-in hardening (151k) ran on 28 September 2026 and is Done. Until then this read two items: 151k, then 151l. The test website's uploaded documents on a store every copy reaches (151i) are built and switched off, and wait on Lakhbir connecting a private Blob store (Word question 231). Until Phase 151i closed this read three items, 151i first. The test lookups Lakhbir allowed (151g) are built. The test website's row (151e) is finished on Claude's side and waits on Lakhbir opening a Turso database (Word question 230). Until 27 September this read: the test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
 
 
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
-|  Claude |  The land boundary's first download, as a test lookup under Lakhbir's five conditions (Phase 151l) |  Written by Phase 151g on 28 September 2026: the question the fetcher waited on is answered, and its first download must keep the same five conditions, which the smoke command does not cover |
 |  Claude |  Recovery codes: ten one-use codes, shown once, so a person who loses their phone can still sign in (Phase 151m) |  Lakhbir answered yes on 28 September 2026 (Word question 232, closed); written by the Phase 151k follow-up |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
@@ -1657,6 +1587,8 @@ WHEN DONE
 ---
 
 ## 7 · What is genuinely blocking Claude
+
+ **Corrected 28 September 2026 by Phase 151l.** The paragraph below says the land boundary maps wait on the data protection officer. They do not any more: Lakhbir answered the test-lookup question on 25 September 2026 (Word question 170), Phase 151g built his five conditions into the smoke command, and Phase 151l made the first boundary download a test lookup under them. The land boundary row is at "Ready - Lakhbir action": running the download, and then switching the fetcher on, are his (section 3, row 13). Nothing in this section blocks Claude today.
 
  **This is the whole of it: two items, re-derived from the live board by Phase 150 on 24 September 2026.** Both wait on the same answer from the data protection officer: the officer's own question item, and the land boundary maps for site size. The boundary item used to wait on a developer's fetcher as well; Phase 150 built that fetcher for real and switched it off, so it waits on the officer alone. **The ****s****e****c****on****d ****r****o****w**** ****o****f**** ****t****h****e**** ****t****a****bl****e ****b****el****o****w**** ****i****s**** an****sw****er****e****d:** the officer said "Not needed" to prior consultation on the backup risk (24 September 2026), and its board item is closed. For the record, the fourteen that sat here when the Phase 127 sweep started on 12 September were read one by one, and seven were not blocking a build:
 

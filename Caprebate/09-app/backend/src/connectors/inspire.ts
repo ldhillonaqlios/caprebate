@@ -28,8 +28,10 @@
  * element whose name is INSPIREID, and one gml:Polygon with posList rings. It is STRICT about everything else: a
  * feature it cannot read makes the whole file unreadable, because a polygon we skipped could be the one that holds
  * the point, and "exactly one polygon contains it" would then be a guess. THE FIRST ALLOWED DOWNLOAD MUST CONFIRM
- * THE SHAPE. Until the data protection officer answers "Can we make a few small, logged test lookups to check a data connector works?",
- * no file has been downloaded, and every test here runs on an invented fixture with no network.
+ * THE SHAPE. "Can we make a few small, logged test lookups to check a data connector works?" was answered by Lakhbir on
+ * 25 September 2026 (yes, on five conditions), and Phase 151l (28 September 2026) built the download as a test lookup
+ * under them: `smoke HMLR_INSPIRE`, src/connectors/boundary-test-lookup.ts. Until a person runs it, no file has been
+ * downloaded, and every test here runs on an invented fixture with no network.
  *
  * NOTHING HERE DECIDES WHAT THE AREA MAY BE USED FOR. The module's CURRENT_LICENCE_PERMISSION does: our own checks
  * only, and no boundary, map or coordinate in a client report (Lakhbir, 15 September 2026).
@@ -105,8 +107,8 @@ export function inspireBoundaryFetcher(input: InspireFetchInput): BoundaryFetche
     const on = input.switched_on ?? BOUNDARY_FETCHING_SWITCHED_ON;
     if (on !== true) {
       refuse('E_FETCHING_SWITCHED_OFF',
-        'Fetching land boundaries is switched off. It waits on one answer from the data protection officer, about ' +
-        'small test lookups. Nothing was sent.');
+        'Fetching land boundaries is switched off. Only Lakhbir can switch it on. A test download checks the file ' +
+        'first. Nothing was sent.');
     }
     if (item.kind !== 'PARCEL_BOUNDARY' || item.dataset !== 'HMLR_INSPIRE_INDEX_POLYGON') {
       refuse('E_FETCH_REFUSED', `This fetcher reads HM Land Registry's land boundaries only, not ${item.dataset}. Nothing was sent.`, { item });
