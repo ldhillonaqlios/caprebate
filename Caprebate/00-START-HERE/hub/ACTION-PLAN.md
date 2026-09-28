@@ -721,7 +721,8 @@ command that counts it, never the number.
   node 03-app/caprebate-gated-exit-renderer-proof.cjs the site's funnel after a gated exit
   node 03-app/caprebate-cash-route-proof.cjs          Rulebook A's claim routes in CB_CASH
      both proofs take --against <an older site file> and MUST go red on a
-     pre-change copy: the gated-exit proof against .bak-phase127, the cash
+     pre-change copy: the gated-exit proof against .bak-phase127 (and its K1-K4,
+     contact details at the close, against .bak-phase151e4), the cash
      proof against .bak-phase129b (R13, R15 and R17 fail). A proof goes red only
      against a copy older than the change it guards.
      --moves-from <older file> lists every state whose cash figure moved and
@@ -1139,6 +1140,11 @@ after that phase.
    file still carries it (its .bak-phase151e3 sibling is the document before):
    merge 230 into the CLOUD copy the AMENDMENT 2 way, never the Mac file over
    it, and look for a OneDrive conflict copy beside it. BUILDABLE.
+   AND ONE BLIND SPOT IN THE CRM FOLD CHECK (Phase 151e line 6, 28 Sep 2026):
+   a §4 reference whose line number is missing ("`src/web/crm.ts:`") passed
+   check C silently until a person saw it. Make C fail on a path with a
+   colon and no number, and prove it with a planted case in --self-test.
+   BUILDABLE.
    AND ONE TEST THAT FAILS UNDER LOAD AND NOT ON ITS OWN (Phase 146j, 25 Sep
    2026): test/phase151c.test.ts, "0 when every point agrees ... 1 when one
    point is 2 mm out", runs tools/ostn15-verify.ts as a child process. In one

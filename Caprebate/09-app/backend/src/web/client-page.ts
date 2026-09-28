@@ -230,12 +230,19 @@ function clientPage(
     need: companyNeed, from: unique(['Companies House', 'the client', ...fromFor('company')]), body: s.details,
   });
 
+  /* PHASE 151e (line 6): a client with no contact we can reach is flagged here until it has one. "We must get contact
+     details, it is a non negotiable" (Lakhbir, 28 September 2026). */
+  const reachable = C.reachableContacts(db, org.id);
+  const contactNeed: Need[] = reachable > 0 ? [] : [{ label: 'An email address or a telephone number for someone at this client' }];
   sections.push({
     key: 'client.contacts', id: 'contacts', kind: 'company', heading: 'Contacts',
     ...(s.contact_count === undefined ? {} : { count: s.contact_count }),
-    status: (s.contact_count ?? 0) > 0 ? 'DONE' : 'NOT_STARTED',
-    working: (s.contact_count ?? 0) > 0 ? 'Nothing right now.' : 'Nobody is recorded yet. Add a contact.',
-    need: [], from: ['the client'], body: s.contacts,
+    status: statusFromNeeds(contactNeed, (s.contact_count ?? 0) > 0),
+    working: reachable > 0 ? 'Nothing right now.'
+      : (s.contact_count ?? 0) > 0 ? 'Nobody here has an email address or a telephone number yet. Add one.' : 'Nobody is recorded yet. Add a contact.',
+    need: contactNeed, from: ['the client'],
+    body: reachable > 0 ? s.contacts
+      : h`<p class="err" id="no-way-to-reach"><strong>Required.</strong> ${C.NO_WAY_TO_REACH_WORDS}</p>${s.contacts}`,
   });
 
   /* PHASE 151b: THE ONLINE IDENTITY CHECK, for a login that keeps the registers (compliance.read; sending is

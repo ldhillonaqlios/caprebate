@@ -15,6 +15,11 @@
      And, as the control on all four, an UNGATED prospect still gets:
        C1  the funnel_close offer;   C2  the account screen after an email;
        C3  a slot leading to the account screen;   C4  the ceiling.
+     And, since Phase 151e (line 6), 28 Sep 2026, contact details are not
+     optional at the close: K1 no email address, K2 a telephone number given
+     for email, K3 no telephone number, K4 no permission - each keeps the
+     person at the close with the reason. K1-K4 MUST FAIL against
+     "Caprebate site.html.bak-phase151e4".
      The back end departs from the site on purpose here - gatedExitPage,
      closePage and gatedThankYouPage in 09-app/backend/src/web/router.ts - and
      this is the check that the site now matches it.
@@ -90,6 +95,15 @@ function reach(taxpayer) {
   return stage();
 }
 
+/* PHASE 151e (line 6), 28 Sep 2026: the close needs a name, a way to reach them on the channel chosen and their
+   permission, so every check that means to get past it fills those in (invented). */
+function fill(channel, value) {
+  FN.setC("full_name", "Invented Person");
+  FN.setC("channel", channel);
+  FN.setC("contact_value", value !== undefined ? value : channel === "email" ? "invented.person@example.invalid" : "01632 960111");
+  FN.setC("contact_consent", true);
+}
+
 /* ---- gated ---------------------------------------------------------------- */
 check("G0", "a non-taxpayer is stopped at Q1b and shown the reasoned exit",
   () => /likely little or no claim/.test(reach("no")));
@@ -100,26 +114,42 @@ check("G1", "and not the funnel_close words about the figure above",
   () => { reach("no"); FN.go("contact"); const h = stage();
           return !h.includes(esc(closeOffer.heading)) && !h.includes(esc(closeOffer.body)); });
 check("G2", "an email after a gated exit goes straight to the thank-you, with no account screen",
-  () => { reach("no"); FN.go("contact"); FN.setC("channel", "email"); FN.submitContact(); const h = stage();
+  () => { reach("no"); FN.go("contact"); fill("email"); FN.submitContact(); const h = stage();
           return /Thank you/.test(h) && !/Save your assessment/.test(h); });
 check("G3", "a telephone booking after a gated exit: the slot screen leads to the thank-you",
-  () => { reach("no"); FN.go("contact"); FN.setC("channel", "phone"); FN.submitContact(); const h = stage();
+  () => { reach("no"); FN.go("contact"); fill("phone"); FN.submitContact(); const h = stage();
           return /When shall we call you/.test(h) && /FN\.go\('done'\)/.test(h) && !/FN\.go\('account'\)/.test(h); });
 check("G4", "the thank-you after a gated exit prints no ceiling and no 'What you told us'",
-  () => { reach("no"); FN.go("contact"); FN.setC("channel", "email"); FN.submitContact(); FN.go("done"); const h = stage();
+  () => { reach("no"); FN.go("contact"); fill("email"); FN.submitContact(); FN.go("done"); const h = stage();
           return /Thank you/.test(h) && !/Indicative ceiling/.test(h) && !/What you told us/.test(h); });
 
 /* ---- ungated: the control ------------------------------------------------- */
 check("C1", "an ungated close still carries the funnel_close offer",
   () => { reach("yes"); FN.go("contact"); return stage().includes(esc(closeOffer.heading)); });
 check("C2", "an ungated email still reaches the account screen",
-  () => { reach("yes"); FN.go("contact"); FN.setC("channel", "email"); FN.submitContact();
+  () => { reach("yes"); FN.go("contact"); fill("email"); FN.submitContact();
           return /Save your assessment/.test(stage()); });
 check("C3", "an ungated telephone booking: the slot screen still leads to the account screen",
-  () => { reach("yes"); FN.go("contact"); FN.setC("channel", "phone"); FN.submitContact();
+  () => { reach("yes"); FN.go("contact"); fill("phone"); FN.submitContact();
           return /FN\.go\('account'\)/.test(stage()); });
 check("C4", "the ungated thank-you still prints the Indicative ceiling",
   () => { reach("yes"); FN.go("done"); return /Indicative ceiling/.test(stage()); });
+
+/* ---- PHASE 151e (line 6): contact details are not optional ----------------
+   K1-K4 FAIL on any site file before 28 Sep 2026 (.bak-phase151e4): it let a person past the close with none. */
+const stays = (h) => /id="contact-err"/.test(h) && !/Save your assessment/.test(h) && !/When shall we call you/.test(h);
+check("K1", "an email chosen and no address: the close stays, and says so",
+  () => { reach("yes"); FN.go("contact"); fill("email", ""); FN.submitContact(); const h = stage();
+          return stays(h) && /We need your email address/.test(h); });
+check("K2", "a telephone number given for email: the close stays, and says so",
+  () => { reach("yes"); FN.go("contact"); fill("email", "01632 960111"); FN.submitContact(); const h = stage();
+          return stays(h) && /does not look like an email address/.test(h); });
+check("K3", "a telephone call chosen and no number: the close stays, and says so",
+  () => { reach("no"); FN.go("contact"); fill("phone", ""); FN.submitContact(); const h = stage();
+          return stays(h) && /We need your telephone number/.test(h); });
+check("K4", "no permission to contact them: the close stays, and says so",
+  () => { reach("yes"); FN.go("contact"); fill("email"); FN.setC("contact_consent", false); FN.submitContact(); const h = stage();
+          return stays(h) && /We need your permission/.test(h); });
 
 console.log("THE GATED-EXIT RENDERER PROOF");
 console.log("  site file: " + SITE);

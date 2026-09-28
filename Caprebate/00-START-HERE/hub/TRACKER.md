@@ -7,7 +7,7 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 2 |
-| Ready - Lakhbir action | 35 |
+| Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 1 |
 | Blocked - licence or purchase | 5 |
@@ -15,13 +15,13 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
 | Done | 265 |
-| Working on it | 1 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
-| Claude | 234 |
+| Claude | 233 |
 | CTA | 45 |
-| Lakhbir | 73 |
+| Lakhbir | 74 |
 | Surveyor | 9 |
 | Solicitor/DPO | 57 |
 | Developer | 20 |
@@ -1290,7 +1290,7 @@
 
 ### Phase 151e - the test website: why every page fails, and what it shows to anyone
 
-`13133268301` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
+`13133268301` · **Ready - Lakhbir action** · owner Lakhbir
 
 - Note 2026-09-25 (Phase 151d): Written by Phase 151d: every page of the test website answers a server error (the deploy of 43f674b already did), and the website serves every committed file to anyone. Line 1 is buildable; line 2 waits on Word question 229.
 - Note 2026-09-25 (Phase 151h): Phase 151h added line 3: where Didit sends its results. No host can take one today (500 on the test deploy, no keys there, a fresh database each cold start).
@@ -1298,6 +1298,7 @@
 - Note 2026-09-25 (Phase 151e): Lines 2 and 3 (first half) DONE 25 Sep 2026: the test website serves no file of ours (229 yes), and reads Didit's keys from its settings only behind CAPREBATE_TEST_PASSWORD. Left: a check and its result on one database.
 - Note 2026-09-25 (Phase 151e): 25 Sep 2026: first real check end to end on the test website - Lakhbir checked himself, Didit's signed result arrived and the page showed Passed. Line 4 added: the panel says nothing on a client with no contacts.
 - Note 2026-09-27 (Phase 151e): Lines 4-5 DONE 27 Sep 2026: one lasting database for every copy of the test website, built and switched off (Turso through Vercel; needs Lakhbir to open it, Word question 230); the panel and a refused result say so on memory; the empty identity panel now says to add a contact first, with the link. Uploaded documents: Phase 151i.
+- Note 2026-09-28 (Phase 151e): Line 6 DONE 28 Sep 2026 (Lakhbir: contact details are non-negotiable, both rules): the website cannot save a client without an email or phone; a client with none is flagged; the last one cannot be cleared; an identity check goes only to a contact we can reach. The row still waits on Lakhbir opening Turso (Word question 230).
 
 ### Phase 151f - switch the online identity check from Veriff to Didit
 

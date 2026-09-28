@@ -922,6 +922,21 @@ function num(v: string | null): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+/**
+ * PHASE 151e (line 6), 28 September 2026 — THE FUNNEL'S CLOSE NEEDS A WAY TO REACH THE PERSON, on the channel they chose:
+ * an email address for email, a telephone number for a call or a text. Blank, or not one, is refused in words, and
+ * nothing is saved. "We must get contact details, it is a non negotiable" (Lakhbir).
+ */
+export function contactValueProblem(channel: string, value: string): string | undefined {
+  if (channel === 'email') {
+    if (value === '') return 'We need your email address so we can reach you.';
+    return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? undefined : 'That does not look like an email address. Please check it.';
+  }
+  if (value === '') return 'We need your telephone number so we can reach you.';
+  const digits = value.replace(/\D/g, '').length;
+  return /^[0-9+()\-\s]+$/.test(value) && digits >= 10 && digits <= 15 ? undefined : 'That does not look like a telephone number. Please check it.';
+}
+
 function applyClose(draft: Draft, f: URLSearchParams): string | undefined {
   const c = (draft.state as { contact: Record<string, unknown> }).contact;
   const name = (f.get('full_name') ?? '').trim();
@@ -929,6 +944,9 @@ function applyClose(draft: Draft, f: URLSearchParams): string | undefined {
   const channels = BOOKING.CHANNELS;
   if (name.length === 0) return 'We need a name to know who we are calling.';
   if (!channels.some((ch) => ch.id === channelId)) return 'Choose how you would like us to reach you.';
+  // PHASE 151e (line 6): contact details are not optional (Lakhbir, 28 Sep 2026). No way to reach them, no client.
+  const reach = contactValueProblem(channelId, (f.get('contact_value') ?? '').trim());
+  if (reach !== undefined) return reach;
   if (f.get('contact_consent') !== 'on') {
     return 'We need your permission to contact you about this. It is not marketing consent.';
   }
@@ -971,9 +989,9 @@ function writeBookingAndContact(
   const at = d.app.now();
   const business_id = 'business_id' in holder ? holder.business_id : null;
   const lead_id = 'lead_id' in holder ? holder.lead_id : null;
-  // At the funnel close the address is already on the organisation (`submit()`);
-  // with no organisation, the prospect's own contact is the only place for it.
-  const typed = lead_id !== null && typeof c.contact_value === 'string' ? c.contact_value : null;
+  // PHASE 151e (line 6): the person's own contact holds the address they typed, at the funnel close too. It was
+  // kept only on the organisation there, which left every website client with a contact nobody could reach.
+  const typed = typeof c.contact_value === 'string' && c.contact_value.trim() !== '' ? c.contact_value.trim() : null;
   d.app.db.run(
     'INSERT INTO contacts (id, business_id, lead_id, full_name, job_role, job_role_other, contact_consent, marketing_optin, ' +
       'email, phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -1321,7 +1339,7 @@ function closePage(
         <label class="fl">How would you like us to reach you?</label>
         ${radios('channel', channels.map((c) => ({ value: c.id, label: c.label })), null)}
         <label class="fl" for="close-contact-value">Your telephone number or email address</label>
-        <input class="fi" id="close-contact-value" name="contact_value">
+        <input class="fi" id="close-contact-value" name="contact_value" required>
         <label class="fl">If you chose the telephone, when suits you?</label>
         ${slots.available
           ? h`<p class="help">${zoneNotice(slots.slots[0]?.starts_at ?? '')}</p>

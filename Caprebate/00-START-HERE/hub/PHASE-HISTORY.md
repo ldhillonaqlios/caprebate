@@ -10458,3 +10458,29 @@ NEW node 03-app/caprebate-cash-route-proof.cjs       7 of 7 hold
  **Step 4B.** Items at "Ready - Claude can build": Phase 151g and Phase 151i, each with its own section. No orphans.
 
  **Commit:** `Phase 151e lines 4-5: one database for a check and its result (Turso, switched off); the panel says so on memory, and says to add a contact first` — pushed to `main` on github.com/ldhillonaqlios/caprebate.
+
+## PHASE 151e, LINE 6 — contact details are required (28 September 2026, Opus, Mac copy, Lakhbir's MacBook Pro)
+
+ **Lakhbir, in the chat, 28 September 2026: "Line 5 - we must get contact details it is a non negotiable".** Asked which rule, he chose **both**: a new client cannot be saved without at least one contact with an email address or a telephone number, and an identity check cannot be sent to a contact who has neither. Claimed (2f25f77) under tracker row 13133268301, which is back at Ready - Lakhbir action (it still waits on the Turso question); the claim is cleared. `.bak-phase151e4` siblings of every changed file.
+
+ **He also asked whether Turso costs money.** Its pricing page, read on 28 September 2026: a free plan at $0 with no card, 100 databases, 5 GB, 500 million rows read and 10 million written a month — far beyond what the test website's invented data needs; paid plans from $4.99 a month. Answered in the chat; Word question 230 is unchanged.
+
+### DONE — with the evidence
+
+-  **Only two paths create a client**, re-derived by grepping every `INSERT INTO businesses`: the seed and the website's funnel close. The funnel close required a name and a channel, but the email or telephone itself was optional, and the contact row it wrote held neither (the address sat only on the organisation). Now `contactValueProblem` refuses a blank one, or one that does not fit the channel (an email for email; 10 to 15 digits for a call or a text), in words, and nothing is saved; what was typed is kept on the person's contact too; the box is marked required.
+-  **Flagged, and never undone.** A client with no contact we can reach shows **Required** under **Contacts**, with a WE NEED line, until one is added (`reachableContacts`). `updateContact` refuses the change that would clear the last email address and telephone number a client has.
+-  **The identity check** refuses a contact with neither, before anything is sent, and offers only reachable contacts in **Who to check**, naming the others with a link.
+-  **The site file's own funnel** says the same words before it moves on (`FN.submitContact`); the engine was re-extracted (only the manifest moved). The gated-exit renderer proof now fills in invented details where it means to get past the close, and gains K1 to K4 for the rule: green on the site, and K1 to K4 red against `.bak-phase151e4`, while its documented control against `.bak-phase127` still fails G1 to G4 as before.
+-  **Tests, `test/phase151e4.test.ts`** (run it to count them): the funnel close refused six ways with nothing saved and accepted twice with the value on the contact; the flag and its clearing; the last way to reach a client kept; the identity check refused and the panel's offer. **Every one fails on the pre-change code** (the four changed source files put back in a scratch copy, the new names imported by namespace), each for the rule's own reason, not a missing name. Three existing tests changed on purpose: two in `staff.test.ts` typed a telephone number for the email channel, and one in `phase138.test.ts` needed a client whose Contacts section starts closed, which a client with no reachable contact no longer is.
+-  **The checks, re-derived at the close:** `npm run check` exit 0; the site harness the same in both modes, 0 fail, 4 xfail; phase3 and phase9 green; the drift checker's total **3,745**. Extraction verifier and `extract --check` exit 0. The drift checker went red on the two Developer Spec figures the new tests moved, which were updated, and is green; its self-test exit 0 and its negative control exit 1. Plain words (screens and guide), brand, tracker, register and CRM fold checks green with their self-tests — the fold check after three §4 line references moved; payload proof PASS; the gated-exit proof 14 of 14.
+-  **The seed is unchanged on purpose.** Most invented clients have no contact, so they show the flag on the demo and the test website: the rule working, and recorded in the Developer Spec's section.
+-  **Paperwork.** The guide (the contacts block and B53) and Help, rebuilt; the Developer Spec ("Built by Phase 151e, line 6", two figures, three §4 references); COORDINATES (the gated-exit proof's K checks); the file index; a tracker note.
+
+### NOT DONE — each with its home
+
+-  The CRM fold check let a §4 reference with its line number missing pass (found when this phase's own edit dropped one, and corrected) — BUILDABLE — added to the sweep (Phase 152), step 3, in terms.
+-  Word question 230 still to be proved in the cloud copy — BUILDABLE — already in the sweep (Phase 152), step 3.
+
+ **Step 4B.** Items at "Ready - Claude can build": Phase 151g and Phase 151i, each with its own section. No orphans.
+
+ **Commit:** `Phase 151e line 6: contact details are required - no client without a way to reach them, flagged until fixed, and an identity check only to someone we can reach` — pushed to `main` on github.com/ldhillonaqlios/caprebate.

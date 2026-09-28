@@ -45,6 +45,7 @@ import { can } from '../authz.ts';
 import { h, raw, type Safe } from './html.ts';
 import { localWhen } from './localtime.ts';
 import { assertComplianceRead, assertComplianceWrite, complianceObj, record, type ComplianceDeps } from './compliance.ts';
+import { isReachable } from './crm.ts';
 import {
   IDENTITY_CHECK, IDENTITY_PROVIDER_NAME, identityCheckMissing, identityResultCopy, identityTestingWarning, readIdentityDecision,
   sentUnderTestingWaiver, startIdentityCheck, type IdentityCheckConfig, type IdentityOutcome, type IdentitySignature,
@@ -93,8 +94,11 @@ export async function sendIdentityCheck(
   const cd: ComplianceDeps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
   const business = db.get<{ id: string }>('SELECT id FROM businesses WHERE id = ?', [input.business_id]);
   if (business === undefined) return { ok: false, why: 'Choose the organisation.' };
-  const contact = db.get<{ id: string }>('SELECT id FROM contacts WHERE id = ? AND business_id = ?', [input.contact_id, input.business_id]);
+  const contact = db.get<{ id: string; email: string | null; phone: string | null }>(
+    'SELECT id, email, phone FROM contacts WHERE id = ? AND business_id = ?', [input.contact_id, input.business_id]);
   if (contact === undefined) return { ok: false, why: 'Choose the person to be checked. They must be a contact of this organisation.' };
+  // PHASE 151e (line 6): we send the link to the person, so we must be able to reach them (Lakhbir, 28 Sep 2026)
+  if (!isReachable(contact)) return { ok: false, why: UNREACHABLE_CONTACT_WORDS };
   if (input.cdd_check_id !== null) {
     const c = db.get<{ state: string }>('SELECT state FROM cdd_checks WHERE id = ? AND business_id = ?', [input.cdd_check_id, input.business_id]);
     if (c === undefined) return { ok: false, why: 'That due diligence check is not one of this organisation’s.' };
@@ -242,6 +246,9 @@ export function identityChecks(db: App['db'], where: { readonly business_id?: st
  * with a link to the form that adds one.
  */
 export const NO_CONTACTS_WORDS = 'A check goes to a contact of this client. Add the person as a contact first, then come back here to send it.';
+/** PHASE 151e (line 6): a check goes only to a contact with an email address or a telephone number. */
+export const UNREACHABLE_CONTACT_WORDS =
+  'We cannot reach this person. Add their email address or telephone number to their contact details first, then send the check.';
 
 /**
  * THE PANEL, on the client's page and on a due diligence check. Shown to a person who may read the registers
@@ -257,6 +264,11 @@ export function identityPanel(app: App, actor: Actor, where: { readonly business
   const testing = identityTestingWarning(IDENTITY_CHECK);
   const forgetful = forgetfulDatabaseWarning(app);
   const mayWrite = can(actor, 'compliance.write', complianceObj());
+  // PHASE 151e (line 6): only a contact we can reach is offered; the rest are named, with what to add
+  const reachableIds = new Set(app.db.all<{ id: string }>(
+    "SELECT id FROM contacts WHERE business_id = ? AND (TRIM(COALESCE(email, '')) <> '' OR TRIM(COALESCE(phone, '')) <> '')", [where.business_id]).map((r) => r.id));
+  const offered = contacts.filter((c) => reachableIds.has(c.id));
+  const unreachable = contacts.filter((c) => !reachableIds.has(c.id));
   const action = where.cdd_check_id !== undefined ? `/staff/compliance/aml/checks/${where.cdd_check_id}/identity` : '/staff/compliance/identity-checks';
   return h`<div id="identity-check">
     <p class="help">We send the person a link. They photograph their ID and take a selfie on their phone, and ${IDENTITY_PROVIDER_NAME} tells us the result. Their photographs never come to us.</p>
@@ -266,10 +278,11 @@ export function identityPanel(app: App, actor: Actor, where: { readonly business
     ${lines.length === 0 ? h`<p class="help">No identity check has been sent.</p>` : h`<table><thead><tr><th>Person</th><th>Sent</th><th>Result</th><th>Link for the client</th></tr></thead><tbody>
       ${lines.map((l) => h`<tr><td>${l.contact}</td><td>${l.sent}</td><td>${l.outcome_words}${l.result_at === null ? '' : `, ${localWhen(l.result_at)}`}</td><td><a href="${l.link}">Their link</a></td></tr>`)}</tbody></table>`}
     ${mayWrite && contacts.length === 0 ? h`<p class="help" id="identity-no-contacts"><strong>Nobody to check yet.</strong> ${NO_CONTACTS_WORDS} <a href="/staff/clients/${where.business_id}#contacts">Add a contact</a></p>` : raw('')}
-    ${!mayWrite || contacts.length === 0 ? raw('') : h`<form method="post" action="${action}">
+    ${mayWrite && unreachable.length > 0 ? h`<p class="help" id="identity-unreachable"><strong>${offered.length === 0 ? 'Nobody we can reach yet.' : 'Not offered:'}</strong> ${unreachable.map((c) => c.full_name).join(', ')} ${unreachable.length === 1 ? 'has' : 'have'} no email address or telephone number. <a href="/staff/clients/${where.business_id}#contacts">Add them to the contact details</a></p>` : raw('')}
+    ${!mayWrite || offered.length === 0 ? raw('') : h`<form method="post" action="${action}">
       <input type="hidden" name="business_id" value="${where.business_id}">
       <label class="fl" for="idc-contact">Who to check</label>
-      <select class="fi" id="idc-contact" name="contact_id">${contacts.map((c) => h`<option value="${c.id}">${c.full_name}</option>`)}</select>
+      <select class="fi" id="idc-contact" name="contact_id">${offered.map((c) => h`<option value="${c.id}">${c.full_name}</option>`)}</select>
       <label class="fl" for="idc-first">First name, as on their ID</label><input class="fi" id="idc-first" name="first_name" required>
       <label class="fl" for="idc-last">Last name, as on their ID</label><input class="fi" id="idc-last" name="last_name" required>
       <button class="cta" type="submit">Send an identity check</button></form>`}

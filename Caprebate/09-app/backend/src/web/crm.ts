@@ -1088,6 +1088,31 @@ function contactValues(input: Fields, stored: ContactValues): Check<ContactValue
 }
 
 /**
+ * PHASE 151e (line 6), 28 September 2026 — CONTACT DETAILS ARE NOT OPTIONAL. Lakhbir: "we must get contact details, it
+ * is a non negotiable". A client must have at least one contact with an email address or a telephone number:
+ *   - a client saved from the website cannot be saved without one (the funnel's close, src/web/router.ts);
+ *   - a change here that would leave a client with no contact we can reach is refused (`updateContact`);
+ *   - a client that has none is flagged on its page until it does (src/web/client-page.ts); and
+ *   - an identity check goes only to a contact who has one (src/web/identity-checks.ts).
+ * A contact added here may still lack both: the rule is about the client, and the flag stays until one has them.
+ */
+export const NO_WAY_TO_REACH_WORDS = 'We must have a way to reach this client: a contact with an email address or a telephone number.';
+export const LAST_WAY_TO_REACH_WORDS =
+  'This is the only way we have to reach this client. Keep an email address or a telephone number, or add another contact who has one first.';
+
+/** Whether a contact has an email address or a telephone number. Blank is not a value. */
+export function isReachable(c: { readonly email: string | null; readonly phone: string | null }): boolean {
+  return (c.email ?? '').trim() !== '' || (c.phone ?? '').trim() !== '';
+}
+
+/** How many of a client's contacts we can reach, leaving out one contact when asked (the one being changed). */
+export function reachableContacts(db: CrmDeps['db'], business_id: string, leaving_out: string | null = null): number {
+  return db.get<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM contacts WHERE business_id = ? AND id IS NOT ? AND (TRIM(COALESCE(email, '')) <> '' OR TRIM(COALESCE(phone, '')) <> '')",
+    [business_id, leaving_out])?.n ?? 0;
+}
+
+/**
  * ADD A CONTACT TO AN ORGANISATION.
  *
  * NO CONSENT IS INVENTED. A contact typed in by staff did not tick the funnel
@@ -1128,6 +1153,10 @@ export function updateContact(d: CrmDeps, actor: Actor, contact_id: string, inpu
   if (!v.ok) return v;
   const changed = changedKeys(stored, v.value);
   if (changed.length === 0) return { ok: true, id: r.id };
+  // PHASE 151e (line 6): never the change that leaves a client with no contact we can reach
+  if (r.business_id !== null && isReachable(stored) && !isReachable(v.value) && reachableContacts(d.db, r.business_id, r.id) === 0) {
+    return { ok: false, why: LAST_WAY_TO_REACH_WORDS, field: 'email' };
+  }
   d.db.run(
     'UPDATE contacts SET full_name = ?, job_role_other = ?, contact_type = ?, is_decision_maker = ?, email = ?, ' +
       'phone = ?, notes = ?, updated_at = ? WHERE id = ?',

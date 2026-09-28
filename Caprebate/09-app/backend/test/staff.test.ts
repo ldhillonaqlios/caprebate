@@ -146,7 +146,8 @@ async function boot(opts: { workingTimes?: boolean } = {}): Promise<Harness> {
     }
     const submitted = await c.post('/assessment/close', {
       full_name: 'A Person', business_name: 'Meadowcroft Care Limited',
-      job_role: 'owner', channel: o.channel ?? 'phone', contact_value: '01632 960111',
+      // PHASE 151e (line 6): the way to reach them must match the channel chosen - an email address for email
+      job_role: 'owner', channel: o.channel ?? 'phone', contact_value: (o.channel ?? 'phone') === 'email' ? 'a.person@example.invalid' : '01632 960111',
       contact_consent: 'on', ...(slot === null || slot === '' ? {} : { slot }),
     });
     assert.equal(submitted.status, 200, 'the funnel did not close');

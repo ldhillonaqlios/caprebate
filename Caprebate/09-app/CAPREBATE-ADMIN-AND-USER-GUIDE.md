@@ -1901,7 +1901,13 @@ Address: `/staff/organisations` · one organisation: `/staff/organisations/{orga
 **What it will refuse, and why**
 - A fact from a better source. A question is never asked twice. So the legal name, which is known from the Companies House register record, is not asked again. One sent anyway is refused.
 - A contact with no name: "A contact is a person, and needs a name."
+- Taking away the last email address or telephone number a client has. We must always be able to reach a client.
+  The page says: "This is the only way we have to reach this client." Add another contact who has one first.
 - A client's accountant or adviser is a contact and never gets a login. The page says so under **Add a contact**.
+
+**We must be able to reach every client.** This is not optional. Each client needs at least one contact with an
+email address or a telephone number. A client without one shows **Required** in red under **Contacts**. It stays
+until you add one. The website will not save a new client without one either.
 - Anything saved to send to a **Do not contact** organisation is refused (see `B23`).
 
 **Try it on the demo**
@@ -3653,6 +3659,8 @@ finish the check yourself. A pass never finishes it for you.
 - A result more than five minutes old. It could be an old one sent again, so it is refused too.
 - A result for a check we never sent. It is refused too.
 - A person who is not a contact of this client. Add them as a contact first.
+- A person with no email address or telephone number. We send them the link, so we must be able to reach them. The
+  box names them. Add their details under **Contacts** first. Only people we can reach are listed in **Who to check**.
 - A result for a check this copy of the website has forgotten. It is refused like any other. It is never matched to
   the nearest check.
 - A due diligence check that is finished. Send it from the client's page instead.

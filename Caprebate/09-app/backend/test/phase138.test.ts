@@ -21,6 +21,7 @@
  * Written against HTTP, so it fails against the .bak-phase138 copies.
  */
 
+import * as C151e4 from '../src/web/crm.ts';
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -222,6 +223,11 @@ describe('open and closed, remembered per person', () => {
 
   test('"keep this open for me" is kept for that person only, on the server, never in the address; "Let the page decide" undoes it', async () => {
     const page = `/staff/clients/${biz}`;
+    // PHASE 151e (line 6): a client with no contact we can reach is flagged and its Contacts section opens, so this
+    // client is given one (invented) first - the choice under test needs a section that starts closed.
+    if (C151e4.reachableContacts(made.app.db, biz) === 0) {
+      made.app.db.run("INSERT INTO contacts (id, business_id, full_name, contact_consent, marketing_optin, email, created_at) VALUES ('c-138-reach', ?, 'Invented Contact', 0, 0, 'invented.contact@example.invalid', ?)", [biz, made.app.now()]);
+    }
     const before = sec((await as('sales').get(page)).body, 'contacts');
     assert.equal(before.open, false, 'contacts started open, so the test proves nothing');
     const kept = await as('sales').post('/staff/me/sections', { section: 'client.contacts', open: 'yes', back: page, anchor: 'contacts' });

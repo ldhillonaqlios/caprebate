@@ -14640,6 +14640,9 @@ var FN = (function(){
         + '<label class="ck"><input type="checkbox" '+(c.marketing_optin?"checked":"")
         + ' onchange="FN.setC(\'marketing_optin\',this.checked)"> Keep me updated about Cap Rebate <span class="opt2">(optional)</span></label>';
     }
+    /* PHASE 151e (line 6), 28 Sep 2026: contact details are not optional, and the back end refuses the close without
+       them (contactValueProblem in 09-app/backend/src/web/router.ts). The same words, before anything moves on. */
+    if(c.contact_err) h += '<p class="err" id="contact-err">'+esc(c.contact_err)+'</p>';
     return h + '<button class="cta" onclick="FN.submitContact()">Continue \u2192</button>';
   }
 
@@ -14783,6 +14786,17 @@ var FN = (function(){
       else { phase = "figure"; draw(); }
     },
     submitContact:function(){
+      /* PHASE 151e (line 6): a name, a way to reach them on the channel chosen, and their permission - or no further. */
+      var c = S.contact, v = String(c.contact_value||"").trim(), digits = v.replace(/\D/g,"").length;
+      c.contact_err = !String(c.full_name||"").trim() ? "We need a name to know who we are calling."
+        : !c.channel ? "Choose how you would like us to reach you."
+        : c.channel === "email"
+          ? (!v ? "We need your email address so we can reach you."
+            : (v.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) ? "That does not look like an email address. Please check it." : null)
+          : (!v ? "We need your telephone number so we can reach you."
+            : (!/^[0-9+()\-\s]+$/.test(v) || digits < 10 || digits > 15) ? "That does not look like a telephone number. Please check it." : null);
+      if(!c.contact_err && !c.contact_consent) c.contact_err = "We need your permission to contact you about this. It is not marketing consent.";
+      if(c.contact_err){ draw(); return; }
       /* After a gated exit there is no figure to save, so the account screen -
          which promises one - is not offered; the back end offers none either. */
       phase = CB_BOOKING.booksASlot(S.contact.channel) ? "slot"
