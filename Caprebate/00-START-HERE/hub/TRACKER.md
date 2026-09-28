@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
 | Done | 271 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1388,7 +1388,7 @@
 
 ### Phase 153 - five decisions carried into the documents that never heard of them, and the rows that say more than is true
 
-`13133268312` · **Ready - Claude can build** · owner Claude
+`13133268312` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro.local**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md (the Phase 153 section)
 - Note 2026-09-28 (Phase 152 (sweep)): Written by the Phase 152 sweep: ten lines - the data protection mailbox, monday.com, the Claude API, the title register by hand, BCIS, the fee and other moved figures, the engagement letter's comments and specimen, smaller reads, tracker rows whose label is not what is in the way, and questions asked twice. Nobody has to answer anything first.
