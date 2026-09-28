@@ -6,24 +6,24 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 3 |
 | Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 119 |
-| Blocked - question | 1 |
+| Blocked - question | 0 |
 | Blocked - licence or purchase | 5 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
-| Done | 266 |
-| Working on it | 1 |
+| Done | 267 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
-| Claude | 235 |
+| Claude | 236 |
 | CTA | 45 |
 | Lakhbir | 74 |
 | Surveyor | 9 |
-| Solicitor/DPO | 57 |
+| Solicitor/DPO | 56 |
 | Developer | 20 |
 
 ---
@@ -1136,11 +1136,12 @@
 - File: `08-monday-doc-exports/12830205481__Developer-Handoff-Pack-the-index.md`
 - File: `08-monday-doc-exports/12830205481__Activation-Test-Plan.md`
 
-### Land boundary maps for site size - fetcher built and switched off 24 Sep 2026. Fetching waits only on the DPO: can we make a few small, logged test lookups?
+### Land boundary maps for site size - fetcher built and switched off 24 Sep 2026. The test-lookups question is answered (25 Sep); its first download as a test lookup under the five conditions is Phase 151l
 
-`12830205914` · **Blocked - question** · owner Solicitor/DPO · Lakhbir Dhillon
+`12830205914` · **Ready - Claude can build** · owner Claude · Lakhbir Dhillon
 
 - File: `08-monday-doc-exports/12830205914__Pull-in-land-boundary-maps-to-get-site-size-waiting-on-the-licence.md`
+- Note 2026-09-28 (Phase 151g): Word question 170 was answered on 25 Sep 2026 (yes, on five conditions) and Phase 151g built the conditions into the smoke command, which does not cover a boundary download. The first download, as a test lookup under the same conditions and confirming the GML shape, is Phase 151l. Switching the fetcher on stays Lakhbir's.
 
 ### DPO: may we make a test lookup to prove a data connector works?
 
@@ -1311,9 +1312,10 @@
 
 ### Phase 151g - the test lookups Lakhbir allowed: the smoke test keeps his five conditions
 
-`13133268303` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's MacBook Pro (Mac copy)**
+`13133268303` · **Done** · owner Claude
 
 - Note 2026-09-25 (Phase 151f): Written by Phase 151f: Lakhbir said yes to small, logged test lookups on five conditions (Word question 170, closed 25 Sep 2026); the smoke test (Phase 146g) must enforce them.
+- Note 2026-09-28 (Phase 151g): Built: src/connectors/test-lookups.ts; smoke refuses without --who/--why, keeps a log outside the repository (~/.caprebate-test-lookups.jsonl) with only connector, time, PASS/NO, who, why; refuses a fourth lookup per switch-on (smoke-switched-on restarts it); refuses a client's postcode, number or name (CAPREBATE_DB, else --not-a-client, logged); says it is not a demonstration first. test/phase151g.test.ts, 23 tests, all red on the pre-change code.
 
 ### Phase 151h - switch the identity check on for testing, the papers waived and saying so
 

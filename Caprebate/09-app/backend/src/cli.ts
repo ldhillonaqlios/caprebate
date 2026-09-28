@@ -10,6 +10,8 @@
  *   node src/cli.ts read-mailbox      read new replies to contact@caprebate.co.uk, read-only (INBOUND_EMAIL; off, so none)
  *   node src/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
  *   node src/cli.ts sweep-land-boundaries   delete every kept land boundary file past the licence's 35 days
+ *   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who W --why Y   one logged test lookup (Phase 151g)
+ *   node src/cli.ts smoke-switched-on <SOURCE> --who W --why Y   record a switch-on; the count of three starts again
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests
  */
@@ -30,7 +32,7 @@ import { MESSAGE_RETENTION, sweepMessages } from './web/message-retention.ts';
 import { inspireStoreFromEnv, INSPIRE_KEEP_DAYS } from './connectors/inspire-store.ts';
 import { randomUUID } from 'node:crypto';
 import { liveTransport } from './connectors/http.ts';
-import { smokeOne, SMOKE_SOURCES, SMOKE_DEFAULTS } from './connectors/smoke.ts';
+import { runSmokeCommand, runSwitchedOnCommand } from './connectors/test-lookups.ts';
 import { processSecrets } from './secrets.ts';
 import { postcodeStore } from './web/postcode.ts';
 
@@ -166,58 +168,34 @@ async function main(): Promise<number> {
    * PHASE 146g — THE LIVE SMOKE TEST. Does this account, this key and this address actually work?
    *
    * Every suite runs on recorded answers with no key and no network, which proves the code and proves nothing about
-   * an account somebody has just opened. This makes ONE real call to ONE service, on PUBLIC TEST DATA, and says
-   * whether the service took it. The handover page in the Developer Spec names this command in every row.
+   * an account somebody has just opened. This makes ONE real call to ONE service and says whether the service took
+   * it. The handover page in the Developer Spec names this command in every row.
    *
    * IT NEEDS CAPREBATE_LIVE_SMOKE=1, the same shape as the seed's own confirmation: a live call is not something to
-   * make by mistyping a command. It opens no gate, touches no client and changes no switch that ships.
+   * make by mistyping a command. It opens no gate and changes no switch that ships.
+   *
+   * PHASE 151g, 28 September 2026: IT NOW KEEPS LAKHBIR'S FIVE CONDITIONS (Word question 170, answered 25 September
+   * 2026) as refusals, not as a printed warning — who and why required, a log outside the repository that keeps only
+   * the connector, the time, PASS or NO, who and why, three lookups per connector each time it is switched on, never
+   * a client's values, and never a demonstration. src/connectors/test-lookups.ts does all of it; this hands it the
+   * live transport and the key file.
    * ------------------------------------------------------------------ */
   if (cmd === 'smoke') {
-    const source_id = (process.argv[3] ?? '').toUpperCase();
-    const arg = (name: string, fallback: string): string => {
-      const i = process.argv.indexOf(`--${name}`);
-      return i > 0 && typeof process.argv[i + 1] === 'string' ? (process.argv[i + 1] as string) : fallback;
-    };
-    if (source_id === '' || SMOKE_SOURCES[source_id] === undefined) {
-      console.error(`usage: CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> [--postcode P] [--company-number N] [--company-name X]`);
-      console.error(`sources: ${Object.keys(SMOKE_SOURCES).join(', ')}`);
-      return 1;
-    }
-    if (process.env.CAPREBATE_LIVE_SMOKE !== '1') {
-      console.error('refusing to make a live call: set CAPREBATE_LIVE_SMOKE=1 to confirm you mean to contact the service.');
-      return 1;
-    }
-    const values = {
-      company_number: arg('company-number', SMOKE_DEFAULTS.company_number),
-      company_name: arg('company-name', SMOKE_DEFAULTS.company_name),
-      address_line_1: arg('address', SMOKE_DEFAULTS.address_line_1),
-      town: arg('town', SMOKE_DEFAULTS.town),
-      postcode: arg('postcode', SMOKE_DEFAULTS.postcode),
-    };
-    console.log('PUBLIC TEST DATA ONLY. Until the data protection officer has answered the test-lookups question,');
-    console.log('do not pass a client\u2019s postcode, company number or name to this command.');
-    console.log(`asking ${source_id} about ${values.company_name} (${values.company_number}), ${values.postcode}\n`);
-    // An audit log of its own, in memory: a smoke test writes its row like any other call and leaves nothing behind.
-    const db = new Db(':memory:');
-    try {
-      migrate(db, MIGRATIONS_DIR);
-      const now = (): string => new Date().toISOString();
-      const r = await smokeOne(source_id, values, {
-        audit: new AuditLog(db), now, transport: liveTransport, secrets: processSecrets(), postcodeStore: postcodeStore(),
-      });
-      console.log(`${r.accepted ? 'PASS' : 'NO'}  ${r.source_id} (${r.tier})`);
-      console.log(`  ${r.accepted ? 'the service took our call' : 'the service did not take our call'}: ${r.why}`);
-      console.log(`  lookup: ${r.outcome}${r.call === null ? '  (no call was made)' : `  call: ${r.call.outcome}${r.call.status === null ? '' : ` ${r.call.status}`} after ${r.call.attempts} ${r.call.attempts === 1 ? 'try' : 'tries'}`}`);
-      if (r.cost_pence !== null && r.cost_pence > 0) console.log(`  it cost ${r.cost_pence}p`);
-      console.log('\nA PASS means the address, the key and the account are right. It does NOT mean the register holds');
-      console.log('anything about what you asked: "nothing matched" is still a pass.');
-      return r.accepted ? 0 : 1;
-    } finally {
-      db.close();
-    }
+    return runSmokeCommand(process.argv.slice(3), process.env, {
+      now: () => new Date().toISOString(), out: (l) => console.log(l), err: (l) => console.error(l),
+      transport: liveTransport, secrets: processSecrets(), postcodeStore: postcodeStore(),
+    });
   }
 
-  console.error('usage: node src/cli.ts <migrate|seed|verify-audit|sweep-originals|sweep-messages|sweep-land-boundaries|send-outbox|read-mailbox|smoke>');
+  /* PHASE 151g. A person records that a connector has been switched on: one line in the test lookup log, and the only
+     way that connector's count of three test lookups starts again. It makes no call and changes no switch. */
+  if (cmd === 'smoke-switched-on') {
+    return runSwitchedOnCommand(process.argv.slice(3), process.env, {
+      now: () => new Date().toISOString(), out: (l) => console.log(l), err: (l) => console.error(l),
+    });
+  }
+
+  console.error('usage: node src/cli.ts <migrate|seed|verify-audit|sweep-originals|sweep-messages|sweep-land-boundaries|send-outbox|read-mailbox|smoke|smoke-switched-on>');
   return 1;
 }
 

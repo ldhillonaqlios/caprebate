@@ -631,6 +631,12 @@ DISK - ONE MACHINE, THE MAC. THE ACER IS RETIRED (Lakhbir, 25 Sep 2026).
   *.key anywhere. Check the key file BY NAME ONLY - never print a value.
   src/connectors/http.ts is the only file under src/ that may call fetch, and
   test/phase146b.test.ts fails on any other.
+  THE TEST LOOKUP LOG (Phase 151g) is ~/.caprebate-test-lookups.jsonl, or
+  CAPREBATE_TEST_LOOKUP_LOG - outside the repository, refused inside it. The
+  smoke command keeps Lakhbir's five conditions there (Word question 170):
+  who and why, three per connector per switch-on (node src/cli.ts
+  smoke-switched-on <SOURCE> --who --why restarts the count), never a
+  client's values, only connector, time, PASS or NO, who and why.
   node  on PATH (Homebrew).
   A DOCX ZIP may use BACKSLASH entry paths: the engagement letter's is
   "word\document.xml" and the seven policy templates' are not. Match both. To
@@ -885,69 +891,9 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 151g — the test lookups Lakhbir allowed: the smoke test keeps his five conditions
-
- **Model: Opus. Written 25 September 2026 by Phase 151f.** Tracker row: "Phase 151g - the test lookups Lakhbir allowed" in 05 · FOR DEVELOPMENT. Runs next, then 151i, then the sweep.
-
- **Why this exists.** Lakhbir answered "Can we make a few small, logged test lookups to check a data connector works?" on 25 September 2026: yes, on five conditions (Word question 170, now in the closed document). The live smoke test already exists (Phase 146g, `CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE>`), but it enforces none of the five: it only prints a warning, keeps its audit row in a database in memory that vanishes, and would take a client's postcode if one were typed.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
-═══════════════════════════════════
-
-Mac copy. Take a .bak-phase151g sibling of every file you change. Tracker row:
-"Phase 151g - the test lookups Lakhbir allowed" (find its id with list --group
-DEVELOPMENT). Read first: 09-app/backend/src/connectors/smoke.ts, the `smoke`
-command in src/cli.ts, and Word question 170 in the closed questions document.
-
-THE FIVE CONDITIONS, LAKHBIR'S WORDS: no more than three lookups per connector
-each time it is switched on; never a client's property; keep only pass or
-fail, the time and the connector; log who ran it and why; never use it to show
-the product to clients. Build each into the smoke command, so it is enforced
-and not only printed:
-1. WHO AND WHY. --who and --why are required, and refused when empty.
-2. A LOG THAT OUTLIVES THE RUN, KEEPING ONLY WHAT HE SAID. One line per lookup
-   in a file outside the repository (CAPREBATE_TEST_LOOKUP_LOG, default
-   ~/.caprebate-test-lookups.jsonl; refuse a path inside the tree, the way
-   src/secrets.ts refuses a key file there): the connector, the time, PASS or
-   NO, who and why. Never the values asked, never the answer.
-3. THREE PER CONNECTOR, EACH TIME IT IS SWITCHED ON. Count a connector's lines
-   since the last "switched on" line for it, and refuse a fourth. A person
-   records a switch-on with a command of its own (who, why), which is also the
-   only way the count starts again.
-4. NEVER A CLIENT'S PROPERTY. With CAPREBATE_DB set, refuse a postcode, company
-   number or company name that matches any business or property held there;
-   without it, refuse anything but the public defaults in SMOKE_DEFAULTS unless
-   --not-a-client is given, and log that it was.
-5. NOT A DEMONSTRATION. Say so on every run; the why is logged. Change the
-   printed warning: the question is answered, and the command now says which
-   conditions it applies.
-Tests on an invented log in a temporary folder, no network: each condition
-refused and each allowed, proved red on the pre-change code. Update the
-Developer Spec's one-page table (the smoke test column), the guide if it names
-the command, and the officer's register note of 25 Sep 2026.
-
-CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
-inside their folders; the drift checker and its negative control; the plain-
-words check; the tracker check; the register check and the CRM fold check.
-Commit and push.
-```
-
 ## PHASE 151i — the test website's uploaded documents on a store every copy reaches, switched off
 
- **Model: Opus. Written 27 September 2026 by Phase 151e (lines 4 and 5).** Tracker row: "Phase 151i - the test website's uploaded documents on a store every copy reaches" in 05 · FOR DEVELOPMENT. Runs after 151g, before the sweep.
+ **Model: Opus. Written 27 September 2026 by Phase 151e (lines 4 and 5).** Tracker row: "Phase 151i - the test website's uploaded documents on a store every copy reaches" in 05 · FOR DEVELOPMENT. Runs next, then 151k, then 151l, then the sweep.
 
  **Why this exists.** Phase 151e gave the test website a lasting database, built and switched off until Lakhbir opens a Turso database through Vercel (Word question 230). Its records will then outlive a copy of the website; its uploaded documents will not. `api/index.mjs` still hands the object store a folder on the function's temporary disk, so a document uploaded through one copy is missing from the next, while its row says it is there. Nobody has to answer anything for the code: build it and switch it off.
 
@@ -1012,7 +958,7 @@ CRM fold check; payload-proof. Commit and push; check the live test website:
 
 ## PHASE 151k — sign-in hardening: the API's steps, the app secret at rest, codes out of the outbox, the screenshot tool
 
- **Model: Opus. Written 28 September 2026 by Phase 151j.** Tracker row: "Phase 151k - sign-in hardening" in 05 · FOR DEVELOPMENT. Runs after 151i, before the sweep.
+ **Model: Opus. Written 28 September 2026 by Phase 151j.** Tracker row: "Phase 151k - sign-in hardening" in 05 · FOR DEVELOPMENT. Runs after 151i, then 151l, then the sweep.
 
  **Why this exists.** Phase 151j built the second step Lakhbir asked for (an email code or an authenticator app; every staff login; a client may) and temporary passwords. It left four things the Developer Spec's "Built by Phase 151j" section names, none waiting on anybody: build them.
 
@@ -1070,6 +1016,76 @@ line); the plain-words check; the tracker check; the register check and the
 CRM fold check; payload-proof. Commit and push; check the live test website:
 "/" answers 200 and the login page renders with its "Forgotten your password?"
 link.
+```
+
+## PHASE 151l — the land boundary's first download, as a test lookup under Lakhbir's five conditions
+
+ **Model: Opus. Written 28 September 2026 by Phase 151g.** Tracker row: "Land boundary maps for site size" (12830205914) in 05 · FOR DEVELOPMENT. Runs after 151k, before the sweep.
+
+ **Why this exists.** The land boundary fetcher (Phase 150, wired by 151a and 151c) is built and switched off, and its tracker row and the Developer Spec's one page said it waited only on "Can we make a few small, logged test lookups to check a data connector works?" (Word question 170). Lakhbir answered yes on 25 September 2026, on five conditions, and Phase 151g built them into the smoke command (`src/connectors/test-lookups.ts`). But the smoke command does not cover the boundary download (the one page says "No smoke test: a download is a file, not a lookup"), and the one page also says "the first allowed download must confirm the shape" of HM Land Registry's GML, whose element names are not published. So the first download has no tool that keeps the five conditions. Nobody has to answer anything to build one.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
+a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
+branch main. On the Mac the working copy is Development/, one level above the
+tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
+Allowances/Business Development/Development. git pull, then git log --oneline.
+OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
+INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
+COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
+plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
+already there stops you) and clear it at the end; retag what you touch in the
+tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
+write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+═══════════════════════════════════
+
+Mac copy. Take a .bak-phase151l sibling of every file you change. Tracker row:
+"Land boundary maps for site size" (12830205914). Read first:
+src/connectors/test-lookups.ts and the "Built by Phase 151g" section of the
+Developer Spec; src/connectors/inspire.ts (inspireBoundaryFetcher) and
+src/connectors/site-area.ts; BOUNDARY_FETCHING_SWITCHED_ON and
+fetchAndImportBoundary in 04-phase-work/phase9/caprebate-boundary-import.ts;
+the HM Land Registry INSPIRE row of the Developer Spec's one page.
+
+1. A BOUNDARY TEST LOOKUP UNDER THE SAME FIVE CONDITIONS, on the SAME log and
+   the SAME refusals (--who and --why; three per switch-on, counted from a
+   smoke-switched-on line for HMLR_INSPIRE; never a client's property; only
+   the connector, the time, PASS or NO, who and why; never a demonstration).
+   Reuse runSmokeCommand's checks - do not write a second set. Either make
+   HMLR_INSPIRE a source the smoke command accepts, or give it a command of
+   its own that calls the same functions; say which and why.
+2. PUBLIC VALUES ONLY. The default is a public building with a published
+   British National Grid easting and northing and its council (70 Whitehall,
+   Westminster, like SMOKE_DEFAULTS; take its easting and northing from a
+   published source and cite it). Only the council's name leaves; the point
+   stays here. A typed point or council goes through condition 2 as a
+   postcode does (CAPREBATE_DB, else --not-a-client, logged).
+3. WHAT A PASS MEANS: the council's file downloaded, every polygon in it read
+   by the existing reader (which refuses the whole file on one it cannot read
+   - that is the shape check the one page asks for), and the polygon holding
+   the point found. A PASS says nothing more. The downloaded file and the
+   polygon are thrown away after the run: not kept in
+   CAPREBATE_INSPIRE_STORE_DIR, not stored through the one door.
+   BOUNDARY_FETCHING_SWITCHED_ON STAYS FALSE: this turns the fetcher on for
+   one call in a command a person typed, the way smokeOne does for a
+   register, and a test proves the shipped constant is untouched.
+4. Tests on invented fixtures and an invented log in a temporary folder, no
+   network: each condition refused and allowed for the boundary, a PASS, a
+   NO on a file whose shape the reader refuses; red on the pre-change code.
+5. PAPERWORK. The one page's INSPIRE row: the "what must be true first" cell
+   (Phase 151g already says question 170 is answered and points here; say
+   the tool is built) and the "Smoke test" cell. The comment above
+   BOUNDARY_FETCHING_SWITCHED_ON in phase9 that says switching on "needs only
+   the data protection officer's answer". The officer's register (FOR THE
+   SOLICITOR, THE DPO AND THE DEVELOPER), a dated note. Retag 12830205914 by
+   what is in the way when you close: switching it on is Lakhbir's, and the
+   test download itself is his or a named person's to run.
+
+CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
+inside their folders; the drift checker and its negative control (on its own
+line); the plain-words check; the tracker check; the register check and the
+CRM fold check. Commit and push.
 ```
 
 ## PHASE 152 — Sweep and stress-test (the recurring one, always last)
@@ -1582,14 +1598,14 @@ WHEN DONE
 
 ## 6 · What Claude is building next
 
- **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 27 September 2026 by Phase 151e (lines 4 and 5): two items, and no orphan.** The test lookups Lakhbir allowed (151g), and the test website's uploaded documents on a store every copy reaches (151i). The test website's row (151e) is finished on Claude's side and waits on Lakhbir opening a Turso database (Word question 230). Until 27 September this read: the test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
+ **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 by Phase 151g: three items, and no orphan.** The test website's uploaded documents on a store every copy reaches (151i), sign-in hardening (151k), and the land boundary's first download as a test lookup (151l). The test lookups Lakhbir allowed (151g) are built. The test website's row (151e) is finished on Claude's side and waits on Lakhbir opening a Turso database (Word question 230). Until 27 September this read: the test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
 
 
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
-|  Claude |  The test lookups Lakhbir allowed (Phase 151g) |  He said yes to small, logged test lookups on five conditions; the smoke test that makes them exists and enforces none of the five yet |
 |  Claude |  Sign-in hardening: the API's steps, the app secret at rest, codes out of the outbox, the screenshot tool (Phase 151k) |  Written by Phase 151j on 28 September 2026: four things the second step left, none waiting on anybody |
 |  Claude |  The test website's uploaded documents on a store every copy reaches (Phase 151i) |  Written by Phase 151e on 27 September 2026: once the test website has its lasting database, its uploaded documents would still sit on each copy's temporary disk; and the audit log's next number on a shared database. Build it and switch it off |
+|  Claude |  The land boundary's first download, as a test lookup under Lakhbir's five conditions (Phase 151l) |  Written by Phase 151g on 28 September 2026: the question the fetcher waited on is answered, and its first download must keep the same five conditions, which the smoke command does not cover |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 

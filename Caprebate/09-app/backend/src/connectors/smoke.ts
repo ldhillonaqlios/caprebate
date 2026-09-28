@@ -11,11 +11,12 @@
  * does not read a client, and it changes no switch that ships: `REGISTER_SWITCHES` stays exactly as it is, and this
  * turns ONE source on for ONE call, in a map of its own, in a command a person typed.
  *
- * PUBLIC TEST DATA ONLY, AND THAT IS THE RULE THIS FILE EXISTS INSIDE. The integration phases' rule: live calls go
- * only to public test data until the data protection officer has answered "Can we make a few small, logged test
- * lookups to check a data connector works?". The defaults below are Caprebate's own company number and a public
- * address that belongs to nobody we act for. GIVING IT A CLIENT'S POSTCODE OR COMPANY NUMBER WOULD BREAK THAT RULE,
- * and no default here can stop somebody typing one — which is why the command prints the rule before it runs.
+ * PUBLIC TEST DATA ONLY, AND THAT IS THE RULE THIS FILE EXISTS INSIDE. "Can we make a few small, logged test lookups
+ * to check a data connector works?" was answered by Lakhbir on 25 September 2026: yes, on five conditions (Word
+ * question 170). The defaults below are Caprebate's own company number and a public address that belongs to nobody
+ * we act for. SINCE PHASE 151g THE COMMAND ENFORCES THE FIVE CONDITIONS rather than printing a warning: who and why,
+ * a log outside the repository, three lookups per switch-on, never a client's values, never a demonstration. That is
+ * src/connectors/test-lookups.ts; this file still makes the one call and says whether it was taken.
  *
  * WHAT A PASS MEANS, EXACTLY. That the service accepted our call: the address in src/connectors/sources.ts is right,
  * the key is in the key file and the account is live. IT DOES NOT MEAN THE REGISTER HOLDS ANYTHING for the value you
@@ -23,7 +24,8 @@
  * never added together.
  *
  * IT WRITES THE SAME AUDIT ROW AS ANY OTHER CALL, because it goes through `callOutside` like everything else. It
- * needs an audit log to write to, and the command gives it one in a database of its own, in memory.
+ * needs an audit log to write to, and the command gives it one in a database of its own, in memory, which is thrown
+ * away with the answer. What lasts is the test lookup log's one line (src/connectors/test-lookups.ts).
  */
 
 import type { AuditLog } from '../audit.ts';
@@ -49,8 +51,9 @@ export const SMOKE_SOURCES: Readonly<Record<string, 'free' | 'paid' | 'not chose
  *   · the company is CAP REBATE LTD, 17307313 — our own, confirmed on 18 September 2026;
  *   · the address is 70 Whitehall, London SW1A 2AS — the Cabinet Office, and about as public as a building gets.
  *
- * `--postcode`, `--company-number` and `--company-name` replace them. A CLIENT'S VALUE MUST NOT BE PASSED until the
- * data protection officer has answered the test-lookups question.
+ * `--postcode`, `--company-number` and `--company-name` replace them. A CLIENT'S VALUE IS NEVER PASSED, and since
+ * Phase 151g the command refuses one: held in CAPREBATE_DB, or, with no database, anything but these without
+ * --not-a-client.
  */
 export const SMOKE_DEFAULTS = Object.freeze({
   company_number: '17307313',
