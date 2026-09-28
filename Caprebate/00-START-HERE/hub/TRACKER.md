@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 1 |
 | Ready - Lakhbir action | 37 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 7 |
 | Done | 268 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1138,7 +1138,7 @@
 
 ### Land boundary maps for site size - fetcher built and switched off 24 Sep 2026. The test-lookups question is answered (25 Sep); its first download as a test lookup under the five conditions is Phase 151l
 
-`12830205914` · **Ready - Claude can build** · owner Claude · Lakhbir Dhillon
+`12830205914` · **Working on it** · owner Claude · Lakhbir Dhillon · **CLAIMED BY Lakhbirs-MacBook-Pro.local (Mac)**
 
 - File: `08-monday-doc-exports/12830205914__Pull-in-land-boundary-maps-to-get-site-size-waiting-on-the-licence.md`
 - Note 2026-09-28 (Phase 151g): Word question 170 was answered on 25 Sep 2026 (yes, on five conditions) and Phase 151g built the conditions into the smoke command, which does not cover a boundary download. The first download, as a test lookup under the same conditions and confirming the GML shape, is Phase 151l. Switching the fetcher on stays Lakhbir's.
