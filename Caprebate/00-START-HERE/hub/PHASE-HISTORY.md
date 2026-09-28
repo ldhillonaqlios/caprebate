@@ -10722,5 +10722,7 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  Whether startup funding and the back-end developer meeting happened - BLOCKED on Lakhbir - Word question 236.
 -  Whether the estimate may say "refund" on W2 when a loss is carried back - BLOCKED on the tax adviser - Word question 237.
 
- **The live test website after the push:** in the record commit that follows this one.
+ **The live test website after the push (751c724).** GitHub reported the deploy (6713680996) successful at 16:23:08, and nothing had touched the site since 15:56. The first request, `/` at 16:23:12, answered **200 in 3.63 s** - a cold start, well inside the 300-second limit; then `/` in 0.39 s and `/login` in 0.29 s; `/api/login/step/recovery` with no token still says "That sign-in has timed out", as Phase 151m left it. None of this sweep's changes shows from outside (the outbox, the migration runner and the start-up log line are all inside), so which copy answered is inferred from the timing, not read. **Not provable from here:** the build's "build:" line (did it apply migration 060 to Turso?) and the new "this copy started in N ms" line - the Vercel connector reaches no project of Lakhbir's; section 3 row 14 asks him to read them once.
+
+ **Claim cleared** in `hub/CLAIM.md` in the commit that carries this line.
 
