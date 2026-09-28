@@ -182,7 +182,13 @@ export async function createApp(
        /api/login/step/<new-password | method | code | resend> carrying that token in the body (never the address);
        POST /api/login/step with only the token says where the step stands. A session - the cookie and 200 - comes only
        when the last step is done. The limits are the website's, because they are the same rows: 15 minutes a sign-in,
-       5 wrong codes, a code once. */
+       5 wrong codes, a code once.
+       PHASE 151m — RECOVERY CODES, on the same functions. The answer to the step that sets a second step up carries
+       `recovery_codes` ONCE (ten; nothing keeps them as text, so they cannot be asked for again); a session's answer
+       carries `recovery_codes_left` for a person with a second step. At the VERIFY step a recovery code goes to its own
+       route, POST /api/login/step/recovery with `step_token` and `code` - not /code, so a six-digit code and a recovery
+       code are never guessed apart. It shares the 5 wrong codes. Signed in, POST /api/account/recovery-codes makes ten
+       new ones (every unused old one thrown away) and answers them once. */
     const sessionCookie = (r: LoginResult): string =>
       `${r.cookie.name}=${r.cookie.value}; HttpOnly; Secure; SameSite=Strict; Path=/; Expires=${new Date(r.cookie.expires).toUTCString()}`;
     const stepAnswer = (status: number, token: string, extra: Record<string, unknown> = {}): void => {
@@ -190,7 +196,7 @@ export async function createApp(
       if (v === undefined) return send(res, 401, { error: SI.STEP_GONE });
       // The step token goes back only in the body, to the caller that holds it already or has just earned it.
       send(res, status, { ...extra, step: v.step, needs: v.needs, method: v.method, sent_to: v.sent_to,
-        app_key: v.app_key, otpauth_uri: v.otpauth_uri, expires_at: v.expires_at, step_token: token,
+        app_key: v.app_key, otpauth_uri: v.otpauth_uri, expires_at: v.expires_at, recovery_code: v.recovery_code, step_token: token,
         ...(v.refused === null ? {} : { error: v.refused }) });
     };
 
@@ -205,7 +211,7 @@ export async function createApp(
       return send(res, 200, { user: r.login.user });
     }
 
-    const apiStep = /^\/api\/login\/step(?:\/(new-password|method|code|resend))?$/.exec(path);
+    const apiStep = /^\/api\/login\/step(?:\/(new-password|method|code|resend|recovery))?$/.exec(path);
     if (apiStep && req.method === 'POST') {
       const body = await readJson(req);
       const str = (k: string): string => (typeof body[k] === 'string' ? body[k] as string : '');
@@ -215,12 +221,15 @@ export async function createApp(
       const r = which === 'new-password' ? await SI.submitNewPassword(app, token, str('password'), typeof body.again === 'string' ? body.again : str('password'))
         : which === 'method' ? SI.chooseMethod(app, token, str('method'))
         : which === 'code' ? SI.submitCode(app, token, str('code'))
+        : which === 'recovery' ? SI.submitRecoveryCode(app, token, str('code'))
         : SI.resendCode(app, token);
       if (r.kind === 'SESSION') {
         res.setHeader('set-cookie', sessionCookie(r.login));
-        return send(res, 200, { user: r.login.user });
+        return send(res, 200, { user: r.login.user,
+          ...(r.recovery_codes === undefined ? {} : { recovery_codes: r.recovery_codes }),
+          ...(r.recovery_left === undefined ? {} : { recovery_codes_left: r.recovery_left }) });
       }
-      if (r.kind === 'ACCOUNT_DONE') return send(res, 200, { done: true });
+      if (r.kind === 'ACCOUNT_DONE') return send(res, 200, { done: true, ...(r.recovery_codes === undefined ? {} : { recovery_codes: r.recovery_codes }) });
       if (r.kind === 'GONE') return send(res, 401, { error: r.why });
       if (r.kind === 'ERROR') return stepAnswer(400, token, { error: r.why });
       return stepAnswer(202, token, r.note === undefined ? {} : { note: r.note });
@@ -234,6 +243,11 @@ export async function createApp(
       logout(app.deps, session.session_id, session.user);
       res.setHeader('set-cookie', `${SESSION_COOKIE_NAME}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`);
       return send(res, 200, { ok: true });
+    }
+
+    if (path === '/api/account/recovery-codes' && req.method === 'POST') {
+      const r = SI.makeNewRecoveryCodes(app, actor); // PHASE 151m: the same function as the website's button
+      return r.ok ? send(res, 200, { recovery_codes: r.codes }) : send(res, 400, { error: r.why });
     }
 
     if (path === '/api/whoami' && req.method === 'GET') {

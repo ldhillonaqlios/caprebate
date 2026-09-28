@@ -230,8 +230,9 @@ describe('151k · 1 · the JSON API walks the steps, on the same functions as th
       const r = await fetch(`${w.base}/login/step/code`, { method: 'POST', redirect: 'manual',
         headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: `cb_step=${token}` },
         body: new URLSearchParams({ code: w.appCode(key) }).toString() });
-      assert.equal(r.status, 303);
-      assert.equal(r.headers.get('location'), '/staff');
+      // PHASE 151m: setting the step up answers the recovery codes page, whose one link goes to /staff
+      assert.equal(r.status, 200);
+      assert.match(await r.text(), /Your recovery codes[\s\S]*href="\/staff">I have saved them/);
       // and server.ts calls the step functions of src/web/sign-in.ts, and verifies no code of its own
       const src = readFileSync(join(import.meta.dirname, '..', 'src', 'server.ts'), 'utf8');
       assert.match(src, /SI\.submitCode\(/);

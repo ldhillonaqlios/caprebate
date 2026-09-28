@@ -36,6 +36,8 @@ export type AuditKind =
   | 'TWO_FACTOR_SET_UP' | 'TWO_FACTOR_REMOVED' | 'TEMPORARY_PASSWORD_ISSUED'
   /* PHASE 151k: `node src/cli.ts seal-app-secrets` sealed the app secrets still kept as text - a count, never a secret. */
   | 'APP_SECRETS_SEALED'
+  /* PHASE 151m: recovery codes made (a count and why, never a code), and one used (how many are left, never the code). */
+  | 'RECOVERY_CODES_MADE' | 'RECOVERY_CODE_USED'
   | 'RATE_LIMITED'
   | 'USER_CREATED' | 'USER_UPDATED' | 'USER_DISABLED' | 'ROLE_ASSIGNED'
   /** Phase 151: a role the super admin made, changed, or tried to make and was refused (src/web/role-editor.ts). */

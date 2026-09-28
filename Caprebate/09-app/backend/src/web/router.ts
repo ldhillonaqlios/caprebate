@@ -31,6 +31,7 @@ import type { Db } from '../db.ts';
 import { authenticate, logout, AuthError, SESSION_COOKIE_NAME, GENERIC_AUTH_FAILURE, TEMPORARY_PASSWORD_EXPIRED,
   requestPasswordReset, completePasswordReset, type LoginResult } from '../auth.ts';
 import * as SI from './sign-in.ts';
+import { RECOVERY_CODES_LOW } from './recovery-codes.ts';
 import { toActor } from '../users.ts';
 import { SITE_CSS, CSS_HEADERS, PNG_HEADERS } from './assets.ts';
 import { LOGO_INK_PNG } from './brand-logo.ts';
@@ -477,11 +478,12 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
 
   /* PHASE 151j — THE STEPS BETWEEN A RIGHT PASSWORD AND A SESSION (src/web/sign-in.ts). */
   if (path === '/login/step' && method === 'GET') {
-    const body = SI.stepPage(d.app, cookie(req, SI.STEP_COOKIE));
+    // PHASE 151m: ?use=recovery draws the VERIFY step as the recovery-code form.
+    const body = SI.stepPage(d.app, cookie(req, SI.STEP_COOKIE), undefined, undefined, url.searchParams.get('use') === 'recovery' ? 'recovery' : undefined);
     if (body === undefined) { res.setHeader('set-cookie', stepCookie(null)); html(res, 200, loginPage(SI.STEP_GONE)); return 'handled'; }
     html(res, 200, body); return 'handled';
   }
-  const stepAction = /^\/login\/step\/(password|method|code|resend)$/.exec(path);
+  const stepAction = /^\/login\/step\/(password|method|code|resend|recovery)$/.exec(path);
   if (stepAction && method === 'POST') {
     const f = await form(req);
     const raw0 = cookie(req, SI.STEP_COOKIE);
@@ -489,14 +491,28 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const r = which === 'password' ? await SI.submitNewPassword(d.app, raw0, f.get('password') ?? '', f.get('again') ?? '')
       : which === 'method' ? SI.chooseMethod(d.app, raw0, f.get('method') ?? '')
       : which === 'code' ? SI.submitCode(d.app, raw0, f.get('code') ?? '')
+      : which === 'recovery' ? SI.submitRecoveryCode(d.app, raw0, f.get('code') ?? '')
       : SI.resendCode(d.app, raw0);
-    if (r.kind === 'SESSION') { res.setHeader('set-cookie', [stepCookie(null), sessionCookie(r.login)]); redirectHome(res, r.login); return 'handled'; }
+    if (r.kind === 'SESSION') {
+      res.setHeader('set-cookie', [stepCookie(null), sessionCookie(r.login)]);
+      // PHASE 151m: a second step just set up shows its recovery codes, once, here - they are kept nowhere as text, so
+      // this answer is the page. With two or fewer left, the page after sign-in is "Your second step", which says so.
+      const home = mayEnterBackOffice(toActor(r.login.user)) ? '/staff' : '/portal';
+      if (r.recovery_codes !== undefined) { html(res, 200, SI.recoveryCodesPage(r.recovery_codes, { href: home, label: 'I have saved them. Continue' })); return 'handled'; }
+      if (r.recovery_left !== undefined && r.recovery_left <= RECOVERY_CODES_LOW) {
+        redirect(res, r.login.user.role === 'CLIENT' ? '/portal/two-factor' : '/staff/two-factor'); return 'handled';
+      }
+      redirectHome(res, r.login); return 'handled';
+    }
     if (r.kind === 'ACCOUNT_DONE') {
       res.setHeader('set-cookie', stepCookie(null));
-      redirect(res, actor?.role === 'CLIENT' ? '/portal/two-factor?done=set' : '/staff/two-factor?done=set'); return 'handled';
+      const done = actor?.role === 'CLIENT' ? '/portal/two-factor?done=set' : '/staff/two-factor?done=set';
+      if (r.recovery_codes !== undefined) { html(res, 200, SI.recoveryCodesPage(r.recovery_codes, { href: done, label: 'I have saved them. Continue' }, nav(actor))); return 'handled'; }
+      redirect(res, done); return 'handled';
     }
     if (r.kind === 'GONE') { res.setHeader('set-cookie', stepCookie(null)); html(res, 401, loginPage(r.why)); return 'handled'; }
-    const page0 = SI.stepPage(d.app, raw0, r.kind === 'ERROR' ? r.why : undefined, r.kind === 'STEP' ? r.note : undefined);
+    const page0 = SI.stepPage(d.app, raw0, r.kind === 'ERROR' ? r.why : undefined, r.kind === 'STEP' ? r.note : undefined,
+      which === 'recovery' ? 'recovery' : undefined);
     if (page0 === undefined) { res.setHeader('set-cookie', stepCookie(null)); html(res, 401, loginPage(SI.STEP_GONE)); return 'handled'; }
     html(res, r.kind === 'ERROR' ? 400 : 200, page0); return 'handled';
   }
@@ -538,13 +554,19 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
 
   /* PHASE 151j — A PERSON'S OWN SECOND STEP: set it up, change it, or (a client only) turn it off. A client's page is
      under /portal and a member of staff's under /staff, so each header links only inside its own application. */
-  const own = /^\/(staff|portal)\/two-factor(\/change|\/off)?$/.exec(path);
+  const own = /^\/(staff|portal)\/two-factor(\/change|\/off|\/recovery-codes)?$/.exec(path);
   if (own) {
     if (actor === undefined) { redirect(res, '/login'); return 'handled'; }
     const home = actor.role === 'CLIENT' ? '/portal/two-factor' : '/staff/two-factor';
     if (`/${own[1]}/two-factor` !== home) { redirect(res, home); return 'handled'; }
     if (own[2] === undefined && method === 'GET') {
-      html(res, 200, twoFactorPage(actor, home, SI.ownTwoFactor(d.app, actor), url.searchParams.get('done'), undefined)); return 'handled';
+      html(res, 200, twoFactorPage(actor, home, SI.ownTwoFactor(d.app, actor), url.searchParams.get('done'), undefined, SI.ownRecoveryCodesLeft(d.app, actor))); return 'handled';
+    }
+    /* PHASE 151m: "Make new recovery codes" - ten new ones, shown once on this answer, and every unused old one gone. */
+    if (own[2] === '/recovery-codes' && method === 'POST') {
+      const r = SI.makeNewRecoveryCodes(d.app, actor);
+      if (!r.ok) { html(res, 400, twoFactorPage(actor, home, SI.ownTwoFactor(d.app, actor), null, r.why, SI.ownRecoveryCodesLeft(d.app, actor))); return 'handled'; }
+      html(res, 200, SI.recoveryCodesPage(r.codes, { href: home, label: 'I have saved them. Back to your second step' }, nav(actor))); return 'handled';
     }
     if (own[2] === '/change' && method === 'POST') {
       res.setHeader('set-cookie', stepCookie(SI.startAccountSetup(d.app, actor)));
@@ -552,7 +574,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     }
     if (own[2] === '/off' && method === 'POST') {
       const r = SI.removeOwnTwoFactor(d.app, actor);
-      if (!r.ok) { html(res, 400, twoFactorPage(actor, home, SI.ownTwoFactor(d.app, actor), null, r.why)); return 'handled'; }
+      if (!r.ok) { html(res, 400, twoFactorPage(actor, home, SI.ownTwoFactor(d.app, actor), null, r.why, SI.ownRecoveryCodesLeft(d.app, actor))); return 'handled'; }
       redirect(res, `${home}?done=off`); return 'handled';
     }
   }
@@ -1587,8 +1609,16 @@ function resetPage(tok: string, error: string | undefined): string {
   });
 }
 
-function twoFactorPage(actor: Actor, home: string, method: SI.Method | null, done: string | null, error: string | undefined): string {
+function twoFactorPage(actor: Actor, home: string, method: SI.Method | null, done: string | null, error: string | undefined, recoveryLeft: number): string {
   const words = method === 'APP' ? 'an authenticator app' : method === 'EMAIL' ? 'a code sent to your email' : 'nothing yet';
+  // PHASE 151m: the recovery codes - how many are left, a warning with two or fewer, and a button for new ones.
+  const rc = SI.recoveryCodesWords(recoveryLeft);
+  const recovery = method === null ? raw('') : h`
+      <h2>Recovery codes</h2>
+      <p class="${rc.low ? 'err' : 'help'}">${rc.text}</p>
+      <p class="help">A recovery code lets you sign in if you lose your phone or cannot get your code. Each works once.
+      Making new codes throws away every one you have not used.</p>
+      <form method="post" action="${home}/recovery-codes"><button class="cta" type="submit">Make new recovery codes</button></form>`;
   return page({
     title: 'Your second step', nav: nav(actor),
     body: h`
@@ -1598,7 +1628,8 @@ function twoFactorPage(actor: Actor, home: string, method: SI.Method | null, don
       <p>When you sign in, after your password you use: <strong>${words}</strong>.</p>
       <form method="post" action="${home}/change"><button class="cta" type="submit">${method === null ? 'Set it up' : 'Change it'}</button></form>
       ${actor.role === 'CLIENT' && method !== null ? h`<form method="post" action="${home}/off"><button class="linkish" type="submit">Turn it off</button></form>` : raw('')}
-      ${actor.role === 'CLIENT' ? raw('') : h`<p class="help">Every staff login needs a second step, so it cannot be turned off.</p>`}`,
+      ${actor.role === 'CLIENT' ? raw('') : h`<p class="help">Every staff login needs a second step, so it cannot be turned off.</p>`}
+      ${recovery}`,
   });
 }
 

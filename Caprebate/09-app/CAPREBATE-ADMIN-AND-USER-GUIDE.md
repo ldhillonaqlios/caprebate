@@ -299,8 +299,9 @@ the person yourself, in person or by telephone, not by email. It works for 7 day
 their own password. Staff then set up their second step.
 
 **A new temporary password, or a lost phone.** Each row has two buttons for this. One is **New temporary password**. The
-other is **Reset second step**. A new temporary password signs them out and replaces their password. Resetting the second step signs them out
-too. They set it up again the next time they sign in.
+other is **Reset second step**. A new temporary password signs them out and replaces their password. Their recovery codes
+still work. Resetting the second step signs them out too. It also deletes their codes. They set it up again the next
+time they sign in, and get new codes. A person who lost their phone should try a recovery code first.
 
 **Changing a role.** Find "Change somebody's role". Choose the new role and press **Assign**. The page warns you:
 "Changing a role signs that person out at once. They sign in again with the new role." Your own account is not in that
@@ -326,6 +327,14 @@ has a login.
 **The second step.** Every staff login needs one, each time you sign in. After your password, you give a six-number code.
 It comes from an authenticator app on your phone, or in an email. You choose which the first time. A client may turn it
 on in their portal. See `B55`.
+
+**Recovery codes.** When you set up your second step, we show you ten recovery codes, once. Each code works once, in
+place of your six-number code. Use one if you lose your phone or cannot get your email. Save them or print them. Keep
+them somewhere safe, away from your phone. A password manager is good, or a printed copy at home. We only keep a scrambled
+copy, so we cannot show them to you again. When you use one, we email you to say so, and how many you have left. With 2
+or fewer left, the page after you sign in tells you. To get ten new ones, open **Your second step** and press **Make new
+recovery codes**. That throws away the old ones you have not used. Three more things delete them: a new second step,
+**Reset second step**, and a client turning their step off.
 
 ---
 
@@ -3699,20 +3708,33 @@ Everyone who signs in. Every staff login must use a second step. A client may ch
 2. The first time, choose **An authenticator app on my phone** or **An email**. The app is safest.
 3. For the app, scan the picture with Google Authenticator or Microsoft Authenticator. You can type the key instead.
 4. Type the six numbers and press **Continue**. You are in.
-5. Next time, type the six numbers your app shows, or the ones in the email.
-6. To change it, open your name at the top right, then **Your second step**.
+5. We then show you ten **recovery codes**, once. Save them or print them now. Then press **I have saved them. Continue**.
+6. Next time, type the six numbers your app shows, or the ones in the email.
+7. To change it, open your name at the top right, then **Your second step**.
+
+**Recovery codes**
+A recovery code lets you sign in if you lose your phone or cannot get your email. Each code works once.
+- Keep them somewhere safe, away from your phone. A password manager is good. So is a printed copy at home.
+- To use one, sign in with your password. Then press **Use a recovery code instead**, and type a code.
+- We email you each time one is used, with how many are left.
+- With 2 or fewer left, the page after you sign in tells you. Open **Your second step** and press **Make new recovery
+  codes**. You get ten new ones, and the old ones stop working.
+- We cannot show your codes again. We only keep a scrambled copy.
 
 **If you were given a temporary password**
 Sign in with it. You then choose your own password. Use at least 12 characters. A temporary password works for 7 days.
 
 **What it refuses, and why**
-- A wrong code. After 5 wrong codes you must sign in again.
+- A wrong code. After 5 wrong codes you must sign in again. A wrong recovery code counts too.
+- A recovery code used once already.
 - A code used once already. Wait for the next one.
 - A temporary password more than 7 days old. Ask your administrator for a new one.
 - Turning the second step off, for staff. Only a client can turn it off.
 
 **Check yourself**
-- *I lost my phone. What now?* Ask your administrator. They can reset it. Then you set it up again.
+- *I lost my phone. What now?* Use a recovery code. Then make new codes, and set up your new phone. No codes left? Ask
+  your administrator. They can reset it. Then you set it up again.
+- *I have used 8 of my 10 codes. What now?* Press **Make new recovery codes** on **Your second step**.
 - *I forgot my password. What now?* Press **Forgotten your password?** on the sign-in page. We email you a link.
 - *Does the email code work on the test website?* Not yet. Emails are not sent there. Use the authenticator app.
 

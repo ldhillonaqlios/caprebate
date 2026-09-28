@@ -86,6 +86,10 @@ async function world() {
   const lastEmail = (subject: string) => db.get<{ to_email: string; body: string }>('SELECT to_email, body FROM outbox WHERE subject = ? ORDER BY rowid DESC LIMIT 1', [subject]);
   const emailedCode = () => /code is (\d{6})/.exec(lastEmail('Your Cap Rebate sign-in code')?.body ?? '')?.[1] ?? '';
   const appCode = (secret: string, ahead = 0) => codeAt(secret, stepAt(NOW_MS) + ahead);
+  /** PHASE 151m: setting a second step up now answers 200 with the recovery codes, shown once; its one link goes where
+   *  the redirect used to. This is where that link points, or null if the answer is not that page. */
+  const onward = (r: Res): string | null => r.status === 200 && /Your recovery codes/.test(r.body)
+    ? (/<a class="cta" href="([^"]+)">I have saved them/.exec(r.body)?.[1] ?? null) : null;
   /** A staff login with no second step yet: sign in, choose the app, prove it. Returns the browser and the secret. */
   async function staffWithApp(email: string, password = SEED_PASSWORD) {
     const b = browser();
@@ -93,10 +97,10 @@ async function world() {
     await b.post('/login/step/method', { method: 'APP' });
     const secret = pendingSecret();
     const done = await b.post('/login/step/code', { code: appCode(secret) });
-    assert.equal(done.status, 303, done.body.slice(0, 300));
+    assert.equal(onward(done), '/staff', done.body.slice(0, 300));
     return { b, secret };
   }
-  return { made, db, browser, user, pendingSecret, lastEmail, emailedCode, appCode, staffWithApp, base, close: () => { made.server.close(); made.close(); } };
+  return { made, db, browser, user, pendingSecret, lastEmail, emailedCode, appCode, onward, staffWithApp, base, close: () => { made.server.close(); made.close(); } };
 }
 
 describe('151j · every staff login gives a second step; a password alone opens nothing', () => {
@@ -130,8 +134,7 @@ describe('151j · every staff login gives a second step; a password alone opens 
       assert.equal(wrong.status, 400);
       assert.ok(wrong.body.includes(WRONG_CODE));
       const right = await b.post('/login/step/code', { code: w.appCode(secret) });
-      assert.equal(right.status, 303);
-      assert.equal(right.location, '/staff');
+      assert.equal(w.onward(right), '/staff'); // PHASE 151m: the recovery codes page, then /staff
       assert.ok(b.jar.has('cb_session') && !b.jar.has('cb_step'));
       assert.equal((await b.req('/staff')).status, 200);
       const u = w.user('sales@example.invalid')!;
@@ -172,7 +175,7 @@ describe('151j · every staff login gives a second step; a password alone opens 
       assert.ok(!JSON.stringify(w.db.all('SELECT * FROM sign_in_steps')).includes(code), 'the code is stored in clear');
       assert.ok(!JSON.stringify(w.db.all('SELECT detail FROM audit_log')).includes(code), 'the code reached the audit log');
       const ok = await b.post('/login/step/code', { code });
-      assert.equal(ok.status, 303);
+      assert.equal(w.onward(ok), '/staff'); // PHASE 151m: the recovery codes page, then /staff
       assert.equal(w.user('surveying@example.invalid')?.mfa_method, 'EMAIL');
       // and next time a fresh code is emailed at the password
       const b2 = w.browser();
@@ -240,7 +243,7 @@ describe('151j · a client may choose a second step; staff cannot turn theirs of
       await b.post('/login/step/method', { method: 'APP' });
       const secret = w.pendingSecret();
       const done = await b.post('/login/step/code', { code: w.appCode(secret) });
-      assert.equal(done.location, '/portal/two-factor?done=set');
+      assert.equal(w.onward(done), '/portal/two-factor?done=set'); // PHASE 151m: the recovery codes page first
       const again = w.browser();
       assert.equal((await again.post('/login', { email: 'client@example.invalid', password: SEED_PASSWORD })).location, '/login/step');
       assert.equal((await again.post('/login/step/code', { code: w.appCode(secret, 1) })).location, '/portal');
@@ -285,7 +288,7 @@ describe('151j · the super user creates accounts with a temporary password, ass
       const chosen = await p.post('/login/step/password', { password: 'my-own-invented-password', again: 'my-own-invented-password' });
       assert.match(chosen.body, /Set up your second step/, 'staff went on without a second step');
       await p.post('/login/step/method', { method: 'APP' });
-      assert.equal((await p.post('/login/step/code', { code: w.appCode(w.pendingSecret()) })).location, '/staff');
+      assert.equal(w.onward(await p.post('/login/step/code', { code: w.appCode(w.pendingSecret()) })), '/staff'); // PHASE 151m
       assert.equal(w.user('new.starter@example.invalid')?.password_temporary_until, null);
       // the temporary password no longer works
       assert.equal((await w.browser().post('/login', { email: 'new.starter@example.invalid', password: temp })).status, 401);

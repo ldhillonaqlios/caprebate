@@ -42,7 +42,9 @@ export type OutboundMessage = {
   /** SIGNED_LETTER — Phase 146f: the client's own copy of the engagement letter they signed, as a PDF. */
   /** SIGN_IN_CODE — Phase 151k: a six-digit sign-in code (src/web/sign-in.ts). With PASSWORD_RESET, its words are taken
    *  out of the outbox once it has really been sent (src/stubs/email-provider.ts, blankSentSecrets). */
-  kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER' | 'ACCOUNT_VERIFY' | 'FREE_TYPED' | 'SIGNED_LETTER' | 'SIGN_IN_CODE';
+  /** RECOVERY_CODE_USED — Phase 151m: a recovery code was used to sign in, and how many are left. It carries NO code, so
+   *  it is not one of the kinds blankSentSecrets empties: its words stay, as every other email's do. */
+  kind: 'PASSWORD_RESET' | 'WELCOME' | 'NOTIFICATION' | 'CALENDAR_INVITE' | 'TEMPLATE' | 'COMPLIANCE_LETTER' | 'ACCOUNT_VERIFY' | 'FREE_TYPED' | 'SIGNED_LETTER' | 'SIGN_IN_CODE' | 'RECOVERY_CODE_USED';
   /**
    * The organisation the message is about, where there is one. CRM 1 of 10.
    * Optional because a staff password reset is about nobody's organisation —

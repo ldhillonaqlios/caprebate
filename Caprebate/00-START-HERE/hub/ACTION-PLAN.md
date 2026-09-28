@@ -489,6 +489,12 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   SENT sign-in code or reset link loses its outbox body (migration 058).
   The screenshot tool signs in with 09-app/backend/tools/demo-sign-in.ts,
   demo logins on this machine only.
+  Since Phase 151m: ten RECOVERY CODES, shown once when a second step is set
+  up and on "Make new recovery codes" (/staff/two-factor, /portal/two-
+  factor; POST /api/account/recovery-codes), kept only as scrypt hashes in
+  recovery_codes (migration 059, src/web/recovery-codes.ts). One is taken
+  in place of the code at the VERIFY step (/login/step/recovery,
+  /api/login/step/recovery), once, within the same 5 wrong codes.
 
 THE LOCK - hub/CLAIM.md replaces monday.com's "Claimed by (machine)" column
   Before a phase starts: write the phase, the machine and the time there,
@@ -906,80 +912,6 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 151m — recovery codes: ten one-use codes, so a person who loses their phone can still sign in
-
- **Model: Opus. Written 28 September 2026 by the Phase 151k follow-up.** Tracker row: "Phase 151m - recovery codes" (13133268311) in 05 · FOR DEVELOPMENT. Runs next (151l ran on 28 September 2026), then the sweep.
-
- **Why this exists.** Phase 151k asked Lakhbir "Do you want recovery codes, so a person who loses their phone can still sign in?" (Word question 232), recommending not yet. He answered **yes** in the chat on 28 September 2026, and the question is closed. Today a person who loses their phone must ask the super user to reset their second step. Nobody has to answer anything more to build this.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
-═══════════════════════════════════
-
-Mac copy. Take a .bak-phase151m sibling of every file you change. Tracker row:
-"Phase 151m - recovery codes" (13133268311). Lakhbir, 28 Sep 2026, Word
-question 232 (closed): yes to recovery codes. Read first: src/web/sign-in.ts
-(describeStep, submitCode, startAccountSetup, resetTwoFactor,
-removeOwnTwoFactor), the JSON API steps in src/server.ts, src/mfa-seal.ts, the
-"Built by Phase 151j" and "Built by Phase 151k" sections of the Developer
-Spec, test/phase151j.test.ts and test/phase151k.test.ts. Invented people only;
-no network. NEW FILES: check each with git check-ignore -v - the .gitignore
-ignores *secret*, *.key, *.env and .env.* anywhere (Phase 151k lost a file
-that way until the rename).
-
-1. THE CODES. Ten, each about 50 bits from a set with no look-alikes, in
-   groups a person can read out (like temporaryPassword()). Kept ONLY as a
-   hash bound to the person (a new table in a new migration: user, hash,
-   made_at, used_at), never as text, never in a log or an audit row.
-2. WHEN THEY ARE MADE. Shown ONCE, on the page after a second step is first
-   set up (staff and clients alike), and from "Your second step"
-   (/staff/two-factor, /portal/two-factor) as "Make new recovery codes",
-   which throws away every unused one. The page says: save or print them,
-   each works once, they will not be shown again. The JSON API gets the same
-   (the step's answer carries them once, and a route for new ones), on the
-   same functions - never a second implementation.
-3. USING ONE. At the VERIFY step, on the website and the API, a recovery
-   code is taken in place of the app or email code (a link "Use a recovery
-   code instead" on the page; the API takes it on /api/login/step/code or a
-   route of its own - say which). It counts toward the same 5 wrong codes,
-   is used once, is audited (RECOVERY_CODE_USED, with how many are left,
-   never the code), and emails the person that one was used and how many
-   remain (the outbox; a new kind, and add it to blankSentSecrets only if
-   the email carries a code - it should not). With 2 or fewer left, the page
-   after sign-in says so and offers new ones.
-4. WHAT CLEARS THEM. The super user's "Reset second step", a client turning
-   theirs off, and setting a new second step up all delete the person's
-   codes. A new temporary password does not.
-5. WORDS. The step page's "Lost your phone? Ask your administrator..." line
-   names recovery codes first. The Help page B55 (src/web/help-content.ts)
-   and CAPREBATE-ADMIN-AND-USER-GUIDE.md (the second step, near line 326):
-   what they are, where to keep them, what to do when they run out. Grade 7
-   in the guide; run the plain-words check.
-6. TESTS, red on the pre-change code: ten made and shown once; stored only as
-   hashes; one signs in once and never twice; a wrong one counts toward the 5;
-   the email and the audit row carry no code; making new ones voids the old;
-   each of the three clearings; the API walks the same path; a client too.
-
-CHECKS - npm run check; the site harness, both modes; phase3 and phase9 from
-inside their folders; the drift checker and its negative control (on its own
-line); the plain-words check; the tracker check; the register check and the
-CRM fold check; payload-proof. Commit and push; check the live test website:
-"/" answers 200 and the login page renders with its "Forgotten your password?"
-link.
-```
-
 ## PHASE 152 — Sweep and stress-test (the recurring one, always last)
 
 
@@ -1195,7 +1127,8 @@ after that phase.
    the open one still the document from before 230, the closed one byte for
    byte the Mac file). So the merge now carries the CLOSED document too:
    230 and 231 into the open cloud copy, 232 into the closed one. The build
-   is Phase 151m. BUILDABLE.
+   is done (Phase 151m, 28 Sep 2026); the merge is still this sweep's.
+   BUILDABLE.
    AND THE SIGN-UP CONFIRMATION LINK (Phase 151k): Phase 151k blanks a SENT
    sign-in code or reset link in the outbox (SENT_SECRET_KINDS, migration
    058), as it was asked. An ACCOUNT_VERIFY email carries a single-use link
@@ -1575,12 +1508,12 @@ WHEN DONE
 
 ## 6 · What Claude is building next
 
- **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 by Phase 151l: one item, and no orphan.** Recovery codes (151m), which Lakhbir said yes to that afternoon (Word question 232). The land boundary's first download as a test lookup (151l) is built: `smoke HMLR_INSPIRE`, and running it is Lakhbir's (section 3, row 13). Until Phase 151l closed this read two items: 151l, then 151m. Sign-in hardening (151k) ran on 28 September 2026 and is Done. Until then this read two items: 151k, then 151l. The test website's uploaded documents on a store every copy reaches (151i) are built and switched off, and wait on Lakhbir connecting a private Blob store (Word question 231). Until Phase 151i closed this read three items, 151i first. The test lookups Lakhbir allowed (151g) are built. The test website's row (151e) is finished on Claude's side and waits on Lakhbir opening a Turso database (Word question 230). Until 27 September this read: the test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
+ **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 by Phase 151m: empty, and no orphan.** Nothing is waiting for Claude to build; the sweep is next. Recovery codes (151m) ran on 28 September 2026 and are Done. Until Phase 151m closed this read one item: 151m. The land boundary's first download as a test lookup (151l) is built: `smoke HMLR_INSPIRE`, and running it is Lakhbir's (section 3, row 13). Until Phase 151l closed this read two items: 151l, then 151m. Sign-in hardening (151k) ran on 28 September 2026 and is Done. Until then this read two items: 151k, then 151l. The test website's uploaded documents on a store every copy reaches (151i) are built and switched off, and wait on Lakhbir connecting a private Blob store (Word question 231). Until Phase 151i closed this read three items, 151i first. The test lookups Lakhbir allowed (151g) are built. The test website's row (151e) is finished on Claude's side and waits on Lakhbir opening a Turso database (Word question 230). Until 27 September this read: the test website (151e), and the test lookups Lakhbir allowed (151g). Taking back a pick ran as Phase 146j the same day and is recorded in PHASE HISTORY. Phase 151f switched the identity check to Didit the same day. Every item is covered by a phase, which is the test Amendment 1 sets. Phases 151b and 151c ran on 25 September 2026 and are recorded in PHASE HISTORY.
 
 
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
-|  Claude |  Recovery codes: ten one-use codes, shown once, so a person who loses their phone can still sign in (Phase 151m) |  Lakhbir answered yes on 28 September 2026 (Word question 232, closed); written by the Phase 151k follow-up |
+|  — |  Nothing: the queue is empty (re-derived by Phase 151m, 28 September 2026) |  Recovery codes were the last item, and Phase 151m built them |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 
