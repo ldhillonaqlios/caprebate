@@ -1193,6 +1193,15 @@ after that phase.
    What is left to prove before 231 closes: BLOB_STORE_ID on the project
    (connected), Turso on, the log line "uploaded documents are kept in the
    private document store", and an invented file opening in a second copy.
+   READ AT 11:07 ON 28 SEP (Lakhbir, the function log): "the lasting
+   database could not be opened (), so the records are kept in memory" -
+   Turso IS set and failed to open, and the reason was blank (libsql's error
+   code is empty). The log now prints the library's words, address and token
+   cut out (openFailure, api/index.mjs). Read that line after the next start,
+   fix what it names, and only then prove 230 and 231. Until then each copy
+   keeps its own memory, so a sign-in's second step can land on a copy that
+   never saw it and be refused ("That sign-in has timed out"), as it was at
+   11:07:15 and 11:07:33.
    AND THE FIRST REQUEST AFTER EVERY DEPLOY TIMES OUT (Phases 151j and 151i,
    28 Sep 2026): "/" answered 504 after 30 s on the new copy's first start,
    twice running; every request after it answered 200 in under half a

@@ -74,7 +74,8 @@ describe('151e line 7 · 2 · the test website opens its lasting database, or fa
     try {
       assert.equal(o.lasting, false);
       assert.equal(o.made.app.db.kind, 'memory');
-      assert.match(o.why, /could not be opened \(ECONNREFUSED\), so the records are kept in memory/);
+      // Phase 151i follow-up: the code, then the library's own words with the address cut out (libsql's code is empty).
+      assert.match(o.why, /could not be opened \(ECONNREFUSED: connect failed to \[hidden\]\), so the records are kept in memory/);
       assert.ok(!o.why.includes('secret-host') && !o.why.includes('invented-secret-token'), 'the address or the token was printed');
       assert.ok(users(o.made) > 0, 'the fallback was not seeded');
     } finally { o.made.close(); }

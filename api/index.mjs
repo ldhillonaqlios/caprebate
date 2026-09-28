@@ -161,7 +161,7 @@ export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_00
     return { made, lasting: false, why };
   };
   if (lasting.authToken === undefined) return memory(lasting.why);
-  const reason = (e) => String(e?.code ?? e?.name ?? 'an error');
+  const reason = (e) => openFailure(e, lasting);
   let made;
   try {
     // PHASE 151i: `lastingOnly` (the shared document store) goes with the lasting database and never with memory.
@@ -182,6 +182,29 @@ export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_00
     try { made.close(); } catch { /* already gone */ }
     return memory(`the lasting database could not be seeded (${reason(e)}), so the records are kept in memory`);
   }
+}
+
+/**
+ * PHASE 151i follow-up, 28 September 2026: WHY THE LASTING DATABASE WOULD NOT OPEN, IN WORDS A PERSON CAN ACT ON.
+ * Line 7 printed only an error's code or name. The libsql library's errors carry an EMPTY code and put everything in
+ * the message ("Hrana(Http(\"error trying to connect: ...\"))"), so the live website's first real attempt on Turso
+ * logged "could not be opened ()". Now the code (or name) and the library's own words are printed, AFTER every copy
+ * of the address, its host name and the token is cut out, and anything else shaped like a token or an address.
+ * Never more than 200 characters of it.
+ */
+export function openFailure(e, lasting) {
+  const code = String(e?.code ?? '').trim() || String(e?.name ?? '').trim() || 'an error';
+  let words = String(e?.message ?? '');
+  const hidden = [lasting?.authToken, lasting?.location];
+  try { hidden.push(new URL(String(lasting?.location ?? '')).host); } catch { /* not an address: nothing more to hide */ }
+  for (const h of hidden) if (typeof h === 'string' && h.trim().length >= 4) words = words.split(h.trim()).join('[hidden]');
+  words = words
+    .replace(/eyJ[\w-]+(?:\.[\w-]+){1,2}/g, '[hidden]')           // a JSON web token, which is what Turso's tokens are
+    .replace(/\b(?:libsql|https?|wss?):\/\/[^\s"')]+/gi, '[address]')
+    .replace(/[\w-]+\.turso\.io\b/gi, '[address]')
+    .replace(/\s+/g, ' ').trim()
+    .slice(0, 200);
+  return words === '' || words === code ? code : `${code}: ${words}`;
 }
 
 /**

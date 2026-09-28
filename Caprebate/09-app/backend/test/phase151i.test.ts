@@ -457,3 +457,40 @@ describe('151i · 4 · the audit log on a database two copies share', () => {
     assert.match(r.out, /audit log intact: 4 entries/);
   });
 });
+
+describe('151i follow-up · why the lasting database would not open, in the library\'s own words', () => {
+  // What libsql 0.5.29 throws when a remote open fails, measured on this Mac on 28 Sep 2026: an Error whose code is
+  // EMPTY and whose message carries everything. The live test website logged "could not be opened ()" from exactly this.
+  const ADDRESS = 'libsql://caprebate-invented-151i.aws-us-east-1.turso.io';
+  const TOKEN = 'eyJhbGciOiJFZERTQSJ9.eyJpbnZlbnRlZCI6dHJ1ZX0.aW52ZW50ZWQtc2lnbmF0dXJl';
+  const lasting = { location: ADDRESS, authToken: TOKEN, why: 'the records are kept in the lasting database' };
+  const libsqlError = (message: string) => Object.assign(new Error(message), { code: '' });
+  type WithFailure = { openFailure: (e: unknown, l: Lasting) => string };
+
+  test('the reason names what went wrong, and never the address, its host or the token, even when the library repeats them', async () => {
+    const { openFailure } = (await entry()) as unknown as WithFailure;
+    const refused = openFailure(libsqlError('Hrana(Http("error trying to connect: tcp connect error: Connection refused (os error 61)"))'), lasting);
+    assert.match(refused, /^Error: Hrana\(Http\("error trying to connect: tcp connect error: Connection refused/);
+    const told = openFailure(libsqlError(`Hrana(Api("status=401 Unauthorized, token ${TOKEN} refused by caprebate-invented-151i.aws-us-east-1.turso.io at ${ADDRESS}"))`), lasting);
+    assert.match(told, /401 Unauthorized/);
+    for (const secret of [TOKEN, ADDRESS, 'caprebate-invented-151i', 'eyJ']) assert.equal(told.includes(secret), false, `the reason carries ${secret}`);
+    const other = openFailure(libsqlError(`failed for another-db.turso.io with eyJvdGhlciI6MX0.eyJ4IjoxfQ.c2ln and https://x.example.invalid/y`), lasting);
+    assert.equal(/turso\.io|eyJ|example\.invalid/.test(other), false, other);
+    assert.ok(openFailure(libsqlError('x'.repeat(1000)), lasting).length <= 'Error: '.length + 200);
+    assert.equal(openFailure(Object.assign(new Error(''), { code: 'ECONNREFUSED' }), lasting), 'ECONNREFUSED');
+  });
+
+  test('the website falls back to memory and its log line says why, in words', async () => {
+    const { openLasting } = await entry();
+    const failing = (async (loc: string, o: object) => {
+      if (loc !== ':memory:') throw libsqlError(`Hrana(Api("status=404 Not Found: database ${ADDRESS} does not exist"))`);
+      return createApp(loc, o);
+    }) as typeof createApp;
+    const o = await openLasting(failing, seed, lasting, { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151i-why-')), now: () => NOW }, 0);
+    try {
+      assert.equal(o.lasting, false);
+      assert.match(o.why, /^the lasting database could not be opened \(Error: Hrana\(Api\("status=404 Not Found: database \[hidden\] does not exist"\)\)\), so the records are kept in memory$/);
+      assert.equal(o.why.includes(ADDRESS) || o.why.includes(TOKEN), false);
+    } finally { o.made.close(); }
+  });
+});

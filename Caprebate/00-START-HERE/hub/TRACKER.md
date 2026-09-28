@@ -1348,6 +1348,7 @@
 - Note 2026-09-27 (Phase 151e): Written by Phase 151e (lines 4-5): with the lasting database on, uploaded documents would still sit on each copy's temporary disk. Build a store every copy reaches, switched off.
 - Note 2026-09-28 (Phase 151i): Built and switched off: uploaded documents go to one private Vercel Blob store when the lasting database is in use and a store is connected; the audit log survives two copies appending. Waits on Lakhbir connecting a private Blob store (Word question 231).
 - Note 2026-09-28 (Phase 151i): Lakhbir, in the chat: the Blob store is created, Private, and redeployed. Recorded under Word question 231 (Mac file). Still to prove: connected to caprebate-test, Turso on beside it, a file opening in a second copy - the sweep's step 3.
+- Note 2026-09-28 (Phase 151i): The live log said Turso 'could not be opened ()': set, but failing, and libsql leaves an error's code empty. The log now prints the library's words (address and token cut out). The Blob store stayed off, as designed, because the lasting database was not in use.
 
 ### Phase 151j - sign-in: forgot password, temporary passwords, two-factor by email code or authenticator app
 
