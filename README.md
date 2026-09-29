@@ -23,9 +23,10 @@ Keep the forwarded port **Private** (the default).
 
 What to try (since 18 September 2026):
 
-- `/` is the website (`Caprebate site.html`). **Log in** (top right) goes to the sign-in page; a signed-in person goes
-  straight to their home. **Start your assessment** goes to the real assessment.
-- **Request my estimate** at the bottom of the website sends an enquiry. Sign in as `sales@example.invalid`, open
+- `/` is the home page (`Caprebate/09-app/site/home.html`, since 29 September 2026; `Caprebate site.html` without it).
+  **Log in** (top bar) goes to the sign-in page; a signed-in person goes straight to their home. **Am I eligible?** goes to
+  the real assessment, in the home page's colours.
+- **Send my enquiry** (Contact us, above the questions) sends an enquiry. Sign in as `sales@example.invalid`, open
   **Leads**, then **Website enquiries**, and open it as a lead or close it.
 - Finish the assessment signed out: the thank-you page offers **Create my login**. No email is really sent; the
   "Confirm your Cap Rebate login" message, with its link, is printed in the demo's terminal. Open the link and press

@@ -74,6 +74,7 @@ import {
 } from './introducers.ts';
 import { clientDeliverables, type ClientDeliverable } from './claim-record.ts';
 import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from './public-site.ts';
+import { homeEdition, gsapScript, HOME_PAGE_HEADERS } from './home-site.ts';
 import { receiveEnquiry } from './enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
 import { ANSWER_MYSELF_LABEL, checkedLine, checkPropertyPostcodes, lookupsOffered, recordLookupsDeclined, type KeptCheck } from './address-check.ts';
@@ -182,7 +183,8 @@ async function inContext(d: WebDeps, path: string, work: () => Promise<WebResult
 
 function nav(actor: Actor | undefined): Safe {
   return actor === undefined
-    ? h`<nav><a href="/assessment">Free assessment</a><a href="/login">Log in</a></nav>`
+    // 29 Sep 2026: the public header says what the home page's button says (Lakhbir: "Am I eligible?").
+    ? h`<nav><a class="navcta" href="/assessment">Am I eligible?</a><a href="/login">Log in</a></nav>`
     // PHASE 133a: a signed-in person gets their application's header — the back office's for staff, the portal's for a client.
     : mayEnterBackOffice(actor) ? staffShell(actor) : portalShell(actor);
 }
@@ -247,7 +249,23 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const site = siteEdition();
     if (site !== undefined) { res.writeHead(200, SITE_JS_HEADERS); res.end(site.js); return 'handled'; }
   }
+  /* 29 SEPTEMBER 2026: THE NEW HOME PAGE (src/web/home-site.ts), its style, its script and GSAP, when the file is beside
+     the build. Without it, `/` is `Caprebate site.html` as below. */
+  if (path === '/assets/home.css' && method === 'GET') {
+    const edition = homeEdition();
+    if (edition !== undefined) { res.writeHead(200, CSS_HEADERS); res.end(edition.css); return 'handled'; }
+  }
+  if (path === '/assets/home.js' && method === 'GET') {
+    const edition = homeEdition();
+    if (edition !== undefined) { res.writeHead(200, SITE_JS_HEADERS); res.end(edition.js); return 'handled'; }
+  }
+  if (path === '/assets/gsap.min.js' && method === 'GET') {
+    const gsap = gsapScript();
+    if (gsap !== null) { res.writeHead(200, { ...SITE_JS_HEADERS, 'cache-control': 'public, max-age=86400' }); res.end(gsap); return 'handled'; }
+  }
   if (path === '/' && method === 'GET') {
+    const edition = homeEdition();
+    if (edition !== undefined) { res.writeHead(200, HOME_PAGE_HEADERS); res.end(edition.html); return 'handled'; }
     const site = siteEdition();
     if (site !== undefined) {
       // PHASE 146f: the analytics measurement id comes from the key file, not the file (src/analytics.ts). None, no change.

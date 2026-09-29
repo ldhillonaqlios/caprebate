@@ -723,6 +723,65 @@ a.small{font-size:16px;font-weight:400;margin-left:.5rem}
   .gbtns button{flex:1 1 auto}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* ================================================================== *
+ * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
+ * Lakhbir: "when someone clicks am i eligible it matches the colours of
+ * the new home page". The assessment, sign-in and the enquiry's
+ * thank-you (body.public) take the home page's ink ground, ivory type,
+ * Cap Mint actions and its mark. The back office and the portal are
+ * untouched: every rule below starts body.public.
+ * ================================================================== */
+body.public{--white:#121614;--mist:#1b201e;--ink:#EDEAE2;--body:#c9ccc8;--mut:#a4aca8;--accent:#ABEDD8;--on-accent:#111111;--line:#2d3532;--focus:#ABEDD8;--ok:#9fe3bd;--okbg:#15291f;--warn:#f2c46b;--warnbg:#2a2210;--stop:#f0a08f;--stopbg:#2c1714;background:#121614;color:#c9ccc8}
+body.public a{color:#ABEDD8}
+body.public .top{background:#121614;border-bottom:1px solid #2d3532}
+body.public .topline{padding:.9rem 1.5rem;max-width:74rem;min-height:76px}
+body.public .brandmark{display:inline-flex;align-items:center;gap:12px;text-decoration:none;color:#EDEAE2}
+body.public .brandmark .wm{font-family:"Roboto Slab","Rockwell","Bookman Old Style",Georgia,serif;font-weight:800;font-size:13px;letter-spacing:.18em;text-transform:uppercase}
+body.public .mark{width:52px;height:52px;overflow:visible}
+body.public .mk{fill:none;stroke:#EDEAE2;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1 1;stroke-dashoffset:0;animation:pubmkloop 3.8s cubic-bezier(.65,0,.35,1) infinite}
+body.public .mk-scr{fill:none;stroke:#ABEDD8;stroke-width:2.6;transform-box:fill-box;transform-origin:50% 50%;animation:pubmkin 3.8s ease infinite both}
+body.public .mk-key{fill:#EDEAE2;transform-box:fill-box;transform-origin:50% 50%;animation:pubmkin 3.8s ease infinite both}
+body.public .mk-key:nth-of-type(2){animation-delay:.12s}body.public .mk-key:nth-of-type(3){animation-delay:.18s}body.public .mk-key:nth-of-type(4){animation-delay:.24s}
+body.public .mk-key:nth-of-type(5){animation-delay:.30s}body.public .mk-key:nth-of-type(6){animation-delay:.36s}body.public .mk-key:nth-of-type(7){animation-delay:.42s}
+@keyframes pubmkloop{0%{stroke-dashoffset:1}32%{stroke-dashoffset:0}72%{stroke-dashoffset:0}100%{stroke-dashoffset:-1}}
+@keyframes pubmkin{0%,28%{opacity:0;transform:scale(.3)}38%,70%{opacity:1;transform:scale(1)}80%,100%{opacity:0;transform:scale(.3)}}
+@media (prefers-reduced-motion:reduce){body.public .mk,body.public .mk-scr,body.public .mk-key{animation:none}}
+body.public .top nav:not(.appnav){margin-left:auto;display:flex;align-items:center;gap:1.4rem}
+body.public .top nav:not(.appnav) a{margin-right:0;color:#c9ccc8;text-decoration:none;font-size:16px}
+body.public .top nav:not(.appnav) a:hover{color:#EDEAE2}
+body.public .top nav:not(.appnav) a.navcta{display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#ABEDD8;color:#111111;font-weight:700;font-size:15px}
+body.public .top nav:not(.appnav) a.navcta:hover{background:#c4f3e3;color:#111111}
+body.public main{max-width:48rem;padding:3rem 1.5rem 5rem}
+body.public h1,body.public h2,body.public h3,body.public h4{color:#EDEAE2}
+body.public h1{font-size:clamp(32px,4.4vw,48px);letter-spacing:-.01em}
+body.public h2{font-size:clamp(26px,3.2vw,38px);line-height:1.18;letter-spacing:-.01em}
+body.public .rung{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#ABEDD8;margin:0 0 .4rem}
+body.public .group,body.public .eyebrow{font-size:14px;letter-spacing:.04em;color:#a4aca8}
+body.public .help,body.public p{color:#c9ccc8}
+body.public label,body.public .fl,body.public legend{color:#EDEAE2}
+body.public .opts{gap:.75rem;margin:1.5rem 0}
+body.public .opt{background:#1b201e;border:1px solid #3e4945;border-radius:14px;padding:1rem 1.15rem;color:#EDEAE2;font-size:17px;font-weight:600;cursor:pointer;transition:border-color .25s ease,box-shadow .3s ease,background .25s ease}
+body.public .opt:hover,body.public .opt:focus-within{border-color:#ABEDD8;box-shadow:0 0 0 1px #ABEDD8,0 0 26px 2px rgba(171,237,216,.3)}
+body.public .opt:has(input:checked),body.public .opt.sel{border-color:#ABEDD8;background:rgba(171,237,216,.1);box-shadow:inset 0 0 0 1px #ABEDD8}
+body.public input[type="checkbox"],body.public input[type="radio"]{accent-color:#ABEDD8}
+body.public input,body.public select,body.public textarea,body.public .fi{background:#1b201e;color:#EDEAE2;border:1px solid #3e4945;border-radius:12px;min-height:3rem;padding:.65rem .85rem;color-scheme:dark}
+body.public input[type="checkbox"],body.public input[type="radio"]{min-height:0;padding:0}
+body.public input:focus-visible,body.public select:focus-visible,body.public textarea:focus-visible,body.public .fi:focus-visible{outline:none;border-color:#ABEDD8;box-shadow:0 0 0 1px #ABEDD8,0 0 22px rgba(171,237,216,.28)}
+body.public .cta,body.public .btn-primary,body.public button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet){background:#ABEDD8;border-color:#ABEDD8;color:#111111;border-radius:999px;font-weight:700;min-height:3rem;padding:.7rem 1.5rem}
+body.public .cta:hover,body.public .btn-primary:hover,body.public button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet):hover{background:#c4f3e3;border-color:#c4f3e3;color:#111111}
+body.public .btn-quiet{background:transparent;color:#EDEAE2;border-color:#3e4945;border-radius:999px}
+body.public .card,body.public .pblock,body.public .assumebox,body.public .gate{background:#1b201e;border-color:#2d3532;color:#c9ccc8;border-radius:16px}
+body.public .figbig{color:#ABEDD8;font-size:clamp(40px,6vw,64px)}
+body.public table{color:#c9ccc8}
+body.public th,body.public td{border-color:#2d3532}
+body.public .err{color:#f0a08f}
+body.public .ok{color:#9fe3bd}
+body.public .foot{background:#0e1210;border-top:1px solid #2d3532;color:#a4aca8}
+body.public .foot p{color:#a4aca8}
+body.public .foot a{color:#EDEAE2}
+body.public .skip:focus{background:#121614;color:#EDEAE2}
+@media (max-width:620px){body.public .brandmark .wm{font-size:12px;letter-spacing:.14em}body.public .mark{width:44px;height:44px}body.public .top nav:not(.appnav){gap:.9rem}}
 `;
 
 /**

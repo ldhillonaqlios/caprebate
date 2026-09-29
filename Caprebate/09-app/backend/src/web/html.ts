@@ -73,6 +73,16 @@ function renderValue(v: unknown): string {
  * unreadable, which was visible the first time the assessments list was opened
  * in a browser rather than asserted about in a test.
  */
+/** The home page's mark: a house whose body is a calculator (the supplied lockup's calculator, drawn as a building).
+ *  Inline SVG, no style attribute: its animation and colours are in the stylesheet (body.public). */
+export const PUBLIC_MARK =
+  '<svg class="mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">' +
+  '<path class="mk" pathLength="1" d="M14 43 H34 A4 4 0 0 0 38 39 V20.5 L24 8 L10 20.5 V39 A4 4 0 0 0 14 43 Z"/>' +
+  '<rect class="mk-scr" x="16" y="20" width="16" height="5.5" rx="1.6"/>' +
+  '<rect class="mk-key" x="16" y="29.5" width="4" height="4" rx="1"/><rect class="mk-key" x="22" y="29.5" width="4" height="4" rx="1"/>' +
+  '<rect class="mk-key" x="28" y="29.5" width="4" height="4" rx="1"/><rect class="mk-key" x="16" y="35.5" width="4" height="4" rx="1"/>' +
+  '<rect class="mk-key" x="22" y="35.5" width="4" height="4" rx="1"/><rect class="mk-key" x="28" y="35.5" width="4" height="4" rx="1"/></svg>';
+
 export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boolean }): string {
   // PHASE 133a: a header that carries its own home (the back office's or the portal's) is drawn as the application
   // header — the name, the search, my open tasks, the user menu, then the tabs. Anything else is the public header.
@@ -85,7 +95,12 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
   // or icon-only mark exists yet (slide 24). Phase 133a's invented "C" square is gone.
   // PHASE 133d (D1): every required field says "(required)" in words, put into its label here (src/web/required.ts).
   const staff = shell && home === '/staff';
-  const brand = staff
+  // 29 SEPTEMBER 2026: the public pages (the assessment, sign-in, the enquiry's thank-you) wear the new home page's
+  // colours and its mark — the calculator drawn as a house, with the name beside it (Lakhbir: "when someone clicks am i
+  // eligible it matches the colours of the new home page"). The client portal keeps the supplied lockup.
+  const brand = !shell
+    ? h`<a class="brandmark" href="/" aria-label="Cap Rebate, home">${raw(PUBLIC_MARK)}<span class="wm">Cap Rebate</span></a>`
+    : staff
     ? h`<a class="brand" href="${home}">Cap Rebate</a>`
     : h`<a class="logo" href="${home}"><img src="/assets/cap-rebate-logo.png" alt="Cap Rebate — capital allowances simplified" width="120" height="81"></a>`;
   return (

@@ -9,6 +9,7 @@
     "@anthropic-ai/sdk": "0.127.0",
     "@node-rs/argon2": "2.2.0",
     "@vercel/blob": "2.8.0",
+    "gsap": "3.14.2",
     "libsql": "0.5.29",
     "uqr": "0.1.3"
   }

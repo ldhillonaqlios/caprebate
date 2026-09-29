@@ -10802,3 +10802,16 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  NOT DONE: the lasting database itself - BLOCKED on Lakhbir reading the new "Why:" line on the identity panel (Word question 230).
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 29 September 2026 — the new home page on the test website, and the assessment in its colours (Opus, Mac copy)
+
+ Lakhbir: "this look good, push it to vercel", and "make sure when someone clicks am i eligble it matches the colours of the new home page".
+
+-  **The home page** designed in Website Content/landing-page (the drawn building, the calculator, the sector drawings, the 3% section, the contact form, the FAQ) is copied as one file to `Caprebate/09-app/site/home.html` and served at `/` by the new `src/web/home-site.ts`. Without that file `/` is `Caprebate site.html` as before, then the back end's own page. Its `<style>` is `/assets/home.css`, its `<script>` blocks, in order, `/assets/home.js`; the file was changed to carry no style attribute (page variables are `data-vars`, set by its script) and nothing inline is left, or the edition is refused.
+-  **Two things from outside, named.** GSAP, which draws the page, is served from this site (`/assets/gsap.min.js`, from `gsap` 3.14.2 now in the root `package.json`; absent, the drawings show finished). Cloudflare Turnstile checks the contact form: the home page's policy is the back end's plus scripts and frames from `https://challenges.cloudflare.com`, nothing else. **Its key is Cloudflare's public TEST key, which always passes, and `/enquiry` does not yet check the token**: the live key, the secret and the server check are a job before launch, and Turnstile needs a line in the privacy notice (Sadique).
+-  **The assessment, sign-in and thank-you pages (`body.public`) wear the home page's colours**: ink ground, ivory type, mint buttons and answer cards with the mint glow, and the new mark (the supplied lockup's calculator drawn as a house) with the name. The public menu says **Am I eligible?**. The back office and the portal are untouched (a test holds every theme rule to `body.public`).
+-  **Wording.** The home page's line "whether your rebate is large or small" became "whether your claim is large or small": the house voice (`src/web/voice.ts`) avoids "rebate" as a refund, and the phase133c test refused the page. The sector cards point to the calculator until the five sector pages exist. The home page gained a **Log in** link (phase133j's requirement).
+-  **Proof.** `test/home-page.test.ts`, nine tests; loosening the policy and adding one style attribute each turned them red. Three older tests now describe the new `/` (phase133a's policy line, phase133c's sign-in mark, phase133j's home page). `npm run check` exit 0, 1817 pass; the harness 1279/0/4; phase3 439; phase9 403; drift (`--fast --expect 1279,439,403,1817`, Developer Spec §4 to 1,817 and 3,938), CRM fold (the three new asset routes described), plain words, brand, register, analytics all green.
+-  NOT DONE: GSAP was not installed on the Mac, so the animation was checked on the deploy; the tall phone version of the hero video and its render (waiting on Lakhbir); the Turnstile live key and server check.
+
+ **Claim cleared** in the commit that carries this record.

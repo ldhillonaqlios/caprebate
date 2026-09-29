@@ -237,11 +237,18 @@ describe('no page carries inline script or style, and the CSP is unchanged', () 
       if (r.status !== 200) continue;
       /* PHASE 133j: `/` IS THE WEBSITE, and it carries exactly one script: its own, from this origin, as a file. Its CSP
          is the back end's with `script-src 'self'` added and nothing else loosened. Every other rule still holds. */
+      /* 29 SEPTEMBER 2026: `/` IS THE NEW HOME PAGE (src/web/home-site.ts). Its policy is the back end's with its own
+         script and Cloudflare's security check (scripts and frames from that one origin) added, nothing else loosened.
+         Its scripts are files from this origin, and the search engines' structured data, which a browser never runs. */
       if (path === '/') {
-        assert.equal(r.headers.get('content-security-policy'), CSP_BEFORE.replace("form-action", "script-src 'self'; form-action"),
-          '/ carries a policy other than the back end’s plus its own script');
-        assert.equal([...body.matchAll(/<script\b/gi)].length, 1, '/ carries more than its one script');
-        body = body.replace('<script src="/assets/site-page.js"></script>', '');
+        assert.equal(r.headers.get('content-security-policy'),
+          CSP_BEFORE.replace("form-action", "script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; form-action"),
+          '/ carries a policy other than the back end’s plus its own script and the security check');
+        const scripts = [...body.matchAll(/<script\b[^>]*>/gi)].map((m) => m[0]);
+        assert.deepEqual(scripts, ['<script src="/assets/gsap.min.js" defer>', '<script type="application/ld+json">', '<script src="/assets/home.js">'],
+          '/ carries a script other than its own files and its structured data');
+        body = body.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, '')
+          .replace('<script src="/assets/gsap.min.js" defer></script>', '').replace('<script src="/assets/home.js"></script>', '');
       }
       for (const [re, what] of INLINE) assert.equal(re.test(body), false, `${path} carries ${what}`);
     }

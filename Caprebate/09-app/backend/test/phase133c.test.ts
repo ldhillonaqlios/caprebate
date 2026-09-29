@@ -209,12 +209,16 @@ describe('the Cap Rebate brand', () => {
     const served = Buffer.from(await (await fetch(`${h.base}/assets/cap-rebate-logo.png`)).arrayBuffer());
     const supplied = readFileSync(join(import.meta.dirname, '..', '..', '..', '04-phase-work', 'phase133c', 'brand-assets', 'caprebate_logo_monoink_924.png'));
     assert.equal(Buffer.compare(served, supplied), 0);
+    // 29 SEPTEMBER 2026: the public pages (sign-in among them) wear the new home page's mark — the supplied lockup's
+    // calculator drawn as a house — with the name beside it. The portal keeps the supplied lockup; the back office the name.
     const login = await (await fetch(`${h.base}/login`)).text();
-    assert.match(login, /<a class="logo" href="\/"><img src="\/assets\/cap-rebate-logo.png" alt="Cap Rebate[^"]*" width="120"/);
+    assert.match(login, /<a class="brandmark" href="\/" aria-label="Cap Rebate, home"><svg class="mark" viewBox="0 0 48 48"[^>]*><path class="mk" pathLength="1" d="M14 43 H34[^"]*"\/>/);
+    assert.match(login, /<span class="wm">Cap Rebate<\/span><\/a>/);
     assert.match((await as('client').get('/portal')).body, /<img src="\/assets\/cap-rebate-logo.png"/);
     const staff = (await as('sales').get('/staff')).body;
     assert.match(staff, /<a class="brand" href="\/staff">Cap Rebate<\/a>/);
-    assert.equal(/class="mark"/.test(staff) || /class="mark"/.test(login), false, 'the invented "C" square is still drawn');
+    assert.equal(/class="mark"/.test(staff), false, 'the back office draws a mark');
+    assert.equal(/>C<\/span>|class="mark">C/.test(login), false, 'the invented "C" square is still drawn');
   });
 });
 

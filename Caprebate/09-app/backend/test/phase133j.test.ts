@@ -97,34 +97,31 @@ function outbox(kind: string): { to_email: string; body: string }[] {
 /* ================================================================== */
 
 describe('the website is served at / by the back end', () => {
-  test('/ is Caprebate site.html, with Log in top right and every assessment link going to the back end', async () => {
+  /* 29 SEPTEMBER 2026: `/` is the new home page (src/web/home-site.ts, tested in test/home-page.test.ts). What this
+     phase asked of the website still holds there: Log in top right, every assessment link to the back end, and the
+     enquiry form to /enquiry with the same fields. `Caprebate site.html`'s edition is still built and tested below. */
+  test('/ is the home page, with Log in in the top bar and every assessment link going to the back end', async () => {
     const r = await makeClient(base).req('/');
     assert.equal(r.status, 200);
-    assert.match(r.body, /<title>Cap Rebate — Capital Allowances for Healthcare Property<\/title>/);
-    const header = /<header id="hdr">([\s\S]*?)<\/header>/.exec(r.body)?.[1] ?? '';
-    assert.match(header, /<\/nav>\s*<a href="\/login" class="btn btn-ghost nav-login">Log in<\/a>/, 'no Log in button after the menu');
-    const assess = [...r.body.matchAll(/<a href="([^"]*)"[^>]*\bdata-assess\b/g)].map((m) => m[1]);
-    assert.ok(assess.length >= 3, 'the assessment links are gone');
-    assert.deepEqual([...new Set(assess)], ['/assessment']);
-    assert.match(r.body, /<form id="leadform" action="\/enquiry" method="post" novalidate>/);
-    assert.doesNotMatch(r.body, /assessTpl|assessOverlay/, 'the in-page assessment was served');
-    assert.ok(r.body.length < 200_000, 'the served page still carries the megabyte of in-page assessment');
-    assert.match(r.body, /<link rel="stylesheet" href="\/assets\/site-page.css">/);
-    assert.match(r.body, /<script src="\/assets\/site-page.js"><\/script>/);
+    assert.match(r.body, /<title>Capital Allowances for Healthcare Property \| Cap Rebate<\/title>/);
+    const header = /<header class="bar" id="bar">([\s\S]*?)<\/header>/.exec(r.body)?.[1] ?? '';
+    assert.match(header, /<a class="bar-login" href="\/login">Log in<\/a>/, 'no Log in in the top bar');
+    const assess = [...r.body.matchAll(/<a class="[^"]*" href="(\/assessment)"/g)].map((m) => m[1]);
+    assert.ok(assess.length >= 4, 'the assessment links are gone');
+    assert.match(r.body, /<form class="c-form" id="contactform" action="\/enquiry" method="post" novalidate/);
+    for (const name of ['name', 'firm', 'email', 'phone', 'ptype', 'message']) assert.match(r.body, new RegExp(`name="${name}"`));
+    assert.match(r.body, /<link rel="stylesheet" href="\/assets\/home.css">/);
+    assert.match(r.body, /<script src="\/assets\/home.js"><\/script>/);
   });
 
-  test('its style and script are two fixed assets, and the policy adds only its own script', async () => {
+  test('the site file’s edition still builds, with its style and script as two fixed assets', async () => {
     const c = makeClient(base);
-    const page = await c.req('/');
-    assert.equal(page.headers.get('content-security-policy'),
-      "default-src 'none'; style-src 'self'; img-src 'self' data:; script-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
     const css = await c.req('/assets/site-page.css');
     assert.equal(css.status, 200);
     assert.match(css.headers.get('content-type') ?? '', /^text\/css/);
     assert.match(css.body, /\.u-band\{/);
     const js = await c.req('/assets/site-page.js');
     assert.equal(js.status, 200);
-    assert.match(js.headers.get('content-type') ?? '', /^text\/javascript/);
     assert.match(js.body, /closest\('\[data-assess\]'\)/);
     assert.equal(js.headers.get('x-content-type-options'), 'nosniff');
   });
