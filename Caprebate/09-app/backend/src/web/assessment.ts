@@ -33,6 +33,7 @@
  * nothing.
  */
 
+import { normalisePostcode } from '../connectors/postcode-check.ts';
 import { randomUUID } from 'node:crypto';
 import type { Db } from '../db.ts';
 import { FUNNEL, FRONTDOOR } from './engine.ts';
@@ -295,18 +296,27 @@ export function submit(
   db.tx(() => {
     // CRM 1 of 10: `source` is DERIVED — a business that arrived through the
     // funnel arrived through the website — and `updated_at` starts at creation.
+    // 29 Sep 2026: the company number, when the person chose their company from the first screen's search.
+    const cn = (s as unknown as { company_number?: unknown }).company_number;
+    const chosenNumber = typeof cn === 'string' && /^(\d{8}|[A-Z]{2}\d{6})$/.test(cn) ? cn : null;
     db.run(
-      'INSERT INTO businesses (id, name, sector, stage, contact_email, contact_phone, created_at, source, updated_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO businesses (id, name, sector, stage, contact_email, contact_phone, created_at, source, updated_at, company_number) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [business_id, businessName(s), sector, 'ASSESSMENT_SUBMITTED',
-       contactEmail(s), contactPhone(s), at, 'WEBSITE', at],
+       contactEmail(s), contactPhone(s), at, 'WEBSITE', at, chosenNumber],
     );
+    // 29 Sep 2026: the first screen's postcode goes on the first property, when that property's address still carries it.
+    const start = (s as unknown as { start?: StartAnswers }).start;
+    const startPostcode = start?.postcode !== undefined && start.postcode !== null ? normalisePostcode(start.postcode) : null;
     let firstProperty: string | null = null;
     for (const p of (s.properties ?? []) as { address?: string | null }[]) {
       const property_id = id();
+      const first = firstProperty === null;
       firstProperty ??= property_id;
+      const pc = first && startPostcode !== null && typeof p.address === 'string'
+        && p.address.toUpperCase().replace(/\s+/g, '').includes(startPostcode.replace(' ', '')) ? startPostcode : null;
       db.run('INSERT INTO properties (id, business_id, label, postcode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-        [property_id, business_id, p.address ?? 'Unnamed property', null, at, at]);
+        [property_id, business_id, p.address ?? 'Unnamed property', pc, at, at]);
     }
     db.run(
       'INSERT INTO assessments (id, business_id, sector, submitted_at, shown_low_pence, shown_high_pence, created_at) ' +
@@ -343,6 +353,25 @@ function lowOf(figure: { readonly breakdown?: readonly { low?: number }[] }): nu
     if (typeof r.low === 'number') { total += r.low; any = true; }
   }
   return any ? Math.round(total * 100) : null;
+}
+
+/**
+ * 29 SEPTEMBER 2026: THE FIRST SCREEN — THE COMPANY AND THE PROPERTY (Lakhbir: "with the am i eligible we should be
+ * asking for address and company name"). It comes before the six screens and is not one of CB_FUNNEL's, so their list,
+ * their order and the checks on them are unchanged; the step count a person reads is one more.
+ */
+export const START_SCREEN = Object.freeze({
+  group: 'Before we start',
+  heading: 'Your business and your property',
+  help: 'We use these to prepare your figure and to find the right records. You can change them later.',
+});
+
+export type StartAnswers = { line1: string | null; town: string | null; postcode: string | null };
+
+/** The first property's address, as the first screen writes it: the parts given, in order, with commas. */
+export function addressFrom(a: StartAnswers): string | null {
+  const parts = [a.line1, a.town, a.postcode].filter((x): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim());
+  return parts.length === 0 ? null : parts.join(', ');
 }
 
 function businessName(s: FunnelState): string {

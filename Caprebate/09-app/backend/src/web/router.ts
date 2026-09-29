@@ -40,7 +40,10 @@ import { FUNNEL, FRONTDOOR, BOOKING, registryGate } from './engine.ts';
 import {
   SCREEN_IDS, SCREENS, OPTIONS, COSMETIC_NOTE, asksProfit, nextScreen, isGatedExit, PAST_THE_GATE,
   newDraft, loadDraft, saveDraft, submit, closeGatedExit, type Draft, type ScreenId,
+  START_SCREEN, addressFrom, type StartAnswers,
 } from './assessment.ts';
+import { searchCompanies, companySearchOffered, COMPANY_SEARCH, type CompanyCandidate } from '../connectors/company-search.ts';
+import { checkPostcode, normalisePostcode, postcodeCheckMissing, POSTCODE_CHECK } from '../connectors/postcode-check.ts';
 import { loadLetter } from './letter.ts';
 import * as P from './portal.ts';
 import { ENGAGEMENT_SIGNING, shownLetter, signEngagement, signingMissing } from './signing.ts';
@@ -78,7 +81,7 @@ import { homeEdition, gsapScript, HOME_PAGE_HEADERS } from './home-site.ts';
 import { checkTurnstile, refusalWords, turnstileSiteKey, withSiteKey, TURNSTILE_FIELD } from '../connectors/turnstile.ts';
 import { receiveEnquiry } from './enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
-import { ANSWER_MYSELF_LABEL, checkedLine, checkPropertyPostcodes, lookupsOffered, recordLookupsDeclined, type KeptCheck } from './address-check.ts';
+import { ANSWER_MYSELF_LABEL, checkedLine, checkPropertyPostcodes, freeGate, lookupsOffered, recordLookupsDeclined, type KeptCheck } from './address-check.ts';
 import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from './identity-checks.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
@@ -385,6 +388,42 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assessment' && method === 'GET') {
     const draft = newDraft(d.app.db, now, newId);
     setCookie(res, DRAFT_COOKIE, draft.token, 60 * 60 * 6);
+    // 29 Sep 2026: the assessment opens on the company and the property, then the six questions.
+    redirect(res, '/assessment/start'); return 'handled';
+  }
+
+  /* 29 SEPTEMBER 2026: THE FIRST SCREEN — the company's name and the property's address (Lakhbir: "with the am i
+     eligible we should be asking for address and company name"). "Find my company" (Companies House) and "Check
+     postcode" (Postcodes.io) are forms sent to this server, shown only when their gates are open; until then both are
+     typed. The server does not insist on this screen: a draft may still go straight to Q1, as every older link does. */
+  if (path === '/assessment/start' && (method === 'GET' || method === 'POST')) {
+    const draft = loadDraft(d.app.db, cookie(req, DRAFT_COOKIE));
+    if (draft === undefined) { redirect(res, '/assessment'); return 'handled'; }
+    const lookups = startLookups(d.app);
+    if (method === 'GET') { html(res, 200, startPage(draft, actor, lookups)); return 'handled'; }
+    const posted = await form(req);
+    applyStart(draft, posted);
+    const st = draft.state as Record<string, unknown>;
+    const find = posted.get('find');
+    if (find === 'company' && lookups.company) {
+      const r = await searchCompanies({ name: startName(draft), gate: lookups.gate, deps: { audit: d.app.audit, now: d.app.now, transport: d.app.outside },
+        secrets: d.app.secrets, config: lookups.companyConfig });
+      st['company_results'] = r.state === 'FOUND' ? r.candidates : [];
+      st['company_search_note'] = r.state === 'FOUND' ? null : r.state === 'NONE'
+        ? 'No company matched that name. Check the spelling, or carry on with the name as you typed it.' : r.why;
+      saveDraft(d.app.db, draft, now); redirect(res, '/assessment/start#company'); return 'handled';
+    }
+    if (find === 'postcode' && lookups.postcode) {
+      const a = st['start'] as StartAnswers | undefined;
+      const r = await checkPostcode({ postcode: a?.postcode ?? '', gate: lookups.gate, config: lookups.postcodeConfig,
+        deps: { audit: d.app.audit, now: d.app.now, transport: d.app.outside } });
+      st['start_postcode_check'] = r.state === 'CHECKED' ? { postcode: r.postcode, council_area: r.council_area, region: r.region, country: r.country }
+        : { not_found: r.state === 'NOT_FOUND' ? 'We could not find that postcode. Check it, or carry on with it as typed.' : r.why };
+      saveDraft(d.app.db, draft, now); redirect(res, '/assessment/start#property'); return 'handled';
+    }
+    const errors = startErrors(draft);
+    saveDraft(d.app.db, draft, now);
+    if (errors.length > 0) { html(res, 400, startPage(draft, actor, lookups, errors)); return 'handled'; }
     redirect(res, '/assessment/Q1'); return 'handled';
   }
 
@@ -1135,7 +1174,8 @@ function applyClose(draft: Draft, f: URLSearchParams): string | undefined {
     return 'We need your permission to contact you about this. It is not marketing consent.';
   }
   c.full_name = name;
-  c.business_name = (f.get('business_name') ?? '').trim() || null;
+  // 29 Sep 2026: the box is filled from the first screen; left empty, the first screen's name stands.
+  c.business_name = (f.get('business_name') ?? '').trim() || (typeof c.business_name === 'string' && c.business_name.trim() !== '' ? c.business_name : null);
   c.job_role = f.get('job_role');
   c.channel = channelId;
   c.contact_value = (f.get('contact_value') ?? '').trim() || null;
@@ -1319,13 +1359,126 @@ function home(actor: Actor | undefined): string {
   });
 }
 
+/* ------------------------------------------------ 29 Sep 2026: the first screen */
+
+type StartLookups = {
+  readonly gate: ReturnType<typeof freeGate>; readonly company: boolean; readonly postcode: boolean;
+  readonly companyConfig: typeof COMPANY_SEARCH; readonly postcodeConfig: typeof POSTCODE_CHECK;
+};
+
+/** Whether each lookup can run: its gate, its switch and, for Companies House, its key. Tests may set all three. */
+function startLookups(app: WebDeps['app']): StartLookups {
+  const o = app.startLookups;
+  const gate = o?.gate ?? freeGate();
+  const companyConfig = o?.company ?? COMPANY_SEARCH;
+  const postcodeConfig = o?.postcode ?? POSTCODE_CHECK;
+  return { gate, companyConfig, postcodeConfig,
+    company: companySearchOffered(companyConfig, gate, app.secrets),
+    postcode: postcodeCheckMissing(postcodeConfig, gate).length === 0 };
+}
+
+const clip = (v: string | null, max: number): string | null => {
+  const t = (v ?? '').trim().replace(/\s+/g, ' ');
+  return t === '' ? null : t.slice(0, max);
+};
+
+function startName(draft: Draft): string {
+  const c = (draft.state as { contact?: { business_name?: unknown } }).contact;
+  return typeof c?.business_name === 'string' ? c.business_name : '';
+}
+
+/** Read the first screen. The company's name goes where the last page asks it; the address becomes the first property's. */
+function applyStart(draft: Draft, f: URLSearchParams): void {
+  const st = draft.state as Record<string, unknown>;
+  const contact = (st['contact'] ??= {}) as Record<string, unknown>;
+  const typed = clip(f.get('business_name'), 200);
+  const results = (st['company_results'] ?? []) as CompanyCandidate[];
+  const picked = f.get('company_number');
+  if (picked === 'none') { st['company_number'] = null; st['company_name_chosen'] = null; }
+  else if (picked !== null) {
+    const c = results.find((x) => x.number === picked);
+    if (c !== undefined) { st['company_number'] = c.number; st['company_name_chosen'] = c.name; contact['business_name'] = c.name; }
+  }
+  if (picked === null || picked === 'none') {
+    contact['business_name'] = typed;
+    // A name changed after a company was chosen is no longer that company.
+    if (typed !== st['company_name_chosen']) { st['company_number'] = null; st['company_name_chosen'] = null; }
+  }
+  const before = st['start'] as StartAnswers | undefined;
+  const a: StartAnswers = { line1: clip(f.get('line1'), 200), town: clip(f.get('town'), 100), postcode: clip(f.get('postcode'), 10) };
+  if (a.postcode !== before?.postcode) delete st['start_postcode_check'];
+  st['start'] = a;
+  const props = (st['properties'] ??= [FUNNEL.blankProperty()]) as Record<string, unknown>[];
+  if (props.length === 0) props.push(FUNNEL.blankProperty() as Record<string, unknown>);
+  const address = addressFrom(a);
+  if (address !== null && props[0] !== undefined) props[0]['address'] = address;
+}
+
+/** What the first screen still needs, in plain words. */
+function startErrors(draft: Draft): string[] {
+  const st = draft.state as Record<string, unknown>;
+  const a = st['start'] as StartAnswers | undefined;
+  const out: string[] = [];
+  if (startName(draft).trim() === '') out.push('Tell us the name of your company or business.');
+  if (a?.line1 === null || a?.line1 === undefined) out.push('Tell us the building name or number, and the street.');
+  if (a?.postcode === null || a?.postcode === undefined) out.push('Tell us the postcode.');
+  else if (normalisePostcode(a.postcode) === null) out.push('That does not look like a UK postcode. Check it and try again.');
+  return out;
+}
+
+function startPage(draft: Draft, actor: Actor | undefined, lookups: StartLookups, errors: readonly string[] = []): string {
+  const st = draft.state as Record<string, unknown>;
+  const a = (st['start'] ?? {}) as Partial<StartAnswers>;
+  const results = (st['company_results'] ?? []) as CompanyCandidate[];
+  const chosen = typeof st['company_number'] === 'string' ? st['company_number'] as string : null;
+  const note = typeof st['company_search_note'] === 'string' ? st['company_search_note'] as string : null;
+  const pcCheck = st['start_postcode_check'] as (KeptCheck & { not_found?: undefined }) | { not_found: string } | undefined;
+  return page({
+    title: START_SCREEN.heading, nav: nav(actor),
+    body: h`
+      <p class="rung">Step 1 of ${SCREEN_IDS.length + 1}</p>
+      <div class="group">${START_SCREEN.group}</div>
+      <h2>${START_SCREEN.heading}</h2>
+      <p class="help">${START_SCREEN.help}</p>
+      ${errors.length === 0 ? raw('') : h`<div class="err" role="alert"><p>Please check these:</p><ul>${errors.map((e) => h`<li>${e}</li>`)}</ul></div>`}
+      <form method="post" action="/assessment/start">
+        <button type="submit" class="vh" tabindex="-1" aria-hidden="true">Continue</button>
+        <fieldset id="company"><legend>Your business</legend>
+          <label class="fl" for="s-business">Your company or business name</label>
+          <input class="fi" id="s-business" name="business_name" value="${startName(draft)}" autocomplete="organization" required>
+          ${lookups.company ? h`<p><button type="submit" name="find" value="company" class="btn-quiet">Find my company</button></p>` : raw('')}
+          ${results.length === 0 ? raw('') : h`<p class="help">Choose your company, so we can find its public records.</p>
+            <div class="opts">${results.map((c) => h`<label class="opt${c.number === chosen ? ' sel' : ''}">
+              <input type="radio" name="company_number" value="${c.number}"${c.number === chosen ? raw(' checked') : raw('')}>
+              ${c.name} <span class="help">· company number ${c.number}${c.status === null ? '' : ` · ${c.status}`}${c.office_postcode === null ? '' : ` · registered office ${c.office_postcode}`}</span></label>`)}
+              <label class="opt"><input type="radio" name="company_number" value="none"> None of these</label></div>`}
+          ${note === null ? raw('') : h`<p class="help">${note}</p>`}
+          ${chosen === null || results.length > 0 ? raw('') : h`<p class="help">Company number ${chosen}.</p>`}
+        </fieldset>
+        <fieldset id="property"><legend>The property</legend>
+          <label class="fl" for="s-line1">Building name or number, and street</label>
+          <input class="fi" id="s-line1" name="line1" value="${a.line1 ?? ''}" autocomplete="address-line1" required>
+          <label class="fl" for="s-town">Town</label>
+          <input class="fi" id="s-town" name="town" value="${a.town ?? ''}" autocomplete="address-level2">
+          <label class="fl" for="s-postcode">Postcode</label>
+          <input class="fi" id="s-postcode" name="postcode" value="${a.postcode ?? ''}" autocomplete="postal-code" required>
+          ${lookups.postcode ? h`<p><button type="submit" name="find" value="postcode" class="btn-quiet">Check postcode</button></p>` : raw('')}
+          ${pcCheck === undefined ? raw('') : pcCheck.not_found !== undefined ? h`<p class="help">${pcCheck.not_found}</p>` : h`<p class="help">${checkedLine(pcCheck as KeptCheck)}</p>`}
+          <p class="help">More than one property? You can add the others later.</p>
+        </fieldset>
+        <button class="cta" type="submit">Continue →</button>
+      </form>`,
+  });
+}
+
 function screenPage(draft: Draft, id: ScreenId, actor: Actor | undefined): string {
   const sc = SCREENS[id];
-  const n = SCREEN_IDS.indexOf(id) + 1;
+  // 29 Sep 2026: the first screen (the company and the property) comes before these six, so it is step 1.
+  const n = SCREEN_IDS.indexOf(id) + 2;
   return page({
     title: sc.heading, nav: nav(actor),
     body: h`
-      <p class="rung">Step ${n} of ${SCREEN_IDS.length}</p>
+      <p class="rung">Step ${n} of ${SCREEN_IDS.length + 1}</p>
       <div class="group">${sc.group}</div>
       <h2>${sc.heading}</h2>
       ${sc.help !== undefined ? h`<p class="help">${sc.help}</p>` : raw('')}
@@ -1517,7 +1670,7 @@ function closePage(
         <label class="fl" for="close-full-name">Your name</label>
         <input class="fi" id="close-full-name" name="full_name" autocomplete="name" required>
         <label class="fl" for="close-business-name">Your business</label>
-        <input class="fi" id="close-business-name" name="business_name" autocomplete="organization">
+        <input class="fi" id="close-business-name" name="business_name" value="${(draft.state as { contact?: { business_name?: string | null } }).contact?.business_name ?? ''}" autocomplete="organization">
         <label class="fl">Your role in the business</label>
         ${radios('job_role', roles.map(([v, l]) => ({ value: v, label: l })), null)}
         <label class="fl">How would you like us to reach you?</label>

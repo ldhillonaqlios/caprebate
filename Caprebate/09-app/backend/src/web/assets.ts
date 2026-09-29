@@ -781,6 +781,10 @@ body.public .foot{background:#0e1210;border-top:1px solid #2d3532;color:#a4aca8}
 body.public .foot p{color:#a4aca8}
 body.public .foot a{color:#EDEAE2}
 body.public .skip:focus{background:#121614;color:#EDEAE2}
+body.public fieldset{border:1px solid #2d3532;border-radius:16px;padding:1.1rem 1.4rem 1.4rem;margin:1.6rem 0;background:#161b19}
+body.public legend{font-family:"Bookman Old Style","Roboto Slab",Georgia,"Times New Roman",serif;font-size:21px;font-weight:700;padding:0 .5rem;color:#EDEAE2}
+body.public fieldset .fl:first-of-type{margin-top:.4rem}
+body.public .err ul{margin:.3rem 0 0;padding-left:1.2rem}
 @media (max-width:620px){body.public .brandmark .wm{font-size:12px;letter-spacing:.14em}body.public .mark{width:44px;height:44px}body.public .top nav:not(.appnav){gap:.9rem}}
 `;
 

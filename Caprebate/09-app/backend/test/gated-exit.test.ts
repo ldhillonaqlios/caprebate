@@ -99,7 +99,9 @@ function stateWith(v: string | undefined): FunnelState {
 }
 
 async function toQ1b(c: Client): Promise<void> {
-  assert.equal((await c.req('/assessment')).location, '/assessment/Q1');
+  // 29 Sep 2026: the assessment opens on the company and the property (test/assessment-start.test.ts), then Q1.
+  assert.equal((await c.req('/assessment')).location, '/assessment/start');
+  assert.equal((await c.post('/assessment/start', { business_name: 'Gate Test Care Limited', line1: '1 Invented Street', town: 'Hinckley', postcode: 'LE10 1DA' })).location, '/assessment/Q1');
   assert.equal((await c.post('/assessment/Q1', { own_prior_claim: 'no' })).location, '/assessment/Q1a');
   assert.equal((await c.post('/assessment/Q1a', { previous_owner_claimed: 'dont_know' })).location, '/assessment/Q1b');
 }

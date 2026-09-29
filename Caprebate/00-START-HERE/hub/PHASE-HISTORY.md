@@ -10841,3 +10841,14 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## Ad-hoc, 29 September 2026 — "Am I eligible?" asks the company and the property first (Opus, Mac copy)
+
+ Lakhbir: "is there a free API which allows users to use for an address search?" and "with the am i eligible we should be asking for address and company name". Answered: no complete UK address search is free (the Royal Mail file is licensed); Postcodes.io is free but gives the council area, not a street list; Companies House's search is free with the key (in the key file). Lakhbir chose Postcodes.io for the address and the questions on the first screen.
+
+-  **The first screen** (`/assessment/start`, step 1 of 7): the company or business name, and the property as building name or number and street, town and postcode. `/assessment` now opens it. The name is the last page's `business_name` (prefilled there, and kept when that box is left empty — before, a blank there would have wiped it); the address becomes the first property's; the postcode goes on the property row, and a chosen company's number on `businesses.company_number`. Missing answers are said in words (400). **The six questions are unchanged**: the screen is not one of CB_FUNNEL's, so `SCREEN_IDS`, the site file and harness Suite Q still say six; a draft may still post Q1 first, as every older link and test does.
+-  **Two lookups, built and switched off.** "Find my company" (`src/connectors/company-search.ts`: Companies House `/search/companies`, up to eight results, keeping only the source register's permitted fields for CH_COMPANY — name, number, status, registered-office postcode; **not** the company type, which the register does not permit, so the legal-form question stays) and "Check postcode" (the existing Postcodes.io check). Each is a form sent to this server, shown only when the free-tier gate is open, the service is named in the privacy notice, and its switch is on (`COMPANY_SEARCH`, new, in the case stamp; `POSTCODE_CHECK`) — and Companies House needs its key. Until then both are typed and nothing is sent.
+-  **For Sadique (DPO):** Companies House (a visitor's own search, before any engagement) and Postcodes.io need naming in the privacy notice before either switch goes on.
+-  **Proof.** `test/assessment-start.test.ts`, eight tests (the lookups on recorded answers only); six mutations each turned one red. gated-exit.test.ts's walk now passes through the first screen. `npm run check` exit 0, 1852 pass; the harness 1279/0/4; phase3 439; phase9 403; drift (`--fast --expect 1279,439,403,1852`, Developer Spec §4 to 1,852 and 3,973), CRM fold (the new route described, four §4 references moved), plain words, brand, register, analytics all green.
+
+ **Claim cleared** in the commit that carries this record.
+

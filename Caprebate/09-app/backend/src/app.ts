@@ -19,6 +19,9 @@ import { newId } from './users.ts';
 import { primeTimingDefence, type Deps } from './auth.ts';
 import { processSecrets, type SecretStore } from './secrets.ts';
 import type { CallPolicy } from './connectors/sources.ts';
+import type { GateStatus } from './connectors/registers.ts';
+import type { CompanySearchConfig } from './connectors/company-search.ts';
+import type { PostcodeCheckConfig } from './connectors/postcode-check.ts';
 import { liveTransport, type Transport } from './connectors/http.ts';
 
 export const MIGRATIONS_DIR = join(import.meta.dirname, '..', 'migrations');
@@ -55,6 +58,11 @@ export type App = {
    * transfer to Cloudflare approved), so a test can reach the recorded answers. Never set by a running server.
    */
   turnstilePolicy?: Partial<CallPolicy>;
+  /**
+   * 29 SEPTEMBER 2026: TESTS ONLY - the assessment's first screen's two lookups (Companies House, Postcodes.io) with
+   * their gate and switches set, so a test can reach the recorded answers. Never set by a running server.
+   */
+  startLookups?: { readonly gate: GateStatus; readonly company: CompanySearchConfig; readonly postcode: PostcodeCheckConfig };
 };
 
 export type BuildOptions = {

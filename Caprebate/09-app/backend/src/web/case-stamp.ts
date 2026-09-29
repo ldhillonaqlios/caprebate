@@ -57,6 +57,7 @@ import { ENGAGEMENT_SIGNING } from './signing.ts';
 import { INBOUND_EMAIL } from '../stubs/email-inbound.ts';
 import { IDENTITY_CHECK } from '../connectors/identity-check.ts';
 import { POSTCODE_CHECK } from '../connectors/postcode-check.ts';
+import { COMPANY_SEARCH } from '../connectors/company-search.ts';
 import { FEE_CLAWBACK } from './claim-record.ts';
 import { DEFENCE_PACK_GENERATOR } from './defence-pack.ts';
 import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
@@ -182,6 +183,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'INBOUND_EMAIL', on: INBOUND_EMAIL.enabled, home: 'src/stubs/email-inbound.ts' },
     { switch: 'IDENTITY_CHECK', on: IDENTITY_CHECK.enabled, home: 'src/connectors/identity-check.ts' },
     { switch: 'POSTCODE_CHECK', on: POSTCODE_CHECK.enabled, home: 'src/connectors/postcode-check.ts' },
+    { switch: 'COMPANY_SEARCH', on: COMPANY_SEARCH.enabled, home: 'src/connectors/company-search.ts' },
     { switch: 'ENGAGEMENT_SIGNING', on: ENGAGEMENT_SIGNING.enabled, home: 'src/web/signing.ts' },
     { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/web/message-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/web/defence-pack.ts' },
