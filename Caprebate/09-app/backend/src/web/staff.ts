@@ -753,11 +753,11 @@ function auditPage(actor: Actor, v: AuditLogView): string {
         <button type="submit">Show</button> <a href="/staff/audit">Clear</a>
       </form>
       ${v.said.length === 0 ? raw('') : h`<ul>${v.said.map((x) => h`<li class="help">${x}</li>`)}</ul>`}
-      ${v.lines.length === 0 ? h`<p class="help">No line matches.</p>` : h`<table>
+      ${v.lines.length === 0 ? h`<p class="help">No line matches.</p>` : h`<div class="tablewrap" id="audit-lines"><table>
         <thead><tr><th>#</th><th>When</th><th>Kind</th><th>Role</th><th>Who (id)</th><th>About</th><th>Outcome</th></tr></thead>
         <tbody>${v.lines.map((l) => h`<tr class="${l.outcome === 'REFUSED' ? 'overdue' : ''}"><td>${l.seq}</td><td class="when">${l.at}</td><td>${l.kind}</td>
           <td>${l.actor_role ?? h`<span class="help">no session</span>`}</td><td>${l.actor_id ?? '—'}</td>
-          <td>${l.object_type ?? '—'} ${l.object_id ?? ''}</td><td>${AUDIT_OUTCOMES[l.outcome] ?? l.outcome}</td></tr>`)}</tbody></table>`}`,
+          <td>${l.object_type ?? '—'} ${l.object_id ?? ''}</td><td>${AUDIT_OUTCOMES[l.outcome] ?? l.outcome}</td></tr>`)}</tbody></table></div>`}`,
   });
 }
 

@@ -145,7 +145,14 @@ export const FORGOTTEN_CHECK_WORDS =
   'This server keeps its records in memory only. The check may have been sent from a copy that has forgotten it. Send the check again.';
 
 export function forgetfulDatabaseWarning(app: App): string | null {
-  return app.db.kind === 'memory' ? FORGETFUL_DATABASE_WORDS : null;
+  if (app.db.kind !== 'memory') return null;
+  return app.storageWhy === undefined ? FORGETFUL_DATABASE_WORDS : `${FORGETFUL_DATABASE_WORDS} ${storageReason(app.storageWhy)}`;
+}
+
+/** 29 Sep 2026: the reason the server gave at start-up, as one sentence. It never holds an address or a token. */
+export function storageReason(why: string): string {
+  const t = why.trim().replace(/[.\s]+$/, '');
+  return `Why: ${t.charAt(0).toUpperCase()}${t.slice(1)}.`;
 }
 
 export type ReceiveResult = { readonly status: 200 | 401 | 404; readonly outcome: IdentityOutcome | null; readonly note?: string };

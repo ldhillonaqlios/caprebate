@@ -10790,3 +10790,15 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  DONE: the exemption, the explanation, the tests, the records. NOT DONE: confirming the live site is on Turso — BLOCKED on Lakhbir looking (Word question 230); the flaky sign-up test — BUILDABLE — Phase 153a line 7.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc fix, 29 September 2026 — text cut off on the staff screens, and why the site says "records kept in memory" (Opus, Mac copy)
+
+ Lakhbir, with two screenshots: "the UI UX needs to be addressed, too many texts have been cut off. Also it says records kept in memory only."
+
+-  **Home tiles cut every text at 48 characters with "…"** (`src/web/home.ts`, `short`), so a next action read "Confirm who owns the building, and that we…". Now whole, wrapping; the grid keeps a row's tiles level. **A tile's late date ran past the tile's edge**: `main.wide .when{white-space:nowrap}` (one element, two classes) outweighed the tile's own rule; now `main .hometile .tileline.when` wraps it (checked in a browser - a rule of equal weight lost).
+-  **Found by a crawl of every screen, every login, at 1280, 800 and 390 px**, with a new check added to `04-phase-work/phase144/tools/crawl-shots.mjs` (`--widths`, and SPILL: text whose line boxes pass the edge of its card, cell, badge or button, not counting strips that scroll sideways on purpose): the **Leads cards' next-action line** (same nowrap; the Leads page scrolled sideways at 800 and 390) and the **Audit log's table** (the page scrolled sideways at 800, cutting off "About" and "Outcome"; now inside `.tablewrap`). The pipeline board, the stage bar and the tab strips scroll sideways by design and were left. The detector was itself proved: it reported three late tiles with the old style set on them, and none with the new. **After the fixes: 372 page views, sideways scroll on 0, text past its box on 0.**
+-  **"Records kept in memory"** is true: the test website is not using its lasting database. The connector sees Lakhbir's Vercel team but no project in it, so its settings and logs cannot be read from here. The website already works out why at start-up (`openLasting`'s `why`, never an address or a token) and printed it only to the log; it now also ends the identity panel's box and the sign-in time-out page with "Why: …" (`App.storageWhy`, set by `api/index.mjs` only on memory; `storageReason`). Lakhbir can read the reason on the page and send it.
+-  **Proof.** `test/tiles-and-storage-reason.test.ts`, nine tests; each fix removed on its own turns exactly its own tests red. `npm run check` exit 0, 1808 pass; the harness 1279/0/4; drift (`--fast --expect 1279,439,403,1808`, Developer Spec §4 to 1,808 and 3,929), CRM fold (three §4 references moved: `STUBS` to `src/app.ts:138`, `receiveIdentityResult` to `:165`), plain words, brand, tracker and register checks exit 0.
+-  NOT DONE: the lasting database itself - BLOCKED on Lakhbir reading the new "Why:" line on the identity panel (Word question 230).
+
+ **Claim cleared** in the commit that carries this record.

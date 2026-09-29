@@ -43,6 +43,12 @@ export type App = {
   now: () => string;
   deps: Deps;
   close(): void;
+  /**
+   * 29 SEPTEMBER 2026: why this server keeps its records where it does, when the caller knows - the test website sets
+   * it from its database choice (api/index.mjs, openLasting's `why`). Never an address and never a token. Absent, the
+   * pages say only that the records are in memory.
+   */
+  storageWhy?: string;
 };
 
 export type BuildOptions = {

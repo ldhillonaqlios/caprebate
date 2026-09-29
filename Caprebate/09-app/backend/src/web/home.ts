@@ -50,16 +50,13 @@ export type HomeTile = {
 /** Most tiles a row draws before its last tile becomes "See all". */
 export const ROW_LIMIT = 12;
 
-/** Text on a tile is cut to this many characters, so no tile runs past three lines at phone width. */
-const TILE_TEXT = 48;
-
-function short(s: string): string {
-  const t = s.replace(/\s+/g, ' ').trim();
-  if (t.length <= TILE_TEXT) return t;
-  const cut = t.slice(0, TILE_TEXT - 1);
-  const space = cut.lastIndexOf(' ');
-  // At the last whole word, and never leaving a comma or a dash dangling before the ellipsis.
-  return `${(space > TILE_TEXT / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:—–-]+$/, '')}…`;
+/**
+ * Text on a tile, whitespace collapsed and NEVER CUT (29 September 2026, Lakhbir: "too many texts have been cut off").
+ * Until then every tile's text stopped at 48 characters with "…", so a next action read "Confirm who owns the
+ * building, and that we…". A tile now wraps its whole text; the grid gives every tile in a row the same height.
+ */
+export function short(s: string): string {
+  return s.replace(/\s+/g, ' ').trim();
 }
 
 function plural(n: number, one: string, many: string): string {

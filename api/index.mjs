@@ -44,6 +44,8 @@ async function build() {
   }, 10_000, await sharedDocumentOptions(docs, lasting));
   const made = opened.made;
   console.log(`test deployment: ${opened.why}`);
+  // 29 SEPTEMBER 2026: the same reason, on the page that says the records are in memory - so nobody has to read the log.
+  if (!opened.lasting) made.app.storageWhy = opened.why;
   console.log(`test deployment: ${documentsWhy(docs, opened.lasting)}`);
   // PHASE 151e (line 3): a password of its own, and then - only then - the Didit keys from the website's settings.
   const t151e = await configureTestDeploy(made, process.env);

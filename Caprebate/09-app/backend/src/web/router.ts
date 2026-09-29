@@ -77,7 +77,7 @@ import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from '
 import { receiveEnquiry } from './enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
 import { ANSWER_MYSELF_LABEL, checkedLine, checkPropertyPostcodes, lookupsOffered, recordLookupsDeclined, type KeptCheck } from './address-check.ts';
-import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult } from './identity-checks.ts';
+import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from './identity-checks.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -1640,8 +1640,9 @@ function twoFactorPage(actor: Actor, home: string, method: SI.Method | null, don
  * The test website runs on memory whenever its lasting database is not in use (api/index.mjs, lastingDatabase).
  */
 export const STEP_LOST_ON_MEMORY = 'This website keeps its records in memory. Each copy of it has its own. So a sign-in step can be lost when the next page reaches another copy. If this happens every time, the lasting database is not in use.';
-export function stepGoneWhy(app: { db: { kind: string } }): string | undefined {
-  return app.db.kind === 'memory' ? STEP_LOST_ON_MEMORY : undefined;
+export function stepGoneWhy(app: { db: { kind: string }; storageWhy?: string }): string | undefined {
+  if (app.db.kind !== 'memory') return undefined;
+  return app.storageWhy === undefined ? STEP_LOST_ON_MEMORY : `${STEP_LOST_ON_MEMORY} ${storageReason(app.storageWhy)}`;
 }
 
 function loginPage(error: string | undefined, note?: string, why?: string): string {

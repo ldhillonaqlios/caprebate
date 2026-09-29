@@ -433,6 +433,7 @@ table.compact{margin:0}table.compact td{padding:.3rem .35rem}
 .hometile .tilecount{display:block;font-family:${HEADING_STACK};font-size:32px;font-weight:700;line-height:1.1}
 .hometile.late{border-top-color:var(--stop)}
 .hometile.late .tileline.when{color:var(--stop);font-weight:700}
+.hometile .tileline,main .hometile .tileline.when{white-space:normal;overflow-wrap:break-word}
 
 /* PHASE 137: the leads as cards in four sections. A card is a <details>: its summary is the card, and it opens in place. */
 .leadtools{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.5rem 1rem;margin:0 0 .75rem}
@@ -459,6 +460,9 @@ table.compact{margin:0}table.compact td{padding:.3rem .35rem}
 .lc-name{flex:1 1 100%;font-size:20px;font-weight:700;color:var(--ink)}
 .lc-line{font-size:16px;color:var(--body)}
 .lc-line.when{color:var(--stop);font-weight:700}
+/* 29 Sep 2026: a lead card's next-action line carries its late date, and main.wide .when kept it on one line, so it ran
+   past the card and the Leads page scrolled sideways. It wraps, like a Home tile's. */
+main .leadcard .lc-line.when{white-space:normal;overflow-wrap:break-word}
 .lc-line.nobody{font-weight:700;color:var(--ink)}
 .lc-open{margin-left:auto;font-size:16px;color:var(--ink);text-decoration:underline}
 .lc-hide{display:none}
