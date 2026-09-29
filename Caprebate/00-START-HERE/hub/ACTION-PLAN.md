@@ -332,6 +332,11 @@ DOCUMENT". In particular:
   CLOSING CHECK   "question added to the Word questions document under
            <person>".
 
+SINCE 29 SEP 2026 THERE IS ALSO "Caprebate - Unanswered Questions (29 Sep
+2026).docx" beside it: the same open questions, re-sectioned for the director,
+Lakhbir, Sadique, the surveyor and the accountant, with the SAME numbers.
+Read answers typed in either; copy one into Caprebate_Questions.docx the
+AMENDMENT 2 way before acting on it.
 READ THE ANSWERS THERE. Before you act on any question, read its Answer line
 and the paragraphs under it in the Word document. Lakhbir writes his answers
 there. An answer found only in the monday.com document is copied into the Word
@@ -1024,6 +1029,374 @@ figures, update the registers you touched, and write the record.
 ```
 
 
+## PHASE 153b — tax readings built on our recommendation, for the accountant to check
+
+ **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13133268315 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
+a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
+branch main. On the Mac the working copy is Development/, one level above the
+tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
+Allowances/Business Development/Development. git pull, then git log --oneline.
+OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
+INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
+COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
+plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
+already there stops you) and clear it at the end; retag what you touch in the
+tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
+write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+═══════════════════════════════════
+
+Mac copy. A .bak-phase153b sibling of every file you change.
+
+Each is a tax reading the accountant (or a tax adviser they name) is asked about in Section 5 of the review document. Build every new reading behind its own switch, OFF in what ships, exactly as the 24 existing ones: the harness asserts them off, so a switch flipped in test is a deliberate, recorded change, never a side effect. Add each to the switch table (01-rulebooks/Caprebate-Phase-51-CTA-Switch-Table-v1.md) and FOR THE ACCOUNTANT. N4 applies throughout.
+READ THE ANSWERS FIRST: a line whose question has been answered in either
+Word document since 29 Sep is built to the answer, not the recommendation.
+
+1. Carry the no-claim test's VAT rule into the fee-versus-benefit comparison,
+   dormant until we are VAT-registered. (Word question 59: Once we charge
+   VAT, should the fee comparison include VAT for clients who cannot reclaim
+   it?)
+2. When the switch is on, set ‘seller could never claim’ from the ‘who did
+   you buy from’ answer and drop the extra question, as Lakhbir asked. (Word
+   question 73: If the seller was never allowed to claim, does the pooling
+   rule still apply?)
+3. When the switch is on, add the care-provider lease and Lakhbir's
+   confirming-letter template to the supported-living document list. (Word
+   question 77: Can a high-care scheme fall outside the rule about homes
+   altogether?)
+4. Add the same-business exception to the rates rulebook and both tax
+   summaries, showing the capped and uncapped lines side by side. (Word
+   question 85: Does the loss relief cap apply when losses are set against
+   the same business's profits?)
+5. Add a question behind the same switch: was the landlord's payment for the
+   shared parts? If yes, take it off the shared-parts share. (Word question
+   86: In supported living, does a landlord's payment come off before or
+   after the shared-areas share?)
+6. Add a line to the partnership tax summary warning that a repayment may
+   belong to former partners. (Word question 88: For partnerships, how long
+   can the tax return be changed, and how do partners benefit?)
+7. Add the loss-carried-back exception to Rulebook A and change the
+   estimate's word to ‘repayment of tax paid for last year’. (Word question
+   92: After the change window closes, can tax relief still give cash back?)
+8. Add a switch, off, that lets an otherwise complete election with no tax
+   reference stand outside the window. (Word question 95: Does a missing tax
+   reference make an election invalid, or can it be fixed?)
+9. Add a switch, off, that accepts a wrongly labelled election which meets
+   every rule of the correct section. (Word question 96: Is an election made
+   under the wrong section of the law still valid?)
+10. Add a check that limits an elected figure to the seller's own cost or the
+   sale price share, and says so to the client. (Word question 98: What
+   happens if an election sets too high a value from the start?)
+11. Add a ‘housing association or registered provider’ answer to the
+   supported-living funding question, treated as not a public body, with a
+   flag to check it gets no relief. (Word question 108: Is a private social
+   housing provider a public body for tax relief rules?)
+12. Add a claim-record check that stops an equal-share grant split reaching a
+   filed claim without the grant papers or the adviser's view. (Word question
+   109: How should we split a grant when we cannot tell what it paid for?)
+13. Add a yes/no confirmation to the claim record, in all sectors, that the
+   client has checked with the grant provider. (Word question 110: Is a
+   warning enough when claiming relief might force a grant to be repaid?)
+14. Change the dental help text to ‘no general NHS premises grant scheme like
+   the GP one’. (Word question 111: What does the dental funding rules'
+   statement on premises grants mean?)
+15. Write the stopping rule into Rulebook B and the ownership-history
+   checklist. (Word question 113: How far back should we search a building's
+   ownership history before stopping?)
+16. Produce the accountant report as a PDF, and export the return entries for
+   each year as a spreadsheet (CSV) beside it. (Word question 121: In what
+   format would you like us to send our results?)
+17. Rename the job cost model's tax adviser line to "our own tax adviser, if
+   we introduce one", figures unchanged. (Word question 191: Should our job
+   cost model still count a tax adviser's review on every surveyor job?)
+18. Keep the Companies House company type and map it: ltd and plc to company,
+   LLP to partnership with a confirm step, anything else asked. (Word
+   question 198: When Companies House says a client is an LLP, what kind of
+   business should our estimate treat it as?)
+19. Mark Homedata planning as the chosen planning source in the register
+   switches and research panel, still off until the account opens. (Word
+   question 202: Should we pay for planning history, or keep the free one
+   that asks us to go slowly?)
+20. Map the works-VAT answer to the fee VAT position, only for the same
+   business with nothing changed; other answers stay not known. (Word
+   question 226: Can a client's answer about VAT on their building work tell
+   us whether they can reclaim VAT on our fee?)
+
+When every line is done: run every check in COORDINATES (prove each new
+test red on the code before), re-derive the figures, update the register
+entry for each built item, note each question "built in Phase 153b" in
+the review document's Answer line, and write the record.
+```
+
+
+## PHASE 153c — data protection and the back office built on our recommendation, for Sadique to check; one test call per keyed connector
+
+ **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13133268316 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
+a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
+branch main. On the Mac the working copy is Development/, one level above the
+tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
+Allowances/Business Development/Development. git pull, then git log --oneline.
+OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
+INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
+COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
+plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
+already there stops you) and clear it at the end; retag what you touch in the
+tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
+write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+═══════════════════════════════════
+
+Mac copy. A .bak-phase153c sibling of every file you change.
+
+Each is a question in Section 3 (Sadique) or a data protection paper for the director. Build it in the back end or the paper, usable in the test system with invented data only; nothing here may touch a real client. Record each in FOR THE SOLICITOR, THE DPO AND THE DEVELOPER as built, awaiting Sadique's viability check.
+READ THE ANSWERS FIRST: a line whose question has been answered in either
+Word document since 29 Sep is built to the answer, not the recommendation.
+
+1. Set the address lookup's keep-until period to seven years in the test
+   system, with reports still closed, marked as awaiting Homedata's answer.
+   (Word question 37: Who owns the address data, what are the rules, and how
+   long can we keep it?)
+2. Write an email-only test version of the surveyor breach clause (24 hours,
+   data.protection@caprebate.co.uk) beside the current draft. (Word question
+   55: How many hours should a surveyor have to tell us about a data breach,
+   and how?)
+3. Add the deputy route (Lakhbir decides, the director countersigns, the
+   regulator line) to the complaints pack and the rights-request procedure,
+   as a draft. (Word question 56: Who decides a data rights request or
+   complaint when the officer is away or is the subject?)
+4. Make 'Through the client' in the person register save only when the
+   published-notice route is recorded for the same person. (Word question
+   162: May we ask our client to pass our privacy notice to a stranger named
+   in our records?)
+5. Write the one-page review of the notices-page position and reword its
+   trigger to 'when the notices page goes live'. (Word question 165: Is the
+   review of our notices-page position due now that the brand name is
+   settled?)
+6. Add a 'next update due' (last update + 28 days) and a one-month 'target
+   outcome' date to each complaint in the complaints register, shown as our
+   target, not a legal deadline. (Word question 178: How often should someone
+   who complained get updates, and when should it be finished?)
+7. Add a restricted breach names list to the back office, readable only by
+   the officer and the named deputy, linked from each breach entry by
+   reference. (Word question 181: Once the back office is live, which breach
+   record is the official one?)
+8. Redraft section 3 of the privacy notice, the lawful-basis part of the
+   governance policies and the legitimate-interests assessment to split sole-
+   trader and company enquirers. (Word question 182: When someone enquires
+   for a company, what is our legal reason for holding their details?)
+9. Build an import of healthcare premises (business name, address, sector,
+   source) from open-licence registers, with no personal names and no
+   outreach feature. (Word question 183: Where will the healthcare property
+   list come from, and can we use it for marketing?)
+10. Draft a one-page letter of authority from CAP REBATE LTD to Lakhbir
+   Dhillon for breach decisions when the officer is unreachable. (Word
+   question 184: What written permission must CAP REBATE LTD give Lakhbir to
+   decide on data breaches?)
+11. Record "our copy, seven years" as the test reading in the retention
+   schedule, beside the officer's question on Anthropic's terms. (Word
+   question 192: When you said "data is stored for 7 years", whose copy did
+   you mean?)
+12. Give the scanned-page reader a per-document-kind allow list (starting with
+   contractor cost breakdowns, O&M manuals and building regulations
+   certificates), everything else refused. (Word question 193: Can a scanned
+   page be sent to the AI company whole, before we remove anyone's details?)
+13. Fill the notices page's Google blanks (who Google is, consent as the
+   basis, the US transfer safeguard) from Google's published terms and add
+   Google to the recipients list, marked for the officer to check. (Word
+   question 195: How should our privacy notice name Google, now that the
+   website will use Google Analytics?)
+14. Set the care regulator's cache window to 30 days in the test system and
+   show 'Source: Care Quality Commission, Open Government Licence' beside
+   each fact. (Word question 201: How up to date must information from the
+   care regulator be when we use it?)
+15. Add prior_claim, prior_owner_claim, entity and trigger to the approved
+   analytics labels, the estimate's calls and the allow-list check. (Word
+   question 208: What should we call the first four screens of our online
+   estimate when we count how many people reach each one?)
+16. Switch keeping uploads on in the test system only (invented files), with a
+   test proving Sales cannot open another team's client file. (Word question
+   219: How long do we keep the files clients upload, and who may open them?)
+17. Add a clean-up job that deletes website enquiries 12 months after they
+   were closed, writing a deletion-log entry for each. (Word question 222:
+   How long do we keep a closed website enquiry before it is deleted?)
+
+18. ONE TEST CALL PER KEYED CONNECTOR, under Lakhbir's five conditions for
+   test lookups (Word question 170, answered 25 Sep 2026). Checked by name
+   on 29 Sep: the key file holds Companies House, CQC, EPC and Homedata keys
+   and no test lookup has ever run (~/.caprebate-test-lookups.jsonl does not
+   exist). For CH_COMPANY, CQC and EPC: smoke-switched-on --who "Claude, for
+   Lakhbir" --why "prove the key (29 Sep review)", then ONE smoke each on the
+   defaults (our own company and 70 Whitehall) - never a client. Homedata
+   only once Lakhbir says the account holds a balance (Word question 207).
+   Report PASS or NO per connector; switch nothing on that ships.
+19. The identity check's testing waiver record (src/connectors/identity-
+   check.ts) describes Lakhbir as "director"; he is Head of Business
+   Development and the director is Jalil Ahmed. Correct the record's
+   wording and its test.
+
+When every line is done: run every check in COORDINATES (prove each new
+test red on the code before), re-derive the figures, update the register
+entry for each built item, note each question "built in Phase 153c" in
+the review document's Answer line, and write the record.
+```
+
+
+## PHASE 153d — the commercial papers in test form, for the director and the solicitor
+
+ **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13133268317 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
+a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
+branch main. On the Mac the working copy is Development/, one level above the
+tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
+Allowances/Business Development/Development. git pull, then git log --oneline.
+OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
+INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
+COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
+plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
+already there stops you) and clear it at the end; retag what you touch in the
+tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
+write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+═══════════════════════════════════
+
+Mac copy. A .bak-phase153d sibling of every file you change.
+
+Each is a question in Section 1 (the director). Every paper made here is a TEST copy, each filled term marked "test default, not agreed"; the real engagement letter's brackets are the director's and the solicitor's and are not filled. The test-default letter may be used by the portal in the test system only, and the letter tests must prove a real client can never be sent it.
+READ THE ANSWERS FIRST: a line whose question has been answered in either
+Word document since 29 Sep is built to the answer, not the recommendation.
+
+1. Add a fixed disposal fee, costed from the job cost model, to the disposal
+   note and the test system's quote, marked as a test default awaiting the
+   director. (Word question 23: What do we charge for help when a client
+   sells a property?)
+2. Make a test-only copy of the engagement letter with clause 5, clause 7(d)
+   and clause 13 filled with our defaults, each marked "test default, not
+   agreed". (Word question 33: What is our break fee, and do we charge an
+   abort fee or a fixed fee?)
+3. Fill clause 13's two terms in the test-only copy of the letter (see the
+   break fee line) and run the refund against it in testing. (Word question
+   34: If HMRC cuts a claim after we are paid, how much do we refund?)
+4. Draft one-page introducer terms (what makes a firm registered, the 10% on
+   the invoiced fee, clawback) and a client disclosure line, marked for the
+   solicitor. (Word question 42: Do we pay anything to an accountant who
+   sends us a client?)
+5. Add a three-level risk scale, a 25% ownership threshold and partnership,
+   LLP and trust client types to the money-laundering check, as test
+   defaults. (Word question 45: If anti-money-laundering rules apply, how do
+   we rate client risk?)
+6. Score the enquiry-support risk at 12 (High) before safeguards in the risk
+   register, and write a one-page list of insurance covers to put to a
+   broker. (Word question 62: How likely and how costly is our free,
+   unlimited help if HMRC checks a claim?)
+7. Fill clause 7(d) in the test-only copy of the letter (see the break fee
+   line). (Word question 196: Should clause 7 of our engagement letter name
+   IONOS, or say our email company is named in the privacy notice?)
+
+When every line is done: run every check in COORDINATES (prove each new
+test red on the code before), re-derive the figures, update the register
+entry for each built item, note each question "built in Phase 153d" in
+the review document's Answer line, and write the record.
+```
+
+
+## PHASE 153e — the surveyor's workbench built on our recommendation, for the surveyor to check
+
+ **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13133268318 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
+a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
+branch main. On the Mac the working copy is Development/, one level above the
+tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
+Allowances/Business Development/Development. git pull, then git log --oneline.
+OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
+INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
+COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
+plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
+already there stops you) and clear it at the end; retag what you touch in the
+tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
+write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+═══════════════════════════════════
+
+Mac copy. A .bak-phase153e sibling of every file you change.
+
+Each is a question in Section 4 (the surveyor). Build in phase9, the back end's surveyor workspace or the report template, marked test only where the reviewer said so; placeholders stay labelled as placeholders, and nothing is presented to a surveyor as calibrated.
+READ THE ANSWERS FIRST: a line whose question has been answered in either
+Word document since 29 Sep is built to the answer, not the recommendation.
+
+1. Code the desk-first rule: desk-only when the required documents are all
+   present and no escalation trigger from the desktop-first policy fires;
+   otherwise flag 'site visit needed'; test system only. (Word question 129:
+   Can you value a building safely without ever visiting it?)
+2. Put the video capture script into the client portal as ordered steps with
+   a coverage score and a placeholder pass mark (test only). (Word question
+   130: When can a video walkthrough replace a site visit?)
+3. Code the evidence-level grid on price paid or invoice total with
+   placeholder limits; show the surveyor the level only; keep price withheld
+   until commit (test only). (Word question 131: Should the site-visit
+   decision use our hidden estimate or the price paid?)
+4. Add a floor-area apportionment for shared areas, fed from floor-plan
+   areas, with the flat 25% share as a labelled fallback (test only). (Word
+   question 133: Which shared areas in care homes count as part of someone's
+   home?)
+5. Set default groups for the four ventilation cases per the typed rule, flag
+   theatre and isolation systems for the surveyor, and add client questions
+   on purpose and specification (test only). (Word question 134: How do we
+   tell clinical ventilation from ordinary building ventilation?)
+6. Give the seven unplaced items the typed default placements in the fixture
+   list and room schedule (test only). (Word question 135: Where do emergency
+   lighting and six other items fit in our list?)
+7. Add a job-size banded preliminaries table (placeholder bands) and switch
+   on the by-source preliminaries rule in the test system. (Word question
+   136: Are we adding site running costs twice to every job?)
+8. Add a like-for-like adjustment step (date index, fees, demolition,
+   preliminaries) before the insurance cross-check and a 10% support limit
+   (test only). (Word question 137: How must we adjust our rebuild cost
+   before comparing it with insurance?)
+9. Add a way to re-set each sector range from finished, surveyor-signed
+   claims, and give supported living separate ranges per trigger (test only).
+   (Word question 138: Are our five sector percentage ranges anywhere near
+   right?)
+10. Add a regression test on the past claim with a percentage and pound limit
+   and a 0.01 split limit, plus a slot for a second untuned case. (Word
+   question 139: How close must our results be to a real past claim to pass?)
+11. Add the agreed planning-assumption wording to the report template's land
+   value and assumptions sections (test only). (Word question 145: What
+   should we assume about planning permission when valuing the land?)
+12. Work out the index factor from a BCIS index table and the purchase and
+   valuation dates (placeholder table until the product is bought). (Word
+   question 147: Which cost index should turn today's prices back to the
+   purchase date?)
+13. Change the hospital theatre count to count each space in the suite, with
+   its own equipment rows (test only). (Word question 148: Should an
+   operating theatre be counted as one room or several?)
+14. Set a 10% flag limit for price-per-square-metre fields in the blind
+   comparison (test only). (Word question 149: How big a gap is too big in
+   our blind test?)
+15. Add a 'seen on site' or 'from documents' label to each finding in the
+   report template and review screen. (Word question 150: Can you tell like-
+   for-like replacement from a site visit?)
+16. Add Homedata's dimensions item behind an off switch, labelled as an
+   estimate, and a five-home comparison against known areas. (Word question
+   203: Can we use a measured floor area when a building has no energy
+   certificate?)
+
+When every line is done: run every check in COORDINATES (prove each new
+test red on the code before), re-derive the figures, update the register
+entry for each built item, note each question "built in Phase 153e" in
+the review document's Answer line, and write the record.
+```
+
+
 ## PHASE 154 — Sweep and stress-test (the recurring one, always last)
 
 
@@ -1530,12 +1903,16 @@ WHEN DONE
 
 ## 6 · What Claude is building next
 
- **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 28 September 2026 at the close of Phase 153: one item, Phase 153a, covered by its own section.** Phase 153 carried the five decisions of 22 to 25 September into about fifty documents and corrected the rows whose labels said more than was true (its record is in PHASE HISTORY); what it found and could build but did not — the grant trace, the direction of the 24 tax adviser switches, recovery rows for the systems in use, and three document reconciliations — is Phase 153a, and the sweep (154) runs after it. Before Phase 153 this read: one item, Phase 153. Until the sweep this read: empty, and no orphan. Recovery codes (151m) ran on 28 September 2026 and are Done. The land boundary's first download as a test lookup (151l) is built: `smoke HMLR_INSPIRE`, and running it is Lakhbir's (section 3, row 13). Sign-in hardening (151k) ran on 28 September 2026 and is Done. The test website's uploaded documents on a store every copy reaches (151i) are built; seeing them work is Lakhbir's (section 3, row 14).
+ **Straight off the tracker's "Ready - Claude can build" queue, re-derived on 29 September 2026 after the question review: five items, Phases 153a to 153e, each covered by its own section.** On 29 September Lakhbir set the rule that a sign-off never blocks a build: we build on our recommendation in the test system and ask the reviewer whether it is viable. Every one of the 160 open questions was reviewed against it (`hub/QUESTIONS-REVIEW-2026-09-29.json`); none stops the build, and the sixty builds they named are Phases 153b to 153e. The questions themselves are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx`, in five sections: the director, Lakhbir, Sadique, the surveyor and the accountant. Before that: Phase 153 carried the five decisions of 22 to 25 September into about fifty documents and corrected the rows whose labels said more than was true (its record is in PHASE HISTORY); what it found and could build but did not — the grant trace, the direction of the 24 tax adviser switches, recovery rows for the systems in use, and three document reconciliations — is Phase 153a, and the sweep (154) runs after it. Before Phase 153 this read: one item, Phase 153. Until the sweep this read: empty, and no orphan. Recovery codes (151m) ran on 28 September 2026 and are Done. The land boundary's first download as a test lookup (151l) is built: `smoke HMLR_INSPIRE`, and running it is Lakhbir's (section 3, row 13). Sign-in hardening (151k) ran on 28 September 2026 and is Done. The test website's uploaded documents on a store every copy reaches (151i) are built; seeing them work is Lakhbir's (section 3, row 14).
 
 
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
 |  Claude |  Phase 153a — the grant trace, the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations (13133268314) |  Phase 153 found it; nobody has to answer anything first |
+|  Claude |  Phase 153b — tax readings built on our recommendation, for the accountant to check (13133268315) |  The 29 September question review: build, then ask if it is viable |
+|  Claude |  Phase 153c — data protection and the back office, for Sadique to check; one test call per keyed connector (13133268316) |  The same review |
+|  Claude |  Phase 153d — the commercial papers in test form, for the director and the solicitor (13133268317) |  The same review |
+|  Claude |  Phase 153e — the surveyor's workbench, for the surveyor to check (13133268318) |  The same review |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 
