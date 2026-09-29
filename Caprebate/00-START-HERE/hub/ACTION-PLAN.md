@@ -506,6 +506,14 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   while a step is left. createApp(..., { twoFactor: 'off' }) is for the older
   test files and tools/payload-proof.ts ONLY - never src/ or api/. On the
   test website emails are not sent, so use the authenticator app there.
+  SINCE 29 SEP 2026 (Lakhbir): on the test website ONLY, a login at the
+  reserved domain example.invalid (the invented seed logins) asks for no
+  second step - policy STAFF_EXCEPT_INVENTED, set by api/index.mjs
+  (TEST_WEBSITE_TWO_FACTOR), never by src/ and never the default; every other
+  login still must give one (test/invented-logins.test.ts). A sign-in step
+  lives in the database, so ON MEMORY each copy of the website has its own
+  and a step begun on one is "timed out" on the next - reproduced that day;
+  the time-out page now says so (stepGoneWhy). Sessions live there too.
   Since Phase 151k: /api/login answers 202 and a step token, and
   /api/login/step/... walk the SAME functions (src/web/sign-in.ts); the
   app's secret is sealed where CAPREBATE_MFA_KEY is set (key file, or the

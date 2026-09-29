@@ -56,8 +56,20 @@ const RESET_TTL_MS = 30 * 60 * 1000;
  *   OFF     no second step for anyone, and a temporary password is not asked to change - the setting the older
  *           test files pass, each saying so, because they test other things through a password sign-in. Never set
  *           in src/, api/ or a tool a person runs to use the system.
+ *   STAFF_EXCEPT_INVENTED   (29 September 2026, Lakhbir: "stop it for the @example.invalid emails") STAFF for every
+ *           login, except that one whose address is at the reserved domain example.invalid asks for no second step.
+ *           That domain can never receive mail (RFC 2606), so only the invented seed logins carry it. Set by the test
+ *           website ONLY (api/index.mjs), never by default and never for production. A temporary password is still
+ *           asked to change.
  */
-export type TwoFactorPolicy = 'STAFF' | 'OFF';
+export type TwoFactorPolicy = 'STAFF' | 'OFF' | 'STAFF_EXCEPT_INVENTED';
+
+/** The reserved domain the invented seed logins use. Matched on the whole domain, in any case. */
+export const INVENTED_DOMAIN = 'example.invalid';
+export function isInventedLogin(email: string): boolean {
+  const at = email.trim().toLowerCase().lastIndexOf('@');
+  return at > 0 && email.trim().toLowerCase().slice(at + 1) === INVENTED_DOMAIN;
+}
 
 export type Deps = {
   db: Db;
@@ -158,8 +170,8 @@ export type SignInStep = 'NEW_PASSWORD' | 'SETUP' | 'VERIFY';
 export const TEMPORARY_PASSWORD_EXPIRED = 'Your temporary password has expired. Ask your administrator for a new one.';
 
 export function nextSignInStep(d: Deps, user_id: string): SignInStep | null {
-  const r = d.db.get<{ role: string; password_temporary_until: string | null; mfa_method: string | null }>(
-    'SELECT role, password_temporary_until, mfa_method FROM users WHERE id = ?', [user_id]);
+  const r = d.db.get<{ role: string; password_temporary_until: string | null; mfa_method: string | null; email: string }>(
+    'SELECT role, password_temporary_until, mfa_method, email FROM users WHERE id = ?', [user_id]);
   if (r === undefined) throw new AuthError('E_AUTH_FAILED', GENERIC_AUTH_FAILURE);
   if ((d.twoFactor ?? 'STAFF') === 'OFF') return null;
   if (r.password_temporary_until !== null) {
@@ -168,6 +180,7 @@ export function nextSignInStep(d: Deps, user_id: string): SignInStep | null {
     }
     return 'NEW_PASSWORD';
   }
+  if (d.twoFactor === 'STAFF_EXCEPT_INVENTED' && isInventedLogin(r.email)) return null;
   if (r.mfa_method !== null) return 'VERIFY';
   return r.role === 'CLIENT' ? null : 'SETUP';
 }

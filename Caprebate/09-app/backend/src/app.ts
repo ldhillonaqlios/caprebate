@@ -51,8 +51,9 @@ export type BuildOptions = {
   dbAuthToken?: string;
   /** Tests only: open a memory or file database through libsql, to prove the application runs on it (src/db.ts). */
   dbEngine?: 'node:sqlite' | 'libsql';
-  /** PHASE 151j: who must give a second factor. Absent is 'staff', the rule. 'off' is for the older tests only. */
-  twoFactor?: 'staff' | 'off';
+  /** PHASE 151j: who must give a second factor. Absent is 'staff', the rule. 'off' is for the older tests only.
+   *  'staff-except-invented' (29 Sep 2026) is for the test website only: see TwoFactorPolicy in src/auth.ts. */
+  twoFactor?: 'staff' | 'off' | 'staff-except-invented';
   hasher?: PasswordHasher;
   now?: () => string;
   migrationsDir?: string;
@@ -93,7 +94,8 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
 
   await primeTimingDefence(hasher);
 
-  const deps: Deps = { db, audit, hasher, now, twoFactor: opts.twoFactor === 'off' ? 'OFF' : 'STAFF' };
+  const deps: Deps = { db, audit, hasher, now, twoFactor: opts.twoFactor === 'off' ? 'OFF'
+    : opts.twoFactor === 'staff-except-invented' ? 'STAFF_EXCEPT_INVENTED' : 'STAFF' };
   return { db, audit, hasher, email, signature, secrets, outside, now, deps, close: () => db.close() };
 }
 

@@ -480,7 +480,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/login/step' && method === 'GET') {
     // PHASE 151m: ?use=recovery draws the VERIFY step as the recovery-code form.
     const body = SI.stepPage(d.app, cookie(req, SI.STEP_COOKIE), undefined, undefined, url.searchParams.get('use') === 'recovery' ? 'recovery' : undefined);
-    if (body === undefined) { res.setHeader('set-cookie', stepCookie(null)); html(res, 200, loginPage(SI.STEP_GONE)); return 'handled'; }
+    if (body === undefined) { res.setHeader('set-cookie', stepCookie(null)); html(res, 200, loginPage(SI.STEP_GONE, undefined, stepGoneWhy(d.app))); return 'handled'; }
     html(res, 200, body); return 'handled';
   }
   const stepAction = /^\/login\/step\/(password|method|code|resend|recovery)$/.exec(path);
@@ -510,10 +510,10 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       if (r.recovery_codes !== undefined) { html(res, 200, SI.recoveryCodesPage(r.recovery_codes, { href: done, label: 'I have saved them. Continue' }, nav(actor))); return 'handled'; }
       redirect(res, done); return 'handled';
     }
-    if (r.kind === 'GONE') { res.setHeader('set-cookie', stepCookie(null)); html(res, 401, loginPage(r.why)); return 'handled'; }
+    if (r.kind === 'GONE') { res.setHeader('set-cookie', stepCookie(null)); html(res, 401, loginPage(r.why, undefined, stepGoneWhy(d.app))); return 'handled'; }
     const page0 = SI.stepPage(d.app, raw0, r.kind === 'ERROR' ? r.why : undefined, r.kind === 'STEP' ? r.note : undefined,
       which === 'recovery' ? 'recovery' : undefined);
-    if (page0 === undefined) { res.setHeader('set-cookie', stepCookie(null)); html(res, 401, loginPage(SI.STEP_GONE)); return 'handled'; }
+    if (page0 === undefined) { res.setHeader('set-cookie', stepCookie(null)); html(res, 401, loginPage(SI.STEP_GONE, undefined, stepGoneWhy(d.app))); return 'handled'; }
     html(res, r.kind === 'ERROR' ? 400 : 200, page0); return 'handled';
   }
 
@@ -1633,12 +1633,24 @@ function twoFactorPage(actor: Actor, home: string, method: SI.Method | null, don
   });
 }
 
-function loginPage(error: string | undefined, note?: string): string {
+/**
+ * 29 SEPTEMBER 2026 — WHY A SIGN-IN STEP IS LOST, SAID WHERE IT HAPPENS. A step lives in the database (sign_in_steps).
+ * On a database kept in memory, each copy of the website has its own, so a step begun on one copy is not there when the
+ * next request reaches another, and it reads as "timed out" at once. Reproduced that day with two copies on memory.
+ * The test website runs on memory whenever its lasting database is not in use (api/index.mjs, lastingDatabase).
+ */
+export const STEP_LOST_ON_MEMORY = 'This website keeps its records in memory. Each copy of it has its own. So a sign-in step can be lost when the next page reaches another copy. If this happens every time, the lasting database is not in use.';
+export function stepGoneWhy(app: { db: { kind: string } }): string | undefined {
+  return app.db.kind === 'memory' ? STEP_LOST_ON_MEMORY : undefined;
+}
+
+function loginPage(error: string | undefined, note?: string, why?: string): string {
   return page({
     title: 'Sign in',
     body: h`
       <h1>Sign in</h1>
       ${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}
+      ${why !== undefined ? h`<p class="help" id="step-lost-why">${why}</p>` : raw('')}
       ${note !== undefined ? h`<p class="ok">${note}</p>` : raw('')}
       <form method="post" action="/login">
         <label class="fl" for="login-email">Email</label><input class="fi" id="login-email" type="email" name="email" autocomplete="username" required>

@@ -37,6 +37,9 @@ async function build() {
   const docs = sharedDocumentStore(process.env, lasting);
   const opened = await openLasting(createApp, seed, lasting, {
     documentRoot: mkdtempSync(join(tmpdir(), 'cb-vercel-')),
+    // 29 SEPTEMBER 2026 (Lakhbir): the invented @example.invalid logins ask for no second step on the test website;
+    // every other login still must give one (src/auth.ts, STAFF_EXCEPT_INVENTED). This file only - never the default.
+    twoFactor: TEST_WEBSITE_TWO_FACTOR,
     ...(publicOrigin === undefined ? {} : { publicOrigin }),
   }, 10_000, await sharedDocumentOptions(docs, lasting));
   const made = opened.made;
@@ -78,6 +81,9 @@ async function build() {
  *       nothing changes and NO key is read, whatever the settings hold. The identity panel says the keys are missing.
  * It prints what it did - never a password and never a key.
  */
+/** 29 Sep 2026: who gives a second step on the test website. Read by test/invented-logins.test.ts. */
+export const TEST_WEBSITE_TWO_FACTOR = 'staff-except-invented';
+
 export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'CAPREBATE_MFA_KEY']);
 
 export async function configureTestDeploy(made, env) {

@@ -81,7 +81,7 @@ export type ServerOptions = {
   /** Tests only: see BuildOptions.dbEngine. */
   dbEngine?: 'node:sqlite' | 'libsql';
   /** PHASE 151j: see BuildOptions.twoFactor. Absent is 'staff'. */
-  twoFactor?: 'staff' | 'off';
+  twoFactor?: 'staff' | 'off' | 'staff-except-invented';
   /** PHASE 151i follow-up 5: see BuildOptions.schema. Absent builds the tables, as always. */
   schema?: 'apply' | 'require-built';
   /**

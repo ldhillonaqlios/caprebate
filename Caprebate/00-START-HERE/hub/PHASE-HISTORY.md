@@ -10779,3 +10779,14 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  4B: the build queue holds one item, Phase 153a (13133268314), covered by its own section by id and subject. No orphan.
 
  **Claim cleared** in `hub/CLAIM.md` in the commit that carries this record.
+
+## Ad-hoc fix, 29 September 2026 — no second step for the invented logins on the test website, and why the authenticator step "times out" (Opus, Mac copy)
+
+ Lakhbir: "check the 2FA and stop it for the @example.invalid emails — every time I go to click 2FA via authenticator app the session times out." Claimed 55afb9e.
+
+-  **The cause, reproduced.** A sign-in step is a row in the database (`sign_in_steps`) with a cookie pointing at it. On one copy of the website, choosing the authenticator app reaches the set-up page (200). On two copies each on its own in-memory database, the same click answers 401 "That sign-in has timed out" — Lakhbir's words. The lasting database (`src/db.ts`) talks to Turso directly, with no local replica, so with Turso in use every copy sees the step at once. So the live test website is most likely still on memory: Word question 230 (not yet confirmed) is the thing to check. Sessions are in the database too, so on memory a login can also drop between pages.
+-  **What changed.** A third policy, `STAFF_EXCEPT_INVENTED` (`src/auth.ts`, `isInventedLogin`: the whole domain `example.invalid`, any case): no second step for the invented seed logins; a temporary password is still asked to change; every other login unchanged. Set only by `api/index.mjs` (`TEST_WEBSITE_TWO_FACTOR`); the default stays STAFF, and a test fails if any file under `src/` sets it. The time-out page now adds, on a memory database, why a step can be lost (`stepGoneWhy`, `STEP_LOST_ON_MEMORY`).
+-  **Proof.** `test/invented-logins.test.ts`, eight tests. With the one exemption line removed, exactly the two invented-login tests fail; with the page words removed, exactly the time-out test fails. `npm run check` exit 0, **1799 pass** (was 1791, 96 files); the plain-words test caught the first wording at grade 10.9 and it was shortened. The Phase 152 sign-up test failed at random on the old code too (1 in 6 alone) — the known flake, Phase 153a line 7. The CRM fold check (one moved reference, `STUBS` to `src/app.ts:132`), the drift checker (`--fast --expect 1279,439,403,1799`: Developer Spec §4 moved to 1,799 and 3,920), plain words, brand, tracker and register checks all exit 0; the payload proof PASS.
+-  DONE: the exemption, the explanation, the tests, the records. NOT DONE: confirming the live site is on Turso — BLOCKED on Lakhbir looking (Word question 230); the flaky sign-up test — BUILDABLE — Phase 153a line 7.
+
+ **Claim cleared** in the commit that carries this record.
