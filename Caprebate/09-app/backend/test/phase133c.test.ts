@@ -97,6 +97,9 @@ async function crawl(c: Client, start: string): Promise<Map<string, Res>> {
     for (const x of r.body.matchAll(/href="([^"#]+)"/g)) {
       const href = (x[1] ?? '').replace(/&amp;/g, '&');
       if (!href.startsWith('/') || href.startsWith('//')) continue;
+      // 29 Sep 2026: `/` is the public home page: its title is the search engines' ("… | Cap Rebate", SEO-SPEC.md) and its
+      // voice is checked in test/home-page.test.ts. The notices page's "Back to the home page" link made it reachable.
+      if (href === '/') continue;
       if (/^\/(assets|logout)|\.csv(\?|$)|\.json(\?|$)|\/upload\//.test(href)) continue;
       const shape = href.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, '{id}').replace(/=[^&]*/g, '=');
       if (shapes.has(shape)) continue;

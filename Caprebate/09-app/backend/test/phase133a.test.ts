@@ -127,6 +127,9 @@ async function crawl(c: Client, start: string): Promise<Map<string, Res>> {
     for (const x of r.body.matchAll(/href="([^"#]+)"/g)) {
       const href = (x[1] ?? '').replace(/&amp;/g, '&');
       if (!href.startsWith('/') || href.startsWith('//')) continue;
+      // 29 Sep 2026: `/` is the public home page, under its own policy and with its own script, and is held to its own
+      // rules in test/home-page.test.ts. The notices page's "Back to the home page" link made it reachable from here.
+      if (href === '/') continue;
       if (/^\/(assets|logout)|\.csv(\?|$)|\/upload\//.test(href)) continue;
       const shape = href.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, '{id}').replace(/=[^&]*/g, '=');
       if (shapes.has(shape)) continue;

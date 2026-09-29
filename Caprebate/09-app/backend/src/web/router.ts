@@ -118,6 +118,22 @@ function setCookie(res: ServerResponse, name: string, value: string, maxAge: num
   res.setHeader('set-cookie', Array.isArray(prior) ? [...prior, line] : prior ? [String(prior), line] : [line]);
 }
 
+/** STRESS TEST, 29 SEP 2026: the addresses where a HEAD is answered as a GET, because their GET changes nothing. */
+function HEAD_AS_GET(path: string): boolean {
+  return path === '/' || path.startsWith('/assets/') || path === '/login' || path === '/favicon.svg' || path === '/favicon.ico'
+    || path === '/privacy/' || path === '/privacy' || path === '/notices/' || path === '/notices';
+}
+
+/** The browser tab's icon: the home page's mark (the calculator drawn as a house) on the ink ground. */
+const FAVICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#121614"/>' +
+  '<g transform="translate(3 3) scale(0.875)"><path d="M14 43 H34 A4 4 0 0 0 38 39 V20.5 L24 8 L10 20.5 V39 A4 4 0 0 0 14 43 Z" fill="none" stroke="#EDEAE2" stroke-width="3.4" stroke-linejoin="round"/>' +
+  '<rect x="16" y="20" width="16" height="5.5" rx="1.6" fill="none" stroke="#ABEDD8" stroke-width="2.8"/>' +
+  '<g fill="#EDEAE2"><rect x="16" y="29.5" width="4" height="4" rx="1"/><rect x="22" y="29.5" width="4" height="4" rx="1"/><rect x="28" y="29.5" width="4" height="4" rx="1"/>' +
+  '<rect x="16" y="35.5" width="4" height="4" rx="1"/><rect x="22" y="35.5" width="4" height="4" rx="1"/><rect x="28" y="35.5" width="4" height="4" rx="1"/></g></g></svg>';
+const FAVICON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
+  'content-type': 'image/svg+xml', 'x-content-type-options': 'nosniff', 'cache-control': 'public, max-age=86400',
+});
+
 function html(res: ServerResponse, status: number, body: string): void {
   res.writeHead(status, HTML_HEADERS);
   res.end(body);
@@ -222,7 +238,10 @@ export type WebResult = 'handled' | 'not-mine';
 export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerResponse): Promise<WebResult> {
   const url = new URL(req.url ?? '/', 'http://localhost');
   const path = url.pathname;
-  const method = req.method ?? 'GET';
+  /* STRESS TEST, 29 SEP 2026: A HEAD asks for a GET's headers without its body (Node drops the body itself). Link
+     checkers, uptime monitors and link previews send it, and got a 401. Answered as a GET only where a GET changes
+     nothing: the home page, the files, sign-in, the notices. Anywhere else a HEAD meets the page for unknown addresses. */
+  const method = req.method === 'HEAD' && HEAD_AS_GET(path) ? 'GET' : req.method ?? 'GET';
   const newId = d.newId ?? randomUUID;
   const now = d.app.now;
 
@@ -237,6 +256,23 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assets/cap-rebate-logo.png' && method === 'GET') {
     res.writeHead(200, PNG_HEADERS); res.end(LOGO_INK_PNG); return 'handled';
   }
+  // STRESS TEST, 29 SEP 2026: the house mark as the browser tab's icon. A browser asked for /favicon.ico on every page
+  // and met a 401, which it logged as an error; pages now name /favicon.svg, and /favicon.ico answers "nothing here".
+  if (path === '/favicon.svg' && method === 'GET') { res.writeHead(200, FAVICON_HEADERS); res.end(FAVICON_SVG); return 'handled'; }
+  if (path === '/favicon.ico' && method === 'GET') { res.writeHead(204, { 'cache-control': 'public, max-age=86400' }); res.end(); return 'handled'; }
+  /* STRESS TEST, 29 SEP 2026: THE PRIVACY NOTICE AND THE PUBLIC NOTICES ARE NOT PUBLISHED YET (03-app's notices page is a
+     draft with facts not set, and the privacy notice waits on the data protection officer), but every page links to them
+     and the links answered 401. Until they are published, a page that says so and how to reach us - nothing more. */
+  if ((path === '/privacy/' || path === '/privacy' || path === '/notices/' || path === '/notices') && method === 'GET') {
+    html(res, 200, page({ title: 'Privacy and public notices', nav: nav(actor), body: h`<h1>Privacy and public notices</h1>
+      <p>Our privacy notice and our public notices are being prepared. They will be published on this page before the website opens to clients.</p>
+      <p>Until then, if you have a question about how we use your details, or you want to make a complaint, email
+      <a href="mailto:contact@caprebate.co.uk">contact@caprebate.co.uk</a>. A person will read it and reply.</p>
+      <p><a href="/">Back to the home page</a></p>` }));
+    return 'handled';
+  }
+  // STRESS TEST, 29 SEP 2026: the enquiry's thank-you page, reloaded or bookmarked, is a GET; it goes back to the form.
+  if (path === '/enquiry' && method === 'GET') { redirect(res, '/#contact'); return 'handled'; }
 
   /* ------------------------------------------------------ public site */
   /* PHASE 133j: THE WEBSITE IS `Caprebate site.html`, served from the one file (src/web/public-site.ts) with its style
@@ -254,12 +290,12 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
      the build. Without it, `/` is `Caprebate site.html` as below. */
   if (path === '/assets/home.css' && method === 'GET') {
     const edition = homeEdition();
-    if (edition !== undefined) { res.writeHead(200, CSS_HEADERS); res.end(edition.css); return 'handled'; }
+    if (edition !== undefined) { res.writeHead(200, { ...CSS_HEADERS, 'cache-control': 'public, max-age=300' }); res.end(edition.css); return 'handled'; }
   }
   if (path === '/assets/home.js' && method === 'GET') {
     const edition = homeEdition();
     // The configured Turnstile site key goes in here; without one the page keeps Cloudflare's test key.
-    if (edition !== undefined) { res.writeHead(200, SITE_JS_HEADERS); res.end(withSiteKey(edition.js, turnstileSiteKey(d.app.secrets))); return 'handled'; }
+    if (edition !== undefined) { res.writeHead(200, { ...SITE_JS_HEADERS, 'cache-control': 'public, max-age=300' }); res.end(withSiteKey(edition.js, turnstileSiteKey(d.app.secrets))); return 'handled'; }
   }
   if (path === '/assets/gsap.min.js' && method === 'GET') {
     const gsap = gsapScript();
@@ -691,6 +727,15 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     return 'handled';
   }
 
+  /* STRESS TEST, 29 SEP 2026: AN ADDRESS NOBODY OWNS. It fell through to the JSON API, which asked for a login and
+     answered 401 "those details did not match" to a person who had only mistyped an address. A GET or HEAD outside
+     /api now gets a page that says so. The JSON API keeps its own answers: every one of its addresses is under /api. */
+  if ((method === 'GET' || method === 'HEAD') && path !== '/api' && !path.startsWith('/api/')) {
+    html(res, 404, page({ title: 'Page not found', nav: nav(actor), body: h`<h1>We cannot find that page</h1>
+      <p>The address may be mistyped, or the page may have moved.</p>
+      <p><a class="cta" href="/">Go to the home page</a></p>` }));
+    return 'handled';
+  }
   return 'not-mine';
 }
 
@@ -1933,13 +1978,15 @@ function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, n
  * PHASE 146f: THE ADDRESS A SIGNATURE CAME FROM. The socket's own address; behind a host's proxy, the first address in
  * X-Forwarded-For, but only when CAPREBATE_TRUST_PROXY=1 says a proxy we trust set it — otherwise anyone could type one.
  */
-function clientIp(req: IncomingMessage): string {
+export function clientIp(req: IncomingMessage): string {
   if (process.env.CAPREBATE_TRUST_PROXY === '1') {
     const fwd = req.headers['x-forwarded-for'];
     const first = (Array.isArray(fwd) ? fwd[0] : fwd)?.split(',')[0]?.trim();
     if (first !== undefined && first !== '') return first;
   }
-  return req.socket.remoteAddress ?? 'unknown';
+  /* STRESS TEST, 29 SEP 2026: every enquiry answered 500 on the test website, and nothing else there differs from a
+     local run but the request. The address is now read so that a request with no socket cannot throw. */
+  try { return req.socket?.remoteAddress ?? 'unknown'; } catch { return 'unknown'; }
 }
 
 function letterPage(

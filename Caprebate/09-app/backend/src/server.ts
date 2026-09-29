@@ -148,6 +148,10 @@ export async function createApp(
       }
       if (e instanceof AuthError) return send(res, 401, { error: e.message });
       if (e instanceof PayloadTooLarge) return send(res, 413, { error: 'body too large' });
+      /* STRESS TEST, 29 SEP 2026: SAID IN THE LOG, which no 500 was before, so a fault on the test website can be found.
+         The kind of error and the line of code only: never its message, which could carry what a person typed. */
+      const where = e instanceof Error ? (e.stack ?? '').split('\n').find((l) => l.includes('/src/'))?.trim() ?? '' : '';
+      console.error(`500 on ${req.method ?? '?'} ${new URL(req.url ?? '/', 'http://localhost').pathname}: ${e instanceof Error ? e.name : typeof e} ${where}`);
       send(res, 500, { error: 'something went wrong' });
     });
   });

@@ -193,7 +193,7 @@ function clientPage(nav: Safe, v: BillingClient, today: string, done: string | n
       <h2>Waiting for an invoice</h2>
       ${v.to_invoice.length === 0 ? h`<p class="help">No claim is waiting for an invoice.</p>` : h`<ul>${v.to_invoice.map((e) => h`<li>${e.claim_ref}: our fee ${e.expected}.
         ${e.finance_task === null ? '' : `Your task: ${e.finance_task.title} (${e.finance_task.due.label}).`}
-        <a href="/staff/finance#expected">Raise it on the finance page</a></li>`)}</ul>`}
+        <a href="/staff/finance#to-invoice">Raise it on the finance page</a></li>`)}</ul>`}
       <h2>Invoices</h2>
       ${v.invoices.length === 0 ? h`<p class="help">No invoice yet.</p>` : v.invoices.map((i) => h`<section class="card"><div class="card-h"><h2><a href="/staff/finance/${i.id}">${i.number ?? 'An invoice with no number yet'}</a></h2></div>
         <p>${i.claim.claim_ref} · ${i.money.label} · owed ${i.money.outstanding} · ${i.money.due.label}</p>

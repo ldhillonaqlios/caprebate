@@ -109,6 +109,7 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${opts.title} · Cap Rebate</title>
 <link rel="stylesheet" href="/assets/site.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head><body class="${shell ? 'app' : 'public'}">
 <a class="skip" href="#main">Skip to content</a>
 <header class="top"><div class="topline">${brand}${opts.nav ?? raw('')}</div></header>
