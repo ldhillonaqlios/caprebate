@@ -49,7 +49,11 @@ function text(f: URLSearchParams, name: string, max: number): string | null | un
 }
 
 /** Receive the form. No actor: a visitor has no account. */
-export function receiveEnquiry(auth: Deps, newId: () => string, f: URLSearchParams): Received {
+/**
+ * `check` is what the contact form's security check found (src/connectors/turnstile.ts), recorded on the audit line:
+ * 'passed', or 'not_checked' with why. A failed check never reaches here: the router refuses it first.
+ */
+export function receiveEnquiry(auth: Deps, newId: () => string, f: URLSearchParams, check: 'passed' | 'not_checked:no_secret' | 'not_checked:transfer_not_approved' = 'not_checked:no_secret'): Received {
   const name = text(f, 'name', 200);
   const firm = text(f, 'firm', 300);
   const email = text(f, 'email', 254);
@@ -77,7 +81,7 @@ export function receiveEnquiry(auth: Deps, newId: () => string, f: URLSearchPara
   );
   auth.audit.append({
     at, kind: 'WEBSITE_ENQUIRY_RECEIVED', outcome: 'ALLOWED', actor_id: null, actor_role: null,
-    object_type: 'website_enquiry', object_id: id, detail: { sector: PROPERTY_TYPES[ptype] ?? null },
+    object_type: 'website_enquiry', object_id: id, detail: { sector: PROPERTY_TYPES[ptype] ?? null, security_check: check },
   });
   return { ok: true, id };
 }

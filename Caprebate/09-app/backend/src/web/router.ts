@@ -75,6 +75,7 @@ import {
 import { clientDeliverables, type ClientDeliverable } from './claim-record.ts';
 import { siteEdition, SITE_PAGE_CSP, SITE_PAGE_HEADERS, SITE_JS_HEADERS } from './public-site.ts';
 import { homeEdition, gsapScript, HOME_PAGE_HEADERS } from './home-site.ts';
+import { checkTurnstile, refusalWords, turnstileSiteKey, withSiteKey, TURNSTILE_FIELD } from '../connectors/turnstile.ts';
 import { receiveEnquiry } from './enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
 import { ANSWER_MYSELF_LABEL, checkedLine, checkPropertyPostcodes, lookupsOffered, recordLookupsDeclined, type KeptCheck } from './address-check.ts';
@@ -257,7 +258,8 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   }
   if (path === '/assets/home.js' && method === 'GET') {
     const edition = homeEdition();
-    if (edition !== undefined) { res.writeHead(200, SITE_JS_HEADERS); res.end(edition.js); return 'handled'; }
+    // The configured Turnstile site key goes in here; without one the page keeps Cloudflare's test key.
+    if (edition !== undefined) { res.writeHead(200, SITE_JS_HEADERS); res.end(withSiteKey(edition.js, turnstileSiteKey(d.app.secrets))); return 'handled'; }
   }
   if (path === '/assets/gsap.min.js' && method === 'GET') {
     const gsap = gsapScript();
@@ -291,7 +293,20 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     return 'handled';
   }
   if (path === '/enquiry' && method === 'POST') {
-    const r = receiveEnquiry(d.app.deps, newId, await form(req));
+    const posted = await form(req);
+    /* 29 SEPTEMBER 2026: THE SECURITY CHECK, ON THE SERVER (src/connectors/turnstile.ts). Without a secret key, or before
+       the transfer to Cloudflare is approved, nothing is checked and the enquiry is kept as before. With both, an answer
+       that is missing, rejected or unanswered refuses the enquiry: nothing is kept, and the audit says which. */
+    const check = await checkTurnstile({ audit: d.app.audit, now: d.app.now, transport: d.app.outside, secrets: d.app.secrets,
+      ...(d.app.turnstilePolicy === undefined ? {} : { policy_override: d.app.turnstilePolicy }) }, posted.get(TURNSTILE_FIELD), clientIp(req));
+    if (check.state === 'FAILED') {
+      d.app.audit.append({ at: d.app.now(), kind: 'WEBSITE_ENQUIRY_REFUSED', outcome: 'REFUSED', actor_id: null, actor_role: null,
+        detail: { why: 'security_check', reason: check.reason, codes: [...check.codes] } });
+      html(res, 400, page({ title: 'Your enquiry was not sent', nav: nav(actor),
+        body: h`<h1>Your enquiry was not sent</h1><p class="err">${refusalWords(check)}</p><p><a href="/#contact">Go back to the form</a></p>` }));
+      return 'handled';
+    }
+    const r = receiveEnquiry(d.app.deps, newId, posted, check.state === 'PASSED' ? 'passed' : `not_checked:${check.reason}`);
     if (!r.ok) {
       html(res, 400, page({ title: 'Your enquiry was not sent', nav: nav(actor),
         body: h`<h1>Your enquiry was not sent</h1><p class="err">${r.why}</p><p><a href="/#contact">Go back to the form</a></p>` }));

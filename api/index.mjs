@@ -50,6 +50,9 @@ async function build() {
   // PHASE 151e (line 3): a password of its own, and then - only then - the Didit keys from the website's settings.
   const t151e = await configureTestDeploy(made, process.env);
   console.log(`test deployment: ${t151e.why}`);
+  // 29 SEPTEMBER 2026: whether the contact form's security check is checked on the server, and if not why (names only).
+  const { turnstileWhy } = await import('../Caprebate/09-app/backend/src/connectors/turnstile.ts');
+  console.log(`test deployment: ${turnstileWhy(made.app.secrets)}`);
   // No email is sent. The outbox (with a sign-up's confirmation link) goes to the function log, as the demo prints it.
   const shown = new Set();
   setInterval(() => {

@@ -230,6 +230,21 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     rate_basis: 'Didit publishes 600 a minute for creating sessions (read 25 Sep 2026); twenty a minute is OUR cautious limit - a check is started by a person, one at a time',
     timeout_ms: 20_000, max_bytes: 256 * 1024, max_attempts: 2, cost_pence: 33,
   },
+  CLOUDFLARE_TURNSTILE: {
+    /* 29 SEPTEMBER 2026 — the home page contact form's security check (src/connectors/turnstile.ts). A PROCESSOR, not a
+       register source: the server sends Cloudflare the widget's answer and the visitor's address, and Cloudflare says
+       whether the answer is real. Address and call from developers.cloudflare.com/turnstile/get-started/server-side-
+       validation (read 29 Sep 2026). Cloudflare, Inc. is a US company with a global network; it publishes no region
+       for this call, so the row says US and the transfer is NOT APPROVED: until the data protection officer approves
+       it, nothing is sent and every enquiry is kept unchecked (src/connectors/turnstile.ts says so in the log). The
+       widget in the visitor's browser already talks to Cloudflare, so the privacy notice needs a line either way.
+       ONE TRY: an answer is good once, so a retry would be refused as a duplicate. Turnstile is free. */
+    service_id: 'CLOUDFLARE_TURNSTILE', register_source: null,
+    base_url: 'https://challenges.cloudflare.com', region: 'US', international_transfer_approved: false,
+    rate: { limit: 60, window_ms: 60 * 1000 },
+    rate_basis: 'NOT PUBLISHED for siteverify (read 29 Sep 2026); sixty a minute is OUR cautious limit - one check an enquiry, and enquiries are limited per address',
+    timeout_ms: 8_000, max_bytes: 16 * 1024, max_attempts: 1,
+  },
   CLAUDE_DOCUMENTS: {
     service_id: 'CLAUDE_DOCUMENTS', register_source: null,
     base_url: 'https://api.anthropic.com', region: 'US', international_transfer_approved: false,

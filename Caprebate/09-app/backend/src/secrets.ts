@@ -42,7 +42,9 @@ export type SecretOwner =
   | 'CLAUDE_DOCUMENTS' | 'COMPANIES_HOUSE' | 'CQC' | 'EPC' | 'HOMEDATA_ADDRESS' | 'HMLR_TITLE'
   | 'IONOS_EMAIL' | 'IONOS_MAILBOX' | 'GOOGLE_ANALYTICS' | 'DIDIT_IDV'
   /** PHASE 151k: not a connector - the sign-in's own key, which seals each person's authenticator app secret. */
-  | 'SIGN_IN';
+  | 'SIGN_IN'
+  /** 29 Sep 2026: the contact form's security check (src/connectors/turnstile.ts). */
+  | 'CLOUDFLARE_TURNSTILE';
 
 export type SecretKey = {
   readonly name: string;
@@ -117,6 +119,8 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'DIDIT_WEBHOOK_SECRET', owner: 'DIDIT_IDV', secret: true, phase: '151f', what: 'the Didit webhook secret that signs its results' },
   { name: 'DIDIT_WORKFLOW_ID', owner: 'DIDIT_IDV', secret: false, phase: '151f', what: 'the id of the check set up in the Didit console (not secret)' },
   { name: 'CAPREBATE_MFA_KEY', owner: 'SIGN_IN', secret: true, phase: '151k', what: 'the key that seals each person’s authenticator app secret: 32 random bytes, as base64 (src/mfa-seal.ts)' },
+  { name: 'TURNSTILE_SITE_KEY', owner: 'CLOUDFLARE_TURNSTILE', secret: false, phase: 'turnstile', what: 'the Cloudflare Turnstile site key for the home page’s contact form (public: it is printed in the page)' },
+  { name: 'TURNSTILE_SECRET_KEY', owner: 'CLOUDFLARE_TURNSTILE', secret: true, phase: 'turnstile', what: 'the Cloudflare Turnstile secret key, which the server sends to Cloudflare to check the form’s answer' },
 ]);
 
 export type SecretsState = 'LOADED' | 'NO_FILE' | 'REFUSED_INSIDE_REPOSITORY' | 'UNREADABLE';

@@ -370,6 +370,8 @@ export type AuditKind =
    */
   | 'SITE_POINT_ENTERED' | 'SITE_COUNCIL_ADDED'
   | 'WEBSITE_ENQUIRY_RECEIVED' | 'WEBSITE_ENQUIRY_HANDLED'
+  /** 29 Sep 2026: an enquiry refused by the contact form's security check (src/connectors/turnstile.ts). Nothing kept. */
+  | 'WEBSITE_ENQUIRY_REFUSED'
   | 'CLIENT_SIGNUP_REQUESTED' | 'CLIENT_SIGNUP_VERIFIED'
   | 'AUTHORISATION_REFUSED';
 

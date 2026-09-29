@@ -18,6 +18,7 @@ import { builtInSignatureProvider, type SignatureProvider } from './stubs/signat
 import { newId } from './users.ts';
 import { primeTimingDefence, type Deps } from './auth.ts';
 import { processSecrets, type SecretStore } from './secrets.ts';
+import type { CallPolicy } from './connectors/sources.ts';
 import { liveTransport, type Transport } from './connectors/http.ts';
 
 export const MIGRATIONS_DIR = join(import.meta.dirname, '..', 'migrations');
@@ -49,6 +50,11 @@ export type App = {
    * pages say only that the records are in memory.
    */
   storageWhy?: string;
+  /**
+   * 29 SEPTEMBER 2026: TESTS ONLY - the contact form security check's call policy with some values changed (the
+   * transfer to Cloudflare approved), so a test can reach the recorded answers. Never set by a running server.
+   */
+  turnstilePolicy?: Partial<CallPolicy>;
 };
 
 export type BuildOptions = {

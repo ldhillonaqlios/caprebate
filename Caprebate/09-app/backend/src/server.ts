@@ -21,6 +21,7 @@
  * than run as a second server.
  */
 
+import { turnstileWhy } from './connectors/turnstile.ts';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
@@ -311,7 +312,10 @@ export async function createApp(
 if (import.meta.filename === process.argv[1]) {
   const port = Number(process.env.PORT ?? 8103);
   const location = process.env.CAPREBATE_DB ?? 'caprebate.db';
-  void createApp(location).then(({ server }) => {
-    server.listen(port, () => console.log(`caprebate back end on http://localhost:${port}`));
+  void createApp(location).then(({ server, app }) => {
+    server.listen(port, () => {
+      console.log(`caprebate back end on http://localhost:${port}`);
+      console.log(`  ${turnstileWhy(app.secrets)}`); // 29 Sep 2026: the contact form's security check, said at start-up
+    });
   });
 }

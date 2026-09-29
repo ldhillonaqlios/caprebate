@@ -165,7 +165,8 @@ describe('the website enquiry form', () => {
       'SELECT full_name, email, property_type, status, contact_consent FROM website_enquiries WHERE email = ?', [good.email]);
     assert.deepEqual({ ...row }, { full_name: good.name, email: good.email, property_type: 'Dental practice', status: 'NEW', contact_consent: 1 });
     const line = made.app.db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'WEBSITE_ENQUIRY_RECEIVED' ORDER BY seq DESC LIMIT 1");
-    assert.deepEqual(JSON.parse(line?.detail ?? '{}'), { sector: 'dental' });
+    // 29 Sep 2026: the line also says whether the security check ran (src/connectors/turnstile.ts); no key here, so not.
+    assert.deepEqual(JSON.parse(line?.detail ?? '{}'), { sector: 'dental', security_check: 'not_checked:no_secret' });
   });
 
   test('without a name, a real address or a listed property type, nothing is kept — and no tick is asked for (Phase 151)', async () => {

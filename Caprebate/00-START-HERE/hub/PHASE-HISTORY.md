@@ -10815,3 +10815,17 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  NOT DONE: GSAP was not installed on the Mac, so the animation was checked on the deploy; the tall phone version of the hero video and its render (waiting on Lakhbir); the Turnstile live key and server check.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 29 September 2026 — the contact form's security check, checked on the server (Opus, Mac copy)
+
+ The home page's contact form ran Cloudflare Turnstile only in the browser, with Cloudflare's test key, and `/enquiry` checked nothing: a script posting to `/enquiry` never met it. Built from the task raised when the home page went live.
+
+-  **The check** (`src/connectors/turnstile.ts`): `/enquiry` asks Cloudflare's siteverify whether the form's `cf-turnstile-response` is real, through `src/connectors/http.ts` like every outside call (new row `CLOUDFLARE_TURNSTILE` in `sources.ts`: one try, because an answer is good once; 8 seconds; 60 a minute, our own figure). **Refused** when the answer is missing, rejected or unanswered: 400 in plain words, nothing kept, audited `WEBSITE_ENQUIRY_REFUSED` with the reason and Cloudflare's error codes and never the person. A kept enquiry's audit line now says `security_check`: `passed`, or `not_checked:` with why.
+-  **Keys, by name only** (`src/secrets.ts`, owner `CLOUDFLARE_TURNSTILE`; both in `secrets.example.env` with no value): `TURNSTILE_SECRET_KEY`, and `TURNSTILE_SITE_KEY` (public; `/assets/home.js` puts it in the page in place of the test key). No secret key: nothing is checked and enquiries are kept as before.
+-  **SWITCHED OFF BY THE TRANSFER RULE, as shipped.** Cloudflare is a US company, so the row says region US with `international_transfer_approved: false`, like the Claude API. Until that is true nothing is sent to Cloudflare and every enquiry is kept, unchecked. The start-up log (`api/index.mjs`, `src/server.ts`, the demo) says which of the three states holds, in words, with no key.
+-  **FOR SADIQUE (DPO): Turnstile needs approving as a processor, and a line in the privacy notice** — the widget in the visitor's browser already talks to Cloudflare on the test website, and the server check sends Cloudflare the widget's answer and the visitor's address. Then: the live keys in the key file, and the one word in `sources.ts`.
+-  **Proof.** `test/turnstile.test.ts`, seventeen tests on recorded answers (Cloudflare's published test keys); dropping the refusal, shipping the transfer approved, passing every answer and allowing retries each turned them red. phase133j's audit-line test now includes `security_check`. `npm run check` exit 0, 1834 pass; the harness 1279/0/4; phase3 439; phase9 403; drift (`--fast --expect 1279,439,403,1834`, Developer Spec §4 to 1,834 and 3,955), CRM fold (four §4 line references moved), plain words, brand, register, analytics all green.
+-  NOT DONE: the DPO's approval and the notice line (above); the live Cloudflare keys (Lakhbir, from the Cloudflare dashboard).
+
+ **Claim cleared** in the commit that carries this record.
+

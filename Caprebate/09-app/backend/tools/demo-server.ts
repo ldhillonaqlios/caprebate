@@ -1,4 +1,5 @@
 /** See demo-server.cjs. In-memory, seeded, for looking at the screens. */
+import { turnstileWhy } from '../src/connectors/turnstile.ts';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -50,6 +51,7 @@ made.server.listen(port, () => {
   for (const u of r.users) console.log(`  ${u.role.padEnd(11)} ${u.email}`);
   console.log(`  password: ${r.password}`);
   console.log('  the website is at /, the back office at /login');
+  console.log(`  ${turnstileWhy(made.app.secrets)}`); // 29 Sep 2026: the contact form's security check
   /* PHASE 151k: every staff login asks for a second step at its first sign-in (Phase 151j). The emails this demo would
      have sent are printed above as they happen, so choose "an email" and the code appears here. The screenshot tool
      (04-phase-work/phase144/tools/crawl-shots.mjs) sets up an app for itself, or reads the code from this console. */
