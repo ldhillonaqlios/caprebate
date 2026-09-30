@@ -332,7 +332,13 @@ describe('one way to call outside, and every call is written down', () => {
     const domain = (u: string) => new URL(u).hostname.split('.').slice(-3).join('.');
     for (const p of Object.values(CALL_POLICIES)) {
       if (p.base_url !== null) assert.equal(new URL(p.base_url).protocol, 'https:', p.service_id);
-      if (p.region !== 'UK' && p.region !== 'EU') assert.notEqual(policyRefusal(p), null, `${p.service_id} can be called outside the UK and EU`);
+      // 30 Sep 2026: an approved transfer is allowed, but only the ones named here — the data protection officer's
+      // approval of Zoom (relayed by Lakhbir, for testing). Any other row turned on outside the UK and EU is refused.
+      const APPROVED_TRANSFERS = ['ZOOM_OAUTH', 'ZOOM_API'];
+      if (p.region !== 'UK' && p.region !== 'EU') {
+        if (APPROVED_TRANSFERS.includes(p.service_id)) assert.equal(policyRefusal(p), null, `${p.service_id} was approved`);
+        else assert.notEqual(policyRefusal(p), null, `${p.service_id} can be called outside the UK and EU`);
+      }
       if (p.register_source === null || p.base_url === null) continue;
       const src = REGISTER_SOURCES.find((s) => s.source_id === p.register_source);
       assert.ok(src?.endpoint, `${p.service_id}: no register endpoint`);

@@ -14,6 +14,7 @@ import { Db, migrate, pendingMigrations } from './db.ts';
 import { AuditLog } from './audit.ts';
 import { defaultHasher, type PasswordHasher } from './password.ts';
 import { outboxTransport, type EmailTransport } from './stubs/email.ts';
+import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type Connector } from './stubs/email-provider.ts';
 import { builtInSignatureProvider, type SignatureProvider } from './stubs/signature.ts';
 import { newId } from './users.ts';
 import { primeTimingDefence, type Deps } from './auth.ts';
@@ -63,6 +64,8 @@ export type App = {
    * can reach the recorded answers (src/connectors/zoom.ts). Never set by a running server.
    */
   zoomPolicy?: Partial<CallPolicy>;
+  /** 30 SEPTEMBER 2026: TESTS ONLY - how the server reaches the mail server (a fake one). Never set by a running server. */
+  smtpConnect?: Connector;
   /**
    * 29 SEPTEMBER 2026: TESTS ONLY - the assessment's first screen's two lookups (Companies House, Postcodes.io) with
    * their gate and switches set, so a test can reach the recorded answers. Never set by a running server.
@@ -112,7 +115,11 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
   const now = opts.now ?? ((): string => new Date().toISOString());
   const hasher = opts.hasher ?? (await defaultHasher());
   const audit = new AuditLog(db);
-  const email = outboxTransport(db, newId, now);
+  // 30 Sep 2026: sending is asked at the moment each email is saved, of the switch and of THIS app's key store (read
+  // through `made`, because the test website replaces its store after start-up).
+  let made: App | undefined;
+  const email = outboxTransport(db, newId, now,
+    () => made !== undefined && sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(made.secrets)));
   const signature = builtInSignatureProvider(newId);
   const secrets = opts.secrets ?? processSecrets();
   const outside = opts.outside ?? liveTransport;
@@ -121,7 +128,8 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
 
   const deps: Deps = { db, audit, hasher, now, twoFactor: opts.twoFactor === 'off' ? 'OFF'
     : opts.twoFactor === 'staff-except-invented' ? 'STAFF_EXCEPT_INVENTED' : 'STAFF' };
-  return { db, audit, hasher, email, signature, secrets, outside, now, deps, close: () => db.close() };
+  made = { db, audit, hasher, email, signature, secrets, outside, now, deps, close: () => db.close() };
+  return made;
 }
 
 /**

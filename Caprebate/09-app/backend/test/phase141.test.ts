@@ -430,8 +430,11 @@ describe('1 · files from the company’s folder', () => {
 });
 
 describe('4 · EMAIL_SENDING — built, and off', () => {
-  test('it ships off in all five ways, the case stamp reads it, and each missing thing is said in plain words', () => {
-    assert.equal(EMAIL_SENDING.enabled, false);
+  // 30 Sep 2026: switched ON for testing under a recorded waiver (Lakhbir: "swithc on sending emails"); the papers still do not name IONOS.
+  test('on for testing: the papers are waived, never claimed; the case stamp reads it on; without the login it is off, in words', () => {
+    assert.equal(EMAIL_SENDING.enabled, true);
+    assert.equal(EMAIL_SENDING.papers_waived_for_testing, true);
+    assert.match(EMAIL_SENDING.waiver_record ?? '', /^Lakhbir Dhillon, 30 September 2026, .*"swithc on sending emails"/);
     // PHASE 142b: Lakhbir chose IONOS on 22 September 2026, so the provider is set; sending stays off.
     assert.equal(EMAIL_SENDING.provider, 'SMTP');
     assert.equal(EMAIL_SENDING.named_in_privacy_notice, false);
@@ -439,9 +442,11 @@ describe('4 · EMAIL_SENDING — built, and off', () => {
     // 24 Sep 2026: the mailbox is read (216) and the test email arrived (217). Sending stays off.
     assert.equal(EMAIL_SENDING.mailbox_and_dns_ready, true);
     assert.equal(EMAIL_SENDING.question, 'May we send you one test email from contact@caprebate.co.uk before email sending is switched on?');
-    assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'EMAIL_SENDING'), { switch: 'EMAIL_SENDING', on: false, home: 'src/stubs/email-provider.ts' });
-    assert.equal(sendingOn(EMAIL_SENDING, LOGIN), false);
-    assert.deepEqual(sendingMissing(EMAIL_SENDING, null), [
+    assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'EMAIL_SENDING'), { switch: 'EMAIL_SENDING', on: true, home: 'src/stubs/email-provider.ts' });
+    assert.equal(sendingOn(EMAIL_SENDING, LOGIN), true);
+    assert.deepEqual(sendingMissing(EMAIL_SENDING, null), ['Add the email service’s login to the server.']);
+    // Without the waiver, and with the switch off, each missing thing is still said in plain words.
+    assert.deepEqual(sendingMissing({ ...EMAIL_SENDING, enabled: false, papers_waived_for_testing: false }, null), [
       'Name that service in the privacy notice and in the engagement letter.',
       'Add the email service’s login to the server.',
       'Then switch sending on.',
@@ -464,7 +469,8 @@ describe('4 · EMAIL_SENDING — built, and off', () => {
     try {
       assert.ok(F.saveEmail(w.deps(), w.as('SALES'), { kind: 'company', id: w.biz }, { contact_id: w.contacts[0]?.id ?? '', subject: 'x', body: 'y' }, []).ok);
       let called = 0;
-      const r = await dispatchOutbox({ db: w.made.app.db, now: w.made.app.now }, EMAIL_SENDING, LOGIN,
+      // Switched off (it ships on for testing since 30 Sep 2026): nothing is opened.
+      const r = await dispatchOutbox({ db: w.made.app.db, now: w.made.app.now }, { ...EMAIL_SENDING, enabled: false }, LOGIN,
         { id: 'SPY', deliver: async () => { called++; return { ok: true, ref: 'x' }; } }, noFiles);
       assert.equal(r.state, 'OFF');
       assert.equal(called, 0);

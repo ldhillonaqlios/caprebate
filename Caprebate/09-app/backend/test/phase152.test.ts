@@ -119,7 +119,7 @@ describe('Phase 152 · the sign-up confirmation link is not kept in the outbox o
     try {
       const off = outboxTransport(w.db, () => 'v-off', () => NOW);
       off.send({ to_email: 'client@example.invalid', subject: 's', body: 'token=keepme', kind: 'ACCOUNT_VERIFY' });
-      const r = await EP.dispatchOutbox({ db: w.db, now: () => NOW }, EP.EMAIL_SENDING, LOGIN, spy(), noFiles);
+      const r = await EP.dispatchOutbox({ db: w.db, now: () => NOW }, { ...EP.EMAIL_SENDING, enabled: false }, LOGIN, spy(), noFiles);
       assert.equal(r.state, 'OFF');
       assert.equal(bodyOf(w.db, 'v-off').body, 'token=keepme');
     } finally { w.close(); }

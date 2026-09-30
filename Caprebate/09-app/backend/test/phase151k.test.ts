@@ -424,7 +424,7 @@ describe('151k · 3 · once really sent, a sign-in code or a reset link is taken
     try {
       const off = outboxTransport(w.db, () => 'k-off', () => NOW);
       off.send({ to_email: 'sales@example.invalid', subject: 'code', body: 'Your Cap Rebate sign-in code is 654321.', kind: 'SIGN_IN_CODE' });
-      const r = await EP.dispatchOutbox({ db: w.db, now: () => NOW }, EP.EMAIL_SENDING, LOGIN, { id: 'SPY', deliver: async () => ({ ok: true, ref: 'x' }) }, noFiles);
+      const r = await EP.dispatchOutbox({ db: w.db, now: () => NOW }, { ...EP.EMAIL_SENDING, enabled: false }, LOGIN, { id: 'SPY', deliver: async () => ({ ok: true, ref: 'x' }) }, noFiles);
       assert.equal(r.state, 'OFF');
       assert.equal(w.db.get<{ body: string }>("SELECT body FROM outbox WHERE id = 'k-off'")?.body, 'Your Cap Rebate sign-in code is 654321.');
     } finally { w.close(); }

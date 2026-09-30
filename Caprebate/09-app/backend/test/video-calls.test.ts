@@ -100,16 +100,16 @@ async function sendVideo(name: string, email: string, slotIndex = 3) {
 }
 
 describe('the Zoom connector', () => {
-  test('as shipped nothing is made: the keys are named as missing, and the transfer waits for the data protection officer', () => {
-    assert.equal(CALL_POLICIES['ZOOM_API']?.international_transfer_approved, false);
-    assert.equal(CALL_POLICIES['ZOOM_OAUTH']?.international_transfer_approved, false);
+  test('the transfer is approved (30 Sep 2026, for testing); without the keys nothing is made, and they are named', () => {
+    assert.equal(CALL_POLICIES['ZOOM_API']?.international_transfer_approved, true);
+    assert.equal(CALL_POLICIES['ZOOM_OAUTH']?.international_transfer_approved, true);
     assert.equal(CALL_POLICIES['ZOOM_API']?.max_attempts, 1, 'making a meeting is not safe to repeat');
     assert.deepEqual(zoomMissing(secretsFromValues({})), [
       'Put the Zoom keys in the key file: ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET, ZOOM_SDK_CLIENT_ID, ZOOM_SDK_CLIENT_SECRET.',
-      'Zoom is a US company: the data protection officer approves the transfer (sources.ts, ZOOM_OAUTH and ZOOM_API).',
     ]);
-    assert.deepEqual(zoomMissing(secretsFromValues(KEYS)), ['Zoom is a US company: the data protection officer approves the transfer (sources.ts, ZOOM_OAUTH and ZOOM_API).']);
-    assert.deepEqual(zoomMissing(secretsFromValues(KEYS), APPROVED), []);
+    assert.deepEqual(zoomMissing(secretsFromValues(KEYS)), []);
+    // Were the approval taken back, the transfer would be named again.
+    assert.deepEqual(zoomMissing(secretsFromValues(KEYS), { international_transfer_approved: false }), ['Zoom is a US company: the data protection officer approves the transfer (sources.ts, ZOOM_OAUTH and ZOOM_API).']);
   });
 
   test('a meeting is made with the time, an hour, the waiting room and "Cap Rebate call" — nobody\'s name — and the token is asked for once', async () => {

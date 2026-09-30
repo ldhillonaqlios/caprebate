@@ -149,7 +149,9 @@ export function currentSender(db: Db): Sender {
  * THE OUTBOX. `sending` says whether sending is on at the moment a row is written (src/stubs/email-provider.ts); a row
  * written while it is off is saved with `send_requested = 0` and is never sent later. It is off, so today every row is.
  */
-export function outboxTransport(db: Db, ids: () => string, now: () => string, sending: () => boolean = () => false): EmailTransport {
+export function outboxTransport(
+  db: Db, ids: () => string, now: () => string, sending: () => boolean = () => false,
+): EmailTransport {
   return {
     id: 'STUB',
     delivers: false,
@@ -160,6 +162,8 @@ export function outboxTransport(db: Db, ids: () => string, now: () => string, se
       const id = ids();
       const from = currentSender(db);
       const requested = sending() ? 1 : 0;
+      // An email that really goes does not tell its reader it has not been sent.
+      if (requested === 1) m = { ...m, body: withoutNotSentWords(m.body) };
       db.run(
         'INSERT INTO outbox (id, created_at, to_email, subject, body, kind, sent_at, transport, business_id, from_header, reply_to, ' +
           'claim_id, lead_id, contact_id, written_by, send_requested) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -178,6 +182,27 @@ export function outboxTransport(db: Db, ids: () => string, now: () => string, se
       return { id, delivered: false, refused: null };
     },
   };
+}
+
+/**
+ * 30 Sep 2026: THE SENTENCES THAT SAY AN EMAIL WAS NOT SENT, written into bodies while sending was off. Taken out of an
+ * email that is going, so nobody receives "Not sent yet".
+ */
+export const NOT_SENT_WORDS: readonly string[] = Object.freeze([
+  'Not sent yet. Emails and calendar invites are not switched on yet. This message and its invite are saved with the emails waiting to send.',
+  'Not sent yet — sending email is not switched on. It is saved in the emails waiting to send.',
+]);
+
+export function withoutNotSentWords(body: string): string {
+  let out = body;
+  for (const w of NOT_SENT_WORDS) out = out.split(w).join('');
+  return out.replace(/\n{3,}/g, '\n\n').trimEnd();
+}
+
+/** 30 Sep 2026: an address nobody can receive at — the reserved test names (RFC 2606 and 6761). */
+export function isInventedAddress(address: string): boolean {
+  const d = (address.split('@').pop() ?? '').trim().toLowerCase().replace(/\.$/, '');
+  return /(^|\.)(invalid|test|example|localhost)$/.test(d) || /(^|\.)example\.(com|net|org)$/.test(d);
 }
 
 /** The label a screen must show beside anything this transport produced. */

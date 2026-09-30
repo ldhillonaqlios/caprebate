@@ -78,6 +78,12 @@ export type EmailSending = {
    *  email has arrived (Word questions 216 and 217). False until all four are. */
   readonly mailbox_and_dns_ready: boolean;
   readonly question: string;
+  /**
+   * TESTING ONLY, as the identity check's (Phase 151h): a person's decision to send before the privacy notice and the
+   * engagement letter name IONOS. It never makes either `named_in_*` true. Absent is false.
+   */
+  readonly papers_waived_for_testing?: boolean;
+  readonly waiver_record?: string | null;
 };
 
 /** The title of the open question under Lakhbir in the Word questions document (217). Quoted, not paraphrased. The provider
@@ -90,8 +96,15 @@ export const EMAIL_PROVIDER_QUESTION = 'May we send you one test email from cont
  * clause 7 of the engagement letter, are not yet true. IONOS is already "our email" in the privacy notice, but that
  * notice is a draft nobody has approved, so `named_in_privacy_notice` stays false until it is published.
  */
+/*
+ * SWITCHED ON FOR TESTING, 30 September 2026 (Lakhbir: "swithc on sending emails", and "again remeber this is all a test
+ * and not the final version - the idea is we build what we can and then ask for approval"). Under a recorded waiver:
+ * the privacy notice and clause 7 are still drafts that do not name IONOS, so both `named_in_*` stay FALSE. Sending
+ * also needs the IONOS login: in the key file locally, and on the test website its settings (behind the test password).
+ * An invented address (@example.invalid, example.com) is never sent to (src/stubs/email.ts, isInventedAddress).
+ */
 export const EMAIL_SENDING: EmailSending = Object.freeze({
-  enabled: false,
+  enabled: true,
   provider: 'SMTP',
   named_in_privacy_notice: false,
   named_in_engagement_letter: false,
@@ -102,6 +115,8 @@ export const EMAIL_SENDING: EmailSending = Object.freeze({
      name IONOS first, and then the switch. */
   mailbox_and_dns_ready: true,
   question: EMAIL_PROVIDER_QUESTION,
+  papers_waived_for_testing: true,
+  waiver_record: 'Lakhbir Dhillon, 30 September 2026, in chat: "swithc on sending emails". This is a test build. The privacy notice and engagement letter do not name IONOS yet.',
 });
 
 /** The provider's login, from the key file. Never in code, never in the database, never in the environment. */
@@ -165,7 +180,7 @@ export function auditMailConnections(audit: AuditLog, now: () => string): Connec
 export function sendingMissing(cfg: EmailSending, login: SmtpLogin | null): string[] {
   const out: string[] = [];
   if (cfg.provider === null) out.push('Choose the email service that will send them.');
-  if (cfg.named_in_privacy_notice !== true || cfg.named_in_engagement_letter !== true) {
+  if ((cfg.named_in_privacy_notice !== true || cfg.named_in_engagement_letter !== true) && cfg.papers_waived_for_testing !== true) {
     out.push('Name that service in the privacy notice and in the engagement letter.');
   }
   if (cfg.mailbox_and_dns_ready !== true) out.push('Say who reads contact@caprebate.co.uk, and send one test email from it.');

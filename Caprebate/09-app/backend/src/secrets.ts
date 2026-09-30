@@ -333,5 +333,15 @@ export function loadSecrets(opts: { env?: Record<string, string | undefined>; re
  */
 export function processSecrets(env: Record<string, string | undefined> = process.env): SecretStore {
   if (env.NODE_TEST_CONTEXT !== undefined && env.CAPREBATE_LIVE_SMOKE !== '1') return emptySecrets('the test runner never reads the key file');
+  if (useInstead !== null) return useInstead;
   return loadSecrets({ env });
 }
+
+/*
+ * 30 SEPTEMBER 2026: THE TEST WEBSITE HAS NO KEY FILE; its keys are its settings, read behind the test password
+ * (api/index.mjs, configureTestDeploy). Screens that ask `processSecrets()` for the email login (a staff email, a message
+ * alert, the settings page) would find none there, so the website hands its store here once it has read it. Never used
+ * under the test runner, and a running server with a key file never calls it.
+ */
+let useInstead: SecretStore | null = null;
+export function useProcessSecrets(store: SecretStore): void { useInstead = store; }

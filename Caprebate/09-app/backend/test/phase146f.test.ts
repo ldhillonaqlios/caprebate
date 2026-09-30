@@ -140,8 +140,10 @@ describe('1 · the logins come from the key file, and only an IONOS host is acce
     assert.equal(store.state, 'LOADED');
     assert.equal(smtpLoginFromKeyFile(store)?.host, 'smtp.ionos.co.uk');
   });
-  test('it is still off: EMAIL_SENDING and INBOUND_EMAIL are false, and a key file alone turns nothing on', () => {
-    assert.equal(EMAIL_SENDING.enabled, false);
+  // 30 Sep 2026: EMAIL_SENDING is on for testing under a recorded waiver; the papers still do not name IONOS.
+  test('sending is on for testing with the papers waived, never claimed; the mailbox is read', () => {
+    assert.equal(EMAIL_SENDING.enabled, true);
+    assert.equal(EMAIL_SENDING.papers_waived_for_testing, true);
     assert.equal(EMAIL_SENDING.mailbox_and_dns_ready, true, 'the mailbox is read and the test email arrived (24 Sep 2026)');
     assert.equal(EMAIL_SENDING.named_in_engagement_letter, false);
   });

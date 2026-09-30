@@ -253,8 +253,9 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
        the time of the call and the words "Cap Rebate call"; no client's name, email or number. The call itself (the
        client's voice and picture) runs through Zoom whichever way it is joined, which is what the approval is about.
        ONE TRY for the token: a refused secret stays refused. */
+    /* THE TRANSFER: Approved 30 September 2026 by Sadique Maskeen (data protection officer), as relayed by Lakhbir in the chat with Claude: "saqiue approves". A test build; the approval is for testing and is to be confirmed before real clients. */
     service_id: 'ZOOM_OAUTH', register_source: null,
-    base_url: 'https://zoom.us', region: 'US', international_transfer_approved: false,
+    base_url: 'https://zoom.us', region: 'US', international_transfer_approved: true,
     rate: { limit: 30, window_ms: 60 * 1000 },
     rate_basis: 'Zoom does not publish a limit for the token call (read 30 Sep 2026); thirty a minute is OUR cautious limit, and a token lasts an hour',
     timeout_ms: 10_000, max_bytes: 16 * 1024, max_attempts: 1,
@@ -264,8 +265,9 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
        api.zoom.us (developers.zoom.us, read 30 Sep 2026). US, not approved, as ZOOM_OAUTH. ONE TRY: making a meeting is
        not safe to repeat (a retry after a lost answer makes two). Zoom's plans allow about a hundred meetings made a day
        per user; twenty a minute is OUR cautious limit. */
+    /* THE TRANSFER: approved with ZOOM_OAUTH, 30 September 2026 (Sadique Maskeen, relayed by Lakhbir). */
     service_id: 'ZOOM_API', register_source: null,
-    base_url: 'https://api.zoom.us', region: 'US', international_transfer_approved: false,
+    base_url: 'https://api.zoom.us', region: 'US', international_transfer_approved: true,
     rate: { limit: 20, window_ms: 60 * 1000 },
     rate_basis: 'Zoom rate-limits by plan and call type (read 30 Sep 2026); twenty a minute is OUR cautious limit, one meeting a call booked',
     timeout_ms: 15_000, max_bytes: 64 * 1024, max_attempts: 1,

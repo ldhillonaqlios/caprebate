@@ -40,7 +40,7 @@ export type CompanySearchConfig = {
 export const COMPANY_SEARCH: CompanySearchConfig = Object.freeze({
   enabled: true, named_in_privacy_notice: false,
   papers_waived_for_testing: true,
-  waiver_record: 'Lakhbir Dhillon, 30 September 2026, in the chat with Claude: "switch on companies house and postcodes.io". The privacy notice is a draft and is not published; it does not yet name Companies House for this use. Test website, invented data only.',
+  waiver_record: 'Lakhbir Dhillon, 30 September 2026, in the chat with Claude: "switch on companies house and postcodes.io". The privacy notice is a draft and is not published; it does not yet name Companies House for this use. Test website, invented data only. Asked whether that is acceptable for testing: "yes its acceptable" (Lakhbir, 30 September 2026).',
 });
 
 export type CompanyCandidate = {

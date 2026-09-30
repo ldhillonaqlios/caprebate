@@ -11,13 +11,14 @@
  *   · a MEETING SDK app — ZOOM_SDK_CLIENT_ID, ZOOM_SDK_CLIENT_SECRET. Its secret signs each join ON THIS SERVER (a JWT,
  *     HMAC-SHA256: appKey, mn, role, iat, exp, tokenExp), so the meeting runs inside our page with Zoom's own Web SDK.
  *     Meetings on our own account need no Zoom review; since 2 March 2026 only joining OTHER accounts' meetings does.
- * The host is a licensed user on our account (ZOOM_HOST_EMAIL, else the account's owner). A free Zoom plan stops a
- * meeting at 40 minutes; calls are an hour (SLOT_MINUTES), so the host needs a paid licence.
+ * The host is a user on our account (ZOOM_HOST_EMAIL, else the account's owner). Calls are booked for an hour
+ * (SLOT_MINUTES). A FREE Zoom plan stops a meeting at 40 minutes, and for testing that is accepted (Lakhbir, 30 Sep
+ * 2026: "leave the time for having it free at 40 mins but each appointment should be 1 hour"); a paid licence lifts it.
  *
- * NOTHING HAPPENS UNTIL THREE THINGS ARE TRUE, each said in words by `zoomMissing`: the five keys are in the key file,
- * and the transfer is approved (sources.ts, ZOOM_OAUTH and ZOOM_API: Zoom is a US company, and a call outside the UK
- * and EU is refused until the data protection officer approves it). Until then no meeting is made, the booking stands,
- * and the back office says "send them a link", as before.
+ * NOTHING HAPPENS UNTIL BOTH ARE TRUE, each said in words by `zoomMissing`: the five keys are in the key file, and
+ * the transfer is approved (sources.ts, ZOOM_OAUTH and ZOOM_API: Zoom is a US company). The transfer was approved for
+ * testing on 30 September 2026 (Sadique Maskeen, relayed by Lakhbir). Without the keys no meeting is made, the booking
+ * stands, and the back office says "send them a link", as before.
  *
  * WHAT IS SENT TO ZOOM: the time, the length and the words "Cap Rebate call". Never the client's name, email or number.
  * No key is ever printed, logged or put in a page; a join signature and a ZAK go only to the one person joining.

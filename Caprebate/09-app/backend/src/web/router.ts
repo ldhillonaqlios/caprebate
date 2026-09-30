@@ -69,6 +69,7 @@ import { publicSlots, isBookable, SLOT_MINUTES } from './schedule.ts';
 import { activeMeeting, booksATime, clientMayJoin, joinPanel, reconcileVideoMeeting, withJoinScripts, VIDEO_PAGE_HEADERS } from './video-calls.ts';
 import { joinSignature } from '../connectors/zoom.ts';
 import { VIDEO_CALL_JS } from './video-call-script.ts';
+import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
 import { bookingInviteFile, sendVideoInvite } from './booking-invite.ts';
 import { ga4MeasurementId, sitePolicy, withMeasurementId } from '../analytics.ts';
 import { localStamp, localWhen, ukDate, ukDatesIn, zoneNotice } from './localtime.ts';
@@ -577,7 +578,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       const offer = first !== undefined ? offerSignup(d.app, newId, first.business_id as string, first.assessment_id) : undefined;
       const totals = { business_id: first?.business_id ?? '', assessment_id: first?.assessment_id ?? out.enquiry_id,
         low_pence: out.parts.reduce((a, p) => a + (p.low_pence ?? 0), 0) || null, high_pence: out.parts.reduce((a, p) => a + (p.high_pence ?? 0), 0) || null };
-      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true, video)); return 'handled';
+      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true, video, sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(d.app.secrets)))); return 'handled';
     }
     if (method === 'POST') {
       const f = await form(req);
@@ -1735,6 +1736,8 @@ function submittedPage(
   upTo = false,
   /** 30 Sep 2026: a video call with a time: its join page when the meeting was made, else null (the link will follow). */
   video?: { join: string | null },
+  /** 30 Sep 2026: whether emails are being sent, so the page does not say an invitation is unsent when it is going. */
+  sending = false,
 ): string {
   return page({
     title: 'Thank you', nav: nav(actor),
@@ -1750,7 +1753,7 @@ function submittedPage(
             ${video === undefined ? raw('') : video.join !== null
               ? h`<p>Your video call link: <a href="${video.join}">join the call here</a>. It opens half an hour before the call. We have also emailed it to you, with Zoom's own link if you would rather use the Zoom app.</p>`
               : h`<p class="help">We will email you the link for the video call before it starts.</p>`}
-            <p class="help">The calendar invitation has not been sent yet.</p>`
+            <p class="help">${sending ? 'We are emailing you the calendar invitation now.' : 'The calendar invitation has not been sent yet.'}</p>`
         : h`<p class="help">No time is held yet. Either the way you chose to talk does not book a time,
             or the time you picked had gone. We will ring you to arrange one.</p>`}
       <p class="help">Your reference: <code>${out.assessment_id}</code>. Nothing has been looked up about your property.</p>

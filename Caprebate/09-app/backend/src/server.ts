@@ -35,6 +35,9 @@ import { handleWeb, PayloadTooLarge, refusalAsPage, sendRefusalPage } from './we
 import { FsObjectStore } from './web/objectstore.ts';
 import { SharedObjectStore, type BlobClient } from './web/shared-objectstore.ts';
 import { sealKeyFromEnv, type KeepOriginals } from './web/originals.ts';
+import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, sendingOn, smtpLoginFromKeyFile, smtpProvider } from './stubs/email-provider.ts';
+import { isInventedAddress } from './stubs/email.ts';
+import { openKeptOriginal } from './web/uploads.ts';
 
 function readCookie(req: IncomingMessage, name: string): string | undefined {
   const raw = req.headers.cookie;
@@ -138,7 +141,47 @@ export async function createApp(
     ? new FsObjectStore({ root: opts.documentRoot ?? process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '.documents'), ...kept })
     : new SharedObjectStore({ ...kept, client: opts.sharedDocuments.client, linkSecret: opts.sharedDocuments.linkSecret });
 
+  /* 30 SEPTEMBER 2026: EMAILS SAVED TO BE SENT ARE SENT BEFORE THE ANSWER FINISHES. Sending is on for testing
+     (EMAIL_SENDING); before, only `node src/cli.ts send-outbox` could send, and nothing ran it. The answer's end is held
+     until every email this request saved to be sent - by any part of the site: an invitation, a staff email, a message
+     alert - has been tried once through IONOS, then released; so the test website's copy, frozen once it has answered,
+     still sends. Each row is claimed first (last_error set while it goes), so two copies never send one email twice. An
+     invented address (@example.invalid, example.com: the seed's and the tests') is never sent to. A failure is kept on the
+     row and never stops the answer. The same checks as the command line: do not contact, a bounced address, a lost file. */
+  const sendSaved = async (since: string): Promise<void> => {
+    const login = smtpLoginFromKeyFile(app.secrets);
+    if (!sendingOn(EMAIL_SENDING, login) || login === null) return;
+    const rows = app.db.all<{ id: string; to_email: string }>(
+      'SELECT id, to_email FROM outbox WHERE send_requested = 1 AND sent_at IS NULL AND last_error IS NULL AND created_at >= ? ORDER BY created_at', [since]);
+    if (rows.length === 0) return;
+    const provider = smtpProvider(login, app.smtpConnect, 15_000, auditMailConnections(app.audit, app.now));
+    for (const r of rows) {
+      if (isInventedAddress(r.to_email)) {
+        app.db.run('UPDATE outbox SET last_error = ? WHERE id = ? AND last_error IS NULL', ['An invented address, so it was not sent.', r.id]);
+        continue;
+      }
+      if (app.db.run('UPDATE outbox SET last_error = ? WHERE id = ? AND last_error IS NULL AND sent_at IS NULL', ['Being sent.', r.id]).changes !== 1) continue;
+      try {
+        await dispatchOutbox({ db: app.db, now: app.now }, EMAIL_SENDING, login, provider, async (doc) => {
+          const k = await openKeptOriginal({ db: app.db, store, now: app.now, audit: app.audit }, { id: 'system', role: 'SYSTEM' }, doc);
+          return k === null ? null : { filename: k.filename, content_type: 'application/octet-stream', bytes: k.bytes };
+        }, r.id);
+      } catch {
+        app.db.run("UPDATE outbox SET last_error = ? WHERE id = ? AND last_error = 'Being sent.'", ['It could not be sent just now.', r.id]);
+      }
+    }
+  };
+
   const server = createServer((req, res) => {
+    const since = app.now();
+    const end = res.end.bind(res) as (...a: unknown[]) => ServerResponse;
+    let ending = false;
+    (res as unknown as { end: (...a: unknown[]) => ServerResponse }).end = (...a: unknown[]): ServerResponse => {
+      if (ending) return end(...a);
+      ending = true;
+      void sendSaved(since).catch(() => undefined).finally(() => { end(...a); });
+      return res;
+    };
     void handle(req, res).catch((e: unknown) => {
       // NO INTERNALS IN AN ERROR MESSAGE. The audit log carries the detail.
       // A REFUSAL AND A MISSING ROW LOOK THE SAME FROM OUTSIDE. Distinguishing

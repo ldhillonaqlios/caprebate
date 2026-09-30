@@ -95,7 +95,9 @@ export const TEST_WEBSITE_TWO_FACTOR = 'staff-except-invented';
 // 30 Sep 2026: COMPANIES_HOUSE_API_KEY for "Find my company" (switched on for testing, src/connectors/company-search.ts),
 // and the six Zoom names for video calls (src/connectors/zoom.ts; still refused until Zoom's transfer is approved).
 export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY',
-  'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET', 'ZOOM_HOST_EMAIL']);
+  'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET', 'ZOOM_HOST_EMAIL',
+  // 30 Sep 2026: email sending is on for testing; the IONOS login that sends from contact@caprebate.co.uk.
+  'IONOS_SMTP_HOST', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'IONOS_SMTP_PASSWORD']);
 
 export async function configureTestDeploy(made, env) {
   const pw = (env.CAPREBATE_TEST_PASSWORD ?? '').trim();
@@ -111,8 +113,10 @@ export async function configureTestDeploy(made, env) {
       made.app.db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, u.id]);
     }
   }
-  const { secretsFromEnvironment } = await import('../Caprebate/09-app/backend/src/secrets.ts');
+  const { secretsFromEnvironment, useProcessSecrets } = await import('../Caprebate/09-app/backend/src/secrets.ts');
   made.app.secrets = secretsFromEnvironment(env, TEST_DEPLOY_KEYS);
+  // 30 Sep 2026: every screen that asks the process for a key (the email login) reads these same settings.
+  useProcessSecrets(made.app.secrets);
   const loaded = TEST_DEPLOY_KEYS.filter((k) => (env[k] ?? '').trim() !== '');
   return { password_changed: true, keys_loaded: loaded, why: `every login now uses the test password; keys read: ${loaded.join(', ') || 'none'}` };
 }
