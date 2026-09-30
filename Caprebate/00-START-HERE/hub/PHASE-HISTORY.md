@@ -10866,3 +10866,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Proof.** `test/funnel4.test.ts`, sixteen tests: stage 1 and add/remove, checks per building, no figure before stage 4, details per building, the reveal (£1,050,000 on the invented walk), the reach form's checks, two companies as one enquiry with a single video booking, the gated company's lead, Sales seeing the link, and the old Q1 route. Eight single-line mutations (a no-tax building counted, the enquiry link dropped, an all-no-tax company sent as an assessment, "same as" ignored, "add another" doing nothing, a second call booked, a video caller's email not kept, a bad reach form sent) each turned it red. `test/assessment-start.test.ts` is retired with its screen; gated-exit's walk starts at the buildings; automation counts three `LEAD_CREATED` sites; web.test's two booking tests reworded for 061 with their checks unchanged. `npm run check` exit 0, 1860 pass; the harness 1279/0/4; phase3 439; phase9 403; drift (`--fast --expect 1279,439,403,1860`, Developer Spec §4 to 1,860 and 3,981), CRM fold, plain words, brand, register, analytics all green. Looked at on desktop and phone on the local demo.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 30 September 2026 — the four-stage funnel's live-check fixes (Opus, Mac copy)
+
+ The live test website was walked through end to end after f917d88, with invented details, and sent: `/assessment` opens the buildings, the reveal showed £1,050,000, a video call held a time, and the thank-you came back. Two faults were found and fixed:
+
+-  **The consent boxes and Send ran together on one line** on the figure page (a form-wide rule sets `label.ck` inline). They now sit in their own block (`.f4-consent`), one per line, with Send below.
+-  **The thank-you said "The range you were shown: £550,000 to £1,050,000"**, but the four-stage reveal shows only "up to" the total. For a four-stage enquiry it now says "The figure you were shown: up to £1,050,000". The older close and the portal's range card are unchanged.
+-  **Proof.** Three assertions added to the two-company test in `test/funnel4.test.ts` (still sixteen tests); undoing either fix turned it red. `npm run check` exit 0, 1860 pass (the typecheck's 55 phase3 diagnostics are the known, reported-not-failing ones); the harness 1279/0/4; drift, CRM fold, plain words and brand green.
+
+ **Claim cleared** in the commit that carries this record.

@@ -540,8 +540,8 @@ export function figureBody(s: S, slots: { available: true; slots: readonly { sta
           <input class="fi" id="r-email" name="email" type="email" value="${reach === 'video' || reach === 'email' ? v('contact_value') : ''}" autocomplete="email">
           <p class="help f4-for-video-note">We will email you the link for the video call.</p></div>
       </fieldset>
-      <label class="ck"><input type="checkbox" name="contact_consent"${raw(c['contact_consent'] === true ? ' checked' : '')}> Yes, you may contact me about this enquiry.</label>
-      <label class="ck"><input type="checkbox" name="marketing_optin"${raw(c['marketing_optin'] === true ? ' checked' : '')}> Separately, you may send me occasional updates. (Optional, and never a condition of sending.)</label>
+      <div class="f4-consent"><label class="ck"><input type="checkbox" name="contact_consent"${raw(c['contact_consent'] === true ? ' checked' : '')}> Yes, you may contact me about this enquiry.</label>
+      <label class="ck"><input type="checkbox" name="marketing_optin"${raw(c['marketing_optin'] === true ? ' checked' : '')}> Separately, you may send me occasional updates. (Optional, and never a condition of sending.)</label></div>
       <button class="cta" type="submit">Send</button>
     </form>`;
 }

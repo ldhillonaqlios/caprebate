@@ -247,6 +247,11 @@ describe('how to reach you, and what is written', () => {
     const sent = await c.post('/assessment/close', { first_name: 'Ada', surname: 'Invented', job_role: 'owner_director', channel: 'video', email: 'ada.f4@example.invalid', slot, contact_consent: 'on' });
     assert.equal(sent.status, 200, sent.body.slice(0, 300));
     assert.match(sent.body, /Thank you — that is with us\./);
+    // 30 Sep live check: the page says the figure as it was shown ("up to"), never a range the person did not see.
+    assert.match(sent.body, /The figure you were shown: <strong>up to £1,050,000<\/strong>/);
+    assert.doesNotMatch(sent.body, /The range you were shown/);
+    // and the two consent boxes stand on their own lines, above the Send button.
+    assert.match(fig, /<div class="f4-consent"><label class="ck"><input type="checkbox" name="contact_consent"[\s\S]*?name="marketing_optin"[\s\S]*?<\/label><\/div>\s*<button class="cta" type="submit">Send<\/button>/);
     const orgs = made.app.db.all<{ id: string; name: string }>("SELECT id, name FROM businesses WHERE name IN ('Invented Care Homes Limited','Invented Dental LLP') ORDER BY name");
     assert.equal(orgs.length, 2);
     const leads = made.app.db.all<{ business_id: string; enquiry_id: string | null }>('SELECT business_id, enquiry_id FROM leads WHERE business_id IN (?, ?)', [orgs[0]!.id, orgs[1]!.id]);

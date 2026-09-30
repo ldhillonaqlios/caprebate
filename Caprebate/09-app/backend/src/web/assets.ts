@@ -814,6 +814,8 @@ body.public .f4-p0>span{animation-delay:0.0s}body.public .f4-p1>span{animation-d
 @keyframes f4climb{from{transform:translateY(0)}}
 @media (prefers-reduced-motion:reduce){body.public .f4-reel>span{animation:none}}
 body.public .f4-parts{display:grid;gap:10px;margin:0 0 1rem}
+body.public .f4-consent{margin:1rem 0}
+body.public .f4-consent label.ck{display:block}
 body.public .f4-part{border:1px solid #2d3532;border-radius:14px;padding:.8rem 1rem;background:#161b19}
 body.public .f4-part-name{margin:0;font-weight:700;color:#EDEAE2}
 body.public .f4-part-figure{margin:.2rem 0 0;color:#ABEDD8;font-weight:700}

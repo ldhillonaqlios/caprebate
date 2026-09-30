@@ -534,7 +534,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       const offer = first !== undefined ? offerSignup(d.app, newId, first.business_id as string, first.assessment_id) : undefined;
       const totals = { business_id: first?.business_id ?? '', assessment_id: first?.assessment_id ?? out.enquiry_id,
         low_pence: out.parts.reduce((a, p) => a + (p.low_pence ?? 0), 0) || null, high_pence: out.parts.reduce((a, p) => a + (p.high_pence ?? 0), 0) || null };
-      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined)); return 'handled';
+      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true)); return 'handled';
     }
     if (method === 'POST') {
       const f = await form(req);
@@ -1681,6 +1681,8 @@ function closePage(
 function submittedPage(
   out: { business_id: string; assessment_id: string; low_pence: number | null; high_pence: number | null },
   booked: { booked_at: string | null }, actor: Actor | undefined, offer?: string,
+  /** 30 Sep 2026: the four-stage funnel shows "up to" a figure, not a range, so the thank-you says what was shown. */
+  upTo = false,
 ): string {
   return page({
     title: 'Thank you', nav: nav(actor),
@@ -1688,7 +1690,9 @@ function submittedPage(
       <h1>Thank you — that is with us.</h1>
       <p>We have your assessment, and our team can see it. Somebody will be in touch
       through the channel you chose.</p>
-      <p>The range you were shown: <strong>${formatShownRange(out)}</strong>.</p>
+      ${upTo && out.high_pence !== null
+        ? h`<p>The figure you were shown: <strong>up to ${formatPence(out.high_pence)}</strong>.</p>`
+        : h`<p>The range you were shown: <strong>${formatShownRange(out)}</strong>.</p>`}
       ${booked.booked_at !== null
         ? h`<p>We have held <strong>${clockOf(booked.booked_at)}</strong> for your call.</p>
             <p class="help">The calendar invitation has not been sent yet.</p>`
