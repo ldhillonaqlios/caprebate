@@ -785,6 +785,58 @@ body.public fieldset{border:1px solid #2d3532;border-radius:16px;padding:1.1rem 
 body.public legend{font-family:"Bookman Old Style","Roboto Slab",Georgia,"Times New Roman",serif;font-size:21px;font-weight:700;padding:0 .5rem;color:#EDEAE2}
 body.public fieldset .fl:first-of-type{margin-top:.4rem}
 body.public .err ul{margin:.3rem 0 0;padding-left:1.2rem}
+
+body.public .f4-stages{list-style:none;display:flex;gap:6px;margin:0 0 1.6rem;padding:0;counter-reset:f4}
+body.public .f4-stages li{flex:1;counter-increment:f4;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a4aca8;border-top:4px solid #2d3532;padding-top:.5rem}
+body.public .f4-stages li.done{color:#ABEDD8;border-top-color:#ABEDD8}
+body.public .f4-stages li.cur{color:#EDEAE2;border-top-color:#ABEDD8}
+body.public .f4-h{font-size:clamp(28px,4vw,42px);margin:.2rem 0 .6rem}
+body.public .f4-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+body.public .f4-add{border-style:dashed;width:100%;min-height:3.2rem;font-weight:700;color:#ABEDD8;border-color:#3e4945}
+body.public .f4-same{display:block;margin:.2rem 0 1rem;color:#ABEDD8;font-weight:700}
+body.public .f4-nav{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:1.6rem}
+body.public .f4-back{color:#c9ccc8}
+body.public .f4-teaser,body.public .f4-ready{border:1px solid #ABEDD8;border-radius:16px;padding:1.2rem 1.4rem;margin:0 0 1.6rem;background:rgba(171,237,216,.06)}
+body.public .f4-teaser ul{margin:.4rem 0;padding-left:1.2rem}
+body.public .f4-kicker{margin:0 0 .4rem;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#ABEDD8}
+body.public .f4-hidden{font-family:"Bookman Old Style","Roboto Slab",Georgia,serif;font-size:clamp(40px,7vw,64px);font-weight:700;margin:.2rem 0 .6rem;color:#ABEDD8;user-select:none}
+body.public .f4-hidden span{filter:blur(14px);opacity:.8}
+body.public .f4-reveal{text-align:center;border-radius:20px;padding:2rem 1rem 1.4rem;margin:0 0 1.4rem;background:radial-gradient(circle at 50% 0%,rgba(171,237,216,.16),rgba(171,237,216,0) 70%)}
+body.public .f4-lead{font-size:18px;color:#c9ccc8;margin:0}
+body.public .f4-amount{margin:.4rem 0 .4rem;font-family:"Bookman Old Style","Roboto Slab",Georgia,serif;font-weight:700;font-size:clamp(52px,11vw,104px);line-height:1.1;color:#ABEDD8}
+body.public .f4-reels{display:inline-flex;align-items:flex-start}
+body.public .f4-reel{display:inline-block;height:1.1em;overflow:hidden;vertical-align:top}
+body.public .f4-reel>span{display:flex;flex-direction:column;animation:f4climb 2.4s cubic-bezier(.16,.84,.24,1) both}
+body.public .f4-reel i{font-style:normal;display:block;height:1.1em;line-height:1.1em}
+body.public .f4-sep{display:inline-block;height:1.1em;line-height:1.1em}
+body.public .f4-r0>span{transform:translateY(-11.00em)}body.public .f4-r1>span{transform:translateY(-12.10em)}body.public .f4-r2>span{transform:translateY(-13.20em)}body.public .f4-r3>span{transform:translateY(-14.30em)}body.public .f4-r4>span{transform:translateY(-15.40em)}body.public .f4-r5>span{transform:translateY(-16.50em)}body.public .f4-r6>span{transform:translateY(-17.60em)}body.public .f4-r7>span{transform:translateY(-18.70em)}body.public .f4-r8>span{transform:translateY(-19.80em)}body.public .f4-r9>span{transform:translateY(-20.90em)}
+body.public .f4-p0>span{animation-delay:0.0s}body.public .f4-p1>span{animation-delay:0.1s}body.public .f4-p2>span{animation-delay:0.2s}body.public .f4-p3>span{animation-delay:0.3s}body.public .f4-p4>span{animation-delay:0.4s}body.public .f4-p5>span{animation-delay:0.5s}body.public .f4-p6>span{animation-delay:0.6s}body.public .f4-p7>span{animation-delay:0.7s}body.public .f4-p8>span{animation-delay:0.8s}body.public .f4-p9>span{animation-delay:0.9s}
+@keyframes f4climb{from{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){body.public .f4-reel>span{animation:none}}
+body.public .f4-parts{display:grid;gap:10px;margin:0 0 1rem}
+body.public .f4-part{border:1px solid #2d3532;border-radius:14px;padding:.8rem 1rem;background:#161b19}
+body.public .f4-part-name{margin:0;font-weight:700;color:#EDEAE2}
+body.public .f4-part-figure{margin:.2rem 0 0;color:#ABEDD8;font-weight:700}
+body.public .f4-assume{margin:0 0 2rem}
+body.public .f4-assume summary{cursor:pointer;color:#ABEDD8;font-weight:700}
+body.public .f4-names{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
+body.public .f4-channel-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.4rem 0 1rem}
+body.public .f4-channel{display:flex;align-items:center;justify-content:center;gap:8px;min-height:3.4rem;border:1px solid #3e4945;border-radius:14px;font-weight:700;color:#EDEAE2;cursor:pointer;background:#1b201e;transition:border-color .25s ease,box-shadow .3s ease}
+body.public .f4-channel:hover{border-color:#ABEDD8;box-shadow:0 0 0 1px #ABEDD8,0 0 24px rgba(171,237,216,.3)}
+body.public .f4-channel:has(input:checked){border-color:#ABEDD8;background:rgba(171,237,216,.12);box-shadow:inset 0 0 0 1px #ABEDD8}
+body.public .f4-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));max-height:22rem;overflow:auto}
+@supports selector(:has(*)){
+ body.public .f4-follow,body.public .f4-if-cosmetic,body.public .f4-for-slot,body.public .f4-for-phone,body.public .f4-for-email,body.public .f4-for-video-note{display:none}
+ body.public .f4-own:has(.f4-tax input[value="yes"]:checked) .f4-if-tax-yes{display:block}
+ body.public .f4-own:has(.f4-works input[value="yes"]:checked) .f4-if-works-yes{display:block}
+ body.public .f4-follow:has(.f4-kind input[value="cosmetic"]:checked) .f4-if-cosmetic{display:block}
+ body.public .f4-b:has(.f4-same input:checked) .f4-own{display:none}
+ body.public .f4-channels:has(input[value="phone"]:checked) .f4-for-slot,body.public .f4-channels:has(input[value="video"]:checked) .f4-for-slot{display:block}
+ body.public .f4-channels:has(input[value="phone"]:checked) .f4-for-phone{display:block}
+ body.public .f4-channels:has(input[value="video"]:checked) .f4-for-email,body.public .f4-channels:has(input[value="email"]:checked) .f4-for-email{display:block}
+ body.public .f4-channels:has(input[value="video"]:checked) .f4-for-video-note{display:block}
+}
+@media (max-width:620px){body.public .f4-names,body.public .f4-channel-cards{grid-template-columns:minmax(0,1fr)}body.public .f4-stages li{font-size:12px}}
 @media (max-width:620px){body.public .brandmark .wm{font-size:12px;letter-spacing:.14em}body.public .mark{width:44px;height:44px}body.public .top nav:not(.appnav){gap:.9rem}}
 `;
 

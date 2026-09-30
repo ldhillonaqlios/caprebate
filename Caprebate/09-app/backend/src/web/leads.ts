@@ -240,6 +240,11 @@ export type LeadView = {
   readonly status: { readonly key: string; readonly label: string };
   readonly lost: { readonly reason: string | null; readonly note: string | null } | null;
   readonly converted: { readonly at: string; readonly claim_id: string; readonly claim_ref: string } | null;
+  /**
+   * 30 Sep 2026: the other leads the same assessment made — buildings owned by different businesses, one organisation
+   * and one lead each (migration 061, `enquiry_id`). Empty for a lead that is the only one of its enquiry.
+   */
+  readonly same_enquiry: readonly { readonly lead_id: string; readonly name: string }[];
   readonly contact_channel: string | null;
   /**
    * WHO ASKED — only for a lead with no organisation yet, whose contact belongs to
@@ -311,7 +316,12 @@ export function leadView(db: Db, actor: Actor, id: string): LeadView {
       reach: who.phone ?? who.email,
     };
 
+  const enquiry = db.get<{ enquiry_id: string | null }>('SELECT enquiry_id FROM leads WHERE id = ?', [r.id])?.enquiry_id ?? null;
+  const same_enquiry = enquiry === null ? [] : db.all<{ lead_id: string; name: string }>(
+    'SELECT l.id AS lead_id, COALESCE(b.name, l.prospect_organisation) AS name FROM leads l LEFT JOIN businesses b ON b.id = l.business_id ' +
+      'WHERE l.enquiry_id = ? AND l.id <> ? ORDER BY l.created_at, l.id', [enquiry, r.id]);
   return {
+    same_enquiry,
     id: r.id,
     organisation: {
       id: r.business_id,

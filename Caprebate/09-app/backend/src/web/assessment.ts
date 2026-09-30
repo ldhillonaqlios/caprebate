@@ -355,17 +355,7 @@ function lowOf(figure: { readonly breakdown?: readonly { low?: number }[] }): nu
   return any ? Math.round(total * 100) : null;
 }
 
-/**
- * 29 SEPTEMBER 2026: THE FIRST SCREEN — THE COMPANY AND THE PROPERTY (Lakhbir: "with the am i eligible we should be
- * asking for address and company name"). It comes before the six screens and is not one of CB_FUNNEL's, so their list,
- * their order and the checks on them are unchanged; the step count a person reads is one more.
- */
-export const START_SCREEN = Object.freeze({
-  group: 'Before we start',
-  heading: 'Your business and your property',
-  help: 'We use these to prepare your figure and to find the right records. You can change them later.',
-});
-
+/** 29 Sep 2026: an address in parts, as the four-stage funnel's stage 3 asks it (building and street, town, postcode). */
 export type StartAnswers = { line1: string | null; town: string | null; postcode: string | null };
 
 /** The first property's address, as the first screen writes it: the parts given, in order, with commas. */
@@ -385,7 +375,8 @@ function businessName(s: FunnelState): string {
 
 function contactEmail(s: FunnelState): string | null {
   const c = s.contact as { channel?: string | null; contact_value?: string | null } | undefined;
-  return c?.channel === 'email' ? (c.contact_value ?? null) : null;
+  // 30 Sep 2026: a video call is reached by email too.
+  return c?.channel === 'email' || c?.channel === 'video' ? (c.contact_value ?? null) : null;
 }
 function contactPhone(s: FunnelState): string | null {
   const c = s.contact as { channel?: string | null; contact_value?: string | null } | undefined;

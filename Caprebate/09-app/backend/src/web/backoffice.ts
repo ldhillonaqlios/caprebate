@@ -132,6 +132,7 @@ const CHANNEL_LABEL: Readonly<Record<string, string>> = Object.freeze({
   phone: 'Telephone — they asked for a call',
   sms_whatsapp: 'Text message or WhatsApp',
   email: 'Email',
+  video: 'Video call — they asked for one; send them the link',
 });
 
 /**

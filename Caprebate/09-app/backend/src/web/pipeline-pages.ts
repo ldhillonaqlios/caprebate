@@ -465,6 +465,8 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
         { label: 'What made it a lead', value: v.origin.label },
         { label: 'Source', value: v.source.label },
         { label: 'Introducer', value: v.introducer === null ? null : v.introducer.introducer.name },
+        v.same_enquiry.length === 0 ? null : { label: 'Same enquiry as', value: h`${v.same_enquiry.map((o, i) => h`${i === 0 ? '' : ', '}<a href="/staff/leads/${o.lead_id}">${o.name}</a>`)}`,
+          why: 'One assessment, with buildings owned by different businesses. Each business is its own lead, engagement and claim.' },
         v.property_basics === undefined ? null : { label: 'What the referral said about the property', value: h`${
           v.property_basics.postcode ?? 'No postcode given'} · ${v.property_basics.event ?? 'no event given'}${
           v.property_basics.year === null ? raw('') : h` · ${String(v.property_basics.year)}`}`, why: 'Replaced by the assessment’s own property when the lead converts.' },

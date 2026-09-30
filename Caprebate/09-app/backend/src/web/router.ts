@@ -40,10 +40,10 @@ import { FUNNEL, FRONTDOOR, BOOKING, registryGate } from './engine.ts';
 import {
   SCREEN_IDS, SCREENS, OPTIONS, COSMETIC_NOTE, asksProfit, nextScreen, isGatedExit, PAST_THE_GATE,
   newDraft, loadDraft, saveDraft, submit, closeGatedExit, type Draft, type ScreenId,
-  START_SCREEN, addressFrom, type StartAnswers,
 } from './assessment.ts';
-import { searchCompanies, companySearchOffered, COMPANY_SEARCH, type CompanyCandidate } from '../connectors/company-search.ts';
-import { checkPostcode, normalisePostcode, postcodeCheckMissing, POSTCODE_CHECK } from '../connectors/postcode-check.ts';
+import { F4_ROUTE, F4_SCREENS, F4_TEXT, applyF4, applyReach, allGated, buildings, figureBody, firstIncomplete, isFunnel4, screenBody, stageBar, stageOf, submitEnquiry, type F4Screen } from './funnel4.ts';
+import { searchCompanies, companySearchOffered, COMPANY_SEARCH } from '../connectors/company-search.ts';
+import { checkPostcode, postcodeCheckMissing, POSTCODE_CHECK } from '../connectors/postcode-check.ts';
 import { loadLetter } from './letter.ts';
 import * as P from './portal.ts';
 import { ENGAGEMENT_SIGNING, shownLetter, signEngagement, signingMissing } from './signing.ts';
@@ -388,43 +388,56 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assessment' && method === 'GET') {
     const draft = newDraft(d.app.db, now, newId);
     setCookie(res, DRAFT_COOKIE, draft.token, 60 * 60 * 6);
-    // 29 Sep 2026: the assessment opens on the company and the property, then the six questions.
-    redirect(res, '/assessment/start'); return 'handled';
+    // 30 Sep 2026: the assessment opens on stage 1 of the four-stage funnel (src/web/funnel4.ts).
+    redirect(res, '/assessment/buildings'); return 'handled';
   }
 
-  /* 29 SEPTEMBER 2026: THE FIRST SCREEN — the company's name and the property's address (Lakhbir: "with the am i
-     eligible we should be asking for address and company name"). "Find my company" (Companies House) and "Check
-     postcode" (Postcodes.io) are forms sent to this server, shown only when their gates are open; until then both are
-     typed. The server does not insist on this screen: a draft may still go straight to Q1, as every older link does. */
-  if (path === '/assessment/start' && (method === 'GET' || method === 'POST')) {
+  /* 30 SEPTEMBER 2026: the first screen of 29 September (the company and the property up front) is retired: the four-stage
+     funnel asks for them per building, at stage 3. An old link to it opens stage 1. */
+  if (path === '/assessment/start') { redirect(res, '/assessment/buildings'); return 'handled'; }
+
+  /* 30 SEPTEMBER 2026: THE FOUR-STAGE FUNNEL (src/web/funnel4.ts). Buildings, then the checks per building, then who
+     owns each and where, then the figure. The server keeps a person on the first screen that is not complete, and a
+     follow-up that does not apply is not kept. */
+  const f4 = F4_ROUTE.exec(path);
+  if (f4 && (method === 'GET' || method === 'POST')) {
+    const id = f4[1] as F4Screen;
     const draft = loadDraft(d.app.db, cookie(req, DRAFT_COOKIE));
     if (draft === undefined) { redirect(res, '/assessment'); return 'handled'; }
-    const lookups = startLookups(d.app);
-    if (method === 'GET') { html(res, 200, startPage(draft, actor, lookups)); return 'handled'; }
+    const s = draft.state as unknown as Record<string, unknown>;
+    const lookups = f4Lookups(d.app);
+    // No jumping ahead: a screen past the first incomplete one sends the person back to that one.
+    const gap = isFunnel4(s) ? firstIncomplete(s) : 'buildings';
+    if (gap !== null && F4_SCREENS.indexOf(id) > F4_SCREENS.indexOf(gap)) { redirect(res, `/assessment/${gap}`); return 'handled'; }
+    if (isFunnel4(s) && allGated(s) && F4_SCREENS.indexOf(id) > F4_SCREENS.indexOf('tax')) { redirect(res, '/assessment/no-claim'); return 'handled'; }
+    if (method === 'GET') { html(res, 200, f4Page(draft, id, actor, lookups, [])); return 'handled'; }
     const posted = await form(req);
-    applyStart(draft, posted);
-    const st = draft.state as Record<string, unknown>;
     const find = posted.get('find');
-    if (find === 'company' && lookups.company) {
-      const r = await searchCompanies({ name: startName(draft), gate: lookups.gate, deps: { audit: d.app.audit, now: d.app.now, transport: d.app.outside },
-        secrets: d.app.secrets, config: lookups.companyConfig });
-      st['company_results'] = r.state === 'FOUND' ? r.candidates : [];
-      st['company_search_note'] = r.state === 'FOUND' ? null : r.state === 'NONE'
-        ? 'No company matched that name. Check the spelling, or carry on with the name as you typed it.' : r.why;
-      saveDraft(d.app.db, draft, now); redirect(res, '/assessment/start#company'); return 'handled';
+    const r = applyF4(s, id, posted);
+    if (id === 'details' && find !== null) {
+      const [what, at] = find.split(':');
+      const b = buildings(s)[Number(at)];
+      if (b !== undefined && what === 'company' && lookups.company) {
+        const got = await searchCompanies({ name: typeof b['business_name'] === 'string' ? b['business_name'] : '', gate: lookups.gate,
+          deps: { audit: d.app.audit, now: d.app.now, transport: d.app.outside }, secrets: d.app.secrets, config: lookups.companyConfig });
+        b['company_results'] = got.state === 'FOUND' ? got.candidates : [];
+        b['company_note'] = got.state === 'FOUND' ? null : got.state === 'NONE'
+          ? 'No company matched that name. Check the spelling, or carry on with the name as you typed it.' : got.why;
+      }
+      if (b !== undefined && what === 'postcode' && lookups.postcode) {
+        const got = await checkPostcode({ postcode: typeof b['postcode'] === 'string' ? b['postcode'] : '', gate: lookups.gate, config: lookups.postcodeConfig,
+          deps: { audit: d.app.audit, now: d.app.now, transport: d.app.outside } });
+        b['postcode_check'] = got.state === 'CHECKED' ? { postcode: got.postcode, council_area: got.council_area, region: got.region, country: got.country }
+          : { not_found: got.state === 'NOT_FOUND' ? 'We could not find that postcode. Check it, or carry on with it as typed.' : got.why };
+      }
+      saveDraft(d.app.db, draft, now); redirect(res, `/assessment/details#b${at ?? '0'}`); return 'handled';
     }
-    if (find === 'postcode' && lookups.postcode) {
-      const a = st['start'] as StartAnswers | undefined;
-      const r = await checkPostcode({ postcode: a?.postcode ?? '', gate: lookups.gate, config: lookups.postcodeConfig,
-        deps: { audit: d.app.audit, now: d.app.now, transport: d.app.outside } });
-      st['start_postcode_check'] = r.state === 'CHECKED' ? { postcode: r.postcode, council_area: r.council_area, region: r.region, country: r.country }
-        : { not_found: r.state === 'NOT_FOUND' ? 'We could not find that postcode. Check it, or carry on with it as typed.' : r.why };
-      saveDraft(d.app.db, draft, now); redirect(res, '/assessment/start#property'); return 'handled';
-    }
-    const errors = startErrors(draft);
     saveDraft(d.app.db, draft, now);
-    if (errors.length > 0) { html(res, 400, startPage(draft, actor, lookups, errors)); return 'handled'; }
-    redirect(res, '/assessment/Q1'); return 'handled';
+    if (r.stay === true) { redirect(res, `/assessment/${id}`); return 'handled'; }
+    if (r.errors.length > 0) { html(res, 400, f4Page(draft, id, actor, lookups, r.errors)); return 'handled'; }
+    if (id === 'tax' && allGated(s)) { redirect(res, '/assessment/no-claim'); return 'handled'; }
+    const next = F4_SCREENS[F4_SCREENS.indexOf(id) + 1];
+    redirect(res, next === undefined ? '/assessment/figure' : `/assessment/${next}`); return 'handled';
   }
 
   const screenMatch = /^\/assessment\/(Q1|Q1a|Q1b|Q1c|Q2|Q3)$/.exec(path);
@@ -465,6 +478,14 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assessment/figure' && method === 'GET') {
     const draft = loadDraft(d.app.db, cookie(req, DRAFT_COOKIE));
     if (draft === undefined) { redirect(res, '/assessment'); return 'handled'; }
+    // 30 Sep 2026: a four-stage draft sees its figure only when stage 3 is done.
+    if (isFunnel4(draft.state)) {
+      const s = draft.state as unknown as Record<string, unknown>;
+      if (allGated(s)) { redirect(res, '/assessment/no-claim'); return 'handled'; }
+      const gap = firstIncomplete(s);
+      if (gap !== null) { redirect(res, `/assessment/${gap}`); return 'handled'; }
+      html(res, 200, f4FigurePage(draft, actor, publicSlots(d.app.db, now()))); return 'handled';
+    }
     // UC-C9: a reasoned negative never produces a figure.
     if (isGatedExit(draft.state)) { redirect(res, '/assessment/no-claim'); return 'handled'; }
     html(res, 200, figurePage(draft, actor)); return 'handled';
@@ -486,6 +507,34 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     if (method === 'GET') {
       html(res, 200, closePage(draft, actor, undefined, publicSlots(d.app.db, now())));
       return 'handled';
+    }
+    if (method === 'POST' && isFunnel4(draft.state) && !allGated(draft.state as unknown as Record<string, unknown>)) {
+      /* 30 SEPTEMBER 2026: THE FOUR-STAGE CLOSE. First name, surname, position; then telephone (a time and the number),
+         video call (a time and an email address) or email. One organisation per business that owns a building, each
+         with its own lead, linked as one enquiry; the person is the contact on each; one booking, on the first. */
+      const s = draft.state as unknown as Record<string, unknown>;
+      if (firstIncomplete(s) !== null) { redirect(res, '/assessment/figure'); return 'handled'; }
+      const f = await form(req);
+      const err = applyReach(s, f, FUNNEL.ROLES as readonly (readonly [string, string])[], (ch, v) => contactValueProblem(ch, v));
+      saveDraft(d.app.db, draft, now);
+      if (err !== undefined) { html(res, 400, f4FigurePage(draft, actor, publicSlots(d.app.db, now()), err)); return 'handled'; }
+      const out = submitEnquiry(d.app.db, draft, now, newId);
+      let booked: { booked_at: string | null } = { booked_at: null };
+      out.parts.forEach((p, k) => {
+        d.app.audit.append({
+          at: now(), kind: 'LEAD_CREATED', outcome: 'ALLOWED', actor_id: null, actor_role: null, object_type: 'lead', object_id: p.lead_id,
+          detail: { business: p.business_id, origin: p.business_id === null ? 'GATED_EXIT' : 'ASSESSMENT', route: 'funnel4_close', enquiry: out.enquiry_id },
+        });
+        const holder = p.business_id !== null ? { business_id: p.business_id } : { lead_id: p.lead_id };
+        const w = writeBookingAndContact(d, draft, holder, p.business_id === null ? 'gated_exit' : 'funnel_close', newId, k === 0);
+        if (k === 0) booked = w;
+        fireAutomation({ db: d.app.db, audit: d.app.audit, now, newId }, null, { trigger: 'LEAD_CREATED', lead_id: p.lead_id });
+      });
+      const first = out.parts.find((p) => p.business_id !== null && p.assessment_id !== null);
+      const offer = first !== undefined ? offerSignup(d.app, newId, first.business_id as string, first.assessment_id) : undefined;
+      const totals = { business_id: first?.business_id ?? '', assessment_id: first?.assessment_id ?? out.enquiry_id,
+        low_pence: out.parts.reduce((a, p) => a + (p.low_pence ?? 0), 0) || null, high_pence: out.parts.reduce((a, p) => a + (p.high_pence ?? 0), 0) || null };
+      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined)); return 'handled';
     }
     if (method === 'POST') {
       const f = await form(req);
@@ -1208,6 +1257,8 @@ function applyClose(draft: Draft, f: URLSearchParams): string | undefined {
 function writeBookingAndContact(
   d: WebDeps, draft: Draft, holder: { business_id: string } | { lead_id: string },
   entry_point: 'funnel_close' | 'gated_exit', newId: () => string,
+  /** 30 Sep 2026: false for the second and later businesses of one enquiry — the person, not a second call. */
+  withBooking = true,
 ): { booked_at: string | null } {
   const c = (draft.state as { contact: Record<string, unknown> }).contact;
   const at = d.app.now();
@@ -1222,9 +1273,10 @@ function writeBookingAndContact(
     [newId(), business_id, lead_id, String(c.full_name ?? ''), c.job_role as string | null,
      c.job_role_other as string | null, c.contact_consent === true ? 1 : 0,
      c.marketing_optin === true ? 1 : 0,
-     c.channel === 'email' ? typed : null,
+     c.channel === 'email' || c.channel === 'video' ? typed : null,
      c.channel === 'phone' || c.channel === 'sms_whatsapp' ? typed : null, at],
   );
+  if (!withBooking) return { booked_at: null };
 
   /* THE SLOT IS RE-CHECKED HERE AGAINST THE WORKING TIMES, NOT TRUSTED.
      The picker showed what was free when the page was drawn. By now somebody
@@ -1359,15 +1411,15 @@ function home(actor: Actor | undefined): string {
   });
 }
 
-/* ------------------------------------------------ 29 Sep 2026: the first screen */
+/* ------------------------------------------------ 30 Sep 2026: the four-stage funnel's pages */
 
-type StartLookups = {
+type F4Lookups = {
   readonly gate: ReturnType<typeof freeGate>; readonly company: boolean; readonly postcode: boolean;
   readonly companyConfig: typeof COMPANY_SEARCH; readonly postcodeConfig: typeof POSTCODE_CHECK;
 };
 
-/** Whether each lookup can run: its gate, its switch and, for Companies House, its key. Tests may set all three. */
-function startLookups(app: WebDeps['app']): StartLookups {
+/** Whether each lookup at stage 3 can run: its gate, its switch and, for Companies House, its key. Tests may set all three. */
+function f4Lookups(app: WebDeps['app']): F4Lookups {
   const o = app.startLookups;
   const gate = o?.gate ?? freeGate();
   const companyConfig = o?.company ?? COMPANY_SEARCH;
@@ -1377,108 +1429,38 @@ function startLookups(app: WebDeps['app']): StartLookups {
     postcode: postcodeCheckMissing(postcodeConfig, gate).length === 0 };
 }
 
-const clip = (v: string | null, max: number): string | null => {
-  const t = (v ?? '').trim().replace(/\s+/g, ' ');
-  return t === '' ? null : t.slice(0, max);
-};
-
-function startName(draft: Draft): string {
-  const c = (draft.state as { contact?: { business_name?: unknown } }).contact;
-  return typeof c?.business_name === 'string' ? c.business_name : '';
-}
-
-/** Read the first screen. The company's name goes where the last page asks it; the address becomes the first property's. */
-function applyStart(draft: Draft, f: URLSearchParams): void {
-  const st = draft.state as Record<string, unknown>;
-  const contact = (st['contact'] ??= {}) as Record<string, unknown>;
-  const typed = clip(f.get('business_name'), 200);
-  const results = (st['company_results'] ?? []) as CompanyCandidate[];
-  const picked = f.get('company_number');
-  if (picked === 'none') { st['company_number'] = null; st['company_name_chosen'] = null; }
-  else if (picked !== null) {
-    const c = results.find((x) => x.number === picked);
-    if (c !== undefined) { st['company_number'] = c.number; st['company_name_chosen'] = c.name; contact['business_name'] = c.name; }
-  }
-  if (picked === null || picked === 'none') {
-    contact['business_name'] = typed;
-    // A name changed after a company was chosen is no longer that company.
-    if (typed !== st['company_name_chosen']) { st['company_number'] = null; st['company_name_chosen'] = null; }
-  }
-  const before = st['start'] as StartAnswers | undefined;
-  const a: StartAnswers = { line1: clip(f.get('line1'), 200), town: clip(f.get('town'), 100), postcode: clip(f.get('postcode'), 10) };
-  if (a.postcode !== before?.postcode) delete st['start_postcode_check'];
-  st['start'] = a;
-  const props = (st['properties'] ??= [FUNNEL.blankProperty()]) as Record<string, unknown>[];
-  if (props.length === 0) props.push(FUNNEL.blankProperty() as Record<string, unknown>);
-  const address = addressFrom(a);
-  if (address !== null && props[0] !== undefined) props[0]['address'] = address;
-}
-
-/** What the first screen still needs, in plain words. */
-function startErrors(draft: Draft): string[] {
-  const st = draft.state as Record<string, unknown>;
-  const a = st['start'] as StartAnswers | undefined;
-  const out: string[] = [];
-  if (startName(draft).trim() === '') out.push('Tell us the name of your company or business.');
-  if (a?.line1 === null || a?.line1 === undefined) out.push('Tell us the building name or number, and the street.');
-  if (a?.postcode === null || a?.postcode === undefined) out.push('Tell us the postcode.');
-  else if (normalisePostcode(a.postcode) === null) out.push('That does not look like a UK postcode. Check it and try again.');
-  return out;
-}
-
-function startPage(draft: Draft, actor: Actor | undefined, lookups: StartLookups, errors: readonly string[] = []): string {
-  const st = draft.state as Record<string, unknown>;
-  const a = (st['start'] ?? {}) as Partial<StartAnswers>;
-  const results = (st['company_results'] ?? []) as CompanyCandidate[];
-  const chosen = typeof st['company_number'] === 'string' ? st['company_number'] as string : null;
-  const note = typeof st['company_search_note'] === 'string' ? st['company_search_note'] as string : null;
-  const pcCheck = st['start_postcode_check'] as (KeptCheck & { not_found?: undefined }) | { not_found: string } | undefined;
+function f4Page(draft: Draft, id: F4Screen, actor: Actor | undefined, lookups: F4Lookups, errors: readonly string[]): string {
+  const s = draft.state as unknown as Record<string, unknown>;
+  const t = F4_TEXT[id];
   return page({
-    title: START_SCREEN.heading, nav: nav(actor),
-    body: h`
-      <p class="rung">Step 1 of ${SCREEN_IDS.length + 1}</p>
-      <div class="group">${START_SCREEN.group}</div>
-      <h2>${START_SCREEN.heading}</h2>
-      <p class="help">${START_SCREEN.help}</p>
+    title: t.heading, nav: nav(actor),
+    body: h`${stageBar(stageOf(id))}
+      <h1 class="f4-h">${t.heading}</h1>
+      <p class="help">${t.help}</p>
       ${errors.length === 0 ? raw('') : h`<div class="err" role="alert"><p>Please check these:</p><ul>${errors.map((e) => h`<li>${e}</li>`)}</ul></div>`}
-      <form method="post" action="/assessment/start">
+      <form method="post" action="/assessment/${id}" class="f4-form f4-${id}">
         <button type="submit" class="vh" tabindex="-1" aria-hidden="true">Continue</button>
-        <fieldset id="company"><legend>Your business</legend>
-          <label class="fl" for="s-business">Your company or business name</label>
-          <input class="fi" id="s-business" name="business_name" value="${startName(draft)}" autocomplete="organization" required>
-          ${lookups.company ? h`<p><button type="submit" name="find" value="company" class="btn-quiet">Find my company</button></p>` : raw('')}
-          ${results.length === 0 ? raw('') : h`<p class="help">Choose your company, so we can find its public records.</p>
-            <div class="opts">${results.map((c) => h`<label class="opt${c.number === chosen ? ' sel' : ''}">
-              <input type="radio" name="company_number" value="${c.number}"${c.number === chosen ? raw(' checked') : raw('')}>
-              ${c.name} <span class="help">· company number ${c.number}${c.status === null ? '' : ` · ${c.status}`}${c.office_postcode === null ? '' : ` · registered office ${c.office_postcode}`}</span></label>`)}
-              <label class="opt"><input type="radio" name="company_number" value="none"> None of these</label></div>`}
-          ${note === null ? raw('') : h`<p class="help">${note}</p>`}
-          ${chosen === null || results.length > 0 ? raw('') : h`<p class="help">Company number ${chosen}.</p>`}
-        </fieldset>
-        <fieldset id="property"><legend>The property</legend>
-          <label class="fl" for="s-line1">Building name or number, and street</label>
-          <input class="fi" id="s-line1" name="line1" value="${a.line1 ?? ''}" autocomplete="address-line1" required>
-          <label class="fl" for="s-town">Town</label>
-          <input class="fi" id="s-town" name="town" value="${a.town ?? ''}" autocomplete="address-level2">
-          <label class="fl" for="s-postcode">Postcode</label>
-          <input class="fi" id="s-postcode" name="postcode" value="${a.postcode ?? ''}" autocomplete="postal-code" required>
-          ${lookups.postcode ? h`<p><button type="submit" name="find" value="postcode" class="btn-quiet">Check postcode</button></p>` : raw('')}
-          ${pcCheck === undefined ? raw('') : pcCheck.not_found !== undefined ? h`<p class="help">${pcCheck.not_found}</p>` : h`<p class="help">${checkedLine(pcCheck as KeptCheck)}</p>`}
-          <p class="help">More than one property? You can add the others later.</p>
-        </fieldset>
-        <button class="cta" type="submit">Continue →</button>
+        ${screenBody(s, id, lookups)}
+        <p class="f4-nav">${F4_SCREENS.indexOf(id) > 0 ? h`<a class="f4-back" href="/assessment/${F4_SCREENS[F4_SCREENS.indexOf(id) - 1] ?? 'buildings'}">← Back</a>` : raw('')}
+        <button class="cta" type="submit">${id === 'details' ? 'Show my figure →' : 'Continue →'}</button></p>
       </form>`,
+  });
+}
+
+function f4FigurePage(draft: Draft, actor: Actor | undefined, slots: ReturnType<typeof publicSlots>, error?: string): string {
+  return page({
+    title: 'Your figure', nav: nav(actor),
+    body: h`${stageBar(3)}${figureBody(draft.state as unknown as Record<string, unknown>, slots, error, FUNNEL.ROLES as readonly (readonly [string, string])[])}`,
   });
 }
 
 function screenPage(draft: Draft, id: ScreenId, actor: Actor | undefined): string {
   const sc = SCREENS[id];
-  // 29 Sep 2026: the first screen (the company and the property) comes before these six, so it is step 1.
-  const n = SCREEN_IDS.indexOf(id) + 2;
+  const n = SCREEN_IDS.indexOf(id) + 1;
   return page({
     title: sc.heading, nav: nav(actor),
     body: h`
-      <p class="rung">Step ${n} of ${SCREEN_IDS.length + 1}</p>
+      <p class="rung">Step ${n} of ${SCREEN_IDS.length}</p>
       <div class="group">${sc.group}</div>
       <h2>${sc.heading}</h2>
       ${sc.help !== undefined ? h`<p class="help">${sc.help}</p>` : raw('')}
@@ -2043,7 +2025,7 @@ function portalPage(
         ? h`<p class="help">Nothing is booked. Reply to any message from us and we will arrange a call.</p>`
         : h`<table><thead><tr><th>How</th><th>When</th><th>Booked from</th></tr></thead><tbody>
             ${bks.map((b) => h`<tr>
-              <td>${b.channel === 'phone' ? 'Telephone' : b.channel === 'email' ? 'Email' : 'Text message / WhatsApp'}</td>
+              <td>${b.channel === 'phone' ? 'Telephone' : b.channel === 'video' ? 'Video call' : b.channel === 'email' ? 'Email' : 'Text message / WhatsApp'}</td>
               <td>${b.starts_at === null
                 ? 'No set time. Only a telephone call books a time.'
                 : clockOf(b.starts_at)}</td>

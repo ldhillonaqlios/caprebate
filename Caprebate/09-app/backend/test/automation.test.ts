@@ -215,7 +215,8 @@ describe('lead created → an owner and a first follow-up', () => {
           'SELECT business_id, owner_id, owner_role FROM staff_tasks WHERE lead_id = ?', [gated])),
         { business_id: null, owner_id: null, owner_role: 'SALES' });
       const router = readFileSync(join(SRC, 'web/router.ts'), 'utf8');
-      assert.equal([...router.matchAll(/fireAutomation\(\{[^}]*\}, null, \{ trigger: 'LEAD_CREATED'/g)].length, 2, 'the funnel close and the gated exit do not both fire lead created');
+      // 30 Sep 2026: the four-stage funnel's close is the third (one per lead it makes).
+      assert.equal([...router.matchAll(/fireAutomation\(\{[^}]*\}, null, \{ trigger: 'LEAD_CREATED'/g)].length, 3, 'the funnel close, the four-stage close and the gated exit do not each fire lead created');
     } finally { app.close(); }
   });
 });

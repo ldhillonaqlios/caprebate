@@ -486,17 +486,17 @@ test('output is escaped, and the gates are reported shut', () => {
   assert.ok(g.requires.includes('privacy notice'));
 });
 
-test('CB_BOOKING is the only booking model, and video is still gone', () => {
+test('CB_BOOKING is the only booking model, and the engine still offers no video (the funnel’s sales video call is 061’s, not the engine’s)', () => {
   const ids = BOOKING.CHANNELS.map((c) => c.id);
   assert.deepEqual(ids, ['phone', 'sms_whatsapp', 'email']);
   assert.ok(!ids.includes('video') && !ids.includes('virtual'),
-    'video was removed on 3 September 2026 and must not come back through a schema');
+    'video was removed from the engine on 3 September 2026 (a survey stand-in); 061 re-adds it only as a sales call in the four-stage funnel');
   // A channel whose processor is undeclared must not render.
   const renderable = BOOKING.renderableChannels([]).map((c) => c.id);
   assert.ok(!renderable.includes('sms_whatsapp'), 'WhatsApp is a processor and is not declared');
 });
 
-test('the bookings table accepts only CB_BOOKING’s channels, and only phone books a moment', async (t) => {
+test('the bookings table refuses an invented channel, and only a telephone or video call books a moment', async (t) => {
   const it = await boot();
   t.after(() => it.close());
   it.app.db.run('INSERT INTO businesses (id,name,sector,stage,created_at) VALUES (?,?,?,?,?)',
