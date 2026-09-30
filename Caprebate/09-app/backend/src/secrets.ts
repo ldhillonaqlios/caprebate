@@ -46,7 +46,9 @@ export type SecretOwner =
   /** 29 Sep 2026: the contact form's security check (src/connectors/turnstile.ts). */
   | 'CLOUDFLARE_TURNSTILE'
   /** 30 Sep 2026: video calls - a meeting made for each, and joined inside the back office (src/connectors/zoom.ts). */
-  | 'ZOOM';
+  | 'ZOOM'
+  /** 30 Sep 2026: WhatsApp with each client from the back office (src/connectors/whatsapp.ts). */
+  | 'WHATSAPP';
 
 export type SecretKey = {
   readonly name: string;
@@ -129,6 +131,12 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'ZOOM_SDK_CLIENT_ID', owner: 'ZOOM', secret: false, phase: 'zoom', what: 'the Meeting SDK app’s client id, so a call is joined inside our own pages (not secret: it is in each join’s signature)' },
   { name: 'ZOOM_SDK_CLIENT_SECRET', owner: 'ZOOM', secret: true, phase: 'zoom', what: 'the Meeting SDK app’s client secret, which signs each join on this server' },
   { name: 'ZOOM_HOST_EMAIL', owner: 'ZOOM', secret: false, phase: 'zoom', what: 'the email of the Zoom user who hosts the calls (a licensed user on our account); absent, the account’s owner' },
+  { name: 'WHATSAPP_ACCESS_TOKEN', owner: 'WHATSAPP', secret: true, phase: 'whatsapp', what: 'a token from Meta that lets us send WhatsApp messages. It does not run out.' },
+  { name: 'WHATSAPP_PHONE_NUMBER_ID', owner: 'WHATSAPP', secret: false, phase: 'whatsapp', what: 'the id Meta gives our WhatsApp number (in WhatsApp Manager; not the number itself)' },
+  { name: 'WHATSAPP_APP_SECRET', owner: 'WHATSAPP', secret: true, phase: 'whatsapp', what: 'the Meta app’s secret, which signs every message Meta sends to our webhook' },
+  { name: 'WHATSAPP_VERIFY_TOKEN', owner: 'WHATSAPP', secret: true, phase: 'whatsapp', what: 'a word we choose and also type into Meta’s webhook settings, so Meta can check the address is ours' },
+  { name: 'WHATSAPP_OPENING_TEMPLATE', owner: 'WHATSAPP', secret: false, phase: 'whatsapp', what: 'the name of our approved opening message template, with one {{1}} for the first name' },
+  { name: 'WHATSAPP_TEMPLATE_LANGUAGE', owner: 'WHATSAPP', secret: false, phase: 'whatsapp', what: 'the language code of that template; en_GB if empty' },
 ]);
 
 export type SecretsState = 'LOADED' | 'NO_FILE' | 'REFUSED_INSIDE_REPOSITORY' | 'UNREADABLE';

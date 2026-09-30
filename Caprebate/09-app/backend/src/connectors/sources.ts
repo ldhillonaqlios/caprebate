@@ -272,6 +272,19 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     rate_basis: 'Zoom rate-limits by plan and call type (read 30 Sep 2026); twenty a minute is OUR cautious limit, one meeting a call booked',
     timeout_ms: 15_000, max_bytes: 64 * 1024, max_attempts: 1,
   },
+  WHATSAPP_CLOUD: {
+    /* 30 SEPTEMBER 2026 — WhatsApp with each client from the back office (src/connectors/whatsapp.ts). A PROCESSOR:
+       Meta's WhatsApp Cloud API, graph.facebook.com (developers.facebook.com, read 30 Sep 2026; Graph API v25.0). Meta
+       keeps Cloud API messages in its data centres, in the United States unless a local storage region is set up, so
+       the row is US and the transfer is NOT APPROVED: until the data protection officer approves it, nothing is sent
+       and the back office says so. What is sent: the number and the words staff typed. ONE TRY: a retry after a lost
+       answer would send the message twice. Meta's limit for a new number is far above ours; sixty a minute is OURS. */
+    service_id: 'WHATSAPP_CLOUD', register_source: null,
+    base_url: 'https://graph.facebook.com', region: 'US', international_transfer_approved: false,
+    rate: { limit: 60, window_ms: 60 * 1000 },
+    rate_basis: 'Meta limits by the number’s messaging tier (read 30 Sep 2026); sixty a minute is OUR cautious limit',
+    timeout_ms: 15_000, max_bytes: 64 * 1024, max_attempts: 1,
+  },
   CLAUDE_DOCUMENTS: {
     service_id: 'CLAUDE_DOCUMENTS', register_source: null,
     base_url: 'https://api.anthropic.com', region: 'US', international_transfer_approved: false,

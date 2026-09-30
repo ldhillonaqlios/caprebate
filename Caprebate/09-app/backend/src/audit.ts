@@ -351,6 +351,12 @@ export type AuditKind =
    * date of birth or an image. What the service tells us is kept in the check's own row, not here.
    */
   | 'IDENTITY_CHECK_SENT' | 'IDENTITY_CHECK_NOT_SENT' | 'IDENTITY_RESULT_RECEIVED' | 'IDENTITY_RESULT_REFUSED'
+  /**
+   * 30 Sep 2026: WhatsApp with each client (src/web/whatsapp.ts). Sent, or not sent and why; received and filed (or left
+   * for a person to file); a webhook body refused because Meta's signature did not hold; filed by hand. Ids, counts and
+   * outcomes only — NEVER a number or the words.
+   */
+  | 'WHATSAPP_SENT' | 'WHATSAPP_NOT_SENT' | 'WHATSAPP_RECEIVED' | 'WHATSAPP_REFUSED' | 'WHATSAPP_FILED'
   /** Phase 151f: a signed word from the service that the check is still under way, or about something other than a
    *  check's status. Acknowledged and not kept as a result. The status word and why only. */
   | 'IDENTITY_RESULT_NOT_KEPT'

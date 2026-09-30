@@ -56,6 +56,8 @@ async function build() {
   // 30 SEPTEMBER 2026: whether video calls get a Zoom meeting, and if not why (names only).
   const { zoomWhy } = await import('../Caprebate/09-app/backend/src/connectors/zoom.ts');
   console.log(`test deployment: ${zoomWhy(made.app.secrets)}`);
+  const { whatsappWhy } = await import('../Caprebate/09-app/backend/src/connectors/whatsapp.ts');
+  console.log(`test deployment: ${whatsappWhy(made.app.secrets)}`);
   // No email is sent. The outbox (with a sign-up's confirmation link) goes to the function log, as the demo prints it.
   const shown = new Set();
   setInterval(() => {
@@ -97,7 +99,9 @@ export const TEST_WEBSITE_TWO_FACTOR = 'staff-except-invented';
 export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY',
   'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET', 'ZOOM_HOST_EMAIL',
   // 30 Sep 2026: email sending is on for testing; the IONOS login that sends from contact@caprebate.co.uk.
-  'IONOS_SMTP_HOST', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'IONOS_SMTP_PASSWORD']);
+  'IONOS_SMTP_HOST', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'IONOS_SMTP_PASSWORD',
+  // 30 Sep 2026: WhatsApp with each client (src/connectors/whatsapp.ts; nothing is sent until Meta's transfer is approved).
+  'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_TEMPLATE_LANGUAGE']);
 
 export async function configureTestDeploy(made, env) {
   const pw = (env.CAPREBATE_TEST_PASSWORD ?? '').trim();

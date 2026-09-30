@@ -69,6 +69,8 @@ import { publicSlots, isBookable, SLOT_MINUTES } from './schedule.ts';
 import { activeMeeting, booksATime, clientMayJoin, joinPanel, reconcileVideoMeeting, withJoinScripts, VIDEO_PAGE_HEADERS } from './video-calls.ts';
 import { joinSignature } from '../connectors/zoom.ts';
 import { VIDEO_CALL_JS } from './video-call-script.ts';
+import { receiveWhatsApp } from './whatsapp.ts';
+import { webhookChallenge } from '../connectors/whatsapp.ts';
 import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
 import { bookingInviteFile, sendVideoInvite } from './booking-invite.ts';
 import { ga4MeasurementId, sitePolicy, withMeasurementId } from '../analytics.ts';
@@ -354,6 +356,22 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* PHASE 151b: THE IDENTITY CHECK'S SIGNED RESULT. The service has no login, so this sits outside it — and believes
      nothing it is sent unless the signature holds (src/web/identity-checks.ts). A bad signature is refused and audited.
      The answer is a status and nothing else: the service reads no page, and a refusal says nothing about why. */
+  /* 30 SEP 2026: WHATSAPP — THE ADDRESS META CALLS (src/web/whatsapp.ts). No login: Meta has none. GET is Meta checking
+     the address with our verify word; POST carries messages and statuses, believed only under Meta's signature. */
+  if (path === '/hooks/whatsapp' && method === 'GET') {
+    const ok = webhookChallenge(d.app.secrets, url.searchParams.get('hub.mode'), url.searchParams.get('hub.verify_token'), url.searchParams.get('hub.challenge'));
+    res.writeHead(ok === null ? 403 : 200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
+    res.end(ok ?? 'refused');
+    return 'handled';
+  }
+  if (path === '/hooks/whatsapp' && method === 'POST') {
+    const raw0 = (await readBody(req, 1024 * 1024)).toString('utf8');
+    const sig = req.headers['x-hub-signature-256'];
+    const r = receiveWhatsApp(d.app, raw0, typeof sig === 'string' ? sig : null);
+    res.writeHead(r.status, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
+    res.end(r.status === 200 ? 'ok' : 'refused');
+    return 'handled';
+  }
   if (path === IDENTITY_HOOK_PATH && method === 'POST') {
     const raw0 = (await readBody(req, IDENTITY_HOOK_MAX_BYTES)).toString('utf8');
     // PHASE 151f: Didit signs with two headers and dates the result; any may be missing, and then nothing is believed.

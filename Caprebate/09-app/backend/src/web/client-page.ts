@@ -196,7 +196,7 @@ function clientPage(
 
   /* PHASE 142: CHAT — "Team only" (the company's notes, as a conversation) and "With the client" (the portal's Messages),
      two tabs, each with its unread number. Drawn only for a login that may read one of the two. */
-  const chatNow = chatBlock({ app: d.app, newId: d.newId }, actor, org.id, chat, note === 'saved' ? 'note' : done === 'message' || done === 'saved-file' ? done : undefined);
+  const chatNow = chatBlock({ app: d.app, newId: d.newId }, actor, org.id, chat, note === 'saved' ? 'note' : done === 'message' || done === 'saved-file' || done === 'whatsapp' || done === 'whatsapp-opening' ? done : undefined);
   if (chatNow !== null) {
     const waitingOnUs = M.clientMessagesWaiting(db, actor, d.app.now()).find((w) => w.business_id === org.id);
     sections.push({

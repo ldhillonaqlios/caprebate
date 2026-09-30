@@ -64,6 +64,8 @@ export type App = {
    * can reach the recorded answers (src/connectors/zoom.ts). Never set by a running server.
    */
   zoomPolicy?: Partial<CallPolicy>;
+  /** 30 SEPTEMBER 2026: TESTS ONLY - WhatsApp's call policy with the transfer approved (src/connectors/whatsapp.ts). */
+  whatsappPolicy?: Partial<CallPolicy>;
   /** 30 SEPTEMBER 2026: TESTS ONLY - how the server reaches the mail server (a fake one). Never set by a running server. */
   smtpConnect?: Connector;
   /**

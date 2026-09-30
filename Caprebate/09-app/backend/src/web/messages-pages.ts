@@ -29,6 +29,9 @@ import * as IE from './inbound-email.ts';
 import { page } from './html.ts';
 import { imapLoginFromKeyFile, imapMailbox, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../stubs/email-inbound.ts';
 import { earlyQuestions, receiveFile } from './client-files-pages.ts';
+import * as W from './whatsapp.ts';
+import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../connectors/whatsapp.ts';
+import { localStamp } from './localtime.ts';
 import { boundaryOf, parseMultipart, type Part } from './multipart.ts';
 import { UPLOAD_LIMITS } from './upload-handler-port.ts';
 import { earlyQuestionsFor, receivableTypes } from './documents.ts';
@@ -36,7 +39,8 @@ import { earlyVouchesFrom } from './document-reading.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
-export type ChatTab = 'team' | 'client';
+/** 30 Sep 2026: 'all' — "Everything": portal, email and WhatsApp with the company, in one list (src/web/whatsapp.ts). */
+export type ChatTab = 'team' | 'client' | 'all';
 
 /**
  * THE TAB A PAGE IS DRAWN WITH: the one asked for, where this login may open it; otherwise "With the client" when the
@@ -47,6 +51,7 @@ export function chatTab(db: Db, actor: Actor, business_id: string, asked: string
   const client = can(actor, 'client_message.read', { type: 'client_message', id: business_id, business_id });
   if (asked === 'team' && team) return 'team';
   if (asked === 'client' && client) return 'client';
+  if (asked === 'all' && client) return 'all';
   if (client && M.unreadCount(db, actor, business_id, 'CLIENT') > 0) return 'client';
   return team ? 'team' : client ? 'client' : null;
 }
@@ -113,7 +118,7 @@ function claimPicker(id: string, claims: readonly M.ClaimChoice[], clientWords: 
 function tabs(business_id: string, current: ChatTab, team: number | null, client: number | null): Safe {
   const link = (tab: ChatTab, label: string, n: number | null): Safe => (n === null ? raw('') : h`<li><a href="/staff/clients/${business_id}?chat=${tab}#chat"${
     current === tab ? raw(' aria-current="page"') : raw('')}>${label}${n > 0 ? h` <span class="unread" aria-label="${n} not read">${n}</span>` : raw('')}</a></li>`);
-  return h`<ul class="chattabs" aria-label="Which chat">${link('team', 'Team only', team)}${link('client', 'With the client', client)}</ul>`;
+  return h`<ul class="chattabs" aria-label="Which chat">${link('team', 'Team only', team)}${link('client', 'With the client', client)}${link('all', 'Everything: portal, email and WhatsApp', client === null ? null : 0)}</ul>`;
 }
 
 /**
@@ -152,6 +157,7 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
         <button class="cta" type="submit">Send to the team</button></form>` : raw('')}`,
     };
   }
+  if (tab === 'all') return { tab, unread, started, body: h`${top}${everything(d.app, actor, business_id, done)}` };
   const c = M.clientThread(db, actor, business_id);
   const types = IE.mayReadQueue(actor) ? receivableTypes(db) : [];
   if (opened) M.markRead(deps, actor, business_id, 'CLIENT');
@@ -171,6 +177,48 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
           ? 'They read it in their portal. We email them to say a message is waiting — never the message itself.'
           : 'They read it in their portal. We do not email them about it yet.'}</p></form>`}`,
   };
+}
+
+/**
+ * 30 SEP 2026 — "EVERYTHING": every message with the company, however it travelled, oldest first; then WhatsApp to one
+ * of its contacts, and the ways to write an email or a portal message. Lakhbir: "each client when we view back end has
+ * full communication via email or whats app".
+ */
+function everything(app: App, actor: Actor, business_id: string, done: string | undefined): Safe {
+  const db = app.db;
+  const now = app.now();
+  const items = W.conversation(db, actor, business_id, now);
+  const c = M.clientThread(db, actor, business_id);
+  const people = W.phoneContacts(db, business_id, now);
+  const missing = whatsappMissing(app.secrets, app.whatsappPolicy);
+  const unfiled = W.unfiledWhatsApp(db, actor, now).length;
+  const write = !c.may_write ? raw('')
+    : c.do_not_contact ? h`<div class="gate" role="note"><strong>You cannot write to this company.</strong> They asked us not to contact them.</div>`
+    : h`<div class="pblock chatform" id="whatsapp">
+        <p class="fl">Write to ${c.company}</p>
+        <p><a href="/staff/clients/${business_id}/email">Write an email</a> · <a href="/staff/clients/${business_id}?chat=client#chat">Write in their portal</a></p>
+        <h3>On WhatsApp</h3>
+        ${missing.length === 0 ? raw('') : h`<div class="gate" role="note"><strong>WhatsApp is not switched on yet.</strong> ${missing.join(' ')} Anything you send now is kept here as not sent.</div>`}
+        ${people.length === 0 ? h`<p class="help">None of ${c.company}’s contacts has a mobile number. Add one under Contacts to write to them on WhatsApp.</p>`
+          : h`<form method="post" action="/staff/clients/${business_id}/whatsapp">
+          <label class="fl" for="wa-to">To</label>
+          <select class="fi" id="wa-to" name="contact_id" required>${people.map((p) => h`<option value="${p.id}">${p.name} — ${p.shown} — ${p.open_until === null
+            ? `only our opening message (more than ${WINDOW_HOURS} hours since they last wrote on WhatsApp)` : `you can write freely until ${localStamp(p.open_until, now)}`}</option>`)}</select>
+          <label class="fl" for="wa-body">Message</label>
+          <textarea class="fi" id="wa-body" name="body" maxlength="${String(MAX_WHATSAPP_TEXT)}" rows="3"></textarea>
+          <p><button class="cta" type="submit" name="send" value="1">Send on WhatsApp</button>
+          <button class="btn-quiet" type="submit" name="opening" value="1" formnovalidate>Send our opening message</button></p>
+          <p class="help">WhatsApp lets us write freely only within ${WINDOW_HOURS} hours of the person’s last message to us. After that, it only lets us send our opening message. It asks them to reply.</p>
+        </form>`}
+      </div>`;
+  return h`${done === 'whatsapp' ? savedMessage('Sent on WhatsApp.') : raw('')}
+    ${done === 'whatsapp-opening' ? savedMessage('Our opening message is sent. When they reply, you can write freely for 24 hours.') : raw('')}
+    ${unfiled === 0 ? raw('') : h`<p class="help"><a href="/staff/whatsapp">${unfiled === 1 ? 'One WhatsApp message' : `${unfiled} WhatsApp messages`} from a number we do not know yet — file ${unfiled === 1 ? 'it' : 'them'}</a></p>`}
+    ${items.length === 0 ? h`<p class="empty">Nothing with ${c.company} yet.</p>` : h`<ol class="chat">${items.map((i) => h`<li class="msg${i.ours ? ' mine' : ''}">
+      <p class="msgmeta"><span class="via">${i.channel}</span> <strong>${i.who}</strong> · ${i.when}${i.state === null ? '' : ` · ${i.state}`}</p>
+      ${i.subject === null ? raw('') : h`<p class="msgsubj">${i.subject}</p>`}
+      <p class="msgbody">${i.body}</p></li>`)}</ol>`}
+    ${write}`;
 }
 
 /* ================================================================== *
@@ -213,6 +261,47 @@ export async function handleStaffMessages(
     const r = M.postClientMessage(deps, actor, id, { body: f.get('body') ?? '', claim_id: f.get('claim_id') });
     if (!r.ok) return d.problem(res, actor, 'Not sent', r.why, `/staff/clients/${id}?chat=client#chat`);
     redirect(res, `/staff/clients/${id}?chat=client&done=message#chat`);
+    return 'handled';
+  }
+
+  /* ---- 30 SEP 2026: WHATSAPP TO ONE OF THE COMPANY'S CONTACTS ---- */
+  const wa = /^\/staff\/clients\/([A-Za-z0-9-]+)\/whatsapp$/.exec(path);
+  if (wa && method === 'POST') {
+    const id = wa[1] ?? '';
+    const f = await form(req);
+    const opening = f.get('opening') === '1';
+    const r = await W.sendWhatsApp(d.app, actor, id, { contact_id: f.get('contact_id') ?? '', body: f.get('body') ?? '', opening });
+    if (!r.ok) return d.problem(res, actor, 'Not sent on WhatsApp', r.why, `/staff/clients/${id}?chat=all#whatsapp`);
+    redirect(res, `/staff/clients/${id}?chat=all&done=${opening ? 'whatsapp-opening' : 'whatsapp'}#chat`);
+    return 'handled';
+  }
+
+  /* ---- 30 SEP 2026: WHATSAPP FROM A NUMBER NO SINGLE COMPANY HAS, FILED BY A PERSON ---- */
+  if (path === '/staff/whatsapp' && method === 'GET') {
+    if (!can(actor, 'client_message.write', { type: 'client_message', id: 'queue', business_id: 'queue' })) return d.problem(res, actor, 'Not available', 'Only the people who write to clients file WhatsApp messages.', '/staff');
+    const now = d.app.now();
+    const q = W.unfiledWhatsApp(db, actor, now);
+    const companies = db.all<{ id: string; name: string }>('SELECT id, name FROM businesses ORDER BY name');
+    const done = url.searchParams.get('done');
+    html(res, 200, page({ title: 'WhatsApp to file', nav: d.nav(actor), body: h`
+      <h1>WhatsApp messages to file</h1>
+      <p class="help">These came from a number that no single company has among its contacts. Read each, and file it under the company it belongs to. Nothing is filed by guesswork.</p>
+      ${done === 'filed' ? savedMessage('Filed. It is now in that company’s Everything tab.') : raw('')}
+      ${q.length === 0 ? h`<p class="empty">Nothing to file.</p>` : h`<ol class="chat">${q.map((m) => h`<li class="msg" id="wa-${m.id}">
+        <p class="msgmeta"><span class="via">WhatsApp</span> <strong>${m.shown}</strong> · ${m.when}</p>
+        <p class="msgbody">${m.body}</p>
+        <form method="post" action="/staff/whatsapp/${m.id}/file" class="tickform">
+          <label class="vh" for="wa-file-${m.id}">Which company?</label>
+          <select class="fi" id="wa-file-${m.id}" name="business_id" required><option value="">Which company?</option>${companies.map((c) => h`<option value="${c.id}">${c.name}</option>`)}</select>
+          <button type="submit">File it</button></form></li>`)}</ol>`}` }));
+    return 'handled';
+  }
+  const waFile = /^\/staff\/whatsapp\/([A-Za-z0-9-]+)\/file$/.exec(path);
+  if (waFile && method === 'POST') {
+    const f = await form(req);
+    const r = W.fileWhatsApp(d.app, actor, waFile[1] ?? '', f.get('business_id') ?? '');
+    if (!r.ok) return d.problem(res, actor, 'Not filed', r.why, '/staff/whatsapp');
+    redirect(res, '/staff/whatsapp?done=filed');
     return 'handled';
   }
 

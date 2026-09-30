@@ -154,6 +154,8 @@ hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
 .group,.eyebrow{font-size:14px;letter-spacing:.04em;color:var(--body);margin:0 0 .35rem;font-weight:600}
 .help{color:var(--body);font-size:16px}
 .vc-panel{margin:1rem 0}
+.via{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.02em;border:1px solid var(--line);border-radius:999px;padding:0 .5rem;margin-right:.25rem}
+.msgsubj{font-weight:700;margin:.2rem 0}
 .vc-root{width:100%;max-width:1000px;min-height:0}
 .say{color:var(--body);font-size:16px}
 pre{white-space:pre-wrap;font-family:inherit}
