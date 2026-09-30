@@ -16,6 +16,8 @@ import { SITE_CSS } from '../src/web/assets.ts';
 import { fixtureTransport, type Fixture } from '../src/connectors/http.ts';
 import { secretsFromValues } from '../src/secrets.ts';
 import { COMPANY_SEARCH } from '../src/connectors/company-search.ts';
+import { ADDRESS_LOOKUP, addressLookupMissing, readAddresses } from '../src/connectors/address-lookup.ts';
+import { CALL_POLICIES } from '../src/connectors/sources.ts';
 import { MAX_DAYS } from '../src/web/slot-picker.ts';
 import { SLOT_MINUTES } from '../src/web/schedule.ts';
 import { localDate, localClock } from '../src/web/localtime.ts';
@@ -405,6 +407,63 @@ describe('stage 3 lookups, switched on for testing', () => {
       assert.match(page, /INVENTED CARE HOMES LIMITED <span class="help">· company number 12345678 · active · registered office LE10 1AA<\/span>/);
       assert.match(page, /We found the postcode LE10 1DA: Hinckley and Bosworth, East Midlands, England\./);
       assert.doesNotMatch(page, /Somewhere Road/, 'more than the permitted fields reached the page');
+    } finally { made.app.outside = was.outside; made.app.secrets = was.secrets; }
+  });
+});
+
+// 30 Sep 2026, Lakhbir: "for address look up for the client rather than typeing this would be better" (GoAddress), and
+// "sadique approves". Recorded answers only: nothing here goes out.
+describe('"Find my address" (GoAddress)', () => {
+  const ANSWER: Fixture = { status: 200, headers: { 'content-type': 'application/json' }, body: JSON.stringify({
+    query: 'LE101DA', count: 2,
+    results: [{ addressid: 'a1', address: 'x', postcode: 'LE10 1DA', label: 'x' }, { addressid: 'a2', address: 'y', postcode: 'LE10 1DA', label: 'y' }],
+    new_address_res: [
+      { addressid: 'a1', organisation: 'INVENTED CARE HOME', houseNo: '1', street: 'INVENTED STREET', postcode: 'LE10 1DA', post_town: 'HINCKLEY' },
+      { addressid: 'a2', houseNo: '3', street: 'INVENTED STREET', postcode: 'LE10 1DA', post_town: 'HINCKLEY' }],
+    new_address_res2: [{ addressid: 'a1', line_1: 'Invented Care Home', line_2: '1 Invented Street' }, { addressid: 'a2', line_1: '3 Invented Street' }],
+    usage_today: 1, daily_limit: 100, remaining_today: 99 }) };
+  test('switched on for testing and approved; needs only its key; the answer is read into lines, town and postcode', () => {
+    assert.equal(ADDRESS_LOOKUP.enabled, true);
+    assert.equal(ADDRESS_LOOKUP.named_in_privacy_notice, false, 'the waiver never pretends the notice names it');
+    assert.match(ADDRESS_LOOKUP.waiver_record ?? '', /"sadique approves"/);
+    assert.equal(CALL_POLICIES['GOADDRESS']?.international_transfer_approved, true);
+    assert.deepEqual(addressLookupMissing(ADDRESS_LOOKUP, secretsFromValues({})), ['Put the GoAddress key in the key file: GOADDRESS_API_KEY.']);
+    assert.deepEqual(addressLookupMissing(ADDRESS_LOOKUP, secretsFromValues({ GOADDRESS_API_KEY: 'k' })), []);
+    assert.deepEqual(readAddresses(ANSWER.body, 'LE10 1DA').map((a) => [a.id, a.line1, a.town, a.postcode]), [
+      ['a1', 'Invented Care Home, 1 Invented Street', 'Hinckley', 'LE10 1DA'], ['a2', '3 Invented Street', 'Hinckley', 'LE10 1DA']]);
+    assert.deepEqual(readAddresses('not json', 'LE10 1DA'), []);
+  });
+
+  test('the postcode alone is sent; the person picks theirs and it fills the address; "not in the list" keeps what they typed', async () => {
+    const was = { outside: made.app.outside, secrets: made.app.secrets };
+    try {
+      const t = fixtureTransport({ 'GET /api/address/LE101DA': ANSWER });
+      made.app.outside = t;
+      made.app.secrets = secretsFromValues({ GOADDRESS_API_KEY: 'invented-goaddress-token' });
+      const c = client();
+      await toDetails(c);
+      let page = (await c.req('/assessment/details')).body;
+      assert.match(page, /Find my address/);
+      assert.doesNotMatch(page, /Check postcode/, 'both lookups offered');
+      assert.ok(page.indexOf('name="b0_postcode"') < page.indexOf('name="b0_line1"'), 'the postcode should come first');
+      await c.post('/assessment/details', { ...DETAILS, b0_line1: '', b0_town: '', find: 'address:0' });
+      assert.equal(t.seen.length, 1);
+      assert.match(t.seen[0]!.url, /\/api\/address\/LE101DA$/);
+      assert.equal(t.seen[0]!.headers['authorization'], 'Bearer invented-goaddress-token');
+      assert.equal(t.seen[0]!.body, undefined, 'something beside the postcode was sent');
+      page = (await c.req('/assessment/details')).body;
+      assert.match(page, /Choose your address/);
+      assert.match(page, /name="b0_address_pick" value="a2"> 3 Invented Street, Hinckley<\/label>/);
+      assert.match(page, /value="none"> My address is not in the list/);
+      const next = await c.post('/assessment/details', { ...DETAILS, b0_line1: '', b0_town: '', b0_address_pick: 'a2' });
+      assert.equal(next.location, '/assessment/figure', next.body.slice(0, 300));
+      assert.match((await c.req('/assessment/figure')).body, /Building 1 · Care home — 3 Invented Street, Hinckley, LE10 1DA/);
+      // "Not in the list": what they typed stands.
+      const c2 = client();
+      await toDetails(c2);
+      await c2.post('/assessment/details', { ...DETAILS, find: 'address:0' });
+      await c2.post('/assessment/details', { ...DETAILS, b0_line1: '9 Typed Road', b0_address_pick: 'none' });
+      assert.match((await c2.req('/assessment/figure')).body, /Building 1 · Care home — 9 Typed Road, Hinckley, LE10 1DA/);
     } finally { made.app.outside = was.outside; made.app.secrets = was.secrets; }
   });
 });

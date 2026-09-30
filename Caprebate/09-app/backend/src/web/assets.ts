@@ -831,6 +831,10 @@ body.public .f4-channel{display:flex;align-items:center;justify-content:center;g
 body.public .f4-channel:hover{border-color:#ABEDD8;box-shadow:0 0 0 1px #ABEDD8,0 0 24px rgba(171,237,216,.3)}
 body.public .f4-channel:has(input:checked){border-color:#ABEDD8;background:rgba(171,237,216,.12);box-shadow:inset 0 0 0 1px #ABEDD8}
 body.public .f4-picker fieldset{border:0;padding:0;margin:.6rem 0;min-width:0}
+body.public .f4-addresses{border:0;padding:0;margin:.6rem 0;min-width:0}
+body.public .f4-addresses legend{padding:0}
+body.public .f4-address-list{display:grid;gap:6px;max-height:20rem;overflow-y:auto;padding:2px}
+body.public .f4-address-list .opt{margin:0;padding:.55rem .8rem;font-weight:400}
 body.public .f4-channels,body.public .f4-picker{min-width:0;max-width:100%}
 body.public .f4-date-row{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity}
 body.public .f4-date{position:relative;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:84px;padding:10px 12px;border:1px solid #3e4945;border-radius:14px;background:#1b201e;color:#EDEAE2;cursor:pointer;scroll-snap-align:start;transition:border-color .25s ease,box-shadow .3s ease}

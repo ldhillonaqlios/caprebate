@@ -101,7 +101,9 @@ export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_S
   // 30 Sep 2026: email sending is on for testing; the IONOS login that sends from contact@caprebate.co.uk.
   'IONOS_SMTP_HOST', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'IONOS_SMTP_PASSWORD',
   // 30 Sep 2026: WhatsApp with each client (src/connectors/whatsapp.ts; nothing is sent until Meta's transfer is approved).
-  'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_TEMPLATE_LANGUAGE']);
+  'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_TEMPLATE_LANGUAGE',
+  // 30 Sep 2026: "Find my address" at the assessment (src/connectors/address-lookup.ts).
+  'GOADDRESS_API_KEY']);
 
 export async function configureTestDeploy(made, env) {
   const pw = (env.CAPREBATE_TEST_PASSWORD ?? '').trim();

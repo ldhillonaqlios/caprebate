@@ -44,6 +44,7 @@ import {
 import { F4_ROUTE, F4_SCREENS, F4_TEXT, applyF4, applyReach, allGated, buildings, figureBody, firstIncomplete, isFunnel4, screenBody, stageBar, stageOf, submitEnquiry, type F4Screen } from './funnel4.ts';
 import { searchCompanies, companySearchOffered, COMPANY_SEARCH } from '../connectors/company-search.ts';
 import { checkPostcode, postcodeCheckMissing, POSTCODE_CHECK } from '../connectors/postcode-check.ts';
+import { ADDRESS_LOOKUP, addressLookupMissing, findAddresses } from '../connectors/address-lookup.ts';
 import { loadLetter } from './letter.ts';
 import * as P from './portal.ts';
 import { ENGAGEMENT_SIGNING, shownLetter, signEngagement, signingMissing } from './signing.ts';
@@ -481,6 +482,13 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
           deps: { audit: d.app.audit, now: d.app.now, transport: d.app.outside } });
         b['postcode_check'] = got.state === 'CHECKED' ? { postcode: got.postcode, council_area: got.council_area, region: got.region, country: got.country }
           : { not_found: got.state === 'NOT_FOUND' ? 'We could not find that postcode. Check it, or carry on with it as typed.' : got.why };
+      }
+      if (b !== undefined && what === 'address' && lookups.address) {
+        const got = await findAddresses({ postcode: typeof b['postcode'] === 'string' ? b['postcode'] : '', secrets: d.app.secrets,
+          deps: { audit: d.app.audit, now: d.app.now, transport: d.app.outside },
+          ...(d.app.addressLookup === undefined ? {} : { config: d.app.addressLookup.config, ...(d.app.addressLookup.policy === undefined ? {} : { policy_override: d.app.addressLookup.policy }) }) });
+        b['address_results'] = got.state === 'FOUND' ? got.addresses : [];
+        b['address_note'] = got.state === 'FOUND' ? null : got.why;
       }
       saveDraft(d.app.db, draft, now); redirect(res, `/assessment/details#b${at ?? '0'}`); return 'handled';
     }
@@ -1485,6 +1493,8 @@ function home(actor: Actor | undefined): string {
 type F4Lookups = {
   readonly gate: ReturnType<typeof freeGate>; readonly company: boolean; readonly postcode: boolean;
   readonly companyConfig: typeof COMPANY_SEARCH; readonly postcodeConfig: typeof POSTCODE_CHECK;
+  /** 30 Sep 2026: "Find my address" (GoAddress): its switch, its key and its approval. */
+  readonly address: boolean;
 };
 
 /** Whether each lookup at stage 3 can run: its gate, its switch and, for Companies House, its key. Tests may set all three. */
@@ -1495,7 +1505,8 @@ function f4Lookups(app: WebDeps['app']): F4Lookups {
   const postcodeConfig = o?.postcode ?? POSTCODE_CHECK;
   return { gate, companyConfig, postcodeConfig,
     company: companySearchOffered(companyConfig, gate, app.secrets),
-    postcode: postcodeCheckMissing(postcodeConfig, gate).length === 0 };
+    postcode: postcodeCheckMissing(postcodeConfig, gate).length === 0,
+    address: addressLookupMissing(app.addressLookup?.config ?? ADDRESS_LOOKUP, app.secrets, app.addressLookup?.policy).length === 0 };
 }
 
 function f4Page(draft: Draft, id: F4Screen, actor: Actor | undefined, lookups: F4Lookups, errors: readonly string[]): string {

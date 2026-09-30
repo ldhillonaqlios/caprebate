@@ -97,17 +97,18 @@ describe('WhatsApp', () => {
     assert.equal(waNumber(''), null);
   });
 
-  test('as shipped nothing is sent: the transfer waits for the data protection officer, and the page says so; an attempt is kept as not sent', async () => {
-    assert.equal(CALL_POLICIES['WHATSAPP_CLOUD']?.international_transfer_approved, false);
+  test('the transfer is approved (Sadique, 30 Sep 2026, for testing); without the keys nothing is sent, the page says which, and an attempt is kept as not sent', async () => {
+    assert.equal(CALL_POLICIES['WHATSAPP_CLOUD']?.international_transfer_approved, true);
     assert.equal(CALL_POLICIES['WHATSAPP_CLOUD']?.max_attempts, 1, 'a message is not safe to send twice');
-    assert.deepEqual(whatsappMissing(secretsFromValues(KEYS)), ['Meta keeps WhatsApp messages outside the UK: the data protection officer approves the transfer (sources.ts, WHATSAPP_CLOUD).']);
+    assert.deepEqual(whatsappMissing(secretsFromValues(KEYS)), []);
+    assert.deepEqual(whatsappMissing(secretsFromValues(KEYS), { international_transfer_approved: false }), ['Meta keeps WhatsApp messages outside the UK: the data protection officer approves the transfer (sources.ts, WHATSAPP_CLOUD).']);
     const t = fixtureTransport({ [SEND]: ACCEPTED('wamid.never') });
     made.app.outside = t;
-    made.app.secrets = secretsFromValues(KEYS);
+    made.app.secrets = secretsFromValues({});
     const s = await sales();
     const page = (await s.req('/staff/clients/b-wa-1?chat=all')).body;
     assert.match(page, /Everything: portal, email and WhatsApp/);
-    assert.match(page, /WhatsApp is not switched on yet\.<\/strong> Meta keeps WhatsApp messages outside the UK/);
+    assert.match(page, /WhatsApp is not switched on yet\.<\/strong> Put the WhatsApp keys in the key file: WHATSAPP_ACCESS_TOKEN/);
     assert.match(page, /<option value="c-wa-ada">Ada Invented — 07700 900123 — only our opening message/);
     const waForm = page.slice(page.indexOf('<select class="fi" id="wa-to"'), page.indexOf('</select>', page.indexOf('id="wa-to"')));
     assert.doesNotMatch(waForm, /value="c-wa-no-phone"/, 'a contact with no number was offered');

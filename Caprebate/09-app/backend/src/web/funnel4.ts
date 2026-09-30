@@ -39,6 +39,7 @@ import { openLeadForGatedExit } from './leads.ts';
 import type { Db } from '../db.ts';
 import { normalisePostcode } from '../connectors/postcode-check.ts';
 import type { CompanyCandidate } from '../connectors/company-search.ts';
+import type { FoundAddress } from '../connectors/address-lookup.ts';
 import { slotPicker, slotDayProblem } from './slot-picker.ts';
 
 export const F4_SCREENS = ['buildings', 'spend-on', 'amounts', 'tax', 'claims', 'works', 'details'] as const;
@@ -293,10 +294,16 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
       const before = b['postcode'];
       b['line1'] = clip(f.get(`b${i}_line1`), 200);
       b['town'] = clip(f.get(`b${i}_town`), 100);
-      const pcTyped = clip(f.get(`b${i}_postcode`), 10);
+      let pcTyped = clip(f.get(`b${i}_postcode`), 10);
+      // 30 Sep 2026: an address picked from "Find my address" (GoAddress) fills the lines, the town and the postcode.
+      const found = (b['address_results'] ?? []) as FoundAddress[];
+      const pick = f.get(`b${i}_address_pick`);
+      const chosen = pick !== null && pick !== 'none' ? found.find((a) => a.id === pick) : undefined;
+      if (chosen !== undefined) { b['line1'] = chosen.line1; b['town'] = chosen.town; pcTyped = chosen.postcode; b['address_id'] = chosen.id; }
+      else if (pick === 'none') b['address_id'] = null;
       const pc = pcTyped === null ? null : normalisePostcode(pcTyped);
       b['postcode'] = pc;
-      if (pc !== before) delete b['postcode_check'];
+      if (pc !== before) { delete b['postcode_check']; if (chosen === undefined) { delete b['address_results']; b['address_id'] = null; } }
       const address = addressFrom({ line1: b['line1'] as string | null, town: b['town'] as string | null, postcode: pc ?? pcTyped });
       if (address !== null) b['address'] = address;
       if (b['business_name'] === null || b['business_name'] === undefined) errors.push(`Tell us the name of the business that owns ${label(b, i)}.`);
@@ -372,7 +379,7 @@ function sameBox(i: number, what: string, on: unknown, text = 'Same answers as B
 }
 
 /** The screen's own questions. The router puts them in the page, with the stage bar and the errors. */
-export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; postcode: boolean }): Safe {
+export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; postcode: boolean; address?: boolean }): Safe {
   const bs = buildings(s);
   const sectorOpts = Object.keys(SECTOR).map((k) => ({ value: k, label: SECTOR[k] ?? k }));
   const spendOpts = Object.keys(SPEND_ON).map((k) => ({ value: k, label: SPEND_ON[k] ?? k }));
@@ -454,16 +461,30 @@ export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; post
         <p class="fl">What kind of business is it?</p>
         ${radios(`b${i}_entity`, entityOpts, b['entity_type'])}
       </div>
+      <label class="fl" for="b${i}-postcode">Postcode</label>
+      <input class="fi" id="b${i}-postcode" name="b${i}_postcode" value="${typeof b['postcode'] === 'string' ? b['postcode'] : ''}" autocomplete="postal-code">
+      ${lookups.address === true ? h`<p><button type="submit" name="find" value="address:${String(i)}" class="btn-quiet" formnovalidate>Find my address</button></p>`
+        : lookups.postcode ? h`<p><button type="submit" name="find" value="postcode:${String(i)}" class="btn-quiet" formnovalidate>Check postcode</button></p>` : raw('')}
+      ${addressPicker(b, i)}
       <label class="fl" for="b${i}-line1">Building name or number, and street</label>
       <input class="fi" id="b${i}-line1" name="b${i}_line1" value="${typeof b['line1'] === 'string' ? b['line1'] : ''}" autocomplete="address-line1">
       <label class="fl" for="b${i}-town">Town</label>
       <input class="fi" id="b${i}-town" name="b${i}_town" value="${typeof b['town'] === 'string' ? b['town'] : ''}" autocomplete="address-level2">
-      <label class="fl" for="b${i}-postcode">Postcode</label>
-      <input class="fi" id="b${i}-postcode" name="b${i}_postcode" value="${typeof b['postcode'] === 'string' ? b['postcode'] : ''}" autocomplete="postal-code">
-      ${lookups.postcode ? h`<p><button type="submit" name="find" value="postcode:${String(i)}" class="btn-quiet" formnovalidate>Check postcode</button></p>` : raw('')}
       ${pcc === undefined ? raw('') : 'not_found' in pcc ? h`<p class="help">${pcc.not_found}</p>`
         : h`<p class="help">We found the postcode ${pcc.postcode}${[pcc.council_area, pcc.region, pcc.country].filter((x) => x !== null).length > 0 ? `: ${[pcc.council_area, pcc.region, pcc.country].filter((x) => x !== null).join(', ')}` : ''}.</p>`}`);
   })}`;
+}
+
+/** 30 Sep 2026: the addresses "Find my address" found, to pick one; or that it is not there, and it is typed below. */
+function addressPicker(b: B, i: number): Safe {
+  const note = typeof b['address_note'] === 'string' ? b['address_note'] : null;
+  const found = (b['address_results'] ?? []) as FoundAddress[];
+  if (found.length === 0) return note === null ? raw('') : h`<p class="help">${note}</p>`;
+  const chosen = typeof b['address_id'] === 'string' ? b['address_id'] : null;
+  return h`<fieldset class="f4-addresses"><legend class="fl">Choose your address</legend>
+    <div class="opts f4-address-list">${found.map((a) => h`<label class="opt"><input type="radio" name="b${String(i)}_address_pick" value="${a.id}"${checked(chosen, a.id)}> ${a.label}</label>`)}
+      <label class="opt"><input type="radio" name="b${String(i)}_address_pick" value="none"> My address is not in the list — I will type it below</label></div>
+    <p class="help">Picked yours? You do not need to type it below.</p></fieldset>`;
 }
 
 /** After stage 1: what their buildings hold, in words. Never a number. */

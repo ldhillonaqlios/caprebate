@@ -94,7 +94,9 @@ describe('Phase 152 · the sign-up confirmation link is not kept in the outbox o
   test('end to end: a real sign-up request is sent and blanked, and the link from the email still makes the login once', async () => {
     const w = await world();
     try {
-      const business = w.db.get<{ id: string }>('SELECT id FROM businesses ORDER BY id LIMIT 1')!.id;
+      // 30 Sep 2026: a company we may contact. The seed's ids are random, and the seed's Fenmoor (b6) is DO_NOT_CONTACT:
+      // when it sorted first (about one run in five) the email was rightly refused and this test failed.
+      const business = w.db.get<{ id: string }>("SELECT id FROM businesses WHERE client_status IS NULL OR client_status <> 'DO_NOT_CONTACT' ORDER BY id LIMIT 1")!.id;
       let k = 0;
       // sending on, as it would be on a live deploy, so the request is saved as one to send
       (w.app as { email: ReturnType<typeof outboxTransport> }).email = outboxTransport(w.db, () => `e2e-${++k}`, () => NOW, () => true);

@@ -279,11 +279,27 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
        the row is US and the transfer is NOT APPROVED: until the data protection officer approves it, nothing is sent
        and the back office says so. What is sent: the number and the words staff typed. ONE TRY: a retry after a lost
        answer would send the message twice. Meta's limit for a new number is far above ours; sixty a minute is OURS. */
+    /* THE TRANSFER: approved for testing on 30 September 2026 by Sadique Maskeen (data protection officer), relayed by
+       Lakhbir in chat: "Sadique approves WhatsApp, the contact box is enough for testing". To be confirmed before real
+       clients. */
     service_id: 'WHATSAPP_CLOUD', register_source: null,
-    base_url: 'https://graph.facebook.com', region: 'US', international_transfer_approved: false,
+    base_url: 'https://graph.facebook.com', region: 'US', international_transfer_approved: true,
     rate: { limit: 60, window_ms: 60 * 1000 },
     rate_basis: 'Meta limits by the number’s messaging tier (read 30 Sep 2026); sixty a minute is OUR cautious limit',
     timeout_ms: 15_000, max_bytes: 64 * 1024, max_attempts: 1,
+  },
+  GOADDRESS: {
+    /* 30 SEPTEMBER 2026 — "Find my address" at the assessment (src/connectors/address-lookup.ts). A PROCESSOR: GoAddress,
+       https://portal.goaddress.io/api/address/{postcode} with a bearer token (goaddress.io/docs.html, read 30 Sep 2026).
+       Its site names no company and no hosting place, so the row says US (outside the UK) until GoAddress says where,
+       and the transfer was APPROVED FOR TESTING on 30 September 2026 by Sadique Maskeen, relayed by Lakhbir ("sadique
+       approves"). What is sent: a postcode, nothing else. The free plan is 100 lookups; paid plans count a day's lookups,
+       so sixty a minute is OUR cautious limit. A lookup is safe to repeat. */
+    service_id: 'GOADDRESS', register_source: null,
+    base_url: 'https://portal.goaddress.io', region: 'US', international_transfer_approved: true,
+    rate: { limit: 60, window_ms: 60 * 1000 },
+    rate_basis: 'GoAddress limits lookups a day by plan (read 30 Sep 2026); sixty a minute is OUR cautious limit',
+    timeout_ms: 8_000, max_bytes: 512 * 1024, max_attempts: 2,
   },
   CLAUDE_DOCUMENTS: {
     service_id: 'CLAUDE_DOCUMENTS', register_source: null,
