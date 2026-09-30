@@ -7,7 +7,9 @@
  * TWO ZOOM APPS, BOTH MADE IN THE ZOOM APP MARKETPLACE ON OUR OWN ACCOUNT (developers.zoom.us, read 30 Sep 2026):
  *   · a SERVER-TO-SERVER OAUTH app — ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET. The server swaps them for an
  *     hour's token and makes, moves and cancels the meeting for each video call, and asks for the host's start token
- *     (ZAK) when a member of staff opens the call. Scopes: make, update and delete meetings, and read a user's ZAK.
+ *     (ZAK) when a member of staff opens the call. Scopes: meeting:write:meeting:admin, meeting:update:meeting:admin,
+ *     meeting:delete:meeting:admin, and user:read:token:admin — the first live call (30 Sep 2026) showed the start token
+ *     needs that one ("user:read:zak:admin" is not enough: Zoom answered 4711).
  *   · a MEETING SDK app — ZOOM_SDK_CLIENT_ID, ZOOM_SDK_CLIENT_SECRET. Its secret signs each join ON THIS SERVER (a JWT,
  *     HMAC-SHA256: appKey, mn, role, iat, exp, tokenExp), so the meeting runs inside our page with Zoom's own Web SDK.
  *     Meetings on our own account need no Zoom review; since 2 March 2026 only joining OTHER accounts' meetings does.

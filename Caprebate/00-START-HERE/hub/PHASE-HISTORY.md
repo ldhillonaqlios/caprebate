@@ -10936,3 +10936,14 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Proof.** Two tests added to `test/funnel4.test.ts` (twenty-three: the switch, the approval and reading the answer; the postcode alone sent, a pick filling the address, "not in the list" keeping what was typed) and the WhatsApp switch test restated. Seven single-line mutations each turned them red. Looked at on a phone-sized screen. `npm run check` exit 0, 1888 pass (104 files); harness 1279/0/4; phase3 439; phase9 403; drift (`--fast --expect 1279,439,403,1888`, Developer Spec §4 to 1,888 and 4,009), CRM fold (six §4 references moved), plain words, brand, register and analytics green.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 30 September 2026 — the first live calls: GoAddress read as it really answers; Zoom's start-token permission (Opus, Mac copy)
+
+ Lakhbir filled in the GoAddress key and the six Zoom keys. Two read-only live calls from the Mac (no key printed):
+
+-  **GoAddress works** — LE10 1DA answered 200 with 99 addresses (the free plan's day showed 98 lookups). Its real answer differs from its documentation: `new_address_res2`'s line_2 to line_4 are the COUNTY, the POSTCODE and the COUNTRY, so the list read "…, Leicestershire, Le101da, England, Hinckley". It is now read from `raw_address` (else line_1 alone), with the town from `post_town`: "1, Castle Inn Court 107-113, Castle Street, Hinckley". The test's recorded answer now has the real shape; reading line_2 to line_4 as address lines turns it red.
+-  **Zoom signs in** (the Server-to-Server token, 200, with the four scopes asked for), but the host's start token answered 400, code 4711: it needs **`user:read:token:admin`**, not `user:read:zak:admin`. Lakhbir adds that scope to the Zoom app; `zoom.ts` and `secrets.example.env` now name the exact scopes. No meeting was made.
+-  **A correction:** the previous entry said `test/funnel4.test.ts` had twenty-three tests; it has twenty-one. The Developer Spec §4 line is corrected.
+-  `npm run check` exit 0, 1888 pass; CRM fold, plain words, brand, register, analytics and drift (`--fast --expect 1279,439,403,1888`) green.
+
+ **Claim cleared** in the commit that carries this record.

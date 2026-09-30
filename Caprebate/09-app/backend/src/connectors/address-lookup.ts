@@ -7,10 +7,12 @@
  * for 200 a day (goaddress.io, read 30 Sep 2026).
  *
  * THE CALL (goaddress.io/docs.html, read 30 Sep 2026): GET https://portal.goaddress.io/api/address/{postcode}, with
- * "Authorization: Bearer <token>" (GOADDRESS_API_KEY in the key file). The answer lists the addresses at the postcode;
- * its field names are only partly documented, so it is read defensively: the lines from `new_address_res2` (line_1 to
- * line_4), the town and postcode from `new_address_res`, joined on `addressid`, and `results[].label` when those are
- * absent. Anything unreadable is "not found", never a guess.
+ * "Authorization: Bearer <token>" (GOADDRESS_API_KEY in the key file). The answer lists the addresses at the postcode.
+ * READ AS IT REALLY ANSWERS — the first live lookup, 30 Sep 2026 (LE10 1DA, 99 addresses): each address is in
+ * `new_address_res` with `raw_address` (the building and street, "1, Castle Inn Court 107-113, Castle Street"),
+ * `post_town`, `postcode` ("LE101DA") and the county and country; `new_address_res2` repeats it as line_1 (the address)
+ * with line_2 to line_4 the COUNTY, the POSTCODE and the COUNTRY — so only line_1 is an address line. `results[].label`
+ * is still read if neither list comes back. Anything unreadable is "not found", never a guess.
  *
  * WHAT IS SENT: THE POSTCODE, AND NOTHING ELSE. The person picks their address from the list, or says it is not there
  * and types it; nothing is chosen for them.
@@ -77,7 +79,10 @@ export function readAddresses(body: string, asked: string): FoundAddress[] {
   const ids = lines.size > 0 ? [...lines.keys()] : [...detail.keys()];
   for (const id of ids) {
     const d = detail.get(id) ?? {};
-    const ls = lines.get(id) ?? [str(d['organisation']), str(d['building_name']), [str(d['flat']), str(d['houseNo']), str(d['street'])].filter(Boolean).join(' ') || null].filter((x): x is string => x !== null);
+    // The building and street: `raw_address`, else line_1 (never line_2 to line_4: county, postcode, country), else parts.
+    const first = str(d['raw_address']) ?? (lines.get(id) ?? [])[0] ?? null;
+    const ls = first !== null ? [first]
+      : [str(d['organisation']), str(d['building_name']), [str(d['flat']), str(d['house_no']) ?? str(d['houseNo']), str(d['street'])].filter(Boolean).join(' ') || null].filter((x): x is string => x !== null);
     const town = str(d['post_town']) ?? str(d['town']) ?? str(d['city']);
     const pc = normalisePostcode(str(d['postcode']) ?? asked) ?? asked;
     if (ls.length === 0) continue;

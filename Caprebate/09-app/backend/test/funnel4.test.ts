@@ -414,14 +414,16 @@ describe('stage 3 lookups, switched on for testing', () => {
 // 30 Sep 2026, Lakhbir: "for address look up for the client rather than typeing this would be better" (GoAddress), and
 // "sadique approves". Recorded answers only: nothing here goes out.
 describe('"Find my address" (GoAddress)', () => {
+  // The shape of GoAddress's real answer (the first live lookup, 30 Sep 2026), with invented addresses.
   const ANSWER: Fixture = { status: 200, headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-    query: 'LE101DA', count: 2,
-    results: [{ addressid: 'a1', address: 'x', postcode: 'LE10 1DA', label: 'x' }, { addressid: 'a2', address: 'y', postcode: 'LE10 1DA', label: 'y' }],
+    postcode: 'LE101DA', total: 2, addresses: ['Invented Care Home, 1 Invented Street', '3 Invented Street'],
     new_address_res: [
-      { addressid: 'a1', organisation: 'INVENTED CARE HOME', houseNo: '1', street: 'INVENTED STREET', postcode: 'LE10 1DA', post_town: 'HINCKLEY' },
-      { addressid: 'a2', houseNo: '3', street: 'INVENTED STREET', postcode: 'LE10 1DA', post_town: 'HINCKLEY' }],
-    new_address_res2: [{ addressid: 'a1', line_1: 'Invented Care Home', line_2: '1 Invented Street' }, { addressid: 'a2', line_1: '3 Invented Street' }],
-    usage_today: 1, daily_limit: 100, remaining_today: 99 }) };
+      { addressid: 'a1', raw_address: 'Invented Care Home, 1 Invented Street', flat: null, house_no: null, building_name: 'Invented Care Home', organisation: null, street: '1 Invented Street', postcode: 'LE101DA', post_town: 'Hinckley', city: 'Hinckley and Bosworth', town: 'Hinckley', county: 'Leicestershire', country: 'England' },
+      { addressid: 'a2', raw_address: '3 Invented Street', flat: null, house_no: '3', building_name: null, organisation: null, street: 'Invented Street', postcode: 'LE101DA', post_town: 'Hinckley', county: 'Leicestershire', country: 'England' }],
+    new_address_res2: [
+      { addressid: 'a1', line_1: 'Invented Care Home, 1 Invented Street', line_2: 'Leicestershire', line_3: 'LE101DA', line_4: 'England' },
+      { addressid: 'a2', line_1: '3 Invented Street', line_2: 'Leicestershire', line_3: 'LE101DA', line_4: 'England' }],
+    address_info: { postcode: 'LE101DA', post_town: 'Hinckley' }, extra_info: null, usage_today: 1, daily_limit: 100, remaining_today: 99 }) };
   test('switched on for testing and approved; needs only its key; the answer is read into lines, town and postcode', () => {
     assert.equal(ADDRESS_LOOKUP.enabled, true);
     assert.equal(ADDRESS_LOOKUP.named_in_privacy_notice, false, 'the waiver never pretends the notice names it');
