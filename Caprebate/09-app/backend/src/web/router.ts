@@ -463,7 +463,9 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
         if (lookupsOffered()) st['lookups_declined'] = posted.get('lookups_declined') === 'on';
         else delete st['lookups_declined'];
         const props = (st['properties'] ?? []) as Record<string, unknown>[];
-        const kept = await checkPropertyPostcodes(d.app, props, st['lookups_declined'] === true);
+        // 30 Sep 2026: the same test hook as the four-stage screens (app.startLookups), now that the check ships on for testing.
+        const hook = d.app.startLookups;
+        const kept = await checkPropertyPostcodes(d.app, props, st['lookups_declined'] === true, hook === undefined ? {} : { gate: hook.gate, config: hook.postcode });
         props.forEach((p, i) => { const k = kept[i] ?? null; if (k === null) delete p['postcode_checked']; else p['postcode_checked'] = k; });
       }
       draft.screen = id;

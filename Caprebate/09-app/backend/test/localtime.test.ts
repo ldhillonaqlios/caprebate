@@ -171,12 +171,9 @@ describe('nine to five means nine to five in June AND in January', () => {
       assert.equal(localClock(summer.slots[0]?.starts_at ?? ''), '09:00');
       assert.equal(localClock(winter.slots[0]?.starts_at ?? ''), '09:00');
 
-      /* The whole day, both seasons: 09:00 to 16:30 inclusive, sixteen slots,
+      /* The whole day, both seasons: 09:00 to 16:00 inclusive, eight one-hour calls (30 Sep 2026: calls are an hour),
          and the last one ends at 17:00 rather than starting at it. */
-      const expected = [
-        '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
-        '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
-      ];
+      const expected = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
       assert.deepEqual(offeredOn(db, SUMMER_DAY), expected);
       assert.deepEqual(offeredOn(db, WINTER_DAY), expected);
     } finally { db.close(); }
@@ -195,16 +192,18 @@ describe('nine to five means nine to five in June AND in January', () => {
          accept a time its own picker had never offered — which is exactly the
          hole the "picker is a courtesy, the refusal is the control" rule
          exists to close. */
-      const earlySummer = isBookable(db, `${SUMMER_DAY}T07:30:00.000Z`, {});
+      const earlySummer = isBookable(db, `${SUMMER_DAY}T07:00:00.000Z`, {});
       assert.equal(earlySummer.ok, false);
       if (!earlySummer.ok) assert.match(earlySummer.why, /outside the working hours/);
-      const earlyWinter = isBookable(db, `${WINTER_DAY}T08:30:00.000Z`, {});
+      const earlyWinter = isBookable(db, `${WINTER_DAY}T08:00:00.000Z`, {});
       assert.equal(earlyWinter.ok, false);
 
-      /* And the last half hour of the day, which is the off-by-one either way:
-         16:30 local starts inside the hours and ends exactly on 17:00. */
-      assert.equal(isBookable(db, `${SUMMER_DAY}T15:30:00.000Z`, {}).ok, true);
+      /* And the last hour of the day, which is the off-by-one either way:
+         16:00 local starts inside the hours and ends exactly on 17:00. */
+      assert.equal(isBookable(db, `${SUMMER_DAY}T15:00:00.000Z`, {}).ok, true);
       assert.equal(isBookable(db, `${SUMMER_DAY}T16:00:00.000Z`, {}).ok, false);
+      /* A half-hour start is refused now that calls are an hour: calls start on the hour. */
+      assert.equal(isBookable(db, `${SUMMER_DAY}T14:30:00.000Z`, {}).ok, false);
     } finally { db.close(); }
   });
 
@@ -226,19 +225,18 @@ describe('nine to five means nine to five in June AND in January', () => {
           [`wt-${weekday}`, 'u-SALES', weekday, 0, 4 * 60]);
       }
 
-      /* SPRING: local 01:00 to 01:59 does not exist, so those two slots are not
-         offered. Six remain out of the eight a normal four-hour period has. */
+      /* SPRING: local 01:00 to 01:59 does not exist, so that hour's call is not
+         offered. Three remain out of the four a normal four-hour period has. */
       const march = offeredOn(db, CLOCKS_GO_FORWARD);
-      assert.deepEqual(march, ['00:00', '00:30', '02:00', '02:30', '03:00', '03:30']);
+      assert.deepEqual(march, ['00:00', '02:00', '03:00']);
       assert.equal(march.includes('01:00'), false, 'a slot was offered at a time that does not exist');
 
-      /* AUTUMN: local 01:00 to 01:59 happens twice, so those two clock times
-         appear twice — TEN slots in a four-hour period, because that morning
+      /* AUTUMN: local 01:00 to 01:59 happens twice, so that clock time
+         appears twice — FIVE calls in a four-hour period, because that morning
          really is five hours long. They are different instants. */
       const october = offeredOn(db, CLOCKS_GO_BACK);
-      assert.equal(october.length, 10);
+      assert.equal(october.length, 5);
       assert.equal(october.filter((c) => c === '01:00').length, 2);
-      assert.equal(october.filter((c) => c === '01:30').length, 2);
 
       const from = startOfLocalDay(`${CLOCKS_GO_BACK}T12:00:00.000Z`);
       const r = slotsBetween(db, from, addLocalDays(from, 1), {});

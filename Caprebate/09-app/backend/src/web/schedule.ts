@@ -128,8 +128,9 @@ function bookableUserIds(db: Db): Set<string> {
   return out;
 }
 
-/** How long a booked call is. One number, quoted by every screen that shows one. */
-export const SLOT_MINUTES = 30;
+/** How long a booked call is. One number, quoted by every screen that shows one.
+ * 30 September 2026, Lakhbir: "make the call times 1 hour for both virtual and telephone". It was 30. Calls start on the hour. */
+export const SLOT_MINUTES = 60;
 
 /** How far ahead the pickers look. A fortnight is long enough to find a time. */
 export const HORIZON_DAYS = 14;

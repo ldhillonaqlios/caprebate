@@ -26,9 +26,22 @@ export type CompanySearchConfig = {
   readonly enabled: boolean;
   /** Companies House is named in the published privacy notice for a visitor's own search at the assessment. */
   readonly named_in_privacy_notice: boolean;
+  /** TESTING ONLY, as POSTCODE_CHECK's (postcode-check.ts): sent before the notice names the service. Absent is false. */
+  readonly papers_waived_for_testing?: boolean;
+  readonly waiver_record?: string | null;
 };
 
-export const COMPANY_SEARCH: CompanySearchConfig = Object.freeze({ enabled: false, named_in_privacy_notice: false });
+/*
+ * SWITCHED ON FOR TESTING, 30 September 2026 (Lakhbir: "switch on companies house and postcodes.io"), under the same
+ * recorded waiver as the postcode check. The key is still needed: in the key file locally, and on the test website
+ * COMPANIES_HOUSE_API_KEY in its settings (api/index.mjs reads it behind the test password). Without it there is no
+ * "Find my company" button and the name is typed, as before.
+ */
+export const COMPANY_SEARCH: CompanySearchConfig = Object.freeze({
+  enabled: true, named_in_privacy_notice: false,
+  papers_waived_for_testing: true,
+  waiver_record: 'Lakhbir Dhillon, 30 September 2026, in the chat with Claude: "switch on companies house and postcodes.io". The privacy notice is a draft and is not published; it does not yet name Companies House for this use. Test website, invented data only.',
+});
 
 export type CompanyCandidate = {
   readonly name: string;
@@ -45,8 +58,9 @@ export type CompanySearch =
 /** What must be true before a name is sent, in plain words. Empty means it can be sent. */
 export function companySearchMissing(cfg: CompanySearchConfig, gate: GateStatus, secrets: SecretStore): string[] {
   const out: string[] = [];
-  if (!gate.free_enabled) out.push('Publish the privacy notice and link it from the assessment.');
-  if (cfg.named_in_privacy_notice !== true) out.push('Name Companies House in the privacy notice, for a visitor’s own search.');
+  const waived = cfg.papers_waived_for_testing === true;
+  if (!gate.free_enabled && !waived) out.push('Publish the privacy notice and link it from the assessment.');
+  if (cfg.named_in_privacy_notice !== true && !waived) out.push('Name Companies House in the privacy notice, for a visitor’s own search.');
   if (cfg.enabled !== true) out.push('Then switch the company search on.');
   if ((secrets.forOwner('COMPANIES_HOUSE').get('COMPANIES_HOUSE_API_KEY') ?? '').trim() === '') out.push('Put the Companies House key in the key file.');
   return out;

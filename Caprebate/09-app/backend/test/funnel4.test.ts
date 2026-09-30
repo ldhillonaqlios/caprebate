@@ -12,6 +12,13 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/server.ts';
+import { SITE_CSS } from '../src/web/assets.ts';
+import { fixtureTransport, type Fixture } from '../src/connectors/http.ts';
+import { secretsFromValues } from '../src/secrets.ts';
+import { COMPANY_SEARCH } from '../src/connectors/company-search.ts';
+import { MAX_DAYS } from '../src/web/slot-picker.ts';
+import { SLOT_MINUTES } from '../src/web/schedule.ts';
+import { localDate, localClock } from '../src/web/localtime.ts';
 
 const T = '2026-09-08T00:00:00.000Z';
 let made: Awaited<ReturnType<typeof createApp>>;
@@ -203,7 +210,7 @@ describe('stage 3 and the figure', () => {
     assert.match(fig, /Building 1 · Care home — 1 Invented Street, Hinckley, LE10 1DA<\/p>\s*<p class="f4-part-figure">up to £600,000/);
     assert.match(fig, /Building 2 · Dental practice — 2 Made Up Road, Leicester, LE1 1AA<\/p>\s*<p class="f4-part-figure">up to £450,000/);
     assert.match(fig, /Building 1 · Care home: .*loss|Building 1 · Care home/);
-    for (const w of ['First name', 'Surname', 'Your position in the business', 'Telephone', 'Video call', 'Email', 'Choose a date and time']) assert.match(fig, new RegExp(w));
+    for (const w of ['First name', 'Surname', 'Your position in the business', 'Telephone', 'Video call', 'Email', '1\\. Choose a date', '2\\. Choose a time']) assert.match(fig, new RegExp(w));
     assert.doesNotMatch(fig, /<script/);
   });
 
@@ -235,6 +242,59 @@ describe('how to reach you, and what is written', () => {
       assert.equal(r.status, 400, JSON.stringify(f));
       assert.match(r.body, words);
     }
+  });
+
+  // 30 Sep 2026, Lakhbir: "1) choose date ... pull from the back end calendar ... 2) choose time", and calls of one hour.
+  test('choose a date, then a time: both from the diaries, a row of dates, that day\'s hour-long times under it', async () => {
+    const c = client();
+    await toDetails(c);
+    await c.post('/assessment/details', DETAILS);
+    const fig = (await c.req('/assessment/figure')).body;
+    const dates = [...fig.matchAll(/<label class="f4-date f4-d(\d+)"><input type="radio" name="day" value="(\d{4}-\d\d-\d\d)"( checked)?>/g)];
+    assert.ok(dates.length >= 14 && dates.length <= MAX_DAYS, `${dates.length} dates offered`);
+    assert.deepEqual(dates.map((m) => Number(m[1])), dates.map((_, i) => i), 'the date cards are numbered in order');
+    assert.deepEqual(dates.filter((m) => m[3] !== undefined).map((m) => m[2]), [dates[0]![2]], 'the first date is chosen, so its times show at once');
+    // Every time is on the hour, an hour long, and sits under its own date.
+    const groups = [...fig.matchAll(/<div class="f4-times f4-t(\d+)">([\s\S]*?)<\/div><\/div>/g)];
+    assert.equal(groups.length, dates.length);
+    for (const g of groups) {
+      const day = dates[Number(g[1])]![2];
+      const times = [...g[2]!.matchAll(/name="slot" value="([^"]+)"> (\d\d:\d\d) – (\d\d:\d\d)/g)];
+      assert.ok(times.length > 0, `no times under ${day}`);
+      for (const t of times) {
+        assert.equal(localDate(t[1]!), day, 'a time sits under another date');
+        assert.equal(localClock(t[1]!), t[2]);
+        assert.match(t[2]!, /:00$/, 'calls start on the hour');
+        assert.equal(localClock(new Date(Date.parse(t[1]!) + 3_600_000).toISOString()), t[3], 'a call is an hour');
+      }
+    }
+    assert.equal(SLOT_MINUTES, 60);
+    assert.match(fig, /Each call lasts an hour\./);
+    // With no JavaScript, one rule per date card shows its times; there is a rule for every card there can be.
+    for (let i = 0; i < MAX_DAYS; i++) assert.ok(SITE_CSS.includes(`.f4-picker:has(.f4-d${i} input:checked) .f4-t${i}{display:block}`), `no rule for date ${i}`);
+    assert.ok(!SITE_CSS.includes(`.f4-d${MAX_DAYS} input`));
+  });
+
+  test('a time hidden under another date is refused, a date with no time is refused, and the time chosen is held for an hour', async () => {
+    const c = client();
+    await toDetails(c);
+    await c.post('/assessment/details', { ...DETAILS, b0_business: 'Picker Care Homes Limited', b1_business: 'Picker Dental LLP' });
+    const fig = (await c.req('/assessment/figure')).body;
+    const days = [...fig.matchAll(/name="day" value="(\d{4}-\d\d-\d\d)"/g)].map((m) => m[1]!);
+    const later = [...fig.matchAll(/name="slot" value="([^"]+)"/g)].map((m) => m[1]!).filter((t) => t !== '' && localDate(t) === days[2]);
+    const who = { first_name: 'Ada', surname: 'Invented', job_role: 'owner_director', channel: 'phone', phone: '01632 960000', contact_consent: 'on' };
+    const hidden = await c.post('/assessment/close', { ...who, day: days[1]!, slot: later[0]! });
+    assert.equal(hidden.status, 400);
+    assert.match(hidden.body, /Choose a time on [A-Z][a-z]+day \d{1,2} [A-Z][a-z]+ — the time you had chosen is on /);
+    assert.match(hidden.body, new RegExp(`name="day" value="${days[1]}" checked`), 'the date they were looking at stays chosen');
+    const none = await c.post('/assessment/close', { ...who, day: days[2]! });
+    assert.equal(none.status, 400);
+    assert.match(none.body, /Choose a time on [A-Z][a-z]+day \d{1,2} [A-Z][a-z]+, or tick that none of the times suit you\./);
+    const sent = await c.post('/assessment/close', { ...who, day: days[2]!, slot: later[1]! });
+    assert.equal(sent.status, 200, sent.body.slice(0, 300));
+    const held = made.app.db.get<{ starts_at: string; ends_at: string }>('SELECT starts_at, ends_at FROM bookings WHERE starts_at = ?', [later[1]!]);
+    assert.ok(held !== undefined, 'the time was not held');
+    assert.equal(Date.parse(held.ends_at) - Date.parse(held.starts_at), 60 * 60_000, 'the call is not an hour');
   });
 
   test('two companies: two organisations, two leads in one enquiry, the person on each, one video call held on the first', async () => {
@@ -304,5 +364,47 @@ describe('how to reach you, and what is written', () => {
     await c.req('/assessment');
     assert.equal((await c.post('/assessment/Q1', { own_prior_claim: 'no' })).location, '/assessment/Q1a');
     assert.match((await c.req('/assessment/Q1a')).body, /<p class="rung">Step 2 of 6<\/p>/);
+  });
+});
+
+// 30 Sep 2026, Lakhbir: "switch on companies house and postcodes.io". On for testing under a recorded waiver, with the
+// privacy notice still unpublished (the free gate shut, as shipped). Recorded answers only: nothing here goes out.
+describe('stage 3 lookups, switched on for testing', () => {
+  const SEARCH: Fixture = { status: 200, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items: [
+    { title: 'INVENTED CARE HOMES LIMITED', company_number: '12345678', company_status: 'active', address: { address_line_1: '9 Somewhere Road', postal_code: 'LE10 1AA' } },
+  ] }) };
+  const POSTCODE: Fixture = { status: 200, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status: 200, result: { postcode: 'LE10 1DA', admin_district: 'Hinckley and Bosworth', region: 'East Midlands', country: 'England' } }) };
+  test('as shipped, with the notice unpublished: "Check postcode" is offered, and "Find this company" once the key is there; each sends only its own word', async () => {
+    const was = { outside: made.app.outside, secrets: made.app.secrets };
+    try {
+      assert.equal(COMPANY_SEARCH.enabled, true);
+      assert.equal(COMPANY_SEARCH.named_in_privacy_notice, false, 'the waiver never pretends the notice names it');
+      assert.match(COMPANY_SEARCH.waiver_record ?? '', /"switch on companies house and postcodes\.io"/);
+      const t = fixtureTransport({ 'GET /search/companies': SEARCH, 'GET /postcodes/LE101DA': POSTCODE });
+      made.app.outside = t;
+      delete made.app.startLookups;
+      made.app.secrets = secretsFromValues({});
+      const c = client();
+      await toDetails(c);
+      let page = (await c.req('/assessment/details')).body;
+      assert.match(page, /Check postcode/);
+      assert.doesNotMatch(page, /Find this company/, 'offered with no key');
+      made.app.secrets = secretsFromValues({ COMPANIES_HOUSE_API_KEY: 'invented-companies-house-key-000' });
+      page = (await c.req('/assessment/details')).body;
+      assert.match(page, /Find this company/);
+      await c.post('/assessment/details', { ...DETAILS, b0_business: 'invented care homes', find: 'company:0' });
+      const asked = t.seen.find((x) => x.url.includes('/search/companies'));
+      assert.ok(asked, 'Companies House was not asked');
+      assert.equal(new URL(asked.url).searchParams.get('q'), 'invented care homes');
+      assert.doesNotMatch(asked.url, /Invented%20Street|LE10|Hinckley/, 'more than the name went to Companies House');
+      await c.post('/assessment/details', { ...DETAILS, find: 'postcode:0' });
+      const pc = t.seen.filter((x) => x.url.includes('/postcodes/'));
+      assert.equal(pc.length, 1);
+      assert.match(pc[0]!.url, /\/postcodes\/LE101DA$/);
+      page = (await c.req('/assessment/details')).body;
+      assert.match(page, /INVENTED CARE HOMES LIMITED <span class="help">· company number 12345678 · active · registered office LE10 1AA<\/span>/);
+      assert.match(page, /We found the postcode LE10 1DA: Hinckley and Bosworth, East Midlands, England\./);
+      assert.doesNotMatch(page, /Somewhere Road/, 'more than the permitted fields reached the page');
+    } finally { made.app.outside = was.outside; made.app.secrets = was.secrets; }
   });
 });

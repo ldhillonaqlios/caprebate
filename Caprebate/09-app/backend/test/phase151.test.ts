@@ -414,18 +414,30 @@ async function pcRig(fixtures: Record<string, Fixture | readonly Fixture[]> = { 
 }
 
 describe('3 · the free postcode check is built for real and switched off behind the free gate', () => {
-  test('it ships off, the stamp reads it, and as shipped it sends nothing — with the gate shut or open', async () => {
-    assert.equal(POSTCODE_CHECK.enabled, false);
-    assert.equal(POSTCODE_CHECK.named_in_privacy_notice, false);
-    assert.equal(backendSwitchReadings().find((r) => r.switch === 'POSTCODE_CHECK')?.on, false);
+  test('switched OFF, as it shipped until 30 Sep 2026, it sends nothing — with the gate shut or open', async () => {
+    const OFF = Object.freeze({ enabled: false, named_in_privacy_notice: false });
     const r = await pcRig();
     for (const gate of [SHUT, OPEN]) {
-      const out = await checkPostcode({ postcode: 'LE10 1DA', gate, deps: r.deps });
+      const out = await checkPostcode({ postcode: 'LE10 1DA', gate, deps: r.deps, config: OFF });
       assert.equal(out.state, 'NOT_CHECKED');
     }
     assert.equal(r.t.seen.length, 0);
-    assert.deepEqual(postcodeCheckMissing(POSTCODE_CHECK, SHUT), [
+    assert.deepEqual(postcodeCheckMissing(OFF, SHUT), [
       'Publish the privacy notice and link it from the address question.', 'Name Postcodes.io in the privacy notice.', 'Then switch the postcode check on.']);
+  });
+
+  test('30 Sep 2026: switched ON for testing under a recorded waiver — the notice is still not said to name it, and the stamp reads it on', async () => {
+    assert.equal(POSTCODE_CHECK.enabled, true);
+    assert.equal(POSTCODE_CHECK.named_in_privacy_notice, false, 'the waiver never pretends the notice names it');
+    assert.equal(POSTCODE_CHECK.papers_waived_for_testing, true);
+    assert.match(POSTCODE_CHECK.waiver_record ?? '', /^Lakhbir Dhillon, 30 September 2026, .*"switch on companies house and postcodes\.io"/);
+    assert.equal(backendSwitchReadings().find((r) => r.switch === 'POSTCODE_CHECK')?.on, true);
+    assert.deepEqual(postcodeCheckMissing(POSTCODE_CHECK, SHUT), []);
+    const r = await pcRig();
+    assert.equal((await checkPostcode({ postcode: 'LE10 1DA', gate: SHUT, deps: r.deps })).state, 'CHECKED');
+    assert.equal(r.t.seen.length, 1);
+    // Without the waiver, the same switch with the gate shut still sends nothing.
+    assert.deepEqual(postcodeCheckMissing({ ...POSTCODE_CHECK, papers_waived_for_testing: false }, SHUT).length, 2);
   });
 
   test('the free gate alone keeps it off, even with the switch on and the notice naming it — no second gate', async () => {

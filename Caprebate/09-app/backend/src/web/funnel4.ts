@@ -39,7 +39,7 @@ import { openLeadForGatedExit } from './leads.ts';
 import type { Db } from '../db.ts';
 import { normalisePostcode } from '../connectors/postcode-check.ts';
 import type { CompanyCandidate } from '../connectors/company-search.ts';
-import { localWhen, zoneNotice } from './localtime.ts';
+import { slotPicker, slotDayProblem } from './slot-picker.ts';
 
 export const F4_SCREENS = ['buildings', 'spend-on', 'amounts', 'tax', 'claims', 'works', 'details'] as const;
 export type F4Screen = (typeof F4_SCREENS)[number];
@@ -528,11 +528,7 @@ export function figureBody(s: S, slots: { available: true; slots: readonly { sta
       <fieldset class="f4-channels"><legend>How would you like to talk?</legend>
         <div class="f4-channel-cards">${REACH.map((r) => h`<label class="f4-channel"><input type="radio" name="channel" value="${r.id}"${checked(reach, r.id)}> ${r.label}</label>`)}</div>
         <div class="f4-for-slot">
-          <p class="fl">Choose a date and time</p>
-          ${slots.available ? h`<p class="help">${zoneNotice(slots.slots[0]?.starts_at ?? '')}</p>
-            <div class="opts f4-slots">${slots.slots.slice(0, 24).map((sl) => h`<label class="opt"><input type="radio" name="slot" value="${sl.starts_at}"${checked(v('slot'), sl.starts_at)}> ${localWhen(sl.starts_at)}</label>`)}
-              <label class="opt"><input type="radio" name="slot" value=""${raw(v('slot') === '' ? ' checked' : '')}> None of these times suit me — please get in touch to arrange one</label></div>`
-            : h`<div class="flag">${slots.say}</div>`}
+          ${slotPicker(slots, v('slot'), v('day'))}
         </div>
         <div class="f4-for-phone"><label class="fl" for="r-phone">Your telephone number</label>
           <input class="fi" id="r-phone" name="phone" type="tel" value="${reach === 'phone' ? v('contact_value') : ''}" autocomplete="tel"></div>
@@ -569,6 +565,12 @@ export function applyReach(s: S, f: URLSearchParams, roles: readonly (readonly [
   c['contact_consent'] = true;
   c['sms_variant'] = null;
   c['slot'] = channel.books ? (f.get('slot') ?? null) : null;
+  c['day'] = channel.books ? (f.get('day') ?? null) : null;
+  // 30 Sep 2026: a date, then a time on it (src/web/slot-picker.ts). A time hidden under another date is refused.
+  if (channel.books) {
+    const wrongDay = slotDayProblem(f.get('day'), f.get('slot'));
+    if (wrongDay !== undefined) return wrongDay;
+  }
   return undefined;
 }
 

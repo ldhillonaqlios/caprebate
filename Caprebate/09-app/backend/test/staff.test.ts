@@ -597,7 +597,7 @@ describe('the calendar', () => {
       const staff = await h.signIn('SALES');
       const nextWeek = addLocalDays(startOfLocalWeek(held), 7);
       const cal = await staff.req(`/staff/calendar?view=week&date=${localDate(nextWeek)}`);
-      assert.match(cal.body, /free 30-minute slots/);
+      assert.match(cal.body, /free 60-minute slots/);
 
       const again = isBookable(h.app.db, held, {});
       assert.equal(again.ok, false, 'a booked slot is still bookable');

@@ -37,15 +37,33 @@ export type PostcodeCheckConfig = {
   readonly enabled: boolean;
   /** Postcodes.io is named in the published privacy notice. */
   readonly named_in_privacy_notice: boolean;
+  /**
+   * TESTING ONLY, as the identity check's (src/connectors/identity-check.ts, Phase 151h): a person's decision to send
+   * before the notice is published and names the service. It never makes `named_in_privacy_notice` true. Absent is false.
+   */
+  readonly papers_waived_for_testing?: boolean;
+  /** Who waived it, when, and in what words. */
+  readonly waiver_record?: string | null;
 };
 
-export const POSTCODE_CHECK: PostcodeCheckConfig = Object.freeze({ enabled: false, named_in_privacy_notice: false });
+/*
+ * SWITCHED ON FOR TESTING, 30 September 2026 (Lakhbir: "switch on companies house and postcodes.io"). The build-then-check
+ * rule: built and on in the test website, then Sadique (DPO) is asked whether it is viable. `named_in_privacy_notice`
+ * stays FALSE because it is false. Before real visitors: publish the notice naming Postcodes.io, set that true, and
+ * set `papers_waived_for_testing` to false.
+ */
+export const POSTCODE_CHECK: PostcodeCheckConfig = Object.freeze({
+  enabled: true, named_in_privacy_notice: false,
+  papers_waived_for_testing: true,
+  waiver_record: 'Lakhbir Dhillon, 30 September 2026, in the chat with Claude: "switch on companies house and postcodes.io". The privacy notice is a draft and is not published; it does not yet name Postcodes.io. Test website, invented data only.',
+});
 
 /** What must be true before a postcode is sent, each in plain words. Empty means it can be sent. */
 export function postcodeCheckMissing(cfg: PostcodeCheckConfig, gate: GateStatus): string[] {
   const out: string[] = [];
-  if (!gate.free_enabled) out.push('Publish the privacy notice and link it from the address question.');
-  if (cfg.named_in_privacy_notice !== true) out.push('Name Postcodes.io in the privacy notice.');
+  const waived = cfg.papers_waived_for_testing === true;
+  if (!gate.free_enabled && !waived) out.push('Publish the privacy notice and link it from the address question.');
+  if (cfg.named_in_privacy_notice !== true && !waived) out.push('Name Postcodes.io in the privacy notice.');
   if (cfg.enabled !== true) out.push('Then switch the postcode check on.');
   return out;
 }

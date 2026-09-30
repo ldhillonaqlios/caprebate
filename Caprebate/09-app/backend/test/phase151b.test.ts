@@ -498,11 +498,13 @@ const GATE_SHUT = gateStatus({ precondition: { enabled: false, requires: 'a publ
 const LE10: Fixture = { status: 200, body: JSON.stringify({ status: 200, result: { postcode: 'LE10 1DA', country: 'England', region: 'East Midlands', admin_district: 'Hinckley and Bosworth' } }) };
 
 describe('3 · the postcode check runs on this server, and off it changes nothing', () => {
-  test('as shipped, saving the property screen sends nothing, keeps nothing, and the screen is exactly the typed address', async () => {
+  // Shipped OFF until 30 Sep 2026, when Lakhbir switched it on for testing; this is the check switched off.
+  test('switched off, saving the property screen sends nothing, keeps nothing, and the screen is exactly the typed address', async () => {
     const w = await world();
     try {
       const t = fixtureTransport({ 'GET /postcodes/LE101DA': LE10 });
       w.app.outside = t;
+      w.app.startLookups = { gate: GATE_SHUT, company: { enabled: false, named_in_privacy_notice: false }, postcode: { enabled: false, named_in_privacy_notice: false } };
       const draft = newDraft(w.db, w.app.now, () => 'draft-151b');
       const c = client(w.base);
       const headers = { cookie: `cb_draft=${draft.token}`, 'content-type': 'application/x-www-form-urlencoded' };

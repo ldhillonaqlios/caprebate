@@ -826,7 +826,21 @@ body.public .f4-channel-cards{display:grid;grid-template-columns:repeat(3,minmax
 body.public .f4-channel{display:flex;align-items:center;justify-content:center;gap:8px;min-height:3.4rem;border:1px solid #3e4945;border-radius:14px;font-weight:700;color:#EDEAE2;cursor:pointer;background:#1b201e;transition:border-color .25s ease,box-shadow .3s ease}
 body.public .f4-channel:hover{border-color:#ABEDD8;box-shadow:0 0 0 1px #ABEDD8,0 0 24px rgba(171,237,216,.3)}
 body.public .f4-channel:has(input:checked){border-color:#ABEDD8;background:rgba(171,237,216,.12);box-shadow:inset 0 0 0 1px #ABEDD8}
-body.public .f4-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));max-height:22rem;overflow:auto}
+body.public .f4-picker fieldset{border:0;padding:0;margin:.6rem 0;min-width:0}
+body.public .f4-channels,body.public .f4-picker{min-width:0;max-width:100%}
+body.public .f4-date-row{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity}
+body.public .f4-date{position:relative;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:84px;padding:10px 12px;border:1px solid #3e4945;border-radius:14px;background:#1b201e;color:#EDEAE2;cursor:pointer;scroll-snap-align:start;transition:border-color .25s ease,box-shadow .3s ease}
+body.public .f4-date input,body.public .f4-time input{position:absolute;opacity:0;width:1px;height:1px}
+body.public .f4-date:hover,body.public .f4-time:hover{border-color:#ABEDD8}
+body.public .f4-date:has(input:checked),body.public .f4-time:has(input:checked){border-color:#ABEDD8;background:rgba(171,237,216,.12);box-shadow:inset 0 0 0 1px #ABEDD8}
+body.public .f4-date:has(input:focus-visible),body.public .f4-time:has(input:focus-visible){outline:2px solid #ABEDD8;outline-offset:2px}
+body.public .f4-wd{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#b9c2be}
+body.public .f4-dm{font-size:18px;font-weight:700}
+body.public .f4-n{font-size:12px;color:#b9c2be}
+body.public .f4-times-h{font-weight:700;margin:.4rem 0}
+body.public .f4-time-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+body.public .f4-time{position:relative;display:flex;align-items:center;justify-content:center;min-height:3rem;border:1px solid #3e4945;border-radius:12px;background:#1b201e;color:#EDEAE2;font-weight:700;cursor:pointer}
+body.public .f4-none{margin-top:.8rem}
 @supports selector(:has(*)){
  body.public .f4-follow,body.public .f4-if-cosmetic,body.public .f4-for-slot,body.public .f4-for-phone,body.public .f4-for-email,body.public .f4-for-video-note{display:none}
  body.public .f4-own:has(.f4-tax input[value="yes"]:checked) .f4-if-tax-yes{display:block}
@@ -837,6 +851,24 @@ body.public .f4-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax
  body.public .f4-channels:has(input[value="phone"]:checked) .f4-for-phone{display:block}
  body.public .f4-channels:has(input[value="video"]:checked) .f4-for-email,body.public .f4-channels:has(input[value="email"]:checked) .f4-for-email{display:block}
  body.public .f4-channels:has(input[value="video"]:checked) .f4-for-video-note{display:block}
+ body.public .f4-times{display:none}
+ body.public .f4-picker:has(.f4-d0 input:checked) .f4-t0{display:block}
+ body.public .f4-picker:has(.f4-d1 input:checked) .f4-t1{display:block}
+ body.public .f4-picker:has(.f4-d2 input:checked) .f4-t2{display:block}
+ body.public .f4-picker:has(.f4-d3 input:checked) .f4-t3{display:block}
+ body.public .f4-picker:has(.f4-d4 input:checked) .f4-t4{display:block}
+ body.public .f4-picker:has(.f4-d5 input:checked) .f4-t5{display:block}
+ body.public .f4-picker:has(.f4-d6 input:checked) .f4-t6{display:block}
+ body.public .f4-picker:has(.f4-d7 input:checked) .f4-t7{display:block}
+ body.public .f4-picker:has(.f4-d8 input:checked) .f4-t8{display:block}
+ body.public .f4-picker:has(.f4-d9 input:checked) .f4-t9{display:block}
+ body.public .f4-picker:has(.f4-d10 input:checked) .f4-t10{display:block}
+ body.public .f4-picker:has(.f4-d11 input:checked) .f4-t11{display:block}
+ body.public .f4-picker:has(.f4-d12 input:checked) .f4-t12{display:block}
+ body.public .f4-picker:has(.f4-d13 input:checked) .f4-t13{display:block}
+ body.public .f4-picker:has(.f4-d14 input:checked) .f4-t14{display:block}
+ body.public .f4-picker:has(.f4-d15 input:checked) .f4-t15{display:block}
+ body.public .f4-times-h{display:none}
 }
 @media (max-width:620px){body.public .f4-names,body.public .f4-channel-cards{grid-template-columns:minmax(0,1fr)}body.public .f4-stages li{font-size:12px}}
 @media (max-width:620px){body.public .brandmark .wm{font-size:12px;letter-spacing:.14em}body.public .mark{width:44px;height:44px}body.public .top nav:not(.appnav){gap:.9rem}}

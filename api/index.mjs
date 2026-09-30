@@ -89,7 +89,8 @@ async function build() {
 /** 29 Sep 2026: who gives a second step on the test website. Read by test/invented-logins.test.ts. */
 export const TEST_WEBSITE_TWO_FACTOR = 'staff-except-invented';
 
-export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'CAPREBATE_MFA_KEY']);
+// 30 Sep 2026: COMPANIES_HOUSE_API_KEY for "Find my company" (switched on for testing, src/connectors/company-search.ts).
+export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY']);
 
 export async function configureTestDeploy(made, env) {
   const pw = (env.CAPREBATE_TEST_PASSWORD ?? '').trim();
