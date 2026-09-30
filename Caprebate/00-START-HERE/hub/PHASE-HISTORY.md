@@ -10947,3 +10947,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  `npm run check` exit 0, 1888 pass; CRM fold, plain words, brand, register, analytics and drift (`--fast --expect 1279,439,403,1888`) green.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 30 September 2026 — the first real Zoom call inside the site (Opus, Mac copy)
+
+ Lakhbir added Zoom's `user:read:token:admin`; the host's start token now answers 200. Then a real call, end to end on the Mac, with invented details (the invitation to an @example.com address, never sent): the thank-you gave the join link; Zoom made the meeting; the invitation carried our join page and Zoom's link; the staff page opened as the host, the SDK loaded, and the host joined ("You are the host…"); the call was then cancelled and its meeting deleted.
+
+-  **Found and fixed:** Zoom's SDK loads part of its video screen as a `blob:` script, which the join pages' policy refused (`ChunkLoadError`, 1 refusal). `VIDEO_PAGE_CSP`'s script-src now allows `blob:` (still nothing inline, no other origin); run again: 0 refusals. `test/video-calls.test.ts` now asserts it (removing `blob:` turns it red).
+-  **Learned:** one Zoom user hosts one meeting at a time. A meeting the host started stays live at Zoom until it ends (a free meeting at 40 minutes) even when our side deletes it, and the next start answered "Already has other meetings in progress". So with one `ZOOM_HOST_EMAIL`, two overlapping calls cannot both run — for more than one caller at a time, each needs their own Zoom user as host (a follow-up to build: the host is the call's assigned member of staff).
+-  `npm run check` exit 0, 1888 pass; CRM fold, plain words, brand, register, analytics and drift (`--fast --expect 1279,439,403,1888`) green.
+
+ **Claim cleared** in the commit that carries this record.

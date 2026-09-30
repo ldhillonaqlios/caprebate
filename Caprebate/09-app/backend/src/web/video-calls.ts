@@ -116,7 +116,9 @@ export function videoJoinWords(db: Db, booking_id: string, origin: string): { lo
  */
 export const VIDEO_PAGE_CSP =
   "default-src 'none'; " +
-  "script-src 'self' https://source.zoom.us 'wasm-unsafe-eval' 'unsafe-eval'; " +
+  // blob: — the first real call (30 Sep 2026) showed Zoom's SDK loads part of its video screen as a blob: script;
+  // refused, the call started but its picture did not (ChunkLoadError). Still no inline script and no other origin.
+  "script-src 'self' blob: https://source.zoom.us 'wasm-unsafe-eval' 'unsafe-eval'; " +
   "style-src 'self' 'unsafe-inline' https://source.zoom.us; " +
   "img-src 'self' data: blob: https://*.zoom.us; " +
   "media-src 'self' blob: https://*.zoom.us; " +

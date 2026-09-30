@@ -213,6 +213,10 @@ describe('joining inside our site', () => {
     const open = await client().req(`/call/${token}`);
     assert.equal(open.status, 200);
     assert.equal(open.headers.get('content-security-policy'), VIDEO_PAGE_CSP);
+    // The first real call (30 Sep 2026): Zoom loads part of its video screen as a blob: script. Still nothing inline.
+    const scriptSrc = /script-src ([^;]+);/.exec(VIDEO_PAGE_CSP)?.[1] ?? '';
+    assert.ok(scriptSrc.split(' ').includes('blob:'), 'Zoom\'s blob: scripts are refused');
+    assert.ok(!scriptSrc.includes("'unsafe-inline'"), 'inline script allowed');
     assert.equal(open.headers.get('cache-control'), 'no-store');
     assert.match(open.body, /<script src="https:\/\/source\.zoom\.us\/6\.5\.0\/zoom-meeting-embedded-6\.5\.0\.min\.js" crossorigin="anonymous"><\/script><script src="\/assets\/video-call\.js"><\/script>/);
     assert.doesNotMatch(open.body, /<script>|<script [^>]*>[^<]+<\/script>/, 'an inline script');
