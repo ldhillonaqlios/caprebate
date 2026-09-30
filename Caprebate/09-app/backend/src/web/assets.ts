@@ -153,6 +153,8 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
 hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
 .group,.eyebrow{font-size:14px;letter-spacing:.04em;color:var(--body);margin:0 0 .35rem;font-weight:600}
 .help{color:var(--body);font-size:16px}
+.vc-panel{margin:1rem 0}
+.vc-root{width:100%;max-width:1000px;min-height:0}
 .say{color:var(--body);font-size:16px}
 pre{white-space:pre-wrap;font-family:inherit}
 dl{display:grid;grid-template-columns:minmax(9rem,max-content) 1fr;gap:.35rem 1.25rem;margin:.5rem 0}

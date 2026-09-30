@@ -168,7 +168,9 @@ export function fixtureTransport(fixtures: Record<string, Fixture | readonly Fix
       });
     }
     if (f.network_error === true) throw new TypeError('fetch failed: connection reset');
-    return new Response(f.bytes !== undefined ? new Uint8Array(f.bytes) : f.body, { status: f.status, headers: f.headers ?? { 'content-type': 'application/json' } });
+    // 30 Sep 2026: a 204 (Zoom's answer to a move or a cancel) carries no body at all; a Response refuses one.
+    const bodiless = f.status === 204 || f.status === 205 || f.status === 304;
+    return new Response(bodiless ? null : f.bytes !== undefined ? new Uint8Array(f.bytes) : f.body, { status: f.status, headers: f.headers ?? { 'content-type': 'application/json' } });
   };
   return Object.assign(t, { seen });
 }
@@ -216,7 +218,8 @@ export type CallRequest = {
   readonly params?: Record<string, string>;
   /** Query values. Their NAMES are recorded; their values never are. */
   readonly query?: Record<string, string>;
-  readonly method?: 'GET' | 'POST';
+  /** 30 Sep 2026: PATCH and DELETE for Zoom, to move and cancel a video call's meeting (src/connectors/zoom.ts). */
+  readonly method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   readonly headers?: Record<string, string>;
   readonly body?: string;
   /**

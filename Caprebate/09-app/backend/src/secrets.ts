@@ -44,7 +44,9 @@ export type SecretOwner =
   /** PHASE 151k: not a connector - the sign-in's own key, which seals each person's authenticator app secret. */
   | 'SIGN_IN'
   /** 29 Sep 2026: the contact form's security check (src/connectors/turnstile.ts). */
-  | 'CLOUDFLARE_TURNSTILE';
+  | 'CLOUDFLARE_TURNSTILE'
+  /** 30 Sep 2026: video calls - a meeting made for each, and joined inside the back office (src/connectors/zoom.ts). */
+  | 'ZOOM';
 
 export type SecretKey = {
   readonly name: string;
@@ -121,6 +123,12 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'CAPREBATE_MFA_KEY', owner: 'SIGN_IN', secret: true, phase: '151k', what: 'the key that seals each person’s authenticator app secret: 32 random bytes, as base64 (src/mfa-seal.ts)' },
   { name: 'TURNSTILE_SITE_KEY', owner: 'CLOUDFLARE_TURNSTILE', secret: false, phase: 'turnstile', what: 'the Cloudflare Turnstile site key for the home page’s contact form (public: it is printed in the page)' },
   { name: 'TURNSTILE_SECRET_KEY', owner: 'CLOUDFLARE_TURNSTILE', secret: true, phase: 'turnstile', what: 'the Cloudflare Turnstile secret key, which the server sends to Cloudflare to check the form’s answer' },
+  { name: 'ZOOM_ACCOUNT_ID', owner: 'ZOOM', secret: false, phase: 'zoom', what: 'the Zoom account id, from the Server-to-Server OAuth app in the Zoom App Marketplace (not secret)' },
+  { name: 'ZOOM_CLIENT_ID', owner: 'ZOOM', secret: false, phase: 'zoom', what: 'the Server-to-Server OAuth app’s client id, which makes, moves and cancels each video call’s meeting' },
+  { name: 'ZOOM_CLIENT_SECRET', owner: 'ZOOM', secret: true, phase: 'zoom', what: 'the Server-to-Server OAuth app’s client secret' },
+  { name: 'ZOOM_SDK_CLIENT_ID', owner: 'ZOOM', secret: false, phase: 'zoom', what: 'the Meeting SDK app’s client id, so a call is joined inside our own pages (not secret: it is in each join’s signature)' },
+  { name: 'ZOOM_SDK_CLIENT_SECRET', owner: 'ZOOM', secret: true, phase: 'zoom', what: 'the Meeting SDK app’s client secret, which signs each join on this server' },
+  { name: 'ZOOM_HOST_EMAIL', owner: 'ZOOM', secret: false, phase: 'zoom', what: 'the email of the Zoom user who hosts the calls (a licensed user on our account); absent, the account’s owner' },
 ]);
 
 export type SecretsState = 'LOADED' | 'NO_FILE' | 'REFUSED_INSIDE_REPOSITORY' | 'UNREADABLE';

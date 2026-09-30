@@ -735,7 +735,7 @@ describe('one booking, two views', () => {
       const r = await staff.post(`/staff/calendar/${id}/schedule`,
         { starts_at: '2026-09-09T10:00:00.000Z', assigned_to: '' });
       assert.equal(r.status, 400);
-      assert.match(r.body, /does not get a time\. Only a phone call can be given one\./);
+      assert.match(r.body, /does not get a time\. Only a telephone or video call can be given one\./);
     } finally { h.close(); }
   });
 

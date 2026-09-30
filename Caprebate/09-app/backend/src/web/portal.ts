@@ -20,6 +20,7 @@ import { STUB_NOTICE } from '../stubs/email.ts';
 import { bookingInviteFile } from './booking-invite.ts';
 import { authorise, can, type Actor } from '../authz.ts';
 import { BOOKING } from './engine.ts';
+import { booksATime } from './video-calls.ts';
 import { localWhen } from './localtime.ts';
 import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES, isBookable } from './schedule.ts';
 import { claimStage, clientStageFor, progressFor, type Progress } from './stages.ts';
@@ -492,8 +493,9 @@ export function moveOwnBooking(
 
   // CB_BOOKING decides which channels hold a moment, and it is asked rather
   // than second-guessed. A client who asked for an email has nothing to move.
-  if (!BOOKING.booksASlot(before.channel)) {
-    return { ok: false, why: 'Only a telephone call holds a specific time, so there is none to move.' };
+  // 30 Sep 2026: a video call holds a time too; its Zoom meeting follows the move (the route reconciles it).
+  if (!booksATime(before.channel)) {
+    return { ok: false, why: 'Only a telephone or video call holds a specific time, so there is none to move.' };
   }
   if (before.cancelled_at !== null) return { ok: false, why: ALREADY_CANCELLED };
   // Phase 132e: THE CALL THEY HOLD MAY BE MOVED AT ANY TIME, however close or past.

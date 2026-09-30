@@ -245,6 +245,31 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     rate_basis: 'NOT PUBLISHED for siteverify (read 29 Sep 2026); sixty a minute is OUR cautious limit - one check an enquiry, and enquiries are limited per address',
     timeout_ms: 8_000, max_bytes: 16 * 1024, max_attempts: 1,
   },
+  ZOOM_OAUTH: {
+    /* 30 SEPTEMBER 2026 — video calls (src/connectors/zoom.ts). A PROCESSOR. Zoom's Server-to-Server OAuth: the server
+       swaps its app's id and secret for an hour's access token. Address from developers.zoom.us (read 30 Sep 2026).
+       Zoom Video Communications, Inc. is a US company, so the row says US and the transfer is NOT APPROVED: until the
+       data protection officer approves it, no meeting is made, and the team sends a link as before. What is sent is
+       the time of the call and the words "Cap Rebate call"; no client's name, email or number. The call itself (the
+       client's voice and picture) runs through Zoom whichever way it is joined, which is what the approval is about.
+       ONE TRY for the token: a refused secret stays refused. */
+    service_id: 'ZOOM_OAUTH', register_source: null,
+    base_url: 'https://zoom.us', region: 'US', international_transfer_approved: false,
+    rate: { limit: 30, window_ms: 60 * 1000 },
+    rate_basis: 'Zoom does not publish a limit for the token call (read 30 Sep 2026); thirty a minute is OUR cautious limit, and a token lasts an hour',
+    timeout_ms: 10_000, max_bytes: 16 * 1024, max_attempts: 1,
+  },
+  ZOOM_API: {
+    /* 30 SEPTEMBER 2026 — make, move and cancel a video call's meeting, and the host's start token (ZAK), through
+       api.zoom.us (developers.zoom.us, read 30 Sep 2026). US, not approved, as ZOOM_OAUTH. ONE TRY: making a meeting is
+       not safe to repeat (a retry after a lost answer makes two). Zoom's plans allow about a hundred meetings made a day
+       per user; twenty a minute is OUR cautious limit. */
+    service_id: 'ZOOM_API', register_source: null,
+    base_url: 'https://api.zoom.us', region: 'US', international_transfer_approved: false,
+    rate: { limit: 20, window_ms: 60 * 1000 },
+    rate_basis: 'Zoom rate-limits by plan and call type (read 30 Sep 2026); twenty a minute is OUR cautious limit, one meeting a call booked',
+    timeout_ms: 15_000, max_bytes: 64 * 1024, max_attempts: 1,
+  },
   CLAUDE_DOCUMENTS: {
     service_id: 'CLAUDE_DOCUMENTS', register_source: null,
     base_url: 'https://api.anthropic.com', region: 'US', international_transfer_approved: false,

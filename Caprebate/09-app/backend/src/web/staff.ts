@@ -74,11 +74,16 @@ import {
 import { singleFile } from './multipart.ts';
 import { RANGE_QUALIFIER } from './shown-range.ts';
 import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from './audit-log.ts';
+import { activeMeeting, clientJoinUrl, joinPanel, reconcileVideoMeeting, withJoinScripts, zoomDeps, VIDEO_PAGE_HEADERS } from './video-calls.ts';
+import { sendVideoInvite } from './booking-invite.ts';
+import { hostZak, joinSignature, zoomMissing } from '../connectors/zoom.ts';
 
 export type StaffDeps = {
   app: App;
   store: FsObjectStore;
   newId: () => string;
+  /** 30 Sep 2026: the site's address, for a video call's join page in its invitation. */
+  publicOrigin?: string;
 };
 
 export type WebResult = 'handled' | 'not-mine';
@@ -285,13 +290,46 @@ export async function handleStaff(
     if (starts === '') {
       return problem(res, actor, 'Not scheduled', 'Pick a time.', '/staff/calendar');
     }
+    const hadTime = db.get<{ s: string | null }>('SELECT starts_at AS s FROM bookings WHERE id = ?', [id])?.s ?? null;
     const r = B.scheduleBooking(
       { db, audit: d.app.audit, email: d.app.email, now, newId: d.newId },
       actor,
       { booking_id: id, starts_at: starts, assigned_to: f.get('assigned_to') },
     );
     if (!r.ok) return problem(res, actor, 'Not scheduled', r.why, '/staff/calendar');
+    // 30 Sep 2026: a video call's Zoom meeting is made (or moved) for the time, and its invitation carries the link.
+    if (r.booking.channel === 'video') {
+      await reconcileVideoMeeting(d.app, id);
+      sendVideoInvite(d.app, d.publicOrigin ?? 'http://localhost:8103', id, hadTime === null ? 'arranged' : 'moved');
+    }
     redirect(res, `/staff/calendar?view=day&date=${isoDate(r.booking.starts_at ?? now())}`);
+    return 'handled';
+  }
+
+  /* 30 Sep 2026: A VIDEO CALL, JOINED INSIDE THE BACK OFFICE. Those who arrange calls start it as the host (Zoom's start
+     token, asked for now and put only in this page, which is never cached); anyone else who may see the call joins it. */
+  const videoCall = /^\/staff\/calendar\/([A-Za-z0-9-]+)\/video$/.exec(path);
+  if (videoCall && method === 'GET') {
+    const id = videoCall[1] ?? '';
+    const bk = B.bookingById(db, actor, id);
+    const m = bk.channel === 'video' && bk.cancelled_at === null ? activeMeeting(db, id) : undefined;
+    if (m === undefined || bk.starts_at === null) {
+      const why = bk.channel !== 'video' ? 'This is not a video call.' : bk.cancelled_at !== null ? 'This call was cancelled.'
+        : bk.starts_at === null ? 'Give the call a time first; its meeting is made then.' : zoomMissing(d.app.secrets, d.app.zoomPolicy).join(' ') || 'Zoom did not make a meeting for this call. Give it its time again to try once more, or send the client a link yourself.';
+      return problem(res, actor, 'No video call to join', why, `/staff/calendar/${id}`);
+    }
+    const host = B.mayArrangeCalls(actor);
+    const zak = host ? await hostZak(zoomDeps(d.app)) : null;
+    const sig = joinSignature(d.app.secrets, m.meeting_id, host && zak !== null ? 1 : 0, now());
+    if (sig === null) return problem(res, actor, 'No video call to join', zoomMissing(d.app.secrets, d.app.zoomPolicy).join(' '), `/staff/calendar/${id}`);
+    const name = db.get<{ n: string }>('SELECT display_name AS n FROM users WHERE id = ?', [actor.id])?.n ?? 'Cap Rebate';
+    const out = page({ title: `Video call · ${bk.business_name}`, nav: nav(actor), wide: true, body: h`
+      <h1>Video call with ${bk.business_name}</h1>
+      <p><strong>${when(bk.starts_at)}</strong>, for an hour. ${host && zak === null ? h`<span class="help">Zoom did not give us the host's start token, so you join as a participant; start the meeting from the Zoom app if the client is waiting.</span>` : raw('')}</p>
+      ${joinPanel({ meeting_id: m.meeting_id, passcode: m.passcode, signature: sig.signature, sdk_key: sig.sdk_key, user_name: `${name} · Cap Rebate`, zak: host ? zak : null }, host && zak !== null ? 'host' : 'client')}
+      <p class="help">Or open it in the Zoom app: <a href="${m.join_url}" rel="noopener noreferrer">${m.join_url}</a>. The client's own page: ${clientJoinUrl(d.publicOrigin ?? 'http://localhost:8103', m.client_token)}</p>
+      <p><a href="/staff/calendar/${id}">Back to the call</a></p>` });
+    res.writeHead(200, VIDEO_PAGE_HEADERS); res.end(withJoinScripts(out));
     return 'handled';
   }
 
@@ -302,8 +340,12 @@ export async function handleStaff(
     // THE SAME FUNCTION THE CALENDAR AND THE CLIENT'S OWN PICKER ASK. One
     // source of bookable time, reached from three places.
     const slots = staffSlots(db, now(), addLocalDays(startOfLocalDay(now()), HORIZON_DAYS), { now: now() });
+    // 30 Sep 2026: a video call says whether its Zoom meeting is ready to join, and if not why.
+    const video = bk.channel !== 'video' || bk.cancelled_at !== null ? undefined
+      : activeMeeting(db, id) !== undefined ? { ready: true as const }
+      : { ready: false as const, why: bk.starts_at === null ? 'It has no time yet; its meeting is made when it is given one.' : zoomMissing(d.app.secrets, d.app.zoomPolicy).join(' ') || 'Zoom did not make a meeting. Give it its time again to try once more, or send the client a link yourself.' };
     html(res, 200, bookingPage(actor, bk, B.bookingHistory(db, actor, id),
-      B.assignableStaffIfPermitted(db, actor), slots));
+      B.assignableStaffIfPermitted(db, actor), slots, video));
     return 'handled';
   }
 
@@ -919,6 +961,7 @@ function bookingPage(
   history: readonly { from_starts_at: string | null; to_starts_at: string | null; changed_by_name: string | null; at: string; cancelled?: number }[],
   staff: readonly { id: string; display_name: string }[],
   slots: Availability,
+  video?: { ready: true } | { ready: false; why: string },
 ): string {
   return page({
     title: b.business_name, nav: nav(actor),
@@ -934,6 +977,9 @@ function bookingPage(
         <tr><th>Requested</th><td class="when">${stamp(b.created_at)}</td></tr>
         <tr><th>Booked for</th><td>${when(b.starts_at)}</td></tr>
         <tr><th>Assigned to</th><td>${b.assigned_name ?? 'nobody'}</td></tr>
+        ${video === undefined ? raw('') : video.ready
+          ? h`<tr><th>Video call</th><td><a class="cta" href="/staff/calendar/${b.id}/video">Join the video call</a> <span class="help">in the back office, through Zoom. The client has been sent their own link.</span></td></tr>`
+          : h`<tr><th>Video call</th><td>No Zoom meeting yet. ${video.why}</td></tr>`}
         ${b.cancelled_at !== null
           ? h`<tr><th>Cancelled</th><td><strong>Cancelled by ${b.cancelled_by_name ?? 'unknown'}${b.cancelled_by_role === 'CLIENT' ? ' (the client)' : ''}</strong>,
               <span class="when">${stamp(b.cancelled_at)}</span>. The enquiry is still open.</td></tr>`

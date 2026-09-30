@@ -36,6 +36,7 @@ import type { Db } from '../db.ts';
 import { authorise, can, type Actor } from '../authz.ts';
 import { formatShownRange, type ShownRange } from './shown-range.ts';
 import { BOOKING } from './engine.ts';
+import { booksATime } from './video-calls.ts';
 import {
   SLOT_MINUTES, addLocalDays, isBookable, startOfLocalDay, startOfLocalWeek, staffSlots,
   type Availability,
@@ -202,7 +203,7 @@ function contactOf(b: BookingChannelRow | undefined): ContactView {
     channel: b.channel, variant: b.sms_variant,
     label: CHANNEL_LABEL[b.channel] ?? b.channel,
     entry_point: b.entry_point,
-    books_a_slot: BOOKING.booksASlot(b.channel),
+    books_a_slot: booksATime(b.channel),
   };
 }
 
@@ -445,8 +446,8 @@ export function calendar(
 
   return {
     view: opts.view, from, to, days, scheduled,
-    awaiting: noTime.filter((b) => BOOKING.booksASlot(b.channel)),
-    capture_only: noTime.filter((b) => !BOOKING.booksASlot(b.channel)),
+    awaiting: noTime.filter((b) => booksATime(b.channel)),
+    capture_only: noTime.filter((b) => !booksATime(b.channel)),
     cancelled,
     availability: staffSlots(db, from, to, {
       now: opts.now,
@@ -493,10 +494,11 @@ export function scheduleBooking(
   if (before.cancelled_at !== null) {
     return { ok: false, why: 'This call was cancelled, so it cannot be given a time. The enquiry is still open; arrange a new call with the client.' };
   }
-  if (!BOOKING.booksASlot(before.channel)) {
+  // 30 Sep 2026: a video call holds a time too (booksATime), so one where no time suited can be given one.
+  if (!booksATime(before.channel)) {
     return {
       ok: false,
-      why: `${before.channel_label} does not get a time. Only a phone call can be given one.`,
+      why: `${before.channel_label} does not get a time. Only a telephone or video call can be given one.`,
     };
   }
 
@@ -548,7 +550,8 @@ export function scheduleBooking(
   const invite = bookingInviteFile(d.db, d.now, {
     booking_id: before.id, method: 'REQUEST', starts_at: args.starts_at, ends_at: ends, to: business?.contact_email,
   });
-  d.email.send({
+  // 30 Sep 2026: a VIDEO call's invitation is sent by the route once its Zoom meeting is made, so it carries the link.
+  if (before.channel !== 'video') d.email.send({
     to_email: business?.contact_email ?? 'no-address-recorded@example.invalid',
     subject: `Your call with Cap Rebate — ${readable}`,
     body:

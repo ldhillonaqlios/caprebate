@@ -66,7 +66,10 @@ import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
 import { clientHelp } from './help.ts';
 import { nameSwitches } from './navigation.ts';
 import { publicSlots, isBookable, SLOT_MINUTES } from './schedule.ts';
-import { bookingInviteFile } from './booking-invite.ts';
+import { activeMeeting, booksATime, clientMayJoin, joinPanel, reconcileVideoMeeting, withJoinScripts, VIDEO_PAGE_HEADERS } from './video-calls.ts';
+import { joinSignature } from '../connectors/zoom.ts';
+import { VIDEO_CALL_JS } from './video-call-script.ts';
+import { bookingInviteFile, sendVideoInvite } from './booking-invite.ts';
 import { ga4MeasurementId, sitePolicy, withMeasurementId } from '../analytics.ts';
 import { localStamp, localWhen, ukDate, ukDatesIn, zoneNotice } from './localtime.ts';
 import { formatPence, formatShownRange, toPence, RANGE_QUALIFIER } from './shown-range.ts';
@@ -254,6 +257,36 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* ---------------------------------------------------------- assets */
   if (path === '/assets/site.css' && method === 'GET') {
     res.writeHead(200, CSS_HEADERS); res.end(SITE_CSS); return 'handled';
+  }
+  // 30 Sep 2026: the join pages' one script (src/web/video-call-script.ts).
+  if (path === '/assets/video-call.js' && method === 'GET') {
+    res.writeHead(200, SITE_JS_HEADERS); res.end(VIDEO_CALL_JS); return 'handled';
+  }
+  /* 30 Sep 2026: THE CLIENT'S JOIN PAGE, /call/<token>. The token is the only key: 64 hex characters, made when the
+     meeting was made and sent only to the client. It opens from half an hour before the call until an hour after. */
+  const callMatch = /^\/call\/([0-9a-f]{64})$/.exec(path);
+  if (callMatch && method === 'GET') {
+    const m = d.app.db.get<{ booking_id: string; meeting_id: string; join_url: string; passcode: string | null; starts_at: string | null; ends_at: string | null; cancelled_at: string | null; business_id: string | null; lead_id: string | null }>(
+      'SELECT v.booking_id, v.meeting_id, v.join_url, v.passcode, b.starts_at, b.ends_at, b.cancelled_at, b.business_id, b.lead_id ' +
+      'FROM video_meetings v JOIN bookings b ON b.id = v.booking_id WHERE v.client_token = ? AND v.cancelled_at IS NULL', [callMatch[1] ?? '']);
+    if (m === undefined || m.starts_at === null || m.ends_at === null || m.cancelled_at !== null) {
+      res.writeHead(404, VIDEO_PAGE_HEADERS);
+      res.end(page({ title: 'Video call', nav: nav(actor), body: h`<h1>This call is not available</h1>
+        <p>The link may be for a call that was moved or cancelled. Please check the latest email from us, or reply to it and we will help.</p>` }));
+      return 'handled';
+    }
+    const when = clientMayJoin(m.starts_at, m.ends_at, now());
+    const who = d.app.db.get<{ n: string }>(
+      'SELECT full_name AS n FROM contacts WHERE (business_id = ? OR lead_id = ?) ORDER BY created_at ASC, id ASC LIMIT 1', [m.business_id, m.lead_id])?.n ?? 'Guest';
+    const sig = when === 'open' ? joinSignature(d.app.secrets, m.meeting_id, 0, now()) : null;
+    const head = h`<h1>Your video call with Cap Rebate</h1><p><strong>${clockOf(m.starts_at)}</strong>, for an hour.</p>`;
+    const zoomApp = h`<p class="help">Rather use the Zoom app, or on a phone? <a href="${m.join_url}" rel="noopener noreferrer">Open the call in Zoom</a>${m.passcode === null ? '' : ` (passcode ${m.passcode})`}.</p>`;
+    const body = when === 'early' ? h`${head}<p>The call opens here half an hour before it starts. Come back then, or keep the email we sent you.</p>${zoomApp}`
+      : when === 'over' ? h`${head}<p>This call has finished. If you missed it, reply to our email and we will arrange another.</p>`
+      : sig === null ? h`${head}<p>The call cannot open on this page just now.</p>${zoomApp}`
+      : h`${head}${joinPanel({ meeting_id: m.meeting_id, passcode: m.passcode, signature: sig.signature, sdk_key: sig.sdk_key, user_name: who.slice(0, 60), zak: null }, 'client')}${zoomApp}`;
+    const out = page({ title: 'Your video call', nav: nav(actor), body, wide: true });
+    res.writeHead(200, VIDEO_PAGE_HEADERS); res.end(sig === null ? out : withJoinScripts(out)); return 'handled';
   }
   // PHASE 133c: the supplied logo, from memory, like the stylesheet — never from a path on disk.
   if (path === '/assets/cap-rebate-logo.png' && method === 'GET') {
@@ -521,7 +554,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       saveDraft(d.app.db, draft, now);
       if (err !== undefined) { html(res, 400, f4FigurePage(draft, actor, publicSlots(d.app.db, now()), err)); return 'handled'; }
       const out = submitEnquiry(d.app.db, draft, now, newId);
-      let booked: { booked_at: string | null } = { booked_at: null };
+      let booked: { booked_at: string | null; booking_id: string | null } = { booked_at: null, booking_id: null };
       out.parts.forEach((p, k) => {
         d.app.audit.append({
           at: now(), kind: 'LEAD_CREATED', outcome: 'ALLOWED', actor_id: null, actor_role: null, object_type: 'lead', object_id: p.lead_id,
@@ -532,11 +565,19 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
         if (k === 0) booked = w;
         fireAutomation({ db: d.app.db, audit: d.app.audit, now, newId }, null, { trigger: 'LEAD_CREATED', lead_id: p.lead_id });
       });
+      // 30 Sep 2026: a video call with a time gets its Zoom meeting now, and its invitation carries the link.
+      let video: { join: string | null } | undefined;
+      if (booked.booking_id !== null && booked.booked_at !== null && (s['contact'] as Record<string, unknown>)['channel'] === 'video') {
+        await reconcileVideoMeeting(d.app, booked.booking_id);
+        sendVideoInvite(d.app, d.publicOrigin ?? 'http://localhost:8103', booked.booking_id, 'arranged');
+        const m = activeMeeting(d.app.db, booked.booking_id);
+        video = { join: m === undefined ? null : `/call/${m.client_token}` };
+      }
       const first = out.parts.find((p) => p.business_id !== null && p.assessment_id !== null);
       const offer = first !== undefined ? offerSignup(d.app, newId, first.business_id as string, first.assessment_id) : undefined;
       const totals = { business_id: first?.business_id ?? '', assessment_id: first?.assessment_id ?? out.enquiry_id,
         low_pence: out.parts.reduce((a, p) => a + (p.low_pence ?? 0), 0) || null, high_pence: out.parts.reduce((a, p) => a + (p.high_pence ?? 0), 0) || null };
-      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true)); return 'handled';
+      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true, video)); return 'handled';
     }
     if (method === 'POST') {
       const f = await form(req);
@@ -750,11 +791,11 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const rerender = async (href: string): Promise<{ status: number; body: string }> => {
       const u = new URL(href, 'http://localhost');
       const cap = captureResponse();
-      await inContext(d, u.pathname, () => handleStaff({ app: d.app, store: d.store, newId }, req, cap.res, u, 'GET', actor, form, readBody));
+      await inContext(d, u.pathname, () => handleStaff({ app: d.app, store: d.store, newId, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, cap.res, u, 'GET', actor, form, readBody));
       return cap.done;
     };
     return inContext(d, path, () => handleStaff(
-      { app: d.app, store: d.store, newId }, req, res, url, method, actor, form, readBody,
+      { app: d.app, store: d.store, newId, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form, readBody,
     ), rerender);
   }
 
@@ -929,8 +970,11 @@ async function portalRoutes(
     const cls = P.claims(db, actor, business_id);
     // PHASE 139: the steps staff have told this client about — words and dates, and nothing behind them.
     const done = portalSteps(db, actor, business_id);
+    // 30 Sep 2026: each video call with a meeting gets its join link on the portal.
+    const joins: Record<string, string> = {};
+    for (const b of bks) { const m = b.channel === 'video' ? activeMeeting(db, b.id) : undefined; if (m !== undefined) joins[b.id] = `/call/${m.client_token}`; }
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
-      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(welcome === undefined ? {} : { welcome }) }));
+      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', joins, ...(welcome === undefined ? {} : { welcome }) }));
     return 'handled';
   }
 
@@ -1042,6 +1086,8 @@ async function portalRoutes(
       html(res, 400, simple(f.get('cancel') === 'on' ? 'The call was not cancelled' : 'That time was not taken', r.why));
       return 'handled';
     }
+    // 30 Sep 2026: a video call's Zoom meeting follows the change (moved, or deleted when cancelled or given back).
+    await reconcileVideoMeeting(d.app, bookingMatch[1] ?? '');
     redirect(res, '/portal'); return 'handled';
   }
 
@@ -1261,7 +1307,7 @@ function writeBookingAndContact(
   entry_point: 'funnel_close' | 'gated_exit', newId: () => string,
   /** 30 Sep 2026: false for the second and later businesses of one enquiry — the person, not a second call. */
   withBooking = true,
-): { booked_at: string | null } {
+): { booked_at: string | null; booking_id: string | null } {
   const c = (draft.state as { contact: Record<string, unknown> }).contact;
   const at = d.app.now();
   const business_id = 'business_id' in holder ? holder.business_id : null;
@@ -1278,7 +1324,7 @@ function writeBookingAndContact(
      c.channel === 'email' || c.channel === 'video' ? typed : null,
      c.channel === 'phone' || c.channel === 'sms_whatsapp' ? typed : null, at],
   );
-  if (!withBooking) return { booked_at: null };
+  if (!withBooking) return { booked_at: null, booking_id: null };
 
   /* THE SLOT IS RE-CHECKED HERE AGAINST THE WORKING TIMES, NOT TRUSTED.
      The picker showed what was free when the page was drawn. By now somebody
@@ -1318,7 +1364,8 @@ function writeBookingAndContact(
   /* PHASE 146f: A CALL GIVEN A TIME HERE GETS ITS INVITATION TOO, like one given a time by staff or moved by the
      client — the same email, the same .ics, the same switch (EMAIL_SENDING, off). With no email address recorded,
      nothing is written: the call still stands, and staff reach them the way they asked. */
-  if (starts !== null && ends !== null) {
+  // 30 Sep 2026: a VIDEO call's invitation waits for its meeting, so it carries the link (sendVideoInvite, below).
+  if (starts !== null && ends !== null && c.channel !== 'video') {
     const to = business_id !== null
       ? d.app.db.get<{ e: string | null }>('SELECT contact_email AS e FROM businesses WHERE id = ?', [business_id])?.e ?? null
       : null;
@@ -1336,8 +1383,9 @@ function writeBookingAndContact(
       });
     }
   }
-  return { booked_at: starts };
+  return { booked_at: starts, booking_id };
 }
+
 
 /* ------------------------------------------------------------------ *
  * pages
@@ -1685,6 +1733,8 @@ function submittedPage(
   booked: { booked_at: string | null }, actor: Actor | undefined, offer?: string,
   /** 30 Sep 2026: the four-stage funnel shows "up to" a figure, not a range, so the thank-you says what was shown. */
   upTo = false,
+  /** 30 Sep 2026: a video call with a time: its join page when the meeting was made, else null (the link will follow). */
+  video?: { join: string | null },
 ): string {
   return page({
     title: 'Thank you', nav: nav(actor),
@@ -1696,7 +1746,10 @@ function submittedPage(
         ? h`<p>The figure you were shown: <strong>up to ${formatPence(out.high_pence)}</strong>.</p>`
         : h`<p>The range you were shown: <strong>${formatShownRange(out)}</strong>.</p>`}
       ${booked.booked_at !== null
-        ? h`<p>We have held <strong>${clockOf(booked.booked_at)}</strong> for your call.</p>
+        ? h`<p>We have held <strong>${clockOf(booked.booked_at)}</strong> for your ${video === undefined ? 'call' : 'video call'}.</p>
+            ${video === undefined ? raw('') : video.join !== null
+              ? h`<p>Your video call link: <a href="${video.join}">join the call here</a>. It opens half an hour before the call. We have also emailed it to you, with Zoom's own link if you would rather use the Zoom app.</p>`
+              : h`<p class="help">We will email you the link for the video call before it starts.</p>`}
             <p class="help">The calendar invitation has not been sent yet.</p>`
         : h`<p class="help">No time is held yet. Either the way you chose to talk does not book a time,
             or the time you picked had gone. We will ring you to arrange one.</p>`}
@@ -1737,7 +1790,7 @@ function movePanel(
     return h`<div class="flag">You cancelled this call on ${clockOf(b.cancelled_at)}. Your enquiry is still
       open — telephone us, or reply to any message from us, and we will arrange another call.</div>`;
   }
-  if (!BOOKING.booksASlot(b.channel)) return raw('');
+  if (!booksATime(b.channel)) return raw('');
   const offerable = slots.available ? slots.slots.filter((sl) => !P.tooSoonForNewTime(nowIso, sl.starts_at)) : [];
   const cancelForm = h`
       <p class="help">Or cancel this call altogether. Your enquiry stays open and nothing else about it
@@ -1905,7 +1958,7 @@ function portalPage(
   slots: ReturnType<typeof publicSlots>, nowIso: string,
   dlv: readonly ClientDeliverable[] = [],
   share: readonly ClientShareChoice[] = [],
-  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[]; readonly sent?: boolean } = {},
+  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[]; readonly sent?: boolean; readonly joins?: Readonly<Record<string, string>> } = {},
 ): string {
   const open = tks.filter((t) => t.state === 'OPEN');
   const asked = reqs.filter((r) => r.state === 'REQUESTED');
@@ -2033,8 +2086,8 @@ function portalPage(
             ${bks.map((b) => h`<tr>
               <td>${b.channel === 'phone' ? 'Telephone' : b.channel === 'video' ? 'Video call' : b.channel === 'email' ? 'Email' : 'Text message / WhatsApp'}</td>
               <td>${b.starts_at === null
-                ? 'No set time. Only a telephone call books a time.'
-                : clockOf(b.starts_at)}</td>
+                ? 'No set time yet.'
+                : clockOf(b.starts_at)}${extra.joins?.[b.id] === undefined ? '' : h` · <a href="${extra.joins[b.id]!}">Join the video call</a>`}</td>
               <td>${BOOKED_FROM[b.entry_point] ?? b.entry_point.replace(/_/g, ' ')}</td></tr>`)}</tbody></table>
           ${bks.map((b) => movePanel(b, slots, nowIso))}`}
       </section>

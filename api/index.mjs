@@ -53,6 +53,9 @@ async function build() {
   // 29 SEPTEMBER 2026: whether the contact form's security check is checked on the server, and if not why (names only).
   const { turnstileWhy } = await import('../Caprebate/09-app/backend/src/connectors/turnstile.ts');
   console.log(`test deployment: ${turnstileWhy(made.app.secrets)}`);
+  // 30 SEPTEMBER 2026: whether video calls get a Zoom meeting, and if not why (names only).
+  const { zoomWhy } = await import('../Caprebate/09-app/backend/src/connectors/zoom.ts');
+  console.log(`test deployment: ${zoomWhy(made.app.secrets)}`);
   // No email is sent. The outbox (with a sign-up's confirmation link) goes to the function log, as the demo prints it.
   const shown = new Set();
   setInterval(() => {
@@ -89,8 +92,10 @@ async function build() {
 /** 29 Sep 2026: who gives a second step on the test website. Read by test/invented-logins.test.ts. */
 export const TEST_WEBSITE_TWO_FACTOR = 'staff-except-invented';
 
-// 30 Sep 2026: COMPANIES_HOUSE_API_KEY for "Find my company" (switched on for testing, src/connectors/company-search.ts).
-export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY']);
+// 30 Sep 2026: COMPANIES_HOUSE_API_KEY for "Find my company" (switched on for testing, src/connectors/company-search.ts),
+// and the six Zoom names for video calls (src/connectors/zoom.ts; still refused until Zoom's transfer is approved).
+export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY',
+  'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET', 'ZOOM_HOST_EMAIL']);
 
 export async function configureTestDeploy(made, env) {
   const pw = (env.CAPREBATE_TEST_PASSWORD ?? '').trim();

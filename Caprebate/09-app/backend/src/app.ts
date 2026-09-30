@@ -59,6 +59,11 @@ export type App = {
    */
   turnstilePolicy?: Partial<CallPolicy>;
   /**
+   * 30 SEPTEMBER 2026: TESTS ONLY - Zoom's two call policies with some values changed (the transfer approved), so a test
+   * can reach the recorded answers (src/connectors/zoom.ts). Never set by a running server.
+   */
+  zoomPolicy?: Partial<CallPolicy>;
+  /**
    * 29 SEPTEMBER 2026: TESTS ONLY - the assessment's first screen's two lookups (Companies House, Postcodes.io) with
    * their gate and switches set, so a test can reach the recorded answers. Never set by a running server.
    */
