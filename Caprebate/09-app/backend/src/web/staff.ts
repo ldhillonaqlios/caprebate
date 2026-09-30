@@ -371,7 +371,7 @@ export async function handleStaff(
 
   /* ------------------------------ SECTION 3 · engaged clients (Phase 106) */
   const engaged = await handleEngaged(
-    { app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form,
+    { app: d.app, newId: d.newId, nav, stamp, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form,
   );
   if (engaged === 'handled') return 'handled';
 

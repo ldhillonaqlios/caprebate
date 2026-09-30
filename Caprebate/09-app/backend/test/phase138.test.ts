@@ -115,7 +115,7 @@ describe('one section component, on both pages', () => {
     assert.equal(r.status, 200);
     const all = sections(r.body);
     // Phase 139 added "Check and tell the client" after the claims; Phase 142 added "Chat" before the activity.
-    assert.deepEqual(all.map((x) => x.id), ['claims', 'checks', 'questions', 'chat', 'activity', 'details', 'contacts', 'properties', 'sources', 'answers', 'documents']);
+    assert.deepEqual(all.map((x) => x.id), ['chat', 'claims', 'properties', 'questions', 'answers', 'details', 'contacts', 'checks', 'sources', 'documents', 'activity'] /* 30 Sep 2026: grouped by tab — Chat, Claims, Properties, Questions, People, Checks, Files, Activity */);
     const words: Record<string, string> = { company: 'Company', property: 'Property', facts: 'Facts and figures', documents: 'Documents', money: 'Money', messages: 'Messages' };
     for (const x of all) {
       assert.match(x.html, /<span class="secicon" aria-hidden="true"><svg /, `#${x.id} has no icon`);
@@ -217,6 +217,8 @@ describe('open and closed, remembered per person', () => {
     assert.ok(sections(r.body).length >= 5, 'the client page is not drawn as sections');
     assert.ok(sections(r.body).some((x) => x.open) && sections(r.body).some((x) => !x.open), 'every section is open, or every one closed');
     for (const x of sections(r.body)) {
+      // 30 Sep 2026: the Chat tab's one section is the conversation itself, so it is always drawn open.
+      if (x.id === 'chat') { assert.equal(x.open, true, '#chat is closed inside its own tab'); continue; }
       const chip = /<span class="badge[^"]*">(Not started|Working on it|Waiting for the client|Done)<\/span><\/summary>/.exec(x.html)?.[1];
       if (chip === 'Done' || chip === 'Not started') assert.equal(x.open, false, `#${x.id} is ${chip} and open`);
       else assert.equal(x.open, true, `#${x.id} is ${chip ?? '?'} and closed`);

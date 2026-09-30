@@ -154,6 +154,48 @@ hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
 .group,.eyebrow{font-size:14px;letter-spacing:.04em;color:var(--body);margin:0 0 .35rem;font-weight:600}
 .help{color:var(--body);font-size:16px}
 .vc-panel{margin:1rem 0}
+.cprogress{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;list-style:none;padding:0;margin:.9rem 0 .7rem}
+.cprogress li{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut);min-width:0}
+.cprogress .bar{display:block;height:6px;border-radius:3px;background:var(--line)}
+.cprogress .done .bar{background:var(--ok)}
+.cprogress .now .bar{background:var(--ink)}
+.cprogress .now .name{color:var(--ink);font-weight:700}
+.cactions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:.3rem}
+.cactions .btn{display:inline-flex;align-items:center;gap:6px;padding:.45rem .9rem;border:1px solid var(--line);border-radius:var(--radius);text-decoration:none;color:var(--ink);font-weight:600;background:var(--white)}
+.cmore{position:relative}
+.cmore summary{cursor:pointer;padding:.45rem .9rem;border:1px solid var(--line);border-radius:var(--radius);font-weight:600;list-style:none;background:var(--white)}
+.cmore ul{position:absolute;z-index:5;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:.4rem;margin:.3rem 0 0;list-style:none;min-width:15rem}
+.cmore li a{display:block;padding:.4rem .5rem;text-decoration:none;color:var(--ink)}
+.cmore li a:hover{background:var(--mist)}
+.ctop{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;margin:1rem 0;align-items:start}
+.cactions .filesbtn-row{margin:0}
+.lk-summary{display:flex;flex-wrap:wrap;gap:6px;margin:.4rem 0}
+.lk-summary .lk{padding:.1rem .6rem;border-radius:999px;border:1px solid var(--line);background:var(--mist)}
+.lk-g-done{color:var(--ok)}
+.lk-g-failed{color:var(--stop)}
+.lk-list summary{cursor:pointer;font-weight:600}
+.cnext,.clookups{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem}
+.cnext{border:2px solid var(--mint)}
+.cnext-title{font-weight:700;font-size:18px;color:var(--ink);margin:.2rem 0 .5rem}
+.cfacts{list-style:none;padding:0;margin:0 0 .8rem}
+.cfacts li{padding:.2rem 0;color:var(--body)}
+.cfacts .ok>span:first-child{color:var(--ok);font-weight:700}
+.cblocks{margin-top:.8rem;padding:.6rem .8rem;border-radius:var(--radius);background:var(--warnbg);color:var(--warn)}
+.cblocks p{margin:.2rem 0}
+.clookups ul{list-style:none;padding:0;margin:.3rem 0 .6rem}
+.clookups li{display:flex;justify-content:space-between;gap:8px;padding:.25rem 0;border-bottom:1px solid var(--mist)}
+.lk{font-size:14px;white-space:nowrap}
+.lk-fired{color:var(--ok)}
+.lk-failed{color:var(--stop)}
+.lk-not-run,.lk-not-permitted-yet,.lk-off{color:var(--mut)}
+.ctabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line);margin:1.2rem 0 .8rem}
+.ctab-link{padding:.55rem .9rem;border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;text-decoration:none;color:var(--body);font-weight:600;margin-bottom:-1px}
+.ctab-link:hover{background:var(--mist)}
+.ctab{display:none}
+.ctab:target,.ctab:has(:target){display:block}
+.ctab-panels:not(:has(:target)) .ctab.is-default{display:block}
+.ctabwrap:not(:has(.ctab-panels :target)) .ctab-link.is-default,.ctabwrap:has(.ct-chat:target,.ct-chat :target) .ctl-chat,.ctabwrap:has(.ct-claims:target,.ct-claims :target) .ctl-claims,.ctabwrap:has(.ct-properties:target,.ct-properties :target) .ctl-properties,.ctabwrap:has(.ct-questions:target,.ct-questions :target) .ctl-questions,.ctabwrap:has(.ct-people:target,.ct-people :target) .ctl-people,.ctabwrap:has(.ct-checks:target,.ct-checks :target) .ctl-checks,.ctabwrap:has(.ct-files:target,.ct-files :target) .ctl-files,.ctabwrap:has(.ct-activity:target,.ct-activity :target) .ctl-activity{background:var(--white);border-color:var(--line);color:var(--ink)}
+@media (max-width:760px){.ctop{grid-template-columns:minmax(0,1fr)}.cprogress{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .via{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.02em;border:1px solid var(--line);border-radius:999px;padding:0 .5rem;margin-right:.25rem}
 .msgsubj{font-weight:700;margin:.2rem 0}
 .vc-root{width:100%;max-width:1000px;min-height:0}

@@ -1019,7 +1019,7 @@ function claimPage(
         status: sum.status, working: sum.working, need: [],
         from: [...new Set(mine.steps.flatMap((s) => s.facts.map((f) => f.chip)))],
         body: claimChecksBlock(checks, v.id, x.step),
-        ...(msg === 'checked' || msg === 'unchecked' || msg === 'told' || msg === 'takenback' ? { open_now: true } : {}),
+        ...(msg === 'checked' || msg === 'unchecked' || (msg?.startsWith('told') ?? false) || msg === 'takenback' ? { open_now: true } : {}),
       });
     }
   }

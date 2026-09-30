@@ -184,7 +184,7 @@ describe('steps, and telling the client', () => {
     const before1 = await as('sales').get(`/staff/clients/${dunmarrow}`);
     const booked = stepHtml(before1.body, dunmarrowSite, 'SURVEY_BOOKED');
     assert.match(booked, /<span class="chip">Surveyor<\/span>/);
-    assert.equal(booked.includes('>Tell the client</button>'), false, 'offered before the fact is ticked');
+    assert.equal(booked.includes('>Tell the client and move on</button>'), false, 'offered before the fact is ticked');
     // Pressing it anyway is refused, and nothing is written.
     const early = await as('sales').post(`/staff/clients/${dunmarrow}/steps/tell`, { step: 'SURVEY_BOOKED', claim_id: dunmarrowSite, back: 'client' });
     assert.notEqual(early.status, 303);
@@ -198,7 +198,7 @@ describe('steps, and telling the client', () => {
     const ready = await as('sales').get(`/staff/clients/${dunmarrow}`);
     const b2 = stepHtml(ready.body, dunmarrowSite, 'SURVEY_BOOKED');
     assert.match(b2, /Ready to tell the client/);
-    assert.ok(b2.includes('>Tell the client</button>'));
+    assert.ok(b2.includes('>Tell the client and move on</button>'));
     assert.equal(db().get<{ n: number }>('SELECT COUNT(*) AS n FROM client_step_notices')?.n, 0, 'told without anyone pressing the button');
   });
 

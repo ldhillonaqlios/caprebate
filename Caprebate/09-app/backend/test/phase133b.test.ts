@@ -103,13 +103,16 @@ describe('the five long screens are on the record layout', () => {
     // four working panels are inside them, under the section's heading; "Waiting on" is a highlight, and its card is gone.
     const secs = [...r.body.matchAll(/<details class="sec sec-[a-z]+" id="([^"]+)"/g)].map((m) => m[1]);
     // PHASE 139: "Check and tell the client" follows the claims. PHASE 142: "Chat" — the notes, as "Team only" — before the activity.
-    assert.deepEqual(secs, ['claims', 'checks', 'questions', 'chat', 'activity', 'details', 'contacts', 'properties', 'sources', 'answers', 'documents']);
+    assert.deepEqual(secs, ['chat', 'claims', 'properties', 'questions', 'answers', 'details', 'contacts', 'checks', 'sources', 'documents', 'activity'] /* 30 Sep 2026: grouped by tab — Chat, Claims, Properties, Questions, People, Checks, Files, Activity */);
     for (const inner of ['tasks', 'missing', 'company-notes']) assert.match(r.body, new RegExp(`id="${inner}"`), `#${inner} is not on the page`);
     const ids = [...r.body.matchAll(/\sid="([^"]+)"/g)].map((x) => x[1] ?? '');
     assert.deepEqual([...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))], [], 'an id is used more than once');
     assert.equal(/<script|\sstyle=|\son[a-z]+=/i.test(r.body), false, 'carries a script, a style attribute or a handler');
     assert.match(r.body, /<header class="highlights">/, 'no highlights panel');
-    assert.match(r.body, /<aside class="side"/, 'no right-hand panel');
+    // 30 Sep 2026: the right-hand panel became the header's actions, the next step, the lookups at a glance, and tabs.
+    assert.match(r.body, /<div class="cactions">/, 'no header actions');
+    assert.match(r.body, /<div class="ctop">/, 'no next step and lookups');
+    assert.match(r.body, /<nav class="ctabs" aria-label="Parts of this client">/, 'no tabs');
     assert.match(r.body, /<dt>Waiting on<\/dt>/, '"Waiting on" is not a highlight');
     assert.match(r.body, /Only your team sees this\. The client never does\./);
     assert.equal(/<div class="card-h"><h2>Waiting on<\/h2>/.test(r.body), false, 'the "Waiting on" card is still drawn');

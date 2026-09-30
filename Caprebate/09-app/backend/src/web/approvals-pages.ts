@@ -84,7 +84,7 @@ function stepBlock(s: StepView, back: Back, mayApprove: boolean, openStep: strin
       : `${done} of ${s.facts.length} checked.`}${s.missing > 0 ? ` ${s.missing} still missing — ask for ${s.missing === 1 ? 'it' : 'them'} under We need.` : ''}</p>
     ${s.told !== null ? h`<p>Told the client on ${ukDate(s.told.at)} <span class="help">by ${s.told.by}</span></p>` : raw('')}
     ${s.taken_back !== null && s.told === null ? h`<p class="help">Taken back on ${ukDate(s.taken_back.at)} by ${s.taken_back.by}: ${s.taken_back.reason}. The client sees “Being re-checked”.</p>` : raw('')}
-    ${s.may_tell ? h`<form method="post" action="${action}/tell" class="inline">${ids}<button type="submit" class="cta">Tell the client</button></form>` : raw('')}
+    ${s.may_tell ? h`<form method="post" action="${action}/tell" class="inline">${ids}<button type="submit" class="cta">Tell the client and move on</button></form>` : raw('')}
     ${s.may_take_back ? h`<details class="undo"><summary>Take this step back</summary>
       <form method="post" action="${action}/take-back">${ids}<label>Why? <input name="reason" required maxlength="2000"></label>
         <button type="submit">Take it back</button></form>

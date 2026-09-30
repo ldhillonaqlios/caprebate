@@ -55,6 +55,7 @@ import { emailButton } from './free-email-pages.ts';
 import { identityChecks, identityPanel } from './identity-checks.ts';
 import { IDENTITY_PROVIDER_NAME } from '../connectors/identity-check.ts';
 import { complianceObj } from './compliance.ts';
+import { headerActions, lookupsCard, nextStepCard, progressBar, tabbed, TAB_OF_SECTION, type TabKey } from './client-layout.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -147,7 +148,8 @@ function clientPage(
   // PHASE 141: THE EMAIL BUTTON, beside Files, for a login that may write to the company — Admin and Sales.
   const mayEmail = can(actor, 'email.queue', { type: 'email', id: org.id, business_id: org.id });
   // PHASE 142: a note saved, a message sent, or a chat tab pressed opens the Chat section.
-  const openNow = note === 'saved' || done === 'message' || done === 'saved-file' || chat !== null ? 'chat' : done === undefined ? undefined : OPEN_AFTER[done];
+  const openNow = note === 'saved' || done === 'message' || done === 'saved-file' || chat !== null ? 'chat'
+    : done === undefined ? undefined : done.startsWith('told') ? 'checks' : OPEN_AFTER[done];
 
   /* WE NEED: every missing fact, in the section it belongs to, with the one-press ask where this login may ask. */
   const needsFor = (where: E.MissingFact['section']): Need[] => (p === null ? [] : p.missing.filter((m) => m.section === where).map((m) => ({
@@ -308,13 +310,16 @@ function clientPage(
     need: [], from: ['the client', 'Cap Rebate'], body: folderTiles(folder),
   });
 
+  // 30 Sep 2026: "Email the client" became Chat, in the header — every message with them, and a box to write.
   const quick: QuickAction[] = [
     ...s.quick,
-    ...(mayEmail ? [{ href: `/staff/clients/${org.id}/email`, label: 'Email the client' }] : []),
+    ...(mayEmail ? [{ href: `/staff/clients/${org.id}/email`, label: 'Write an email' }] : []),
     ...(work !== null && work.sources.rate.allowed ? [{ href: '#sources', label: 'Run the research' }] : []),
     ...(p !== null && p.missing.length > 0 ? [{ href: '#questions', label: 'Ask the client for something' }] : []),
   ];
   const legal = org.legal_name.value !== null && org.legal_name.value !== org.trading_name ? org.legal_name.display : null;
+  // Which tab shows first: where a change was just made, a step asked for, else the conversation.
+  const defaultTab: TabKey = openNow !== undefined ? (TAB_OF_SECTION[openNow] ?? 'chat') : step !== undefined ? 'checks' : 'chat';
 
   return page({
     title: org.trading_name, nav: d.nav(actor), wide: true,
@@ -326,8 +331,9 @@ function clientPage(
         { label: 'Owner', value: org.owner?.name ?? 'nobody yet' },
         waiting === null ? null : { label: 'Waiting on', value: waiting },
         p === null ? null : { label: 'Engagement letter', value: p.row.letter_label },
-      ], filesButton(org.id, folder.files.length, mayEmail ? emailButton(`/staff/clients/${org.id}/email`) : raw('')), legal === null ? raw('') : h`${legal}`)}
-      ${recordLayout(h`${sections.map((x) => section({ ...x, ...(openNow === x.id ? { open_now: true } : {}) }, ctx))}`, sidePanel(null, quick))}
+      ], h`${progressBar(db, org.id)}${headerActions(org.id, folder.files.length, chatNow !== null, quick)}`, legal === null ? raw('') : h`${legal}`)}
+      <div class="ctop">${nextStepCard(db, checks, d.app.now().slice(0, 10))}${lookupsCard(work?.sources ?? null, d.app.now())}</div>
+      ${tabbed(sections.map((x) => (openNow === x.id ? { ...x, open_now: true } : x)), ctx, defaultTab)}
       <p><a href="/staff/clients">Back to the list</a></p>`,
   });
 }

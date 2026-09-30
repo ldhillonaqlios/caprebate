@@ -21,6 +21,7 @@
  * screen omitting a field, which is presentation and not a control.
  */
 
+import { tellAndMoveOn } from './tell-and-move.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
@@ -44,6 +45,8 @@ export type EngagedDeps = {
   nav: (actor: Actor) => Safe;
   stamp: (iso: string) => string;
   problem: (res: ServerResponse, actor: Actor, title: string, why: string, back: string, field?: string) => 'handled';
+  /** 30 Sep 2026: the site's address, for the portal link in the "Tell the client and move on" email. */
+  publicOrigin?: string;
 };
 
 function html(res: ServerResponse, status: number, body: string): void {
@@ -138,6 +141,10 @@ export async function handleEngaged(
     return 'handled';
   }
 
+  /* 30 Sep 2026: which "told" message: whether a claim moved on, and whether the email went. */
+  const tellWords = (r: { moved?: readonly unknown[]; emailed?: boolean }): string =>
+    `${(r.moved?.length ?? 0) > 0 ? 'told-moved' : 'told'}${r.emailed === true ? '-emailed' : ''}`;
+
   /* ---- PHASE 139 · checked and approved, and telling the client ---- */
   const checks = /^\/staff\/clients\/([A-Za-z0-9-]+)\/(checks\/approve|checks\/unapprove|steps\/tell|steps\/take-back)$/.exec(path);
   if (checks && method === 'POST') {
@@ -154,12 +161,14 @@ export async function handleEngaged(
     const which = checks[2];
     const r = which === 'checks/approve' ? A.approveFact(deps, actor, id, { ref: f.get('ref') ?? '', value: f.get('value') })
       : which === 'checks/unapprove' ? A.unapproveFact(deps, actor, id, { ref: f.get('ref') ?? '', reason: f.get('reason') })
-        : which === 'steps/tell' ? A.tellClient(deps, actor, id, { step: f.get('step') ?? '', claim_id })
+        : which === 'steps/tell' ? tellAndMoveOn({ ...deps, email: d.app.email }, actor, id, { step: f.get('step') ?? '', claim_id }, d.publicOrigin ?? 'http://localhost:8103')
           : A.takeStepBack(deps, actor, id, { step: f.get('step') ?? '', claim_id, reason: f.get('reason') });
     const title = which === 'checks/approve' ? 'Not ticked' : which === 'checks/unapprove' ? 'Tick not taken off'
       : which === 'steps/tell' ? 'The client was not told' : 'Not taken back';
     if (!r.ok) return d.problem(res, actor, title, r.why, `${page}${anchor}`, r.field);
-    const saved = which === 'checks/approve' ? 'checked' : which === 'checks/unapprove' ? 'unchecked' : which === 'steps/tell' ? 'told' : 'takenback';
+    // 30 Sep 2026: "Tell the client and move on" says whether the email went and whether a claim moved on.
+    const saved = which === 'checks/approve' ? 'checked' : which === 'checks/unapprove' ? 'unchecked'
+      : which === 'steps/tell' ? tellWords(r as { moved?: readonly unknown[]; emailed?: boolean }) : 'takenback';
     redirect(res, `${page}?done=${saved}${at === null ? '' : `&step=${at}`}${anchor}`);
     return 'handled';
   }
@@ -246,6 +255,10 @@ export const DONE_WORDS: Readonly<Record<string, string>> = Object.freeze({
   checked: 'Saved. The tick is recorded with your name and the time.',
   unchecked: 'The tick is off. Your reason is kept with it.',
   told: 'Done. The client’s portal now shows this step, with today’s date.',
+  // 30 Sep 2026: "Tell the client and move on".
+  'told-emailed': 'Done. The client’s portal shows this step, with today’s date, and we have emailed them.',
+  'told-moved': 'Done. The client’s portal shows this step, and the claim has moved on to its next stage.',
+  'told-moved-emailed': 'Done. The client’s portal shows this step, we have emailed them, and the claim has moved on to its next stage.',
   takenback: 'Taken back. The client’s portal now says “Being re-checked”.',
 });
 
