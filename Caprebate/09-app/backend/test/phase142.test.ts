@@ -443,18 +443,21 @@ describe('replies to contact@caprebate.co.uk', () => {
   after(() => w.close());
 
   test('INBOUND_EMAIL is built and off: reading does nothing, opens no connection, and says what is missing', async () => {
-    assert.equal(INBOUND_EMAIL.enabled, false);
-    // PHASE 142b: IONOS chosen on 22 September 2026, so the mailbox is read over IMAP; reading stays off.
+    // 30 Sep 2026: switched ON for testing (the IMAP login added); here the switch is turned off to prove "off".
+    assert.equal(INBOUND_EMAIL.enabled, true);
+    const OFF = { ...INBOUND_EMAIL, enabled: false };
+    // PHASE 142b: IONOS chosen on 22 September 2026, so the mailbox is read over IMAP.
     assert.equal(INBOUND_EMAIL.provider, 'IMAP');
-    assert.ok(backendSwitchReadings().some((s) => s.switch === 'INBOUND_EMAIL' && s.on === false && s.home === 'src/stubs/email-inbound.ts'));
+    assert.ok(backendSwitchReadings().some((s) => s.switch === 'INBOUND_EMAIL' && s.on === true && s.home === 'src/stubs/email-inbound.ts'));
     let touched = false;
     const spy: Mailbox = { since: async () => { touched = true; return []; }, one: async () => { touched = true; return null; } };
-    const r = await IE.readMailbox(w.deps(), INBOUND_EMAIL, LOGIN, spy);
+    const r = await IE.readMailbox(w.deps(), OFF, LOGIN, spy);
     assert.equal(r.state, 'OFF');
     assert.equal(touched, false, 'the mailbox was opened while reading was off');
-    assert.deepEqual(readingMissing(INBOUND_EMAIL, null).filter((x) => !/login/i.test(x)), [
+    assert.deepEqual(readingMissing(OFF, null).filter((x) => !/login/i.test(x)), [
       'Then switch reading replies on.',
     ]);
+    assert.deepEqual(readingMissing(INBOUND_EMAIL, null), ['Add the mailbox’s login to the server.']);
   });
 
   test('the text part only: HTML is never kept, a file is counted, a header word is decoded', () => {
@@ -494,6 +497,8 @@ describe('replies to contact@caprebate.co.uk', () => {
     const contact = w.contacts[0];
     assert.ok(contact);
     const ref = sentEmail(w, w.dunmarrow, contact, w.dunClaim);
+    // 30 Sep 2026: the reader started when the inbox was empty (migration 064), so message 1 is new mail to read.
+    w.made.app.db.run('INSERT INTO mailbox_watermark (id, uid, set_at) VALUES (1, 0, ?) ON CONFLICT(id) DO NOTHING', [w.made.app.now()]);
     const mails = new Map([[1, rawEmail({ from: contact.email.toUpperCase(), inReplyTo: ref, text: 'Tuesday suits us.' })]]);
     const f = await fakeImap(mails);
     try {

@@ -45,8 +45,14 @@ export type InboundEmail = {
 };
 
 /** PHASE 142b: Lakhbir chose IONOS on 22 September 2026, so the mailbox is read over IMAP. Still off: the mailbox is not ready. */
+/*
+ * SWITCHED ON FOR TESTING, 30 September 2026 (Lakhbir: the IONOS_IMAP_* login added, "lets work on this" — reading
+ * clients' email replies into their conversation). Read-only (EXAMINE, BODY.PEEK): nothing in the mailbox is changed or
+ * deleted. The first read starts from the inbox as it stands (migration 064), so mail already there is never brought in.
+ * The privacy notice is a draft: it is to name this before real clients.
+ */
 export const INBOUND_EMAIL: InboundEmail = Object.freeze({
-  enabled: false,
+  enabled: true,
   provider: 'IMAP',
   /* True since 24 September 2026: contact@ exists and Sadique Maskeen reads it (Word questions 216 and 217, closed).
      Reading replies stays OFF until its IMAP login is in the key file and the switch is turned on. */
@@ -238,6 +244,8 @@ export interface Mailbox {
   since(after: number): Promise<RawEmail[]>;
   /** One message by its number, or null if it is no longer there. Read-only. */
   one(uid: number): Promise<RawEmail | null>;
+  /** 30 Sep 2026: the inbox's highest message number (0 when empty), without reading any message. Read-only. */
+  highestUid?(): Promise<number>;
 }
 
 /** A connection to the mail server. Production opens TLS; a test hands in its own socket. */
@@ -365,5 +373,11 @@ export function imapMailbox(
       return fetchUids(s, uids);
     }),
     one: (uid) => session(async (s) => (await fetchUids(s, [uid]))[0] ?? null),
+    highestUid: () => session(async (s) => {
+      const r = await s.run('UID SEARCH ALL');
+      if (!r.ok) throw new Error('the inbox could not be searched');
+      const uids = r.lines.filter((l) => /^\* SEARCH\b/i.test(l)).flatMap((l) => l.replace(/^\* SEARCH/i, '').trim().split(/\s+/)).map(Number).filter((n) => Number.isInteger(n) && n > 0);
+      return uids.length === 0 ? 0 : Math.max(...uids);
+    }),
   };
 }

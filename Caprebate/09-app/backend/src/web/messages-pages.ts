@@ -27,7 +27,7 @@ import type { FsObjectStore } from './objectstore.ts';
 import * as M from './messages.ts';
 import * as IE from './inbound-email.ts';
 import { page } from './html.ts';
-import { imapLoginFromKeyFile, imapMailbox, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../stubs/email-inbound.ts';
+import { imapLoginFromKeyFile, imapMailbox, readingMissing, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../stubs/email-inbound.ts';
 import { earlyQuestions, receiveFile } from './client-files-pages.ts';
 import * as W from './whatsapp.ts';
 import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../connectors/whatsapp.ts';
@@ -211,7 +211,10 @@ function everything(app: App, actor: Actor, business_id: string, done: string | 
           <p class="help">WhatsApp lets us write freely only within ${WINDOW_HOURS} hours of the person’s last message to us. After that, it only lets us send our opening message. It asks them to reply.</p>
         </form>`}
       </div>`;
-  return h`${done === 'whatsapp' ? savedMessage('Sent on WhatsApp.') : raw('')}
+  const checkForm = IE.mayReadQueue(actor) ? h`<form method="post" action="/staff/replies/check" class="inline"><input type="hidden" name="back" value="/staff/clients/${business_id}?chat=all">
+      <button class="linkish" type="submit">Check for new email replies</button></form>` : raw('');
+  return h`${done === 'checked' ? savedMessage('Checked for new email replies.') : raw('')}${checkForm}
+    ${done === 'whatsapp' ? savedMessage('Sent on WhatsApp.') : raw('')}
     ${done === 'whatsapp-opening' ? savedMessage('Our opening message is sent. When they reply, you can write freely for 24 hours.') : raw('')}
     ${unfiled === 0 ? raw('') : h`<p class="help"><a href="/staff/whatsapp">${unfiled === 1 ? 'One WhatsApp message' : `${unfiled} WhatsApp messages`} from a number we do not know yet — file ${unfiled === 1 ? 'it' : 'them'}</a></p>`}
     ${items.length === 0 ? h`<p class="empty">Nothing with ${c.company} yet.</p>` : h`<ol class="chat">${items.map((i) => h`<li class="msg${i.ours ? ' mine' : ''}">
@@ -306,7 +309,20 @@ export async function handleStaffMessages(
   }
 
   /* ---- PHASE 142: EMAIL REPLIES THE MAILBOX READER COULD NOT FILE ---- */
+  /* 30 SEP 2026: "CHECK FOR NEW EMAIL REPLIES" — read the inbox now, then go back where the person was. */
+  if (path === '/staff/replies/check' && method === 'POST') {
+    if (!IE.mayReadQueue(actor)) return d.problem(res, actor, 'Not available', 'Only the people who sort email replies can check for them.', '/staff');
+    const f = await form(req);
+    const back = f.get('back') ?? '';
+    await IE.readRepliesIfDue(d.app, true);
+    // Back only to a back-office page: its own path, plain characters, never another site.
+    const to = back.startsWith('/staff/') && /^[A-Za-z0-9/?=&_-]*$/.test(back) ? back : '/staff/replies';
+    redirect(res, `${to}${to.includes('?') ? '&' : '?'}done=checked#chat`);
+    return 'handled';
+  }
+
   if (path === '/staff/replies' && method === 'GET') {
+    if (IE.mayReadQueue(actor)) await IE.readRepliesIfDue(d.app);
     const q = IE.replyQueue(db, actor);
     const companies = db.all<{ id: string; name: string }>('SELECT id, name FROM businesses ORDER BY name');
     const inbound = d.inbound ?? INBOUND_EMAIL;
@@ -315,7 +331,9 @@ export async function handleStaffMessages(
       title: 'Email replies to sort', nav: d.nav(actor), wide: true,
       body: h`<h1>Email replies to sort</h1>
         ${done === 'filed' ? savedMessage('Filed. It is on the company’s chat now.') : raw('')}
-        ${inbound.enabled ? raw('') : h`<div class="gate" role="note"><strong>We are not reading replies yet.</strong> The contact@caprebate.co.uk mailbox is not set up.</div>`}
+        ${done === 'checked' ? savedMessage('Checked for new email replies.') : raw('')}
+        ${readingOn(d.app.inboundEmail ?? inbound, imapLoginFromKeyFile(d.app.secrets)) || d.app.mailbox !== undefined ? h`<form method="post" action="/staff/replies/check" class="inline"><input type="hidden" name="back" value="/staff/replies"><button class="linkish" type="submit">Check for new email replies</button></form>`
+          : h`<div class="gate" role="note"><strong>We are not reading replies yet.</strong> ${readingMissing(d.app.inboundEmail ?? inbound, imapLoginFromKeyFile(d.app.secrets)).join(' ')}</div>`}
         <p class="help">We could not tell which company sent these. Read each one, then choose the company.</p>
         ${q.length === 0 ? h`<p class="empty">Nothing to sort.</p>` : h`<ul class="emaillist">${q.map((e) => h`<li class="tile">
           <p class="tilename">${e.subject === '' ? '(no subject)' : e.subject}</p>

@@ -30,6 +30,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Actor } from '../authz.ts';
 import { can } from '../authz.ts';
+import { mayReadQueue, readRepliesIfDue } from './inbound-email.ts';
 import { h, raw, page, HTML_HEADERS } from './html.ts';
 import { claimName, highlights, moreDetail, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, type Need, type QuickAction, type SectionContext, type SectionSpec } from './components.ts';
 import { sectionPrefs } from './sections.ts';
@@ -96,6 +97,8 @@ export async function handleClientPage(
   // A login on neither is refused by the organisation's own read, as /staff/organisations/:id refused it.
   const org = C.organisationView(db, actor, id);
   const work = mayWork ? { page: E.businessPage(db, actor, id), sources: R.sourcesFor(db, actor, id) } : null;
+  // 30 Sep 2026: "Everything" reads new email replies first (at most every two minutes), for those who may read them.
+  if (url.searchParams.get('chat') === 'all' && mayReadQueue(actor)) await readRepliesIfDue(d.app);
   html(res, 200, clientPage(d, actor, org, work, done, note, url.searchParams.get('step') ?? undefined, url.searchParams.get('chat')));
   return 'handled';
 }
@@ -196,7 +199,7 @@ function clientPage(
 
   /* PHASE 142: CHAT — "Team only" (the company's notes, as a conversation) and "With the client" (the portal's Messages),
      two tabs, each with its unread number. Drawn only for a login that may read one of the two. */
-  const chatNow = chatBlock({ app: d.app, newId: d.newId }, actor, org.id, chat, note === 'saved' ? 'note' : done === 'message' || done === 'saved-file' || done === 'whatsapp' || done === 'whatsapp-opening' ? done : undefined);
+  const chatNow = chatBlock({ app: d.app, newId: d.newId }, actor, org.id, chat, note === 'saved' ? 'note' : done === 'message' || done === 'saved-file' || done === 'whatsapp' || done === 'whatsapp-opening' || done === 'checked' ? done : undefined);
   if (chatNow !== null) {
     const waitingOnUs = M.clientMessagesWaiting(db, actor, d.app.now()).find((w) => w.business_id === org.id);
     sections.push({

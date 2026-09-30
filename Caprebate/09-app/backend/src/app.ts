@@ -16,6 +16,7 @@ import { defaultHasher, type PasswordHasher } from './password.ts';
 import { outboxTransport, type EmailTransport } from './stubs/email.ts';
 import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type Connector } from './stubs/email-provider.ts';
 import type { AddressLookupConfig } from './connectors/address-lookup.ts';
+import type { InboundEmail, Mailbox } from './stubs/email-inbound.ts';
 import { builtInSignatureProvider, type SignatureProvider } from './stubs/signature.ts';
 import { newId } from './users.ts';
 import { primeTimingDefence, type Deps } from './auth.ts';
@@ -67,6 +68,9 @@ export type App = {
   zoomPolicy?: Partial<CallPolicy>;
   /** 30 SEPTEMBER 2026: TESTS ONLY - WhatsApp's call policy with the transfer approved (src/connectors/whatsapp.ts). */
   whatsappPolicy?: Partial<CallPolicy>;
+  /** 30 SEPTEMBER 2026: TESTS ONLY - a recorded inbox and the reading switch, for reading replies when staff look. */
+  mailbox?: Mailbox;
+  inboundEmail?: InboundEmail;
   /** 30 SEPTEMBER 2026: TESTS ONLY - "Find my address" switched and approved as a test needs (src/connectors/address-lookup.ts). */
   addressLookup?: { readonly config: AddressLookupConfig; readonly policy?: Partial<CallPolicy> };
   /** 30 SEPTEMBER 2026: TESTS ONLY - how the server reaches the mail server (a fake one). Never set by a running server. */

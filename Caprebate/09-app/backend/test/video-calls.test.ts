@@ -92,7 +92,7 @@ async function sendVideo(name: string, email: string, slotIndex = 3) {
   const { c, fig } = await toFigure(name);
   const slots = [...fig.matchAll(/name="slot" value="([^"]+)"/g)].map((m) => m[1]!).filter((x) => x !== '');
   const slot = slots[slotIndex]!;
-  const day = [...fig.matchAll(/name="day" value="(\d{4}-\d\d-\d\d)"/g)].map((m) => m[1]!).find((d) => slot.startsWith(d) || new Date(slot).toLocaleDateString('en-CA', { timeZone: 'Europe/London' }) === d)!;
+  const day = [...fig.matchAll(/name="day" value="(\d{4}-\d\d-\d\d)"/g)].map((m) => m[1]!).find((d) => new Date(slot).toLocaleDateString('en-CA', { timeZone: 'Europe/London' }) === d)!; // the UK date, never the UTC one
   const sent = await c.post('/assessment/close', { first_name: 'Ada', surname: 'Invented', job_role: 'owner_director', channel: 'video', email, day, slot, contact_consent: 'on' });
   const business = made.app.db.get<{ id: string }>('SELECT id FROM businesses WHERE name = ?', [name])!.id;
   const booking = made.app.db.get<{ id: string; starts_at: string }>('SELECT id, starts_at FROM bookings WHERE business_id = ?', [business])!;

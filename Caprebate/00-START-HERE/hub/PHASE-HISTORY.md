@@ -10957,3 +10957,15 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  `npm run check` exit 0, 1888 pass; CRM fold, plain words, brand, register, analytics and drift (`--fast --expect 1279,439,403,1888`) green.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 30 September 2026 — reading email replies, on for testing (Opus, Mac copy)
+
+ Lakhbir added the `IONOS_IMAP_*` login (the key file and Vercel). A read-only live check from the Mac: the app accepts it (an IONOS server, port 993), the sign-in was accepted, the inbox opened read-only with 23 messages, signed out — nothing opened or changed.
+
+-  **Switched on for testing** (`INBOUND_EMAIL.enabled: true`; the privacy notice is to name it before real clients). Read-only as built in Phase 142 (EXAMINE, BODY.PEEK): nothing in the mailbox is changed or deleted.
+-  **From switch-on onward only** (migration 064, `mailbox_watermark`): the first read notes the inbox's highest message number (`UID SEARCH ALL`, a new read-only `Mailbox.highestUid`) and reads nothing, so the 23 messages already there never come into the site; every read after takes only what arrived since, and the mark only moves forward.
+-  **Read when staff look** — the test website runs nothing on a timer (and the Vercel plan's scheduled-job limit is not known), so opening a client's Everything tab or **Email replies to sort** reads the inbox first, at most every two minutes per copy (`readRepliesIfDue`), and **Check for new email replies** (`POST /staff/replies/check`, Admin and Sales) reads at once and goes back only to a `/staff/` page. A read that fails never stops the page. The test website now reads `IONOS_IMAP_*` from its settings.
+-  **Found on the way:** `test/video-calls.test.ts`'s helper matched a time's date in UTC before UK time; at 23:00 UTC (midnight in the UK) it sent the wrong date and the site rightly refused. The helper now uses the UK date only. Not a fault in the site.
+-  **Proof.** `test/reply-reading.test.ts`, three tests (the first read notes and reads nothing, then only new mail, the mark forward-only; the real inbox command is a read-only search with nothing fetched; staff looking reads, not twice within two minutes, the button at once, never back to another site). Seven single-line mutations each turned them red. phase142's switch test restated, and its filing test starts from a reader begun on an empty inbox. `npm run check` exit 0, 1891 pass (105 files); harness 1279/0/4; phase3 439; phase9 403; drift (`--fast --expect 1279,439,403,1891`, Developer Spec §4 to 1,891 and 4,012), CRM fold (a route described, three §4 references moved), plain words, brand, register and analytics green.
+
+ **Claim cleared** in the commit that carries this record.

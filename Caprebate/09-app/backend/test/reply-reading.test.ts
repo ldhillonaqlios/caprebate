@@ -1,0 +1,144 @@
+/**
+ * 30 SEPTEMBER 2026 — READING EMAIL REPLIES, SWITCHED ON FOR TESTING (src/web/inbound-email.ts, migration 064).
+ *
+ * The contact@ inbox already held 23 messages when reading was switched on. The first read only notes where the inbox
+ * stands; every read after takes only what arrived since. The test website runs nothing on a timer, so replies are read
+ * when staff look (at most every two minutes) or when they press "Check for new email replies". A fake mail server and
+ * recorded inboxes only: nothing here reaches IONOS.
+ */
+import { describe, test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { createServer, connect as netConnect, type Server } from 'node:net';
+import { randomUUID } from 'node:crypto';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createApp } from '../src/server.ts';
+import { secretsFromValues } from '../src/secrets.ts';
+import { INBOUND_EMAIL, imapMailbox, type Mailbox, type RawEmail } from '../src/stubs/email-inbound.ts';
+import * as IE from '../src/web/inbound-email.ts';
+
+const T = '2026-09-30T12:00:00.000Z';
+const PASSWORD = 'a-very-long-development-password';
+const IMAP_KEYS = { IONOS_IMAP_HOST: 'imap.ionos.co.uk', IONOS_IMAP_PORT: '993', IONOS_IMAP_USER: 'contact@caprebate.co.uk', IONOS_IMAP_PASSWORD: 'not-a-real-password' };
+
+const mail = (from: string, text: string): Uint8Array => new Uint8Array(Buffer.from([
+  `From: A Person <${from}>`, 'To: Cap Rebate <contact@caprebate.co.uk>', 'Subject: Hello',
+  `Message-ID: <${randomUUID()}@example.invalid>`, 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=utf-8', '', text].join('\r\n'), 'utf8'));
+
+/** A recorded inbox: the messages it holds, and every call it was asked. */
+function inbox(mails: Map<number, Uint8Array>) {
+  const calls: string[] = [];
+  const box: Mailbox = {
+    since: async (after) => { calls.push(`since ${after}`); return [...mails.entries()].filter(([u]) => u > after).sort((a, b) => a[0] - b[0]).map(([uid, raw]): RawEmail => ({ uid, raw })); },
+    one: async (uid) => { calls.push(`one ${uid}`); const raw = mails.get(uid); return raw === undefined ? null : { uid, raw }; },
+    highestUid: async () => { calls.push('highest'); return mails.size === 0 ? 0 : Math.max(...mails.keys()); },
+  };
+  return { box, calls, mails };
+}
+
+let made: Awaited<ReturnType<typeof createApp>>;
+let base = '';
+let now = T;
+before(async () => {
+  made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-rr-')), now: () => now });
+  await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
+  const a = made.server.address();
+  base = `http://127.0.0.1:${typeof a === 'object' && a !== null ? a.port : 0}`;
+  const hash = await made.app.hasher.hash(PASSWORD);
+  made.app.db.run('INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,NULL)',
+    ['u-rr-sales', 'rr.sales@example.invalid', 'rr.sales@example.invalid', 'Sam Sales', 'SALES', hash, T, T]);
+  made.app.db.run('INSERT INTO businesses (id,name,sector,stage,created_at) VALUES (?,?,?,?,?)', ['b-rr', 'Reply Test Limited', 'dental', 'ASSESSMENT_SUBMITTED', T]);
+});
+after(() => made.close());
+
+let session: { req: (p: string, init?: RequestInit) => Promise<{ status: number; body: string; location: string | null }> } | undefined;
+async function sales() {
+  if (session !== undefined) return session;
+  let cookie = '';
+  const req = async (path: string, init: RequestInit = {}) => {
+    const r = await fetch(base + path, { redirect: 'manual', ...init, headers: { ...(init.headers as Record<string, string> ?? {}), ...(cookie ? { cookie } : {}) } });
+    for (const s of r.headers.getSetCookie()) { const f = s.split(';')[0] ?? ''; const k = f.split('=')[0]; cookie = [...cookie.split('; ').filter((x) => x && x.split('=')[0] !== k), f].join('; '); }
+    return { status: r.status, body: await r.text(), location: r.headers.get('location') };
+  };
+  await req('/login', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ email: 'rr.sales@example.invalid', password: PASSWORD }).toString() });
+  session = { req };
+  return session;
+}
+
+describe('reading email replies, on for testing', () => {
+  test('switched on for testing; the first read only notes where the inbox stands and reads nothing already there', async () => {
+    assert.equal(INBOUND_EMAIL.enabled, true);
+    const i = inbox(new Map([[1, mail('old.one@invented.co.uk', 'An old email.')], [23, mail('old.two@invented.co.uk', 'Another old one.')]]));
+    const deps = { db: made.app.db, audit: made.app.audit, now: made.app.now, newId: randomUUID };
+    const login = { host: 'imap.ionos.co.uk', port: 993, user: 'contact@caprebate.co.uk', password: 'x' };
+    const first = await IE.readMailbox(deps, INBOUND_EMAIL, login, i.box);
+    assert.deepEqual(first, { state: 'RAN', read: 0, filed: 0, queued: 0, do_not_contact: 0, bounces: 0, started: true });
+    assert.deepEqual(i.calls, ['highest'], 'a message already in the inbox was read');
+    assert.equal(made.app.db.get<{ uid: number }>('SELECT uid FROM mailbox_watermark')?.uid, 23);
+    // New mail arrives: only it is read, and nothing from before.
+    i.mails.set(24, mail('new.person@invented.co.uk', 'Is this the right address?'));
+    const second = await IE.readMailbox(deps, INBOUND_EMAIL, login, i.box);
+    assert.equal(second.state === 'RAN' && second.read, 1);
+    assert.equal(second.state === 'RAN' && second.queued, 1);
+    assert.deepEqual(i.calls.slice(1), ['since 23']);
+    const kept = made.app.db.all<{ from_address: string }>('SELECT from_address FROM inbound_email');
+    assert.deepEqual(kept.map((k) => k.from_address), ['new.person@invented.co.uk']);
+    assert.equal(made.app.db.get<{ uid: number }>('SELECT uid FROM mailbox_watermark')?.uid, 24);
+    assert.throws(() => made.app.db.run('UPDATE mailbox_watermark SET uid = 5'), /only moves forward/);
+  });
+
+  test('the real inbox command: the highest number is asked with a read-only search, and nothing is fetched', async () => {
+    const commands: string[] = [];
+    const server: Server = createServer((sock) => {
+      let buf = '';
+      sock.write('* OK fake IMAP ready\r\n');
+      sock.on('data', (c: Buffer) => {
+        buf += c.toString('latin1');
+        let k: number;
+        while ((k = buf.indexOf('\r\n')) >= 0) {
+          const line = buf.slice(0, k); buf = buf.slice(k + 2); commands.push(line);
+          const [tag, ...rest] = line.split(' '); const cmd = rest.join(' ');
+          if (/^LOGIN /i.test(cmd)) sock.write(`${tag} OK logged in\r\n`);
+          else if (/^EXAMINE INBOX$/i.test(cmd)) sock.write(`* 3 EXISTS\r\n${tag} OK [READ-ONLY] done\r\n`);
+          else if (/^UID SEARCH ALL$/i.test(cmd)) sock.write(`* SEARCH 7 21 23\r\n${tag} OK done\r\n`);
+          else if (/^LOGOUT$/i.test(cmd)) { sock.write(`* BYE\r\n${tag} OK bye\r\n`); sock.end(); } else sock.write(`${tag} BAD not in this fake\r\n`);
+        }
+      });
+    });
+    await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+    const a = server.address();
+    const port = typeof a === 'object' && a !== null ? a.port : 0;
+    try {
+      const box = imapMailbox({ host: '127.0.0.1', port, user: 'contact@caprebate.co.uk', password: 'x' }, () => netConnect(port, '127.0.0.1'));
+      assert.equal(await box.highestUid!(), 23);
+      assert.ok(commands.some((c) => /EXAMINE INBOX/.test(c)), 'the inbox was not opened read-only');
+      assert.ok(!commands.some((c) => /SELECT|FETCH|STORE|EXPUNGE/i.test(c)), 'more than a read-only search was sent');
+    } finally { server.close(); }
+  });
+
+  test('staff looking reads new replies (at most every two minutes); "Check for new email replies" reads at once', async () => {
+    const i = inbox(new Map([[25, mail('looked@invented.co.uk', 'Read when staff looked.')]]));
+    made.app.mailbox = i.box;
+    made.app.secrets = secretsFromValues(IMAP_KEYS);
+    try {
+      const s = await sales();
+      now = '2026-09-30T13:00:00.000Z';
+      const page = await s.req('/staff/replies');
+      assert.equal(page.status, 200);
+      assert.match(page.body, /Read when staff looked\./);
+      assert.match(page.body, /Check for new email replies/);
+      const before = i.calls.length;
+      i.mails.set(26, mail('later@invented.co.uk', 'Arrived a minute later.'));
+      now = '2026-09-30T13:01:00.000Z';
+      assert.doesNotMatch((await s.req('/staff/clients/b-rr?chat=all')).body, /Arrived a minute later/);
+      assert.equal(i.calls.length, before, 'the inbox was read again within two minutes');
+      const checked = await s.req('/staff/replies/check', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ back: '/staff/clients/b-rr?chat=all' }).toString() });
+      assert.equal(checked.location, '/staff/clients/b-rr?chat=all&done=checked#chat');
+      assert.match((await s.req('/staff/replies')).body, /Arrived a minute later\./);
+      // Somewhere outside the back office is never where it sends a person back to.
+      const away = await s.req('/staff/replies/check', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ back: 'https://elsewhere.example/' }).toString() });
+      assert.equal(away.location, '/staff/replies?done=checked#chat');
+    } finally { delete made.app.mailbox; made.app.secrets = secretsFromValues({}); }
+  });
+});

@@ -40,9 +40,11 @@ import { alertNewMessage } from './messages.ts';
 import type { EmailSending, SmtpLogin } from '../stubs/email-provider.ts';
 import { recordBounce } from '../stubs/email-provider.ts';
 import {
-  INBOUND_EMAIL, parseBounceReport, parseEmail, readingMissing, readingOn,
+  INBOUND_EMAIL, imapLoginFromKeyFile, imapMailbox, parseBounceReport, parseEmail, readingMissing, readingOn,
   type ImapLogin, type InboundEmail, type Mailbox, type ParsedEmail, type RawEmail,
 } from '../stubs/email-inbound.ts';
+import { auditMailConnections } from '../stubs/email-provider.ts';
+import { randomUUID } from 'node:crypto';
 
 export type InboundDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -140,20 +142,36 @@ export function ingest(d: InboundDeps, mail: RawEmail, parsed: ParsedEmail = par
 
 export type ReadResult =
   | { readonly state: 'OFF'; readonly missing: readonly string[] }
-  | { readonly state: 'RAN'; readonly read: number; readonly filed: number; readonly queued: number; readonly do_not_contact: number; readonly bounces: number };
+  | { readonly state: 'RAN'; readonly read: number; readonly filed: number; readonly queued: number; readonly do_not_contact: number; readonly bounces: number;
+      /** 30 Sep 2026: true on the first read, which only noted where the inbox stood and read nothing (migration 064). */
+      readonly started?: true };
 
 /** READ EVERY NEW REPLY. OFF returns at once and opens no connection. */
 export async function readMailbox(d: InboundDeps, cfg: InboundEmail, login: ImapLogin | null, mailbox: Mailbox | null): Promise<ReadResult> {
   if (!readingOn(cfg, login) || mailbox === null) return { state: 'OFF', missing: readingMissing(cfg, login) };
-  const last = d.db.get<{ n: number | null }>(
+  const kept = d.db.get<{ n: number | null }>(
     'SELECT MAX(n) AS n FROM (SELECT MAX(CAST(mailbox_uid AS INTEGER)) AS n FROM inbound_email ' +
-      'UNION ALL SELECT MAX(CAST(mailbox_uid AS INTEGER)) FROM inbound_bounce_notices)')?.n ?? 0;
-  let read = 0, filed = 0, queued = 0, dnc = 0, bounced = 0;
+      'UNION ALL SELECT MAX(CAST(mailbox_uid AS INTEGER)) FROM inbound_bounce_notices)')?.n ?? null;
+  const mark = d.db.get<{ uid: number }>('SELECT uid FROM mailbox_watermark WHERE id = 1')?.uid ?? null;
+  /* 30 Sep 2026: THE FIRST READ ONLY NOTES WHERE THE INBOX STANDS. Nothing read yet and nothing noted: note the highest
+     message number and read nothing, so mail that was already there is never brought in (migration 064). */
+  if (kept === null && mark === null && mailbox.highestUid !== undefined) {
+    const top = await mailbox.highestUid();
+    d.db.run('INSERT INTO mailbox_watermark (id, uid, set_at) VALUES (1, ?, ?) ON CONFLICT(id) DO NOTHING', [top, d.now()]);
+    return { state: 'RAN', read: 0, filed: 0, queued: 0, do_not_contact: 0, bounces: 0, started: true };
+  }
+  const last = Math.max(kept ?? 0, mark ?? 0);
+  let read = 0, filed = 0, queued = 0, dnc = 0, bounced = 0, top = last;
   for (const m of await mailbox.since(last)) {
+    top = Math.max(top, m.uid);
     const o = ingest(d, m);
     if (o === null) continue;
     read++;
     if (o === 'FILED') filed++; else if (o === 'QUEUED') queued++; else if (o === 'BOUNCE') bounced++; else dnc++;
+  }
+  // Move the mark past everything looked at, so a message this reader passes over is not fetched again next time.
+  if (top > (mark ?? 0)) {
+    d.db.run('INSERT INTO mailbox_watermark (id, uid, set_at) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET uid = excluded.uid, set_at = excluded.set_at WHERE excluded.uid > mailbox_watermark.uid', [top, d.now()]);
   }
   return { state: 'RAN', read, filed, queued, do_not_contact: dnc, bounces: bounced };
 }
@@ -295,3 +313,29 @@ export async function saveEmailedFile(
 }
 
 export { INBOUND_EMAIL };
+
+/* ================================================================== *
+ * 30 SEP 2026 — READ WHEN STAFF LOOK
+ * The test website runs nothing on a timer, so replies are read when a person who may see them looks: opening a
+ * client's "Everything" tab or "Email replies to sort" reads the inbox first — at most once every two minutes per copy
+ * of the site — and "Check for new replies" reads it at once. A read that fails never stops the page: it is audited
+ * as a mail connection, and the page draws with what is already filed.
+ * ================================================================== */
+
+const lastRead = new WeakMap<object, number>();
+export const READ_EVERY_MS = 2 * 60_000;
+
+export async function readRepliesIfDue(app: App, force = false): Promise<ReadResult | null> {
+  const nowMs = Date.parse(app.now());
+  const prev = lastRead.get(app) ?? 0;
+  if (!force && nowMs - prev < READ_EVERY_MS) return null;
+  lastRead.set(app, nowMs);
+  const login = imapLoginFromKeyFile(app.secrets);
+  const mailbox = app.mailbox !== undefined ? app.mailbox
+    : login === null ? null : imapMailbox(login, undefined, 20_000, auditMailConnections(app.audit, app.now));
+  try {
+    return await readMailbox({ db: app.db, audit: app.audit, now: app.now, newId: () => randomUUID() }, app.inboundEmail ?? INBOUND_EMAIL, login, mailbox);
+  } catch {
+    return null;
+  }
+}

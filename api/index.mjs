@@ -103,7 +103,9 @@ export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_S
   // 30 Sep 2026: WhatsApp with each client (src/connectors/whatsapp.ts; nothing is sent until Meta's transfer is approved).
   'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_TEMPLATE_LANGUAGE',
   // 30 Sep 2026: "Find my address" at the assessment (src/connectors/address-lookup.ts).
-  'GOADDRESS_API_KEY']);
+  'GOADDRESS_API_KEY',
+  // 30 Sep 2026: reading replies to contact@ (src/stubs/email-inbound.ts), read-only.
+  'IONOS_IMAP_HOST', 'IONOS_IMAP_PORT', 'IONOS_IMAP_USER', 'IONOS_IMAP_PASSWORD']);
 
 export async function configureTestDeploy(made, env) {
   const pw = (env.CAPREBATE_TEST_PASSWORD ?? '').trim();
