@@ -34,6 +34,8 @@ import { SAVED_NOT_SENT } from '../stubs/email.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, smtpLoginFromKeyFile, smtpProvider, type EmailSending, type SmtpLogin } from '../stubs/email-provider.ts';
 import { openKeptOriginal } from './uploads.ts';
 import { markChannelRead } from './messages.ts';
+import { lastReadWords, mayReadQueue, readRepliesIfDue } from './inbound-email.ts';
+import { localStamp } from './localtime.ts';
 import type { EmailChain } from './email-chains.ts';
 
 export type WebResult = 'handled' | 'not-mine';
@@ -87,6 +89,8 @@ export async function handleFreeEmail(
   if (method === 'GET') {
     const ask: Record<string, string | null> = {};
     for (const k of ASK) ask[k] = url.searchParams.get(k);
+    // 1 Oct 2026: their replies are on this page, so the inbox is read first (at most every two minutes).
+    if (subject.kind === 'company' && mayReadQueue(actor)) await readRepliesIfDue(d.app);
     const f = F.emailForm(deps, actor, subject, ask);
     // Their emails are on this page: reading it reads them.
     if (f.business_id !== null) markChannelRead({ db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId }, actor, f.business_id, 'EMAIL');
@@ -127,6 +131,7 @@ const DONE: Readonly<Record<string, string>> = Object.freeze({
   saved: SAVED_NOT_SENT,
   sent: 'Sent.',
   failed: 'Saved, but it could not be sent. The reason is in the list below.',
+  checked: 'Checked for new email replies.',
 });
 
 function selected(on: boolean): Safe {
@@ -205,6 +210,14 @@ function chainsPanel(f: F.EmailForm): Safe {
   return h`${f.chains.map((c, i) => chainBlock(f, c, f.replying === null ? i === 0 : f.replying.key === c.key))}`;
 }
 
+/** 1 Oct 2026: "Check for new email replies" here too, and what the last check found — never a silent failure. */
+function checkReplies(d: EmailPageDeps, actor: Actor, f: F.EmailForm): Safe {
+  if (f.subject.kind !== 'company' || !mayReadQueue(actor)) return raw('');
+  const last = lastReadWords(d.app);
+  return h`<div class="help echeck"><form method="post" action="/staff/replies/check" class="inline"><input type="hidden" name="back" value="${f.action}"><button class="linkish" type="submit">Check for new email replies</button></form>${
+    last === null ? raw('') : h` · <span${last.ok ? raw('') : raw(' class="echeck-bad"')}>Last checked ${localStamp(last.at, d.app.now())}: ${last.words}</span>`}</div>`;
+}
+
 function emailPage(d: EmailPageDeps, actor: Actor, f: F.EmailForm, done: string | null, refused?: string): string {
   return page({
     title: `Email ${f.company}`, nav: d.nav(actor), wide: true,
@@ -226,6 +239,7 @@ function emailPage(d: EmailPageDeps, actor: Actor, f: F.EmailForm, done: string 
         </section>
         <section class="convo-chain" aria-labelledby="chains-h">
           <h2 id="chains-h">Emails with ${f.company}</h2>
+          ${checkReplies(d, actor, f)}
           ${chainsPanel(f)}
         </section>
       </div>`,

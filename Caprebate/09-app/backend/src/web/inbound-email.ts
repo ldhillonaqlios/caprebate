@@ -47,6 +47,7 @@ import {
 } from '../stubs/email-inbound.ts';
 import { auditMailConnections } from '../stubs/email-provider.ts';
 import { randomUUID } from 'node:crypto';
+import { redactSecrets } from '../secrets.ts';
 
 export type InboundDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -167,7 +168,8 @@ export async function readMailbox(d: InboundDeps, cfg: InboundEmail, login: Imap
   if (kept === null && mark === null && mailbox.highestUid !== undefined) {
     const top = await mailbox.highestUid();
     d.db.run('INSERT INTO mailbox_watermark (id, uid, set_at) VALUES (1, ?, ?) ON CONFLICT(id) DO NOTHING', [top, d.now()]);
-    return { state: 'RAN', read: 0, filed: 0, queued: 0, do_not_contact: 0, bounces: 0, started: true };
+    const r = await repliesToOurs(d, mailbox, top);
+    return { state: 'RAN', read: r, filed: r, queued: 0, do_not_contact: 0, bounces: 0, started: true };
   }
   const last = Math.max(kept ?? 0, mark ?? 0);
   let read = 0, filed = 0, queued = 0, dnc = 0, bounced = 0, top = last;
@@ -178,11 +180,46 @@ export async function readMailbox(d: InboundDeps, cfg: InboundEmail, login: Imap
     read++;
     if (o === 'FILED') filed++; else if (o === 'QUEUED') queued++; else if (o === 'BOUNCE') bounced++; else dnc++;
   }
+  // 1 Oct 2026: a reply to one of OUR emails is never "mail that was already there", whenever it arrived.
+  const late = await repliesToOurs(d, mailbox, last);
+  read += late; filed += late;
   // Move the mark past everything looked at, so a message this reader passes over is not fetched again next time.
   if (top > (mark ?? 0)) {
     d.db.run('INSERT INTO mailbox_watermark (id, uid, set_at) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET uid = excluded.uid, set_at = excluded.set_at WHERE excluded.uid > mailbox_watermark.uid', [top, d.now()]);
   }
   return { state: 'RAN', read, filed, queued, do_not_contact: dnc, bounces: bounced };
+}
+
+/**
+ * 1 OCT 2026 — A REPLY TO ONE OF OUR EMAILS IS NEVER SKIPPED. The first read notes where the inbox stands and reads
+ * nothing before it, so the mail that was there at switch-on never comes in. But on the test website the first read
+ * happened only when somebody first looked — after Lakhbir's replies to the site's own emails had arrived — so they
+ * were passed over with the rest. Now every read also asks the inbox (read-only, one header) for messages answering a
+ * Message-ID of our domain at or below the mark, and takes in each one not already read that answers an email this
+ * site really sent — and only those: nothing else from before the mark comes in. Returns how many it filed.
+ */
+async function repliesToOurs(d: InboundDeps, mailbox: Mailbox, upTo: number): Promise<number> {
+  if (mailbox.answering === undefined || upTo <= 0) return 0;
+  const domain = (currentSenderDomain(d.db) ?? '').toLowerCase();
+  if (domain === '') return 0;
+  let filed = 0;
+  let found: number[];
+  // A server that cannot search one header must not stop the ordinary read: this pass is a second look, not the read.
+  try { found = await mailbox.answering(domain); } catch { return 0; }
+  const uids = found.filter((u) => u <= upTo).slice(-25);
+  for (const uid of uids) {
+    if (d.db.get('SELECT 1 AS x FROM inbound_email WHERE mailbox_uid = ?', [String(uid)]) !== undefined) continue;
+    const m = await mailbox.one(uid);
+    if (m === null) continue;
+    const parsed = parseEmail(m.raw);
+    if (ourEmail(d.db, parsed.answers) === null) continue; // not one of ours: what was there before switch-on stays out
+    if (ingest(d, m, parsed) === 'FILED') filed++;
+  }
+  return filed;
+}
+
+function currentSenderDomain(db: Db): string | null {
+  return db.get<{ a: string }>('SELECT address AS a FROM email_sender ORDER BY rowid DESC LIMIT 1')?.a.split('@')[1] ?? null;
 }
 
 /* ================================================================== *
@@ -334,6 +371,13 @@ export { INBOUND_EMAIL };
 const lastRead = new WeakMap<object, number>();
 export const READ_EVERY_MS = 2 * 60_000;
 
+/** 1 Oct 2026: what the last read on this copy of the site found, in words — shown beside "Check for new email replies",
+ *  so a read that fails is never silent. */
+const lastOutcome = new WeakMap<object, { at: string; words: string; ok: boolean }>();
+export function lastReadWords(app: App): { at: string; words: string; ok: boolean } | null {
+  return lastOutcome.get(app) ?? null;
+}
+
 export async function readRepliesIfDue(app: App, force = false): Promise<ReadResult | null> {
   const nowMs = Date.parse(app.now());
   const prev = lastRead.get(app) ?? 0;
@@ -343,8 +387,15 @@ export async function readRepliesIfDue(app: App, force = false): Promise<ReadRes
   const mailbox = app.mailbox !== undefined ? app.mailbox
     : login === null ? null : imapMailbox(login, undefined, 20_000, auditMailConnections(app.audit, app.now));
   try {
-    return await readMailbox({ db: app.db, audit: app.audit, now: app.now, newId: () => randomUUID() }, app.inboundEmail ?? INBOUND_EMAIL, login, mailbox);
-  } catch {
+    const r = await readMailbox({ db: app.db, audit: app.audit, now: app.now, newId: () => randomUUID() }, app.inboundEmail ?? INBOUND_EMAIL, login, mailbox);
+    lastOutcome.set(app, r.state === 'OFF'
+      ? { at: app.now(), ok: false, words: `Not reading replies: ${r.missing.join(' ')}` }
+      : { at: app.now(), ok: true, words: r.started === true && r.read === 0 ? 'Started reading the inbox: from now on, new replies come in.'
+        : r.read === 0 ? 'No new email.' : `${r.read === 1 ? 'One new email' : `${r.read} new emails`}: ${r.filed} filed on a client’s conversation, ${r.queued} to sort.` });
+    return r;
+  } catch (e) {
+    // Never stops the page — but says why, with nothing of the login in it.
+    lastOutcome.set(app, { at: app.now(), ok: false, words: `Could not read the inbox: ${redactSecrets(e instanceof Error ? e.message : String(e)).slice(0, 160)}` });
     return null;
   }
 }

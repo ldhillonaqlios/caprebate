@@ -141,4 +141,57 @@ describe('reading email replies, on for testing', () => {
       assert.equal(away.location, '/staff/replies?done=checked#chat');
     } finally { delete made.app.mailbox; made.app.secrets = secretsFromValues({}); }
   });
+
+  test('a reply to one of OUR emails is taken in even when it arrived before the reader started; nothing else from before is', async () => {
+    const db = made.app.db;
+    db.run("INSERT INTO contacts (id, business_id, full_name, contact_consent, marketing_optin, created_at, email) VALUES ('c-rr-1', 'b-rr', 'Rae Reply', 1, 0, ?, 'rae@reply-test.invented.co.uk')", [T]);
+    db.run("INSERT INTO outbox (id, created_at, to_email, subject, body, kind, sent_at, transport, business_id, provider_ref, send_requested) VALUES ('o-rr-1', ?, 'rae@reply-test.invented.co.uk', 'Your survey', 'Hello', 'FREE_TYPED', ?, 'SMTP', 'b-rr', 'aaaabbbbccccddddeeeeffff00001111@caprebate.co.uk', 1)", [T, T]);
+    const answering = (n: number, to: string) => new Uint8Array(Buffer.from([
+      'From: Rae Reply <rae@reply-test.invented.co.uk>', 'To: contact@caprebate.co.uk', 'Subject: Re: Your survey',
+      `Message-ID: <early-${n}@invented.co.uk>`, `In-Reply-To: <${to}>`, 'Content-Type: text/plain; charset=utf-8', '', `Early reply ${n}.`].join('\r\n'), 'utf8'));
+    // Below the mark: 10 answers our email; 11 answers somebody else's at our domain; 12 is ordinary old mail.
+    const mails = new Map<number, Uint8Array>([[10, answering(10, 'aaaabbbbccccddddeeeeffff00001111@caprebate.co.uk')], [11, answering(11, 'not-ours@caprebate.co.uk')], [12, mail('old@invented.co.uk', 'Old mail.')]]);
+    const asked: string[] = [];
+    const box = {
+      since: async () => [], one: async (uid: number) => { asked.push(`one ${uid}`); const raw = mails.get(uid); return raw === undefined ? null : { uid, raw }; },
+      highestUid: async () => 26,
+      answering: async (domain: string) => { asked.push(`answering ${domain}`); return [10, 11]; },
+    };
+    const deps = { db, audit: made.app.audit, now: made.app.now, newId: randomUUID };
+    const r = await IE.readMailbox(deps, INBOUND_EMAIL, { host: 'imap.ionos.co.uk', port: 993, user: 'contact@caprebate.co.uk', password: 'x' }, box);
+    assert.equal(r.state === 'RAN' && r.filed, 1);
+    assert.deepEqual(asked, ['answering caprebate.co.uk', 'one 10', 'one 11'], 'old mail that answers nothing of ours was fetched');
+    const kept = db.all<{ mailbox_uid: string; outcome: string }>("SELECT mailbox_uid, outcome FROM inbound_email WHERE mailbox_uid IN ('10','11','12')");
+    assert.deepEqual(kept.map((k) => ({ ...k })), [{ mailbox_uid: '10', outcome: 'FILED' }]);
+    assert.ok(db.get("SELECT 1 AS x FROM client_messages WHERE body = 'Early reply 10.' AND business_id = 'b-rr'"), 'not on the conversation');
+    // Read again: taken in once only.
+    await IE.readMailbox(deps, INBOUND_EMAIL, { host: 'imap.ionos.co.uk', port: 993, user: 'contact@caprebate.co.uk', password: 'x' }, box);
+    assert.equal(db.get<{ n: number }>("SELECT count(*) AS n FROM inbound_email WHERE mailbox_uid = '10'")!.n, 1);
+    // A server that cannot search that header does not stop the ordinary read.
+    const deaf = { ...box, answering: async () => { throw new Error('the inbox could not be searched'); } };
+    assert.equal((await IE.readMailbox(deps, INBOUND_EMAIL, { host: 'imap.ionos.co.uk', port: 993, user: 'contact@caprebate.co.uk', password: 'x' }, deaf)).state, 'RAN');
+  });
+
+  test('the Email page reads the inbox first and says what the last check found; a read that fails says why', async () => {
+    const s = await sales();
+    made.app.secrets = secretsFromValues(IMAP_KEYS);
+    made.app.mailbox = { since: async () => { throw new Error('the mailbox refused the login'); }, one: async () => null, highestUid: async () => 26 };
+    try {
+      now = '2026-09-30T16:00:00.000Z';
+      const page = (await s.req('/staff/clients/b-rr/email')).body;
+      assert.match(page, /<form method="post" action="\/staff\/replies\/check" class="inline"><input type="hidden" name="back" value="\/staff\/clients\/b-rr\/email">/);
+      assert.match(page, /<span class="echeck-bad">Last checked [^<]*: Could not read the inbox: the mailbox refused the login<\/span>/);
+      assert.match((await s.req('/staff/replies')).body, /Last checked [^<]*: Could not read the inbox: the mailbox refused the login/);
+      made.app.mailbox = { since: async () => [], one: async () => null, highestUid: async () => 26 };
+      assert.equal((await s.req('/staff/replies/check', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ back: '/staff/clients/b-rr/email' }).toString() })).location,
+        '/staff/clients/b-rr/email?done=checked#chat');
+      assert.match((await s.req('/staff/clients/b-rr/email?done=checked')).body, /Checked for new email replies\.[\s\S]*Last checked [^<]*: No new email\./);
+      // A plain visit to the client's page reads too — not only its Everything tab.
+      let reads = 0;
+      made.app.mailbox = { since: async () => { reads++; return []; }, one: async () => null, highestUid: async () => 26 };
+      now = '2026-09-30T16:05:00.000Z';
+      assert.equal((await s.req('/staff/clients/b-rr')).status, 200);
+      assert.equal(reads, 1, 'opening the client page did not read the inbox');
+    } finally { delete made.app.mailbox; made.app.secrets = secretsFromValues({}); }
+  });
 });

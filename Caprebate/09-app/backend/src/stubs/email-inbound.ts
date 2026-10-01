@@ -246,6 +246,9 @@ export interface Mailbox {
   one(uid: number): Promise<RawEmail | null>;
   /** 30 Sep 2026: the inbox's highest message number (0 when empty), without reading any message. Read-only. */
   highestUid?(): Promise<number>;
+  /** 1 Oct 2026: the numbers of the messages that answer an email whose Message-ID ends "@domain" — replies to ours,
+   *  whenever they arrived. A read-only search of one header; nothing is fetched. */
+  answering?(domain: string): Promise<number[]>;
 }
 
 /** A connection to the mail server. Production opens TLS; a test hands in its own socket. */
@@ -373,6 +376,13 @@ export function imapMailbox(
       return fetchUids(s, uids);
     }),
     one: (uid) => session(async (s) => (await fetchUids(s, [uid]))[0] ?? null),
+    answering: (domain) => session(async (s) => {
+      if (!/^[a-z0-9.-]+$/i.test(domain)) return [];
+      const r = await s.run(`UID SEARCH HEADER IN-REPLY-TO "@${domain}"`);
+      if (!r.ok) throw new Error('the inbox could not be searched');
+      return r.lines.filter((l) => /^\* SEARCH\b/i.test(l)).flatMap((l) => l.replace(/^\* SEARCH/i, '').trim().split(/\s+/))
+        .map(Number).filter((n) => Number.isInteger(n) && n > 0).sort((a, b) => a - b);
+    }),
     highestUid: () => session(async (s) => {
       const r = await s.run('UID SEARCH ALL');
       if (!r.ok) throw new Error('the inbox could not be searched');

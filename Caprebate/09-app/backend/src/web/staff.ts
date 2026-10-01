@@ -42,6 +42,7 @@ import { homeRows } from './home.ts';
 import { dashboard, dashView } from './staff-dashboard.ts';
 import { addBlock, removeBlock } from './time-blocks.ts';
 import { saveKey } from './saved-keys.ts';
+import { mayReadQueue, readRepliesIfDue } from './inbound-email.ts';
 import { refillForm, typedValues } from './refill.ts';
 import { welcomeCard, why } from './components.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
@@ -234,6 +235,8 @@ export async function handleStaff(
   if (path === '/staff' && method === 'GET') {
     // 1 Oct 2026: Home is a dashboard, in the shape of the login's role; Admin has a tab for each (src/web/staff-dashboard.ts).
     const view = dashView(actor, url.searchParams.get('view'));
+    // 1 Oct 2026: the inbox is read first (at most every two minutes), so "new messages" counts a reply that just came.
+    if (mayReadQueue(actor)) await readRepliesIfDue(d.app);
     html(res, 200, homePage(actor, view === null ? homeRows(d.app, actor)
       : dashboard(d.app, actor, view, { week: url.searchParams.get('week'), done: url.searchParams.get('done') }), view)); return 'handled';
   }

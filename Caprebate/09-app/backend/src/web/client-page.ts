@@ -99,7 +99,8 @@ export async function handleClientPage(
   const org = C.organisationView(db, actor, id);
   const work = mayWork ? { page: E.businessPage(db, actor, id), sources: R.sourcesFor(db, actor, id) } : null;
   // 30 Sep 2026: "Everything" reads new email replies first (at most every two minutes), for those who may read them.
-  if (url.searchParams.get('chat') === 'all' && mayReadQueue(actor)) await readRepliesIfDue(d.app);
+  // 1 Oct 2026: every visit to a client's page does, so a reply is there (and its red dot) wherever staff look.
+  if (mayReadQueue(actor)) await readRepliesIfDue(d.app);
   html(res, 200, clientPage(d, actor, org, work, done, note, url.searchParams.get('step') ?? undefined, url.searchParams.get('chat')));
   return 'handled';
 }

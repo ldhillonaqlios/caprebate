@@ -28,6 +28,7 @@ import type { FsObjectStore } from './objectstore.ts';
 import * as M from './messages.ts';
 import * as IE from './inbound-email.ts';
 import { page } from './html.ts';
+import { localStamp } from './localtime.ts';
 import { imapLoginFromKeyFile, imapMailbox, readingMissing, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../stubs/email-inbound.ts';
 import { earlyQuestions, receiveFile } from './client-files-pages.ts';
 import * as W from './whatsapp.ts';
@@ -336,6 +337,7 @@ export async function handleStaffMessages(
         ${done === 'checked' ? savedMessage('Checked for new email replies.') : raw('')}
         ${readingOn(d.app.inboundEmail ?? inbound, imapLoginFromKeyFile(d.app.secrets)) || d.app.mailbox !== undefined ? h`<form method="post" action="/staff/replies/check" class="inline"><input type="hidden" name="back" value="/staff/replies"><button class="linkish" type="submit">Check for new email replies</button></form>`
           : h`<div class="gate" role="note"><strong>We are not reading replies yet.</strong> ${readingMissing(d.app.inboundEmail ?? inbound, imapLoginFromKeyFile(d.app.secrets)).join(' ')}</div>`}
+        ${(() => { const last = IE.lastReadWords(d.app); return last === null ? raw('') : h`<p class="help">Last checked ${localStamp(last.at, d.app.now())}: ${last.words}</p>`; })()}
         <p class="help">We could not tell which company sent these. Read each one, then choose the company.</p>
         ${q.length === 0 ? h`<p class="empty">Nothing to sort.</p>` : h`<ul class="emaillist">${q.map((e) => h`<li class="tile">
           <p class="tilename">${e.subject === '' ? '(no subject)' : e.subject}</p>

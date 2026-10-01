@@ -205,6 +205,8 @@ hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
 .echain{border:1px solid var(--line);border-radius:var(--radius);padding:.4rem .8rem;margin:0 0 .7rem}
 .echain>summary{text-decoration:none;color:var(--ink)}
 .echain-subj{font-weight:700}
+.echeck{margin:0 0 .8rem}
+.echeck-bad{color:var(--stop);font-weight:600}
 .echain-meta{display:block;font-weight:400}
 .echain.is-reply{border:2px solid var(--mint)}
 .msg.is-new{border-left:3px solid var(--stop)}
