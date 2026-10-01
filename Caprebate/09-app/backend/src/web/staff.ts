@@ -56,6 +56,7 @@ import { handleClientFiles } from './client-files-pages.ts';
 import { handleFreeEmail } from './free-email-pages.ts';
 import { handleStaffMessages } from './messages-pages.ts';
 import { handleSurveyor } from './surveyor-pages.ts';
+import { handleSurveyPack } from './survey-pack-pages.ts';
 import { handleFinance } from './finance-pages.ts';
 import { handleCrm } from './crm-pages.ts';
 import { handlePipeline } from './pipeline-pages.ts';
@@ -411,6 +412,9 @@ export async function handleStaff(
     { app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form,
   );
   if (survey === 'handled') return 'handled';
+  // 1 Oct 2026: the survey pack — the sums, the surveyor's stamped changes (src/web/survey-pack-pages.ts).
+  const pack = await handleSurveyPack({ app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form);
+  if (pack === 'handled') return 'handled';
 
   /* ------------------------------ SECTION 5 · Caprebate's finance (Phase 107) */
   const finance = await handleFinance(

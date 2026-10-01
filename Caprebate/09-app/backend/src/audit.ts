@@ -364,6 +364,8 @@ export type AuditKind =
   // 1 Oct 2026: the Communication tab — a Zoom call staff started or booked, a telephone call staff logged, a video call
   // first opened by its host (src/web/communication.ts). Ids and outcomes only.
   | 'BOOKING_CREATED' | 'CALL_LOGGED' | 'VIDEO_CALL_OPENED'
+  /** 1 Oct 2026: a surveyor changed the survey pack (src/web/survey-pack.ts): what, which line, which fields — never a value. */
+  | 'SURVEY_PACK_CHANGED'
   /** Phase 151f: a signed word from the service that the check is still under way, or about something other than a
    *  check's status. Acknowledged and not kept as a result. The status word and why only. */
   | 'IDENTITY_RESULT_NOT_KEPT'

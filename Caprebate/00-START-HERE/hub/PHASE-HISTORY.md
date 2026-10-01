@@ -11041,3 +11041,14 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Looked at, not changed (reported to Lakhbir first):** WhatsApp and IONOS sending can reach real people from a local copy with the real key file; GoAddress spends the shared lookup allowance; Companies House, Postcodes.io and IONOS reading (read-only) affect no one.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 1 October 2026 — the survey pack, stage 1: the sums and the surveyor's stamped changes (Claude Code, cloud session)
+
+ Lakhbir approved the mock-ups (the surveyor's editable pack; the client's report) and chose a pre-filled pack with honest wording: "the idea is API's do most of the work, they check and approve"; "any edits made by the surveyor needs to essentially have their stamp to say thats their number"; "when you build this stress test it, this is one thing that cannot fail". Question 187 answered: the drafts go to the surveyor pre-filled (the originals). Six stages; this is the first.
+
+-  **Built:** the sums (`src/web/pack-sums.ts`: section 562 by rebuild cost, whole pence in BigInt, the pools adding to the penny, no total while anything is missing or wrong); the lines from the fixture list (`src/web/pack-lines.ts`); the pack (`src/web/survey-pack.ts`, migration 070: drafts read from evidence only — the title register's price, that property's energy certificate, room counts — and every surveyor change kept for ever with their name, the time and a reason); the pages (`src/web/survey-pack-pages.ts`: chapters 4, 9 and 10 of 23; edit in place, take out, put back, add, our draft back; out-of-date pages refused). Rates are never drafted: BCIS is not bought yet.
+-  **Proof.** `test/pack-sums.test.ts` (12) and `test/survey-pack.test.ts` (14), including 20,000 seeded packs against an independent oracle, 50,000 fuzzed strings, 400 random two-tab changes and 2,000 random forms; 21 single-line mutations each turned them red (two first survived — changing a line taken out, and a value typed again unchanged — and tests were added). `npm run check` 1968 pass (114 files) on the full copy; in the cloud clone the same five older tests that need Mac-only files cannot run. CRM fold, plain words, register, analytics and drift (`--expect 1279,439,403,1968`) green; the brand check cannot open the logo here.
+-  **Next:** stage 2, the legal check (section 198 election and the pooling requirement) as a gate before approval.
+
+ **Claim cleared** in the commit that carries this record.
+
