@@ -75,12 +75,6 @@ function card(id: string, title: string, body: Safe, extra: Safe = raw('')): Saf
   return h`<section class="dash-card" id="${id}" aria-labelledby="${id}-h"><div class="dash-card-h"><h2 id="${id}-h">${title}</h2>${extra}</div>${body}</section>`;
 }
 
-/** The view's tabs, for Admin. */
-function tabs(view: DashView): Safe {
-  const order: DashView[] = ['sales', 'accounting', 'surveying', 'admin'];
-  return h`<nav class="dash-tabs" aria-label="Whose dashboard">${order.map((v) => h`<a href="/staff?view=${v}" class="dash-tab"${v === view ? raw(' aria-current="page"') : raw('')}>${VIEW_LABEL[v]}</a>`)}</nav>`;
-}
-
 /* ------------------------------------------------------------------ the calls in a window */
 
 export type CallItem = {
@@ -356,5 +350,6 @@ export function dashboard(app: App, actor: Actor, view: DashView, q: { week: str
     }
     parts.push(...jobsRow(actor, app), calendarCard(app, actor, view, q.week, q.done), todayActivities(app, actor), todayRow(actor, app, now));
   }
-  return h`${actor.role === 'ADMIN' ? tabs(view) : raw('')}${parts}`;
+  // 1 Oct 2026: Admin's view tabs are in the top bar (src/web/navigation.ts, viewTabs).
+  return h`${parts}`;
 }

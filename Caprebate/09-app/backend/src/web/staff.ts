@@ -159,8 +159,8 @@ function when(iso: string | null): string {
  * reversal, and how it keeps the worry answered, is written at the top of src/web/navigation.ts: the menu asks each
  * section's own gate, and test/phase133a.test.ts opens every link for every login in both directions.
  */
-export function nav(actor: Actor): Safe {
-  return staffShell(actor);
+export function nav(actor: Actor, view: string | null = null): Safe {
+  return staffShell(actor, view);
 }
 
 /**
@@ -235,7 +235,7 @@ export async function handleStaff(
     // 1 Oct 2026: Home is a dashboard, in the shape of the login's role; Admin has a tab for each (src/web/staff-dashboard.ts).
     const view = dashView(actor, url.searchParams.get('view'));
     html(res, 200, homePage(actor, view === null ? homeRows(d.app, actor)
-      : dashboard(d.app, actor, view, { week: url.searchParams.get('week'), done: url.searchParams.get('done') }))); return 'handled';
+      : dashboard(d.app, actor, view, { week: url.searchParams.get('week'), done: url.searchParams.get('done') }), view)); return 'handled';
   }
 
   /* ------------------------------------------ 1 OCT 2026 · blocking off time in your own diary */
@@ -817,8 +817,8 @@ function withDone(back: string, done: string): string {
   return `${clean}${clean.includes('?') ? '&' : '?'}done=${done}${hash === undefined ? '' : `#${hash}`}`;
 }
 
-function homePage(actor: Actor, rows: Safe): string {
-  return page({ title: 'Home', nav: nav(actor), wide: true, body: h`<h1>Home</h1>${rows}` });
+function homePage(actor: Actor, rows: Safe, view: string | null = null): string {
+  return page({ title: 'Home', nav: nav(actor, view), wide: true, body: h`<h1>Home</h1>${rows}` });
 }
 
 /**

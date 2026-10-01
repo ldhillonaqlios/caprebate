@@ -7,7 +7,9 @@
  * THE FILING RULE, AND IT IS STRICT
  *
  *   MATCHED    the reply's In-Reply-To or References names the Message-ID of an email we sent (outbox.provider_ref), AND
- *              it comes from one of THAT email's company's contacts. Then it is a message FROM the client on the company's
+ *              it comes from one of THAT email's company's contacts — or (1 October 2026, now that staff may type any
+ *              address in To) from THE VERY ADDRESS THAT EMAIL WENT TO: it answers our own random Message-ID, from the
+ *              address we wrote to, which nobody else could know to fake. Then it is a message FROM the client on the company's
  *              "With the client" thread, tagged to the same claim as our email, and on the timeline as "A reply from
  *              <contact>".
  *   QUEUED     anything else: no Message-ID of ours (NO_MATCH), or one of ours from an address that is not one of that
@@ -55,13 +57,18 @@ export type InboundDeps = {
 type Outcome = 'FILED' | 'QUEUED' | 'DO_NOT_CONTACT' | 'BOUNCE';
 
 /** The Message-ID we stamped, as a reply names it: without the angle brackets. */
-function ourEmail(db: Db, answers: readonly string[]): { id: string; business_id: string; claim_id: string | null } | null {
+function ourEmail(db: Db, answers: readonly string[]): { id: string; business_id: string; claim_id: string | null; to_email: string } | null {
   for (const ref of answers) {
-    const o = db.get<{ id: string; business_id: string | null; claim_id: string | null }>(
-      'SELECT id, business_id, claim_id FROM outbox WHERE provider_ref = ? AND sent_at IS NOT NULL', [ref]);
-    if (o !== undefined && o.business_id !== null) return { id: o.id, business_id: o.business_id, claim_id: o.claim_id };
+    const o = db.get<{ id: string; business_id: string | null; claim_id: string | null; to_email: string }>(
+      'SELECT id, business_id, claim_id, to_email FROM outbox WHERE provider_ref = ? AND sent_at IS NOT NULL', [ref]);
+    if (o !== undefined && o.business_id !== null) return { id: o.id, business_id: o.business_id, claim_id: o.claim_id, to_email: o.to_email };
   }
   return null;
+}
+
+/** The plain address inside "Name <address>", lower case. */
+function plainAddress(a: string): string {
+  return (/<([^<>\s]+@[^<>\s]+)>\s*$/.exec(a)?.[1] ?? a).trim().toLowerCase();
 }
 
 /** One of this company's contacts with this address, or null. Asked of the company, never across companies. */
@@ -102,13 +109,15 @@ export function ingest(d: InboundDeps, mail: RawEmail, parsed: ParsedEmail = par
   }
   const ours = ourEmail(d.db, parsed.answers);
   const contact = ours === null ? null : contactOf(d.db, ours.business_id, parsed.from_address);
+  // 1 Oct 2026: from the very address our email went to (typed in To, not a contact) — it answers our own Message-ID.
+  const toWhomWeWrote = ours !== null && contact === null && parsed.from_address.trim() !== '' && plainAddress(ours.to_email) === plainAddress(parsed.from_address);
   const id = d.newId();
   const at = d.now();
   const text = parsed.text === '' ? '(The email had no words in it.)' : parsed.text;
   let outcome: Outcome;
   let message: string | null = null;
   d.db.tx(() => {
-    if (ours !== null && contact !== null) {
+    if (ours !== null && (contact !== null || toWhomWeWrote)) {
       const dnc = d.db.get<{ s: string | null }>('SELECT client_status AS s FROM businesses WHERE id = ?', [ours.business_id])?.s === 'DO_NOT_CONTACT';
       outcome = dnc ? 'DO_NOT_CONTACT' : 'FILED';
       message = d.newId();

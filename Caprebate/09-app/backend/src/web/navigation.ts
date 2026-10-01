@@ -260,7 +260,18 @@ function userMenu(name: string, actor: Actor, settingsHref: string): Safe {
 }
 
 /** The back office's header and tabs, for a staff login. */
-export function staffShell(actor: Actor): Shell {
+/**
+ * 1 OCT 2026 — ADMIN'S VIEWS IN THE TOP BAR. Lakhbir: "i want the sales, accounting, survayor, admin these tabs to be
+ * shifted next to the search box in the white space from logo to search box". Admin's choice of Home dashboard, on every
+ * back-office page; the one Home is showing is marked. Nobody else has them (src/web/staff-dashboard.ts, dashView).
+ */
+function viewTabs(actor: Actor, current: string | null): Safe {
+  if (actor.role !== 'ADMIN') return raw('');
+  const views: readonly (readonly [string, string])[] = [['sales', 'Sales'], ['accounting', 'Accounting'], ['surveying', 'Surveyor'], ['admin', 'Admin']];
+  return h`<nav class="dash-tabs" aria-label="Whose dashboard">${views.map(([v, label]) => h`<a href="/staff?view=${v}" class="dash-tab"${v === current ? raw(' aria-current="page"') : raw('')}>${label}</a>`)}</nav>`;
+}
+
+export function staffShell(actor: Actor, view: string | null = null): Shell {
   const ctx = navContext.getStore();
   const path = ctx?.path ?? null;
   const tabs = tabsFor(actor);
@@ -291,7 +302,7 @@ export function staffShell(actor: Actor): Shell {
   };
   const moreCurrent = tabs.more.some((s) => isCurrent(s, path));
   const help = h`<a class="helplink" href="/staff/help?screen=${helpScreenFor(path ?? '/staff', actor)}">Help</a>`;
-  const html = h`<div class="util">${search}${help}${userMenu(displayName(ctx?.db, actor), actor, '/staff/settings')}</div>
+  const html = h`${viewTabs(actor, view)}<div class="util">${search}${help}${userMenu(displayName(ctx?.db, actor), actor, '/staff/settings')}</div>
     <nav class="appnav" aria-label="Sections">
       <ul class="tabs-main">${tabs.primary.map((s) => h`<li>${tab(s)}</li>`)}${tabs.more.length === 0 ? raw('') : h`<li class="more"><details${moreCurrent ? raw(' class="has-current"') : raw('')}><summary>More</summary>
         <ul>${tabs.more.map((s) => h`<li>${tab(s)}</li>`)}</ul></details></li>`}</ul></nav>`;

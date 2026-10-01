@@ -163,4 +163,18 @@ describe('email and WhatsApp as conversations', () => {
     made.app.db.run("INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, 'b-cv-1', NULL, 'FROM_CLIENT', 'EMAIL', NULL, 'c-cv-ann', 'One more thing', ?)", [randomUUID(), now]);
     assert.match(chatButton((await req('/staff/clients/b-cv-1')).body), /aria-label="1 new message"/);
   });
+  test('a reply from the very address we wrote to (typed in To, not a contact) goes into the conversation; from any other address it waits to be sorted', async () => {
+    now = '2026-10-01T15:00:00.000Z';
+    const sent = await post('/staff/clients/b-cv-1/email', { to_email: 'Owner.Typed@Elsewhere.Invented.co.uk', subject: 'Typed address', body: 'Hello.' });
+    assert.equal(sent.status, 303);
+    const row = made.app.db.get<{ id: string; contact_id: string | null }>("SELECT id, contact_id FROM outbox WHERE subject = 'Typed address'")!;
+    assert.equal(row.contact_id, null);
+    made.app.db.run('UPDATE outbox SET sent_at = ?, provider_ref = ? WHERE id = ?', [now, 'ours-typed@caprebate.co.uk', row.id]);
+    const deps = { db: made.app.db, audit: made.app.audit, now: made.app.now, newId: randomUUID };
+    assert.equal(IE.ingest(deps, { uid: 40, raw: reply('owner.typed@elsewhere.invented.co.uk', 'ours-typed@caprebate.co.uk', 'Got it, thanks.', 'typed-reply@invented.co.uk') }), 'FILED');
+    assert.equal(IE.ingest(deps, { uid: 41, raw: reply('somebody.else@invented.co.uk', 'ours-typed@caprebate.co.uk', 'Forwarded on.', 'other-reply@invented.co.uk') }), 'QUEUED');
+    const page = (await req(`/staff/clients/b-cv-1/email?thread=${row.id}`)).body;
+    assert.match(page, /Got it, thanks\./);
+    assert.doesNotMatch(page, /Forwarded on\./);
+  });
 });

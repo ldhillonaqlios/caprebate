@@ -76,6 +76,12 @@ describe('Home as a dashboard', () => {
     const admin = (await req('admin', '/staff')).body;
     assert.match(admin, /<nav class="dash-tabs" aria-label="Whose dashboard"><a href="\/staff\?view=sales" class="dash-tab" aria-current="page">Sales<\/a><a href="\/staff\?view=accounting" class="dash-tab">Accounting<\/a><a href="\/staff\?view=surveying" class="dash-tab">Surveyor<\/a><a href="\/staff\?view=admin" class="dash-tab">Admin<\/a><\/nav>/);
     for (const who of ['sales', 'accounting', 'surveying', 'readonly'] as const) assert.doesNotMatch((await req(who, '/staff?view=admin')).body, /dash-tabs|Who is working/, who);
+    // In the top bar, between the name and the search box (Lakhbir, 1 Oct 2026) — and on every back-office page.
+    assert.match(admin, /<a class="brand" href="\/staff">[\s\S]*?<\/a>\s*<nav class="dash-tabs"[\s\S]*?<\/nav><div class="util"><form class="gsearch"/);
+    assert.ok(admin.indexOf('class="dash-tabs"') < admin.indexOf('<main'), 'the tabs are not in the top bar');
+    const clients = (await req('admin', '/staff/clients')).body;
+    assert.match(clients, /<nav class="dash-tabs" aria-label="Whose dashboard">/);
+    assert.doesNotMatch(clients.slice(clients.indexOf('class="dash-tabs"'), clients.indexOf('</nav>', clients.indexOf('class="dash-tabs"'))), /aria-current/, 'a view is marked on a page that is not Home');
     assert.match((await req('admin', '/staff?view=accounting')).body, /aria-current="page">Accounting<\/a>[\s\S]*aria-labelledby="row-money"/);
     assert.match((await req('admin', '/staff?view=surveying')).body, /aria-current="page">Surveyor<\/a>[\s\S]*aria-labelledby="row-jobs"/);
   });
