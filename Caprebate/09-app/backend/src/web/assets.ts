@@ -268,6 +268,10 @@ hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
 @media (max-width:760px){.pdash{grid-template-columns:minmax(0,1fr)}}
 .keylist details>summary{text-decoration:none;color:var(--ink);font-weight:400}
 .keylist code{font-weight:700}
+.chip.key-on{background:var(--okbg);color:var(--ok);border-color:var(--ok)}
+.chip.key-idle{background:var(--warnbg);color:var(--warn);border-color:var(--warn)}
+.chip.key-off{background:var(--stopbg);color:var(--stop);border-color:var(--stop)}
+.key-why{color:var(--warn)}
 .keyform{display:flex;flex-wrap:wrap;gap:.4rem .8rem;align-items:flex-end;margin:.4rem 0 .6rem}
 .keyform>div{flex:1 1 14rem;min-width:0}
 .keyform .fl{margin:0 0 .2rem}

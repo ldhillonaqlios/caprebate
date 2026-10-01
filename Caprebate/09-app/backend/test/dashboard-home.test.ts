@@ -175,11 +175,13 @@ describe('Admin’s tab: people and API keys', () => {
   test('API keys: where each comes from, never a value; saved only with Admin’s own password, sealed, and in use at once; taken off, the key file’s again', async () => {
     const before = made.app.secrets;
     const sealKey = Buffer.alloc(32, 7).toString('base64');
-    made.app.secrets = secretsFromValues({ CAPREBATE_MFA_KEY: sealKey, GOADDRESS_API_KEY: 'file-value-0001' });
+    made.app.secrets = secretsFromValues({ CAPREBATE_MFA_KEY: sealKey, GOADDRESS_API_KEY: 'file-value-0001', CQC_SUBSCRIPTION_KEY: 'cqc-value-0001' });
     try {
       const page = section((await req('admin', '/staff?view=admin')).body, 'keys');
-      assert.match(page, /<code>GOADDRESS_API_KEY<\/code> <span class="chip chip-ok">From the key file or the website’s settings<\/span>/);
-      assert.match(page, /<code>ZOOM_CLIENT_SECRET<\/code> <span class="chip">Not set<\/span>/);
+      // 1 Oct 2026, Lakhbir: "not set = red, active = green, set but not active = amber".
+      assert.match(page, /<code>GOADDRESS_API_KEY<\/code> <span class="chip key-on">In use<\/span><\/summary>\s*<p class="help">[^<]*\. From the key file or the website’s settings\.<\/p>/);
+      assert.match(page, /<code>ZOOM_CLIENT_SECRET<\/code> <span class="chip key-off">Not set<\/span>/);
+      assert.match(page, /<code>CQC_SUBSCRIPTION_KEY<\/code> <span class="chip key-idle">Set, not in use<\/span>[\s\S]*?<p class="help key-why">Why it is not in use: The care regulator lookup is not switched on\.<\/p>/);
       assert.doesNotMatch(page, /CAPREBATE_MFA_KEY<\/code>|HMLR_BG_PASSWORD/, 'the sealing key, or a retired one, was offered');
       assert.doesNotMatch(page, /file-value-0001/);
       assert.match(page, /<input class="fi" id="kv-GOADDRESS_API_KEY" name="value" type="password"/);
@@ -195,14 +197,14 @@ describe('Admin’s tab: people and API keys', () => {
       assert.equal(made.app.secrets.forOwner('GOADDRESS').get('GOADDRESS_API_KEY'), 'new-value-23456', 'not in use');
       assert.equal(made.app.secrets.forOwner('SIGN_IN').get('CAPREBATE_MFA_KEY'), sealKey, 'the other keys were lost');
       const after = (await req('admin', '/staff?view=admin&done=key-saved')).body;
-      assert.match(section(after, 'keys'), /<code>GOADDRESS_API_KEY<\/code> <span class="chip chip-ok">Saved here<\/span>/);
+      assert.match(section(after, 'keys'), /<code>GOADDRESS_API_KEY<\/code> <span class="chip key-on">In use<\/span><\/summary>\s*<p class="help">[^<]*\. Saved here, [^<]*by Dash admin\.<\/p>/);
       assert.doesNotMatch(after, /new-value-23456/);
       const audit = made.app.db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'KEY_SAVED'")!;
       assert.equal(JSON.parse(audit.detail).key, 'GOADDRESS_API_KEY');
       assert.ok(!audit.detail.includes('new-value'), 'the value is in the audit log');
       // A sealed value copied onto another key's name does not open: it is never used, and the page says so.
       made.app.db.run('INSERT INTO saved_keys (id, name, sealed, set_by, set_at) VALUES (?, ?, ?, ?, ?)', [randomUUID(), 'ZOOM_CLIENT_SECRET', row.sealed, 'u-dh-admin', T]);
-      assert.match(section((await req('admin', '/staff?view=admin')).body, 'keys'), /<code>ZOOM_CLIENT_SECRET<\/code> <span class="chip">Saved here, but this server cannot open it<\/span>/);
+      assert.match(section((await req('admin', '/staff?view=admin')).body, 'keys'), /<code>ZOOM_CLIENT_SECRET<\/code> <span class="chip key-idle">Set, not in use<\/span>[\s\S]*?Saved here, but this server cannot open it: save it again\./);
       assert.equal(made.app.secrets.forOwner('ZOOM').get('ZOOM_CLIENT_SECRET'), null);
       assert.throws(() => made.app.db.run('UPDATE saved_keys SET sealed = NULL'), /never edited/);
       // Taken off: the key file's value again.

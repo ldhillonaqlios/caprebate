@@ -22,6 +22,18 @@ import type { Actor } from '../authz.ts';
 import { SECRET_KEYS, overlaySecrets, type SecretKey, type SecretStore } from '../secrets.ts';
 import { MFA_KEY_NAME, mfaKeyFrom } from '../mfa-seal.ts';
 import { localStamp } from './localtime.ts';
+import type { SecretOwner } from '../secrets.ts';
+import { EMAIL_SENDING } from '../stubs/email-provider.ts';
+import { INBOUND_EMAIL } from '../stubs/email-inbound.ts';
+import { IDENTITY_CHECK } from '../connectors/identity-check.ts';
+import { COMPANY_SEARCH } from '../connectors/company-search.ts';
+import { ADDRESS_LOOKUP } from '../connectors/address-lookup.ts';
+import { switchedOn } from '../connectors/registers.ts';
+import { CLAUDE_SWITCHES } from '../connectors/claude.ts';
+import { zoomMissing } from '../connectors/zoom.ts';
+import { whatsappMissing } from '../connectors/whatsapp.ts';
+import { turnstileWhy } from '../connectors/turnstile.ts';
+import { ga4MeasurementId } from '../analytics.ts';
 
 const PREFIX = 'cbkey1:';
 
@@ -91,11 +103,43 @@ export function refreshSavedKeys(app: App): void {
   h.savedKeysMark = mark;
 }
 
+/**
+ * 1 OCT 2026 — IS THE SERVICE THAT USES THIS KEY SWITCHED ON? Lakhbir: "not set = red, active = green, set but not
+ * active = amber". Each service's own switch or readiness check, read as it stands now; the words say what is off.
+ */
+export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: string } {
+  const st = app.secrets;
+  const off = (why: string) => ({ on: false, why });
+  switch (owner) {
+    case 'CLAUDE_DOCUMENTS': return Object.values(CLAUDE_SWITCHES).some((v) => v) ? { on: true, why: '' } : off('Reading documents with Claude is not switched on.');
+    case 'COMPANIES_HOUSE': return COMPANY_SEARCH.enabled || switchedOn('CH_COMPANY') ? { on: true, why: '' } : off('The Companies House search is not switched on.');
+    case 'CQC': return switchedOn('CQC') ? { on: true, why: '' } : off('The care regulator lookup is not switched on.');
+    case 'EPC': return switchedOn('EPC') ? { on: true, why: '' } : off('The energy certificate lookup is not switched on.');
+    case 'HOMEDATA_ADDRESS': return switchedOn('HOMEDATA_ADDRESS') ? { on: true, why: '' } : off('The Homedata address lookup is not switched on.');
+    case 'IONOS_EMAIL': return EMAIL_SENDING.enabled ? { on: true, why: '' } : off('Sending email is not switched on.');
+    case 'IONOS_MAILBOX': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
+    case 'GOOGLE_ANALYTICS': return ga4MeasurementId(st) !== null ? { on: true, why: '' } : off('It is not a Google Analytics id (G- then letters and numbers).');
+    case 'DIDIT_IDV': return IDENTITY_CHECK.enabled ? { on: true, why: '' } : off('The online identity check is not switched on.');
+    case 'CLOUDFLARE_TURNSTILE': {
+      const w = turnstileWhy(st);
+      return /is checked on the server with Cloudflare$/.test(w) ? { on: true, why: '' } : off(w.replace(/^the contact form’s security check /, 'The contact form’s security check '));
+    }
+    case 'ZOOM': { const m = zoomMissing(st, app.zoomPolicy); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
+    case 'WHATSAPP': { const m = whatsappMissing(st, app.whatsappPolicy); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
+    case 'GOADDRESS': return ADDRESS_LOOKUP.enabled ? { on: true, why: '' } : off('“Find my address” is not switched on.');
+    default: return off('Nothing uses this key yet.');
+  }
+}
+
 export type KeyRow = {
   readonly name: string; readonly what: string; readonly secret: boolean;
   readonly from: 'SAVED' | 'FILE' | 'NOT_SET' | 'UNREADABLE';
   /** For a saved one: when and by whom, in words. */
   readonly saved: string | null;
+  /** Not set (red); set and its service on (green); set but its service off, or saved and unreadable (amber). */
+  readonly state: 'NOT_SET' | 'ACTIVE' | 'SET_OFF';
+  /** For amber: what is off, in words. */
+  readonly why_off: string | null;
 };
 
 export type KeysView = { readonly rows: readonly KeyRow[]; readonly can_save: boolean; readonly why_not: string | null };
@@ -110,11 +154,18 @@ export function keysView(app: App, actor: Actor): KeysView {
   const rows = EDITABLE_KEYS.map((k): KeyRow => {
     const l = latest.get(k.name);
     const inBase = base.forOwner(k.owner).has(k.name);
+    const svc = serviceOn(app, k.owner);
+    const lit = (from: KeyRow['from']): Pick<KeyRow, 'state' | 'why_off'> =>
+      from === 'NOT_SET' ? { state: 'NOT_SET', why_off: null }
+        : from === 'UNREADABLE' ? { state: 'SET_OFF', why_off: 'Saved here, but this server cannot open it: save it again.' }
+          : svc.on ? { state: 'ACTIVE', why_off: null } : { state: 'SET_OFF', why_off: svc.why };
     if (l !== undefined && l.sealed !== null) {
       const readable = key !== null && open(key, k.name, l.sealed) !== null;
-      return { name: k.name, what: k.what, secret: k.secret, from: readable ? 'SAVED' : 'UNREADABLE', saved: `${localStamp(l.set_at, now)}${l.by === null ? '' : `, by ${l.by}`}` };
+      const from = readable ? 'SAVED' : 'UNREADABLE';
+      return { name: k.name, what: k.what, secret: k.secret, from, saved: `${localStamp(l.set_at, now)}${l.by === null ? '' : `, by ${l.by}`}`, ...lit(from) };
     }
-    return { name: k.name, what: k.what, secret: k.secret, from: inBase ? 'FILE' : 'NOT_SET', saved: null };
+    const from = inBase ? 'FILE' : 'NOT_SET';
+    return { name: k.name, what: k.what, secret: k.secret, from, saved: null, ...lit(from) };
   });
   return { rows, can_save: key !== null, why_not: key === null ? `Keys cannot be saved here until ${MFA_KEY_NAME} is set in the key file or the website’s settings: it is what seals them.` : null };
 }

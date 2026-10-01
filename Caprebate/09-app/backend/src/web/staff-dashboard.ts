@@ -256,6 +256,12 @@ function peopleCard(app: App, actor: Actor): Safe {
 }
 
 const FROM_WORDS: Readonly<Record<string, string>> = { SAVED: 'Saved here', FILE: 'From the key file or the website’s settings', NOT_SET: 'Not set', UNREADABLE: 'Saved here, but this server cannot open it' };
+/** 1 Oct 2026, Lakhbir: "not set = red, active = green, set but not active = amber". Colour is never the only sign. */
+const STATE_CHIP: Readonly<Record<string, { cls: string; words: string }>> = {
+  ACTIVE: { cls: 'key-on', words: 'In use' },
+  SET_OFF: { cls: 'key-idle', words: 'Set, not in use' },
+  NOT_SET: { cls: 'key-off', words: 'Not set' },
+};
 
 /** Every key Admin may change: where each comes from, and a box to save a new one. Never a value. */
 function keysCard(app: App, actor: Actor, done: string | null): Safe {
@@ -264,8 +270,9 @@ function keysCard(app: App, actor: Actor, done: string | null): Safe {
     done === 'key-unsaved' ? h`<p class="saved" role="status">Taken off. The key file’s value, or the website’s setting, is in use again.</p>` : raw('')}
     ${v.why_not === null ? raw('') : h`<div class="gate" role="note">${v.why_not}</div>`}
     <p class="help">A key you save is locked before it is stored, and is never shown again — here or anywhere. To save one, type the password you sign in to this site with (not the key’s own password).</p>
-    <ul class="dash-list keylist">${v.rows.map((r) => h`<li id="key-${r.name}"><details><summary><code>${r.name}</code> <span class="chip${r.from === 'NOT_SET' || r.from === 'UNREADABLE' ? '' : ' chip-ok'}">${FROM_WORDS[r.from] ?? r.from}</span></summary>
-      <p class="help">${r.what}${r.saved === null ? '' : `. Saved ${r.saved}.`}</p>
+    <ul class="dash-list keylist">${v.rows.map((r) => h`<li id="key-${r.name}"><details><summary><code>${r.name}</code> <span class="chip ${STATE_CHIP[r.state]?.cls ?? ''}">${STATE_CHIP[r.state]?.words ?? r.state}</span></summary>
+      <p class="help">${r.what}. ${r.from === 'NOT_SET' ? 'Not set anywhere.' : `${FROM_WORDS[r.from] ?? r.from}${r.saved === null ? '' : `, ${r.saved}`}.`}</p>
+      ${r.why_off === null ? raw('') : h`<p class="help key-why">Why it is not in use: ${r.why_off}</p>`}
       ${!v.can_save ? raw('') : h`<form method="post" action="/staff/keys/${r.name}" class="keyform">
         <div><label class="fl" for="kv-${r.name}">New value for ${r.name}</label><input class="fi" id="kv-${r.name}" name="value" type="${r.secret ? 'password' : 'text'}" autocomplete="off" required maxlength="4096"></div>
         <div><label class="fl" for="kp-${r.name}">The password you sign in to this site with</label><input class="fi" id="kp-${r.name}" name="password" type="password" autocomplete="current-password" required></div>
