@@ -185,7 +185,7 @@ describe('Admin’s tab: people and API keys', () => {
       assert.match(page, /<input class="fi" id="kv-GOADDRESS_API_KEY" name="value" type="password"/);
       // Not Sales'; and not without Admin's own password.
       assert.match((await post('sales', '/staff/keys/GOADDRESS_API_KEY', { value: 'x', password: PASSWORD })).body, /Only Admin can change a key/);
-      assert.match((await post('admin', '/staff/keys/GOADDRESS_API_KEY', { value: 'new-value-23456', password: 'not it' })).body, /That is not your password/);
+      assert.match((await post('admin', '/staff/keys/GOADDRESS_API_KEY', { value: 'new-value-23456', password: 'not it' })).body, /That is not the password you sign in to this site with/);
       assert.equal(made.app.db.get<{ n: number }>('SELECT count(*) AS n FROM saved_keys')!.n, 0);
       const r = await post('admin', '/staff/keys/GOADDRESS_API_KEY', { value: 'new-value-23456', password: PASSWORD });
       assert.equal(r.location, '/staff?view=admin&done=key-saved#key-GOADDRESS_API_KEY');

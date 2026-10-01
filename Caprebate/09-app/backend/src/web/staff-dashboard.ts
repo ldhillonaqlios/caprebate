@@ -263,15 +263,15 @@ function keysCard(app: App, actor: Actor, done: string | null): Safe {
   return card('keys', 'API keys', h`${done === 'key-saved' ? h`<p class="saved" role="status">Saved and locked. It is in use from now on.</p>` : raw('')}${
     done === 'key-unsaved' ? h`<p class="saved" role="status">Taken off. The key file’s value, or the website’s setting, is in use again.</p>` : raw('')}
     ${v.why_not === null ? raw('') : h`<div class="gate" role="note">${v.why_not}</div>`}
-    <p class="help">A key you save is locked before it is stored, and is never shown again — here or anywhere. Saving needs your own password.</p>
+    <p class="help">A key you save is locked before it is stored, and is never shown again — here or anywhere. To save one, type the password you sign in to this site with (not the key’s own password).</p>
     <ul class="dash-list keylist">${v.rows.map((r) => h`<li id="key-${r.name}"><details><summary><code>${r.name}</code> <span class="chip${r.from === 'NOT_SET' || r.from === 'UNREADABLE' ? '' : ' chip-ok'}">${FROM_WORDS[r.from] ?? r.from}</span></summary>
       <p class="help">${r.what}${r.saved === null ? '' : `. Saved ${r.saved}.`}</p>
       ${!v.can_save ? raw('') : h`<form method="post" action="/staff/keys/${r.name}" class="keyform">
-        <div><label class="fl" for="kv-${r.name}">New value</label><input class="fi" id="kv-${r.name}" name="value" type="${r.secret ? 'password' : 'text'}" autocomplete="off" required maxlength="4096"></div>
-        <div><label class="fl" for="kp-${r.name}">Your password</label><input class="fi" id="kp-${r.name}" name="password" type="password" autocomplete="current-password" required></div>
+        <div><label class="fl" for="kv-${r.name}">New value for ${r.name}</label><input class="fi" id="kv-${r.name}" name="value" type="${r.secret ? 'password' : 'text'}" autocomplete="off" required maxlength="4096"></div>
+        <div><label class="fl" for="kp-${r.name}">The password you sign in to this site with</label><input class="fi" id="kp-${r.name}" name="password" type="password" autocomplete="current-password" required></div>
         <button class="cta" type="submit">Save it</button></form>`}
       ${r.from !== 'SAVED' && r.from !== 'UNREADABLE' ? raw('') : h`<form method="post" action="/staff/keys/${r.name}/unsave" class="keyform">
-        <div><label class="fl" for="ku-${r.name}">Your password</label><input class="fi" id="ku-${r.name}" name="password" type="password" autocomplete="current-password" required></div>
+        <div><label class="fl" for="ku-${r.name}">The password you sign in to this site with</label><input class="fi" id="ku-${r.name}" name="password" type="password" autocomplete="current-password" required></div>
         <button class="btn-quiet" type="submit">Use the key file’s value again</button></form>`}</details></li>`)}</ul>`);
 }
 

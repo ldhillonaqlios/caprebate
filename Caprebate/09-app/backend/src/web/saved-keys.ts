@@ -131,7 +131,7 @@ export async function saveKey(app: App, actor: Actor, name: string, value: strin
   if (actor.role !== 'ADMIN') return { ok: false, why: 'Only Admin can change a key.' };
   const k = EDITABLE_KEYS.find((x) => x.name === name);
   if (k === undefined) return { ok: false, why: 'That is not a key that can be changed here.' };
-  if (!(await passwordHolds(app, actor, password))) return { ok: false, why: 'That is not your password. Nothing was saved.' };
+  if (!(await passwordHolds(app, actor, password))) return { ok: false, why: 'That is not the password you sign in to this site with. Nothing was saved.' };
   const base = baseOf(app as Holder);
   const key = sealingKey(base);
   let sealed: string | null = null;
