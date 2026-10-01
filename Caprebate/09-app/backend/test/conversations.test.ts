@@ -14,6 +14,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/server.ts';
 import * as IE from '../src/web/inbound-email.ts';
+import { INBOUND_EMAIL } from '../src/stubs/email-inbound.ts';
 import { buildMessage, smtpProvider } from '../src/stubs/email-provider.ts';
 
 const T = '2026-10-01T09:00:00.000Z';
@@ -176,5 +177,33 @@ describe('email and WhatsApp as conversations', () => {
     const page = (await req(`/staff/clients/b-cv-1/email?thread=${row.id}`)).body;
     assert.match(page, /Got it, thanks\./);
     assert.doesNotMatch(page, /Forwarded on\./);
+  });
+
+  test('a reply set aside before the rule existed is filed by it at the next read; one from another address stays; Everything shows emails to a typed address', async () => {
+    const db = made.app.db;
+    now = '2026-10-01T16:00:00.000Z';
+    db.run("INSERT INTO outbox (id, created_at, to_email, subject, body, kind, sent_at, transport, business_id, provider_ref, send_requested, written_by) VALUES ('o-cv-old', ?, 'Lee.Own@Icloud.Invented.co.uk', 'Before the rule', 'Hello there.', 'FREE_TYPED', ?, 'SMTP', 'b-cv-1', 'ours-old@caprebate.co.uk', 1, 'u-cv-sales')", [now, now]);
+    // As the reader left them before today: answering our email, from an address that is not a contact — set aside.
+    for (const [id, uid, from, words] of [['ie-old-1', '60', 'lee.own@icloud.invented.co.uk', 'Yes, that works.'], ['ie-old-2', '61', 'stranger@invented.co.uk', 'Who are you?']] as const) {
+      db.run("INSERT INTO inbound_email (id, received_at, mailbox_uid, message_id, from_address, subject, text_body, matched_outbox_id, business_id, claim_id, contact_id, outcome, queue_reason, client_message_id) VALUES (?, ?, ?, ?, ?, 'Re: Before the rule', ?, 'o-cv-old', NULL, NULL, NULL, 'QUEUED', 'NOT_A_CONTACT', NULL)",
+        [id, now, uid, `${id}@invented.co.uk`, from, words]);
+    }
+    const deps = { db, audit: made.app.audit, now: made.app.now, newId: randomUUID };
+    const r = await IE.readMailbox(deps, INBOUND_EMAIL, { host: 'imap.ionos.co.uk', port: 993, user: 'contact@caprebate.co.uk', password: 'x' },
+      { since: async () => [], one: async () => null, highestUid: async () => 61 });
+    assert.equal(r.state === 'RAN' && r.filed, 1);
+    const filing = db.get<{ filed_by: string | null; rule: string | null; business_id: string }>("SELECT filed_by, rule, business_id FROM inbound_email_filings WHERE inbound_email_id = 'ie-old-1'");
+    assert.deepEqual({ ...filing }, { filed_by: null, rule: 'ANSWERS_OUR_EMAIL', business_id: 'b-cv-1' });
+    assert.equal(db.get("SELECT 1 AS x FROM inbound_email_filings WHERE inbound_email_id = 'ie-old-2'"), undefined, 'a reply from another address was filed');
+    assert.throws(() => db.run("INSERT INTO inbound_email_filings (id, inbound_email_id, business_id, claim_id, client_message_id, filed_by, rule, filed_at) VALUES ('x', 'ie-old-2', 'b-cv-1', NULL, (SELECT id FROM client_messages LIMIT 1), NULL, NULL, ?)", [now]), /CHECK/, 'a filing with neither a person nor a rule');
+    // Read again: filed once.
+    await IE.readMailbox(deps, INBOUND_EMAIL, { host: 'imap.ionos.co.uk', port: 993, user: 'contact@caprebate.co.uk', password: 'x' }, { since: async () => [], one: async () => null, highestUid: async () => 61 });
+    assert.equal(db.get<{ n: number }>("SELECT count(*) AS n FROM inbound_email_filings WHERE inbound_email_id = 'ie-old-1'")!.n, 1);
+    // On the conversation, with our email; and the Everything tab shows the email to the typed address and the reply.
+    assert.match((await req('/staff/clients/b-cv-1/email?thread=o-cv-old')).body, /Hello there\.[\s\S]*Yes, that works\./);
+    const all = (await req('/staff/clients/b-cv-1?chat=all')).body;
+    assert.match(all, /Cap Rebate, to Lee\.Own@Icloud\.Invented\.co\.uk[\s\S]*?Before the rule/);
+    assert.match(all, /Yes, that works\./);
+    assert.doesNotMatch(all, /Who are you\?/);
   });
 });

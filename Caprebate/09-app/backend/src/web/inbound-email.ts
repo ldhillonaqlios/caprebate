@@ -183,6 +183,8 @@ export async function readMailbox(d: InboundDeps, cfg: InboundEmail, login: Imap
   // 1 Oct 2026: a reply to one of OUR emails is never "mail that was already there", whenever it arrived.
   const late = await repliesToOurs(d, mailbox, last);
   read += late; filed += late;
+  // 1 Oct 2026: and one set aside before today's rule existed is filed by it now (migration 068).
+  filed += fileByRule(d);
   // Move the mark past everything looked at, so a message this reader passes over is not fetched again next time.
   if (top > (mark ?? 0)) {
     d.db.run('INSERT INTO mailbox_watermark (id, uid, set_at) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET uid = excluded.uid, set_at = excluded.set_at WHERE excluded.uid > mailbox_watermark.uid', [top, d.now()]);
@@ -214,6 +216,39 @@ async function repliesToOurs(d: InboundDeps, mailbox: Mailbox, upTo: number): Pr
     const parsed = parseEmail(m.raw);
     if (ourEmail(d.db, parsed.answers) === null) continue; // not one of ours: what was there before switch-on stays out
     if (ingest(d, m, parsed) === 'FILED') filed++;
+  }
+  return filed;
+}
+
+/**
+ * 1 OCT 2026 — A REPLY WAITING TO BE SORTED THAT THE RULES NOW FILE. A reply that answers one of our emails waits in
+ * "Email replies to sort" when it came from an address that is not one of that company's contacts. Since today a reply
+ * from the very address our email went to is filed (see `ingest`), and the company may since have added the sender as a
+ * contact. Each such reply still waiting is filed on that company's conversation, tagged to our email's claim, with the
+ * rule recorded in place of a person (migration 068). Nothing else in the queue moves. Returns how many it filed.
+ */
+export function fileByRule(d: InboundDeps): number {
+  const waiting = d.db.all<{ id: string; from_address: string; text_body: string; outbox_id: string; business_id: string; claim_id: string | null; to_email: string; received_at: string }>(
+    'SELECT e.id, e.from_address, e.text_body, o.id AS outbox_id, o.business_id, o.claim_id, o.to_email, e.received_at FROM inbound_email e ' +
+    "JOIN outbox o ON o.id = e.matched_outbox_id WHERE e.outcome = 'QUEUED' AND o.business_id IS NOT NULL " +
+    'AND NOT EXISTS (SELECT 1 FROM inbound_email_filings g WHERE g.inbound_email_id = e.id) ORDER BY e.received_at, e.id');
+  let filed = 0;
+  for (const w of waiting) {
+    const contact = contactOf(d.db, w.business_id, plainAddress(w.from_address));
+    if (contact === null && plainAddress(w.to_email) !== plainAddress(w.from_address)) continue;
+    if (d.db.get<{ s: string | null }>('SELECT client_status AS s FROM businesses WHERE id = ?', [w.business_id])?.s === 'DO_NOT_CONTACT') continue;
+    const message = d.newId();
+    const at = d.now();
+    d.db.tx(() => {
+      d.db.run('INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)',
+        [message, w.business_id, w.claim_id, 'FROM_CLIENT', 'EMAIL', contact, w.text_body.slice(0, 8000), at]);
+      d.db.run('INSERT INTO inbound_email_filings (id, inbound_email_id, business_id, claim_id, client_message_id, filed_by, rule, filed_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?)',
+        [d.newId(), w.id, w.business_id, w.claim_id, message, 'ANSWERS_OUR_EMAIL', at]);
+    });
+    d.audit.append({ at, kind: 'INBOUND_EMAIL_FILED', outcome: 'ALLOWED', actor_id: null, actor_role: null, object_type: 'inbound_email', object_id: w.id,
+      detail: { business: w.business_id, message, by_rule: 'ANSWERS_OUR_EMAIL', contact_known: contact !== null } });
+    alertNewMessage(d, message);
+    filed++;
   }
   return filed;
 }

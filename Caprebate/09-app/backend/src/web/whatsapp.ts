@@ -178,7 +178,8 @@ export function conversation(db: Db, actor: Actor, business_id: string, nowIso: 
   for (const e of db.all<{ created_at: string; to_email: string; subject: string; body: string; sent_at: string | null; kind: string }>(
     'SELECT created_at, to_email, subject, body, sent_at, kind FROM outbox WHERE business_id = ? ORDER BY created_at', [business_id])) {
     if (SENT_SECRET_KINDS.includes(e.kind)) continue; // a sign-in code or one-use link is never shown
-    if (!theirs.has(e.to_email.toLowerCase())) continue;
+    // 1 Oct 2026: an email staff wrote themselves is the client's, whatever address they typed in To.
+    if (!theirs.has(e.to_email.toLowerCase()) && e.kind !== 'FREE_TYPED' && e.kind !== 'TEMPLATE') continue;
     items.push({ at: e.created_at, when: localStamp(e.created_at, nowIso), channel: 'Email', ours: true, who: `Cap Rebate, to ${e.to_email}`,
       subject: e.subject, body: e.body, state: e.sent_at === null ? 'Not sent' : 'Sent' });
   }
