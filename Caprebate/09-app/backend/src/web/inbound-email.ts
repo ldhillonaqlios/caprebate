@@ -48,6 +48,7 @@ import {
 import { auditMailConnections } from '../stubs/email-provider.ts';
 import { randomUUID } from 'node:crypto';
 import { redactSecrets } from '../secrets.ts';
+import { STATE_WORDS } from './email-chains.ts';
 
 export type InboundDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -405,6 +406,42 @@ export { INBOUND_EMAIL };
 
 const lastRead = new WeakMap<object, number>();
 export const READ_EVERY_MS = 2 * 60_000;
+
+/**
+ * 1 OCT 2026 — HOW EMAIL READING STANDS, for staff to see (and to send to whoever is looking into it). Lakhbir's replies
+ * reached the inbox but not the site, and the site's own records were the one thing that could not be seen from outside:
+ * the mark, the emails received and what became of each, and the emails sent and whether each kept the Message-ID a
+ * reply is matched on. Admin and Sales (`inbound_email.read`). Addresses and subjects, never an email's words.
+ */
+export type ReadingState = {
+  readonly mark: number | null;
+  readonly received: readonly { uid: string; when: string; from: string; subject: string; outcome: string; answers_ours: boolean; ours_company: string | null; filed_on: string | null; how: string | null }[];
+  readonly sent: readonly { when: string; to: string; company: string | null; subject: string; state: string; id_kept: boolean }[];
+};
+
+export function readingState(db: Db, actor: Actor, nowIso: string): ReadingState {
+  authorise(actor, 'inbound_email.read', queueObj);
+  const mark = db.get<{ uid: number }>('SELECT uid FROM mailbox_watermark WHERE id = 1')?.uid ?? null;
+  const received = db.all<{ uid: string; at: string; from_address: string; subject: string; outcome: string; queue_reason: string | null; matched: string | null; ours_company: string | null; filed_on: string | null; by: string | null; rule: string | null; direct: string | null }>(
+    'SELECT e.mailbox_uid AS uid, e.received_at AS at, e.from_address, e.subject, e.outcome, e.queue_reason, e.matched_outbox_id AS matched, ' +
+    'ob.name AS ours_company, COALESCE(fb.name, gb.name) AS filed_on, u.display_name AS by, g.rule, fb.name AS direct ' +
+    'FROM inbound_email e LEFT JOIN outbox o ON o.id = e.matched_outbox_id LEFT JOIN businesses ob ON ob.id = o.business_id ' +
+    'LEFT JOIN businesses fb ON fb.id = e.business_id LEFT JOIN inbound_email_filings g ON g.inbound_email_id = e.id ' +
+    'LEFT JOIN businesses gb ON gb.id = g.business_id LEFT JOIN users u ON u.id = g.filed_by ' +
+    'ORDER BY CAST(e.mailbox_uid AS INTEGER) DESC LIMIT 12').map((r) => ({
+      uid: r.uid, when: localStamp(r.at, nowIso), from: r.from_address, subject: r.subject === '' ? '(no subject)' : r.subject,
+      outcome: r.outcome === 'FILED' ? 'Filed' : r.outcome === 'DO_NOT_CONTACT' ? 'Filed (do not contact)' : r.filed_on !== null ? 'Filed later, from Email replies to sort' : `Waiting to sort: ${QUEUE_WORDS[r.queue_reason ?? ''] ?? r.queue_reason ?? ''}`,
+      answers_ours: r.matched !== null, ours_company: r.ours_company, filed_on: r.filed_on,
+      how: r.direct !== null ? 'when it came in' : r.rule !== null ? 'by the rule (it answers our email)' : r.by !== null ? `by ${r.by}` : null,
+    }));
+  const sent = db.all<{ at: string; to_email: string; company: string | null; subject: string; sent_at: string | null; send_requested: number; last_error: string | null; provider_ref: string | null }>(
+    "SELECT o.created_at AS at, o.to_email, b.name AS company, o.subject, o.sent_at, o.send_requested, o.last_error, o.provider_ref FROM outbox o LEFT JOIN businesses b ON b.id = o.business_id " +
+    "WHERE o.kind IN ('FREE_TYPED','TEMPLATE','NOTIFICATION') ORDER BY o.created_at DESC LIMIT 8").map((r) => ({
+      when: localStamp(r.at, nowIso), to: r.to_email, company: r.company, subject: r.subject,
+      state: STATE_WORDS(r.sent_at, r.send_requested, r.last_error, nowIso), id_kept: r.provider_ref !== null,
+    }));
+  return { mark, received, sent };
+}
 
 /** 1 Oct 2026: what the last read on this copy of the site found, in words — shown beside "Check for new email replies",
  *  so a read that fails is never silent. */

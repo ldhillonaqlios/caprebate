@@ -339,6 +339,7 @@ export async function handleStaffMessages(
           : h`<div class="gate" role="note"><strong>We are not reading replies yet.</strong> ${readingMissing(d.app.inboundEmail ?? inbound, imapLoginFromKeyFile(d.app.secrets)).join(' ')}</div>`}
         ${(() => { const last = IE.lastReadWords(d.app); return last === null ? raw('') : h`<p class="help">Last checked ${localStamp(last.at, d.app.now())}: ${last.words}</p>`; })()}
         <p class="help">We could not tell which company sent these. Read each one, then choose the company.</p>
+        ${readingPanel(IE.readingState(db, actor, d.app.now()), readingOn(d.app.inboundEmail ?? inbound, imapLoginFromKeyFile(d.app.secrets)) || d.app.mailbox !== undefined)}
         ${q.length === 0 ? h`<p class="empty">Nothing to sort.</p>` : h`<ul class="emaillist">${q.map((e) => h`<li class="tile">
           <p class="tilename">${e.subject === '' ? '(no subject)' : e.subject}</p>
           <p class="filefrom">From ${e.from_address} · ${e.when}${e.files > 0 ? ` · ${e.files} ${e.files === 1 ? 'file' : 'files'}` : ''}</p>
@@ -370,6 +371,22 @@ export async function handleStaffMessages(
     return 'handled';
   }
   return 'not-mine';
+}
+
+/** 1 Oct 2026: how email reading stands — the mark, what came in and what became of it, what went out. */
+function readingPanel(r: IE.ReadingState, on: boolean): Safe {
+  return h`<details class="readstate" id="how-reading-stands"><summary>How email reading stands</summary>
+    <p class="help">Reading is ${on ? 'on' : 'off'}. ${r.mark === null ? 'The inbox has not been read yet.' : `Read up to message ${String(r.mark)} of the inbox; anything after it comes in at the next check.`}</p>
+    <h3>Last emails received</h3>
+    ${r.received.length === 0 ? h`<p class="empty">None yet.</p>` : h`<table class="stack"><thead><tr><th>Inbox no.</th><th>When</th><th>From</th><th>Subject</th><th>What happened</th><th>Answers our email?</th></tr></thead><tbody>${
+      r.received.map((x) => h`<tr><td data-label="Inbox no.">${x.uid}</td><td data-label="When">${x.when}</td><td data-label="From">${x.from}</td><td data-label="Subject">${x.subject}</td>
+        <td data-label="What happened">${x.outcome}${x.filed_on === null ? '' : ` — on ${x.filed_on}`}${x.how === null ? '' : `, ${x.how}`}</td>
+        <td data-label="Answers our email?">${x.answers_ours ? `Yes${x.ours_company === null ? '' : ` (sent from ${x.ours_company})`}` : 'No'}</td></tr>`)}</tbody></table>`}
+    <h3>Last emails sent</h3>
+    ${r.sent.length === 0 ? h`<p class="empty">None yet.</p>` : h`<table class="stack"><thead><tr><th>When</th><th>To</th><th>Company</th><th>Subject</th><th>Sent?</th><th>Reply can be matched?</th></tr></thead><tbody>${
+      r.sent.map((x) => h`<tr><td data-label="When">${x.when}</td><td data-label="To">${x.to}</td><td data-label="Company">${x.company ?? '—'}</td><td data-label="Subject">${x.subject}</td>
+        <td data-label="Sent?">${x.state}</td><td data-label="Reply can be matched?">${x.id_kept ? 'Yes' : 'No'}</td></tr>`)}</tbody></table>`}
+  </details>`;
 }
 
 /* ================================================================== *
