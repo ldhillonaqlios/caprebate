@@ -30,7 +30,7 @@ import { COMPANY_SEARCH } from '../connectors/company-search.ts';
 import { ADDRESS_LOOKUP } from '../connectors/address-lookup.ts';
 import { switchedOn } from '../connectors/registers.ts';
 import { CLAUDE_SWITCHES } from '../connectors/claude.ts';
-import { zoomMissing } from '../connectors/zoom.ts';
+import { zoomBlockers } from './video-calls.ts';
 import { whatsappMissing } from '../connectors/whatsapp.ts';
 import { turnstileWhy } from '../connectors/turnstile.ts';
 import { ga4MeasurementId } from '../analytics.ts';
@@ -124,7 +124,7 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
       const w = turnstileWhy(st);
       return /is checked on the server with Cloudflare$/.test(w) ? { on: true, why: '' } : off(w.replace(/^the contact form’s security check /, 'The contact form’s security check '));
     }
-    case 'ZOOM': { const m = zoomMissing(st, app.zoomPolicy); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
+    case 'ZOOM': { const m = zoomBlockers(app); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'WHATSAPP': { const m = whatsappMissing(st, app.whatsappPolicy); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'REPLY_TIMER': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
     case 'GOADDRESS': return ADDRESS_LOOKUP.enabled ? { on: true, why: '' } : off('“Find my address” is not switched on.');

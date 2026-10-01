@@ -78,9 +78,9 @@ import {
 import { singleFile } from './multipart.ts';
 import { RANGE_QUALIFIER } from './shown-range.ts';
 import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from './audit-log.ts';
-import { activeMeeting, clientJoinUrl, joinPanel, reconcileVideoMeeting, withJoinScripts, zoomDeps, VIDEO_PAGE_HEADERS } from './video-calls.ts';
+import { activeMeeting, clientJoinUrl, joinPanel, reconcileVideoMeeting, withJoinScripts, zoomBlockers, zoomDeps, VIDEO_PAGE_HEADERS } from './video-calls.ts';
 import { sendVideoInvite } from './booking-invite.ts';
-import { hostZak, joinSignature, zoomMissing } from '../connectors/zoom.ts';
+import { hostZak, joinSignature } from '../connectors/zoom.ts';
 
 export type StaffDeps = {
   app: App;
@@ -342,7 +342,7 @@ export async function handleStaff(
     const m = bk.channel === 'video' && bk.cancelled_at === null ? activeMeeting(db, id) : undefined;
     if (m === undefined || bk.starts_at === null) {
       const why = bk.channel !== 'video' ? 'This is not a video call.' : bk.cancelled_at !== null ? 'This call was cancelled.'
-        : bk.starts_at === null ? 'Give the call a time first; its meeting is made then.' : zoomMissing(d.app.secrets, d.app.zoomPolicy).join(' ') || 'Zoom did not make a meeting for this call. Give it its time again to try once more, or send the client a link yourself.';
+        : bk.starts_at === null ? 'Give the call a time first; its meeting is made then.' : zoomBlockers(d.app).join(' ') || 'Zoom did not make a meeting for this call. Give it its time again to try once more, or send the client a link yourself.';
       return problem(res, actor, 'No video call to join', why, `/staff/calendar/${id}`);
     }
     const host = B.mayArrangeCalls(actor);
@@ -352,7 +352,7 @@ export async function handleStaff(
     }
     const zak = host ? await hostZak(zoomDeps(d.app)) : null;
     const sig = joinSignature(d.app.secrets, m.meeting_id, host && zak !== null ? 1 : 0, now());
-    if (sig === null) return problem(res, actor, 'No video call to join', zoomMissing(d.app.secrets, d.app.zoomPolicy).join(' '), `/staff/calendar/${id}`);
+    if (sig === null) return problem(res, actor, 'No video call to join', zoomBlockers(d.app).join(' '), `/staff/calendar/${id}`);
     const name = db.get<{ n: string }>('SELECT display_name AS n FROM users WHERE id = ?', [actor.id])?.n ?? 'Cap Rebate';
     const out = page({ title: `Video call · ${bk.business_name}`, nav: nav(actor), wide: true, body: h`
       <h1>Video call with ${bk.business_name}</h1>
@@ -374,7 +374,7 @@ export async function handleStaff(
     // 30 Sep 2026: a video call says whether its Zoom meeting is ready to join, and if not why.
     const video = bk.channel !== 'video' || bk.cancelled_at !== null ? undefined
       : activeMeeting(db, id) !== undefined ? { ready: true as const }
-      : { ready: false as const, why: bk.starts_at === null ? 'It has no time yet; its meeting is made when it is given one.' : zoomMissing(d.app.secrets, d.app.zoomPolicy).join(' ') || 'Zoom did not make a meeting. Give it its time again to try once more, or send the client a link yourself.' };
+      : { ready: false as const, why: bk.starts_at === null ? 'It has no time yet; its meeting is made when it is given one.' : zoomBlockers(d.app).join(' ') || 'Zoom did not make a meeting. Give it its time again to try once more, or send the client a link yourself.' };
     html(res, 200, bookingPage(actor, bk, B.bookingHistory(db, actor, id),
       B.assignableStaffIfPermitted(db, actor), slots, video));
     return 'handled';

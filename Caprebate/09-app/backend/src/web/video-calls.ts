@@ -28,7 +28,7 @@ import { BOOKING } from './engine.ts';
 import { SLOT_MINUTES } from './schedule.ts';
 import { localWhen } from './localtime.ts';
 import { h, type Safe } from './html.ts';
-import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, ZOOM_SDK_BASE, type ZoomDeps } from '../connectors/zoom.ts';
+import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, ZOOM_SDK_BASE, type ZoomDeps } from '../connectors/zoom.ts';
 
 /** A call that holds a moment: a telephone call (CB_BOOKING) or, since 30 Sep 2026, a video call. */
 export function booksATime(channel: string): boolean {
@@ -49,6 +49,14 @@ export function activeMeeting(db: Db, booking_id: string): Meeting | undefined {
 export function zoomDeps(app: App): ZoomDeps {
   return { audit: app.audit, now: app.now, transport: app.outside, secrets: app.secrets,
     ...(app.zoomPolicy === undefined ? {} : { policy_override: app.zoomPolicy }) };
+}
+
+/**
+ * 1 Oct 2026: everything that stops THIS app calling Zoom, in words: the keys, the transfer, and whether this copy is
+ * the test website (or was started with CAPREBATE_LOCAL_ZOOM=1). Empty means Zoom is on. Every screen asks this.
+ */
+export function zoomBlockers(app: App): string[] {
+  return zoomMissing(app.secrets, app.zoomPolicy, { outside: app.outside });
 }
 
 export type Reconciled = 'MADE' | 'MOVED' | 'CANCELLED' | 'NONE' | { readonly not_made: string };

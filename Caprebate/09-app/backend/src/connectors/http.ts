@@ -51,6 +51,15 @@ export const liveTransport: Transport = Object.assign(
   { [LIVE_MARK]: true },
 );
 
+/**
+ * 1 OCT 2026: WHETHER A TRANSPORT REALLY REACHES OUTSIDE — the platform's fetch, or the certificate one. A test's
+ * recorded answers (fixtureTransport) reach nobody, so a guard that keeps a local copy from calling a real service
+ * (Zoom: src/connectors/zoom.ts, zoomPlaceRefusal) leaves them alone.
+ */
+export function isLiveTransport(t: Transport): boolean {
+  return (t as { [LIVE_MARK]?: boolean })[LIVE_MARK] === true;
+}
+
 /* ------------------------------------------------------------------ the certificate-carrying transport */
 
 /**
@@ -419,7 +428,7 @@ export async function callOutside(deps: CallDeps, req: CallRequest): Promise<Cal
   const why = policyRefusal(policy);
   if (why !== null || policy === undefined) return refuse('REFUSED', why ?? 'not in the list');
   const env = deps.env ?? process.env;
-  if ((deps.transport as { [LIVE_MARK]?: boolean })[LIVE_MARK] === true && env.NODE_TEST_CONTEXT !== undefined && env.CAPREBATE_LIVE_SMOKE !== '1') {
+  if (isLiveTransport(deps.transport) && env.NODE_TEST_CONTEXT !== undefined && env.CAPREBATE_LIVE_SMOKE !== '1') {
     return refuse('REFUSED', 'a test tried to call a real service; tests use recorded answers');
   }
   const path = fill(req.endpoint, req.params ?? {});

@@ -11030,3 +11030,14 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **A slip, said:** the local copy used for the screenshot reads the real key file, so booking a test Zoom call there made a real meeting on Lakhbir's Zoom account (Friday 2 October 09:00). Its invite email was not sent (an invented address; refused by the guard). Lakhbir is told, and asked whether to cancel it.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 1 October 2026 — only the test website calls Zoom (Claude Code, cloud session)
+
+ Lakhbir: a local copy on the Mac (reading the real key file) booked a test Zoom call through the Communication tab and made a REAL meeting on our Zoom account. "Make Zoom refuse to call out unless the app is the deployed test website, or an explicit opt-in setting is on."
+
+-  **Built** (`src/connectors/zoom.ts`): `zoomPlaceRefusal` refuses a live call to Zoom unless Vercel says this is the test website (`VERCEL=1`, `VERCEL_ENV` production or preview, `VERCEL_URL` set) or the copy was started with `CAPREBATE_LOCAL_ZOOM=1` (exactly 1). It stops making, moving and deleting meetings and asking for the host's start token. A test's recorded answers are never refused (`isLiveTransport`, `src/connectors/http.ts`). `zoomBlockers(app)` (`src/web/video-calls.ts`) is what every screen asks, so the Communication tab, the calendar's call page, the call page and the API keys card say why in words; the start-up log's `zoomWhy` too.
+-  **Also:** a Zoom call booked with no meeting now says so ("Booked, but Zoom made no meeting, so the invite has no join link"); it said the link was on its way. One line of `test/communication.test.ts` restated for it.
+-  **Proof.** `test/zoom-local-guard.test.ts`, eight tests; sixteen single-line mutations each turned them red. `npm run check` 1942 pass (112 files) on the full copy. In the cloud clone six older tests cannot run (files kept only on the Mac: the SOP export, 01-rulebooks, the brand logo, the `.bak-phase144a` files), and the brand check cannot open the logo for the same reason; every other check green (CRM fold, plain words, register, analytics, drift `--expect 1279,439,403,1942`).
+-  **Looked at, not changed (reported to Lakhbir first):** WhatsApp and IONOS sending can reach real people from a local copy with the real key file; GoAddress spends the shared lookup allowance; Companies House, Postcodes.io and IONOS reading (read-only) affect no one.
+
+ **Claim cleared** in the commit that carries this record.
