@@ -126,6 +126,7 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
     }
     case 'ZOOM': { const m = zoomMissing(st, app.zoomPolicy); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'WHATSAPP': { const m = whatsappMissing(st, app.whatsappPolicy); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
+    case 'REPLY_TIMER': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
     case 'GOADDRESS': return ADDRESS_LOOKUP.enabled ? { on: true, why: '' } : off('“Find my address” is not switched on.');
     default: return off('Nothing uses this key yet.');
   }

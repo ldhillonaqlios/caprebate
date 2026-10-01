@@ -104,6 +104,8 @@ export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_S
   'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_TEMPLATE_LANGUAGE',
   // 30 Sep 2026: "Find my address" at the assessment (src/connectors/address-lookup.ts).
   'GOADDRESS_API_KEY',
+  // 1 Oct 2026: the outside timer's word, so it can wake the website to read email replies.
+  'REPLY_TIMER_TOKEN',
   // 30 Sep 2026: reading replies to contact@ (src/stubs/email-inbound.ts), read-only.
   'IONOS_IMAP_HOST', 'IONOS_IMAP_PORT', 'IONOS_IMAP_USER', 'IONOS_IMAP_PASSWORD']);
 

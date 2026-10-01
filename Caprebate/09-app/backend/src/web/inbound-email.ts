@@ -46,7 +46,8 @@ import {
   type ImapLogin, type InboundEmail, type Mailbox, type ParsedEmail, type RawEmail,
 } from '../stubs/email-inbound.ts';
 import { auditMailConnections } from '../stubs/email-provider.ts';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
+import type { SecretStore } from '../secrets.ts';
 import { redactSecrets } from '../secrets.ts';
 import { STATE_WORDS } from './email-chains.ts';
 
@@ -441,6 +442,23 @@ export function readingState(db: Db, actor: Actor, nowIso: string): ReadingState
       state: STATE_WORDS(r.sent_at, r.send_requested, r.last_error, nowIso), id_kept: r.provider_ref !== null,
     }));
   return { mark, received, sent };
+}
+
+/**
+ * 1 OCTOBER 2026 — THE REPLY TIMER. Lakhbir chose a free outside timer (cron-job.org) to wake the website every few
+ * minutes, so replies come in with nobody on the site: POST (or GET) /hooks/read-replies with the header
+ * "Authorization: Bearer <REPLY_TIMER_TOKEN>". Without that word, or with a short one set, it is refused and nothing is
+ * read; compared in constant time. It reads at most once every two minutes however often it is called. Its answer is
+ * counts only — never an address, a subject or a word of any email — so the timer service learns nothing.
+ */
+export const REPLY_TIMER_MIN_LENGTH = 32;
+
+export function timerMayRead(store: SecretStore, authorization: string | undefined): boolean {
+  const want = (store.forOwner('REPLY_TIMER').get('REPLY_TIMER_TOKEN') ?? '').trim();
+  if (want.length < REPLY_TIMER_MIN_LENGTH) return false;
+  const got = /^Bearer\s+(\S+)\s*$/i.exec(authorization ?? '')?.[1] ?? '';
+  const a = Buffer.from(got, 'utf8'), b = Buffer.from(want, 'utf8');
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 /** 1 Oct 2026: what the last read on this copy of the site found, in words — shown beside "Check for new email replies",

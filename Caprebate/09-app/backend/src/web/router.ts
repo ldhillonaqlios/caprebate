@@ -69,6 +69,7 @@ import { nameSwitches } from './navigation.ts';
 import { publicSlots, isBookable, SLOT_MINUTES } from './schedule.ts';
 import { activeMeeting, booksATime, clientMayJoin, joinPanel, reconcileVideoMeeting, withJoinScripts, VIDEO_PAGE_HEADERS } from './video-calls.ts';
 import { portalDashboard } from './portal-dashboard.ts';
+import * as IE from './inbound-email.ts';
 import { joinSignature } from '../connectors/zoom.ts';
 import { VIDEO_CALL_JS } from './video-call-script.ts';
 import { receiveWhatsApp } from './whatsapp.ts';
@@ -372,6 +373,21 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const r = receiveWhatsApp(d.app, raw0, typeof sig === 'string' ? sig : null);
     res.writeHead(r.status, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
     res.end(r.status === 200 ? 'ok' : 'refused');
+    return 'handled';
+  }
+  /* 1 OCT 2026: THE REPLY TIMER (src/web/inbound-email.ts, timerMayRead). No login: an outside timer calls it, with its
+     word in the Authorization header. Counts only in the answer. */
+  if (path === '/hooks/read-replies' && (method === 'POST' || method === 'GET')) {
+    const auth = req.headers['authorization'];
+    if (!IE.timerMayRead(d.app.secrets, typeof auth === 'string' ? auth : undefined)) {
+      res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
+      res.end('refused');
+      return 'handled';
+    }
+    const r = await IE.readRepliesIfDue(d.app);
+    res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
+    res.end(r === null ? (IE.lastReadWords(d.app)?.ok === false ? 'could not read the inbox' : 'read in the last two minutes')
+      : r.state === 'OFF' ? 'reading replies is off' : `read ${String(r.read)}, filed ${String(r.filed)}, to sort ${String(r.queued)}`);
     return 'handled';
   }
   if (path === IDENTITY_HOOK_PATH && method === 'POST') {
