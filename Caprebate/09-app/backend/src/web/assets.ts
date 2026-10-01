@@ -255,6 +255,17 @@ hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
 .wk-form .fl{margin:0}
 .wk-form .cta,.wk-form .help{grid-column:1/-1;justify-self:start}
 .chip-ok{background:var(--okbg);color:var(--ok);border-color:#b7d9c2}
+/* 1 Oct 2026 — the client's portal home as a dashboard (src/web/portal-dashboard.ts) */
+.pdash{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0 0 1.4rem}
+.pdash-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--white);padding:1rem 1.1rem;min-width:0}
+.pdash-card h2{font-size:22px;margin:0 0 .6rem}
+#where-you-are{grid-column:1/-1}
+.pdash-big{font-size:20px;font-weight:700;color:var(--ink);margin:.4rem 0}
+.pdash-list li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem;padding:.5rem 0;border-top:1px solid var(--line)}
+.pdash-list li:first-child{border-top:0}
+.pdash-list li.late .help{color:var(--stop)}
+.pdash-new strong{color:var(--ink)}
+@media (max-width:760px){.pdash{grid-template-columns:minmax(0,1fr)}}
 .keylist details>summary{text-decoration:none;color:var(--ink);font-weight:400}
 .keylist code{font-weight:700}
 .keyform{display:flex;flex-wrap:wrap;gap:.4rem .8rem;align-items:flex-end;margin:.4rem 0 .6rem}

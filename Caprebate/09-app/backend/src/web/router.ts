@@ -68,6 +68,7 @@ import { clientHelp } from './help.ts';
 import { nameSwitches } from './navigation.ts';
 import { publicSlots, isBookable, SLOT_MINUTES } from './schedule.ts';
 import { activeMeeting, booksATime, clientMayJoin, joinPanel, reconcileVideoMeeting, withJoinScripts, VIDEO_PAGE_HEADERS } from './video-calls.ts';
+import { portalDashboard } from './portal-dashboard.ts';
 import { joinSignature } from '../connectors/zoom.ts';
 import { VIDEO_CALL_JS } from './video-call-script.ts';
 import { receiveWhatsApp } from './whatsapp.ts';
@@ -1000,8 +1001,10 @@ async function portalRoutes(
     // 30 Sep 2026: each video call with a meeting gets its join link on the portal.
     const joins: Record<string, string> = {};
     for (const b of bks) { const m = b.channel === 'video' ? activeMeeting(db, b.id) : undefined; if (m !== undefined) joins[b.id] = `/call/${m.client_token}`; }
+    // 1 Oct 2026: the top of the portal as a dashboard (src/web/portal-dashboard.ts).
+    const dashboard = portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins });
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
-      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', joins, ...(welcome === undefined ? {} : { welcome }) }));
+      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', joins, dashboard, ...(welcome === undefined ? {} : { welcome }) }));
     return 'handled';
   }
 
@@ -1990,7 +1993,7 @@ function portalPage(
   slots: ReturnType<typeof publicSlots>, nowIso: string,
   dlv: readonly ClientDeliverable[] = [],
   share: readonly ClientShareChoice[] = [],
-  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[]; readonly sent?: boolean; readonly joins?: Readonly<Record<string, string>> } = {},
+  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[]; readonly sent?: boolean; readonly joins?: Readonly<Record<string, string>>; readonly dashboard?: Safe } = {},
 ): string {
   const open = tks.filter((t) => t.state === 'OPEN');
   const asked = reqs.filter((r) => r.state === 'REQUESTED');
@@ -2007,6 +2010,7 @@ function portalPage(
       <header class="highlights"><p class="eyebrow">${cls.length === 1 ? 'Your claim' : 'Your claims'}</p><h1>${business.name}</h1>
         <p><a class="btn btn-primary" href="/portal/messages">Send us a message</a> <a class="btn" href="#appointment">Book a call</a></p></header>
       ${extra.welcome ?? raw('')}
+      ${extra.dashboard ?? raw('')}
       ${cls.length === 0 ? raw('') : card('Your claims', portalClaimTiles(cls, named, business.name), { count: cls.length, id: 'your-claims' })}
       ${clientStepsCard(extra.done ?? [], cls.map((c) => ({ id: c.id, name: propertyIn(business.name, c.property) ?? 'Your claim' })))}
       <section class="card" id="contact-us"><div class="card-h"><h2>How to contact us</h2></div>
@@ -2023,11 +2027,11 @@ function portalPage(
             <p class="help">${CLIENT_RANGE_BASIS}</p>`}
       </section>
 
-      <section class="card" id="waiting-on-you"><div class="card-h"><h2>What we need from you</h2><span class="count">${open.length + asked.length}</span></div>
+      ${extra.dashboard !== undefined ? raw('') : h`<section class="card" id="waiting-on-you"><div class="card-h"><h2>What we need from you</h2><span class="count">${open.length + asked.length}</span></div>
         ${open.length + asked.length === 0 ? h`<p class="empty">Nothing at the moment. We are working on your claim, and we will tell you here if we need anything.</p>`
           : h`<ul class="plain">${open.map((t) => h`<li><a href="#question-${t.id}">${t.question}</a> <span class="help">— a question</span></li>`)}${
             asked.map((r) => h`<li><a href="#request-${r.id}">${r.type.label}</a> <span class="help">— a document, ${ukDatesIn(r.due.label)}</span></li>`)}</ul>`}
-      </section>
+      </section>`}
 
       <section class="card"><div class="card-h"><h2>Questions we still need answered</h2></div>
       ${open.length === 0

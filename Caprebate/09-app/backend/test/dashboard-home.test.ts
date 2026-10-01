@@ -224,3 +224,55 @@ describe('Admin’s tab: people and API keys', () => {
     } finally { made.app.secrets = before; (made.app as { baseSecrets?: unknown }).baseSecrets = was; }
   });
 });
+
+describe('the client’s portal home as a dashboard', () => {
+  test('five cards at the top: where the claim is, what we need, what we are working on, the next call, and what is new', async () => {
+    const db = made.app.db;
+    const hash = await made.app.hasher.hash(PASSWORD);
+    db.run('INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,?)',
+      ['u-dh-client', 'dh.client@example.invalid', 'dh.client@example.invalid', 'Dash client', 'CLIENT', hash, T, T, 'b-dh-1']);
+    // A message from us they have not read.
+    db.run("INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, 'b-dh-1', NULL, 'TO_CLIENT', 'STAFF', 'u-dh-sales', NULL, 'Your survey is booked.', ?)", [randomUUID(), T]);
+    const c = 'client' as unknown as Who;
+    await post(c, '/login', { email: 'dh.client@example.invalid', password: PASSWORD });
+    const page = (await req(c, '/portal')).body;
+    const dash = /<div class="pdash">[\s\S]*?<\/section><\/div>/.exec(page)?.[0] ?? '';
+    assert.deepEqual([...dash.matchAll(/<section class="pdash-card" id="([a-z-]+)"/g)].map((m) => m[1]), ['where-you-are', 'waiting-on-you', 'working-on', 'next-call', 'new-for-you']);
+    assert.equal((page.match(/id="waiting-on-you"/g) ?? []).length, 1, 'What we need from you is drawn twice');
+    assert.equal((dash.match(/<li class="(done|now|todo)"/g) ?? []).length, 6);
+    assert.match(dash, /Step 1 of 6: Your estimate/);
+    // The Zoom call at 14:00 (15:00 is a telephone call), and how to move it.
+    assert.match(dash, /<p class="pdash-big">Thursday 1 Oct 2026, 14:00<\/p>\s*<p>A video call, here in your portal\.<\/p>/);
+    assert.match(dash, /<a class="btn" href="#appointment">Move or cancel it<\/a>/);
+    assert.match(dash, /And 1 more booked\./);
+    assert.match(dash, /<strong>A new message from us<\/strong> <a class="cta" href="\/portal\/messages">Read it<\/a>/);
+    assert.ok(page.indexOf('class="pdash"') < page.indexOf('id="contact-us"'), 'the dashboard is not at the top');
+  });
+
+  test('each card’s button: answer a question, send a document, join the video call; only what is recent is new', async () => {
+    const { portalDashboard } = await import('../src/web/portal-dashboard.ts');
+    const html = String(portalDashboard({
+      db: made.app.db, actor: { id: 'u-dh-client', role: 'CLIENT' } as never, business_id: 'b-dh-1', nowIso: T,
+      bookings: [{ id: 'bk-x', channel: 'video', starts_at: '2026-10-02T09:00:00.000Z', cancelled_at: null }, { id: 'bk-gone', channel: 'video', starts_at: '2026-10-01T10:00:00.000Z', cancelled_at: T }],
+      tasks: [{ id: 't-1', state: 'OPEN', question: 'Who owns the building?' }, { id: 't-2', state: 'ANSWERED', question: 'Answered already' }],
+      requests: [{ id: 'r-1', state: 'REQUESTED', type: { label: 'Floor plans' }, due: { label: 'due by 5 Oct 2026', overdue: false } }],
+      done: [
+        { claim_id: null, key: 'SURVEY_BOOKED', state: 'DONE', words: 'Cap Rebate has booked your survey', on: '2026-09-25' },
+        { claim_id: null, key: 'COMPANY', state: 'DONE', words: 'Cap Rebate has checked your company details', on: '2026-07-01' },
+      ] as never,
+      delivered: [{ label: 'client report', version: 1, issued_on: '2026-09-30', note: '' }],
+      joins: { 'bk-x': '/call/tok-123' },
+    }));
+    assert.match(html, /Who owns the building\? <span class="help">— a question<\/span><\/span> <a class="cta" href="#question-t-1">Answer it<\/a>/);
+    assert.doesNotMatch(html, /Answered already/);
+    assert.match(html, /Floor plans <span class="help">— a document, due by 5 Oct 2026<\/span><\/span> <a class="cta" href="#request-r-1">Send it<\/a>/);
+    assert.match(html, /Friday 2 Oct 2026, 10:00[\s\S]*?<a class="cta" href="\/call\/tok-123">Join the video call<\/a>/);
+    assert.doesNotMatch(html, /And \d+ more booked/, 'a cancelled call was counted');
+    const fresh = /<section class="pdash-card" id="new-for-you"[\s\S]*?<\/section>/.exec(html)?.[0] ?? '';
+    assert.match(fresh, /Cap Rebate has booked your survey/);
+    assert.match(fresh, /We issued your client report/);
+    assert.doesNotMatch(fresh, /checked your company details/, 'something from July is "new"');
+    const done = /<section class="pdash-card" id="working-on"[\s\S]*?<\/section>/.exec(html)?.[0] ?? '';
+    assert.ok(done.indexOf('booked your survey') < done.indexOf('checked your company details'), 'not newest first');
+  });
+});
