@@ -288,6 +288,20 @@ function makeStore(state: SecretsState, why: string, values: Map<string, string>
   return Object.freeze(store);
 }
 
+/**
+ * 1 OCT 2026: THE SAME KEYS, WITH SOME REPLACED — the keys Admin saved on Home's Admin tab (src/web/saved-keys.ts), over
+ * the key file or the website's settings. Every key is read from `base` by its own owner, so nothing crosses owners.
+ */
+export function overlaySecrets(base: SecretStore, over: ReadonlyMap<string, string>, why: string): SecretStore {
+  const values = new Map<string, string>();
+  for (const k of SECRET_KEYS) {
+    const v = base.forOwner(k.owner).get(k.name);
+    if (v !== null) values.set(k.name, v);
+  }
+  for (const [n, v] of over) if (KEY_OF_NAME.get(n) === n) values.set(n, v);
+  return makeStore(values.size > 0 ? 'LOADED' : base.state, why, values, base.readable_by_others);
+}
+
 /** An empty store: every connector NOT_CONFIGURED. What a test, and a machine with no key file, get. */
 export function emptySecrets(why = 'no key file is in use'): SecretStore {
   return makeStore('NO_FILE', why, new Map(), false);

@@ -17,6 +17,7 @@ import { join } from 'node:path';
 import { createApp } from '../src/server.ts';
 import { isBookable, staffSlots } from '../src/web/schedule.ts';
 import { dashView } from '../src/web/staff-dashboard.ts';
+import { secretsFromValues } from '../src/secrets.ts';
 
 // Thursday 1 October 2026, 10:00 in the UK (09:00 UTC).
 const T = '2026-10-01T09:00:00.000Z';
@@ -152,5 +153,74 @@ describe('Home as a dashboard', () => {
     assert.match(who, /<td data-label="Who">Dash admin<\/td><td data-label="Role">admin<\/td>\s*<td data-label="Now"><span class="chip chip-ok">Working<\/span><\/td>\s*<td data-label="Today">10:00 to 10:00<\/td>/);
     assert.match(who, /<td data-label="Who">Dash sales<\/td>[\s\S]*?Working/);
     assert.match(page, /aria-labelledby="row-admin"/);
+  });
+});
+
+describe('Admin’s tab: people and API keys', () => {
+  test('People: everyone who can sign in with Reset password and Archive (never for yourself); archiving stops them at once and lists them as archived', async () => {
+    const page = (await req('admin', '/staff?view=admin')).body;
+    const people = section(page, 'people');
+    assert.match(people, /<td data-label="Who">Dash surveying<\/td>[\s\S]*?action="\/staff\/users\/u-dh-surveying\/temporary-password"[\s\S]*?action="\/staff\/users\/u-dh-surveying\/disable"/);
+    assert.doesNotMatch(people, /\/staff\/users\/u-dh-admin\/disable/, 'Admin was offered to archive themself');
+    assert.match(people, /<a class="cta" href="\/staff\/users#create-user">Add a person<\/a>/);
+    assert.match((await req('surveying', '/staff')).body, /Survey jobs|row-jobs/);
+    const r = await post('admin', '/staff/users/u-dh-surveying/disable', { back: '/staff?view=admin' });
+    assert.equal(r.location, '/staff?view=admin&done=archived#people');
+    assert.notEqual((await req('surveying', '/staff')).status, 200, 'an archived person is still signed in');
+    assert.match(section((await req('admin', '/staff?view=admin')).body, 'people'), /<summary>Archived \(1\)<\/summary>[\s\S]*Dash surveying/);
+    // From the Users page it still goes back there.
+    assert.equal((await post('admin', '/staff/users/u-dh-accounting/disable', {})).location, '/staff/users?done=disabled');
+  });
+
+  test('API keys: where each comes from, never a value; saved only with Admin’s own password, sealed, and in use at once; taken off, the key file’s again', async () => {
+    const before = made.app.secrets;
+    const sealKey = Buffer.alloc(32, 7).toString('base64');
+    made.app.secrets = secretsFromValues({ CAPREBATE_MFA_KEY: sealKey, GOADDRESS_API_KEY: 'file-value-0001' });
+    try {
+      const page = section((await req('admin', '/staff?view=admin')).body, 'keys');
+      assert.match(page, /<code>GOADDRESS_API_KEY<\/code> <span class="chip chip-ok">From the key file or the website’s settings<\/span>/);
+      assert.match(page, /<code>ZOOM_CLIENT_SECRET<\/code> <span class="chip">Not set<\/span>/);
+      assert.doesNotMatch(page, /CAPREBATE_MFA_KEY<\/code>|HMLR_BG_PASSWORD/, 'the sealing key, or a retired one, was offered');
+      assert.doesNotMatch(page, /file-value-0001/);
+      assert.match(page, /<input class="fi" id="kv-GOADDRESS_API_KEY" name="value" type="password"/);
+      // Not Sales'; and not without Admin's own password.
+      assert.match((await post('sales', '/staff/keys/GOADDRESS_API_KEY', { value: 'x', password: PASSWORD })).body, /Only Admin can change a key/);
+      assert.match((await post('admin', '/staff/keys/GOADDRESS_API_KEY', { value: 'new-value-23456', password: 'not it' })).body, /That is not your password/);
+      assert.equal(made.app.db.get<{ n: number }>('SELECT count(*) AS n FROM saved_keys')!.n, 0);
+      const r = await post('admin', '/staff/keys/GOADDRESS_API_KEY', { value: 'new-value-23456', password: PASSWORD });
+      assert.equal(r.location, '/staff?view=admin&done=key-saved#key-GOADDRESS_API_KEY');
+      const row = made.app.db.get<{ sealed: string }>('SELECT sealed FROM saved_keys')!;
+      assert.match(row.sealed, /^cbkey1:/);
+      assert.ok(!row.sealed.includes('new-value-23456'), 'kept as text');
+      assert.equal(made.app.secrets.forOwner('GOADDRESS').get('GOADDRESS_API_KEY'), 'new-value-23456', 'not in use');
+      assert.equal(made.app.secrets.forOwner('SIGN_IN').get('CAPREBATE_MFA_KEY'), sealKey, 'the other keys were lost');
+      const after = (await req('admin', '/staff?view=admin&done=key-saved')).body;
+      assert.match(section(after, 'keys'), /<code>GOADDRESS_API_KEY<\/code> <span class="chip chip-ok">Saved here<\/span>/);
+      assert.doesNotMatch(after, /new-value-23456/);
+      const audit = made.app.db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'KEY_SAVED'")!;
+      assert.equal(JSON.parse(audit.detail).key, 'GOADDRESS_API_KEY');
+      assert.ok(!audit.detail.includes('new-value'), 'the value is in the audit log');
+      // A sealed value copied onto another key's name does not open: it is never used, and the page says so.
+      made.app.db.run('INSERT INTO saved_keys (id, name, sealed, set_by, set_at) VALUES (?, ?, ?, ?, ?)', [randomUUID(), 'ZOOM_CLIENT_SECRET', row.sealed, 'u-dh-admin', T]);
+      assert.match(section((await req('admin', '/staff?view=admin')).body, 'keys'), /<code>ZOOM_CLIENT_SECRET<\/code> <span class="chip">Saved here, but this server cannot open it<\/span>/);
+      assert.equal(made.app.secrets.forOwner('ZOOM').get('ZOOM_CLIENT_SECRET'), null);
+      assert.throws(() => made.app.db.run('UPDATE saved_keys SET sealed = NULL'), /never edited/);
+      // Taken off: the key file's value again.
+      assert.equal((await post('admin', '/staff/keys/GOADDRESS_API_KEY/unsave', { password: PASSWORD })).location, '/staff?view=admin&done=key-unsaved#key-GOADDRESS_API_KEY');
+      assert.equal(made.app.secrets.forOwner('GOADDRESS').get('GOADDRESS_API_KEY'), 'file-value-0001');
+    } finally { made.app.secrets = before; delete (made.app as { baseSecrets?: unknown }).baseSecrets; }
+  });
+
+  test('without the sealing key nothing can be saved, and the page says what is missing', async () => {
+    const before = made.app.secrets;
+    made.app.secrets = secretsFromValues({ GOADDRESS_API_KEY: 'file-value-0001' });
+    const was = (made.app as { baseSecrets?: unknown }).baseSecrets;
+    (made.app as { baseSecrets?: unknown }).baseSecrets = made.app.secrets;
+    try {
+      const page = section((await req('admin', '/staff?view=admin')).body, 'keys');
+      assert.match(page, /Keys cannot be saved here until CAPREBATE_MFA_KEY is set/);
+      assert.doesNotMatch(page, /name="value"/);
+      assert.match((await post('admin', '/staff/keys/WHATSAPP_ACCESS_TOKEN', { value: 'abc', password: PASSWORD })).body, /Keys cannot be saved here until CAPREBATE_MFA_KEY is set/);
+    } finally { made.app.secrets = before; (made.app as { baseSecrets?: unknown }).baseSecrets = was; }
   });
 });

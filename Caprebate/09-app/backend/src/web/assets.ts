@@ -255,6 +255,11 @@ hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
 .wk-form .fl{margin:0}
 .wk-form .cta,.wk-form .help{grid-column:1/-1;justify-self:start}
 .chip-ok{background:var(--okbg);color:var(--ok);border-color:#b7d9c2}
+.keylist details>summary{text-decoration:none;color:var(--ink);font-weight:400}
+.keylist code{font-weight:700}
+.keyform{display:flex;flex-wrap:wrap;gap:.4rem .8rem;align-items:flex-end;margin:.4rem 0 .6rem}
+.keyform>div{flex:1 1 14rem;min-width:0}
+.keyform .fl{margin:0 0 .2rem}
 @media (max-width:900px){.dash-grid{grid-template-columns:minmax(0,1fr)}.wk{grid-template-columns:minmax(0,1fr)}.wk-day{min-height:0}}
 @media (max-width:600px){.act{grid-template-columns:minmax(0,1fr)}.act-cta{justify-self:start}}
 .vc-root{width:100%;max-width:1000px;min-height:0}

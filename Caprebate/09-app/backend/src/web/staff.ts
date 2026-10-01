@@ -41,6 +41,7 @@ import { settingsBody, settingsTiles } from './admin-tiles.ts';
 import { homeRows } from './home.ts';
 import { dashboard, dashView } from './staff-dashboard.ts';
 import { addBlock, removeBlock } from './time-blocks.ts';
+import { saveKey } from './saved-keys.ts';
 import { refillForm, typedValues } from './refill.ts';
 import { welcomeCard, why } from './components.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
@@ -534,6 +535,8 @@ export async function handleStaff(
 
   const disableMatch = /^\/staff\/users\/([A-Za-z0-9-]+)\/disable$/.exec(path);
   if (disableMatch && method === 'POST') {
+    // 1 Oct 2026: "Archive" on Home's Admin tab posts here too, and goes back there.
+    const fromHome = (await form(req)).get('back') === '/staff?view=admin';
     try {
       S.disableUser(d.app.deps, actor, disableMatch[1] ?? '');
     } catch (e) {
@@ -551,7 +554,17 @@ export async function handleStaff(
         object_type: 'user', object_id: disableMatch[1] ?? '', detail: { photo_deleted: true, because: 'ACCOUNT_DISABLED' },
       });
     }
-    redirect(res, '/staff/users?done=disabled'); return 'handled';
+    redirect(res, fromHome ? '/staff?view=admin&done=archived#people' : '/staff/users?done=disabled'); return 'handled';
+  }
+
+  /* ------------------------------------------ 1 OCT 2026 · Admin saves an API key, sealed (src/web/saved-keys.ts) */
+  const keyMatch = /^\/staff\/keys\/([A-Z0-9_]{1,64})(\/unsave)?$/.exec(path);
+  if (keyMatch && method === 'POST') {
+    const f = await form(req);
+    const unsave = keyMatch[2] !== undefined;
+    const r = await saveKey(d.app, actor, keyMatch[1] ?? '', unsave ? null : (f.get('value') ?? ''), f.get('password') ?? '');
+    if (!r.ok) return problem(res, actor, 'Not saved', r.why, '/staff?view=admin#keys');
+    redirect(res, `/staff?view=admin&done=${unsave ? 'key-unsaved' : 'key-saved'}#key-${keyMatch[1] ?? ''}`); return 'handled';
   }
 
   /* ---------------------------------- PHASE 146g · addresses we cannot email */
@@ -1288,7 +1301,7 @@ function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | un
           <button class="cta" type="submit">Assign</button>
         </form>`)}
 
-      <h3>Create a user</h3>
+      <h3 id="create-user">Create a user</h3>
       <form method="post" action="/staff/users/create">
         <label class="fl" for="new-user-email">Username — an email address</label>
         <input class="fi" id="new-user-email" name="email" required>

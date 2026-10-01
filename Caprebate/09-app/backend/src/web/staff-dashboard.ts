@@ -38,13 +38,14 @@ import { financeDashboard } from './invoices.ts';
 import { assertFinanceSection } from './finance.ts';
 import { assertSurveySection, surveyorJobs } from './surveyor.ts';
 import { isLateNewLead } from './working-days.ts';
-import { localClock, localDate, localPartsOf, ukDate, WEEKDAY_NAMES } from './localtime.ts';
+import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES } from './localtime.ts';
 import { addLocalDays, startOfLocalDay, startOfLocalWeek } from './schedule.ts';
 import * as B from './backoffice.ts';
 import * as M from './messages.ts';
 import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayRow } from './home.ts';
 import { blocksFor, mayBlockTime } from './time-blocks.ts';
 import { newDot } from './client-layout.ts';
+import { keysView } from './saved-keys.ts';
 
 export type DashView = 'sales' | 'accounting' | 'surveying' | 'admin';
 
@@ -236,7 +237,45 @@ export function staffWorking(app: App, actor: Actor): WorkingRow[] {
     .map((r) => ({ name: r.display_name, role: r.role, now: r.live > 0, first: r.first === null ? null : (r.first < dayStart ? dayStart : r.first), last: r.last }));
 }
 
-function adminView(app: App, actor: Actor): Safe[] {
+/** People who can sign in, and those archived: Admin's tools for each, on the Admin tab. */
+function peopleCard(app: App, actor: Actor): Safe {
+  const people = app.db.all<{ id: string; display_name: string; role: string; disabled_at: string | null; last: string | null }>(
+    "SELECT u.id, u.display_name, u.role, u.disabled_at, (SELECT max(s.last_seen_at) FROM sessions s WHERE s.user_id = u.id) AS last FROM users u WHERE u.role <> 'CLIENT' ORDER BY u.display_name");
+  const now = app.now();
+  const active = people.filter((p) => p.disabled_at === null);
+  const archived = people.filter((p) => p.disabled_at !== null);
+  const back = h`<input type="hidden" name="back" value="/staff?view=admin">`;
+  return card('people', 'People', h`<table class="stack dash-table"><thead><tr><th>Who</th><th>Role</th><th>Last signed in</th><th>Do</th></tr></thead><tbody>${
+    active.map((p) => h`<tr><td data-label="Who">${p.display_name}</td><td data-label="Role">${p.role.replace(/_/g, ' ').toLowerCase()}</td>
+      <td data-label="Last signed in">${p.last === null ? h`<span class="help">Never</span>` : localStamp(p.last, now)}</td>
+      <td data-label="Do"><form method="post" action="/staff/users/${p.id}/temporary-password" class="inline"><button class="linkish" type="submit">Reset password</button></form>${
+        p.id === actor.id ? raw('') : h` · <form method="post" action="/staff/users/${p.id}/disable" class="inline">${back}<button class="linkish" type="submit">Archive</button></form>`}</td></tr>`)}</tbody></table>
+    <p><a class="cta" href="/staff/users#create-user">Add a person</a> <a href="/staff/users">Roles and second steps</a></p>
+    <p class="help">Reset password makes a temporary one, shown to you once, and signs them out. Archive stops them signing in at once; what they did stays.</p>
+    ${archived.length === 0 ? raw('') : h`<details><summary>Archived (${String(archived.length)})</summary><ul class="dash-list">${archived.map((p) => h`<li>${p.display_name} <span class="help">· ${p.role.replace(/_/g, ' ').toLowerCase()} · archived ${localStamp(p.disabled_at ?? '', now)}</span></li>`)}</ul></details>`}`);
+}
+
+const FROM_WORDS: Readonly<Record<string, string>> = { SAVED: 'Saved here', FILE: 'From the key file or the website’s settings', NOT_SET: 'Not set', UNREADABLE: 'Saved here, but this server cannot open it' };
+
+/** Every key Admin may change: where each comes from, and a box to save a new one. Never a value. */
+function keysCard(app: App, actor: Actor, done: string | null): Safe {
+  const v = keysView(app, actor);
+  return card('keys', 'API keys', h`${done === 'key-saved' ? h`<p class="saved" role="status">Saved and locked. It is in use from now on.</p>` : raw('')}${
+    done === 'key-unsaved' ? h`<p class="saved" role="status">Taken off. The key file’s value, or the website’s setting, is in use again.</p>` : raw('')}
+    ${v.why_not === null ? raw('') : h`<div class="gate" role="note">${v.why_not}</div>`}
+    <p class="help">A key you save is locked before it is stored, and is never shown again — here or anywhere. Saving needs your own password.</p>
+    <ul class="dash-list keylist">${v.rows.map((r) => h`<li id="key-${r.name}"><details><summary><code>${r.name}</code> <span class="chip${r.from === 'NOT_SET' || r.from === 'UNREADABLE' ? '' : ' chip-ok'}">${FROM_WORDS[r.from] ?? r.from}</span></summary>
+      <p class="help">${r.what}${r.saved === null ? '' : `. Saved ${r.saved}.`}</p>
+      ${!v.can_save ? raw('') : h`<form method="post" action="/staff/keys/${r.name}" class="keyform">
+        <div><label class="fl" for="kv-${r.name}">New value</label><input class="fi" id="kv-${r.name}" name="value" type="${r.secret ? 'password' : 'text'}" autocomplete="off" required maxlength="4096"></div>
+        <div><label class="fl" for="kp-${r.name}">Your password</label><input class="fi" id="kp-${r.name}" name="password" type="password" autocomplete="current-password" required></div>
+        <button class="cta" type="submit">Save it</button></form>`}
+      ${r.from !== 'SAVED' && r.from !== 'UNREADABLE' ? raw('') : h`<form method="post" action="/staff/keys/${r.name}/unsave" class="keyform">
+        <div><label class="fl" for="ku-${r.name}">Your password</label><input class="fi" id="ku-${r.name}" name="password" type="password" autocomplete="current-password" required></div>
+        <button class="btn-quiet" type="submit">Use the key file’s value again</button></form>`}</details></li>`)}</ul>`);
+}
+
+function adminView(app: App, actor: Actor, done: string | null = null): Safe[] {
   const rows = staffWorking(app, actor);
   const working = rows.filter((r) => r.now).length;
   const today = rows.filter((r) => r.last !== null).length;
@@ -250,6 +289,9 @@ function adminView(app: App, actor: Actor): Safe[] {
       { label: 'signed in today', value: String(today), sub: `of ${rows.length} staff`, href: '#staff-working' },
     ]),
     card('staff-working', 'Who is working', h`${table}<p class="help">Working now means seen in the last 30 minutes. Times are from their sign-ins today.</p>`),
+    ...(done === 'archived' ? [h`<p class="saved" role="status">Archived. They cannot sign in, and what they did stays.</p>`] : []),
+    peopleCard(app, actor),
+    keysCard(app, actor, done),
     ...adminRow(actor, app),
   ];
 }
@@ -262,7 +304,7 @@ export function dashboard(app: App, actor: Actor, view: DashView, q: { week: str
   const now = app.now();
   const parts: Safe[] = [];
   if (view === 'admin') {
-    parts.push(...adminView(app, actor));
+    parts.push(...adminView(app, actor, q.done));
   } else if (view === 'sales') {
     const leads = opens(actor, assertLeadSection)
       ? leadsList(app.db, actor, { filters: {}, sort: 'age' }).rows.filter((l) => l.claim === null && l.status.key === 'NEW') : [];

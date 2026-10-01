@@ -37,6 +37,7 @@ import { SharedObjectStore, type BlobClient } from './web/shared-objectstore.ts'
 import { sealKeyFromEnv, type KeepOriginals } from './web/originals.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, sendingOn, smtpLoginFromKeyFile, smtpProvider } from './stubs/email-provider.ts';
 import { isInventedAddress } from './stubs/email.ts';
+import { refreshSavedKeys } from './web/saved-keys.ts';
 import { openKeptOriginal } from './web/uploads.ts';
 
 function readCookie(req: IncomingMessage, name: string): string | undefined {
@@ -174,6 +175,8 @@ export async function createApp(
 
   const server = createServer((req, res) => {
     const since = app.now();
+    // 1 Oct 2026: a key Admin saved on another copy of the website is read here from this request on (src/web/saved-keys.ts).
+    try { refreshSavedKeys(app); } catch { /* a database without migration 067 yet keeps the keys it has */ }
     const end = res.end.bind(res) as (...a: unknown[]) => ServerResponse;
     let ending = false;
     (res as unknown as { end: (...a: unknown[]) => ServerResponse }).end = (...a: unknown[]): ServerResponse => {
