@@ -43,7 +43,22 @@ export type DbOptions = {
   readonly authToken?: string;
   /** Tests only: open a memory or file database through libsql instead of node:sqlite, to prove the two agree. */
   readonly engine?: 'node:sqlite' | 'libsql';
+  /** Tests only: how the engine is opened (and opened again), so a dropped connection can be shown. */
+  readonly openEngine?: () => Engine;
 };
+
+/**
+ * 1 OCTOBER 2026 — A CONNECTION TURSO DROPPED IS OPENED AGAIN. The test website's build empties and refills its lasting
+ * database; on 1 Oct 2026 every refill stopped part way with Turso's "stream not found" (a connection the server no
+ * longer holds), so the database was left half filled and every copy of the website ran on its own memory — replies
+ * never met the emails they answered, and sign-ins did not last. Now a call that meets a dropped connection opens it
+ * again and is made once more; a transaction that meets one is begun again from the start (the server undid it when the
+ * connection went, so nothing of it is kept). Only for a remote database: a file or memory has no connection to lose.
+ */
+export function droppedConnection(e: unknown): boolean {
+  const m = String((e as { message?: unknown } | null)?.message ?? e);
+  return /stream not found|stream expired|stream is closed|invalid baton|baton/i.test(m);
+}
 
 /** The addresses that mean a remote libSQL database. Plain http:// is refused: a token never travels unencrypted. */
 const REMOTE_ADDRESS = /^(libsql|https):\/\/[^\s/]+/;
@@ -53,7 +68,7 @@ type Statement = {
   get(...p: Param[]): unknown;
   all(...p: Param[]): unknown[];
 };
-type Engine = { exec(sql: string): unknown; prepare(sql: string): Statement; close(): void };
+export type Engine = { exec(sql: string): unknown; prepare(sql: string): Statement; close(): void };
 
 function openLibsql(location: string, authToken: string | undefined): Engine {
   const Database = createRequire(import.meta.url)('libsql') as new (path: string, opts?: { authToken?: string }) => Engine;
@@ -86,6 +101,8 @@ export function dbKind(location: string): DbKind {
 
 export class Db {
   #db: Engine;
+  #open: (() => Engine) | null = null;
+  #depth = 0;
   /** Where this database is. Read it; never infer it from anything a request carries. */
   readonly kind: DbKind;
   /** Which library answers: node:sqlite, built into Node, or libsql (always, for a remote database). */
@@ -94,10 +111,14 @@ export class Db {
   constructor(location = ':memory:', opts: DbOptions = {}) {
     this.kind = dbKind(location);
     this.engine = this.kind === 'remote' || opts.engine === 'libsql' ? 'libsql' : 'node:sqlite';
-    if (this.kind === 'remote') {
+    if (opts.openEngine !== undefined) {
+      this.#open = opts.openEngine;
+      this.#db = opts.openEngine();
+    } else if (this.kind === 'remote') {
       const token = (opts.authToken ?? '').trim();
       if (token === '') throw new Error('A remote database needs its token.');
-      this.#db = openLibsql(location, token);
+      this.#open = () => openLibsql(location, token);
+      this.#db = this.#open();
     } else {
       this.#db = this.engine === 'libsql' ? openLibsql(location, undefined) : new DatabaseSync(location) as unknown as Engine;
     }
@@ -111,23 +132,42 @@ export class Db {
     if (this.kind === 'file') this.#db.exec(`PRAGMA busy_timeout = ${BUSY_TIMEOUT_MS}`);
   }
 
+  /** Open the connection again (a remote one Turso dropped). Never for a file or memory. */
+  #reopen(): void {
+    if (this.#open === null) return;
+    try { this.#db.close(); } catch { /* already gone */ }
+    this.#db = this.#open();
+    this.#db.exec('PRAGMA foreign_keys = ON');
+  }
+
+  /** One call; if the connection was dropped (and this is not inside a transaction), open it again and call once more. */
+  #call<T>(f: () => T): T {
+    try {
+      return f();
+    } catch (e) {
+      if (this.#open === null || this.#depth > 0 || !droppedConnection(e)) throw e;
+      this.#reopen();
+      return f();
+    }
+  }
+
   /** Schema only. Never accepts caller data — migrations and DDL exclusively. */
   execDdl(sql: string): void {
-    this.#db.exec(sql);
+    this.#call(() => this.#db.exec(sql));
   }
 
   run(sql: string, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-    const r = this.#db.prepare(sql).run(...params);
+    const r = this.#call(() => this.#db.prepare(sql).run(...params));
     return { changes: Number(r.changes), lastInsertRowid: Number(r.lastInsertRowid) };
   }
 
   get<T extends Row = Row>(sql: string, params: readonly Param[] = []): T | undefined {
-    const r = this.#db.prepare(sql).get(...params) as T | undefined;
+    const r = this.#call(() => this.#db.prepare(sql).get(...params) as T | undefined);
     return r === undefined || this.engine === 'node:sqlite' ? r : asNodeSqliteRow(r);
   }
 
   all<T extends Row = Row>(sql: string, params: readonly Param[] = []): T[] {
-    const rows = this.#db.prepare(sql).all(...params) as T[];
+    const rows = this.#call(() => this.#db.prepare(sql).all(...params) as T[]);
     return this.engine === 'node:sqlite' ? rows : rows.map(asNodeSqliteRow);
   }
 
@@ -141,14 +181,25 @@ export class Db {
    * reads what it wrote. libSQL's own client asks for a write transaction the same way.
    */
   tx<T>(fn: () => T): T {
-    this.#db.exec('BEGIN IMMEDIATE');
-    try {
-      const out = fn();
-      this.#db.exec('COMMIT');
-      return out;
-    } catch (e) {
-      this.#db.exec('ROLLBACK');
-      throw e;
+    // 1 Oct 2026: a transaction whose connection was dropped is begun again once, from the start (see droppedConnection).
+    for (let attempt = 1; ; attempt++) {
+      if (this.#depth > 0) {
+        // Inside another transaction: part of it, as before.
+        return fn();
+      }
+      this.#call(() => this.#db.exec('BEGIN IMMEDIATE'));
+      this.#depth++;
+      try {
+        const out = fn();
+        this.#db.exec('COMMIT');
+        this.#depth--;
+        return out;
+      } catch (e) {
+        this.#depth--;
+        try { this.#db.exec('ROLLBACK'); } catch { /* a dropped connection has nothing to roll back */ }
+        if (attempt === 1 && this.#open !== null && droppedConnection(e)) { this.#reopen(); continue; }
+        throw e;
+      }
     }
   }
 
