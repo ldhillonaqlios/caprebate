@@ -97,15 +97,16 @@ export async function handleSurveyPack(
  * ================================================================== */
 
 /** A value's source, as a small label: the evidence, our draft, or the surveyor's name and time. */
-function sourceTag(d: PackPageDeps, s: Source | null): Safe {
+function sourceTag(d: PackPageDeps, s: Source | null, short = false): Safe {
   if (s === null) return h`<span class="pk-src pk-need">needed</span>`;
-  if (s.kind === 'EVIDENCE') return h`<span class="pk-src pk-ev">${s.text}</span>`;
+  if (s.kind === 'EVIDENCE') return h`<span class="pk-src pk-ev">${short ? 'Evidence' : s.text}</span>`;
   if (s.kind === 'DRAFT') return h`<span class="pk-src pk-dr">Our draft</span>`;
-  return h`<span class="pk-src pk-sv">${s.by_name ?? s.text}${s.at === null || s.at === undefined ? '' : ` · ${d.stamp(s.at)}`}</span>`;
+  // In a table cell, the surveyor's name; the time is in the list of changes beside it.
+  return h`<span class="pk-src pk-sv">${s.by_name ?? s.text}${short || s.at === null || s.at === undefined ? '' : ` · ${d.stamp(s.at)}`}</span>`;
 }
 
 function valueCell(d: PackPageDeps, v: Valued, words: (n: number | null) => string): Safe {
-  return h`<td class="n">${v.value === null ? h`<span class="pk-gap">—</span>` : words(v.value)}<br>${sourceTag(d, v.source)}</td>`;
+  return h`<td class="n">${v.value === null ? h`<span class="pk-gap">—</span>` : words(v.value)}<br>${sourceTag(d, v.source, true)}</td>`;
 }
 
 const PENCE = (n: number | null) => poundsWords(n);
@@ -237,19 +238,19 @@ function elementsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearc
       <td class="n">${PENCE(sum?.cost_pence ?? null)}</td>
       ${valueCell(d, l.qpct_bp, PCT)}
       <td class="n">${PENCE(sum?.qualifying_pence ?? null)}</td>
-      <td>${l.pool === null ? h`<span class="pk-src pk-need">needed</span>` : h`<span class="pool pool-${l.pool.toLowerCase()}">${l.pool === 'MP' ? 'Main' : 'Special'}</span><br>${sourceTag(d, l.pool_source)}`}</td>
+      <td>${l.pool === null ? h`<span class="pk-src pk-need">needed</span>` : h`<span class="pool pool-${l.pool.toLowerCase()}">${l.pool === 'MP' ? 'Main' : 'Special'}</span><br>${sourceTag(d, l.pool_source, true)}`}</td>
       <td>${v.may_edit && v.property !== null && !open ? h`<a href="${base(v.job.id)}?ch=10&edit=${encodeURIComponent(l.id)}#l-${l.id}">Edit</a>` : raw('')}</td></tr>
       ${open ? editRow(v, l, ch) : raw('')}`;
   };
   return h`
     <p class="lede">Every element that may qualify, from our fixture list. Each line's rebuild cost is how much × the rate. The share that qualifies gives its qualifying cost. Change any number, or take a line out, and every total follows.</p>
-    <table class="pk-table pk-lines"><thead><tr><th>Element</th><th class="n">How much</th><th class="n">Rate</th><th class="n">Rebuild cost</th><th class="n">Qualifies</th><th class="n">Qualifying cost</th><th>Pool</th><th></th></tr></thead>
+    <div class="pk-scroll"><table class="pk-table pk-lines"><thead><tr><th>Element</th><th class="n">How much</th><th class="n">Rate</th><th class="n">Rebuild cost</th><th class="n">Qualifies</th><th class="n">Qualifying cost</th><th>Pool</th><th></th></tr></thead>
     ${groups.filter((g) => g.lines.length > 0).map((g) => h`<tbody><tr class="pk-grp"><th colspan="8" scope="rowgroup">${g.title}</th></tr>${g.lines.map(row)}</tbody>`)}
-    <tbody><tr class="pk-tot"><th scope="row">Total</th><td></td><td></td><td class="n">${PENCE(v.sums.elements_cost_pence)}</td><td></td><td class="n">${PENCE(v.sums.elements_qualifying_pence)}</td><td></td><td></td></tr></tbody></table>
+    <tbody><tr class="pk-tot"><th scope="row">Total</th><td></td><td></td><td class="n">${PENCE(v.sums.elements_cost_pence)}</td><td></td><td class="n">${PENCE(v.sums.elements_qualifying_pence)}</td><td></td><td></td></tr></tbody></table></div>
     <p class="help">The totals here count only the lines with every value in. Chapter 4 shows the full split once nothing is missing.</p>
     ${v.may_edit && v.property !== null ? addForm(v, ch, q.get('add') === '1') : raw('')}
     ${out.length === 0 ? raw('') : h`<h2>Taken out (${String(out.length)})</h2><ul class="pk-out">${out.map((l) => h`<li id="l-${l.id}">${l.label}${l.removed_source === null ? raw('') : h` — ${l.removed_source.by_name ?? ''}: “${l.removed_source.reason ?? ''}”`}
-      ${v.may_edit ? h` <form method="post" action="${base(v.job.id)}/restore" class="inline">${hidden(v, ch)}<input type="hidden" name="line" value="${l.id}"><label class="vh" for="rr-${l.id}">Why put it back?</label><input id="rr-${l.id}" class="fi pk-why-s" name="reason" maxlength="500" required placeholder="Why put it back?"><button class="btn" type="submit">Put it back</button></form>` : raw('')}</li>`)}</ul>`}`;
+      ${v.may_edit ? h` <form method="post" action="${base(v.job.id)}/restore" class="inline">${hidden(v, ch)}<input type="hidden" name="line" value="${l.id}"><label class="vh" for="rr-${l.id}">Why put it back?</label><input id="rr-${l.id}" class="fi pk-why-s" name="reason" maxlength="500" required placeholder="Why put it back?"><button class="btn-quiet" type="submit">Put it back</button></form>` : raw('')}</li>`)}</ul>`}`;
 }
 
 function editRow(v: P.PackView, l: P.ViewLine, ch: number): Safe {
@@ -271,10 +272,10 @@ function editRow(v: P.PackView, l: P.ViewLine, ch: number): Safe {
     <div class="pk-side-forms">
       <form method="post" action="${base(v.job.id)}/remove" class="inline">${hidden(v, ch)}<input type="hidden" name="line" value="${l.id}">
         <label class="vh" for="rm-${l.id}">Why take it out?</label><input id="rm-${l.id}" class="fi pk-why-s" name="reason" maxlength="500" required placeholder="Why take it out? For example: not in this building">
-        <button class="btn pk-danger" type="submit">Take this line out</button></form>
+        <button class="btn-quiet pk-danger" type="submit">Take this line out</button></form>
       ${l.template === null ? raw('') : h`<form method="post" action="${base(v.job.id)}/revert" class="inline">${hidden(v, ch)}<input type="hidden" name="line" value="${l.id}">
         <label class="vh" for="rv-${l.id}">Why put our draft back?</label><input id="rv-${l.id}" class="fi pk-why-s" name="reason" maxlength="500" required placeholder="Why put our draft back?">
-        <button class="btn" type="submit">Put our draft back</button></form>`}
+        <button class="btn-quiet" type="submit">Put our draft back</button></form>`}
     </div></td></tr>`;
 }
 

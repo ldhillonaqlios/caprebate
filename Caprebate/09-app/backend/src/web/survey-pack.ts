@@ -188,7 +188,11 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
 
   const lineFrom = (id: string, label: string, unit: string, t: LineTemplate | null, added: ViewLine['added']): ViewLine => {
     const qtyDraft: Valued = t === null ? none
-      : t.qty_from.kind === 'GIA' ? (ev.gia.value === null ? none : { value: inputs.gia_milli_m2.value, source: inputs.gia_milli_m2.source })
+      // A whole-building system follows the pack's floor area, whoever gave it (the certificate, or the surveyor in
+      // chapter 9). Its source says so, and carries no reason: it is not a change made on this line.
+      : t.qty_from.kind === 'GIA' ? (inputs.gia_milli_m2.value === null ? none : { value: inputs.gia_milli_m2.value, source: {
+        kind: inputs.gia_milli_m2.source?.kind ?? 'EVIDENCE', text: 'The floor area (chapter 9)',
+        by_name: inputs.gia_milli_m2.source?.by_name ?? null, at: inputs.gia_milli_m2.source?.at ?? null } })
       : t.qty_from.kind === 'ROOMS' ? roomDraft(d.db, job.id, t.qty_from.rooms)
       : none;
     const draftSrc = (what: string): Source | null => t === null ? null : { kind: 'DRAFT', text: `Fixture list ${t.element_id}${t.authority === '' ? '' : ` — ${t.authority}`}${what}` };

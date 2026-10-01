@@ -11052,3 +11052,9 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## Ad-hoc, 1 October 2026 — the survey pack, stage 1 follow-up (Claude Code, cloud session)
+
+-  Found by driving the demo: when there was no energy certificate and the surveyor typed the floor area, the whole-building systems (electrics, water, heating, ventilation) did not follow it. They do now, labelled *The floor area (chapter 9)* with the surveyor's name. In the table a stamp shows the surveyor's name (the time is in the list of changes beside it), and the elements table scrolls rather than squeezing. Two tests extended; the new rule broken on purpose and caught. `npm run check` 1968 pass on the full copy (the same five Mac-only tests cannot run in the cloud clone).
+
+ **Claim cleared** in the commit that carries this record.
+

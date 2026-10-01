@@ -151,7 +151,7 @@ describe('the pack', () => {
     assert.ok(rows.every((x) => x.by_user === 'u-pk-sam' && x.reason === 'Lighting only in the clinical half'));
     // The page shows the stamp beside the number, and the change in the list.
     const page = (await req('u-pk-sam', `${P()}?ch=10`)).body;
-    assert.match(page, /<td class="n">£162<br><span class="pk-src pk-sv">Sam Surveyor · /);
+    assert.match(page, /<td class="n">£162<br><span class="pk-src pk-sv">Sam Surveyor<\/span><\/td>/);
     assert.match(page, /<strong>Sam Surveyor<\/strong> set the share that qualifies on <a href="[^"]+#l-LS-SR-001">General electrical system including lighting<\/a>\. “Lighting only in the clinical half”/);
     // The audit says what and where, never the value.
     const audit = made.app.db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'SURVEY_PACK_CHANGED' ORDER BY seq DESC LIMIT 1")!;
@@ -193,6 +193,10 @@ describe('the pack', () => {
     assert.equal(again.status, 400);
     assert.match(again.body, /That is already the value\. Nothing changed\./);
     assert.equal(seqOf(), s);
+    // The whole-building systems follow the pack's floor area, whoever gave it — and say where it came from.
+    const elec = view().lines.find((x) => x.id === 'LS-SR-002')!;
+    assert.deepEqual([elec.qty_milli.value, elec.qty_milli.source?.kind, elec.qty_milli.source?.text, elec.qty_milli.source?.by_name], [641_000, 'SURVEYOR', 'The floor area (chapter 9)', 'Sam Surveyor']);
+    assert.equal(elec.qty_milli.source?.reason ?? null, null, 'a floor area drafted onto a line reads as a change made on the line');
     // An empty box puts the energy certificate's figure back — and only a value of theirs can be put back.
     assert.equal((await post('u-pk-sam', `${P()}/value`, { field: 'gia', value: '', reason: 'Use the certificate', seq: s, ch: '9' })).status, 303);
     assert.deepEqual([view().inputs.gia_milli_m2.value, view().inputs.gia_milli_m2.source?.kind], [640_500, 'EVIDENCE']);
@@ -278,6 +282,11 @@ describe('the pack', () => {
     assert.equal(w.property?.id, 'p-pk-2b');
     assert.equal(w.inputs.gia_milli_m2.value, null, 'the east site’s certificate was read as the west site’s');
     assert.equal((await post('u-pk-sam', `${P(JOB2)}/property`, { property_id: 'p-pk-2a', ch: '10', seq: '0' })).status, 400, 'changed once set');
+    // No certificate for this site: the surveyor gives the floor area, and the whole-building systems follow it.
+    assert.equal(w.lines.find((x) => x.id === 'LS-SR-001')!.qty_milli.value, null);
+    assert.equal((await post('u-pk-sam', `${P(JOB2)}/value`, { field: 'gia', value: '420', reason: 'Measured from the plans', seq: seqOf(JOB2), ch: '9' })).status, 303);
+    const l = view(JOB2).lines.find((x) => x.id === 'LS-SR-001')!;
+    assert.deepEqual([l.qty_milli.value, l.qty_milli.source?.text, l.qty_milli.source?.by_name], [420_000, 'The floor area (chapter 9)', 'Sam Surveyor']);
   });
 
   test('a complete pack: the totals on the page are exactly the sums module’s, and the pools add up to the penny', async () => {
