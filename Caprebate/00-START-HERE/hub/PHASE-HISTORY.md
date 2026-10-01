@@ -11002,3 +11002,11 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Proof.** `test/dashboard-home.test.ts`, eleven tests; 29 single-line mutations across the three parts each turned them red (one survivor, a sort that did nothing, removed). `npm run check` exit 0, 1914 pass (108 files); harness 1279; phase3 439; phase9 403; drift (`--fast --expect 1279,439,403,1914`, Developer Spec to 1,914 and 4,035), CRM fold (routes described, five §4 references moved), plain words ("sealed" is banned on screen: the page says "locked"), brand, register and analytics green.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 1 October 2026 — why no email went out (Opus, Mac copy)
+
+ Lakhbir, from the test website: "Admin User, to lakhbir.s.dhillon@icloud.com · Today, 10:31 · Not sent: The mail server refused it: 0 the connection closed — check why i cant sent and receive emails".
+
+-  **Found, by signing in to IONOS and out again from the Mac with nothing sent:** (1) the key file names port 587, which starts in plain text and turns secure with STARTTLS; the adapter opened every port as 465, so IONOS hung up before its greeting ("wrong version number"); (2) `IONOS_SMTP_USER` names another mailbox — IONOS answers 535; the same password with `contact@caprebate.co.uk` (the IMAP user) answers 235.
+-  **Fixed in code:** `smtpProvider` speaks STARTTLS on any port but 465 (never a password in plain text; a server that will not go secure is refused), says why a connection dropped, and has `check()` — sign in and out, sending nothing. Checked live on 587 with the right user: accepted. `test/smtp-starttls.test.ts`, two tests, three mutations red; `npm run check` 1916 pass (109 files); drift (`--expect 1279,439,403,1916`), fold (five §4 references moved), plain words, brand, register, analytics green.
+-  **For Lakhbir:** `IONOS_SMTP_USER` is to be `contact@caprebate.co.uk`, in the key file and the website's settings (or saved on Home's Admin tab). The email that failed is not retried by itself: send it again.

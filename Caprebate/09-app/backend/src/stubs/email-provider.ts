@@ -59,6 +59,7 @@
  */
 
 import { connect as tlsConnect } from 'node:tls';
+import { connect as netConnect } from 'node:net';
 import type { Duplex } from 'node:stream';
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { Db } from '../db.ts';
@@ -307,10 +308,12 @@ function replyReader(sock: Duplex): () => Promise<{ code: number; text: string }
       if (w !== undefined) w(line); else lines.push(line);
     }
   });
+  let reason = '';
   const end = (): void => { ended = true; while (waiting.length > 0) waiting.shift()?.(null); };
   sock.on('end', end);
   sock.on('close', end);
-  sock.on('error', end);
+  // 1 Oct 2026: say WHY it closed — "wrong version number" is how a secure connection to the wrong port shows itself.
+  sock.on('error', (e: Error) => { reason = e.message.replace(/\s+/g, ' ').slice(0, 120); end(); });
   const nextLine = (): Promise<string | null> => {
     const l = lines.shift();
     if (l !== undefined) return Promise.resolve(l);
@@ -321,18 +324,70 @@ function replyReader(sock: Duplex): () => Promise<{ code: number; text: string }
     const text: string[] = [];
     for (;;) {
       const line = await nextLine();
-      if (line === null) return { code: 0, text: text.join(' ') || 'the connection closed' };
+      if (line === null) return { code: 0, text: text.join(' ') || (reason === '' ? 'the connection closed' : `the connection closed (${reason})`) };
       text.push(line.slice(4));
       if (line.length < 4 || line[3] === ' ') return { code: Number(line.slice(0, 3)) || 0, text: text.join(' ') };
     }
   };
 }
 
+/**
+ * 1 OCT 2026 — PORT 587 SPEAKS PLAIN FIRST. IONOS takes mail on 465, secure from the first byte, and on 587, where the
+ * conversation starts in plain text and becomes secure with STARTTLS before anything private is said. Until today the
+ * adapter opened every port as 465, so a key file saying 587 met a server that hung up before its greeting ("0 the
+ * connection closed"). Now 465 is secure from the start, and any other port says EHLO, STARTTLS, and only then — on the
+ * secure connection — EHLO again and the login. A server that will not go secure is refused: the password is never sent
+ * in plain text. A test's own connector is used as it is.
+ */
+type Opened = { sock: Duplex; read: () => Promise<{ code: number; text: string }>; say: (line: string) => void };
+
+async function openSession(login: SmtpLogin, connect: Connector, domain: string): Promise<{ ok: true; s: Opened; ehlo: { code: number; text: string } } | { ok: false; at: string; r: { code: number; text: string }; s: Opened }> {
+  const plain = connect === tlsConnector && login.port !== 465;
+  const first = plain ? netConnect({ host: login.host, port: login.port }) : connect(login);
+  let s: Opened = { sock: first, read: replyReader(first), say: (line) => { first.write(`${line}\r\n`); } };
+  const hello = await s.read();
+  if (hello.code !== 220) return { ok: false, at: 'greeting', r: hello, s };
+  s.say(`EHLO ${domain}`);
+  let ehlo = await s.read();
+  if (Math.floor(ehlo.code / 100) !== 2) return { ok: false, at: 'EHLO', r: ehlo, s };
+  if (plain) {
+    s.say('STARTTLS');
+    const go = await s.read();
+    if (go.code !== 220) return { ok: false, at: 'STARTTLS', r: go.code === 0 ? go : { code: go.code, text: `it would not make the connection secure: ${go.text}` }, s };
+    const secure = tlsConnect({ socket: first as never, servername: login.host });
+    s = { sock: secure, read: replyReader(secure), say: (line) => { secure.write(`${line}\r\n`); } };
+    s.say(`EHLO ${domain}`);
+    ehlo = await s.read();
+    if (Math.floor(ehlo.code / 100) !== 2) return { ok: false, at: 'EHLO', r: ehlo, s };
+  }
+  return { ok: true, s, ehlo };
+}
+
 export function smtpProvider(
   login: SmtpLogin, connect: Connector = tlsConnector, timeoutMs = 30_000, record?: ConnectionRecorder,
-): EmailProvider {
+): EmailProvider & { check(): Promise<{ ok: true } | { ok: false; why: string }> } {
   return {
     id: 'SMTP',
+    /** 1 Oct 2026: sign in and out again, sending nothing — "does our login work?". */
+    async check() {
+      const domain = addressOf(login.user).split('@')[1] ?? 'localhost';
+      let opened: Opened | null = null;
+      const timer = setTimeout(() => opened?.sock.destroy(new Error('timed out')), timeoutMs);
+      try {
+        const o = await openSession(login, connect, domain);
+        opened = o.s;
+        if (!o.ok) return { ok: false, why: `The mail server refused it at ${o.at}: ${`${o.r.code} ${o.r.text}`.slice(0, 200)}` };
+        o.s.say(`AUTH PLAIN ${Buffer.from(`\0${login.user}\0${login.password}`, 'utf8').toString('base64')}`);
+        const auth = await o.s.read();
+        o.s.say('QUIT');
+        return auth.code === 235 ? { ok: true } : { ok: false, why: `The mail server did not accept our login: ${`${auth.code} ${auth.text}`.slice(0, 200)}` };
+      } catch (err) {
+        return { ok: false, why: `Could not reach the mail server: ${err instanceof Error ? err.message : String(err)}` };
+      } finally {
+        clearTimeout(timer);
+        opened?.sock.end();
+      }
+    },
     async deliver(e: Envelope): Promise<Delivered> {
       const from = addressOf(e.from_header);
       const to = addressOf(e.to);
@@ -347,21 +402,25 @@ export function smtpProvider(
       const done = (outcome: MailConnection['outcome'], messages: number): void => {
         record?.({ service: 'IONOS_SMTP', purpose: 'SEND', outcome, reply_code: lastCode, messages, took_ms: Date.now() - started });
       };
-      const sock = connect(login);
-      const timer = setTimeout(() => sock.destroy(new Error('timed out')), timeoutMs);
-      const read = replyReader(sock);
-      const say = (line: string): void => { sock.write(`${line}\r\n`); };
+      let opened: Opened | null = null;
+      const timer = setTimeout(() => opened?.sock.destroy(new Error('timed out')), timeoutMs);
       /** Null when the reply is the one wanted; else the code and the words, and whether it was the recipient's step. */
       const step = async (line: string | null, want: number): Promise<{ code: number; text: string } | null> => {
-        if (line !== null) say(line);
-        const r = await read();
+        if (opened === null) return { code: 0, text: 'the connection closed' };
+        if (line !== null) opened.say(line);
+        const r = await opened.read();
         if (r.code !== 0) lastCode = r.code;
         return Math.floor(r.code / 100) === Math.floor(want / 100) ? null : r;
       };
       try {
+        const o = await openSession(login, connect, domain);
+        opened = o.s;
+        if (!o.ok) {
+          if (o.r.code !== 0) lastCode = o.r.code;
+          done(o.r.code === 0 ? 'FAILED' : 'REFUSED', 0);
+          return { ok: false, why: `The mail server refused it: ${`${o.r.code} ${o.r.text}`.slice(0, 200)}` };
+        }
         const steps: [string | null, number, boolean][] = [
-          [null, 220, false],
-          [`EHLO ${domain}`, 250, false],
           [`AUTH PLAIN ${Buffer.from(`\0${login.user}\0${login.password}`, 'utf8').toString('base64')}`, 235, false],
           [`MAIL FROM:<${from}>`, 250, false],
           [`RCPT TO:<${to}>`, 250, true],
@@ -380,7 +439,7 @@ export function smtpProvider(
           }
           return { ok: false, why };
         }
-        say('QUIT');
+        opened.say('QUIT');
         done('OK', 1);
         return { ok: true, ref: messageId };
       } catch (err) {
@@ -388,7 +447,7 @@ export function smtpProvider(
         return { ok: false, why: `Could not reach the mail server: ${err instanceof Error ? err.message : String(err)}` };
       } finally {
         clearTimeout(timer);
-        sock.end();
+        opened?.sock.end();
       }
     },
   };
