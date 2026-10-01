@@ -341,9 +341,9 @@ export async function handleStaffMessages(
         <p class="help">We could not tell which company sent these. Read each one, then choose the company.</p>
         ${readingPanel(IE.readingState(db, actor, d.app.now()), readingOn(d.app.inboundEmail ?? inbound, imapLoginFromKeyFile(d.app.secrets)) || d.app.mailbox !== undefined,
           // 1 Oct 2026: a copy on memory cannot match a reply to an email another copy sent — say which this copy is on.
-          db.kind === 'remote' ? 'This copy of the website keeps its records in the lasting database, shared by every copy.'
-            : d.app.storageWhy === undefined ? 'This copy of the website keeps its records in its own memory.'
-              : `This copy of the website keeps its records in its own memory, not the lasting database: ${d.app.storageWhy}.`)}
+          db.kind === 'remote' ? 'Records: the lasting database, which every copy of the site shares.'
+            : d.app.storageWhy === undefined ? 'Records: this copy’s own memory, which no other copy sees.'
+              : `Records: this copy’s own memory, which no other copy sees. Why: ${d.app.storageWhy}.`)}
         ${q.length === 0 ? h`<p class="empty">Nothing to sort.</p>` : h`<ul class="emaillist">${q.map((e) => h`<li class="tile">
           <p class="tilename">${e.subject === '' ? '(no subject)' : e.subject}</p>
           <p class="filefrom">From ${e.from_address} · ${e.when}${e.files > 0 ? ` · ${e.files} ${e.files === 1 ? 'file' : 'files'}` : ''}</p>
