@@ -132,6 +132,16 @@ export function lastChannelRead(db: Db, user_id: string, business_id: string, ch
     'SELECT MAX(read_at) AS at FROM channel_reads WHERE user_id = ? AND business_id = ? AND channel = ?', [user_id, business_id, channel])?.at ?? '';
 }
 
+/** 1 Oct 2026: when this person last read each way the company writes — for "New since you last looked". */
+export function readMarks(db: Db, user_id: string, business_id: string): { portal: string; email: string; whatsapp: string; team: string } {
+  return {
+    portal: lastRead(db, user_id, business_id, 'CLIENT'),
+    email: emailsReadUntil(db, user_id, business_id),
+    whatsapp: lastChannelRead(db, user_id, business_id, 'WHATSAPP'),
+    team: lastRead(db, user_id, business_id, 'TEAM'),
+  };
+}
+
 /** The later of two times written the same way (ISO), '' being never. */
 function later(a: string, b: string): string {
   return a > b ? a : b;

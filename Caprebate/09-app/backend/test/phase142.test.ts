@@ -152,9 +152,10 @@ describe('two threads per company, and the rule table', () => {
     const sp = await w.signIn('sales');
     const page = await sp.get(`/staff/clients/${w.dunmarrow}?chat=team`);
     assert.equal(page.status, 200);
-    assert.match(page.body, /<ul class="chattabs"[^>]*>[\s\S]*Team only[\s\S]*With the client/);
+    // 1 Oct 2026: on Communication, one conversation — the note is a "Team only" box, and "Team only" is a way to write.
+    assert.match(page.body, /<a class="it it-team[^"]*" href="[^"]+">[\s\S]*?<span class="ch ch-team">Team only<\/span>[\s\S]*?Phase 142 existing note — ask about the lift/);
+    assert.match(page.body, /<option value="team">Team only \(internal note\)<\/option>/);
     assert.match(page.body, /Only your team sees this\. The client never does\./);
-    assert.match(page.body, /Phase 142 existing note — ask about the lift/);
   });
 
   test('a message is never edited and never deleted; nor is a team message', () => {
@@ -220,14 +221,15 @@ describe('the portal: Messages, a file that lands in Files, and a team thread it
     const sent = await client.upload('/portal/messages', { body: 'Hello, when will you visit?', claim_id: '', type_code: '' }, null);
     assert.equal(sent.status, 303, sent.body);
     assert.match(sent.location ?? '', /done=sent/);
-    // Staff: the tab carries 1 unread, and the section opens on the client's tab because something is new.
+    // Staff: Communication carries the red dot, and the message is in the conversation, marked new.
     const before = await sales.get(`/staff/clients/${w.corvale}`);
-    assert.match(before.body, /With the client <span class="unread" aria-label="1 not read">1<\/span>/);
+    assert.match(before.body, /chatbtn[^>]*>Communication <span class="newdot" aria-label="1 new message"/);
     assert.match(before.body, /Hello, when will you visit\?/);
     const opened = await sales.get(`/staff/clients/${w.corvale}?chat=client`);
     assert.equal(opened.status, 200);
+    assert.match(opened.body, /<span class="new-pill">New<\/span>[\s\S]*?Hello, when will you visit\?/);
     const again = await sales.get(`/staff/clients/${w.corvale}?chat=client`);
-    assert.equal(/With the client <span class="unread"/.test(again.body), false, 'opening the tab did not mark it read');
+    assert.equal(/chatbtn[^>]*>Communication <span class="newdot"/.test(again.body), false, 'opening Communication did not mark it read');
     w.clock.now = '2026-09-21T10:05:00.000Z';
     const reply = await sales.post(`/staff/clients/${w.corvale}/messages`, { body: 'Next Tuesday at ten.', claim_id: '' });
     assert.equal(reply.status, 303);

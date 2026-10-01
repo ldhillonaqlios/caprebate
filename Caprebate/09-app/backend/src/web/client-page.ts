@@ -43,7 +43,7 @@ import { opens } from './navigation.ts';
 import { timelineIfPermitted } from './timeline.ts';
 import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { timelineBlock } from './tasks-pages.ts';
-import { chatBlock } from './messages-pages.ts';
+import { communicationPanel } from './communication.ts';
 import * as M from './messages.ts';
 import { claimTilesFor, organisationSections, renderClaim, type CrmPageDeps } from './crm-pages.ts';
 import { askButton, businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4 } from './engaged-pages.ts';
@@ -101,7 +101,10 @@ export async function handleClientPage(
   // 30 Sep 2026: "Everything" reads new email replies first (at most every two minutes), for those who may read them.
   // 1 Oct 2026: every visit to a client's page does, so a reply is there (and its red dot) wherever staff look.
   if (mayReadQueue(actor)) await readRepliesIfDue(d.app);
-  html(res, 200, clientPage(d, actor, org, work, done, note, url.searchParams.get('step') ?? undefined, url.searchParams.get('chat')));
+  html(res, 200, clientPage(d, actor, org, work, done, note, url.searchParams.get('step') ?? undefined, url.searchParams.get('chat'), {
+    via: url.searchParams.get('via'), thread: url.searchParams.get('thread'), contact: url.searchParams.get('contact'),
+    show: url.searchParams.get('show'), search: url.searchParams.get('q'),
+  }));
   return 'handled';
 }
 
@@ -136,6 +139,7 @@ function clientPage(
   d: CrmPageDeps, actor: Actor, org: C.OrganisationView,
   work: { page: E.BusinessPage; sources: R.SourcesPanel } | null,
   done: string | undefined, note: string | undefined, step?: string, chat: string | null = null,
+  comm: { via: string | null; thread: string | null; contact: string | null; show: string | null; search: string | null } = { via: null, thread: null, contact: null, show: null, search: null },
 ): string {
   const db = d.app.db;
   const owners = mayCreateTask(actor) ? taskOwnerChoices(db) : null;
@@ -202,17 +206,23 @@ function clientPage(
 
   /* PHASE 142: CHAT — "Team only" (the company's notes, as a conversation) and "With the client" (the portal's Messages),
      two tabs, each with its unread number. Drawn only for a login that may read one of the two. */
-  const chatNow = chatBlock({ app: d.app, newId: d.newId }, actor, org.id, chat, note === 'saved' ? 'note' : done === 'message' || done === 'saved-file' || done === 'whatsapp' || done === 'whatsapp-opening' || done === 'checked' ? done : undefined);
+  /* 1 OCT 2026: CHAT BECOMES COMMUNICATION (src/web/communication.ts) — one form to write any way, beside the whole
+     conversation. The routes that wrote before still do, and say what they did here. */
+  const oldDone: Readonly<Record<string, string>> = { message: 'sent-portal', whatsapp: 'sent-whatsapp', 'whatsapp-opening': 'sent-opening' };
+  const chatNow = communicationPanel({ app: d.app }, actor, org.id, {
+    ...comm, opened: chat !== null,
+    done: note === 'saved' ? 'sent-team' : done === undefined ? null : (oldDone[done] ?? done),
+  });
   // 1 Oct 2026: the red dot on Chat — counted after the chat was drawn, so what this visit opened is already read.
   const fresh = M.newFromClient(db, actor, org.id);
   if (chatNow !== null) {
     const waitingOnUs = M.clientMessagesWaiting(db, actor, d.app.now()).find((w) => w.business_id === org.id);
     sections.push({
-      key: 'client.chat', id: 'chat', kind: 'messages', heading: 'Chat',
+      key: 'client.chat', id: 'chat', kind: 'messages', heading: 'Communication',
       ...(chatNow.unread > 0 ? { count: chatNow.unread } : {}),
       // "Waiting" on a section means waiting for the CLIENT; a client waiting for US is work, so it reads "Working on it".
       status: waitingOnUs !== undefined || chatNow.unread > 0 || chatNow.started ? 'WORKING' : 'NOT_STARTED',
-      working: waitingOnUs !== undefined ? 'The client is waiting for a reply.' : chatNow.unread > 0 ? 'There are new messages to read.' : 'Talk to your team, or to the client.',
+      working: waitingOnUs !== undefined ? 'The client is waiting for a reply.' : chatNow.unread > 0 ? 'There are new messages to read.' : 'Write to them any way, or to your team; log a call; start or book a Zoom call.',
       need: [], from: ['your team', 'the client'],
       // The notes' old anchor is kept, so every link to #company-notes still lands on the team's chat.
       body: h`<div id="company-notes">${chatNow.body}</div>`,

@@ -38,7 +38,7 @@ export const TAB_OF_SECTION: Readonly<Record<string, TabKey>> = Object.freeze({
 });
 
 export const TABS: readonly (readonly [TabKey, string])[] = Object.freeze([
-  ['chat', 'Chat'], ['claims', 'Claims'], ['properties', 'Properties'], ['questions', 'Questions'], ['people', 'People'],
+  ['chat', 'Communication'], ['claims', 'Claims'], ['properties', 'Properties'], ['questions', 'Questions'], ['people', 'People'],
   ['checks', 'Checks'], ['files', 'Files'], ['activity', 'Activity'],
 ]);
 
@@ -60,7 +60,7 @@ export function headerActions(business_id: string, fileCount: number, mayChat: b
   const call = quick.find((q) => /^Log a call/.test(q.label));
   const more = quick.filter((q) => q !== call && !/^(Email the client|Chat)$/.test(q.label));
   return h`<div class="cactions">
-    ${mayChat ? h`<a class="cta chatbtn" href="/staff/clients/${business_id}?chat=all#chat">Chat${newDot(fresh)}</a>` : raw('')}
+    ${mayChat ? h`<a class="cta chatbtn" href="/staff/clients/${business_id}?chat=all#chat">Communication${newDot(fresh)}</a>` : raw('')}
     ${call === undefined ? raw('') : h`<a class="btn" href="${call.href}">Log a call</a>`}
     ${filesButton(business_id, fileCount)}
     ${more.length === 0 ? raw('') : h`<details class="cmore"><summary>More</summary><ul>${more.map((q) => h`<li><a href="${q.href}">${q.label}</a></li>`)}</ul></details>`}

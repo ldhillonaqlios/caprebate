@@ -47,7 +47,8 @@ async function req(path: string, init: RequestInit = {}) {
   return { status: r.status, body: await r.text(), location: r.headers.get('location') };
 }
 const post = (path: string, form: Record<string, string>) => req(path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(form).toString() });
-const chatButton = (body: string): string => /<a class="cta chatbtn"[^>]*>Chat[\s\S]*?<\/a>/.exec(body)?.[0] ?? '';
+// 1 Oct 2026: "Chat" is now "Communication" (src/web/communication.ts).
+const chatButton = (body: string): string => /<a class="cta chatbtn"[^>]*>Communication[\s\S]*?<\/a>/.exec(body)?.[0] ?? '';
 
 /** A reply as a mail program writes it: answering one of our Message-IDs. */
 const reply = (from: string, answers: string, words: string, mid: string) => new Uint8Array(Buffer.from([
@@ -78,7 +79,7 @@ describe('email and WhatsApp as conversations', () => {
     // The red dot: on Chat, on its tab, and on the Clients list — until someone reads it.
     const client = (await req('/staff/clients/b-cv-1')).body;
     assert.match(chatButton(client), /<span class="newdot" aria-label="1 new message"[^>]*>1<\/span>/);
-    assert.match(client, /class="ctab-link ctl-chat[^"]*">Chat <span class="newdot"/);
+    assert.match(client, /class="ctab-link ctl-chat[^"]*">Communication <span class="newdot"/);
     assert.match((await req('/staff/clients')).body, /href="\/staff\/clients\/b-cv-1\?chat=all#chat">Chain Test Limited<\/a> <span class="newdot"/);
     assert.doesNotMatch((await req('/staff/clients')).body, /href="\/staff\/clients\/b-cv-2[^"]*">Other Company Limited<\/a> <span class="newdot"/, 'the dot is on the wrong company');
     // The email page: one chain, our email then theirs, theirs marked new; Reply under it. Reading it clears the dot.
@@ -158,8 +159,9 @@ describe('email and WhatsApp as conversations', () => {
       [randomUUID(), now, now]);
     assert.match(chatButton((await req('/staff/clients/b-cv-1')).body), /newdot/);
     const all = (await req('/staff/clients/b-cv-1?chat=all')).body;
-    assert.doesNotMatch(chatButton(all), /newdot/, 'Everything was open and the dot stayed');
-    assert.match(all, /<a class="cta" href="\/staff\/clients\/b-cv-1\/email">Email<\/a>\s*<a class="cta" href="\/staff\/clients\/b-cv-1\/whatsapp">WhatsApp<\/a>/);
+    assert.doesNotMatch(chatButton(all), /newdot/, 'Communication was open and the dot stayed');
+    // Every way to write is in the one form there.
+    assert.match(all, /<select class="fi" id="via" name="via"><option value="email" selected>Email<\/option><option value="whatsapp">WhatsApp<\/option><option value="portal">Portal message<\/option>/);
     now = '2026-10-01T14:00:00.000Z';
     made.app.db.run("INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, 'b-cv-1', NULL, 'FROM_CLIENT', 'EMAIL', NULL, 'c-cv-ann', 'One more thing', ?)", [randomUUID(), now]);
     assert.match(chatButton((await req('/staff/clients/b-cv-1')).body), /aria-label="1 new message"/);
@@ -199,10 +201,10 @@ describe('email and WhatsApp as conversations', () => {
     // Read again: filed once.
     await IE.readMailbox(deps, INBOUND_EMAIL, { host: 'imap.ionos.co.uk', port: 993, user: 'contact@caprebate.co.uk', password: 'x' }, { since: async () => [], one: async () => null, highestUid: async () => 61 });
     assert.equal(db.get<{ n: number }>("SELECT count(*) AS n FROM inbound_email_filings WHERE inbound_email_id = 'ie-old-1'")!.n, 1);
-    // On the conversation, with our email; and the Everything tab shows the email to the typed address and the reply.
+    // On the conversation, with our email; and Communication shows the email to the typed address and the reply.
     assert.match((await req('/staff/clients/b-cv-1/email?thread=o-cv-old')).body, /Hello there\.[\s\S]*Yes, that works\./);
     const all = (await req('/staff/clients/b-cv-1?chat=all')).body;
-    assert.match(all, /Cap Rebate, to Lee\.Own@Icloud\.Invented\.co\.uk[\s\S]*?Before the rule/);
+    assert.match(all, /Sam Sales, to Lee\.Own@Icloud\.Invented\.co\.uk[\s\S]*?Before the rule/);
     assert.match(all, /Yes, that works\./);
     assert.doesNotMatch(all, /Who are you\?/);
   });

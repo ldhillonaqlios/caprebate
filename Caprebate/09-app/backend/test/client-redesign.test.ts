@@ -62,7 +62,7 @@ before(async () => {
 after(() => made.close());
 
 describe('the client page, laid out again', () => {
-  test('the header: the client\'s six steps as a bar, and Chat, Log a call and Files — "Email the client" is gone', async () => {
+  test('the header: the client\'s six steps as a bar, and Communication, Log a call and Files — "Email the client" is gone', async () => {
     const r = await as('sales').get(`/staff/clients/${dunmarrow}`);
     assert.equal(r.status, 200);
     const bar = /<ol class="cprogress"[\s\S]*?<\/ol>/.exec(r.body)?.[0] ?? '';
@@ -70,7 +70,8 @@ describe('the client page, laid out again', () => {
     assert.match(bar, /<li class="now" aria-current="step"><span class="bar"><\/span><span class="name">Expert sign-off<\/span><\/li>/, 'Dunmarrow is at survey: "Expert sign-off"');
     assert.equal((bar.match(/class="done"/g) ?? []).length, 3);
     const actions = /<div class="cactions">[\s\S]*?<\/div>/.exec(r.body)?.[0] ?? '';
-    assert.match(actions, new RegExp(`<a class="cta chatbtn" href="/staff/clients/${dunmarrow}\\?chat=all#chat">Chat`));
+    // 1 Oct 2026: "the chat word turns in to communication" (src/web/communication.ts).
+    assert.match(actions, new RegExp(`<a class="cta chatbtn" href="/staff/clients/${dunmarrow}\\?chat=all#chat">Communication`));
     assert.match(actions, /<a class="btn" href="#add-task">Log a call<\/a>/);
     assert.match(actions, /class="filesbtn"/);
     assert.match(actions, /<summary>More<\/summary>[\s\S]*Add a contact[\s\S]*Write an email/);
@@ -80,7 +81,7 @@ describe('the client page, laid out again', () => {
   test('every section is still on the page, in tabs; the conversation shows first; a link to a section opens its tab', async () => {
     const r = await as('sales').get(`/staff/clients/${dunmarrow}`);
     const tabs = [...r.body.matchAll(/<a href="#tab-([a-z]+)" class="ctab-link ctl-[a-z]+( is-default)?">([^<]+)<\/a>/g)];
-    assert.deepEqual(tabs.map((m) => m[3]), ['Chat', 'Claims', 'Properties', 'Questions', 'People', 'Checks', 'Files', 'Activity']);
+    assert.deepEqual(tabs.map((m) => m[3]), ['Communication', 'Claims', 'Properties', 'Questions', 'People', 'Checks', 'Files', 'Activity']);
     assert.deepEqual(tabs.filter((m) => m[2] !== undefined).map((m) => m[1]), ['chat'], 'the conversation is not the first tab shown');
     for (const [tab, secs] of [['chat', ['chat']], ['people', ['details', 'contacts']], ['checks', ['checks', 'sources']], ['activity', ['activity']]] as const) {
       const start = r.body.indexOf(`id="tab-${tab}"`);

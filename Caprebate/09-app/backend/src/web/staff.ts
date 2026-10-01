@@ -346,6 +346,10 @@ export async function handleStaff(
       return problem(res, actor, 'No video call to join', why, `/staff/calendar/${id}`);
     }
     const host = B.mayArrangeCalls(actor);
+    // 1 Oct 2026: the first time a host opens the call, it is marked started — the Communication tab shows it.
+    if (host && db.run('UPDATE video_meetings SET host_opened_at = ?, host_opened_by = ? WHERE id = ? AND host_opened_at IS NULL', [now(), actor.id, m.id]).changes === 1) {
+      d.app.audit.append({ at: now(), kind: 'VIDEO_CALL_OPENED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'booking', object_id: id, detail: {} });
+    }
     const zak = host ? await hostZak(zoomDeps(d.app)) : null;
     const sig = joinSignature(d.app.secrets, m.meeting_id, host && zak !== null ? 1 : 0, now());
     if (sig === null) return problem(res, actor, 'No video call to join', zoomMissing(d.app.secrets, d.app.zoomPolicy).join(' '), `/staff/calendar/${id}`);
@@ -385,7 +389,7 @@ export async function handleStaff(
   if (freeEmail === 'handled') return 'handled';
 
   /* ------------------ SECTION 3 · writing to the client on the company's chat, and email replies to sort (Phase 142) */
-  const chat = await handleStaffMessages({ app: d.app, store: d.store, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
+  const chat = await handleStaffMessages({ app: d.app, store: d.store, newId: d.newId, nav, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form);
   if (chat === 'handled') return 'handled';
 
   /* ------------------ SECTION 3 · the company's files, in folders, and a staff upload (Phase 140) */

@@ -261,6 +261,59 @@ hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
 .wk-form .fl{margin:0}
 .wk-form .cta,.wk-form .help{grid-column:1/-1;justify-self:start}
 .chip-ok{background:var(--okbg);color:var(--ok);border-color:#b7d9c2}
+/* 1 Oct 2026 — Communication (src/web/communication.ts): one form, the whole conversation */
+.comms{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,8fr);gap:18px;align-items:start}
+.pane{border:1px solid var(--line);border-radius:var(--radius);background:var(--white);padding:1rem 1.1rem;min-width:0}
+.pane h2{font-size:22px;margin:0 0 .7rem}
+.composer .f{margin:0 0 .75rem}.composer .f label{display:block;font-weight:700;color:var(--ink);margin:0 0 .25rem;font-size:15px}
+.composer .fi{width:100%;box-sizing:border-box}
+.composer .hint{font-size:14px;color:var(--mut);margin:.25rem 0 0}
+.composer .only,.composer .only-btn{display:none}
+.composer:has(#via option[value=email]:checked) .for-email,.composer:has(#via option[value=whatsapp]:checked) .for-whatsapp,
+.composer:has(#via option[value=portal]:checked) .for-portal,.composer:has(#via option[value=team]:checked) .for-team,
+.composer:has(#via option[value=zoom]:checked) .for-zoom,.composer:has(#via option[value=call]:checked) .for-call{display:block}
+.composer:has(#via option[value=email]:checked) .only-btn.for-email,.composer:has(#via option[value=whatsapp]:checked) .only-btn.for-whatsapp,
+.composer:has(#via option[value=portal]:checked) .only-btn.for-portal,.composer:has(#via option[value=team]:checked) .only-btn.for-team{display:inline-flex}
+.composer:has(#via option[value=email]:checked) .for-msg,.composer:has(#via option[value=whatsapp]:checked) .for-msg,
+.composer:has(#via option[value=portal]:checked) .for-msg,.composer:has(#via option[value=team]:checked) .for-msg{display:block}
+.team-note{background:var(--warnbg);border:1px solid var(--warn);color:var(--ink);border-radius:8px;padding:.45rem .6rem;font-size:14px;margin:0 0 .75rem}
+.sendrow{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 0 .4rem}
+.replying{display:flex;justify-content:space-between;gap:.5rem;align-items:center;background:var(--mist);border:1px solid var(--line);border-radius:8px;padding:.45rem .6rem;margin:0 0 .8rem;font-size:14px}
+.or{display:flex;align-items:center;gap:.6rem;color:var(--mut);font-size:13px;margin:.8rem 0}.or:before,.or:after{content:"";flex:1;border-top:1px solid var(--line)}
+.searchrow{display:flex;gap:.5rem;margin:0 0 .6rem}.searchrow .fi{flex:1;min-width:0}
+.found{font-size:14px;color:var(--mut);margin:0 0 .6rem}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 .8rem}
+.filters a{border:1px solid var(--line);border-radius:999px;padding:.25rem .7rem;text-decoration:none;color:var(--ink);font-size:14px;font-weight:600;background:var(--white)}
+.filters a[aria-current]{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.flow{list-style:none;margin:0;padding:0 .2rem 0 0;display:flex;flex-direction:column-reverse;gap:.55rem;max-height:46rem;overflow:auto}
+.flow .day{align-self:center;font-size:13px;color:var(--mut);font-weight:700;margin:.4rem 0 .1rem}
+.flow .newline{align-self:stretch;border-top:2px solid var(--stop);text-align:center;font-size:12px;font-weight:700;color:var(--stop);margin:.6rem 0 .3rem}
+.flow .newline span{background:var(--white);padding:0 .5rem;position:relative;top:-.75em}
+.flow .cm-li{display:flex;flex-direction:column}
+.flow a.it{display:block;max-width:82%;border:1px solid var(--line);border-radius:10px;padding:.5rem .75rem;background:var(--white);align-self:flex-start;text-decoration:none;color:var(--body)}
+.flow a.it.ours{align-self:flex-end;background:var(--mist)}
+.flow a.it.it-team,.flow a.it.it-call,.flow a.it.it-zoom{align-self:stretch;max-width:none}
+.flow a.it.it-team{background:var(--warnbg);border-left:4px solid var(--warn)}
+.flow a.it.it-call{background:var(--mist);border-style:dashed}
+.flow a.it.it-zoom{background:#f3f5ff;border-left:4px solid #5568d9}
+.flow a.it:hover{border-color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.flow a.it:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.flow .meta{font-size:13px;color:var(--mut);margin:0 0 .2rem;display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}
+.flow .who{font-weight:700;color:var(--ink)}
+.flow .subj{font-weight:700;margin:.1rem 0 .2rem;color:var(--ink)}
+.flow .body{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.flow .reply-hint{display:none;font-size:12px;font-weight:700;color:var(--ink);margin-left:auto}
+.flow a.it:hover .reply-hint,.flow a.it:focus .reply-hint{display:inline}
+.ch{display:inline-block;border-radius:999px;padding:0 .5rem;font-size:12px;font-weight:700;border:1px solid}
+.ch-email{background:#e8f0fb;color:#1f4f8f;border-color:#b9cdea}
+.ch-whatsapp{background:#e6f6ea;color:#17663a;border-color:#b5e0c2}
+.ch-portal{background:#e6f7f1;color:#1e5c48;border-color:var(--mint)}
+.ch-team{background:#fff3d6;color:#7a5200;border-color:#e7c98a}
+.ch-call{background:#eceeed;color:#3b403e;border-color:#cfd4d2}
+.ch-zoom{background:#e9ecfd;color:#2d3fa8;border-color:#bfc7f5}
+.new-pill{background:var(--stop);color:var(--white);border-radius:999px;font-size:12px;font-weight:700;padding:0 .45rem}
+mark{background:#ffe58a;color:inherit;padding:0 .1em;border-radius:3px}
+@media (max-width:900px){.comms{grid-template-columns:minmax(0,1fr)}.flow a.it{max-width:100%}}
 /* 1 Oct 2026 — the client's portal home as a dashboard (src/web/portal-dashboard.ts) */
 .pdash{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0 0 1.4rem}
 .pdash-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--white);padding:1rem 1.1rem;min-width:0}

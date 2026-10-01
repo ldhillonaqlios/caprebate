@@ -110,21 +110,27 @@ export async function handleFreeEmail(
     html(res, 400, emailPage(d, actor, { ...f, prefill: { ...f.prefill, subject: input['subject'] ?? '', body: input['body'] ?? '' } }, null, r.why));
     return 'handled';
   }
-  let done = 'saved';
-  if (r.requested) {
-    // Sending is on: send this one now. A failure leaves it saved, with the reason, and the page says so.
-    const provider = login === null ? null : smtpProvider(login, undefined, undefined, auditMailConnections(d.app.audit, d.app.now));
-    const out = await dispatchOutbox({ db: d.app.db, now: d.app.now }, sending, login, provider, async (document_id) => {
-      const kept = await openKeptOriginal({ db: d.app.db, store: d.store, now: d.app.now, audit: d.app.audit }, actor, document_id);
-      if (kept === null) return null;
-      const ext = kept.sniffed_as === 'pdf' ? 'pdf' : kept.sniffed_as === 'png' ? 'png' : kept.sniffed_as === 'jpeg' ? 'jpg' : 'bin';
-      const type = ext === 'pdf' ? 'application/pdf' : ext === 'png' ? 'image/png' : ext === 'jpg' ? 'image/jpeg' : 'application/octet-stream';
-      return { filename: `${kept.filename}.${ext}`, content_type: type, bytes: kept.bytes };
-    }, r.id);
-    done = out.state === 'RAN' && out.sent === 1 ? 'sent' : 'failed';
-  }
+  const done = r.requested ? await sendSavedEmailNow({ app: d.app, store: d.store }, actor, sending, login, r.id) : 'saved';
   redirect(res, `${r.action}?done=${done}`);
   return 'handled';
+}
+
+/**
+ * Send one email that was just saved while sending is on. A failure leaves it saved, with the reason. 1 Oct 2026: shared
+ * by this page and the Communication tab (src/web/communication.ts).
+ */
+export async function sendSavedEmailNow(
+  d: { app: App; store: FsObjectStore }, actor: Actor, sending: EmailSending, login: SmtpLogin | null, outbox_id: string,
+): Promise<'sent' | 'failed'> {
+  const provider = login === null ? null : smtpProvider(login, undefined, undefined, auditMailConnections(d.app.audit, d.app.now));
+  const out = await dispatchOutbox({ db: d.app.db, now: d.app.now }, sending, login, provider, async (document_id) => {
+    const kept = await openKeptOriginal({ db: d.app.db, store: d.store, now: d.app.now, audit: d.app.audit }, actor, document_id);
+    if (kept === null) return null;
+    const ext = kept.sniffed_as === 'pdf' ? 'pdf' : kept.sniffed_as === 'png' ? 'png' : kept.sniffed_as === 'jpeg' ? 'jpg' : 'bin';
+    const type = ext === 'pdf' ? 'application/pdf' : ext === 'png' ? 'image/png' : ext === 'jpg' ? 'image/jpeg' : 'application/octet-stream';
+    return { filename: `${kept.filename}.${ext}`, content_type: type, bytes: kept.bytes };
+  }, outbox_id);
+  return out.state === 'RAN' && out.sent === 1 ? 'sent' : 'failed';
 }
 
 const DONE: Readonly<Record<string, string>> = Object.freeze({

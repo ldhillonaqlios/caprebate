@@ -361,6 +361,9 @@ export type AuditKind =
   | 'TIME_BLOCKED' | 'TIME_FREED'
   // 1 Oct 2026: Admin saved a key's new value (sealed), or went back to the key file's (src/web/saved-keys.ts). The name only.
   | 'KEY_SAVED' | 'KEY_UNSAVED'
+  // 1 Oct 2026: the Communication tab — a Zoom call staff started or booked, a telephone call staff logged, a video call
+  // first opened by its host (src/web/communication.ts). Ids and outcomes only.
+  | 'BOOKING_CREATED' | 'CALL_LOGGED' | 'VIDEO_CALL_OPENED'
   /** Phase 151f: a signed word from the service that the check is still under way, or about something other than a
    *  check's status. Acknowledged and not kept as a result. The status word and why only. */
   | 'IDENTITY_RESULT_NOT_KEPT'

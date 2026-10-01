@@ -76,11 +76,12 @@ function placeAndWords(db: Db, booking_id: string, method: InviteMethod, origin:
  * same email says the link will follow. Saved to the outbox like every other; it leaves when email sending is on.
  * The funnel's close sends it after the meeting is made, and so does the staff calendar when it gives or moves a time.
  */
-export function sendVideoInvite(app: App, origin: string, booking_id: string, what: 'arranged' | 'moved'): void {
+export function sendVideoInvite(app: App, origin: string, booking_id: string, what: 'arranged' | 'moved', toAddress?: string): void {
   const b = app.db.get<{ business_id: string | null; lead_id: string | null; starts_at: string | null; ends_at: string | null; channel: string }>(
     'SELECT business_id, lead_id, starts_at, ends_at, channel FROM bookings WHERE id = ?', [booking_id]);
   if (b === undefined || b.channel !== 'video' || b.starts_at === null || b.ends_at === null) return;
-  const to = b.business_id !== null
+  // 1 Oct 2026: the Communication tab names who the call is with; otherwise the company's own address, as before.
+  const to = toAddress !== undefined && toAddress.trim() !== '' ? toAddress.trim() : b.business_id !== null
     ? app.db.get<{ e: string | null }>('SELECT contact_email AS e FROM businesses WHERE id = ?', [b.business_id])?.e ?? null
     : app.db.get<{ e: string | null }>('SELECT email AS e FROM contacts WHERE lead_id = ? ORDER BY created_at ASC, id ASC LIMIT 1', [b.lead_id])?.e ?? null;
   if (to === null) return;

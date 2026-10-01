@@ -33,6 +33,7 @@ import { imapLoginFromKeyFile, imapMailbox, readingMissing, readingOn, INBOUND_E
 import { earlyQuestions, receiveFile } from './client-files-pages.ts';
 import * as W from './whatsapp.ts';
 import { whatsappPage } from './whatsapp-page.ts';
+import { communicate, composer } from './communication.ts';
 import { boundaryOf, parseMultipart, type Part } from './multipart.ts';
 import { UPLOAD_LIMITS } from './upload-handler-port.ts';
 import { earlyQuestionsFor, receivableTypes } from './documents.ts';
@@ -92,7 +93,7 @@ export function surveyorThreadPanel(db: Db, actor: Actor, business_id: string): 
  * PHASE 142 — THE FILES OF AN EMAILED REPLY THAT NOBODY HAS SAVED YET. One small form each: say what it is, and it is
  * fetched from the mailbox and saved to Files through the upload path. Only for Admin and Sales (`inbound_email.file`).
  */
-function emailedFiles(
+export function emailedFiles(
   db: Db, actor: Actor, m: M.ThreadMessage, types: readonly { code: string; label: string; handler_type: string | null }[], business_id: string,
 ): Safe {
   if (!m.by_email) return raw('');
@@ -231,6 +232,8 @@ export type StaffMessageDeps = {
   problem: (res: ServerResponse, actor: Actor, title: string, why: string, back: string, field?: string) => 'handled';
   /** Tests pass their own; the application reads INBOUND_EMAIL and the environment. */
   inbound?: InboundEmail; mailbox?: Mailbox | null;
+  /** 1 Oct 2026: where the client's join page is, for a Zoom invite from the Communication tab. */
+  publicOrigin?: string;
 };
 
 function html(res: ServerResponse, status: number, body: string): void {
@@ -253,6 +256,19 @@ export async function handleStaffMessages(
   const path = url.pathname;
   const db = d.app.db;
   const deps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
+
+  /* 1 OCT 2026: THE COMMUNICATION TAB'S ONE FORM (src/web/communication.ts). A refusal draws the form again, filled. */
+  const cm = /^\/staff\/clients\/([A-Za-z0-9-]+)\/communicate$/.exec(path);
+  if (cm && method === 'POST') {
+    const id = cm[1] ?? '';
+    const r = await communicate({ app: d.app, store: d.store, newId: d.newId, origin: d.publicOrigin ?? 'http://localhost:8103' }, actor, id, await form(req));
+    if (r.ok) { redirect(res, r.to); return 'handled'; }
+    const company = db.get<{ name: string }>('SELECT name FROM businesses WHERE id = ?', [id])?.name ?? 'this client';
+    html(res, 400, page({ title: `Not sent · ${company}`, nav: d.nav(actor), body: h`<h1>Not sent</h1>
+      <p><a href="/staff/clients/${id}?chat=all#chat">Back to ${company}</a></p>
+      <div class="pane">${composer({ app: d.app, actor, business_id: id, now: d.app.now() }, r.prefill, r.why)}</div>` }));
+    return 'handled';
+  }
 
   const m = /^\/staff\/clients\/([A-Za-z0-9-]+)\/messages$/.exec(path);
   if (m && method === 'POST') {

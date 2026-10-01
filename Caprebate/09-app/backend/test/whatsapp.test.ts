@@ -107,8 +107,9 @@ describe('WhatsApp', () => {
     made.app.secrets = secretsFromValues({});
     const s = await sales();
     const all = (await s.req('/staff/clients/b-wa-1?chat=all')).body;
-    assert.match(all, /Everything: portal, email and WhatsApp/);
-    assert.match(all, /<a class="cta" href="\/staff\/clients\/b-wa-1\/whatsapp">WhatsApp<\/a>/);
+    // 1 Oct 2026: Communication — WhatsApp is one of the ways to write in its one form, and says it is not switched on yet.
+    assert.match(all, /<option value="whatsapp">WhatsApp<\/option>/);
+    assert.match(all, /WhatsApp is not switched on yet: Put the WhatsApp keys in the key file: WHATSAPP_ACCESS_TOKEN/);
     // 1 Oct 2026: WhatsApp has its own page — the conversation on the right, the message on the left.
     const page = (await s.req('/staff/clients/b-wa-1/whatsapp')).body;
     assert.match(page, /<section class="convo-write" id="compose"[\s\S]*<section class="convo-chain"/);
@@ -174,7 +175,7 @@ describe('WhatsApp', () => {
     assert.equal(got[0]!['contact_id'], 'c-wa-ada');
     const s = await sales();
     const page = (await s.req('/staff/clients/b-wa-1?chat=all')).body;
-    assert.match(page, /<span class="via">WhatsApp<\/span> <strong>Ada Invented<\/strong>/);
+    assert.match(page, /<span class="ch ch-whatsapp">WhatsApp<\/span> <span class="who">Ada Invented<\/span>/);
     assert.match(page, /Yes please, call me tomorrow/);
     const wa = (await s.req('/staff/clients/b-wa-1/whatsapp')).body;
     assert.match(wa, /<span class="via">WhatsApp<\/span> <strong>Ada Invented<\/strong> · [^<]*<\/p>\s*<p class="msgbody">Yes please, call me tomorrow/);
@@ -207,7 +208,7 @@ describe('WhatsApp', () => {
     assert.throws(() => made.app.db.run("UPDATE whatsapp_messages SET body = 'changed' WHERE id = ?", [id]), /never edited/);
   });
 
-  test('"Everything" puts the portal, the emails we sent them and WhatsApp in one list, in order — and never a sign-in code or a colleague\'s alert', async () => {
+  test('Communication puts the portal, the emails we sent them and WhatsApp in one list, in order — and never a sign-in code or a colleague\'s alert', async () => {
     on();
     const s = await sales();
     await s.post('/staff/clients/b-wa-1/messages', { body: 'A portal message from us.' });
@@ -215,14 +216,15 @@ describe('WhatsApp', () => {
     made.app.email.send({ to_email: 'ada@invented-dental.co.uk', subject: 'Your code', body: 'Code 123456', kind: 'SIGN_IN_CODE', business_id: 'b-wa-1' });
     made.app.email.send({ to_email: 'wa.sales@example.invalid', subject: 'A new message', body: 'For staff.', kind: 'NOTIFICATION', business_id: 'b-wa-1' });
     const page = (await s.req('/staff/clients/b-wa-1?chat=all')).body;
-    const list = page.slice(page.indexOf('<ol class="chat">'));
+    // 1 Oct 2026: Communication's one conversation, newest at the bottom (drawn newest first in a column-reverse list).
+    const list = /<ol class="flow">[\s\S]*?<\/ol>/.exec(page)?.[0] ?? '';
     const at = (w: string) => list.indexOf(w);
-    assert.ok(at('Yes please, call me tomorrow') >= 0 && at('A portal message from us.') > at('Yes please, call me tomorrow') && at('The surveyor comes on Monday.') > at('A portal message from us.'), 'not in order, or missing');
-    assert.match(list, /<span class="via">Portal<\/span>/);
-    assert.match(list, /<span class="via">Email<\/span> <strong>Cap Rebate, to ada@invented-dental\.co\.uk<\/strong>/);
-    assert.match(list, /<p class="msgsubj">Your survey date<\/p>/);
+    assert.ok(at('Yes please, call me tomorrow') >= 0 && at('A portal message from us.') >= 0 && at('The surveyor comes on Monday.') >= 0, 'missing');
+    assert.ok(at('The surveyor comes on Monday.') <= at('A portal message from us.') && at('A portal message from us.') < at('Yes please, call me tomorrow'), 'not in order');
+    assert.match(list, /<span class="ch ch-portal">Portal<\/span>/);
+    assert.match(list, /<span class="ch ch-email">Email<\/span> <span class="who">Cap Rebate, to ada@invented-dental\.co\.uk<\/span>/);
+    assert.match(list, /<p class="subj">Your survey date<\/p>/);
     assert.doesNotMatch(list, /Code 123456|For staff\./);
-    assert.match(page, /href="\/staff\/clients\/b-wa-1\/email">Write an email<\/a>/);
   });
 
   test('a company marked do not contact is never written to on WhatsApp', async () => {
