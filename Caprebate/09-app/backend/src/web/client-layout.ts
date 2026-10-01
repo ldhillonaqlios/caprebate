@@ -49,12 +49,18 @@ export function progressBar(db: Db, business_id: string): Safe {
     i === p.at ? raw(' aria-current="step"') : raw('')}><span class="bar"></span><span class="name">${name}</span></li>`)}</ol>`;
 }
 
+/** 1 Oct 2026: the red dot — messages from the client this person has not read, in words for a screen reader. */
+export function newDot(n: number): Safe {
+  if (n <= 0) return raw('');
+  return h` <span class="newdot" aria-label="${n === 1 ? '1 new message' : `${String(n)} new messages`}" title="New from the client">${String(n)}</span>`;
+}
+
 /** Chat, Log a call, Files — and the rest under "More". */
-export function headerActions(business_id: string, fileCount: number, mayChat: boolean, quick: readonly QuickAction[]): Safe {
+export function headerActions(business_id: string, fileCount: number, mayChat: boolean, quick: readonly QuickAction[], fresh = 0): Safe {
   const call = quick.find((q) => /^Log a call/.test(q.label));
   const more = quick.filter((q) => q !== call && !/^(Email the client|Chat)$/.test(q.label));
   return h`<div class="cactions">
-    ${mayChat ? h`<a class="cta" href="/staff/clients/${business_id}?chat=all#chat">Chat</a>` : raw('')}
+    ${mayChat ? h`<a class="cta chatbtn" href="/staff/clients/${business_id}?chat=all#chat">Chat${newDot(fresh)}</a>` : raw('')}
     ${call === undefined ? raw('') : h`<a class="btn" href="${call.href}">Log a call</a>`}
     ${filesButton(business_id, fileCount)}
     ${more.length === 0 ? raw('') : h`<details class="cmore"><summary>More</summary><ul>${more.map((q) => h`<li><a href="${q.href}">${q.label}</a></li>`)}</ul></details>`}
@@ -120,7 +126,7 @@ export function lookupsCard(src: SourcesPanel | null, nowIso: string): Safe {
 
 /** The sections, in their tabs. Inside a tab each keeps its own open-or-closed rule (work open, done folded, the person's
  *  own choice kept), and the one just changed opens, as it always has. */
-export function tabbed(sections: readonly SectionSpec[], ctx: SectionContext, defaultTab: TabKey): Safe {
+export function tabbed(sections: readonly SectionSpec[], ctx: SectionContext, defaultTab: TabKey, fresh = 0): Safe {
   const by = new Map<TabKey, SectionSpec[]>();
   for (const s of sections) {
     const t = TAB_OF_SECTION[s.id] ?? 'activity';
@@ -129,7 +135,7 @@ export function tabbed(sections: readonly SectionSpec[], ctx: SectionContext, de
   const present = TABS.filter(([k]) => (by.get(k) ?? []).length > 0);
   const chosen = present.some(([k]) => k === defaultTab) ? defaultTab : (present[0]?.[0] ?? 'activity');
   return h`<div class="ctabwrap">
-    <nav class="ctabs" aria-label="Parts of this client">${present.map(([k, label]) => h`<a href="#tab-${k}" class="ctab-link ctl-${k}${k === chosen ? ' is-default' : ''}">${label}</a>`)}</nav>
+    <nav class="ctabs" aria-label="Parts of this client">${present.map(([k, label]) => h`<a href="#tab-${k}" class="ctab-link ctl-${k}${k === chosen ? ' is-default' : ''}">${label}${k === 'chat' ? newDot(fresh) : raw('')}</a>`)}</nav>
     <div class="ctab-panels">${present.map(([k]) => h`<div class="ctab ct-${k}${k === chosen ? ' is-default' : ''}" id="tab-${k}">${
       (by.get(k) ?? []).map((s) => section(k === 'chat' ? { ...s, open_now: true } : s, ctx))}</div>`)}</div></div>`;
 }

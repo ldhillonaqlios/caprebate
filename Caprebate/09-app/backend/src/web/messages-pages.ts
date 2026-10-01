@@ -16,6 +16,7 @@
  * NOTHING HERE DECIDES WHO SEES WHAT: src/web/messages.ts asks every rule on every read and write.
  */
 
+import { randomUUID } from 'node:crypto';
 import { EMAIL_SENDING, auditMailConnections, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
@@ -30,8 +31,7 @@ import { page } from './html.ts';
 import { imapLoginFromKeyFile, imapMailbox, readingMissing, readingOn, INBOUND_EMAIL, type InboundEmail, type Mailbox } from '../stubs/email-inbound.ts';
 import { earlyQuestions, receiveFile } from './client-files-pages.ts';
 import * as W from './whatsapp.ts';
-import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../connectors/whatsapp.ts';
-import { localStamp } from './localtime.ts';
+import { whatsappPage } from './whatsapp-page.ts';
 import { boundaryOf, parseMultipart, type Part } from './multipart.ts';
 import { UPLOAD_LIMITS } from './upload-handler-port.ts';
 import { earlyQuestionsFor, receivableTypes } from './documents.ts';
@@ -157,7 +157,7 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
         <button class="cta" type="submit">Send to the team</button></form>` : raw('')}`,
     };
   }
-  if (tab === 'all') return { tab, unread, started, body: h`${top}${everything(d.app, actor, business_id, done)}` };
+  if (tab === 'all') return { tab, unread, started, body: h`${top}${everything(d.app, actor, business_id, done, opened)}` };
   const c = M.clientThread(db, actor, business_id);
   const types = IE.mayReadQueue(actor) ? receivableTypes(db) : [];
   if (opened) M.markRead(deps, actor, business_id, 'CLIENT');
@@ -184,32 +184,28 @@ export function chatBlock(d: { app: App; newId: () => string }, actor: Actor, bu
  * of its contacts, and the ways to write an email or a portal message. Lakhbir: "each client when we view back end has
  * full communication via email or whats app".
  */
-function everything(app: App, actor: Actor, business_id: string, done: string | undefined): Safe {
+function everything(app: App, actor: Actor, business_id: string, done: string | undefined, opened: boolean): Safe {
   const db = app.db;
   const now = app.now();
+  // Everything they sent is on this tab: opening it reads it all (the red dot on Chat goes).
+  const deps = { db, audit: app.audit, now: app.now, newId: () => randomUUID() };
+  if (opened) {
+    M.markRead(deps, actor, business_id, 'CLIENT');
+    M.markChannelRead(deps, actor, business_id, 'EMAIL');
+    M.markChannelRead(deps, actor, business_id, 'WHATSAPP');
+  }
   const items = W.conversation(db, actor, business_id, now);
   const c = M.clientThread(db, actor, business_id);
-  const people = W.phoneContacts(db, business_id, now);
-  const missing = whatsappMissing(app.secrets, app.whatsappPolicy);
   const unfiled = W.unfiledWhatsApp(db, actor, now).length;
+  // 1 Oct 2026: each way of writing has its own page, with the conversation beside the box.
   const write = !c.may_write ? raw('')
     : c.do_not_contact ? h`<div class="gate" role="note"><strong>You cannot write to this company.</strong> They asked us not to contact them.</div>`
-    : h`<div class="pblock chatform" id="whatsapp">
+    : h`<div class="pblock chatform chatways" id="whatsapp">
         <p class="fl">Write to ${c.company}</p>
-        <p><a href="/staff/clients/${business_id}/email">Write an email</a> · <a href="/staff/clients/${business_id}?chat=client#chat">Write in their portal</a></p>
-        <h3>On WhatsApp</h3>
-        ${missing.length === 0 ? raw('') : h`<div class="gate" role="note"><strong>WhatsApp is not switched on yet.</strong> ${missing.join(' ')} Anything you send now is kept here as not sent.</div>`}
-        ${people.length === 0 ? h`<p class="help">None of ${c.company}’s contacts has a mobile number. Add one under Contacts to write to them on WhatsApp.</p>`
-          : h`<form method="post" action="/staff/clients/${business_id}/whatsapp">
-          <label class="fl" for="wa-to">To</label>
-          <select class="fi" id="wa-to" name="contact_id" required>${people.map((p) => h`<option value="${p.id}">${p.name} — ${p.shown} — ${p.open_until === null
-            ? `only our opening message (more than ${WINDOW_HOURS} hours since they last wrote on WhatsApp)` : `you can write freely until ${localStamp(p.open_until, now)}`}</option>`)}</select>
-          <label class="fl" for="wa-body">Message</label>
-          <textarea class="fi" id="wa-body" name="body" maxlength="${String(MAX_WHATSAPP_TEXT)}" rows="3"></textarea>
-          <p><button class="cta" type="submit" name="send" value="1">Send on WhatsApp</button>
-          <button class="btn-quiet" type="submit" name="opening" value="1" formnovalidate>Send our opening message</button></p>
-          <p class="help">WhatsApp lets us write freely only within ${WINDOW_HOURS} hours of the person’s last message to us. After that, it only lets us send our opening message. It asks them to reply.</p>
-        </form>`}
+        <p class="cactions"><a class="cta" href="/staff/clients/${business_id}/email">Email</a>
+          <a class="cta" href="/staff/clients/${business_id}/whatsapp">WhatsApp</a>
+          <a class="btn" href="/staff/clients/${business_id}?chat=client#chat">In their portal</a></p>
+        <p class="help">Each opens with the conversation on the right and the box to write on the left.</p>
       </div>`;
   const checkForm = IE.mayReadQueue(actor) ? h`<form method="post" action="/staff/replies/check" class="inline"><input type="hidden" name="back" value="/staff/clients/${business_id}?chat=all">
       <button class="linkish" type="submit">Check for new email replies</button></form>` : raw('');
@@ -269,13 +265,19 @@ export async function handleStaffMessages(
 
   /* ---- 30 SEP 2026: WHATSAPP TO ONE OF THE COMPANY'S CONTACTS ---- */
   const wa = /^\/staff\/clients\/([A-Za-z0-9-]+)\/whatsapp$/.exec(path);
+  if (wa && method === 'GET') {
+    // 1 Oct 2026: the conversation on the right, the message on the left (src/web/whatsapp-page.ts).
+    html(res, 200, whatsappPage(d.app, actor, wa[1] ?? '', url.searchParams.get('contact'), url.searchParams.get('done'), d.nav(actor)));
+    return 'handled';
+  }
   if (wa && method === 'POST') {
     const id = wa[1] ?? '';
     const f = await form(req);
     const opening = f.get('opening') === '1';
     const r = await W.sendWhatsApp(d.app, actor, id, { contact_id: f.get('contact_id') ?? '', body: f.get('body') ?? '', opening });
-    if (!r.ok) return d.problem(res, actor, 'Not sent on WhatsApp', r.why, `/staff/clients/${id}?chat=all#whatsapp`);
-    redirect(res, `/staff/clients/${id}?chat=all&done=${opening ? 'whatsapp-opening' : 'whatsapp'}#chat`);
+    const back = `/staff/clients/${id}/whatsapp?contact=${encodeURIComponent(f.get('contact_id') ?? '')}`;
+    if (!r.ok) return d.problem(res, actor, 'Not sent on WhatsApp', r.why, back);
+    redirect(res, `${back}&done=${opening ? 'whatsapp-opening' : 'whatsapp'}`);
     return 'handled';
   }
 

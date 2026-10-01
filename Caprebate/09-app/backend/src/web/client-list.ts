@@ -21,6 +21,8 @@ import { organisationList, assertOrganisationSection, NOT_RECORDED } from './crm
 import { waitingOn, type WaitingOn } from './engaged.ts';
 import { h, raw, page, type Safe } from './html.ts';
 import { badge } from './components.ts';
+import { newFromClient } from './messages.ts';
+import { newDot } from './client-layout.ts';
 
 export type ClientListRow = {
   readonly id: string;
@@ -34,6 +36,8 @@ export type ClientListRow = {
   readonly claims: number;
   /** Null where this login may not read who is holding the claim up. */
   readonly waiting: { readonly who: WaitingOn; readonly why: string } | null;
+  /** 1 Oct 2026: messages from the client — portal, email, WhatsApp — this person has not read (the red dot). */
+  readonly new_messages: number;
 };
 
 export type ClientList = { readonly rows: readonly ClientListRow[]; readonly shows_waiting: boolean };
@@ -52,6 +56,7 @@ export function clientList(db: Db, actor: Actor, sort: ClientSort = 'waiting'): 
     sector: o.sector.replace(/_/g, ' ').toLowerCase(),
     status: o.client_status, do_not_contact: o.do_not_contact, owner: o.owner, claims: o.claims,
     waiting: waitingOn(db, actor, o.id),
+    new_messages: newFromClient(db, actor, o.id),
   }));
   const shows_waiting = rows.some((r) => r.waiting !== null);
   const byName = (a: ClientListRow, b: ClientListRow): number => a.name.localeCompare(b.name);
@@ -85,7 +90,7 @@ export function clientListPage(nav: Safe, list: ClientList, sort: ClientSort): s
         : h`<table class="stack clientlist"><thead><tr><th>Company</th>${list.shows_waiting ? h`<th>Waiting on</th>` : raw('')}
             <th>Status</th><th>Owner</th><th>Claims</th></tr></thead>
           <tbody>${list.rows.map((r) => h`<tr>
-            <td data-label="Company"><a class="rowname" href="/staff/clients/${r.id}">${r.name}</a>${
+            <td data-label="Company"><a class="rowname" href="/staff/clients/${r.id}${r.new_messages > 0 ? '?chat=all#chat' : ''}">${r.name}</a>${newDot(r.new_messages)}${
               r.legal_name === null ? raw('') : h`<br><span class="help">${r.legal_name}</span>`}<br><span class="help">${r.sector}</span></td>
             ${list.shows_waiting ? h`<td data-label="Waiting on">${waitingCell(r.waiting)}</td>` : raw('')}
             <td data-label="Status">${r.do_not_contact ? h`<strong>${r.status}</strong>` : h`${r.status}`}</td>

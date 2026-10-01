@@ -122,6 +122,58 @@ function lastRead(db: Db, user_id: string, business_id: string, thread: Thread):
 }
 
 /**
+ * 1 OCT 2026 — WHEN A PERSON LAST READ A COMPANY'S EMAILS OR ITS WHATSAPP (migration 065, `channel_reads`), for the red
+ * dot on Chat. An emailed reply is also on the portal thread, so reading either place reads it.
+ */
+export type Channel = 'EMAIL' | 'WHATSAPP';
+
+export function lastChannelRead(db: Db, user_id: string, business_id: string, channel: Channel): string {
+  return db.get<{ at: string | null }>(
+    'SELECT MAX(read_at) AS at FROM channel_reads WHERE user_id = ? AND business_id = ? AND channel = ?', [user_id, business_id, channel])?.at ?? '';
+}
+
+/** The later of two times written the same way (ISO), '' being never. */
+function later(a: string, b: string): string {
+  return a > b ? a : b;
+}
+
+/** When this person last read the company's emailed replies: on the portal thread, or on the email page. */
+export function emailsReadUntil(db: Db, user_id: string, business_id: string): string {
+  return later(lastRead(db, user_id, business_id, 'CLIENT'), lastChannelRead(db, user_id, business_id, 'EMAIL'));
+}
+
+/** Emailed replies this person has not read. Staff only: the client wrote them. */
+export function unreadEmails(db: Db, actor: Actor, business_id: string): number {
+  if (actor.role === 'CLIENT' || !can(actor, 'client_message.read', clientObj(db, business_id))) return 0;
+  return db.get<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM client_messages WHERE business_id = ? AND direction = 'FROM_CLIENT' AND source = 'EMAIL' AND created_at > ?",
+    [business_id, emailsReadUntil(db, actor.id, business_id)])?.n ?? 0;
+}
+
+/** WhatsApp messages from the company this person has not read. */
+export function unreadWhatsApp(db: Db, actor: Actor, business_id: string): number {
+  if (actor.role === 'CLIENT' || !can(actor, 'client_message.read', clientObj(db, business_id))) return 0;
+  return db.get<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM whatsapp_messages WHERE business_id = ? AND direction = 'IN' AND created_at > ?",
+    [business_id, lastChannelRead(db, actor.id, business_id, 'WHATSAPP')])?.n ?? 0;
+}
+
+/** Record that this person has read the company's emails, or its WhatsApp, now — only when something was unread. */
+export function markChannelRead(d: MessageDeps, actor: Actor, business_id: string, channel: Channel): void {
+  if ((channel === 'EMAIL' ? unreadEmails(d.db, actor, business_id) : unreadWhatsApp(d.db, actor, business_id)) === 0) return;
+  d.db.run('INSERT INTO channel_reads (id, user_id, business_id, channel, read_at) VALUES (?, ?, ?, ?, ?)',
+    [d.newId(), actor.id, business_id, channel, d.now()]);
+}
+
+/**
+ * THE RED DOT ON CHAT: how many messages from the client — in the portal, by email or on WhatsApp — this person has not
+ * read. 0 for a login that may not read them.
+ */
+export function newFromClient(db: Db, actor: Actor, business_id: string): number {
+  return unreadCount(db, actor, business_id, 'CLIENT') + unreadWhatsApp(db, actor, business_id);
+}
+
+/**
  * HOW MANY MESSAGES THIS PERSON HAS NOT READ. On the thread with the client: for staff, what the client sent since they
  * last read it; for the client, what we sent. On the team thread: what colleagues wrote. A login that may not read a
  * thread gets 0, never a number about a thread it cannot open.
@@ -131,8 +183,11 @@ export function unreadCount(db: Db, actor: Actor, business_id: string, thread: T
     if (!can(actor, 'client_message.read', clientObj(db, business_id))) return 0;
     const since = lastRead(db, actor.id, business_id, 'CLIENT');
     const direction = actor.role === 'CLIENT' ? 'TO_CLIENT' : 'FROM_CLIENT';
+    // 1 Oct 2026: an emailed reply read on the email page is read here too.
+    const emails = actor.role === 'CLIENT' ? since : later(since, lastChannelRead(db, actor.id, business_id, 'EMAIL'));
     return db.get<{ n: number }>(
-      'SELECT COUNT(*) AS n FROM client_messages WHERE business_id = ? AND direction = ? AND created_at > ?', [business_id, direction, since])?.n ?? 0;
+      "SELECT COUNT(*) AS n FROM client_messages WHERE business_id = ? AND direction = ? AND created_at > ? AND (source <> 'EMAIL' OR created_at > ?)",
+      [business_id, direction, since, emails])?.n ?? 0;
   }
   if (!can(actor, 'internal_note.read', noteObj(business_id))) return 0;
   const since = lastRead(db, actor.id, business_id, 'TEAM');

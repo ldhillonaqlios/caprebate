@@ -198,6 +198,17 @@ hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
 @media (max-width:760px){.ctop{grid-template-columns:minmax(0,1fr)}.cprogress{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .via{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.02em;border:1px solid var(--line);border-radius:999px;padding:0 .5rem;margin-right:.25rem}
 .msgsubj{font-weight:700;margin:.2rem 0}
+.newdot{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .35em;margin-left:.35rem;border-radius:999px;background:var(--stop);color:var(--white);font-size:12px;font-weight:700;line-height:1;vertical-align:middle;text-decoration:none}
+.convo{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:1.2rem;align-items:start;margin-top:1rem}
+.convo-write,.convo-chain{border:1px solid var(--line);border-radius:var(--radius);background:var(--white);padding:1rem 1.1rem;min-width:0}
+.convo-chain .chat{max-height:none}
+.echain{border:1px solid var(--line);border-radius:var(--radius);padding:.4rem .8rem;margin:0 0 .7rem}
+.echain>summary{text-decoration:none;color:var(--ink)}
+.echain-subj{font-weight:700}
+.echain-meta{display:block;font-weight:400}
+.echain.is-reply{border:2px solid var(--mint)}
+.msg.is-new{border-left:3px solid var(--stop)}
+@media (max-width:760px){.convo{grid-template-columns:minmax(0,1fr)}}
 .vc-root{width:100%;max-width:1000px;min-height:0}
 .say{color:var(--body);font-size:16px}
 pre{white-space:pre-wrap;font-family:inherit}

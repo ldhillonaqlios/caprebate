@@ -64,7 +64,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { processSecrets, type SecretStore } from '../secrets.ts';
-import { isDoNotContact } from './email.ts';
+import { isDoNotContact, isInventedAddress } from './email.ts';
 
 export type EmailSending = {
   readonly enabled: boolean;
@@ -208,6 +208,9 @@ export type Envelope = {
   readonly body: string;
   readonly attachments: readonly Attachment[];
   readonly date: Date;
+  /** 1 Oct 2026: a reply's In-Reply-To and References — Message-IDs without the angle brackets. */
+  readonly in_reply_to?: string | null;
+  readonly references?: readonly string[];
 };
 
 /** The address inside "Name <address>", or the whole thing when there are no brackets. */
@@ -231,6 +234,9 @@ function base64Lines(bytes: Uint8Array): string {
   return (Buffer.from(bytes).toString('base64').match(/.{1,76}/g) ?? []).join('\r\n');
 }
 
+/** A Message-ID as a reply names it: one plain id with an @, no brackets, spaces or line breaks. */
+const MESSAGE_ID = /^[^<>\s@]{1,200}@[^<>\s@]{1,200}$/;
+
 /** The whole message, as SMTP's DATA carries it. Every body part is base64, so no line can begin with a dot. */
 export function buildMessage(e: Envelope, messageId: string): string {
   const head = [
@@ -240,6 +246,10 @@ export function buildMessage(e: Envelope, messageId: string): string {
     `Subject: ${headerWords(e.subject)}`,
     `Date: ${e.date.toUTCString().replace('GMT', '+0000')}`,
     `Message-ID: <${messageId}>`,
+    // A reply names what it answers, so the client's mail program keeps the chain together (only a plain id goes).
+    ...(e.in_reply_to !== undefined && e.in_reply_to !== null && MESSAGE_ID.test(e.in_reply_to) ? [`In-Reply-To: <${e.in_reply_to}>`] : []),
+    ...((e.references ?? []).filter((r) => MESSAGE_ID.test(r)).length === 0 ? []
+      : [`References: ${(e.references ?? []).filter((r) => MESSAGE_ID.test(r)).slice(-20).map((r) => `<${r}>`).join(' ')}`]),
     'MIME-Version: 1.0',
   ];
   const text = ['Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: base64', '', base64Lines(Buffer.from(e.body, 'utf8'))];
@@ -327,6 +337,9 @@ export function smtpProvider(
       const from = addressOf(e.from_header);
       const to = addressOf(e.to);
       if (/[\r\n<>\s]/.test(from) || /[\r\n<>\s]/.test(to)) return { ok: false, why: 'An address is not a plain email address.' };
+      // 1 Oct 2026: an invented address (example.invalid, example.com …) never reaches the real mail server, whichever
+      // page or command sent it. Found when a local copy, sending on, tried one from the Write an email page.
+      if (connect === tlsConnector && isInventedAddress(to)) return { ok: false, why: 'An invented address, so it was not sent.' };
       const domain = from.split('@')[1] ?? 'localhost';
       const messageId = `${randomBytes(16).toString('hex')}@${domain}`;
       const started = Date.now();
@@ -439,7 +452,7 @@ export type DispatchResult =
 
 type Waiting = {
   id: string; to_email: string; subject: string; body: string; business_id: string | null;
-  from_header: string | null; reply_to: string | null;
+  from_header: string | null; reply_to: string | null; in_reply_to: string | null; references_ids: string | null;
 };
 
 /**
@@ -477,8 +490,8 @@ export async function dispatchOutbox(
 ): Promise<DispatchResult> {
   if (!sendingOn(cfg, login) || provider === null) return { state: 'OFF', missing: sendingMissing(cfg, login) };
   const rows = only === undefined
-    ? d.db.all<Waiting>('SELECT id, to_email, subject, body, business_id, from_header, reply_to FROM outbox WHERE sent_at IS NULL AND send_requested = 1 ORDER BY created_at')
-    : d.db.all<Waiting>('SELECT id, to_email, subject, body, business_id, from_header, reply_to FROM outbox WHERE sent_at IS NULL AND send_requested = 1 AND id = ?', [only]);
+    ? d.db.all<Waiting>('SELECT id, to_email, subject, body, business_id, from_header, reply_to, in_reply_to, references_ids FROM outbox WHERE sent_at IS NULL AND send_requested = 1 ORDER BY created_at')
+    : d.db.all<Waiting>('SELECT id, to_email, subject, body, business_id, from_header, reply_to, in_reply_to, references_ids FROM outbox WHERE sent_at IS NULL AND send_requested = 1 AND id = ?', [only]);
   let sent = 0, failed = 0, refused = 0;
   for (const r of rows) {
     const fail = (why: string): void => { d.db.run('UPDATE outbox SET last_error = ? WHERE id = ?', [why, r.id]); };
@@ -497,6 +510,7 @@ export async function dispatchOutbox(
     const out = await provider.deliver({
       from_header: r.from_header, reply_to: r.reply_to, to: r.to_email, subject: r.subject, body: r.body,
       attachments: files, date: new Date(d.now()),
+      in_reply_to: r.in_reply_to, references: r.references_ids === null ? [] : r.references_ids.split(' '),
     });
     if (out.ok) {
       d.db.run('UPDATE outbox SET sent_at = ?, transport = ?, provider_ref = ?, last_error = NULL WHERE id = ?', [d.now(), provider.id, out.ref, r.id]);

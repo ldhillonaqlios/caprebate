@@ -228,7 +228,7 @@ describe('1 · the Email button and the form', () => {
     } finally { w.close(); }
   });
 
-  test('the form: From is shown, To offers only the company’s contacts with an address, and it says emails are not being sent', async () => {
+  test('the form: From is shown, To is filled in with a contact and can be typed over, the contacts are suggested, and it says emails are not being sent', async () => {
     const w = await boot();
     try {
       const c = await w.signIn('sales');
@@ -238,8 +238,12 @@ describe('1 · the Email button and the form', () => {
       assert.match(r.body, /Cap Rebate &lt;contact@caprebate.co.uk&gt;/);
       assert.match(r.body, /Emails are not being sent yet/);
       assert.match(r.body, /Save the email/);
-      for (const x of w.contacts) assert.ok(r.body.includes(`value="${x.id}"`), 'a contact was not offered');
-      assert.doesNotMatch(r.body, /name="to_email"|name="to"|type="email"/, 'there is a box to type an address into');
+      // 1 Oct 2026 (Lakhbir: "auto populated … however it needs to allow users to overide the email"): a box, filled in.
+      const box = /<input class="fi" id="em-to" name="to_email" type="email" required maxlength="254" list="em-to-list" autocomplete="off" value="([^"]+)">/.exec(r.body);
+      assert.ok(box, 'no To box');
+      assert.ok(w.contacts.some((x) => x.email === box[1]), 'To is not filled in with one of their contacts');
+      const list = /<datalist id="em-to-list">([\s\S]*?)<\/datalist>/.exec(r.body)?.[1] ?? '';
+      for (const x of w.contacts) assert.ok(list.includes(`value="${x.email}"`), 'a contact was not suggested');
       // Nothing personal in an address the page links to or posts to.
       for (const m of r.body.matchAll(/(?:href|action)="([^"]+)"/g)) assert.ok(!(m[1] ?? '').includes('@'), `an address carries personal data: ${m[1] ?? ''}`);
     } finally { w.close(); }
@@ -274,20 +278,30 @@ describe('1 · the Email button and the form', () => {
     } finally { w.close(); }
   });
 
-  test('To is never a typed address: another company’s contact, a made-up id and a contact with no address are all refused', async () => {
+  test('To: an address typed over it goes, recorded as a contact where it is one; not an address, or none, is refused; a contact chosen by id must be theirs', async () => {
     const w = await boot();
     try {
       const db = w.made.app.db;
       db.run("INSERT INTO contacts (id, business_id, full_name, contact_consent, marketing_optin, created_at, email) VALUES ('c-141-other', ?, 'Other Person', 1, 0, ?, 'other@example.invalid')", [w.other, w.made.app.now()]);
       db.run("INSERT INTO contacts (id, business_id, full_name, contact_consent, marketing_optin, created_at, email) VALUES ('c-141-noaddr', ?, 'No Address', 1, 0, ?, NULL)", [w.biz, w.made.app.now()]);
       const s = { kind: 'company' as const, id: w.biz };
+      // With no To typed, only one of this company's own contacts with an address, by id.
       for (const contact_id of ['c-141-other', 'made-up', 'c-141-noaddr', '']) {
-        const r = F.saveEmail(w.deps(), w.as('SALES'), s, { contact_id, subject: 'x', body: 'y', to_email: 'anyone@example.invalid' }, []);
+        const r = F.saveEmail(w.deps(), w.as('SALES'), s, { contact_id, subject: 'x', body: 'y' }, []);
         assert.equal(r.ok, false, contact_id);
+      }
+      for (const bad of ['not an address', 'a@b', 'two@one.co.uk, three@one.co.uk', 'line@break.co.uk\nBcc: x@y.co.uk']) {
+        assert.equal(F.saveEmail(w.deps(), w.as('SALES'), s, { to_email: bad, subject: 'x', body: 'y' }, []).ok, false, bad);
       }
       const form = F.emailForm(w.deps(), w.as('SALES'), s);
       assert.ok(form.not_offered.some((n) => n.name === 'No Address'), 'a contact with no address is not said to be missing');
       assert.equal(db.get<{ n: number }>("SELECT COUNT(*) AS n FROM outbox WHERE kind = 'FREE_TYPED'")?.n, 0);
+      // Typed over: it goes there, with no contact recorded; a contact's own address, typed in any case, is that contact.
+      assert.ok(F.saveEmail(w.deps(), w.as('SALES'), s, { to_email: 'someone.else@invented.co.uk', subject: 'Typed', body: 'y' }, []).ok);
+      const mine = w.contacts[0]!;
+      assert.ok(F.saveEmail(w.deps(), w.as('SALES'), s, { to_email: mine.email.toUpperCase(), subject: 'Known', body: 'y' }, []).ok);
+      const rows = db.all<{ subject: string; to_email: string; contact_id: string | null }>("SELECT subject, to_email, contact_id FROM outbox WHERE kind = 'FREE_TYPED' ORDER BY subject");
+      assert.deepEqual(rows.map((x) => ({ ...x })), [{ subject: 'Known', to_email: mine.email, contact_id: mine.id }, { subject: 'Typed', to_email: 'someone.else@invented.co.uk', contact_id: null }]);
     } finally { w.close(); }
   });
 

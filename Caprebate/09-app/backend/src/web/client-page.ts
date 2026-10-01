@@ -202,6 +202,8 @@ function clientPage(
   /* PHASE 142: CHAT — "Team only" (the company's notes, as a conversation) and "With the client" (the portal's Messages),
      two tabs, each with its unread number. Drawn only for a login that may read one of the two. */
   const chatNow = chatBlock({ app: d.app, newId: d.newId }, actor, org.id, chat, note === 'saved' ? 'note' : done === 'message' || done === 'saved-file' || done === 'whatsapp' || done === 'whatsapp-opening' || done === 'checked' ? done : undefined);
+  // 1 Oct 2026: the red dot on Chat — counted after the chat was drawn, so what this visit opened is already read.
+  const fresh = M.newFromClient(db, actor, org.id);
   if (chatNow !== null) {
     const waitingOnUs = M.clientMessagesWaiting(db, actor, d.app.now()).find((w) => w.business_id === org.id);
     sections.push({
@@ -331,9 +333,9 @@ function clientPage(
         { label: 'Owner', value: org.owner?.name ?? 'nobody yet' },
         waiting === null ? null : { label: 'Waiting on', value: waiting },
         p === null ? null : { label: 'Engagement letter', value: p.row.letter_label },
-      ], h`${progressBar(db, org.id)}${headerActions(org.id, folder.files.length, chatNow !== null, quick)}`, legal === null ? raw('') : h`${legal}`)}
+      ], h`${progressBar(db, org.id)}${headerActions(org.id, folder.files.length, chatNow !== null, quick, fresh)}`, legal === null ? raw('') : h`${legal}`)}
       <div class="ctop">${nextStepCard(db, checks, d.app.now().slice(0, 10))}${lookupsCard(work?.sources ?? null, d.app.now())}</div>
-      ${tabbed(sections.map((x) => (openNow === x.id ? { ...x, open_now: true } : x)), ctx, defaultTab)}
+      ${tabbed(sections.map((x) => (openNow === x.id ? { ...x, open_now: true } : x)), ctx, defaultTab, fresh)}
       <p><a href="/staff/clients">Back to the list</a></p>`,
   });
 }

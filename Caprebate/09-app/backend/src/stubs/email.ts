@@ -62,6 +62,13 @@ export type OutboundMessage = {
   written_by?: string | null;
   attachments?: readonly { readonly logical_document_id: string; readonly document_id: string }[];
   /**
+   * 1 OCT 2026 — A REPLY JOINS ITS CHAIN (migration 065): the chain's key, and the Message-IDs it answers (without the
+   * angle brackets), sent as In-Reply-To and References. A new email has none.
+   */
+  thread_key?: string | null;
+  in_reply_to?: string | null;
+  references?: readonly string[];
+  /**
    * PHASE 146f — a file made for this email that is not one of the company's documents: the calendar invitation
    * (.ics, src/stubs/calendar.ts) or the signed engagement letter (.pdf). Stored with the email, sent with it.
    */
@@ -166,9 +173,10 @@ export function outboxTransport(
       if (requested === 1) m = { ...m, body: withoutNotSentWords(m.body) };
       db.run(
         'INSERT INTO outbox (id, created_at, to_email, subject, body, kind, sent_at, transport, business_id, from_header, reply_to, ' +
-          'claim_id, lead_id, contact_id, written_by, send_requested) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'claim_id, lead_id, contact_id, written_by, send_requested, thread_key, in_reply_to, references_ids) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [id, now(), m.to_email, m.subject, m.body, m.kind, 'STUB', m.business_id ?? null, from.from_header, from.reply_to,
-          m.claim_id ?? null, m.lead_id ?? null, m.contact_id ?? null, m.written_by ?? null, requested],
+          m.claim_id ?? null, m.lead_id ?? null, m.contact_id ?? null, m.written_by ?? null, requested,
+          m.thread_key ?? null, m.in_reply_to ?? null, (m.references ?? []).length === 0 ? null : (m.references ?? []).join(' ')],
       );
       for (const a of m.attachments ?? []) {
         db.run('INSERT INTO outbox_attachments (id, outbox_id, logical_document_id, document_id) VALUES (?, ?, ?, ?)',

@@ -106,10 +106,14 @@ describe('WhatsApp', () => {
     made.app.outside = t;
     made.app.secrets = secretsFromValues({});
     const s = await sales();
-    const page = (await s.req('/staff/clients/b-wa-1?chat=all')).body;
-    assert.match(page, /Everything: portal, email and WhatsApp/);
+    const all = (await s.req('/staff/clients/b-wa-1?chat=all')).body;
+    assert.match(all, /Everything: portal, email and WhatsApp/);
+    assert.match(all, /<a class="cta" href="\/staff\/clients\/b-wa-1\/whatsapp">WhatsApp<\/a>/);
+    // 1 Oct 2026: WhatsApp has its own page — the conversation on the right, the message on the left.
+    const page = (await s.req('/staff/clients/b-wa-1/whatsapp')).body;
+    assert.match(page, /<section class="convo-write" id="compose"[\s\S]*<section class="convo-chain"/);
     assert.match(page, /WhatsApp is not switched on yet\.<\/strong> Put the WhatsApp keys in the key file: WHATSAPP_ACCESS_TOKEN/);
-    assert.match(page, /<option value="c-wa-ada">Ada Invented — 07700 900123 — only our opening message/);
+    assert.match(page, /<option value="c-wa-ada"( selected)?>Ada Invented — 07700 900123 — only our opening message/);
     const waForm = page.slice(page.indexOf('<select class="fi" id="wa-to"'), page.indexOf('</select>', page.indexOf('id="wa-to"')));
     assert.doesNotMatch(waForm, /value="c-wa-no-phone"/, 'a contact with no number was offered');
     const r = await s.post('/staff/clients/b-wa-1/whatsapp', { contact_id: 'c-wa-ada', opening: '1' });
@@ -128,7 +132,7 @@ describe('WhatsApp', () => {
     assert.match(words.body, /more than 24 hours since Ada last wrote to us on WhatsApp/);
     assert.equal(t.seen.length, 0);
     const r = await s.post('/staff/clients/b-wa-1/whatsapp', { contact_id: 'c-wa-ada', opening: '1' });
-    assert.equal(r.location, '/staff/clients/b-wa-1?chat=all&done=whatsapp-opening#chat');
+    assert.equal(r.location, '/staff/clients/b-wa-1/whatsapp?contact=c-wa-ada&done=whatsapp-opening');
     assert.equal(t.seen.length, 1);
     assert.equal(t.seen[0]!.headers['authorization'], 'Bearer invented-token');
     const sent = JSON.parse(t.seen[0]!.body ?? '{}');
@@ -172,9 +176,11 @@ describe('WhatsApp', () => {
     const page = (await s.req('/staff/clients/b-wa-1?chat=all')).body;
     assert.match(page, /<span class="via">WhatsApp<\/span> <strong>Ada Invented<\/strong>/);
     assert.match(page, /Yes please, call me tomorrow/);
-    assert.match(page, /Ada Invented — 07700 900123 — you can write freely until /);
+    const wa = (await s.req('/staff/clients/b-wa-1/whatsapp')).body;
+    assert.match(wa, /<span class="via">WhatsApp<\/span> <strong>Ada Invented<\/strong> · [^<]*<\/p>\s*<p class="msgbody">Yes please, call me tomorrow/);
+    assert.match(wa, /Ada Invented — 07700 900123 — you can write freely until /);
     const r = await s.post('/staff/clients/b-wa-1/whatsapp', { contact_id: 'c-wa-ada', body: 'Great — we will ring at 10:00.', send: '1' });
-    assert.equal(r.location, '/staff/clients/b-wa-1?chat=all&done=whatsapp#chat');
+    assert.equal(r.location, '/staff/clients/b-wa-1/whatsapp?contact=c-wa-ada&done=whatsapp');
     assert.deepEqual(JSON.parse(t.seen.at(-1)!.body ?? '{}'), { messaging_product: 'whatsapp', recipient_type: 'individual', to: '447700900123', type: 'text', text: { preview_url: false, body: 'Great — we will ring at 10:00.' } });
     const status = (st: string) => { const body = JSON.stringify({ entry: [{ changes: [{ value: { statuses: [{ id: 'wamid.text1', status: st, timestamp: String(Math.floor(Date.now() / 1000)), recipient_id: '447700900123' }] } }] }] });
       return hook({ body, sig: `sha256=${createHmac('sha256', KEYS.WHATSAPP_APP_SECRET).update(body).digest('hex')}` }); };

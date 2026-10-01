@@ -10,10 +10,14 @@
  * ───────────────────────────────────────────────────────────────────────────
  * WHAT THIS HOLDS, AND IT IS ASKED ON THE SERVER EVERY TIME
  *
- *   TO IS ONE OF THE COMPANY'S OWN CONTACTS, BY ID. There is no address box: an address that is not a contact of this
- *   company cannot be written to. A contact with no address recorded is listed as needing one, not offered. A lead's own
- *   contact — someone who asked through the website and has no company record yet — is offered only where they agreed
- *   to be contacted.
+ *   TO IS FILLED IN WITH THE COMPANY'S MAIN CONTACT, AND STAFF MAY TYPE OVER IT (1 October 2026 — Lakhbir: "the To:
+ *   field needs to be auto populated with the emails address, however it needs to allow users to overide the email if
+ *   needed"; until then it was a list of contacts only). An address that is one of the company's contacts is recorded as
+ *   that contact; any other is recorded with no contact, and a reply from it waits under "Email replies to sort" (the
+ *   mailbox reader files only replies from the company's contacts). A lead's own contact who did not agree to be
+ *   contacted cannot be written to, typed or not. A do-not-contact address is refused, as always.
+ *   A REPLY JOINS ITS CHAIN (src/web/email-chains.ts): `thread` names one of this company's chains; the email carries the
+ *   chain's key and the Message-IDs it answers.
  *   THE SUBJECT AND THE BODY ARE TYPED FREELY. A template is only a place to start: it fills the two boxes and staff
  *   edit them. The same refusals as a template: no bank details, no invoice, nothing that tips somebody off.
  *   A CLAIM, IF ONE IS PICKED, IS ONE OF THE COMPANY'S OWN — asked here, and held again by a trigger (migration 036).
@@ -44,6 +48,7 @@ import { activeTemplates, freeTextRefusal, mergePlain, mergeValues, templateRefu
 import { propertyIn } from './components.ts';
 import { localStamp } from './localtime.ts';
 import { KEEP_ORIGINALS } from './originals.ts';
+import { emailChains, reSubject, STATE_WORDS, type EmailChain } from './email-chains.ts';
 
 export type EmailDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
@@ -74,7 +79,14 @@ export type EmailForm = {
   /** Why nothing can be attached, where nothing can. */
   readonly attach_words: string | null;
   readonly sent: readonly SentRow[];
-  readonly prefill: { readonly contact_id: string; readonly claim_id: string; readonly subject: string; readonly body: string; readonly template_id: string };
+  /** 1 Oct 2026: every chain of emails with them, newest first; and the one being replied to, if any. */
+  readonly chains: readonly EmailChain[];
+  readonly replying: EmailChain | null;
+  readonly prefill: {
+    readonly contact_id: string; readonly claim_id: string; readonly subject: string; readonly body: string; readonly template_id: string;
+    /** The address in the To box: the chain's, the contact asked for, or the main contact's. */
+    readonly to: string;
+  };
 };
 
 export type SentRow = {
@@ -92,6 +104,10 @@ type Base = {
   contacts: ContactChoice[]; not_offered: { name: string; why: string }[];
   do_not_contact: boolean; back: string; action: string;
   attachable: { id: string; name: string; document_id: string }[]; attach_words: string | null;
+  /** Addresses that may not be written to even when typed: a lead's contact who did not agree to be contacted. */
+  barred: string[];
+  /** The address the company gave us as its own, if any — the main contact's, when it is one of theirs. */
+  main_email: string | null;
 };
 
 function claimsOf(org: C.OrganisationView): Base['claims'] {
@@ -131,8 +147,10 @@ function companyBase(d: EmailDeps, actor: Actor, business_id: string): Base {
   authorise(actor, 'email.queue', { type: 'email', id: org.id, business_id: org.id });
   const people = companyContacts(d.db, actor, org.id);
   const files = attachableFiles(d, actor, org);
+  const main = d.db.get<{ e: string | null }>('SELECT contact_email AS e FROM businesses WHERE id = ?', [org.id])?.e ?? null;
   return {
-    company: org.trading_name, business_id: org.id, lead_id: null, claims: claimsOf(org), ...people,
+    company: org.trading_name, business_id: org.id, lead_id: null, claims: claimsOf(org), ...people, barred: [],
+    main_email: main === null || main.trim() === '' ? null : main.trim(),
     do_not_contact: org.client_status.do_not_contact,
     back: `/staff/clients/${org.id}`, action: `/staff/clients/${org.id}/email`,
     attachable: files.list, attach_words: files.words,
@@ -156,19 +174,23 @@ function leadBase(d: EmailDeps, actor: Actor, lead_id: string): Base {
   // A lead with no company record yet: the person who asked is the lead's own contact (migration 011).
   const contacts: ContactChoice[] = [];
   const not_offered: Base['not_offered'] = [];
+  const barred: string[] = [];
   const rows = d.db.all<{ id: string; full_name: string; email: string | null; contact_consent: number }>(
     'SELECT id, full_name, email, contact_consent FROM contacts WHERE lead_id = ? AND business_id IS NULL ORDER BY full_name ASC, id ASC', [l.id]);
   for (const c of rows) {
     if (!can(actor, 'contact.read', { type: 'contact', id: c.id, business_id: null })) continue;
     const email = (c.email ?? '').trim();
-    if (c.contact_consent !== 1) not_offered.push({ name: c.full_name, why: 'they did not agree to be contacted' });
+    if (c.contact_consent !== 1) {
+      not_offered.push({ name: c.full_name, why: 'they did not agree to be contacted' });
+      if (email !== '') barred.push(email.toLowerCase());
+    }
     else if (email === '') not_offered.push({ name: c.full_name, why: 'no email address recorded' });
     else contacts.push({ id: c.id, name: c.full_name, email });
   }
   const dnc = contacts.some((c) => isDoNotContactAddress(d.db, c.email));
   return {
     company: l.organisation_name ?? rows[0]?.full_name ?? 'This lead', business_id: null, lead_id: l.id, claims: [],
-    contacts, not_offered, do_not_contact: dnc, back, action,
+    contacts, not_offered, barred, main_email: null, do_not_contact: dnc, back, action,
     attachable: [], attach_words: 'A lead has no files yet. You can attach files once they are a client.',
   };
 }
@@ -183,10 +205,6 @@ function baseFor(d: EmailDeps, actor: Actor, s: EmailSubject): Base {
   return s.kind === 'company' ? companyBase(d, actor, s.id) : leadBase(d, actor, s.id);
 }
 
-const STATE_WORDS = (sent_at: string | null, requested: number, last_error: string | null): string =>
-  sent_at !== null ? `Sent ${localStamp(sent_at)}`
-    : requested === 1 ? (last_error === null ? 'Waiting to be sent' : `Not sent: ${last_error}`)
-      : 'Saved — not sent';
 
 function sentRows(db: Db, b: Base): SentRow[] {
   type Row = { created_at: string; to_email: string; subject: string; sent_at: string | null; send_requested: number; last_error: string | null; claim_id: string | null; id: string };
@@ -213,9 +231,16 @@ export function emailForm(d: EmailDeps, actor: Actor, s: EmailSubject, ask: Read
   const cfg = d.sending ?? EMAIL_SENDING;
   const login = d.login ?? null;
   const templates = activeTemplates(d.db, actor);
-  const claim_id = b.claims.some((c) => c.id === ask['claim']) ? (ask['claim'] ?? '') : '';
+  const chains = emailChains(d.db, actor, { business_id: b.business_id, lead_id: b.lead_id }, d.now());
+  const replying = chains.find((c) => c.key === ask['thread']) ?? null;
+  const asked = ask['claim'] ?? (replying?.claim_id ?? null);
+  const claim_id = b.claims.some((c) => c.id === asked) ? (asked ?? '') : '';
   const contact_id = b.contacts.some((c) => c.id === ask['contact']) ? (ask['contact'] ?? '') : (b.contacts.length === 1 ? (b.contacts[0]?.id ?? '') : '');
-  let subject = '', body = '', template_id = '';
+  // The To box: a chain's correspondent; the contact asked for; the company's main address where it is a contact's;
+  // else the first contact. What was typed before a refusal wins over all of them.
+  const main = b.contacts.find((c) => c.email.toLowerCase() === (b.main_email ?? '').toLowerCase());
+  const to = ask['to'] ?? replying?.reply_to ?? b.contacts.find((c) => c.id === contact_id)?.email ?? main?.email ?? b.contacts[0]?.email ?? b.main_email ?? '';
+  let subject = replying === null ? '' : reSubject(replying.subject), body = '', template_id = '';
   const t = templates.find((x) => x.id === ask['template']);
   if (t !== undefined) {
     const row = d.db.get<{ label: string; subject: string; body: string }>('SELECT label, subject, body FROM email_templates WHERE id = ? AND active = 1', [t.id]);
@@ -236,13 +261,13 @@ export function emailForm(d: EmailDeps, actor: Actor, s: EmailSubject, ask: Read
     sending: { on: sendingOn(cfg, login), missing: sendingMissing(cfg, login) },
     do_not_contact: b.do_not_contact, contacts: b.contacts, not_offered: b.not_offered, claims: b.claims, templates,
     attachable: b.attachable.map((a) => ({ id: a.id, name: a.name })), attach_words: b.attach_words,
-    sent: sentRows(d.db, b),
-    prefill: { contact_id, claim_id, subject, body, template_id },
+    sent: sentRows(d.db, b), chains, replying,
+    prefill: { contact_id, claim_id, subject, body, template_id, to },
   };
 }
 
 export type SaveResult =
-  | { readonly ok: true; readonly id: string; readonly requested: boolean; readonly back: string; readonly action: string }
+  | { readonly ok: true; readonly id: string; readonly requested: boolean; readonly back: string; readonly action: string; readonly chain: string }
   | { readonly ok: false; readonly why: string; readonly field?: string };
 
 /**
@@ -252,10 +277,24 @@ export type SaveResult =
 export function saveEmail(d: EmailDeps, actor: Actor, s: EmailSubject, input: Readonly<Record<string, string | null>>, attach: readonly string[]): SaveResult {
   const b = baseFor(d, actor, s);
   if (b.do_not_contact) return { ok: false, why: DNC_WHY };
-  const contact = b.contacts.find((c) => c.id === (input['contact_id'] ?? '').trim());
-  if (contact === undefined) {
-    return { ok: false, why: 'Choose who it is to. It can only go to one of this company’s contacts with an email address.', field: 'contact_id' };
+  // TO: what was typed in the To box; or, from a caller with no box, one of the contacts by id.
+  const typed = (input['to_email'] ?? '').trim();
+  let contact: ContactChoice | undefined;
+  let to: string;
+  if (typed !== '') {
+    if (!ADDRESS.test(typed) || typed.length > 254) return { ok: false, why: 'That is not an email address. Check the To box.', field: 'to_email' };
+    if (b.barred.includes(typed.toLowerCase())) return { ok: false, why: 'They did not agree to be contacted, so we cannot email them.', field: 'to_email' };
+    contact = b.contacts.find((c) => c.email.toLowerCase() === typed.toLowerCase());
+    to = contact?.email ?? typed;
+  } else {
+    contact = b.contacts.find((c) => c.id === (input['contact_id'] ?? '').trim());
+    if (contact === undefined) return { ok: false, why: 'Say who it is to: type an email address in the To box.', field: 'to_email' };
+    to = contact.email;
   }
+  // A REPLY: one of this company's own chains, whatever the form said.
+  const thread = (input['thread'] ?? '').trim();
+  const chain = thread === '' ? null : emailChains(d.db, actor, { business_id: b.business_id, lead_id: b.lead_id }, d.now()).find((c) => c.key === thread) ?? null;
+  if (thread !== '' && chain === null) return { ok: false, why: 'That conversation is not one of this company’s. Start a new email instead.', field: 'thread' };
   const claim = (input['claim_id'] ?? '').trim();
   if (claim !== '' && !b.claims.some((c) => c.id === claim)) return { ok: false, why: 'Choose one of this company’s claims.', field: 'claim_id' };
   const subject = (input['subject'] ?? '').replace(/[\r\n]+/g, ' ').trim();
@@ -274,8 +313,9 @@ export function saveEmail(d: EmailDeps, actor: Actor, s: EmailSubject, input: Re
   const cfg = d.sending ?? EMAIL_SENDING;
   const on = sendingOn(cfg, d.login ?? null);
   const out = outboxTransport(d.db, d.newId, d.now, () => on).send({
-    to_email: contact.email, subject, body, kind: 'FREE_TYPED', business_id: b.business_id,
-    claim_id: claim === '' ? null : claim, lead_id: b.lead_id, contact_id: contact.id, written_by: actor.id,
+    to_email: to, subject, body, kind: 'FREE_TYPED', business_id: b.business_id,
+    claim_id: claim === '' ? null : claim, lead_id: b.lead_id, contact_id: contact?.id ?? null, written_by: actor.id,
+    thread_key: chain?.key ?? null, in_reply_to: chain?.in_reply_to ?? null, references: chain?.references ?? [],
     attachments: files.flatMap((f) => (f === undefined ? [] : [{ logical_document_id: f.id, document_id: f.document_id }])),
   });
   if (out.id === null) return { ok: false, why: DNC_WHY };
@@ -283,11 +323,11 @@ export function saveEmail(d: EmailDeps, actor: Actor, s: EmailSubject, input: Re
     at: d.now(), kind: 'EMAIL_WRITTEN', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'outbox', object_id: out.id,
     detail: {
-      business: b.business_id, lead: b.lead_id, claim: claim === '' ? null : claim, contact: contact.id,
-      files: files.length, send_requested: on,
+      business: b.business_id, lead: b.lead_id, claim: claim === '' ? null : claim, contact: contact?.id ?? null,
+      to_contact: contact !== undefined, reply: chain !== null, files: files.length, send_requested: on,
     },
   });
-  return { ok: true, id: out.id, requested: on, back: b.back, action: b.action };
+  return { ok: true, id: out.id, requested: on, back: b.back, action: b.action, chain: chain?.key ?? out.id };
 }
 
 /* ================================================================== *

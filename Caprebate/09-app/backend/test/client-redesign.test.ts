@@ -70,7 +70,7 @@ describe('the client page, laid out again', () => {
     assert.match(bar, /<li class="now" aria-current="step"><span class="bar"><\/span><span class="name">Expert sign-off<\/span><\/li>/, 'Dunmarrow is at survey: "Expert sign-off"');
     assert.equal((bar.match(/class="done"/g) ?? []).length, 3);
     const actions = /<div class="cactions">[\s\S]*?<\/div>/.exec(r.body)?.[0] ?? '';
-    assert.match(actions, new RegExp(`<a class="cta" href="/staff/clients/${dunmarrow}\\?chat=all#chat">Chat</a>`));
+    assert.match(actions, new RegExp(`<a class="cta chatbtn" href="/staff/clients/${dunmarrow}\\?chat=all#chat">Chat`));
     assert.match(actions, /<a class="btn" href="#add-task">Log a call<\/a>/);
     assert.match(actions, /class="filesbtn"/);
     assert.match(actions, /<summary>More<\/summary>[\s\S]*Add a contact[\s\S]*Write an email/);
