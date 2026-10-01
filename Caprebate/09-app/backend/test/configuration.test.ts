@@ -546,7 +546,8 @@ describe('the admin settings screen — the lists, the reasons, the folded scree
         // Phase 133b: each is a section of the left-hand section list, headed by an <h2>, where it was a panel headed by a div.
         assert.match(pageHtml, new RegExp(`<section class="tabpanel card" id="[a-z-]+"><h2 class="sechead">${heading}</h2>`), `the screen draws no ${heading}`);
       }
-      assert.match((await admin.get('/staff')).body, /href="\/staff\/admin-settings"/, 'the navigation does not link the settings');
+      // 1 Oct 2026: Admin's own tiles are on Home's Admin tab.
+      assert.match((await admin.get('/staff?view=admin')).body, /href="\/staff\/admin-settings"/, 'the navigation does not link the settings');
       const view = JSON.parse((await admin.get('/staff/admin-settings/view.json')).body) as CF.ConfigurationView;
       assert.equal(view.lists.length, 5);
       assert.equal(view.reasons.length, 2);

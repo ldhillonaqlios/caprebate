@@ -112,14 +112,17 @@ after(() => { h.made.close(); });
 
 describe('the rows, in Lakhbir\'s order', () => {
   test('each login\'s Home is its rows, in exactly the brief\'s order', async () => {
+    // 1 Oct 2026 — Home as a dashboard, in Lakhbir's new order ("whos a new lead … whats in the pipeline … new messages
+    // … a calendar … and below it … activities for today"); Admin's own row is on the Admin tab.
     const want: Record<Staff, string[]> = {
-      sales: ['new-leads', 'next-actions', 'today', 'pipeline'],
-      readonly: ['new-leads', 'next-actions', 'today', 'pipeline'],
-      admin: ['new-leads', 'next-actions', 'today', 'pipeline', 'admin'],
+      sales: ['new-leads', 'pipeline', 'today', 'next-actions'],
+      readonly: ['new-leads', 'pipeline', 'today', 'next-actions'],
+      admin: ['new-leads', 'pipeline', 'today', 'next-actions'],
       accounting: ['money', 'today'],
       surveying: ['jobs', 'today'],
     };
     for (const who of STAFF) assert.deepEqual(rowIds((await as(who).get('/staff')).body), want[who], who);
+    assert.deepEqual(rowIds((await as('admin').get('/staff?view=admin')).body), ['admin']);
   });
 
   test('new leads: a count tile first, then oldest first, and red once a lead has waited more than one working day', async () => {
@@ -153,7 +156,7 @@ describe('the rows, in Lakhbir\'s order', () => {
   });
 
   test('Admin\'s own row: Users, Switches, Audit log and Refused sign-ins', async () => {
-    const t = tiles(row((await as('admin').get('/staff')).body, 'admin'));
+    const t = tiles(row((await as('admin').get('/staff?view=admin')).body, 'admin'));
     assert.deepEqual(t.map((x) => x.lines[0]), ['Users', 'Switches', 'Audit log', 'Refused sign-ins']);
     assert.equal(t[2]?.lines[1], 'Checked — nothing changed');
   });

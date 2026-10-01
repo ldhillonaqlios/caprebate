@@ -1,0 +1,156 @@
+/**
+ * 1 OCTOBER 2026 — HOME AS A DASHBOARD, AND BLOCKING OFF TIME.
+ *
+ * Lakhbir: "for workers, it should be client driven whos a new lead (where did the lead come from) whats in the pipeline
+ * at which stage, any new messages received, a calendar allowing users to block off time … and below it should be
+ * activities for today if its a telephone call, teams call and if they need to send any initial emails … a CTA on each,
+ * if its a zoom call clicking the CTA launches zoom and the same goes for email. Phone will be manual." Admin: "tabs
+ * across the top to see the sales dashboard … same does for accounting and survayor … a special tab which is admin".
+ * Invented people and numbers only; nothing leaves.
+ */
+import { describe, test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createApp } from '../src/server.ts';
+import { isBookable, staffSlots } from '../src/web/schedule.ts';
+import { dashView } from '../src/web/staff-dashboard.ts';
+
+// Thursday 1 October 2026, 10:00 in the UK (09:00 UTC).
+const T = '2026-10-01T09:00:00.000Z';
+const PASSWORD = 'a-very-long-development-password';
+const ROLES = { admin: 'ADMIN', sales: 'SALES', accounting: 'ACCOUNTING', surveying: 'SURVEYING', readonly: 'READ_ONLY' } as const;
+type Who = keyof typeof ROLES;
+
+let made: Awaited<ReturnType<typeof createApp>>;
+let base = '';
+const now = T;
+before(async () => {
+  made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-dh-')), now: () => now });
+  await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
+  const a = made.server.address();
+  base = `http://127.0.0.1:${typeof a === 'object' && a !== null ? a.port : 0}`;
+  const db = made.app.db;
+  const hash = await made.app.hasher.hash(PASSWORD);
+  for (const [who, role] of Object.entries(ROLES)) {
+    db.run('INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,NULL)',
+      [`u-dh-${who}`, `dh.${who}@example.invalid`, `dh.${who}@example.invalid`, `Dash ${who}`, role, hash, T, T]);
+  }
+  // Sales works Thursdays 09:00 to 17:00.
+  db.run('INSERT INTO working_times (id, user_id, weekday, start_min, end_min) VALUES (?, ?, 4, 540, 1020)', [randomUUID(), 'u-dh-sales']);
+  db.run('INSERT INTO businesses (id,name,sector,stage,created_at) VALUES (?,?,?,?,?)', ['b-dh-1', 'Dashboard Dental Limited', 'dental', 'ASSESSMENT_SUBMITTED', T]);
+  db.run("INSERT INTO contacts (id, business_id, full_name, contact_consent, marketing_optin, created_at, email, phone) VALUES ('c-dh-1', 'b-dh-1', 'Pat Phone', 1, 0, ?, 'pat@dashboard-dental.invented.co.uk', '07700 900456')", [T]);
+  // Today: a Zoom call at 14:00 for Sales, and a telephone call at 15:00 nobody has taken.
+  db.run("INSERT INTO bookings (id, business_id, assigned_to, channel, entry_point, starts_at, ends_at, created_at) VALUES ('bk-dh-video', 'b-dh-1', 'u-dh-sales', 'video', 'funnel_close', '2026-10-01T13:00:00.000Z', '2026-10-01T14:00:00.000Z', ?)", [T]);
+  db.run("INSERT INTO bookings (id, business_id, assigned_to, channel, entry_point, starts_at, ends_at, created_at) VALUES ('bk-dh-phone', 'b-dh-1', NULL, 'phone', 'funnel_close', '2026-10-01T14:00:00.000Z', '2026-10-01T15:00:00.000Z', ?)", [T]);
+  // A new lead from the website nobody has written to.
+  db.run("INSERT INTO leads (id, business_id, origin, source, prospect_organisation, prospect_sector, lead_date, priority, status, created_at, updated_at) VALUES ('lead-dh-1', NULL, 'STAFF', 'WEBSITE', 'First Email Dental Limited', 'dental', ?, 'NORMAL', 'NEW', ?, ?)", [T, T, T]);
+  db.run("INSERT INTO contacts (id, lead_id, business_id, full_name, contact_consent, marketing_optin, created_at, email) VALUES ('c-dh-lead', 'lead-dh-1', NULL, 'Lee Lead', 1, 0, ?, 'lee@first-email.invented.co.uk')", [T]);
+});
+after(() => made.close());
+
+const cookies = new Map<Who, string>();
+async function req(who: Who, path: string, init: RequestInit = {}) {
+  let cookie = cookies.get(who) ?? '';
+  const r = await fetch(base + path, { redirect: 'manual', ...init, headers: { ...(init.headers as Record<string, string> ?? {}), ...(cookie ? { cookie } : {}) } });
+  for (const s of r.headers.getSetCookie()) { const f = s.split(';')[0] ?? ''; const k = f.split('=')[0]; cookie = [...cookie.split('; ').filter((x) => x && x.split('=')[0] !== k), f].join('; '); }
+  cookies.set(who, cookie);
+  return { status: r.status, body: await r.text(), location: r.headers.get('location') };
+}
+const post = (who: Who, path: string, form: Record<string, string>) => req(who, path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(form).toString() });
+const section = (body: string, id: string): string => new RegExp(`<section class="dash-card" id="${id}"[\\s\\S]*?</section>`).exec(body)?.[0] ?? '';
+const stat = (body: string, label: string): string => new RegExp(`<span class="dash-num">([^<]+)</span><span class="dash-label">${label}</span>`).exec(body)?.[1] ?? 'missing';
+
+describe('Home as a dashboard', () => {
+  before(async () => { for (const who of Object.keys(ROLES) as Who[]) await post(who, '/login', { email: `dh.${who}@example.invalid`, password: PASSWORD }); });
+
+  test('each role gets its own view; Admin chooses with tabs across the top, and only Admin has them', async () => {
+    assert.equal(dashView({ id: 'x', role: 'SALES' } as never, 'admin'), 'sales', 'Sales opened the Admin tab');
+    assert.equal(dashView({ id: 'x', role: 'ACCOUNTING' } as never, null), 'accounting');
+    assert.equal(dashView({ id: 'x', role: 'SURVEYING' } as never, 'sales'), 'surveying');
+    assert.equal(dashView({ id: 'x', role: 'ADMIN' } as never, null), 'sales');
+    assert.equal(dashView({ id: 'x', role: 'ADMIN' } as never, 'admin'), 'admin');
+    const admin = (await req('admin', '/staff')).body;
+    assert.match(admin, /<nav class="dash-tabs" aria-label="Whose dashboard"><a href="\/staff\?view=sales" class="dash-tab" aria-current="page">Sales<\/a><a href="\/staff\?view=accounting" class="dash-tab">Accounting<\/a><a href="\/staff\?view=surveying" class="dash-tab">Surveyor<\/a><a href="\/staff\?view=admin" class="dash-tab">Admin<\/a><\/nav>/);
+    for (const who of ['sales', 'accounting', 'surveying', 'readonly'] as const) assert.doesNotMatch((await req(who, '/staff?view=admin')).body, /dash-tabs|Who is working/, who);
+    assert.match((await req('admin', '/staff?view=accounting')).body, /aria-current="page">Accounting<\/a>[\s\S]*aria-labelledby="row-money"/);
+    assert.match((await req('admin', '/staff?view=surveying')).body, /aria-current="page">Surveyor<\/a>[\s\S]*aria-labelledby="row-jobs"/);
+  });
+
+  test('Sales: the figures at a glance, the new lead with where it came from, and today’s calls and first emails — each with its button', async () => {
+    const page = (await req('sales', '/staff')).body;
+    assert.equal(stat(page, 'new lead'), '1');
+    assert.equal(stat(page, 'calls today'), '2');
+    assert.match(page, /First Email Dental Limited[\s\S]*?From Website/);
+    const today = section(page, 'today-activities');
+    // The Zoom call: its button opens the host's call inside the site.
+    assert.match(today, /<span class="act-when">14:00<\/span>[\s\S]*?<span class="chip">Zoom call<\/span> <a href="\/staff\/calendar\/bk-dh-video">Dashboard Dental Limited<\/a> · Pat Phone<\/span>\s*<a class="cta act-cta" href="\/staff\/calendar\/bk-dh-video\/video">Start the Zoom call<\/a>/);
+    // The telephone call: made by hand — the number is shown, and the button opens the call to note it.
+    assert.match(today, /<span class="act-when">15:00<\/span>[\s\S]*?Telephone call[\s\S]*?<span class="act-phone">07700 900456<\/span> <span class="help">· nobody has taken it yet<\/span><\/span>\s*<a class="btn act-cta" href="\/staff\/calendar\/bk-dh-phone">Open the call<\/a>/);
+    assert.ok(today.indexOf('14:00') < today.indexOf('15:00'), 'not in time order');
+    // The first email: the button opens the email page for that lead, filled in.
+    assert.match(today, /First email<\/span> <a href="\/staff\/leads\/lead-dh-1">First Email Dental Limited<\/a> · from Website[\s\S]*?<a class="cta act-cta" href="\/staff\/leads\/lead-dh-1\/email">Write the first email<\/a>/);
+    const email = (await req('sales', '/staff/leads/lead-dh-1/email')).body;
+    assert.match(email, /value="lee@first-email\.invented\.co\.uk">/);
+    // Once written, it is no longer waiting.
+    assert.equal((await post('sales', '/staff/leads/lead-dh-1/email', { to_email: 'lee@first-email.invented.co.uk', subject: 'Your enquiry', body: 'Thank you.' })).status, 303);
+    assert.doesNotMatch(section((await req('sales', '/staff')).body, 'today-activities'), /First Email Dental Limited/);
+  });
+
+  test('the view-only login sees the dashboard without a button that changes anything', async () => {
+    const page = (await req('readonly', '/staff')).body;
+    assert.match(section(page, 'today-activities'), /Zoom call/);
+    assert.doesNotMatch(section(page, 'today-activities'), /act-cta/);
+    assert.doesNotMatch(page, /Block off time/);
+  });
+
+  test('blocking off time: it shows in the calendar, and no call can be offered or booked in it; a clash with a call is refused; only its owner (or Admin) frees it', async () => {
+    const db = made.app.db;
+    const four = '2026-10-01T15:00:00.000Z'; // 16:00 in the UK
+    assert.equal(isBookable(db, four, { forUser: 'u-dh-sales', now }).ok, true);
+    // Over the Zoom call: refused, so no client is left without the call they booked.
+    const clash = await post('sales', '/staff/time-blocks', { date: '2026-10-01', from: '13:30', to: '14:30', reason: '', back: '/staff#calendar' });
+    assert.equal(clash.status, 400);
+    assert.match(clash.body, /You have a call booked in that time/);
+    for (const [from, to, why] of [['17:00', '16:00', 'The finish must be after the start'], ['08:00', '09:00', 'That time has already gone'], ['nine', '10:00', 'Give a date']] as const) {
+      const r = await post('sales', '/staff/time-blocks', { date: '2026-10-01', from, to, back: '/staff#calendar' });
+      assert.equal(r.status, 400, from);
+      assert.match(r.body, new RegExp(why), from);
+    }
+    const ok = await post('sales', '/staff/time-blocks', { date: '2026-10-01', from: '16:00', to: '17:00', reason: 'Dentist', back: '/staff#calendar' });
+    assert.equal(ok.location, '/staff?done=blocked#calendar');
+    const block = db.get<{ id: string; starts_at: string; ends_at: string }>('SELECT id, starts_at, ends_at FROM time_blocks')!;
+    assert.deepEqual({ ...block, id: 'x' }, { id: 'x', starts_at: four, ends_at: '2026-10-01T16:00:00.000Z' });
+    // Held exactly as a call holds it.
+    assert.deepEqual(isBookable(db, four, { forUser: 'u-dh-sales', now }), { ok: false, why: 'that time has been taken' });
+    const slots = staffSlots(db, now, '2026-10-02T00:00:00.000Z', { onlyUser: 'u-dh-sales', now });
+    assert.ok(slots.available && !slots.slots.some((s) => s.starts_at === four), 'the blocked hour was offered');
+    const cal = section((await req('sales', '/staff?done=blocked')).body, 'calendar');
+    assert.match(cal, /Blocked off\. Nobody can book you a call then\./);
+    assert.match(cal, /<li class="wk-day today" aria-current="date">[\s\S]*?<strong>14:00<\/strong> Zoom · Dashboard Dental Limited[\s\S]*?<li class="wk-block"><strong>16:00–17:00<\/strong> Blocked · Dentist/);
+    // Not Accounting's to free; Admin may.
+    assert.equal((await post('accounting', `/staff/time-blocks/${block.id}/remove`, { back: '/staff#calendar' })).status, 400);
+    assert.equal(db.get<{ r: string | null }>('SELECT removed_at AS r FROM time_blocks')!.r, null);
+    assert.equal((await post('sales', `/staff/time-blocks/${block.id}/remove`, { back: 'https://elsewhere.example/' })).location, '/staff?done=freed#calendar', 'sent back to another site');
+    assert.equal(isBookable(db, four, { forUser: 'u-dh-sales', now }).ok, true, 'freed time was not bookable again');
+    assert.throws(() => db.run('DELETE FROM time_blocks'), /never deleted/);
+    assert.throws(() => db.run('UPDATE time_blocks SET reason = ?', ['x']), /never edited/);
+  });
+
+  test('a new message from a client is counted at a glance and listed, with a button to read and reply', async () => {
+    made.app.db.run("INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, 'b-dh-1', NULL, 'FROM_CLIENT', 'EMAIL', NULL, 'c-dh-1', 'Can we move the call?', ?)", [randomUUID(), T]);
+    const page = (await req('sales', '/staff')).body;
+    assert.equal(stat(page, 'new message'), '1');
+    assert.match(section(page, 'new-messages'), /<a href="\/staff\/clients\/b-dh-1\?chat=all#chat">Dashboard Dental Limited<\/a> <span class="newdot"[^>]*>1<\/span>\s*<a class="btn act-cta" href="\/staff\/clients\/b-dh-1\?chat=all#chat">Read and reply<\/a>/);
+  });
+
+  test('Admin’s own tab: who is working now, and when they signed in today', async () => {
+    const page = (await req('admin', '/staff?view=admin')).body;
+    const who = section(page, 'staff-working');
+    assert.match(who, /<td data-label="Who">Dash admin<\/td><td data-label="Role">admin<\/td>\s*<td data-label="Now"><span class="chip chip-ok">Working<\/span><\/td>\s*<td data-label="Today">10:00 to 10:00<\/td>/);
+    assert.match(who, /<td data-label="Who">Dash sales<\/td>[\s\S]*?Working/);
+    assert.match(page, /aria-labelledby="row-admin"/);
+  });
+});

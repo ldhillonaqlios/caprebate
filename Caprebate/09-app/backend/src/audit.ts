@@ -357,6 +357,8 @@ export type AuditKind =
    * outcomes only — NEVER a number or the words.
    */
   | 'WHATSAPP_SENT' | 'WHATSAPP_NOT_SENT' | 'WHATSAPP_RECEIVED' | 'WHATSAPP_REFUSED' | 'WHATSAPP_FILED'
+  // 1 Oct 2026: a person blocking off, or freeing, time in their own diary (src/web/time-blocks.ts).
+  | 'TIME_BLOCKED' | 'TIME_FREED'
   /** Phase 151f: a signed word from the service that the check is still under way, or about something other than a
    *  check's status. Acknowledged and not kept as a result. The status word and why only. */
   | 'IDENTITY_RESULT_NOT_KEPT'

@@ -104,7 +104,7 @@ function capped(tiles: readonly HomeTile[], href: string): { tiles: readonly Hom
 /** In progress: a lead somebody has contacted that is not yet a claim, and not lost. */
 const IN_PROGRESS = new Set(['CONTACTED', 'QUALIFIED', 'NURTURE']);
 
-function leadsRows(actor: Actor, app: App, nowIso: string): Safe[] {
+export function leadsRows(actor: Actor, app: App, nowIso: string): Safe[] {
   if (!opens(actor, assertLeadSection)) return [];
   const rows = leadsList(app.db, actor, { filters: {}, sort: 'age' }).rows.filter((l) => l.claim === null);
   const fresh = rows.filter((l) => l.status.key === 'NEW');
@@ -158,7 +158,7 @@ type Dated = { readonly due_on: string; readonly late: boolean; readonly tile: H
  * Surveying; every one it may read for the others, which covers the next actions of leads and claims, since each of those
  * is a task), and the questions and document requests it put to clients that are due today or late. Late first.
  */
-function todayRow(actor: Actor, app: App, nowIso: string): Safe {
+export function todayRow(actor: Actor, app: App, nowIso: string): Safe {
   const db = app.db;
   const work = T.myWork(db, actor, nowIso);
   const own = actor.role === 'ACCOUNTING' || actor.role === 'SURVEYING';
@@ -209,7 +209,7 @@ function reportsTile(actor: Actor): HomeTile[] {
   return opens(actor, assertDashboard) ? [{ href: '/staff/reports', name: 'Reports', lines: ['Figures by month, quarter or year'] }] : [];
 }
 
-function pipelineRow(actor: Actor, app: App, nowIso: string): Safe[] {
+export function pipelineRow(actor: Actor, app: App, nowIso: string): Safe[] {
   if (!opens(actor, pipelineBoardGate)) return [];
   const board = pipelineBoard(app.db, actor, nowIso);
   const tiles: HomeTile[] = board.columns.map((col) => ({
@@ -227,7 +227,7 @@ const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({
   CANNOT_SAY: 'Cannot tell — a setting is missing',
 });
 
-function moneyRow(actor: Actor, app: App, nowIso: string): Safe[] {
+export function moneyRow(actor: Actor, app: App, nowIso: string): Safe[] {
   if (!opens(actor, assertFinanceSection)) return [];
   const f = financeDashboard(app.db, actor, nowIso);
   const band = f.vat.rolling.band;
@@ -249,7 +249,7 @@ function moneyRow(actor: Actor, app: App, nowIso: string): Safe[] {
   return [homeRow('money', 'Money', [...tiles, ...reportsTile(actor)], 'Nothing to show.')];
 }
 
-function jobsRow(actor: Actor, app: App): Safe[] {
+export function jobsRow(actor: Actor, app: App): Safe[] {
   if (!opens(actor, assertSurveySection)) return [];
   const jobs = surveyorJobs(app.db, actor);
   const waiting = jobs.filter((j) => j.state === 'SEALED').length;
@@ -260,7 +260,7 @@ function jobsRow(actor: Actor, app: App): Safe[] {
   return [homeRow('jobs', 'Survey jobs', [...tiles, ...reportsTile(actor)], 'No survey jobs.')];
 }
 
-function adminRow(actor: Actor, app: App): Safe[] {
+export function adminRow(actor: Actor, app: App): Safe[] {
   if (actor.role !== 'ADMIN') return [];
   const staff = S.staffList(app.db, actor);
   const log = auditLogView({ db: app.db, audit: app.audit, now: app.now }, actor, new URLSearchParams());

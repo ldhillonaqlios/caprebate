@@ -39,6 +39,8 @@ import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import { staffShell, portalShell, opens, navContext, filterBar, LEAD_FILTERS } from './navigation.ts';
 import { settingsBody, settingsTiles } from './admin-tiles.ts';
 import { homeRows } from './home.ts';
+import { dashboard, dashView } from './staff-dashboard.ts';
+import { addBlock, removeBlock } from './time-blocks.ts';
 import { refillForm, typedValues } from './refill.ts';
 import { welcomeCard, why } from './components.ts';
 import { welcomeShown, dismissWelcome, WELCOME_JOBS } from './welcome.ts';
@@ -229,7 +231,28 @@ export async function handleStaff(
 
   /* ------------------------------------------------------------ home */
   if (path === '/staff' && method === 'GET') {
-    html(res, 200, homePage(actor, homeRows(d.app, actor))); return 'handled';
+    // 1 Oct 2026: Home is a dashboard, in the shape of the login's role; Admin has a tab for each (src/web/staff-dashboard.ts).
+    const view = dashView(actor, url.searchParams.get('view'));
+    html(res, 200, homePage(actor, view === null ? homeRows(d.app, actor)
+      : dashboard(d.app, actor, view, { week: url.searchParams.get('week'), done: url.searchParams.get('done') }))); return 'handled';
+  }
+
+  /* ------------------------------------------ 1 OCT 2026 · blocking off time in your own diary */
+  if (path === '/staff/time-blocks' && method === 'POST') {
+    const f = await form(req);
+    const r = addBlock({ db, audit: d.app.audit, now, newId: d.newId }, actor, {
+      date: f.get('date') ?? '', from: f.get('from') ?? '', to: f.get('to') ?? '', until_date: f.get('until_date') ?? '', reason: f.get('reason') ?? '' });
+    const back = safeBack(f.get('back'));
+    if (!r.ok) return problem(res, actor, 'Not blocked', r.why, back);
+    redirect(res, withDone(back, 'blocked')); return 'handled';
+  }
+  const freeIt = /^\/staff\/time-blocks\/([A-Za-z0-9-]+)\/remove$/.exec(path);
+  if (freeIt && method === 'POST') {
+    const f = await form(req);
+    const r = removeBlock({ db, audit: d.app.audit, now, newId: d.newId }, actor, freeIt[1] ?? '');
+    const back = safeBack(f.get('back'));
+    if (!r.ok) return problem(res, actor, 'Not freed', r.why, back);
+    redirect(res, withDone(back, 'freed')); return 'handled';
   }
 
   /* ------------------------------------------ PHASE 133c · the welcome card and Help */
@@ -768,6 +791,19 @@ function currentSessionId(d: StaffDeps, req: IncomingMessage): string {
  * The page is a heading and the rows. Nothing else: the "Signed in as" line, the welcome card (now on Help) and the two
  * notes (the outbox is on Your account; UK time is in the guide) left the page, and the dashboard is the Reports tile.
  */
+/** Back to a page of Home only: its own path and plain characters, never another site. */
+function safeBack(back: string | null): string {
+  const b = back ?? '';
+  return b.startsWith('/staff') && /^\/staff[A-Za-z0-9/?=&_#-]*$/.test(b) && !b.startsWith('//') ? b : '/staff#calendar';
+}
+
+/** The same address with ?done= set, before any #part. */
+function withDone(back: string, done: string): string {
+  const [path, hash] = back.split('#');
+  const clean = (path ?? '').replace(/([?&])done=[^&]*&?/, '$1').replace(/[?&]$/, '');
+  return `${clean}${clean.includes('?') ? '&' : '?'}done=${done}${hash === undefined ? '' : `#${hash}`}`;
+}
+
 function homePage(actor: Actor, rows: Safe): string {
   return page({ title: 'Home', nav: nav(actor), wide: true, body: h`<h1>Home</h1>${rows}` });
 }

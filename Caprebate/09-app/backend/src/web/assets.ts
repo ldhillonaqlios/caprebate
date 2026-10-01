@@ -209,6 +209,54 @@ hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
 .echain.is-reply{border:2px solid var(--mint)}
 .msg.is-new{border-left:3px solid var(--stop)}
 @media (max-width:760px){.convo{grid-template-columns:minmax(0,1fr)}}
+/* 1 Oct 2026 — Home as a dashboard (src/web/staff-dashboard.ts) */
+.dash-tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line);margin:0 0 1rem}
+.dash-tab{padding:.55rem 1rem;border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;text-decoration:none;color:var(--body);font-weight:600;margin-bottom:-1px}
+.dash-tab[aria-current="page"]{background:var(--white);border-color:var(--line);color:var(--ink);border-bottom:2px solid var(--mint)}
+.dash-strip{list-style:none;margin:0 0 1.2rem;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:12px}
+.dash-stat a{display:flex;flex-direction:column;gap:2px;padding:.9rem 1rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--white);text-decoration:none;color:var(--ink);height:100%;box-sizing:border-box}
+.dash-stat a:hover{border-color:var(--mint)}
+.dash-num{font-size:34px;font-weight:700;line-height:1.1}
+.dash-label{font-weight:600}
+.dash-sub{font-size:14px;color:var(--mut)}
+.dash-stat.late a{border-left:4px solid var(--stop)}
+.dash-stat.late .dash-sub{color:var(--stop)}
+.dash-stat.ok a{border-left:4px solid var(--ok)}
+.dash-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:start}
+.dash-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--white);padding:1rem 1.1rem;margin:0 0 1.4rem;min-width:0}
+.dash-card-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.5rem;margin:0 0 .6rem}
+.dash-card-h h2{font-size:24px;margin:0}
+.dash-list{list-style:none;margin:0;padding:0}
+.dash-list li{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.55rem 0;border-top:1px solid var(--line)}
+.dash-list li:first-child{border-top:0}
+.dash-list .act-cta{margin-left:auto}
+.acts{list-style:none;margin:0 0 .6rem;padding:0}
+.act{display:grid;grid-template-columns:4.2rem minmax(0,1fr) auto;gap:.75rem;align-items:center;padding:.65rem 0;border-top:1px solid var(--line)}
+.act:first-child{border-top:0}
+.act-when{font-weight:700;color:var(--ink)}
+.act.past .act-when{color:var(--mut)}
+.act.late .act-when{color:var(--stop)}
+.act-phone{font-weight:700;white-space:nowrap}
+.act-cta{white-space:nowrap}
+.btn.act-cta{display:inline-flex;align-items:center;padding:.45rem .9rem;border:1px solid var(--line);border-radius:var(--radius);text-decoration:none;color:var(--ink);font-weight:600;background:var(--white)}
+.wk{list-style:none;margin:0 0 .8rem;padding:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.wk-day{border:1px solid var(--line);border-radius:8px;padding:.45rem .5rem;min-height:6.5rem;background:var(--white);min-width:0}
+.wk-day.today{border:2px solid var(--mint)}
+.wk-day.past{background:var(--mist)}
+.wk-h{margin:0 0 .3rem;font-weight:700;color:var(--ink)}
+.wk-h span{font-weight:400;color:var(--mut)}
+.wk-free{margin:0;color:var(--mut);font-size:14px}
+.wk-items{list-style:none;margin:0;padding:0;font-size:14px}
+.wk-items li{margin:0 0 .3rem;overflow-wrap:anywhere}
+.wk-call a{text-decoration:none;color:var(--ink)}
+.wk-block{background:var(--warnbg);border-radius:6px;padding:.15rem .3rem}
+.wk-nav{font-size:15px}
+.wk-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:.4rem .8rem;align-items:end;max-width:56rem}
+.wk-form .fl{margin:0}
+.wk-form .cta,.wk-form .help{grid-column:1/-1;justify-self:start}
+.chip-ok{background:var(--okbg);color:var(--ok);border-color:#b7d9c2}
+@media (max-width:900px){.dash-grid{grid-template-columns:minmax(0,1fr)}.wk{grid-template-columns:minmax(0,1fr)}.wk-day{min-height:0}}
+@media (max-width:600px){.act{grid-template-columns:minmax(0,1fr)}.act-cta{justify-self:start}}
 .vc-root{width:100%;max-width:1000px;min-height:0}
 .say{color:var(--body);font-size:16px}
 pre{white-space:pre-wrap;font-family:inherit}

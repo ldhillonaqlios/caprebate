@@ -375,7 +375,11 @@ function bookedSpans(db: Db, fromIso: string, toIso: string): BookedSpan[] {
         'WHERE starts_at IS NOT NULL AND ends_at IS NOT NULL AND cancelled_at IS NULL AND starts_at < ? AND ends_at > ?',
       [toIso, fromIso],
     )
-    .map((r) => ({ user_id: r.assigned_to, from: Date.parse(r.starts_at), to: Date.parse(r.ends_at) }));
+    .map((r) => ({ user_id: r.assigned_to, from: Date.parse(r.starts_at), to: Date.parse(r.ends_at) }))
+    // 1 Oct 2026: time a person blocked off holds their diary exactly as a call does (migration 066).
+    .concat(db.all<{ user_id: string; starts_at: string; ends_at: string }>(
+      'SELECT user_id, starts_at, ends_at FROM time_blocks WHERE removed_at IS NULL AND starts_at < ? AND ends_at > ?', [toIso, fromIso])
+      .map((b) => ({ user_id: b.user_id, from: Date.parse(b.starts_at), to: Date.parse(b.ends_at) })));
 }
 
 /**
@@ -613,7 +617,10 @@ export function isBookable(
         'WHERE starts_at IS NOT NULL AND ends_at IS NOT NULL AND cancelled_at IS NULL AND starts_at < ? AND ends_at > ?',
       [end, start],
     )
-    .filter((b) => b.id !== opts.ignoreBooking);
+    .filter((b) => b.id !== opts.ignoreBooking)
+    // 1 Oct 2026: a person's blocked-off time is taken, as a call is (migration 066).
+    .concat(db.all<{ id: string; assigned_to: string; starts_at: string; ends_at: string }>(
+      'SELECT id, user_id AS assigned_to, starts_at, ends_at FROM time_blocks WHERE removed_at IS NULL AND starts_at < ? AND ends_at > ?', [end, start]));
 
   for (const w of covering) {
     if (!active.has(w.user_id)) continue;
