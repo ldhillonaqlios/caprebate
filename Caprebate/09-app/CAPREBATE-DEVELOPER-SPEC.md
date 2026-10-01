@@ -1315,7 +1315,9 @@ which automatically saves within their client portfolio."*
   short one set: 403 "refused", nothing read. With it: `readRepliesIfDue` — at most one read every two minutes however
   often it is called — and an answer of counts only ("read N, filed N, to sort N"; "read in the last two minutes";
   "could not read the inbox"; "reading replies is off"), never an address or a word of any email. In a header, not the
-  address, so the word is not written into web logs. **Accept** `test/reply-reading.test.ts` (now seven tests);
+  address, so the word is not written into web logs. The word is taken with or without "Bearer " in front, and a
+  refusal says why — no word set on the website, no word sent, or a word that does not match — never the word
+  (`timerRefusal`). **Accept** `test/reply-reading.test.ts` (now seven tests);
   `test/phase151e.test.ts` (the test website's key list).
 - **Replies to contact@caprebate.co.uk — `INBOUND_EMAIL`, ON FOR TESTING since 30 Sep 2026 (see §1: from switch-on onward only, read when staff look); built and shipped off before** (`src/stubs/email-inbound.ts`,
   `src/web/inbound-email.ts`). A dependency-free IMAP reader over `node:tls`: `LOGIN` (quoted, no line break), **`EXAMINE

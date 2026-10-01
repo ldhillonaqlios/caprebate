@@ -214,11 +214,16 @@ describe('reading email replies, on for testing', () => {
     made.app.secrets = secretsFromValues({ ...IMAP_KEYS });
     try {
       // No word set: refused, whatever is sent.
-      assert.equal((await hook(`Bearer ${word}`)).status, 403);
+      const none = await hook(`Bearer ${word}`);
+      assert.equal(none.status, 403);
+      assert.equal(await none.text(), 'refused: no word is set on the website (REPLY_TIMER_TOKEN, 32 characters or more)');
       made.app.secrets = secretsFromValues({ ...IMAP_KEYS, REPLY_TIMER_TOKEN: 'too-short' });
       assert.equal((await hook('Bearer too-short')).status, 403, 'a short word was accepted');
       made.app.secrets = secretsFromValues({ ...IMAP_KEYS, REPLY_TIMER_TOKEN: word });
-      for (const bad of [undefined, `Bearer ${'b'.repeat(40)}`, word, `Bearer ${word}x`]) assert.equal((await hook(bad)).status, 403, String(bad));
+      for (const bad of [undefined, `Bearer ${'b'.repeat(40)}`, `Bearer ${word}x`, `Basic ${word}`]) assert.equal((await hook(bad)).status, 403, String(bad));
+      // The refusal says why, never the word.
+      assert.equal(await (await hook()).text(), 'refused: no word was sent: add the header Authorization: Bearer <the word>');
+      assert.equal(await (await hook(`Bearer ${'b'.repeat(40)}`)).text(), 'refused: the word sent does not match the one set on the website');
       assert.equal(reads, 0, 'the inbox was read without the word');
       now = '2026-09-30T17:00:00.000Z';
       const ok = await hook(`Bearer ${word}`);
@@ -228,9 +233,9 @@ describe('reading email replies, on for testing', () => {
       // Called again at once: not read again within two minutes.
       assert.equal(await (await hook(`Bearer ${word}`)).text(), 'read in the last two minutes');
       assert.equal(reads, 1);
-      // GET works too (some timers only send GET), and the answer never carries an email's words.
+      // GET works too (some timers only send GET), the word alone (no "Bearer ") is taken, and the answer never carries an email's words.
       now = '2026-09-30T17:05:00.000Z';
-      const got = await fetch(`${base}/hooks/read-replies`, { headers: { authorization: `Bearer ${word}` } });
+      const got = await fetch(`${base}/hooks/read-replies`, { headers: { authorization: word } });
       assert.match(await got.text(), /^read \d+, filed \d+, to sort \d+$/);
     } finally { delete made.app.mailbox; made.app.secrets = secretsFromValues({}); }
   });

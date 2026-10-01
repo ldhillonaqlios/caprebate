@@ -68,11 +68,11 @@ function open(key: Buffer, name: string, sealed: string): string | null {
   }
 }
 
-type Latest = { name: string; sealed: string | null; set_at: string; by: string | null };
+type Latest = { name: string; sealed: string | null; set_at: string; who: string | null };
 
 function latestRows(app: App): Latest[] {
   return app.db.all<Latest>(
-    'SELECT k.name, k.sealed, k.set_at, u.display_name AS by FROM saved_keys k LEFT JOIN users u ON u.id = k.set_by ' +
+    'SELECT k.name, k.sealed, k.set_at, u.display_name AS who FROM saved_keys k LEFT JOIN users u ON u.id = k.set_by ' +
     'WHERE k.rowid = (SELECT max(x.rowid) FROM saved_keys x WHERE x.name = k.name) ORDER BY k.name');
 }
 
@@ -163,7 +163,7 @@ export function keysView(app: App, actor: Actor): KeysView {
     if (l !== undefined && l.sealed !== null) {
       const readable = key !== null && open(key, k.name, l.sealed) !== null;
       const from = readable ? 'SAVED' : 'UNREADABLE';
-      return { name: k.name, what: k.what, secret: k.secret, from, saved: `${localStamp(l.set_at, now)}${l.by === null ? '' : `, by ${l.by}`}`, ...lit(from) };
+      return { name: k.name, what: k.what, secret: k.secret, from, saved: `${localStamp(l.set_at, now)}${l.who === null || l.who === undefined ? '' : `, by ${l.who}`}`, ...lit(from) };
     }
     const from = inBase ? 'FILE' : 'NOT_SET';
     return { name: k.name, what: k.what, secret: k.secret, from, saved: null, ...lit(from) };

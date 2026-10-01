@@ -454,11 +454,19 @@ export function readingState(db: Db, actor: Actor, nowIso: string): ReadingState
 export const REPLY_TIMER_MIN_LENGTH = 32;
 
 export function timerMayRead(store: SecretStore, authorization: string | undefined): boolean {
+  return timerRefusal(store, authorization) === null;
+}
+
+/** Why the timer was refused, in words it can show (never the word itself), or null when it may read. 1 Oct 2026: the word
+ *  is taken with or without "Bearer " in front, since timers' forms differ. */
+export function timerRefusal(store: SecretStore, authorization: string | undefined): string | null {
   const want = (store.forOwner('REPLY_TIMER').get('REPLY_TIMER_TOKEN') ?? '').trim();
-  if (want.length < REPLY_TIMER_MIN_LENGTH) return false;
-  const got = /^Bearer\s+(\S+)\s*$/i.exec(authorization ?? '')?.[1] ?? '';
+  if (want.length < REPLY_TIMER_MIN_LENGTH) return 'no word is set on the website (REPLY_TIMER_TOKEN, 32 characters or more)';
+  const sent = (authorization ?? '').trim();
+  if (sent === '') return 'no word was sent: add the header Authorization: Bearer <the word>';
+  const got = /^Bearer\s+(\S+)$/i.exec(sent)?.[1] ?? sent;
   const a = Buffer.from(got, 'utf8'), b = Buffer.from(want, 'utf8');
-  return a.length === b.length && timingSafeEqual(a, b);
+  return a.length === b.length && timingSafeEqual(a, b) ? null : 'the word sent does not match the one set on the website';
 }
 
 /** 1 Oct 2026: what the last read on this copy of the site found, in words — shown beside "Check for new email replies",

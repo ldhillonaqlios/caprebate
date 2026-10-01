@@ -265,7 +265,7 @@ function keysCard(app: App, actor: Actor, done: string | null): Safe {
     ${v.why_not === null ? raw('') : h`<div class="gate" role="note">${v.why_not}</div>`}
     <p class="help">A key you save is locked before it is stored, and is never shown again — here or anywhere. To save one, type the password you sign in to this site with (not the key’s own password).</p>
     <ul class="dash-list keylist">${v.rows.map((r) => h`<li id="key-${r.name}"><details><summary><code>${r.name}</code> <span class="chip ${STATE_CHIP[r.state]?.cls ?? ''}">${STATE_CHIP[r.state]?.words ?? r.state}</span></summary>
-      <p class="help">${r.what}. ${r.from === 'NOT_SET' ? 'Not set anywhere.' : `${FROM_WORDS[r.from] ?? r.from}${r.saved === null ? '' : `, ${r.saved}`}.`}</p>
+      <p class="help">${r.what.replace(/\.$/, '')}. ${r.from === 'NOT_SET' ? 'Not set anywhere.' : `${FROM_WORDS[r.from] ?? r.from}${r.saved === null ? '' : `, ${r.saved}`}.`}</p>
       ${r.why_off === null ? raw('') : h`<p class="help key-why">Why it is not in use: ${r.why_off}</p>`}
       ${!v.can_save ? raw('') : h`<form method="post" action="/staff/keys/${r.name}" class="keyform">
         <div><label class="fl" for="kv-${r.name}">New value for ${r.name}</label><input class="fi" id="kv-${r.name}" name="value" type="${r.secret ? 'password' : 'text'}" autocomplete="off" required maxlength="4096"></div>

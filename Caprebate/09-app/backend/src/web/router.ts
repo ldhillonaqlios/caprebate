@@ -379,9 +379,10 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
      word in the Authorization header. Counts only in the answer. */
   if (path === '/hooks/read-replies' && (method === 'POST' || method === 'GET')) {
     const auth = req.headers['authorization'];
-    if (!IE.timerMayRead(d.app.secrets, typeof auth === 'string' ? auth : undefined)) {
+    const why = IE.timerRefusal(d.app.secrets, typeof auth === 'string' ? auth : undefined);
+    if (why !== null) {
       res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
-      res.end('refused');
+      res.end(`refused: ${why}`);
       return 'handled';
     }
     const r = await IE.readRepliesIfDue(d.app);
