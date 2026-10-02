@@ -35,7 +35,7 @@ import { handleWeb, PayloadTooLarge, refusalAsPage, sendRefusalPage } from './we
 import { FsObjectStore } from './web/objectstore.ts';
 import { SharedObjectStore, type BlobClient } from './web/shared-objectstore.ts';
 import { sealKeyFromEnv, type KeepOriginals } from './web/originals.ts';
-import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, sendingOn, smtpLoginFromKeyFile, smtpProvider } from './stubs/email-provider.ts';
+import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, sendingOn, smtpLoginFromKeyFile, smtpProvider } from './stubs/email-provider.ts';
 import { isInventedAddress } from './stubs/email.ts';
 import { refreshSavedKeys } from './web/saved-keys.ts';
 import { openKeptOriginal } from './web/uploads.ts';
@@ -151,7 +151,7 @@ export async function createApp(
      row and never stops the answer. The same checks as the command line: do not contact, a bounced address, a lost file. */
   const sendSaved = async (since: string): Promise<void> => {
     const login = smtpLoginFromKeyFile(app.secrets);
-    if (!sendingOn(EMAIL_SENDING, login) || login === null) return;
+    if (!sendingOn(EMAIL_SENDING, login, mailWhere(app)) || login === null) return;
     const rows = app.db.all<{ id: string; to_email: string }>(
       'SELECT id, to_email FROM outbox WHERE send_requested = 1 AND sent_at IS NULL AND last_error IS NULL AND created_at >= ? ORDER BY created_at', [since]);
     if (rows.length === 0) return;

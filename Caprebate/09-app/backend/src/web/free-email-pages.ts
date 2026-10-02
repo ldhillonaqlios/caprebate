@@ -31,7 +31,7 @@ import { savedMessage, why } from './components.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import * as F from './free-email.ts';
 import { SAVED_NOT_SENT } from '../stubs/email.ts';
-import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, smtpLoginFromKeyFile, smtpProvider, type EmailSending, type SmtpLogin } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, mailWhere, smtpLoginFromKeyFile, smtpProvider, type EmailSending, type SmtpLogin } from '../stubs/email-provider.ts';
 import { openKeptOriginal } from './uploads.ts';
 import { markChannelRead } from './messages.ts';
 import { lastReadWords, mayReadQueue, readRepliesIfDue } from './inbound-email.ts';
@@ -84,7 +84,7 @@ export async function handleFreeEmail(
   const subject: F.EmailSubject = { kind: m[1] === 'clients' ? 'company' : 'lead', id: m[2] ?? '' };
   const sending = d.sending ?? EMAIL_SENDING;
   const login = d.login === undefined ? smtpLoginFromKeyFile() : d.login;
-  const deps: F.EmailDeps = { db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId, sending, login };
+  const deps: F.EmailDeps = { db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId, sending, login, where: mailWhere(d.app) };
 
   if (method === 'GET') {
     const ask: Record<string, string | null> = {};

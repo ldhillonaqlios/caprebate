@@ -74,7 +74,7 @@ import { joinSignature } from '../connectors/zoom.ts';
 import { VIDEO_CALL_JS } from './video-call-script.ts';
 import { receiveWhatsApp } from './whatsapp.ts';
 import { webhookChallenge } from '../connectors/whatsapp.ts';
-import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING, mailWhere, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
 import { bookingInviteFile, sendVideoInvite } from './booking-invite.ts';
 import { ga4MeasurementId, sitePolicy, withMeasurementId } from '../analytics.ts';
 import { localStamp, localWhen, ukDate, ukDatesIn, zoneNotice } from './localtime.ts';
@@ -622,7 +622,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       const offer = first !== undefined ? offerSignup(d.app, newId, first.business_id as string, first.assessment_id) : undefined;
       const totals = { business_id: first?.business_id ?? '', assessment_id: first?.assessment_id ?? out.enquiry_id,
         low_pence: out.parts.reduce((a, p) => a + (p.low_pence ?? 0), 0) || null, high_pence: out.parts.reduce((a, p) => a + (p.high_pence ?? 0), 0) || null };
-      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true, video, sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(d.app.secrets)))); return 'handled';
+      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true, video, sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(d.app.secrets), mailWhere(d.app)))); return 'handled';
     }
     if (method === 'POST') {
       const f = await form(req);

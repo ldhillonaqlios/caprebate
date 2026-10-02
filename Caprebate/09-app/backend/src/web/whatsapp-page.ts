@@ -81,7 +81,7 @@ export function whatsappPage(app: App, actor: Actor, business_id: string, asked:
   // Reading the page reads their WhatsApp: the dot on Chat goes.
   markChannelRead({ db, audit: app.audit, now: app.now, newId: () => randomUUID() }, actor, business_id, 'WHATSAPP');
   const mayWrite = can(actor, 'client_message.write', { type: 'client_message', id: business_id, business_id });
-  const missing = whatsappMissing(app.secrets, app.whatsappPolicy);
+  const missing = whatsappMissing(app.secrets, app.whatsappPolicy, { outside: app.outside });
   const reachable = people.filter((p) => p.contact !== null);
   const pick = chosen?.contact ?? reachable[0]?.contact ?? null;
   const write: Safe = !mayWrite ? h`<p class="help">You can read this conversation, not write to it.</p>`

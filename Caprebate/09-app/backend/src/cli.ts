@@ -27,7 +27,7 @@ import { join } from 'node:path';
 import { FsObjectStore } from './web/objectstore.ts';
 import { sealKeyFromEnv } from './web/originals.ts';
 import { openKeptOriginal, sweepOriginals } from './web/uploads.ts';
-import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, smtpLoginFromKeyFile, smtpProvider } from './stubs/email-provider.ts';
+import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, emailPlaceRefusal, smtpLoginFromKeyFile, smtpProvider } from './stubs/email-provider.ts';
 import { INBOUND_EMAIL, imapLoginFromKeyFile, imapMailbox } from './stubs/email-inbound.ts';
 import { readMailbox } from './web/inbound-email.ts';
 import { MESSAGE_RETENTION, sweepMessages } from './web/message-retention.ts';
@@ -152,6 +152,9 @@ async function main(): Promise<number> {
     const db = new Db(DEFAULT_DB);
     try {
       const login = smtpLoginFromKeyFile();
+      // 2 Oct 2026: only the test website sends (src/connectors/place.ts), unless started with CAPREBATE_LOCAL_EMAIL=1.
+      const place = emailPlaceRefusal({ live: true });
+      if (place !== null) { console.log(`Emails are not being sent: ${place}`); return 0; }
       const store = new FsObjectStore({ root: process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '.documents'), sealKey: sealKeyFromEnv() });
       const audit = new AuditLog(db);
       const now = (): string => new Date().toISOString();

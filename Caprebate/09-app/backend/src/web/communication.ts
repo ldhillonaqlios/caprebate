@@ -48,7 +48,7 @@ import { addLocalDays, isBookable, SLOT_MINUTES, staffSlots, startOfLocalDay } f
 import { activeMeeting, reconcileVideoMeeting, zoomBlockers } from './video-calls.ts';
 import { sendVideoInvite } from './booking-invite.ts';
 import { sendSavedEmailNow } from './free-email-pages.ts';
-import { EMAIL_SENDING, smtpLoginFromKeyFile, sendingOn, SENT_SECRET_KINDS } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING, mailWhere, smtpLoginFromKeyFile, sendingOn, SENT_SECRET_KINDS } from '../stubs/email-provider.ts';
 import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../connectors/whatsapp.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import * as IE from './inbound-email.ts';
@@ -263,8 +263,8 @@ export function composer(c: Ctx, p: Prefill, refused?: string): Safe {
   const claims = db.all<{ id: string; claim_ref: string; label: string | null }>(
     'SELECT c.id, c.claim_ref, p.label FROM claims c LEFT JOIN properties p ON p.id = c.property_id WHERE c.business_id = ? ORDER BY c.claim_ref', [c.business_id]);
   const wa = W.phoneContacts(db, c.business_id, c.now);
-  const waMissing = whatsappMissing(c.app.secrets, c.app.whatsappPolicy);
-  const sendingNow = sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(c.app.secrets));
+  const waMissing = whatsappMissing(c.app.secrets, c.app.whatsappPolicy, { outside: c.app.outside });
+  const sendingNow = sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(c.app.secrets), mailWhere(c.app));
   // 1 Oct 2026: why Zoom makes no meeting from here, if it does not (the keys, the transfer, or not the test website).
   const zoomOff = zoomBlockers(c.app);
   // Zoom: this person's own free hours, the next fortnight.
@@ -446,7 +446,7 @@ export async function communicate(d: SendDeps, actor: Actor, business_id: string
 
   if (via === 'email') {
     const login = smtpLoginFromKeyFile(d.app.secrets);
-    const r = F.saveEmail({ ...deps, sending: EMAIL_SENDING, login }, actor, { kind: 'company', id: business_id },
+    const r = F.saveEmail({ ...deps, sending: EMAIL_SENDING, login, where: mailWhere(d.app) }, actor, { kind: 'company', id: business_id },
       { to_email: f.get('to_email'), subject: f.get('subject'), body, claim_id: claim, thread: f.get('thread') }, []);
     if (!r.ok) return keep(r.why);
     const out = r.requested ? await sendSavedEmailNow({ app: d.app, store: d.store }, actor, EMAIL_SENDING, login, r.id) : 'saved';

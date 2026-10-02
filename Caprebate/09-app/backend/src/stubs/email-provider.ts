@@ -56,6 +56,13 @@
  * the email was saved. From and Reply-To come from the stored row, which was stamped from the one sender setting. An
  * attachment is sent only while its original is still kept; one that is gone stops the email, which is left unsent
  * with the reason.
+ *
+ * 2 OCT 2026 — ONLY THE TEST WEBSITE SENDS (Lakhbir: "yes for now"), as Zoom and WhatsApp: a copy on a computer, reading
+ * the real key file, would email real people from contact@caprebate.co.uk. Sending is on only on the deployed test
+ * website, or when the copy was started with CAPREBATE_LOCAL_EMAIL=1 (src/connectors/place.ts). Every screen that asks
+ * whether sending is on passes where it runs (`MailWhere`), so it says so in words; and the provider itself refuses to
+ * deliver over a real connection from anywhere else. A test's own mail server reaches nobody, so it is never refused.
+ * Signing in to check the login (`check`) sends nothing and is left alone.
  */
 
 import { connect as tlsConnect } from 'node:tls';
@@ -66,6 +73,7 @@ import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { processSecrets, type SecretStore } from '../secrets.ts';
 import { isDoNotContact, isInventedAddress } from './email.ts';
+import { placeRefusal, type Env } from '../connectors/place.ts';
 
 export type EmailSending = {
   readonly enabled: boolean;
@@ -177,8 +185,31 @@ export function auditMailConnections(audit: AuditLog, now: () => string): Connec
   };
 }
 
-/** What is still missing before emails can be sent — each in plain words. Empty means sending is on. */
-export function sendingMissing(cfg: EmailSending, login: SmtpLogin | null): string[] {
+/** 2 Oct 2026: the setting that lets a copy that is not the test website send email. Off unless exactly "1". */
+export const EMAIL_LOCAL_OPT_IN = 'CAPREBATE_LOCAL_EMAIL';
+
+/**
+ * Where the app runs: whether its mail connection is the real one (no `smtpConnect` handed in — a test hands in its
+ * own server), and its settings (the process's, unless a test gives some).
+ */
+export type MailWhere = { readonly live: boolean; readonly env?: Env };
+
+/** Where an app runs, for `sendingOn`: live unless it was handed its own mail server. */
+export function mailWhere(app: { readonly smtpConnect?: Connector | undefined }): MailWhere {
+  return { live: app.smtpConnect === undefined };
+}
+
+/** 2 Oct 2026: why THIS copy may not send email, in words, or null when it may. */
+export function emailPlaceRefusal(where: MailWhere): string | null {
+  return placeRefusal({ live: where.live, ...(where.env === undefined ? {} : { env: where.env }), optIn: EMAIL_LOCAL_OPT_IN, service: 'email sending',
+    harm: 'An email from here would reach a real person from contact@caprebate.co.uk.' });
+}
+
+/**
+ * What is still missing before emails can be sent — each in plain words. Empty means sending is on. With `where`
+ * (every screen and sender in src/ passes it), whether this copy may send at all is said too.
+ */
+export function sendingMissing(cfg: EmailSending, login: SmtpLogin | null, where?: MailWhere): string[] {
   const out: string[] = [];
   if (cfg.provider === null) out.push('Choose the email service that will send them.');
   if ((cfg.named_in_privacy_notice !== true || cfg.named_in_engagement_letter !== true) && cfg.papers_waived_for_testing !== true) {
@@ -187,12 +218,14 @@ export function sendingMissing(cfg: EmailSending, login: SmtpLogin | null): stri
   if (cfg.mailbox_and_dns_ready !== true) out.push('Say who reads contact@caprebate.co.uk, and send one test email from it.');
   if (cfg.provider !== null && login === null) out.push('Add the email service’s login to the server.');
   if (cfg.enabled !== true) out.push('Then switch sending on.');
+  const place = where === undefined ? null : emailPlaceRefusal(where);
+  if (place !== null) out.push(place);
   return out;
 }
 
 /** True only when every condition is met. */
-export function sendingOn(cfg: EmailSending, login: SmtpLogin | null): boolean {
-  return sendingMissing(cfg, login).length === 0;
+export function sendingOn(cfg: EmailSending, login: SmtpLogin | null, where?: MailWhere): boolean {
+  return sendingMissing(cfg, login, where).length === 0;
 }
 
 /* ================================================================== *
@@ -395,6 +428,9 @@ export function smtpProvider(
       // 1 Oct 2026: an invented address (example.invalid, example.com …) never reaches the real mail server, whichever
       // page or command sent it. Found when a local copy, sending on, tried one from the Write an email page.
       if (connect === tlsConnector && isInventedAddress(to)) return { ok: false, why: 'An invented address, so it was not sent.' };
+      // 2 Oct 2026: never a real delivery from a copy that is not the test website (unless started to on purpose).
+      const place = connect === tlsConnector ? emailPlaceRefusal({ live: true }) : null;
+      if (place !== null) return { ok: false, why: place };
       const domain = from.split('@')[1] ?? 'localhost';
       const messageId = `${randomBytes(16).toString('hex')}@${domain}`;
       const started = Date.now();

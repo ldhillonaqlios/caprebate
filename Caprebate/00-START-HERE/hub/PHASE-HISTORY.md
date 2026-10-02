@@ -11080,3 +11080,12 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** stage 4 — the client's report and PDF from the approved version, sent to the client's portal and to the in-house and/or client's accountant.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — only the test website sends WhatsApp messages and IONOS emails (Claude Code, cloud session)
+
+ Asked whether WhatsApp and IONOS sending should get Zoom's guard, Lakhbir: "yes for now".
+
+-  **Built:** one rule for all three, `src/connectors/place.ts` (`onTestWebsite`, `placeRefusal`); Zoom now asks it too, with its words unchanged. **WhatsApp** (`whatsappPlaceRefusal`): a copy that is not the deployed test website sends nothing unless started with `CAPREBATE_LOCAL_WHATSAPP=1`; the Communication tab, the WhatsApp page and the API keys card say why. Receiving is untouched. **IONOS email** (`emailPlaceRefusal`, `MailWhere`, `mailWhere`): every screen and sender asks where the app runs; a copy saves emails but asks for none to be sent, and the provider never delivers over a real connection from it, unless started with `CAPREBATE_LOCAL_EMAIL=1`. The command-line sender says so and stops. Checking the login sends nothing and is untouched. On a copy, sign-in codes are not emailed; the demo launcher prints them, as it always has.
+-  **Proof.** `test/send-local-guard.test.ts` (6); 15 single-line breakages each turned it red. `npm run check` 1999 pass (117 files) on the full copy; in the cloud clone the same five Mac-only tests cannot run. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,1999`) green.
+
+ **Claim cleared** in the commit that carries this record.

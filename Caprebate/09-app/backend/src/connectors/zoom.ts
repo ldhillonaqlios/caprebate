@@ -37,6 +37,9 @@ import type { AuditLog } from '../audit.ts';
 import type { SecretStore } from '../secrets.ts';
 import { callOutside, isLiveTransport, liveTransport, policyRefusal, type Transport } from './http.ts';
 import { CALL_POLICIES, type CallPolicy } from './sources.ts';
+import { onTestWebsite, type Env } from './place.ts';
+
+export { onTestWebsite };
 
 export const ZOOM_OAUTH = 'ZOOM_OAUTH';
 export const ZOOM_API = 'ZOOM_API';
@@ -84,13 +87,6 @@ function transferRefused(o?: Partial<CallPolicy>): string | null {
 
 /** 1 Oct 2026: the setting that lets a copy that is not the test website call Zoom. Off unless it is exactly "1". */
 export const ZOOM_LOCAL_OPT_IN = 'CAPREBATE_LOCAL_ZOOM';
-
-type Env = Readonly<Record<string, string | undefined>>;
-
-/** True on the deployed test website: Vercel sets these three on its own servers, for a live or a preview deploy. */
-export function onTestWebsite(env: Env = process.env): boolean {
-  return env['VERCEL'] === '1' && (env['VERCEL_ENV'] === 'production' || env['VERCEL_ENV'] === 'preview') && (env['VERCEL_URL'] ?? '').trim() !== '';
-}
 
 /**
  * 1 Oct 2026: why THIS copy may not call Zoom, in words, or null when it may. Only a live transport is ever refused:

@@ -39,7 +39,7 @@ import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { authorise, can, type Actor } from '../authz.ts';
 import { currentSender, outboxTransport, type Sender } from '../stubs/email.ts';
-import { EMAIL_SENDING, sendingMissing, sendingOn, type EmailSending, type SmtpLogin } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING, sendingMissing, sendingOn, type EmailSending, type MailWhere, type SmtpLogin } from '../stubs/email-provider.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
 import * as C from './crm.ts';
 import * as D from './documents.ts';
@@ -54,6 +54,8 @@ export type EmailDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
   /** The sending switch and the provider's login. Tests pass their own; the application passes EMAIL_SENDING. */
   sending?: EmailSending; login?: SmtpLogin | null;
+  /** 2 Oct 2026: where the app runs (src/connectors/place.ts). The application passes it; absent, not asked. */
+  where?: MailWhere;
 };
 
 export type EmailSubject = { readonly kind: 'company'; readonly id: string } | { readonly kind: 'lead'; readonly id: string };
@@ -258,7 +260,7 @@ export function emailForm(d: EmailDeps, actor: Actor, s: EmailSubject, ask: Read
   return {
     subject: s, company: b.company, business_id: b.business_id, back: b.back, action: b.action,
     sender: currentSender(d.db),
-    sending: { on: sendingOn(cfg, login), missing: sendingMissing(cfg, login) },
+    sending: { on: sendingOn(cfg, login, d.where), missing: sendingMissing(cfg, login, d.where) },
     do_not_contact: b.do_not_contact, contacts: b.contacts, not_offered: b.not_offered, claims: b.claims, templates,
     attachable: b.attachable.map((a) => ({ id: a.id, name: a.name })), attach_words: b.attach_words,
     sent: sentRows(d.db, b), chains, replying,
@@ -311,7 +313,7 @@ export function saveEmail(d: EmailDeps, actor: Actor, s: EmailSubject, input: Re
   if (files.some((f) => f === undefined)) return { ok: false, why: 'Choose files from this company’s Files that the client can see.', field: 'attach' };
 
   const cfg = d.sending ?? EMAIL_SENDING;
-  const on = sendingOn(cfg, d.login ?? null);
+  const on = sendingOn(cfg, d.login ?? null, d.where);
   const out = outboxTransport(d.db, d.newId, d.now, () => on).send({
     to_email: to, subject, body, kind: 'FREE_TYPED', business_id: b.business_id,
     claim_id: claim === '' ? null : claim, lead_id: b.lead_id, contact_id: contact?.id ?? null, written_by: actor.id,
