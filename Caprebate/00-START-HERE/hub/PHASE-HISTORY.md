@@ -11266,3 +11266,10 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## UI tidy phase 12 of 17, 3 October 2026 — Finance (Claude Code, on the Mac)
+
+-  **Built:** Finance opens with four boxes — Invoiced, Received, Still owed, and "Late, on 2 invoices" in red — then a yellow line naming each claim ready to invoice, with Raise our fee. Invoices opens first. The six parts are in the left-hand menu under Finance, with counts; on a phone they stay as tabs. Each claim number sits under its company; a late invoice is a red label, one with no due date a grey one. The right-hand panel is gone: its links were already at the top and in the menu, and it pushed the invoices table sideways on a laptop.
+-  **Proof.** `test/ui-tidy-finance.test.ts`, ten tests; 18 single-line mutations, all red. Screenshots for Admin and Accounting at 1280 and 390, no sideways scroll. 2167 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2167`) green.
+-  **Next:** phase 13, Calendar.
+
+ **Claim cleared** in the commit that carries this record.

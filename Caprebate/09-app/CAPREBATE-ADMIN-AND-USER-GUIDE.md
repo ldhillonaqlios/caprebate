@@ -1821,9 +1821,13 @@ use an action. The finance settings form is Admin's alone.
 Address: `/staff/finance` · one invoice: `/staff/finance/{invoice}`
 
 **How to do the common job**
-**Where things are.** The page opens with the totals in a highlights strip. It has six tabs. **Money** is section 1 and
-**VAT** is 2. **Invoices** holds 3 and 4. **Fee controls and firms** holds 5 and 7. **Settings** is 6, and **Earlier
-invoices** is 8. The numbered headings stay the same. Three cards on your home page open this page. **Fees waiting to be
+**Where things are.** Four boxes count the money. They are **Invoiced**, **Received**, **Still owed** and **Late**.
+The Late box is red when an invoice is late. It says how many. Under the boxes, a yellow line names each claim ready to
+invoice. It has a **Raise our fee** button. The page has six parts. **Invoices** opens first and holds 3 and 4.
+**Money** is section 1 and **VAT** is 2. **Fee controls and firms** holds 5 and 7. **Finance settings** is 6, and
+**Earlier invoices** is 8. On a laptop the six parts are in the left-hand menu, under Finance. Invoices and Earlier
+invoices show how many each holds. On a phone they are tabs. Each claim number sits under its company. A late invoice
+has a red label. One with no due date has a grey one. The numbered headings stay the same. Three cards on your home page open this page. **Fees waiting to be
 invoiced** opens section 3. **Invoices due and overdue** opens section 4. **The VAT position** opens section 2.
 
 1. **Raise our fee.** On the **Invoices** tab, find **3 · Claims at the invoice stage with no invoice raised**. Press **Raise our fee** on the claim's row. There is no amount to type. The fee comes from the tax adviser's signed-off figure. The invoice takes the next number in the series.

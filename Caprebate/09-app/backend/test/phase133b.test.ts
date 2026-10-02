@@ -144,7 +144,7 @@ describe('the five long screens are on the record layout', () => {
   test('finance: six tabs hold all eight numbered sections, each with its id, and Accounting’s home cards link to them', async () => {
     const r = await as('accounting').get('/staff/finance');
     assert.equal(r.status, 200);
-    sound('/staff/finance', r.body, ['money', 'vat', 'invoices', 'fees', 'settings', 'earlier']);
+    sound('/staff/finance', r.body, ['invoices', 'money', 'vat', 'fees', 'settings', 'earlier']);
     const where: [string, string, string][] = [
       // PHASE 138: numbered headings are plain words.
       ['money', 'money-by-month', 'The money, by month'], ['vat', 'vat-monitoring', 'VAT monitoring'],

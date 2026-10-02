@@ -1398,6 +1398,11 @@ a.packhead-switch{background:var(--mint);color:var(--ink);border-radius:.5rem;pa
 a.packhead-switch:hover{text-decoration:underline}
 .pk-groups td:nth-child(2){white-space:nowrap}
 
+/* UI TIDY PHASE 12 — FINANCE (src/web/finance-pages.ts). From 900 px the left-hand menu holds Finance's sections. */
+.readyline{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem;background:var(--warnbg);border:1px solid #ecd29a;border-radius:.6rem;padding:.7rem 1rem;color:var(--ink);margin:0 0 1rem}
+.readyline .btn-primary{margin-left:auto}
+@media (min-width:900px){.financepage .rtabs{display:none}}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of
