@@ -953,7 +953,8 @@ describe('the defects the guide found by running every exercise on the demo', ()
       assert.equal(/<pre>/.test(claimPage.body), false, 'the surveyor’s facts are raw JSON');
       assert.ok(claimPage.body.includes('The claimant, for tax'));
       const jobs = await surveyor.get('/staff/survey');
-      assert.ok(jobs.body.includes(`<span class="help">${anyStageLabel('SURVEY')}</span>`), 'the job list does not use the procedure’s stage words');
+      // UI tidy phase 10: the stage is drawn as a label in its group's colour.
+      assert.ok(jobs.body.includes(`<span class="badge g-survey">${anyStageLabel('SURVEY')}</span>`), 'the job list does not use the procedure’s stage words');
       assert.equal(jobs.body.includes(stageOf('AT_SURVEY')?.label ?? 'missing'), false, 'the job list uses the client portal’s words');
 
       const invoice = db.get<{ id: string }>('SELECT id FROM invoices WHERE claim_id = ? LIMIT 1', [d.assessed]);

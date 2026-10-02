@@ -11248,3 +11248,11 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## UI tidy phase 10 of 17, 3 October 2026 — Survey jobs and a survey job (Claude Code, on the Mac)
+
+-  **Built:** every survey job names its client, its site and its claim number, its stage in colour, under four boxes; a job's page names its site and claim at the top, links the client's other job, marks its own site "This job", and opens out the left-hand menu (its parts, the survey pack, the other job). Dunmarrow's two jobs now read "branch surgery CR-2026-0009" and "main site CR-2026-0004".
+-  **Proof.** `test/ui-tidy-survey.test.ts`, eight tests; 14 single-line mutations, all red. Screenshots of the list and of Dunmarrow's branch surgery job. 2152 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2152`) green.
+-  **Next:** Lakhbir reviews phases 7 to 10, then approves the next group (phases 11 to 14: survey pack, Finance, Calendar, Introducers).
+
+ **Claim cleared** in the commit that carries this record.
+

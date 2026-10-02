@@ -1382,6 +1382,12 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 #my-tasks table{margin-top:0}
 table tr.overdue{color:inherit}
 
+/* UI TIDY PHASE 10 — SURVEY JOBS (src/web/surveyor-pages.ts). The site under the client, the claim number beside it. */
+.jobtable .rowlink{font-weight:700;color:var(--ink)}
+.jobsite{font-weight:600;color:var(--ink)}
+.otherjobs{margin:-.25rem 0 1rem;padding:.6rem .9rem;background:var(--warnbg);border:1px solid #ecd29a;border-radius:.5rem;color:var(--ink)}
+tr.thisjob td{background:var(--okbg)}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of

@@ -1749,6 +1749,12 @@ the room counts, the rates and the evidence. Then come **your own figures**, and
 until you commit your figures.** The screen says "It is not hidden on screen — we do not send it to you at all". You get
 it straight away when you commit.
 
+**Which job is which.** One client can have more than one job, one for each claim. So each job in the list shows the
+client, then the site in bold, then the claim number in grey. The job's page says the same at the top, under the
+client's name. If the client has another job, a yellow line says so, with a link to it. Under **The property**, this
+job's own site comes first, marked **This job**. The menu on the left opens out to the job. It lists the job's parts,
+the **Survey pack**, and the client's other job.
+
 **Who can open it**
 Surveying, Admin and Sales. A surveyor sees only jobs assigned to them, and is refused anyone else's. Only the assigned
 surveyor commits. Accounting, Read only and the client are refused.

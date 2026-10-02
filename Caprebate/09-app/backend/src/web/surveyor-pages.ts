@@ -35,7 +35,9 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { dataLink, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from './components.ts';
+import { breadcrumb, claimRef, dataLink, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from './components.ts';
+import { kpiRow, nobodyBadge, siteOf, stageBadge } from './look.ts';
+import { setSubMenu } from './navigation.ts';
 import * as S from './surveyor.ts';
 import { registerAttribution } from './research.ts';
 import { formatPence } from './shown-range.ts';
@@ -201,30 +203,45 @@ function ratesFrom(f: URLSearchParams): S.RateInput[] {
  * THE LIST
  * ------------------------------------------------------------------ */
 
+/**
+ * UI TIDY PHASE 10, 3 October 2026. Lakhbir opened the wrong one of Dunmarrow's two surveys: each job now names its site
+ * and its claim number under the client, and its stage is in its colour. Solid boxes count the jobs, those waiting for
+ * the surveyor's figures, those with figures in, and the rooms still to count.
+ */
+export function jobSite(r: S.JobRow): string {
+  return r.property_label === null ? 'no site recorded' : siteOf(r.business_name, r.property_label);
+}
+
 function listPage(d: SurveyorDeps, actor: Actor, rows: readonly S.JobRow[]): string {
   const sealed = rows.filter((r) => r.state === 'SEALED').length;
+  const rooms = rows.reduce((n, r) => n + Math.max(0, r.rooms_total - r.rooms_counted), 0);
   return page({
     title: 'Survey jobs', nav: d.nav(actor), wide: true,
     body: h`
-      <h1>Survey jobs</h1>
-      <p class="help">${rows.length} job${rows.length === 1 ? '' : 's'} you can open.
-        ${sealed} waiting for your figures.</p>
+      <div class="pagehead"><div><h1>Survey jobs</h1><p class="lede">${rows.length} job${rows.length === 1 ? '' : 's'} you can open · ${sealed} waiting for your figures</p></div></div>
+      ${kpiRow([
+        { label: 'Jobs open', value: String(rows.length), tone: 'total' },
+        { label: 'Waiting for your figures', value: String(sealed), tone: sealed > 0 ? 'warn' : 'plain' },
+        { label: 'Figures in', value: String(rows.length - sealed), tone: 'money' },
+        { label: 'Rooms still to count', value: String(rooms), tone: 'survey' },
+      ])}
       ${rows.length === 0
         ? h`<p class="help">Nothing is assigned to you. A job shows here once the office gives it to you.</p>`
-        : h`<table><thead><tr>
-            <th>Business</th><th>Sector</th><th>Rooms counted</th><th>Rates recorded</th>
+        : h`<div class="tablewrap"><table class="stack jobtable"><thead><tr>
+            <th>Client and site</th><th>Sector</th><th>Rooms counted</th><th>Rates recorded</th>
             <th>Your figures</th><th>Assigned to</th><th>Stage</th></tr></thead>
           <tbody>${rows.map((r) => h`<tr>
-            <td><a href="/staff/survey/${r.job_id}">${r.business_name}</a></td>
-            <td>${r.sector.replace(/_/g, ' ')}</td>
-            <td>${r.rooms_counted} of ${r.rooms_total}</td>
-            <td>${r.rates_recorded} of ${r.rates_total}</td>
-            <td>${r.state === 'COMMITTED_AND_RELEASED'
-              ? h`committed${r.committed_at !== null ? h` ${d.stamp(r.committed_at)}` : raw('')}`
-              : h`<strong>not yet</strong>`}</td>
-            <td>${r.surveyor_name ?? h`<span class="help">nobody</span>`}</td>
-            <td><span class="help">${r.stage_label}</span></td>
-          </tr>`)}</tbody></table>`}
+            <td data-label="Client and site"><a class="rowlink" href="/staff/survey/${r.job_id}">${r.business_name}</a><br><span class="jobsite">${jobSite(r)}</span>${
+              r.claim_ref === null ? raw('') : h` ${claimRef(r.claim_ref)}`}</td>
+            <td data-label="Sector">${r.sector.replace(/_/g, ' ')}</td>
+            <td data-label="Rooms counted">${r.rooms_counted} of ${r.rooms_total}</td>
+            <td data-label="Rates recorded">${r.rates_recorded} of ${r.rates_total}</td>
+            <td data-label="Your figures">${r.state === 'COMMITTED_AND_RELEASED'
+              ? h`<span class="badge b-ok">In</span>${r.committed_at !== null ? h`<br><span class="help">${d.stamp(r.committed_at)}</span>` : raw('')}`
+              : h`<span class="badge b-warn">Not yet</span>`}</td>
+            <td data-label="Assigned to">${r.surveyor_name ?? nobodyBadge('Nobody yet')}</td>
+            <td data-label="Stage">${r.claim_stage_key === null ? h`<span class="help">${r.stage_label}</span>` : stageBadge(r.claim_stage_key, r.stage_label)}</td>
+          </tr>`)}</tbody></table></div>`}
 
       <div class="gate"><strong>Our estimate is not on these pages until your figures are in.</strong>
       It is not hidden on screen — we do not send it to you at all. Once you commit your figures,
@@ -279,13 +296,27 @@ function workspacePage(
   ].filter((q): q is QuickAction => q !== null);
   // PHASE 142b: the thread with the client, read only, where the rule admits this login.
   const chat = surveyorThreadPanel(d.app.db, actor, w.job.business_id);
+  // UI TIDY PHASE 10: the job names its site and claim; the client's other jobs are a link away; the menu opens out.
+  const site = jobSite(w.job);
+  const others = S.surveyorJobs(d.app.db, actor).filter((j) => j.business_id === w.job.business_id && j.job_id !== w.job.job_id);
+  const parts: readonly (readonly [string, string])[] = [['property', 'The property'], ['rooms', 'Rooms'], ['rates', 'Rates'], ['evidence', 'Evidence'],
+    ['figures', 'Your figures'], ['record', 'The record'], ...(chat === null ? [] : [['messages', 'Messages'] as const])];
+  setSubMenu({
+    title: `${w.job.business_name} — ${site}`,
+    items: [...parts.map(([id, label]) => ({ href: `/staff/survey/${w.job.job_id}#${id}`, label })),
+      { href: packLink.href, label: 'Survey pack' },
+      ...others.map((o) => ({ href: `/staff/survey/${o.job_id}`, label: `Their other job: ${jobSite(o)}` }))],
+  });
   return page({
     title: w.job.business_name, nav: d.nav(actor), wide: true,
     body: h`
       ${done !== undefined && DONE_WORDS[done] !== undefined
         ? h`<div class="gate">${DONE_WORDS[done]}</div>` : raw('')}
       ${room === 'saved' ? h`<div class="gate">Recorded.</div>` : raw('')}
+      ${breadcrumb([{ label: 'Survey jobs', href: '/staff/survey' }, { label: `${w.job.business_name} — ${site}` }])}
       ${highlights('Survey job', w.job.business_name, [
+        { label: 'Site', value: site },
+        { label: 'Claim', value: w.job.claim_ref ?? 'not yet on a claim' },
         { label: 'Sector', value: w.job.sector.replace(/_/g, ' ') },
         { label: 'Stage', value: w.job.stage_label },
         { label: 'Job opened', value: d.stamp(w.job.created_at) },
@@ -293,7 +324,9 @@ function workspacePage(
         { label: 'Rates recorded', value: `${rates} of ${w.rates.rows.length}` },
         { label: 'Your figures', value: committed ? (w.job.committed_at === null ? 'committed' : `committed ${d.stamp(w.job.committed_at)}`) : 'not yet' },
         { label: 'Our estimate', value: released ? 'released' : 'withheld' },
-      ])}
+      ], raw(''), h`${site}${w.job.claim_ref === null ? raw('') : h` · ${claimRef(w.job.claim_ref)}`}`)}
+      ${others.length === 0 ? raw('') : h`<p class="otherjobs">This client has ${String(others.length + 1)} survey jobs. ${others.length === 1 ? 'The other one' : 'The others'}: ${
+        others.map((o, i) => h`${i === 0 ? raw('') : raw(', ')}<a href="/staff/survey/${o.job_id}">${jobSite(o)}</a>${o.claim_ref === null ? raw('') : h` ${claimRef(o.claim_ref)}`}`)}</p>`}
       ${recordLayout(recordTabs([
         { id: 'property', label: 'The property', body: propertyPanel(w) },
         { id: 'rooms', label: 'Rooms', body: roomsPanel(w) },
@@ -338,8 +371,9 @@ function propertyPanel(w: S.Workspace): Safe {
     ${p.properties.length === 0
       ? h`<p class="help">No property has been recorded against this client.</p>`
       : h`<table><thead><tr><th>Site</th><th>Postcode</th></tr></thead>
-          <tbody>${p.properties.map((x) => h`<tr>
-            <td>${x.label}</td><td>${x.postcode ?? h`<span class="help">not recorded</span>`}</td>
+          <tbody>${[...p.properties].sort((a, b) => Number(b.label === w.job.property_label) - Number(a.label === w.job.property_label)).map((x) => h`<tr${
+            x.label === w.job.property_label ? raw(' class="thisjob"') : raw('')}>
+            <td>${x.label}${x.label === w.job.property_label ? h` <span class="badge b-ok">This job</span>` : raw('')}</td><td>${x.postcode ?? h`<span class="help">not recorded</span>`}</td>
           </tr>`)}</tbody></table>`}
     <h3>What the client told us</h3>
     <p class="help">${p.answers.length} questions, in the order asked. A skipped question and an
