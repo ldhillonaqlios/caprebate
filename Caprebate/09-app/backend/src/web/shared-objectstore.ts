@@ -40,7 +40,7 @@ import { hkdfSync } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { FsObjectStore, INCOMING_PREFIX, type FsObjectStoreOptions, type IncomingTarget } from './objectstore.ts';
+import { FsObjectStore, INCOMING_PREFIX, VIDEO_PREFIX, type FsObjectStoreOptions, type IncomingTarget } from './objectstore.ts';
 
 /** Every object of ours sits under this path in the Blob store, so nothing else in it can be mistaken for one. */
 export const SHARED_PREFIX = 'caprebate-documents/';
@@ -128,6 +128,11 @@ export class SharedObjectStore extends FsObjectStore {
     if (!key.startsWith(INCOMING_PREFIX)) throw new Error('not an incoming key');
     if (this.#client.presignPut === undefined) return null;
     return this.#client.presignPut(SHARED_PREFIX + key, { maximumSizeInBytes: maxBytes, validUntil: validUntilMs });
+  }
+
+  override async dropVideoPiece(key: string): Promise<void> {
+    if (!key.startsWith(VIDEO_PREFIX)) throw new Error('not a video piece');
+    await this.#client.remove(SHARED_PREFIX + key);
   }
 
   override async dropIncoming(key: string): Promise<void> {

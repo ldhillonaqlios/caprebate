@@ -45,7 +45,7 @@ export const ABANDON_HOURS = 24;
  * website at most 4.4 MB a photo (its limit on a request). Such a slot's key ends `.site.lock`, so our route knows it.
  */
 export const SITE_MAX_LOCKED_BYTES = 4_400_000;
-const SITE_SUFFIX = '.site.lock';
+export const SITE_SUFFIX = '.site.lock';
 
 /**
  * What went wrong, in words safe to show and to log: the error's kind and message, with any web address and any long

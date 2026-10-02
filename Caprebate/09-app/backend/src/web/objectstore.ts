@@ -91,6 +91,9 @@ export const SEALED_PREFIX = 'survey-photos/';
 /** 2 Oct 2026: where a photo LOCKED ON THE PHONE waits (src/web/photo-upload.ts) until the server opens, cleans and seals
  *  it. Only locked bytes are ever here, and each is removed once it is dealt with. */
 export const INCOMING_PREFIX = 'survey-incoming/';
+/** 2 Oct 2026: where a client's video is kept, in pieces, each sealed (src/web/survey-video.ts). */
+export const VIDEO_PREFIX = 'survey-videos/';
+const isSealedKey = (key: string): boolean => key.startsWith(SEALED_PREFIX) || key.startsWith(VIDEO_PREFIX);
 
 /** Where the phone sends one locked photo, and the headers to send with it. */
 export type IncomingTarget = { readonly url: string; readonly headers: Readonly<Record<string, string>> };
@@ -207,7 +210,7 @@ export class FsObjectStore implements ObjectStore {
 
   async putSealed(key: string, bytes: Uint8Array): Promise<void> {
     assertSafeKey(key);
-    if (!key.startsWith(SEALED_PREFIX)) throw new Error('not a sealed key');
+    if (!isSealedKey(key)) throw new Error('not a sealed key');
     if (this.#sealKey === null) throw new Error('refusing to keep a photo with no encryption key');
     await this.writeBytes(key, seal(this.#sealKey, bytes));
   }
@@ -225,7 +228,7 @@ export class FsObjectStore implements ObjectStore {
 
   async getSealed(key: string): Promise<Buffer> {
     assertSafeKey(key);
-    if (!key.startsWith(SEALED_PREFIX)) throw new Error('not a sealed key');
+    if (!isSealedKey(key)) throw new Error('not a sealed key');
     if (this.#sealKey === null) throw new Error('no key to open a photo');
     return unseal(this.#sealKey, await this.readBytes(key));
   }
@@ -243,6 +246,14 @@ export class FsObjectStore implements ObjectStore {
     assertIncomingKey(key);
     void maxBytes; void validUntilMs;
     return null;
+  }
+
+  /** 2 Oct 2026: a piece of a video that was never kept (refused or abandoned) is removed. Only under survey-videos/. */
+  async dropVideoPiece(key: string): Promise<void> {
+    assertSafeKey(key);
+    if (!key.startsWith(VIDEO_PREFIX)) throw new Error('not a video piece');
+    try { await this.readBytes(key); } catch { return; }
+    await this.removeProven(key);
   }
 
   /** A locked photo, written by our own route (a folder only). */

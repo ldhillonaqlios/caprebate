@@ -27,6 +27,7 @@ import { packView, type PackDeps, type PackResult, type PackView } from './surve
 import { legalAllows, legalView, type LegalView } from './pack-legal.ts';
 import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { basisOf, checklistView, walkthroughsOf } from './survey-evidence.ts';
+import { videosOf } from './survey-video.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
   'I have reviewed this report to the extent it sets out.',
@@ -151,10 +152,13 @@ function inspectionOf(d: { db: PackDeps['db'] }, job_id: string) {
   const b = basisOf(d.db, job_id);
   const c = checklistView(d.db, job_id);
   const recs = walkthroughsOf(d.db, job_id).flatMap((w) => w.recordings);
+  const vids = videosOf(d.db, job_id);
   return {
     basis: b?.basis ?? null, words: b?.words ?? null, note: b?.note ?? null,
     photos: c?.photos ?? 0, items_done: c?.done ?? 0, items_marked: c?.marked ?? 0, items_total: c?.total ?? 0,
     recordings: recs.length, recorded_minutes: recs.reduce((a, r) => a + r.minutes, 0),
+    // 2 Oct 2026: the client's own videos of the building (src/web/survey-video.ts).
+    videos: vids.length, video_minutes: Math.round(vids.reduce((a, v) => a + v.duration_ms, 0) / 60_000),
   };
 }
 

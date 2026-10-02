@@ -8,6 +8,8 @@
  * gives, and then reported done. The page shows each photo's state and the count. No photo is read by anything but this
  * script and our server.
  *
+ * 2 Oct 2026: it also sends a video, in locked pieces of 4 MB (initVideo; src/web/survey-video.ts).
+ *
  * IF IT CANNOT RUN (no script, an old browser, no Web Crypto), nothing changes: the form posts to the page as before,
  * up to 15 photos and 4.4 MB a send. It sets no style (the security policy allows none): it only sets classes, text and
  * the `hidden` attribute. `lockPhoto` is also on CapRebatePhotoLock, so a test can lock a photo exactly as a phone does.
@@ -48,6 +50,7 @@ export const PHOTO_UPLOAD_JS = `(function () {
   root.CapRebatePhotoLock = { lockPhoto: lockPhoto };
 
   if (typeof document === 'undefined') return;
+  initVideo();
   var form = document.getElementById('many-form');
   var box = document.getElementById('many-progress');
   if (!form || !box || !root.fetch || !root.crypto || !root.crypto.subtle || !root.URLSearchParams) return;
@@ -151,5 +154,96 @@ export const PHOTO_UPLOAD_JS = `(function () {
     e.preventDefault();
     send(Array.prototype.slice.call(input.files), job.value, note ? note.value : '');
   });
+
+  /* 2 Oct 2026: A VIDEO, in pieces of 4 MB, each locked on the phone and sent straight to the file store
+     (src/web/survey-video.ts). Its length is read first where the phone can; the server checks it again. */
+  function initVideo() {
+    var vform = document.getElementById('video-form');
+    var vbox = document.getElementById('video-progress');
+    if (!vform || !vbox || !root.fetch || !root.crypto || !root.crypto.subtle || !root.URLSearchParams || !root.URL) return;
+    var vbar = document.getElementById('video-bar');
+    var vcount = document.getElementById('video-count');
+    var vend = document.getElementById('video-end');
+    var vwords = document.getElementById('video-end-words');
+    var vlock = document.getElementById('video-lock');
+    if (vlock) vlock.hidden = false;
+    function vprogress(done, total, words) {
+      var pct = total === 0 ? 0 : Math.round((done * 100) / total);
+      if (vbar) vbar.className = 'pk-w' + String(Math.round(pct / 5) * 5);
+      if (vcount) vcount.textContent = words;
+    }
+    function vfinish(words, ok) {
+      if (vwords) { vwords.textContent = words; vwords.className = ok ? 'ev-done' : 'ev-fail'; }
+      if (vend) vend.hidden = false;
+    }
+    function lengthOf(file) {
+      return new Promise(function (resolve) {
+        var settled = false;
+        var url = null;
+        function done(v) { if (settled) return; settled = true; if (url) root.URL.revokeObjectURL(url); resolve(v); }
+        try {
+          var v = document.createElement('video');
+          v.preload = 'metadata';
+          v.addEventListener('loadedmetadata', function () { done(isFinite(v.duration) ? v.duration : null); });
+          v.addEventListener('error', function () { done(null); });
+          setTimeout(function () { done(null); }, 8000);
+          url = root.URL.createObjectURL(file);
+          v.src = url;
+        } catch (e) { done(null); }
+      });
+    }
+    async function putPiece(slot, locked) {
+      var headers = { 'content-type': 'application/octet-stream' };
+      for (var h in slot.headers) headers[h] = slot.headers[h];
+      for (var attempt = 0; attempt < 3; attempt++) {
+        try {
+          var put = await root.fetch(slot.url, { method: 'PUT', headers: headers, body: new Blob([locked], { type: 'application/octet-stream' }),
+            credentials: slot.url.charAt(0) === '/' ? 'same-origin' : 'omit' });
+          if (put.ok) return true;
+        } catch (e) { /* the connection dropped: try again */ }
+      }
+      return false;
+    }
+    async function sendVideo(file, job, note) {
+      vform.hidden = true;
+      vbox.hidden = false;
+      if (file.size > 1024 * 1024 * 1024) { vfinish('That video is over 1 GB. Send a shorter one, or film the building in two or three parts.', false); return; }
+      vprogress(0, 1, 'Checking the video…');
+      var secs = await lengthOf(file);
+      if (secs !== null && secs > 605) { vfinish('That video is ' + String(Math.round(secs / 60)) + ' minutes long. The most is 10 minutes: film the building in two or three parts.', false); return; }
+      var start = await post('/portal/building/video/start', { job: job, size: String(file.size), nobody: 'yes', note: note });
+      if (!start.ok) { vfinish(start.why, false); return; }
+      for (var n = 1; n <= start.pieces; n++) {
+        var why = null;
+        try {
+          var from = (n - 1) * start.piece_bytes;
+          var plain = new Uint8Array(await file.slice(from, Math.min(file.size, from + start.piece_bytes)).arrayBuffer());
+          var locked = await lockPhoto(start.key, plain);
+          var slot = await post('/portal/building/video/' + start.send + '/slot', { n: String(n), size: String(locked.length) });
+          if (!slot.ok) why = slot.why;
+          else if (!(await putPiece(slot, locked))) why = 'the connection failed.';
+          else {
+            var piece = await post('/portal/building/video/' + start.send + '/slot/' + slot.slot + '/done', {});
+            if (!piece.ok) why = piece.why;
+          }
+        } catch (e) { why = 'something went wrong on this phone.'; }
+        if (why !== null) { vfinish('The video was not sent: ' + why + ' Try again, on Wi-Fi if you can.', false); return; }
+        vprogress(n, start.pieces, 'Sending: ' + String(Math.round((n * 100) / start.pieces)) + '%. Please keep this page open.');
+      }
+      vprogress(start.pieces, start.pieces, 'Checking the video…');
+      var fin = await post('/portal/building/video/' + start.send + '/finish', {});
+      if (fin.ok) vfinish('Thank you. Your video arrived' + (fin.minutes > 0 ? ' (' + String(fin.minutes) + ' min)' : '') + '. Your surveyor can watch it now.', true);
+      else vfinish(fin.why, false);
+    }
+    vform.addEventListener('submit', function (e) {
+      var input = vform.querySelector('input[name="video"]');
+      var tick = vform.querySelector('input[name="nobody"]');
+      var job = vform.querySelector('input[name="job"]');
+      var note = vform.querySelector('input[name="note"]');
+      if (!input || !input.files || input.files.length === 0 || !tick || !tick.checked || !job) return;
+      e.preventDefault();
+      sendVideo(input.files[0], job.value, note ? note.value : '');
+    });
+  }
 })();
 `;
