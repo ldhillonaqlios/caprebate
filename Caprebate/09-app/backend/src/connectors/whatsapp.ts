@@ -23,14 +23,19 @@
  * storage region is set up), so the row is US and NOT APPROVED until the data protection officer approves it
  * (sources.ts, WHATSAPP_CLOUD). Until then nothing is sent, and the back office says so. Receiving needs no call.
  *
+ * 2 OCT 2026 — ONLY THE TEST WEBSITE SENDS (Lakhbir: "yes for now"), as Zoom: a copy on a computer, reading the real
+ * key file, would message a real person from our number. It sends only on the deployed test website, or when started
+ * with CAPREBATE_LOCAL_WHATSAPP=1 (src/connectors/place.ts). Receiving is not touched.
+ *
  * No key is ever printed or logged. What is sent to Meta is the number and the words staff typed, nothing else.
  */
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { AuditLog } from '../audit.ts';
 import type { SecretStore } from '../secrets.ts';
-import { callOutside, policyRefusal, type Transport } from './http.ts';
+import { callOutside, isLiveTransport, policyRefusal, type Transport } from './http.ts';
 import { CALL_POLICIES, type CallPolicy } from './sources.ts';
+import { placeRefusal, type Env } from './place.ts';
 
 export const WHATSAPP_SERVICE = 'WHATSAPP_CLOUD';
 export const GRAPH_VERSION = 'v25.0';
@@ -45,14 +50,34 @@ export type WhatsAppDeps = {
   readonly secrets: SecretStore;
   /** Tests only: the service's policy with some values changed (the transfer approved). */
   readonly policy_override?: Partial<CallPolicy>;
+  /** Tests only: the settings asked whether this copy is the test website. Absent, the process's own. */
+  readonly env?: Env;
 };
+
+/** 2 Oct 2026: the setting that lets a copy that is not the test website send WhatsApp messages. Off unless exactly "1". */
+export const WHATSAPP_LOCAL_OPT_IN = 'CAPREBATE_LOCAL_WHATSAPP';
+
+/**
+ * 2 Oct 2026 (Lakhbir: "yes for now"): why THIS copy may not send WhatsApp messages, in words, or null when it may —
+ * as Zoom (src/connectors/place.ts). Only a live transport is ever refused.
+ */
+export function whatsappPlaceRefusal(outside: Transport, env?: Env): string | null {
+  return placeRefusal({ live: isLiveTransport(outside), ...(env === undefined ? {} : { env }), optIn: WHATSAPP_LOCAL_OPT_IN, service: 'WhatsApp',
+    harm: 'A message from here would reach a real person from our WhatsApp number.' });
+}
+
+/** Where the app runs, for `whatsappMissing`: how it reaches outside, and its settings (the process's, unless a test gives some). */
+export type WhatsAppWhere = { readonly outside: Transport; readonly env?: Env };
 
 const REQUIRED = ['WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_OPENING_TEMPLATE'] as const;
 
 function key(store: SecretStore, name: string): string { return (store.forOwner('WHATSAPP').get(name) ?? '').trim(); }
 
-/** What must be true before a message is sent, in words. Empty means WhatsApp is on. Names only, never a value. */
-export function whatsappMissing(store: SecretStore, o?: Partial<CallPolicy>): string[] {
+/**
+ * What must be true before a message is sent, in words. Empty means WhatsApp is on. Names only, never a value. With
+ * `where` (every caller in src/ passes it), whether this copy may send at all is said too.
+ */
+export function whatsappMissing(store: SecretStore, o?: Partial<CallPolicy>, where?: WhatsAppWhere): string[] {
   const out: string[] = [];
   const absent = REQUIRED.filter((n) => key(store, n) === '');
   if (absent.length > 0) out.push(`Put the WhatsApp keys in the key file: ${absent.join(', ')}.`);
@@ -60,6 +85,8 @@ export function whatsappMissing(store: SecretStore, o?: Partial<CallPolicy>): st
   if (policyRefusal(base === undefined ? undefined : { ...base, ...o }) !== null) {
     out.push('Meta keeps WhatsApp messages outside the UK: the data protection officer approves the transfer (sources.ts, WHATSAPP_CLOUD).');
   }
+  const place = where === undefined ? null : whatsappPlaceRefusal(where.outside, where.env);
+  if (place !== null) out.push(place);
   return out;
 }
 
@@ -78,7 +105,7 @@ export function waNumber(raw: string | null | undefined): string | null {
 export type Sent = { readonly state: 'SENT'; readonly wa_id: string } | { readonly state: 'NOT_SENT'; readonly why: string; readonly outside_window?: true };
 
 async function post(d: WhatsAppDeps, payload: object): Promise<Sent> {
-  const missing = whatsappMissing(d.secrets, d.policy_override);
+  const missing = whatsappMissing(d.secrets, d.policy_override, { outside: d.transport, ...(d.env === undefined ? {} : { env: d.env }) });
   if (missing.length > 0) return { state: 'NOT_SENT', why: missing.join(' ') };
   const r = await callOutside(
     { audit: d.audit, now: d.now, transport: d.transport, ...(d.policy_override === undefined ? {} : { policy_override: d.policy_override }) },

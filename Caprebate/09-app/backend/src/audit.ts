@@ -364,6 +364,17 @@ export type AuditKind =
   // 1 Oct 2026: the Communication tab — a Zoom call staff started or booked, a telephone call staff logged, a video call
   // first opened by its host (src/web/communication.ts). Ids and outcomes only.
   | 'BOOKING_CREATED' | 'CALL_LOGGED' | 'VIDEO_CALL_OPENED'
+  /** 1 Oct 2026: a surveyor changed the survey pack (src/web/survey-pack.ts): what, which line, which fields — never a value. */
+  | 'SURVEY_PACK_CHANGED'
+  /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/web/pack-approve.ts): the version and its fingerprint. */
+  | 'SURVEY_PACK_APPROVED'
+  /** 2 Oct 2026: the survey report emailed to the client's accountant for sign-off; their answer by the private link
+   *  (src/web/report-signoff.ts). Ids, the version and the outcome — never the link, never a figure. */
+  | 'REPORT_SENT_FOR_SIGNOFF' | 'REPORT_SIGNOFF_ANSWERED'
+  /** 2 Oct 2026: a client's photo for the survey checklist (src/web/survey-evidence.ts). The photo's id and item only. */
+  | 'SURVEY_EVIDENCE_ADDED'
+  /** 2 Oct 2026: photos sent in one go put under checklist items by Admin or Sales, or taken back. Counts only. */
+  | 'SURVEY_PHOTOS_SORTED'
   /** Phase 151f: a signed word from the service that the check is still under way, or about something other than a
    *  check's status. Acknowledged and not kept as a result. The status word and why only. */
   | 'IDENTITY_RESULT_NOT_KEPT'

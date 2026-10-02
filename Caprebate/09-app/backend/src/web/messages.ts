@@ -36,7 +36,7 @@ import { localStamp } from './localtime.ts';
 import { propertyIn } from './components.ts';
 import { workingDaysSince, LATE_AFTER_WORKING_DAYS } from './working-days.ts';
 import { documentObj } from './documents.ts';
-import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type EmailSending, type SmtpLogin } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type EmailSending, type MailWhere, type SmtpLogin } from '../stubs/email-provider.ts';
 import { outboxTransport } from '../stubs/email.ts';
 import { NOTICE_SUBJECT_LEADS_WITH_COMPANY, noticeSubject } from './automation.ts';
 
@@ -44,6 +44,8 @@ export type MessageDeps = {
   db: Db; audit: AuditLog; now: () => string; newId: () => string;
   /** PHASE 142a: the EMAIL_SENDING switch and the provider's login, for the new-message alert. Absent is the shipped switch, off. */
   sending?: EmailSending; login?: SmtpLogin | null;
+  /** 2 Oct 2026: where the app runs (src/connectors/place.ts). Absent with the key file's login: a real connection. */
+  where?: MailWhere;
   /** Where the site is, for the link in an alert. Absent: CAPREBATE_PUBLIC_ORIGIN, and with neither the email carries no link. */
   origin?: string;
 };
@@ -387,7 +389,7 @@ export function alertWords(to: 'STAFF' | 'CLIENT', company: string | null, busin
 export function alertNewMessage(d: MessageDeps, message_id: string): AlertResult {
   const cfg = d.sending ?? EMAIL_SENDING;
   const login = d.login === undefined ? smtpLoginFromKeyFile() : d.login;
-  if (!sendingOn(cfg, login)) return { state: 'OFF' };
+  if (!sendingOn(cfg, login, d.where ?? (d.login === undefined ? { live: true } : undefined))) return { state: 'OFF' };
   const m = d.db.get<{ business_id: string; direction: string; name: string; owner_id: string | null }>(
     'SELECT m.business_id, m.direction, b.name, b.owner_id FROM client_messages m JOIN businesses b ON b.id = m.business_id WHERE m.id = ?', [message_id]);
   if (m === undefined) return { state: 'NOT_QUEUED', why: 'NOBODY_TO_TELL' };

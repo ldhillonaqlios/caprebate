@@ -125,7 +125,7 @@ function activeSelect(active: boolean, disabled: boolean): Safe {
  */
 function senderSection(d: ConfigPageDeps, actor: Actor): RecordTab {
   const s = senderSetting(d.app.db, actor);
-  const missing = sendingMissing(EMAIL_SENDING, smtpLoginFromKeyFile());
+  const missing = sendingMissing(EMAIL_SENDING, smtpLoginFromKeyFile(), { live: true });
   return { id: 'email-sender', label: 'Who emails come from', body: h`
     <p><strong>${s.sender.from_header}</strong></p>
     <p class="help">Replies go to ${s.sender.reply_to}.</p>

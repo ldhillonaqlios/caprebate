@@ -158,7 +158,8 @@ describe('Communication', () => {
     const slot = /<select class="fi" id="cm-slot" name="slot"><optgroup label="[^"]+"><option value="([^"]+)"/.exec(page)?.[1] ?? '';
     assert.equal(slot, '2026-10-02T08:00:00.000Z', 'Friday 09:00 was not the first free hour');
     const r = await send('u-cm-sales', { via: 'zoom', zoom_to: 'pat@comms-test.invented.co.uk', slot, go: 'zoom-book' });
-    assert.equal(r.location, '/staff/clients/b-cm?chat=all&done=booked-zoom#chat');
+    // 1 Oct 2026: no Zoom keys here, so no meeting is made and the banner says so (it said the join link was on its way).
+    assert.equal(r.location, '/staff/clients/b-cm?chat=all&done=booked-no-zoom#chat');
     const b = made.app.db.get<{ id: string; entry_point: string; assigned_to: string; starts_at: string }>("SELECT id, entry_point, assigned_to, starts_at FROM bookings WHERE business_id = 'b-cm'")!;
     assert.deepEqual({ ...b, id: 'x' }, { id: 'x', entry_point: 'staff', assigned_to: 'u-cm-sales', starts_at: slot });
     assert.equal(made.app.db.get<{ to_email: string }>("SELECT to_email FROM outbox WHERE kind = 'CALENDAR_INVITE'")!.to_email, 'pat@comms-test.invented.co.uk');

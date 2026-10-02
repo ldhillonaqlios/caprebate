@@ -180,6 +180,30 @@ function loadJob(db: Db, actor: Actor, job_id: string): JobDbRow {
   return r;
 }
 
+/**
+ * 1 Oct 2026: THE JOB, FOR THE SURVEY PACK (src/web/survey-pack.ts) — read under the same rule as the workspace
+ * (`surveyor_job.read` on the specific job), and its authorisation object, so the pack asks `surveyor_job.commit` of the
+ * same object the workspace does. Nothing else of the job is handed out.
+ */
+export type PackJob = {
+  readonly id: string; readonly business_id: string; readonly business_name: string; readonly sector: string;
+  readonly surveyor_id: string | null; readonly surveyor_name: string | null; readonly claim_id: string | null;
+  readonly state: string;
+};
+/** 2 Oct 2026: whether a job has its locked estimate — without one, committing figures releases nothing and is refused. */
+export function jobHasEstimate(db: Db, job_id: string): boolean {
+  return db.get('SELECT 1 AS x FROM estimates e JOIN surveyor_jobs j ON j.assessment_id = e.assessment_id WHERE j.id = ?', [job_id]) !== undefined;
+}
+
+export function packJob(db: Db, actor: Actor, job_id: string): { job: PackJob; obj: Extract<Obj, { type: 'surveyor_job' }> } {
+  const r = loadJob(db, actor, job_id);
+  return {
+    job: { id: r.id, business_id: r.business_id, business_name: r.name, sector: r.sector, surveyor_id: r.surveyor_id,
+      surveyor_name: r.surveyor_name, claim_id: r.claim_id, state: r.state },
+    obj: objOf(r),
+  };
+}
+
 /* ================================================================== *
  * THE PAYLOAD — the inputs, and no outputs
  * ================================================================== */

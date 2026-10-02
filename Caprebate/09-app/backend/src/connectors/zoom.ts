@@ -22,6 +22,12 @@
  * testing on 30 September 2026 (Sadique Maskeen, relayed by Lakhbir). Without the keys no meeting is made, the booking
  * stands, and the back office says "send them a link", as before.
  *
+ * 1 OCT 2026 — ONLY THE TEST WEBSITE CALLS ZOOM. A copy on Lakhbir's Mac (a demo server reading the real key file) booked
+ * a test call from the Communication tab and made a REAL meeting on our Zoom account. So a third thing must be true,
+ * said in words by `zoomPlaceRefusal`: the app is the deployed test website (Vercel says so: VERCEL=1, VERCEL_ENV
+ * production or preview, and VERCEL_URL set), OR the copy was started with CAPREBATE_LOCAL_ZOOM=1, for when Lakhbir
+ * really wants to try Zoom on his own computer. A test's recorded answers reach nobody, so they are never refused.
+ *
  * WHAT IS SENT TO ZOOM: the time, the length and the words "Cap Rebate call". Never the client's name, email or number.
  * No key is ever printed, logged or put in a page; a join signature and a ZAK go only to the one person joining.
  */
@@ -29,8 +35,11 @@
 import { createHmac } from 'node:crypto';
 import type { AuditLog } from '../audit.ts';
 import type { SecretStore } from '../secrets.ts';
-import { callOutside, policyRefusal, type Transport } from './http.ts';
+import { callOutside, isLiveTransport, liveTransport, policyRefusal, type Transport } from './http.ts';
 import { CALL_POLICIES, type CallPolicy } from './sources.ts';
+import { onTestWebsite, type Env } from './place.ts';
+
+export { onTestWebsite };
 
 export const ZOOM_OAUTH = 'ZOOM_OAUTH';
 export const ZOOM_API = 'ZOOM_API';
@@ -47,7 +56,14 @@ export type ZoomDeps = {
   readonly secrets: SecretStore;
   /** Tests only: the two services' policy with some values changed (the transfer approved). */
   readonly policy_override?: Partial<CallPolicy>;
+  /** Tests only: the settings asked whether this copy is the test website. Absent, the process's own. */
+  readonly env?: Env;
 };
+
+/** Everything that stops a call to Zoom from these deps, in words. */
+function blocked(d: ZoomDeps): string[] {
+  return zoomMissing(d.secrets, d.policy_override, { outside: d.transport, ...(d.env === undefined ? {} : { env: d.env }) });
+}
 
 type Keys = { account: string; id: string; secret: string; sdkId: string; sdkSecret: string; host: string };
 
@@ -69,14 +85,37 @@ function transferRefused(o?: Partial<CallPolicy>): string | null {
   return null;
 }
 
-/** What must be true before a meeting is made, in words. Empty means Zoom is on. Names only, never a value. */
-export function zoomMissing(store: SecretStore, o?: Partial<CallPolicy>): string[] {
+/** 1 Oct 2026: the setting that lets a copy that is not the test website call Zoom. Off unless it is exactly "1". */
+export const ZOOM_LOCAL_OPT_IN = 'CAPREBATE_LOCAL_ZOOM';
+
+/**
+ * 1 Oct 2026: why THIS copy may not call Zoom, in words, or null when it may. Only a live transport is ever refused:
+ * a test's recorded answers reach nobody.
+ */
+export function zoomPlaceRefusal(outside: Transport, env: Env = process.env): string | null {
+  if (!isLiveTransport(outside)) return null;
+  if (onTestWebsite(env)) return null;
+  if ((env[ZOOM_LOCAL_OPT_IN] ?? '').trim() === '1') return null;
+  return `This copy is not the test website, so it does not call Zoom. A call from here would make a real meeting on our Zoom account. To try Zoom here on purpose, start it with ${ZOOM_LOCAL_OPT_IN}=1.`;
+}
+
+/** Where the app runs, for `zoomMissing`: how it reaches outside, and its settings (the process's, unless a test gives some). */
+export type ZoomWhere = { readonly outside: Transport; readonly env?: Env };
+
+/**
+ * What must be true before a meeting is made, in words. Empty means Zoom is on. Names only, never a value. With
+ * `where` (every caller in src/ passes it; a test asks for the keys and the transfer alone), whether this copy may
+ * call Zoom at all is said too.
+ */
+export function zoomMissing(store: SecretStore, o?: Partial<CallPolicy>, where?: ZoomWhere): string[] {
   const out: string[] = [];
   const s = store.forOwner('ZOOM');
   const absent = ['ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET']
     .filter((n) => (s.get(n) ?? '').trim() === '');
   if (absent.length > 0) out.push(`Put the Zoom keys in the key file: ${absent.join(', ')}.`);
   if (transferRefused(o) !== null) out.push('Zoom is a US company: the data protection officer approves the transfer (sources.ts, ZOOM_OAUTH and ZOOM_API).');
+  const place = where === undefined ? null : zoomPlaceRefusal(where.outside, where.env);
+  if (place !== null) out.push(place);
   return out;
 }
 
@@ -128,13 +167,14 @@ export type MadeMeeting =
 function zoomTime(iso: string): string { return new Date(iso).toISOString().replace(/\.\d{3}Z$/, 'Z'); }
 
 /** Make the meeting for one call. At most one token call and one meeting call; never throws. */
-export async function makeZoomMeeting(d: ZoomDeps, startsAt: string, minutes: number): Promise<MadeMeeting> {
-  const missing = zoomMissing(d.secrets, d.policy_override);
+/** 2 Oct 2026: `record` — a survey walkthrough call (src/web/survey-evidence.ts) is recorded to Zoom's cloud. */
+export async function makeZoomMeeting(d: ZoomDeps, startsAt: string, minutes: number, opts: { readonly record?: boolean } = {}): Promise<MadeMeeting> {
+  const missing = blocked(d);
   if (missing.length > 0) return { state: 'NOT_MADE', why: missing.join(' ') };
   const k = keys(d.secrets)!;
   const r = await api(d, k, 'POST', '/v2/users/{user}/meetings', { user: k.host }, {
     topic: MEETING_TOPIC, type: 2, start_time: zoomTime(startsAt), duration: minutes, timezone: 'Europe/London',
-    settings: { join_before_host: false, waiting_room: true, mute_upon_entry: false, host_video: true, participant_video: true, approval_type: 2, auto_recording: 'none' },
+    settings: { join_before_host: false, waiting_room: true, mute_upon_entry: false, host_video: true, participant_video: true, approval_type: 2, auto_recording: opts.record === true ? 'cloud' : 'none' },
   });
   if (r === null) return { state: 'NOT_MADE', why: 'Zoom did not give us a token: check the Server-to-Server app’s keys and that it is activated.' };
   if (r.outcome !== 'OK' || r.body === null) return { state: 'NOT_MADE', why: `Zoom did not make the meeting (${r.why}).` };
@@ -147,23 +187,50 @@ export async function makeZoomMeeting(d: ZoomDeps, startsAt: string, minutes: nu
   } catch { return { state: 'NOT_MADE', why: 'Zoom’s answer did not carry a meeting we could read.' }; }
 }
 
+export type Recording = { readonly state: 'FOUND'; readonly share_url: string; readonly passcode: string | null; readonly minutes: number; readonly recorded_at: string }
+  | { readonly state: 'NOT_YET' | 'NOT_FOUND'; readonly why: string };
+
+/**
+ * 2 Oct 2026: a walkthrough call's cloud recording, as Zoom describes it (GET /v2/meetings/{meetingId}/recordings,
+ * developers.zoom.us, read 2 Oct 2026). Only its sharing link, passcode, length and start are read; the video stays
+ * with Zoom. Needs the Server-to-Server app's recording scope, and cloud recording on our Zoom plan.
+ */
+export async function zoomRecording(d: ZoomDeps, meetingId: string): Promise<Recording> {
+  const missing = blocked(d);
+  if (missing.length > 0) return { state: 'NOT_FOUND', why: missing.join(' ') };
+  if (!/^\d{9,12}$/.test(meetingId)) return { state: 'NOT_FOUND', why: 'That is not a Zoom meeting.' };
+  const r = await api(d, keys(d.secrets)!, 'GET', '/v2/meetings/{meeting}/recordings', { meeting: meetingId });
+  if (r === null) return { state: 'NOT_FOUND', why: 'Zoom did not give us a token: check the Server-to-Server app’s keys and that it is activated.' };
+  if (r.status === 404) return { state: 'NOT_YET', why: 'Zoom has no recording of this call yet. It can take a while after the call ends.' };
+  if (r.outcome !== 'OK' || r.body === null) return { state: 'NOT_FOUND', why: `Zoom did not answer (${r.why}). Check the app has the recording scope, and that cloud recording is on.` };
+  try {
+    const j = JSON.parse(r.body) as { share_url?: unknown; password?: unknown; duration?: unknown; start_time?: unknown };
+    const url = typeof j.share_url === 'string' ? j.share_url : '';
+    if (!/^https:\/\/([a-z0-9-]+\.)*zoom\.us\//.test(url)) return { state: 'NOT_YET', why: 'Zoom’s answer did not carry a recording we could read.' };
+    const minutes = typeof j.duration === 'number' && Number.isFinite(j.duration) ? Math.max(0, Math.min(600, Math.round(j.duration))) : 0;
+    const at = typeof j.start_time === 'string' && !Number.isNaN(Date.parse(j.start_time)) ? new Date(j.start_time).toISOString() : '';
+    if (at === '') return { state: 'NOT_YET', why: 'Zoom’s answer did not say when it was recorded.' };
+    return { state: 'FOUND', share_url: url, passcode: typeof j.password === 'string' && j.password !== '' ? j.password.slice(0, 64) : null, minutes, recorded_at: at };
+  } catch { return { state: 'NOT_YET', why: 'Zoom’s answer did not carry a recording we could read.' }; }
+}
+
 /** Move a meeting to a new time. True when Zoom took it. */
 export async function moveZoomMeeting(d: ZoomDeps, meetingId: string, startsAt: string, minutes: number): Promise<boolean> {
-  if (zoomMissing(d.secrets, d.policy_override).length > 0) return false;
+  if (blocked(d).length > 0) return false;
   const r = await api(d, keys(d.secrets)!, 'PATCH', '/v2/meetings/{meeting}', { meeting: meetingId }, { start_time: zoomTime(startsAt), duration: minutes, timezone: 'Europe/London' });
   return r !== null && r.outcome === 'OK';
 }
 
 /** Delete a cancelled call's meeting. True when Zoom took it (or it was already gone). */
 export async function cancelZoomMeeting(d: ZoomDeps, meetingId: string): Promise<boolean> {
-  if (zoomMissing(d.secrets, d.policy_override).length > 0) return false;
+  if (blocked(d).length > 0) return false;
   const r = await api(d, keys(d.secrets)!, 'DELETE', '/v2/meetings/{meeting}', { meeting: meetingId });
   return r !== null && (r.outcome === 'OK' || r.status === 404);
 }
 
 /** The host's start token (ZAK), so a member of staff starts the call as its host inside our page. Null if refused. */
 export async function hostZak(d: ZoomDeps): Promise<string | null> {
-  if (zoomMissing(d.secrets, d.policy_override).length > 0) return null;
+  if (blocked(d).length > 0) return null;
   const k = keys(d.secrets)!;
   const r = await api(d, k, 'GET', '/v2/users/{user}/token', { user: k.host }, undefined, { type: 'zak' });
   if (r === null || r.outcome !== 'OK' || r.body === null) return null;
@@ -190,8 +257,8 @@ export function joinSignature(store: SecretStore, meetingId: string, role: 0 | 1
 }
 
 /** For the start-up log: whether video calls get a meeting, and if not why. Names only. */
-export function zoomWhy(store: SecretStore): string {
-  const m = zoomMissing(store);
+export function zoomWhy(store: SecretStore, outside: Transport = liveTransport, env: Env = process.env): string {
+  const m = zoomMissing(store, undefined, { outside, env });
   return m.length === 0 ? 'video calls get a Zoom meeting, sent to the client and joined inside the site'
     : `video calls get no Zoom meeting yet, so the team sends a link: ${m.join(' ')}`;
 }

@@ -28,7 +28,7 @@ import { BOOKING } from './engine.ts';
 import { SLOT_MINUTES } from './schedule.ts';
 import { localWhen } from './localtime.ts';
 import { h, type Safe } from './html.ts';
-import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, ZOOM_SDK_BASE, type ZoomDeps } from '../connectors/zoom.ts';
+import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, ZOOM_SDK_BASE, type ZoomDeps } from '../connectors/zoom.ts';
 
 /** A call that holds a moment: a telephone call (CB_BOOKING) or, since 30 Sep 2026, a video call. */
 export function booksATime(channel: string): boolean {
@@ -51,6 +51,14 @@ export function zoomDeps(app: App): ZoomDeps {
     ...(app.zoomPolicy === undefined ? {} : { policy_override: app.zoomPolicy }) };
 }
 
+/**
+ * 1 Oct 2026: everything that stops THIS app calling Zoom, in words: the keys, the transfer, and whether this copy is
+ * the test website (or was started with CAPREBATE_LOCAL_ZOOM=1). Empty means Zoom is on. Every screen asks this.
+ */
+export function zoomBlockers(app: App): string[] {
+  return zoomMissing(app.secrets, app.zoomPolicy, { outside: app.outside });
+}
+
 export type Reconciled = 'MADE' | 'MOVED' | 'CANCELLED' | 'NONE' | { readonly not_made: string };
 
 /** Bring the call's Zoom meeting into line with the call. Never throws; at most two calls to Zoom. */
@@ -71,7 +79,9 @@ export async function reconcileVideoMeeting(app: App, booking_id: string): Promi
     const ok = await moveZoomMeeting(zd, m.meeting_id, b.starts_at, SLOT_MINUTES).catch(() => false);
     return ok ? 'MOVED' : { not_made: 'Zoom did not take the new time. The link still works; the host starts the call at the new time.' };
   }
-  const made = await makeZoomMeeting(zd, b.starts_at, SLOT_MINUTES).catch(() => ({ state: 'NOT_MADE' as const, why: 'Zoom could not be reached.' }));
+  // 2 Oct 2026: a survey walkthrough call (src/web/survey-evidence.ts) is recorded, so the surveyor can watch it.
+  const record = app.db.get('SELECT 1 AS x FROM survey_walkthroughs WHERE booking_id = ?', [booking_id]) !== undefined;
+  const made = await makeZoomMeeting(zd, b.starts_at, SLOT_MINUTES, { record }).catch(() => ({ state: 'NOT_MADE' as const, why: 'Zoom could not be reached.' }));
   if (made.state !== 'MADE') return { not_made: made.why };
   app.db.run(
     'INSERT INTO video_meetings (id, booking_id, provider, meeting_id, join_url, passcode, client_token, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',

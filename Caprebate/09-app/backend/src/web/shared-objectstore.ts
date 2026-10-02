@@ -40,7 +40,7 @@ import { hkdfSync } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { FsObjectStore, type FsObjectStoreOptions } from './objectstore.ts';
+import { FsObjectStore, INCOMING_PREFIX, type FsObjectStoreOptions, type IncomingTarget } from './objectstore.ts';
 
 /** Every object of ours sits under this path in the Blob store, so nothing else in it can be mistaken for one. */
 export const SHARED_PREFIX = 'caprebate-documents/';
@@ -59,7 +59,15 @@ export interface BlobClient {
   exists(pathname: string): Promise<boolean>;
   /** Delete one object. Deleting one that is not there is not an error (Blob's `del`). */
   remove(pathname: string): Promise<void>;
+  /**
+   * 2 Oct 2026: a one-time address the PHONE sends one object to, straight to the store (a presigned PUT): only this
+   * pathname, only until `validUntil`, at most `maximumSizeInBytes`, private. With the headers it must send.
+   */
+  presignPut?(pathname: string, opts: { readonly maximumSizeInBytes: number; readonly validUntil: number }): Promise<IncomingTarget>;
 }
+
+/** The site a presigned PUT goes to (@vercel/blob 2.8: its control API, https://vercel.com/api/blob). */
+export const BLOB_UPLOAD_ORIGIN = 'https://vercel.com';
 
 export type SharedPutOptions = {
   readonly access: 'private';
@@ -113,6 +121,20 @@ export class SharedObjectStore extends FsObjectStore {
     await this.writeBytes(to_key, await this.readBytes(from_key));
   }
 
+  /* 2 Oct 2026: a photo locked on the phone is sent straight to the store, never through a copy of the website. */
+  override get incomingOrigin(): string | null { return this.#client.presignPut === undefined ? null : BLOB_UPLOAD_ORIGIN; }
+
+  override async incomingTarget(key: string, maxBytes: number, validUntilMs: number): Promise<IncomingTarget | null> {
+    if (!key.startsWith(INCOMING_PREFIX)) throw new Error('not an incoming key');
+    if (this.#client.presignPut === undefined) return null;
+    return this.#client.presignPut(SHARED_PREFIX + key, { maximumSizeInBytes: maxBytes, validUntil: validUntilMs });
+  }
+
+  override async dropIncoming(key: string): Promise<void> {
+    if (!key.startsWith(INCOMING_PREFIX)) throw new Error('not an incoming key');
+    await this.#client.remove(SHARED_PREFIX + key);
+  }
+
   /** As the folder does: a missing object throws, and so does one still there after the delete. */
   protected override async removeProven(key: string): Promise<void> {
     const p = SHARED_PREFIX + key;
@@ -129,7 +151,14 @@ export type VercelBlobSdk = {
   head(pathname: string, opts: Record<string, unknown>): Promise<unknown>;
   del(pathname: string, opts: Record<string, unknown>): Promise<void>;
   BlobNotFoundError: new (...a: never[]) => Error;
+  /** 2 Oct 2026, for a presigned PUT (@vercel/blob 2.8). Absent in an older SDK: then photos go through our own route. */
+  issueSignedToken?(opts: Record<string, unknown>): Promise<{ clientSigningToken: string; delegationToken: string }>;
+  presignUrl?(token: { clientSigningToken: string; delegationToken: string }, opts: Record<string, unknown>): Promise<{ presignedUrl: string }>;
+  parseStoreIdFromPresignedUrl?(url: string): string;
 };
+
+/** @vercel/blob 2.8's API version, sent with a presigned PUT as its own client sends it. */
+export const BLOB_API_VERSION = '12';
 
 /**
  * The real client. `token` is a read-write token (CAPREBATE_BLOB_TOKEN, else BLOB_READ_WRITE_TOKEN); with none, the SDK
@@ -161,5 +190,19 @@ export async function vercelBlobClient(auth: { token?: string }, sdk?: VercelBlo
     async remove(pathname) {
       await blob.del(pathname, { ...who });
     },
+    ...(blob.issueSignedToken === undefined || blob.presignUrl === undefined || blob.parseStoreIdFromPresignedUrl === undefined ? {} : {
+      /* A token for exactly this pathname and only `put`, until `validUntil`; then the address. Its headers are the ones
+         @vercel/blob 2.8's own browser client sends to a presigned PUT: private, the API version, the store. */
+      async presignPut(pathname: string, o: { readonly maximumSizeInBytes: number; readonly validUntil: number }): Promise<IncomingTarget> {
+        const limits = { pathname, validUntil: o.validUntil, maximumSizeInBytes: o.maximumSizeInBytes, allowedContentTypes: [SHARED_CONTENT_TYPE] };
+        const token = await blob.issueSignedToken!({ ...limits, operations: ['put'], ...who });
+        const { presignedUrl } = await blob.presignUrl!(token, { ...limits, operation: 'put', access: 'private', addRandomSuffix: false, allowOverwrite: false });
+        if (!presignedUrl.startsWith(`${BLOB_UPLOAD_ORIGIN}/`)) throw new Error('the store gave an upload address on another site');
+        return { url: presignedUrl, headers: {
+          'x-vercel-blob-access': 'private', 'x-api-version': BLOB_API_VERSION,
+          'x-vercel-blob-store-id': blob.parseStoreIdFromPresignedUrl!(presignedUrl), 'x-content-type': SHARED_CONTENT_TYPE,
+        } };
+      },
+    }),
   };
 }

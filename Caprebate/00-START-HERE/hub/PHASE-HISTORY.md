@@ -11030,3 +11030,108 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **A slip, said:** the local copy used for the screenshot reads the real key file, so booking a test Zoom call there made a real meeting on Lakhbir's Zoom account (Friday 2 October 09:00). Its invite email was not sent (an invented address; refused by the guard). Lakhbir is told, and asked whether to cancel it.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 1 October 2026 — only the test website calls Zoom (Claude Code, cloud session)
+
+ Lakhbir: a local copy on the Mac (reading the real key file) booked a test Zoom call through the Communication tab and made a REAL meeting on our Zoom account. "Make Zoom refuse to call out unless the app is the deployed test website, or an explicit opt-in setting is on."
+
+-  **Built** (`src/connectors/zoom.ts`): `zoomPlaceRefusal` refuses a live call to Zoom unless Vercel says this is the test website (`VERCEL=1`, `VERCEL_ENV` production or preview, `VERCEL_URL` set) or the copy was started with `CAPREBATE_LOCAL_ZOOM=1` (exactly 1). It stops making, moving and deleting meetings and asking for the host's start token. A test's recorded answers are never refused (`isLiveTransport`, `src/connectors/http.ts`). `zoomBlockers(app)` (`src/web/video-calls.ts`) is what every screen asks, so the Communication tab, the calendar's call page, the call page and the API keys card say why in words; the start-up log's `zoomWhy` too.
+-  **Also:** a Zoom call booked with no meeting now says so ("Booked, but Zoom made no meeting, so the invite has no join link"); it said the link was on its way. One line of `test/communication.test.ts` restated for it.
+-  **Proof.** `test/zoom-local-guard.test.ts`, eight tests; sixteen single-line mutations each turned them red. `npm run check` 1942 pass (112 files) on the full copy. In the cloud clone six older tests cannot run (files kept only on the Mac: the SOP export, 01-rulebooks, the brand logo, the `.bak-phase144a` files), and the brand check cannot open the logo for the same reason; every other check green (CRM fold, plain words, register, analytics, drift `--expect 1279,439,403,1942`).
+-  **Looked at, not changed (reported to Lakhbir first):** WhatsApp and IONOS sending can reach real people from a local copy with the real key file; GoAddress spends the shared lookup allowance; Companies House, Postcodes.io and IONOS reading (read-only) affect no one.
+
+ **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 1 October 2026 — the survey pack, stage 1: the sums and the surveyor's stamped changes (Claude Code, cloud session)
+
+ Lakhbir approved the mock-ups (the surveyor's editable pack; the client's report) and chose a pre-filled pack with honest wording: "the idea is API's do most of the work, they check and approve"; "any edits made by the surveyor needs to essentially have their stamp to say thats their number"; "when you build this stress test it, this is one thing that cannot fail". Question 187 answered: the drafts go to the surveyor pre-filled (the originals). Six stages; this is the first.
+
+-  **Built:** the sums (`src/web/pack-sums.ts`: section 562 by rebuild cost, whole pence in BigInt, the pools adding to the penny, no total while anything is missing or wrong); the lines from the fixture list (`src/web/pack-lines.ts`); the pack (`src/web/survey-pack.ts`, migration 070: drafts read from evidence only — the title register's price, that property's energy certificate, room counts — and every surveyor change kept for ever with their name, the time and a reason); the pages (`src/web/survey-pack-pages.ts`: chapters 4, 9 and 10 of 23; edit in place, take out, put back, add, our draft back; out-of-date pages refused). Rates are never drafted: BCIS is not bought yet.
+-  **Proof.** `test/pack-sums.test.ts` (12) and `test/survey-pack.test.ts` (14), including 20,000 seeded packs against an independent oracle, 50,000 fuzzed strings, 400 random two-tab changes and 2,000 random forms; 21 single-line mutations each turned them red (two first survived — changing a line taken out, and a value typed again unchanged — and tests were added). `npm run check` 1968 pass (114 files) on the full copy; in the cloud clone the same five older tests that need Mac-only files cannot run. CRM fold, plain words, register, analytics and drift (`--expect 1279,439,403,1968`) green; the brand check cannot open the logo here.
+-  **Next:** stage 2, the legal check (section 198 election and the pooling requirement) as a gate before approval.
+
+ **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 1 October 2026 — the survey pack, stage 1 follow-up (Claude Code, cloud session)
+
+-  Found by driving the demo: when there was no energy certificate and the surveyor typed the floor area, the whole-building systems (electrics, water, heating, ventilation) did not follow it. They do now, labelled *The floor area (chapter 9)* with the surveyor's name. In the table a stamp shows the surveyor's name (the time is in the list of changes beside it), and the elements table scrolls rather than squeezing. Two tests extended; the new rule broken on purpose and caught. `npm run check` 1968 pass on the full copy (the same five Mac-only tests cannot run in the cloud clone).
+
+ **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — the survey pack, stage 2: the legal check (Claude Code, cloud session)
+
+ Lakhbir agreed the legal check comes before the survey ("1) i agree, how can we add this in?"): a building bought from an owner who could claim can leave the buyer nothing on the fixtures unless the value was fixed in time (s.187A, s.198).
+
+-  **Built:** chapter 7 of the pack, *The legal check* (`src/web/pack-legal.ts`, migration 071). The questions are the engine's own, picked by the facts they set, and replayed through the sector's own flow; the engine's `CB_ELECTION.assess` and `CB_S187A.assess` give the position; the verdict is Clear, Clear with a deadline, Not settled yet, or Fails, and a complete election (or a written statement) caps the claim. Answers by the assigned surveyor, Sales or Admin, each with where it came from, kept for ever. `legalAllows` is what stage 3's approval will ask.
+-  **Found while building:** the election check read "no notice produced" where the flow never asked about an election (nobody in the history could claim) — it is now assessed only where asked. On the demo, a drop-down started on its first answer, so an answer nobody gave could be saved — it now starts on *Choose…*, which cannot be saved. Also noted, not changed: the engine's `CB_ELECTION.windowOpen` reads the real clock rather than `s.__now` (no verdict here depends on it, and the tests avoid it).
+-  **Proof.** `test/pack-legal.test.ts` (13); 22 single-line mutations each turned it red. `npm run check` 1981 pass (115 files) on the full copy; in the cloud clone the same five Mac-only tests cannot run. CRM fold, plain words, register, analytics and drift (`--expect 1279,439,403,1981`) green.
+-  **Next:** stage 3 — approval unlocks once every chapter has been opened, the legal check allows it and the sums are complete; one click; the report frozen with a fingerprint.
+
+ **Claim cleared** in the commit that carries this record.
+
+
+## Ad-hoc, 2 October 2026 — the survey pack, stage 3: read it all, then one click (Claude Code, cloud session)
+
+ Lakhbir: "whole pack needs to be read through then approve button ungreys like someone reading and accepting T&C"; "when the surveyor signs it should be a single CTA approve click"; the fingerprint, approved; "this is one thing that cannot fail".
+
+-  **Built:** chapter 23 of the pack, *Sign* (`src/web/pack-approve.ts`, `src/web/pack-chapters.ts`, migration 072). Each check is ticked or said in words with a link: the property, complete sums, the legal check allows it, every built chapter opened by the assigned surveyor (and chapter 7 again after anyone else answers it), their RICS number, the job's locked estimate. Until then the button is grey. One click keeps the whole report as one JSON document with its SHA-256 fingerprint as the next version, and in the same transaction commits the figures to the job (or amends them, after the first), so the claim reads them as before. Anything refused undoes the lot. A version can be opened exactly as approved, and says whether its fingerprint still holds. The side of every chapter shows the approval's state; the chapter list ticks each one opened.
+-  **Found while building:** the grey button was drawn black by a stronger button rule; fixed and checked on the demo. Two sentences were above grade 9; simplified.
+-  **Proof.** `test/pack-approve.test.ts` (12), including eight clicks at once (one version), an out-of-date page from the pack or the legal check, a refused commitment keeping nothing, and a copy altered underneath shown as altered; 34 single-line mutations each turned it red. `npm run check` 1993 pass (116 files) on the full copy; in the cloud clone the same five Mac-only tests cannot run (and `phase144a`'s backup-copy test needs the Mac's `.bak-phase144a` files). CRM fold, plain words, register, analytics and drift (`--expect 1279,439,403,1993`) green; the brand check cannot open the logo here.
+-  **Next:** stage 4 — the client's report and PDF from the approved version, sent to the client's portal and to the in-house and/or client's accountant.
+
+ **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — only the test website sends WhatsApp messages and IONOS emails (Claude Code, cloud session)
+
+ Asked whether WhatsApp and IONOS sending should get Zoom's guard, Lakhbir: "yes for now".
+
+-  **Built:** one rule for all three, `src/connectors/place.ts` (`onTestWebsite`, `placeRefusal`); Zoom now asks it too, with its words unchanged. **WhatsApp** (`whatsappPlaceRefusal`): a copy that is not the deployed test website sends nothing unless started with `CAPREBATE_LOCAL_WHATSAPP=1`; the Communication tab, the WhatsApp page and the API keys card say why. Receiving is untouched. **IONOS email** (`emailPlaceRefusal`, `MailWhere`, `mailWhere`): every screen and sender asks where the app runs; a copy saves emails but asks for none to be sent, and the provider never delivers over a real connection from it, unless started with `CAPREBATE_LOCAL_EMAIL=1`. The command-line sender says so and stops. Checking the login sends nothing and is untouched. On a copy, sign-in codes are not emailed; the demo launcher prints them, as it always has.
+-  **Proof.** `test/send-local-guard.test.ts` (6); 15 single-line breakages each turned it red. `npm run check` 1999 pass (117 files) on the full copy; in the cloud clone the same five Mac-only tests cannot run. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,1999`) green.
+
+ **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — the survey pack, stage 4: the client's report, the accountant's sign-off, then the client (Claude Code, cloud session)
+
+ Mock-ups shown first and approved ("Yes, build it as shown"). Asked how the report travels, Lakhbir: "Adviser, then client"; our own adviser's sign-off "Staff record it, as today"; the client's accountant by "Email + private sign-off link".
+
+-  **Built:** the client's survey report from the approved version (`src/web/survey-report.ts`): five parts (cover with the headline figure and pools, how it is worked out, item by item with each value's source, the legal check and next steps, the declaration with the RICS number and fingerprint, and the AI note at the end), as a page and as a PDF from one set of contents. A dependency-free drawn PDF (`src/web/pdf-canvas.ts`, exact character widths in `pdf-metrics.ts`): the same bytes every time, so never stored. Chapter 23's **Send the report** panel; the accountant's email with the PDF and a private, one-use, 30-day link (only its SHA-256 kept); their sign-off or send-back; the signed answer recorded on the claim through `recordSignOff`; the client sees a version only after a sign-off of that version's figure, with a portal card and page; "Tell the client" once (`src/web/report-signoff.ts`, `report-pages.ts`, migration 073).
+-  **Found while building:** a firm typed as "Limited" alone was accepted (now a name must come first); the PDF's letter spacing leaked into later text; the bold lead-ins overprinted; on the accountant's page the site's dark theme turned the report's black cover pale and its text grey (its colours are now fixed); the portal card's bar had no colour; a reports test forbids any table named "report" (the tables are `pack_signoff_*`).
+-  **Proof.** `test/survey-report.test.ts` (14); 33 single-line mutations, 32 red and one that changes nothing. Driven end to end on the demo: approve, email, sign off by the link, record, tell, portal. `npm run check` 2013 pass (118 files) on the full copy; in the cloud clone the same five Mac-only tests cannot run. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2013`) green; the brand check cannot open the logo here.
+-  **Next:** stage 5 — the guided photo checklist and the recorded phone walkthrough in the client portal.
+
+ **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — the survey pack, stage 5: the client shows us the building — a photo checklist and a recorded call (Claude Code, cloud session)
+
+ Mock-up shown first and approved ("Yes, build it as shown"). Asked: the photos are kept for testing ("Keep them, test only": 7 years, encrypted, opened by Admin, Sales, the DPO, the client and the assigned surveyor); the walkthrough is a recorded Zoom call ("Recorded Zoom call"), as the test website takes at most 4.5 MB a request.
+
+-  **Built:** "Show us your building" in the client portal (`src/web/evidence-pages.ts`, `src/web/survey-checklist.ts`, `src/web/survey-evidence.ts`): the photo checklist in the filming guide's order, one item a page for a phone, each item linked to the pack lines it is evidence for. A photo needs the tick "nobody is in it"; only a JPEG or PNG of at most 4.4 MB; its place, phone and comments are taken out; it is kept encrypted with the store's key (refused, in words, with no key). Items can be marked not here or not safe. The client asks for a recorded video call; Admin or Sales books it; its Zoom meeting records to the cloud; the recording's link, passcode and length are fetched from Zoom and kept; opening it is recorded. Chapter 2 of the pack ("Your inspection") is built: the evidence, the call, and how the surveyor inspected, which approval waits for and the report now states. Chapter 10 shows each line's photos. Migration 074 (eight tables, none ever edited or deleted).
+-  **Found while building:** a surveyor has no free times in the diary — only Admin and Sales own client calls, and a surveyor is kept out of bookings on purpose — so Admin or Sales books the walkthrough (not widened); an empty list of times now says why; the same place surveyed twice showed its name twice in the portal (now numbered); the mark buttons were louder than "Take a photo" (now quiet); six checklist sentences were above grade 9.
+-  **Needs on the test website:** `CAPREBATE_ORIGINALS_KEY` set (without it photos are refused, in words); Zoom cloud recording on the plan, and the recording scope on the Server-to-Server app.
+-  **Proof.** `test/survey-evidence.test.ts` (21), and the report test now checks the inspection line; 56 single-line mutations, 50 red, six that change nothing a test can see. Driven end to end on the demo: real photos sent through the portal, the call booked and its recording fetched (recorded Zoom answers, nothing reached Zoom), the basis saved, the chips and the photos page. `npm run check` 2031 pass (119 files) on the full copy; in the cloud clone the same five Mac-only tests cannot run. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2031`) green; the brand check cannot open the logo here.
+-  **Next:** stage 6 — the lookups switched on in test, and OS building outlines on the report's cover.
+
+ **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — survey photos sent many at once, sorted by Admin or Sales (Claude Code, cloud session)
+
+ Lakhbir: "give users the ability to not only upload photos individually but also in one go. admin can then split and upload photos as this is more user friendly". Mock-up shown first and approved ("Yes, build it as shown"); who sorts: "Admin and Sales".
+
+-  **Built:** a "Send lots of photos at once" box in the client portal: up to 15 photos and 4.4 MB in one send, one tick that nobody is in them; each checked and cleaned like a single photo, all or none; kept encrypted as not yet sorted, and the portal says how many wait. A "Sort the client's photos" page for Admin and Sales: each photo put under a checklist item, left for now, or taken back; one Save for all; every move kept (migration 075, `survey_photo_sorts`); the newest move is the photo's item. Chapter 2 shows what waits, with Sort them. A sorted photo counts like any other; an unsorted one towards nothing.
+-  **The limit, said plainly on the page:** the test website takes 4.5 MB a send, and a page may run no script to split a big one, so one send is often one or two full-size phone photos. Over the limit, our server says so in words; on the test website Vercel's own error page shows first.
+-  **Proof.** Five tests added to `test/survey-evidence.test.ts` (now 26); 25 single-line mutations, all red. Driven on the demo: five real photos sent in one go, sorted by Admin, seen under their items. `npm run check` 2036 pass (119 files) on the full copy; the same five Mac-only tests cannot run in the cloud clone. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2036`) green.
+-  **Next:** stage 6 — the lookups switched on in test, and OS building outlines on the report's cover.
+
+ **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — full-size survey photos sent straight to the file store, locked on the phone (Claude Code, cloud session)
+
+ Lakhbir asked whether the test website's 4.5 MB a send could be raised; it cannot (Vercel's fixed limit). Chose "option 2" — each photo straight to the private file store — then "Lock on the phone", "100 photos, 25 MB each", and the mock-up ("Yes, build it as shown").
+
+-  **Built:** "Send lots of photos at once" gains one script of our own, allowed only by that page's security policy. Each photo is checked on the phone, locked there (a fresh AES-256-GCM key per photo, locked with the send's one-time RSA key; the private half kept in the database encrypted with the store's key), and sent straight to the private Blob store at a one-time address for exactly that file (a presigned PUT, signed in by the project's existing connection — no new key needed). The server then opens it, checks and cleans it, keeps it encrypted as not yet sorted, and removes the locked upload. Up to 100 photos and 25 MB each. Uploads never finished are removed after a day, at the next send or when the outside timer wakes the site. Migration 076 (the photos table rebuilt for 25 MB, three new tables). Without the script the box works as before.
+-  **Found while checking the test website's settings (names only):** the Blob store is already connected; `CAPREBATE_ORIGINALS_KEY` is NOT set there, so every photo is refused in words until it is.
+-  **Not yet proven against Vercel itself:** the presigned PUT is built to @vercel/blob 2.8's own code and tested against a store answering as its SDK does. The first real send on the test website is its proof.
+-  **Proof.** `test/photo-upload.test.ts` (13), the page's own script locking photos in Node's Web Crypto; 38 single-line mutations, 36 red, two that change nothing. Driven in Chromium on the demo: four 6 MB photos (24 MB) in one send, all kept; a HEIC file skipped in words. `npm run check` 2049 pass (120 files) on the full copy; the same five Mac-only tests cannot run in the cloud clone. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2049`) green.
+-  **Next:** stage 6 — the lookups switched on in test, and OS building outlines on the report's cover.
+
+ **Claim cleared** in the commit that carries this record.

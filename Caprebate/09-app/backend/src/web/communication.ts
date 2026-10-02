@@ -45,10 +45,10 @@ import { addNote } from './engaged.ts';
 import { createTask } from './tasks.ts';
 import { mayArrangeCalls } from './backoffice.ts';
 import { addLocalDays, isBookable, SLOT_MINUTES, staffSlots, startOfLocalDay } from './schedule.ts';
-import { activeMeeting, reconcileVideoMeeting } from './video-calls.ts';
+import { activeMeeting, reconcileVideoMeeting, zoomBlockers } from './video-calls.ts';
 import { sendVideoInvite } from './booking-invite.ts';
 import { sendSavedEmailNow } from './free-email-pages.ts';
-import { EMAIL_SENDING, smtpLoginFromKeyFile, sendingOn, SENT_SECRET_KINDS } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING, mailWhere, smtpLoginFromKeyFile, sendingOn, SENT_SECRET_KINDS } from '../stubs/email-provider.ts';
 import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../connectors/whatsapp.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import * as IE from './inbound-email.ts';
@@ -263,8 +263,10 @@ export function composer(c: Ctx, p: Prefill, refused?: string): Safe {
   const claims = db.all<{ id: string; claim_ref: string; label: string | null }>(
     'SELECT c.id, c.claim_ref, p.label FROM claims c LEFT JOIN properties p ON p.id = c.property_id WHERE c.business_id = ? ORDER BY c.claim_ref', [c.business_id]);
   const wa = W.phoneContacts(db, c.business_id, c.now);
-  const waMissing = whatsappMissing(c.app.secrets, c.app.whatsappPolicy);
-  const sendingNow = sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(c.app.secrets));
+  const waMissing = whatsappMissing(c.app.secrets, c.app.whatsappPolicy, { outside: c.app.outside });
+  const sendingNow = sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(c.app.secrets), mailWhere(c.app));
+  // 1 Oct 2026: why Zoom makes no meeting from here, if it does not (the keys, the transfer, or not the test website).
+  const zoomOff = zoomBlockers(c.app);
   // Zoom: this person's own free hours, the next fortnight.
   const slots = (() => {
     const s = staffSlots(db, c.now, addLocalDays(startOfLocalDay(c.now), 14), { onlyUser: c.actor.id, now: c.now });
@@ -315,6 +317,7 @@ export function composer(c: Ctx, p: Prefill, refused?: string): Safe {
     </div>
 
     <div class="only for-zoom">
+      ${zoomOff.length === 0 ? raw('') : h`<p class="hint">Zoom is not switched on here: ${zoomOff.join(' ')} A call is still booked, with no Zoom meeting, so send them a link yourself.</p>`}
       <div class="f"><label for="cm-zoom-to">With</label><select class="fi" id="cm-zoom-to" name="zoom_to">${ppl.filter((x) => x.email !== null).map((x) => opt(x.email ?? '', `${x.name} — ${x.email ?? ''}`, x.id === p.contact_id))}</select></div>
       <div class="sendrow"><button class="cta" type="submit" name="go" value="zoom-now">Start a Zoom call now</button></div>
       <p class="hint">Opens the call here for you, and emails them the link to join.</p>
@@ -347,6 +350,7 @@ const DONE: Readonly<Record<string, string>> = {
   'sent-whatsapp': 'Sent on WhatsApp.', 'sent-opening': 'Our opening message is sent. When they reply, you can write freely for 24 hours.',
   'sent-portal': 'Sent. They will see it in their portal.', 'sent-team': 'Saved. Only your team can see it.',
   'logged-call': 'The call is logged.', 'booked-zoom': 'Booked. The invite with the join link is on its way to them.',
+  'booked-no-zoom': 'Booked, but Zoom made no meeting, so the invite has no join link. Choose Zoom call to see why.',
 };
 
 export function communicationPanel(
@@ -442,7 +446,7 @@ export async function communicate(d: SendDeps, actor: Actor, business_id: string
 
   if (via === 'email') {
     const login = smtpLoginFromKeyFile(d.app.secrets);
-    const r = F.saveEmail({ ...deps, sending: EMAIL_SENDING, login }, actor, { kind: 'company', id: business_id },
+    const r = F.saveEmail({ ...deps, sending: EMAIL_SENDING, login, where: mailWhere(d.app) }, actor, { kind: 'company', id: business_id },
       { to_email: f.get('to_email'), subject: f.get('subject'), body, claim_id: claim, thread: f.get('thread') }, []);
     if (!r.ok) return keep(r.why);
     const out = r.requested ? await sendSavedEmailNow({ app: d.app, store: d.store }, actor, EMAIL_SENDING, login, r.id) : 'saved';
@@ -503,7 +507,7 @@ export async function communicate(d: SendDeps, actor: Actor, business_id: string
     [id, business_id, actor.id, starts, ends, now]);
   d.app.audit.append({ at: now, kind: 'BOOKING_CREATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'booking', object_id: id,
     detail: { business: business_id, channel: 'video', now: go !== 'zoom-book' } });
-  await reconcileVideoMeeting(d.app, id);
+  const zoomed = await reconcileVideoMeeting(d.app, id);
   sendVideoInvite(d.app, d.origin, id, 'arranged', to);
-  return { ok: true, to: go === 'zoom-book' ? back('booked-zoom') : `/staff/calendar/${id}/video` };
+  return { ok: true, to: go !== 'zoom-book' ? `/staff/calendar/${id}/video` : back(zoomed === 'MADE' ? 'booked-zoom' : 'booked-no-zoom') };
 }

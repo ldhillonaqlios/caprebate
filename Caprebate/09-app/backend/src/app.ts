@@ -14,7 +14,7 @@ import { Db, migrate, pendingMigrations } from './db.ts';
 import { AuditLog } from './audit.ts';
 import { defaultHasher, type PasswordHasher } from './password.ts';
 import { outboxTransport, type EmailTransport } from './stubs/email.ts';
-import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type Connector } from './stubs/email-provider.ts';
+import { EMAIL_SENDING, mailWhere, sendingOn, smtpLoginFromKeyFile, type Connector } from './stubs/email-provider.ts';
 import type { AddressLookupConfig } from './connectors/address-lookup.ts';
 import type { InboundEmail, Mailbox } from './stubs/email-inbound.ts';
 import { builtInSignatureProvider, type SignatureProvider } from './stubs/signature.ts';
@@ -128,7 +128,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
   // through `made`, because the test website replaces its store after start-up).
   let made: App | undefined;
   const email = outboxTransport(db, newId, now,
-    () => made !== undefined && sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(made.secrets)));
+    () => made !== undefined && sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(made.secrets), mailWhere(made)));
   const signature = builtInSignatureProvider(newId);
   const secrets = opts.secrets ?? processSecrets();
   const outside = opts.outside ?? liveTransport;

@@ -72,9 +72,11 @@ import { portalDashboard } from './portal-dashboard.ts';
 import * as IE from './inbound-email.ts';
 import { joinSignature } from '../connectors/zoom.ts';
 import { VIDEO_CALL_JS } from './video-call-script.ts';
+import { PHOTO_UPLOAD_JS } from './photo-upload-script.ts';
+import { sweepUploads } from './photo-upload.ts';
 import { receiveWhatsApp } from './whatsapp.ts';
 import { webhookChallenge } from '../connectors/whatsapp.ts';
-import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
+import { EMAIL_SENDING, mailWhere, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
 import { bookingInviteFile, sendVideoInvite } from './booking-invite.ts';
 import { ga4MeasurementId, sitePolicy, withMeasurementId } from '../analytics.ts';
 import { localStamp, localWhen, ukDate, ukDatesIn, zoneNotice } from './localtime.ts';
@@ -92,6 +94,8 @@ import { receiveEnquiry } from './enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
 import { ANSWER_MYSELF_LABEL, checkedLine, checkPropertyPostcodes, freeGate, lookupsOffered, recordLookupsDeclined, type KeptCheck } from './address-check.ts';
 import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from './identity-checks.ts';
+import { handleSignoffLink, portalReport, portalReportCard } from './report-pages.ts';
+import { handlePortalEvidence, portalEvidenceCard } from './evidence-pages.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -268,6 +272,10 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assets/video-call.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(VIDEO_CALL_JS); return 'handled';
   }
+  // 2 Oct 2026: the photo page's one script (src/web/photo-upload-script.ts).
+  if (path === '/assets/photo-upload.js' && method === 'GET') {
+    res.writeHead(200, SITE_JS_HEADERS); res.end(PHOTO_UPLOAD_JS); return 'handled';
+  }
   /* 30 Sep 2026: THE CLIENT'S JOIN PAGE, /call/<token>. The token is the only key: 64 hex characters, made when the
      meeting was made and sent only to the client. It opens from half an hour before the call until an hour after. */
   const callMatch = /^\/call\/([0-9a-f]{64})$/.exec(path);
@@ -359,6 +367,12 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* PHASE 151b: THE IDENTITY CHECK'S SIGNED RESULT. The service has no login, so this sits outside it — and believes
      nothing it is sent unless the signature holds (src/web/identity-checks.ts). A bad signature is refused and audited.
      The answer is a status and nothing else: the service reads no page, and a refusal says nothing about why. */
+  /* 2 OCT 2026: THE ACCOUNTANT'S PRIVATE SIGN-OFF LINK (src/web/report-pages.ts). No login: the link is the key, kept only
+     as its SHA-256, answered once, for 30 days. */
+  if (path.startsWith('/signoff/')) {
+    const r = await handleSignoffLink(d.app, newId, req, res, url, method, form);
+    if (r === 'handled') return 'handled';
+  }
   /* 30 SEP 2026: WHATSAPP — THE ADDRESS META CALLS (src/web/whatsapp.ts). No login: Meta has none. GET is Meta checking
      the address with our verify word; POST carries messages and statuses, believed only under Meta's signature. */
   if (path === '/hooks/whatsapp' && method === 'GET') {
@@ -386,6 +400,8 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       return 'handled';
     }
     const r = await IE.readRepliesIfDue(d.app);
+    // 2 Oct 2026: the same wake clears photo uploads never finished within a day (src/web/photo-upload.ts).
+    await sweepUploads({ db: d.app.db, now: d.app.now }, d.store);
     res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
     res.end(r === null ? (IE.lastReadWords(d.app)?.ok === false ? 'could not read the inbox' : 'read in the last two minutes')
       : r.state === 'OFF' ? 'reading replies is off' : `read ${String(r.read)}, filed ${String(r.filed)}, to sort ${String(r.queued)}`);
@@ -622,7 +638,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       const offer = first !== undefined ? offerSignup(d.app, newId, first.business_id as string, first.assessment_id) : undefined;
       const totals = { business_id: first?.business_id ?? '', assessment_id: first?.assessment_id ?? out.enquiry_id,
         low_pence: out.parts.reduce((a, p) => a + (p.low_pence ?? 0), 0) || null, high_pence: out.parts.reduce((a, p) => a + (p.high_pence ?? 0), 0) || null };
-      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true, video, sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(d.app.secrets)))); return 'handled';
+      html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true, video, sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(d.app.secrets), mailWhere(d.app)))); return 'handled';
     }
     if (method === 'POST') {
       const f = await form(req);
@@ -1019,7 +1035,8 @@ async function portalRoutes(
     const joins: Record<string, string> = {};
     for (const b of bks) { const m = b.channel === 'video' ? activeMeeting(db, b.id) : undefined; if (m !== undefined) joins[b.id] = `/call/${m.client_token}`; }
     // 1 Oct 2026: the top of the portal as a dashboard (src/web/portal-dashboard.ts).
-    const dashboard = portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins });
+    // 2 Oct 2026: the survey report's card leads, once a tax adviser's sign-off has released it (src/web/report-pages.ts).
+    const dashboard = h`${portalReportCard(d.app, business_id)}${portalEvidenceCard(db, business_id)}${portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins })}`;
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
       publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', joins, dashboard, ...(welcome === undefined ? {} : { welcome }) }));
     return 'handled';
@@ -1027,6 +1044,17 @@ async function portalRoutes(
 
   /* PHASE 142: MESSAGES — the thread with the client, and nothing else. `business_id` is the session's for a client, so a
      client only ever reads and writes their own company's thread; every read and write is asked of the rule table again. */
+  /* 2 OCT 2026: "SHOW US YOUR BUILDING" — the photo checklist and the recorded walkthrough call (src/web/evidence-pages.ts). */
+  if (path === '/portal/building' || path.startsWith('/portal/building/')) {
+    P.progress(db, actor, business_id); // the business is asked of the rule table, as every portal page does
+    const r = await handlePortalEvidence({ app: d.app, store: d.store, newId, nav: nav(actor), form, readBody }, req, res, url, method, actor, business_id);
+    if (r === 'handled') return 'handled';
+  }
+  /* 2 OCT 2026: THE CLIENT'S SURVEY REPORT — only the version a tax adviser's sign-off has released (src/web/report-pages.ts). */
+  if ((path === '/portal/report' || path === '/portal/report.pdf') && method === 'GET') {
+    P.progress(db, actor, business_id); // the business is asked of the rule table, as every portal page does
+    return portalReport(d.app, actor, business_id, path, res, nav(actor));
+  }
   if (path === '/portal/messages' && method === 'GET') {
     const m = portalMessagesBody({ app: d.app, newId }, actor, business_id, url.searchParams.get('done'));
     html(res, 200, page({ title: m.title, nav: nav(actor), wide: true, body: m.body }));

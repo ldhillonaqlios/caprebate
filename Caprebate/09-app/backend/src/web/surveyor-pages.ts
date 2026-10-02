@@ -267,7 +267,10 @@ function workspacePage(
   const committed = w.job.state === 'COMMITTED_AND_RELEASED';
   const released = w.payload.quarantine.state === 'COMMITTED_AND_RELEASED';
   const rates = w.rates.rows.filter((f) => f.recorded !== null).length;
-  const quick: QuickAction[] = !w.may_commit ? [] : [
+  // 1 Oct 2026: the survey pack — every element, the sums, and the surveyor's stamped changes.
+  const packLink: QuickAction = { href: `/staff/survey/${w.job.job_id}/pack?ch=4`, label: 'Open the survey pack' };
+  const quick: QuickAction[] = !w.may_commit ? [packLink] : [
+    packLink,
     committed
       ? (w.payload.estimate !== undefined ? { href: '#aa', label: 'Amend your figures' } : null)
       : { href: '#figures', label: 'Commit your figures' },
