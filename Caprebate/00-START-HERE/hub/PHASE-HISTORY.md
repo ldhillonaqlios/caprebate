@@ -11145,3 +11145,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** Lakhbir sends a few photos again; the words on screen (or the `photo upload:` line in Vercel's log) say whether the direct way failed at the address, the upload or the keeping, and that is fixed.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — the home page's Log in on a phone (Claude Code, cloud session)
+
+ Lakhbir, on an iPhone: there was no Log in button on a phone. Under 980 px the home page hides its menu, and Log in was in it.
+
+-  **Built:** a Log in link of its own beside "Am I eligible?", on phones and small tablets only, in the header's colour on dark and light; the button stays on one line; the header tightens under 430 px, and the word mark gives way under 360 px. Checked in a phone-sized browser at 320, 360, 390 and 430 px.
+-  **Proof.** One test in `test/home-page.test.ts`; it fails if the link or its phone rule is removed. `npm run check` 2053 pass (120 files) on the full copy; the same five Mac-only tests cannot run in the cloud clone. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2053`) green.
+-  **Also:** Lakhbir's first photo send from an iPhone 15 Pro (3.0 MB) arrived.
+
+ **Claim cleared** in the commit that carries this record.

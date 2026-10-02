@@ -331,7 +331,13 @@ html{scroll-padding-top:100px}
 .bar.on-light .bar-cta{background:#121614;color:#EDEAE2}
 .bar.on-light .bar-cta:hover{background:#27312d}
 @media (prefers-reduced-motion:reduce){.bar .mk,.bar .mk-scr,.bar .mk-key{animation:none}}
-@media (max-width:980px){.bar-nav{display:none}}
+/* 2 Oct 2026: under 980px the menu is hidden, and Log in with it - a phone had no way to sign in. Its own link, beside
+   "Am I eligible?", on a phone and a small tablet only; it takes the header's colour on dark and on light. */
+.bar-login-m{display:none;margin-left:auto;color:var(--wm);font-weight:700;font-size:15px;text-decoration:none;white-space:nowrap;padding:10px 4px;transition:color .35s ease}
+.bar-login-m:focus-visible{outline:3px solid var(--mkm);outline-offset:4px;border-radius:6px}
+@media (max-width:980px){.bar-nav{display:none}.bar-login-m{display:inline-flex}.bar-cta{white-space:nowrap}}
+@media (max-width:430px){.bar-in{gap:10px}.brand{gap:7px}.mark{width:40px;height:40px}.brand .wm{font-size:11px;letter-spacing:.08em}.bar-cta{padding:0 13px}.bar-login-m{font-size:14px}}
+@media (max-width:359px){.brand .wm{display:none}}
 @media (max-width:620px){.bar{height:64px}.bar-in{padding:0 14px}.mark{width:46px;height:46px}.brand{gap:9px}.brand .wm{font-size:12px;letter-spacing:.14em}.bar-cta{min-height:42px;padding:0 16px;font-size:14px}html{scroll-padding-top:84px}}
 /* calculator: more room (Lakhbir, 29 Sep 2026: "the calculator section looks squashed") */
 .calc{padding:150px 0 140px}
@@ -453,6 +459,7 @@ html{scroll-padding-top:100px}
 <a href="#questions">Questions</a>
 <a class="bar-login" href="/login">Log in</a>
 </nav>
+<a class="bar-login-m" href="/login">Log in</a>
 <a class="cta bar-cta" href="/assessment">Am I eligible?</a>
 </div>
 </header>

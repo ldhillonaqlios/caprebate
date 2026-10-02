@@ -66,6 +66,15 @@ describe('the home page', () => {
     assert.doesNotMatch(body, /<style\b/i, 'an inline <style>');
   });
 
+  test('a phone can sign in: Log in stays in the top bar when the menu is hidden (2 Oct 2026, Lakhbir on an iPhone)', async () => {
+    const body = await (await get('/')).text();
+    const header = /<header class="bar" id="bar">([\s\S]*?)<\/header>/.exec(body)?.[1] ?? '';
+    assert.match(header, /<\/nav>\s*<a class="bar-login-m" href="\/login">Log in<\/a>\s*<a class="cta bar-cta" href="\/assessment">/, 'no Log in beside "Am I eligible?"');
+    const css = await (await get('/assets/home.css')).text();
+    assert.match(css, /\.bar-login-m\{display:none;/, 'the phone link shows on a wide screen too');
+    assert.ok(css.includes('@media (max-width:980px){.bar-nav{display:none}.bar-login-m{display:inline-flex}'), 'the menu hides with no Log in in its place');
+  });
+
   test('the edition is refused if the file gains anything inline', () => {
     const ok = '<html><head><style>a{}</style></head><body><p>x</p><script>1</script></body></html>';
     assert.doesNotThrow(() => buildHomeEdition(ok));
