@@ -79,7 +79,9 @@ export async function reconcileVideoMeeting(app: App, booking_id: string): Promi
     const ok = await moveZoomMeeting(zd, m.meeting_id, b.starts_at, SLOT_MINUTES).catch(() => false);
     return ok ? 'MOVED' : { not_made: 'Zoom did not take the new time. The link still works; the host starts the call at the new time.' };
   }
-  const made = await makeZoomMeeting(zd, b.starts_at, SLOT_MINUTES).catch(() => ({ state: 'NOT_MADE' as const, why: 'Zoom could not be reached.' }));
+  // 2 Oct 2026: a survey walkthrough call (src/web/survey-evidence.ts) is recorded, so the surveyor can watch it.
+  const record = app.db.get('SELECT 1 AS x FROM survey_walkthroughs WHERE booking_id = ?', [booking_id]) !== undefined;
+  const made = await makeZoomMeeting(zd, b.starts_at, SLOT_MINUTES, { record }).catch(() => ({ state: 'NOT_MADE' as const, why: 'Zoom could not be reached.' }));
   if (made.state !== 'MADE') return { not_made: made.why };
   app.db.run(
     'INSERT INTO video_meetings (id, booking_id, provider, meeting_id, join_url, passcode, client_token, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',

@@ -29,6 +29,8 @@ import * as P from './survey-pack.ts';
 import * as L from './pack-legal.ts';
 import * as A from './pack-approve.ts';
 import { sendPanel } from './report-pages.ts';
+import { inspectionChapter, lineEvidence } from './evidence-pages.ts';
+import { evidenceByLine } from './survey-evidence.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 
 export type PackPageDeps = {
@@ -159,6 +161,7 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
       <article class="pack-book">
         <h1>${String(chapter.n)} · ${chapter.title}</h1>
         ${ch === 4 ? summaryChapter(v) : ch === 7 ? legalChapter(d, v, lv, ch, q) : ch === 9 ? inputsChapter(d, v, ch, q) : ch === 10 ? elementsChapter(d, v, ch, q)
+          : ch === 2 ? inspectionChapter(d.app, actor, v.job.id, q)
           : ch === 23 ? signChapter(d, actor, v, ready, q)
           : h`<p class="help">This chapter is filled in at the next stage of the build. For now, the sums are in chapters 4, 9 and 10.</p>`}
       </article>
@@ -307,6 +310,8 @@ function elementsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearc
   const editing = q.get('edit');
   const sumOf = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
   const live = v.lines.filter((l) => !l.removed);
+  // 2 Oct 2026: each line's photos from the client (src/web/survey-evidence.ts).
+  const evidence = evidenceByLine(d.app.db, v.job.id);
   const groups: { title: string; lines: P.ViewLine[] }[] = [
     { title: 'Special rate pool — integral features', lines: live.filter((l) => l.pool === 'SR' && l.added === null) },
     { title: 'Main pool — plant and machinery', lines: live.filter((l) => l.pool === 'MP' && l.added === null) },
@@ -319,7 +324,7 @@ function elementsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearc
     const open = editing === l.id && v.may_edit && v.property !== null;
     const judgement = l.template !== null && /CONTESTED|JUDGEMENT/.test(l.template.status);
     return h`<tr id="l-${l.id}"${l.qty_milli.source?.kind === 'SURVEYOR' || l.rate_pence.source?.kind === 'SURVEYOR' ? raw(' class="pk-mine"') : raw('')}>
-      <td>${l.label}<br><span class="help">${l.element_id ?? 'Added'}${l.unit === '' ? '' : ` · ${l.unit}`}${judgement ? ' · a judgement call' : ''}</span>
+      <td>${l.label}<br><span class="help">${l.element_id ?? 'Added'}${l.unit === '' ? '' : ` · ${l.unit}`}${judgement ? ' · a judgement call' : ''}</span>${evidence.has(l.element_id ?? '') ? h`<br>${lineEvidence(evidence, v.job.id, l.element_id)}` : raw('')}
         ${l.added === null ? raw('') : h`<br><span class="help">Added by ${l.added.by_name}: “${l.added.reason}”</span>`}</td>
       ${valueCell(d, l.qty_milli, QTY)}${valueCell(d, l.rate_pence, PENCE)}
       <td class="n">${PENCE(sum?.cost_pence ?? null)}</td>
@@ -419,6 +424,7 @@ const CHECKS: readonly { key: string; done: string }[] = Object.freeze([
   { key: 'sums', done: 'Every value is in. The sums are complete.' },
   { key: 'legal', done: 'The legal check allows it.' },
   { key: 'read', done: 'Every chapter has been opened.' },
+  { key: 'basis', done: 'You have said how you inspected.' },
   { key: 'details', done: 'The RICS number is on file.' },
   { key: 'estimate', done: 'The job has its locked estimate.' },
 ]);

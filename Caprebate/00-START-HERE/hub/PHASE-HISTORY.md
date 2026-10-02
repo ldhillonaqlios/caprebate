@@ -11100,3 +11100,15 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** stage 5 — the guided photo checklist and the recorded phone walkthrough in the client portal.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — the survey pack, stage 5: the client shows us the building — a photo checklist and a recorded call (Claude Code, cloud session)
+
+ Mock-up shown first and approved ("Yes, build it as shown"). Asked: the photos are kept for testing ("Keep them, test only": 7 years, encrypted, opened by Admin, Sales, the DPO, the client and the assigned surveyor); the walkthrough is a recorded Zoom call ("Recorded Zoom call"), as the test website takes at most 4.5 MB a request.
+
+-  **Built:** "Show us your building" in the client portal (`src/web/evidence-pages.ts`, `src/web/survey-checklist.ts`, `src/web/survey-evidence.ts`): the photo checklist in the filming guide's order, one item a page for a phone, each item linked to the pack lines it is evidence for. A photo needs the tick "nobody is in it"; only a JPEG or PNG of at most 4.4 MB; its place, phone and comments are taken out; it is kept encrypted with the store's key (refused, in words, with no key). Items can be marked not here or not safe. The client asks for a recorded video call; Admin or Sales books it; its Zoom meeting records to the cloud; the recording's link, passcode and length are fetched from Zoom and kept; opening it is recorded. Chapter 2 of the pack ("Your inspection") is built: the evidence, the call, and how the surveyor inspected, which approval waits for and the report now states. Chapter 10 shows each line's photos. Migration 074 (eight tables, none ever edited or deleted).
+-  **Found while building:** a surveyor has no free times in the diary — only Admin and Sales own client calls, and a surveyor is kept out of bookings on purpose — so Admin or Sales books the walkthrough (not widened); an empty list of times now says why; the same place surveyed twice showed its name twice in the portal (now numbered); the mark buttons were louder than "Take a photo" (now quiet); six checklist sentences were above grade 9.
+-  **Needs on the test website:** `CAPREBATE_ORIGINALS_KEY` set (without it photos are refused, in words); Zoom cloud recording on the plan, and the recording scope on the Server-to-Server app.
+-  **Proof.** `test/survey-evidence.test.ts` (21), and the report test now checks the inspection line; 56 single-line mutations, 50 red, six that change nothing a test can see. Driven end to end on the demo: real photos sent through the portal, the call booked and its recording fetched (recorded Zoom answers, nothing reached Zoom), the basis saved, the chips and the photos page. `npm run check` 2031 pass (119 files) on the full copy; in the cloud clone the same five Mac-only tests cannot run. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2031`) green; the brand check cannot open the logo here.
+-  **Next:** stage 6 — the lookups switched on in test, and OS building outlines on the report's cover.
+
+ **Claim cleared** in the commit that carries this record.

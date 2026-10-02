@@ -382,6 +382,38 @@ dl.pk-dl{display:block;margin:0}.pk-dl div{display:flex;justify-content:space-be
 .pk-checks{list-style:none;padding:0;margin:.6rem 0 1rem}.pk-checks li{padding:.45rem .6rem;border:1px solid var(--line);border-left:4px solid var(--stop);border-radius:var(--radius);margin:.35rem 0;font-size:15px}
 .pk-checks li.pk-ok{border-left-color:var(--ok)}
 .pk-tick{color:var(--ok);font-weight:700}
+/* 2 Oct 2026 — "Show us your building" and the surveyor's chapter 2 (src/web/evidence-pages.ts) */
+.ev-two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:1rem 0 1.4rem}
+.ev-opt{border:2px solid var(--ink);border-radius:10px;padding:1rem 1.1rem;background:var(--white)}
+.ev-alt{border-color:var(--line)}
+.ev-opt h2{font-size:20px;margin:0 0 .4rem}
+.ev-bar{height:10px;background:#e6ece9;border-radius:5px;overflow:hidden;margin:.6rem 0 .3rem}.ev-bar i{display:block;height:10px;background:var(--ok)}
+.ev-group{border:1px solid var(--line);border-radius:10px;margin:.8rem 0;overflow:hidden;background:var(--white)}
+.ev-group h2{background:var(--mist);margin:0;padding:.5rem .9rem;font-size:17px;display:flex;justify-content:space-between;gap:.5rem}
+.ev-group h2 span{font-size:13px;color:var(--mut)}
+.ev-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:.6rem .9rem;border-top:1px solid var(--line);align-items:center}
+.ev-right{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end}
+.ev-right form.inline{display:inline}
+.ev-st{display:inline-block;border-radius:999px;padding:0 .5rem;font-size:12px;font-weight:700;border:1px solid}
+.ev-ok{background:var(--okbg);color:var(--ok);border-color:var(--ok)}.ev-skip{background:#eceeed;color:#3b403e;border-color:#cfd4d2}.ev-todo{background:var(--white);color:var(--stop);border-color:var(--stop)}
+.ev-thumb{width:72px;height:54px;object-fit:cover;border-radius:5px;border:1px solid var(--line);vertical-align:middle}
+.ev-phone{max-width:30rem;margin:0 auto}
+.ev-phone h1{font-size:28px}
+.ev-rules{font-size:15px}
+.ev-have{display:flex;flex-wrap:wrap;gap:10px;margin:.6rem 0}.ev-have figure{margin:0;text-align:center}
+.ev-take{border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem;margin:.8rem 0;background:var(--white)}
+.ev-take .ck{display:block;margin:.6rem 0;font-weight:700}
+.ev-file,.ev-note{display:block;font-weight:700;margin:.4rem 0}
+.ev-file input{display:block;margin-top:.4rem;font-size:16px}
+.ev-note .fi{width:100%}
+.ev-nav{margin-top:1rem}
+.ev-guide{max-width:46rem}
+.ev-card{border:2px solid var(--ink)}
+.ev-chip{display:inline-block;border-radius:999px;padding:0 .5rem;font-size:12px;font-weight:700;border:1px solid #e7c98a;background:#fff3d6;color:#7a5200;text-decoration:none;margin-top:2px}
+.ev-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:12px;padding:.8rem}
+.ev-gallery figure{margin:0}.ev-gallery figcaption{font-size:13px;color:var(--mut)}
+.ev-big{width:100%;height:11rem;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+@media (max-width:760px){.ev-two{grid-template-columns:minmax(0,1fr)}.ev-item{grid-template-columns:minmax(0,1fr)}.ev-right{justify-content:flex-start}}
 /* 2 Oct 2026 — sending the report (src/web/report-pages.ts, sendPanel) */
 .pk-sendp{margin-top:1.6rem;border-top:2px solid var(--ink);padding-top:.8rem}
 .pk-step{display:flex;gap:12px;border:1px solid var(--line);border-radius:var(--radius);padding:.7rem .9rem;margin:.6rem 0}

@@ -26,6 +26,7 @@ import { amendFigures, commitFigures, jobHasEstimate, packJob } from './surveyor
 import { packView, type PackDeps, type PackResult, type PackView } from './survey-pack.ts';
 import { legalAllows, legalView, type LegalView } from './pack-legal.ts';
 import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
+import { basisOf, checklistView, walkthroughsOf } from './survey-evidence.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
   'I have reviewed this report to the extent it sets out.',
@@ -112,6 +113,8 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
     const names = unread.map((c) => `${c} · ${CHAPTERS.find((x) => x.n === c)?.title ?? ''}`).join('; ');
     blockers.push({ key: 'read', words: `Open every chapter first. Still to open: ${names}.`, href: `${base(job_id)}?ch=${String(unread[0])}` });
   }
+  // 2 Oct 2026: how the surveyor inspected (chapter 2, src/web/survey-evidence.ts) goes in the report.
+  if (basisOf(d.db, job_id) === null) blockers.push({ key: 'basis', words: 'Say how you inspected the building, in chapter 2.', href: `${base(job_id)}?ch=2#inspection` });
   const details = detailsOf(d.db, surveyor);
   if (details === null) blockers.push({ key: 'details', words: 'Add your RICS number below. It goes on the report with your name.', href: `${base(job_id)}?ch=23#details` });
   if (!jobHasEstimate(d.db, job_id)) blockers.push({ key: 'estimate', words: 'This job has no locked estimate, so approving would release nothing. Tell the office.', href: null });
@@ -143,7 +146,19 @@ export function fingerprintOf(json: string): string {
   return createHash('sha256').update(json, 'utf8').digest('hex');
 }
 
-export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at: string; by: { id: string; name: string }; details: Details }) {
+/** 2 Oct 2026: how the building was inspected, and what the client sent, for the approved version. */
+function inspectionOf(d: { db: PackDeps['db'] }, job_id: string) {
+  const b = basisOf(d.db, job_id);
+  const c = checklistView(d.db, job_id);
+  const recs = walkthroughsOf(d.db, job_id).flatMap((w) => w.recordings);
+  return {
+    basis: b?.basis ?? null, words: b?.words ?? null, note: b?.note ?? null,
+    photos: c?.photos ?? 0, items_done: c?.done ?? 0, items_marked: c?.marked ?? 0, items_total: c?.total ?? 0,
+    recordings: recs.length, recorded_minutes: recs.reduce((a, r) => a + r.minutes, 0),
+  };
+}
+
+export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at: string; by: { id: string; name: string }; details: Details }, d: { db: PackDeps['db'] }) {
   const sumOf = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
   return {
     format: 'cap-rebate-survey-pack/1',
@@ -168,6 +183,7 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
       special_pool_pence: v.sums.special_pool_pence, share_bp: v.sums.share_bp,
     },
     changes: v.changes,
+    inspection: inspectionOf(d, v.job.id),
     legal: {
       verdict: lv.verdict,
       answers: lv.asked.filter((q) => lv.answers.has(q.id)).map((q) => {
@@ -214,7 +230,7 @@ export function approvePack(d: PackDeps, actor: Actor, job_id: string, f: { seq:
       const version = (r.approvals[0]?.version ?? 0) + 1;
       const at = d.now();
       const name = d.db.get<{ n: string }>('SELECT display_name AS n FROM users WHERE id = ?', [actor.id])?.n ?? actor.id;
-      const json = canonical(snapshotOf(v, lv, { version, at, by: { id: actor.id, name }, details }));
+      const json = canonical(snapshotOf(v, lv, { version, at, by: { id: actor.id, name }, details }, d));
       const fingerprint = fingerprintOf(json);
       d.db.run('INSERT INTO survey_pack_approvals (id, pack_id, version, pack_seq, legal_seq, snapshot_json, fingerprint, approved_by, approved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [d.newId(), pack_id, version, v.seq, lv.seq, json, fingerprint, actor.id, at]);

@@ -58,6 +58,7 @@ import { handleStaffMessages } from './messages-pages.ts';
 import { handleSurveyor } from './surveyor-pages.ts';
 import { handleSurveyPack } from './survey-pack-pages.ts';
 import { handleReportStaff } from './report-pages.ts';
+import { handleStaffEvidence } from './evidence-pages.ts';
 import { handleFinance } from './finance-pages.ts';
 import { handleCrm } from './crm-pages.ts';
 import { handlePipeline } from './pipeline-pages.ts';
@@ -419,6 +420,9 @@ export async function handleStaff(
   // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/web/report-pages.ts).
   const report = await handleReportStaff({ app: d.app, newId: d.newId, nav, stamp, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (report === 'handled') return 'handled';
+  // 2 Oct 2026: the client's photos, the walkthrough call and how the surveyor inspected (src/web/evidence-pages.ts).
+  const evidence = await handleStaffEvidence({ app: d.app, store: d.store, newId: d.newId, nav, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
+  if (evidence === 'handled') return 'handled';
 
   /* ------------------------------ SECTION 5 · Caprebate's finance (Phase 107) */
   const finance = await handleFinance(

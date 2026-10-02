@@ -27,6 +27,7 @@ import { choosePackProperty, packView, savePackValue, saveLine, setLineRemoved }
 import { answerLegal, legalView } from '../src/web/pack-legal.ts';
 import { approvePack, approvedVersion, canonical, fingerprintOf, readiness, saveDetails, DECLARATION } from '../src/web/pack-approve.ts';
 import { chaptersToRead } from '../src/web/pack-chapters.ts';
+import { setBasis } from '../src/web/survey-evidence.ts';
 import { actor } from './helpers.ts';
 
 const T = '2026-10-02T09:00:00.000Z';
@@ -104,6 +105,8 @@ function fill(job = JOB): void {
   ok(saveLine(deps(), SAM, job, { line: keep[1]!, qty: '100', rate: '300', qpct: '50', pool: 'MP', reason: 'Counted on the walkthrough', seq: String(view(job).seq) }));
   ok(savePackValue(deps(), SAM, job, { field: 'land', value: '150000', reason: 'The land registry and local sales', seq: String(view(job).seq) }));
   ok(savePackValue(deps(), SAM, job, { field: 'building_rate', value: '1500', reason: 'BCIS, GP surgeries, rebased', seq: String(view(job).seq) }));
+  // 2 Oct 2026 (stage 5): how the surveyor inspected, in chapter 2.
+  ok(setBasis(deps(), SAM, job, { basis: 'DESKTOP_EVIDENCE', note: '' }));
 }
 /** The legal check made clear: a building built new is not a purchase. */
 function clearLegal(job = JOB): void {
@@ -136,13 +139,13 @@ describe('the approval of the survey pack', () => {
     assert.match(page, /<h1>23 · Sign<\/h1>/);
     assert.match(page, /<button class="cta" type="submit" disabled>Approve and sign this report<\/button>/);
     assert.match(page, /The button turns on when every line above is ticked\./);
-    assert.deepEqual(keys(), ['sums', 'legal', 'read', 'details']);
+    assert.deepEqual(keys(), ['sums', 'legal', 'read', 'basis', 'details']);
     assert.match(page, /✗ \d+ values are still needed\. There is no total until then\. <a href="\/staff\/survey\/job-ap-1\/pack\?ch=4">Put it right<\/a>/);
-    assert.match(page, /✗ Open every chapter first\. Still to open: 4 · Summary; 7 · The legal check; 9 · Price, land and floor area; 10 · Rebuild cost and split\./);
+    assert.match(page, /✗ Open every chapter first\. Still to open: 2 · Your inspection; 4 · Summary; 7 · The legal check; 9 · Price, land and floor area; 10 · Rebuild cost and split\./);
     assert.match(page, /✗ Add your RICS number below\./);
     assert.match(page, /✓ The job has its locked estimate\./);
     for (const s of DECLARATION) assert.ok(page.includes(s.replace(/’/g, '’')), s);
-    assert.match(page, /<span class="pk-lv pk-lv-amber">4 things first<\/span>/, 'the side card counts what is left');
+    assert.match(page, /<span class="pk-lv pk-lv-amber">5 things first<\/span>/, 'the side card counts what is left');
     // A job with no locked estimate says so, and says who to tell; a company with two sites must be told which.
     assert.ok(keys(JOB_NO_ESTIMATE).includes('estimate'));
     assert.equal(keys(JOB_TWO)[0], 'property');
@@ -190,7 +193,7 @@ describe('the approval of the survey pack', () => {
     // A chapter number out of range, or not built, is never recorded.
     await req('u-ap-sam', `${P()}?ch=99`);
     await req('u-ap-sam', `${P()}?ch=5`);
-    assert.equal(made.app.db.get<{ c: number }>('SELECT COUNT(*) AS c FROM survey_pack_reads WHERE chapter NOT IN (4, 7, 9, 10, 23)')!.c, 0);
+    assert.equal(made.app.db.get<{ c: number }>('SELECT COUNT(*) AS c FROM survey_pack_reads WHERE chapter NOT IN (2, 4, 7, 9, 10, 23)')!.c, 0);
     assert.throws(() => made.app.db.run('UPDATE survey_pack_reads SET legal_seq = 0'), /never edited/);
   });
 

@@ -81,6 +81,9 @@ function isOriginalKey(key: string): boolean {
  * the point: a later reader can disagree with it, which they cannot do with a
  * number that has no argument attached.
  */
+/** 2 Oct 2026: where survey photos are kept, each sealed (`putSealed`). */
+export const SEALED_PREFIX = 'survey-photos/';
+
 export const DIR_MODE = 0o700;
 export const FILE_MODE = 0o600;
 
@@ -183,6 +186,26 @@ export class FsObjectStore implements ObjectStore {
   async delete(key: string): Promise<void> {
     assertSafeKey(key);
     await this.removeProven(key);
+  }
+
+  /**
+   * 2 OCT 2026: A SURVEY PHOTO (src/web/survey-evidence.ts) — kept ENCRYPTED with the same key as a kept original, under
+   * its own prefix, and refused with no key: a photo of the inside of a client's building is never written in the clear.
+   */
+  get canSeal(): boolean { return this.#sealKey !== null; }
+
+  async putSealed(key: string, bytes: Uint8Array): Promise<void> {
+    assertSafeKey(key);
+    if (!key.startsWith(SEALED_PREFIX)) throw new Error('not a sealed key');
+    if (this.#sealKey === null) throw new Error('refusing to keep a photo with no encryption key');
+    await this.writeBytes(key, seal(this.#sealKey, bytes));
+  }
+
+  async getSealed(key: string): Promise<Buffer> {
+    assertSafeKey(key);
+    if (!key.startsWith(SEALED_PREFIX)) throw new Error('not a sealed key');
+    if (this.#sealKey === null) throw new Error('no key to open a photo');
+    return unseal(this.#sealKey, await this.readBytes(key));
   }
 
   async putText(key: string, body: string): Promise<void> {

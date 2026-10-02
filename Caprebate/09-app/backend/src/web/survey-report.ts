@@ -57,6 +57,8 @@ export type ReportModel = {
   readonly next: readonly { readonly title: string; readonly words: string }[];
   readonly declaration: readonly string[];
   readonly automation_note: string;
+  /** 2 Oct 2026: how the building was inspected, and what the client sent (src/web/survey-evidence.ts). Null in a version approved before. */
+  readonly inspection: string | null;
 };
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -83,6 +85,14 @@ function chipOf(s: Source | null, short = false): Chip {
 const LEVEL: Readonly<Record<string, string>> = Object.freeze({ GREEN: 'Clear', URGENT: 'Clear, with a deadline', AMBER: 'Not settled', RED: 'Fails' });
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+function inspectionWords(i: Snapshot['inspection'] | undefined): string | null {
+  if (i === undefined || i.words === null) return null;
+  const sent: string[] = [];
+  if (i.photos > 0) sent.push(`${String(i.photos)} photo${i.photos === 1 ? '' : 's'} from the client, covering ${String(i.items_done)} of ${String(i.items_total)} checklist items`);
+  if (i.recordings > 0) sent.push(`${i.recordings === 1 ? 'a recorded video call' : `${String(i.recordings)} recorded video calls`} of ${String(i.recorded_minutes)} minutes`);
+  return `${i.words}${i.note === null ? '' : ` (${i.note})`}.${sent.length === 0 ? '' : ` The surveyor had ${sent.join(', and ')}.`}`;
+}
 
 export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
   const s = x.sums;
@@ -166,6 +176,7 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     ],
     declaration: [...x.declaration],
     automation_note: x.automation_note,
+    inspection: inspectionWords((x as { inspection?: Snapshot['inspection'] }).inspection),
   };
 }
 
@@ -241,6 +252,7 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
       <h2 class="rp-h"><span>05</span>The surveyor’s declaration</h2>
       <div class="rp-decl"><ol>${m.declaration.map((d) => h`<li>${d}</li>`)}</ol>
         <div class="rp-sigrow"><div><b>${m.surveyor.name}</b>Surveyor</div><div><b>RICS no. ${m.surveyor.rics}</b>${m.surveyor.firm ?? ''}</div><div><b>${m.approved_on}, ${m.approved_clock}</b>Approved online, version ${String(m.version)}</div></div></div>
+      ${m.inspection === null ? raw('') : h`<h3>How the building was inspected</h3><p>${m.inspection}</p>`}
       <h3>The report’s fingerprint</h3>
       <p>This code belongs to this exact report. If a single figure were changed, the code would change. We keep the approved report and its code.</p>
       <p class="pk-fp">${m.fingerprint}</p>
@@ -552,6 +564,12 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
     c.text(x, dy + 42, fit(b, 'Helvetica', 9, sw), 'Helvetica', 9, C.body);
   });
   c.y += dh + 26;
+  if (m.inspection !== null) {
+    c.text(L, c.y, 'How the building was inspected', 'Times-Bold', 13, C.ink);
+    c.y += 6;
+    c.para(m.inspection, { after: 16 });
+    c.y += 10;
+  }
   c.text(L, c.y, 'The report’s fingerprint', 'Times-Bold', 13, C.ink);
   c.y += 6;
   c.para('This code belongs to this exact report. If a single figure were changed, the code would change. We keep the approved report and its code.', { after: 4 });

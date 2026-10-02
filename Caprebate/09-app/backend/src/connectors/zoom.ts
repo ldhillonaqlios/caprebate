@@ -167,13 +167,14 @@ export type MadeMeeting =
 function zoomTime(iso: string): string { return new Date(iso).toISOString().replace(/\.\d{3}Z$/, 'Z'); }
 
 /** Make the meeting for one call. At most one token call and one meeting call; never throws. */
-export async function makeZoomMeeting(d: ZoomDeps, startsAt: string, minutes: number): Promise<MadeMeeting> {
+/** 2 Oct 2026: `record` — a survey walkthrough call (src/web/survey-evidence.ts) is recorded to Zoom's cloud. */
+export async function makeZoomMeeting(d: ZoomDeps, startsAt: string, minutes: number, opts: { readonly record?: boolean } = {}): Promise<MadeMeeting> {
   const missing = blocked(d);
   if (missing.length > 0) return { state: 'NOT_MADE', why: missing.join(' ') };
   const k = keys(d.secrets)!;
   const r = await api(d, k, 'POST', '/v2/users/{user}/meetings', { user: k.host }, {
     topic: MEETING_TOPIC, type: 2, start_time: zoomTime(startsAt), duration: minutes, timezone: 'Europe/London',
-    settings: { join_before_host: false, waiting_room: true, mute_upon_entry: false, host_video: true, participant_video: true, approval_type: 2, auto_recording: 'none' },
+    settings: { join_before_host: false, waiting_room: true, mute_upon_entry: false, host_video: true, participant_video: true, approval_type: 2, auto_recording: opts.record === true ? 'cloud' : 'none' },
   });
   if (r === null) return { state: 'NOT_MADE', why: 'Zoom did not give us a token: check the Server-to-Server app’s keys and that it is activated.' };
   if (r.outcome !== 'OK' || r.body === null) return { state: 'NOT_MADE', why: `Zoom did not make the meeting (${r.why}).` };
@@ -184,6 +185,33 @@ export async function makeZoomMeeting(d: ZoomDeps, startsAt: string, minutes: nu
     if (!/^\d{9,12}$/.test(id) || !/^https:\/\/([a-z0-9-]+\.)*zoom\.us\//.test(url)) return { state: 'NOT_MADE', why: 'Zoom’s answer did not carry a meeting we could read.' };
     return { state: 'MADE', meeting_id: id, join_url: url, passcode: typeof j.password === 'string' && j.password !== '' ? j.password : null };
   } catch { return { state: 'NOT_MADE', why: 'Zoom’s answer did not carry a meeting we could read.' }; }
+}
+
+export type Recording = { readonly state: 'FOUND'; readonly share_url: string; readonly passcode: string | null; readonly minutes: number; readonly recorded_at: string }
+  | { readonly state: 'NOT_YET' | 'NOT_FOUND'; readonly why: string };
+
+/**
+ * 2 Oct 2026: a walkthrough call's cloud recording, as Zoom describes it (GET /v2/meetings/{meetingId}/recordings,
+ * developers.zoom.us, read 2 Oct 2026). Only its sharing link, passcode, length and start are read; the video stays
+ * with Zoom. Needs the Server-to-Server app's recording scope, and cloud recording on our Zoom plan.
+ */
+export async function zoomRecording(d: ZoomDeps, meetingId: string): Promise<Recording> {
+  const missing = blocked(d);
+  if (missing.length > 0) return { state: 'NOT_FOUND', why: missing.join(' ') };
+  if (!/^\d{9,12}$/.test(meetingId)) return { state: 'NOT_FOUND', why: 'That is not a Zoom meeting.' };
+  const r = await api(d, keys(d.secrets)!, 'GET', '/v2/meetings/{meeting}/recordings', { meeting: meetingId });
+  if (r === null) return { state: 'NOT_FOUND', why: 'Zoom did not give us a token: check the Server-to-Server app’s keys and that it is activated.' };
+  if (r.status === 404) return { state: 'NOT_YET', why: 'Zoom has no recording of this call yet. It can take a while after the call ends.' };
+  if (r.outcome !== 'OK' || r.body === null) return { state: 'NOT_FOUND', why: `Zoom did not answer (${r.why}). Check the app has the recording scope, and that cloud recording is on.` };
+  try {
+    const j = JSON.parse(r.body) as { share_url?: unknown; password?: unknown; duration?: unknown; start_time?: unknown };
+    const url = typeof j.share_url === 'string' ? j.share_url : '';
+    if (!/^https:\/\/([a-z0-9-]+\.)*zoom\.us\//.test(url)) return { state: 'NOT_YET', why: 'Zoom’s answer did not carry a recording we could read.' };
+    const minutes = typeof j.duration === 'number' && Number.isFinite(j.duration) ? Math.max(0, Math.min(600, Math.round(j.duration))) : 0;
+    const at = typeof j.start_time === 'string' && !Number.isNaN(Date.parse(j.start_time)) ? new Date(j.start_time).toISOString() : '';
+    if (at === '') return { state: 'NOT_YET', why: 'Zoom’s answer did not say when it was recorded.' };
+    return { state: 'FOUND', share_url: url, passcode: typeof j.password === 'string' && j.password !== '' ? j.password.slice(0, 64) : null, minutes, recorded_at: at };
+  } catch { return { state: 'NOT_YET', why: 'Zoom’s answer did not carry a recording we could read.' }; }
 }
 
 /** Move a meeting to a new time. True when Zoom took it. */

@@ -33,6 +33,7 @@ import { answerLegal, legalView } from '../src/web/pack-legal.ts';
 import { approvePack, approvedVersion, saveDetails } from '../src/web/pack-approve.ts';
 import { chaptersToRead } from '../src/web/pack-chapters.ts';
 import * as S from '../src/web/report-signoff.ts';
+import { setBasis } from '../src/web/survey-evidence.ts';
 import { blankSentSecrets, SENT_SECRET_BODY } from '../src/stubs/email-provider.ts';
 import * as C from '../src/web/crm.ts';
 import * as P from '../src/web/pipeline.ts';
@@ -165,6 +166,7 @@ function approveOnce(rate: string): void {
       ok(answerLegal(deps(), SAM, JOB, { question: q, values: v, source: 'The building contract', seq: String(legalView(deps(), SAM, JOB).seq) }));
     }
     ok(saveDetails(deps(), SAM, JOB, { rics_number: '1234567', firm: 'Sam Surveyors LLP' }));
+    ok(setBasis(deps(), SAM, JOB, { basis: 'DESKTOP_EVIDENCE', note: '' }));
   }
   ok(saveLine(deps(), SAM, JOB, { line: view().lines[0]!.id, qty: '10', rate, qpct: '100', pool: 'SR', reason: 'Counted on the walkthrough', seq: String(view().seq) }));
   for (const c of chaptersToRead()) made.app.db.run('INSERT OR IGNORE INTO survey_pack_reads (id, job_id, user_id, chapter, legal_seq, at) VALUES (?, ?, ?, ?, ?, ?)',
@@ -189,11 +191,12 @@ describe('the report', () => {
     assert.equal(m.sources.find((x) => x.label === 'Floor area')!.chip.kind, 'EVIDENCE');
     assert.equal(m.taken_out.length, view().lines.filter((l) => l.removed).length);
     assert.equal(m.legal.level_words, 'Clear');
+    assert.equal(m.inspection, 'Desktop, with the client’s photos and video.', 'how the building was inspected');
     assert.ok(m.legal.answers.some((a) => a.answer === '1 May 2023'), 'a date is in words');
     const html = String(reportHtml(m, { pdf: null }));
     const pdf = pdfText(reportPdf(m).bytes);
     for (const must of [m.headline.qualifying, m.headline.main, m.headline.special, m.headline.share, 'RICS no. 1234567', 'Sam Surveyors LLP', m.fingerprint,
-      ...m.declaration, 'How this report was made', m.legal.headline.split('.')[0]!]) {
+      ...m.declaration, 'How this report was made', m.legal.headline.split('.')[0]!, 'How the building was inspected', m.inspection!]) {
       assert.ok(html.includes(must.replace(/’/g, '’')), `the page lacks ${must}`);
       assert.ok(pdf.replace(/\n/g, ' ').includes(must) || pdf.includes(must), `the PDF lacks ${must}`);
     }

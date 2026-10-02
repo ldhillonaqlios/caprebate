@@ -4,7 +4,7 @@
  */
 /** The report's 23 chapters, in the report template's order (surveyor-valuation-report-template-v2.md). */
 export const CHAPTERS: readonly { readonly n: number; readonly title: string; readonly built: boolean }[] = Object.freeze([
-  { n: 1, title: 'Report and property', built: false }, { n: 2, title: 'Your inspection', built: false },
+  { n: 1, title: 'Report and property', built: false }, { n: 2, title: 'Your inspection', built: true },
   { n: 3, title: 'Purpose and basis', built: false }, { n: 4, title: 'Summary', built: true },
   { n: 5, title: 'The building', built: false }, { n: 6, title: 'Room schedule', built: false },
   { n: 7, title: 'The legal check', built: true }, { n: 8, title: 'Dwellings', built: false },
