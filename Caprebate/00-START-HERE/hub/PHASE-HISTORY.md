@@ -11273,3 +11273,11 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** phase 13, Calendar.
 
  **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 13 of 17, 3 October 2026 — the Calendar (Claude Code, on the Mac)
+
+-  **Built:** the Calendar names the day ("Monday 5 Oct 2026") or the week, with Earlier, Today, Later and Show the week as buttons, and four boxes counting the calls booked, waiting, asked another way and cancelled. The week is seven boxes side by side, today's marked, instead of seven headings over "Nothing booked". Nobody on a call is amber; a cancelled call is red. "Give it a time" only for those who may arrange calls; "Open" for anyone else. Cancelled calls fold away with their count. The tables stack on a phone. The sections are in the left-hand menu.
+-  **Proof.** `test/ui-tidy-calendar.test.ts`, ten tests; 18 single-line mutations, all red. Screenshots of today, Monday 5 October and its week, at 1280 and 390, with two calls booked in the local demo. 2177 tests, all pass but the stray-file one (and `whatsapp.test.ts` once under load; it passes on its own). CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2177`) green.
+-  **Next:** phase 14, Introducers.
+
+ **Claim cleared** in the commit that carries this record.

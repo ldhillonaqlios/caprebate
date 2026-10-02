@@ -1403,6 +1403,20 @@ a.packhead-switch:hover{text-decoration:underline}
 .readyline .btn-primary{margin-left:auto}
 @media (min-width:900px){.financepage .rtabs{display:none}}
 
+/* UI TIDY PHASE 13 — THE CALENDAR (src/web/staff.ts calendarPage). The week as seven boxes side by side from 900 px. */
+.calnav{display:flex;flex-wrap:wrap;gap:.4rem;margin:0}
+.weekgrid{list-style:none;margin:0 0 1.5rem;padding:0;display:grid;grid-template-columns:1fr;gap:.5rem}
+.wday{background:var(--white);border:1px solid var(--line);border-radius:.6rem;padding:.6rem .7rem;min-width:0}
+.wday.today{border:2px solid var(--ink);box-shadow:inset 0 4px 0 var(--mint)}
+.wday-h{margin:0 0 .4rem;font-weight:700;font-size:14px}
+.wnone{margin:0;color:var(--mut);font-size:14px}
+.wcalls{list-style:none;margin:0;padding:0}
+.wcalls li{margin:0 0 .45rem;padding:.35rem .5rem;background:var(--mist);border-left:3px solid var(--ink);border-radius:.3rem;font-size:14px;line-height:1.35;overflow-wrap:anywhere}
+.wcalls a{color:var(--ink);font-weight:600}
+.wmeta{display:block;font-size:13px;color:var(--mut);margin-top:.15rem}
+@media (min-width:900px){.weekgrid{grid-template-columns:repeat(7,minmax(0,1fr))}.wday{min-height:7rem}}
+@media (max-width:899px){.wday:not(:has(.wcalls)){display:flex;justify-content:space-between;align-items:baseline;gap:.5rem}.wday:not(:has(.wcalls)) .wday-h{margin:0}}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of

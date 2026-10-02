@@ -1057,6 +1057,12 @@ the claim's next action — it needs an owner and a due date**. A task with no d
 no due date. It never shows as on time. A task is never deleted. To stop one, open its own page. The box there is
 **Cancel it — a task is never deleted, so say why**. Give a reason, and press **Cancel the task**.
 
+**Calls, on the Calendar.** Open **Calendar** (Address: `/staff/calendar`). It shows one day. **Show the week** shows
+seven boxes, one a day. Use **Earlier**, **Today** and **Later** to move. Four boxes count the calls. One is the calls booked.
+One is the calls waiting for a time. One is the people who asked another way. One is the calls cancelled. A call with nobody on it says **Nobody
+yet**, in amber. A cancelled call says **Cancelled**, in red. Under **Asked for a call, no time yet**, press **Give it
+a time** on a row. **Cancelled calls** is folded. Press it to see them.
+
 **7. Documents, and asking a client for one.** Go to the claim's **Related** tab. Or use **Request a document**
 under **Quick actions**. The **Documents** panel lists the **Requests**. It also lists what is linked to the claim. To ask the
 client for a document:
