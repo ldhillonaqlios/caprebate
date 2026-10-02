@@ -92,6 +92,7 @@ import { receiveEnquiry } from './enquiries.ts';
 import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } from './signup.ts';
 import { ANSWER_MYSELF_LABEL, checkedLine, checkPropertyPostcodes, freeGate, lookupsOffered, recordLookupsDeclined, type KeptCheck } from './address-check.ts';
 import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from './identity-checks.ts';
+import { handleSignoffLink, portalReport, portalReportCard } from './report-pages.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -359,6 +360,12 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* PHASE 151b: THE IDENTITY CHECK'S SIGNED RESULT. The service has no login, so this sits outside it — and believes
      nothing it is sent unless the signature holds (src/web/identity-checks.ts). A bad signature is refused and audited.
      The answer is a status and nothing else: the service reads no page, and a refusal says nothing about why. */
+  /* 2 OCT 2026: THE ACCOUNTANT'S PRIVATE SIGN-OFF LINK (src/web/report-pages.ts). No login: the link is the key, kept only
+     as its SHA-256, answered once, for 30 days. */
+  if (path.startsWith('/signoff/')) {
+    const r = await handleSignoffLink(d.app, newId, req, res, url, method, form);
+    if (r === 'handled') return 'handled';
+  }
   /* 30 SEP 2026: WHATSAPP — THE ADDRESS META CALLS (src/web/whatsapp.ts). No login: Meta has none. GET is Meta checking
      the address with our verify word; POST carries messages and statuses, believed only under Meta's signature. */
   if (path === '/hooks/whatsapp' && method === 'GET') {
@@ -1019,7 +1026,8 @@ async function portalRoutes(
     const joins: Record<string, string> = {};
     for (const b of bks) { const m = b.channel === 'video' ? activeMeeting(db, b.id) : undefined; if (m !== undefined) joins[b.id] = `/call/${m.client_token}`; }
     // 1 Oct 2026: the top of the portal as a dashboard (src/web/portal-dashboard.ts).
-    const dashboard = portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins });
+    // 2 Oct 2026: the survey report's card leads, once a tax adviser's sign-off has released it (src/web/report-pages.ts).
+    const dashboard = h`${portalReportCard(d.app, business_id)}${portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins })}`;
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
       publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', joins, dashboard, ...(welcome === undefined ? {} : { welcome }) }));
     return 'handled';
@@ -1027,6 +1035,11 @@ async function portalRoutes(
 
   /* PHASE 142: MESSAGES — the thread with the client, and nothing else. `business_id` is the session's for a client, so a
      client only ever reads and writes their own company's thread; every read and write is asked of the rule table again. */
+  /* 2 OCT 2026: THE CLIENT'S SURVEY REPORT — only the version a tax adviser's sign-off has released (src/web/report-pages.ts). */
+  if ((path === '/portal/report' || path === '/portal/report.pdf') && method === 'GET') {
+    P.progress(db, actor, business_id); // the business is asked of the rule table, as every portal page does
+    return portalReport(d.app, actor, business_id, path, res, nav(actor));
+  }
   if (path === '/portal/messages' && method === 'GET') {
     const m = portalMessagesBody({ app: d.app, newId }, actor, business_id, url.searchParams.get('done'));
     html(res, 200, page({ title: m.title, nav: nav(actor), wide: true, body: m.body }));

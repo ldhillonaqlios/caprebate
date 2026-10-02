@@ -28,6 +28,7 @@ import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as P from './survey-pack.ts';
 import * as L from './pack-legal.ts';
 import * as A from './pack-approve.ts';
+import { sendPanel } from './report-pages.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 
 export type PackPageDeps = {
@@ -158,7 +159,7 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
       <article class="pack-book">
         <h1>${String(chapter.n)} · ${chapter.title}</h1>
         ${ch === 4 ? summaryChapter(v) : ch === 7 ? legalChapter(d, v, lv, ch, q) : ch === 9 ? inputsChapter(d, v, ch, q) : ch === 10 ? elementsChapter(d, v, ch, q)
-          : ch === 23 ? signChapter(d, v, ready, q)
+          : ch === 23 ? signChapter(d, actor, v, ready, q)
           : h`<p class="help">This chapter is filled in at the next stage of the build. For now, the sums are in chapters 4, 9 and 10.</p>`}
       </article>
       <aside class="pack-side">${approveCard(v, ready)}${totalsCard(v)}${legalCard(v, lv)}${changesCard(d, v)}</aside>
@@ -221,15 +222,6 @@ function legalCard(v: P.PackView, lv: L.LegalView): Safe {
     <p class="help"><a href="${base(v.job.id)}?ch=7">${allows.ok ? 'It does not stop approval.' : 'It stops approval until it is settled.'}</a></p></section>`;
 }
 
-/** An answer as words: the option's label, a list of labels, a date or an amount. */
-function answerWords(q: L.EngineQuestion, value: unknown): string {
-  const label = (k: unknown) => q.opts?.find((o) => o[0] === k)?.[1] ?? String(k);
-  if (Array.isArray(value)) return value.length === 0 ? 'none of these' : value.map(label).join('; ');
-  if (q.type === 'currency' && typeof value === 'number') return poundsWords(Math.round(value * 100));
-  if (q.type === 'percent' && typeof value === 'number') return `${String(value)}%`;
-  return label(value);
-}
-
 function questionForm(v: P.PackView, lv: L.LegalView, q: L.EngineQuestion, ch: number): Safe {
   const now = lv.answers.get(q.id)?.value;
   const field = q.type === 'single'
@@ -269,7 +261,7 @@ function legalChapter(d: PackPageDeps, v: P.PackView, lv: L.LegalView, ch: numbe
       return h`<li id="lq-row-${x.id}" class="${a === undefined ? 'pk-q pk-q-open' : 'pk-q'}">
         <p class="pk-q-ask"><strong>${x.ask}</strong>${x.optional === true ? h` <span class="help">(you do not have to)</span>` : raw('')}</p>
         ${x.help === undefined ? raw('') : h`<p class="help">${x.help}</p>`}
-        ${a === undefined ? raw('') : h`<p class="pk-q-ans">${answerWords(x, a.value)} <span class="pk-src pk-sv">${a.by_name} · ${d.stamp(a.at)}</span> <span class="help">From: ${a.source_note}</span>
+        ${a === undefined ? raw('') : h`<p class="pk-q-ans">${L.answerWords(x, a.value)} <span class="pk-src pk-sv">${a.by_name} · ${d.stamp(a.at)}</span> <span class="help">From: ${a.source_note}</span>
           ${lv.may_answer && open !== x.id ? h` <a href="${base(v.job.id)}?ch=7&q=${x.id}#lq-row-${x.id}">Change</a>` : raw('')}</p>`}
         ${editing ? questionForm(v, lv, x, ch) : raw('')}</li>`;
     })}</ol>
@@ -431,7 +423,7 @@ const CHECKS: readonly { key: string; done: string }[] = Object.freeze([
   { key: 'estimate', done: 'The job has its locked estimate.' },
 ]);
 
-function signChapter(d: PackPageDeps, v: P.PackView, r: A.Readiness, q: URLSearchParams): Safe {
+function signChapter(d: PackPageDeps, actor: Actor, v: P.PackView, r: A.Readiness, q: URLSearchParams): Safe {
   const blocked = new Map(r.blockers.map((b) => [b.key, b] as const));
   const editDetails = r.may_approve && (r.details === null || q.get('details') === '1');
   return h`
@@ -460,7 +452,8 @@ function signChapter(d: PackPageDeps, v: P.PackView, r: A.Readiness, q: URLSearc
     <h2>Approved versions (${String(r.approvals.length)})</h2>
     ${r.approvals.length === 0 ? h`<p class="help">None yet. Each approval is kept for ever. A later change makes a new version and leaves the old one as it was.</p>`
       : h`<table class="pk-table"><thead><tr><th>Version</th><th>Approved by</th><th>When</th><th>Fingerprint</th><th></th></tr></thead><tbody>
-        ${r.approvals.map((a) => h`<tr><td>${String(a.version)}</td><td>${a.approver_name}</td><td>${d.stamp(a.approved_at)}</td><td class="pk-fp">${a.fingerprint.slice(0, 16)}…</td><td><a href="${base(v.job.id)}/version/${String(a.version)}">Open</a></td></tr>`)}</tbody></table>`}`;
+        ${r.approvals.map((a) => h`<tr><td>${String(a.version)}</td><td>${a.approver_name}</td><td>${d.stamp(a.approved_at)}</td><td class="pk-fp">${a.fingerprint.slice(0, 16)}…</td><td><a href="${base(v.job.id)}/version/${String(a.version)}">Open</a> · <a href="${base(v.job.id)}/version/${String(a.version)}/report">The client’s report</a></td></tr>`)}</tbody></table>`}
+    ${sendPanel(d, actor, v, r, q)}`;
 }
 
 function approveCard(v: P.PackView, r: A.Readiness): Safe {
@@ -509,13 +502,13 @@ function versionPage(d: PackPageDeps, actor: Actor, v: P.PackView, kept: NonNull
     <p><span class="pk-lv pk-lv-${x.legal.verdict.level.toLowerCase()}">${LEVEL_WORDS[x.legal.verdict.level]}</span> ${x.legal.verdict.headline}</p>
     ${x.legal.answers.length === 0 ? raw('') : h`<ul>${x.legal.answers.map((a) => {
       const lq = L.legalQuestions(x.job.sector).find((y) => y.id === a.question_id);
-      return h`<li>${a.ask} <strong>${lq === undefined ? String(a.value) : answerWords(lq, a.value)}</strong> <span class="help">— ${a.by}, from: ${a.source}</span></li>`;
+      return h`<li>${a.ask} <strong>${lq === undefined ? String(a.value) : L.answerWords(lq, a.value)}</strong> <span class="help">— ${a.by}, from: ${a.source}</span></li>`;
     })}</ul>`}
     <h2>The surveyor’s changes (${String(x.changes.length)})</h2>
     ${x.changes.length === 0 ? h`<p class="help">None. Every figure is from the evidence or our draft, as marked.</p>`
       : h`<ol class="pk-log">${x.changes.map((c) => h`<li><strong>${c.by_name}</strong> ${c.words}${c.line_label === null ? '' : ` on ${c.line_label}`}. “${c.reason}” <span class="help">${d.stamp(c.at)}</span></li>`)}</ol>`}
     <div class="pk-decl"><h2>The declaration</h2><ol>${x.declaration.map((s) => h`<li>${s}</li>`)}</ol></div>
     <p class="help">${x.automation_note}</p>
-    <p><a href="${base(v.job.id)}?ch=23">Back to the pack</a></p>`;
+    <p><a href="${base(v.job.id)}/version/${String(x.version)}/report">The client’s report</a> · <a href="${base(v.job.id)}/version/${String(x.version)}/report.pdf">its PDF</a> · <a href="${base(v.job.id)}?ch=23">Back to the pack</a></p>`;
   return page({ title: `Survey pack version ${String(x.version)} · ${x.business.name}`, nav: d.nav(actor), wide: true, body });
 }

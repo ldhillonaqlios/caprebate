@@ -11089,3 +11089,14 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Proof.** `test/send-local-guard.test.ts` (6); 15 single-line breakages each turned it red. `npm run check` 1999 pass (117 files) on the full copy; in the cloud clone the same five Mac-only tests cannot run. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,1999`) green.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — the survey pack, stage 4: the client's report, the accountant's sign-off, then the client (Claude Code, cloud session)
+
+ Mock-ups shown first and approved ("Yes, build it as shown"). Asked how the report travels, Lakhbir: "Adviser, then client"; our own adviser's sign-off "Staff record it, as today"; the client's accountant by "Email + private sign-off link".
+
+-  **Built:** the client's survey report from the approved version (`src/web/survey-report.ts`): five parts (cover with the headline figure and pools, how it is worked out, item by item with each value's source, the legal check and next steps, the declaration with the RICS number and fingerprint, and the AI note at the end), as a page and as a PDF from one set of contents. A dependency-free drawn PDF (`src/web/pdf-canvas.ts`, exact character widths in `pdf-metrics.ts`): the same bytes every time, so never stored. Chapter 23's **Send the report** panel; the accountant's email with the PDF and a private, one-use, 30-day link (only its SHA-256 kept); their sign-off or send-back; the signed answer recorded on the claim through `recordSignOff`; the client sees a version only after a sign-off of that version's figure, with a portal card and page; "Tell the client" once (`src/web/report-signoff.ts`, `report-pages.ts`, migration 073).
+-  **Found while building:** a firm typed as "Limited" alone was accepted (now a name must come first); the PDF's letter spacing leaked into later text; the bold lead-ins overprinted; on the accountant's page the site's dark theme turned the report's black cover pale and its text grey (its colours are now fixed); the portal card's bar had no colour; a reports test forbids any table named "report" (the tables are `pack_signoff_*`).
+-  **Proof.** `test/survey-report.test.ts` (14); 33 single-line mutations, 32 red and one that changes nothing. Driven end to end on the demo: approve, email, sign off by the link, record, tell, portal. `npm run check` 2013 pass (118 files) on the full copy; in the cloud clone the same five Mac-only tests cannot run. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2013`) green; the brand check cannot open the logo here.
+-  **Next:** stage 5 — the guided photo checklist and the recorded phone walkthrough in the client portal.
+
+ **Claim cleared** in the commit that carries this record.

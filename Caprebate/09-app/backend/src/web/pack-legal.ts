@@ -26,6 +26,7 @@ import { authorise, can, type Actor } from '../authz.ts';
 import { CB, getSector, newSession } from './engine.ts';
 import { packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult } from './survey-pack.ts';
+import { poundsWords } from './pack-sums.ts';
 
 export type EngineQuestion = {
   readonly id: string;
@@ -297,3 +298,13 @@ export function answerLegal(d: PackDeps, actor: Actor, job_id: string, f: { ques
     return { ok: true };
   });
 }
+
+/** An answer as words: the option's label, a list of labels, a date or an amount. */
+export function answerWords(q: EngineQuestion, value: unknown): string {
+  const label = (k: unknown) => q.opts?.find((o) => o[0] === k)?.[1] ?? String(k);
+  if (Array.isArray(value)) return value.length === 0 ? 'none of these' : value.map(label).join('; ');
+  if (q.type === 'currency' && typeof value === 'number') return poundsWords(Math.round(value * 100));
+  if (q.type === 'percent' && typeof value === 'number') return `${String(value)}%`;
+  return label(value);
+}
+

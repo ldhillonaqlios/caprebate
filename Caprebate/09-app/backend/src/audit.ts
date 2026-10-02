@@ -368,6 +368,9 @@ export type AuditKind =
   | 'SURVEY_PACK_CHANGED'
   /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/web/pack-approve.ts): the version and its fingerprint. */
   | 'SURVEY_PACK_APPROVED'
+  /** 2 Oct 2026: the survey report emailed to the client's accountant for sign-off; their answer by the private link
+   *  (src/web/report-signoff.ts). Ids, the version and the outcome — never the link, never a figure. */
+  | 'REPORT_SENT_FOR_SIGNOFF' | 'REPORT_SIGNOFF_ANSWERED'
   /** Phase 151f: a signed word from the service that the check is still under way, or about something other than a
    *  check's status. Acknowledged and not kept as a result. The status word and why only. */
   | 'IDENTITY_RESULT_NOT_KEPT'
