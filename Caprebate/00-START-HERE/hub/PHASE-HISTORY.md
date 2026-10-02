@@ -11135,3 +11135,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** stage 6 — the lookups switched on in test, and OS building outlines on the report's cover.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — a failed photo send says why, and falls back through the website (Claude Code, cloud session)
+
+ After PR #1 was merged and deployed, Lakhbir sent seven photos from the Dunmarrow client portal on the test website: the send started (the key works), but every photo said "The website did not answer. Please try again." The Vercel logs could not be read from the session (the connector is refused them).
+
+-  **Built:** every step of a send that fails now answers in words with what went wrong (its kind and message; no address, no token) and logs the same line, so the next try says the cause on screen. When the file store gives no one-time address, a photo of up to 4.4 MB comes through our own route instead and is kept as before; a bigger one is refused in words with the reason. A send that kept nothing ends in red; the iPhone hint shows only after a photo skipped for its type.
+-  **Proof.** Three tests added to `test/photo-upload.test.ts` (now 16); 8 single-line mutations, all red. `npm run check` 2052 pass (120 files) on the full copy; the same five Mac-only tests cannot run in the cloud clone. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2052`) green.
+-  **Next:** Lakhbir sends a few photos again; the words on screen (or the `photo upload:` line in Vercel's log) say whether the direct way failed at the address, the upload or the keeping, and that is fixed.
+
+ **Claim cleared** in the commit that carries this record.

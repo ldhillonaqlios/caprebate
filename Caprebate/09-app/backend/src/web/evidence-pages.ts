@@ -21,7 +21,7 @@
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
-import { can, type Actor } from '../authz.ts';
+import { can, NotAuthorised, type Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import * as E from './survey-evidence.ts';
@@ -232,16 +232,16 @@ export async function handlePortalEvidence(
   const slotAsk = /^\/portal\/building\/upload\/([A-Za-z0-9-]+)\/slot$/.exec(path);
   if (slotAsk !== null && method === 'POST') {
     const f = await d.form(req);
-    return json(res, await U.slotFor(deps, d.store, actor, slotAsk[1] ?? '', { n: f.get('n') ?? '', size: f.get('size') ?? '' }));
+    return answer(res, 'This photo could not be given a place in our file store', () => U.slotFor(deps, d.store, actor, slotAsk[1] ?? '', { n: f.get('n') ?? '', size: f.get('size') ?? '' }));
   }
   const slotPut = /^\/portal\/building\/upload\/([A-Za-z0-9-]+)\/slot\/([A-Za-z0-9-]+)$/.exec(path);
   if (slotPut !== null && method === 'PUT') {
     let body: Buffer;
     try { body = await d.readBody(req, U.MAX_LOCKED_BYTES); } catch (e) { if (e instanceof Error && e.name === 'PayloadTooLarge') return json(res, { ok: false, why: 'That photo is too big. The most is 25 MB.' }, 413); throw e; }
-    return json(res, await U.putLocal(deps, d.store, actor, slotPut[1] ?? '', slotPut[2] ?? '', new Uint8Array(body)));
+    return answer(res, 'This photo could not be kept on the way', () => U.putLocal(deps, d.store, actor, slotPut[1] ?? '', slotPut[2] ?? '', new Uint8Array(body)));
   }
   const slotDone = /^\/portal\/building\/upload\/([A-Za-z0-9-]+)\/slot\/([A-Za-z0-9-]+)\/done$/.exec(path);
-  if (slotDone !== null && method === 'POST') return json(res, await U.finishSlot(deps, d.store, actor, slotDone[1] ?? '', slotDone[2] ?? ''));
+  if (slotDone !== null && method === 'POST') return answer(res, 'This photo arrived but could not be kept', () => U.finishSlot(deps, d.store, actor, slotDone[1] ?? '', slotDone[2] ?? ''));
   if (path === '/portal/building/photos' && method === 'POST') {
     const tooMuch = () => html(413, 'Not sent', h`<div class="card" role="alert"><h1>The photos were not sent</h1><p>Those photos are too big together. The most is 4.4 MB in one go. Send fewer at a time.</p><p><a href="/portal/building#many">Back</a></p></div>`);
     let body: Buffer;
@@ -290,6 +290,22 @@ export async function handlePortalEvidence(
 
 /** A path back into the checklist: the list or an item, for one job, and an item's place on the list. */
 const BACK_INTO_CHECKLIST = /^\/portal\/building(\/item\/[A-Z0-9-]{2,60})?\?job=[A-Za-z0-9-]+(#i-[A-Z0-9-]{2,60})?$/;
+
+/**
+ * 2 Oct 2026: a step of a send that fails ANSWERS IN WORDS, with what went wrong (U.failureWords: never an address or a
+ * token), and says it in the log — so a failure on the test website is never only "the website did not answer". A
+ * refusal of who may do it is not caught: it is the router's 403, as everywhere.
+ */
+async function answer(res: ServerResponse, step: string, run: () => Promise<object>): Promise<'handled'> {
+  try {
+    return json(res, await run());
+  } catch (e) {
+    if (e instanceof NotAuthorised) throw e;
+    const why = U.failureWords(e);
+    console.error(`photo upload: ${step}: ${why}`);
+    return json(res, { ok: false, why: `${step}. Please try again later; we have been told. (${why})` }, 500);
+  }
+}
 
 function json(res: ServerResponse, body: object, status?: number): 'handled' {
   const ok = (body as { ok?: unknown }).ok === true;
