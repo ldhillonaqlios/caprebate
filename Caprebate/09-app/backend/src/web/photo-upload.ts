@@ -39,6 +39,24 @@ export const SEND_HOURS = 3;
 export const SLOT_MINUTES = 30;
 /** An upload not finished after this long is removed by the sweep. */
 export const ABANDON_HOURS = 24;
+/**
+ * 2 Oct 2026, the first send on the test website: every photo failed at "the website did not answer". The fallback: if
+ * the store will not give its one-time address, the locked photo comes through our own route instead — on the test
+ * website at most 4.4 MB a photo (its limit on a request). Such a slot's key ends `.site.lock`, so our route knows it.
+ */
+export const SITE_MAX_LOCKED_BYTES = 4_400_000;
+const SITE_SUFFIX = '.site.lock';
+
+/**
+ * What went wrong, in words safe to show and to log: the error's kind and message, with any web address and any long
+ * token-like run taken out, at most 200 characters. Never a stack.
+ */
+export function failureWords(e: unknown): string {
+  const name = e instanceof Error ? e.name : 'Error';
+  const msg = e instanceof Error ? e.message : String(e);
+  const clean = msg.replace(/https?:\/\/\S+/g, '[address]').replace(/[A-Za-z0-9+/_=-]{40,}/g, '[…]').replace(/\s+/g, ' ').trim();
+  return `${name}: ${clean}`.slice(0, 200);
+}
 
 const MAGIC = Buffer.from('CBUP1', 'latin1');
 
@@ -90,8 +108,21 @@ export async function slotFor(d: EvidenceDeps, store: FsObjectStore, actor: Acto
   const id = d.newId();
   const staged = `${INCOMING_PREFIX}${s.id}/${id}.lock`;
   const until = Math.min(Date.parse(now) + SLOT_MINUTES * 60_000, Date.parse(s.expires_at));
-  const remote: IncomingTarget | null = await store.incomingTarget(staged, size, until);
-  d.db.run('INSERT INTO survey_upload_slots (id, session_id, n, staged_key, byte_size, issued_at) VALUES (?, ?, ?, ?, ?, ?)', [id, s.id, n, staged, size, now]);
+  let remote: IncomingTarget | null;
+  let key = staged;
+  try {
+    remote = await store.incomingTarget(staged, size, until);
+  } catch (e) {
+    // The store would not give its address: say why in the log, and send this photo through our own route if it fits.
+    const why = failureWords(e);
+    console.error(`photo upload: the store gave no upload address, so photos go through the website: ${why}`);
+    if (size > SITE_MAX_LOCKED_BYTES) {
+      return { ok: false, why: `This photo is over 4.4 MB, and the direct way to our file store is not working yet, so it cannot be sent today. We have been told. (${why})` };
+    }
+    remote = null;
+    key = staged.replace(/\.lock$/, SITE_SUFFIX);
+  }
+  d.db.run('INSERT INTO survey_upload_slots (id, session_id, n, staged_key, byte_size, issued_at) VALUES (?, ?, ?, ?, ?, ?)', [id, s.id, n, key, size, now]);
   const target = remote ?? { url: `/portal/building/upload/${s.id}/slot/${id}`, headers: {} };
   return { ok: true, slot: id, url: target.url, headers: target.headers };
 }
@@ -103,12 +134,15 @@ function slotOf(d: EvidenceDeps, session_id: string, slot_id: string): Slot | un
     'LEFT JOIN survey_upload_outcomes o ON o.slot_id = s.id WHERE s.id = ? AND s.session_id = ?', [slot_id, session_id]);
 }
 
-/** A copy that is not the test website: the locked photo comes to our own route, at most the size the slot said. */
+/**
+ * The locked photo through our own route: on a copy that is not the test website, or (the fallback) a slot the store
+ * gave no address for. At most the size the slot said.
+ */
 export async function putLocal(d: EvidenceDeps, store: FsObjectStore, actor: Actor, session_id: string, slot_id: string, bytes: Uint8Array): Promise<UploadResult<object>> {
-  if (store.incomingOrigin !== null) return { ok: false, why: 'Photos go straight to the file store here, not through this page.' };
   const s = ownSession(d, actor, session_id);
   const slot = slotOf(d, s.id, slot_id);
   if (slot === undefined) return { ok: false, why: 'That photo is not one of this send.' };
+  if (store.incomingOrigin !== null && !slot.staged_key.endsWith(SITE_SUFFIX)) return { ok: false, why: 'Photos go straight to the file store here, not through this page.' };
   if (slot.outcome !== null) return { ok: false, why: 'That photo has already been dealt with.' };
   if (d.now() > new Date(Date.parse(slot.issued_at) + SLOT_MINUTES * 60_000).toISOString()) return { ok: false, why: 'That photo’s place has run out of time. Send it again.' };
   if (bytes.length === 0 || bytes.length > slot.byte_size) return { ok: false, why: 'That photo is not the size it said it was.' };

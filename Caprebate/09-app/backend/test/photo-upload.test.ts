@@ -21,7 +21,7 @@
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { constants, createHash, privateDecrypt, randomBytes, randomUUID } from 'node:crypto';
-import { mkdtempSync, existsSync } from 'node:fs';
+import { mkdtempSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import vm from 'node:vm';
@@ -82,6 +82,7 @@ before(async () => {
   }
   db.run('INSERT INTO assessments (id,business_id,sector,submitted_at,shown_low_pence,shown_high_pence,created_at) VALUES (?,?,?,?,?,?,?)', ['as-pu', 'b-pu', 'gp', T0, 100, 200, T0]);
   db.run('INSERT INTO surveyor_jobs (id,business_id,assessment_id,surveyor_id,state,committed_at,created_at,claim_id) VALUES (?,?,?,?,?,?,?,?)', [JOB, 'b-pu', 'as-pu', 'u-pu-sam', 'SEALED', null, T0, null]);
+  db.run('INSERT INTO surveyor_jobs (id,business_id,assessment_id,surveyor_id,state,committed_at,created_at,claim_id) VALUES (?,?,?,?,?,?,?,?)', ['job-pu-2', 'b-pu', 'as-pu', 'u-pu-sam', 'SEALED', null, later(1), null]);
   for (const w of ['u-pu-client', 'u-pu-other']) {
     await req(w, '/login', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ email: `${w}@example.invalid`, password: PASSWORD }).toString() });
   }
@@ -288,9 +289,47 @@ describe('the test website: straight to the file store', () => {
     blob.objects.set(path2, Buffer.alloc(5001, 1));
     assert.deepEqual(await U.finishSlot(deps(), store, CLIENT, r.session, s2.slot), { ok: false, why: 'That photo is not the size it said it was.' });
     assert.ok(!blob.objects.has(path2));
-    // An address on any other site is refused, never handed to a phone.
+    // An address on any other site is never handed to a phone: that photo goes through our own route instead.
     blob.setHost('https://evil.example.com/api/blob/');
-    await assert.rejects(U.slotFor(deps(), store, CLIENT, r.session, { n: '2', size: '5000' }), /upload address on another site/);
+    const s3 = await U.slotFor(deps(), store, CLIENT, r.session, { n: '2', size: '5000' });
+    assert.ok(s3.ok);
+    if (s3.ok) assert.ok(s3.url.startsWith(`/portal/building/upload/${r.session}/slot/`) && !s3.url.includes('evil'), s3.url);
+  });
+
+  test('when the store gives no address, a photo up to 4.4 MB comes through our own route and is kept; a bigger one is refused in words', async () => {
+    const blob = fakeBlob();
+    blob.sdk.issueSignedToken = async () => { throw Object.assign(new Error('Vercel Blob: Access denied at https://vercel.com/api/blob/signed-token?t=abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGH'), { name: 'BlobAccessError' }); };
+    const store = new SharedObjectStore({ client: await vercelBlobClient({}, blob.sdk), linkSecret: randomBytes(32), now: made.app.now, sealKey: randomBytes(32) });
+    const r = start(CLIENT, {}, store);
+    assert.ok(r.ok);
+    if (!r.ok) return;
+    const big = await U.slotFor(deps(), store, CLIENT, r.session, { n: '1', size: String(U.SITE_MAX_LOCKED_BYTES + 1) });
+    assert.equal(big.ok, false);
+    if (!big.ok) {
+      assert.match(big.why, /^This photo is over 4\.4 MB, and the direct way to our file store is not working yet/);
+      assert.match(big.why, /BlobAccessError: Vercel Blob: Access denied at \[address\]/);
+      assert.doesNotMatch(big.why, /abcdefghijklmnop|https:/, 'the address or a token was shown');
+    }
+    const locked = await lockPhoto(r.key, JPEG);
+    const s = await U.slotFor(deps(), store, CLIENT, r.session, { n: '2', size: String(locked.length) });
+    assert.ok(s.ok);
+    if (!s.ok) return;
+    assert.deepEqual([s.url, s.headers], [`/portal/building/upload/${r.session}/slot/${s.slot}`, {}]);
+    const path = `caprebate-documents/survey-incoming/${r.session}/${s.slot}.site.lock`;
+    assert.deepEqual(await U.putLocal(deps(), store, CLIENT, r.session, s.slot, locked), { ok: true });
+    assert.ok(blob.objects.has(path), 'the fallback upload is not in the store');
+    const done = await U.finishSlot(deps(), store, CLIENT, r.session, s.slot);
+    assert.ok(done.ok);
+    assert.ok(!blob.objects.has(path), 'the fallback upload was kept');
+  });
+
+  test('what went wrong is said safely: its kind and words, no address, no token, at most 200 characters', () => {
+    assert.equal(U.failureWords(new TypeError('fetch failed')), 'TypeError: fetch failed');
+    assert.equal(U.failureWords('plain words'), 'Error: plain words');
+    const w = U.failureWords(new Error(`token ${'Z'.repeat(60)} at https://x.example.com/a?b=c and then ${'more words '.repeat(40)}`));
+    assert.ok(w.length <= 200);
+    assert.doesNotMatch(w, /ZZZZZZZZZZ|https?:/);
+    assert.match(w, /^Error: token \[…\] at \[address\] and then more words/);
   });
 
   test('an older store client with no presigned PUT keeps photos on our own route', async () => {
@@ -387,6 +426,23 @@ describe('the page and the whole send over HTTP', () => {
     assert.notEqual((await post('u-pu-other', `/portal/building/upload/${st.session}/slot`, { n: '1', size: '1000' })).status, 200);
     const tooBig = await req('u-pu-client', `/portal/building/upload/${st.session}/slot/nope`, { method: 'PUT', body: Buffer.alloc(U.MAX_LOCKED_BYTES + 10) });
     assert.equal(tooBig.status, 413);
+  });
+
+  test('a step that fails answers in words — what went wrong, never "the website did not answer"', async () => {
+    // The second survey's photo folder is blocked by a file of that name, so keeping the photo fails.
+    mkdirSync(join(ROOT, 'survey-photos'), { recursive: true });
+    writeFileSync(join(ROOT, 'survey-photos', 'job-pu-2'), 'in the way');
+    const st = JSON.parse((await post('u-pu-client', '/portal/building/upload/start', { job: 'job-pu-2', photos: '1', nobody: 'yes', note: '' })).body) as { ok: boolean; session: string; key: string };
+    assert.ok(st.ok);
+    const locked = await lockPhoto(st.key, JPEG);
+    const slot = JSON.parse((await post('u-pu-client', `/portal/building/upload/${st.session}/slot`, { n: '1', size: String(locked.length) })).body) as { slot: string; url: string };
+    assert.equal((await req('u-pu-client', slot.url, { method: 'PUT', body: locked })).status, 200);
+    const done = await post('u-pu-client', `/portal/building/upload/${st.session}/slot/${slot.slot}/done`, {});
+    assert.equal(done.status, 500);
+    assert.match(done.headers.get('content-type') ?? '', /application\/json/);
+    const body = JSON.parse(done.body) as { ok: boolean; why: string };
+    assert.equal(body.ok, false);
+    assert.match(body.why, /^This photo arrived but could not be kept\. Please try again later; we have been told\. \(Error: /);
   });
 });
 

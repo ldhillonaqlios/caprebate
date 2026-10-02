@@ -82,11 +82,13 @@ export const PHOTO_UPLOAD_JS = `(function () {
     if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return 'png';
     return null;
   }
+  var typeSkipped = false;
   function finish(job, sent, skipped, why) {
     var words = why ? why : sent === 0 ? 'No photo arrived.' :
       'Thank you. ' + String(sent) + (sent === 1 ? ' photo arrived' : ' photos arrived') + '. We will sort them into the checklist.';
-    if (!why && skipped > 0) words += ' ' + String(skipped) + ' did not: the list says why. On an iPhone, choose a skipped photo again here and it is sent as a JPEG.';
-    if (endWords) endWords.textContent = words;
+    if (!why && skipped > 0) words += ' ' + String(skipped) + ' did not: the list says why.';
+    if (!why && typeSkipped) words += ' On an iPhone, choose a skipped photo again here and it is sent as a JPEG.';
+    if (endWords) { endWords.textContent = words; endWords.className = why || sent === 0 ? 'ev-fail' : 'ev-done'; }
     if (end) end.hidden = false;
     if (count && !why) count.textContent = String(sent + skipped) + ' of ' + String(sent + skipped) + ' done.';
   }
@@ -116,7 +118,7 @@ export const PHOTO_UPLOAD_JS = `(function () {
       var f = files[i];
       try {
         if (f.size > MAX_BYTES) { mark(st, 'ev-bad', 'Too big (the most is 25 MB) — skipped'); skipped++; }
-        else if ((await kind(f)) === null) { mark(st, 'ev-bad', 'Not a JPEG or PNG — skipped'); skipped++; }
+        else if ((await kind(f)) === null) { mark(st, 'ev-bad', 'Not a JPEG or PNG — skipped'); skipped++; typeSkipped = true; }
         else {
           mark(st, 'ev-wt', 'Sending…');
           var locked = await lockPhoto(start.key, new Uint8Array(await f.arrayBuffer()));
