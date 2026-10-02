@@ -31,6 +31,7 @@ import { packJob } from './surveyor.ts';
 import { staffSlots, addLocalDays, startOfLocalDay } from './schedule.ts';
 import { localDate, localClock, ukDate } from './localtime.ts';
 import { activeMeeting, clientJoinUrl } from './video-calls.ts';
+import * as U from './photo-upload.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });
@@ -86,13 +87,19 @@ function thumbs(photos: readonly E.PhotoRow[], src: (id: string) => string, limi
 function manyForm(job: string, unsorted: number): Safe {
   return h`<section class="ev-many" id="many"><h2>Send lots of photos at once</h2>
     <p>Took photos already? Choose them all here. <strong>We sort them into the checklist for you.</strong></p>
-    <form method="post" action="/portal/building/photos" enctype="multipart/form-data" class="ev-take">
+    <form method="post" action="/portal/building/photos" enctype="multipart/form-data" class="ev-take" id="many-form">
       <input type="hidden" name="job" value="${job}">
       <label class="ev-file">Choose photos <input type="file" name="files" accept="image/jpeg,image/png" multiple required></label>
       <label class="ck"><input type="checkbox" name="nobody" value="yes" required> Nobody is in any of these photos: no people, screens or records.</label>
       <label class="ev-note">A note, if it helps (optional) <input class="fi" name="note" maxlength="500" placeholder="For example: the plant room and the kitchen"></label>
-      <p class="help">You can send up to 15 photos and 4.4 MB at a time. That is often 1 or 2 full-size phone photos, or more smaller ones. If it is too much, send the rest in another go.</p>
+      <p class="help" id="many-limit">You can send up to 15 photos and 4.4 MB at a time. That is often 1 or 2 full-size phone photos, or more smaller ones. If it is too much, send the rest in another go.</p>
+      <p class="help" id="many-lock" hidden><span class="ev-lock">Locked on your phone</span> Each photo is locked before it leaves your phone, and only we can open it.</p>
       <button class="cta" type="submit">Send these photos</button></form>
+    <div id="many-progress" class="ev-progress" hidden><h3>Sending your photos</h3>
+      <div class="ev-bar"><i id="many-bar" class="pk-w0"></i></div>
+      <p class="help" id="many-count" role="status"></p>
+      <ul id="many-list" class="ev-sendlist"></ul>
+      <div id="many-end" hidden><p class="ev-done" id="many-end-words" role="status"></p><p><a class="cta" href="/portal/building?job=${job}&amp;done=photos#many">Back to the checklist</a></p></div></div>
     ${unsorted === 0 ? raw('') : h`<p class="ev-wait" role="status">${String(unsorted)} photo${unsorted === 1 ? ' is' : 's are'} waiting for us to sort. You do not need to do anything.</p>`}
     <p class="help">Prefer to go item by item? The checklist below works the same way.</p></section>`;
 }
@@ -215,6 +222,26 @@ export async function handlePortalEvidence(
     redirect(res, safeBack(got.fields['back'] ?? null, `/portal/building?job=${job}`, 'photo'));
     return 'handled';
   }
+  /* 2 Oct 2026: a send straight to the file store, each photo locked on the phone (src/web/photo-upload.ts). JSON for the
+     page's script only. */
+  if (path === '/portal/building/upload/start' && method === 'POST') {
+    const f = await d.form(req);
+    await U.sweepUploads(deps, d.store);
+    return json(res, U.startUpload(deps, d.store, actor, { job_id: f.get('job') ?? '', photos: f.get('photos') ?? '', nobody: f.get('nobody') ?? '', note: f.get('note') ?? '' }));
+  }
+  const slotAsk = /^\/portal\/building\/upload\/([A-Za-z0-9-]+)\/slot$/.exec(path);
+  if (slotAsk !== null && method === 'POST') {
+    const f = await d.form(req);
+    return json(res, await U.slotFor(deps, d.store, actor, slotAsk[1] ?? '', { n: f.get('n') ?? '', size: f.get('size') ?? '' }));
+  }
+  const slotPut = /^\/portal\/building\/upload\/([A-Za-z0-9-]+)\/slot\/([A-Za-z0-9-]+)$/.exec(path);
+  if (slotPut !== null && method === 'PUT') {
+    let body: Buffer;
+    try { body = await d.readBody(req, U.MAX_LOCKED_BYTES); } catch (e) { if (e instanceof Error && e.name === 'PayloadTooLarge') return json(res, { ok: false, why: 'That photo is too big. The most is 25 MB.' }, 413); throw e; }
+    return json(res, await U.putLocal(deps, d.store, actor, slotPut[1] ?? '', slotPut[2] ?? '', new Uint8Array(body)));
+  }
+  const slotDone = /^\/portal\/building\/upload\/([A-Za-z0-9-]+)\/slot\/([A-Za-z0-9-]+)\/done$/.exec(path);
+  if (slotDone !== null && method === 'POST') return json(res, await U.finishSlot(deps, d.store, actor, slotDone[1] ?? '', slotDone[2] ?? ''));
   if (path === '/portal/building/photos' && method === 'POST') {
     const tooMuch = () => html(413, 'Not sent', h`<div class="card" role="alert"><h1>The photos were not sent</h1><p>Those photos are too big together. The most is 4.4 MB in one go. Send fewer at a time.</p><p><a href="/portal/building#many">Back</a></p></div>`);
     let body: Buffer;
@@ -246,7 +273,11 @@ export async function handlePortalEvidence(
   if (j === undefined) return html(404, 'Show us your building', h`<div class="card"><h1>Show us your building</h1><p>There is no survey for your building yet. We will tell you when there is.</p><p><a href="/portal">Back to your portal</a></p></div>`);
   const v = E.checklistView(d.app.db, j.id);
   if (v === null) return 'not-mine';
-  if (path === '/portal/building') return html(200, 'Show us your building', overview(d, actor, v, jobs, url.searchParams));
+  if (path === '/portal/building') {
+    res.writeHead(200, { ...HTML_HEADERS, 'content-security-policy': photoPageCsp(d.store.incomingOrigin) });
+    res.end(withUploadScript(page({ title: 'Show us your building', nav: d.nav, wide: true, body: overview(d, actor, v, jobs, url.searchParams) })));
+    return 'handled';
+  }
   if (path === '/portal/building/guide') return html(200, 'The filming guide', guidePage(v));
   const item = /^\/portal\/building\/item\/([A-Z0-9-]{2,60})$/.exec(path);
   if (item !== null) {
@@ -259,6 +290,27 @@ export async function handlePortalEvidence(
 
 /** A path back into the checklist: the list or an item, for one job, and an item's place on the list. */
 const BACK_INTO_CHECKLIST = /^\/portal\/building(\/item\/[A-Z0-9-]{2,60})?\?job=[A-Za-z0-9-]+(#i-[A-Z0-9-]{2,60})?$/;
+
+function json(res: ServerResponse, body: object, status?: number): 'handled' {
+  const ok = (body as { ok?: unknown }).ok === true;
+  res.writeHead(status ?? (ok ? 200 : 400), { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' });
+  res.end(JSON.stringify(body));
+  return 'handled';
+}
+
+/**
+ * The photo page's security policy: every page's, plus OUR OWN script (/assets/photo-upload.js) and, on the test
+ * website, the file store's upload address as the one other site the page may send to. Nothing inline, ever.
+ */
+export function photoPageCsp(incomingOrigin: string | null): string {
+  return "default-src 'none'; style-src 'self'; img-src 'self' data:; script-src 'self'; " +
+    `connect-src 'self'${incomingOrigin === null ? '' : ` ${incomingOrigin}`}; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`;
+}
+
+/** The page with its one script, named last so the page reads without it. */
+export function withUploadScript(html: string): string {
+  return html.replace('</body>', '<script src="/assets/photo-upload.js" defer></script></body>');
+}
 
 /** Only a path back into the checklist, never somewhere else. */
 function safeBack(back: string | null | undefined, fallback: string, done?: string): string {

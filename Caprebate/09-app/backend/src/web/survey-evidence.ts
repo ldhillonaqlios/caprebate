@@ -138,7 +138,7 @@ function jobRow(db: Db, job_id: string): EvidenceJob | null {
 }
 
 /** A client of the job's own company — the only person who adds photos and marks items. */
-function clientOf(db: Db, actor: Actor, job_id: string): EvidenceJob {
+export function clientOf(db: Db, actor: Actor, job_id: string): EvidenceJob {
   const j = jobRow(db, job_id);
   if (j === null || actor.role !== 'CLIENT' || actor.business_id !== j.business_id) throw new NotAuthorised('survey_evidence.add', 'surveyor_job');
   return j;
@@ -219,11 +219,11 @@ export async function addPhoto(
   return { ok: true, id: await keep(d, store, actor, job.id, item.key, c, note) };
 }
 
-const NO_KEY = 'We cannot keep photos yet: the key that encrypts them is not set. We have been told.';
-type Cleaned = { readonly ok: true; readonly type: 'image/jpeg' | 'image/png'; readonly bytes: Uint8Array } | { readonly ok: false; readonly why: string };
+export const NO_KEY = 'We cannot keep photos yet: the key that encrypts them is not set. We have been told.';
+export type Cleaned = { readonly ok: true; readonly type: 'image/jpeg' | 'image/png'; readonly bytes: Uint8Array } | { readonly ok: false; readonly why: string };
 
 /** A photo known by its first bytes, with its hidden details taken out. */
-function cleaned(bytes: Uint8Array): Cleaned {
+export function cleaned(bytes: Uint8Array): Cleaned {
   const type = sniffImage(bytes);
   if (type === null) return { ok: false, why: 'Send a photo as a JPEG or PNG. An iPhone turns its photos into JPEG when you choose one here.' };
   const clean = type === 'image/jpeg' ? stripJpeg(bytes) : stripPng(bytes);
@@ -232,7 +232,7 @@ function cleaned(bytes: Uint8Array): Cleaned {
 }
 
 /** Encrypt it, keep it, and say so in the audit log. */
-async function keep(d: EvidenceDeps, store: FsObjectStore, actor: Actor, job_id: string, item_key: string, c: Extract<Cleaned, { ok: true }>, note: string): Promise<string> {
+export async function keep(d: EvidenceDeps, store: FsObjectStore, actor: Actor, job_id: string, item_key: string, c: Extract<Cleaned, { ok: true }>, note: string): Promise<string> {
   const id = d.newId();
   const key = `survey-photos/${job_id}/${id}.${c.type === 'image/jpeg' ? 'jpg' : 'png'}`;
   await store.putSealed(key, c.bytes);

@@ -11123,3 +11123,15 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** stage 6 — the lookups switched on in test, and OS building outlines on the report's cover.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — full-size survey photos sent straight to the file store, locked on the phone (Claude Code, cloud session)
+
+ Lakhbir asked whether the test website's 4.5 MB a send could be raised; it cannot (Vercel's fixed limit). Chose "option 2" — each photo straight to the private file store — then "Lock on the phone", "100 photos, 25 MB each", and the mock-up ("Yes, build it as shown").
+
+-  **Built:** "Send lots of photos at once" gains one script of our own, allowed only by that page's security policy. Each photo is checked on the phone, locked there (a fresh AES-256-GCM key per photo, locked with the send's one-time RSA key; the private half kept in the database encrypted with the store's key), and sent straight to the private Blob store at a one-time address for exactly that file (a presigned PUT, signed in by the project's existing connection — no new key needed). The server then opens it, checks and cleans it, keeps it encrypted as not yet sorted, and removes the locked upload. Up to 100 photos and 25 MB each. Uploads never finished are removed after a day, at the next send or when the outside timer wakes the site. Migration 076 (the photos table rebuilt for 25 MB, three new tables). Without the script the box works as before.
+-  **Found while checking the test website's settings (names only):** the Blob store is already connected; `CAPREBATE_ORIGINALS_KEY` is NOT set there, so every photo is refused in words until it is.
+-  **Not yet proven against Vercel itself:** the presigned PUT is built to @vercel/blob 2.8's own code and tested against a store answering as its SDK does. The first real send on the test website is its proof.
+-  **Proof.** `test/photo-upload.test.ts` (13), the page's own script locking photos in Node's Web Crypto; 38 single-line mutations, 36 red, two that change nothing. Driven in Chromium on the demo: four 6 MB photos (24 MB) in one send, all kept; a HEIC file skipped in words. `npm run check` 2049 pass (120 files) on the full copy; the same five Mac-only tests cannot run in the cloud clone. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2049`) green.
+-  **Next:** stage 6 — the lookups switched on in test, and OS building outlines on the report's cover.
+
+ **Claim cleared** in the commit that carries this record.

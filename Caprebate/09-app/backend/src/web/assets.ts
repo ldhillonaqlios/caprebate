@@ -416,6 +416,13 @@ dl.pk-dl{display:block;margin:0}.pk-dl div{display:flex;justify-content:space-be
 .ev-card-photo{margin:0;border:1px solid var(--line);border-radius:10px;padding:.6rem;background:var(--white)}
 .ev-card-photo label{display:block;font-weight:700;margin-top:.4rem}
 .ev-card-photo select{width:100%}
+.ev-lock{display:inline-block;background:var(--okbg,#e6f4ea);color:var(--ok,#1d6b35);border:1px solid var(--ok,#1d6b35);border-radius:999px;padding:0 .5rem;font-size:12px;font-weight:700}
+.ev-progress{border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem;margin:.8rem 0;background:var(--white)}
+.ev-sendlist{list-style:none;margin:.6rem 0;padding:0;border:1px solid var(--line);border-radius:8px}
+.ev-sendlist li{display:flex;justify-content:space-between;gap:10px;padding:.35rem .7rem;border-top:1px solid var(--line);font-size:14px}
+.ev-sendlist li:first-child{border-top:0}
+.ev-wt{color:var(--muted,#6b7280)}.ev-ok2{color:#1d6b35;font-weight:700}.ev-bad{color:#a01e1e;font-weight:700}
+.ev-done{background:#e6f4ea;color:#1d6b35;border:1px solid #1d6b35;border-radius:8px;padding:.5rem .8rem;font-weight:700}
 .ev-chip{display:inline-block;border-radius:999px;padding:0 .5rem;font-size:12px;font-weight:700;border:1px solid #e7c98a;background:#fff3d6;color:#7a5200;text-decoration:none;margin-top:2px}
 .ev-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:12px;padding:.8rem}
 .ev-gallery figure{margin:0}.ev-gallery figcaption{font-size:13px;color:var(--mut)}

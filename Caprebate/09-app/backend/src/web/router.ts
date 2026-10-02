@@ -72,6 +72,8 @@ import { portalDashboard } from './portal-dashboard.ts';
 import * as IE from './inbound-email.ts';
 import { joinSignature } from '../connectors/zoom.ts';
 import { VIDEO_CALL_JS } from './video-call-script.ts';
+import { PHOTO_UPLOAD_JS } from './photo-upload-script.ts';
+import { sweepUploads } from './photo-upload.ts';
 import { receiveWhatsApp } from './whatsapp.ts';
 import { webhookChallenge } from '../connectors/whatsapp.ts';
 import { EMAIL_SENDING, mailWhere, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
@@ -270,6 +272,10 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/assets/video-call.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(VIDEO_CALL_JS); return 'handled';
   }
+  // 2 Oct 2026: the photo page's one script (src/web/photo-upload-script.ts).
+  if (path === '/assets/photo-upload.js' && method === 'GET') {
+    res.writeHead(200, SITE_JS_HEADERS); res.end(PHOTO_UPLOAD_JS); return 'handled';
+  }
   /* 30 Sep 2026: THE CLIENT'S JOIN PAGE, /call/<token>. The token is the only key: 64 hex characters, made when the
      meeting was made and sent only to the client. It opens from half an hour before the call until an hour after. */
   const callMatch = /^\/call\/([0-9a-f]{64})$/.exec(path);
@@ -394,6 +400,8 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       return 'handled';
     }
     const r = await IE.readRepliesIfDue(d.app);
+    // 2 Oct 2026: the same wake clears photo uploads never finished within a day (src/web/photo-upload.ts).
+    await sweepUploads({ db: d.app.db, now: d.app.now }, d.store);
     res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
     res.end(r === null ? (IE.lastReadWords(d.app)?.ok === false ? 'could not read the inbox' : 'read in the last two minutes')
       : r.state === 'OFF' ? 'reading replies is off' : `read ${String(r.read)}, filed ${String(r.filed)}, to sort ${String(r.queued)}`);

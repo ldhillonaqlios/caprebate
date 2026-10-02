@@ -81,8 +81,19 @@ function isOriginalKey(key: string): boolean {
  * the point: a later reader can disagree with it, which they cannot do with a
  * number that has no argument attached.
  */
+function assertIncomingKey(key: string): void {
+  assertSafeKey(key);
+  if (!key.startsWith(INCOMING_PREFIX)) throw new Error('not an incoming key');
+}
+
 /** 2 Oct 2026: where survey photos are kept, each sealed (`putSealed`). */
 export const SEALED_PREFIX = 'survey-photos/';
+/** 2 Oct 2026: where a photo LOCKED ON THE PHONE waits (src/web/photo-upload.ts) until the server opens, cleans and seals
+ *  it. Only locked bytes are ever here, and each is removed once it is dealt with. */
+export const INCOMING_PREFIX = 'survey-incoming/';
+
+/** Where the phone sends one locked photo, and the headers to send with it. */
+export type IncomingTarget = { readonly url: string; readonly headers: Readonly<Record<string, string>> };
 
 export const DIR_MODE = 0o700;
 export const FILE_MODE = 0o600;
@@ -201,11 +212,56 @@ export class FsObjectStore implements ObjectStore {
     await this.writeBytes(key, seal(this.#sealKey, bytes));
   }
 
+  /** 2 Oct 2026: a small secret encrypted with the same key, to keep in the database (a one-time lock's private half). */
+  sealBytes(plain: Uint8Array): Buffer {
+    if (this.#sealKey === null) throw new Error('refusing to keep a secret with no encryption key');
+    return seal(this.#sealKey, plain);
+  }
+
+  openBytes(sealed: Uint8Array): Buffer {
+    if (this.#sealKey === null) throw new Error('no key to open a secret');
+    return unseal(this.#sealKey, sealed);
+  }
+
   async getSealed(key: string): Promise<Buffer> {
     assertSafeKey(key);
     if (!key.startsWith(SEALED_PREFIX)) throw new Error('not a sealed key');
     if (this.#sealKey === null) throw new Error('no key to open a photo');
     return unseal(this.#sealKey, await this.readBytes(key));
+  }
+
+  /* ------------------------------------- 2 Oct 2026: photos sent straight here */
+
+  /**
+   * The other site the phone sends a locked photo to, for the page's security policy; null when it is sent to this
+   * site (a folder: `putIncoming` from our own route). The shared store answers Vercel Blob's address.
+   */
+  get incomingOrigin(): string | null { return null; }
+
+  /** Where the phone sends one locked photo: null here, meaning our own route. The shared store answers Blob's. */
+  async incomingTarget(key: string, maxBytes: number, validUntilMs: number): Promise<IncomingTarget | null> {
+    assertIncomingKey(key);
+    void maxBytes; void validUntilMs;
+    return null;
+  }
+
+  /** A locked photo, written by our own route (a folder only). */
+  async putIncoming(key: string, bytes: Uint8Array): Promise<void> {
+    assertIncomingKey(key);
+    await this.writeBytes(key, bytes);
+  }
+
+  /** A locked photo, or null if it never arrived. */
+  async takeIncoming(key: string): Promise<Uint8Array | null> {
+    assertIncomingKey(key);
+    try { return await this.readBytes(key); } catch { return null; }
+  }
+
+  /** Remove a locked photo once it is dealt with. One that never arrived is not an error here. */
+  async dropIncoming(key: string): Promise<void> {
+    assertIncomingKey(key);
+    if ((await this.takeIncoming(key)) === null) return;
+    await this.removeProven(key);
   }
 
   async putText(key: string, body: string): Promise<void> {
