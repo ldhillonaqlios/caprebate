@@ -651,7 +651,7 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
       ${(() => {
         const vids = SV.videosOf(app.db, job_id);
         const secs = Math.round(vids.reduce((a, x) => a + x.duration_ms, 0) / 1000);
-        return h`<tr><td>Videos from the client</td><td>${vids.length === 0 ? 'None sent.' : `${String(vids.length)} video${vids.length === 1 ? '' : 's'}, ${String(Math.floor(secs / 60))} min ${String(secs % 60)} s`}</td>
+        return h`<tr><td>Videos from the client</td><td>${vids.length === 0 ? 'None sent.' : `${String(vids.length)} video${vids.length === 1 ? '' : 's'}, ${SV.lengthWords(secs)}`}</td>
           <td>${vids.length === 0 ? raw('') : h`<a href="${base}/videos">Watch them</a>`}</td></tr>`;
       })()}
       ${v.unsorted === 0 ? raw('') : h`<tr><td>Sent all at once, not sorted yet</td><td>${String(v.unsorted)} photo${v.unsorted === 1 ? '' : 's'}${maySort ? '' : ' · Admin or Sales sort them'}</td>

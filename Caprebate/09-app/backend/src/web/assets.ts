@@ -1388,6 +1388,16 @@ table tr.overdue{color:inherit}
 .otherjobs{margin:-.25rem 0 1rem;padding:.6rem .9rem;background:var(--warnbg);border:1px solid #ecd29a;border-radius:.5rem;color:var(--ink)}
 tr.thisjob td{background:var(--okbg)}
 
+/* UI TIDY PHASE 11 — THE SURVEY PACK (src/web/survey-pack-pages.ts packHead). Which client, which site, which claim. */
+.packhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.75rem 1rem;background:var(--ink);color:var(--white);border-radius:.75rem;padding:.9rem 1.2rem;margin:0 0 1rem}
+.packhead p{margin:0;color:var(--white)}
+.packhead-kind{color:var(--mint)!important;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.packhead-title{font-family:${HEADING_STACK};font-size:26px;font-weight:700;line-height:1.25}
+.packhead-facts{font-size:15px}
+a.packhead-switch{background:var(--mint);color:var(--ink);border-radius:.5rem;padding:.5rem .9rem;font-weight:700;text-decoration:none;white-space:nowrap}
+a.packhead-switch:hover{text-decoration:underline}
+.pk-groups td:nth-child(2){white-space:nowrap}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of

@@ -1755,6 +1755,12 @@ client's name. If the client has another job, a yellow line says so, with a link
 job's own site comes first, marked **This job**. The menu on the left opens out to the job. It lists the job's parts,
 the **Survey pack**, and the client's other job.
 
+**The survey pack says which job it is.** A dark band at the top names the client and the site. Under it are the claim
+number and the postcode. If the client has two jobs, it says which one this is. A button switches to the other pack,
+at the same chapter. In the **Summary**, **Still needed** has two lines. One is for chapter 9. One is for chapter 10.
+Each says how many. **Show all** lists every one. A video's length
+reads like "32 s" or "2 min 12 s".
+
 **Who can open it**
 Surveying, Admin and Sales. A surveyor sees only jobs assigned to them, and is refused anyone else's. Only the assigned
 surveyor commits. Accounting, Read only and the client are refused.

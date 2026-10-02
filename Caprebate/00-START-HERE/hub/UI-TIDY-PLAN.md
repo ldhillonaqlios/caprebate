@@ -65,15 +65,15 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 | 8 | A client's page, part 2: messages, checks, people, files, history as menu entries | DONE 3 Oct |
 | 9 | Tasks | DONE 3 Oct |
 | 10 | Survey jobs and a survey job (each names its site and claim number) | DONE 3 Oct |
-| 11 | Survey pack (names the site and claim; "0 min 32 s" becomes "32 s") | NEXT, once Lakhbir has reviewed 7 to 10 |
-| 12 | Finance | |
+| 11 | Survey pack (names the site and claim; "0 min 32 s" becomes "32 s") | DONE 3 Oct |
+| 12 | Finance | NEXT |
 | 13 | Calendar | |
 | 14 | Introducers | |
 | 15 | Settings | |
 | 16 | Client portal: Your claims, Messages, Show us your building | |
 | 17 | Accounting's and the Surveyor's own pages, and a phone check of every page | |
 
-**Groups approved so far:** phases 1 and 2 (2 October 2026); phases 3 to 6 (2 October 2026); phases 7 to 10 (3 October 2026).
+**Groups approved so far:** phases 1 and 2 (2 October 2026); phases 3 to 6 (2 October 2026); phases 7 to 10 (3 October 2026); phases 11 to 14 (3 October 2026).
 
 ## What the first look found (2 October 2026), worst first
 

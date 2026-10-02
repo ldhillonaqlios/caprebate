@@ -212,6 +212,27 @@ export function jobSite(r: S.JobRow): string {
   return r.property_label === null ? 'no site recorded' : siteOf(r.business_name, r.property_label);
 }
 
+/** The client's other survey jobs this login may open. */
+export function otherJobs(app: App, actor: Actor, job: S.JobRow): S.JobRow[] {
+  return S.surveyorJobs(app.db, actor).filter((j) => j.business_id === job.business_id && j.job_id !== job.job_id);
+}
+
+/**
+ * THE JOB'S OWN MENU, opening out under Survey jobs (src/web/navigation.ts, `setSubMenu`): the client and site; the job's
+ * parts; the survey pack, marked on the pack (UI tidy phase 11); and the client's other jobs by site.
+ */
+export function setJobMenu(app: App, actor: Actor, job: S.JobRow, current: 'pack' | null): void {
+  const chat = surveyorThreadPanel(app.db, actor, job.business_id) !== null;
+  const parts: readonly (readonly [string, string])[] = [['property', 'The property'], ['rooms', 'Rooms'], ['rates', 'Rates'], ['evidence', 'Evidence'],
+    ['figures', 'Your figures'], ['record', 'The record'], ...(chat ? [['messages', 'Messages'] as const] : [])];
+  setSubMenu({
+    title: `${job.business_name} — ${jobSite(job)}`,
+    items: [...parts.map(([id, label]) => ({ href: `/staff/survey/${job.job_id}#${id}`, label })),
+      { href: `/staff/survey/${job.job_id}/pack?ch=4`, label: 'Survey pack', current: current === 'pack' },
+      ...otherJobs(app, actor, job).map((o) => ({ href: `/staff/survey/${o.job_id}`, label: `Their other job: ${jobSite(o)}` }))],
+  });
+}
+
 function listPage(d: SurveyorDeps, actor: Actor, rows: readonly S.JobRow[]): string {
   const sealed = rows.filter((r) => r.state === 'SEALED').length;
   const rooms = rows.reduce((n, r) => n + Math.max(0, r.rooms_total - r.rooms_counted), 0);
@@ -298,15 +319,8 @@ function workspacePage(
   const chat = surveyorThreadPanel(d.app.db, actor, w.job.business_id);
   // UI TIDY PHASE 10: the job names its site and claim; the client's other jobs are a link away; the menu opens out.
   const site = jobSite(w.job);
-  const others = S.surveyorJobs(d.app.db, actor).filter((j) => j.business_id === w.job.business_id && j.job_id !== w.job.job_id);
-  const parts: readonly (readonly [string, string])[] = [['property', 'The property'], ['rooms', 'Rooms'], ['rates', 'Rates'], ['evidence', 'Evidence'],
-    ['figures', 'Your figures'], ['record', 'The record'], ...(chat === null ? [] : [['messages', 'Messages'] as const])];
-  setSubMenu({
-    title: `${w.job.business_name} — ${site}`,
-    items: [...parts.map(([id, label]) => ({ href: `/staff/survey/${w.job.job_id}#${id}`, label })),
-      { href: packLink.href, label: 'Survey pack' },
-      ...others.map((o) => ({ href: `/staff/survey/${o.job_id}`, label: `Their other job: ${jobSite(o)}` }))],
-  });
+  const others = otherJobs(d.app, actor, w.job);
+  setJobMenu(d.app, actor, w.job, null);
   return page({
     title: w.job.business_name, nav: d.nav(actor), wide: true,
     body: h`

@@ -11256,3 +11256,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## UI tidy phase 11 of 17, 3 October 2026 — the survey pack (Claude Code, on the Mac)
+
+ Lakhbir approved phases 11 to 14 as the fourth group.
+
+-  **Built:** the pack opens with a dark band — "Dunmarrow Medical Practice Limited — main site", "CR-2026-0004 · ZZ4 4DD · survey job 1 of 2 for this client" — and a button to switch to the branch surgery's pack at the same chapter; the job's menu opens out with Survey pack marked; Still needed is two counted lines with every value behind Show all; a video's length reads "32 s".
+-  **Proof.** `test/ui-tidy-pack.test.ts`, five tests; 13 single-line mutations, all red. Screenshots of both Dunmarrow packs. 2157 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2157`) green.
+-  **Next:** phase 12, Finance.
+
+ **Claim cleared** in the commit that carries this record.
+
