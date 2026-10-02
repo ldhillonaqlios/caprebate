@@ -11155,3 +11155,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Also:** Lakhbir's first photo send from an iPhone 15 Pro (3.0 MB) arrived.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — Show us your building redesigned, and sending a video (Claude Code, cloud session)
+
+ Lakhbir: the page was cluttered and there was no clear way to send a video. The mock-up was agreed with one change: "I don't have this" takes an item off the list. Limits: 10 minutes and 1 GB a video, kept the same as photos.
+
+-  **Built:** the page is now three choices (Photos, A video, A recorded video call). A video is checked for length on the phone, cut into 4 MB pieces, each locked on the phone and sent straight to the file store; kept encrypted; checked as an MP4 or MOV of at most 10 minutes; its place blanked; played back in pieces. Staff see it in the pack (chapter 2 and its own page). Migration 077, six tables, none edited or deleted.
+-  **Proof.** `test/survey-video.test.ts`, fourteen tests; 30 single-line mutations, all red. A 20-second, 12 MB video sent from Chromium arrived with only its place's 9 digits changed. `npm run check` 2067 pass (121 files) on the full copy; the same five Mac-only tests cannot run in the cloud clone. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2067`) green.
+-  **Next:** Lakhbir sends a short video from the iPhone on the test website.
+
+ **Claim cleared** in the commit that carries this record.

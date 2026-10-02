@@ -32,16 +32,29 @@ import { staffSlots, addLocalDays, startOfLocalDay } from './schedule.ts';
 import { localDate, localClock, ukDate } from './localtime.ts';
 import { activeMeeting, clientJoinUrl } from './video-calls.ts';
 import * as U from './photo-upload.ts';
+import * as SV from './survey-video.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });
   res.end('');
 }
 
+/** A photo, sent in pieces of 1 MB, so a full-size one is streamed rather than held to the test website's 4.5 MB answer. */
 function sendImage(res: ServerResponse, img: { bytes: Buffer; content_type: string }): void {
   res.writeHead(200, { 'content-type': img.content_type, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff',
-    'content-security-policy': "default-src 'none'", 'content-disposition': 'inline', 'content-length': String(img.bytes.length) });
-  res.end(img.bytes);
+    'content-security-policy': "default-src 'none'", 'content-disposition': 'inline' });
+  for (let at = 0; at < img.bytes.length; at += 1024 * 1024) res.write(img.bytes.subarray(at, at + 1024 * 1024));
+  res.end();
+}
+
+/** A range of a video, at most one piece: 206 with its place in the whole; 416 for a range not in it; 404 for none. */
+function playVideo(res: ServerResponse, r: Awaited<ReturnType<typeof SV.videoBytes>>): 'handled' {
+  if (r === null) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' }); res.end('That video is not here.'); return 'handled'; }
+  if (r === 'BAD_RANGE') { res.writeHead(416, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' }); res.end('That part is not in the video.'); return 'handled'; }
+  res.writeHead(206, { 'content-type': r.content_type, 'content-range': `bytes ${String(r.start)}-${String(r.end)}/${String(r.total)}`, 'accept-ranges': 'bytes',
+    'content-length': String(r.bytes.length), 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff', 'content-security-policy': "default-src 'none'" });
+  res.end(r.bytes);
+  return 'handled';
 }
 
 const when = (iso: string) => `${ukDate(localDate(iso))}, ${localClock(iso)}`;
@@ -65,16 +78,18 @@ function photoForm(job: string, item: string, back: string): Safe {
     <button class="cta" type="submit">Send the photo</button></form>`;
 }
 
-function markForms(job: string, item: E.ItemView, back: string): Safe {
+function markForms(job: string, item: E.ItemView, back: string, inList = false): Safe {
   const f = (mark: string, words: string, cls = 'btn-quiet') => h`<form method="post" action="/portal/building/mark" class="inline"><input type="hidden" name="job" value="${job}"><input type="hidden" name="item" value="${item.key}"><input type="hidden" name="mark" value="${mark}"><input type="hidden" name="back" value="${back}"><button class="${cls}" type="submit">${words}</button></form>`;
+  if (item.mark === 'NOT_HERE') return f('CLEARED', 'I do have this');
   if (item.mark !== null) return f('CLEARED', 'Change this');
   if (item.photos.length > 0) return raw('');
-  return h`${f('NOT_HERE', 'Not in our building')} ${f('NOT_SAFE', 'Not safe or not ours')}`;
+  // 2 Oct 2026, Lakhbir: the list needs "I don't have this", which takes the item off the list.
+  return inList ? f('NOT_HERE', 'I don’t have this') : h`${f('NOT_HERE', 'I don’t have this')} ${f('NOT_SAFE', 'Not safe or not ours')}`;
 }
 
 function status(i: E.ItemView): Safe {
   if (i.photos.length > 0) return h`<span class="ev-st ev-ok">${String(i.photos.length)} photo${i.photos.length === 1 ? '' : 's'}</span>`;
-  if (i.mark === 'NOT_HERE') return h`<span class="ev-st ev-skip">Not in our building</span>`;
+  if (i.mark === 'NOT_HERE') return h`<span class="ev-st ev-skip">You don’t have this</span>`;
   if (i.mark === 'NOT_SAFE') return h`<span class="ev-st ev-skip">Not safe or not ours</span>`;
   return h`<span class="ev-st ev-todo">to do</span>`;
 }
@@ -85,7 +100,7 @@ function thumbs(photos: readonly E.PhotoRow[], src: (id: string) => string, limi
 
 /** Send lots of photos at once: Admin or Sales sort them into the checklist. */
 function manyForm(job: string, unsorted: number): Safe {
-  return h`<section class="ev-many" id="many"><h2>Send lots of photos at once</h2>
+  return h`<section class="ev-box" id="many"><h2>Send lots of photos at once</h2>
     <p>Took photos already? Choose them all here. <strong>We sort them into the checklist for you.</strong></p>
     <form method="post" action="/portal/building/photos" enctype="multipart/form-data" class="ev-take" id="many-form">
       <input type="hidden" name="job" value="${job}">
@@ -99,22 +114,35 @@ function manyForm(job: string, unsorted: number): Safe {
       <div class="ev-bar"><i id="many-bar" class="pk-w0"></i></div>
       <p class="help" id="many-count" role="status"></p>
       <ul id="many-list" class="ev-sendlist"></ul>
-      <div id="many-end" hidden><p class="ev-done" id="many-end-words" role="status"></p><p><a class="cta" href="/portal/building?job=${job}&amp;done=photos#many">Back to the checklist</a></p></div></div>
-    ${unsorted === 0 ? raw('') : h`<p class="ev-wait" role="status">${String(unsorted)} photo${unsorted === 1 ? ' is' : 's are'} waiting for us to sort. You do not need to do anything.</p>`}
-    <p class="help">Prefer to go item by item? The checklist below works the same way.</p></section>`;
+      <div id="many-end" hidden><p class="ev-done" id="many-end-words" role="status"></p><p><a class="cta" href="/portal/building/photos?job=${job}&amp;done=photos#many">Back to the checklist</a></p></div></div>
+    ${unsorted === 0 ? raw('') : h`<p class="ev-wait" role="status">${String(unsorted)} photo${unsorted === 1 ? ' is' : 's are'} waiting for us to sort. You do not need to do anything.</p>`}</section>`;
 }
 
-function overview(d: PortalEvidenceDeps, actor: Actor, v: E.ChecklistView, jobs: readonly E.EvidenceJob[], q: URLSearchParams): Safe {
-  const job = v.job.id;
-  const pct = v.total === 0 ? 0 : Math.round(((v.done + v.marked) * 100) / v.total);
+const crumb = (job: string, here: string): Safe => h`<p class="ev-crumb"><a href="/portal/building?job=${job}">Show us your building</a> › <strong>${here}</strong></p>`;
+
+/* 2 Oct 2026: three plain drawings for the three choices — no picture files, no style, nothing to load. */
+const ICONS: Readonly<Record<'photos' | 'video' | 'call', Safe>> = Object.freeze({
+  photos: raw('<svg class="ev-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg>'),
+  video: raw('<svg class="ev-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="6.5" width="12.5" height="11" rx="1.5"/><path d="M15.5 10.5l5.5-3v9l-5.5-3z"/></svg>'),
+  call: raw('<svg class="ev-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.5 3.5l3 3-1.8 2.2a11 11 0 0 0 7.6 7.6l2.2-1.8 3 3-2 2.5C11 19.5 4.5 13 4 5.5z"/></svg>'),
+});
+
+type CallState = { next: E.Walkthrough | null; meeting: ReturnType<typeof activeMeeting>; asked: { at: string; by_name: string } | undefined };
+function callState(d: PortalEvidenceDeps, job: string): CallState {
   const walks = E.walkthroughsOf(d.app.db, job).filter((w) => !w.cancelled && w.starts_at !== null);
   const next = walks.find((w) => (w.starts_at ?? '') >= d.app.now()) ?? null;
-  const meeting = next === null ? undefined : activeMeeting(d.app.db, next.booking_id);
-  const asked = E.asksOf(d.app.db, job)[0];
-  const firstTodo = v.items.find((i) => !i.done) ?? v.items[0];
-  const notes: Record<string, string> = { photos: 'Thank you. We have your photos, and we will sort them into the checklist.', photo: 'Thank you. We have the photo.', marked: 'Saved.', removed: 'That photo is taken back. Nobody will see it.', asked: 'Thank you. We will offer you a time for the call.' };
+  return { next, meeting: next === null ? undefined : activeMeeting(d.app.db, next.booking_id), asked: E.asksOf(d.app.db, job)[0] };
+}
+
+/** "Show us your building": three choices, each to its own page (the mock-up Lakhbir approved, 2 Oct 2026). */
+function overview(d: PortalEvidenceDeps, v: E.ChecklistView, jobs: readonly E.EvidenceJob[], q: URLSearchParams): Safe {
+  const job = v.job.id;
+  const pct = v.total === 0 ? 0 : Math.round(((v.done + v.marked) * 100) / v.total);
+  const videos = SV.videosOf(d.app.db, job);
+  const minutes = Math.round(videos.reduce((a, x) => a + x.duration_ms, 0) / 60_000);
+  const call = callState(d, job);
+  const notes: Record<string, string> = { asked: 'Thank you. We will offer you a time for the call.' };
   const done = q.get('done');
-  const may = actor.role === 'CLIENT';
   return h`
     ${done !== null && notes[done] !== undefined ? h`<div class="gate" role="status">${notes[done]!}</div>` : raw('')}
     <h1>Show us your building</h1>
@@ -123,28 +151,105 @@ function overview(d: PortalEvidenceDeps, actor: Actor, v: E.ChecklistView, jobs:
       const name = jobs.filter((x) => x.place === j.place).length > 1 ? `${j.place} (survey ${String(k + 1)})` : j.place;
       return j.id === job ? h`<strong>${name}</strong> ` : h`<a href="/portal/building?job=${j.id}">${name}</a> `;
     })}</p>` : h`<p class="help">For: ${v.job.place}</p>`}
-    <p>Your surveyor values the fixtures in your building. They cannot see inside it, so we ask you to show them. Choose one way, or both. <strong>${NOBODY_IN_SHOT}</strong></p>
-    <div class="ev-two">
-      <section class="ev-opt"><h2>1 · A photo checklist</h2><p>Go room by room with your phone. We tell you exactly what to photograph. About 30 to 45 minutes.</p>
+    <p>Your surveyor values the fixtures inside your building, so they need to see it. Choose any way that suits you. One is enough, and more is better.</p>
+    <p class="ev-rule">${NOBODY_IN_SHOT}</p>
+    <div class="ev-three">
+      <section class="ev-choice">${ICONS.photos}<h2>Photos</h2><p>Go room by room with a checklist, or send lots of photos at once.</p>
         <div class="ev-bar" role="img" aria-label="${String(pct)} per cent done"><i class="pk-w${String(Math.round(pct / 5) * 5)}"></i></div>
-        <p class="help">${String(v.done)} of ${String(v.total)} done${v.marked === 0 ? '' : ` · ${String(v.marked)} marked not in the building or not safe`}</p>
-        ${firstTodo === undefined ? raw('') : h`<a class="cta" href="/portal/building/item/${firstTodo.key}?job=${job}">${v.done + v.marked === 0 ? 'Start the checklist' : 'Carry on with the checklist'}</a>`}</section>
-      <section class="ev-opt ev-alt"><h2>2 · A recorded video call</h2><p>Join a video call on your phone and walk round while we guide you. The call is recorded so the surveyor can watch it. About 20 to 40 minutes.</p>
-        ${next !== null && next.starts_at !== null ? h`<p><strong>Booked: ${when(next.starts_at)}</strong></p>${meeting === undefined ? raw('') : h`<p><a class="cta" href="${clientJoinUrl('', meeting.client_token)}">Join the call</a></p>`}`
-          : asked !== undefined ? h`<p class="help">You asked for a call on ${when(asked.at)}. We will offer you a time.</p>`
-          : may ? h`<form method="post" action="/portal/building/ask"><input type="hidden" name="job" value="${job}"><button class="btn" type="submit">Ask for a recorded video call</button></form>` : raw('')}
-        <p><a href="/portal/building/guide?job=${job}">Read the filming guide</a></p></section>
+        <p class="ev-state">${String(v.done + v.marked)} of ${String(v.total)} done${v.unsorted === 0 ? '' : ` · ${String(v.unsorted)} waiting for us to sort`}</p>
+        <a class="cta" href="/portal/building/photos?job=${job}">Send photos</a></section>
+      <section class="ev-choice">${ICONS.video}<h2>A video</h2><p>Film a slow walk round on your phone and send it to us. Up to 10 minutes a video.</p>
+        <p class="ev-state">${videos.length === 0 ? 'None sent yet' : `${String(videos.length)} video${videos.length === 1 ? '' : 's'} sent, ${SV.minutesWords(minutes)}`}</p>
+        <a class="cta" href="/portal/building/video?job=${job}">Send a video</a></section>
+      <section class="ev-choice">${ICONS.call}<h2>A recorded video call</h2><p>We guide you round on a video call. It is recorded so your surveyor can watch it.</p>
+        <p class="ev-state">${call.next !== null && call.next.starts_at !== null ? `Booked: ${when(call.next.starts_at)}` : call.asked !== undefined ? 'Asked for: we will offer you a time' : 'Not asked for yet'}</p>
+        <a class="cta" href="/portal/building/call?job=${job}">${call.next !== null || call.asked !== undefined ? 'See the call' : 'Ask for a call'}</a></section>
     </div>
+    <p class="help">Not sure what to film? <a href="/portal/building/guide?job=${job}">Read the filming guide</a>. It lists every room and everything we need to see.</p>`;
+}
+
+/** Photos: send lots at once, then the checklist item by item. An item the client does not have leaves the list. */
+function photosPage(v: E.ChecklistView, actor: Actor, q: URLSearchParams): Safe {
+  const job = v.job.id;
+  const may = actor.role === 'CLIENT';
+  const showHidden = q.get('hidden') === '1';
+  const hidden = v.items.filter((i) => i.mark === 'NOT_HERE' && i.photos.length === 0);
+  const notes: Record<string, string> = { photos: 'Thank you. We have your photos, and we will sort them into the checklist.', photo: 'Thank you. We have the photo.', marked: 'Saved.', removed: 'That photo is taken back. Nobody will see it.' };
+  const done = q.get('done');
+  const listed = (i: E.ItemView) => showHidden || !hidden.includes(i);
+  const back = (i: E.ItemView) => `/portal/building/photos?job=${job}${showHidden ? '&hidden=1' : ''}#i-${i.key}`;
+  return h`
+    ${done !== null && notes[done] !== undefined ? h`<div class="gate" role="status">${notes[done]!}</div>` : raw('')}
+    ${crumb(job, 'Photos')}
+    <h1>Photos</h1>
+    <p class="ev-rule">${NOBODY_IN_SHOT}</p>
     ${may ? manyForm(job, v.unsorted) : raw('')}
-    ${GROUPS.map((g, gi) => {
-      const items = v.items.filter((i) => i.group === g);
-      if (items.length === 0) return raw('');
-      return h`<section class="ev-group"><h2>${String(gi + 1)} · ${g} <span>${String(items.filter((i) => i.done).length)} of ${String(items.length)} done</span></h2>
-        ${items.map((i) => h`<div class="ev-item" id="i-${i.key}"><div><a href="/portal/building/item/${i.key}?job=${job}"><b>${i.title}</b></a>${i.each === true ? ' (each one)' : ''}. ${i.what}</div>
-          <div class="ev-right">${thumbs(i.photos, (id) => `/portal/building/photo/${id}`, 3)} ${status(i)} ${may ? markForms(job, i, `/portal/building?job=${job}#i-${i.key}`) : raw('')}
-            ${may && i.mark === null ? h`<a class="btn" href="/portal/building/item/${i.key}?job=${job}">${i.photos.length > 0 ? 'Add another' : 'Take a photo'}</a>` : raw('')}</div></div>`)}</section>`;
-    })}
-    <p class="help">The list follows our filming guide. It starts outside and ends above the ceiling.</p>`;
+    <section class="ev-box" id="items"><h2>Or go item by item</h2>
+      <p class="help">The checklist, in the filming guide’s order: it starts outside and ends above the ceiling. ${String(v.done + v.marked)} of ${String(v.total)} done.</p>
+      ${hidden.length === 0 ? raw('') : h`<p class="help">${showHidden
+        ? h`Showing the ${String(hidden.length)} item${hidden.length === 1 ? '' : 's'} you don’t have. <a href="/portal/building/photos?job=${job}#items">Hide them</a>`
+        : h`${String(hidden.length)} item${hidden.length === 1 ? '' : 's'} you don’t have ${hidden.length === 1 ? 'is' : 'are'} hidden. <a href="/portal/building/photos?job=${job}&amp;hidden=1#items">Show ${hidden.length === 1 ? 'it' : 'them'}</a>`}</p>`}
+      ${GROUPS.map((g, gi) => {
+        const all = v.items.filter((i) => i.group === g);
+        const items = all.filter(listed);
+        if (items.length === 0) return raw('');
+        return h`<section class="ev-group"><h3>${String(gi + 1)} · ${g} <span>${String(all.filter((i) => i.done).length)} of ${String(all.length)} done</span></h3>
+          ${items.map((i) => h`<div class="ev-item" id="i-${i.key}"><div><a href="/portal/building/item/${i.key}?job=${job}"><b>${i.title}</b></a>${i.each === true ? ' (each one)' : ''}. ${i.what}</div>
+            <div class="ev-right">${thumbs(i.photos, (id) => `/portal/building/photo/${id}`, 3)} ${status(i)} ${may ? markForms(job, i, back(i), true) : raw('')}
+              ${may && i.mark === null ? h`<a class="btn" href="/portal/building/item/${i.key}?job=${job}">${i.photos.length > 0 ? 'Add another' : 'Take a photo'}</a>` : raw('')}</div></div>`)}</section>`;
+      })}</section>`;
+}
+
+/** A video: what to film, the send, and the client's videos. */
+function videoPage(d: PortalEvidenceDeps, v: E.ChecklistView, actor: Actor, q: URLSearchParams): Safe {
+  const job = v.job.id;
+  const may = actor.role === 'CLIENT';
+  const videos = SV.videosOf(d.app.db, job);
+  const notes: Record<string, string> = { removed: 'That video is taken back. Nobody will see it.', script: 'Your browser could not send the video. Please try again on an up-to-date phone or computer browser.' };
+  const done = q.get('done');
+  const mmss = (ms: number) => `${String(Math.floor(ms / 60_000))}:${String(Math.round((ms % 60_000) / 1000)).padStart(2, '0')}`;
+  return h`
+    ${done !== null && notes[done] !== undefined ? h`<div class="gate" role="status">${notes[done]!}</div>` : raw('')}
+    ${crumb(job, 'A video')}
+    <h1>Send a video</h1>
+    <ul class="ev-rules"><li>Walk slowly, room by room. Turn the lights on.</li><li>Hold the phone sideways. Pause on each boiler, meter and fuse board.</li>
+      <li>${NOBODY_IN_SHOT}</li><li>Up to 10 minutes and 1 GB a video. A big building can be two or three videos.</li></ul>
+    ${may ? h`<section class="ev-box" id="video">
+      <form method="post" action="/portal/building/video" class="ev-take" id="video-form">
+        <input type="hidden" name="job" value="${job}">
+        <label class="ev-file">Choose or record a video <input type="file" name="video" accept="video/*" required></label>
+        <label class="ck"><input type="checkbox" name="nobody" value="yes" required> Nobody is in this video: no people, screens or records.</label>
+        <label class="ev-note">Which part of the building? (optional) <input class="fi" name="note" maxlength="500" placeholder="For example: the ground floor and the plant room"></label>
+        <p class="help" id="video-lock" hidden><span class="ev-lock">Locked on your phone</span> The video is locked before it leaves your phone, and only we can open it.</p>
+        <button class="cta" type="submit">Send the video</button></form>
+      <div id="video-progress" class="ev-progress" hidden><h3>Sending your video</h3>
+        <div class="ev-bar"><i id="video-bar" class="pk-w0"></i></div>
+        <p class="help" id="video-count" role="status"></p>
+        <div id="video-end" hidden><p class="ev-done" id="video-end-words" role="status"></p><p><a class="cta" href="/portal/building/video?job=${job}">Back to your videos</a></p></div></div>
+    </section>` : raw('')}
+    <section class="ev-box"><h2>Your videos</h2>
+      ${videos.length === 0 ? h`<p class="help">None sent yet.</p>` : videos.map((x) => h`<div class="ev-vrow"><div><strong>${x.note ?? 'A video'}</strong>
+          <span class="help">${mmss(x.duration_ms)} · ${(x.byte_size / 1048576).toFixed(0)} MB · sent ${when(x.taken_at)}</span></div>
+        <video class="ev-video" controls preload="none" src="/portal/building/video/${x.id}/play"></video>
+        ${may ? h`<form method="post" action="/portal/building/video/${x.id}/remove" class="inline"><button class="linkish" type="submit">Take it back</button></form>` : raw('')}</div>`)}
+    </section>`;
+}
+
+/** The recorded video call: ask for one, or the time booked and the way in. */
+function callPage(d: PortalEvidenceDeps, v: E.ChecklistView, actor: Actor, q: URLSearchParams): Safe {
+  const job = v.job.id;
+  const c = callState(d, job);
+  return h`
+    ${q.get('done') === 'asked' ? h`<div class="gate" role="status">Thank you. We will offer you a time for the call.</div>` : raw('')}
+    ${crumb(job, 'A recorded video call')}
+    <h1>A recorded video call</h1>
+    <p>Join a video call on your phone and walk round while we guide you. The call is recorded so your surveyor can watch it. It takes about 20 to 40 minutes.</p>
+    <p class="ev-rule">${NOBODY_IN_SHOT}</p>
+    <section class="ev-box">
+      ${c.next !== null && c.next.starts_at !== null ? h`<p><strong>Booked: ${when(c.next.starts_at)}</strong></p>${c.meeting === undefined ? raw('') : h`<p><a class="cta" href="${clientJoinUrl('', c.meeting.client_token)}">Join the call</a></p>`}`
+        : c.asked !== undefined ? h`<p>You asked for a call on ${when(c.asked.at)}. We will offer you a time.</p>`
+        : actor.role === 'CLIENT' ? h`<form method="post" action="/portal/building/ask"><input type="hidden" name="job" value="${job}"><button class="cta" type="submit">Ask for a recorded video call</button></form>` : raw('')}
+      <p><a href="/portal/building/guide?job=${job}">Read the filming guide</a> before the call.</p></section>`;
 }
 
 function itemPage(d: PortalEvidenceDeps, actor: Actor, v: E.ChecklistView, key: string, q: URLSearchParams): Safe | null {
@@ -167,7 +272,7 @@ function itemPage(d: PortalEvidenceDeps, actor: Actor, v: E.ChecklistView, key: 
     ${actor.role === 'CLIENT' && i.mark === null ? photoForm(job, i.key, back) : raw('')}
     ${actor.role === 'CLIENT' ? h`<p>${markForms(job, i, back)}</p>` : raw('')}
     ${i.mark === null ? raw('') : h`<p>${status(i)}</p>`}
-    <p class="ev-nav"><a href="/portal/building?job=${job}#i-${i.key}">The whole list</a>${nextItem === undefined ? raw('') : h` · <a href="/portal/building/item/${nextItem.key}?job=${job}">Next: ${nextItem.title} →</a>`}</p>
+    <p class="ev-nav"><a href="/portal/building/photos?job=${job}#i-${i.key}">The whole list</a>${nextItem === undefined ? raw('') : h` · <a href="/portal/building/item/${nextItem.key}?job=${job}">Next: ${nextItem.title} →</a>`}</p>
   </div>`;
 }
 
@@ -209,7 +314,7 @@ export async function handlePortalEvidence(
     const f = await d.form(req);
     const r = E.withdrawPhoto(deps, actor, remove[1] ?? '', '');
     if (!r.ok) return html(400, 'Not done', h`<div class="card" role="alert"><h1>Not done</h1><p>${r.why}</p><p><a href="/portal/building">Back</a></p></div>`);
-    redirect(res, safeBack(f.get('back'), '/portal/building', 'removed'));
+    redirect(res, safeBack(f.get('back'), '/portal/building/photos', 'removed'));
     return 'handled';
   }
   if (path === '/portal/building/photo' && method === 'POST') {
@@ -218,8 +323,8 @@ export async function handlePortalEvidence(
     if (!got.ok) return html(400, 'Not sent', h`<div class="card" role="alert"><h1>The photo was not sent</h1><p>${got.why.charAt(0).toUpperCase() + got.why.slice(1)}.</p><p><a href="/portal/building">Back</a></p></div>`);
     const job = got.fields['job'] ?? '';
     const r = await E.addPhoto(deps, d.store, actor, { job_id: job, item_key: got.fields['item'] ?? '', bytes: got.part.bytes, nobody: got.fields['nobody'] ?? '', note: got.fields['note'] ?? '' });
-    if (!r.ok) return html(400, 'Not sent', h`<div class="card" role="alert"><h1>The photo was not sent</h1><p>${r.why}</p><p><a href="${safeBack(got.fields['back'] ?? null, `/portal/building?job=${job}`)}">Back</a></p></div>`);
-    redirect(res, safeBack(got.fields['back'] ?? null, `/portal/building?job=${job}`, 'photo'));
+    if (!r.ok) return html(400, 'Not sent', h`<div class="card" role="alert"><h1>The photo was not sent</h1><p>${r.why}</p><p><a href="${safeBack(got.fields['back'] ?? null, `/portal/building/photos?job=${job}`)}">Back</a></p></div>`);
+    redirect(res, safeBack(got.fields['back'] ?? null, `/portal/building/photos?job=${job}`, 'photo'));
     return 'handled';
   }
   /* 2 Oct 2026: a send straight to the file store, each photo locked on the phone (src/web/photo-upload.ts). JSON for the
@@ -243,29 +348,64 @@ export async function handlePortalEvidence(
   const slotDone = /^\/portal\/building\/upload\/([A-Za-z0-9-]+)\/slot\/([A-Za-z0-9-]+)\/done$/.exec(path);
   if (slotDone !== null && method === 'POST') return answer(res, 'This photo arrived but could not be kept', () => U.finishSlot(deps, d.store, actor, slotDone[1] ?? '', slotDone[2] ?? ''));
   if (path === '/portal/building/photos' && method === 'POST') {
-    const tooMuch = () => html(413, 'Not sent', h`<div class="card" role="alert"><h1>The photos were not sent</h1><p>Those photos are too big together. The most is 4.4 MB in one go. Send fewer at a time.</p><p><a href="/portal/building#many">Back</a></p></div>`);
+    const tooMuch = () => html(413, 'Not sent', h`<div class="card" role="alert"><h1>The photos were not sent</h1><p>Those photos are too big together. The most is 4.4 MB in one go. Send fewer at a time.</p><p><a href="/portal/building/photos#many">Back</a></p></div>`);
     let body: Buffer;
     try { body = await d.readBody(req, E.MAX_PHOTO_BYTES + 64 * 1024); } catch (e) { if (e instanceof Error && e.name === 'PayloadTooLarge') return tooMuch(); throw e; }
     const got = manyFiles(new Uint8Array(body), req.headers['content-type'], E.MAX_PHOTOS_AT_ONCE);
-    if (!got.ok) return html(400, 'Not sent', h`<div class="card" role="alert"><h1>The photos were not sent</h1><p>${got.why.charAt(0).toUpperCase() + got.why.slice(1)}.</p><p><a href="/portal/building#many">Back</a></p></div>`);
+    if (!got.ok) return html(400, 'Not sent', h`<div class="card" role="alert"><h1>The photos were not sent</h1><p>${got.why.charAt(0).toUpperCase() + got.why.slice(1)}.</p><p><a href="/portal/building/photos#many">Back</a></p></div>`);
     const job = got.fields['job'] ?? '';
     const r = await E.addPhotos(deps, d.store, actor, { job_id: job, files: got.files.map((f) => f.bytes), nobody: got.fields['nobody'] ?? '', note: got.fields['note'] ?? '' });
-    if (!r.ok) return html(400, 'Not sent', h`<div class="card" role="alert"><h1>The photos were not sent</h1><p>${r.why}</p><p><a href="/portal/building?job=${job}#many">Back</a></p></div>`);
-    redirect(res, `/portal/building?job=${job}&done=photos#many`);
+    if (!r.ok) return html(400, 'Not sent', h`<div class="card" role="alert"><h1>The photos were not sent</h1><p>${r.why}</p><p><a href="/portal/building/photos?job=${job}#many">Back</a></p></div>`);
+    redirect(res, `/portal/building/photos?job=${job}&done=photos#many`);
     return 'handled';
   }
   if (path === '/portal/building/mark' && method === 'POST') {
     const f = await d.form(req);
     const r = E.markItem(deps, actor, { job_id: f.get('job') ?? '', item_key: f.get('item') ?? '', mark: f.get('mark') ?? '' });
     if (!r.ok) return html(400, 'Not saved', h`<div class="card" role="alert"><h1>Not saved</h1><p>${r.why}</p><p><a href="/portal/building">Back</a></p></div>`);
-    redirect(res, safeBack(f.get('back'), `/portal/building?job=${f.get('job') ?? ''}`, 'marked'));
+    redirect(res, safeBack(f.get('back'), `/portal/building/photos?job=${f.get('job') ?? ''}`, 'marked'));
     return 'handled';
   }
   if (path === '/portal/building/ask' && method === 'POST') {
     const f = await d.form(req);
     const r = E.askWalkthrough(deps, actor, f.get('job') ?? '');
     if (!r.ok) return html(400, 'Not sent', h`<div class="card" role="alert"><h1>Not sent</h1><p>${r.why}</p><p><a href="/portal/building">Back</a></p></div>`);
-    redirect(res, `/portal/building?job=${f.get('job') ?? ''}&done=asked`);
+    redirect(res, `/portal/building/call?job=${f.get('job') ?? ''}&done=asked`);
+    return 'handled';
+  }
+  /* 2 Oct 2026: A VIDEO, in locked pieces straight to the file store (src/web/survey-video.ts). JSON for the page's script. */
+  if (path === '/portal/building/video' && method === 'POST') {
+    // Only a browser that could not run the page's script posts the form itself: a video cannot go without it.
+    redirect(res, `/portal/building/video?job=${(await d.form(req)).get('job') ?? ''}&done=script`);
+    return 'handled';
+  }
+  if (path === '/portal/building/video/start' && method === 'POST') {
+    const f = await d.form(req);
+    await SV.sweepVideos(deps, d.store);
+    return answer(res, 'The video could not be started', async () => SV.startVideo(deps, d.store, actor, { job_id: f.get('job') ?? '', size: f.get('size') ?? '', nobody: f.get('nobody') ?? '', note: f.get('note') ?? '' }));
+  }
+  const vSlot = /^\/portal\/building\/video\/([A-Za-z0-9-]+)\/slot$/.exec(path);
+  if (vSlot !== null && method === 'POST') {
+    const f = await d.form(req);
+    return answer(res, 'A piece of the video could not be given a place in our file store', () => SV.videoSlot(deps, d.store, actor, vSlot[1] ?? '', { n: f.get('n') ?? '', size: f.get('size') ?? '' }));
+  }
+  const vPut = /^\/portal\/building\/video\/([A-Za-z0-9-]+)\/slot\/([A-Za-z0-9-]+)$/.exec(path);
+  if (vPut !== null && method === 'PUT') {
+    let body: Buffer;
+    try { body = await d.readBody(req, SV.MAX_LOCKED_PIECE); } catch (e) { if (e instanceof Error && e.name === 'PayloadTooLarge') return json(res, { ok: false, why: 'That piece is too big.' }, 413); throw e; }
+    return answer(res, 'A piece of the video could not be kept on the way', () => SV.putVideoLocal(deps, d.store, actor, vPut[1] ?? '', vPut[2] ?? '', new Uint8Array(body)));
+  }
+  const vDone = /^\/portal\/building\/video\/([A-Za-z0-9-]+)\/slot\/([A-Za-z0-9-]+)\/done$/.exec(path);
+  if (vDone !== null && method === 'POST') return answer(res, 'A piece of the video arrived but could not be kept', () => SV.finishPiece(deps, d.store, actor, vDone[1] ?? '', vDone[2] ?? ''));
+  const vFinish = /^\/portal\/building\/video\/([A-Za-z0-9-]+)\/finish$/.exec(path);
+  if (vFinish !== null && method === 'POST') return answer(res, 'The video arrived but could not be kept', () => SV.finishVideo(deps, d.store, actor, vFinish[1] ?? ''));
+  const vPlay = /^\/portal\/building\/video\/([A-Za-z0-9-]+)\/play$/.exec(path);
+  if (vPlay !== null && method === 'GET') return playVideo(res, await SV.videoBytes(deps, d.store, actor, vPlay[1] ?? '', req.headers['range']));
+  const vRemove = /^\/portal\/building\/video\/([A-Za-z0-9-]+)\/remove$/.exec(path);
+  if (vRemove !== null && method === 'POST') {
+    const r = SV.withdrawVideo(deps, actor, vRemove[1] ?? '', '');
+    if (!r.ok) return html(400, 'Not done', h`<div class="card" role="alert"><h1>Not done</h1><p>${r.why}</p><p><a href="/portal/building/video">Back</a></p></div>`);
+    redirect(res, '/portal/building/video?done=removed');
     return 'handled';
   }
   if (method !== 'GET') return 'not-mine';
@@ -273,11 +413,15 @@ export async function handlePortalEvidence(
   if (j === undefined) return html(404, 'Show us your building', h`<div class="card"><h1>Show us your building</h1><p>There is no survey for your building yet. We will tell you when there is.</p><p><a href="/portal">Back to your portal</a></p></div>`);
   const v = E.checklistView(d.app.db, j.id);
   if (v === null) return 'not-mine';
-  if (path === '/portal/building') {
-    res.writeHead(200, { ...HTML_HEADERS, 'content-security-policy': photoPageCsp(d.store.incomingOrigin) });
-    res.end(withUploadScript(page({ title: 'Show us your building', nav: d.nav, wide: true, body: overview(d, actor, v, jobs, url.searchParams) })));
+  if (path === '/portal/building') return html(200, 'Show us your building', overview(d, v, jobs, url.searchParams));
+  if (path === '/portal/building/photos' || path === '/portal/building/video') {
+    const video = path.endsWith('/video');
+    res.writeHead(200, { ...HTML_HEADERS, 'content-security-policy': photoPageCsp(d.store.incomingOrigin, video) });
+    res.end(withUploadScript(page({ title: video ? 'Send a video' : 'Photos', nav: d.nav, wide: true,
+      body: video ? videoPage(d, v, actor, url.searchParams) : photosPage(v, actor, url.searchParams) })));
     return 'handled';
   }
+  if (path === '/portal/building/call') return html(200, 'A recorded video call', callPage(d, v, actor, url.searchParams));
   if (path === '/portal/building/guide') return html(200, 'The filming guide', guidePage(v));
   const item = /^\/portal\/building\/item\/([A-Z0-9-]{2,60})$/.exec(path);
   if (item !== null) {
@@ -289,7 +433,7 @@ export async function handlePortalEvidence(
 }
 
 /** A path back into the checklist: the list or an item, for one job, and an item's place on the list. */
-const BACK_INTO_CHECKLIST = /^\/portal\/building(\/item\/[A-Z0-9-]{2,60})?\?job=[A-Za-z0-9-]+(#i-[A-Z0-9-]{2,60})?$/;
+const BACK_INTO_CHECKLIST = /^\/portal\/building(\/item\/[A-Z0-9-]{2,60}|\/photos)?\?job=[A-Za-z0-9-]+(&hidden=1)?(#i-[A-Z0-9-]{2,60})?$/;
 
 /**
  * 2 Oct 2026: a step of a send that fails ANSWERS IN WORDS, with what went wrong (U.failureWords: never an address or a
@@ -318,8 +462,9 @@ function json(res: ServerResponse, body: object, status?: number): 'handled' {
  * The photo page's security policy: every page's, plus OUR OWN script (/assets/photo-upload.js) and, on the test
  * website, the file store's upload address as the one other site the page may send to. Nothing inline, ever.
  */
-export function photoPageCsp(incomingOrigin: string | null): string {
-  return "default-src 'none'; style-src 'self'; img-src 'self' data:; script-src 'self'; " +
+export function photoPageCsp(incomingOrigin: string | null, video = false): string {
+  // The video page also plays the client's videos (from this site) and reads a chosen video's length (a blob: of it).
+  return `default-src 'none'; style-src 'self'; img-src 'self' data:; script-src 'self'; ${video ? "media-src 'self' blob:; " : ''}` +
     `connect-src 'self'${incomingOrigin === null ? '' : ` ${incomingOrigin}`}; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`;
 }
 
@@ -362,7 +507,7 @@ export async function handleStaffEvidence(
   d: StaffEvidenceDeps, req: IncomingMessage, res: ServerResponse, url: URL, method: string, actor: Actor,
   form: (r: IncomingMessage) => Promise<URLSearchParams>,
 ): Promise<'handled' | 'not-mine'> {
-  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack\/(photos|sort|photo\/[A-Za-z0-9-]+|photo\/[A-Za-z0-9-]+\/withdraw|basis|walkthrough|recording|recording\/[A-Za-z0-9-]+)$/.exec(url.pathname);
+  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack\/(photos|sort|videos|video\/[A-Za-z0-9-]+|video\/[A-Za-z0-9-]+\/withdraw|photo\/[A-Za-z0-9-]+|photo\/[A-Za-z0-9-]+\/withdraw|basis|walkthrough|recording|recording\/[A-Za-z0-9-]+)$/.exec(url.pathname);
   if (m === null) return 'not-mine';
   const job = m[1] ?? '';
   const what = m[2] ?? '';
@@ -372,6 +517,32 @@ export async function handleStaffEvidence(
     const img = await E.photoBytes(deps, d.store, actor, what.slice(6));
     if (img === null) return d.problem(res, actor, 'No photo', 'That photo is not here, or it was taken back.', back);
     sendImage(res, img);
+    return 'handled';
+  }
+  /* 2 Oct 2026: the client's videos, watched in pieces; Admin or Sales may take one back. */
+  if (method === 'GET' && what.startsWith('video/')) return playVideo(res, await SV.videoBytes(deps, d.store, actor, what.slice(6), req.headers['range']));
+  if (method === 'GET' && what === 'videos') {
+    const { obj, job: pj } = packJob(d.app.db, actor, job);
+    if (!can(actor, 'surveyor_job.read', obj)) return 'not-mine';
+    const videos = SV.videosOf(d.app.db, job);
+    const mayWithdraw = can(actor, 'email.queue', { type: 'email', id: pj.business_id, business_id: pj.business_id });
+    res.writeHead(200, { ...HTML_HEADERS, 'content-security-policy': "default-src 'none'; style-src 'self'; img-src 'self' data:; media-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'" });
+    res.end(page({ title: `Videos · ${pj.business_name}`, nav: d.nav(actor), wide: true, body: h`
+      <p class="eyebrow">${pj.business_name} · Survey pack · the client’s videos</p>
+      <h1>The client’s videos</h1>
+      ${url.searchParams.get('done') === 'withdrawn' ? h`<div class="gate" role="status">Taken back. Nobody will see it.</div>` : raw('')}
+      <p><a href="${back}">Back to chapter 2</a></p>
+      ${videos.length === 0 ? h`<p class="help">No videos yet.</p>` : videos.map((x) => h`<section class="ev-group"><h2>${x.note ?? 'A video'} <span>${String(Math.round(x.duration_ms / 1000))} seconds · ${(x.byte_size / 1048576).toFixed(0)} MB</span></h2>
+        <div class="ev-vstaff"><video class="ev-video-big" controls preload="metadata" src="/staff/survey/${job}/pack/video/${x.id}"></video>
+        <p class="help">Sent ${when(x.taken_at)} by ${x.taken_by_name}.</p>
+        ${mayWithdraw ? h`<form method="post" action="/staff/survey/${job}/pack/video/${x.id}/withdraw" class="inline"><label class="vh" for="vw-${x.id}">Why take it back?</label><input id="vw-${x.id}" class="fi" name="reason" maxlength="300" required placeholder="Why take it back?"><button class="btn-quiet" type="submit">Take it back</button></form>` : raw('')}</div></section>`)}` }));
+    return 'handled';
+  }
+  if (method === 'POST' && what.startsWith('video/') && what.endsWith('/withdraw')) {
+    const f = await form(req);
+    const r = SV.withdrawVideo(deps, actor, what.slice(6, -9), f.get('reason') ?? '');
+    if (!r.ok) return d.problem(res, actor, 'Not done', r.why, `/staff/survey/${job}/pack/videos`);
+    redirect(res, `/staff/survey/${job}/pack/videos?done=withdrawn`);
     return 'handled';
   }
   if (what === 'sort') {
@@ -477,6 +648,12 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
     <table class="pk-table"><thead><tr><th>Evidence from the client</th><th>Done</th><th></th></tr></thead><tbody>
       <tr><td>The photo checklist</td><td>${String(v.done)} of ${String(v.total)} items, ${String(v.photos)} photo${v.photos === 1 ? '' : 's'}${v.marked === 0 ? '' : ` · ${String(v.marked)} marked not in the building or not safe`}</td>
         <td>${v.photos === 0 ? raw('') : h`<a href="${base}/photos">See every photo</a>`}</td></tr>
+      ${(() => {
+        const vids = SV.videosOf(app.db, job_id);
+        const secs = Math.round(vids.reduce((a, x) => a + x.duration_ms, 0) / 1000);
+        return h`<tr><td>Videos from the client</td><td>${vids.length === 0 ? 'None sent.' : `${String(vids.length)} video${vids.length === 1 ? '' : 's'}, ${String(Math.floor(secs / 60))} min ${String(secs % 60)} s`}</td>
+          <td>${vids.length === 0 ? raw('') : h`<a href="${base}/videos">Watch them</a>`}</td></tr>`;
+      })()}
       ${v.unsorted === 0 ? raw('') : h`<tr><td>Sent all at once, not sorted yet</td><td>${String(v.unsorted)} photo${v.unsorted === 1 ? '' : 's'}${maySort ? '' : ' · Admin or Sales sort them'}</td>
         <td>${maySort ? h`<a class="btn" href="${base}/sort">Sort them</a>` : raw('')}</td></tr>`}
       ${walks.length === 0 ? h`<tr><td>A recorded walkthrough call</td><td>${asks.length === 0 ? 'None asked for or booked.' : `The client asked for one on ${when(asks[0]!.at)}.`}</td><td></td></tr>`

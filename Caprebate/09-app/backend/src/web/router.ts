@@ -74,6 +74,7 @@ import { joinSignature } from '../connectors/zoom.ts';
 import { VIDEO_CALL_JS } from './video-call-script.ts';
 import { PHOTO_UPLOAD_JS } from './photo-upload-script.ts';
 import { sweepUploads } from './photo-upload.ts';
+import { sweepVideos } from './survey-video.ts';
 import { receiveWhatsApp } from './whatsapp.ts';
 import { webhookChallenge } from '../connectors/whatsapp.ts';
 import { EMAIL_SENDING, mailWhere, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
@@ -402,6 +403,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const r = await IE.readRepliesIfDue(d.app);
     // 2 Oct 2026: the same wake clears photo uploads never finished within a day (src/web/photo-upload.ts).
     await sweepUploads({ db: d.app.db, now: d.app.now }, d.store);
+    await sweepVideos({ db: d.app.db, now: d.app.now }, d.store);
     res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
     res.end(r === null ? (IE.lastReadWords(d.app)?.ok === false ? 'could not read the inbox' : 'read in the last two minutes')
       : r.state === 'OFF' ? 'reading replies is off' : `read ${String(r.read)}, filed ${String(r.filed)}, to sort ${String(r.queued)}`);

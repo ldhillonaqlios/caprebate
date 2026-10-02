@@ -383,7 +383,7 @@ describe('the sweep', () => {
 
 describe('the page and the whole send over HTTP', () => {
   test('the photo page names its own script and allows it; no other portal page does; the script is served', async () => {
-    const page = await req('u-pu-client', `/portal/building?job=${JOB}`);
+    const page = await req('u-pu-client', `/portal/building/photos?job=${JOB}`);
     assert.equal(page.status, 200, String(page.headers.get('location')));
     const csp = page.headers.get('content-security-policy') ?? '';
     assert.match(csp, /script-src 'self';/);

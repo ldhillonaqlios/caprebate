@@ -424,6 +424,25 @@ dl.pk-dl{display:block;margin:0}.pk-dl div{display:flex;justify-content:space-be
 .ev-wt{color:var(--muted,#6b7280)}.ev-ok2{color:#1d6b35;font-weight:700}.ev-bad{color:#a01e1e;font-weight:700}
 .ev-done{background:#e6f4ea;color:#1d6b35;border:1px solid #1d6b35;border-radius:8px;padding:.5rem .8rem;font-weight:700}
 .ev-fail{background:#fdecec;color:#a01e1e;border:1px solid #a01e1e;border-radius:8px;padding:.5rem .8rem;font-weight:700}
+/* 2 Oct 2026: "Show us your building" redesigned - three choices, each on its own page (src/web/evidence-pages.ts). */
+.ev-rule{background:var(--white);border:1px solid var(--line);border-left:5px solid var(--ink);border-radius:8px;padding:.6rem .9rem;margin:.8rem 0 1.2rem;font-weight:700;color:var(--ink)}
+.ev-three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 1rem}
+.ev-choice{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:1rem 1rem 1.1rem;display:flex;flex-direction:column;gap:.35rem}
+.ev-choice h2{margin:.2rem 0 0;font-size:1.2rem}.ev-choice p{margin:0}
+.ev-choice .cta{margin-top:auto;text-align:center}
+.ev-ico{width:44px;height:44px;padding:9px;border-radius:10px;background:#ABEDD8;fill:none;stroke:#111111;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.ev-state{font-size:13px;font-weight:700;color:#1d6b35;margin:.2rem 0 .6rem}
+.ev-crumb{font-size:13px;color:var(--muted,#6b7280);margin:0 0 .3rem}
+.ev-box{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem;margin:0 0 1.1rem}
+.ev-box h2{margin-top:0}
+.ev-box .ev-group h3{background:var(--mist,#f2f8f6);margin:0;padding:.5rem .9rem;font-size:1rem;display:flex;justify-content:space-between}
+.ev-box .ev-group h3 span{font-size:12px;color:var(--muted,#6b7280);font-weight:700}
+.ev-vrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:.6rem 0;border-top:1px solid var(--line)}
+.ev-vrow .help{display:block}
+.ev-video{grid-column:1/-1;width:100%;max-height:240px;background:#111111;border-radius:8px}
+.ev-vstaff{padding:.8rem}
+.ev-video-big{width:100%;max-height:480px;background:#111111;border-radius:8px}
+@media (max-width:760px){.ev-three{grid-template-columns:minmax(0,1fr)}}
 .ev-chip{display:inline-block;border-radius:999px;padding:0 .5rem;font-size:12px;font-weight:700;border:1px solid #e7c98a;background:#fff3d6;color:#7a5200;text-decoration:none;margin-top:2px}
 .ev-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:12px;padding:.8rem}
 .ev-gallery figure{margin:0}.ev-gallery figcaption{font-size:13px;color:var(--mut)}

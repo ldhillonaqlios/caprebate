@@ -24,6 +24,7 @@ import { percentWords, poundsWords, quantityWords, type Source, type Valued } fr
 import { answerWords, legalQuestions } from './pack-legal.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from './pdf-canvas.ts';
+import { minutesWords } from './survey-video.ts';
 
 export const REPORT_TITLE = 'Capital allowances survey report';
 
@@ -91,6 +92,9 @@ function inspectionWords(i: Snapshot['inspection'] | undefined): string | null {
   const sent: string[] = [];
   if (i.photos > 0) sent.push(`${String(i.photos)} photo${i.photos === 1 ? '' : 's'} from the client, covering ${String(i.items_done)} of ${String(i.items_total)} checklist items`);
   if (i.recordings > 0) sent.push(`${i.recordings === 1 ? 'a recorded video call' : `${String(i.recordings)} recorded video calls`} of ${String(i.recorded_minutes)} minutes`);
+  // 2 Oct 2026: the client's own videos; a version approved before they existed has none.
+  const vids = (i as { videos?: number }).videos ?? 0;
+  if (vids > 0) sent.push(`${vids === 1 ? 'a video' : `${String(vids)} videos`} from the client (${minutesWords((i as { video_minutes?: number }).video_minutes ?? 0)})`);
   return `${i.words}${i.note === null ? '' : ` (${i.note})`}.${sent.length === 0 ? '' : ` The surveyor had ${sent.join(', and ')}.`}`;
 }
 

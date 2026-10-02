@@ -422,11 +422,21 @@ describe('the pages', () => {
   test('the portal: the card, the checklist in groups with the rule, an item, the guide; another company’s checklist is not shown', async () => {
     const home = (await req('u-ev-client', '/portal')).body;
     assert.match(home, /<section class="card ev-card" id="show-us"><h2>Show us your building<\/h2>/);
+    // 2 Oct 2026, the redesign: three choices on the page, each opening its own page; the checklist is on Photos.
     const r = await req('u-ev-client', '/portal/building');
     assert.equal(r.status, 200);
     assert.ok(r.body.includes(NOBODY_IN_SHOT.replace(/:.*/, '')), 'the rule is not said');
-    for (const g of GROUPS) assert.ok(r.body.includes(g), g);
-    assert.ok(r.body.includes('Booked'), 'the booked call is not shown');
+    for (const [h2, href] of [['Photos', '/portal/building/photos'], ['A video', '/portal/building/video'], ['A recorded video call', '/portal/building/call']]) {
+      assert.ok(r.body.includes(`<h2>${h2 ?? ''}</h2>`) && r.body.includes(`href="${href ?? ''}?job=${JOB}"`), h2 ?? '');
+    }
+    assert.ok(r.body.includes('Booked: '), 'the booked call is not shown');
+    assert.doesNotMatch(r.body, /<script/, 'the choices page runs a script');
+    const photos = await req('u-ev-client', `/portal/building/photos?job=${JOB}`);
+    for (const g of GROUPS) assert.ok(photos.body.includes(g), g);
+    assert.ok(photos.body.includes(NOBODY_IN_SHOT.replace(/:.*/, '')), 'the rule is not said on Photos');
+    const call = await req('u-ev-client', `/portal/building/call?job=${JOB}`);
+    assert.equal(call.status, 200);
+    assert.ok(call.body.includes('Booked: '), 'the call page does not show the booking');
     const item = await req('u-ev-client', `/portal/building/item/PLANT-PIPES?job=${JOB}`);
     assert.equal(item.status, 200);
     assert.match(item.body, /name="nobody" value="yes" required/);
@@ -453,7 +463,7 @@ describe('the pages', () => {
     assert.deepEqual([img.status, img.type], [200, 'image/jpeg']);
     assert.deepEqual(Buffer.from(img.bytes), JPEG_CLEAN);
     assert.notEqual((await req('u-ev-other', `/portal/building/photo/${id}`)).status, 200);
-    assert.equal((await send('https://evil.example.com/')).location, `/portal/building?job=${JOB}&done=photo`, 'sent back somewhere else');
+    assert.equal((await send('https://evil.example.com/')).location, `/portal/building/photos?job=${JOB}&done=photo`, 'sent back somewhere else');
     const m = await post('u-ev-client', '/portal/building/mark', { job: JOB, item: 'COMMS-CABINET', mark: 'NOT_SAFE', back: `/portal/building?job=${JOB}#i-COMMS-CABINET` });
     assert.equal(m.location, `/portal/building?job=${JOB}&done=marked#i-COMMS-CABINET`);
   });
@@ -553,7 +563,7 @@ describe('many photos at once, sorted by Admin or Sales', () => {
   });
 
   test('the pages: the portal box and what waits; sending through it; the sorting page for Admin; chapter 2’s row', async () => {
-    const portal = (await req('u-ev-client', `/portal/building?job=${JOB}`)).body;
+    const portal = (await req('u-ev-client', `/portal/building/photos?job=${JOB}`)).body;
     assert.match(portal, /<h2>Send lots of photos at once<\/h2>/);
     assert.match(portal, /name="files" accept="image\/jpeg,image\/png" multiple required/);
     assert.ok(portal.includes('1 photo is waiting for us to sort.'), 'what waits is not said');
@@ -564,7 +574,7 @@ describe('many photos at once, sorted by Admin or Sales', () => {
       return req('u-ev-client', '/portal/building/photos', { method: 'POST', body: fd });
     };
     const ok = await send([JPEG, JPEG]);
-    assert.equal(ok.location, `/portal/building?job=${JOB}&done=photos#many`);
+    assert.equal(ok.location, `/portal/building/photos?job=${JOB}&done=photos#many`);
     assert.equal(E.checklistView(made.app.db, JOB)!.unsorted, 3);
     const big = await send([Buffer.alloc(E.MAX_PHOTO_BYTES + 70 * 1024, 0xff)]);
     assert.equal(big.status, 413);
