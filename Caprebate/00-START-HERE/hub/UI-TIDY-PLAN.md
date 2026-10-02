@@ -60,8 +60,8 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 | 3 | Pipeline | DONE 2 Oct |
 | 4 | Home | DONE 2 Oct |
 | 5 | Leads | DONE 2 Oct |
-| 6 | Clients list | NEXT |
-| 7 | A client's page, part 1: header, claim boxes, its own menu | |
+| 6 | Clients list | DONE 2 Oct |
+| 7 | A client's page, part 1: header, claim boxes, its own menu | NEXT, once Lakhbir has reviewed 3 to 6 |
 | 8 | A client's page, part 2: messages, checks, people, files, history as menu entries | |
 | 9 | Tasks | |
 | 10 | Survey jobs and a survey job (each names its site and claim number) | |

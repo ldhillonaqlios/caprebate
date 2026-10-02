@@ -99,3 +99,9 @@ export function groupBar(counts: Readonly<Partial<Record<GroupKey, number>>>): {
   })}</div>`;
   return { bar, empty };
 }
+
+/** The site alone: a property is labelled "Company — site", and the company is already named beside it (UI tidy phase 3). */
+export function siteOf(client: string, property: string | null): string {
+  if (property === null) return 'no property recorded';
+  return property.startsWith(`${client} — `) ? property.slice(client.length + 3) : property;
+}

@@ -11214,3 +11214,11 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## UI tidy phase 6 of 17, 2 October 2026 — the Clients list (Claude Code, on the Mac)
+
+-  **Built:** a line of counts and solid boxes (waiting on us, waiting on the client, asked not to be contacted, every company), each a filter; Find a client by company, site or claim number; the status in its colour; each claim beside its company by site and number, its stage in its colour — Dunmarrow's main site and branch surgery side by side.
+-  **Proof.** `test/ui-tidy-clients.test.ts`, six tests; 14 single-line mutations, all red. Screenshots at 1280 and 390 px. 2126 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2126`) green.
+-  **Next:** Lakhbir reviews phases 3 to 6, then approves the next group (phases 7 to 10: a client's page in two parts, Tasks, Survey jobs).
+
+ **Claim cleared** in the commit that carries this record.
+

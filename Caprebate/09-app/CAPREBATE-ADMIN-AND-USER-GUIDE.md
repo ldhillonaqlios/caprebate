@@ -1610,8 +1610,12 @@ to rely on the colour alone. Beside the heading is a label saying where the box 
 **One Clients list.** "Engaged clients" and "Organisations" used to be two lists of the same companies. Each opened the
 same page. They are now one list, **Clients** (`/staff/clients`). It is a tab for Sales, Admin and Read only. Each row
 starts with the **company's name**. Its legal name and sector are in small text under it. Then come **Waiting on**,
-**Status**, **Owner** and **Claims**. **Waiting on us first** puts the companies waiting on us at the top. **A to Z**
-sorts by name. The old address `/staff/organisations` brings you here.
+**Status**, **Owner** and **Claims**. The status has a colour. **Active** is green, and **Do not contact** is red.
+**Claims** lists each claim by its site and number, with its stage in colour. So two claims of one company are easy to
+tell apart. At the top, the boxes count who is waiting on us, who is waiting on the client, and who asked not to be
+contacted. Press a box to see just those. **Find a client** searches by company, site or claim number. **Waiting on us
+first** puts the companies waiting on us at the top. **A to Z** sorts by name. The old address `/staff/organisations`
+brings you here.
 - **Read only** can open the list. It shows company, status, owner and claims. **Waiting on** is not shown. It is built
   from the research and the questions, and Read only may not read those.
 - The old list had more columns. They are now on the company's page, in the highlights and the **Waiting on** card on
@@ -1704,7 +1708,7 @@ Each shows only when that control is on the page for you. **Waiting on** is one 
 
 **Try it on the demo** (as sales@example.invalid, on a freshly started demo)
 - On 17 September 2026, **Engaged clients** read "6 in the pipeline. 5 waiting on us, 0 waiting on the client, 1 on
-  neither." The one **Clients** list now reads "6 companies. 5 waiting on us, 0 waiting on the client."
+  neither." The one **Clients** list now says 6 companies. Its boxes say 5 wait on us. None wait on the client.
 - Open **Corvale Supported Living Limited**. *Observed:* the highlights read Sector "supported living" and Waiting on
   "Us". They read Engagement letter "signed", Research "not run" and Still missing "16 facts". The tabs read Sources 12,
   Still missing 16, Tasks 0, Notes 0. The quick actions are Run the research, Ask for a missing fact and Add a note.

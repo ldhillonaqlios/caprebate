@@ -1334,6 +1334,11 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 .recordlead[open]>summary::before{content:"– "}
 .recordlead[open]>summary.pnum{margin-bottom:.6rem;padding-bottom:.5rem;border-bottom:1px solid var(--line)}
 
+/* UI TIDY PHASE 6 — THE CLIENTS LIST (src/web/client-list.ts). Each claim beside its company, by site, in its colour. */
+.claimsat{list-style:none;margin:0;padding:0;display:grid;gap:.3rem}
+.claimsat li{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .45rem}
+.clientlist .rowname{font-weight:700;color:var(--ink)}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of

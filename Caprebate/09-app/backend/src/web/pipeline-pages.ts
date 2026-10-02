@@ -26,7 +26,8 @@ import { sectionPrefs } from './sections.ts';
 import { leadNextStep, plainNeed } from './next-step.ts';
 import { dueReading, dueWords, ukDatesIn } from './localtime.ts';
 import { navContext, filterBar, LEAD_FILTERS } from './navigation.ts';
-import { STAGE_GROUPS, groupBand, groupBar, kpiRow, lateBadge, noDateBadge, nobodyBadge, stageBadge, stageGroupOf, stageLabel, type GroupKey } from './look.ts';
+import { STAGE_GROUPS, groupBand, groupBar, kpiRow, lateBadge, noDateBadge, nobodyBadge, siteOf, stageBadge, stageGroupOf, stageLabel, type GroupKey } from './look.ts';
+export { siteOf } from './look.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as C from './crm.ts';
 import * as L from './leads.ts';
@@ -623,12 +624,6 @@ function dueCell(c: C.BoardCard, nowIso: string): Safe {
   if (c.next_action_due === null) return noDateBadge('No date');
   const r = dueReading(c.next_action_due, nowIso);
   return h`<span class="when">${r.words === '' ? r.date : r.words}</span>`;
-}
-
-/** The site alone: a property is labelled "Company — site", and the company is already the row's link. */
-export function siteOf(client: string, property: string | null): string {
-  if (property === null) return 'no property recorded';
-  return property.startsWith(`${client} — `) ? property.slice(client.length + 3) : property;
 }
 
 function pipelineRow(c: C.BoardCard, nowIso: string, withValue: boolean): Safe {
