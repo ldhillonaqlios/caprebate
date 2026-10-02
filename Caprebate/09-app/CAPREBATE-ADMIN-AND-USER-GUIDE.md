@@ -917,14 +917,13 @@ is still refused. You see **You cannot open this page**. That is the system work
 
 ### U1 · Sales — a working day
 
-**1. Start on the landing page.** After you sign in, you are on **Home** (Address: `/staff`). It has rows of tiles.
-A tile is red when it is late (see `B0`):
+**1. Start on the landing page.** After you sign in, you are on **Home** (Address: `/staff`). The top line says how
+many jobs are late. Under it are coloured boxes with the numbers. Your work is on the left. Late items are red (see `B0`):
+- **Do these first** — what is due today, or late. That means tasks, client questions and asks for documents.
 - **New leads** — leads nobody has contacted yet, oldest first. Contact a red one today.
-- **Existing leads — next actions** — each lead we are working on, and its next step. Its last tile is **Claims with no
+- **Existing leads — next actions** — each lead we are working on, and its next step. Its last line is **Claims with no
   next step**. It lists the claims with no owner or no next step. Give each one an owner, then its next action.
-- **Today and overdue** — what is due today, or late. That means tasks, client questions and asks for documents.
-- **Pipeline by stage** — how many claims sit at each stage. A tile opens that stage's claims. **Reports** is last.
-  On a phone these tiles are two to a row.
+- On the right, **Pipeline** shows five coloured bars, one for each group of stages. **Reports** is under them.
 - Your whole list is on the **Tasks** tab. It holds **My tasks**, your claims and who each one waits on. It also
   shows what you are waiting on from clients. Each task has **Start** and **Complete**.
 
@@ -1458,9 +1457,10 @@ and a developer can point at the same screen.
 
 ### Training — `B0` the landing page
 
-**Home is tiles.** Home is rows of tiles and nothing else. Each tile takes you to the thing itself in one click. No tile
-holds more than three lines. A red tile is late. The welcome card is on **Help**. Your full task list is on **Tasks**.
-The dashboard's figures are the **Reports** tile.
+**Home is your day at a glance.** The top line says how many jobs are late. Coloured boxes show the numbers. Each box
+opens what it counts. Your work is on the left, one line each. The pipeline and your week are on the right. A red
+line is late. The welcome card is on **Help**. Your full task list is on **Tasks**. The dashboard's figures are under
+**Reports**.
 
 **What it is for**
 The first page every staff member sees — **Home**. It answers "what do I do next", in the order Lakhbir set.
@@ -1471,10 +1471,10 @@ on the portal instead. Each role sees different rows. You see a row only if you 
 
 | Role | Rows, top to bottom |
 |---|---|
-| Sales, Read only | New leads; Existing leads — next actions; Today and overdue; Pipeline by stage |
-| Admin | the same four, then Users; Switches; Audit log; Refused sign-ins |
-| Accounting | Invoices due; Fees to invoice; VAT position; Reports; then Today and overdue |
-| Surveying | Waiting for your figures; All your survey jobs; Reports; then Today and overdue |
+| Sales, Read only | Left: Do these first; Today's activities; New leads; New messages; Existing leads — next actions. Right: Pipeline; Your calendar |
+| Admin | the same as Sales. The **Admin** choice under **Home shows** gives Users; Switches; Audit log; Refused sign-ins |
+| Accounting | Left: Do these first; Today's activities. Right: Money; Your calendar |
+| Surveying | Left: Do these first; Today's activities. Right: Survey jobs; Your calendar |
 
 Address: `/staff`
 
@@ -1487,11 +1487,11 @@ Address: `/staff`
 - **Existing leads — next actions** — one tile per lead we are working on. Each shows the company, its next step and
   when it is due. A tile is red when it is late, or when it has no next step. The last tile, **Claims with no next
   step**, opens that list in **Tasks**.
-- **Today and overdue** — what is due today or late. That means tasks, and the questions and document
+- **Do these first** — what is due today or late. That means tasks, and the questions and document
   requests you sent a client. A lead's or a claim's next step is a task. Late items come first, in red. Accounting and
   Surveying see their own tasks and their team's. Sales, Admin and Read only see every task they may read.
-- **Pipeline by stage** — one tile per stage, with its number of claims. A tile opens the list of those claims. The last
-  tile, **Reports**, opens the figures by month, quarter or year (`B40`).
+- **Pipeline** — five coloured bars, one for each group of stages, each with its number of claims. A bar opens the
+  **Pipeline**. Under them, **Reports** opens the figures by month, quarter or year (`B40`).
 - **Admin** — **Users**, **Switches**, **Audit log** and **Refused sign-ins**. The **Audit log** tile reads "Checked —
   nothing changed". Or it reads, in red, "Problem found — tell Lakhbir". **Refused sign-ins** come from the latest
   entries of the log.
@@ -1500,7 +1500,7 @@ A row with nothing in it says so in one line, such as "No new leads." That way y
 
 **How to do the common job**
 1. Sign in. You arrive on **Home**.
-2. Start at the top: open each red tile first.
+2. Start at the top of **Do these first**: open each red line first.
 3. Press a tile to open the lead, task, client or list behind it, and do the job there.
 4. Press **Claims with no next step** to give each claim an owner and a next step.
 5. For your whole task list, press the **Tasks** tab. Its number turns red when one of yours is late.
@@ -1517,12 +1517,12 @@ A row with nothing in it says so in one line, such as "No new leads." That way y
 *Observed on a freshly started demo, 21 September 2026.* Sign in as Sales. **New leads** reads "No new leads." The demo
 has none until you record one. Now look at **Existing leads — next actions**. It shows a tile for Gorsebrook Invented Care Homes
 Limited. The tile reads "Next: Confirm who owns the building, and that we…". A long step is cut at a whole word, so open the tile to read
-it all. The tile then says "Due in 3 days (24 Sep 2026)". After it comes **Claims with no next step**. **Today and
-overdue** starts with a red tile for Aldergate Care Group Limited. It says "Call to talk through the range they were
-shown". It is "20 days overdue (1 Sep 2026)". **Pipeline by stage** reads Enquiry 2 claims, Survey 3 claims, Invoice 1
-claim. Press **Survey**, and the claims list shows the three at that stage. Now record a lead on **Leads**. Go back to
+it all. The tile then says "Due in 3 days (24 Sep 2026)". After it comes **Claims with no next step**. **Do these
+first** starts with a red line for Aldergate Care Group Limited. It says "Call to talk through the range they were
+shown". It is "20 days overdue (1 Sep 2026)". In **Pipeline**, the first bar reads 4. The third reads 3.
+Press a bar, and the **Pipeline** opens. Now record a lead on **Leads**. Go back to
 **Home**. The lead is under **New leads**, "Came in today", and the number reads 1. Sign in as Accounting. **Invoices
-due** is red. It says "£13,000 not yet paid" and "£13,000 late (2 invoices)". **Today and overdue** reads "Nothing is
+due** is red. It says "£13,000 not yet paid" and "£13,000 late (2 invoices)". **Do these first** reads "Nothing is
 due today, and nothing is late."
 
 **Check yourself**

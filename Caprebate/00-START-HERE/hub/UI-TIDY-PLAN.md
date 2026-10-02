@@ -58,8 +58,8 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 | 1 | The shared look: stage colours, solid number boxes, black table headers, labels | DONE 2 Oct |
 | 2 | The left-hand menu for every login, the menus that open out, a menu button on phones; Survey jobs leaves More | DONE 2 Oct (Settings opens out; the client, survey job and Finance open out in their own phases) |
 | 3 | Pipeline | DONE 2 Oct |
-| 4 | Home | NEXT |
-| 5 | Leads | |
+| 4 | Home | DONE 2 Oct |
+| 5 | Leads | NEXT |
 | 6 | Clients list | |
 | 7 | A client's page, part 1: header, claim boxes, its own menu | |
 | 8 | A client's page, part 2: messages, checks, people, files, history as menu entries | |

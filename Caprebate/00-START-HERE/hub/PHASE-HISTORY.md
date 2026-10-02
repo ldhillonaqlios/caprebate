@@ -11196,3 +11196,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## UI tidy phase 4 of 17, 2 October 2026 — Home in two columns (Claude Code, on the Mac)
+
+ Lakhbir on the Pipeline: "this looks good".
+
+-  **Built:** every Home (Sales, Admin, Read only, Accounting, the Surveyor) starts with one line saying how many jobs are late and solid number boxes, each a link; then the work on the left (Do these first, today's calls and emails, new leads and messages, leads' next steps) and the pipeline's five coloured bars, money or survey jobs, and the calendar on the right. Nothing that was on Home was taken away.
+-  **Proof.** `test/ui-tidy-home.test.ts`, eight tests; four older Home tests read the new layout; 17 single-line mutations, all red. Screenshots of every Home at 1280 and 390 px. 2114 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2114`) green.
+-  **Next:** phase 5, Leads.
+
+ **Claim cleared** in the commit that carries this record.
+

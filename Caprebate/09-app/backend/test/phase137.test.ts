@@ -298,11 +298,10 @@ describe('Filter and List view', () => {
 });
 
 describe('Home on a phone', () => {
-  test('the pipeline row draws its tiles two to a row at phone width, and only that row', async () => {
+  test('UI tidy phase 4: the pipeline is five bars, not tiles two to a row, and Home stacks into one column on a narrow screen', async () => {
     const home = (await as('sales').get('/staff')).body;
-    assert.match(home, /aria-labelledby="row-pipeline"><h2 id="row-pipeline">Pipeline by stage<\/h2><ul class="tiles hometiles pairtiles">/);
-    assert.equal((home.match(/pairtiles/g) ?? []).length, 1);
-    const phone = /@media \(max-width:720px\)\{([\s\S]*?)\n\}/.exec(CSS)?.[1] ?? '';
-    assert.match(phone, /\.hometiles\.pairtiles\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+    assert.match(home, /aria-labelledby="row-pipeline"><h2 id="row-pipeline">Pipeline<\/h2><ul class="gbars">/);
+    assert.equal((home.match(/pairtiles/g) ?? []).length, 0);
+    assert.match(CSS, /@media \(max-width:1100px\)\{\.home-cols\{grid-template-columns:minmax\(0,1fr\)\}\}/);
   });
 });

@@ -837,7 +837,8 @@ function withDone(back: string, done: string): string {
 }
 
 function homePage(actor: Actor, rows: Safe, view: string | null = null): string {
-  return page({ title: 'Home', nav: nav(actor, view), wide: true, body: h`<h1>Home</h1>${rows}` });
+  // UI TIDY PHASE 4: a dashboard draws its own heading, with the day and what is late beside it (src/web/staff-dashboard.ts).
+  return page({ title: 'Home', nav: nav(actor, view), wide: true, body: view === null ? h`<h1>Home</h1>${rows}` : rows });
 }
 
 /**

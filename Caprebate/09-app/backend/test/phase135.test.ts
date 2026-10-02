@@ -304,7 +304,8 @@ describe('the dashboard is reached from Home', () => {
       assert.equal((await as(who).get('/staff/dashboard/view.json')).status, 200, `${who} view.json`);
       const home = (await as(who).get('/staff')).body;
       assert.doesNotMatch(home, /See the dashboard/, who);
-      assert.match(home, /<a class="tilelink" href="\/staff\/reports"><span class="tilename">Reports<\/span>/, who);
+      // UI tidy phase 4: a tile on Accounting's and the Surveyor's Home; a link under the pipeline's bars on the others'.
+      assert.match(home, /<a (class="tilelink" )?href="\/staff\/reports">(<span class="tilename">)?Reports/, who);
     }
   });
 });

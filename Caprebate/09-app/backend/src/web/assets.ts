@@ -1289,6 +1289,41 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 .pipetable .btn-quiet{white-space:nowrap;font-size:14px}
 @media (max-width:720px){.pipetable .bandrow th{display:block}.pipetable .bandrow{border:0;padding:0;background:transparent}}
 
+/* UI TIDY PHASE 4 — HOME IN TWO COLUMNS (src/web/staff-dashboard.ts). The work on the left as rows, one line each, late
+   in red; the pipeline's five coloured bars and the week on the right. The rows' markup is Phase 136's tiles. */
+.home-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:1.25rem;align-items:start}
+@media (max-width:1100px){.home-cols{grid-template-columns:minmax(0,1fr)}}
+.home-cols .homerow,.home-cols .dash-card{background:var(--white);border:1px solid var(--line);border-radius:.75rem;padding:1rem 1.1rem;margin:0 0 1.25rem}
+.home-cols .homerow>h2,.home-cols .dash-card-h h2{font-size:22px}
+.home-cols .hometiles{display:block;margin:0;border:1px solid var(--line);border-radius:.5rem;overflow:hidden}
+.home-cols .hometile{border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none}
+.home-cols .hometile:first-child{border-top:0}
+.home-cols .hometile:nth-child(even){background:var(--zebra)}
+.home-cols .hometile .tilelink{display:flex;flex-wrap:wrap;align-items:baseline;gap:.15rem .75rem;padding:.6rem .8rem}
+.home-cols .hometile .tilename{font-size:16px;flex:1 1 12rem}
+.home-cols .hometile .tileline{margin:0;font-size:15px;flex:1 1 14rem}
+.home-cols .hometile .tilecount{font-size:24px}
+.home-cols .hometile.late .tileline.when{flex:0 0 auto;background:var(--stop);color:var(--white);border-radius:999px;padding:.05rem .6rem;font-size:14px}
+.home-side .hometile .tileline{flex-basis:100%}
+.gbars{list-style:none;margin:0 0 .6rem;padding:0;display:grid;gap:.35rem}
+.gbar{display:grid;grid-template-columns:7.5rem minmax(0,1fr) 1.6rem;align-items:center;gap:.5rem;color:var(--ink);text-decoration:none;font-size:15px}
+.gbar:hover .gbar-name{text-decoration:underline}
+.gbar-track{height:1.1rem;background:var(--nodate);border-radius:.3rem;overflow:hidden;display:block}
+.gbar-fill{display:block;height:100%}
+.gbar-fill.g-win{background:var(--g-win)}.gbar-fill.g-gather{background:var(--g-gather)}.gbar-fill.g-survey{background:var(--g-survey)}
+.gbar-fill.g-sign{background:var(--g-sign)}.gbar-fill.g-paid{background:var(--g-paid)}
+.gbar-fill.gw-0{width:0}.gbar-fill.gw-1{width:10%}.gbar-fill.gw-2{width:20%}.gbar-fill.gw-3{width:30%}.gbar-fill.gw-4{width:40%}.gbar-fill.gw-5{width:50%}
+.gbar-fill.gw-6{width:60%}.gbar-fill.gw-7{width:70%}.gbar-fill.gw-8{width:80%}.gbar-fill.gw-9{width:90%}.gbar-fill.gw-10{width:100%}
+.gbar-n{font-weight:700;text-align:right}
+.homelinks{margin:.4rem 0 0;font-size:15px}
+.home-side .wk{grid-template-columns:minmax(0,1fr);gap:4px}
+.home-side .wk-day{min-height:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .6rem;padding:.35rem .6rem}
+.home-side .wk-day .wk-h{margin:0;min-width:4.5rem}
+.home-side .wk-day .wk-free{margin:0}
+.home-side .wk-items{flex:1 1 100%}
+.home-side .wk-day.today{border-color:var(--ink);background:var(--mint)}
+.home-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:0 1.25rem;align-items:start}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of
