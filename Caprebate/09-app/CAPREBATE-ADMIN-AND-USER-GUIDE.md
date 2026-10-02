@@ -2317,6 +2317,10 @@ The **Tasks** tab shows how many open tasks you have. It turns red when one is o
 views: **My tasks**, **Every open task** and **Claims with no next step**. The last one used to be the **Next actions**
 list (`B24`). You see each view only if your role may open it.
 
+At the top, four boxes count your tasks. **Late** is red. **Due today** and **No due date** come next.
+**Claims with no next step** opens that list. In the table, a late task has a red label, with its date under it. Under
+the table, the longer lists are folded. Each says how many it holds. Press one to open it.
+
 **What it is for**
 Tasks are the jobs colleagues do. Each task has an owner, or a team it waits with. It has a due date or none. It has an
 activity type, a priority, a repeat if you want one, and a status. A question put to a client is not a task. It lives

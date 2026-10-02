@@ -1375,6 +1375,13 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 @media (min-width:900px){body.app .ctabs{display:none}}
 @media (max-width:720px){.cpart{grid-template-columns:minmax(0,1fr) auto}.cpart-what{grid-column:1/-1}}
 
+/* UI TIDY PHASE 9 — TASKS (src/web/tasks-pages.ts). The longer lists under the tasks fold, each with how many it holds. */
+.morelist{border-top:1px solid var(--line);padding:.6rem 0}
+.morelist>summary{cursor:pointer;font-weight:700;font-size:16px;color:var(--ink)}
+.morelist>summary .count{display:inline-block;min-width:1.4rem;padding:0 .35rem;border-radius:999px;background:var(--ink);color:var(--white);font-size:13px;text-align:center}
+#my-tasks table{margin-top:0}
+table tr.overdue{color:inherit}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of

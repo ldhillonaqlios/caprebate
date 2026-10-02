@@ -63,8 +63,8 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 | 6 | Clients list | DONE 2 Oct |
 | 7 | A client's page, part 1: header, claim boxes, its own menu | DONE 3 Oct |
 | 8 | A client's page, part 2: messages, checks, people, files, history as menu entries | DONE 3 Oct |
-| 9 | Tasks | NEXT |
-| 10 | Survey jobs and a survey job (each names its site and claim number) | |
+| 9 | Tasks | DONE 3 Oct |
+| 10 | Survey jobs and a survey job (each names its site and claim number) | NEXT |
 | 11 | Survey pack (names the site and claim; "0 min 32 s" becomes "32 s") | |
 | 12 | Finance | |
 | 13 | Calendar | |

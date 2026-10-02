@@ -23,7 +23,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { filterBar, TASK_FILTERS } from './navigation.ts';
+import { filterBar, opens, TASK_FILTERS } from './navigation.ts';
+import { kpiRow, lateBadge, noDateBadge, type KpiTone } from './look.ts';
 import { claimRef, savedMessage, why } from './components.ts';
 import * as T from './tasks.ts';
 import * as A from './automation.ts';
@@ -269,9 +270,17 @@ function saved(msg: string | undefined): Safe {
 
 /** A due reading, drawn. OVERDUE is loud; no due date says so in words. */
 export function dueCell(due: T.DueReading): Safe {
-  if (due.overdue) return h`<strong class="overdue">${due.label}</strong>`;
-  if (due.state === 'NO_DUE_DATE') return h`<span class="help">${due.label}</span>`;
+  // UI tidy phase 9: late is a solid red label, no due date a grey one (src/web/look.ts), wherever a task list is drawn.
+  // The label is "31 days overdue (1 Sep 2026)": the words in the label, the date under it, so the column stays narrow.
+  const m = /^(.*?) \((.+)\)$/.exec(due.label);
+  if (due.overdue) return m === null ? lateBadge(due.label) : h`${lateBadge(m[1] ?? '')}<br><span class="help">${m[2] ?? ''}</span>`;
+  if (due.state === 'NO_DUE_DATE') return noDateBadge(due.label); // the one sentence for no due date (T.NO_DUE_DATE, N4)
   return h`${due.label}`;
+}
+
+/** What a task is about, without saying the company twice: a company already named in a claim's words is left out. */
+function aboutOf(about: readonly T.TaskAbout[]): readonly T.TaskAbout[] {
+  return about.filter((a) => !(a.kind === 'organisation' && about.some((b) => b !== a && b.label.includes(a.label))));
 }
 
 function quickStatus(t: T.TaskView, back: string): Safe {
@@ -288,10 +297,10 @@ export function taskRows(tasks: readonly T.TaskView[], back: string, empty: stri
   if (tasks.length === 0) return h`<p class="help">${empty}</p>`;
   return h`<table><thead><tr><th>Task</th><th>About</th><th>Owner</th><th>Due</th><th>Status</th><th></th></tr></thead>
     <tbody>${tasks.map((t) => h`<tr class="${t.due.overdue ? 'overdue' : ''}">
-      <td><a href="/staff/tasks/${t.id}">${t.title}</a>${t.is_next_action ? h`<br><strong>the claim’s next action</strong>` : raw('')}
+      <td><a href="/staff/tasks/${t.id}">${t.title}</a>${t.is_next_action ? h`<br><span class="badge b-info">the claim’s next action</span>` : raw('')}
         <br><span class="help">${t.activity.label} · ${t.origin}</span></td>
       <td>${t.about.length === 0 ? h`<span class="help">—</span>`
-        : t.about.map((a) => (a.href === null ? h`${a.label}<br>` : h`<a href="${a.href}">${a.label}</a><br>`))}</td>
+        : aboutOf(t.about).map((a) => (a.href === null ? h`${a.label}<br>` : h`<a href="${a.href}">${a.label}</a><br>`))}</td>
       <td>${t.owner.label}</td>
       <td>${dueCell(t.due)}</td>
       <td>${t.status.label}${t.closed === null ? raw('') : h`<br><span class="help">${t.closed}</span>`}</td>
@@ -420,9 +429,18 @@ export function emailBlock(
 }
 
 /** MY TASKS — on the landing page, for every staff role. */
+/**
+ * UI TIDY PHASE 9, 3 October 2026: the tasks first; then what a client owes us and is late with, open; then the longer
+ * lists folded, each saying how many it holds — the claims with no next step (Tasks' own filter has them too), my claims
+ * and who each waits on, and the other questions waiting on a client. Every list is still here.
+ */
+function morelist(title: string, n: number, body: Safe): Safe {
+  return n === 0 ? raw('') : h`<details class="morelist"><summary>${title} <span class="count">${String(n)}</span></summary>${body}</details>`;
+}
+
 export function myTasksBlock(w: T.MyWork): Safe {
-  return h`<div class="pblock"><div class="pnum">My tasks</div>
-    ${w.overdue > 0 ? h`<p class="err"><strong>${w.overdue} overdue.</strong></p>` : raw('')}
+  const otherQuestions = w.questions_waiting.filter((q) => !q.due.overdue);
+  return h`<section class="card" id="my-tasks"><h2 class="vh">My tasks</h2>
     ${taskRows(w.tasks, '/staff', 'Nothing is yours or waiting with your team right now.')}
     ${w.client_questions_overdue.length === 0 ? raw('') : h`<p><strong>Questions you put to a client that are past their due date</strong></p>
       <ul>${w.client_questions_overdue.map((q) => h`<li class="overdue"><a href="/staff/clients/${q.business_id}">${q.client}</a>:
@@ -432,20 +450,21 @@ export function myTasksBlock(w: T.MyWork): Safe {
         r.claim === null ? h`<a href="/staff/clients/${r.business_id}">${r.client}</a>`
           : h`<a href="/staff/claims/${r.claim.id}">${r.claim.name}</a> ${claimRef(r.claim.claim_ref)}`}:
         ${r.type_label} — ${r.due.overdue ? h`<strong>${r.due.label}</strong>` : h`${r.due.label}`}</li>`)}</ul>`}
-    ${w.claims_without_next_action.length === 0 ? raw('') : h`<p><strong>Claims you own with no next step, owner or date</strong></p>
+    ${morelist('Claims with no next step, owner or date', w.claims_without_next_action.length + w.unowned_claims_breaking.length, h`
+      ${w.claims_without_next_action.length === 0 ? raw('') : h`<p><strong>Claims you own</strong></p>
       <ul>${w.claims_without_next_action.map((c) => h`<li><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} — ${c.sentence}</li>`)}</ul>`}
-    ${w.unowned_claims_breaking.length === 0 ? raw('') : h`<p><strong>Claims nobody owns with no next step, owner or date</strong></p>
+      ${w.unowned_claims_breaking.length === 0 ? raw('') : h`<p><strong>Claims nobody owns</strong></p>
       <ul>${w.unowned_claims_breaking.map((c) => h`<li><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} — ${c.sentence}
-        <span class="help">— give it an owner, then its next action</span></li>`)}</ul>`}
-    ${w.my_claims.length === 0 ? raw('') : h`<p><strong>My claims, their next actions, and who is waiting</strong></p>
+        <span class="help">— give it an owner, then its next action</span></li>`)}</ul>`}`)}
+    ${morelist('My claims, their next actions, and who is waiting', w.my_claims.length, h`
       <ul>${w.my_claims.map((c) => h`<li class="${c.overdue ? 'overdue' : ''}"><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} — ${c.stage}:
         ${c.overdue ? h`<strong>${c.next_action}</strong>` : h`${c.next_action}`}${c.waiting === null ? raw('')
-          : h` <span class="help">— ${c.waiting.who === 'CLIENT' ? 'waiting on the client' : c.waiting.who === 'US' ? 'waiting on us' : 'nobody is waiting'}: ${c.waiting.why}</span>`}</li>`)}</ul>`}
-    ${w.questions_waiting.filter((q) => !q.due.overdue).length === 0 ? raw('') : h`<p><strong>Other questions you are waiting on a client to answer</strong></p>
-      <ul>${w.questions_waiting.filter((q) => !q.due.overdue).map((q) => h`<li><a href="/staff/clients/${q.business_id}">${q.client}</a>:
-        “${q.question}” — ${q.due.label}${q.sent ? raw('') : h` <span class="help">— not yet sent to the client’s portal, so it waits on us</span>`}</li>`)}</ul>`}
+          : h` <span class="help">— ${c.waiting.who === 'CLIENT' ? 'waiting on the client' : c.waiting.who === 'US' ? 'waiting on us' : 'nobody is waiting'}: ${c.waiting.why}</span>`}</li>`)}</ul>`)}
+    ${morelist('Other questions you are waiting on a client to answer', otherQuestions.length, h`
+      <ul>${otherQuestions.map((q) => h`<li><a href="/staff/clients/${q.business_id}">${q.client}</a>:
+        “${q.question}” — ${q.due.label}${q.sent ? raw('') : h` <span class="help">— not yet sent to the client’s portal, so it waits on us</span>`}</li>`)}</ul>`)}
     <p class="help"><a href="/staff/tasks">All my tasks</a>. A task waiting with your team shows here until somebody takes it.</p>
-  </div>`;
+  </section>`;
 }
 
 /* ------------------------------------------------------------------ *
@@ -455,7 +474,15 @@ export function myTasksBlock(w: T.MyWork): Safe {
 function tasksListPage(d: TaskPageDeps, actor: Actor, w: T.MyWork, all: readonly T.TaskView[] | null, msg: string | undefined): string {
   return page({
     title: 'Tasks', nav: d.nav(actor), wide: true,
-    body: h`<h1>Tasks</h1>${filterBar(actor, TASK_FILTERS, all === null ? '/staff/tasks' : '/staff/tasks?view=all')}${saved(msg)}
+    body: h`<div class="pagehead"><div><h1>Tasks</h1><p class="lede">${w.tasks.length} open · ${w.overdue} late</p></div></div>
+      ${kpiRow([
+        { label: 'Late', value: String(w.overdue), tone: w.overdue > 0 ? 'late' : 'plain', href: '#my-tasks' },
+        { label: 'Due today', value: String(w.tasks.filter((t) => t.due.state === 'DUE_TODAY').length), tone: 'total', href: '#my-tasks' },
+        { label: 'No due date', value: String(w.tasks.filter((t) => t.due.state === 'NO_DUE_DATE').length), tone: 'plain', href: '#my-tasks' },
+        ...(opens(actor, T.nextActionsGate) ? [{ label: 'Claims with no next step', value: String(w.claims_without_next_action.length + w.unowned_claims_breaking.length),
+          tone: (w.claims_without_next_action.length + w.unowned_claims_breaking.length > 0 ? 'warn' : 'plain') as KpiTone, href: '/staff/next-actions' }] : []),
+      ])}
+      ${filterBar(actor, TASK_FILTERS, all === null ? '/staff/tasks' : '/staff/tasks?view=all')}${saved(msg)}
       <div class="help">A job a colleague does. A question for the client is on the client's page.${why(h`Overdue is judged against
       today’s date in the UK. A task with no due date is not overdue, and not on time either.`)}</div>
       ${myTasksBlock(w)}

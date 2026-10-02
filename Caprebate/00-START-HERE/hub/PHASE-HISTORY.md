@@ -11240,3 +11240,11 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## UI tidy phase 9 of 17, 3 October 2026 — Tasks (Claude Code, on the Mac)
+
+-  **Built:** a line of counts and four boxes (late, due today, no due date, claims with no next step); late as a red label with its date under it in every task table, the company said once, "the claim's next action" a quiet label; the longer lists under the table folded with their counts. Nothing taken away.
+-  **Proof.** `test/ui-tidy-tasks.test.ts`, seven tests; 11 single-line mutations, all red. Screenshots for Sales and Accounting: Sales's Tasks went from 2955 to 1769 px tall at 1280. 2144 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2144`) green.
+-  **Next:** phase 10, Survey jobs and a survey job.
+
+ **Claim cleared** in the commit that carries this record.
+
