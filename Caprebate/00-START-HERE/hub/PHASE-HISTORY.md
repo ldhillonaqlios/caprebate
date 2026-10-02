@@ -11069,3 +11069,14 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+
+## Ad-hoc, 2 October 2026 — the survey pack, stage 3: read it all, then one click (Claude Code, cloud session)
+
+ Lakhbir: "whole pack needs to be read through then approve button ungreys like someone reading and accepting T&C"; "when the surveyor signs it should be a single CTA approve click"; the fingerprint, approved; "this is one thing that cannot fail".
+
+-  **Built:** chapter 23 of the pack, *Sign* (`src/web/pack-approve.ts`, `src/web/pack-chapters.ts`, migration 072). Each check is ticked or said in words with a link: the property, complete sums, the legal check allows it, every built chapter opened by the assigned surveyor (and chapter 7 again after anyone else answers it), their RICS number, the job's locked estimate. Until then the button is grey. One click keeps the whole report as one JSON document with its SHA-256 fingerprint as the next version, and in the same transaction commits the figures to the job (or amends them, after the first), so the claim reads them as before. Anything refused undoes the lot. A version can be opened exactly as approved, and says whether its fingerprint still holds. The side of every chapter shows the approval's state; the chapter list ticks each one opened.
+-  **Found while building:** the grey button was drawn black by a stronger button rule; fixed and checked on the demo. Two sentences were above grade 9; simplified.
+-  **Proof.** `test/pack-approve.test.ts` (12), including eight clicks at once (one version), an out-of-date page from the pack or the legal check, a refused commitment keeping nothing, and a copy altered underneath shown as altered; 34 single-line mutations each turned it red. `npm run check` 1993 pass (116 files) on the full copy; in the cloud clone the same five Mac-only tests cannot run (and `phase144a`'s backup-copy test needs the Mac's `.bak-phase144a` files). CRM fold, plain words, register, analytics and drift (`--expect 1279,439,403,1993`) green; the brand check cannot open the logo here.
+-  **Next:** stage 4 — the client's report and PDF from the approved version, sent to the client's portal and to the in-house and/or client's accountant.
+
+ **Claim cleared** in the commit that carries this record.

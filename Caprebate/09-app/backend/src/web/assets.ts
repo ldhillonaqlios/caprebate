@@ -378,6 +378,17 @@ dl.pk-dl{display:block;margin:0}.pk-dl div{display:flex;justify-content:space-be
 .pk-q-form{margin-top:.5rem}
 .pk-add{border:1px solid var(--line);border-radius:var(--radius);padding:.8rem 1rem;margin:1rem 0}
 .pk-choose{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+/* 2 Oct 2026 — the pack's signing chapter and its approved versions (src/web/pack-approve.ts) */
+.pk-checks{list-style:none;padding:0;margin:.6rem 0 1rem}.pk-checks li{padding:.45rem .6rem;border:1px solid var(--line);border-left:4px solid var(--stop);border-radius:var(--radius);margin:.35rem 0;font-size:15px}
+.pk-checks li.pk-ok{border-left-color:var(--ok)}
+.pk-tick{color:var(--ok);font-weight:700}
+.pk-decl{border:2px solid var(--ink);border-radius:var(--radius);padding:.8rem 1rem;margin:1rem 0}
+.pk-decl ol{margin:.3rem 0 0;padding-left:1.2rem}.pk-decl li{margin:.2rem 0}
+.pk-approve{margin:1rem 0 1.4rem}
+.pack-book .pk-approve button.cta[type="submit"][disabled],.pack-book .pk-approve button.cta[type="submit"][disabled]:hover{background:var(--mist);border-color:var(--line);color:var(--mut);cursor:not-allowed}
+.pk-approved{background:var(--okbg);border:2px solid var(--ok);border-radius:var(--radius);padding:.8rem 1rem;margin:.8rem 0}
+.pk-fp{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;overflow-wrap:anywhere}
+.pk-fp-bad{background:var(--stopbg);border:2px solid var(--stop);border-radius:var(--radius);padding:.8rem 1rem}
 @media (max-width:1100px){.pack{grid-template-columns:minmax(0,1fr)}.pack-ch,.pack-side{position:static}.pathway{flex-direction:column}.pathway div{border-left:0;border-top:1px solid var(--line)}.pk-needed{columns:1}}
 /* 1 Oct 2026 — the client's portal home as a dashboard (src/web/portal-dashboard.ts) */
 .pdash{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0 0 1.4rem}

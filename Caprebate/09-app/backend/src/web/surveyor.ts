@@ -190,6 +190,11 @@ export type PackJob = {
   readonly surveyor_id: string | null; readonly surveyor_name: string | null; readonly claim_id: string | null;
   readonly state: string;
 };
+/** 2 Oct 2026: whether a job has its locked estimate — without one, committing figures releases nothing and is refused. */
+export function jobHasEstimate(db: Db, job_id: string): boolean {
+  return db.get('SELECT 1 AS x FROM estimates e JOIN surveyor_jobs j ON j.assessment_id = e.assessment_id WHERE j.id = ?', [job_id]) !== undefined;
+}
+
 export function packJob(db: Db, actor: Actor, job_id: string): { job: PackJob; obj: Extract<Obj, { type: 'surveyor_job' }> } {
   const r = loadJob(db, actor, job_id);
   return {

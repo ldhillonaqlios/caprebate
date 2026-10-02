@@ -366,6 +366,8 @@ export type AuditKind =
   | 'BOOKING_CREATED' | 'CALL_LOGGED' | 'VIDEO_CALL_OPENED'
   /** 1 Oct 2026: a surveyor changed the survey pack (src/web/survey-pack.ts): what, which line, which fields — never a value. */
   | 'SURVEY_PACK_CHANGED'
+  /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/web/pack-approve.ts): the version and its fingerprint. */
+  | 'SURVEY_PACK_APPROVED'
   /** Phase 151f: a signed word from the service that the check is still under way, or about something other than a
    *  check's status. Acknowledged and not kept as a result. The status word and why only. */
   | 'IDENTITY_RESULT_NOT_KEPT'
