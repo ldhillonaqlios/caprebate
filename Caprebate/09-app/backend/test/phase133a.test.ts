@@ -360,7 +360,7 @@ describe('every page works with JavaScript switched off', () => {
     assert.match(home.body, /<details class="usermenu">/);
     // UI TIDY PHASE 2: More is gone (every section sits in a named group); the phone's Menu button needs no script either.
     assert.match(home.body, /<input type="checkbox" id="navtoggle" class="navtoggle"><label for="navtoggle" class="navbutton">Menu<\/label>/);
-    const board = await as('sales').get('/staff/pipeline');
+    const board = await as('sales').get('/staff/pipeline?layout=board'); // UI tidy phase 3: the board of columns is the second view
     assert.match(board.body, /<ol class="board"/);
     assert.match(board.body, /<li id="stage-ENQUIRY"/);
   });

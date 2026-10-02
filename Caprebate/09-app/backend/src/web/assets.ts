@@ -1272,6 +1272,23 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
   body.app .uname{position:static;width:auto;height:auto;overflow:visible;clip:auto}
 }
 
+/* UI TIDY PHASE 3 — THE PIPELINE AS ONE TABLE (src/web/pipeline-pages.ts, pipelineTable). Each group of stages opens
+   with its coloured band; the business is the link a person reads first. */
+.listtools{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:.6rem 1rem;margin:0 0 .9rem}
+.listtools .viewbar{margin:0}
+.inlineform{display:flex;flex-wrap:wrap;align-items:flex-end;gap:.4rem}
+.inlineform label{flex-basis:100%;font-weight:600;font-size:15px;margin:0}
+.inlineform input[type="search"]{width:20rem;max-width:100%;min-height:2.5rem}
+.pipetable{margin:0}
+.pipetable .bandrow th{padding:0;background:transparent;border:0}
+.pipetable .bandrow .band{border-radius:0}
+.pipetable td{font-size:15px}
+@media (min-width:721px){.pipetable td:first-child{min-width:12rem}.pipetable td:nth-child(3){min-width:15rem}}
+.pipetable .moveform{margin:.4rem 0 0}
+.pipetable .rowlink{font-weight:700;color:var(--ink)}
+.pipetable .btn-quiet{white-space:nowrap;font-size:14px}
+@media (max-width:720px){.pipetable .bandrow th{display:block}.pipetable .bandrow{border:0;padding:0;background:transparent}}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of

@@ -176,7 +176,7 @@ describe('UI tidy phase 2: the phone’s Menu button and the left-hand layout', 
     assert.match(SITE_CSS, /body\.app \.tabs-main>li>a\[aria-current="page"\]\{background:var\(--mint\);color:var\(--ink\)/);
     assert.match(SITE_CSS, /body\.app \.subnav a\[aria-current="page"\]\{background:var\(--mint\);color:var\(--ink\)/);
     const from = SITE_CSS.lastIndexOf('/*', SITE_CSS.indexOf('UI TIDY PHASE 2 — THE LEFT-HAND MENU'));
-    const block = SITE_CSS.slice(from, SITE_CSS.lastIndexOf('/*', SITE_CSS.indexOf('THE PUBLIC PAGES IN THE HOME PAGE')));
+    const block = SITE_CSS.slice(from, SITE_CSS.indexOf('\n/* ', from + 10)); // up to the next block's opening comment
     const rules = block.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@media[^{]*\{/g, '');
     for (const m of rules.matchAll(/([^{}]+)\{[^{}]*\}/g)) {
       for (const one of (m[1] ?? '').split(',')) {

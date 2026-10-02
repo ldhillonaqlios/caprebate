@@ -57,8 +57,8 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 | --- | --- | --- |
 | 1 | The shared look: stage colours, solid number boxes, black table headers, labels | DONE 2 Oct |
 | 2 | The left-hand menu for every login, the menus that open out, a menu button on phones; Survey jobs leaves More | DONE 2 Oct (Settings opens out; the client, survey job and Finance open out in their own phases) |
-| 3 | Pipeline | NEXT, once Lakhbir has reviewed 1 and 2 |
-| 4 | Home | |
+| 3 | Pipeline | DONE 2 Oct |
+| 4 | Home | NEXT |
 | 5 | Leads | |
 | 6 | Clients list | |
 | 7 | A client's page, part 1: header, claim boxes, its own menu | |
@@ -73,7 +73,7 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 | 16 | Client portal: Your claims, Messages, Show us your building | |
 | 17 | Accounting's and the Surveyor's own pages, and a phone check of every page | |
 
-**Groups approved so far:** phases 1 and 2 (2 October 2026).
+**Groups approved so far:** phases 1 and 2 (2 October 2026); phases 3 to 6 (2 October 2026).
 
 ## What the first look found (2 October 2026), worst first
 

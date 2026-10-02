@@ -116,7 +116,7 @@ Each login has an easy layout of its own. **Nothing a role may see or do changed
   sections down the left** instead. These are **Admin settings** (`B43`) and **Document types** (`B29`). Pick a section
   and only that one shows. Nothing moved off any of the five. Each section is in a tab or in the list. After you save
   something, the page opens on the tab or section you saved in.
-- **The pipeline** (`B21`) is a board: one column per stage, a card per claim. On a phone the columns stack.
+- **The pipeline** (`B21`) is one table of claims, in coloured groups of stages. **Show as a board** gives one column per stage.
 - **Claims** (`B17`, `B42`) show the **Filter, sort and save** panel beside the list. Click an underlined column
   heading to sort the list by it. **Leads** (`B19`) are cards in four sections. The same panel is behind its
   **Filter** button. The table is **List view**.
@@ -2241,11 +2241,15 @@ It is refused. Record ownership and claim conflict as Yes. Now every check is a 
 
 ### Training — `B21` the pipeline board
 
-**Where things are on the page.** The board is a row of columns, one for each stage. Each column shows its name and
-count at the top. A stage's owner and what it needs are under **Owner and what this step needs**. Each claim is a card.
-It shows the reference, client, property and owner. It also shows the days since its last move and the next action. It
-has the **Move to …** button. **On hold** and the claims that have stopped (**Stopped — the record is kept**) are in a
-second row below. On a phone, the columns stack into a list.
+**Where things are on the page.** At the top are four boxes: claims in progress, next steps that are late, claims
+nobody owns, and claims on hold. A red or brown box is a link to just those claims. Under them a coloured bar shows
+where the claims are. Then comes one table of every claim. It has five groups. Each group has its own colour. The
+first is **Winning it**. The last is **Getting paid**. Each row shows the business, then the site and
+the claim number. It shows the stage, the next step and when it is due. A late step is red. It shows the owner, or
+**Nobody yet**. Under the next step is the **Move to …** button. Claims on hold, and claims that have stopped, are at
+the end. Use **Find a claim** to search by business, site or claim number. Use **All**, **Late**, **Mine** or
+**Nobody owns it** to narrow the list. **Show as a board** opens the old board of columns. There, a stage's owner and
+what it needs are under **Owner and what this step needs**. On a phone, each row is a card.
 
 **What it is for**
 It shows every claim on the ten steps, one column each. Below is a lane for claims on hold and the claims that have
@@ -2260,9 +2264,9 @@ board or make any move.
 Address: `/staff/pipeline` · a move: sent from a card or the claim page
 
 **How to do the common job**
-1. Open **Pipeline** and find the card.
-2. Read the column's **What this step needs:** line.
-3. Press the card's **Move to …** button. It asks for exactly the next stage.
+1. Open **Pipeline** and find the claim's row. **Find a claim** helps.
+2. To see what the step needs, open the claim, or use **Show as a board** and read the column's **What this step needs:** line.
+3. Press the row's **Move to …** button. It asks for exactly the next stage.
 4. If the move is refused, open the claim. Its pipeline panel lists each need with ✗ or ✓ and the reason.
 5. To exit or hold, use the claim page. To exit, use **Close the claim here**, with **Exit to** and **Reason**. The record is kept. To hold, use **Put on hold**, with **Hold reason**.
 

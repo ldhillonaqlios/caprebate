@@ -11186,3 +11186,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## UI tidy phase 3 of 17, 2 October 2026 — the Pipeline as one table (Claude Code, on the Mac)
+
+ Lakhbir approved phases 3 to 6 as the second group.
+
+-  **Built:** `/staff/pipeline` is one table in five coloured stage groups, with four boxes (in progress, late, nobody owns it, on hold), the bar of groups, search and four filters; each row keeps its Move button under the next step. The board of columns is `?layout=board`, unchanged. Found and fixed on the way: a move from the board returned to `?layout=board?done=moved`.
+-  **Proof.** `test/ui-tidy-pipeline.test.ts`, eleven tests; 19 single-line mutations, all red. Screenshots at 1280 and 390 px. 2106 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2106`) green.
+-  **Next:** phase 4, Home.
+
+ **Claim cleared** in the commit that carries this record.
+

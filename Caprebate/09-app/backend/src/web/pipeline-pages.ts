@@ -24,8 +24,9 @@ import { can, type Actor } from '../authz.ts';
 import { badge, brandName, claimRef, dataLink, fields, highlights, nextStepCard, recordLayout, savedMessage, section, sidePanel, why, type Need, type SectionContext, type SectionSpec } from './components.ts';
 import { sectionPrefs } from './sections.ts';
 import { leadNextStep, plainNeed } from './next-step.ts';
-import { dueWords, ukDatesIn } from './localtime.ts';
+import { dueReading, dueWords, ukDatesIn } from './localtime.ts';
 import { navContext, filterBar, LEAD_FILTERS } from './navigation.ts';
+import { STAGE_GROUPS, groupBand, groupBar, kpiRow, lateBadge, noDateBadge, nobodyBadge, stageBadge, stageGroupOf, stageLabel, type GroupKey } from './look.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as C from './crm.ts';
 import * as L from './leads.ts';
@@ -219,7 +220,10 @@ export async function handlePipeline(
     return 'handled';
   }
   if (path === '/staff/pipeline' && method === 'GET') {
-    html(res, 200, boardPage(d, actor, C.pipelineBoard(db, actor, d.app.now()), done));
+    // UI TIDY PHASE 3: one table, grouped by stage, by default; `layout=board` is the board of columns, as it was.
+    const b = C.pipelineBoard(db, actor, d.app.now());
+    html(res, 200, url.searchParams.get('layout') === 'board' ? boardPage(d, actor, b, done)
+      : pipelineTable(d, actor, b, done, d.app.now(), { q: url.searchParams.get('q') ?? '', show: url.searchParams.get('show') ?? '' }));
     return 'handled';
   }
 
@@ -228,7 +232,8 @@ export async function handlePipeline(
   if (move && method === 'POST') {
     const id = move[1] ?? '';
     const f = await form(req);
-    const back = f.get('back') === 'board' ? '/staff/pipeline' : `/staff/claims/${id}`;
+    // UI tidy phase 3: `back` is one fixed word, never a path — the table (`board`) or the board of columns (`columns`).
+    const back = f.get('back') === 'board' ? '/staff/pipeline' : f.get('back') === 'columns' ? '/staff/pipeline?layout=board' : `/staff/claims/${id}`;
     const r = P.moveClaim(deps, actor, id, {
       kind: f.get('kind') ?? '', to: nonBlank(f.get('to')), reason_code: nonBlank(f.get('reason_code')),
       reason: nonBlank(f.get('reason')),
@@ -239,7 +244,7 @@ export async function handlePipeline(
       },
     });
     if (!r.ok) return d.problem(res, actor, 'Not moved', r.why, back, r.field);
-    redirect(res, `${back}?done=moved`);
+    redirect(res, `${back}${back.includes('?') ? '&' : '?'}done=moved`);
     return 'handled';
   }
 
@@ -557,7 +562,7 @@ function card(c: C.BoardCard): Safe {
     ${c.hold === undefined ? raw('') : h`<p class="help">On hold: ${c.hold.reason ?? 'no reason recorded'} — returns to ${c.hold.returns_to}</p>`}
     ${c.next === undefined ? raw('') : h`<form method="post" action="/staff/claims/${c.id}/stage">
       <input type="hidden" name="kind" value="FORWARD"><input type="hidden" name="to" value="${c.next.key}">
-      <input type="hidden" name="back" value="board"><button type="submit" class="btn-quiet">Move to ${c.next.label}</button></form>`}</li>`;
+      <input type="hidden" name="back" value="columns"><button type="submit" class="btn-quiet">Move to ${c.next.label}</button></form>`}</li>`;
 }
 
 function cards(list: readonly C.BoardCard[]): Safe {
@@ -569,12 +574,131 @@ function column(id: string, label: string, list: readonly C.BoardCard[], about: 
     ${about}${cards(list)}</li>`;
 }
 
+/* ------------------------------------------------------------------ *
+ * THE PIPELINE AS ONE TABLE — UI TIDY PHASE 3, 2 October 2026
+ * ------------------------------------------------------------------ */
+
+/**
+ * Lakhbir chose "design 2" (00-START-HERE/hub/UI-TIDY-PLAN.md): the pipeline as one table, grouped by stage, with colours
+ * and darker boxes "to make this easier to read". At laptop width the board of columns ran off the right edge. Every
+ * claim the board showed is a row here, in the same groups of stages (src/web/look.ts), the latest next step first; the
+ * row keeps the card's Move button, under its next step, and the board itself is one click away (`layout=board`). Search and the four
+ * filters are links, so nothing needs a script.
+ */
+type PipelineFilter = { readonly q: string; readonly show: string };
+
+const PIPELINE_SHOWS: readonly (readonly [string, string])[] = [['', 'All'], ['late', 'Late'], ['mine', 'Mine'], ['nobody', 'Nobody owns it']];
+
+/** Whole days a next step is late, or null when it is not late (or has no date). */
+function daysLate(due: string | null, nowIso: string): number | null {
+  const r = dueReading(due, nowIso);
+  if (!r.overdue) return null;
+  const n = Number(/^(\d+)/.exec(r.words)?.[1] ?? 'NaN');
+  return Number.isFinite(n) ? n : null;
+}
+
+function dueCell(c: C.BoardCard, nowIso: string): Safe {
+  if (c.next_action === null) return raw('');
+  const late = daysLate(c.next_action_due, nowIso);
+  if (late !== null) return lateBadge(`${late} ${late === 1 ? 'day' : 'days'} late`);
+  if (c.next_action_due === null) return noDateBadge('No date');
+  const r = dueReading(c.next_action_due, nowIso);
+  return h`<span class="when">${r.words === '' ? r.date : r.words}</span>`;
+}
+
+/** The site alone: a property is labelled "Company — site", and the company is already the row's link. */
+export function siteOf(client: string, property: string | null): string {
+  if (property === null) return 'no property recorded';
+  return property.startsWith(`${client} — `) ? property.slice(client.length + 3) : property;
+}
+
+function pipelineRow(c: C.BoardCard, nowIso: string, withValue: boolean): Safe {
+  return h`<tr><td data-label="Business and site"><a class="rowlink" href="/staff/claims/${c.id}">${c.client}</a><br><span class="help">${
+      siteOf(c.client, c.property)} · ${c.claim_ref}</span></td>
+    <td data-label="Stage">${c.stage_key === null ? h`<span class="badge">${c.stage_label}</span>` : stageBadge(c.stage_key, c.stage_label)}</td>
+    <td data-label="Next step">${c.next_action ?? h`<span class="help">No next step yet</span>`}${c.hold === undefined ? raw('')
+      : h`<br><span class="help">On hold: ${c.hold.reason ?? 'no reason recorded'} — returns to ${c.hold.returns_to}</span>`}${
+      c.next === undefined ? raw('') : h`<form method="post" action="/staff/claims/${c.id}/stage" class="moveform">
+      <input type="hidden" name="kind" value="FORWARD"><input type="hidden" name="to" value="${c.next.key}">
+      <input type="hidden" name="back" value="board"><button type="submit" class="btn-quiet">Move to ${c.next.label}</button></form>`}</td>
+    <td data-label="Due">${dueCell(c, nowIso)}</td>
+    <td data-label="Owner">${c.owner ?? nobodyBadge('Nobody yet')}</td>
+    ${withValue ? h`<td data-label="Range shown">${c.value ?? ''}</td>` : raw('')}</tr>`;
+}
+
+/** The latest next step first; then a step with a date before one without; then by reference. */
+function byUrgency(nowIso: string): (a: C.BoardCard, b: C.BoardCard) => number {
+  const key = (c: C.BoardCard): number => daysLate(c.next_action_due, nowIso) ?? (c.next_action_due === null ? -1e9 : -Date.parse(c.next_action_due) / 864e5 - 1e6);
+  return (a, b) => key(b) - key(a) || a.claim_ref.localeCompare(b.claim_ref);
+}
+
+function pipelineTable(d: PipelinePageDeps, actor: Actor, b: C.Board, msg: string | undefined, nowIso: string, f: PipelineFilter): string {
+  const inProgress = b.columns.flatMap((col) => col.cards);
+  const all = [...inProgress, ...b.on_hold, ...b.exited.flatMap((e) => e.cards), ...b.unrecognised];
+  const q = f.q.trim().toLowerCase();
+  const show = PIPELINE_SHOWS.some(([k]) => k === f.show) ? f.show : '';
+  const keep = (c: C.BoardCard): boolean =>
+    (q === '' || c.client.toLowerCase().includes(q) || c.claim_ref.toLowerCase().includes(q) || (c.property ?? '').toLowerCase().includes(q))
+    && (show === '' || (show === 'late' && daysLate(c.next_action_due, nowIso) !== null) || (show === 'mine' && c.owner_id === actor.id)
+      || (show === 'nobody' && c.owner_id === null));
+  const late = inProgress.filter((c) => daysLate(c.next_action_due, nowIso) !== null).length;
+  const nobody = inProgress.filter((c) => c.owner_id === null).length;
+  const withValue = all.some((c) => c.value !== undefined);
+  const cols = withValue ? 6 : 5;
+  const counts: Partial<Record<GroupKey, number>> = {};
+  for (const c of inProgress) { const g = stageGroupOf(c.stage_key); if (g !== null) counts[g.key] = (counts[g.key] ?? 0) + 1; }
+  const { bar, empty } = groupBar(counts);
+  const sort = byUrgency(nowIso);
+  const groups: { band: Safe; rows: C.BoardCard[] }[] = [
+    ...STAGE_GROUPS.map((g) => {
+      const rows = inProgress.filter((c) => stageGroupOf(c.stage_key)?.key === g.key && keep(c)).sort(sort);
+      return { band: groupBand(g, `${g.name} · ${g.stages.map((k) => stageLabel(k)).join(', ')} · ${rows.length} ${rows.length === 1 ? 'claim' : 'claims'}`), rows };
+    }),
+    { band: groupBand(null, `On hold · ${b.on_hold.filter(keep).length}`), rows: b.on_hold.filter(keep).sort(sort) },
+    { band: groupBand(null, `Stopped — the record is kept · ${b.exited.flatMap((e) => e.cards).filter(keep).length}`), rows: b.exited.flatMap((e) => e.cards).filter(keep) },
+    { band: groupBand(null, `No step set · ${b.unrecognised.filter(keep).length}`), rows: b.unrecognised.filter(keep) },
+  ].filter((g) => g.rows.length > 0);
+  const link = (k: string): string => { const p = new URLSearchParams(); if (f.q !== '') p.set('q', f.q); if (k !== '') p.set('show', k); const s = p.toString(); return s === '' ? '/staff/pipeline' : `/staff/pipeline?${s}`; };
+  const shown = groups.reduce((n, g) => n + g.rows.length, 0);
+  return page({
+    title: 'Pipeline', nav: d.nav(actor), wide: true,
+    body: h`<div class="pagehead"><div><p class="eyebrow">Claims</p><h1>Pipeline</h1>
+        <p class="help">${inProgress.length} ${inProgress.length === 1 ? 'claim' : 'claims'} in progress · ${late} with a late next step</p></div>
+      <p><a class="btn" href="/staff/pipeline?layout=board">Show as a board</a>${can(actor, 'lead.write', { type: 'lead', id: '__lead_section__', business_id: null }) ? h` <a class="btn btn-primary" href="/staff/leads#record-lead">Record a lead</a>` : raw('')}</p></div>${done(msg)}
+      ${kpiRow([
+        { label: 'In progress', value: String(inProgress.length), tone: 'total' },
+        { label: 'Next step late', value: String(late), tone: 'late', href: link('late') },
+        { label: 'Nobody owns it', value: String(nobody), tone: 'warn', href: link('nobody') },
+        { label: 'On hold', value: String(b.on_hold.length), tone: 'plain' },
+      ])}
+      <section class="card"><h2 class="vh">Where the claims are</h2>${bar}${empty.length === 0 || inProgress.length === 0 ? raw('')
+        : h`<p class="help">Nothing at ${empty.join(', ')}.</p>`}
+      <div class="help">A claim moves one step at a time, and each move is checked when you press it.${why(h`There are ten steps, from enquiry to defence pack.
+      <strong>Each step is checked before a claim can move on</strong> — the button alone does not move it. Our fee is
+      due ${b.fee_trigger}.`)}</div></section>
+      <section class="card">
+        <div class="listtools"><form method="get" action="/staff/pipeline" role="search" class="inlineform"><label for="pq">Find a claim</label>
+          <input id="pq" name="q" type="search" value="${f.q}" placeholder="A business, a site or a claim number">${show === '' ? raw('') : h`<input type="hidden" name="show" value="${show}">`}
+          <button type="submit" class="btn-quiet">Find</button></form>
+        <nav class="viewbar" aria-label="Show">${PIPELINE_SHOWS.map(([k, label]) => h`<a href="${link(k)}"${k === show ? raw(' aria-current="page"') : raw('')}>${label}</a>`)}</nav></div>
+        ${shown === 0 ? h`<p class="empty">No claim matches. <a href="/staff/pipeline">Show every claim</a></p>`
+          : h`<div class="tablewrap"><table class="stack pipetable">
+          <thead><tr><th scope="col">Business and site</th><th scope="col">Stage</th><th scope="col">Next step</th><th scope="col">Due</th><th scope="col">Owner</th>${
+            withValue ? h`<th scope="col">Range shown</th>` : raw('')}</tr></thead>
+          ${groups.map((g) => h`<tbody><tr class="bandrow"><th scope="colgroup" colspan="${cols}">${g.band}</th></tr>${g.rows.map((c) => pipelineRow(c, nowIso, withValue))}</tbody>`)}
+        </table></div>`}
+      </section>
+      ${dataLink(actor, '/staff/pipeline/view.json')}`,
+  });
+}
+
 function boardPage(d: PipelinePageDeps, actor: Actor, b: C.Board, msg: string | undefined): string {
   const exited = b.exited.filter((e) => e.cards.length > 0);
   const open = b.columns.reduce((n, c) => n + c.cards.length, 0);
   return page({
     title: 'Pipeline', nav: d.nav(actor), wide: true,
-    body: h`<div class="pagehead"><div><p class="eyebrow">Claims</p><h1>Pipeline</h1></div><p class="help">${open} in progress · ${b.on_hold.length} on hold</p></div>${done(msg)}
+    body: h`<div class="pagehead"><div><p class="eyebrow">Claims</p><h1>Pipeline</h1></div><p class="help">${open} in progress · ${b.on_hold.length} on hold
+      <a class="btn" href="/staff/pipeline">Show as a list</a></p></div>${done(msg)}
       <div class="help">A claim moves one step at a time, and each move is checked when you press it.${why(h`There are ten steps, from enquiry to defence pack.
       <strong>Each step is checked before a claim can move on</strong> — the button alone does not move it. Our fee is
       due ${b.fee_trigger}.`)}</div>

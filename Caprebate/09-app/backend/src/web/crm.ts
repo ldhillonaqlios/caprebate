@@ -2087,6 +2087,10 @@ export type BoardCard = {
   /** Whole days since the claim's last move, or since it was opened. */
   readonly age_days: number;
   readonly stage_label: string;
+  /** UI tidy phase 3: the stored stage, the owner's id and the next action's due day, for the Pipeline table. */
+  readonly stage_key: string | null;
+  readonly owner_id: string | null;
+  readonly next_action_due: string | null;
   readonly hold?: { readonly reason: string | null; readonly returns_to: string };
   /** The next stage, for a person who may ask to move it. The server asks the gate again. */
   readonly next?: { readonly key: string; readonly label: string };
@@ -2119,6 +2123,7 @@ export function boardCard(db: Db, actor: Actor, r: ClaimDbRow, nowIso: string): 
   return {
     id: r.id, claim_ref: r.claim_ref, client: r.business_name, property: r.property_label, owner: r.owner_name,
     next_action: r.next_action, age_days: age, stage_label: s.label,
+    stage_key: r.stage, owner_id: r.owner_id, next_action_due: r.next_action_due,
     ...(s.kind === 'ON_HOLD' ? { hold: { reason: r.hold_reason, returns_to: anyStageLabel(r.hold_return_stage) } } : {}),
     ...(next === null ? {} : { next: { key: next, label: next === 'CLOSED' ? 'Closed' : anyStageLabel(next) } }),
     ...(value === null ? {} : { value: value.established ? value.shown_range : 'no estimate yet' }),
