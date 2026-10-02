@@ -47,6 +47,14 @@ export const BRAND_TOKENS: Readonly<Record<string, string>> = Object.freeze({
   ok: '#1d6b35', okbg: '#e6f4ea',
   warn: '#8a5300', warnbg: '#fff5e0',
   stop: '#a01e1e', stopbg: '#fcefef',
+  // UI TIDY PHASE 1, 2 October 2026: one colour for each group of claim stages (src/web/look.ts), from the mock-ups
+  // Lakhbir chose. Each group has a solid colour (white text on it), a light tint, and the darker text drawn on the tint.
+  'g-win': '#1e4fa3', 'g-win-bg': '#dfe9f9', 'g-win-ink': '#1a438c',
+  'g-gather': '#6b3fa0', 'g-gather-bg': '#ece3f7', 'g-gather-ink': '#55308a',
+  'g-survey': '#0f6b5c', 'g-survey-bg': '#d4efe8', 'g-survey-ink': '#0b5548',
+  'g-sign': '#8a5300', 'g-sign-bg': '#fbecd0', 'g-sign-ink': '#6e4300',
+  'g-paid': '#1d6b35', 'g-paid-bg': '#dcf0e1', 'g-paid-ink': '#185c2d',
+  nodate: '#e3e8e6', zebra: '#f6f9f8',
 });
 
 /**
@@ -60,6 +68,12 @@ export const TEXT_PAIRINGS: readonly (readonly [text: string, ground: string])[]
   ['stop', 'white'], ['stop', 'mist'], ['stop', 'stopbg'],
   // PHASE 135: the Tasks tab's count when a task is overdue.
   ['white', 'stop'],
+  // UI TIDY PHASE 1: the stage groups (a label on its tint, white on its solid band), the solid number boxes, the black
+  // table heading, the "no date" label and the striped rows.
+  ['g-win-ink', 'g-win-bg'], ['white', 'g-win'], ['g-gather-ink', 'g-gather-bg'], ['white', 'g-gather'],
+  ['g-survey-ink', 'g-survey-bg'], ['white', 'g-survey'], ['g-sign-ink', 'g-sign-bg'], ['white', 'g-sign'],
+  ['g-paid-ink', 'g-paid-bg'], ['white', 'g-paid'], ['white', 'warn'], ['white', 'ok'], ['white', 'ink'], ['mint', 'ink'],
+  ['ink', 'nodate'], ['ink', 'zebra'], ['body', 'zebra'],
 ]);
 
 const tokenCss = Object.entries(BRAND_TOKENS).map(([k, v]) => `--${k}:${v}`).join(';');
@@ -1142,6 +1156,46 @@ a.small{font-size:16px;font-weight:400;margin-left:.5rem}
   .gbtns button{flex:1 1 auto}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* ================================================================== *
+ * UI TIDY PHASE 1 — THE SHARED LOOK, 2 October 2026 (src/web/look.ts).
+ * Lakhbir chose "design 2" and asked for colours and darker boxes, so a
+ * busy person reads a page at a glance. The back office and the portal
+ * only: every rule starts body.app or names a class only look.ts draws.
+ * ================================================================== */
+body.app thead th{background:var(--ink);color:var(--white);border-bottom:0;font-size:15px;font-weight:700}
+body.app thead th:first-child{border-top-left-radius:.4rem}body.app thead th:last-child{border-top-right-radius:.4rem}
+body.app thead th a{color:var(--white)}
+body.app tbody tr:nth-child(even):not([class]) td{background:var(--zebra)}
+body.app tbody tr:not([class]):hover td{background:var(--mist)}
+.badge.g-win{background:var(--g-win-bg);color:var(--g-win-ink);border-color:var(--g-win)}
+.badge.g-gather{background:var(--g-gather-bg);color:var(--g-gather-ink);border-color:var(--g-gather)}
+.badge.g-survey{background:var(--g-survey-bg);color:var(--g-survey-ink);border-color:var(--g-survey)}
+.badge.g-sign{background:var(--g-sign-bg);color:var(--g-sign-ink);border-color:var(--g-sign)}
+.badge.g-paid{background:var(--g-paid-bg);color:var(--g-paid-ink);border-color:var(--g-paid)}
+.badge.b-late{background:var(--stop);color:var(--white);border-color:var(--stop);font-weight:700}
+.badge.b-nodate{background:var(--nodate);color:var(--ink);border-color:var(--nodate)}
+.badge.b-nobody{background:var(--warnbg);color:var(--warn);border-color:#ecd29a}
+.band{color:var(--white);font-weight:700;font-size:14px;letter-spacing:.04em;padding:.5rem .9rem;margin:0}
+.band.g-win{background:var(--g-win)}.band.g-gather{background:var(--g-gather)}.band.g-survey{background:var(--g-survey)}
+.band.g-sign{background:var(--g-sign)}.band.g-paid{background:var(--g-paid)}.band.g-none{background:var(--ink)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.9rem;margin:0 0 1.25rem;padding:0;list-style:none}
+.kpi{display:block;border-radius:.75rem;padding:.9rem 1.1rem;color:var(--white);text-decoration:none;min-width:0}
+.kpi .kpi-label{display:block;font-size:15px;font-weight:600;color:inherit}
+.kpi .kpi-value{display:block;font-family:${HEADING_STACK};font-size:32px;font-weight:700;line-height:1.2;color:inherit;overflow-wrap:anywhere}
+a.kpi:hover{text-decoration:none;filter:brightness(1.15)}a.kpi:hover .kpi-label{text-decoration:underline}
+.kpi.k-total{background:var(--ink)}.kpi.k-total .kpi-value{color:var(--mint)}
+.kpi.k-late{background:var(--stop)}.kpi.k-warn{background:var(--warn)}.kpi.k-money{background:var(--ok)}
+.kpi.k-win{background:var(--g-win)}.kpi.k-gather{background:var(--g-gather)}.kpi.k-survey{background:var(--g-survey)}
+.kpi.k-sign{background:var(--g-sign)}.kpi.k-paid{background:var(--g-paid)}
+.kpi.k-plain{background:var(--white);color:var(--ink);border:1px solid var(--line)}
+.groupbar{display:flex;height:2.1rem;border-radius:.5rem;overflow:hidden;margin:.4rem 0}
+.groupbar span{display:flex;align-items:center;padding:0 .6rem;color:var(--white);font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;min-width:0}
+.groupbar .g-win{background:var(--g-win)}.groupbar .g-gather{background:var(--g-gather)}.groupbar .g-survey{background:var(--g-survey)}
+.groupbar .g-sign{background:var(--g-sign)}.groupbar .g-paid{background:var(--g-paid)}
+.groupbar .gw-1{flex-grow:1}.groupbar .gw-2{flex-grow:2}.groupbar .gw-3{flex-grow:3}.groupbar .gw-4{flex-grow:4}.groupbar .gw-5{flex-grow:5}
+.groupbar .gw-6{flex-grow:6}.groupbar .gw-7{flex-grow:7}.groupbar .gw-8{flex-grow:8}.groupbar .gw-9{flex-grow:9}.groupbar .gw-10{flex-grow:10}
+@media (max-width:600px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}.kpi{padding:.7rem .8rem}.kpi .kpi-value{font-size:26px}}
 
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.

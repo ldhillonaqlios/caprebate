@@ -55,8 +55,8 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 
 | # | Phase | Status |
 | --- | --- | --- |
-| 1 | The shared look: stage colours, solid number boxes, black table headers, labels | NEXT |
-| 2 | The left-hand menu for every login, the menus that open out, a menu button on phones; Survey jobs leaves More | |
+| 1 | The shared look: stage colours, solid number boxes, black table headers, labels | DONE 2 Oct |
+| 2 | The left-hand menu for every login, the menus that open out, a menu button on phones; Survey jobs leaves More | NEXT |
 | 3 | Pipeline | |
 | 4 | Home | |
 | 5 | Leads | |
@@ -86,6 +86,10 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 7. Pipeline: runs off the right edge at laptop width. 8. Introducers: two long forms open before the list.
 9. Finance: two boxes say the same thing; a Settings tab beside the main Settings. 10. Calendar: a sentence under
 every heading. 11. Phone: the header fills a quarter of the first screen.
+
+## Things to know
+
+- This Mac has stray files that are not in the repository: `api/index.mjs.new0929`, `09-app/backend/test/assessment-start.test.ts`, `test/_tmp152-*.test.ts`, `test/_probe146l.test.ts`, several `*.mutbak` and `*.new0929`. They make `npm run check` and the sign-off register check red here. Never delete them; Lakhbir decides. Count the back end with `node --test $(git ls-files 'test/*.test.ts')` plus any new test file.
 
 ## Tools
 

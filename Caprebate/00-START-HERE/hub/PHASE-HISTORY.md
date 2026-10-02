@@ -11165,3 +11165,14 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** Lakhbir sends a short video from the iPhone on the test website.
 
  **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 1 of 17, 2 October 2026 — the shared look (Claude Code, on the Mac)
+
+ Lakhbir: make every tab cleaner and easy to use without help. He looked at five mock-ups, chose "design 2" (a left-hand menu with groups, each list one table), asked for colours and darker boxes, and approved phases 1 and 2 as the first group. The plan is `00-START-HERE/hub/UI-TIDY-PLAN.md`.
+
+-  **Built:** `src/web/look.ts` and its rules: five stage groups each with its own colour, solid number boxes, a bar of the groups, late / no date / nobody yet labels. On every back-office and portal page now: black table headings and striped rows. Nothing else moves until the pages use the pieces (phases 3 to 17).
+-  **Proof.** `test/ui-tidy-look.test.ts`, twelve tests; 20 single-line mutations, all red. Every colour pairing 4.5:1 or better (test/phase133c.test.ts). Screenshots of Tasks, Finance, Calendar and Survey jobs at 1280 and 390 px. The repo's own tests: 2082 tests, 2081 pass; the one failure is `test/phase151i.test.ts` reading a stray file on this Mac, `api/index.mjs.new0929`, which is not in the repository (nor are `test/assessment-start.test.ts`, `test/_tmp152-*.test.ts` and `test/_probe146l.test.ts`, whose own failures `npm run check` also counts here). CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2082`) green; the sign-off register check is red only on those same stray files.
+-  **Next:** phase 2, the left-hand menu.
+
+ **Claim cleared** in the commit that carries this record.
+
