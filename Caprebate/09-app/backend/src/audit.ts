@@ -375,6 +375,9 @@ export type AuditKind =
   | 'SURVEY_EVIDENCE_ADDED'
   /** 2 Oct 2026: photos sent in one go put under checklist items by Admin or Sales, or taken back. Counts only. */
   | 'SURVEY_PHOTOS_SORTED'
+  /** 2 Oct 2026: a site plan fetched for a survey job's report (src/web/site-plan.ts): how many buildings, and how the
+   *  client's was picked. Never the postcode, never a coordinate. */
+  | 'SITE_PLAN_FETCHED'
   /** Phase 151f: a signed word from the service that the check is still under way, or about something other than a
    *  check's status. Acknowledged and not kept as a result. The status word and why only. */
   | 'IDENTITY_RESULT_NOT_KEPT'

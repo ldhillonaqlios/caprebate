@@ -11165,3 +11165,15 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** Lakhbir sends a short video from the iPhone on the test website.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — the survey pack, stage 6: the free lookups on the test website, and the report's site plan (Claude Code, cloud session)
+
+ Stage 6 of the survey pack. Lakhbir, asked which lookups to switch on for the test website: "All the free ones". Asked how the client's building is chosen on the site plan: "Automatic".
+
+-  **Built — the lookups:** on the test website only, EPC, price paid, planning and CQC are switched on under a recorded waiver (`TEST_WEBSITE_LOOKUPS`), as the postcode check's is; the shipped switches stay off and every other gate holds. CQC's council area comes from postcodes.io there. The test website reads the EPC, CQC and Ordnance Survey keys from its settings.
+-  **Built — the site plan:** a button in chapter 9 fetches Ordnance Survey's free building outlines round the property's postcode (OS Features API, OS Open Zoomstack); the client's building is picked automatically; the approved version keeps it, and the report's cover draws it on the page and in the PDF, with OS's credit line. Migration 078. Never the land boundary.
+-  **Proof.** `test/survey-stage6.test.ts`, eleven tests; 36 single-line mutations, 35 caught and one that cannot be (the point-in-shape test counts crossings the other way, with the same answer). `npm run check` 2078 pass (122 files) on the full copy; the same five Mac-only tests cannot run in the cloud clone. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2078`) green.
+-  **Next:** Lakhbir adds three keys in Vercel (EPC, CQC, and a free Ordnance Survey Data Hub key), then runs the research and gets a site plan for a test client.
+
+ **Claim cleared** in the commit that carries this record.
+

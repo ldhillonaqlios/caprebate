@@ -6,7 +6,7 @@
  * reader has (nothing embedded), WinAnsi text written as hexadecimal strings so no character can end a string early or be
  * read as an operator, and the same bytes for the same input — so the PDF of an approved version is the same file
  * every time it is made, and needs no keeping. What it adds: a filled or outlined box (square or rounded), a line
- * (solid or dashed), a filled circle, text in Helvetica, Helvetica-Bold or Times-Bold in any colour, set left, right or
+ * (solid or dashed), a filled circle, a shape of straight sides (2 Oct 2026, the site plan), text in Helvetica, Helvetica-Bold or Times-Bold in any colour, set left, right or
  * centred, and the exact width of a piece of text (src/web/pdf-metrics.ts), so prose wraps and figures line up.
  *
  * Positions are in points from the TOP-LEFT of the page (text at its baseline), as a page is read; the writer turns them
@@ -23,6 +23,8 @@ export type Op =
       readonly fill?: Rgb; readonly stroke?: Rgb; readonly lw?: number; readonly r?: number; readonly dash?: number }
   | { readonly k: 'line'; readonly x1: number; readonly y1: number; readonly x2: number; readonly y2: number; readonly color: Rgb; readonly lw: number; readonly dash?: number }
   | { readonly k: 'circle'; readonly cx: number; readonly cy: number; readonly r: number; readonly fill: Rgb }
+  /** 2 Oct 2026: a shape of straight sides — the site plan's buildings. Rings of [x, y] points; holes drawn even-odd. */
+  | { readonly k: 'poly'; readonly rings: readonly (readonly (readonly [number, number])[])[]; readonly fill?: Rgb; readonly stroke?: Rgb; readonly lw?: number }
   | { readonly k: 'text'; readonly x: number; readonly y: number; readonly s: string; readonly font: PdfFont; readonly size: number; readonly color: Rgb;
       readonly align?: 'left' | 'right' | 'center'; readonly spacing?: number };
 
@@ -103,6 +105,13 @@ export function buildCanvasPdf(pages: readonly (readonly Op[])[], info: { readon
         out.push(`q ${o.fill === undefined ? '' : `${colour(o.fill)} rg `}${o.stroke === undefined ? '' : `${colour(o.stroke)} RG ${n(o.lw ?? 1)} w `}${o.dash === undefined ? '' : `[${n(o.dash)}] 0 d `}${path} ${paint} Q`);
       } else if (o.k === 'line') {
         out.push(`q ${colour(o.color)} RG ${n(o.lw)} w ${o.dash === undefined ? '' : `[${n(o.dash)}] 0 d `}${n(o.x1)} ${n(PAGE.h - o.y1)} m ${n(o.x2)} ${n(PAGE.h - o.y2)} l S Q`);
+      } else if (o.k === 'poly') {
+        const path = o.rings.filter((r) => r.length >= 2)
+          .map((r) => `${r.map(([x, y], i) => `${n(x)} ${n(PAGE.h - y)} ${i === 0 ? 'm' : 'l'}`).join(' ')} h`).join(' ');
+        if (path !== '' && (o.fill !== undefined || o.stroke !== undefined)) {
+          const paint = o.fill !== undefined && o.stroke !== undefined ? 'B*' : o.fill !== undefined ? 'f*' : 'S';
+          out.push(`q ${o.fill === undefined ? '' : `${colour(o.fill)} rg `}${o.stroke === undefined ? '' : `${colour(o.stroke)} RG ${n(o.lw ?? 1)} w `}${path} ${paint} Q`);
+        }
       } else if (o.k === 'circle') {
         out.push(`q ${colour(o.fill)} rg ${roundedPath(o.cx - o.r, PAGE.h - o.cy - o.r, 2 * o.r, 2 * o.r, o.r)} f Q`);
       } else {

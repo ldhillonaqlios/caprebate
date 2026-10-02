@@ -28,7 +28,7 @@ import { INBOUND_EMAIL } from '../stubs/email-inbound.ts';
 import { IDENTITY_CHECK } from '../connectors/identity-check.ts';
 import { COMPANY_SEARCH } from '../connectors/company-search.ts';
 import { ADDRESS_LOOKUP } from '../connectors/address-lookup.ts';
-import { switchedOn } from '../connectors/registers.ts';
+import { lookupsWaivedHere, switchedOn, switchesHere } from '../connectors/registers.ts';
 import { CLAUDE_SWITCHES } from '../connectors/claude.ts';
 import { zoomBlockers } from './video-calls.ts';
 import { whatsappMissing } from '../connectors/whatsapp.ts';
@@ -113,8 +113,8 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
   switch (owner) {
     case 'CLAUDE_DOCUMENTS': return Object.values(CLAUDE_SWITCHES).some((v) => v) ? { on: true, why: '' } : off('Reading documents with Claude is not switched on.');
     case 'COMPANIES_HOUSE': return COMPANY_SEARCH.enabled || switchedOn('CH_COMPANY') ? { on: true, why: '' } : off('The Companies House search is not switched on.');
-    case 'CQC': return switchedOn('CQC') ? { on: true, why: '' } : off('The care regulator lookup is not switched on.');
-    case 'EPC': return switchedOn('EPC') ? { on: true, why: '' } : off('The energy certificate lookup is not switched on.');
+    case 'CQC': return switchedOn('CQC', switchesHere()) ? { on: true, why: '' } : off('The care regulator lookup is not switched on.');
+    case 'EPC': return switchedOn('EPC', switchesHere()) ? { on: true, why: '' } : off('The energy certificate lookup is not switched on.');
     case 'HOMEDATA_ADDRESS': return switchedOn('HOMEDATA_ADDRESS') ? { on: true, why: '' } : off('The Homedata address lookup is not switched on.');
     case 'IONOS_EMAIL': return EMAIL_SENDING.enabled ? { on: true, why: '' } : off('Sending email is not switched on.');
     case 'IONOS_MAILBOX': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
@@ -128,6 +128,8 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
     case 'WHATSAPP': { const m = whatsappMissing(st, app.whatsappPolicy, { outside: app.outside }); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'REPLY_TIMER': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
     case 'GOADDRESS': return ADDRESS_LOOKUP.enabled ? { on: true, why: '' } : off('“Find my address” is not switched on.');
+    // 2 Oct 2026: the report's site plan (src/web/site-plan.ts), fetched on the test website only, for now.
+    case 'OS_MAPS': return lookupsWaivedHere() ? { on: true, why: '' } : off('Site plans are fetched on the test website only, for now.');
     default: return off('Nothing uses this key yet.');
   }
 }

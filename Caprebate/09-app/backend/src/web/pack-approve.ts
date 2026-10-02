@@ -28,6 +28,7 @@ import { legalAllows, legalView, type LegalView } from './pack-legal.ts';
 import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { basisOf, checklistView, walkthroughsOf } from './survey-evidence.ts';
 import { videosOf } from './survey-video.ts';
+import { sitePlanOf, type SitePlan } from './site-plan.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
   'I have reviewed this report to the extent it sets out.',
@@ -162,6 +163,11 @@ function inspectionOf(d: { db: PackDeps['db'] }, job_id: string) {
   };
 }
 
+function siteOf(d: { db: PackDeps['db'] }, job_id: string): { site_plan?: SitePlan } {
+  const p = sitePlanOf(d.db, job_id);
+  return p === null ? {} : { site_plan: p };
+}
+
 export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at: string; by: { id: string; name: string }; details: Details }, d: { db: PackDeps['db'] }) {
   const sumOf = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
   return {
@@ -188,6 +194,9 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     },
     changes: v.changes,
     inspection: inspectionOf(d, v.job.id),
+    // 2 Oct 2026, stage 6: the site plan as it stood at approval (src/web/site-plan.ts), so the report never changes after.
+    // Only when there is one: a version approved without a plan keeps the shape every earlier version has.
+    ...siteOf(d, v.job.id),
     legal: {
       verdict: lv.verdict,
       answers: lv.asked.filter((q) => lv.answers.has(q.id)).map((q) => {

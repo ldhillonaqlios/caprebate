@@ -16,8 +16,9 @@
  *   4  the legal check, and what happens next
  *   5  the surveyor's declaration, their name and RICS number, the fingerprint, and how the report was made
  *
- * The building's outline from Ordnance Survey's free maps joins page 1 at stage 6. The site boundary (INSPIRE) is never
- * in it (Lakhbir's rule, 1 Oct 2026).
+ * Page 1 also shows the site plan, when the version has one (stage 6, 2 Oct 2026): the client's building and the buildings
+ * round it, from Ordnance Survey's free maps (src/web/site-plan.ts). The site boundary (INSPIRE) is never in it
+ * (Lakhbir's rule, 1 Oct 2026).
  */
 import { h, raw, type Safe } from './html.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
@@ -25,6 +26,7 @@ import { answerWords, legalQuestions } from './pack-legal.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from './pdf-canvas.ts';
 import { minutesWords } from './survey-video.ts';
+import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from './site-plan.ts';
 
 export const REPORT_TITLE = 'Capital allowances survey report';
 
@@ -60,6 +62,8 @@ export type ReportModel = {
   readonly automation_note: string;
   /** 2 Oct 2026: how the building was inspected, and what the client sent (src/web/survey-evidence.ts). Null in a version approved before. */
   readonly inspection: string | null;
+  /** 2 Oct 2026, stage 6: the site plan from Ordnance Survey's free maps, as approved; null when the version has none. */
+  readonly site_plan: SitePlan | null;
 };
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -181,6 +185,7 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     declaration: [...x.declaration],
     automation_note: x.automation_note,
     inspection: inspectionWords((x as { inspection?: Snapshot['inspection'] }).inspection),
+    site_plan: (x as { site_plan?: SitePlan }).site_plan ?? null,
   };
 }
 
@@ -210,6 +215,9 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
           <div class="rp-facts"><h2>About the building</h2><dl>${m.facts.map((f) => h`<div><dt>${f.label}</dt><dd>${f.value}</dd></div>`)}</dl></div>
         </div>
         <div class="rp-sign"><span class="rp-seal" aria-hidden="true">✓</span><p><b>Approved by the surveyor on ${m.approved_on}.</b> Version ${String(m.version)}. Each figure in this report says where it came from, and every figure the surveyor set carries their name.<br><span class="rp-note">Report reference (fingerprint): ${m.fingerprint.slice(0, 8)}…${m.fingerprint.slice(-7)}</span></p></div>
+        ${m.site_plan === null ? raw('') : h`<div class="rp-plan">${sitePlanSvg(m.site_plan, `Site plan: the building at ${m.property}, and the buildings round it`)}
+          <div><h2>Site plan</h2><p>${pickWords(m.site_plan)} The grey ones are the buildings round it. North is up.</p>
+          <p class="rp-note">The plan shows buildings only, not the legal boundary of the site. ${m.site_plan.attribution}.</p></div></div>`}
         ${links.pdf === null ? raw('') : h`<p><a class="cta" href="${links.pdf}">Download the PDF</a></p>`}
       </div>
     </section>
@@ -393,6 +401,20 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
   c.text(L + 66, 546, `Approved by the surveyor on ${m.approved_on}. Version ${String(m.version)}.`, 'Helvetica-Bold', 10.5, C.ink);
   c.text(L + 66, 561, 'Each figure says where it came from. Every figure the surveyor set carries their name.', 'Helvetica', 9.5, C.body);
   c.text(L + 66, 577, `Report reference (fingerprint): ${m.fingerprint.slice(0, 8)}…${m.fingerprint.slice(-7)}`, 'Helvetica', 8.5, C.mut);
+  // 2 Oct 2026, stage 6: the site plan, from Ordnance Survey's free maps, when the version has one.
+  if (m.site_plan !== null) {
+    const top = 612;
+    const side = 150; // the box ends at the page's bottom margin (BOTTOM, 778)
+    c.ops.push({ k: 'rect', x: L, y: top, w: W, h: side + 16, r: 8, stroke: C.line, lw: 0.8 });
+    c.ops.push(...sitePlanOps(m.site_plan, L + 8, top + 8, side));
+    const tx = L + side + 26;
+    const tw = W - side - 40;
+    c.text(tx, top + 26, 'Site plan', 'Times-Bold', 13, C.ink);
+    let py = top + 46;
+    for (const line of wrapText(`${pickWords(m.site_plan)} The grey ones are the buildings round it. North is up.`, 'Helvetica', 9.5, tw)) { c.text(tx, py, line, 'Helvetica', 9.5, C.body); py += 13; }
+    py += 6;
+    for (const line of wrapText(`The plan shows buildings only, not the legal boundary of the site. ${m.site_plan.attribution}.`, 'Helvetica', 8, tw)) { c.text(tx, py, line, 'Helvetica', 8, C.mut); py += 11; }
+  }
 
   /* ---------------------------------------------------------- 2 · how it is worked out */
   c.page();

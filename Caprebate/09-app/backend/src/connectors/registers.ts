@@ -48,6 +48,7 @@ import type { IngestedRecord } from '../../../../04-phase-work/phase3/caprebate-
 import type { OwnerSecrets, SecretOwner, SecretStore } from '../secrets.ts';
 import { callOutside, type CallDeps, type CallRequest, type CallResult, type GateSnapshot } from './http.ts';
 import { BOUNDARY_FETCHING_SWITCHED_ON } from '../../../../04-phase-work/phase9/caprebate-boundary-import.ts';
+import { onTestWebsite, type Env } from './place.ts';
 
 export type Tier = 'FREE' | 'PAID';
 export type SourceState = 'NOT_RUN' | 'FIRED' | 'FAILED' | 'NOT_PERMITTED_YET';
@@ -149,6 +150,48 @@ export const REGISTER_SWITCHES: Readonly<Record<string, boolean>> = Object.freez
 /** Only `true` is on. An absent source, and anything else, is off. */
 export function switchedOn(source_id: string, switches: Readonly<Record<string, boolean>> = REGISTER_SWITCHES): boolean {
   return switches[source_id] === true;
+}
+
+/**
+ * 2 OCTOBER 2026 — THE FREE LOOKUPS, SWITCHED ON FOR THE TEST WEBSITE ONLY (the survey pack, stage 6).
+ *
+ * Lakhbir, asked which lookups to switch on for the test website: "All the free ones" — the energy certificate (EPC),
+ * the Land Registry's price paid (HMLR_PPD), planning applications (PLANNING) and the care regulator (CQC). The paid
+ * ones (Homedata, the land boundary) stay off, and so does every switch above: REGISTER_SWITCHES is unchanged.
+ *
+ * WHAT IT WAIVES, ON THE TEST WEBSITE AND NOWHERE ELSE: for these four sources only, the free-tier gate (a published
+ * privacy notice, CB_REGISTRY.precondition, and with it CA7's match measurement) and the five conditions of the test
+ * lookups (src/connectors/test-lookups.ts): they run for the test website's own clients, which are invented. It waives
+ * nothing else: a lookup that needs the signed engagement (CA2) still waits for it, a client who chose to answer the
+ * questions themselves is still not looked up, and each source still needs its key. As the postcode check's waiver
+ * (src/connectors/postcode-check.ts): before real visitors, publish the notice, then take this waiver out.
+ *
+ * WHERE IT HOLDS: on the deployed test website (Vercel says so: src/connectors/place.ts), or a copy started with
+ * CAPREBATE_LOOKUPS_HERE=1. A copy on a computer, and every test that does not say otherwise, sees the switches above.
+ */
+export const TEST_WEBSITE_LOOKUPS = Object.freeze({
+  sources: Object.freeze(['CQC', 'EPC', 'HMLR_PPD', 'PLANNING']) as readonly string[],
+  waiver_record: 'Lakhbir Dhillon, 2 October 2026, in the chat with Claude, asked which lookups to switch on for the test ' +
+    'website: "All the free ones" (EPC, price paid, planning applications, CQC). The privacy notice is a draft and is not ' +
+    'published. Test website only; real visitors are not affected.',
+});
+
+export const LOOKUPS_LOCAL_OPT_IN = 'CAPREBATE_LOOKUPS_HERE';
+
+/** True where the waiver holds: the test website, or a copy started with CAPREBATE_LOOKUPS_HERE=1. */
+export function lookupsWaivedHere(env: Env = process.env): boolean {
+  return onTestWebsite(env) || (env[LOOKUPS_LOCAL_OPT_IN] ?? '').trim() === '1';
+}
+
+/** True when this source's free-tier gate is waived here. */
+export function freeGateWaived(source_id: string, env: Env = process.env): boolean {
+  return lookupsWaivedHere(env) && TEST_WEBSITE_LOOKUPS.sources.includes(source_id);
+}
+
+/** The switches for this copy: REGISTER_SWITCHES, with the waived sources on where the waiver holds. */
+export function switchesHere(env: Env = process.env): Readonly<Record<string, boolean>> {
+  if (!lookupsWaivedHere(env)) return REGISTER_SWITCHES;
+  return Object.freeze({ ...REGISTER_SWITCHES, ...Object.fromEntries(TEST_WEBSITE_LOOKUPS.sources.map((id) => [id, true])) });
 }
 
 /* ================================================================== *

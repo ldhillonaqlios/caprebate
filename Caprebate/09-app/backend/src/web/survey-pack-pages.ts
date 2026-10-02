@@ -31,6 +31,7 @@ import * as A from './pack-approve.ts';
 import { sendPanel } from './report-pages.ts';
 import { inspectionChapter, lineEvidence } from './evidence-pages.ts';
 import { evidenceByLine } from './survey-evidence.ts';
+import { fetchSitePlan, pickWords, sitePlanOf, sitePlanSvg } from './site-plan.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 
 export type PackPageDeps = {
@@ -67,7 +68,7 @@ export async function handleSurveyPack(
     res.end(versionPage(d, actor, v, kept));
     return 'handled';
   }
-  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve)?$/.exec(url.pathname);
+  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve|\/site-plan)?$/.exec(url.pathname);
   if (m === null) return 'not-mine';
   const job = m[1] ?? '';
   const act = m[2]?.slice(1);
@@ -97,6 +98,13 @@ export async function handleSurveyPack(
     if (!r.ok && r.stale === true) { redirect(res, `${base(job)}?ch=23&stale=1`); return 'handled'; }
     if (!r.ok) return d.problem(res, actor, 'Not approved', r.why, `${base(job)}?ch=23`);
     redirect(res, `${base(job)}?ch=23&done=approved&v=${String(r.version ?? '')}`);
+    return 'handled';
+  }
+  if (act === 'site-plan') {
+    // 2 Oct 2026, stage 6: the site plan for the report's cover, from Ordnance Survey's free maps (src/web/site-plan.ts).
+    const r = await fetchSitePlan({ db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId, transport: d.app.outside, secrets: d.app.secrets }, actor, job);
+    if (!r.ok) return d.problem(res, actor, 'No site plan', r.why, `${base(job)}?ch=9#site-plan`);
+    redirect(res, `${base(job)}?ch=9&done=plan#site-plan`);
     return 'handled';
   }
   let r: P.PackResult;
@@ -148,6 +156,7 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
   const notes: Safe[] = [];
   if (q.get('done') === 'approved') notes.push(h`<div class="gate" role="status">Approved. The report is kept exactly as it stands, with its fingerprint.</div>`);
   if (q.get('done') === 'saved') notes.push(h`<div class="gate" role="status">Saved, under your name. Every total follows.</div>`);
+  if (q.get('done') === 'plan') notes.push(h`<div class="gate" role="status">Site plan fetched. It goes on the report’s cover when you approve.</div>`);
   if (q.get('stale') === '1') notes.push(h`<div class="gate" role="alert"><strong>This pack changed since you opened it.</strong> Here it is again with that change. Make yours again if it still applies.</div>`);
   const body = h`
     ${notes}
@@ -301,7 +310,20 @@ function inputsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchP
           <p class="help">${w.hint} Leave it empty to put our figure back.</p>
           <div class="sendrow"><button class="cta" type="submit">Save — every total follows</button><a href="${base(v.job.id)}?ch=9#l-${field}">Cancel</a></div></form></td></tr>` : raw('')}`;
     })}</tbody></table>
-    ${v.inputs.building_rate_pence.value === null ? h`<p class="help">The whole-building rate comes from BCIS. Until BCIS is bought, the surveyor types it, and it is theirs.</p>` : raw('')}`;
+    ${v.inputs.building_rate_pence.value === null ? h`<p class="help">The whole-building rate comes from BCIS. Until BCIS is bought, the surveyor types it, and it is theirs.</p>` : raw('')}
+    ${sitePlanPanel(d, v, ch)}`;
+}
+
+/** 2 Oct 2026, stage 6: the site plan for the report's cover. Fetched with one button; the newest is shown. */
+function sitePlanPanel(d: PackPageDeps, v: P.PackView, ch: number): Safe {
+  const plan = sitePlanOf(d.app.db, v.job.id);
+  return h`<section class="pk-card" id="site-plan"><h2>Site plan for the report</h2>
+    ${plan === null
+      ? h`<p>No site plan yet. We draw it from Ordnance Survey’s free maps, round the property’s postcode. It shows buildings only, never the site’s legal boundary.</p>`
+      : h`<div class="rp-plan">${sitePlanSvg(plan, `Site plan round ${plan.postcode}`)}<div><p>${pickWords(plan)} Placed by the postcode ${plan.postcode}. Fetched ${d.stamp(plan.fetched_at)}.</p>
+        <p class="help">If the dark building is the wrong one, check the property’s postcode, then get it again. The plan goes on the report’s cover as it stands when you approve. ${plan.attribution}.</p></div></div>`}
+    ${v.may_edit ? h`<form method="post" action="${base(v.job.id)}/site-plan">${hidden(v, ch)}<button class="${plan === null ? 'cta' : 'btn-quiet'}" type="submit">${plan === null ? 'Get the site plan' : 'Get it again'}</button></form>` : raw('')}
+  </section>`;
 }
 
 /* ------------------------------------------------------------ chapter 10 */

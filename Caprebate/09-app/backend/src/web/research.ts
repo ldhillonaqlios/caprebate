@@ -88,7 +88,9 @@ import type { AuditLog } from '../audit.ts';
 import { registryGate, REGISTRY } from './engine.ts';
 import { DECLINED_LINE, lookupsDeclined } from './address-check.ts';
 import { SOURCES as REGISTER_SOURCES, LICENCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
-import { switchedOn, runConnector, REGISTER_SWITCHES, type Bundle, type ConnectorContext } from '../connectors/registers.ts';
+import { switchedOn, runConnector, REGISTER_SWITCHES, switchesHere, freeGateWaived, gateStatus, type Bundle, type ConnectorContext } from '../connectors/registers.ts';
+import type { Env } from '../connectors/place.ts';
+import { checkPostcode } from '../connectors/postcode-check.ts';
 import type { Transport, RateLimiter } from '../connectors/http.ts';
 import type { SecretStore } from '../secrets.ts';
 import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../connectors/free-registers.ts';
@@ -339,6 +341,14 @@ export type FreeGate = {
 export function freeGate(): FreeGate {
   const g = registryGate();
   return { open: g.enabled, requires: g.requires };
+}
+
+/**
+ * 2 Oct 2026: the free gate as it stands for ONE source here — open for a source the test website's waiver names
+ * (src/connectors/registers.ts, TEST_WEBSITE_LOOKUPS), and otherwise the free gate itself.
+ */
+export function freeGateFor(free: FreeGate, source_id: string, env: Env = process.env): FreeGate {
+  return !free.open && freeGateWaived(source_id, env) ? { open: true, requires: free.requires } : free;
 }
 
 export type SignedEngagement = {
@@ -649,7 +659,7 @@ export function stateUnderGates(
 export function sourcesFor(
   db: Db, actor: Actor, business_id: string,
   /** PHASE 151c: where the site area's grid, store and postcode table come from. Absent: the server's own settings. */
-  opts: { readonly site?: SiteAreaSetup } = {},
+  opts: { readonly site?: SiteAreaSetup; /** 2 Oct 2026: where this copy runs, for the test website's waiver. Absent: the process's. */ readonly env?: Env } = {},
 ): SourcesPanel {
   assertResearchSection(actor, 'research.read');
   authorise(actor, 'research.read', { type: 'research', id: business_id, business_id });
@@ -684,7 +694,7 @@ export function sourcesFor(
   const sources = catalogue().map((entry) => {
     const row = stored.get(entry.source_id);
     const current = (row?.state ?? 'NOT_RUN') as SourceState;
-    const resolved = stateUnderGates(entry, current, free, engagement, lookupsDeclined(db, business_id));
+    const resolved = stateUnderGates(entry, current, freeGateFor(free, entry.source_id, opts.env), engagement, lookupsDeclined(db, business_id));
     /* PHASE 146k: a source looked up by hand is "looked up" once a person has recorded it, and still to do until then —
        read off what is held, never off a row a click wrote. Before signing it waits like any paid source. */
     const hand = BY_HAND[entry.source_id];
@@ -708,7 +718,7 @@ export function sourcesFor(
       failure_code: row?.failure_code ?? null,
       detail: resolved.state === 'FAILED' && row?.detail ? row.detail : resolved.detail,
       may_retry: resolved.state === 'FAILED',
-      switched_on: switchedOn(entry.source_id),
+      switched_on: switchedOn(entry.source_id, switchesHere(opts.env)),
       picked: picked.has(entry.source_id) && resolved.state === 'FIRED',
       taken_back: takenBack.get(entry.source_id) ?? null,
       by_hand: false,
@@ -716,7 +726,7 @@ export function sourcesFor(
   });
 
   const outstandingPaid = sources.filter((s) => s.state !== 'FIRED').map((s) => s.source_id);
-  const before = totalBeforePence(outstandingPaid, (id) => switchedOn(id));
+  const before = totalBeforePence(outstandingPaid, (id) => switchedOn(id, switchesHere(opts.env)));
   const last = db.get<{ cost_pence: number | null; at: string }>(
     'SELECT cost_pence, at FROM research_runs WHERE business_id = ? ORDER BY at DESC, rowid DESC LIMIT 1',
     [business_id],
@@ -806,8 +816,10 @@ export type RunDeps = {
 export type ResearchOutside = {
   readonly transport: Transport;
   readonly secrets: SecretStore;
-  /** REGISTER_SWITCHES unless a test passes its own. */
+  /** REGISTER_SWITCHES (with the test website's waiver, where it holds) unless a test passes its own. */
   readonly switches?: Readonly<Record<string, boolean>>;
+  /** 2 Oct 2026: where this copy runs, for the test website's waiver (src/connectors/registers.ts). Absent: the process's. */
+  readonly env?: Env;
   readonly limiter?: RateLimiter;
   readonly sleep?: (ms: number) => Promise<void>;
   /** The ONS postcode table; `postcodeStore()` unless a test passes one. */
@@ -899,7 +911,7 @@ export async function consultAllowed(
       continue;
     }
     const o = d.outside;
-    const switches = o.switches ?? REGISTER_SWITCHES;
+    const switches = o.switches ?? switchesHere(o.env);
     const ctx: ConnectorContext = {
       deps: {
         audit: d.audit, now: d.now, transport: o.transport,
@@ -907,10 +919,20 @@ export async function consultAllowed(
         ...(o.sleep === undefined ? {} : { sleep: o.sleep }),
       },
       actor_id: actor.id, actor_role: actor.role, claim_id: null,
-      gate: { ...gates, switched_on: switchedOn(x.entry.source_id, switches) },
+      gate: { ...gates, free_gate_open: gates.free_gate_open || freeGateWaived(x.entry.source_id, o.env), switched_on: switchedOn(x.entry.source_id, switches) },
       secrets: null,
     };
-    const query = built.query(subject, earlier, o.postcodeStore === undefined ? postcodeStore() : o.postcodeStore);
+    let query = built.query(subject, earlier, o.postcodeStore === undefined ? postcodeStore() : o.postcodeStore);
+    /* 2 Oct 2026: THE CARE REGULATOR'S COUNCIL AREA ON THE TEST WEBSITE. The care regulator is searched by council area,
+       which the ONS postcode table gives; the test website has no such table. Where the waiver holds, and only then,
+       the council area comes from postcodes.io, which the postcode check already uses (only the postcode is sent). */
+    if (x.entry.source_id === 'CQC' && freeGateWaived('CQC', o.env) && (query as { council?: unknown }).council === null && subject.property?.postcode) {
+      const pc = await checkPostcode({
+        postcode: subject.property.postcode, gate: gateStatus({ precondition: registryGate() }),
+        deps: { audit: d.audit, now: d.now, transport: o.transport, ...(o.limiter === undefined ? {} : { limiter: o.limiter }), ...(o.sleep === undefined ? {} : { sleep: o.sleep }) },
+      });
+      if (pc.state === 'CHECKED' && pc.council_area !== null) query = { ...(query as Record<string, unknown>), council: pc.council_area };
+    }
     /* The pick's two keys are added to the query the builder made, rather than passed through every builder: a
        builder's job is to say what to ask the register about this client, and a pick does not change that — it
        changes what is done with the candidates the register comes back with. */
@@ -999,11 +1021,12 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
 
   const free = freeGate();
   const engagement = assertSignedEngagement(d.db, business_id);
-  const panel = sourcesFor(d.db, actor, business_id);
+  const env = d.outside?.env;
+  const panel = sourcesFor(d.db, actor, business_id, env === undefined ? {} : { env });
 
   // PHASE 146k: a source looked up by hand is never consulted by the click.
   const decided = panel.sources.filter((s) => s.state !== 'FIRED' && !s.by_hand).map((s) => ({
-    entry: s, ...stateUnderGates(s, s.state === 'FAILED' ? 'NOT_RUN' : s.state, free, engagement, lookupsDeclined(d.db, business_id)),
+    entry: s, ...stateUnderGates(s, s.state === 'FAILED' ? 'NOT_RUN' : s.state, freeGateFor(free, s.source_id, env), engagement, lookupsDeclined(d.db, business_id)),
   }));
   const outcomes = await consultAllowed(d, actor, business_id, decided,
     { free_gate_open: free.open, engagement_signed: engagement.signed === true });

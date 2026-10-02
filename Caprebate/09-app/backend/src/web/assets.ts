@@ -496,6 +496,10 @@ dl.pk-dl{display:block;margin:0}.pk-dl div{display:flex;justify-content:space-be
 .rp-facts div:last-child{border-bottom:0}.rp-facts dt{color:var(--mut)}.rp-facts dd{margin:0;font-weight:700;color:var(--ink)}
 .rp-sign{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-top:1.4rem}
 .rp-sign p{margin:0}
+.rp-plan{display:grid;grid-template-columns:240px 1fr;gap:18px;align-items:start;border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin-top:1.2rem}
+.rp-plan h2{font-size:18px;margin:0 0 .4rem}.rp-plan p{margin:0 0 .5rem}
+.rp-plan-map{display:block;width:100%;height:auto;border-radius:6px;border:1px solid var(--line)}
+@media (max-width:640px){.rp-plan{grid-template-columns:1fr}.rp-plan-map{max-width:320px}}
 .rp-seal{flex:none;width:50px;height:50px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;color:var(--ink)}
 .rp-note{font-size:13px;color:var(--mut)}
 .rp-h{display:flex;align-items:baseline;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:.4rem;margin:0 0 1rem;font-size:26px}

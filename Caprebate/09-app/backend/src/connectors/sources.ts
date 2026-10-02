@@ -215,6 +215,19 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     rate_basis: 'NOT PUBLISHED on postcodes.io/docs (read 24 Sep 2026); sixty a minute is OUR cautious guess - one a visitor, at the address question',
     timeout_ms: 5_000, max_bytes: 64 * 1024, max_attempts: 2,
   },
+  OS_FEATURES: {
+    /* 2 OCTOBER 2026 — the building outlines for the report's site plan (the survey pack, stage 6;
+       src/connectors/os-buildings.ts). Ordnance Survey's Features API, on the free OS OpenData plan, serving OS Open
+       Zoomstack's local buildings: open data under the Open Government Licence, shown with "Contains OS data © Crown
+       copyright and database right". Only a small square of map around the postcode's point is
+       asked for, never a name or an address. Ordnance Survey is in Southampton, so UK. Its key is a project key from
+       osdatahub.os.uk. The OS Data Hub's open plan publishes 600 transactions a minute; ten a minute is ours. */
+    service_id: 'OS_FEATURES', register_source: null,
+    base_url: 'https://api.os.uk', region: 'UK', international_transfer_approved: false,
+    rate: { limit: 10, window_ms: 60 * 1000 },
+    rate_basis: 'the OS Data Hub publishes 600 a minute on the open plan; ten a minute is OUR cautious limit - one site plan is one call, asked for by a person',
+    timeout_ms: 15_000, max_bytes: 2 * MB, max_attempts: 2,
+  },
   DIDIT_IDV: {
     /* PHASE 151f, 25 September 2026 — Didit, the online identity check for the money-laundering rules
        (src/connectors/identity-check.ts), BUILT AND SWITCHED OFF, in place of Veriff (Phase 151) on Lakhbir's
