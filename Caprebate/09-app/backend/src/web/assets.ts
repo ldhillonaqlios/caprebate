@@ -1358,6 +1358,23 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 .nextbox-t{margin:.2rem 0 0;font-size:17px;font-weight:700;color:var(--white)}
 .claimbox-go{margin:auto 0 0}
 
+/* UI TIDY PHASE 8 — A CLIENT'S PAGE, PART 2 (src/web/client-layout.ts tabbed, partsList). A plain visit shows one line per
+   part; a part opens when it is chosen here or in the left-hand menu. From 900 px the menu holds the parts, so the row of
+   tabs is for phones. */
+.cparts{list-style:none;margin:1rem 0;padding:0;background:var(--white);border:1px solid var(--line);border-radius:.75rem;overflow:hidden}
+.cparts li+li{border-top:1px solid var(--line)}
+.cparts li:nth-child(even){background:var(--zebra)}
+.cpart{display:grid;grid-template-columns:minmax(9rem,1fr) auto minmax(0,2.5fr);align-items:center;gap:.4rem 1rem;padding:.75rem 1rem;color:var(--ink);text-decoration:none}
+.cpart:hover{background:var(--mist)}
+.cpart:hover .cpart-name{text-decoration:underline}
+.cpart-name{font-weight:700;font-size:17px}
+.cpart-count{display:inline-block;min-width:1.4rem;padding:0 .35rem;border-radius:999px;background:var(--ink);color:var(--white);font-size:13px;text-align:center}
+.cpart-what{color:var(--body);font-size:15px}
+.ctabwrap:has(.ctab-panels :target) .cparts{display:none}
+.ctab-back{margin:0 0 .6rem;font-size:15px}
+@media (min-width:900px){body.app .ctabs{display:none}}
+@media (max-width:720px){.cpart{grid-template-columns:minmax(0,1fr) auto}.cpart-what{grid-column:1/-1}}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of

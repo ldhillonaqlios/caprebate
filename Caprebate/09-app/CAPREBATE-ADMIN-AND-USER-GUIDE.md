@@ -1646,6 +1646,12 @@ such as "Claim 1 of 2 · Survey". It shows the site, the claim number and the ne
 a red label. **Open the claim** opens it. The menu on the left opens out too. It shows the client's name, **Overview**,
 each claim by its site and stage, and the parts of the page.
 
+**Every part, one line each.** Under the claims, each part of the page has one line. **Communication** is the first part.
+**Activity** is the last. Each line says where that part
+stands, what is going on, and how many things it holds. Press a line to open that part. You can also press the part in
+the menu on the left. **Every part of this client** takes you back to the lines. After you save something, the page
+opens on the part you saved in.
+
 **Who can open it now:** Admin and Sales see all of it. The view-only login sees the company's record. That is Timeline,
 Contacts, Properties, Documents and Details. It does not see the research or the notes. Accounting and Surveying are
 refused.

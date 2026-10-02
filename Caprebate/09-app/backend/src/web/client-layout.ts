@@ -22,8 +22,8 @@ import { h, raw, type Safe } from './html.ts';
 import { localStamp } from './localtime.ts';
 import type { ChecksPanel, StepView } from './approvals.ts';
 import type { SourcesPanel } from './research.ts';
-import type { QuickAction, SectionContext, SectionSpec } from './components.ts';
-import { section } from './components.ts';
+import type { QuickAction, SectionContext, SectionSpec, SectionStatus } from './components.ts';
+import { section, SECTION_STATUS_WORDS } from './components.ts';
 import { clientProgress, whyNotMoved } from './tell-and-move.ts';
 import { filesButton } from './client-files-pages.ts';
 import type { Db } from '../db.ts';
@@ -130,19 +130,42 @@ export function lookupsCard(src: SourcesPanel | null, nowIso: string): Safe {
 }
 
 /** The sections, in their tabs. Inside a tab each keeps its own open-or-closed rule (work open, done folded, the person's
- *  own choice kept), and the one just changed opens, as it always has. */
-export function tabbed(sections: readonly SectionSpec[], ctx: SectionContext, defaultTab: TabKey, fresh = 0): Safe {
+ *  own choice kept), and the one just changed opens, as it always has.
+ *
+ *  UI TIDY PHASE 8, 3 October 2026 — AN OVERVIEW FIRST. With no tab asked for (`defaultTab` null: a plain visit, no change
+ *  just made), no part is open: the page shows one line per part — its name, where it stands, what is happening, its
+ *  count — each a link that opens it, as the left-hand menu's entries do. A part opened says how to get back to them all.
+ *  After a change, or with a step asked for, the part it was made in opens, as before. Every section is still in the page.
+ */
+export function tabbed(sections: readonly SectionSpec[], ctx: SectionContext, defaultTab: TabKey | null, fresh = 0): Safe {
   const by = new Map<TabKey, SectionSpec[]>();
   for (const s of sections) {
     const t = TAB_OF_SECTION[s.id] ?? 'activity';
     by.set(t, [...(by.get(t) ?? []), s]);
   }
   const present = TABS.filter(([k]) => (by.get(k) ?? []).length > 0);
-  const chosen = present.some(([k]) => k === defaultTab) ? defaultTab : (present[0]?.[0] ?? 'activity');
+  const chosen: TabKey | null = defaultTab === null ? null : present.some(([k]) => k === defaultTab) ? defaultTab : (present[0]?.[0] ?? 'activity');
+  const back = ctx.back === null ? raw('') : h`<p class="ctab-back"><a href="${ctx.back}">Every part of this client</a></p>`;
   return h`<div class="ctabwrap">
     <nav class="ctabs" aria-label="Parts of this client">${present.map(([k, label]) => h`<a href="#tab-${k}" class="ctab-link ctl-${k}${k === chosen ? ' is-default' : ''}">${label}${k === 'chat' ? newDot(fresh) : raw('')}</a>`)}</nav>
-    <div class="ctab-panels">${present.map(([k]) => h`<div class="ctab ct-${k}${k === chosen ? ' is-default' : ''}" id="tab-${k}">${
+    ${chosen === null ? partsList(present, by, fresh) : raw('')}
+    <div class="ctab-panels">${present.map(([k]) => h`<div class="ctab ct-${k}${k === chosen ? ' is-default' : ''}" id="tab-${k}">${back}${
       (by.get(k) ?? []).map((s) => section(k === 'chat' ? { ...s, open_now: true } : s, ctx))}</div>`)}</div></div>`;
+}
+
+const PART_TONE: Readonly<Record<SectionStatus, string>> = Object.freeze({ NOT_STARTED: '', WORKING: ' b-info', WAITING: ' b-warn', DONE: ' b-ok' });
+const PART_ORDER: readonly SectionStatus[] = ['WAITING', 'WORKING', 'NOT_STARTED', 'DONE'];
+
+/** One line per part: the most pressing of its sections' states, the first of their "working on" lines, their count. */
+function partsList(present: readonly (readonly [TabKey, string])[], by: ReadonlyMap<TabKey, readonly SectionSpec[]>, fresh: number): Safe {
+  return h`<ul class="cparts" aria-label="Every part of this client">${present.map(([k, label]) => {
+    const secs = by.get(k) ?? [];
+    const status = PART_ORDER.find((st) => secs.some((s) => s.status === st)) ?? 'NOT_STARTED';
+    const lead = secs.find((s) => s.status === status) ?? secs[0];
+    const count = secs.reduce((n, s) => n + (s.count ?? 0), 0);
+    return h`<li><a class="cpart" href="#tab-${k}"><span class="cpart-name">${label}${k === 'chat' ? newDot(fresh) : raw('')}${
+      count > 0 ? h` <span class="cpart-count">${String(count)}</span>` : raw('')}</span><span class="badge${PART_TONE[status]}">${SECTION_STATUS_WORDS[status]}</span><span class="cpart-what">${lead?.working ?? ''}</span></a></li>`;
+  })}</ul>`;
 }
 
 /* ================================================================== *

@@ -113,3 +113,57 @@ describe('UI tidy phase 7: the stylesheet', () => {
     for (const m of block.matchAll(/font-size:(\d+)px/g)) assert.ok(Number(m[1]) >= 12, `font-size ${m[1]}px`);
   });
 });
+
+describe('UI tidy phase 8: a client’s page opens on one line per part', () => {
+  const parts = (body: string): { tab: string; name: string; count: number | null; status: string; tone: string; what: string }[] =>
+    [...(/<ul class="cparts"[^>]*>([\s\S]*?)<\/ul>/.exec(body)?.[1] ?? '').matchAll(
+      /<a class="cpart" href="#tab-([a-z]+)"><span class="cpart-name">([^<]+)(?:<span class="newdot"[^>]*>[^<]*<\/span>)?(?: <span class="cpart-count">(\d+)<\/span>)?<\/span><span class="badge( b-[a-z]+)?">([^<]+)<\/span><span class="cpart-what">([^<]*)<\/span><\/a>/g)]
+      .map((m) => ({ tab: m[1] ?? '', name: (m[2] ?? '').trim(), count: m[3] === undefined ? null : Number(m[3]), tone: (m[4] ?? '').trim(), status: m[5] ?? '', what: m[6] ?? '' }));
+
+  test('a plain visit opens no part: one line per part, in the tabs’ order, each opening its part', async () => {
+    const body = (await H.get('sales', `/staff/clients/${dun}`)).body;
+    const tabs = [...body.matchAll(/<a href="#tab-([a-z]+)" class="ctab-link ctl-[a-z]+( is-default)?">([^<]+)/g)];
+    assert.deepEqual(tabs.filter((t) => t[2] !== undefined), [], 'a part is open');
+    const p = parts(body);
+    assert.deepEqual(p.map((x) => x.tab), tabs.map((t) => t[1]));
+    assert.deepEqual(p.map((x) => x.name), tabs.map((t) => (t[3] ?? '').trim()));
+    for (const x of p) {
+      const tone: Record<string, string> = { 'Waiting for the client': 'b-warn', 'Working on it': 'b-info', Done: 'b-ok', 'Not started': '' };
+      assert.equal(x.tone, tone[x.status], `${x.tab}: ${x.status} drawn ${x.tone}`);
+      assert.ok(x.what.length > 0, `${x.tab} says nothing about what is happening`);
+    }
+  });
+
+  test('each line shows its part’s most pressing state and the sum of its sections’ counts', async () => {
+    const body = (await H.get('sales', `/staff/clients/${dun}`)).body;
+    const order = ['Waiting for the client', 'Working on it', 'Not started', 'Done'];
+    for (const x of parts(body)) {
+      const start = body.indexOf(`id="tab-${x.tab}"`);
+      const next = body.indexOf('<div class="ctab ct-', start + 1);
+      const panel = body.slice(start, next < 0 ? body.indexOf('</div></div>', start) : next);
+      const states = [...panel.matchAll(/<\/h2>\s*<span class="badge[^"]*">(Not started|Working on it|Waiting for the client|Done)<\/span><\/summary>/g)].map((m) => m[1] ?? '');
+      assert.ok(states.length > 0, `${x.tab}: no section states read`);
+      assert.equal(x.status, order.find((o) => states.includes(o)), x.tab);
+      const sum = [...panel.matchAll(/<h2>[^<]*? <span class="count">(\d+)<\/span><\/h2>/g)].reduce((n, m) => n + Number(m[1]), 0);
+      assert.equal(x.count ?? 0, sum, `${x.tab}: the line counts ${String(x.count)}, its sections ${String(sum)}`);
+      // Its words are the "working on" line of the first section in that most pressing state.
+      const pairs = [...panel.matchAll(/<span class="badge[^"]*">(Not started|Working on it|Waiting for the client|Done)<\/span><\/summary>\s*<div class="secbody">\s*<dl class="three">\s*<dt>Working on<\/dt><dd>([^<]*)<\/dd>/g)];
+      assert.equal(x.what, pairs.find((m) => m[1] === x.status)?.[2], `${x.tab}: the line’s words`);
+    }
+  });
+
+  test('after a change, the part it was made in opens, as before, and the lines are not drawn', async () => {
+    const body = (await H.get('sales', `/staff/clients/${dun}?done=contact`)).body;
+    assert.match(body, /class="ctab-link ctl-people is-default"/);
+    assert.doesNotMatch(body, /class="cparts"/);
+    assert.match((await H.get('sales', `/staff/clients/${dun}?chat=all`)).body, /class="ctab-link ctl-chat is-default"/);
+  });
+
+  test('every part, opened, offers the way back to them all; from 900 px the row of tabs gives way to the menu', async () => {
+    const body = (await H.get('sales', `/staff/clients/${dun}`)).body;
+    const panels = [...body.matchAll(/<div class="ctab ct-[a-z]+" id="tab-[a-z]+"><p class="ctab-back"><a href="\/staff\/clients\/[^"]+">Every part of this client<\/a><\/p>/g)];
+    assert.equal(panels.length, parts(body).length);
+    assert.match(SITE_CSS, /\.ctabwrap:has\(\.ctab-panels :target\) \.cparts\{display:none\}/);
+    assert.match(SITE_CSS, /@media \(min-width:900px\)\{body\.app \.ctabs\{display:none\}\}/);
+  });
+});

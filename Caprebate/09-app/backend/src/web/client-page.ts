@@ -334,7 +334,8 @@ function clientPage(
   ];
   const legal = org.legal_name.value !== null && org.legal_name.value !== org.trading_name ? org.legal_name.display : null;
   // Which tab shows first: where a change was just made, a step asked for, else the conversation.
-  const defaultTab: TabKey = openNow !== undefined ? (TAB_OF_SECTION[openNow] ?? 'chat') : step !== undefined ? 'checks' : 'chat';
+  // UI tidy phase 8: a plain visit opens no part — the overview of every part shows instead (tabbed, partsList).
+  const defaultTab: TabKey | null = openNow !== undefined ? (TAB_OF_SECTION[openNow] ?? 'chat') : step !== undefined ? 'checks' : null;
 
   // UI tidy phase 7: the left-hand menu opens out to this client — its claims, then the page's parts.
   setClientMenu(org.id, org.trading_name, org.claims, presentTabs(sections), null, d.app.now());

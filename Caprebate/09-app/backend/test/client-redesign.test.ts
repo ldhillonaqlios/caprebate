@@ -84,7 +84,10 @@ describe('the client page, laid out again', () => {
     // UI tidy phase 7: the claims are boxes at the top of the page (#claims), no longer a tab.
     assert.deepEqual(tabs.map((m) => m[3]), ['Communication', 'Properties', 'Questions', 'People', 'Checks', 'Files', 'Activity']);
     assert.match(r.body, /<section class="claimboxes" id="claims" aria-label="Claims">/);
-    assert.deepEqual(tabs.filter((m) => m[2] !== undefined).map((m) => m[1]), ['chat'], 'the conversation is not the first tab shown');
+    // UI tidy phase 8: a plain visit opens no part — one line per part shows instead; ?chat= still opens the conversation.
+    assert.deepEqual(tabs.filter((m) => m[2] !== undefined).map((m) => m[1]), [], 'a part is open on a plain visit');
+    assert.match(r.body, /<ul class="cparts" aria-label="Every part of this client">/);
+    assert.match((await as('sales').get(`/staff/clients/${dunmarrow}?chat=all`)).body, /class="ctab-link ctl-chat is-default"/);
     for (const [tab, secs] of [['chat', ['chat']], ['people', ['details', 'contacts']], ['checks', ['checks', 'sources']], ['activity', ['activity']]] as const) {
       const start = r.body.indexOf(`id="tab-${tab}"`);
       const end = r.body.indexOf('<div class="ctab ', start + 1);

@@ -11232,3 +11232,11 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## UI tidy phase 8 of 17, 3 October 2026 — a client's page, part 2 (Claude Code, on the Mac)
+
+-  **Built:** a client's page no longer opens on the message form. Under the claims, every part has one line — where it stands, what is happening, how many — and opens when chosen there or in the left-hand menu, with a way back to them all. After a change the part it was made in opens, as before. On a laptop the row of tabs gives way to the menu.
+-  **Proof.** `test/ui-tidy-client.test.ts`, four more tests (11); 10 single-line mutations, all red. Screenshots of the overview and of People opened. The page went from 2406 to 1683 px tall at 1280. 2137 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2137`) green.
+-  **Next:** phase 9, Tasks.
+
+ **Claim cleared** in the commit that carries this record.
+
