@@ -19,6 +19,7 @@ import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import * as P from './survey-pack.ts';
+import * as L from './pack-legal.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 
 export type PackPageDeps = {
@@ -34,7 +35,7 @@ export const CHAPTERS: readonly { readonly n: number; readonly title: string; re
   { n: 1, title: 'Report and property', built: false }, { n: 2, title: 'Your inspection', built: false },
   { n: 3, title: 'Purpose and basis', built: false }, { n: 4, title: 'Summary', built: true },
   { n: 5, title: 'The building', built: false }, { n: 6, title: 'Room schedule', built: false },
-  { n: 7, title: 'Ownership', built: false }, { n: 8, title: 'Dwellings', built: false },
+  { n: 7, title: 'The legal check', built: true }, { n: 8, title: 'Dwellings', built: false },
   { n: 9, title: 'Price, land and floor area', built: true }, { n: 10, title: 'Rebuild cost and split', built: true },
   { n: 11, title: 'Bare land', built: false }, { n: 12, title: 'Fixtures, item by item', built: false },
   { n: 13, title: 'Pools', built: false }, { n: 14, title: 'Qualifying share', built: false },
@@ -55,7 +56,7 @@ export async function handleSurveyPack(
   d: PackPageDeps, req: IncomingMessage, res: ServerResponse, url: URL, method: string, actor: Actor,
   form: (r: IncomingMessage) => Promise<URLSearchParams>,
 ): Promise<'handled' | 'not-mine'> {
-  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/line|\/revert|\/remove|\/restore|\/add|\/property)?$/.exec(url.pathname);
+  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal)?$/.exec(url.pathname);
   if (m === null) return 'not-mine';
   const job = m[1] ?? '';
   const act = m[2]?.slice(1);
@@ -65,7 +66,8 @@ export async function handleSurveyPack(
     const v = P.packView(deps, actor, job);
     const ch = Number(url.searchParams.get('ch') ?? '10');
     res.writeHead(200, HTML_HEADERS);
-    res.end(packPage(d, actor, v, CHAPTERS.some((c) => c.n === ch) ? ch : 10, url.searchParams));
+    const lv = L.legalView(deps, actor, job);
+    res.end(packPage(d, actor, v, lv, CHAPTERS.some((c) => c.n === ch) ? ch : 10, url.searchParams));
     return 'handled';
   }
   if (act === undefined || method !== 'POST') return 'not-mine';
@@ -84,6 +86,7 @@ export async function handleSurveyPack(
     case 'remove': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, true); break;
     case 'restore': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, false); break;
     case 'add': r = P.addLine(deps, actor, job, { label: f.get('label') ?? '', unit: f.get('unit') ?? '', qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq }); break;
+    case 'legal': r = L.answerLegal(deps, actor, job, { question: f.get('question') ?? '', values: f.getAll('answer'), source: f.get('source') ?? '', seq }); break;
     default: r = P.choosePackProperty(deps, actor, job, f.get('property_id') ?? '');
   }
   if (!r.ok && r.stale === true) { redirect(res, back('&stale=1')); return 'handled'; }
@@ -117,7 +120,7 @@ function hidden(v: P.PackView, ch: number): Safe {
   return h`<input type="hidden" name="seq" value="${String(v.seq)}"><input type="hidden" name="ch" value="${String(ch)}">`;
 }
 
-function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, ch: number, q: URLSearchParams): string {
+function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView, ch: number, q: URLSearchParams): string {
   const s = v.sums;
   const chapter = CHAPTERS.find((c) => c.n === ch) ?? CHAPTERS[9]!;
   const notes: Safe[] = [];
@@ -134,10 +137,10 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, ch: number, q: U
       </nav>
       <article class="pack-book">
         <h1>${String(chapter.n)} · ${chapter.title}</h1>
-        ${ch === 4 ? summaryChapter(v) : ch === 9 ? inputsChapter(d, v, ch, q) : ch === 10 ? elementsChapter(d, v, ch, q)
+        ${ch === 4 ? summaryChapter(v) : ch === 7 ? legalChapter(d, v, lv, ch, q) : ch === 9 ? inputsChapter(d, v, ch, q) : ch === 10 ? elementsChapter(d, v, ch, q)
           : h`<p class="help">This chapter is filled in at the next stage of the build. For now, the sums are in chapters 4, 9 and 10.</p>`}
       </article>
-      <aside class="pack-side">${totalsCard(v)}${changesCard(d, v)}</aside>
+      <aside class="pack-side">${totalsCard(v)}${legalCard(v, lv)}${changesCard(d, v)}</aside>
     </div>
     <p><a href="/staff/survey/${v.job.id}">Back to the survey job</a></p>`;
   void actor;
@@ -182,6 +185,77 @@ function neededList(v: P.PackView): Safe {
       <p class="help">There is no total until every value is in. We never fill a gap with a guess.</p>
       <ul class="pk-needed">${s.needed.slice(0, 60).map((n) => h`<li><a href="${base(v.job.id)}?ch=${n.where === 'INPUT' ? '9' : '10'}${n.line_id === null ? '' : `&edit=${encodeURIComponent(n.line_id)}#l-${n.line_id}`}">${n.words}</a></li>`)}</ul>
       ${s.needed.length > 60 ? h`<p class="help">… and ${String(s.needed.length - 60)} more.</p>` : raw('')}`}`;
+}
+
+/* ------------------------------------------------------------ chapter 7 */
+
+const LEVEL_WORDS: Readonly<Record<L.Level, string>> = Object.freeze({
+  GREEN: 'Clear', URGENT: 'Clear, with a deadline', AMBER: 'Not settled yet', RED: 'Fails',
+});
+
+function legalCard(v: P.PackView, lv: L.LegalView): Safe {
+  const allows = L.legalAllows(lv.verdict, v.sums.qualifying_pence);
+  return h`<section class="pk-card"><h2>The legal check</h2>
+    <p><span class="pk-lv pk-lv-${lv.verdict.level.toLowerCase()}">${LEVEL_WORDS[lv.verdict.level]}</span></p>
+    <p class="help"><a href="${base(v.job.id)}?ch=7">${allows.ok ? 'It does not stop approval.' : 'It stops approval until it is settled.'}</a></p></section>`;
+}
+
+/** An answer as words: the option's label, a list of labels, a date or an amount. */
+function answerWords(q: L.EngineQuestion, value: unknown): string {
+  const label = (k: unknown) => q.opts?.find((o) => o[0] === k)?.[1] ?? String(k);
+  if (Array.isArray(value)) return value.length === 0 ? 'none of these' : value.map(label).join('; ');
+  if (q.type === 'currency' && typeof value === 'number') return poundsWords(Math.round(value * 100));
+  if (q.type === 'percent' && typeof value === 'number') return `${String(value)}%`;
+  return label(value);
+}
+
+function questionForm(v: P.PackView, lv: L.LegalView, q: L.EngineQuestion, ch: number): Safe {
+  const now = lv.answers.get(q.id)?.value;
+  const field = q.type === 'single'
+    ? h`
+<select class="fi" name="answer" id="lq-${q.id}"><option value=""${now === undefined ? raw(' selected') : raw('')}>Choose…</option>${(q.opts ?? []).map((o) => h`<option value="${o[0]}"${now === o[0] ? raw(' selected') : raw('')}>${o[1]}</option>`)}</select>`
+    : q.type === 'multi'
+      ? h`<span class="pk-multi">${(q.opts ?? []).map((o) => h`<label><input type="checkbox" name="answer" value="${o[0]}"${Array.isArray(now) && now.includes(o[0]) ? raw(' checked') : raw('')}> ${o[1]}</label>`)}</span>`
+      : q.type === 'date'
+        ? h`<input class="fi" type="date" name="answer" id="lq-${q.id}" value="${typeof now === 'string' ? now : ''}">`
+        : h`<input class="fi" name="answer" id="lq-${q.id}" inputmode="decimal" autocomplete="off" value="${typeof now === 'number' ? String(now) : ''}">`;
+  return h`<form method="post" action="${base(v.job.id)}/legal" class="pk-q-form"><input type="hidden" name="seq" value="${String(lv.seq)}"><input type="hidden" name="ch" value="${String(ch)}"><input type="hidden" name="question" value="${q.id}">
+    <div class="pk-fields"><label for="lq-${q.id}">${q.type === 'currency' ? 'Amount in pounds' : q.type === 'date' ? 'Date' : 'Answer'}</label>${field}
+      <label>Where did this come from? <input class="fi pk-why" name="source" maxlength="300" required placeholder="For example: the election notice, the CPSE replies, the client"></label></div>
+    <div class="sendrow"><button class="cta" type="submit">Save the answer</button>${now === undefined ? raw('') : h`<a href="${base(v.job.id)}?ch=7#lq-row-${q.id}">Cancel</a>`}</div></form>`;
+}
+
+function legalChapter(d: PackPageDeps, v: P.PackView, lv: L.LegalView, ch: number, q: URLSearchParams): Safe {
+  const verdict = lv.verdict;
+  const allows = L.legalAllows(verdict, v.sums.qualifying_pence);
+  const open = q.get('q');
+  const unanswered = new Set(lv.unanswered.map((x) => x.id));
+  return h`
+    <p class="lede">Can the client claim on these fixtures at all? When a building is bought, the claim may be worth nothing. It depends on what the seller did. The usual fix is a section 198 election, made within two years. These are our engine’s own questions and rules. Each answer says who gave it and where it came from.</p>
+    <div class="pk-verdict pk-lv-${verdict.level.toLowerCase()}" role="status">
+      <p class="pk-verdict-h"><strong>${LEVEL_WORDS[verdict.level]}.</strong> ${verdict.headline}</p>
+      ${verdict.why.length === 0 ? raw('') : h`<p class="help">Why, in the engine’s words:</p><ul>${verdict.why.map((w) => h`<li>${w}</li>`)}</ul>`}
+      ${verdict.actions.length === 0 ? raw('') : h`<p class="help">What to do:</p><ul>${verdict.actions.map((w) => h`<li>${w}</li>`)}</ul>`}
+      ${verdict.cap_pence === null ? raw('') : h`<p><strong>Capped.</strong> The claim on the fixtures cannot be more than ${poundsWords(verdict.cap_pence)}, ${verdict.cap_words ?? ''}. The pack’s figure is ${poundsWords(v.sums.qualifying_pence)}.</p>`}
+      <p><strong>${allows.ok ? 'This does not stop approval.' : 'This stops approval.'}</strong>${allows.ok || allows.why === verdict.headline ? raw('') : h` ${allows.why}`}</p>
+    </div>
+    <h2>The questions (${String(lv.asked.length)})</h2>
+    <p class="help">Only the questions the answers so far lead to are shown. “Not sure” is an answer, and it is never a pass.</p>
+    <ol class="pk-qs">${lv.asked.map((x) => {
+      const a = lv.answers.get(x.id);
+      // Every question not yet answered has its form open, the optional ones too; an answered one opens on "Change".
+      const editing = lv.may_answer && (a === undefined || open === x.id);
+      return h`<li id="lq-row-${x.id}" class="${a === undefined ? 'pk-q pk-q-open' : 'pk-q'}">
+        <p class="pk-q-ask"><strong>${x.ask}</strong>${x.optional === true ? h` <span class="help">(you do not have to)</span>` : raw('')}</p>
+        ${x.help === undefined ? raw('') : h`<p class="help">${x.help}</p>`}
+        ${a === undefined ? raw('') : h`<p class="pk-q-ans">${answerWords(x, a.value)} <span class="pk-src pk-sv">${a.by_name} · ${d.stamp(a.at)}</span> <span class="help">From: ${a.source_note}</span>
+          ${lv.may_answer && open !== x.id ? h` <a href="${base(v.job.id)}?ch=7&q=${x.id}#lq-row-${x.id}">Change</a>` : raw('')}</p>`}
+        ${editing ? questionForm(v, lv, x, ch) : raw('')}</li>`;
+    })}</ol>
+    ${lv.not_asked_now.length === 0 ? raw('') : h`<h2>Answers no longer asked (${String(lv.not_asked_now.length)})</h2>
+      <p class="help">An earlier answer changed, so these questions are not asked now. They are kept, and not used.</p>
+      <ul>${lv.not_asked_now.map((a) => h`<li>${lv.questions.find((x) => x.id === a.question_id)?.ask ?? a.question_id} — ${a.by_name}</li>`)}</ul>`}
+    ${lv.may_answer ? raw('') : h`<p class="help">The assigned surveyor, Sales or Admin answer these.</p>`}`;
 }
 
 /* ------------------------------------------------------------ chapter 9 */

@@ -11058,3 +11058,14 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## Ad-hoc, 2 October 2026 — the survey pack, stage 2: the legal check (Claude Code, cloud session)
+
+ Lakhbir agreed the legal check comes before the survey ("1) i agree, how can we add this in?"): a building bought from an owner who could claim can leave the buyer nothing on the fixtures unless the value was fixed in time (s.187A, s.198).
+
+-  **Built:** chapter 7 of the pack, *The legal check* (`src/web/pack-legal.ts`, migration 071). The questions are the engine's own, picked by the facts they set, and replayed through the sector's own flow; the engine's `CB_ELECTION.assess` and `CB_S187A.assess` give the position; the verdict is Clear, Clear with a deadline, Not settled yet, or Fails, and a complete election (or a written statement) caps the claim. Answers by the assigned surveyor, Sales or Admin, each with where it came from, kept for ever. `legalAllows` is what stage 3's approval will ask.
+-  **Found while building:** the election check read "no notice produced" where the flow never asked about an election (nobody in the history could claim) — it is now assessed only where asked. On the demo, a drop-down started on its first answer, so an answer nobody gave could be saved — it now starts on *Choose…*, which cannot be saved. Also noted, not changed: the engine's `CB_ELECTION.windowOpen` reads the real clock rather than `s.__now` (no verdict here depends on it, and the tests avoid it).
+-  **Proof.** `test/pack-legal.test.ts` (13); 22 single-line mutations each turned it red. `npm run check` 1981 pass (115 files) on the full copy; in the cloud clone the same five Mac-only tests cannot run. CRM fold, plain words, register, analytics and drift (`--expect 1279,439,403,1981`) green.
+-  **Next:** stage 3 — approval unlocks once every chapter has been opened, the legal check allows it and the sums are complete; one click; the report frozen with a fingerprint.
+
+ **Claim cleared** in the commit that carries this record.
+
