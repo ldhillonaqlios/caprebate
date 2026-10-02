@@ -373,6 +373,8 @@ export type AuditKind =
   | 'REPORT_SENT_FOR_SIGNOFF' | 'REPORT_SIGNOFF_ANSWERED'
   /** 2 Oct 2026: a client's photo for the survey checklist (src/web/survey-evidence.ts). The photo's id and item only. */
   | 'SURVEY_EVIDENCE_ADDED'
+  /** 2 Oct 2026: photos sent in one go put under checklist items by Admin or Sales, or taken back. Counts only. */
+  | 'SURVEY_PHOTOS_SORTED'
   /** Phase 151f: a signed word from the service that the check is still under way, or about something other than a
    *  check's status. Acknowledged and not kept as a result. The status word and why only. */
   | 'IDENTITY_RESULT_NOT_KEPT'

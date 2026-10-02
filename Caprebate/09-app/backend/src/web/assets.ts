@@ -409,6 +409,13 @@ dl.pk-dl{display:block;margin:0}.pk-dl div{display:flex;justify-content:space-be
 .ev-nav{margin-top:1rem}
 .ev-guide{max-width:46rem}
 .ev-card{border:2px solid var(--ink)}
+.ev-many{border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:0 0 1.2rem;background:var(--white)}
+.ev-many .ev-take{border:2px dashed var(--ink)}
+.ev-wait{background:#fff5e0;color:#8a5300;border:1px solid #e7c98a;border-radius:8px;padding:.5rem .8rem;font-weight:700;margin:.6rem 0}
+.ev-sort{display:grid;grid-template-columns:repeat(auto-fill,minmax(16rem,1fr));gap:14px;margin:.8rem 0}
+.ev-card-photo{margin:0;border:1px solid var(--line);border-radius:10px;padding:.6rem;background:var(--white)}
+.ev-card-photo label{display:block;font-weight:700;margin-top:.4rem}
+.ev-card-photo select{width:100%}
 .ev-chip{display:inline-block;border-radius:999px;padding:0 .5rem;font-size:12px;font-weight:700;border:1px solid #e7c98a;background:#fff3d6;color:#7a5200;text-decoration:none;margin-top:2px}
 .ev-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:12px;padding:.8rem}
 .ev-gallery figure{margin:0}.ev-gallery figcaption{font-size:13px;color:var(--mut)}

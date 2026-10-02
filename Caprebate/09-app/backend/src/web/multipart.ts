@@ -140,3 +140,29 @@ export function singleFile(
   if (part === undefined) return { ok: false, why: 'no file was attached' };
   return { ok: true, part, fields };
 }
+
+/**
+ * 2 Oct 2026: SEVERAL PHOTOS IN ONE FORM — the client's "send lots of photos at once" (src/web/evidence-pages.ts).
+ * The same ungenerous reader; every file part is returned, in order, up to `max` of them (the parts cap above still
+ * holds). A form that posts more than `max` is refused, not cut short.
+ */
+export function manyFiles(
+  body: Uint8Array, contentType: string | undefined, max: number,
+): { ok: true; files: Part[]; fields: Record<string, string> } | { ok: false; why: string } {
+  const boundary = boundaryOf(contentType);
+  if (boundary === null) return { ok: false, why: 'that request is not a file upload' };
+  let parts: Part[];
+  try {
+    parts = parseMultipart(body, boundary);
+  } catch (e) {
+    return { ok: false, why: e instanceof MultipartError ? e.message : 'that upload could not be read' };
+  }
+  const files = parts.filter((p) => p.filename !== undefined && p.bytes.length > 0);
+  if (files.length === 0) return { ok: false, why: 'no file was attached' };
+  if (files.length > max) return { ok: false, why: `attach at most ${String(max)} files at a time` };
+  const fields: Record<string, string> = {};
+  for (const p of parts) {
+    if (p.filename === undefined) fields[p.name] = Buffer.from(p.bytes).toString('utf8');
+  }
+  return { ok: true, files, fields };
+}

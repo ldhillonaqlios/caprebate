@@ -11112,3 +11112,14 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** stage 6 — the lookups switched on in test, and OS building outlines on the report's cover.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 2 October 2026 — survey photos sent many at once, sorted by Admin or Sales (Claude Code, cloud session)
+
+ Lakhbir: "give users the ability to not only upload photos individually but also in one go. admin can then split and upload photos as this is more user friendly". Mock-up shown first and approved ("Yes, build it as shown"); who sorts: "Admin and Sales".
+
+-  **Built:** a "Send lots of photos at once" box in the client portal: up to 15 photos and 4.4 MB in one send, one tick that nobody is in them; each checked and cleaned like a single photo, all or none; kept encrypted as not yet sorted, and the portal says how many wait. A "Sort the client's photos" page for Admin and Sales: each photo put under a checklist item, left for now, or taken back; one Save for all; every move kept (migration 075, `survey_photo_sorts`); the newest move is the photo's item. Chapter 2 shows what waits, with Sort them. A sorted photo counts like any other; an unsorted one towards nothing.
+-  **The limit, said plainly on the page:** the test website takes 4.5 MB a send, and a page may run no script to split a big one, so one send is often one or two full-size phone photos. Over the limit, our server says so in words; on the test website Vercel's own error page shows first.
+-  **Proof.** Five tests added to `test/survey-evidence.test.ts` (now 26); 25 single-line mutations, all red. Driven on the demo: five real photos sent in one go, sorted by Admin, seen under their items. `npm run check` 2036 pass (119 files) on the full copy; the same five Mac-only tests cannot run in the cloud clone. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2036`) green.
+-  **Next:** stage 6 — the lookups switched on in test, and OS building outlines on the report's cover.
+
+ **Claim cleared** in the commit that carries this record.

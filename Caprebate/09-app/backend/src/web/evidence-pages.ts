@@ -26,7 +26,7 @@ import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import * as E from './survey-evidence.ts';
 import { GROUPS, NOBODY_IN_SHOT } from './survey-checklist.ts';
-import { singleFile } from './multipart.ts';
+import { manyFiles, singleFile } from './multipart.ts';
 import { packJob } from './surveyor.ts';
 import { staffSlots, addLocalDays, startOfLocalDay } from './schedule.ts';
 import { localDate, localClock, ukDate } from './localtime.ts';
@@ -82,6 +82,21 @@ function thumbs(photos: readonly E.PhotoRow[], src: (id: string) => string, limi
   return h`${photos.slice(0, limit).map((p) => h`<a href="${src(p.id)}"><img class="ev-thumb" src="${src(p.id)}" alt="A photo sent ${when(p.taken_at)}"></a>`)}`;
 }
 
+/** Send lots of photos at once: Admin or Sales sort them into the checklist. */
+function manyForm(job: string, unsorted: number): Safe {
+  return h`<section class="ev-many" id="many"><h2>Send lots of photos at once</h2>
+    <p>Took photos already? Choose them all here. <strong>We sort them into the checklist for you.</strong></p>
+    <form method="post" action="/portal/building/photos" enctype="multipart/form-data" class="ev-take">
+      <input type="hidden" name="job" value="${job}">
+      <label class="ev-file">Choose photos <input type="file" name="files" accept="image/jpeg,image/png" multiple required></label>
+      <label class="ck"><input type="checkbox" name="nobody" value="yes" required> Nobody is in any of these photos: no people, screens or records.</label>
+      <label class="ev-note">A note, if it helps (optional) <input class="fi" name="note" maxlength="500" placeholder="For example: the plant room and the kitchen"></label>
+      <p class="help">You can send up to 15 photos and 4.4 MB at a time. That is often 1 or 2 full-size phone photos, or more smaller ones. If it is too much, send the rest in another go.</p>
+      <button class="cta" type="submit">Send these photos</button></form>
+    ${unsorted === 0 ? raw('') : h`<p class="ev-wait" role="status">${String(unsorted)} photo${unsorted === 1 ? ' is' : 's are'} waiting for us to sort. You do not need to do anything.</p>`}
+    <p class="help">Prefer to go item by item? The checklist below works the same way.</p></section>`;
+}
+
 function overview(d: PortalEvidenceDeps, actor: Actor, v: E.ChecklistView, jobs: readonly E.EvidenceJob[], q: URLSearchParams): Safe {
   const job = v.job.id;
   const pct = v.total === 0 ? 0 : Math.round(((v.done + v.marked) * 100) / v.total);
@@ -90,7 +105,7 @@ function overview(d: PortalEvidenceDeps, actor: Actor, v: E.ChecklistView, jobs:
   const meeting = next === null ? undefined : activeMeeting(d.app.db, next.booking_id);
   const asked = E.asksOf(d.app.db, job)[0];
   const firstTodo = v.items.find((i) => !i.done) ?? v.items[0];
-  const notes: Record<string, string> = { photo: 'Thank you. We have the photo.', marked: 'Saved.', removed: 'That photo is taken back. Nobody will see it.', asked: 'Thank you. We will offer you a time for the call.' };
+  const notes: Record<string, string> = { photos: 'Thank you. We have your photos, and we will sort them into the checklist.', photo: 'Thank you. We have the photo.', marked: 'Saved.', removed: 'That photo is taken back. Nobody will see it.', asked: 'Thank you. We will offer you a time for the call.' };
   const done = q.get('done');
   const may = actor.role === 'CLIENT';
   return h`
@@ -113,6 +128,7 @@ function overview(d: PortalEvidenceDeps, actor: Actor, v: E.ChecklistView, jobs:
           : may ? h`<form method="post" action="/portal/building/ask"><input type="hidden" name="job" value="${job}"><button class="btn" type="submit">Ask for a recorded video call</button></form>` : raw('')}
         <p><a href="/portal/building/guide?job=${job}">Read the filming guide</a></p></section>
     </div>
+    ${may ? manyForm(job, v.unsorted) : raw('')}
     ${GROUPS.map((g, gi) => {
       const items = v.items.filter((i) => i.group === g);
       if (items.length === 0) return raw('');
@@ -199,6 +215,18 @@ export async function handlePortalEvidence(
     redirect(res, safeBack(got.fields['back'] ?? null, `/portal/building?job=${job}`, 'photo'));
     return 'handled';
   }
+  if (path === '/portal/building/photos' && method === 'POST') {
+    const tooMuch = () => html(413, 'Not sent', h`<div class="card" role="alert"><h1>The photos were not sent</h1><p>Those photos are too big together. The most is 4.4 MB in one go. Send fewer at a time.</p><p><a href="/portal/building#many">Back</a></p></div>`);
+    let body: Buffer;
+    try { body = await d.readBody(req, E.MAX_PHOTO_BYTES + 64 * 1024); } catch (e) { if (e instanceof Error && e.name === 'PayloadTooLarge') return tooMuch(); throw e; }
+    const got = manyFiles(new Uint8Array(body), req.headers['content-type'], E.MAX_PHOTOS_AT_ONCE);
+    if (!got.ok) return html(400, 'Not sent', h`<div class="card" role="alert"><h1>The photos were not sent</h1><p>${got.why.charAt(0).toUpperCase() + got.why.slice(1)}.</p><p><a href="/portal/building#many">Back</a></p></div>`);
+    const job = got.fields['job'] ?? '';
+    const r = await E.addPhotos(deps, d.store, actor, { job_id: job, files: got.files.map((f) => f.bytes), nobody: got.fields['nobody'] ?? '', note: got.fields['note'] ?? '' });
+    if (!r.ok) return html(400, 'Not sent', h`<div class="card" role="alert"><h1>The photos were not sent</h1><p>${r.why}</p><p><a href="/portal/building?job=${job}#many">Back</a></p></div>`);
+    redirect(res, `/portal/building?job=${job}&done=photos#many`);
+    return 'handled';
+  }
   if (path === '/portal/building/mark' && method === 'POST') {
     const f = await d.form(req);
     const r = E.markItem(deps, actor, { job_id: f.get('job') ?? '', item_key: f.get('item') ?? '', mark: f.get('mark') ?? '' });
@@ -266,7 +294,7 @@ export async function handleStaffEvidence(
   d: StaffEvidenceDeps, req: IncomingMessage, res: ServerResponse, url: URL, method: string, actor: Actor,
   form: (r: IncomingMessage) => Promise<URLSearchParams>,
 ): Promise<'handled' | 'not-mine'> {
-  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack\/(photos|photo\/[A-Za-z0-9-]+|photo\/[A-Za-z0-9-]+\/withdraw|basis|walkthrough|recording|recording\/[A-Za-z0-9-]+)$/.exec(url.pathname);
+  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack\/(photos|sort|photo\/[A-Za-z0-9-]+|photo\/[A-Za-z0-9-]+\/withdraw|basis|walkthrough|recording|recording\/[A-Za-z0-9-]+)$/.exec(url.pathname);
   if (m === null) return 'not-mine';
   const job = m[1] ?? '';
   const what = m[2] ?? '';
@@ -276,6 +304,42 @@ export async function handleStaffEvidence(
     const img = await E.photoBytes(deps, d.store, actor, what.slice(6));
     if (img === null) return d.problem(res, actor, 'No photo', 'That photo is not here, or it was taken back.', back);
     sendImage(res, img);
+    return 'handled';
+  }
+  if (what === 'sort') {
+    const { job: pj } = packJob(d.app.db, actor, job);
+    if (!can(actor, 'email.queue', { type: 'email', id: pj.business_id, business_id: pj.business_id })) return 'not-mine';
+    if (method === 'POST') {
+      const f = await form(req);
+      const choices: Record<string, string> = {};
+      for (const [k, v] of f) if (k.startsWith('to-')) choices[k.slice(3)] = v;
+      const r = E.sortPhotos(deps, actor, job, choices);
+      if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, `/staff/survey/${job}/pack/sort`);
+      redirect(res, `/staff/survey/${job}/pack/sort?done=${String(r.sorted)}-${String(r.taken_back)}`);
+      return 'handled';
+    }
+    if (method !== 'GET') return 'not-mine';
+    const v = E.checklistView(d.app.db, job);
+    if (v === null) return 'not-mine';
+    const waiting = E.unsortedOf(d.app.db, job);
+    const done = /^(\d+)-(\d+)$/.exec(url.searchParams.get('done') ?? '');
+    res.writeHead(200, HTML_HEADERS);
+    res.end(page({ title: `Sort the photos · ${v.job.place}`, nav: d.nav(actor), wide: true, body: h`
+      <p class="eyebrow">${v.job.place} · Survey pack · the client’s photos</p>
+      <h1>Sort the client’s photos</h1>
+      ${done === null ? raw('') : h`<div class="gate" role="status">Saved: ${done[1] ?? '0'} put under the checklist, ${done[2] ?? '0'} taken back.</div>`}
+      <p class="help">${waiting.length === 0 ? 'Nothing is waiting to be sorted.' : `${String(waiting.length)} waiting. Put each one under its checklist item. The surveyor sees it there, and on its line in chapter 10.`}</p>
+      ${waiting.length === 0 ? raw('') : h`<form method="post" action="/staff/survey/${job}/pack/sort"><div class="ev-sort">${waiting.map((p) => h`<figure class="ev-card-photo">
+        <a href="/staff/survey/${job}/pack/photo/${p.id}"><img class="ev-big" src="/staff/survey/${job}/pack/photo/${p.id}" alt="A photo sent ${when(p.taken_at)}"></a>
+        <figcaption>${when(p.taken_at)} · ${p.taken_by_name}${p.note === null ? '' : ` · “${p.note}”`}
+          <label for="to-${p.id}">Put it under</label>
+<select class="fi" id="to-${p.id}" name="to-${p.id}"><option value="">Leave for now</option>${GROUPS.map((g) => {
+            const items = v.items.filter((i) => i.group === g);
+            return items.length === 0 ? raw('') : h`<optgroup label="${g}">${items.map((i) => h`<option value="${i.key}">${i.title}</option>`)}</optgroup>`;
+          })}<option value="${E.TAKE_BACK}">Not useful: take it back</option></select></figcaption></figure>`)}</div>
+        <p class="help">One click saves them all. Each move is kept with your name and the time. Nothing is deleted.</p>
+        <button class="cta" type="submit">Save all</button></form>`}
+      <p><a href="/staff/survey/${job}/pack?ch=2">Back to chapter 2</a></p>` }));
     return 'handled';
   }
   if (method === 'GET' && what === 'photos') {
@@ -291,6 +355,7 @@ export async function handleStaffEvidence(
       <p class="eyebrow">${v.job.place} · Survey pack · the client’s photos</p>
       <h1>${line === null ? 'Every photo' : `The photos for ${line}`}</h1>
       <p><a href="${back}">Back to chapter 2</a>${line === null ? raw('') : h` · <a href="/staff/survey/${job}/pack/photos">Every photo</a>`}</p>
+      ${line === null && v.unsorted > 0 ? h`<p class="ev-wait">${String(v.unsorted)} more sent in one go, not sorted yet.${mayWithdraw ? h` <a href="/staff/survey/${job}/pack/sort">Sort them</a>` : raw('')}</p>` : raw('')}
       ${items.length === 0 ? h`<p class="help">No photos yet.</p>` : items.map((i) => h`<section class="ev-group"><h2>${i.group} · ${i.title}</h2>
         <div class="ev-gallery">${i.photos.map((p) => h`<figure><a href="/staff/survey/${job}/pack/photo/${p.id}"><img class="ev-big" src="/staff/survey/${job}/pack/photo/${p.id}" alt="${i.title}, ${when(p.taken_at)}"></a>
           <figcaption>${when(p.taken_at)} · ${p.taken_by_name}${p.note === null ? '' : ` · “${p.note}”`}
@@ -325,6 +390,7 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
   const isSurveyor = can(actor, 'surveyor_job.commit', obj);
   const mayArrange = isSurveyor || can(actor, 'email.queue', { type: 'email', id: job.business_id, business_id: job.business_id });
   const mayBook = can(actor, 'booking.write', { type: 'booking', id: 'walkthrough', business_id: job.business_id });
+  const maySort = can(actor, 'email.queue', { type: 'email', id: job.business_id, business_id: job.business_id });
   const walks = E.walkthroughsOf(app.db, job_id);
   const asks = E.asksOf(app.db, job_id);
   const basis = E.basisOf(app.db, job_id);
@@ -343,6 +409,8 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
     <table class="pk-table"><thead><tr><th>Evidence from the client</th><th>Done</th><th></th></tr></thead><tbody>
       <tr><td>The photo checklist</td><td>${String(v.done)} of ${String(v.total)} items, ${String(v.photos)} photo${v.photos === 1 ? '' : 's'}${v.marked === 0 ? '' : ` · ${String(v.marked)} marked not in the building or not safe`}</td>
         <td>${v.photos === 0 ? raw('') : h`<a href="${base}/photos">See every photo</a>`}</td></tr>
+      ${v.unsorted === 0 ? raw('') : h`<tr><td>Sent all at once, not sorted yet</td><td>${String(v.unsorted)} photo${v.unsorted === 1 ? '' : 's'}${maySort ? '' : ' · Admin or Sales sort them'}</td>
+        <td>${maySort ? h`<a class="btn" href="${base}/sort">Sort them</a>` : raw('')}</td></tr>`}
       ${walks.length === 0 ? h`<tr><td>A recorded walkthrough call</td><td>${asks.length === 0 ? 'None asked for or booked.' : `The client asked for one on ${when(asks[0]!.at)}.`}</td><td></td></tr>`
         : walks.map((w) => h`<tr><td>Walkthrough call${w.starts_at === null ? '' : `, ${when(w.starts_at)}`}${w.cancelled ? ' (cancelled)' : ''}<br><span class="help">Booked by ${w.booked_by_name}</span></td>
           <td>${w.recordings.length === 0 ? (w.meeting_id === null ? 'No Zoom meeting, so no recording.' : 'No recording fetched yet.')

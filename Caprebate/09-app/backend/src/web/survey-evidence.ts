@@ -15,6 +15,12 @@
  * where it is, its type, size and SHA-256, who took it, when, and the client's "nobody is in it". A photo is never
  * edited or deleted here: it is taken back (withdrawn), by the client or by staff, and is then shown to nobody.
  *
+ * MANY AT ONCE (2 Oct 2026, Lakhbir: "not only … individually but also in one go. admin can then split"). A client
+ * may send up to 15 photos in one go, with one "nobody is in them", up to 4.4 MB in all (the test website's limit is
+ * for the whole send). Each is checked and cleaned like a single one; if any is refused, none is kept, and the page
+ * says which. They are kept under UNSORTED until Admin or Sales put each under a checklist item (`sortPhotos`, migration
+ * 075): the newest move is the photo's item. One that is not useful is taken back.
+ *
  * WHO SEES A PHOTO. The client of that company; Admin and Sales; and the surveyor assigned to the job — every request
  * asked of the rules (`surveyor_job.read` for staff). Lakhbir's waiver for testing names Admin, Sales, the data
  * protection officer, the client and the assigned surveyor, and the 7-year keep (SURVEY_PHOTOS below). Real use waits
@@ -144,11 +150,16 @@ export type ItemView = ChecklistItem & {
   readonly mark: 'NOT_HERE' | 'NOT_SAFE' | null;
   readonly done: boolean;
 };
-export type ChecklistView = { readonly job: EvidenceJob; readonly items: readonly ItemView[]; readonly done: number; readonly marked: number; readonly total: number; readonly photos: number };
+/** `photos` counts the photos under a checklist item; `unsorted` those sent in one go and not yet sorted. */
+export type ChecklistView = { readonly job: EvidenceJob; readonly items: readonly ItemView[]; readonly done: number; readonly marked: number; readonly total: number; readonly photos: number; readonly unsorted: number };
+
+/** The item key of a photo sent in one go, before Admin or Sales sort it. Never a checklist item. */
+export const UNSORTED = 'UNSORTED';
 
 export function photosOf(db: Db, job_id: string): PhotoRow[] {
   return db.all<PhotoRow>(
-    'SELECT p.id, p.item_key, p.content_type, p.byte_size, p.note, p.taken_at, u.display_name AS taken_by_name FROM survey_photos p JOIN users u ON u.id = p.taken_by ' +
+    'SELECT p.id, COALESCE((SELECT s.item_key FROM survey_photo_sorts s WHERE s.photo_id = p.id ORDER BY s.at DESC, s.rowid DESC LIMIT 1), p.item_key) AS item_key, ' +
+      'p.content_type, p.byte_size, p.note, p.taken_at, u.display_name AS taken_by_name FROM survey_photos p JOIN users u ON u.id = p.taken_by ' +
       'LEFT JOIN survey_photo_withdrawals w ON w.photo_id = p.id WHERE p.job_id = ? AND w.photo_id IS NULL ORDER BY p.taken_at, p.rowid', [job_id]);
 }
 
@@ -165,7 +176,8 @@ export function checklistView(db: Db, job_id: string): ChecklistView | null {
     const mark = m === 'NOT_HERE' || m === 'NOT_SAFE' ? m : null;
     return { ...i, photos: ps, mark, done: ps.length > 0 || mark !== null };
   });
-  return { job, items, done: items.filter((i) => i.photos.length > 0).length, marked: items.filter((i) => i.photos.length === 0 && i.mark !== null).length, total: items.length, photos: photos.length };
+  return { job, items, done: items.filter((i) => i.photos.length > 0).length, marked: items.filter((i) => i.photos.length === 0 && i.mark !== null).length, total: items.length,
+    photos: items.reduce((a, i) => a + i.photos.length, 0), unsorted: photos.filter((p) => p.item_key === UNSORTED).length };
 }
 
 /** The photos each pack line has, by the fixture list's id: how many, and from which items. */
@@ -199,22 +211,69 @@ export async function addPhoto(
   if (f.nobody !== 'yes') return { ok: false, field: 'nobody', why: 'Tick to say nobody is in the photo: no patients, residents, staff, screens or records.' };
   if (f.bytes.length === 0) return { ok: false, field: 'file', why: 'Choose or take a photo first.' };
   if (f.bytes.length > MAX_PHOTO_BYTES) return { ok: false, field: 'file', why: 'That photo is too big. The most is 4.4 MB. Take it again at a smaller size, or send a screenshot of it.' };
-  const type = sniffImage(f.bytes);
-  if (type === null) return { ok: false, field: 'file', why: 'Send a photo as a JPEG or PNG. An iPhone turns its photos into JPEG when you choose one here.' };
-  const clean = type === 'image/jpeg' ? stripJpeg(f.bytes) : stripPng(f.bytes);
-  if (clean === null) return { ok: false, field: 'file', why: 'That photo could not be read. Take it again, please.' };
+  const c = cleaned(f.bytes);
+  if (!c.ok) return { ok: false, field: 'file', why: c.why };
   const note = f.note.trim().replace(/\s+/g, ' ');
   if (note.length > 500) return { ok: false, field: 'note', why: 'Keep the note under 500 characters.' };
-  if (!store.canSeal) return { ok: false, why: 'We cannot keep photos yet: the key that encrypts them is not set. We have been told.' };
+  if (!store.canSeal) return { ok: false, why: NO_KEY };
+  return { ok: true, id: await keep(d, store, actor, job.id, item.key, c, note) };
+}
+
+const NO_KEY = 'We cannot keep photos yet: the key that encrypts them is not set. We have been told.';
+type Cleaned = { readonly ok: true; readonly type: 'image/jpeg' | 'image/png'; readonly bytes: Uint8Array } | { readonly ok: false; readonly why: string };
+
+/** A photo known by its first bytes, with its hidden details taken out. */
+function cleaned(bytes: Uint8Array): Cleaned {
+  const type = sniffImage(bytes);
+  if (type === null) return { ok: false, why: 'Send a photo as a JPEG or PNG. An iPhone turns its photos into JPEG when you choose one here.' };
+  const clean = type === 'image/jpeg' ? stripJpeg(bytes) : stripPng(bytes);
+  if (clean === null) return { ok: false, why: 'That photo could not be read. Take it again, please.' };
+  return { ok: true, type, bytes: clean };
+}
+
+/** Encrypt it, keep it, and say so in the audit log. */
+async function keep(d: EvidenceDeps, store: FsObjectStore, actor: Actor, job_id: string, item_key: string, c: Extract<Cleaned, { ok: true }>, note: string): Promise<string> {
   const id = d.newId();
-  const key = `survey-photos/${job.id}/${id}.${type === 'image/jpeg' ? 'jpg' : 'png'}`;
-  await store.putSealed(key, clean);
+  const key = `survey-photos/${job_id}/${id}.${c.type === 'image/jpeg' ? 'jpg' : 'png'}`;
+  await store.putSealed(key, c.bytes);
   const at = d.now();
   d.db.run('INSERT INTO survey_photos (id, job_id, item_key, object_key, content_type, byte_size, sha256, note, taken_by, taken_at, nobody_in_it) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
-    [id, job.id, item.key, key, type, clean.length, createHash('sha256').update(clean).digest('hex'), note === '' ? null : note, actor.id, at]);
-  d.audit.append({ at, kind: 'SURVEY_EVIDENCE_ADDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'surveyor_job', object_id: job.id,
-    detail: { photo: id, item: item.key } });
-  return { ok: true, id };
+    [id, job_id, item_key, key, c.type, c.bytes.length, createHash('sha256').update(c.bytes).digest('hex'), note === '' ? null : note, actor.id, at]);
+  d.audit.append({ at, kind: 'SURVEY_EVIDENCE_ADDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'surveyor_job', object_id: job_id,
+    detail: { photo: id, item: item_key } });
+  return id;
+}
+
+/** The most a client sends in one go. */
+export const MAX_PHOTOS_AT_ONCE = 15;
+
+/**
+ * Several photos in one go, from a client of that company, with one "nobody is in them". All are checked first: if
+ * any is refused, none is kept, and the words say which (by its place in the list, 1 being the first). They are kept
+ * under UNSORTED, for Admin or Sales to sort.
+ */
+export async function addPhotos(
+  d: EvidenceDeps, store: FsObjectStore, actor: Actor,
+  f: { job_id: string; files: readonly Uint8Array[]; nobody: string; note: string },
+): Promise<{ readonly ok: true; readonly ids: readonly string[] } | { readonly ok: false; readonly why: string; readonly field?: string }> {
+  const job = clientOf(d.db, actor, f.job_id);
+  if (f.nobody !== 'yes') return { ok: false, field: 'nobody', why: 'Tick to say nobody is in the photos: no patients, residents, staff, screens or records.' };
+  const files = f.files.filter((b) => b.length > 0);
+  if (files.length === 0) return { ok: false, field: 'files', why: 'Choose your photos first.' };
+  if (files.length > MAX_PHOTOS_AT_ONCE) return { ok: false, field: 'files', why: `Send at most ${String(MAX_PHOTOS_AT_ONCE)} photos at a time.` };
+  if (files.reduce((a, b) => a + b.length, 0) > MAX_PHOTO_BYTES) return { ok: false, field: 'files', why: 'Those photos are too big together. The most is 4.4 MB in one go. Send fewer at a time.' };
+  const all: Extract<Cleaned, { ok: true }>[] = [];
+  for (const [k, b] of files.entries()) {
+    const c = cleaned(b);
+    if (!c.ok) return { ok: false, field: 'files', why: `Photo ${String(k + 1)}: ${c.why} None was sent.` };
+    all.push(c);
+  }
+  const note = f.note.trim().replace(/\s+/g, ' ');
+  if (note.length > 500) return { ok: false, field: 'note', why: 'Keep the note under 500 characters.' };
+  if (!store.canSeal) return { ok: false, why: NO_KEY };
+  const ids: string[] = [];
+  for (const c of all) ids.push(await keep(d, store, actor, job.id, UNSORTED, c, note));
+  return { ok: true, ids };
 }
 
 export function markItem(d: EvidenceDeps, actor: Actor, f: { job_id: string; item_key: string; mark: string }): Result {
@@ -256,6 +315,53 @@ export async function photoBytes(d: EvidenceDeps, store: FsObjectStore, actor: A
   }
   if (p.withdrawn === 1) return null;
   return { bytes: await store.getSealed(p.object_key), content_type: p.content_type };
+}
+
+/* ================================================================== *
+ * SORTING PHOTOS SENT IN ONE GO — Admin or Sales
+ * ================================================================== */
+
+/** The choice that takes a photo back while sorting. */
+export const TAKE_BACK = 'TAKE_BACK';
+
+/** The photos sent in one go and not yet sorted, oldest first. */
+export function unsortedOf(db: Db, job_id: string): PhotoRow[] {
+  return photosOf(db, job_id).filter((p) => p.item_key === UNSORTED);
+}
+
+/**
+ * Put each chosen photo under a checklist item, or take it back as not useful. Admin or Sales only. `choices` maps a
+ * photo to an item key, TAKE_BACK, or '' (leave it for now). Every choice is checked first; if any is wrong, nothing
+ * is saved. Each move is kept under the sorter's name.
+ */
+export function sortPhotos(d: EvidenceDeps, actor: Actor, job_id: string, choices: Readonly<Record<string, string>>): { readonly ok: true; readonly sorted: number; readonly taken_back: number } | { readonly ok: false; readonly why: string } {
+  const { job } = packJob(d.db, actor, job_id);
+  authorise(actor, 'email.queue', { type: 'email', id: job.business_id, business_id: job.business_id });
+  const keys = new Set(checklistFor(job.sector).map((i) => i.key));
+  const live = new Map(photosOf(d.db, job_id).map((p) => [p.id, p] as const));
+  const moves = Object.entries(choices).filter(([, to]) => to !== '');
+  for (const [photo, to] of moves) {
+    if (!live.has(photo)) return { ok: false, why: 'One of those photos is not this survey’s, or was taken back. Nothing was saved.' };
+    if (to !== TAKE_BACK && !keys.has(to)) return { ok: false, why: 'Choose an item from the checklist for each photo. Nothing was saved.' };
+  }
+  let sorted = 0;
+  let taken_back = 0;
+  d.db.tx(() => {
+    for (const [photo, to] of moves) {
+      if (to === TAKE_BACK) {
+        d.db.run('INSERT INTO survey_photo_withdrawals (photo_id, by_user, reason, at) VALUES (?, ?, ?, ?)', [photo, actor.id, 'Not useful, taken back when sorting.', d.now()]);
+        taken_back++;
+      } else if (live.get(photo)?.item_key !== to) {
+        d.db.run('INSERT INTO survey_photo_sorts (id, photo_id, item_key, by_user, at) VALUES (?, ?, ?, ?, ?)', [d.newId(), photo, to, actor.id, d.now()]);
+        sorted++;
+      }
+    }
+    if (sorted + taken_back > 0) {
+      d.audit.append({ at: d.now(), kind: 'SURVEY_PHOTOS_SORTED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'surveyor_job', object_id: job_id,
+        detail: { sorted, taken_back } });
+    }
+  });
+  return { ok: true, sorted, taken_back };
 }
 
 /* ================================================================== *

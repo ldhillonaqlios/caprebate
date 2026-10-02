@@ -18,6 +18,9 @@
  *   · how the surveyor inspected: only the assigned surveyor says it, and the pack's chapter 2 shows it;
  *   · the pages: the portal's checklist, an item, the guide, a photo sent through the page; the pack's chapter 2 and each
  *     line's photo chip;
+ *   · many at once (Lakhbir, 2 Oct 2026: "not only … individually but also in one go. admin can then split"): only from
+ *     the company's client, with the tick, at most 15 and 4.4 MB, all or none; kept unsorted; sorted only by Admin or
+ *     Sales, all or nothing, the newest move the photo's item; the portal box, the sorting page and chapter 2's row;
  *   · none of the new records is ever edited or deleted.
  */
 import { describe, test, before, after } from 'node:test';
@@ -29,6 +32,7 @@ import { join } from 'node:path';
 import { crc32 } from 'node:zlib';
 import { createApp } from '../src/server.ts';
 import { FsObjectStore } from '../src/web/objectstore.ts';
+import { manyFiles } from '../src/web/multipart.ts';
 import { checklistFor, GROUPS, NOBODY_IN_SHOT } from '../src/web/survey-checklist.ts';
 import * as E from '../src/web/survey-evidence.ts';
 import { packView } from '../src/web/survey-pack.ts';
@@ -477,6 +481,118 @@ describe('the pages', () => {
   });
 });
 
+describe('many photos at once, sorted by Admin or Sales', () => {
+  const many = (who = CLIENT, f: Partial<{ job_id: string; files: Uint8Array[]; nobody: string; note: string }> = {}) =>
+    E.addPhotos(deps(), made.store, who, { job_id: JOB, files: [JPEG, PNG, JPEG_CLEAN], nobody: 'yes', note: '', ...f });
+  let ids: readonly string[] = [];
+
+  test('the reader returns every file in order, and refuses too many, none, or a request that is not a form with files', () => {
+    const body = (n: number) => Buffer.concat([...Array.from({ length: n }, (_, k) => Buffer.from(`--B\r\nContent-Disposition: form-data; name="files"; filename="p${String(k)}.jpg"\r\nContent-Type: image/jpeg\r\n\r\nX${String(k)}\r\n`)),
+      Buffer.from('--B\r\nContent-Disposition: form-data; name="job"\r\n\r\nj1\r\n--B--\r\n')]);
+    const r = manyFiles(body(3), 'multipart/form-data; boundary=B', 15);
+    assert.ok(r.ok);
+    if (r.ok) { assert.deepEqual(r.files.map((f) => Buffer.from(f.bytes).toString()), ['X0', 'X1', 'X2']); assert.equal(r.fields['job'], 'j1'); }
+    assert.deepEqual(manyFiles(body(4), 'multipart/form-data; boundary=B', 3), { ok: false, why: 'attach at most 3 files at a time' });
+    assert.deepEqual(manyFiles(body(0), 'multipart/form-data; boundary=B', 3), { ok: false, why: 'no file was attached' });
+    assert.equal(manyFiles(body(1), 'application/x-www-form-urlencoded', 3).ok, false);
+  });
+
+  test('only a client of that company sends them; with the tick; at most 15 and 4.4 MB; one bad photo and none is kept', async () => {
+    for (const who of [OTHER_CLIENT, SAM, ADMIN, SALES]) await assert.rejects(many(who), /not authorised|NotAuthorised/i, who.id);
+    const before = made.app.db.get<{ n: number }>('SELECT count(*) AS n FROM survey_photos')!.n;
+    const no = async (f: Parameters<typeof many>[1], why: RegExp) => { const r = await many(CLIENT, f); assert.equal(r.ok, false); if (!r.ok) assert.match(r.why, why); };
+    await no({ nobody: '' }, /nobody is in the photos/);
+    await no({ files: [] }, /Choose your photos first/);
+    await no({ files: [new Uint8Array(0)] }, /Choose your photos first/);
+    await no({ files: Array.from({ length: E.MAX_PHOTOS_AT_ONCE + 1 }, () => JPEG) }, /at most 15 photos/);
+    await no({ files: [JPEG, Buffer.alloc(E.MAX_PHOTO_BYTES - JPEG.length + 1, 0xff)] }, /too big together\. The most is 4\.4 MB/);
+    await no({ files: [JPEG, Buffer.from('GIF89a, not a photo'), PNG] }, /^Photo 2: Send a photo as a JPEG or PNG\. .* None was sent\.$/);
+    await no({ note: 'x'.repeat(501) }, /under 500/);
+    assert.equal(made.app.db.get<{ n: number }>('SELECT count(*) AS n FROM survey_photos')!.n, before, 'a refused send kept something');
+    const bare = new FsObjectStore({ root: mkdtempSync(join(tmpdir(), 'cb-ev-nokey2-')), now: made.app.now, sealKey: null });
+    assert.equal((await E.addPhotos(deps(), bare, CLIENT, { job_id: JOB, files: [JPEG], nobody: 'yes', note: '' })).ok, false, 'kept with no key');
+  });
+
+  test('sent, each is cleaned, encrypted and kept unsorted; it counts towards no item until sorted', async () => {
+    const v0 = E.checklistView(made.app.db, JOB)!;
+    const r = await many(CLIENT, { note: 'the plant room' });
+    assert.ok(r.ok);
+    if (!r.ok) return;
+    ids = r.ids;
+    assert.equal(ids.length, 3);
+    const rows = made.app.db.all<{ item_key: string; content_type: string; note: string }>('SELECT item_key, content_type, note FROM survey_photos WHERE id IN (?, ?, ?) ORDER BY rowid', [...ids]);
+    assert.deepEqual(rows.map((x) => [x.item_key, x.content_type, x.note]), [['UNSORTED', 'image/jpeg', 'the plant room'], ['UNSORTED', 'image/png', 'the plant room'], ['UNSORTED', 'image/jpeg', 'the plant room']]);
+    assert.deepEqual((await E.photoBytes(deps(), made.store, ADMIN, ids[0]!))!.bytes, JPEG_CLEAN, 'its hidden details are still taken out');
+    assert.deepEqual((await E.photoBytes(deps(), made.store, ADMIN, ids[1]!))!.bytes, PNG_CLEAN);
+    const v = E.checklistView(made.app.db, JOB)!;
+    assert.deepEqual([v.unsorted, v.photos, v.done], [3, v0.photos, v0.done]);
+    assert.deepEqual(E.unsortedOf(made.app.db, JOB).map((p) => p.id), [...ids]);
+  });
+
+  test('only Admin or Sales sort them; a wrong choice saves nothing; the newest move is the photo’s item; one can be taken back', () => {
+    for (const who of [SAM, OLA, ACC, RO, CLIENT]) assert.throws(() => E.sortPhotos(deps(), who, JOB, { [ids[0]!]: 'PLANT-CONTROLS' }), Error, who.id);
+    assert.equal(E.sortPhotos(deps(), ADMIN, JOB, { [ids[0]!]: 'PLANT-CONTROLS', [ids[1]!]: 'NOT-AN-ITEM' }).ok, false);
+    assert.equal(E.sortPhotos(deps(), ADMIN, JOB, { [ids[0]!]: 'UNSORTED' }).ok, false, 'sorted back to unsorted');
+    assert.equal(E.sortPhotos(deps(), ADMIN, JOB, { [ids[0]!]: 'PLANT-CONTROLS', 'no-such-photo': 'VOIDS' }).ok, false);
+    assert.equal(E.checklistView(made.app.db, JOB)!.unsorted, 3, 'a refused sort saved something');
+    assert.deepEqual(E.sortPhotos(deps(), SALES, JOB, { [ids[0]!]: 'PLANT-CONTROLS', [ids[1]!]: E.TAKE_BACK, [ids[2]!]: '' }), { ok: true, sorted: 1, taken_back: 1 });
+    let v = E.checklistView(made.app.db, JOB)!;
+    assert.equal(v.unsorted, 1);
+    assert.deepEqual(v.items.find((i) => i.key === 'PLANT-CONTROLS')!.photos.map((p) => p.id), [ids[0]]);
+    assert.equal(v.items.find((i) => i.key === 'PLANT-CONTROLS')!.done, true);
+    assert.equal(made.app.db.get<{ reason: string }>('SELECT reason FROM survey_photo_withdrawals WHERE photo_id = ?', [ids[1]!])!.reason, 'Not useful, taken back when sorting.');
+    assert.equal(E.sortPhotos(deps(), ADMIN, JOB, { [ids[1]!]: 'VOIDS' }).ok, false, 'a photo taken back is sorted');
+    // Moved again, the newest is its item; the same item again is not a move.
+    assert.deepEqual(E.sortPhotos(deps(), ADMIN, JOB, { [ids[0]!]: 'PLANT-AIR' }), { ok: true, sorted: 1, taken_back: 0 });
+    assert.deepEqual(E.sortPhotos(deps(), ADMIN, JOB, { [ids[0]!]: 'PLANT-AIR' }), { ok: true, sorted: 0, taken_back: 0 });
+    v = E.checklistView(made.app.db, JOB)!;
+    assert.equal(v.items.find((i) => i.key === 'PLANT-CONTROLS')!.photos.length, 0);
+    assert.deepEqual(v.items.find((i) => i.key === 'PLANT-AIR')!.photos.map((p) => p.id), [ids[0]]);
+    assert.ok((E.evidenceByLine(made.app.db, JOB).get('LS-GP-008')?.count ?? 0) >= 1, 'a sorted photo is not evidence for its item’s lines');
+    assert.equal(made.app.db.get<{ n: number }>("SELECT count(*) AS n FROM audit_log WHERE kind = 'SURVEY_PHOTOS_SORTED' AND object_id = ?", [JOB])!.n, 2);
+  });
+
+  test('the pages: the portal box and what waits; sending through it; the sorting page for Admin; chapter 2’s row', async () => {
+    const portal = (await req('u-ev-client', `/portal/building?job=${JOB}`)).body;
+    assert.match(portal, /<h2>Send lots of photos at once<\/h2>/);
+    assert.match(portal, /name="files" accept="image\/jpeg,image\/png" multiple required/);
+    assert.ok(portal.includes('1 photo is waiting for us to sort.'), 'what waits is not said');
+    const send = (files: Buffer[]) => {
+      const fd = new FormData();
+      for (const [k, v] of [['job', JOB], ['nobody', 'yes'], ['note', '']]) fd.set(k ?? '', v ?? '');
+      files.forEach((f, k) => fd.append('files', new Blob([new Uint8Array(f)], { type: 'image/jpeg' }), `p${String(k)}.jpg`));
+      return req('u-ev-client', '/portal/building/photos', { method: 'POST', body: fd });
+    };
+    const ok = await send([JPEG, JPEG]);
+    assert.equal(ok.location, `/portal/building?job=${JOB}&done=photos#many`);
+    assert.equal(E.checklistView(made.app.db, JOB)!.unsorted, 3);
+    const big = await send([Buffer.alloc(E.MAX_PHOTO_BYTES + 70 * 1024, 0xff)]);
+    assert.equal(big.status, 413);
+    assert.match(big.body, /too big together\. The most is 4\.4 MB in one go/);
+    const bad = await send([JPEG, Buffer.from('not a photo at all')]);
+    assert.equal(bad.status, 400);
+    assert.match(bad.body, /Photo 2: /);
+    // Admin's sorting page: every waiting photo, each with the checklist in groups.
+    const sortPage = await req('u-ev-admin', `/staff/survey/${JOB}/pack/sort`);
+    assert.equal(sortPage.status, 200);
+    const waiting = E.unsortedOf(made.app.db, JOB);
+    for (const p of waiting) assert.ok(sortPage.body.includes(`name="to-${p.id}"`), p.id);
+    assert.match(sortPage.body, /<optgroup label="The plant room"><option value="PLANT-BOILER">The boiler\(s\)<\/option>/);
+    assert.ok(sortPage.body.includes(`<option value="${E.TAKE_BACK}">Not useful: take it back</option>`));
+    assert.notEqual((await req('u-ev-sam', `/staff/survey/${JOB}/pack/sort`)).status, 200, 'the surveyor sorts');
+    // Chapter 2 says what waits, with the way to sort it for Admin, and who sorts it for the surveyor.
+    assert.match((await req('u-ev-admin', `/staff/survey/${JOB}/pack?ch=2`)).body, new RegExp(`Sent all at once, not sorted yet</td><td>3 photos</td>\\s*<td><a class="btn" href="/staff/survey/${JOB}/pack/sort">Sort them</a>`));
+    assert.ok((await req('u-ev-sam', `/staff/survey/${JOB}/pack?ch=2`)).body.includes('3 photos · Admin or Sales sort them'));
+    const form: Record<string, string> = {};
+    waiting.forEach((p, k) => { form[`to-${p.id}`] = k === 0 ? 'KITCHEN' : ''; });
+    const saved = await post('u-ev-admin', `/staff/survey/${JOB}/pack/sort`, form);
+    assert.equal(saved.location, `/staff/survey/${JOB}/pack/sort?done=1-0`);
+    assert.ok((await req('u-ev-admin', saved.location ?? '')).body.includes('Saved: 1 put under the checklist, 0 taken back.'));
+    assert.equal(E.checklistView(made.app.db, JOB)!.unsorted, 2);
+    assert.ok((await req('u-ev-admin', `/staff/survey/${JOB}/pack/photos`)).body.includes('2 more sent in one go, not sorted yet.'));
+  });
+});
+
 describe('the records', () => {
   test('none is ever edited or deleted', () => {
     const db = made.app.db;
@@ -489,6 +605,7 @@ describe('the records', () => {
       'UPDATE survey_recordings SET minutes = minutes', 'DELETE FROM survey_recordings',
       'UPDATE survey_recording_views SET at = at', 'DELETE FROM survey_recording_views',
       'UPDATE survey_inspection_basis SET note = note', 'DELETE FROM survey_inspection_basis',
+      'UPDATE survey_photo_sorts SET at = at', 'DELETE FROM survey_photo_sorts',
     ]) assert.throws(() => db.run(sql), /never/, sql);
     assert.ok(db.get<{ n: number }>('SELECT count(*) AS n FROM survey_recording_views')!.n > 0, 'a table was empty, so its trigger was not tried');
     for (const t of ['survey_photo_withdrawals', 'survey_walkthrough_asks', 'survey_walkthroughs', 'survey_recordings', 'survey_inspection_basis', 'survey_checklist_marks']) {
