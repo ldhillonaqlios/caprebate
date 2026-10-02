@@ -11206,3 +11206,11 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## UI tidy phase 5 of 17, 2 October 2026 — Leads (Claude Code, on the Mac)
+
+-  **Built:** one heading with a line of counts and one main button, Record a lead; four solid boxes, one per section, each a link; every switch on one row; the "Record a lead by hand" form folded until asked for (`?record=1`). The cards, the sections, the list view and the filter are as they were.
+-  **Proof.** `test/ui-tidy-leads.test.ts`, six tests; 11 single-line mutations, all red. Screenshots at 1280 and 390 px, the form closed and open. 2120 tests, all pass but the stray-file one; `test/survey-report.test.ts` failed once under load and passes alone. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2120`) green.
+-  **Next:** phase 6, the Clients list.
+
+ **Claim cleared** in the commit that carries this record.
+

@@ -1324,6 +1324,16 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 .home-side .wk-day.today{border-color:var(--ink);background:var(--mint)}
 .home-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:0 1.25rem;align-items:start}
 
+/* UI TIDY PHASE 5 — LEADS (src/web/pipeline-pages.ts leadsHead). Every switch on one row; the record form folded. */
+.leadtools{align-items:center}
+.leadtools .toolnote{margin:0;font-size:15px}
+.recordlead>summary.pnum{display:block;cursor:pointer;list-style:none;margin:0;padding:0;border:0;font-size:20px}
+.leadtools .filterbox:not([open]){flex:0 0 auto}
+.recordlead>summary::-webkit-details-marker{display:none}
+.recordlead>summary::before{content:"+ ";font-weight:700}
+.recordlead[open]>summary::before{content:"– "}
+.recordlead[open]>summary.pnum{margin-bottom:.6rem;padding-bottom:.5rem;border-bottom:1px solid var(--line)}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of

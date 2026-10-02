@@ -946,7 +946,8 @@ instead: **Nobody owns this — take it**. A website enquiry nobody has answered
 lead** and **Close, nothing more needed**. **Filter** opens the filters and saved views. **List view** is the old
 table.
 
-*Recording a lead by hand.* Go to the foot of the list, under **Record a lead by hand**. Choose **An organisation
+*Recording a lead by hand.* Press **Record a lead** at the top. The form opens at the foot of the list, under
+**Record a lead by hand**. Choose **An organisation
 already recorded**. Or fill in **Or the organisation's name**. Then choose **Where it came from (required)**. Under
 **More options** you can set **Its sector** and the **Next action**. The next action becomes a task on the lead, and
 you own it. You can also set its **Due** date. Press **Record the lead**.
@@ -2130,8 +2131,10 @@ the team shows only **Owner** and **Surveyor**.
 Each box starts with **Working on**, **We need** and **Coming from**. Each box remembers if you keep it open.
 
 
-**The leads page.** Leads are shown as cards, in four sections, so a new one cannot get lost. The page is not one long
-table. Each section shows its count:
+**The leads page.** The top line gives the count in each section. Four boxes show the same counts. Press a box to go to
+its section. Under them is one row of switches. Pick **All leads** or **Filled assessments**. Pick **Cards** or
+**List view**. **Website enquiries** and **Filter** are on the same row. **Record a lead** is the button at the top right. Leads are shown as
+cards, in four sections, so a new one cannot get lost. Each section shows its count:
 
 | Section | Holds | Shown |
 |---|---|---|
@@ -2178,7 +2181,7 @@ surveyor is not shown **All leads**. *Observed on a freshly started demo, 21 Sep
 assessments** reads "6 submitted, newest first."
 
 **Where things are on the page.** The leads list has **Filter, sort and save** beside it. The underlined headings
-(Date, Next action, Range shown) sort it. **Record a lead by hand**, at the top, jumps to the form. A lead's page opens
+(Date, Next action, Range shown) sort it. **Record a lead**, at the top, opens the form. A lead's page opens
 with its highlights. These are the status, owner, source, next action and lead date. Once the lead is converted, the
 claim is there too. Then come three parts:
 - **Details**: the lead, the enquiry checks, **Change the lead** and **Convert**.

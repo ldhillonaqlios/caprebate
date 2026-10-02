@@ -189,8 +189,8 @@ describe('UI tidy phase 3: nothing was taken away', () => {
   });
 
   test('Record a lead is offered only to a login that may record one', async () => {
-    assert.match((await H.get('sales', '/staff/pipeline')).body, /<a class="btn btn-primary" href="\/staff\/leads#record-lead">Record a lead<\/a>/);
-    assert.match((await H.get('admin', '/staff/pipeline')).body, /href="\/staff\/leads#record-lead"/);
+    assert.match((await H.get('sales', '/staff/pipeline')).body, /<a class="btn btn-primary" href="\/staff\/leads\?record=1#record-lead">Record a lead<\/a>/);
+    assert.match((await H.get('admin', '/staff/pipeline')).body, /href="\/staff\/leads\?record=1#record-lead"/);
     const ro = await H.get('readonly', '/staff/pipeline');
     assert.equal(ro.status, 200);
     assert.doesNotMatch(ro.body, /record-lead/);

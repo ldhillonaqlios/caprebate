@@ -55,7 +55,7 @@ describe('UI tidy phase 4: the top of Home', () => {
   });
 
   test('Record a lead is offered only to a login that may record one', async () => {
-    for (const who of ['sales', 'admin'] as const) assert.match((await H.get(who, '/staff')).body, /<a class="btn btn-primary" href="\/staff\/leads#record-lead">Record a lead<\/a>/, who);
+    for (const who of ['sales', 'admin'] as const) assert.match((await H.get(who, '/staff')).body, /<a class="btn btn-primary" href="\/staff\/leads\?record=1#record-lead">Record a lead<\/a>/, who);
     for (const who of ['readonly', 'accounting', 'surveying'] as const) assert.doesNotMatch((await H.get(who, '/staff')).body, /record-lead/, who);
   });
 });

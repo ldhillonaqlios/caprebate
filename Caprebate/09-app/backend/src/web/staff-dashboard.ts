@@ -333,7 +333,7 @@ export function dashboard(app: App, actor: Actor, view: DashView, q: { week: str
     const [newLeads, nextActions] = leadsRows(actor, app, now);
     const msgCard = messagesCard(app, actor);
     const record = can(actor, 'lead.write', { type: 'lead', id: '__lead_section__', business_id: null })
-      ? h`<p><a class="btn btn-primary" href="/staff/leads#record-lead">Record a lead</a></p>` : raw('');
+      ? h`<p><a class="btn btn-primary" href="/staff/leads?record=1#record-lead">Record a lead</a></p>` : raw('');
     return h`${head(now, lateJobs, record)}${kpiRow([
       lateBox,
       { label: leads.length === 1 ? 'New lead' : 'New leads', value: String(leads.length), tone: leads.length > 0 ? 'win' : 'plain', href: '#row-new-leads' },
