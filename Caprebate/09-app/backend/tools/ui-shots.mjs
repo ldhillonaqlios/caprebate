@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..', '..');
 const out = process.argv[2]; const plan = JSON.parse(readFileSync(process.argv[3], 'utf8'));
-const WIDTHS = (process.env.WIDTHS ?? '1280,390').split(',').map(Number);
+const WIDTHS = (process.env.WIDTHS ?? '1280,390').split(',').map(Number); // SCREEN=1 keeps each picture to one screen, 900 px high
 const BASE = process.env.BASE ?? 'http://localhost:8105';
 mkdirSync(out, { recursive: true });
 const { demoSignIn } = await import(pathToFileURL(join(ROOT, '09-app/backend/tools/demo-sign-in.ts')).href);
@@ -45,11 +45,12 @@ for (const [who, items] of Object.entries(plan)) {
     for (const width of WIDTHS) {
       await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 768 });
       await send('Page.navigate', { url: BASE + path }); await wait(Number(process.env.WAIT ?? 800));
+      if (it.click) { await evaluate(`document.querySelector(${JSON.stringify(it.click)})?.click()`); await wait(300); } // e.g. the phone's Menu button
       const info = JSON.parse(await evaluate(`JSON.stringify({h: document.documentElement.scrollHeight, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, u: location.pathname+location.search,
         links: document.querySelectorAll('main a[href]').length, buttons: document.querySelectorAll('main button, main input[type=submit]').length, forms: document.querySelectorAll('main form').length,
         tables: document.querySelectorAll('main table').length, boxes: document.querySelectorAll('main .card, main .panel, main section, main .tile').length, words: (document.querySelector('main')||document.body).innerText.split(/\\s+/).length})`));
       const fn = `${who}-${name}-${width}.png`;
-      const img = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip: { x: 0, y: 0, width, height: Math.max(200, Math.min(info.h, 14000)), scale: 1 } });
+      const img = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip: { x: 0, y: 0, width, height: process.env.SCREEN === '1' ? 900 : Math.max(200, Math.min(info.h, 14000)), scale: 1 } });
       writeFileSync(join(out, fn), Buffer.from(img.result.data, 'base64'));
       report.push({ who, name, width, ...info });
       console.log(`${who.padEnd(10)} ${name.padEnd(22)} ${String(width).padStart(4)} h=${info.h} words=${info.words} links=${info.links} buttons=${info.buttons} forms=${info.forms} tables=${info.tables} boxes=${info.boxes} ${info.sw>info.cw?'SIDEWAYS':''} ${info.u}`);

@@ -37,14 +37,18 @@ type Client = { get(path: string): Promise<Res> };
 const STAFF = ['admin', 'sales', 'accounting', 'surveying', 'readonly'] as const;
 type Staff = (typeof STAFF)[number];
 
-/** THE TARGET MENUS — the Developer Spec's table "The menus", section 2. Tabs in order, then More in order. */
+/**
+ * THE TARGET MENUS — the Developer Spec's table "The menus", section 2. UI TIDY PHASE 2 (2 October 2026): the menu runs
+ * down the left in named groups and More is gone, so each login's list is its whole menu in order. What moved out of More:
+ * Admin's Calendar, Introducers and Survey jobs, Sales's Calendar, Accounting's Introducer fees. Nothing joined or left.
+ */
 const MENUS: Readonly<Record<Staff, { tabs: readonly string[]; more: readonly string[] }>> = {
-  sales: { tabs: ['Home', 'Leads', 'Clients', 'Pipeline', 'Tasks', 'Introducers'], more: ['Calendar'] },
+  sales: { tabs: ['Home', 'Tasks', 'Leads', 'Pipeline', 'Introducers', 'Clients', 'Calendar'], more: [] },
   // PHASE 151b (Word answer 40): Accounting's Clients tab — its billing view of the clients area (src/web/billing.ts).
-  accounting: { tabs: ['Home', 'Clients', 'Claims', 'Finance', 'Tasks'], more: ['Introducer fees'] },
+  accounting: { tabs: ['Home', 'Tasks', 'Clients', 'Claims', 'Finance', 'Introducer fees'], more: [] },
   surveying: { tabs: ['Home', 'Survey jobs', 'Tasks'], more: [] },
-  readonly: { tabs: ['Home', 'Leads', 'Clients', 'Pipeline'], more: [] },
-  admin: { tabs: ['Home', 'Leads', 'Clients', 'Pipeline', 'Tasks', 'Finance', 'Settings'], more: ['Calendar', 'Introducers', 'Survey jobs'] },
+  readonly: { tabs: ['Home', 'Leads', 'Pipeline', 'Clients'], more: [] },
+  admin: { tabs: ['Home', 'Tasks', 'Leads', 'Pipeline', 'Introducers', 'Clients', 'Survey jobs', 'Calendar', 'Finance', 'Settings'], more: [] },
 };
 
 /**
@@ -144,10 +148,11 @@ describe('each login has exactly its menu', () => {
     });
   }
 
-  test('More holds at most four entries for every login', async () => {
+  test('no login has a More any longer (UI tidy phase 2)', async () => {
     for (const who of STAFF) {
-      const m = menuOf((await as(who).get('/staff')).body);
-      assert.ok((m.more ?? []).length <= 4, `${who}'s More holds ${(m.more ?? []).length}`);
+      const body = (await as(who).get('/staff')).body;
+      assert.equal(menuOf(body).more, null, `${who} still has a More`);
+      assert.doesNotMatch(body, /<summary>More<\/summary>/, `${who} still has a More`);
     }
   });
 

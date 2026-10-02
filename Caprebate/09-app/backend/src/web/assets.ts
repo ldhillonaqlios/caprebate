@@ -1198,6 +1198,81 @@ a.kpi:hover{text-decoration:none;filter:brightness(1.15)}a.kpi:hover .kpi-label{
 @media (max-width:600px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}.kpi{padding:.7rem .8rem}.kpi .kpi-value{font-size:26px}}
 
 /* ================================================================== *
+ * UI TIDY PHASE 2 — THE LEFT-HAND MENU, 2 October 2026.
+ * The back office's and the portal's header becomes a black menu down
+ * the left (the markup is unchanged: header.top holds the name, the
+ * util and the sections). Groups are named; nothing is under More.
+ * Under 900 px it folds to a bar with a Menu button (no script: a
+ * checkbox the stylesheet reads, src/web/navigation.ts MENU_BUTTON).
+ * ================================================================== */
+body.app>header.top{background:var(--ink);border-bottom:0}
+body.app .topline{max-width:none;margin:0}
+body.app .topline>.brand{color:var(--white)}
+body.app .topline>.logo{background:var(--white);border-radius:.5rem;padding:10px;line-height:0}
+body.app .topline>.logo img{width:110px}
+body.app .util{display:contents}
+body.app .helplink{color:var(--white)}
+body.app .usermenu summary{color:var(--white)}
+body.app .usermenu summary::after{color:var(--white)}
+body.app .menu-pop{color:var(--ink)}
+body.app .appnav{flex-basis:auto}
+body.app .navgroups{list-style:none;margin:0;padding:0}
+body.app .navlabel{color:var(--mint);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:.8rem .65rem .2rem}
+body.app .tabs-main{flex-direction:column;flex-wrap:nowrap;gap:2px}
+body.app .tabs-main>li>a{display:flex;justify-content:space-between;align-items:center;gap:.5rem;color:var(--white);border:0;border-radius:.5rem;padding:.42rem .65rem;white-space:normal}
+body.app .tabs-main>li>a:hover{background:#2a302d}
+body.app .tabs-main>li>a[aria-current="page"]{background:var(--mint);color:var(--ink);font-weight:700}
+body.app .tabs-main .tabcount{background:var(--white);color:var(--ink)}
+body.app .tabs-main .tabcount.late{background:var(--stop);color:var(--white)}
+body.app .subtitle{color:var(--mint);font-size:13px;font-weight:700;margin:.45rem .5rem .15rem 1.4rem;line-height:1.35}
+body.app .subnav{list-style:none;margin:.2rem 0 .4rem .9rem;padding:0}
+body.app .subnav a{display:flex;justify-content:space-between;gap:.4rem;color:#e6eeeb;font-size:15px;padding:.38rem .6rem;border-radius:.4rem;text-decoration:none}
+body.app .subnav a:hover{background:#2a302d}
+body.app .subnav a[aria-current="page"]{background:var(--mint);color:var(--ink);font-weight:700}
+body.app .subnote{font-size:13px;font-weight:700;white-space:nowrap}
+body.app .topline .dash-tabs{margin:0;gap:4px}
+body.app .topline .dash-tabs::before{content:"Home shows";flex-basis:100%;color:var(--mint);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:0 .15rem .2rem}
+body.app .topline .dash-tab{color:var(--white);border-color:#4a514e;font-size:14px;padding:.3rem .7rem}
+body.app .topline .dash-tab:hover{background:#2a302d}
+body.app .topline .dash-tab[aria-current="page"]{background:var(--mint);border-color:var(--mint);color:var(--ink)}
+.navtoggle,.navbutton{display:none}
+body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){background:var(--mint);border-color:var(--mint);color:var(--ink)}
+@media (min-width:900px){
+  body.app{display:grid;grid-template-columns:15.5rem minmax(0,1fr);grid-template-rows:1fr auto;min-height:100vh}
+  body.app>header.top{grid-column:1;grid-row:1/span 2;position:sticky;top:0;height:100vh;overflow-y:auto}
+  body.app>main{grid-column:2;grid-row:1;width:100%;box-sizing:border-box}
+  body.app>footer{grid-column:2;grid-row:2}
+  body.app .topline{flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:.4rem;padding:1rem .75rem;min-height:100%;box-sizing:border-box}
+  body.app .topline>.brand{font-size:22px;padding:0 .5rem}
+  body.app .topline>.logo{align-self:flex-start}
+  body.app .topline .dash-tabs{order:1}
+  body.app .gsearch{order:2}
+  body.app .gsearch input{width:100%;max-width:none;min-width:0;flex:1;border-color:#4a514e;background:#1d211f;color:var(--white)}
+  body.app .gsearch input::placeholder{color:#c9d3cf}
+  body.app .gsearch button{padding:0 .7rem}
+  body.app .appnav{order:3}
+  body.app .helplink{order:4;margin-top:auto;padding:.4rem .65rem}
+  body.app .usermenu{order:5}
+  body.app .menu-pop{top:auto;bottom:calc(100% + .3rem);left:0;right:auto}
+}
+@media (max-width:899.98px){
+  body.app .topline{flex-wrap:wrap;align-items:center;padding:.5rem .75rem;gap:.5rem}
+  body.app .navbutton{display:inline-flex;align-items:center;margin-left:auto;min-height:44px;padding:0 1rem;border:1px solid #6b7370;border-radius:.5rem;color:var(--white);font-weight:700;cursor:pointer}
+  body.app .navtoggle{display:block;position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+  body.app .navtoggle:focus-visible+.navbutton{outline:3px solid var(--mint);outline-offset:2px}
+  body.app .navtoggle:checked+.navbutton{background:var(--mint);color:var(--ink);border-color:var(--mint)}
+  body.app .topline .dash-tabs,body.app .gsearch,body.app .appnav,body.app .helplink,body.app .usermenu{display:none;flex-basis:100%;order:3}
+  body.app .topline:has(.navtoggle:checked) .dash-tabs{display:flex;order:3}
+  body.app .topline:has(.navtoggle:checked) .gsearch{display:flex;order:4}
+  body.app .gsearch input{flex:1;min-width:0}
+  body.app .topline:has(.navtoggle:checked) .appnav{display:block;order:5}
+  body.app .topline:has(.navtoggle:checked) .helplink{display:block;order:6;padding:.4rem .65rem}
+  body.app .topline:has(.navtoggle:checked) .usermenu{display:block;order:7}
+  body.app .navtoggle,body.app .navbutton{order:2}
+  body.app .uname{position:static;width:auto;height:auto;overflow:visible;clip:auto}
+}
+
+/* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of
  * the new home page". The assessment, sign-in and the enquiry's

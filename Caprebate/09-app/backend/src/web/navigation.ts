@@ -132,28 +132,53 @@ export const SECTIONS: readonly Section[] = Object.freeze([
 
 /**
  * PHASE 135 — EACH LOGIN'S MENU, BY NAME. Lakhbir, 18 September 2026: the tabs repeated each other, and some logins had a
- * dozen entries under More. A login's menu now lists the sections it does its daily job in — being allowed to open a
- * section is not a reason to list it. The verdict for every section, and the reason for each, is the table "The menus"
- * in 09-app/CAPREBATE-DEVELOPER-SPEC.md, section 2. `test/phase135.test.ts` asserts every menu exactly.
+ * dozen entries under More. A login's menu lists the sections it does its daily job in — being allowed to open a section
+ * is not a reason to list it. `test/phase135.test.ts` asserts every menu exactly.
+ *
+ * UI TIDY PHASE 2, 2 October 2026 — A LEFT-HAND MENU IN GROUPS, AND NO MORE. Lakhbir chose "design 2" from the mock-ups
+ * (00-START-HERE/hub/UI-TIDY-PLAN.md): the menu runs down the left in named groups, so nothing is hidden. Admin's Survey
+ * jobs, Calendar and Introducers, Sales's Calendar and Accounting's Introducer fees came out of More into their groups;
+ * no section joined or left any login's menu. The verdict for every section is the table "The menus" in
+ * 09-app/CAPREBATE-DEVELOPER-SPEC.md, section 2.
  *
  * THE MENU NEVER GRANTS OR REMOVES A PERMISSION. A listed section is still drawn only where its gate admits the login,
  * and a section on no menu answers its address exactly as before.
  */
-export const MENUS: Readonly<Partial<Record<AppRole, { readonly tabs: readonly string[]; readonly more: readonly string[] }>>> = Object.freeze({
-  SALES: { tabs: ['home', 'leads', 'clients', 'pipeline', 'tasks', 'introducers'], more: ['calendar'] },
+export type MenuGroup = { readonly label: string | null; readonly keys: readonly string[] };
+
+export const MENUS: Readonly<Partial<Record<AppRole, readonly MenuGroup[]>>> = Object.freeze({
+  SALES: [
+    { label: null, keys: ['home', 'tasks'] },
+    { label: 'Winning clients', keys: ['leads', 'pipeline', 'introducers'] },
+    { label: 'Clients and claims', keys: ['clients', 'calendar'] },
+  ],
   // PHASE 151b (Word answer 40, closed 24 September 2026): Clients, as the brief asked — Accounting's billing view of it:
   // who to chase, what waits for an invoice, what is owed. Not the client record, which it still may not read.
-  ACCOUNTING: { tabs: ['home', 'clients', 'claims', 'finance', 'tasks'], more: ['introducer-rewards'] },
-  SURVEYING: { tabs: ['home', 'survey', 'tasks'], more: [] },
-  READ_ONLY: { tabs: ['home', 'leads', 'clients', 'pipeline'], more: [] },
-  ADMIN: { tabs: ['home', 'leads', 'clients', 'pipeline', 'tasks', 'finance', 'settings'], more: ['calendar', 'introducers', 'survey'] },
+  ACCOUNTING: [
+    { label: null, keys: ['home', 'tasks'] },
+    { label: 'Clients and claims', keys: ['clients', 'claims'] },
+    { label: 'Money', keys: ['finance', 'introducer-rewards'] },
+  ],
+  SURVEYING: [{ label: null, keys: ['home', 'survey', 'tasks'] }],
+  READ_ONLY: [
+    { label: null, keys: ['home'] },
+    { label: 'Winning clients', keys: ['leads', 'pipeline'] },
+    { label: 'Clients and claims', keys: ['clients'] },
+  ],
+  ADMIN: [
+    { label: null, keys: ['home', 'tasks'] },
+    { label: 'Winning clients', keys: ['leads', 'pipeline', 'introducers'] },
+    { label: 'Clients and claims', keys: ['clients', 'survey', 'calendar'] },
+    { label: 'Money', keys: ['finance'] },
+    { label: 'Admin', keys: ['settings'] },
+  ],
 });
 
-/** More holds at most this many entries, or it is not drawn. Checked when the module loads, so a fifth cannot ship. */
-export const MORE_LIMIT = 4;
-for (const [role, m] of Object.entries(MENUS)) {
-  if (m.more.length > MORE_LIMIT) throw new Error(`${role}'s More menu lists ${m.more.length} entries; the limit is ${MORE_LIMIT}`);
-  for (const key of [...m.tabs, ...m.more]) {
+/** Checked when the module loads: every key is a section, and no login's menu names a section twice. */
+for (const [role, groups] of Object.entries(MENUS)) {
+  const keys = groups.flatMap((g) => g.keys);
+  if (new Set(keys).size !== keys.length) throw new Error(`${role}'s menu names a section twice`);
+  for (const key of keys) {
     if (!SECTIONS.some((s) => s.key === key)) throw new Error(`${role}'s menu names ${key}, which is not a section`);
   }
 }
@@ -166,26 +191,80 @@ export function opens(actor: Actor, gate: (actor: Actor) => void): boolean {
   }
 }
 
-export type Tabs = { readonly primary: readonly Section[]; readonly more: readonly Section[] };
+export type Tabs = {
+  /** The menu's groups, each with only the sections its gates admit; a group left empty is not drawn. */
+  readonly groups: readonly { readonly label: string | null; readonly sections: readonly Section[] }[];
+  /** Every section on the menu, in order. */
+  readonly primary: readonly Section[];
+};
 
-/** A LOGIN'S TABS: its menu, in the menu's order, each section only where its gate admits the login. */
+/** A LOGIN'S MENU: its groups, in the menu's order, each section only where its gate admits the login. */
 export function tabsFor(actor: Actor): Tabs {
   const m = MENUS[actor.role];
-  if (m === undefined) return { primary: [], more: [] };
-  const pick = (keys: readonly string[]): Section[] => keys
-    .map((k) => SECTIONS.find((s) => s.key === k))
-    .filter((s): s is Section => s !== undefined && opens(actor, s.gate));
-  return { primary: pick(m.tabs), more: pick(m.more) };
+  if (m === undefined) return { groups: [], primary: [] };
+  const groups = m.map((g) => ({
+    label: g.label,
+    sections: g.keys.map((k) => SECTIONS.find((s) => s.key === k))
+      .filter((s): s is Section => s !== undefined && opens(actor, s.gate)),
+  })).filter((g) => g.sections.length > 0);
+  return { groups, primary: groups.flatMap((g) => g.sections) };
 }
 
 /** Every address a login's menu links to — what the Phase 133a test opens. */
 export function menuHrefs(actor: Actor): string[] {
   const t = tabsFor(actor);
-  const out = [...t.primary, ...t.more].map((s) => s.href);
+  const out = t.primary.map((s) => s.href);
   if (opens(actor, searchGate)) out.push('/staff/search');
   out.push('/staff/settings');
   return [...new Set(out)];
 }
+
+/* ------------------------------------------------------------------ *
+ * A MENU THAT OPENS OUT — UI TIDY PHASE 2
+ * ------------------------------------------------------------------ */
+
+/**
+ * THE ENTRIES UNDER THE CURRENT SECTION. On an inner page the menu opens out under the section a person is in: Settings
+ * lists each setting; later phases add a client's own claims and sections, a survey job's parts and Finance's. An entry is
+ * a page or a place on one, and a page passes in only what its own gates already show (`setSubMenu`). `title` names
+ * the thing open, such as a client.
+ */
+export type SubMenu = {
+  readonly title?: string;
+  readonly items: readonly { readonly href: string; readonly label: string; readonly note?: string; readonly current?: boolean }[];
+};
+
+const SUB_MENUS = new WeakMap<NavContext, SubMenu>();
+
+/** A page names the entries that open out under its section, for this request only. Outside a request it does nothing. */
+export function setSubMenu(menu: SubMenu): void {
+  const ctx = navContext.getStore();
+  if (ctx !== undefined) SUB_MENUS.set(ctx, menu);
+}
+
+/** The entries under `section` for this request: the page's own, or Settings' list of settings. None elsewhere. */
+function subMenuFor(actor: Actor, section: Section, path: string | null): SubMenu | null {
+  const ctx = navContext.getStore();
+  const own = ctx === undefined ? undefined : SUB_MENUS.get(ctx);
+  if (own !== undefined) return own;
+  if (section.key === 'settings') {
+    return { items: SETTINGS_TILES.filter((t) => opens(actor, t.gate)).map((t) => ({
+      href: t.href, label: t.label, current: path !== null && (path === t.href || path.startsWith(`${t.href}/`)) })) };
+  }
+  return null;
+}
+
+function subMenuHtml(menu: SubMenu | null): Safe {
+  if (menu === null || menu.items.length === 0) return raw('');
+  return h`${menu.title === undefined ? raw('') : h`<p class="subtitle">${menu.title}</p>`}<ul class="subnav">${menu.items.map((i) => h`<li><a href="${i.href}"${
+    i.current === true ? raw(' aria-current="page"') : raw('')}>${i.label}${i.note === undefined ? raw('') : h` <span class="subnote">${i.note}</span>`}</a></li>`)}</ul>`;
+}
+
+/**
+ * THE PHONE'S MENU BUTTON. Under 900 px the menu folds behind one button, with no script: a checkbox and its label, and
+ * the stylesheet shows the menu while it is ticked. It comes last in the header so the parts before it keep their order.
+ */
+const MENU_BUTTON = raw('<input type="checkbox" id="navtoggle" class="navtoggle"><label for="navtoggle" class="navbutton">Menu</label>');
 
 /* ------------------------------------------------------------------ *
  * FILTERS — ONE TAB, TWO VIEWS (PHASE 135)
@@ -300,12 +379,11 @@ export function staffShell(actor: Actor, view: string | null = null): Shell {
       ? h`<a href="${s.href}" aria-current="page">${s.label}${extra}</a>`
       : h`<a href="${s.href}">${s.label}${extra}</a>`;
   };
-  const moreCurrent = tabs.more.some((s) => isCurrent(s, path));
   const help = h`<a class="helplink" href="/staff/help?screen=${helpScreenFor(path ?? '/staff', actor)}">Help</a>`;
   const html = h`${viewTabs(actor, view)}<div class="util">${search}${help}${userMenu(displayName(ctx?.db, actor), actor, '/staff/settings')}</div>
-    <nav class="appnav" aria-label="Sections">
-      <ul class="tabs-main">${tabs.primary.map((s) => h`<li>${tab(s)}</li>`)}${tabs.more.length === 0 ? raw('') : h`<li class="more"><details${moreCurrent ? raw(' class="has-current"') : raw('')}><summary>More</summary>
-        <ul>${tabs.more.map((s) => h`<li>${tab(s)}</li>`)}</ul></details></li>`}</ul></nav>`;
+    <nav class="appnav" aria-label="Sections"><ul class="navgroups">${tabs.groups.map((g) => h`<li class="navgroup">${
+      g.label === null ? raw('') : h`<p class="navlabel">${g.label}</p>`}<ul class="tabs-main">${g.sections.map((s) => h`<li>${tab(s)}${
+      isCurrent(s, path) ? subMenuHtml(subMenuFor(actor, s, path)) : raw('')}</li>`)}</ul></li>`)}</ul></nav>${MENU_BUTTON}`;
   return new Shell(html.html, '/staff');
 }
 
@@ -326,7 +404,7 @@ export function portalShell(actor: Actor): Shell {
   const html = h`<div class="util"><a class="helplink" href="/portal/help">Help</a>${userMenu(name, actor, '/portal/settings')}</div>
     <nav class="appnav portalnav" aria-label="Sections"><ul class="tabs-main"><li>${current
       ? h`<a href="/portal" aria-current="page">Your claims</a>` : h`<a href="/portal">Your claims</a>`}</li>${
-      actor.role === 'CLIENT' ? h`<li>${messages}</li>` : raw('')}</ul></nav>`;
+      actor.role === 'CLIENT' ? h`<li>${messages}</li>` : raw('')}</ul></nav>${MENU_BUTTON}`;
   return new Shell(html.html, '/portal');
 }
 

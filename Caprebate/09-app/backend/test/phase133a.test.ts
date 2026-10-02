@@ -358,7 +358,8 @@ describe('every page works with JavaScript switched off', () => {
     }
     const home = await as('sales').get('/staff');
     assert.match(home.body, /<details class="usermenu">/);
-    assert.match(home.body, /<li class="more"><details/);
+    // UI TIDY PHASE 2: More is gone (every section sits in a named group); the phone's Menu button needs no script either.
+    assert.match(home.body, /<input type="checkbox" id="navtoggle" class="navtoggle"><label for="navtoggle" class="navbutton">Menu<\/label>/);
     const board = await as('sales').get('/staff/pipeline');
     assert.match(board.body, /<ol class="board"/);
     assert.match(board.body, /<li id="stage-ENQUIRY"/);

@@ -11176,3 +11176,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## UI tidy phase 2 of 17, 2 October 2026 — the left-hand menu (Claude Code, on the Mac)
+
+ Lakhbir: Survey jobs was hidden under More; he chose a menu down the left in named groups and asked what the menu looks like on inner pages, such as a client's.
+
+-  **Built:** the back office's and the portal's header is a black menu down the left in named groups (Winning clients, Clients and claims, Money, Admin), with no More: Admin's Survey jobs, Calendar and Introducers, Sales's Calendar and Accounting's Introducer fees moved into their groups. Nothing joined or left a menu and no gate changed. Under the current section the menu opens out (`setSubMenu`); Settings does now, the client, survey job and Finance follow in their phases. On a phone it folds behind a Menu button that needs no script.
+-  **Proof.** `test/ui-tidy-menu.test.ts`, thirteen tests; 20 single-line mutations, all red. Screenshots for every login at 1280 and 390 px, the phone menu open and closed. The repo's own tests: 2095, all pass but `test/phase151i.test.ts`, which reads the stray `api/index.mjs.new0929` on this Mac. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2095`) green.
+-  **Next:** Lakhbir reviews phases 1 and 2, then approves the next group (phases 3 to 6: Pipeline, Home, Leads, Clients).
+
+ **Claim cleared** in the commit that carries this record.
+

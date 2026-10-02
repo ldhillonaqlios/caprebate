@@ -56,8 +56,8 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 | # | Phase | Status |
 | --- | --- | --- |
 | 1 | The shared look: stage colours, solid number boxes, black table headers, labels | DONE 2 Oct |
-| 2 | The left-hand menu for every login, the menus that open out, a menu button on phones; Survey jobs leaves More | NEXT |
-| 3 | Pipeline | |
+| 2 | The left-hand menu for every login, the menus that open out, a menu button on phones; Survey jobs leaves More | DONE 2 Oct (Settings opens out; the client, survey job and Finance open out in their own phases) |
+| 3 | Pipeline | NEXT, once Lakhbir has reviewed 1 and 2 |
 | 4 | Home | |
 | 5 | Leads | |
 | 6 | Clients list | |

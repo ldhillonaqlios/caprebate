@@ -61,22 +61,25 @@ goes for the chartered tax adviser. Their sign-off is a record that Sales keeps.
 
 Each login has an easy layout of its own. **Nothing a role may see or do changed** — only where things sit.
 
-- **The header** is on every page. It has **Cap Rebate**, which takes you back to your home page. It has a **Search**
-  box. This is the same search as `B41`. It has **Help**. It has your **name**. Your name opens a small menu with
-  **Your account** and **Sign out**.
-- **The tabs under it are your role's, and only the screens you work in every day.** No two tabs do the same job.
-  Each role has a short row of tabs. **More** holds at most four entries. It is not shown when there is nothing to put
-  in it. **The Tasks tab shows how many open tasks you have** — the number turns red when one is overdue. **No
-  permission changed.** A screen that is not on your tabs still opens by its address. It also opens from a link on a
-  page that leads to it.
+- **The menu** runs down the left of every page. It is black, and the page you are on is green. At the top is
+  **Cap Rebate**, which takes you back to your home page. Then the **Search** box. This is the same search as `B41`.
+  At the foot is **Help**, and your **name**. Your name opens a small menu with **Your account** and **Sign out**.
+- **The menu lists your role's screens, in groups.** It shows only the screens you work in every day. Nothing is
+  hidden under **More** any more. **Tasks shows how many open tasks you have** — the number turns red when one is
+  late. **No permission changed.** A screen that is not on your menu still opens by its address. It also opens from a
+  link on a page that leads to it.
+- **On some pages the menu opens out.** In **Settings**, each setting is listed under it, and the one you are in is
+  green.
+- **On a phone** the menu folds away. Tap **Menu** at the top to open it. Tap it again to close it.
 
-  | Role | Tabs | More |
-  |---|---|---|
-  | Sales | Home, Leads, Clients, Pipeline, Tasks, Introducers | Calendar |
-  | Accounting | Home, Claims, Finance, Tasks | Introducer fees |
-  | Surveying | Home, Survey jobs, Tasks | — |
-  | Read only | Home, Leads, Clients, Pipeline | — |
-  | Admin | Home, Leads, Clients, Pipeline, Tasks, Finance, Settings | Calendar, Introducers, Survey jobs |
+  | Role | Menu |
+  |---|---|
+  | Sales | Home, Tasks · **Winning clients:** Leads, Pipeline, Introducers · **Clients and claims:** Clients, Calendar |
+  | Accounting | Home, Tasks · **Clients and claims:** Clients, Claims · **Money:** Finance, Introducer fees |
+  | Surveying | Home, Survey jobs, Tasks |
+  | Read only | Home · **Winning clients:** Leads, Pipeline · **Clients and claims:** Clients |
+  | Admin | Home, Tasks · **Winning clients:** Leads, Pipeline, Introducers |
+  | Admin, below | **Clients and claims:** Clients, Survey jobs, Calendar · **Money:** Finance · **Admin:** Settings |
 
   **Where the screens that left the tabs are now:**
 
@@ -2698,7 +2701,7 @@ Address: /staff/introducers/… (the duplicate firm's own page)
 ### Training — `B32` the reward model and fees
 
 **Now called Introducer fees.** Admin opens it from the **Settings** tab, with the **Introducer fees** tile. Accounting
-opens it from **More** → **Introducer fees**. Sales uses the link on **Introducers**.
+opens it from **Introducer fees** in the menu, under **Money**. Sales uses the link on **Introducers**.
 
 Address: /staff/introducer-rewards
 
