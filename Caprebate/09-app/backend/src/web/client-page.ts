@@ -31,8 +31,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Actor } from '../authz.ts';
 import { can } from '../authz.ts';
 import { mayReadQueue, readRepliesIfDue } from './inbound-email.ts';
-import { h, raw, page, HTML_HEADERS } from './html.ts';
-import { claimName, highlights, moreDetail, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, type Need, type QuickAction, type SectionContext, type SectionSpec } from './components.ts';
+import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
+import { breadcrumb, claimName, moreDetail, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, type Need, type QuickAction, type SectionContext, type SectionSpec } from './components.ts';
 import { sectionPrefs } from './sections.ts';
 import * as C from './crm.ts';
 import * as E from './engaged.ts';
@@ -45,7 +45,7 @@ import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { timelineBlock } from './tasks-pages.ts';
 import { communicationPanel } from './communication.ts';
 import * as M from './messages.ts';
-import { claimTilesFor, organisationSections, renderClaim, type CrmPageDeps } from './crm-pages.ts';
+import { organisationSections, renderClaim, type CrmPageDeps } from './crm-pages.ts';
 import { askButton, businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4 } from './engaged-pages.ts';
 import { checksPanelIfPermitted } from './approvals.ts';
 import { checksBlock, checksSummary, STEP_ANCHOR } from './approvals-pages.ts';
@@ -55,7 +55,7 @@ import { emailButton } from './free-email-pages.ts';
 import { identityChecks, identityPanel } from './identity-checks.ts';
 import { IDENTITY_PROVIDER_NAME } from '../connectors/identity-check.ts';
 import { complianceObj } from './compliance.ts';
-import { headerActions, lookupsCard, nextStepCard, progressBar, tabbed, TAB_OF_SECTION, type TabKey } from './client-layout.ts';
+import { claimBoxes, headerActions, lookupsCard, nextStepCard, presentTabs, progressBar, setClientMenu, tabbed, TAB_OF_SECTION, type TabKey } from './client-layout.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -77,6 +77,11 @@ export async function handleClientPage(
     const v = C.claimView(db, actor, inside[2] ?? '', { now: d.app.now() });
     // A claim addressed under a company that is not its own is not found, exactly as a claim that does not exist.
     if (v.client.business_id !== (inside[1] ?? '')) throw new NotFoundAsRefusal();
+    // UI tidy phase 7: the client's own menu, with this claim marked — for a login that may read the company.
+    if (opens(actor, C.assertOrganisationSection) && can(actor, 'organisation.read', { type: 'business', id: v.client.business_id })) {
+      const org = C.organisationView(db, actor, v.client.business_id);
+      setClientMenu(org.id, org.trading_name, org.claims, [], v.id, d.app.now());
+    }
     html(res, 200, renderClaim(d, actor, v, url.searchParams.get('done') ?? undefined, url.searchParams.get('step') ?? undefined));
     return 'handled';
   }
@@ -106,6 +111,12 @@ export async function handleClientPage(
     show: url.searchParams.get('show'), search: url.searchParams.get('q'),
   }));
   return 'handled';
+}
+
+/** UI tidy phase 7: the client's status in its colour, as the Clients list draws it. */
+function clientStatusBadge(key: string | null, label: string): Safe {
+  const tone = key === 'ACTIVE' ? ' b-ok' : key === 'PROSPECT' ? ' b-info' : key === 'DO_NOT_CONTACT' ? ' b-late' : '';
+  return h`<span class="badge${tone}">${label}</span>`;
 }
 
 /** The words shown after a change. Each is said once, at the top of the page. */
@@ -164,16 +175,7 @@ function clientPage(
   const fromFor = (where: E.MissingFact['section']): string[] => (p === null ? [] : p.missing.filter((m) => m.section === where).map((m) => m.from));
 
   const sections: SectionSpec[] = [];
-  const nextClaim = org.claims.find((c) => c.next_action !== null);
-  sections.push({
-    key: 'client.claims', id: 'claims', kind: 'facts', heading: 'Claims', count: org.claims.length,
-    status: org.claims.length === 0 ? 'NOT_STARTED' : 'WORKING',
-    working: org.claims.length === 0 ? 'No claim yet. Open one from a property.'
-      : nextClaim === undefined ? 'Every claim needs a next step. Open a claim to set one.'
-        : `Next: ${nextClaim.next_action ?? ''}${nextClaim.property === null ? '' : ` (${nextClaim.property})`}.`,
-    need: [], from: ['the client', 'the surveyor'],
-    body: claimTilesFor(org.claims, 'No claim yet. Open one from a property.', org.trading_name),
-  });
+  // UI TIDY PHASE 7: the claims are boxes at the top of the page (claimBoxes), no longer a section in a tab.
 
   /* PHASE 139: WHERE EACH FACT CAME FROM, THE APPROVE BOX, AND TELLING THE CLIENT. Only for a login that checks facts. */
   const checks = checksPanelIfPermitted(db, actor, org.id, d.app.now().slice(0, 10));
@@ -334,17 +336,21 @@ function clientPage(
   // Which tab shows first: where a change was just made, a step asked for, else the conversation.
   const defaultTab: TabKey = openNow !== undefined ? (TAB_OF_SECTION[openNow] ?? 'chat') : step !== undefined ? 'checks' : 'chat';
 
+  // UI tidy phase 7: the left-hand menu opens out to this client — its claims, then the page's parts.
+  setClientMenu(org.id, org.trading_name, org.claims, presentTabs(sections), null, d.app.now());
   return page({
     title: org.trading_name, nav: d.nav(actor), wide: true,
     body: h`
       ${done !== undefined && DONE_WORDS[done] !== undefined ? savedMessage(DONE_WORDS[done])
         : done !== undefined && SAVED[done] !== undefined ? savedMessage(SAVED[done]) : raw('')}
-      ${highlights('Client', org.trading_name, [
-        { label: 'Status', value: org.client_status.label },
-        { label: 'Owner', value: org.owner?.name ?? 'nobody yet' },
-        waiting === null ? null : { label: 'Waiting on', value: waiting },
-        p === null ? null : { label: 'Engagement letter', value: p.row.letter_label },
-      ], h`${progressBar(db, org.id)}${headerActions(org.id, folder.files.length, chatNow !== null, quick, fresh)}`, legal === null ? raw('') : h`${legal}`)}
+      ${breadcrumb([{ label: 'Clients', href: '/staff/clients' }, { label: org.trading_name }])}
+      <header class="clienthead"><div class="clienthead-main"><h1>${org.trading_name}</h1>${legal === null ? raw('') : h`<p class="subhead">${legal}</p>`}
+        <p class="pills">${clientStatusBadge(org.client_status.value, org.client_status.label)}<span class="badge">Owner: ${org.owner?.name ?? 'nobody yet'}</span>${
+          waiting === null ? raw('') : h`<span class="badge${waiting === 'Us' ? ' b-warn' : ''}">Waiting on ${waiting === 'Us' ? 'us' : waiting === 'The client' ? 'the client' : 'nobody'}</span>`}${
+          p === null ? raw('') : h`<span class="badge">Engagement letter: ${p.row.letter_label}</span>`}</p></div>
+        ${headerActions(org.id, folder.files.length, chatNow !== null, quick, fresh)}</header>
+      ${progressBar(db, org.id)}
+      ${claimBoxes(org.trading_name, org.claims, d.app.now())}
       <div class="ctop">${nextStepCard(db, checks, d.app.now().slice(0, 10))}${lookupsCard(work?.sources ?? null, d.app.now())}</div>
       ${tabbed(sections.map((x) => (openNow === x.id ? { ...x, open_now: true } : x)), ctx, defaultTab, fresh)}
       <p><a href="/staff/clients">Back to the list</a></p>`,

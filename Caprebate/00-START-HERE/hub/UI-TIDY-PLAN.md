@@ -61,8 +61,8 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 | 4 | Home | DONE 2 Oct |
 | 5 | Leads | DONE 2 Oct |
 | 6 | Clients list | DONE 2 Oct |
-| 7 | A client's page, part 1: header, claim boxes, its own menu | NEXT, once Lakhbir has reviewed 3 to 6 |
-| 8 | A client's page, part 2: messages, checks, people, files, history as menu entries | |
+| 7 | A client's page, part 1: header, claim boxes, its own menu | DONE 3 Oct |
+| 8 | A client's page, part 2: messages, checks, people, files, history as menu entries | NEXT |
 | 9 | Tasks | |
 | 10 | Survey jobs and a survey job (each names its site and claim number) | |
 | 11 | Survey pack (names the site and claim; "0 min 32 s" becomes "32 s") | |
@@ -73,7 +73,7 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 | 16 | Client portal: Your claims, Messages, Show us your building | |
 | 17 | Accounting's and the Surveyor's own pages, and a phone check of every page | |
 
-**Groups approved so far:** phases 1 and 2 (2 October 2026); phases 3 to 6 (2 October 2026).
+**Groups approved so far:** phases 1 and 2 (2 October 2026); phases 3 to 6 (2 October 2026); phases 7 to 10 (3 October 2026).
 
 ## What the first look found (2 October 2026), worst first
 

@@ -11222,3 +11222,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
  **Claim cleared** in the commit that carries this record.
 
+## UI tidy phase 7 of 17, 3 October 2026 — a client's page, part 1 (Claude Code, on the Mac)
+
+ Lakhbir approved phases 7 to 10 as the third group.
+
+-  **Built:** a client's page opens with its name, coloured labels and its actions beside them, then each claim in a box of its own — its stage's colour, its site, its number in grey, its next step in a dark box with a red late label, and Open the claim. The left-hand menu opens out to the client: its name, Overview, each claim by site and stage, then the page's parts; on a claim, that claim is marked. Claims is no longer a tab.
+-  **Proof.** `test/ui-tidy-client.test.ts`, seven tests; four older tests read the new top; 15 single-line mutations, all red. Screenshots of Dunmarrow and of its branch surgery claim. 2133 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2133`) green.
+-  **Next:** phase 8, a client's page part 2.
+
+ **Claim cleared** in the commit that carries this record.
+

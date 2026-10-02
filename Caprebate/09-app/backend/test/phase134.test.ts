@@ -98,6 +98,9 @@ function tiles(body: string, id: string): string[] {
   // PHASE 138: the Claims card is now a coloured section (a <details>); its tiles are the first tile list after its id.
   const card = new RegExp(`<section class="card" id="${id}">([\\s\\S]*?)</section>`).exec(body)?.[1]
     ?? new RegExp(`<details class="sec sec-[a-z]+" id="${id}"[\\s\\S]*?(<ul class="tiles">[\\s\\S]*?</ul>)`).exec(body)?.[1] ?? '';
+  // UI tidy phase 7: the claims are boxes at the top of the page, one <article class="claimbox"> each.
+  const boxes = new RegExp(`<section class="claimboxes" id="${id}"[^>]*>([\\s\\S]*?)</section>`).exec(body)?.[1];
+  if (boxes !== undefined) return [...boxes.matchAll(/<article class="claimbox">([\s\S]*?)<\/article>/g)].map((m) => m[1] ?? '');
   return [...card.matchAll(/<li class="tile">([\s\S]*?)<\/li>/g)].map((m) => m[1] ?? '');
 }
 

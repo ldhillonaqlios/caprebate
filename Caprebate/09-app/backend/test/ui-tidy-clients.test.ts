@@ -76,8 +76,8 @@ describe('UI tidy phase 6: each row', () => {
     for (const c of cards) {
       const row = rowOf(body, c.client);
       const g = stageGroupOf(c.stage_key);
-      assert.ok(row.includes(`<a href="/staff/claims/${c.id}">${siteOf(c.client, c.property)}</a> <span class="help">${c.claim_ref}</span>`), c.claim_ref);
-      if (g !== null) assert.ok(row.includes(`<span class="badge g-${g.key}">${c.stage_label}</span> <a href="/staff/claims/${c.id}">`), c.claim_ref);
+      assert.ok(row.includes(`<a href="/staff/clients/${c.business_id}/claims/${c.id}">${siteOf(c.client, c.property)}</a> <span class="help">${c.claim_ref}</span>`), c.claim_ref);
+      if (g !== null) assert.ok(row.includes(`<span class="badge g-${g.key}">${c.stage_label}</span> <a href="/staff/clients/${c.business_id}/claims/${c.id}">`), c.claim_ref);
     }
     const dun = rowOf(body, 'Dunmarrow Medical Practice Limited');
     assert.ok(dun.indexOf('>main site<') >= 0 && dun.indexOf('>branch surgery<') > dun.indexOf('>main site<'));

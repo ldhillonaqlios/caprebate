@@ -907,8 +907,8 @@ We do that on purpose. Staff land on their **Home** page. A client lands on thei
 
 Address: `/login`
 
-**The menu.** Each role has its own tabs along the top. The tabs show only the screens that role can open. See
-*The layout* near the start of this guide. What if you type the address of a screen that is not in your tabs? It
+**The menu.** Each role has its own menu down the left. It shows only the screens that role can open. See
+*The layout* near the start of this guide. What if you type the address of a screen that is not in your menu? It
 is still refused. You see **You cannot open this page**. That is the system working.
 
 **Every time on the screens is UK time**, and "today" always means today's date in the UK.
@@ -1640,6 +1640,12 @@ brings you here.
 - **A note or a question can say which claim it is about.** Choose it under **About which claim?**, or leave
   "The company in general".
 
+**The top of a client's page.** First comes the client's name, with coloured labels for its status, owner and who it
+waits on. The buttons are beside it. Then each claim has a box of its own. The box is headed by its stage, in colour,
+such as "Claim 1 of 2 · Survey". It shows the site, the claim number and the next step, in a dark box. A late step has
+a red label. **Open the claim** opens it. The menu on the left opens out too. It shows the client's name, **Overview**,
+each claim by its site and stage, and the parts of the page.
+
 **Who can open it now:** Admin and Sales see all of it. The view-only login sees the company's record. That is Timeline,
 Contacts, Properties, Documents and Details. It does not see the research or the notes. Accounting and Surveying are
 refused.
@@ -1647,7 +1653,7 @@ refused.
 **Try it on the demo** (as sales@example.invalid, on a freshly started demo, 18 September 2026)
 - Open **Clients** and choose **Elverton Private Hospital Limited**. *Observed:* the address becomes
   `/staff/clients/…`. The highlights read Claims 3, Status Active and Owner nobody yet. They also read Waiting on Us and
-  Engagement letter signed. Three tiles read **main site** (Survey, CR-2026-0005) and **main site** (Enquiry,
+  Engagement letter signed. Three boxes read **main site** (Survey, CR-2026-0005) and **main site** (Enquiry,
   CR-2026-0007). The third is **outpatient annexe** (Enquiry, CR-2026-0008). The tabs read Still missing 16 and
   Research 12.
 - Press **outpatient annexe**. *Observed:* "Elverton Private Hospital Limited › outpatient annexe". That line is at the top. The

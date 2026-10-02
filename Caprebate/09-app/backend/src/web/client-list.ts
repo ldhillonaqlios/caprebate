@@ -22,7 +22,7 @@ import { opens } from './navigation.ts';
 import { kpiRow, nobodyBadge, siteOf, stageBadge } from './look.ts';
 import { waitingOn, type WaitingOn } from './engaged.ts';
 import { h, raw, page, type Safe } from './html.ts';
-import { badge } from './components.ts';
+import { badge, claimHref } from './components.ts';
 import { newFromClient } from './messages.ts';
 import { newDot } from './client-layout.ts';
 
@@ -152,7 +152,7 @@ export function clientListPage(nav: Safe, list: ClientList, sort: ClientSort, f:
             <td data-label="Status">${statusBadge(r)}</td>
             <td data-label="Owner">${r.owner ?? nobodyBadge('Nobody yet')}</td>
             <td data-label="Claims">${r.claims_at.length === 0 ? h`${r.claims}` : h`<ul class="claimsat">${r.claims_at.map((c) => h`<li>${
-              c.stage_key === null ? h`<span class="badge">${c.stage_label}</span>` : stageBadge(c.stage_key, c.stage_label)} <a href="/staff/claims/${c.id}">${c.site}</a> <span class="help">${c.ref}</span></li>`)}</ul>`}</td></tr>`)}</tbody></table></div>`}
+              c.stage_key === null ? h`<span class="badge">${c.stage_label}</span>` : stageBadge(c.stage_key, c.stage_label)} <a href="${claimHref(r.id, c.id)}">${c.site}</a> <span class="help">${c.ref}</span></li>`)}</ul>`}</td></tr>`)}</tbody></table></div>`}
       </section>`,
   });
 }

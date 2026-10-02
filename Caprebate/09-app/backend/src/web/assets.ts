@@ -1339,6 +1339,25 @@ body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){backgro
 .claimsat li{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .45rem}
 .clientlist .rowname{font-weight:700;color:var(--ink)}
 
+/* UI TIDY PHASE 7 — A CLIENT'S PAGE (src/web/client-page.ts, client-layout.ts). The name and its labels, the actions
+   beside them, then each claim in a box of its own, headed in its stage's colour, its next step in a dark box. */
+.clienthead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:.75rem 1.25rem;margin:0 0 .75rem}
+.clienthead h1{margin:0 0 .2rem;font-size:36px}
+.clienthead .subhead{margin:0 0 .4rem}
+.clienthead .pills{display:flex;flex-wrap:wrap;gap:.35rem;margin:.3rem 0 0}
+.clienthead .cactions{margin:0}
+.claimboxes{display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:1rem;margin:1rem 0 1.25rem}
+.claimbox{background:var(--white);border:1px solid var(--line);border-radius:.75rem;overflow:hidden;display:flex;flex-direction:column}
+.claimbox .band{border-radius:0}
+.claimbox-body{padding:.8rem 1rem 1rem;display:flex;flex-direction:column;gap:.35rem;flex:1}
+.claimbox-site{font-size:22px;margin:0}
+.claimbox-site a{color:var(--ink)}
+.claimbox .help{margin:0}
+.nextbox{background:var(--ink);color:var(--white);border-radius:.6rem;padding:.6rem .8rem;margin:.3rem 0}
+.nextbox-h{display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin:0;color:var(--mint);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.nextbox-t{margin:.2rem 0 0;font-size:17px;font-weight:700;color:var(--white)}
+.claimbox-go{margin:auto 0 0}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of

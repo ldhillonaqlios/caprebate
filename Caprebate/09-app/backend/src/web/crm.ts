@@ -755,6 +755,8 @@ export type ClaimSummary = {
   readonly town: string | null;
   readonly workstream: string;
   readonly stage: string;
+  /** UI tidy phase 7: the stored stage, for its colour. */
+  readonly stage_key: string | null;
   readonly next_action: string | null;
   readonly next_action_due: string | null;
   readonly value?: ClaimValue;
@@ -764,7 +766,7 @@ function summaryOf(db: Db, actor: Actor, r: ClaimDbRow): ClaimSummary {
   const base = {
     id: r.id, claim_ref: r.claim_ref, business_id: r.business_id, property: r.property_label, town: r.property_town,
     workstream: words(WORKSTREAMS, r.workstream, r.workstream),
-    stage: stageReading(r.stage).label,
+    stage: stageReading(r.stage).label, stage_key: r.stage,
     next_action: r.next_action, next_action_due: r.next_action_due,
   };
   return can(actor, 'claim.read_value', claimObjFor(db,r)) ? { ...base, value: claimValue(db, r.assessment_id) } : base;

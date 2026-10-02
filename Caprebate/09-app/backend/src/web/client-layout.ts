@@ -27,6 +27,11 @@ import { section } from './components.ts';
 import { clientProgress, whyNotMoved } from './tell-and-move.ts';
 import { filesButton } from './client-files-pages.ts';
 import type { Db } from '../db.ts';
+import type { ClaimSummary } from './crm.ts';
+import { claimHref, claimRef, propertyIn } from './components.ts';
+import { dueReading } from './localtime.ts';
+import { groupBand, lateBadge, noDateBadge, stageGroupOf } from './look.ts';
+import { setSubMenu } from './navigation.ts';
 
 export type TabKey = 'chat' | 'claims' | 'properties' | 'questions' | 'people' | 'checks' | 'files' | 'activity';
 
@@ -138,4 +143,65 @@ export function tabbed(sections: readonly SectionSpec[], ctx: SectionContext, de
     <nav class="ctabs" aria-label="Parts of this client">${present.map(([k, label]) => h`<a href="#tab-${k}" class="ctab-link ctl-${k}${k === chosen ? ' is-default' : ''}">${label}${k === 'chat' ? newDot(fresh) : raw('')}</a>`)}</nav>
     <div class="ctab-panels">${present.map(([k]) => h`<div class="ctab ct-${k}${k === chosen ? ' is-default' : ''}" id="tab-${k}">${
       (by.get(k) ?? []).map((s) => section(k === 'chat' ? { ...s, open_now: true } : s, ctx))}</div>`)}</div></div>`;
+}
+
+/* ================================================================== *
+ * UI TIDY PHASE 7, 3 October 2026 — EACH CLAIM IN ITS OWN BOX, AND THE CLIENT'S OWN MENU
+ * ================================================================== */
+
+/** "3 days late", "Due today", "No date" — a next step's date as the label the Pipeline uses. */
+function dueLabel(due: string | null, nowIso: string): Safe {
+  if (due === null) return noDateBadge('No date');
+  const r = dueReading(due, nowIso);
+  if (r.overdue) { const n = /^(\d+)/.exec(r.words)?.[1] ?? ''; return lateBadge(`${n} ${n === '1' ? 'day' : 'days'} late`); }
+  return h`<span class="badge">${r.words === '' ? r.date : r.words}</span>`;
+}
+
+/**
+ * THE CLAIMS AT THE TOP. Lakhbir opened the wrong one of a client's two claims: each is now a box of its own, headed by its
+ * stage in its group's colour and "Claim 1 of 2", named by its site (the company is the page), its number in grey, and its
+ * next step in a dark box with when it is due. The box opens the claim inside this page. The id is the old Claims
+ * section's, so every link to #claims still lands here.
+ */
+export function claimBoxes(company: string, claims: readonly ClaimSummary[], nowIso: string): Safe {
+  if (claims.length === 0) return h`<section class="claimboxes" id="claims" aria-label="Claims"><p class="empty">No claim yet. Open one from a property.</p></section>`;
+  return h`<section class="claimboxes" id="claims" aria-label="Claims">${claims.map((c, i) => {
+    const site = propertyIn(company, c.property) ?? 'no property recorded';
+    return h`<article class="claimbox">${groupBand(stageGroupOf(c.stage_key), `Claim ${String(i + 1)} of ${String(claims.length)} · ${c.stage}`)}
+      <div class="claimbox-body"><h2 class="claimbox-site"><a href="${claimHref(c.business_id, c.id)}">${site}</a></h2>
+        <p class="help">${claimRef(c.claim_ref)}${c.town === null ? '' : ` · ${c.town}`}${c.value?.established === true ? ` · range shown ${c.value.shown_range}` : ''}</p>
+        <div class="nextbox"><p class="nextbox-h"><span>Next step</span>${c.next_action === null ? raw('') : dueLabel(c.next_action_due, nowIso)}</p>
+          <p class="nextbox-t">${c.next_action ?? 'No next step yet — open the claim to set one'}</p></div>
+        <p class="claimbox-go"><a class="btn" href="${claimHref(c.business_id, c.id)}">Open the claim</a></p></div></article>`;
+  })}</section>`;
+}
+
+/** The parts of this page that have something in them, in the tabs' order. */
+export function presentTabs(sections: readonly { readonly id: string }[]): (readonly [TabKey, string])[] {
+  const used = new Set(sections.map((s) => TAB_OF_SECTION[s.id] ?? 'activity'));
+  return TABS.filter(([k]) => used.has(k));
+}
+
+/**
+ * THE CLIENT'S OWN MENU, opening out under Clients in the left-hand menu (src/web/navigation.ts, `setSubMenu`): the
+ * client's name; Overview; each claim by its site and stage (never its number, which is never a link's words — Phase
+ * 134) with its next step's lateness; then the page's parts. `current` is the claim open, or null on the company's page.
+ */
+export function setClientMenu(business_id: string, company: string, claims: readonly ClaimSummary[], parts: readonly (readonly [TabKey, string])[],
+  current: string | null, nowIso: string): void {
+  const base = `/staff/clients/${business_id}`;
+  setSubMenu({
+    title: company,
+    items: [
+      { href: base, label: 'Overview', current: current === null },
+      ...claims.map((c) => {
+        const r = dueReading(c.next_action_due, nowIso);
+        const n = /^(\d+)/.exec(r.words)?.[1] ?? '';
+        const late = c.next_action !== null && r.overdue ? `${n} ${n === '1' ? 'day' : 'days'} late` : undefined;
+        return { href: claimHref(business_id, c.id), label: `${propertyIn(company, c.property) ?? 'claim'} · ${c.stage}`,
+          ...(late === undefined ? {} : { note: late }), current: current === c.id };
+      }),
+      ...parts.filter(([k]) => k !== 'claims').map(([k, label]) => ({ href: `${base}#tab-${k}`, label })),
+    ],
+  });
 }
