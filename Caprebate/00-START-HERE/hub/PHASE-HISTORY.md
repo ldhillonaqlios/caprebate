@@ -11361,3 +11361,11 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Proof.** No code changed. House checks green.
 
  **Claim cleared** in the commit that carries this record.
+
+## Planning, 3 October 2026 (continued) — the services phase moved near the end; monday.com the main board again
+
+-  **Order:** Lakhbir: the outside-services phase "should be one of the last things". It is now **Phase 156**, run after **Phase 155** (the services the plans name but nobody built, which was 156) and before the sweep (157). Every reference in the plan, KEYS-AND-SWITCHES, WAITING-ON-PEOPLE and CONTINUE-IN-A-NEW-CHAT follows; his own quoted words are kept with a note.
+-  **monday.com:** "im happy with monday becoming the main board we use to build and keep on top of tasks, but we shouldnt neglect one drive". The rule is written under "How the phases at the top of this document work": the board "💰 Health Capital" (18422317809) tracks the work; every change is also written to hub/TRACKER.csv so OneDrive stays complete; documents stay in OneDrive; a disagreement between the two is put to Lakhbir; no client data or keys on the shared board. It overrules every older "monday.com was dropped" line; the banners and corrections blocks of 153a–157 say so. A read-only comparison of the board with the tracker was started; nothing has been written to the board.
+-  **Proof.** No code changed. House checks green.
+
+ **Claim cleared** in the commit that carries this record.

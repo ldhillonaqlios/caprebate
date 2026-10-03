@@ -18,8 +18,11 @@ WHERE EVERYTHING IS
 - The plan: Caprebate/00-START-HERE/hub/ACTION-PLAN.md. Read THE STANDING
   INSTRUCTION and COORDINATES first. The phases still to run are at the top, in
   order: 153a, 153b, 153c, 153d, 153e (each has a "CHECKED 3 OCTOBER 2026 -
-  CORRECTIONS" block inside it that overrules its older lines), 153f, 154a1,
-  155, 156, then 157 (the sweep, always last). Each phase is one fenced block.
+  CORRECTIONS" block inside it that overrules its older lines), 153f (work no
+  phase held), 154a1 (the 3 Oct sweep's bugs), 155 (services the plans name but
+  nobody built), 156 (every outside service: my steps, then yours - deliberately
+  near the end), then 157 (the sweep, always last). Each phase is one fenced
+  block.
 - What only a person can do: hub/WAITING-ON-PEOPLE.md.
 - Every outside service, its keys and whether it is on: hub/KEYS-AND-SWITCHES.md.
 - History of everything done: hub/PHASE-HISTORY.md (read the end). The last
@@ -64,11 +67,12 @@ HOUSE RULES (follow them exactly)
 - You can't sign in to the test website yourself. Real emails or messages need
   my OK first. Never ask me to paste a key or password into the chat: keys go
   into Vercel or ~/.caprebate-secrets.env, by me.
-- monday.com: the board "💰 Health Capital" (18422317809) was dropped on 25 Sep
-  for the repository's tracker (hub/TRACKER.csv). I want to work from the board
-  again; until the note under "How the phases at the top of this document work"
-  in ACTION-PLAN.md says how the two are kept, read the files and don't write to
-  the board without asking me.
+- monday.com is our main board again (decided 3 Oct): "💰 Health Capital"
+  (board 18422317809). Track the work there, and write every change to
+  hub/TRACKER.csv too so OneDrive stays complete; documents stay in OneDrive.
+  If the board and the tracker disagree, ask me which is right. The board is
+  shared: no client data or keys on it. The rules are in ACTION-PLAN.md under
+  "How the phases at the top of this document work".
 
 WHAT TO DO FIRST
 Tell me in a few lines where things stand (git log, CLAIM.md, the open pull

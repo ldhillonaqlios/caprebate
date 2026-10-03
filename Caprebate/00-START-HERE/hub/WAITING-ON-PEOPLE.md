@@ -15,7 +15,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 ## Lakhbir
 
 - [ ] Confirm or complete the ICO registration (ACTION-PLAN ~1828).
-- [ ] Check DKIM signing is on in IONOS (ACTION-PLAN ~1815; Phase 155 A4 has the steps).
+- [ ] Check DKIM signing is on in IONOS (ACTION-PLAN ~1815; Phase 156 A4 has the steps).
 - [ ] Get the director's confirmation of the 3% fee and the other terms (Word question 215).
 - [ ] Send the Valuation Office email (Word question 11).
 - [ ] Book the free 45-minute surveyor call.
@@ -30,7 +30,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Others in the tracker: break and abort fee, clawback clause 13, Homedata licence facts, rate-card uplifts,
       solicitor brief, mailbox confirmation, Google Business Profile, bank and insurance, HMRC corporation tax,
       supplier breach clauses, and ten lower-priority items (Homedata, cyber security, hardware, brand, analytics…).
-- [ ] The API steps in Phase 155 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
+- [ ] The API steps in Phase 156 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
       Vercel, Zoom licence, Google Analytics, Anthropic paperwork, GoAddress, Didit).
 - [ ] Send a test video from the iPhone through "Show us your building", and supply the tall hero video for the home
       page (PHASE-HISTORY ~11112-11160).
