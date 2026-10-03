@@ -11337,3 +11337,14 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** Lakhbir merges; then measure the test website again; then, with his go-ahead, switch the local copy on and measure.
 
  **Claim cleared** in the commit that carries this record.
+
+## Faster clicks 2, 3 October 2026 (Claude Code, on the Mac)
+
+ Lakhbir merged faster clicks (#6) and said "then fix".
+
+-  **Measured** on the test website, read only, as Admin: Home 4.6 s → 2.2 s; Tasks 0.8–0.9 s, Pipeline 1.1–1.2 s and Clients 2.6–3.5 s about as before. The times fit about 0.5 s a click plus about 11 ms a trip.
+-  **Built:** "last seen" on a session is written at most once a minute, not twice every click, so an ordinary click writes nothing to the lasting database. Only Admin's Home reads it, to the minute.
+-  **Proof.** One test added to `test/faster-clicks.test.ts`; 4 single-line mutations, all red. 2221 tests: all pass but the stray-file one and once `survey-report.test.ts`'s "a wrong or broken link opens nothing" (a link it broke at random opened, 200; it passes twice on its own, as it did once before in the UI tidy — it looks like a link changed in a character that does not change what it says). Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2221`) green.
+-  **Next:** the local copy (switched off) is what takes most of the remaining time away; switching it on needs Lakhbir's go-ahead to add `CAPREBATE_DB_LOCAL_COPY=on` to the test website's settings.
+
+ **Claim cleared** in the commit that carries this record.

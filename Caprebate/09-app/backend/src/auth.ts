@@ -255,11 +255,14 @@ function issueSession(d: Deps, user_id: string, rotated_from?: string): { cookie
 
 export type Authenticated = { user: User; session_id: string };
 
+/** Faster clicks 2: how often a session's "last seen" is written, at most. */
+export const LAST_SEEN_EVERY_MS = 60_000;
+
 /** Returns undefined for absent, unknown, expired, revoked, or disabled-owner. */
 export function authenticate(d: Deps, rawToken: string | undefined): Authenticated | undefined {
   if (rawToken === undefined || rawToken === '') return undefined;
-  const row = d.db.get<{ id: string; user_id: string; expires_at: string; revoked_at: string | null }>(
-    'SELECT id, user_id, expires_at, revoked_at FROM sessions WHERE token_hash = ?',
+  const row = d.db.get<{ id: string; user_id: string; expires_at: string; revoked_at: string | null; last_seen_at: string | null }>(
+    'SELECT id, user_id, expires_at, revoked_at, last_seen_at FROM sessions WHERE token_hash = ?',
     [hashToken(rawToken)],
   );
   if (row === undefined) return undefined;
@@ -269,7 +272,15 @@ export function authenticate(d: Deps, rawToken: string | undefined): Authenticat
   const user = findById(d.db, row.user_id);
   if (user === undefined || user.disabled) return undefined;
 
-  d.db.run('UPDATE sessions SET last_seen_at = ? WHERE id = ?', [d.now(), row.id]);
+  // FASTER CLICKS 2, 3 October 2026: "last seen" is written at most once a minute, not twice a click (the server and the
+  // page router each check the session). On the test website a write is a trip to the lasting database's primary, and
+  // it made the click forget every read it had (src/db.ts withReadMemo). Only Admin's Home reads it — "working now" is
+  // seen in the last 30 minutes, "last signed in" is to the minute — so a minute's grain changes nothing shown. Expiry
+  // never reads it: a session ends at `expires_at` or when revoked, as before.
+  const now = d.now();
+  if (row.last_seen_at === null || Date.parse(now) - Date.parse(row.last_seen_at) >= LAST_SEEN_EVERY_MS) {
+    d.db.run('UPDATE sessions SET last_seen_at = ? WHERE id = ?', [now, row.id]);
+  }
   return { user, session_id: row.id };
 }
 
