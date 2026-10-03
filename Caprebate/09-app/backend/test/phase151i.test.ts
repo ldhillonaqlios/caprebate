@@ -349,7 +349,11 @@ describe('151i · 3 · switched off, nothing changes', () => {
     const build = src.slice(src.indexOf('async function build()'), src.indexOf('export async function configureTestDeploy'));
     assert.match(build, /sharedDocumentStore\(process\.env, lasting\)/);
     assert.match(build, /openLasting\(createApp, seed, lasting, \{[\s\S]*?\}, 10_000, await sharedDocumentOptions\(docs, lasting\)\)/);
-    assert.match(src, /createApp\(lasting\.location, \{ \.\.\.opts, \.\.\.lastingOnly, dbAuthToken: lasting\.authToken, schema: 'require-built' \}\)/);
+    // Faster clicks (3 Oct 2026): the lasting database's options are named once, `remote`, and both ways of opening it —
+    // with a local copy and without — are given them; memory still never is.
+    assert.match(src, /const remote = \{ \.\.\.opts, \.\.\.lastingOnly, dbAuthToken: lasting\.authToken, schema: 'require-built' \};/);
+    assert.match(src, /createApp\(lasting\.location, \{ \.\.\.remote, dbLocalCopy: /);
+    assert.match(src, /made \?\?= await createApp\(lasting\.location, remote\);/);
     assert.match(src, /const made = await createApp\(':memory:', opts\);/, 'memory must never get the shared store');
   });
 });

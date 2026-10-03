@@ -149,7 +149,9 @@ export function lastingDatabase(env) {
   if (url === '' || token === '') return { location: ':memory:', why: 'a lasting database needs both its address and its token, so the records are kept in memory' };
   if (pw.length < 12) return { location: ':memory:', why: 'a lasting database is used only behind the test password, so the records are kept in memory' };
   if (!/^(libsql|https):\/\//.test(url)) return { location: ':memory:', why: 'the lasting database address must start libsql:// or https://, so the records are kept in memory' };
-  return { location: url, authToken: token, why: 'the records are kept in the lasting database' };
+  // FASTER CLICKS, part 2 (3 October 2026): CAPREBATE_DB_LOCAL_COPY=on keeps a copy of it next to each copy of the website.
+  const localCopy = (env.CAPREBATE_DB_LOCAL_COPY ?? '').trim().toLowerCase() === 'on';
+  return { location: url, authToken: token, localCopy, why: 'the records are kept in the lasting database' };
 }
 
 /**
@@ -203,10 +205,22 @@ export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_00
   if (lasting.authToken === undefined) return memory(lasting.why);
   const reason = (e) => openFailure(e, lasting);
   let made;
+  let copyWhy = '';
   try {
     // PHASE 151i: `lastingOnly` (the shared document store) goes with the lasting database and never with memory.
     // PHASE 151i follow-up 5: 'require-built' - a copy builds no table; the deploy's build step does (prepareLasting).
-    made = await createApp(lasting.location, { ...opts, ...lastingOnly, dbAuthToken: lasting.authToken, schema: 'require-built' });
+    const remote = { ...opts, ...lastingOnly, dbAuthToken: lasting.authToken, schema: 'require-built' };
+    // FASTER CLICKS, part 2: with the setting on, first with a local copy of the database; if that cannot open, the
+    // lasting database as before, and the log says why.
+    if (lasting.localCopy === true) {
+      try {
+        made = await createApp(lasting.location, { ...remote, dbLocalCopy: join(mkdtempSync(join(tmpdir(), 'cb-copy-')), 'copy.db') });
+        copyWhy = ', with a copy of it kept next to this copy of the website';
+      } catch (e) {
+        copyWhy = `; its local copy could not be opened (${reason(e)}), so every query goes to it`;
+      }
+    }
+    made ??= await createApp(lasting.location, remote);
   } catch (e) {
     if (e?.code === 'E_NOT_BUILT') return memory(`${NOT_BUILT_WORDS} (${String(e.message)}). Until then the records are kept in memory`);
     // PHASE 151i follow-up 3: say what to do, not only what broke.
@@ -216,7 +230,7 @@ export async function openLasting(createApp, seed, lasting, opts, waitMs = 10_00
   // PHASE 151i follow-up 5: a copy NEVER seeds a lasting database. Two copies seeding one empty database at once each
   // fail on the other's rows and both give up, which left it half seeded on 28 Sep 2026. It only reads where it stands.
   const state = seedState(made);
-  if (state === 'complete') return { made, lasting: true, why: lasting.why };
+  if (state === 'complete') return { made, lasting: true, why: `${lasting.why}${copyWhy}` };
   made.close();
   return memory(state === 'empty'
     ? `${NOT_BUILT_WORDS} (its tables are there and its invented records are not). Until then the records are kept in memory`

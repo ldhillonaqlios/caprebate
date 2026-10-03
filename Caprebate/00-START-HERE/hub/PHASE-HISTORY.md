@@ -11325,3 +11325,15 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** the pull request.
 
  **Claim cleared** in the commit that carries this record.
+
+## Faster clicks, 3 October 2026 (Claude Code, on the Mac)
+
+ Lakhbir: "The back end is really slow to react to clicks, why is that?" — then "do it".
+
+-  **Found:** on the test website every database query is a trip over the network to Turso, and a click asked hundreds (Home 467 to 737). Measured read-only in a browser: Home 4.6 s, Clients 2.1 s, Pipeline 1.1 s, Tasks 0.9 s; the same pages build in 0.01 to 0.03 s on the Mac.
+-  **Built, part 1:** a click asks each question once (`withReadMemo`, src/db.ts); any write forgets at once, and nothing is remembered inside a transaction. Home 737 → 177 trips (Sales), 467 → 148 (Admin); Tasks 234 → 68.
+-  **Built, part 2, switched off:** a local copy of the database on each copy of the website, brought up to date at the start of every click, when the website's settings say `CAPREBATE_DB_LOCAL_COPY=on`; if it cannot open, the website uses the database as before. Not yet proved on Turso (no libSQL server on the Mac); to be tried on the test website, with Lakhbir's go-ahead to add the setting.
+-  **Proof.** `test/faster-clicks.test.ts`, ten tests; 19 single-line mutations, all red. A first full run was spoiled — the mutation run changed src/db.ts while the suite was running — so it was stopped and the whole suite run again. A second run had whole files fail with ETIMEDOUT reading the source: OneDrive stopped answering for a while; once it answered, the suite was run a third time. 2220 tests: all pass but the stray-file one (`whatsapp.test.ts` passed this time). `test/phase151i.test.ts`'s check that the shared document store goes only to the lasting database now reads the options named once, `remote`, and both ways of opening. Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2220`) green.
+-  **Next:** Lakhbir merges; then measure the test website again; then, with his go-ahead, switch the local copy on and measure.
+
+ **Claim cleared** in the commit that carries this record.
