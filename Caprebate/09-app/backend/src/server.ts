@@ -26,6 +26,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { buildApp, STUBS } from './app.ts';
+import { withReadMemo } from './db.ts';
 import { authorise, can, NotAuthorised, REGISTERED_ACTIONS, type Actor, type Obj } from './authz.ts';
 import { authenticate, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAILURE, type LoginResult } from './auth.ts';
 import * as SI from './web/sign-in.ts';
@@ -85,6 +86,8 @@ export type ServerOptions = {
   dbAuthToken?: string;
   /** Tests only: see BuildOptions.dbEngine. */
   dbEngine?: 'node:sqlite' | 'libsql';
+  /** Faster clicks, part 2: see BuildOptions.dbLocalCopy. */
+  dbLocalCopy?: string;
   /** PHASE 151j: see BuildOptions.twoFactor. Absent is 'staff'. */
   twoFactor?: 'staff' | 'off' | 'staff-except-invented';
   /** PHASE 151i follow-up 5: see BuildOptions.schema. Absent builds the tables, as always. */
@@ -128,7 +131,7 @@ export async function createApp(
   opts: ServerOptions = {},
 ): Promise<{ server: ReturnType<typeof createServer>; close: () => void; app: Awaited<ReturnType<typeof buildApp>>; store: FsObjectStore }> {
   const app = await buildApp({
-    location, ...(opts.now === undefined ? {} : { now: opts.now }), ...(opts.dbAuthToken === undefined ? {} : { dbAuthToken: opts.dbAuthToken }),
+    location, ...(opts.now === undefined ? {} : { now: opts.now }), ...(opts.dbAuthToken === undefined ? {} : { dbAuthToken: opts.dbAuthToken }), ...(opts.dbLocalCopy === undefined ? {} : { dbLocalCopy: opts.dbLocalCopy }),
     ...(opts.dbEngine === undefined ? {} : { dbEngine: opts.dbEngine }),
     ...(opts.twoFactor === undefined ? {} : { twoFactor: opts.twoFactor }),
     ...(opts.schema === undefined ? {} : { schema: opts.schema }),
@@ -173,7 +176,11 @@ export async function createApp(
     }
   };
 
-  const server = createServer((req, res) => {
+  // FASTER CLICKS, 3 Oct 2026: each request remembers its own reads until anything is written (src/db.ts withReadMemo).
+  const server = createServer((req, res) => withReadMemo(() => {
+    // Faster clicks, part 2: with a local copy of the lasting database, first bring in what any copy wrote since — one
+    // trip. If it cannot, this click reads the copy as it stands; the next click tries again.
+    try { app.db.refresh(); } catch (e) { console.error(`the local copy of the database was not brought up to date: ${e instanceof Error ? e.name : typeof e}`); }
     const since = app.now();
     // 1 Oct 2026: a key Admin saved on another copy of the website is read here from this request on (src/web/saved-keys.ts).
     try { refreshSavedKeys(app); } catch { /* a database without migration 067 yet keeps the keys it has */ }
@@ -200,7 +207,7 @@ export async function createApp(
       console.error(`500 on ${req.method ?? '?'} ${new URL(req.url ?? '/', 'http://localhost').pathname}: ${e instanceof Error ? e.name : typeof e} ${where}`);
       send(res, 500, { error: 'something went wrong' });
     });
-  });
+  }));
 
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const url = new URL(req.url ?? '/', 'http://localhost');

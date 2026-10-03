@@ -88,6 +88,8 @@ export type BuildOptions = {
   dbAuthToken?: string;
   /** Tests only: open a memory or file database through libsql, to prove the application runs on it (src/db.ts). */
   dbEngine?: 'node:sqlite' | 'libsql';
+  /** Faster clicks, part 2: a local file that keeps a copy of the remote database `location` names (src/db.ts localCopy). */
+  dbLocalCopy?: string;
   /** PHASE 151j: who must give a second factor. Absent is 'staff', the rule. 'off' is for the older tests only.
    *  'staff-except-invented' (29 Sep 2026) is for the test website only: see TwoFactorPolicy in src/auth.ts. */
   twoFactor?: 'staff' | 'off' | 'staff-except-invented';
@@ -109,6 +111,7 @@ export type BuildOptions = {
 export async function buildApp(opts: BuildOptions = {}): Promise<App> {
   const db = new Db(opts.location ?? ':memory:', {
     ...(opts.dbAuthToken === undefined ? {} : { authToken: opts.dbAuthToken }), ...(opts.dbEngine === undefined ? {} : { engine: opts.dbEngine }),
+    ...(opts.dbLocalCopy === undefined ? {} : { localCopy: opts.dbLocalCopy }),
   });
   if (opts.schema === 'require-built') {
     const left = pendingMigrations(db, opts.migrationsDir ?? MIGRATIONS_DIR);

@@ -12,6 +12,7 @@
  * if one appears, because a rule nothing checks is a comment.
  */
 
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -45,6 +46,14 @@ export type DbOptions = {
   readonly engine?: 'node:sqlite' | 'libsql';
   /** Tests only: how the engine is opened (and opened again), so a dropped connection can be shown. */
   readonly openEngine?: () => Engine;
+  /**
+   * FASTER CLICKS, part 2 (3 October 2026): a file on this machine that keeps a LOCAL COPY of the remote database. Reads
+   * are answered from it; writes go to the remote database (libSQL's "embedded replica"), and `refresh()` — at the start
+   * of every click — brings in what any copy of the website wrote since. Remote databases only, and only when the
+   * website's settings ask for it (api/index.mjs, CAPREBATE_DB_LOCAL_COPY=on). With `openEngine` (tests) the engine
+   * given is the copy.
+   */
+  readonly localCopy?: string;
 };
 
 /**
@@ -60,6 +69,34 @@ export function droppedConnection(e: unknown): boolean {
   return /stream not found|stream expired|stream is closed|invalid baton|baton/i.test(m);
 }
 
+/**
+ * FASTER CLICKS, 3 OCTOBER 2026 — ONE ANSWER PER QUESTION, PER CLICK. Lakhbir: "The back end is really slow to react to
+ * clicks." On the test website every query is a trip over the network to the lasting database (Turso), and a click on
+ * Home asked 467 to 737 of them — the same "which surveyor is on this claim?" 165 times — so a page that takes 0.03 s on
+ * the Mac took 4 to 10 s there. While one click is answered (`withReadMemo`, wrapped round every request in
+ * src/server.ts), a read asked again with the same SQL and the same values is answered from what this click already
+ * has. It is safe because it can never be out of date:
+ *   - ANY WRITE, by this click or any other one in this process, forgets everything remembered, at once (`#epoch`);
+ *   - INSIDE A TRANSACTION nothing is remembered or reused: a transaction reads the database itself;
+ *   - each caller gets its OWN COPY of the rows, so one that changes a row it was given changes nobody else's;
+ *   - a value that is not plain text, a number or nothing (a file's bytes) is never remembered;
+ *   - outside a click (start-up, the seed, the timers) nothing is remembered.
+ * A second copy of the website writing meanwhile is seen on the next click, as before: one click reads one moment.
+ */
+const READS = new AsyncLocalStorage<WeakMap<Db, Map<string, { epoch: number; value: unknown }>>>();
+
+/** Answer `fn` — one request — with a memory of its own reads. Nested calls share the outer one. */
+export function withReadMemo<T>(fn: () => T): T {
+  return READS.getStore() === undefined ? READS.run(new WeakMap(), fn) : fn();
+}
+
+function memoKey(sql: string, params: readonly Param[]): string | null {
+  for (const p of params) if (p !== null && typeof p !== 'string' && typeof p !== 'number' && typeof p !== 'bigint') return null;
+  return `${sql}\u0000${params.map((p) => (p === null ? '\u0001' : `${typeof p}:${String(p)}`)).join('\u0000')}`;
+}
+
+const copyRow = <T>(r: T): T => (r !== null && typeof r === 'object' ? { ...(r as object) } as T : r);
+
 /** The addresses that mean a remote libSQL database. Plain http:// is refused: a token never travels unencrypted. */
 const REMOTE_ADDRESS = /^(libsql|https):\/\/[^\s/]+/;
 
@@ -68,11 +105,19 @@ type Statement = {
   get(...p: Param[]): unknown;
   all(...p: Param[]): unknown[];
 };
-export type Engine = { exec(sql: string): unknown; prepare(sql: string): Statement; close(): void };
+export type Engine = { exec(sql: string): unknown; prepare(sql: string): Statement; close(): void; sync?(): unknown };
 
 function openLibsql(location: string, authToken: string | undefined): Engine {
   const Database = createRequire(import.meta.url)('libsql') as new (path: string, opts?: { authToken?: string }) => Engine;
   return authToken === undefined ? new Database(location) : new Database(location, { authToken });
+}
+
+/** Faster clicks, part 2: a local copy at `file` of the remote database at `location`, brought up to date once. */
+function openLocalCopy(file: string, location: string, authToken: string): Engine {
+  const Database = createRequire(import.meta.url)('libsql') as new (path: string, opts: { syncUrl: string; authToken: string }) => Engine;
+  const e = new Database(file, { syncUrl: location, authToken });
+  e.sync?.();
+  return e;
 }
 
 /**
@@ -103,21 +148,29 @@ export class Db {
   #db: Engine;
   #open: (() => Engine) | null = null;
   #depth = 0;
+  /** Faster clicks: moves on at every write, so a remembered read from before it is never used. */
+  #epoch = 0;
+  /** Faster clicks: how many times the engine itself was asked — the trips over the network, on a remote database. */
+  #trips = 0;
   /** Where this database is. Read it; never infer it from anything a request carries. */
   readonly kind: DbKind;
   /** Which library answers: node:sqlite, built into Node, or libsql (always, for a remote database). */
   readonly engine: 'node:sqlite' | 'libsql';
+  /** Faster clicks, part 2: whether reads come from a local copy of the remote database (brought up to date by `refresh`). */
+  readonly localCopy: boolean;
 
   constructor(location = ':memory:', opts: DbOptions = {}) {
     this.kind = dbKind(location);
     this.engine = this.kind === 'remote' || opts.engine === 'libsql' ? 'libsql' : 'node:sqlite';
+    this.localCopy = opts.localCopy !== undefined && (this.kind === 'remote' || opts.openEngine !== undefined);
     if (opts.openEngine !== undefined) {
       this.#open = opts.openEngine;
       this.#db = opts.openEngine();
     } else if (this.kind === 'remote') {
       const token = (opts.authToken ?? '').trim();
       if (token === '') throw new Error('A remote database needs its token.');
-      this.#open = () => openLibsql(location, token);
+      const copy = opts.localCopy;
+      this.#open = copy === undefined ? () => openLibsql(location, token) : () => openLocalCopy(copy, location, token);
       this.#db = this.#open();
     } else {
       this.#db = this.engine === 'libsql' ? openLibsql(location, undefined) : new DatabaseSync(location) as unknown as Engine;
@@ -140,8 +193,22 @@ export class Db {
     this.#db.exec('PRAGMA foreign_keys = ON');
   }
 
+  /**
+   * Faster clicks, part 2: bring the local copy up to date with what any copy of the website wrote — one trip. Called at
+   * the start of every click (src/server.ts). Nothing to do without a local copy.
+   */
+  refresh(): void {
+    if (!this.localCopy) return;
+    this.#epoch++;
+    this.#call(() => this.#db.sync?.());
+  }
+
+  /** How many times the engine has been asked since this handle opened. Read it; it only counts. */
+  get trips(): number { return this.#trips; }
+
   /** One call; if the connection was dropped (and this is not inside a transaction), open it again and call once more. */
   #call<T>(f: () => T): T {
+    this.#trips++;
     try {
       return f();
     } catch (e) {
@@ -153,22 +220,44 @@ export class Db {
 
   /** Schema only. Never accepts caller data — migrations and DDL exclusively. */
   execDdl(sql: string): void {
+    this.#epoch++;
     this.#call(() => this.#db.exec(sql));
   }
 
   run(sql: string, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+    this.#epoch++;
     const r = this.#call(() => this.#db.prepare(sql).run(...params));
+    this.#epoch++;
     return { changes: Number(r.changes), lastInsertRowid: Number(r.lastInsertRowid) };
   }
 
+  /** Faster clicks: this click's remembered answer to the same read, if there is one and no write came since. */
+  #memo<T>(kind: 'get' | 'all', sql: string, params: readonly Param[], read: () => T): T {
+    const store = this.#depth > 0 ? undefined : READS.getStore();
+    const key = store === undefined ? null : memoKey(`${kind} ${sql}`, params);
+    if (store === undefined || key === null) return read();
+    let mine = store.get(this);
+    if (mine === undefined) { mine = new Map(); store.set(this, mine); }
+    const had = mine.get(key);
+    if (had !== undefined && had.epoch === this.#epoch) return had.value as T;
+    const epoch = this.#epoch;
+    const value = read();
+    if (this.#epoch === epoch) mine.set(key, { epoch, value });
+    return value;
+  }
+
   get<T extends Row = Row>(sql: string, params: readonly Param[] = []): T | undefined {
-    const r = this.#call(() => this.#db.prepare(sql).get(...params) as T | undefined);
-    return r === undefined || this.engine === 'node:sqlite' ? r : asNodeSqliteRow(r);
+    return copyRow(this.#memo('get', sql, params, () => {
+      const r = this.#call(() => this.#db.prepare(sql).get(...params) as T | undefined);
+      return r === undefined || this.engine === 'node:sqlite' ? r : asNodeSqliteRow(r);
+    }));
   }
 
   all<T extends Row = Row>(sql: string, params: readonly Param[] = []): T[] {
-    const rows = this.#call(() => this.#db.prepare(sql).all(...params) as T[]);
-    return this.engine === 'node:sqlite' ? rows : rows.map(asNodeSqliteRow);
+    return this.#memo('all', sql, params, () => {
+      const rows = this.#call(() => this.#db.prepare(sql).all(...params) as T[]);
+      return this.engine === 'node:sqlite' ? rows : rows.map(asNodeSqliteRow);
+    }).map(copyRow);
   }
 
   /**
@@ -187,6 +276,8 @@ export class Db {
         // Inside another transaction: part of it, as before.
         return fn();
       }
+      // Faster clicks: every write inside (run, execDdl) already forgets what was remembered, and nothing is remembered
+      // while the transaction is open, so neither its commit nor its undoing needs to.
       this.#call(() => this.#db.exec('BEGIN IMMEDIATE'));
       this.#depth++;
       try {
