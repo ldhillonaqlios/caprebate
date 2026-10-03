@@ -820,21 +820,42 @@ function propertyPage(
  * CLAIMS
  * ------------------------------------------------------------------ */
 
+/**
+ * UI TIDY PHASE 17 (3 October 2026): a column this login may not read on any row is left out, and the page says so,
+ * instead of a dash in every row — Accounting reads the company and the reference, so its list is those two. A column
+ * read on some rows keeps the dash on the others, as before.
+ */
+export function claimColumns(rows: readonly Pick<C.ClaimRow, 'property' | 'stage' | 'next_action' | 'owner'>[]): {
+  property: boolean; stage: boolean; next_action: boolean; owner: boolean;
+} {
+  return {
+    property: rows.some((r) => r.property !== undefined), stage: rows.some((r) => r.stage !== undefined && r.stage !== null),
+    next_action: rows.some((r) => r.next_action !== undefined), owner: rows.some((r) => r.owner !== undefined),
+  };
+}
+
 function claimsPage(d: CrmPageDeps, actor: Actor, rows: readonly C.ClaimRow[], controls: Safe = raw(''), sortBy: SortBy = (_k, l) => h`${l}`): string {
   // PHASE 133a: the filters and saved views in a panel beside the list; sortable headings; one table style.
+  const col = claimColumns(rows);
+  const hidden = !col.property || !col.stage || !col.next_action || !col.owner;
+  // Each column's heading and cells from one list, so a heading cannot stand over another column's cells.
+  const dash = h`<span class="help">—</span>`;
+  const shown = ([
+    { key: 'property', label: 'Property', head: h`Property`, cell: (r: C.ClaimRow): Safe => (r.property === undefined ? dash : orNot(r.property, 'none recorded')) },
+    { key: 'stage', label: 'Stage', head: h`Stage`, cell: (r: C.ClaimRow): Safe => h`${r.stage ?? '—'}` },
+    { key: 'next_action', label: 'Next action', head: sortBy('next_action', 'Next action'), cell: (r: C.ClaimRow): Safe => (r.next_action === undefined ? dash : orNot(r.next_action, 'none recorded')) },
+    { key: 'owner', label: 'Owner', head: h`Owner`, cell: (r: C.ClaimRow): Safe => (r.owner === undefined ? dash : orNot(r.owner, 'nobody yet')) },
+  ] as const).filter((c) => col[c.key]);
   return page({
     title: 'Claims', nav: d.nav(actor), wide: true,
     body: h`<div class="pagehead"><div><p class="eyebrow">Claims</p><h1>Claims</h1></div><p class="help">${rows.length} shown.</p></div>
       <div class="listlayout">${controls}<div class="listmain">
-      ${rows.length === 0 ? h`<p class="empty">No claims yet. A claim opens when a lead is converted, or from a property’s page.</p>` : h`<div class="tablewrap"><table>
-        <thead><tr><th>${sortBy('company', 'Company')}</th><th>Property</th><th>Stage</th>
-        <th>${sortBy('next_action', 'Next action')}</th><th>Owner</th><th>${sortBy('reference', 'Reference')}</th></tr></thead>
+      ${rows.length === 0 ? h`<p class="empty">No claims yet. A claim opens when a lead is converted, or from a property’s page.</p>` : h`${
+        hidden ? h`<p class="help">Only the columns your role may read are shown.</p>` : raw('')}<div class="tablewrap"><table class="stack">
+        <thead><tr><th>${sortBy('company', 'Company')}</th>${shown.map((c) => h`<th>${c.head}</th>`)}<th>${sortBy('reference', 'Reference')}</th></tr></thead>
         <tbody>${rows.map((r) => h`<tr><td><a href="${claimHref(r.business_id, r.id)}">${r.client}</a></td>
-          <td>${r.property === undefined ? h`<span class="help">—</span>` : orNot(r.property, 'none recorded')}</td>
-          <td>${r.stage ?? '—'}</td>
-          <td>${r.next_action === undefined ? h`<span class="help">—</span>` : orNot(r.next_action, 'none recorded')}</td>
-          <td>${r.owner === undefined ? h`<span class="help">—</span>` : orNot(r.owner, 'nobody yet')}</td>
-          <td>${claimRef(r.claim_ref)}</td></tr>`)}</tbody></table></div>`}
+          ${shown.map((c) => h`<td data-label="${c.label}">${c.cell(r)}</td>`)}
+          <td data-label="Reference">${claimRef(r.claim_ref)}</td></tr>`)}</tbody></table></div>`}
       </div></div>`,
   });
 }

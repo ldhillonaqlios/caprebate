@@ -71,7 +71,9 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 | 14 | Introducers | DONE 3 Oct |
 | 15 | Settings | DONE 3 Oct |
 | 16 | Client portal: Your claims, Messages, Show us your building | DONE 3 Oct |
-| 17 | Accounting's and the Surveyor's own pages, and a phone check of every page | NEXT |
+| 17 | Accounting's and the Surveyor's own pages, and a phone check of every page | DONE 3 Oct |
+
+**All 17 phases are built (3 October 2026), on branch `claude/tidy-every-tab`, for Lakhbir to review and merge.** Still open: whether the very long claim page gets a phase of its own.
 
 **Groups approved so far:** phases 1 and 2 (2 October 2026); phases 3 to 6 (2 October 2026); phases 7 to 10 (3 October 2026); phases 11 to 14 (3 October 2026); phases 15 to 17 (3 October 2026).
 

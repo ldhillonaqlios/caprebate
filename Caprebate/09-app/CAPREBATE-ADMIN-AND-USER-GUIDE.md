@@ -1176,7 +1176,9 @@ record stays. "Only an accountant or adviser contact can join a claim's team". N
   an invoice when it arrives.
 - **Dashboard**: the money tiles only.
 - **Finance**.
-- **Claims**: the reference and the client. The value reads "not shown to this role".
+- **Claims**: the client and the reference. The value reads "not shown to this role". Columns Accounting may not read
+  are left out, and the page says so.
+- **Clients**: each client with a claim to invoice or an invoice. An overdue invoice shows as a red label.
 - A claim's page. It shows its **Documents** (the fee invoice and the signed letter only). It shows **Money** (the
   claim's own invoices). It has a timeline of "Financial events only". A claim at the invoice stage also shows **Our
   estimated fee**. That is the fee the finance view expects. It shows until our fee is raised.

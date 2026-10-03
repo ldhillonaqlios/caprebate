@@ -11307,3 +11307,11 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** phase 17, Accounting's and the Surveyor's own pages, and a phone check of every page.
 
  **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 17 of 17, 3 October 2026 — Accounting's and the Surveyor's pages, and a phone check (Claude Code, on the Mac)
+
+-  **Built:** Accounting's Claims list leaves out the four columns it may not read (they were dashes on every row) and says so; Sales and Admin still see all six. Accounting's Clients list shows an overdue invoice as a red label. Accounting's and the Surveyor's homes (phase 4) needed nothing. The phone check: every tab, for every login, at 390 px — 31 pages, none scrolls sideways.
+-  **Proof.** `test/ui-tidy-accounting.test.ts`, four tests; 7 single-line mutations, all red. Screenshots of every tab at 390 px, and Accounting's and the Surveyor's pages at 1280. 2205 tests, run in 12 chunks: all pass but the stray-file one and `whatsapp.test.ts`'s order check, the timing flake under load (three out of three on its own). Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2205`) green.
+-  **Next:** the 17 phases are done. Lakhbir reviews phases 15 to 17 and the branch, and decides whether the very long claim page gets a phase of its own.
+
+ **Claim cleared** in the commit that carries this record.
