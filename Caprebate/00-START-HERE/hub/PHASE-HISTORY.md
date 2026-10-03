@@ -11289,3 +11289,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** Lakhbir reviews phases 11 to 14; then phases 15 to 17.
 
  **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 15 of 17, 3 October 2026 — Settings (Claude Code, on the Mac)
+
+ Lakhbir approved phases 15 to 17 as the fifth group.
+
+-  **Built:** Users and roles drops from 5,190 px to about 1,400: a header with Make or change a role and Add a user, four boxes, and one table with each role as a label, Active or Turned off in colour, and Change role folded in the person's own row; Add a user folds until asked for (Home's Add a person card opens it). Automation: four boxes, the thirteen things no rule may do folded with their count, each rule's source moved under it. Email templates: Add a template folded. Compliance: three boxes for the registers, the dated-value form folded. Switches, Document types, the Audit log and Introducer fees already read well and are unchanged.
+-  **Proof.** `test/ui-tidy-settings.test.ts`, eight tests; 18 single-line mutations, all red. Screenshots of Users (closed and open), Automation, Email templates and Compliance at 1280 and 390. 2196 tests, run in 12 chunks: all pass but the stray-file one. Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2196`) green.
+-  **Next:** phase 16, the client portal.
+
+ **Claim cleared** in the commit that carries this record.

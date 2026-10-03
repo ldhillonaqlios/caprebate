@@ -197,7 +197,7 @@ export async function handleTasks(
 
   /* --------------------------------------------------------- automation */
   if (path === '/staff/automation' && method === 'GET') {
-    html(res, 200, rulesPageHtml(d, actor, A.rulesPage(db, actor), done));
+    html(res, 200, rulesPageHtml(d, actor, A.rulesPage(db, actor), done, url.searchParams.get('add') === '1'));
     return 'handled';
   }
   if (path === '/staff/automation' && method === 'POST') {
@@ -216,7 +216,7 @@ export async function handleTasks(
 
   /* ---------------------------------------------------------- templates */
   if (path === '/staff/templates' && method === 'GET') {
-    html(res, 200, templatesPageHtml(d, actor, M.templatesPage(db, actor), done));
+    html(res, 200, templatesPageHtml(d, actor, M.templatesPage(db, actor), done, url.searchParams.get('add') === '1'));
     return 'handled';
   }
   if (path === '/staff/templates' && method === 'POST') {
@@ -588,23 +588,37 @@ export function distinctReasons(list: readonly { readonly key: string; readonly 
   return out;
 }
 
-function rulesPageHtml(d: TaskPageDeps, actor: Actor, p: A.RulesPage, msg: string | undefined): string {
+/**
+ * UI TIDY PHASE 15 (3 October 2026): the rules page opens with what it is, Add a rule, and four boxes; the thirteen
+ * things no rule may do fold away with their count (each still said once, and still refused by the store); Add a rule
+ * opens from its button. The templates page: Add a template folds until its button opens it.
+ */
+function rulesPageHtml(d: TaskPageDeps, actor: Actor, p: A.RulesPage, msg: string | undefined, adding = false): string {
   const choices = taskChoices(d.app.db);
   return page({
     title: 'Automation', nav: d.nav(actor), wide: true,
-    body: h`<h1>Automation rules</h1>${saved(msg)}
+    body: h`<div class="pagehead"><div><h1>Automation rules</h1>
+        <p class="lede">Tasks and reminders that start by themselves when something happens.</p></div>
+        ${p.may_write ? h`<p><a class="btn btn-primary" href="?add=1#add-rule">Add a rule</a></p>` : raw('')}</div>${saved(msg)}
+      ${kpiRow([
+        { label: 'Rules', value: String(p.rules.length), tone: 'total', href: '#rules' },
+        { label: 'Active', value: String(p.rules.filter((r) => r.active).length), tone: 'paid', href: '#rules' },
+        { label: 'Retired', value: String(p.rules.filter((r) => !r.active).length), tone: 'plain', href: '#rules' },
+        { label: 'Did not run', value: String(p.runs.filter((r) => !r.ran).length), tone: p.runs.some((r) => !r.ran) ? 'warn' : 'plain', href: '#runs' },
+      ])}
       <p class="help">Each rule says when it acts and what it does. Each time, it notes if it ran, or why not.
       A notice is saved with the emails waiting to send. It is not sent yet.</p>
-      <div class="gate"><strong>What no rule may do.</strong> Each is refused, with the reason:<ul>${distinctReasons(p.forbidden).map((why) => h`<li>${why}</li>`)}</ul></div>
-      <div class="pblock"><div class="pnum">The rules</div><table>
-        <thead><tr><th>Rule</th><th>When</th><th>Does</th><th>Goes to</th><th>Active</th><th>Where it came from</th></tr></thead>
-        <tbody>${p.rules.map((r) => h`<tr><td>${r.label}${r.task === null || r.task.title === null ? raw('') : h`<br><span class="help">“${r.task.title}”, due in ${r.task.due_in_days ?? 0} days</span>`}</td>
-          <td>${r.trigger.label}</td><td>${r.effect.label}</td><td>${r.assign.label}</td><td>${r.active ? 'yes' : 'retired'}</td>
-          <td><span class="help">${r.source}</span></td></tr>
-          ${p.may_write ? h`<tr><td colspan="6"><details><summary>Change “${r.label}”</summary>${ruleForm(`/staff/automation/${r.id}`, r, choices, p.request_types)}</details></td></tr>` : raw('')}`)}
+      <details class="morelist cantdo"><summary>What no rule may do <span class="count">${String(distinctReasons(p.forbidden).length)}</span></summary>
+        <p class="help">Each is refused, with the reason:</p><ul>${distinctReasons(p.forbidden).map((why) => h`<li>${why}</li>`)}</ul></details>
+      <div class="pblock" id="rules"><div class="pnum">The rules</div><table>
+        <thead><tr><th>Rule</th><th>When</th><th>Does</th><th>Goes to</th><th>Active</th></tr></thead>
+        <tbody>${p.rules.map((r) => h`<tr><td><strong>${r.label}</strong>${r.task === null || r.task.title === null ? raw('') : h`<br><span class="help">“${r.task.title}”, due in ${r.task.due_in_days ?? 0} days</span>`}</td>
+          <td>${r.trigger.label}</td><td>${r.effect.label}</td><td>${r.assign.label}</td><td>${r.active ? h`<span class="badge b-ok">yes</span>` : h`<span class="badge b-nodate">retired</span>`}</td></tr>
+          <tr class="rulefrom"><td colspan="5"><span class="help">Where it came from: ${r.source}</span>
+          ${p.may_write ? h`<details><summary>Change “${r.label}”</summary>${ruleForm(`/staff/automation/${r.id}`, r, choices, p.request_types)}</details>` : raw('')}</td></tr>`)}
         </tbody></table>
-      ${p.may_write ? h`<details><summary>Add a rule</summary>${ruleForm('/staff/automation', null, choices, p.request_types)}</details>` : raw('')}</div>
-      <div class="pblock"><div class="pnum">What the rules did</div>
+      ${p.may_write ? h`<details class="formfold" id="add-rule"${adding ? raw(' open') : raw('')}><summary>Add a rule</summary>${ruleForm('/staff/automation', null, choices, p.request_types)}</details>` : raw('')}</div>
+      <div class="pblock" id="runs"><div class="pnum">What the rules did</div>
         ${p.runs.length === 0 ? h`<p class="help">No rule has run yet.</p>` : h`<table>
           <thead><tr><th>When</th><th>Rule</th><th>Event</th><th>About</th><th>Result</th></tr></thead>
           <tbody>${p.runs.map((r) => h`<tr><td class="when">${r.at}</td><td>${r.rule}</td><td>${r.trigger}</td><td>${r.about}</td>
@@ -613,7 +627,7 @@ function rulesPageHtml(d: TaskPageDeps, actor: Actor, p: A.RulesPage, msg: strin
   });
 }
 
-function templatesPageHtml(d: TaskPageDeps, actor: Actor, p: M.TemplatesPage, msg: string | undefined): string {
+function templatesPageHtml(d: TaskPageDeps, actor: Actor, p: M.TemplatesPage, msg: string | undefined, adding = false): string {
   const fields = Object.keys(p.merge_fields).map((k) => `{{${k}}}`).join(' ');
   const form = (action: string, t: M.TemplateView | null): Safe => h`<form method="post" action="${action}">
     <label>Label <input name="label" value="${t?.label ?? ''}" required></label>
@@ -624,7 +638,9 @@ function templatesPageHtml(d: TaskPageDeps, actor: Actor, p: M.TemplatesPage, ms
     <button type="submit">Save the template</button></form>`;
   return page({
     title: 'Email templates', nav: d.nav(actor), wide: true,
-    body: h`<h1>Email templates</h1>${saved(msg)}
+    body: h`<div class="pagehead"><div><h1>Email templates</h1>
+        <p class="lede">The wording of the emails we send to clients.</p></div>
+        ${p.may_write ? h`<p><a class="btn btn-primary" href="?add=1#add-template">Add a template</a></p>` : raw('')}</div>${saved(msg)}
       <p class="help">The merge fields are ${fields} and no others. A merged value is shown as typed. A value nobody recorded shows as a
       gap in square brackets. The email is saved to send later. It is not sent yet.</p>
       <div class="gate"><strong>Never bank details, never an invoice.</strong> A template with either is refused. Invoices
@@ -632,6 +648,6 @@ function templatesPageHtml(d: TaskPageDeps, actor: Actor, p: M.TemplatesPage, ms
       ${p.templates.map((t) => h`<div class="pblock"><div class="pnum">${t.label}${t.active ? '' : ' — retired'}</div>
         <p><strong>${t.subject}</strong></p><pre>${t.body}</pre><p class="help">changed ${t.updated}</p>
         ${p.may_write ? h`<details><summary>Change it</summary>${form(`/staff/templates/${t.id}`, t)}</details>` : raw('')}</div>`)}
-      ${p.may_write ? h`<div class="pblock"><div class="pnum">Add a template</div>${form('/staff/templates', null)}</div>` : raw('')}`,
+      ${p.may_write ? h`<details class="pblock recordlead" id="add-template"${adding ? raw(' open') : raw('')}><summary class="pnum">Add a template</summary>${form('/staff/templates', null)}</details>` : raw('')}`,
   });
 }

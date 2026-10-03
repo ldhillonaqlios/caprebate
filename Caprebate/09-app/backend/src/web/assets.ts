@@ -1426,6 +1426,14 @@ a.packhead-switch:hover{text-decoration:underline}
 .formfold[open]>summary::before{content:"– "}
 .formfold[open]>summary{margin-bottom:.6rem}
 
+/* UI TIDY PHASE 15 — SETTINGS (src/web/staff.ts usersPage, tasks-pages.ts, compliance-views.ts). */
+.rolefold{margin:.35rem 0 0}
+.rolefold>summary{padding:.25rem .65rem;font-size:14px}
+.rolefold form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:.4rem}
+.rolefold label{font-size:14px}
+.userlist td:last-child{min-width:14rem}
+.cantdo ul{margin:.25rem 0 0}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of

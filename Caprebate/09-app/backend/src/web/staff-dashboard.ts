@@ -238,7 +238,7 @@ function peopleCard(app: App, actor: Actor): Safe {
       <td data-label="Last signed in">${p.last === null ? h`<span class="help">Never</span>` : localStamp(p.last, now)}</td>
       <td data-label="Do"><form method="post" action="/staff/users/${p.id}/temporary-password" class="inline"><button class="linkish" type="submit">Reset password</button></form>${
         p.id === actor.id ? raw('') : h` · <form method="post" action="/staff/users/${p.id}/disable" class="inline">${back}<button class="linkish" type="submit">Archive</button></form>`}</td></tr>`)}</tbody></table>
-    <p><a class="cta" href="/staff/users#create-user">Add a person</a> <a href="/staff/users">Roles and second steps</a></p>
+    <p><a class="cta" href="/staff/users?add=1#create-user">Add a person</a> <a href="/staff/users">Roles and second steps</a></p>
     <p class="help">Reset password makes a temporary one, shown to you once, and signs them out. Archive stops them signing in at once; what they did stays.</p>
     ${archived.length === 0 ? raw('') : h`<details><summary>Archived (${String(archived.length)})</summary><ul class="dash-list">${archived.map((p) => h`<li>${p.display_name} <span class="help">· ${p.role.replace(/_/g, ' ').toLowerCase()} · archived ${localStamp(p.disabled_at ?? '', now)}</span></li>`)}</ul></details>`}`);
 }

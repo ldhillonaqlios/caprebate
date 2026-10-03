@@ -169,7 +169,7 @@ describe('Admin’s tab: people and API keys', () => {
     const people = section(page, 'people');
     assert.match(people, /<td data-label="Who">Dash surveying<\/td>[\s\S]*?action="\/staff\/users\/u-dh-surveying\/temporary-password"[\s\S]*?action="\/staff\/users\/u-dh-surveying\/disable"/);
     assert.doesNotMatch(people, /\/staff\/users\/u-dh-admin\/disable/, 'Admin was offered to archive themself');
-    assert.match(people, /<a class="cta" href="\/staff\/users#create-user">Add a person<\/a>/);
+    assert.match(people, /<a class="cta" href="\/staff\/users\?add=1#create-user">Add a person<\/a>/); // UI tidy phase 15: the form opens
     assert.match((await req('surveying', '/staff')).body, /Survey jobs|row-jobs/);
     const r = await post('admin', '/staff/users/u-dh-surveying/disable', { back: '/staff?view=admin' });
     assert.equal(r.location, '/staff?view=admin&done=archived#people');

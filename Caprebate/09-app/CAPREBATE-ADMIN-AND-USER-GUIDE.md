@@ -167,7 +167,7 @@ Each login has an easy layout of its own. **Nothing a role may see or do changed
     claim, the claim's details and the organisation. Then a contact, a property and a document request;
   - finance, introducers, the claim's facts, grants and past owners;
   - document types, automation rules, templates, admin settings;
-  - your own account settings, Create a user, and the survey job.
+  - your own account settings, Add a user, and the survey job.
 
   Some refusals are not about one field. For example, a stage is not ready yet, or an invoice was already sent. These
   still show at the top of the form. A screen reader reads each required field's name with it. This is because every
@@ -291,7 +291,7 @@ He asks: *"Do we need a compliance role separate from Admin?"*
 
 Address: /staff/users. The page heading is **Users and roles**. You reach it from Settings, under "Administration".
 
-**Adding a user.** Fill in "Create a user":
+**Adding a user.** Press **Add a user** at the top. The form opens. Fill it in:
 - "Username — an email address"
 - "Display name"
 - "Role"
@@ -306,9 +306,12 @@ other is **Reset second step**. A new temporary password signs them out and repl
 still work. Resetting the second step signs them out too. It also deletes their codes. They set it up again the next
 time they sign in, and get new codes. A person who lost their phone should try a recovery code first.
 
-**Changing a role.** Find "Change somebody's role". Choose the new role and press **Assign**. The page warns you:
-"Changing a role signs that person out at once. They sign in again with the new role." Your own account is not in that
-list.
+**Changing a role.** Find the person's row. Press **Change role**. Choose the new role from the list and press
+**Assign**. The page warns you: "Changing a role signs that person out at once. They sign in again with the new role."
+Your own row has no **Change role**. Nor does a login that is turned off.
+
+**What the page shows.** Four boxes count the staff, the client logins, the logins turned off, and the staff with no
+working hours. Each row shows the role as a label. It says **Active** in green or **Turned off** in red.
 
 **Turning a login off.** Press **Disable** on the person's row. They are signed out straight away, on every device. They
 do not wait until they next sign in. After that, when they try to sign in, they get the usual "those details did not
@@ -533,8 +536,8 @@ emails waiting to send. It is not sent yet."
 Nine rules come with the demo. Each has a **Change** link. To stop a rule, set "Active" to "no — retired". Rules are not
 deleted.
 
-**What no rule may do, and why.** The page lists these at the top: "What no rule may do. Each is refused, with the
-reason":
+**What no rule may do, and why.** Press **What no rule may do** near the top. It opens a list. Each one is refused,
+with the reason:
 - No rule can turn on free lookups. They start when our privacy notice is published.
 - No rule can turn on paid lookups. They need a signed engagement letter and a person to click.
 - No rule can record a signature. Only the client signs the engagement letter.
@@ -789,7 +792,7 @@ The registers:
 - "Customer due diligence is in force" (Off);
 - "The insurance position" (No policy in force).
 
-To record a new value, use **Record a new dated value**. It needs a
+To record a new value, press **Record a new dated value**. The form opens. It needs a
 value, a "Takes effect" date and "Where it comes from".
 
 ---
@@ -1890,10 +1893,10 @@ Address: /staff/users (the **Settings** tab → **Users**; or **Your account** �
 
 **How to do the common job**
 1. Open the **Settings** tab, then the **Users** tile.
-2. Under "Create a user", fill in "Username — an email address" and "Display name". Choose a "Role". For someone who should only look, pick **READ_ONLY**. They can read the work and change nothing. They never see a value, money, a register or the audit log.
+2. Press **Add a user**. Fill in "Username — an email address" and "Display name". Choose a "Role". For someone who should only look, pick **READ_ONLY**. They can read the work and change nothing. They never see a value, money, a register or the audit log.
 3. Leave "Business — for a CLIENT account only" empty unless the account is a client's.
 4. Press **Create**. The next page shows a **temporary password**, once. Hand it over yourself; nothing is emailed. It works for 7 days.
-5. To change a role, go to "Change somebody's role" and find the person. Choose the role and press **Assign**. All their sessions end at once.
+5. To change a role, find the person's row and press **Change role**. Choose the role and press **Assign**. All their sessions end at once.
 6. To switch someone off, press **Disable** on their row. Their sessions end at once. There is no button to switch them back on.
 
 **What it will refuse, and why**
@@ -2525,7 +2528,7 @@ Address: /staff/templates
 **Who can open it.** Admin and Sales can read it. Only Admin saves a template. Accounting, Surveying and clients cannot open it.
 
 **How to do the common job**
-1. Open **Add a template**. Fill in "Label", "Subject" and "Body".
+1. Press **Add a template**. The form opens. Fill in "Label", "Subject" and "Body".
 2. Use only the six merge fields. Spell them exactly like this: `{{contact_name}}` `{{organisation}}` `{{property_address}}` `{{claim_reference}}` `{{next_action}}` `{{due_date}}`.
 3. Set "Active" and press **Save the template**.
 4. To use a template, open the client and press **Email**. Open **Start from a template**. Choose it and press **Use this template**.
@@ -2805,7 +2808,8 @@ The links along the top are:
 **Who can open it.** Admin only. Sales was refused "not authorised". Remember the banner. One Admin login types both names, so the system does **not** check that two people did it.
 
 **How to do the common job** (record a dated setting)
-1. On the landing page, under "Settings — dated, and sourced", choose "Setting" and "Value".
+1. On the landing page, under "Settings — dated, and sourced", press **Record a new dated value**. The form opens.
+   Choose "Setting" and "Value".
 2. Fill in "Takes effect". Then fill in "Where it comes from — a written answer, a policy schedule".
 3. Press **Record a new dated value**. The old value stays on the record. The new one applies from its date.
 

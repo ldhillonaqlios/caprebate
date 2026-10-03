@@ -501,7 +501,7 @@ export async function handleStaff(
 
   /* ------------------------------------------------ ADMIN ONLY · users */
   if (path === '/staff/users' && method === 'GET') {
-    html(res, 200, usersPage(actor, S.staffList(db, actor), undefined, madeRoleChoices(d.app, actor))); return 'handled';
+    html(res, 200, usersPage(actor, S.staffList(db, actor), undefined, madeRoleChoices(d.app, actor), url.searchParams.get('add') === '1')); return 'handled';
   }
 
   if (path === '/staff/users/create' && method === 'POST') {
@@ -1324,63 +1324,87 @@ function temporaryPasswordPage(actor: Actor, name: string, email: string, role: 
   });
 }
 
+/** UI TIDY PHASE 15: where Add a user lands — the form, opened. Home's "Add a person" card links here too. */
+export const ADD_USER_HREF = '/staff/users?add=1#create-user';
+
+/** UI TIDY PHASE 15: the counts over the users list. "Staff" leaves out client logins; turned off accounts count apart. */
+export function userCounts(rows: readonly Pick<S.StaffRow, 'user' | 'working_periods'>[]): {
+  staff: number; clients: number; off: number; no_hours: number;
+} {
+  const on = rows.filter((r) => !r.user.disabled);
+  const staff = on.filter((r) => r.user.role !== 'CLIENT');
+  return {
+    staff: staff.length, clients: on.length - staff.length, off: rows.length - on.length,
+    no_hours: staff.filter((r) => r.working_periods === 0).length,
+  };
+}
+
+/**
+ * UI TIDY PHASE 15 — USERS AND ROLES, 3 October 2026. Was 5,000 px: a block of six role buttons for every person, then
+ * the create form. Now: a header with Make or change a role and Add a user, four boxes, and one table that stacks on a
+ * phone — each person's name over their username, their role as a label, Active in green or Turned off in red, and their
+ * actions: the three that were there, and Change role, folded in their own row, a list of the roles instead of six
+ * buttons. Add a user is folded until its button, a link to it, or a refusal opens it. Nobody's own row offers a role.
+ */
 function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | undefined,
-  made: readonly { key: string; name: string }[] = []): string {
+  made: readonly { key: string; name: string }[] = [], adding = false): string {
   // PHASE 151b: the roles the super admin made are offered beside the built-in ones, by their own names.
   const staffOnly = made.map((m) => ({ value: m.key, label: m.name }));
   const all = [...APP_ROLES.map((r) => ({ value: r as string, label: r as string })), ...staffOnly];
+  const n = userCounts(rows);
   return page({
     title: 'Users and roles', nav: nav(actor), wide: true,
     body: h`
-      <h1>Users and roles</h1>
+      <div class="pagehead"><div><h1>Users and roles</h1>
+        <p class="lede">Add a user, change a role, or turn an account off.</p></div>
+        <p><a class="btn" href="/staff/admin/roles">Make or change a role</a> <a class="btn btn-primary" href="${ADD_USER_HREF}">Add a user</a></p></div>
       ${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}
-      <p class="help">Here you can add a user, change a role or turn an account off.
-      <strong>You cannot change someone's name, username or photo.</strong> Only they can, from their
-      own account.</p>
+      ${kpiRow([
+        { label: 'Staff', value: String(n.staff), tone: 'total' },
+        { label: 'Client logins', value: String(n.clients), tone: 'plain' },
+        { label: 'Turned off', value: String(n.off), tone: 'plain' },
+        { label: 'Staff with no working hours', value: String(n.no_hours), tone: 'plain' },
+      ])}
+      <p class="help"><strong>You cannot change someone's name, username or photo.</strong> Only they can, from their
+      own account. Changing a role signs that person out at once. They sign in again with the new role.</p>
 
-      <table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Hours set</th><th>Photo</th><th>State</th><th></th></tr></thead>
+      <div class="tablewrap"><table class="stack userlist"><thead><tr><th>Name</th><th>Role</th><th>Hours set</th><th>Photo</th><th>State</th><th></th></tr></thead>
       <tbody>${rows.map((r) => h`<tr>
-        <td>${r.user.display_name}</td><td>${r.user.email}</td><td>${roleName(r.user.role)}</td>
-        <td>${r.working_periods === 0 ? h`<span class="help">none</span>` : r.working_periods}</td>
-        <td>${r.has_photo ? 'yes' : 'no'}</td>
-        <td>${r.user.disabled ? 'disabled' : 'active'}</td>
+        <td>${r.user.display_name}<br><span class="help">${r.user.email}</span></td>
+        <td data-label="Role"><span class="badge b-info">${roleName(r.user.role)}</span></td>
+        <td data-label="Hours set">${r.working_periods === 0 ? h`<span class="help">none</span>` : r.working_periods}</td>
+        <td data-label="Photo">${r.has_photo ? 'yes' : 'no'}</td>
+        <td data-label="State">${r.user.disabled ? h`<span class="badge b-late">Turned off</span>` : h`<span class="badge b-ok">Active</span>`}</td>
         <td>${r.user.disabled ? raw('') : h`
           <form method="post" action="/staff/users/${r.user.id}/disable" class="inline">
             <button class="linkish" type="submit">Disable</button></form>
           <form method="post" action="/staff/users/${r.user.id}/temporary-password" class="inline">
             <button class="linkish" type="submit">New temporary password</button></form>
           <form method="post" action="/staff/users/${r.user.id}/reset-two-factor" class="inline">
-            <button class="linkish" type="submit">Reset second step</button></form>`}</td>
-      </tr>`)}</tbody></table>
+            <button class="linkish" type="submit">Reset second step</button></form>
+          ${r.user.id === actor.id ? raw('') : h`<details class="formfold rolefold"><summary>Change role</summary>
+            <form method="post" action="/staff/users/${r.user.id}/role">
+              <label>New role for ${r.user.display_name} <select name="role">${all.map((role) => h`
+                <option value="${role.value}"${role.value === r.user.role ? raw(' selected') : raw('')}>${role.label}</option>`)}</select></label>
+              <button type="submit">Assign</button></form></details>`}`}</td>
+      </tr>`)}</tbody></table></div>
 
-      <p><a href="/staff/admin/roles">Make or change a role</a> — a mix of what our own roles can do, for somebody who needs it.</p>
-
-      <h3>Change somebody's role</h3>
-      <p class="help">Changing a role signs that person out at once. They sign in again with the new role.</p>
-      ${rows.filter((r) => !r.user.disabled && r.user.id !== actor.id).map((r) => h`
-        <form method="post" action="/staff/users/${r.user.id}/role">
-          <label class="fl">${r.user.display_name} — currently ${roleName(r.user.role)}</label>
-          <div class="opts">${all.map((role) => h`
-            <label class="opt"><input type="radio" name="role" value="${role.value}"${role.value === r.user.role ? raw(' checked') : raw('')}> ${role.label}</label>`)}</div>
-          <button class="cta" type="submit">Assign</button>
-        </form>`)}
-
-      <h3 id="create-user">Create a user</h3>
+      <details class="pblock recordlead" id="create-user"${adding ? raw(' open') : raw('')}><summary class="pnum">Add a user</summary>
       <form method="post" action="/staff/users/create">
         <label class="fl" for="new-user-email">Username — an email address</label>
         <input class="fi" id="new-user-email" name="email" required>
         <label class="fl" for="new-user-display-name">Display name</label>
         <input class="fi" id="new-user-display-name" name="display_name" required>
-        <label class="fl">Role</label>
-        <div class="opts">${all.map((role) => h`
-          <label class="opt"><input type="radio" name="role" value="${role.value}"> ${role.label}</label>`)}</div>
+        <label class="fl" for="new-user-role">Role</label>
+        <select class="fi" id="new-user-role" name="role"><option value="">choose a role</option>${all.map((role) => h`
+          <option value="${role.value}">${role.label}</option>`)}</select>
         <label class="fl" for="new-user-business">Business — for a CLIENT account only</label>
         <input class="fi" id="new-user-business" name="business_id" placeholder="leave empty for a staff account">
         <button class="cta" type="submit">Create</button>
       </form>
-      <div class="gate">We make a temporary password for the new person and show it to you once. Give it to them
+      <p class="help">We make a temporary password for the new person and show it to you once. Give it to them
       yourself, not by email. It works for ${SI.TEMPORARY_PASSWORD_DAYS} days. When they first sign in, they choose their own
-      password and set up their second step.</div>
+      password and set up their second step.</p></details>
       <p><a href="/staff/settings">Back to settings</a></p>`,
   });
 }
