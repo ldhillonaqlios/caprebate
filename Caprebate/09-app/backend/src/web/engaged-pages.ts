@@ -76,7 +76,8 @@ export async function handleEngaged(
      can read it. The engaged-client list it replaced is no longer drawn; `engagedClients` still serves its other readers. */
   if (path === '/staff/clients' && method === 'GET') {
     const sort: ClientSort = url.searchParams.get('sort') === 'name' ? 'name' : 'waiting';
-    html(res, 200, clientListPage(d.nav(actor), clientList(db, actor, sort), sort));
+    html(res, 200, clientListPage(d.nav(actor), clientList(db, actor, sort, d.app.now()), sort,
+      { q: url.searchParams.get('q') ?? '', show: url.searchParams.get('show') ?? '' }));
     return 'handled';
   }
 

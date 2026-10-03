@@ -247,6 +247,14 @@ function section(key: LeadSectionKey, items: readonly Item[], empty: string, fol
     : h`<section class="leadsec" id="leads-${key}" aria-labelledby="leads-h-${key}">${head}${list}</section>`;
 }
 
+/** UI tidy phase 5: how many each section holds — what the sections below draw, counted the same way, for the boxes. */
+export function leadSectionCounts(rows: readonly LeadListRow[], enquiries: readonly EnquiryRow[], d: CardDeps): Record<LeadSectionKey, number> {
+  const n: Record<LeadSectionKey, number> = { new: 0, going: 0, later: 0, closed: 0 };
+  for (const r of rows) n[leadSection(r.status.key)] += 1;
+  if (d.mayHandleEnquiries) n.new += enquiries.length;
+  return n;
+}
+
 /**
  * EVERY SECTION, IN ORDER. Open sections: the longest-waiting first. Closed: the most recent first. Enquiries go into New
  * only when no filter is applied, since a filter on owner, sector or source is a question about leads.

@@ -360,12 +360,12 @@ describe('2 · the role editor’s screens: every choice in words, grouped, borr
       assert.match(list.body, /Bookkeeper/);
       assert.match(list.body, /3 things/);
       const users = await admin.get('/staff/users');
-      assert.match(users.body, /value="ROLE_BOOKKEEPER"> Bookkeeper/);
+      assert.match(users.body, /value="ROLE_BOOKKEEPER">Bookkeeper<\/option>/); // UI tidy phase 15: a list of roles, not buttons
       assert.match(users.body, /Make or change a role/);
       const accounting = w.db.get<{ id: string }>("SELECT id FROM users WHERE role = 'ACCOUNTING' LIMIT 1")!;
       assert.equal((await admin.post(`/staff/users/${accounting.id}/role`, { role: 'ROLE_BOOKKEEPER' })).status, 303);
       assert.equal(w.db.get<{ role: string }>('SELECT role FROM users WHERE id = ?', [accounting.id])?.role, 'ROLE_BOOKKEEPER');
-      assert.match((await admin.get('/staff/users')).body, /<td>Bookkeeper<\/td>/, 'the users page shows the made role by its name');
+      assert.match((await admin.get('/staff/users')).body, /<td data-label="Role"><span class="badge b-info">Bookkeeper<\/span><\/td>/, 'the users page shows the made role by its name');
       // A new staff user can be created straight into a made role.
       const created = await admin.post('/staff/users/create', { email: 'keeper2@example.invalid', display_name: 'Second Keeper', role: 'ROLE_BOOKKEEPER', password: 'a-long-enough-password' });
       // Phase 151j: creating a user now shows the temporary password once, instead of going back to the list

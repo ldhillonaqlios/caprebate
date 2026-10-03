@@ -42,7 +42,8 @@ import { localClock, localDate, localPartsOf, localStamp, ukDate, WEEKDAY_NAMES 
 import { addLocalDays, startOfLocalDay, startOfLocalWeek } from './schedule.ts';
 import * as B from './backoffice.ts';
 import * as M from './messages.ts';
-import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayRow } from './home.ts';
+import { adminRow, jobsRow, leadsRows, moneyRow, pipelineRow, todayItems, todayRow } from './home.ts';
+import { kpiRow, type Kpi } from './look.ts';
 import { blocksFor, mayBlockTime } from './time-blocks.ts';
 import { newDot } from './client-layout.ts';
 import { keysView } from './saved-keys.ts';
@@ -63,13 +64,6 @@ export function dashView(actor: Actor, asked: string | null): DashView | null {
 /* ================================================================== *
  * PIECES
  * ================================================================== */
-
-type Stat = { label: string; value: string; sub?: string; href: string; tone?: 'late' | 'ok' };
-
-function strip(stats: readonly Stat[]): Safe {
-  return h`<ul class="dash-strip" aria-label="At a glance">${stats.map((s) => h`<li class="dash-stat${s.tone === 'late' ? ' late' : s.tone === 'ok' ? ' ok' : ''}">
-    <a href="${s.href}"><span class="dash-num">${s.value}</span><span class="dash-label">${s.label}</span>${s.sub === undefined ? raw('') : h`<span class="dash-sub">${s.sub}</span>`}</a></li>`)}</ul>`;
-}
 
 function card(id: string, title: string, body: Safe, extra: Safe = raw('')): Safe {
   return h`<section class="dash-card" id="${id}" aria-labelledby="${id}-h"><div class="dash-card-h"><h2 id="${id}-h">${title}</h2>${extra}</div>${body}</section>`;
@@ -244,7 +238,7 @@ function peopleCard(app: App, actor: Actor): Safe {
       <td data-label="Last signed in">${p.last === null ? h`<span class="help">Never</span>` : localStamp(p.last, now)}</td>
       <td data-label="Do"><form method="post" action="/staff/users/${p.id}/temporary-password" class="inline"><button class="linkish" type="submit">Reset password</button></form>${
         p.id === actor.id ? raw('') : h` · <form method="post" action="/staff/users/${p.id}/disable" class="inline">${back}<button class="linkish" type="submit">Archive</button></form>`}</td></tr>`)}</tbody></table>
-    <p><a class="cta" href="/staff/users#create-user">Add a person</a> <a href="/staff/users">Roles and second steps</a></p>
+    <p><a class="cta" href="/staff/users?add=1#create-user">Add a person</a> <a href="/staff/users">Roles and second steps</a></p>
     <p class="help">Reset password makes a temporary one, shown to you once, and signs them out. Archive stops them signing in at once; what they did stays.</p>
     ${archived.length === 0 ? raw('') : h`<details><summary>Archived (${String(archived.length)})</summary><ul class="dash-list">${archived.map((p) => h`<li>${p.display_name} <span class="help">· ${p.role.replace(/_/g, ' ').toLowerCase()} · archived ${localStamp(p.disabled_at ?? '', now)}</span></li>`)}</ul></details>`}`);
 }
@@ -285,9 +279,9 @@ function adminView(app: App, actor: Actor, done: string | null = null): Safe[] {
       <td data-label="Now">${r.now ? h`<span class="chip chip-ok">Working</span>` : h`<span class="help">Away</span>`}</td>
       <td data-label="Today">${r.first === null || r.last === null ? h`<span class="help">Not signed in today</span>` : `${localClock(r.first)} to ${localClock(r.last)}`}</td></tr>`)}</tbody></table>`;
   return [
-    strip([
-      { label: 'working now', value: String(working), href: '#staff-working', ...(working > 0 ? { tone: 'ok' as const } : {}) },
-      { label: 'signed in today', value: String(today), sub: `of ${rows.length} staff`, href: '#staff-working' },
+    kpiRow([
+      { label: 'Working now', value: String(working), tone: working > 0 ? 'money' : 'plain', href: '#staff-working' },
+      { label: `Signed in today, of ${String(rows.length)} staff`, value: String(today), tone: 'total', href: '#staff-working' },
     ]),
     card('staff-working', 'Who is working', h`${table}<p class="help">Working now means seen in the last 30 minutes. Times are from their sign-ins today.</p>`),
     ...(done === 'archived' ? [h`<p class="saved" role="status">Archived. They cannot sign in, and what they did stays.</p>`] : []),
@@ -301,55 +295,82 @@ function adminView(app: App, actor: Actor, done: string | null = null): Safe[] {
  * THE PAGE BODY
  * ================================================================== */
 
+/**
+ * UI TIDY PHASE 4, 2 October 2026 — HOME IN TWO COLUMNS. Lakhbir chose design 2 (00-START-HERE/hub/UI-TIDY-PLAN.md): one
+ * line saying what is late, solid number boxes, then the work on the left — "Do these first", today's calls and emails,
+ * new leads and messages, leads' next steps — and the pipeline and the calendar on the right. Every part that was on
+ * Home is still here, for the same logins; only where it sits and how it is drawn changed.
+ */
+const FULL_MONTHS = Object.freeze(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']);
+
+function head(now: string, late: number, actions: Safe = raw('')): Safe {
+  const p = localPartsOf(Date.parse(now));
+  const day = `${WEEKDAY_NAMES[p.weekday] ?? ''} ${String(p.day)} ${FULL_MONTHS[p.month - 1] ?? ''}`.trim();
+  return h`<div class="pagehead"><div><h1>Home</h1><p class="lede">${day}. ${late === 0 ? 'Nothing is late.' : late === 1 ? '1 job is late — start at the top.' : `${String(late)} jobs are late — start at the top.`}</p></div>${actions}</div>`;
+}
+
+function columns(main: readonly Safe[], side: readonly Safe[]): Safe {
+  return h`<div class="home-cols"><div class="home-main">${main}</div><div class="home-side">${side}</div></div>`;
+}
+
 export function dashboard(app: App, actor: Actor, view: DashView, q: { week: string | null; done: string | null }): Safe {
   const now = app.now();
-  const parts: Safe[] = [];
+  const lateJobs = todayItems(actor, app, now).filter((t) => t.late === true).length;
   if (view === 'admin') {
-    parts.push(...adminView(app, actor, q.done));
-  } else if (view === 'sales') {
+    return h`${head(now, lateJobs)}${adminView(app, actor, q.done)}`;
+  }
+  const from = startOfLocalDay(now);
+  const calls = callsBetween(app, actor, from, addLocalDays(from, 1)).length;
+  const lateBox: Kpi = { label: lateJobs === 1 ? 'Job late' : 'Jobs late', value: String(lateJobs), tone: lateJobs > 0 ? 'late' : 'plain', href: '#row-today' };
+  const callBox: Kpi = { label: calls === 1 ? 'Call today' : 'Calls today', value: String(calls), tone: 'plain', href: '#today-activities' };
+  if (view === 'sales') {
     const leads = opens(actor, assertLeadSection)
       ? leadsList(app.db, actor, { filters: {}, sort: 'age' }).rows.filter((l) => l.claim === null && l.status.key === 'NEW') : [];
-    const late = leads.filter((l) => isLateNewLead(l.lead_at, now)).length;
     const board = opens(actor, pipelineBoardGate) ? pipelineBoard(app.db, actor, now) : null;
     const inPipe = board === null ? 0 : board.columns.reduce((n, c) => n + c.cards.length, 0);
     const msgs = can(actor, 'client_message.read', { type: 'client_message', id: '__home__', business_id: '__home__' })
       ? organisationList(app.db, actor).reduce((n, o) => n + M.newFromClient(app.db, actor, o.id), 0) : 0;
-    const from = startOfLocalDay(now);
-    const calls = callsBetween(app, actor, from, addLocalDays(from, 1)).length;
-    parts.push(strip([
-      { label: leads.length === 1 ? 'new lead' : 'new leads', value: String(leads.length), ...(late > 0 ? { sub: `${late} waiting too long`, tone: 'late' as const } : {}), href: '#row-new-leads' },
-      { label: msgs === 1 ? 'new message' : 'new messages', value: String(msgs), href: '#new-messages', ...(msgs > 0 ? { tone: 'late' as const } : {}) },
-      { label: calls === 1 ? 'call today' : 'calls today', value: String(calls), href: '#today-activities' },
-      { label: inPipe === 1 ? 'claim in the pipeline' : 'claims in the pipeline', value: String(inPipe), href: '#row-pipeline' },
-    ]));
     const [newLeads, nextActions] = leadsRows(actor, app, now);
     const msgCard = messagesCard(app, actor);
-    parts.push(h`<div class="dash-grid">${newLeads ?? raw('')}${msgCard ?? raw('')}</div>`);
-    parts.push(...pipelineRow(actor, app, now));
-    parts.push(calendarCard(app, actor, view, q.week, q.done));
-    parts.push(todayActivities(app, actor), todayRow(actor, app, now));
-    if (nextActions !== undefined) parts.push(nextActions);
-  } else if (view === 'accounting') {
+    const record = can(actor, 'lead.write', { type: 'lead', id: '__lead_section__', business_id: null })
+      ? h`<p><a class="btn btn-primary" href="/staff/leads?record=1#record-lead">Record a lead</a></p>` : raw('');
+    return h`${head(now, lateJobs, record)}${kpiRow([
+      lateBox,
+      { label: leads.length === 1 ? 'New lead' : 'New leads', value: String(leads.length), tone: leads.length > 0 ? 'win' : 'plain', href: '#row-new-leads' },
+      { label: msgs === 1 ? 'New message' : 'New messages', value: String(msgs), tone: msgs > 0 ? 'warn' : 'plain', href: '#new-messages' },
+      callBox,
+      { label: 'Claims in progress', value: String(inPipe), tone: 'total', href: '/staff/pipeline' },
+    ])}${columns(
+      [todayRow(actor, app, now), todayActivities(app, actor), h`<div class="home-pair">${newLeads ?? raw('')}${msgCard ?? raw('')}</div>`, nextActions ?? raw('')],
+      [...pipelineRow(actor, app, now), calendarCard(app, actor, view, q.week, q.done)],
+    )}`;
+  }
+  if (view === 'accounting') {
+    const boxes: Kpi[] = [lateBox];
     if (opens(actor, assertFinanceSection)) {
       const f = financeDashboard(app.db, actor, now);
-      parts.push(strip([
-        { label: 'not yet paid', value: f.totals.outstanding, href: '/staff/finance#claim-invoices' },
-        { label: f.totals.overdue_count === 1 ? 'invoice late' : 'invoices late', value: String(f.totals.overdue_count), href: '/staff/finance#claim-invoices', ...(f.totals.overdue_count > 0 ? { tone: 'late' as const } : {}) },
-        { label: f.expected.claims.length === 1 ? 'claim ready for our fee' : 'claims ready for our fee', value: String(f.expected.claims.length), href: '/staff/finance#to-invoice' },
-      ]));
+      boxes.push(
+        { label: 'Not yet paid', value: f.totals.outstanding, tone: 'money', href: '/staff/finance#claim-invoices' },
+        { label: f.totals.overdue_count === 1 ? 'Invoice late' : 'Invoices late', value: String(f.totals.overdue_count), tone: f.totals.overdue_count > 0 ? 'late' : 'plain', href: '/staff/finance#claim-invoices' },
+        { label: f.expected.claims.length === 1 ? 'Claim ready for our fee' : 'Claims ready for our fee', value: String(f.expected.claims.length), tone: f.expected.claims.length > 0 ? 'warn' : 'plain', href: '/staff/finance#to-invoice' },
+      );
     }
-    parts.push(...moneyRow(actor, app, now), calendarCard(app, actor, view, q.week, q.done), todayActivities(app, actor), todayRow(actor, app, now));
-  } else {
-    if (opens(actor, assertSurveySection)) {
-      const jobs = surveyorJobs(app.db, actor);
-      const waiting = jobs.filter((j) => j.state === 'SEALED').length;
-      parts.push(strip([
-        { label: waiting === 1 ? 'job waiting for your figures' : 'jobs waiting for your figures', value: String(waiting), href: '/staff/survey', ...(waiting > 0 ? { tone: 'late' as const } : {}) },
-        { label: jobs.length === 1 ? 'survey job' : 'survey jobs', value: String(jobs.length), href: '/staff/survey' },
-      ]));
-    }
-    parts.push(...jobsRow(actor, app), calendarCard(app, actor, view, q.week, q.done), todayActivities(app, actor), todayRow(actor, app, now));
+    return h`${head(now, lateJobs)}${kpiRow([...boxes, callBox])}${columns(
+      [todayRow(actor, app, now), todayActivities(app, actor)],
+      [...moneyRow(actor, app, now), calendarCard(app, actor, view, q.week, q.done)],
+    )}`;
   }
-  // 1 Oct 2026: Admin's view tabs are in the top bar (src/web/navigation.ts, viewTabs).
-  return h`${parts}`;
+  const boxes: Kpi[] = [lateBox];
+  if (opens(actor, assertSurveySection)) {
+    const jobs = surveyorJobs(app.db, actor);
+    const waiting = jobs.filter((j) => j.state === 'SEALED').length;
+    boxes.push(
+      { label: waiting === 1 ? 'Job waiting for your figures' : 'Jobs waiting for your figures', value: String(waiting), tone: waiting > 0 ? 'warn' : 'plain', href: '/staff/survey' },
+      { label: jobs.length === 1 ? 'Survey job' : 'Survey jobs', value: String(jobs.length), tone: 'survey', href: '/staff/survey' },
+    );
+  }
+  return h`${head(now, lateJobs)}${kpiRow([...boxes, callBox])}${columns(
+    [todayRow(actor, app, now), todayActivities(app, actor)],
+    [...jobsRow(actor, app), calendarCard(app, actor, view, q.week, q.done)],
+  )}`;
 }

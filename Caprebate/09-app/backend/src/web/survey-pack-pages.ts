@@ -43,6 +43,9 @@ export type PackPageDeps = {
 
 export { CHAPTERS } from './pack-chapters.ts';
 import { CHAPTERS } from './pack-chapters.ts';
+import * as S from './surveyor.ts';
+import { jobSite, setJobMenu } from './surveyor-pages.ts';
+import { lateBadge, siteOf } from './look.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });
@@ -151,7 +154,7 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
   if (q.get('stale') === '1') notes.push(h`<div class="gate" role="alert"><strong>This pack changed since you opened it.</strong> Here it is again with that change. Make yours again if it still applies.</div>`);
   const body = h`
     ${notes}
-    <p class="eyebrow">${v.job.business_name} · Survey pack</p>
+    ${packHead(d.app, actor, v, ch)}
     ${v.property === null ? propertyChooser(v, ch) : raw('')}
     <div class="pack">
       <nav class="pack-ch" aria-label="The pack's chapters"><p class="pack-ch-h">The pack · ${String(CHAPTERS.length)} chapters</p>
@@ -168,8 +171,31 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
       <aside class="pack-side">${approveCard(v, ready)}${totalsCard(v)}${legalCard(v, lv)}${changesCard(d, v)}</aside>
     </div>
     <p><a href="/staff/survey/${v.job.id}">Back to the survey job</a></p>`;
-  void actor;
+  const job = S.surveyorJobs(d.app.db, actor).find((j) => j.job_id === v.job.id);
+  if (job !== undefined) setJobMenu(d.app, actor, job, 'pack');
   return page({ title: `Survey pack · ${v.job.business_name}`, nav: d.nav(actor), wide: true, body });
+}
+
+/**
+ * UI TIDY PHASE 11, 3 October 2026 — WHICH PACK THIS IS. Lakhbir: "The survey pack doesn't say which of a client's surveys
+ * you are looking at. Dunmarrow has two, and I opened the wrong one first." A dark band names the client and the site (the
+ * pack's own property, else its claim's), the claim number and postcode, which of the client's survey jobs it is, and a
+ * button to each of the others' packs, at the same chapter.
+ */
+function packHead(app: App, actor: Actor, v: P.PackView, ch: number): Safe {
+  const all = S.surveyorJobs(app.db, actor).filter((j) => j.business_id === v.job.business_id)
+    .sort((a, b) => (a.claim_ref ?? '').localeCompare(b.claim_ref ?? '') || a.job_id.localeCompare(b.job_id));
+  const job = all.find((j) => j.job_id === v.job.id);
+  const site = v.property !== null ? siteOf(v.job.business_name, v.property.label) : job === undefined ? 'no site recorded' : jobSite(job);
+  const postcode = v.property?.postcode ?? job?.property_postcode ?? null;
+  const n = all.findIndex((j) => j.job_id === v.job.id);
+  const facts = [job?.claim_ref ?? null, postcode, all.length > 1 && n >= 0 ? `survey job ${String(n + 1)} of ${String(all.length)} for this client` : null]
+    .filter((x): x is string => x !== null);
+  return h`<section class="packhead" aria-label="Which survey pack this is"><div>
+      <p class="packhead-kind">Survey pack</p>
+      <p class="packhead-title">${v.job.business_name} — ${site}</p>
+      <p class="packhead-facts">${facts.join(' · ')}</p></div>
+    ${all.filter((j) => j.job_id !== v.job.id).map((o) => h`<a class="packhead-switch" href="${base(o.job_id)}?ch=${String(ch)}">Switch to ${jobSite(o)}</a>`)}</section>`;
 }
 
 function propertyChooser(v: P.PackView, ch: number): Safe {
@@ -206,10 +232,28 @@ function neededList(v: P.PackView): Safe {
   if (s.complete) return h`<p class="gate"><strong>Every value is in.</strong> The sums are complete.</p>`;
   return h`
     ${s.problems.map((p) => h`<p class="gate pk-problem" role="alert"><strong>Check this.</strong> ${p.words}</p>`)}
-    ${s.needed.length === 0 ? raw('') : h`<h2>Still needed (${String(s.needed.length)})</h2>
+    ${s.needed.length === 0 ? raw('') : neededGroups(v)}`;
+}
+
+/**
+ * UI TIDY PHASE 11: STILL NEEDED, IN GROUPS. Forty-one links in two columns was a wall. The values of chapter 9 are few
+ * and listed; the lines of chapter 10 are counted, with one link to the chapter; every one is still listed, one per line,
+ * behind "Show all".
+ */
+function neededGroups(v: P.PackView): Safe {
+  const s = v.sums;
+  const link = (n: (typeof s.needed)[number]): string => `${base(v.job.id)}?ch=${n.where === 'INPUT' ? '9' : '10'}${n.line_id === null ? '' : `&edit=${encodeURIComponent(n.line_id)}#l-${n.line_id}`}`;
+  const inputs = s.needed.filter((n) => n.where === 'INPUT');
+  const lines = s.needed.filter((n) => n.where !== 'INPUT');
+  return h`<h2>Still needed: ${String(s.needed.length)}</h2>
       <p class="help">There is no total until every value is in. We never fill a gap with a guess.</p>
-      <ul class="pk-needed">${s.needed.slice(0, 60).map((n) => h`<li><a href="${base(v.job.id)}?ch=${n.where === 'INPUT' ? '9' : '10'}${n.line_id === null ? '' : `&edit=${encodeURIComponent(n.line_id)}#l-${n.line_id}`}">${n.words}</a></li>`)}</ul>
-      ${s.needed.length > 60 ? h`<p class="help">… and ${String(s.needed.length - 60)} more.</p>` : raw('')}`}`;
+      <table class="pk-table pk-groups"><thead><tr><th>What is missing</th><th>How many</th><th></th></tr></thead><tbody>
+        ${inputs.length === 0 ? raw('') : h`<tr><td>Price, land and floor area<br><span class="help">${inputs.map((n) => n.words).join(' ')}</span></td><td>${lateBadge(String(inputs.length))}</td><td><a href="${base(v.job.id)}?ch=9">Go to chapter 9</a></td></tr>`}
+        ${lines.length === 0 ? raw('') : h`<tr><td>Rebuild cost and split, line by line<br><span class="help">How much, the rate, and for some the pool.</span></td><td>${lateBadge(String(lines.length))}</td><td><a href="${base(v.job.id)}?ch=10">Go to chapter 10</a></td></tr>`}
+      </tbody></table>
+      <details class="morelist"><summary>Show all ${String(s.needed.length)}, one per line</summary>
+        <ul class="pk-needed">${s.needed.slice(0, 60).map((n) => h`<li><a href="${link(n)}">${n.words}</a></li>`)}</ul>
+        ${s.needed.length > 60 ? h`<p class="help">… and ${String(s.needed.length - 60)} more.</p>` : raw('')}</details>`;
 }
 
 /* ------------------------------------------------------------ chapter 7 */

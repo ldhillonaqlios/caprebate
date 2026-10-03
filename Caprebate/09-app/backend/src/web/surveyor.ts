@@ -112,6 +112,13 @@ export type JobRow = {
   /** Rate fields the surveyor has recorded a figure for, out of the ten tracked. */
   readonly rates_recorded: number;
   readonly rates_total: number;
+  /** UI TIDY PHASE 10: the job's own claim — its number, its site and its stage — so two jobs for one client are told
+   *  apart. Null for a job on no claim. The site is the property's label; the surveyor's payload already carries it. */
+  readonly claim_id: string | null;
+  readonly claim_ref: string | null;
+  readonly property_label: string | null;
+  readonly property_postcode: string | null;
+  readonly claim_stage_key: string | null;
 };
 
 type JobDbRow = {
@@ -120,13 +127,16 @@ type JobDbRow = {
   name: string; sector: string; stage: string; surveyor_name: string | null;
   /** The CRM follow-on: the stage of the job's own claim, in the operating procedure's words. NULL for a job on no claim. */
   claim_id: string | null; claim_stage: string | null;
+  claim_ref: string | null; property_label: string | null; property_postcode: string | null;
 };
 
 const JOB_SELECT =
   'SELECT j.id, j.business_id, j.assessment_id, j.surveyor_id, j.state, j.committed_at, ' +
-  'j.created_at, b.name, b.sector, b.stage, u.display_name AS surveyor_name, j.claim_id, cl.stage AS claim_stage ' +
+  'j.created_at, b.name, b.sector, b.stage, u.display_name AS surveyor_name, j.claim_id, cl.stage AS claim_stage, ' +
+  'cl.claim_ref, p.label AS property_label, p.postcode AS property_postcode ' +
   'FROM surveyor_jobs j JOIN businesses b ON b.id = j.business_id ' +
-  'LEFT JOIN users u ON u.id = j.surveyor_id LEFT JOIN claims cl ON cl.id = j.claim_id ';
+  'LEFT JOIN users u ON u.id = j.surveyor_id LEFT JOIN claims cl ON cl.id = j.claim_id ' +
+  'LEFT JOIN properties p ON p.id = cl.property_id ';
 
 function objOf(r: JobDbRow): Extract<Obj, { type: 'surveyor_job' }> {
   return { type: 'surveyor_job', id: r.id, business_id: r.business_id, surveyor_id: r.surveyor_id };
@@ -154,6 +164,8 @@ function toRow(db: Db, r: JobDbRow): JobRow {
       : `${stageOf(r.stage)?.label ?? 'stage unknown'} — not yet on a claim`,
     rooms_counted: counted, rooms_total: total,
     rates_recorded: rates, rates_total: RATE_FIELDS.length,
+    claim_id: r.claim_id, claim_ref: r.claim_ref, property_label: r.property_label, property_postcode: r.property_postcode,
+    claim_stage_key: r.claim_stage,
   };
 }
 

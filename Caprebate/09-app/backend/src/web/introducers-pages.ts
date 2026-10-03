@@ -17,7 +17,9 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import { can, type Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { claimRef, dataLink, savedMessage } from './components.ts';
+import { breadcrumb, claimRef, dataLink, savedMessage } from './components.ts';
+import { kpiRow, lateBadge, nobodyBadge } from './look.ts';
+import { setSubMenu } from './navigation.ts';
 import * as I from './introducers.ts';
 import { vocabulary } from './vocabularies.ts';
 import { SECTORS } from './leads.ts';
@@ -87,7 +89,8 @@ export async function handleIntroducers(
   const done = url.searchParams.get('done') ?? undefined;
 
   if (path === '/staff/introducers' && method === 'GET') {
-    html(res, 200, listPage(d, actor, I.introducerList(db, actor, d.app.now()), done));
+    const open = url.searchParams.get('record') === 'referral' ? 'referral' : url.searchParams.get('add') === 'firm' ? 'firm' : null;
+    html(res, 200, listPage(d, actor, I.introducerList(db, actor, d.app.now()), done, open));
     return 'handled';
   }
   if (path === '/staff/introducers' && method === 'POST') {
@@ -160,7 +163,7 @@ export async function handleIntroducers(
   }
   const one = /^\/staff\/introducers\/([A-Za-z0-9-]+)$/.exec(path);
   if (one && method === 'GET') {
-    html(res, 200, firmPage(d, actor, I.introducerView(db, actor, one[1] ?? '', d.app.now()), done));
+    html(res, 200, firmPage(d, actor, I.introducerView(db, actor, one[1] ?? '', d.app.now()), done, url.searchParams.get('refer') === '1'));
     return 'handled';
   }
   if (one && method === 'POST') {
@@ -247,37 +250,87 @@ function clientFields(): Safe {
  * THE LIST
  * ------------------------------------------------------------------ */
 
-function listPage(d: IntroducerPageDeps, actor: Actor, rows: readonly I.IntroducerRow[], msg: string | undefined): string {
+/** UI TIDY PHASE 14: where the top's buttons open each form, folded until asked for. */
+export const RECORD_REFERRAL_HREF = '/staff/introducers?record=referral#record-referral';
+export const ADD_FIRM_HREF = '/staff/introducers?add=firm#add-firm';
+
+/** UI TIDY PHASE 14: the reward model in a word or two, grey while it is off. The full words are on its own page. */
+export function rewardBadge(model: string): Safe {
+  return model === 'OFF' ? h`<span class="badge b-nodate">Off</span>` : h`<span class="badge b-info">Model ${model.charAt(0)}</span>`;
+}
+
+/** UI TIDY PHASE 14: a reading's first part, "none recorded", where the list has no room for why; the firm's page keeps it all. */
+export function firstPart(label: string): string {
+  return label.split(' — ')[0] ?? label;
+}
+
+/** UI TIDY PHASE 14: what a firm sent us, in one cell: "2 leads, 1 claim opened, 0 won", then its reasoned negatives. */
+export function sentUs(p: { leads_referred: number; claims_opened: number; claims_won: number; reasoned_negatives: number }): Safe {
+  const many = (n: number, one: string, more: string): string => `${String(n)} ${n === 1 ? one : more}`;
+  return h`${many(p.leads_referred, 'lead', 'leads')}, ${many(p.claims_opened, 'claim', 'claims')} opened, ${String(p.claims_won)} won<br><span class="help">${many(p.reasoned_negatives, 'reasoned negative', 'reasoned negatives')}</span>`;
+}
+
+/** UI TIDY PHASE 14: the counts over the firms a login may read in full. */
+export function introducerCounts(rows: readonly I.IntroducerRow[]): { firms: number; leads: number; claims: number; won: number; late: number } {
+  const full = rows.filter((r) => r.pipeline !== undefined);
+  return {
+    firms: rows.length,
+    leads: full.reduce((n, r) => n + (r.pipeline?.leads_referred ?? 0), 0),
+    claims: full.reduce((n, r) => n + (r.pipeline?.claims_opened ?? 0), 0),
+    won: full.reduce((n, r) => n + (r.pipeline?.claims_won ?? 0), 0),
+    late: rows.filter((r) => r.details?.next_contact.overdue === true).length,
+  };
+}
+
+/**
+ * UI TIDY PHASE 14 — INTRODUCERS, 3 October 2026. The page opens with what it is, its two buttons (Record a referral,
+ * Add a firm) and the reward model as a label; boxes count the firms, what they sent and the firms whose next contact is
+ * late. The firms are one table — the contact's last and next in one cell, what the firm sent us in one, the fees
+ * invoiced and paid in one — that stacks on a phone; a firm with nobody on it says so in amber, and a late next contact is red. The two forms
+ * fold away until a button opens them, or a refusal sends one back with what was typed.
+ */
+function listPage(d: IntroducerPageDeps, actor: Actor, rows: readonly I.IntroducerRow[], msg: string | undefined, open: 'referral' | 'firm' | null): string {
   const mayWrite = can(actor, 'introducer.write', SECTION_OBJ);
   const mayReward = can(actor, 'introducer_reward.read', { type: 'introducer_reward', id: 'the-setting' });
   const firms = rows.map((r) => ({ id: r.id, name: r.firm_name }));
   const model = I.rewardSetting(d.app.db).model;
+  const n = introducerCounts(rows);
+  const full = rows.some((r) => r.details !== undefined);
+  const money = rows.some((r) => r.money !== undefined);
+  setSubMenu({ items: [
+    { href: '/staff/introducers#firms', label: 'The firms', ...(rows.length > 0 ? { note: String(rows.length) } : {}) },
+    ...(mayWrite ? [{ href: RECORD_REFERRAL_HREF, label: 'Record a referral' }, { href: ADD_FIRM_HREF, label: 'Add a firm' }] : []),
+    ...(mayReward ? [{ href: '/staff/introducer-rewards', label: 'The reward model' }] : []),
+  ] });
   return page({
     title: 'Introducers', nav: d.nav(actor), wide: true,
-    body: h`<h1>Introducers</h1>${saved(msg)}
-      <p class="help">A firm that refers clients to us — an accountancy practice above all. <strong>The people at a firm
-      are its contacts, and none of them has a login.</strong> Every figure here is worked out fresh from the leads, the
-      claims, the invoices and the tasks. None is stored. A value nobody knows is shown as
-      not known, never as £0.</p>
-      ${mayReward ? h`<p>The reward model: <strong>${I.REWARD_MODELS[model] ?? model}</strong> —
-        <a href="/staff/introducer-rewards">the reward model and any fees</a></p>` : raw('')}
-      ${rows.length === 0 ? h`<p class="help">No introducer is recorded.</p>` : h`<table>
-        <thead><tr><th>Firm</th><th>Kind</th><th>Owner</th><th>Last contact</th><th>Next contact</th><th>Leads referred</th>
-        <th>Claims opened</th><th>Won</th><th>Reasoned negatives</th><th>Fees invoiced</th><th>Fees paid</th></tr></thead>
-        <tbody>${rows.map((r) => h`<tr><td><a href="/staff/introducers/${r.id}">${r.firm_name}</a>${
-          r.details?.from_public_form === true ? h`<br><span class="help">from the public form — check it is the firm it says</span>` : raw('')}</td>
-          <td>${r.details === undefined ? raw('—') : h`${r.details.type}`}</td>
-          <td>${r.details === undefined ? raw('—') : orNot(r.details.owner, 'nobody yet')}</td>
-          <td>${r.details === undefined ? raw('—') : h`${r.details.last_contact}`}</td>
-          <td>${r.details === undefined ? raw('—') : r.details.next_contact.overdue ? h`<strong>${r.details.next_contact.label}</strong>` : h`${r.details.next_contact.label}`}</td>
-          <td>${r.pipeline === undefined ? raw('—') : h`${String(r.pipeline.leads_referred)}`}</td>
-          <td>${r.pipeline === undefined ? raw('—') : h`${String(r.pipeline.claims_opened)}`}</td>
-          <td>${r.pipeline === undefined ? raw('—') : h`${String(r.pipeline.claims_won)}`}</td>
-          <td>${r.pipeline === undefined ? raw('—') : h`${String(r.pipeline.reasoned_negatives)}`}</td>
-          <td>${r.money === undefined ? h`<span class="help">not shown to this role</span>` : h`${r.money.fees_invoiced}`}</td>
-          <td>${r.money === undefined ? h`<span class="help">not shown to this role</span>` : h`${r.money.fees_paid}`}</td></tr>`)}</tbody></table>`}
+    body: h`<div class="pagehead"><div><h1>Introducers</h1>
+        <p class="lede">Firms that refer clients to us — an accountancy practice above all.</p></div>
+        ${mayWrite ? h`<p><a class="btn" href="${ADD_FIRM_HREF}">Add a firm</a> <a class="btn btn-primary" href="${RECORD_REFERRAL_HREF}">Record a referral</a></p>` : raw('')}</div>${saved(msg)}
+      ${full ? kpiRow([
+        { label: 'Firms', value: String(n.firms), tone: 'total', href: '#firms' },
+        { label: 'Leads referred', value: String(n.leads), tone: 'win', href: '#firms' },
+        { label: 'Claims opened', value: String(n.claims), tone: 'survey', href: '#firms' },
+        { label: 'Claims won', value: String(n.won), tone: 'paid', href: '#firms' },
+        { label: 'Next contact late', value: String(n.late), tone: n.late > 0 ? 'late' : 'plain', href: '#firms' },
+      ]) : raw('')}
+      ${mayReward ? h`<p class="rewardline">The reward model: ${rewardBadge(model)} <a href="/staff/introducer-rewards">the reward model and any fees</a></p>` : raw('')}
+      <p class="help"><strong>The people at a firm are its contacts, and none of them has a login.</strong> Every figure here
+      is worked out fresh from the leads, the claims, the invoices and the tasks. None is stored. A value nobody knows is
+      shown as not known, never as £0.</p>
 
-      ${!mayWrite ? raw('') : h`<div class="pblock"><div class="pnum">Record a referral</div>
+      <h2 id="firms">The firms</h2>
+      ${rows.length === 0 ? h`<p class="empty">No introducer is recorded.${mayWrite ? h` <a href="${RECORD_REFERRAL_HREF}">Record a referral</a> — it adds the firm too — or <a href="${ADD_FIRM_HREF}">add a firm</a>.` : raw('')}</p>` : h`<div class="tablewrap"><table class="stack">
+        <thead><tr><th>Firm</th>${full ? h`<th>Owner</th><th>Contact</th><th>Sent us</th>` : raw('')}${money ? h`<th>Fees</th>` : raw('')}</tr></thead>
+        <tbody>${rows.map((r) => h`<tr><td><a href="/staff/introducers/${r.id}">${r.firm_name}</a>${r.details === undefined || r.details.type === 'not recorded' ? raw('') : h`<br><span class="help">${r.details.type}</span>`}${
+          r.details?.from_public_form === true ? h`<br><span class="badge b-nobody">from the public form — check it is the firm it says</span>` : raw('')}</td>
+          ${!full ? raw('') : r.details === undefined || r.pipeline === undefined ? h`<td colspan="3">—</td>` : h`
+          <td data-label="Owner">${r.details.owner === null ? nobodyBadge('Nobody yet') : h`${r.details.owner}`}</td>
+          <td data-label="Contact">Last: ${firstPart(r.details.last_contact)}<br>Next: ${r.details.next_contact.overdue ? lateBadge(r.details.next_contact.label) : h`${firstPart(r.details.next_contact.label)}`}</td>
+          <td data-label="Sent us">${sentUs(r.pipeline)}</td>`}
+          ${!money ? raw('') : h`<td data-label="Fees">${r.money === undefined ? h`<span class="help">not shown to this role</span>` : h`${r.money.fees_invoiced} invoiced<br>${r.money.fees_paid} paid`}</td>`}</tr>`)}</tbody></table></div>`}
+
+      ${!mayWrite ? raw('') : h`<details class="pblock recordlead" id="record-referral"${open === 'referral' ? raw(' open') : raw('')}><summary class="pnum">Record a referral</summary>
         <p class="help">This makes a lead, with the firm as its introducer. The lead holds the client business's name and
         sector, but no people. The person referring is saved as a contact at the firm. The client's own people are added
         later, at the assessment.</p>
@@ -289,15 +342,15 @@ function listPage(d: IntroducerPageDeps, actor: Actor, rows: readonly I.Introduc
           <label>Their email <input name="contact_email" type="email"></label>
           <label>Their telephone <input name="contact_phone"></label>
           ${clientFields()}
-          <button type="submit">Record the referral</button></form></div>
+          <button type="submit">Record the referral</button></form></details>
 
-        <div class="pblock"><div class="pnum">Add a firm</div>
+        <details class="pblock recordlead" id="add-firm"${open === 'firm' ? raw(' open') : raw('')}><summary class="pnum">Add a firm</summary>
         <form method="post" action="/staff/introducers">
           <label>The firm's name <input name="firm_name" required></label>
           <label>Its kind <select name="introducer_type">${options(vocabulary(d.app.db, 'INTRODUCER_TYPE'), null, 'not recorded')}</select></label>
           <label>Relationship started <input name="relationship_started_on" type="date"></label>
           <label>Notes <textarea name="notes"></textarea></label>
-          <button type="submit">Add the firm</button></form></div>`}`,
+          <button type="submit">Add the firm</button></form></details>`}`,
   });
 }
 
@@ -315,13 +368,32 @@ function feeTable(fees: readonly I.FeeView[]): Safe {
         ${f.may_record_settled ? h`<form method="post" action="/staff/introducer-fees/${f.id}/settled" class="inline"><button type="submit">Record it paid to the firm</button></form>` : raw('')}</td></tr>`)}</tbody></table>`;
 }
 
-function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg: string | undefined): string {
+function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg: string | undefined, refer = false): string {
   const e = v.edit;
   const contacts = v.contacts ?? [];
   const firmPeople = contacts.map((c) => ({ id: c.id, name: c.full_name }));
+  // UI TIDY PHASE 14: the firm's sections open out under Introducers in the left-hand menu.
+  setSubMenu({ title: v.firm_name, items: [
+    ...(v.details === undefined ? [] : [{ href: '#firm', label: 'The firm' }]),
+    { href: '#sent', label: 'What it has sent us' },
+    ...(v.referrals === undefined ? [] : [{ href: '#referrals', label: 'Referrals', ...(v.referrals.length > 0 ? { note: String(v.referrals.length) } : {}) }]),
+    ...(v.contacts === undefined ? [] : [{ href: '#people', label: 'The people at the firm', ...(contacts.length > 0 ? { note: String(contacts.length) } : {}) }]),
+    ...(v.contact_log === undefined ? [] : [{ href: '#contact', label: 'Contact with the firm' }]),
+    ...(v.fees === undefined ? [] : [{ href: '#fees', label: 'Fees to this firm' }]),
+    ...(e === undefined || v.details === undefined ? [] : [{ href: '#change', label: 'Change the firm' }]),
+  ] });
   return page({
     title: v.firm_name, nav: d.nav(actor), wide: true,
-    body: h`<h1>${v.firm_name}</h1>${saved(msg)}
+    body: h`${breadcrumb([{ label: 'Introducers', href: '/staff/introducers' }, { label: v.firm_name }])}
+      <div class="pagehead"><div><h1>${v.firm_name}</h1>
+        ${v.details === undefined ? raw('') : h`<p class="lede">${v.details.type.key === null ? raw('') : h`${v.details.type.label} · `}${v.details.owner === null ? nobodyBadge('Nobody yet') : h`Owned by ${v.details.owner.name}`} · Next contact: ${v.details.next_contact.overdue ? lateBadge(v.details.next_contact.label) : h`${firstPart(v.details.next_contact.label)}`}</p>`}</div>
+        ${v.referrals !== undefined && e !== undefined ? h`<p><a class="btn btn-primary" href="?refer=1#refer-here">Record a referral</a></p>` : raw('')}</div>${saved(msg)}
+      ${v.pipeline === undefined ? raw('') : kpiRow([
+        { label: 'Leads referred', value: String(v.pipeline.leads_referred), tone: 'win', href: '#referrals' },
+        { label: 'Claims opened', value: String(v.pipeline.claims_opened), tone: 'survey', href: '#referrals' },
+        { label: 'Claims won', value: String(v.pipeline.claims_won), tone: 'paid', href: '#referrals' },
+        { label: 'Reasoned negatives', value: String(v.pipeline.reasoned_negatives), tone: 'plain', href: '#sent' },
+      ])}
       <p class="help">A firm that refers clients to us. Nobody here has a login. The firm hears nothing about a client's claim
       unless that client has said yes to sharing progress.</p>
       ${v.merged_into === undefined || v.merged_into === null ? raw('') : h`<div class="gate"><strong>Merged</strong> onto <a href="/staff/introducers/${v.merged_into.id}">${v.merged_into.name}</a>
@@ -336,53 +408,49 @@ function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg:
           <label>Why these are the same firm <input name="reason" required maxlength="1000"></label>
           <button type="submit">Merge</button></form></div>`}
 
-      ${v.details === undefined ? raw('') : h`<div class="pblock"><div class="pnum">The firm</div><dl>
+      ${v.details === undefined ? raw('') : h`<div class="pblock" id="firm"><div class="pnum">The firm</div><dl>
         <dt>Kind</dt><dd>${v.details.type.label}</dd>
-        <dt>Relationship owner</dt><dd>${orNot(v.details.owner?.name, 'nobody yet')}</dd>
+        <dt>Relationship owner</dt><dd>${v.details.owner === null ? nobodyBadge('Nobody yet') : h`${v.details.owner.name}`}</dd>
         <dt>Relationship started</dt><dd>${orNot(v.details.relationship_started_on, 'not recorded')}</dd>
         <dt>Last contact</dt><dd>${v.details.last_contact.label}<br><span class="help">read from the contact logged below, never typed</span></dd>
-        <dt>Next contact</dt><dd>${v.details.next_contact.overdue ? h`<strong>${v.details.next_contact.label}</strong>` : h`${v.details.next_contact.label}`}</dd>
+        <dt>Next contact</dt><dd>${v.details.next_contact.overdue ? lateBadge(v.details.next_contact.label) : h`${v.details.next_contact.label}`}</dd>
         <dt>Notes</dt><dd>${orNot(v.details.notes, 'none')}</dd>
         ${v.details.from_public_form ? h`<dt>Recorded by</dt><dd>the public referral form — check it is the firm it says</dd>` : raw('')}
       </dl></div>`}
 
-      <div class="pblock"><div class="pnum">What the firm has sent us — worked out, never stored</div>
-        ${v.pipeline === undefined ? raw('') : h`<dl>
-          <dt>Leads referred</dt><dd>${String(v.pipeline.leads_referred)}</dd>
-          <dt>Claims opened</dt><dd>${String(v.pipeline.claims_opened)}</dd>
-          <dt>Claims won</dt><dd>${String(v.pipeline.claims_won)}</dd>
-          <dt>Reasoned negatives</dt><dd>${String(v.pipeline.reasoned_negatives)} <span class="help">— counted apart from the wins</span></dd></dl>`}
+      <div class="pblock" id="sent"><div class="pnum">What the firm has sent us — worked out, never stored</div>
+        ${v.pipeline === undefined ? raw('') : h`<p class="help">The boxes at the top count the leads it referred, the claims opened and won, and the
+          reasoned negatives — counted apart from the wins.</p>`}
         ${v.value === undefined ? raw('') : h`<p>Estimated claim value: <strong>${v.value.estimated_allowances}</strong>
           <br><span class="help">${String(v.value.claims_with_estimate)} with an estimate, ${String(v.value.claims_without_estimate)} without — ${v.value.basis}</span></p>`}
         ${v.money === undefined ? raw('') : h`<p>Fees invoiced: <strong>${v.money.fees_invoiced}</strong> · fees paid: <strong>${v.money.fees_paid}</strong>
           <br><span class="help">${String(v.money.invoices_counted)} invoices counted, ${String(v.money.invoices_without_a_fee)} with no fee recorded — ${v.money.basis}</span></p>`}
       </div>
 
-      ${v.referrals === undefined ? raw('') : h`<div class="pblock"><div class="pnum">Referrals</div>
+      ${v.referrals === undefined ? raw('') : h`<div class="pblock" id="referrals"><div class="pnum">Referrals</div>
         ${v.referrals.length === 0 ? h`<p class="help">No lead names this firm.</p>` : h`<table>
           <thead><tr><th>Client</th><th>Date</th><th>Lead status</th><th>Claim</th><th>Sharing progress</th></tr></thead>
           <tbody>${v.referrals.map((r) => h`<tr><td><a href="/staff/leads/${r.lead_id}">${r.organisation}</a></td><td>${r.lead_date}</td>
             <td>${r.status}</td><td>${r.claim === null ? h`<span class="help">—</span>` : h`<a href="/staff/claims/${r.claim.id}">Open the claim</a> · ${r.claim.stage} ${claimRef(r.claim.claim_ref)}`}</td>
             <td>${orNot(r.share, 'not shown to this role')}</td></tr>`)}</tbody></table>`}
-        ${e === undefined ? raw('') : h`<form method="post" action="/staff/introducers/${v.id}/referrals">
-          <p class="help">A referral from this firm.</p>
+        ${e === undefined ? raw('') : h`<details class="formfold" id="refer-here"${refer ? raw(' open') : raw('')}><summary>Record a referral from this firm</summary><form method="post" action="/staff/introducers/${v.id}/referrals">
           <label>The person referring <select name="contact_id">${people(firmPeople, null, 'somebody not listed — name them')}</select></label>
           <label>Or their name <input name="contact_name"></label>
           <label>Their email <input name="contact_email" type="email"></label>
           ${clientFields()}
-          <button type="submit">Record the referral</button></form>`}</div>`}
+          <button type="submit">Record the referral</button></form></details>`}</div>`}
 
-      ${v.contacts === undefined ? raw('') : h`<div class="pblock"><div class="pnum">The people at the firm</div>
+      ${v.contacts === undefined ? raw('') : h`<div class="pblock" id="people"><div class="pnum">The people at the firm</div>
         ${contacts.length === 0 ? h`<p class="help">Nobody at the firm is recorded.</p>` : h`<table>
           <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Telephone</th><th>Notes</th><th>Receives notices</th></tr></thead>
           <tbody>${contacts.map((c) => h`<tr><td>${c.full_name}</td><td>${orNot(c.job_title, '—')}</td><td>${orNot(c.email, '—')}</td>
             <td>${orNot(c.phone, '—')}</td><td>${orNot(c.notes, '—')}</td><td>${c.receives_notices ? 'yes' : ''}</td></tr>`)}</tbody></table>`}
-        ${e === undefined ? raw('') : h`<form method="post" action="/staff/introducers/${v.id}/contacts">
+        ${e === undefined ? raw('') : h`<details class="formfold"><summary>Add a person</summary><form method="post" action="/staff/introducers/${v.id}/contacts">
           <label>Name <input name="full_name" required></label><label>Role <input name="job_title"></label>
           <label>Email <input name="email" type="email"></label><label>Telephone <input name="phone"></label>
-          <label>Notes <input name="notes"></label><button type="submit">Add the person</button></form>`}</div>`}
+          <label>Notes <input name="notes"></label><button type="submit">Add the person</button></form></details>`}</div>`}
 
-      ${v.contact_log === undefined ? raw('') : h`<div class="pblock"><div class="pnum">Contact with the firm — tasks on the firm</div>
+      ${v.contact_log === undefined ? raw('') : h`<div class="pblock" id="contact"><div class="pnum">Contact with the firm — tasks on the firm</div>
         <p class="help">A call, an email or a meeting is a task, as it is on a client: logged as done, or planned with an owner
         and a date. The last contact and the next are read from these. A planned one is completed on its own task page.</p>
         ${v.contact_log.length === 0 ? h`<p class="help">Nothing is logged or planned.</p>` : h`<table>
@@ -390,29 +458,27 @@ function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg:
           <tbody>${v.contact_log.map((t) => h`<tr><td><a href="/staff/tasks/${t.task_id}">${t.what}</a></td>
             <td>${t.kind}${t.reciprocity ? h`<br><span class="help">reward model A</span>` : raw('')}</td>
             <td>${orNot(t.with, 'the firm')}</td><td>${orNot(t.owner, '—')}</td>
-            <td>${t.overdue ? h`<strong>${t.state}</strong>` : h`${t.state}`}</td><td>${orNot(t.note, '—')}</td></tr>`)}</tbody></table>`}
+            <td>${t.overdue ? lateBadge(t.state) : h`${t.state}`}</td><td>${orNot(t.note, '—')}</td></tr>`)}</tbody></table>`}
         ${e === undefined ? raw('') : h`
-          <form method="post" action="/staff/introducers/${v.id}/contact-log">
-            <p class="help">Log contact that has happened.</p>
+          <details class="formfold"><summary>Log contact that has happened</summary><form method="post" action="/staff/introducers/${v.id}/contact-log">
             <label>Kind <select name="kind">${options(e.kinds, null, 'choose')}</select></label>
             <label>What it was <input name="title" required maxlength="300"></label>
             <label>With <select name="contact_id">${people(firmPeople, null, 'the firm')}</select></label>
-            <label>Note <input name="note"></label><button type="submit">Log it</button></form>
-          <form method="post" action="/staff/introducers/${v.id}/next-contact">
-            <p class="help">Plan the next contact.</p>
+            <label>Note <input name="note"></label><button type="submit">Log it</button></form></details>
+          <details class="formfold"><summary>Plan the next contact</summary><form method="post" action="/staff/introducers/${v.id}/next-contact">
             <label>Kind <select name="kind">${options(e.kinds, null, 'choose')}</select></label>
             <label>What it is <input name="title" required maxlength="300"></label>
             <label>With <select name="contact_id">${people(firmPeople, null, 'the firm')}</select></label>
             <label>Owner <select name="owner_id">${people(e.owners, v.details?.owner?.id ?? null, 'choose')}</select></label>
             <label>Due <input name="due_on" type="date" required></label>
-            <label>Note <input name="note"></label><button type="submit">Plan it</button></form>
+            <label>Note <input name="note"></label><button type="submit">Plan it</button></form></details>
           <p class="help">The reward model is ${v.reward.model.label.toLowerCase()}. Model A must be on to log a CPD session,
           a joint one-pager or faster turnaround.</p>`}</div>`}
 
-      ${v.fees === undefined ? raw('') : h`<div class="pblock"><div class="pnum">Fees to this firm under reward model B</div>${feeTable(v.fees)}</div>`}
+      ${v.fees === undefined ? raw('') : h`<div class="pblock" id="fees"><div class="pnum">Fees to this firm under reward model B</div>${feeTable(v.fees)}</div>`}
 
-      ${e === undefined || v.details === undefined ? raw('') : h`<div class="pblock"><div class="pnum">Change the firm</div>
-        <form method="post" action="/staff/introducers/${v.id}">
+      ${e === undefined || v.details === undefined ? raw('') : h`<div class="pblock" id="change"><div class="pnum">Change the firm</div>
+        <details class="formfold"><summary>Change the firm's details</summary><form method="post" action="/staff/introducers/${v.id}">
           <label>Name <input name="firm_name" value="${v.firm_name}"></label>
           <label>Kind <select name="introducer_type">${options(e.types, v.details.type.key, 'not recorded')}</select></label>
           <label>Relationship owner <select name="owner_id">${people(e.owners, v.details.owner?.id ?? null, 'nobody yet')}</select></label>
@@ -420,7 +486,7 @@ function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg:
           <label>Who receives progress notices <select name="notice_contact_id">${people(
             firmPeople, contacts.find((c) => c.receives_notices)?.id ?? null, 'nobody — no notice can be sent')}</select></label>
           <label>Notes <textarea name="notes">${v.details.notes ?? ''}</textarea></label>
-          <button type="submit">Save</button></form></div>`}
+          <button type="submit">Save</button></form></details></div>`}
 
       ${dataLink(actor, `/staff/introducers/${v.id}/view.json`)}`,
   });

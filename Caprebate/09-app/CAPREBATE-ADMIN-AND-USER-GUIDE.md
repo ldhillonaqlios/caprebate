@@ -61,22 +61,25 @@ goes for the chartered tax adviser. Their sign-off is a record that Sales keeps.
 
 Each login has an easy layout of its own. **Nothing a role may see or do changed** — only where things sit.
 
-- **The header** is on every page. It has **Cap Rebate**, which takes you back to your home page. It has a **Search**
-  box. This is the same search as `B41`. It has **Help**. It has your **name**. Your name opens a small menu with
-  **Your account** and **Sign out**.
-- **The tabs under it are your role's, and only the screens you work in every day.** No two tabs do the same job.
-  Each role has a short row of tabs. **More** holds at most four entries. It is not shown when there is nothing to put
-  in it. **The Tasks tab shows how many open tasks you have** — the number turns red when one is overdue. **No
-  permission changed.** A screen that is not on your tabs still opens by its address. It also opens from a link on a
-  page that leads to it.
+- **The menu** runs down the left of every page. It is black, and the page you are on is green. At the top is
+  **Cap Rebate**, which takes you back to your home page. Then the **Search** box. This is the same search as `B41`.
+  At the foot is **Help**, and your **name**. Your name opens a small menu with **Your account** and **Sign out**.
+- **The menu lists your role's screens, in groups.** It shows only the screens you work in every day. Nothing is
+  hidden under **More** any more. **Tasks shows how many open tasks you have** — the number turns red when one is
+  late. **No permission changed.** A screen that is not on your menu still opens by its address. It also opens from a
+  link on a page that leads to it.
+- **On some pages the menu opens out.** In **Settings**, each setting is listed under it, and the one you are in is
+  green.
+- **On a phone** the menu folds away. Tap **Menu** at the top to open it. Tap it again to close it.
 
-  | Role | Tabs | More |
-  |---|---|---|
-  | Sales | Home, Leads, Clients, Pipeline, Tasks, Introducers | Calendar |
-  | Accounting | Home, Claims, Finance, Tasks | Introducer fees |
-  | Surveying | Home, Survey jobs, Tasks | — |
-  | Read only | Home, Leads, Clients, Pipeline | — |
-  | Admin | Home, Leads, Clients, Pipeline, Tasks, Finance, Settings | Calendar, Introducers, Survey jobs |
+  | Role | Menu |
+  |---|---|
+  | Sales | Home, Tasks · **Winning clients:** Leads, Pipeline, Introducers · **Clients and claims:** Clients, Calendar |
+  | Accounting | Home, Tasks · **Clients and claims:** Clients, Claims · **Money:** Finance, Introducer fees |
+  | Surveying | Home, Survey jobs, Tasks |
+  | Read only | Home · **Winning clients:** Leads, Pipeline · **Clients and claims:** Clients |
+  | Admin | Home, Tasks · **Winning clients:** Leads, Pipeline, Introducers |
+  | Admin, below | **Clients and claims:** Clients, Survey jobs, Calendar · **Money:** Finance · **Admin:** Settings |
 
   **Where the screens that left the tabs are now:**
 
@@ -113,7 +116,7 @@ Each login has an easy layout of its own. **Nothing a role may see or do changed
   sections down the left** instead. These are **Admin settings** (`B43`) and **Document types** (`B29`). Pick a section
   and only that one shows. Nothing moved off any of the five. Each section is in a tab or in the list. After you save
   something, the page opens on the tab or section you saved in.
-- **The pipeline** (`B21`) is a board: one column per stage, a card per claim. On a phone the columns stack.
+- **The pipeline** (`B21`) is one table of claims, in coloured groups of stages. **Show as a board** gives one column per stage.
 - **Claims** (`B17`, `B42`) show the **Filter, sort and save** panel beside the list. Click an underlined column
   heading to sort the list by it. **Leads** (`B19`) are cards in four sections. The same panel is behind its
   **Filter** button. The table is **List view**.
@@ -164,7 +167,7 @@ Each login has an easy layout of its own. **Nothing a role may see or do changed
     claim, the claim's details and the organisation. Then a contact, a property and a document request;
   - finance, introducers, the claim's facts, grants and past owners;
   - document types, automation rules, templates, admin settings;
-  - your own account settings, Create a user, and the survey job.
+  - your own account settings, Add a user, and the survey job.
 
   Some refusals are not about one field. For example, a stage is not ready yet, or an invoice was already sent. These
   still show at the top of the form. A screen reader reads each required field's name with it. This is because every
@@ -288,7 +291,7 @@ He asks: *"Do we need a compliance role separate from Admin?"*
 
 Address: /staff/users. The page heading is **Users and roles**. You reach it from Settings, under "Administration".
 
-**Adding a user.** Fill in "Create a user":
+**Adding a user.** Press **Add a user** at the top. The form opens. Fill it in:
 - "Username — an email address"
 - "Display name"
 - "Role"
@@ -303,9 +306,12 @@ other is **Reset second step**. A new temporary password signs them out and repl
 still work. Resetting the second step signs them out too. It also deletes their codes. They set it up again the next
 time they sign in, and get new codes. A person who lost their phone should try a recovery code first.
 
-**Changing a role.** Find "Change somebody's role". Choose the new role and press **Assign**. The page warns you:
-"Changing a role signs that person out at once. They sign in again with the new role." Your own account is not in that
-list.
+**Changing a role.** Find the person's row. Press **Change role**. Choose the new role from the list and press
+**Assign**. The page warns you: "Changing a role signs that person out at once. They sign in again with the new role."
+Your own row has no **Change role**. Nor does a login that is turned off.
+
+**What the page shows.** Four boxes count the staff, the client logins, the logins turned off, and the staff with no
+working hours. Each row shows the role as a label. It says **Active** in green or **Turned off** in red.
 
 **Turning a login off.** Press **Disable** on the person's row. They are signed out straight away, on every device. They
 do not wait until they next sign in. After that, when they try to sign in, they get the usual "those details did not
@@ -530,8 +536,8 @@ emails waiting to send. It is not sent yet."
 Nine rules come with the demo. Each has a **Change** link. To stop a rule, set "Active" to "no — retired". Rules are not
 deleted.
 
-**What no rule may do, and why.** The page lists these at the top: "What no rule may do. Each is refused, with the
-reason":
+**What no rule may do, and why.** Press **What no rule may do** near the top. It opens a list. Each one is refused,
+with the reason:
 - No rule can turn on free lookups. They start when our privacy notice is published.
 - No rule can turn on paid lookups. They need a signed engagement letter and a person to click.
 - No rule can record a signature. Only the client signs the engagement letter.
@@ -786,7 +792,7 @@ The registers:
 - "Customer due diligence is in force" (Off);
 - "The insurance position" (No policy in force).
 
-To record a new value, use **Record a new dated value**. It needs a
+To record a new value, press **Record a new dated value**. The form opens. It needs a
 value, a "Takes effect" date and "Where it comes from".
 
 ---
@@ -904,8 +910,8 @@ We do that on purpose. Staff land on their **Home** page. A client lands on thei
 
 Address: `/login`
 
-**The menu.** Each role has its own tabs along the top. The tabs show only the screens that role can open. See
-*The layout* near the start of this guide. What if you type the address of a screen that is not in your tabs? It
+**The menu.** Each role has its own menu down the left. It shows only the screens that role can open. See
+*The layout* near the start of this guide. What if you type the address of a screen that is not in your menu? It
 is still refused. You see **You cannot open this page**. That is the system working.
 
 **Every time on the screens is UK time**, and "today" always means today's date in the UK.
@@ -914,14 +920,13 @@ is still refused. You see **You cannot open this page**. That is the system work
 
 ### U1 · Sales — a working day
 
-**1. Start on the landing page.** After you sign in, you are on **Home** (Address: `/staff`). It has rows of tiles.
-A tile is red when it is late (see `B0`):
+**1. Start on the landing page.** After you sign in, you are on **Home** (Address: `/staff`). The top line says how
+many jobs are late. Under it are coloured boxes with the numbers. Your work is on the left. Late items are red (see `B0`):
+- **Do these first** — what is due today, or late. That means tasks, client questions and asks for documents.
 - **New leads** — leads nobody has contacted yet, oldest first. Contact a red one today.
-- **Existing leads — next actions** — each lead we are working on, and its next step. Its last tile is **Claims with no
+- **Existing leads — next actions** — each lead we are working on, and its next step. Its last line is **Claims with no
   next step**. It lists the claims with no owner or no next step. Give each one an owner, then its next action.
-- **Today and overdue** — what is due today, or late. That means tasks, client questions and asks for documents.
-- **Pipeline by stage** — how many claims sit at each stage. A tile opens that stage's claims. **Reports** is last.
-  On a phone these tiles are two to a row.
+- On the right, **Pipeline** shows five coloured bars, one for each group of stages. **Reports** is under them.
 - Your whole list is on the **Tasks** tab. It holds **My tasks**, your claims and who each one waits on. It also
   shows what you are waiting on from clients. Each task has **Start** and **Complete**.
 
@@ -944,7 +949,8 @@ instead: **Nobody owns this — take it**. A website enquiry nobody has answered
 lead** and **Close, nothing more needed**. **Filter** opens the filters and saved views. **List view** is the old
 table.
 
-*Recording a lead by hand.* Go to the foot of the list, under **Record a lead by hand**. Choose **An organisation
+*Recording a lead by hand.* Press **Record a lead** at the top. The form opens at the foot of the list, under
+**Record a lead by hand**. Choose **An organisation
 already recorded**. Or fill in **Or the organisation's name**. Then choose **Where it came from (required)**. Under
 **More options** you can set **Its sector** and the **Next action**. The next action becomes a task on the lead, and
 you own it. You can also set its **Due** date. Press **Record the lead**.
@@ -1054,6 +1060,12 @@ the claim's next action — it needs an owner and a due date**. A task with no d
 no due date. It never shows as on time. A task is never deleted. To stop one, open its own page. The box there is
 **Cancel it — a task is never deleted, so say why**. Give a reason, and press **Cancel the task**.
 
+**Calls, on the Calendar.** Open **Calendar** (Address: `/staff/calendar`). It shows one day. **Show the week** shows
+seven boxes, one a day. Use **Earlier**, **Today** and **Later** to move. Four boxes count the calls. One is the calls booked.
+One is the calls waiting for a time. One is the people who asked another way. One is the calls cancelled. A call with nobody on it says **Nobody
+yet**, in amber. A cancelled call says **Cancelled**, in red. Under **Asked for a call, no time yet**, press **Give it
+a time** on a row. **Cancelled calls** is folded. Press it to see them.
+
 **7. Documents, and asking a client for one.** Go to the claim's **Related** tab. Or use **Request a document**
 under **Quick actions**. The **Documents** panel lists the **Requests**. It also lists what is linked to the claim. To ask the
 client for a document:
@@ -1095,6 +1107,11 @@ that refer clients. None of their people ever has a login.
 - **Record a referral** takes the firm and the person who refers. It also takes the client business's name and basic
   facts. It makes a lead, with the firm as its introducer.
 - **Add a firm** adds a firm on its own.
+
+Both are buttons at the top. Each opens its form. Boxes count the firms, the leads they sent, the claims opened and
+won, and the firms whose next contact is late. Each firm is one row. A firm with no owner says **Nobody yet**, in
+amber. A late next contact is red. **Sent us** says what the firm sent. Open a firm to see more. Its parts are in the
+left-hand menu. Its forms are folded. Press one, such as **Add a person**, to open it.
 
 A referred lead has the section **The introducer, and sharing progress with it**. It asks: "Does the client want
 progress shared with the firm?" Read the client the words shown. Choose **Their answer** (Yes, No or Withdrawn). Then
@@ -1159,7 +1176,9 @@ record stays. "Only an accountant or adviser contact can join a claim's team". N
   an invoice when it arrives.
 - **Dashboard**: the money tiles only.
 - **Finance**.
-- **Claims**: the reference and the client. The value reads "not shown to this role".
+- **Claims**: the client and the reference. The value reads "not shown to this role". Columns Accounting may not read
+  are left out, and the page says so.
+- **Clients**: each client with a claim to invoice or an invoice. An overdue invoice shows as a red label.
 - A claim's page. It shows its **Documents** (the fee invoice and the signed letter only). It shows **Money** (the
   claim's own invoices). It has a timeline of "Financial events only". A claim at the invoice stage also shows **Our
   estimated fee**. That is the fee the finance view expects. It shows until our fee is raised.
@@ -1455,9 +1474,10 @@ and a developer can point at the same screen.
 
 ### Training — `B0` the landing page
 
-**Home is tiles.** Home is rows of tiles and nothing else. Each tile takes you to the thing itself in one click. No tile
-holds more than three lines. A red tile is late. The welcome card is on **Help**. Your full task list is on **Tasks**.
-The dashboard's figures are the **Reports** tile.
+**Home is your day at a glance.** The top line says how many jobs are late. Coloured boxes show the numbers. Each box
+opens what it counts. Your work is on the left, one line each. The pipeline and your week are on the right. A red
+line is late. The welcome card is on **Help**. Your full task list is on **Tasks**. The dashboard's figures are under
+**Reports**.
 
 **What it is for**
 The first page every staff member sees — **Home**. It answers "what do I do next", in the order Lakhbir set.
@@ -1468,10 +1488,10 @@ on the portal instead. Each role sees different rows. You see a row only if you 
 
 | Role | Rows, top to bottom |
 |---|---|
-| Sales, Read only | New leads; Existing leads — next actions; Today and overdue; Pipeline by stage |
-| Admin | the same four, then Users; Switches; Audit log; Refused sign-ins |
-| Accounting | Invoices due; Fees to invoice; VAT position; Reports; then Today and overdue |
-| Surveying | Waiting for your figures; All your survey jobs; Reports; then Today and overdue |
+| Sales, Read only | Left: Do these first; Today's activities; New leads; New messages; Existing leads — next actions. Right: Pipeline; Your calendar |
+| Admin | the same as Sales. The **Admin** choice under **Home shows** gives Users; Switches; Audit log; Refused sign-ins |
+| Accounting | Left: Do these first; Today's activities. Right: Money; Your calendar |
+| Surveying | Left: Do these first; Today's activities. Right: Survey jobs; Your calendar |
 
 Address: `/staff`
 
@@ -1484,11 +1504,11 @@ Address: `/staff`
 - **Existing leads — next actions** — one tile per lead we are working on. Each shows the company, its next step and
   when it is due. A tile is red when it is late, or when it has no next step. The last tile, **Claims with no next
   step**, opens that list in **Tasks**.
-- **Today and overdue** — what is due today or late. That means tasks, and the questions and document
+- **Do these first** — what is due today or late. That means tasks, and the questions and document
   requests you sent a client. A lead's or a claim's next step is a task. Late items come first, in red. Accounting and
   Surveying see their own tasks and their team's. Sales, Admin and Read only see every task they may read.
-- **Pipeline by stage** — one tile per stage, with its number of claims. A tile opens the list of those claims. The last
-  tile, **Reports**, opens the figures by month, quarter or year (`B40`).
+- **Pipeline** — five coloured bars, one for each group of stages, each with its number of claims. A bar opens the
+  **Pipeline**. Under them, **Reports** opens the figures by month, quarter or year (`B40`).
 - **Admin** — **Users**, **Switches**, **Audit log** and **Refused sign-ins**. The **Audit log** tile reads "Checked —
   nothing changed". Or it reads, in red, "Problem found — tell Lakhbir". **Refused sign-ins** come from the latest
   entries of the log.
@@ -1497,7 +1517,7 @@ A row with nothing in it says so in one line, such as "No new leads." That way y
 
 **How to do the common job**
 1. Sign in. You arrive on **Home**.
-2. Start at the top: open each red tile first.
+2. Start at the top of **Do these first**: open each red line first.
 3. Press a tile to open the lead, task, client or list behind it, and do the job there.
 4. Press **Claims with no next step** to give each claim an owner and a next step.
 5. For your whole task list, press the **Tasks** tab. Its number turns red when one of yours is late.
@@ -1514,12 +1534,12 @@ A row with nothing in it says so in one line, such as "No new leads." That way y
 *Observed on a freshly started demo, 21 September 2026.* Sign in as Sales. **New leads** reads "No new leads." The demo
 has none until you record one. Now look at **Existing leads — next actions**. It shows a tile for Gorsebrook Invented Care Homes
 Limited. The tile reads "Next: Confirm who owns the building, and that we…". A long step is cut at a whole word, so open the tile to read
-it all. The tile then says "Due in 3 days (24 Sep 2026)". After it comes **Claims with no next step**. **Today and
-overdue** starts with a red tile for Aldergate Care Group Limited. It says "Call to talk through the range they were
-shown". It is "20 days overdue (1 Sep 2026)". **Pipeline by stage** reads Enquiry 2 claims, Survey 3 claims, Invoice 1
-claim. Press **Survey**, and the claims list shows the three at that stage. Now record a lead on **Leads**. Go back to
+it all. The tile then says "Due in 3 days (24 Sep 2026)". After it comes **Claims with no next step**. **Do these
+first** starts with a red line for Aldergate Care Group Limited. It says "Call to talk through the range they were
+shown". It is "20 days overdue (1 Sep 2026)". In **Pipeline**, the first bar reads 4. The third reads 3.
+Press a bar, and the **Pipeline** opens. Now record a lead on **Leads**. Go back to
 **Home**. The lead is under **New leads**, "Came in today", and the number reads 1. Sign in as Accounting. **Invoices
-due** is red. It says "£13,000 not yet paid" and "£13,000 late (2 invoices)". **Today and overdue** reads "Nothing is
+due** is red. It says "£13,000 not yet paid" and "£13,000 late (2 invoices)". **Do these first** reads "Nothing is
 due today, and nothing is late."
 
 **Check yourself**
@@ -1606,8 +1626,12 @@ to rely on the colour alone. Beside the heading is a label saying where the box 
 **One Clients list.** "Engaged clients" and "Organisations" used to be two lists of the same companies. Each opened the
 same page. They are now one list, **Clients** (`/staff/clients`). It is a tab for Sales, Admin and Read only. Each row
 starts with the **company's name**. Its legal name and sector are in small text under it. Then come **Waiting on**,
-**Status**, **Owner** and **Claims**. **Waiting on us first** puts the companies waiting on us at the top. **A to Z**
-sorts by name. The old address `/staff/organisations` brings you here.
+**Status**, **Owner** and **Claims**. The status has a colour. **Active** is green, and **Do not contact** is red.
+**Claims** lists each claim by its site and number, with its stage in colour. So two claims of one company are easy to
+tell apart. At the top, the boxes count who is waiting on us, who is waiting on the client, and who asked not to be
+contacted. Press a box to see just those. **Find a client** searches by company, site or claim number. **Waiting on us
+first** puts the companies waiting on us at the top. **A to Z** sorts by name. The old address `/staff/organisations`
+brings you here.
 - **Read only** can open the list. It shows company, status, owner and claims. **Waiting on** is not shown. It is built
   from the research and the questions, and Read only may not read those.
 - The old list had more columns. They are now on the company's page, in the highlights and the **Waiting on** card on
@@ -1632,6 +1656,18 @@ sorts by name. The old address `/staff/organisations` brings you here.
 - **A note or a question can say which claim it is about.** Choose it under **About which claim?**, or leave
   "The company in general".
 
+**The top of a client's page.** First comes the client's name, with coloured labels for its status, owner and who it
+waits on. The buttons are beside it. Then each claim has a box of its own. The box is headed by its stage, in colour,
+such as "Claim 1 of 2 · Survey". It shows the site, the claim number and the next step, in a dark box. A late step has
+a red label. **Open the claim** opens it. The menu on the left opens out too. It shows the client's name, **Overview**,
+each claim by its site and stage, and the parts of the page.
+
+**Every part, one line each.** Under the claims, each part of the page has one line. **Communication** is the first part.
+**Activity** is the last. Each line says where that part
+stands, what is going on, and how many things it holds. Press a line to open that part. You can also press the part in
+the menu on the left. **Every part of this client** takes you back to the lines. After you save something, the page
+opens on the part you saved in.
+
 **Who can open it now:** Admin and Sales see all of it. The view-only login sees the company's record. That is Timeline,
 Contacts, Properties, Documents and Details. It does not see the research or the notes. Accounting and Surveying are
 refused.
@@ -1639,7 +1675,7 @@ refused.
 **Try it on the demo** (as sales@example.invalid, on a freshly started demo, 18 September 2026)
 - Open **Clients** and choose **Elverton Private Hospital Limited**. *Observed:* the address becomes
   `/staff/clients/…`. The highlights read Claims 3, Status Active and Owner nobody yet. They also read Waiting on Us and
-  Engagement letter signed. Three tiles read **main site** (Survey, CR-2026-0005) and **main site** (Enquiry,
+  Engagement letter signed. Three boxes read **main site** (Survey, CR-2026-0005) and **main site** (Enquiry,
   CR-2026-0007). The third is **outpatient annexe** (Enquiry, CR-2026-0008). The tabs read Still missing 16 and
   Research 12.
 - Press **outpatient annexe**. *Observed:* "Elverton Private Hospital Limited › outpatient annexe". That line is at the top. The
@@ -1700,7 +1736,7 @@ Each shows only when that control is on the page for you. **Waiting on** is one 
 
 **Try it on the demo** (as sales@example.invalid, on a freshly started demo)
 - On 17 September 2026, **Engaged clients** read "6 in the pipeline. 5 waiting on us, 0 waiting on the client, 1 on
-  neither." The one **Clients** list now reads "6 companies. 5 waiting on us, 0 waiting on the client."
+  neither." The one **Clients** list now says 6 companies. Its boxes say 5 wait on us. None wait on the client.
 - Open **Corvale Supported Living Limited**. *Observed:* the highlights read Sector "supported living" and Waiting on
   "Us". They read Engagement letter "signed", Research "not run" and Still missing "16 facts". The tabs read Sources 12,
   Still missing 16, Tasks 0, Notes 0. The quick actions are Run the research, Ask for a missing fact and Add a note.
@@ -1728,6 +1764,18 @@ A surveyor's own jobs. Each job has the six steps of a desktop survey. They are 
 the room counts, the rates and the evidence. Then come **your own figures**, and the record. **Our estimate is withheld
 until you commit your figures.** The screen says "It is not hidden on screen — we do not send it to you at all". You get
 it straight away when you commit.
+
+**Which job is which.** One client can have more than one job, one for each claim. So each job in the list shows the
+client, then the site in bold, then the claim number in grey. The job's page says the same at the top, under the
+client's name. If the client has another job, a yellow line says so, with a link to it. Under **The property**, this
+job's own site comes first, marked **This job**. The menu on the left opens out to the job. It lists the job's parts,
+the **Survey pack**, and the client's other job.
+
+**The survey pack says which job it is.** A dark band at the top names the client and the site. Under it are the claim
+number and the postcode. If the client has two jobs, it says which one this is. A button switches to the other pack,
+at the same chapter. In the **Summary**, **Still needed** has two lines. One is for chapter 9. One is for chapter 10.
+Each says how many. **Show all** lists every one. A video's length
+reads like "32 s" or "2 min 12 s".
 
 **Who can open it**
 Surveying, Admin and Sales. A surveyor sees only jobs assigned to them, and is refused anyone else's. Only the assigned
@@ -1789,9 +1837,13 @@ use an action. The finance settings form is Admin's alone.
 Address: `/staff/finance` · one invoice: `/staff/finance/{invoice}`
 
 **How to do the common job**
-**Where things are.** The page opens with the totals in a highlights strip. It has six tabs. **Money** is section 1 and
-**VAT** is 2. **Invoices** holds 3 and 4. **Fee controls and firms** holds 5 and 7. **Settings** is 6, and **Earlier
-invoices** is 8. The numbered headings stay the same. Three cards on your home page open this page. **Fees waiting to be
+**Where things are.** Four boxes count the money. They are **Invoiced**, **Received**, **Still owed** and **Late**.
+The Late box is red when an invoice is late. It says how many. Under the boxes, a yellow line names each claim ready to
+invoice. It has a **Raise our fee** button. The page has six parts. **Invoices** opens first and holds 3 and 4.
+**Money** is section 1 and **VAT** is 2. **Fee controls and firms** holds 5 and 7. **Finance settings** is 6, and
+**Earlier invoices** is 8. On a laptop the six parts are in the left-hand menu, under Finance. Invoices and Earlier
+invoices show how many each holds. On a phone they are tabs. Each claim number sits under its company. A late invoice
+has a red label. One with no due date has a grey one. The numbered headings stay the same. Three cards on your home page open this page. **Fees waiting to be
 invoiced** opens section 3. **Invoices due and overdue** opens section 4. **The VAT position** opens section 2.
 
 1. **Raise our fee.** On the **Invoices** tab, find **3 · Claims at the invoice stage with no invoice raised**. Press **Raise our fee** on the claim's row. There is no amount to type. The fee comes from the tax adviser's signed-off figure. The invoice takes the next number in the series.
@@ -1843,10 +1895,10 @@ Address: /staff/users (the **Settings** tab → **Users**; or **Your account** �
 
 **How to do the common job**
 1. Open the **Settings** tab, then the **Users** tile.
-2. Under "Create a user", fill in "Username — an email address" and "Display name". Choose a "Role". For someone who should only look, pick **READ_ONLY**. They can read the work and change nothing. They never see a value, money, a register or the audit log.
+2. Press **Add a user**. Fill in "Username — an email address" and "Display name". Choose a "Role". For someone who should only look, pick **READ_ONLY**. They can read the work and change nothing. They never see a value, money, a register or the audit log.
 3. Leave "Business — for a CLIENT account only" empty unless the account is a client's.
 4. Press **Create**. The next page shows a **temporary password**, once. Hand it over yourself; nothing is emailed. It works for 7 days.
-5. To change a role, go to "Change somebody's role" and find the person. Choose the role and press **Assign**. All their sessions end at once.
+5. To change a role, find the person's row and press **Change role**. Choose the role and press **Assign**. All their sessions end at once.
 6. To switch someone off, press **Disable** on their row. Their sessions end at once. There is no button to switch them back on.
 
 **What it will refuse, and why**
@@ -2030,13 +2082,12 @@ Aldergate Care Group Limited. **Elverton Private Hospital Limited** has three ro
 heading to sort by it: Reference, Next action or Value. A claim's page opens with its highlights. These are the stage, owner, property,
 priority, value (for a role that may read it) and client. Next comes the **stage bar**. It shows the ten stages and
 Closed, with the current one filled in. Under it you see **Moving on from …: Ready** or **Not ready yet**. It also shows
-the first thing still needed. Then come three tabs:
-- **Details**: the claim, the team, the estimated fee and the overview. It also has **The pipeline** panel, with
-  **Move the claim**. Then come the facts, the four figures, the value and **Change the claim**.
-- **Related**: documents and requests, money and contacts. It also has deliverables and aftercare. Each part shows a
-  count.
-- **Activity**: **Next action and tasks**, the timeline, and the internal notes. It also has **Email**. That opens the
-  company's Email page with this claim chosen.
+the first thing still needed. Then come the claim's boxes, one under another. The first is **Stage and next move**.
+Others hold the facts, the checks, the figures and the property. More hold the team, documents and money. The last
+holds messages and activity. Only **Stage and next move** opens by itself. Each other box shows one line, with its heading and how it
+stands, such as **Working on it** or **Done**. Press a box to open it. A box you just changed opens. So does one you
+chose to **keep this open for me**. On a laptop, the left-hand menu lists the boxes under the claim. A box that needs
+work says **to do**. One waiting for the client says **waiting**. The stage shows in its colour at the top.
 
 On the right are **Next action** and **Quick actions**. The quick actions are:
 - **Log a call or add a task**
@@ -2127,8 +2178,10 @@ the team shows only **Owner** and **Surveyor**.
 Each box starts with **Working on**, **We need** and **Coming from**. Each box remembers if you keep it open.
 
 
-**The leads page.** Leads are shown as cards, in four sections, so a new one cannot get lost. The page is not one long
-table. Each section shows its count:
+**The leads page.** The top line gives the count in each section. Four boxes show the same counts. Press a box to go to
+its section. Under them is one row of switches. Pick **All leads** or **Filled assessments**. Pick **Cards** or
+**List view**. **Website enquiries** and **Filter** are on the same row. **Record a lead** is the button at the top right. Leads are shown as
+cards, in four sections, so a new one cannot get lost. Each section shows its count:
 
 | Section | Holds | Shown |
 |---|---|---|
@@ -2175,7 +2228,7 @@ surveyor is not shown **All leads**. *Observed on a freshly started demo, 21 Sep
 assessments** reads "6 submitted, newest first."
 
 **Where things are on the page.** The leads list has **Filter, sort and save** beside it. The underlined headings
-(Date, Next action, Range shown) sort it. **Record a lead by hand**, at the top, jumps to the form. A lead's page opens
+(Date, Next action, Range shown) sort it. **Record a lead**, at the top, opens the form. A lead's page opens
 with its highlights. These are the status, owner, source, next action and lead date. Once the lead is converted, the
 claim is there too. Then come three parts:
 - **Details**: the lead, the enquiry checks, **Change the lead** and **Convert**.
@@ -2238,11 +2291,15 @@ It is refused. Record ownership and claim conflict as Yes. Now every check is a 
 
 ### Training — `B21` the pipeline board
 
-**Where things are on the page.** The board is a row of columns, one for each stage. Each column shows its name and
-count at the top. A stage's owner and what it needs are under **Owner and what this step needs**. Each claim is a card.
-It shows the reference, client, property and owner. It also shows the days since its last move and the next action. It
-has the **Move to …** button. **On hold** and the claims that have stopped (**Stopped — the record is kept**) are in a
-second row below. On a phone, the columns stack into a list.
+**Where things are on the page.** At the top are four boxes: claims in progress, next steps that are late, claims
+nobody owns, and claims on hold. A red or brown box is a link to just those claims. Under them a coloured bar shows
+where the claims are. Then comes one table of every claim. It has five groups. Each group has its own colour. The
+first is **Winning it**. The last is **Getting paid**. Each row shows the business, then the site and
+the claim number. It shows the stage, the next step and when it is due. A late step is red. It shows the owner, or
+**Nobody yet**. Under the next step is the **Move to …** button. Claims on hold, and claims that have stopped, are at
+the end. Use **Find a claim** to search by business, site or claim number. Use **All**, **Late**, **Mine** or
+**Nobody owns it** to narrow the list. **Show as a board** opens the old board of columns. There, a stage's owner and
+what it needs are under **Owner and what this step needs**. On a phone, each row is a card.
 
 **What it is for**
 It shows every claim on the ten steps, one column each. Below is a lane for claims on hold and the claims that have
@@ -2257,9 +2314,9 @@ board or make any move.
 Address: `/staff/pipeline` · a move: sent from a card or the claim page
 
 **How to do the common job**
-1. Open **Pipeline** and find the card.
-2. Read the column's **What this step needs:** line.
-3. Press the card's **Move to …** button. It asks for exactly the next stage.
+1. Open **Pipeline** and find the claim's row. **Find a claim** helps.
+2. To see what the step needs, open the claim, or use **Show as a board** and read the column's **What this step needs:** line.
+3. Press the row's **Move to …** button. It asks for exactly the next stage.
 4. If the move is refused, open the claim. Its pipeline panel lists each need with ✗ or ✓ and the reason.
 5. To exit or hold, use the claim page. To exit, use **Close the claim here**, with **Exit to** and **Reason**. The record is kept. To hold, use **Put on hold**, with **Hold reason**.
 
@@ -2290,6 +2347,10 @@ is sent but not signed. Press **Move to Engagement** on CR-2026-0001, and it mov
 The **Tasks** tab shows how many open tasks you have. It turns red when one is overdue. The page opens with three
 views: **My tasks**, **Every open task** and **Claims with no next step**. The last one used to be the **Next actions**
 list (`B24`). You see each view only if your role may open it.
+
+At the top, four boxes count your tasks. **Late** is red. **Due today** and **No due date** come next.
+**Claims with no next step** opens that list. In the table, a late task has a red label, with its date under it. Under
+the table, the longer lists are folded. Each says how many it holds. Press one to open it.
 
 **What it is for**
 Tasks are the jobs colleagues do. Each task has an owner, or a team it waits with. It has a due date or none. It has an
@@ -2468,7 +2529,7 @@ Address: /staff/templates
 **Who can open it.** Admin and Sales can read it. Only Admin saves a template. Accounting, Surveying and clients cannot open it.
 
 **How to do the common job**
-1. Open **Add a template**. Fill in "Label", "Subject" and "Body".
+1. Press **Add a template**. The form opens. Fill in "Label", "Subject" and "Body".
 2. Use only the six merge fields. Spell them exactly like this: `{{contact_name}}` `{{organisation}}` `{{property_address}}` `{{claim_reference}}` `{{next_action}}` `{{due_date}}`.
 3. Set "Active" and press **Save the template**.
 4. To use a template, open the client and press **Email**. Open **Start from a template**. Choose it and press **Use this template**.
@@ -2698,7 +2759,7 @@ Address: /staff/introducers/… (the duplicate firm's own page)
 ### Training — `B32` the reward model and fees
 
 **Now called Introducer fees.** Admin opens it from the **Settings** tab, with the **Introducer fees** tile. Accounting
-opens it from **More** → **Introducer fees**. Sales uses the link on **Introducers**.
+opens it from **Introducer fees** in the menu, under **Money**. Sales uses the link on **Introducers**.
 
 Address: /staff/introducer-rewards
 
@@ -2748,7 +2809,8 @@ The links along the top are:
 **Who can open it.** Admin only. Sales was refused "not authorised". Remember the banner. One Admin login types both names, so the system does **not** check that two people did it.
 
 **How to do the common job** (record a dated setting)
-1. On the landing page, under "Settings — dated, and sourced", choose "Setting" and "Value".
+1. On the landing page, under "Settings — dated, and sourced", press **Record a new dated value**. The form opens.
+   Choose "Setting" and "Value".
 2. Fill in "Takes effect". Then fill in "Where it comes from — a written answer, a policy schedule".
 3. Press **Record a new dated value**. The old value stays on the record. The new one applies from its date.
 
@@ -3492,17 +3554,17 @@ ever open their own company's claims. Any other address answers "We cannot find 
 client@example.invalid. **Your claims** shows one tile, **main site**. To see a company with three, sign in as admin.
 Open `/portal?business={Elverton's id}`.
 
-**Where things are on the page.** The portal opens with the business's name and two buttons, **Book a call** and **Who
-to contact**. Then come these, in order:
+**Where things are on the page.** The portal opens with the business's name and three buttons. They are **Send us a
+message**, **Book a call** and **Send us a document**. Then come these, in order:
 - the **Welcome to Cap Rebate** card, until the client hides it;
-- **How to contact us**;
-- the **stage bar** of the six steps for clients, from **1 Your estimate** to **6 Aftercare** (now switched on);
-- **The range you were shown**, with its basis under it;
-- **What we need from you**. This lists each open question and each document we asked for, linked to its form.
+- **Where your claim is**, the six steps from **1 Your estimate** to **6 Aftercare**;
+- **What we need from you**. This lists each open question and each document we asked for, linked to its form. If
+  there is nothing, it says so;
+- **What we are working on**, **Your next call** and **New for you**.
 
-Below that are the questions and the documents asked for. Then comes **What happens at each step**, behind **Show each
-step**. Then every other section. **Help** at the top opens this section. (Before, **How to contact us** was at the
-foot. The card was headed **What we are waiting for from you**.)
+Below them are the client's claims, what we have done, and the range. The questions and the documents asked for come
+next, but only when there is one. Then come the other parts. **How to contact us** is near the end. On a laptop, the
+left-hand menu lists the parts under **Your claims**. Press one to go to it. **Help** at the top opens this section.
 
 **What it is for**
 The client's claim page gained three things.

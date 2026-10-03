@@ -62,7 +62,8 @@ async function req(who: Who, path: string, init: RequestInit = {}) {
 }
 const post = (who: Who, path: string, form: Record<string, string>) => req(who, path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(form).toString() });
 const section = (body: string, id: string): string => new RegExp(`<section class="dash-card" id="${id}"[\\s\\S]*?</section>`).exec(body)?.[0] ?? '';
-const stat = (body: string, label: string): string => new RegExp(`<span class="dash-num">([^<]+)</span><span class="dash-label">${label}</span>`).exec(body)?.[1] ?? 'missing';
+// UI tidy phase 4: the figures at a glance are solid boxes (src/web/look.ts kpiRow), label then figure.
+const stat = (body: string, label: string): string => new RegExp(`<span class="kpi-label">${label}</span><span class="kpi-value">([^<]+)</span>`).exec(body)?.[1] ?? 'missing';
 
 describe('Home as a dashboard', () => {
   before(async () => { for (const who of Object.keys(ROLES) as Who[]) await post(who, '/login', { email: `dh.${who}@example.invalid`, password: PASSWORD }); });
@@ -88,8 +89,8 @@ describe('Home as a dashboard', () => {
 
   test('Sales: the figures at a glance, the new lead with where it came from, and today’s calls and first emails — each with its button', async () => {
     const page = (await req('sales', '/staff')).body;
-    assert.equal(stat(page, 'new lead'), '1');
-    assert.equal(stat(page, 'calls today'), '2');
+    assert.equal(stat(page, 'New lead'), '1');
+    assert.equal(stat(page, 'Calls today'), '2');
     assert.match(page, /First Email Dental Limited[\s\S]*?From Website/);
     const today = section(page, 'today-activities');
     // The Zoom call: its button opens the host's call inside the site.
@@ -149,7 +150,7 @@ describe('Home as a dashboard', () => {
   test('a new message from a client is counted at a glance and listed, with a button to read and reply', async () => {
     made.app.db.run("INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, 'b-dh-1', NULL, 'FROM_CLIENT', 'EMAIL', NULL, 'c-dh-1', 'Can we move the call?', ?)", [randomUUID(), T]);
     const page = (await req('sales', '/staff')).body;
-    assert.equal(stat(page, 'new message'), '1');
+    assert.equal(stat(page, 'New message'), '1');
     assert.match(section(page, 'new-messages'), /<a href="\/staff\/clients\/b-dh-1\?chat=all#chat">Dashboard Dental Limited<\/a> <span class="newdot"[^>]*>1<\/span>\s*<a class="btn act-cta" href="\/staff\/clients\/b-dh-1\?chat=all#chat">Read and reply<\/a>/);
   });
 
@@ -168,7 +169,7 @@ describe('Admin’s tab: people and API keys', () => {
     const people = section(page, 'people');
     assert.match(people, /<td data-label="Who">Dash surveying<\/td>[\s\S]*?action="\/staff\/users\/u-dh-surveying\/temporary-password"[\s\S]*?action="\/staff\/users\/u-dh-surveying\/disable"/);
     assert.doesNotMatch(people, /\/staff\/users\/u-dh-admin\/disable/, 'Admin was offered to archive themself');
-    assert.match(people, /<a class="cta" href="\/staff\/users#create-user">Add a person<\/a>/);
+    assert.match(people, /<a class="cta" href="\/staff\/users\?add=1#create-user">Add a person<\/a>/); // UI tidy phase 15: the form opens
     assert.match((await req('surveying', '/staff')).body, /Survey jobs|row-jobs/);
     const r = await post('admin', '/staff/users/u-dh-surveying/disable', { back: '/staff?view=admin' });
     assert.equal(r.location, '/staff?view=admin&done=archived#people');

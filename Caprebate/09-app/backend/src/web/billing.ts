@@ -158,6 +158,7 @@ export function recordChase(
  * THE SCREENS
  * ================================================================== */
 
+/** UI TIDY PHASE 17 (3 October 2026): a client with an invoice overdue shows it as a red label, as every other list does. */
 function listPage(nav: Safe, rows: ReturnType<typeof billingClients>): string {
   return page({
     title: 'Clients', nav, wide: true,
@@ -167,7 +168,7 @@ function listPage(nav: Safe, rows: ReturnType<typeof billingClients>): string {
       ${rows.length === 0 ? h`<p class="help">No client has anything to invoice yet.</p>` : h`<table><thead><tr><th>Client</th><th>Waiting for an invoice</th>
         <th>Invoices still owed</th><th>Owed</th><th>Overdue</th><th>Last chased</th></tr></thead><tbody>
         ${rows.map((r) => h`<tr><td><a href="/staff/clients/${r.id}">${r.name}</a></td><td>${r.to_invoice}</td><td>${r.open}</td><td>${r.outstanding}</td>
-          <td>${r.overdue === 0 ? 'none' : h`<strong>${r.overdue}</strong>`}</td><td>${r.last_chased ?? 'not yet'}</td></tr>`)}</tbody></table>`}`,
+          <td>${r.overdue === 0 ? 'none' : h`<span class="badge b-late">${r.overdue} late</span>`}</td><td>${r.last_chased ?? 'not yet'}</td></tr>`)}</tbody></table>`}`,
   });
 }
 

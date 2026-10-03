@@ -10,6 +10,7 @@
 
 import { h, raw, page, type Safe } from './html.ts';
 import { localWhen } from './localtime.ts';
+import { kpiRow } from './look.ts';
 import type { AmlView, CheckView } from './compliance-aml.ts';
 import { AUTHORITY_BASES, BENEFICIAL_OWNERSHIP, CLAIMANT_TYPES, ENTITY_STATUSES, OFFICES, OWNER_SOURCES, PSC_DECISIONS, SANCTIONS_RESULTS } from './compliance-aml.ts';
 import type { ComplaintCount, ComplaintView, RegisterLine, RequestView, SearchResult } from './compliance-rights.ts';
@@ -94,25 +95,34 @@ function holdsAndLinks(kind: string, id: string, holds: readonly HoldRow[], link
 
 /* ------------------------------------------------------------------ the landing page */
 
+/**
+ * UI TIDY PHASE 15 (3 October 2026): the landing page opens with what it is and three boxes, one a register, each a link;
+ * a breach on the register makes its box red. The form for a new dated value folds until asked for (or a refusal).
+ */
 export function landingPage(nav: Nav, aml: AmlView, settings: readonly SettingReading[], counts: { rights: number; complaints: number; breaches: number }, count: ComplaintCount, msg?: string): string {
   return page({
     title: 'Compliance', nav, wide: true,
-    body: h`<h1>Compliance</h1>${subnav()}${done(msg)}${limitation()}
+    body: h`<div class="pagehead"><div><h1>Compliance</h1>
+        <p class="lede">Identity checks, data requests and anything that went wrong.</p></div></div>${subnav()}${done(msg)}${limitation()}
+      ${kpiRow([
+        { label: 'Rights requests', value: String(counts.rights), tone: 'plain', href: '/staff/compliance/rights' },
+        { label: 'Complaints', value: String(counts.complaints), tone: 'plain', href: '/staff/compliance/complaints' },
+        { label: 'Breaches', value: String(counts.breaches), tone: counts.breaches > 0 ? 'late' : 'plain', href: '/staff/compliance/breaches' },
+      ])}
       <p class="help">Only Admin can use this section today, because no other role can. There is no data protection officer login.
       Whether one is needed is Lakhbir’s question. Sales, Accounting, Surveying and clients cannot reach anything here.</p>
       <h3>Settings — dated, and sourced</h3>
       <table><tbody>${settings.map((s) => h`<tr><td>${SETTINGS[s.setting] ?? s.setting}</td><td><strong>${s.label}</strong></td>
         <td>${s.effective_from ?? ''}</td><td class="help">${s.source ?? ''}</td></tr>`)}</tbody></table>
       <p class="help">${aml.effect}</p>
+      <details class="formfold" id="record-setting"><summary>Record a new dated value</summary>
       ${form('/staff/compliance/settings', 'Record a new dated value', h`
         ${choose('Setting', 'setting', SETTINGS)}
         ${choose('Value', 'value', { ...SETTING_VALUES['AML_IN_SCOPE'], ...SETTING_VALUES['INSURANCE_POSITION'] })}
-        ${input('Takes effect', 'effective_from', null, 'date')} ${area('Where it comes from — a written answer, a policy schedule', 'source')}`)}
-      <h3>The registers</h3>
-      <ul><li><a href="/staff/compliance/rights">Rights requests</a> — ${String(counts.rights)}</li>
-        <li><a href="/staff/compliance/complaints">Complaints</a> — ${String(counts.complaints)}; s.164A complaints ${count.from} to ${count.to}:
-          <strong>${String(count.s164a)}</strong> (not s.164A ${String(count.not_164a)}, not yet classified ${String(count.unclassified)} — counted apart, never as no)</li>
-        <li><a href="/staff/compliance/breaches">Breach register</a> — ${String(counts.breaches)}</li></ul>
+        ${input('Takes effect', 'effective_from', null, 'date')} ${area('Where it comes from — a written answer, a policy schedule', 'source')}`)}</details>
+      <p class="help">s.164A complaints ${count.from} to ${count.to}: <strong>${String(count.s164a)}</strong> (not s.164A
+        ${String(count.not_164a)}, not yet classified ${String(count.unclassified)} — counted apart, never as no).</p>
+      <h3>Find a person</h3>
       ${form('/staff/compliance/search', 'Search for a person', h`${input('A name, an email address or a telephone number', 'term')}
         <p class="help">Finds a person through an organisation, a lead with no organisation, or an introducing firm, with the tasks that name them.
         It does not reach inside a document.</p>`)}`,

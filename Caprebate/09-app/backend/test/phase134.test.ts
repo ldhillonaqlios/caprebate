@@ -98,6 +98,9 @@ function tiles(body: string, id: string): string[] {
   // PHASE 138: the Claims card is now a coloured section (a <details>); its tiles are the first tile list after its id.
   const card = new RegExp(`<section class="card" id="${id}">([\\s\\S]*?)</section>`).exec(body)?.[1]
     ?? new RegExp(`<details class="sec sec-[a-z]+" id="${id}"[\\s\\S]*?(<ul class="tiles">[\\s\\S]*?</ul>)`).exec(body)?.[1] ?? '';
+  // UI tidy phase 7: the claims are boxes at the top of the page, one <article class="claimbox"> each.
+  const boxes = new RegExp(`<section class="claimboxes" id="${id}"[^>]*>([\\s\\S]*?)</section>`).exec(body)?.[1];
+  if (boxes !== undefined) return [...boxes.matchAll(/<article class="claimbox">([\s\S]*?)<\/article>/g)].map((m) => m[1] ?? '');
   return [...card.matchAll(/<li class="tile">([\s\S]*?)<\/li>/g)].map((m) => m[1] ?? '');
 }
 
@@ -163,7 +166,7 @@ describe('the seeded company with two properties and three claims', () => {
     const head = /<thead><tr>([\s\S]*?)<\/tr><\/thead>/.exec(r.body)?.[1] ?? '';
     const cols = [...head.matchAll(/<th>([\s\S]*?)<\/th>/g)].map((m) => (m[1] ?? '').replace(/<span class="sorted">[^<]*<\/span>/, '').replace(/<[^>]+>/g, '').trim());
     assert.deepEqual(cols, ['Company', 'Property', 'Stage', 'Next action', 'Owner', 'Reference']);
-    for (const c of claims) assert.ok(r.body.includes(`<td><span class="claimref">${c.claim_ref}</span></td>`), `${c.claim_ref} is not a grey label`);
+    for (const c of claims) assert.ok(r.body.includes(`<td data-label="Reference"><span class="claimref">${c.claim_ref}</span></td>`), `${c.claim_ref} is not a grey label`); // UI tidy phase 17: labelled for a phone
   });
 });
 

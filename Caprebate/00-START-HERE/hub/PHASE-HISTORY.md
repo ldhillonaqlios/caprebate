@@ -11165,3 +11165,163 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** Lakhbir sends a short video from the iPhone on the test website.
 
  **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 1 of 17, 2 October 2026 — the shared look (Claude Code, on the Mac)
+
+ Lakhbir: make every tab cleaner and easy to use without help. He looked at five mock-ups, chose "design 2" (a left-hand menu with groups, each list one table), asked for colours and darker boxes, and approved phases 1 and 2 as the first group. The plan is `00-START-HERE/hub/UI-TIDY-PLAN.md`.
+
+-  **Built:** `src/web/look.ts` and its rules: five stage groups each with its own colour, solid number boxes, a bar of the groups, late / no date / nobody yet labels. On every back-office and portal page now: black table headings and striped rows. Nothing else moves until the pages use the pieces (phases 3 to 17).
+-  **Proof.** `test/ui-tidy-look.test.ts`, twelve tests; 20 single-line mutations, all red. Every colour pairing 4.5:1 or better (test/phase133c.test.ts). Screenshots of Tasks, Finance, Calendar and Survey jobs at 1280 and 390 px. The repo's own tests: 2082 tests, 2081 pass; the one failure is `test/phase151i.test.ts` reading a stray file on this Mac, `api/index.mjs.new0929`, which is not in the repository (nor are `test/assessment-start.test.ts`, `test/_tmp152-*.test.ts` and `test/_probe146l.test.ts`, whose own failures `npm run check` also counts here). CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2082`) green; the sign-off register check is red only on those same stray files.
+-  **Next:** phase 2, the left-hand menu.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 2 of 17, 2 October 2026 — the left-hand menu (Claude Code, on the Mac)
+
+ Lakhbir: Survey jobs was hidden under More; he chose a menu down the left in named groups and asked what the menu looks like on inner pages, such as a client's.
+
+-  **Built:** the back office's and the portal's header is a black menu down the left in named groups (Winning clients, Clients and claims, Money, Admin), with no More: Admin's Survey jobs, Calendar and Introducers, Sales's Calendar and Accounting's Introducer fees moved into their groups. Nothing joined or left a menu and no gate changed. Under the current section the menu opens out (`setSubMenu`); Settings does now, the client, survey job and Finance follow in their phases. On a phone it folds behind a Menu button that needs no script.
+-  **Proof.** `test/ui-tidy-menu.test.ts`, thirteen tests; 20 single-line mutations, all red. Screenshots for every login at 1280 and 390 px, the phone menu open and closed. The repo's own tests: 2095, all pass but `test/phase151i.test.ts`, which reads the stray `api/index.mjs.new0929` on this Mac. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2095`) green.
+-  **Next:** Lakhbir reviews phases 1 and 2, then approves the next group (phases 3 to 6: Pipeline, Home, Leads, Clients).
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 3 of 17, 2 October 2026 — the Pipeline as one table (Claude Code, on the Mac)
+
+ Lakhbir approved phases 3 to 6 as the second group.
+
+-  **Built:** `/staff/pipeline` is one table in five coloured stage groups, with four boxes (in progress, late, nobody owns it, on hold), the bar of groups, search and four filters; each row keeps its Move button under the next step. The board of columns is `?layout=board`, unchanged. Found and fixed on the way: a move from the board returned to `?layout=board?done=moved`.
+-  **Proof.** `test/ui-tidy-pipeline.test.ts`, eleven tests; 19 single-line mutations, all red. Screenshots at 1280 and 390 px. 2106 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2106`) green.
+-  **Next:** phase 4, Home.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 4 of 17, 2 October 2026 — Home in two columns (Claude Code, on the Mac)
+
+ Lakhbir on the Pipeline: "this looks good".
+
+-  **Built:** every Home (Sales, Admin, Read only, Accounting, the Surveyor) starts with one line saying how many jobs are late and solid number boxes, each a link; then the work on the left (Do these first, today's calls and emails, new leads and messages, leads' next steps) and the pipeline's five coloured bars, money or survey jobs, and the calendar on the right. Nothing that was on Home was taken away.
+-  **Proof.** `test/ui-tidy-home.test.ts`, eight tests; four older Home tests read the new layout; 17 single-line mutations, all red. Screenshots of every Home at 1280 and 390 px. 2114 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2114`) green.
+-  **Next:** phase 5, Leads.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 5 of 17, 2 October 2026 — Leads (Claude Code, on the Mac)
+
+-  **Built:** one heading with a line of counts and one main button, Record a lead; four solid boxes, one per section, each a link; every switch on one row; the "Record a lead by hand" form folded until asked for (`?record=1`). The cards, the sections, the list view and the filter are as they were.
+-  **Proof.** `test/ui-tidy-leads.test.ts`, six tests; 11 single-line mutations, all red. Screenshots at 1280 and 390 px, the form closed and open. 2120 tests, all pass but the stray-file one; `test/survey-report.test.ts` failed once under load and passes alone. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2120`) green.
+-  **Next:** phase 6, the Clients list.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 6 of 17, 2 October 2026 — the Clients list (Claude Code, on the Mac)
+
+-  **Built:** a line of counts and solid boxes (waiting on us, waiting on the client, asked not to be contacted, every company), each a filter; Find a client by company, site or claim number; the status in its colour; each claim beside its company by site and number, its stage in its colour — Dunmarrow's main site and branch surgery side by side.
+-  **Proof.** `test/ui-tidy-clients.test.ts`, six tests; 14 single-line mutations, all red. Screenshots at 1280 and 390 px. 2126 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2126`) green.
+-  **Next:** Lakhbir reviews phases 3 to 6, then approves the next group (phases 7 to 10: a client's page in two parts, Tasks, Survey jobs).
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 7 of 17, 3 October 2026 — a client's page, part 1 (Claude Code, on the Mac)
+
+ Lakhbir approved phases 7 to 10 as the third group.
+
+-  **Built:** a client's page opens with its name, coloured labels and its actions beside them, then each claim in a box of its own — its stage's colour, its site, its number in grey, its next step in a dark box with a red late label, and Open the claim. The left-hand menu opens out to the client: its name, Overview, each claim by site and stage, then the page's parts; on a claim, that claim is marked. Claims is no longer a tab.
+-  **Proof.** `test/ui-tidy-client.test.ts`, seven tests; four older tests read the new top; 15 single-line mutations, all red. Screenshots of Dunmarrow and of its branch surgery claim. 2133 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2133`) green.
+-  **Next:** phase 8, a client's page part 2.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 8 of 17, 3 October 2026 — a client's page, part 2 (Claude Code, on the Mac)
+
+-  **Built:** a client's page no longer opens on the message form. Under the claims, every part has one line — where it stands, what is happening, how many — and opens when chosen there or in the left-hand menu, with a way back to them all. After a change the part it was made in opens, as before. On a laptop the row of tabs gives way to the menu.
+-  **Proof.** `test/ui-tidy-client.test.ts`, four more tests (11); 10 single-line mutations, all red. Screenshots of the overview and of People opened. The page went from 2406 to 1683 px tall at 1280. 2137 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2137`) green.
+-  **Next:** phase 9, Tasks.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 9 of 17, 3 October 2026 — Tasks (Claude Code, on the Mac)
+
+-  **Built:** a line of counts and four boxes (late, due today, no due date, claims with no next step); late as a red label with its date under it in every task table, the company said once, "the claim's next action" a quiet label; the longer lists under the table folded with their counts. Nothing taken away.
+-  **Proof.** `test/ui-tidy-tasks.test.ts`, seven tests; 11 single-line mutations, all red. Screenshots for Sales and Accounting: Sales's Tasks went from 2955 to 1769 px tall at 1280. 2144 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2144`) green.
+-  **Next:** phase 10, Survey jobs and a survey job.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 10 of 17, 3 October 2026 — Survey jobs and a survey job (Claude Code, on the Mac)
+
+-  **Built:** every survey job names its client, its site and its claim number, its stage in colour, under four boxes; a job's page names its site and claim at the top, links the client's other job, marks its own site "This job", and opens out the left-hand menu (its parts, the survey pack, the other job). Dunmarrow's two jobs now read "branch surgery CR-2026-0009" and "main site CR-2026-0004".
+-  **Proof.** `test/ui-tidy-survey.test.ts`, eight tests; 14 single-line mutations, all red. Screenshots of the list and of Dunmarrow's branch surgery job. 2152 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2152`) green.
+-  **Next:** Lakhbir reviews phases 7 to 10, then approves the next group (phases 11 to 14: survey pack, Finance, Calendar, Introducers).
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 11 of 17, 3 October 2026 — the survey pack (Claude Code, on the Mac)
+
+ Lakhbir approved phases 11 to 14 as the fourth group.
+
+-  **Built:** the pack opens with a dark band — "Dunmarrow Medical Practice Limited — main site", "CR-2026-0004 · ZZ4 4DD · survey job 1 of 2 for this client" — and a button to switch to the branch surgery's pack at the same chapter; the job's menu opens out with Survey pack marked; Still needed is two counted lines with every value behind Show all; a video's length reads "32 s".
+-  **Proof.** `test/ui-tidy-pack.test.ts`, five tests; 13 single-line mutations, all red. Screenshots of both Dunmarrow packs. 2157 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2157`) green.
+-  **Next:** phase 12, Finance.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 12 of 17, 3 October 2026 — Finance (Claude Code, on the Mac)
+
+-  **Built:** Finance opens with four boxes — Invoiced, Received, Still owed, and "Late, on 2 invoices" in red — then a yellow line naming each claim ready to invoice, with Raise our fee. Invoices opens first. The six parts are in the left-hand menu under Finance, with counts; on a phone they stay as tabs. Each claim number sits under its company; a late invoice is a red label, one with no due date a grey one. The right-hand panel is gone: its links were already at the top and in the menu, and it pushed the invoices table sideways on a laptop.
+-  **Proof.** `test/ui-tidy-finance.test.ts`, ten tests; 18 single-line mutations, all red. Screenshots for Admin and Accounting at 1280 and 390, no sideways scroll. 2167 tests, all pass but the stray-file one. CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2167`) green.
+-  **Next:** phase 13, Calendar.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 13 of 17, 3 October 2026 — the Calendar (Claude Code, on the Mac)
+
+-  **Built:** the Calendar names the day ("Monday 5 Oct 2026") or the week, with Earlier, Today, Later and Show the week as buttons, and four boxes counting the calls booked, waiting, asked another way and cancelled. The week is seven boxes side by side, today's marked, instead of seven headings over "Nothing booked". Nobody on a call is amber; a cancelled call is red. "Give it a time" only for those who may arrange calls; "Open" for anyone else. Cancelled calls fold away with their count. The tables stack on a phone. The sections are in the left-hand menu.
+-  **Proof.** `test/ui-tidy-calendar.test.ts`, ten tests; 18 single-line mutations, all red. Screenshots of today, Monday 5 October and its week, at 1280 and 390, with two calls booked in the local demo. 2177 tests, all pass but the stray-file one (and `whatsapp.test.ts` once under load; it passes on its own). CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2177`) green.
+-  **Next:** phase 14, Introducers.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 14 of 17, 3 October 2026 — Introducers (Claude Code, on the Mac)
+
+-  **Built:** Introducers opens with Add a firm and Record a referral as buttons, boxes counting the firms, what they sent and the late next contacts, and the reward model as a label. The firms are one short table — owner (Nobody yet in amber), contact (late in red), what each sent us in one line — that stacks on a phone. The two forms fold until a button or a refusal opens them. A firm's page has the way back, a line with its owner and next contact, the same boxes, its sections in the left-hand menu and its forms folded. Accounting still sees only the firms and their fees.
+-  **Proof.** `test/ui-tidy-introducers.test.ts`, eleven tests; 22 single-line mutations, all red. Screenshots for Sales and Accounting at 1280 and 390, with three firms added in the local demo. 2188 tests, run in 12 chunks because the Mac was overloaded (load 40 to 80): all pass but the stray-file one and `whatsapp.test.ts`'s order check, which failed once under that load and passes three times out of three on its own. Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2188`) green. Also fixed: a type slip in phase 13's Calendar test (a message that could be empty), which the type check caught; the commit gate now runs the type check.
+-  **Next:** Lakhbir reviews phases 11 to 14; then phases 15 to 17.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 15 of 17, 3 October 2026 — Settings (Claude Code, on the Mac)
+
+ Lakhbir approved phases 15 to 17 as the fifth group.
+
+-  **Built:** Users and roles drops from 5,190 px to about 1,400: a header with Make or change a role and Add a user, four boxes, and one table with each role as a label, Active or Turned off in colour, and Change role folded in the person's own row; Add a user folds until asked for (Home's Add a person card opens it). Automation: four boxes, the thirteen things no rule may do folded with their count, each rule's source moved under it. Email templates: Add a template folded. Compliance: three boxes for the registers, the dated-value form folded. Switches, Document types, the Audit log and Introducer fees already read well and are unchanged.
+-  **Proof.** `test/ui-tidy-settings.test.ts`, eight tests; 18 single-line mutations, all red. Screenshots of Users (closed and open), Automation, Email templates and Compliance at 1280 and 390. 2196 tests, run in 12 chunks: all pass but the stray-file one. Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2196`) green.
+-  **Next:** phase 16, the client portal.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 16 of 17, 3 October 2026 — the client portal (Claude Code, on the Mac)
+
+-  **Built:** the portal home's header offers Send us a message, Book a call and Send us a document; "Send us a message" is now said once, not four times. The questions and the documents asked for are drawn only when there is one — the "What we need from you" card already says when nothing is. How to contact us moves to the end, its words unchanged. On a laptop the page's parts open out under Your claims in the left-hand menu. The claim's own page, Messages and Show us your building already read well and are unchanged.
+-  **Proof.** `test/ui-tidy-portal.test.ts`, five tests; 9 single-line mutations, all red. Screenshots of the portal home at 1280 and 390. 2201 tests, run in 12 chunks: all pass but the stray-file one and `whatsapp.test.ts`'s order check, the timing flake under load (it passes three times out of three on its own; a separate task is offered to fix it). Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2201`) green.
+-  **Next:** phase 17, Accounting's and the Surveyor's own pages, and a phone check of every page.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 17 of 17, 3 October 2026 — Accounting's and the Surveyor's pages, and a phone check (Claude Code, on the Mac)
+
+-  **Built:** Accounting's Claims list leaves out the four columns it may not read (they were dashes on every row) and says so; Sales and Admin still see all six. Accounting's Clients list shows an overdue invoice as a red label. Accounting's and the Surveyor's homes (phase 4) needed nothing. The phone check: every tab, for every login, at 390 px — 31 pages, none scrolls sideways.
+-  **Proof.** `test/ui-tidy-accounting.test.ts`, four tests; 7 single-line mutations, all red. Screenshots of every tab at 390 px, and Accounting's and the Surveyor's pages at 1280. 2205 tests, run in 12 chunks: all pass but the stray-file one and `whatsapp.test.ts`'s order check. That check is a timing flake: on its own it passed twice and failed once, so it can fail without load too (a separate task is offered to fix it). Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2205`) green — after a follow-up commit: the phase 17 commit went in with the CRM fold red (`handleBilling` moved from `billing.ts:210` to `:211` and the spec still said 210), because its gate piped the checks through `tail`, which hid the failure. The gate is now run on its own before each commit.
+-  **Next:** the 17 phases are done. Lakhbir reviews phases 15 to 17 and the branch, and decides whether the very long claim page gets a phase of its own.
+
+ **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 18, 3 October 2026 — the claim page (Claude Code, on the Mac)
+
+ Lakhbir approved the screenshots of phases 15 to 17 and asked for this phase before the pull request.
+
+-  **Built:** a claim's page drops from about 10,700 px to about 2,600. Only **Stage and next move** opens by itself; every other section is a one-line summary with its status until a change just made, or the person's own "keep this open for me", opens it. The claim's sections are listed under it in the client's left-hand menu, "to do" or "waiting" where they are. The stage shows in its colour at the top. Every section, form and permission is unchanged.
+-  **Proof.** `test/ui-tidy-claim.test.ts`, five tests; 8 single-line mutations, all red. Screenshots for Admin and Sales at 1280 and 390. 2210 tests, run in 12 chunks: all pass but the stray-file one and `whatsapp.test.ts`'s order check, the known flake. Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2210`) green.
+-  **Next:** the pull request.
+
+ **Claim cleared** in the commit that carries this record.

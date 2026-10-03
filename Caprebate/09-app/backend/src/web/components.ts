@@ -403,16 +403,22 @@ export type SectionSpec = {
 };
 
 /** What a page passes to every section: the person's own choices, and the page's address for coming back after one. */
-export type SectionContext = { readonly prefs: ReadonlyMap<string, boolean>; readonly back: string | null };
+export type SectionContext = {
+  readonly prefs: ReadonlyMap<string, boolean>; readonly back: string | null;
+  /** UI TIDY PHASE 18: where given, only these sections open by their status; the rest start closed (a change just made,
+   *  or the person's own choice, still opens one). The claim page passes its stage, so it no longer opens 10,000 px. */
+  readonly autoOpen?: readonly string[];
+};
 
 /** How many WE NEED lines are shown before the rest fold under "and N more". */
 export const NEEDS_SHOWN = 5;
 
 /** Open, or closed, when the page is drawn: a change just made here, then the person's choice, then the status. */
-export function sectionOpens(s: Pick<SectionSpec, 'key' | 'status' | 'open_now'>, prefs: ReadonlyMap<string, boolean>): boolean {
+export function sectionOpens(s: Pick<SectionSpec, 'key' | 'status' | 'open_now'>, prefs: ReadonlyMap<string, boolean>, autoOpen?: readonly string[]): boolean {
   if (s.open_now === true) return true;
   const mine = prefs.get(s.key);
   if (mine !== undefined) return mine;
+  if (autoOpen !== undefined && !autoOpen.includes(s.key)) return false;
   return s.status === 'WORKING' || s.status === 'WAITING';
 }
 
@@ -423,7 +429,7 @@ function needLine(n: Need): Safe {
 
 export function section(s: SectionSpec, ctx: SectionContext): Safe {
   const k = SECTION_KINDS[s.kind];
-  const open = sectionOpens(s, ctx.prefs);
+  const open = sectionOpens(s, ctx.prefs, ctx.autoOpen);
   const mine = ctx.prefs.get(s.key);
   // One line per thing needed: two sources asking the same question are one need (the first, which carries its ask).
   const needs = s.need.filter((n, i) => s.need.findIndex((o) => o.label.trim().toLowerCase() === n.label.trim().toLowerCase()) === i);

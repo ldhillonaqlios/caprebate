@@ -36,6 +36,7 @@ import * as T from './tasks.ts';
 import * as M from './messages.ts';
 import * as IE from './inbound-email.ts';
 import * as S from './settings.ts';
+import { STAGE_GROUPS } from './look.ts';
 
 /** One tile: a name and at most two more lines. `late` draws it red. */
 export type HomeTile = {
@@ -159,6 +160,14 @@ type Dated = { readonly due_on: string; readonly late: boolean; readonly tile: H
  * is a task), and the questions and document requests it put to clients that are due today or late. Late first.
  */
 export function todayRow(actor: Actor, app: App, nowIso: string): Safe {
+  const items = todayItems(actor, app, nowIso);
+  const c = capped(items, '/staff/tasks');
+  // UI TIDY PHASE 4: "Do these first" — the late ones first, then today's; the same items as before.
+  return homeRow('today', 'Do these first', c.tiles, 'Nothing is due today, and nothing is late.', c.more);
+}
+
+/** The items on "Do these first", late first: what `todayRow` draws, and what Home's "Late" box counts. */
+export function todayItems(actor: Actor, app: App, nowIso: string): HomeTile[] {
   const db = app.db;
   const work = T.myWork(db, actor, nowIso);
   const own = actor.role === 'ACCOUNTING' || actor.role === 'SURVEYING';
@@ -200,24 +209,35 @@ export function todayRow(actor: Actor, app: App, nowIso: string): Safe {
     const q = IE.replyQueue(db, actor);
     if (q.length > 0) items.push({ due_on: '', late: true, tile: { href: '/staff/replies', name: 'Email replies to sort', lines: [`${q.length} waiting — choose the company`], late: true } });
   }
-  const ordered = [...items.filter((x) => x.late), ...items.filter((x) => !x.late)].map((x) => x.tile);
-  const c = capped(ordered, '/staff/tasks');
-  return homeRow('today', 'Today and overdue', c.tiles, 'Nothing is due today, and nothing is late.', c.more);
+  return [...items.filter((x) => x.late), ...items.filter((x) => !x.late)].map((x) => x.tile);
 }
 
 function reportsTile(actor: Actor): HomeTile[] {
   return opens(actor, assertDashboard) ? [{ href: '/staff/reports', name: 'Reports', lines: ['Figures by month, quarter or year'] }] : [];
 }
 
+/**
+ * UI TIDY PHASE 4: THE PIPELINE AS FIVE COLOURED BARS. Lakhbir agreed the eleven stage tiles become one small chart: each
+ * group of stages (src/web/look.ts) with its count, as long as its share, each a link to the Pipeline. On hold, when any,
+ * and Reports follow as links. The numbers are the same board's.
+ */
 export function pipelineRow(actor: Actor, app: App, nowIso: string): Safe[] {
   if (!opens(actor, pipelineBoardGate)) return [];
   const board = pipelineBoard(app.db, actor, nowIso);
-  const tiles: HomeTile[] = board.columns.map((col) => ({
-    href: `/staff/claims?stage=${encodeURIComponent(col.key)}`, name: col.label, lines: [plural(col.cards.length, 'claim', 'claims')],
-  }));
-  if (board.on_hold.length > 0) tiles.push({ href: '/staff/claims?status=ON_HOLD', name: 'On hold', lines: [plural(board.on_hold.length, 'claim', 'claims')] });
-  // PHASE 137: two stage tiles to a row on a phone (class "pairtiles"); the other rows stay one to a row.
-  return [homeRow('pipeline', 'Pipeline by stage', [...tiles, ...reportsTile(actor)], 'No claims yet.', undefined, 'pairtiles')];
+  const cards = board.columns.flatMap((col) => col.cards.map((c) => col.key));
+  const most = Math.max(1, ...STAGE_GROUPS.map((g) => cards.filter((k) => g.stages.includes(k)).length));
+  const bars = STAGE_GROUPS.map((g) => {
+    const n = cards.filter((k) => g.stages.includes(k)).length;
+    return h`<li><a class="gbar" href="/staff/pipeline"><span class="gbar-name">${g.name}</span><span class="gbar-track"><span class="gbar-fill g-${g.key} gw-${
+      n === 0 ? 0 : Math.max(1, Math.round((n / most) * 10))}"></span></span><span class="gbar-n">${n}</span></a></li>`;
+  });
+  const links = [
+    h`<a href="/staff/pipeline">Open the pipeline</a>`,
+    ...(board.on_hold.length > 0 ? [h`<a href="/staff/claims?status=ON_HOLD">${plural(board.on_hold.length, 'claim', 'claims')} on hold</a>`] : []),
+    ...reportsTile(actor).map((t) => h`<a href="${t.href}">${t.name}: ${t.lines[0] ?? ''}</a>`),
+  ];
+  return [h`<section class="homerow" aria-labelledby="row-pipeline"><h2 id="row-pipeline">Pipeline</h2>${
+    cards.length === 0 ? h`<p class="empty">No claims yet.</p>` : h`<ul class="gbars">${bars}</ul>`}<p class="homelinks">${links.map((l, i) => h`${i === 0 ? raw('') : raw(' · ')}${l}`)}</p></section>`];
 }
 
 const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({

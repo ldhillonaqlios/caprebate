@@ -23,7 +23,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { filterBar, TASK_FILTERS } from './navigation.ts';
+import { filterBar, opens, TASK_FILTERS } from './navigation.ts';
+import { kpiRow, lateBadge, noDateBadge, type KpiTone } from './look.ts';
 import { claimRef, savedMessage, why } from './components.ts';
 import * as T from './tasks.ts';
 import * as A from './automation.ts';
@@ -196,7 +197,7 @@ export async function handleTasks(
 
   /* --------------------------------------------------------- automation */
   if (path === '/staff/automation' && method === 'GET') {
-    html(res, 200, rulesPageHtml(d, actor, A.rulesPage(db, actor), done));
+    html(res, 200, rulesPageHtml(d, actor, A.rulesPage(db, actor), done, url.searchParams.get('add') === '1'));
     return 'handled';
   }
   if (path === '/staff/automation' && method === 'POST') {
@@ -215,7 +216,7 @@ export async function handleTasks(
 
   /* ---------------------------------------------------------- templates */
   if (path === '/staff/templates' && method === 'GET') {
-    html(res, 200, templatesPageHtml(d, actor, M.templatesPage(db, actor), done));
+    html(res, 200, templatesPageHtml(d, actor, M.templatesPage(db, actor), done, url.searchParams.get('add') === '1'));
     return 'handled';
   }
   if (path === '/staff/templates' && method === 'POST') {
@@ -269,9 +270,17 @@ function saved(msg: string | undefined): Safe {
 
 /** A due reading, drawn. OVERDUE is loud; no due date says so in words. */
 export function dueCell(due: T.DueReading): Safe {
-  if (due.overdue) return h`<strong class="overdue">${due.label}</strong>`;
-  if (due.state === 'NO_DUE_DATE') return h`<span class="help">${due.label}</span>`;
+  // UI tidy phase 9: late is a solid red label, no due date a grey one (src/web/look.ts), wherever a task list is drawn.
+  // The label is "31 days overdue (1 Sep 2026)": the words in the label, the date under it, so the column stays narrow.
+  const m = /^(.*?) \((.+)\)$/.exec(due.label);
+  if (due.overdue) return m === null ? lateBadge(due.label) : h`${lateBadge(m[1] ?? '')}<br><span class="help">${m[2] ?? ''}</span>`;
+  if (due.state === 'NO_DUE_DATE') return noDateBadge(due.label); // the one sentence for no due date (T.NO_DUE_DATE, N4)
   return h`${due.label}`;
+}
+
+/** What a task is about, without saying the company twice: a company already named in a claim's words is left out. */
+function aboutOf(about: readonly T.TaskAbout[]): readonly T.TaskAbout[] {
+  return about.filter((a) => !(a.kind === 'organisation' && about.some((b) => b !== a && b.label.includes(a.label))));
 }
 
 function quickStatus(t: T.TaskView, back: string): Safe {
@@ -288,10 +297,10 @@ export function taskRows(tasks: readonly T.TaskView[], back: string, empty: stri
   if (tasks.length === 0) return h`<p class="help">${empty}</p>`;
   return h`<table><thead><tr><th>Task</th><th>About</th><th>Owner</th><th>Due</th><th>Status</th><th></th></tr></thead>
     <tbody>${tasks.map((t) => h`<tr class="${t.due.overdue ? 'overdue' : ''}">
-      <td><a href="/staff/tasks/${t.id}">${t.title}</a>${t.is_next_action ? h`<br><strong>the claim’s next action</strong>` : raw('')}
+      <td><a href="/staff/tasks/${t.id}">${t.title}</a>${t.is_next_action ? h`<br><span class="badge b-info">the claim’s next action</span>` : raw('')}
         <br><span class="help">${t.activity.label} · ${t.origin}</span></td>
       <td>${t.about.length === 0 ? h`<span class="help">—</span>`
-        : t.about.map((a) => (a.href === null ? h`${a.label}<br>` : h`<a href="${a.href}">${a.label}</a><br>`))}</td>
+        : aboutOf(t.about).map((a) => (a.href === null ? h`${a.label}<br>` : h`<a href="${a.href}">${a.label}</a><br>`))}</td>
       <td>${t.owner.label}</td>
       <td>${dueCell(t.due)}</td>
       <td>${t.status.label}${t.closed === null ? raw('') : h`<br><span class="help">${t.closed}</span>`}</td>
@@ -420,9 +429,18 @@ export function emailBlock(
 }
 
 /** MY TASKS — on the landing page, for every staff role. */
+/**
+ * UI TIDY PHASE 9, 3 October 2026: the tasks first; then what a client owes us and is late with, open; then the longer
+ * lists folded, each saying how many it holds — the claims with no next step (Tasks' own filter has them too), my claims
+ * and who each waits on, and the other questions waiting on a client. Every list is still here.
+ */
+function morelist(title: string, n: number, body: Safe): Safe {
+  return n === 0 ? raw('') : h`<details class="morelist"><summary>${title} <span class="count">${String(n)}</span></summary>${body}</details>`;
+}
+
 export function myTasksBlock(w: T.MyWork): Safe {
-  return h`<div class="pblock"><div class="pnum">My tasks</div>
-    ${w.overdue > 0 ? h`<p class="err"><strong>${w.overdue} overdue.</strong></p>` : raw('')}
+  const otherQuestions = w.questions_waiting.filter((q) => !q.due.overdue);
+  return h`<section class="card" id="my-tasks"><h2 class="vh">My tasks</h2>
     ${taskRows(w.tasks, '/staff', 'Nothing is yours or waiting with your team right now.')}
     ${w.client_questions_overdue.length === 0 ? raw('') : h`<p><strong>Questions you put to a client that are past their due date</strong></p>
       <ul>${w.client_questions_overdue.map((q) => h`<li class="overdue"><a href="/staff/clients/${q.business_id}">${q.client}</a>:
@@ -432,20 +450,21 @@ export function myTasksBlock(w: T.MyWork): Safe {
         r.claim === null ? h`<a href="/staff/clients/${r.business_id}">${r.client}</a>`
           : h`<a href="/staff/claims/${r.claim.id}">${r.claim.name}</a> ${claimRef(r.claim.claim_ref)}`}:
         ${r.type_label} — ${r.due.overdue ? h`<strong>${r.due.label}</strong>` : h`${r.due.label}`}</li>`)}</ul>`}
-    ${w.claims_without_next_action.length === 0 ? raw('') : h`<p><strong>Claims you own with no next step, owner or date</strong></p>
+    ${morelist('Claims with no next step, owner or date', w.claims_without_next_action.length + w.unowned_claims_breaking.length, h`
+      ${w.claims_without_next_action.length === 0 ? raw('') : h`<p><strong>Claims you own</strong></p>
       <ul>${w.claims_without_next_action.map((c) => h`<li><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} — ${c.sentence}</li>`)}</ul>`}
-    ${w.unowned_claims_breaking.length === 0 ? raw('') : h`<p><strong>Claims nobody owns with no next step, owner or date</strong></p>
+      ${w.unowned_claims_breaking.length === 0 ? raw('') : h`<p><strong>Claims nobody owns</strong></p>
       <ul>${w.unowned_claims_breaking.map((c) => h`<li><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} — ${c.sentence}
-        <span class="help">— give it an owner, then its next action</span></li>`)}</ul>`}
-    ${w.my_claims.length === 0 ? raw('') : h`<p><strong>My claims, their next actions, and who is waiting</strong></p>
+        <span class="help">— give it an owner, then its next action</span></li>`)}</ul>`}`)}
+    ${morelist('My claims, their next actions, and who is waiting', w.my_claims.length, h`
       <ul>${w.my_claims.map((c) => h`<li class="${c.overdue ? 'overdue' : ''}"><a href="/staff/claims/${c.id}">${c.name}</a> ${claimRef(c.claim_ref)} — ${c.stage}:
         ${c.overdue ? h`<strong>${c.next_action}</strong>` : h`${c.next_action}`}${c.waiting === null ? raw('')
-          : h` <span class="help">— ${c.waiting.who === 'CLIENT' ? 'waiting on the client' : c.waiting.who === 'US' ? 'waiting on us' : 'nobody is waiting'}: ${c.waiting.why}</span>`}</li>`)}</ul>`}
-    ${w.questions_waiting.filter((q) => !q.due.overdue).length === 0 ? raw('') : h`<p><strong>Other questions you are waiting on a client to answer</strong></p>
-      <ul>${w.questions_waiting.filter((q) => !q.due.overdue).map((q) => h`<li><a href="/staff/clients/${q.business_id}">${q.client}</a>:
-        “${q.question}” — ${q.due.label}${q.sent ? raw('') : h` <span class="help">— not yet sent to the client’s portal, so it waits on us</span>`}</li>`)}</ul>`}
+          : h` <span class="help">— ${c.waiting.who === 'CLIENT' ? 'waiting on the client' : c.waiting.who === 'US' ? 'waiting on us' : 'nobody is waiting'}: ${c.waiting.why}</span>`}</li>`)}</ul>`)}
+    ${morelist('Other questions you are waiting on a client to answer', otherQuestions.length, h`
+      <ul>${otherQuestions.map((q) => h`<li><a href="/staff/clients/${q.business_id}">${q.client}</a>:
+        “${q.question}” — ${q.due.label}${q.sent ? raw('') : h` <span class="help">— not yet sent to the client’s portal, so it waits on us</span>`}</li>`)}</ul>`)}
     <p class="help"><a href="/staff/tasks">All my tasks</a>. A task waiting with your team shows here until somebody takes it.</p>
-  </div>`;
+  </section>`;
 }
 
 /* ------------------------------------------------------------------ *
@@ -455,7 +474,15 @@ export function myTasksBlock(w: T.MyWork): Safe {
 function tasksListPage(d: TaskPageDeps, actor: Actor, w: T.MyWork, all: readonly T.TaskView[] | null, msg: string | undefined): string {
   return page({
     title: 'Tasks', nav: d.nav(actor), wide: true,
-    body: h`<h1>Tasks</h1>${filterBar(actor, TASK_FILTERS, all === null ? '/staff/tasks' : '/staff/tasks?view=all')}${saved(msg)}
+    body: h`<div class="pagehead"><div><h1>Tasks</h1><p class="lede">${w.tasks.length} open · ${w.overdue} late</p></div></div>
+      ${kpiRow([
+        { label: 'Late', value: String(w.overdue), tone: w.overdue > 0 ? 'late' : 'plain', href: '#my-tasks' },
+        { label: 'Due today', value: String(w.tasks.filter((t) => t.due.state === 'DUE_TODAY').length), tone: 'total', href: '#my-tasks' },
+        { label: 'No due date', value: String(w.tasks.filter((t) => t.due.state === 'NO_DUE_DATE').length), tone: 'plain', href: '#my-tasks' },
+        ...(opens(actor, T.nextActionsGate) ? [{ label: 'Claims with no next step', value: String(w.claims_without_next_action.length + w.unowned_claims_breaking.length),
+          tone: (w.claims_without_next_action.length + w.unowned_claims_breaking.length > 0 ? 'warn' : 'plain') as KpiTone, href: '/staff/next-actions' }] : []),
+      ])}
+      ${filterBar(actor, TASK_FILTERS, all === null ? '/staff/tasks' : '/staff/tasks?view=all')}${saved(msg)}
       <div class="help">A job a colleague does. A question for the client is on the client's page.${why(h`Overdue is judged against
       today’s date in the UK. A task with no due date is not overdue, and not on time either.`)}</div>
       ${myTasksBlock(w)}
@@ -561,23 +588,37 @@ export function distinctReasons(list: readonly { readonly key: string; readonly 
   return out;
 }
 
-function rulesPageHtml(d: TaskPageDeps, actor: Actor, p: A.RulesPage, msg: string | undefined): string {
+/**
+ * UI TIDY PHASE 15 (3 October 2026): the rules page opens with what it is, Add a rule, and four boxes; the thirteen
+ * things no rule may do fold away with their count (each still said once, and still refused by the store); Add a rule
+ * opens from its button. The templates page: Add a template folds until its button opens it.
+ */
+function rulesPageHtml(d: TaskPageDeps, actor: Actor, p: A.RulesPage, msg: string | undefined, adding = false): string {
   const choices = taskChoices(d.app.db);
   return page({
     title: 'Automation', nav: d.nav(actor), wide: true,
-    body: h`<h1>Automation rules</h1>${saved(msg)}
+    body: h`<div class="pagehead"><div><h1>Automation rules</h1>
+        <p class="lede">Tasks and reminders that start by themselves when something happens.</p></div>
+        ${p.may_write ? h`<p><a class="btn btn-primary" href="?add=1#add-rule">Add a rule</a></p>` : raw('')}</div>${saved(msg)}
+      ${kpiRow([
+        { label: 'Rules', value: String(p.rules.length), tone: 'total', href: '#rules' },
+        { label: 'Active', value: String(p.rules.filter((r) => r.active).length), tone: 'paid', href: '#rules' },
+        { label: 'Retired', value: String(p.rules.filter((r) => !r.active).length), tone: 'plain', href: '#rules' },
+        { label: 'Did not run', value: String(p.runs.filter((r) => !r.ran).length), tone: p.runs.some((r) => !r.ran) ? 'warn' : 'plain', href: '#runs' },
+      ])}
       <p class="help">Each rule says when it acts and what it does. Each time, it notes if it ran, or why not.
       A notice is saved with the emails waiting to send. It is not sent yet.</p>
-      <div class="gate"><strong>What no rule may do.</strong> Each is refused, with the reason:<ul>${distinctReasons(p.forbidden).map((why) => h`<li>${why}</li>`)}</ul></div>
-      <div class="pblock"><div class="pnum">The rules</div><table>
-        <thead><tr><th>Rule</th><th>When</th><th>Does</th><th>Goes to</th><th>Active</th><th>Where it came from</th></tr></thead>
-        <tbody>${p.rules.map((r) => h`<tr><td>${r.label}${r.task === null || r.task.title === null ? raw('') : h`<br><span class="help">“${r.task.title}”, due in ${r.task.due_in_days ?? 0} days</span>`}</td>
-          <td>${r.trigger.label}</td><td>${r.effect.label}</td><td>${r.assign.label}</td><td>${r.active ? 'yes' : 'retired'}</td>
-          <td><span class="help">${r.source}</span></td></tr>
-          ${p.may_write ? h`<tr><td colspan="6"><details><summary>Change “${r.label}”</summary>${ruleForm(`/staff/automation/${r.id}`, r, choices, p.request_types)}</details></td></tr>` : raw('')}`)}
+      <details class="morelist cantdo"><summary>What no rule may do <span class="count">${String(distinctReasons(p.forbidden).length)}</span></summary>
+        <p class="help">Each is refused, with the reason:</p><ul>${distinctReasons(p.forbidden).map((why) => h`<li>${why}</li>`)}</ul></details>
+      <div class="pblock" id="rules"><div class="pnum">The rules</div><table>
+        <thead><tr><th>Rule</th><th>When</th><th>Does</th><th>Goes to</th><th>Active</th></tr></thead>
+        <tbody>${p.rules.map((r) => h`<tr><td><strong>${r.label}</strong>${r.task === null || r.task.title === null ? raw('') : h`<br><span class="help">“${r.task.title}”, due in ${r.task.due_in_days ?? 0} days</span>`}</td>
+          <td>${r.trigger.label}</td><td>${r.effect.label}</td><td>${r.assign.label}</td><td>${r.active ? h`<span class="badge b-ok">yes</span>` : h`<span class="badge b-nodate">retired</span>`}</td></tr>
+          <tr class="rulefrom"><td colspan="5"><span class="help">Where it came from: ${r.source}</span>
+          ${p.may_write ? h`<details><summary>Change “${r.label}”</summary>${ruleForm(`/staff/automation/${r.id}`, r, choices, p.request_types)}</details>` : raw('')}</td></tr>`)}
         </tbody></table>
-      ${p.may_write ? h`<details><summary>Add a rule</summary>${ruleForm('/staff/automation', null, choices, p.request_types)}</details>` : raw('')}</div>
-      <div class="pblock"><div class="pnum">What the rules did</div>
+      ${p.may_write ? h`<details class="formfold" id="add-rule"${adding ? raw(' open') : raw('')}><summary>Add a rule</summary>${ruleForm('/staff/automation', null, choices, p.request_types)}</details>` : raw('')}</div>
+      <div class="pblock" id="runs"><div class="pnum">What the rules did</div>
         ${p.runs.length === 0 ? h`<p class="help">No rule has run yet.</p>` : h`<table>
           <thead><tr><th>When</th><th>Rule</th><th>Event</th><th>About</th><th>Result</th></tr></thead>
           <tbody>${p.runs.map((r) => h`<tr><td class="when">${r.at}</td><td>${r.rule}</td><td>${r.trigger}</td><td>${r.about}</td>
@@ -586,7 +627,7 @@ function rulesPageHtml(d: TaskPageDeps, actor: Actor, p: A.RulesPage, msg: strin
   });
 }
 
-function templatesPageHtml(d: TaskPageDeps, actor: Actor, p: M.TemplatesPage, msg: string | undefined): string {
+function templatesPageHtml(d: TaskPageDeps, actor: Actor, p: M.TemplatesPage, msg: string | undefined, adding = false): string {
   const fields = Object.keys(p.merge_fields).map((k) => `{{${k}}}`).join(' ');
   const form = (action: string, t: M.TemplateView | null): Safe => h`<form method="post" action="${action}">
     <label>Label <input name="label" value="${t?.label ?? ''}" required></label>
@@ -597,7 +638,9 @@ function templatesPageHtml(d: TaskPageDeps, actor: Actor, p: M.TemplatesPage, ms
     <button type="submit">Save the template</button></form>`;
   return page({
     title: 'Email templates', nav: d.nav(actor), wide: true,
-    body: h`<h1>Email templates</h1>${saved(msg)}
+    body: h`<div class="pagehead"><div><h1>Email templates</h1>
+        <p class="lede">The wording of the emails we send to clients.</p></div>
+        ${p.may_write ? h`<p><a class="btn btn-primary" href="?add=1#add-template">Add a template</a></p>` : raw('')}</div>${saved(msg)}
       <p class="help">The merge fields are ${fields} and no others. A merged value is shown as typed. A value nobody recorded shows as a
       gap in square brackets. The email is saved to send later. It is not sent yet.</p>
       <div class="gate"><strong>Never bank details, never an invoice.</strong> A template with either is refused. Invoices
@@ -605,6 +648,6 @@ function templatesPageHtml(d: TaskPageDeps, actor: Actor, p: M.TemplatesPage, ms
       ${p.templates.map((t) => h`<div class="pblock"><div class="pnum">${t.label}${t.active ? '' : ' — retired'}</div>
         <p><strong>${t.subject}</strong></p><pre>${t.body}</pre><p class="help">changed ${t.updated}</p>
         ${p.may_write ? h`<details><summary>Change it</summary>${form(`/staff/templates/${t.id}`, t)}</details>` : raw('')}</div>`)}
-      ${p.may_write ? h`<div class="pblock"><div class="pnum">Add a template</div>${form('/staff/templates', null)}</div>` : raw('')}`,
+      ${p.may_write ? h`<details class="pblock recordlead" id="add-template"${adding ? raw(' open') : raw('')}><summary class="pnum">Add a template</summary>${form('/staff/templates', null)}</details>` : raw('')}`,
   });
 }

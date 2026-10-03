@@ -22,7 +22,9 @@ import { randomUUID } from 'node:crypto';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
-import { claimRef, highlights, recordLayout, recordTabs, sidePanel, type QuickAction } from './components.ts';
+import { claimRef, recordTabs } from './components.ts';
+import { kpiRow, lateBadge, noDateBadge } from './look.ts';
+import { setSubMenu } from './navigation.ts';
 import * as F from './finance.ts';
 import * as I from './invoices.ts';
 import * as V from './vat.ts';
@@ -230,6 +232,36 @@ function settingsBlock(v: I.FinanceDashboard): Safe {
       </form>` : raw('')}`;
 }
 
+/** UI TIDY PHASE 12: Finance's sections in the left-hand menu, with how many invoices each list holds. */
+export function financeMenu(invoices: number, earlier: number): { href: string; label: string; note?: string }[] {
+  return [
+    { href: '/staff/finance#invoices', label: 'Invoices', ...(invoices > 0 ? { note: String(invoices) } : {}) },
+    { href: '/staff/finance#money', label: 'Money by month' },
+    { href: '/staff/finance#vat', label: 'VAT' },
+    { href: '/staff/finance#fees', label: 'Fee controls and firms' },
+    { href: '/staff/finance#settings', label: 'Finance settings' },
+    { href: '/staff/finance#earlier', label: 'Earlier invoices', ...(earlier > 0 ? { note: String(earlier) } : {}) },
+  ];
+}
+
+/** UI TIDY PHASE 12: the red box's label, "Late, on 1 invoice" or "Late, on 2 invoices". */
+export function lateBoxLabel(n: number): string {
+  return `Late, on ${String(n)} invoice${n === 1 ? '' : 's'}`;
+}
+
+/** UI TIDY PHASE 12: one line naming every claim ready to invoice, and Raise our fee where the login may raise one. */
+export function readyLine(claims: readonly Pick<I.FinanceDashboard['expected']['claims'][number], 'client_name' | 'claim_ref' | 'may_raise'>[]): Safe {
+  if (claims.length === 0) return raw('');
+  return h`<p class="readyline"><strong>Ready to invoice:</strong> ${claims.map((c, i) => h`${i === 0 ? raw('') : raw(', ')}${c.client_name} ${claimRef(c.claim_ref)}`)}${
+    claims.some((c) => c.may_raise) ? h` <a class="btn btn-primary" href="#to-invoice">Raise our fee</a>` : raw('')}</p>`;
+}
+
+/** UI TIDY PHASE 12: an invoice's Due cell. Late is a red label; no due date a grey one; on time the words. */
+export function invoiceDue(i: { due_on: string | null; money: { overdue: boolean; due: { label: string } } }): Safe {
+  if (i.due_on === null) return noDateBadge('No due date set yet');
+  return i.money.overdue ? lateBadge(i.money.due.label) : h`${i.money.due.label}`;
+}
+
 /**
  * PHASE 133b — FINANCE ON TABS. The eight numbered sections keep their numbers and their words, and each heading now has
  * an id, so a link can land on one (Accounting's home cards do). They are grouped into six tabs, by the job a person comes
@@ -237,34 +269,56 @@ function settingsBlock(v: I.FinanceDashboard): Safe {
  * to firms; the settings; and the organisations' invoices from before. Every section is on the page, drawn from the same
  * two views as before, whichever tab is showing. The three closing notes sit with the section they are about.
  *
- * THE RIGHT-HAND PANEL repeats the totals section 1 already prints, and offers the controls this page draws for the
- * login: Raise our fee where a claim waits with a button, Run the VAT check (always drawn), Record a setting where the
- * settings form is drawn.
+ * UI TIDY PHASE 12 (3 October 2026): the right-hand panel is gone. Its three links were said again at the top (Raise our
+ * fee, Run the VAT check) and in the left-hand menu (Finance settings), and it pushed the invoices table sideways on a
+ * laptop. Four boxes count the money; a line names every claim ready to invoice; invoices open first; each claim's
+ * number sits under its company instead of in a column of its own; a late invoice is a red label.
  */
 function listPage(
   d: FinanceDeps, actor: Actor, s: F.FinanceSummary, v: I.FinanceDashboard, saved: string | undefined,
 ): string {
   const pct = Math.round(s.fee_rate * 1000) / 10;
-  const quick: QuickAction[] = [
-    ...(v.expected.claims.some((c) => c.may_raise) ? [{ href: '#to-invoice', label: 'Raise our fee' }] : []),
-    { href: '#vat-check', label: 'Run the VAT check' },
-    ...(v.may_record_setting ? [{ href: '#setting', label: 'Record a finance setting' }] : []),
-  ];
+  // UI TIDY PHASE 12: Finance's sections in the left-hand menu, opening out under Finance; on a laptop they replace the
+  // row of tabs (`financepage`), and on a phone the tabs stay.
+  setSubMenu({ items: financeMenu(v.invoices.length, s.rows.length) });
   return page({
     title: 'Finance', nav: d.nav(actor), wide: true,
-    body: h`
+    body: h`<div class="financepage">
       ${saved === undefined ? raw('') : h`<div class="gate">${SAVED[saved] ?? 'Recorded.'}</div>`}
-      ${highlights('Cap Rebate’s own finance', 'Finance', [
-        { label: 'Invoiced', value: v.totals.invoiced },
-        { label: 'Received', value: v.totals.received },
-        { label: 'Outstanding', value: v.totals.outstanding },
-        { label: 'Overdue', value: `${v.totals.overdue} on ${v.totals.overdue_count} invoice${v.totals.overdue_count === 1 ? '' : 's'}` },
-        { label: 'Waiting to be invoiced', value: `${v.expected.claims.length} claim${v.expected.claims.length === 1 ? '' : 's'}` },
-      ], h`<p class="help">Cap Rebate’s own finance — the fee we charge and whether it has been invoiced
-        and paid. Not the client’s tax affairs, and not their accountant’s papers.</p>`)}
-      <div class="gate"><strong>${v.recorded_not_collected}</strong></div>
+      <div class="pagehead"><div><h1>Finance</h1>
+        <p class="lede">Cap Rebate’s own fees, and whether each is invoiced and paid. Not the client’s tax affairs, and not their accountant’s papers.</p></div>
+        <p>${v.expected.claims.some((c) => c.may_raise) ? h`<a class="btn btn-primary" href="#to-invoice">Raise our fee</a> ` : raw('')}<a class="btn" href="#vat-check">Run the VAT check</a></p></div>
+      ${kpiRow([
+        { label: 'Invoiced', value: v.totals.invoiced, tone: 'total', href: '#claim-invoices' },
+        { label: 'Received', value: v.totals.received, tone: 'money', href: '#claim-invoices' },
+        { label: 'Still owed', value: v.totals.outstanding, tone: 'warn', href: '#claim-invoices' },
+        { label: lateBoxLabel(v.totals.overdue_count), value: v.totals.overdue, tone: v.totals.overdue_count > 0 ? 'late' : 'plain', href: '#claim-invoices' },
+      ])}
+      ${readyLine(v.expected.claims)}
+      <p class="help">${v.recorded_not_collected}</p>
 
-      ${recordLayout(recordTabs([
+      ${recordTabs([
+        { id: 'invoices', label: 'Invoices', count: v.invoices.length, body: h`
+      <h2 id="to-invoice">Claims at the invoice stage with no invoice raised</h2>
+      ${v.expected.claims.length === 0 ? h`<p class="help">No claim is waiting at the invoice stage.</p>` : h`
+        <p class="help">Expected ${v.expected.total}${v.expected.without_a_fee > 0 ? h`; ${v.expected.without_a_fee} whose fee cannot be computed, counted apart` : raw('')}.
+          Each claim’s finance task was made when it reached the invoice stage. We never make a second one.</p>
+        <table><thead><tr><th>Company</th><th>At the invoice stage since</th><th>Expected fee</th><th>Earned on</th><th>Finance task</th><th></th></tr></thead>
+          <tbody>${v.expected.claims.map((c) => h`<tr><td>${c.client_name}<br>${claimRef(c.claim_ref)}</td><td>${c.entered_invoice_on}</td><td>${c.expected}</td>
+            <td>${c.expected_on === null ? h`<strong>NO DATE</strong><br><span class="help">${c.expected_on_reading}</span>` : h`${c.expected_on}${c.due_if_invoiced_on_delivery === null ? raw('') : h`<br><span class="help">due ${c.due_if_invoiced_on_delivery} if invoiced that day</span>`}`}</td>
+            <td>${c.finance_task === null ? h`<span class="help">none recorded</span>` : h`${c.finance_task.title} — ${c.finance_task.due.label}`}</td>
+            <td>${c.may_raise ? h`<form method="post" action="/staff/finance/claims/${c.claim_id}/raise"><input type="hidden" name="kind" value="FEE">
+              <button type="submit">Raise our fee</button></form>` : raw('')}</td></tr>`)}</tbody></table>`}
+
+      <h2 id="claim-invoices">The claims’ invoices</h2>
+      ${v.invoices.length === 0 ? h`<p class="help">No invoice is raised on any claim.</p>` : h`
+        <table><thead><tr><th>Company</th><th>Number</th><th>For</th><th>Date</th><th>Amount</th><th>VAT</th><th>Invoice</th><th>Money</th><th>Outstanding</th><th>Due</th></tr></thead>
+          <tbody>${v.invoices.map((i) => h`<tr><td>${i.client_name}<br>${claimRef(i.claim.claim_ref)}</td><td><a href="/staff/finance/${i.id}">${i.number ?? 'unnumbered'}</a></td>
+            <td>${i.kind.label}</td><td>${i.invoice_date}</td><td>${i.fee}</td><td>${i.vat}</td><td>${i.state.label}</td>
+            <td>${i.money.label}</td><td>${i.money.outstanding}</td>
+            <td>${invoiceDue(i)}</td></tr>`)}</tbody></table>`}
+
+` },
         { id: 'money', label: 'Money', body: h`
       <h2 id="money-by-month">The money, by month</h2>
       <p class="help">Invoiced ${v.totals.invoiced}; credit notes ${v.totals.credited}; received ${v.totals.received};
@@ -280,27 +334,6 @@ function listPage(
       <form method="post" action="/staff/finance/vat-check" id="vat-check"><p><button type="submit">Run the VAT check</button></p></form>
 
       <div class="gate">${s.vat_note}</div>` },
-        { id: 'invoices', label: 'Invoices', count: v.invoices.length, body: h`
-      <h2 id="to-invoice">Claims at the invoice stage with no invoice raised</h2>
-      ${v.expected.claims.length === 0 ? h`<p class="help">No claim is waiting at the invoice stage.</p>` : h`
-        <p class="help">Expected ${v.expected.total}${v.expected.without_a_fee > 0 ? h`; ${v.expected.without_a_fee} whose fee cannot be computed, counted apart` : raw('')}.
-          Each claim’s finance task was made when it reached the invoice stage. We never make a second one.</p>
-        <table><thead><tr><th>Company</th><th>At the invoice stage since</th><th>Expected fee</th><th>Earned on</th><th>Finance task</th><th></th><th>Reference</th></tr></thead>
-          <tbody>${v.expected.claims.map((c) => h`<tr><td>${c.client_name}</td><td>${c.entered_invoice_on}</td><td>${c.expected}</td>
-            <td>${c.expected_on === null ? h`<strong>NO DATE</strong><br><span class="help">${c.expected_on_reading}</span>` : h`${c.expected_on}${c.due_if_invoiced_on_delivery === null ? raw('') : h`<br><span class="help">due ${c.due_if_invoiced_on_delivery} if invoiced that day</span>`}`}</td>
-            <td>${c.finance_task === null ? h`<span class="help">none recorded</span>` : h`${c.finance_task.title} — ${c.finance_task.due.label}`}</td>
-            <td>${c.may_raise ? h`<form method="post" action="/staff/finance/claims/${c.claim_id}/raise"><input type="hidden" name="kind" value="FEE">
-              <button type="submit">Raise our fee</button></form>` : raw('')}</td><td>${claimRef(c.claim_ref)}</td></tr>`)}</tbody></table>`}
-
-      <h2 id="claim-invoices">The claims’ invoices</h2>
-      ${v.invoices.length === 0 ? h`<p class="help">No invoice is raised on any claim.</p>` : h`
-        <table><thead><tr><th>Company</th><th>Number</th><th>For</th><th>Date</th><th>Amount</th><th>VAT</th><th>Invoice</th><th>Money</th><th>Outstanding</th><th>Due</th><th>Reference</th></tr></thead>
-          <tbody>${v.invoices.map((i) => h`<tr><td>${i.client_name}</td><td><a href="/staff/finance/${i.id}">${i.number ?? 'unnumbered'}</a></td>
-            <td>${i.kind.label}</td><td>${i.invoice_date}</td><td>${i.fee}</td><td>${i.vat}</td><td>${i.state.label}</td>
-            <td>${i.money.label}</td><td>${i.money.outstanding}</td>
-            <td>${i.due_on === null ? h`<strong>No due date set yet</strong>` : i.money.overdue ? h`<strong>${i.money.due.label}</strong>` : i.money.due.label}</td><td>${claimRef(i.claim.claim_ref)}</td></tr>`)}</tbody></table>`}
-
-` },
         { id: 'fees', label: 'Fee controls and firms', body: h`
       <h2 id="fee-controls">The fee controls, and what the engagement letter says</h2>
       ${controlsBlock(v.controls)}
@@ -313,7 +346,7 @@ function listPage(
             <td>${f.disclosure.given ? f.disclosure.recorded ?? 'yes' : 'not yet'}</td><td>${f.state.label}</td></tr>`)}</tbody></table>`}
 
 ` },
-        { id: 'settings', label: 'Settings', body: h`
+        { id: 'settings', label: 'Finance settings', body: h`
       <h2 id="finance-settings">The finance settings</h2>
       ${settingsBlock(v)}
 
@@ -346,7 +379,7 @@ function listPage(
         but the fee falls due now. Open an invoice to see the sums.</div>
 
 ` },
-      ]), sidePanel(null, quick))}`,
+      ])}</div>`,
   });
 }
 

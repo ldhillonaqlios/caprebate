@@ -47,6 +47,14 @@ export const BRAND_TOKENS: Readonly<Record<string, string>> = Object.freeze({
   ok: '#1d6b35', okbg: '#e6f4ea',
   warn: '#8a5300', warnbg: '#fff5e0',
   stop: '#a01e1e', stopbg: '#fcefef',
+  // UI TIDY PHASE 1, 2 October 2026: one colour for each group of claim stages (src/web/look.ts), from the mock-ups
+  // Lakhbir chose. Each group has a solid colour (white text on it), a light tint, and the darker text drawn on the tint.
+  'g-win': '#1e4fa3', 'g-win-bg': '#dfe9f9', 'g-win-ink': '#1a438c',
+  'g-gather': '#6b3fa0', 'g-gather-bg': '#ece3f7', 'g-gather-ink': '#55308a',
+  'g-survey': '#0f6b5c', 'g-survey-bg': '#d4efe8', 'g-survey-ink': '#0b5548',
+  'g-sign': '#8a5300', 'g-sign-bg': '#fbecd0', 'g-sign-ink': '#6e4300',
+  'g-paid': '#1d6b35', 'g-paid-bg': '#dcf0e1', 'g-paid-ink': '#185c2d',
+  nodate: '#e3e8e6', zebra: '#f6f9f8',
 });
 
 /**
@@ -60,6 +68,12 @@ export const TEXT_PAIRINGS: readonly (readonly [text: string, ground: string])[]
   ['stop', 'white'], ['stop', 'mist'], ['stop', 'stopbg'],
   // PHASE 135: the Tasks tab's count when a task is overdue.
   ['white', 'stop'],
+  // UI TIDY PHASE 1: the stage groups (a label on its tint, white on its solid band), the solid number boxes, the black
+  // table heading, the "no date" label and the striped rows.
+  ['g-win-ink', 'g-win-bg'], ['white', 'g-win'], ['g-gather-ink', 'g-gather-bg'], ['white', 'g-gather'],
+  ['g-survey-ink', 'g-survey-bg'], ['white', 'g-survey'], ['g-sign-ink', 'g-sign-bg'], ['white', 'g-sign'],
+  ['g-paid-ink', 'g-paid-bg'], ['white', 'g-paid'], ['white', 'warn'], ['white', 'ok'], ['white', 'ink'], ['mint', 'ink'],
+  ['ink', 'nodate'], ['ink', 'zebra'], ['body', 'zebra'],
 ]);
 
 const tokenCss = Object.entries(BRAND_TOKENS).map(([k, v]) => `--${k}:${v}`).join(';');
@@ -1142,6 +1156,286 @@ a.small{font-size:16px;font-weight:400;margin-left:.5rem}
   .gbtns button{flex:1 1 auto}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* ================================================================== *
+ * UI TIDY PHASE 1 — THE SHARED LOOK, 2 October 2026 (src/web/look.ts).
+ * Lakhbir chose "design 2" and asked for colours and darker boxes, so a
+ * busy person reads a page at a glance. The back office and the portal
+ * only: every rule starts body.app or names a class only look.ts draws.
+ * ================================================================== */
+body.app thead th{background:var(--ink);color:var(--white);border-bottom:0;font-size:15px;font-weight:700}
+body.app thead th:first-child{border-top-left-radius:.4rem}body.app thead th:last-child{border-top-right-radius:.4rem}
+body.app thead th a{color:var(--white)}
+body.app tbody tr:nth-child(even):not([class]) td{background:var(--zebra)}
+body.app tbody tr:not([class]):hover td{background:var(--mist)}
+.badge.g-win{background:var(--g-win-bg);color:var(--g-win-ink);border-color:var(--g-win)}
+.badge.g-gather{background:var(--g-gather-bg);color:var(--g-gather-ink);border-color:var(--g-gather)}
+.badge.g-survey{background:var(--g-survey-bg);color:var(--g-survey-ink);border-color:var(--g-survey)}
+.badge.g-sign{background:var(--g-sign-bg);color:var(--g-sign-ink);border-color:var(--g-sign)}
+.badge.g-paid{background:var(--g-paid-bg);color:var(--g-paid-ink);border-color:var(--g-paid)}
+.badge.b-late{background:var(--stop);color:var(--white);border-color:var(--stop);font-weight:700}
+.badge.b-nodate{background:var(--nodate);color:var(--ink);border-color:var(--nodate)}
+.badge.b-nobody{background:var(--warnbg);color:var(--warn);border-color:#ecd29a}
+.band{color:var(--white);font-weight:700;font-size:14px;letter-spacing:.04em;padding:.5rem .9rem;margin:0}
+.band.g-win{background:var(--g-win)}.band.g-gather{background:var(--g-gather)}.band.g-survey{background:var(--g-survey)}
+.band.g-sign{background:var(--g-sign)}.band.g-paid{background:var(--g-paid)}.band.g-none{background:var(--ink)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.9rem;margin:0 0 1.25rem;padding:0;list-style:none}
+.kpi{display:block;border-radius:.75rem;padding:.9rem 1.1rem;color:var(--white);text-decoration:none;min-width:0}
+.kpi .kpi-label{display:block;font-size:15px;font-weight:600;color:inherit}
+.kpi .kpi-value{display:block;font-family:${HEADING_STACK};font-size:32px;font-weight:700;line-height:1.2;color:inherit;overflow-wrap:anywhere}
+a.kpi:hover{text-decoration:none;filter:brightness(1.15)}a.kpi:hover .kpi-label{text-decoration:underline}
+.kpi.k-total{background:var(--ink)}.kpi.k-total .kpi-value{color:var(--mint)}
+.kpi.k-late{background:var(--stop)}.kpi.k-warn{background:var(--warn)}.kpi.k-money{background:var(--ok)}
+.kpi.k-win{background:var(--g-win)}.kpi.k-gather{background:var(--g-gather)}.kpi.k-survey{background:var(--g-survey)}
+.kpi.k-sign{background:var(--g-sign)}.kpi.k-paid{background:var(--g-paid)}
+.kpi.k-plain{background:var(--white);color:var(--ink);border:1px solid var(--line)}
+.groupbar{display:flex;height:2.1rem;border-radius:.5rem;overflow:hidden;margin:.4rem 0}
+.groupbar span{display:flex;align-items:center;padding:0 .6rem;color:var(--white);font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;min-width:0}
+.groupbar .g-win{background:var(--g-win)}.groupbar .g-gather{background:var(--g-gather)}.groupbar .g-survey{background:var(--g-survey)}
+.groupbar .g-sign{background:var(--g-sign)}.groupbar .g-paid{background:var(--g-paid)}
+.groupbar .gw-1{flex-grow:1}.groupbar .gw-2{flex-grow:2}.groupbar .gw-3{flex-grow:3}.groupbar .gw-4{flex-grow:4}.groupbar .gw-5{flex-grow:5}
+.groupbar .gw-6{flex-grow:6}.groupbar .gw-7{flex-grow:7}.groupbar .gw-8{flex-grow:8}.groupbar .gw-9{flex-grow:9}.groupbar .gw-10{flex-grow:10}
+@media (max-width:600px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}.kpi{padding:.7rem .8rem}.kpi .kpi-value{font-size:26px}}
+
+/* ================================================================== *
+ * UI TIDY PHASE 2 — THE LEFT-HAND MENU, 2 October 2026.
+ * The back office's and the portal's header becomes a black menu down
+ * the left (the markup is unchanged: header.top holds the name, the
+ * util and the sections). Groups are named; nothing is under More.
+ * Under 900 px it folds to a bar with a Menu button (no script: a
+ * checkbox the stylesheet reads, src/web/navigation.ts MENU_BUTTON).
+ * ================================================================== */
+body.app>header.top{background:var(--ink);border-bottom:0}
+body.app .topline{max-width:none;margin:0}
+body.app .topline>.brand{color:var(--white)}
+body.app .topline>.logo{background:var(--white);border-radius:.5rem;padding:10px;line-height:0}
+body.app .topline>.logo img{width:110px}
+body.app .util{display:contents}
+body.app .helplink{color:var(--white)}
+body.app .usermenu summary{color:var(--white)}
+body.app .usermenu summary::after{color:var(--white)}
+body.app .menu-pop{color:var(--ink)}
+body.app .appnav{flex-basis:auto}
+body.app .navgroups{list-style:none;margin:0;padding:0}
+body.app .navlabel{color:var(--mint);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:.8rem .65rem .2rem}
+body.app .tabs-main{flex-direction:column;flex-wrap:nowrap;gap:2px}
+body.app .tabs-main>li>a{display:flex;justify-content:space-between;align-items:center;gap:.5rem;color:var(--white);border:0;border-radius:.5rem;padding:.42rem .65rem;white-space:normal}
+body.app .tabs-main>li>a:hover{background:#2a302d}
+body.app .tabs-main>li>a[aria-current="page"]{background:var(--mint);color:var(--ink);font-weight:700}
+body.app .tabs-main .tabcount{background:var(--white);color:var(--ink)}
+body.app .tabs-main .tabcount.late{background:var(--stop);color:var(--white)}
+body.app .subtitle{color:var(--mint);font-size:13px;font-weight:700;margin:.45rem .5rem .15rem 1.4rem;line-height:1.35}
+body.app .subnav{list-style:none;margin:.2rem 0 .4rem .9rem;padding:0}
+body.app .subnav a{display:flex;justify-content:space-between;gap:.4rem;color:#e6eeeb;font-size:15px;padding:.38rem .6rem;border-radius:.4rem;text-decoration:none}
+body.app .subnav a:hover{background:#2a302d}
+body.app .subnav a[aria-current="page"]{background:var(--mint);color:var(--ink);font-weight:700}
+body.app .subnote{font-size:13px;font-weight:700;white-space:nowrap}
+body.app .topline .dash-tabs{margin:0;gap:4px}
+body.app .topline .dash-tabs::before{content:"Home shows";flex-basis:100%;color:var(--mint);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:0 .15rem .2rem}
+body.app .topline .dash-tab{color:var(--white);border-color:#4a514e;font-size:14px;padding:.3rem .7rem}
+body.app .topline .dash-tab:hover{background:#2a302d}
+body.app .topline .dash-tab[aria-current="page"]{background:var(--mint);border-color:var(--mint);color:var(--ink)}
+.navtoggle,.navbutton{display:none}
+body.app .topline .gsearch button[type="submit"]:not(.linkish):not(.opt){background:var(--mint);border-color:var(--mint);color:var(--ink)}
+@media (min-width:900px){
+  body.app{display:grid;grid-template-columns:15.5rem minmax(0,1fr);grid-template-rows:1fr auto;min-height:100vh}
+  body.app>header.top{grid-column:1;grid-row:1/span 2;position:sticky;top:0;height:100vh;overflow-y:auto}
+  body.app>main{grid-column:2;grid-row:1;width:100%;box-sizing:border-box}
+  body.app>footer{grid-column:2;grid-row:2}
+  body.app .topline{flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:.4rem;padding:1rem .75rem;min-height:100%;box-sizing:border-box}
+  body.app .topline>.brand{font-size:22px;padding:0 .5rem}
+  body.app .topline>.logo{align-self:flex-start}
+  body.app .topline .dash-tabs{order:1}
+  body.app .gsearch{order:2}
+  body.app .gsearch input{width:100%;max-width:none;min-width:0;flex:1;border-color:#4a514e;background:#1d211f;color:var(--white)}
+  body.app .gsearch input::placeholder{color:#c9d3cf}
+  body.app .gsearch button{padding:0 .7rem}
+  body.app .appnav{order:3}
+  body.app .helplink{order:4;margin-top:auto;padding:.4rem .65rem}
+  body.app .usermenu{order:5}
+  body.app .menu-pop{top:auto;bottom:calc(100% + .3rem);left:0;right:auto}
+}
+@media (max-width:899.98px){
+  body.app .topline{flex-wrap:wrap;align-items:center;padding:.5rem .75rem;gap:.5rem}
+  body.app .navbutton{display:inline-flex;align-items:center;margin-left:auto;min-height:44px;padding:0 1rem;border:1px solid #6b7370;border-radius:.5rem;color:var(--white);font-weight:700;cursor:pointer}
+  body.app .navtoggle{display:block;position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+  body.app .navtoggle:focus-visible+.navbutton{outline:3px solid var(--mint);outline-offset:2px}
+  body.app .navtoggle:checked+.navbutton{background:var(--mint);color:var(--ink);border-color:var(--mint)}
+  body.app .topline .dash-tabs,body.app .gsearch,body.app .appnav,body.app .helplink,body.app .usermenu{display:none;flex-basis:100%;order:3}
+  body.app .topline:has(.navtoggle:checked) .dash-tabs{display:flex;order:3}
+  body.app .topline:has(.navtoggle:checked) .gsearch{display:flex;order:4}
+  body.app .gsearch input{flex:1;min-width:0}
+  body.app .topline:has(.navtoggle:checked) .appnav{display:block;order:5}
+  body.app .topline:has(.navtoggle:checked) .helplink{display:block;order:6;padding:.4rem .65rem}
+  body.app .topline:has(.navtoggle:checked) .usermenu{display:block;order:7}
+  body.app .navtoggle,body.app .navbutton{order:2}
+  body.app .uname{position:static;width:auto;height:auto;overflow:visible;clip:auto}
+}
+
+/* UI TIDY PHASE 3 — THE PIPELINE AS ONE TABLE (src/web/pipeline-pages.ts, pipelineTable). Each group of stages opens
+   with its coloured band; the business is the link a person reads first. */
+.listtools{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:.6rem 1rem;margin:0 0 .9rem}
+.listtools .viewbar{margin:0}
+.inlineform{display:flex;flex-wrap:wrap;align-items:flex-end;gap:.4rem}
+.inlineform label{flex-basis:100%;font-weight:600;font-size:15px;margin:0}
+.inlineform input[type="search"]{width:20rem;max-width:100%;min-height:2.5rem}
+.pipetable{margin:0}
+.pipetable .bandrow th{padding:0;background:transparent;border:0}
+.pipetable .bandrow .band{border-radius:0}
+.pipetable td{font-size:15px}
+@media (min-width:721px){.pipetable td:first-child{min-width:12rem}.pipetable td:nth-child(3){min-width:15rem}}
+.pipetable .moveform{margin:.4rem 0 0}
+.pipetable .rowlink{font-weight:700;color:var(--ink)}
+.pipetable .btn-quiet{white-space:nowrap;font-size:14px}
+@media (max-width:720px){.pipetable .bandrow th{display:block}.pipetable .bandrow{border:0;padding:0;background:transparent}}
+
+/* UI TIDY PHASE 4 — HOME IN TWO COLUMNS (src/web/staff-dashboard.ts). The work on the left as rows, one line each, late
+   in red; the pipeline's five coloured bars and the week on the right. The rows' markup is Phase 136's tiles. */
+.home-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:1.25rem;align-items:start}
+@media (max-width:1100px){.home-cols{grid-template-columns:minmax(0,1fr)}}
+.home-cols .homerow,.home-cols .dash-card{background:var(--white);border:1px solid var(--line);border-radius:.75rem;padding:1rem 1.1rem;margin:0 0 1.25rem}
+.home-cols .homerow>h2,.home-cols .dash-card-h h2{font-size:22px}
+.home-cols .hometiles{display:block;margin:0;border:1px solid var(--line);border-radius:.5rem;overflow:hidden}
+.home-cols .hometile{border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none}
+.home-cols .hometile:first-child{border-top:0}
+.home-cols .hometile:nth-child(even){background:var(--zebra)}
+.home-cols .hometile .tilelink{display:flex;flex-wrap:wrap;align-items:baseline;gap:.15rem .75rem;padding:.6rem .8rem}
+.home-cols .hometile .tilename{font-size:16px;flex:1 1 12rem}
+.home-cols .hometile .tileline{margin:0;font-size:15px;flex:1 1 14rem}
+.home-cols .hometile .tilecount{font-size:24px}
+.home-cols .hometile.late .tileline.when{flex:0 0 auto;background:var(--stop);color:var(--white);border-radius:999px;padding:.05rem .6rem;font-size:14px}
+.home-side .hometile .tileline{flex-basis:100%}
+.gbars{list-style:none;margin:0 0 .6rem;padding:0;display:grid;gap:.35rem}
+.gbar{display:grid;grid-template-columns:7.5rem minmax(0,1fr) 1.6rem;align-items:center;gap:.5rem;color:var(--ink);text-decoration:none;font-size:15px}
+.gbar:hover .gbar-name{text-decoration:underline}
+.gbar-track{height:1.1rem;background:var(--nodate);border-radius:.3rem;overflow:hidden;display:block}
+.gbar-fill{display:block;height:100%}
+.gbar-fill.g-win{background:var(--g-win)}.gbar-fill.g-gather{background:var(--g-gather)}.gbar-fill.g-survey{background:var(--g-survey)}
+.gbar-fill.g-sign{background:var(--g-sign)}.gbar-fill.g-paid{background:var(--g-paid)}
+.gbar-fill.gw-0{width:0}.gbar-fill.gw-1{width:10%}.gbar-fill.gw-2{width:20%}.gbar-fill.gw-3{width:30%}.gbar-fill.gw-4{width:40%}.gbar-fill.gw-5{width:50%}
+.gbar-fill.gw-6{width:60%}.gbar-fill.gw-7{width:70%}.gbar-fill.gw-8{width:80%}.gbar-fill.gw-9{width:90%}.gbar-fill.gw-10{width:100%}
+.gbar-n{font-weight:700;text-align:right}
+.homelinks{margin:.4rem 0 0;font-size:15px}
+.home-side .wk{grid-template-columns:minmax(0,1fr);gap:4px}
+.home-side .wk-day{min-height:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .6rem;padding:.35rem .6rem}
+.home-side .wk-day .wk-h{margin:0;min-width:4.5rem}
+.home-side .wk-day .wk-free{margin:0}
+.home-side .wk-items{flex:1 1 100%}
+.home-side .wk-day.today{border-color:var(--ink);background:var(--mint)}
+.home-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:0 1.25rem;align-items:start}
+
+/* UI TIDY PHASE 5 — LEADS (src/web/pipeline-pages.ts leadsHead). Every switch on one row; the record form folded. */
+.leadtools{align-items:center}
+.leadtools .toolnote{margin:0;font-size:15px}
+.recordlead>summary.pnum{display:block;cursor:pointer;list-style:none;margin:0;padding:0;border:0;font-size:20px}
+.leadtools .filterbox:not([open]){flex:0 0 auto}
+.recordlead>summary::-webkit-details-marker{display:none}
+.recordlead>summary::before{content:"+ ";font-weight:700}
+.recordlead[open]>summary::before{content:"– "}
+.recordlead[open]>summary.pnum{margin-bottom:.6rem;padding-bottom:.5rem;border-bottom:1px solid var(--line)}
+
+/* UI TIDY PHASE 6 — THE CLIENTS LIST (src/web/client-list.ts). Each claim beside its company, by site, in its colour. */
+.claimsat{list-style:none;margin:0;padding:0;display:grid;gap:.3rem}
+.claimsat li{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .45rem}
+.clientlist .rowname{font-weight:700;color:var(--ink)}
+
+/* UI TIDY PHASE 7 — A CLIENT'S PAGE (src/web/client-page.ts, client-layout.ts). The name and its labels, the actions
+   beside them, then each claim in a box of its own, headed in its stage's colour, its next step in a dark box. */
+.clienthead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:.75rem 1.25rem;margin:0 0 .75rem}
+.clienthead h1{margin:0 0 .2rem;font-size:36px}
+.clienthead .subhead{margin:0 0 .4rem}
+.clienthead .pills{display:flex;flex-wrap:wrap;gap:.35rem;margin:.3rem 0 0}
+.clienthead .cactions{margin:0}
+.claimboxes{display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:1rem;margin:1rem 0 1.25rem}
+.claimbox{background:var(--white);border:1px solid var(--line);border-radius:.75rem;overflow:hidden;display:flex;flex-direction:column}
+.claimbox .band{border-radius:0}
+.claimbox-body{padding:.8rem 1rem 1rem;display:flex;flex-direction:column;gap:.35rem;flex:1}
+.claimbox-site{font-size:22px;margin:0}
+.claimbox-site a{color:var(--ink)}
+.claimbox .help{margin:0}
+.nextbox{background:var(--ink);color:var(--white);border-radius:.6rem;padding:.6rem .8rem;margin:.3rem 0}
+.nextbox-h{display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin:0;color:var(--mint);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.nextbox-t{margin:.2rem 0 0;font-size:17px;font-weight:700;color:var(--white)}
+.claimbox-go{margin:auto 0 0}
+
+/* UI TIDY PHASE 8 — A CLIENT'S PAGE, PART 2 (src/web/client-layout.ts tabbed, partsList). A plain visit shows one line per
+   part; a part opens when it is chosen here or in the left-hand menu. From 900 px the menu holds the parts, so the row of
+   tabs is for phones. */
+.cparts{list-style:none;margin:1rem 0;padding:0;background:var(--white);border:1px solid var(--line);border-radius:.75rem;overflow:hidden}
+.cparts li+li{border-top:1px solid var(--line)}
+.cparts li:nth-child(even){background:var(--zebra)}
+.cpart{display:grid;grid-template-columns:minmax(9rem,1fr) auto minmax(0,2.5fr);align-items:center;gap:.4rem 1rem;padding:.75rem 1rem;color:var(--ink);text-decoration:none}
+.cpart:hover{background:var(--mist)}
+.cpart:hover .cpart-name{text-decoration:underline}
+.cpart-name{font-weight:700;font-size:17px}
+.cpart-count{display:inline-block;min-width:1.4rem;padding:0 .35rem;border-radius:999px;background:var(--ink);color:var(--white);font-size:13px;text-align:center}
+.cpart-what{color:var(--body);font-size:15px}
+.ctabwrap:has(.ctab-panels :target) .cparts{display:none}
+.ctab-back{margin:0 0 .6rem;font-size:15px}
+@media (min-width:900px){body.app .ctabs{display:none}}
+@media (max-width:720px){.cpart{grid-template-columns:minmax(0,1fr) auto}.cpart-what{grid-column:1/-1}}
+
+/* UI TIDY PHASE 9 — TASKS (src/web/tasks-pages.ts). The longer lists under the tasks fold, each with how many it holds. */
+.morelist{border-top:1px solid var(--line);padding:.6rem 0}
+.morelist>summary{cursor:pointer;font-weight:700;font-size:16px;color:var(--ink)}
+.morelist>summary .count{display:inline-block;min-width:1.4rem;padding:0 .35rem;border-radius:999px;background:var(--ink);color:var(--white);font-size:13px;text-align:center}
+#my-tasks table{margin-top:0}
+table tr.overdue{color:inherit}
+
+/* UI TIDY PHASE 10 — SURVEY JOBS (src/web/surveyor-pages.ts). The site under the client, the claim number beside it. */
+.jobtable .rowlink{font-weight:700;color:var(--ink)}
+.jobsite{font-weight:600;color:var(--ink)}
+.otherjobs{margin:-.25rem 0 1rem;padding:.6rem .9rem;background:var(--warnbg);border:1px solid #ecd29a;border-radius:.5rem;color:var(--ink)}
+tr.thisjob td{background:var(--okbg)}
+
+/* UI TIDY PHASE 11 — THE SURVEY PACK (src/web/survey-pack-pages.ts packHead). Which client, which site, which claim. */
+.packhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.75rem 1rem;background:var(--ink);color:var(--white);border-radius:.75rem;padding:.9rem 1.2rem;margin:0 0 1rem}
+.packhead p{margin:0;color:var(--white)}
+.packhead-kind{color:var(--mint)!important;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.packhead-title{font-family:${HEADING_STACK};font-size:26px;font-weight:700;line-height:1.25}
+.packhead-facts{font-size:15px}
+a.packhead-switch{background:var(--mint);color:var(--ink);border-radius:.5rem;padding:.5rem .9rem;font-weight:700;text-decoration:none;white-space:nowrap}
+a.packhead-switch:hover{text-decoration:underline}
+.pk-groups td:nth-child(2){white-space:nowrap}
+
+/* UI TIDY PHASE 12 — FINANCE (src/web/finance-pages.ts). From 900 px the left-hand menu holds Finance's sections. */
+.readyline{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem;background:var(--warnbg);border:1px solid #ecd29a;border-radius:.6rem;padding:.7rem 1rem;color:var(--ink);margin:0 0 1rem}
+.readyline .btn-primary{margin-left:auto}
+@media (min-width:900px){.financepage .rtabs{display:none}}
+
+/* UI TIDY PHASE 13 — THE CALENDAR (src/web/staff.ts calendarPage). The week as seven boxes side by side from 900 px. */
+.calnav{display:flex;flex-wrap:wrap;gap:.4rem;margin:0}
+.weekgrid{list-style:none;margin:0 0 1.5rem;padding:0;display:grid;grid-template-columns:1fr;gap:.5rem}
+.wday{background:var(--white);border:1px solid var(--line);border-radius:.6rem;padding:.6rem .7rem;min-width:0}
+.wday.today{border:2px solid var(--ink);box-shadow:inset 0 4px 0 var(--mint)}
+.wday-h{margin:0 0 .4rem;font-weight:700;font-size:14px}
+.wnone{margin:0;color:var(--mut);font-size:14px}
+.wcalls{list-style:none;margin:0;padding:0}
+.wcalls li{margin:0 0 .45rem;padding:.35rem .5rem;background:var(--mist);border-left:3px solid var(--ink);border-radius:.3rem;font-size:14px;line-height:1.35;overflow-wrap:anywhere}
+.wcalls a{color:var(--ink);font-weight:600}
+.wmeta{display:block;font-size:13px;color:var(--mut);margin-top:.15rem}
+@media (min-width:900px){.weekgrid{grid-template-columns:repeat(7,minmax(0,1fr))}.wday{min-height:7rem}}
+@media (max-width:899px){.wday:not(:has(.wcalls)){display:flex;justify-content:space-between;align-items:baseline;gap:.5rem}.wday:not(:has(.wcalls)) .wday-h{margin:0}}
+
+/* UI TIDY PHASE 14 — INTRODUCERS (src/web/introducers-pages.ts). */
+.rewardline{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem;margin:0 0 .5rem}
+.formfold{margin:.75rem 0 0}
+.formfold>summary{display:inline-block;cursor:pointer;list-style:none;font-weight:700;border:1px solid var(--ink);border-radius:.5rem;padding:.45rem .9rem;background:var(--white)}
+.formfold>summary::-webkit-details-marker{display:none}
+.formfold>summary::before{content:"+ "}
+.formfold[open]>summary::before{content:"– "}
+.formfold[open]>summary{margin-bottom:.6rem}
+
+/* UI TIDY PHASE 15 — SETTINGS (src/web/staff.ts usersPage, tasks-pages.ts, compliance-views.ts). */
+.rolefold{margin:.35rem 0 0}
+.rolefold>summary{padding:.25rem .65rem;font-size:14px}
+.rolefold form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:.4rem}
+.rolefold label{font-size:14px}
+.userlist td:last-child{min-width:14rem}
+.cantdo ul{margin:.25rem 0 0}
+
+/* UI TIDY PHASE 18 — THE CLAIM PAGE (src/web/crm-pages.ts). Its sections, indented under the claim in the left-hand menu. */
+.subnav li.subsub a{padding-left:1.75rem;font-size:13px}
 
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.

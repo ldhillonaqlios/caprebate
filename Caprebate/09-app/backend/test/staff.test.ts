@@ -374,14 +374,14 @@ describe('the calendar', () => {
       const staff = await h.signIn('SALES');
       const day = await staff.req('/staff/calendar?view=day&date=2026-09-09');
       assert.equal(day.status, 200);
-      assert.match(day.body, /Day · 9 Sep 2026/); // Phase 133c: UK dates
+      assert.match(day.body, /<p class="lede">Wednesday 9 Sep 2026<\/p>/); // Phase 133c: UK dates; UI tidy phase 13: the day's name
       const week = await staff.req('/staff/calendar?view=week&date=2026-09-09');
       assert.equal(week.status, 200);
       // The 9th is a Wednesday, so its week runs from Monday the 7th.
-      assert.match(week.body, /Week · 7 Sep 2026/, 'the week does not start on a Monday');
+      assert.match(week.body, /The week of 7 Sep 2026/, 'the week does not start on a Monday');
       assert.match(week.body, /to 13 Sep 2026/, 'the week does not end on a Sunday');
-      assert.match(week.body, /Monday 7 Sep 2026/);
-      assert.match(week.body, /Sunday 13 Sep 2026/);
+      assert.match(week.body, /<p class="wday-h">Mon 7 Sep 2026<\/p>/); // UI tidy phase 13: one box a day
+      assert.match(week.body, /<p class="wday-h">Sun 13 Sep 2026<\/p>/);
     } finally { h.close(); }
   });
 

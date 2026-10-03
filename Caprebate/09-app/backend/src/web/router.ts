@@ -58,7 +58,7 @@ import { READ_AND_DELETED } from './originals.ts';
 import { receivableTypes, startDocumentUpload, readLines, type RequestView } from './documents.ts';
 import { handleStaff, handlePortalSettings } from './staff.ts';
 import { mayEnterBackOffice, NotFoundAsRefusal } from './backoffice.ts';
-import { navContext, staffShell, portalShell, type NameSwitches, type NavContext } from './navigation.ts';
+import { navContext, staffShell, portalShell, setSubMenu, type NameSwitches, type NavContext } from './navigation.ts';
 import { badge, breadcrumb, card, claimRef, clientStageBar, noticeAtAddress, propertyIn, savedMessage, welcomeCard, why } from './components.ts';
 import { stepName } from './portal-steps.ts';
 import { clientSteps, type ClientStep } from './approvals.ts';
@@ -2048,23 +2048,34 @@ function portalPage(
     .map((x) => [x.logical_document_id ?? '', `${x.type_label ?? ''} ${x.seq ?? ''}`] as const)).entries()];
   const named = extra.proposedSteps === true;
   const cls = extra.claims ?? [];
+  const answered = tks.filter((t) => t.state === 'ANSWERED');
+  const received = reqs.filter((r) => r.state === 'RECEIVED');
+  // UI TIDY PHASE 16: the page's parts open out under Your claims in the left-hand menu.
+  setSubMenu({ items: [
+    ...(extra.dashboard === undefined ? [] : [{ href: '#where-you-are', label: 'Where your claim is' }]),
+    { href: '#waiting-on-you', label: 'What we need from you', ...(open.length + asked.length > 0 ? { note: String(open.length + asked.length) } : {}) },
+    { href: '#done-so-far', label: 'What we have done' },
+    { href: '#your-range', label: 'The range you were shown' },
+    { href: '#letter', label: 'Your engagement letter' },
+    { href: '#appointment', label: 'Your appointment' },
+    { href: '#documents', label: 'Documents' },
+    { href: '#contact-us', label: 'How to contact us' },
+  ] });
   return page({
     title: business.name, nav: nav(actor), wide: true,
     /* PHASE 133c (B9): THE PORTAL, IN THE ORDER A CLIENT NEEDS IT. At the top, how to reach us and book a call; then where
        the claim is; the range with its basis underneath; what we need from you; then everything else. The long step
-       explanations sit behind "What happens at each step". Every section Phase 133a drew is still on the page. */
+       explanations sit behind "What happens at each step". Every section Phase 133a drew is still on the page.
+       UI TIDY PHASE 16 (3 October 2026): the header also offers Send us a document; the questions and the documents asked
+       for are drawn only when there is one (the "What we need from you" card already says when nothing is); How to
+       contact us moves to the end, its words unchanged; the parts are listed under Your claims in the left-hand menu. */
     body: h`
       <header class="highlights"><p class="eyebrow">${cls.length === 1 ? 'Your claim' : 'Your claims'}</p><h1>${business.name}</h1>
-        <p><a class="btn btn-primary" href="/portal/messages">Send us a message</a> <a class="btn" href="#appointment">Book a call</a></p></header>
+        <p><a class="btn btn-primary" href="/portal/messages">Send us a message</a> <a class="btn" href="#appointment">Book a call</a> <a class="btn" href="#documents">Send us a document</a></p></header>
       ${extra.welcome ?? raw('')}
       ${extra.dashboard ?? raw('')}
       ${cls.length === 0 ? raw('') : card('Your claims', portalClaimTiles(cls, named, business.name), { count: cls.length, id: 'your-claims' })}
       ${clientStepsCard(extra.done ?? [], cls.map((c) => ({ id: c.id, name: propertyIn(business.name, c.property) ?? 'Your claim' })))}
-      <section class="card" id="contact-us"><div class="card-h"><h2>How to contact us</h2></div>
-        <p>Write to us under <a href="/portal/messages">Messages</a> — you can send a file there too — or ask for a call under
-        <a href="#appointment">Your appointment</a>. If you are unhappy with anything we have done, our
-        <a href="/notices/">public notices</a> say how to complain.</p>
-      </section>
       ${cls.length === 0 && progress.known ? clientStageBar(progress.steps.map((s) => ({ label: stepName(s.stage, named), state: s.state }))) : raw('')}
 
       <section class="card" id="your-range"><div class="card-h"><h2>The range you were shown</h2></div>
@@ -2080,7 +2091,7 @@ function portalPage(
             asked.map((r) => h`<li><a href="#request-${r.id}">${r.type.label}</a> <span class="help">— a document, ${ukDatesIn(r.due.label)}</span></li>`)}</ul>`}
       </section>`}
 
-      <section class="card"><div class="card-h"><h2>Questions we still need answered</h2></div>
+      ${open.length + answered.length === 0 ? raw('') : h`<section class="card" id="questions"><div class="card-h"><h2>Questions we still need answered</h2></div>
       ${open.length === 0
         ? h`<p class="help">Nothing is waiting on you.</p>`
         : open.map((t) => h`
@@ -2094,12 +2105,12 @@ function portalPage(
               <button class="cta" type="submit">Send this answer</button>
             </form>
           </div>`)}
-      ${tks.filter((t) => t.state === 'ANSWERED').map((t) => h`
+      ${answered.map((t) => h`
         <p class="help">✓ ${t.question} — ${t.answer_state === 'DONT_KNOW' ? 'answered “I don’t know”' : t.answer}
         (${t.answered_by_role === 'CLIENT' ? 'you' : 'Cap Rebate'}, ${t.answered_at === null ? '' : localStamp(t.answered_at, nowIso)})</p>`)}
-      </section>
+      </section>`}
 
-      <section class="card"><div class="card-h"><h2>Documents we have asked you for</h2></div>
+      ${asked.length + received.length === 0 ? raw('') : h`<section class="card" id="asked-documents"><div class="card-h"><h2>Documents we have asked you for</h2></div>
       ${asked.length === 0
         ? h`<p class="help">We are not waiting on any document from you.</p>`
         : asked.map((r) => h`
@@ -2115,9 +2126,9 @@ function portalPage(
             <p class="help">It is marked received when the file arrives and passes our checks. There is no button
             to say you have sent it.</p>
           </div>`)}
-      ${reqs.filter((r) => r.state === 'RECEIVED').map((r) => h`
+      ${received.map((r) => h`
         <p class="help">✓ ${r.type.label} — received${r.received === null ? '' : `, version ${r.received.version_no ?? ''}, ${ukDatesIn(r.received.at)}`}</p>`)}
-      </section>
+      </section>`}
 
       <section class="card"><div class="card-h"><h2>What happens at each step</h2></div>
       ${progress.known
@@ -2128,7 +2139,7 @@ function portalPage(
             Ask us and we will tell you. <span class="help">${P.stageInWords(business.stage)}</span></div>`}
       </section>
 
-      <section class="card"><div class="card-h"><h2>What we have issued to you</h2></div>
+      <section class="card" id="issued"><div class="card-h"><h2>What we have issued to you</h2></div>
       ${dlv.length === 0
         ? h`<p class="help">Nothing has been issued yet.</p>`
         : h`<table><tbody>${dlv.map((x) => h`<tr><td>${x.label}</td><td>version ${x.version}, issued ${ukDate(x.issued_on)}</td>
@@ -2155,7 +2166,7 @@ function portalPage(
             </form>` : raw('')}
         </div>`)}</section>`}
 
-      <section class="card"><div class="card-h"><h2>Your engagement letter</h2></div>
+      <section class="card" id="letter"><div class="card-h"><h2>Your engagement letter</h2></div>
       ${eng === null
         ? h`<p class="help">No engagement letter has been prepared yet.</p>`
         : h`<p>Status: <strong>${eng.state.toLowerCase().replace('_', ' ')}</strong>${eng.signed_at !== null ? h`, ${localStamp(eng.signed_at, nowIso)}` : raw('')}.</p>
@@ -2197,7 +2208,13 @@ function portalPage(
         <button class="cta" type="submit">Send</button>
       </form></section>
 
-      <section class="card"><div class="card-h"><h2>Your account</h2></div>
+      <section class="card" id="contact-us"><div class="card-h"><h2>How to contact us</h2></div>
+        <p>Write to us under <a href="/portal/messages">Messages</a> — you can send a file there too — or ask for a call under
+        <a href="#appointment">Your appointment</a>. If you are unhappy with anything we have done, our
+        <a href="/notices/">public notices</a> say how to complain.</p>
+      </section>
+
+      <section class="card" id="account"><div class="card-h"><h2>Your account</h2></div>
       <p><a href="/portal/settings">Change your password, name or username</a></p></section>`,
   });
 }

@@ -42,6 +42,14 @@ type Send = { id: string; job_id: string; by_user: string; byte_size: number; pi
 const pieceKey = (send: string, n: number): string => `${VIDEO_PREFIX}${send}/${String(n)}`;
 const plainSizeOf = (s: Pick<Send, 'byte_size' | 'pieces'>, n: number): number => n < s.pieces ? VIDEO_PIECE_BYTES : s.byte_size - (s.pieces - 1) * VIDEO_PIECE_BYTES;
 
+/** UI tidy phase 11: a video's length, short — "32 s", "2 min", "2 min 12 s" — never "0 min 32 s" (Lakhbir, 2 October 2026). */
+export function lengthWords(secs: number): string {
+  const s = Math.max(0, Math.round(secs));
+  const m = Math.floor(s / 60);
+  if (m === 0) return `${String(s)} s`;
+  return s % 60 === 0 ? `${String(m)} min` : `${String(m)} min ${String(s % 60)} s`;
+}
+
 /** How long, in words: "under a minute", "1 minute", "12 minutes". */
 export function minutesWords(minutes: number): string {
   return minutes < 1 ? 'under a minute' : `${String(minutes)} minute${minutes === 1 ? '' : 's'}`;

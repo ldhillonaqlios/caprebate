@@ -115,11 +115,12 @@ describe('the rows, in Lakhbir\'s order', () => {
     // 1 Oct 2026 — Home as a dashboard, in Lakhbir's new order ("whos a new lead … whats in the pipeline … new messages
     // … a calendar … and below it … activities for today"); Admin's own row is on the Admin tab.
     const want: Record<Staff, string[]> = {
-      sales: ['new-leads', 'pipeline', 'today', 'next-actions'],
-      readonly: ['new-leads', 'pipeline', 'today', 'next-actions'],
-      admin: ['new-leads', 'pipeline', 'today', 'next-actions'],
-      accounting: ['money', 'today'],
-      surveying: ['jobs', 'today'],
+      // UI tidy phase 4: the work on the left (Do these first, new leads, leads' next steps), the pipeline on the right.
+      sales: ['today', 'new-leads', 'next-actions', 'pipeline'],
+      readonly: ['today', 'new-leads', 'next-actions', 'pipeline'],
+      admin: ['today', 'new-leads', 'next-actions', 'pipeline'],
+      accounting: ['today', 'money'],
+      surveying: ['today', 'jobs'],
     };
     for (const who of STAFF) assert.deepEqual(rowIds((await as(who).get('/staff')).body), want[who], who);
     assert.deepEqual(rowIds((await as('admin').get('/staff?view=admin')).body), ['admin']);
@@ -148,11 +149,18 @@ describe('the rows, in Lakhbir\'s order', () => {
     }
   });
 
-  test('the pipeline row: one tile per stage, each opening that stage\'s list of claims, then Reports', async () => {
-    const t = tiles(row((await as('sales').get('/staff')).body, 'pipeline'));
-    assert.ok(t.length >= 10, 'one tile per stage');
-    for (const x of t.filter((y) => y.href.startsWith('/staff/claims?stage='))) assert.match(x.lines[1] ?? '', /^\d+ claims?$/);
-    assert.equal(t[t.length - 1]?.href, '/staff/reports');
+  test('the pipeline row: the five groups of stages as bars, each with its count, then Open the pipeline and Reports', async () => {
+    // UI tidy phase 4: Lakhbir agreed the eleven stage tiles become one small chart (00-START-HERE/hub/UI-TIDY-PLAN.md).
+    const r = row((await as('sales').get('/staff')).body, 'pipeline');
+    const bars = [...r.matchAll(/<a class="gbar" href="\/staff\/pipeline"><span class="gbar-name">([^<]+)<\/span><span class="gbar-track"><span class="gbar-fill g-([a-z]+) gw-(\d+)"><\/span><\/span><span class="gbar-n">(\d+)<\/span><\/a>/g)];
+    assert.deepEqual(bars.map((m) => m[1]), ['Winning it', 'Gathering', 'Surveying', 'Signing off', 'Getting paid']);
+    assert.deepEqual(bars.map((m) => m[2]), ['win', 'gather', 'survey', 'sign', 'paid']);
+    const n = bars.map((m) => Number(m[4]));
+    const most = Math.max(...n);
+    for (const m of bars) assert.equal(Number(m[3]), Number(m[4]) === 0 ? 0 : Math.max(1, Math.round((Number(m[4]) / most) * 10)), m[1] ?? '');
+    const inProgress = Number(/<span class="kpi-label">Claims in progress<\/span><span class="kpi-value">(\d+)<\/span>/.exec((await as('sales').get('/staff')).body)?.[1]);
+    assert.equal(n.reduce((a, b) => a + b, 0), inProgress, 'the bars do not add up to the claims in progress');
+    assert.match(r, /<p class="homelinks"><a href="\/staff\/pipeline">Open the pipeline<\/a>( · <a href="\/staff\/claims\?status=ON_HOLD">[^<]+<\/a>)? · <a href="\/staff\/reports">Reports: Figures by month, quarter or year<\/a><\/p>/);
   });
 
   test('Admin\'s own row: Users, Switches, Audit log and Refused sign-ins', async () => {

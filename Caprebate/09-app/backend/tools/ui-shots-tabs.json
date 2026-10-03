@@ -1,0 +1,145 @@
+{
+ "admin": [
+  {
+   "name": "home",
+   "path": "/staff"
+  },
+  {
+   "name": "leads",
+   "path": "/staff/leads"
+  },
+  {
+   "name": "clients",
+   "path": "/staff/clients"
+  },
+  {
+   "name": "pipeline",
+   "path": "/staff/pipeline"
+  },
+  {
+   "name": "tasks",
+   "path": "/staff/tasks"
+  },
+  {
+   "name": "finance",
+   "path": "/staff/finance"
+  },
+  {
+   "name": "settings",
+   "path": "/staff/admin"
+  },
+  {
+   "name": "calendar",
+   "path": "/staff/calendar"
+  },
+  {
+   "name": "introducers",
+   "path": "/staff/introducers"
+  },
+  {
+   "name": "survey",
+   "path": "/staff/survey"
+  },
+  {
+   "name": "client-record",
+   "from": "/staff/clients",
+   "match": "^/staff/(organisations|clients)/[0-9a-f-]{36}",
+   "text": "Dunmarrow"
+  },
+  {
+   "name": "survey-job",
+   "from": "/staff/survey",
+   "match": "^/staff/survey/[0-9a-f-]{36}"
+  }
+ ],
+ "sales": [
+  {
+   "name": "home",
+   "path": "/staff"
+  },
+  {
+   "name": "leads",
+   "path": "/staff/leads"
+  },
+  {
+   "name": "clients",
+   "path": "/staff/clients"
+  },
+  {
+   "name": "pipeline",
+   "path": "/staff/pipeline"
+  },
+  {
+   "name": "tasks",
+   "path": "/staff/tasks"
+  },
+  {
+   "name": "introducers",
+   "path": "/staff/introducers"
+  },
+  {
+   "name": "calendar",
+   "path": "/staff/calendar"
+  }
+ ],
+ "accounting": [
+  {
+   "name": "home",
+   "path": "/staff"
+  },
+  {
+   "name": "clients",
+   "path": "/staff/clients"
+  },
+  {
+   "name": "claims",
+   "path": "/staff/claims"
+  },
+  {
+   "name": "finance",
+   "path": "/staff/finance"
+  },
+  {
+   "name": "tasks",
+   "path": "/staff/tasks"
+  },
+  {
+   "name": "introducer-fees",
+   "path": "/staff/introducer-rewards"
+  }
+ ],
+ "surveying": [
+  {
+   "name": "home",
+   "path": "/staff"
+  },
+  {
+   "name": "survey",
+   "path": "/staff/survey"
+  },
+  {
+   "name": "tasks",
+   "path": "/staff/tasks"
+  }
+ ],
+ "client": [
+  {
+   "name": "claims",
+   "path": "/portal"
+  },
+  {
+   "name": "messages",
+   "path": "/portal/messages"
+  },
+  {
+   "name": "building",
+   "from": "/portal",
+   "match": "^/portal/building"
+  },
+  {
+   "name": "claim",
+   "from": "/portal",
+   "match": "^/portal/claims/"
+  }
+ ]
+}
