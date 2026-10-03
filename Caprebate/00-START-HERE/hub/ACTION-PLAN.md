@@ -955,7 +955,7 @@ command that counts it, never the number.
 
 ## PHASE 153a — the grant trace, the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations
 
- **Model: Opus. Written 28 September 2026 by Phase 153.** Tracker row: "Phase 153a - what Phase 153 found and could build but did not ..." (13133268314, in 05 · FOR DEVELOPMENT). Runs next, then the sweep. **Why this exists.** Phase 153 carried five decisions into about fifty documents; its agents found six more things nobody has to answer anything for. Each is buildable today, so under AMENDMENT 1 each goes in a phase, not a sentence. **Test every line against its file first.**
+ **Model: Opus. Written 28 September 2026 by Phase 153.** Tracker row: "Phase 153a - what Phase 153 found and could build but did not ..." (13199500801, in 05 · FOR DEVELOPMENT). Runs next, then the sweep. **Why this exists.** Phase 153 carried five decisions into about fifty documents; its agents found six more things nobody has to answer anything for. Each is buildable today, so under AMENDMENT 1 each goes in a phase, not a sentence. **Test every line against its file first.**
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1063,7 +1063,7 @@ figures, update the registers you touched, and write the record.
 
 ## PHASE 153b — tax readings built on our recommendation, for the accountant to check
 
- **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13133268315 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
+ **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13199454668 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1190,7 +1190,7 @@ the review document's Answer line, and write the record.
 
 ## PHASE 153c — data protection and the back office built on our recommendation, for Sadique to check; one test call per keyed connector
 
- **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13133268316 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
+ **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13199468908 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1334,7 +1334,7 @@ the review document's Answer line, and write the record.
 
 ## PHASE 153d — the commercial papers in test form, for the director and the solicitor
 
- **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13133268317 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
+ **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13199500802 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1405,7 +1405,7 @@ the review document's Answer line, and write the record.
 
 ## PHASE 153e — the surveyor's workbench built on our recommendation, for the surveyor to check
 
- **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13133268318 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
+ **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13199476474 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -2433,11 +2433,11 @@ WHEN DONE
 
 |  Owner |  What it is |  Why it is on the queue |
 | --- | --- | --- |
-|  Claude |  Phase 153a — the grant trace, the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations (13133268314) |  Phase 153 found it; nobody has to answer anything first |
-|  Claude |  Phase 153b — tax readings built on our recommendation, for the accountant to check (13133268315) |  The 29 September question review: build, then ask if it is viable |
-|  Claude |  Phase 153c — data protection and the back office, for Sadique to check; one test call per keyed connector (13133268316) |  The same review |
-|  Claude |  Phase 153d — the commercial papers in test form, for the director and the solicitor (13133268317) |  The same review |
-|  Claude |  Phase 153e — the surveyor's workbench, for the surveyor to check (13133268318) |  The same review |
+|  Claude |  Phase 153a — the grant trace, the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations (13199500801) |  Phase 153 found it; nobody has to answer anything first |
+|  Claude |  Phase 153b — tax readings built on our recommendation, for the accountant to check (13199454668) |  The 29 September question review: build, then ask if it is viable |
+|  Claude |  Phase 153c — data protection and the back office, for Sadique to check; one test call per keyed connector (13199468908) |  The same review |
+|  Claude |  Phase 153d — the commercial papers in test form, for the director and the solicitor (13199500802) |  The same review |
+|  Claude |  Phase 153e — the surveyor's workbench, for the surveyor to check (13199476474) |  The same review |
 |  Claude |  Phase 153f — work found on 3 October that no phase held (survey pack stage 6 and chapters, an engine date bug, Zoom hosts, the old screens, WhatsApp, answers into the record, the tracker) |  The 3 October check of 153a-154 |
 |  Claude |  Phase 154a1 — the faults the 3 October sweep found, fixed (12 lines) |  Lakhbir, 3 Oct: "these should be fixed in phase 154a1" |
 |  Claude |  Phase 155 — the services the plans name but nobody has built (CIW, the Care Inspectorate, the VOA list, BCIS, the reply timer, the three server files) |  Lakhbir, 3 Oct: "this needs to be phase 156" (renumbered 155 when the services phase moved near the end) |

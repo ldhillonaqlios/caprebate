@@ -11369,3 +11369,38 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Proof.** No code changed. House checks green.
 
  **Claim cleared** in the commit that carries this record.
+
+## Board sync, 3 October 2026 — monday.com brought up to date from the tracker (Claude Code, on the Mac)
+
+ Lakhbir said yes to the list of changes ("yes to both").
+
+-  **Compared first, read only:** 431 board items and 131 subitems against hub/TRACKER.csv (448 items, 131 subitems): 561 matched, 72 differences (21 names, 13 statuses, 13 owner types, 3 old claims, 2 subitem statuses, 1 deadline, plus groups), 18 rows only in the tracker, 1 item only on the board. Almost every difference was a later decision in the tracker that never reached the board (it was last changed on 30 Sep).
+-  **Written to the board:** 53 field changes on 42 items and subitems (including the 8 "Director (CAP REBATE LTD)" owner types to Lakhbir, as he said on 25 Sep); 6 Done items moved to group Z; the 18 tracker-only items created (the 10 Done ones in Z), each with an update saying where it came from. Every write took first time; the board was re-read and matches the tracker.
+-  **Written to the tracker (OneDrive kept complete):** the 18 rows now carry the ids monday.com gave them, in TRACKER.csv/.md and ACTION-PLAN.md, each with a dated note giving its old id; the 16 Done rows that sat outside group Z moved there, as on the board. THE TRACKER CHECK - 448 items, 131 subitems
+GREEN.: GREEN, 448 items, 131 subitems. Older PHASE-HISTORY entries and the Phase 151d record keep the old ids, as records of what was written then; this table translates them:
+
+   | old tracker id | monday id |
+   |---|---|
+   | 13133268301 | 13199476298 |
+   | 13133268302 | 13199476479 |
+   | 13133268303 | 13199476287 |
+   | 13133268304 | 13199454522 |
+   | 13133268305 | 13199454657 |
+   | 13133268306 | 13199468745 |
+   | 13133268307 | 13199476480 |
+   | 13133268308 | 13199476288 |
+   | 13133268309 | 13199476285 |
+   | 13133268310 | 13199476286 |
+   | 13133268311 | 13199476481 |
+   | 13133268312 | 13199454667 |
+   | 13133268313 | 13199468746 |
+   | 13133268314 | 13199500801 |
+   | 13133268315 | 13199454668 |
+   | 13133268316 | 13199468908 |
+   | 13133268317 | 13199500802 |
+   | 13133268318 | 13199476474 |
+
+-  **Left for Lakhbir:** "Create Social media account" (13169912823), added to the board by Abdul Rahman Hijazi on 30 Sep with no status and no owner. The tracker refuses a row without both, so it is not in the tracker until Lakhbir says which status and owner it has.
+-  **Proof.** No code changed. House checks green.
+
+ **Claim cleared** in the commit that carries this record.
