@@ -1434,6 +1434,9 @@ a.packhead-switch:hover{text-decoration:underline}
 .userlist td:last-child{min-width:14rem}
 .cantdo ul{margin:.25rem 0 0}
 
+/* UI TIDY PHASE 18 — THE CLAIM PAGE (src/web/crm-pages.ts). Its sections, indented under the claim in the left-hand menu. */
+.subnav li.subsub a{padding-left:1.75rem;font-size:13px}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of

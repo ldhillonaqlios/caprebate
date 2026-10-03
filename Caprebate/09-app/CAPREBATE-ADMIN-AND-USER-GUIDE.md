@@ -2082,13 +2082,12 @@ Aldergate Care Group Limited. **Elverton Private Hospital Limited** has three ro
 heading to sort by it: Reference, Next action or Value. A claim's page opens with its highlights. These are the stage, owner, property,
 priority, value (for a role that may read it) and client. Next comes the **stage bar**. It shows the ten stages and
 Closed, with the current one filled in. Under it you see **Moving on from …: Ready** or **Not ready yet**. It also shows
-the first thing still needed. Then come three tabs:
-- **Details**: the claim, the team, the estimated fee and the overview. It also has **The pipeline** panel, with
-  **Move the claim**. Then come the facts, the four figures, the value and **Change the claim**.
-- **Related**: documents and requests, money and contacts. It also has deliverables and aftercare. Each part shows a
-  count.
-- **Activity**: **Next action and tasks**, the timeline, and the internal notes. It also has **Email**. That opens the
-  company's Email page with this claim chosen.
+the first thing still needed. Then come the claim's boxes, one under another. The first is **Stage and next move**.
+Others hold the facts, the checks, the figures and the property. More hold the team, documents and money. The last
+holds messages and activity. Only **Stage and next move** opens by itself. Each other box shows one line, with its heading and how it
+stands, such as **Working on it** or **Done**. Press a box to open it. A box you just changed opens. So does one you
+chose to **keep this open for me**. On a laptop, the left-hand menu lists the boxes under the claim. A box that needs
+work says **to do**. One waiting for the client says **waiting**. The stage shows in its colour at the top.
 
 On the right are **Next action** and **Quick actions**. The quick actions are:
 - **Log a call or add a task**

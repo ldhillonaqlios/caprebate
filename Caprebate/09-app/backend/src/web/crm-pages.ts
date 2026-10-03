@@ -43,7 +43,8 @@ import * as LI from './lists.ts';
 import { taskChoices, vocabulary } from './vocabularies.ts';
 import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } from './lists-pages.ts';
 import { aftercareBlock, deliverablesBlock, factsBlock, figuresBlock, grantsBlock } from './claim-record-pages.ts';
-import { opens } from './navigation.ts';
+import { addUnderCurrent, opens } from './navigation.ts';
+import { nobodyBadge, stageBadge } from './look.ts';
 import { assertClientsSection } from './engaged.ts';
 import { badge, brandName, breadcrumb, claimHref, claimName, claimRef, claimStageBar, claimTiles, dataLink, propertyIn, fields, highlights, moreDetail, nextStepCard, recordLayout, savedMessage, section, sidePanel, statusFromNeeds, why, type Need, type QuickAction, type SectionContext, type SectionSpec } from './components.ts';
 import { sectionPrefs } from './sections.ts';
@@ -908,6 +909,9 @@ function askableFacts(p: F.FactsPanel): readonly F.FactReading[] {
   // PHASE 143: whether anyone else paid is asked in its own section, "Grants and contributions", and not twice.
 }
 
+/** UI TIDY PHASE 18: a claim section's state, short enough for the left-hand menu. Done and not started say nothing. */
+export const SECTION_STATUS_NOTE: Readonly<Record<'WORKING' | 'WAITING', string>> = Object.freeze({ WORKING: 'to do', WAITING: 'waiting' });
+
 function claimPage(
   d: CrmPageDeps, actor: Actor, v: C.ClaimView, msg: string | undefined,
   x: {
@@ -944,7 +948,12 @@ function claimPage(
 
   /* PHASE 138: THE CLAIM'S SECTIONS. Each is built only from a part of the view this login was given, and only where the
      view carries it — a surveyor's view carries the stage and the released facts, Accounting's the money. */
-  const ctx: SectionContext = { prefs: sectionPrefs(db, actor), back: v.client.linkable ? claimHref(biz, v.id) : `/staff/claims/${v.id}` };
+  // UI TIDY PHASE 18: only the stage opens by itself (and the checks, when a step was just worked in); every other section
+  // starts closed, as a one-line summary with its status, unless a change was just made in it or the person keeps it open.
+  const ctx: SectionContext = {
+    prefs: sectionPrefs(db, actor), back: v.client.linkable ? claimHref(biz, v.id) : `/staff/claims/${v.id}`,
+    autoOpen: ['claim.stage', ...(x.step === undefined ? [] : ['claim.checks'])],
+  };
   const asked = openClaimQuestions(db, actor, biz, v.id);
   const mayAsk = can(actor, 'internal_note.write', { type: 'internal_note', id: biz, business_id: biz });
   const needFor = (fact_id: string, label: string): Need => (asked.has(fact_id) ? { label, asked: true }
@@ -1161,12 +1170,17 @@ function claimPage(
       <div id="claim-notes">${notes}</div>`,
   });
 
+  // UI TIDY PHASE 18: the claim's sections, under this claim in the left-hand menu.
+  addUnderCurrent(claimName(v.client.name, property?.label), sections.map((sp) => ({
+    href: `#${sp.id}`, label: sp.heading, ...(sp.status === 'WORKING' || sp.status === 'WAITING' ? { note: SECTION_STATUS_NOTE[sp.status] } : {}),
+  })));
   return page({
     title: claimName(v.client.name, property?.label), nav: d.nav(actor), wide: true,
     body: h`${breadcrumb([{ label: v.client.name, href: v.client.linkable ? `/staff/clients/${biz}` : null }, { label: propertyIn(v.client.name, property?.label ?? null) ?? 'Claim' }])}${done(msg)}
       ${highlights('Claim', v.client.name, [
-        v.header === undefined ? null : { label: 'Stage', value: v.header.stage.label },
-        v.header === undefined ? null : { label: 'Owner', value: orNot(v.header.owner, 'nobody yet') },
+        // UI TIDY PHASE 18: the stage in its group's colour, and nobody on it in amber, as on every list.
+        v.header === undefined ? null : { label: 'Stage', value: v.header.stage.key === null ? v.header.stage.label : stageBadge(v.header.stage.key, v.header.stage.label) },
+        v.header === undefined ? null : { label: 'Owner', value: v.header.owner === null ? nobodyBadge('Nobody yet') : v.header.owner },
         v.overview === undefined ? null : { label: 'Priority', value: v.overview.priority.label },
         v.value === undefined ? null : { label: 'Value', value: v.value.established ? v.value.shown_range : 'no estimate yet' },
       ], raw(''), h`${where === null ? 'Claim' : `Claim on ${where}`} ${claimRef(v.claim_ref)}`)}

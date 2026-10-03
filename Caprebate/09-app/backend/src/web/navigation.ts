@@ -231,7 +231,7 @@ export function menuHrefs(actor: Actor): string[] {
  */
 export type SubMenu = {
   readonly title?: string;
-  readonly items: readonly { readonly href: string; readonly label: string; readonly note?: string; readonly current?: boolean }[];
+  readonly items: readonly { readonly href: string; readonly label: string; readonly note?: string; readonly current?: boolean; readonly sub?: boolean }[];
 };
 
 const SUB_MENUS = new WeakMap<NavContext, SubMenu>();
@@ -240,6 +240,20 @@ const SUB_MENUS = new WeakMap<NavContext, SubMenu>();
 export function setSubMenu(menu: SubMenu): void {
   const ctx = navContext.getStore();
   if (ctx !== undefined) SUB_MENUS.set(ctx, menu);
+}
+
+/**
+ * UI TIDY PHASE 18: a page inside another's frame adds its own parts under the entry marked current — a claim's sections
+ * under that claim, in its client's menu. With no menu set yet, they become the menu, under `title`.
+ */
+export function addUnderCurrent(title: string, items: SubMenu['items']): void {
+  const ctx = navContext.getStore();
+  if (ctx === undefined) return;
+  const menu = SUB_MENUS.get(ctx);
+  const sub = items.map((i) => ({ ...i, sub: true }));
+  const at = menu === undefined ? -1 : menu.items.findIndex((i) => i.current === true);
+  if (menu === undefined || at < 0) { SUB_MENUS.set(ctx, { title, items: sub }); return; }
+  SUB_MENUS.set(ctx, { ...menu, items: [...menu.items.slice(0, at + 1), ...sub, ...menu.items.slice(at + 1)] });
 }
 
 /** The entries under `section` for this request: the page's own, or Settings' list of settings. None elsewhere. */
@@ -256,7 +270,7 @@ function subMenuFor(actor: Actor, section: Section, path: string | null): SubMen
 
 function subMenuHtml(menu: SubMenu | null): Safe {
   if (menu === null || menu.items.length === 0) return raw('');
-  return h`${menu.title === undefined ? raw('') : h`<p class="subtitle">${menu.title}</p>`}<ul class="subnav">${menu.items.map((i) => h`<li><a href="${i.href}"${
+  return h`${menu.title === undefined ? raw('') : h`<p class="subtitle">${menu.title}</p>`}<ul class="subnav">${menu.items.map((i) => h`<li${i.sub === true ? raw(' class="subsub"') : raw('')}><a href="${i.href}"${
     i.current === true ? raw(' aria-current="page"') : raw('')}>${i.label}${i.note === undefined ? raw('') : h` <span class="subnote">${i.note}</span>`}</a></li>`)}</ul>`;
 }
 

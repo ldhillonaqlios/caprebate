@@ -11315,3 +11315,13 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** the 17 phases are done. Lakhbir reviews phases 15 to 17 and the branch, and decides whether the very long claim page gets a phase of its own.
 
  **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 18, 3 October 2026 — the claim page (Claude Code, on the Mac)
+
+ Lakhbir approved the screenshots of phases 15 to 17 and asked for this phase before the pull request.
+
+-  **Built:** a claim's page drops from about 10,700 px to about 2,600. Only **Stage and next move** opens by itself; every other section is a one-line summary with its status until a change just made, or the person's own "keep this open for me", opens it. The claim's sections are listed under it in the client's left-hand menu, "to do" or "waiting" where they are. The stage shows in its colour at the top. Every section, form and permission is unchanged.
+-  **Proof.** `test/ui-tidy-claim.test.ts`, five tests; 8 single-line mutations, all red. Screenshots for Admin and Sales at 1280 and 390. 2210 tests, run in 12 chunks: all pass but the stray-file one and `whatsapp.test.ts`'s order check, the known flake. Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2210`) green.
+-  **Next:** the pull request.
+
+ **Claim cleared** in the commit that carries this record.
