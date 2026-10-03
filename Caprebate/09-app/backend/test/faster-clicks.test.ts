@@ -224,3 +224,39 @@ describe('Faster clicks, part 2: a local copy of the lasting database', () => {
     } finally { H.close(); }
   });
 });
+
+/* ------------------------------------------------------------------ *
+ * FASTER CLICKS 2 — "LAST SEEN" AT MOST ONCE A MINUTE, NOT TWICE A CLICK
+ * ------------------------------------------------------------------ */
+
+describe('Faster clicks 2: last seen is written at most once a minute', () => {
+  test('a click writes nothing when last seen is under a minute old; once it is a minute old, one write, and Admin’s Home still says who is working', async () => {
+    let now = Date.parse('2026-10-03T10:00:00.000Z');
+    const made = await createApp(':memory:', { ...opts(), now: () => new Date(now).toISOString(), twoFactor: 'off' });
+    try {
+      const s = await seed(made.app.db, made.app.hasher, made.app.now);
+      await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
+      const addr = made.server.address();
+      const base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;
+      const login = await fetch(`${base}/login`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ email: 'admin@example.invalid', password: s.password }).toString() });
+      const cookie = login.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
+      const db = made.app.db as unknown as { run: (...a: unknown[]) => unknown };
+      const writes: string[] = [];
+      const run0 = db.run.bind(made.app.db);
+      db.run = (...a: unknown[]) => { writes.push(String(a[0])); return run0(...a); };
+      const seen = () => made.app.db.get<{ at: string }>("SELECT max(last_seen_at) AS at FROM sessions s JOIN users u ON u.id = s.user_id WHERE u.email = 'admin@example.invalid'")?.at;
+      const get = (p: string) => fetch(base + p, { headers: { cookie } });
+      now += 1000; assert.equal((await get('/staff/tasks')).status, 200);
+      now += 30_000; assert.equal((await get('/staff/tasks')).status, 200);
+      assert.deepEqual(writes.filter((w) => w.includes('last_seen_at')), [], 'last seen was written within the minute');
+      const before = seen();
+      now += 30_000; assert.equal((await get('/staff/tasks')).status, 200);
+      assert.equal(writes.filter((w) => w.includes('last_seen_at')).length, 1, 'once a minute had passed, last seen was written once, not twice');
+      assert.notEqual(seen(), before);
+      assert.equal(seen(), new Date(now).toISOString());
+      const home = await (await get('/staff?view=admin')).text();
+      assert.match(home, /Admin User/);
+    } finally { made.close(); }
+  });
+});
