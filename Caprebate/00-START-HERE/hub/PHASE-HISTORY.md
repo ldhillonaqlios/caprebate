@@ -11348,3 +11348,59 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** the local copy (switched off) is what takes most of the remaining time away; switching it on needs Lakhbir's go-ahead to add `CAPREBATE_DB_LOCAL_COPY=on` to the test website's settings.
 
  **Claim cleared** in the commit that carries this record.
+
+## Planning, 3 October 2026 — phases 153a–157 checked; 153f, 154a1, 155, 156 written (Claude Code, on the Mac)
+
+ Lakhbir: check each phase from 153a to 154 is exactly right; the bugs found go in 154a1; all the APIs needed are 155, step by step; what the plans name but nobody built is 156; save what waits on people and what is built but switched off; and write a prompt to carry on in a new chat.
+
+-  **The local database copy is on and stays on.** `CAPREBATE_DB_LOCAL_COPY=on` was added to the test website's settings on 3 Oct with Lakhbir's yes and the site redeployed; after PR #7 merged, measured read-only as Admin: Home 0.7–0.8 s (4.6 s that morning, 10 s on a first click), Clients 0.66 s (2.1–3.5 s), Pipeline 0.62 s (1.1 s), Tasks 0.65 s (0.9 s). A saved choice (a section's "keep this open for me") showed on the next page and was put back. A fresh copy's first click takes about 14 s while it fetches the database.
+-  **Four audits** (read-only, by agents): phases and the action plan; every outside service; what production sign-off still needs; and a full sweep and stress test on the Mac (502 pages crawled as every login with no 5xx or broken link; 140 requests a second with no error; 200 writes at once, none lost; one 500 and smaller faults, now Phase 154a1).
+-  **153a–153e checked line by line** against the code: almost nothing done since 29 Sep (the site file, the engine, the rulebooks and the papers are untouched; no Word question answered since). Each phase now carries a dated corrections block; 153a line 7 was done on 30 Sep. The sweep's stale instructions were corrected and it is renumbered **Phase 157**.
+-  **New:** Phase 153f (work no phase held: survey pack stage 6 and its 17 chapters, an engine date bug, Zoom hosts, the old screens, WhatsApp, answers into the record, the tracker); 154a1 (12 faults from the sweep); 155 (every outside service: Lakhbir's steps, then Claude's); 156 (CIW, the Care Inspectorate, the VOA list, BCIS, the reply timer, the server files). New hub pages: `WAITING-ON-PEOPLE.md`, `KEYS-AND-SWITCHES.md`, `CONTINUE-IN-A-NEW-CHAT.md`.
+-  **monday.com:** Lakhbir has access again and wants to work from the board ("💰 Health Capital", 18422317809, last changed 30 Sep). Nothing was written to it; the action plan says how phases treat it until he decides.
+-  **Proof.** No code changed. House checks green.
+
+ **Claim cleared** in the commit that carries this record.
+
+## Planning, 3 October 2026 (continued) — the services phase moved near the end; monday.com the main board again
+
+-  **Order:** Lakhbir: the outside-services phase "should be one of the last things". It is now **Phase 156**, run after **Phase 155** (the services the plans name but nobody built, which was 156) and before the sweep (157). Every reference in the plan, KEYS-AND-SWITCHES, WAITING-ON-PEOPLE and CONTINUE-IN-A-NEW-CHAT follows; his own quoted words are kept with a note.
+-  **monday.com:** "im happy with monday becoming the main board we use to build and keep on top of tasks, but we shouldnt neglect one drive". The rule is written under "How the phases at the top of this document work": the board "💰 Health Capital" (18422317809) tracks the work; every change is also written to hub/TRACKER.csv so OneDrive stays complete; documents stay in OneDrive; a disagreement between the two is put to Lakhbir; no client data or keys on the shared board. It overrules every older "monday.com was dropped" line; the banners and corrections blocks of 153a–157 say so. A read-only comparison of the board with the tracker was started; nothing has been written to the board.
+-  **Proof.** No code changed. House checks green.
+
+ **Claim cleared** in the commit that carries this record.
+
+## Board sync, 3 October 2026 — monday.com brought up to date from the tracker (Claude Code, on the Mac)
+
+ Lakhbir said yes to the list of changes ("yes to both").
+
+-  **Compared first, read only:** 431 board items and 131 subitems against hub/TRACKER.csv (448 items, 131 subitems): 561 matched, 72 differences (21 names, 13 statuses, 13 owner types, 3 old claims, 2 subitem statuses, 1 deadline, plus groups), 18 rows only in the tracker, 1 item only on the board. Almost every difference was a later decision in the tracker that never reached the board (it was last changed on 30 Sep).
+-  **Written to the board:** 53 field changes on 42 items and subitems (including the 8 "Director (CAP REBATE LTD)" owner types to Lakhbir, as he said on 25 Sep); 6 Done items moved to group Z; the 18 tracker-only items created (the 10 Done ones in Z), each with an update saying where it came from. Every write took first time; the board was re-read and matches the tracker.
+-  **Written to the tracker (OneDrive kept complete):** the 18 rows now carry the ids monday.com gave them, in TRACKER.csv/.md and ACTION-PLAN.md, each with a dated note giving its old id; the 16 Done rows that sat outside group Z moved there, as on the board. THE TRACKER CHECK - 448 items, 131 subitems
+GREEN.: GREEN, 448 items, 131 subitems. Older PHASE-HISTORY entries and the Phase 151d record keep the old ids, as records of what was written then; this table translates them:
+
+   | old tracker id | monday id |
+   |---|---|
+   | 13133268301 | 13199476298 |
+   | 13133268302 | 13199476479 |
+   | 13133268303 | 13199476287 |
+   | 13133268304 | 13199454522 |
+   | 13133268305 | 13199454657 |
+   | 13133268306 | 13199468745 |
+   | 13133268307 | 13199476480 |
+   | 13133268308 | 13199476288 |
+   | 13133268309 | 13199476285 |
+   | 13133268310 | 13199476286 |
+   | 13133268311 | 13199476481 |
+   | 13133268312 | 13199454667 |
+   | 13133268313 | 13199468746 |
+   | 13133268314 | 13199500801 |
+   | 13133268315 | 13199454668 |
+   | 13133268316 | 13199468908 |
+   | 13133268317 | 13199500802 |
+   | 13133268318 | 13199476474 |
+
+-  **Left for Lakhbir:** "Create Social media account" (13169912823), added to the board by Abdul Rahman Hijazi on 30 Sep with no status and no owner. The tracker refuses a row without both, so it is not in the tracker until Lakhbir says which status and owner it has.
+-  **Proof.** No code changed. House checks green.
+
+ **Claim cleared** in the commit that carries this record.

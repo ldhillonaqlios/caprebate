@@ -70,13 +70,7 @@
 
 ## 01 · FOR LAKHBIR — decisions, appointments, company, governance
 
-79 items.
-
-### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
-
-`12927874161` · **Done** · owner Lakhbir
-
-- Note 2026-09-28 (Phase 152 (sweep)): Done: both halves are answered - the mailbox exists (Word question 3, closed) and who reads it (Word question 216, closed: Sadique Maskeen reads all three mailboxes). The one test email left is its own row, 13093310525. Several officer documents still say the address is not set; Phase 153 line 1 corrects them.
+77 items.
 
 ### Register with the ICO and put the data protection basics in place
 
@@ -397,12 +391,6 @@
 `13032264597` · **Built - awaiting sign-off** · owner Solicitor/DPO
 
 - Note 2026-09-28 (Phase 153): The officer's login: Word question 44 closed on 24 Sep - no separate data protection login for now (Admin keeps these records); revisit when the officer has a login. The address is data.protection@caprebate.co.uk, live and read by Sadique Maskeen (questions 3 and 216).
-
-### Confirm there is no existing client data to import into the CRM - the developer's price assumes nothing to import
-
-`13032414363` · **Done** · owner Lakhbir
-
-- Note 2026-09-28 (Phase 152 (sweep)): Done: Word question 46 ("Is it true we have no existing client records to bring in?") was answered and closed on 24 Sep 2026 - nothing to import; the developer's price stands. Found by the sweep; the label had not followed the answer.
 
 ### Caprebate G5 — write lawful basis / legitimate interests assessment for register lookups (third-party personal data in EPC, CQC, Companies House)
 
@@ -1106,7 +1094,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-54 items.
+40 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1186,12 +1174,6 @@
 - File: `08-monday-doc-exports/12830205914__Pull-in-land-boundary-maps-to-get-site-size-waiting-on-the-licence.md`
 - Note 2026-09-28 (Phase 151g): Word question 170 was answered on 25 Sep 2026 (yes, on five conditions) and Phase 151g built the conditions into the smoke command, which does not cover a boundary download. The first download, as a test lookup under the same conditions and confirming the GML shape, is Phase 151l. Switching the fetcher on stays Lakhbir's.
 - Note 2026-09-28 (Phase 151l): Phase 151l built the first download as a test lookup: smoke HMLR_INSPIRE, in the smoke command, under the same five conditions and log (src/connectors/boundary-test-lookup.ts, test/phase151l.test.ts). Default: City of Westminster's file, looking for 70 Whitehall's published grid reference. Nothing has been downloaded yet. In the way: Lakhbir, or a person he names, records the switch-on (smoke-switched-on HMLR_INSPIRE) and runs it; switching the fetcher on for the application stays his.
-
-### DPO: may we make a test lookup to prove a data connector works?
-
-`12927233268` · **Done** · owner Lakhbir
-
-- Note 2026-09-25 (Phase 151f): Answered by Lakhbir as the director: yes, on five conditions (Word question 170, moved to the closed document). The build that enforces them is Phase 151g (row 13133268303). The officer sees the answer in his register and can ask for it to change.
 
 ### DPO: allow company names on conveyancing uploads, strip individuals?
 
@@ -1304,12 +1286,6 @@
 `13104163090` · **Built - awaiting sign-off** · owner Developer
 
 
-### Phase 146j — taking back a pick: undoing a close match a person chose, and the record that says it was undone
-
-`13117648493` · **Done** · owner Claude
-
-- Note 2026-09-25 (Phase 146j): Built: a pick taken back with a reason (one record removed through record_id, lookup back to MATCH_REVIEW, pick row kept); a yes taken back (that field only); the question asked on upload and request forms. test/phase146j.test.ts, 29 tests; record in PHASE HISTORY.
-
 ### A person's pick for a close match — built and switched off, waiting on the data protection officer (Word question 209)
 
 `13117672434` · **Built - awaiting sign-off** · owner Solicitor/DPO
@@ -1326,21 +1302,9 @@
 
 - File: `04-phase-work/phase3/caprebate-cibse-plant-lives-source-register-row.md` (attached as 13119191966__CIBSE-plant-lives-source-register-row.md)
 
-### Phase 151c - give the site area its caller and its screen: the research run after signing, a point and a neighbouring council a person enters, the OSTN15 file
-
-`13129705258` · **Done** · owner Claude
-
-- Note 2026-09-25 (Phase 151d, closing Phase 151c): Phase 151c is done (commit 43f674b): the research run is the site area's one caller, the property page's point-and-council form, the OSTN15 tool's test, the licence wording agreed, Word question 227 for Lakhbir. Everything stays switched off. Its record is in PHASE-HISTORY.md.
-
-### Phase 151c lines 6-8 - name Veriff and Postcodes.io in the papers as drafts, the answer-it-myself notice words, and Accounting's Help page
-
-`13133268300` · **Done** · owner Claude
-
-- Note 2026-09-25 (Phase 151d, closing Phase 151c): Lines 6 to 8 are done (commit 43f674b): Veriff and Postcodes.io named in a dated draft section of the privacy notice and in a Word comment on clause 7; the line for the notice at the address question; Accounting's Help link names B55. No switch was flipped. Record in PHASE-HISTORY.md.
-
 ### Phase 151e - the test website: lines 1 to 7 built; left: seeing it run on Turso (Word question 230)
 
-`13133268301` · **Ready - Lakhbir action** · owner Lakhbir
+`13199476298` · **Ready - Lakhbir action** · owner Lakhbir
 
 - Note 2026-09-25 (Phase 151d): Written by Phase 151d: every page of the test website answers a server error (the deploy of 43f674b already did), and the website serves every committed file to anyone. Line 1 is buildable; line 2 waits on Word question 229.
 - Note 2026-09-25 (Phase 151h): Phase 151h added line 3: where Didit sends its results. No host can take one today (500 on the test deploy, no keys there, a fresh database each cold start).
@@ -1352,49 +1316,11 @@
 - Note 2026-09-28 (Phase 151e): Line 7 DONE 28 Sep 2026: an invented contact on every seeded client; the test website opens Turso when set and falls back to memory, never down. Waiting on Lakhbir: add Turso in Vercel (Storage, region us-east-1, connected to caprebate-test) and redeploy.
 - Note 2026-09-28 (Phase 152 (sweep)): Where it stands (the sweep, 28 Sep 2026): Turso is set, and every push since follow-up 5 (72a9712, 9c364e5, and this sweep's) redeploys with the build step, so nothing waits on another redeploy. What is left is to SEE it: sign in on the test website and open a client's Identity check - no "Records kept in memory" box means Turso - or read the function log's "test deployment:" lines. Claude cannot do either: signing in there is Lakhbir's, and the Vercel connector's only team holds no projects (caprebate-test is not found there). Word questions 230 and 231 say so.
 - Note 2026-09-29 (29 Sep fix): 29 Sep 2026: Lakhbir reported that choosing the authenticator app at sign-in always 'times out'. Reproduced locally: a sign-in step lives in the database, so on memory a step begun on one copy of the website is missing on the next, and reads as timed out at once - on one copy it works. With Turso in use every copy shares the database and this cannot happen, so the live site is most likely still on memory (Word question 230). Sessions are held there too, so on memory a login can also drop between pages. The invented @example.invalid logins now ask for no second step on the test website, and the time-out page says when the records are in memory.
-
-### Phase 151f - switch the online identity check from Veriff to Didit
-
-`13133268302` · **Done** · owner Claude
-
-- Note 2026-09-25 (Phase 151f): Done: the identity check is Didit's, still switched off; migration 053; the papers and the Word questions updated. Record in PHASE-HISTORY.md.
-- Note 2026-09-25 (Phase 151f, later): Lakhbir, 25 Sep 2026: the Didit account is live and DIDIT_API_KEY is in the key file (its label was renamed to that exact name so it is read; checked by name only). Still missing: DIDIT_WEBHOOK_SECRET and DIDIT_WORKFLOW_ID. The check stays off until the officer and the solicitor approve the papers.
-- Note 2026-09-25 (Phase 151f, later): Lakhbir, 25 Sep 2026: all three Didit entries are in the key file and read (checked by name only). Only the papers (officer and solicitor) and the switch remain.
-
-### Phase 151g - the test lookups Lakhbir allowed: the smoke test keeps his five conditions
-
-`13133268303` · **Done** · owner Claude
-
-- Note 2026-09-25 (Phase 151f): Written by Phase 151f: Lakhbir said yes to small, logged test lookups on five conditions (Word question 170, closed 25 Sep 2026); the smoke test (Phase 146g) must enforce them.
-- Note 2026-09-28 (Phase 151g): Built: src/connectors/test-lookups.ts; smoke refuses without --who/--why, keeps a log outside the repository (~/.caprebate-test-lookups.jsonl) with only connector, time, PASS/NO, who, why; refuses a fourth lookup per switch-on (smoke-switched-on restarts it); refuses a client's postcode, number or name (CAPREBATE_DB, else --not-a-client, logged); says it is not a demonstration first. test/phase151g.test.ts, 23 tests, all red on the pre-change code.
-
-### Phase 151h - switch the identity check on for testing, the papers waived and saying so
-
-`13133268304` · **Done** · owner Claude
-
-- Note 2026-09-25 (Phase 151h): Lakhbir, 25 Sep 2026: switched on for testing. The papers are waived, not done, and the screens say so. Record in PHASE-HISTORY.md.
-
-### Phase 146k - the title register by hand: HM Land Registry's title register looked up manually, not through Business Gateway
-
-`13133268305` · **Done** · owner Claude
-
-- Note 2026-09-25 (Phase 146k): Built: Business Gateway retired from the click (PAID_RETIRED, keys marked retired, gone from the example); the title register recorded by hand on the property page and taken back with a reason. test/phase146k.test.ts, 12 tests; record in PHASE HISTORY.
-
-### Phase 146l - the title register's documents uploaded by hand: the official copy and title plan as a document type staff upload, beside what they type
-
-`13133268306` · **Done** · owner Claude
-
-- Note 2026-09-27 (Phase 146l): Built: TITLE_REGISTER document type (official copy and title plan), read by a person, never a model; migration 056; upload box on the property page. test/phase146l.test.ts; record in PHASE HISTORY.
-
-### Phase 146m - the Land Registry answers relayed: the officer keeps the official copy, the solicitor lets title figures into the accountant's pack
-
-`13133268307` · **Done** · owner Claude
-
-- Note 2026-09-27 (Phase 146m): Done: HMLR_TITLE licence cleared (solicitor yes, relayed); official copy kept (officer yes, relayed); SDP-L22 answered. Record in PHASE HISTORY.
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268301 (board sync, Lakhbir's yes).
 
 ### Phase 151i - the test website's uploaded documents on a store every copy reaches
 
-`13133268308` · **Ready - Lakhbir action** · owner Lakhbir
+`13199476288` · **Ready - Lakhbir action** · owner Lakhbir
 
 - Note 2026-09-27 (Phase 151e): Written by Phase 151e (lines 4-5): with the lasting database on, uploaded documents would still sit on each copy's temporary disk. Build a store every copy reaches, switched off.
 - Note 2026-09-28 (Phase 151i): Built and switched off: uploaded documents go to one private Vercel Blob store when the lasting database is in use and a store is connected; the audit log survives two copies appending. Waits on Lakhbir connecting a private Blob store (Word question 231).
@@ -1404,74 +1330,86 @@
 - Note 2026-09-28 (Phase 151i): Second Turso database half built too: copies started in pairs and both migrated and seeded it. Now built once by the deploy's build step (tools/prepare-lasting.mjs). Lakhbir to empty it once more and redeploy.
 - Note 2026-09-28 (Phase 151i): The new Turso database was half seeded too (copies racing). Lakhbir chose: the build step empties a half-built test database and builds it again; copies never build or seed it. Built. Lakhbir to redeploy with a build.
 - Note 2026-09-28 (Phase 152 (sweep)): Where it stands (the sweep, 28 Sep 2026): Turso is set, and every push since follow-up 5 (72a9712, 9c364e5, and this sweep's) redeploys with the build step, so nothing waits on another redeploy. What is left is to SEE it: sign in on the test website and open a client's Identity check - no "Records kept in memory" box means Turso - or read the function log's "test deployment:" lines. Claude cannot do either: signing in there is Lakhbir's, and the Vercel connector's only team holds no projects (caprebate-test is not found there). Word questions 230 and 231 say so. For this row also: upload an invented file through one sign-in and open it from another after a redeploy.
-
-### Phase 151j - sign-in: forgot password, temporary passwords, two-factor by email code or authenticator app
-
-`13133268309` · **Done** · owner Claude
-
-- Note 2026-09-28 (Phase 151j): DONE 28 Sep 2026: forgot password by emailed link; temporary passwords shown once (7 days); a second step (authenticator app or email code) for every staff login, optional for clients; login() refuses while a step is left. Hardening: Phase 151k. Evidence: test/phase151j.test.ts, PHASE HISTORY.
-
-### Phase 151k - sign-in hardening: the API's steps, the app secret at rest, codes out of the outbox, the screenshot tool
-
-`13133268310` · **Done** · owner Claude
-
-- Note 2026-09-28 (Phase 151k): DONE 28 Sep 2026: /api/login answers 202 + a step token and /api/login/step/... walk the same sign-in.ts functions; the app secret sealed with CAPREBATE_MFA_KEY (unset = text, as before); a SENT sign-in code or reset link loses its outbox body (migration 058); the screenshot tool signs demo logins in (tools/demo-sign-in.ts). test/phase151k.test.ts, 21 of 27 red on the pre-change code. Recovery codes asked as Word question 232.
-- Note 2026-09-28 (Phase 151k follow-up): Follow-up 28 Sep 2026: Lakhbir answered yes to recovery codes (Word question 232); question closed, the build is Phase 151m.
-
-### Phase 151m - recovery codes: ten one-use codes, shown once, so a person who loses their phone can still sign in
-
-`13133268311` · **Done** · owner Claude
-
-- Note 2026-09-28 (Phase 151k follow-up): Lakhbir answered yes to recovery codes on 28 Sep 2026 (Word question 232, closed). Written as Phase 151m, after 151l and before the sweep.
-- Note 2026-09-28 (Phase 151m): DONE 28 Sep 2026: ten recovery codes (50 bits, scrypt hashes only, migration 059) shown once at setup and on Make new recovery codes; taken once at the VERIFY step on the website and /api/login/step/recovery within the same 5 wrong codes; audited and emailed with no code; cleared by a new step, a reset or a client turning it off. test/phase151m.test.ts red before, green after.
-
-### Phase 153 - five decisions carried into the documents that never heard of them, and the rows that say more than is true
-
-`13133268312` · **Done** · owner Claude
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md (the Phase 153 section)
-- Note 2026-09-28 (Phase 152 (sweep)): Written by the Phase 152 sweep: ten lines - the data protection mailbox, monday.com, the Claude API, the title register by hand, BCIS, the fee and other moved figures, the engagement letter's comments and specimen, smaller reads, tracker rows whose label is not what is in the way, and questions asked twice. Nobody has to answer anything first.
-- Note 2026-09-28 (Phase 152 (sweep)): An eleventh line: the tax adviser's review is 53 questions (Rulebook I's seven joined it, Word question 50), and every copy of the old count still says 46.
-- Note 2026-09-28 (Phase 152 follow-up): A twelfth line, added by the Phase 152 follow-up at Lakhbir's request: the two licence-blocked rows Claude owns - prove the fee scale is built and off, and test the location adjustment on an invented BCIS-shaped table, generalising it (off) if it only fits Spon's.
-- Note 2026-09-28 (Phase 153): Line 12 done: the fee scale proved built and off; the location adjustment proved to take a BCIS table (UK mean 100) with tests D30-D34, red on the pre-Phase-132 model. phase9 398 -> 403.
-- Note 2026-09-28 (Phase 153): Phase 153 closed 28 Sep 2026: lines 1-12 done; record in PHASE-HISTORY.md; what it could build but did not is Phase 153a (13133268314).
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268308 (board sync, Lakhbir's yes).
 
 ### Measure the address match on 200 real properties (S10's measurement, never taken): the tool is built (tools/match-measure.ts) and --run refuses until the officer answers Word question 200
 
-`13133268313` · **Blocked - question** · owner Solicitor/DPO
+`13199468746` · **Blocked - question** · owner Solicitor/DPO
 
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
 ### Phase 153a - what Phase 153 found and could build but did not: the grant trace (F-15's remainder), the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations
 
-`13133268314` · **Ready - Claude can build** · owner Claude
+`13199500801` · **Ready - Claude can build** · owner Claude
 
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268314 (board sync, Lakhbir's yes).
 
 ### Phase 153b - tax readings built on our recommendation for the accountant to check: 20 builds from the 29 Sep question review
 
-`13133268315` · **Ready - Claude can build** · owner Claude
+`13199454668` · **Ready - Claude can build** · owner Claude
 
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268315 (board sync, Lakhbir's yes).
 
 ### Phase 153c - data protection and the back office built on our recommendation for Sadique to check, one test call per keyed connector, and the Didit waiver's wording: 19 lines
 
-`13133268316` · **Ready - Claude can build** · owner Claude
+`13199468908` · **Ready - Claude can build** · owner Claude
 
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268316 (board sync, Lakhbir's yes).
 
 ### Phase 153d - the commercial papers in test form for the director and the solicitor: test-default engagement letter, disposal fee, introducer terms, AML scale, risk score
 
-`13133268317` · **Ready - Claude can build** · owner Claude
+`13199500802` · **Ready - Claude can build** · owner Claude
 
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268317 (board sync, Lakhbir's yes).
 
 ### Phase 153e - the surveyor's workbench built on our recommendation for the surveyor to check: 16 builds from the 29 Sep review
 
-`13133268318` · **Ready - Claude can build** · owner Claude
+`13199476474` · **Ready - Claude can build** · owner Claude
 
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268318 (board sync, Lakhbir's yes).
 
 ---
 
 ## Z · Complete / Not Applicable
 
-256 items.
+272 items.
+
+### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
+
+`12927874161` · **Done** · owner Lakhbir
+
+- Note 2026-09-28 (Phase 152 (sweep)): Done: both halves are answered - the mailbox exists (Word question 3, closed) and who reads it (Word question 216, closed: Sadique Maskeen reads all three mailboxes). The one test email left is its own row, 13093310525. Several officer documents still say the address is not set; Phase 153 line 1 corrects them.
+
+### Confirm there is no existing client data to import into the CRM - the developer's price assumes nothing to import
+
+`13032414363` · **Done** · owner Lakhbir
+
+- Note 2026-09-28 (Phase 152 (sweep)): Done: Word question 46 ("Is it true we have no existing client records to bring in?") was answered and closed on 24 Sep 2026 - nothing to import; the developer's price stands. Found by the sweep; the label had not followed the answer.
+
+### DPO: may we make a test lookup to prove a data connector works?
+
+`12927233268` · **Done** · owner Lakhbir
+
+- Note 2026-09-25 (Phase 151f): Answered by Lakhbir as the director: yes, on five conditions (Word question 170, moved to the closed document). The build that enforces them is Phase 151g (row 13199476287). The officer sees the answer in his register and can ask for it to change.
+
+### Phase 146j — taking back a pick: undoing a close match a person chose, and the record that says it was undone
+
+`13117648493` · **Done** · owner Claude
+
+- Note 2026-09-25 (Phase 146j): Built: a pick taken back with a reason (one record removed through record_id, lookup back to MATCH_REVIEW, pick row kept); a yes taken back (that field only); the question asked on upload and request forms. test/phase146j.test.ts, 29 tests; record in PHASE HISTORY.
+
+### Phase 151c - give the site area its caller and its screen: the research run after signing, a point and a neighbouring council a person enters, the OSTN15 file
+
+`13129705258` · **Done** · owner Claude
+
+- Note 2026-09-25 (Phase 151d, closing Phase 151c): Phase 151c is done (commit 43f674b): the research run is the site area's one caller, the property page's point-and-council form, the OSTN15 tool's test, the licence wording agreed, Word question 227 for Lakhbir. Everything stays switched off. Its record is in PHASE-HISTORY.md.
+
+### Phase 151c lines 6-8 - name Veriff and Postcodes.io in the papers as drafts, the answer-it-myself notice words, and Accounting's Help page
+
+`13133268300` · **Done** · owner Claude
+
+- Note 2026-09-25 (Phase 151d, closing Phase 151c): Lines 6 to 8 are done (commit 43f674b): Veriff and Postcodes.io named in a dated draft section of the privacy notice and in a Word comment on clause 7; the line for the notice at the address question; Accounting's Help link names B55. No switch was flipped. Record in PHASE-HISTORY.md.
 
 ### Market & competitor research
 
@@ -1784,7 +1722,7 @@
 
 `12852269899` · **Done** · owner Claude
 
-- Note 2026-09-28 (Phase 153): Checked by Phase 153 (28 Sep): NOT closed by Phase 143. A claim_grants table exists (migration 015, CRM 6 of 10, 11 Sep) with a payer type and a free-text list of what each grant paid for, but it only feeds the check to leave the valuation stage; no figure is computed from it, the estimate engine still cuts the claim by the single grant_fraction, the items list is not linked to the taxonomy's cost items, and nothing checks the payer type. The remainder is Phase 153a line 1 (row 13133268314).
+- Note 2026-09-28 (Phase 153): Checked by Phase 153 (28 Sep): NOT closed by Phase 143. A claim_grants table exists (migration 015, CRM 6 of 10, 11 Sep) with a payer type and a free-text list of what each grant paid for, but it only feeds the check to leave the valuation stage; no figure is computed from it, the estimate engine still cuts the claim by the single grant_fraction, the items list is not linked to the taxonomy's cost items, and nothing checks the payer type. The remainder is Phase 153a line 1 (row 13199500801).
 
 ### F-16 — advice gap, GP client-facing copy: nothing warns that claiming on a grant-funded element can trigger recovery of the grant under direction 56, independently of tax. The practice already declared its intention to claim under direction 5(1)(b)
 
@@ -1921,7 +1859,7 @@
 
 - File: `_archive/superseded/data-sourcing-automation-blueprint.html`
 - File: `08-monday-doc-exports/12819677135__S10-Address-Matching-Spec.md`
-- Note 2026-09-28 (Phase 153): Its 200-property measurement now has its own row, 13133268313 (Blocked - question, Word question 200).
+- Note 2026-09-28 (Phase 153): Its 200-property measurement now has its own row, 13199468746 (Blocked - question, Word question 200).
 
 ### Homedata integration — typeahead debounced 200ms, candidate list below confidence threshold, X-Call-Weight logged
 
@@ -2888,4 +2826,84 @@
 
 `13032576266` · **Done** · owner Claude
 
+
+### Phase 151f - switch the online identity check from Veriff to Didit
+
+`13199476479` · **Done** · owner Claude
+
+- Note 2026-09-25 (Phase 151f): Done: the identity check is Didit's, still switched off; migration 053; the papers and the Word questions updated. Record in PHASE-HISTORY.md.
+- Note 2026-09-25 (Phase 151f, later): Lakhbir, 25 Sep 2026: the Didit account is live and DIDIT_API_KEY is in the key file (its label was renamed to that exact name so it is read; checked by name only). Still missing: DIDIT_WEBHOOK_SECRET and DIDIT_WORKFLOW_ID. The check stays off until the officer and the solicitor approve the papers.
+- Note 2026-09-25 (Phase 151f, later): Lakhbir, 25 Sep 2026: all three Didit entries are in the key file and read (checked by name only). Only the papers (officer and solicitor) and the switch remain.
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268302 (board sync, Lakhbir's yes).
+
+### Phase 151g - the test lookups Lakhbir allowed: the smoke test keeps his five conditions
+
+`13199476287` · **Done** · owner Claude
+
+- Note 2026-09-25 (Phase 151f): Written by Phase 151f: Lakhbir said yes to small, logged test lookups on five conditions (Word question 170, closed 25 Sep 2026); the smoke test (Phase 146g) must enforce them.
+- Note 2026-09-28 (Phase 151g): Built: src/connectors/test-lookups.ts; smoke refuses without --who/--why, keeps a log outside the repository (~/.caprebate-test-lookups.jsonl) with only connector, time, PASS/NO, who, why; refuses a fourth lookup per switch-on (smoke-switched-on restarts it); refuses a client's postcode, number or name (CAPREBATE_DB, else --not-a-client, logged); says it is not a demonstration first. test/phase151g.test.ts, 23 tests, all red on the pre-change code.
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268303 (board sync, Lakhbir's yes).
+
+### Phase 151h - switch the identity check on for testing, the papers waived and saying so
+
+`13199454522` · **Done** · owner Claude
+
+- Note 2026-09-25 (Phase 151h): Lakhbir, 25 Sep 2026: switched on for testing. The papers are waived, not done, and the screens say so. Record in PHASE-HISTORY.md.
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268304 (board sync, Lakhbir's yes).
+
+### Phase 146k - the title register by hand: HM Land Registry's title register looked up manually, not through Business Gateway
+
+`13199454657` · **Done** · owner Claude
+
+- Note 2026-09-25 (Phase 146k): Built: Business Gateway retired from the click (PAID_RETIRED, keys marked retired, gone from the example); the title register recorded by hand on the property page and taken back with a reason. test/phase146k.test.ts, 12 tests; record in PHASE HISTORY.
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268305 (board sync, Lakhbir's yes).
+
+### Phase 146l - the title register's documents uploaded by hand: the official copy and title plan as a document type staff upload, beside what they type
+
+`13199468745` · **Done** · owner Claude
+
+- Note 2026-09-27 (Phase 146l): Built: TITLE_REGISTER document type (official copy and title plan), read by a person, never a model; migration 056; upload box on the property page. test/phase146l.test.ts; record in PHASE HISTORY.
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268306 (board sync, Lakhbir's yes).
+
+### Phase 146m - the Land Registry answers relayed: the officer keeps the official copy, the solicitor lets title figures into the accountant's pack
+
+`13199476480` · **Done** · owner Claude
+
+- Note 2026-09-27 (Phase 146m): Done: HMLR_TITLE licence cleared (solicitor yes, relayed); official copy kept (officer yes, relayed); SDP-L22 answered. Record in PHASE HISTORY.
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268307 (board sync, Lakhbir's yes).
+
+### Phase 151j - sign-in: forgot password, temporary passwords, two-factor by email code or authenticator app
+
+`13199476285` · **Done** · owner Claude
+
+- Note 2026-09-28 (Phase 151j): DONE 28 Sep 2026: forgot password by emailed link; temporary passwords shown once (7 days); a second step (authenticator app or email code) for every staff login, optional for clients; login() refuses while a step is left. Hardening: Phase 151k. Evidence: test/phase151j.test.ts, PHASE HISTORY.
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268309 (board sync, Lakhbir's yes).
+
+### Phase 151k - sign-in hardening: the API's steps, the app secret at rest, codes out of the outbox, the screenshot tool
+
+`13199476286` · **Done** · owner Claude
+
+- Note 2026-09-28 (Phase 151k): DONE 28 Sep 2026: /api/login answers 202 + a step token and /api/login/step/... walk the same sign-in.ts functions; the app secret sealed with CAPREBATE_MFA_KEY (unset = text, as before); a SENT sign-in code or reset link loses its outbox body (migration 058); the screenshot tool signs demo logins in (tools/demo-sign-in.ts). test/phase151k.test.ts, 21 of 27 red on the pre-change code. Recovery codes asked as Word question 232.
+- Note 2026-09-28 (Phase 151k follow-up): Follow-up 28 Sep 2026: Lakhbir answered yes to recovery codes (Word question 232); question closed, the build is Phase 151m.
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268310 (board sync, Lakhbir's yes).
+
+### Phase 151m - recovery codes: ten one-use codes, shown once, so a person who loses their phone can still sign in
+
+`13199476481` · **Done** · owner Claude
+
+- Note 2026-09-28 (Phase 151k follow-up): Lakhbir answered yes to recovery codes on 28 Sep 2026 (Word question 232, closed). Written as Phase 151m, after 151l and before the sweep.
+- Note 2026-09-28 (Phase 151m): DONE 28 Sep 2026: ten recovery codes (50 bits, scrypt hashes only, migration 059) shown once at setup and on Make new recovery codes; taken once at the VERIFY step on the website and /api/login/step/recovery within the same 5 wrong codes; audited and emailed with no code; cleared by a new step, a reset or a client turning it off. test/phase151m.test.ts red before, green after.
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268311 (board sync, Lakhbir's yes).
+
+### Phase 153 - five decisions carried into the documents that never heard of them, and the rows that say more than is true
+
+`13199454667` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md (the Phase 153 section)
+- Note 2026-09-28 (Phase 152 (sweep)): Written by the Phase 152 sweep: ten lines - the data protection mailbox, monday.com, the Claude API, the title register by hand, BCIS, the fee and other moved figures, the engagement letter's comments and specimen, smaller reads, tracker rows whose label is not what is in the way, and questions asked twice. Nobody has to answer anything first.
+- Note 2026-09-28 (Phase 152 (sweep)): An eleventh line: the tax adviser's review is 53 questions (Rulebook I's seven joined it, Word question 50), and every copy of the old count still says 46.
+- Note 2026-09-28 (Phase 152 follow-up): A twelfth line, added by the Phase 152 follow-up at Lakhbir's request: the two licence-blocked rows Claude owns - prove the fee scale is built and off, and test the location adjustment on an invented BCIS-shaped table, generalising it (off) if it only fits Spon's.
+- Note 2026-09-28 (Phase 153): Line 12 done: the fee scale proved built and off; the location adjustment proved to take a BCIS table (UK mean 100) with tests D30-D34, red on the pre-Phase-132 model. phase9 398 -> 403.
+- Note 2026-09-28 (Phase 153): Phase 153 closed 28 Sep 2026: lines 1-12 done; record in PHASE-HISTORY.md; what it could build but did not is Phase 153a (13199500801).
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268312 (board sync, Lakhbir's yes).
 
