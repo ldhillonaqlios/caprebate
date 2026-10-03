@@ -11299,3 +11299,11 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** phase 16, the client portal.
 
  **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 16 of 17, 3 October 2026 — the client portal (Claude Code, on the Mac)
+
+-  **Built:** the portal home's header offers Send us a message, Book a call and Send us a document; "Send us a message" is now said once, not four times. The questions and the documents asked for are drawn only when there is one — the "What we need from you" card already says when nothing is. How to contact us moves to the end, its words unchanged. On a laptop the page's parts open out under Your claims in the left-hand menu. The claim's own page, Messages and Show us your building already read well and are unchanged.
+-  **Proof.** `test/ui-tidy-portal.test.ts`, five tests; 9 single-line mutations, all red. Screenshots of the portal home at 1280 and 390. 2201 tests, run in 12 chunks: all pass but the stray-file one and `whatsapp.test.ts`'s order check, the timing flake under load (it passes three times out of three on its own; a separate task is offered to fix it). Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2201`) green.
+-  **Next:** phase 17, Accounting's and the Surveyor's own pages, and a phone check of every page.
+
+ **Claim cleared** in the commit that carries this record.

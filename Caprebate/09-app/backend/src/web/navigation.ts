@@ -395,6 +395,7 @@ export function portalShell(actor: Actor): Shell {
   const ctx = navContext.getStore();
   const name = displayName(ctx?.db, actor);
   const current = ctx?.path === '/portal' || (ctx?.path ?? '').startsWith('/portal/claims/');
+  // UI TIDY PHASE 16: on the claims page, its sections open out under Your claims (the page names them, `setSubMenu`).
   // PHASE 142: MESSAGES, with how many of ours the client has not read. Only for the client, on their own company.
   const onMessages = ctx?.path === '/portal/messages' || (ctx?.path ?? '').startsWith('/portal/messages/');
   const unread = ctx?.db !== undefined && actor.role === 'CLIENT' && actor.business_id !== null && !onMessages
@@ -403,7 +404,7 @@ export function portalShell(actor: Actor): Shell {
     unread > 0 ? h` <span class="tabcount" aria-label="${unread} not read">${unread}</span>` : raw('')}</a>`;
   const html = h`<div class="util"><a class="helplink" href="/portal/help">Help</a>${userMenu(name, actor, '/portal/settings')}</div>
     <nav class="appnav portalnav" aria-label="Sections"><ul class="tabs-main"><li>${current
-      ? h`<a href="/portal" aria-current="page">Your claims</a>` : h`<a href="/portal">Your claims</a>`}</li>${
+      ? h`<a href="/portal" aria-current="page">Your claims</a>${subMenuHtml(ctx === undefined ? null : SUB_MENUS.get(ctx) ?? null)}` : h`<a href="/portal">Your claims</a>`}</li>${
       actor.role === 'CLIENT' ? h`<li>${messages}</li>` : raw('')}</ul></nav>${MENU_BUTTON}`;
   return new Shell(html.html, '/portal');
 }

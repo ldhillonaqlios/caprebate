@@ -11,6 +11,7 @@
  *                            ring; a call asked for with no time yet says so; none at all offers "Book a call".
  *   NEW FOR YOU              our messages they have not read, and what we have done or issued in the last 30 days.
  *   WHAT WE NEED FROM YOU    every open question and every document asked for, each with its button.
+ * UI TIDY PHASE 16 (3 October 2026): the cards no longer repeat "Send us a message" — the header carries it, once.
  * Nothing here is new information: each card reads what the portal's own sections read, asked of the same rules. No
  * figure, no fact and no value is shown — only words, dates and counts.
  */
@@ -64,7 +65,7 @@ export function portalDashboard(x: PortalDashInput): Safe {
   const call = card('next-call', 'Your next call', next === undefined
     ? h`<p>Nothing is booked.</p><p><a class="cta" href="#appointment">Book a call</a></p>`
     : next.starts_at === null
-      ? h`<p>You asked us for a call. We will offer you a time.</p><p><a class="btn" href="/portal/messages">Send us a message</a></p>`
+      ? h`<p>You asked us for a call. We will offer you a time.</p>`
       : h`<p class="pdash-big">${dayWords(next.starts_at)}, ${localClock(next.starts_at)}</p>
         <p>${next.channel === 'video' ? 'A video call, here in your portal.' : next.channel === 'phone' ? 'A telephone call. We will ring you.' : 'A call.'}</p>
         <p>${x.joins[next.id] !== undefined ? h`<a class="cta" href="${x.joins[next.id]!}">Join the video call</a> ` : raw('')}<a class="btn" href="#appointment">Move or cancel it</a></p>
@@ -80,7 +81,7 @@ export function portalDashboard(x: PortalDashInput): Safe {
     ...issued.map((d) => h`<li>We issued your ${d.label} <span class="help">· ${ukDate(d.issued_on)}</span></li>`),
   ];
   const fresh = card('new-for-you', 'New for you', items.length === 0
-    ? h`<p class="empty">Nothing new in the last 30 days.</p><p><a class="btn" href="/portal/messages">Send us a message</a></p>`
+    ? h`<p class="empty">Nothing new in the last 30 days.</p>`
     : h`<ul class="plain pdash-list">${items}</ul>`);
 
   const open = x.tasks.filter((t) => t.state === 'OPEN');

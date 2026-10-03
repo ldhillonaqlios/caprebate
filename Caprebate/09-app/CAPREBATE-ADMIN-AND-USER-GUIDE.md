@@ -3553,17 +3553,17 @@ ever open their own company's claims. Any other address answers "We cannot find 
 client@example.invalid. **Your claims** shows one tile, **main site**. To see a company with three, sign in as admin.
 Open `/portal?business={Elverton's id}`.
 
-**Where things are on the page.** The portal opens with the business's name and two buttons, **Book a call** and **Who
-to contact**. Then come these, in order:
+**Where things are on the page.** The portal opens with the business's name and three buttons. They are **Send us a
+message**, **Book a call** and **Send us a document**. Then come these, in order:
 - the **Welcome to Cap Rebate** card, until the client hides it;
-- **How to contact us**;
-- the **stage bar** of the six steps for clients, from **1 Your estimate** to **6 Aftercare** (now switched on);
-- **The range you were shown**, with its basis under it;
-- **What we need from you**. This lists each open question and each document we asked for, linked to its form.
+- **Where your claim is**, the six steps from **1 Your estimate** to **6 Aftercare**;
+- **What we need from you**. This lists each open question and each document we asked for, linked to its form. If
+  there is nothing, it says so;
+- **What we are working on**, **Your next call** and **New for you**.
 
-Below that are the questions and the documents asked for. Then comes **What happens at each step**, behind **Show each
-step**. Then every other section. **Help** at the top opens this section. (Before, **How to contact us** was at the
-foot. The card was headed **What we are waiting for from you**.)
+Below them are the client's claims, what we have done, and the range. The questions and the documents asked for come
+next, but only when there is one. Then come the other parts. **How to contact us** is near the end. On a laptop, the
+left-hand menu lists the parts under **Your claims**. Press one to go to it. **Help** at the top opens this section.
 
 **What it is for**
 The client's claim page gained three things.

@@ -108,7 +108,10 @@ describe('UI tidy phase 2: each login’s menu, in named groups', () => {
     const nav = navOf(r.body);
     assert.match(nav, /<a href="\/portal" aria-current="page">Your claims<\/a>/);
     assert.match(nav, /<a href="\/portal\/messages">Messages/);
-    assert.doesNotMatch(nav, /navlabel|subnav/);
+    assert.doesNotMatch(nav, /navlabel/);
+    // UI tidy phase 16: on the claims page, Your claims opens out to the page's parts; on Messages nothing opens out.
+    assert.match(nav, /<a href="\/portal" aria-current="page">Your claims<\/a><ul class="subnav"><li><a href="#where-you-are">Where your claim is<\/a><\/li>/);
+    assert.doesNotMatch(navOf((await get('client', '/portal/messages')).body), /subnav/);
   });
 });
 
@@ -124,7 +127,7 @@ describe('UI tidy phase 2: the menu opens out under the current section', () => 
 
   test('on Settings itself every setting is listed and none is marked; elsewhere nothing opens out', async () => {
     assert.deepEqual(subOf((await get('admin', '/staff/admin')).body), { title: null, items: SETTINGS, current: [] });
-    for (const [who, path] of [['admin', '/staff'], ['admin', '/staff/pipeline'], ['sales', '/staff/tasks'], ['accounting', '/staff/introducer-rewards'], ['client', '/portal']] as const) {
+    for (const [who, path] of [['admin', '/staff'], ['admin', '/staff/pipeline'], ['sales', '/staff/tasks'], ['accounting', '/staff/introducer-rewards'], ['client', '/portal/messages']] as const) {
       assert.equal(subOf((await get(who, path)).body), null, `${who} ${path}`);
     }
   });
