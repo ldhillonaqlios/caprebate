@@ -68,8 +68,8 @@ alternate rows `#f6f9f8`. The left menu is black with the current page in mint.
 | 11 | Survey pack (names the site and claim; "0 min 32 s" becomes "32 s") | DONE 3 Oct |
 | 12 | Finance | DONE 3 Oct |
 | 13 | Calendar | DONE 3 Oct |
-| 14 | Introducers | NEXT |
-| 15 | Settings | |
+| 14 | Introducers | DONE 3 Oct |
+| 15 | Settings | NEXT, once Lakhbir has reviewed 11 to 14 |
 | 16 | Client portal: Your claims, Messages, Show us your building | |
 | 17 | Accounting's and the Surveyor's own pages, and a phone check of every page | |
 

@@ -77,7 +77,7 @@ describe('UI tidy phase 13: the week and the day', () => {
     const mon = days[0]?.[2] ?? '';
     assert.match(mon, new RegExp(`<a href="/staff/calendar/${held}"><strong>09:00</strong> [^<]+</a>\\s*<span class="wmeta">[^<]+</span><span class="wmeta"><span class="badge b-nobody">Nobody yet</span></span>`));
     assert.match(days[1]?.[2] ?? '', new RegExp(`href="/staff/calendar/${gone}"[\\s\\S]*<span class="badge b-late">Cancelled</span>`));
-    for (const d of days.slice(2)) assert.match(d[2] ?? '', /^\s*<p class="wnone">Nothing booked<\/p>\s*$/, d[1]);
+    for (const d of days.slice(2)) assert.match(d[2] ?? '', /^\s*<p class="wnone">Nothing booked<\/p>\s*$/, d[1] ?? '');
   });
 
   test('today’s box is marked, and only today’s', async () => {

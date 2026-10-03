@@ -11281,3 +11281,11 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 -  **Next:** phase 14, Introducers.
 
  **Claim cleared** in the commit that carries this record.
+
+## UI tidy phase 14 of 17, 3 October 2026 — Introducers (Claude Code, on the Mac)
+
+-  **Built:** Introducers opens with Add a firm and Record a referral as buttons, boxes counting the firms, what they sent and the late next contacts, and the reward model as a label. The firms are one short table — owner (Nobody yet in amber), contact (late in red), what each sent us in one line — that stacks on a phone. The two forms fold until a button or a refusal opens them. A firm's page has the way back, a line with its owner and next contact, the same boxes, its sections in the left-hand menu and its forms folded. Accounting still sees only the firms and their fees.
+-  **Proof.** `test/ui-tidy-introducers.test.ts`, eleven tests; 22 single-line mutations, all red. Screenshots for Sales and Accounting at 1280 and 390, with three firms added in the local demo. 2188 tests, run in 12 chunks because the Mac was overloaded (load 40 to 80): all pass but the stray-file one and `whatsapp.test.ts`'s order check, which failed once under that load and passes three times out of three on its own. Type check, CRM fold, plain words, analytics and drift (`--expect 1279,439,403,2188`) green. Also fixed: a type slip in phase 13's Calendar test (a message that could be empty), which the type check caught; the commit gate now runs the type check.
+-  **Next:** Lakhbir reviews phases 11 to 14; then phases 15 to 17.
+
+ **Claim cleared** in the commit that carries this record.

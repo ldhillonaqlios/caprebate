@@ -1105,6 +1105,11 @@ that refer clients. None of their people ever has a login.
   facts. It makes a lead, with the firm as its introducer.
 - **Add a firm** adds a firm on its own.
 
+Both are buttons at the top. Each opens its form. Boxes count the firms, the leads they sent, the claims opened and
+won, and the firms whose next contact is late. Each firm is one row. A firm with no owner says **Nobody yet**, in
+amber. A late next contact is red. **Sent us** says what the firm sent. Open a firm to see more. Its parts are in the
+left-hand menu. Its forms are folded. Press one, such as **Add a person**, to open it.
+
 A referred lead has the section **The introducer, and sharing progress with it**. It asks: "Does the client want
 progress shared with the firm?" Read the client the words shown. Choose **Their answer** (Yes, No or Withdrawn). Then
 press **Record the answer**. Until the client says yes, nothing about the claim goes to the firm. The screen puts it

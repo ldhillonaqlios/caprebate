@@ -1417,6 +1417,15 @@ a.packhead-switch:hover{text-decoration:underline}
 @media (min-width:900px){.weekgrid{grid-template-columns:repeat(7,minmax(0,1fr))}.wday{min-height:7rem}}
 @media (max-width:899px){.wday:not(:has(.wcalls)){display:flex;justify-content:space-between;align-items:baseline;gap:.5rem}.wday:not(:has(.wcalls)) .wday-h{margin:0}}
 
+/* UI TIDY PHASE 14 — INTRODUCERS (src/web/introducers-pages.ts). */
+.rewardline{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem;margin:0 0 .5rem}
+.formfold{margin:.75rem 0 0}
+.formfold>summary{display:inline-block;cursor:pointer;list-style:none;font-weight:700;border:1px solid var(--ink);border-radius:.5rem;padding:.45rem .9rem;background:var(--white)}
+.formfold>summary::-webkit-details-marker{display:none}
+.formfold>summary::before{content:"+ "}
+.formfold[open]>summary::before{content:"– "}
+.formfold[open]>summary{margin-bottom:.6rem}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of
