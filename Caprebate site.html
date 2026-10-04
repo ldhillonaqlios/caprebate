@@ -2977,7 +2977,11 @@ var CB_ELECTION = (function(){
     if(!deadline) return null;
     var trib = parseDate(s.tribunal_application_date);
     if(trib && trib <= deadline && s.tribunal_status === "undetermined") return true;
-    return new Date() <= deadline;
+    /* PHASE 153f, 4 October 2026 (noted 2 Oct): the clock the engine is GIVEN (s.__now, as the back end's legal check
+       passes it), and the real clock only when none is given. It read the real clock before, so a case run for a
+       fixed date could get the wrong answer either side of the deadline. */
+    var today = s.__now ? parseDate(s.__now) : null;
+    return (today || new Date()) <= deadline;
   }
 
   /* -------------------------------------------------------------------------

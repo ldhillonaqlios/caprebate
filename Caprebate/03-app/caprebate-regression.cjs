@@ -8460,6 +8460,25 @@ if (startSuite("AJ", "Phase 153e — the surveyor's workbench: supported living'
     [true, false]);
 }
 
+if (startSuite("AK", "Phase 153f — the election window reads the clock it is given")) {
+  const safe = fn => { try { return fn(); } catch (e) { return "threw: " + e.message; } };
+  const W = s => safe(() => CB_ELECTION.windowOpen(s));
+  /* acquisition 1 Jan 2024: the window closes two years later, about 1 Jan 2026. */
+  const PAST = { acquisition_date: "2024-01-01" };
+  /* acquisition 1 Jun 2026: the window closes about 1 Jun 2028, after any real date this suite will run on. */
+  const FUTURE = { acquisition_date: "2026-06-01" };
+  check("AK1 — a clock given inside a window that the real clock says is closed: open",
+    [W(Object.assign({ __now: "2025-12-01" }, PAST)), W(Object.assign({ __now: "2024-06-01T09:00:00Z" }, PAST))], [true, true]);
+  check("AK2 — a clock given after a window that the real clock says is still open: closed",
+    [W(Object.assign({ __now: "2028-12-01" }, FUTURE)), W(Object.assign({ __now: "2030-01-01" }, FUTURE))], [false, false]);
+  check("AK3 — either side of the same deadline, a day apart",
+    [W(Object.assign({ __now: "2025-12-30" }, PAST)), W(Object.assign({ __now: "2026-01-03" }, PAST))], [true, false]);
+  check("AK4 N4 — no acquisition date is still not known, whatever the clock; no clock given falls back to the real one",
+    [W({ __now: "2025-12-01" }), W(Object.assign({}, PAST)), W(Object.assign({}, FUTURE))], [null, false, true]);
+  check("AK5 — a clock that cannot be read falls back to the real one rather than opening the window",
+    [W(Object.assign({ __now: "not a date" }, PAST))], [false]);
+}
+
 /* ------------------------------------------------------------------- report */
 console.log("\n" + "=".repeat(72));
 console.log("  pass " + results.pass + "   fail " + results.fail +
