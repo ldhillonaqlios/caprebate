@@ -1535,6 +1535,23 @@ FROM PHASE 153e (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the cost model
   pack's chapters too — the index dates in chapter 11 and the checks in 14 —
   and bring the phase3 module's £/m² review flag (Phase 153e line 14) into
   chapter 22. Neither is in the back end today.
+FROM PHASE 154a1 (4 Oct 2026), TWO LOOSE ENDS WITH THEIR HOME HERE, both
+  buildable today. Line 13 built the s.187A pooling requirement (R-B1,
+  CB_S187A.poolingAssess) for a seller KNOWN to have been able to claim.
+  (a) The fixed-value questions (14po, 14fvr and the rest) are still asked
+      of a seller the pooling requirement already takes to nil. Rulebook A
+      Addendum 1 says they are gated behind the pooling answer. Hide them
+      then - keep the sale-date question (14pod), which the pooling check
+      reads - with harness checks both ways and the pack's legal check.
+  (b) A seller whose ENTITLEMENT is not known ("not sure" or never asked) and
+      who never claimed still gets the upper half of the band at Stage 3,
+      with the words "no prior entitlement ... (best case)". Rulebook B says
+      that seller is undetermined between branches B and C, so it should
+      be nil at the bottom with a flag (N4: "not sure" and absent alike).
+      And for a seller known entitled who never claimed and sold before
+      April 2014 (branch D) the figure is right but those words are not:
+      use Rulebook B section 6's replacement wording. Re-run
+      03-app/caprebate-switch-direction.cjs after both.
 ═══════════════════════════════════
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.

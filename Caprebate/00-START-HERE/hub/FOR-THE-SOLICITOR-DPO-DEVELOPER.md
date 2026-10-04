@@ -1998,3 +1998,23 @@ Name:                                  Date:
  For the developer: migration 087 (`survey_pack_words`: the surveyor's own words, never edited or deleted) and one staff route, `/staff/survey/{job}/pack/words`. No personal data beyond the surveyor's name on each change.
 
  **And the board's own total at the close of Phase 153g, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 154a1, 4 October 2026 — the faults the 3 October sweep found, fixed; nothing moved in or out
+
+ **For the data protection officer — two things that touch personal data, both made safer.**
+-  **The test website's function log no longer prints emails.** It printed every new email in the outbox — the address, the subject and the body, sign-up links included — against the Developer Spec's rule of no personal data in logs. It now prints how many, of which kinds, and how many were sent: "3 new emails in the outbox - FREE_TYPED 1, SIGN_UP 2; 1 sent, 2 not sent". Nothing else changed in what is sent.
+-  **Invisible characters are taken out of what people type.** A null and a right-to-left override typed into a claim note or a portal message were stored and shown back as typed; the override can make a file name read backwards. Every form the website reads now drops control characters (keeping tabs and line breaks) and the direction marks and overrides. A password is never altered.
+
+ **For the developer.** No migration and no new route. Line by line, with its test in `09-app/backend/test/phase154a1.test.ts`:
+-  A body over its cap is read and dropped (up to 8 MB more) and the 413 says `Connection: close` (`src/web/router.ts` `readBody`, `bindResponse`); the JSON API's cap is now a 413 too, not a 500 (`src/server.ts` `readJson`). Before, the next request on that connection hung six seconds and was reset.
+-  The compliance person search cuts its term to 200 characters and says so (`SEARCH_TERM_MAX`); 50,000 characters was a 500.
+-  A contact, an introducer's person or a firm with no name field at all is refused (`crm.ts`, `introducers.ts`); the firm was a 500.
+-  A double-clicked task is one task: the same person, the same fields, within ten seconds (`tasks.ts` `DOUBLE_CLICK_MS`).
+-  Every label names its box and no heading skips a level on any page any login reaches; a test walks them all.
+-  The drift checker counts the back end over the test files git tracks, and names any untracked one.
+
+ **And the board's own total at the close of Phase 154a1, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+

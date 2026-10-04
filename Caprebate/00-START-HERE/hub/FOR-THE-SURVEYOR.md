@@ -1040,3 +1040,13 @@ reasonably be established remotely should require a site inspection before a sur
  **SV-S4, the report.** The other ten chapters are built: 5 The building, 8 Dwellings, 11 Bare land, 14 Qualifying share, 16 Leaseback, 17 Structures allowance, 18 Other reliefs, 19 Judgement calls, 20 Repairs or capital and 22 Findings. Each shows what we hold, says where each line came from, and says "not on file", "not written yet" or "not worked out yet" for anything missing. **Nothing is drafted for you:** no land fraction, no dwelling fraction, no qualifying percentage, no narrative. Where the report template asks for your words (construction type, your land comparables and planning basis, the basis for each percentage, a disposal value, your sector's main judgement, what you saw of any works, and the four narrative questions), each has its own box, kept with your reason under your name. You open all 22 chapters before approving, and the client's report now carries the ten as its section 06.
 
  **And the board's own total at the close of Phase 153g, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 154a1, 4 October 2026 — nothing moved in or out
+
+ **The pack's legal check and the online estimate now agree on one thing they did not.** Where the client bought from a tax-paying business that could have claimed allowances on the fixtures but never did, and it sold after April 2014, the legal check shows red, says the fixtures claim is nil, and names what would change that (the seller pooling the spending in a period that began on or before the sale). If we do not know when the seller stopped owning, or whether it ever claimed, it shows amber. Nothing for you to decide: it is the tax adviser's to check (FOR THE ACCOUNTANT, Phase 154a1). It does mean the date the seller stopped owning, from the title register, is worth having in the pack.
+
+ **And the board's own total at the close of Phase 154a1, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+

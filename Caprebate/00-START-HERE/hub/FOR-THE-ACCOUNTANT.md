@@ -1765,7 +1765,7 @@ Signed .............................  Date ..........................
 
  **Two of Phase 153b's lines are Lakhbir's, not yours, and are not in this register:** the job cost model's tax adviser line is renamed "our own tax adviser, if we introduce one", with every figure unchanged (question 191); and Homedata is marked as the chosen planning source, still off until the account opens (question 202).
 
- **One thing the count found, for you to know about:** where a seller who could have claimed never did, the online estimate applies no cap and raises no flag about the pooling requirement — it applies the election and fixed-value caps only to a seller known to have claimed. The surveyor's working file does assess it. It is written into the sweep's phase of faults to check against Rulebook B.
+ **One thing the count found, for you to know about:** where a seller who could have claimed never did, the online estimate applies no cap and raises no flag about the pooling requirement — it applies the election and fixed-value caps only to a seller known to have claimed. The surveyor's working file does assess it. It is written into the sweep's phase of faults to check against Rulebook B. *Done by Phase 154a1 on 4 October 2026 — see that phase's section at the end of this register.*
 
  **And the board's own total at the close of Phase 153b, 4 October 2026, counted in code: 124 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-five is 124.
 
@@ -1812,3 +1812,24 @@ Signed .............................  Date ..........................
  Phase 153g built the surveyor's last ten pack chapters. Three of them hold facts for you, and decide nothing: 17 Structures allowance (the structure left after the plant and the land, worked out, never carried across from a plant answer), 18 Other reliefs (land remediation flags), and 20 Repairs or capital, which records what the surveyor saw of any works, for your repair-or-capital call. **One gap for you:** nothing in the assessment or on the claim asks whether the property was sold and leased back, or whether contamination was taken on from someone else, so chapters 16 and 18 say "not on file". Should either be asked, and where?
 
  **And the board's own total at the close of Phase 153g, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+---
+
+## Phase 154a1, 4 October 2026 — the pooling requirement now applies in the online estimate; nothing moved in or out
+
+ **What was wrong.** A client who bought from a tax-paying business that could have claimed capital allowances on the fixtures, but never did, got the full range with no cap and no warning. The estimate only looked at the second-hand fixtures rules where the seller was known to have claimed. Rulebook B (branch C, row C1) says the opposite: a seller who could claim but never pooled the spending, and stopped owning after April 2014, leaves the buyer nil (s.187A(4) and (3)).
+
+ **What it does now, in all five sectors and in the surveyor's legal check alike.** It is built on, not behind a switch, because it puts the estimate back in line with Rulebook B, and it can only make a figure smaller or unsettled, never bigger.
+-  **The seller could claim, never did, and stopped owning after April 2014:** nil. The flag names the pooling requirement and says what would meet it: the seller putting the spending into its pool in a tax period that began on or before the sale, which it may still be able to do by amending its return for the period of the sale. Example: a care home bought for £2,000,000 in June 2019 from a trading company that never claimed — nil, where it was a range up to the top of the band.
+-  **The same seller, but we do not know when it stopped owning:** unsettled, with nil at the bottom and the top of the range shown, flagged. The date could take the rule out of force, so it is never a firm nil.
+-  **The seller could claim and we do not know whether it did** ("not sure", or never asked): unsettled in the same way, nil at the bottom (row C9). "Not sure" and no answer give the same result.
+-  **Unchanged:** a seller who claimed (the fixed-value rules apply, as before); a seller who could never claim (still the best case); a sale before April 2014, when the pooling requirement was not yet in force (branch D); a seller whose entitlement itself is not known (see the second point below).
+
+ **Three things for you to check. None of them is a new question; each is already in your review pack.**
+1.  **"Never claimed" is read as "never pooled".** We do not ask separately whether the seller pooled (Rulebook B, defect 9; your review pack, B-Q6, which proposes splitting the question). A claim is a pooling (s.202(3)), so a seller who claimed has pooled; we treat a seller who never claimed as one that never pooled. If a seller can pool without ever claiming an allowance, that reading is too harsh and the question needs splitting first.
+2.  **How an unsettled case is shown.** We show a range with nil at the bottom and a flag, the way every other unproven s.187A position is shown, rather than no figure at all. That is your review pack's B-Q2; Rulebook B section 6 leans towards showing no figure.
+3.  **A seller whose entitlement is not known, who never claimed, still gets the upper half of the band.** Rulebook B says that seller sits between branches B and C. It is not changed here; it is written into the sweep's phase to build, with nil at the bottom, and the wording for a branch D seller corrected.
+
+ **One switch, checked again.** "The fixed value requirement needs a past owner who claimed" (fvr_requires_past_owner_claim) is now read after the pooling requirement, as Rulebook A's addendum orders them, so it cannot clear a case the pooling requirement takes to nil. Counted in code again: it still moves no figure in the online estimate, and only the surveyor's legal check, for a seller who sold before April 2014. Every other switch kept its direction.
+
+ **And the board's own total at the close of Phase 154a1, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
