@@ -93,7 +93,9 @@ export const SEALED_PREFIX = 'survey-photos/';
 export const INCOMING_PREFIX = 'survey-incoming/';
 /** 2 Oct 2026: where a client's video is kept, in pieces, each sealed (src/web/survey-video.ts). */
 export const VIDEO_PREFIX = 'survey-videos/';
-const isSealedKey = (key: string): boolean => key.startsWith(SEALED_PREFIX) || key.startsWith(VIDEO_PREFIX);
+/** PHASE 153f, 4 Oct 2026: a file someone sent us on WhatsApp, fetched from Meta and kept sealed (src/web/whatsapp.ts). */
+export const WHATSAPP_PREFIX = 'whatsapp-files/';
+const isSealedKey = (key: string): boolean => key.startsWith(SEALED_PREFIX) || key.startsWith(VIDEO_PREFIX) || key.startsWith(WHATSAPP_PREFIX);
 
 /** Where the phone sends one locked photo, and the headers to send with it. */
 export type IncomingTarget = { readonly url: string; readonly headers: Readonly<Record<string, string>> };

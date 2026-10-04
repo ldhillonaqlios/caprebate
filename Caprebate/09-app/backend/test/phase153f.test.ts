@@ -4,10 +4,14 @@
  * Line 4: each video call is hosted on Zoom by its own member of staff (one Zoom user hosts one meeting at a time), and
  * the start token is asked for that same person; a member of staff with no Zoom user on our account falls back to the
  * shared host, and the call's page says so. Recorded Zoom answers only: nothing reaches Zoom.
+ *
+ * Line 6(a): a photo, voice note or document someone sends us on WhatsApp is fetched from Meta when a person presses
+ * "Get it", checked against Meta's SHA-256, and kept sealed; then opened as a download. Recorded Meta answers only.
  */
 
 import { describe, test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -16,6 +20,8 @@ import { fixtureTransport, liveTransport, type Fixture } from '../src/connectors
 import { secretsFromValues } from '../src/secrets.ts';
 import { forgetZoomToken } from '../src/connectors/zoom.ts';
 import { activeMeeting, meetingHost, reconcileVideoMeeting } from '../src/web/video-calls.ts';
+import { readWebhook } from '../src/connectors/whatsapp.ts';
+import { attachmentOf, fetchWhatsAppAttachment, receiveWhatsApp, whatsAppAttachmentBytes } from '../src/web/whatsapp.ts';
 
 const T = '2026-10-04T00:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';
@@ -44,7 +50,7 @@ const FIXTURES = {
 let made: Awaited<ReturnType<typeof createApp>>;
 let base = '';
 before(async () => {
-  made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-153f-')), publicOrigin: 'https://caprebate.example.invalid' });
+  made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-153f-')), publicOrigin: 'https://caprebate.example.invalid', sealKey: randomBytes(32) });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const a = made.server.address();
   base = `http://127.0.0.1:${typeof a === 'object' && a !== null ? a.port : 0}`;
@@ -60,7 +66,7 @@ before(async () => {
   book('bk-sam', 'u-zs'); book('bk-pat', 'u-zp'); book('bk-none', null); book('bk-nozoom', 'u-zn');
 });
 after(() => made.close());
-beforeEach(() => { forgetZoomToken(); made.app.outside = liveTransport; made.app.secrets = secretsFromValues({}); delete made.app.zoomPolicy; });
+beforeEach(() => { forgetZoomToken(); made.app.outside = liveTransport; made.app.secrets = secretsFromValues({}); delete made.app.zoomPolicy; delete made.app.whatsappPolicy; });
 
 function zoomOn() {
   const t = fixtureTransport(FIXTURES);
@@ -125,5 +131,89 @@ describe('line 4 — each video call hosted on Zoom by its own member of staff',
     assert.match(z, /meeting:read:past_meeting:admin/);
     assert.match(z, /meeting:read:list_past_participants:admin/);
     assert.equal(/\/v2\/past_meetings/.test(z.replace(/^\s*\*.*$/gm, '')), false, 'no code calls the past-meeting endpoints yet');
+  });
+});
+
+/* ------------------------------------------------------------------ line 6(a): WhatsApp attachments */
+
+const WA_KEYS = {
+  WHATSAPP_ACCESS_TOKEN: 'invented-token', WHATSAPP_PHONE_NUMBER_ID: '123456789012345', WHATSAPP_APP_SECRET: 'invented-app-secret',
+  WHATSAPP_VERIFY_TOKEN: 'invented-verify-word', WHATSAPP_OPENING_TEMPLATE: 'cap_rebate_opening',
+};
+const PHOTO = Buffer.from('invented photo bytes, not a real picture');
+const PHOTO_SHA = createHash('sha256').update(PHOTO).digest('hex');
+const LOOKASIDE = 'https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=invented&ext=1&hash=invented';
+const mediaInfo = (over: Record<string, unknown> = {}): Fixture => json(200, { messaging_product: 'whatsapp', url: LOOKASIDE, mime_type: 'image/jpeg', sha256: PHOTO_SHA, file_size: PHOTO.length, id: 'MEDIA1', ...over });
+function waOn(fixtures: Record<string, Fixture>) {
+  const t = fixtureTransport(fixtures);
+  made.app.outside = t;
+  made.app.secrets = secretsFromValues(WA_KEYS);
+  made.app.whatsappPolicy = { international_transfer_approved: true };
+  return t;
+}
+function webhook(id: string, mediaId: string, from = '447700900111'): string {
+  return JSON.stringify({ entry: [{ changes: [{ value: { messages: [{ from, id, timestamp: '1759564800', type: 'image',
+    image: { id: mediaId, mime_type: 'image/jpeg', sha256: PHOTO_SHA, caption: 'the plant room' } }] } }] }] });
+}
+const signed = (raw: string) => 'sha256=' + createHmac('sha256', WA_KEYS.WHATSAPP_APP_SECRET).update(raw, 'utf8').digest('hex');
+const sales = { id: 'u-zs', role: 'SALES' } as never;
+
+describe('line 6(a) — a file someone sends us on WhatsApp, got and kept here', () => {
+  before(() => {
+    made.app.db.run("INSERT INTO contacts (id, business_id, full_name, phone, contact_consent, marketing_optin, created_at, updated_at) VALUES ('c-wa', 'b-zh', 'Ada Invented', '07700 900111', 1, 0, ?, ?)", [T, T]);
+  });
+
+  test('the webhook keeps the attachment\'s id, type and SHA-256 with the message, and says to get it on the page', () => {
+    const w = readWebhook(webhook('wamid.A1', 'MEDIA1'));
+    assert.deepEqual(w.incoming[0]?.media, { id: 'MEDIA1', type: 'image', mime: 'image/jpeg', sha256: PHOTO_SHA, filename: null });
+    assert.match(w.incoming[0]?.body ?? '', /They sent a photo on WhatsApp\. With it: the plant room Get it on their WhatsApp page\./);
+    made.app.secrets = secretsFromValues(WA_KEYS);
+    const raw = webhook('wamid.A1', 'MEDIA1');
+    assert.equal(receiveWhatsApp(made.app, raw, signed(raw)).kept, 1);
+    const msg = made.app.db.get<{ id: string }>("SELECT id FROM whatsapp_messages WHERE wa_id = 'wamid.A1'")!.id;
+    const a = attachmentOf(made.app.db, msg)!;
+    assert.deepEqual([a.business_id, a.media_type, a.fetched_at], ['b-zh', 'image', null]);
+  });
+
+  test('"Get it": two calls with our token, the bytes checked against Meta\'s SHA-256, kept sealed, then opened as a download', async () => {
+    const t = waOn({ 'GET /v25.0/MEDIA1': mediaInfo(), 'GET /whatsapp_business/attachments/': { status: 200, headers: { 'content-type': 'image/jpeg' }, body: '', bytes: new Uint8Array(PHOTO) } });
+    const msg = made.app.db.get<{ id: string }>("SELECT id FROM whatsapp_messages WHERE wa_id = 'wamid.A1'")!.id;
+    assert.deepEqual(await fetchWhatsAppAttachment(made.app, made.store, sales, msg), { ok: true });
+    assert.deepEqual(t.seen.map((x) => `${x.method} ${new URL(x.url).host}${new URL(x.url).pathname}`),
+      ['GET graph.facebook.com/v25.0/MEDIA1', 'GET lookaside.fbsbx.com/whatsapp_business/attachments/']);
+    assert.ok(t.seen.every((x) => x.headers['authorization'] === 'Bearer invented-token'));
+    const a = attachmentOf(made.app.db, msg)!;
+    assert.equal(a.bytes, PHOTO.length);
+    assert.match(a.object_key ?? '', /^whatsapp-files\//);
+    const kept = Buffer.from(await made.store.get(a.object_key!));
+    assert.equal(kept.includes(PHOTO), false, 'kept sealed, never as the plain bytes');
+    const out = await whatsAppAttachmentBytes(made.app, made.store, sales, msg);
+    assert.deepEqual([out?.bytes.equals(PHOTO), out?.mime, out?.filename], [true, 'image/jpeg', 'whatsapp-image.jpeg']);
+    // Fetched once: a second press calls nobody.
+    assert.deepEqual(await fetchWhatsAppAttachment(made.app, made.store, sales, msg), { ok: true });
+    assert.equal(t.seen.length, 2);
+    assert.throws(() => made.app.db.run('UPDATE whatsapp_media SET bytes = 1 WHERE message_id = ?', [msg]), /fetched once/);
+    assert.throws(() => made.app.db.run('DELETE FROM whatsapp_media WHERE message_id = ?', [msg]), /retention rule/);
+  });
+
+  test('refused, in words, with nothing kept: an address that is not Meta\'s file host, bytes that do not match, a file over 16 MB, WhatsApp not on', async () => {
+    const make = (wa: string, media: string) => { const raw = webhook(wa, media); receiveWhatsApp(made.app, raw, signed(raw));
+      return made.app.db.get<{ id: string }>('SELECT id FROM whatsapp_messages WHERE wa_id = ?', [wa])!.id; };
+    made.app.secrets = secretsFromValues(WA_KEYS);
+    const elsewhere = make('wamid.B1', 'MEDIA2'), wrong = make('wamid.B2', 'MEDIA3'), big = make('wamid.B3', 'MEDIA4'), off = make('wamid.B4', 'MEDIA5');
+    const t = waOn({
+      'GET /v25.0/MEDIA2': mediaInfo({ url: 'https://example.invalid/whatsapp_business/attachments/?mid=x' }),
+      'GET /v25.0/MEDIA3': mediaInfo(),
+      'GET /v25.0/MEDIA4': mediaInfo({ file_size: 17 * 1024 * 1024 }),
+      'GET /whatsapp_business/attachments/': { status: 200, headers: { 'content-type': 'image/jpeg' }, body: '', bytes: new Uint8Array(Buffer.from('something else')) },
+    });
+    const why = async (id: string) => { const r = await fetchWhatsAppAttachment(made.app, made.store, sales, id); return r.ok ? 'kept' : r.why; };
+    assert.match(await why(elsewhere), /not Meta’s file host/);
+    assert.match(await why(wrong), /does not match what WhatsApp said/);
+    assert.match(await why(big), /larger than 16 MB/);
+    assert.equal(t.seen.filter((x) => new URL(x.url).host === 'example.invalid').length, 0, 'never went to the other address');
+    made.app.secrets = secretsFromValues({});
+    assert.match(await why(off), /Put the WhatsApp keys in the key file/);
+    for (const id of [elsewhere, wrong, big, off]) assert.equal(attachmentOf(made.app.db, id)!.fetched_at, null);
   });
 });

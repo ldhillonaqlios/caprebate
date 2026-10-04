@@ -20,7 +20,7 @@ import { h, raw, page, type Safe } from './html.ts';
 import { savedMessage } from './components.ts';
 import { localStamp } from './localtime.ts';
 import { markChannelRead, lastChannelRead } from './messages.ts';
-import { phoneContacts, type PhoneContact } from './whatsapp.ts';
+import { attachmentOf, phoneContacts, ATTACHMENT_WORDS, type PhoneContact } from './whatsapp.ts';
 import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../connectors/whatsapp.ts';
 import { isDoNotContact } from '../stubs/email.ts';
 
@@ -65,7 +65,24 @@ export function waLines(db: Db, business_id: string, number: string, nowIso: str
   });
 }
 
+/**
+ * PHASE 153f: a file someone sent us — "Get it" (fetched from Meta and kept sealed) for those who write to the company,
+ * then "Open it" for those who may read it.
+ */
+function attachmentLine(db: Db, actor: Actor, business_id: string, message_id: string): Safe {
+  const a = attachmentOf(db, message_id);
+  if (a === undefined) return raw('');
+  const what = ATTACHMENT_WORDS[a.media_type] ?? 'the file';
+  if (a.fetched_at !== null) {
+    return h`<p class="msgfile"><a href="/staff/whatsapp/${message_id}/attachment">Open ${what}</a>${a.filename === null ? '' : ` (${a.filename})`}. Kept here, encrypted.</p>`;
+  }
+  return can(actor, 'client_message.write', { type: 'client_message', id: business_id, business_id })
+    ? h`<form method="post" action="/staff/whatsapp/${message_id}/attachment" class="msgfile"><button class="btn-quiet" type="submit">Get ${what} from WhatsApp</button></form>`
+    : h`<p class="msgfile help">Someone who writes to this company can get ${what} from WhatsApp.</p>`;
+}
+
 const DONE: Readonly<Record<string, string>> = {
+  'whatsapp-file': 'Got it from WhatsApp. It is kept here, encrypted.',
   whatsapp: 'Sent on WhatsApp.',
   'whatsapp-opening': 'Our opening message is sent. When they reply, you can write freely for 24 hours.',
 };
@@ -108,7 +125,7 @@ export function whatsappPage(app: App, actor: Actor, business_id: string, asked:
       : lines.length === 0 ? h`<p class="empty">No WhatsApp with ${chosen.name} yet. Write the first on the left.</p>`
       : h`<ol class="chat">${lines.map((l) => h`<li class="msg${l.ours ? ' mine' : ''}" id="wa-${l.id}">
           <p class="msgmeta"><span class="via">WhatsApp</span> <strong>${l.who}</strong> · ${l.when}${l.state === null ? '' : ` · ${l.state}`}</p>
-          <p class="msgbody">${l.body}</p></li>`)}</ol>`}`;
+          <p class="msgbody">${l.body}</p>${attachmentLine(db, actor, business_id, l.id)}</li>`)}</ol>`}`;
   return page({
     title: `WhatsApp ${company}`, nav, wide: true,
     body: h`${done !== null && DONE[done] !== undefined ? savedMessage(DONE[done]) : raw('')}

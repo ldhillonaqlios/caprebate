@@ -228,6 +228,18 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     rate_basis: 'the OS Data Hub publishes 600 a minute on the open plan; ten a minute is OUR cautious limit - one site plan is one call, asked for by a person',
     timeout_ms: 15_000, max_bytes: 2 * MB, max_attempts: 2,
   },
+  WHATSAPP_MEDIA: {
+    /* PHASE 153f, 4 October 2026 — A FILE SOMEONE SENT US ON WHATSAPP (src/connectors/whatsapp.ts, fetchWhatsAppMedia).
+       Meta gives each photo, voice note or document an address on its own file host for a few minutes; we fetch it there
+       with our WhatsApp token, only when a member of staff presses "Get it". The same processor and the same transfer
+       as WHATSAPP_CLOUD (approved for testing on 30 September 2026), so the same answer here. Nothing is sent but the
+       token; the file comes back. A GET, so a second try is safe. Our own limit on size: 16 MB. */
+    service_id: 'WHATSAPP_MEDIA', register_source: null,
+    base_url: 'https://lookaside.fbsbx.com', region: 'US', international_transfer_approved: true,
+    rate: { limit: 30, window_ms: 60 * 1000 },
+    rate_basis: 'Meta does not publish a limit for media downloads (read 4 Oct 2026); thirty a minute is OUR cautious limit - one file a click',
+    timeout_ms: 30_000, max_bytes: 16 * MB, max_attempts: 2,
+  },
   DIDIT_IDV: {
     /* PHASE 151f, 25 September 2026 — Didit, the online identity check for the money-laundering rules
        (src/connectors/identity-check.ts), BUILT AND SWITCHED OFF, in place of Veriff (Phase 151) on Lakhbir's

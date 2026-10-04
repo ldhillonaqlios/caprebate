@@ -318,6 +318,26 @@ export async function handleStaffMessages(
           <button type="submit">File it</button></form></li>`)}</ol>`}` }));
     return 'handled';
   }
+  /* ---- PHASE 153f, 4 OCT 2026: A FILE SOMEONE SENT US ON WHATSAPP — got from Meta and kept sealed, then opened here ---- */
+  const waAtt = /^\/staff\/whatsapp\/([A-Za-z0-9-]+)\/attachment$/.exec(path);
+  if (waAtt && method === 'POST') {
+    const mid = waAtt[1] ?? '';
+    const a = W.attachmentOf(db, mid);
+    const back = a?.business_id ? `/staff/clients/${a.business_id}/whatsapp` : '/staff/whatsapp';
+    const r = await W.fetchWhatsAppAttachment(d.app, d.store, actor, mid);
+    if (!r.ok) return d.problem(res, actor, 'Not got from WhatsApp', r.why, back);
+    redirect(res, `${back}?done=whatsapp-file#wa-${mid}`);
+    return 'handled';
+  }
+  if (waAtt && method === 'GET') {
+    const got = await W.whatsAppAttachmentBytes(d.app, d.store, actor, waAtt[1] ?? '');
+    if (got === null) return d.problem(res, actor, 'No file', 'There is no file kept for that WhatsApp message. Get it from WhatsApp first.', '/staff');
+    // Downloaded, never shown inline: a file from outside is not trusted to run in our pages.
+    res.writeHead(200, { 'content-type': got.mime, 'content-length': String(got.bytes.length), 'content-disposition': `attachment; filename="${got.filename}"`,
+      'x-content-type-options': 'nosniff', 'cache-control': 'no-store', 'content-security-policy': "default-src 'none'; sandbox" });
+    res.end(got.bytes);
+    return 'handled';
+  }
   const waFile = /^\/staff\/whatsapp\/([A-Za-z0-9-]+)\/file$/.exec(path);
   if (waFile && method === 'POST') {
     const f = await form(req);
