@@ -2274,3 +2274,24 @@ test("P153e-7 (q139) the slot for a second, untuned case is there and empty, and
   assert.match(slot.why, /nothing was tuned to/);
   assert.equal(PAST_CLAIMS.filter(c => c.status === "CASE").length, 1, "one real case; the second is not invented");
 });
+
+/* PHASE 155 (line 4), 4 October 2026 — the BCIS index table from a file Lakhbir downloads, in CB_BCIS_INDEX's shape. */
+test("P155-4a the index table read from a downloaded file: months and quarters, headings passed over, sorted, and the factor reads it as it reads the placeholder", () => {
+  const r = M.parseIndexTable("BCIS All-in TPI (invented figures for this test)\nPeriod,Index\n2Q 2024,384\n1Q 2024,380\nJan 2025,388\n2026-01,396\n,\n", { source: "an invented file" });
+  assert.deepEqual(r.table.points.map(p => [p[0], p[1]]), [["2024-01", 380], ["2024-04", 384], ["2025-01", 388], ["2026-01", 396]]);
+  assert.equal(r.passed_over, 3, "the title, the heading and the empty pair");
+  assert.equal(r.table.loaded, true);
+  assert.equal(r.table.source, "an invented file");
+  assert.match(r.table.licence, /named users only; not for reports until BCIS confirms/);
+  assert.equal(near(M.indexFactorFromTable(r.table, "2024-05-01", "2026-01-15").factor, 384 / 396), true);
+  assert.deepEqual(["2024-03", "2024-03-31", "Mar 2024", "March 2024", "1Q 2024", "Q1 2024", "2024 Q1", "1q2024"].map(M.indexPeriod),
+    ["2024-03", "2024-03", "2024-03", "2024-03", "2024-01", "2024-01", "2024-01", "2024-01"]);
+});
+
+test("P155-4b a file that cannot be read whole is refused whole (N4): an unread period, a figure of nil, a period twice, or one point", () => {
+  assert.equal(codeOf(() => M.parseIndexTable("Spring 2024,380\n2024-05,384")), "E_INDEX_FILE_PERIOD");
+  assert.equal(codeOf(() => M.parseIndexTable("2024-01,380\n2024-02,0")), "E_INDEX_FILE_FIGURE");
+  assert.equal(codeOf(() => M.parseIndexTable("1Q 2024,380\n2024-01,381")), "E_INDEX_FILE_DUPLICATE");
+  assert.equal(codeOf(() => M.parseIndexTable("Period,Index\n2024-01,380")), "E_INDEX_FILE_TOO_SHORT");
+  assert.equal(M.CB_BCIS_INDEX.loaded, false, "importing a file never fills the shipped table");
+});

@@ -503,6 +503,16 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   /statuses); that address is behind Vercel's sign-in. The public address is
   https://caprebate-test.vercel.app. Each copy logs "test deployment: this
   copy started in N ms".
+  THE OUTSIDE REPLY TIMER (Phase 155 line 5, 4 Oct 2026): a cron-job.org job,
+  set up by hand by Lakhbir (Phase 156 A3) and held in HIS account - nothing
+  here can see or change it. Every 5 minutes it calls POST /hooks/read-replies
+  with "Authorization: Bearer <REPLY_TIMER_TOKEN>" (the word is in Vercel's
+  settings only; src/web/inbound-email.ts timerRefusal). Its history is on
+  cron-job.org (200 = read; 401/403 = word or Vercel protection). Ours: one
+  row, mailbox_reads (migration 088, times only). If it stops, replies wait
+  in the mailbox, nothing is lost, and Admin's home page warns after an hour
+  without a read, weekdays 09:00-17:30 UK (repliesStale, REPLY_WATCH). The
+  continuity plan's section 5 row says the same.
   SIGNING IN (Phase 151j, 28 Sep 2026): every staff login gives a second
   step (an authenticator app or an email code); a client may; a new account
   gets a temporary password shown once (7 days). login() itself refuses

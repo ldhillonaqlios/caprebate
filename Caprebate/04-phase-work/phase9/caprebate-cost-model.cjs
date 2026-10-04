@@ -2155,6 +2155,65 @@ const CB_BCIS_INDEX_PLACEHOLDER = Object.freeze({
   ].map(p => Object.freeze(p)))
 });
 
+/* PHASE 155 (line 4), 4 October 2026 — THE REAL INDEX, FROM A FILE LAKHBIR DOWNLOADS. BCIS publishes no API licence
+   and the product is not bought (Word question 218), so nothing here calls BCIS. Once it is bought, Lakhbir downloads
+   the index series from BCIS as a spreadsheet saved as CSV, and `parseIndexTable` turns it into a table of exactly
+   CB_BCIS_INDEX's shape. The back end keeps it OUTSIDE the repository (09-app/backend/src/web/bcis-index.ts, the
+   command `import-bcis-index`): BCIS's licence (BCIS_COMMERCIAL in the source register) lets named users use the rates
+   and does not let the table be reproduced, so it is never committed and never published.
+   WHAT IT READS: two columns per row - a period and an index figure. A period is a month (2024-01, 2024-01-31,
+   "Jan 2024", "January 2024") or a quarter ("1Q 2024", "Q1 2024", "2024 Q1", taken as its first month). A row whose
+   figure is not a number (a heading, a note, a blank) is passed over and counted. REFUSED WHOLE, never guessed (N4):
+   a period that cannot be read, a figure of nil or less, the same period twice, or fewer than two points. */
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+function indexPeriod(raw) {
+  const t = String(raw || "").trim().replace(/^"|"$/g, "").trim();
+  let m;
+  if ((m = /^(\d{4})-(\d{2})(?:-\d{2})?$/.exec(t))) return +m[2] >= 1 && +m[2] <= 12 ? m[1] + "-" + m[2] : null;
+  if ((m = /^([A-Za-z]{3,9})\.?\s+(\d{4})$/.exec(t))) {
+    const i = MONTHS.indexOf(m[1].slice(0, 3).toLowerCase());
+    return i < 0 ? null : m[2] + "-" + String(i + 1).padStart(2, "0");
+  }
+  if ((m = /^(?:([1-4])\s*Q|Q\s*([1-4]))\s*(\d{4})$/i.exec(t)) || (m = /^(\d{4})\s*Q\s*([1-4])$/i.exec(t))) {
+    const q = m.length === 4 ? +(m[1] || m[2]) : +m[2];
+    const year = m.length === 4 ? m[3] : m[1];
+    return year + "-" + String((q - 1) * 3 + 1).padStart(2, "0");
+  }
+  return null;
+}
+function parseIndexTable(text, meta) {
+  meta = meta || {};
+  const points = [];
+  const seen = new Set();
+  let passedOver = 0;
+  const rows = String(text || "").replace(/^\uFEFF/, "").split(/\r?\n/);
+  rows.forEach((line, n) => {
+    if (line.trim() === "") return;
+    const cells = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+    const figure = (cells[1] || "").replace(/,/g, "");
+    if (!/^-?\d+(\.\d+)?$/.test(figure)) { passedOver++; return; }
+    const period = indexPeriod(cells[0]);
+    if (period === null) fail("E_INDEX_FILE_PERIOD", "row " + (n + 1) + ": the period " + JSON.stringify(cells[0]) + " is not a month or a quarter this reads", { row: n + 1 });
+    const value = Number(figure);
+    if (!(value > 0)) fail("E_INDEX_FILE_FIGURE", "row " + (n + 1) + ": an index figure must be more than nil", { row: n + 1, value });
+    if (seen.has(period)) fail("E_INDEX_FILE_DUPLICATE", "the period " + period + " appears twice", { period });
+    seen.add(period);
+    points.push(Object.freeze([period, value]));
+  });
+  if (points.length < 2) fail("E_INDEX_FILE_TOO_SHORT", "an index table needs at least two points; this file has " + points.length, { points: points.length });
+  points.sort((a, b) => (a[0] < b[0] ? -1 : 1));
+  return Object.freeze({
+    table: Object.freeze({
+      loaded: true,
+      source: meta.source || "BCIS building price index, imported from a file",
+      licence: meta.licence || "BCIS (RICS) subscription - named users only; not for reports until BCIS confirms (BCIS_COMMERCIAL)",
+      verified_at: meta.verified_at || null,
+      points: Object.freeze(points)
+    }),
+    passed_over: passedOver
+  });
+}
+
 /** The factor that turns a cost priced at the valuation date back to the purchase date: index(purchase) / index(valuation). */
 function indexFactorFromTable(table, purchase, valuation) {
   const iso = /^\d{4}-\d{2}(-\d{2})?$/;
@@ -2261,7 +2320,7 @@ const TEST_SYSTEM_TABLES = Object.freeze({ CB_BCIS_INDEX: CB_BCIS_INDEX_PLACEHOL
 
 module.exports = {
   PRELIMS_BANDS_PLACEHOLDER, defaultPrelimsRate,
-  CB_BCIS_INDEX, CB_BCIS_INDEX_PLACEHOLDER, indexFactorFromTable,
+  CB_BCIS_INDEX, CB_BCIS_INDEX_PLACEHOLDER, indexFactorFromTable, parseIndexTable, indexPeriod,
   INSURANCE_SUPPORT_LIMIT_TEST, insuranceCrossCheck,
   PAST_CLAIM_LIMITS_TEST, pastClaimWithin,
   TEST_SYSTEM_GATES, TEST_SYSTEM_TABLES,

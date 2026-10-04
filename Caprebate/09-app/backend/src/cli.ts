@@ -157,6 +157,19 @@ async function main(): Promise<number> {
     }
   }
 
+  if (cmd === 'import-bcis-index') {
+    /* PHASE 155 (line 4). The BCIS index from a file Lakhbir downloads, kept OUTSIDE the repository (src/web/bcis-index.ts). */
+    const file = process.argv[3];
+    if (file === undefined) { console.error('Usage: node src/cli.ts import-bcis-index <the CSV downloaded from BCIS>'); return 1; }
+    const { readFileSync } = await import('node:fs');
+    const { importBcisIndex } = await import('./web/bcis-index.ts');
+    const r = importBcisIndex(readFileSync(file, 'utf8'), file, new Date().toISOString());
+    if (!r.ok) { console.error(r.why); return 1; }
+    console.log(`${r.points} index points, ${r.from} to ${r.to}, kept at ${r.path}${r.passed_over === 0 ? '' : ` (${r.passed_over} row${r.passed_over === 1 ? '' : 's'} with no figure passed over)`}. ` +
+      'The survey pack does not use it yet: wiring the cost model into the pack is Phase 157.');
+    return 0;
+  }
+
   if (cmd === 'sector-ranges') {
     /* PHASE 153e (Word question 138). Reads the approved survey packs and proposes a range per sector, supported living
        per trigger. It changes no band: a person changes the engine, with the surveyor's agreement. */
