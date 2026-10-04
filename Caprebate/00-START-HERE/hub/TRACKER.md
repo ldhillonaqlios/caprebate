@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 290 |
-| Working on it | 1 |
+| Done | 291 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1141,7 +1141,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-35 items.
+34 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1357,12 +1357,6 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 155 - the services the plans name but nobody has built
-
-`13201103800` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
-
-- Note 2026-10-04 (Phase 153f): Added by Phase 153f (line 8): the tracker had not moved since 29 Sep. Created on the monday.com board first, which gave it this id; the record is in PHASE-HISTORY.
-
 ### Phase 156 - every outside service: PART A Lakhbir's steps, PART B Claude's after each
 
 `13201103801` · **Ready - Lakhbir action** · owner Lakhbir
@@ -1373,7 +1367,7 @@
 
 ## Z · Complete / Not Applicable
 
-290 items.
+291 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3047,4 +3041,11 @@
 
 - Note 2026-10-04 (Phase 153f): Added by Phase 153f (line 8): the tracker had not moved since 29 Sep. Created on the monday.com board first, which gave it this id; the record is in PHASE-HISTORY.
 - Note 2026-10-04 (Phase 154a1): Done: all 13 lines fixed and proved red first; R-B1 built; 4,625 tests; pull request 15. Record in PHASE-HISTORY.
+
+### Phase 155 - the services the plans name but nobody has built
+
+`13201103800` · **Done** · owner Claude
+
+- Note 2026-10-04 (Phase 153f): Added by Phase 153f (line 8): the tracker had not moved since 29 Sep. Created on the monday.com board first, which gave it this id; the record is in PHASE-HISTORY.
+- Note 2026-10-04 (Phase 155): Done: CIW and the Care Inspectorate built from downloaded lists (off); VOA not built (licence: business rates only); BCIS index import; the reply timer and its warning; the three server files written up. 4,644 tests; pull request 16. Record in PHASE-HISTORY.
 
