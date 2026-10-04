@@ -1186,11 +1186,14 @@ if (startSuite("H", "Phase 8 — prepared patches, gated on the CTA")) {
       /* PHASE 132i - the seller question now sits straight before x12b in every flow (CB_CTAQ.place), so x12b
          itself asks about the chain behind a barred seller, and the second asking (x51eeo) is retired. Until
          then x12b read a fact only a later question set, and a second pass forward asked it when the first had not. */
-      check("H5 flow — the seller question comes straight before the earlier-owner question in all five flows, switch on and off, and the old follow-up (x51eeo) is gone",
+      /* PHASE 153b, 4 October 2026 (Word question 73): the extra seller question x51barred is retired, as Lakhbir
+         asked ("Do not ask anything, Just find out who they purchased the property off"). The seller question x12
+         records the fact E-8 reads, and it comes before the earlier-owner question in every flow. */
+      check("H5 flow — the extra seller question (x51barred) and the old follow-up (x51eeo) are gone from all five flows, switch on and off, and the seller question comes before the earlier-owner question",
         [E8, []].map(g => ["Q", "D", "S", "G", "H"].map((p, i) => { const Q = liftGated(SECTORS[i], g).Q || [];
           const at = id => Q.findIndex(q => q.id === id);
-          return [at(p + "51barred") >= 0 && at(p + "51barred") === at(p + "12b") - 1, at(p + "51eeo")]; })),
-        [E8, []].map(() => ["Q", "D", "S", "G", "H"].map(() => [true, -1])));
+          return [at(p + "51barred"), at(p + "51eeo"), at(p + "12") >= 0 && at(p + "12") < at(p + "12b")]; })),
+        [E8, []].map(() => ["Q", "D", "S", "G", "H"].map(() => [-1, -1, true])));
       {
         const S12 = qOfE("supported_living", E8, "S12"), S12b = qOfE("supported_living", E8, "S12b");
         const st = { trigger: ["purchase"], deal: "property", flags: [], assumptions: [] };
@@ -1502,7 +1505,10 @@ if (startSuite("H", "Phase 8 — prepared patches, gated on the CTA")) {
       /* the twenty-fourth, added by Phase 132's second builder on 14 September 2026 - H7 SL-C1 */
       "sl_landlord_contribution",
       /* the twenty-fifth, added by Phase 153a on 4 October 2026 - H24, read by the back end's survey pack */
-      "grant_traced_to_elements"];
+      "grant_traced_to_elements",
+      /* four more, added by Phase 153b on 4 October 2026 - Suite AI */
+      "election_missing_utr_fixable", "election_wrong_section_accepted", "election_value_cut_to_lawful_max",
+      "registered_provider_not_public_body"];
     check("H11 — the switchboard carries exactly the prepared readings listed here, no more and no fewer",
       Object.keys(CTA).sort(), SWITCHES.slice().sort());
     check("H11 — EVERY switch ships OFF — no tax position has been taken",
@@ -1548,8 +1554,9 @@ if (startSuite("H", "Phase 8 — prepared patches, gated on the CTA")) {
       visible("care_homes", ["connected_contributor_no_reduction"]), ["51conn"]);
     check("H12 branch A — F-3 asks how much grant is traced to the common parts",
       visible("supported_living", ["grant_traced_after_dwelling"]), ["51gtr"]);
-    check("H12 branch A — E-8 asks whether the seller could ever have claimed",
-      visible("care_homes", ["s187a_needs_entitled_owner"]), ["51barred"]);
+    /* PHASE 153b (Word question 73): E-8 asks nothing of its own any more - it reads the seller question. */
+    check("H12 branch A — E-8 asks no question of its own: it reads who the seller was (Phase 153b, Word question 73)",
+      visible("care_homes", ["s187a_needs_entitled_owner"]), []);
     check("H12 branch A — F-10 asks how the past owner became entitled",
       visible("care_homes", ["s538_carveout"]), ["51route"]);
 
@@ -7572,7 +7579,15 @@ if (startSuite("AE", "Phase 132h — flags taken back, hidden questions, land re
        question with CB_AE5_DUMP against Caprebate site.html.bak-phase132j served through the redirect hook (3 reads),
        switches off and on: all 442 questions present before give byte-identical single-answer sessions; the only
        lines that differ are the four new polluter questions (Q23, D23, S23, G23), 892 lines against 884. */
-    "cb7dbb6f3a3d03e90e97f88b88e898da90fa6173");
+    /* RE-PINNED BY PHASE 153b, 4 October 2026, from "cb7dbb6f3a3d03e90e97f88b88e898da90fa6173". Proved question by
+       question with CB_AE5_DUMP against Caprebate site.html.bak-phase153b served through the redirect hook (1 read),
+       switches off and on: 904 lines against 892, and every line present before is byte-identical except these, each
+       intended. Gone: x51barred in all five flows, off and on (Word question 73 - the extra seller question retired).
+       New: x51elcost (EL-C2, Word question 98) and x51vatfee (Word question 226) in all five, off and on, and S51slcp
+       (Word question 86). Changed, off and on: the works-VAT question (Q18, D18, S18, G19, H18), which now also keeps
+       its answer as works_vat. Changed with switches on only: the seller question (x12), which raises the E-8 evidence
+       flag the retired question raised, and S17, which offers the registered-provider answer (Word question 108). */
+    "25bac5481c4b4f8421d45dc26d52b41946a960b6");
 
   const conds = (sec, on) => handlers(sec, on).filter(q => typeof q.showIf === "function");
   check("AE6 — hidden, every conditional question with a handler, all five, switches off and on, every option: hidden gives back the session as it was before the answer; still shown is untouched; shown again and answered is the single answer; a question before the one answered is never taken",
@@ -7673,8 +7688,13 @@ if (startSuite("AE", "Phase 132h — flags taken back, hidden questions, land re
      and x51barred and x51gtr moved in the list (CB_CTAQ.place), so the seeded walks draw their answers in a different
      order: two flows reach more, two fewer. S51gtr now follows the grant share it reads and is reached; Q51gtr also
      needs a letting care home with self-contained units, and is not. */
+  /* RE-MEASURED BY PHASE 153b, 4 October 2026, same seed and walks, against .bak-phase153b served through the
+     redirect hook and against the changed site: off unchanged (44, 40, 37, 46, 41); on care homes 62 -> 64, dental
+     59 -> 60, supported living 58 -> 59, GP 66 -> 66, private hospital 69 -> 68. The five x51barred questions were
+     retired (Word question 73) - H51barred was one the walks reached - and x51elcost, x51vatfee and S51slcp added, so
+     the walks draw in a different order. The private-hospital floor moves down by exactly that one question. */
   const AE7_FLOOR = { "off:care_homes": 43, "off:dental": 35, "off:supported_living": 36, "off:gp": 45, "off:private_hospital": 41,
-                      "on:care_homes": 61, "on:dental": 59, "on:supported_living": 57, "on:gp": 66, "on:private_hospital": 69 };
+                      "on:care_homes": 61, "on:dental": 59, "on:supported_living": 57, "on:gp": 66, "on:private_hospital": 68 };
   const WALK = {}; [false, true].forEach(on => SECTORS.forEach(sec => { WALK[sec + on] = walkCheck(sec, on, 150); }));
   console.log("         conditional questions reached and hidden by the walks (switches off | on): " +
     SECTORS.map(sec => sec + " " + WALK[sec + false].reached + "/" + WALK[sec + false].of + " | " + WALK[sec + true].reached + "/" + WALK[sec + true].of).join(", "));
@@ -7852,7 +7872,8 @@ if (startSuite("AF", "Phase 132i — unknowns that relieved on routing, answers 
     [false, true].map(on => SECS.map(sec => PASSES[sec + on].asked >= 25 * 60)), [false, true].map(() => SECS.map(() => true)));
   check("AF3 — the questions that read an answer given after them, named: the grant-share question now follows the grant amount; the seller question now precedes the earlier-owner question",
     [["care_homes", "Q"], ["supported_living", "S"]].map(([sec, p]) => { const Q = mod(sec, true).Q, at = id => Q.findIndex(q => q.id === id);
-      return [at(p + "51gtr") === at(p + "17r") + 1, Q[at(p + "51gtr")].group === Q[at(p + "17r")].group, at(p + "51barred") === at(p + "12b") - 1]; }),
+      /* Phase 153b: x51barred is retired (Word question 73); the seller question x12 still comes before x12b */
+      return [at(p + "51gtr") === at(p + "17r") + 1, Q[at(p + "51gtr")].group === Q[at(p + "17r")].group, at(p + "51barred") === -1 && at(p + "12") < at(p + "12b")]; }),
     [[true, true, true], [true, true, true]]);
   check("AF3 — x14fvr is worked out from the CURRENT intervening-owner answer, however late it is given: answered before x14iv, and before x14iv changes, it ends as if answered after (all five flows)",
     SECS.map(sec => safe(() => { const p = PFX[sec], M = mod(sec, false), fvr = qOf(sec, p + "14fvr", false), iv = qOf(sec, p + "14iv", false), poe = qOf(sec, p + "12", false);
@@ -8166,6 +8187,239 @@ if (startSuite("AH", "Phase 151b — VAT in the £1,000 no-claim test")) {
      (function(){ const s = src.slice(src.indexOf("var CB_FEE"), src.indexOf("var CB_FEEGUARD")); const i = s.indexOf("VAT IN THE NO-CLAIM TEST");
        return i >= 0 && /AWAITING THE TAX ADVISER'S REVIEW/.test(s.slice(i)) && /NEW CLIENT-FACING WORDING, AWAITING THE TAX ADVISER'S REVIEW/.test(s.slice(i)); })()],
     [true, true, true]);
+}
+
+
+/* =============================================================================
+   SUITE AI — PHASE 153b, 4 October 2026. Tax readings built on our own
+   recommendation from the 29 September question review, for the accountant (or
+   a tax adviser they name) to check. Lakhbir, 29 September 2026: "anything you
+   need signing off we build it, we then ask the accountant/solicitor/DPO to see
+   if its viable and if not we then correct it".
+
+     AI1  Word question 73  - E-8 reads who the seller was; the extra question is gone
+     AI2  Word question 77  - the care provider's lease and letter, with E-4 on only
+     AI3  Word question 86  - a landlord payment for the shared parts comes off them
+     AI4  Word question 92  - "repayment of tax paid for last year"
+     AI5  Word question 95  - EL-U1, an election with no tax references
+     AI6  Word question 96  - EL-W1, an election under the wrong label
+     AI7  Word question 98  - EL-C2, an elected figure above the lawful maximum
+     AI8  Word question 108 - SL-R34, a housing association's payment
+     AI9  Word question 111 - the dental help text
+     AI10 Word question 59  - VAT in the fee comparison, dormant until registered
+     AI11 Word question 226 - the works-VAT answer and VAT on our fee
+
+   Every new switch ships off (H11). Each reading is asserted both ways, and
+   wherever a reading relieves, "not sure" AND absent are both asserted (N4).
+   Written so that against the pre-change site every new check FAILS rather
+   than the harness dying.
+   ============================================================================= */
+if (startSuite("AI", "Phase 153b — tax readings built on our recommendation")) {
+  const safe = fn => { try { return fn(); } catch (e) { return "threw: " + e.message; } };
+  const J = JSON.stringify;
+  const near = (a, b) => typeof a === "number" && typeof b === "number" && Math.abs(a - b) < 0.5;
+  const base = (sector, extra) => Object.assign({
+    sector: sector, trigger: ["purchase"], deal: "property", base_amount: 2000000, claimant_type: "company",
+    activity: "trade", dwelling_setting: "institution_commercial", acuity: "normal",
+    flags: [], assumptions: [], lrr: false, return_in_time: false }, extra || {});
+  const runOn = (sector, gates, extra) => { const s = base(sector, extra); return { r: liftGated(sector, gates).runEngine(s), s }; };
+  const hi = r => r && r.QE ? r.QE[1] : NaN;
+  const lo = r => r && r.QE ? r.QE[0] : NaN;
+  const layerOn = gates => { let l = layerSrc;
+    (gates || []).forEach(g => { l = l.replace(new RegExp("(" + g + "\\s*:\\s*)false", "g"), "$1true"); });
+    return new Function(l + "; return {CB_ELECTION:CB_ELECTION, CB_CTA:CB_CTA, CB_FEE:CB_FEE, CB_FEEGUARD:CB_FEEGUARD, CB_BENEFIT:CB_BENEFIT};")(); };
+  const qOf = (sector, gates, id) => (liftGated(sector, gates).Q || []).find(q => q.id === id);
+  const PFX = { care_homes: "Q", dental: "D", supported_living: "S", gp: "G", private_hospital: "H" };
+
+  /* --- AI1: Word question 73 ------------------------------------------- */
+  const E8 = ["s187a_needs_entitled_owner"];
+  check("AI1 — the extra seller question is gone from all five flows, switch on and off (Lakhbir: \"Do not ask anything, Just find out who they purchased the property off\")",
+    [E8, []].map(g => SECTORS.map(sec => !!qOf(sec, g, PFX[sec] + "51barred"))), [E8, []].map(() => SECTORS.map(() => false)));
+  const seller = (sec, g, v) => safe(() => { const st = base(sec, { flags: [], assumptions: [] }); delete st.prior_owner_entitled;
+    const M = liftGated(sec, g); const q = (M.Q || []).find(x => x.id === PFX[sec] + "12"); q.onSet(st, v); return st; });
+  const e8flag = st => !!(st && st.flags && st.flags.some(f => /SELLER ARGUABLY NEVER ENTITLED \(E-8\)/.test(f)));
+  check("AI1 — on, the seller answer \"A private landlord who let it out as homes\" records the bar and raises the E-8 evidence flag, in all five flows",
+    SECTORS.map(sec => { const st = seller(sec, E8, "residential_landlord"); return [st.prior_owner_s35_barred, e8flag(st)]; }),
+    SECTORS.map(() => [true, true]));
+  check("AI1 — off, the same answer records the bar as it always did and raises no E-8 flag",
+    SECTORS.map(sec => { const st = seller(sec, [], "residential_landlord"); return [st.prior_owner_s35_barred, e8flag(st)]; }),
+    SECTORS.map(() => [true, false]));
+  check("AI1 N4 — on, \"Not sure\" and no answer leave the bar unset and raise nothing (both asserted); so does a tax-paying seller",
+    SECTORS.map(sec => [seller(sec, E8, "unsure"), seller(sec, E8, undefined), seller(sec, E8, "taxpaying")]
+      .map(st => ["prior_owner_s35_barred" in st, e8flag(st)])),
+    SECTORS.map(() => [[false, false], [false, false], [false, false]]));
+  check("AI1 — on, a landlord seller with no earlier entitled owner takes the purchase outside s.187A from the seller answer alone",
+    safe(() => { const st = seller("supported_living", E8, "residential_landlord");
+      Object.assign(st, { prior_owner_claimed: "yes", earlier_entitled_owner: "no", election_document: "exists_not_held", election_value: 50000 });
+      const r = liftGated("supported_living", E8).runEngine(st); return [typeof st.election_outcome, r.flags.some(f => /s\.187A NOT ENGAGED/.test(f))]; }),
+    ["undefined", true]);
+
+  /* --- AI2: Word question 77 ------------------------------------------- */
+  const docsSrc = (function(){ const i = src.indexOf("function DOCS(sector, trigger){"); if (i < 0) return null;
+    const j = src.indexOf("\nfunction ", i + 10); return src.slice(i, j < 0 ? undefined : j); })();
+  const docs = (on, sector) => safe(() => new Function("CB_CTA", docsSrc + "; return DOCS(" + J(sector) + ", [\"purchase\"]);")({ specialised_supported_housing: on }));
+  const careDocs = h => typeof h === "string" ? [/Lease or contract with the care provider/.test(h), /Letter from the care provider confirming the care given on site/.test(h)] : h;
+  check("AI2 — with E-4 on, supported living's document list asks for the care provider's lease or contract and its confirming letter",
+    careDocs(docs(true, "supported_living")), [true, true]);
+  check("AI2 — off, and in every other sector either way, the list is as it was",
+    [careDocs(docs(false, "supported_living"))].concat(["care_homes", "dental", "gp", "private_hospital"].map(sec => careDocs(docs(true, sec)))),
+    [[false, false], [false, false], [false, false], [false, false], [false, false]]);
+
+  /* --- AI3: Word question 86 ------------------------------------------- */
+  {
+    const SLC = ["sl_landlord_contribution"];
+    const SL = extra => Object.assign({ trigger: ["refurb_fitout"], base_amount: 400000, landlord_contrib_answer: "yes", landlord_contrib_fraction: 0.3 }, extra);
+    const spread = runOn("supported_living", SLC, SL()).r;
+    const tied = runOn("supported_living", SLC, SL({ landlord_contrib_shared_parts: true })).r;
+    const none = runOn("supported_living", SLC, SL({ landlord_contrib_answer: "no", landlord_contrib_fraction: 0 })).r;
+    /* worked example from the review: £400,000, landlord 30%, shared parts 25%. Spread first: £400,000 x 70% x 25%
+       = £70,000 of shared parts. Tied to the shared parts: £100,000 - £120,000 = nil. */
+    check("AI3 — on, a payment KNOWN to be for the shared parts comes straight off them: the review's example (£400,000, 30%, shared parts 25%) leaves nothing, where spreading it leaves 70% of the figure",
+      [near(hi(spread), hi(none) * 0.7), hi(tied), tied.flags.some(f => /LANDLORD PAYMENT TAKEN OFF THE SHARED PARTS/.test(f))],
+      [true, 0, true]);
+    const small = runOn("supported_living", SLC, SL({ landlord_contrib_fraction: 0.1, landlord_contrib_shared_parts: true })).r;
+    check("AI3 — a smaller tied payment (10%) takes £40,000 off the £100,000 of shared parts: 60% of the untouched figure, below the 90% an even spread gives",
+      near(hi(small), hi(none) * 0.6), true);
+    const qp = qOf("supported_living", SLC, "S51slcp");
+    const ask = v => { const st = base("supported_living", SL()); if (qp) qp.onSet(st, v); return st; };
+    const u = ask("unsure"), n = ask("no"), absent = base("supported_living", SL());
+    const ru = liftGated("supported_living", SLC).runEngine(u), rn = liftGated("supported_living", SLC).runEngine(n), ra = liftGated("supported_living", SLC).runEngine(absent);
+    check("AI3 N4 — \"no\", \"not sure\" and no answer all keep the even spread (each asserted); only \"not sure\" is flagged",
+      [near(hi(rn), hi(spread)), near(hi(ru), hi(spread)), near(hi(ra), hi(spread)),
+       ru.flags.some(f => /Word question 86/.test(f)), ra.flags.some(f => /Word question 86/.test(f))],
+      [true, true, true, true, false]);
+    check("AI3 — the question is asked only with the switch on and only after a landlord payment; off, a session saying it was tied is today's figure",
+      [!!(qp && qp.showIf({ landlord_contrib_answer: "yes" })), !!(qp && qp.showIf({ landlord_contrib_answer: "no" })),
+       !!qOf("supported_living", [], "S51slcp")?.showIf({ landlord_contrib_answer: "yes" }),
+       near(hi(runOn("supported_living", [], SL({ landlord_contrib_shared_parts: true })).r), hi(runOn("supported_living", [], SL()).r))],
+      [true, false, false, true]);
+  }
+
+  /* --- AI4: Word question 92 ------------------------------------------- */
+  check("AI4 — the loss-carried-back sentence says \"repayment of tax paid for last year\" in all five flows, and \"come back as a refund\" nowhere",
+    [(src.match(/part of this can also come back as a repayment of tax paid for last year\./g) || []).length, /come back as a refund/.test(src)],
+    [5, false]);
+
+  /* --- AI5-AI7: the elections ------------------------------------------- */
+  const SIX = ["amount", "plant", "land", "interest", "utrs", "both"];
+  const EL = (extra) => Object.assign({ trigger: ["purchase"], election_document: "held", election_content: SIX.slice(),
+    election_value: 300000, election_scope: "all_fixtures", election_multi_property: "no", acquisition_date: "2015-01-01",
+    election_notified_date: "2015-06-01", __section: () => ({ section: "s.198", item: 1, available: true, why: "a sale" }) }, extra);
+  const closed = () => false, open = () => true, unknown = () => null;
+  const assess = (gates, st) => safe(() => layerOn(gates).CB_ELECTION.assess(st));
+  const out = (gates, st) => { const r = assess(gates, st); return r && r.outcome ? r.outcome : r; };
+  const NOUTR = SIX.filter(k => k !== "utrs");
+  const U1 = ["election_missing_utr_fixable"];
+  check("AI5 — EL-U1 off: an election missing only its tax references is nil once the window has closed, remade inside it, unresolved where the window is not known (today)",
+    [closed, open, unknown].map(w => out([], EL({ election_content: NOUTR, __windowOpen: w }))), ["NIL", "LIVE", "INDET"]);
+  check("AI5 — EL-U1 on: once the window is KNOWN to have closed it stands at the elected figure and is flagged as a slip; inside the window and unknown, nothing changes (N4)",
+    [closed, open, unknown].map(w => { const r = assess(U1, EL({ election_content: NOUTR, __windowOpen: w })); return [r.outcome, r.value === 300000 && r.outcome === "CAP-ELECT"]; }),
+    [["CAP-ELECT", true], ["LIVE", false], ["INDET", false]]);
+  check("AI5 — EL-U1 on: anything else missing as well still fails it, and a complete election is untouched",
+    [out(U1, EL({ election_content: ["amount", "plant", "land", "both"], __windowOpen: closed })),
+     J(assess(U1, EL({ __windowOpen: closed }))) === J(assess([], EL({ __windowOpen: closed })))], ["NIL", true]);
+  check("AI5 — EL-U1 on: the engine says so in the assumptions and flags of the five flows",
+    SECTORS.map(sec => safe(() => { const r = runOn(sec, U1, EL({ election_content: NOUTR, __windowOpen: closed, prior_owner_claimed: "yes", prior_owner_entitled: "yes" })).r;
+      return r.flags.some(f => /ELECTION WITHOUT TAX REFERENCES TREATED AS VALID \(EL-U1\)/.test(f)); })), SECTORS.map(() => true));
+  const W1 = ["election_wrong_section_accepted"];
+  const WRONG = w => EL({ election_section: "s.199", __windowOpen: w });
+  check("AI6 — EL-W1 off: a complete election under the wrong label is remade inside the window and unresolved outside it (today)",
+    [closed, open, unknown].map(w => out([], WRONG(w))), ["INDET", "LIVE", "INDET"]);
+  check("AI6 — EL-W1 on: once the window is KNOWN to have closed it is read under the right section at the elected figure; inside and unknown, nothing changes (N4)",
+    [closed, open, unknown].map(w => { const r = assess(W1, WRONG(w)); return [r.outcome, r.outcome === "CAP-ELECT" ? r.section + " " + r.value : null]; }),
+    [["CAP-ELECT", "s.198 300000"], ["LIVE", null], ["INDET", null]]);
+  check("AI6 — EL-W1 on: the flows flag it as a switched position",
+    SECTORS.map(sec => safe(() => runOn(sec, W1, Object.assign(WRONG(closed), { prior_owner_claimed: "yes", prior_owner_entitled: "yes" })).r.flags
+      .some(f => /WRONGLY LABELLED ELECTION TREATED AS VALID \(EL-W1\)/.test(f)))), SECTORS.map(() => true));
+  const C2 = ["election_value_cut_to_lawful_max"];
+  const CUT = extra => EL(Object.assign({ __windowOpen: closed, base_amount: 2000000 }, extra));
+  check("AI7 — EL-C2 off: the claim rests on the figure the election states, even above what the seller paid (today)",
+    safe(() => assess([], CUT({ election_seller_cost: 250000 })).value), 300000);
+  check("AI7 — EL-C2 on: the review's example (£300,000 elected, the seller paid £250,000) is cut down to £250,000; the document's figure is kept beside it",
+    safe(() => { const r = assess(C2, CUT({ election_seller_cost: 250000 })); return [r.value, r.value_as_elected, r.cut.by.key]; }),
+    [250000, 300000, "seller_cost"]);
+  check("AI7 — EL-C2 on: the price paid is the other limit (bought for £200,000, seller's cost not known), and a figure under both limits is untouched",
+    safe(() => [assess(C2, CUT({ base_amount: 200000 })).value, assess(C2, CUT({ election_seller_cost: 400000 })).value]), [200000, 300000]);
+  check("AI7 N4 — EL-C2 on: a seller's cost not known (absent, or blank) cuts nothing and is never nil (both asserted)",
+    safe(() => [assess(C2, CUT({})).value, assess(C2, CUT({ election_seller_cost: null })).value, assess(C2, CUT({ election_seller_cost: 0 })).value]),
+    [300000, 300000, 300000]);
+  check("AI7 — EL-C2 on: the flows tell the client and flag it; with the cost not known they flag it as not checked",
+    SECTORS.map(sec => safe(() => { const a = runOn(sec, C2, CUT({ election_seller_cost: 250000, prior_owner_claimed: "yes", prior_owner_entitled: "yes" })).r;
+      const b = runOn(sec, C2, CUT({ prior_owner_claimed: "yes", prior_owner_entitled: "yes", base_amount: 9000000 })).r;
+      return [a.assumptions.some(x => /more than the law lets it fix/.test(x)), a.flags.some(f => /ELECTED VALUE CUT DOWN \(EL-C2\)/.test(f)),
+              b.flags.some(f => /not checked against what the seller paid/.test(f))]; })), SECTORS.map(() => [true, true, true]));
+  check("AI7 — the seller's-cost question is asked only with EL-C2 on, after the election amount, in all five flows",
+    SECTORS.map(sec => { const on = liftGated(sec, C2).Q, at = id => on.findIndex(q => q.id === id), q = on[at(PFX[sec] + "51elcost")];
+      const st = { election_document: "held", election_quantified: true };
+      return [at(PFX[sec] + "51elcost") === at(PFX[sec] + "14v") + 1, !!(q && q.showIf(st)), !!qOf(sec, [], PFX[sec] + "51elcost")?.showIf(st)]; }),
+    SECTORS.map(() => [true, true, false]));
+
+  /* --- AI8: Word question 108 ------------------------------------------ */
+  {
+    const R34 = ["registered_provider_not_public_body"];
+    const optsOf = g => (qOf("supported_living", g, "S17") || { opts: [] }).opts.map(o => o[0]);
+    check("AI8 — the supported-living funding question offers a housing association or registered provider only with SL-R34 on",
+      [optsOf([]).includes("registered_provider"), optsOf(R34).includes("registered_provider"), optsOf(R34).slice(-1)[0]], [false, true, "unsure"]);
+    const st = () => base("supported_living", { trigger: ["refurb_fitout"], base_amount: 400000 });
+    const M = liftGated("supported_living", R34), q = (M.Q || []).find(x => x.id === "S17");
+    const rp = st(); q.onSet(rp, "registered_provider"); const rRP = M.runEngine(rp);
+    const rNone = M.runEngine(st());
+    const g = st(); q.onSet(g, "some"); g.grant_fraction = 0.2; const rG = M.runEngine(g);
+    check("AI8 — on, a registered provider's payment stays in the claim (the no-grant figure, above a 20% grant's), and is flagged to check it got no tax relief",
+      [near(hi(rRP), hi(rNone)), hi(rG) < hi(rRP), rRP.flags.some(f => /REGISTERED PROVIDER TREATED AS NOT A PUBLIC BODY \(SL-R34\)/.test(f))],
+      [true, true, true]);
+  }
+
+  /* --- AI9: Word question 111 ------------------------------------------ */
+  check("AI9 — the dental funding help says there is no general NHS premises grant scheme like the GP one, and no longer that there is none at all",
+    [/no general NHS premises grant scheme like the GP one/.test(src), /dentistry has no NHS premises-grant scheme \(unlike GPs\)/.test(src)], [true, false]);
+
+  /* --- AI10: Word question 59 ------------------------------------------ */
+  {
+    const L = layerOn([]);
+    const V = L.CB_FEE.NO_CLAIM_VAT, G = L.CB_FEEGUARD;
+    const withSet = (registered, sw, fn) => { const k = [V.we_are_vat_registered, G.fee_comparison_counts_vat];
+      try { V.we_are_vat_registered = registered; G.fee_comparison_counts_vat = sw; return fn(); } catch (e) { return "threw: " + e.message; }
+      finally { V.we_are_vat_registered = k[0]; G.fee_comparison_counts_vat = k[1]; } };
+    const ctx = vat => { const c = { main: 0, special: 30000, period_start: "2026-04-01", is_company: true }; if (vat !== undefined) c.client_vat = vat; return c; };
+    const C = (vat) => L.CB_FEE.display(30000, 0.25, ctx(vat)).comparison;
+    check("AI10 — the switch ships off, beside the two fee-guard switches",
+      [G.fee_comparison_counts_vat, G.fee_cap_at_year_one_benefit, G.fee_warn_when_exceeds_benefit], [false, false, false]);
+    check("AI10 — not registered (today): the comparison is the same field for field, switch on or off, whatever the client's VAT position",
+      ["cannot_reclaim", "can_reclaim", "not sure", undefined].map(v => withSet(false, true, () => J(C(v))) === J(C(v))), [true, true, true, true]);
+    check("AI10 — registered with the switch OFF: the comparison is the fee alone, as today",
+      withSet(true, false, () => J(C("cannot_reclaim"))) === J(C("cannot_reclaim")), true);
+    const y1 = C().year_one_benefit;
+    check("AI10 — registered, switch on, the client cannot reclaim: the fee counted is £900 plus £180 VAT, the fee stays £900, and the year-one verdict is taken on £1,080",
+      withSet(true, true, () => { const c = C("cannot_reclaim"); return [c.fee, c.fee_counted, c.fee_vat.treatment, c.fee_exceeds_year_one_benefit === (1080 > y1)]; }),
+      [900, 1080, "COUNTED_CLIENT_CANNOT_RECLAIM", true]);
+    check("AI10 — registered, switch on, the client can reclaim: the fee alone",
+      withSet(true, true, () => { const c = C("can_reclaim"); return [c.fee, c.fee_counted, c.fee_vat.treatment]; }), [900, 900, "NOT_COUNTED_CLIENT_CAN_RECLAIM"]);
+    check("AI10 N4 — registered, switch on, the position \"not sure\" and never given (both asserted): no fee counted, and a verdict only where the fee with and without VAT agree",
+      withSet(true, true, () => ["not sure", undefined].map(v => { const c = C(v), plain = withSet(false, false, () => C(v));
+        return [c.fee_counted, c.fee_vat.treatment, c.fee_exceeds_year_one_benefit === null || c.fee_exceeds_year_one_benefit === plain.fee_exceeds_year_one_benefit]; })),
+      [[null, "UNDETERMINED", true], [null, "UNDETERMINED", true]]);
+  }
+
+  /* --- AI11: Word question 226 ----------------------------------------- */
+  {
+    const L = layerOn([]);
+    const m = st => safe(() => L.CB_FEE.clientVatFromWorks(st));
+    check("AI11 — the mapping: \"Reclaimed in full\" is can reclaim and \"Not reclaimable (exempt)\" cannot, ONLY for the same business with nothing changed",
+      [m({ works_vat: "reclaim", works_vat_same_business: true }), m({ works_vat: "exempt", works_vat_same_business: true })], ["can_reclaim", "cannot_reclaim"]);
+    check("AI11 N4 — every other answer, and every case without the confirmation (\"no\", \"not sure\", absent), stays not known",
+      [m({ works_vat: "mixed", works_vat_same_business: true }), m({ works_vat: "zero", works_vat_same_business: true }),
+       m({ works_vat: "dispensing", works_vat_same_business: true }), m({ works_vat: "unsure", works_vat_same_business: true }),
+       m({ works_vat: "reclaim", works_vat_same_business: false }), m({ works_vat: "exempt" }), m({ works_vat: "reclaim", works_vat_same_business: null }), m({}), m(null)],
+      [null, null, null, null, null, null, null, null, null]);
+    const vq = sec => (liftGated(sec, []).Q || []).find(q => /^Was VAT charged on the spend/.test(q.ask || ""));
+    check("AI11 — the works-VAT question keeps its answer as works_vat in all five flows, and the confirmation follows it",
+      SECTORS.map(sec => safe(() => { const Q = liftGated(sec, []).Q, q = Q.find(x => /^Was VAT charged on the spend/.test(x.ask || "")), st = base(sec);
+        q.onSet(st, "exempt"); return [st.works_vat, Q.findIndex(x => x.id === PFX[sec] + "51vatfee") === Q.indexOf(q) + 1]; })),
+      SECTORS.map(() => ["exempt", true]));
+    check("AI11 — the confirmation is never shown while we are not VAT-registered (today)",
+      SECTORS.map(sec => !!qOf(sec, Object.keys(layerOn([]).CB_CTA), PFX[sec] + "51vatfee")?.showIf({ works_vat: "exempt" })), SECTORS.map(() => false));
+  }
 }
 
 

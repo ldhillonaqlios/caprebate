@@ -50,8 +50,7 @@ export interface DerivedSessionFacts {
   readonly sufficient_profit?: "no" | "unsure" | "yes";
   readonly unit_type?: "selfcontained" | "shared" | "single" | "unsure";
   readonly vacancy?: "converting" | "no" | "unsure" | "void";
-  readonly vat?: "exempt" | "reclaim" | "unsure" | "zero";
 }
 
-/** The 46 facts above, as a runtime list, for tooling that needs it. */
-export declare const DERIVED_SESSION_FACTS: readonly ("aia_answer" | "care_type" | "claimant_raw" | "claimant_type" | "common_spaces" | "deal" | "dental_fitout" | "dvs_statement" | "earlier_entitled_owner" | "election_content" | "election_document" | "election_scope" | "election_section" | "facility" | "fitout" | "fvr_window_closed" | "grant_answer" | "grant_quantification" | "is_taxpayer" | "landlord_contrib_answer" | "lease" | "living" | "nation" | "ownership" | "plant_serves" | "premises_type" | "prior_claim_answer" | "prior_owner_claimed" | "prior_owner_grant" | "reg" | "repairs_mix" | "resi_use" | "role" | "s187a_8_statements" | "s33b_50pc_answer" | "s33b_feature" | "s33b_more_work" | "scale" | "sector" | "segregation" | "snl" | "still_own_property" | "sufficient_profit" | "unit_type" | "vacancy" | "vat")[];
+/** The 45 facts above, as a runtime list, for tooling that needs it. */
+export declare const DERIVED_SESSION_FACTS: readonly ("aia_answer" | "care_type" | "claimant_raw" | "claimant_type" | "common_spaces" | "deal" | "dental_fitout" | "dvs_statement" | "earlier_entitled_owner" | "election_content" | "election_document" | "election_scope" | "election_section" | "facility" | "fitout" | "fvr_window_closed" | "grant_answer" | "grant_quantification" | "is_taxpayer" | "landlord_contrib_answer" | "lease" | "living" | "nation" | "ownership" | "plant_serves" | "premises_type" | "prior_claim_answer" | "prior_owner_claimed" | "prior_owner_grant" | "reg" | "repairs_mix" | "resi_use" | "role" | "s187a_8_statements" | "s33b_50pc_answer" | "s33b_feature" | "s33b_more_work" | "scale" | "sector" | "segregation" | "snl" | "still_own_property" | "sufficient_profit" | "unit_type" | "vacancy")[];

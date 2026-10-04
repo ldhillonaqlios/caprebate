@@ -540,9 +540,16 @@ const Q = [
   help:"Grant-funded spending can\u2019t also be claimed, so we take it out \u2014 and in supported housing the grant often covers a large share, which shrinks any common-parts claim further. Two things aren\u2019t grants in this sense: insurance or compensation for a destroyed/damaged asset (s.535), and a private contribution \u2014 not from a public body \u2014 where the payer gets no tax relief for it (s.536). Neither reduces your claim.",
   opts:[["no","No grant / subsidy"],["some","Yes \u2014 a grant or public/other subsidy"],
         ["insurance","Insurance or compensation for a destroyed/damaged asset"],
-        ["private_norelief","A private contribution \u2014 the payer isn\u2019t a public body and gets no tax relief for it"],
-        ["unsure","Not sure"]],
+        ["private_norelief","A private contribution \u2014 the payer isn\u2019t a public body and gets no tax relief for it"]]
+        /* SL-R34 - PHASE 153b, 4 October 2026, Word question 108: offered only
+           with CB_CTA.registered_provider_not_public_body on. Off, the list is
+           exactly as it was. */
+        .concat(CB_CTA.registered_provider_not_public_body === true
+          ? [["registered_provider","A housing association or registered provider of social housing"]] : [])
+        .concat([["unsure","Not sure"]]),
   onSet:(s,v)=>{ s.grant_answer=v;
+     if(v==="registered_provider"){ s.assumptions.push("payment from a housing association or registered provider kept IN the claim, not stripped out \u2014 a private registered provider is not a public body just because it is registered (a switched reading, Word question 108), and s.536 disapplies s.532 where the payer is not a public body and gets no allowance or deduction for the payment. This does NOT extend to SBA (s.536(6))");
+       pushFlag(s,"REGISTERED PROVIDER TREATED AS NOT A PUBLIC BODY (SL-R34) \u2014 a SWITCHED position (CB_CTA.registered_provider_not_public_body) that stands only if Word question 108 is answered that way. Check this provider is not itself a public body, and that it got no tax relief on the payment, before relying on this figure."); }
      if(v==="unsure") pushFlag(s,"Grant/subsidy funding unconfirmed \u2014 F-2: NOT assumed nil. A grant would shrink the claim further, so this needs confirming before the figure is relied on");
      if(v==="insurance") s.assumptions.push("insurance/compensation-funded spend kept IN the claim, not stripped out \u2014 s.535 treats it as incurred by you despite s.532 (F-4)");
      if(v==="private_norelief") s.assumptions.push("private, non-tax-relieved contribution kept IN the claim, not stripped out \u2014 s.536 disapplies s.532 where the payer isn't a public body and gets no allowance or deduction for the payment (F-4); confirm the payer isn't a public body and claims no relief before relying on this. This does NOT extend to SBA (s.536(6)) \u2014 any structures-and-buildings-allowance element funded by the same contribution is still reduced by s.532, F-8");
@@ -602,7 +609,7 @@ const Q = [
      msg:"It looks like the common-parts fixtures have already been claimed, and they can only be claimed once.",
      pivot:"If only loose equipment was claimed, the built-in common-parts fixtures may still be available \u2014 worth a quick check."} : null }
 ];
-CB_CTAQ.place(Q, "S");   /* Phase 132i - no question reads an answer given after it; see CB_CTAQ.place */
+CB_CTAQ.place(Q, "S", function(s,f){ pushFlag(s,f); });   /* Phase 132i - no question reads an answer given after it; see CB_CTAQ.place */
 answerTakesBack(Q, null, lrrFromAnswers);   /* Phase 132g, every question since Phase 132h - see answerTakesBack below; lrrFromAnswers since Phase 132j */
 
 /* PHASE 132j, 16 September 2026 - LAND REMEDIATION FOLLOWS BOTH ANSWERS, as the
@@ -960,7 +967,13 @@ function runEngine(s){
   // contributor is not exempted. Off, nothing is deducted whatever the session
   // carries, which is today's figure.
   const __slContrib = (CB_CTA.sl_landlord_contribution === true) ? (s.landlord_contrib_fraction||0) : 0;
-  if(__slContrib>0){ base = base*(1-__slContrib);
+  // PHASE 153b, 4 October 2026 (Word question 86). Same switch. A payment the
+  // client KNOWS paid for the shared parts is not spread across the spend: it
+  // comes straight off the shared-parts share below (never below nil). Any
+  // other answer, "not sure" and none included, keeps the even spread.
+  const __slContribShared = __slContrib > 0 && s.landlord_contrib_shared_parts === true;
+  const __slContribAmount = __slContribShared ? base*__slContrib : 0;
+  if(__slContrib>0 && !__slContribShared){ base = base*(1-__slContrib);
     A.push("landlord contribution to the works removed ("+Math.round(__slContrib*100)+"% of spend) — reduces the qualifying spend before the common-parts share is taken (s.532); the landlord may separately claim contribution allowances (s.537–538)"); }
 
   // common-parts ceiling — circulation, lift, staff areas and landlord’s services only.
@@ -975,7 +988,12 @@ function runEngine(s){
     else
       A.push("common-parts share assumed as an upper ceiling of "+(COMMON_PARTS*100)+"% \u2014 the homes themselves, shared kitchens/lounges and any central plant serving them are excluded; not independently calibrated (R-B8); never a share of total scheme cost");
   }
-  const B = base*__cpFactor;
+  let B = base*__cpFactor;
+  if(__slContribShared){
+    B = Math.max(0, B - __slContribAmount);
+    A.push("the landlord\u2019s payment ("+Math.round(__slContrib*100)+"% of the spend) paid for the shared parts, so it has come straight off the shared parts rather than being spread across the whole spend (s.532)"+(B === 0 ? " \u2014 it covers all of them, so nothing is left to claim there" : "")+"; the landlord may separately claim contribution allowances (s.537\u2013538)");
+    pushFlag(s,"LANDLORD PAYMENT TAKEN OFF THE SHARED PARTS (SL-C1, Word question 86) \u2014 a SWITCHED position (CB_CTA.sl_landlord_contribution) that stands only if the tax adviser confirms this order. Evidence what the payment was for.");
+  }
 
   // Stage 2 — upper band only, on the common-parts base (ceiling presentation)
   let [qLo,qHi]=YIELD_BAND.supported_living.refurb_fitout;
@@ -1180,7 +1198,7 @@ function runEngine(s){
   if(__cash.mechanism === CB_CASH.MECHANISM.AMEND){
     speed += " Because this reaches an already-filed return, the cash benefit here can include an actual refund from HMRC, not just a lower bill.";
   } else if(__cash.mechanism === CB_CASH.MECHANISM.LOSS_CARRYBACK){
-    speed += " Because the claim increases a loss carried back against an earlier year's profits, part of this can also come back as a refund of tax already paid.";
+    speed += " Because the claim increases a loss carried back against an earlier year's profits, part of this can also come back as a repayment of tax paid for last year.";   /* Phase 153b, Word question 92: a loss carried back repays an earlier year's tax - Rulebook A s.4's exception to "refund" */
   } else if(__cash.mechanism === CB_CASH.MECHANISM.CURRENT_YEAR){
     speed += " This reaches a return that hasn't been filed yet, so it reduces what's due rather than producing a refund of tax already paid.";
   } else if(__cash.mechanism === CB_CASH.MECHANISM.WDA_FORWARD){

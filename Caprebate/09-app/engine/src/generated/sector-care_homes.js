@@ -553,7 +553,7 @@ const Q = [
      msg:"It looks like the building\u2019s fixtures have already been claimed, and they can only be claimed once.",
      pivot:"If you\u2019re not certain that covered the embedded fixtures (rather than loose equipment), it\u2019s worth a quick check \u2014 there\u2019s sometimes more available than a general claim captured."} : null }
 ];
-CB_CTAQ.place(Q, "Q");   /* Phase 132i - no question reads an answer given after it; see CB_CTAQ.place */
+CB_CTAQ.place(Q, "Q", function(s,f){ pushFlag(s,f); });   /* Phase 132i - no question reads an answer given after it; see CB_CTAQ.place */
 answerTakesBack(Q, null, lrrFromAnswers);   /* Phase 132g, every question since Phase 132h - see answerTakesBack below; lrrFromAnswers since Phase 132j */
 
 /* PHASE 132j, 16 September 2026 - LAND REMEDIATION FOLLOWS BOTH ANSWERS, as the
@@ -1114,7 +1114,7 @@ function runEngine(s){
   if(__cash.mechanism === CB_CASH.MECHANISM.AMEND){
     speed += " Because this reaches an already-filed return, the cash benefit here can include an actual refund from HMRC, not just a lower bill.";
   } else if(__cash.mechanism === CB_CASH.MECHANISM.LOSS_CARRYBACK){
-    speed += " Because the claim increases a loss carried back against an earlier year's profits, part of this can also come back as a refund of tax already paid.";
+    speed += " Because the claim increases a loss carried back against an earlier year's profits, part of this can also come back as a repayment of tax paid for last year.";   /* Phase 153b, Word question 92: a loss carried back repays an earlier year's tax - Rulebook A s.4's exception to "refund" */
   } else if(__cash.mechanism === CB_CASH.MECHANISM.CURRENT_YEAR){
     speed += " This reaches a return that hasn't been filed yet, so it reduces what's due rather than producing a refund of tax already paid.";
   } else if(__cash.mechanism === CB_CASH.MECHANISM.WDA_FORWARD){

@@ -482,7 +482,7 @@ const Q = [
  // ---- Funding, VAT & timing ----
  {id:"D17", group:"Funding & timing", type:"single",
   ask:"Was any spend grant- or subsidy-funded?",
-  help:"Grant-funded spending can\u2019t also be claimed. Note dentistry has no NHS premises-grant scheme (unlike GPs), and NHS dental-contract income is ordinary trading income, not a capital grant \u2014 so it doesn\u2019t reduce your claim. Two things aren\u2019t grants in this sense either: insurance or compensation for a destroyed/damaged asset (s.535), and a private contribution \u2014 not from a public body \u2014 where the payer gets no tax relief for it (s.536). Neither reduces your claim.",
+  help:"Grant-funded spending can\u2019t also be claimed. Note dentistry has no general NHS premises grant scheme like the GP one, and NHS dental-contract income is ordinary trading income, not a capital grant \u2014 so it doesn\u2019t reduce your claim. Two things aren\u2019t grants in this sense either: insurance or compensation for a destroyed/damaged asset (s.535), and a private contribution \u2014 not from a public body \u2014 where the payer gets no tax relief for it (s.536). Neither reduces your claim.",
   opts:[["no","No"],["some","Yes \u2014 a grant or public/other subsidy"],
         ["insurance","Insurance or compensation for a destroyed/damaged asset"],
         ["private_norelief","A private contribution \u2014 the payer isn\u2019t a public body and gets no tax relief for it"],
@@ -547,7 +547,7 @@ const Q = [
      msg:"It looks like the fit-out fixtures have already been claimed, and they can only be claimed once.",
      pivot:"If only <strong>loose equipment</strong> was claimed, the built-in embedded services may still be available \u2014 worth a quick check."} : null }
 ];
-CB_CTAQ.place(Q, "D");   /* Phase 132i - no question reads an answer given after it; see CB_CTAQ.place */
+CB_CTAQ.place(Q, "D", function(s,f){ pushFlag(s,f); });   /* Phase 132i - no question reads an answer given after it; see CB_CTAQ.place */
 answerTakesBack(Q, null, lrrFromAnswers);   /* Phase 132g, every question since Phase 132h - see answerTakesBack below; lrrFromAnswers since Phase 132j */
 
 /* PHASE 132j, 16 September 2026 - LAND REMEDIATION FOLLOWS BOTH ANSWERS, as the
@@ -1073,7 +1073,7 @@ function runEngine(s){
   if(__cash.mechanism === CB_CASH.MECHANISM.AMEND){
     speed += " Because this reaches an already-filed return, the cash benefit here can include an actual refund from HMRC, not just a lower bill.";
   } else if(__cash.mechanism === CB_CASH.MECHANISM.LOSS_CARRYBACK){
-    speed += " Because the claim increases a loss carried back against an earlier year's profits, part of this can also come back as a refund of tax already paid.";
+    speed += " Because the claim increases a loss carried back against an earlier year's profits, part of this can also come back as a repayment of tax paid for last year.";   /* Phase 153b, Word question 92: a loss carried back repays an earlier year's tax - Rulebook A s.4's exception to "refund" */
   } else if(__cash.mechanism === CB_CASH.MECHANISM.CURRENT_YEAR){
     speed += " This reaches a return that hasn't been filed yet, so it reduces what's due rather than producing a refund of tax already paid.";
   } else if(__cash.mechanism === CB_CASH.MECHANISM.WDA_FORWARD){

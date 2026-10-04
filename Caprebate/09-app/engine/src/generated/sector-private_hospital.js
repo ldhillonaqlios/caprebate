@@ -720,7 +720,7 @@ const Q = [
      if(s.trigger.includes("purchase")) pushFlag(s,"Obtain the seller’s allowance statement — without it a buyer cannot continue the seller’s structures and buildings allowance.");
      if(s.resi_use==="let"||s.resi_use==="both") pushFlag(s,"Mixed building with a let residential part — the residential-use test for structures and buildings allowance is wider than the dwelling-house test and is not modelled here (E-10), so no structures and buildings allowance figure is given."); } }
 ];
-CB_CTAQ.place(Q, "H");   /* Phase 132i - no question reads an answer given after it; see CB_CTAQ.place */
+CB_CTAQ.place(Q, "H", function(s,f){ pushFlag(s,f); });   /* Phase 132i - no question reads an answer given after it; see CB_CTAQ.place */
 answerTakesBack(Q, null, lrrFromAnswers);   /* Phase 132g, every question since Phase 132h - see answerTakesBack below */
 
 function pushFlag(s,f){ answerFlagRaised(s,f); if(!s.flags.includes(f)) s.flags.push(f); }
@@ -1263,7 +1263,7 @@ function runEngine(s){
   if(__cash.mechanism === CB_CASH.MECHANISM.AMEND){
     speed += " Because this reaches an already-filed return, the cash benefit here can include an actual refund from HMRC, not just a lower bill.";
   } else if(__cash.mechanism === CB_CASH.MECHANISM.LOSS_CARRYBACK){
-    speed += " Because the claim increases a loss carried back against an earlier year's profits, part of this can also come back as a refund of tax already paid.";
+    speed += " Because the claim increases a loss carried back against an earlier year's profits, part of this can also come back as a repayment of tax paid for last year.";   /* Phase 153b, Word question 92: a loss carried back repays an earlier year's tax - Rulebook A s.4's exception to "refund" */
   } else if(__cash.mechanism === CB_CASH.MECHANISM.CURRENT_YEAR){
     speed += " This reaches a return that hasn't been filed yet, so it reduces what's due rather than producing a refund of tax already paid.";
   } else if(__cash.mechanism === CB_CASH.MECHANISM.WDA_FORWARD){
