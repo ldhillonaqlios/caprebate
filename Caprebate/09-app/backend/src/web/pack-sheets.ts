@@ -170,7 +170,7 @@ function bareLand(c: Ctx): Sheet {
       // Phase 153e line 11: the planning assumption, as it goes in the report.
       ...REPORT_ASSUMPTIONS.map((a) => ({ label: 'What we assume about planning', value: a, from: 'fixed wording' as const, missing: NOT_ON_FILE })),
     ],
-    words: ['land_comparables', 'land_voa', 'land_date', 'land_planning_basis'], items: [], carries: '153e lines 11 and 12',
+    words: ['land_comparables', 'land_voa', 'land_date', 'land_planning_basis'], items: [], carries: '153e line 11 (line 12, the index dates, waits for the cost model in the pack: Phase 157)',
   };
 }
 
@@ -330,7 +330,7 @@ function findings(c: Ctx): Sheet {
       { label: 'How much evidence this job needs', value: level?.level_words ?? null, from: 'worked out', missing: NOT_WORKED },
       wordsRow(c, 'narrative_description'), wordsRow(c, 'narrative_condition'), wordsRow(c, 'narrative_departures'), wordsRow(c, 'narrative_opinion'),
     ],
-    words: ['narrative_description', 'narrative_condition', 'narrative_departures', 'narrative_opinion'], items: [], carries: '153e lines 1 to 3, 14 and 15',
+    words: ['narrative_description', 'narrative_condition', 'narrative_departures', 'narrative_opinion'], items: [], carries: '153e lines 1 to 3 and 15 (line 14, the £/m² review flag, lives in the phase3 module the back end does not read: Phase 157)',
   };
 }
 

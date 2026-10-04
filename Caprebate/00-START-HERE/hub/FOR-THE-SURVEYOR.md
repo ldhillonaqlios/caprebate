@@ -1031,3 +1031,12 @@ reasonably be established remotely should require a site inspection before a sur
  **SV-S4, the report.** Six more chapters of the survey pack are built, each showing what the pack already holds and saying "not on file", "not counted" or "needed" for anything missing: 1 Report and property (with the site plan from Ordnance Survey's free building outlines, never the legal boundary), 3 Purpose and basis, 6 Room schedule, 12 Fixtures item by item, 13 Pools, and 21 Limits. You open each before approving. The other ten are Phase 153g. **SV-S5:** each video call is now hosted on Zoom by the member of staff it is assigned to.
 
  **And the board's own total at the close of Phase 153f, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153g, 4 October 2026 — every chapter of your pack is built; nothing moved in or out
+
+ **SV-S4, the report.** The other ten chapters are built: 5 The building, 8 Dwellings, 11 Bare land, 14 Qualifying share, 16 Leaseback, 17 Structures allowance, 18 Other reliefs, 19 Judgement calls, 20 Repairs or capital and 22 Findings. Each shows what we hold, says where each line came from, and says "not on file", "not written yet" or "not worked out yet" for anything missing. **Nothing is drafted for you:** no land fraction, no dwelling fraction, no qualifying percentage, no narrative. Where the report template asks for your words (construction type, your land comparables and planning basis, the basis for each percentage, a disposal value, your sector's main judgement, what you saw of any works, and the four narrative questions), each has its own box, kept with your reason under your name. You open all 22 chapters before approving, and the client's report now carries the ten as its section 06.
+
+ **And the board's own total at the close of Phase 153g, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

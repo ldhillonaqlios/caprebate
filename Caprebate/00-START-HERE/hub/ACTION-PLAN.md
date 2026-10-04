@@ -1609,6 +1609,10 @@ FROM PHASE 153e (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the cost model
   pack (the preliminaries, the index and the insurance check, each shown as a
   test placeholder to the surveyor), with tests, and keep each gate off in the
   shipped model.
+  ADDED 4 Oct 2026 by Phase 153g: when it is wired in, show its results in the
+  pack's chapters too — the index dates in chapter 11 and the checks in 14 —
+  and bring the phase3 module's £/m² review flag (Phase 153e line 14) into
+  chapter 22. Neither is in the back end today.
 ═══════════════════════════════════
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.

@@ -1803,3 +1803,12 @@ Signed .............................  Date ..........................
  **The election window now reads the date it is given.** The engine's check of whether a fresh election can still be made (the two-year window) read the computer's own clock, not the date a case was run for. The back end's legal check passes a date, so a case run for a fixed date could get the wrong answer either side of the deadline. Fixed, with a test a day either side; no switch, no figure moved for a case run today.
 
  **And the board's own total at the close of Phase 153f, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153g, 4 October 2026 — nothing moved in or out
+
+ Phase 153g built the surveyor's last ten pack chapters. Three of them hold facts for you, and decide nothing: 17 Structures allowance (the structure left after the plant and the land, worked out, never carried across from a plant answer), 18 Other reliefs (land remediation flags), and 20 Repairs or capital, which records what the surveyor saw of any works, for your repair-or-capital call.
+
+ **And the board's own total at the close of Phase 153g, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

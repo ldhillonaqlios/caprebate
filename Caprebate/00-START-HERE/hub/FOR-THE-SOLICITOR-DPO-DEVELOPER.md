@@ -1989,3 +1989,12 @@ Name:                                  Date:
 **A READING FOR YOU — how long WhatsApp messages and their files are kept (Phase 153f line 6(b)).** Nothing deletes a WhatsApp message or a fetched file today. **Our recommendation:** the same rule as client messages and the team chat (`MESSAGE_RETENTION`, waiting on your answer to "How long do we keep client messages and the team chat?"). For a company with a claim, its WhatsApp messages and files go with the claim file, the later of its accounting period end and the report's first issue, plus the claim file's years. For a company with no claim, they go some months after the last message on any channel. A message nobody filed goes that many months after it arrived. A legal hold keeps it. If a claim's date is not known, nothing on that company is due. Meta keeps its own copy for its own period (about 30 days for a file); deleting ours does not delete theirs. **Nothing is built:** one answer from you sets both rules.
 
  **And the board's own total at the close of Phase 153f, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153g, 4 October 2026 — nothing moved in or out
+
+ For the developer: migration 087 (`survey_pack_words`: the surveyor's own words, never edited or deleted) and one staff route, `/staff/survey/{job}/pack/words`. No personal data beyond the surveyor's name on each change.
+
+ **And the board's own total at the close of Phase 153g, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
