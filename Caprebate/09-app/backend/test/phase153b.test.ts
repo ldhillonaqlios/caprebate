@@ -159,3 +159,29 @@ describe('line 20 — Word question 226: the works-VAT answer and VAT on our fee
     ], [null, null, null, null, null, null]);
   });
 });
+
+describe('line 21 — the two switches that act only in the survey pack, each on alone: which way they move it', () => {
+  /* The flows' direction for the other 27 is counted by 03-app/caprebate-switch-direction.cjs. These two cannot move an
+     estimate figure: grant_traced_to_elements is read only by the pack (Suite H, H24), and the flows put the s.187A
+     caps only on a seller KNOWN to have claimed, while fvr_requires_past_owner_claim acts only on one known NOT to have. */
+  test('fvr_requires_past_owner_claim — BIGGER in the pack: a seller who never claimed, bought in 2019, is unsettled off and clear on', () => {
+    const st = new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2019-06-01', G11: 'no', G12: 'taxpaying', G14: 'no',
+      G14po: 'sold_market', G14pod: '2019-06-01', G14iv: 'no', G14t: 'none', G15: 'no', G14fvr: 'yes' }));
+    const off = assessLegal('gp', st, NOW, 'company').verdict.level;
+    const on = withSwitch('fvr_requires_past_owner_claim', () => assessLegal('gp', st, NOW, 'company').verdict.level);
+    assert.deepEqual([off, on], ['AMBER', 'GREEN']);
+  });
+  test('grant_traced_to_elements — EITHER WAY in the pack: off, £40,000 of NHS money takes £5,600 off a £140,000 pack; on, matched to the fire alarm it takes £40,000, matched to items that never qualify it takes nothing', async () => {
+    const { packSums } = await import('../src/web/pack-sums.ts');
+    const { applyGrants } = await import('../src/web/pack-grants.ts');
+    const ev = (value: number) => ({ value, source: { kind: 'EVIDENCE' as const, text: 'test' } });
+    const L = (id: string, element_id: string, qty: number, rate: number, qpct: number, pool: 'SR' | 'MP') =>
+      ({ id, label: id, element_id, unit: 'no', pool, pool_source: null, qty_milli: ev(qty), rate_pence: ev(rate), qpct_bp: ev(qpct), removed: false, removed_source: null });
+    const IN = { price_paid_pence: ev(100_000_000), land_pence: ev(20_000_000), gia_milli_m2: ev(1_000_000), building_rate_pence: ev(100_000) };
+    const PACK = [L('A', 'LS-SR-001', 1_000_000, 10_000, 10000, 'SR'), L('B', 'LS-MP-003', 1000, 5_000_000, 10000, 'MP'), L('C', 'LS-MP-001', 10_000, 500_000, 5000, 'MP')];
+    const q = (ids: readonly string[], trace: boolean) => applyGrants(IN as never, PACK as never, packSums(IN as never, PACK as never),
+      [{ id: 'g', payer_class: 'nhs', amount_pence: 4_000_000, element_ids: ids }], { element_trace: trace, connected_no_reduction: false }).sums.qualifying_pence;
+    const off = q(['LS-MP-003'], false);
+    assert.deepEqual([off, q(['LS-MP-003'], true), q(['SL-X-001'], true)], [13_440_000, 10_000_000, 14_000_000]);
+  });
+});
