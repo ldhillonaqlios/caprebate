@@ -54,6 +54,8 @@ import { deskFirstReading } from './desk-first.ts';
 import { roomsFor } from './rooms.ts';
 import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
 import { TEST_DEFAULT_WORDS } from './pack-lines.ts';
+import { packSheet, SHEET_CHAPTERS, type SheetRow } from './pack-sheets.ts';
+import { savePackWords, WORD_FIELDS } from './pack-words.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });
@@ -78,7 +80,7 @@ export async function handleSurveyPack(
     res.end(versionPage(d, actor, v, kept));
     return 'handled';
   }
-  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/extra|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve|\/site-plan)?$/.exec(url.pathname);
+  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/extra|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve|\/site-plan|\/words)?$/.exec(url.pathname);
   if (m === null) return 'not-mine';
   const job = m[1] ?? '';
   const act = m[2]?.slice(1);
@@ -121,6 +123,8 @@ export async function handleSurveyPack(
   switch (act) {
     case 'value': r = P.savePackValue(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
     case 'extra': r = P.savePackExtra(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
+    // PHASE 153g: the surveyor's own words in chapters 5, 8, 11, 14, 16, 19, 20 and 22 (src/web/pack-words.ts).
+    case 'words': r = savePackWords(deps, actor, job, { field: f.get('field') ?? '', words: f.get('words') ?? '', reason, seq }); break;
     case 'line': r = P.saveLine(deps, actor, job, { line, qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq }); break;
     case 'revert': r = P.revertLine(deps, actor, job, { line, reason, seq }); break;
     case 'remove': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, true); break;
@@ -186,6 +190,7 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
           : ch === 23 ? signChapter(d, actor, v, ready, q)
           : ch === 1 ? reportChapter(d, actor, v) : ch === 3 ? purposeChapter(d, v) : ch === 6 ? roomsChapter(d, v)
           : ch === 12 ? itemsChapter(d, v) : ch === 13 ? poolsChapter(v) : ch === 21 ? limitsChapter()
+          : SHEET_CHAPTERS.includes(ch) ? sheetChapter(d, v, ch)
           : h`<p class="help">This chapter is filled in at the next stage of the build. For now, the sums are in chapters 4, 9 and 10.</p>`}
       </article>
       <aside class="pack-side">${approveCard(v, ready)}${totalsCard(v)}${legalCard(v, lv)}${changesCard(d, v)}</aside>
@@ -377,6 +382,37 @@ export function limitsChapter(): Safe {
       <li><strong>Not tax advice.</strong> The claim itself is the tax adviser’s.</li>
     </ul>
     <p class="help">Write any special assumption in your notes for now. Do the same for a limit on what you could inspect, or anything you were asked to leave out.</p>`;
+}
+
+/* ------------------------------------------------------------ PHASE 153g: the other ten chapters */
+
+const FROM_CLASS: Readonly<Record<string, string>> = Object.freeze({ 'the surveyor': 'pk-sv', 'the pack': 'pk-dr', 'worked out': 'pk-dr', 'fixed wording': 'pk-dr' });
+
+/**
+ * PHASE 153g — chapters 5, 8, 11, 14, 16, 17, 18, 19, 20 and 22, from one reading (src/web/pack-sheets.ts): each row
+ * says where it comes from, and a row with nothing behind it says so in words. The surveyor's words are each a form, kept
+ * with a reason under their name; Admin and Sales read them.
+ */
+export function sheetChapter(d: PackPageDeps, v: P.PackView, ch: number): Safe {
+  const s = packSheet(d.app.db, v, ch);
+  if (s === null) return raw('');
+  const cell = (r: SheetRow) => r.value === null
+    ? h`<span class="pk-src pk-need">${r.missing}</span>`
+    : h`${r.value} <span class="pk-src ${FROM_CLASS[r.from] ?? 'pk-ev'}">${r.from === 'the surveyor' && r.by !== undefined ? r.by : r.from}</span>`;
+  return h`<p class="lede">${s.lede}</p>
+    ${s.applies ? raw('') : h`<p class="gate" role="note">${s.not_applies_words ?? ''}</p>`}
+    ${s.rows.length === 0 ? raw('') : h`<table class="pk-table"><tbody>${s.rows.map((r) => h`<tr><th scope="row">${r.label}</th><td>${cell(r)}</td></tr>`)}</tbody></table>`}
+    ${s.items.length === 0 ? (s.n === 19 ? h`<p class="help">No item in this pack is marked as a judgement call.</p>` : raw(''))
+      : h`<h2>Items that are judgement calls (${String(s.items.length)})</h2><ul class="pk-needed">${s.items.map((i) => h`<li><strong>${i.label}</strong><br><span class="help">${i.detail}</span></li>`)}</ul>`}
+    ${!v.may_edit || v.property === null ? raw('') : s.words.map((f) => {
+      const w = WORD_FIELDS[f];
+      const now = s.rows.find((r) => r.label === w.label)?.value ?? '';
+      return h`<form method="post" action="${base(v.job.id)}/words" class="pblock" id="w-${f}">${hidden(v, ch)}<input type="hidden" name="field" value="${f}">
+        <label class="fl" for="w-${f}-t">${w.label}</label><p class="help">${w.ask}</p>
+        <textarea class="fi" id="w-${f}-t" name="words" rows="3" maxlength="4000">${now}</textarea>
+        <label class="fl" for="w-${f}-r">Why</label><input class="fi" id="w-${f}-r" name="reason" maxlength="500" required>
+        <button class="btn-quiet" type="submit">Save</button></form>`;
+    })}`;
 }
 
 /* ------------------------------------------------------------ chapter 15: grants and VAT */

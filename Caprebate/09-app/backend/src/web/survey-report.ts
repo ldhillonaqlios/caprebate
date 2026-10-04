@@ -68,6 +68,14 @@ export type ReportModel = {
   readonly assumptions: readonly string[];
   /** 2 Oct 2026, stage 6: the site plan from Ordnance Survey's free maps, as approved; null when the version has none. */
   readonly site_plan: SitePlan | null;
+  /** PHASE 153g: the surveyor's chapters (5, 8, 11, 14, 16 to 20, 22) as approved. Empty in a version approved before. */
+  readonly chapters: readonly ReportChapter[];
+};
+
+export type ReportChapter = {
+  readonly n: number; readonly title: string; readonly applies: boolean; readonly not_applies_words: string | null;
+  readonly rows: readonly { readonly label: string; readonly value: string | null; readonly missing: string }[];
+  readonly items: readonly { readonly label: string; readonly detail: string }[];
 };
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -205,6 +213,8 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     inspection: inspectionWords((x as { inspection?: Snapshot['inspection'] }).inspection),
     assumptions: (x as { assumptions?: readonly string[] }).assumptions ?? [],
     site_plan: (x as { site_plan?: SitePlan }).site_plan ?? null,
+    chapters: ((x as { chapters?: readonly ReportChapter[] }).chapters ?? []).map((c) => ({ n: c.n, title: c.title, applies: c.applies, not_applies_words: c.not_applies_words,
+      rows: c.rows.map((r) => ({ label: r.label, value: r.value, missing: r.missing })), items: c.items.map((i) => ({ label: i.label, detail: i.detail })) })),
   };
 }
 
@@ -290,6 +300,14 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
       <p class="pk-fp">${m.fingerprint}</p>
       <div class="rp-ai"><h3>How this report was made</h3><p>${m.automation_note}</p></div>
     </section>
+    ${m.chapters.length === 0 ? raw('') : h`<section class="rp-sheet">
+      <h2 class="rp-h"><span>06</span>The surveyor’s chapters</h2>
+      <p>Each chapter as the surveyor approved it. Anything not on file says so; nothing is filled in for them.</p>
+      ${m.chapters.map((c) => h`<h3>${String(c.n)} · ${c.title}</h3>
+        ${c.applies ? raw('') : h`<p>${c.not_applies_words ?? ''}</p>`}
+        ${c.rows.length === 0 ? raw('') : h`<table class="rp-table"><tbody>${c.rows.map((r) => h`<tr><th scope="row">${r.label}</th><td>${r.value ?? r.missing}</td></tr>`)}</tbody></table>`}
+        ${c.items.length === 0 ? raw('') : h`<ul>${c.items.map((i) => h`<li><b>${i.label}</b> ${i.detail}</li>`)}</ul>`}`)}
+    </section>`}
   </div>`;
 }
 
@@ -631,6 +649,23 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
   c.ops.push({ k: 'rect', x: L, y: c.y, w: W, h: ai.length * 13 + 40, r: 8, fill: C.mist });
   c.text(L + 16, c.y + 22, 'How this report was made', 'Times-Bold', 11.5, C.ink);
   ai.forEach((line, i) => c.text(L + 16, c.y + 38 + i * 13, line, 'Helvetica', 9.5, C.body));
+  c.y += ai.length * 13 + 52;
+
+  /* ---------------------------------------------------------- 6 · PHASE 153g: the surveyor's chapters */
+  if (m.chapters.length > 0) {
+    c.page();
+    c.heading('06', 'The surveyor’s chapters');
+    c.para('Each chapter as the surveyor approved it. Anything not on file says so; nothing is filled in for them.', { after: 10 });
+    for (const ch of m.chapters) {
+      c.need(40);
+      c.text(L, c.y, `${String(ch.n)} · ${ch.title}`, 'Times-Bold', 12.5, C.ink);
+      c.y += 6;
+      if (!ch.applies && ch.not_applies_words !== null) c.para(ch.not_applies_words, { after: 6 });
+      for (const r of ch.rows) c.para(`${r.label}: ${r.value ?? r.missing}`, { after: 4 });
+      for (const i of ch.items) c.para(`${i.label} — ${i.detail}`, { after: 4 });
+      c.y += 10;
+    }
+  }
 
   return buildCanvasPdf(c.finish(), { title: `${REPORT_TITLE} · ${m.company} · version ${String(m.version)}` });
 }

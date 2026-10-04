@@ -343,6 +343,9 @@ function begin(d: PackDeps, actor: Actor, job_id: string, reason: string, expect
   });
 }
 
+/** PHASE 153g: the same guard for the surveyor's own words (src/web/pack-words.ts): who may, the reason, a page out of date. */
+export const beginPackChange = begin;
+
 function insertEntry(d: PackDeps, actor: Actor, pack_id: string, line_key: string | null, field: PackField, value: number | null, pool: Pool | null, reason: string): void {
   d.db.run(
     'INSERT INTO survey_pack_entries (id, pack_id, seq, line_key, field, value, pool, by_user, reason, at) ' +

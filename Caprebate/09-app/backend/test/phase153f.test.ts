@@ -254,9 +254,9 @@ describe('line 2 — chapters 1, 3, 6, 12, 13 and 21 of the survey pack', () => 
     saveLine(pd(), SV, 'j-fdn', { line: 'LS-SR-001', qty: '1000', rate: '100', qpct: '100', pool: 'SR', reason: 'Measured', seq: String(v0().seq) });
   });
 
-  test('six more chapters are built, so the surveyor opens each before approving; the other ten wait for Phase 153g', () => {
-    assert.deepEqual(CHAPTERS.filter((c) => c.built).map((c) => c.n), [1, 2, 3, 4, 6, 7, 9, 10, 12, 13, 15, 21, 23]);
-    assert.deepEqual(chaptersToRead(), [1, 2, 3, 4, 6, 7, 9, 10, 12, 13, 15, 21]);
+  test('six more chapters are built, so the surveyor opens each before approving (Phase 153g built the other ten)', () => {
+    for (const n of [1, 3, 6, 12, 13, 21]) assert.ok(CHAPTERS.find((c) => c.n === n)?.built, String(n));
+    for (const n of [1, 3, 6, 12, 13, 21]) assert.ok(chaptersToRead().includes(n), String(n));
   });
 
   test('chapter 1 names the client, the property, the claim and the surveyor, and says what is not on file', () => {

@@ -141,7 +141,7 @@ describe('the approval of the survey pack', () => {
     assert.match(page, /The button turns on when every line above is ticked\./);
     assert.deepEqual(keys(), ['sums', 'legal', 'read', 'basis', 'details']);
     assert.match(page, /✗ \d+ values are still needed\. There is no total until then\. <a href="\/staff\/survey\/job-ap-1\/pack\?ch=4">Put it right<\/a>/);
-    assert.match(page, /✗ Open every chapter first\. Still to open: 1 · Report and property; 2 · Your inspection; 3 · Purpose and basis; 4 · Summary; 6 · Room schedule; 7 · The legal check; 9 · Price, land and floor area; 10 · Rebuild cost and split; 12 · Fixtures, item by item; 13 · Pools; 15 · Grants and VAT; 21 · Limits\./); // PHASE 153f: six more chapters built
+    assert.match(page, /✗ Open every chapter first\. Still to open: 1 · Report and property; 2 · Your inspection; 3 · Purpose and basis; 4 · Summary; 5 · The building; 6 · Room schedule; 7 · The legal check; 8 · Dwellings; 9 · Price, land and floor area; 10 · Rebuild cost and split; 11 · Bare land; 12 · Fixtures, item by item; 13 · Pools; 14 · Qualifying share; 15 · Grants and VAT; 16 · Leaseback; 17 · Structures allowance; 18 · Other reliefs; 19 · Judgement calls; 20 · Repairs or capital; 21 · Limits; 22 · Findings\./); // PHASE 153f and 153g: every chapter built
     assert.match(page, /✗ Add your RICS number below\./);
     assert.match(page, /✓ The job has its locked estimate\./);
     for (const s of DECLARATION) assert.ok(page.includes(s.replace(/’/g, '’')), s);

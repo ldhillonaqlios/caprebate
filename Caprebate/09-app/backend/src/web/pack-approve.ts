@@ -21,6 +21,7 @@
  * so a page drawn before a change cannot approve the changed pack, and a second click on the same state is refused.
  */
 import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
+import { sheetsForVersion } from './pack-sheets.ts';
 import { createHash } from 'node:crypto';
 import { authorise, can, type Actor } from '../authz.ts';
 import { amendFigures, commitFigures, jobHasEstimate, packJob } from './surveyor.ts';
@@ -220,6 +221,8 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     // 2 Oct 2026, stage 6: the site plan as it stood at approval (src/web/site-plan.ts), so the report never changes after.
     // Only when there is one: a version approved without a plan keeps the shape every earlier version has.
     ...siteOf(d, v.job.id),
+    // PHASE 153g: chapters 5, 8, 11, 14, 16 to 20 and 22, as they stood at approval (src/web/pack-sheets.ts).
+    chapters: sheetsForVersion(d.db, v),
     legal: {
       verdict: lv.verdict,
       answers: lv.asked.filter((q) => lv.answers.has(q.id)).map((q) => {
