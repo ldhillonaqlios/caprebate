@@ -154,7 +154,7 @@ export function deskFirstReading(db: Db, job_id: string, cfg = DESK_FIRST_TEST):
     if (fact(k)?.answer === 'UNKNOWN') signs.push(`A fact that decides the value is not known: ${k.toLowerCase().replace(/_/g, ' ')}.`);
   }
   if (job.sector === 'supported_living') signs.push('Supported living: the split between homes and shared areas needs the surveyor’s eyes until it is measured.');
-  if (value_band === 4 || complexity_band === 4) signs.push('The top band on value or complexity: a conservative default until real jobs show otherwise.');
+  if (value_band === 4 || complexity_band === 4) signs.push('Top band on value or complexity. We visit by default until real jobs show otherwise.');
 
   let tier = (GRID[value_band - 1] as readonly Tier[])[complexity_band - 1] as Tier;
   const coverage = videoCoverage(db, job_id, cfg);

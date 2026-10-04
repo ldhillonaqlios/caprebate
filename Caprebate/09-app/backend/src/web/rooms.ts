@@ -178,6 +178,13 @@ const PRIVATE_HOSPITAL: SectorRooms = {
   rooms: [
     { room_id: 'PH-R1', label: 'Consulting room (outpatient)', driver: 'per room' },
     { room_id: 'PH-R2', label: 'Operating theatre', driver: 'per room' },
+    /* PHASE 153e, 4 October 2026 (Word question 148): each space in a theatre suite is counted, not the suite. Lakhbir
+       answered "Several"; the draft in the box agrees. A TEST DEFAULT for the surveyor to confirm which spaces carry
+       which equipment (src/web/pack-lines.ts, SUITE_ROWS). */
+    { room_id: 'PH-R2A', label: 'Anaesthetic room (theatre suite)', driver: 'per room' },
+    { room_id: 'PH-R2B', label: 'Theatre preparation room (theatre suite)', driver: 'per room' },
+    { room_id: 'PH-R2C', label: 'Scrub room (theatre suite)', driver: 'per room' },
+    { room_id: 'PH-R2D', label: 'Recovery bay (theatre suite)', driver: 'per room' },
     { room_id: 'PH-R3', label: 'Intensive care / critical care room', driver: 'per room' },
     { room_id: 'PH-R4', label: 'Imaging room — X-ray and CT', driver: 'per room' },
     { room_id: 'PH-R5', label: 'Imaging room — MRI', driver: 'per room' },

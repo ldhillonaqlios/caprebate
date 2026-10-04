@@ -534,7 +534,7 @@ figure, the assumption chosen moves the claim in a direction that is not neutral
 this were an explicit stated assumption on the face of every report than an implicit choice.
 
 > **Test wording, 4 October 2026 (Phase 153e, Word question 145) — for you to approve or reword.** Every report
-> the test system approves now carries, under "What we assume": _We assume the property’s current use is lawful, and that no planning limits or enforcement we have not been told about affect its value. We did not check the planning records, unless this report says so. Any planning permission, limit or doubt we know of is named separately._ It states the assumption; it does not answer
+> the test system approves now carries, under "What we assume": _We assume the property’s current use is lawful. We assume no planning rule or action we were not told about changes its value. We did not check the planning records, unless this report says so. Any planning permission, limit or doubt we know of is named separately._ It states the assumption; it does not answer
 > which planning basis the bare site is valued on, which is still Q-RT-19's question for you.
 
 ---
@@ -808,7 +808,7 @@ have drawn it.
   beyond anything stated; information supplied by the client and their advisers is accurate and
   complete; no allowance is made for any matter that would only be revealed by a survey outside the
   agreed scope.
-- **Planning** _(test wording, 4 October 2026, Phase 153e, for you to approve; see section 11, Q-RT-19)_. We assume the property’s current use is lawful, and that no planning limits or enforcement we have not been told about affect its value. We did not check the planning records, unless this report says so. Any planning permission, limit or doubt we know of is named separately.
+- **Planning** _(test wording, 4 October 2026, Phase 153e, for you to approve; see section 11, Q-RT-19)_. We assume the property’s current use is lawful. We assume no planning rule or action we were not told about changes its value. We did not check the planning records, unless this report says so. Any planning permission, limit or doubt we know of is named separately.
 - **Reliance.** Prepared for the stated claimant and their professional advisers only. Not to be relied
   on by any other party; no responsibility is accepted to any third party.
 - **Currency of rates and law.** Tax rates and thresholds are stated as at the basis date in Section 3

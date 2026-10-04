@@ -9,7 +9,7 @@
  * and 21).
  */
 export const PLANNING_ASSUMPTION =
-  'We assume the property’s current use is lawful, and that no planning limits or enforcement we have not been told about affect its value. ' +
+  'We assume the property’s current use is lawful. We assume no planning rule or action we were not told about changes its value. ' +
   'We did not check the planning records, unless this report says so. Any planning permission, limit or doubt we know of is named separately.';
 
 export const REPORT_ASSUMPTIONS: readonly string[] = Object.freeze([PLANNING_ASSUMPTION]);
