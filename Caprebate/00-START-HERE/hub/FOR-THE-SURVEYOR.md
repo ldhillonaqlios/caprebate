@@ -971,3 +971,11 @@ reasonably be established remotely should require a site inspection before a sur
 -  **The location and job-size adjustment** (the Spon's section of this register, "Which books they are" onward) was tested against an invented table shaped like BCIS's: the model accepts a table declared on BCIS's base of a UK mean of 100 and still refuses a table from another book, a missing base and a bare mean. It stays switched off; the real factors wait on the purchase. What that section says about Spon's is the record of the books we set aside, not the plan.
 -  **SV-S6, preliminaries.** Unchanged in substance. The convention you are asked for applies to whichever published index we use — BCIS, not Spon's.
 -  **Your first session's papers.** The two copies with the pre-fill rule and the 63%, 46% and 80% figures withheld are ready, so Lakhbir's choice is one word (Word question 187). The handoff index now points at the current report template (v2.3), not the superseded v1.
+
+---
+
+## Phase 153a, 4 October 2026 — nothing moved into or out of this register
+
+ **Marked 4 October 2026 by Phase 153a. Nothing moved into or out of this register, and its own size has not changed: nine entries covering nine board items, all nine at Built — awaiting sign-off.** One entry was added to FOR THE ACCOUNTANT — a grant matched to the items it paid for. **One thing is worth your knowing:** the survey pack now has a chapter 15, "Grants and VAT", which you open before approving. It shows the claim's grants and what each takes off the spend that qualifies; nothing in it is yours to type, and its VAT half is not built yet.
+
+ **And the board's own total at the close of Phase 153a, 4 October 2026, counted in code: 120 items carry that status**: forty-six in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Forty-six plus nine plus sixty-five is 120.

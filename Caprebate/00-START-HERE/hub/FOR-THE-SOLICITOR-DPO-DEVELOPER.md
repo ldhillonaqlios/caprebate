@@ -1898,3 +1898,11 @@ Name:                                  Date:
 -  **SDP-V8.** Nothing to install; only the address supplier's answers remain.
 
  **This register's size, re-derived at the close of Phase 153 by the register check** — one entry in (SDP-P40) and one out (SDP-L4, now a mention): the count is the check's, printed at the close, not quoted here.
+
+---
+
+## Phase 153a, 4 October 2026 — dated lines on five entries; nothing moved in or out
+
+ The recipients list (SDP-P6, now v1.4), the breach and transparency communications (SDP-P25), the Article 14 assessment (SDP-P26), the public notices page (SDP-P7) and the business continuity plan (SDP-P29) each carry a dated line under their entry. **Nothing moved into or out of this register.**
+
+ **And the board's own total at the close of Phase 153a, 4 October 2026, counted in code: 120 items carry that status**: forty-six in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Forty-six plus nine plus sixty-five is 120.

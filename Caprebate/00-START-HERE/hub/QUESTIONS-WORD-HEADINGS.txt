@@ -82,6 +82,7 @@
 198) When Companies House says a client is an LLP, what kind of business should our estimate treat it as?
 226) Can a client's answer about VAT on their building work tell us whether they can reclaim VAT on our fee?
 237) When a claim through the pool creates a loss that is carried back, may we tell the client part of it comes back as a refund?
+239) When a grant's papers say which items it paid for, should it come off only those items?
 116) Would you send a client to us, and what would stop you?
 117) Do you want a fee for sending clients, and what must you tell them?
 118) Who sends the corrected tax return to HMRC: you or us?

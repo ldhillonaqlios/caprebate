@@ -1357,12 +1357,14 @@
 `13199454668` · **Ready - Claude can build** · owner Claude
 
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268315 (board sync, Lakhbir's yes).
+- Note 2026-10-04 (Phase 153a): Lines 12 and 13 done by Phase 153a (grant checks at valuation); new line 21 added: the switches' direction, moved from Phase 153a line 2, to run last.
 
 ### Phase 153c - data protection and the back office built on our recommendation for Sadique to check, one test call per keyed connector, and the Didit waiver's wording: 19 lines
 
 `13199468908` · **Ready - Claude can build** · owner Claude
 
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268316 (board sync, Lakhbir's yes).
+- Note 2026-10-04 (Phase 153a): Line 13 done by Phase 153a (Google in the recipients list v1.4 and the notices page, for the officer to check); one line added: may chapter 15 show the surveyor grant amounts (ask Sadique).
 
 ### Phase 153d - the commercial papers in test form for the director and the solicitor: test-default engagement letter, disposal fee, introducer terms, AML scale, risk score
 
@@ -1375,6 +1377,7 @@
 `13199476474` · **Ready - Claude can build** · owner Claude
 
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268318 (board sync, Lakhbir's yes).
+- Note 2026-10-04 (Phase 153a): Line 17 added by Phase 153a: chapter 15's VAT half (the survey pack's grants half is built).
 
 ---
 
@@ -1730,6 +1733,7 @@
 `12852269899` · **Done** · owner Claude
 
 - Note 2026-09-28 (Phase 153): Checked by Phase 153 (28 Sep): NOT closed by Phase 143. A claim_grants table exists (migration 015, CRM 6 of 10, 11 Sep) with a payer type and a free-text list of what each grant paid for, but it only feeds the check to leave the valuation stage; no figure is computed from it, the estimate engine still cuts the claim by the single grant_fraction, the items list is not linked to the taxonomy's cost items, and nothing checks the payer type. The remainder is Phase 153a line 1 (row 13199500801).
+- Note 2026-10-04 (Phase 153a): The remainder is built and switched off (Phase 153a): grants matched to fixture-list rows, the survey pack's chapter 15, switch grant_traced_to_elements; waiting on the tax adviser at 13200627626 (ACC-A16).
 
 ### F-16 — advice gap, GP client-facing copy: nothing warns that claiming on a grant-funded element can trigger recovery of the grant under direction 56, independently of tax. The practice already declared its intention to claim under direction 5(1)(b)
 

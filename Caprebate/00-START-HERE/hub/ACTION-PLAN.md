@@ -1256,6 +1256,29 @@ Line 18: CONFLICTS with src/connectors/company-search.ts ~11, which keeps only
   permitted fields first (and ask Sadique), then map.
 ═══════════════════════════════════
 
+═══ 4 OCTOBER 2026 — PHASE 153a TOOK TWO LINES AND GAVE ONE ═══
+Lines 12 and 13 are DONE (Phase 153a, with its grant trace): the gate out of
+  valuation asks for the grant papers or the tax adviser's view before a grant
+  split in equal share moves on, and the client's check with whoever paid
+  (claim facts GRANT_SPLIT_ADVISER_VIEW and GRANT_PROVIDER_CHECKED, migration
+  078, src/web/grant-checks.ts). Skip them. Word questions 109 and 110 already
+  carry "Built 4 October 2026 (Phase 153a)".
+The tax adviser's switches now number 25 (grant_traced_to_elements, ACC-A16).
+21. LAST, AFTER EVERY SWITCH THIS PHASE ADDS IS BUILT (Phase 153a line 2,
+   moved here because a count taken before this phase would go stale): THE TAX
+   ADVISER SWITCHES - WHICH WAY EACH ONE MOVES A CLAIM. The Blockers page
+   (00-START-HERE/"Caprebate — Blockers & What Unblocks Them.html") says "nine
+   of the twelve make claims bigger, one only smaller"; FOR THE ACCOUNTANT's
+   opening counts the first 24 (fifteen bigger, three smaller, four either
+   way, one basis, one false negatives); verify-extraction.cjs counts them.
+   Derive the direction of each IN CODE: switch it on alone against a fixed
+   set of states and compare the cash figure, the way the cash route proof's
+   --moves-from does (grant_traced_to_elements is read by the back end's
+   survey pack, not the site: prove it with test/pack-grants.test.ts's pack,
+   where it moves money either way). Write the split into the page and FOR THE
+   ACCOUNTANT, and say how it was counted.
+═══════════════════════════════════
+
 When every line is done: run every check in COORDINATES (prove each new
 test red on the code before), re-derive the figures, update the register
 entry for each built item, note each question "built in Phase 153b" in
@@ -1413,6 +1436,15 @@ Line 1: "Find my address" now uses GoAddress (src/connectors/address-lookup.ts,
   30 Sep), not Homedata - add a GoAddress retention reading too.
 Lines 1, 11, 16 are all seven-year retention readings (Word questions 37, 192,
   219): do them together.
+4 Oct 2026 (Phase 153a): LINE 13 IS DONE - Google Analytics is P15 in the
+  recipients list (v1.4, marked for the officer to check) and the notices
+  page's Google gap is filled from Google's published terms, marked for him.
+  Skip it. ADD: chapter 15 of the survey pack shows the surveyor the claim's
+  grants (who paid, as a class; the amount; the items), as chapter 9 already
+  shows the price. The surveyor's released list (src/payload.ts,
+  releasedFactReader) carries no amount. Ask Sadique whether the pack may show
+  grant amounts to the surveyor; build his answer (hide the amount from
+  SURVEYING, or record the pack on the released list).
 Line 5: /notices/ has been served as "not published" since 29 Sep.
 Line 12: PARTLY - a per-type "a person reads this, never our reader" state
   exists (document-reading.ts ~274); add the allow list.
@@ -1688,6 +1720,13 @@ Line 15: PARTLY - every pack value shows its source and the surveyor's stamped
   changes; add the "seen on site / from documents" label.
 Word question 187 was answered in chat on 1 Oct (PHASE-HISTORY ~11047): the
   drafts go to the surveyor pre-filled. It is not yet in the Word document.
+ADDED 4 Oct 2026 by Phase 153a - 17. CHAPTER 15'S VAT HALF. Phase 153a built
+  the survey pack's chapter 15, "Grants and VAT", for grants only
+  (src/web/pack-grants.ts); its VAT section says VAT is not in the pack yet.
+  Build it: whether VAT the client could not reclaim is part of the spend
+  (Module 00 C23: irrecoverable VAT is included; partial exemption
+  unresolved), as a pack input with its source, N4 throughout, tests both
+  ways, and the report's figures.
 ═══════════════════════════════════
 
 When every line is done: run every check in COORDINATES (prove each new
