@@ -11464,3 +11464,9 @@ Run from the run sheet's top block. Claimed in 803e1d4 (hub/CLAIM.md; board and 
  **Step 4B.** Items at "Ready - Claude can build": 13199454668 (153b), 13199468908 (153c), 13199500802 (153d), 13199476474 (153e) — each has its own section. No orphans.
 
  **Claim cleared** in the commit that carries this record.
+
+## Ad-hoc, 4 October 2026 — the stray untracked files deleted (Claude Code, on the Mac)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Lakhbir, in the chat, after Phase 153a asked: "yes the stray files can go". The 21 untracked files `git status` listed — `*.mutbak` (11), `*.new0929` (4 in src/, and `api/index.mjs.new0929`), `test/_tmp152-mut.test.ts`, `test/_tmp152-old.test.ts`, `test/_probe146l.test.ts`, `test/assessment-start.test.ts`, `_crawl_roles.ts`, `_s2.ts` — exactly the list the plan named and nothing else, were deleted from the Mac copy (OneDrive keeps them in its recycle bin). **`npm run check` on the Mac is green again: lint-sql clean, typecheck 0 errors, 2272 pass / 0 fail.** The plan's four passages that said never to delete them now say they were deleted with his yes (Phase 154a1's opening and line 11, the sweep's corrections block, CONTINUE-IN-A-NEW-CHAT.md), and WAITING-ON-PEOPLE.md's item is ticked; the run sheet's 154a1 and 157 blocks were written to match and checked equal to the file. **Left:** Phase 154a1 line 11's other half — the register check and the drift checker's own run should count only tracked test files, so an untracked file can never turn them red again — stays in that phase. No code changed.
+
+ **Claim cleared** in the commit that carries this record.

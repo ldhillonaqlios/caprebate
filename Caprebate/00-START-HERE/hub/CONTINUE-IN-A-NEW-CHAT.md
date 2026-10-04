@@ -67,10 +67,9 @@ HOUSE RULES (follow them exactly)
   counts) and hub/PHASE-HISTORY.md.
 - Font sizes 12px or more. Screen text in plain words (reading grade 9 or under);
   the guide grade 7 or under.
-- Never permanently delete anything. Never delete the stray local files
-  (*.mutbak, *.new0929, api/index.mjs.new0929, test/_tmp152-*.test.ts,
-  test/_probe146l.test.ts, test/assessment-start.test.ts, _crawl_roles.ts,
-  _s2.ts): they make two checks red on the Mac; I decide about them.
+- Never permanently delete anything. The stray local files that made two checks
+  red on the Mac were deleted on 4 Oct 2026 with my yes; ask me before deleting
+  any other untracked file.
 - You can't sign in to the test website yourself. Real emails or messages need
   my OK first. Never ask me to paste a key or password into the chat: keys go
   into Vercel or ~/.caprebate-secrets.env, by me.

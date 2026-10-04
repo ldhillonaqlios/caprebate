@@ -34,9 +34,9 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       Vercel, Zoom licence, Google Analytics, Anthropic paperwork, GoAddress, Didit).
 - [ ] Send a test video from the iPhone through "Show us your building", and supply the tall hero video for the home
       page (PHASE-HISTORY ~11112-11160).
-- [ ] Decide whether the stray local files on the Mac (`*.mutbak`, `*.new0929`, `api/index.mjs.new0929`,
+- [x] Decide whether the stray local files on the Mac (`*.mutbak`, `*.new0929`, `api/index.mjs.new0929`,
       `test/_tmp152-*.test.ts`, `test/_probe146l.test.ts`, `test/assessment-start.test.ts`, `_crawl_roles.ts`,
-      `_s2.ts`) may go: they turn two checks red on the Mac.
+      `_s2.ts`) may go: they turn two checks red on the Mac. **Yes (Lakhbir, 4 Oct 2026); all 21 deleted that day.**
 
 ## The director (Jalil Ahmed)
 

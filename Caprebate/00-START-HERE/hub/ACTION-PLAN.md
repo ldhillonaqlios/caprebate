@@ -1750,9 +1750,10 @@ WHEN THE PHASE IS DONE, in this order:
 ═══════════════════════════════════
 
 Tests go in Caprebate/09-app/backend/test. Break each fix on purpose to prove
-its test catches it. Never delete the stray local files (*.mutbak, *.new0929,
+its test catches it. The stray local files (*.mutbak, *.new0929,
 api/index.mjs.new0929, test/_tmp152-*.test.ts, test/_probe146l.test.ts,
-test/assessment-start.test.ts, _crawl_roles.ts, _s2.ts): they are Lakhbir's.
+test/assessment-start.test.ts, _crawl_roles.ts, _s2.ts) were deleted on 4 Oct
+2026 with Lakhbir's yes; none is left untracked.
 
 1. A 500 ON THE COMPLIANCE PERSON SEARCH. As Admin, POST
    /staff/compliance/search with term = 50,000 characters answers 500 (40,000
@@ -1805,13 +1806,13 @@ test/assessment-start.test.ts, _crawl_roles.ts, _s2.ts): they are Lakhbir's.
         included), to the Vercel function log - against the spec's "no
         personal data in logs" (Developer Spec ~3743). Print counts and kinds
         only, never an address, subject or body.
-11. THE SIGN-OFF REGISTER CHECK IS RED ON THIS MAC only because its built-in
-    suite run picks up the stray untracked test files (assessment-start: 7
-    fail, _tmp152-old: 2, _tmp152-mut: 1) and api/index.mjs.new0929 (the
-    "151i follow-up 4 ... vercel.json runs the build step" test). Do not
-    delete them: make the check run `git ls-files 'test/*.test.ts'` the way
-    every phase now counts the suite, and say so in its output; ask Lakhbir in
-    the record whether the stray files may go.
+11. THE SIGN-OFF REGISTER CHECK WAS RED ON THIS MAC only because its built-in
+    suite run picked up stray untracked test files. HALF DONE 4 Oct 2026:
+    Lakhbir said the strays may go and they are deleted, so npm run check is
+    green on the Mac again. Still do the other half: make the check (and the
+    drift checker's own run) count `git ls-files 'test/*.test.ts'` the way
+    every phase now counts the suite, so an untracked file can never turn it
+    red again, and say so in its output.
 12. TWO TESTS THAT FAIL NOW AND THEN: test/whatsapp.test.ts's "Communication
     puts ... in one list, in order" (failed once in three runs even alone on 3
     Oct) and test/survey-report.test.ts's "a wrong or broken link opens
@@ -2164,10 +2165,9 @@ banner. Write every change to the board AND to hub/TRACKER.csv.
 BRANCHES: since 2 Oct work goes on claude/* branches and pull requests (#1-#7);
   Lakhbir merges, and a merge deploys the test website. Never push to main.
 COUNT THE SUITE as `node --test $(git ls-files 'test/*.test.ts')` (plus any new
-  file). npm run check and the register check are red on the Mac only because of
-  untracked stray files (*.mutbak, *.new0929, api/index.mjs.new0929,
-  test/assessment-start.test.ts, test/_tmp152-*.test.ts,
-  test/_probe146l.test.ts) - never delete them; Lakhbir decides (154a1 line 11).
+  file). The untracked stray files that made npm run check and the register
+  check red on the Mac were deleted on 4 Oct 2026 with Lakhbir's yes; if a new
+  untracked file appears, ask him before deleting it (154a1 line 11).
   On 3 Oct: 1279 / 439 / 403 / 2221. The Mac can be overloaded: run the suite in
   chunks of about 12 files, and if a file fails with ETIMEDOUT reading the source,
   OneDrive stalled - wait and run it again.
