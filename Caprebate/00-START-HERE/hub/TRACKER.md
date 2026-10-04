@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 1 |
 | Ready - Lakhbir action | 32 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 1 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
 | Done | 289 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1354,7 +1354,7 @@
 
 ### Phase 154a1 - the faults the 3 October sweep found, fixed (12 lines)
 
-`13201103799` · **Ready - Claude can build** · owner Claude
+`13201103799` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
 
 - Note 2026-10-04 (Phase 153f): Added by Phase 153f (line 8): the tracker had not moved since 29 Sep. Created on the monday.com board first, which gave it this id; the record is in PHASE-HISTORY.
 
