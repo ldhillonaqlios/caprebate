@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 3 |
+| Ready - Claude can build | 2 |
 | Ready - Lakhbir action | 32 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 1 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
 | Done | 288 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1354,7 +1354,7 @@
 
 ### Phase 153g - the survey pack's other ten chapters (from Phase 153f line 2)
 
-`13201098035` · **Ready - Claude can build** · owner Claude
+`13201098035` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
 
 - Note 2026-10-04 (Phase 153f): Created by Phase 153f (line 2) on the monday.com board, which gave it this id; the tracker's add gave 13201070998, replaced here. The order for the ten chapters: 04-phase-work/phase153f/survey-pack-chapters-order.md.
 
