@@ -82,7 +82,7 @@ import {
 import { singleFile } from './multipart.ts';
 import { RANGE_QUALIFIER } from './shown-range.ts';
 import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from './audit-log.ts';
-import { activeMeeting, clientJoinUrl, joinPanel, reconcileVideoMeeting, withJoinScripts, zoomBlockers, zoomDeps, VIDEO_PAGE_HEADERS } from './video-calls.ts';
+import { activeMeeting, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, withJoinScripts, zoomBlockers, zoomDeps, VIDEO_PAGE_HEADERS } from './video-calls.ts';
 import { sendVideoInvite } from './booking-invite.ts';
 import { hostZak, joinSignature } from '../connectors/zoom.ts';
 
@@ -354,13 +354,15 @@ export async function handleStaff(
     if (host && db.run('UPDATE video_meetings SET host_opened_at = ?, host_opened_by = ? WHERE id = ? AND host_opened_at IS NULL', [now(), actor.id, m.id]).changes === 1) {
       d.app.audit.append({ at: now(), kind: 'VIDEO_CALL_OPENED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'booking', object_id: id, detail: {} });
     }
-    const zak = host ? await hostZak(zoomDeps(d.app)) : null;
+    // PHASE 153f: the start token of the Zoom user the meeting was made under (the assigned member of staff, else the shared host).
+    const zhost = meetingHost(db, m);
+    const zak = host ? await hostZak(zoomDeps(d.app), zhost?.email) : null;
     const sig = joinSignature(d.app.secrets, m.meeting_id, host && zak !== null ? 1 : 0, now());
     if (sig === null) return problem(res, actor, 'No video call to join', zoomBlockers(d.app).join(' '), `/staff/calendar/${id}`);
     const name = db.get<{ n: string }>('SELECT display_name AS n FROM users WHERE id = ?', [actor.id])?.n ?? 'Cap Rebate';
     const out = page({ title: `Video call · ${bk.business_name}`, nav: nav(actor), wide: true, body: h`
       <h1>Video call with ${bk.business_name}</h1>
-      <p><strong>${when(bk.starts_at)}</strong>, for an hour. ${host && zak === null ? h`<span class="help">Zoom did not give us the host's start token, so you join as a participant; start the meeting from the Zoom app if the client is waiting.</span>` : raw('')}</p>
+      <p><strong>${when(bk.starts_at)}</strong>, for an hour. Hosted on Zoom by ${zhost === null ? 'our shared Zoom user' : zhost.name}. ${host && zak === null ? h`<span class="help">Zoom did not give us the host's start token, so you join as a participant; start the meeting from the Zoom app if the client is waiting.</span>` : raw('')}</p>
       ${joinPanel({ meeting_id: m.meeting_id, passcode: m.passcode, signature: sig.signature, sdk_key: sig.sdk_key, user_name: `${name} · Cap Rebate`, zak: host ? zak : null }, host && zak !== null ? 'host' : 'client')}
       <p class="help">Or open it in the Zoom app: <a href="${m.join_url}" rel="noopener noreferrer">${m.join_url}</a>. The client's own page: ${clientJoinUrl(d.publicOrigin ?? 'http://localhost:8103', m.client_token)}</p>
       <p><a href="/staff/calendar/${id}">Back to the call</a></p>` });

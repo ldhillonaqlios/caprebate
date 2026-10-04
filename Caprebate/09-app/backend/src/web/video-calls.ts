@@ -28,7 +28,7 @@ import { BOOKING } from './engine.ts';
 import { SLOT_MINUTES } from './schedule.ts';
 import { localWhen } from './localtime.ts';
 import { h, type Safe } from './html.ts';
-import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, ZOOM_SDK_BASE, type ZoomDeps } from '../connectors/zoom.ts';
+import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, ZOOM_SDK_BASE, type MadeMeeting, type ZoomDeps } from '../connectors/zoom.ts';
 
 /** A call that holds a moment: a telephone call (CB_BOOKING) or, since 30 Sep 2026, a video call. */
 export function booksATime(channel: string): boolean {
@@ -38,12 +38,33 @@ export function booksATime(channel: string): boolean {
 export type Meeting = {
   readonly id: string; readonly booking_id: string; readonly meeting_id: string; readonly join_url: string;
   readonly passcode: string | null; readonly client_token: string; readonly created_at: string;
+  /** PHASE 153f (migration 084): whose Zoom user the meeting was made under; null, the shared host. */
+  readonly host_user_id: string | null;
 };
 
 export function activeMeeting(db: Db, booking_id: string): Meeting | undefined {
   return db.get<Meeting>(
-    'SELECT id, booking_id, meeting_id, join_url, passcode, client_token, created_at FROM video_meetings WHERE booking_id = ? AND cancelled_at IS NULL',
+    'SELECT id, booking_id, meeting_id, join_url, passcode, client_token, created_at, host_user_id FROM video_meetings WHERE booking_id = ? AND cancelled_at IS NULL',
     [booking_id]);
+}
+
+/**
+ * PHASE 153f, 4 October 2026 — WHO HOSTS A CALL. One Zoom user hosts one meeting at a time (learned on the first live
+ * calls, 30 Sep 2026), so each call is made under the member of staff it is assigned to: their sign-in email, which must
+ * be a user on our Zoom account. A call with nobody assigned, or assigned to someone disabled, uses the shared host.
+ */
+export function callHost(db: Db, booking_id: string): { readonly user_id: string; readonly email: string; readonly name: string } | null {
+  const u = db.get<{ id: string; email: string; display_name: string }>(
+    `SELECT u.id, u.email, u.display_name FROM bookings b JOIN users u ON u.id = b.assigned_to
+      WHERE b.id = ? AND u.disabled_at IS NULL AND u.role <> 'CLIENT'`, [booking_id]);
+  return u === undefined ? null : { user_id: u.id, email: u.email, name: u.display_name };
+}
+
+/** PHASE 153f: the meeting's host, for the start token and the call's page. Null, the shared host. */
+export function meetingHost(db: Db, m: Meeting): { readonly email: string; readonly name: string } | null {
+  if (m.host_user_id === null) return null;
+  const u = db.get<{ email: string; display_name: string }>('SELECT email, display_name FROM users WHERE id = ?', [m.host_user_id]);
+  return u === undefined ? null : { email: u.email, name: u.display_name };
 }
 
 export function zoomDeps(app: App): ZoomDeps {
@@ -81,11 +102,22 @@ export async function reconcileVideoMeeting(app: App, booking_id: string): Promi
   }
   // 2 Oct 2026: a survey walkthrough call (src/web/survey-evidence.ts) is recorded, so the surveyor can watch it.
   const record = app.db.get('SELECT 1 AS x FROM survey_walkthroughs WHERE booking_id = ?', [booking_id]) !== undefined;
-  const made = await makeZoomMeeting(zd, b.starts_at, SLOT_MINUTES, { record }).catch(() => ({ state: 'NOT_MADE' as const, why: 'Zoom could not be reached.' }));
+  // PHASE 153f: made under the assigned member of staff, so two calls at once can both run; if they have no Zoom user
+  // on our account, under the shared host instead, and the audit line says so.
+  const host = callHost(app.db, booking_id);
+  const unreachable: MadeMeeting = { state: 'NOT_MADE', why: 'Zoom could not be reached.' };
+  let made: MadeMeeting = await makeZoomMeeting(zd, b.starts_at, SLOT_MINUTES, { record, ...(host === null ? {} : { host: host.email }) }).catch(() => unreachable);
+  let hostId: string | null = host === null ? null : host.user_id;
+  if (made.state !== 'MADE' && made.host_unknown === true) {
+    app.audit.append({ at: app.now(), kind: 'VIDEO_CALL_SHARED_HOST', outcome: 'ALLOWED', actor_id: null, actor_role: null,
+      object_type: 'booking', object_id: booking_id, detail: { why: 'NO_ZOOM_USER' } });
+    made = await makeZoomMeeting(zd, b.starts_at, SLOT_MINUTES, { record }).catch(() => unreachable);
+    hostId = null;
+  }
   if (made.state !== 'MADE') return { not_made: made.why };
   app.db.run(
-    'INSERT INTO video_meetings (id, booking_id, provider, meeting_id, join_url, passcode, client_token, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [randomBytes(16).toString('hex'), booking_id, 'zoom', made.meeting_id, made.join_url, made.passcode, randomBytes(32).toString('hex'), app.now()]);
+    'INSERT INTO video_meetings (id, booking_id, provider, meeting_id, join_url, passcode, client_token, created_at, host_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [randomBytes(16).toString('hex'), booking_id, 'zoom', made.meeting_id, made.join_url, made.passcode, randomBytes(32).toString('hex'), app.now(), hostId]);
   return 'MADE';
 }
 

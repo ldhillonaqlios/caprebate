@@ -1454,6 +1454,17 @@ A6. ZOOM - A PAID LICENCE. The free plan ends calls at 40 minutes and has no
        add cloud recording read.
     3. Sadique confirms Zoom's transfer for real clients (approved for
        testing only).
+    ADDED 4 Oct 2026 by Phase 153f:
+    4. Each call is now hosted by its own member of staff (one Zoom user
+       hosts one meeting at a time). Add each member of staff who takes
+       video calls as a user on our Zoom account, under the SAME email they
+       sign in to Cap Rebate with, each with a Pro licence. Anyone not on
+       Zoom falls back to the shared host (ZOOM_HOST_EMAIL).
+    5. To see how long a call lasted and who came, add two more scopes to
+       the same app: meeting:read:past_meeting:admin and
+       meeting:read:list_past_participants:admin. Then tell Claude: PART B6
+       (the call's page then reads them (GET /v2/past_meetings/{id} and
+       /participants); nothing asks for them yet).
 A7. GOOGLE ANALYTICS 4 (website visits, after consent). Free.
     1. analytics.google.com > Admin > Create property "Caprebate", UK, GBP.
     2. Data streams > Web > the site address > copy the Measurement ID
@@ -1498,6 +1509,11 @@ B4. AN ADMIN "CONNECTIONS" PAGE, so nobody has to read code to know: one row
     call and its result, and what it waits on. Read only; Admin only.
 B5. Update hub/KEYS-AND-SWITCHES.md and the Developer Spec's stubs table to
     what is now true, and mark each PART A step done or not done.
+B6. (ADDED 4 Oct 2026 by Phase 153f.) ZOOM'S CALL LENGTH AND ATTENDEES, once
+    A6 step 5's two scopes are on: after a call, read GET /v2/past_meetings/
+    {meetingId} (its duration) and /participants (how many came; keep the
+    count and the minutes, never a name or an email), show them on the call
+    and the Communication tab, with a test on recorded answers.
 
 When every line that could run is done: run every check in COORDINATES,
 re-derive the figures, update the registers, write the record, and leave each
