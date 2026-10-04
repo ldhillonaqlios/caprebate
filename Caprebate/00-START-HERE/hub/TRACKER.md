@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 289 |
-| Working on it | 1 |
+| Done | 290 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1139,7 +1139,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-36 items.
+35 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1354,12 +1354,6 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 154a1 - the faults the 3 October sweep found, fixed (12 lines)
-
-`13201103799` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
-
-- Note 2026-10-04 (Phase 153f): Added by Phase 153f (line 8): the tracker had not moved since 29 Sep. Created on the monday.com board first, which gave it this id; the record is in PHASE-HISTORY.
-
 ### Phase 155 - the services the plans name but nobody has built
 
 `13201103800` · **Ready - Claude can build** · owner Claude
@@ -1376,7 +1370,7 @@
 
 ## Z · Complete / Not Applicable
 
-289 items.
+290 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3042,4 +3036,11 @@
 `13201122898` · **Done** · owner Claude
 
 - Note 2026-10-04 (Phase 153f): Added by Phase 153f (line 8): the tracker had not moved since 29 Sep. Created on the monday.com board first, which gave it this id; the record is in PHASE-HISTORY.
+
+### Phase 154a1 - the faults the 3 October sweep found, fixed (12 lines)
+
+`13201103799` · **Done** · owner Claude
+
+- Note 2026-10-04 (Phase 153f): Added by Phase 153f (line 8): the tracker had not moved since 29 Sep. Created on the monday.com board first, which gave it this id; the record is in PHASE-HISTORY.
+- Note 2026-10-04 (Phase 154a1): Done: all 13 lines fixed and proved red first; R-B1 built; 4,625 tests; pull request 15. Record in PHASE-HISTORY.
 

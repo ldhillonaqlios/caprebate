@@ -967,162 +967,6 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 154a1 — the faults the 3 October sweep found, fixed
-
- **Model: Opus. Written 3 October 2026 from the full sweep and stress test Lakhbir asked for that day** (its raw outputs and scripts were in the session's scratchpad; every finding is restated here so nothing depends on them). **Why this exists.** Lakhbir, 3 Oct 2026: "looking at all the bugs found these should be fixed in phase 154a1". The sweep crawled 502 pages as every login with no 5xx and no broken link, held 140 requests a second with no error, and lost no write under 200 at once; these are what it did find. **Prove each fault on the code before you fix it** (a test red first), then green.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)"; if it has no
-item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
-claude/... branch; never push to main; Lakhbir merges. Retag what you touch
-and give every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make (status, owner, note, new item) is written to
-  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
-  node 03-app/caprebate-tracker.cjs check passes. If the board and the
-  tracker disagree, stop and ask Lakhbir which is right.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
-  so at the end and tell Lakhbir to git pull on the Mac.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
-   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
-   line "<phase> - <date>", then what you did, what you found, what is left
-   and where it now lives, the test count, and the branch or pull request.
-   Plain words; no client data, no keys. (update_doc add_markdown_content
-   with no after_block_id adds it at the end.) Put the same entry at the top
-   of your PHASE-HISTORY record.
-3. DELETE THIS SECTION from the top of the run sheet (its title, its note
-   and this block: read_docs with include_blocks gives the block ids, then
-   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
-   at the top of both.
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-Tests go in Caprebate/09-app/backend/test. Break each fix on purpose to prove
-its test catches it. The stray local files (*.mutbak, *.new0929,
-api/index.mjs.new0929, test/_tmp152-*.test.ts, test/_probe146l.test.ts,
-test/assessment-start.test.ts, _crawl_roles.ts, _s2.ts) were deleted on 4 Oct
-2026 with Lakhbir's yes; none is left untracked.
-
-1. A 500 ON THE COMPLIANCE PERSON SEARCH. As Admin, POST
-   /staff/compliance/search with term = 50,000 characters answers 500 (40,000
-   answers 200): src/web/compliance-rights.ts ~766-769 builds a LIKE pattern
-   with no length limit and SQLite refuses a pattern over 50,000 bytes
-   (src/db.ts get). Cap the term as the other searches do
-   (compliance-identity.ts ~216 stops at 200; search.ts ~175 cuts to 100) and
-   say so in the refusal or the page.
-2. A CONTACT WITH NO NAME. As Sales, POST
-   /staff/organisations/{id}/contacts with no full_name field at all (body
-   "foo=bar", or empty) answers 303 and adds a nameless contact;
-   full_name= (present, empty) is refused 400 as it should be. Cause:
-   src/web/crm.ts ~1128-1131 starts the new contact's name as '' not null, so
-   take() (~336) keeps '' and the check at ~1081 (=== null) passes it.
-3. A REFUSED UPLOAD LEAVES THE CONNECTION HANGING. After a 413 (body too
-   large) on a kept-alive connection, the next request on it hangs about 6 s
-   and is reset. src/web/router.ts ~170-179 stops reading part-way;
-   src/server.ts ~203. Either drain (up to a cap) or send Connection: close
-   with the 413 and close it. Test with two requests on one connection.
-4. LABELS NOT TIED TO THEIR BOXES (screen readers). src/web/compliance-
-   views.ts ~30-45: the input(), area() and choose() helpers write
-   <label class="fl"> with no for= and not around the control - every
-   compliance form. Also staff.ts ~1217 and ~1239 (photo and working hours on
-   /staff/settings and /portal/settings), configuration-pages.ts ~118, ~154,
-   ~166 (the label box and the active/retired list on /staff/admin-settings,
-   flagged 58 and 36 times), crm-pages.ts ~436 (milestone note, placeholder
-   only) and finance-pages.ts ~546 (void reason, placeholder only). Add a test
-   that walks every page as every login and finds no labelled control without
-   for=/wrapping/aria-label.
-5. A CONTACT SAVED WITHOUT ITS COMPANY goes to /staff/clients/?done=contact,
-   a 404 (crm-pages.ts ~175-179). Send it back to a page that exists.
-6. HEADINGS THAT JUMP FROM h1 TO h3 on /staff/settings, /portal/settings, a
-   booking under /staff/calendar/ (staff.ts ~1107, ~1124) and the assessment
-   pages (staff.ts ~925). Make them h2.
-7. A DOUBLE CLICK MAKES TWO TASKS. Posting the same task twice at once
-   creates two. Add a one-time form token (or refuse an identical task from
-   the same person within a few seconds) and prove it with two posts at once.
-8. code{font-size:.9em} (assets.ts ~166) is 10.8 px inside 12 px text - under
-   the 12 px house rule. Set a floor.
-9. INVISIBLE CHARACTERS (a null and a right-to-left override) are stored and
-   shown back as typed in claim notes and portal messages. Strip control and
-   bidi-override characters on the way in (keep ordinary newlines), with a
-   test.
-10. STALE WORDS AND A LOG THAT SAYS TOO MUCH, in api/index.mjs:
-    (a) ~61 "No email is sent" - wrong since 30 Sep (EMAIL_SENDING is on for
-        testing); ~98 says Zoom is "still refused until Zoom's transfer is
-        approved" - wrong (it is approved for testing, connectors/sources.ts
-        ~256-270). Correct both comments.
-    (b) ~62-70 prints every unsent outbox email, body and all (sign-up links
-        included), to the Vercel function log - against the spec's "no
-        personal data in logs" (Developer Spec ~3743). Print counts and kinds
-        only, never an address, subject or body.
-11. THE SIGN-OFF REGISTER CHECK WAS RED ON THIS MAC only because its built-in
-    suite run picked up stray untracked test files. HALF DONE 4 Oct 2026:
-    Lakhbir said the strays may go and they are deleted, so npm run check is
-    green on the Mac again. Still do the other half: make the check (and the
-    drift checker's own run) count `git ls-files 'test/*.test.ts'` the way
-    every phase now counts the suite, so an untracked file can never turn it
-    red again, and say so in its output.
-12. TWO TESTS THAT FAIL NOW AND THEN: test/whatsapp.test.ts's "Communication
-    puts ... in one list, in order" (failed once in three runs even alone on 3
-    Oct) and test/survey-report.test.ts's "a wrong or broken link opens
-    nothing" (a link it broke at random opened, 200 - it looks like a change
-    to a base64url character that decodes the same). Make each deterministic
-    (fixed clock steps; break the link in a way that always changes it) and
-    prove it holds over 30 runs and under 30 busy processes.
-13. R-B1, THE INVERTED s.187A POOLING REQUIREMENT - the harness's oldest xfail
-    (Suite C, "C1 - entitled seller who never pooled -> NIL", logged by Phase
-    2 and held by no phase since). Phase 153b's switch count (line 21) met it
-    from the other side: a purchase from a seller who could claim but never
-    did (prior_owner_entitled "yes", prior_owner_claimed "no") gets the whole
-    range with NO cap and NO flag, because every flow applies the election and
-    s.187A caps only where the seller is KNOWN to have claimed (Stage 5,
-    `dom==="purchase" && s.prior_owner_claimed==="yes"`), while the survey
-    pack's legal check (src/web/pack-legal.ts) assesses s.187A on every
-    purchase. Read Rulebook B branch C and Rulebook A's addendum; build the
-    pooling requirement into the five flows as the rulebook states it (nil,
-    or unresolved with nil at the bottom where the dates are not known; the
-    seller may still pool before the transfer, so say what would satisfy it),
-    flip C1 from xfail to an ordinary assertion, and prove it red on the code
-    before. N4: an unknown claim history must not relieve. Then re-run
-    03-app/caprebate-switch-direction.cjs: fvr_requires_past_owner_claim may
-    then move an estimate figure too.
-
-═══ 4 OCTOBER 2026 — PHASE 153b TOOK HALF OF LINE 12 AND GAVE LINE 13 ═══
-Line 12's second half is DONE: test/survey-report.test.ts broke the link by
-  replacing its last character with "A", which is no change at all when the
-  random token already ends in "A" (1 in 64). It now uses "B" in that case.
-  The whatsapp.test.ts half remains.
-Line 13 is new (above).
-═══════════════════════════════════
-
-When every line is done: run every check in COORDINATES, re-derive the
-figures, update the registers you touched, and write the record.
-Then do WHEN THE PHASE IS DONE, at the top of this block.
-```
-
-
 ## PHASE 155 — the services the plans name but nobody has built
 
  **Model: Opus. Written 3 October 2026 from the API audit.** **Why this exists.** Lakhbir, 3 Oct 2026: "Mentioned in the plans but not built: i feel like this needs to be phase 156". It became Phase 155 when he moved the services phase near the end, later the same day. Each is built the way every connector before it was: switched OFF in what ships, behind its own register switch, with the free gate shut, recorded answers in its tests, and no call to the real service from a test. **Find each source's terms first and write them into the source register (src/connectors/sources.ts) before any code**; a source whose terms forbid our use is recorded and NOT built.
@@ -1493,7 +1337,9 @@ BRANCHES: since 2 Oct work goes on claude/* branches and pull requests (#1-#7);
 COUNT THE SUITE as `node --test $(git ls-files 'test/*.test.ts')` (plus any new
   file). The untracked stray files that made npm run check and the register
   check red on the Mac were deleted on 4 Oct 2026 with Lakhbir's yes; if a new
-  untracked file appears, ask him before deleting it (154a1 line 11).
+  untracked file appears, ask him before deleting it. Since Phase 154a1 (line
+  11) the drift checker and the register check count only the test files git
+  tracks and name any untracked one, so a stray file cannot turn them red.
   On 3 Oct: 1279 / 439 / 403 / 2221. The Mac can be overloaded: run the suite in
   chunks of about 12 files, and if a file fails with ETIMEDOUT reading the source,
   OneDrive stalled - wait and run it again.
@@ -2050,7 +1896,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 153d — the commercial papers in test form, for the director and the solicitor (13199500802) |  The same review |
 |  Claude |  Phase 153e — the surveyor's workbench, for the surveyor to check (13199476474) |  The same review |
 |  Claude |  Phase 153f — work found on 3 October that no phase held (survey pack stage 6 and chapters, an engine date bug, Zoom hosts, the old screens, WhatsApp, answers into the record, the tracker) |  The 3 October check of 153a-154 |
-|  Claude |  Phase 154a1 — the faults the 3 October sweep found, fixed (12 lines) |  Lakhbir, 3 Oct: "these should be fixed in phase 154a1" |
+|  Claude |  Phase 154a1 — the faults the 3 October sweep found, fixed (13 lines) — **done 4 Oct 2026**, see PHASE HISTORY |  Lakhbir, 3 Oct: "these should be fixed in phase 154a1" |
 |  Claude |  Phase 155 — the services the plans name but nobody has built (CIW, the Care Inspectorate, the VOA list, BCIS, the reply timer, the three server files) |  Lakhbir, 3 Oct: "this needs to be phase 156" (renumbered 155 when the services phase moved near the end) |
 |  Claude and Lakhbir |  Phase 156 — every outside service, run near the end: PART A is Lakhbir's, step by step; PART B is Claude's, after each step |  Lakhbir, 3 Oct: "all API's needed should be phase 155" |
 |  Claude |  Phase 157 — the sweep, always last |  The standing rule |

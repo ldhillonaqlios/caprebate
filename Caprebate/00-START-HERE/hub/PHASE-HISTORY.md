@@ -11708,7 +11708,7 @@ Run from the run sheet's top block. Claimed in deaa2e9 (hub/CLAIM.md; board and 
 - **Found:** the same no-name fault in the introducer forms (a nameless firm was a 500); the JSON API's size cap answered 500, not 413; the A-3 switch hid the sale-date question the pooling rule needs; the funnel's front door turned "the seller did not claim" into "the seller could not". All fixed.
 - **Left, and where it lives:** the tax adviser checks the pooling reading — FOR THE ACCOUNTANT, Phase 154a1 (and the review pack's B-Q2 and B-Q6); hiding the fixed-value questions once the pooling rule has decided, and a seller whose entitlement is unknown — Phase 157's loose ends.
 - **Tests:** site harness 1,363 (both modes, 3 xfail — C1 is an ordinary check now), phase3 440, phase9 413, back end 2,409 — 4,625 in all; every check green.
-- **Branch:** claude/phase-154a1, pull request against claude/phase-153g (stacked on 14, 13, 12, 11, 10 and 9: merge in order).
+- **Branch:** claude/phase-154a1, pull request 15 (stacked on 14, 13, 12, 11, 10 and 9: merge in order).
 
 Run from the run sheet's top block. Claimed in 42020e8 (hub/CLAIM.md; board and tracker row 13201103799 set to Working on it, Claimed by "Mac (Lakhbir's MacBook Pro)", bb505c2). `.bak-phase154a1` siblings of every file changed, beside each (OneDrive). READ THE ANSWERS FIRST: both Word documents copied down from the cloud were byte-identical to the Mac files Phase 153f wrote; no answer to act on, and no question opened or closed, so the Word documents and the headings file are unchanged (the two read copies went to the recycle bin).
 
