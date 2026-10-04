@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 1 |
 | Ready - Lakhbir action | 33 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 1 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
 | Done | 275 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1384,7 +1384,7 @@
 
 ### Phase 153d - the commercial papers in test form for the director and the solicitor: test-default engagement letter, disposal fee, introducer terms, AML scale, risk score
 
-`13199500802` · **Ready - Claude can build** · owner Claude
+`13199500802` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
 
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268317 (board sync, Lakhbir's yes).
 
