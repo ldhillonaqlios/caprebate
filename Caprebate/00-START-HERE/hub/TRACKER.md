@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 272 |
-| Working on it | 1 |
+| Done | 273 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1101,7 +1101,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-40 items.
+39 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1346,12 +1346,6 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 153a - what Phase 153 found and could build but did not: the grant trace (F-15's remainder), the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations
-
-`13199500801` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's, OneDrive copy) - Phase 153a, 4 Oct 2026**
-
-- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268314 (board sync, Lakhbir's yes).
-
 ### Phase 153b - tax readings built on our recommendation for the accountant to check: 20 builds from the 29 Sep question review
 
 `13199454668` · **Ready - Claude can build** · owner Claude
@@ -1383,7 +1377,7 @@
 
 ## Z · Complete / Not Applicable
 
-272 items.
+273 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -2917,4 +2911,11 @@
 - Note 2026-09-28 (Phase 153): Line 12 done: the fee scale proved built and off; the location adjustment proved to take a BCIS table (UK mean 100) with tests D30-D34, red on the pre-Phase-132 model. phase9 398 -> 403.
 - Note 2026-09-28 (Phase 153): Phase 153 closed 28 Sep 2026: lines 1-12 done; record in PHASE-HISTORY.md; what it could build but did not is Phase 153a (13199500801).
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268312 (board sync, Lakhbir's yes).
+
+### Phase 153a - what Phase 153 found and could build but did not: the grant trace (F-15's remainder), the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations
+
+`13199500801` · **Done** · owner Claude
+
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268314 (board sync, Lakhbir's yes).
+- Note 2026-10-04 (Phase 153a): Done: the grant trace built and switched off (with 153b lines 12-13), recovery rows, the SOP's owner-name exception, the recipients list v1.4 and the transfer wording (with 153c line 13), the session record's item 4. Line 2 moved to 153b line 21; line 7 was already done. Record in PHASE-HISTORY.md.
 

@@ -618,6 +618,12 @@ THE HUB ROWS - the old monday.com items, found in the tracker by these ids
                                              phases on top, then DONE - ACTIONS
                                              AND OUTCOMES); the doc as it was is
                                              in 08-monday-doc-exports/
+                                             18429698457 is the doc's OBJECT id;
+                                             its API doc id is 46840326. Adding
+                                             blocks (add_markdown_content,
+                                             create_block) fails with an internal
+                                             error on the object id - pass
+                                             46840326 (Phase 153a, 4 Oct 2026)
   CAPREBATE QUESTIONS       12976075805   -> the Word document (background:
                                              hub/QUESTIONS-BACKGROUND.md)
   PHASE HISTORY             12878920167   -> hub/PHASE-HISTORY.md
@@ -960,148 +966,6 @@ command that counts it, never the number.
  **Three of them touch a decision that is not Claude's, and each is built switched off with a question to Lakhbir:** keeping the original of a client's uploaded file (140), the email provider and the contactus@ mailbox (141), and whether the surveyor sees either chat thread (142).
 
 ---
-
-## PHASE 153a — the grant trace, the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations
-
- **Model: Opus. Written 28 September 2026 by Phase 153.** Tracker row: "Phase 153a - what Phase 153 found and could build but did not ..." (13199500801, in 05 · FOR DEVELOPMENT). Runs next, then the sweep. **Why this exists.** Phase 153 carried five decisions into about fifty documents; its agents found six more things nobody has to answer anything for. Each is buildable today, so under AMENDMENT 1 each goes in a phase, not a sentence. **Test every line against its file first.**
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)"; if it has no
-item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
-claude/... branch; never push to main; Lakhbir merges. Retag what you touch
-and give every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make (status, owner, note, new item) is written to
-  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
-  node 03-app/caprebate-tracker.cjs check passes. If the board and the
-  tracker disagree, stop and ask Lakhbir which is right.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
-  so at the end and tell Lakhbir to git pull on the Mac.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
-   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
-   line "<phase> - <date>", then what you did, what you found, what is left
-   and where it now lives, the test count, and the branch or pull request.
-   Plain words; no client data, no keys. (update_doc add_markdown_content
-   with no after_block_id adds it at the end.) Put the same entry at the top
-   of your PHASE-HISTORY record.
-3. DELETE THIS SECTION from the top of the run sheet (its title, its note
-   and this block: read_docs with include_blocks gives the block ids, then
-   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
-   at the top of both.
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-Mac copy. A .bak-phase153a sibling of every file you change.
-
-1. F-15'S REMAINDER - THE GRANT TRACE, BUILT AND SWITCHED OFF (12852269899,
-   Done with "remainder documented as future work"). Phase 153 checked: the
-   back end has claim_grants (migration 015, CRM 6 of 10) with a payer type
-   and a FREE-TEXT list of what each grant paid for, used only by the check to
-   leave the valuation stage. No figure is computed from it; the site's
-   engine still cuts the claim by one grant_fraction; the list is not linked
-   to the fixture taxonomy's cost items; nothing checks the payer type.
-   Build, behind a new switch that ships OFF: a grant traced to named
-   taxonomy elements reduces only those elements' qualifying expenditure,
-   an untraced grant keeps today's grant_fraction route, and the payer class
-   is validated against a closed list. N4 applies: an unknown trace is
-   untraced, never zero. Tests both ways, red on the code before. Then a
-   dated line in Module 00 (~545, "payer-class and traced-elements structure
-   remain absent") - run the harness and the drift checker after, as the
-   Module files are read by both. Whether grants reduce qualifying
-   expenditure element by element is the tax adviser's to confirm: add the
-   switch to the tax adviser's register and a Word question if none exists.
-2. THE 24 TAX ADVISER SWITCHES - WHICH WAY EACH ONE MOVES A CLAIM. The
-   Blockers page (00-START-HERE/"Caprebate — Blockers & What Unblocks
-   Them.html") said "nine of the twelve make claims bigger, one only
-   smaller"; verify-extraction.cjs now counts 24. Derive the direction of
-   each IN CODE (switch it on alone against a fixed set of states and compare
-   the cash figure, the way the cash route proof's --moves-from does), write
-   the split into the page and FOR THE ACCOUNTANT, and say how it was counted.
-3. RECOVERY ROWS FOR THE SYSTEMS IN USE. The continuity plan (08/
-   12552682536__Business-Continuity-and-Disaster-Recovery-Plan.md) has no
-   recovery rows for the test website (Vercel, its Turso database and Blob
-   store), GitHub, IONOS mail, or the back office. Draft them in the plan's
-   own format, each target marked "proposed - Sadique Maskeen, as plan owner,
-   to set", from what COORDINATES says about each; add a dated line to the
-   plan's register entry.
-4. THE SOP'S OWNER-NAME EXCEPTION. The standard operating procedures (08/
-   12552682457__..., step 3 ~283) keep a Land Registry owner-name exception,
-   while the by-hand title form (Phase 146k/146l) has no box for a name and
-   the officer said yes on 27 Sep to keeping an official copy that names a
-   private owner, read by a person and never by the document reader (Word
-   question 233, closed). Read both and make the SOP say what the system
-   does.
-5. THE TRANSFER WORDING (PL-P17). The breach communications pack (08/
-   12927894775) and the Article 14 assessment (08/12927987812) both mark
-   their letters' transfer paragraph "to be redrafted from the updated
-   recipients list" after monday.com was dropped. Redraft it from 06-.../
-   Caprebate-Recipients-of-Client-Personal-Data-v1.md (v1.3) as a proposal
-   for the officer; add the dated line to both register entries.
-6. THE SESSION RECORD'S s.9 ITEM 4 (02-modules-and-build-prep/Caprebate-
-   Session-Record-and-Build-Sequence-v1.md): "advise vs support" reads as
-   decided (the hybrid model, 28 Aug, brand guidelines 3.5). Confirm from the
-   source and add a dated line, or leave it and say why.
-7. A FLAKY TEST. test/phase152.test.ts:94, "a real sign-up request is sent
-   and blanked", failed at least three times on 28 Sep while several suites
-   ran at once ("Cannot read properties of undefined (reading 'body')"); alone
-   it passes 10 of 10, and Phase 153's clean full run passed 1,791. Find what
-   it reads that is not there under load (an email not yet in the outbox?),
-   make it wait for the thing itself rather than for time, and prove the fix
-   the Phase 152 way: fail it deliberately under the old wait, then hold under
-   30 busy processes (see how Phase 152 proved the grid tool's test).
-
-═══ CHECKED 3 OCTOBER 2026 — CORRECTIONS. They overrule the lines above where they differ. ═══
-MONDAY.COM IS THE MAIN BOARD AGAIN (Lakhbir, 3 Oct 2026): follow the note under
-"How the phases at the top of this document work" - it overrules this phase's
-banner. Write every change to the board AND to hub/TRACKER.csv.
-Line 1: the back end ALREADY checks the payer type against a closed list
-  (src/web/claim-facts.ts ~78, ~748; migration 015 ~97). What is missing is the
-  calculation: traced_elements is free text and the site file still uses
-  grant_fraction. Build it in the survey pack too: chapter 15 "Grants and VAT"
-  is unbuilt (src/web/pack-chapters.ts ~14) and pack-sums.ts has no grant
-  handling. Do it with 153b lines 12-13 (the same grant data).
-Line 2: run it AFTER 153b, which adds switches, or the count goes stale.
-Line 3: add rows also for Zoom, WhatsApp Cloud, GoAddress, Cloudflare
-  Turnstile, cron-job.org (the reply timer), Companies House, Postcodes.io,
-  Didit, and the Blob store now holding survey photos and videos.
-Line 4: the exception is at 08/12552682457...:284 AND repeated at :673. Fix both.
-Line 5: update the recipients list FIRST - v1.3 names none of Zoom, WhatsApp,
-  GoAddress, Cloudflare, Turso, Google or Didit. Sadique approved the Zoom,
-  WhatsApp and GoAddress transfers for testing (PHASE-HISTORY ~10908, ~10933);
-  record that. Do it with 153c line 13.
-Line 7: DONE on 30 Sep (PHASE-HISTORY ~10935; the cause was random seed ids
-  sorting Fenmoor first, not the outbox). Skip it. The two tests that now fail
-  now and then are 154a1 line 12.
-═══════════════════════════════════
-
-When every line is done: run every check in COORDINATES, re-derive the
-figures, update the registers you touched, and write the record.
-Then do WHEN THE PHASE IS DONE, at the top of this block.
-```
-
 
 ## PHASE 153b — tax readings built on our recommendation, for the accountant to check
 
