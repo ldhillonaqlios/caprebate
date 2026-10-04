@@ -7,14 +7,14 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 0 |
-| Ready - Lakhbir action | 36 |
+| Ready - Lakhbir action | 35 |
 | Built - awaiting sign-off | 126 |
-| Blocked - question | 1 |
-| Blocked - licence or purchase | 4 |
+| Blocked - question | 2 |
+| Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 292 |
+| Done | 293 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -71,7 +71,7 @@
 
 ## 01 · FOR LAKHBIR — decisions, appointments, company, governance
 
-79 items.
+78 items.
 
 ### Register with the ICO and put the data protection basics in place
 
@@ -90,15 +90,6 @@
 - File: `08-monday-doc-exports/12955356558__Unblocking-the-condensed-funnel.md`
 - Note 2026-09-28 (Phase 153): Built on the site, switched off (Phase 153): the address question ('Where is it?') draws one line linking 'Our privacy notice' to /notices/ only while CB_REGISTRY.precondition.enabled is true - the existing switch, no second gate, no tick box (informed, not consented: rule 13(b)). Harness Suite Q7 (five tests) covers it; two fail on the pre-change site file. The back end's own address question (09-app/backend/src/web/assessment.ts) gets the same link in this phase. Left for Lakhbir: publish the notice, then flip the one switch.
 - Note 2026-09-28 (Phase 153): Also built in the back end (Phase 153): the served assessment's address question (src/web/router.ts, screen Q2) draws the same link through noticeAtAddress(registryGate()) - off today; test/phase153.test.ts, its wiring test red on the pre-change router.
-
-### 📨 Decide: ask the Valuation Office about its Rating Cost Guide? (the rating list scrapped and the Ordnance Survey email dropped, 4 Oct 2026)
-
-`12933604947` · **Ready - Lakhbir action** · owner Lakhbir
-
-- File: `08-monday-doc-exports/12933604947__Two-emails-to-send.md`
-- Note 2026-10-04 (Phase 155): Phase 155 (4 Oct 2026): the rating list's terms read again, unchanged - business rates purposes only. Email 1 is still the only route; the email document has a dated line.
-- Note 2026-10-04 (Planning (VOA scrapped)): The Valuation Office's rating list is SCRAPPED (Lakhbir: 'scrap the VOA rating'); not to be asked for. Email 1 is now only about the Rating Cost Guide (fee scale and ageing tables); whether to send it, and the Ordnance Survey email (Word question 11), is Lakhbir's decision. Posted on monday the same day.
-- Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): The Ordnance Survey email DROPPED (Lakhbir: 'OS email no we dont need to send it'). Nothing waits on it: site size and a boundary plan rest on HM Land Registry's conditions; the building outlines use Ordnance Survey's free open data (no letter). Only the Rating Cost Guide question is left, Lakhbir's. Renamed on monday and here.
 
 ### Get a legal answer on whether our old data-lookup design broke the rules
 
@@ -121,6 +112,7 @@
 
 - File: `04-phase-work/phase9/surveyor-call-agenda.md`
 - File: `08-monday-doc-exports/12830181616__Free-45-minute-surveyor-call.md`
+- Note 2026-10-04 (Planning (Valuation Office email not sent)): Question 9a added to the call (the professional-fees percentage), because the Valuation Office is not being asked. Posted on monday.
 
 ### SURVEYOR · STEP 2 of 3 — run the first paid three-hour review
 
@@ -1118,6 +1110,7 @@
 
 - File: `08-monday-doc-exports/12927234437__Depreciation-both-methods-built-neither-chosen.md`
 - File: `08-monday-doc-exports/12927234437__F-3-Prepared-Patch-CIBSE-to-taxonomy-crosswalk-completeness-gate.md`
+- Note 2026-10-04 (Planning (Valuation Office email not sent)): The Valuation Office is not being asked for its ageing scale (Lakhbir: 'dont send it'). The ageing method stays the surveyor's ruling (call question 9); CIBSE Guide M gives plant lives. Posted on monday.
 
 ### Adjust building costs for where the property is and how big the job is
 
@@ -1205,10 +1198,11 @@
 
 ### Replace the flat 15% professional fees with a proper scale
 
-`12804380489` · **Blocked - licence or purchase** · owner Claude
+`12804380489` · **Blocked - question** · owner Claude
 
 - Note 2026-09-28 (Phase 152 follow-up): Checked at Lakhbir's request (build it and switch it off?): already built and OFF - the banded scale and the building-type adders, interlocked, empty tables. The bands are the Valuation Office's data, so nothing more is buildable before its licence (12933604947); and the scale raises fees on jobs under about £750k, so it needs the tax adviser too. Phase 153 line 12(a) proves it and writes it here.
 - Note 2026-09-28 (Phase 153): Proved built, interlocked and off on 28 Sep (Phase 153): phase9 node --test 398/398 with A1 (every gate ships false), A2 (every table ships empty) and C1-C15; the model prints leg_e3_voa_fee_scale false, leg_e3_building_type_adder false, 0 fee bands, 0 adders, and either switch on over the empty tables refuses E_TABLE_NOT_LOADED; the scale on without the adder refuses E_BUILDING_TYPE_ADDER_REQUIRED (C10). Nothing more is buildable: the bands are the Valuation Office's data (licence enquiry 12933604947) and a regressive scale needs the tax adviser.
+- Note 2026-10-04 (Planning (Valuation Office email not sent)): The Valuation Office is not being asked (Lakhbir: 'dont send it'). The fees percentage now comes from the surveyor (call question 9a). The flat 15% is the client's design-team fees on top of the build cost, not our 3% fee. Status Blocked - question on monday and here; the empty fee table and switches stay off.
 
 ### Land boundary maps for site size - fetcher built and switched off 24 Sep 2026; its first download is a test lookup under the five conditions (smoke HMLR_INSPIRE, built 28 Sep 2026). Lakhbir, or a person he names, runs it; switching it on is Lakhbir's
 
@@ -1389,13 +1383,23 @@
 
 ## Z · Complete / Not Applicable
 
-292 items.
+293 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
 `12927874161` · **Done** · owner Lakhbir
 
 - Note 2026-09-28 (Phase 152 (sweep)): Done: both halves are answered - the mailbox exists (Word question 3, closed) and who reads it (Word question 216, closed: Sadique Maskeen reads all three mailboxes). The one test email left is its own row, 13093310525. Several officer documents still say the address is not set; Phase 153 line 1 corrects them.
+
+### CLOSED, NOT SENT (Lakhbir, 4 Oct 2026) - the two data-licence emails: the VOA rating list scrapped, the Ordnance Survey email and the Rating Cost Guide email not sent; fee percentage and ageing go to the surveyor
+
+`12933604947` · **Done** · owner Lakhbir
+
+- File: `08-monday-doc-exports/12933604947__Two-emails-to-send.md`
+- Note 2026-10-04 (Phase 155): Phase 155 (4 Oct 2026): the rating list's terms read again, unchanged - business rates purposes only. Email 1 is still the only route; the email document has a dated line.
+- Note 2026-10-04 (Planning (VOA scrapped)): The Valuation Office's rating list is SCRAPPED (Lakhbir: 'scrap the VOA rating'); not to be asked for. Email 1 is now only about the Rating Cost Guide (fee scale and ageing tables); whether to send it, and the Ordnance Survey email (Word question 11), is Lakhbir's decision. Posted on monday the same day.
+- Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): The Ordnance Survey email DROPPED (Lakhbir: 'OS email no we dont need to send it'). Nothing waits on it: site size and a boundary plan rest on HM Land Registry's conditions; the building outlines use Ordnance Survey's free open data (no letter). Only the Rating Cost Guide question is left, Lakhbir's. Renamed on monday and here.
+- Note 2026-10-04 (Planning (Valuation Office email not sent)): CLOSED, NOT SENT. Lakhbir on the Rating Cost Guide email: 'dont send it'. Neither licence email is sent. The surveyor sets the fee percentage and the ageing method (free 45-minute call, Q9 and Q9a). Done, group Z, on monday and here.
 
 ### Confirm there is no existing client data to import into the CRM - the developer's price assumes nothing to import
 

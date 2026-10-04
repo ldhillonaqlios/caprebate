@@ -56,7 +56,7 @@ test mode, developers will change this".
 
 ## Named in the plans, not built
 
-**The VOA rating list — SCRAPPED** (Lakhbir, 4 Oct 2026: "scrap the VOA rating"): its licence restricts it to business
+**The VOA rating list — SCRAPPED** (Lakhbir, 4 Oct 2026: "scrap the VOA rating"): its licence restricts it to business **The Valuation Office email about its Rating Cost Guide is not sent either (Lakhbir, 4 Oct 2026: "dont send it"):** the fee scale and ageing tables stay empty and off, and the surveyor sets the fee percentage and the ageing method instead.
 rates purposes (Phase 155). Not to be reopened — COORDINATES, "DECIDED - DO NOT REOPEN". The rest of
 what was here was built by Phase 155: the Welsh and Scottish care regulators and the BCIS index import (above), and the
 outside reply timer, now in COORDINATES and the continuity plan, with Admin warned on the home page after an hour

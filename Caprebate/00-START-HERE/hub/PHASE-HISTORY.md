@@ -11816,3 +11816,31 @@ Tracker check green; no code or test changed.
 ### NOT DONE — each with its home
 
 - Whether to ask the Valuation Office about its Rating Cost Guide — Lakhbir — Word question 11; tracker 12933604947; WAITING-ON-PEOPLE.md.
+
+## PLANNING, 4 October 2026, last — the Valuation Office email not sent; fees and ageing go to the surveyor (Opus 5.5, Mac copy, Lakhbir's MacBook Pro)
+
+**Run-sheet entry.** Planning (last) - 4 October 2026. Lakhbir decided not to send the Valuation Office email about its Rating Cost Guide ("dont send it"), so neither licence email is sent and the email task (12933604947) is closed in group Z. The surveyor now sets the professional-fees percentage (a new question 9a on the free 45-minute call) and the ageing method (question 9, already there). BCIS gives build costs once bought; CIBSE Guide M (free) gives plant lives. Added to COORDINATES, "DECIDED - DO NOT REOPEN". No code changed; figures unchanged (4,644). Branch claude/plan-156, PR 17.
+
+### What Lakhbir asked, and the answers given in the chat
+
+- What the flat 15% is for, since our fee is fixed at 3%: it is not our fee. It estimates the design-team fees (architects, engineers, quantity surveyors) the client paid on top of the build cost, whose plant share can be claimed too. It has no source (register R-B9); a competitor's report (the Eureka benchmark) uses the same 15% on top of BCIS element costs. Our 3% fee is unchanged.
+- Whether BCIS gives ageing: mostly not. BCIS gives build costs and price indices; plant lives come free from CIBSE Guide M; how much value is lost by a given age is a valuation method, the surveyor's to choose.
+- Whether the 15% would come from BCIS: no. BCIS costs are the builder's price; fees go on top as a rule of thumb.
+- What the Valuation Office was for: nothing essential — a published source for the fee percentage and a ready-made ageing scale, both restricted to its own rating work. Then: "dont send it".
+
+### What was done
+
+- **ACTION-PLAN.md:** a fourth "DECIDED - DO NOT REOPEN" entry (the Valuation Office email); the sweep's line names it; section 8 gained a dated note that row 3 (send the Valuation Office email) is closed.
+- **WAITING-ON-PEOPLE** (Word question 11 closed; the licences line says the fees percentage comes from the surveyor), **KEYS-AND-SWITCHES** (the VOA paragraph), the two-emails document (closed), the surveyor-call document (question 9a and its capture line added; backup .bak-plan156).
+- **Board and tracker:** 12933604947 renamed "CLOSED, NOT SENT …", Done, moved to group Z; 12804380489 (the 15% fees) set "Blocked - question" (waiting on the surveyor); updates and notes on 12933604947, 12804380489, 12927234437 (ageing) and 12830181616 (the surveyor call).
+- **Word (AMENDMENT 2 way, backups .bak-plan156c):** Caprebate_Questions.docx question 11 — a recorded answer closing it; the Unanswered document question 11 — the same recorded answer.
+- **Left as it is, on purpose:** the cost model's comments that say the fee scale waits on "the VOA licence" (04-phase-work/phase9/caprebate-cost-model.cjs). COORDINATES now says such text is history; the next sweep corrects it.
+
+### Checks
+
+Tracker check green; no code or test changed.
+
+### NOT DONE — each with its home
+
+- The professional-fees percentage and the ageing method — the surveyor — the free 45-minute call (Q9a, Q9); tracker 12804380489 and 12927234437.
+- The cost model's stale "VOA licence" comments — Phase 157 (the sweep).

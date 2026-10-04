@@ -17,7 +17,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Confirm or complete the ICO registration (ACTION-PLAN ~1828).
 - [ ] Check DKIM signing is on in IONOS (ACTION-PLAN ~1815; Phase 156 A4 has the steps).
 - [ ] Get the director's confirmation of the 3% fee and the other terms (Word question 215).
-- [ ] Word question 11: say whether to ask the Valuation Office about its Rating Cost Guide (building costs). _On 4 Oct 2026 the VOA rating list was scrapped and the Ordnance Survey email was dropped (not to be sent) — neither is to be asked for._
+- [x] Word question 11 — CLOSED 4 Oct 2026: neither licence email is sent (Lakhbir: the VOA rating list scrapped; "OS email no we dont need to send it"; on the Rating Cost Guide, "dont send it"). The fee percentage and the ageing method go to the surveyor (the free 45-minute call, Q9 and Q9a).
 - [ ] Book the free 45-minute surveyor call.
 - [ ] Get the DPO appointment signed by Sadique and the company, and its five blanks filled.
 - [ ] Engage a chartered tax adviser.
@@ -103,7 +103,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 
 ## Licences and purchases
 
-- [ ] BCIS; the location and job-size adjustment; the professional fees scale; Valuation Office data; CIBSE plant
+- [ ] BCIS; the location and job-size adjustment; the professional fees percentage (from the surveyor, not the Valuation Office: 4 Oct 2026); CIBSE plant
       lives; Homedata balance; Zoom Pro; WhatsApp (Meta) messages; GoAddress plan after 100 lookups.
 
 ## For the developers (production, not test)

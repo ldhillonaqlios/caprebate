@@ -470,9 +470,20 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     GA4_MEASUREMENT_ID, nothing loads); no phase asks for the measurement ID
     or sets it up. Only the marketing team, through Lakhbir, picks it up
     again. Tracker 12552691720 stays "Parked - deliberate".
-  (Still open: whether to ask the Valuation Office about its Rating Cost
-    Guide - a different document, about building costs, not the rating
-    list. Word question 11.)
+  THE VALUATION OFFICE EMAIL (its Rating Cost Guide) - NOT SENT (Lakhbir, 4
+    Oct 2026: "dont send it"). Email 1 of tracker 12933604947 is dropped, so
+    both licence emails are gone and that item is closed. The guide's purpose
+    clause keeps it to the Valuation Office's own rating work, so nothing of
+    ours uses it: not its fee bands, not its ageing scale. Instead the
+    SURVEYOR sets (1) the professional-fees percentage (the flat 15% in the
+    cost model is a rule of thumb with no source - the design team's fees
+    the client paid on top of the build cost, NOT our 3% fee, which is fixed)
+    and (2) the ageing method (both built, off, awaiting the surveyor's
+    ruling, tracker 12927234437); BCIS (once bought) gives build costs and
+    CIBSE Guide M (free) gives plant lives. Both questions are on the free
+    45-minute surveyor call (its Q9 and Q9a). The cost model's empty
+    CB_VOA_FEE_SCALE table and its switches stay off; older text saying
+    they wait on "the VOA licence" is history - they wait on the surveyor.
 
 WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   ACTION-PLAN.md                    this document
@@ -1729,7 +1740,8 @@ FROM PHASE 154a1 (4 Oct 2026), TWO LOOSE ENDS WITH THEIR HOME HERE, both
 
 DO NOT REOPEN what COORDINATES lists under "DECIDED - DO NOT REOPEN" (added
 4 Oct 2026: the VOA rating list, scrapped by Lakhbir; the Ordnance Survey
-licence email, not sent; Google Analytics, dropped for now). A sweep that finds
+licence email, not sent; Google Analytics, dropped for now; the Valuation
+Office email about its Rating Cost Guide, not sent). A sweep that finds
 older text saying otherwise corrects the text, not the decision.
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.
@@ -2158,6 +2170,8 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 
  **The fee problem is decided: the fee stays a flat 3%.** Lakhbir answered on 24 September 2026, in the Word questions document, that we keep 3% because over the whole five to seven years the relief is spread across, the client gains more than the fee. The arithmetic behind the question is kept here so nobody re-derives it: on a real competitor's client file our old 5% fee would have been £3,687 against £3,405 of year-one tax relief; at 3% it is £2,212, below that year-one relief, but 2.19 times the £1,010 that client actually realised, and it still exceeds the year-one relief where most of the spend is special-rate plant or profits are low. The answer is about the whole term, not year one. So the cap, the warning and a change of percentage all stay built and switched off. **What is left is not a decision but a signature:** CAP REBATE LTD signs the letters, so its director is asked to confirm the decided terms - "Does the director of CAP REBATE LTD agree the business decisions you make for the company?".
 
+
+ **4 October 2026: neither email is being sent (Lakhbir).** The rating list is scrapped and both licence emails are dropped; row 3 above is closed. The fee percentage and the ageing method go to the surveyor instead (COORDINATES, "DECIDED - DO NOT REOPEN"). The paragraphs below are history.
 
  **One of the two emails unblocks something the other cannot.** The Valuation Office one seeks clearance to use official valuation data commercially and sits behind the depreciation model, the location factor and the fee-scale correction. The Ordnance Survey one gets boundary maps, which is a quality improvement we can live without. **And do not wait for either reply to fix the preliminaries double count** — that is our own arithmetic mistake, it inflates every job we produce, and it needs nobody's permission.
 
