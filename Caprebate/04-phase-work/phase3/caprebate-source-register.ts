@@ -262,13 +262,16 @@ export const LICENCES: readonly Licence[] = [
     name: 'CQC syndication / API terms of use',
     publisher_of_licence: 'Care Quality Commission',
     attribution_required: true,
-    attribution_text: 'Information from the Care Quality Commission, used under the CQC syndication terms.',
+    /* PHASE 153c, 4 October 2026 (Word question 201): the words shown beside each CQC fact. CQC's "Using CQC data"
+       page puts the data under the Open Government Licence and asks users to acknowledge they use CQC information. */
+    attribution_text: 'Source: Care Quality Commission, Open Government Licence',
     redistribution: { client_report: true, accountant_report: true, hmrc_pack: true, internal: true },
-    /* 0 IS OUR REFUSAL, NOT CQC'S FIGURE (Phase 146c, 23 September 2026). This said 30 days, and nobody had confirmed
-       it. The window stays 0 — a value is out of date the moment it is held and is looked up again before it drives
-       anything — until the solicitor answers how current CQC data must be when we use it. Null would mean "no limit",
-       an unconfirmed fact asserted the permissive way (N4). */
-    cache_max_age_days: 0,
+    /* 0 WAS OUR REFUSAL, NOT CQC'S FIGURE (Phase 146c, 23 September 2026), until the solicitor answered how current CQC
+       data must be when we use it.
+       PHASE 153c, 4 October 2026 — 30 DAYS IN THE TEST SYSTEM, on our recommendation (Word question 201, the director's,
+       for the solicitor): a fact held up to 30 days, always with its source beside it, unless the terms that come with
+       the key say otherwise. Test data only. Null would still mean "no limit" and is never used (N4). */
+    cache_max_age_days: 30,
     legal_review_required: true,
     notes: 'FLAG: the syndication terms were thought to carry a currency obligation; the solicitor/DPO confirms the cache ' +
       'window, and until then it is 0. Read 23 Sep 2026: the current developer portal publishes no terms for the API ' +
@@ -444,6 +447,14 @@ export const LICENCES: readonly Licence[] = [
      *   - permission to reproduce in a client report, an accountant pack or an
      *     HMRC pack: none beyond §4's prohibition.
      * The supplier's own contact for these is legal@homedata.co.uk (§13).
+     *
+     * PHASE 153c, 4 October 2026 — THE KEEP-UNTIL PERIOD IS SEVEN YEARS IN THE TEST SYSTEM (Word question 37). Built
+     * on our recommendation, for the officer and Homedata to check: an address and its property number are kept with
+     * the claim file for seven years (2,557 days), like the rest of it, so a claim checked years later can still say
+     * which building every figure was matched on. It is OUR TEST READING, NOT HOMEDATA'S FIGURE, and it stands only
+     * until Homedata answers the drafted email in writing. EVERY OUTWARD CHANNEL STAYS CLOSED: nothing from this source
+     * reaches a client, accountant or HMRC report. The same reading covers GoAddress ("Find my address",
+     * src/connectors/address-lookup.ts ADDRESS_KEEP_UNTIL), which publishes no period either.
      */
     licence_id: 'HOMEDATA_TERMS',
     name: 'Homedata Terms of Service (Nov 2024) — limited, non-exclusive licence under the subscription plan; NO LICENCE NAME PUBLISHED',
@@ -453,9 +464,11 @@ export const LICENCES: readonly Licence[] = [
       'NOT PUBLISHED — Homedata publishes no attribution wording for address data. ' +
       'Nothing from this source may appear in a report until the supplier states it.',
     redistribution: { client_report: false, accountant_report: false, hmrc_pack: false, internal: true },
-    cache_max_age_days: 0,
+    cache_max_age_days: 2557,
     legal_review_required: true,
     notes:
+      'TEST READING, Phase 153c (4 Oct 2026, Word question 37): kept seven years with the claim file, reports still ' +
+      'closed, awaiting Homedata\'s written answer. Not the supplier\'s figure. ' +
       'Read against the supplier\'s published pages 12 Sep 2026 (Phase 129). Underlying data, per those ' +
       'pages: Ordnance Survey AddressBase (the UPRN) and Royal Mail PAF. Cache window, attribution wording, ' +
       'licence name and per-channel reproduction are NOT PUBLISHED; 0 days and false are our refusals, not ' +

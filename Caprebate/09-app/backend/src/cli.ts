@@ -9,6 +9,8 @@
  *   node src/cli.ts send-outbox       send every email saved while sending was on (EMAIL_SENDING; off, so none)
  *   node src/cli.ts read-mailbox      read new replies to contact@caprebate.co.uk, read-only (INBOUND_EMAIL; off, so none)
  *   node src/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
+ *   node src/cli.ts sweep-enquiries   delete every closed website enquiry past its period (ENQUIRY_RETENTION, Phase 153c; off, so none)
+ *   node src/cli.ts import-premises <CQC_CARE_DIRECTORY|NHS_ODS_DENTAL|NHS_ODS_GP> <file> --by <user id>   healthcare premises, no names (Phase 153c)
  *   node src/cli.ts sweep-land-boundaries   delete every kept land boundary file past the licence's 35 days
  *   node src/cli.ts seal-app-secrets  seal every authenticator app secret still kept as text (CAPREBATE_MFA_KEY, Phase 151k)
  *   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who W --why Y   one logged test lookup (Phase 151g)
@@ -109,6 +111,45 @@ async function main(): Promise<number> {
       const r = sweepMessages({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() }, MESSAGE_RETENTION, null);
       console.log(r.state === 'OFF' ? `Messages are not being cleaned up yet:\n  ${r.missing.join('\n  ')}`
         : `${r.client_messages} client message${r.client_messages === 1 ? '' : 's'}, ${r.team_messages} team message${r.team_messages === 1 ? '' : 's'} and ${r.emails} emailed repl${r.emails === 1 ? 'y' : 'ies'} deleted because their time was up.`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  if (cmd === 'sweep-enquiries') {
+    /* PHASE 153c (Word question 222). ENQUIRY_RETENTION is off, so this deletes nothing and says why. */
+    const db = new Db(DEFAULT_DB);
+    try {
+      const { sweepEnquiries, ENQUIRY_RETENTION } = await import('./web/enquiry-retention.ts');
+      const r = sweepEnquiries({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() }, ENQUIRY_RETENTION, null);
+      console.log(r.state === 'OFF' ? `Closed enquiries are not being cleaned up yet:\n  ${r.missing.join('\n  ')}`
+        : `${r.deleted} closed website enquir${r.deleted === 1 ? 'y' : 'ies'} deleted because their time was up; ${r.funnel_leads_due_not_deleted} lost funnel lead${r.funnel_leads_due_not_deleted === 1 ? '' : 's'} past the period, not deleted (no path yet).`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  if (cmd === 'import-premises') {
+    /* PHASE 153c (Word question 183). Business name, address, sector and source only; a name that may be a person's is
+       held back. Nothing reads the list to contact anyone. */
+    const [source, file] = [process.argv[3], process.argv[4]];
+    const byAt = process.argv.indexOf('--by');
+    const by = byAt > 0 ? process.argv[byAt + 1] : undefined;
+    const { importPremises, PREMISES_SOURCES } = await import('./web/premises-import.ts');
+    if (source === undefined || !(source in PREMISES_SOURCES) || file === undefined || by === undefined) {
+      console.error(`Usage: node src/cli.ts import-premises <${Object.keys(PREMISES_SOURCES).join('|')}> <file> --by <user id>`);
+      return 1;
+    }
+    const { readFileSync } = await import('node:fs');
+    const db = new Db(DEFAULT_DB);
+    try {
+      const user = db.get<{ role: string }>('SELECT role FROM users WHERE id = ? AND disabled_at IS NULL', [by]);
+      if (user === undefined || user.role !== 'ADMIN') { console.error('Only an active Admin may import premises.'); return 1; }
+      const r = importPremises({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() },
+        source as keyof typeof PREMISES_SOURCES, readFileSync(file, 'utf8'), { id: by, role: user.role });
+      console.log(`${r.kept} kept, ${r.already_held} already held, ${r.held_back_may_name_a_person} held back (the name may be a person's), ${r.skipped_unreadable} unreadable, ${r.skipped_not_our_sector} not a sector we serve.`);
       return 0;
     } finally {
       db.close();

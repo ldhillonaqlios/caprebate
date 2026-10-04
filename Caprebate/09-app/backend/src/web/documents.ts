@@ -434,7 +434,15 @@ export function documentObj(db: Db, l: { id: string; business_id: string; reader
     type: 'document', id: l.id, business_id: l.business_id, readers: l.readers, carries_value: l.carries_value === 1,
     letter_signed: letterSigned(db, l.business_id), assigned_surveyor_ids: documentSurveyors(db, l.id, l.business_id),
     released_to_client: releasedToClient(db, l.id), shown_to_client: shownToClient(db, l.id),
+    owner_ids: clientOwners(db, l.business_id),
   };
+}
+
+/** PHASE 153c: who owns this client — the organisation's owner and each of its claims' owners. Read by `document.read_original`. */
+export function clientOwners(db: Db, business_id: string): string[] {
+  const rows = db.all<{ o: string | null }>(
+    'SELECT owner_id AS o FROM businesses WHERE id = ? UNION SELECT owner_id AS o FROM claims WHERE business_id = ?', [business_id, business_id]);
+  return rows.map((r) => r.o).filter((x): x is string => typeof x === 'string' && x !== '');
 }
 
 /**

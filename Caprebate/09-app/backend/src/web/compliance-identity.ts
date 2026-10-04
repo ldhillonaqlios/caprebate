@@ -87,6 +87,13 @@ export const PERSON_ROLES: Vocab = Object.freeze({
 });
 export const ROUTE_KINDS: Vocab = Object.freeze({ POSTAL: 'A postal address printed on the document', EMAIL: 'An email address printed on the document' });
 export const NOTICE_ROUTES: Vocab = Object.freeze({ DIRECT_POST: 'By post, directly', DIRECT_EMAIL: 'By email, directly', CLIENT_ROUTE: 'Through the client' });
+/**
+ * PHASE 153c, 4 October 2026 (Word question 162, Sadique's: "May we ask our client to pass our privacy notice to a
+ * stranger named in our records?"). Built on our recommendation for him to check: "Through the client" is never the
+ * only route. It saves only when the notice is also published on our notices page and that is recorded for the same
+ * person — and the record shows both. The database refuses it too (migration 080).
+ */
+export const PUBLISHED_NOTICE_WORDS = 'Also on our published notices page';
 
 /** Section 4 of the Dashboard Data Specification — shown wherever S2 is. */
 export const S2_REFUSALS: readonly string[] = Object.freeze([
@@ -149,7 +156,12 @@ export function updatePerson(d: ComplianceDeps, actor: Actor, ref: string, input
       if (!has(NOTICE_ROUTES, route)) return { ok: false, why: 'Say how the notice went. “The client said they would forward it” is not a route.' };
       const on = check(dateField(input['notice_sent_on'], 'The date it was sent'));
       if (on === null) return { ok: false, why: 'Give the date it was sent.' };
-      d.db.run('UPDATE identity_persons SET notice_template = ?, notice_route = ?, notice_sent_on = ?, updated_at = ? WHERE person_ref = ?', [template, route, on, at, ref]);
+      const published = input['notice_published_too'] === 'YES';
+      if (route === 'CLIENT_ROUTE' && !published) {
+        return { ok: false, why: '“Through the client” is never the only route. Record that the notice is also on our published notices page for this person, or send it directly.' };
+      }
+      d.db.run('UPDATE identity_persons SET notice_template = ?, notice_route = ?, notice_sent_on = ?, notice_published_too = ?, updated_at = ? WHERE person_ref = ?',
+        [template, route, on, published ? 1 : 0, at, ref]);
     } else if (what === 'EXEMPTION') {
       const article = check(requiredText(input['exemption_article'], 60, 'The Article relied on'));
       const reason = check(requiredText(input['exemption_reason'], 4000, 'The reason, for this person and this document'));
@@ -177,10 +189,10 @@ export function readPerson(d: ComplianceDeps, actor: Actor, ref: string): Person
   assertIdentityRead(actor, ref);
   const p = d.db.get<{
     person_ref: string; name: string; role: string; contact_route: string | null; contact_route_kind: string | null; doc_id: string;
-    notice_template: string | null; notice_route: string | null; notice_sent_on: string | null; exemption_article: string | null;
+    notice_template: string | null; notice_route: string | null; notice_sent_on: string | null; notice_published_too: number | null; exemption_article: string | null;
     exemption_reason: string | null; doc_type: string | null; doc_created: string; retention_ref: string | null;
   }>(
-    'SELECT p.person_ref, p.name, p.role, p.contact_route, p.contact_route_kind, p.doc_id, p.notice_template, p.notice_route, p.notice_sent_on, ' +
+    'SELECT p.person_ref, p.name, p.role, p.contact_route, p.contact_route_kind, p.doc_id, p.notice_template, p.notice_route, p.notice_sent_on, p.notice_published_too, ' +
       'p.exemption_article, p.exemption_reason, d.type_code AS doc_type, d.created_at AS doc_created, d.retention_ref ' +
       'FROM identity_persons p JOIN documents d ON d.id = p.source_record_ref WHERE p.person_ref = ?', [ref]);
   if (p === undefined) throw new NotFoundAsRefusal();
@@ -192,7 +204,8 @@ export function readPerson(d: ComplianceDeps, actor: Actor, ref: string): Person
     contact_route_kind: p.contact_route_kind, route_group: ra ? 'R-A' : 'R-B',
     route_group_label: ra ? 'A contact detail is printed, so the exemption does not apply. Send the notice within one month.' : 'No contact detail is printed',
     doc_id: p.doc_id, doc_type: p.doc_type, received_on: ukDay(p.doc_created),
-    notice: p.notice_route === null ? 'No notice recorded' : `${p.notice_template ?? ''}, ${words(NOTICE_ROUTES, p.notice_route, p.notice_route)}, ${p.notice_sent_on ?? ''}`,
+    notice: p.notice_route === null ? 'No notice recorded'
+      : `${p.notice_template ?? ''}, ${words(NOTICE_ROUTES, p.notice_route, p.notice_route)}${p.notice_published_too === 1 ? ` + ${PUBLISHED_NOTICE_WORDS.toLowerCase()}` : ''}, ${p.notice_sent_on ?? ''}`,
     exemption: p.exemption_article === null ? 'No exemption recorded' : `${p.exemption_article}: ${p.exemption_reason ?? ''}`,
     retention: `Kept as long as the claim record it points to, and never longer. That record’s deletion date: ${clock.label}`,
     holds: holdsFor(d.db, 'IDENTITY_PERSON', ref),

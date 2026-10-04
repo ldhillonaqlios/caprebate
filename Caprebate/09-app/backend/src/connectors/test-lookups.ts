@@ -2,7 +2,8 @@
  * THE TEST LOOKUPS LAKHBIR ALLOWED, AND THE FIVE CONDITIONS HE ALLOWED THEM ON. Phase 151g, 28 September 2026.
  *
  * Word question 170, "Can we make a few small, logged test lookups to check a data connector works?", was answered
- * on 25 September 2026 by Lakhbir, as the director: yes, on five conditions, in his words —
+ * on 25 September 2026 by Lakhbir Dhillon, Head of Business Development (the director is Jalil Ahmed; corrected
+ * 4 October 2026, Phase 153c): yes, on five conditions, in his words —
  *
  *   1. no more than three lookups per connector each time it is switched on;
  *   2. never a client's property;

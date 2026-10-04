@@ -380,15 +380,17 @@ test('T34 nothing about a person may be written from the ONS postcode source', (
 
 /* --- The address lookup (board item 13003875907, Phase 129) -------- */
 
-test('T-HD1 the address lookup is registered, and an unpublished cache window is a refusal, not "no limit"', () => {
+test('T-HD1 the address lookup is registered, kept seven years as a TEST reading (Phase 153c), never "no limit"', () => {
   const r = reg();
   const lic = LICENCES.find((l) => l.licence_id === 'HOMEDATA_TERMS')!;
-  assert.equal(lic.cache_max_age_days, 0, 'null would assert "no limit", which the supplier never published');
+  // Phase 153c, Word question 37: seven years with the claim file in the test system, awaiting Homedata's answer.
+  assert.equal(lic.cache_max_age_days, 2557, 'seven years; null would assert "no limit", which the supplier never published');
+  assert.match(lic.notes ?? '', /TEST READING[\s\S]*awaiting Homedata/);
   assert.equal(lic.legal_review_required, true);
   assert.match(lic.name, /NO LICENCE NAME PUBLISHED/);
   assert.match(lic.attribution_text ?? '', /^NOT PUBLISHED/);
   const cell = record(r, { entity_id: 'J1', field_id: 'uprn', source_id: 'HOMEDATA_ADDRESS', retrieval: ret(), value: '100023336956' }) as AnyCell;
-  assert.equal(stalenessReport(r, [cell], NOW).length, 1, 'a held address is stale until re-fetched');
+  assert.equal(stalenessReport(r, [cell], NOW).length, 0, 'a held address is kept with the claim file, not re-fetched');
 });
 
 test('T-HD2 the address lookup may not be reproduced outward, and writes only its own three fields', () => {

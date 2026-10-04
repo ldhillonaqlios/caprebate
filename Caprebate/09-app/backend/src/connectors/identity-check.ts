@@ -100,7 +100,7 @@ export const IDENTITY_CHECK: IdentityCheckConfig = Object.freeze({
   named_in_privacy_notice: false,
   named_in_engagement_letter: false,
   papers_waived_for_testing: true,
-  waiver_record: 'Lakhbir Dhillon, director, 25 September 2026, in the chat with Claude: "switch it on we are still in a testing enviroment". The privacy notice is a draft. It is not published. Clause 7 names Didit only in a comment.',
+  waiver_record: 'Lakhbir Dhillon, Head of Business Development, 25 September 2026, in the chat with Claude: "switch it on we are still in a testing enviroment". The privacy notice is a draft. It is not published. Clause 7 names Didit only in a comment.',
   question: IDENTITY_CHECK_QUESTION,
 });
 

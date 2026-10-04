@@ -54,6 +54,19 @@ export const STAGES = Object.freeze([
   { name: 'Your figure', screens: [] },
 ] as const);
 
+/**
+ * PHASE 153c, 4 October 2026 (Word question 208, Sadique's) — THE NAMES WE COUNT EACH SCREEN BY, on the approved list
+ * (the step names the site's one analytics wrapper accepts). The first four screens of the old estimate were its own earlier claim, the seller's
+ * claim, the kind of business and what brought them here; in this funnel those are asked on "spend-on" (what brought
+ * them here), "claims" (both claim questions) and "details" (the kind of business). Nothing here sends anything: this
+ * page is served by the back end, which loads no analytics, and the map is what a count of these screens must use.
+ */
+export const F4_STEP_LABELS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  'spend-on': Object.freeze(['trigger']),
+  claims: Object.freeze(['prior_claim', 'prior_owner_claim']),
+  details: Object.freeze(['entity']),
+});
+
 /** What each screen asks. Plain words; the question titles cover every answer offered. */
 export const F4_TEXT: Readonly<Record<F4Screen, { heading: string; help: string }>> = Object.freeze({
   buildings: { heading: 'What type of business do you have?',

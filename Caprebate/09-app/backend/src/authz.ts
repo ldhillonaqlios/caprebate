@@ -150,6 +150,8 @@ export type Obj =
        * src/web/documents.ts (`shownToClient`). Absent is not true: a client is refused a document that does not say.
        */
       readonly shown_to_client?: boolean;
+      /** PHASE 153c: the client's owners — read by `document.read_original` for Sales. Absent is nobody. */
+      readonly owner_ids?: readonly string[];
     }
   | { readonly type: 'document_type'; readonly id: string }
   | { readonly type: 'document_request'; readonly id: string; readonly business_id: string }
@@ -291,6 +293,11 @@ type DocumentFacts = {
   released_to_client?: boolean;
   /** PHASE 140: see the `document` object. Absent is not true. */
   shown_to_client?: boolean;
+  /**
+   * PHASE 153c, 4 October 2026 (Word question 219): the staff who own this client — the organisation's owner and the
+   * owner of each of its claims. Read only by `document.read_original` for Sales. Absent is nobody (N4).
+   */
+  owner_ids?: readonly string[];
 };
 
 /** Sales works the claim: its evidence, its team's papers and the letter. Not the fee invoice — `invoice.read` is not Sales's. */
@@ -745,7 +752,10 @@ const RULES: RuleTable = {
   },
   /* 24 September 2026, Word question 219: Sales, Admin and the data protection officer may open a kept original. Sales
      on the same documents it may read, never the fee invoice. Kept originals exist only while KEEP_ORIGINALS is on. */
-  'document.read_original': { ADMIN: always, SALES: salesDocument as Rule<ObjType>, CLIENT: clientDocument as Rule<ObjType> },
+  /* PHASE 153c, 4 October 2026 (Word question 219, "only Sales on their own clients"): Sales opens a kept original only
+     on a client it owns — the organisation's owner, or the owner of one of its claims. Another salesperson's client is
+     refused, and an owner not recorded admits nobody (N4). Reading the document itself (`document.read`) is unchanged. */
+  'document.read_original': { ADMIN: always, SALES: ((a: Actor, o: DocumentFacts) => salesDocument(a, o) && Array.isArray(o.owner_ids) && o.owner_ids.includes(a.id)) as Rule<ObjType>, CLIENT: clientDocument as Rule<ObjType> },
   'document.upload': { ADMIN: always, SALES: always, CLIENT: isOwnBusiness as Rule<ObjType> },
   'document.link': { ADMIN: always, SALES: always },
   /** PHASE 140: whether the client can see a file — the two roles that upload one. Never the client, never a surveyor. */
@@ -865,6 +875,9 @@ const RULES: RuleTable = {
   'compliance.write': { ADMIN: always },
   'compliance.identity_read': { ADMIN: always },
   'compliance.identity_write': { ADMIN: always },
+  /* Phase 153c (Word question 181): the restricted breach names list. ADMIN here only as the door: src/web/breach-names.ts
+     lets an Admin through only when they are the deputy named in breach_names_deputies (migration 080). */
+  'compliance.breach_names': { ADMIN: always },
   'share_consent.client_record': { CLIENT: ownBusiness as Rule<ObjType> },
 
   /* --- the per-disclosure log. Phase 129, 12 September 2026 -------------------
@@ -1123,6 +1136,7 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'compliance.write': NO(WRITES),
   'compliance.identity_read': NO('the identity store (S2) — never'),
   'compliance.identity_write': NO(WRITES),
+  'compliance.breach_names': NO('the restricted breach names list — the officer and the named deputy only'),
   'share_consent.client_record': NO('the client\'s own action; also a write'),
   'disclosure.read': NO('who received a client\'s data is a compliance register; ADMIN\'s alone'),
   'disclosure.record': NO(WRITES),
@@ -1186,6 +1200,7 @@ const DPO_RULES: Readonly<Record<string, Rule<ObjType>>> = Object.freeze({
   'compliance.write': always,
   'compliance.identity_read': always,
   'compliance.identity_write': always,
+  'compliance.breach_names': always,
   'disclosure.read': always,
   // 24 September 2026, Word question 219: the officer may open a kept original.
   'document.read_original': always,

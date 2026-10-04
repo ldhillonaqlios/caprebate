@@ -61,6 +61,23 @@ export const KEEP_ORIGINALS: KeepOriginals = Object.freeze({
   question: KEEP_ORIGINALS_QUESTION,
 });
 
+/**
+ * PHASE 153c, 4 October 2026 — ON FOR THE TEST WEBSITE ONLY (Word question 219, built on Lakhbir's recorded answer of
+ * 24 September and his "Keep them, test only" of 2 October for the survey photos, for the data protection officer to
+ * check). Only api/index.mjs passes this, and only the test website runs that file; `KEEP_ORIGINALS` above, the default
+ * everywhere else, stays off. The test website holds invented files only. A kept original still needs its key
+ * (CAPREBATE_ORIGINALS_KEY in the website's settings): without it nothing is kept, whatever this says.
+ */
+export const KEEP_ORIGINALS_TEST_WEBSITE: KeepOriginals & { readonly waiver_record: string } = Object.freeze({
+  enabled: true,
+  retention_days: 2557,
+  question: KEEP_ORIGINALS_QUESTION,
+  waiver_record: 'Lakhbir Dhillon, Head of Business Development, 24 September 2026 in the chat (Word question 219): keep uploads ' +
+    '7 years; Sales, Admin and the data protection officer may open them. 2 October 2026, on the survey photos: "Keep them, ' +
+    'test only". On for the test website, with invented files, until Sadique Maskeen approves; Sales opens a kept original ' +
+    'only on a client it owns.',
+});
+
 /** The days a kept original lives, or null where the switch is off in any of its three ways. */
 export function keptDays(cfg: KeepOriginals, sealKey: Buffer | null): number | null {
   if (cfg.enabled !== true) return null;

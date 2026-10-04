@@ -10,6 +10,7 @@
 
 import { h, raw, page, type Safe } from './html.ts';
 import { localWhen } from './localtime.ts';
+import { COMPLAINT_TARGET_NOTE } from './compliance-clock.ts';
 import { kpiRow } from './look.ts';
 import type { AmlView, CheckView } from './compliance-aml.ts';
 import { AUTHORITY_BASES, BENEFICIAL_OWNERSHIP, CLAIMANT_TYPES, ENTITY_STATUSES, OFFICES, OWNER_SOURCES, PSC_DECISIONS, SANCTIONS_RESULTS } from './compliance-aml.ts';
@@ -279,13 +280,14 @@ export function searchPage(nav: Nav, term: string, s: SearchResult): string {
 
 /* ------------------------------------------------------------------ complaints */
 
-export function complaintsListPage(nav: Nav, rows: readonly { id: string; ref: string; received: string; classified: string; ack_deadline: string; ack_in_time: string; status: string }[], msg?: string): string {
+export function complaintsListPage(nav: Nav, rows: readonly { id: string; ref: string; received: string; classified: string; ack_deadline: string; ack_in_time: string; status: string; next_update_due: string | null; target_outcome: string }[], msg?: string): string {
   return page({
     title: 'Complaints', nav, wide: true,
     body: h`<h1>The complaints log</h1>${subnav()}${done(msg)}${limitation()}
-      <table><thead><tr><th>Ref</th><th>Received</th><th>s.164A?</th><th>Acknowledge by</th><th>In time</th><th>Status</th></tr></thead><tbody>
+      <table><thead><tr><th>Ref</th><th>Received</th><th>s.164A?</th><th>Acknowledge by</th><th>In time</th><th>Next update by (our target)</th><th>Outcome by (our target)</th><th>Status</th></tr></thead><tbody>
       ${rows.map((r) => h`<tr><td><a href="/staff/compliance/complaints/${r.id}">${r.ref}</a></td><td>${r.received}</td><td>${r.classified}</td>
-        <td>${r.ack_deadline}</td><td>${r.ack_in_time}</td><td>${r.status}</td></tr>`)}</tbody></table>
+        <td>${r.ack_deadline}</td><td>${r.ack_in_time}</td><td>${r.next_update_due ?? 'none due'}</td><td>${r.target_outcome}</td><td>${r.status}</td></tr>`)}</tbody></table>
+      <p class="help">${COMPLAINT_TARGET_NOTE}</p>
       ${form('/staff/compliance/complaints', 'Log a complaint', h`
         ${input(`Received (${moment})`, 'received_at')} ${choose('How it arrived', 'received_via', COMPLAINT_VIA)} ${input('Where exactly', 'received_via_detail')}
         ${area('How they describe themselves', 'complainant_as_described')} ${area('What they said, quoted', 'complaint_verbatim')}
@@ -302,6 +304,8 @@ export function complaintPage(nav: Nav, v: ComplaintView, msg?: string): string 
     body: h`<h1>${c.complaint_ref}</h1>${subnav()}${done(msg)}${limitation()}
       <p>Received ${localWhen(c.received_at)}. Status <strong>${c.status}</strong>.</p><blockquote>${c.complaint_verbatim}</blockquote>
       <h3>The thirty days</h3><ul>${v.ack.working.map((w) => h`<li>${w}</li>`)}</ul><p class="help">${v.no_deadline_note}</p>
+      <h3>Our own targets</h3><ul><li>Next update to the person by: <strong>${v.targets.next_update_due ?? 'none due — the outcome has been told'}</strong> (28 days after they were last told, on ${v.targets.last_told})</li>
+        <li>Outcome by: <strong>${v.targets.target_outcome}</strong> (one month from receipt)</li></ul><p class="help">${v.targets.note}</p>
       <h3>Classification</h3>
       ${c.is_164a === null ? (open ? form(`/staff/compliance/complaints/${c.id}/classify`, 'Classify', h`${choose('Is it a s.164A complaint?', 'is_164a', IS_164A)} ${area('Why', 'classification_reason')}`) : raw(''))
         : h`<p>${IS_164A[c.is_164a] ?? c.is_164a} — ${c.classification_reason ?? ''} (${c.classified_at === null ? '' : localWhen(c.classified_at)}; not revised once made)</p>`}
@@ -329,6 +333,19 @@ export function complaintPage(nav: Nav, v: ComplaintView, msg?: string): string 
 
 /* ------------------------------------------------------------------ breaches */
 
+/** Phase 153c (Word question 181): the restricted names list for one breach entry. Only its two readers reach this page. */
+export function breachNamesPage(nav: Nav, incident_id: string, annex_ref: string | null, lines: readonly { annex_ref: string; name: string; how_involved: string; note: string | null; recorded_at: string }[], msg?: string): string {
+  return page({
+    title: 'Restricted names', nav, wide: true,
+    body: h`<h1>Restricted names${annex_ref === null ? '' : ` — ${annex_ref}`}</h1>${subnav()}${done(msg)}
+      <p class="flag">Only the data protection officer and the named deputy can open this list. Every opening is in the audit log. The breach entry carries only the reference.</p>
+      <table><thead><tr><th>Name</th><th>How they were involved</th><th>Note</th><th>Recorded</th></tr></thead><tbody>
+      ${lines.map((l) => h`<tr><td>${l.name}</td><td>${l.how_involved}</td><td>${l.note ?? ''}</td><td>${localWhen(l.recorded_at)}</td></tr>`)}</tbody></table>
+      ${form(`/staff/compliance/breaches/${incident_id}/names`, 'Add a name', h`${input('Name', 'name')} ${input('How they were involved', 'how_involved')} ${area('Note', 'note')}`)}
+      <p><a href="/staff/compliance/breaches/${incident_id}">Back to the entry</a></p>`,
+  });
+}
+
 export function breachListPage(nav: Nav, rows: readonly { id: string; ref: string; kind: string; aware: string; clock: string; status: string }[], msg?: string): string {
   return page({
     title: 'Breach register', nav, wide: true,
@@ -341,7 +358,9 @@ export function breachListPage(nav: Nav, rows: readonly { id: string; ref: strin
         ${input(`Discovered (${moment})`, 'discovered_at')} ${input('Discovered by', 'discovered_by')} ${choose('How', 'discovery_route', DISCOVERY_ROUTES)}
         ${input(`Aware — fix it on the day (${moment})`, 'awareness_at')} ${area('Why that is the moment of awareness', 'awareness_basis')}
         ${choose('When it happened is', 'occurred_state', OCCURRED_STATES)} ${input(`Happened (${moment})`, 'occurred_at')} ${area('The basis, if estimated or unknown', 'occurred_basis')}
-        ${area('What happened — never bank details', 'description')}`)}`,
+        ${area('What happened — never bank details', 'description')}`)}
+      ${form('/staff/compliance/breach-names/deputy', 'Name the deputy for the restricted names list', h`<p class="help">Besides the data protection officer, one Admin may open the restricted names list: the deputy named in writing (the letter of authority). Naming another replaces the last.</p>
+        ${input('Their login (user id)', 'user_id')} ${input('The paper that names them', 'source')}`)}`,
   });
 }
 
@@ -354,6 +373,7 @@ export function incidentPage(nav: Nav, v: IncidentView, msg?: string): string {
     body: h`<h1>${i.incident_ref} — ${i.kind_label}</h1>${subnav()}${done(msg)}${limitation()}
       <p class="flag">${v.clock.label}</p>
       ${i.claim_ref === null ? raw('') : h`<p>Claim ${i.claim_ref}${i.fraud_attempted_on === null ? '' : `, attempt on ${i.fraud_attempted_on}`}.</p>`}
+      <p>Names: ${i.annex_ref === null ? 'none recorded' : h`kept in the restricted list under ${i.annex_ref}`} — <a href="/staff/compliance/breaches/${i.id}/names">open the restricted list</a> (the data protection officer and the named deputy only).</p>
       <p><a href="/staff/compliance/breaches/${i.id}/ico-sheet">The sheet for the Information Commissioner’s Office (from 30 September 2026, the Information Commission). It is a template.</a></p>
       ${v.corrections.map((x) => h`<p class="help">Awareness corrected to ${localWhen(x.corrected_to)}: ${x.reason}</p>`)}
       ${open ? form(`/staff/compliance/breaches/${i.id}/awareness`, 'Record a correction beside the original', h`${input(`Corrected to (${moment})`, 'corrected_to')} ${area('Why', 'reason')}`) : raw('')}
@@ -363,7 +383,7 @@ export function incidentPage(nav: Nav, v: IncidentView, msg?: string): string {
         ${area('Records — categories and number', 'record_categories_and_number', i.record_categories_and_number)} ${area('Special category data, and how it got there', 'special_category_present', i.special_category_present)}
         ${area('Likely consequences for the people', 'likely_consequences', i.likely_consequences)} ${area('Remedial action', 'remedial_action', i.remedial_action)}
         ${area('Mitigating action', 'mitigating_action', i.mitigating_action)} ${area('Processor involved', 'processor_involved', i.processor_involved)}
-        ${input('Annex reference, like ANX-001 — the names stay in the annex', 'annex_ref', i.annex_ref)}
+        ${input('Annex reference, like ANX-001 — the names stay in the restricted list', 'annex_ref', i.annex_ref)}
         ${choose('Is it a personal data breach? The data protection officer decides.', 'is_personal_data_breach', YES_NO, i.is_personal_data_breach)}
         ${area('Their reason', 'classification_reason', i.classification_reason)} ${area('What changed as a result', 'lessons_and_changes', i.lessons_and_changes)}`) : raw('')}
       <h3>The decisions</h3>
@@ -430,7 +450,8 @@ export function personPage(nav: Nav, p: PersonView, msg?: string): string {
         <tr><th>Rights requests</th><td>${p.rights_requests.map((r) => h`<a href="/staff/compliance/rights/${r.id}">${r.ref}</a> `)}</td></tr>
         <tr><th>Complaints</th><td>${p.complaints.map((r) => h`<a href="/staff/compliance/complaints/${r.id}">${r.ref}</a> `)}</td></tr></tbody></table>
       ${form(`/staff/compliance/identity/${p.person_ref}`, 'Record the notice sent', h`<input type="hidden" name="what" value="NOTICE">
-        ${input('Template', 'notice_template')} ${choose('Route', 'notice_route', NOTICE_ROUTES)} ${input('Sent on', 'notice_sent_on', null, 'date')}`)}
+        ${input('Template', 'notice_template')} ${choose('Route', 'notice_route', NOTICE_ROUTES)} ${input('Sent on', 'notice_sent_on', null, 'date')}
+        ${choose('Also on our published notices page? Needed for “Through the client”', 'notice_published_too', { YES: 'Yes', NO: 'No' })}`)}
       ${form(`/staff/compliance/identity/${p.person_ref}`, 'Record the exemption relied on', h`<input type="hidden" name="what" value="EXEMPTION">
         ${input('Article', 'exemption_article')} ${area('The reason, for this person and this document', 'exemption_reason')}`)}`,
   });

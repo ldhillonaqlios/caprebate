@@ -39,9 +39,10 @@
  * NO and a reason code — its bundle has no records, so nothing reaches the one door. It is CQC's own switch that turns
  * it on, so it is off with the lookup above. The lookup above still never reads either name.
  *
- * THE CACHE WINDOW STAYS 0. CQC's licence entry (CQC_SYNDICATION in the source register) holds 0 days until the
- * solicitor answers how current CQC data must be when we use it: a value is out of date the moment it is held and is
- * looked up again before it drives anything.
+ * THE CACHE WINDOW: 30 DAYS IN THE TEST SYSTEM (Phase 153c, 4 October 2026, Word question 201). CQC's licence entry
+ * (CQC_SYNDICATION in the source register) held 0 days until the solicitor answered how current CQC data must be when we
+ * use it; it now holds 30, on our recommendation, with "Source: Care Quality Commission, Open Government Licence" shown
+ * beside each fact, until the terms that come with the key say otherwise.
  */
 
 import type { OwnerSecrets } from '../secrets.ts';

@@ -273,7 +273,7 @@ const ROUTE_WORDS: Readonly<Record<string, string>> = Object.freeze({
  * (src/web/pack-grants.ts). Nothing is typed here: a grant is recorded, matched and removed on the claim, by Sales or
  * Admin, so the surveyor sees what the claim holds and the figure it gives. VAT is not in the pack yet.
  */
-function grantsChapter(v: P.PackView): Safe {
+export function grantsChapter(v: P.PackView): Safe {
   const g = v.grants;
   const r = g.reading;
   const effect = new Map(r.effects.map((e) => [e.grant_id, e] as const));
@@ -284,6 +284,7 @@ function grantsChapter(v: P.PackView): Safe {
   return h`
     <p class="lede">Money from someone else — the NHS, a council, a landlord — reduces the spend it paid for. Insurance money after damage does not.</p>
     <p>${how}</p>
+    ${g.amounts_shown ? raw('') : h`<p class="help">What each grant paid is held by the office, not shown here. The totals below are the pack’s own, and they are in the figures you approve.</p>`}
     ${g.claim_id === null ? h`<p class="gate">This survey job is on no claim, so there are no grants to read. Grants are recorded on the claim.</p>`
       : g.list.length === 0 ? h`<p class="gate">No grant is recorded on the claim. If anyone else paid for any of the work, it is recorded on the claim, and comes off here.</p>`
       : h`<table class="pk-table"><thead><tr><th scope="col">Who paid</th><th scope="col" class="n">How much</th><th scope="col">What it paid for</th><th scope="col">How it comes off</th><th scope="col" class="n">Takes off</th></tr></thead>
@@ -291,10 +292,10 @@ function grantsChapter(v: P.PackView): Safe {
           const e = effect.get(x.id);
           const met = (e?.line_ids ?? []).map((id) => lineLabel.get(id) ?? id);
           return h`<tr><td>${PAYER_CLASSES[x.payer_class] ?? 'Not known'}<br><span class="help">${x.kind === 'GRANT' ? 'A grant' : 'A payment towards the work'}</span></td>
-            <td class="n">${x.amount_pence === null ? h`<span class="pk-gap">not known</span>` : PENCE(x.amount_pence)}</td>
+            <td class="n">${x.amount_pence === null ? h`<span class="pk-gap">not known</span>` : g.amounts_shown ? PENCE(x.amount_pence) : h`<span class="help">Held by the office</span>`}</td>
             <td>${x.element_names.length > 0 ? x.element_names.join('; ') : x.traced === 'YES' ? 'Matched in words only' : 'Not matched yet'}</td>
             <td>${ROUTE_WORDS[e?.route ?? ''] ?? '—'}<br><span class="help">${e?.words ?? ''}${met.length === 0 ? '' : ` Lines: ${met.join('; ')}.`}</span></td>
-            <td class="n">${e?.reduction_pence === null || e === undefined ? '—' : PENCE(e.reduction_pence)}</td></tr>`;
+            <td class="n">${e?.reduction_pence === null || e === undefined || !g.amounts_shown ? '—' : PENCE(e.reduction_pence)}</td></tr>`;
         })}</tbody>
         <tbody><tr class="pk-tot"><th scope="row">Before grants</th><td></td><td></td><td></td><td class="n">${PENCE(r.before.qualifying_pence)}</td></tr>
           <tr class="pk-tot"><th scope="row">Less grants</th><td></td><td></td><td></td><td class="n">${r.reduction_pence === null ? '—' : `− ${PENCE(r.reduction_pence)}`}</td></tr>

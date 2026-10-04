@@ -711,9 +711,9 @@ describe('only fields both registers permit; the supplier docs recorded and date
     }
   });
 
-  test('THE SOURCE REGISTER: the EPC endpoint is the API host; CQC’s cache window is 0; every service row’s address is in SUPPLIER_DOCS, dated', () => {
+  test('THE SOURCE REGISTER: the EPC endpoint is the API host; CQC’s cache window is 30 days in the test system (Phase 153c); every service row’s address is in SUPPLIER_DOCS, dated', () => {
     assert.equal(REGISTER_SOURCES.find((s) => s.source_id === 'EPC')?.endpoint, 'https://api.get-energy-performance-data.communities.gov.uk');
-    assert.equal(LICENCES.find((l) => l.licence_id === 'CQC_SYNDICATION')?.cache_max_age_days, 0);
+    assert.equal(LICENCES.find((l) => l.licence_id === 'CQC_SYNDICATION')?.cache_max_age_days, 30);
     // This phase's sources. The paid lookups' rows (Homedata, the title register) are Phase 146d's to document.
     for (const p of Object.values(CALL_POLICIES)) {
       if (p.register_source === null || p.base_url === null || FREE_CONNECTORS[p.register_source] === undefined) continue;

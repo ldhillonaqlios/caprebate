@@ -40,6 +40,9 @@ async function build() {
     // 29 SEPTEMBER 2026 (Lakhbir): the invented @example.invalid logins ask for no second step on the test website;
     // every other login still must give one (src/auth.ts, STAFF_EXCEPT_INVENTED). This file only - never the default.
     twoFactor: TEST_WEBSITE_TWO_FACTOR,
+    // 4 OCTOBER 2026 (Phase 153c, Word question 219): uploads are kept on the test website only - invented files - for
+    // 7 years, sealed with CAPREBATE_ORIGINALS_KEY from its settings; without the key nothing is kept. Never the default.
+    keepOriginals: (await import('../Caprebate/09-app/backend/src/web/originals.ts')).KEEP_ORIGINALS_TEST_WEBSITE,
     ...(publicOrigin === undefined ? {} : { publicOrigin }),
   }, 10_000, await sharedDocumentOptions(docs, lasting));
   const made = opened.made;
@@ -58,6 +61,9 @@ async function build() {
   console.log(`test deployment: ${zoomWhy(made.app.secrets)}`);
   const { whatsappWhy } = await import('../Caprebate/09-app/backend/src/connectors/whatsapp.ts');
   console.log(`test deployment: ${whatsappWhy(made.app.secrets)}`);
+  // 4 OCTOBER 2026 (Phase 153c): whether uploaded files are kept, and if not why (the key's name only, never its value).
+  const { sealKeyFromEnv } = await import('../Caprebate/09-app/backend/src/web/originals.ts');
+  console.log(`test deployment: uploaded files ${sealKeyFromEnv() === null ? 'are NOT kept - CAPREBATE_ORIGINALS_KEY is not set in the settings' : 'are kept for 7 years, sealed'}`);
   // No email is sent. The outbox (with a sign-up's confirmation link) goes to the function log, as the demo prints it.
   const shown = new Set();
   setInterval(() => {

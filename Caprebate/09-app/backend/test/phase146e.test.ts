@@ -340,7 +340,8 @@ describe('a scanned PDF: its pictures read as text behind their own switch, and 
 
   test('switched on: the pages come back as text, and that text goes to the same strip as any other', async () => {
     const w = await world({ [MSG]: answer(PAGE_TEXT) });
-    const ex = documentTextExtractor(async (images) => (await CL.readScannedPages(w.ctx, 'doc-scan', images)).pages);
+    // Phase 153c: only a kind on the allow list is sent as page pictures (an O&M manual is).
+    const ex = documentTextExtractor(async (images) => (await CL.readScannedPages(w.ctx, 'doc-scan', images, 'OM_MANUAL')).pages);
     const pages = await ex.toPages(scannedPdf());
     assert.deepEqual(pages, [{ page: 1, lines: ['SIGNIFICANT FINDINGS', 'Alarm system: Category L1 throughout.'] }]);
     const body = JSON.parse(w.t.seen[0]!.body ?? '{}') as Record<string, any>;
@@ -350,6 +351,17 @@ describe('a scanned PDF: its pictures read as text behind their own switch, and 
     assert.equal(rows.length, 1);
     assert.equal(w.everyRow().includes('Category L1'), false, 'the words read off a page reached the audit chain');
     w.app.close();
+  });
+
+  test('PHASE 153c — A KIND NOT ON THE LIST: everything switched on, and a lease, or a page of no known kind, is never sent', async () => {
+    for (const kind of ['LEASE', null]) {
+      const w = await world({ [MSG]: answer(PAGE_TEXT) });
+      const r = await CL.readScannedPages(w.ctx, 'doc-scan', pdfPageImages(scannedPdf())!, kind);
+      assert.equal(r.state, 'KIND_NOT_ALLOWED');
+      assert.equal(r.pages, null);
+      assert.equal(w.t.seen.length, 0, `${String(kind)} was sent to the reader`);
+      w.app.close();
+    }
   });
 
   test('SWITCHED OFF ON ITS OWN: with document reading on and scanned pages off, a scan keeps its marker and nothing is sent', async () => {

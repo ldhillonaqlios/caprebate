@@ -17,6 +17,7 @@ import * as A from './compliance-aml.ts';
 import * as R from './compliance-rights.ts';
 import * as B from './compliance-breach.ts';
 import * as S from './compliance-identity.ts';
+import * as N from './breach-names.ts';
 import * as V from './compliance-views.ts';
 import { identityPanel, sendIdentityCheck } from './identity-checks.ts';
 
@@ -202,6 +203,22 @@ export async function handleCompliance(
   if (sheet && method === 'GET') {
     const s = B.icoAnswerSheet(db, actor, sheet[1] ?? '', now());
     return html(res, V.icoSheetPage(nav, s.ref, s.sections, s.note));
+  }
+  /* Phase 153c (Word question 181): the restricted names list — the officer and the named deputy only. */
+  const names = m(`/breaches/${ID}/names`);
+  if (names && method === 'GET') {
+    const r = N.namesFor(deps, actor, names[1] ?? '');
+    if (!r.ok) return d.problem(res, actor, 'Restricted', r.why, `/staff/compliance/breaches/${names[1] ?? ''}`);
+    return html(res, V.breachNamesPage(nav, names[1] ?? '', r.annex_ref, r.lines, msg));
+  }
+  if (names && method === 'POST') {
+    const id = names[1] ?? '';
+    const r = N.addName(deps, actor, id, posted(await form(req)));
+    return back(r, 'Not added', `/staff/compliance/breaches/${id}/names?done=added`, `/staff/compliance/breaches/${id}`);
+  }
+  if (path === '/staff/compliance/breach-names/deputy' && method === 'POST') {
+    const r = N.nameDeputy(deps, actor, posted(await form(req)));
+    return back(r, 'Not recorded', '/staff/compliance/breaches?done=deputy-named', '/staff/compliance/breaches');
   }
   const oneBi = m(`/breaches/${ID}`);
   if (oneBi && method === 'GET') return html(res, V.incidentPage(nav, B.incidentView(db, actor, oneBi[1] ?? '', now()), msg));

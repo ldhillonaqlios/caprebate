@@ -814,7 +814,10 @@ var CB_TRACK = (function(){
      other value is dropped. The plan's sector names are not the engine's
      (care_home, gp_primary_care): a caller maps, the list does not bend. */
   var PARAMS = {
-    step_id:            { oneOf:["sector","property_basics","ownership","entity","spend","timing","result"] },
+    /* PHASE 153c, 4 October 2026 (Word question 208, Sadique's): prior_claim, prior_owner_claim and trigger added for
+       the first four screens, with entity already here - on our recommendation, for him to check. */
+    step_id:            { oneOf:["sector","property_basics","ownership","entity","spend","timing","result",
+                                 "prior_claim","prior_owner_claim","trigger"] },
     step_index:         { integer:true, min:1 },
     sector:             { oneOf:["care_home","dental","gp_primary_care","supported_living","private_hospital"] },
     nation:             { oneOf:["england","wales","scotland","northern_ireland"] },
@@ -14711,7 +14714,10 @@ var FN = (function(){
      number alone. The plan's sector names are not the engine's, so they are
      mapped here and the list does not bend. */
   var FLOW = "2026-09-a";
-  var STEP_ID = { Q2:"property_basics", Q3:"spend" };
+  /* PHASE 153c (Word question 208): the first four screens by name - Q1 the client's own earlier claim, Q1a the
+     seller's, Q2 the kind of business, Q3 what brought them here. Until then Q2 and Q3 sent property_basics and
+     spend, and Q1 and Q1a sent their number alone. */
+  var STEP_ID = { Q1:"prior_claim", Q1a:"prior_owner_claim", Q2:"entity", Q3:"trigger" };
   var PLAN_SECTOR = { care_homes:"care_home", dental:"dental", gp:"gp_primary_care",
                       supported_living:"supported_living", private_hospital:"private_hospital" };
   var lastStep = -1, lastPhase = null;

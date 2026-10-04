@@ -51,7 +51,20 @@ export type PackGrants = {
   }[];
   readonly switches: GrantSwitches;
   readonly reading: GrantReading;
+  /** False for the surveyor (Phase 153c): what each grant paid, and what each takes off, is not shown to them. */
+  readonly amounts_shown: boolean;
 };
+
+/**
+ * PHASE 153c, 4 October 2026 — MAY THE SURVEYOR SEE WHAT EACH GRANT PAID? Built on our recommendation, for Sadique Maskeen
+ * (data protection officer) to check. The surveyor's released list (src/payload.ts, releasedFactReader) carries no
+ * amount, so the pack does not show one either: chapter 15 shows the surveyor who paid (as a class), what it paid for
+ * and how it comes off, but not each grant's amount or what each takes off. The pack's totals — before grants, less
+ * grants, the spend that qualifies — are still shown, because they are in the figures the surveyor approves. Every
+ * other role sees the amounts. If Sadique says the surveyor may see them, this becomes true and the pack goes on the
+ * released list instead.
+ */
+export const GRANT_AMOUNTS_TO_SURVEYOR = false;
 
 export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed';
 export const PACK_INPUT_FIELDS = Object.freeze(['price_paid', 'land', 'gia', 'building_rate'] as const);
@@ -258,6 +271,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   const reading = applyGrants(inputs, lines, before, onClaim, switches);
   const grants: PackGrants = {
     claim_id: job.claim_id, switches, reading,
+    amounts_shown: actor.role !== 'SURVEYING' || GRANT_AMOUNTS_TO_SURVEYOR,
     list: onClaim.map((g) => ({ id: g.id, kind: g.kind, payer_class: g.payer_class, amount_pence: g.amount_pence, traced: g.traced,
       element_ids: g.element_ids, element_names: g.element_ids.map(elementName) })),
   };

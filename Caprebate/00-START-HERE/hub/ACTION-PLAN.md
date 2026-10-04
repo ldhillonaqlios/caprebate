@@ -1930,7 +1930,12 @@ B2. WHATSAPP: once the six are in, send ONE opening template to Lakhbir's own
     reply, and report PASS/NO. Switch nothing else on.
 B3. CQC, EPC, HOMEDATA: add the three names to TEST_DEPLOY_KEYS; then 153c
     line 18's one test call each (our own company and 70 Whitehall, never a
-    client), under the five conditions of Word question 170.
+    client), under the five conditions of Word question 170. ALSO, from 153c
+    line 18 (moved here 4 Oct 2026): Companies House (switched on for
+    testing, never a recorded test call) and the Anthropic key (one read of
+    an invented page). Homedata only once Lakhbir says the account holds a
+    balance (Word question 207). Report PASS or NO per connector; switch
+    nothing on that ships.
 B4. AN ADMIN "CONNECTIONS" PAGE, so nobody has to read code to know: one row
     per outside service - key present (yes/no, never the value), switched on
     (and the switch's name), on for testing under a waiver or for real, last
@@ -2024,6 +2029,13 @@ THE NOTES AT THE END (the Acer copy, update_block, 06-.../_doc.xml) are history:
   the Acer is retired and _doc.xml is gone.
 THE NUMBER: phases 153f, 154a1, 155 and 156 were added above this one on 3 Oct, so
   this sweep's heading is now PHASE 157.
+FROM PHASE 153c (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the enquiry
+  clean-up (src/web/enquiry-retention.ts, sweep-enquiries) deletes closed
+  contact-form enquiries only. A funnel enquiry is a CRM lead (migration 061,
+  leads.enquiry_id), tied to its organisation, contacts and bookings, so the
+  job only COUNTS lost funnel leads past twelve months. Write the deletion path
+  for a lead (what goes, what stays, the deletion-log entry), with its test,
+  for the officer to check alongside Word question 222.
 ═══════════════════════════════════
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.

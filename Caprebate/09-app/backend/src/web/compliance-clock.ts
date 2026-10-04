@@ -344,3 +344,46 @@ export function acknowledgementClock(receipt: string, acknowledged: string | nul
   }
   return { acknowledgement_deadline: deadline, ack_in_time, working };
 }
+
+/* ================================================================== *
+ * A COMPLAINT'S OWN TARGETS — PHASE 153c, 4 October 2026 (Word question 178, Sadique's: "How often
+ * should someone who complained get updates, and when should it be finished?"). Built on our recommendation for him
+ * to check: an update at least every 28 days, and our own target of one calendar month from receipt to the outcome.
+ * NEITHER IS A LEGAL DEADLINE and the words say so: the law asks only that a complaint is answered "without undue
+ * delay" (s.164A(4)), and these are what we hold ourselves to. Pure: the same days give the same dates.
+ * ================================================================== */
+
+/** The same day one calendar month later, kept within the month (31 January gives 28 or 29 February). */
+export function addCalendarMonth(day: string): string {
+  const { y, m, d } = parse(day);
+  const ny = m === 12 ? y + 1 : y;
+  const nm = m === 12 ? 1 : m + 1;
+  return fmt({ y: ny, m: nm, d: Math.min(d, daysInMonth(ny, nm)) });
+}
+
+export const COMPLAINT_UPDATE_EVERY_DAYS = 28;
+export const COMPLAINT_TARGET_NOTE =
+  'These are our own targets, not legal deadlines. The law asks for an answer without undue delay (s.164A(4)). ' +
+  'We aim to tell the person how it is going at least every 28 days, and sooner if the time we expect changes, ' +
+  'and to give the outcome within one month of receiving it.';
+
+export type ComplaintTargets = {
+  /** The last time the person was told anything: the latest progress update, the acknowledgement, or receipt. */
+  readonly last_told: string;
+  /** last_told + 28 days. Null once the outcome has been told: nothing more is due. */
+  readonly next_update_due: string | null;
+  /** One calendar month from the day it was received. */
+  readonly target_outcome: string;
+  readonly note: string;
+};
+
+export function complaintTargets(received: string, acknowledged: string | null, progress: readonly string[], outcomeTold: string | null): ComplaintTargets {
+  const told = [received, ...(acknowledged === null ? [] : [acknowledged]), ...progress].filter((x) => DAY.test(x)).sort();
+  const last_told = told[told.length - 1] ?? received;
+  return {
+    last_told,
+    next_update_due: outcomeTold === null ? addDays(last_told, COMPLAINT_UPDATE_EVERY_DAYS) : null,
+    target_outcome: addCalendarMonth(received),
+    note: COMPLAINT_TARGET_NOTE,
+  };
+}
