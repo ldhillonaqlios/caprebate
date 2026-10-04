@@ -877,10 +877,56 @@ if (startSuite("G", "Rulebook B truth table — live engines")) {
     /* ---- xfail: defects logged on the board, outside Phase 2 ---- */
 
     /* C1 - the inverted s.187A pooling branch (R-B1). A seller who was
-       entitled and never pooled is NIL. The engine returns its best case. */
-    const c1 = run("care_homes", { prior_owner_entitled: "yes", prior_owner_claimed: "no" });
+       entitled and never pooled is NIL. The engine returned its best case.
+       FIXED BY PHASE 154a1 (line 13), 4 October 2026, AND NO LONGER AN XFAIL.
+       Rulebook B row C1 is a pooling requirement IN FORCE, which needs the
+       seller to have stopped owning after April 2014 (FA 2012 Sch 10 para
+       13(2)); so C1 now carries a 2019 sale date and is NIL. The same seller
+       with NO date is unresolved with nil at the bottom (C1u): the date could
+       take the requirement out of force (branch D), so it is never a firm nil
+       and never the full range. Every flow, not only care homes. */
+    const lo = q => Array.isArray(q) ? q[0] : q;
+    const hi = q => Array.isArray(q) ? q[1] : q;
+    const POOL_FLAG = /s\.187A\(4\) POOLING/;
+    const c1 = run("care_homes", { prior_owner_entitled: "yes", prior_owner_claimed: "no", past_owner_cessation_date: "2019-06-01" });
     check("C1  — entitled seller who never pooled → NIL",
-      c1.QE, [0, 0], { xfail: "R-B1, the inverted s.187A pooling requirement" });
+      c1.QE, [0, 0]);
+    check("C1  — and the flag names the pooling requirement, and says what would meet it",
+      [c1.flags.some(f => /s\.187A\(4\) POOLING REQUIREMENT NOT MET/.test(f)),
+       c1.flags.some(f => /tax period that began on or before the day it sold/.test(f))], [true, true]);
+    SECTORS.forEach(sec => {
+      const n = run(sec, { prior_owner_entitled: "yes", prior_owner_claimed: "no", past_owner_cessation_date: "2019-06-01" });
+      check("C1  " + sec + " — entitled seller who never pooled, sold in 2019 → nil",
+        [lo(n.QE), hi(n.QE), n.flags.some(f => POOL_FLAG.test(f))], [0, 0, true]);
+      const u = run(sec, { prior_owner_entitled: "yes", prior_owner_claimed: "no" });
+      check("C1u " + sec + " — the same seller, sale date not known → unresolved: flagged, never the full range with nothing said",
+        [sec === "supported_living" || lo(u.QE) === 0, hi(u.QE) > 0, u.flags.some(f => /s\.187A\(4\) POOLING POSITION UNPROVEN/.test(f))],
+        [true, true, true]);
+      const d = run(sec, { prior_owner_entitled: "yes", prior_owner_claimed: "no", past_owner_cessation_date: "2013-06-01" });
+      check("C1d " + sec + " — sold before April 2014 → the pooling requirement is not in force (branch D): no pooling flag, a figure",
+        [hi(d.QE) > 0, d.flags.some(f => POOL_FLAG.test(f))], [true, false]);
+    });
+    /* N4 - an unknown claim history never relieves, and "not sure" and absent
+       behave alike: both unresolved with nil at the bottom (Rulebook B row C9). */
+    const cs = run("care_homes", { prior_owner_entitled: "yes", prior_owner_claimed: "unsure", past_owner_cessation_date: "2019-06-01" });
+    const ca = run("care_homes", { prior_owner_entitled: "yes", past_owner_cessation_date: "2019-06-01" });
+    check("C9  — an entitled seller whose claim history is 'not sure': nil at the bottom, flagged",
+      [cs.QE[0], cs.QE[1] > 0, cs.flags.some(f => POOL_FLAG.test(f))], [0, true, true]);
+    check("C9  — never asked behaves exactly as 'not sure' (N4: absent and unsure alike)",
+      [ca.QE[0], ca.QE[1], ca.flags.some(f => POOL_FLAG.test(f))], [cs.QE[0], cs.QE[1], true]);
+    /* What the pooling requirement must NOT touch. */
+    const cy = run("care_homes", { prior_owner_entitled: "yes", prior_owner_claimed: "yes", past_owner_cessation_date: "2019-06-01" });
+    check("C1y — a seller who claimed (and so pooled) is not met by the pooling check",
+      [cy.flags.some(f => POOL_FLAG.test(f)), (cy.s.s187a || {}).requirement === "POOLING"], [false, false]);
+    const cn = run("care_homes", { prior_owner_entitled: "no", prior_owner_claimed: "no", past_owner_cessation_date: "2019-06-01" });
+    check("C1n — a seller who could never claim is not met by it either: still the best case",
+      [cn.QE[0] > 0, cn.flags.some(f => POOL_FLAG.test(f))], [true, false]);
+    const cq = run("care_homes", { prior_owner_entitled: "unsure", prior_owner_claimed: "no", past_owner_cessation_date: "2019-06-01" });
+    check("C1q — an entitlement not known is unchanged by this check (only a seller KNOWN to have been able to claim)",
+      cq.flags.some(f => POOL_FLAG.test(f)), false);
+    const cr = run("care_homes", { trigger: ["refurbishment"], prior_owner_entitled: "yes", prior_owner_claimed: "no", past_owner_cessation_date: "2019-06-01" });
+    check("C1r — not a purchase, so no past owner's pooling is asked about",
+      cr.flags.some(f => POOL_FLAG.test(f)), false);
 
     /* B2/B3 - the look-back to the last entitled owner. Rulebook B called this
        the most serious undetected defect: a non-entitled intermediary does not
@@ -1444,7 +1490,15 @@ if (startSuite("H", "Phase 8 — prepared patches, gated on the CTA")) {
 
        THIS IS NOT R-B1. R-B1 is the POOLING requirement (s.187A(4)) on an
        entitled owner who never pooled, and it points the other way. The two
-       are deliberately not coupled; the C1 xfail in Suite G is untouched.
+       are deliberately not coupled.
+       PHASE 154a1 (line 13), 4 October 2026: R-B1 IS NOW BUILT (Suite G, C1),
+       and it is asked FIRST (Rulebook A Addendum 1, F1 before F2): a seller who
+       never pooled, after April 2014, takes the claim to nil whichever reading
+       of the fixed value requirement is switched on. So H10's seller now
+       stopped owning in 2013 - the pooling requirement is not in force there
+       (FA 2012 Sch 10 para 13(2), branch D) - and the checks below still test
+       the A-3 switch and nothing else. H10p shows the switch cannot reach a
+       case the pooling requirement decides.
        --------------------------------------------------------------------- */
     const S187A_A3 = layerGated(["fvr_requires_past_owner_claim"]).CB_S187A;
 
@@ -1452,8 +1506,14 @@ if (startSuite("H", "Phase 8 — prepared patches, gated on the CTA")) {
       prior_owner_entitled: "yes", prior_owner_claimed: "no",
       earlier_entitled_owner: "no",
       past_owner_disposal_mode: "sold_market",
+      past_owner_cessation_date: "2013-06-01",
       acquisition_date: "2024-01-01", __now: "2026-08-31"
     };
+    const H10P = Object.assign({}, H10);
+    delete H10P.past_owner_cessation_date;
+    check("H10p — with no sale date the pooling requirement decides first, switch off or on",
+      [S187A_OFF.assess(H10P).requirement, S187A_A3.assess(H10P).requirement, S187A_A3.assess(H10P).outcome],
+      ["POOLING", "POOLING", "INDET"]);
     check("H10 branch B — the fixed value track runs even where nobody ever claimed",
       S187A_OFF.assess(H10).track, "FVR");
     check("H10 branch A — a past owner who never claimed takes s.187A off entirely",
@@ -3485,6 +3545,13 @@ if (startSuite("O", "Phase 67 — condensed front door, derivation layer")) {
     check("O6 — 'don't know' sets no engine fact; 'yes' sets one",
       [dk.prior_owner_entitled === undefined, yes.prior_owner_entitled],
       [true, "yes"]);
+    /* PHASE 154a1 (line 13): "no" is a seller who did not claim, not one who
+       could not. It used to set prior_owner_entitled "no" - the best case -
+       which inverted the pooling requirement (R-B1) at the front door. */
+    const no = {}; q.onSet(no, "no");
+    check("O6 — 'no' records that the previous owner did not claim, and leaves whether they could to its own question",
+      [no.prior_owner_claimed, no.prior_owner_entitled === undefined, dk.prior_owner_claimed === undefined],
+      ["no", true, true]);
   })();
 
   /* A gated client is the one most worth talking to. */

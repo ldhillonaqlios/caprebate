@@ -163,10 +163,16 @@ describe('line 20 — Word question 226: the works-VAT answer and VAT on our fee
 describe('line 21 — the two switches that act only in the survey pack, each on alone: which way they move it', () => {
   /* The flows' direction for the other 27 is counted by 03-app/caprebate-switch-direction.cjs. These two cannot move an
      estimate figure: grant_traced_to_elements is read only by the pack (Suite H, H24), and the flows put the s.187A
-     caps only on a seller KNOWN to have claimed, while fvr_requires_past_owner_claim acts only on one known NOT to have. */
-  test('fvr_requires_past_owner_claim — BIGGER in the pack: a seller who never claimed, bought in 2019, is unsettled off and clear on', () => {
-    const st = new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2019-06-01', G11: 'no', G12: 'taxpaying', G14: 'no',
-      G14po: 'sold_market', G14pod: '2019-06-01', G14iv: 'no', G14t: 'none', G15: 'no', G14fvr: 'yes' }));
+     caps only on a seller KNOWN to have claimed, while fvr_requires_past_owner_claim acts only on one known NOT to have.
+     Phase 154a1 (line 13): the flows now meet a seller who never claimed through the pooling requirement, which is asked
+     first; caprebate-switch-direction.cjs says whether this switch can now move a flow's figure. */
+  // PHASE 154a1 (line 13): bought in 2013, not 2019. The pooling requirement (R-B1) is now asked first, and a tax-paying
+  // seller who never claimed and sold after April 2014 is nil whichever way this switch is set - so in 2019 the switch
+  // could no longer move this pack (RED both ways; test/phase154a1.test.ts line 13). Sold in June 2013 the pooling
+  // requirement is not in force (FA 2012 Sch 10 para 13(2)) and this switch is again the only thing that decides it.
+  test('fvr_requires_past_owner_claim — BIGGER in the pack: a seller who never claimed, bought in 2013, is unsettled off and clear on', () => {
+    const st = new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2013-06-01', G11: 'no', G12: 'taxpaying', G14: 'no',
+      G14po: 'sold_market', G14pod: '2013-06-01', G14iv: 'no', G14t: 'none', G15: 'no', G14fvr: 'yes' }));
     const off = assessLegal('gp', st, NOW, 'company').verdict.level;
     const on = withSwitch('fvr_requires_past_owner_claim', () => assessLegal('gp', st, NOW, 'company').verdict.level);
     assert.deepEqual([off, on], ['AMBER', 'GREEN']);

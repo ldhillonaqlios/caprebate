@@ -3806,6 +3806,62 @@ var CB_S187A = (function(){
     return true;
   }
 
+  /* -------------------------------------------------------------------------
+     PHASE 154a1 (line 13), 4 October 2026 — R-B1, THE POOLING REQUIREMENT
+     (s.187A(4)). The harness's oldest xfail (Suite G, C1), logged by Phase 2.
+
+     THE DEFECT. A purchase from a seller who could claim but never did got the
+     whole range with no cap and no flag: the flows applied s.187A only where
+     the seller was KNOWN to have claimed, and a seller who never claimed never
+     pooled. Rulebook B branch C, row C1: an entitled past owner who did not
+     pool, where the requirement is in force, takes the claim to NIL - for this
+     buyer and every later one (s.187A(3)). Rulebook A Addendum 1, F1: this is
+     asked FIRST, before the fixed value requirement, because the reason for a
+     nil differs and the report must name it.
+
+     THE READING, AND WHAT IT LEANS ON.
+       - Only a seller KNOWN to have been able to claim (prior_owner_entitled
+         "yes"). An unknown entitlement is unchanged here.
+       - A claim is a pooling (s.202(3)), so a seller who claimed has pooled
+         and the fixed value requirement takes over, as before. There is no
+         separate "pooled" answer yet (Rulebook B, defect 9): "never claimed"
+         is read as "never pooled".
+       - The requirement is in force where the seller stopped owning the
+         fixtures after April 2014 (FA 2012 Sch 10 para 13(2),
+         poolingRequirementInForce). A KNOWN earlier date takes it out of force
+         (branch D) and nothing changes. An UNKNOWN date leaves it in force -
+         but then the answer is unresolved with nil at the bottom (row C9's
+         treatment), never a firm nil, because the date could clear it.
+       - Never claimed, date known and after April 2014: NIL.
+       - Never claimed, date not known: INDET, nil at the bottom.
+       - Claim history "not sure" or never asked: INDET, nil at the bottom
+         (row C9). N4: an unknown claim history never relieves - it gets the
+         same unresolved answer whether it was "not sure" or absent.
+     The seller may still pool: in a tax period that began on or before the
+     day it sold (s.187A(4)), which includes the period of the sale, while that
+     return can be amended. The words say what would satisfy it.
+     ------------------------------------------------------------------------- */
+  var POOLING_WOULD_SATISFY = "This is met only if the seller put what it spent on these fixtures into its capital allowances pool in a tax period that began on or before the day it sold them to you (s.187A(4)). A seller that has not done so may still be able to, by amending its tax return for the period of the sale while that return can still be amended. Ask the seller for its replies to the standard property enquiries on capital allowances, and for the tax computation that shows the pool.";
+
+  function poolingAssess(s){
+    s = s || {};
+    if(s.prior_owner_entitled !== "yes") return null;
+    if(s.prior_owner_claimed === "yes") return null;
+    if(regimeOff(s)) return null;
+    var known = !!parseDate(s.past_owner_cessation_date);
+    if(known && !poolingRequirementInForce(s)) return null;
+    var di = disposalItem(s);
+    if(s.prior_owner_claimed === "no" && known)
+      return { outcome:OUT.NIL, item:di.item, track:TRACK.UNKNOWN, pooling:true, requirement:"POOLING",
+               why:"you have told us the seller was a tax-paying business that never claimed capital allowances on these fixtures, so it never pooled what it spent on them, and it stopped owning them after April 2014, when the requirement to pool first applies. If that is right, the fixtures claim on this purchase is nil, for you and for anyone who buys from you",
+               action:POOLING_WOULD_SATISFY };
+    return { outcome:OUT.INDET, item:di.item, track:TRACK.UNKNOWN, pooling:true, requirement:"POOLING",
+             why:(s.prior_owner_claimed === "no"
+               ? "you have told us the seller was a tax-paying business that never claimed capital allowances on these fixtures, so it never pooled what it spent on them. If it stopped owning them after April 2014 the fixtures claim on this purchase is nil, and we do not yet know when it stopped owning them"
+               : "the seller was a tax-paying business that could have claimed capital allowances on these fixtures, and whether it ever did, and so whether it pooled what it spent on them, is not known. If it never did, the fixtures claim on this purchase may be nil"),
+             action:POOLING_WOULD_SATISFY + (known ? "" : " And tell us the date the seller stopped owning the property.") };
+  }
+
   /* -----------------------------------------------------------------------
      A-2 (12921346993), switch CB_CTA.s187a_6b_statements_route, A-Q8.
 
@@ -3863,6 +3919,19 @@ var CB_S187A = (function(){
                why:"nobody in the ownership history was ever able to claim capital allowances on these fixtures, so the second-hand fixtures conditions in s.187A do not apply at all",
                action:"s.185 can still cap the claim if an earlier owner did claim — that is assessed separately" };
 
+    if(regimeOff(s))
+      return { outcome:OUT.OFF, item:di.item, track:TRACK.UNKNOWN, pooling:pooling,
+               why:"the owner who last claimed had already stopped owning the fixtures before the second-hand fixtures rules came in (FA 2012 Sch 10 para 13(1)), so s.187A does not apply to this purchase",
+               action:"s.185 can still cap the claim at the disposal value that owner brought into account — that is assessed separately" };
+
+    /* F1 - PHASE 154a1 (line 13): the pooling requirement, BEFORE the fixed
+       value requirement and before the A-3 switch (Rulebook A Addendum 1, F1
+       before F2). A past owner who never pooled takes the claim to nil
+       whichever reading of the fixed value requirement is switched on, so the
+       A-3 switch cannot reach a case this decides. poolingAssess, above. */
+    var pooled = poolingAssess(s);
+    if(pooled) return pooled;
+
     /* A-3 — the fixed value requirement needs a past owner who was required to
        bring a disposal value into account. OFF by default; switch
        CB_CTA.fvr_requires_past_owner_claim, waits on B-Q4. */
@@ -3872,10 +3941,6 @@ var CB_S187A = (function(){
                why:"the owner before you never actually claimed capital allowances on these fixtures, so they never had to bring a disposal value into account for them. The requirement to fix the value between the two of you is a requirement about that disposal value, so on this reading it does not apply to your purchase at all",
                action:"this does NOT decide the separate question of whether that owner was required to have pooled the expenditure first (s.187A(4)) \u2014 that is assessed on its own facts. s.185 can still cap the claim if an earlier owner did claim." };
 
-    if(regimeOff(s))
-      return { outcome:OUT.OFF, item:di.item, track:TRACK.UNKNOWN, pooling:pooling,
-               why:"the owner who last claimed had already stopped owning the fixtures before the second-hand fixtures rules came in (FA 2012 Sch 10 para 13(1)), so s.187A does not apply to this purchase",
-               action:"s.185 can still cap the claim at the disposal value that owner brought into account — that is assessed separately" };
 
     /* F4 - has a relevant apportionment ALREADY been made? Row A-F12.
        This limb comes before the track fork on purpose. A valid joint election
@@ -3997,6 +4062,12 @@ var CB_S187A = (function(){
         return [Math.min(lo, a.value), Math.min(hi, a.value)];
 
       case OUT.NIL:
+        /* PHASE 154a1 (line 13): a nil names the requirement that failed (Rulebook A Addendum 1, the report). */
+        if(a.requirement === "POOLING"){
+          A && A.push("the fixtures claim on this purchase is nil, because the seller never pooled what it spent on them — " + a.why);
+          flag && flag("s.187A(4) POOLING REQUIREMENT NOT MET — NIL (s.187A(3)) — " + a.why + ". " + (a.action || ""));
+          return [0, 0];
+        }
         A && A.push("the fixtures the earlier owner disposed of are nil — " + a.why);
         flag && flag("s.187A(3)(c) NIL — " + a.why + (a.action ? " " + a.action : ""));
         return [0, 0];
@@ -4008,7 +4079,8 @@ var CB_S187A = (function(){
 
       default: /* INDET */
         A && A.push("this cannot be settled on what is known so far, so the bottom of the range is shown as nil — " + a.why);
-        flag && flag("s.187A POSITION UNPROVEN — " + a.why + (a.action ? " " + a.action : ""));
+        flag && flag((a.requirement === "POOLING" ? "s.187A(4) POOLING POSITION UNPROVEN — " : "s.187A POSITION UNPROVEN — ")
+          + a.why + (a.action ? (a.requirement === "POOLING" ? ". " : " ") + a.action : ""));
         return [0, hi];
     }
   }
@@ -4079,7 +4151,12 @@ var CB_S187A = (function(){
       {id:p+"14pod", group:g, type:"date", optional:true,
        ask:"On what date did that earlier owner stop owning the property?",
        help:"Leave it blank if you don’t know. This date does real work: it decides whether the second-hand fixtures rules apply to your purchase at all, and where a written statement of value is needed it is the date the deadline for that statement runs from. It is on the Land Registry title register.",
-       showIf:gate,
+       /* PHASE 154a1 (line 13): the caller's own gate, never the A-3 one. This
+          date also decides whether the pooling requirement is in force
+          (poolingAssess), which A-3 does not touch - so a seller who never
+          claimed is still asked it with that switch on. Switch off, the two
+          gates are the same and the flow is unchanged. */
+       showIf:rawGate,
        onSet:(s,v)=>{ s.past_owner_cessation_date=v||null;
          if(!v) flag(s,"Past owner’s cessation of ownership date not captured — the FA 2012 Sch 10 para 13(1) and 13(2) transitionals and the s.187A(11) statement deadline all run from it. Both transitionals are treated as NOT applying until it is known (A-5)"); } },
 
@@ -4163,6 +4240,7 @@ var CB_S187A = (function(){
            windowStart:windowStart, fvrWindow:fvrWindow,
            dvsAssess:dvsAssess, relevantApportionmentMade:relevantApportionmentMade,
            pastOwnerBroughtNoDisposalValue:pastOwnerBroughtNoDisposalValue,
+           poolingAssess:poolingAssess,
            statementsRoute:statementsRoute,
            assess:assess, applyOutcome:applyOutcome,
            questions:questions };
@@ -5024,9 +5102,14 @@ var CB_FRONTDOOR = (function(){
       gates:false, derived:null,
       onSet:function(s,v){
         s.previous_owner_claimed = v;
-        /* Feed the engine's own vocabulary rather than a parallel one. */
+        /* Feed the engine's own vocabulary rather than a parallel one.
+           PHASE 154a1 (line 13): "no" is a seller who did not CLAIM, which is not a
+           seller who could not - a tax-paying seller who never claimed is the one
+           the pooling requirement takes to nil (R-B1). So "no" records the claim
+           history only and leaves entitlement to its own question; it used to set
+           prior_owner_entitled "no", the best case, which inverted that rule. */
         if(v === "yes") s.prior_owner_entitled = "yes";
-        else if(v === "no") s.prior_owner_entitled = "no";
+        else if(v === "no") s.prior_owner_claimed = "no";
         /* "don't know" deliberately sets nothing — unresolved, not guessed. */
       } },
 

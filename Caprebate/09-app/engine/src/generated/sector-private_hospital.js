@@ -1148,6 +1148,20 @@ function runEngine(s){
     QE_lo = Math.min(QE_lo, __dv); QE_hi = Math.min(QE_hi, __dv);
   }
 
+  // PHASE 154a1 (line 13), R-B1 — THE POOLING REQUIREMENT (s.187A(4)). A seller
+  // KNOWN to have been able to claim who never claimed (so never pooled), or
+  // whose claim history is unknown: nil, or unresolved with nil at the bottom.
+  // The caps block below runs only on a seller who claimed, so this is the
+  // only place such a purchase meets s.187A. CB_S187A.poolingAssess.
+  if(dom==="purchase" && s.prior_owner_claimed!=="yes" && !__s187aOff && !__s538Carve){
+    var __pool = CB_S187A.poolingAssess(s);
+    if(__pool){
+      s.s187a = __pool;
+      var __pr = CB_S187A.applyOutcome(__pool, QE_lo, QE_hi, A, function(f){ pushFlag(s,f); });
+      QE_lo = __pr[0]; QE_hi = __pr[1];
+    }
+  }
+
   // Stage 5 — caps (purchase + prior claim)
   if(dom==="purchase" && s.prior_owner_claimed==="yes" && !__s187aOff && !__s538Carve){
     // C-1 — an ASSERTED election is not an election. s.187B(1) puts the

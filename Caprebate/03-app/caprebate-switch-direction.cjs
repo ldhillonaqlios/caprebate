@@ -38,6 +38,13 @@
    claimed (Stage 5), and the switch acts only where the seller is known NOT to have.
    Its figure is the back end's survey pack legal check (09-app/backend/src/web/
    pack-legal.ts), which runs CB_S187A.assess on every purchase.
+   RE-RUN BY PHASE 154a1 (line 13), 4 October 2026, after the pooling requirement
+   (R-B1) was built into the five flows: it still moves no flow figure (0 of 1540
+   states), because the pooling requirement is asked first and settles a seller
+   who never claimed before this switch is read. Every other switch kept its
+   direction; their counts moved a little, since a purchase from a seller who
+   never claimed is now nil or unresolved and leaves less for them to move.
+   Before and after: 04-phase-work/phase154a1/proofs/ (OneDrive).
 
    grant_traced_to_elements is read by the back end's survey pack, not by these
    flows (Suite H, H24), so here it is NO FIGURE MOVED by design; its direction is

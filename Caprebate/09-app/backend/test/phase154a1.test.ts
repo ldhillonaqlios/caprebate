@@ -349,3 +349,45 @@ describe('line 10: the test website’s start file', () => {
     assert.doesNotMatch(entry, /nothing is sent until Meta's transfer is approved/);
   });
 });
+
+/* ------------------------------------------------------------------ line 13 */
+
+describe('line 13: the pooling requirement (s.187A(4)) in the survey pack, as in the five flows', () => {
+  const NOW = '2026-10-04T09:00:00.000Z';
+  const seller = (extra: Record<string, unknown>) => new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2019-06-01', G12: 'taxpaying',
+    G14: 'no', G14po: 'sold_market', G14pod: '2019-06-01', G14iv: 'no', G14t: 'none', G15: 'no', G14fvr: 'yes', ...extra }));
+  const legal = async () => (await import('../src/web/pack-legal.ts')).assessLegal;
+  const cta = async () => (await import('../src/web/engine.ts')).CB.CB_CTA as unknown as Record<string, unknown>;
+
+  test('a tax-paying seller who never claimed, sold in 2019: RED, naming the pooling requirement and what would meet it', async () => {
+    const v = (await legal())('gp', seller({ G11: 'no' }), NOW, 'company').verdict;
+    assert.equal(v.level, 'RED');
+    assert.ok(v.why.some((w) => /never pooled what it spent on them/.test(w)), v.why.join(' | '));
+    assert.ok(v.actions.some((a) => /tax period that began on or before the day it sold them to you \(s\.187A\(4\)\)/.test(a)), v.actions.join(' | '));
+  });
+
+  test('the A-3 switch cannot reach that case: still RED with it on, and the sale date is still asked', async () => {
+    const CTA = await cta();
+    const was = CTA['fvr_requires_past_owner_claim'];
+    CTA['fvr_requires_past_owner_claim'] = true;
+    try {
+      const r = (await legal())('gp', seller({ G11: 'no' }), NOW, 'company');
+      assert.equal(r.verdict.level, 'RED');
+      assert.ok(r.asked.some((q) => /14pod$/.test(q.id)), 'the date the seller stopped owning is not asked');
+    } finally { CTA['fvr_requires_past_owner_claim'] = was; }
+  });
+
+  test('N4: a claim history "not sure", or never given, is unsettled (AMBER) — the same either way, never clear', async () => {
+    const assess = await legal();
+    const unsure = assess('gp', seller({ G11: 'unsure' }), NOW, 'company').verdict;
+    const never = assess('gp', seller({}), NOW, 'company').verdict;
+    assert.equal(unsure.level, 'AMBER');
+    assert.equal(never.level, 'AMBER');
+    assert.ok(unsure.why.some((w) => /whether it ever did, and so whether it pooled/.test(w)), unsure.why.join(' | '));
+  });
+
+  test('a seller who never claimed but sold before April 2014 is not met by it (the requirement was not yet in force)', async () => {
+    const v = (await legal())('gp', seller({ G11: 'no', G9d: '2013-06-01', G14pod: '2013-06-01' }), NOW, 'company').verdict;
+    assert.ok(!v.why.some((w) => /never pooled/.test(w)), v.why.join(' | '));
+  });
+});
