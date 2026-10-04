@@ -27,7 +27,8 @@ import { amendFigures, commitFigures, jobHasEstimate, packJob } from './surveyor
 import { packView, type PackDeps, type PackResult, type PackView } from './survey-pack.ts';
 import { legalAllows, legalView, type LegalView } from './pack-legal.ts';
 import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
-import { basisOf, checklistView, walkthroughsOf } from './survey-evidence.ts';
+import { basisOf, checklistView, evidenceByLine, walkthroughsOf } from './survey-evidence.ts';
+import { findingSeen } from './finding-source.ts';
 import { videosOf } from './survey-video.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
@@ -165,6 +166,9 @@ function inspectionOf(d: { db: PackDeps['db'] }, job_id: string) {
 
 export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at: string; by: { id: string; name: string }; details: Details }, d: { db: PackDeps['db'] }) {
   const sumOf = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
+  // PHASE 153e (Word question 150): each finding, seen on site or from documents, frozen with the version.
+  const basis = basisOf(d.db, v.job.id)?.basis ?? null;
+  const photosByLine = evidenceByLine(d.db, v.job.id);
   return {
     format: 'cap-rebate-survey-pack/1',
     version: a.version,
@@ -180,6 +184,7 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
       id: l.id, label: l.label, element_id: l.element_id, unit: l.unit, pool: l.pool, pool_source: l.pool_source,
       qty_milli: l.qty_milli, rate_pence: l.rate_pence, qpct_bp: l.qpct_bp, removed: l.removed, removed_source: l.removed_source,
       cost_pence: sumOf.get(l.id)?.cost_pence ?? null, qualifying_pence: sumOf.get(l.id)?.qualifying_pence ?? null,
+      seen: findingSeen(basis, l, photosByLine.get(l.element_id ?? '')?.count ?? 0),
     })),
     sums: {
       rebuild_pence: v.sums.rebuild_pence, building_price_pence: v.sums.building_price_pence,

@@ -35,6 +35,8 @@ export type ReportRow = {
   readonly cost: string; readonly qpct: string; readonly qpct_chip: Chip; readonly qualifying: string;
   /** This item's share of the qualifying total, as a whole percentage, for its bar. */
   readonly share: number;
+  /** PHASE 153e: seen on site, or from documents. Null in a version approved before. */
+  readonly seen: string | null;
 };
 
 export type ReportModel = {
@@ -119,6 +121,7 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     cost: poundsWords(l.cost_pence), qpct: percentWords(l.qpct_bp.value), qpct_chip: chipOf(l.qpct_bp.source, true),
     qualifying: poundsWords(l.qualifying_pence),
     share: totalQ === 0 || l.qualifying_pence === null ? 0 : Math.round((l.qualifying_pence * 100) / totalQ),
+    seen: (l as { seen?: string }).seen ?? null,
   });
   const sr = live.filter((l) => l.pool === 'SR');
   const mp = live.filter((l) => l.pool === 'MP');
@@ -247,7 +250,7 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
       <p class="rp-lede">Each item’s rebuild cost is how much there is × the rate. The share that qualifies gives its qualifying cost.</p>
       <div class="pk-scroll"><table class="rp-table rp-items"><thead><tr><th>Item</th><th class="n">How much</th><th class="n">Rate</th><th class="n">Rebuild cost</th><th class="n">Qualifies</th><th class="n">Qualifying cost</th></tr></thead>
         ${m.groups.map((g) => h`<tbody><tr class="rp-grp"><th colspan="6" scope="rowgroup">${g.title}</th></tr>${g.rows.map((r) => h`<tr>
-          <td>${r.label}<br><span class="rp-note">${r.unit}</span><span class="rp-bar"><i class="rp-bar-${g.pool === 'SR' ? 'sr' : 'mp'} ${w5(r.share)}"></i></span></td>
+          <td>${r.label}<br><span class="rp-note">${r.unit}${r.seen === null ? '' : ` · ${r.seen}`}</span><span class="rp-bar"><i class="rp-bar-${g.pool === 'SR' ? 'sr' : 'mp'} ${w5(r.share)}"></i></span></td>
           <td class="n">${r.qty}<br>${chipHtml(r.qty_chip)}</td><td class="n">${r.rate}<br>${chipHtml(r.rate_chip)}</td><td class="n">${r.cost}</td>
           <td class="n">${r.qpct}<br>${chipHtml(r.qpct_chip)}</td><td class="n">${r.qualifying}</td></tr>`)}</tbody>`)}
         <tbody><tr class="rp-tot"><th scope="row">Total</th><td></td><td></td><td class="n">${m.totals.cost}</td><td></td><td class="n">${m.totals.qualifying}</td></tr></tbody></table></div>
@@ -494,7 +497,7 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
       if (c.y + rh > BOTTOM) { c.page(); tableHead(); }
       const top = c.y;
       lines.forEach((line, i) => c.text(L + 2, top + 14 + i * 12, line, 'Helvetica', 9.5, C.ink));
-      c.text(L + 2, top + 14 + lines.length * 12, fit(r.unit, 'Helvetica', 7.5, itemW), 'Helvetica', 7.5, C.mut);
+      c.text(L + 2, top + 14 + lines.length * 12, fit(r.seen === null ? r.unit : `${r.unit} · ${r.seen}`, 'Helvetica', 7.5, itemW), 'Helvetica', 7.5, C.mut);
       const by = top + 19 + lines.length * 12;
       c.ops.push({ k: 'rect', x: L + 2, y: by, w: itemW * 0.85, h: 4, r: 2, fill: C.track });
       if (r.share > 0) c.ops.push({ k: 'rect', x: L + 2, y: by, w: Math.max(4, (itemW * 0.85 * r.share) / 100), h: 4, r: 2, fill: g.pool === 'SR' ? C.sr : C.mp });

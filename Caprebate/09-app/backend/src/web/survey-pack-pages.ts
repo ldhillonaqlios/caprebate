@@ -30,7 +30,8 @@ import * as L from './pack-legal.ts';
 import * as A from './pack-approve.ts';
 import { sendPanel } from './report-pages.ts';
 import { inspectionChapter, lineEvidence } from './evidence-pages.ts';
-import { evidenceByLine } from './survey-evidence.ts';
+import { basisOf, evidenceByLine } from './survey-evidence.ts';
+import { findingSeen } from './finding-source.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 
 export type PackPageDeps = {
@@ -405,6 +406,8 @@ function elementsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearc
   const live = v.lines.filter((l) => !l.removed);
   // 2 Oct 2026: each line's photos from the client (src/web/survey-evidence.ts).
   const evidence = evidenceByLine(d.app.db, v.job.id);
+  // PHASE 153e (Word question 150): each line says whether it was seen on site or comes from documents.
+  const basis = basisOf(d.app.db, v.job.id)?.basis ?? null;
   const groups: { title: string; lines: P.ViewLine[] }[] = [
     { title: 'Special rate pool — integral features', lines: live.filter((l) => l.pool === 'SR' && l.added === null) },
     { title: 'Main pool — plant and machinery', lines: live.filter((l) => l.pool === 'MP' && l.added === null) },
@@ -417,7 +420,7 @@ function elementsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearc
     const open = editing === l.id && v.may_edit && v.property !== null;
     const judgement = l.template !== null && /CONTESTED|JUDGEMENT/.test(l.template.status);
     return h`<tr id="l-${l.id}"${l.qty_milli.source?.kind === 'SURVEYOR' || l.rate_pence.source?.kind === 'SURVEYOR' ? raw(' class="pk-mine"') : raw('')}>
-      <td>${l.label}<br><span class="help">${l.element_id ?? 'Added'}${l.unit === '' ? '' : ` · ${l.unit}`}${judgement ? ' · a judgement call' : ''}</span>${evidence.has(l.element_id ?? '') ? h`<br>${lineEvidence(evidence, v.job.id, l.element_id)}` : raw('')}
+      <td>${l.label}<br><span class="help">${l.element_id ?? 'Added'}${l.unit === '' ? '' : ` · ${l.unit}`}${judgement ? ' · a judgement call' : ''} · ${findingSeen(basis, l, evidence.get(l.element_id ?? '')?.count ?? 0)}</span>${evidence.has(l.element_id ?? '') ? h`<br>${lineEvidence(evidence, v.job.id, l.element_id)}` : raw('')}
         ${l.added === null ? raw('') : h`<br><span class="help">Added by ${l.added.by_name}: “${l.added.reason}”</span>`}</td>
       ${valueCell(d, l.qty_milli, QTY)}${valueCell(d, l.rate_pence, PENCE)}
       <td class="n">${PENCE(sum?.cost_pence ?? null)}</td>

@@ -76,6 +76,8 @@ export type HomedataQuery = {
   readonly property: TypedProperty | null;
   /** The 200-property measurement only (tools/match-measure.ts). Never set by the research flow. */
   readonly measure?: MeasureHook;
+  /** PHASE 153e: TESTS ONLY. Absent, HOMEDATA_DIMENSIONS governs, and it is off. */
+  readonly dimensions?: HomedataDimensions;
 } & PickQuery;
 
 /**
@@ -86,6 +88,54 @@ export type HomedataQuery = {
  * belongs to a register we already consult for nothing, and none of them is added without a decision.
  */
 export const HOMEDATA_SLUGS: readonly string[] = Object.freeze(['address', 'lr_title']);
+
+/**
+ * PHASE 153e, 4 October 2026 (Word question 203, the surveyor's) — HOMEDATA'S `dimensions` ITEM (1 token, a penny), BEHIND
+ * ITS OWN SWITCH, OFF. A floor area worked out from the building's outline and height, for a building with no energy
+ * certificate. It is NOT a measurement, so it is never stored as a register fact and is always labelled "estimated from
+ * the building's shape". Before it is relied on, it is compared on five homes whose floor areas are known
+ * (`compareEstimatedAreas`), and the surveyor says when a real measurement must replace it. The field names below are
+ * the ones we read; they are checked against the first real response before the switch goes on.
+ */
+export type HomedataDimensions = { readonly enabled: boolean; readonly question: string };
+export const DIMENSIONS_QUESTION = 'Can we use a measured floor area when a building has no energy certificate?';
+export const HOMEDATA_DIMENSIONS: HomedataDimensions = Object.freeze({ enabled: false, question: DIMENSIONS_QUESTION });
+export const ESTIMATED_AREA_LABEL = 'estimated from the building’s shape';
+
+/** The slugs for one lookup: the two always asked, and `dimensions` only with its switch on. */
+export function homedataSlugs(d: HomedataDimensions = HOMEDATA_DIMENSIONS): readonly string[] {
+  return d.enabled ? [...HOMEDATA_SLUGS, 'dimensions'] : HOMEDATA_SLUGS;
+}
+
+/** The floor-area estimate from the dimensions item: a positive number under a named key, or nothing (N4). */
+export function dimensionsEstimate(raw: unknown): { floor_area_m2: number; label: string } | null {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  for (const k of ['floor_area_m2', 'total_floor_area_m2', 'estimated_floor_area', 'floor_area']) {
+    const v = o[k];
+    if (typeof v === 'number' && Number.isFinite(v) && v > 0) return { floor_area_m2: Math.round(v * 10) / 10, label: ESTIMATED_AREA_LABEL };
+  }
+  return null;
+}
+
+export type AreaComparisonRow = { readonly home: string; readonly known_m2: number; readonly estimated_m2: number | null };
+export type AreaComparison = {
+  readonly rows: readonly (AreaComparisonRow & { readonly gap_percent: number | null })[];
+  readonly compared: number;
+  readonly median_gap_percent: number | null;
+  readonly worst_gap_percent: number | null;
+  readonly enough: boolean;
+};
+
+/** The five-home comparison: each estimate against a known floor area, in per cent of the known one. Five are needed. */
+export function compareEstimatedAreas(rows: readonly AreaComparisonRow[]): AreaComparison {
+  const out = rows.map((r) => ({ ...r, gap_percent: r.estimated_m2 === null || !(r.known_m2 > 0) ? null
+    : Math.round(((r.estimated_m2 - r.known_m2) / r.known_m2) * 1000) / 10 }));
+  const gaps = out.map((r) => r.gap_percent).filter((g): g is number => g !== null).map(Math.abs).sort((a, b) => a - b);
+  const mid = gaps.length === 0 ? null : gaps.length % 2 === 1 ? gaps[(gaps.length - 1) / 2] as number
+    : ((gaps[gaps.length / 2 - 1] as number) + (gaps[gaps.length / 2] as number)) / 2;
+  return { rows: out, compared: gaps.length, median_gap_percent: mid, worst_gap_percent: gaps.length === 0 ? null : gaps[gaps.length - 1] as number, enough: gaps.length >= 5 };
+}
 
 /**
  * THE TIER PATHS, NAMED SO A TEST CAN PROVE WE NEVER ASK FOR ONE. `address` is on this list as well as being a slug we
@@ -269,7 +319,7 @@ export const homedataAddress = defineSteppedConnector<HomedataQuery>({
     // 2 · the matched property's address fields and coordinates, and the penny title pre-check. Named slugs, summed
     //     weights, no tier.
     const detail = await call({
-      endpoint: '/property/{uprn}/', params: { uprn }, query: { with: HOMEDATA_SLUGS.join(',') },
+      endpoint: '/property/{uprn}/', params: { uprn }, query: { with: homedataSlugs(q.dimensions ?? HOMEDATA_DIMENSIONS).join(',') },
     });
     if (detail.outcome !== 'OK' || detail.body === null) return { kind: 'CALL_FAILED', call: detail, calls };
     let parsed: Record<string, unknown> | null = null;
@@ -283,7 +333,9 @@ export const homedataAddress = defineSteppedConnector<HomedataQuery>({
       records: [{ sourceId: 'HOMEDATA_ADDRESS', entityId: uprn, fields }],
       /* `uprn` is repeated in the facts on purpose: the facts are what the next lookup on this click reads, and the
          energy certificate lookup takes the UPRN from here to turn its fuzzy postcode match into an exact key. */
-      facts: { ...fields, title_pre_check: pre },
+      facts: { ...fields, title_pre_check: pre,
+        // Phase 153e: only with the dimensions switch on, and never a register fact: labelled as the estimate it is.
+        ...((q.dimensions ?? HOMEDATA_DIMENSIONS).enabled ? { estimated_floor_area: dimensionsEstimate(parsed['dimensions']) } : {}) },
     };
     const coords = fields['latitude'] === undefined ? ' It gives no coordinates, so the spatial screen stays unfed.' : '';
     const title = pre.has_title

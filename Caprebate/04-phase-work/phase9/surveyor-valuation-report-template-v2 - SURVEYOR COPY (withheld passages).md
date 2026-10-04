@@ -784,6 +784,12 @@ in an old plant room looks like a new boiler. If the answer is "only from the sp
 looking", then this section's evidence comes from documents and your role in it is smaller than we
 have drawn it.
 
+> **Built on our recommendation, 4 October 2026 (Phase 153e, Word question 150) — for you to check.** Lakhbir
+> answered "No": like-for-like cannot be told from a visit alone. So every finding in the report now carries one of
+> two labels: **Seen on site** (you inspected on site, as chapter 2 records, and set that item's figures or pool
+> yourself) or **From documents** (everything else, with "and the client's photos" where the client photographed it).
+> A video or photos are not a visit. The survey pack shows the same label against each line.
+
 ---
 
 # SECTION 21 — Limitations, Assumptions & Restriction on Use `[MIXED]`
