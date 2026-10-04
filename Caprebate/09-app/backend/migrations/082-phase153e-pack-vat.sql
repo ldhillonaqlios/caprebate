@@ -1,10 +1,12 @@
 -- ===========================================================================
--- 082 — CHAPTER 15'S VAT HALF                                   Phase 153e, 4 October 2026
+-- 082 — CHAPTER 15'S VAT HALF, AND SHARED AREAS FROM FLOOR PLANS   Phase 153e, 4 October 2026
 --
 -- Module 00 C23: VAT the client paid and could not reclaim is part of the spend. Built on our recommendation, for the
 -- surveyor and the tax adviser to check, as two pack inputs with their source (src/web/pack-vat.ts):
 --   vat_position  0 reclaims it all · 1 exempt · 2 partly exempt (unresolved: never counted) · 3 not known (never counted)
 --   vat           the VAT paid that could not be reclaimed, in pence
+-- and, for supported living (Word question 133), shared_area: the shared areas from the floor plans, in thousandths of
+-- a square metre, which the common-parts rows are drafted from (src/web/pack-lines.ts).
 -- Both belong to the whole pack (no line). The field CHECK cannot change in place, so the table is rebuilt the way
 -- migration 007 rebuilt `businesses`: every row copied, its index and two triggers made again word for word.
 -- ===========================================================================
@@ -21,7 +23,7 @@ CREATE TABLE survey_pack_entries_new (
   seq       INTEGER NOT NULL CHECK (seq >= 1),
   -- A fixture list id ('LS-GP-001') or an added line's id; NULL for the four values that belong to the whole pack.
   line_key  TEXT,
-  field     TEXT NOT NULL CHECK (field IN ('price_paid','land','gia','building_rate','qty','rate','qpct','pool','removed','vat_position','vat')),
+  field     TEXT NOT NULL CHECK (field IN ('price_paid','land','gia','building_rate','qty','rate','qpct','pool','removed','vat_position','vat','shared_area')),
   -- Whole numbers only: pence, thousandths of a unit, hundredths of a per cent, 1 or 0. NULL: our draft again.
   value     INTEGER CHECK (value IS NULL OR value >= 0),
   pool      TEXT CHECK (pool IN ('MP','SR')),
@@ -29,7 +31,7 @@ CREATE TABLE survey_pack_entries_new (
   reason    TEXT NOT NULL CHECK (length(trim(reason)) BETWEEN 1 AND 500),
   at        TEXT NOT NULL,
   UNIQUE (pack_id, seq),
-  CHECK ((line_key IS NULL) = (field IN ('price_paid','land','gia','building_rate','vat_position','vat'))),
+  CHECK ((line_key IS NULL) = (field IN ('price_paid','land','gia','building_rate','vat_position','vat','shared_area'))),
   CHECK (field = 'pool' OR pool IS NULL),
   CHECK (field <> 'pool' OR value IS NULL),
   CHECK (field <> 'removed' OR value IN (0, 1)),

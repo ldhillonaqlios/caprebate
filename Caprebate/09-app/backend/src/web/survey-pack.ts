@@ -67,7 +67,7 @@ export type PackGrants = {
  */
 export const GRANT_AMOUNTS_TO_SURVEYOR = false;
 
-export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed' | 'vat_position' | 'vat';
+export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed' | 'vat_position' | 'vat' | 'shared_area';
 export const PACK_INPUT_FIELDS = Object.freeze(['price_paid', 'land', 'gia', 'building_rate'] as const);
 export type PackInputField = (typeof PACK_INPUT_FIELDS)[number];
 
@@ -101,6 +101,8 @@ export type PackView = {
   readonly grants: PackGrants;
   /** PHASE 153e: chapter 15's VAT half (src/web/pack-vat.ts). Its counted VAT is in `sums`, added to the price paid. */
   readonly vat: VatReading;
+  /** PHASE 153e: supported living's shared areas from the floor plans, in thousandths of a m² (the surveyor's, with a reason). */
+  readonly shared_area: Valued;
   /** The pack's counter as this view was read. A change must carry it back. */
   readonly seq: number;
   readonly may_edit: boolean;
@@ -195,8 +197,12 @@ function surveyorSource(e: EntryRow): Source {
 const FIELD_WORDS: Readonly<Record<PackField, string>> = Object.freeze({
   price_paid: 'price paid', land: 'bare land', gia: 'floor area', building_rate: 'whole-building rate',
   qty: 'how much', rate: 'rate', qpct: 'share that qualifies', pool: 'pool', removed: 'taken out',
-  vat_position: 'VAT position', vat: 'VAT that could not be reclaimed',
+  vat_position: 'VAT position', vat: 'VAT that could not be reclaimed', shared_area: 'shared areas from the floor plans',
 });
+
+/** PHASE 153e (Word question 133): the share of the floor area used when no floor plans give the shared areas. */
+export const SHARED_FALLBACK_BP = 2500;
+export const SHARED_FALLBACK_WORDS = 'Fallback: a flat 25% of the floor area, not independently calibrated (a test default)';
 
 export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   const { job, obj } = packJob(d.db, actor, job_id);
@@ -224,6 +230,14 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     building_rate_pence: resolve(null, 'building_rate', none),
   };
 
+  // PHASE 153e (Word question 133): the common parts, by floor area from the floor plans, or the labelled 25% fallback.
+  const shared_area = resolve(null, 'shared_area', none);
+  const sharedDraft: Valued = shared_area.value !== null
+    ? { value: shared_area.value, source: { kind: 'SURVEYOR', text: 'The shared areas from the floor plans (chapter 9)', by_name: shared_area.source?.by_name ?? null, at: shared_area.source?.at ?? null } }
+    : inputs.gia_milli_m2.value !== null
+      ? { value: Math.round((inputs.gia_milli_m2.value * SHARED_FALLBACK_BP) / 10000), source: { kind: 'DRAFT', text: SHARED_FALLBACK_WORDS } }
+      : none;
+
   const lineFrom = (id: string, label: string, unit: string, t: LineTemplate | null, added: ViewLine['added']): ViewLine => {
     const qtyDraft: Valued = t === null ? none
       // A whole-building system follows the pack's floor area, whoever gave it (the certificate, or the surveyor in
@@ -232,6 +246,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
         kind: inputs.gia_milli_m2.source?.kind ?? 'EVIDENCE', text: 'The floor area (chapter 9)',
         by_name: inputs.gia_milli_m2.source?.by_name ?? null, at: inputs.gia_milli_m2.source?.at ?? null } })
       : t.qty_from.kind === 'ROOMS' ? roomDraft(d.db, job.id, t.qty_from.rooms)
+      : t.qty_from.kind === 'SHARED' ? sharedDraft
       : none;
     const draftSrc = (what: string): Source | null => t === null ? null : { kind: 'DRAFT', text: `Fixture list ${t.element_id}${t.authority === '' ? '' : ` — ${t.authority}`}${what}` };
     const poolEntry = last(id, 'pool');
@@ -288,7 +303,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
 
   return {
     job, pack_id: pack?.id ?? null, property, property_choices: choices,
-    inputs, lines, sums: reading.sums, grants, vat,
+    inputs, lines, sums: reading.sums, grants, vat, shared_area,
     seq: entries.length === 0 ? 0 : (entries[entries.length - 1] as EntryRow).seq,
     may_edit: can(actor, 'surveyor_job.commit', obj),
     changes,
@@ -367,11 +382,11 @@ export function savePackValue(d: PackDeps, actor: Actor, job_id: string, f: { fi
 }
 
 /**
- * PHASE 153e — CHAPTER 15'S VAT: the position (one of four) or the amount not reclaimed, each the surveyor's, with a
- * reason. Empty: back to not recorded.
+ * PHASE 153e — THE PACK'S EXTRA VALUES: chapter 15's VAT position (one of four) and the amount not reclaimed, and
+ * supported living's shared areas from the floor plans. Each the surveyor's, with a reason. Empty: back to not recorded.
  */
-export function saveVatValue(d: PackDeps, actor: Actor, job_id: string, f: { field: string; value: string; reason: string; seq: string }): PackResult {
-  if (f.field !== 'vat_position' && f.field !== 'vat') return { ok: false, field: 'field', why: 'That is not one of the VAT values.' };
+export function savePackExtra(d: PackDeps, actor: Actor, job_id: string, f: { field: string; value: string; reason: string; seq: string }): PackResult {
+  if (f.field !== 'vat_position' && f.field !== 'vat' && f.field !== 'shared_area') return { ok: false, field: 'field', why: 'That is not one of the pack’s values.' };
   const field: PackField = f.field;
   const raw = f.value.trim();
   let value: number | null = null;
@@ -381,14 +396,15 @@ export function saveVatValue(d: PackDeps, actor: Actor, job_id: string, f: { fie
       if (i < 0) return { ok: false, field: 'value', why: 'Choose one of the four answers.' };
       value = i;
     } else {
-      const p = parseMoney(raw);
+      const p = field === 'shared_area' ? parseQuantity(raw) : parseMoney(raw);
       if (!p.ok) return { ok: false, field: 'value', why: p.why };
       value = p.value;
     }
   }
   return begin(d, actor, job_id, f.reason, f.seq, ({ view, pack_id }) => {
-    const now = field === 'vat_position' ? view.vat.position_source : view.vat.amount_source;
-    const was = field === 'vat_position' ? (view.vat.position_source === null ? null : VAT_POSITION_CODES.indexOf(view.vat.position)) : view.vat.amount_pence;
+    const now = field === 'vat_position' ? view.vat.position_source : field === 'vat' ? view.vat.amount_source : view.shared_area.source;
+    const was = field === 'vat_position' ? (view.vat.position_source === null ? null : VAT_POSITION_CODES.indexOf(view.vat.position))
+      : field === 'vat' ? view.vat.amount_pence : view.shared_area.value;
     if (value === null && now === null) return { ok: false, field: 'value', why: 'Nothing is recorded yet, so there is nothing to clear.' };
     if (value !== null && now !== null && was === value) return { ok: false, field: 'value', why: 'That is already the value. Nothing changed.' };
     insertEntry(d, actor, pack_id, null, field, value, null, f.reason);

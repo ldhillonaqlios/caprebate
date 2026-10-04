@@ -73,7 +73,7 @@ export async function handleSurveyPack(
     res.end(versionPage(d, actor, v, kept));
     return 'handled';
   }
-  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/vat|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve)?$/.exec(url.pathname);
+  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/extra|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve)?$/.exec(url.pathname);
   if (m === null) return 'not-mine';
   const job = m[1] ?? '';
   const act = m[2]?.slice(1);
@@ -108,7 +108,7 @@ export async function handleSurveyPack(
   let r: P.PackResult;
   switch (act) {
     case 'value': r = P.savePackValue(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
-    case 'vat': r = P.saveVatValue(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
+    case 'extra': r = P.savePackExtra(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
     case 'line': r = P.saveLine(deps, actor, job, { line, qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq }); break;
     case 'revert': r = P.revertLine(deps, actor, job, { line, reason, seq }); break;
     case 'remove': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, true); break;
@@ -325,12 +325,12 @@ function vatSection(d: PackPageDeps, v: P.PackView, ch: number): Safe {
     </tbody></table>
     <p class="help">${t.words}</p>
     ${!v.may_edit || v.property === null ? raw('') : h`<details class="pk-add"><summary>Record the VAT position</summary>
-      <form method="post" action="${base(v.job.id)}/vat">${hidden(v, ch)}<input type="hidden" name="field" value="vat_position"><div class="pk-fields">
+      <form method="post" action="${base(v.job.id)}/extra">${hidden(v, ch)}<input type="hidden" name="field" value="vat_position"><div class="pk-fields">
         <label>Could the client reclaim it?
 <select class="fi" name="value"><option value="">Not recorded</option>${opt('RECLAIMS', VAT_POSITION_WORDS.RECLAIMS)}${opt('EXEMPT', VAT_POSITION_WORDS.EXEMPT)}${opt('PARTLY_EXEMPT', VAT_POSITION_WORDS.PARTLY_EXEMPT)}${opt('NOT_KNOWN', VAT_POSITION_WORDS.NOT_KNOWN)}</select></label>
         <label>Why <input class="fi" name="reason" maxlength="500" required placeholder="For example: their VAT return shows no VAT reclaimed"></label></div>
         <button class="cta" type="submit">Save</button></form>
-      <form method="post" action="${base(v.job.id)}/vat">${hidden(v, ch)}<input type="hidden" name="field" value="vat"><div class="pk-fields">
+      <form method="post" action="${base(v.job.id)}/extra">${hidden(v, ch)}<input type="hidden" name="field" value="vat"><div class="pk-fields">
         <label>VAT not reclaimed, in pounds <input class="fi" name="value" inputmode="decimal" value="${t.amount_pence === null ? '' : String(t.amount_pence / 100)}"></label>
         <label>Why <input class="fi" name="reason" maxlength="500" required placeholder="For example: the VAT on the purchase invoice"></label></div>
         <button class="cta" type="submit">Save</button></form></details>`}`;
@@ -425,7 +425,23 @@ function inputsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchP
           <p class="help">${w.hint} Leave it empty to put our figure back.</p>
           <div class="sendrow"><button class="cta" type="submit">Save — every total follows</button><a href="${base(v.job.id)}?ch=9#l-${field}">Cancel</a></div></form></td></tr>` : raw('')}`;
     })}</tbody></table>
-    ${v.inputs.building_rate_pence.value === null ? h`<p class="help">The whole-building rate comes from BCIS. Until BCIS is bought, the surveyor types it, and it is theirs.</p>` : raw('')}`;
+    ${v.inputs.building_rate_pence.value === null ? h`<p class="help">The whole-building rate comes from BCIS. Until BCIS is bought, the surveyor types it, and it is theirs.</p>` : raw('')}
+    ${v.job.sector === 'supported_living' ? sharedAreaBlock(d, v, ch) : raw('')}`;
+}
+
+/**
+ * PHASE 153e (Word question 133): supported living's shared areas, measured from the floor plans. The common-parts
+ * rows are drafted from it; with none, a flat 25% of the floor area, labelled as the fallback it is.
+ */
+function sharedAreaBlock(d: PackPageDeps, v: P.PackView, ch: number): Safe {
+  const s = v.shared_area;
+  return h`<h2>Shared areas, from the floor plans</h2>
+    <p class="help">The common parts are measured from the floor plans where we have them. Without them, we use a flat 25% of the floor area. That share is not checked against real jobs.</p>
+    <p>${s.value === null ? h`<span class="pk-src pk-need">not measured</span> · ${P.SHARED_FALLBACK_WORDS}` : h`${QTY(s.value)} m² ${sourceTag(d, s.source, true)}`}</p>
+    ${!v.may_edit || v.property === null ? raw('') : h`<form method="post" action="${base(v.job.id)}/extra">${hidden(v, ch)}<input type="hidden" name="field" value="shared_area"><div class="pk-fields">
+      <label>Shared areas, in m² <input class="fi" name="value" inputmode="decimal" value="${s.value === null ? '' : String(s.value / 1000)}"></label>
+      <label>Why <input class="fi" name="reason" maxlength="500" required placeholder="For example: the corridors, lounge and staff rooms on the floor plans"></label></div>
+      <button class="cta" type="submit">Save</button></form>`}`;
 }
 
 /* ------------------------------------------------------------ chapter 10 */

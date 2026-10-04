@@ -136,7 +136,9 @@ export type LineTemplate = {
   readonly label: string;
   readonly unit: string;
   /** How the quantity is drafted: from the floor area, from room counts, or not at all. */
-  readonly qty_from: { readonly kind: 'GIA' } | { readonly kind: 'ROOMS'; readonly rooms: readonly string[] } | { readonly kind: 'NONE' };
+  readonly qty_from: { readonly kind: 'GIA' } | { readonly kind: 'ROOMS'; readonly rooms: readonly string[] } | { readonly kind: 'NONE' }
+    /** PHASE 153e: supported living's common parts, from the shared areas on the floor plans (else the 25% fallback). */
+    | { readonly kind: 'SHARED' };
   readonly pool: Pool | null;
   /** Hundredths of a per cent, or null where the list leaves it to the surveyor. */
   readonly qpct_bp: number | null;
@@ -171,7 +173,9 @@ export function linesForSector(sector: string): LineTemplate[] {
     }
     else if (rooms[basis] !== undefined && COUNT_UNITS.has(unitCode)) { qty_from = { kind: 'ROOMS', rooms: rooms[basis] as readonly string[] }; unit = 'rooms'; }
     // Communal floor area in supported living is not the whole floor area: never drafted from it.
-    if (qty_from.kind === 'GIA' && /^communal/i.test(basis)) { qty_from = { kind: 'NONE' }; unit = 'm² of common parts'; }
+    // PHASE 153e (Word question 133): drafted from the shared areas the surveyor reads off the floor plans instead; with
+    // none, a flat 25% of the floor area, labelled as the fallback it is (src/web/survey-pack.ts, sharedDraft).
+    if (qty_from.kind === 'GIA' && /^communal/i.test(basis)) { qty_from = { kind: 'SHARED' }; unit = 'm² of common parts'; }
     const pct = (r['qualifying_pct'] ?? '').trim();
     const qpct_bp = /^\d{1,3}$/.test(pct) && Number(pct) <= 100 ? Number(pct) * 100 : null;
     const place = PLACEMENT[r['element_id'] ?? ''];
