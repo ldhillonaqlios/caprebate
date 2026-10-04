@@ -996,7 +996,8 @@ function runEngine(s){
   }
 
   // Stage 2 — upper band only, on the common-parts base (ceiling presentation)
-  let [qLo,qHi]=YIELD_BAND.supported_living.refurb_fitout;
+  // PHASE 153e (Word question 138): with CB_BAND.SWITCHES.sl_band_by_trigger on, the trigger's own band; off, as before.
+  let [qLo,qHi]=(CB_BAND.SWITCHES.sl_band_by_trigger && CB_BAND.slBand(s.trigger)) || YIELD_BAND.supported_living.refurb_fitout;
   // E-11 (feeds R-B8): a SECOND, independently unverified assessment — of the common-parts
   // spend, what fraction is qualifying P&M fixture density. Disclosed separately from the
   // Stage 1 common-parts share so neither uncalibrated number is hidden inside the other.

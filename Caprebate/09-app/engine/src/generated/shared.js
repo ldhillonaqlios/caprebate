@@ -6611,7 +6611,30 @@ var CB_BAND = (function(){
     return { low: Math.round(spend * b[0]), high: Math.round(spend * b[1]), band:b };
   }
 
-  return { BANDS:BANDS, bandKey:bandKey, bandFor:bandFor, rangeFor:rangeFor };
+  /* PHASE 153e, 4 October 2026 (Word question 138, the surveyor's): supported living's range read for its own
+     trigger, behind a switch that ships OFF. Today the calculation reads the refurbishment and fit-out band whatever
+     the trigger; its three bands are identical (10% to 25%), so the switch changes no figure until the surveyor sets
+     separate ranges from finished claims (the back end's src/web/sector-ranges.ts proposes them). A trigger list with
+     more than one trigger takes the band with the LOWEST ceiling (never the one that relieves); no trigger: none. */
+  var SWITCHES = { sl_band_by_trigger: false };
+  function slBandKey(t){
+    if(t === "purchase") return "purchase";
+    if(t === "new_build") return "new_build";
+    if(t === "conversion" || t === "fitout" || t === "fit_out" || t === "refurb") return "refurb_fitout";
+    return null;
+  }
+  function slBand(triggers){
+    var list = Array.isArray(triggers) ? triggers : (typeof triggers === "string" ? [triggers] : []);
+    var best = null;
+    for(var i = 0; i < list.length; i++){
+      var k = slBandKey(list[i]);
+      var b = k ? BANDS.supported_living[k] : null;
+      if(b && (best === null || b[1] < best[1])) best = b;
+    }
+    return best;
+  }
+
+  return { BANDS:BANDS, bandKey:bandKey, bandFor:bandFor, rangeFor:rangeFor, SWITCHES:SWITCHES, slBandKey:slBandKey, slBand:slBand };
 })();
 
 

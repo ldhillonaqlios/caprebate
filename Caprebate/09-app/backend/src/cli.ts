@@ -11,6 +11,7 @@
  *   node src/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
  *   node src/cli.ts sweep-enquiries   delete every closed website enquiry past its period (ENQUIRY_RETENTION, Phase 153c; off, so none)
  *   node src/cli.ts import-premises <CQC_CARE_DIRECTORY|NHS_ODS_DENTAL|NHS_ODS_GP> <file> --by <user id>   healthcare premises, no names (Phase 153c)
+ *   node src/cli.ts sector-ranges     propose each sector's range from approved survey packs; changes nothing (Phase 153e)
  *   node src/cli.ts sweep-land-boundaries   delete every kept land boundary file past the licence's 35 days
  *   node src/cli.ts seal-app-secrets  seal every authenticator app secret still kept as text (CAPREBATE_MFA_KEY, Phase 151k)
  *   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who W --why Y   one logged test lookup (Phase 151g)
@@ -150,6 +151,22 @@ async function main(): Promise<number> {
       const r = importPremises({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() },
         source as keyof typeof PREMISES_SOURCES, readFileSync(file, 'utf8'), { id: by, role: user.role });
       console.log(`${r.kept} kept, ${r.already_held} already held, ${r.held_back_may_name_a_person} held back (the name may be a person's), ${r.skipped_unreadable} unreadable, ${r.skipped_not_our_sector} not a sector we serve.`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  if (cmd === 'sector-ranges') {
+    /* PHASE 153e (Word question 138). Reads the approved survey packs and proposes a range per sector, supported living
+       per trigger. It changes no band: a person changes the engine, with the surveyor's agreement. */
+    const db = new Db(DEFAULT_DB);
+    try {
+      const { proposeRanges } = await import('./web/sector-ranges.ts');
+      const r = proposeRanges(db);
+      if (r.proposals.length === 0) console.log('No approved survey pack yet, so there is nothing to propose.');
+      for (const p of r.proposals) console.log(`${p.sector}${p.trigger === null ? '' : ` (${p.trigger})`}: ${p.words}`);
+      if (r.left_out > 0) console.log(`${String(r.left_out)} approved pack(s) left out: no price paid or no qualifying figure.`);
       return 0;
     } finally {
       db.close();
