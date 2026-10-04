@@ -1,6 +1,6 @@
 # Caprebate — the action plan
 
- **THIS IS THE DOCUMENT TO WORK FROM. **The phase prompts sit at the top, ready to copy and paste. Everything below them is the plan itself: what the business is, what is genuinely finished, what is stuck and on whom, the order to work in, and an honest list of what we do not know.
+ **THIS IS THE DOCUMENT TO WORK FROM. **The phase prompts sit at the top, ready to copy and paste. **Since 4 October 2026 Lakhbir pastes them from the monday.com RUN SHEET** (the document on the CAPREBATE ACTION PLAN item), which holds the same phases at its very top and a short log of what each finished phase did at its end; this file is the full copy in OneDrive and is kept the same (rule 6 under "How the phases at the top of this document work"). Everything below them is the plan itself: what the business is, what is genuinely finished, what is stuck and on whom, the order to work in, and an honest list of what we do not know.
 
  **Where everything lives, since 25 September 2026: in files, and monday.com is gone.** On 25 September 2026 Lakhbir became a guest on the monday.com account that held this project, and every monday.com call began to fail ("the account admin must enable 'Public Hosted MCP'"). He decided to drop monday.com that day. **Phase 151d exported everything it held, checked it complete, and made it files in `00-START-HERE/hub/`**, committed to the repository: this plan (`ACTION-PLAN.md`); `PHASE-HISTORY.md`, which records what every completed phase actually did and is an archive, not a runbook; the three live registers of everything waiting on a named person's signature (`FOR-THE-ACCOUNTANT.md`, `FOR-THE-SURVEYOR.md`, `FOR-THE-SOLICITOR-DPO-DEVELOPER.md`); the board, as `TRACKER.csv` (read `TRACKER.md`, and change it only with `node 03-app/caprebate-tracker.cjs`); the comments the board carried, as `COMMENTS-ARCHIVE.md`; the old monday.com questions document, as `QUESTIONS-BACKGROUND.md` (background only); and the lock, `CLAIM.md`. The exports themselves are kept unedited in `_archive/`. **Every open question and every answer is in the Word document Caprebate_Questions.docx**, in Lakhbir's OneDrive (Health Capital Allowances folder): the source of truth for questions and answers (Lakhbir, 22 September 2026), read and written as AMENDMENT 2 says. Where this plan says "the question that unblocks it", the question is in the Word document. **Where older text below says "the board", read the tracker; where it says a board item, read its row, found by the same id.**
 
@@ -435,8 +435,11 @@ REWRITTEN 25 SEP 2026 BY PHASE 151d, THE DAY monday.com WAS DROPPED. Lakhbir
 became a guest on the seveneightsixmediagroup monday.com account and every
 connector call began to fail ("the account admin must enable 'Public Hosted
 MCP'"); he decided to leave monday.com that day. Everything it held was
-exported, checked complete, and is now a file in the repository. DO NOT CALL
-ANY monday.com TOOL. Every monday.com-only trap (block ids and positions, the
+exported, checked complete, and is now a file in the repository.
+CHANGED 3 AND 4 OCT 2026 (Lakhbir): monday.com is the main board again, and
+its doc 18429698457 is the run sheet the phases are pasted from. Follow the
+note under "How the phases at the top of this document work" and each
+phase's banner; OneDrive stays the full copy. Every monday.com-only trap (block ids and positions, the
 25-item limit, document columns, asset ids, re-uploading files) was deleted
 with it; the old blocks, and the 25 dated notes that sat under them, are
 verbatim in the export in _archive/ if a record is ever needed.
@@ -609,7 +612,12 @@ OWNER TYPES - the six:  Claude . CTA . Lakhbir . Surveyor . Solicitor/DPO .
   actor with no login.
 
 THE HUB ROWS - the old monday.com items, found in the tracker by these ids
-  CAPREBATE ACTION PLAN     12976111942   -> hub/ACTION-PLAN.md
+  CAPREBATE ACTION PLAN     12976111942   -> hub/ACTION-PLAN.md; its monday
+                                             doc 18429698457 is THE RUN SHEET
+                                             again since 4 Oct 2026 (the live
+                                             phases on top, then DONE - ACTIONS
+                                             AND OUTCOMES); the doc as it was is
+                                             in 08-monday-doc-exports/
   CAPREBATE QUESTIONS       12976075805   -> the Word document (background:
                                              hub/QUESTIONS-BACKGROUND.md)
   PHASE HISTORY             12878920167   -> hub/PHASE-HISTORY.md
@@ -959,18 +967,51 @@ command that counts it, never the number.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 
 Mac copy. A .bak-phase153a sibling of every file you change.
@@ -1058,6 +1099,7 @@ Line 7: DONE on 30 Sep (PHASE-HISTORY ~10935; the cause was random seed ids
 
 When every line is done: run every check in COORDINATES, re-derive the
 figures, update the registers you touched, and write the record.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
@@ -1067,18 +1109,51 @@ figures, update the registers you touched, and write the record.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 
 Mac copy. A .bak-phase153b sibling of every file you change.
@@ -1185,6 +1260,7 @@ When every line is done: run every check in COORDINATES (prove each new
 test red on the code before), re-derive the figures, update the register
 entry for each built item, note each question "built in Phase 153b" in
 the review document's Answer line, and write the record.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
@@ -1194,18 +1270,51 @@ the review document's Answer line, and write the record.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 
 Mac copy. A .bak-phase153c sibling of every file you change.
@@ -1329,6 +1438,7 @@ When every line is done: run every check in COORDINATES (prove each new
 test red on the code before), re-derive the figures, update the register
 entry for each built item, note each question "built in Phase 153c" in
 the review document's Answer line, and write the record.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
@@ -1338,18 +1448,51 @@ the review document's Answer line, and write the record.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 
 Mac copy. A .bak-phase153d sibling of every file you change.
@@ -1400,6 +1543,7 @@ When every line is done: run every check in COORDINATES (prove each new
 test red on the code before), re-derive the figures, update the register
 entry for each built item, note each question "built in Phase 153d" in
 the review document's Answer line, and write the record.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
@@ -1409,18 +1553,51 @@ the review document's Answer line, and write the record.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 
 Mac copy. A .bak-phase153e sibling of every file you change.
@@ -1517,6 +1694,7 @@ When every line is done: run every check in COORDINATES (prove each new
 test red on the code before), re-derive the figures, update the register
 entry for each built item, note each question "built in Phase 153e" in
 the review document's Answer line, and write the record.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
@@ -1526,20 +1704,51 @@ the review document's Answer line, and write the record.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Everything a phase needs is in files in the
-repository, github.com/ldhillonaqlios/caprebate, branch main. On the Mac the
-working copy is Development/, one level above the tree:
-/Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. MONDAY.COM is the main board again (3 Oct 2026): follow the
-note under "How the phases at the top of this document work". If you cannot
-read the plan, still: claim the work in hub/CLAIM.md (commit and push first; a
-claim already there stops you) and clear it at the end; retag what you touch
-in the tracker (node 03-app/caprebate-tracker.cjs); give every loose end a
-home; write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS
-SECTION. Work on a branch; never push to main; Lakhbir merges.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 
 1. SURVEY PACK STAGE 6 - the free lookups switched on in test and building
@@ -1580,6 +1789,7 @@ SECTION. Work on a branch; never push to main; Lakhbir merges.
 When every line is done: run every check in COORDINATES (prove each new test
 red on the code before), re-derive the figures, update the registers you
 touched, and write the record.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
@@ -1589,20 +1799,51 @@ touched, and write the record.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Everything a phase needs is in files in the
-repository, github.com/ldhillonaqlios/caprebate, branch main. On the Mac the
-working copy is Development/, one level above the tree:
-/Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. MONDAY.COM is the main board again (3 Oct 2026): follow the
-note under "How the phases at the top of this document work". If you cannot
-read the plan, still: claim the work in hub/CLAIM.md (commit and push first; a
-claim already there stops you) and clear it at the end; retag what you touch
-in the tracker (node 03-app/caprebate-tracker.cjs); give every loose end a
-home; write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS
-SECTION. Work on a branch; never push to main; Lakhbir merges.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 
 Tests go in Caprebate/09-app/backend/test. Break each fix on purpose to prove
@@ -1678,6 +1919,7 @@ test/assessment-start.test.ts, _crawl_roles.ts, _s2.ts): they are Lakhbir's.
 
 When every line is done: run every check in COORDINATES, re-derive the
 figures, update the registers you touched, and write the record.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
@@ -1687,20 +1929,51 @@ figures, update the registers you touched, and write the record.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Everything a phase needs is in files in the
-repository, github.com/ldhillonaqlios/caprebate, branch main. On the Mac the
-working copy is Development/, one level above the tree:
-/Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. MONDAY.COM is the main board again (3 Oct 2026): follow the
-note under "How the phases at the top of this document work". If you cannot
-read the plan, still: claim the work in hub/CLAIM.md (commit and push first; a
-claim already there stops you) and clear it at the end; retag what you touch
-in the tracker (node 03-app/caprebate-tracker.cjs); give every loose end a
-home; write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS
-SECTION. Work on a branch; never push to main; Lakhbir merges.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 
 1. CIW - THE CARE INSPECTORATE WALES. Its register switch exists
@@ -1738,6 +2011,7 @@ SECTION. Work on a branch; never push to main; Lakhbir merges.
 When every line is done: run every check in COORDINATES (prove each new test
 red on the code before), re-derive the figures, update the registers, and write
 the record.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
@@ -1747,20 +2021,51 @@ the record.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Everything a phase needs is in files in the
-repository, github.com/ldhillonaqlios/caprebate, branch main. On the Mac the
-working copy is Development/, one level above the tree:
-/Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. MONDAY.COM is the main board again (3 Oct 2026): follow the
-note under "How the phases at the top of this document work". If you cannot
-read the plan, still: claim the work in hub/CLAIM.md (commit and push first; a
-claim already there stops you) and clear it at the end; retag what you touch
-in the tracker (node 03-app/caprebate-tracker.cjs); give every loose end a
-home; write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS
-SECTION. Work on a branch; never push to main; Lakhbir merges.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 
 START by reading hub/KEYS-AND-SWITCHES.md, then ASK LAKHBIR which PART A steps
@@ -1891,6 +2196,7 @@ B5. Update hub/KEYS-AND-SWITCHES.md and the Developer Spec's stubs table to
 When every line that could run is done: run every check in COORDINATES,
 re-derive the figures, update the registers, write the record, and leave each
 PART A step not yet done as a line in hub/WAITING-ON-PEOPLE.md.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
@@ -1903,18 +2209,50 @@ PART A step not yet done as a line in hub/WAITING-ON-PEOPLE.md.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. THIS SECTION IS NEVER DELETED: it is the sweep. Renumber it forward in
+   BOTH places (the run sheet and hub/ACTION-PLAN.md) so it stays the
+   highest number and last, just above "DONE - ACTIONS AND OUTCOMES".
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 ═══ CHECKED 3 OCTOBER 2026 — CORRECTIONS. They overrule the text below where they differ. ═══
 MONDAY.COM IS THE MAIN BOARD AGAIN (Lakhbir, 3 Oct 2026): follow the note under
@@ -2169,6 +2507,7 @@ WHEN DONE
 3. Leave the drift checker, the tracker check and the register check green,
    and prove the drift checker can still go red.
 
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
  **ADDED 24 SEPTEMBER 2026 BY PHASE 147 — TWO MORE JOBS FOR THE SWEEP, BOTH BUILDABLE, AND ONE CORRECTION TO ITS OWN PROMPT.** A note rather than an edit, because the prompt block above is 13 KB and `update_block` replaces all of it. The sweep folds it in. **(1) Read CIBSE's "Fair Use Policy" page live, and its "CIBSE copyright" section.** CIBSE's terms point to it for Knowledge Portal content. Phase 147 could not read it: the site answered 503 and "HTTP Error 500.30" on 24 September, and the page is not archived. It may settle the three things CIBSE does not publish: whether a report a client pays for is "a text for sale", whether using a life in a calculation is reproduction, and whether several staff may use one download. If it does, update the licence CIBSE_KNOWLEDGE in `04-phase-work/phase3/caprebate-source-register.ts`, its write-up `caprebate-cibse-plant-lives-source-register-row.md`, and Word question 213 — **and loosen a refusal only on CIBSE's own words.** **(2) Point 3a(b) of the prompt above is out of date.** Section 6 of `caprebate-job-economics.md` is no longer "written ENTIRELY around that null", and its "at a high price" branch is withdrawn, not merely unfired. And "7p for an address and UPRN" is the supplier's find-then-retrieve: our lookup is 8p (postcode 2, address 5, title check 1). The price stays null for a new reason: it is a list price, not an account price. Fold that into 3a when the prompt is next retyped, and check the SHAPE 3a names, not these words. **DONE 24 SEPTEMBER 2026 BY THE SWEEP (Phase 149, renumbered 151): (1) is done.** The page is gone from CIBSE's live site - it is not among the 3,703 pages in its sitemap, though the live terms still point to it - and it was read as last archived, on 29 May 2022. It confirms all three refusals and loosens none: downloads are for personal use, and re-use "for re-use, re-sale or other gain" or for a third party needs permission. The licence note, the write-up (re-uploaded) and Word question 213 say so. (2) still stands: this sweep changed only the prompt's heading, as the prompt instructs, so point 3a is still to be folded when the prompt is next retyped. **FOLDED 25 SEPTEMBER 2026 BY PHASE 151d:** point 3a(b) of the prompt above now says this.
@@ -2577,7 +2916,8 @@ _ |
  2. **OneDrive is never neglected.** Every status, owner or new item written to the board is written to `hub/TRACKER.csv` too, in the same phase (`node 03-app/caprebate-tracker.cjs`), so the files in OneDrive stay a complete record and every check that reads them keeps working. Documents, papers, the plan, PHASE HISTORY and the registers stay in OneDrive; the board links to them and never holds the only copy.
  3. **If the board and the tracker disagree, stop and ask Lakhbir** which is right, and say what each says. Never overwrite one with the other without asking.
  4. **The board is shared** (its owners include Abdul Rahman Hijazi, Shafiek Mohabbat and Umar Hussain, and it is open to everyone in the account): no client personal data, no keys or passwords, and no invented-data logins on it.
- 5. **The board was last changed on 30 September**; on 3 October a read-only comparison with the tracker was made, and bringing the board up to date waits on Lakhbir's yes to the list of changes.
+ 5. **The board was brought up to date from the tracker on 3 October 2026** (with Lakhbir's yes; the record is in PHASE HISTORY).
+ 6. **THE RUN SHEET — LAKHBIR, 4 OCTOBER 2026.** The monday document on the CAPREBATE ACTION PLAN item (doc 18429698457) is where the phases are run from. It holds only the live phases, in order, at the very top (each one fenced block, ready to copy and paste), then **DONE — ACTIONS AND OUTCOMES**, a short entry per finished phase, oldest first. Every phase's banner says what to do when it finishes: write the full record in PHASE HISTORY; add its short entry at the END of the run sheet; **delete its own section from the run sheet AND from this document** (the sweep never deletes itself — it renumbers forward and stays last); set its board item and the tracker; clear the claim. **The phases here and on the run sheet must stay the same**: a phase added, changed or deleted in one is added, changed or deleted in the other in the same phase, and the copy in this document wins if they ever differ. The doc as it was before 4 October is saved in `08-monday-doc-exports/`.
 
  The engineering work runs as numbered phases, and the live ones are at the top of this document — copy a whole block, paste it into Claude, and it claims the work, does it, records what it found and deletes its own section. **Every phase also works THE STANDING INSTRUCTION**, which is the same thirteen numbered points and a closing check every time: retag what you touched, carry every loose end into a phase or a question, update the three sign-off registers, re-derive any figure you quote, and write the record into PHASE HISTORY. **A**** ****phas****e**** may not cl****ose wh****il****e ****a****nything it did not fini****sh**** is still only a**** sent****e****n****c****e** — that is the rule that stops work quietly disappearing into prose, and it is why the brand rename inside the Monday documents became its own phase rather than a line in a report when the disk rename could not reach them.
 

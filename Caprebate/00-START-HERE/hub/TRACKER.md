@@ -39,6 +39,7 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-09-25 (Phase 151d): The plan is now 00-START-HERE/hub/ACTION-PLAN.md, and the lock is 00-START-HERE/hub/CLAIM.md, not this row's claim. Phase 151c's claim, left here when monday.com access was lost, is cleared.
 - Note 2026-09-25 (Phase 151d, later): Lakhbir, 25 Sep 2026: leave monday.com (his to do in monday.com); the Acer is retired, only the Mac - the plan's DISK paragraph says so.
+- Note 2026-10-04 (Run sheet set-up): Its monday document (doc 18429698457) is THE RUN SHEET again: the ten live phases (153a to 157) at the very top, one block each to copy into Claude, then DONE - ACTIONS AND OUTCOMES, where each finished phase adds a short entry. Each phase's banner now says: delete yourself from the run sheet AND from hub/ACTION-PLAN.md when done (the sweep renumbers instead), add your entry at the end of the run sheet, and keep OneDrive up to date (every board change also in this tracker). The doc as it was (a 23 Sep copy of the plan) is saved in 08-monday-doc-exports/.
 
 ### ❓ CAPREBATE QUESTIONS — every open question, and who has to answer it
 

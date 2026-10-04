@@ -1,6 +1,6 @@
 # Carry on in a new chat — paste the block below into a new Claude Code chat
 
-Written 3 October 2026. It is everything a new chat needs to pick up where the last one stopped. Copy the whole block.
+Written 3 October 2026; the run sheet added 4 October. It is everything a new chat needs to pick up where the last one stopped. Copy the whole block.
 
 ```
 I'm Lakhbir Dhillon, Head of Business Development at Cap Rebate (CAP REBATE LTD;
@@ -23,6 +23,13 @@ WHERE EVERYTHING IS
   nobody built), 156 (every outside service: my steps, then yours - deliberately
   near the end), then 157 (the sweep, always last). Each phase is one fenced
   block.
+- THE RUN SHEET (since 4 Oct): the monday.com document on the CAPREBATE ACTION
+  PLAN item (doc 18429698457) holds the same phases at its very top, one block
+  each; I copy the top one into a chat to run it. When a phase is done it
+  deletes itself from the run sheet AND from ACTION-PLAN.md (the sweep
+  renumbers instead), adds a short "actions and outcomes" entry at the end of
+  the run sheet, and writes its full record in PHASE-HISTORY.md. Every
+  phase's opening block says all this.
 - What only a person can do: hub/WAITING-ON-PEOPLE.md.
 - Every outside service, its keys and whether it is on: hub/KEYS-AND-SWITCHES.md.
 - History of everything done: hub/PHASE-HISTORY.md (read the end). The last
@@ -71,7 +78,8 @@ HOUSE RULES (follow them exactly)
   (board 18422317809). Track the work there, and write every change to
   hub/TRACKER.csv too so OneDrive stays complete; documents stay in OneDrive.
   If the board and the tracker disagree, ask me which is right. The board is
-  shared: no client data or keys on it. The rules are in ACTION-PLAN.md under
+  shared: no client data or keys on it. Keep OneDrive up to date: every
+  document lives there, never only on monday. The rules are in ACTION-PLAN.md under
   "How the phases at the top of this document work".
 
 WHAT TO DO FIRST
