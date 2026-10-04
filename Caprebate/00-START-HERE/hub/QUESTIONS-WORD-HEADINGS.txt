@@ -161,6 +161,9 @@
 224) May we submit a client's amended tax return for them, with their written permission, and what must our letter say?
 240) May we keep a company's type ("ltd", "plc" or "llp") from Companies House, to fill in what kind of business a client is?
 241) May the survey pack show the surveyor how much each grant on a claim paid?
+242) Do you approve Zoom, a US company, for our video calls?
+243) Do you approve WhatsApp (Meta), a US company, for messages with clients?
+244) Do you approve GoAddress for "Find my address"?
 1) What do we do when our fee is more than the client saves in year one?
 3) Has the privacy email inbox been set up, and is someone reading it?
 4) Should the business email inboxes be set up on IONOS or Microsoft 365?
