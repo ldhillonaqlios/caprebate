@@ -46,6 +46,7 @@ import { CHAPTERS } from './pack-chapters.ts';
 import * as S from './surveyor.ts';
 import { jobSite, setJobMenu } from './surveyor-pages.ts';
 import { lateBadge, siteOf } from './look.ts';
+import { PAYER_CLASSES } from './claim-facts.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });
@@ -164,6 +165,7 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
       <article class="pack-book">
         <h1>${String(chapter.n)} · ${chapter.title}</h1>
         ${ch === 4 ? summaryChapter(v) : ch === 7 ? legalChapter(d, v, lv, ch, q) : ch === 9 ? inputsChapter(d, v, ch, q) : ch === 10 ? elementsChapter(d, v, ch, q)
+          : ch === 15 ? grantsChapter(v)
           : ch === 2 ? inspectionChapter(d.app, actor, v.job.id, q)
           : ch === 23 ? signChapter(d, actor, v, ready, q)
           : h`<p class="help">This chapter is filled in at the next stage of the build. For now, the sums are in chapters 4, 9 and 10.</p>`}
@@ -220,6 +222,7 @@ function summaryChapter(v: P.PackView): Safe {
       <div>Less bare land<b>${i.land_pence.value === null ? '—' : `− ${PENCE(i.land_pence.value)}`}</b><span>Chapter 9</span></div>
       <div>The building<b>${PENCE(s.building_price_pence)}</b><span>price less land</span></div>
       <div>Rebuild cost today<b>${PENCE(s.rebuild_pence)}</b><span>floor area × rate</span></div>
+      ${v.grants.list.length === 0 ? raw('') : h`<div>Less grants<b>${v.grants.reading.reduction_pence === null ? '—' : `− ${PENCE(v.grants.reading.reduction_pence)}`}</b><span>Chapter 15</span></div>`}
       <div class="pathway-end">Spend that qualifies<b>${PENCE(s.qualifying_pence)}</b><span>${s.share_bp === null ? 'not worked out yet' : `${PCT(s.share_bp)} of the building`}</span></div>
     </div>
     ${mainPct === null ? raw('') : h`<p><strong>Where it sits.</strong> Main pool ${PENCE(s.main_pool_pence)} (${String(mainPct)}%) · Special rate pool ${PENCE(s.special_pool_pence)} (${String(100 - mainPct)}%)</p>
@@ -242,18 +245,63 @@ function neededList(v: P.PackView): Safe {
  */
 function neededGroups(v: P.PackView): Safe {
   const s = v.sums;
-  const link = (n: (typeof s.needed)[number]): string => `${base(v.job.id)}?ch=${n.where === 'INPUT' ? '9' : '10'}${n.line_id === null ? '' : `&edit=${encodeURIComponent(n.line_id)}#l-${n.line_id}`}`;
+  const link = (n: (typeof s.needed)[number]): string => n.where === 'GRANT' ? `${base(v.job.id)}?ch=15`
+    : `${base(v.job.id)}?ch=${n.where === 'INPUT' ? '9' : '10'}${n.line_id === null ? '' : `&edit=${encodeURIComponent(n.line_id)}#l-${n.line_id}`}`;
   const inputs = s.needed.filter((n) => n.where === 'INPUT');
-  const lines = s.needed.filter((n) => n.where !== 'INPUT');
+  const lines = s.needed.filter((n) => n.where === 'LINE');
+  const grants = s.needed.filter((n) => n.where === 'GRANT');
   return h`<h2>Still needed: ${String(s.needed.length)}</h2>
       <p class="help">There is no total until every value is in. We never fill a gap with a guess.</p>
       <table class="pk-table pk-groups"><thead><tr><th>What is missing</th><th>How many</th><th></th></tr></thead><tbody>
         ${inputs.length === 0 ? raw('') : h`<tr><td>Price, land and floor area<br><span class="help">${inputs.map((n) => n.words).join(' ')}</span></td><td>${lateBadge(String(inputs.length))}</td><td><a href="${base(v.job.id)}?ch=9">Go to chapter 9</a></td></tr>`}
         ${lines.length === 0 ? raw('') : h`<tr><td>Rebuild cost and split, line by line<br><span class="help">How much, the rate, and for some the pool.</span></td><td>${lateBadge(String(lines.length))}</td><td><a href="${base(v.job.id)}?ch=10">Go to chapter 10</a></td></tr>`}
+        ${grants.length === 0 ? raw('') : h`<tr><td>Grants on the claim<br><span class="help">How much each grant paid. It is recorded on the claim, not here.</span></td><td>${lateBadge(String(grants.length))}</td><td><a href="${base(v.job.id)}?ch=15">Go to chapter 15</a></td></tr>`}
       </tbody></table>
       <details class="morelist"><summary>Show all ${String(s.needed.length)}, one per line</summary>
         <ul class="pk-needed">${s.needed.slice(0, 60).map((n) => h`<li><a href="${link(n)}">${n.words}</a></li>`)}</ul>
         ${s.needed.length > 60 ? h`<p class="help">… and ${String(s.needed.length - 60)} more.</p>` : raw('')}</details>`;
+}
+
+/* ------------------------------------------------------------ chapter 15: grants and VAT */
+
+const ROUTE_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  ITEMS: 'Off the items it paid for', EQUAL_SHARE: 'Off every item, in equal share', NOT_TAKEN_OFF: 'Not taken off',
+});
+
+/**
+ * PHASE 153a, 4 October 2026 — F-15's remainder. The claim's grants, read from the claim record, and what each takes off
+ * (src/web/pack-grants.ts). Nothing is typed here: a grant is recorded, matched and removed on the claim, by Sales or
+ * Admin, so the surveyor sees what the claim holds and the figure it gives. VAT is not in the pack yet.
+ */
+function grantsChapter(v: P.PackView): Safe {
+  const g = v.grants;
+  const r = g.reading;
+  const effect = new Map(r.effects.map((e) => [e.grant_id, e] as const));
+  const lineLabel = new Map(v.lines.map((l) => [l.id, l.label] as const));
+  const how = g.switches.element_trace
+    ? 'A grant matched to rows of our fixture list comes off only those items. A grant not matched to rows comes off every item in equal share.'
+    : 'Every grant comes off every item in equal share: the grant as a share of the price paid. Taking a grant off only the items it paid for is built, and switched off until the tax adviser says it is right.';
+  return h`
+    <p class="lede">Money from someone else — the NHS, a council, a landlord — reduces the spend it paid for. Insurance money after damage does not.</p>
+    <p>${how}</p>
+    ${g.claim_id === null ? h`<p class="gate">This survey job is on no claim, so there are no grants to read. Grants are recorded on the claim.</p>`
+      : g.list.length === 0 ? h`<p class="gate">No grant is recorded on the claim. If anyone else paid for any of the work, it is recorded on the claim, and comes off here.</p>`
+      : h`<table class="pk-table"><thead><tr><th scope="col">Who paid</th><th scope="col" class="n">How much</th><th scope="col">What it paid for</th><th scope="col">How it comes off</th><th scope="col" class="n">Takes off</th></tr></thead>
+        <tbody>${g.list.map((x) => {
+          const e = effect.get(x.id);
+          const met = (e?.line_ids ?? []).map((id) => lineLabel.get(id) ?? id);
+          return h`<tr><td>${PAYER_CLASSES[x.payer_class] ?? 'Not known'}<br><span class="help">${x.kind === 'GRANT' ? 'A grant' : 'A payment towards the work'}</span></td>
+            <td class="n">${x.amount_pence === null ? h`<span class="pk-gap">not known</span>` : PENCE(x.amount_pence)}</td>
+            <td>${x.element_names.length > 0 ? x.element_names.join('; ') : x.traced === 'YES' ? 'Matched in words only' : 'Not matched yet'}</td>
+            <td>${ROUTE_WORDS[e?.route ?? ''] ?? '—'}<br><span class="help">${e?.words ?? ''}${met.length === 0 ? '' : ` Lines: ${met.join('; ')}.`}</span></td>
+            <td class="n">${e?.reduction_pence === null || e === undefined ? '—' : PENCE(e.reduction_pence)}</td></tr>`;
+        })}</tbody>
+        <tbody><tr class="pk-tot"><th scope="row">Before grants</th><td></td><td></td><td></td><td class="n">${PENCE(r.before.qualifying_pence)}</td></tr>
+          <tr class="pk-tot"><th scope="row">Less grants</th><td></td><td></td><td></td><td class="n">${r.reduction_pence === null ? '—' : `− ${PENCE(r.reduction_pence)}`}</td></tr>
+          <tr class="pk-tot"><th scope="row">Spend that qualifies</th><td></td><td></td><td></td><td class="n">${PENCE(v.sums.qualifying_pence)}</td></tr></tbody></table>
+        ${r.reduction_pence === null ? h`<p class="gate" role="alert">There is no total until every grant’s amount is known, and the rest of the pack is complete. Record the amount on the claim.</p>` : raw('')}`}
+    <h2>VAT</h2>
+    <p class="help">VAT is not in this pack yet. Whether VAT the client could not reclaim counts as spend is added at a later stage of the build.</p>`;
 }
 
 /* ------------------------------------------------------------ chapter 7 */
@@ -437,6 +485,8 @@ function totalsCard(v: P.PackView): Safe {
   const s = v.sums;
   return h`<section class="pk-card"><h2>The pack’s totals</h2>
     <dl class="pk-dl">
+      ${v.grants.list.length === 0 ? raw('') : h`<div><dt>Before grants</dt><dd>${PENCE(v.grants.reading.before.qualifying_pence)}</dd></div>
+      <div><dt>Less grants</dt><dd>${v.grants.reading.reduction_pence === null ? '—' : `− ${PENCE(v.grants.reading.reduction_pence)}`}</dd></div>`}
       <div><dt>Spend that qualifies</dt><dd>${PENCE(s.qualifying_pence)}</dd></div>
       <div><dt>Main pool</dt><dd>${PENCE(s.main_pool_pence)}</dd></div>
       <div><dt>Special rate pool</dt><dd>${PENCE(s.special_pool_pence)}</dd></div>

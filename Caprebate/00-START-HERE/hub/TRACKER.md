@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 5 |
+| Ready - Claude can build | 4 |
 | Ready - Lakhbir action | 33 |
 | Built - awaiting sign-off | 119 |
 | Blocked - question | 1 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
 | Done | 272 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1342,7 +1342,7 @@
 
 ### Phase 153a - what Phase 153 found and could build but did not: the grant trace (F-15's remainder), the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations
 
-`13199500801` · **Ready - Claude can build** · owner Claude
+`13199500801` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's, OneDrive copy) - Phase 153a, 4 Oct 2026**
 
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268314 (board sync, Lakhbir's yes).
 

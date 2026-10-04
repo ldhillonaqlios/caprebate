@@ -1,7 +1,7 @@
 {
   "generatedBy": "09-app/engine/tools/extract.cjs",
   "source": "Caprebate site.html",
-  "sourceSha256": "d56088195382d62c0032653c2036d45adf1715a8a8674547dc2281e30b262018",
+  "sourceSha256": "1299c63450ff5f6f4615f6f3b9eee584937c9b10e64412e17d8a9538200eafaa",
   "sharedModules": [
     "CB_PLANT",
     "CB_CTA",
@@ -36,7 +36,7 @@
   ],
   "slices": {
     "shared.js": {
-      "bytes": 382884
+      "bytes": 384355
     },
     "sector-care_homes.js": {
       "bytes": 92665

@@ -646,7 +646,29 @@ var CB_CTA = {
      N4: only a KNOWN share is deducted. "Not sure" and no answer deduct nothing,
      and "not sure" is flagged as NOT assumed nil. F-6 is not asked in this
      sector, so a connected contributor is not exempted here. */
-  sl_landlord_contribution: false
+  sl_landlord_contribution: false,
+
+  /* ===== ADDED 4 OCTOBER 2026 BY PHASE 153a: ONE MORE, false ===== */
+
+  /* F-15's remainder - item 12852269899 (Done, "remainder documented as
+     future work"), Rulebook F section 5 (".traced_elements[] - the field the
+     whole module turns on") and F3 ("trace it to cost elements; do not
+     pro-rate yet"). Waits on the tax adviser: does a grant whose papers name
+     the items it paid for reduce ONLY those items' qualifying spend?
+     THIS ESTIMATE NEVER READS IT. The public estimate holds no item-by-item
+     spend, so every grant here is untraced and keeps the grant_fraction route
+     whichever way this sits - Suite H, H24, asserts that in all five sectors.
+     It is read by the back end's survey pack (09-app/backend/src/web/
+     pack-grants.ts, chapter 15), where each line is a row of the fixture list
+     and a grant on the claim record can name the rows it paid for.
+     ON => a grant matched to named fixture-list rows comes off only those
+     rows' qualifying spend (and their pool); a grant not matched to rows
+     keeps the equal share. EITHER WAY: a grant that paid for qualifying items
+     takes more off than an equal share would; one that paid only for items
+     that never qualify (walls, the flats) takes nothing off (Word question 79).
+     N4: a grant matched only in words, or not at all, is UNTRACED - never
+     taken as having paid for nothing. An amount not known gives no total. */
+  grant_traced_to_elements: false
 };
 
 

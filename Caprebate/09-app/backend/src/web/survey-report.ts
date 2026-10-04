@@ -100,6 +100,11 @@ function inspectionWords(i: Snapshot['inspection'] | undefined): string | null {
 
 export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
   const s = x.sums;
+  // PHASE 153a: a version approved before grants came off has no `grants`; one with grants that took nothing off reads as before.
+  const gr = (x as { grants?: Snapshot['grants'] }).grants;
+  const off = gr !== undefined && gr.reduction_pence !== null && gr.reduction_pence > 0 ? gr : null;
+  const beforeShare = s.rebuild_pence === null || s.rebuild_pence === 0 || s.elements_qualifying_pence === null ? null
+    : Math.round((s.elements_qualifying_pence * 10000) / s.rebuild_pence);
   const q = (s.qualifying_pence ?? 0);
   const main = s.main_pool_pence ?? 0;
   const mainPct = q === 0 ? 0 : Math.round((main * 100) / q);
@@ -143,11 +148,16 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
       { label: 'Less bare land', value: `– ${poundsWords(iv.land_pence.value)}`, note: 'the land alone' },
       { label: 'The building', value: poundsWords(s.building_price_pence), note: 'price less land' },
       { label: 'Rebuild cost', value: poundsWords(s.rebuild_pence), note: `${area(iv.gia_milli_m2.value)} × ${poundsWords(iv.building_rate_pence.value)}` },
+      ...(off === null ? [] : [{ label: 'Less grants', value: `– ${poundsWords(off.reduction_pence)}`, note: 'paid by others' }]),
       { label: 'Qualifies', value: poundsWords(s.qualifying_pence), note: `${percentWords(s.share_bp)} of the building` },
     ],
-    sum_words: [
+    sum_words: off === null ? [
       `The qualifying items would cost ${poundsWords(s.elements_qualifying_pence)} to rebuild, out of ${poundsWords(s.rebuild_pence)} for the whole building. That is ${percentWords(s.share_bp)}.`,
       `So ${percentWords(s.share_bp)} of what you paid for the building qualifies: ${poundsWords(s.building_price_pence)} × ${poundsWords(s.elements_qualifying_pence)} ÷ ${poundsWords(s.rebuild_pence)} = ${poundsWords(s.qualifying_pence)}.`,
+    ] : [
+      `The qualifying items would cost ${poundsWords(s.elements_qualifying_pence)} to rebuild, out of ${poundsWords(s.rebuild_pence)} for the whole building. That is ${percentWords(beforeShare)}.`,
+      `So ${percentWords(beforeShare)} of what you paid for the building qualifies before grants: ${poundsWords(s.building_price_pence)} × ${poundsWords(s.elements_qualifying_pence)} ÷ ${poundsWords(s.rebuild_pence)} = ${poundsWords(off.before_qualifying_pence)}.`,
+      `Others paid for part of it, so ${poundsWords(off.reduction_pence)} comes off${off.element_trace ? '' : ', in equal share across every item'}: ${poundsWords(s.qualifying_pence)} qualifies.`,
     ],
     pools: {
       main: { total: poundsWords(s.main_pool_pence), items: mp.map((l) => l.label) },

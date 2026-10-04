@@ -186,6 +186,19 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
       qualifying_pence: v.sums.qualifying_pence, main_pool_pence: v.sums.main_pool_pence,
       special_pool_pence: v.sums.special_pool_pence, share_bp: v.sums.share_bp,
     },
+    // PHASE 153a — chapter 15: the claim's grants and what each took off. `sums` above is the figure after them.
+    grants: {
+      element_trace: v.grants.switches.element_trace,
+      before_qualifying_pence: v.grants.reading.before.qualifying_pence,
+      before_main_pool_pence: v.grants.reading.before.main_pool_pence,
+      before_special_pool_pence: v.grants.reading.before.special_pool_pence,
+      reduction_pence: v.grants.reading.reduction_pence,
+      list: v.grants.list.map((g) => {
+        const e = v.grants.reading.effects.find((x) => x.grant_id === g.id);
+        return { id: g.id, kind: g.kind, payer_class: g.payer_class, amount_pence: g.amount_pence, element_ids: g.element_ids,
+          route: e?.route ?? null, words: e?.words ?? null, line_ids: e?.line_ids ?? [], reduction_pence: e?.reduction_pence ?? null };
+      }),
+    },
     changes: v.changes,
     inspection: inspectionOf(d, v.job.id),
     legal: {

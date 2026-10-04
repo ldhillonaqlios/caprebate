@@ -11,7 +11,7 @@ export const CHAPTERS: readonly { readonly n: number; readonly title: string; re
   { n: 9, title: 'Price, land and floor area', built: true }, { n: 10, title: 'Rebuild cost and split', built: true },
   { n: 11, title: 'Bare land', built: false }, { n: 12, title: 'Fixtures, item by item', built: false },
   { n: 13, title: 'Pools', built: false }, { n: 14, title: 'Qualifying share', built: false },
-  { n: 15, title: 'Grants and VAT', built: false }, { n: 16, title: 'Leaseback', built: false },
+  { n: 15, title: 'Grants and VAT', built: true }, { n: 16, title: 'Leaseback', built: false },
   { n: 17, title: 'Structures allowance', built: false }, { n: 18, title: 'Other reliefs', built: false },
   { n: 19, title: 'Judgement calls', built: false }, { n: 20, title: 'Repairs or capital', built: false },
   { n: 21, title: 'Limits', built: false }, { n: 22, title: 'Findings', built: false }, { n: 23, title: 'Sign', built: true },

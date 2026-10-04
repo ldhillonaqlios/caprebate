@@ -242,6 +242,9 @@ export interface CtaSwitches {
       and s.187A ceilings rather than off the spend before them. The only switch that
       can only make a claim smaller, and only where a ceiling binds. */
   readonly grant_after_ceilings: boolean;
+  /** F-15's remainder (Phase 153a, 4 October 2026): a grant matched to named fixture-list rows comes off only those
+      rows' qualifying spend. Read by the back end's survey pack, never by the public estimate. */
+  readonly grant_traced_to_elements: boolean;
 }
 
 /** The gate on the free register lookups. `enabled` is false and is not ours to flip. */

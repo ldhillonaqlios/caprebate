@@ -52,6 +52,7 @@ import { fireAutomation } from './automation.ts';
 import { onClaimStageEntered } from './introducers.ts';
 import { cddGateNeed } from './compliance.ts';
 import { amendmentWindowReading, electionResolved, grantsTraced } from './claim-facts.ts';
+import { grantProviderNeed, grantSplitNeed } from './grant-checks.ts';
 import { deliverableIssuedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from './claim-record.ts';
 import { clientConfirmationNeed, filingRoute } from './client-filing.ts';
 import {
@@ -523,7 +524,10 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
     case 'VALUATION': {
       // CRM 6 of 10: every grant traced is a fact now; every rate sourced stays the surveyor's confirmation.
       const g = grantsTraced(db, c.id);
-      needs.push({ what: 'Every grant or contribution traced to the items it paid for', met: g.met, why: g.why }, confirmation(db, c, 'VALUATION_SIGNED'));
+      needs.push({ what: 'Every grant or contribution traced to the items it paid for', met: g.met, why: g.why });
+      // PHASE 153a (Phase 153b lines 12 and 13): no grant split in equal share without its papers or the tax adviser's
+      // view; the client has checked with whoever paid. Both met where no grant is left on the claim.
+      needs.push(grantSplitNeed(db, c), grantProviderNeed(db, c), confirmation(db, c, 'VALUATION_SIGNED'));
       break;
     }
     case 'TAX_ADVISER_SIGNOFF':

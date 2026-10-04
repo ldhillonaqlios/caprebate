@@ -143,7 +143,8 @@ function applies(db: Db, c: { id: string; property_id: string | null }, conditio
   return { applies: false, known: false, why: 'the property’s tenure is not known — record it on the property; not known does not pass' };
 }
 
-function receivedOnClaim(db: Db, c: { id: string }, type_code: string): { at: string } | undefined {
+/** Exported for Phase 153a's grant check (src/web/grant-checks.ts): the grant papers, received on the claim. */
+export function receivedOnClaim(db: Db, c: { id: string }, type_code: string): { at: string } | undefined {
   const r = db.get<{ at: string | null }>(
     'SELECT MAX(d.created_at) AS at FROM documents d JOIN logical_documents l ON l.id = d.logical_document_id ' +
       'WHERE l.type_code = ? AND d.strip_recorded_at IS NOT NULL AND d.quarantine_discharged_at IS NOT NULL AND d.failure_code IS NULL ' +

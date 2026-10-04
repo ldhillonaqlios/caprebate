@@ -83,7 +83,18 @@ export async function handleClaimRecord(
   if (m) {
     const id = m[1] ?? '';
     return finish(id, F.recordGrant(deps, actor, id, posted(await form(req),
-      ['kind', 'payer_class', 'amount', 'amount_basis', 'traced', 'traced_elements', 'source_id', 'note'])), 'Grant not saved', 'grants', GRANTS_ANCHOR);
+      ['kind', 'payer_class', 'amount', 'amount_basis', 'traced', 'traced_elements', 'element_ids', 'source_id', 'note'])), 'Grant not saved', 'grants', GRANTS_ANCHOR);
+  }
+  // PHASE 153a: the two grant facts the gate out of valuation reads (src/web/grant-checks.ts), from the grants section,
+  // and back to it. Only those two keys: every other fact is recorded on the facts panel, as before.
+  m = new RegExp(`^/staff/claims/${ID}/grants/fact$`).exec(path);
+  if (m) {
+    const id = m[1] ?? '';
+    const f = posted(await form(req), ['fact_key', 'answer', 'value', 'source_id']);
+    if (f['fact_key'] !== 'GRANT_PROVIDER_CHECKED' && f['fact_key'] !== 'GRANT_SPLIT_ADVISER_VIEW') {
+      return finish(id, { ok: false, why: 'That is not one of the grant checks.' }, 'Answer not saved', 'grants', GRANTS_ANCHOR);
+    }
+    return finish(id, F.recordFact(deps, actor, id, f), 'Answer not saved', 'grants', GRANTS_ANCHOR);
   }
   m = new RegExp(`^/staff/claims/${ID}/grants/${ID}/withdraw$`).exec(path);
   if (m) {
@@ -396,6 +407,8 @@ function matchedChip(traced_key: string): Safe {
 type CardLine = {
   readonly kind: string; readonly payer: string; readonly payer_key: string; readonly amount_pence: number | null;
   readonly amount_basis_key: string; readonly traced_key: string; readonly traced_elements: string | null; readonly told_by: string;
+  /** Phase 153a: the fixture-list rows it paid for, by name. */
+  readonly element_names: readonly string[];
 };
 
 function grantCard(g: CardLine, meta: Safe, actions: Safe, effect = true): Safe {
@@ -404,6 +417,7 @@ function grantCard(g: CardLine, meta: Safe, actions: Safe, effect = true): Safe 
     <p class="gamt">${g.amount_pence === null ? h`<span class="help">Amount not known</span>` : formatPence(g.amount_pence)}</p>
     <p class="gline">${grantSentence(g)}</p>
     <p class="gchips">${matchedChip(g.traced_key)} ${badge(g.kind)}</p>
+    ${g.element_names.length === 0 ? raw('') : h`<p class="help">From our list of items: ${g.element_names.join('; ')}</p>`}
     <p class="help">${BASIS_WORDS[g.amount_basis_key] ?? BASIS_WORDS['UNKNOWN']} · ${g.told_by}${meta}</p>
     ${effect ? h`<p class="help">${grantEffect(g.payer_key)}</p>` : raw('')}
     ${actions}</li>`;
@@ -442,6 +456,7 @@ export function grantsBlock(claim_id: string, p: F.FactsPanel, asked: boolean): 
     amount_basis_key: Object.entries(F.AMOUNT_BASES).find(([, v]) => v === l.amount_basis)?.[0] ?? 'UNKNOWN',
     traced_key: l.traced_key, traced_elements: l.traced_elements,
     told_by: l.source.source_id === null ? l.source.publisher : (F.CAPTURE_SOURCES[l.source.source_id] ?? l.source.publisher),
+    element_names: l.element_names,
   });
   const said = answer === 'YES' ? badge('Yes', 'info') : answer === 'NO' ? badge('No', 'ok') : answeredNotSure ? badge('Not sure', 'warn') : badge('Not answered yet', 'warn');
   return h`<div class="pblock grants">
@@ -469,11 +484,36 @@ export function grantsBlock(claim_id: string, p: F.FactsPanel, asked: boolean): 
     <ul class="tiles gcards">${active.map((l) => grantCard(card(l),
       h` · added ${l.source.recorded_at ?? ''}${l.source.recorded_by === null ? '' : ` by ${l.source.recorded_by}`}`,
       p.may_record ? removeGrant(claim_id, l.id) : raw('')))}</ul>`}
+    ${active.length === 0 ? raw('') : grantChecks(claim_id, p)}
     ${!p.may_record ? raw('') : h`<form method="post" action="/staff/claims/${claim_id}/grants/new" class="gadd">
       <input type="hidden" name="go" value="start"><button type="submit">Add a grant or contribution</button></form>`}
     ${removed.length === 0 ? raw('') : moreDetail(h`<ul class="gremoved">${removed.map((l) => h`<li>${grantSentence(l)} <span class="help">Removed ${
       (l.withdrawn ?? '').replace(/^withdrawn /, '')}</span></li>`)}</ul>`, `Removed (${removed.length})`)}
   </div>`;
+}
+
+/**
+ * PHASE 153a — BEFORE THE CLAIM MOVES ON FROM VALUATION (src/web/grant-checks.ts; Phase 153b lines 12 and 13). Two
+ * answers, each Yes or No with who told us: the client has checked with whoever paid; and, where a grant is split in
+ * equal share with no papers received, the tax adviser's view on the split — which counts only from the tax adviser.
+ */
+function grantChecks(claim_id: string, p: F.FactsPanel): Safe {
+  const g = p.grants;
+  const shown = (r: F.FactReading): Safe => r.known ? badge(r.display, r.value === 'YES' ? 'ok' : 'warn') : badge('Not answered yet', 'warn');
+  const ask = (key: string, sources: Readonly<Record<string, string>>): Safe => !p.may_record ? raw('') : h`<form method="post" action="/staff/claims/${claim_id}/grants/fact" class="gyesno">
+      <input type="hidden" name="fact_key" value="${key}"><input type="hidden" name="answer" value="VALUE">
+      <label>Who told us? <select name="source_id" required><option value="">Choose one</option>${options(sources)}</select></label>
+      <p class="gbtns"><button type="submit" name="value" value="YES" class="btn-quiet">Yes</button>
+        <button type="submit" name="value" value="NO" class="btn-quiet">No</button></p></form>`;
+  const adviserOnly: Readonly<Record<string, string>> = Object.freeze({ CTA: F.CAPTURE_SOURCES['CTA'] ?? 'The tax adviser' });
+  return h`<div class="gask">
+      <h3>Before the claim moves on</h3>
+      <p><strong>Has the client checked with whoever paid that claiming will not make them pay the grant back?</strong> ${shown(g.provider_checked)}</p>
+      ${ask('GRANT_PROVIDER_CHECKED', F.CAPTURE_SOURCES)}
+      <p><strong>Has the tax adviser given their view on how a grant with no breakdown is split?</strong> ${shown(g.split_view)}</p>
+      ${ask('GRANT_SPLIT_ADVISER_VIEW', adviserOnly)}
+      <div class="help">Not needed when the grant papers are on the claim.${why(g.switch.says)}</div>
+    </div>`;
 }
 
 /* ---------------- "Did anyone else pay?" ---------------- */
@@ -507,13 +547,15 @@ function answerGrantsQuestion(
 
 /* ---------------- "Add a grant or contribution", one question per step ---------------- */
 
-const DRAFT_KEYS = ['kind', 'payer_class', 'amount', 'amount_basis', 'source_id', 'traced_elements', 'note', 'traced'] as const;
+const DRAFT_KEYS = ['kind', 'payer_class', 'amount', 'amount_basis', 'source_id', 'traced_elements', 'element_ids', 'note', 'traced'] as const;
 type Draft = Record<(typeof DRAFT_KEYS)[number], string>;
 const STEP_NAMES = ['Who paid', 'How much', 'What it paid for', 'Matched'] as const;
 
 function draftFrom(f: URLSearchParams): Draft {
   const out = {} as Draft;
   for (const k of DRAFT_KEYS) out[k] = (f.get(k) ?? '').trim();
+  // Phase 153a: on the step that asks it, the items ticked; on every other step, the list carried from it.
+  if (f.get('step') === '3' && f.get('go') !== 'edit') out.element_ids = f.getAll('element_pick').map((x) => x.trim()).filter((x) => x !== '').join(',');
   return out;
 }
 
@@ -539,8 +581,10 @@ function checkStep(step: number, x: Draft): string | null {
     if (!Object.hasOwn(F.CAPTURE_SOURCES, x.source_id)) return 'Say who told us.';
   }
   if (step === 3 && x.traced_elements.length > 4000) return 'That is too long — keep it under 4,000 characters.';
+  if (step === 3) { const ids = F.parseElementIds(x.element_ids); if (!ids.ok) return ids.why; }
   if (step === 4) {
     if (!Object.hasOwn(F.TRACED, x.traced)) return 'Say whether it is matched yet.';
+    if (x.element_ids !== '' && x.traced !== 'YES') return 'You chose items from our list, so it is matched. Choose Yes, or go back and clear the items.';
   }
   return null;
 }
@@ -555,7 +599,7 @@ function grantStepPage(d: ClaimRecordPageDeps, res: ServerResponse, actor: Actor
   if (go === 'next') {
     problem = checkStep(at, x);
     // A grant is matched only with what it paid for written down (the store refuses it too): back to that step.
-    if (problem === null && at === 4 && x.traced === 'YES' && x.traced_elements === '') {
+    if (problem === null && at === 4 && x.traced === 'YES' && x.traced_elements === '' && x.element_ids === '') {
       step = 3;
       problem = 'To mark it matched, first write what it paid for.';
     } else step = problem === null ? at + 1 : at;
@@ -590,10 +634,15 @@ function grantStepPage(d: ClaimRecordPageDeps, res: ServerResponse, actor: Actor
         x.source_id === k ? raw(' selected') : raw('')}>${v}</option>`)}</select></label>
       ${nav(true)}</form>`;
   } else if (step === 3) {
-    body = h`<form method="post" action="${self}" class="gstep"><input type="hidden" name="step" value="3">${carry(x, ['traced_elements', 'note'])}
+    const picked = new Set(x.element_ids.split(',').filter((e) => e !== ''));
+    body = h`<form method="post" action="${self}" class="gstep"><input type="hidden" name="step" value="3">${carry(x, ['traced_elements', 'note', 'element_ids'])}
       <h2>What did it pay for?</h2>
       <label>The items it paid for <textarea name="traced_elements" maxlength="4000">${x.traced_elements}</textarea></label>
       <p class="help">For example: the heating, lighting and fire alarm in the new treatment rooms. Leave it blank if you do not know yet.</p>
+      <details class="more"${picked.size > 0 ? raw(' open') : raw('')}><summary>Tick the items from our list${picked.size > 0 ? ` (${String(picked.size)} ticked)` : ''}</summary>
+        <p class="help">Tick only what the grant letter or agreement shows it paid for. Leave them all clear if you do not know.</p>
+        <div class="opts">${F.grantElementChoices(c.sector).map((e) => h`<label class="opt${picked.has(e.id) ? ' sel' : ''}"><input type="checkbox" name="element_pick" value="${e.id}"${
+          picked.has(e.id) ? raw(' checked') : raw('')}> ${e.name}</label>`)}</div></details>
       <label>Anything else to note <input name="note" maxlength="2000" value="${x.note}"></label>
       ${nav(true)}</form>`;
   } else if (step === 4) {
@@ -607,6 +656,7 @@ function grantStepPage(d: ClaimRecordPageDeps, res: ServerResponse, actor: Actor
       kind: x.kind === 'GRANT' ? 'Grant' : 'Contribution', payer: F.PAYER_CLASSES[x.payer_class] ?? '', payer_key: x.payer_class,
       amount_pence: x.amount === '' ? null : F.penceValue(x.amount), amount_basis_key: x.amount_basis, traced_key: x.traced,
       traced_elements: x.traced_elements === '' ? null : x.traced_elements, told_by: F.CAPTURE_SOURCES[x.source_id] ?? '',
+      element_names: x.element_ids.split(',').filter((e) => e !== '').map(F.elementName),
     };
     body = h`<h2>Check it, then save</h2>
       <ul class="tiles gcards">${grantCard(preview, raw(''), raw(''), false)}</ul>

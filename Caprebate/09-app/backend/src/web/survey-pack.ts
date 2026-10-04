@@ -31,8 +31,27 @@ import {
   packSums, parseMoney, parsePercent, parseQuantity, parseRate,
   type PackInputs, type PackLine, type PackSums, type Pool, type Source, type Valued,
 } from './pack-sums.ts';
+import { applyGrants, type GrantReading, type GrantSwitches } from './pack-grants.ts';
+import { elementName, packGrantsFor } from './claim-facts.ts';
+import { shippedGrantSwitches } from './grant-checks.ts';
 
-export type PackDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
+/**
+ * `grantSwitches` (Phase 153a) is for the tests alone: it stands in for CB_CTA's two grant switches so chapter 15 can be
+ * proved both ways. Nothing in src/ or api/ passes it, so a pack always takes the switches as they ship.
+ */
+export type PackDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; grantSwitches?: GrantSwitches };
+
+/** Chapter 15's grants: the claim's, as the pack takes them (src/web/pack-grants.ts). */
+export type PackGrants = {
+  /** The claim the survey job is on; null for a job on no claim, which has no grants to read. */
+  readonly claim_id: string | null;
+  readonly list: readonly {
+    readonly id: string; readonly kind: string; readonly payer_class: string; readonly amount_pence: number | null;
+    readonly traced: string; readonly element_ids: readonly string[]; readonly element_names: readonly string[];
+  }[];
+  readonly switches: GrantSwitches;
+  readonly reading: GrantReading;
+};
 
 export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed';
 export const PACK_INPUT_FIELDS = Object.freeze(['price_paid', 'land', 'gia', 'building_rate'] as const);
@@ -63,7 +82,9 @@ export type PackView = {
   readonly property_choices: readonly PropertyChoice[];
   readonly inputs: PackInputs;
   readonly lines: readonly ViewLine[];
+  /** The pack's sums AFTER the claim's grants (Phase 153a, chapter 15); the figures before them are `grants.reading.before`. */
   readonly sums: PackSums;
+  readonly grants: PackGrants;
   /** The pack's counter as this view was read. A change must carry it back. */
   readonly seq: number;
   readonly may_edit: boolean;
@@ -229,9 +250,21 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
       : `set the ${FIELD_WORDS[e.field]}`,
   }));
 
+  // PHASE 153a — the claim's grants come off the sums here, so every total, the legal check, approval and the report
+  // read the figure after them. With no grant on the claim the sums are exactly packSums's.
+  const switches = d.grantSwitches ?? shippedGrantSwitches();
+  const onClaim = job.claim_id === null ? [] : packGrantsFor(d.db, job.claim_id);
+  const before = packSums(inputs, lines);
+  const reading = applyGrants(inputs, lines, before, onClaim, switches);
+  const grants: PackGrants = {
+    claim_id: job.claim_id, switches, reading,
+    list: onClaim.map((g) => ({ id: g.id, kind: g.kind, payer_class: g.payer_class, amount_pence: g.amount_pence, traced: g.traced,
+      element_ids: g.element_ids, element_names: g.element_ids.map(elementName) })),
+  };
+
   return {
     job, pack_id: pack?.id ?? null, property, property_choices: choices,
-    inputs, lines, sums: packSums(inputs, lines),
+    inputs, lines, sums: reading.sums, grants,
     seq: entries.length === 0 ? 0 : (entries[entries.length - 1] as EntryRow).seq,
     may_edit: can(actor, 'surveyor_job.commit', obj),
     changes,

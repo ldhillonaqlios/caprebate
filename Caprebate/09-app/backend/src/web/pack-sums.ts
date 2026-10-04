@@ -75,7 +75,9 @@ export type PackInputs = {
   readonly building_rate_pence: Valued;
 };
 
-export type Needed = { readonly where: 'INPUT' | 'LINE'; readonly key: string; readonly line_id: string | null; readonly words: string };
+/** INPUT: chapter 9. LINE: chapter 10. GRANT (Phase 153a): a grant on the claim whose amount is not known, chapter 15 —
+ *  `line_id` then holds the grant's id. */
+export type Needed = { readonly where: 'INPUT' | 'LINE' | 'GRANT'; readonly key: string; readonly line_id: string | null; readonly words: string };
 
 export type ProblemCode = 'LAND_NOT_BELOW_PRICE' | 'ELEMENTS_EXCEED_BUILDING' | 'NO_REBUILD_COST' | 'TOO_LARGE';
 export type Problem = { readonly code: ProblemCode; readonly words: string };

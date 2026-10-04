@@ -1500,8 +1500,10 @@ if (startSuite("H", "Phase 8 — prepared patches, gated on the CTA")) {
       "s33b_aggregation", "ct_rate_from_associated_companies", "income_tax_taper_band",
       "window_company_member_date",
       /* the twenty-fourth, added by Phase 132's second builder on 14 September 2026 - H7 SL-C1 */
-      "sl_landlord_contribution"];
-    check("H11 — the switchboard carries exactly the twenty-four prepared readings",
+      "sl_landlord_contribution",
+      /* the twenty-fifth, added by Phase 153a on 4 October 2026 - H24, read by the back end's survey pack */
+      "grant_traced_to_elements"];
+    check("H11 — the switchboard carries exactly the prepared readings listed here, no more and no fewer",
       Object.keys(CTA).sort(), SWITCHES.slice().sort());
     check("H11 — EVERY switch ships OFF — no tax position has been taken",
       SWITCHES.filter(k => CTA[k] !== false), []);
@@ -2025,6 +2027,27 @@ if (startSuite("H", "Phase 8 — prepared patches, gated on the CTA")) {
       check("H23 branch A — on, it does not call the lease item 9",
         [/item 9/.test(polOn), /not established/.test(polOn)], [false, true]);
     }
+
+    /* ---------------------------------------------------------------------
+       H24 - F-15's REMAINDER (item 12852269899), gated on the grant-trace
+       question. PHASE 153a, 4 October 2026. grant_traced_to_elements is read
+       by the back end's survey pack, where each line is a fixture-list row
+       and a grant on the claim record can name the rows it paid for
+       (09-app/backend/src/web/pack-grants.ts, tested there both ways). The
+       public estimate holds no row-by-row spend, so every grant in it is
+       untraced and keeps the grant_fraction route whichever way the switch
+       sits - the figure, the flags and the words, in all five sectors.
+       --------------------------------------------------------------------- */
+    SECTORS.forEach(sec => {
+      const st = () => Object.assign({ sector: sec, trigger: ["refurb_fitout"] }, H14_GRANT);
+      const off = run(sec, st()).r;
+      const on = runGated(sec, ["grant_traced_to_elements"], st()).r;
+      check("H24 — " + sec + ": the public estimate keeps the grant_fraction route whichever way grant_traced_to_elements sits",
+        [lo(on), hi(on), on.flags.join(" | "), (on.assumptions || []).join(" | ")],
+        [lo(off), hi(off), off.flags.join(" | "), (off.assumptions || []).join(" | ")]);
+      check("H24 — " + sec + ": and the grant still comes off it (the switch is no way to drop a grant)",
+        hi(off) < hi(run(sec, { sector: sec, trigger: ["refurb_fitout"] }).r), true);
+    });
   }
 }
 
