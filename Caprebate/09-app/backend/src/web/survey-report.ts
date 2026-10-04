@@ -150,6 +150,9 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     ],
     flow: [
       { label: 'Price paid', value: poundsWords(iv.price_paid_pence.value), note: 'what you paid' },
+      // PHASE 153e: VAT the client could not reclaim, where the version counted any. A version approved before has none.
+      ...(((x as { vat?: { counted_pence: number } }).vat?.counted_pence ?? 0) > 0
+        ? [{ label: 'Plus VAT not reclaimed', value: `+ ${poundsWords((x as { vat?: { counted_pence: number } }).vat?.counted_pence ?? 0)}`, note: 'part of what you spent' }] : []),
       { label: 'Less bare land', value: `– ${poundsWords(iv.land_pence.value)}`, note: 'the land alone' },
       { label: 'The building', value: poundsWords(s.building_price_pence), note: 'price less land' },
       { label: 'Rebuild cost', value: poundsWords(s.rebuild_pence), note: `${area(iv.gia_milli_m2.value)} × ${poundsWords(iv.building_rate_pence.value)}` },

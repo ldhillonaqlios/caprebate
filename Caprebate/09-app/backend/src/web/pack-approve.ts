@@ -207,6 +207,8 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     },
     changes: v.changes,
     inspection: inspectionOf(d, v.job.id),
+    // PHASE 153e: chapter 15's VAT half, frozen with the version. Its counted VAT is already in `sums`.
+    vat: { position: v.vat.position, amount_pence: v.vat.amount_pence, counted_pence: v.vat.counted_pence, words: v.vat.words },
     // PHASE 153e (Word question 145): the planning assumption, frozen with the version (a test reading for the surveyor).
     assumptions: [...REPORT_ASSUMPTIONS],
     legal: {

@@ -22,6 +22,7 @@
  * they cannot anchor on it). The pack cannot: section 562 shares out the price, so the price is its first input. This
  * follows Lakhbir's decision of 1 October 2026 that the surveyor works from a pre-filled pack and approves it.
  */
+import { vatReading, VAT_POSITION_CODES, type VatReading } from './pack-vat.ts';
 import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { authorise, can, type Actor } from '../authz.ts';
@@ -66,7 +67,7 @@ export type PackGrants = {
  */
 export const GRANT_AMOUNTS_TO_SURVEYOR = false;
 
-export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed';
+export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed' | 'vat_position' | 'vat';
 export const PACK_INPUT_FIELDS = Object.freeze(['price_paid', 'land', 'gia', 'building_rate'] as const);
 export type PackInputField = (typeof PACK_INPUT_FIELDS)[number];
 
@@ -98,6 +99,8 @@ export type PackView = {
   /** The pack's sums AFTER the claim's grants (Phase 153a, chapter 15); the figures before them are `grants.reading.before`. */
   readonly sums: PackSums;
   readonly grants: PackGrants;
+  /** PHASE 153e: chapter 15's VAT half (src/web/pack-vat.ts). Its counted VAT is in `sums`, added to the price paid. */
+  readonly vat: VatReading;
   /** The pack's counter as this view was read. A change must carry it back. */
   readonly seq: number;
   readonly may_edit: boolean;
@@ -192,6 +195,7 @@ function surveyorSource(e: EntryRow): Source {
 const FIELD_WORDS: Readonly<Record<PackField, string>> = Object.freeze({
   price_paid: 'price paid', land: 'bare land', gia: 'floor area', building_rate: 'whole-building rate',
   qty: 'how much', rate: 'rate', qpct: 'share that qualifies', pool: 'pool', removed: 'taken out',
+  vat_position: 'VAT position', vat: 'VAT that could not be reclaimed',
 });
 
 export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
@@ -267,8 +271,14 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   // read the figure after them. With no grant on the claim the sums are exactly packSums's.
   const switches = d.grantSwitches ?? shippedGrantSwitches();
   const onClaim = job.claim_id === null ? [] : packGrantsFor(d.db, job.claim_id);
-  const before = packSums(inputs, lines);
-  const reading = applyGrants(inputs, lines, before, onClaim, switches);
+  // PHASE 153e: VAT the client could not reclaim is part of the price that is shared out (Module 00 C23). The price
+  // shown stays the price paid; the sums read it with the counted VAT added.
+  const vat = vatReading(resolve(null, 'vat_position', none), resolve(null, 'vat', none));
+  const forSums: PackInputs = vat.counted_pence > 0 && inputs.price_paid_pence.value !== null
+    ? { ...inputs, price_paid_pence: { value: inputs.price_paid_pence.value + vat.counted_pence, source: inputs.price_paid_pence.source } }
+    : inputs;
+  const before = packSums(forSums, lines);
+  const reading = applyGrants(forSums, lines, before, onClaim, switches);
   const grants: PackGrants = {
     claim_id: job.claim_id, switches, reading,
     amounts_shown: actor.role !== 'SURVEYING' || GRANT_AMOUNTS_TO_SURVEYOR,
@@ -278,7 +288,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
 
   return {
     job, pack_id: pack?.id ?? null, property, property_choices: choices,
-    inputs, lines, sums: reading.sums, grants,
+    inputs, lines, sums: reading.sums, grants, vat,
     seq: entries.length === 0 ? 0 : (entries[entries.length - 1] as EntryRow).seq,
     may_edit: can(actor, 'surveyor_job.commit', obj),
     changes,
@@ -350,6 +360,37 @@ export function savePackValue(d: PackDeps, actor: Actor, job_id: string, f: { fi
     const isMine = isEntry(now.source);
     if (value === null && !isMine) return { ok: false, field: 'value', why: 'Type a value. (An empty box puts our figure back, and this one is not yours to put back.)' };
     if (value !== null && isMine && now.value === value) return { ok: false, field: 'value', why: 'That is already the value. Nothing changed.' };
+    insertEntry(d, actor, pack_id, null, field, value, null, f.reason);
+    audit(d, actor, view, 'value', null, [field]);
+    return { ok: true };
+  });
+}
+
+/**
+ * PHASE 153e — CHAPTER 15'S VAT: the position (one of four) or the amount not reclaimed, each the surveyor's, with a
+ * reason. Empty: back to not recorded.
+ */
+export function saveVatValue(d: PackDeps, actor: Actor, job_id: string, f: { field: string; value: string; reason: string; seq: string }): PackResult {
+  if (f.field !== 'vat_position' && f.field !== 'vat') return { ok: false, field: 'field', why: 'That is not one of the VAT values.' };
+  const field: PackField = f.field;
+  const raw = f.value.trim();
+  let value: number | null = null;
+  if (raw !== '') {
+    if (field === 'vat_position') {
+      const i = VAT_POSITION_CODES.indexOf(raw as (typeof VAT_POSITION_CODES)[number]);
+      if (i < 0) return { ok: false, field: 'value', why: 'Choose one of the four answers.' };
+      value = i;
+    } else {
+      const p = parseMoney(raw);
+      if (!p.ok) return { ok: false, field: 'value', why: p.why };
+      value = p.value;
+    }
+  }
+  return begin(d, actor, job_id, f.reason, f.seq, ({ view, pack_id }) => {
+    const now = field === 'vat_position' ? view.vat.position_source : view.vat.amount_source;
+    const was = field === 'vat_position' ? (view.vat.position_source === null ? null : VAT_POSITION_CODES.indexOf(view.vat.position)) : view.vat.amount_pence;
+    if (value === null && now === null) return { ok: false, field: 'value', why: 'Nothing is recorded yet, so there is nothing to clear.' };
+    if (value !== null && now !== null && was === value) return { ok: false, field: 'value', why: 'That is already the value. Nothing changed.' };
     insertEntry(d, actor, pack_id, null, field, value, null, f.reason);
     audit(d, actor, view, 'value', null, [field]);
     return { ok: true };

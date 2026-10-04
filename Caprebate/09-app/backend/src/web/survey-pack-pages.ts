@@ -21,6 +21,7 @@
  * Every number on these pages says where it came from: the evidence, our draft, or the surveyor's own name. Every form
  * carries the pack's counter (`seq`), so a change from an out-of-date page is refused, never applied blind.
  */
+import { VAT_POSITION_WORDS } from './pack-vat.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
@@ -72,7 +73,7 @@ export async function handleSurveyPack(
     res.end(versionPage(d, actor, v, kept));
     return 'handled';
   }
-  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve)?$/.exec(url.pathname);
+  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/vat|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve)?$/.exec(url.pathname);
   if (m === null) return 'not-mine';
   const job = m[1] ?? '';
   const act = m[2]?.slice(1);
@@ -107,6 +108,7 @@ export async function handleSurveyPack(
   let r: P.PackResult;
   switch (act) {
     case 'value': r = P.savePackValue(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
+    case 'vat': r = P.saveVatValue(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
     case 'line': r = P.saveLine(deps, actor, job, { line, qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq }); break;
     case 'revert': r = P.revertLine(deps, actor, job, { line, reason, seq }); break;
     case 'remove': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, true); break;
@@ -166,7 +168,7 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
       <article class="pack-book">
         <h1>${String(chapter.n)} · ${chapter.title}</h1>
         ${ch === 4 ? summaryChapter(v) : ch === 7 ? legalChapter(d, v, lv, ch, q) : ch === 9 ? inputsChapter(d, v, ch, q) : ch === 10 ? elementsChapter(d, v, ch, q)
-          : ch === 15 ? grantsChapter(v)
+          : ch === 15 ? h`${grantsChapter(v)}${vatSection(d, v, ch)}`
           : ch === 2 ? inspectionChapter(d.app, actor, v.job.id, q)
           : ch === 23 ? signChapter(d, actor, v, ready, q)
           : h`<p class="help">This chapter is filled in at the next stage of the build. For now, the sums are in chapters 4, 9 and 10.</p>`}
@@ -220,6 +222,7 @@ function summaryChapter(v: P.PackView): Safe {
     <p class="lede">How the price paid becomes the spend that qualifies. Each box comes from the chapters after it.</p>
     <div class="pathway">
       <div>Price paid<b>${PENCE(i.price_paid_pence.value)}</b><span>Chapter 9</span></div>
+      ${v.vat.counted_pence === 0 ? raw('') : h`<div>Plus VAT not reclaimed<b>+ ${PENCE(v.vat.counted_pence)}</b><span>Chapter 15</span></div>`}
       <div>Less bare land<b>${i.land_pence.value === null ? '—' : `− ${PENCE(i.land_pence.value)}`}</b><span>Chapter 9</span></div>
       <div>The building<b>${PENCE(s.building_price_pence)}</b><span>price less land</span></div>
       <div>Rebuild cost today<b>${PENCE(s.rebuild_pence)}</b><span>floor area × rate</span></div>
@@ -302,8 +305,35 @@ export function grantsChapter(v: P.PackView): Safe {
           <tr class="pk-tot"><th scope="row">Less grants</th><td></td><td></td><td></td><td class="n">${r.reduction_pence === null ? '—' : `− ${PENCE(r.reduction_pence)}`}</td></tr>
           <tr class="pk-tot"><th scope="row">Spend that qualifies</th><td></td><td></td><td></td><td class="n">${PENCE(v.sums.qualifying_pence)}</td></tr></tbody></table>
         ${r.reduction_pence === null ? h`<p class="gate" role="alert">There is no total until every grant’s amount is known, and the rest of the pack is complete. Record the amount on the claim.</p>` : raw('')}`}
-    <h2>VAT</h2>
-    <p class="help">VAT is not in this pack yet. Whether VAT the client could not reclaim counts as spend is added at a later stage of the build.</p>`;
+`;
+}
+
+/**
+ * PHASE 153e — CHAPTER 15'S VAT HALF (src/web/pack-vat.ts; Module 00 C23). The surveyor records whether the client could
+ * reclaim the VAT, and the VAT not reclaimed, each with a reason. Only "exempt" adds it to the price paid; partly exempt
+ * waits for the tax adviser; not known adds nothing (N4).
+ */
+function vatSection(d: PackPageDeps, v: P.PackView, ch: number): Safe {
+  const t = v.vat;
+  const opt = (k: string, w: string) => h`<option value="${k}"${t.position_source !== null && t.position === k ? raw(' selected') : raw('')}>${w}</option>`;
+  return h`<h2>VAT</h2>
+    <p class="lede">VAT the client paid and could not reclaim is part of what they spent, so it is added to the price before it is shared out. Healthcare is mostly VAT-exempt.</p>
+    <table class="pk-table"><tbody>
+      <tr><th scope="row">Could the client reclaim the VAT?</th><td>${t.position_source === null ? h`<span class="pk-src pk-need">not recorded</span>` : h`${VAT_POSITION_WORDS[t.position]} ${sourceTag(d, t.position_source, true)}`}</td></tr>
+      <tr><th scope="row">VAT not reclaimed</th><td>${t.amount_pence === null ? h`<span class="pk-src pk-need">not recorded</span>` : h`${PENCE(t.amount_pence)} ${sourceTag(d, t.amount_source, true)}`}</td></tr>
+      <tr><th scope="row">Added to the price</th><td class="n">${PENCE(t.counted_pence)}</td></tr>
+    </tbody></table>
+    <p class="help">${t.words}</p>
+    ${!v.may_edit || v.property === null ? raw('') : h`<details class="pk-add"><summary>Record the VAT position</summary>
+      <form method="post" action="${base(v.job.id)}/vat">${hidden(v, ch)}<input type="hidden" name="field" value="vat_position"><div class="pk-fields">
+        <label>Could the client reclaim it?
+<select class="fi" name="value"><option value="">Not recorded</option>${opt('RECLAIMS', VAT_POSITION_WORDS.RECLAIMS)}${opt('EXEMPT', VAT_POSITION_WORDS.EXEMPT)}${opt('PARTLY_EXEMPT', VAT_POSITION_WORDS.PARTLY_EXEMPT)}${opt('NOT_KNOWN', VAT_POSITION_WORDS.NOT_KNOWN)}</select></label>
+        <label>Why <input class="fi" name="reason" maxlength="500" required placeholder="For example: their VAT return shows no VAT reclaimed"></label></div>
+        <button class="cta" type="submit">Save</button></form>
+      <form method="post" action="${base(v.job.id)}/vat">${hidden(v, ch)}<input type="hidden" name="field" value="vat"><div class="pk-fields">
+        <label>VAT not reclaimed, in pounds <input class="fi" name="value" inputmode="decimal" value="${t.amount_pence === null ? '' : String(t.amount_pence / 100)}"></label>
+        <label>Why <input class="fi" name="reason" maxlength="500" required placeholder="For example: the VAT on the purchase invoice"></label></div>
+        <button class="cta" type="submit">Save</button></form></details>`}`;
 }
 
 /* ------------------------------------------------------------ chapter 7 */
