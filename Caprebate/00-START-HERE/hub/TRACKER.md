@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 288 |
-| Working on it | 1 |
+| Done | 289 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1137,7 +1137,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-37 items.
+36 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1352,12 +1352,6 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 153g - the survey pack's other ten chapters (from Phase 153f line 2)
-
-`13201098035` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
-
-- Note 2026-10-04 (Phase 153f): Created by Phase 153f (line 2) on the monday.com board, which gave it this id; the tracker's add gave 13201070998, replaced here. The order for the ten chapters: 04-phase-work/phase153f/survey-pack-chapters-order.md.
-
 ### Phase 154a1 - the faults the 3 October sweep found, fixed (12 lines)
 
 `13201103799` · **Ready - Claude can build** · owner Claude
@@ -1380,7 +1374,7 @@
 
 ## Z · Complete / Not Applicable
 
-288 items.
+289 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -2991,6 +2985,13 @@
 
 - Note 2026-10-04 (Phase 153f): Created on the monday.com board, which gave it this id; the tracker's add gave 13200780220, replaced here. Claimed by the Mac.
 - Note 2026-10-04 (Phase 153f): Done 4 Oct 2026: stage 6 brought across; six more pack chapters (the rest is Phase 153g, 13201098035); the election clock; each call's own Zoom host; the old screens retired; WhatsApp attachments and the funnel's contact box (Word answer 164); the chat answers in the Word document; the tracker brought up to date. Board Done in group Z, claim cleared; PR 13. Record in PHASE-HISTORY.
+
+### Phase 153g - the survey pack's other ten chapters (from Phase 153f line 2)
+
+`13201098035` · **Done** · owner Claude
+
+- Note 2026-10-04 (Phase 153f): Created by Phase 153f (line 2) on the monday.com board, which gave it this id; the tracker's add gave 13201070998, replaced here. The order for the ten chapters: 04-phase-work/phase153f/survey-pack-chapters-order.md.
+- Note 2026-10-04 (Phase 153g): Done 4 Oct 2026: the survey pack's last ten chapters built from one reading, the surveyor's words kept with a reason, section 06 of the client's report; every chapter now built. Board Done in group Z, claim cleared; PR 14. Record in PHASE-HISTORY.
 
 ### The four-stage funnel: buildings, checks, details, then the figure (30 Sep 2026)
 
