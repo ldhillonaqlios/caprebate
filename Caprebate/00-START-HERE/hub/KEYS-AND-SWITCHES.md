@@ -35,17 +35,18 @@ test mode, developers will change this".
 | Cloudflare Turnstile | Anti-bot check on the contact form | **Not working**: the page shows Cloudflare's test key, the server check is off. `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` not set and not in `TEST_DEPLOY_KEYS`; transfer not approved | 156 A1/B1 |
 | WhatsApp (Meta) | Messaging clients | All six `WHATSAPP_*` keys; Meta business account, approved template, webhook | 156 A2/B2 |
 | Anthropic Claude API | Reading clients' documents | `ANTHROPIC_API_KEY`; switches off (`CLAUDE_SWITCHES`); Sadique's approval and the director's signature first | 156 A8 |
-| CQC | Care registrations and beds | `CQC_SUBSCRIPTION_KEY` in the local key file, not in Vercel or `TEST_DEPLOY_KEYS`; switch off; free gate shut | 156 A5/B3 |
-| EPC register | Floor area, age band | `EPC_API_TOKEN` in the local key file only; switch off | 156 A5/B3 |
+| CQC | Care registrations and beds | `CQC_SUBSCRIPTION_KEY` in the local key file, not in Vercel or `TEST_DEPLOY_KEYS`; switch off; free gate shut **Phase 153f (4 Oct 2026):** on the test website only, switched on under Lakhbir's 2 Oct waiver ("All the free ones", `TEST_WEBSITE_LOOKUPS`); the shipped switch stays off. The key is now in `TEST_DEPLOY_KEYS`; it still has to be set in Vercel. | 156 A5/B3 |
+| EPC register | Floor area, age band | `EPC_API_TOKEN` in the local key file only; switch off **Phase 153f (4 Oct 2026):** on the test website only, switched on under Lakhbir's 2 Oct waiver ("All the free ones", `TEST_WEBSITE_LOOKUPS`); the shipped switch stays off. The key is now in `TEST_DEPLOY_KEYS`; it still has to be set in Vercel. | 156 A5/B3 |
 | Homedata | Paid address/UPRN and planning; a floor-area estimate from the building's shape (Phase 153e, 4 Oct 2026: `HOMEDATA_DIMENSIONS`, off, its own switch, stamped on every case) | `HOMEDATA_API_KEY` in the local key file only; needs a balance; switch off | 156 A5/B3 |
 | Companies House research | Profile, filings, PSC, officers after sign-up | Key is set; switches off; free gate (a published privacy notice) | 156 B3 (moved from 153c line 18) |
-| HM Land Registry Price Paid | Sale prices | Switch off; free gate | — |
+| HM Land Registry Price Paid | Sale prices | Switch off; free gate **Phase 153f (4 Oct 2026):** on the test website only, switched on under Lakhbir's 2 Oct waiver ("All the free ones", `TEST_WEBSITE_LOOKUPS`); the shipped switch stays off. | — |
 | HM Land Registry INSPIRE | Land boundary / site area | Switched off in code; first test download; the files a server needs | 155 line 6 |
-| Planning (planning.data.gov.uk, PlanIt) | Planning history | Switch off; free gate; PlanIt's "not for commercial use" | 153b line 19 |
+| Planning (planning.data.gov.uk, PlanIt) | Planning history | Switch off; free gate; PlanIt's "not for commercial use" **Phase 153f (4 Oct 2026):** on the test website only, switched on under Lakhbir's 2 Oct waiver ("All the free ones", `TEST_WEBSITE_LOOKUPS`); the shipped switch stays off. PlanIt only, for the test website's invented clients; Homedata stays the chosen route (Word question 202). | 153b line 19 |
 | ONS postcode table | Postcode to council area | A 75 MB file on a server (`CAPREBATE_POSTCODE_DB`) | 155 line 6 |
 | Google Analytics 4 | Website visits after consent | `GA4_MEASUREMENT_ID`; Sadique's review of the measurement plan | 156 A7 |
 | Engagement signing | Typed-name signature, in house | `ENGAGEMENT_SIGNING` off until the solicitor confirms | waiting on the solicitor |
 | Keeping uploaded originals | Encrypted copies of client files | `CAPREBATE_ORIGINALS_KEY` is set; ON for the test website only (`KEEP_ORIGINALS_TEST_WEBSITE`, passed by api/index.mjs, seven years, Phase 153c); the shipped `KEEP_ORIGINALS` stays off; Sadique's check | waiting on Sadique |
+| Ordnance Survey (OS Data Hub, Features API) | Building outlines for the report's site plan (Phase 153f, 4 Oct 2026, from the 2 Oct stage 6) | `OS_DATA_HUB_API_KEY` (free OS OpenData plan; in `TEST_DEPLOY_KEYS`, not yet set in Vercel); fetched on the test website only | 156 A5 |
 | HM Land Registry title (Business Gateway) | Official title copy | Retired: done by hand | — |
 
 ## Named in the plans, not built

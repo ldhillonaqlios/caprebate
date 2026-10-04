@@ -34,7 +34,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       solicitor brief, mailbox confirmation, Google Business Profile, bank and insurance, HMRC corporation tax,
       supplier breach clauses, and ten lower-priority items (Homedata, cyber security, hardware, brand, analytics…).
 - [ ] The API steps in Phase 156 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
-      Vercel, Zoom licence, Google Analytics, Anthropic paperwork, GoAddress, Didit).
+      Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom licence, Google Analytics, Anthropic paperwork, GoAddress, Didit).
 - [ ] Send a test video from the iPhone through "Show us your building", and supply the tall hero video for the home
       page (PHASE-HISTORY ~11112-11160).
 - [x] Decide whether the stray local files on the Mac (`*.mutbak`, `*.new0929`, `api/index.mjs.new0929`,

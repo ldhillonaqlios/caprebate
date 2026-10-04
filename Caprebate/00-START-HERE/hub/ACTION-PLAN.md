@@ -1440,6 +1440,12 @@ A5. CQC, EPC, HOMEDATA (register lookups after a client signs). The local key
     3. These stay OFF for real clients until the free gate opens (a published
        privacy notice) and, for Homedata, a signed engagement.
     Then tell Claude: PART B3.
+    ADDED 4 Oct 2026 by Phase 153f: the test website already runs CQC, EPC,
+    price paid and planning (PlanIt) for its invented clients under the 2 Oct
+    waiver (TEST_WEBSITE_LOOKUPS), once the keys are in Vercel; the names are in
+    TEST_DEPLOY_KEYS. Also make a free Ordnance Survey Data Hub project key
+    (osdatahub.os.uk, OS OpenData plan, add the OS Features API) and copy it
+    into Vercel as OS_DATA_HUB_API_KEY: it draws the report's site plan.
 A6. ZOOM - A PAID LICENCE. The free plan ends calls at 40 minutes and has no
     cloud recording (walkthrough calls ask for recording).
     1. zoom.us > Admin > Account management > Plans and billing: upgrade the

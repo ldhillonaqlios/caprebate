@@ -30,6 +30,7 @@ import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { basisOf, checklistView, evidenceByLine, walkthroughsOf } from './survey-evidence.ts';
 import { findingSeen } from './finding-source.ts';
 import { videosOf } from './survey-video.ts';
+import { sitePlanOf, type SitePlan } from './site-plan.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
   'I have reviewed this report to the extent it sets out.',
@@ -164,6 +165,11 @@ function inspectionOf(d: { db: PackDeps['db'] }, job_id: string) {
   };
 }
 
+function siteOf(d: { db: PackDeps['db'] }, job_id: string): { site_plan?: SitePlan } {
+  const p = sitePlanOf(d.db, job_id);
+  return p === null ? {} : { site_plan: p };
+}
+
 export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at: string; by: { id: string; name: string }; details: Details }, d: { db: PackDeps['db'] }) {
   const sumOf = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
   // PHASE 153e (Word question 150): each finding, seen on site or from documents, frozen with the version.
@@ -211,6 +217,9 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     vat: { position: v.vat.position, amount_pence: v.vat.amount_pence, counted_pence: v.vat.counted_pence, words: v.vat.words },
     // PHASE 153e (Word question 145): the planning assumption, frozen with the version (a test reading for the surveyor).
     assumptions: [...REPORT_ASSUMPTIONS],
+    // 2 Oct 2026, stage 6: the site plan as it stood at approval (src/web/site-plan.ts), so the report never changes after.
+    // Only when there is one: a version approved without a plan keeps the shape every earlier version has.
+    ...siteOf(d, v.job.id),
     legal: {
       verdict: lv.verdict,
       answers: lv.asked.filter((q) => lv.answers.has(q.id)).map((q) => {
