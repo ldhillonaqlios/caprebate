@@ -77,6 +77,28 @@ export const CLAIMANT_GUIDE: Readonly<Record<string, ClaimantGuide>> = Object.fr
     owners: 'Not applicable — the individual is the customer.',
     authority: 'The paper does not say.',
   },
+  /* PHASE 153d, 4 October 2026 (Word question 45): three more kinds, TEST DEFAULTS, NOT AGREED — for the solicitor. */
+  ORDINARY_PARTNERSHIP: {
+    label: 'Ordinary partnership (not GPs) — test default',
+    identify: 'The partnership, and each partner who owns more than 25% or controls it.',
+    verify: 'Standard identity checks on the partners signing the engagement letter.',
+    owners: 'Each partner who owns more than 25% of the partnership or controls it.',
+    authority: 'An authorised partner.',
+  },
+  LLP: {
+    label: 'Limited liability partnership (LLP) — test default',
+    identify: 'The LLP and the members instructing us. Note its Companies House number and registered office.',
+    verify: 'Against the Companies House register.',
+    owners: 'Each member who owns more than 25% or controls the LLP. Take reasonable measures to check this.',
+    authority: 'A designated member.',
+  },
+  TRUST: {
+    label: 'Trust — test default',
+    identify: 'The trust, its trustees, and who benefits from it.',
+    verify: 'The trust deed, and standard identity checks on the trustees instructing us.',
+    owners: 'The settlor, the trustees, any beneficiary entitled to more than 25%, and anyone who controls the trust.',
+    authority: 'A trustee.',
+  },
   OTHER: {
     label: 'Another kind of claimant — the paper does not cover it',
     identify: 'Not in the paper. Record what was identified and why, and put the type to the solicitor.',
@@ -90,6 +112,7 @@ export const CLAIMANT_TYPES: Vocab = Object.freeze(
 export const AUTHORITY_BASES: Vocab = Object.freeze({
   DIRECTOR: 'A director', PARTNER: 'An authorised partner', PROPRIETOR: 'The proprietor',
   TRUSTEE_OR_AUTHORISED_OFFICER: 'A trustee or authorised officer', LEGAL_OWNER_IN_PERSON: 'The legal owner, in person', OTHER: 'Other — say in the evidence',
+  DESIGNATED_MEMBER: 'A designated member of an LLP',
 });
 export const BENEFICIAL_OWNERSHIP: Vocab = Object.freeze({
   RECORDED: 'Beneficial owners are recorded on this check', NOT_APPLICABLE_INDIVIDUAL: 'Not applicable — the customer is an individual',
@@ -102,8 +125,23 @@ export const PSC_DECISIONS: Vocab = Object.freeze({
 });
 export const OFFICES: Vocab = Object.freeze({ NOMINATED_OFFICER: 'Nominated officer', COMPLIANCE_OFFICER: 'Compliance officer' });
 
+/**
+ * PHASE 153d, 4 October 2026 — THE CHECK'S TEST DEFAULTS (Word question 45, the director's, for the solicitor). Built on
+ * our recommendation so the test system runs end to end: a low, medium or high risk level; anyone owning more than 25%
+ * treated as an owner to check; and ordinary partnerships, LLPs and trusts as kinds of claimant. NOT AGREED: the
+ * solicitor checks each. The check is still switched off with AML_IN_SCOPE, and the level is never required to finish.
+ */
+export const RISK_LEVELS: Vocab = Object.freeze({ LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High' });
+export const AML_TEST_DEFAULTS = Object.freeze({
+  status: 'TEST_DEFAULT_NOT_AGREED' as const,
+  risk_levels: Object.keys(RISK_LEVELS),
+  ownership_threshold_percent: 25,
+  added_claimant_types: ['ORDINARY_PARTNERSHIP', 'LLP', 'TRUST'],
+  awaiting: 'the solicitor (Word question 45)',
+});
+
 export const RISK_RATING_NOTE =
-  'The position paper sets no risk-rating scale, so none is offered here. Use words, or leave it blank. The scale is a question for the solicitor.';
+  'Test default, not agreed: rate the risk low, medium or high. Treat anyone who owns more than 25% as an owner to check. The solicitor checks both.';
 
 /** Said wherever the pull is shown. */
 export const PSC_SEPARATION =
@@ -197,14 +235,14 @@ type CheckRow = {
   identified: string | null; verification_method: string | null; register_ref: string | null; evidence_document_id: string | null;
   beneficial_ownership: string | null; authority_basis: string | null; authority_contact_id: string | null; authority_evidence: string | null;
   entity_status: string | null; sanctions_screen: string | null; sanctions_screened_on: string | null;
-  risk_rating: string | null; risk_rating_basis: string | null; checked_on: string | null; checked_by: string | null;
+  risk_rating: string | null; risk_level: string | null; risk_rating_basis: string | null; checked_on: string | null; checked_by: string | null;
   state: string; completed_at: string | null; withdrawn_reason: string | null; created_at: string; updated_at: string;
 };
 
 const CHECK_SELECT =
   'SELECT id, business_id, claim_id, claimant_type, claimant_type_note, identified, verification_method, register_ref, evidence_document_id, ' +
   'beneficial_ownership, authority_basis, authority_contact_id, authority_evidence, entity_status, sanctions_screen, sanctions_screened_on, ' +
-  'risk_rating, risk_rating_basis, checked_on, checked_by, state, completed_at, withdrawn_reason, created_at, updated_at FROM cdd_checks ';
+  'risk_rating, risk_level, risk_rating_basis, checked_on, checked_by, state, completed_at, withdrawn_reason, created_at, updated_at FROM cdd_checks ';
 
 function loadCheck(db: Db, id: string): CheckRow {
   const r = db.get<CheckRow>(`${CHECK_SELECT}WHERE id = ?`, [id]);
@@ -238,7 +276,7 @@ export function openCheck(d: ComplianceDeps, actor: Actor, input: Fields): Write
 
 const CHECK_FIELDS = ['identified', 'verification_method', 'register_ref', 'evidence_document_id', 'beneficial_ownership', 'authority_basis',
   'authority_contact_id', 'authority_evidence', 'entity_status', 'sanctions_screen', 'sanctions_screened_on', 'risk_rating',
-  'risk_rating_basis', 'checked_on'] as const;
+  'risk_level', 'risk_rating_basis', 'checked_on'] as const;
 
 export function updateCheck(d: ComplianceDeps, actor: Actor, id: string, input: Fields): WriteResult {
   assertComplianceWrite(actor);
@@ -260,6 +298,7 @@ export function updateCheck(d: ComplianceDeps, actor: Actor, id: string, input: 
       sanctions_screen: take('sanctions_screen', (v) => vocabField(v, SANCTIONS_RESULTS, 'The sanctions screen')),
       sanctions_screened_on: take('sanctions_screened_on', (v) => dateField(v, 'The date of the sanctions screen')),
       risk_rating: take('risk_rating', (v) => textField(v, 200, 'The risk rating')),
+      risk_level: take('risk_level', (v) => vocabField(v, RISK_LEVELS, 'The risk level')),
       risk_rating_basis: take('risk_rating_basis', (v) => textField(v, 2000, 'Why that rating')),
       checked_on: take('checked_on', (v) => dateField(v, 'The date of the check')),
     };
@@ -276,10 +315,10 @@ export function updateCheck(d: ComplianceDeps, actor: Actor, id: string, input: 
     d.db.run(
       'UPDATE cdd_checks SET identified = ?, verification_method = ?, register_ref = ?, evidence_document_id = ?, beneficial_ownership = ?, ' +
         'authority_basis = ?, authority_contact_id = ?, authority_evidence = ?, entity_status = ?, sanctions_screen = ?, sanctions_screened_on = ?, ' +
-        'risk_rating = ?, risk_rating_basis = ?, checked_on = ?, checked_by = ?, updated_at = ? WHERE id = ?',
+        'risk_rating = ?, risk_level = ?, risk_rating_basis = ?, checked_on = ?, checked_by = ?, updated_at = ? WHERE id = ?',
       [next.identified, next.verification_method, next.register_ref, next.evidence_document_id, next.beneficial_ownership, next.authority_basis,
         next.authority_contact_id, next.authority_evidence, next.entity_status, next.sanctions_screen, next.sanctions_screened_on,
-        next.risk_rating, next.risk_rating_basis, next.checked_on, next.checked_on === null ? null : actor.id, d.now(), id]);
+        next.risk_rating, next.risk_level, next.risk_rating_basis, next.checked_on, next.checked_on === null ? null : actor.id, d.now(), id]);
     record(d, actor, 'CDD_CHECK_UPDATED', 'ALLOWED', 'cdd_check', id, { fields: changed });
     return { ok: true, id };
   });

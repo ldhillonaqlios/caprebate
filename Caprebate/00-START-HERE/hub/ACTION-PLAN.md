@@ -1849,6 +1849,13 @@ FROM PHASE 153c (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the enquiry
   job only COUNTS lost funnel leads past twelve months. Write the deletion path
   for a lead (what goes, what stays, the deletion-log entry), with its test,
   for the officer to check alongside Word question 222.
+FROM PHASE 153d (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the draft
+  introducer terms (06-commercial-and-governance/Caprebate-Introducer-Terms-
+  DRAFT-v0.1.md) say a firm is "registered" once it has SIGNED them. The back
+  office counts any firm marked ACCOUNTANT_FIRM (introducers.ts onFeeInvoiced).
+  Once the director and the solicitor agree the terms, record the signature
+  (a dated, append-only row) and pay model C only to a firm with one, with
+  its test. Model C stays off until then.
 ═══════════════════════════════════
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.

@@ -13,7 +13,7 @@ import { localWhen } from './localtime.ts';
 import { COMPLAINT_TARGET_NOTE } from './compliance-clock.ts';
 import { kpiRow } from './look.ts';
 import type { AmlView, CheckView } from './compliance-aml.ts';
-import { AUTHORITY_BASES, BENEFICIAL_OWNERSHIP, CLAIMANT_TYPES, ENTITY_STATUSES, OFFICES, OWNER_SOURCES, PSC_DECISIONS, SANCTIONS_RESULTS } from './compliance-aml.ts';
+import { AUTHORITY_BASES, BENEFICIAL_OWNERSHIP, CLAIMANT_TYPES, ENTITY_STATUSES, OFFICES, OWNER_SOURCES, PSC_DECISIONS, RISK_LEVELS, RISK_RATING_NOTE, SANCTIONS_RESULTS } from './compliance-aml.ts';
 import type { ComplaintCount, ComplaintView, RegisterLine, RequestView, SearchResult } from './compliance-rights.ts';
 import {
   ACCESS_RESPONSE_ITEMS, COMPLAINT_LIMBS, COMPLAINT_OUTCOMES, COMPLAINT_VIA, EXTENSION_GROUND_WORDS, FEE_STATUS, IDENTITY_EVIDENCE, IDENTITY_OUTCOMES,
@@ -178,8 +178,9 @@ export function checkPage(nav: Nav, v: CheckView, msg?: string, identity: Safe =
         ${area('The evidence of authority', 'authority_evidence', c.authority_evidence)}
         ${choose('Entity status', 'entity_status', ENTITY_STATUSES, c.entity_status)}
         ${choose('Sanctions screen', 'sanctions_screen', SANCTIONS_RESULTS, c.sanctions_screen)} ${input('Screened on', 'sanctions_screened_on', c.sanctions_screened_on, 'date')}
-        <p class="help">${'The position paper sets no risk-rating scale, so none is offered. Words, or nothing.'}</p>
-        ${input('Risk rating', 'risk_rating', c.risk_rating)} ${area('Why', 'risk_rating_basis', c.risk_rating_basis)}
+        <p class="help">${RISK_RATING_NOTE}</p>
+        ${choose('Risk level (test default)', 'risk_level', RISK_LEVELS, c.risk_level)}
+        ${input('The risk in words', 'risk_rating', c.risk_rating)} ${area('Why', 'risk_rating_basis', c.risk_rating_basis)}
         ${input('Checked on', 'checked_on', c.checked_on, 'date')}`) : raw('')}
       <h3>Online identity check</h3>${identity}
       <h3>The PSC pull</h3><p>${v.psc_pull.reading}</p>

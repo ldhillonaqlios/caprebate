@@ -43,6 +43,9 @@ async function build() {
     // 4 OCTOBER 2026 (Phase 153c, Word question 219): uploads are kept on the test website only - invented files - for
     // 7 years, sealed with CAPREBATE_ORIGINALS_KEY from its settings; without the key nothing is kept. Never the default.
     keepOriginals: (await import('../Caprebate/09-app/backend/src/web/originals.ts')).KEEP_ORIGINALS_TEST_WEBSITE,
+    // 4 OCTOBER 2026 (Phase 153d, Word questions 33, 34 and 196): the portal shows the TEST-ONLY engagement letter, its
+    // clauses 5, 7(d) and 13 filled with test defaults, not agreed. It is never signed. This file only - never the default.
+    testLetter: true,
     ...(publicOrigin === undefined ? {} : { publicOrigin }),
   }, 10_000, await sharedDocumentOptions(docs, lasting));
   const made = opened.made;

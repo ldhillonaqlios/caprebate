@@ -54,6 +54,22 @@ export const LETTER_PATH = join(
 );
 
 /**
+ * THE TEST-ONLY COPY — Phase 153d, 4 October 2026 (Word questions 33, 34 and 196, the director's). Built on our
+ * recommendation, for the director and the solicitor to check: the same letter with clause 5 (£995 a property plus the
+ * charges of a surveyor already booked, at cost), clause 7(d) ("named in our privacy notice") and clause 13 (any
+ * reduction; a settlement the client accepts counts) filled, each marked "test default, not agreed", and a TEST COPY
+ * line under the title. The real letter above keeps its brackets: they are the director's and the solicitor's.
+ * ONLY THE TEST WEBSITE READS THIS COPY: createApp's `testLetter`, passed by api/index.mjs alone. A test copy is never
+ * signed, whatever the switch says (signing.ts), so a real client can never be sent it as a contract.
+ */
+export const TEST_LETTER_PATH = join(
+  import.meta.dirname, '..', '..', '..', '..',
+  '06-commercial-and-governance', 'Caprebate Engagement Letter - TEST DEFAULTS, not agreed.docx',
+);
+export const TEST_COPY_MARK = 'TEST COPY — for the test system only.';
+export const TEST_DEFAULT_MARK = '(test default, not agreed)';
+
+/**
  * A term the letter leaves open. `where` is the clause a person will look in.
  *
  * DERIVED FROM THE DOCUMENT, NOT LISTED BY HAND. `unresolvedTerms()` finds the
@@ -68,6 +84,8 @@ export type Letter = {
   readonly openTerms: readonly OpenTerm[];
   /** Specimen values still in the rendered text, named so the screen can flag them. */
   readonly specimens: readonly string[];
+  /** Phase 153d: true for the test-only copy (its TEST COPY line). Never signed. */
+  readonly test_copy: boolean;
 };
 
 /** The specimen client and figures baked into the template. */
@@ -142,6 +160,7 @@ export function loadLetter(
   return {
     paragraphs,
     openTerms: unresolvedTerms(paragraphs),
+    test_copy: paragraphs.some((p) => p.text.startsWith(TEST_COPY_MARK)),
     specimens: [
       ...(rendered.includes(SPECIMEN_CLIENT) ? [`the specimen client name "${SPECIMEN_CLIENT}"`] : []),
       ...(rendered.includes(SPECIMEN_COMPANY_NUMBER)

@@ -1442,8 +1442,43 @@ function gateThreshold(loaded, targetMargin) {
   return loaded * (1 + m);
 }
 
+/* =============================================================================
+   11. THE DISPOSAL FEE — PHASE 153d, 4 October 2026 (Word question 23, the director's)
+
+   Built on our recommendation, for the director to check: when a client sells a property, our help - reading the
+   sale and the claim file, working out the disposal value for each pool, and drafting the s.198 election and its
+   covering note - is a FIXED FEE, costed here from the same inputs as every other job: our own hours at the model's
+   £60 rate, plus the data line. Never a percentage of the sale price or of the election figure: a percentage of the
+   election figure would pay us more for the outcome that costs our client more tax. No allowance is found on a
+   disposal, so 3% of the allowances would be nothing.
+
+   AT COST, NO MARGIN: £290. Any margin is the director's to set. Lakhbir's note on question 23 ("a flat 3%" when no
+   allowance is made) did not say 3% of what, so it is recorded with the question rather than built. A TEST DEFAULT,
+   NOT AGREED: the disposal note and the staff task say so wherever the figure is shown.
+   ============================================================================= */
+const DISPOSAL_WORK = Object.freeze({
+  hours: 4,
+  rate: SECTOR_DIRECT.dental.rate,
+  data: SECTOR_DIRECT.dental.data,
+  covers: "reading the sale and the claim file, the disposal value for each pool, and the drafted s.198 election with its covering note",
+  status: "TEST_DEFAULT_NOT_AGREED",
+  awaiting: "the director (Word question 23)"
+});
+
+/** The fixed disposal fee in pounds, worked out from DISPOSAL_WORK: hours x rate + data. */
+function disposalFee() {
+  const w = DISPOSAL_WORK;
+  const pounds = w.hours * w.rate + w.data;
+  return Object.freeze({
+    pounds, pence: pounds * 100, hours: w.hours, rate: w.rate, data: w.data, covers: w.covers,
+    status: w.status, awaiting: w.awaiting,
+    words: "£" + pounds + ", fixed, for " + w.covers + ". A test default, not agreed: the director decides the figure."
+  });
+}
+
 module.exports = {
   JobEconError,
+  DISPOSAL_WORK, disposalFee,
   SECTOR_DIRECT, SECTORS, ROUTES, PARAMS, MODELLING, BANDS, LINE_NAMES,
   SECTOR_INVARIANT_SURVEYOR,
   DESK_DEFENSIBILITY_ANSWERED,

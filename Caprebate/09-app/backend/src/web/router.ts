@@ -113,6 +113,8 @@ export type WebDeps = {
    * REQUEST'S Host header, which is whatever the sender typed. Absent is http://localhost:8103.
    */
   publicOrigin?: string;
+  /** PHASE 153d: the test-only letter (src/web/letter.ts, TEST_LETTER_PATH). Absent is the real letter. Only the test website passes it. */
+  letterPath?: string;
 };
 
 /* ------------------------------------------------------------------ *
@@ -1109,7 +1111,7 @@ async function portalRoutes(
     const { business } = P.progress(db, actor, business_id);
     P.markViewed(db, actor, business_id, now);
     const eng = P.engagement(db, actor, business_id);
-    html(res, 200, letterPage(actor, business, eng));
+    html(res, 200, letterPage(actor, business, eng, undefined, undefined, d.letterPath));
     return 'handled';
   }
 
@@ -1124,9 +1126,9 @@ async function portalRoutes(
       ? { ok: false as const, why: 'Please sign in again, then sign the letter.' }
       : signEngagement({ db, audit: d.app.audit, email: d.app.email, now, newId }, actor, business_id, {
         ...typed, authorised: f.get('authorised') === 'on', letter_sha256: f.get('letter_sha256') ?? '',
-      }, { ip: clientIp(req), session_id });
+      }, { ip: clientIp(req), session_id }, d.letterPath === undefined ? {} : { letterPath: d.letterPath });
     if (!r.ok) {
-      html(res, 400, letterPage(actor, business, P.engagement(db, actor, business_id), r.why, typed));
+      html(res, 400, letterPage(actor, business, P.engagement(db, actor, business_id), r.why, typed, d.letterPath));
       return 'handled';
     }
     html(res, 200, page({ title: 'Letter signed', nav: nav(actor), body: h`<h1>Thank you — the letter is signed</h1>
@@ -2285,12 +2287,13 @@ export function clientIp(req: IncomingMessage): string {
 
 function letterPage(
   actor: Actor, business: P.Business, eng: P.EngagementView | null,
-  problem?: string, typed?: { full_name: string; role: string },
+  problem?: string, typed?: { full_name: string; role: string }, letterPath?: string,
 ): string {
   // The record's number travels with its name. Absent is omitted, never passed as undefined; a blank is passed and
   // letter.ts treats it as absent — the specimen stays and is flagged, never read as the client's (N4).
-  const shown = shownLetter(business);
+  const shown = shownLetter(business, letterPath);
   const openTerms = loadLetter({
+    ...(letterPath === undefined ? {} : { path: letterPath }),
     clientName: business.name,
     ...(business.company_number === undefined || business.company_number === null ? {} : { companyNumber: business.company_number }),
   });
