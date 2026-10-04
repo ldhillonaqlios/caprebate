@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 33 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 1 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
 | Done | 276 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1384,7 +1384,7 @@
 
 ### Phase 153e - the surveyor's workbench built on our recommendation for the surveyor to check: 16 builds from the 29 Sep review
 
-`13199476474` · **Ready - Claude can build** · owner Claude
+`13199476474` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
 
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268318 (board sync, Lakhbir's yes).
 - Note 2026-10-04 (Phase 153a): Line 17 added by Phase 153a: chapter 15's VAT half (the survey pack's grants half is built).
