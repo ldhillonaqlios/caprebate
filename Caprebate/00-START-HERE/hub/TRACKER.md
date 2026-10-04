@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 4 |
+| Ready - Claude can build | 3 |
 | Ready - Lakhbir action | 33 |
 | Built - awaiting sign-off | 120 |
 | Blocked - question | 1 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
 | Done | 273 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1348,7 +1348,7 @@
 
 ### Phase 153b - tax readings built on our recommendation for the accountant to check: 20 builds from the 29 Sep question review
 
-`13199454668` · **Ready - Claude can build** · owner Claude
+`13199454668` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
 
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268315 (board sync, Lakhbir's yes).
 - Note 2026-10-04 (Phase 153a): Lines 12 and 13 done by Phase 153a (grant checks at valuation); new line 21 added: the switches' direction, moved from Phase 153a line 2, to run last.
