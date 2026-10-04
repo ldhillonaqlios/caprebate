@@ -60,6 +60,8 @@ export type ReportModel = {
   readonly automation_note: string;
   /** 2 Oct 2026: how the building was inspected, and what the client sent (src/web/survey-evidence.ts). Null in a version approved before. */
   readonly inspection: string | null;
+  /** PHASE 153e: the assumptions the version was approved on (the planning assumption). Empty in a version approved before. */
+  readonly assumptions: readonly string[];
 };
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -191,6 +193,7 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     declaration: [...x.declaration],
     automation_note: x.automation_note,
     inspection: inspectionWords((x as { inspection?: Snapshot['inspection'] }).inspection),
+    assumptions: (x as { assumptions?: readonly string[] }).assumptions ?? [],
   };
 }
 
@@ -267,6 +270,7 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
       <div class="rp-decl"><ol>${m.declaration.map((d) => h`<li>${d}</li>`)}</ol>
         <div class="rp-sigrow"><div><b>${m.surveyor.name}</b>Surveyor</div><div><b>RICS no. ${m.surveyor.rics}</b>${m.surveyor.firm ?? ''}</div><div><b>${m.approved_on}, ${m.approved_clock}</b>Approved online, version ${String(m.version)}</div></div></div>
       ${m.inspection === null ? raw('') : h`<h3>How the building was inspected</h3><p>${m.inspection}</p>`}
+      ${m.assumptions.length === 0 ? raw('') : h`<h3>What we assume</h3>${m.assumptions.map((a) => h`<p>${a}</p>`)}`}
       <h3>The report’s fingerprint</h3>
       <p>This code belongs to this exact report. If a single figure were changed, the code would change. We keep the approved report and its code.</p>
       <p class="pk-fp">${m.fingerprint}</p>
@@ -582,6 +586,12 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
     c.text(L, c.y, 'How the building was inspected', 'Times-Bold', 13, C.ink);
     c.y += 6;
     c.para(m.inspection, { after: 16 });
+    c.y += 10;
+  }
+  if (m.assumptions.length > 0) {
+    c.text(L, c.y, 'What we assume', 'Times-Bold', 13, C.ink);
+    c.y += 6;
+    for (const a of m.assumptions) c.para(a, { after: 8 });
     c.y += 10;
   }
   c.text(L, c.y, 'The report’s fingerprint', 'Times-Bold', 13, C.ink);

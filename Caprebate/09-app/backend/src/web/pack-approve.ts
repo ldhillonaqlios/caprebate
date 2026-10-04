@@ -20,6 +20,7 @@
  * own stages read them exactly as before. If any of that is refused, nothing is kept. The form carries both counters,
  * so a page drawn before a change cannot approve the changed pack, and a second click on the same state is refused.
  */
+import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
 import { createHash } from 'node:crypto';
 import { authorise, can, type Actor } from '../authz.ts';
 import { amendFigures, commitFigures, jobHasEstimate, packJob } from './surveyor.ts';
@@ -201,6 +202,8 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     },
     changes: v.changes,
     inspection: inspectionOf(d, v.job.id),
+    // PHASE 153e (Word question 145): the planning assumption, frozen with the version (a test reading for the surveyor).
+    assumptions: [...REPORT_ASSUMPTIONS],
     legal: {
       verdict: lv.verdict,
       answers: lv.asked.filter((q) => lv.answers.has(q.id)).map((q) => {

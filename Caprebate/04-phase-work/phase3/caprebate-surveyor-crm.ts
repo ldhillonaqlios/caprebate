@@ -881,6 +881,14 @@ export const BLANK_CONTROL_EVERY_N = 10;
 export const BLANK_CONTROL_DIVERGENCE_PP = 3;
 
 /**
+ * PHASE 153e, 4 October 2026 (Word question 149, the surveyor's): the limit for a GBP/m2 field, a TEST DEFAULT built on
+ * the answer typed under the question ("For price-per-square-metre figures, use a 10% tolerance as the initial
+ * threshold … flagged for review rather than automatically treated as a failure"). Relative to the pre-filled median.
+ * Outside it the field is FLAGGED FOR REVIEW, never retired automatically. For the surveyor to confirm.
+ */
+export const BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 = 0.10;
+
+/**
  * Deterministic assignment, so the same job is always in the same arm however
  * many times this is evaluated, and so the arm can be reconstructed from the
  * job id alone when the data is audited later. A random draw would be
@@ -963,8 +971,12 @@ export type ControlComparison = {
     | 'PREFILL_SUPPORTED'
     /** They land somewhere else. The adoption rate was measuring the anchor. Retire the pre-fill. */
     | 'RETIRE_PREFILL'
-    /** The threshold is expressed in percentage points and this field is not a percentage. */
-    | 'THRESHOLD_NOT_DEFINED_FOR_UNIT';
+    /** The threshold is expressed in percentage points and this field is not a percentage (no test limit for its unit). */
+    | 'THRESHOLD_NOT_DEFINED_FOR_UNIT'
+    /** Phase 153e: a GBP/m2 field within the test limit of 10%. */
+    | 'WITHIN_TEST_LIMIT'
+    /** Phase 153e: a GBP/m2 field more than 10% apart. Flagged for the surveyor's review, not a fail. */
+    | 'FLAG_FOR_REVIEW';
   note: string;
 };
 
@@ -1023,6 +1035,19 @@ export function blankControlComparison(
         `${ctl.length} control and ${pre.length} pre-filled observation(s); ${minPerArm} are needed in ` +
         `each arm. At a 1-in-${BLANK_CONTROL_EVERY_N} control rate this arrives slowly by construction — ` +
         `that is the cost of the control, not a fault in it.`,
+    };
+  }
+
+  // PHASE 153e: a GBP/m2 field has a test limit now: 10% of the pre-filled median, as a flag, never a retirement.
+  if (spec.unit === 'GBP/m2' && prefilled_median !== null && prefilled_median !== 0 && gap !== null) {
+    const rel = Math.abs(gap) / Math.abs(prefilled_median);
+    const pct = Math.round(rel * 1000) / 10;
+    return {
+      ...base,
+      verdict: rel > BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 ? 'FLAG_FOR_REVIEW' : 'WITHIN_TEST_LIMIT',
+      note: `Gap is ${gap} ${spec.unit}, ${pct}% of the pre-filled median. The test limit is ` +
+        `${BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 * 100}% (a test default, for the surveyor to confirm): ` +
+        (rel > BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 ? 'flagged for review, not a fail.' : 'within it.'),
     };
   }
 

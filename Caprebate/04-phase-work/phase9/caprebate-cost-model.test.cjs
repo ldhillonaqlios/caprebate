@@ -165,6 +165,7 @@ test("A1 every Phase 9 gate ships false", () => {
   assert.deepEqual(Object.keys(gates).sort(), [
     "leg_e2_drop_prelims_from_erc",
     "leg_e2_oncosts_by_price_source",
+    "leg_e2_prelims_banded_by_job_size",
     "leg_e3_building_type_adder",
     "leg_e3_voa_fee_scale",
     "leg_e4_contract_size_outside_window",
@@ -2159,4 +2160,117 @@ test("J13 F3-4/F3-5 through the checked path: a longer life survives strictly be
   const shortLife = M.elementDepreciationFactor({ element_ref: "LS-CH-001", age_years: 7 }, o);
   const longLife = M.elementDepreciationFactor({ element_ref: "LS-CH-012", age_years: 7 }, o);
   assert.ok(longLife.factor > shortLife.factor, "identical factors would mean the life lookup is not wired");
+});
+
+/* =============================================================================
+   P153e — PHASE 153e, 4 OCTOBER 2026: FOUR OF THE SURVEYOR'S QUESTIONS IN THIS MODEL'S OWN TEST SYSTEM
+   (136 preliminaries by job size; 137 the insurance cross-check; 139 the past claim; 147 the index from dates).
+   ============================================================================= */
+
+test("P153e-1 (q136) preliminaries by job size: placeholder bands, only with the gate on, and a job with no size refuses", () => {
+  assert.equal(M.CB_P9_GATES.leg_e2_prelims_banded_by_job_size, false, "ships off");
+  assert.equal(M.defaultPrelimsRate({}, {}), 0.18, "off: the flat 18% as before");
+  const on = { gates: { leg_e2_prelims_banded_by_job_size: true } };
+  assert.equal(M.defaultPrelimsRate({ job_size_pounds: 100000 }, on), 0.18);
+  assert.equal(M.defaultPrelimsRate({ job_size_pounds: 250000 }, on), 0.15, "a band's floor is in the band");
+  assert.equal(M.defaultPrelimsRate({ job_size_pounds: 2000000 }, on), 0.12);
+  assert.equal(M.defaultPrelimsRate({ job_size_pounds: 9000000 }, on), 0.10);
+  assert.equal(codeOf(() => M.defaultPrelimsRate({}, on)), "E_JOB_SIZE_REQUIRED", "N4: no size is never defaulted");
+  assert.match(M.PRELIMS_BANDS_PLACEHOLDER.status, /PLACEHOLDER/);
+  const r = M.prelimsFactor({ cost_basis: M.COST_BASIS.RESIDUAL, job_size_pounds: 2000000 }, on);
+  assert.equal(near(r.factor, 1.12), true, "the residual path takes the banded rate");
+});
+
+test("P153e-2 (q136) the test system runs the by-source rule and the bands together: a book that includes on-costs adds none; one that excludes them takes the band", () => {
+  const t = { gates: M.TEST_SYSTEM_GATES, tables: ALL_FIXTURES };
+  assert.equal(M.TEST_SYSTEM_GATES.leg_e2_oncosts_by_price_source, true);
+  assert.equal(M.TEST_SYSTEM_GATES.leg_e2_drop_prelims_from_erc, undefined, "never the blanket drop");
+  const incl = M.prelimsFactor({ cost_basis: M.COST_BASIS.RESIDUAL, price_source: "invented_book_b", job_size_pounds: 2000000 }, t);
+  assert.equal(incl.factor, 1);
+  const excl = M.prelimsFactor({ cost_basis: M.COST_BASIS.RESIDUAL, price_source: "invented_book_a", job_size_pounds: 2000000 }, t);
+  assert.equal(near(excl.factor, 1.12), true);
+  assert.equal(codeOf(() => M.prelimsFactor({ cost_basis: M.COST_BASIS.RESIDUAL, price_source: "invented_book_c", job_size_pounds: 2000000 }, t)), "E_ONCOSTS_BASIS_UNKNOWN");
+});
+
+test("P153e-3 (q147) the index factor from a table and two dates: today's price back to the purchase date; never extrapolated; the real table ships empty", () => {
+  const f = M.indexFactorFromTable(M.CB_BCIS_INDEX_PLACEHOLDER, "2021-06-30", "2026-03-01");
+  assert.equal(near(f.factor, 322 / 396), true);
+  assert.match(f.source, /PLACEHOLDER - INVENTED POINTS, NOT BCIS DATA/);
+  assert.equal(codeOf(() => M.indexFactorFromTable(M.CB_BCIS_INDEX_PLACEHOLDER, "2017-06-30", "2026-03-01")), "E_INDEX_DATE_OUTSIDE_TABLE");
+  assert.equal(codeOf(() => M.indexFactorFromTable(M.CB_BCIS_INDEX_PLACEHOLDER, "2021-06", "2027-03-01")), "E_INDEX_DATE_OUTSIDE_TABLE");
+  assert.equal(codeOf(() => M.indexFactorFromTable(M.CB_BCIS_INDEX_PLACEHOLDER, "last year", "2026-03-01")), "E_INDEX_DATES_REQUIRED");
+  assert.equal(M.CB_BCIS_INDEX.loaded, false);
+  const base = { purchase_consideration: 1000000, land_value_estimate: 200000, prelims_rate: 0, fees_rate: 0,
+    elements: [{ element_ref: "x", pool: "main", qty: 1, rate: 400000 }, { element_ref: "y", pool: "nonqual", qty: 1, rate: 400000 }] };
+  assert.equal(codeOf(() => M.residualApportionment(Object.assign({}, base, { index_dates: { purchase: "2021-06-30", valuation: "2026-03-01" } }))), "E_TABLE_NOT_LOADED", "the real table is empty: no guess");
+  const r = M.residualApportionment(Object.assign({}, base, { index_dates: { purchase: "2021-06-30", valuation: "2026-03-01" } }), { tables: M.TEST_SYSTEM_TABLES });
+  assert.equal(near(r.factors.index_factor, 322 / 396), true);
+  assert.equal(near(r.components.A, 400000 * 322 / 396, 1e-6), true);
+  assert.equal(codeOf(() => M.residualApportionment(Object.assign({}, base, { index_factor: 1.05, index_dates: { purchase: "2021-06-30", valuation: "2026-03-01" } }), { tables: M.TEST_SYSTEM_TABLES })), "E_INDEX_CONFLICT");
+});
+
+test("P153e-4 (q137) the insurance cross-check: like for like first, then within 10% supports; an unknown basis is NOT_COMPARABLE, never support; the word corroborates is never used", () => {
+  const T = { tables: M.TEST_SYSTEM_TABLES };
+  const same = { demolition: true, fees: true, prelims: true };
+  const s = M.insuranceCrossCheck({ ours: { amount: 2000000, date: "2026-03-01", includes: same }, insurance: { amount: 2100000, date: "2026-03-01", includes: same } }, T);
+  assert.equal(s.verdict, "SUPPORTS");
+  const far = M.insuranceCrossCheck({ ours: { amount: 2000000, date: "2026-03-01", includes: same }, insurance: { amount: 2500000, date: "2026-03-01", includes: same } }, T);
+  assert.equal(far.verdict, "DOES_NOT_SUPPORT");
+  // Fees in the insurance figure and not ours: ours gains 15% first, and then the two agree.
+  const fees = M.insuranceCrossCheck({ ours: { amount: 2000000, date: "2026-03-01", includes: { demolition: true, fees: false, prelims: true } },
+    insurance: { amount: 2300000, date: "2026-03-01", includes: same }, adjustments: { fees_rate: 0.15 } }, T);
+  assert.equal(fees.verdict, "SUPPORTS");
+  assert.equal(near(fees.ours_adjusted, 2300000, 1e-6), true);
+  // An older insurance figure is brought to our date by the index before comparing.
+  const dated = M.insuranceCrossCheck({ ours: { amount: 396000, date: "2026-03-01", includes: same }, insurance: { amount: 322000, date: "2021-06-30", includes: same } }, T);
+  assert.equal(dated.verdict, "SUPPORTS");
+  assert.ok(dated.steps.some(x => /brought from 2021-06-30 to 2026-03-01/.test(x)));
+  const unknown = M.insuranceCrossCheck({ ours: { amount: 2000000, date: "2026-03-01", includes: same }, insurance: { amount: 2000000, date: "2026-03-01", includes: { demolition: true, fees: null, prelims: true } } }, T);
+  assert.equal(unknown.verdict, "NOT_COMPARABLE", "N4: an unknown never lets it support ours");
+  const noAdj = M.insuranceCrossCheck({ ours: { amount: 2000000, date: "2026-03-01", includes: { demolition: false, fees: true, prelims: true } }, insurance: { amount: 2000000, date: "2026-03-01", includes: same } }, T);
+  assert.equal(noAdj.verdict, "NOT_COMPARABLE");
+  assert.equal(M.INSURANCE_SUPPORT_LIMIT_TEST, 0.10);
+  assert.ok(!/corroborat/i.test(JSON.stringify([s, far, fees, dated, unknown, noAdj])));
+});
+
+/* The past claim, GC-01 (02-modules-and-build-prep/Build-Prep-Care-Homes-Estimate-Engine-Specification.md §9): its
+   delivered replacement costs and land, put through the model's apportionment. What can be tested without the original
+   quantities is the apportionment itself, and that is what this tests. */
+const PAST_CLAIMS = [
+  { id: "GC-01", status: "CASE", tuned: "possibly: the flat 15% fees may have been back-solved to it (see the fees note)",
+    input: { purchase_consideration: 2706000, land_value_estimate: 838860, prelims_rate: 0, fees_rate: 0,
+      elements: [
+        { element_ref: "gc01_main", pool: "main", qty: 1, rate: 1320841 * 475641 / 1036124 },
+        { element_ref: "gc01_special", pool: "special", qty: 1, rate: 1320841 - 1320841 * 475641 / 1036124 },
+        { element_ref: "gc01_building", pool: "nonqual", qty: 1, rate: 1289881 }] },
+    expected: { money: { qualifying: 1036124, main: 475641, special: 560483, A: 1320841, B: 1289881 }, split: 0.78 } },
+  { id: "UNTUNED-1", status: "EMPTY_SLOT",
+    why: "a second finished claim that nothing was tuned to, added the day one closes with the surveyor's agreement (Word question 139)" }
+];
+
+test("P153e-5 (q139) THE PAST CLAIM: GC-01 within 5% AND within GBP 25,000 on every money figure, and within 0.01 on the split", () => {
+  const c = PAST_CLAIMS[0];
+  const r = M.residualApportionment(c.input);
+  const actual = { money: { qualifying: r.qualifying_pm.low, main: r.qualifying_pools.low.main, special: r.qualifying_pools.low.special,
+    A: r.components.A, B: r.components.B }, split: r.multiplier.at_low_land };
+  const v = M.pastClaimWithin(c.expected, actual);
+  assert.deepEqual(v.misses, []);
+  assert.equal(v.passes, true);
+  assert.deepEqual(M.PAST_CLAIM_LIMITS_TEST, { pct: 0.05, pounds: 25000, split: 0.01 });
+});
+
+test("P153e-6 (q139) the limits bite: 6% off fails on the percentage, GBP 30,000 off on a big figure fails on the pounds, 0.02 off fails on the split", () => {
+  const e = { money: { qualifying: 1000000 }, split: 0.78 };
+  assert.equal(M.pastClaimWithin(e, { money: { qualifying: 1060000 }, split: 0.78 }).passes, false);
+  assert.equal(M.pastClaimWithin({ money: { qualifying: 10000000 } }, { money: { qualifying: 10030000 } }).passes, false, "0.3% but GBP 30,000");
+  assert.equal(M.pastClaimWithin(e, { money: { qualifying: 1000000 }, split: 0.80 }).passes, false);
+  assert.equal(M.pastClaimWithin(e, { money: {}, split: 0.78 }).passes, false, "a missing figure is a miss, never a pass");
+  assert.equal(M.pastClaimWithin(e, { money: { qualifying: 1020000 }, split: 0.785 }).passes, true);
+});
+
+test("P153e-7 (q139) the slot for a second, untuned case is there and empty, and it is never counted as a pass", () => {
+  const slot = PAST_CLAIMS.find(c => c.status === "EMPTY_SLOT");
+  assert.ok(slot);
+  assert.match(slot.why, /nothing was tuned to/);
+  assert.equal(PAST_CLAIMS.filter(c => c.status === "CASE").length, 1, "one real case; the second is not invented");
 });
