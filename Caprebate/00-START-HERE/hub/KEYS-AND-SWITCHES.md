@@ -37,7 +37,7 @@ test mode, developers will change this".
 | Anthropic Claude API | Reading clients' documents | `ANTHROPIC_API_KEY`; switches off (`CLAUDE_SWITCHES`); Sadique's approval and the director's signature first | 156 A8 |
 | CQC | Care registrations and beds | `CQC_SUBSCRIPTION_KEY` in the local key file, not in Vercel or `TEST_DEPLOY_KEYS`; switch off; free gate shut | 156 A5/B3 |
 | EPC register | Floor area, age band | `EPC_API_TOKEN` in the local key file only; switch off | 156 A5/B3 |
-| Homedata | Paid address/UPRN and planning | `HOMEDATA_API_KEY` in the local key file only; needs a balance; switch off | 156 A5/B3 |
+| Homedata | Paid address/UPRN and planning; a floor-area estimate from the building's shape (Phase 153e, 4 Oct 2026: `HOMEDATA_DIMENSIONS`, off, its own switch, stamped on every case) | `HOMEDATA_API_KEY` in the local key file only; needs a balance; switch off | 156 A5/B3 |
 | Companies House research | Profile, filings, PSC, officers after sign-up | Key is set; switches off; free gate (a published privacy notice) | 156 B3 (moved from 153c line 18) |
 | HM Land Registry Price Paid | Sale prices | Switch off; free gate | — |
 | HM Land Registry INSPIRE | Land boundary / site area | Switched off in code; first test download; the files a server needs | 155 line 6 |

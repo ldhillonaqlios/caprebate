@@ -1751,6 +1751,14 @@ FROM PHASE 153d (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the draft
   Once the director and the solicitor agree the terms, record the signature
   (a dated, append-only row) and pay model C only to a firm with one, with
   its test. Model C stays off until then.
+FROM PHASE 153e (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the cost model
+  (04-phase-work/phase9/caprebate-cost-model.cjs) now has preliminaries by job
+  size, the index factor from a table, the insurance cross-check and the
+  past-claim limits, all run in its own test system (TEST_SYSTEM_GATES). The
+  back end's survey pack does not use the cost model at all. Wire it into the
+  pack (the preliminaries, the index and the insurance check, each shown as a
+  test placeholder to the surveyor), with tests, and keep each gate off in the
+  shipped model.
 ═══════════════════════════════════
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.

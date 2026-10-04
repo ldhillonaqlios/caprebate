@@ -84,10 +84,19 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 
 - [ ] 45 built items for the tax adviser (24 switched-off tax readings, 11 rulebooks, a 53-line review pack) and 13
       questions for the accountant on the referral channel and AML. 58 Word questions for the accountant.
+- [ ] Phase 153e: chapter 15's VAT half (FOR THE ACCOUNTANT, ACC-A16's dated line): only an exempt claimant's VAT not
+      reclaimed is counted; a partly exempt claimant waits for you.
 
 ## The surveyor
 
 - [ ] 9 built items; 27 Word questions (preliminaries, the video-only basis, emergency lighting, theatre counts…).
+- [ ] Check the Phase 153e workbench, built on our recommendation (Word questions 129–131, 133–139, 145, 147–150, 203),
+      each a test default or a placeholder: the desk-first grid's limits and the 80% pass mark; the shared-area fallback
+      (25%); the ventilation and seven-item placements; the theatre suite's spaces; preliminaries by job size; the
+      insurance and past-claim limits (10%; 5% and £25,000); the index table; the planning sentence; "Seen on site" or
+      "From documents". How many re-shoots before a visit is not built: it waits for your answer.
+- [ ] A second finished claim, not used to tune the cost model, for the past-claim test's empty slot (Word question 139).
+- [ ] The Homedata five-home floor-area comparison waits on the Homedata account and its balance (Phase 156 A5/B3).
 
 ## Licences and purchases
 
