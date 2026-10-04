@@ -446,6 +446,21 @@ verbatim in the export in _archive/ if a record is ever needed.
 IT IS TWO BLOCKS; the second follows directly. They are files now, so correct
 a fact IN THE BLOCK, never in a note beneath it.
 
+DECIDED - DO NOT REOPEN. Lakhbir's settled decisions that a phase or a sweep
+keeps meeting in older text. Do not rebuild, re-ask or re-list them.
+  THE VOA RATING LIST - SCRAPPED (Lakhbir, 4 Oct 2026: "scrap the VOA
+    rating"). Its licence restricts it to business rates purposes ("An open
+    government licence does not apply"; read by Phase 155). Floor area comes
+    from the EPC register, Homedata's estimate (paid, off) and the surveyor.
+    The tracker row (12830205481) is SCRAPPED in group Z and archived on
+    monday.com; the source register keeps the VOA row, its licence
+    VOA_RATING_LIST with every channel shut, and the panel says "not built";
+    the phase9 importer stays unshipped and nothing is to wire it in. Older
+    text that says VOA is "waiting on the licence" is history.
+  (Still open, and NOT scrapped: Word question 11's Ordnance Survey email,
+    and whether to ask the Valuation Office about its Rating Cost Guide -
+    a different document, about building costs, not the rating list.)
+
 WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   ACTION-PLAN.md                    this document
   PHASE-HISTORY.md                  what every completed phase did; append a
@@ -504,7 +519,7 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   https://caprebate-test.vercel.app. Each copy logs "test deployment: this
   copy started in N ms".
   THE OUTSIDE REPLY TIMER (Phase 155 line 5, 4 Oct 2026): a cron-job.org job,
-  set up by hand by Lakhbir (Phase 156 A3) and held in HIS account - nothing
+  set up by hand by Lakhbir (Phase 156b A1) and held in HIS account - nothing
   here can see or change it. Every 5 minutes it calls POST /hooks/read-replies
   with "Authorization: Bearer <REPLY_TIMER_TOKEN>" (the word is in Vercel's
   settings only; src/web/inbound-email.ts timerRefusal). Its history is on
@@ -977,9 +992,25 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 156 — every outside service the build needs: what Lakhbir does, step by step, and what Claude builds
+## PHASE 156a — the missing keys in Vercel, and Ordnance Survey and Cloudflare set up, step by step
 
- **Model: Opus. Written 3 October 2026 from the API audit Lakhbir asked for that day.** **Why this exists.** Lakhbir, 3 Oct 2026: "all API's needed should be phase 155 and it should tell me step by step what i need to do and how to do it". Later the same day he moved it near the end ("i feel like this should be one of the last things, makes more sense"), so it is Phase 156, run after 155 and before the sweep. The anti-bot check on the contact form (Cloudflare Turnstile) does not work: the page shows Cloudflare's TEST key and the server check is off. The keys-and-switches list (hub/KEYS-AND-SWITCHES.md) is the state on 3 Oct; this phase moves it. **PART A is Lakhbir's** (accounts, keys, paperwork - Claude cannot sign up to anything or enter a key or a password); **PART B is Claude's**, and each PART B line runs only once its PART A step is done. **Nothing here switches a service on for real clients**: the test website and invented data only, and each service's paper (privacy notice, DPO approval of the transfer) stays as its own sign-off.
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **The keys the test website is missing, from the key check of 4 October (names only), and the two free accounts it still needs.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+
+ **Phase 156 was split into 156a to 156e on 4 October 2026.** Lakhbir: "lets break down phase 156 and include 156a this is a step by step on adding the missing keys in vercel and setting up OS, Cloudfare". The one Phase 156 held every outside service in one block (its PART A ten steps for Lakhbir, its PART B seven for Claude). It is now five phases, each one service area, run straight down the page. **Where each old step went**, so older text that says "Phase 156 A5" or "156 B3" can be followed:
+
+| Old step | Now | | Old step | Now |
+| --- | --- | --- | --- | --- |
+| A1 Cloudflare Turnstile | 156a A3 | | B1 Turnstile in the code | 156a B2 |
+| A5 CQC, EPC (and its OS addition) | 156a A1, A2 | | B3 test calls: CQC, EPC | 156a B3 |
+| A5 Homedata (key, balance) | 156e A1 | | B3 Companies House, Anthropic, Homedata calls; "answer it myself" | 156e B1, B2 |
+| A3 the reply timer | 156b A1 | | B2 WhatsApp | 156c B1 |
+| A4 IONOS signing | 156b A2 | | B4 the Connections page | 156e B3 |
+| A2 WhatsApp | 156c A1 | | B5 update the documents | every phase |
+| A6 Zoom | 156d A1 | | B6 Zoom's call length | 156d B1 |
+| A7 Google Analytics | 156e A5 | | B7 the care regulators' lists | 156e B4 |
+| A8 Anthropic, A9 GoAddress, A10 Didit | 156e A2, A3, A4 | | | |
+
+ The board item "Phase 156" became 156a, with new items for 156b to 156e (all in 05 · FOR DEVELOPMENT, all in the tracker).
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1030,32 +1061,274 @@ WHEN THE PHASE IS DONE, in this order:
    plain lines what was done and what is next.
 ═══════════════════════════════════
 
-START by reading hub/KEYS-AND-SWITCHES.md, then ASK LAKHBIR which PART A steps
-he has done. Never ask him to paste a key into the chat: keys go into Vercel
-(Settings > Environment Variables, Production, type Sensitive) or the key file
-~/.caprebate-secrets.env, by him. You may list names in Vercel; never read or
-print a value. A key in Vercel does nothing until its name is also in
-TEST_DEPLOY_KEYS (api/index.mjs ~99) - that part is PART B.
+RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
+into Vercel (project caprebate-test > Settings > Environment Variables,
+Production, Sensitive) and into the key file, by him. You may list NAMES in
+Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
+never read, decrypt or print a value. A key in Vercel does nothing until its
+name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
+only on the next deploy. Nothing here switches anything on for real clients:
+the test website and invented data only, and each service's paper (privacy
+notice, the data protection officer's approval of a transfer) stays its own
+sign-off.
 
-PART A - LAKHBIR, STEP BY STEP (one service at a time; tick each in
+THE CHECK OF 4 OCTOBER 2026 (names only, never a value) - re-check it first:
+  IN VERCEL ALREADY: Didit (3), Companies House, Zoom (6), IONOS sending (4)
+    and reading (4), GoAddress, REPLY_TIMER_TOKEN, CAPREBATE_MFA_KEY, the test
+    password, CAPREBATE_ORIGINALS_KEY, Turso (2), the Blob store.
+  IN THE KEY FILE BUT NOT IN VERCEL: EPC_API_TOKEN, CQC_SUBSCRIPTION_KEY.
+  IN NEITHER: OS_DATA_HUB_API_KEY, TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY.
+  (Not for this phase: WhatsApp - 156c; Homedata, Anthropic, Google
+  Analytics - 156e.)
+  How: the Vercel connector's filter_project_envs on the project, reading only
+  each "key"; the key file by name only:
+    awk -F= '/^[A-Z][A-Z0-9_]*=/{print $1}' ~/.caprebate-secrets.env
+
+PART A - LAKHBIR, STEP BY STEP (about 30 minutes; tick each in
 hub/KEYS-AND-SWITCHES.md, or tell Claude and Claude ticks it)
 
-A1. CLOUDFLARE TURNSTILE (the contact form's anti-bot check). Free.
-    1. Go to dash.cloudflare.com and sign in (or create a free account with
-       the company email).
-    2. In the left menu choose Turnstile, then "Add widget".
-    3. Name: "Caprebate contact form". Hostnames: caprebate-test.vercel.app
-       (add caprebate.co.uk later, when the real site goes live). Widget mode:
-       Managed. Create.
-    4. Cloudflare shows a SITE KEY and a SECRET KEY. In Vercel (project
-       caprebate-test > Settings > Environment Variables) add
-       TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY, Production, Sensitive.
-    5. Ask Sadique to approve Cloudflare as a US transfer for testing (its
-       line in connectors/sources.ts is not approved today).
-    Then tell Claude: PART B1.
-A2. WHATSAPP (messaging clients from the back office). Meta charges per
-    template message.
-    1. business.facebook.com: make sure CAP REBATE LTD has a Meta Business
+A1. EPC AND CQC INTO VERCEL (5 minutes). Both keys are already in our key file.
+    1. Open the key file: OneDrive > Health Capital Allowances > "Private -
+       keys (do not share)" > caprebate-secrets.txt (the Mac's
+       ~/.caprebate-secrets.env is a link to it). Copy from it; paste nowhere
+       but Vercel.
+    2. vercel.com > sign in > the caprebate-test project > Settings >
+       Environment Variables > Add New.
+    3. Key: EPC_API_TOKEN. Value: everything after "EPC_API_TOKEN=" on its
+       line (no quotes, no spaces). Environments: Production only. Tick
+       Sensitive. Save.
+    4. The same for CQC_SUBSCRIPTION_KEY.
+    (Not HOMEDATA_API_KEY: it is paid and waits for 156e.)
+A2. ORDNANCE SURVEY (free, about 10 minutes). It draws the building outlines on
+    the report's site plan.
+    1. osdatahub.os.uk > Sign up (or Log in) with the company email. Choose
+       the OS OpenData plan: free, no card.
+    2. Dashboard > API projects > Create a new project. Name it "Caprebate
+       test".
+    3. Inside the project: Add an API to this project > OS Features API.
+    4. The project page shows a Project API Key. Copy it.
+    5. Vercel (as A1): Key OS_DATA_HUB_API_KEY, the value, Production,
+       Sensitive. Save.
+    6. Key file: add a new line  OS_DATA_HUB_API_KEY=<the key>  and save, so
+       the Mac's copy matches Vercel.
+A3. CLOUDFLARE TURNSTILE (free, about 10 minutes). The anti-bot check on the
+    home page's contact form; today the page shows Cloudflare's TEST key and
+    the server check is off.
+    1. dash.cloudflare.com > sign in, or create a free account with the
+       company email.
+    2. Left menu: Turnstile > Add widget.
+    3. Widget name "Caprebate contact form". Hostnames: caprebate-test.
+       vercel.app (add caprebate.co.uk later, when the real site goes live).
+       Widget mode: Managed. Create.
+    4. Cloudflare shows a SITE KEY and a SECRET KEY. In Vercel add
+       TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY (Production, Sensitive).
+    5. Key file: add the same two lines.
+    6. Ask Sadique to approve Cloudflare (a US company) for testing. Until he
+       does, the server check stays off and every enquiry is kept unchecked
+       (the function log says so).
+A4. REDEPLOY (1 minute): Vercel > Deployments > the newest Production
+    deployment > the three dots > Redeploy. A new setting only reaches the
+    site on the next deploy.
+A5. Tell Claude which of A1 to A3 are done. Never paste a key into the chat.
+
+PART B - CLAUDE (after A5)
+
+B1. Confirm the new names are in Vercel and the key file (names only), and
+    that a deploy since then is live.
+B2. TURNSTILE IN THE CODE (old 156 B1): add TURNSTILE_SITE_KEY and
+    TURNSTILE_SECRET_KEY to TEST_DEPLOY_KEYS; serve the real site key in the
+    contact form instead of Cloudflare's test key (src/web/home-site.ts);
+    prove the server check refuses a missing or wrong token and passes a
+    right one (Cloudflare publishes always-pass and always-fail test keys -
+    use those in tests, red on the code before); record the transfer as
+    waiting on Sadique and do NOT set international_transfer_approved
+    without his yes.
+B3. ONE TEST LOOKUP EACH for EPC, CQC and the Ordnance Survey site plan, under
+    the five conditions of Word question 170 (node src/cli.ts smoke ...; our
+    own company and 70 Whitehall, never a client). Report PASS or NO per
+    service. Switch nothing on that ships. EPC_API_TOKEN, CQC_SUBSCRIPTION_KEY
+    and OS_DATA_HUB_API_KEY are already in TEST_DEPLOY_KEYS.
+B4. Update hub/KEYS-AND-SWITCHES.md and the Developer Spec's keys table to
+    what is now true.
+
+When every line that could run is done: run every check in COORDINATES,
+re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
+the record, and leave each PART A step not yet done as a line in
+hub/WAITING-ON-PEOPLE.md.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
+```
+
+
+## PHASE 156b — email: the reply timer and signed emails
+
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **The two email steps of the old Phase 156.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
+into Vercel (project caprebate-test > Settings > Environment Variables,
+Production, Sensitive) and into the key file, by him. You may list NAMES in
+Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
+never read, decrypt or print a value. A key in Vercel does nothing until its
+name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
+only on the next deploy. Nothing here switches anything on for real clients:
+the test website and invented data only, and each service's paper (privacy
+notice, the data protection officer's approval of a transfer) stays its own
+sign-off.
+
+PART A - LAKHBIR
+
+A1. THE REPLY TIMER (old 156 A3). You chose cron-job.org on 1 Oct; the website
+    side is built and REPLY_TIMER_TOKEN is in Vercel. If the job is not made:
+    1. cron-job.org > sign in > Create cronjob.
+    2. URL https://caprebate-test.vercel.app/hooks/read-replies, every 5
+       minutes, method POST.
+    3. Advanced > Headers: Authorization = Bearer <the REPLY_TIMER_TOKEN
+       value, which only you have>.
+    4. Save. If it is made already, open its history: each run should show
+       200. A 401 means the word does not match; a 403 or a Vercel login page
+       means Vercel's deployment protection is in the way - tell Claude.
+A2. IONOS - CHECK EMAILS ARE SIGNED (old 156 A4; the first test email went to
+    junk).
+    1. IONOS control panel > Domains & SSL > caprebate.co.uk > DNS.
+    2. Check there is a DKIM record for IONOS mail and an SPF record that names
+       IONOS (IONOS shows the exact value it wants; copy it from there). If
+       IONOS offers to switch DKIM on for the domain, switch it on.
+    3. Send a test email from the back office to the address mail-tester.com
+       gives you, and tell Claude the score.
+
+PART B - CLAUDE
+
+B1. Read when replies were last read (the mailbox_reads row, Phase 155) and
+    whether Admin's home shows the "Email replies are not being read" warning
+    on the test website; report what cron-job.org's history should then show.
+B2. With the mail-tester score: name each thing it marks down and whether it
+    is ours to fix in code (a header, the From line) or Lakhbir's in IONOS
+    (DNS). Fix what is ours, with a test.
+
+When every line that could run is done: run every check in COORDINATES,
+re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
+the record, and leave each PART A step not yet done as a line in
+hub/WAITING-ON-PEOPLE.md.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
+```
+
+
+## PHASE 156c — WhatsApp
+
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **The old Phase 156's WhatsApp steps.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
+into Vercel (project caprebate-test > Settings > Environment Variables,
+Production, Sensitive) and into the key file, by him. You may list NAMES in
+Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
+never read, decrypt or print a value. A key in Vercel does nothing until its
+name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
+only on the next deploy. Nothing here switches anything on for real clients:
+the test website and invented data only, and each service's paper (privacy
+notice, the data protection officer's approval of a transfer) stays its own
+sign-off.
+
+PART A - LAKHBIR (old 156 A2) - WHATSAPP, messaging clients from the back
+office. Meta charges per template message.
+
+A1. 1. business.facebook.com: make sure CAP REBATE LTD has a Meta Business
        account, verified (Business settings > Security centre).
     2. developers.facebook.com > My Apps > Create app > type Business > add
        the WhatsApp product, linked to that business account.
@@ -1072,133 +1345,244 @@ A2. WHATSAPP (messaging clients from the back office). Meta charges per
        short opening message; submit and wait for approval. Its name ->
        WHATSAPP_OPENING_TEMPLATE; its language code (for example en_GB) ->
        WHATSAPP_TEMPLATE_LANGUAGE.
-    8. Add all six to Vercel (Production, Sensitive) and redeploy.
+    8. Add all six to Vercel (Production, Sensitive) and to the key file, and
+       redeploy.
     9. App > WhatsApp > Configuration > Webhook: callback URL
        https://caprebate-test.vercel.app/hooks/whatsapp, verify token = the
        word from step 6. Subscribe to "messages".
     10. Sadique confirms the Meta transfer (approved for testing only today)
         and the privacy notice line.
-    The six names are already in TEST_DEPLOY_KEYS, so nothing else is needed
-    to start testing. Then tell Claude: PART B2.
-A3. THE REPLY TIMER (fetches replies to contact@ every few minutes).
-    You chose cron-job.org on 1 Oct; the website side is built and
-    REPLY_TIMER_TOKEN is set in Vercel.
-    1. cron-job.org > sign in > Create cronjob.
-    2. URL https://caprebate-test.vercel.app/hooks/read-replies, every 5
-       minutes, method POST.
-    3. Advanced > Headers: Authorization = Bearer <the REPLY_TIMER_TOKEN
-       value, which only you have>.
-    4. Save, then open its history after 10 minutes: each run should show 200.
-       A 401 means the word does not match; a 403 or a Vercel login page means
-       Vercel's deployment protection is in the way - tell Claude.
-A4. IONOS - CHECK EMAILS ARE SIGNED (the first test email went to junk).
-    1. IONOS control panel > Domains & SSL > caprebate.co.uk > DNS.
-    2. Check there is a DKIM record for IONOS mail and an SPF record that
-       names IONOS (IONOS shows the exact value it wants; copy it from there).
-       If IONOS offers to switch DKIM on for the domain, switch it on.
-    3. Send a test email from the back office to the address mail-tester.com
-       gives you and read the score. Tell Claude the score.
-A5. CQC, EPC, HOMEDATA (register lookups after a client signs). The local key
-    file already holds keys for all three (checked 29 Sep).
-    1. Copy CQC_SUBSCRIPTION_KEY, EPC_API_TOKEN and HOMEDATA_API_KEY from
-       ~/.caprebate-secrets.env into Vercel (Production, Sensitive).
-    2. Homedata only: put a balance on the account (Word question 207) and
-       tell Claude it is there.
-    3. These stay OFF for real clients until the free gate opens (a published
-       privacy notice) and, for Homedata, a signed engagement.
-    Then tell Claude: PART B3.
-    ADDED 4 Oct 2026 by Phase 153f: the test website already runs CQC, EPC,
-    price paid and planning (PlanIt) for its invented clients under the 2 Oct
-    waiver (TEST_WEBSITE_LOOKUPS), once the keys are in Vercel; the names are in
-    TEST_DEPLOY_KEYS. Also make a free Ordnance Survey Data Hub project key
-    (osdatahub.os.uk, OS OpenData plan, add the OS Features API) and copy it
-    into Vercel as OS_DATA_HUB_API_KEY: it draws the report's site plan.
-A6. ZOOM - A PAID LICENCE. The free plan ends calls at 40 minutes and has no
-    cloud recording (walkthrough calls ask for recording).
-    1. zoom.us > Admin > Account management > Plans and billing: upgrade the
+    The six names are already in TEST_DEPLOY_KEYS.
+
+PART B - CLAUDE
+
+B1. (old 156 B2) Once the six are in, send ONE opening template to Lakhbir's
+    own number (ask him for it in the chat; never a client), read the
+    webhook's reply, and report PASS or NO. Switch nothing else on.
+
+When every line that could run is done: run every check in COORDINATES,
+re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
+the record, and leave each PART A step not yet done as a line in
+hub/WAITING-ON-PEOPLE.md.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
+```
+
+
+## PHASE 156d — Zoom: the paid licence, a user for each member of staff, and call lengths
+
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **The old Phase 156's Zoom steps.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
+into Vercel (project caprebate-test > Settings > Environment Variables,
+Production, Sensitive) and into the key file, by him. You may list NAMES in
+Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
+never read, decrypt or print a value. A key in Vercel does nothing until its
+name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
+only on the next deploy. Nothing here switches anything on for real clients:
+the test website and invented data only, and each service's paper (privacy
+notice, the data protection officer's approval of a transfer) stays its own
+sign-off.
+
+PART A - LAKHBIR (old 156 A6) - ZOOM, A PAID LICENCE. The free plan ends calls
+at 40 minutes and has no cloud recording (walkthrough calls ask for it).
+
+A1. 1. zoom.us > Admin > Account management > Plans and billing: upgrade the
        host user (ZOOM_HOST_EMAIL) to Pro.
     2. marketplace.zoom.us > Manage > the app behind ZOOM_CLIENT_ID > Scopes:
        add cloud recording read.
-    3. Sadique confirms Zoom's transfer for real clients (approved for
-       testing only).
-    ADDED 4 Oct 2026 by Phase 153f:
-    4. Each call is now hosted by its own member of staff (one Zoom user
-       hosts one meeting at a time). Add each member of staff who takes
-       video calls as a user on our Zoom account, under the SAME email they
-       sign in to Cap Rebate with, each with a Pro licence. Anyone not on
-       Zoom falls back to the shared host (ZOOM_HOST_EMAIL).
-    5. To see how long a call lasted and who came, add two more scopes to
-       the same app: meeting:read:past_meeting:admin and
-       meeting:read:list_past_participants:admin. Then tell Claude: PART B6
-       (the call's page then reads them (GET /v2/past_meetings/{id} and
-       /participants); nothing asks for them yet).
-A7. GOOGLE ANALYTICS 4 (website visits, after consent). Free.
-    1. analytics.google.com > Admin > Create property "Caprebate", UK, GBP.
-    2. Data streams > Web > the site address > copy the Measurement ID
-       (starts G-) -> GA4_MEASUREMENT_ID in Vercel.
-    3. Sadique reviews the measurement plan and the cookie wording first;
-       nothing loads before consent.
-A8. ANTHROPIC CLAUDE API (reading clients' documents). PAPER FIRST, KEY LAST.
-    1. Sadique approves Anthropic as the document reader and its terms; the
-       director signs (Developer Spec ~2520, ~2534).
-    2. Only then: console.anthropic.com > the company's organisation >
-       Billing > API keys > Create key -> ANTHROPIC_API_KEY.
-A9. GOADDRESS ("Find my address"). 100 free lookups, then a paid plan: when
-    the free ones run out, buy the smallest plan on its account page. Find
-    out (and tell Claude) GoAddress's company and where it is hosted
-    (connectors/sources.ts ~294 asks).
-A10. DIDIT (identity checks). 500 free a month, then about 33 US cents a
-    check. In Didit's console, set how long it keeps results (to match the
-    retention schedule once Sadique approves it).
+    3. Sadique confirms Zoom's transfer for real clients (approved for testing
+       only).
+    4. Each call is hosted by its own member of staff (Phase 153f): add each
+       member of staff who takes video calls as a user on our Zoom account,
+       under the SAME email they sign in to Cap Rebate with, each with a Pro
+       licence. Anyone not on Zoom falls back to the shared host.
+    5. To see how long a call lasted and who came, add two more scopes to the
+       same app: meeting:read:past_meeting:admin and
+       meeting:read:list_past_participants:admin.
 
-PART B - CLAUDE (each only after its PART A step)
+PART B - CLAUDE
 
-B1. TURNSTILE: add TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY to
-    TEST_DEPLOY_KEYS; serve the real site key in the contact form instead of
-    Cloudflare's test key (src/web/home-site.ts ~34-40); prove the server
-    check refuses a missing or wrong token and passes a right one (Cloudflare
-    publishes always-pass and always-fail test keys - use them in tests);
-    record the transfer as waiting on Sadique.
-B2. WHATSAPP: once the six are in, send ONE opening template to Lakhbir's own
-    number (ask him for it in the chat; never a client), read the webhook's
-    reply, and report PASS/NO. Switch nothing else on.
-B3. CQC, EPC, HOMEDATA: add the three names to TEST_DEPLOY_KEYS; then 153c
-    line 18's one test call each (our own company and 70 Whitehall, never a
-    client), under the five conditions of Word question 170. ALSO, from 153c
-    line 18 (moved here 4 Oct 2026): Companies House (switched on for
-    testing, never a recorded test call) and the Anthropic key (one read of
-    an invented page). Homedata only once Lakhbir says the account holds a
-    balance (Word question 207). Report PASS or NO per connector; switch
-    nothing on that ships.
-    ADDED 4 Oct 2026 by Phase 153f: when the free gate opens, put "answer it
-    myself" (Word answer 180) on the four-stage funnel's details screen. It
-    was on the retired six-screen funnel's address screen only.
-B4. AN ADMIN "CONNECTIONS" PAGE, so nobody has to read code to know: one row
-    per outside service - key present (yes/no, never the value), switched on
-    (and the switch's name), on for testing under a waiver or for real, last
-    call and its result, and what it waits on. Read only; Admin only.
-B5. Update hub/KEYS-AND-SWITCHES.md and the Developer Spec's stubs table to
-    what is now true, and mark each PART A step done or not done.
-B6. (ADDED 4 Oct 2026 by Phase 153f.) ZOOM'S CALL LENGTH AND ATTENDEES, once
-    A6 step 5's two scopes are on: after a call, read GET /v2/past_meetings/
-    {meetingId} (its duration) and /participants (how many came; keep the
-    count and the minutes, never a name or an email), show them on the call
-    and the Communication tab, with a test on recorded answers.
-B7. (ADDED 4 Oct 2026 by Phase 155.) THE WELSH AND SCOTTISH CARE REGULATORS'
-    LISTS. Phase 155 built both lookups from downloaded files, imported by
-    "node src/cli.ts import-register <CIW|CARE_INSPECTORATE> <file> --by
-    <admin>", which writes to the local database only - so the test website
-    (Turso) cannot be given a list without a command line. Build an Admin
-    upload for the file (the same import, refused whole on wrong columns;
-    the Scottish file is Windows-1252), show on B4's page when each list was
-    last imported, and remind Admin monthly to import the new month's file.
-    No PART A step: CIW's extract and the Care Inspectorate's datastore need
-    no account. ASK LAKHBIR whether his 2 Oct waiver ("All the free ones")
-    covers these two; only on his yes add them to TEST_WEBSITE_LOOKUPS.
+B1. (old 156 B6) Once step 5's scopes are on: after a call, read GET
+    /v2/past_meetings/{meetingId} (its duration) and /participants (how many
+    came; keep the count and the minutes, never a name or an email); show
+    them on the call and the Communication tab, with a test on recorded
+    answers, red on the code before.
 
 When every line that could run is done: run every check in COORDINATES,
-re-derive the figures, update the registers, write the record, and leave each
-PART A step not yet done as a line in hub/WAITING-ON-PEOPLE.md.
+re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
+the record, and leave each PART A step not yet done as a line in
+hub/WAITING-ON-PEOPLE.md.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
+```
+
+
+## PHASE 156e — the paid and paper-first services, the Connections page and the care regulators' lists
+
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **Everything else the old Phase 156 held: Homedata, Anthropic, GoAddress, Didit, Google Analytics (to ask about), the Connections page and the Welsh and Scottish lists.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
+into Vercel (project caprebate-test > Settings > Environment Variables,
+Production, Sensitive) and into the key file, by him. You may list NAMES in
+Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
+never read, decrypt or print a value. A key in Vercel does nothing until its
+name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
+only on the next deploy. Nothing here switches anything on for real clients:
+the test website and invented data only, and each service's paper (privacy
+notice, the data protection officer's approval of a transfer) stays its own
+sign-off.
+
+PART A - LAKHBIR (each on its own; any order)
+
+A1. HOMEDATA (paid address lookup, after a client signs). Copy
+    HOMEDATA_API_KEY from the key file into Vercel (Production, Sensitive) and
+    put a balance on the account (Word question 207); tell Claude when it is
+    there. It stays OFF for real clients until a signed engagement.
+A2. ANTHROPIC CLAUDE API (reading clients' documents). PAPER FIRST, KEY LAST.
+    1. Sadique approves Anthropic as the document reader and its terms; the
+       director signs (Developer Spec, the document-reading rows).
+    2. Only then: console.anthropic.com > the company's organisation > Billing
+       > API keys > Create key -> ANTHROPIC_API_KEY (the key file has one
+       already; Vercel does not, on purpose).
+A3. GOADDRESS ("Find my address"). 100 free lookups, then a paid plan: when the
+    free ones run out, buy the smallest plan on its account page. Find out
+    (and tell Claude) GoAddress's company and where it is hosted
+    (src/connectors/sources.ts asks).
+A4. DIDIT (identity checks). 500 free a month, then about 33 US cents a check.
+    In Didit's console, set how long it keeps results, to match the retention
+    schedule once Sadique approves it.
+A5. GOOGLE ANALYTICS 4 (counting website visits, after a visitor accepts
+    cookies). ASK LAKHBIR FIRST (4 Oct 2026 he said the marketing team deals
+    with things like this): is it the marketing team's? If so, the marketing
+    team creates the property (analytics.google.com > Admin > Create property
+    "Caprebate", UK, GBP > Data streams > Web > the site address) and sends
+    the Measurement ID (starts G-), which goes into Vercel as
+    GA4_MEASUREMENT_ID. Sadique reviews the measurement plan and the cookie
+    wording first; nothing loads before consent.
+
+PART B - CLAUDE
+
+B1. (old 156 B3, the rest) One recorded test call each, under Word question
+    170's five conditions: Companies House (switched on for testing, never a
+    recorded test call), the Anthropic key (one read of an invented page, only
+    after A2), and Homedata (only once A1's balance is there). Report PASS or
+    NO; switch nothing on that ships.
+B2. When the free gate opens: put "answer it myself" (Word answer 180) on the
+    four-stage funnel's details screen.
+B3. (old 156 B4) AN ADMIN "CONNECTIONS" PAGE, so nobody has to read code to
+    know: one row per outside service - key present (yes/no, never the value),
+    switched on (and the switch's name), on for testing under a waiver or for
+    real, last call and its result, and what it waits on. Read only; Admin
+    only.
+B4. (old 156 B7, added by Phase 155) THE WELSH AND SCOTTISH CARE REGULATORS'
+    LISTS: an Admin upload for each downloaded file (the same import as
+    "node src/cli.ts import-register", refused whole on wrong columns; the
+    Scottish file is Windows-1252), each list's last import on B3's page, and
+    a monthly reminder to import the new month's file. ASK LAKHBIR whether his
+    2 Oct waiver ("All the free ones") covers these two; only on his yes add
+    them to TEST_WEBSITE_LOOKUPS.
+
+When every line that could run is done: run every check in COORDINATES,
+re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
+the record, and leave each PART A step not yet done as a line in
+hub/WAITING-ON-PEOPLE.md.
 Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
@@ -1332,6 +1716,10 @@ FROM PHASE 154a1 (4 Oct 2026), TWO LOOSE ENDS WITH THEIR HOME HERE, both
       use Rulebook B section 6's replacement wording. Re-run
       03-app/caprebate-switch-direction.cjs after both.
 ═══════════════════════════════════
+
+DO NOT REOPEN what COORDINATES lists under "DECIDED - DO NOT REOPEN" (added
+4 Oct 2026: the VOA rating list, scrapped by Lakhbir). A sweep that finds
+older text saying otherwise corrects the text, not the decision.
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.
 
@@ -1831,7 +2219,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 153f — work found on 3 October that no phase held (survey pack stage 6 and chapters, an engine date bug, Zoom hosts, the old screens, WhatsApp, answers into the record, the tracker) |  The 3 October check of 153a-154 |
 |  Claude |  Phase 154a1 — the faults the 3 October sweep found, fixed (13 lines) — **done 4 Oct 2026**, see PHASE HISTORY |  Lakhbir, 3 Oct: "these should be fixed in phase 154a1" |
 |  Claude |  Phase 155 — the services the plans name but nobody has built (CIW, the Care Inspectorate, the VOA list, BCIS, the reply timer, the three server files) — **done 4 Oct 2026**, see PHASE HISTORY (the VOA list not built: its licence forbids our use) |  Lakhbir, 3 Oct: "this needs to be phase 156" (renumbered 155 when the services phase moved near the end) |
-|  Claude and Lakhbir |  Phase 156 — every outside service, run near the end: PART A is Lakhbir's, step by step; PART B is Claude's, after each step |  Lakhbir, 3 Oct: "all API's needed should be phase 155" |
+|  Claude and Lakhbir |  Phases 156a to 156e — every outside service, split on 4 Oct 2026 (156a the missing keys in Vercel, Ordnance Survey and Cloudflare; 156b email; 156c WhatsApp; 156d Zoom; 156e the rest): PART A is Lakhbir's, step by step; PART B is Claude's, after each step |  Lakhbir, 3 Oct: "all API's needed should be phase 155" |
 |  Claude |  Phase 157 — the sweep, always last |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

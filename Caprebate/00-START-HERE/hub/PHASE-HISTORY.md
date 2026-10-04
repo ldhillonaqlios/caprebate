@@ -11766,3 +11766,29 @@ Run from the run sheet's top block. Claimed in 10d0946 (hub/CLAIM.md; board and 
 - The survey pack reading the imported BCIS table — BUILDABLE once the pack is wired to the cost model — Phase 157 (its cost-model loose end, widened).
 - Buying BCIS — BLOCKED on Lakhbir (Word question 218) — unchanged.
 - Northern Ireland's regulator (RQIA) — no line of this phase asked for it, and Northern Ireland is the one nation our postcode table may not be used for without a separate licence — so it is noted, not carried; the name exclusion register's subitem 2 still covers it. (Scotland is not yet a served nation either — CB_JURIS serves England and Wales — but line 2 asked for its regulator, and the lookup is ready for the day it is.)
+
+## PLANNING, 4 October 2026 — the VOA rating list scrapped; Phase 156 split into 156a to 156e (Opus 5.5, Mac copy, Lakhbir's MacBook Pro)
+
+**Run-sheet entry.** Planning - 4 October 2026. Lakhbir scrapped the Valuation Office's rating list ("scrap the VOA rating"): its board item is marked scrapped and archived, and the decision is now in COORDINATES under "DECIDED - DO NOT REOPEN" so no phase or sweep brings it back. Phase 156 was split into five: 156a (the keys missing from Vercel, and Ordnance Survey and Cloudflare set up, step by step), 156b (email), 156c (WhatsApp), 156d (Zoom), 156e (the rest). No code changed; no test count changed (1363 / 440 / 415 / 2426 = 4,644). Branch claude/plan-156.
+
+### What Lakhbir asked
+
+1. "scrap the VOA rating remove from monday board, and ensure history is updated so we dont stumble across this again".
+2. Why we can't just use the property valuation that is public on GOV.UK (answered in the chat: public to look at is not the same as free to reuse; the service's terms limit it to business rates, and the EPC already gives floor area).
+3. "lets break down phase 156 and include 156a this is a step by step on adding the missing keys in vercel and setting up OS, Cloudfare".
+4. What Google Analytics is for, since a marketing team handles that kind of thing (answered in the chat; 156e A5 asks him whether it is the marketing team's).
+
+### What was done
+
+- **The rating list, scrapped everywhere it lives.** Board item 12830205481 renamed "SCRAPPED, NOT DONE …", set Done, moved to group Z and archived on monday.com; the tracker row matches. ACTION-PLAN.md COORDINATES gained a "DECIDED - DO NOT REOPEN" list (the rating list is its first entry); Phase 157 (the sweep) gained a line telling it not to reopen anything on that list, on the run sheet too. KEYS-AND-SWITCHES (the VOA paragraph), WAITING-ON-PEOPLE (the old "send the Valuation Office email" line replaced by the Ordnance Survey email and the Rating Cost Guide decision), the two-emails document (OneDrive), the VOA importer's spec, the source register's comment (the licence VOA_RATING_LIST keeps every channel shut) and the Developer Spec's VOA row all say SCRAPPED with the date. Word Caprebate_Questions.docx, question 11: a recorded-answer paragraph added (AMENDMENT 2 way: copied down, compared, built, written in place, compared after; backup .bak-plan156); the Unanswered document was not changed (its question 11 is about the fee scale only). An update on 12933604947 and its tracker note say Email 1 is now only about the Rating Cost Guide.
+- **Still open, NOT scrapped:** Word question 11's Ordnance Survey email, and whether to ask the Valuation Office about its Rating Cost Guide (building costs, a different document). Both Lakhbir's.
+- **Phase 156 split.** ACTION-PLAN.md and the run sheet now hold 156a, 156b, 156c, 156d, 156e (each with the standard banner, a rules paragraph, PART A for Lakhbir and PART B for Claude); the old Phase 156 section is gone from both. The table at the top of 156a maps every old step (156 A1 … B7) to its new home; KEYS-AND-SWITCHES says the same at its top. 156a is built from the 4 October key check (names only): EPC and CQC are in the key file but not in Vercel; the Ordnance Survey key and the two Cloudflare Turnstile keys are in neither. Board: the old "Phase 156" item (13201103801) became 156a; new items 13201538869 (156b), 13201538871 (156c), 13201538872 (156d), 13201538874 (156e), all "Ready - Lakhbir action", group 05; tracker matches.
+
+### Checks
+
+Tracker check green. No code or test changed, so the test figures stand at 1363 / 440 / 415 / 2426 (4,644).
+
+### NOT DONE — each with its home
+
+- Every PART A step of 156a to 156e — Lakhbir's — the phases themselves (156a first).
+- The Ordnance Survey email and the Rating Cost Guide question — Lakhbir's decision — Word question 11; WAITING-ON-PEOPLE.md; tracker 12933604947.

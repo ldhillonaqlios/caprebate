@@ -298,7 +298,9 @@ export const LICENCES: readonly Licence[] = [
        only": for interested persons, councils, their representatives and those who serve them, passed on only for the
        same purposes, deleted when no longer needed for them. A capital allowances claim is not a rating purpose. So
        every channel is FALSE — internal too — and nothing is imported (Phase 155 line 3; the phase9 importer
-       04-phase-work/phase9/caprebate-voa-import.ts stays unshipped). Only the VOA could permit our use. */
+       04-phase-work/phase9/caprebate-voa-import.ts stays unshipped). Only the VOA could permit our use.
+       SCRAPPED, the same day: Lakhbir, "scrap the VOA rating". Not to be reopened (ACTION-PLAN COORDINATES,
+       "DECIDED - DO NOT REOPEN"). The row stays so the panel can say why it is not used. */
     licence_id: 'VOA_RATING_LIST',
     name: 'VOA rating list data — restricted to Non Domestic Rating purposes; NOT the Open Government Licence',
     publisher_of_licence: 'Valuation Office Agency (HMRC)',

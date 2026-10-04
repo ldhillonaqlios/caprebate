@@ -4,6 +4,8 @@
 
 > **This is prepared and NOT SHIPPED.** No live data has ever been pulled — not one network call, not one test call, not even a format-check request. Every fixture in `caprebate-voa-import.test.ts` is a hand-written literal string. The reference-table stubs this connector produces today are empty and carry `loaded: false`. The container is built; the contents wait for the VOA bulk-data licence to clear.
 
+> **SCRAPPED — Lakhbir, 4 October 2026: "scrap the VOA rating".** This connector is not to be shipped, wired in or revalidated. It stays in the tree as a record of what was built in August (deleting a tested module would lose its history), and nothing reads it. COORDINATES, "DECIDED - DO NOT REOPEN".
+
 > **4 October 2026 (Phase 155, line 3) — THE LICENCE WAS READ, AND IT DOES NOT ALLOW OUR USE.** The VOA's bulk download page says "An open government licence does not apply", and its terms restrict the data to "Non Domestic Rating (NDR) purposes only"; capital allowances work is not that. The source register's licence row was `VOA_OPEN` and said Open Government Licence; it is now `VOA_RATING_LIST`, with every channel shut. **Two of the assumptions below are now answered**: A-2 — the real files are asterisk-delimited text (the "list entries" and "summary valuations" files, about 93 MB and 155 MB zipped), not the pipe layout this connector parses; and the files carry **no UPRN**. Nothing here is to be pointed at a real file unless the Valuation Office grants permission (the email waiting on Lakhbir, tracker item 12933604947).
 
 ## 0. What this document is

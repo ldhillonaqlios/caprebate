@@ -14,6 +14,8 @@ database is in AWS us-east-1, in the USA; the Blob store's region is not stated)
 when the production host is chosen — the spec's UK-residency rule (DS-W11). Lakhbir, 3 Oct 2026: "we are currently in
 test mode, developers will change this".
 
+**4 October 2026 (planning): Phase 156 was split into 156a to 156e.** A "156 A…" or "156 B…" step named below is the old numbering; the table at the top of Phase 156a in ACTION-PLAN.md says where each one went (for example 156 A1 Turnstile is now 156a A3; 156 A5 CQC and EPC is now 156a A1). The keys still missing from Vercel (EPC, CQC, Ordnance Survey, the two Turnstile keys) are Phase 156a, step by step.
+
 ## On now (test website)
 
 | Service | What it does | Keys (in Vercel?) | State | Before real clients |
@@ -54,8 +56,8 @@ test mode, developers will change this".
 
 ## Named in the plans, not built
 
-**The VOA rating list — not built, and not buildable as things stand** (Phase 155, 4 Oct 2026): its licence restricts it
-to business rates purposes. Only the Valuation Office can change that (the licence email waiting on Lakhbir). The rest of
+**The VOA rating list — SCRAPPED** (Lakhbir, 4 Oct 2026: "scrap the VOA rating"): its licence restricts it to business
+rates purposes (Phase 155). Not to be reopened — COORDINATES, "DECIDED - DO NOT REOPEN". The rest of
 what was here was built by Phase 155: the Welsh and Scottish care regulators and the BCIS index import (above), and the
 outside reply timer, now in COORDINATES and the continuity plan, with Admin warned on the home page after an hour
 without a read in working hours.

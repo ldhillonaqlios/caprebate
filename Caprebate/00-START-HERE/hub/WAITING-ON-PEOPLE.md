@@ -17,7 +17,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Confirm or complete the ICO registration (ACTION-PLAN ~1828).
 - [ ] Check DKIM signing is on in IONOS (ACTION-PLAN ~1815; Phase 156 A4 has the steps).
 - [ ] Get the director's confirmation of the 3% fee and the other terms (Word question 215).
-- [ ] Send the Valuation Office email (Word question 11).
+- [ ] Word question 11: send the Ordnance Survey email, and say whether to ask the Valuation Office about its Rating Cost Guide (building costs). _The VOA rating list itself was scrapped on 4 Oct 2026 — not to be asked for._
 - [ ] Book the free 45-minute surveyor call.
 - [ ] Get the DPO appointment signed by Sadique and the company, and its five blanks filled.
 - [ ] Engage a chartered tax adviser.
