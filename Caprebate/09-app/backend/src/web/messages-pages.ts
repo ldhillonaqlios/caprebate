@@ -38,6 +38,7 @@ import { boundaryOf, parseMultipart, type Part } from './multipart.ts';
 import { UPLOAD_LIMITS } from './upload-handler-port.ts';
 import { earlyQuestionsFor, receivableTypes } from './documents.ts';
 import { earlyVouchesFrom } from './document-reading.ts';
+import { cleanField } from './typed.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -497,7 +498,7 @@ export async function readPortalSend(
     if (files.length > 1) return { ok: false, why: 'Send one file at a time.' };
     const field = (n: string): string | null => {
       const p = parts.find((x) => x.filename === undefined && x.name === n);
-      return p === undefined ? null : Buffer.from(p.bytes).toString('utf8');
+      return p === undefined ? null : cleanField(n, Buffer.from(p.bytes).toString('utf8'));
     };
     return { ok: true, send: { body: field('body') ?? '', claim_id: field('claim_id'), type_code: field('type_code'), bytes: files[0]?.bytes ?? null } };
   }

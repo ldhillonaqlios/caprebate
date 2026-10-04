@@ -28,8 +28,17 @@ const ACCEPTED = (id: string): Fixture => ({ status: 200, headers: { 'content-ty
 
 let made: Awaited<ReturnType<typeof createApp>>;
 let base = '';
+/**
+ * PHASE 154a1 (line 12), 4 October 2026 — A CLOCK THAT ALWAYS MOVES ON. "Communication puts ... in one list, in order"
+ * failed about one run in three (13 in 30 on the old code): the portal message and the email it posts straight after
+ * were often written in the same millisecond, and Communication breaks a tie on the row's random id - a coin toss. This
+ * clock is the real time, but never the same instant twice, so every row has its own moment and the order is the order
+ * they were written in.
+ */
+let lastTick = 0;
+const steadyNow = (): string => { lastTick = Math.max(Date.now(), lastTick + 1); return new Date(lastTick).toISOString(); };
 before(async () => {
-  made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-wa-')) });
+  made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-wa-')), now: steadyNow });
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const a = made.server.address();
   base = `http://127.0.0.1:${typeof a === 'object' && a !== null ? a.port : 0}`;

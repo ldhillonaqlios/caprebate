@@ -67,16 +67,22 @@ async function build() {
   // 4 OCTOBER 2026 (Phase 153c): whether uploaded files are kept, and if not why (the key's name only, never its value).
   const { sealKeyFromEnv } = await import('../Caprebate/09-app/backend/src/web/originals.ts');
   console.log(`test deployment: uploaded files ${sealKeyFromEnv() === null ? 'are NOT kept - CAPREBATE_ORIGINALS_KEY is not set in the settings' : 'are kept for 7 years, sealed'}`);
-  // No email is sent. The outbox (with a sign-up's confirmation link) goes to the function log, as the demo prints it.
+  // PHASE 154a1 (line 10), 4 October 2026: EMAIL IS SENT ON THE TEST WEBSITE (EMAIL_SENDING, on for testing since 30 Sep
+  // 2026), and the function log is no place for an email. This used to print every new outbox email - address, subject
+  // and body, sign-up links included - against the spec's "no personal data in logs". It now says how many, of which
+  // kinds, and how many were sent: never an address, a subject or a body.
   const shown = new Set();
   setInterval(() => {
-    // Only what this copy's life has put there: on a lasting database, the older messages were printed before.
-    for (const m of made.app.db.all('SELECT id, to_email, subject, body FROM outbox WHERE created_at >= ? ORDER BY created_at', [since])) {
+    // Only what this copy's life has put there: on a lasting database, the older messages were counted before.
+    const fresh = [];
+    for (const m of made.app.db.all('SELECT id, kind, sent_at FROM outbox WHERE created_at >= ? ORDER BY created_at', [since])) {
       if (shown.has(m.id)) continue;
       shown.add(m.id);
-      console.log(`--- outbox (not sent) to ${m.to_email}: ${m.subject}\n${m.body}\n---`);
+      fresh.push({ kind: m.kind, sent: m.sent_at !== null });
     }
-  }, 1000).unref();
+    const line = outboxLogLine(fresh);
+    if (line !== null) console.log(line);
+  }, 5000).unref();
   // PHASE 152 (the sweep, 28 September 2026): the first request after a deploy answered 504 twice on 28 September, when a
   // copy still built the lasting database itself under a 30-second limit. Since Phase 151i follow-ups 3 to 5 the deploy's
   // build does that and a copy only opens it (13 database calls, measured); on memory the whole start takes under a
@@ -100,16 +106,26 @@ async function build() {
  *       nothing changes and NO key is read, whatever the settings hold. The identity panel says the keys are missing.
  * It prints what it did - never a password and never a key.
  */
+/** PHASE 154a1 (line 10): new outbox emails as one log line - counts and kinds only. Read by test/phase154a1.test.ts. */
+export function outboxLogLine(rows) {
+  if (rows.length === 0) return null;
+  const kinds = new Map();
+  for (const r of rows) kinds.set(r.kind, (kinds.get(r.kind) ?? 0) + 1);
+  const sent = rows.filter((r) => r.sent).length;
+  const list = [...kinds].sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, n]) => `${k} ${n}`).join(', ');
+  return `test deployment: ${rows.length} new email${rows.length === 1 ? '' : 's'} in the outbox - ${list}; ${sent} sent, ${rows.length - sent} not sent`;
+}
+
 /** 29 Sep 2026: who gives a second step on the test website. Read by test/invented-logins.test.ts. */
 export const TEST_WEBSITE_TWO_FACTOR = 'staff-except-invented';
 
 // 30 Sep 2026: COMPANIES_HOUSE_API_KEY for "Find my company" (switched on for testing, src/connectors/company-search.ts),
-// and the six Zoom names for video calls (src/connectors/zoom.ts; still refused until Zoom's transfer is approved).
+// and the six Zoom names for video calls (src/connectors/zoom.ts; Zoom's transfer approved for testing, 30 Sep 2026).
 export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY',
   'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET', 'ZOOM_HOST_EMAIL',
   // 30 Sep 2026: email sending is on for testing; the IONOS login that sends from contact@caprebate.co.uk.
   'IONOS_SMTP_HOST', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'IONOS_SMTP_PASSWORD',
-  // 30 Sep 2026: WhatsApp with each client (src/connectors/whatsapp.ts; nothing is sent until Meta's transfer is approved).
+  // 30 Sep 2026: WhatsApp with each client (src/connectors/whatsapp.ts; Meta's transfer approved for testing, 30 Sep 2026).
   'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_TEMPLATE_LANGUAGE',
   // 30 Sep 2026: "Find my address" at the assessment (src/connectors/address-lookup.ts).
   'GOADDRESS_API_KEY',

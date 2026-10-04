@@ -760,7 +760,19 @@ export function complaintCount(db: Db, actor: Actor, from: string, to: string): 
  * ================================================================== */
 
 export type SearchHit = { readonly store: string; readonly how: string; readonly id: string; readonly label: string; readonly link: string | null };
-export type SearchResult = { readonly hits: readonly SearchHit[]; readonly scope: readonly string[]; readonly s2_note: string };
+export type SearchResult = {
+  readonly hits: readonly SearchHit[]; readonly scope: readonly string[]; readonly s2_note: string;
+  /** PHASE 154a1 (line 1): what was searched, at most SEARCH_TERM_MAX characters, and whether the typed term was longer. */
+  readonly term: string; readonly cut: boolean;
+};
+
+/**
+ * PHASE 154a1 (line 1), 4 October 2026: THE TERM IS CAPPED, AS THE OTHER SEARCHES ARE. The 3 October sweep posted 50,000
+ * characters here and got a 500: the LIKE pattern built from it was over SQLite's 50,000-byte limit. The S2 name search
+ * stops at 200 (compliance-identity.ts) and the back office search cuts to 100 (search.ts); this one cuts to 200 and the
+ * page says so, so nobody thinks the whole of what they typed was searched.
+ */
+export const SEARCH_TERM_MAX = 200;
 
 export const SEARCH_SCOPE: readonly string[] = Object.freeze([
   'contacts on an organisation', 'contacts on a lead with no organisation', 'people at an introducing firm',
@@ -770,8 +782,11 @@ export const SEARCH_SCOPE: readonly string[] = Object.freeze([
 
 export function searchPerson(d: ComplianceDeps, actor: Actor, term: string): SearchResult {
   assertComplianceRead(actor);
-  const t = term.trim().toLowerCase();
-  if (t.length < 2) return { hits: [], scope: SEARCH_SCOPE, s2_note: S2_NOTE };
+  const typed = term.trim();
+  const cut = typed.length > SEARCH_TERM_MAX;
+  const shown = typed.slice(0, SEARCH_TERM_MAX);
+  const t = shown.toLowerCase();
+  if (t.length < 2) return { hits: [], scope: SEARCH_SCOPE, s2_note: S2_NOTE, term: shown, cut };
   const escaped = t.replace(/[\\%_]/g, (m) => `\\${m}`);
   const pattern = ['%', escaped, '%'].join('');
   const db = d.db;
@@ -815,7 +830,7 @@ export function searchPerson(d: ComplianceDeps, actor: Actor, term: string): Sea
   const counts: Record<string, number> = {};
   for (const h of hits) counts[h.store] = (counts[h.store] ?? 0) + 1;
   record(d, actor, 'RIGHTS_SEARCH_RUN', 'ALLOWED', 'compliance', 'rights-search', { counts, total: hits.length });
-  return { hits, scope: SEARCH_SCOPE, s2_note: S2_NOTE };
+  return { hits, scope: SEARCH_SCOPE, s2_note: S2_NOTE, term: shown, cut };
 }
 
 export const S2_NOTE =

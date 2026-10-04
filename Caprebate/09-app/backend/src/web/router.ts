@@ -25,6 +25,7 @@
 
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { cleanForm } from './typed.ts';
 import type { App } from '../app.ts';
 import { authorise, can, NotAuthorised, type Actor } from '../authz.ts';
 import type { Db } from '../db.ts';
@@ -162,17 +163,51 @@ function redirect(res: ServerResponse, to: string): void {
   res.end('');
 }
 
+/**
+ * PHASE 154a1 (line 3), 4 October 2026 — A REFUSED BODY CLOSES ITS CONNECTION, CLEANLY. The 3 October sweep found that
+ * after a 413 on a kept-alive connection the next request on it hung about 6 s and was reset: reading stopped part-way,
+ * the rest of the body was left in the connection, and the connection was kept. Now the rest of a body over its cap is
+ * read and dropped - up to DRAIN_MAX more, so the sender is never cut off mid-send and sees the answer - and the 413
+ * says "Connection: close", so the connection ends when the answer has gone and nothing left in it is taken for the
+ * next request. A body more than DRAIN_MAX over its cap is refused at once and the connection closed under it.
+ * server.ts tells this file which response each request is answered on.
+ */
+const DRAIN_MAX = 8 * 1024 * 1024;
+const RESPONSES = new WeakMap<IncomingMessage, ServerResponse>();
+export function bindResponse(req: IncomingMessage, res: ServerResponse): void { RESPONSES.set(req, res); }
+function closeAfterAnswer(req: IncomingMessage): void {
+  const res = RESPONSES.get(req);
+  if (res === undefined || res.headersSent) return;
+  res.shouldKeepAlive = false;
+  res.setHeader('connection', 'close');
+}
+
 /** Bodies are capped. A cap is a control, not a nicety. */
-async function readBody(req: IncomingMessage, max = 2 * 1024 * 1024): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  let size = 0;
-  for await (const c of req) {
-    const b = c as Buffer;
-    size += b.length;
-    if (size > max) throw new PayloadTooLarge();
-    chunks.push(b);
-  }
-  return Buffer.concat(chunks);
+export function readBody(req: IncomingMessage, max = 2 * 1024 * 1024): Promise<Buffer> {
+  if (req.readableEnded) return Promise.resolve(Buffer.alloc(0));
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    let over = false;
+    let settled = false;
+    const refuse = (): void => {
+      if (settled) return;
+      settled = true;
+      closeAfterAnswer(req);
+      reject(new PayloadTooLarge());
+    };
+    req.on('data', (c: Buffer) => {
+      size += c.length;
+      if (!over && size > max) { over = true; chunks.length = 0; }
+      if (over) { if (size > max + DRAIN_MAX) refuse(); return; } // the rest of a refused body is read and dropped
+      chunks.push(c);
+    });
+    req.once('end', () => {
+      if (over) { refuse(); return; }
+      if (!settled) { settled = true; resolve(Buffer.concat(chunks)); }
+    });
+    req.once('error', (e) => { if (!settled) { settled = true; reject(e); } });
+  });
 }
 
 export class PayloadTooLarge extends Error {
@@ -180,7 +215,8 @@ export class PayloadTooLarge extends Error {
 }
 
 async function form(req: IncomingMessage): Promise<URLSearchParams> {
-  const typed = new URLSearchParams((await readBody(req)).toString('utf8'));
+  // PHASE 154a1 (line 9): invisible characters out on the way in (src/web/typed.ts).
+  const typed = cleanForm(new URLSearchParams((await readBody(req)).toString('utf8')));
   // PHASE 133c: what the form carried is kept for this request, so a refusal can put it back where it was typed (B6).
   const scratch = navContext.getStore()?.form;
   if (scratch !== undefined) { scratch.typed = typed; scratch.action = new URL(req.url ?? '/', 'http://localhost').pathname; }

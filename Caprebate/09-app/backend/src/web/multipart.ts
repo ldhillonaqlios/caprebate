@@ -21,6 +21,7 @@
  * capped and re-encoded before it is stored. A parser is a way of reading a
  * request; the allow-list is somewhere else and stays there.
  */
+import { cleanField } from './typed.ts';
 
 export class MultipartError extends Error {
   readonly code = 'E_MULTIPART';
@@ -134,7 +135,7 @@ export function singleFile(
   if (files.length > 1) return { ok: false, why: 'attach one file, not several' };
   const fields: Record<string, string> = {};
   for (const p of parts) {
-    if (p.filename === undefined) fields[p.name] = Buffer.from(p.bytes).toString('utf8');
+    if (p.filename === undefined) fields[p.name] = cleanField(p.name, Buffer.from(p.bytes).toString('utf8'));
   }
   const part = files[0];
   if (part === undefined) return { ok: false, why: 'no file was attached' };
@@ -162,7 +163,7 @@ export function manyFiles(
   if (files.length > max) return { ok: false, why: `attach at most ${String(max)} files at a time` };
   const fields: Record<string, string> = {};
   for (const p of parts) {
-    if (p.filename === undefined) fields[p.name] = Buffer.from(p.bytes).toString('utf8');
+    if (p.filename === undefined) fields[p.name] = cleanField(p.name, Buffer.from(p.bytes).toString('utf8'));
   }
   return { ok: true, files, fields };
 }

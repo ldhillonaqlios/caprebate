@@ -110,12 +110,14 @@ export async function handleConfiguration(
   return 'not-mine';
 }
 
-function activeSelect(active: boolean, disabled: boolean): Safe {
+// PHASE 154a1 (line 4): the label box and this list sit in a table row with no label of their own, so each says
+// what it is to a screen reader (aria-label), naming the code it is for.
+function activeSelect(active: boolean, disabled: boolean, code: string): Safe {
   return disabled
     ? h`<span class="help">written by the application — never retired</span>`
     // Split across lines: tools/lint-sql.cjs reads the HTML word for a drop-down after a backtick as SQL.
     : h`
-      <select name="active"><option value="1"${active ? raw(' selected') : raw('')}>active</option><option value="0"${active ? raw('') : raw(' selected')}>retired</option></select>`;
+      <select name="active" aria-label="Whether ${code} is active or retired"><option value="1"${active ? raw(' selected') : raw('')}>active</option><option value="0"${active ? raw('') : raw(' selected')}>retired</option></select>`;
 }
 
 /**
@@ -151,7 +153,7 @@ function settingsPage(d: ConfigPageDeps, actor: Actor, v: CF.ConfigurationView, 
         <table><thead><tr><th>Code</th><th>Label</th><th>State</th><th>Where it came from</th></tr></thead><tbody>${l.values.map((x) => h`<tr>
           <td><code>${x.code}</code></td>
           <td>${v.may_write ? h`<form method="post" action="/staff/admin-settings/values/${l.list}/${x.code}" class="inline">
-            <input name="label" value="${x.label}" maxlength="120"> ${activeSelect(x.active, x.fixed)} <button type="submit">Save</button></form>` : h`${x.label}`}</td>
+            <input name="label" value="${x.label}" maxlength="120" aria-label="The label for ${x.code}"> ${activeSelect(x.active, x.fixed, x.code)} <button type="submit">Save</button></form>` : h`${x.label}`}</td>
           <td>${x.active ? 'active' : 'retired'}${x.fixed ? h` <span class="help">— the application writes it</span>` : raw('')}</td>
           <td class="help">${x.source}</td></tr>`)}</tbody></table>
         ${v.may_write ? h`<form method="post" action="/staff/admin-settings/values"><input type="hidden" name="list" value="${l.list}">
@@ -163,7 +165,7 @@ function settingsPage(d: ConfigPageDeps, actor: Actor, v: CF.ConfigurationView, 
         <table><thead><tr><th>Code</th><th>Label</th><th>State</th></tr></thead><tbody>${l.values.map((x) => h`<tr>
           <td><code>${x.code}</code></td>
           <td>${v.may_write ? h`<form method="post" action="/staff/admin-settings/reasons/${l.list}/${x.code}" class="inline">
-            <input name="label" value="${x.label}" maxlength="300"> ${activeSelect(x.active, x.code === 'OTHER')} <button type="submit">Save</button></form>` : h`${x.label}`}</td>
+            <input name="label" value="${x.label}" maxlength="300" aria-label="The label for ${x.code}"> ${activeSelect(x.active, x.code === 'OTHER', x.code)} <button type="submit">Save</button></form>` : h`${x.label}`}</td>
           <td>${x.active ? 'active' : 'retired'}</td></tr>`)}</tbody></table>
         ${v.may_write ? h`<form method="post" action="/staff/admin-settings/reasons"><input type="hidden" name="list" value="${l.list}">
           <label>Code <input name="code" required pattern="[A-Z][A-Z_]{1,59}"></label>

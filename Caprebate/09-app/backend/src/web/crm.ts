@@ -1078,7 +1078,9 @@ function contactValues(input: Fields, stored: ContactValues): Check<ContactValue
   if (!name.ok || !title.ok || !type.ok || !dm.ok || !email.ok || !phone.ok || !notes.ok) {
     return { ok: false, why: 'That was not saved, because one of the values is not one this form accepts. Check each field and send it again.' };
   }
-  if (name.value === null) return { ok: false, why: 'A contact is a person, and needs a name.', field: 'full_name' };
+  // PHASE 154a1 (line 2): a NEW contact starts from a stored name of '', so a post with no full_name field at all kept
+  // that '' and passed a check for null alone - the 3 October sweep added a nameless contact that way. Blank is no name.
+  if (name.value === null || name.value.trim() === '') return { ok: false, why: 'A contact is a person, and needs a name.', field: 'full_name' };
   return {
     ok: true,
     value: {

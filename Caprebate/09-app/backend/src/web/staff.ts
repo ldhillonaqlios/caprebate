@@ -924,7 +924,7 @@ function assessmentPage(actor: Actor, a: B.AssessmentDetail): string {
         <tr><th>How to reach them</th><td>${contactCell(a.contact)}</td></tr>
       </tbody></table>
 
-      <h3>Every question, in the order asked</h3>
+      <h2>Every question, in the order asked</h2>
       <p class="help">${a.answers.length} questions — ${a.answered} answered,
       ${a.dont_know} answered “I don’t know”, ${a.skipped} skipped.
       <strong>A skipped question is a fact about the claim, not a blank</strong>, and “I don’t know”
@@ -1106,24 +1106,24 @@ function bookingPage(
         : !B.mayArrangeCalls(actor)
           ? h`<p class="help">You can view this call. Giving it a time or moving it is for the people who arrange calls.</p>`
         : slots.available
-        ? h`<h3>${b.starts_at === null ? 'Give it a time' : 'Move it'}</h3>
+        ? h`<h2>${b.starts_at === null ? 'Give it a time' : 'Move it'}</h2>
           <form method="post" action="/staff/calendar/${b.id}/schedule">
-            <label class="fl">A free slot</label>
-            <div class="opts">${distinctMoments(slots.slots).slice(0, 40).map((s) => h`
+            <p class="fl" id="slot-label">A free slot</p>
+            <div class="opts" role="radiogroup" aria-labelledby="slot-label">${distinctMoments(slots.slots).slice(0, 40).map((s) => h`
               <label class="opt${s.starts_at === b.starts_at ? ' sel' : ''}">
                 <input type="radio" name="starts_at" value="${s.starts_at}"${s.starts_at === b.starts_at ? raw(' checked') : raw('')}>
                 ${when(s.starts_at)}${s.starts_at === b.starts_at ? ' — where it is now' : ''}
                 ${s.how_many === 1 ? h`<span class="help"> · only one person is free then</span>` : raw('')}
               </label>`)}</div>
-            <label class="fl">Assign to</label>
-            <div class="opts"><label class="opt"><input type="radio" name="assigned_to" value="" checked>
+            <p class="fl" id="assign-label">Assign to</p>
+            <div class="opts" role="radiogroup" aria-labelledby="assign-label"><label class="opt"><input type="radio" name="assigned_to" value="" checked>
               Whoever is free at that time</label>
               ${staff.map((u) => h`<label class="opt"><input type="radio" name="assigned_to" value="${u.id}"> ${u.display_name}</label>`)}</div>
             <button class="cta" type="submit">Save</button>
           </form>`
         : h`<div class="flag"><strong>Nothing to offer.</strong> ${slots.say}</div>`}
 
-      <h3>What has happened to this booking</h3>
+      <h2>What has happened to this booking</h2>
       ${history.length === 0
         ? h`<p class="help">It has not been moved since the client asked for it.</p>`
         : h`<table><thead><tr><th>From</th><th>To</th><th>By</th><th>When</th></tr></thead>
@@ -1180,7 +1180,7 @@ function settingsPage(
       ${saved !== undefined ? h`<p class="help">Saved.</p>` : raw('')}
       ${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}
 
-      <h3>You</h3>
+      <h2>You</h2>
       <p class="help">Signed in as <strong>${p.user.display_name}</strong> (${p.user.role.toLowerCase()}).</p>
       ${p.photo === undefined
         ? h`<p class="help">No photograph on this account.</p>`
@@ -1209,14 +1209,14 @@ function settingsPage(
         <button class="cta" type="submit">Change the password</button>
       </form>
 
-      <h3>Your photograph</h3>
+      <h2>Your photograph</h2>
       <p class="help">PNG only, up to ${Math.round(IMAGE_LIMITS.max_bytes / 1024 / 1024)} MB, kept at
       no more than ${IMAGE_LIMITS.max_stored_dimension} pixels on the long side.
       <strong>Nothing you send is stored.</strong> We read the picture and save a fresh copy of it.
       Anything else hidden in the file is left out. That is why we only take PNG.</p>
       <form method="post" action="${base}/photo" enctype="application/octet-stream">
         <p class="help">Choose a PNG file, then press Upload.</p>
-        <input class="fi" type="file" name="photo" accept="image/png">
+        <input class="fi" type="file" name="photo" accept="image/png" aria-label="Your photograph, a PNG file">
         <button class="cta" type="submit">Upload</button>
       </form>
       ${p.photo === undefined ? raw('') : h`
@@ -1227,7 +1227,7 @@ function settingsPage(
         Made from a ${p.photo.source_format.toUpperCase()} of ${p.photo.source_bytes} bytes
         on ${stamp(p.photo.updated_at)}.</p>`}
 
-      ${inBackOffice ? h`<h3>Your working times</h3>
+      ${inBackOffice ? h`<h2>Your working times</h2>
       <p class="help"><strong>Bookings only use these hours.</strong> No time outside them is offered,
       on the calendar or on the client's own picker. A time outside them is refused when saved.</p>
       <p class="help"><strong>These hours are UK time.</strong> Nine to five means nine to five all
@@ -1237,20 +1237,20 @@ function settingsPage(
         ${p.week.map((row) => h`<div class="pblock">
           <label class="ck"><input type="checkbox" name="d${row.weekday}_on"${row.set ? raw(' checked') : raw('')}>
             ${row.name}</label>
-          <label class="fl">From</label>
-          <input class="fi" name="d${row.weekday}_start" value="${row.start}" placeholder="09:00">
-          <label class="fl">To</label>
-          <input class="fi" name="d${row.weekday}_end" value="${row.end}" placeholder="17:00">
+          <label class="fl" for="d${row.weekday}_start">From</label>
+          <input class="fi" id="d${row.weekday}_start" name="d${row.weekday}_start" value="${row.start}" placeholder="09:00">
+          <label class="fl" for="d${row.weekday}_end">To</label>
+          <input class="fi" id="d${row.weekday}_end" name="d${row.weekday}_end" value="${row.end}" placeholder="17:00">
         </div>`)}
         <button class="cta" type="submit">Save the week</button>
       </form>
 
-      ${S.canAdminister(actor) ? h`<h3>Administration</h3>
+      ${S.canAdminister(actor) ? h`<h2>Administration</h2>
         <p><a class="cta" href="/staff/users">Users and roles</a></p>
         <p><a class="cta" href="/staff/email-addresses">Addresses we cannot email</a>${stopped === 0
           ? raw('') : h` — ${stopped} stopped`}</p>` : raw('')}
 
-      <h3>Emails waiting to send</h3>
+      <h2>Emails waiting to send</h2>
       <p class="help">Emails are not being sent yet. Each one is saved here until sending is switched on.
       Calendar invites wait here too. A company's own emails are on its Email page.</p>
       ${outbox.length === 0

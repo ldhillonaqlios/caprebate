@@ -17,7 +17,7 @@ import { AUTHORITY_BASES, BENEFICIAL_OWNERSHIP, CLAIMANT_TYPES, ENTITY_STATUSES,
 import type { ComplaintCount, ComplaintView, RegisterLine, RequestView, SearchResult } from './compliance-rights.ts';
 import {
   ACCESS_RESPONSE_ITEMS, COMPLAINT_LIMBS, COMPLAINT_OUTCOMES, COMPLAINT_VIA, EXTENSION_GROUND_WORDS, FEE_STATUS, IDENTITY_EVIDENCE, IDENTITY_OUTCOMES,
-  IDENTITY_ROUTES, IDENTITY_STATUS, IS_164A, LIMB_DECISIONS, LIMB_WORDS, ONWARD_ROUTE_ITEMS, RECEIVED_VIA, REFUSAL_RESPONSE_ITEMS, REQUEST_STATUS,
+  IDENTITY_ROUTES, IDENTITY_STATUS, IS_164A, LIMB_DECISIONS, LIMB_WORDS, ONWARD_ROUTE_ITEMS, RECEIVED_VIA, REFUSAL_RESPONSE_ITEMS, REQUEST_STATUS, SEARCH_TERM_MAX,
 } from './compliance-rights.ts';
 import type { IncidentView, SheetSection } from './compliance-breach.ts';
 import { ART33, ART34, DISCOVERY_ROUTES, FACT_VALUES, INCIDENT_KINDS, OCCURRED_STATES, RECIPIENTS, TOLD_POSITIONS, YES_NO } from './compliance-breach.ts';
@@ -29,12 +29,26 @@ type Nav = Safe;
 
 /* ------------------------------------------------------------------ form pieces */
 
+/**
+ * PHASE 154a1 (line 4), 4 October 2026: EVERY LABEL NAMES ITS BOX. These three wrote <label class="fl"> with no for=
+ * and not around the box, so a screen reader read every compliance form's boxes with no name (the 3 October sweep).
+ * Each box now has an id of its own - a page can carry the same field in several forms, so the id is numbered - and its
+ * label says for= that id.
+ */
+let fieldCount = 0;
+function fieldId(name: string): string {
+  fieldCount = (fieldCount + 1) % 1_000_000;
+  return `cf-${name.replace(/[^A-Za-z0-9_-]/g, '')}-${fieldCount.toString(36)}`;
+}
+
 export function input(label: string, name: string, value: string | null = null, type = 'text'): Safe {
-  return h`<label class="fl">${label}</label><input class="fi" type="${type}" name="${name}" value="${value ?? ''}">`;
+  const id = fieldId(name);
+  return h`<label class="fl" for="${id}">${label}</label><input class="fi" id="${id}" type="${type}" name="${name}" value="${value ?? ''}">`;
 }
 
 export function area(label: string, name: string, value: string | null = null): Safe {
-  return h`<label class="fl">${label}</label><textarea class="fi" name="${name}" rows="3">${value ?? ''}</textarea>`;
+  const id = fieldId(name);
+  return h`<label class="fl" for="${id}">${label}</label><textarea class="fi" id="${id}" name="${name}" rows="3">${value ?? ''}</textarea>`;
 }
 
 // The HTML tag shares a word with SQL, and tools/lint-sql.cjs reads words, not languages: the tag is built apart.
@@ -42,7 +56,8 @@ const PICK_OPEN = raw('<sel' + 'ect class="fi" name="');
 const PICK_CLOSE = raw('</sel' + 'ect>');
 
 export function choose(label: string, name: string, vocab: Vocab, selected: string | null = null): Safe {
-  return h`<label class="fl">${label}</label>${PICK_OPEN}${name}"><option value="">— not recorded —</option>${
+  const id = fieldId(name);
+  return h`<label class="fl" for="${id}">${label}</label>${PICK_OPEN}${name}" id="${id}"><option value="">— not recorded —</option>${
     Object.entries(vocab).map(([k, v]) => (k === selected ? h`<option value="${k}" selected>${v}</option>` : h`<option value="${k}">${v}</option>`))}${PICK_CLOSE}`;
 }
 
@@ -78,7 +93,7 @@ function subnav(): Safe {
 
 function holdsAndLinks(kind: string, id: string, holds: readonly HoldRow[], links: readonly LinkLine[]): Safe {
   return h`
-    <h3>Holds and restrictions</h3>
+    <h2>Holds and restrictions</h2>
     ${holds.length === 0 ? h`<p class="help">None.</p>` : h`<table><tbody>${holds.map((x) => h`<tr><td>${HOLD_KINDS[x.hold_kind] ?? x.hold_kind}</td>
       <td>${x.record_kind} ${x.record_id}</td><td>${x.reason}</td><td>review ${x.review_on}</td>
       <td>${x.lifted_at === null ? form(`/staff/compliance/holds/${x.id}/lift`, 'Lift', input('Why it is lifted', 'lift_reason')) : h`lifted — ${x.lift_reason ?? ''}`}</td></tr>`)}</tbody></table>`}
@@ -87,7 +102,7 @@ function holdsAndLinks(kind: string, id: string, holds: readonly HoldRow[], link
       ${choose('Kind', 'hold_kind', HOLD_KINDS)} ${choose('Why', 'reason_kind', HOLD_REASONS)}
       ${input('The kind of record held — its code in capitals, like DOCUMENT_VERSIONS', 'record_kind')} ${input('The record’s id', 'record_id')}
       ${area('The reason', 'reason')} ${input('Next review', 'review_on', null, 'date')}`)}
-    <h3>Cross-references — read in both directions</h3>
+    <h2>Cross-references — read in both directions</h2>
     ${links.length === 0 ? h`<p class="help">None.</p>` : h`<ul>${links.map((l) => h`<li>${l.label} ${l.ref ?? l.id}</li>`)}</ul>`}
     ${form('/staff/compliance/links', 'Cross-reference', h`
       <input type="hidden" name="from_kind" value="${kind}"><input type="hidden" name="from_id" value="${id}">
@@ -112,7 +127,7 @@ export function landingPage(nav: Nav, aml: AmlView, settings: readonly SettingRe
       ])}
       <p class="help">Only Admin can use this section today, because no other role can. There is no data protection officer login.
       Whether one is needed is Lakhbir’s question. Sales, Accounting, Surveying and clients cannot reach anything here.</p>
-      <h3>Settings — dated, and sourced</h3>
+      <h2>Settings — dated, and sourced</h2>
       <table><tbody>${settings.map((s) => h`<tr><td>${SETTINGS[s.setting] ?? s.setting}</td><td><strong>${s.label}</strong></td>
         <td>${s.effective_from ?? ''}</td><td class="help">${s.source ?? ''}</td></tr>`)}</tbody></table>
       <p class="help">${aml.effect}</p>
@@ -123,7 +138,7 @@ export function landingPage(nav: Nav, aml: AmlView, settings: readonly SettingRe
         ${input('Takes effect', 'effective_from', null, 'date')} ${area('Where it comes from — a written answer, a policy schedule', 'source')}`)}</details>
       <p class="help">s.164A complaints ${count.from} to ${count.to}: <strong>${String(count.s164a)}</strong> (not s.164A
         ${String(count.not_164a)}, not yet classified ${String(count.unclassified)} — counted apart, never as no).</p>
-      <h3>Find a person</h3>
+      <h2>Find a person</h2>
       ${form('/staff/compliance/search', 'Search for a person', h`${input('A name, an email address or a telephone number', 'term')}
         <p class="help">Finds a person through an organisation, a lead with no organisation, or an introducing firm, with the tasks that name them.
         It does not reach inside a document.</p>`)}`,
@@ -138,18 +153,18 @@ export function amlPage(nav: Nav, v: AmlView, organisations: readonly { id: stri
     body: h`<h1>Customer due diligence</h1>${subnav()}${done(msg)}
       <div class="flag">${v.effect}</div>${limitation()}
       <p class="help">${v.psc_separation}</p>
-      <h3>Officers</h3>
+      <h2>Officers</h2>
       ${v.officers.length === 0 ? h`<p class="help">None recorded. The paper wants the nominated officer named in writing.</p>`
         : h`<table><tbody>${v.officers.map((o) => h`<tr><td>${o.office}</td><td>${o.who}</td><td>from ${o.appointed_on}</td>
           <td>${o.ended_on === null ? form(`/staff/compliance/aml/officers/${o.id}/end`, 'End', input('Ended on', 'ended_on', null, 'date')) : h`ended ${o.ended_on}`}</td></tr>`)}</tbody></table>`}
       ${form('/staff/compliance/aml/officers', 'Record an appointment', h`${choose('Office', 'office', OFFICES)}
         ${choose('Who', 'user_id', Object.fromEntries(staff.map((s) => [s.id, s.name])))} ${input('Appointed on', 'appointed_on', null, 'date')}
         ${area('Where it is named in writing', 'source')}`)}
-      <h3>The firm-wide risk assessment</h3><p>${v.risk_assessment_reading}</p>
+      <h2>The firm-wide risk assessment</h2><p>${v.risk_assessment_reading}</p>
       ${form('/staff/compliance/aml/risk-assessments', 'Record a dated assessment', h`${input('Dated', 'assessed_on', null, 'date')}
         ${input('Where the document is', 'document_ref')} ${area('What it covers — client types, reach, channels, services', 'covers')}
         ${choose('Does it name the contingent fee as a risk factor?', 'contingent_fee_named', { YES: 'Yes', NO: 'No' })}`)}
-      <h3>Checks</h3>
+      <h2>Checks</h2>
       ${v.checks.length === 0 ? h`<p class="help">None.</p>` : h`<table><tbody>${v.checks.map((k) => h`<tr><td><a href="/staff/compliance/aml/checks/${k.id}">${k.organisation}</a></td>
         <td>${k.claimant_type}</td><td>${k.state}</td><td>${k.completed_at ?? ''}</td></tr>`)}</tbody></table>`}
       ${form('/staff/compliance/aml/checks', 'Open a check', h`${choose('Organisation', 'business_id', Object.fromEntries(organisations.map((o) => [o.id, o.name])))}
@@ -182,12 +197,12 @@ export function checkPage(nav: Nav, v: CheckView, msg?: string, identity: Safe =
         ${choose('Risk level (test default)', 'risk_level', RISK_LEVELS, c.risk_level)}
         ${input('The risk in words', 'risk_rating', c.risk_rating)} ${area('Why', 'risk_rating_basis', c.risk_rating_basis)}
         ${input('Checked on', 'checked_on', c.checked_on, 'date')}`) : raw('')}
-      <h3>Online identity check</h3>${identity}
-      <h3>The PSC pull</h3><p>${v.psc_pull.reading}</p>
+      <h2>Online identity check</h2>${identity}
+      <h2>The PSC pull</h2><p>${v.psc_pull.reading}</p>
       ${v.psc_decisions.map((p) => h`<p class="help">${PSC_DECISIONS[p.decision] ?? p.decision}, ${p.decided_on}: ${p.reasoning}</p>`)}
       ${open ? form(`/staff/compliance/aml/checks/${c.id}/psc-decisions`, 'Record a dated decision on the pull', h`
         ${choose('Decision', 'decision', PSC_DECISIONS)} ${area('Why', 'reasoning')} ${input('Decided on', 'decided_on', null, 'date')}`) : raw('')}
-      <h3>Beneficial owners</h3>
+      <h2>Beneficial owners</h2>
       ${v.owners.length === 0 ? h`<p class="help">None recorded.</p>` : h`<ul>${v.owners.map((o) => h`<li>${o.contact} — ${o.basis_of_control} (${OWNER_SOURCES[o.identified_from] ?? o.identified_from})</li>`)}</ul>`}
       ${open ? form(`/staff/compliance/aml/checks/${c.id}/owners`, 'Record an owner', h`
         ${choose('Contact', 'contact_id', Object.fromEntries(v.contacts.map((x) => [x.id, x.full_name])))}
@@ -195,7 +210,7 @@ export function checkPage(nav: Nav, v: CheckView, msg?: string, identity: Safe =
         ${choose('Evidence document', 'evidence_document_id', Object.fromEntries(v.documents.map((x) => [x.id, x.label])))} ${input('Verified how', 'verified_how')}`) : raw('')}
       ${open ? h`${form(`/staff/compliance/aml/checks/${c.id}/complete`, 'Finish the check', raw(''))}
         ${form(`/staff/compliance/aml/checks/${c.id}/withdraw`, 'Withdraw', input('Why', 'withdrawn_reason'))}` : raw('')}
-      <h3>Ongoing monitoring</h3>
+      <h2>Ongoing monitoring</h2>
       ${v.notes.map((n) => h`<p class="help">${n.noted_on}: ${n.note}</p>`)}
       ${form('/staff/compliance/aml/notes', 'Add a note', h`<input type="hidden" name="business_id" value="${c.business_id}"><input type="hidden" name="check_id" value="${c.id}">
         ${input('Dated', 'noted_on', null, 'date')} ${area('Note', 'note')}`)}`,
@@ -215,8 +230,8 @@ export function rightsListPage(nav: Nav, rows: readonly RegisterLine[], msg?: st
         ${input(`Received — when Cap Rebate received it, not when it was read (${moment})`, 'received_at')} ${choose('How it arrived', 'received_via', RECEIVED_VIA)}
         ${input('Where exactly', 'received_via_detail')} ${input(`Forwarded (${moment})`, 'forwarded_at')} ${input('Forwarded by', 'forwarded_by')}
         ${area('How they describe themselves, in their words', 'requester_as_described')} ${area('What they asked for, quoted', 'request_verbatim')}
-        <label class="fl">The rights it asks for — each has its own deadline</label>
-        ${Object.entries(LIMB_WORDS).map(([k, v]) => h`<label class="ck"><input type="checkbox" name="limbs" value="${k}"> ${v}</label> `)}
+        <p class="fl" id="limbs-label">The rights it asks for — each has its own deadline</p>
+        <div role="group" aria-labelledby="limbs-label">${Object.entries(LIMB_WORDS).map(([k, v]) => h`<label class="ck"><input type="checkbox" name="limbs" value="${k}"> ${v}</label> `)}</div>
         ${area('An alternative classification considered and rejected', 'classification_alternatives')}
         ${input('Contact id, if they are one', 'contact_id')} ${input('Lead id, if they asked through one', 'lead_id')}`)}`,
   });
@@ -230,7 +245,7 @@ export function requestPage(nav: Nav, v: RequestView, msg?: string): string {
     body: h`<h1>${r.request_ref}</h1>${subnav()}${done(msg)}${limitation()}
       <p>Received ${localWhen(r.received_at)} by ${RECEIVED_VIA[r.received_via] ?? r.received_via}. Status <strong>${REQUEST_STATUS[r.status] ?? r.status}</strong>.</p>
       <blockquote>${r.request_verbatim}</blockquote>
-      <h3>Deadlines — one row per right</h3>
+      <h2>Deadlines — one row per right</h2>
       ${v.limbs.map((l) => h`<div class="pblock"><p><strong>${l.label}</strong> — decision: ${l.row.decision === null ? 'not yet' : (LIMB_DECISIONS[l.row.decision] ?? l.row.decision)}</p>
         ${l.clock === null ? h`<p class="err">${l.clock_error ?? ''}</p>` : h`
           <ul>${l.clock.working.map((w) => h`<li>${w}</li>`)}</ul>
@@ -245,7 +260,7 @@ export function requestPage(nav: Nav, v: RequestView, msg?: string): string {
           ${choose('Decision', 'decision', LIMB_DECISIONS, l.row.decision)} ${area('Why, on these facts, for this person', 'decision_reasoning', l.row.decision_reasoning)}
           ${area('Was the time taken an undue delay?', 'undue_delay_assessment', l.row.undue_delay_assessment)}`) : raw('')}</div>`)}
       ${open ? form(`/staff/compliance/rights/${r.id}/limbs`, 'Add a right', choose('Right', 'limb', LIMB_WORDS)) : raw('')}
-      <h3>The request</h3>
+      <h2>The request</h2>
       ${open ? form(`/staff/compliance/rights/${r.id}`, 'Save', h`
         ${choose('Identity status', 'identity_status', IDENTITY_STATUS, r.identity_status)} ${choose('Identity route', 'identity_route', IDENTITY_ROUTES, r.identity_route)}
         ${area('The identity standard applied, and why it was proportionate', 'identity_standard_applied', r.identity_standard_applied)}
@@ -261,7 +276,7 @@ export function requestPage(nav: Nav, v: RequestView, msg?: string): string {
       ${open ? form(`/staff/compliance/rights/${r.id}/close`, 'Close the request', h`
         <p class="help">Tick against the response actually sent. An access response:</p>${ticks('check_', ACCESS_RESPONSE_ITEMS)}
         <p class="help">Any refusal, in whole or part:</p>${ticks('check_', REFUSAL_RESPONSE_ITEMS)}`) : h`<p>Closed ${r.closed_at === null ? '' : localWhen(r.closed_at)}.</p>`}
-      <h3>Letters — ${v.draft_note}</h3>
+      <h2>Letters — ${v.draft_note}</h2>
       ${form(`/staff/compliance/rights/${r.id}/letters`, 'Add to emails waiting to send', h`${choose('Letter', 'letter', Object.fromEntries(v.letters.map((x) => [x.kind, x.label])))}
         ${input('Their email address', 'to_email')} ${area('The reasons, in the words sent', 'reasons')} ${input('What we need from them', 'asked')}
         <p class="help">It is saved with the emails waiting to send, marked not sent. It goes nowhere else.</p>`)}
@@ -269,10 +284,11 @@ export function requestPage(nav: Nav, v: RequestView, msg?: string): string {
   });
 }
 
-export function searchPage(nav: Nav, term: string, s: SearchResult): string {
+export function searchPage(nav: Nav, _term: string, s: SearchResult): string {
   return page({
     title: 'Search for a person', nav, wide: true,
-    body: h`<h1>Search: ${term}</h1>${subnav()}
+    body: h`<h1>Search: ${s.term}</h1>${subnav()}
+      ${s.cut ? h`<p class="flag">Only the first ${SEARCH_TERM_MAX} characters of what you typed were searched.</p>` : raw('')}
       <p class="help">Searched: ${s.scope.join('; ')}.</p><p class="flag">${s.s2_note} <a href="/staff/compliance/identity">Search the names</a>.</p>
       ${s.hits.length === 0 ? h`<p>Nothing found in the stores above.</p>` : h`<table><thead><tr><th>Store</th><th>How</th><th>What</th></tr></thead><tbody>
         ${s.hits.map((x) => h`<tr><td>${x.store}</td><td>${x.how}</td><td>${x.link === null ? x.label : h`<a href="${x.link}">${x.label}</a>`}</td></tr>`)}</tbody></table>`}`,
@@ -304,10 +320,10 @@ export function complaintPage(nav: Nav, v: ComplaintView, msg?: string): string 
     title: c.complaint_ref, nav, wide: true,
     body: h`<h1>${c.complaint_ref}</h1>${subnav()}${done(msg)}${limitation()}
       <p>Received ${localWhen(c.received_at)}. Status <strong>${c.status}</strong>.</p><blockquote>${c.complaint_verbatim}</blockquote>
-      <h3>The thirty days</h3><ul>${v.ack.working.map((w) => h`<li>${w}</li>`)}</ul><p class="help">${v.no_deadline_note}</p>
-      <h3>Our own targets</h3><ul><li>Next update to the person by: <strong>${v.targets.next_update_due ?? 'none due — the outcome has been told'}</strong> (28 days after they were last told, on ${v.targets.last_told})</li>
+      <h2>The thirty days</h2><ul>${v.ack.working.map((w) => h`<li>${w}</li>`)}</ul><p class="help">${v.no_deadline_note}</p>
+      <h2>Our own targets</h2><ul><li>Next update to the person by: <strong>${v.targets.next_update_due ?? 'none due — the outcome has been told'}</strong> (28 days after they were last told, on ${v.targets.last_told})</li>
         <li>Outcome by: <strong>${v.targets.target_outcome}</strong> (one month from receipt)</li></ul><p class="help">${v.targets.note}</p>
-      <h3>Classification</h3>
+      <h2>Classification</h2>
       ${c.is_164a === null ? (open ? form(`/staff/compliance/complaints/${c.id}/classify`, 'Classify', h`${choose('Is it a s.164A complaint?', 'is_164a', IS_164A)} ${area('Why', 'classification_reason')}`) : raw(''))
         : h`<p>${IS_164A[c.is_164a] ?? c.is_164a} — ${c.classification_reason ?? ''} (${c.classified_at === null ? '' : localWhen(c.classified_at)}; not revised once made)</p>`}
       ${open ? form(`/staff/compliance/complaints/${c.id}`, 'Save', h`
@@ -321,11 +337,11 @@ export function complaintPage(nav: Nav, v: ComplaintView, msg?: string): string 
         ${input('Decided by — named', 'decided_by', c.decided_by)} ${area('Why someone other than the data protection officer decided', 'decided_by_reason', c.decided_by_reason)}
         ${input('Countersigned by — named', 'countersigned_by', c.countersigned_by)} ${area('The countersigner’s own view, where it differs', 'countersigner_view', c.countersigner_view)}
         ${area('What changed as a result', 'lessons_and_changes', c.lessons_and_changes)}`) : raw('')}
-      <h3>Progress told to the complainant</h3>
+      <h2>Progress told to the complainant</h2>
       ${v.progress.map((p) => h`<p class="help">${p.told_on}: ${p.said}</p>`)}
       ${open ? form(`/staff/compliance/complaints/${c.id}/progress`, 'Record an update', h`${input('Told on', 'told_on', null, 'date')} ${area('What they were told', 'said')}`) : raw('')}
       ${open ? form(`/staff/compliance/complaints/${c.id}/close`, 'Close', h`<p class="help">Tick against the outcome letter actually sent:</p>${ticks('check_', ONWARD_ROUTE_ITEMS)}`) : raw('')}
-      <h3>Letters — ${v.draft_note}</h3>
+      <h2>Letters — ${v.draft_note}</h2>
       ${form(`/staff/compliance/complaints/${c.id}/letters`, 'Add to emails waiting to send', h`${choose('Letter', 'letter', Object.fromEntries(v.letters.map((x) => [x.kind, x.label])))}
         ${input('Their email address', 'to_email')} ${input('If they also asked for something to be done: what', 'asked')}`)}
       ${holdsAndLinks('COMPLAINT', c.id, v.holds, v.links)}`,
@@ -378,7 +394,7 @@ export function incidentPage(nav: Nav, v: IncidentView, msg?: string): string {
       <p><a href="/staff/compliance/breaches/${i.id}/ico-sheet">The sheet for the Information Commissioner’s Office (from 30 September 2026, the Information Commission). It is a template.</a></p>
       ${v.corrections.map((x) => h`<p class="help">Awareness corrected to ${localWhen(x.corrected_to)}: ${x.reason}</p>`)}
       ${open ? form(`/staff/compliance/breaches/${i.id}/awareness`, 'Record a correction beside the original', h`${input(`Corrected to (${moment})`, 'corrected_to')} ${area('Why', 'reason')}`) : raw('')}
-      <h3>The facts</h3>
+      <h2>The facts</h2>
       ${open ? form(`/staff/compliance/breaches/${i.id}`, 'Save', h`
         ${area('What happened', 'description', i.description)} ${area('People — categories, then a number or range with its basis', 'subject_categories_and_number', i.subject_categories_and_number)}
         ${area('Records — categories and number', 'record_categories_and_number', i.record_categories_and_number)} ${area('Special category data, and how it got there', 'special_category_present', i.special_category_present)}
@@ -387,7 +403,7 @@ export function incidentPage(nav: Nav, v: IncidentView, msg?: string): string {
         ${input('Annex reference, like ANX-001 — the names stay in the restricted list', 'annex_ref', i.annex_ref)}
         ${choose('Is it a personal data breach? The data protection officer decides.', 'is_personal_data_breach', YES_NO, i.is_personal_data_breach)}
         ${area('Their reason', 'classification_reason', i.classification_reason)} ${area('What changed as a result', 'lessons_and_changes', i.lessons_and_changes)}`) : raw('')}
-      <h3>The decisions</h3>
+      <h2>The decisions</h2>
       ${open ? form(`/staff/compliance/breaches/${i.id}/decision`, 'Save the decision', h`
         ${choose('Article 33', 'art33_decision', ART33, dc?.art33_decision ?? null)} ${area('Reasoning — does the “unlikely to result in a risk” test apply?', 'art33_reasoning', dc?.art33_reasoning ?? null)}
         ${input(`Notified (${moment})`, 'notified_at', dc?.notified_at ?? null)} ${input('To whom', 'notified_recipient', dc?.notified_recipient ?? null)}
@@ -399,10 +415,10 @@ export function incidentPage(nav: Nav, v: IncidentView, msg?: string): string {
         ${choose('The deputy route was used', 'deputy_route_used', { YES: 'Yes', NO: 'No' }, dc === null ? null : dc.deputy_route_used === 1 ? 'YES' : 'NO')}
         ${area('The attempts to reach the data protection officer — what, channel, time', 'dpo_contact_attempts', dc?.dpo_contact_attempts ?? null)}
         ${input('Countersigned by — named', 'countersigned_by', dc?.countersigned_by ?? null)}`) : raw('')}
-      <h3>Notification phases</h3>
+      <h2>Notification phases</h2>
       ${v.phases.map((p) => h`<p class="help">Phase ${String(p.phase_no)}, ${localWhen(p.sent_at)}: ${p.what_was_sent} — outstanding: ${p.outstanding}</p>`)}
       ${open ? form(`/staff/compliance/breaches/${i.id}/phases`, 'Record a phase', h`${input(`Sent (${moment})`, 'sent_at')} ${area('What was sent', 'what_was_sent')} ${area('What was outstanding, and by when', 'outstanding')}`) : raw('')}
-      <h3>Who else was told</h3><p class="help">${v.insurance}</p>
+      <h2>Who else was told</h2><p class="help">${v.insurance}</p>
       <table><tbody>${v.told.map((t) => h`<tr><td>${t.label}</td><td>${TOLD_POSITIONS[t.position] ?? t.position}</td><td>${t.told_at === null ? '' : localWhen(t.told_at)}</td><td>${t.note ?? ''}</td></tr>`)}</tbody></table>
       ${open ? form(`/staff/compliance/breaches/${i.id}/told`, 'Record', h`${choose('Who', 'recipient_kind', RECIPIENTS)} ${choose('Position', 'position', TOLD_POSITIONS)}
         ${input(`Told (${moment})`, 'told_at')} ${input('Note', 'note')}`) : raw('')}
@@ -415,7 +431,7 @@ export function icoSheetPage(nav: Nav, ref: string, sections: readonly SheetSect
   return page({
     title: `Answer sheet for the data protection regulator — ${ref}`, nav, wide: true,
     body: h`<h1>The sheet for the Information Commissioner’s Office (from 30 September 2026, the Information Commission) — ${ref}</h1>${subnav()}<p class="flag">${note}</p>
-      ${sections.map((s) => h`<h3>${s.title}</h3><table><tbody>${s.lines.map((l) => h`<tr><th>${l.field}</th><td>${l.answer}</td></tr>`)}</tbody></table>`)}`,
+      ${sections.map((s) => h`<h2>${s.title}</h2><table><tbody>${s.lines.map((l) => h`<tr><th>${l.field}</th><td>${l.answer}</td></tr>`)}</tbody></table>`)}`,
   });
 }
 
@@ -469,7 +485,7 @@ export function consentPage(nav: Nav, c: ConsentHistory, msg?: string): string {
     title: 'Consent history', nav, wide: true,
     body: h`<h1>Consent history — ${c.contact.full_name}</h1>${subnav()}${done(msg)}${limitation()}<p>${c.contact.organisation ?? ''}</p>
       <table><tbody>${c.current.map((x) => h`<tr><th>${x.kind}</th><td>${x.reading}</td></tr>`)}</tbody></table>
-      <h3>Every answer</h3>
+      <h2>Every answer</h2>
       <table><thead><tr><th>When</th><th>What</th><th>Answer</th><th>Words asked</th><th>Route</th><th>Kept in</th></tr></thead><tbody>
       ${c.lines.map((l) => h`<tr><td>${localWhen(l.at)}</td><td>${l.kind.startsWith('SHARE_WITH ') ? `Sharing progress with ${l.kind.slice('SHARE_WITH '.length)}` : (CONSENT_KINDS[l.kind] ?? l.kind)}</td><td>${CONSENT_DECISIONS[l.decision] ?? l.decision}</td><td>${l.wording}</td><td>${routeWords(l.route)}</td><td class="help">${l.source}</td></tr>`)}</tbody></table>
       ${form(`/staff/compliance/consent/${c.contact.id}`, 'Record an answer', h`${choose('Which', 'kind', CONSENT_KINDS)} ${choose('Answer', 'decision', CONSENT_DECISIONS)}

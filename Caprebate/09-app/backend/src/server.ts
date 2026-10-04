@@ -33,7 +33,7 @@ import { authenticate, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAIL
 import * as SI from './web/sign-in.ts';
 import { toActor } from './users.ts';
 import { payloadFor, assertSurveySection } from './web/surveyor.ts';
-import { handleWeb, PayloadTooLarge, refusalAsPage, sendRefusalPage } from './web/router.ts';
+import { bindResponse, handleWeb, PayloadTooLarge, readBody, refusalAsPage, sendRefusalPage } from './web/router.ts';
 import { FsObjectStore } from './web/objectstore.ts';
 import { SharedObjectStore, type BlobClient } from './web/shared-objectstore.ts';
 import { sealKeyFromEnv, type KeepOriginals } from './web/originals.ts';
@@ -53,17 +53,12 @@ function readCookie(req: IncomingMessage, name: string): string | undefined {
 }
 
 async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
-  const chunks: Buffer[] = [];
-  let size = 0;
-  for await (const c of req) {
-    const b = c as Buffer;
-    size += b.length;
-    if (size > 1_000_000) throw new Error('body too large'); // a cap is a control
-    chunks.push(b);
-  }
-  if (chunks.length === 0) return {};
+  // a cap is a control. PHASE 154a1 (line 3): the web half's reader, so a body over it is a 413 that closes its
+  // connection - it was a plain Error, answered 500, with the rest of the body left in a kept-alive connection.
+  const body = await readBody(req, 1_000_000);
+  if (body.length === 0) return {};
   try {
-    const parsed: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    const parsed: unknown = JSON.parse(body.toString('utf8'));
     return typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : {};
   } catch {
     return {};
@@ -181,6 +176,7 @@ export async function createApp(
 
   // FASTER CLICKS, 3 Oct 2026: each request remembers its own reads until anything is written (src/db.ts withReadMemo).
   const server = createServer((req, res) => withReadMemo(() => {
+    bindResponse(req, res);
     // Faster clicks, part 2: with a local copy of the lasting database, first bring in what any copy wrote since — one
     // trip. If it cannot, this click reads the copy as it stands; the next click tries again.
     try { app.db.refresh(); } catch (e) { console.error(`the local copy of the database was not brought up to date: ${e instanceof Error ? e.name : typeof e}`); }

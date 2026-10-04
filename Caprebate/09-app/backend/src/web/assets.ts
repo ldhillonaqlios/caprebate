@@ -163,7 +163,7 @@ body.app main.wide{max-width:96rem}
 main.wide td,main.wide th{vertical-align:top}
 main.wide .when{white-space:nowrap}
 p{margin:.6rem 0}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;background:var(--mist);padding:.05rem .3rem;border-radius:.25rem;color:var(--ink)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:max(.9em,12px);background:var(--mist);padding:.05rem .3rem;border-radius:.25rem;color:var(--ink)}
 hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
 .group,.eyebrow{font-size:14px;letter-spacing:.04em;color:var(--body);margin:0 0 .35rem;font-weight:600}
 .help{color:var(--body);font-size:16px}

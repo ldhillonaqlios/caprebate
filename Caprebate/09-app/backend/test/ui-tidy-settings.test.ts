@@ -123,6 +123,6 @@ describe('UI tidy phase 15: Compliance', () => {
     ]);
     assert.match(body, /<details class="formfold" id="record-setting"><summary>Record a new dated value<\/summary>\s*<form method="post" action="\/staff\/compliance\/settings"/);
     assert.match(body, /s\.164A complaints [^:]+: <strong>0<\/strong>/);
-    assert.match(body, /<h3>Find a person<\/h3>/);
+    assert.match(body, /<h2>Find a person<\/h2>/); // Phase 154a1 line 6: h2, so no heading skips a level
   });
 });
