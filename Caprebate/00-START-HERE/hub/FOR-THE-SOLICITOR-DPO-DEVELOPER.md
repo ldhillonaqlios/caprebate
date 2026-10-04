@@ -1906,3 +1906,11 @@ Name:                                  Date:
  The recipients list (SDP-P6, now v1.4), the breach and transparency communications (SDP-P25), the Article 14 assessment (SDP-P26), the public notices page (SDP-P7) and the business continuity plan (SDP-P29) each carry a dated line under their entry. **Nothing moved into or out of this register.**
 
  **And the board's own total at the close of Phase 153a, 4 October 2026, counted in code: 120 items carry that status**: forty-six in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Forty-six plus nine plus sixty-five is 120.
+
+---
+
+## Phase 153b, 4 October 2026 — one proposal for the data protection officer; nothing moved in or out
+
+ **The company's type from Companies House (Word question 198, and a new question for the officer).** To fill in "what kind of business are you" from Companies House, we must keep the company's type ("ltd", "plc", "llp" …) from the search result. It is a fact about the company, not about a person, but the source register's permitted fields for Companies House did not include it. Phase 153b added it as a **proposed** permitted field (04-phase-work/phase3/caprebate-source-register.ts) and built the mapping behind its own switch, `COMPANY_TYPE_FROM_REGISTER`, **off**: while it is off the type is not kept at all. The officer is asked in the Word questions document whether it may be kept. Nothing moved into or out of this register.
+
+ **And the board's own total at the close of Phase 153b, 4 October 2026, counted in code: 124 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-five is 124.

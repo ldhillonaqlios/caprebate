@@ -1820,6 +1820,31 @@ test/assessment-start.test.ts, _crawl_roles.ts, _s2.ts) were deleted on 4 Oct
     to a base64url character that decodes the same). Make each deterministic
     (fixed clock steps; break the link in a way that always changes it) and
     prove it holds over 30 runs and under 30 busy processes.
+13. R-B1, THE INVERTED s.187A POOLING REQUIREMENT - the harness's oldest xfail
+    (Suite C, "C1 - entitled seller who never pooled -> NIL", logged by Phase
+    2 and held by no phase since). Phase 153b's switch count (line 21) met it
+    from the other side: a purchase from a seller who could claim but never
+    did (prior_owner_entitled "yes", prior_owner_claimed "no") gets the whole
+    range with NO cap and NO flag, because every flow applies the election and
+    s.187A caps only where the seller is KNOWN to have claimed (Stage 5,
+    `dom==="purchase" && s.prior_owner_claimed==="yes"`), while the survey
+    pack's legal check (src/web/pack-legal.ts) assesses s.187A on every
+    purchase. Read Rulebook B branch C and Rulebook A's addendum; build the
+    pooling requirement into the five flows as the rulebook states it (nil,
+    or unresolved with nil at the bottom where the dates are not known; the
+    seller may still pool before the transfer, so say what would satisfy it),
+    flip C1 from xfail to an ordinary assertion, and prove it red on the code
+    before. N4: an unknown claim history must not relieve. Then re-run
+    03-app/caprebate-switch-direction.cjs: fvr_requires_past_owner_claim may
+    then move an estimate figure too.
+
+═══ 4 OCTOBER 2026 — PHASE 153b TOOK HALF OF LINE 12 AND GAVE LINE 13 ═══
+Line 12's second half is DONE: test/survey-report.test.ts broke the link by
+  replacing its last character with "A", which is no change at all when the
+  random token already ends in "A" (1 in 64). It now uses "B" in that case.
+  The whatsapp.test.ts half remains.
+Line 13 is new (above).
+═══════════════════════════════════
 
 When every line is done: run every check in COORDINATES, re-derive the
 figures, update the registers you touched, and write the record.

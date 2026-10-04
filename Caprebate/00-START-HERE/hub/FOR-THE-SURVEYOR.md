@@ -979,3 +979,11 @@ reasonably be established remotely should require a site inspection before a sur
  **Marked 4 October 2026 by Phase 153a. Nothing moved into or out of this register, and its own size has not changed: nine entries covering nine board items, all nine at Built — awaiting sign-off.** One entry was added to FOR THE ACCOUNTANT — a grant matched to the items it paid for. **One thing is worth your knowing:** the survey pack now has a chapter 15, "Grants and VAT", which you open before approving. It shows the claim's grants and what each takes off the spend that qualifies; nothing in it is yours to type, and its VAT half is not built yet.
 
  **And the board's own total at the close of Phase 153a, 4 October 2026, counted in code: 120 items carry that status**: forty-six in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Forty-six plus nine plus sixty-five is 120.
+
+---
+
+## Phase 153b, 4 October 2026 — nothing moved into or out of this register
+
+ **Marked 4 October 2026 by Phase 153b. Nothing moved into or out of this register, and its own size has not changed: nine entries covering nine board items, all nine at Built — awaiting sign-off.** Phase 153b's readings are the tax adviser's; FOR THE ACCOUNTANT gained four entries.
+
+ **And the board's own total at the close of Phase 153b, 4 October 2026, counted in code: 124 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-five is 124.

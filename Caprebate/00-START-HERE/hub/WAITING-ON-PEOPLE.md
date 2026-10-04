@@ -26,6 +26,8 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Run the land boundary's first test download.
 - [ ] Look once at the test website to confirm Turso and the Blob store (Word questions 230 and 231).
 - [ ] Delete the "DELETE" files on the OneDrive web page.
+- [ ] File your own care-provider confirming-letter template (Word question 77) in `05-reports-and-templates/`; until then the supported-living list points at our draft, `Caprebate-Care-Provider-Confirming-Letter-Template-DRAFT-v0.1.md` (Phase 153b, 4 Oct 2026).
+- [ ] Confirm the two Phase 153b builds that are yours: the job cost model's line renamed "our own tax adviser, if we introduce one" (Word question 191), and Homedata as the chosen planning source, still off (Word question 202).
 - [ ] Answer Word questions 235, 236, 238, 187 and 34 (237 is for the tax adviser).
 - [ ] Others in the tracker: break and abort fee, clawback clause 13, Homedata licence facts, rate-card uplifts,
       solicitor brief, mailbox confirmation, Google Business Profile, bank and insurance, HMRC corporation tax,
@@ -43,6 +45,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Agree the business terms and the 3% fee (Word question 215).
 - [ ] Choose and instruct a solicitor (Word question 238).
 - [ ] Who approves the rate card (Word question 69).
+- [ ] Ask the accountant whether the fee-versus-benefit comparison should count VAT on our fee for clients who cannot reclaim it (Word question 59) — built on that recommendation on 4 Oct 2026 (Phase 153b), switched off, and dormant until we are VAT-registered.
 - [ ] Break fee and abort fee; fill the engagement letter's eight blanks with the solicitor.
 - [ ] Countersign the DPO's appointment; sign the Anthropic contract when Sadique approves it.
 - [ ] Where the breach register lives and who may write to it (SDP-G1); the one-off adviser engagement (SDP-G2).
@@ -51,6 +54,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 
 - [ ] Sign his own appointment.
 - [ ] The 200-address matching test (Word question 200) — the only item at "Blocked - question".
+- [ ] May we keep a company's type from Companies House ("ltd", "plc", "llp")? Proposed as a permitted field on 4 Oct 2026 (Phase 153b), with its switch off — Word question 240.
 - [ ] Approve the retention schedule, the document-pipeline impact assessment (DPIA), the breach procedure and the
       upload boundary.
 - [ ] Approve and publish the privacy notice naming every service (IONOS, Didit, Postcodes.io, Companies House, Zoom,

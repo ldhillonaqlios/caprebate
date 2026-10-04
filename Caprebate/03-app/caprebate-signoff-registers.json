@@ -3,9 +3,9 @@
   "_why": "A loose scan for board ids cannot tell those two apart, and if it guesses ENTRY it hides exactly the failure the check exists to find - an item name-dropped in a note would look housed. Phase 113c checked every match by hand on 9 September 2026 and every one happened to be a genuine entry, so the loose scan was safe THAT DAY and is not safe as a design. This file is that judgement, written down once, so the check can be strict instead of generous.",
   "_how_it_stays_honest": "The check FAILS when a register's text contains a board id this file does not classify, and FAILS when this file names an id the register's text no longer contains. So it cannot quietly go stale: adding an entry to a register without recording it here is a red run, and so is deleting one.",
   "_entry_shapes_in_use": "Two, and the second exists because of a tooling limit recorded in COORDINATES: a row in the register's Appendix 3 index table, or a prose note declaring an entry. A row cannot be added to an existing Monday table through the document API, so every entry added after a register's table was built is declared in prose beside it. SV-S7, SV-S8, SDP-L3, SDP-V3, SDP-L4, SDP-L5, SDP-P5 to SDP-P8 and SDP-V4 are all of that second kind. Since 15 September 2026 (Phase 132d) every entry code in all three registers carries its register's prefix - SV- for FOR THE SURVEYOR, ACC- for FOR THE ACCOUNTANT, SDP- for FOR THE SOLICITOR, THE DPO AND THE DEVELOPER - in the registers themselves and in the refs here; the check matches board ids and counts, never a ref's code.",
-  "version": "1.4",
+  "version": "1.5",
   "written": "4 October 2026",
-  "writtenBy": "Phase 153a (one entry added: ACC-A16, the twenty-fifth tax-adviser switch). Phase 151d wrote v1.3 (the register files moved to 00-START-HERE/hub/ when monday.com was dropped; no entry changed). Phase 146i wrote v1.2, Phase 146h v1.1, Phase 146g v1.0",
+  "writtenBy": "Phase 153b (four entries added: ACC-A17 to ACC-A20, tax-adviser switches twenty-six to twenty-nine). Phase 153a (one entry added: ACC-A16, the twenty-fifth tax-adviser switch). Phase 151d wrote v1.3 (the register files moved to 00-START-HERE/hub/ when monday.com was dropped; no entry changed). Phase 146i wrote v1.2, Phase 146h v1.1, Phase 146g v1.0",
   "board": 18422317809,
   "awaitingLabel": "Built - awaiting sign-off",
   "_boardIds": "A board id looks exactly like an item id, and every register's Appendix 3 opens by naming the board. These are boards, and the check skips them rather than asking anybody to classify them as entries.",
@@ -276,6 +276,30 @@
           "id": "13200627626",
           "how": "table",
           "why": "Built by Phase 153a on 4 Oct 2026 as the twenty-fifth tax-adviser switch, grant_traced_to_elements, off; read by the back end's survey pack, chapter 15. Created on monday.com in group 02 at Built - awaiting sign-off with owner CTA. The question it waits on is the tax adviser's, so it is housed here. The registers are files since 25 Sep 2026, so the row is in the Appendix 3 table itself."
+        },
+        {
+          "ref": "ACC-A17 an election with no tax references stands once the window has closed (added Phase 153b, 4 Oct 2026; entry after ACC-A16 in Section A, row in Appendix 3's index table)",
+          "id": "13200700684",
+          "how": "table",
+          "why": "Built by Phase 153b on 4 Oct 2026 as a tax-adviser switch, election_missing_utr_fixable, off (Word question 95). Created on monday.com in group 02 at Built - awaiting sign-off with owner CTA. The question it waits on is the tax adviser's, so it is housed here; the row is in the Appendix 3 table itself."
+        },
+        {
+          "ref": "ACC-A18 an election under the wrong section is read under the right one once the window has closed (added Phase 153b, 4 Oct 2026; entry after ACC-A16 in Section A, row in Appendix 3's index table)",
+          "id": "13200701317",
+          "how": "table",
+          "why": "Built by Phase 153b on 4 Oct 2026 as a tax-adviser switch, election_wrong_section_accepted, off (Word question 96). Created on monday.com in group 02 at Built - awaiting sign-off with owner CTA. The question it waits on is the tax adviser's, so it is housed here; the row is in the Appendix 3 table itself."
+        },
+        {
+          "ref": "ACC-A19 an elected figure above the law's limit is cut down to it (added Phase 153b, 4 Oct 2026; entry after ACC-A16 in Section A, row in Appendix 3's index table)",
+          "id": "13200702306",
+          "how": "table",
+          "why": "Built by Phase 153b on 4 Oct 2026 as a tax-adviser switch, election_value_cut_to_lawful_max, off (Word question 98). Created on monday.com in group 02 at Built - awaiting sign-off with owner CTA. The question it waits on is the tax adviser's, so it is housed here; the row is in the Appendix 3 table itself."
+        },
+        {
+          "ref": "ACC-A20 a housing association's payment in supported living is not a public body's (added Phase 153b, 4 Oct 2026; entry after ACC-A16 in Section A, row in Appendix 3's index table)",
+          "id": "13200704047",
+          "how": "table",
+          "why": "Built by Phase 153b on 4 Oct 2026 as a tax-adviser switch, registered_provider_not_public_body, off (Word question 108). Created on monday.com in group 02 at Built - awaiting sign-off with owner CTA. The question it waits on is the tax adviser's, so it is housed here; the row is in the Appendix 3 table itself."
         }
       ],
       "mentions": [
