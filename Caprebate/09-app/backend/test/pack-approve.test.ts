@@ -193,7 +193,7 @@ describe('the approval of the survey pack', () => {
     // A chapter number out of range, or not built, is never recorded.
     await req('u-ap-sam', `${P()}?ch=99`);
     await req('u-ap-sam', `${P()}?ch=5`);
-    assert.equal(made.app.db.get<{ c: number }>(`SELECT COUNT(*) AS c FROM survey_pack_reads WHERE chapter NOT IN (${[...chaptersToRead(), 23].join(', ')})`)!.c, 0); // PHASE 153f: the built chapters, read from the list
+    assert.equal(made.app.db.get<{ c: number }>('SELECT COUNT(*) AS c FROM survey_pack_reads WHERE chapter NOT IN (SELECT value FROM json_each(?))', [JSON.stringify([...chaptersToRead(), 23])])!.c, 0); // PHASE 153f: the built chapters, read from the list
     assert.throws(() => made.app.db.run('UPDATE survey_pack_reads SET legal_seq = 0'), /never edited/);
   });
 

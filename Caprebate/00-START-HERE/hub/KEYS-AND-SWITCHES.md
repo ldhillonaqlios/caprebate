@@ -22,7 +22,7 @@ test mode, developers will change this".
 | Vercel Blob | Uploaded documents | `BLOB_STORE_ID` (yes) | Live | UK host (developers) |
 | IONOS email sending | Staff emails, invitations, sign-in codes, calendar invites | `IONOS_SMTP_*` (yes) | **Sends real email**, under a testing waiver (`EMAIL_SENDING`, src/stubs/email-provider.ts) | Privacy notice and letter clause 7 name IONOS; check DKIM (156 A4) |
 | IONOS mailbox reading | Replies to contact@ come into the app | `IONOS_IMAP_*`, `REPLY_TIMER_TOKEN` (yes) | Live, read only; the outside timer (cron-job.org) is set up by hand (156 A3) | Privacy notice |
-| Zoom | Video calls, meetings created on our account | `ZOOM_*` (yes) | Live, transfer approved for testing | Paid licence (156 A6); Sadique for real clients |
+| Zoom | Video calls, meetings created on our account | `ZOOM_*` (yes) | Live, transfer approved for testing **Phase 153f (4 Oct 2026):** each call is hosted by its assigned member of staff, under their sign-in email (each needs a Zoom user on our account and a licence); anyone else falls back to the shared host. Call length and attendees need two more scopes (156 A6 step 5). | Paid licence (156 A6); Sadique for real clients |
 | Didit | Identity checks | `DIDIT_*` (yes) | Live under a testing waiver; 500 free a month, then about 33 US cents a check | Privacy notice; retention set in Didit (156 A10) |
 | Companies House "Find my company" | Company search at the assessment | `COMPANIES_HOUSE_API_KEY` (yes) | Live under a testing waiver | Privacy notice |
 | Postcodes.io | Postcode check | none | Live under a testing waiver | Privacy notice |
@@ -33,7 +33,7 @@ test mode, developers will change this".
 | Service | What it does | What is missing | Phase |
 |---|---|---|---|
 | Cloudflare Turnstile | Anti-bot check on the contact form | **Not working**: the page shows Cloudflare's test key, the server check is off. `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` not set and not in `TEST_DEPLOY_KEYS`; transfer not approved | 156 A1/B1 |
-| WhatsApp (Meta) | Messaging clients | All six `WHATSAPP_*` keys; Meta business account, approved template, webhook | 156 A2/B2 |
+| WhatsApp (Meta) | Messaging clients | All six `WHATSAPP_*` keys; Meta business account, approved template, webhook **Phase 153f:** a file someone sends is fetched from Meta's file host when staff press "Get it" (service WHATSAPP_MEDIA, same token); the funnel asks a separate, optional WhatsApp question. | 156 A2/B2 |
 | Anthropic Claude API | Reading clients' documents | `ANTHROPIC_API_KEY`; switches off (`CLAUDE_SWITCHES`); Sadique's approval and the director's signature first | 156 A8 |
 | CQC | Care registrations and beds | `CQC_SUBSCRIPTION_KEY` in the local key file, not in Vercel or `TEST_DEPLOY_KEYS`; switch off; free gate shut **Phase 153f (4 Oct 2026):** on the test website only, switched on under Lakhbir's 2 Oct waiver ("All the free ones", `TEST_WEBSITE_LOOKUPS`); the shipped switch stays off. The key is now in `TEST_DEPLOY_KEYS`; it still has to be set in Vercel. | 156 A5/B3 |
 | EPC register | Floor area, age band | `EPC_API_TOKEN` in the local key file only; switch off **Phase 153f (4 Oct 2026):** on the test website only, switched on under Lakhbir's 2 Oct waiver ("All the free ones", `TEST_WEBSITE_LOOKUPS`); the shipped switch stays off. The key is now in `TEST_DEPLOY_KEYS`; it still has to be set in Vercel. | 156 A5/B3 |

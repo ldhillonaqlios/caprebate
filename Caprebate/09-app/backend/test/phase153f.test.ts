@@ -158,7 +158,7 @@ function webhook(id: string, mediaId: string, from = '447700900111'): string {
   return JSON.stringify({ entry: [{ changes: [{ value: { messages: [{ from, id, timestamp: '1759564800', type: 'image',
     image: { id: mediaId, mime_type: 'image/jpeg', sha256: PHOTO_SHA, caption: 'the plant room' } }] } }] }] });
 }
-const signed = (raw: string) => 'sha256=' + createHmac('sha256', WA_KEYS.WHATSAPP_APP_SECRET).update(raw, 'utf8').digest('hex');
+const signed = (raw: string) => ['sha256', createHmac('sha256', WA_KEYS.WHATSAPP_APP_SECRET).update(raw, 'utf8').digest('hex')].join('=');
 const sales = { id: 'u-zs', role: 'SALES' } as never;
 
 describe('line 6(a) — a file someone sends us on WhatsApp, got and kept here', () => {
