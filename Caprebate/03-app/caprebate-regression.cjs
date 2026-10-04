@@ -8423,6 +8423,43 @@ if (startSuite("AI", "Phase 153b — tax readings built on our recommendation"))
 }
 
 
+if (startSuite("AJ", "Phase 153e — the surveyor's workbench: supported living's band by trigger (Word question 138)")) {
+  const safe = fn => { try { return fn(); } catch (e) { return "threw: " + e.message; } };
+  const SW = ["sl_band_by_trigger"];
+  const base = extra => Object.assign({
+    sector: "supported_living", trigger: ["purchase"], deal: "property", base_amount: 2000000, claimant_type: "company",
+    activity: "trade", dwelling_setting: "institution_commercial", acuity: "normal",
+    flags: [], assumptions: [], lrr: false, return_in_time: false }, extra || {});
+  const hi = r => r && r.QE ? r.QE[1] : NaN;
+  /* A test-only copy of the shared layer whose supported-living PURCHASE band is narrower (10% to 15%), so the switch
+     has something to change. The shipped bands are identical, so on the real text the switch changes no figure. */
+  const NARROW = l => l.replace(/supported_living:\s*\{\s*purchase:\[0\.10,0\.25\]/, "supported_living: { purchase:[0.10,0.15]");
+  const withLayer = (fn, f) => { const keep = layerSrc; layerSrc = f(layerSrc); try { return fn(); } finally { layerSrc = keep; } };
+  const band = gates => { let l = layerSrc; (gates || []).forEach(g => { l = l.replace(new RegExp("(" + g + "\\s*:\\s*)false", "g"), "$1true"); });
+    return new Function(NARROW(l) + "; return CB_BAND;")(); };
+
+  check("AJ1 — the switch ships off, in the site and in what the harness reads",
+    [CB_BAND.SWITCHES && CB_BAND.SWITCHES.sl_band_by_trigger, /sl_band_by_trigger\s*:\s*false/.test(layerSrc)], [false, true]);
+  check("AJ2 — on the real text the three supported-living bands are the same, so the switch changes no figure for any trigger",
+    ["purchase", "new_build", "fitout", "conversion"].map(t => safe(() =>
+      hi(liftGated("supported_living", SW).runEngine(base({ trigger: [t] }))) === hi(liftGated("supported_living", []).runEngine(base({ trigger: [t] }))))),
+    [true, true, true, true]);
+  const on = safe(() => band(SW)), off = safe(() => band([]));
+  check("AJ3 — slBand reads the trigger's own band; several triggers take the LOWEST ceiling, never the one that relieves",
+    safe(() => [on.slBand(["purchase"]), on.slBand("new_build"), on.slBand(["fitout"]), on.slBand(["purchase", "fitout"]), on.slBand(["fitout", "purchase"])]),
+    [[0.10, 0.15], [0.10, 0.25], [0.10, 0.25], [0.10, 0.15], [0.10, 0.15]]);
+  check("AJ4 N4 — no trigger, an empty list or an unknown trigger gives no band, so the calculation keeps the refurbishment band (each asserted)",
+    safe(() => [on.slBand(undefined), on.slBand([]), on.slBand(["something_else"]), on.slBand(null)]), [null, null, null, null]);
+  const runNarrow = (gates, t) => safe(() => withLayer(() => hi(liftGated("supported_living", gates).runEngine(base({ trigger: t }))), NARROW));
+  const today = hi(liftGated("supported_living", []).runEngine(base({ trigger: ["purchase"] })));
+  check("AJ5 — with a narrower purchase band (test copy): off, a purchase reads the refurbishment band as today; on, it reads its own and the ceiling drops to 15/25 of it",
+    [runNarrow([], ["purchase"]) === today, Math.abs(runNarrow(SW, ["purchase"]) - today * 0.15 / 0.25) < 1],
+    [true, true]);
+  check("AJ5 N4 — on, an unknown trigger keeps today's figure; off, the switch value in the copy is still false",
+    [runNarrow(SW, ["something_else"]) === hi(liftGated("supported_living", []).runEngine(base({ trigger: ["something_else"] }))), safe(() => off.SWITCHES.sl_band_by_trigger)],
+    [true, false]);
+}
+
 /* ------------------------------------------------------------------- report */
 console.log("\n" + "=".repeat(72));
 console.log("  pass " + results.pass + "   fail " + results.fail +

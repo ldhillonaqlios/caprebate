@@ -120,54 +120,71 @@ function pricePaidPence(db: Db, job: JobRow): number | null {
   return null;
 }
 
-export function deskFirstReading(db: Db, job_id: string, cfg = DESK_FIRST_TEST): DeskFirstReading | null {
-  const job = db.get<JobRow>('SELECT j.business_id, j.claim_id, b.sector FROM surveyor_jobs j JOIN businesses b ON b.id = j.business_id WHERE j.id = ?', [job_id]);
-  if (job === undefined) return null;
+/** What the rule reads, gathered from the records (deskFirstReading) or given by a test. */
+export type DeskFirstFacts = {
+  readonly sector: string;
+  /** The price paid in pence; null where no record gives it. */
+  readonly price_pence: number | null;
+  /** True only where the claim records that the client did NOT buy the building (built or refitted it). */
+  readonly not_a_purchase: boolean;
+  readonly documents_complete: boolean;
+  readonly election_unsettled: boolean;
+  /** Facts that decide the value, recorded as not known. */
+  readonly unknown_facts: readonly string[];
+  readonly coverage: Coverage | null;
+};
+
+/** The rule itself: the grid, the warning signs, the verdict. No records read here. */
+export function deskFirstVerdict(f: DeskFirstFacts, cfg = DESK_FIRST_TEST): DeskFirstReading {
   const why: string[] = [];
   const signs: string[] = [];
-
-  // Axis 1: value, on the price paid (question 131). Not known: the top band (N4).
-  const price = pricePaidPence(db, job);
-  const value_band = price === null ? 4 : band(price, cfg.value_limits_pence, false);
-  why.push(price === null ? 'No price paid on the records, so the value is treated as the top band.' : `Value band V${String(value_band)}, from the price paid.`);
-
-  // Axis 2: complexity, a scored composite (policy 2.3), every weight a placeholder.
-  const facts = job.claim_id === null ? new Map() : latestFacts(db, job.claim_id);
-  const fact = (k: string) => facts.get(k) as { answer: string; value_text: string | null } | undefined;
+  const value_band = f.price_pence === null ? 4 : band(f.price_pence, cfg.value_limits_pence, false);
+  why.push(f.price_pence === null ? 'No price paid on the records, so the value is treated as the top band.' : `Value band V${String(value_band)}, from the price paid.`);
   let score = 0;
-  const bought = fact('BOUGHT_THE_BUILDING');
-  if (bought === undefined || bought.answer !== 'VALUE' || bought.value_text !== 'NO') { score += 2; why.push('A purchase, or not known: the price must be shared out (+2).'); }
-  if (job.sector === 'private_hospital' || job.sector === 'dental') { score += 2; why.push('Hidden, high-value plant is usual in this sector (+2).'); }
-  else if (job.sector === 'care_homes' || job.sector === 'gp') { score += 1; why.push('A middle sector for hidden plant (+1).'); }
-  const needs = job.claim_id === null ? [] : mandatoryDocumentNeeds(db, { id: job.claim_id, property_id: db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [job.claim_id])?.p ?? null });
-  const documents_complete = job.claim_id !== null && needs.every((n) => n.met);
-  if (!documents_complete) { score += 2; why.push('The required documents are not all in (+2).'); }
+  if (!f.not_a_purchase) { score += 2; why.push('A purchase, or not known: the price must be shared out (+2).'); }
+  if (f.sector === 'private_hospital' || f.sector === 'dental') { score += 2; why.push('Hidden, high-value plant is usual in this sector (+2).'); }
+  else if (f.sector === 'care_homes' || f.sector === 'gp') { score += 1; why.push('A middle sector for hidden plant (+1).'); }
+  if (!f.documents_complete) { score += 2; why.push('The required documents are not all in (+2).'); }
   const complexity_band = band(score, cfg.complexity_limits, true);
   why.push(`Complexity band C${String(complexity_band)} (score ${String(score)}).`);
 
-  // The policy's warning signs (5) that the records can read. Each forces a visit.
-  const election = fact('ELECTION_EXISTS');
-  if (election !== undefined && election.answer === 'VALUE' && election.value_text === 'YES' && fact('ELECTION_VALUE')?.answer !== 'VALUE') {
-    signs.push('A s.198 or s.199 election exists and the value it fixes is not settled.');
-  }
-  for (const k of ['ELECTION_EXISTS', 'GRANTS_EXIST', 'BOUGHT_THE_BUILDING']) {
-    if (fact(k)?.answer === 'UNKNOWN') signs.push(`A fact that decides the value is not known: ${k.toLowerCase().replace(/_/g, ' ')}.`);
-  }
-  if (job.sector === 'supported_living') signs.push('Supported living: the split between homes and shared areas needs the surveyor’s eyes until it is measured.');
+  if (f.election_unsettled) signs.push('A s.198 or s.199 election exists and the value it fixes is not settled.');
+  for (const k of f.unknown_facts) signs.push(`A fact that decides the value is not known: ${k}.`);
+  if (f.sector === 'supported_living') signs.push('Supported living: the split between homes and shared areas needs the surveyor’s eyes until it is measured.');
   if (value_band === 4 || complexity_band === 4) signs.push('Top band on value or complexity. We visit by default until real jobs show otherwise.');
 
   let tier = (GRID[value_band - 1] as readonly Tier[])[complexity_band - 1] as Tier;
-  const coverage = videoCoverage(db, job_id, cfg);
-  if (tier !== 'DT-T1' && tier !== 'DT-T4' && coverage !== null && !coverage.passes) {
-    signs.push(`The client’s photo and video coverage is ${String(coverage.percent)}%, below the test pass mark of ${String(coverage.pass_mark_percent)}%.`);
+  if (tier !== 'DT-T1' && tier !== 'DT-T4' && f.coverage !== null && !f.coverage.passes) {
+    signs.push(`The client’s photo and video coverage is ${String(f.coverage.percent)}%, below the test pass mark of ${String(f.coverage.pass_mark_percent)}%.`);
   }
   if (signs.length > 0) tier = 'DT-T4';
-  const verdict = tier === 'DT-T4' ? 'SITE_VISIT_NEEDED' : tier === 'DT-T1' && documents_complete ? 'DESK_ONLY'
+  const verdict = tier === 'DT-T4' ? 'SITE_VISIT_NEEDED' : tier === 'DT-T1' && f.documents_complete ? 'DESK_ONLY'
     : tier === 'DT-T1' ? 'SITE_VISIT_NEEDED' : 'DESK_WITH_VIDEO';
-  if (tier === 'DT-T1' && !documents_complete) signs.push('Desktop only needs every required document in; until then, a site visit.');
+  if (tier === 'DT-T1' && !f.documents_complete) signs.push('Desktop only needs every required document in; until then, a site visit.');
   const shown: Tier = verdict === 'SITE_VISIT_NEEDED' ? 'DT-T4' : tier;
   return {
-    tier: shown, verdict, value_band, complexity_band, documents_complete, coverage, why, signs,
+    tier: shown, verdict, value_band, complexity_band, documents_complete: f.documents_complete, coverage: f.coverage, why, signs,
     level_words: `${TIER_WORDS[shown]} — a test reading with placeholder limits, for you to confirm or raise.`,
   };
+}
+
+/** The rule on a job's records. */
+export function deskFirstReading(db: Db, job_id: string, cfg = DESK_FIRST_TEST): DeskFirstReading | null {
+  const job = db.get<JobRow>('SELECT j.business_id, j.claim_id, b.sector FROM surveyor_jobs j JOIN businesses b ON b.id = j.business_id WHERE j.id = ?', [job_id]);
+  if (job === undefined) return null;
+  const facts = job.claim_id === null ? new Map() : latestFacts(db, job.claim_id);
+  const fact = (k: string) => facts.get(k) as { answer: string; value_text: string | null } | undefined;
+  const bought = fact('BOUGHT_THE_BUILDING');
+  const property_id = job.claim_id === null ? null : db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [job.claim_id])?.p ?? null;
+  const needs = job.claim_id === null ? [] : mandatoryDocumentNeeds(db, { id: job.claim_id, property_id });
+  const election = fact('ELECTION_EXISTS');
+  return deskFirstVerdict({
+    sector: job.sector,
+    price_pence: pricePaidPence(db, job),
+    not_a_purchase: bought !== undefined && bought.answer === 'VALUE' && bought.value_text === 'NO',
+    documents_complete: job.claim_id !== null && needs.every((n) => n.met),
+    election_unsettled: election !== undefined && election.answer === 'VALUE' && election.value_text === 'YES' && fact('ELECTION_VALUE')?.answer !== 'VALUE',
+    unknown_facts: ['ELECTION_EXISTS', 'GRANTS_EXIST', 'BOUGHT_THE_BUILDING'].filter((k) => fact(k)?.answer === 'UNKNOWN').map((k) => k.toLowerCase().replace(/_/g, ' ')),
+    coverage: videoCoverage(db, job_id, cfg),
+  }, cfg);
 }
