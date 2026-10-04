@@ -4,11 +4,13 @@
 
 > **This is prepared and NOT SHIPPED.** No live data has ever been pulled — not one network call, not one test call, not even a format-check request. Every fixture in `caprebate-voa-import.test.ts` is a hand-written literal string. The reference-table stubs this connector produces today are empty and carry `loaded: false`. The container is built; the contents wait for the VOA bulk-data licence to clear.
 
+> **4 October 2026 (Phase 155, line 3) — THE LICENCE WAS READ, AND IT DOES NOT ALLOW OUR USE.** The VOA's bulk download page says "An open government licence does not apply", and its terms restrict the data to "Non Domestic Rating (NDR) purposes only"; capital allowances work is not that. The source register's licence row was `VOA_OPEN` and said Open Government Licence; it is now `VOA_RATING_LIST`, with every channel shut. **Two of the assumptions below are now answered**: A-2 — the real files are asterisk-delimited text (the "list entries" and "summary valuations" files, about 93 MB and 155 MB zipped), not the pipe layout this connector parses; and the files carry **no UPRN**. Nothing here is to be pointed at a real file unless the Valuation Office grants permission (the email waiting on Lakhbir, tracker item 12933604947).
+
 ## 0. What this document is
 
 The specification for `caprebate-voa-import.ts` — the nightly-watcher connector, parser and incremental-update logic for the VOA's published bulk rating/valuation list data. It records the file-format **assumptions** the code is written against, flagged individually for verification once the licence lands, because the format has been *designed to be plausible*, not confirmed against a real file. Do not treat any column name, delimiter or pragma line below as a fact about the real VOA product until it has been checked against an actual licensed file.
 
-Governed by `Build-Prep-Consolidated-Schema.md` §0 (conventions), §0.4 (provenance code `API`), §0.5 (confidence grade). Field ids reuse the `voa_*` whitelist already registered in `phase3/caprebate-source-register.ts` (`SOURCES` → `VOA`, licence `VOA_OPEN`).
+Governed by `Build-Prep-Consolidated-Schema.md` §0 (conventions), §0.4 (provenance code `API`), §0.5 (confidence grade). Field ids reuse the `voa_*` whitelist already registered in `phase3/caprebate-source-register.ts` (`SOURCES` → `VOA`, licence `VOA_RATING_LIST` — `VOA_OPEN` until Phase 155).
 
 ## 1. The four list years
 
@@ -110,7 +112,7 @@ The one caveat is not a grade problem but a presence problem: `voa_total_area_m2
 | `effective_date` | `voa_effective_date` | `date` | `API` | A |
 | `total_area_m2` | `voa_total_area_m2` | `area_m2` | `API` | A, if present — see Assumption A-6 |
 
-These five field ids are exactly the `permitted_fields` whitelist phase 3 already registered for `source_id: 'VOA'` under licence `VOA_OPEN`. This connector does not introduce new schema-level field ids; it is the thing that would eventually populate the ones already reserved.
+These five field ids are exactly the `permitted_fields` whitelist phase 3 already registered for `source_id: 'VOA'` under licence `VOA_RATING_LIST` (`VOA_OPEN` until Phase 155, 4 October 2026). This connector does not introduce new schema-level field ids; it is the thing that would eventually populate the ones already reserved.
 
 ## 7. What is deliberately not built here
 

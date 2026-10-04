@@ -40,9 +40,12 @@ test mode, developers will change this".
 | Homedata | Paid address/UPRN and planning; a floor-area estimate from the building's shape (Phase 153e, 4 Oct 2026: `HOMEDATA_DIMENSIONS`, off, its own switch, stamped on every case) | `HOMEDATA_API_KEY` in the local key file only; needs a balance; switch off | 156 A5/B3 |
 | Companies House research | Profile, filings, PSC, officers after sign-up | Key is set; switches off; free gate (a published privacy notice) | 156 B3 (moved from 153c line 18) |
 | HM Land Registry Price Paid | Sale prices | Switch off; free gate **Phase 153f (4 Oct 2026):** on the test website only, switched on under Lakhbir's 2 Oct waiver ("All the free ones", `TEST_WEBSITE_LOOKUPS`); the shipped switch stays off. | — |
-| HM Land Registry INSPIRE | Land boundary / site area | Switched off in code; first test download; the files a server needs | 155 line 6 |
+| HM Land Registry INSPIRE | Land boundary / site area | Switched off in code; first test download; a folder on a server (`CAPREBATE_INSPIRE_STORE_DIR`) — written up for the developers, Developer Spec §5.1a (Phase 155) | 156 |
 | Planning (planning.data.gov.uk, PlanIt) | Planning history | Switch off; free gate; PlanIt's "not for commercial use" **Phase 153f (4 Oct 2026):** on the test website only, switched on under Lakhbir's 2 Oct waiver ("All the free ones", `TEST_WEBSITE_LOOKUPS`); the shipped switch stays off. PlanIt only, for the test website's invented clients; Homedata stays the chosen route (Word question 202). | 153b line 19 |
-| ONS postcode table | Postcode to council area | A 75 MB file on a server (`CAPREBATE_POSTCODE_DB`) | 155 line 6 |
+| ONS postcode table | Postcode to council area | A 75 MB file on a server (`CAPREBATE_POSTCODE_DB`) — written up, with OSTN15 (`CAPREBATE_OSTN15_FILE`), Developer Spec §5.1a (Phase 155) | the production host |
+| Care Inspectorate Wales | Care registrations and places in Wales (Phase 155, 4 Oct 2026) | No key: a downloaded file, imported on the server (`node src/cli.ts import-register CIW <file> --by <admin>`); `REGISTER_SWITCHES.CIW` off; free gate shut | — |
+| Care Inspectorate (Scotland) | Care registrations, places and beds in Scotland (Phase 155) | No key: the month's datastore CSV, imported the same way (`import-register CARE_INSPECTORATE`); `REGISTER_SWITCHES.CARE_INSPECTORATE` off; free gate shut | — |
+| BCIS index | The building price index the cost model turns costs back to the purchase date with (Phase 155) | BCIS bought (Word question 218); then `node src/cli.ts import-bcis-index <file>` keeps it outside the repository (`CAPREBATE_BCIS_INDEX_FILE`) | 157 (the pack's wiring) |
 | Google Analytics 4 | Website visits after consent | `GA4_MEASUREMENT_ID`; Sadique's review of the measurement plan | 156 A7 |
 | Engagement signing | Typed-name signature, in house | `ENGAGEMENT_SIGNING` off until the solicitor confirms | waiting on the solicitor |
 | Keeping uploaded originals | Encrypted copies of client files | `CAPREBATE_ORIGINALS_KEY` is set; ON for the test website only (`KEEP_ORIGINALS_TEST_WEBSITE`, passed by api/index.mjs, seven years, Phase 153c); the shipped `KEEP_ORIGINALS` stays off; Sadique's check | waiting on Sadique |
@@ -51,8 +54,11 @@ test mode, developers will change this".
 
 ## Named in the plans, not built
 
-CIW (Wales), the Care Inspectorate (Scotland), the VOA rating list, BCIS cost rates (no API licence; product not
-bought), and the outside reply timer written into the repository — Phase 155.
+**The VOA rating list — not built, and not buildable as things stand** (Phase 155, 4 Oct 2026): its licence restricts it
+to business rates purposes. Only the Valuation Office can change that (the licence email waiting on Lakhbir). The rest of
+what was here was built by Phase 155: the Welsh and Scottish care regulators and the BCIS index import (above), and the
+outside reply timer, now in COORDINATES and the continuity plan, with Admin warned on the home page after an hour
+without a read in working hours.
 
 ## Set in Vercel but doing nothing
 

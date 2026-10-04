@@ -157,6 +157,36 @@ async function main(): Promise<number> {
     }
   }
 
+  if (cmd === 'import-register') {
+    /* PHASE 155 (lines 1-2). The Welsh or Scottish care regulator's downloaded list into a table on this server
+       (src/web/register-files.ts). Importing switches nothing on: each lookup stays behind its own switch, off. */
+    const [source, file] = [process.argv[3], process.argv[4]];
+    const byAt = process.argv.indexOf('--by');
+    const by = byAt > 0 ? process.argv[byAt + 1] : undefined;
+    const { importRegisterFile, decodeRegisterFile, FILE_SOURCES } = await import('./web/register-files.ts');
+    if (source === undefined || !(source in FILE_SOURCES) || file === undefined || by === undefined) {
+      console.error(`Usage: node src/cli.ts import-register <${Object.keys(FILE_SOURCES).join('|')}> <file> --by <user id>`);
+      for (const f of Object.values(FILE_SOURCES)) console.error(`  ${f.source_id}: ${f.download}`);
+      return 1;
+    }
+    const { readFileSync } = await import('node:fs');
+    const db = new Db(DEFAULT_DB);
+    try {
+      const user = db.get<{ role: string }>('SELECT role FROM users WHERE id = ? AND disabled_at IS NULL', [by]);
+      if (user === undefined || user.role !== 'ADMIN') { console.error('Only an active Admin may import a register file.'); return 1; }
+      const id = source as keyof typeof FILE_SOURCES;
+      const r = importRegisterFile({ db, audit: new AuditLog(db), now: () => new Date().toISOString() },
+        id, decodeRegisterFile(readFileSync(file), id), file, { id: by, role: user.role });
+      console.log(`${r.kept} services kept, ${r.skipped_unreadable} skipped (no reference, or no postcode we can read), ${r.replaced} replaced from the last import. The lookup is still switched off.`);
+      return 0;
+    } catch (e) {
+      console.error(e instanceof Error ? e.message : String(e));
+      return 1;
+    } finally {
+      db.close();
+    }
+  }
+
   if (cmd === 'import-bcis-index') {
     /* PHASE 155 (line 4). The BCIS index from a file Lakhbir downloads, kept OUTSIDE the repository (src/web/bcis-index.ts). */
     const file = process.argv[3];

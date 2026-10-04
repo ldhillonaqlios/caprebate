@@ -141,7 +141,9 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'manager_name', 'manager_name_*',
     ],
     nameExceptions: [],
-    note: 'CIW, the Care Inspectorate and RQIA publish the same shape of record; treated as one policy entry.',
+    note: 'CIW, the Care Inspectorate and RQIA publish the same shape of record; treated as one policy entry. ' +
+      'Phase 155 (4 October 2026): CIW and the Care Inspectorate are now built and have entries of their own under the ' +
+      'source register\'s ids (subitems 16 and 17); this entry stays, unchanged, for RQIA.',
   },
   {
     // Subitem 3.
@@ -432,6 +434,49 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'An area, its grade and a polygon identifier, and nothing about anybody. HM Land Registry\'s INSPIRE polygons ' +
       'carry no title number and no proprietor. The title number is excluded as well as the names because it leads ' +
       'straight to the register\'s proprietor, and nothing here needs it.',
+  },
+  {
+    /**
+     * Subitem 16. PHASE 155 (line 1), 4 October 2026 — Care Inspectorate Wales, BUILT AT LAST, so it needs its own
+     * entry: the one door writes under the SOURCE REGISTER's id, CIW, and subitem 2 (CARE_REGULATORS_DEVOLVED) is a
+     * policy written before any of the three devolved regulators had a connector, under an id nothing writes. It stays,
+     * for RQIA (Northern Ireland), which has none still. CIW's directory download (SUPPLIER_DOCS, CIW) names each
+     * service's Responsible Individuals and Registered Persons, and gives the provider's NAME — which for a sole trader
+     * or a partnership is a person's. None is read: the import reads named columns only (09-app/backend/src/web/
+     * register-files.ts), and these are excluded here as the second line.
+     */
+    sourceId: 'CIW',
+    subitem: 16,
+    publisher: 'Care Inspectorate Wales',
+    datasetLabel: 'Registered services (social care, Wales) — the directory download',
+    riskLevel: 'standard',
+    keptFields: ['ciw_service_id', 'service_categories', 'service_subtype', 'capacity', 'location_postcode',
+      'ciw_uprn', 'local_authority', 'ciw_provider_id', 'provider_type', 'provider_registration_date'],
+    excludedNameFields: ['responsible_individual_name', 'responsible_individual_*', 'registered_person_name', 'registered_person_*',
+      'provider_name', 'provider_name_*', 'manager_name', 'manager_name_*'],
+    nameExceptions: [],
+    note:
+      'The provider is kept by its CIW reference and its type, never its name: a sole trader\'s or a partnership\'s ' +
+      'provider name is the person\'s own. The service\'s own name is not kept either — the address match does not need it.',
+  },
+  {
+    /**
+     * Subitem 17. PHASE 155 (line 2), 4 October 2026 — the Care Inspectorate (Scotland), built the same way. Its
+     * datastore names a manager and gives a telephone number and an email for each service, and names the provider:
+     * none is read.
+     */
+    sourceId: 'CARE_INSPECTORATE',
+    subitem: 17,
+    publisher: 'Care Inspectorate (Scotland)',
+    datasetLabel: 'Datastore of registered care services (Scotland)',
+    riskLevel: 'standard',
+    keptFields: ['ci_cs_number', 'care_service', 'care_subtype', 'registered_places', 'total_beds', 'registration_date',
+      'service_status', 'ci_uprn', 'local_authority', 'ci_provider_number', 'location_postcode'],
+    excludedNameFields: ['manager_name', 'manager_*', 'service_provider_name', 'service_provider_name_*'],
+    nameExceptions: [],
+    note:
+      'The provider is kept by its Care Inspectorate number, never its name, as for CIW. The manager\'s name, and the ' +
+      'service\'s telephone number and email, are in the file and are never read.',
   },
   {
     // Subitem 13. Added by Phase 41 (board item 12928074627). Subitem 12 is

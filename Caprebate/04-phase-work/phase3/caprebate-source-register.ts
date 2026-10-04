@@ -290,16 +290,27 @@ export const LICENCES: readonly Licence[] = [
     notes: 'Registration via GOV.UK One Login and acceptance of terms required before bulk access. England & Wales only (Phase 64).',
   },
   {
-    licence_id: 'VOA_OPEN',
-    name: 'VOA published rating list data',
-    publisher_of_licence: 'Valuation Office Agency',
+    /* PHASE 155 (line 3), 4 October 2026 — READ, AND IT DOES NOT ALLOW OUR USE. This row said "VOA_OPEN" and the Open
+       Government Licence; neither was ever true. The VOA's bulk rating list download page
+       (voaratinglists.blob.core.windows.net/html/rlidata.htm, read 4 October 2026, an "I Agree" before any file) says
+       "An open government licence does not apply", and its terms (tax.service.gov.uk/view-my-valuation/terms-and-
+       conditions) say "Publication of this information and its use is restricted to Non Domestic Rating (NDR) purposes
+       only": for interested persons, councils, their representatives and those who serve them, passed on only for the
+       same purposes, deleted when no longer needed for them. A capital allowances claim is not a rating purpose. So
+       every channel is FALSE — internal too — and nothing is imported (Phase 155 line 3; the phase9 importer
+       04-phase-work/phase9/caprebate-voa-import.ts stays unshipped). Only the VOA could permit our use. */
+    licence_id: 'VOA_RATING_LIST',
+    name: 'VOA rating list data — restricted to Non Domestic Rating purposes; NOT the Open Government Licence',
+    publisher_of_licence: 'Valuation Office Agency (HMRC)',
     attribution_required: true,
-    attribution_text:
-      'Contains Valuation Office Agency data © Crown copyright, licensed under the Open Government Licence v3.0.',
-    redistribution: { client_report: true, accountant_report: true, hmrc_pack: true, internal: true },
-    cache_max_age_days: 365,
-    legal_review_required: false,
-    notes: 'Summary valuation and floor area only. Ratepayer name excluded at source (12818314296).',
+    attribution_text: 'Valuation Office Agency rating list data, used under the VOA\'s own terms.',
+    redistribution: { client_report: false, accountant_report: false, hmrc_pack: false, internal: false },
+    cache_max_age_days: 0,
+    legal_review_required: true,
+    notes: 'Read 4 October 2026: "Publication of this information and its use is restricted to Non Domestic Rating (NDR) ' +
+      'purposes only", and "An open government licence does not apply". Capital allowances work is not an NDR purpose, so ' +
+      'it is not used at all until the VOA permits it. The file is asterisk-delimited and carries no UPRN. Ratepayer ' +
+      'name excluded at source (12818314296) in any case.',
   },
   {
     /**
@@ -718,16 +729,39 @@ export const SOURCES: readonly Source[] = [
     endpoint: 'https://api.service.cqc.org.uk',
   },
   {
+    /* PHASE 155 (line 1), 4 October 2026: built — a downloaded file, imported on this server (09-app/backend/src/web/
+       register-files.ts), never a call per client. CIW publishes its whole directory as one CSV; there is no API. Its
+       file has no registration status and no service registration date (only the provider's), so neither is kept.
+       BULK, not API: the file is downloaded by a person. The named Responsible Individuals and Registered Persons are
+       in the file and are never read. */
     source_id: 'CIW',
     publisher: 'Care Inspectorate Wales',
-    dataset: 'Registered services (social care, Wales)',
+    dataset: 'Registered services (social care, Wales) — the directory download',
     licence_id: 'OGL_V3',
     default_prov: 'API',
     max_grade: 'A',
-    permitted_fields: ['ciw_service_id', 'registration_status', 'service_categories', 'capacity', 'location_postcode'],
-    excluded_fields: ['responsible_individual*', 'manager_name*'],
+    permitted_fields: ['ciw_service_id', 'service_categories', 'service_subtype', 'capacity', 'location_postcode',
+      'ciw_uprn', 'local_authority', 'ciw_provider_id', 'provider_type', 'provider_registration_date'],
+    excluded_fields: ['responsible_individual*', 'manager_name*', 'registered_person*', 'provider_name*', '*_email*', '*_telephone*'],
     personal_name_exceptions: NO_NAMES,
-    endpoint: null,
+    endpoint: 'https://digital.careinspectorate.wales',
+  },
+  {
+    /* PHASE 155 (line 2), 4 October 2026: the Care Inspectorate, Scotland's care regulator — new. Its datastore is a
+       monthly CSV of every registered care service, under the Open Government Licence; there is no API. Imported on
+       this server like CIW's. Its file names a manager and gives a telephone number and an email for each service:
+       none is ever read. */
+    source_id: 'CARE_INSPECTORATE',
+    publisher: 'Care Inspectorate (Scotland)',
+    dataset: 'Datastore of registered care services (Scotland) — monthly download',
+    licence_id: 'OGL_V3',
+    default_prov: 'API',
+    max_grade: 'A',
+    permitted_fields: ['ci_cs_number', 'care_service', 'care_subtype', 'registered_places', 'total_beds', 'registration_date',
+      'service_status', 'ci_uprn', 'local_authority', 'ci_provider_number', 'location_postcode'],
+    excluded_fields: ['manager*', 'service_provider_name*', '*_email*', '*_phone*'],
+    personal_name_exceptions: NO_NAMES,
+    endpoint: 'https://www.careinspectorate.scot',
   },
   {
     source_id: 'EPC',
@@ -755,7 +789,7 @@ export const SOURCES: readonly Source[] = [
     source_id: 'VOA',
     publisher: 'Valuation Office Agency',
     dataset: 'Rating list summary valuation',
-    licence_id: 'VOA_OPEN',
+    licence_id: 'VOA_RATING_LIST',
     default_prov: 'API',
     max_grade: 'A',
     permitted_fields: ['voa_total_area_m2', 'voa_summary_valuation', 'voa_scat_code', 'voa_ba_reference', 'voa_effective_date'],
@@ -1030,6 +1064,54 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
     findings:
       'items[] of kind, name, natures_of_control, ceased_on (and name_elements, notified_on, links). Parameters ' +
       'items_per_page, start_index, register_view. A super-secure entry carries no name.',
+  },
+  {
+    /* PHASE 155, 4 October 2026 — three sources read for their terms before any code (the phase's own rule). */
+    source_id: 'CIW',
+    api_base: ['https://digital.careinspectorate.wales'],
+    docs: [
+      'https://digital.careinspectorate.wales/data-extract',
+      'https://digital.careinspectorate.wales/api/DataExport',
+      'https://www.careinspectorate.wales/copyright',
+    ],
+    read_on: '2026-10-04',
+    findings:
+      'No API. The directory is one CSV (ciw_services_YYYYMMDD_HHMM.csv, about 5 MB, 87 columns, every field quoted, UTF-8, ' +
+      'CRLF, line breaks inside some fields), generated on request and "refreshed on an ongoing basis". The download ' +
+      'address is the directory app\'s own and is not documented, so it may change. No licence on the extract page; ' +
+      'CIW\'s site-wide copyright notice puts its information under the Open Government Licence. No registration status ' +
+      'and no service registration date (only the provider\'s). It names Responsible Individuals and Registered Persons, ' +
+      'which are personal data the OGL does not cover: never read.',
+  },
+  {
+    source_id: 'CARE_INSPECTORATE',
+    api_base: ['https://ci-web-media-production-bucket.s3.eu-west-2.amazonaws.com'],
+    docs: [
+      'https://www.careinspectorate.scot/resources-data/data-and-statistics/datastore',
+      'https://ci-web-media-production-bucket.s3.eu-west-2.amazonaws.com/assets/resources/datastore/260831datastoreexternal.csv',
+    ],
+    read_on: '2026-10-04',
+    findings:
+      'No API. A monthly datastore of every registered care service, CSV and XLSX (YYMMDDdatastoreexternal, about 10 MB, ' +
+      '109 columns, Windows-1252 encoded, header unquoted, CRLF), "updated monthly"; the latest is 31 August 2026. "Unless ' +
+      'otherwise stated, all content is available under the Open Government Licence." Year-suffixed columns are renamed ' +
+      'as the years roll on, so only the stable ones are read. It names a manager and gives a telephone and an email per ' +
+      'service: never read.',
+  },
+  {
+    source_id: 'VOA',
+    api_base: ['https://voaratinglists.blob.core.windows.net'],
+    docs: [
+      'https://voaratinglists.blob.core.windows.net/html/rlidata.htm',
+      'https://www.tax.service.gov.uk/view-my-valuation/terms-and-conditions',
+    ],
+    read_on: '2026-10-04',
+    findings:
+      'NOT FOR OUR USE. The bulk rating list download (list entries about 93 MB zipped, 511 MB unzipped; summary ' +
+      'valuations 155 MB and 735 MB; asterisk-delimited despite the .csv name; no UPRN) sits behind an "I Agree" to ' +
+      'terms that say "An open government licence does not apply" and "Publication of this information and its use is ' +
+      'restricted to Non Domestic Rating (NDR) purposes only". Capital allowances work is not an NDR purpose, so it is ' +
+      'recorded here and not imported (licence VOA_RATING_LIST).',
   },
   {
     source_id: 'CQC',

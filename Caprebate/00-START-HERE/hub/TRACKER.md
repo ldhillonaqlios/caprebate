@@ -96,6 +96,7 @@
 `12933604947` · **Ready - Lakhbir action** · owner Lakhbir
 
 - File: `08-monday-doc-exports/12933604947__Two-emails-to-send.md`
+- Note 2026-10-04 (Phase 155): Phase 155 (4 Oct 2026): the rating list's terms read again, unchanged - business rates purposes only. Email 1 is still the only route; the email document has a dated line.
 
 ### Get a legal answer on whether our old data-lookup design broke the rules
 
@@ -1100,6 +1101,7 @@
 
 - File: `08-monday-doc-exports/12804374406__Spon-s-blind-re-run-protocol.md`
 - Note 2026-09-28 (Phase 153): The blind re-run protocol is rewritten for BCIS as a draft (08-monday-doc-exports/12804374406__BCIS-blind-re-run-protocol-DRAFT.md), marked as waiting on Word question 218; the Spon's version is kept as history with a dated pointer.
+- Note 2026-10-04 (Phase 155): Phase 155 line 4 built the import for when BCIS is bought: node src/cli.ts import-bcis-index <the CSV downloaded from BCIS> keeps the index outside the repository (BCIS's licence); the placeholder stays labelled until then.
 
 ### Decide whether to buy the two British Standards behind the quantity model
 
@@ -1211,6 +1213,7 @@
 
 - File: `08-monday-doc-exports/12830205481__Developer-Handoff-Pack-the-index.md`
 - File: `08-monday-doc-exports/12830205481__Activation-Test-Plan.md`
+- Note 2026-10-04 (Phase 155): Phase 155 line 3 read the licence: the rating list is restricted to business rates purposes ('An open government licence does not apply'), so nothing imports it; the source register now says so (VOA_RATING_LIST). Still waits on the Valuation Office's answer to the email (12933604947).
 
 ### Land boundary maps for site size - fetcher built and switched off 24 Sep 2026; its first download is a test lookup under the five conditions (smoke HMLR_INSPIRE, built 28 Sep 2026). Lakhbir, or a person he names, runs it; switching it on is Lakhbir's
 
@@ -1891,6 +1894,7 @@
 `12830178580` · **Done** · owner Claude · Lakhbir Dhillon
 
 - File: `08-monday-doc-exports/12830178580__Item-7-Care-Regulator-Integration-CQC-Syndication-API-CIW-Care-Inspect.md`
+- Note 2026-10-04 (Phase 155): Phase 155 lines 1-2 built the Welsh and Scottish halves: CIW's directory and the Care Inspectorate's datastore, each a downloaded file imported on this server (node src/cli.ts import-register), looked up by postcode and address, switched off. RQIA (Northern Ireland) is not built.
 
 ### PlanIt + council portal scrape including building control status
 

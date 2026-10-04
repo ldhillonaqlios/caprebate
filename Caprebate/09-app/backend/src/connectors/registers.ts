@@ -123,9 +123,14 @@ export const REGISTER_SWITCHES: Readonly<Record<string, boolean>> = Object.freez
   CH_COMPANY: false,
   CH_PSC: false,
   CQC: false,
+  /* PHASE 155 (line 1): BUILT — Care Inspectorate Wales's directory, imported on this server (src/connectors/register-files.ts). Still off. */
   CIW: false,
+  /* PHASE 155 (line 2): NEW — the Care Inspectorate (Scotland), its datastore imported on this server the same way. Off. */
+  CARE_INSPECTORATE: false,
   EPC: false,
   HMLR_PPD: false,
+  /* PHASE 155 (line 3): NOT BUILT, AND NOT BUILDABLE AS THINGS STAND — the VOA's licence restricts its rating list to
+     business rates purposes (the source register's VOA_RATING_LIST). The switch stays so a case stamp reads as before. */
   VOA: false,
   PLANNING: false,
   ONS_POSTCODE: false,

@@ -27,7 +27,9 @@ test('R1 the eleven ORIGINAL register sources are still one per subitem 1-11, no
   // test keeps its shape and excludes the later additions by name rather than
   // widening its expected list, which is how it stays a test of the eleven.
   // PHASE 151a, 24 September 2026 adds HMLR_INSPIRE at subitem 15 the same way.
-  const later = ['CLIENT_DOC', 'HOMEDATA_ADDRESS', 'HMLR_INSPIRE'];
+  // PHASE 155, 4 October 2026 adds CIW (16) and CARE_INSPECTORATE (17) the same way: the Welsh and Scottish regulators,
+  // built at last, each under the source register's own id. Subitem 2 stays, for RQIA.
+  const later = ['CLIENT_DOC', 'HOMEDATA_ADDRESS', 'HMLR_INSPIRE', 'CIW', 'CARE_INSPECTORATE'];
   const subitems = NAME_EXCLUSION_POLICY
     .filter((p) => !later.includes(p.sourceId))
     .map((p) => p.subitem)
@@ -49,7 +51,14 @@ test('R1b CLIENT_DOC is still the only non-register source; the paid address loo
   assert.equal(inspire.length, 1);
   assert.equal(inspire[0].subitem, 15);
   assert.deepEqual(inspire[0].nameExceptions, []);
-  assert.equal(NAME_EXCLUSION_POLICY.length, 14);
+  // Phase 155: sixteen. The Welsh and Scottish care regulators, at subitems 16 and 17, each keeping no name.
+  for (const [id, n] of [['CIW', 16], ['CARE_INSPECTORATE', 17]] as const) {
+    const e = NAME_EXCLUSION_POLICY.filter((p) => p.sourceId === id);
+    assert.equal(e.length, 1, id);
+    assert.equal(e[0].subitem, n, id);
+    assert.deepEqual(e[0].nameExceptions, [], id);
+  }
+  assert.equal(NAME_EXCLUSION_POLICY.length, 16);
   // Every subitem is still unique: a number is never reused.
   const numbers = NAME_EXCLUSION_POLICY.map((p) => p.subitem);
   assert.equal(new Set(numbers).size, numbers.length);

@@ -93,7 +93,7 @@ const CLAIM_STEPS: readonly StepKey[] = ['PROPERTY', 'TAX', 'SURVEY_BOOKED', 'SU
 export const REGISTER_CHIPS: Readonly<Record<string, string>> = Object.freeze({
   CH_COMPANY: 'Companies House', CH_PSC: 'Companies House',
   EPC: 'EPC register', HMLR_PPD: 'HM Land Registry', HMLR_TITLE: 'HM Land Registry',
-  CQC: 'Care regulator', CIW: 'Care regulator', VOA: 'Valuation office', PLANNING: 'Planning register',
+  CQC: 'Care regulator', CIW: 'Care regulator', CARE_INSPECTORATE: 'Care regulator', VOA: 'Valuation office', PLANNING: 'Planning register',
   ONS_POSTCODE: 'Postcode register', HOMEDATA_ADDRESS: 'Address lookup',
 });
 

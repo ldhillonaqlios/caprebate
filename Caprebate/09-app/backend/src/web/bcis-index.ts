@@ -42,7 +42,8 @@ export function importBcisIndex(csv: string, fileName: string, nowIso: string,
   env: Record<string, string | undefined> = process.env, repoRoot: string = repositoryRoot()): BcisImport {
   const path = bcisIndexPath(env);
   if (isInside(path, repoRoot)) {
-    return { ok: false, why: `the BCIS index may not be kept inside the repository (${repoRoot}): BCIS's licence does not let the table be reproduced. Set CAPREBATE_BCIS_INDEX_FILE to a file outside it, or leave it unset for ${DEFAULT_BCIS_INDEX_FILE}` };
+    return { ok: false, why: `the BCIS index may not be kept in the code folder (${repoRoot}). BCIS's licence does not let us copy it. ` +
+      `Keep it outside, or use the default: ${DEFAULT_BCIS_INDEX_FILE}. The setting is CAPREBATE_BCIS_INDEX_FILE` };
   }
   let parsed: { table: IndexTable; passed_over: number };
   try {

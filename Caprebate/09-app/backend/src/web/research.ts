@@ -133,6 +133,8 @@ const TIER_BY_SOURCE: Readonly<Record<string, Tier>> = Object.freeze({
   EPC: 'FREE',
   CQC: 'FREE',
   CIW: 'FREE',
+  /* Phase 155: the Scottish care regulator, free open data like the Welsh one. */
+  CARE_INSPECTORATE: 'FREE',
   CH_COMPANY: 'FREE',
   CH_PSC: 'FREE',
   HMLR_PPD: 'FREE',
@@ -223,6 +225,7 @@ export type CatalogueEntry = {
 export const REGISTRY_ID_OF: Readonly<Record<string, string>> = Object.freeze({
   CQC: 'cqc',
   CIW: 'cqc', // the Welsh regulator answers the same fields as the English one
+  CARE_INSPECTORATE: 'cqc', // and so does the Scottish one (Phase 155)
   EPC: 'epc',
   CH_COMPANY: 'companies_house',
   CH_PSC: 'companies_house',
@@ -925,7 +928,7 @@ export async function consultAllowed(
       gate: { ...gates, free_gate_open: gates.free_gate_open || freeGateWaived(x.entry.source_id, o.env), switched_on: switchedOn(x.entry.source_id, switches) },
       secrets: null,
     };
-    let query = built.query(subject, earlier, o.postcodeStore === undefined ? postcodeStore() : o.postcodeStore);
+    let query = built.query(subject, earlier, o.postcodeStore === undefined ? postcodeStore() : o.postcodeStore, d.db);
     /* 2 Oct 2026: THE CARE REGULATOR'S COUNCIL AREA ON THE TEST WEBSITE. The care regulator is searched by council area,
        which the ONS postcode table gives; the test website has no such table. Where the waiver holds, and only then,
        the council area comes from postcodes.io, which the postcode check already uses (only the postcode is sent). */

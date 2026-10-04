@@ -144,7 +144,7 @@ describe('line 4: the BCIS index from a file Lakhbir downloads, kept outside the
     const inside = join(repositoryRoot(), 'bcis-index-155.json');
     const r = importBcisIndex(FILE, 'x.csv', '2026-10-04T15:00:00.000Z', { CAPREBATE_BCIS_INDEX_FILE: inside });
     assert.equal(r.ok, false);
-    assert.match(r.ok ? '' : r.why, /may not be kept inside the repository/);
+    assert.match(r.ok ? '' : r.why, /may not be kept in the code folder/);
     const { existsSync } = await import('node:fs');
     assert.equal(existsSync(inside), false);
   });
@@ -158,5 +158,162 @@ describe('line 4: the BCIS index from a file Lakhbir downloads, kept outside the
     assert.equal(bad.ok, false);
     assert.match(bad.ok ? '' : bad.why, /not a month or a quarter/);
     assert.equal(bcisIndexTable(env).table?.points.length, 4);
+  });
+});
+
+/* ------------------------------------------------------------------ lines 1 and 2 */
+
+/** Invented files, with the real files' own column names (read 4 October 2026) and some of the columns never read. */
+const q = (cells: readonly string[]) => cells.map((c) => `"${c.replace(/"/g, '""')}"`).join(',');
+const CIW_HEAD = ['Service URN', 'Service name', 'Service type', 'Service sub-type', 'Service address line 1', 'Service address line 2',
+  'Service address line 3', 'Service town/city', 'Service postcode', 'Service address UPRN', 'Local authority', 'Primary email address',
+  'Maximum no. of places', 'Responsible Individual names', 'Registered Person names', 'Provider URN', 'Provider name', 'Provider type',
+  'Company number', 'Provider registration date'];
+const CIW_FILE = [
+  q(CIW_HEAD),
+  q(['SIN-00000001-AAAA', 'Invented Bryn Care Home', 'Care Home Service', 'Adults With Nursing', '1 Invented Lane', '', '', 'Nowhere', 'zz9 1aa',
+    '100000000001', 'Invented Council', 'inventedhome@example.invalid', '42', 'Ann Invented', 'Bob Invented', 'P-0001', 'Carol Invented trading as Bryn', 'Individual', '', '07/03/2015']),
+  q(['SIN-00000002-BBBB', 'Invented Other Home', 'Care Home Service', 'Adults Without Nursing', '3 Invented Lane', '', '', 'Nowhere', 'ZZ9 1AA',
+    '', 'Invented Council', '', '12', '', '', 'P-0002', 'Invented Care Ltd', 'Organisation', '01234567', '31/02/2020']),
+  q(['SIN-00000003-CCCC', 'An invented childminder', 'Child Minder', '', '', '', '', '', '', '', '', '', '6', 'Dee Invented', '', '', '', '', '', '']),
+].join('\r\n');
+const CI_HEAD = 'CSNumber,CareService,Subtype,ServiceName,Address_line_1,Address_line_2,Address_line_3,Address_line_4,Service_town,Service_Postcode,' +
+  'ChopUPRN,Manager_Name,Service_Phone_Number,Eforms_email_address,SP_number,ServiceProvider,ServiceStatus,DateReg,TotalBeds,Council_Area_Name,Registered_Places,Complaints_upheld_2627';
+
+describe('lines 1 and 2: the Welsh and Scottish care regulators, imported on this server and looked up there', () => {
+  const ADMIN = { id: 'u-155-admin', role: 'ADMIN' };
+  const deps = () => ({ db: made.app.db, audit: made.app.audit, now: () => '2026-10-04T16:00:00.000Z' });
+
+  test('CIW: imported by Admin only; the services kept by their own reference, with places, kind, provider number and dates, and never a name or an email', async () => {
+    const RF = await import('../src/web/register-files.ts');
+    assert.throws(() => RF.importRegisterFile(deps(), 'CIW', CIW_FILE, 'ciw.csv', { id: 'u-155-sales', role: 'SALES' }), /only Admin/);
+    const r = RF.importRegisterFile(deps(), 'CIW', CIW_FILE, 'ciw.csv', ADMIN);
+    assert.deepEqual(r, { kept: 2, skipped_unreadable: 1, replaced: 0 });
+    const all = made.app.db.all<{ ref: string; fields: string; address: string }>("SELECT ref, fields, address FROM register_file_rows WHERE source_id = 'CIW' ORDER BY ref");
+    assert.deepEqual(JSON.parse(all[0]!.fields), {
+      ciw_service_id: 'SIN-00000001-AAAA', service_categories: 'Care Home Service', service_subtype: 'Adults With Nursing', capacity: 42,
+      ciw_uprn: '100000000001', local_authority: 'Invented Council', ciw_provider_id: 'P-0001', provider_type: 'Individual',
+      provider_registration_date: '2015-03-07', location_postcode: 'ZZ9 1AA',
+    });
+    assert.equal(JSON.parse(all[1]!.fields).provider_registration_date, undefined, '31 February is not a date, so it is not kept');
+    assert.doesNotMatch(JSON.stringify(all), /Invented Bryn|Ann Invented|Bob Invented|Carol Invented|inventedhome@|Invented Care Ltd/, 'a name or an email was kept');
+    const audit = made.app.db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'REGISTER_FILE_IMPORTED' ORDER BY seq DESC LIMIT 1");
+    assert.match(audit?.detail ?? '', /"kept":2/);
+  });
+
+  test('a file whose columns are not the regulator’s is refused whole, and the rows already held stay', async () => {
+    const RF = await import('../src/web/register-files.ts');
+    const wrong = CIW_FILE.replace('"Service postcode"', '"Postcode"');
+    assert.throws(() => RF.importRegisterFile(deps(), 'CIW', wrong, 'wrong.csv', ADMIN), /not the ones Care Inspectorate Wales describes, so nothing was imported\. Missing: Service postcode/);
+    assert.equal(made.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM register_file_rows WHERE source_id = 'CIW'")?.n, 2);
+  });
+
+  test('the Care Inspectorate: a Windows-1252 file read as such, its own day-month-year dates, beds only where stated, Inactive kept as inactive', async () => {
+    const RF = await import('../src/web/register-files.ts');
+    const text = [CI_HEAD,
+      'CS2001000001,Care Home Service,Older People,Invented House,1 Invented Street,,,,Nowhere,ZZ8 2BB,200000000001,Edna Invented,0100 000 0000,ednainvented@example.invalid,SP2001000001,Fred Invented,Active,01/04/2002,40,Invented Council,40,3',
+      'CS2001000002,Care Home Service,Older People,St Invent’s House,2 Invented Street,,,,Nowhere,ZZ8 2BB,,,,,SP2001000002,Invented Group Ltd,Inactive,15/06/2010,,Invented Council,25,0',
+    ].join('\r\n');
+    const cp1252 = Uint8Array.from(Buffer.from(text.replace('’', '\u0092'), 'latin1'));
+    assert.equal(RF.decodeRegisterFile(cp1252, 'CARE_INSPECTORATE').includes('St Invent’s House'), true, 'byte 0x92 is a right quote in Windows-1252');
+    const r = RF.importRegisterFile(deps(), 'CARE_INSPECTORATE', RF.decodeRegisterFile(cp1252, 'CARE_INSPECTORATE'), 'ci.csv', ADMIN);
+    assert.deepEqual(r, { kept: 2, skipped_unreadable: 0, replaced: 0 });
+    const rows = made.app.db.all<{ fields: string }>("SELECT fields FROM register_file_rows WHERE source_id = 'CARE_INSPECTORATE' ORDER BY ref").map((x) => JSON.parse(x.fields));
+    assert.deepEqual(rows[0], { ci_cs_number: 'CS2001000001', care_service: 'Care Home Service', care_subtype: 'Older People', registered_places: 40,
+      total_beds: 40, registration_date: '2002-04-01', service_status: 'Active', ci_uprn: '200000000001', local_authority: 'Invented Council',
+      ci_provider_number: 'SP2001000001', location_postcode: 'ZZ8 2BB' });
+    assert.equal(rows[1].total_beds, undefined, 'no beds stated: none kept (N4), never 0');
+    assert.equal(rows[1].service_status, 'Inactive');
+    assert.doesNotMatch(JSON.stringify(rows), /Edna|Fred|ednainvented|0100 000|Invented Group/);
+  });
+
+  test('the lookups: Wales from CIW’s list and Scotland from the Care Inspectorate’s, matched on the address, nothing sent outside', async () => {
+    const C = await import('../src/connectors/registers.ts');
+    const { ciw, careInspectorate } = await import('../src/connectors/register-files.ts');
+    const { fixtureTransport } = await import('../src/connectors/http.ts');
+    const { emptySecrets } = await import('../src/secrets.ts');
+    const t = fixtureTransport({});
+    const ctx = { deps: { audit: made.app.audit, now: made.app.now, transport: t }, actor_id: 'u-155-admin', actor_role: 'ADMIN' as const, claim_id: null,
+      gate: { free_gate_open: true, engagement_signed: true, switched_on: true }, secrets: null };
+    const ALL_ON = Object.fromEntries(Object.keys(C.REGISTER_SWITCHES).map((k) => [k, true]));
+    const ALLOWED = { state: 'NOT_RUN' as const, detail: 'allowed' };
+    const wales = { id: 'p-w', address_line_1: '1 Invented Lane', address_line_2: null, town: 'Nowhere', postcode: 'ZZ9 1AA', jurisdiction: 'wales' as const };
+    const w = await C.runConnector(ciw, ctx, { property: wales, nation: 'wales', db: made.app.db }, ALLOWED, emptySecrets(), ALL_ON);
+    assert.equal(w.state, 'FIRED', w.detail);
+    assert.equal(w.bundle?.facts['ciw_service_id'], 'SIN-00000001-AAAA');
+    assert.equal(w.bundle?.facts['capacity'], 42);
+    assert.match(w.detail, /looked up in Care Inspectorate Wales's list on this server \(imported 2026-10-04\).*Nothing was sent outside/);
+    const scot = { id: 'p-s', address_line_1: '2 Invented Street', address_line_2: null, town: 'Nowhere', postcode: 'ZZ8 2BB', jurisdiction: 'scotland' as const };
+    const s = await C.runConnector(careInspectorate, ctx, { property: scot, nation: 'scotland', db: made.app.db }, ALLOWED, emptySecrets(), ALL_ON);
+    assert.equal(s.state, 'FIRED', s.detail);
+    assert.equal(s.bundle?.facts['ci_cs_number'], 'CS2001000002');
+    assert.equal(t.seen.length, 0, 'a call went outside');
+    // Through the one door, as a research run stores it: the name exclusion register knows both sources and every field.
+    const { ingestRegisterRecord } = await import('../src/stubs/registers.ts');
+    made.app.db.run('INSERT INTO businesses (id,name,sector,stage,created_at) VALUES (?,?,?,?,?)', ['b-155', 'Invented Care Limited', 'care_homes', 'ASSESSMENT_SUBMITTED', MON_10]);
+    let n = 0;
+    for (const rec of [...(w.bundle?.records ?? []), ...(s.bundle?.records ?? [])]) {
+      ingestRegisterRecord(made.app.db, () => `rr-155-${++n}`, made.app.now, 'b-155', rec);
+    }
+    assert.equal(made.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM register_records WHERE business_id = 'b-155'")?.n, 2);
+  });
+
+  test('the wrong nation, no nation, no list imported, nothing at the postcode, and the switch off: each says so and keeps nothing', async () => {
+    const C = await import('../src/connectors/registers.ts');
+    const { ciw, careInspectorate } = await import('../src/connectors/register-files.ts');
+    const { fixtureTransport } = await import('../src/connectors/http.ts');
+    const { emptySecrets } = await import('../src/secrets.ts');
+    const { testApp } = await import('./helpers.ts');
+    const ctx = { deps: { audit: made.app.audit, now: made.app.now, transport: fixtureTransport({}) }, actor_id: 'u-155-admin', actor_role: 'ADMIN' as const, claim_id: null,
+      gate: { free_gate_open: true, engagement_signed: true, switched_on: true }, secrets: null };
+    const ALL_ON = Object.fromEntries(Object.keys(C.REGISTER_SWITCHES).map((k) => [k, true]));
+    const ALLOWED = { state: 'NOT_RUN' as const, detail: 'allowed' };
+    const prop = (pc: string, nation: 'wales' | 'scotland' | 'england') => ({ id: 'p', address_line_1: '1 Invented Lane', address_line_2: null, town: 'Nowhere', postcode: pc, jurisdiction: nation });
+    const run = (c: typeof ciw, pc: string, nation: 'wales' | 'scotland' | 'england' | null, db = made.app.db, sw: Record<string, boolean> = ALL_ON) =>
+      C.runConnector(c, ctx, { property: prop(pc, nation ?? 'wales'), nation, db }, ALLOWED, emptySecrets(), sw);
+    assert.match((await run(ciw, 'ZZ9 1AA', 'england')).detail, /not in Wales/);
+    assert.match((await run(careInspectorate, 'ZZ9 1AA', 'wales')).detail, /not in Scotland/);
+    assert.match((await run(ciw, 'ZZ9 1AA', null)).detail, /do not know which part of the UK/);
+    const fresh = await testApp();
+    assert.match((await run(ciw, 'ZZ9 1AA', 'wales', fresh.db)).detail, /has not been imported here yet/);
+    fresh.close();
+    const none = await run(ciw, 'ZZ7 7ZZ', 'wales');
+    assert.equal(none.state, 'FAILED');
+    assert.match(none.detail, /no service at this postcode/);
+    const off = await run(ciw, 'ZZ9 1AA', 'wales', made.app.db, C.REGISTER_SWITCHES);
+    assert.equal(off.state, 'NOT_RUN');
+    for (const r of [none, off]) assert.equal(r.bundle, null);
+  });
+
+  test('both are switched off as shipped; both are on the research panel as free lookups with a connector; the Welsh one is no longer "not built"', async () => {
+    const C = await import('../src/connectors/registers.ts');
+    const { FREE_CONNECTORS, NOT_BUILT } = await import('../src/connectors/free-registers.ts');
+    assert.equal(C.REGISTER_SWITCHES['CIW'], false);
+    assert.equal(C.REGISTER_SWITCHES['CARE_INSPECTORATE'], false);
+    assert.ok(FREE_CONNECTORS['CIW'] !== undefined && FREE_CONNECTORS['CARE_INSPECTORATE'] !== undefined);
+    assert.equal(NOT_BUILT['CIW'], undefined);
+  });
+});
+
+/* ------------------------------------------------------------------ line 3 */
+
+describe('line 3: the valuation office’s rating list — its licence read, and not built', () => {
+  test('the licence is recorded as it is: not the Open Government Licence, rating purposes only, no channel open', async () => {
+    const { LICENCES, SOURCES, SUPPLIER_DOCS } = await import('../../../04-phase-work/phase3/caprebate-source-register.ts');
+    const voa = SOURCES.find((s) => s.source_id === 'VOA');
+    assert.equal(voa?.licence_id, 'VOA_RATING_LIST');
+    const lic = LICENCES.find((l) => l.licence_id === 'VOA_RATING_LIST');
+    assert.match(lic?.name ?? '', /restricted to Non Domestic Rating purposes; NOT the Open Government Licence/);
+    assert.deepEqual(lic?.redistribution, { client_report: false, accountant_report: false, hmrc_pack: false, internal: false });
+    assert.equal(LICENCES.some((l) => l.licence_id === 'VOA_OPEN'), false, 'the old row said it was open data; it never was');
+    assert.match(SUPPLIER_DOCS.find((x) => x.source_id === 'VOA')?.findings ?? '', /NOT FOR OUR USE/);
+  });
+
+  test('nothing imports it, and the research panel says why in plain words', async () => {
+    const { FREE_CONNECTORS, NOT_BUILT } = await import('../src/connectors/free-registers.ts');
+    const { FILE_SOURCES } = await import('../src/web/register-files.ts');
+    assert.equal(FREE_CONNECTORS['VOA'], undefined);
+    assert.equal((FILE_SOURCES as Record<string, unknown>)['VOA'], undefined);
+    assert.match(NOT_BUILT['VOA'] ?? '', /licence lets its rating list be used for business rates only\. A capital allowances claim is not that/);
   });
 });

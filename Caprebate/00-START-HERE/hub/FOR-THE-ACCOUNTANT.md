@@ -1833,3 +1833,13 @@ Signed .............................  Date ..........................
  **One switch, checked again.** "The fixed value requirement needs a past owner who claimed" (fvr_requires_past_owner_claim) is now read after the pooling requirement, as Rulebook A's addendum orders them, so it cannot clear a case the pooling requirement takes to nil. Counted in code again: it still moves no figure in the online estimate, and only the surveyor's legal check, for a seller who sold before April 2014. Every other switch kept its direction.
 
  **And the board's own total at the close of Phase 154a1, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 155, 4 October 2026 — nothing moved in or out
+
+ Phase 155 built register lookups and a cost index import; none of it is a tax reading. One correction of fact you may meet: the valuation office's rating list is **not** open data (our records said it was) — its terms restrict it to business rates purposes, so nothing of ours uses it.
+
+
+ **And the board's own total at the close of Phase 155, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

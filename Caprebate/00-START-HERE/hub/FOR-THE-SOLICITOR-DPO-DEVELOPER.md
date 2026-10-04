@@ -2018,3 +2018,16 @@ Name:                                  Date:
 
  **And the board's own total at the close of Phase 154a1, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
 
+
+---
+
+## Phase 155, 4 October 2026 — the services the plans named but nobody had built; nothing moved in or out
+
+ **For the data protection officer — two care regulators' lists, kept without a single name.** The Welsh and Scottish care regulators publish their registers as downloadable files, under the Open Government Licence. They are now imported onto our own server by Admin, and a lookup reads them there; nothing about a client is sent anywhere. Both files name people — Wales its Responsible Individuals and Registered Persons, Scotland each service's manager, with a telephone number and an email — and both give the provider's name, which for a sole trader is a person's. **None of it is read**: the import reads named columns only (the service's reference, its kind, its places and beds, its address for matching, the council area, the provider's reference number and type). The name exclusion register has an entry for each (subitems 16 and 17). Both lookups are switched off, behind the same free gate as every other register. Example: a care home at an invented Welsh postcode is matched to its CIW reference and its 42 places, and that is all that is kept.
+
+ **For the solicitor — the valuation office's rating list may not be used by us, as its terms stand.** Read on 4 October 2026: "An open government licence does not apply", and use is "restricted to Non Domestic Rating (NDR) purposes only". Our own source register had recorded it as open data; that is corrected, with every use shut. Nothing imports it. The licence email to the Valuation Office (waiting on Lakhbir) is the only way to change that.
+
+ **For the developer.** Migrations 088 (`mailbox_reads`: when replies were last read, times only) and 089 (`register_file_rows`, `register_file_imports`: never edited or deleted). Two commands: `node src/cli.ts import-register <CIW|CARE_INSPECTORATE> <file> --by <admin>` and `node src/cli.ts import-bcis-index <file>` (kept outside the repository: BCIS's licence). Admin's home warns when replies have not been read for over an hour in working hours. And the three files a production server must carry — the postcode table, the OSTN15 grid and the land boundary folder — are written up in the Developer Spec, §5.1a: what each is, where it comes from, its licence and its size. No route changed.
+
+
+ **And the board's own total at the close of Phase 155, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

@@ -1050,3 +1050,12 @@ reasonably be established remotely should require a site inspection before a sur
 
  **And the board's own total at the close of Phase 154a1, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
 
+
+---
+
+## Phase 155, 4 October 2026 — nothing moved in or out
+
+ **The building price index can be loaded the day BCIS is bought.** The cost model turns today's rebuild price back to the purchase date with an index (your question 147). Until now it had only a table of invented points, labelled as such. Now one command reads the index file downloaded from BCIS — monthly or quarterly figures — and keeps it on our server, outside the code, because BCIS's licence lets named users use it but not copy it. Nothing for you to decide: which BCIS product is bought is Lakhbir's (Word question 218), and the survey pack starts using the index when the pack is joined to the cost model (Phase 157). **And in Wales and Scotland**, a care home's registered places now come from the regulator's own published list, as they already did from the CQC in England, once the lookups are switched on.
+
+
+ **And the board's own total at the close of Phase 155, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
