@@ -176,7 +176,15 @@ export function assessLegal(sector: string, answers: ReadonlyMap<string, unknown
     let cap_words: string | null = null;
     if (e.outcome === el.OUT['CAP_ELECT']) {
       const mode = e.scope?.mode;
-      if (mode === 'all_fixtures') { cap = poundsToPence(e.value); cap_words = 'the value the section 198 election fixes for the fixtures'; }
+      /* PHASE 153b (Word question 98): with CB_CTA.election_value_cut_to_lawful_max on, the engine has already cut an
+         elected figure above what the seller paid, or above the price, down to that limit; the cap says so. */
+      const cut = (e as { cut?: { applied?: boolean; by?: { words?: string } } | null }).cut;
+      if (mode === 'all_fixtures') {
+        cap = poundsToPence(e.value);
+        cap_words = cut?.applied === true
+          ? `the most the law lets the section 198 election fix: ${cut.by?.words ?? 'its limit'}, below the figure it states`
+          : 'the value the section 198 election fixes for the fixtures';
+      }
       else if (mode !== 'listed_items') return { level: 'AMBER', headline: 'Say what the election lists before the pack can be approved: it may fix the value of every fixture.', why, actions, ...none };
     }
     if (a.outcome === fx.OUT['CAP_DV']) {

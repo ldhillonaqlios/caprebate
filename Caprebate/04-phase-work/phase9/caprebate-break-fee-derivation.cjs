@@ -104,7 +104,7 @@ console.log("Engine file: " + SITE + "\n");
 
 for (const routeId of ["SURVEYOR_VISIT", "DESK_ONLY"]) {
   console.log("=== ROUTE " + routeId + " — " + M.ROUTES[routeId].label + " ===");
-  console.log("Sector | Data | Internal | Surveyor | Tax adviser | Direct | Research run (range) | Surveyor instructed (not liable / liable) | Survey delivered | Adviser reviewed | £995 covers pre-survey max?");
+  console.log("Sector | Data | Internal | Surveyor | " + M.LINE_NAMES.cta + " | Direct | Research run (range) | Surveyor instructed (not liable / liable) | Survey delivered | Adviser reviewed | £995 covers pre-survey max?");
   for (const sec of M.SECTORS) {
     const st = stages(sec, routeId), L = st.lines;
     const r = st.research_run_surveyor_not_instructed, si = st.surveyor_instructed_not_delivered;

@@ -1199,3 +1199,11 @@ test("H9 the sector spread the documents quote is the DIRECT one, not the loaded
   assert.ok(loaded("dental", 16) / loaded("dental", 200) >
             loaded("private_hospital", 100) / loaded("dental", 100));
 });
+
+test("Phase 153b (Word question 191): the tax adviser line is named \"our own tax adviser, if we introduce one\", and no figure moved", () => {
+  assert.equal(M.LINE_NAMES.cta, "Our own tax adviser, if we introduce one");
+  /* Figures unchanged: the line's amounts as they stood before the rename, read here rather than restated elsewhere. */
+  assert.deepEqual(M.SECTORS.map(s => M.SECTOR_DIRECT[s].cta), [600, 900, 1200, 1300]);
+  assert.equal(M.ROUTES.SURVEYOR_VISIT.cta_share, 1);
+  assert.equal(M.loadedCost("dental", "SURVEYOR_VISIT", 120).cta, 600);
+});

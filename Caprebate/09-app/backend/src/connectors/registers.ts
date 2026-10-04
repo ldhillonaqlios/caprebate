@@ -133,10 +133,11 @@ export const REGISTER_SWITCHES: Readonly<Record<string, boolean>> = Object.freez
      PAID_RETIRED, in no map a click reads, so this switch turns nothing on. It stays so a case stamp reads as before. */
   HMLR_TITLE: false,
   BCIS: false,
-  /* PHASE 146d, item 18: the paid planning route, built beside PlanIt and NOT chosen. It is not a row on the
-     research panel — the register source it reads for is PLANNING, and PlanIt is still the source of record for
-     that row — so it is a switch with no catalogue entry, which is exactly what "built and not chosen" looks like.
-     Turning it on is a decision for Lakhbir and it is written up for him. */
+  /* PHASE 146d, item 18: the paid planning route, built beside PlanIt. It is not a row on the research panel — the
+     register source it reads for is PLANNING — so it is a switch with no catalogue entry.
+     PHASE 153b, 4 October 2026 (Word question 202, Lakhbir's): CHOSEN, on our recommendation — Homedata, by the
+     property's own number, about 5p on the same click as the address lookup, after the engagement letter is signed;
+     PlanIt kept built as the free fallback. See PLANNING_ROUTE below. STILL OFF until the Homedata account is open. */
   HOMEDATA_PLANNING: false,
   /* PHASE 150, 24 September 2026: the land boundary. NOT A SECOND SWITCH — it IS the boundary module's own
      BOUNDARY_FETCHING_SWITCHED_ON, read here so the research panel shows the same answer the fetcher obeys
@@ -145,6 +146,24 @@ export const REGISTER_SWITCHES: Readonly<Record<string, boolean>> = Object.freez
   /* Phase 151: the postcode check at the address question has its own switch, POSTCODE_CHECK, off. Never run by the button. */
   POSTCODES_IO: false,
 });
+
+/**
+ * WHICH ROUTE IS CHOSEN WHERE A REGISTER SOURCE HAS TWO. PHASE 153b, 4 October 2026 — Word question 202 ("Should we pay
+ * for planning history, or keep the free one that asks us to go slowly?"), Lakhbir's, built on our recommendation for
+ * him to confirm. Planning history can come from PlanIt (free, one volunteer, about 300 searches a day, asks not to be
+ * built on for a paid service) or from Homedata (paid, by the property's own number, so fewer wrong matches). Homedata
+ * is the chosen route and PlanIt the built fallback. Choosing switches NOTHING on: HOMEDATA_PLANNING above stays false
+ * until the Homedata account is open, and as a paid lookup it runs only after a signed engagement either way.
+ */
+export const PLANNING_ROUTE = Object.freeze({
+  register_source: 'PLANNING',
+  chosen: 'HOMEDATA_PLANNING',
+  fallback: 'PLANNING',
+  question: 202,
+  chosen_on: '2026-10-04',
+  words: 'Chosen route: Homedata planning. It finds the property by its own number, for about 5p, once the letter is ' +
+    'signed. It is switched off until our Homedata account is open. PlanIt, the free route, stays built as a fallback.',
+} as const);
 
 /** Only `true` is on. An absent source, and anything else, is off. */
 export function switchedOn(source_id: string, switches: Readonly<Record<string, boolean>> = REGISTER_SWITCHES): boolean {

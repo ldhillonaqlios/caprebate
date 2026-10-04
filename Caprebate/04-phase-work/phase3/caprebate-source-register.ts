@@ -604,6 +604,11 @@ export const SOURCES: readonly Source[] = [
     permitted_fields: [
       'company_number', 'company_status', 'sic_codes', 'accounts_year_end',
       'incorporation_date', 'registered_office_postcode', 'group_link_*',
+      // PHASE 153b, 4 October 2026 (Word question 198): the company's TYPE ("ltd", "plc", "llp" ...), a fact about the
+      // company and not about a person. PROPOSED, for the data protection officer (Sadique Maskeen) to agree — the
+      // corrections of 3 October said "change the permitted fields first (and ask Sadique), then map". Nothing reads
+      // it until COMPANY_TYPE_FROM_REGISTER (09-app/backend/src/connectors/company-search.ts) is switched on, and it is off.
+      'company_type',
     ],
     excluded_fields: ['officer_*', 'director_*', 'secretary_*', '*_dob', 'service_address*', 'residential_address*'],
     personal_name_exceptions: NO_NAMES,

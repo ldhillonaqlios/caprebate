@@ -88,7 +88,7 @@ import type { AuditLog } from '../audit.ts';
 import { registryGate, REGISTRY } from './engine.ts';
 import { DECLINED_LINE, lookupsDeclined } from './address-check.ts';
 import { SOURCES as REGISTER_SOURCES, LICENCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
-import { switchedOn, runConnector, REGISTER_SWITCHES, type Bundle, type ConnectorContext } from '../connectors/registers.ts';
+import { switchedOn, runConnector, REGISTER_SWITCHES, PLANNING_ROUTE, type Bundle, type ConnectorContext } from '../connectors/registers.ts';
 import type { Transport, RateLimiter } from '../connectors/http.ts';
 import type { SecretStore } from '../secrets.ts';
 import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../connectors/free-registers.ts';
@@ -191,6 +191,8 @@ export type CatalogueEntry = {
    * an operator waiting for the wrong thing.
    */
   readonly licence_gate: string | null;
+  /** PHASE 153b (Word question 202): the chosen route where a source has two, in plain words; null elsewhere. */
+  readonly chosen_route: string | null;
   /**
    * PHASE 132f, 16 September 2026 — CONDITION CA2, READ OFF THE ENGINE.
    *
@@ -320,6 +322,7 @@ export function catalogue(): readonly CatalogueEntry[] {
         tier_settled: tier !== undefined,
         endpoint: s.endpoint,
         licence_gate: licenceGateFor(s.source_id),
+        chosen_route: s.source_id === PLANNING_ROUTE.register_source ? PLANNING_ROUTE.words : null,
         post_signature_fields: postSignatureFieldsFor(s.source_id, s.personal_name_exceptions),
       };
     });

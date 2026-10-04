@@ -79,7 +79,8 @@ export type OutboundMessage = {
 
 export type InlineFile = {
   readonly filename: string;
-  readonly content_type: 'text/calendar; method=REQUEST; charset=utf-8' | 'text/calendar; method=CANCEL; charset=utf-8' | 'application/pdf';
+  /** Phase 153b (migration 079): the return-entries spreadsheet beside a survey report's PDF. */
+  readonly content_type: 'text/calendar; method=REQUEST; charset=utf-8' | 'text/calendar; method=CANCEL; charset=utf-8' | 'application/pdf' | 'text/csv; charset=utf-8';
   readonly bytes: Uint8Array;
 };
 

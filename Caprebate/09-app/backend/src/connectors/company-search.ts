@@ -8,9 +8,10 @@
  *
  * WHAT IS KEPT FROM A RESULT, AND ONLY THAT: the company's name, its number, its status and its registered office's
  * POSTCODE — the source register's permitted fields for CH_COMPANY (company_number, company_status,
- * registered_office_postcode), and the name the person is choosing as their own. Not the company's type: the register
- * does not permit it and src/connectors/free-registers.ts deliberately does not map it to the legal form, so the
- * assessment still asks that. Never an officer, a director or an address line.
+ * registered_office_postcode), and the name the person is choosing as their own. Never an officer, a director or an
+ * address line. THE COMPANY'S TYPE ONLY WITH COMPANY_TYPE_FROM_REGISTER ON (below, Phase 153b, Word question 198): the
+ * register now lists `company_type` as a PROPOSED permitted field for the data protection officer to agree, and while
+ * the switch is off it is not kept and the assessment asks the legal form, exactly as before.
  *
  * SWITCHED OFF, LIKE THE POSTCODE CHECK (postcode-check.ts), until three things are true: the free-tier gate is open
  * (the privacy notice published and linked), Companies House is named in that notice for THIS use (a visitor's own
@@ -48,7 +49,33 @@ export type CompanyCandidate = {
   readonly number: string;
   readonly status: string | null;
   readonly office_postcode: string | null;
+  /** Companies House's company type ("ltd", "plc", "llp" ...). Kept ONLY with COMPANY_TYPE_FROM_REGISTER on. */
+  readonly company_type?: string | null;
 };
+
+/*
+ * PHASE 153b, 4 October 2026 — WORD QUESTION 198 ("When Companies House says a client is an LLP, what kind of business
+ * should our estimate treat it as?"), for the accountant, with the data protection officer's one-line change to the
+ * permitted fields. Built on our recommendation and SWITCHED OFF until both have answered:
+ *   "ltd" and "plc"  -> a company ("Limited company"), filled in for the person, who can still change it;
+ *   "llp"            -> an LLP, taxed like a partnership — NEVER filled in silently: the person is asked to confirm it;
+ *   anything else    -> asked, as today (an unlimited company, a guarantee company, a Scottish partnership …).
+ * A type not known — absent, blank, or the switch off — is asked (N4). Off, nothing is kept and nothing changes.
+ */
+export const COMPANY_TYPE_FROM_REGISTER: { readonly enabled: boolean; readonly question: number } = Object.freeze({
+  enabled: false, question: 198,
+});
+
+export type EntityFromType = { readonly entity: 'ltd' | 'llp'; readonly confirm: boolean } | null;
+
+/** What a Companies House company type tells the assessment's "what kind of business" — or null where it is asked. */
+export function entityFromCompanyType(type: unknown, cfg: { readonly enabled: boolean } = COMPANY_TYPE_FROM_REGISTER): EntityFromType {
+  if (cfg.enabled !== true || typeof type !== 'string') return null;
+  const t = type.trim().toLowerCase();
+  if (t === 'ltd' || t === 'plc') return { entity: 'ltd', confirm: false };
+  if (t === 'llp') return { entity: 'llp', confirm: true };
+  return null;
+}
 
 export type CompanySearch =
   | { readonly state: 'FOUND'; readonly candidates: readonly CompanyCandidate[] }
@@ -82,7 +109,10 @@ export async function searchCompanies(i: {
   readonly secrets: SecretStore;
   /** TESTS ONLY. Absent, COMPANY_SEARCH governs, and it is off. */
   readonly config?: CompanySearchConfig;
+  /** TESTS ONLY. Absent, COMPANY_TYPE_FROM_REGISTER governs, and it is off. */
+  readonly typeConfig?: { readonly enabled: boolean };
 }): Promise<CompanySearch> {
+  const keepType = (i.typeConfig ?? COMPANY_TYPE_FROM_REGISTER).enabled === true;
   const missing = companySearchMissing(i.config ?? COMPANY_SEARCH, i.gate, i.secrets);
   if (missing.length > 0) return { state: 'NOT_SEARCHED', why: missing.join(' ') };
   const q = i.name.trim().replace(/\s+/g, ' ');
@@ -107,7 +137,8 @@ export async function searchCompanies(i: {
     if (number === null || name === null || !NUMBER.test(number)) continue;
     const addr = o['address'] !== null && typeof o['address'] === 'object' ? o['address'] as Record<string, unknown> : {};
     const pc = str(addr['postal_code']);
-    candidates.push({ name, number, status: str(o['company_status']), office_postcode: pc !== null && POSTCODE.test(pc) ? pc.toUpperCase() : null });
+    const candidate: CompanyCandidate = { name, number, status: str(o['company_status']), office_postcode: pc !== null && POSTCODE.test(pc) ? pc.toUpperCase() : null };
+    candidates.push(keepType ? { ...candidate, company_type: str(o['company_type']) } : candidate);
   }
   return candidates.length === 0 ? { state: 'NONE' } : { state: 'FOUND', candidates };
 }

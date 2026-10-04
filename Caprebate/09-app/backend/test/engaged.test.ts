@@ -605,7 +605,7 @@ describe('panel 2 — sources, and the two gates', () => {
     const untiered: R.CatalogueEntry = {
       source_id: 'A_NEW_SOURCE', publisher: 'Someone', dataset: 'Something',
       licence_id: 'X', licence_name: 'X', tier: R.UNTIERED_DEFAULT, tier_settled: false,
-      endpoint: null, licence_gate: null, post_signature_fields: [],
+      endpoint: null, licence_gate: null, post_signature_fields: [], chosen_route: null,
     };
     assert.equal(R.UNTIERED_DEFAULT, 'PAID', 'an untiered source defaults to the permissive gate');
 

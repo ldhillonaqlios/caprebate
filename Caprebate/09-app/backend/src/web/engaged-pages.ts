@@ -385,7 +385,7 @@ export function panel2(p: E.BusinessPage, s: R.SourcesPanel): Safe {
       <tbody>${s.sources.map((x) => h`<tr>
         <td>${x.dataset}</td>
         <td data-label="Status">${STATE_WORDS[x.state]}${x.attempts > 1 ? h` <span class="help">(${x.attempts} tries)</span>` : raw('')}</td>
-        <td data-label="What happened"><span class="say">${x.detail}</span>${x.may_retry
+        <td data-label="What happened"><span class="say">${x.detail}</span>${x.chosen_route === null ? raw('') : h` <span class="help">${x.chosen_route}</span>`}${x.may_retry
           ? h` <form method="post" action="/staff/clients/${p.business.id}/research/retry" class="inline">
                <input type="hidden" name="source_id" value="${x.source_id}">
                <button class="linkish" type="submit">Try this one again</button></form>`

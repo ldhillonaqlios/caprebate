@@ -38,7 +38,7 @@ import { OPTIONS, addressFrom, submit, type Draft, type FunnelState } from './as
 import { openLeadForGatedExit } from './leads.ts';
 import type { Db } from '../db.ts';
 import { normalisePostcode } from '../connectors/postcode-check.ts';
-import type { CompanyCandidate } from '../connectors/company-search.ts';
+import { entityFromCompanyType, type CompanyCandidate } from '../connectors/company-search.ts';
 import type { FoundAddress } from '../connectors/address-lookup.ts';
 import { slotPicker, slotDayProblem } from './slot-picker.ts';
 
@@ -290,6 +290,18 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
         }
         const ent = f.get(`b${i}_entity`);
         b['entity_type'] = ent !== null && Object.hasOwn(ENTITY, ent) ? ent : null;
+        /* PHASE 153b (Word question 198), off: with COMPANY_TYPE_FROM_REGISTER on and no kind of business chosen, a
+           company picked from Companies House fills it in — a limited company or a plc as "Limited company"; an LLP
+           only when the person confirms it, so the screen is kept and asks; any other type is asked as before. */
+        delete b['entity_suggested'];
+        if (b['entity_type'] === null && chosen !== undefined) {
+          const m = entityFromCompanyType(chosen.company_type);
+          if (m !== null && !m.confirm) b['entity_type'] = m.entity;
+          else if (m !== null) {
+            b['entity_suggested'] = m.entity;
+            errors.push(`Companies House says ${chosen.name} is an LLP. We treat an LLP like a partnership for tax. Choose "LLP" below to confirm.`);
+          }
+        }
       }
       const before = b['postcode'];
       b['line1'] = clip(f.get(`b${i}_line1`), 200);
@@ -459,7 +471,7 @@ export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; post
           <label class="opt"><input type="radio" name="b${i}_company_number" value="none"> None of these</label></div>`}
         ${note === null ? raw('') : h`<p class="help">${note}</p>`}
         <p class="fl">What kind of business is it?</p>
-        ${radios(`b${i}_entity`, entityOpts, b['entity_type'])}
+        ${radios(`b${i}_entity`, entityOpts, b['entity_type'] ?? b['entity_suggested'] ?? null)}
       </div>
       <label class="fl" for="b${i}-postcode">Postcode</label>
       <input class="fi" id="b${i}-postcode" name="b${i}_postcode" value="${typeof b['postcode'] === 'string' ? b['postcode'] : ''}" autocomplete="postal-code">

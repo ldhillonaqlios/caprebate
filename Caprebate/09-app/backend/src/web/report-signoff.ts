@@ -31,6 +31,7 @@ import type { EmailTransport } from '../stubs/email.ts';
 import { packJob } from './surveyor.ts';
 import { approvedVersion, type ApprovalRow, type Snapshot } from './pack-approve.ts';
 import { reportModel, reportPdf, longDate, REPORT_TITLE } from './survey-report.ts';
+import { returnContext, returnEntriesCsv } from './return-entries.ts';
 import { recordSignOff } from './claim-record.ts';
 import { postClientMessage } from './messages.ts';
 import { localDate } from './localtime.ts';
@@ -118,12 +119,15 @@ export function sendForSignoff(
   const at = d.now();
   const expires = new Date(Date.parse(at) + LINK_DAYS * 86_400_000).toISOString();
   const pdf = reportPdf(reportModel(kept.snapshot, kept.row.fingerprint));
+  // PHASE 153b (Word question 121): the return entries for each year, as a spreadsheet, beside the PDF.
+  const csv = returnEntriesCsv(kept.snapshot, returnContext(d.db, job.claim_id, job.business_id), kept.row.fingerprint);
   return d.db.tx(() => {
     const sent = d.email.send({
       to_email: who.email.trim(), subject: `Survey report to sign off: ${job.business_name}`,
       body: emailBody(who.name, job.business_name, kept.snapshot, `${f.origin}/signoff/${token}`, expires),
       kind: 'REPORT_FOR_SIGNOFF', business_id: job.business_id, contact_id: who.id, written_by: actor.id, claim_id: job.claim_id,
-      inline_files: [{ filename: `survey-report-version-${String(version)}.pdf`, content_type: 'application/pdf', bytes: pdf.bytes }],
+      inline_files: [{ filename: `survey-report-version-${String(version)}.pdf`, content_type: 'application/pdf', bytes: pdf.bytes },
+        { filename: `return-entries-version-${String(version)}.csv`, content_type: 'text/csv; charset=utf-8', bytes: new TextEncoder().encode(csv) }],
     });
     if (sent.id === null) return { ok: false as const, why: 'This company asked us not to contact them. Nothing was sent.' };
     const id = d.newId();
@@ -145,14 +149,16 @@ export type LinkView =
   | { readonly state: 'EXPIRED' }
   | { readonly state: 'ANSWERED'; readonly outcome: 'SIGNED' | 'SENT_BACK'; readonly answered_at: string }
   | { readonly state: 'OPEN'; readonly request_id: string; readonly contact_name: string; readonly company: string; readonly snapshot: Snapshot;
-      readonly fingerprint: string; readonly fingerprint_holds: boolean; readonly expires_at: string };
+      readonly fingerprint: string; readonly fingerprint_holds: boolean; readonly expires_at: string;
+      /** Phase 153b: the job's claim and business, for the return-entries spreadsheet. */
+      readonly claim_id: string | null; readonly business_id: string };
 
 /** What a sign-off link opens, by the link alone. Unknown, used and out-of-date links are told apart only in words. */
 export function linkView(db: Db, now: string, token: string): LinkView {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return { state: 'NONE' };
   const r = db.get<{ id: string; expires_at: string; name: string; company: string; snapshot_json: string; fingerprint: string;
-    outcome: 'SIGNED' | 'SENT_BACK' | null; answered_at: string | null }>(
-    'SELECT r.id, r.expires_at, c.full_name AS name, b.name AS company, a.snapshot_json, a.fingerprint, x.outcome, x.answered_at ' +
+    outcome: 'SIGNED' | 'SENT_BACK' | null; answered_at: string | null; claim_id: string | null; business_id: string }>(
+    'SELECT r.id, r.expires_at, c.full_name AS name, b.name AS company, a.snapshot_json, a.fingerprint, x.outcome, x.answered_at, j.claim_id, j.business_id ' +
       'FROM pack_signoff_requests r JOIN survey_pack_approvals a ON a.id = r.approval_id JOIN contacts c ON c.id = r.contact_id ' +
       'JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id JOIN businesses b ON b.id = j.business_id ' +
       'LEFT JOIN pack_signoff_answers x ON x.request_id = r.id WHERE r.token_sha256 = ?', [hashToken(token)]);
@@ -160,7 +166,8 @@ export function linkView(db: Db, now: string, token: string): LinkView {
   if (r.outcome !== null) return { state: 'ANSWERED', outcome: r.outcome, answered_at: r.answered_at ?? '' };
   if (now >= r.expires_at) return { state: 'EXPIRED' };
   return { state: 'OPEN', request_id: r.id, contact_name: r.name, company: r.company, snapshot: JSON.parse(r.snapshot_json) as Snapshot,
-    fingerprint: r.fingerprint, fingerprint_holds: createHash('sha256').update(r.snapshot_json, 'utf8').digest('hex') === r.fingerprint, expires_at: r.expires_at };
+    fingerprint: r.fingerprint, fingerprint_holds: createHash('sha256').update(r.snapshot_json, 'utf8').digest('hex') === r.fingerprint, expires_at: r.expires_at,
+    claim_id: r.claim_id, business_id: r.business_id };
 }
 
 /** The accountant's answer, once: signed, or sent back with a reason. */
