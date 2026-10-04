@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 3 |
+| Ready - Claude can build | 2 |
 | Ready - Lakhbir action | 33 |
 | Built - awaiting sign-off | 124 |
 | Blocked - question | 1 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
 | Done | 274 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1372,7 +1372,7 @@
 
 ### Phase 153c - data protection and the back office built on our recommendation for Sadique to check, one test call per keyed connector, and the Didit waiver's wording: 19 lines
 
-`13199468908` · **Ready - Claude can build** · owner Claude
+`13199468908` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
 
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268316 (board sync, Lakhbir's yes).
 - Note 2026-10-04 (Phase 153a): Line 13 done by Phase 153a (Google in the recipients list v1.4 and the notices page, for the officer to check); one line added: may chapter 15 show the surveyor grant amounts (ask Sadique).
