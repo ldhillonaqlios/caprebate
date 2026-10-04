@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 273 |
-| Working on it | 1 |
+| Done | 274 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1125,7 +1125,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-39 items.
+38 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1370,13 +1370,6 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 153b - tax readings built on our recommendation for the accountant to check: 20 builds from the 29 Sep question review
-
-`13199454668` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
-
-- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268315 (board sync, Lakhbir's yes).
-- Note 2026-10-04 (Phase 153a): Lines 12 and 13 done by Phase 153a (grant checks at valuation); new line 21 added: the switches' direction, moved from Phase 153a line 2, to run last.
-
 ### Phase 153c - data protection and the back office built on our recommendation for Sadique to check, one test call per keyed connector, and the Didit waiver's wording: 19 lines
 
 `13199468908` · **Ready - Claude can build** · owner Claude
@@ -1401,7 +1394,7 @@
 
 ## Z · Complete / Not Applicable
 
-273 items.
+274 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -2942,4 +2935,12 @@
 
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268314 (board sync, Lakhbir's yes).
 - Note 2026-10-04 (Phase 153a): Done: the grant trace built and switched off (with 153b lines 12-13), recovery rows, the SOP's owner-name exception, the recipients list v1.4 and the transfer wording (with 153c line 13), the session record's item 4. Line 2 moved to 153b line 21; line 7 was already done. Record in PHASE-HISTORY.md.
+
+### Phase 153b - tax readings built on our recommendation for the accountant to check: 20 builds from the 29 Sep question review
+
+`13199454668` · **Done** · owner Claude
+
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268315 (board sync, Lakhbir's yes).
+- Note 2026-10-04 (Phase 153a): Lines 12 and 13 done by Phase 153a (grant checks at valuation); new line 21 added: the switches' direction, moved from Phase 153a line 2, to run last.
+- Note 2026-10-04 (Phase 153b): Done: every open line built (12 and 13 by Phase 153a), new readings behind their own switches, off; four new tax adviser switches (13200700684, 13200701317, 13200702306, 13200704047); the 29 switches' direction counted in code. Tests 4,460. Branch claude/phase-153b, pull request 9. Board: Done, group Z, claim cleared.
 
