@@ -995,3 +995,12 @@ reasonably be established remotely should require a site inspection before a sur
  Phase 153c built data protection and back office work for the data protection officer to check. Two items were added to FOR THE SOLICITOR, THE DPO AND THE DEVELOPER (SDP-P41 and SDP-P42); none here.
 
  **And the board's own total at the close of Phase 153c, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153d, 4 October 2026
+
+ Phase 153d built the commercial papers in test form for the director and the solicitor. Nothing moved into or out of this register.
+
+ **And the board's own total at the close of Phase 153d, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

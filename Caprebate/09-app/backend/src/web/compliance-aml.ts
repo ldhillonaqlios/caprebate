@@ -96,7 +96,7 @@ export const CLAIMANT_GUIDE: Readonly<Record<string, ClaimantGuide>> = Object.fr
     label: 'Trust — test default',
     identify: 'The trust, its trustees, and who benefits from it.',
     verify: 'The trust deed, and standard identity checks on the trustees instructing us.',
-    owners: 'The settlor, the trustees, any beneficiary entitled to more than 25%, and anyone who controls the trust.',
+    owners: 'The settlor and the trustees. Any beneficiary with more than 25%. Anyone who controls the trust.',
     authority: 'A trustee.',
   },
   OTHER: {

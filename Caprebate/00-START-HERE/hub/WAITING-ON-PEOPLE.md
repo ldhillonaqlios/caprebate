@@ -52,6 +52,8 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Where the breach register lives and who may write to it (SDP-G1); the one-off adviser engagement (SDP-G2).
 - [ ] Take the draft letter of authority for Lakhbir's breach decisions to the solicitor and, if they agree, sign it (Word question 184; `06-commercial-and-governance/Caprebate-Letter-of-Authority-Breach-Deputy-DRAFT-v0.1.md`, Phase 153c).
 - [ ] Agree the draft deputy route for rights requests and complaints, with you countersigning (Word question 56; complaints pack 3.5A, rights procedure 5.9A, Phase 153c).
+- [ ] Check the Phase 153d test defaults, each built on our recommendation and marked "test default, not agreed" (Word questions 23, 33, 34, 42, 45, 62 and 196): the disposal fee (£290, fixed); the test-only engagement letter's clause 5 (£995 a property plus a booked surveyor at cost), clause 7(d) and clause 13 (any reduction; settlements count); the introducer terms (10%, signed terms); the money-laundering check's scale, 25% and three new kinds of client; and the enquiry-support risk at 12 (High).
+- [ ] Take the one-page list of insurance covers and the broker brief to a broker (Word question 62; `06-commercial-and-governance/Caprebate-Insurance-Covers-to-Ask-a-Broker-v0.1.md`).
 
 ## The DPO (Sadique Maskeen)
 
@@ -76,6 +78,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] The engagement letter: review it; confirm a typed-name signature is acceptable (then signing is switched on).
 - [ ] SDP-L2 and SDP-L9 to L21; introducer terms; the terms, complaints and consent policies.
 - [ ] Phase 153c: the email-only surveyor breach clause (Word question 55, 2C-T beside the draft), the letter of authority (question 184) and the deputy route (question 56).
+- [ ] Phase 153d: the test-only engagement letter's clauses 5, 7(d) and 13 (is £995 a fair estimate of our losses; does clause 13 work; is "named in our privacy notice" sound?), the introducer terms and disclosure line (question 42), and the money-laundering check's test defaults (question 45).
 
 ## The accountant and the tax adviser
 

@@ -1776,3 +1776,12 @@ Signed .............................  Date ..........................
  Phase 153c built data protection and back office work for the data protection officer to check. Two items were added to FOR THE SOLICITOR, THE DPO AND THE DEVELOPER (SDP-P41 and SDP-P42); none here.
 
  **And the board's own total at the close of Phase 153c, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153d, 4 October 2026
+
+ Phase 153d built the commercial papers in test form for the director and the solicitor. **One dated line here: ACC-C3, the disposal note (Word question 23).** The test system shows a fixed fee of **£290** for the review and the drafted election, costed in the job cost model as four hours of our time at £60 plus the £50 data line, at cost, never a percentage of the sale or the election figure. It is marked "a test default, not agreed" in both disposal notes, on the staff disposal task and on the aftercare panel. The director decides the figure. Nothing moved into or out of this register.
+
+ **And the board's own total at the close of Phase 153d, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
