@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 276 |
-| Working on it | 1 |
+| Done | 277 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1137,7 +1137,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-36 items.
+35 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1382,18 +1382,11 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 153e - the surveyor's workbench built on our recommendation for the surveyor to check: 16 builds from the 29 Sep review
-
-`13199476474` · **Working on it** · owner Claude · **CLAIMED BY Mac (Lakhbir's MacBook Pro)**
-
-- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268318 (board sync, Lakhbir's yes).
-- Note 2026-10-04 (Phase 153a): Line 17 added by Phase 153a: chapter 15's VAT half (the survey pack's grants half is built).
-
 ---
 
 ## Z · Complete / Not Applicable
 
-276 items.
+277 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -2957,4 +2950,12 @@
 
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268317 (board sync, Lakhbir's yes).
 - Note 2026-10-04 (Phase 153d): Done: the seven commercial questions built in test form, each marked test default, not agreed, for the director and the solicitor (Word questions marked); the test-only engagement letter, never signed; the disposal fee; introducer terms; the AML check's test defaults; R12 at 12 with an insurance list. No new register item. Tests 4,498. Branch claude/phase-153d, pull request 11 (stacked on 10 and 9). Board: Done, group Z, claim cleared.
+
+### Phase 153e - the surveyor's workbench built on our recommendation for the surveyor to check: 16 builds from the 29 Sep review
+
+`13199476474` · **Done** · owner Claude
+
+- Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268318 (board sync, Lakhbir's yes).
+- Note 2026-10-04 (Phase 153a): Line 17 added by Phase 153a: chapter 15's VAT half (the survey pack's grants half is built).
+- Note 2026-10-04 (Phase 153e): Done 4 Oct 2026: sixteen surveyor questions and chapter 15's VAT half built in the test system, each a test default or placeholder for the surveyor (and the tax adviser) to check; board Done in group Z, claim cleared; PR 12. Record in PHASE-HISTORY.
 
