@@ -64,6 +64,7 @@ import { FEE_CLAWBACK } from './claim-record.ts';
 import { DEFENCE_PACK_GENERATOR } from './defence-pack.ts';
 import { ALLOWANCE_PROFIT_COMPARISON } from './allowance-profit-comparison.ts';
 import { FUNNEL_SWITCHES } from './funnel-session.ts';
+import { HOMEDATA_DIMENSIONS } from '../connectors/homedata.ts';
 import { REGISTER_SWITCHES } from '../connectors/registers.ts';
 import { CLAUDE_SWITCHES } from '../connectors/claude.ts';
 import { PICK_SWITCHES } from './match-review.ts';
@@ -158,6 +159,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   ENQUIRY_RETENTION            the closed-enquiry clean-up job (Phase 153c)    src/web/enquiry-retention.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/web/defence-pack.ts
  *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/web/allowance-profit-comparison.ts
+ *   HOMEDATA_DIMENSIONS          Homedata's floor-area estimate (Phase 153e)     src/connectors/homedata.ts
  *   FUNNEL_SWITCHES.breakeven_is_insufficient_profit
  *                                break-even read as insufficient profit          src/web/funnel-session.ts
  *
@@ -198,6 +200,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/web/enquiry-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/web/defence-pack.ts' },
     { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/web/allowance-profit-comparison.ts' },
+    { switch: 'HOMEDATA_DIMENSIONS', on: HOMEDATA_DIMENSIONS.enabled, home: 'src/connectors/homedata.ts' },
     { switch: 'FUNNEL_SWITCHES.breakeven_is_insufficient_profit', on: FUNNEL_SWITCHES.breakeven_is_insufficient_profit, home: 'src/web/funnel-session.ts' },
   ];
 }

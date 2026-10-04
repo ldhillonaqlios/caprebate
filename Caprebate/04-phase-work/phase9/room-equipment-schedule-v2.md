@@ -422,6 +422,19 @@ here because answering them once fixes them everywhere.
 right answer genuinely differs by case, tell us what the distinguishing factor is, and we will build
 that factor into the question flow rather than asking you again on every job.
 
+**Built in the test system, 4 October 2026 (Phase 153e) — test defaults for you to confirm, not decisions.**
+From the answers typed under Word questions 134 and 135, the back end's survey pack now places these
+rows by default, each labelled "Test default (Phase 153e), for the surveyor to confirm" on the pack line
+(`09-app/backend/src/web/pack-lines.ts`, `PLACEMENT`; the fixture list itself is unchanged):
+XS-7 — dental extract (`LS-DEN-015`) and ordinary GP treatment-room ventilation (`LS-GP-008`) are special
+rate as normal air flow; theatre ultra-clean ventilation (`LS-PH-002`) and isolation ventilation
+(`LS-PH-003`) are flagged with no pool, for you to decide on each job by function, specification and
+purpose; the client is asked what a ventilation system is for and how it is specified.
+XS-1 — emergency lighting sits inside `LS-SR-001`. XS-2 — kitchen extract sits inside `LS-SR-004`.
+XS-3 and XS-4 — clinical flooring (`LS-MP-013`, 0%) and ordinary security glazing stay with the building.
+XS-5 and XS-6 — drug storage (care homes and private hospitals) and standby power (private hospitals)
+are added as their own plant. PH-8 — a theatre suite is counted space by space (Q-S9-1).
+
 ---
 
 ## 7. Index of the rows we are least sure about

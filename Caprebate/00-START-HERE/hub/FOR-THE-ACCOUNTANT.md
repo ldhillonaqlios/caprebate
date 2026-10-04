@@ -1785,3 +1785,12 @@ Signed .............................  Date ..........................
  Phase 153d built the commercial papers in test form for the director and the solicitor. **One dated line here: ACC-C3, the disposal note (Word question 23).** The test system shows a fixed fee of **£290** for the review and the drafted election, costed in the job cost model as four hours of our time at £60 plus the £50 data line, at cost, never a percentage of the sale or the election figure. It is marked "a test default, not agreed" in both disposal notes, on the staff disposal task and on the aftercare panel. The director decides the figure. Nothing moved into or out of this register.
 
  **And the board's own total at the close of Phase 153d, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153e, 4 October 2026
+
+ Phase 153e built the surveyor's workbench on our recommendation. **One dated line here: ACC-A16, chapter 15's VAT half (line 17 of the phase, added by Phase 153a).** The surveyor records the claimant's VAT position with a reason. Only an exempt claimant's VAT not reclaimed is added to the price before it is shared out; a claimant that reclaims VAT adds nothing; a partly exempt claimant changes nothing and waits for you; not known and not recorded count nothing. It is a test reading, for you to check.
+
+ **And the board's own total at the close of Phase 153e, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

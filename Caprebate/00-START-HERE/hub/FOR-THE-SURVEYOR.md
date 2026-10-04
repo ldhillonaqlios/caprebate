@@ -1004,3 +1004,21 @@ reasonably be established remotely should require a site inspection before a sur
  Phase 153d built the commercial papers in test form for the director and the solicitor. Nothing moved into or out of this register.
 
  **And the board's own total at the close of Phase 153d, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153e, 4 October 2026 — your workbench, built on our recommendation for you to check; dated lines on seven entries, nothing moved in or out
+
+ Phase 153e built sixteen of your questions in the test system, each from the answer typed under it, each marked as a test default or a placeholder for you to set. **Nothing here is calibrated and nothing is presented to you as settled.** No entry changes state.
+
+-  **SV-S5, desk first and the video (Word questions 129 to 131).** The grid is coded with placeholder limits; desk-only only when every document is in and no warning sign fires. Your job page shows the evidence level in words and nothing else. The coverage score counts required items filmed or marked "not here"; under a placeholder pass mark of 80% the level becomes a site visit.
+-  **SV-S1, quantities (questions 133 and 148).** Supported living's common parts come from the shared areas you read off the floor plans; with none, a flat 25% of the floor area, labelled as the fallback. A theatre suite is counted space by space (theatre, anaesthetic, preparation, scrub, recovery).
+-  **SV-S2, the room-by-room list (questions 134 and 135).** Dental and GP treatment ventilation are special rate by default; theatre and isolation ventilation are flagged for you on each job; emergency lighting and kitchen extract sit inside their systems; flooring and ordinary glazing stay with the building; drug storage and standby power are their own plant. Each is labelled "Test default (Phase 153e), for the surveyor to confirm".
+-  **SV-S6, preliminaries (question 136).** Preliminaries by job size, from placeholder bands, behind a switch that ships off; the cost model's own test system runs it.
+-  **SV-S7, the insurance figure (question 137).** The cross-check is built: like for like first, then within a test limit of 10% it "supports"; an unknown basis is "not comparable". The word "corroborates" is never used.
+-  **SV-S8, your rates (questions 147 and 149).** The index factor from a table and two dates (the real table ships empty; a placeholder table in test only); a £/m² figure more than 10% from the blank control is flagged for review.
+-  **SV-S4, the report (questions 145 and 150).** The planning assumption is in every version approved from now and in your template; each finding says "Seen on site" or "From documents".
+-  **Outside any entry.** Sector ranges are proposed from approved packs once five claims exist (question 138), with the engine's supported-living band by trigger behind a switch, off. The past-claim test (question 139) checks GC-01 within 5% and £25,000, and keeps an empty slot for a second case rather than inventing one.
+
+ **And the board's own total at the close of Phase 153e, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

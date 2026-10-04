@@ -1966,3 +1966,12 @@ Name:                                  Date:
 -  **The disposal fee (Word question 23), for the director.** A fixed fee of £290 for the review and the drafted election, at cost from the job cost model; never a percentage. It is in FOR THE ACCOUNTANT under ACC-C3, the disposal note.
 
  **And the board's own total at the close of Phase 153d, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153e, 4 October 2026 — nothing moved in or out
+
+ Phase 153e built the surveyor's workbench. Nothing here changes. For the developer: one new migration (082, the pack's VAT position and shared area, the own-transaction shape with its foreign-key guard) and one new staff route, `/staff/survey/:job/pack/extra`. Homedata's floor-area estimate is built behind its switch, off.
+
+ **And the board's own total at the close of Phase 153e, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

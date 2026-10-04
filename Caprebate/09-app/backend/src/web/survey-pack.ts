@@ -202,7 +202,7 @@ const FIELD_WORDS: Readonly<Record<PackField, string>> = Object.freeze({
 
 /** PHASE 153e (Word question 133): the share of the floor area used when no floor plans give the shared areas. */
 export const SHARED_FALLBACK_BP = 2500;
-export const SHARED_FALLBACK_WORDS = 'Fallback: a flat 25% of the floor area, not independently calibrated (a test default)';
+export const SHARED_FALLBACK_WORDS = 'Fallback: a flat 25% of the floor area. A test default, not yet checked by a surveyor';
 
 export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   const { job, obj } = packJob(d.db, actor, job_id);

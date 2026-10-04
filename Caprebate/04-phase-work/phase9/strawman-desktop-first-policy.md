@@ -4,6 +4,8 @@
 
 **v0.2, 12 September 2026 (Phase 129):** §2.2, §6 and §7 corrected so that only the evidential basis a case is instructed on travels to the surveyor — never the value band, the complexity score or the estimate behind them. Nothing else changed.
 
+**Built in the test system, 4 October 2026 (Phase 153e), on Word questions 129 to 131 — not a settled policy.** The §2.4 grid is coded in `09-app/backend/src/web/desk-first.ts` with PLACEHOLDER values (value limits £250,000 / £1m / £3m, complexity limits 1 / 3 / 5, a coverage pass mark of 80%), all marked `TEST_ONLY_PLACEHOLDERS` for the surveyor to set. Desk-only is offered only when every document is in and no warning sign fires (no price counts as the top band, N4); the surveyor's job page shows the evidence level in words and nothing else. The coverage score counts the script's required items photographed or marked "not here"; under the pass mark the level becomes a site visit.
+
 > **THIS IS A DRAFT FOR A CHARTERED SURVEYOR TO CORRECT. IT IS NOT PROFESSIONAL ADVICE, AND IT
 > IS NOT A SETTLED POLICY.** No RICS-registered surveyor has been appointed to this project at the
 > time of writing (27 Aug 2026). Everything below was drafted by a non-surveyor working from the
