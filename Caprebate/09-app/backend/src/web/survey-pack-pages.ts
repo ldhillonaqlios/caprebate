@@ -50,6 +50,10 @@ import * as S from './surveyor.ts';
 import { jobSite, setJobMenu } from './surveyor-pages.ts';
 import { lateBadge, siteOf } from './look.ts';
 import { PAYER_CLASSES } from './claim-facts.ts';
+import { deskFirstReading } from './desk-first.ts';
+import { roomsFor } from './rooms.ts';
+import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
+import { TEST_DEFAULT_WORDS } from './pack-lines.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });
@@ -180,6 +184,8 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
           : ch === 15 ? h`${grantsChapter(v)}${vatSection(d, v, ch)}`
           : ch === 2 ? inspectionChapter(d.app, actor, v.job.id, q)
           : ch === 23 ? signChapter(d, actor, v, ready, q)
+          : ch === 1 ? reportChapter(d, actor, v) : ch === 3 ? purposeChapter(d, v) : ch === 6 ? roomsChapter(d, v)
+          : ch === 12 ? itemsChapter(d, v) : ch === 13 ? poolsChapter(v) : ch === 21 ? limitsChapter()
           : h`<p class="help">This chapter is filled in at the next stage of the build. For now, the sums are in chapters 4, 9 and 10.</p>`}
       </article>
       <aside class="pack-side">${approveCard(v, ready)}${totalsCard(v)}${legalCard(v, lv)}${changesCard(d, v)}</aside>
@@ -273,6 +279,104 @@ function neededGroups(v: P.PackView): Safe {
       <details class="morelist"><summary>Show all ${String(s.needed.length)}, one per line</summary>
         <ul class="pk-needed">${s.needed.slice(0, 60).map((n) => h`<li><a href="${link(n)}">${n.words}</a></li>`)}</ul>
         ${s.needed.length > 60 ? h`<p class="help">… and ${String(s.needed.length - 60)} more.</p>` : raw('')}</details>`;
+}
+
+/* ------------------------------------------------------------ PHASE 153f: chapters 1, 3, 6, 12, 13 and 21 */
+
+const SECTOR_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  care_homes: 'Care home', dental: 'Dental practice', supported_living: 'Supported living', gp: 'GP surgery', private_hospital: 'Private hospital or clinic',
+});
+
+/** Chapter 1 — who the report is for and which property. Nothing typed here: it comes from the claim and the job. */
+export function reportChapter(d: PackPageDeps, actor: Actor, v: P.PackView): Safe {
+  const job = S.surveyorJobs(d.app.db, actor).find((j) => j.job_id === v.job.id);
+  const plan = sitePlanOf(d.app.db, v.job.id);
+  const row = (k: string, val: string | null) => h`<tr><th scope="row">${k}</th><td>${val === null || val === '' ? h`<span class="pk-src pk-need">not on file</span>` : val}</td></tr>`;
+  return h`<p class="lede">Who the report is for, and which property. It comes from the claim and the survey job.</p>
+    <table class="pk-table"><tbody>
+      ${row('Client', v.job.business_name)}
+      ${row('Property', v.property === null ? null : v.property.label)}
+      ${row('Postcode', v.property?.postcode ?? job?.property_postcode ?? null)}
+      ${row('Kind of property', SECTOR_WORDS[v.job.sector] ?? v.job.sector)}
+      ${row('Claim reference', job?.claim_ref ?? null)}
+      ${row('Surveyor', v.job.surveyor_name)}
+    </tbody></table>
+    ${plan === null ? h`<p class="help">No site plan yet. Get it in chapter 9; it goes on the report’s cover.</p>`
+      : h`<div class="rp-plan">${sitePlanSvg(plan, `Site plan round ${plan.postcode}`)}<p class="help">${pickWords(plan)} ${plan.attribution}. Not the legal boundary of the site.</p></div>`}`;
+}
+
+/** Chapter 3 — what the report is for, and the basis it was made on (Phase 153e lines 1 to 3: the evidence level). */
+export function purposeChapter(d: PackPageDeps, v: P.PackView): Safe {
+  const b = basisOf(d.app.db, v.job.id);
+  const level = deskFirstReading(d.app.db, v.job.id);
+  return h`<p class="lede">What the report is for, and what it rests on.</p>
+    <p><strong>The report.</strong> A capital allowances valuation report. Until you sign it, it is a working draft, not tax advice.</p>
+    <p><strong>Its purpose.</strong> To find the spend on plant and machinery that qualifies for a capital allowances claim on this property. The price paid is split in a just and reasonable way (section 562 of the Capital Allowances Act 2001).</p>
+    <p><strong>How you inspected.</strong> ${b === null ? h`<span class="pk-src pk-need">not recorded</span> Say it in chapter 2.` : h`${b.words}${b.note === null ? '' : `: ${b.note}`} <span class="help">(${b.by_name})</span>`}</p>
+    <p><strong>How much evidence this job needs.</strong> ${level === null ? 'Not worked out yet.' : level.level_words}</p>
+    <p class="help">The standard assumptions are in chapter 21. Write any special assumption, and why, in chapter 21 when it is built; for now, in your notes.</p>`;
+}
+
+/** Chapter 6 — the room counts recorded on the job (they size the per-room lines of chapter 10), and what each room is. */
+export function roomsChapter(d: PackPageDeps, v: P.PackView): Safe {
+  const r = roomsFor(v.job.sector);
+  if (r === null) return h`<p class="help">This kind of property has no room list.</p>`;
+  const counts = new Map(d.app.db.all<{ room_id: string; room_count: number | null }>(
+    'SELECT room_id, room_count FROM surveyor_room_counts WHERE job_id = ?', [v.job.id]).map((x) => [x.room_id, x.room_count] as const));
+  const missing = r.rooms.filter((x) => (counts.get(x.room_id) ?? null) === null).length;
+  return h`<p class="lede">The rooms, counted. A count sizes every line of chapter 10 that is counted per room. This sector scales on ${r.scales_on}.</p>
+    ${missing === 0 ? raw('') : h`<p class="gate" role="note">${String(missing)} of ${String(r.rooms.length)} rooms not counted yet. Count them on <a href="/staff/survey/${v.job.id}">the survey job</a>.</p>`}
+    <table class="pk-table"><thead><tr><th>Room</th><th>How it is counted</th><th>Count</th></tr></thead><tbody>
+      ${r.rooms.map((x) => { const c = counts.get(x.room_id) ?? null; return h`<tr><td>${x.label}${x.caveat === undefined ? '' : h`<br><span class="help">${x.caveat}</span>`}</td><td>${x.driver}</td><td>${c === null ? h`<span class="pk-src pk-need">not counted</span>` : String(c)}</td></tr>`; })}
+    </tbody></table>
+    ${r.note === undefined ? raw('') : h`<p class="help">${r.note}</p>`}`;
+}
+
+/** Chapter 12 — every fixture, item by item: its pool, its share, our default where it is one, and how it was seen. */
+export function itemsChapter(d: PackPageDeps, v: P.PackView): Safe {
+  const evidence = evidenceByLine(d.app.db, v.job.id);
+  const basis = basisOf(d.app.db, v.job.id)?.basis ?? null;
+  const live = v.lines.filter((l) => !l.removed);
+  const out = v.lines.filter((l) => l.removed);
+  return h`<p class="lede">Every fixture, item by item. Chapter 10 is where you change one; this is how the report lists them.</p>
+    <table class="pk-table"><thead><tr><th>Item</th><th>Pool</th><th>Share that qualifies</th><th>Seen</th></tr></thead><tbody>
+      ${live.map((l) => h`<tr><td>${l.label}${l.template === null || !l.template.authority.includes(TEST_DEFAULT_WORDS) ? raw('') : h`<br><span class="help">${l.template.authority.slice(l.template.authority.indexOf(TEST_DEFAULT_WORDS))}</span>`}</td>
+        <td>${l.pool === null ? h`<span class="pk-src pk-need">not decided</span>` : POOL_WORDS[l.pool] ?? l.pool}</td>
+        <td>${l.qpct_bp.value === null ? h`<span class="pk-src pk-need">needed</span>` : PCT(l.qpct_bp.value)}</td>
+        <td>${findingSeen(basis, l, evidence.get(l.element_id ?? '')?.count ?? 0)}</td></tr>`)}
+    </tbody></table>
+    ${out.length === 0 ? raw('') : h`<p class="help">Taken out, so not in the report: ${out.map((l) => l.label).join(', ')}.</p>`}`;
+}
+
+const POOL_WORDS: Readonly<Record<string, string>> = Object.freeze({ MP: 'Main pool', SR: 'Special rate pool' });
+
+/** Chapter 13 — the two pools: what is in each, from chapter 10's lines. Nothing is counted until it is complete. */
+export function poolsChapter(v: P.PackView): Safe {
+  const sum = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
+  const group = (pool: string | null) => v.lines.filter((l) => !l.removed && l.pool === pool);
+  const total = (ls: readonly P.ViewLine[]) => { let t = 0; for (const l of ls) { const q = sum.get(l.id)?.qualifying_pence ?? null; if (q === null) return null; t += q; } return t; };
+  const undecided = group(null);
+  return h`<p class="lede">Where the spend that qualifies sits: the main pool, or the special rate pool.</p>
+    <table class="pk-table"><thead><tr><th>Pool</th><th>Items</th><th>Qualifying spend</th></tr></thead><tbody>
+      ${(['MP', 'SR'] as const).map((p) => { const ls = group(p); const t = total(ls); return h`<tr><td>${POOL_WORDS[p]!}</td><td>${String(ls.length)}</td><td>${t === null ? h`<span class="pk-src pk-need">not complete</span>` : PENCE(t)}</td></tr>`; })}
+    </tbody></table>
+    ${v.sums.qualifying_pence === null ? h`<p class="help">The pools are final only when every value is in (chapter 4 lists what is missing).</p>`
+      : h`<p><strong>After the price is shared out:</strong> main pool ${PENCE(v.sums.main_pool_pence)} · special rate pool ${PENCE(v.sums.special_pool_pence)}.</p>`}
+    ${undecided.length === 0 ? raw('') : h`<p class="gate" role="note">${String(undecided.length)} item${undecided.length === 1 ? '' : 's'} with no pool yet: ${undecided.map((l) => l.label).join(', ')}. Decide each in chapter 10.</p>`}`;
+}
+
+/** Chapter 21 — the report's limits and standard assumptions, with the planning assumption (Phase 153e line 11). */
+export function limitsChapter(): Safe {
+  return h`<p class="lede">What the report does not cover, and what it assumes. Test wording, for you to approve.</p>
+    <ul>
+      <li><strong>Scope.</strong> This report is for capital allowances only. It is not a market valuation or a survey of the building’s condition. It is not for a loan or for insurance.</li>
+      <li><strong>Basis.</strong> A just and reasonable split of the price paid (section 562). The plant is valued at what it would cost to replace. The rest goes to the building and the bare land.</li>
+      <li><strong>Standard assumptions.</strong> Title is good. No undisclosed rights or covenants change the value. The land is not contaminated beyond anything stated. What the client and their advisers told us is accurate and complete.</li>
+      ${REPORT_ASSUMPTIONS.map((a) => h`<li><strong>Planning.</strong> ${a}</li>`)}
+      <li><strong>Reliance.</strong> Prepared for the client and their advisers only. Nobody else may rely on it.</li>
+      <li><strong>Not tax advice.</strong> The claim itself is the tax adviser’s.</li>
+    </ul>
+    <p class="help">Write any special assumption in your notes for now. Do the same for a limit on what you could inspect, or anything you were asked to leave out.</p>`;
 }
 
 /* ------------------------------------------------------------ chapter 15: grants and VAT */

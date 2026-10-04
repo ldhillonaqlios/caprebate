@@ -141,7 +141,7 @@ describe('the approval of the survey pack', () => {
     assert.match(page, /The button turns on when every line above is ticked\./);
     assert.deepEqual(keys(), ['sums', 'legal', 'read', 'basis', 'details']);
     assert.match(page, /✗ \d+ values are still needed\. There is no total until then\. <a href="\/staff\/survey\/job-ap-1\/pack\?ch=4">Put it right<\/a>/);
-    assert.match(page, /✗ Open every chapter first\. Still to open: 2 · Your inspection; 4 · Summary; 7 · The legal check; 9 · Price, land and floor area; 10 · Rebuild cost and split; 15 · Grants and VAT\./);
+    assert.match(page, /✗ Open every chapter first\. Still to open: 1 · Report and property; 2 · Your inspection; 3 · Purpose and basis; 4 · Summary; 6 · Room schedule; 7 · The legal check; 9 · Price, land and floor area; 10 · Rebuild cost and split; 12 · Fixtures, item by item; 13 · Pools; 15 · Grants and VAT; 21 · Limits\./); // PHASE 153f: six more chapters built
     assert.match(page, /✗ Add your RICS number below\./);
     assert.match(page, /✓ The job has its locked estimate\./);
     for (const s of DECLARATION) assert.ok(page.includes(s.replace(/’/g, '’')), s);
@@ -193,7 +193,7 @@ describe('the approval of the survey pack', () => {
     // A chapter number out of range, or not built, is never recorded.
     await req('u-ap-sam', `${P()}?ch=99`);
     await req('u-ap-sam', `${P()}?ch=5`);
-    assert.equal(made.app.db.get<{ c: number }>('SELECT COUNT(*) AS c FROM survey_pack_reads WHERE chapter NOT IN (2, 4, 7, 9, 10, 15, 23)')!.c, 0);
+    assert.equal(made.app.db.get<{ c: number }>(`SELECT COUNT(*) AS c FROM survey_pack_reads WHERE chapter NOT IN (${[...chaptersToRead(), 23].join(', ')})`)!.c, 0); // PHASE 153f: the built chapters, read from the list
     assert.throws(() => made.app.db.run('UPDATE survey_pack_reads SET legal_seq = 0'), /never edited/);
   });
 

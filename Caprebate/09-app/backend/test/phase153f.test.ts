@@ -5,6 +5,8 @@
  * the start token is asked for that same person; a member of staff with no Zoom user on our account falls back to the
  * shared host, and the call's page says so. Recorded Zoom answers only: nothing reaches Zoom.
  *
+ * Line 2: six more chapters of the survey pack, each showing what the pack already holds.
+ *
  * Line 6(a): a photo, voice note or document someone sends us on WhatsApp is fetched from Meta when a person presses
  * "Get it", checked against Meta's SHA-256, and kept sealed; then opened as a download. Recorded Meta answers only.
  */
@@ -21,6 +23,7 @@ import { secretsFromValues } from '../src/secrets.ts';
 import { forgetZoomToken } from '../src/connectors/zoom.ts';
 import { activeMeeting, meetingHost, reconcileVideoMeeting } from '../src/web/video-calls.ts';
 import { readWebhook } from '../src/connectors/whatsapp.ts';
+import { raw } from '../src/web/html.ts';
 import { attachmentOf, fetchWhatsAppAttachment, receiveWhatsApp, whatsAppAttachmentBytes } from '../src/web/whatsapp.ts';
 
 const T = '2026-10-04T00:00:00.000Z';
@@ -215,5 +218,82 @@ describe('line 6(a) — a file someone sends us on WhatsApp, got and kept here',
     made.app.secrets = secretsFromValues({});
     assert.match(await why(off), /Put the WhatsApp keys in the key file/);
     for (const id of [elsewhere, wrong, big, off]) assert.equal(attachmentOf(made.app.db, id)!.fetched_at, null);
+  });
+});
+
+/* ------------------------------------------------------------------ line 2: six more chapters of the survey pack */
+
+import { packView, saveLine, setLineRemoved, savePackValue, type PackDeps } from '../src/web/survey-pack.ts';
+import { reportChapter, purposeChapter, roomsChapter, itemsChapter, poolsChapter, limitsChapter, CHAPTERS } from '../src/web/survey-pack-pages.ts';
+import { chaptersToRead } from '../src/web/pack-chapters.ts';
+import { actor } from './helpers.ts';
+
+describe('line 2 — chapters 1, 3, 6, 12, 13 and 21 of the survey pack', () => {
+  const SV = actor('SURVEYING', 'u-f-sam');
+  let k = 0;
+  const pd = (): PackDeps => ({ db: made.app.db, audit: made.app.audit, now: made.app.now, newId: () => `f153-${String(++k)}` });
+  const pageDeps = () => ({ app: made.app, newId: () => `f153p-${String(++k)}`, nav: () => raw(''), stamp: (x: string) => x, problem: () => 'handled' as const });
+  before(() => {
+    const db = made.app.db;
+    db.run('INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,NULL)',
+      ['u-f-sam', 'sam153f@example.invalid', 'sam153f@example.invalid', 'Sam Surveyor', 'SURVEYING', 'x', T, T]);
+    db.run('INSERT INTO businesses (id,name,sector,stage,created_at,claimant_type) VALUES (?,?,?,?,?,?)', ['b-fdn', 'Invented Dental Limited', 'dental', 'SURVEY', T, 'COMPANY']);
+    db.run('INSERT INTO properties (id,business_id,label,postcode,created_at) VALUES (?,?,?,?,?)', ['p-fdn', 'b-fdn', '1 Invented Row', 'ZZ9 9ZZ', T]);
+    db.run('INSERT INTO assessments (id,business_id,sector,submitted_at,shown_low_pence,shown_high_pence,created_at) VALUES (?,?,?,?,?,?,?)', ['as-fdn', 'b-fdn', 'dental', T, 100, 200, T]);
+    db.run('INSERT INTO claims (id, claim_ref, business_id, property_id, assessment_id, workstream, stage, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
+      ['c-fdn', 'CR-2026-1539', 'b-fdn', 'p-fdn', 'as-fdn', 'UNKNOWN', 'VALUATION', T, T]);
+    db.run('INSERT INTO surveyor_jobs (id,business_id,assessment_id,surveyor_id,state,committed_at,created_at,claim_id) VALUES (?,?,?,?,?,?,?,?)',
+      ['j-fdn', 'b-fdn', 'as-fdn', 'u-f-sam', 'SEALED', null, T, 'c-fdn']);
+    db.run('INSERT INTO register_records (id,business_id,source_id,entity_id,fields_json,obtained_at,property_id) VALUES (?,?,?,?,?,?,?)',
+      ['rr-title-fdn', 'b-fdn', 'HMLR_TITLE', 'ZZFDN', JSON.stringify({ title_number: 'ZZFDN', price_paid: 1000000 }), T, 'p-fdn']);
+    const v0 = () => packView(pd(), SV, 'j-fdn');
+    for (const l of v0().lines) {
+      if (l.element_id === 'LS-SR-001' || l.element_id === 'LS-DEN-015' || l.removed) continue;
+      setLineRemoved(pd(), SV, 'j-fdn', { line: l.id, reason: 'Not in this building', seq: String(v0().seq) }, true);
+    }
+    saveLine(pd(), SV, 'j-fdn', { line: 'LS-SR-001', qty: '1000', rate: '100', qpct: '100', pool: 'SR', reason: 'Measured', seq: String(v0().seq) });
+  });
+
+  test('six more chapters are built, so the surveyor opens each before approving; the other ten wait for Phase 153g', () => {
+    assert.deepEqual(CHAPTERS.filter((c) => c.built).map((c) => c.n), [1, 2, 3, 4, 6, 7, 9, 10, 12, 13, 15, 21, 23]);
+    assert.deepEqual(chaptersToRead(), [1, 2, 3, 4, 6, 7, 9, 10, 12, 13, 15, 21]);
+  });
+
+  test('chapter 1 names the client, the property, the claim and the surveyor, and says what is not on file', () => {
+    const out = String(reportChapter(pageDeps(), SV, packView(pd(), SV, 'j-fdn')));
+    for (const w of ['Invented Dental Limited', '1 Invented Row', 'ZZ9 9ZZ', 'Dental practice', 'Sam Surveyor', 'No site plan yet']) assert.ok(out.includes(w), w);
+  });
+
+  test('chapter 3: the purpose, and "not recorded" for how the surveyor inspected until chapter 2 says (N4)', () => {
+    const out = String(purposeChapter(pageDeps(), packView(pd(), SV, 'j-fdn')));
+    assert.match(out, /section 562 of the Capital Allowances Act 2001/);
+    assert.match(out, /How you inspected\.<\/strong> <span class="pk-src pk-need">not recorded<\/span>/);
+  });
+
+  test('chapter 6: every dental room, uncounted ones said as not counted, and a count shown once it is recorded', () => {
+    const v = packView(pd(), SV, 'j-fdn');
+    const before = String(roomsChapter(pageDeps(), v));
+    assert.match(before, /7 of 7 rooms not counted yet/);
+    made.app.db.run('INSERT INTO surveyor_room_counts (id, job_id, room_id, room_count, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?)', ['rc-f1', 'j-fdn', 'DN-R1', 3, 'u-f-sam', T]);
+    const after = String(roomsChapter(pageDeps(), v));
+    assert.match(after, /6 of 7 rooms not counted yet/);
+    assert.match(after, /<td>3<\/td>/);
+  });
+
+  test('chapter 12 lists each item with its pool, share and how it was seen, and our default placements say so; chapter 13 sums the pools', () => {
+    const v = packView(pd(), SV, 'j-fdn');
+    const items = String(itemsChapter(pageDeps(), v));
+    assert.match(items, /Special rate pool/);
+    assert.match(items, /From documents/);
+    assert.match(items, /Test default \(Phase 153e\), for the surveyor to confirm: treated as normal air flow/);
+    const pools = String(poolsChapter(v));
+    assert.match(pools, /<td>Special rate pool<\/td><td>2<\/td>/);
+    assert.match(pools, /not complete/, 'nothing counted until every value is in');
+  });
+
+  test('chapter 21 carries the standard assumptions and the planning assumption, word for word', () => {
+    const out = String(limitsChapter());
+    assert.match(out, /We assume the property’s current use is lawful\./);
+    assert.match(out, /Nobody else may rely on it/);
   });
 });
