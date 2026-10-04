@@ -364,8 +364,8 @@ export function addCalendarMonth(day: string): string {
 export const COMPLAINT_UPDATE_EVERY_DAYS = 28;
 export const COMPLAINT_TARGET_NOTE =
   'These are our own targets, not legal deadlines. The law asks for an answer without undue delay (s.164A(4)). ' +
-  'We aim to tell the person how it is going at least every 28 days, and sooner if the time we expect changes, ' +
-  'and to give the outcome within one month of receiving it.';
+  'We aim to tell the person how it is going at least every 28 days. ' +
+  'We tell them sooner if our timing changes. We aim to give the outcome within one month.';
 
 export type ComplaintTargets = {
   /** The last time the person was told anything: the latest progress update, the acknowledgement, or receipt. */

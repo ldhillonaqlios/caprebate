@@ -38,14 +38,14 @@ test mode, developers will change this".
 | CQC | Care registrations and beds | `CQC_SUBSCRIPTION_KEY` in the local key file, not in Vercel or `TEST_DEPLOY_KEYS`; switch off; free gate shut | 156 A5/B3 |
 | EPC register | Floor area, age band | `EPC_API_TOKEN` in the local key file only; switch off | 156 A5/B3 |
 | Homedata | Paid address/UPRN and planning | `HOMEDATA_API_KEY` in the local key file only; needs a balance; switch off | 156 A5/B3 |
-| Companies House research | Profile, filings, PSC, officers after sign-up | Key is set; switches off; free gate (a published privacy notice) | 153c line 18 |
+| Companies House research | Profile, filings, PSC, officers after sign-up | Key is set; switches off; free gate (a published privacy notice) | 156 B3 (moved from 153c line 18) |
 | HM Land Registry Price Paid | Sale prices | Switch off; free gate | — |
 | HM Land Registry INSPIRE | Land boundary / site area | Switched off in code; first test download; the files a server needs | 155 line 6 |
 | Planning (planning.data.gov.uk, PlanIt) | Planning history | Switch off; free gate; PlanIt's "not for commercial use" | 153b line 19 |
 | ONS postcode table | Postcode to council area | A 75 MB file on a server (`CAPREBATE_POSTCODE_DB`) | 155 line 6 |
 | Google Analytics 4 | Website visits after consent | `GA4_MEASUREMENT_ID`; Sadique's review of the measurement plan | 156 A7 |
 | Engagement signing | Typed-name signature, in house | `ENGAGEMENT_SIGNING` off until the solicitor confirms | waiting on the solicitor |
-| Keeping uploaded originals | Encrypted copies of client files | `CAPREBATE_ORIGINALS_KEY` is set; `KEEP_ORIGINALS` off | 153c line 16 |
+| Keeping uploaded originals | Encrypted copies of client files | `CAPREBATE_ORIGINALS_KEY` is set; ON for the test website only (`KEEP_ORIGINALS_TEST_WEBSITE`, passed by api/index.mjs, seven years, Phase 153c); the shipped `KEEP_ORIGINALS` stays off; Sadique's check | waiting on Sadique |
 | HM Land Registry title (Business Gateway) | Official title copy | Retired: done by hand | — |
 
 ## Named in the plans, not built
@@ -55,4 +55,4 @@ bought), and the outside reply timer written into the repository — Phase 155.
 
 ## Set in Vercel but doing nothing
 
-`BLOB_WEBHOOK_PUBLIC_KEY` (read nowhere). `CAPREBATE_ORIGINALS_KEY` (read, but `KEEP_ORIGINALS` is off).
+`BLOB_WEBHOOK_PUBLIC_KEY` (read nowhere). (`CAPREBATE_ORIGINALS_KEY` was here until Phase 153c, 4 Oct 2026: the test website now keeps uploads with it.)

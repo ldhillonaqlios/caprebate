@@ -987,3 +987,11 @@ reasonably be established remotely should require a site inspection before a sur
  **Marked 4 October 2026 by Phase 153b. Nothing moved into or out of this register, and its own size has not changed: nine entries covering nine board items, all nine at Built — awaiting sign-off.** Phase 153b's readings are the tax adviser's; FOR THE ACCOUNTANT gained four entries.
 
  **And the board's own total at the close of Phase 153b, 4 October 2026, counted in code: 124 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-five is 124.
+
+---
+
+## Phase 153c, 4 October 2026 — nothing moved into or out of this register
+
+ Phase 153c built data protection and back office work for the data protection officer to check. Two items were added to FOR THE SOLICITOR, THE DPO AND THE DEVELOPER (SDP-P41 and SDP-P42); none here.
+
+ **And the board's own total at the close of Phase 153c, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

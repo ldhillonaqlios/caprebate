@@ -50,7 +50,8 @@ import { CLIENT_SHARE_GIVE, REFERRAL_FORM } from './introducers.ts';
 import { CONVEYANCING_STRIP } from './conveyancing-strip.ts';
 import { FEE_CONTROLS } from './fee-controls.ts';
 import { MANDATORY_DOCUMENTS } from './mandatory-documents.ts';
-import { KEEP_ORIGINALS } from './originals.ts';
+import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from './originals.ts';
+import { ENQUIRY_RETENTION } from './enquiry-retention.ts';
 import { MESSAGE_RETENTION } from './message-retention.ts';
 import { EMAIL_SENDING } from '../stubs/email-provider.ts';
 import { ENGAGEMENT_SIGNING } from './signing.ts';
@@ -145,6 +146,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   FEE_CONTROLS.break_and_abort the break and abort fees                        src/web/fee-controls.ts
  *   MANDATORY_DOCUMENTS          the documents a gate requires                   src/web/mandatory-documents.ts
  *   KEEP_ORIGINALS               keeping the file a client sent (Phase 140)      src/web/originals.ts
+ *   KEEP_ORIGINALS_TEST_WEBSITE  the same, on the test website only (153c)      src/web/originals.ts, passed by api/index.mjs
  *   EMAIL_SENDING                sending email from contact@ (Phase 141)       src/stubs/email-provider.ts
  *   INBOUND_EMAIL                reading replies to contact@ (Phase 142)       src/stubs/email-inbound.ts
  *   IDENTITY_CHECK               the online identity check (Phase 151)          src/connectors/identity-check.ts
@@ -153,6 +155,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   COMPANY_TYPE_FROM_REGISTER   the company type from Companies House (153b)   src/connectors/company-search.ts
  *   ENGAGEMENT_SIGNING           the built-in letter signature (Phase 146f)      src/web/signing.ts
  *   MESSAGE_RETENTION            the message clean-up job (Phase 142a)           src/web/message-retention.ts
+ *   ENQUIRY_RETENTION            the closed-enquiry clean-up job (Phase 153c)    src/web/enquiry-retention.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/web/defence-pack.ts
  *   ALLOWANCE_PROFIT_COMPARISON  the with-and-without allowance and profit run   src/web/allowance-profit-comparison.ts
  *   FUNNEL_SWITCHES.breakeven_is_insufficient_profit
@@ -182,6 +185,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'FEE_CONTROLS.break_and_abort', on: FEE_CONTROLS.break_and_abort.enabled, home: 'src/web/fee-controls.ts' },
     { switch: 'MANDATORY_DOCUMENTS', on: MANDATORY_DOCUMENTS.enabled, home: 'src/web/mandatory-documents.ts' },
     { switch: 'KEEP_ORIGINALS', on: KEEP_ORIGINALS.enabled, home: 'src/web/originals.ts' },
+    { switch: 'KEEP_ORIGINALS_TEST_WEBSITE', on: KEEP_ORIGINALS_TEST_WEBSITE.enabled, home: 'src/web/originals.ts (the test website only, through api/index.mjs)' },
     { switch: 'EMAIL_SENDING', on: EMAIL_SENDING.enabled, home: 'src/stubs/email-provider.ts' },
     { switch: 'INBOUND_EMAIL', on: INBOUND_EMAIL.enabled, home: 'src/stubs/email-inbound.ts' },
     { switch: 'IDENTITY_CHECK', on: IDENTITY_CHECK.enabled, home: 'src/connectors/identity-check.ts' },
@@ -191,6 +195,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'ADDRESS_LOOKUP', on: ADDRESS_LOOKUP.enabled, home: 'src/connectors/address-lookup.ts' },
     { switch: 'ENGAGEMENT_SIGNING', on: ENGAGEMENT_SIGNING.enabled, home: 'src/web/signing.ts' },
     { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/web/message-retention.ts' },
+    { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/web/enquiry-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/web/defence-pack.ts' },
     { switch: 'ALLOWANCE_PROFIT_COMPARISON', on: ALLOWANCE_PROFIT_COMPARISON.enabled, home: 'src/web/allowance-profit-comparison.ts' },
     { switch: 'FUNNEL_SWITCHES.breakeven_is_insufficient_profit', on: FUNNEL_SWITCHES.breakeven_is_insufficient_profit, home: 'src/web/funnel-session.ts' },

@@ -1768,3 +1768,11 @@ Signed .............................  Date ..........................
  **One thing the count found, for you to know about:** where a seller who could have claimed never did, the online estimate applies no cap and raises no flag about the pooling requirement — it applies the election and fixed-value caps only to a seller known to have claimed. The surveyor's working file does assess it. It is written into the sweep's phase of faults to check against Rulebook B.
 
  **And the board's own total at the close of Phase 153b, 4 October 2026, counted in code: 124 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-five is 124.
+
+---
+
+## Phase 153c, 4 October 2026 — nothing moved into or out of this register
+
+ Phase 153c built data protection and back office work for the data protection officer to check. Two items were added to FOR THE SOLICITOR, THE DPO AND THE DEVELOPER (SDP-P41 and SDP-P42); none here.
+
+ **And the board's own total at the close of Phase 153c, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

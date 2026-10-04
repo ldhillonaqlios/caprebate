@@ -29,6 +29,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] File your own care-provider confirming-letter template (Word question 77) in `05-reports-and-templates/`; until then the supported-living list points at our draft, `Caprebate-Care-Provider-Confirming-Letter-Template-DRAFT-v0.1.md` (Phase 153b, 4 Oct 2026).
 - [ ] Confirm the two Phase 153b builds that are yours: the job cost model's line renamed "our own tax adviser, if we introduce one" (Word question 191), and Homedata as the chosen planning source, still off (Word question 202).
 - [ ] Answer Word questions 235, 236, 238, 187 and 34 (237 is for the tax adviser).
+- [ ] Confirm the two Phase 153c readings that are yours: "data is stored for 7 years" read as OUR copy (Word question 192), and the address lookup kept seven years in test until Homedata answers (Word question 37, and send Homedata the drafted email when the account opens).
 - [ ] Others in the tracker: break and abort fee, clawback clause 13, Homedata licence facts, rate-card uplifts,
       solicitor brief, mailbox confirmation, Google Business Profile, bank and insurance, HMRC corporation tax,
       supplier breach clauses, and ten lower-priority items (Homedata, cyber security, hardware, brand, analytics…).
@@ -49,12 +50,16 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Break fee and abort fee; fill the engagement letter's eight blanks with the solicitor.
 - [ ] Countersign the DPO's appointment; sign the Anthropic contract when Sadique approves it.
 - [ ] Where the breach register lives and who may write to it (SDP-G1); the one-off adviser engagement (SDP-G2).
+- [ ] Take the draft letter of authority for Lakhbir's breach decisions to the solicitor and, if they agree, sign it (Word question 184; `06-commercial-and-governance/Caprebate-Letter-of-Authority-Breach-Deputy-DRAFT-v0.1.md`, Phase 153c).
+- [ ] Agree the draft deputy route for rights requests and complaints, with you countersigning (Word question 56; complaints pack 3.5A, rights procedure 5.9A, Phase 153c).
 
 ## The DPO (Sadique Maskeen)
 
 - [ ] Sign his own appointment.
 - [ ] The 200-address matching test (Word question 200) — the only item at "Blocked - question".
 - [ ] May we keep a company's type from Companies House ("ltd", "plc", "llp")? Proposed as a permitted field on 4 Oct 2026 (Phase 153b), with its switch off — Word question 240.
+- [ ] Check the Phase 153c builds, each built on our recommendation in the test system (Word questions 37, 55, 56, 162, 165, 178, 181, 182, 183, 184, 192, 193, 201, 208, 219 and 222, each marked "Built 4 October 2026 (Phase 153c)"); the new entries SDP-P41 (healthcare premises import) and SDP-P42 (the enquiry clean-up, off until you approve twelve months).
+- [ ] May the survey pack show the surveyor how much each grant paid? Built hidden — Word question 241 (Phase 153c).
 - [ ] Approve the retention schedule, the document-pipeline impact assessment (DPIA), the breach procedure and the
       upload boundary.
 - [ ] Approve and publish the privacy notice naming every service (IONOS, Didit, Postcodes.io, Companies House, Zoom,
@@ -70,6 +75,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       required, is an offence).
 - [ ] The engagement letter: review it; confirm a typed-name signature is acceptable (then signing is switched on).
 - [ ] SDP-L2 and SDP-L9 to L21; introducer terms; the terms, complaints and consent policies.
+- [ ] Phase 153c: the email-only surveyor breach clause (Word question 55, 2C-T beside the draft), the letter of authority (question 184) and the deputy route (question 56).
 
 ## The accountant and the tax adviser
 

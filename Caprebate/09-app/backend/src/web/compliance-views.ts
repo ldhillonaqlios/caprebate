@@ -359,7 +359,7 @@ export function breachListPage(nav: Nav, rows: readonly { id: string; ref: strin
         ${input(`Aware — fix it on the day (${moment})`, 'awareness_at')} ${area('Why that is the moment of awareness', 'awareness_basis')}
         ${choose('When it happened is', 'occurred_state', OCCURRED_STATES)} ${input(`Happened (${moment})`, 'occurred_at')} ${area('The basis, if estimated or unknown', 'occurred_basis')}
         ${area('What happened — never bank details', 'description')}`)}
-      ${form('/staff/compliance/breach-names/deputy', 'Name the deputy for the restricted names list', h`<p class="help">Besides the data protection officer, one Admin may open the restricted names list: the deputy named in writing (the letter of authority). Naming another replaces the last.</p>
+      ${form('/staff/compliance/breach-names/deputy', 'Name the deputy for the restricted names list', h`<p class="help">The data protection officer may open the list of names. So may one Admin: the deputy named in writing. Naming another replaces the last.</p>
         ${input('Their login (user id)', 'user_id')} ${input('The paper that names them', 'source')}`)}`,
   });
 }
