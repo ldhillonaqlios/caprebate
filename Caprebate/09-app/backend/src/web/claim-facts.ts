@@ -148,7 +148,7 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
     label: 'The client has checked with whoever paid the grant that claiming will not make them pay it back', kind: 'choice', choices: YES_NO,
   },
   GRANT_SPLIT_ADVISER_VIEW: {
-    label: 'The tax adviser has given their view on how a grant with no breakdown is split — counted only with the tax adviser as the source',
+    label: 'The tax adviser has said how to split a grant with no breakdown. Only counts if the tax adviser told us',
     kind: 'choice', choices: YES_NO,
   },
 });

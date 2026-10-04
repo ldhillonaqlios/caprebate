@@ -35,7 +35,7 @@
  *
  * NOTHING HERE READS A DATABASE, A CLOCK OR A SWITCH: the switches are arguments, so both ways are tested
  * (test/pack-grants.test.ts) while the one that ships is off. Whether a grant reduces qualifying spend item by item is
- * the tax adviser's to confirm — FOR THE ACCOUNTANT, ACC-A44.
+ * the tax adviser's to confirm — FOR THE ACCOUNTANT, ACC-A16.
  */
 import { mulDivRound, type Needed, type PackInputs, type PackLine, type PackSums } from './pack-sums.ts';
 
@@ -206,7 +206,7 @@ export function applyGrants(inputs: PackInputs, lines: readonly PackLine[], sums
     let own = ZERO;
     for (const [id, a] of metBy(x.g, ls)) own += loss(id, a);
     const words = ls.length === 0
-      ? 'Matched to rows of the fixture list that are not counted in this pack — items that never qualify, or lines taken out — so it takes nothing off.'
+      ? 'It paid only for items this pack does not count. Those items never qualify, or were taken out. So it takes nothing off.'
       : x.words;
     return { grant_id: x.g.id, route: x.route, words, line_ids: ls.map((l) => l.id), reduction_pence: Number(own > Q ? Q : own) };
   });

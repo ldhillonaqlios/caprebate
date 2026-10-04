@@ -29,6 +29,8 @@
 
  Every reading of the law in this document that would make a claim **bigger** has been coded, tested both ways, and left **off**. The engine behaves today exactly as it behaved before any of the work was done. Eleven rulebooks are written with the statute cited throughout. Twenty-four engine readings sit in the live source behind named switches, each set to the behaviour the engine already had — counted by the extraction verifier and checked against the code on 15 September 2026 — plus one switch for the break-even answer (ACC-A13), which sits in the back end's funnel rather than in the engine. Of the twenty-four, fifteen would make a claim bigger if switched on, three can only make one smaller, four move money either way, one changes the basis of a figure and one removes false negatives. The ones that can only make a claim smaller are off too: off means today's behaviour, not the safer reading. (Corrected 14 September 2026 by Phase 131: this said seventeen. Corrected 15 September 2026 by Phase 132: this said nineteen. Phase 132 built five more — the aggregation of repairs into a replacement, the corporation tax rate from the associated-company count, the 60% band where the personal allowance is withdrawn, the later company deadline for a partnership with a company partner, and a landlord's contribution in supported living.)
 
+ **Added 4 October 2026 by Phase 153a:** there are now twenty-five engine readings. The twenty-fifth, ACC-A16, takes a grant matched to named items off only those items, and it moves money either way; it is read by the surveyor's working file, not by the online estimate. The split above is counted for the first twenty-four. It is being re-derived for all of them in code, by switching each on alone against the same set of cases, once the readings Phase 153b adds are built.
+
 
  **We are not asking you to bless a position we have already taken. We have not taken it.**
 
@@ -562,6 +564,34 @@ Signed .............................  Date ..........................
 Roll the year end forward
 ```
 
+### ACC-A16 · When a grant's papers say which items it paid for, should it come off only those items?
+
+> Added 4 October 2026 by Phase 153a. It is numbered ACC-A16 because ACC-A15 was the last number, and it sits here, after ACC-A15, because it is the item-by-item half of the grant question ACC-A8 asks for supported living. Money moves either way on it: a grant that paid for qualifying items takes more off than an equal share would, and a grant that paid only for items that never qualify takes nothing off.
+
+|  What it is |  Section 532 reduces spend "to the extent that" someone else met it, and Rulebook F's rule F3 says to trace a grant to the items it paid for before sharing anything out. Until 4 October 2026 nothing in our software could: a grant on a claim was matched to its items in words only. Now each grant on the claim record can name the rows of our fixture list it paid for (the electrics, the fire alarm, the nurse call), and the survey pack — the surveyor's working file for a claim — takes the claim's grants off its figures in a new chapter, "Grants and VAT". A worked example: price paid £1,000,000, land £200,000, so the building is £800,000; £120,000 of it qualifies (£40,000 for the fire alarm in the main pool, £80,000 for the electrics in the special rate pool); the NHS paid £40,000 towards the fire alarm. |
+| --- | --- |
+|  What state it is in |  Built and tested both ways. Off, as it ships, every grant comes off every item in equal share — the grant as a share of the price paid, which is how our online estimate has always treated a grant: £40,000 on £1,000,000 is 4%, so £115,200 qualifies. On, a grant matched to rows of the list comes off only those rows: the fire alarm's £40,000 was met in full, so £80,000 qualifies, all of it in the special rate pool. A grant matched only in words, or not at all, keeps the equal share — we never treat an unknown trace as having paid for nothing. Insurance money after damage is not taken off either way. A grant whose amount is not known gives no figure at all until it is known. The online estimate does not change either way: it holds no item-by-item spend. |
+|  Which way the money moves |  EITHER WAY, and only on the switch. In the example, on takes £40,000 off where off takes £4,800. A grant that paid only for the flats or the walls, which never qualify, takes nothing off when on, where off takes its share. |
+|  What we are asking you to do |  Answer the question in the Word questions document under your name: "When a grant's papers say which items it paid for, should it come off only those items?" And tell us if a grant matched to several items should be shared between them by their rebuild cost, which is what we built, or in some other way. |
+|  If you agree |  One-line switch. Nothing else needs building. |
+|  If you do not |  The switch stays off and every grant keeps the equal share. Before any claim moves on, the gate already asks for the grant papers or your view on the split (built the same day, for the question "How should we split a grant when we cannot tell what it paid for?"). |
+|  What it unblocks |  Whether a grant reduces only what it paid for, in every sector — and with it the supported-living case in ACC-A8, where most of a grant bought flats that never qualify. |
+
+```
+SIGN-OFF        Confirmed  /  Amended  /  Rejected      (delete two)
+
+(a) Does a grant traced to named items reduce only those items'
+    qualifying spend?                                     Yes / No
+(b) Where it paid for several items, may it be shared between them
+    by their rebuild cost?        Yes  /  No  /  Another basis: ........
+
+Your amendment or reasoning:
+.....................................................................
+.....................................................................
+
+Signed .............................  Date ..........................
+```
+
 ---
 
 ### Section A — the summary you can work from
@@ -583,8 +613,9 @@ Roll the year end forward
 |  ACC-A13 |  "Roughly break-even" read as not enough taxable profit |  More cautious — never a better-looking claim |  Yes, off |
 |  ACC-A14 |  A new lease for a premium with no joint election, not item 9 of the disposal table |  Either way |  Yes, off |
 |  ACC-A15 |  The amendment window where the money was spent after the year end the client gave |  Bigger — only where the client's dates do not sit together |  Yes, off (the other half is live, because it can only close a window) |
+|  ACC-A16 |  A grant matched to the items it paid for comes off only those items |  Either way |  Yes, off |
 
- **Answer ACC-A4 with ACC-A7. Do not couple ACC-A8 with ACC-A9, and read ACC-A12 beside ACC-A8.** In the table above, ACC-A1 to ACC-A6 and ACC-A8 to ACC-A10 make claims bigger; ACC-A11 changes the basis; ACC-A7 removes false negatives; ACC-A12 can only make a claim smaller; ACC-A13 can only make one more cautious; ACC-A14 moves money either way; and ACC-A15 can only make a claim bigger, and only on its switch. Until 13 September 2026 this sentence counted nine of twelve, and said ACC-A12 had no row because a row cannot be added to a table here. The table has since been replaced whole, with every earlier row carried word for word and rows for ACC-A12, ACC-A13 and ACC-A14 added — and replaced whole again on 13 September 2026 by Phase 129b, carrying ACC-A1 to ACC-A14 word for word and adding a row for ACC-A15. **A firm that only ever finds arguments in its own favour is a firm to be suspicious of, and we know that** — which is why the direction is printed here rather than left for you to notice.
+ **Answer ACC-A4 with ACC-A7. Do not couple ACC-A8 with ACC-A9, and read ACC-A12 beside ACC-A8.** In the table above, ACC-A1 to ACC-A6 and ACC-A8 to ACC-A10 make claims bigger; ACC-A11 changes the basis; ACC-A7 removes false negatives; ACC-A12 can only make a claim smaller; ACC-A13 can only make one more cautious; ACC-A14 moves money either way; ACC-A15 can only make a claim bigger, and only on its switch; and ACC-A16, added 4 October 2026, moves money either way. Until 13 September 2026 this sentence counted nine of twelve, and said ACC-A12 had no row because a row cannot be added to a table here. The table has since been replaced whole, with every earlier row carried word for word and rows for ACC-A12, ACC-A13 and ACC-A14 added — and replaced whole again on 13 September 2026 by Phase 129b, carrying ACC-A1 to ACC-A14 word for word and adding a row for ACC-A15. **A firm that only ever finds arguments in its own favour is a firm to be suspicious of, and we know that** — which is why the direction is printed here rather than left for you to notice.
 
 
 ---
@@ -1084,6 +1115,7 @@ supervised
 |  ACC-A9 connected contributor |  12852267228 |
 |  ACC-A10 provision of / commissioning |  12843022045 |
 |  ACC-A11 trade-purpose flat |  12851716860 |
+|  ACC-A16 grant matched to its items (added 4 Oct 2026) |  13200627626 |
 |  B1-B11 rulebooks |  A 12830061109 / A add 12921255840 / B 12830061291 / C 12830037336 / D 12830044150 / E 12830037617 / F 12830044153 / G 12830061107 / H 12830043662 / I 12830060773 / I add 12889350666 |
 |  B file carrier
  |  12921255840 (A addendum) — the A–F carriers 12830178875 / 12830182172 / 12841288962 / 12851645135 / 12910751557 / 12910769642 were closed 12 Sep 2026; their files are byte-identical copies of the files on the Rulebook items.
@@ -1363,6 +1395,8 @@ Signed .............................  Date ..........................
 
  Added 15 September 2026 by Phase 132. Three corrections to the procedures. The enquiry scope now describes a trading business with healthcare property in the UK. The assessment's owner line now matches the flow as built. And the sign-off stage is now a tax adviser's sign-off — the client's own accountant or tax adviser, or our own chartered tax adviser, who is not yet appointed — following clause 1 of the engagement letter. Stage 8's "accountant confirms" is unchanged, pending Lakhbir. Please confirm the sign-off stage as now worded.
 
+ _Added 4 October 2026 by Phase 153a. One correction to the procedures, in two places (SOP 4, step 3, and the data protection officer's retention question near the end): they no longer keep an HM Land Registry owner-name exception. No owner's name is taken from the title register — a person reads it and types at most seven facts, none of them a name — and an uploaded official copy that names a private owner is kept whole and read only by a person, as the data protection officer agreed on 27 September 2026. Nothing you are asked to sign about tax changed._
+
  **ACC-H2 · The business plan — pricing and the 24-month forecast.** Board item 12552682421. "A draft for approval by Sadique Maskeen, Data Protection Officer, and adoption by CAP REBATE LTD, by a director. Nothing here is decided." (Until 18 September 2026 the plan said "a draft for Lakhbir Dhillon to approve"; Lakhbir, who has no affiliation with CAP REBATE LTD, set the approver that day — Phase 133i.) Rebuilt on the decided fee base on 9 September, and brought up to date on 14 September 2026: advise-or-support decided, clauses 1 and 13, no minimum job size, and four figures in the risk section re-derived from the model. The pricing and forecast figures did not move. On 15 September 2026 the risk section's count of questions put to the tax adviser was corrected to forty-four, and a note now says that the dental cost range and ratio in section 6 are not printed by the plan's model — they come from the job-economics module, at 16 and 200 jobs. **For the practising accountant:** check the pricing and forecast arithmetic before the company relies on it. **Unblocks** the plan being approved and adopted.
 
 
@@ -1610,3 +1644,9 @@ Signed .............................  Date ..........................
 -  **The tax adviser's switches.** The extraction verifier now counts twenty-four, every one off; which way each one moves a claim is being re-counted in Phase 153a.
 
  **This register's size is unchanged by Phase 153**: no item moved into or out of it. The count is the register check's.
+
+---
+
+## Phase 153a, 4 October 2026 — one entry more: ACC-A16, a grant matched to the items it paid for
+
+ **This register gains one entry and one board item.** ACC-A16 sits in Section A after ACC-A15, with a row in Section A's summary table and in Appendix 3's index. It is the twenty-fifth engine switch — built, tested both ways and switched off — and it moves money either way. Two more checks were built the same day on the way a claim leaves valuation: the grant papers or your view before a grant split in equal share moves on, and the client's confirmation that they have checked with whoever paid the grant. They answer the recommendations under "How should we split a grant when we cannot tell what it paid for?" and "Is a warning enough when claiming relief might force a grant to be repaid?", and both questions now say so. **This register's size is the register check's to count.**

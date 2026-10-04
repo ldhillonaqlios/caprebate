@@ -922,6 +922,8 @@ Signed .............................  Date ..........................
 
  **For the data protection officer. Board item 12927931400.**
 
+ _4 October 2026 (Phase 153a): the list is now v1.4. Six processors are added — Zoom, WhatsApp (Meta), GoAddress, Cloudflare Turnstile, Turso and Google Analytics (marked for you to check) — and the test website's Vercel host and Vercel Blob file store are named under P5 and P4. Your approval of the Zoom, WhatsApp and GoAddress transfers for testing only, relayed by Lakhbir on 30 September 2026, is recorded in their rows; none is approved for a real client. Everything these services hold today is invented test data._
+
 |  **What it is** |  The recipients list Article 15(1)(c) and Article 19 require: **five recipients we disclose to** — the surveyor, the tax adviser, the client's own accountant, HMRC, and the registers, which are listed **only to say they receive nothing** — and **seven processors**, who are recipients too under Article 4(9). For each, whether anything has actually been disclosed to date. |
 | --- | --- |
 |  **What state it is in** |  **Written 8 September 2026 and attached to the board item.** It was assembly rather than discovery: the components sat in four documents nobody in the data-protection workstream opens. **The honest previous position was not "there is no list" but "there are four partial lists, none of them written for Article 19".** |
@@ -956,6 +958,8 @@ Signed .............................  Date ..........................
 ```
 
 ## SDP-P7 · The public notices page — two statutory duties that cannot be performed today
+
+ _4 October 2026 (Phase 153a, with Phase 153c line 13): the cookies section's one Google gap is filled from Google's published terms — who provides Google Analytics, the transfer safeguards Google names, and the visitor's yes as the legal reason — and marked for you to check. Analytics stays off: no measurement id is set._
 
  **For the data protection officer, and one part is for the director. Board item 12946752268. This page is described in a note above; this is its entry, and it carries the item number the note did not.**
 
@@ -1250,10 +1254,14 @@ Signed .............................  Date ..........................
 
  **SDP-P25 · The six breach and transparency communications.** Board item 12927894775. Every template is headed DRAFT — NOT APPROVED. Approve them with SDP-P24, which points at them. Since 13 September 2026 the pack also carries two drafted answers that need your specific approval: what the regulator's breach form asks for (section 2.7, from the regulator's own pages) and the automated-decision answer in the Article 14 letter (section 7.5, from Articles 22A to 22D, now read). **Unblocks** notifying the regulator and the people affected within the time the law allows.
 
+ _4 October 2026 (Phase 153a): the letter's paragraph on sending information outside the UK (section 7, PL-P17) now has a proposed redraft from the updated recipients list (v1.4), without monday.com, with the services used only for testing in a bracket to fill on the day. It is a proposal for you; nothing is sent with it._
+
 
  **Added 15 September 2026 by Phase 132c.** The Article 14 letter's answer on sending information outside the UK (section 7.5, item 6, and its placeholder) now states what Microsoft, monday.com and IONOS publish about where they hold data. Our own accounts are still unchecked, so the placeholder is only partly filled. The breach letters themselves still name the Information Commissioner without the change of 30 September 2026; that is carried to the next phase.
 
  **SDP-P26 · The Article 14 assessment for people named in documents clients upload.** Board item 12927987812. Approve the transparency position. It does not decide the lawful basis and must not be read as deciding it. Since 13 September 2026 it also carries a drafted automated-decision answer (section 6.9, from Articles 22A to 22D) for you to approve. **Unblocks** publishing the notice wording in its section 8, which may not appear anywhere until you approve it. Corrected 15 September 2026: section 6.9 no longer says a person acts on every value read from a document. As built, only values below their confidence threshold go to a person, the per-type review switch is off for every type, and no model reads client documents today. Article 36, prior consultation, is now read (section 13.3), and condition A14-D9 points to risk R11 in the risk register.
+
+ _4 October 2026 (Phase 153a): its letter's section 7 (PL-P17) now has a proposed redraft from the updated recipients list (v1.4), naming only the services a client's uploaded document can reach. It is a proposal for you; nothing is sent with it._
 
 
  **Added 15 September 2026 by Phase 132c.** The placeholder for sending information outside the UK now states what the three providers publish, and is marked partly filled: our own accounts are not checked, and no document-reading provider has been chosen. The notices page carries the same wording. Whether the Article 14 letter may be sent with that placeholder only partly filled is for you to judge.
@@ -1263,6 +1271,8 @@ Signed .............................  Date ..........................
  **SDP-P28 · The client-document ingestion control, and its 1 September reconciliation.** Board item 12928074627. The code is built, tested and called by the upload handler; the policy it enforces — what is kept from an upload and what is removed on receipt — is not approved. **Unblocks** that control being agreed policy rather than our default.
 
  **SDP-P29 · The business continuity and disaster recovery plan.** Board item 12552682536. Its own header says DRAFT, not yet in force. It is with you first because its breach scenario hands the personal-data half of an incident to the procedure in SDP-P24; Sadique Maskeen approves the plan as a whole after (Lakhbir until 18 September 2026). **Unblocks** a recovery plan anyone may rely on.
+
+ _4 October 2026 (Phase 153a): the plan now has proposed recovery rows for the systems in use — the test website on Vercel, its Turso database, the Vercel Blob file store (now holding survey photos and videos), GitHub, IONOS email and the back office in §3, and Zoom, WhatsApp Cloud, GoAddress, Cloudflare Turnstile, cron-job.org, Companies House, Postcodes.io, Didit and the file store in §5. Every recovery time and recovery point in them is marked "proposed — Sadique Maskeen, as plan owner, to set"; nothing is set until he sets it._
 
  **SDP-P30 · The annual data protection audit — checklist and schedule.** Board item 12552683056. It names Sadique Maskeen as approver (Lakhbir until 18 September 2026). It is with you first because an audit of the data protection position is yours to run, and its checklist asks for your sign-off on any change to the lawful basis. **Unblocks** the first audit having an agreed list to check against.
 
