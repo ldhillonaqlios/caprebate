@@ -1794,3 +1794,12 @@ Signed .............................  Date ..........................
  Phase 153e built the surveyor's workbench on our recommendation. **One dated line here: ACC-A16, chapter 15's VAT half (line 17 of the phase, added by Phase 153a).** The surveyor records the claimant's VAT position with a reason. Only an exempt claimant's VAT not reclaimed is added to the price before it is shared out; a claimant that reclaims VAT adds nothing; a partly exempt claimant changes nothing and waits for you; not known and not recorded count nothing. It is a test reading, for you to check.
 
  **And the board's own total at the close of Phase 153e, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153f, 4 October 2026 — a date fault fixed in the election check; nothing moved in or out
+
+ **The election window now reads the date it is given.** The engine's check of whether a fresh election can still be made (the two-year window) read the computer's own clock, not the date a case was run for. The back end's legal check passes a date, so a case run for a fixed date could get the wrong answer either side of the deadline. Fixed, with a test a day either side; no switch, no figure moved for a case run today.
+
+ **And the board's own total at the close of Phase 153f, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

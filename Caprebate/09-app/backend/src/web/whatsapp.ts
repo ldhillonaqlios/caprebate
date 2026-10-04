@@ -42,7 +42,8 @@ export function whatsappDeps(app: App): WhatsAppDeps {
 
 const obj = (db: Db, business_id: string) => ({ type: 'client_message' as const, id: business_id, business_id });
 
-export type PhoneContact = { readonly id: string; readonly name: string; readonly first: string; readonly number: string; readonly shown: string; readonly open_until: string | null };
+export type PhoneContact = { readonly id: string; readonly name: string; readonly first: string; readonly number: string; readonly shown: string; readonly open_until: string | null;
+  /** PHASE 153f (migration 086): whether they agreed to WhatsApp, on the funnel's optional box. */ readonly agreed: boolean };
 
 /** When the 24-hour window with this number closes, or null when it is closed. */
 export function windowOpenUntil(db: Db, number: string, nowIso: string): string | null {
@@ -55,11 +56,11 @@ export function windowOpenUntil(db: Db, number: string, nowIso: string): string 
 /** The company's contacts WhatsApp can reach: those with a telephone number we can read. */
 export function phoneContacts(db: Db, business_id: string, nowIso: string): PhoneContact[] {
   const out: PhoneContact[] = [];
-  for (const c of db.all<{ id: string; full_name: string; phone: string | null }>(
-    "SELECT id, full_name, phone FROM contacts WHERE business_id = ? AND phone IS NOT NULL AND trim(phone) <> '' ORDER BY full_name", [business_id])) {
+  for (const c of db.all<{ id: string; full_name: string; phone: string | null; whatsapp_optin: number }>(
+    "SELECT id, full_name, phone, whatsapp_optin FROM contacts WHERE business_id = ? AND phone IS NOT NULL AND trim(phone) <> '' ORDER BY full_name", [business_id])) {
     const n = waNumber(c.phone);
     if (n === null) continue;
-    out.push({ id: c.id, name: c.full_name, first: c.full_name.trim().split(/\s+/)[0] ?? '', number: n, shown: c.phone ?? '', open_until: windowOpenUntil(db, n, nowIso) });
+    out.push({ id: c.id, name: c.full_name, first: c.full_name.trim().split(/\s+/)[0] ?? '', number: n, shown: c.phone ?? '', open_until: windowOpenUntil(db, n, nowIso), agreed: c.whatsapp_optin === 1 });
   }
   return out;
 }

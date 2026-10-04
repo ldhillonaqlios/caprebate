@@ -120,36 +120,33 @@ async function boot(opts: { workingTimes?: boolean } = {}): Promise<Harness> {
     c: Client; figureBody: string; closeBody: string; submittedBody: string;
   }> {
     const c = client();
+    /* PHASE 153f, 4 October 2026: the six old screens are retired, so this walks the four-stage funnel with the same
+       answers. THE LEGAL ENTITY WAS THE ONE QUESTION LEFT BLANK (asked, not answered: SKIPPED). The four-stage funnel
+       does not move on without an answer, so it is answered "Not sure" here, and the test of how a SKIPPED answer is
+       shown marks it skipped as an old record made by the six screens holds it (see "I DON'T KNOW" AND "SKIPPED").
+       The works follow-ups are still never asked (works = 'no' closes that branch) and still produce NO ROW. */
     await c.req('/assessment');
-    await c.post('/assessment/Q1', { own_prior_claim: 'no' });
-    await c.post('/assessment/Q1a', { previous_owner_claimed: 'dont_know' });
-    await c.post('/assessment/Q1b', { is_uk_taxpayer: 'yes', current_year_position: 'profitable' });
-    await c.post('/assessment/Q1c', { trigger_default: 'purchase' });
-    /* ONE QUESTION IS DELIBERATELY LEFT BLANK — the legal entity. It was ASKED
-       and not answered, which is what SKIPPED means, and it is the state the
-       staff screens have to render as a fact rather than as an empty cell.
-       NOTE THE DISTINCTION THIS FIXTURE ALSO ESTABLISHES: the works follow-ups
-       below are never asked at all (works = 'no' closes that branch), and they
-       produce NO ROW — not a SKIPPED row. "Nobody asked" and "asked, not
-       answered" are different facts about a claim and the schema keeps them
-       apart. Only the second is a skip. */
-    await c.post('/assessment/Q2', {
-      p0_address: 'Meadowcroft House, ZZ9 9ZZ', p0_sector: 'care_homes',
-      p0_trigger: 'purchase', p0_spend: '2400000', p0_date: '06/2021',
-    });
-    await c.post('/assessment/Q3', { p0_works: 'no' });
+    await c.post('/assessment/buildings', { b0_sector: 'care_homes' });
+    await c.post('/assessment/spend-on', { b0_trigger: 'purchase' });
+    await c.post('/assessment/amounts', { b0_spend: '2400000', b0_date: '06/2021' });
+    await c.post('/assessment/tax', { b0_tax: 'yes', b0_profit: 'profitable' });
+    await c.post('/assessment/claims', { b0_prior: 'no', b0_seller: 'dont_know' });
+    await c.post('/assessment/works', { b0_works: 'no' });
+    await c.post('/assessment/details', { b0_business: 'Meadowcroft Care Limited', b0_entity: 'unsure', b0_line1: 'Meadowcroft House', b0_postcode: 'ZZ9 9ZZ' });
+    // The figure and the close are one page in the four-stage funnel: the reveal, then how to reach you.
     const figure = await c.req('/assessment/figure');
-    const close = await c.req('/assessment/close');
+    const close = figure;
 
     let slot = o.slot;
     if (slot === undefined) {
       const m = /name="slot" value="([^"]+)"/.exec(close.body);
       slot = m?.[1] ?? '';
     }
+    const channel = o.channel ?? 'phone';
     const submitted = await c.post('/assessment/close', {
-      full_name: 'A Person', business_name: 'Meadowcroft Care Limited',
+      first_name: 'A', surname: 'Person',
       // PHASE 151e (line 6): the way to reach them must match the channel chosen - an email address for email
-      job_role: 'owner', channel: o.channel ?? 'phone', contact_value: (o.channel ?? 'phone') === 'email' ? 'a.person@example.invalid' : '01632 960111',
+      job_role: 'owner_director', channel, ...(channel === 'email' ? { email: 'a.person@example.invalid' } : { phone: '01632 960111' }),
       contact_consent: 'on', ...(slot === null || slot === '' ? {} : { slot }),
     });
     assert.equal(submitted.status, 200, 'the funnel did not close');
@@ -242,6 +239,10 @@ describe('the filled assessments list', () => {
       const staff = await h.signIn('SALES');
       const list = await staff.req('/staff/assessments');
       const id = /\/staff\/assessments\/([A-Za-z0-9-]+)/.exec(list.body)?.[1] ?? '';
+      // PHASE 153f: the four-stage funnel does not move on with a question unanswered, so it records no SKIPPED row. The
+      // records the six old screens made still hold them, and are kept: the legal entity is marked skipped here exactly
+      // as one of those records holds it (asked, not answered), and the screen must still show it in words.
+      h.app.db.run("UPDATE assessment_answers SET state = 'SKIPPED', value = NULL WHERE assessment_id = ? AND question_id = 'Q2-1-entity'", [id]);
       const page = await staff.req(`/staff/assessments/${id}`);
 
       assert.match(page.body, /I don’t know — the client said so/);
@@ -500,17 +501,17 @@ describe('the calendar', () => {
     const h = await boot({ workingTimes: false });
     try {
       const c = h.client();
+      // PHASE 153f: through the four-stage funnel; its close is the reach form on the figure page.
       await c.req('/assessment');
-      await c.post('/assessment/Q1', { own_prior_claim: 'no' });
-      await c.post('/assessment/Q1a', { previous_owner_claimed: 'dont_know' });
-      await c.post('/assessment/Q1b', { is_uk_taxpayer: 'yes', current_year_position: 'profitable' });
-      await c.post('/assessment/Q1c', { trigger_default: 'purchase' });
-      await c.post('/assessment/Q2', {
-        p0_address: 'Somewhere', p0_sector: 'dental', p0_entity_type: 'ltd',
-        p0_trigger: 'purchase', p0_spend: '900000', p0_date: '01/2020',
-      });
-      await c.post('/assessment/Q3', { p0_works: 'no' });
-      const close = await c.req('/assessment/close');
+      await c.post('/assessment/buildings', { b0_sector: 'dental' });
+      await c.post('/assessment/spend-on', { b0_trigger: 'purchase' });
+      await c.post('/assessment/amounts', { b0_spend: '900000', b0_date: '01/2020' });
+      await c.post('/assessment/tax', { b0_tax: 'yes', b0_profit: 'profitable' });
+      await c.post('/assessment/claims', { b0_prior: 'no', b0_seller: 'dont_know' });
+      await c.post('/assessment/works', { b0_works: 'no' });
+      await c.post('/assessment/details', { b0_business: 'Somewhere Dental Limited', b0_entity: 'ltd', b0_line1: 'Somewhere', b0_postcode: 'ZZ9 9ZZ' });
+      const close = await c.req('/assessment/figure');
+      assert.equal(close.status, 200, 'the four-stage close was not reached');
       assert.match(close.body, /We have no times to offer at the moment/);
       assert.equal(/working times/i.test(close.body), false,
         'the public page explained our internal staffing state');
@@ -710,7 +711,8 @@ describe('one booking, two views', () => {
     const h = await boot();
     try {
       const run = await h.runFunnel();
-      assert.match(run.closeBody, /If you chose the telephone, when suits you\?/);
+      // PHASE 153f: the four-stage close asks for the moment as a date, then a time on it (src/web/slot-picker.ts).
+      assert.match(run.closeBody, /1\. Choose a date[\s\S]*2\. Choose a time/);
       assert.match(run.submittedBody, /We have held/);
       const row = h.app.db.get<{ starts_at: string | null; assigned_to: string | null; entry_point: string }>(
         'SELECT starts_at, assigned_to, entry_point FROM bookings');

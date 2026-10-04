@@ -49,7 +49,7 @@ function client() {
     return { status: r.status, body: await r.text(), location: r.headers.get('location') };
   };
   const post = (path: string, f: Record<string, string>) => req(path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(f).toString() });
-  return { req, post };
+  return { req, post, cookie: () => cookie };
 }
 
 /** Two buildings: a care home bought, a dental practice fitted out; each owned by its own company. */
@@ -238,7 +238,6 @@ describe('how to reach you, and what is written', () => {
       [{ ...base4 }, /Choose how you would like us to reach you: telephone, video call or email\./],
       [{ ...base4, channel: 'phone', email: 'ada@example.invalid' }, /We need your telephone number/],
       [{ ...base4, channel: 'video', phone: '01632 960000' }, /We need your email address/],
-      [{ ...base4, channel: 'email', email: 'ada@example.invalid', contact_consent: '' }, /We need your permission to contact you/],
     ] as const) {
       const r = await c.post('/assessment/close', f as Record<string, string>);
       assert.equal(r.status, 400, JSON.stringify(f));
@@ -313,7 +312,9 @@ describe('how to reach you, and what is written', () => {
     assert.match(sent.body, /The figure you were shown: <strong>up to £1,050,000<\/strong>/);
     assert.doesNotMatch(sent.body, /The range you were shown/);
     // and the two consent boxes stand on their own lines, above the Send button.
-    assert.match(fig, /<div class="f4-consent"><label class="ck"><input type="checkbox" name="contact_consent"[\s\S]*?name="marketing_optin"[\s\S]*?<\/label><\/div>\s*<button class="cta" type="submit">Send<\/button>/);
+    // PHASE 153f (Word answer 164): no tick to send; a statement and the privacy notice link, then two optional boxes.
+    assert.match(fig, /<div class="f4-consent"><p class="help">Sending this asks us to contact you about this enquiry\. You do not need to tick anything\. <a href="\/privacy\/">How we use your details<\/a>\.<\/p>[\s\S]*?name="whatsapp_optin"[\s\S]*?name="marketing_optin"[\s\S]*?<\/label><\/div>\s*<button class="cta" type="submit">Send<\/button>/);
+    assert.equal(/name="contact_consent"/.test(fig), false, 'no contact tick box');
     const orgs = made.app.db.all<{ id: string; name: string }>("SELECT id, name FROM businesses WHERE name IN ('Invented Care Homes Limited','Invented Dental LLP') ORDER BY name");
     assert.equal(orgs.length, 2);
     const leads = made.app.db.all<{ business_id: string; enquiry_id: string | null }>('SELECT business_id, enquiry_id FROM leads WHERE business_id IN (?, ?)', [orgs[0]!.id, orgs[1]!.id]);
@@ -361,11 +362,84 @@ describe('how to reach you, and what is written', () => {
     assert.equal(gated?.enquiry_id, other?.enquiry_id);
   });
 
-  test('the six old screens still work for a draft that uses them', async () => {
+  // PHASE 153f, 4 October 2026 (Word answer 164): sending asks to be contacted; no tick is needed, and WhatsApp is its own box.
+  test('PHASE 153f: sent with no tick at all, the contact is kept as asking to be contacted; the WhatsApp box is kept as ticked or not', async () => {
+    for (const [name, wa] of [['Ivy', 'on'], ['Jo', '']] as const) {
+      const c = client();
+      await toDetails(c);
+      await c.post('/assessment/details', { ...DETAILS, b0_business: `Invented ${name} Care Limited`, b1_business: `Invented ${name} Dental Limited` });
+      const sent = await c.post('/assessment/close', { first_name: name, surname: 'Invented', job_role: 'owner_director', channel: 'email', email: `${name.toLowerCase()}.f4@example.invalid`, ...(wa === '' ? {} : { whatsapp_optin: wa }) });
+      assert.equal(sent.status, 200, sent.body.slice(0, 300));
+      const row = made.app.db.get<{ contact_consent: number; whatsapp_optin: number; marketing_optin: number }>(
+        "SELECT contact_consent, whatsapp_optin, marketing_optin FROM contacts WHERE full_name = ? ORDER BY created_at LIMIT 1", [`${name} Invented`]);
+      assert.deepEqual({ ...row }, { contact_consent: 1, whatsapp_optin: wa === 'on' ? 1 : 0, marketing_optin: 0 });
+    }
+  });
+
+  // PHASE 153f, 4 October 2026: the six old screens are retired. This test said they still worked for a draft that uses
+  // them (Q1 saved and moved on to Q1a, "Step 2 of 6"); the four-stage funnel's own tests above hold every rule they
+  // asked, so an old link now opens stage 1.
+  test('the six old screens are retired: an old link opens stage 1 of the four-stage funnel', async () => {
     const c = client();
     await c.req('/assessment');
-    assert.equal((await c.post('/assessment/Q1', { own_prior_claim: 'no' })).location, '/assessment/Q1a');
-    assert.match((await c.req('/assessment/Q1a')).body, /<p class="rung">Step 2 of 6<\/p>/);
+    assert.equal((await c.post('/assessment/Q1', { own_prior_claim: 'no' })).location, '/assessment/buildings');
+    assert.equal((await c.req('/assessment/Q1a')).location, '/assessment/buildings');
+    assert.doesNotMatch((await c.req('/assessment/buildings')).body, /Step \d of 6/);
+  });
+
+  test('PHASE 153f: the six old screens are retired — every old link, GET or POST, with or without a draft, opens the four-stage funnel, and nothing recorded is changed', async () => {
+    const db = made.app.db;
+    // A four-stage draft part-way through (at stage 3), and a draft as the six old screens left one (on Q2).
+    const c = client();
+    await toDetails(c);
+    const draftRow = (token: string) => db.get<{ state_json: string; screen: string; updated_at: string; submitted_assessment_id: string | null; closed_lead_id: string | null }>(
+      'SELECT state_json, screen, updated_at, submitted_assessment_id, closed_lead_id FROM assessment_drafts WHERE token = ?', [token]);
+    const funnelToken = /(?:^|; )cb_draft=([^;]+)/.exec(c.cookie())?.[1] ?? '';
+    assert.notEqual(funnelToken, '', 'the four-stage draft has no cookie');
+    assert.ok(JSON.parse(draftRow(funnelToken)!.state_json)['funnel'] === 4, 'the draft found is not the four-stage one');
+    const oldToken = 'phase153f-old-six-screen-draft';
+    const oldState = JSON.stringify({ own_prior_claim: 'no', previous_owner_claimed: 'dont_know', is_uk_taxpayer: 'yes', current_year_position: 'profitable',
+      trigger_default: 'purchase', properties: [{ address: 'Old Record House, LE10 1DA', sector: 'care_homes', trigger: 'purchase', spend: 900000, date: '2022' }], contact: {} });
+    db.run('INSERT INTO assessment_drafts (token, state_json, screen, created_at, updated_at) VALUES (?, ?, ?, ?, ?)', [oldToken, oldState, 'Q2', T, T]);
+
+    const COUNT = {
+      drafts: 'SELECT COUNT(*) AS n FROM assessment_drafts',
+      assessments: 'SELECT COUNT(*) AS n FROM assessments',
+      leads: 'SELECT COUNT(*) AS n FROM leads',
+      organisations: 'SELECT COUNT(*) AS n FROM businesses',
+    } as const;
+    const counts = () => Object.fromEntries(Object.entries(COUNT).map(([k, q]) => [k, db.get<{ n: number }>(q)?.n ?? -1]));
+    const before = { counts: counts(), funnel: { ...draftRow(funnelToken) }, old: { ...draftRow(oldToken) } };
+
+    const OLD = ['Q1', 'Q1a', 'Q1b', 'Q1c', 'Q2', 'Q3'];
+    const POSTED: Record<string, Record<string, string>> = {
+      Q1: { own_prior_claim: 'yes' }, Q1a: { previous_owner_claimed: 'yes' }, Q1b: { is_uk_taxpayer: 'no' },
+      Q1c: { trigger_default: 'fit_out' }, Q2: { p0_address: 'Changed, ZZ9 9ZZ', p0_sector: 'dental', add_property: 'on' }, Q3: { p0_works: 'yes' },
+    };
+    let n = 0;
+    for (const cookie of [undefined, `cb_draft=${funnelToken}`, `cb_draft=${oldToken}`]) {
+      for (const id of OLD) {
+        for (const method of ['GET', 'POST'] as const) {
+          const r = await fetch(`${base}/assessment/${id}`, {
+            method, redirect: 'manual',
+            headers: { ...(cookie === undefined ? {} : { cookie }), ...(method === 'POST' ? { 'content-type': 'application/x-www-form-urlencoded' } : {}) },
+            ...(method === 'POST' ? { body: new URLSearchParams(POSTED[id]).toString() } : {}),
+          });
+          const where = `${method} /assessment/${id} ${cookie === undefined ? 'with no draft' : `with ${cookie}`}`;
+          assert.equal(r.status, 303, `${where}: not a redirect`);
+          assert.equal(r.headers.get('location'), '/assessment/buildings', `${where}: not sent to the four-stage funnel`);
+          assert.deepEqual(r.headers.getSetCookie(), [], `${where}: a draft cookie was set`);
+          await r.text();
+          n++;
+        }
+      }
+    }
+    assert.equal(n, 36);
+    assert.deepEqual(counts(), before.counts, 'a row was made or removed');
+    assert.deepEqual({ ...draftRow(funnelToken) }, before.funnel, 'the four-stage draft was changed');
+    assert.deepEqual({ ...draftRow(oldToken) }, before.old, 'the old six-screen draft was changed');
+    // And the four-stage draft carries on where it was.
+    assert.equal((await c.req('/assessment/figure')).location, '/assessment/details');
   });
 });
 

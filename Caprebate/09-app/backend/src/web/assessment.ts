@@ -202,9 +202,11 @@ export function isGatedExit(state: FunnelState): boolean {
  * and no figure. Navigation is a courtesy; the router asks `isGatedExit` again on
  * every request, so a client who types an address does not walk round the gate.
  */
+// Retired with the six screens (Phase 153f); kept for the record of what they asked.
 export const PAST_THE_GATE: readonly ScreenId[] = Object.freeze(['Q1c', 'Q2', 'Q3'] as const);
 
 /** Whether Q1b's profit follow-up renders. CB_FRONTDOOR decides; we ask. */
+// Retired with the six screens (Phase 153f); kept for the record of what they asked.
 export function asksProfit(state: FunnelState): boolean {
   return FRONTDOOR.gateQ1b(state).askProfit === true;
 }

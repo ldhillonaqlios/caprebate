@@ -62,6 +62,9 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] May we keep a company's type from Companies House ("ltd", "plc", "llp")? Proposed as a permitted field on 4 Oct 2026 (Phase 153b), with its switch off — Word question 240.
 - [ ] Check the Phase 153c builds, each built on our recommendation in the test system (Word questions 37, 55, 56, 162, 165, 178, 181, 182, 183, 184, 192, 193, 201, 208, 219 and 222, each marked "Built 4 October 2026 (Phase 153c)"); the new entries SDP-P41 (healthcare premises import) and SDP-P42 (the enquiry clean-up, off until you approve twelve months).
 - [ ] May the survey pack show the surveyor how much each grant paid? Built hidden — Word question 241 (Phase 153c).
+- [ ] Phase 153f: how long WhatsApp messages and their files are kept (a reading in FOR THE SOLICITOR, THE DPO AND THE
+      DEVELOPER: the same rule as client messages); may staff WhatsApp a contact who did not tick the funnel's new optional
+      WhatsApp box; is fetching a WhatsApp file from Meta's file host under your WhatsApp approval (our reading)?
 - [ ] Approve the retention schedule, the document-pipeline impact assessment (DPIA), the breach procedure and the
       upload boundary.
 - [ ] Approve and publish the privacy notice naming every service (IONOS, Didit, Postcodes.io, Companies House, Zoom,

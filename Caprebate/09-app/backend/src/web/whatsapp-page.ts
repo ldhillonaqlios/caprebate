@@ -110,7 +110,7 @@ export function whatsappPage(app: App, actor: Actor, business_id: string, asked:
         <label class="fl" for="wa-to">To</label>
         <select class="fi" id="wa-to" name="contact_id" required>${reachable.map((p) => {
           const c = p.contact!;
-          return h`<option value="${c.id}"${c.id === pick?.id ? raw(' selected') : raw('')}>${c.name} — ${c.shown} — ${c.open_until === null
+          return h`<option value="${c.id}"${c.id === pick?.id ? raw(' selected') : raw('')}>${c.name} — ${c.shown}${c.agreed ? '' : ' — did not tick WhatsApp'} — ${c.open_until === null
             ? `only our opening message (more than ${WINDOW_HOURS} hours since they last wrote on WhatsApp)` : `you can write freely until ${localStamp(c.open_until, now)}`}</option>`;
         })}</select>
         <label class="fl" for="wa-body">Message</label>

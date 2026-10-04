@@ -98,17 +98,27 @@ function stateWith(v: string | undefined): FunnelState {
   return s as unknown as FunnelState;
 }
 
-async function toQ1b(c: Client): Promise<void> {
-  // 30 Sep 2026: the assessment opens on the four-stage funnel (test/funnel4.test.ts); the six old screens still work
-  // for a draft that uses them, and this file walks those.
+/* PHASE 153f, 4 October 2026: the six old screens are retired (an old link opens /assessment/buildings), so this file
+   walks the four-stage funnel. Its tax question ("tax", stage 2) is the old Q1b, asked per building; a draft whose every
+   building's owner pays no UK tax is the engine's reasoned negative, through the same gate (FRONTDOOR.gateQ1b). */
+async function toTheTaxQuestion(c: Client): Promise<void> {
   assert.equal((await c.req('/assessment')).location, '/assessment/buildings');
-  assert.equal((await c.post('/assessment/Q1', { own_prior_claim: 'no' })).location, '/assessment/Q1a');
-  assert.equal((await c.post('/assessment/Q1a', { previous_owner_claimed: 'dont_know' })).location, '/assessment/Q1b');
+  assert.equal((await c.post('/assessment/buildings', { b0_sector: 'care_homes' })).location, '/assessment/spend-on');
+  assert.equal((await c.post('/assessment/spend-on', { b0_trigger: 'purchase' })).location, '/assessment/amounts');
+  assert.equal((await c.post('/assessment/amounts', { b0_spend: '750000', b0_date: '05/2024' })).location, '/assessment/tax');
 }
 
-async function stoppedAtQ1b(c: Client): Promise<void> {
-  await toQ1b(c);
-  assert.equal((await c.post('/assessment/Q1b', { is_uk_taxpayer: 'no' })).location, '/assessment/no-claim');
+async function stoppedAtTheTaxQuestion(c: Client): Promise<void> {
+  await toTheTaxQuestion(c);
+  assert.equal((await c.post('/assessment/tax', { b0_tax: 'no' })).location, '/assessment/no-claim');
+}
+
+/** Follow redirects (at most five) and say where a request ends up, and with what. */
+async function landsOn(c: Client, path: string): Promise<{ path: string; res: Res }> {
+  let at = path;
+  let r = await c.req(at);
+  for (let i = 0; i < 5 && r.location !== null; i++) { at = r.location; r = await c.req(at); }
+  return { path: at, res: r };
 }
 
 const NO_TAX_MESSAGE = String(FRONTDOOR.gateQ1b(stateWith('no')).message);
@@ -150,22 +160,35 @@ describe('the funnel’s only gate stops, and reads the engine’s own field', (
     const h = await boot();
     try {
       const c = h.client();
-      await stoppedAtQ1b(c);
+      // PHASE 153f: "no" at the four-stage funnel's tax question, for the only building, is the old "no" at Q1b.
+      await stoppedAtTheTaxQuestion(c);
 
       const page = await c.req('/assessment/no-claim');
       assert.equal(page.status, 200);
       assert.ok(page.body.includes(NO_TAX_MESSAGE), 'the screen names the gate that fired, in the engine’s words');
 
-      for (const path of ['/assessment/figure', '/assessment/Q1c', '/assessment/Q2', '/assessment/Q3']) {
+      for (const path of ['/assessment/figure', '/assessment/claims']) {
         const r = await c.req(path);
         assert.equal(r.location, '/assessment/no-claim', `${path} is not reachable past the gate`);
-        assert.equal(/You could be entitled/.test(r.body), false, `${path} produced a figure`);
+        assert.equal(/You could be entitled|Your figure/.test(r.body), false, `${path} produced a figure`);
       }
-      assert.equal((await c.post('/assessment/Q2', { p0_sector: 'care_homes' })).location, '/assessment/no-claim',
+      // The screens after the next one send the person to it first, and it to the reasoned negative.
+      for (const path of ['/assessment/works', '/assessment/details']) {
+        const end = await landsOn(c, path);
+        assert.equal(end.path, '/assessment/no-claim', `${path} is not reachable past the gate`);
+        assert.equal(/f4-amount|Your figure/.test(end.res.body), false, `${path} produced a figure`);
+      }
+      // The old screens past the gate (Q1c, Q2, Q3) are retired: an old link opens stage 1, which is before the gate.
+      for (const path of ['/assessment/Q1c', '/assessment/Q2', '/assessment/Q3']) {
+        assert.equal((await c.req(path)).location, '/assessment/buildings', `${path} is not retired`);
+      }
+      const before = h.made.app.db.get<{ state_json: string }>('SELECT state_json FROM assessment_drafts')?.state_json;
+      assert.equal((await c.post('/assessment/claims', { b0_prior: 'no', b0_seller: 'dont_know' })).location, '/assessment/no-claim',
         'a POST past the gate is refused before anything is applied');
+      assert.equal(h.made.app.db.get<{ state_json: string }>('SELECT state_json FROM assessment_drafts')?.state_json, before, 'the refused POST changed the draft');
 
       // A reasoned negative is not a trap: the client can correct the answer.
-      assert.equal((await c.post('/assessment/Q1b', { is_uk_taxpayer: 'yes', current_year_position: 'profitable' })).location, '/assessment/Q1c');
+      assert.equal((await c.post('/assessment/tax', { b0_tax: 'yes', b0_profit: 'profitable' })).location, '/assessment/claims');
       assert.notEqual((await c.req('/assessment/no-claim')).status, 200, 'the reasoned negative is not drawn for a draft the gate does not stop');
     } finally { h.close(); }
   });
@@ -173,22 +196,29 @@ describe('the funnel’s only gate stops, and reads the engine’s own field', (
   test('over HTTP, N4 both ways: "not sure" and an absent answer go on to a figure that prints the condition, and never see the reasoned negative', async () => {
     const h = await boot();
     try {
-      const entity = Object.keys(FUNNEL.ENTITY_LABEL)[0] ?? '';
-      for (const answer of [{ is_uk_taxpayer: 'not sure' }, {}] as Record<string, string>[]) {
-        const what = Object.keys(answer).length === 0 ? 'absent' : 'not sure';
-        const c = h.client();
-        await toQ1b(c);
-        assert.equal((await c.post('/assessment/Q1b', answer)).location, '/assessment/Q1c', `${what} continues`);
-        assert.notEqual((await c.req('/assessment/no-claim')).status, 200, `${what} is not shown the reasoned negative`);
-        assert.equal((await c.post('/assessment/Q1c', { trigger_default: 'purchase' })).location, '/assessment/Q2');
-        assert.equal((await c.post('/assessment/Q2', {
-          p0_address: '1 Example Street', p0_sector: 'care_homes', p0_entity_type: entity, p0_spend: '750000', p0_date: '2024-05',
-        })).location, '/assessment/Q3');
-        assert.equal((await c.post('/assessment/Q3', { p0_works: 'no' })).location, '/assessment/figure');
-        const figure = await c.req('/assessment/figure');
-        assert.equal(figure.status, 200);
-        assert.ok(figure.body.includes(CONDITION), `${what}: the figure carries the condition on its face`);
-      }
+      // PHASE 153f: the four-stage funnel asks the tax question per building and will not move on without an answer, so
+      // "absent" is refused on the screen (400, kept there) — and, like "not sure", never shown the reasoned negative.
+      // The engine reading "not sure" and never-asked identically is asserted above, on FRONTDOOR.gateQ1b itself.
+      const c0 = h.client();
+      await toTheTaxQuestion(c0);
+      const absent = await c0.post('/assessment/tax', {});
+      assert.equal(absent.status, 400, 'absent is refused on the screen');
+      assert.match(absent.body, /Tell us whether the business that owns Building 1 · Care home pays UK tax\./);
+      assert.notEqual((await c0.req('/assessment/no-claim')).status, 200, 'absent is not shown the reasoned negative');
+      assert.equal((await c0.req('/assessment/figure')).location, '/assessment/tax', 'absent reached a figure');
+
+      const c = h.client();
+      await toTheTaxQuestion(c);
+      assert.equal((await c.post('/assessment/tax', { b0_tax: 'not sure' })).location, '/assessment/claims', 'not sure continues');
+      assert.notEqual((await c.req('/assessment/no-claim')).status, 200, 'not sure is not shown the reasoned negative');
+      assert.equal((await c.post('/assessment/claims', { b0_prior: 'no', b0_seller: 'dont_know' })).location, '/assessment/works');
+      assert.equal((await c.post('/assessment/works', { b0_works: 'no' })).location, '/assessment/details');
+      assert.equal((await c.post('/assessment/details', {
+        b0_business: 'Example Care Limited', b0_entity: Object.keys(FUNNEL.ENTITY_LABEL)[0] ?? '', b0_line1: '1 Example Street', b0_postcode: 'ZZ9 9ZZ',
+      })).location, '/assessment/figure');
+      const figure = await c.req('/assessment/figure');
+      assert.equal(figure.status, 200);
+      assert.ok(figure.body.includes(CONDITION), 'not sure: the figure carries the condition on its face');
     } finally { h.close(); }
   });
 });
@@ -203,8 +233,8 @@ describe('the call a reasoned negative offers is kept', () => {
     try {
       const db = h.made.app.db;
       const c = h.client();
-      await toQ1b(c);
-      await c.post('/assessment/Q1b', { is_uk_taxpayer: 'no' });
+      await toTheTaxQuestion(c);
+      await c.post('/assessment/tax', { b0_tax: 'no' });
       const before = count(db, 'leads');
       const sent = await c.post('/assessment/close', {
         full_name: 'Pat Example', channel: 'email', contact_value: 'pat@example.invalid', contact_consent: 'on',
@@ -219,7 +249,7 @@ describe('the call a reasoned negative offers is kept', () => {
     try {
       const db = h.made.app.db;
       const c = h.client();
-      await stoppedAtQ1b(c);
+      await stoppedAtTheTaxQuestion(c);
 
       const form = await c.req('/assessment/close');
       assert.equal(form.status, 200);
@@ -282,7 +312,7 @@ describe('the call a reasoned negative offers is kept', () => {
     try {
       const db = h.made.app.db;
       const c = h.client();
-      await stoppedAtQ1b(c);
+      await stoppedAtTheTaxQuestion(c);
       const before = { leads: count(db, 'leads'), contacts: count(db, 'contacts'), bookings: count(db, 'bookings') };
       for (const fields of [
         { channel: 'email', contact_consent: 'on' },
@@ -307,7 +337,7 @@ describe('a contact and a booking may belong to a lead until it has an organisat
     try {
       const db = h.made.app.db;
       const c = h.client();
-      await stoppedAtQ1b(c);
+      await stoppedAtTheTaxQuestion(c);
       const form = await c.req('/assessment/close');
       const slot = /name="slot" value="(\d{4}-[^"]+)"/.exec(form.body)?.[1];
       assert.ok(slot, 'the seed’s working times offer a slot at the gated exit’s close');

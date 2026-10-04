@@ -1581,6 +1581,9 @@ B3. CQC, EPC, HOMEDATA: add the three names to TEST_DEPLOY_KEYS; then 153c
     an invented page). Homedata only once Lakhbir says the account holds a
     balance (Word question 207). Report PASS or NO per connector; switch
     nothing on that ships.
+    ADDED 4 Oct 2026 by Phase 153f: when the free gate opens, put "answer it
+    myself" (Word answer 180) on the four-stage funnel's details screen. It
+    was on the retired six-screen funnel's address screen only.
 B4. AN ADMIN "CONNECTIONS" PAGE, so nobody has to read code to know: one row
     per outside service - key present (yes/no, never the value), switched on
     (and the switch's name), on for testing under a waiver or for real, last

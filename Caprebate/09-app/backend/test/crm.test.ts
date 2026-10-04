@@ -115,7 +115,7 @@ async function listen(made: Made): Promise<string> {
 /** An application with one user per staff role, and the funnel to create a client. */
 async function bootFunnel(): Promise<{
   made: Made; close(): void; signIn(role: AppRole): Promise<Client>;
-  runFunnel(name: string, q2?: Record<string, string>): Promise<string>;
+  runFunnel(name: string, details?: Record<string, string>): Promise<string>;
 }> {
   const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-crm-')) });
   const base = await listen(made);
@@ -137,24 +137,23 @@ async function bootFunnel(): Promise<{
       assert.equal(r.status, 303, `${role} could not sign in`);
       return c;
     },
-    async runFunnel(name, q2 = {}) {
+    async runFunnel(name, details = {}) {
+      // PHASE 153f: the six old screens are retired; the same answers go through the four-stage funnel. The legal form is
+      // asked at stage 3 now and must be answered; "not sure" (which derives nothing) stands in for the old unanswered one.
       const c = makeClient(base);
       await c.req('/assessment');
-      await c.post('/assessment/Q1', { own_prior_claim: 'no' });
-      await c.post('/assessment/Q1a', { previous_owner_claimed: 'dont_know' });
-      await c.post('/assessment/Q1b', { is_uk_taxpayer: 'yes', current_year_position: 'profitable' });
-      await c.post('/assessment/Q1c', { trigger_default: 'purchase' });
-      await c.post('/assessment/Q2', {
-        p0_address: 'Meadowcroft House, ZZ9 9ZZ', p0_sector: 'care_homes',
-        p0_trigger: 'purchase', p0_spend: '2400000', p0_date: '06/2021', ...q2,
-      });
-      await c.post('/assessment/Q3', { p0_works: 'no' });
-      await c.req('/assessment/figure');
-      const close = await c.req('/assessment/close');
+      await c.post('/assessment/buildings', { b0_sector: 'care_homes' });
+      await c.post('/assessment/spend-on', { b0_trigger: 'purchase' });
+      await c.post('/assessment/amounts', { b0_spend: '2400000', b0_date: '06/2021' });
+      await c.post('/assessment/tax', { b0_tax: 'yes', b0_profit: 'profitable' });
+      await c.post('/assessment/claims', { b0_prior: 'no', b0_seller: 'dont_know' });
+      await c.post('/assessment/works', { b0_works: 'no' });
+      await c.post('/assessment/details', { b0_business: name, b0_entity: 'unsure', b0_line1: 'Meadowcroft House', b0_postcode: 'ZZ9 9ZZ', ...details });
+      const close = await c.req('/assessment/figure');
       const slot = /name="slot" value="([^"]+)"/.exec(close.body)?.[1] ?? '';
       const submitted = await c.post('/assessment/close', {
-        full_name: 'A Person', business_name: name, job_role: 'owner',
-        channel: 'phone', contact_value: '01632 960111', contact_consent: 'on',
+        first_name: 'A', surname: 'Person', job_role: 'owner_director',
+        channel: 'phone', phone: '01632 960111', contact_consent: 'on',
         ...(slot === '' ? {} : { slot }),
       });
       /* CRM 5 of 10 — THE ONE FLAKE, EXPLAINED. On 11 September this close answered 404 once in a full run and never
@@ -307,7 +306,8 @@ describe('the claim record — one organisation, many properties; one property, 
       assert.equal(lead.source, 'WEBSITE');
       assert.equal(lead.origin, 'ASSESSMENT');
       assert.ok(lead.booking_id, 'the funnel close’s booking is not tied to its lead');
-      assert.ok(h.made.app.audit.entries().some((e) => e.kind === 'LEAD_CREATED' && e.detail['route'] === 'funnel_close'));
+      // PHASE 153f: the four-stage funnel's close names its own route.
+      assert.ok(h.made.app.audit.entries().some((e) => e.kind === 'LEAD_CREATED' && e.detail['route'] === 'funnel4_close'));
 
       qualifyAndConvert(h.made.app, lead.id);
       const claims = h.made.app.db.all<{ property_id: string; assessment_id: string; stage: string; workstream: string }>(
@@ -739,8 +739,8 @@ describe('derive, do not re-key — a fact the build already holds is never aske
   test('the claimant type comes from the client’s own entity answer — and "not sure" derives nothing', async () => {
     const h = await bootFunnel();
     try {
-      const ltd = await h.runFunnel('Answered Limited', { p0_entity_type: 'ltd' });
-      const unsure = await h.runFunnel('Unsure Holdings', { p0_entity_type: 'unsure' });
+      const ltd = await h.runFunnel('Answered Limited', { b0_entity: 'ltd' });
+      const unsure = await h.runFunnel('Unsure Holdings', { b0_entity: 'unsure' });
       const a = C.organisationView(h.made.app.db, actor('SALES', 'u-SALES'), ltd);
       assert.equal(a.claimant_type.value, 'COMPANY');
       assert.equal(a.claimant_type.derived, true);

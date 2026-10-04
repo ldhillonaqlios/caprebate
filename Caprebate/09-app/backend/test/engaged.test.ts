@@ -51,21 +51,27 @@ type Client = {
 };
 
 /**
- * The six screens' answers, so a test can run the funnel a different way.
+ * The funnel's answers, so a test can run the funnel a different way.
  *
  * Every field is optional and the default is the fixture `runFunnel` has always
  * used. A test that wants "not sure" everywhere overrides four strings rather
  * than copying the whole walk-through.
+ *
+ * PHASE 153f, 4 October 2026: the six old screens are retired, so these are the four-stage funnel's answers for the one
+ * building — the old names kept for the answers that did not move (the tax question, the claims question), and the
+ * property screen's extras now given to the screen that asks them (`amounts`, `details`, `works`).
  */
 type FunnelAnswers = {
   own_prior_claim?: string;
   previous_owner_claimed?: string;
   is_uk_taxpayer?: string;
   current_year_position?: string;
-  trigger_default?: string;
-  /** Extra fields for the property screen, e.g. p0_entity_type, or a second property. */
-  q2?: Record<string, string>;
-  q3?: Record<string, string>;
+  trigger?: string;
+  /** Extra fields for the amounts screen, e.g. b0_spend_unknown. */
+  amounts?: Record<string, string>;
+  /** Extra fields for the details screen, e.g. b0_entity. */
+  details?: Record<string, string>;
+  works?: Record<string, string>;
 };
 
 type Harness = {
@@ -134,28 +140,24 @@ async function boot(): Promise<Harness> {
     name = 'Meadowcroft Care Limited', answers: FunnelAnswers = {},
   ): Promise<{ business_id: string; figureBody: string }> {
     const c = client();
+    const tax = answers.is_uk_taxpayer ?? 'yes';
     await c.req('/assessment');
-    await c.post('/assessment/Q1', { own_prior_claim: answers.own_prior_claim ?? 'no' });
-    await c.post('/assessment/Q1a', { previous_owner_claimed: answers.previous_owner_claimed ?? 'dont_know' });
-    await c.post('/assessment/Q1b', {
-      is_uk_taxpayer: answers.is_uk_taxpayer ?? 'yes',
-      current_year_position: answers.current_year_position ?? 'profitable',
-    });
-    await c.post('/assessment/Q1c', { trigger_default: answers.trigger_default ?? 'purchase' });
-    // The legal entity is deliberately left blank: ASKED and not answered, which
-    // is SKIPPED, and is one of the facts panel 3 has to derive as missing.
-    await c.post('/assessment/Q2', {
-      p0_address: 'Meadowcroft House, ZZ9 9ZZ', p0_sector: 'care_homes',
-      p0_trigger: 'purchase', p0_spend: '2400000', p0_date: '06/2021',
-      ...(answers.q2 ?? {}),
-    });
-    await c.post('/assessment/Q3', { p0_works: 'no', ...(answers.q3 ?? {}) });
+    await c.post('/assessment/buildings', { b0_sector: 'care_homes' });
+    await c.post('/assessment/spend-on', { b0_trigger: answers.trigger ?? 'purchase' });
+    await c.post('/assessment/amounts', { b0_spend: '2400000', b0_date: '06/2021', ...(answers.amounts ?? {}) });
+    // "Is it profitable" is asked, and kept, only after "yes" (src/web/funnel4.ts).
+    await c.post('/assessment/tax', { b0_tax: tax, ...(tax === 'yes' ? { b0_profit: answers.current_year_position ?? 'profitable' } : {}) });
+    await c.post('/assessment/claims', { b0_prior: answers.own_prior_claim ?? 'no', b0_seller: answers.previous_owner_claimed ?? 'dont_know' });
+    await c.post('/assessment/works', { b0_works: 'no', ...(answers.works ?? {}) });
+    /* The legal entity was deliberately left blank on the old property screen: ASKED and not answered, which is
+       SKIPPED, and one of the facts panel 3 has to derive as missing. The four-stage funnel will not move on without an
+       answer, so it is "Not sure" here, which derives nothing either (N4). */
+    await c.post('/assessment/details', { b0_business: name, b0_entity: 'unsure', b0_line1: 'Meadowcroft House', b0_postcode: 'ZZ9 9ZZ', ...(answers.details ?? {}) });
     const figure = await c.req('/assessment/figure');
-    const close = await c.req('/assessment/close');
-    const slot = /name="slot" value="([^"]+)"/.exec(close.body)?.[1] ?? '';
+    const slot = /name="slot" value="([^"]+)"/.exec(figure.body)?.[1] ?? '';
     const submitted = await c.post('/assessment/close', {
-      full_name: 'A Person', business_name: name, job_role: 'owner',
-      channel: 'phone', contact_value: '01632 960111', contact_consent: 'on',
+      first_name: 'A', surname: 'Person', job_role: 'owner_director',
+      channel: 'phone', phone: '01632 960111', contact_consent: 'on',
       ...(slot === '' ? {} : { slot }),
     });
     assert.equal(submitted.status, 200, 'the funnel did not close');
@@ -167,6 +169,16 @@ async function boot(): Promise<Harness> {
   }
 
   return { close: made.close, app: made.app, signIn, runFunnel };
+}
+
+/**
+ * PHASE 153f: the four-stage funnel does not move on with a question unanswered, so it records no SKIPPED row. The
+ * records the six old screens made still hold them, and are kept. This marks the legal entity skipped exactly as one of
+ * those records holds it (asked, not answered), for the tests of how a skipped answer is shown and derived.
+ */
+function asAnOldRecordWithTheEntitySkipped(app: Harness['app'], business_id: string): void {
+  app.db.run("UPDATE assessment_answers SET state = 'SKIPPED', value = NULL WHERE question_id = 'Q2-1-entity' " +
+    'AND assessment_id IN (SELECT id FROM assessments WHERE business_id = ?)', [business_id]);
 }
 
 /** The href of the first client row on the list. */
@@ -354,6 +366,7 @@ describe('panel 1 — questions and answers', () => {
     const h = await boot();
     try {
       const { business_id } = await h.runFunnel();
+      asAnOldRecordWithTheEntitySkipped(h.app, business_id);
       const staff = await h.signIn('SALES');
       const page = await staff.req(`/staff/clients/${business_id}`);
       assert.match(page.body, /I don’t know — the client said so/);
@@ -700,6 +713,7 @@ describe('panel 3 — what is still missing', () => {
     const h = await boot();
     try {
       const { business_id } = await h.runFunnel();
+      asAnOldRecordWithTheEntitySkipped(h.app, business_id);
       const sales = makeActor('SALES', 'u-SALES');
       const missing = E.missingFacts(h.app.db, sales, business_id);
       const answers = missing.filter((m) => m.origin === 'answer');
@@ -1467,7 +1481,8 @@ describe('the engine session is rebuilt from the funnel, not from three question
         previous_owner_claimed: 'dont_know',
         is_uk_taxpayer: 'not sure',
         current_year_position: 'unsure',
-        q2: { p0_entity_type: 'unsure', p0_spend_unknown: 'on', p0_date_unknown: 'on' },
+        amounts: { b0_spend_unknown: 'on', b0_date_unknown: 'on' },
+        details: { b0_entity: 'unsure' },
       });
       const a = h.app.db.get<{ id: string }>(
         'SELECT id FROM assessments WHERE business_id = ?', [business_id],

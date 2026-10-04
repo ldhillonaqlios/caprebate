@@ -1022,3 +1022,12 @@ reasonably be established remotely should require a site inspection before a sur
 -  **Outside any entry.** Sector ranges are proposed from approved packs once five claims exist (question 138), with the engine's supported-living band by trigger behind a switch, off. The past-claim test (question 139) checks GC-01 within 5% and £25,000, and keeps an empty slot for a second case rather than inventing one.
 
  **And the board's own total at the close of Phase 153e, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153f, 4 October 2026 — six more chapters of your pack; nothing moved in or out
+
+ **SV-S4, the report.** Six more chapters of the survey pack are built, each showing what the pack already holds and saying "not on file", "not counted" or "needed" for anything missing: 1 Report and property (with the site plan from Ordnance Survey's free building outlines, never the legal boundary), 3 Purpose and basis, 6 Room schedule, 12 Fixtures item by item, 13 Pools, and 21 Limits. You open each before approving. The other ten are Phase 153g. **SV-S5:** each video call is now hosted on Zoom by the member of staff it is assigned to.
+
+ **And the board's own total at the close of Phase 153f, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
