@@ -91,13 +91,14 @@
 - Note 2026-09-28 (Phase 153): Built on the site, switched off (Phase 153): the address question ('Where is it?') draws one line linking 'Our privacy notice' to /notices/ only while CB_REGISTRY.precondition.enabled is true - the existing switch, no second gate, no tick box (informed, not consented: rule 13(b)). Harness Suite Q7 (five tests) covers it; two fail on the pre-change site file. The back end's own address question (09-app/backend/src/web/assessment.ts) gets the same link in this phase. Left for Lakhbir: publish the notice, then flip the one switch.
 - Note 2026-09-28 (Phase 153): Also built in the back end (Phase 153): the served assessment's address question (src/web/router.ts, screen Q2) draws the same link through noticeAtAddress(registryGate()) - off today; test/phase153.test.ts, its wiring test red on the pre-change router.
 
-### 📨 Send the two data-licence emails — Valuation Office and Ordnance Survey
+### 📨 Decide: ask the Valuation Office about its Rating Cost Guide? (the rating list scrapped and the Ordnance Survey email dropped, 4 Oct 2026)
 
 `12933604947` · **Ready - Lakhbir action** · owner Lakhbir
 
 - File: `08-monday-doc-exports/12933604947__Two-emails-to-send.md`
 - Note 2026-10-04 (Phase 155): Phase 155 (4 Oct 2026): the rating list's terms read again, unchanged - business rates purposes only. Email 1 is still the only route; the email document has a dated line.
 - Note 2026-10-04 (Planning (VOA scrapped)): The Valuation Office's rating list is SCRAPPED (Lakhbir: 'scrap the VOA rating'); not to be asked for. Email 1 is now only about the Rating Cost Guide (fee scale and ageing tables); whether to send it, and the Ordnance Survey email (Word question 11), is Lakhbir's decision. Posted on monday the same day.
+- Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): The Ordnance Survey email DROPPED (Lakhbir: 'OS email no we dont need to send it'). Nothing waits on it: site size and a boundary plan rest on HM Land Registry's conditions; the building outlines use Ordnance Survey's free open data (no letter). Only the Rating Cost Guide question is left, Lakhbir's. Renamed on monday and here.
 
 ### Get a legal answer on whether our old data-lookup design broke the rules
 
@@ -637,6 +638,7 @@
 - Note 2026-09-25 (Phase 146k): Land Registry Business Gateway taken off this list: the title register is looked up by hand, not by the API (Lakhbir, 25 Sep 2026); its details were removed from the key file.
 - Note 2026-09-28 (Phase 152 (sweep)): Renamed: Veriff was replaced by Didit on 25 Sep 2026 (Word question 225) and the three Didit keys are in the key file (Phase 151h). The name still asked for Veriff.
 - Note 2026-09-29 (29 Sep review): Checked by name only on 29 Sep 2026 (no value read): the key file now holds Companies House, CQC, EPC and Homedata keys as well as Claude, IONOS sending and Didit. Still missing: the IONOS reading (IMAP) login, the Google Analytics measurement id, and CAPREBATE_MFA_KEY. No test lookup has been run on any key yet (~/.caprebate-test-lookups.jsonl does not exist).
+- Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): Google Analytics is no longer a key to get: dropped for now by Lakhbir (the marketing team may pick it up later).
 
 ### DELETE, on the OneDrive WEB PAGE: the folder "DELETE - files to delete (sweep 25 Sep 2026)" (143 MB) and the files named "DELETE - ..." in Health Capital Allowances - they are still in the cloud
 
@@ -1227,6 +1229,7 @@
 
 - File: `08-monday-doc-exports/12552691720__Measurement-Plan-Assessment-Funnel-and-Launch-Analytics.md`
 - Note 2026-09-28 (Phase 152 (sweep)): The trigger in this row's comments is "the WordPress rebuild" - there has been no WordPress since 18 Sep 2026. Read it as: the production website goes live. Google Analytics is chosen (Word question 171) and the cookie banner that gates it is built (13104177454, Done); GA4 and conversion tracking are wired and switched off, so their subitems wait on the live site, not on a build.
+- Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): Google Analytics dropped for now (Lakhbir: the marketing team can pick it up later if needed). Phase 146f's code stays off (no measurement ID: no cookie choice, nothing loads); no phase asks for the ID. Stays Parked - deliberate. Posted on monday.
 - Subitems (3):
   - Configure conversion tracking — `12552685127`
   - Connect Google Search Console — `12552685129`
@@ -1375,11 +1378,12 @@
 
 - Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538872.
 
-### Phase 156e - Homedata, Anthropic, GoAddress, Didit, Google Analytics (to ask), the Connections page and the care regulators' lists
+### Phase 156e - Homedata, Anthropic, GoAddress, Didit, the Connections page and the care regulators' lists (Google Analytics dropped for now)
 
 `13201538874` · **Ready - Lakhbir action** · owner Lakhbir
 
 - Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538874.
+- Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): Step A5 (Google Analytics) dropped for now by Lakhbir; renamed on monday and here.
 
 ---
 

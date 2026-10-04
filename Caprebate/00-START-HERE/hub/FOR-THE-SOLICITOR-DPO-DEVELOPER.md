@@ -922,6 +922,8 @@ Signed .............................  Date ..........................
 
  **For the data protection officer. Board item 12927931400.**
 
+ _4 October 2026 (planning): Google Analytics is dropped for now (Lakhbir); it is off and receives nothing, so its row below needs no check until the marketing team picks it up again._
+
  _4 October 2026 (Phase 153a): the list is now v1.4. Six processors are added — Zoom, WhatsApp (Meta), GoAddress, Cloudflare Turnstile, Turso and Google Analytics (marked for you to check) — and the test website's Vercel host and Vercel Blob file store are named under P5 and P4. Your approval of the Zoom, WhatsApp and GoAddress transfers for testing only, relayed by Lakhbir on 30 September 2026, is recorded in their rows; none is approved for a real client. Everything these services hold today is invented test data._
 
 |  **What it is** |  The recipients list Article 15(1)(c) and Article 19 require: **five recipients we disclose to** — the surveyor, the tax adviser, the client's own accountant, HMRC, and the registers, which are listed **only to say they receive nothing** — and **seven processors**, who are recipients too under Article 4(9). For each, whether anything has actually been disclosed to date. |
@@ -1730,6 +1732,8 @@ Name:                                  Date:
 ### For the data protection officer — two things, and neither is a new decision today
 
  **SDP-P37, added to. The reader now has a caller, and it is still switched off.** When Phase 146e built the reader on 22 September 2026 it was called from nowhere: a finished upload stopped after the strip, and steps 8, 9 and 10 of the receipt contract — the record of what we hold, the reading, and writing what was read — ran in the tests and nowhere else. Phase 146g wired them in on 23 September 2026, **behind the same switch, which is still off**. With it off a finished upload behaves exactly as it did before: nothing is sent, nothing is read, and every question the document might have answered is still asked of the client. With it on, only the parts the strip let through are sent, one record is kept of exactly which parts left (their kind and page, never their words), and a reading that fails leaves every question asked rather than filling one in. **Nothing you have already been asked to approve has changed.**
+
+ _4 October 2026 (planning): Google Analytics is dropped for now (Lakhbir: the marketing team can pick it up later if needed). The code stays off — with no measurement id the page shows no cookie choice and loads nothing from Google — so this amendment, and Google Analytics' row in the recipients list (SDP-P6), need nothing from you until the marketing team picks it up again._
 
  **A Measurement Plan amendment is drafted and waiting for you.** Four of the six assessment screens send no screen name to Google Analytics at all — only a number — so a funnel report can put them in order and cannot say what they are. The amendment names four short labels for them, and it is drafted in full in section 5.3 of the Developer Spec. **None of them is personal data and none is anything a client typed**: they are four fixed words chosen in advance. It is written up as a question for you in the Word questions document. **Nothing changes in the code until you have reviewed it** — the build-time check fails if the code's list and the plan's list differ, which is that control working rather than an obstacle to it.
 

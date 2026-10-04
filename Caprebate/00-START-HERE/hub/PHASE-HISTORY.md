@@ -11792,3 +11792,27 @@ Tracker check green. No code or test changed, so the test figures stand at 1363 
 
 - Every PART A step of 156a to 156e — Lakhbir's — the phases themselves (156a first).
 - The Ordnance Survey email and the Rating Cost Guide question — Lakhbir's decision — Word question 11; WAITING-ON-PEOPLE.md; tracker 12933604947.
+
+## PLANNING, 4 October 2026, later — Google Analytics dropped for now; the Ordnance Survey email not sent (Opus 5.5, Mac copy, Lakhbir's MacBook Pro)
+
+**Run-sheet entry.** Planning (later) - 4 October 2026. Lakhbir dropped Google Analytics for now (the marketing team may pick it up later) and decided not to send the Ordnance Survey licence email. Both are added to COORDINATES, "DECIDED - DO NOT REOPEN". No code changed: Google Analytics was already off (with no measurement ID there is no cookie choice and nothing loads), and the building outlines use Ordnance Survey's free open data, which needs no letter. Still his to decide: whether to ask the Valuation Office about its Rating Cost Guide (Word question 11). Figures unchanged (4,644). Branch claude/plan-156, PR 17.
+
+### What Lakhbir said
+
+- "Google Analytics: i feel like we can drop this and marketing can pick it back up in the futer during development if needed".
+- "OS email no we dont need to send it, and valuation Office about its building-cost guide what is this for ?" (answered in the chat: the guide would supply the fee bands and ageing tables the cost model holds built, off and empty).
+
+### What was done
+
+- **ACTION-PLAN.md:** two new entries under "DECIDED - DO NOT REOPEN"; 156e A5 now says dropped; 156a A2 says the free plan needs no letter; the sweep's do-not-reopen line names all three decisions. **Run sheet:** dated notes under 156a and 156e, 156e's note line and the sweep's note updated.
+- **KEYS-AND-SWITCHES** (the Google Analytics row: dropped; the Ordnance Survey row: open data, no letter, now 156a A2), **WAITING-ON-PEOPLE** (Word question 11 now only the Rating Cost Guide; Google Analytics off the Phase 156 list), **FOR-THE-SOLICITOR-DPO-DEVELOPER** (dated notes on the Measurement Plan amendment and on Google Analytics' row in the recipients list: nothing needed from Sadique until marketing picks it up), the two-emails document (Email 2 dropped).
+- **Board and tracker:** 12933604947 renamed "Decide: ask the Valuation Office about its Rating Cost Guide? …" with an update; 13201538874 (156e) renamed without Google Analytics; updates and notes on 12552691720 (stays Parked - deliberate), 13104162940 and 13201538874.
+- **Word (AMENDMENT 2 way, both files, backups .bak-plan156b):** Caprebate_Questions.docx — recorded answers added to questions 11 (the Ordnance Survey email not sent), 171 (Google Analytics dropped for now) and 195 (nothing to answer until marketing picks it up); the Unanswered document — a recorded note on question 195. Cloud copies matched the Mac before writing and the built files after; the temporary copies went to the recycle bin.
+
+### Checks
+
+Tracker check green; no code or test changed.
+
+### NOT DONE — each with its home
+
+- Whether to ask the Valuation Office about its Rating Cost Guide — Lakhbir — Word question 11; tracker 12933604947; WAITING-ON-PEOPLE.md.

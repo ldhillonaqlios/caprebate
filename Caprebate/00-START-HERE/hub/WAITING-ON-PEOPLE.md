@@ -17,7 +17,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Confirm or complete the ICO registration (ACTION-PLAN ~1828).
 - [ ] Check DKIM signing is on in IONOS (ACTION-PLAN ~1815; Phase 156 A4 has the steps).
 - [ ] Get the director's confirmation of the 3% fee and the other terms (Word question 215).
-- [ ] Word question 11: send the Ordnance Survey email, and say whether to ask the Valuation Office about its Rating Cost Guide (building costs). _The VOA rating list itself was scrapped on 4 Oct 2026 — not to be asked for._
+- [ ] Word question 11: say whether to ask the Valuation Office about its Rating Cost Guide (building costs). _On 4 Oct 2026 the VOA rating list was scrapped and the Ordnance Survey email was dropped (not to be sent) — neither is to be asked for._
 - [ ] Book the free 45-minute surveyor call.
 - [ ] Get the DPO appointment signed by Sadique and the company, and its five blanks filled.
 - [ ] Engage a chartered tax adviser.
@@ -34,7 +34,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       solicitor brief, mailbox confirmation, Google Business Profile, bank and insurance, HMRC corporation tax,
       supplier breach clauses, and ten lower-priority items (Homedata, cyber security, hardware, brand, analytics…).
 - [ ] The API steps in Phase 156 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
-      Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom licence, Google Analytics, Anthropic paperwork, GoAddress, Didit).
+      Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom licence, Anthropic paperwork, GoAddress, Didit). Now Phases 156a to 156e. _Google Analytics was dropped for now on 4 Oct 2026; the marketing team may pick it up later._
 - [ ] Send a test video from the iPhone through "Show us your building", and supply the tall hero video for the home
       page (PHASE-HISTORY ~11112-11160).
 - [x] Decide whether the stray local files on the Mac (`*.mutbak`, `*.new0929`, `api/index.mjs.new0929`,

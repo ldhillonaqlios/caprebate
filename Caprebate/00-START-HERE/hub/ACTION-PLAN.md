@@ -457,9 +457,22 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     VOA_RATING_LIST with every channel shut, and the panel says "not built";
     the phase9 importer stays unshipped and nothing is to wire it in. Older
     text that says VOA is "waiting on the licence" is history.
-  (Still open, and NOT scrapped: Word question 11's Ordnance Survey email,
-    and whether to ask the Valuation Office about its Rating Cost Guide -
-    a different document, about building costs, not the rating list.)
+  THE ORDNANCE SURVEY LICENCE EMAIL - NOT SENT (Lakhbir, 4 Oct 2026: "OS
+    email no we dont need to send it"). Email 2 of tracker 12933604947 is
+    dropped. Nothing waits on it: site size and a boundary plan rest on HM
+    Land Registry's conditions, and the building outlines (Phase 156a A2) use
+    the free OS OpenData plan, which needs no letter. Without it the building
+    footprint is not taken from Ordnance Survey's paid maps; the client or
+    the surveyor gives it, as today.
+  GOOGLE ANALYTICS - DROPPED FOR NOW (Lakhbir, 4 Oct 2026: "we can drop this
+    and marketing can pick it back up in the futer during development if
+    needed"). The code built by Phase 146f stays as it is, OFF (no
+    GA4_MEASUREMENT_ID, nothing loads); no phase asks for the measurement ID
+    or sets it up. Only the marketing team, through Lakhbir, picks it up
+    again. Tracker 12552691720 stays "Parked - deliberate".
+  (Still open: whether to ask the Valuation Office about its Rating Cost
+    Guide - a different document, about building costs, not the rating
+    list. Word question 11.)
 
 WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   ACTION-PLAN.md                    this document
@@ -1100,7 +1113,8 @@ A1. EPC AND CQC INTO VERCEL (5 minutes). Both keys are already in our key file.
     4. The same for CQC_SUBSCRIPTION_KEY.
     (Not HOMEDATA_API_KEY: it is paid and waits for 156e.)
 A2. ORDNANCE SURVEY (free, about 10 minutes). It draws the building outlines on
-    the report's site plan.
+    the report's site plan. The free OS OpenData plan needs no letter to
+    Ordnance Survey (the licence email is not being sent, 4 Oct 2026).
     1. osdatahub.os.uk > Sign up (or Log in) with the company email. Choose
        the OS OpenData plan: free, no card.
     2. Dashboard > API projects > Create a new project. Name it "Caprebate
@@ -1467,7 +1481,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 
 ## PHASE 156e — the paid and paper-first services, the Connections page and the care regulators' lists
 
- **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **Everything else the old Phase 156 held: Homedata, Anthropic, GoAddress, Didit, Google Analytics (to ask about), the Connections page and the Welsh and Scottish lists.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **Everything else the old Phase 156 held: Homedata, Anthropic, GoAddress, Didit, Google Analytics (dropped for now; was to ask about), the Connections page and the Welsh and Scottish lists.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1548,14 +1562,10 @@ A3. GOADDRESS ("Find my address"). 100 free lookups, then a paid plan: when the
 A4. DIDIT (identity checks). 500 free a month, then about 33 US cents a check.
     In Didit's console, set how long it keeps results, to match the retention
     schedule once Sadique approves it.
-A5. GOOGLE ANALYTICS 4 (counting website visits, after a visitor accepts
-    cookies). ASK LAKHBIR FIRST (4 Oct 2026 he said the marketing team deals
-    with things like this): is it the marketing team's? If so, the marketing
-    team creates the property (analytics.google.com > Admin > Create property
-    "Caprebate", UK, GBP > Data streams > Web > the site address) and sends
-    the Measurement ID (starts G-), which goes into Vercel as
-    GA4_MEASUREMENT_ID. Sadique reviews the measurement plan and the cookie
-    wording first; nothing loads before consent.
+A5. GOOGLE ANALYTICS 4 - DROPPED FOR NOW (Lakhbir, 4 Oct 2026: the marketing
+    team can pick it up later if needed). Nothing to do: the code stays OFF,
+    and no one is asked for a measurement ID. See COORDINATES, "DECIDED - DO
+    NOT REOPEN".
 
 PART B - CLAUDE
 
@@ -1718,7 +1728,8 @@ FROM PHASE 154a1 (4 Oct 2026), TWO LOOSE ENDS WITH THEIR HOME HERE, both
 ═══════════════════════════════════
 
 DO NOT REOPEN what COORDINATES lists under "DECIDED - DO NOT REOPEN" (added
-4 Oct 2026: the VOA rating list, scrapped by Lakhbir). A sweep that finds
+4 Oct 2026: the VOA rating list, scrapped by Lakhbir; the Ordnance Survey
+licence email, not sent; Google Analytics, dropped for now). A sweep that finds
 older text saying otherwise corrects the text, not the decision.
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.

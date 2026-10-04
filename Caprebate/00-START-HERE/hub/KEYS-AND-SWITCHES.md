@@ -48,10 +48,10 @@ test mode, developers will change this".
 | Care Inspectorate Wales | Care registrations and places in Wales (Phase 155, 4 Oct 2026) | No key: a downloaded file, imported on the server (`node src/cli.ts import-register CIW <file> --by <admin>`); `REGISTER_SWITCHES.CIW` off; free gate shut | — |
 | Care Inspectorate (Scotland) | Care registrations, places and beds in Scotland (Phase 155) | No key: the month's datastore CSV, imported the same way (`import-register CARE_INSPECTORATE`); `REGISTER_SWITCHES.CARE_INSPECTORATE` off; free gate shut | — |
 | BCIS index | The building price index the cost model turns costs back to the purchase date with (Phase 155) | BCIS bought (Word question 218); then `node src/cli.ts import-bcis-index <file>` keeps it outside the repository (`CAPREBATE_BCIS_INDEX_FILE`) | 157 (the pack's wiring) |
-| Google Analytics 4 | Website visits after consent | `GA4_MEASUREMENT_ID`; Sadique's review of the measurement plan | 156 A7 |
+| Google Analytics 4 | Website visits after consent | **DROPPED FOR NOW (Lakhbir, 4 Oct 2026):** the code stays off (no `GA4_MEASUREMENT_ID`, so no cookie choice and nothing loads); the marketing team may pick it up later. Do not ask for the id | none (was 156 A7) |
 | Engagement signing | Typed-name signature, in house | `ENGAGEMENT_SIGNING` off until the solicitor confirms | waiting on the solicitor |
 | Keeping uploaded originals | Encrypted copies of client files | `CAPREBATE_ORIGINALS_KEY` is set; ON for the test website only (`KEEP_ORIGINALS_TEST_WEBSITE`, passed by api/index.mjs, seven years, Phase 153c); the shipped `KEEP_ORIGINALS` stays off; Sadique's check | waiting on Sadique |
-| Ordnance Survey (OS Data Hub, Features API) | Building outlines for the report's site plan (Phase 153f, 4 Oct 2026, from the 2 Oct stage 6) | `OS_DATA_HUB_API_KEY` (free OS OpenData plan; in `TEST_DEPLOY_KEYS`, not yet set in Vercel); fetched on the test website only | 156 A5 |
+| Ordnance Survey (OS Data Hub, Features API) | Building outlines for the report's site plan (Phase 153f, 4 Oct 2026, from the 2 Oct stage 6) | `OS_DATA_HUB_API_KEY` (free OS OpenData plan; in `TEST_DEPLOY_KEYS`, not yet set in Vercel); fetched on the test website only. Open data (OS Open Zoomstack, Open Government Licence): no letter to Ordnance Survey needed; the licence email is NOT being sent (Lakhbir, 4 Oct 2026) | 156a A2 |
 | HM Land Registry title (Business Gateway) | Official title copy | Retired: done by hand | — |
 
 ## Named in the plans, not built
