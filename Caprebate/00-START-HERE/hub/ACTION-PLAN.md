@@ -1276,6 +1276,17 @@ B6. (ADDED 4 Oct 2026 by Phase 153f.) ZOOM'S CALL LENGTH AND ATTENDEES, once
     {meetingId} (its duration) and /participants (how many came; keep the
     count and the minutes, never a name or an email), show them on the call
     and the Communication tab, with a test on recorded answers.
+B7. (ADDED 4 Oct 2026 by Phase 155.) THE WELSH AND SCOTTISH CARE REGULATORS'
+    LISTS. Phase 155 built both lookups from downloaded files, imported by
+    "node src/cli.ts import-register <CIW|CARE_INSPECTORATE> <file> --by
+    <admin>", which writes to the local database only - so the test website
+    (Turso) cannot be given a list without a command line. Build an Admin
+    upload for the file (the same import, refused whole on wrong columns;
+    the Scottish file is Windows-1252), show on B4's page when each list was
+    last imported, and remind Admin monthly to import the new month's file.
+    No PART A step: CIW's extract and the Care Inspectorate's datastore need
+    no account. ASK LAKHBIR whether his 2 Oct waiver ("All the free ones")
+    covers these two; only on his yes add them to TEST_WEBSITE_LOOKUPS.
 
 When every line that could run is done: run every check in COORDINATES,
 re-derive the figures, update the registers, write the record, and leave each
@@ -1391,6 +1402,10 @@ FROM PHASE 153e (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the cost model
   pack's chapters too — the index dates in chapter 11 and the checks in 14 —
   and bring the phase3 module's £/m² review flag (Phase 153e line 14) into
   chapter 22. Neither is in the back end today.
+  ADDED 4 Oct 2026 by Phase 155: the index factor (Phase 153e line 12) is to
+  read the real BCIS table when one has been imported (bcisIndexTable in
+  09-app/backend/src/web/bcis-index.ts; node src/cli.ts import-bcis-index),
+  and the labelled placeholder only in the test system; never a guess.
 FROM PHASE 154a1 (4 Oct 2026), TWO LOOSE ENDS WITH THEIR HOME HERE, both
   buildable today. Line 13 built the s.187A pooling requirement (R-B1,
   CB_S187A.poolingAssess) for a seller KNOWN to have been able to claim.
@@ -1907,7 +1922,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 153e — the surveyor's workbench, for the surveyor to check (13199476474) |  The same review |
 |  Claude |  Phase 153f — work found on 3 October that no phase held (survey pack stage 6 and chapters, an engine date bug, Zoom hosts, the old screens, WhatsApp, answers into the record, the tracker) |  The 3 October check of 153a-154 |
 |  Claude |  Phase 154a1 — the faults the 3 October sweep found, fixed (13 lines) — **done 4 Oct 2026**, see PHASE HISTORY |  Lakhbir, 3 Oct: "these should be fixed in phase 154a1" |
-|  Claude |  Phase 155 — the services the plans name but nobody has built (CIW, the Care Inspectorate, the VOA list, BCIS, the reply timer, the three server files) |  Lakhbir, 3 Oct: "this needs to be phase 156" (renumbered 155 when the services phase moved near the end) |
+|  Claude |  Phase 155 — the services the plans name but nobody has built (CIW, the Care Inspectorate, the VOA list, BCIS, the reply timer, the three server files) — **done 4 Oct 2026**, see PHASE HISTORY (the VOA list not built: its licence forbids our use) |  Lakhbir, 3 Oct: "this needs to be phase 156" (renumbered 155 when the services phase moved near the end) |
 |  Claude and Lakhbir |  Phase 156 — every outside service, run near the end: PART A is Lakhbir's, step by step; PART B is Claude's, after each step |  Lakhbir, 3 Oct: "all API's needed should be phase 155" |
 |  Claude |  Phase 157 — the sweep, always last |  The standing rule |
 

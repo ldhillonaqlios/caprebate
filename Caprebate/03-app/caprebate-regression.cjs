@@ -6610,10 +6610,14 @@ if (startSuite("Y", "Phase 132 — N2, the engine registry against the name-excl
        exclusion register at all, so `findPolicy` failed closed on it — correct behaviour, and it meant the paid
        address lookup could not have written a single field. Phase 146d built that lookup and added its entry, so
        its own `postcode` now passes, as it must for the connector to work. CIW still has none, because there is
-       no Welsh connector to write anything; an unknown source is still refused outright. */
-    check("Y5 — an unknown source is refused outright; so is the Welsh regulator, which nothing writes; the paid address lookup now has a policy and its own field passes",
-      [codeOf("experian", "anything"), codeOf(BACKEND_ONLY_IDS.cqc[0], "registration_status"), codeOf(BACKEND_ONLY_IDS.homedata[0], "postcode")],
-      ["E_UNKNOWN_SOURCE", "E_UNKNOWN_SOURCE", "passed"]);
+       no Welsh connector to write anything; an unknown source is still refused outright.
+       AMENDED PHASE 155, 4 October 2026: the Welsh regulator IS built now (from its downloaded list), so it has its
+       own entry (subitem 16) — the same gap closing as Homedata's. A field it does not keep is still refused: CIW's
+       file has no registration status, so `registration_status` is unclassified under CIW and refused; its own
+       `capacity` passes. An unknown source is still refused outright. */
+    check("Y5 — an unknown source is refused outright; the Welsh regulator now has a policy: a field it does not keep is refused, its own passes; so does the paid address lookup's",
+      [codeOf("experian", "anything"), codeOf(BACKEND_ONLY_IDS.cqc[0], "registration_status"), codeOf(BACKEND_ONLY_IDS.cqc[0], "capacity"), codeOf(BACKEND_ONLY_IDS.homedata[0], "postcode")],
+      ["E_UNKNOWN_SOURCE", "E_UNCLASSIFIED_FIELD", "passed", "passed"]);
     check("Y6 — an uncatalogued field is refused, never assumed safe",
       [codeOf("HMLR_TITLE", "vendor_solicitor_name"), codeOf("CH_PSC", "director_name")],
       ["E_UNCLASSIFIED_FIELD", "E_UNCLASSIFIED_FIELD"]);
