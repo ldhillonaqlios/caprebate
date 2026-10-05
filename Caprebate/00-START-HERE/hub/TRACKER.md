@@ -7,7 +7,7 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 0 |
-| Ready - Lakhbir action | 32 |
+| Ready - Lakhbir action | 31 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 2 |
 | Blocked - licence or purchase | 3 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
 | Done | 296 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1349,7 +1349,7 @@
 
 ### Phase 156d - Zoom on the free plan: one shared host (contact@), and call lengths if the free plan allows them (no payment)
 
-`13201538872` · **Ready - Lakhbir action** · owner Lakhbir
+`13201538872` · **Working on it** · owner Lakhbir · **CLAIMED BY Lakhbir's Mac**
 
 - Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538872.
 - Note 2026-10-05 (Planning 5 Oct 2026): Rewritten 5 Oct 2026 so nothing is paid for (Lakhbir: 'yes change 156d so i dont pay'): staff added as free Basic users, two free scopes, then Claude finds out whether the free plan gives call length and attendees; the 40-minute limit said plainly; Zoom Pro moved to before real clients. Same change on the monday board and the run sheet.
