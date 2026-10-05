@@ -42,7 +42,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       retention rule; messages from before the client ticked the WhatsApp box are kept) — FOR-THE-SOLICITOR-DPO-DEVELOPER.
 - [ ] An Android WhatsApp export, made-up content, when one is to hand: the reader was built for Android from WhatsApp's
       documented layout and tested on invented files only (Phase 156c). Put it in 09-app/backend/test/fixtures/whatsapp-export.
-- [ ] Sadique: approve Cloudflare (US) for testing, so the contact form's server check can run (Phase 156a A3.6).
+- [x] Sadique: approve Cloudflare (US) for testing, so the contact form's server check can run (Phase 156a A3.6). _(Approved 5 Oct 2026, relayed by Lakhbir; `sources.ts` updated the same day.)_
 - [ ] The API steps in Phase 156 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
       Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom: two free scopes and a check that the host is contact@ (no payment, one shared host: both DONE 5 Oct 2026, Phase 156d), Anthropic paperwork (DONE for testing, 5 Oct 2026), GoAddress (who they are and where hosted; the paid plan after 100 lookups), Didit (how long it keeps results, in its console), Homedata (its key in Vercel and a balance)). Phase 156e, 5 Oct 2026, left these three as yours.
 - [ ] Zoom: hold one short test call and press "Ask Zoom how long it lasted" on its page — say what it shows (whether the free plan gives a call's length). Carried to the sweep, Phase 157. Now Phases 156a to 156e. _Google Analytics was dropped for now on 4 Oct 2026; the marketing team may pick it up later._

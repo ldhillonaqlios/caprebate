@@ -112,7 +112,7 @@ export const CONNECTIONS: readonly Connection[] = Object.freeze([
   { id: 'WHATSAPP', name: 'WhatsApp (live connection)', does: 'Sending from the back office. Chats are added by hand instead (Phase 156c).', owner: 'WHATSAPP', calls: ['WHATSAPP_CLOUD', 'WHATSAPP_MEDIA'],
     switch_name: 'whatsappMissing', waits: 'Nothing: off on purpose. Staff export a chat on the phone and add it to the record.' },
   { id: 'CLOUDFLARE_TURNSTILE', name: 'Cloudflare Turnstile', does: 'The contact form’s check that a person, not a robot, sent it.', owner: 'CLOUDFLARE_TURNSTILE', calls: ['CLOUDFLARE_TURNSTILE'],
-    switch_name: 'turnstileWhy', waits: 'Sadique’s approval of Cloudflare (US) for testing, so the server check can run.' },
+    switch_name: 'turnstileWhy', waits: 'Approved for testing (5 Oct 2026). For real clients: the privacy notice naming Cloudflare.' },
   { id: 'CLAUDE_DOCUMENTS', name: 'Anthropic (reading documents)', does: 'Reads clients’ documents for the facts a claim needs.', owner: 'CLAUDE_DOCUMENTS', calls: ['CLAUDE_DOCUMENTS'],
     switch_name: 'CLAUDE_SWITCHES',
     waits: 'Approved for testing (5 Oct 2026); its reading switches stay off and the key is not on the test website. For real clients: the privacy notice and Sadique’s retention answer.' },
