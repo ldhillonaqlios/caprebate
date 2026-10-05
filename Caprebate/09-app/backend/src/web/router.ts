@@ -73,6 +73,7 @@ import * as IE from './inbound-email.ts';
 import { joinSignature } from '../connectors/zoom.ts';
 import { VIDEO_CALL_JS } from './video-call-script.ts';
 import { PHOTO_UPLOAD_JS } from './photo-upload-script.ts';
+import { WHATSAPP_IMPORT_JS } from './whatsapp-import-script.ts';
 import { sweepUploads } from './photo-upload.ts';
 import { sweepVideos } from './survey-video.ts';
 import { receiveWhatsApp } from './whatsapp.ts';
@@ -309,6 +310,10 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   // 30 Sep 2026: the join pages' one script (src/web/video-call-script.ts).
   if (path === '/assets/video-call.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(VIDEO_CALL_JS); return 'handled';
+  }
+  // PHASE 156c: the WhatsApp pages' one script, which opens an exported chat on the person's computer.
+  if (path === '/assets/whatsapp-import.js' && method === 'GET') {
+    res.writeHead(200, SITE_JS_HEADERS); res.end(WHATSAPP_IMPORT_JS); return 'handled';
   }
   // 2 Oct 2026: the photo page's one script (src/web/photo-upload-script.ts).
   if (path === '/assets/photo-upload.js' && method === 'GET') {

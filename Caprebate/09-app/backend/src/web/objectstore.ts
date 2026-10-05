@@ -95,7 +95,10 @@ export const INCOMING_PREFIX = 'survey-incoming/';
 export const VIDEO_PREFIX = 'survey-videos/';
 /** PHASE 153f, 4 Oct 2026: a file someone sent us on WhatsApp, fetched from Meta and kept sealed (src/web/whatsapp.ts). */
 export const WHATSAPP_PREFIX = 'whatsapp-files/';
-const isSealedKey = (key: string): boolean => key.startsWith(SEALED_PREFIX) || key.startsWith(VIDEO_PREFIX) || key.startsWith(WHATSAPP_PREFIX);
+/** PHASE 156c, 5 Oct 2026: a WhatsApp chat exported on the phone and uploaded for checking — its text, and a small .zip
+ *  whole (src/web/whatsapp-import.ts). Kept sealed, like the files themselves. */
+export const WHATSAPP_IMPORT_PREFIX = 'whatsapp-imports/';
+const isSealedKey = (key: string): boolean => key.startsWith(SEALED_PREFIX) || key.startsWith(VIDEO_PREFIX) || key.startsWith(WHATSAPP_PREFIX) || key.startsWith(WHATSAPP_IMPORT_PREFIX);
 
 /** Where the phone sends one locked photo, and the headers to send with it. */
 export type IncomingTarget = { readonly url: string; readonly headers: Readonly<Record<string, string>> };

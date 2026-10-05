@@ -7,14 +7,14 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 0 |
-| Ready - Lakhbir action | 33 |
+| Ready - Lakhbir action | 32 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 2 |
 | Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 295 |
+| Done | 296 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -1137,7 +1137,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-35 items.
+34 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1347,14 +1347,6 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 156c - WhatsApp by manual upload: export a chat on the phone, add it with photos to the client's record (no live connection)
-
-`13201538871` · **Ready - Lakhbir action** · owner Lakhbir
-
-- Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538871.
-- Note 2026-10-05 (Planning (156c rewritten)): Rewritten (Lakhbir chose option 2): coexistence on his Business app number; first contact from the phone, free; the back office shows both ways and replies only within 24 hours; no opening template, no Meta charge. Route a (Tech Provider) or b (partner). Waiting on: which number, and is it on the WhatsApp Business app. Posted on monday.
-- Note 2026-10-05 (Planning (156c manual upload)): Rewritten again (Lakhbir: 'go with manual upload, keep photos'): export one chat on the phone, upload it with photos to the client's record; no live Meta connection, no partner, no cost; the live code stays off. Waiting on: two invented test exports (A1); Sadique's two questions (A2). Posted on monday.
-
 ### Phase 156d - Zoom: the paid licence, a user for each member of staff, and call lengths
 
 `13201538872` · **Ready - Lakhbir action** · owner Lakhbir
@@ -1372,7 +1364,7 @@
 
 ## Z · Complete / Not Applicable
 
-295 items.
+296 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3089,4 +3081,13 @@
 
 - Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538869.
 - Note 2026-10-05 (Phase 156b): DONE: cron-job.org every 5 minutes, every run 200; SPF, DKIM and DMARC published; mail-tester 10/10; nothing to fix in code. Done, group Z, on monday and here.
+
+### Phase 156c - WhatsApp by manual upload: export a chat on the phone, add it with photos to the client's record (no live connection)
+
+`13201538871` · **Done** · owner Lakhbir
+
+- Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538871.
+- Note 2026-10-05 (Planning (156c rewritten)): Rewritten (Lakhbir chose option 2): coexistence on his Business app number; first contact from the phone, free; the back office shows both ways and replies only within 24 hours; no opening template, no Meta charge. Route a (Tech Provider) or b (partner). Waiting on: which number, and is it on the WhatsApp Business app. Posted on monday.
+- Note 2026-10-05 (Planning (156c manual upload)): Rewritten again (Lakhbir: 'go with manual upload, keep photos'): export one chat on the phone, upload it with photos to the client's record; no live Meta connection, no partner, no cost; the live code stays off. Waiting on: two invented test exports (A1); Sadique's two questions (A2). Posted on monday.
+- Note 2026-10-05 (Phase 156c): DONE: Add a WhatsApp chat (upload, check, save; photos and files; big exports opened on the computer). Checked against a real iPhone export (40 test messages, 4 files). Back end 2464/0. Left: Sadique confirms the two answers; an Android export. Done, group Z, on monday and here.
 

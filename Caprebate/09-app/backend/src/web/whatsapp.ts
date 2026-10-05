@@ -47,7 +47,8 @@ export type PhoneContact = { readonly id: string; readonly name: string; readonl
 
 /** When the 24-hour window with this number closes, or null when it is closed. */
 export function windowOpenUntil(db: Db, number: string, nowIso: string): string | null {
-  const last = db.get<{ at: string | null }>("SELECT max(created_at) AS at FROM whatsapp_messages WHERE phone = ? AND direction = 'IN'", [number])?.at ?? null;
+  // PHASE 156c: a message added from the phone's export never opens WhatsApp's window: only one Meta delivered does.
+  const last = db.get<{ at: string | null }>("SELECT max(created_at) AS at FROM whatsapp_messages WHERE phone = ? AND direction = 'IN' AND id NOT IN (SELECT message_id FROM whatsapp_import_lines)", [number])?.at ?? null;
   if (last === null) return null;
   const until = Date.parse(last) + WINDOW_HOURS * 3_600_000;
   return until > Date.parse(nowIso) ? new Date(until).toISOString() : null;

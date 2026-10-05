@@ -493,7 +493,7 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     business verification, no cost; nothing is sent from the back office.
     The live connection built in Phases 146-153f stays in the code, switched
     off. (Earlier the same day he chose a live "coexistence" connection,
-    phone first; he replaced that with this.) Phase 156c builds it.
+    phone first; he replaced that with this.) Built by Phase 156c, 5 Oct 2026.
 
 WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   ACTION-PLAN.md                    this document
@@ -1026,147 +1026,6 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 156c — WhatsApp by manual upload: export a chat on the phone, add it to the client's record
-
- **Model: Opus. Rewritten 5 October 2026** after Lakhbir chose a manual upload with photos ("go with manual upload, keep photos") over a live connection to Meta. Staff keep talking to clients on the WhatsApp phone; to keep a conversation on the record they export that chat and upload it, and the back office shows it as a thread with dates, times and photos. No Meta account, no supplier, no cost; nothing is sent from the back office. The live connection already built stays in the code, switched off. Replaces the earlier versions (a paid opening template; then a live "coexistence" connection). Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)"; if it has no
-item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
-claude/... branch; never push to main; Lakhbir merges. Retag what you touch
-and give every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make (status, owner, note, new item) is written to
-  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
-  node 03-app/caprebate-tracker.cjs check passes. If the board and the
-  tracker disagree, stop and ask Lakhbir which is right.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
-  so at the end and tell Lakhbir to git pull on the Mac.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
-   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
-   line "<phase> - <date>", then what you did, what you found, what is left
-   and where it now lives, the test count, and the branch or pull request.
-   Plain words; no client data, no keys. (update_doc add_markdown_content
-   with no after_block_id adds it at the end.) Put the same entry at the top
-   of your PHASE-HISTORY record.
-3. DELETE THIS SECTION from the top of the run sheet (its title, its note
-   and this block: read_docs with include_blocks gives the block ids, then
-   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
-   at the top of both.
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
-into Vercel (project caprebate-test > Settings > Environment Variables,
-Production, Sensitive) and into the key file, by him. You may list NAMES in
-Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
-never read, decrypt or print a value. A key in Vercel does nothing until its
-name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
-only on the next deploy. Nothing here switches anything on for real clients:
-the test website and invented data only, and each service's paper (privacy
-notice, the data protection officer's approval of a transfer) stays its own
-sign-off.
-
-PART A - LAKHBIR - WHATSAPP BY MANUAL UPLOAD (decided 5 Oct 2026: "go with
-manual upload, keep photos"; COORDINATES, "DECIDED - DO NOT REOPEN").
-How it works: staff talk to clients on the WhatsApp phone as normal. To keep
-a conversation on the record, they export that one chat on the phone (open
-the chat > tap the name > Export chat > Attach media) and upload the file on
-the client's WhatsApp page. The back office checks it, then shows it as a
-thread with dates, times and photos. Nothing is sent from the back office;
-no Meta account, no supplier, no cost. The live Meta connection already
-built stays in the code, switched off.
-
-A1. TWO TEST FILES (invented, never a client): a short chat between Lakhbir
-    and a colleague who agrees, with a photo, a document, a message over two
-    lines, a deleted message and an edited one. Export it with media from an
-    iPhone and, if one is to hand, from an Android. Put both .zip files in
-    OneDrive: Health Capital Allowances > Business Development > Development
-    > Caprebate > 09-app > backend > test > fixtures > whatsapp-export (tell
-    Claude they are there). They contain no client data, so they may be
-    committed.
-A2. SADIQUE (through Lakhbir): (a) copies of WhatsApp chats and their photos
-    kept on the client's record follow the client-message retention rule -
-    confirm; (b) messages dated before the client ticked the WhatsApp box on
-    the funnel: keep them, or leave them out on upload? (B3 warns either way;
-    the build leaves them IN until he answers.)
-
-PART B - CLAUDE (each with a test that fails on the code before it)
-
-B1. THE READER (src/connectors/whatsapp-export.ts, no network): reads an
-    export .zip (its _chat.txt or "WhatsApp Chat with ....txt") or a bare
-    .txt. Both phone formats: iPhone "[02/10/2026, 14:21:05] Name: text" and
-    Android "02/10/2026, 14:21 - Name: text". Lines without a date join the
-    message above. Attachments: iPhone "<attached: FILE>", Android "FILE
-    (file attached)" - matched to the file in the zip. WhatsApp's own notices
-    (encryption, joined, changed number) are skipped. "This message was
-    deleted" kept as written; "<This message was edited>" marked edited.
-    Dates read day-first (UK); if every day number is 12 or under and the
-    month-first reading is also possible, say so in B3. Times are UK local
-    time (Europe/London, clock changes handled). Built against Lakhbir's A1
-    files; red-proved on files with each feature.
-B2. THE UPLOAD (client's WhatsApp page, client_message.write): choose the
-    contact, choose the file. Limits: the .zip at most 100 MB, 500 files
-    inside; refuse paths that climb out of the folder, nested zips and
-    anything that is not a photo, video, voice note, PDF or Office document;
-    refuse a group chat (more than two names) with the words "Only one-to-one
-    chats can be added for now." Nothing is saved at this step.
-B3. THE CHECK: how many messages and files, first and last date, who is us
-    and who is the client (one click swaps them; a name that is neither is
-    refused), a warning for messages before the WhatsApp box was ticked, and
-    the date-order warning from B1. Then "Save to the record" or "Back".
-B4. SAVING: each message into whatsapp_messages (direction IN or OUT, kind
-    'imported', written_by the uploader, created_at = the message's own
-    time) and each file into the client's files, linked to its message; the
-    original .zip kept with the client's documents; an audit entry. A newer
-    copy of the same chat adds only messages not already there (matched on
-    contact, time, sender and text); the check says how many are new.
-    A migration adds whatever this needs (the next free number).
-B5. THE PAGE: the conversation shows imported messages as the thread does
-    today, "From a WhatsApp export added <date> by <name>" above them, photos
-    viewable. The reply box and "Send our opening message" are removed from
-    the page while the live connection is off (the code stays, switched
-    off); in their place "Reply to <first name> on the WhatsApp phone. To keep
-    newer messages, export the chat again and add it here." The list of
-    uploads (date, contact, how many messages, by whom) sits on the left.
-B6. PAPER. Developer Spec (the WhatsApp rows: manual upload; the live Meta
-    connection built and off), KEYS-AND-SWITCHES (no WhatsApp keys needed),
-    the recipients list note for Sadique (no transfer to Meta from us; the
-    copies follow retention), the notices page if its WhatsApp wording
-    describes the live connection or the opening message, the staff guide
-    (how to export a chat on iPhone and Android).
-
-When every line that could run is done: run every check in COORDINATES,
-re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
-the record, and leave each PART A step not yet done as a line in
-hub/WAITING-ON-PEOPLE.md.
-Then do WHEN THE PHASE IS DONE, at the top of this block.
-```
-
-
 ## PHASE 156d — Zoom: the paid licence, a user for each member of staff, and call lengths
 
  **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **The old Phase 156's Zoom steps.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
@@ -1518,6 +1377,10 @@ licence email, not sent; Google Analytics, dropped for now; the Valuation
 Office email about its Rating Cost Guide, not sent; 5 Oct 2026: WhatsApp by
 manual upload, no live connection). A sweep that finds
 older text saying otherwise corrects the text, not the decision.
+
+LOOSE END FROM PHASE 156c (5 Oct 2026): the Communication tab's one form still offers WhatsApp as a way to write
+(it says WhatsApp is not switched on). With WhatsApp by manual upload, point that choice at the WhatsApp page's "Add a
+WhatsApp chat" instead, or remove it while the live connection is off; restate test/conversations.test.ts to match.
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.
 
@@ -2019,7 +1882,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 153f — work found on 3 October that no phase held (survey pack stage 6 and chapters, an engine date bug, Zoom hosts, the old screens, WhatsApp, answers into the record, the tracker) |  The 3 October check of 153a-154 |
 |  Claude |  Phase 154a1 — the faults the 3 October sweep found, fixed (13 lines) — **done 4 Oct 2026**, see PHASE HISTORY |  Lakhbir, 3 Oct: "these should be fixed in phase 154a1" |
 |  Claude |  Phase 155 — the services the plans name but nobody has built (CIW, the Care Inspectorate, the VOA list, BCIS, the reply timer, the three server files) — **done 4 Oct 2026**, see PHASE HISTORY (the VOA list not built: its licence forbids our use) |  Lakhbir, 3 Oct: "this needs to be phase 156" (renumbered 155 when the services phase moved near the end) |
-|  Claude and Lakhbir |  Phases 156a to 156e — every outside service, split on 4 Oct 2026 (156a the missing keys in Vercel, Ordnance Survey and Cloudflare — **done 5 Oct 2026**, see PHASE HISTORY; 156b email — **done 5 Oct 2026**; 156c WhatsApp; 156d Zoom; 156e the rest): PART A is Lakhbir's, step by step; PART B is Claude's, after each step |  Lakhbir, 3 Oct: "all API's needed should be phase 155" |
+|  Claude and Lakhbir |  Phases 156a to 156e — every outside service, split on 4 Oct 2026 (156a the missing keys in Vercel, Ordnance Survey and Cloudflare — **done 5 Oct 2026**, see PHASE HISTORY; 156b email — **done 5 Oct 2026**; 156c WhatsApp by manual upload — **done 5 Oct 2026**; 156c WhatsApp; 156d Zoom; 156e the rest): PART A is Lakhbir's, step by step; PART B is Claude's, after each step |  Lakhbir, 3 Oct: "all API's needed should be phase 155" |
 |  Claude |  Phase 157 — the sweep, always last |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

@@ -166,7 +166,8 @@ export function unreadEmails(db: Db, actor: Actor, business_id: string): number 
 export function unreadWhatsApp(db: Db, actor: Actor, business_id: string): number {
   if (actor.role === 'CLIENT' || !can(actor, 'client_message.read', clientObj(db, business_id))) return 0;
   return db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM whatsapp_messages WHERE business_id = ? AND direction = 'IN' AND created_at > ?",
+    // PHASE 156c: a chat added from the phone's export is history someone already read on the phone, never "new".
+    "SELECT COUNT(*) AS n FROM whatsapp_messages WHERE business_id = ? AND direction = 'IN' AND created_at > ? AND id NOT IN (SELECT message_id FROM whatsapp_import_lines)",
     [business_id, lastChannelRead(db, actor.id, business_id, 'WHATSAPP')])?.n ?? 0;
 }
 

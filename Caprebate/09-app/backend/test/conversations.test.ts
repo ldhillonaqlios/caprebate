@@ -148,7 +148,8 @@ describe('email and WhatsApp as conversations', () => {
       [randomUUID(), now, now]);
     assert.match(chatButton((await req('/staff/clients/b-cv-1')).body), /aria-label="1 new message"/);
     const page = (await req('/staff/clients/b-cv-1/whatsapp')).body;
-    assert.match(page, /<section class="convo-write" id="compose"[\s\S]*<select class="fi" id="wa-to" name="contact_id" required><option value="c-cv-main" selected>Main Person/);
+    // PHASE 156c (5 Oct 2026): with the live connection off the left holds "Add a WhatsApp chat", not a reply box.
+    assert.match(page, /<section class="convo-write" id="compose"[\s\S]*<select class="fi" id="wa-imp-to" name="contact_id" required><option value="c-cv-main" selected>Main Person/);
     assert.match(page, /<section class="convo-chain"[\s\S]*<h2 id="wa-chain-h">With Main Person<\/h2>[\s\S]*Can you call me\?/);
     assert.doesNotMatch(chatButton((await req('/staff/clients/b-cv-1')).body), /newdot/, 'reading WhatsApp did not clear the dot');
   });

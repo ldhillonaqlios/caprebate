@@ -11997,3 +11997,32 @@ Back end `npm run check`: lint-sql clean, typecheck 0 errors, 2438 pass / 0 fail
 ### NOT DONE
 
 Nothing in this phase. (DMARC is p=none, which only watches; tightening it to quarantine is a later choice for the developers, not needed for testing.)
+
+## PHASE 156c — DONE: WhatsApp by manual upload — a chat exported on the phone, added to the client's record (5 October 2026, Opus 5.5, Mac copy, Lakhbir's MacBook Pro)
+
+**Run-sheet entry.** Phase 156c - 5 October 2026 - DONE. Staff can now add a WhatsApp chat exported on the phone (Export chat > Attach media) to a client's record: the WhatsApp page's "Add a WhatsApp chat", then a check (counts, dates, which name is us, keep from a date — an export holds the whole history), then save. Photos, videos, voice notes, PDFs and Office files come with it; a big export is opened on the staff member's computer and only the chosen period's files are sent. A newer copy adds only what is new; group chats are refused; imported messages never show as unread. With the live connection off, the WhatsApp page has no reply box ("reply on the phone"). Checked privately against a real iPhone export: 40 test messages and 4 files from 5 October, nothing earlier. Back end 2464 pass / 0 fail; figures 1363 / 440 / 415 / 2464 = 4,682. Branch claude/phase-156c.
+
+### Lakhbir's part, and the real export
+
+- **A1:** an iPhone export ("WhatsApp Chat - Zara.zip", 53 MB) — a real chat used with the other person's consent, holding the WHOLE history (84 days, about 10,000 lines, 206 files including a contact card and a Word document), because WhatsApp's Export chat always does. Only its 5 October lines were read, for the layout, with every word masked; earlier lines were counted by date only. The folder 09-app/backend/test/fixtures/whatsapp-export/ is git-ignored (.gitignore); the tests build invented exports. No Android export: built from WhatsApp's documented layout, tested on invented files (WAITING-ON-PEOPLE asks for one).
+- **A2:** answered by Lakhbir 5 Oct 2026 — the copies follow the client-message retention rule ("yes same rules"); messages from before the client ticked the WhatsApp box are kept ("kept in"). Recorded for Sadique to confirm (FOR-THE-SOLICITOR-DPO-DEVELOPER; WAITING-ON-PEOPLE).
+
+### What was found on the way
+
+- **The layout's quirks** (iPhone): CRLF between messages and a bare LF inside one; U+200E before file lines and WhatsApp's own words; a document as "name • 1 page <attached: …>"; "You deleted this message." vs "This message was deleted."; " <This message was edited>"; an empty message.
+- **A notice filter too broad:** a first "… added …" notice pattern swallowed 212 view-once notices ("For added privacy…") in the real file. Narrowed to WhatsApp's true notices; a view-once is shown as "A view-once message — WhatsApp does not put these in an export."
+- **The test website takes about 4.5 MB a request** (Vercel), against a 53 MB export. Hence the page's script: it opens a .zip over 3.5 MB on the person's computer, sends only the chat's text and the file names, and after saving only the files still needed from the dates kept, one at a time (each under 4.4 MB; a bigger one is added by hand). The file is remembered in the browser (IndexedDB) between the two pages; without it, the person chooses the .zip again.
+
+### What was built
+
+- **Reader** src/connectors/whatsapp-export.ts (`parseChat`): both layouts, 12-hour times, day first with a month-first warning, UK time to an exact moment across the clock change.
+- **Steps** src/web/whatsapp-import.ts and src/web/whatsapp-import-pages.ts; migration 090 (`whatsapp_imports`, `whatsapp_import_lines`): upload (whole up to 100 MB, kept sealed under the new `whatsapp-imports/` prefix in src/web/objectstore.ts; or text + names); refusals (not a chat, no chat in the .zip, a name that climbs out, a .zip inside, a group chat, a contact not of this company); check; save (IN RECEIVED / OUT SENT by the uploader, the message's own time, a fingerprint so nothing is saved twice); files from the kept .zip or one at a time, each sealed as a WhatsApp file (`whatsapp_media`, media id `export:<name>`); cancel. `listZipEntries` added to src/web/zip.ts (the one zip reader). Audit kinds WHATSAPP_EXPORT_UPLOADED and WHATSAPP_EXPORT_SAVED (counts only).
+- **The page** src/web/whatsapp-page.ts: "Add a WhatsApp chat" with how to export; the uploads list; imported lines marked "From the phone", our side "<name> (on the phone)"; with the live connection off, no reply box and no opening message; its own policy (script-src 'self'; connect-src 'self') and /assets/whatsapp-import.js (src/web/whatsapp-import-script.ts, no innerHTML; calls through `root.fetch` like the other page scripts). Imported messages are left out of the unread count and never open the 24-hour window (src/web/messages.ts, src/web/whatsapp.ts).
+- **Tests:** test/phase156c.test.ts, twenty-six (red on main: the modules do not exist there), including the script run in a stand-in browser (node:vm with Node's Blob, File, FormData and DecompressionStream). test/whatsapp.test.ts and test/conversations.test.ts restated for the page without a reply box.
+- **Paper:** the Developer Spec (a Phase 156c note; figures), KEYS-AND-SWITCHES (WhatsApp row), WAITING-ON-PEOPLE (Sadique's confirmation; an Android export), ACTION-PLAN (the DECIDED entry; the phase removed), the run sheet. The notices page does not mention WhatsApp, so nothing there changed.
+
+### NOT DONE — each with its home
+
+- Sadique to confirm the two answers — WAITING-ON-PEOPLE.md; FOR-THE-SOLICITOR-DPO-DEVELOPER.
+- An Android export to test against — Lakhbir, when one is to hand — WAITING-ON-PEOPLE.md.
+- The Communication tab's one form still lists WhatsApp as a way to write, saying it is not switched on — the next sweep (Phase 157) decides whether to point it at the WhatsApp page instead.

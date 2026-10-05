@@ -370,6 +370,8 @@ export type AuditKind =
   | 'VIDEO_CALL_SHARED_HOST'
   // PHASE 153f: a file someone sent us on WhatsApp, fetched from Meta and kept sealed (or not, and why in words on the page).
   | 'WHATSAPP_MEDIA_FETCHED' | 'WHATSAPP_MEDIA_NOT_FETCHED'
+  // PHASE 156c: a chat exported on the WhatsApp phone, uploaded for checking, then saved to the record (counts only).
+  | 'WHATSAPP_EXPORT_UPLOADED' | 'WHATSAPP_EXPORT_SAVED'
   /** 1 Oct 2026: a surveyor changed the survey pack (src/web/survey-pack.ts): what, which line, which fields — never a value. */
   | 'SURVEY_PACK_CHANGED'
   /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/web/pack-approve.ts): the version and its fingerprint. */

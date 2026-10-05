@@ -16,6 +16,7 @@
  * NOTHING HERE DECIDES WHO SEES WHAT: src/web/messages.ts asks every rule on every read and write.
  */
 
+import { WHATSAPP_PAGE_HEADERS, withImportScript } from './whatsapp-page.ts';
 import { randomUUID } from 'node:crypto';
 import { EMAIL_SENDING, auditMailConnections, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -285,7 +286,9 @@ export async function handleStaffMessages(
   const wa = /^\/staff\/clients\/([A-Za-z0-9-]+)\/whatsapp$/.exec(path);
   if (wa && method === 'GET') {
     // 1 Oct 2026: the conversation on the right, the message on the left (src/web/whatsapp-page.ts).
-    html(res, 200, whatsappPage(d.app, actor, wa[1] ?? '', url.searchParams.get('contact'), url.searchParams.get('done'), d.nav(actor)));
+    // PHASE 156c: the page runs the export reader's script, so it carries its own policy (src/web/whatsapp-page.ts).
+    res.writeHead(200, WHATSAPP_PAGE_HEADERS);
+    res.end(withImportScript(whatsappPage(d.app, actor, wa[1] ?? '', url.searchParams.get('contact'), url.searchParams.get('done'), d.nav(actor))));
     return 'handled';
   }
   if (wa && method === 'POST') {
