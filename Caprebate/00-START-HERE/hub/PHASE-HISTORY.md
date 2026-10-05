@@ -11844,3 +11844,33 @@ Tracker check green; no code or test changed.
 
 - The professional-fees percentage and the ageing method — the surveyor — the free 45-minute call (Q9a, Q9); tracker 12804380489 and 12927234437.
 - The cost model's stale "VOA licence" comments — Phase 157 (the sweep).
+
+## PLANNING, 5 October 2026 — Phase 156c rewritten: WhatsApp on our own number, the phone first (Opus 5.5, Mac copy, Lakhbir's MacBook Pro)
+
+**Run-sheet entry.** Planning - 5 October 2026 (Phase 156c rewritten). Lakhbir chose "option 2" for WhatsApp: his business number stays on the WhatsApp Business app on his phone and is also connected to the back office (Meta's "coexistence"). First contact is always from the phone, free; the back office shows every message both ways and lets staff reply within 24 hours of the client's last message, then says to use the phone. No paid opening template, so no Meta charge. Phase 156c rewritten in the plan and on the run sheet; added to "DECIDED - DO NOT REOPEN". Waiting on Lakhbir: which number, and whether it is on the WhatsApp Business app. No code changed; figures unchanged (4,644). Branch claude/plan-156, PR 17.
+
+### What Lakhbir asked, and what he was told
+
+- The costs and how it works: Meta charges only for its pre-approved ("template") messages — about 1.5–2p for a utility message in the UK, more for marketing; normal messages inside the 24-hour window after a client writes are free; no monthly Meta fee (sources: Meta's pricing page; UK rate guides).
+- Whether he can still use his phone: yes, through coexistence — one number in both the WhatsApp Business app and the back office. Messages sent from the app stay free (Meta's coexistence page). Limits: old chats do not copy across; groups stay on the phone; the phone's messages do not open the 24-hour window; one number per account.
+- He then chose: first contact from the phone; the back office shows both ways and replies only inside the 24-hour window, then says to use the phone ("I'm thinking option 2 it gives best of both worlds").
+
+### What was found
+
+- Most of option 2 is already built (src/web/whatsapp.ts): the 24-hour window (windowOpenUntil), incoming messages and files, the conversation on the record, the unfiled list. What is new: reading the phone's own messages (Meta's smb_message_echoes webhook), locking the box with a "use the phone" message instead of offering the opening template, and connecting an existing Business app number.
+- Meta lets only a Tech Provider or a Solution Partner connect an existing Business app number ("You must already be a Solution Partner or Tech Provider"). A Tech Provider needs business verification and an app review (two screen recordings, Advanced access to the two WhatsApp permissions); no fee found. A partner company is quicker but charges monthly. 156c A3 makes the choice.
+
+### What was done
+
+- ACTION-PLAN.md: Phase 156c replaced (PART A: the number, Meta business verification, the route, connecting the number, the keys, the webhook; PART B: the phone's messages on the record, the reply box that locks, the connect page, the test, the paper); a "DECIDED - DO NOT REOPEN" entry; the sweep's line. The run sheet's 156c replaced (code block checked equal to the file) and the sweep's note updated.
+- KEYS-AND-SWITCHES (the WhatsApp row), WAITING-ON-PEOPLE (no Meta charge; the US transfer line), FOR-THE-SOLICITOR-DPO-DEVELOPER (a dated note for Sadique: the phone's messages will be kept on the record; old chats and the contact list are not taken; a partner company would be a new processor).
+- Board and tracker: 13201538871 renamed "Phase 156c - WhatsApp on our own number: …" with an update and a note.
+
+### Checks
+
+Tracker check green; no code or test changed.
+
+### NOT DONE — each with its home
+
+- Which number, and whether it is on the WhatsApp Business app — Lakhbir — Phase 156c A1.
+- The route (our own Tech Provider app, or a partner) and everything after it — Phase 156c.

@@ -485,6 +485,15 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     CB_VOA_FEE_SCALE table and its switches stay off; older text saying
     they wait on "the VOA licence" is history - they wait on the surveyor.
 
+  WHATSAPP - THE PHONE FIRST, NO OPENING TEMPLATE (Lakhbir, 5 Oct 2026: "I'm
+    thinking option 2 it gives best of both worlds"). His business number
+    stays on the WhatsApp Business app on his phone and is also connected to
+    the back office (Meta's "coexistence"). First contact is always from the
+    phone (free). The back office shows every message both ways on the
+    client's record and lets staff reply only within 24 hours of the
+    client's last message, then says to use the phone. No paid opening
+    template and no new number. Phase 156c builds it.
+
 WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   ACTION-PLAN.md                    this document
   PHASE-HISTORY.md                  what every completed phase did; append a
@@ -1286,9 +1295,9 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
-## PHASE 156c — WhatsApp
+## PHASE 156c — WhatsApp on our own number: the phone starts the conversation, the back office shows it and replies within 24 hours
 
- **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **The old Phase 156's WhatsApp steps.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+ **Model: Opus. Rewritten 5 October 2026** after Lakhbir chose "option 2": he keeps WhatsApp on his phone (coexistence), first contact is always from the phone (free), the back office shows every message both ways and lets staff reply only within 24 hours of the client's last message, then says to use the phone. No opening template, so no Meta charges. Replaces the 4 October version (a new number and a paid opening template). Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1350,40 +1359,91 @@ the test website and invented data only, and each service's paper (privacy
 notice, the data protection officer's approval of a transfer) stays its own
 sign-off.
 
-PART A - LAKHBIR (old 156 A2) - WHATSAPP, messaging clients from the back
-office. Meta charges per template message.
+PART A - LAKHBIR - WHATSAPP ON OUR OWN NUMBER, THE PHONE FIRST
+(decided 5 Oct 2026, "option 2": COORDINATES, "DECIDED - DO NOT REOPEN").
+How it works: Lakhbir keeps his business number on the WhatsApp Business app
+on his phone and starts every conversation there, free. Through Meta's
+"coexistence" the same number is also connected to the back office, which
+shows every message both ways on the client's record, and lets staff reply
+within 24 hours of the client's last message (free). After 24 hours the reply
+box locks and says to message the client from the phone. No opening template,
+so no Meta charge and no template approval. Messages sent from the app stay
+free (Meta: "Messages sent by the business via the WhatsApp Business app will
+continue to be free").
 
-A1. 1. business.facebook.com: make sure CAP REBATE LTD has a Meta Business
-       account, verified (Business settings > Security centre).
-    2. developers.facebook.com > My Apps > Create app > type Business > add
-       the WhatsApp product, linked to that business account.
-    3. WhatsApp > API Setup: add a phone number that is NOT already used in
-       the WhatsApp app, and verify it by text or call. Copy its "Phone number
-       ID" -> WHATSAPP_PHONE_NUMBER_ID.
-    4. Business settings > Users > System users: add a system user (Admin),
-       give it the app and the WhatsApp account, and generate a token with
-       whatsapp_business_messaging and whatsapp_business_management, set to
-       never expire -> WHATSAPP_ACCESS_TOKEN.
-    5. App settings > Basic > App secret (Show) -> WHATSAPP_APP_SECRET.
-    6. Make up a long random word (40+ characters) -> WHATSAPP_VERIFY_TOKEN.
-    7. WhatsApp Manager > Message templates > Create: category Utility, a
-       short opening message; submit and wait for approval. Its name ->
-       WHATSAPP_OPENING_TEMPLATE; its language code (for example en_GB) ->
-       WHATSAPP_TEMPLATE_LANGUAGE.
-    8. Add all six to Vercel (Production, Sensitive) and to the key file, and
-       redeploy.
-    9. App > WhatsApp > Configuration > Webhook: callback URL
-       https://caprebate-test.vercel.app/hooks/whatsapp, verify token = the
-       word from step 6. Subscribe to "messages".
-    10. Sadique confirms the Meta transfer (approved for testing only today)
-        and the privacy notice line.
-    The six names are already in TEST_DEPLOY_KEYS.
+A1. TELL CLAUDE WHICH NUMBER (in the chat): the business number clients will
+    message. It must be on the WhatsApp BUSINESS app (green icon with a B),
+    version 2.24.17 or later. If it is on ordinary WhatsApp: install WhatsApp
+    Business, register the same number and accept the move (WhatsApp keeps
+    the chats). Coexistence takes one number per account.
+A2. META'S BUSINESS ACCOUNT. business.facebook.com: make sure CAP REBATE LTD
+    has a Meta Business account and start its verification (Business settings
+    > Security centre > Start verification; Companies House details). Every
+    route below needs it.
+A3. CHOOSE THE ROUTE. Meta only lets a "Tech Provider" or one of its partner
+    companies connect an existing Business app number (Meta's coexistence
+    page: "You must already be a Solution Partner or Tech Provider").
+    a) OUR OWN (recommended first; no fee found): developers.facebook.com >
+       My Apps > Create app > type Business > add the WhatsApp product;
+       register as a Tech Provider; Meta reviews the app (it asks for two
+       short screen recordings - Claude makes them on the test website) and
+       grants "Advanced access" to whatsapp_business_messaging and
+       whatsapp_business_management. Takes days to weeks.
+    b) A PARTNER COMPANY that supports coexistence (for example 360dialog,
+       Twilio): quicker, but a monthly fee. Claude prices two before Lakhbir
+       chooses, and the back office's sending code changes to the partner's.
+    Whichever route: Sadique approves the processor (Meta, and any partner)
+    for real clients; Meta is approved for testing only today.
+A4. CONNECT THE NUMBER (after A3). In the back office, Admin > WhatsApp >
+    "Connect our WhatsApp number" (built in B3) opens Meta's sign-up; choose
+    "connect your existing WhatsApp Business app", enter the code the app
+    shows. On the phone, the app then says the number is also connected to
+    the back office. CHOOSE NOT TO SHARE OLD CHATS when asked (we keep only
+    new ones).
+A5. KEYS. App settings > Basic > App secret (Show) -> WHATSAPP_APP_SECRET;
+    make up a long random word (40+ characters) -> WHATSAPP_VERIFY_TOKEN;
+    the Embedded Signup configuration id -> WHATSAPP_SIGNUP_CONFIG_ID (B3
+    names it). The phone number id and the access token come back from A4
+    and are stored by the back office (B3). Add the keys to Vercel
+    (Production, Sensitive) and the key file, and redeploy.
+A6. WEBHOOK. App > WhatsApp > Configuration > Webhook: callback URL
+    https://caprebate-test.vercel.app/hooks/whatsapp, verify token = A5's
+    word. Subscribe to "messages" and "smb_message_echoes" (the messages you
+    send from the phone). Do NOT subscribe to "history" or
+    "smb_app_state_sync" (old chats and the phone's contact list).
 
-PART B - CLAUDE
+PART B - CLAUDE (each with a test that fails on the code before it)
 
-B1. (old 156 B2) Once the six are in, send ONE opening template to Lakhbir's
-    own number (ask him for it in the chat; never a client), read the
-    webhook's reply, and report PASS or NO. Switch nothing else on.
+B1. THE PHONE'S MESSAGES ON THE RECORD. readWebhook (src/connectors/
+    whatsapp.ts) also reads smb_message_echoes: each message sent from the
+    phone is kept as OUT, marked "Sent from the WhatsApp phone", filed to the
+    contact whose number it went to (otherwise to the unfiled list, as
+    incoming messages are). It does not open or extend the 24-hour window
+    (only the client's own messages do; Meta's rule). Ignore history and
+    smb_app_state_sync if they ever arrive (keep nothing).
+B2. THE REPLY BOX. Keep the 24-hour rule (windowOpenUntil, WINDOW_HOURS).
+    Remove the "Send our opening message" button and the opening-template
+    path from the page (switch it off and keep the code, so it can return
+    if Lakhbir asks). When the window is closed the box locks and says:
+    "More than 24 hours since <first name> last wrote. Message them from the
+    WhatsApp phone; when they reply, you can write here again for 24 hours."
+    WHATSAPP_OPENING_TEMPLATE and WHATSAPP_TEMPLATE_LANGUAGE stop being
+    required (whatsappMissing; TEST_DEPLOY_KEYS keeps the names).
+B3. CONNECT FROM THE BACK OFFICE (route a; route b uses the partner's own
+    page instead). An Admin-only page that runs Meta's Embedded Signup for
+    coexistence, exchanges the returned code for a business token, stores
+    the phone number id and token in the server's own key store (never on a
+    page, never in a log), and registers the webhook. Read Meta's current
+    Embedded Signup and coexistence pages first and follow them, not memory.
+B4. THE TEST (Word question 170's five conditions): Lakhbir sends one message
+    from the phone to his own second number or a colleague who agreed,
+    replies from it; Claude checks both show on an invented client's record,
+    replies once from the back office inside the window, and checks the box
+    locks after 24 hours (on a test clock). Report PASS or NO.
+B5. PAPER. Developer Spec (the WhatsApp rows), KEYS-AND-SWITCHES, the
+    recipients list note for Sadique (the phone's messages to clients are now
+    kept on the record and follow its retention; old chats are not taken),
+    the notices page if its WhatsApp wording names the opening message.
 
 When every line that could run is done: run every check in COORDINATES,
 re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
@@ -1741,7 +1801,8 @@ FROM PHASE 154a1 (4 Oct 2026), TWO LOOSE ENDS WITH THEIR HOME HERE, both
 DO NOT REOPEN what COORDINATES lists under "DECIDED - DO NOT REOPEN" (added
 4 Oct 2026: the VOA rating list, scrapped by Lakhbir; the Ordnance Survey
 licence email, not sent; Google Analytics, dropped for now; the Valuation
-Office email about its Rating Cost Guide, not sent). A sweep that finds
+Office email about its Rating Cost Guide, not sent; 5 Oct 2026: WhatsApp,
+the phone first, no opening template). A sweep that finds
 older text saying otherwise corrects the text, not the decision.
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.

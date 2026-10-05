@@ -922,6 +922,8 @@ Signed .............................  Date ..........................
 
  **For the data protection officer. Board item 12927931400.**
 
+ _5 October 2026 (planning): WhatsApp will work phone first (Lakhbir's choice; Phase 156c). His business number stays on the WhatsApp Business app and is also connected to the back office through Meta. So the messages he sends clients from his phone will be kept on the client's record too, under the same retention rule as other client messages; old phone chats are not taken (we decline Meta's offer to share them), and the phone's contact list is not taken. If Phase 156c needs a Meta partner company to connect the number, that company is a new processor for you to approve._
+
  _4 October 2026 (planning): Google Analytics is dropped for now (Lakhbir); it is off and receives nothing, so its row below needs no check until the marketing team picks it up again._
 
  _4 October 2026 (Phase 153a): the list is now v1.4. Six processors are added — Zoom, WhatsApp (Meta), GoAddress, Cloudflare Turnstile, Turso and Google Analytics (marked for you to check) — and the test website's Vercel host and Vercel Blob file store are named under P5 and P4. Your approval of the Zoom, WhatsApp and GoAddress transfers for testing only, relayed by Lakhbir on 30 September 2026, is recorded in their rows; none is approved for a real client. Everything these services hold today is invented test data._

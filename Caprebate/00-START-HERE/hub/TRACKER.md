@@ -1360,11 +1360,12 @@
 
 - Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538869.
 
-### Phase 156c - WhatsApp
+### Phase 156c - WhatsApp on our own number: the phone starts, the back office shows it and replies within 24 hours (no opening template)
 
 `13201538871` · **Ready - Lakhbir action** · owner Lakhbir
 
 - Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538871.
+- Note 2026-10-05 (Planning (156c rewritten)): Rewritten (Lakhbir chose option 2): coexistence on his Business app number; first contact from the phone, free; the back office shows both ways and replies only within 24 hours; no opening template, no Meta charge. Route a (Tech Provider) or b (partner). Waiting on: which number, and is it on the WhatsApp Business app. Posted on monday.
 
 ### Phase 156d - Zoom: the paid licence, a user for each member of staff, and call lengths
 
