@@ -24,6 +24,7 @@
  * claim in a footer.
  */
 
+import { handleWhatsAppImport } from './whatsapp-import-pages.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import * as SI from './sign-in.ts';
 import type { App } from '../app.ts';
@@ -393,6 +394,10 @@ export async function handleStaff(
   /* ------------------ SECTION 3 · a free-typed email to a company or a lead (Phase 141) */
   const freeEmail = await handleFreeEmail({ app: d.app, store: d.store, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
   if (freeEmail === 'handled') return 'handled';
+
+  /* ------------------ SECTION 3 · a WhatsApp chat exported on the phone, added by hand (Phase 156c) */
+  const waImport = await handleWhatsAppImport({ app: d.app, store: d.store, nav, problem }, req, res, url, method, actor, form, body);
+  if (waImport === 'handled') return 'handled';
 
   /* ------------------ SECTION 3 · writing to the client on the company's chat, and email replies to sort (Phase 142) */
   const chat = await handleStaffMessages({ app: d.app, store: d.store, newId: d.newId, nav, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form);

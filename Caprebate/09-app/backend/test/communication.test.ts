@@ -12,6 +12,8 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../src/server.ts';
+import { fixtureTransport } from '../src/connectors/http.ts';
+import { secretsFromValues } from '../src/secrets.ts';
 
 // Thursday 1 October 2026, 10:00 in the UK.
 const T = '2026-10-01T09:00:00.000Z';
@@ -49,8 +51,17 @@ const send = (who: string, form: Record<string, string>) => req(who, '/staff/cli
 const flow = (body: string): string => /<ol class="flow">[\s\S]*?<\/ol>/.exec(body)?.[0] ?? '';
 const selectedVia = (body: string): string => /<select class="fi" id="via" name="via">[\s\S]*?<option value="([a-z]+)" selected>/.exec(body)?.[1] ?? 'none';
 
+/** PHASE 156c: WhatsApp connected live (invented keys, the transfer approved, a transport that answers nothing real), so
+ *  the reply-by-WhatsApp behaviour below is still proved. While it is NOT live, WhatsApp is not offered here at all. */
+function whatsappLive(): void {
+  made.app.secrets = secretsFromValues({ WHATSAPP_ACCESS_TOKEN: 'invented-token', WHATSAPP_PHONE_NUMBER_ID: '123456789012345', WHATSAPP_APP_SECRET: 'invented-app-secret',
+    WHATSAPP_VERIFY_TOKEN: 'invented-verify-word', WHATSAPP_OPENING_TEMPLATE: 'cap_rebate_opening' });
+  made.app.whatsappPolicy = { international_transfer_approved: true };
+  made.app.outside = fixtureTransport({});
+}
+
 describe('Communication', () => {
-  before(async () => { for (const w of ['u-cm-sales', 'u-cm-ro', 'u-cm-admin']) await req(w, '/login', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ email: `${w}@example.invalid`, password: PASSWORD }).toString() }); });
+  before(async () => { whatsappLive(); for (const w of ['u-cm-sales', 'u-cm-ro', 'u-cm-admin']) await req(w, '/login', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ email: `${w}@example.invalid`, password: PASSWORD }).toString() }); });
 
   test('"Chat" is now "Communication": the button and the tab; one form with every way to write, email first, To filled in', async () => {
     const page = (await req('u-cm-sales', '/staff/clients/b-cm?chat=all')).body;
@@ -193,3 +204,30 @@ describe('Communication', () => {
     assert.equal(made.app.db.get<{ n: number }>('SELECT count(*) AS n FROM call_logs')!.n, calls, 'the view-only login logged a call');
   });
 });
+
+describe('PHASE 156c · the company\u2019s conversation while WhatsApp is not connected live', () => {
+  before(() => { made.app.secrets = secretsFromValues({}); delete made.app.whatsappPolicy; });
+  test('WhatsApp is not a way to send; "Add a WhatsApp chat" opens the upload on the WhatsApp page, the person last on WhatsApp chosen; this page stays script-free', async () => {
+    const r = await fetch(`${base}/staff/clients/b-cm?chat=all`, { headers: { cookie: jars.get('u-cm-sales') ?? '' } });
+    const body = await r.text();
+    const ways = /<select class="fi" id="via" name="via">([\s\S]*?)<\/select>/.exec(body)?.[1] ?? '';
+    assert.deepEqual([...ways.matchAll(/<option value="([a-z]+)"/g)].map((m) => m[1]), ['email', 'portal', 'team', 'zoom', 'call']);
+    assert.match(body, /<h3 id="wa-add-h">Add a WhatsApp chat<\/h3>/);
+    assert.match(body, /<a class="btn" href="\/staff\/clients\/b-cm\/whatsapp\?contact=c-cm-pat#wa-import">Add a WhatsApp chat<\/a>/);
+    assert.doesNotMatch(body, /<script\b/);
+    const page = await fetch(`${base}/staff/clients/b-cm/whatsapp?contact=c-cm-pat`, { headers: { cookie: jars.get('u-cm-sales') ?? '' } });
+    assert.match(await page.text(), /<option value="c-cm-pat" selected>Pat Owner/, 'the upload on the WhatsApp page has Pat chosen');
+  });
+  test('a WhatsApp line opens the WhatsApp page rather than a reply here; sending by WhatsApp is refused', async () => {
+    const body = (await req('u-cm-sales', '/staff/clients/b-cm?chat=all')).body;
+    const href = /<a class="it it-whatsapp" href="([^"]+)">[\s\S]*?Can you call me\?/.exec(body)?.[1]?.replace(/&amp;/g, '&') ?? '';
+    assert.equal(href, '/staff/clients/b-cm/whatsapp?contact=c-cm-pat');
+    const r = await send('u-cm-sales', { via: 'whatsapp', wa_contact_id: 'c-cm-pat', body: 'Hello', go: 'send' });
+    assert.equal(r.status, 400);
+    assert.match(r.body, /Choose how to send it\./);
+  });
+  test('a read-only login sees no upload', async () => {
+    assert.doesNotMatch((await req('u-cm-ro', '/staff/clients/b-cm?chat=all')).body, /id="wa-add"/);
+  });
+});
+

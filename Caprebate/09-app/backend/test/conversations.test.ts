@@ -148,7 +148,8 @@ describe('email and WhatsApp as conversations', () => {
       [randomUUID(), now, now]);
     assert.match(chatButton((await req('/staff/clients/b-cv-1')).body), /aria-label="1 new message"/);
     const page = (await req('/staff/clients/b-cv-1/whatsapp')).body;
-    assert.match(page, /<section class="convo-write" id="compose"[\s\S]*<select class="fi" id="wa-to" name="contact_id" required><option value="c-cv-main" selected>Main Person/);
+    // PHASE 156c (5 Oct 2026): with the live connection off the left holds "Add a WhatsApp chat", not a reply box.
+    assert.match(page, /<section class="convo-write" id="compose"[\s\S]*<select class="fi" id="wa-imp-to" name="contact_id" required><option value="c-cv-main" selected>Main Person/);
     assert.match(page, /<section class="convo-chain"[\s\S]*<h2 id="wa-chain-h">With Main Person<\/h2>[\s\S]*Can you call me\?/);
     assert.doesNotMatch(chatButton((await req('/staff/clients/b-cv-1')).body), /newdot/, 'reading WhatsApp did not clear the dot');
   });
@@ -161,7 +162,9 @@ describe('email and WhatsApp as conversations', () => {
     const all = (await req('/staff/clients/b-cv-1?chat=all')).body;
     assert.doesNotMatch(chatButton(all), /newdot/, 'Communication was open and the dot stayed');
     // Every way to write is in the one form there.
-    assert.match(all, /<select class="fi" id="via" name="via"><option value="email" selected>Email<\/option><option value="whatsapp">WhatsApp<\/option><option value="portal">Portal message<\/option>/);
+    // PHASE 156c (5 Oct 2026): with WhatsApp not connected live it is not a way to send here; the chat is added from the phone.
+    assert.match(all, /<select class="fi" id="via" name="via"><option value="email" selected>Email<\/option><option value="portal">Portal message<\/option>/);
+    assert.match(all, /<h3 id="wa-add-h">Add a WhatsApp chat<\/h3>/);
     now = '2026-10-01T14:00:00.000Z';
     made.app.db.run("INSERT INTO client_messages (id, business_id, claim_id, direction, source, author_id, contact_id, body, created_at) VALUES (?, 'b-cv-1', NULL, 'FROM_CLIENT', 'EMAIL', NULL, 'c-cv-ann', 'One more thing', ?)", [randomUUID(), now]);
     assert.match(chatButton((await req('/staff/clients/b-cv-1')).body), /aria-label="1 new message"/);

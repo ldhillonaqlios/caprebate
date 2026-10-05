@@ -23,6 +23,7 @@ import { markChannelRead, lastChannelRead } from './messages.ts';
 import { attachmentOf, phoneContacts, ATTACHMENT_WORDS, type PhoneContact } from './whatsapp.ts';
 import { MAX_WHATSAPP_TEXT, WINDOW_HOURS, whatsappMissing } from '../connectors/whatsapp.ts';
 import { isDoNotContact } from '../stubs/email.ts';
+import { importsFor } from './whatsapp-import.ts';
 
 /** One person (or one number we filed under the company) we have a WhatsApp conversation with, or could. */
 export type WaPerson = {
@@ -30,7 +31,8 @@ export type WaPerson = {
   readonly last_at: string | null; readonly unread: number;
 };
 
-export type WaLine = { readonly id: string; readonly ours: boolean; readonly who: string; readonly when: string; readonly body: string; readonly state: string | null };
+export type WaLine = { readonly id: string; readonly ours: boolean; readonly who: string; readonly when: string; readonly body: string; readonly state: string | null;
+  /** PHASE 156c: added from a chat exported on the phone. */ readonly imported: boolean };
 
 const WA_STATE: Readonly<Record<string, string>> = { SENT: 'Sent', DELIVERED: 'Delivered', READ: 'Read', FAILED: 'Not delivered', NOT_SENT: 'Not sent' };
 
@@ -41,7 +43,7 @@ export function waPeople(db: Db, actor: Actor, business_id: string, nowIso: stri
   const byNumber = new Map<string, WaPerson>();
   for (const c of contacts) if (!byNumber.has(c.number)) byNumber.set(c.number, { key: c.id, name: c.name, number: c.number, contact: c, last_at: null, unread: 0 });
   for (const r of db.all<{ phone: string; last_at: string; first_id: string; unread: number }>(
-    "SELECT phone, max(created_at) AS last_at, min(id) AS first_id, sum(CASE WHEN direction = 'IN' AND created_at > ? THEN 1 ELSE 0 END) AS unread " +
+    "SELECT phone, max(created_at) AS last_at, min(id) AS first_id, sum(CASE WHEN direction = 'IN' AND created_at > ? AND id NOT IN (SELECT message_id FROM whatsapp_import_lines) THEN 1 ELSE 0 END) AS unread " +
     'FROM whatsapp_messages WHERE business_id = ? GROUP BY phone', [readUntil, business_id])) {
     const known = byNumber.get(r.phone);
     byNumber.set(r.phone, known !== undefined ? { ...known, last_at: r.last_at, unread: r.unread }
@@ -52,15 +54,18 @@ export function waPeople(db: Db, actor: Actor, business_id: string, nowIso: stri
 
 /** The conversation with one number, oldest first. */
 export function waLines(db: Db, business_id: string, number: string, nowIso: string): WaLine[] {
-  return db.all<{ id: string; created_at: string; direction: string; body: string; status: string; error: string | null; contact: string | null; writer: string | null }>(
-    'SELECT w.id, w.created_at, w.direction, w.body, w.status, w.error, c.full_name AS contact, u.display_name AS writer FROM whatsapp_messages w ' +
-    'LEFT JOIN contacts c ON c.id = w.contact_id LEFT JOIN users u ON u.id = w.written_by WHERE w.business_id = ? AND w.phone = ? ORDER BY w.created_at, w.id',
+  return db.all<{ id: string; created_at: string; direction: string; body: string; status: string; error: string | null; contact: string | null; writer: string | null; sender: string | null }>(
+    'SELECT w.id, w.created_at, w.direction, w.body, w.status, w.error, c.full_name AS contact, u.display_name AS writer, l.sender FROM whatsapp_messages w ' +
+    'LEFT JOIN contacts c ON c.id = w.contact_id LEFT JOIN users u ON u.id = w.written_by LEFT JOIN whatsapp_import_lines l ON l.message_id = w.id ' +
+    'WHERE w.business_id = ? AND w.phone = ? ORDER BY w.created_at, w.id',
     [business_id, number]).map((w) => {
     const ours = w.direction === 'OUT';
+    const imported = w.sender !== null;
     return {
-      id: w.id, ours, when: localStamp(w.created_at, nowIso), body: w.body,
-      who: ours ? (w.writer ?? 'Cap Rebate') : (w.contact ?? `+${number}`),
-      state: ours ? `${WA_STATE[w.status] ?? w.status}${w.error === null ? '' : ` — ${w.error}`}` : null,
+      id: w.id, ours, when: localStamp(w.created_at, nowIso), body: w.body, imported,
+      // An imported message is named as the phone named it; ours "on the phone", since nobody sent it from here.
+      who: imported ? (ours ? `${w.sender} (on the phone)` : (w.contact ?? w.sender ?? `+${number}`)) : ours ? (w.writer ?? 'Cap Rebate') : (w.contact ?? `+${number}`),
+      state: ours && !imported ? `${WA_STATE[w.status] ?? w.status}${w.error === null ? '' : ` — ${w.error}`}` : null,
     };
   });
 }
@@ -85,6 +90,8 @@ const DONE: Readonly<Record<string, string>> = {
   'whatsapp-file': 'Got it from WhatsApp. It is kept here, encrypted.',
   whatsapp: 'Sent on WhatsApp.',
   'whatsapp-opening': 'Our opening message is sent. When they reply, you can write freely for 24 hours.',
+  'whatsapp-import-saved': 'The WhatsApp chat is added to the record.',
+  'whatsapp-import-cancelled': 'Cancelled. Nothing was added.',
 };
 
 export function whatsappPage(app: App, actor: Actor, business_id: string, asked: string | null, done: string | null, nav: Safe): string {
@@ -101,10 +108,15 @@ export function whatsappPage(app: App, actor: Actor, business_id: string, asked:
   const missing = whatsappMissing(app.secrets, app.whatsappPolicy, { outside: app.outside });
   const reachable = people.filter((p) => p.contact !== null);
   const pick = chosen?.contact ?? reachable[0]?.contact ?? null;
+  // PHASE 156c (5 Oct 2026, Lakhbir: manual upload): while the live connection to Meta is off, nothing is written from here.
+  // Staff reply on the WhatsApp phone and add the chat when it should be kept (src/web/whatsapp-import.ts).
+  const live = missing.length === 0;
+  const first = (chosen?.contact?.first ?? chosen?.name ?? 'them').trim() || 'them';
   const write: Safe = !mayWrite ? h`<p class="help">You can read this conversation, not write to it.</p>`
+    : !live ? h`<p class="help">Reply to ${first} on the WhatsApp phone. To keep newer messages, export the chat again and add it below.</p>`
     : isDoNotContact(db, '', business_id) ? h`<div class="gate" role="note"><strong>You cannot write to this company.</strong> They asked us not to contact them.</div>`
     : reachable.length === 0 ? h`<p class="help">None of ${company}’s contacts has a mobile number. <a href="/staff/clients/${business_id}#contacts">Add one under Contacts</a> to write to them on WhatsApp.</p>`
-    : h`${missing.length === 0 ? raw('') : h`<div class="gate" role="note"><strong>WhatsApp is not switched on yet.</strong> ${missing.join(' ')} Anything you send now is kept here as not sent.</div>`}
+    : h`
       ${chosen !== null && chosen.contact === null ? h`<p class="help">${chosen.name} is not one of their contacts, so you cannot write back to that number. Add it to a contact first.</p>` : raw('')}
       <form method="post" action="/staff/clients/${business_id}/whatsapp" class="pblock chatform">
         <label class="fl" for="wa-to">To</label>
@@ -124,7 +136,7 @@ export function whatsappPage(app: App, actor: Actor, business_id: string, asked:
     ${chosen === null ? h`<p class="empty">No WhatsApp with ${company} yet.</p>`
       : lines.length === 0 ? h`<p class="empty">No WhatsApp with ${chosen.name} yet. Write the first on the left.</p>`
       : h`<ol class="chat">${lines.map((l) => h`<li class="msg${l.ours ? ' mine' : ''}" id="wa-${l.id}">
-          <p class="msgmeta"><span class="via">WhatsApp</span> <strong>${l.who}</strong> · ${l.when}${l.state === null ? '' : ` · ${l.state}`}</p>
+          <p class="msgmeta"><span class="via">${l.imported ? 'From the phone' : 'WhatsApp'}</span> <strong>${l.who}</strong> · ${l.when}${l.state === null ? '' : ` · ${l.state}`}</p>
           <p class="msgbody">${l.body}</p>${attachmentLine(db, actor, business_id, l.id)}</li>`)}</ol>`}`;
   return page({
     title: `WhatsApp ${company}`, nav, wide: true,
@@ -132,8 +144,56 @@ export function whatsappPage(app: App, actor: Actor, business_id: string, asked:
       <h1>WhatsApp ${company}</h1>
       <p><a href="/staff/clients/${business_id}?chat=all#chat">Back to ${company}</a> · <a href="/staff/clients/${business_id}/email">Email them instead</a></p>
       <div class="convo">
-        <section class="convo-write" id="compose" aria-labelledby="wa-write-h"><h2 id="wa-write-h">Write on WhatsApp</h2>${write}</section>
+        <section class="convo-write" id="compose" aria-labelledby="wa-write-h"><h2 id="wa-write-h">${live ? 'Write on WhatsApp' : 'WhatsApp'}</h2>${write}
+          ${mayWrite && reachable.length > 0 ? importBox(app, business_id, reachable.map((p) => p.contact!), pick?.id ?? null) : raw('')}</section>
         <section class="convo-chain" aria-labelledby="wa-chain-h"><h2 id="wa-chain-h">${chosen === null ? 'The conversation' : `With ${chosen.name}`}</h2>${chain}</section>
       </div>`,
   });
 }
+
+/* ================================================================== *
+ * PHASE 156c: ADD A CHAT EXPORTED ON THE PHONE (src/web/whatsapp-import.ts; the script is src/web/whatsapp-import-script.ts).
+ * ================================================================== */
+function importBox(app: App, business_id: string, contacts: readonly PhoneContact[], pick: string | null): Safe {
+  const ups = importsFor(app, business_id).slice(0, 10);
+  return h`<h3 id="wa-import-h">Add a WhatsApp chat</h3>
+    <ol class="help">
+      <li>On the WhatsApp phone, open the chat with the client.</li>
+      <li>Tap their name, then <strong>Export chat</strong>, then <strong>Attach media</strong>.</li>
+      <li>Save the .zip (to Files, or email it to yourself), then choose it here.</li>
+    </ol>
+    ${importForm(business_id, contacts, pick)}
+    ${ups.length === 0 ? raw('') : h`<h3>Chats added</h3><ul class="plainlist">${ups.map((u) => h`<li>${localStamp(u.uploaded_at, app.now())} · ${u.contact} · ${u.status === 'SAVED'
+      ? `${String(u.added ?? 0)} message${u.added === 1 ? '' : 's'} added by ${u.by}${u.files_waiting > 0 ? ` · ${String(u.files_waiting)} file${u.files_waiting === 1 ? '' : 's'} still to add` : ''}`
+      : h`waiting to be checked — <a href="/staff/clients/${business_id}/whatsapp/import/${u.id}">check it</a>`}${u.status === 'SAVED' && u.files_waiting > 0
+      ? h` — <a href="/staff/clients/${business_id}/whatsapp/import/${u.id}">add them</a>` : raw('')}</li>`)}</ul>`}`;
+}
+
+/** PHASE 156c: the upload form alone — on the WhatsApp page and on the company's conversation (src/web/communication.ts). */
+export function importForm(business_id: string, contacts: readonly PhoneContact[], pick: string | null): Safe {
+  return h`<form method="post" action="/staff/clients/${business_id}/whatsapp/import" enctype="multipart/form-data" class="pblock" id="wa-import" aria-labelledby="wa-import-h">
+      <label class="fl" for="wa-imp-to">Whose chat is it</label>
+      <select class="fi" id="wa-imp-to" name="contact_id" required>${contacts.map((c) => h`<option value="${c.id}"${c.id === pick ? raw(' selected') : raw('')}>${c.name} — ${c.shown}</option>`)}</select>
+      <label class="fl" for="wa-imp-file">The exported chat (.zip or .txt)</label>
+      <input class="fi" id="wa-imp-file" name="export" type="file" accept=".zip,.txt,application/zip,text/plain" required>
+      <p class="help" id="wa-imp-note">Nothing is added yet: you check it first. A big export is opened on this computer, and only the chat’s words and the files from the dates you keep are sent.</p>
+      <p><button class="cta" type="submit">Upload and check</button></p>
+    </form>`;
+}
+
+/** PHASE 156c: the WhatsApp pages run one script of our own (the export reader), so their policy allows it and no more. */
+export const WHATSAPP_PAGE_HEADERS: Readonly<Record<string, string>> = Object.freeze({
+  'content-type': 'text/html; charset=utf-8',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'no-referrer',
+  'x-frame-options': 'DENY',
+  'content-security-policy':
+    "default-src 'none'; style-src 'self'; img-src 'self' data:; script-src 'self'; connect-src 'self'; " +
+    "form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+});
+
+/** The page with the export reader's script. */
+export function withImportScript(html: string): string {
+  return html.replace('</body>', '<script src="/assets/whatsapp-import.js" defer></script></body>');
+}
+

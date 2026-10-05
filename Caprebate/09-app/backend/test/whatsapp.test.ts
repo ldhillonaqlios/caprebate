@@ -116,15 +116,19 @@ describe('WhatsApp', () => {
     made.app.secrets = secretsFromValues({});
     const s = await sales();
     const all = (await s.req('/staff/clients/b-wa-1?chat=all')).body;
-    // 1 Oct 2026: Communication — WhatsApp is one of the ways to write in its one form, and says it is not switched on yet.
-    assert.match(all, /<option value="whatsapp">WhatsApp<\/option>/);
-    assert.match(all, /WhatsApp is not switched on yet: Put the WhatsApp keys in the key file: WHATSAPP_ACCESS_TOKEN/);
+    // 1 Oct 2026: Communication — WhatsApp was one of the ways to write in its one form. PHASE 156c (5 Oct 2026): while it is
+    // not connected live it is not offered there; the company's conversation has "Add a WhatsApp chat" instead.
+    assert.doesNotMatch(all, /<option value="whatsapp">WhatsApp<\/option>/);
+    assert.match(all, /<h3 id="wa-add-h">Add a WhatsApp chat<\/h3>/);
     // 1 Oct 2026: WhatsApp has its own page — the conversation on the right, the message on the left.
     const page = (await s.req('/staff/clients/b-wa-1/whatsapp')).body;
     assert.match(page, /<section class="convo-write" id="compose"[\s\S]*<section class="convo-chain"/);
-    assert.match(page, /WhatsApp is not switched on yet\.<\/strong> Put the WhatsApp keys in the key file: WHATSAPP_ACCESS_TOKEN/);
-    assert.match(page, /<option value="c-wa-ada"( selected)?>Ada Invented — 07700 900123 — only our opening message/);
-    const waForm = page.slice(page.indexOf('<select class="fi" id="wa-to"'), page.indexOf('</select>', page.indexOf('id="wa-to"')));
+    // PHASE 156c (5 Oct 2026, Lakhbir: manual upload): with the live connection off there is no reply box here at all —
+    // staff reply on the WhatsApp phone and add the chat (test/phase156c.test.ts). The sending code below is unchanged.
+    assert.doesNotMatch(page, /id="wa-to"/);
+    assert.match(page, /Reply to Ada on the WhatsApp phone/);
+    const waForm = page.slice(page.indexOf('<select class="fi" id="wa-imp-to"'), page.indexOf('</select>', page.indexOf('id="wa-imp-to"')));
+    assert.match(waForm, /value="c-wa-ada"/);
     assert.doesNotMatch(waForm, /value="c-wa-no-phone"/, 'a contact with no number was offered');
     const r = await s.post('/staff/clients/b-wa-1/whatsapp', { contact_id: 'c-wa-ada', opening: '1' });
     assert.equal(r.status, 400);

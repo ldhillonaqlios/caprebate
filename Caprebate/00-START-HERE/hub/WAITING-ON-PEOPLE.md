@@ -38,6 +38,10 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [x] The three key-file lines (OS and both Turnstile) — added by Lakhbir 5 Oct 2026; the Ordnance Survey test lookup PASSED.
 - [x] PRs 9 to 18 into main — done 5 Oct 2026 through PR 19 (claude/plan-156 into main); the live test site reads the keys.
 - [ ] Close PRs 10 to 17 on GitHub: their work is in main through PR 19.
+- [ ] Sadique: confirm the two WhatsApp answers Lakhbir gave on 5 Oct 2026 (uploaded chats follow the client-message
+      retention rule; messages from before the client ticked the WhatsApp box are kept) — FOR-THE-SOLICITOR-DPO-DEVELOPER.
+- [ ] An Android WhatsApp export, made-up content, when one is to hand: the reader was built for Android from WhatsApp's
+      documented layout and tested on invented files only (Phase 156c). Put it in 09-app/backend/test/fixtures/whatsapp-export.
 - [ ] Sadique: approve Cloudflare (US) for testing, so the contact form's server check can run (Phase 156a A3.6).
 - [ ] The API steps in Phase 156 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
       Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom licence, Anthropic paperwork, GoAddress, Didit). Now Phases 156a to 156e. _Google Analytics was dropped for now on 4 Oct 2026; the marketing team may pick it up later._

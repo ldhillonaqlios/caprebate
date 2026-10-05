@@ -68,3 +68,6 @@ dist/
 *.key
 !/Caprebate/09-app/backend/secrets.example.env
 !/Caprebate/09-app/backend/src/secrets.ts
+
+# Phase 156c (5 Oct 2026): real WhatsApp exports dropped here for reading the layout - never committed. Tests build their own invented exports.
+/Caprebate/09-app/backend/test/fixtures/whatsapp-export/

@@ -74,6 +74,30 @@ export function readZipEntryFromBuffer(buf: Buffer, names: readonly string[]): B
   throw new Error(`no ${names.join(' or ')} in this zip`);
 }
 
+/**
+ * PHASE 156c: THE NAMES IN A ZIP, in the order its central directory lists them. The same walk as above, reading names
+ * only; nothing is inflated. Throws like the reader when the file is not a zip.
+ */
+export function listZipEntries(buf: Buffer): string[] {
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= 0 && i > buf.length - 66_000; i--) {
+    if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('not a zip file');
+  const count = buf.readUInt16LE(eocd + 10);
+  let p = buf.readUInt32LE(eocd + 16);
+  const out: string[] = [];
+  for (let n = 0; n < count; n++) {
+    if (p + 46 > buf.length || buf.readUInt32LE(p) !== 0x02014b50) throw new Error('bad central directory entry');
+    const nameLen = buf.readUInt16LE(p + 28);
+    const extraLen = buf.readUInt16LE(p + 30);
+    const commentLen = buf.readUInt16LE(p + 32);
+    out.push(buf.subarray(p + 46, p + 46 + nameLen).toString('utf8'));
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  return out;
+}
+
 /** The same, for a zip on disk. */
 export function readZipEntry(path: string, names: readonly string[]): Buffer {
   try {
