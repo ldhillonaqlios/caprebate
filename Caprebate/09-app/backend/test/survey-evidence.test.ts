@@ -150,6 +150,8 @@ const RO = actor('READ_ONLY', 'u-ev-ro');
 const KEYS = {
   ZOOM_ACCOUNT_ID: 'invented-account', ZOOM_CLIENT_ID: 'invented-s2s-id', ZOOM_CLIENT_SECRET: 'invented-s2s-secret',
   ZOOM_SDK_CLIENT_ID: 'invented-sdk-id', ZOOM_SDK_CLIENT_SECRET: 'invented-sdk-secret',
+  // PHASE 156d: these tests are the PAID plan's recorded walkthrough; the free plan's (the default) is the block at the end.
+  ZOOM_PLAN: 'pro',
 };
 const MEETING = '81234567890';
 const RECORDING = { share_url: 'https://us06web.zoom.us/rec/share/invented-walkthrough', password: 'Rec0rd', duration: 37, start_time: '2026-10-05T17:30:00Z' };
@@ -624,5 +626,65 @@ describe('the records', () => {
     // The database keeps only a Zoom link and a photo's place, never another.
     assert.throws(() => db.run("INSERT INTO survey_photos (id, job_id, item_key, object_key, content_type, byte_size, sha256, note, taken_by, taken_at, nobody_in_it) VALUES ('x', ?, 'VOIDS', 'documents/x.jpg', 'image/jpeg', 1, ?, NULL, 'u-ev-client', ?, 1)", [JOB, 'a'.repeat(64), T0]), /CHECK/);
     assert.throws(() => db.run("INSERT INTO survey_photos (id, job_id, item_key, object_key, content_type, byte_size, sha256, note, taken_by, taken_at, nobody_in_it) VALUES ('x', ?, 'VOIDS', 'survey-photos/x.jpg', 'image/jpeg', 1, ?, NULL, 'u-ev-client', ?, 0)", [JOB, 'a'.repeat(64), T0]), /CHECK/);
+  });
+});
+
+/* PHASE 156d, 5 October 2026 — THE WALKTHROUGH CALL ON THE FREE ZOOM PLAN. Lakhbir: "yes change 156d so i dont pay".
+   No ZOOM_PLAN is the free plan: Zoom keeps no recording, so nothing promises one, and Zoom is not asked to record. */
+describe('PHASE 156d — the walkthrough call on the free Zoom plan', () => {
+  const FREE_KEYS: Record<string, string> = { ...KEYS };
+  delete FREE_KEYS['ZOOM_PLAN'];
+  before(() => { made.app.secrets = secretsFromValues(FREE_KEYS); });
+  after(() => { made.app.secrets = secretsFromValues(KEYS); });
+
+  test('the paid words are the ones approved on 2 Oct 2026; the free words promise no recording', () => {
+    assert.equal(E.WALK_WORDS.paid.message, E.ASK_WORDS);
+    assert.equal(E.WALK_WORDS.paid.lead, 'Join a video call on your phone and walk round while we guide you. The call is recorded so your surveyor can watch it. It takes about 20 to 40 minutes.');
+    for (const [k, v] of Object.entries(E.WALK_WORDS.free)) {
+      assert.doesNotMatch(v, /is recorded|recorded to|records,|its recording appears|watch it/i, `the free plan's ${k} promises a recording: ${v}`);
+    }
+    assert.equal(E.walkWords(true), E.WALK_WORDS.free);
+    assert.equal(E.walkWords(false), E.WALK_WORDS.paid);
+  });
+
+  test('the client\'s pages say "A video call", what happens instead, and the 40 minutes; never that it is recorded', async () => {
+    const home = (await req('u-ev-client', `/portal/building?job=${JOB}`)).body;
+    assert.ok(home.includes('<h2>A video call</h2>'), 'the choice is not "A video call"');
+    assert.ok(home.includes(E.WALK_WORDS.free.choice));
+    assert.ok(!home.includes('It is recorded so your surveyor can watch it.'), 'the choice still promises a recording');
+    const call = (await req('u-ev-client', `/portal/building/call?job=${JOB}`)).body;
+    assert.ok(call.includes('<h1>A video call</h1>'));
+    assert.ok(call.includes('write down what we see for your surveyor') && call.includes('A call ends after 40 minutes'), 'the call page does not say what happens instead');
+    assert.ok(!call.includes('The call is recorded'), 'the call page still promises a recording');
+    const guide = (await req('u-ev-client', `/portal/building/guide?job=${JOB}`)).body;
+    assert.ok(guide.includes('For the video call, and for the photos.'));
+  });
+
+  test('asking for one sends the free plan\'s words', async () => {
+    const r = await post('u-ev-other', '/portal/building/ask', { job: OTHER_JOB });
+    assert.equal(r.status, 303, r.body.slice(0, 300));
+    assert.equal(made.app.db.get<{ n: number }>('SELECT count(*) AS n FROM client_messages WHERE business_id = ? AND body = ?', ['b-ev-other', E.WALK_WORDS.free.message])!.n, 1);
+    assert.equal(made.app.db.get<{ n: number }>('SELECT count(*) AS n FROM client_messages WHERE business_id = ? AND body = ?', ['b-ev-other', E.ASK_WORDS])!.n, 0);
+  });
+
+  test('booked on the free plan: Zoom is not asked to record, staff are told to write down what they see, and there is no "Get the recording"', async () => {
+    const page = (await req('u-ev-admin', `/staff/survey/${JOB}/pack?ch=2`)).body;
+    assert.ok(page.includes('<summary>Book the walkthrough call</summary>') && page.includes(E.WALK_WORDS.free.staffHelp));
+    assert.ok(!page.includes('recorded to Zoom’s cloud'));
+    const slot = /<select class="fi" name="slot"><option value="([^"]+)"/.exec(page)?.[1] ?? '';
+    assert.notEqual(slot, '');
+    const before_ = transport.seen.length;
+    const r = await post('u-ev-admin', `/staff/survey/${JOB}/pack/walkthrough`, { slot, to: 'dee@practice.example.com' });
+    assert.equal(r.location, `/staff/survey/${JOB}/pack?ch=2&done=booked#inspection`);
+    const mk = transport.seen.slice(before_).filter((s) => s.method === 'POST' && s.url.endsWith('/v2/users/me/meetings'));
+    assert.equal(mk.length, 1);
+    assert.equal((JSON.parse(mk[0]!.body ?? '{}') as { settings?: { auto_recording?: string } }).settings?.auto_recording, 'none', 'Zoom was asked to record on the free plan');
+    const after_ = (await req('u-ev-admin', `/staff/survey/${JOB}/pack?ch=2&done=booked`)).body;
+    assert.ok(after_.includes(E.WALK_WORDS.free.booked));
+    assert.ok(after_.includes(E.WALK_WORDS.free.noRecording), 'the new call does not say it is not recorded');
+    const newest = E.walkthroughsOf(made.app.db, JOB).find((w) => w.starts_at === slot)!; // the clock is fixed, so pick it by its time
+    assert.equal(newest.recordings.length, 0);
+    assert.ok(!after_.includes(`name="walkthrough" value="${newest.id}"`), 'the free plan offers "Get the recording from Zoom"');
+    assert.ok((await req('u-ev-sam', `/staff/survey/${JOB}/pack?ch=2`)).body.length > 0);
   });
 });

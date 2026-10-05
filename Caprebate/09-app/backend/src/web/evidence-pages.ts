@@ -2,7 +2,7 @@
  * THE SURVEY'S EVIDENCE — ITS PAGES. 2 October 2026; the mock-up Lakhbir approved that day (src/web/survey-evidence.ts).
  *
  * THE CLIENT'S PORTAL — "Show us your building":
- *   GET  /portal/building[?job=]            the two ways (the photo checklist, a recorded video call) and the checklist
+ *   GET  /portal/building[?job=]            the ways (the photo checklist, a video, a video call - recorded on a paid Zoom plan only, Phase 156d) and the checklist
  *   GET  /portal/building/item/{key}?job=   one item, as a phone shows it, with the next item after it
  *   GET  /portal/building/guide?job=        the filming guide, for the call
  *   POST /portal/building/photo             one photo for one item (a form with a file; no script)
@@ -31,6 +31,7 @@ import { packJob } from './surveyor.ts';
 import { staffSlots, addLocalDays, startOfLocalDay } from './schedule.ts';
 import { localDate, localClock, ukDate } from './localtime.ts';
 import { activeMeeting, clientJoinUrl } from './video-calls.ts';
+import { zoomPlanIsFree } from '../connectors/zoom.ts';
 import * as U from './photo-upload.ts';
 import * as SV from './survey-video.ts';
 import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from './desk-first.ts';
@@ -162,7 +163,7 @@ function overview(d: PortalEvidenceDeps, v: E.ChecklistView, jobs: readonly E.Ev
       <section class="ev-choice">${ICONS.video}<h2>A video</h2><p>Film a slow walk round on your phone and send it to us. Up to 10 minutes a video.</p>
         <p class="ev-state">${videos.length === 0 ? 'None sent yet' : `${String(videos.length)} video${videos.length === 1 ? '' : 's'} sent, ${SV.minutesWords(minutes)}`}</p>
         <a class="cta" href="/portal/building/video?job=${job}">Send a video</a></section>
-      <section class="ev-choice">${ICONS.call}<h2>A recorded video call</h2><p>We guide you round on a video call. It is recorded so your surveyor can watch it.</p>
+      <section class="ev-choice">${ICONS.call}<h2>${W(d).name}</h2><p>${W(d).choice}</p>
         <p class="ev-state">${call.next !== null && call.next.starts_at !== null ? `Booked: ${when(call.next.starts_at)}` : call.asked !== undefined ? 'Asked for: we will offer you a time' : 'Not asked for yet'}</p>
         <a class="cta" href="/portal/building/call?job=${job}">${call.next !== null || call.asked !== undefined ? 'See the call' : 'Ask for a call'}</a></section>
     </div>
@@ -237,20 +238,23 @@ function videoPage(d: PortalEvidenceDeps, v: E.ChecklistView, actor: Actor, q: U
     </section>`;
 }
 
-/** The recorded video call: ask for one, or the time booked and the way in. */
+/** PHASE 156d: the walkthrough call's words for our Zoom plan (src/web/survey-evidence.ts, WALK_WORDS). */
+function W(d: { app: App }): E.WalkWords { return E.walkWords(zoomPlanIsFree(d.app.secrets)); }
+
+/** The walkthrough video call: ask for one, or the time booked and the way in. */
 function callPage(d: PortalEvidenceDeps, v: E.ChecklistView, actor: Actor, q: URLSearchParams): Safe {
   const job = v.job.id;
   const c = callState(d, job);
   return h`
     ${q.get('done') === 'asked' ? h`<div class="gate" role="status">Thank you. We will offer you a time for the call.</div>` : raw('')}
-    ${crumb(job, 'A recorded video call')}
-    <h1>A recorded video call</h1>
-    <p>Join a video call on your phone and walk round while we guide you. The call is recorded so your surveyor can watch it. It takes about 20 to 40 minutes.</p>
+    ${crumb(job, W(d).name)}
+    <h1>${W(d).name}</h1>
+    <p>${W(d).lead}</p>
     <p class="ev-rule">${NOBODY_IN_SHOT}</p>
     <section class="ev-box">
       ${c.next !== null && c.next.starts_at !== null ? h`<p><strong>Booked: ${when(c.next.starts_at)}</strong></p>${c.meeting === undefined ? raw('') : h`<p><a class="cta" href="${clientJoinUrl('', c.meeting.client_token)}">Join the call</a></p>`}`
         : c.asked !== undefined ? h`<p>You asked for a call on ${when(c.asked.at)}. We will offer you a time.</p>`
-        : actor.role === 'CLIENT' ? h`<form method="post" action="/portal/building/ask"><input type="hidden" name="job" value="${job}"><button class="cta" type="submit">Ask for a recorded video call</button></form>` : raw('')}
+        : actor.role === 'CLIENT' ? h`<form method="post" action="/portal/building/ask"><input type="hidden" name="job" value="${job}"><button class="cta" type="submit">${W(d).ask}</button></form>` : raw('')}
       <p><a href="/portal/building/guide?job=${job}">Read the filming guide</a> before the call.</p></section>`;
 }
 
@@ -278,9 +282,9 @@ function itemPage(d: PortalEvidenceDeps, actor: Actor, v: E.ChecklistView, key: 
   </div>`;
 }
 
-function guidePage(v: E.ChecklistView): Safe {
+function guidePage(v: E.ChecklistView, words: E.WalkWords = E.WALK_WORDS.paid): Safe {
   return h`<div class="ev-guide"><h1>The filming guide</h1>
-    <p>For the recorded video call, and for the photos. Read it once before you start.</p>
+    <p>${words.guide} Read it once before you start.</p>
     <h2>Before you start</h2>
     <ul><li><strong>Film when the building is empty</strong>, out of hours if you can. ${NOBODY_IN_SHOT} If someone walks into shot, stop and start that room again.</li>
       <li><strong>Do not put yourself at risk.</strong> Skip anything that is not safe, or not yours to open, and say so.</li>
@@ -371,7 +375,7 @@ export async function handlePortalEvidence(
   }
   if (path === '/portal/building/ask' && method === 'POST') {
     const f = await d.form(req);
-    const r = E.askWalkthrough(deps, actor, f.get('job') ?? '');
+    const r = E.askWalkthrough(deps, actor, f.get('job') ?? '', zoomPlanIsFree(d.app.secrets));
     if (!r.ok) return html(400, 'Not sent', h`<div class="card" role="alert"><h1>Not sent</h1><p>${r.why}</p><p><a href="/portal/building">Back</a></p></div>`);
     redirect(res, `/portal/building/call?job=${f.get('job') ?? ''}&done=asked`);
     return 'handled';
@@ -424,8 +428,8 @@ export async function handlePortalEvidence(
       body: video ? videoPage(d, v, actor, url.searchParams) : photosPage(v, actor, url.searchParams) })));
     return 'handled';
   }
-  if (path === '/portal/building/call') return html(200, 'A recorded video call', callPage(d, v, actor, url.searchParams));
-  if (path === '/portal/building/guide') return html(200, 'The filming guide', guidePage(v));
+  if (path === '/portal/building/call') return html(200, W(d).name, callPage(d, v, actor, url.searchParams));
+  if (path === '/portal/building/guide') return html(200, 'The filming guide', guidePage(v, W(d)));
   const item = /^\/portal\/building\/item\/([A-Z0-9-]{2,60})$/.exec(path);
   if (item !== null) {
     const body = itemPage(d, actor, v, item[1] ?? '', url.searchParams);
@@ -638,7 +642,8 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
   const asks = E.asksOf(app.db, job_id);
   const basis = E.basisOf(app.db, job_id);
   const base = `/staff/survey/${job_id}/pack`;
-  const notes: Record<string, string> = { booked: 'Booked. Its Zoom meeting records, and the client has the invitation.', 'booked-no-zoom': 'Booked, but Zoom made no meeting, so it will not be recorded. See the Communication tab for why.',
+  const words = E.walkWords(zoomPlanIsFree(app.secrets));
+  const notes: Record<string, string> = { booked: words.booked, 'booked-no-zoom': 'Booked, but Zoom made no meeting, so it will not be recorded. See the Communication tab for why.',
     recording: 'We have the recording from Zoom.', basis: 'Saved, under your name.' };
   const done = q.get('done');
   const slots = (() => {
@@ -648,7 +653,7 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
   const emails = app.db.all<{ email: string; name: string }>("SELECT email, full_name AS name FROM contacts WHERE business_id = ? AND email IS NOT NULL AND trim(email) <> '' ORDER BY full_name", [job.business_id]);
   return h`<div id="inspection">
     ${done !== null && notes[done] !== undefined ? h`<div class="gate" role="status">${notes[done]!}</div>` : raw('')}
-    <p class="lede">What the client sent so you can see inside the building, the recorded walkthrough call, and how you inspected. How you inspected goes in the report.</p>
+    <p class="lede">What the client sent so you can see inside the building, ${words.staffLede}, and how you inspected. How you inspected goes in the report.</p>
     <table class="pk-table"><thead><tr><th>Evidence from the client</th><th>Done</th><th></th></tr></thead><tbody>
       <tr><td>The photo checklist</td><td>${String(v.done)} of ${String(v.total)} items, ${String(v.photos)} photo${v.photos === 1 ? '' : 's'}${v.marked === 0 ? '' : ` · ${String(v.marked)} marked not in the building or not safe`}</td>
         <td>${v.photos === 0 ? raw('') : h`<a href="${base}/photos">See every photo</a>`}</td></tr>
@@ -660,23 +665,23 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
       })()}
       ${v.unsorted === 0 ? raw('') : h`<tr><td>Sent all at once, not sorted yet</td><td>${String(v.unsorted)} photo${v.unsorted === 1 ? '' : 's'}${maySort ? '' : ' · Admin or Sales sort them'}</td>
         <td>${maySort ? h`<a class="btn" href="${base}/sort">Sort them</a>` : raw('')}</td></tr>`}
-      ${walks.length === 0 ? h`<tr><td>A recorded walkthrough call</td><td>${asks.length === 0 ? 'None asked for or booked.' : `The client asked for one on ${when(asks[0]!.at)}.`}</td><td></td></tr>`
+      ${walks.length === 0 ? h`<tr><td>${words.staffName}</td><td>${asks.length === 0 ? 'None asked for or booked.' : `The client asked for one on ${when(asks[0]!.at)}.`}</td><td></td></tr>`
         : walks.map((w) => h`<tr><td>Walkthrough call${w.starts_at === null ? '' : `, ${when(w.starts_at)}`}${w.cancelled ? ' (cancelled)' : ''}<br><span class="help">Booked by ${w.booked_by_name}</span></td>
-          <td>${w.recordings.length === 0 ? (w.meeting_id === null ? 'No Zoom meeting, so no recording.' : 'No recording fetched yet.')
+          <td>${w.recordings.length === 0 ? (w.meeting_id === null ? 'No Zoom meeting, so no recording.' : words.noRecording)
             : w.recordings.map((r) => h`<div>${String(r.minutes)} minutes, ${when(r.recorded_at)}${r.passcode === null ? '' : ` · passcode ${r.passcode}`} · opened ${String(r.views)} time${r.views === 1 ? '' : 's'}</div>`)}</td>
           <td>${w.recordings.map((r) => h`<a class="btn" href="${base}/recording/${r.id}">Watch the recording</a> `)}
-            ${mayArrange && w.meeting_id !== null && !w.cancelled && w.recordings.length === 0 ? h`<form method="post" action="${base}/recording" class="inline"><input type="hidden" name="walkthrough" value="${w.id}"><button class="btn-quiet" type="submit">Get the recording from Zoom</button></form>` : raw('')}</td></tr>`)}
+            ${mayArrange && w.meeting_id !== null && !w.cancelled && w.recordings.length === 0 && words !== E.WALK_WORDS.free ? h`<form method="post" action="${base}/recording" class="inline"><input type="hidden" name="walkthrough" value="${w.id}"><button class="btn-quiet" type="submit">Get the recording from Zoom</button></form>` : raw('')}</td></tr>`)}
     </tbody></table>
-    ${!mayBook ? (isSurveyor && walks.length === 0 ? h`<p class="help">Admin or Sales book the walkthrough call: they own client calls in the diary. Its recording appears here.</p>` : raw(''))
+    ${!mayBook ? (isSurveyor && walks.length === 0 ? h`<p class="help">${words.surveyorHelp}</p>` : raw(''))
       : emails.length === 0 ? h`<p class="help">The company has no contact with an email address, so a call cannot be booked.</p>`
       : slots.length === 0 ? h`<p class="help">You have no free times in the next 14 days, so a call cannot be booked. Set your working times on the calendar.</p>`
-      : h`<details class="pk-add"${asks.length > 0 && walks.length === 0 ? raw(' open') : raw('')}><summary>Book the recorded walkthrough call</summary>
+      : h`<details class="pk-add"${asks.length > 0 && walks.length === 0 ? raw(' open') : raw('')}><summary>${words.book}</summary>
         <form method="post" action="${base}/walkthrough"><div class="pk-fields">
           <label>With
 <select class="fi" name="to">${emails.map((e) => h`<option value="${e.email}">${e.name} (${e.email})</option>`)}</select></label>
           <label>When (your free times)
 <select class="fi" name="slot">${slots.map((s) => h`<option value="${s.starts_at}">${when(s.starts_at)}</option>`)}</select></label></div>
-          <p class="help">A Zoom video call, recorded to Zoom’s cloud. You host it and guide the client round; they join on their phone. They get the invitation and the filming guide.</p>
+          <p class="help">${words.staffHelp}</p>
           <button class="cta" type="submit">Book it</button></form></details>`}
     ${(() => {
       // PHASE 153e (Word questions 129 to 131): the desk-first reading. The surveyor sees the level only; staff also see why.

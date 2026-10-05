@@ -137,6 +137,7 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'ZOOM_SDK_CLIENT_ID', owner: 'ZOOM', secret: false, phase: 'zoom', what: 'the Meeting SDK app’s client id, so a call is joined inside our own pages (not secret: it is in each join’s signature)' },
   { name: 'ZOOM_SDK_CLIENT_SECRET', owner: 'ZOOM', secret: true, phase: 'zoom', what: 'the Meeting SDK app’s client secret, which signs each join on this server' },
   { name: 'ZOOM_HOST_EMAIL', owner: 'ZOOM', secret: false, phase: 'zoom', what: 'the email of the Zoom user who hosts the calls (a licensed user on our account); absent, the account’s owner' },
+  { name: 'ZOOM_PLAN', owner: 'ZOOM', secret: false, phase: '156d', what: 'which Zoom plan we are on: absent means the free plan (calls stop at 40 minutes, no cloud recording); "pro" once a paid licence is bought' },
   { name: 'WHATSAPP_ACCESS_TOKEN', owner: 'WHATSAPP', secret: true, phase: 'whatsapp', what: 'a token from Meta that lets us send WhatsApp messages. It does not run out.' },
   { name: 'WHATSAPP_PHONE_NUMBER_ID', owner: 'WHATSAPP', secret: false, phase: 'whatsapp', what: 'the id Meta gives our WhatsApp number (in WhatsApp Manager; not the number itself)' },
   { name: 'WHATSAPP_APP_SECRET', owner: 'WHATSAPP', secret: true, phase: 'whatsapp', what: 'the Meta app’s secret, which signs every message Meta sends to our webhook' },

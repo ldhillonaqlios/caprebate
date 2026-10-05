@@ -368,6 +368,8 @@ export type AuditKind =
   | 'BOOKING_CREATED' | 'CALL_LOGGED' | 'VIDEO_CALL_OPENED'
   // PHASE 153f: a video call made under the shared Zoom host because its member of staff has no Zoom user.
   | 'VIDEO_CALL_SHARED_HOST'
+  // PHASE 156d: how long a video call lasted, asked of Zoom by a member of staff. The state only, never Zoom's answer.
+  | 'VIDEO_CALL_LENGTH_CHECKED'
   // PHASE 153f: a file someone sent us on WhatsApp, fetched from Meta and kept sealed (or not, and why in words on the page).
   | 'WHATSAPP_MEDIA_FETCHED' | 'WHATSAPP_MEDIA_NOT_FETCHED'
   // PHASE 156c: a chat exported on the WhatsApp phone, uploaded for checking, then saved to the record (counts only).

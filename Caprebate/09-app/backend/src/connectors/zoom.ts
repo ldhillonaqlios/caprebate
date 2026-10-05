@@ -10,7 +10,8 @@
  *     (ZAK) when a member of staff opens the call. Scopes: meeting:write:meeting:admin, meeting:update:meeting:admin,
  *     meeting:delete:meeting:admin, and user:read:token:admin — the first live call (30 Sep 2026) showed the start token
  *     needs that one ("user:read:zak:admin" is not enough: Zoom answered 4711).
- *     PHASE 153f, 4 Oct 2026: to read how long a call lasted and who came, two more, NOT YET ASKED FOR OR USED:
+ *     PHASE 153f, 4 Oct 2026: to read how long a call lasted and who came, two more - added by Lakhbir and used by
+ *     zoomPastCall since PHASE 156d, 5 Oct 2026:
  *     meeting:read:past_meeting:admin (GET /v2/past_meetings/{meetingId}: its duration) and
  *     meeting:read:list_past_participants:admin (GET /v2/past_meetings/{meetingId}/participants). Phase 156 A6.
  *     EACH CALL HAS ITS OWN HOST (Phase 153f): the meeting is made under the assigned member of staff's email, which
@@ -21,6 +22,13 @@
  * The host is a user on our account (ZOOM_HOST_EMAIL, else the account's owner). Calls are booked for an hour
  * (SLOT_MINUTES). A FREE Zoom plan stops a meeting at 40 minutes, and for testing that is accepted (Lakhbir, 30 Sep
  * 2026: "leave the time for having it free at 40 mins but each appointment should be 1 hour"); a paid licence lifts it.
+ *
+ * PHASE 156d, 5 October 2026 — THE FREE ZOOM PLAN, ON PURPOSE. Lakhbir: "yes change 156d so i dont pay", and "right now
+ * i dont need to add additonal staff contact@caprebate is enough". So every call is hosted by contact@ (ZOOM_HOST_EMAIL),
+ * a call stops at 40 minutes, and Zoom keeps no recording. ZOOM_PLAN says which plan we are on: absent, or anything but
+ * "pro" (or "paid", "business"), is the free plan (`zoomPlanIsFree`). On the free plan a walkthrough call does not ask
+ * Zoom to record to its cloud, and the screens and the invitation say the 40 minutes plainly. Setting ZOOM_PLAN=pro, when
+ * a paid licence is bought, brings the cloud recording back and takes the 40-minute line away.
  *
  * NOTHING HAPPENS UNTIL BOTH ARE TRUE, each said in words by `zoomMissing`: the five keys are in the key file, and
  * the transfer is approved (sources.ts, ZOOM_OAUTH and ZOOM_API: Zoom is a US company). The transfer was approved for
@@ -53,6 +61,17 @@ export const ZOOM_SDK_VERSION = '6.5.0';
 export const ZOOM_SDK_BASE = `https://source.zoom.us/${ZOOM_SDK_VERSION}`;
 /** What Zoom's meeting is called. Deliberately nobody's name. */
 export const MEETING_TOPIC = 'Cap Rebate call';
+
+/** PHASE 156d: the words that say a paid plan is in use. Anything else, or nothing, is the free plan. */
+const PAID_PLAN_WORDS: readonly string[] = Object.freeze(['pro', 'paid', 'business']);
+
+/** PHASE 156d: true unless ZOOM_PLAN says a paid plan. The free plan is the default, on purpose (5 Oct 2026). */
+export function zoomPlanIsFree(store: SecretStore): boolean {
+  return !PAID_PLAN_WORDS.includes((store.forOwner('ZOOM').get('ZOOM_PLAN') ?? '').trim().toLowerCase());
+}
+
+/** PHASE 156d: the free plan's limit, said plainly where a video call is booked and in its invitation. */
+export const FREE_PLAN_LINE = 'On our current Zoom plan a call ends after 40 minutes. If it does, use the same link to start again.';
 
 export type ZoomDeps = {
   readonly audit: AuditLog;
@@ -195,7 +214,9 @@ export async function makeZoomMeeting(d: ZoomDeps, startsAt: string, minutes: nu
   const host = opts.host !== undefined && opts.host.trim() !== '' ? opts.host.trim() : k.host;
   const r = await api(d, k, 'POST', '/v2/users/{user}/meetings', { user: host }, {
     topic: MEETING_TOPIC, type: 2, start_time: zoomTime(startsAt), duration: minutes, timezone: 'Europe/London',
-    settings: { join_before_host: false, waiting_room: true, mute_upon_entry: false, host_video: true, participant_video: true, approval_type: 2, auto_recording: opts.record === true ? 'cloud' : 'none' },
+    settings: { join_before_host: false, waiting_room: true, mute_upon_entry: false, host_video: true, participant_video: true, approval_type: 2,
+      // PHASE 156d: the free plan has no cloud recording, so only a paid plan is asked to record a walkthrough there.
+      auto_recording: opts.record === true && !zoomPlanIsFree(d.secrets) ? 'cloud' : 'none' },
   });
   if (r === null) return { state: 'NOT_MADE', why: 'Zoom did not give us a token: check the Server-to-Server app’s keys and that it is activated.' };
   if (r.outcome !== 'OK' || r.body === null) {
@@ -236,6 +257,62 @@ export async function zoomRecording(d: ZoomDeps, meetingId: string): Promise<Rec
     if (at === '') return { state: 'NOT_YET', why: 'Zoom’s answer did not say when it was recorded.' };
     return { state: 'FOUND', share_url: url, passcode: typeof j.password === 'string' && j.password !== '' ? j.password.slice(0, 64) : null, minutes, recorded_at: at };
   } catch { return { state: 'NOT_YET', why: 'Zoom’s answer did not carry a recording we could read.' }; }
+}
+
+/**
+ * PHASE 156d, 5 October 2026 — HOW LONG A CALL LASTED, AND HOW MANY JOINED. GET /v2/past_meetings/{meetingId} gives the
+ * last time the meeting ran: its length in minutes ("duration") and how many joined ("participants_count");
+ * where it does not say how many, GET .../participants with page_size 1 gives the count ("total_records"). Scopes
+ * meeting:read:past_meeting:admin and meeting:read:list_past_participants:admin (added by Lakhbir on 5 Oct 2026).
+ * Only two numbers are kept: never a name, an email or anything else from the answer.
+ * Zoom may keep this from a free plan; then the screens say "not shown on our Zoom plan", so nobody thinks it broke.
+ */
+export type PastCall =
+  | { readonly state: 'FOUND'; readonly minutes: number; readonly people: number | null }
+  | { readonly state: 'NOT_YET' | 'NOT_ON_PLAN' | 'NOT_FOUND'; readonly why: string; readonly zoom_code?: number };
+
+/** Zoom's own code and words from an error answer, or nothing. Never anything else from the body. */
+function zoomError(body: string | null): { code: number | null; message: string } {
+  try {
+    const j = JSON.parse(body ?? '') as { code?: unknown; message?: unknown };
+    return { code: typeof j.code === 'number' ? j.code : null, message: typeof j.message === 'string' ? j.message.slice(0, 200) : '' };
+  } catch { return { code: null, message: '' }; }
+}
+
+/** The words that mean "your plan does not include this" in Zoom's error answers. */
+const PLAN_REFUSAL = /\b(paid|pro|licen[cs]ed|upgrade|plan)\b/i;
+
+export const NOT_ON_PLAN_WORDS = 'Call length: not shown on our Zoom plan.';
+
+export async function zoomPastCall(d: ZoomDeps, meetingId: string): Promise<PastCall> {
+  const missing = blocked(d);
+  if (missing.length > 0) return { state: 'NOT_FOUND', why: missing.join(' ') };
+  if (!/^\d{9,12}$/.test(meetingId)) return { state: 'NOT_FOUND', why: 'That is not a Zoom meeting.' };
+  const k = keys(d.secrets)!;
+  const r = await api(d, k, 'GET', '/v2/past_meetings/{meeting}', { meeting: meetingId });
+  if (r === null) return { state: 'NOT_FOUND', why: 'Zoom did not give us a token: check the Server-to-Server app’s keys and that it is activated.' };
+  if (r.outcome !== 'OK' || r.body === null) {
+    const e = zoomError(r.body);
+    const code = e.code === null ? {} : { zoom_code: e.code };
+    if (r.status === 404 || e.code === 3001) return { state: 'NOT_YET', why: 'Zoom has no record of this call having run yet. It can take a few minutes after the call ends.', ...code };
+    if (PLAN_REFUSAL.test(e.message)) return { state: 'NOT_ON_PLAN', why: NOT_ON_PLAN_WORDS, ...code };
+    return { state: 'NOT_FOUND', why: `Zoom did not answer (${r.why}${e.message === '' ? '' : `: ${e.message}`}). Check the app has the two past-meeting scopes.`, ...code };
+  }
+  let minutes = 0;
+  let people: number | null = null;
+  try {
+    const j = JSON.parse(r.body) as { duration?: unknown; participants_count?: unknown };
+    if (typeof j.duration !== 'number' || !Number.isFinite(j.duration)) return { state: 'NOT_FOUND', why: 'Zoom’s answer did not say how long the call lasted.' };
+    minutes = Math.max(0, Math.min(1440, Math.round(j.duration)));
+    if (typeof j.participants_count === 'number' && Number.isFinite(j.participants_count)) people = Math.max(0, Math.min(1000, Math.round(j.participants_count)));
+  } catch { return { state: 'NOT_FOUND', why: 'Zoom’s answer did not say how long the call lasted.' }; }
+  if (people === null) {
+    const p = await api(d, k, 'GET', '/v2/past_meetings/{meeting}/participants', { meeting: meetingId }, undefined, { page_size: '1' });
+    if (p !== null && p.outcome === 'OK' && p.body !== null) {
+      try { const j = JSON.parse(p.body) as { total_records?: unknown }; if (typeof j.total_records === 'number' && Number.isFinite(j.total_records)) people = Math.max(0, Math.min(1000, Math.round(j.total_records))); } catch { /* the count stays unknown */ }
+    }
+  }
+  return { state: 'FOUND', minutes, people };
 }
 
 /** Move a meeting to a new time. True when Zoom took it. */

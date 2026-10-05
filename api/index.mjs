@@ -123,6 +123,8 @@ export const TEST_WEBSITE_TWO_FACTOR = 'staff-except-invented';
 // and the six Zoom names for video calls (src/connectors/zoom.ts; Zoom's transfer approved for testing, 30 Sep 2026).
 export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY',
   'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET', 'ZOOM_HOST_EMAIL',
+  // 5 Oct 2026 (Phase 156d): which Zoom plan we are on; unset is the free plan (src/connectors/zoom.ts, zoomPlanIsFree).
+  'ZOOM_PLAN',
   // 30 Sep 2026: email sending is on for testing; the IONOS login that sends from contact@caprebate.co.uk.
   'IONOS_SMTP_HOST', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'IONOS_SMTP_PASSWORD',
   // 30 Sep 2026: WhatsApp with each client (src/connectors/whatsapp.ts; Meta's transfer approved for testing, 30 Sep 2026).

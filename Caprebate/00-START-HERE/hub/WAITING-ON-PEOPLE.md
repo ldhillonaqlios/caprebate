@@ -44,7 +44,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       documented layout and tested on invented files only (Phase 156c). Put it in 09-app/backend/test/fixtures/whatsapp-export.
 - [ ] Sadique: approve Cloudflare (US) for testing, so the contact form's server check can run (Phase 156a A3.6).
 - [ ] The API steps in Phase 156 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
-      Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom: two free scopes and a check that the host is contact@ (no payment, one shared host: 5 Oct 2026), Anthropic paperwork, GoAddress, Didit). Now Phases 156a to 156e. _Google Analytics was dropped for now on 4 Oct 2026; the marketing team may pick it up later._
+      Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom: two free scopes and a check that the host is contact@ (no payment, one shared host: both DONE 5 Oct 2026, Phase 156d), Anthropic paperwork, GoAddress, Didit). Now Phases 156a to 156e. _Google Analytics was dropped for now on 4 Oct 2026; the marketing team may pick it up later._
 - [ ] Send a test video from the iPhone through "Show us your building", and supply the tall hero video for the home
       page (PHASE-HISTORY ~11112-11160).
 - [x] Decide whether the stray local files on the Mac (`*.mutbak`, `*.new0929`, `api/index.mjs.new0929`,
@@ -114,7 +114,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 ## Licences and purchases
 
 - [ ] BCIS; the location and job-size adjustment; the professional fees percentage (from the surveyor, not the Valuation Office: 4 Oct 2026); CIBSE plant
-      lives; Homedata balance; Zoom Pro — before real clients only, not needed for testing (Lakhbir, 5 Oct 2026: Phase 156d runs on the free plan with one shared host, contact@caprebate.co.uk; calls stop at 40 minutes, Zoom keeps no recording, one call at a time; staff as their own Zoom hosts later, when Lakhbir asks); GoAddress plan after 100 lookups. (WhatsApp: no cost — since 5 Oct 2026 chats are exported on the phone and uploaded to the record; no Meta connection.)
+      lives; Homedata balance; Zoom Pro — before real clients only, not needed for testing (Lakhbir, 5 Oct 2026: Phase 156d runs on the free plan with one shared host, contact@caprebate.co.uk; calls stop at 40 minutes, Zoom keeps no recording, one call at a time; staff as their own Zoom hosts later, when Lakhbir asks: each a free Zoom user under their Cap Rebate sign-in email, and the code already uses it - Phase 153f); GoAddress plan after 100 lookups. (WhatsApp: no cost — since 5 Oct 2026 chats are exported on the phone and uploaded to the record; no Meta connection.)
 
 ## For the developers (production, not test)
 

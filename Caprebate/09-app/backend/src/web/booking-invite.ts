@@ -14,6 +14,7 @@ import { localWhen } from './localtime.ts';
 import { SLOT_MINUTES } from './schedule.ts';
 import { inviteFile, type InviteMethod } from '../stubs/calendar.ts';
 import { activeMeeting, clientJoinUrl, videoJoinWords } from './video-calls.ts';
+import { zoomPlanIsFree } from '../connectors/zoom.ts';
 
 export const CALL_SUMMARY = 'Your call with Cap Rebate';
 
@@ -85,7 +86,7 @@ export function sendVideoInvite(app: App, origin: string, booking_id: string, wh
     ? app.db.get<{ e: string | null }>('SELECT contact_email AS e FROM businesses WHERE id = ?', [b.business_id])?.e ?? null
     : app.db.get<{ e: string | null }>('SELECT email AS e FROM contacts WHERE lead_id = ? ORDER BY created_at ASC, id ASC LIMIT 1', [b.lead_id])?.e ?? null;
   if (to === null) return;
-  const words = videoJoinWords(app.db, booking_id, origin);
+  const words = videoJoinWords(app.db, booking_id, origin, zoomPlanIsFree(app.secrets));
   const invite = bookingInviteFile(app.db, app.now, { booking_id, method: 'REQUEST', starts_at: b.starts_at, ends_at: b.ends_at, to, origin });
   app.email.send({
     to_email: to,

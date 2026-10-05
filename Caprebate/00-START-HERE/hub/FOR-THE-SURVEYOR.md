@@ -429,6 +429,8 @@ Your amendment or reasoning:
 Signed .............................  Date ..........................
 ```
 
+ **Added 5 October 2026 by Phase 156d — the walkthrough CALL is not recorded while we are on the free Zoom plan.** Lakhbir chose not to pay for Zoom during testing. On the free plan Zoom keeps no recording and a call stops at 40 minutes, so a live walkthrough call is no longer something you can watch afterwards: the member of staff who leads it writes down what they see on the job, and the client's own photos and videos (sent through the portal) are unaffected. Your question (d) above, "Would you sign on this footage?", is about footage you can watch; a live call you did not see is weaker evidence, and we would say so. A recorded call comes back if a paid Zoom licence is bought (one setting, `ZOOM_PLAN=pro`). Nothing here asks you anything new.
+
  **Added 16 September 2026 by Phase 132e — unsigned text typed under the questions behind SV-S5.** Nobody signed it and no surveyor wrote it. It is carried here so it is in front of you beside the entry, not as an answer: confirm it, correct it, or strike it out. Nothing in this entry changes state.
 
  **Unsigned draft, not a professional's answer — confirm or correct:** typed into the answer box under “When can a video walkthrough replace a visit?” in CAPREBATE QUESTIONS, unsigned and undated. Quoted exactly as typed; only the box's own dotted leader, where it ran on at the start or end of a line, is left out. It moves no switch and no figure.
