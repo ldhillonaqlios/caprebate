@@ -11953,3 +11953,31 @@ Back end `npm run check`: lint-sql clean, typecheck 0 errors, 2438 pass / 0 fail
 - The Ordnance Survey test lookup — Claude, once the OS line is in the key file — Phase 156a (it stays at the top until then).
 - Merging PRs 9 to 18 so the live test site reads the keys — Lakhbir — WAITING-ON-PEOPLE.md.
 - Approving Cloudflare for testing — Sadique — WAITING-ON-PEOPLE.md.
+
+## PHASE 156a — DONE: the missing keys in Vercel, Ordnance Survey and Cloudflare (5 October 2026, closing record; Opus 5.5, Mac copy, Lakhbir's MacBook Pro)
+
+**Run-sheet entry.** Phase 156a - 5 October 2026 - DONE. Lakhbir put EPC, CQC, Ordnance Survey and both Cloudflare keys in Vercel and the key file. The live test site reads them since PR 19 (all the stacked work, 153b to 156a, into main): the contact form now carries the real Cloudflare site key. Test lookups from the Mac: EPC PASS, CQC PASS, Ordnance Survey PASS (4 building outlines round the public point). The test lookup command was fixed on the way (--nation, --council; it could never call EPC or CQC) and gained an Ordnance Survey lookup. Left: Sadique approves Cloudflare so the server check runs; close PRs 10 to 17. Figures 1363 / 440 / 415 / 2438 = 4,656 (no code changed at the close). Branches claude/phase-156a (PR 18, merged) and claude/phase-156a-close.
+
+### The close
+
+- **Merging.** PRs 9 to 18 were stacked, so PR 18's merge reached only PR 17's branch and main still read none of the keys. PR 19 (claude/plan-156 into main; a test merge was clean) carried them all; Vercel built main at 9b6df98, and the live home page's script then carried a 0x… site key (checked from outside, the key shortened). From now on each phase's PR goes against main.
+- **The key file.** Claude added the three empty names (a backup first, .bak-phase156a beside it); Lakhbir pasted the values. Checked by name and shape only: all three filled, the two Cloudflare keys starting 0x.
+- **Ordnance Survey test lookup** (`smoke OS_FEATURES`, 1 of 3): PASS, four building outlines, nothing kept. Lookups used: EPC 2 of 3, CQC 2 of 3, OS 1 of 3 (the first EPC and CQC ones logged NO before the command was fixed).
+- **Removed from the plan and the run sheet**, as the banner says. Its old-to-new step table, which KEYS-AND-SWITCHES pointed to, is kept here:
+
+| Old step | Now | | Old step | Now |
+| --- | --- | --- | --- | --- |
+| A1 Cloudflare Turnstile | 156a A3 | | B1 Turnstile in the code | 156a B2 |
+| A5 CQC, EPC (and its OS addition) | 156a A1, A2 | | B3 test calls: CQC, EPC | 156a B3 |
+| A5 Homedata (key, balance) | 156e A1 | | B3 Companies House, Anthropic, Homedata calls; "answer it myself" | 156e B1, B2 |
+| A3 the reply timer | 156b A1 | | B2 WhatsApp | 156c B1 |
+| A4 IONOS signing | 156b A2 | | B4 the Connections page | 156e B3 |
+| A2 WhatsApp | 156c A1 | | B5 update the documents | every phase |
+| A6 Zoom | 156d A1 | | B6 Zoom's call length | 156d B1 |
+| A7 Google Analytics | 156e A5 | | B7 the care regulators' lists | 156e B4 |
+| A8 Anthropic, A9 GoAddress, A10 Didit | 156e A2, A3, A4 | | | |
+### NOT DONE — each with its home
+
+- Approving Cloudflare (US) for testing, so the contact form's server check runs — Sadique — WAITING-ON-PEOPLE.md.
+- Closing PRs 10 to 17 (their work is in main) — Lakhbir — WAITING-ON-PEOPLE.md.
+- A third test lookup for EPC and CQC is left in hand (2 of 3 used); none is needed.
