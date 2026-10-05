@@ -12055,3 +12055,31 @@ Lakhbir, 5 Oct 2026: "right now i dont need to add additonal staff contact@capre
 - **Proof.** No code changed. House checks green.
 
  **Claim cleared** in the commit that carries this record.
+
+## Phase 156d — Zoom on the free plan, one shared host — 5 October 2026 (Claude Code, on the Mac)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Built Zoom for the free plan with every call on contact@: the 40-minute limit said where calls are booked, on their pages and in the invitation; a warning (never a refusal) when two video calls overlap on one Zoom user; "Ask Zoom how long it lasted" on a past call's page, keeping two numbers and never a name; walkthrough calls no longer asking Zoom to record, and their words made true; a `ZOOM_PLAN` setting for when a licence is bought. Not done: asking the real Zoom whether the free plan gives the call length — moved to Phase 156e (B5) at Lakhbir's word. Back end 2,487 tests over 153 files. Branch `claude/phase-156d`.
+
+Lakhbir, 5 Oct 2026: "yes change 156d so i dont pay"; "right now i dont need to add additonal staff contact@caprebate is enough"; then, asked for a test call's Meeting ID, "close it without the check and move it to 156e".
+
+- **PART A, Lakhbir — both done 5 Oct 2026.** A1: `ZOOM_HOST_EMAIL` in Vercel edited and the test website redeployed ten seconds later (seen by name and time through the Vercel connector; the value never read). A2: the two scopes `meeting:read:past_meeting:admin` and `meeting:read:list_past_participants:admin` added to the Server-to-Server app "Cap Rebate Calls" (the General app "Cap rebate video", the Meeting SDK one, left alone). A3 (Sadique, real clients) unchanged.
+- **The plan setting** (`src/connectors/zoom.ts`): `ZOOM_PLAN` — absent or anything but pro/paid/business is the free plan (`zoomPlanIsFree`); listed in `src/secrets.ts`, `secrets.example.env` and the test website's `TEST_DEPLOY_KEYS` (`api/index.mjs`; `test/phase151e.test.ts` restated). `makeZoomMeeting` asks for `auto_recording: 'cloud'` only on a paid plan.
+- **B3, the 40 minutes** (`FREE_PLAN_LINE`, `zoomPlanLine`): the call's page in the diary, the host's video page, the Communication tab's booking form, and the invitation (`videoJoinWords(..., freePlan)` from `sendVideoInvite`).
+- **B4, the walkthrough's recording promise** (`WALK_WORDS`, `walkWords` in `src/web/survey-evidence.ts`; `src/web/evidence-pages.ts`): on the free plan the client reads "A video call … We write down what we see for your surveyor … A call ends after 40 minutes"; the ask message, the filming guide and the staff chapter follow; no "Get the recording from Zoom". Found on the way: the walkthrough meeting was made with `auto_recording: 'cloud'`, which the free plan does not have. Paid words unchanged. The staff guide's U1 has a "Video calls on Zoom" paragraph (plain words, grade 7). FOR THE SURVEYOR's SV-S5 has a dated note: a live call they did not see is weaker evidence than footage; nothing new is asked.
+- **B5, one call at a time** (`videoCallsAtSameTime`, `SAME_TIME_WORDS`): another live video call overlapping under the same Zoom user (a meeting's `host_user_id`; null, or no meeting yet, is the shared host) is warned about on the call's page, the video page, after giving or moving a time (it now opens the call's page), and after booking from the Communication tab (`done=booked-zoom-same-time`).
+- **B2, how long it lasted** (`zoomPastCall`; `checkCallLength`, `callLengthOf`, `callLengthWords`; migration 091; `POST /staff/calendar/{id}/length`, those who arrange calls, once the call has started; audit `VIDEO_CALL_LENGTH_CHECKED`, the state only): FOUND (minutes and `participants_count`, or the participants list's `total_records` at page size 1), NOT_YET (404 or code 3001), NOT_ON_PLAN (a refusal naming a paid plan, shown as "Call length: not shown on our Zoom plan."), NOT_FOUND (anything else, in words); a later "not yet" keeps numbers already kept. The Communication tab shows it on the call once asked. Built whichever way the free plan answers, so the test call decides only the words.
+- **B1** built as a read-only command, `CAPREBATE_LOCAL_ZOOM=1 node src/cli.ts zoom-call-length <meeting id>`; it refuses without the opt-in (run once, refused, as it should). **Not run against a real call** — moved to Phase 156e B5.
+- **B6**: KEYS-AND-SWITCHES.md's Zoom row and WAITING-ON-PEOPLE.md say free plan, one shared host, both scopes added, the call-length answer not yet known, Zoom Pro before real clients only, staff as their own hosts when Lakhbir asks.
+- **Tests.** `test/phase156d.test.ts` (15); `test/survey-evidence.test.ts` four more for the free-plan walkthrough (its earlier tests now say `ZOOM_PLAN: 'pro'`, the paid path they describe); `test/phase153f.test.ts` line 4(b) restated — only `zoomPastCall` asks the past-meeting endpoints, proved red with a second caller planted. **Twenty-three deliberate breaks, each caught** (one survived at first — the Communication form's hint was also matched by an earlier invitation shown in the conversation — and the test was tightened, then caught it).
+- **The checks, re-derived.** Back end 2,487 pass / 0 fail over 153 tracked files (chunks of 12; one failure on the first run was `test/phase153f.test.ts` 4(b), superseded by this phase and restated); harness, phase3 and phase9 untouched: 1363, 440, 415. Typecheck 0 errors; CRM fold check green after two spec line references moved (`src/web/booking-invite.ts:26`, `src/secrets.ts:341`); plain words green; analytics 26 checks, 0 failures; drift `--fast --expect 1363,440,415,2487` OK and the 999 control exit 1; register check green; tracker check green. Build queue ("Ready - Claude can build"): empty, no orphans.
+- **The run sheet and OneDrive.** 156d's section deleted from both; 156e's block carries B5 in both, the same text.
+
+```
+DONE          The free-plan Zoom build above (B2-B6), the B1 command, the guide, the spec, the
+              registers and hub pages, 19 tests and 23 caught breaks.
+NOT DONE      Asking the real Zoom whether the free plan gives a call's length - BUILDABLE once
+              Lakhbir holds one test call (nothing to buy or sign) - Phase 156e, B5.
+NOTHING LEFT  beyond that line.
+```
+
+ **Claim cleared** in the commit that carries this record.
