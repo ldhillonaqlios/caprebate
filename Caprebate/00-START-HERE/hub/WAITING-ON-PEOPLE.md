@@ -35,12 +35,9 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       supplier breach clauses, and ten lower-priority items (Homedata, cyber security, hardware, brand, analytics…).
 - [x] **Phase 156a PART A — done 5 Oct 2026 (Lakhbir):** EPC, CQC, Ordnance Survey and both Cloudflare keys set in Vercel
       and a production deploy made. EPC and CQC test lookups PASSED from the Mac the same day.
-- [ ] **Add three lines to the Mac's key file** (OneDrive > Private - keys (do not share) > caprebate-secrets.txt):
-      OS_DATA_HUB_API_KEY, TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY, each the same value as in Vercel. Then tell
-      Claude, who runs the Ordnance Survey test lookup (`smoke OS_FEATURES`, Phase 156a).
-- [ ] **Merge the waiting pull requests, 9 to 18, in order** (each into the one below it; PR 9 into main). The live test
-      website is built from main, which does not yet carry the code that reads the EPC, CQC, Ordnance Survey and
-      Cloudflare keys; merging redeploys it.
+- [x] The three key-file lines (OS and both Turnstile) — added by Lakhbir 5 Oct 2026; the Ordnance Survey test lookup PASSED.
+- [x] PRs 9 to 18 into main — done 5 Oct 2026 through PR 19 (claude/plan-156 into main); the live test site reads the keys.
+- [ ] Close PRs 10 to 17 on GitHub: their work is in main through PR 19.
 - [ ] Sadique: approve Cloudflare (US) for testing, so the contact form's server check can run (Phase 156a A3.6).
 - [ ] The API steps in Phase 156 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
       Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom licence, Anthropic paperwork, GoAddress, Didit). Now Phases 156a to 156e. _Google Analytics was dropped for now on 4 Oct 2026; the marketing team may pick it up later._

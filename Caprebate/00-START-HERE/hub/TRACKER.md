@@ -7,14 +7,14 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 0 |
-| Ready - Lakhbir action | 35 |
+| Ready - Lakhbir action | 34 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 2 |
 | Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 293 |
+| Done | 294 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -1137,7 +1137,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-37 items.
+36 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1347,15 +1347,6 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 156a - the missing keys in Vercel, Ordnance Survey and Cloudflare, step by step
-
-`13201103801` · **Ready - Lakhbir action** · owner Lakhbir
-
-- Note 2026-10-04 (Phase 153f): Added by Phase 153f (line 8): the tracker had not moved since 29 Sep. Created on the monday.com board first, which gave it this id; the record is in PHASE-HISTORY.
-- Note 2026-10-04 (Planning 4 Oct 2026): 4 Oct 2026: Phase 156 split into 156a-156e at Lakhbir's request; this row is 156a (the old steps' new homes are in ACTION-PLAN under Phase 156a).
-- Note 2026-10-05 (Phase 156a): First pass: none of PART A done (names checked). The test website now reads the two Cloudflare keys (TEST_DEPLOY_KEYS; test/phase156a.test.ts); a calendar test that failed only this week fixed. Back end 2430/0. Waiting on Lakhbir's A1-A5, then B1/B3/B4. Posted on monday.
-- Note 2026-10-05 (Phase 156a): Second pass: all five keys in Vercel and deployed (but main does not read them until PRs 9-18 are merged). EPC PASS and CQC PASS from the Mac after fixing the test lookup command (--nation, --council). Ordnance Survey test lookup built; waits for OS_DATA_HUB_API_KEY in the Mac's key file (the three new lines are not there). Back end 2438/0. Posted on monday.
-
 ### Phase 156b - email: the reply timer and signed emails
 
 `13201538869` · **Ready - Lakhbir action** · owner Lakhbir
@@ -1387,7 +1378,7 @@
 
 ## Z · Complete / Not Applicable
 
-293 items.
+294 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3087,4 +3078,14 @@
 
 - Note 2026-10-04 (Phase 153f): Added by Phase 153f (line 8): the tracker had not moved since 29 Sep. Created on the monday.com board first, which gave it this id; the record is in PHASE-HISTORY.
 - Note 2026-10-04 (Phase 155): Done: CIW and the Care Inspectorate built from downloaded lists (off); VOA not built (licence: business rates only); BCIS index import; the reply timer and its warning; the three server files written up. 4,644 tests; pull request 16. Record in PHASE-HISTORY.
+
+### Phase 156a - the missing keys in Vercel, Ordnance Survey and Cloudflare, step by step
+
+`13201103801` · **Done** · owner Lakhbir
+
+- Note 2026-10-04 (Phase 153f): Added by Phase 153f (line 8): the tracker had not moved since 29 Sep. Created on the monday.com board first, which gave it this id; the record is in PHASE-HISTORY.
+- Note 2026-10-04 (Planning 4 Oct 2026): 4 Oct 2026: Phase 156 split into 156a-156e at Lakhbir's request; this row is 156a (the old steps' new homes are in ACTION-PLAN under Phase 156a).
+- Note 2026-10-05 (Phase 156a): First pass: none of PART A done (names checked). The test website now reads the two Cloudflare keys (TEST_DEPLOY_KEYS; test/phase156a.test.ts); a calendar test that failed only this week fixed. Back end 2430/0. Waiting on Lakhbir's A1-A5, then B1/B3/B4. Posted on monday.
+- Note 2026-10-05 (Phase 156a): Second pass: all five keys in Vercel and deployed (but main does not read them until PRs 9-18 are merged). EPC PASS and CQC PASS from the Mac after fixing the test lookup command (--nation, --council). Ordnance Survey test lookup built; waits for OS_DATA_HUB_API_KEY in the Mac's key file (the three new lines are not there). Back end 2438/0. Posted on monday.
+- Note 2026-10-05 (Phase 156a): DONE: all five keys in Vercel and the key file; live since PR 19 (real Cloudflare site key on the contact form). EPC PASS, CQC PASS, Ordnance Survey PASS. Left: Sadique approves Cloudflare; close PRs 10-17. Done, group Z, on monday and here.
 
