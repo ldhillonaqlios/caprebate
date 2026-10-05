@@ -7,14 +7,14 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 0 |
-| Ready - Lakhbir action | 32 |
+| Ready - Lakhbir action | 31 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 2 |
 | Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 296 |
+| Done | 297 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -1137,7 +1137,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1347,14 +1347,6 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 156d - Zoom on the free plan: one shared host (contact@), and call lengths if the free plan allows them (no payment)
-
-`13201538872` · **Ready - Lakhbir action** · owner Lakhbir
-
-- Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538872.
-- Note 2026-10-05 (Planning 5 Oct 2026): Rewritten 5 Oct 2026 so nothing is paid for (Lakhbir: 'yes change 156d so i dont pay'): staff added as free Basic users, two free scopes, then Claude finds out whether the free plan gives call length and attendees; the 40-minute limit said plainly; Zoom Pro moved to before real clients. Same change on the monday board and the run sheet.
-- Note 2026-10-05 (Planning 5 Oct 2026): One shared host for now (Lakhbir, 5 Oct 2026: 'contact@caprebate is enough'): no staff Zoom users; Lakhbir only checks ZOOM_HOST_EMAIL is contact@. Added to the phase: walkthrough calls stop asking Zoom for a cloud recording on the free plan, and a warning when two video calls overlap. Same change on the board and the run sheet.
-
 ### Phase 156e - Homedata, Anthropic, GoAddress, Didit, the Connections page and the care regulators' lists (Google Analytics dropped for now)
 
 `13201538874` · **Ready - Lakhbir action** · owner Lakhbir
@@ -1366,7 +1358,7 @@
 
 ## Z · Complete / Not Applicable
 
-296 items.
+297 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3092,4 +3084,13 @@
 - Note 2026-10-05 (Planning (156c rewritten)): Rewritten (Lakhbir chose option 2): coexistence on his Business app number; first contact from the phone, free; the back office shows both ways and replies only within 24 hours; no opening template, no Meta charge. Route a (Tech Provider) or b (partner). Waiting on: which number, and is it on the WhatsApp Business app. Posted on monday.
 - Note 2026-10-05 (Planning (156c manual upload)): Rewritten again (Lakhbir: 'go with manual upload, keep photos'): export one chat on the phone, upload it with photos to the client's record; no live Meta connection, no partner, no cost; the live code stays off. Waiting on: two invented test exports (A1); Sadique's two questions (A2). Posted on monday.
 - Note 2026-10-05 (Phase 156c): DONE: Add a WhatsApp chat (upload, check, save; photos and files; big exports opened on the computer). Checked against a real iPhone export (40 test messages, 4 files). Back end 2464/0. Left: Sadique confirms the two answers; an Android export. Done, group Z, on monday and here.
+
+### Phase 156d - Zoom on the free plan: one shared host (contact@), and call lengths if the free plan allows them (no payment)
+
+`13201538872` · **Done** · owner Lakhbir
+
+- Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538872.
+- Note 2026-10-05 (Planning 5 Oct 2026): Rewritten 5 Oct 2026 so nothing is paid for (Lakhbir: 'yes change 156d so i dont pay'): staff added as free Basic users, two free scopes, then Claude finds out whether the free plan gives call length and attendees; the 40-minute limit said plainly; Zoom Pro moved to before real clients. Same change on the monday board and the run sheet.
+- Note 2026-10-05 (Planning 5 Oct 2026): One shared host for now (Lakhbir, 5 Oct 2026: 'contact@caprebate is enough'): no staff Zoom users; Lakhbir only checks ZOOM_HOST_EMAIL is contact@. Added to the phase: walkthrough calls stop asking Zoom for a cloud recording on the free plan, and a warning when two video calls overlap. Same change on the board and the run sheet.
+- Note 2026-10-05 (Phase 156d): Phase 156d closed 5 Oct 2026: Zoom on the free plan with one shared host built (the 40 minutes said, a warning for two calls at once, 'Ask Zoom how long it lasted', walkthrough calls not recorded, ZOOM_PLAN for later); record in PHASE-HISTORY.md. Whether the free plan gives a call's length is not yet asked of the real Zoom: moved to Phase 156e B5 (Lakhbir). Board: Done, group Z.
 

@@ -129,11 +129,16 @@ describe('line 4 — each video call hosted on Zoom by its own member of staff',
     assert.match(n.body, /Hosted on Zoom by our shared Zoom user\./);
   });
 
-  test('line 4(b): the two Zoom permissions a call\'s length and attendees need are named, and nothing asks for them yet', () => {
+  // PHASE 156d (5 Oct 2026) restated this: Lakhbir added the two permissions, and zoomPastCall now asks the past-meeting
+  // endpoints - only it, read only (test/phase156d.test.ts proves what it keeps).
+  test('line 4(b): the two Zoom permissions a call\'s length and attendees need are named, and only zoomPastCall asks for them', () => {
     const z = readFileSync(join(import.meta.dirname, '..', 'src', 'connectors', 'zoom.ts'), 'utf8');
     assert.match(z, /meeting:read:past_meeting:admin/);
     assert.match(z, /meeting:read:list_past_participants:admin/);
-    assert.equal(/\/v2\/past_meetings/.test(z.replace(/^\s*\*.*$/gm, '')), false, 'no code calls the past-meeting endpoints yet');
+    const code = z.replace(/^\s*\*.*$/gm, '');
+    const fn = code.slice(code.indexOf('export async function zoomPastCall'), code.indexOf('/** Move a meeting to a new time.'));
+    assert.match(fn, /'GET', '\/v2\/past_meetings\/\{meeting\}'/);
+    assert.equal(/\/v2\/past_meetings/.test(code.replace(fn, '')), false, 'something besides zoomPastCall calls the past-meeting endpoints');
   });
 });
 

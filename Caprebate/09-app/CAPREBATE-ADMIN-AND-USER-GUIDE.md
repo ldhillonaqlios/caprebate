@@ -1066,6 +1066,17 @@ One is the calls waiting for a time. One is the people who asked another way. On
 yet**, in amber. A cancelled call says **Cancelled**, in red. Under **Asked for a call, no time yet**, press **Give it
 a time** on a row. **Cancelled calls** is folded. Press it to see them.
 
+**Video calls on Zoom.** We use the free Zoom plan for now. Every call runs on one Zoom account, contact@. So keep
+these three things in mind:
+- **A call ends after 40 minutes.** If it does, start it again with the same link. The client uses their link again too.
+- **Only one call can run at a time.** If you book a video call at the same time as another, the call's page says so in
+  amber. Pick another time if you can.
+- **Zoom does not record the call.** On a walkthrough call, write down what you see on the job as you go. The client can
+  still send photos and a video.
+
+After a call, open it in the **Calendar** and press **Ask Zoom how long it lasted**. The page then shows how many minutes
+it ran and how many people joined. If our plan does not give this, it says **Call length: not shown on our Zoom plan**.
+
 **7. Documents, and asking a client for one.** Go to the claim's **Related** tab. Or use **Request a document**
 under **Quick actions**. The **Documents** panel lists the **Requests**. It also lists what is linked to the claim. To ask the
 client for a document:

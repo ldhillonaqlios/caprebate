@@ -17,6 +17,7 @@
  *   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who W --why Y   one logged test lookup (Phase 151g)
  *   node src/cli.ts smoke-switched-on <SOURCE> --who W --why Y   record a switch-on; the count of three starts again
  *   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE --who W --why Y   one council's land boundary file, the same way (Phase 151l)
+ *   CAPREBATE_LOCAL_ZOOM=1 node src/cli.ts zoom-call-length <meeting id>   ask Zoom how long one call lasted (Phase 156d)
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests
  */
@@ -41,6 +42,7 @@ import { runSmokeCommand, runSwitchedOnCommand } from './connectors/test-lookups
 import { processSecrets } from './secrets.ts';
 import { mfaKeyFrom, MFA_KEY_NAME, sealTextSecrets } from './mfa-seal.ts';
 import { postcodeStore } from './web/postcode.ts';
+import { zoomPastCall } from './connectors/zoom.ts';
 
 const DEFAULT_DB = process.env.CAPREBATE_DB ?? 'caprebate.db';
 
@@ -319,7 +321,26 @@ async function main(): Promise<number> {
     });
   }
 
-  console.error('usage: node src/cli.ts <migrate|seed|verify-audit|sweep-originals|sweep-messages|sweep-land-boundaries|send-outbox|read-mailbox|smoke|smoke-switched-on>');
+  /* PHASE 156d, 5 October 2026. Ask Zoom how long ONE call lasted and how many joined: Phase 156d's step B1, to learn
+     whether our free Zoom plan gives it. Read only; it makes, moves and keeps nothing, and prints two numbers or Zoom's
+     own code and words, never a name or an email. Like every Zoom call from a copy that is not the test website, it
+     needs CAPREBATE_LOCAL_ZOOM=1 (src/connectors/zoom.ts, zoomPlaceRefusal). The audit line goes to a scratch log. */
+  if (cmd === 'zoom-call-length') {
+    const meeting = (process.argv[3] ?? '').replace(/\s+/g, '');
+    const db = new Db(':memory:');
+    try {
+      migrate(db, MIGRATIONS_DIR);
+      const r = await zoomPastCall({ audit: new AuditLog(db), now: () => new Date().toISOString(), transport: liveTransport, secrets: processSecrets() }, meeting);
+      console.log(r.state === 'FOUND'
+        ? `FOUND: the call lasted ${r.minutes} minute${r.minutes === 1 ? '' : 's'}; ${r.people === null ? 'Zoom did not say how many joined' : `${r.people} joined`}.`
+        : `${r.state}: ${r.why}${r.zoom_code === undefined ? '' : ` (Zoom's code ${r.zoom_code})`}`);
+      return r.state === 'FOUND' ? 0 : 2;
+    } finally {
+      db.close();
+    }
+  }
+
+  console.error('usage: node src/cli.ts <migrate|seed|verify-audit|sweep-originals|sweep-messages|sweep-land-boundaries|send-outbox|read-mailbox|smoke|smoke-switched-on|zoom-call-length>');
   return 1;
 }
 

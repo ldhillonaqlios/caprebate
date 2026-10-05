@@ -83,7 +83,7 @@ import {
 import { singleFile } from './multipart.ts';
 import { RANGE_QUALIFIER } from './shown-range.ts';
 import { AUDIT_OUTCOMES, AUDIT_PAGE_SIZE, auditLogView, type AuditLogView } from './audit-log.ts';
-import { activeMeeting, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, withJoinScripts, zoomBlockers, zoomDeps, VIDEO_PAGE_HEADERS } from './video-calls.ts';
+import { activeMeeting, callLengthOf, callLengthWords, checkCallLength, clientJoinUrl, joinPanel, meetingHost, reconcileVideoMeeting, videoCallsAtSameTime, withJoinScripts, zoomBlockers, zoomDeps, zoomPlanLine, SAME_TIME_WORDS, VIDEO_PAGE_HEADERS } from './video-calls.ts';
 import { sendVideoInvite } from './booking-invite.ts';
 import { hostZak, joinSignature } from '../connectors/zoom.ts';
 
@@ -333,6 +333,8 @@ export async function handleStaff(
     if (r.booking.channel === 'video') {
       await reconcileVideoMeeting(d.app, id);
       sendVideoInvite(d.app, d.publicOrigin ?? 'http://localhost:8103', id, hadTime === null ? 'arranged' : 'moved');
+      // PHASE 156d: booked over another video call on the same Zoom user: the call's own page says so. A warning only.
+      if (videoCallsAtSameTime(db, id) > 0) { redirect(res, `/staff/calendar/${id}`); return 'handled'; }
     }
     redirect(res, `/staff/calendar?view=day&date=${isoDate(r.booking.starts_at ?? now())}`);
     return 'handled';
@@ -363,11 +365,26 @@ export async function handleStaff(
     const name = db.get<{ n: string }>('SELECT display_name AS n FROM users WHERE id = ?', [actor.id])?.n ?? 'Cap Rebate';
     const out = page({ title: `Video call · ${bk.business_name}`, nav: nav(actor), wide: true, body: h`
       <h1>Video call with ${bk.business_name}</h1>
-      <p><strong>${when(bk.starts_at)}</strong>, for an hour. Hosted on Zoom by ${zhost === null ? 'our shared Zoom user' : zhost.name}. ${host && zak === null ? h`<span class="help">Zoom did not give us the host's start token, so you join as a participant; start the meeting from the Zoom app if the client is waiting.</span>` : raw('')}</p>
+      ${videoCallsAtSameTime(db, id) > 0 ? h`<div class="flag" role="note">${SAME_TIME_WORDS}</div>` : raw('')}
+      <p><strong>${when(bk.starts_at)}</strong>, for an hour. Hosted on Zoom by ${zhost === null ? 'our shared Zoom user' : zhost.name}. ${zoomPlanLine(d.app) ?? ''} ${host && zak === null ? h`<span class="help">Zoom did not give us the host's start token, so you join as a participant; start the meeting from the Zoom app if the client is waiting.</span>` : raw('')}</p>
       ${joinPanel({ meeting_id: m.meeting_id, passcode: m.passcode, signature: sig.signature, sdk_key: sig.sdk_key, user_name: `${name} · Cap Rebate`, zak: host ? zak : null }, host && zak !== null ? 'host' : 'client')}
       <p class="help">Or open it in the Zoom app: <a href="${m.join_url}" rel="noopener noreferrer">${m.join_url}</a>. The client's own page: ${clientJoinUrl(d.publicOrigin ?? 'http://localhost:8103', m.client_token)}</p>
       <p><a href="/staff/calendar/${id}">Back to the call</a></p>` });
     res.writeHead(200, VIDEO_PAGE_HEADERS); res.end(withJoinScripts(out));
+    return 'handled';
+  }
+
+  /* PHASE 156d: ask Zoom how long a video call lasted and how many joined. Those who arrange calls, after it began. */
+  const callLength = /^\/staff\/calendar\/([A-Za-z0-9-]+)\/length$/.exec(path);
+  if (callLength && method === 'POST') {
+    const id = callLength[1] ?? '';
+    const bk = B.bookingById(db, actor, id);
+    if (!B.mayArrangeCalls(actor)) return problem(res, actor, 'Not checked', 'Asking Zoom about a call is for the people who arrange calls.', `/staff/calendar/${id}`);
+    if (bk.channel !== 'video' || bk.starts_at === null || Date.parse(now()) < Date.parse(bk.starts_at)) {
+      return problem(res, actor, 'Not checked', 'Zoom can only say how long a call lasted once it has started.', `/staff/calendar/${id}`);
+    }
+    const r = await checkCallLength(d.app, actor, id);
+    redirect(res, `/staff/calendar/${id}?length=${r.state === 'FOUND' || r.state === 'NOT_ON_PLAN' ? 'ok' : encodeURIComponent(r.why)}`);
     return 'handled';
   }
 
@@ -382,8 +399,17 @@ export async function handleStaff(
     const video = bk.channel !== 'video' || bk.cancelled_at !== null ? undefined
       : activeMeeting(db, id) !== undefined ? { ready: true as const }
       : { ready: false as const, why: bk.starts_at === null ? 'It has no time yet; its meeting is made when it is given one.' : zoomBlockers(d.app).join(' ') || 'Zoom did not make a meeting. Give it its time again to try once more, or send the client a link yourself.' };
+    // PHASE 156d: the free plan's 40 minutes, a call booked over another on the same Zoom user, and how long it lasted.
+    const asked = url.searchParams.get('length');
+    const zoomNotes: ZoomNotes | undefined = bk.channel !== 'video' || bk.cancelled_at !== null ? undefined : {
+      plan: zoomPlanLine(d.app),
+      sameTime: videoCallsAtSameTime(db, id) > 0,
+      length: callLengthWords(callLengthOf(db, id)),
+      mayCheck: B.mayArrangeCalls(actor) && activeMeeting(db, id) !== undefined && bk.starts_at !== null && Date.parse(now()) >= Date.parse(bk.starts_at),
+      asked: asked === null || asked === 'ok' ? null : asked.slice(0, 300),
+    };
     html(res, 200, bookingPage(actor, bk, B.bookingHistory(db, actor, id),
-      B.assignableStaffIfPermitted(db, actor), slots, video));
+      B.assignableStaffIfPermitted(db, actor), slots, video, zoomNotes));
     return 'handled';
   }
 
@@ -1076,12 +1102,16 @@ function calendarPage(
   });
 }
 
+/** PHASE 156d: what the call's page says about Zoom beyond the join button. */
+type ZoomNotes = { readonly plan: string | null; readonly sameTime: boolean; readonly length: string | null; readonly mayCheck: boolean; readonly asked: string | null };
+
 function bookingPage(
   actor: Actor, b: B.BookingRow,
   history: readonly { from_starts_at: string | null; to_starts_at: string | null; changed_by_name: string | null; at: string; cancelled?: number }[],
   staff: readonly { id: string; display_name: string }[],
   slots: Availability,
   video?: { ready: true } | { ready: false; why: string },
+  zoom?: ZoomNotes,
 ): string {
   return page({
     title: b.business_name, nav: nav(actor),
@@ -1100,6 +1130,12 @@ function bookingPage(
         ${video === undefined ? raw('') : video.ready
           ? h`<tr><th>Video call</th><td><a class="cta" href="/staff/calendar/${b.id}/video">Join the video call</a> <span class="help">in the back office, through Zoom. The client has been sent their own link.</span></td></tr>`
           : h`<tr><th>Video call</th><td>No Zoom meeting yet. ${video.why}</td></tr>`}
+        ${zoom === undefined ? raw('') : h`
+          ${zoom.sameTime ? h`<tr><th>At the same time</th><td><div class="flag" role="note">${SAME_TIME_WORDS}</div></td></tr>` : raw('')}
+          ${zoom.plan === null ? raw('') : h`<tr><th>Zoom plan</th><td>${zoom.plan}</td></tr>`}
+          ${zoom.length === null && !zoom.mayCheck ? raw('') : h`<tr><th>How long it lasted</th><td>${zoom.length ?? 'Not asked yet.'}
+            ${zoom.asked === null ? raw('') : h`<p class="help" role="status">${zoom.asked}</p>`}
+            ${zoom.mayCheck ? h`<form method="post" action="/staff/calendar/${b.id}/length" class="inline"><button class="btn-quiet" type="submit">Ask Zoom how long it lasted</button></form>` : raw('')}</td></tr>`}`}
         ${b.cancelled_at !== null
           ? h`<tr><th>Cancelled</th><td><strong>Cancelled by ${b.cancelled_by_name ?? 'unknown'}${b.cancelled_by_role === 'CLIENT' ? ' (the client)' : ''}</strong>,
               <span class="when">${stamp(b.cancelled_at)}</span>. The enquiry is still open.</td></tr>`

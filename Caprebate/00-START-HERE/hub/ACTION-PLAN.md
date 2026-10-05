@@ -1026,151 +1026,6 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 156d — Zoom on the free plan: one shared host (contact@), and call lengths if the free plan allows them
-
- **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down; **rewritten 5 October 2026 so nothing is paid for** (Lakhbir: "yes change 156d so i dont pay"). The free Zoom plan is enough for testing: a call stops at 40 minutes (accepted for testing on 30 Sep 2026; appointments stay an hour long) and Zoom keeps no recording of its own. **Zoom Pro is a purchase for before real clients**, on the purchases list in hub/WAITING-ON-PEOPLE.md, not part of this phase. **One shared host, no staff users for now** (Lakhbir, 5 Oct 2026: "right now i dont need to add additonal staff contact@caprebate is enough"): every call is hosted by contact@caprebate.co.uk. Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)"; if it has no
-item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
-claude/... branch; never push to main; Lakhbir merges. Retag what you touch
-and give every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make (status, owner, note, new item) is written to
-  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
-  node 03-app/caprebate-tracker.cjs check passes. If the board and the
-  tracker disagree, stop and ask Lakhbir which is right.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
-  so at the end and tell Lakhbir to git pull on the Mac.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
-   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
-   line "<phase> - <date>", then what you did, what you found, what is left
-   and where it now lives, the test count, and the branch or pull request.
-   Plain words; no client data, no keys. (update_doc add_markdown_content
-   with no after_block_id adds it at the end.) Put the same entry at the top
-   of your PHASE-HISTORY record.
-3. DELETE THIS SECTION from the top of the run sheet (its title, its note
-   and this block: read_docs with include_blocks gives the block ids, then
-   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
-   at the top of both.
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-
-RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
-into Vercel (project caprebate-test > Settings > Environment Variables,
-Production, Sensitive) and into the key file, by him. You may list NAMES in
-Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
-never read, decrypt or print a value. A key in Vercel does nothing until its
-name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
-only on the next deploy. Nothing here switches anything on for real clients:
-the test website and invented data only, and each service's paper (privacy
-notice, the data protection officer's approval of a transfer) stays its own
-sign-off.
-
-NO PAYMENT IN THIS PHASE (Lakhbir, 5 Oct 2026). Never ask Lakhbir to upgrade,
-buy a licence or start a trial. If a step turns out to need a paid Zoom plan,
-stop that step, write it as "needs Zoom Pro - before real clients" in
-hub/WAITING-ON-PEOPLE.md and hub/KEYS-AND-SWITCHES.md, and carry on with the
-rest.
-
-PART A - LAKHBIR - ZOOM ON THE FREE PLAN. Nothing here costs money.
-
-A1. ONE SHARED HOST - NO STAFF USERS FOR NOW (Lakhbir, 5 Oct 2026). Every
-    call is hosted by contact@caprebate.co.uk. Check only: in Vercel
-    (caprebate-test > Settings > Environment Variables) ZOOM_HOST_EMAIL is
-    contact@caprebate.co.uk - or leave it blank if contact@ is the Zoom
-    account's owner. Tell Claude "done"; never paste the value.
-    Adding staff as their own Zoom hosts (Phase 153f) waits until Lakhbir
-    asks: it is a line in hub/WAITING-ON-PEOPLE.md, not part of this phase.
-A2. ADD TWO SCOPES (free), so Claude can try to read how long a call lasted
-    and how many joined: marketplace.zoom.us > Manage > the app behind
-    ZOOM_CLIENT_ID > Scopes > Add scopes: meeting:read:past_meeting:admin and
-    meeting:read:list_past_participants:admin. Save. Do NOT add cloud
-    recording: the free plan has none.
-A3. (Paper, no cost; unchanged.) Sadique approves Zoom's transfer for real
-    clients - it is approved for testing only. Already in
-    hub/WAITING-ON-PEOPLE.md; nothing new to do here.
-
-PART B - CLAUDE
-
-B1. FIND OUT WHAT THE FREE PLAN ALLOWS. After A2, ask Lakhbir to hold one
-    short test call through the back office (invented client, under 40
-    minutes). Then read GET /v2/past_meetings/{meetingId} and
-    /v2/past_meetings/{meetingId}/participants for it, and write down what
-    Zoom answers (200, or the error code and message) in
-    hub/KEYS-AND-SWITCHES.md. Never print or keep a name or an email from
-    the reply.
-B2. IF ZOOM ANSWERS 200: after each call keep the minutes and the number of
-    people who joined (never a name or an email) and show them on the call
-    and the Communication tab, with a test on recorded answers, red on the
-    code before.
-    IF ZOOM REFUSES because the plan is free: build nothing that calls it.
-    Where the minutes would show, say "Call length: not shown on our Zoom
-    plan", so nobody thinks it is broken; write "needs Zoom Pro - before real
-    clients" in the two hub pages.
-B3. SAY THE 40 MINUTES PLAINLY. Calls are booked for an hour (SLOT_MINUTES)
-    but the free plan ends them at 40. Add one plain line where staff book a
-    video call and in the invitation: "On our current Zoom plan a call ends
-    after 40 minutes. If it does, use the same link to start again." Keep it
-    behind one setting that says the plan is free (on by default), so it
-    goes when Pro is bought; test both ways.
-B4. THE "RECORDED" PROMISE. The client's walkthrough page
-    (src/web/evidence-pages.ts ~248) says "The call is recorded so your
-    surveyor can watch it", and a walkthrough call is made with
-    auto_recording 'cloud' (src/connectors/zoom.ts makeZoomMeeting; the
-    recording is then looked for with zoomRecording). The free plan has no
-    cloud recording: on the test call, see what Zoom does with 'cloud' (refuses
-    the meeting, or quietly records nothing); behind the same free-plan
-    setting as B3, make walkthrough calls without cloud recording and stop
-    looking for one. On the free plan only the host's own computer can
-    record. Check how that recording reaches the surveyor (saved by the host,
-    then added to the claim's evidence), write it into the staff guide in
-    plain words, and make the client's line true for the free plan. Do not
-    promise a recording Zoom keeps.
-B5. ONE HOST, ONE CALL AT A TIME. With every call on contact@, two video
-    calls at the same time cannot both run (one Zoom user hosts one meeting
-    at a time). Calls already fall back to the shared host when a member of
-    staff has no Zoom user (src/web/video-calls.ts ~111, an audit line each
-    time). Add a plain warning where a video call is booked or moved: "Another
-    video call is booked at this time. Only one can run at once on our Zoom
-    account." Warn, never block; test it red on the code before.
-B6. In hub/WAITING-ON-PEOPLE.md and hub/KEYS-AND-SWITCHES.md, keep "Zoom Pro"
-    only as "before real clients, not needed for testing", with the reasons:
-    40 minutes, no recording kept by Zoom, one call at a time, and B1's
-    answer; and "staff as their own Zoom hosts" as later, when Lakhbir asks.
-
-When every line that could run is done: run every check in COORDINATES,
-re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
-the record, and leave each PART A step not yet done as a line in
-hub/WAITING-ON-PEOPLE.md.
-Then do WHEN THE PHASE IS DONE, at the top of this block.
-```
-
-
 ## PHASE 156e — the paid and paper-first services, the Connections page and the care regulators' lists
 
  **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **Everything else the old Phase 156 held: Homedata, Anthropic, GoAddress, Didit, Google Analytics (dropped for now; was to ask about), the Connections page and the Welsh and Scottish lists.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
@@ -1280,6 +1135,20 @@ B4. (old 156 B7, added by Phase 155) THE WELSH AND SCOTTISH CARE REGULATORS'
     a monthly reminder to import the new month's file. ASK LAKHBIR whether his
     2 Oct waiver ("All the free ones") covers these two; only on his yes add
     them to TEST_WEBSITE_LOOKUPS.
+B5. (CARRIED FROM PHASE 156d, B1 - Lakhbir, 5 Oct 2026: "close it without the
+    check and move it to 156e".) DOES THE FREE ZOOM PLAN SAY HOW LONG A CALL
+    LASTED? Phase 156d built it (zoomPastCall, "Ask Zoom how long it lasted" on
+    a call's page, migration 091) but never asked the real Zoom. Ask Lakhbir
+    to hold one short test call on the test website (an invented client,
+    under 40 minutes) and send its Meeting ID; then run, from 09-app/backend,
+    CAPREBATE_LOCAL_ZOOM=1 node src/cli.ts zoom-call-length <meeting id>
+    (read only; it prints two numbers or Zoom's code and words). Or he
+    presses the button on the call's page and says what it shows. Write the
+    answer in hub/KEYS-AND-SWITCHES.md's Zoom row: FOUND, or "not on our
+    plan" (then "needs Zoom Pro - before real clients" in
+    hub/WAITING-ON-PEOPLE.md too). If Zoom's refusal is worded in a way the
+    code reads as NOT_FOUND rather than NOT_ON_PLAN, widen PLAN_REFUSAL in
+    src/connectors/zoom.ts to Zoom's real words, with a test red first.
 
 When every line that could run is done: run every check in COORDINATES,
 re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
@@ -1926,7 +1795,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 153f — work found on 3 October that no phase held (survey pack stage 6 and chapters, an engine date bug, Zoom hosts, the old screens, WhatsApp, answers into the record, the tracker) |  The 3 October check of 153a-154 |
 |  Claude |  Phase 154a1 — the faults the 3 October sweep found, fixed (13 lines) — **done 4 Oct 2026**, see PHASE HISTORY |  Lakhbir, 3 Oct: "these should be fixed in phase 154a1" |
 |  Claude |  Phase 155 — the services the plans name but nobody has built (CIW, the Care Inspectorate, the VOA list, BCIS, the reply timer, the three server files) — **done 4 Oct 2026**, see PHASE HISTORY (the VOA list not built: its licence forbids our use) |  Lakhbir, 3 Oct: "this needs to be phase 156" (renumbered 155 when the services phase moved near the end) |
-|  Claude and Lakhbir |  Phases 156a to 156e — every outside service, split on 4 Oct 2026 (156a the missing keys in Vercel, Ordnance Survey and Cloudflare — **done 5 Oct 2026**, see PHASE HISTORY; 156b email — **done 5 Oct 2026**; 156c WhatsApp by manual upload — **done 5 Oct 2026**; 156c WhatsApp; 156d Zoom; 156e the rest): PART A is Lakhbir's, step by step; PART B is Claude's, after each step |  Lakhbir, 3 Oct: "all API's needed should be phase 155" |
+|  Claude and Lakhbir |  Phases 156a to 156e — every outside service, split on 4 Oct 2026 (156a the missing keys in Vercel, Ordnance Survey and Cloudflare — **done 5 Oct 2026**, see PHASE HISTORY; 156b email — **done 5 Oct 2026**; 156c WhatsApp by manual upload — **done 5 Oct 2026**; 156c WhatsApp; 156d Zoom on the free plan, one shared host — **done 5 Oct 2026** (the call-length check moved to 156e B5); 156e the rest): PART A is Lakhbir's, step by step; PART B is Claude's, after each step |  Lakhbir, 3 Oct: "all API's needed should be phase 155" |
 |  Claude |  Phase 157 — the sweep, always last |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".

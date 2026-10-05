@@ -19,6 +19,16 @@
  *
  * WITHOUT ZOOM (no keys yet, or the transfer not approved) nothing here makes a meeting; the call still stands, the
  * email says the link will follow, and the back office says to send one — exactly as before.
+ *
+ * PHASE 156d, 5 October 2026 — THE FREE ZOOM PLAN AND ONE SHARED HOST (Lakhbir: "yes change 156d so i dont pay";
+ * "contact@caprebate is enough"). Three things follow, all here:
+ *   · THE 40 MINUTES, SAID PLAINLY (`zoomPlanLine`): where staff book a video call, on the call's pages, and in the
+ *     invitation (`videoJoinWords`). Gone once ZOOM_PLAN says a paid plan.
+ *   · ONE CALL AT A TIME (`videoCallsAtSameTime`, `SAME_TIME_WORDS`): one Zoom user hosts one meeting at a time, so a
+ *     video call booked over another with the same host is warned about wherever it is booked or moved. A warning,
+ *     never a refusal.
+ *   · HOW LONG IT LASTED (`checkCallLength`): a member of staff asks Zoom after the call; two numbers are kept
+ *     (migration 091), or the screen says our plan does not give them.
  */
 
 import { randomBytes } from 'node:crypto';
@@ -28,7 +38,7 @@ import { BOOKING } from './engine.ts';
 import { SLOT_MINUTES } from './schedule.ts';
 import { localWhen } from './localtime.ts';
 import { h, type Safe } from './html.ts';
-import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, ZOOM_SDK_BASE, type MadeMeeting, type ZoomDeps } from '../connectors/zoom.ts';
+import { cancelZoomMeeting, makeZoomMeeting, moveZoomMeeting, zoomMissing, zoomPastCall, zoomPlanIsFree, FREE_PLAN_LINE, NOT_ON_PLAN_WORDS, ZOOM_SDK_BASE, type MadeMeeting, type PastCall, type ZoomDeps } from '../connectors/zoom.ts';
 
 /** A call that holds a moment: a telephone call (CB_BOOKING) or, since 30 Sep 2026, a video call. */
 export function booksATime(channel: string): boolean {
@@ -78,6 +88,67 @@ export function zoomDeps(app: App): ZoomDeps {
  */
 export function zoomBlockers(app: App): string[] {
   return zoomMissing(app.secrets, app.zoomPolicy, { outside: app.outside });
+}
+
+/** PHASE 156d: the free plan's 40-minute line, or null on a paid plan. */
+export function zoomPlanLine(app: App): string | null {
+  return zoomPlanIsFree(app.secrets) ? FREE_PLAN_LINE : null;
+}
+
+/** PHASE 156d: said wherever a video call is booked or moved over another with the same Zoom host. */
+export const SAME_TIME_WORDS = 'Another video call is booked at this time. Only one can run at once on our Zoom account.';
+
+/**
+ * PHASE 156d: how many OTHER live video calls overlap this one and would run under the same Zoom user. A call's host is
+ * its meeting's (host_user_id; null is the shared host); a call with no meeting yet counts as the shared host, which is
+ * where it would go. Two calls under different members of staff's own Zoom users do not clash.
+ */
+export function videoCallsAtSameTime(db: Db, booking_id: string): number {
+  const b = db.get<{ starts_at: string | null; ends_at: string | null; channel: string; cancelled_at: string | null }>(
+    'SELECT starts_at, ends_at, channel, cancelled_at FROM bookings WHERE id = ?', [booking_id]);
+  if (b === undefined || b.channel !== 'video' || b.cancelled_at !== null || b.starts_at === null || b.ends_at === null) return 0;
+  const host = activeMeeting(db, booking_id)?.host_user_id ?? '';
+  return db.get<{ n: number }>(
+    `SELECT count(*) AS n FROM bookings o
+      WHERE o.id <> ? AND o.channel = 'video' AND o.cancelled_at IS NULL AND o.starts_at IS NOT NULL AND o.ends_at IS NOT NULL
+        AND o.starts_at < ? AND o.ends_at > ?
+        AND coalesce((SELECT m.host_user_id FROM video_meetings m WHERE m.booking_id = o.id AND m.cancelled_at IS NULL), '') = ?`,
+    [booking_id, b.ends_at, b.starts_at, host])?.n ?? 0;
+}
+
+/** PHASE 156d: what is kept of a call's length (migration 091). */
+export type CallLength = { readonly call_minutes: number | null; readonly call_people: number | null; readonly call_check_state: string | null; readonly call_checked_at: string | null };
+
+export function callLengthOf(db: Db, booking_id: string): CallLength | undefined {
+  return db.get<CallLength>('SELECT call_minutes, call_people, call_check_state, call_checked_at FROM video_meetings WHERE booking_id = ? AND cancelled_at IS NULL', [booking_id]);
+}
+
+/** PHASE 156d: a call's length in words, or null when nothing has been learned yet. */
+export function callLengthWords(c: CallLength | undefined): string | null {
+  if (c === undefined) return null;
+  if (c.call_check_state === 'NOT_ON_PLAN') return NOT_ON_PLAN_WORDS;
+  if (c.call_minutes === null) return null;
+  const mins = `${String(c.call_minutes)} minute${c.call_minutes === 1 ? '' : 's'}`;
+  return c.call_people === null ? `Lasted ${mins}.` : `Lasted ${mins}. ${String(c.call_people)} ${c.call_people === 1 ? 'person' : 'people'} joined.`;
+}
+
+/**
+ * PHASE 156d: ask Zoom how long the call lasted and how many joined, and keep the two numbers. A later answer that is
+ * not FOUND keeps any numbers already kept. Never throws; one or two calls to Zoom.
+ */
+export async function checkCallLength(app: App, actor: { id: string; role: string }, booking_id: string): Promise<PastCall> {
+  const m = activeMeeting(app.db, booking_id);
+  if (m === undefined) return { state: 'NOT_FOUND', why: 'This call has no Zoom meeting, so Zoom has nothing to say about it.' };
+  const r: PastCall = await zoomPastCall(zoomDeps(app), m.meeting_id).catch((): PastCall => ({ state: 'NOT_FOUND', why: 'Zoom could not be reached.' }));
+  const now = app.now();
+  if (r.state === 'FOUND') {
+    app.db.run('UPDATE video_meetings SET call_minutes = ?, call_people = ?, call_check_state = ?, call_checked_at = ? WHERE id = ?', [r.minutes, r.people, 'FOUND', now, m.id]);
+  } else {
+    app.db.run("UPDATE video_meetings SET call_check_state = CASE WHEN call_minutes IS NULL THEN ? ELSE 'FOUND' END, call_checked_at = ? WHERE id = ?", [r.state, now, m.id]);
+  }
+  app.audit.append({ at: now, kind: 'VIDEO_CALL_LENGTH_CHECKED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+    object_type: 'booking', object_id: booking_id, detail: { state: r.state } });
+  return r;
 }
 
 export type Reconciled = 'MADE' | 'MOVED' | 'CANCELLED' | 'NONE' | { readonly not_made: string };
@@ -130,7 +201,7 @@ export function clientJoinUrl(origin: string, token: string): string {
  * The words about joining, for an email and a calendar file. Null for a call that is not a video call.
  * With a meeting: our page, then Zoom's link and passcode. Without: that the link will follow.
  */
-export function videoJoinWords(db: Db, booking_id: string, origin: string): { location: string; lines: string } | null {
+export function videoJoinWords(db: Db, booking_id: string, origin: string, freePlan = false): { location: string; lines: string } | null {
   const b = db.get<{ channel: string }>('SELECT channel FROM bookings WHERE id = ?', [booking_id]);
   if (b === undefined || b.channel !== 'video') return null;
   const m = activeMeeting(db, booking_id);
@@ -145,6 +216,8 @@ export function videoJoinWords(db: Db, booking_id: string, origin: string): { lo
       `Or open it in the Zoom app: ${m.join_url}`,
       `Meeting ID: ${m.meeting_id.replace(/(\d{3})(\d{3,4})(\d{4})$/, '$1 $2 $3')}${m.passcode === null ? '' : `, passcode: ${m.passcode}`}`,
       'You will wait in a waiting room until we let you in.',
+      // PHASE 156d: the free plan's limit, said in the invitation too.
+      ...(freePlan ? [FREE_PLAN_LINE] : []),
     ].join('\n'),
   };
 }

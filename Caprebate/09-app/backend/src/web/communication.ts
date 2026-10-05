@@ -45,7 +45,7 @@ import { addNote } from './engaged.ts';
 import { createTask } from './tasks.ts';
 import { mayArrangeCalls } from './backoffice.ts';
 import { addLocalDays, isBookable, SLOT_MINUTES, staffSlots, startOfLocalDay } from './schedule.ts';
-import { activeMeeting, reconcileVideoMeeting, zoomBlockers } from './video-calls.ts';
+import { activeMeeting, callLengthOf, callLengthWords, reconcileVideoMeeting, videoCallsAtSameTime, zoomBlockers, zoomPlanLine, SAME_TIME_WORDS } from './video-calls.ts';
 import { sendVideoInvite } from './booking-invite.ts';
 import { sendSavedEmailNow } from './free-email-pages.ts';
 import { EMAIL_SENDING, mailWhere, smtpLoginFromKeyFile, sendingOn, SENT_SECRET_KINDS } from '../stubs/email-provider.ts';
@@ -144,7 +144,9 @@ export function feed(c: Ctx): FeedItem[] {
       out.push({ id: `b-${b.id}`, at: b.created_at, kind: video ? 'zoom' : 'call', ours: true,
         who: `${video ? 'Zoom call' : 'Telephone call'} ${b.cancelled_at === null ? 'booked' : 'cancelled'}${b.who === null ? '' : ` with ${b.who}`}`,
         subject: b.starts_at === null ? 'No time yet' : `${dayWords(b.starts_at, now)}, ${localClock(b.starts_at)}${b.ends_at === null ? '' : `–${localClock(b.ends_at)}`}`,
-        body: b.cancelled_at !== null ? 'Cancelled.' : video ? (m === undefined ? 'The Zoom link follows by email once the meeting is made.' : open ? 'It is time: click to start the call.' : 'The invite and its join link were emailed.') : 'We ring them at that time.',
+        body: b.cancelled_at !== null ? 'Cancelled.' : video ? (m === undefined ? 'The Zoom link follows by email once the meeting is made.' : open ? 'It is time: click to start the call.'
+          // PHASE 156d: once Zoom has said how long it lasted (or that our plan does not say), that is shown instead.
+          : callLengthWords(callLengthOf(db, b.id)) ?? 'The invite and its join link were emailed.') : 'We ring them at that time.',
         meta: null, isNew: false,
         href: open ? `/staff/calendar/${b.id}/video` : replyHref(c, video ? 'via=zoom' : 'via=call'), hint: open ? 'Start the call' : video ? 'Click to book another' : 'Click to log a call' });
       if (m !== undefined && m.host_opened_at !== null) {
@@ -364,6 +366,7 @@ export function composer(c: Ctx, p: Prefill, refused?: string): Safe {
           <select class="fi" id="cm-slot" name="slot">${[...byDay.entries()].map(([d, times]) => h`<optgroup label="${dayWords(times[0] ?? d, c.now)}">${times.map((t) => opt(t, `${dayWords(t, c.now)}, ${localClock(t)}`, t === p.slot))}</optgroup>`)}</select>`}</div>
       <div class="sendrow"><button class="cta" type="submit" name="go" value="zoom-book">Book and send the invite</button></div>
       <p class="hint">They get an email with the time, the join link and a calendar invite. It goes in your calendar too.</p>
+      ${zoomPlanLine(c.app) === null ? raw('') : h`<p class="hint">${zoomPlanLine(c.app) ?? ''}</p>`}
     </div>
 
     <div class="only for-call">
@@ -387,6 +390,8 @@ const DONE: Readonly<Record<string, string>> = {
   'sent-portal': 'Sent. They will see it in their portal.', 'sent-team': 'Saved. Only your team can see it.',
   'logged-call': 'The call is logged.', 'booked-zoom': 'Booked. The invite with the join link is on its way to them.',
   'booked-no-zoom': 'Booked, but Zoom made no meeting, so the invite has no join link. Choose Zoom call to see why.',
+  // PHASE 156d: booked over another video call on the same Zoom user. A warning: the booking stands.
+  'booked-zoom-same-time': `Booked, and the invite is on its way. ${SAME_TIME_WORDS}`,
 };
 
 export function communicationPanel(
@@ -545,5 +550,6 @@ export async function communicate(d: SendDeps, actor: Actor, business_id: string
     detail: { business: business_id, channel: 'video', now: go !== 'zoom-book' } });
   const zoomed = await reconcileVideoMeeting(d.app, id);
   sendVideoInvite(d.app, d.origin, id, 'arranged', to);
-  return { ok: true, to: go !== 'zoom-book' ? `/staff/calendar/${id}/video` : back(zoomed === 'MADE' ? 'booked-zoom' : 'booked-no-zoom') };
+  return { ok: true, to: go !== 'zoom-book' ? `/staff/calendar/${id}/video`
+    : back(zoomed !== 'MADE' ? 'booked-no-zoom' : videoCallsAtSameTime(db, id) > 0 ? 'booked-zoom-same-time' : 'booked-zoom') };
 }

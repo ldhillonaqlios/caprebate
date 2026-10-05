@@ -370,12 +370,47 @@ export function sortPhotos(d: EvidenceDeps, actor: Actor, job_id: string, choice
 
 export const ASK_WORDS = 'I would like a recorded video call to show you around the building for the survey.';
 
-export function askWalkthrough(d: EvidenceDeps, actor: Actor, job_id: string): Result {
+/**
+ * PHASE 156d, 5 October 2026 — THE WALKTHROUGH CALL'S WORDS, BY ZOOM PLAN. On the free plan (src/connectors/zoom.ts,
+ * zoomPlanIsFree) Zoom keeps no recording and a call stops at 40 minutes, so nothing promises a recording: the person
+ * who leads the call writes down what they see on the job, and the client can still send photos and a video.
+ * The paid words are the ones Lakhbir approved on 2 Oct 2026 ("Recorded Zoom call"); they come back with ZOOM_PLAN=pro.
+ */
+export type WalkWords = { readonly [k in 'name' | 'choice' | 'lead' | 'ask' | 'message' | 'guide' | 'staffName' | 'staffLede' | 'book' | 'booked' | 'staffHelp' | 'surveyorHelp' | 'noRecording']: string };
+
+export const WALK_WORDS: { readonly paid: WalkWords; readonly free: WalkWords } = Object.freeze({
+  paid: Object.freeze({
+    name: 'A recorded video call',
+    choice: 'We guide you round on a video call. It is recorded so your surveyor can watch it.',
+    lead: 'Join a video call on your phone and walk round while we guide you. The call is recorded so your surveyor can watch it. It takes about 20 to 40 minutes.',
+    ask: 'Ask for a recorded video call', message: ASK_WORDS, guide: 'For the recorded video call, and for the photos.',
+    staffName: 'A recorded walkthrough call', staffLede: 'the recorded walkthrough call', book: 'Book the recorded walkthrough call',
+    booked: 'Booked. Its Zoom meeting records, and the client has the invitation.',
+    staffHelp: 'A Zoom video call, recorded to Zoom’s cloud. You host it and guide the client round; they join on their phone. They get the invitation and the filming guide.',
+    surveyorHelp: 'Admin or Sales book the walkthrough call: they own client calls in the diary. Its recording appears here.',
+    noRecording: 'No recording fetched yet.',
+  }),
+  free: Object.freeze({
+    name: 'A video call',
+    choice: 'We guide you round on a video call, and write down what we see for your surveyor.',
+    lead: 'Join a video call on your phone and walk round while we guide you. We write down what we see for your surveyor. It takes about 20 to 40 minutes. A call ends after 40 minutes; if it does, use the same link to start again.',
+    ask: 'Ask for a video call', message: 'I would like a video call to show you around the building for the survey.', guide: 'For the video call, and for the photos.',
+    staffName: 'A walkthrough call', staffLede: 'the walkthrough call', book: 'Book the walkthrough call',
+    booked: 'Booked. The client has the invitation. Our Zoom plan does not record it, so write down what you see on the job.',
+    staffHelp: 'A Zoom video call. Our Zoom plan does not record it, and a call ends after 40 minutes. You host it and guide the client round; they join on their phone. Write down what you see on the job. They get the invitation and the filming guide.',
+    surveyorHelp: 'Admin or Sales book the walkthrough call: they own client calls in the diary. What they saw is written on the job.',
+    noRecording: 'Not recorded: our Zoom plan keeps no recordings.',
+  }),
+});
+
+export function walkWords(freePlan: boolean): WalkWords { return freePlan ? WALK_WORDS.free : WALK_WORDS.paid; }
+
+export function askWalkthrough(d: EvidenceDeps, actor: Actor, job_id: string, freePlan = false): Result {
   const job = clientOf(d.db, actor, job_id);
   const open = d.db.get('SELECT 1 AS x FROM survey_walkthrough_asks a WHERE a.job_id = ? AND NOT EXISTS (SELECT 1 FROM survey_walkthroughs w WHERE w.job_id = a.job_id AND w.booked_at >= a.at)', [job_id]);
   if (open !== undefined) return { ok: false, why: 'We have your request. We will offer you a time.' };
   return d.db.tx((): Result => {
-    const m = postClientMessage(d, actor, job.business_id, { body: ASK_WORDS, claim_id: null });
+    const m = postClientMessage(d, actor, job.business_id, { body: walkWords(freePlan).message, claim_id: null });
     if (!m.ok) return m;
     const id = d.newId();
     d.db.run('INSERT INTO survey_walkthrough_asks (id, job_id, by_user, at) VALUES (?, ?, ?, ?)', [id, job_id, actor.id, d.now()]);
