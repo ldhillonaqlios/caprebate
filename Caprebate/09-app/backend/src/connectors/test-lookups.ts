@@ -54,15 +54,20 @@ import { isInside, repositoryRoot, type SecretStore } from '../secrets.ts';
 import type { Transport } from './http.ts';
 import type { PostcodeStore } from '../web/postcode-port.ts';
 import { smokeOne, SMOKE_DEFAULTS, SMOKE_SOURCES, type SmokeValues } from './smoke.ts';
+import type { Nation } from './nations.ts';
 import {
   BOUNDARY_TEST_DEFAULTS, BOUNDARY_TEST_SOURCE, boundaryClientMatchIn, boundaryTestOne, boundaryValuesFrom, notTheBoundaryDefaults,
 } from './boundary-test-lookup.ts';
+import { buildingsAround, OS_SERVICE_ID } from './os-buildings.ts';
+
+/** PHASE 156a: the Ordnance Survey building outlines (the report's site plan). Only ever at the public test point. */
+export const OS_TEST_SOURCE = OS_SERVICE_ID;
 
 /**
  * EVERY CONNECTOR A TEST LOOKUP CAN BE RUN FOR: the registers the smoke test knows, and (Phase 151l) the land boundary
  * download. One list, so `smoke` and `smoke-switched-on` can never disagree about what a connector is.
  */
-export const TEST_LOOKUP_SOURCES: readonly string[] = Object.freeze([...Object.keys(SMOKE_SOURCES), BOUNDARY_TEST_SOURCE]);
+export const TEST_LOOKUP_SOURCES: readonly string[] = Object.freeze([...Object.keys(SMOKE_SOURCES), BOUNDARY_TEST_SOURCE, OS_TEST_SOURCE]);
 const isTestLookupSource = (s: string): boolean => TEST_LOOKUP_SOURCES.includes(s);
 
 /** Condition 1, in Lakhbir's number. */
@@ -321,8 +326,11 @@ function whoAndWhy(argv: readonly string[]): { who: string; why: string } | stri
   return { who, why };
 }
 
-const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--not-a-client]\n' +
+const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--nation england|wales|scotland|northern_ireland] [--council C] [--not-a-client]\n' +
+  `       CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke OS_FEATURES --who "<name>" --why "<reason>"   (the public test point only)\n` +
   `       CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke ${BOUNDARY_TEST_SOURCE} --who "<name>" --why "<reason>" [--easting E --northing N] [--council <ONS code or HM Land Registry file name>] [--not-a-client]`;
+/** The four values --nation takes (src/connectors/nations.ts). */
+const SMOKE_NATIONS: readonly string[] = ['england', 'wales', 'scotland', 'northern_ireland'];
 const SWITCH_USAGE = 'usage: node src/cli.ts smoke-switched-on <SOURCE> --who "<name>" --why "<reason>"';
 
 /**
@@ -393,7 +401,27 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
   const not_a_client = argv.includes('--not-a-client');
   let ask: string;
   let call: (audit: AuditLog) => Promise<'PASS' | 'NO'>;
-  if (source_id === BOUNDARY_TEST_SOURCE) {
+  if (source_id === OS_TEST_SOURCE) {
+    /* PHASE 156a: ONE square of map round the public test point (70 Whitehall, Historic England's grid reference, the
+       same point the land boundary test uses). No point, postcode or address may be typed, so no client's can be. */
+    if (['easting', 'northing', 'postcode', 'address', 'council'].some((f) => flag(argv, f) !== null)) {
+      d.err('refused: the Ordnance Survey test looks only at the public test point (70 Whitehall); it takes no point, postcode or address.');
+      return 1;
+    }
+    const key = (d.secrets.forOwner('OS_MAPS').get('OS_DATA_HUB_API_KEY') ?? '').trim();
+    if (key === '') { d.err('refused: no OS_DATA_HUB_API_KEY in the key file, so there is nothing to test. Add it there first (the same key as in Vercel).'); return 1; }
+    const at = { easting: BOUNDARY_TEST_DEFAULTS.easting, northing: BOUNDARY_TEST_DEFAULTS.northing };
+    ask = `asking Ordnance Survey for the building outlines round the public test point (${BOUNDARY_TEST_DEFAULTS.source}).\n`;
+    call = async (audit) => {
+      const got = await buildingsAround({ audit, now: d.now, transport: d.transport, ...(d.sleep === undefined ? {} : { sleep: d.sleep }) }, key, at,
+        { id: '(a test lookup)', role: 'test', gate: { free_gate_open: false, engagement_signed: false, switched_on: true } });
+      const result = got.ok ? 'PASS' : 'NO';
+      d.out(`${result}  ${OS_TEST_SOURCE} (free)`);
+      d.out(got.ok ? `  Ordnance Survey took our call and sent ${got.value.length} building outline${got.value.length === 1 ? '' : 's'}.` : `  ${got.why}`);
+      d.out('\nA PASS means the key and the OS Features API on its project are right. Nothing was kept.');
+      return result;
+    };
+  } else if (source_id === BOUNDARY_TEST_SOURCE) {
     const bv = boundaryValuesFrom(argv);
     if (typeof bv === 'string') { d.err(`refused: ${bv}.`); return 1; }
     const client = clientCheck(env, (db) => boundaryClientMatchIn(db, bv), notTheBoundaryDefaults(bv), not_a_client);
@@ -419,6 +447,15 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
       town: flag(argv, 'town') ?? SMOKE_DEFAULTS.town,
       postcode: flag(argv, 'postcode') ?? SMOKE_DEFAULTS.postcode,
     };
+    // PHASE 156a: the person running it may say which part of the UK the address is in. Never assumed.
+    const nationSaid = flag(argv, 'nation');
+    if (nationSaid !== null) {
+      const n = nationSaid.trim().toLowerCase();
+      if (!SMOKE_NATIONS.includes(n)) { d.err('refused: --nation must be england, wales, scotland or northern_ireland.'); return 1; }
+      values.nation = n as Nation;
+    }
+    const councilSaid = flag(argv, 'council');
+    if (councilSaid !== null && councilSaid.trim() !== '') values.council = councilSaid.trim().slice(0, 100);
     const client = clientCheck(env, (db) => clientMatchIn(db, values), notTheDefaults(values), not_a_client);
     if (!client.ok) { d.err(`refused: never a client’s property — ${client.why}.`); return 1; }
     ask = `asking ${source_id} about ${values.company_name} (${values.company_number}), ${values.postcode}\n`;
@@ -432,6 +469,12 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
       d.out(`${result}  ${r.source_id} (${r.tier})`);
       d.out(`  ${r.accepted ? 'the service took our call' : 'the service did not take our call'}: ${r.why}`);
       d.out(`  lookup: ${r.outcome}${r.call === null ? '  (no call was made)' : `  call: ${r.call.outcome}${r.call.status === null ? '' : ` ${r.call.status}`} after ${r.call.attempts} ${r.call.attempts === 1 ? 'try' : 'tries'}`}`);
+      if (r.call === null && values.nation == null && /which part of the UK/.test(r.why)) {
+        d.out('  With no postcode table here, say the nation yourself: add --nation england (70 Whitehall is in England).');
+      }
+      if (r.call === null && values.council == null && /council area/.test(r.why)) {
+        d.out('  With no postcode table here, say the council area yourself: add --council Westminster (70 Whitehall is in Westminster).');
+      }
       if (r.cost_pence !== null && r.cost_pence > 0) d.out(`  it cost ${r.cost_pence}p`);
       d.out('\nA PASS means the address, the key and the account are right. It does NOT mean the register holds');
       d.out('anything about what you asked: "nothing matched" is still a pass.');

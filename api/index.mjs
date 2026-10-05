@@ -135,7 +135,10 @@ export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_S
   // 1 Oct 2026: the outside timer's word, so it can wake the website to read email replies.
   'REPLY_TIMER_TOKEN',
   // 30 Sep 2026: reading replies to contact@ (src/stubs/email-inbound.ts), read-only.
-  'IONOS_IMAP_HOST', 'IONOS_IMAP_PORT', 'IONOS_IMAP_USER', 'IONOS_IMAP_PASSWORD']);
+  'IONOS_IMAP_HOST', 'IONOS_IMAP_PORT', 'IONOS_IMAP_USER', 'IONOS_IMAP_PASSWORD',
+  // 5 Oct 2026 (Phase 156a): the contact form's Cloudflare check (src/connectors/turnstile.ts). The site key goes in the
+  // page; the secret is used only once Sadique approves the transfer to Cloudflare (sources.ts), not before.
+  'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY']);
 
 export async function configureTestDeploy(made, env) {
   const pw = (env.CAPREBATE_TEST_PASSWORD ?? '').trim();

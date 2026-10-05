@@ -11903,3 +11903,53 @@ Tracker check green; no code or test changed.
 - The two test exports — Lakhbir — Phase 156c A1.
 - Retention of the copies; messages from before the client agreed — Sadique — Phase 156c A2.
 - The build — Phase 156c PART B.
+
+## PHASE 156a (first pass) — the Cloudflare keys read on the test website; Lakhbir's key steps still to do (5 October 2026, Opus 5.5, Mac copy, Lakhbir's MacBook Pro)
+
+**Run-sheet entry.** Phase 156a (first pass) - 5 October 2026. Checked by name only: none of Lakhbir's steps is done yet — EPC, CQC, Ordnance Survey and the two Cloudflare keys are not in Vercel (EPC and CQC are in the key file). Did the one line that needs no real key: the test website now reads TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY from Vercel (they were missing from TEST_DEPLOY_KEYS, so keys added there would have been ignored); test/phase156a.test.ts, four tests, three red on the old code (the fourth guards that Cloudflare stays unapproved). Also fixed a calendar test that failed only in the week of 5 October (it did not allow for the "Today" badge in a day's heading). The phase stays at the top: B1, B3 and B4 wait on Lakhbir's steps. Figures 1363 / 440 / 415 / 2430 = 4,648. Branch claude/phase-156a.
+
+### What was done
+
+- **The check of keys, names only.** Vercel (the connector's filter_project_envs, each "key" only): the five names are absent. The key file (names only): EPC_API_TOKEN and CQC_SUBSCRIPTION_KEY present with values; OS_DATA_HUB_API_KEY and both Turnstile names absent. So PART A (A1 to A5) is not done.
+- **B2.** Most of it was built on 29 September (src/connectors/turnstile.ts: the page carries the configured site key, the server check refuses a missing or rejected answer and passes a good one, proved on Cloudflare's test keys in test/turnstile.test.ts). What was missing: the two names in TEST_DEPLOY_KEYS (api/index.mjs), so the test website never read them. Added, with test/phase156a.test.ts (the names are read; the page then carries the configured site key; the start-up line moves from "no key" to "not approved"; the transfer stays NOT approved). test/phase151e.test.ts's list of names updated. international_transfer_approved stays false: Sadique's decision.
+- **A test that failed by date.** test/ui-tidy-calendar.test.ts "the week is seven boxes" read each day's heading as plain text; the real today gets a "Today" badge, so it failed every day from Monday 5 to Sunday 11 October 2026. The pattern now allows the badge; red on the old test today, green after.
+- **Paper.** KEYS-AND-SWITCHES (the Turnstile row); the Developer Spec (the Turnstile row; the figures); WAITING-ON-PEOPLE (156a PART A, and Sadique's Cloudflare approval); a dated note under 156a in the plan and on the run sheet.
+
+### Checks
+
+Back end `npm run check`: lint-sql clean, typecheck clean for this package, 2430 pass / 0 fail over 151 tracked files. Harness, phase3 and phase9 untouched (no engine or module change): 1363, 440, 415. Drift `--fast --expect 1363,440,415,2430`; tracker; CRM fold; register check.
+
+### NOT DONE — each with its home
+
+- PART A (EPC and CQC into Vercel; Ordnance Survey sign-up and key; Cloudflare widget and keys; redeploy) — Lakhbir — Phase 156a; WAITING-ON-PEOPLE.md.
+- B1 (confirm names and a new deploy), B3 (one test lookup each for EPC, CQC and Ordnance Survey), B4 (the keys docs) — Claude, after PART A — Phase 156a.
+- Approving Cloudflare for testing — Sadique — WAITING-ON-PEOPLE.md.
+
+## PHASE 156a (second pass) — the keys in Vercel; EPC and CQC test lookups PASS; the test lookup command fixed; an Ordnance Survey test lookup built (5 October 2026, Opus 5.5, Mac copy, Lakhbir's MacBook Pro)
+
+**Run-sheet entry.** Phase 156a (second pass) - 5 October 2026. Lakhbir put all five keys in Vercel and deployed (checked by name). EPC and CQC test lookups PASSED from the Mac, after a fix: the test lookup command could never call either, because it took the nation (and, for CQC, the council) from the ONS postcode table, which is installed nowhere; it now takes --nation and --council, said by the person running it. An Ordnance Survey test lookup (OS_FEATURES, the public point only) is built and waits for OS_DATA_HUB_API_KEY in the Mac's key file. The live test site was redeployed from main, which does not yet read any of these keys: PRs 9 to 18 must be merged. Figures 1363 / 440 / 415 / 2438 = 4,656. Branch claude/phase-156a, PR 18.
+
+### What was found
+
+- **Vercel (names only):** EPC_API_TOKEN, CQC_SUBSCRIPTION_KEY, OS_DATA_HUB_API_KEY, TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY, all Production and Sensitive. A production deploy after them, READY — of main at 760cdfe (PR 8), which reads none of the five: TEST_DEPLOY_KEYS on main has none of them (they were added by Phases 153f and 156a, on branches not yet merged).
+- **The Mac's key file (names only):** EPC and CQC present; the three new names absent (the file was last changed on 1 October).
+- **The first EPC and CQC test lookups (1 of 3 each) logged NO, with no call made.** A dry run with a fake transport showed why: the subject's nation comes from the ONS postcode table's answer earlier on the click, and the command passed none (and opens no table: CAPREBATE_POSTCODE_DB is set nowhere). EPC covers England and Wales and CQC England only, so both refused to guess. CQC also searches by council area, which the same table gives.
+
+### What was done
+
+- **The test lookup command** (src/connectors/test-lookups.ts, src/connectors/smoke.ts): `--nation england|wales|scotland|northern_ireland` and `--council C`, typed by the person running it, never assumed; a refusal for any other nation; a line saying which flag to add when a lookup stops for want of either. Then the second lookups: **EPC PASS** (200, matched, score 1.00, nothing kept) and **CQC PASS** (200, no location at that postcode) at 70 Whitehall / Westminster.
+- **An Ordnance Survey test lookup** (`smoke OS_FEATURES`): one square of map round the public test point (Historic England's grid reference for 70 Whitehall, the land boundary test's point); refuses a typed point, postcode or address; refuses without the key, before anything is logged. Switched-on line recorded (on Lakhbir's word); no lookup run yet.
+- **Switched-on lines** in ~/.caprebate-test-lookups.jsonl for EPC, CQC and OS_FEATURES, recorded by Claude on Lakhbir's word in the chat. Lookups used: EPC 2 of 3, CQC 2 of 3, OS 0 of 3.
+- **Tests:** test/phase156a.test.ts now twelve (8 new this pass; 7 red on the code before, the eighth a guard that CQC asks nobody for Wales).
+- **Paper:** KEYS-AND-SWITCHES (CQC, EPC, Ordnance Survey and Turnstile rows), the Developer Spec (the smoke command, the figures), WAITING-ON-PEOPLE (PART A done; the three key-file lines; merging PRs 9 to 18), a dated note under 156a in the plan and on the run sheet.
+
+### Checks
+
+Back end `npm run check`: lint-sql clean, typecheck 0 errors, 2438 pass / 0 fail over 151 tracked files. Harness, phase3, phase9 untouched: 1363, 440, 415. Drift `--fast --expect 1363,440,415,2438` exit 0, control exit 1; register check; CRM fold; tracker; plain words.
+
+### NOT DONE — each with its home
+
+- The three key-file lines (OS and both Turnstile) — Lakhbir — WAITING-ON-PEOPLE.md.
+- The Ordnance Survey test lookup — Claude, once the OS line is in the key file — Phase 156a (it stays at the top until then).
+- Merging PRs 9 to 18 so the live test site reads the keys — Lakhbir — WAITING-ON-PEOPLE.md.
+- Approving Cloudflare for testing — Sadique — WAITING-ON-PEOPLE.md.

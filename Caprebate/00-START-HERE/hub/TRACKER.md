@@ -1353,6 +1353,8 @@
 
 - Note 2026-10-04 (Phase 153f): Added by Phase 153f (line 8): the tracker had not moved since 29 Sep. Created on the monday.com board first, which gave it this id; the record is in PHASE-HISTORY.
 - Note 2026-10-04 (Planning 4 Oct 2026): 4 Oct 2026: Phase 156 split into 156a-156e at Lakhbir's request; this row is 156a (the old steps' new homes are in ACTION-PLAN under Phase 156a).
+- Note 2026-10-05 (Phase 156a): First pass: none of PART A done (names checked). The test website now reads the two Cloudflare keys (TEST_DEPLOY_KEYS; test/phase156a.test.ts); a calendar test that failed only this week fixed. Back end 2430/0. Waiting on Lakhbir's A1-A5, then B1/B3/B4. Posted on monday.
+- Note 2026-10-05 (Phase 156a): Second pass: all five keys in Vercel and deployed (but main does not read them until PRs 9-18 are merged). EPC PASS and CQC PASS from the Mac after fixing the test lookup command (--nation, --council). Ordnance Survey test lookup built; waits for OS_DATA_HUB_API_KEY in the Mac's key file (the three new lines are not there). Back end 2438/0. Posted on monday.
 
 ### Phase 156b - email: the reply timer and signed emails
 
