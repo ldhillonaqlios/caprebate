@@ -1347,12 +1347,13 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 156d - Zoom on the free plan: a free user for each member of staff, and call lengths if the free plan allows them (no payment)
+### Phase 156d - Zoom on the free plan: one shared host (contact@), and call lengths if the free plan allows them (no payment)
 
 `13201538872` · **Ready - Lakhbir action** · owner Lakhbir
 
 - Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538872.
 - Note 2026-10-05 (Planning 5 Oct 2026): Rewritten 5 Oct 2026 so nothing is paid for (Lakhbir: 'yes change 156d so i dont pay'): staff added as free Basic users, two free scopes, then Claude finds out whether the free plan gives call length and attendees; the 40-minute limit said plainly; Zoom Pro moved to before real clients. Same change on the monday board and the run sheet.
+- Note 2026-10-05 (Planning 5 Oct 2026): One shared host for now (Lakhbir, 5 Oct 2026: 'contact@caprebate is enough'): no staff Zoom users; Lakhbir only checks ZOOM_HOST_EMAIL is contact@. Added to the phase: walkthrough calls stop asking Zoom for a cloud recording on the free plan, and a warning when two video calls overlap. Same change on the board and the run sheet.
 
 ### Phase 156e - Homedata, Anthropic, GoAddress, Didit, the Connections page and the care regulators' lists (Google Analytics dropped for now)
 

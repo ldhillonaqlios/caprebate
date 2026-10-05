@@ -1026,9 +1026,9 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 156d — Zoom on the free plan: a user for each member of staff, and call lengths if the free plan allows them
+## PHASE 156d — Zoom on the free plan: one shared host (contact@), and call lengths if the free plan allows them
 
- **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down; **rewritten 5 October 2026 so nothing is paid for** (Lakhbir: "yes change 156d so i dont pay"). The free Zoom plan is enough for testing: a call stops at 40 minutes (accepted for testing on 30 Sep 2026; appointments stay an hour long) and Zoom keeps no recording of its own. **Zoom Pro is a purchase for before real clients**, on the purchases list in hub/WAITING-ON-PEOPLE.md, not part of this phase. Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down; **rewritten 5 October 2026 so nothing is paid for** (Lakhbir: "yes change 156d so i dont pay"). The free Zoom plan is enough for testing: a call stops at 40 minutes (accepted for testing on 30 Sep 2026; appointments stay an hour long) and Zoom keeps no recording of its own. **Zoom Pro is a purchase for before real clients**, on the purchases list in hub/WAITING-ON-PEOPLE.md, not part of this phase. **One shared host, no staff users for now** (Lakhbir, 5 Oct 2026: "right now i dont need to add additonal staff contact@caprebate is enough"): every call is hosted by contact@caprebate.co.uk. Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1099,15 +1099,13 @@ rest.
 
 PART A - LAKHBIR - ZOOM ON THE FREE PLAN. Nothing here costs money.
 
-A1. ADD EACH MEMBER OF STAFF AS A FREE USER, so each call is hosted by its own
-    member of staff (Phase 153f).
-    1. zoom.us > sign in as the account owner > Admin > User management >
-       Users > Add users.
-    2. Enter the SAME email they sign in to Cap Rebate with. User type:
-       Basic (free). They accept the invitation Zoom emails them.
-    3. If Zoom will not add a user without a paid plan, stop and tell Claude:
-       calls stay on the shared host (ZOOM_HOST_EMAIL), as they do today.
-    Anyone not added falls back to the shared host.
+A1. ONE SHARED HOST - NO STAFF USERS FOR NOW (Lakhbir, 5 Oct 2026). Every
+    call is hosted by contact@caprebate.co.uk. Check only: in Vercel
+    (caprebate-test > Settings > Environment Variables) ZOOM_HOST_EMAIL is
+    contact@caprebate.co.uk - or leave it blank if contact@ is the Zoom
+    account's owner. Tell Claude "done"; never paste the value.
+    Adding staff as their own Zoom hosts (Phase 153f) waits until Lakhbir
+    asks: it is a line in hub/WAITING-ON-PEOPLE.md, not part of this phase.
 A2. ADD TWO SCOPES (free), so Claude can try to read how long a call lasted
     and how many joined: marketplace.zoom.us > Manage > the app behind
     ZOOM_CLIENT_ID > Scopes > Add scopes: meeting:read:past_meeting:admin and
@@ -1142,16 +1140,28 @@ B3. SAY THE 40 MINUTES PLAINLY. Calls are booked for an hour (SLOT_MINUTES)
     goes when Pro is bought; test both ways.
 B4. THE "RECORDED" PROMISE. The client's walkthrough page
     (src/web/evidence-pages.ts ~248) says "The call is recorded so your
-    surveyor can watch it". On the free plan only the host's own computer can
+    surveyor can watch it", and a walkthrough call is made with
+    auto_recording 'cloud' (src/connectors/zoom.ts makeZoomMeeting; the
+    recording is then looked for with zoomRecording). The free plan has no
+    cloud recording: on the test call, see what Zoom does with 'cloud' (refuses
+    the meeting, or quietly records nothing); behind the same free-plan
+    setting as B3, make walkthrough calls without cloud recording and stop
+    looking for one. On the free plan only the host's own computer can
     record. Check how that recording reaches the surveyor (saved by the host,
     then added to the claim's evidence), write it into the staff guide in
     plain words, and make the client's line true for the free plan. Do not
     promise a recording Zoom keeps.
-B5. Where A1 is done for a member of staff, check one of their test calls is
-    hosted by them, not the shared host.
+B5. ONE HOST, ONE CALL AT A TIME. With every call on contact@, two video
+    calls at the same time cannot both run (one Zoom user hosts one meeting
+    at a time). Calls already fall back to the shared host when a member of
+    staff has no Zoom user (src/web/video-calls.ts ~111, an audit line each
+    time). Add a plain warning where a video call is booked or moved: "Another
+    video call is booked at this time. Only one can run at once on our Zoom
+    account." Warn, never block; test it red on the code before.
 B6. In hub/WAITING-ON-PEOPLE.md and hub/KEYS-AND-SWITCHES.md, keep "Zoom Pro"
     only as "before real clients, not needed for testing", with the reasons:
-    40 minutes, no recording kept by Zoom, and B1's answer.
+    40 minutes, no recording kept by Zoom, one call at a time, and B1's
+    answer; and "staff as their own Zoom hosts" as later, when Lakhbir asks.
 
 When every line that could run is done: run every check in COORDINATES,
 re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write

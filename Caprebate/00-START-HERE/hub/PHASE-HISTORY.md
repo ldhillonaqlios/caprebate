@@ -12042,3 +12042,16 @@ Lakhbir, 5 Oct 2026, asked whether upgrading the Zoom host to Pro was essential 
 - **Proof.** No code changed. House checks green.
 
  **Claim cleared** in the commit that carries this record.
+
+## Planning, 5 October 2026 (later) — Phase 156d on one shared Zoom host (Claude Code, on the Mac)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Phase 156d changed again: no staff Zoom users for now; every call is hosted by contact@caprebate.co.uk. Two things found and added to the phase: walkthrough calls ask Zoom for a cloud recording the free plan does not have, and one host means one call at a time. No code changed; tests unchanged.
+
+Lakhbir, 5 Oct 2026: "right now i dont need to add additonal staff contact@caprebate is enough".
+
+- **Phase 156d (ACTION-PLAN.md and the run sheet, the same text; checked identical after the write; `.bak-156d-onehost` sibling taken).** Title now "one shared host (contact@)". A1 is now only a check that ZOOM_HOST_EMAIL in Vercel is contact@caprebate.co.uk (or blank if contact@ owns the Zoom account); staff as their own hosts waits until Lakhbir asks. B4 now also covers `auto_recording: 'cloud'` on walkthrough calls (src/connectors/zoom.ts makeZoomMeeting, and zoomRecording looking for it): see what Zoom does with it on the free plan, and turn it off behind the free-plan setting. B5 is now a plain warning, never a block, when two video calls overlap (one Zoom user hosts one meeting at a time). B6 adds "one call at a time" and "staff as their own hosts, later".
+- **Checked in the code, nothing changed:** a member of staff with no Zoom user already falls back to the shared host (src/web/video-calls.ts ~111, with a VIDEO_CALL_SHARED_HOST audit line), so calls keep working with no staff users.
+- **KEYS-AND-SWITCHES.md** and **WAITING-ON-PEOPLE.md** say one shared host; **board item 13201538872** renamed on the board and in the tracker, with a dated note. THE TRACKER CHECK green.
+- **Proof.** No code changed. House checks green.
+
+ **Claim cleared** in the commit that carries this record.
