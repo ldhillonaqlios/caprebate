@@ -71,3 +71,119 @@ describe('156a B2 · the Cloudflare keys reach the test website', () => {
     assert.equal(CALL_POLICIES['CLOUDFLARE_TURNSTILE']?.international_transfer_approved, false);
   });
 });
+
+/* ================================================================== *
+ * 156a B3 · A TEST LOOKUP OF EPC OR CQC COULD NEVER CALL. Both cover only part of the UK, and the command took the
+ * nation from the ONS postcode table — which it never opened (no CAPREBATE_POSTCODE_DB, and none is installed on the
+ * Mac or the test website). Every EPC and CQC test lookup ended "no call was made" (5 Oct 2026, the first after the
+ * keys went into Vercel). Now the person running it may say the nation: --nation england. Still never assumed.
+ * ================================================================== */
+import { writeFileSync, readFileSync, existsSync } from 'node:fs';
+
+function lookupWorld(): { env: Record<string, string>; lines: () => Record<string, unknown>[] } {
+  const dir = mkdtempSync(join(tmpdir(), 'cb-156a-smoke-'));
+  const keys = join(dir, 'empty-keys.env');
+  writeFileSync(keys, '', { mode: 0o600 });
+  const log = join(dir, 'test-lookups.jsonl');
+  const env = { PATH: process.env.PATH ?? '', HOME: dir, CAPREBATE_SECRETS: keys, CAPREBATE_TEST_LOOKUP_LOG: log, CAPREBATE_LIVE_SMOKE: '1' };
+  const lines = () => (existsSync(log) ? readFileSync(log, 'utf8') : '').split('\n').filter((l) => l.trim() !== '').map((l) => JSON.parse(l) as Record<string, unknown>);
+  return { env, lines };
+}
+const WHO156 = ['--who', 'Invented Tester', '--why', 'Phase 156a: the key went into Vercel'];
+
+async function runLookup(source: string, extra: string[]): Promise<{ code: number; said: string; calls: number }> {
+  const L = await import('../src/connectors/test-lookups.ts');
+  const { fixtureTransport } = await import('../src/connectors/http.ts');
+  const { secretsFromValues, forgetRegisteredSecretsForTest } = await import('../src/secrets.ts');
+  const w = lookupWorld();
+  const said: string[] = [];
+  const deps = { now: () => '2026-10-05T11:00:00.000Z', out: (l: string) => { said.push(l); }, err: (l: string) => { said.push(l); } };
+  assert.equal(L.runSwitchedOnCommand([source, ...WHO156], w.env, deps), 0);
+  const transport = fixtureTransport({});
+  const code = await L.runSmokeCommand([source, ...WHO156, ...extra], w.env, {
+    ...deps, sleep: async () => {}, transport,
+    secrets: secretsFromValues({ EPC_API_TOKEN: 'epc-fixture-key-156a', CQC_SUBSCRIPTION_KEY: 'cqc-fixture-key-156a' }),
+  });
+  forgetRegisteredSecretsForTest();
+  return { code, said: said.join('\n'), calls: transport.seen.length };
+}
+
+describe('156a B3 · a test lookup of EPC or CQC can be told the nation', () => {
+  test('without --nation and with no postcode table: no call is made, and the command says how to give the nation', async () => {
+    for (const s of ['EPC', 'CQC']) {
+      const r = await runLookup(s, []);
+      assert.equal(r.code, 1, s);
+      assert.equal(r.calls, 0, `${s} called without knowing the nation`);
+      assert.match(r.said, /--nation england/, `${s}: the refusal does not say how to give the nation`);
+    }
+  });
+
+  test('with --nation england (and, for CQC, --council) the service is asked (a 404 from it, "nothing held", is a PASS)', async () => {
+    for (const s of ['EPC', 'CQC']) {
+      const r = await runLookup(s, ['--nation', 'england', ...(s === 'CQC' ? ['--council', 'Westminster'] : [])]);
+      assert.ok(r.calls >= 1, `${s} asked nobody: ${r.said}`);
+      assert.equal(r.code, 0, `${s}: ${r.said}`);
+    }
+  });
+
+  test('a nation that is not one of the four is refused before anything is logged or asked', async () => {
+    const r = await runLookup('EPC', ['--nation', 'France']);
+    assert.equal(r.code, 1);
+    assert.equal(r.calls, 0);
+    assert.match(r.said, /england, wales, scotland or northern_ireland/);
+  });
+
+  test('CQC with the nation but no council says how to give the council, and asks nobody', async () => {
+    const r = await runLookup('CQC', ['--nation', 'england']);
+    assert.equal(r.calls, 0);
+    assert.match(r.said, /--council Westminster/);
+  });
+
+  test('CQC covers England only: --nation wales asks nobody', async () => {
+    const r = await runLookup('CQC', ['--nation', 'wales', '--council', 'Cardiff']);
+    assert.equal(r.calls, 0);
+    assert.equal(r.code, 1);
+  });
+});
+
+describe('156a B3 · a test lookup of the Ordnance Survey building outlines', () => {
+  async function osLookup(extra: string[], keys: Record<string, string>): Promise<{ code: number; said: string; calls: number; urls: string[]; headers: Record<string, string>[] }> {
+    const L = await import('../src/connectors/test-lookups.ts');
+    const { fixtureTransport } = await import('../src/connectors/http.ts');
+    const { secretsFromValues, forgetRegisteredSecretsForTest } = await import('../src/secrets.ts');
+    const w = lookupWorld();
+    const said: string[] = [];
+    const deps = { now: () => '2026-10-05T11:00:00.000Z', out: (l: string) => { said.push(l); }, err: (l: string) => { said.push(l); } };
+    assert.equal(L.runSwitchedOnCommand(['OS_FEATURES', ...WHO156], w.env, deps), 0);
+    const square = [[[530100, 179940], [530140, 179940], [530140, 179970], [530100, 179970], [530100, 179940]]];
+    const transport = fixtureTransport({ 'GET /features/v1/wfs': { status: 200, body: JSON.stringify({ type: 'FeatureCollection', features: [{ geometry: { type: 'Polygon', coordinates: square } }] }) } });
+    const code = await L.runSmokeCommand(['OS_FEATURES', ...WHO156, ...extra], w.env, { ...deps, sleep: async () => {}, transport, secrets: secretsFromValues(keys) });
+    forgetRegisteredSecretsForTest();
+    return { code, said: said.join('\n'), calls: transport.seen.length, urls: transport.seen.map((x) => x.url), headers: transport.seen.map((x) => x.headers) };
+  }
+
+  test('it is a test lookup source, and with the key it asks once round the public point and passes', async () => {
+    const r = await osLookup([], { OS_DATA_HUB_API_KEY: 'os-fixture-key-156a' });
+    assert.equal(r.code, 0, r.said);
+    assert.equal(r.calls, 1);
+    assert.match(r.urls[0] ?? '', /bbox=530040%2C179876%2C530200%2C180036/, 'not the square round the public point');
+    assert.ok(!(r.urls[0] ?? '').includes('os-fixture-key'), 'the key went into the address');
+    assert.equal(r.headers[0]?.['key'], 'os-fixture-key-156a');
+    assert.match(r.said, /sent 1 building outline/);
+  });
+
+  test('without the key it refuses before asking anyone', async () => {
+    const r = await osLookup([], {});
+    assert.equal(r.code, 1);
+    assert.equal(r.calls, 0);
+    assert.match(r.said, /no OS_DATA_HUB_API_KEY in the key file/);
+  });
+
+  test('a typed point, postcode or address is refused: only the public test point', async () => {
+    for (const extra of [['--easting', '530000', '--northing', '180000'], ['--postcode', 'SW1A 2AS'], ['--address', '1 Any Street']]) {
+      const r = await osLookup(extra, { OS_DATA_HUB_API_KEY: 'os-fixture-key-156a' });
+      assert.equal(r.code, 1, extra.join(' '));
+      assert.equal(r.calls, 0, extra.join(' '));
+    }
+  });
+});
