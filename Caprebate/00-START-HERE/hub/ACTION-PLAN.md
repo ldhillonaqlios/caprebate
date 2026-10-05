@@ -485,14 +485,15 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     CB_VOA_FEE_SCALE table and its switches stay off; older text saying
     they wait on "the VOA licence" is history - they wait on the surveyor.
 
-  WHATSAPP - THE PHONE FIRST, NO OPENING TEMPLATE (Lakhbir, 5 Oct 2026: "I'm
-    thinking option 2 it gives best of both worlds"). His business number
-    stays on the WhatsApp Business app on his phone and is also connected to
-    the back office (Meta's "coexistence"). First contact is always from the
-    phone (free). The back office shows every message both ways on the
-    client's record and lets staff reply only within 24 hours of the
-    client's last message, then says to use the phone. No paid opening
-    template and no new number. Phase 156c builds it.
+  WHATSAPP - BY MANUAL UPLOAD, WITH PHOTOS (Lakhbir, 5 Oct 2026: "go with
+    manual upload, keep photos"). Staff talk to clients on the WhatsApp phone;
+    to keep a conversation they export that chat and upload it to the
+    client's record, which shows it as a thread. No live connection to Meta,
+    no partner (Dualhook and others were looked at and not chosen), no Meta
+    business verification, no cost; nothing is sent from the back office.
+    The live connection built in Phases 146-153f stays in the code, switched
+    off. (Earlier the same day he chose a live "coexistence" connection,
+    phone first; he replaced that with this.) Phase 156c builds it.
 
 WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   ACTION-PLAN.md                    this document
@@ -1295,9 +1296,9 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
-## PHASE 156c — WhatsApp on our own number: the phone starts the conversation, the back office shows it and replies within 24 hours
+## PHASE 156c — WhatsApp by manual upload: export a chat on the phone, add it to the client's record
 
- **Model: Opus. Rewritten 5 October 2026** after Lakhbir chose "option 2": he keeps WhatsApp on his phone (coexistence), first contact is always from the phone (free), the back office shows every message both ways and lets staff reply only within 24 hours of the client's last message, then says to use the phone. No opening template, so no Meta charges. Replaces the 4 October version (a new number and a paid opening template). Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+ **Model: Opus. Rewritten 5 October 2026** after Lakhbir chose a manual upload with photos ("go with manual upload, keep photos") over a live connection to Meta. Staff keep talking to clients on the WhatsApp phone; to keep a conversation on the record they export that chat and upload it, and the back office shows it as a thread with dates, times and photos. No Meta account, no supplier, no cost; nothing is sent from the back office. The live connection already built stays in the code, switched off. Replaces the earlier versions (a paid opening template; then a live "coexistence" connection). Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1359,91 +1360,74 @@ the test website and invented data only, and each service's paper (privacy
 notice, the data protection officer's approval of a transfer) stays its own
 sign-off.
 
-PART A - LAKHBIR - WHATSAPP ON OUR OWN NUMBER, THE PHONE FIRST
-(decided 5 Oct 2026, "option 2": COORDINATES, "DECIDED - DO NOT REOPEN").
-How it works: Lakhbir keeps his business number on the WhatsApp Business app
-on his phone and starts every conversation there, free. Through Meta's
-"coexistence" the same number is also connected to the back office, which
-shows every message both ways on the client's record, and lets staff reply
-within 24 hours of the client's last message (free). After 24 hours the reply
-box locks and says to message the client from the phone. No opening template,
-so no Meta charge and no template approval. Messages sent from the app stay
-free (Meta: "Messages sent by the business via the WhatsApp Business app will
-continue to be free").
+PART A - LAKHBIR - WHATSAPP BY MANUAL UPLOAD (decided 5 Oct 2026: "go with
+manual upload, keep photos"; COORDINATES, "DECIDED - DO NOT REOPEN").
+How it works: staff talk to clients on the WhatsApp phone as normal. To keep
+a conversation on the record, they export that one chat on the phone (open
+the chat > tap the name > Export chat > Attach media) and upload the file on
+the client's WhatsApp page. The back office checks it, then shows it as a
+thread with dates, times and photos. Nothing is sent from the back office;
+no Meta account, no supplier, no cost. The live Meta connection already
+built stays in the code, switched off.
 
-A1. TELL CLAUDE WHICH NUMBER (in the chat): the business number clients will
-    message. It must be on the WhatsApp BUSINESS app (green icon with a B),
-    version 2.24.17 or later. If it is on ordinary WhatsApp: install WhatsApp
-    Business, register the same number and accept the move (WhatsApp keeps
-    the chats). Coexistence takes one number per account.
-A2. META'S BUSINESS ACCOUNT. business.facebook.com: make sure CAP REBATE LTD
-    has a Meta Business account and start its verification (Business settings
-    > Security centre > Start verification; Companies House details). Every
-    route below needs it.
-A3. CHOOSE THE ROUTE. Meta only lets a "Tech Provider" or one of its partner
-    companies connect an existing Business app number (Meta's coexistence
-    page: "You must already be a Solution Partner or Tech Provider").
-    a) OUR OWN (recommended first; no fee found): developers.facebook.com >
-       My Apps > Create app > type Business > add the WhatsApp product;
-       register as a Tech Provider; Meta reviews the app (it asks for two
-       short screen recordings - Claude makes them on the test website) and
-       grants "Advanced access" to whatsapp_business_messaging and
-       whatsapp_business_management. Takes days to weeks.
-    b) A PARTNER COMPANY that supports coexistence (for example 360dialog,
-       Twilio): quicker, but a monthly fee. Claude prices two before Lakhbir
-       chooses, and the back office's sending code changes to the partner's.
-    Whichever route: Sadique approves the processor (Meta, and any partner)
-    for real clients; Meta is approved for testing only today.
-A4. CONNECT THE NUMBER (after A3). In the back office, Admin > WhatsApp >
-    "Connect our WhatsApp number" (built in B3) opens Meta's sign-up; choose
-    "connect your existing WhatsApp Business app", enter the code the app
-    shows. On the phone, the app then says the number is also connected to
-    the back office. CHOOSE NOT TO SHARE OLD CHATS when asked (we keep only
-    new ones).
-A5. KEYS. App settings > Basic > App secret (Show) -> WHATSAPP_APP_SECRET;
-    make up a long random word (40+ characters) -> WHATSAPP_VERIFY_TOKEN;
-    the Embedded Signup configuration id -> WHATSAPP_SIGNUP_CONFIG_ID (B3
-    names it). The phone number id and the access token come back from A4
-    and are stored by the back office (B3). Add the keys to Vercel
-    (Production, Sensitive) and the key file, and redeploy.
-A6. WEBHOOK. App > WhatsApp > Configuration > Webhook: callback URL
-    https://caprebate-test.vercel.app/hooks/whatsapp, verify token = A5's
-    word. Subscribe to "messages" and "smb_message_echoes" (the messages you
-    send from the phone). Do NOT subscribe to "history" or
-    "smb_app_state_sync" (old chats and the phone's contact list).
+A1. TWO TEST FILES (invented, never a client): a short chat between Lakhbir
+    and a colleague who agrees, with a photo, a document, a message over two
+    lines, a deleted message and an edited one. Export it with media from an
+    iPhone and, if one is to hand, from an Android. Put both .zip files in
+    OneDrive: Health Capital Allowances > Business Development > Development
+    > Caprebate > 09-app > backend > test > fixtures > whatsapp-export (tell
+    Claude they are there). They contain no client data, so they may be
+    committed.
+A2. SADIQUE (through Lakhbir): (a) copies of WhatsApp chats and their photos
+    kept on the client's record follow the client-message retention rule -
+    confirm; (b) messages dated before the client ticked the WhatsApp box on
+    the funnel: keep them, or leave them out on upload? (B3 warns either way;
+    the build leaves them IN until he answers.)
 
 PART B - CLAUDE (each with a test that fails on the code before it)
 
-B1. THE PHONE'S MESSAGES ON THE RECORD. readWebhook (src/connectors/
-    whatsapp.ts) also reads smb_message_echoes: each message sent from the
-    phone is kept as OUT, marked "Sent from the WhatsApp phone", filed to the
-    contact whose number it went to (otherwise to the unfiled list, as
-    incoming messages are). It does not open or extend the 24-hour window
-    (only the client's own messages do; Meta's rule). Ignore history and
-    smb_app_state_sync if they ever arrive (keep nothing).
-B2. THE REPLY BOX. Keep the 24-hour rule (windowOpenUntil, WINDOW_HOURS).
-    Remove the "Send our opening message" button and the opening-template
-    path from the page (switch it off and keep the code, so it can return
-    if Lakhbir asks). When the window is closed the box locks and says:
-    "More than 24 hours since <first name> last wrote. Message them from the
-    WhatsApp phone; when they reply, you can write here again for 24 hours."
-    WHATSAPP_OPENING_TEMPLATE and WHATSAPP_TEMPLATE_LANGUAGE stop being
-    required (whatsappMissing; TEST_DEPLOY_KEYS keeps the names).
-B3. CONNECT FROM THE BACK OFFICE (route a; route b uses the partner's own
-    page instead). An Admin-only page that runs Meta's Embedded Signup for
-    coexistence, exchanges the returned code for a business token, stores
-    the phone number id and token in the server's own key store (never on a
-    page, never in a log), and registers the webhook. Read Meta's current
-    Embedded Signup and coexistence pages first and follow them, not memory.
-B4. THE TEST (Word question 170's five conditions): Lakhbir sends one message
-    from the phone to his own second number or a colleague who agreed,
-    replies from it; Claude checks both show on an invented client's record,
-    replies once from the back office inside the window, and checks the box
-    locks after 24 hours (on a test clock). Report PASS or NO.
-B5. PAPER. Developer Spec (the WhatsApp rows), KEYS-AND-SWITCHES, the
-    recipients list note for Sadique (the phone's messages to clients are now
-    kept on the record and follow its retention; old chats are not taken),
-    the notices page if its WhatsApp wording names the opening message.
+B1. THE READER (src/connectors/whatsapp-export.ts, no network): reads an
+    export .zip (its _chat.txt or "WhatsApp Chat with ....txt") or a bare
+    .txt. Both phone formats: iPhone "[02/10/2026, 14:21:05] Name: text" and
+    Android "02/10/2026, 14:21 - Name: text". Lines without a date join the
+    message above. Attachments: iPhone "<attached: FILE>", Android "FILE
+    (file attached)" - matched to the file in the zip. WhatsApp's own notices
+    (encryption, joined, changed number) are skipped. "This message was
+    deleted" kept as written; "<This message was edited>" marked edited.
+    Dates read day-first (UK); if every day number is 12 or under and the
+    month-first reading is also possible, say so in B3. Times are UK local
+    time (Europe/London, clock changes handled). Built against Lakhbir's A1
+    files; red-proved on files with each feature.
+B2. THE UPLOAD (client's WhatsApp page, client_message.write): choose the
+    contact, choose the file. Limits: the .zip at most 100 MB, 500 files
+    inside; refuse paths that climb out of the folder, nested zips and
+    anything that is not a photo, video, voice note, PDF or Office document;
+    refuse a group chat (more than two names) with the words "Only one-to-one
+    chats can be added for now." Nothing is saved at this step.
+B3. THE CHECK: how many messages and files, first and last date, who is us
+    and who is the client (one click swaps them; a name that is neither is
+    refused), a warning for messages before the WhatsApp box was ticked, and
+    the date-order warning from B1. Then "Save to the record" or "Back".
+B4. SAVING: each message into whatsapp_messages (direction IN or OUT, kind
+    'imported', written_by the uploader, created_at = the message's own
+    time) and each file into the client's files, linked to its message; the
+    original .zip kept with the client's documents; an audit entry. A newer
+    copy of the same chat adds only messages not already there (matched on
+    contact, time, sender and text); the check says how many are new.
+    A migration adds whatever this needs (the next free number).
+B5. THE PAGE: the conversation shows imported messages as the thread does
+    today, "From a WhatsApp export added <date> by <name>" above them, photos
+    viewable. The reply box and "Send our opening message" are removed from
+    the page while the live connection is off (the code stays, switched
+    off); in their place "Reply to <first name> on the WhatsApp phone. To keep
+    newer messages, export the chat again and add it here." The list of
+    uploads (date, contact, how many messages, by whom) sits on the left.
+B6. PAPER. Developer Spec (the WhatsApp rows: manual upload; the live Meta
+    connection built and off), KEYS-AND-SWITCHES (no WhatsApp keys needed),
+    the recipients list note for Sadique (no transfer to Meta from us; the
+    copies follow retention), the notices page if its WhatsApp wording
+    describes the live connection or the opening message, the staff guide
+    (how to export a chat on iPhone and Android).
 
 When every line that could run is done: run every check in COORDINATES,
 re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
@@ -1801,8 +1785,8 @@ FROM PHASE 154a1 (4 Oct 2026), TWO LOOSE ENDS WITH THEIR HOME HERE, both
 DO NOT REOPEN what COORDINATES lists under "DECIDED - DO NOT REOPEN" (added
 4 Oct 2026: the VOA rating list, scrapped by Lakhbir; the Ordnance Survey
 licence email, not sent; Google Analytics, dropped for now; the Valuation
-Office email about its Rating Cost Guide, not sent; 5 Oct 2026: WhatsApp,
-the phone first, no opening template). A sweep that finds
+Office email about its Rating Cost Guide, not sent; 5 Oct 2026: WhatsApp by
+manual upload, no live connection). A sweep that finds
 older text saying otherwise corrects the text, not the decision.
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.

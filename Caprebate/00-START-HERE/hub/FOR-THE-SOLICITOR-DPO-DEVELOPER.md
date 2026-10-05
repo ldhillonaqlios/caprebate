@@ -922,7 +922,7 @@ Signed .............................  Date ..........................
 
  **For the data protection officer. Board item 12927931400.**
 
- _5 October 2026 (planning): WhatsApp will work phone first (Lakhbir's choice; Phase 156c). His business number stays on the WhatsApp Business app and is also connected to the back office through Meta. So the messages he sends clients from his phone will be kept on the client's record too, under the same retention rule as other client messages; old phone chats are not taken (we decline Meta's offer to share them), and the phone's contact list is not taken. If Phase 156c needs a Meta partner company to connect the number, that company is a new processor for you to approve._
+ _5 October 2026 (planning): WhatsApp by manual upload (Lakhbir's choice; Phase 156c). Staff talk to clients on the WhatsApp phone; to keep a conversation they export that one chat and upload it, with its photos, to the client's record. The back office makes no connection to Meta and sends nothing, so there is no transfer to Meta from our system (the live connection already built stays switched off). Two questions for you, Phase 156c A2: (a) do the uploaded chats and photos follow the client-message retention rule? (b) messages dated before the client ticked the WhatsApp box — keep them, or leave them out on upload? Until you answer they are kept, with a warning on upload. Group chats are refused, so nobody but the client is added._
 
  _4 October 2026 (planning): Google Analytics is dropped for now (Lakhbir); it is off and receives nothing, so its row below needs no check until the marketing team picks it up again._
 

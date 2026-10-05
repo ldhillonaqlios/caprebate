@@ -69,7 +69,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       upload boundary.
 - [ ] Approve and publish the privacy notice naming every service (IONOS, Didit, Postcodes.io, Companies House, Zoom,
       GoAddress, Cloudflare, Google, Anthropic…). Then the testing waivers in the code are switched to "named".
-- [ ] Approve each US transfer for real clients: Zoom, WhatsApp (Meta), GoAddress, Anthropic, Cloudflare, Didit. _(WhatsApp, 5 Oct 2026: the messages sent from Lakhbir's phone will be kept on the client's record too; old phone chats are not taken — Phase 156c.)_
+- [ ] Approve each US transfer for real clients: Zoom, WhatsApp (Meta), GoAddress, Anthropic, Cloudflare, Didit. _(WhatsApp, 5 Oct 2026: no transfer to Meta from us any more — chats are exported on the phone and uploaded to the record, Phase 156c. Sadique's two questions are 156c A2.)_
 - [ ] With the director: are keys saved through the website's Admin tab (sealed with CAPREBATE_MFA_KEY) acceptable?
 - [ ] Approve Cloudflare (Turnstile) as a processor.
 - [ ] About 38 register entries in FOR-THE-SOLICITOR-DPO-DEVELOPER.md, and 26 Word questions.
@@ -104,7 +104,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 ## Licences and purchases
 
 - [ ] BCIS; the location and job-size adjustment; the professional fees percentage (from the surveyor, not the Valuation Office: 4 Oct 2026); CIBSE plant
-      lives; Homedata balance; Zoom Pro; GoAddress plan after 100 lookups. (WhatsApp messages: no Meta charge since 5 Oct 2026 — first contact from the phone, replies only within 24 hours; a partner company's fee only if Phase 156c A3 takes route b.)
+      lives; Homedata balance; Zoom Pro; GoAddress plan after 100 lookups. (WhatsApp: no cost — since 5 Oct 2026 chats are exported on the phone and uploaded to the record; no Meta connection.)
 
 ## For the developers (production, not test)
 

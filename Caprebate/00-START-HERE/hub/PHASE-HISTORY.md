@@ -11874,3 +11874,32 @@ Tracker check green; no code or test changed.
 
 - Which number, and whether it is on the WhatsApp Business app — Lakhbir — Phase 156c A1.
 - The route (our own Tech Provider app, or a partner) and everything after it — Phase 156c.
+
+## PLANNING, 5 October 2026, later — Phase 156c rewritten again: WhatsApp by manual upload, with photos (Opus 5.5, Mac copy, Lakhbir's MacBook Pro)
+
+**Run-sheet entry.** Planning - 5 October 2026 (Phase 156c rewritten again: manual upload). After looking at the live connection (Meta's Tech Provider checks, or a partner such as Dualhook at about £9 a month), Lakhbir chose a manual upload with photos: staff talk to clients on the WhatsApp phone, export one chat when it should be kept, and upload it to the client's record, which shows it as a thread with dates, times and photos. No live connection, no partner, no Meta verification, no cost; the live code already built stays switched off. Phase 156c rewritten in the plan and on the run sheet; "DECIDED - DO NOT REOPEN" updated. Waiting on Lakhbir: two invented test exports. Two questions for Sadique. No code changed; figures unchanged (4,644). Branch claude/plan-156, PR 17.
+
+### What Lakhbir asked, and what he was told
+
+- Partner costs: 360dialog about €49 a month; Dualhook $12; YCloud a free plan (API access unconfirmed); Twilio about half a US cent a message each way (coexistence unconfirmed); team-inbox products £45–£75. Meta's own pricing page says replies inside the 24-hour window stay free, against some blogs that said otherwise from 1 October 2026.
+- Dualhook in depth: WADA BV, Antwerp, Belgium (0786.772.938), Belgian law; one developer; says it is a Meta Tech Partner (not confirmed); inbound messages go straight from Meta to us, outbound through its relay; it holds the Meta token; hosted on Vercel and Turso, no EU-only promise; its DPA uses the EU clauses with no UK addendum; liability capped at three months' fees. Coexistence (any route) disconnects if the Business app is not opened for 14 days.
+- Is the API the only way to show a conversation: for a live thread, yes; otherwise a chat export uploaded by hand (shown as a mock-up), or unofficial WhatsApp Web tools (ruled out).
+- Going to Meta direct: a Meta business account; business verification (Certificate of Incorporation and a recent bank statement or utility bill; 1–3 working days, up to 14); an app with a privacy link; app review with two screen recordings; then connecting the number. One to three weeks; free.
+- Export: one chat at a time, never the whole account (the chat backup cannot be read outside WhatsApp). Each line carries the date, time and sender, so the back office can order it; the phone's date setting, local time and saved names are checked on upload; reactions and quoted replies are not in the export.
+- Then: "go with manual upload, keep photos".
+
+### What was done
+
+- ACTION-PLAN.md: Phase 156c replaced (PART A: two invented test exports; Sadique's two questions. PART B: the reader for both phone formats, the upload with safety limits and group chats refused, the check, saving with top-ups that add only new messages, the page without a reply box, the paper); the "DECIDED - DO NOT REOPEN" WhatsApp entry rewritten (it replaces the coexistence entry from earlier the same day); the sweep's line. The run sheet's 156c replaced (code block checked equal to the file) and the sweep's note updated.
+- KEYS-AND-SWITCHES (no WhatsApp keys needed), WAITING-ON-PEOPLE, FOR-THE-SOLICITOR-DPO-DEVELOPER (the dated note for Sadique rewritten: no transfer to Meta from us; his two questions).
+- Board and tracker: 13201538871 renamed "Phase 156c - WhatsApp by manual upload: …" with an update and a note.
+
+### Checks
+
+Tracker check green; no code or test changed.
+
+### NOT DONE — each with its home
+
+- The two test exports — Lakhbir — Phase 156c A1.
+- Retention of the copies; messages from before the client agreed — Sadique — Phase 156c A2.
+- The build — Phase 156c PART B.
