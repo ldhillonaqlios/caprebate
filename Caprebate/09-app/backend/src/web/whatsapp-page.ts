@@ -162,18 +162,23 @@ function importBox(app: App, business_id: string, contacts: readonly PhoneContac
       <li>Tap their name, then <strong>Export chat</strong>, then <strong>Attach media</strong>.</li>
       <li>Save the .zip (to Files, or email it to yourself), then choose it here.</li>
     </ol>
-    <form method="post" action="/staff/clients/${business_id}/whatsapp/import" enctype="multipart/form-data" class="pblock" id="wa-import" aria-labelledby="wa-import-h">
+    ${importForm(business_id, contacts, pick)}
+    ${ups.length === 0 ? raw('') : h`<h3>Chats added</h3><ul class="plainlist">${ups.map((u) => h`<li>${localStamp(u.uploaded_at, app.now())} · ${u.contact} · ${u.status === 'SAVED'
+      ? `${String(u.added ?? 0)} message${u.added === 1 ? '' : 's'} added by ${u.by}${u.files_waiting > 0 ? ` · ${String(u.files_waiting)} file${u.files_waiting === 1 ? '' : 's'} still to add` : ''}`
+      : h`waiting to be checked — <a href="/staff/clients/${business_id}/whatsapp/import/${u.id}">check it</a>`}${u.status === 'SAVED' && u.files_waiting > 0
+      ? h` — <a href="/staff/clients/${business_id}/whatsapp/import/${u.id}">add them</a>` : raw('')}</li>`)}</ul>`}`;
+}
+
+/** PHASE 156c: the upload form alone — on the WhatsApp page and on the company's conversation (src/web/communication.ts). */
+export function importForm(business_id: string, contacts: readonly PhoneContact[], pick: string | null): Safe {
+  return h`<form method="post" action="/staff/clients/${business_id}/whatsapp/import" enctype="multipart/form-data" class="pblock" id="wa-import" aria-labelledby="wa-import-h">
       <label class="fl" for="wa-imp-to">Whose chat is it</label>
       <select class="fi" id="wa-imp-to" name="contact_id" required>${contacts.map((c) => h`<option value="${c.id}"${c.id === pick ? raw(' selected') : raw('')}>${c.name} — ${c.shown}</option>`)}</select>
       <label class="fl" for="wa-imp-file">The exported chat (.zip or .txt)</label>
       <input class="fi" id="wa-imp-file" name="export" type="file" accept=".zip,.txt,application/zip,text/plain" required>
       <p class="help" id="wa-imp-note">Nothing is added yet: you check it first. A big export is opened on this computer, and only the chat’s words and the files from the dates you keep are sent.</p>
       <p><button class="cta" type="submit">Upload and check</button></p>
-    </form>
-    ${ups.length === 0 ? raw('') : h`<h3>Chats added</h3><ul class="plainlist">${ups.map((u) => h`<li>${localStamp(u.uploaded_at, app.now())} · ${u.contact} · ${u.status === 'SAVED'
-      ? `${String(u.added ?? 0)} message${u.added === 1 ? '' : 's'} added by ${u.by}${u.files_waiting > 0 ? ` · ${String(u.files_waiting)} file${u.files_waiting === 1 ? '' : 's'} still to add` : ''}`
-      : h`waiting to be checked — <a href="/staff/clients/${business_id}/whatsapp/import/${u.id}">check it</a>`}${u.status === 'SAVED' && u.files_waiting > 0
-      ? h` — <a href="/staff/clients/${business_id}/whatsapp/import/${u.id}">add them</a>` : raw('')}</li>`)}</ul>`}`;
+    </form>`;
 }
 
 /** PHASE 156c: the WhatsApp pages run one script of our own (the export reader), so their policy allows it and no more. */

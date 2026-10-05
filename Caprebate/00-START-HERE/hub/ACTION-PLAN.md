@@ -1378,10 +1378,6 @@ Office email about its Rating Cost Guide, not sent; 5 Oct 2026: WhatsApp by
 manual upload, no live connection). A sweep that finds
 older text saying otherwise corrects the text, not the decision.
 
-LOOSE END FROM PHASE 156c (5 Oct 2026): the Communication tab's one form still offers WhatsApp as a way to write
-(it says WhatsApp is not switched on). With WhatsApp by manual upload, point that choice at the WhatsApp page's "Add a
-WhatsApp chat" instead, or remove it while the live connection is off; restate test/conversations.test.ts to match.
-
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.
 
 Read TWO sections before you touch anything:

@@ -106,16 +106,23 @@ export function feed(c: Ctx): FeedItem[] {
           meta: e.state, isNew: e.unread, href: replyHref(c, `via=email&thread=${encodeURIComponent(ch.key)}`), hint: 'Click to reply' });
       }
     }
-    // WhatsApp, both ways.
-    for (const w of db.all<{ id: string; created_at: string; direction: string; body: string; status: string; error: string | null; contact_id: string | null; contact: string | null; writer: string | null; phone: string }>(
-      'SELECT w.id, w.created_at, w.direction, w.body, w.status, w.error, w.contact_id, c.full_name AS contact, u.display_name AS writer, w.phone FROM whatsapp_messages w ' +
-      'LEFT JOIN contacts c ON c.id = w.contact_id LEFT JOIN users u ON u.id = w.written_by WHERE w.business_id = ? ORDER BY w.created_at, w.id', [business_id])) {
+    // WhatsApp, both ways. PHASE 156c: a message added from the phone's export says so, is never "new", and our side is
+    // named as the phone named it. While the live connection is off, a click opens the WhatsApp page, not a reply here.
+    const waLive = whatsappMissing(c.app.secrets, c.app.whatsappPolicy, { outside: c.app.outside }).length === 0;
+    for (const w of db.all<{ id: string; created_at: string; direction: string; body: string; status: string; error: string | null; contact_id: string | null; contact: string | null; writer: string | null; phone: string; sender: string | null }>(
+      'SELECT w.id, w.created_at, w.direction, w.body, w.status, w.error, w.contact_id, c.full_name AS contact, u.display_name AS writer, w.phone, l.sender FROM whatsapp_messages w ' +
+      'LEFT JOIN contacts c ON c.id = w.contact_id LEFT JOIN users u ON u.id = w.written_by LEFT JOIN whatsapp_import_lines l ON l.message_id = w.id ' +
+      'WHERE w.business_id = ? ORDER BY w.created_at, w.id', [business_id])) {
       const ours = w.direction === 'OUT';
+      const imported = w.sender !== null;
+      const them = w.contact ?? `+${w.phone}`;
       out.push({ id: `w-${w.id}`, at: w.created_at, kind: 'whatsapp', ours,
-        who: ours ? `${w.writer ?? 'Cap Rebate'}, to ${w.contact ?? `+${w.phone}`}` : (w.contact ?? `+${w.phone}`), subject: null, body: w.body,
-        meta: ours ? (w.status === 'NOT_SENT' ? `Not sent${w.error === null ? '' : ` — ${w.error}`}` : w.status === 'FAILED' ? 'Not delivered' : w.status.charAt(0) + w.status.slice(1).toLowerCase()) : null,
-        isNew: !ours && w.created_at > marks.whatsapp,
-        href: replyHref(c, w.contact_id === null ? 'via=whatsapp' : `via=whatsapp&contact=${encodeURIComponent(w.contact_id)}`), hint: 'Click to reply' });
+        who: ours ? (imported ? `${w.sender} (on the phone), to ${them}` : `${w.writer ?? 'Cap Rebate'}, to ${them}`) : them, subject: null, body: w.body,
+        meta: imported ? 'From the phone' : ours ? (w.status === 'NOT_SENT' ? `Not sent${w.error === null ? '' : ` — ${w.error}`}` : w.status === 'FAILED' ? 'Not delivered' : w.status.charAt(0) + w.status.slice(1).toLowerCase()) : null,
+        isNew: !ours && !imported && w.created_at > marks.whatsapp,
+        href: waLive ? replyHref(c, w.contact_id === null ? 'via=whatsapp' : `via=whatsapp&contact=${encodeURIComponent(w.contact_id)}`)
+          : `/staff/clients/${business_id}/whatsapp${w.contact_id === null ? '' : `?contact=${encodeURIComponent(w.contact_id)}`}`,
+        hint: waLive ? 'Click to reply' : 'Open the WhatsApp chat' });
     }
     // Calls logged.
     for (const k of db.all<{ id: string; logged_at: string; outcome: string; notes: string; contact_id: string | null; contact: string | null; writer: string | null }>(
@@ -206,12 +213,41 @@ function people(c: Ctx): Choice[] {
     .map((p) => ({ id: p.id, name: p.full_name, email: p.email === null || p.email.trim() === '' ? null : p.email.trim(), phone: p.phone === null || p.phone.trim() === '' ? null : p.phone.trim() }));
 }
 
+/**
+ * PHASE 156c: while WhatsApp is not connected live, the way in for a chat from the phone (src/web/whatsapp-import.ts).
+ * Lakhbir, 5 Oct 2026: "doesnt it make sense to have the upload option on the companies conversation". The upload itself
+ * opens on the WhatsApp page, with the person last on WhatsApp chosen: a real export is far bigger than the test website
+ * takes at once, so that page runs a script that opens it on the person's computer — and this page carries no script
+ * (test/phase133a: every page reached from home works without one).
+ */
+function whatsappAdd(c: Ctx): Safe {
+  const obj = { type: 'client_message' as const, id: c.business_id, business_id: c.business_id };
+  if (whatsappLive(c) || !can(c.actor, 'client_message.write', obj)) return raw('');
+  const wa = W.phoneContacts(c.app.db, c.business_id, c.now);
+  const who = lastOnWhatsApp(c) ?? wa[0]?.id ?? null;
+  return h`<div class="wa-add" id="wa-add"><h3 id="wa-add-h">Add a WhatsApp chat</h3>
+    <p class="help">Talk to them on the WhatsApp phone. To keep the conversation here: on the phone, open the chat, tap their name, then <strong>Export chat</strong> and <strong>Attach media</strong>, and add the .zip.</p>
+    ${wa.length === 0 ? h`<p class="help">None of their contacts has a mobile number. Add one under People first.</p>`
+      : h`<p><a class="btn" href="/staff/clients/${c.business_id}/whatsapp${who === null ? '' : `?contact=${encodeURIComponent(who)}`}#wa-import">Add a WhatsApp chat</a></p>`}</div>`;
+}
+
+/** The contact this company last spoke with on WhatsApp, if any: the one a new chat is most likely with. */
+function lastOnWhatsApp(c: Ctx): string | null {
+  return c.app.db.get<{ c: string | null }>("SELECT contact_id AS c FROM whatsapp_messages WHERE business_id = ? AND contact_id IS NOT NULL ORDER BY created_at DESC LIMIT 1", [c.business_id])?.c ?? null;
+}
+
+function whatsappLive(c: Ctx): boolean {
+  return whatsappMissing(c.app.secrets, c.app.whatsappPolicy, { outside: c.app.outside }).length === 0;
+}
+
 function mayVia(c: Ctx): Via[] {
   const { actor, business_id } = c;
   const obj = { type: 'client_message' as const, id: business_id, business_id };
   const out: Via[] = [];
   if (can(actor, 'email.queue', { type: 'email', id: business_id, business_id })) out.push('email');
-  if (can(actor, 'client_message.write', obj)) out.push('whatsapp', 'portal');
+  // PHASE 156c: WhatsApp is offered here only while the live connection is on; otherwise the box says to use the phone
+  // and add the chat (see `composer`).
+  if (can(actor, 'client_message.write', obj)) out.push(...(whatsappLive(c) ? ['whatsapp' as const] : []), 'portal');
   if (can(actor, 'internal_note.write', { type: 'internal_note', id: business_id, business_id })) out.push('team');
   if (mayArrangeCalls(actor) && can(actor, 'client_message.write', obj)) out.push('zoom');
   if (can(actor, 'client_message.write', obj)) out.push('call');
@@ -404,7 +440,7 @@ export function communicationPanel(
     : [];
   const body = h`${doneWords === undefined ? raw('') : savedMessage(doneWords)}
     <div class="comms">
-      <section class="pane" aria-labelledby="cm-write-h"><h2 id="cm-write-h">Send a message</h2>${composer(c, p)}</section>
+      <section class="pane" aria-labelledby="cm-write-h"><h2 id="cm-write-h">Send a message</h2>${composer(c, p)}${whatsappAdd(c)}</section>
       <section class="pane" aria-labelledby="cm-flow-h"><h2 id="cm-flow-h">The whole conversation</h2>
         <form method="get" action="${base(c)}#chat" class="searchrow" role="search"><input type="hidden" name="chat" value="all">${show === null ? raw('') : h`<input type="hidden" name="show" value="${show}">`}
           <label class="vh" for="cm-q">Search this conversation</label><input class="fi" id="cm-q" name="q" type="search" maxlength="100" value="${search}" placeholder="Search this conversation — words, names, subjects…">

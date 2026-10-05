@@ -239,6 +239,14 @@ describe('156c · upload, check, save', () => {
     assert.match(r.body, /Open the photo/);
     assert.match(r.body, /Chats added/);
   });
+  test('the company\u2019s conversation shows them too: "From the phone", our side named as the phone named it, none of them "New"', async () => {
+    const r = await req('/staff/clients/b-156c?chat=all');
+    const flow = /<ol class="flow">[\s\S]*?<\/ol>/.exec(r.body)?.[0] ?? '';
+    assert.match(flow, /Lakhbir Invented \(on the phone\), to Ada Invented/);
+    assert.match(flow, /From the phone/);
+    assert.doesNotMatch(flow, /new-pill/);
+    assert.match(r.body, /<h3 id="wa-add-h">Add a WhatsApp chat<\/h3>/);
+  });
   test('history is not "new": no red dot, and WhatsApp\u2019s 24-hour window stays shut', () => {
     assert.equal(unreadWhatsApp(made.app.db, salesActor() as never, 'b-156c'), 0);
     assert.equal(windowOpenUntil(made.app.db, '447700900123', made.app.now()), null);

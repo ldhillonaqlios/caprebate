@@ -116,9 +116,10 @@ describe('WhatsApp', () => {
     made.app.secrets = secretsFromValues({});
     const s = await sales();
     const all = (await s.req('/staff/clients/b-wa-1?chat=all')).body;
-    // 1 Oct 2026: Communication — WhatsApp is one of the ways to write in its one form, and says it is not switched on yet.
-    assert.match(all, /<option value="whatsapp">WhatsApp<\/option>/);
-    assert.match(all, /WhatsApp is not switched on yet: Put the WhatsApp keys in the key file: WHATSAPP_ACCESS_TOKEN/);
+    // 1 Oct 2026: Communication — WhatsApp was one of the ways to write in its one form. PHASE 156c (5 Oct 2026): while it is
+    // not connected live it is not offered there; the company's conversation has "Add a WhatsApp chat" instead.
+    assert.doesNotMatch(all, /<option value="whatsapp">WhatsApp<\/option>/);
+    assert.match(all, /<h3 id="wa-add-h">Add a WhatsApp chat<\/h3>/);
     // 1 Oct 2026: WhatsApp has its own page — the conversation on the right, the message on the left.
     const page = (await s.req('/staff/clients/b-wa-1/whatsapp')).body;
     assert.match(page, /<section class="convo-write" id="compose"[\s\S]*<section class="convo-chain"/);
