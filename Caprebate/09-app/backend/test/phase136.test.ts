@@ -163,10 +163,11 @@ describe('the rows, in Lakhbir\'s order', () => {
     assert.match(r, /<p class="homelinks"><a href="\/staff\/pipeline">Open the pipeline<\/a>( · <a href="\/staff\/claims\?status=ON_HOLD">[^<]+<\/a>)? · <a href="\/staff\/reports">Reports: Figures by month, quarter or year<\/a><\/p>/);
   });
 
-  test('Admin\'s own row: Users, Switches, Audit log and Refused sign-ins', async () => {
+  // PHASE 156e (5 Oct 2026): Connections, every outside service, after Switches.
+  test('Admin\'s own row: Users, Switches, Connections, Audit log and Refused sign-ins', async () => {
     const t = tiles(row((await as('admin').get('/staff?view=admin')).body, 'admin'));
-    assert.deepEqual(t.map((x) => x.lines[0]), ['Users', 'Switches', 'Audit log', 'Refused sign-ins']);
-    assert.equal(t[2]?.lines[1], 'Checked — nothing changed');
+    assert.deepEqual(t.map((x) => x.lines[0]), ['Users', 'Switches', 'Connections', 'Audit log', 'Refused sign-ins']);
+    assert.equal(t[3]?.lines[1], 'Checked — nothing changed');
   });
 });
 

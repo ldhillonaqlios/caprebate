@@ -327,8 +327,13 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     timeout_ms: 8_000, max_bytes: 512 * 1024, max_attempts: 2,
   },
   CLAUDE_DOCUMENTS: {
+    /* THE TRANSFER: Approved FOR TESTING on 5 October 2026 - Sadique Maskeen (data protection officer) approved Anthropic
+       as the document reader and the director signed, as relayed by Lakhbir in the chat with Claude (Phase 156e A2):
+       "Yes, for testing". Invented documents only. This opens the transfer and nothing else: both reading switches
+       (src/connectors/claude.ts, CLAUDE_SWITCHES) stay OFF, and ANTHROPIC_API_KEY is in the key file only, not in
+       Vercel and not in TEST_DEPLOY_KEYS, so the test website reads nothing. To be confirmed before real clients. */
     service_id: 'CLAUDE_DOCUMENTS', register_source: null,
-    base_url: 'https://api.anthropic.com', region: 'US', international_transfer_approved: false,
+    base_url: 'https://api.anthropic.com', region: 'US', international_transfer_approved: true,
     rate: { limit: 50, window_ms: 60 * 1000 }, rate_basis: 'depends on the account tier; cautious',
     timeout_ms: 120_000, max_bytes: 8 * MB, max_attempts: 3,
   },

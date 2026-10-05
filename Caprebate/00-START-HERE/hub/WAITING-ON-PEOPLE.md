@@ -44,7 +44,8 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       documented layout and tested on invented files only (Phase 156c). Put it in 09-app/backend/test/fixtures/whatsapp-export.
 - [ ] Sadique: approve Cloudflare (US) for testing, so the contact form's server check can run (Phase 156a A3.6).
 - [ ] The API steps in Phase 156 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
-      Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom: two free scopes and a check that the host is contact@ (no payment, one shared host: both DONE 5 Oct 2026, Phase 156d), Anthropic paperwork, GoAddress, Didit). Now Phases 156a to 156e. _Google Analytics was dropped for now on 4 Oct 2026; the marketing team may pick it up later._
+      Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom: two free scopes and a check that the host is contact@ (no payment, one shared host: both DONE 5 Oct 2026, Phase 156d), Anthropic paperwork (DONE for testing, 5 Oct 2026), GoAddress (who they are and where hosted; the paid plan after 100 lookups), Didit (how long it keeps results, in its console), Homedata (its key in Vercel and a balance)). Phase 156e, 5 Oct 2026, left these three as yours.
+- [ ] Zoom: hold one short test call and press "Ask Zoom how long it lasted" on its page — say what it shows (whether the free plan gives a call's length). Carried to the sweep, Phase 157. Now Phases 156a to 156e. _Google Analytics was dropped for now on 4 Oct 2026; the marketing team may pick it up later._
 - [ ] Send a test video from the iPhone through "Show us your building", and supply the tall hero video for the home
       page (PHASE-HISTORY ~11112-11160).
 - [x] Decide whether the stray local files on the Mac (`*.mutbak`, `*.new0929`, `api/index.mjs.new0929`,
@@ -58,7 +59,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Who approves the rate card (Word question 69).
 - [ ] Ask the accountant whether the fee-versus-benefit comparison should count VAT on our fee for clients who cannot reclaim it (Word question 59) — built on that recommendation on 4 Oct 2026 (Phase 153b), switched off, and dormant until we are VAT-registered.
 - [ ] Break fee and abort fee; fill the engagement letter's eight blanks with the solicitor.
-- [ ] Countersign the DPO's appointment; sign the Anthropic contract when Sadique approves it.
+- [ ] Countersign the DPO's appointment. _(Anthropic: approved by Sadique and signed, for testing, 5 Oct 2026 — relayed by Lakhbir. For real clients it is confirmed again.)_
 - [ ] Where the breach register lives and who may write to it (SDP-G1); the one-off adviser engagement (SDP-G2).
 - [ ] Take the draft letter of authority for Lakhbir's breach decisions to the solicitor and, if they agree, sign it (Word question 184; `06-commercial-and-governance/Caprebate-Letter-of-Authority-Breach-Deputy-DRAFT-v0.1.md`, Phase 153c).
 - [ ] Agree the draft deputy route for rights requests and complaints, with you countersigning (Word question 56; complaints pack 3.5A, rights procedure 5.9A, Phase 153c).

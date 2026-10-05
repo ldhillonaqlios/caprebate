@@ -194,10 +194,11 @@ export function switchedOn(source_id: string, switches: Readonly<Record<string, 
  * CAPREBATE_LOOKUPS_HERE=1. A copy on a computer, and every test that does not say otherwise, sees the switches above.
  */
 export const TEST_WEBSITE_LOOKUPS = Object.freeze({
-  sources: Object.freeze(['CQC', 'EPC', 'HMLR_PPD', 'PLANNING']) as readonly string[],
+  sources: Object.freeze(['CQC', 'EPC', 'HMLR_PPD', 'PLANNING', 'CIW', 'CARE_INSPECTORATE']) as readonly string[],
   waiver_record: 'Lakhbir Dhillon, 2 October 2026, in the chat with Claude, asked which lookups to switch on for the test ' +
     'website: "All the free ones" (EPC, price paid, planning applications, CQC). The privacy notice is a draft and is not ' +
-    'published. Test website only; real visitors are not affected.',
+    'published. Test website only; real visitors are not affected. 5 October 2026 (Phase 156e): asked whether that covers ' +
+    'the Welsh and Scottish care regulators\' downloaded lists (CIW, CARE_INSPECTORATE), he answered "Yes, include them".',
 });
 
 export const LOOKUPS_LOCAL_OPT_IN = 'CAPREBATE_LOOKUPS_HERE';

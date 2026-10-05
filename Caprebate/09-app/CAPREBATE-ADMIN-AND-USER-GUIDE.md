@@ -799,6 +799,16 @@ value, a "Takes effect" date and "Where it comes from".
 
 ### A10 · The switches no screen opens
 
+**The Connections page shows every outside service.** Go to **Settings**, then **Connections** (Address:
+`/staff/connections`). Only Admin can open it. Each row is one service, such as Zoom or Companies House. It says if
+its key is there, but never shows the key. It says if the service is on, what its switch is called, and when it was
+last used. It also says what the service still waits on. Nothing on this page changes anything.
+
+**Import the care regulators' lists each month.** Wales and Scotland publish their lists of care services as a file.
+Get the new file from the regulator's site. Choose it under that row, then press **Import it**. The page sends
+only the columns we keep. Names, phone numbers and emails in the file stay on your computer. Home shows a reminder when
+a list has not been imported this month.
+
 Each of these is built and tested, and **starts switched off**. No screen turns any of them on. The admin settings page
 refuses each one by name (A3). To change one, someone must change the code. That is done only once the person named
 below has answered.

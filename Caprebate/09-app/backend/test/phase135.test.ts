@@ -273,9 +273,10 @@ describe('one tab, two views', () => {
 });
 
 describe('Settings — Admin\'s one page of tiles', () => {
-  const TILES = ['Users', 'Switches', 'Document types', 'Automation', 'Email templates', 'Compliance', 'Audit log', 'Introducer fees'];
+  // PHASE 156e (5 Oct 2026): Connections, every outside service on one page, after Switches.
+  const TILES = ['Users', 'Switches', 'Connections', 'Document types', 'Automation', 'Email templates', 'Compliance', 'Audit log', 'Introducer fees'];
 
-  test('eight tiles in the brief\'s order, and every one opens', async () => {
+  test('nine tiles in the brief\'s order (Connections added by Phase 156e), and every one opens', async () => {
     const r = await as('admin').get('/staff/admin');
     assert.equal(r.status, 200);
     const tiles = [...r.body.matchAll(/<a class="tilelink" href="([^"]+)">\s*<span class="tilename">([^<]+)<\/span>/g)];
