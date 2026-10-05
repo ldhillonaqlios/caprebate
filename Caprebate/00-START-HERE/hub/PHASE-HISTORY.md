@@ -11981,3 +11981,19 @@ Back end `npm run check`: lint-sql clean, typecheck 0 errors, 2438 pass / 0 fail
 - Approving Cloudflare (US) for testing, so the contact form's server check runs — Sadique — WAITING-ON-PEOPLE.md.
 - Closing PRs 10 to 17 (their work is in main) — Lakhbir — WAITING-ON-PEOPLE.md.
 - A third test lookup for EPC and CQC is left in hand (2 of 3 used); none is needed.
+
+## PHASE 156b — DONE: email — the reply timer and signed emails (5 October 2026, Opus 5.5, Mac copy, Lakhbir's MacBook Pro)
+
+**Run-sheet entry.** Phase 156b - 5 October 2026 - DONE. The reply timer works: cron-job.org (Lakhbir's account) calls the website to read client replies, every run 200 OK; Lakhbir moved it from every minute to every 5 minutes. Emails are signed: caprebate.co.uk publishes SPF (IONOS), DKIM (s1-ionos and s2-ionos) and DMARC (p=none), and a test email from the back office scored 10/10 on mail-tester.com, so there was nothing to fix in code. No code changed; figures 1363 / 440 / 415 / 2438 = 4,656. Branch claude/phase-156b.
+
+### What was done and found
+
+- **DNS, read from outside (dig):** TXT on caprebate.co.uk "v=spf1 include:_spf-eu.ionos.com ~all"; s1-ionos and s2-ionos._domainkey are CNAMEs to IONOS with DKIM keys; _dmarc "v=DMARC1; p=none;"; MX mx00 and mx01.ionos.co.uk. So A2's DNS part was already done.
+- **The outgoing message (src/stubs/email-provider.ts), read:** From, Reply-To, To, Subject, Date, Message-ID on caprebate.co.uk, MIME-Version, plain text in base64; EHLO names caprebate.co.uk. Nothing a spam filter would mark down; mail-tester agreed (10/10).
+- **The reply timer:** POST /hooks/read-replies without the word answers the website's own refusal ("no word was sent"), so Vercel's protection is not in the way. Lakhbir's cron-job.org history (screenshot, 5 Oct): every run "Successful, 200 OK", every minute; moved to every 5 minutes (1,440 IONOS logins a day were more than needed; Admin's warning fires after 60 minutes without a read). The longer runs (6 to 11 s) are the website starting from idle.
+- **Not possible from here:** reading the mailbox_reads row or the Vercel logs (the connector's log access is refused, 403); the 200s in cron-job.org's history are the proof instead.
+- **Paper:** KEYS-AND-SWITCHES (the IONOS sending and reading rows), WAITING-ON-PEOPLE (the DKIM line ticked), ACTION-PLAN (the timer note; the mailbox row; section 6), the phase removed from the plan and the run sheet.
+
+### NOT DONE
+
+Nothing in this phase. (DMARC is p=none, which only watches; tightening it to quarantine is a later choice for the developers, not needed for testing.)

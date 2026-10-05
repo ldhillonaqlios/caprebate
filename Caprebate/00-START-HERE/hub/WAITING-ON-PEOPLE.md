@@ -15,7 +15,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 ## Lakhbir
 
 - [ ] Confirm or complete the ICO registration (ACTION-PLAN ~1828).
-- [ ] Check DKIM signing is on in IONOS (ACTION-PLAN ~1815; Phase 156 A4 has the steps).
+- [x] DKIM, SPF and DMARC for caprebate.co.uk — checked 5 Oct 2026 (Phase 156b): all published; a test email scored 10/10 on mail-tester.com.
 - [ ] Get the director's confirmation of the 3% fee and the other terms (Word question 215).
 - [x] Word question 11 — CLOSED 4 Oct 2026: neither licence email is sent (Lakhbir: the VOA rating list scrapped; "OS email no we dont need to send it"; on the Rating Cost Guide, "dont send it"). The fee percentage and the ageing method go to the surveyor (the free 45-minute call, Q9 and Q9a).
 - [ ] Book the free 45-minute surveyor call.
@@ -113,6 +113,8 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       lives; Homedata balance; Zoom Pro; GoAddress plan after 100 lookups. (WhatsApp: no cost — since 5 Oct 2026 chats are exported on the phone and uploaded to the record; no Meta connection.)
 
 ## For the developers (production, not test)
+
+- [ ] Before real clients: consider moving caprebate.co.uk's DMARC from p=none (watch only) to p=quarantine once its reports show only IONOS sending (Phase 156b, 5 Oct 2026).
 
 - [ ] A UK production host with a managed database, file store, key vault, HTTPS/HSTS and tested backups; move the
       data out of the US (Turso is in us-east-1 today).
