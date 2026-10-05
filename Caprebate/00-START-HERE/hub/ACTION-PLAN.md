@@ -1194,6 +1194,8 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
+ **Added 5 October 2026 by Phase 156a (first pass).** Checked by name: none of PART A is done yet (EPC, CQC, Ordnance Survey and both Cloudflare keys are not in Vercel; EPC and CQC are in the key file). B2 is done without waiting, because it needs no real key: `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are now in `TEST_DEPLOY_KEYS` (the rest of B2 was already built on 29 September: the page carries the configured site key, the server check is proved on Cloudflare's test keys in test/turnstile.test.ts), with test/phase156a.test.ts. B1, B3 and B4 wait on PART A, so this phase stays at the top.
+
 ## PHASE 156b — email: the reply timer and signed emails
 
  **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **The two email steps of the old Phase 156.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.

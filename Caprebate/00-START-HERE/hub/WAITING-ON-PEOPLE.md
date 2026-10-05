@@ -33,6 +33,11 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Others in the tracker: break and abort fee, clawback clause 13, Homedata licence facts, rate-card uplifts,
       solicitor brief, mailbox confirmation, Google Business Profile, bank and insurance, HMRC corporation tax,
       supplier breach clauses, and ten lower-priority items (Homedata, cyber security, hardware, brand, analytics…).
+- [ ] **Phase 156a PART A (checked 5 Oct 2026: none done yet).** A1 put EPC_API_TOKEN and CQC_SUBSCRIPTION_KEY from the key
+      file into Vercel; A2 sign up to the free OS Data Hub plan and add OS_DATA_HUB_API_KEY (Vercel and the key file);
+      A3 create the Cloudflare Turnstile widget and add TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY (Vercel and the key
+      file); A4 redeploy; A5 tell Claude. Steps in ACTION-PLAN.md, Phase 156a. Claude's lookups (B3) wait on these.
+- [ ] Sadique: approve Cloudflare (US) for testing, so the contact form's server check can run (Phase 156a A3.6).
 - [ ] The API steps in Phase 156 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
       Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom licence, Anthropic paperwork, GoAddress, Didit). Now Phases 156a to 156e. _Google Analytics was dropped for now on 4 Oct 2026; the marketing team may pick it up later._
 - [ ] Send a test video from the iPhone through "Show us your building", and supply the tall hero video for the home

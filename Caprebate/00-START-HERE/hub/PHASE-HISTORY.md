@@ -11903,3 +11903,24 @@ Tracker check green; no code or test changed.
 - The two test exports — Lakhbir — Phase 156c A1.
 - Retention of the copies; messages from before the client agreed — Sadique — Phase 156c A2.
 - The build — Phase 156c PART B.
+
+## PHASE 156a (first pass) — the Cloudflare keys read on the test website; Lakhbir's key steps still to do (5 October 2026, Opus 5.5, Mac copy, Lakhbir's MacBook Pro)
+
+**Run-sheet entry.** Phase 156a (first pass) - 5 October 2026. Checked by name only: none of Lakhbir's steps is done yet — EPC, CQC, Ordnance Survey and the two Cloudflare keys are not in Vercel (EPC and CQC are in the key file). Did the one line that needs no real key: the test website now reads TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY from Vercel (they were missing from TEST_DEPLOY_KEYS, so keys added there would have been ignored); test/phase156a.test.ts, four tests, three red on the old code (the fourth guards that Cloudflare stays unapproved). Also fixed a calendar test that failed only in the week of 5 October (it did not allow for the "Today" badge in a day's heading). The phase stays at the top: B1, B3 and B4 wait on Lakhbir's steps. Figures 1363 / 440 / 415 / 2430 = 4,648. Branch claude/phase-156a.
+
+### What was done
+
+- **The check of keys, names only.** Vercel (the connector's filter_project_envs, each "key" only): the five names are absent. The key file (names only): EPC_API_TOKEN and CQC_SUBSCRIPTION_KEY present with values; OS_DATA_HUB_API_KEY and both Turnstile names absent. So PART A (A1 to A5) is not done.
+- **B2.** Most of it was built on 29 September (src/connectors/turnstile.ts: the page carries the configured site key, the server check refuses a missing or rejected answer and passes a good one, proved on Cloudflare's test keys in test/turnstile.test.ts). What was missing: the two names in TEST_DEPLOY_KEYS (api/index.mjs), so the test website never read them. Added, with test/phase156a.test.ts (the names are read; the page then carries the configured site key; the start-up line moves from "no key" to "not approved"; the transfer stays NOT approved). test/phase151e.test.ts's list of names updated. international_transfer_approved stays false: Sadique's decision.
+- **A test that failed by date.** test/ui-tidy-calendar.test.ts "the week is seven boxes" read each day's heading as plain text; the real today gets a "Today" badge, so it failed every day from Monday 5 to Sunday 11 October 2026. The pattern now allows the badge; red on the old test today, green after.
+- **Paper.** KEYS-AND-SWITCHES (the Turnstile row); the Developer Spec (the Turnstile row; the figures); WAITING-ON-PEOPLE (156a PART A, and Sadique's Cloudflare approval); a dated note under 156a in the plan and on the run sheet.
+
+### Checks
+
+Back end `npm run check`: lint-sql clean, typecheck clean for this package, 2430 pass / 0 fail over 151 tracked files. Harness, phase3 and phase9 untouched (no engine or module change): 1363, 440, 415. Drift `--fast --expect 1363,440,415,2430`; tracker; CRM fold; register check.
+
+### NOT DONE — each with its home
+
+- PART A (EPC and CQC into Vercel; Ordnance Survey sign-up and key; Cloudflare widget and keys; redeploy) — Lakhbir — Phase 156a; WAITING-ON-PEOPLE.md.
+- B1 (confirm names and a new deploy), B3 (one test lookup each for EPC, CQC and Ordnance Survey), B4 (the keys docs) — Claude, after PART A — Phase 156a.
+- Approving Cloudflare for testing — Sadique — WAITING-ON-PEOPLE.md.
