@@ -1026,9 +1026,9 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 156d — Zoom: the paid licence, a user for each member of staff, and call lengths
+## PHASE 156d — Zoom on the free plan: a user for each member of staff, and call lengths if the free plan allows them
 
- **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **The old Phase 156's Zoom steps.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down; **rewritten 5 October 2026 so nothing is paid for** (Lakhbir: "yes change 156d so i dont pay"). The free Zoom plan is enough for testing: a call stops at 40 minutes (accepted for testing on 30 Sep 2026; appointments stay an hour long) and Zoom keeps no recording of its own. **Zoom Pro is a purchase for before real clients**, on the purchases list in hub/WAITING-ON-PEOPLE.md, not part of this phase. Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1079,6 +1079,7 @@ WHEN THE PHASE IS DONE, in this order:
    plain lines what was done and what is next.
 ═══════════════════════════════════
 
+
 RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
 into Vercel (project caprebate-test > Settings > Environment Variables,
 Production, Sensitive) and into the key file, by him. You may list NAMES in
@@ -1090,30 +1091,67 @@ the test website and invented data only, and each service's paper (privacy
 notice, the data protection officer's approval of a transfer) stays its own
 sign-off.
 
-PART A - LAKHBIR (old 156 A6) - ZOOM, A PAID LICENCE. The free plan ends calls
-at 40 minutes and has no cloud recording (walkthrough calls ask for it).
+NO PAYMENT IN THIS PHASE (Lakhbir, 5 Oct 2026). Never ask Lakhbir to upgrade,
+buy a licence or start a trial. If a step turns out to need a paid Zoom plan,
+stop that step, write it as "needs Zoom Pro - before real clients" in
+hub/WAITING-ON-PEOPLE.md and hub/KEYS-AND-SWITCHES.md, and carry on with the
+rest.
 
-A1. 1. zoom.us > Admin > Account management > Plans and billing: upgrade the
-       host user (ZOOM_HOST_EMAIL) to Pro.
-    2. marketplace.zoom.us > Manage > the app behind ZOOM_CLIENT_ID > Scopes:
-       add cloud recording read.
-    3. Sadique confirms Zoom's transfer for real clients (approved for testing
-       only).
-    4. Each call is hosted by its own member of staff (Phase 153f): add each
-       member of staff who takes video calls as a user on our Zoom account,
-       under the SAME email they sign in to Cap Rebate with, each with a Pro
-       licence. Anyone not on Zoom falls back to the shared host.
-    5. To see how long a call lasted and who came, add two more scopes to the
-       same app: meeting:read:past_meeting:admin and
-       meeting:read:list_past_participants:admin.
+PART A - LAKHBIR - ZOOM ON THE FREE PLAN. Nothing here costs money.
+
+A1. ADD EACH MEMBER OF STAFF AS A FREE USER, so each call is hosted by its own
+    member of staff (Phase 153f).
+    1. zoom.us > sign in as the account owner > Admin > User management >
+       Users > Add users.
+    2. Enter the SAME email they sign in to Cap Rebate with. User type:
+       Basic (free). They accept the invitation Zoom emails them.
+    3. If Zoom will not add a user without a paid plan, stop and tell Claude:
+       calls stay on the shared host (ZOOM_HOST_EMAIL), as they do today.
+    Anyone not added falls back to the shared host.
+A2. ADD TWO SCOPES (free), so Claude can try to read how long a call lasted
+    and how many joined: marketplace.zoom.us > Manage > the app behind
+    ZOOM_CLIENT_ID > Scopes > Add scopes: meeting:read:past_meeting:admin and
+    meeting:read:list_past_participants:admin. Save. Do NOT add cloud
+    recording: the free plan has none.
+A3. (Paper, no cost; unchanged.) Sadique approves Zoom's transfer for real
+    clients - it is approved for testing only. Already in
+    hub/WAITING-ON-PEOPLE.md; nothing new to do here.
 
 PART B - CLAUDE
 
-B1. (old 156 B6) Once step 5's scopes are on: after a call, read GET
-    /v2/past_meetings/{meetingId} (its duration) and /participants (how many
-    came; keep the count and the minutes, never a name or an email); show
-    them on the call and the Communication tab, with a test on recorded
-    answers, red on the code before.
+B1. FIND OUT WHAT THE FREE PLAN ALLOWS. After A2, ask Lakhbir to hold one
+    short test call through the back office (invented client, under 40
+    minutes). Then read GET /v2/past_meetings/{meetingId} and
+    /v2/past_meetings/{meetingId}/participants for it, and write down what
+    Zoom answers (200, or the error code and message) in
+    hub/KEYS-AND-SWITCHES.md. Never print or keep a name or an email from
+    the reply.
+B2. IF ZOOM ANSWERS 200: after each call keep the minutes and the number of
+    people who joined (never a name or an email) and show them on the call
+    and the Communication tab, with a test on recorded answers, red on the
+    code before.
+    IF ZOOM REFUSES because the plan is free: build nothing that calls it.
+    Where the minutes would show, say "Call length: not shown on our Zoom
+    plan", so nobody thinks it is broken; write "needs Zoom Pro - before real
+    clients" in the two hub pages.
+B3. SAY THE 40 MINUTES PLAINLY. Calls are booked for an hour (SLOT_MINUTES)
+    but the free plan ends them at 40. Add one plain line where staff book a
+    video call and in the invitation: "On our current Zoom plan a call ends
+    after 40 minutes. If it does, use the same link to start again." Keep it
+    behind one setting that says the plan is free (on by default), so it
+    goes when Pro is bought; test both ways.
+B4. THE "RECORDED" PROMISE. The client's walkthrough page
+    (src/web/evidence-pages.ts ~248) says "The call is recorded so your
+    surveyor can watch it". On the free plan only the host's own computer can
+    record. Check how that recording reaches the surveyor (saved by the host,
+    then added to the claim's evidence), write it into the staff guide in
+    plain words, and make the client's line true for the free plan. Do not
+    promise a recording Zoom keeps.
+B5. Where A1 is done for a member of staff, check one of their test calls is
+    hosted by them, not the shared host.
+B6. In hub/WAITING-ON-PEOPLE.md and hub/KEYS-AND-SWITCHES.md, keep "Zoom Pro"
+    only as "before real clients, not needed for testing", with the reasons:
+    40 minutes, no recording kept by Zoom, and B1's answer.
 
 When every line that could run is done: run every check in COORDINATES,
 re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
