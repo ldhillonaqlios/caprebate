@@ -720,7 +720,8 @@ describe('the room schedule, and the difference between “none” and “not co
   test('every room id is unique across the five sectors', () => {
     const ids = allRoomIds();
     assert.equal(new Set(ids).size, ids.length, 'two sectors share a room id — a count would collide');
-    assert.equal(ids.length, 49, 'the transcribed schedule has changed size; re-derive it');
+    // Phase 153e (Word question 148): 49 + the four other spaces of a theatre suite (anaesthetic, preparation, scrub, recovery).
+    assert.equal(ids.length, 53, 'the transcribed schedule has changed size; re-derive it');
     for (const sector of ['dental', 'gp', 'care_homes', 'supported_living', 'private_hospital']) {
       assert.notEqual(roomsFor(sector), null, `${sector} has no room schedule`);
     }

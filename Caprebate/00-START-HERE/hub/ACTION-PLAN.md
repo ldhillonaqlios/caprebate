@@ -1,6 +1,6 @@
 # Caprebate — the action plan
 
- **THIS IS THE DOCUMENT TO WORK FROM. **The phase prompts sit at the top, ready to copy and paste. Everything below them is the plan itself: what the business is, what is genuinely finished, what is stuck and on whom, the order to work in, and an honest list of what we do not know.
+ **THIS IS THE DOCUMENT TO WORK FROM. **The phase prompts sit at the top, ready to copy and paste. **Since 4 October 2026 Lakhbir pastes them from the monday.com RUN SHEET** (the document on the CAPREBATE ACTION PLAN item), which holds the same phases at its very top and a short log of what each finished phase did at its end; this file is the full copy in OneDrive and is kept the same (rule 6 under "How the phases at the top of this document work"). Everything below them is the plan itself: what the business is, what is genuinely finished, what is stuck and on whom, the order to work in, and an honest list of what we do not know.
 
  **Where everything lives, since 25 September 2026: in files, and monday.com is gone.** On 25 September 2026 Lakhbir became a guest on the monday.com account that held this project, and every monday.com call began to fail ("the account admin must enable 'Public Hosted MCP'"). He decided to drop monday.com that day. **Phase 151d exported everything it held, checked it complete, and made it files in `00-START-HERE/hub/`**, committed to the repository: this plan (`ACTION-PLAN.md`); `PHASE-HISTORY.md`, which records what every completed phase actually did and is an archive, not a runbook; the three live registers of everything waiting on a named person's signature (`FOR-THE-ACCOUNTANT.md`, `FOR-THE-SURVEYOR.md`, `FOR-THE-SOLICITOR-DPO-DEVELOPER.md`); the board, as `TRACKER.csv` (read `TRACKER.md`, and change it only with `node 03-app/caprebate-tracker.cjs`); the comments the board carried, as `COMMENTS-ARCHIVE.md`; the old monday.com questions document, as `QUESTIONS-BACKGROUND.md` (background only); and the lock, `CLAIM.md`. The exports themselves are kept unedited in `_archive/`. **Every open question and every answer is in the Word document Caprebate_Questions.docx**, in Lakhbir's OneDrive (Health Capital Allowances folder): the source of truth for questions and answers (Lakhbir, 22 September 2026), read and written as AMENDMENT 2 says. Where this plan says "the question that unblocks it", the question is in the Word document. **Where older text below says "the board", read the tracker; where it says a board item, read its row, found by the same id.**
 
@@ -435,13 +435,65 @@ REWRITTEN 25 SEP 2026 BY PHASE 151d, THE DAY monday.com WAS DROPPED. Lakhbir
 became a guest on the seveneightsixmediagroup monday.com account and every
 connector call began to fail ("the account admin must enable 'Public Hosted
 MCP'"); he decided to leave monday.com that day. Everything it held was
-exported, checked complete, and is now a file in the repository. DO NOT CALL
-ANY monday.com TOOL. Every monday.com-only trap (block ids and positions, the
+exported, checked complete, and is now a file in the repository.
+CHANGED 3 AND 4 OCT 2026 (Lakhbir): monday.com is the main board again, and
+its doc 18429698457 is the run sheet the phases are pasted from. Follow the
+note under "How the phases at the top of this document work" and each
+phase's banner; OneDrive stays the full copy. Every monday.com-only trap (block ids and positions, the
 25-item limit, document columns, asset ids, re-uploading files) was deleted
 with it; the old blocks, and the 25 dated notes that sat under them, are
 verbatim in the export in _archive/ if a record is ever needed.
 IT IS TWO BLOCKS; the second follows directly. They are files now, so correct
 a fact IN THE BLOCK, never in a note beneath it.
+
+DECIDED - DO NOT REOPEN. Lakhbir's settled decisions that a phase or a sweep
+keeps meeting in older text. Do not rebuild, re-ask or re-list them.
+  THE VOA RATING LIST - SCRAPPED (Lakhbir, 4 Oct 2026: "scrap the VOA
+    rating"). Its licence restricts it to business rates purposes ("An open
+    government licence does not apply"; read by Phase 155). Floor area comes
+    from the EPC register, Homedata's estimate (paid, off) and the surveyor.
+    The tracker row (12830205481) is SCRAPPED in group Z and archived on
+    monday.com; the source register keeps the VOA row, its licence
+    VOA_RATING_LIST with every channel shut, and the panel says "not built";
+    the phase9 importer stays unshipped and nothing is to wire it in. Older
+    text that says VOA is "waiting on the licence" is history.
+  THE ORDNANCE SURVEY LICENCE EMAIL - NOT SENT (Lakhbir, 4 Oct 2026: "OS
+    email no we dont need to send it"). Email 2 of tracker 12933604947 is
+    dropped. Nothing waits on it: site size and a boundary plan rest on HM
+    Land Registry's conditions, and the building outlines (Phase 156a A2) use
+    the free OS OpenData plan, which needs no letter. Without it the building
+    footprint is not taken from Ordnance Survey's paid maps; the client or
+    the surveyor gives it, as today.
+  GOOGLE ANALYTICS - DROPPED FOR NOW (Lakhbir, 4 Oct 2026: "we can drop this
+    and marketing can pick it back up in the futer during development if
+    needed"). The code built by Phase 146f stays as it is, OFF (no
+    GA4_MEASUREMENT_ID, nothing loads); no phase asks for the measurement ID
+    or sets it up. Only the marketing team, through Lakhbir, picks it up
+    again. Tracker 12552691720 stays "Parked - deliberate".
+  THE VALUATION OFFICE EMAIL (its Rating Cost Guide) - NOT SENT (Lakhbir, 4
+    Oct 2026: "dont send it"). Email 1 of tracker 12933604947 is dropped, so
+    both licence emails are gone and that item is closed. The guide's purpose
+    clause keeps it to the Valuation Office's own rating work, so nothing of
+    ours uses it: not its fee bands, not its ageing scale. Instead the
+    SURVEYOR sets (1) the professional-fees percentage (the flat 15% in the
+    cost model is a rule of thumb with no source - the design team's fees
+    the client paid on top of the build cost, NOT our 3% fee, which is fixed)
+    and (2) the ageing method (both built, off, awaiting the surveyor's
+    ruling, tracker 12927234437); BCIS (once bought) gives build costs and
+    CIBSE Guide M (free) gives plant lives. Both questions are on the free
+    45-minute surveyor call (its Q9 and Q9a). The cost model's empty
+    CB_VOA_FEE_SCALE table and its switches stay off; older text saying
+    they wait on "the VOA licence" is history - they wait on the surveyor.
+
+  WHATSAPP - BY MANUAL UPLOAD, WITH PHOTOS (Lakhbir, 5 Oct 2026: "go with
+    manual upload, keep photos"). Staff talk to clients on the WhatsApp phone;
+    to keep a conversation they export that chat and upload it to the
+    client's record, which shows it as a thread. No live connection to Meta,
+    no partner (Dualhook and others were looked at and not chosen), no Meta
+    business verification, no cost; nothing is sent from the back office.
+    The live connection built in Phases 146-153f stays in the code, switched
+    off. (Earlier the same day he chose a live "coexistence" connection,
+    phone first; he replaced that with this.) Phase 156c builds it.
 
 WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   ACTION-PLAN.md                    this document
@@ -500,6 +552,16 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   /statuses); that address is behind Vercel's sign-in. The public address is
   https://caprebate-test.vercel.app. Each copy logs "test deployment: this
   copy started in N ms".
+  THE OUTSIDE REPLY TIMER (Phase 155 line 5, 4 Oct 2026): a cron-job.org job,
+  set up by hand by Lakhbir (Phase 156b A1) and held in HIS account - nothing
+  here can see or change it. Every 5 minutes it calls POST /hooks/read-replies
+  with "Authorization: Bearer <REPLY_TIMER_TOKEN>" (the word is in Vercel's
+  settings only; src/web/inbound-email.ts timerRefusal). Its history is on
+  cron-job.org (200 = read; 401/403 = word or Vercel protection). Ours: one
+  row, mailbox_reads (migration 088, times only). If it stops, replies wait
+  in the mailbox, nothing is lost, and Admin's home page warns after an hour
+  without a read, weekdays 09:00-17:30 UK (repliesStale, REPLY_WATCH). The
+  continuity plan's section 5 row says the same.
   SIGNING IN (Phase 151j, 28 Sep 2026): every staff login gives a second
   step (an authenticator app or an email code); a client may; a new account
   gets a temporary password shown once (7 days). login() itself refuses
@@ -609,7 +671,18 @@ OWNER TYPES - the six:  Claude . CTA . Lakhbir . Surveyor . Solicitor/DPO .
   actor with no login.
 
 THE HUB ROWS - the old monday.com items, found in the tracker by these ids
-  CAPREBATE ACTION PLAN     12976111942   -> hub/ACTION-PLAN.md
+  CAPREBATE ACTION PLAN     12976111942   -> hub/ACTION-PLAN.md; its monday
+                                             doc 18429698457 is THE RUN SHEET
+                                             again since 4 Oct 2026 (the live
+                                             phases on top, then DONE - ACTIONS
+                                             AND OUTCOMES); the doc as it was is
+                                             in 08-monday-doc-exports/
+                                             18429698457 is the doc's OBJECT id;
+                                             its API doc id is 46840326. Adding
+                                             blocks (add_markdown_content,
+                                             create_block) fails with an internal
+                                             error on the object id - pass
+                                             46840326 (Phase 153a, 4 Oct 2026)
   CAPREBATE QUESTIONS       12976075805   -> the Word document (background:
                                              hub/QUESTIONS-BACKGROUND.md)
   PHASE HISTORY             12878920167   -> hub/PHASE-HISTORY.md
@@ -953,944 +1026,633 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 153a — the grant trace, the 24 switches' direction, recovery rows for the systems in use, and three document reconciliations
+## PHASE 156a — the missing keys in Vercel, and Ordnance Survey and Cloudflare set up, step by step
 
- **Model: Opus. Written 28 September 2026 by Phase 153.** Tracker row: "Phase 153a - what Phase 153 found and could build but did not ..." (13199500801, in 05 · FOR DEVELOPMENT). Runs next, then the sweep. **Why this exists.** Phase 153 carried five decisions into about fifty documents; its agents found six more things nobody has to answer anything for. Each is buildable today, so under AMENDMENT 1 each goes in a phase, not a sentence. **Test every line against its file first.**
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **The keys the test website is missing, from the key check of 4 October (names only), and the two free accounts it still needs.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
 
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
-═══════════════════════════════════
+ **Phase 156 was split into 156a to 156e on 4 October 2026.** Lakhbir: "lets break down phase 156 and include 156a this is a step by step on adding the missing keys in vercel and setting up OS, Cloudfare". The one Phase 156 held every outside service in one block (its PART A ten steps for Lakhbir, its PART B seven for Claude). It is now five phases, each one service area, run straight down the page. **Where each old step went**, so older text that says "Phase 156 A5" or "156 B3" can be followed:
 
-Mac copy. A .bak-phase153a sibling of every file you change.
+| Old step | Now | | Old step | Now |
+| --- | --- | --- | --- | --- |
+| A1 Cloudflare Turnstile | 156a A3 | | B1 Turnstile in the code | 156a B2 |
+| A5 CQC, EPC (and its OS addition) | 156a A1, A2 | | B3 test calls: CQC, EPC | 156a B3 |
+| A5 Homedata (key, balance) | 156e A1 | | B3 Companies House, Anthropic, Homedata calls; "answer it myself" | 156e B1, B2 |
+| A3 the reply timer | 156b A1 | | B2 WhatsApp | 156c B1 |
+| A4 IONOS signing | 156b A2 | | B4 the Connections page | 156e B3 |
+| A2 WhatsApp | 156c A1 | | B5 update the documents | every phase |
+| A6 Zoom | 156d A1 | | B6 Zoom's call length | 156d B1 |
+| A7 Google Analytics | 156e A5 | | B7 the care regulators' lists | 156e B4 |
+| A8 Anthropic, A9 GoAddress, A10 Didit | 156e A2, A3, A4 | | | |
 
-1. F-15'S REMAINDER - THE GRANT TRACE, BUILT AND SWITCHED OFF (12852269899,
-   Done with "remainder documented as future work"). Phase 153 checked: the
-   back end has claim_grants (migration 015, CRM 6 of 10) with a payer type
-   and a FREE-TEXT list of what each grant paid for, used only by the check to
-   leave the valuation stage. No figure is computed from it; the site's
-   engine still cuts the claim by one grant_fraction; the list is not linked
-   to the fixture taxonomy's cost items; nothing checks the payer type.
-   Build, behind a new switch that ships OFF: a grant traced to named
-   taxonomy elements reduces only those elements' qualifying expenditure,
-   an untraced grant keeps today's grant_fraction route, and the payer class
-   is validated against a closed list. N4 applies: an unknown trace is
-   untraced, never zero. Tests both ways, red on the code before. Then a
-   dated line in Module 00 (~545, "payer-class and traced-elements structure
-   remain absent") - run the harness and the drift checker after, as the
-   Module files are read by both. Whether grants reduce qualifying
-   expenditure element by element is the tax adviser's to confirm: add the
-   switch to the tax adviser's register and a Word question if none exists.
-2. THE 24 TAX ADVISER SWITCHES - WHICH WAY EACH ONE MOVES A CLAIM. The
-   Blockers page (00-START-HERE/"Caprebate — Blockers & What Unblocks
-   Them.html") said "nine of the twelve make claims bigger, one only
-   smaller"; verify-extraction.cjs now counts 24. Derive the direction of
-   each IN CODE (switch it on alone against a fixed set of states and compare
-   the cash figure, the way the cash route proof's --moves-from does), write
-   the split into the page and FOR THE ACCOUNTANT, and say how it was counted.
-3. RECOVERY ROWS FOR THE SYSTEMS IN USE. The continuity plan (08/
-   12552682536__Business-Continuity-and-Disaster-Recovery-Plan.md) has no
-   recovery rows for the test website (Vercel, its Turso database and Blob
-   store), GitHub, IONOS mail, or the back office. Draft them in the plan's
-   own format, each target marked "proposed - Sadique Maskeen, as plan owner,
-   to set", from what COORDINATES says about each; add a dated line to the
-   plan's register entry.
-4. THE SOP'S OWNER-NAME EXCEPTION. The standard operating procedures (08/
-   12552682457__..., step 3 ~283) keep a Land Registry owner-name exception,
-   while the by-hand title form (Phase 146k/146l) has no box for a name and
-   the officer said yes on 27 Sep to keeping an official copy that names a
-   private owner, read by a person and never by the document reader (Word
-   question 233, closed). Read both and make the SOP say what the system
-   does.
-5. THE TRANSFER WORDING (PL-P17). The breach communications pack (08/
-   12927894775) and the Article 14 assessment (08/12927987812) both mark
-   their letters' transfer paragraph "to be redrafted from the updated
-   recipients list" after monday.com was dropped. Redraft it from 06-.../
-   Caprebate-Recipients-of-Client-Personal-Data-v1.md (v1.3) as a proposal
-   for the officer; add the dated line to both register entries.
-6. THE SESSION RECORD'S s.9 ITEM 4 (02-modules-and-build-prep/Caprebate-
-   Session-Record-and-Build-Sequence-v1.md): "advise vs support" reads as
-   decided (the hybrid model, 28 Aug, brand guidelines 3.5). Confirm from the
-   source and add a dated line, or leave it and say why.
-7. A FLAKY TEST. test/phase152.test.ts:94, "a real sign-up request is sent
-   and blanked", failed at least three times on 28 Sep while several suites
-   ran at once ("Cannot read properties of undefined (reading 'body')"); alone
-   it passes 10 of 10, and Phase 153's clean full run passed 1,791. Find what
-   it reads that is not there under load (an email not yet in the outbox?),
-   make it wait for the thing itself rather than for time, and prove the fix
-   the Phase 152 way: fail it deliberately under the old wait, then hold under
-   30 busy processes (see how Phase 152 proved the grid tool's test).
-
-═══ CHECKED 3 OCTOBER 2026 — CORRECTIONS. They overrule the lines above where they differ. ═══
-MONDAY.COM IS THE MAIN BOARD AGAIN (Lakhbir, 3 Oct 2026): follow the note under
-"How the phases at the top of this document work" - it overrules this phase's
-banner. Write every change to the board AND to hub/TRACKER.csv.
-Line 1: the back end ALREADY checks the payer type against a closed list
-  (src/web/claim-facts.ts ~78, ~748; migration 015 ~97). What is missing is the
-  calculation: traced_elements is free text and the site file still uses
-  grant_fraction. Build it in the survey pack too: chapter 15 "Grants and VAT"
-  is unbuilt (src/web/pack-chapters.ts ~14) and pack-sums.ts has no grant
-  handling. Do it with 153b lines 12-13 (the same grant data).
-Line 2: run it AFTER 153b, which adds switches, or the count goes stale.
-Line 3: add rows also for Zoom, WhatsApp Cloud, GoAddress, Cloudflare
-  Turnstile, cron-job.org (the reply timer), Companies House, Postcodes.io,
-  Didit, and the Blob store now holding survey photos and videos.
-Line 4: the exception is at 08/12552682457...:284 AND repeated at :673. Fix both.
-Line 5: update the recipients list FIRST - v1.3 names none of Zoom, WhatsApp,
-  GoAddress, Cloudflare, Turso, Google or Didit. Sadique approved the Zoom,
-  WhatsApp and GoAddress transfers for testing (PHASE-HISTORY ~10908, ~10933);
-  record that. Do it with 153c line 13.
-Line 7: DONE on 30 Sep (PHASE-HISTORY ~10935; the cause was random seed ids
-  sorting Fenmoor first, not the outbox). Skip it. The two tests that now fail
-  now and then are 154a1 line 12.
-═══════════════════════════════════
-
-When every line is done: run every check in COORDINATES, re-derive the
-figures, update the registers you touched, and write the record.
-```
-
-
-## PHASE 153b — tax readings built on our recommendation, for the accountant to check
-
- **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13199454668 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
+ The board item "Phase 156" became 156a, with new items for 156b to 156e (all in 05 · FOR DEVELOPMENT, all in the tracker).
 
 ```
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 
-Mac copy. A .bak-phase153b sibling of every file you change.
+RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
+into Vercel (project caprebate-test > Settings > Environment Variables,
+Production, Sensitive) and into the key file, by him. You may list NAMES in
+Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
+never read, decrypt or print a value. A key in Vercel does nothing until its
+name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
+only on the next deploy. Nothing here switches anything on for real clients:
+the test website and invented data only, and each service's paper (privacy
+notice, the data protection officer's approval of a transfer) stays its own
+sign-off.
 
-Each is a tax reading the accountant (or a tax adviser they name) is asked about in Section 5 of the review document. Build every new reading behind its own switch, OFF in what ships, exactly as the 24 existing ones: the harness asserts them off, so a switch flipped in test is a deliberate, recorded change, never a side effect. Add each to the switch table (01-rulebooks/Caprebate-Phase-51-CTA-Switch-Table-v1.md) and FOR THE ACCOUNTANT. N4 applies throughout.
-READ THE ANSWERS FIRST: a line whose question has been answered in either
-Word document since 29 Sep is built to the answer, not the recommendation.
+THE CHECK OF 4 OCTOBER 2026 (names only, never a value) - re-check it first:
+  IN VERCEL ALREADY: Didit (3), Companies House, Zoom (6), IONOS sending (4)
+    and reading (4), GoAddress, REPLY_TIMER_TOKEN, CAPREBATE_MFA_KEY, the test
+    password, CAPREBATE_ORIGINALS_KEY, Turso (2), the Blob store.
+  IN THE KEY FILE BUT NOT IN VERCEL: EPC_API_TOKEN, CQC_SUBSCRIPTION_KEY.
+  IN NEITHER: OS_DATA_HUB_API_KEY, TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY.
+  (Not for this phase: WhatsApp - 156c; Homedata, Anthropic, Google
+  Analytics - 156e.)
+  How: the Vercel connector's filter_project_envs on the project, reading only
+  each "key"; the key file by name only:
+    awk -F= '/^[A-Z][A-Z0-9_]*=/{print $1}' ~/.caprebate-secrets.env
 
-1. Carry the no-claim test's VAT rule into the fee-versus-benefit comparison,
-   dormant until we are VAT-registered. (Word question 59: Once we charge
-   VAT, should the fee comparison include VAT for clients who cannot reclaim
-   it?)
-2. When the switch is on, set ‘seller could never claim’ from the ‘who did
-   you buy from’ answer and drop the extra question, as Lakhbir asked. (Word
-   question 73: If the seller was never allowed to claim, does the pooling
-   rule still apply?)
-3. When the switch is on, add the care-provider lease and Lakhbir's
-   confirming-letter template to the supported-living document list. (Word
-   question 77: Can a high-care scheme fall outside the rule about homes
-   altogether?)
-4. Add the same-business exception to the rates rulebook and both tax
-   summaries, showing the capped and uncapped lines side by side. (Word
-   question 85: Does the loss relief cap apply when losses are set against
-   the same business's profits?)
-5. Add a question behind the same switch: was the landlord's payment for the
-   shared parts? If yes, take it off the shared-parts share. (Word question
-   86: In supported living, does a landlord's payment come off before or
-   after the shared-areas share?)
-6. Add a line to the partnership tax summary warning that a repayment may
-   belong to former partners. (Word question 88: For partnerships, how long
-   can the tax return be changed, and how do partners benefit?)
-7. Add the loss-carried-back exception to Rulebook A and change the
-   estimate's word to ‘repayment of tax paid for last year’. (Word question
-   92: After the change window closes, can tax relief still give cash back?)
-8. Add a switch, off, that lets an otherwise complete election with no tax
-   reference stand outside the window. (Word question 95: Does a missing tax
-   reference make an election invalid, or can it be fixed?)
-9. Add a switch, off, that accepts a wrongly labelled election which meets
-   every rule of the correct section. (Word question 96: Is an election made
-   under the wrong section of the law still valid?)
-10. Add a check that limits an elected figure to the seller's own cost or the
-   sale price share, and says so to the client. (Word question 98: What
-   happens if an election sets too high a value from the start?)
-11. Add a ‘housing association or registered provider’ answer to the
-   supported-living funding question, treated as not a public body, with a
-   flag to check it gets no relief. (Word question 108: Is a private social
-   housing provider a public body for tax relief rules?)
-12. Add a claim-record check that stops an equal-share grant split reaching a
-   filed claim without the grant papers or the adviser's view. (Word question
-   109: How should we split a grant when we cannot tell what it paid for?)
-13. Add a yes/no confirmation to the claim record, in all sectors, that the
-   client has checked with the grant provider. (Word question 110: Is a
-   warning enough when claiming relief might force a grant to be repaid?)
-14. Change the dental help text to ‘no general NHS premises grant scheme like
-   the GP one’. (Word question 111: What does the dental funding rules'
-   statement on premises grants mean?)
-15. Write the stopping rule into Rulebook B and the ownership-history
-   checklist. (Word question 113: How far back should we search a building's
-   ownership history before stopping?)
-16. Produce the accountant report as a PDF, and export the return entries for
-   each year as a spreadsheet (CSV) beside it. (Word question 121: In what
-   format would you like us to send our results?)
-17. Rename the job cost model's tax adviser line to "our own tax adviser, if
-   we introduce one", figures unchanged. (Word question 191: Should our job
-   cost model still count a tax adviser's review on every surveyor job?)
-18. Keep the Companies House company type and map it: ltd and plc to company,
-   LLP to partnership with a confirm step, anything else asked. (Word
-   question 198: When Companies House says a client is an LLP, what kind of
-   business should our estimate treat it as?)
-19. Mark Homedata planning as the chosen planning source in the register
-   switches and research panel, still off until the account opens. (Word
-   question 202: Should we pay for planning history, or keep the free one
-   that asks us to go slowly?)
-20. Map the works-VAT answer to the fee VAT position, only for the same
-   business with nothing changed; other answers stay not known. (Word
-   question 226: Can a client's answer about VAT on their building work tell
-   us whether they can reclaim VAT on our fee?)
-
-═══ CHECKED 3 OCTOBER 2026 — CORRECTIONS. They overrule the lines above where they differ. ═══
-MONDAY.COM IS THE MAIN BOARD AGAIN (Lakhbir, 3 Oct 2026): follow the note under
-"How the phases at the top of this document work" - it overrules this phase's
-banner. Write every change to the board AND to hub/TRACKER.csv.
-Intro: the review JSON gives Word question 59 to the DIRECTOR and 191 and 202
-  to LAKHBIR, not the accountant (lines 1, 17, 19). No question has been
-  answered in either Word document since 29 Sep (checked 3 Oct).
-Lines 2, 3, 5, 11: the public estimate is now the four-stage funnel
-  (src/web/funnel4.ts; its own seller question ~423), not the site file's
-  flows. Build in both, or say which and why.
-Line 10: PARTLY built - src/web/pack-legal.ts ~174-201 caps the pack at the
-  elected value. Build only the check of the election against the seller's
-  cost or sale-price share.
-Lines 12-13: with 153a line 1.
-Line 16: the PDF is built (survey-report.ts, pdf-canvas.ts, report-signoff.ts,
-  emailed to the accountant with a sign-off link). Only the per-year CSV of
-  return entries remains.
-Line 17: the fields are `cta:` in 04-phase-work/phase9/caprebate-job-economics.cjs
-  ~144-145.
-Line 18: CONFLICTS with src/connectors/company-search.ts ~11, which keeps only
-  the fields the source register permits; company type is not one. Change the
-  permitted fields first (and ask Sadique), then map.
-═══════════════════════════════════
-
-When every line is done: run every check in COORDINATES (prove each new
-test red on the code before), re-derive the figures, update the register
-entry for each built item, note each question "built in Phase 153b" in
-the review document's Answer line, and write the record.
-```
-
-
-## PHASE 153c — data protection and the back office built on our recommendation, for Sadique to check; one test call per keyed connector
-
- **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13199468908 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
-═══════════════════════════════════
-
-Mac copy. A .bak-phase153c sibling of every file you change.
-
-Each is a question in Section 3 (Sadique) or a data protection paper for the director. Build it in the back end or the paper, usable in the test system with invented data only; nothing here may touch a real client. Record each in FOR THE SOLICITOR, THE DPO AND THE DEVELOPER as built, awaiting Sadique's viability check.
-READ THE ANSWERS FIRST: a line whose question has been answered in either
-Word document since 29 Sep is built to the answer, not the recommendation.
-
-1. Set the address lookup's keep-until period to seven years in the test
-   system, with reports still closed, marked as awaiting Homedata's answer.
-   (Word question 37: Who owns the address data, what are the rules, and how
-   long can we keep it?)
-2. Write an email-only test version of the surveyor breach clause (24 hours,
-   data.protection@caprebate.co.uk) beside the current draft. (Word question
-   55: How many hours should a surveyor have to tell us about a data breach,
-   and how?)
-3. Add the deputy route (Lakhbir decides, the director countersigns, the
-   regulator line) to the complaints pack and the rights-request procedure,
-   as a draft. (Word question 56: Who decides a data rights request or
-   complaint when the officer is away or is the subject?)
-4. Make 'Through the client' in the person register save only when the
-   published-notice route is recorded for the same person. (Word question
-   162: May we ask our client to pass our privacy notice to a stranger named
-   in our records?)
-5. Write the one-page review of the notices-page position and reword its
-   trigger to 'when the notices page goes live'. (Word question 165: Is the
-   review of our notices-page position due now that the brand name is
-   settled?)
-6. Add a 'next update due' (last update + 28 days) and a one-month 'target
-   outcome' date to each complaint in the complaints register, shown as our
-   target, not a legal deadline. (Word question 178: How often should someone
-   who complained get updates, and when should it be finished?)
-7. Add a restricted breach names list to the back office, readable only by
-   the officer and the named deputy, linked from each breach entry by
-   reference. (Word question 181: Once the back office is live, which breach
-   record is the official one?)
-8. Redraft section 3 of the privacy notice, the lawful-basis part of the
-   governance policies and the legitimate-interests assessment to split sole-
-   trader and company enquirers. (Word question 182: When someone enquires
-   for a company, what is our legal reason for holding their details?)
-9. Build an import of healthcare premises (business name, address, sector,
-   source) from open-licence registers, with no personal names and no
-   outreach feature. (Word question 183: Where will the healthcare property
-   list come from, and can we use it for marketing?)
-10. Draft a one-page letter of authority from CAP REBATE LTD to Lakhbir
-   Dhillon for breach decisions when the officer is unreachable. (Word
-   question 184: What written permission must CAP REBATE LTD give Lakhbir to
-   decide on data breaches?)
-11. Record "our copy, seven years" as the test reading in the retention
-   schedule, beside the officer's question on Anthropic's terms. (Word
-   question 192: When you said "data is stored for 7 years", whose copy did
-   you mean?)
-12. Give the scanned-page reader a per-document-kind allow list (starting with
-   contractor cost breakdowns, O&M manuals and building regulations
-   certificates), everything else refused. (Word question 193: Can a scanned
-   page be sent to the AI company whole, before we remove anyone's details?)
-13. Fill the notices page's Google blanks (who Google is, consent as the
-   basis, the US transfer safeguard) from Google's published terms and add
-   Google to the recipients list, marked for the officer to check. (Word
-   question 195: How should our privacy notice name Google, now that the
-   website will use Google Analytics?)
-14. Set the care regulator's cache window to 30 days in the test system and
-   show 'Source: Care Quality Commission, Open Government Licence' beside
-   each fact. (Word question 201: How up to date must information from the
-   care regulator be when we use it?)
-15. Add prior_claim, prior_owner_claim, entity and trigger to the approved
-   analytics labels, the estimate's calls and the allow-list check. (Word
-   question 208: What should we call the first four screens of our online
-   estimate when we count how many people reach each one?)
-16. Switch keeping uploads on in the test system only (invented files), with a
-   test proving Sales cannot open another team's client file. (Word question
-   219: How long do we keep the files clients upload, and who may open them?)
-17. Add a clean-up job that deletes website enquiries 12 months after they
-   were closed, writing a deletion-log entry for each. (Word question 222:
-   How long do we keep a closed website enquiry before it is deleted?)
-
-18. ONE TEST CALL PER KEYED CONNECTOR, under Lakhbir's five conditions for
-   test lookups (Word question 170, answered 25 Sep 2026). Checked by name
-   on 29 Sep: the key file holds Companies House, CQC, EPC and Homedata keys
-   and no test lookup has ever run (~/.caprebate-test-lookups.jsonl does not
-   exist). For CH_COMPANY, CQC and EPC: smoke-switched-on --who "Claude, for
-   Lakhbir" --why "prove the key (29 Sep review)", then ONE smoke each on the
-   defaults (our own company and 70 Whitehall) - never a client. Homedata
-   only once Lakhbir says the account holds a balance (Word question 207).
-   Report PASS or NO per connector; switch nothing on that ships.
-19. The identity check's testing waiver record (src/connectors/identity-
-   check.ts) describes Lakhbir as "director"; he is Head of Business
-   Development and the director is Jalil Ahmed. Correct the record's
-   wording and its test.
-
-═══ CHECKED 3 OCTOBER 2026 — CORRECTIONS. They overrule the lines above where they differ. ═══
-MONDAY.COM IS THE MAIN BOARD AGAIN (Lakhbir, 3 Oct 2026): follow the note under
-"How the phases at the top of this document work" - it overrules this phase's
-banner. Write every change to the board AND to hub/TRACKER.csv.
-Line 1: "Find my address" now uses GoAddress (src/connectors/address-lookup.ts,
-  30 Sep), not Homedata - add a GoAddress retention reading too.
-Lines 1, 11, 16 are all seven-year retention readings (Word questions 37, 192,
-  219): do them together.
-Line 5: /notices/ has been served as "not published" since 29 Sep.
-Line 12: PARTLY - a per-type "a person reads this, never our reader" state
-  exists (document-reading.ts ~274); add the allow list.
-Line 13: with 153a line 5 (the recipients list).
-Line 15: the "first four screens" are now the funnel's (funnel4.ts); put the
-  labels there.
-Line 16: PARTLY - Lakhbir answered on 2 Oct "Keep them, test only" for survey
-  photos and videos (src/web/survey-evidence.ts ~55-61; the client and the
-  surveyor may open them too). Build KEEP_ORIGINALS to that answer.
-Line 17: there are now two kinds of enquiry - the contact form (/enquiry) and
-  funnel leads (migration 061). Name both.
-Line 18: live calls since 30 Sep (GoAddress, Zoom, IONOS) were made outside the
-  smoke tool, so ~/.caprebate-test-lookups.jsonl still does not exist. Still
-  unproven: Companies House (switched on for testing, no recorded test call),
-  CQC, EPC, Homedata, the Anthropic key. The key file holds all five (names
-  checked 3 Oct). Do it with Phase 156 B3.
-Line 19: still there at src/connectors/identity-check.ts ~103 AND
-  src/connectors/test-lookups.ts ~5 ("as the director"). Fix both, with a test
-  that asserts the word.
-═══════════════════════════════════
-
-When every line is done: run every check in COORDINATES (prove each new
-test red on the code before), re-derive the figures, update the register
-entry for each built item, note each question "built in Phase 153c" in
-the review document's Answer line, and write the record.
-```
-
-
-## PHASE 153d — the commercial papers in test form, for the director and the solicitor
-
- **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13199500802 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
-═══════════════════════════════════
-
-Mac copy. A .bak-phase153d sibling of every file you change.
-
-Each is a question in Section 1 (the director). Every paper made here is a TEST copy, each filled term marked "test default, not agreed"; the real engagement letter's brackets are the director's and the solicitor's and are not filled. The test-default letter may be used by the portal in the test system only, and the letter tests must prove a real client can never be sent it.
-READ THE ANSWERS FIRST: a line whose question has been answered in either
-Word document since 29 Sep is built to the answer, not the recommendation.
-
-1. Add a fixed disposal fee, costed from the job cost model, to the disposal
-   note and the test system's quote, marked as a test default awaiting the
-   director. (Word question 23: What do we charge for help when a client
-   sells a property?)
-2. Make a test-only copy of the engagement letter with clause 5, clause 7(d)
-   and clause 13 filled with our defaults, each marked "test default, not
-   agreed". (Word question 33: What is our break fee, and do we charge an
-   abort fee or a fixed fee?)
-3. Fill clause 13's two terms in the test-only copy of the letter (see the
-   break fee line) and run the refund against it in testing. (Word question
-   34: If HMRC cuts a claim after we are paid, how much do we refund?)
-4. Draft one-page introducer terms (what makes a firm registered, the 10% on
-   the invoiced fee, clawback) and a client disclosure line, marked for the
-   solicitor. (Word question 42: Do we pay anything to an accountant who
-   sends us a client?)
-5. Add a three-level risk scale, a 25% ownership threshold and partnership,
-   LLP and trust client types to the money-laundering check, as test
-   defaults. (Word question 45: If anti-money-laundering rules apply, how do
-   we rate client risk?)
-6. Score the enquiry-support risk at 12 (High) before safeguards in the risk
-   register, and write a one-page list of insurance covers to put to a
-   broker. (Word question 62: How likely and how costly is our free,
-   unlimited help if HMRC checks a claim?)
-7. Fill clause 7(d) in the test-only copy of the letter (see the break fee
-   line). (Word question 196: Should clause 7 of our engagement letter name
-   IONOS, or say our email company is named in the privacy notice?)
-
-═══ CHECKED 3 OCTOBER 2026 — CORRECTIONS. They overrule the lines above where they differ. ═══
-MONDAY.COM IS THE MAIN BOARD AGAIN (Lakhbir, 3 Oct 2026): follow the note under
-"How the phases at the top of this document work" - it overrules this phase's
-banner. Write every change to the board AND to hub/TRACKER.csv.
-Lines 2, 3 and 7 fill the same test-only letter: do them together.
-Line 4: PARTLY - the 10% on the invoiced fee (Model C) is in
-  src/web/introducers.ts ~113-125; write the one-page terms paper.
-Line 7: email has been sent for testing since 30 Sep and clause 7 still does
-  not name IONOS (PHASE-HISTORY ~10912).
-═══════════════════════════════════
-
-When every line is done: run every check in COORDINATES (prove each new
-test red on the code before), re-derive the figures, update the register
-entry for each built item, note each question "built in Phase 153d" in
-the review document's Answer line, and write the record.
-```
-
-
-## PHASE 153e — the surveyor's workbench built on our recommendation, for the surveyor to check
-
- **Model: Opus. Written 29 September 2026 from the question review Lakhbir asked for.** Tracker row: 13199476474 (05 · FOR DEVELOPMENT). **Why this exists.** Lakhbir, 29 September 2026: "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its viable and if not we then correct it, again we are in a test environment at the moment." Every open question was reviewed that day against that rule; the full review, with each question's context, what is built and the recommendation, is `hub/QUESTIONS-REVIEW-2026-09-29.json`, and the questions are asked in `Caprebate - Unanswered Questions (29 Sep 2026).docx` beside the main questions document. **Read each question's entry in the JSON before you build its line.**
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
-═══════════════════════════════════
-
-Mac copy. A .bak-phase153e sibling of every file you change.
-
-Each is a question in Section 4 (the surveyor). Build in phase9, the back end's surveyor workspace or the report template, marked test only where the reviewer said so; placeholders stay labelled as placeholders, and nothing is presented to a surveyor as calibrated.
-READ THE ANSWERS FIRST: a line whose question has been answered in either
-Word document since 29 Sep is built to the answer, not the recommendation.
-
-1. Code the desk-first rule: desk-only when the required documents are all
-   present and no escalation trigger from the desktop-first policy fires;
-   otherwise flag 'site visit needed'; test system only. (Word question 129:
-   Can you value a building safely without ever visiting it?)
-2. Put the video capture script into the client portal as ordered steps with
-   a coverage score and a placeholder pass mark (test only). (Word question
-   130: When can a video walkthrough replace a site visit?)
-3. Code the evidence-level grid on price paid or invoice total with
-   placeholder limits; show the surveyor the level only; keep price withheld
-   until commit (test only). (Word question 131: Should the site-visit
-   decision use our hidden estimate or the price paid?)
-4. Add a floor-area apportionment for shared areas, fed from floor-plan
-   areas, with the flat 25% share as a labelled fallback (test only). (Word
-   question 133: Which shared areas in care homes count as part of someone's
-   home?)
-5. Set default groups for the four ventilation cases per the typed rule, flag
-   theatre and isolation systems for the surveyor, and add client questions
-   on purpose and specification (test only). (Word question 134: How do we
-   tell clinical ventilation from ordinary building ventilation?)
-6. Give the seven unplaced items the typed default placements in the fixture
-   list and room schedule (test only). (Word question 135: Where do emergency
-   lighting and six other items fit in our list?)
-7. Add a job-size banded preliminaries table (placeholder bands) and switch
-   on the by-source preliminaries rule in the test system. (Word question
-   136: Are we adding site running costs twice to every job?)
-8. Add a like-for-like adjustment step (date index, fees, demolition,
-   preliminaries) before the insurance cross-check and a 10% support limit
-   (test only). (Word question 137: How must we adjust our rebuild cost
-   before comparing it with insurance?)
-9. Add a way to re-set each sector range from finished, surveyor-signed
-   claims, and give supported living separate ranges per trigger (test only).
-   (Word question 138: Are our five sector percentage ranges anywhere near
-   right?)
-10. Add a regression test on the past claim with a percentage and pound limit
-   and a 0.01 split limit, plus a slot for a second untuned case. (Word
-   question 139: How close must our results be to a real past claim to pass?)
-11. Add the agreed planning-assumption wording to the report template's land
-   value and assumptions sections (test only). (Word question 145: What
-   should we assume about planning permission when valuing the land?)
-12. Work out the index factor from a BCIS index table and the purchase and
-   valuation dates (placeholder table until the product is bought). (Word
-   question 147: Which cost index should turn today's prices back to the
-   purchase date?)
-13. Change the hospital theatre count to count each space in the suite, with
-   its own equipment rows (test only). (Word question 148: Should an
-   operating theatre be counted as one room or several?)
-14. Set a 10% flag limit for price-per-square-metre fields in the blind
-   comparison (test only). (Word question 149: How big a gap is too big in
-   our blind test?)
-15. Add a 'seen on site' or 'from documents' label to each finding in the
-   report template and review screen. (Word question 150: Can you tell like-
-   for-like replacement from a site visit?)
-16. Add Homedata's dimensions item behind an off switch, labelled as an
-   estimate, and a five-home comparison against known areas. (Word question
-   203: Can we use a measured floor area when a building has no energy
-   certificate?)
-
-═══ CHECKED 3 OCTOBER 2026 — CORRECTIONS. They overrule the lines above where they differ. ═══
-MONDAY.COM IS THE MAIN BOARD AGAIN (Lakhbir, 3 Oct 2026): follow the note under
-"How the phases at the top of this document work" - it overrules this phase's
-banner. Write every change to the board AND to hub/TRACKER.csv.
-Intro: the surveyor's workspace is now the back end's survey pack (17 of its 23
-  chapters unbuilt, src/web/pack-chapters.ts), and there are two report
-  templates: phase9/surveyor-valuation-report-template-v2.md and
-  src/web/survey-report.ts. Say which each line goes in.
-Line 1: PARTLY - the inspection basis (desktop, video, visit) is recorded and
-  approval waits for it (survey-evidence.ts ~469-486). Add the desk-first rule.
-Line 2: PARTLY - stage 5 "Show us your building" built the checklist, a video
-  upload and a recorded Zoom call. Add the coverage score and pass mark.
-Line 7: the by-source rule exists, off, in phase9/caprebate-cost-model.cjs ~658,
-  but pack-sums.ts does not use the phase9 cost model: say which test system.
-  Overlaps the tracker row "Stop counting site overheads twice" (Built -
-  awaiting sign-off).
-Line 11: survey-report.ts has no planning wording; Q-RT-19 is open
-  (template-v2 ~553).
-Line 12: BCIS is not bought (Word question 218): placeholder table; see Phase
-  155 line 4.
-Line 13: src/web/pack-lines.ts ~81 maps a theatre to one room.
-Line 15: PARTLY - every pack value shows its source and the surveyor's stamped
-  changes; add the "seen on site / from documents" label.
-Word question 187 was answered in chat on 1 Oct (PHASE-HISTORY ~11047): the
-  drafts go to the surveyor pre-filled. It is not yet in the Word document.
-═══════════════════════════════════
-
-When every line is done: run every check in COORDINATES (prove each new
-test red on the code before), re-derive the figures, update the register
-entry for each built item, note each question "built in Phase 153e" in
-the review document's Answer line, and write the record.
-```
-
-
-## PHASE 153f — work found on 3 October that no phase held
-
- **Model: Opus. Written 3 October 2026 from the check of 153a–154 Lakhbir asked for that day.** **Why this exists.** The check found work recorded only in PHASE-HISTORY "Next:" lines or in code comments, in no phase; under AMENDMENT 1 each goes in a phase, not a sentence. Items only a person can do went to hub/WAITING-ON-PEOPLE.md instead.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Everything a phase needs is in files in the
-repository, github.com/ldhillonaqlios/caprebate, branch main. On the Mac the
-working copy is Development/, one level above the tree:
-/Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. MONDAY.COM is the main board again (3 Oct 2026): follow the
-note under "How the phases at the top of this document work". If you cannot
-read the plan, still: claim the work in hub/CLAIM.md (commit and push first; a
-claim already there stops you) and clear it at the end; retag what you touch
-in the tracker (node 03-app/caprebate-tracker.cjs); give every loose end a
-home; write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS
-SECTION. Work on a branch; never push to main; Lakhbir merges.
-═══════════════════════════════════
-
-1. SURVEY PACK STAGE 6 - the free lookups switched on in test and building
-   outlines on the report cover (PHASE-HISTORY ~11112, ~11123, ~11135) - exists
-   only on origin/claude/caprebate-back-office-vyu439, never merged. Read that
-   branch against main; bring across what still applies (rebuild on main if it
-   no longer merges), with its tests, or record why not.
-2. THE SURVEY PACK'S 17 UNBUILT CHAPTERS (src/web/pack-chapters.ts lists 23).
-   Write the order to build them in, which 153e lines each one carries, and
-   build as many as the phase can finish; carry the rest into a named phase.
-3. AN ENGINE DATE BUG: CB_ELECTION.windowOpen reads the real clock
-   ("Caprebate site.html" ~2794, new Date()) instead of the clock it is given,
-   noted 2 Oct (PHASE-HISTORY ~11066). Pass the clock in; a test with a fixed
-   date either side of the window.
-4. ZOOM: (a) one host per meeting - each call's assigned staff member must be
-   its host (~11956); (b) call length and attendees need an extra Zoom
-   permission (~11028) - say which scope, and add it to Phase 156 A6.
-5. THE OLD SIX-QUESTION SCREENS are still routed (src/web/assessment.ts ~42);
-   the four-stage funnel was to replace them (~10864). Remove the routes (send
-   old links to the funnel), keeping every record they made.
-6. WHATSAPP: (a) attachments are not downloaded; (b) there is no retention
-   rule for messages; (c) the funnel's consent box has not been checked against
-   Word answer 164 (~10865, ~10922-10923). Build (a) and (c); write (b) as a
-   reading for Sadique.
-7. WRITE THE ANSWERS INTO THE RECORD. Since 29 Sep answers were given in chat
-   and recorded only in PHASE-HISTORY and the code: Word question 187 (1 Oct,
-   the drafts go to the surveyor pre-filled), 219 (2 Oct, keep photos and
-   videos, test only), 230 and 231 (Turso and the Blob store work), and the
-   three transfer approvals for testing (Zoom, WhatsApp, GoAddress). Write each
-   into Caprebate_Questions.docx (AMENDMENT 2), the review JSON and the
-   FOR-THE-* register entries.
-8. THE TRACKER has not moved since 29 Sep: add rows for the funnel, Zoom,
-   WhatsApp, email sending and reading, the survey pack stages, the UI tidy
-   (phases 1-18), faster clicks 1 and 2, and phases 153f, 154a1, 155, 156; move
-   the 151e and 151i rows off "Ready - Lakhbir action" now Turso and the Blob
-   store work; run node 03-app/caprebate-tracker.cjs check.
-
-When every line is done: run every check in COORDINATES (prove each new test
-red on the code before), re-derive the figures, update the registers you
-touched, and write the record.
-```
-
-
-## PHASE 154a1 — the faults the 3 October sweep found, fixed
-
- **Model: Opus. Written 3 October 2026 from the full sweep and stress test Lakhbir asked for that day** (its raw outputs and scripts were in the session's scratchpad; every finding is restated here so nothing depends on them). **Why this exists.** Lakhbir, 3 Oct 2026: "looking at all the bugs found these should be fixed in phase 154a1". The sweep crawled 502 pages as every login with no 5xx and no broken link, held 140 requests a second with no error, and lost no write under 200 at once; these are what it did find. **Prove each fault on the code before you fix it** (a test red first), then green.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Everything a phase needs is in files in the
-repository, github.com/ldhillonaqlios/caprebate, branch main. On the Mac the
-working copy is Development/, one level above the tree:
-/Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. MONDAY.COM is the main board again (3 Oct 2026): follow the
-note under "How the phases at the top of this document work". If you cannot
-read the plan, still: claim the work in hub/CLAIM.md (commit and push first; a
-claim already there stops you) and clear it at the end; retag what you touch
-in the tracker (node 03-app/caprebate-tracker.cjs); give every loose end a
-home; write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS
-SECTION. Work on a branch; never push to main; Lakhbir merges.
-═══════════════════════════════════
-
-Tests go in Caprebate/09-app/backend/test. Break each fix on purpose to prove
-its test catches it. Never delete the stray local files (*.mutbak, *.new0929,
-api/index.mjs.new0929, test/_tmp152-*.test.ts, test/_probe146l.test.ts,
-test/assessment-start.test.ts, _crawl_roles.ts, _s2.ts): they are Lakhbir's.
-
-1. A 500 ON THE COMPLIANCE PERSON SEARCH. As Admin, POST
-   /staff/compliance/search with term = 50,000 characters answers 500 (40,000
-   answers 200): src/web/compliance-rights.ts ~766-769 builds a LIKE pattern
-   with no length limit and SQLite refuses a pattern over 50,000 bytes
-   (src/db.ts get). Cap the term as the other searches do
-   (compliance-identity.ts ~216 stops at 200; search.ts ~175 cuts to 100) and
-   say so in the refusal or the page.
-2. A CONTACT WITH NO NAME. As Sales, POST
-   /staff/organisations/{id}/contacts with no full_name field at all (body
-   "foo=bar", or empty) answers 303 and adds a nameless contact;
-   full_name= (present, empty) is refused 400 as it should be. Cause:
-   src/web/crm.ts ~1128-1131 starts the new contact's name as '' not null, so
-   take() (~336) keeps '' and the check at ~1081 (=== null) passes it.
-3. A REFUSED UPLOAD LEAVES THE CONNECTION HANGING. After a 413 (body too
-   large) on a kept-alive connection, the next request on it hangs about 6 s
-   and is reset. src/web/router.ts ~170-179 stops reading part-way;
-   src/server.ts ~203. Either drain (up to a cap) or send Connection: close
-   with the 413 and close it. Test with two requests on one connection.
-4. LABELS NOT TIED TO THEIR BOXES (screen readers). src/web/compliance-
-   views.ts ~30-45: the input(), area() and choose() helpers write
-   <label class="fl"> with no for= and not around the control - every
-   compliance form. Also staff.ts ~1217 and ~1239 (photo and working hours on
-   /staff/settings and /portal/settings), configuration-pages.ts ~118, ~154,
-   ~166 (the label box and the active/retired list on /staff/admin-settings,
-   flagged 58 and 36 times), crm-pages.ts ~436 (milestone note, placeholder
-   only) and finance-pages.ts ~546 (void reason, placeholder only). Add a test
-   that walks every page as every login and finds no labelled control without
-   for=/wrapping/aria-label.
-5. A CONTACT SAVED WITHOUT ITS COMPANY goes to /staff/clients/?done=contact,
-   a 404 (crm-pages.ts ~175-179). Send it back to a page that exists.
-6. HEADINGS THAT JUMP FROM h1 TO h3 on /staff/settings, /portal/settings, a
-   booking under /staff/calendar/ (staff.ts ~1107, ~1124) and the assessment
-   pages (staff.ts ~925). Make them h2.
-7. A DOUBLE CLICK MAKES TWO TASKS. Posting the same task twice at once
-   creates two. Add a one-time form token (or refuse an identical task from
-   the same person within a few seconds) and prove it with two posts at once.
-8. code{font-size:.9em} (assets.ts ~166) is 10.8 px inside 12 px text - under
-   the 12 px house rule. Set a floor.
-9. INVISIBLE CHARACTERS (a null and a right-to-left override) are stored and
-   shown back as typed in claim notes and portal messages. Strip control and
-   bidi-override characters on the way in (keep ordinary newlines), with a
-   test.
-10. STALE WORDS AND A LOG THAT SAYS TOO MUCH, in api/index.mjs:
-    (a) ~61 "No email is sent" - wrong since 30 Sep (EMAIL_SENDING is on for
-        testing); ~98 says Zoom is "still refused until Zoom's transfer is
-        approved" - wrong (it is approved for testing, connectors/sources.ts
-        ~256-270). Correct both comments.
-    (b) ~62-70 prints every unsent outbox email, body and all (sign-up links
-        included), to the Vercel function log - against the spec's "no
-        personal data in logs" (Developer Spec ~3743). Print counts and kinds
-        only, never an address, subject or body.
-11. THE SIGN-OFF REGISTER CHECK IS RED ON THIS MAC only because its built-in
-    suite run picks up the stray untracked test files (assessment-start: 7
-    fail, _tmp152-old: 2, _tmp152-mut: 1) and api/index.mjs.new0929 (the
-    "151i follow-up 4 ... vercel.json runs the build step" test). Do not
-    delete them: make the check run `git ls-files 'test/*.test.ts'` the way
-    every phase now counts the suite, and say so in its output; ask Lakhbir in
-    the record whether the stray files may go.
-12. TWO TESTS THAT FAIL NOW AND THEN: test/whatsapp.test.ts's "Communication
-    puts ... in one list, in order" (failed once in three runs even alone on 3
-    Oct) and test/survey-report.test.ts's "a wrong or broken link opens
-    nothing" (a link it broke at random opened, 200 - it looks like a change
-    to a base64url character that decodes the same). Make each deterministic
-    (fixed clock steps; break the link in a way that always changes it) and
-    prove it holds over 30 runs and under 30 busy processes.
-
-When every line is done: run every check in COORDINATES, re-derive the
-figures, update the registers you touched, and write the record.
-```
-
-
-## PHASE 155 — the services the plans name but nobody has built
-
- **Model: Opus. Written 3 October 2026 from the API audit.** **Why this exists.** Lakhbir, 3 Oct 2026: "Mentioned in the plans but not built: i feel like this needs to be phase 156". It became Phase 155 when he moved the services phase near the end, later the same day. Each is built the way every connector before it was: switched OFF in what ships, behind its own register switch, with the free gate shut, recorded answers in its tests, and no call to the real service from a test. **Find each source's terms first and write them into the source register (src/connectors/sources.ts) before any code**; a source whose terms forbid our use is recorded and NOT built.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Everything a phase needs is in files in the
-repository, github.com/ldhillonaqlios/caprebate, branch main. On the Mac the
-working copy is Development/, one level above the tree:
-/Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. MONDAY.COM is the main board again (3 Oct 2026): follow the
-note under "How the phases at the top of this document work". If you cannot
-read the plan, still: claim the work in hub/CLAIM.md (commit and push first; a
-claim already there stops you) and clear it at the end; retag what you touch
-in the tracker (node 03-app/caprebate-tracker.cjs); give every loose end a
-home; write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS
-SECTION. Work on a branch; never push to main; Lakhbir merges.
-═══════════════════════════════════
-
-1. CIW - THE CARE INSPECTORATE WALES. Its register switch exists
-   (src/connectors/registers.ts ~125) and the spec says "No endpoint
-   recorded" (Developer Spec ~2358, ~3364). Find CIW's published data (a
-   service directory download or an API), its licence, and how often it
-   changes. Build the connector to the CQC connector's shape
-   (src/connectors/cqc.ts): registration, places, provider; switched off.
-2. THE CARE INSPECTORATE (SCOTLAND). Named in the spec only (~2357): no
-   switch and no code. Add the register switch (off), find its datastore
-   download and licence, and build the same shape.
-3. THE VOA RATING LIST. The switch exists (registers.ts ~128) with no
-   connector; it is a bulk download with its own licence gate (spec ~2360).
-   Read the licence; if it allows our use, build an import (a local table,
-   refreshed on a command, never a live call per client) and the lookup by
-   address/UPRN, switched off.
-4. BCIS COST RATES. Chosen as the cost source, but BCIS publishes no API
-   licence and the product is not bought (Word question 218; app.ts ~179).
-   Build only what does not need the product: an import of the index table
-   from a file Lakhbir downloads, with a placeholder table labelled as such
-   until then (153e line 12 needs the index factor - do the two together or
-   say which phase does it).
-5. THE OUTSIDE REPLY TIMER, IN THE REPOSITORY. cron-job.org is set up by hand
-   (156 A3), so nothing in the repository says it exists. Write it into
-   COORDINATES and the continuity plan (who owns it, where its history is,
-   what happens if it stops), and add an Admin warning when replies have not
-   been read for more than an hour during working hours.
-6. THE THREE FILES A SERVER NEEDS: the ONS postcode table
-   (CAPREBATE_POSTCODE_DB, about 75 MB), OSTN15 (CAPREBATE_OSTN15_FILE) and
-   the INSPIRE store (CAPREBATE_INSPIRE_STORE_DIR). The test website runs on
-   Vercel functions, which cannot hold them. Write down, for the developers
-   who choose the production host, what each is, where it comes from, its
-   licence and its size; build nothing that pretends they are there.
-
-When every line is done: run every check in COORDINATES (prove each new test
-red on the code before), re-derive the figures, update the registers, and write
-the record.
-```
-
-
-## PHASE 156 — every outside service the build needs: what Lakhbir does, step by step, and what Claude builds
-
- **Model: Opus. Written 3 October 2026 from the API audit Lakhbir asked for that day.** **Why this exists.** Lakhbir, 3 Oct 2026: "all API's needed should be phase 155 and it should tell me step by step what i need to do and how to do it". Later the same day he moved it near the end ("i feel like this should be one of the last things, makes more sense"), so it is Phase 156, run after 155 and before the sweep. The anti-bot check on the contact form (Cloudflare Turnstile) does not work: the page shows Cloudflare's TEST key and the server check is off. The keys-and-switches list (hub/KEYS-AND-SWITCHES.md) is the state on 3 Oct; this phase moves it. **PART A is Lakhbir's** (accounts, keys, paperwork - Claude cannot sign up to anything or enter a key or a password); **PART B is Claude's**, and each PART B line runs only once its PART A step is done. **Nothing here switches a service on for real clients**: the test website and invented data only, and each service's paper (privacy notice, DPO approval of the transfer) stays as its own sign-off.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Everything a phase needs is in files in the
-repository, github.com/ldhillonaqlios/caprebate, branch main. On the Mac the
-working copy is Development/, one level above the tree:
-/Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. MONDAY.COM is the main board again (3 Oct 2026): follow the
-note under "How the phases at the top of this document work". If you cannot
-read the plan, still: claim the work in hub/CLAIM.md (commit and push first; a
-claim already there stops you) and clear it at the end; retag what you touch
-in the tracker (node 03-app/caprebate-tracker.cjs); give every loose end a
-home; write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS
-SECTION. Work on a branch; never push to main; Lakhbir merges.
-═══════════════════════════════════
-
-START by reading hub/KEYS-AND-SWITCHES.md, then ASK LAKHBIR which PART A steps
-he has done. Never ask him to paste a key into the chat: keys go into Vercel
-(Settings > Environment Variables, Production, type Sensitive) or the key file
-~/.caprebate-secrets.env, by him. You may list names in Vercel; never read or
-print a value. A key in Vercel does nothing until its name is also in
-TEST_DEPLOY_KEYS (api/index.mjs ~99) - that part is PART B.
-
-PART A - LAKHBIR, STEP BY STEP (one service at a time; tick each in
+PART A - LAKHBIR, STEP BY STEP (about 30 minutes; tick each in
 hub/KEYS-AND-SWITCHES.md, or tell Claude and Claude ticks it)
 
-A1. CLOUDFLARE TURNSTILE (the contact form's anti-bot check). Free.
-    1. Go to dash.cloudflare.com and sign in (or create a free account with
-       the company email).
-    2. In the left menu choose Turnstile, then "Add widget".
-    3. Name: "Caprebate contact form". Hostnames: caprebate-test.vercel.app
-       (add caprebate.co.uk later, when the real site goes live). Widget mode:
-       Managed. Create.
-    4. Cloudflare shows a SITE KEY and a SECRET KEY. In Vercel (project
-       caprebate-test > Settings > Environment Variables) add
-       TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY, Production, Sensitive.
-    5. Ask Sadique to approve Cloudflare as a US transfer for testing (its
-       line in connectors/sources.ts is not approved today).
-    Then tell Claude: PART B1.
-A2. WHATSAPP (messaging clients from the back office). Meta charges per
-    template message.
-    1. business.facebook.com: make sure CAP REBATE LTD has a Meta Business
-       account, verified (Business settings > Security centre).
-    2. developers.facebook.com > My Apps > Create app > type Business > add
-       the WhatsApp product, linked to that business account.
-    3. WhatsApp > API Setup: add a phone number that is NOT already used in
-       the WhatsApp app, and verify it by text or call. Copy its "Phone number
-       ID" -> WHATSAPP_PHONE_NUMBER_ID.
-    4. Business settings > Users > System users: add a system user (Admin),
-       give it the app and the WhatsApp account, and generate a token with
-       whatsapp_business_messaging and whatsapp_business_management, set to
-       never expire -> WHATSAPP_ACCESS_TOKEN.
-    5. App settings > Basic > App secret (Show) -> WHATSAPP_APP_SECRET.
-    6. Make up a long random word (40+ characters) -> WHATSAPP_VERIFY_TOKEN.
-    7. WhatsApp Manager > Message templates > Create: category Utility, a
-       short opening message; submit and wait for approval. Its name ->
-       WHATSAPP_OPENING_TEMPLATE; its language code (for example en_GB) ->
-       WHATSAPP_TEMPLATE_LANGUAGE.
-    8. Add all six to Vercel (Production, Sensitive) and redeploy.
-    9. App > WhatsApp > Configuration > Webhook: callback URL
-       https://caprebate-test.vercel.app/hooks/whatsapp, verify token = the
-       word from step 6. Subscribe to "messages".
-    10. Sadique confirms the Meta transfer (approved for testing only today)
-        and the privacy notice line.
-    The six names are already in TEST_DEPLOY_KEYS, so nothing else is needed
-    to start testing. Then tell Claude: PART B2.
-A3. THE REPLY TIMER (fetches replies to contact@ every few minutes).
-    You chose cron-job.org on 1 Oct; the website side is built and
-    REPLY_TIMER_TOKEN is set in Vercel.
+A1. EPC AND CQC INTO VERCEL (5 minutes). Both keys are already in our key file.
+    1. Open the key file: OneDrive > Health Capital Allowances > "Private -
+       keys (do not share)" > caprebate-secrets.txt (the Mac's
+       ~/.caprebate-secrets.env is a link to it). Copy from it; paste nowhere
+       but Vercel.
+    2. vercel.com > sign in > the caprebate-test project > Settings >
+       Environment Variables > Add New.
+    3. Key: EPC_API_TOKEN. Value: everything after "EPC_API_TOKEN=" on its
+       line (no quotes, no spaces). Environments: Production only. Tick
+       Sensitive. Save.
+    4. The same for CQC_SUBSCRIPTION_KEY.
+    (Not HOMEDATA_API_KEY: it is paid and waits for 156e.)
+A2. ORDNANCE SURVEY (free, about 10 minutes). It draws the building outlines on
+    the report's site plan. The free OS OpenData plan needs no letter to
+    Ordnance Survey (the licence email is not being sent, 4 Oct 2026).
+    1. osdatahub.os.uk > Sign up (or Log in) with the company email. Choose
+       the OS OpenData plan: free, no card.
+    2. Dashboard > API projects > Create a new project. Name it "Caprebate
+       test".
+    3. Inside the project: Add an API to this project > OS Features API.
+    4. The project page shows a Project API Key. Copy it.
+    5. Vercel (as A1): Key OS_DATA_HUB_API_KEY, the value, Production,
+       Sensitive. Save.
+    6. Key file: add a new line  OS_DATA_HUB_API_KEY=<the key>  and save, so
+       the Mac's copy matches Vercel.
+A3. CLOUDFLARE TURNSTILE (free, about 10 minutes). The anti-bot check on the
+    home page's contact form; today the page shows Cloudflare's TEST key and
+    the server check is off.
+    1. dash.cloudflare.com > sign in, or create a free account with the
+       company email.
+    2. Left menu: Turnstile > Add widget.
+    3. Widget name "Caprebate contact form". Hostnames: caprebate-test.
+       vercel.app (add caprebate.co.uk later, when the real site goes live).
+       Widget mode: Managed. Create.
+    4. Cloudflare shows a SITE KEY and a SECRET KEY. In Vercel add
+       TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY (Production, Sensitive).
+    5. Key file: add the same two lines.
+    6. Ask Sadique to approve Cloudflare (a US company) for testing. Until he
+       does, the server check stays off and every enquiry is kept unchecked
+       (the function log says so).
+A4. REDEPLOY (1 minute): Vercel > Deployments > the newest Production
+    deployment > the three dots > Redeploy. A new setting only reaches the
+    site on the next deploy.
+A5. Tell Claude which of A1 to A3 are done. Never paste a key into the chat.
+
+PART B - CLAUDE (after A5)
+
+B1. Confirm the new names are in Vercel and the key file (names only), and
+    that a deploy since then is live.
+B2. TURNSTILE IN THE CODE (old 156 B1): add TURNSTILE_SITE_KEY and
+    TURNSTILE_SECRET_KEY to TEST_DEPLOY_KEYS; serve the real site key in the
+    contact form instead of Cloudflare's test key (src/web/home-site.ts);
+    prove the server check refuses a missing or wrong token and passes a
+    right one (Cloudflare publishes always-pass and always-fail test keys -
+    use those in tests, red on the code before); record the transfer as
+    waiting on Sadique and do NOT set international_transfer_approved
+    without his yes.
+B3. ONE TEST LOOKUP EACH for EPC, CQC and the Ordnance Survey site plan, under
+    the five conditions of Word question 170 (node src/cli.ts smoke ...; our
+    own company and 70 Whitehall, never a client). Report PASS or NO per
+    service. Switch nothing on that ships. EPC_API_TOKEN, CQC_SUBSCRIPTION_KEY
+    and OS_DATA_HUB_API_KEY are already in TEST_DEPLOY_KEYS.
+B4. Update hub/KEYS-AND-SWITCHES.md and the Developer Spec's keys table to
+    what is now true.
+
+When every line that could run is done: run every check in COORDINATES,
+re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
+the record, and leave each PART A step not yet done as a line in
+hub/WAITING-ON-PEOPLE.md.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
+```
+
+
+ **Added 5 October 2026 by Phase 156a (first pass).** Checked by name: none of PART A is done yet (EPC, CQC, Ordnance Survey and both Cloudflare keys are not in Vercel; EPC and CQC are in the key file). B2 is done without waiting, because it needs no real key: `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are now in `TEST_DEPLOY_KEYS` (the rest of B2 was already built on 29 September: the page carries the configured site key, the server check is proved on Cloudflare's test keys in test/turnstile.test.ts), with test/phase156a.test.ts. B1, B3 and B4 wait on PART A, so this phase stays at the top.
+
+ **Added 5 October 2026 by Phase 156a (second pass).** Lakhbir did PART A: all five names are in Vercel (checked by name) and a production deploy was made — but of main, which does not yet read them (PRs 9 to 18 wait to be merged). B3: EPC PASS and CQC PASS from the Mac, after a fix — the test lookup command could never call either (it took the nation, and for CQC the council, from the ONS postcode table, which is installed nowhere); it now takes `--nation` and `--council`, said by the person running it. Ordnance Survey: a test lookup (`smoke OS_FEATURES`, the public point only) is built; it waits for OS_DATA_HUB_API_KEY in the Mac's key file (the three new lines are not there yet). This phase closes once that lookup has run.
+
+## PHASE 156b — email: the reply timer and signed emails
+
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **The two email steps of the old Phase 156.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
+into Vercel (project caprebate-test > Settings > Environment Variables,
+Production, Sensitive) and into the key file, by him. You may list NAMES in
+Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
+never read, decrypt or print a value. A key in Vercel does nothing until its
+name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
+only on the next deploy. Nothing here switches anything on for real clients:
+the test website and invented data only, and each service's paper (privacy
+notice, the data protection officer's approval of a transfer) stays its own
+sign-off.
+
+PART A - LAKHBIR
+
+A1. THE REPLY TIMER (old 156 A3). You chose cron-job.org on 1 Oct; the website
+    side is built and REPLY_TIMER_TOKEN is in Vercel. If the job is not made:
     1. cron-job.org > sign in > Create cronjob.
     2. URL https://caprebate-test.vercel.app/hooks/read-replies, every 5
        minutes, method POST.
     3. Advanced > Headers: Authorization = Bearer <the REPLY_TIMER_TOKEN
        value, which only you have>.
-    4. Save, then open its history after 10 minutes: each run should show 200.
-       A 401 means the word does not match; a 403 or a Vercel login page means
-       Vercel's deployment protection is in the way - tell Claude.
-A4. IONOS - CHECK EMAILS ARE SIGNED (the first test email went to junk).
+    4. Save. If it is made already, open its history: each run should show
+       200. A 401 means the word does not match; a 403 or a Vercel login page
+       means Vercel's deployment protection is in the way - tell Claude.
+A2. IONOS - CHECK EMAILS ARE SIGNED (old 156 A4; the first test email went to
+    junk).
     1. IONOS control panel > Domains & SSL > caprebate.co.uk > DNS.
-    2. Check there is a DKIM record for IONOS mail and an SPF record that
-       names IONOS (IONOS shows the exact value it wants; copy it from there).
-       If IONOS offers to switch DKIM on for the domain, switch it on.
+    2. Check there is a DKIM record for IONOS mail and an SPF record that names
+       IONOS (IONOS shows the exact value it wants; copy it from there). If
+       IONOS offers to switch DKIM on for the domain, switch it on.
     3. Send a test email from the back office to the address mail-tester.com
-       gives you and read the score. Tell Claude the score.
-A5. CQC, EPC, HOMEDATA (register lookups after a client signs). The local key
-    file already holds keys for all three (checked 29 Sep).
-    1. Copy CQC_SUBSCRIPTION_KEY, EPC_API_TOKEN and HOMEDATA_API_KEY from
-       ~/.caprebate-secrets.env into Vercel (Production, Sensitive).
-    2. Homedata only: put a balance on the account (Word question 207) and
-       tell Claude it is there.
-    3. These stay OFF for real clients until the free gate opens (a published
-       privacy notice) and, for Homedata, a signed engagement.
-    Then tell Claude: PART B3.
-A6. ZOOM - A PAID LICENCE. The free plan ends calls at 40 minutes and has no
-    cloud recording (walkthrough calls ask for recording).
-    1. zoom.us > Admin > Account management > Plans and billing: upgrade the
+       gives you, and tell Claude the score.
+
+PART B - CLAUDE
+
+B1. Read when replies were last read (the mailbox_reads row, Phase 155) and
+    whether Admin's home shows the "Email replies are not being read" warning
+    on the test website; report what cron-job.org's history should then show.
+B2. With the mail-tester score: name each thing it marks down and whether it
+    is ours to fix in code (a header, the From line) or Lakhbir's in IONOS
+    (DNS). Fix what is ours, with a test.
+
+When every line that could run is done: run every check in COORDINATES,
+re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
+the record, and leave each PART A step not yet done as a line in
+hub/WAITING-ON-PEOPLE.md.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
+```
+
+
+## PHASE 156c — WhatsApp by manual upload: export a chat on the phone, add it to the client's record
+
+ **Model: Opus. Rewritten 5 October 2026** after Lakhbir chose a manual upload with photos ("go with manual upload, keep photos") over a live connection to Meta. Staff keep talking to clients on the WhatsApp phone; to keep a conversation on the record they export that chat and upload it, and the back office shows it as a thread with dates, times and photos. No Meta account, no supplier, no cost; nothing is sent from the back office. The live connection already built stays in the code, switched off. Replaces the earlier versions (a paid opening template; then a live "coexistence" connection). Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
+into Vercel (project caprebate-test > Settings > Environment Variables,
+Production, Sensitive) and into the key file, by him. You may list NAMES in
+Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
+never read, decrypt or print a value. A key in Vercel does nothing until its
+name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
+only on the next deploy. Nothing here switches anything on for real clients:
+the test website and invented data only, and each service's paper (privacy
+notice, the data protection officer's approval of a transfer) stays its own
+sign-off.
+
+PART A - LAKHBIR - WHATSAPP BY MANUAL UPLOAD (decided 5 Oct 2026: "go with
+manual upload, keep photos"; COORDINATES, "DECIDED - DO NOT REOPEN").
+How it works: staff talk to clients on the WhatsApp phone as normal. To keep
+a conversation on the record, they export that one chat on the phone (open
+the chat > tap the name > Export chat > Attach media) and upload the file on
+the client's WhatsApp page. The back office checks it, then shows it as a
+thread with dates, times and photos. Nothing is sent from the back office;
+no Meta account, no supplier, no cost. The live Meta connection already
+built stays in the code, switched off.
+
+A1. TWO TEST FILES (invented, never a client): a short chat between Lakhbir
+    and a colleague who agrees, with a photo, a document, a message over two
+    lines, a deleted message and an edited one. Export it with media from an
+    iPhone and, if one is to hand, from an Android. Put both .zip files in
+    OneDrive: Health Capital Allowances > Business Development > Development
+    > Caprebate > 09-app > backend > test > fixtures > whatsapp-export (tell
+    Claude they are there). They contain no client data, so they may be
+    committed.
+A2. SADIQUE (through Lakhbir): (a) copies of WhatsApp chats and their photos
+    kept on the client's record follow the client-message retention rule -
+    confirm; (b) messages dated before the client ticked the WhatsApp box on
+    the funnel: keep them, or leave them out on upload? (B3 warns either way;
+    the build leaves them IN until he answers.)
+
+PART B - CLAUDE (each with a test that fails on the code before it)
+
+B1. THE READER (src/connectors/whatsapp-export.ts, no network): reads an
+    export .zip (its _chat.txt or "WhatsApp Chat with ....txt") or a bare
+    .txt. Both phone formats: iPhone "[02/10/2026, 14:21:05] Name: text" and
+    Android "02/10/2026, 14:21 - Name: text". Lines without a date join the
+    message above. Attachments: iPhone "<attached: FILE>", Android "FILE
+    (file attached)" - matched to the file in the zip. WhatsApp's own notices
+    (encryption, joined, changed number) are skipped. "This message was
+    deleted" kept as written; "<This message was edited>" marked edited.
+    Dates read day-first (UK); if every day number is 12 or under and the
+    month-first reading is also possible, say so in B3. Times are UK local
+    time (Europe/London, clock changes handled). Built against Lakhbir's A1
+    files; red-proved on files with each feature.
+B2. THE UPLOAD (client's WhatsApp page, client_message.write): choose the
+    contact, choose the file. Limits: the .zip at most 100 MB, 500 files
+    inside; refuse paths that climb out of the folder, nested zips and
+    anything that is not a photo, video, voice note, PDF or Office document;
+    refuse a group chat (more than two names) with the words "Only one-to-one
+    chats can be added for now." Nothing is saved at this step.
+B3. THE CHECK: how many messages and files, first and last date, who is us
+    and who is the client (one click swaps them; a name that is neither is
+    refused), a warning for messages before the WhatsApp box was ticked, and
+    the date-order warning from B1. Then "Save to the record" or "Back".
+B4. SAVING: each message into whatsapp_messages (direction IN or OUT, kind
+    'imported', written_by the uploader, created_at = the message's own
+    time) and each file into the client's files, linked to its message; the
+    original .zip kept with the client's documents; an audit entry. A newer
+    copy of the same chat adds only messages not already there (matched on
+    contact, time, sender and text); the check says how many are new.
+    A migration adds whatever this needs (the next free number).
+B5. THE PAGE: the conversation shows imported messages as the thread does
+    today, "From a WhatsApp export added <date> by <name>" above them, photos
+    viewable. The reply box and "Send our opening message" are removed from
+    the page while the live connection is off (the code stays, switched
+    off); in their place "Reply to <first name> on the WhatsApp phone. To keep
+    newer messages, export the chat again and add it here." The list of
+    uploads (date, contact, how many messages, by whom) sits on the left.
+B6. PAPER. Developer Spec (the WhatsApp rows: manual upload; the live Meta
+    connection built and off), KEYS-AND-SWITCHES (no WhatsApp keys needed),
+    the recipients list note for Sadique (no transfer to Meta from us; the
+    copies follow retention), the notices page if its WhatsApp wording
+    describes the live connection or the opening message, the staff guide
+    (how to export a chat on iPhone and Android).
+
+When every line that could run is done: run every check in COORDINATES,
+re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
+the record, and leave each PART A step not yet done as a line in
+hub/WAITING-ON-PEOPLE.md.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
+```
+
+
+## PHASE 156d — Zoom: the paid licence, a user for each member of staff, and call lengths
+
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **The old Phase 156's Zoom steps.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
+into Vercel (project caprebate-test > Settings > Environment Variables,
+Production, Sensitive) and into the key file, by him. You may list NAMES in
+Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
+never read, decrypt or print a value. A key in Vercel does nothing until its
+name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
+only on the next deploy. Nothing here switches anything on for real clients:
+the test website and invented data only, and each service's paper (privacy
+notice, the data protection officer's approval of a transfer) stays its own
+sign-off.
+
+PART A - LAKHBIR (old 156 A6) - ZOOM, A PAID LICENCE. The free plan ends calls
+at 40 minutes and has no cloud recording (walkthrough calls ask for it).
+
+A1. 1. zoom.us > Admin > Account management > Plans and billing: upgrade the
        host user (ZOOM_HOST_EMAIL) to Pro.
     2. marketplace.zoom.us > Manage > the app behind ZOOM_CLIENT_ID > Scopes:
        add cloud recording read.
-    3. Sadique confirms Zoom's transfer for real clients (approved for
-       testing only).
-A7. GOOGLE ANALYTICS 4 (website visits, after consent). Free.
-    1. analytics.google.com > Admin > Create property "Caprebate", UK, GBP.
-    2. Data streams > Web > the site address > copy the Measurement ID
-       (starts G-) -> GA4_MEASUREMENT_ID in Vercel.
-    3. Sadique reviews the measurement plan and the cookie wording first;
-       nothing loads before consent.
-A8. ANTHROPIC CLAUDE API (reading clients' documents). PAPER FIRST, KEY LAST.
-    1. Sadique approves Anthropic as the document reader and its terms; the
-       director signs (Developer Spec ~2520, ~2534).
-    2. Only then: console.anthropic.com > the company's organisation >
-       Billing > API keys > Create key -> ANTHROPIC_API_KEY.
-A9. GOADDRESS ("Find my address"). 100 free lookups, then a paid plan: when
-    the free ones run out, buy the smallest plan on its account page. Find
-    out (and tell Claude) GoAddress's company and where it is hosted
-    (connectors/sources.ts ~294 asks).
-A10. DIDIT (identity checks). 500 free a month, then about 33 US cents a
-    check. In Didit's console, set how long it keeps results (to match the
-    retention schedule once Sadique approves it).
+    3. Sadique confirms Zoom's transfer for real clients (approved for testing
+       only).
+    4. Each call is hosted by its own member of staff (Phase 153f): add each
+       member of staff who takes video calls as a user on our Zoom account,
+       under the SAME email they sign in to Cap Rebate with, each with a Pro
+       licence. Anyone not on Zoom falls back to the shared host.
+    5. To see how long a call lasted and who came, add two more scopes to the
+       same app: meeting:read:past_meeting:admin and
+       meeting:read:list_past_participants:admin.
 
-PART B - CLAUDE (each only after its PART A step)
+PART B - CLAUDE
 
-B1. TURNSTILE: add TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY to
-    TEST_DEPLOY_KEYS; serve the real site key in the contact form instead of
-    Cloudflare's test key (src/web/home-site.ts ~34-40); prove the server
-    check refuses a missing or wrong token and passes a right one (Cloudflare
-    publishes always-pass and always-fail test keys - use them in tests);
-    record the transfer as waiting on Sadique.
-B2. WHATSAPP: once the six are in, send ONE opening template to Lakhbir's own
-    number (ask him for it in the chat; never a client), read the webhook's
-    reply, and report PASS/NO. Switch nothing else on.
-B3. CQC, EPC, HOMEDATA: add the three names to TEST_DEPLOY_KEYS; then 153c
-    line 18's one test call each (our own company and 70 Whitehall, never a
-    client), under the five conditions of Word question 170.
-B4. AN ADMIN "CONNECTIONS" PAGE, so nobody has to read code to know: one row
-    per outside service - key present (yes/no, never the value), switched on
-    (and the switch's name), on for testing under a waiver or for real, last
-    call and its result, and what it waits on. Read only; Admin only.
-B5. Update hub/KEYS-AND-SWITCHES.md and the Developer Spec's stubs table to
-    what is now true, and mark each PART A step done or not done.
+B1. (old 156 B6) Once step 5's scopes are on: after a call, read GET
+    /v2/past_meetings/{meetingId} (its duration) and /participants (how many
+    came; keep the count and the minutes, never a name or an email); show
+    them on the call and the Communication tab, with a test on recorded
+    answers, red on the code before.
 
 When every line that could run is done: run every check in COORDINATES,
-re-derive the figures, update the registers, write the record, and leave each
-PART A step not yet done as a line in hub/WAITING-ON-PEOPLE.md.
+re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
+the record, and leave each PART A step not yet done as a line in
+hub/WAITING-ON-PEOPLE.md.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
+```
+
+
+## PHASE 156e — the paid and paper-first services, the Connections page and the care regulators' lists
+
+ **Model: Opus. Written 4 October 2026** when Lakhbir asked for Phase 156 to be broken down. **Everything else the old Phase 156 held: Homedata, Anthropic, GoAddress, Didit, Google Analytics (dropped for now; was to ask about), the Connections page and the Welsh and Scottish lists.** Each PART B line runs only once its PART A step is done; a phase whose PART A is not done yet is left in place, not closed.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. DELETE THIS SECTION from the top of the run sheet (its title, its note
+   and this block: read_docs with include_blocks gives the block ids, then
+   one delete_blocks) AND from hub/ACTION-PLAN.md. The next phase is then
+   at the top of both.
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+RULES FOR EVERY STEP: never ask Lakhbir to paste a key into the chat. Keys go
+into Vercel (project caprebate-test > Settings > Environment Variables,
+Production, Sensitive) and into the key file, by him. You may list NAMES in
+Vercel (the Vercel connector; project id prj_sKZ3nEAEc5GLC8j3bEFcZv3GmGan);
+never read, decrypt or print a value. A key in Vercel does nothing until its
+name is also in TEST_DEPLOY_KEYS (api/index.mjs). A setting reaches the site
+only on the next deploy. Nothing here switches anything on for real clients:
+the test website and invented data only, and each service's paper (privacy
+notice, the data protection officer's approval of a transfer) stays its own
+sign-off.
+
+PART A - LAKHBIR (each on its own; any order)
+
+A1. HOMEDATA (paid address lookup, after a client signs). Copy
+    HOMEDATA_API_KEY from the key file into Vercel (Production, Sensitive) and
+    put a balance on the account (Word question 207); tell Claude when it is
+    there. It stays OFF for real clients until a signed engagement.
+A2. ANTHROPIC CLAUDE API (reading clients' documents). PAPER FIRST, KEY LAST.
+    1. Sadique approves Anthropic as the document reader and its terms; the
+       director signs (Developer Spec, the document-reading rows).
+    2. Only then: console.anthropic.com > the company's organisation > Billing
+       > API keys > Create key -> ANTHROPIC_API_KEY (the key file has one
+       already; Vercel does not, on purpose).
+A3. GOADDRESS ("Find my address"). 100 free lookups, then a paid plan: when the
+    free ones run out, buy the smallest plan on its account page. Find out
+    (and tell Claude) GoAddress's company and where it is hosted
+    (src/connectors/sources.ts asks).
+A4. DIDIT (identity checks). 500 free a month, then about 33 US cents a check.
+    In Didit's console, set how long it keeps results, to match the retention
+    schedule once Sadique approves it.
+A5. GOOGLE ANALYTICS 4 - DROPPED FOR NOW (Lakhbir, 4 Oct 2026: the marketing
+    team can pick it up later if needed). Nothing to do: the code stays OFF,
+    and no one is asked for a measurement ID. See COORDINATES, "DECIDED - DO
+    NOT REOPEN".
+
+PART B - CLAUDE
+
+B1. (old 156 B3, the rest) One recorded test call each, under Word question
+    170's five conditions: Companies House (switched on for testing, never a
+    recorded test call), the Anthropic key (one read of an invented page, only
+    after A2), and Homedata (only once A1's balance is there). Report PASS or
+    NO; switch nothing on that ships.
+B2. When the free gate opens: put "answer it myself" (Word answer 180) on the
+    four-stage funnel's details screen.
+B3. (old 156 B4) AN ADMIN "CONNECTIONS" PAGE, so nobody has to read code to
+    know: one row per outside service - key present (yes/no, never the value),
+    switched on (and the switch's name), on for testing under a waiver or for
+    real, last call and its result, and what it waits on. Read only; Admin
+    only.
+B4. (old 156 B7, added by Phase 155) THE WELSH AND SCOTTISH CARE REGULATORS'
+    LISTS: an Admin upload for each downloaded file (the same import as
+    "node src/cli.ts import-register", refused whole on wrong columns; the
+    Scottish file is Windows-1252), each list's last import on B3's page, and
+    a monthly reminder to import the new month's file. ASK LAKHBIR whether his
+    2 Oct waiver ("All the free ones") covers these two; only on his yes add
+    them to TEST_WEBSITE_LOOKUPS.
+
+When every line that could run is done: run every check in COORDINATES,
+re-derive the figures, update the registers and hub/KEYS-AND-SWITCHES.md, write
+the record, and leave each PART A step not yet done as a line in
+hub/WAITING-ON-PEOPLE.md.
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
 
@@ -1903,18 +1665,50 @@ PART A step not yet done as a line in hub/WAITING-ON-PEOPLE.md.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. monday.com was dropped on 25 Sep 2026: everything
-a phase needs is in files in the repository, github.com/ldhillonaqlios/caprebate,
-branch main. On the Mac the working copy is Development/, one level above the
-tree: /Users/lakhbir/Library/CloudStorage/OneDrive-AqliosLTD/Health Capital
-Allowances/Business Development/Development. git pull, then git log --oneline.
-OPEN Caprebate/00-START-HERE/hub/ACTION-PLAN.md and read THE STANDING
-INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK) and
-COORDINATES first. DO NOT CALL ANY monday.com TOOL. If you cannot read the
-plan, still: claim the work in hub/CLAIM.md (commit and push first; a claim
-already there stops you) and clear it at the end; retag what you touch in the
-tracker (node 03-app/caprebate-tracker.cjs); give every loose end a home;
-write the record at the end of hub/PHASE-HISTORY.md; then DELETE THIS SECTION.
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch; never push to main; Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go. If you are not on the Mac's OneDrive copy, say
+  so at the end and tell Lakhbir to git pull on the Mac.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet, below the last entry under "DONE - ACTIONS AND OUTCOMES": a title
+   line "<phase> - <date>", then what you did, what you found, what is left
+   and where it now lives, the test count, and the branch or pull request.
+   Plain words; no client data, no keys. (update_doc add_markdown_content
+   with no after_block_id adds it at the end.) Put the same entry at the top
+   of your PHASE-HISTORY record.
+3. THIS SECTION IS NEVER DELETED: it is the sweep. Renumber it forward in
+   BOTH places (the run sheet and hub/ACTION-PLAN.md) so it stays the
+   highest number and last, just above "DONE - ACTIONS AND OUTCOMES".
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
 ═══════════════════════════════════
 ═══ CHECKED 3 OCTOBER 2026 — CORRECTIONS. They overrule the text below where they differ. ═══
 MONDAY.COM IS THE MAIN BOARD AGAIN (Lakhbir, 3 Oct 2026): follow the note under
@@ -1923,10 +1717,11 @@ banner. Write every change to the board AND to hub/TRACKER.csv.
 BRANCHES: since 2 Oct work goes on claude/* branches and pull requests (#1-#7);
   Lakhbir merges, and a merge deploys the test website. Never push to main.
 COUNT THE SUITE as `node --test $(git ls-files 'test/*.test.ts')` (plus any new
-  file). npm run check and the register check are red on the Mac only because of
-  untracked stray files (*.mutbak, *.new0929, api/index.mjs.new0929,
-  test/assessment-start.test.ts, test/_tmp152-*.test.ts,
-  test/_probe146l.test.ts) - never delete them; Lakhbir decides (154a1 line 11).
+  file). The untracked stray files that made npm run check and the register
+  check red on the Mac were deleted on 4 Oct 2026 with Lakhbir's yes; if a new
+  untracked file appears, ask him before deleting it. Since Phase 154a1 (line
+  11) the drift checker and the register check count only the test files git
+  tracks and name any untracked one, so a stray file cannot turn them red.
   On 3 Oct: 1279 / 439 / 403 / 2221. The Mac can be overloaded: run the suite in
   chunks of about 12 files, and if a file fails with ETIMEDOUT reading the source,
   OneDrive stalled - wait and run it again.
@@ -1942,7 +1737,61 @@ THE NOTES AT THE END (the Acer copy, update_block, 06-.../_doc.xml) are history:
   the Acer is retired and _doc.xml is gone.
 THE NUMBER: phases 153f, 154a1, 155 and 156 were added above this one on 3 Oct, so
   this sweep's heading is now PHASE 157.
+FROM PHASE 153c (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the enquiry
+  clean-up (src/web/enquiry-retention.ts, sweep-enquiries) deletes closed
+  contact-form enquiries only. A funnel enquiry is a CRM lead (migration 061,
+  leads.enquiry_id), tied to its organisation, contacts and bookings, so the
+  job only COUNTS lost funnel leads past twelve months. Write the deletion path
+  for a lead (what goes, what stays, the deletion-log entry), with its test,
+  for the officer to check alongside Word question 222.
+FROM PHASE 153d (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the draft
+  introducer terms (06-commercial-and-governance/Caprebate-Introducer-Terms-
+  DRAFT-v0.1.md) say a firm is "registered" once it has SIGNED them. The back
+  office counts any firm marked ACCOUNTANT_FIRM (introducers.ts onFeeInvoiced).
+  Once the director and the solicitor agree the terms, record the signature
+  (a dated, append-only row) and pay model C only to a firm with one, with
+  its test. Model C stays off until then.
+FROM PHASE 153e (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the cost model
+  (04-phase-work/phase9/caprebate-cost-model.cjs) now has preliminaries by job
+  size, the index factor from a table, the insurance cross-check and the
+  past-claim limits, all run in its own test system (TEST_SYSTEM_GATES). The
+  back end's survey pack does not use the cost model at all. Wire it into the
+  pack (the preliminaries, the index and the insurance check, each shown as a
+  test placeholder to the surveyor), with tests, and keep each gate off in the
+  shipped model.
+  ADDED 4 Oct 2026 by Phase 153g: when it is wired in, show its results in the
+  pack's chapters too — the index dates in chapter 11 and the checks in 14 —
+  and bring the phase3 module's £/m² review flag (Phase 153e line 14) into
+  chapter 22. Neither is in the back end today.
+  ADDED 4 Oct 2026 by Phase 155: the index factor (Phase 153e line 12) is to
+  read the real BCIS table when one has been imported (bcisIndexTable in
+  09-app/backend/src/web/bcis-index.ts; node src/cli.ts import-bcis-index),
+  and the labelled placeholder only in the test system; never a guess.
+FROM PHASE 154a1 (4 Oct 2026), TWO LOOSE ENDS WITH THEIR HOME HERE, both
+  buildable today. Line 13 built the s.187A pooling requirement (R-B1,
+  CB_S187A.poolingAssess) for a seller KNOWN to have been able to claim.
+  (a) The fixed-value questions (14po, 14fvr and the rest) are still asked
+      of a seller the pooling requirement already takes to nil. Rulebook A
+      Addendum 1 says they are gated behind the pooling answer. Hide them
+      then - keep the sale-date question (14pod), which the pooling check
+      reads - with harness checks both ways and the pack's legal check.
+  (b) A seller whose ENTITLEMENT is not known ("not sure" or never asked) and
+      who never claimed still gets the upper half of the band at Stage 3,
+      with the words "no prior entitlement ... (best case)". Rulebook B says
+      that seller is undetermined between branches B and C, so it should
+      be nil at the bottom with a flag (N4: "not sure" and absent alike).
+      And for a seller known entitled who never claimed and sold before
+      April 2014 (branch D) the figure is right but those words are not:
+      use Rulebook B section 6's replacement wording. Re-run
+      03-app/caprebate-switch-direction.cjs after both.
 ═══════════════════════════════════
+
+DO NOT REOPEN what COORDINATES lists under "DECIDED - DO NOT REOPEN" (added
+4 Oct 2026: the VOA rating list, scrapped by Lakhbir; the Ordnance Survey
+licence email, not sent; Google Analytics, dropped for now; the Valuation
+Office email about its Rating Cost Guide, not sent; 5 Oct 2026: WhatsApp by
+manual upload, no live connection). A sweep that finds
+older text saying otherwise corrects the text, not the decision.
 
 THE SWEEP DOES NOT DELETE ITSELF - it renumbers itself forward and stays last.
 
@@ -2169,6 +2018,7 @@ WHEN DONE
 3. Leave the drift checker, the tracker check and the register check green,
    and prove the drift checker can still go red.
 
+Then do WHEN THE PHASE IS DONE, at the top of this block.
 ```
 
  **ADDED 24 SEPTEMBER 2026 BY PHASE 147 — TWO MORE JOBS FOR THE SWEEP, BOTH BUILDABLE, AND ONE CORRECTION TO ITS OWN PROMPT.** A note rather than an edit, because the prompt block above is 13 KB and `update_block` replaces all of it. The sweep folds it in. **(1) Read CIBSE's "Fair Use Policy" page live, and its "CIBSE copyright" section.** CIBSE's terms point to it for Knowledge Portal content. Phase 147 could not read it: the site answered 503 and "HTTP Error 500.30" on 24 September, and the page is not archived. It may settle the three things CIBSE does not publish: whether a report a client pays for is "a text for sale", whether using a life in a calculation is reproduction, and whether several staff may use one download. If it does, update the licence CIBSE_KNOWLEDGE in `04-phase-work/phase3/caprebate-source-register.ts`, its write-up `caprebate-cibse-plant-lives-source-register-row.md`, and Word question 213 — **and loosen a refusal only on CIBSE's own words.** **(2) Point 3a(b) of the prompt above is out of date.** Section 6 of `caprebate-job-economics.md` is no longer "written ENTIRELY around that null", and its "at a high price" branch is withdrawn, not merely unfired. And "7p for an address and UPRN" is the supplier's find-then-retrieve: our lookup is 8p (postcode 2, address 5, title check 1). The price stays null for a new reason: it is a list price, not an account price. Fold that into 3a when the prompt is next retyped, and check the SHAPE 3a names, not these words. **DONE 24 SEPTEMBER 2026 BY THE SWEEP (Phase 149, renumbered 151): (1) is done.** The page is gone from CIBSE's live site - it is not among the 3,703 pages in its sitemap, though the live terms still point to it - and it was read as last archived, on 29 May 2022. It confirms all three refusals and loosens none: downloads are for personal use, and re-use "for re-use, re-sale or other gain" or for a third party needs permission. The licence note, the write-up (re-uploaded) and Word question 213 say so. (2) still stands: this sweep changed only the prompt's heading, as the prompt instructs, so point 3a is still to be folded when the prompt is next retyped. **FOLDED 25 SEPTEMBER 2026 BY PHASE 151d:** point 3a(b) of the prompt above now says this.
@@ -2370,6 +2220,8 @@ WHEN DONE
  **The fee problem is decided: the fee stays a flat 3%.** Lakhbir answered on 24 September 2026, in the Word questions document, that we keep 3% because over the whole five to seven years the relief is spread across, the client gains more than the fee. The arithmetic behind the question is kept here so nobody re-derives it: on a real competitor's client file our old 5% fee would have been £3,687 against £3,405 of year-one tax relief; at 3% it is £2,212, below that year-one relief, but 2.19 times the £1,010 that client actually realised, and it still exceeds the year-one relief where most of the spend is special-rate plant or profits are low. The answer is about the whole term, not year one. So the cap, the warning and a change of percentage all stay built and switched off. **What is left is not a decision but a signature:** CAP REBATE LTD signs the letters, so its director is asked to confirm the decided terms - "Does the director of CAP REBATE LTD agree the business decisions you make for the company?".
 
 
+ **4 October 2026: neither email is being sent (Lakhbir).** The rating list is scrapped and both licence emails are dropped; row 3 above is closed. The fee percentage and the ageing method go to the surveyor instead (COORDINATES, "DECIDED - DO NOT REOPEN"). The paragraphs below are history.
+
  **One of the two emails unblocks something the other cannot.** The Valuation Office one seeks clearance to use official valuation data commercially and sits behind the depreciation model, the location factor and the fee-scale correction. The Ordnance Survey one gets boundary maps, which is a quality improvement we can live without. **And do not wait for either reply to fix the preliminaries double count** — that is our own arithmetic mistake, it inflates every job we produce, and it needs nobody's permission.
 
  **Incorporation is done.** CAP REBATE LTD, company number 17307313, was incorporated on 29 June 2026 and confirmed as ours on 18 September 2026; its only director is Jalil Ahmed. This paragraph said incorporation was deferred indefinitely until the Phase 145 sweep corrected it on 22 September 2026. What sat behind the company now waits on people, not on the company: the data protection officer's appointment, ICO registration, corporation tax registration, a bank account, insurance and the Google listing. Professional indemnity cover can now be bought, so the breach paperwork's "no policy in force" ends when it is. **Thirteen governance documents are still queued behind one signature — the officer's — and nothing but that signature stops it.**
@@ -2439,9 +2291,9 @@ WHEN DONE
 |  Claude |  Phase 153d — the commercial papers in test form, for the director and the solicitor (13199500802) |  The same review |
 |  Claude |  Phase 153e — the surveyor's workbench, for the surveyor to check (13199476474) |  The same review |
 |  Claude |  Phase 153f — work found on 3 October that no phase held (survey pack stage 6 and chapters, an engine date bug, Zoom hosts, the old screens, WhatsApp, answers into the record, the tracker) |  The 3 October check of 153a-154 |
-|  Claude |  Phase 154a1 — the faults the 3 October sweep found, fixed (12 lines) |  Lakhbir, 3 Oct: "these should be fixed in phase 154a1" |
-|  Claude |  Phase 155 — the services the plans name but nobody has built (CIW, the Care Inspectorate, the VOA list, BCIS, the reply timer, the three server files) |  Lakhbir, 3 Oct: "this needs to be phase 156" (renumbered 155 when the services phase moved near the end) |
-|  Claude and Lakhbir |  Phase 156 — every outside service, run near the end: PART A is Lakhbir's, step by step; PART B is Claude's, after each step |  Lakhbir, 3 Oct: "all API's needed should be phase 155" |
+|  Claude |  Phase 154a1 — the faults the 3 October sweep found, fixed (13 lines) — **done 4 Oct 2026**, see PHASE HISTORY |  Lakhbir, 3 Oct: "these should be fixed in phase 154a1" |
+|  Claude |  Phase 155 — the services the plans name but nobody has built (CIW, the Care Inspectorate, the VOA list, BCIS, the reply timer, the three server files) — **done 4 Oct 2026**, see PHASE HISTORY (the VOA list not built: its licence forbids our use) |  Lakhbir, 3 Oct: "this needs to be phase 156" (renumbered 155 when the services phase moved near the end) |
+|  Claude and Lakhbir |  Phases 156a to 156e — every outside service, split on 4 Oct 2026 (156a the missing keys in Vercel, Ordnance Survey and Cloudflare; 156b email; 156c WhatsApp; 156d Zoom; 156e the rest): PART A is Lakhbir's, step by step; PART B is Claude's, after each step |  Lakhbir, 3 Oct: "all API's needed should be phase 155" |
 |  Claude |  Phase 157 — the sweep, always last |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
@@ -2577,7 +2429,8 @@ _ |
  2. **OneDrive is never neglected.** Every status, owner or new item written to the board is written to `hub/TRACKER.csv` too, in the same phase (`node 03-app/caprebate-tracker.cjs`), so the files in OneDrive stay a complete record and every check that reads them keeps working. Documents, papers, the plan, PHASE HISTORY and the registers stay in OneDrive; the board links to them and never holds the only copy.
  3. **If the board and the tracker disagree, stop and ask Lakhbir** which is right, and say what each says. Never overwrite one with the other without asking.
  4. **The board is shared** (its owners include Abdul Rahman Hijazi, Shafiek Mohabbat and Umar Hussain, and it is open to everyone in the account): no client personal data, no keys or passwords, and no invented-data logins on it.
- 5. **The board was last changed on 30 September**; on 3 October a read-only comparison with the tracker was made, and bringing the board up to date waits on Lakhbir's yes to the list of changes.
+ 5. **The board was brought up to date from the tracker on 3 October 2026** (with Lakhbir's yes; the record is in PHASE HISTORY).
+ 6. **THE RUN SHEET — LAKHBIR, 4 OCTOBER 2026.** The monday document on the CAPREBATE ACTION PLAN item (doc 18429698457) is where the phases are run from. It holds only the live phases, in order, at the very top (each one fenced block, ready to copy and paste), then **DONE — ACTIONS AND OUTCOMES**, a short entry per finished phase, oldest first. Every phase's banner says what to do when it finishes: write the full record in PHASE HISTORY; add its short entry at the END of the run sheet; **delete its own section from the run sheet AND from this document** (the sweep never deletes itself — it renumbers forward and stays last); set its board item and the tracker; clear the claim. **The phases here and on the run sheet must stay the same**: a phase added, changed or deleted in one is added, changed or deleted in the other in the same phase, and the copy in this document wins if they ever differ. The doc as it was before 4 October is saved in `08-monday-doc-exports/`.
 
  The engineering work runs as numbered phases, and the live ones are at the top of this document — copy a whole block, paste it into Claude, and it claims the work, does it, records what it found and deletes its own section. **Every phase also works THE STANDING INSTRUCTION**, which is the same thirteen numbered points and a closing check every time: retag what you touched, carry every loose end into a phase or a question, update the three sign-off registers, re-derive any figure you quote, and write the record into PHASE HISTORY. **A**** ****phas****e**** may not cl****ose wh****il****e ****a****nything it did not fini****sh**** is still only a**** sent****e****n****c****e** — that is the rule that stops work quietly disappearing into prose, and it is why the brand rename inside the Monday documents became its own phase rather than a line in a report when the disk rename could not reach them.
 

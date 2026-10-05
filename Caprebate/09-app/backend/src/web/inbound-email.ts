@@ -33,7 +33,7 @@ import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { authorise, can, type Actor } from '../authz.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
-import { localStamp } from './localtime.ts';
+import { localPartsOf, localStamp } from './localtime.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import { receiveFile } from './client-files-pages.ts';
 import { setShownToClient } from './documents.ts';
@@ -476,6 +476,50 @@ export function lastReadWords(app: App): { at: string; words: string; ok: boolea
   return lastOutcome.get(app) ?? null;
 }
 
+/**
+ * PHASE 155 (line 5), 4 October 2026 — IF THE TIMER STOPS, ADMIN IS TOLD. The outside timer (cron-job.org, set up by hand:
+ * Phase 156 A3; COORDINATES and the continuity plan say who owns it and where its history is) is the only thing that
+ * reads replies while nobody is on the site. Each copy of the website kept its last read in memory, so a stopped timer
+ * was silent. Every read now writes one shared row (migration 088, `mailbox_reads`: times only), and Admin's home page
+ * warns when no read has worked for more than REPLY_WATCH.stale_minutes during REPLY_WATCH's hours.
+ */
+export const REPLY_WATCH = Object.freeze({
+  /** Monday to Friday (getUTCDay numbering, as working_times), UK time. */
+  days: Object.freeze([1, 2, 3, 4, 5]),
+  from_minute: 9 * 60,
+  to_minute: 17 * 60 + 30,
+  stale_minutes: 60,
+});
+
+function noteRead(db: App['db'], at: string, ok: boolean): void {
+  try {
+    db.run('INSERT INTO mailbox_reads (id, last_try_at, last_ok_at, last_failed) VALUES (1, ?, ?, ?) ' +
+      'ON CONFLICT(id) DO UPDATE SET last_try_at = excluded.last_try_at, last_failed = excluded.last_failed, ' +
+      'last_ok_at = COALESCE(excluded.last_ok_at, mailbox_reads.last_ok_at)', [at, ok ? at : null, ok ? 0 : 1]);
+  } catch { /* a database without migration 088 yet keeps reading; it just cannot warn */ }
+}
+
+/**
+ * The warning for Admin's home page, or null. Only where reading replies is meant to be happening — the switch is on and
+ * the mailbox's login is set — and only in working hours: a quiet weekend is not a fault. Never read at all counts as
+ * not read. N4: a row we cannot read is not a read that worked.
+ */
+export function repliesStale(app: App, nowIso: string = app.now()): string | null {
+  const cfg = app.inboundEmail ?? INBOUND_EMAIL;
+  if (cfg.enabled !== true || imapLoginFromKeyFile(app.secrets) === null) return null;
+  const p = localPartsOf(Date.parse(nowIso));
+  if (!REPLY_WATCH.days.includes(p.weekday) || p.minuteOfDay < REPLY_WATCH.from_minute || p.minuteOfDay >= REPLY_WATCH.to_minute) return null;
+  let row: { last_ok_at: string | null; last_failed: number } | undefined;
+  try { row = app.db.get<{ last_ok_at: string | null; last_failed: number }>('SELECT last_ok_at, last_failed FROM mailbox_reads WHERE id = 1'); }
+  catch { row = undefined; }
+  const okAt = row?.last_ok_at ?? null;
+  const ageMin = okAt === null ? null : (Date.parse(nowIso) - Date.parse(okAt)) / 60_000;
+  if (ageMin !== null && Number.isFinite(ageMin) && ageMin <= REPLY_WATCH.stale_minutes) return null;
+  const since = okAt === null ? 'Email replies have never been read in.' : `Email replies were last read in at ${localStamp(okAt, nowIso)}, over an hour ago.`;
+  return `${since} The outside timer that reads them (cron-job.org) may have stopped${row?.last_failed === 1 ? ', or the inbox could not be read on the last try' : ''}. ` +
+    'Open cron-job.org and look at its history, then press "Check for new email replies" on Email.';
+}
+
 export async function readRepliesIfDue(app: App, force = false): Promise<ReadResult | null> {
   const nowMs = Date.parse(app.now());
   const prev = lastRead.get(app) ?? 0;
@@ -486,6 +530,7 @@ export async function readRepliesIfDue(app: App, force = false): Promise<ReadRes
     : login === null ? null : imapMailbox(login, undefined, 20_000, auditMailConnections(app.audit, app.now));
   try {
     const r = await readMailbox({ db: app.db, audit: app.audit, now: app.now, newId: () => randomUUID() }, app.inboundEmail ?? INBOUND_EMAIL, login, mailbox);
+    noteRead(app.db, app.now(), r.state !== 'OFF');
     lastOutcome.set(app, r.state === 'OFF'
       ? { at: app.now(), ok: false, words: `Not reading replies: ${r.missing.join(' ')}` }
       : { at: app.now(), ok: true, words: r.started === true && r.read === 0 ? 'Started reading the inbox: from now on, new replies come in.'
@@ -493,6 +538,7 @@ export async function readRepliesIfDue(app: App, force = false): Promise<ReadRes
     return r;
   } catch (e) {
     // Never stops the page — but says why, with nothing of the login in it.
+    noteRead(app.db, app.now(), false);
     lastOutcome.set(app, { at: app.now(), ok: false, words: `Could not read the inbox: ${redactSecrets(e instanceof Error ? e.message : String(e)).slice(0, 160)}` });
     return null;
   }

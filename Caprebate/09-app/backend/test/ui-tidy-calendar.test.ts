@@ -72,7 +72,9 @@ describe('UI tidy phase 13: the week and the day', () => {
   test('the week is seven boxes, Monday to Sunday, each with its calls or "Nothing booked"', async () => {
     const body = (await H.get('sales', '/staff/calendar?view=week&date=2026-10-07')).body;
     const grid = /<ol class="weekgrid">([\s\S]*?)<\/ol>/.exec(body)?.[1] ?? '';
-    const days = [...grid.matchAll(/<li class="wday[^"]*">\s*<p class="wday-h">([^<]+)<\/p>([\s\S]*?)<\/li>(?=<li class="wday|$)/g)];
+    // PHASE 156a (5 Oct 2026): on a real day inside this week, that day's heading also carries the "Today" badge; the
+    // pattern read only plain text, so this test failed every day from Mon 5 to Sun 11 Oct 2026 and passed otherwise.
+    const days = [...grid.matchAll(/<li class="wday[^"]*">\s*<p class="wday-h">([^<]+?)(?: <span class="badge b-info">Today<\/span>)?<\/p>([\s\S]*?)<\/li>(?=<li class="wday|$)/g)];
     assert.deepEqual(days.map((d) => d[1]), ['Mon 5 Oct 2026', 'Tue 6 Oct 2026', 'Wed 7 Oct 2026', 'Thu 8 Oct 2026', 'Fri 9 Oct 2026', 'Sat 10 Oct 2026', 'Sun 11 Oct 2026']);
     const mon = days[0]?.[2] ?? '';
     assert.match(mon, new RegExp(`<a href="/staff/calendar/${held}"><strong>09:00</strong> [^<]+</a>\\s*<span class="wmeta">[^<]+</span><span class="wmeta"><span class="badge b-nobody">Nobody yet</span></span>`));

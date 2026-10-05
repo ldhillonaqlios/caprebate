@@ -322,6 +322,9 @@ var CB_CTA = {
      an untraced scheme-wide grant be attributed to the claimable areas?
      ON => claims get BIGGER for an UNTRACED grant; a grant actually TRACED to
      the claimable areas still comes off, at its traced rate.
+     COUNTED IN CODE 4 October 2026 (Phase 153b, 03-app/caprebate-switch-
+     direction.cjs): EITHER WAY - a traced share above the scheme-wide rate
+     takes MORE off than today.
      Care homes too since 14 September 2026 (Phase 132): only where
      self-contained units let to residents cut the claim to communal and care
      areas; where that factor is 1 the switch moves nothing. N4 is broken here
@@ -646,7 +649,93 @@ var CB_CTA = {
      N4: only a KNOWN share is deducted. "Not sure" and no answer deduct nothing,
      and "not sure" is flagged as NOT assumed nil. F-6 is not asked in this
      sector, so a connected contributor is not exempted here. */
-  sl_landlord_contribution: false
+  sl_landlord_contribution: false,
+
+  /* ===== ADDED 4 OCTOBER 2026 BY PHASE 153a: ONE MORE, false ===== */
+
+  /* F-15's remainder - item 12852269899 (Done, "remainder documented as
+     future work"), Rulebook F section 5 (".traced_elements[] - the field the
+     whole module turns on") and F3 ("trace it to cost elements; do not
+     pro-rate yet"). Waits on the tax adviser: does a grant whose papers name
+     the items it paid for reduce ONLY those items' qualifying spend?
+     THIS ESTIMATE NEVER READS IT. The public estimate holds no item-by-item
+     spend, so every grant here is untraced and keeps the grant_fraction route
+     whichever way this sits - Suite H, H24, asserts that in all five sectors.
+     It is read by the back end's survey pack (09-app/backend/src/web/
+     pack-grants.ts, chapter 15), where each line is a row of the fixture list
+     and a grant on the claim record can name the rows it paid for.
+     ON => a grant matched to named fixture-list rows comes off only those
+     rows' qualifying spend (and their pool); a grant not matched to rows
+     keeps the equal share. EITHER WAY: a grant that paid for qualifying items
+     takes more off than an equal share would; one that paid only for items
+     that never qualify (walls, the flats) takes nothing off (Word question 79).
+     N4: a grant matched only in words, or not at all, is UNTRACED - never
+     taken as having paid for nothing. An amount not known gives no total. */
+  grant_traced_to_elements: false,
+
+  /* ===== ADDED 4 OCTOBER 2026 BY PHASE 153b: FOUR MORE, false =====
+     Built on our own recommendation from the 29 September question review, for
+     the accountant (or a tax adviser they name) to check (Lakhbir, 29 Sep 2026:
+     "anything you need signing off we build it, we then ask ... if its
+     viable"). Each waits on its Word question, and each is off. */
+
+  /* EL-U1 - Rulebook C row E-B5 and open question 2, Word question 95 ("Does
+     a missing tax reference make an election invalid, or can it be fixed?").
+     s.201(3)(f) asks for both parties' tax references. Today a document
+     without them is not an election: inside the two-year window the client is
+     told to remake it, and once the window has CLOSED the fixtures are nil.
+     ON => where the tax references are the ONLY thing missing and the window
+     is KNOWN to have closed, the election stands as made, and is flagged as a
+     fixable slip to be put right with HMRC. Claims get BIGGER (nil becomes the
+     elected figure). Inside the window, and where the window is not known,
+     nothing changes: remaking it is still the advice, and an unknown window
+     never relieves (N4). Anything else missing still fails it. */
+  election_missing_utr_fixable: false,
+
+  /* EL-W1 - Rulebook C row E-B9 and open question 3, Word question 96 ("Is
+     an election made under the wrong section of the law still valid?").
+     Today a complete election labelled with the wrong section (s.198 for
+     s.199, or the other way) is sent to be remade inside the window and left
+     unresolved, with the bottom of the range at nil, outside it.
+     ON => where the window is KNOWN to have closed, an election that meets
+     every rule of the section these facts require is read under that section
+     and the label is treated as a slip. Money moves EITHER WAY: the bottom of
+     the range rises from nil to the elected figure, and the top comes down to
+     it, because a valid election caps the fixtures it covers (counted by
+     03-app/caprebate-switch-direction.cjs). Inside the window, and where it is not
+     known, nothing changes (N4). It is the same six content checks either way
+     (s.201), so "meets every rule of the correct section" is the checklist
+     passing with the correct section identified. */
+  election_wrong_section_accepted: false,
+
+  /* EL-C2 - Rulebook C row E-C2 and open question 5, Word question 98 ("What
+     happens if an election sets too high a value from the start?").
+     s.198(3): the amount fixed may not exceed the smaller of what the seller
+     could bring in as a disposal value - never more than their own cost of
+     the fixtures (s.62) - and the price paid. The law says what happens when
+     that maximum falls LATER (s.200); it is silent on a figure too high from
+     the start. Today the claim is capped at the figure the election states.
+     ON => that figure is cut down to the most the law allows: the seller's own
+     cost of the fixtures where it is KNOWN, and the price paid where it is
+     KNOWN, whichever is lower, and the client is told. Claims get SMALLER
+     (or stay the same). N4: a limit that is not known cuts nothing and is
+     flagged as not checked; it is never read as nil. A new question asks the
+     seller's cost, and only with this on. */
+  election_value_cut_to_lawful_max: false,
+
+  /* SL-R34 - Rulebook F row F-R34 and open question 2, Word question 108 ("Is
+     a private social housing provider a public body for tax relief rules?").
+     Money from a public body always comes off a claim (s.532); a private
+     payment that got the payer no tax relief can stay in. The supported-living
+     funding question today offers only a grant or public subsidy and a private
+     payment, so a housing association's money is usually taken off like a
+     grant.
+     ON => the question also offers "A housing association or registered
+     provider". It is treated as NOT a public body unless that provider itself
+     is one, so its share is not taken off - and a flag says to confirm that
+     it got no tax relief on the payment. Claims get BIGGER. Off, the answer is
+     not offered and nothing changes. */
+  registered_provider_not_public_body: false
 };
 
 
@@ -738,6 +827,21 @@ var CB_CTAQ = (function(){
         help:"An approximate percentage is fine. It is taken off the spend before the share for the communal parts is worked out, the same way a grant is.",
         showIf:function(s){ return CB_CTA.sl_landlord_contribution === true && s.landlord_contrib_answer === "yes"; },
         onSet:function(s,v){ s.landlord_contrib_fraction = (typeof v === "number" && isFinite(v)) ? Math.min(1, Math.max(0, v/100)) : 0; }});
+      /* PHASE 153b, 4 October 2026 (Word question 86, "In supported living,
+         does a landlord's payment come off before or after the shared-areas
+         share?"). Same switch. Our recommendation: the payment comes off the
+         spend first, spread evenly - unless it was tied to a part, and a
+         payment tied to the shared parts comes straight off the shared-parts
+         share. Only a KNOWN "yes" ties it; "no", "not sure" and no answer keep
+         the even spread, and "not sure" is flagged, because a tied payment can
+         take much more off (N4: the lower reading is never assumed away). */
+      Q.push({id:p+"51slcp", group:g, type:"single",
+        ask:"Did the landlord's payment pay for the shared parts of the building — the corridors, lift, staff areas and the landlord's services?",
+        help:"If the payment was for the shared parts, it comes straight off the shared parts, which is the part you can claim. If it was towards the works in general, it is spread across the whole spend first.",
+        opts:[["yes","Yes — it paid for the shared parts"],["no","No — it was towards the works in general"],["unsure","Not sure"]],
+        showIf:function(s){ return CB_CTA.sl_landlord_contribution === true && s.landlord_contrib_answer === "yes"; },
+        onSet:function(s,v){ s.landlord_contrib_shared_parts = (v === "yes") ? true : (v === "no" ? false : null);
+          if(v === "unsure") flag(s,"Landlord payment not known to be for the works in general (SL-C1, Word question 86) — it has been spread across the whole spend. If it paid for the shared parts it comes straight off them and can take much more off the claim, so this needs confirming before the figure is relied on."); }});
     }
 
     /* F-3 — switch CB_CTA.grant_traced_after_dwelling (12852269900, F-Q3).
@@ -756,16 +860,20 @@ var CB_CTAQ = (function(){
         onSet:function(s,v){ s.grant_traced_fraction = (typeof v === "number")
                                ? Math.min(1, Math.max(0, v/100)) : null; }});
 
-    /* E-8 — switch CB_CTA.s187a_needs_entitled_owner (12851716705, E-Q4). */
-    Q.push({id:p+"51barred", group:g, type:"single",
-      ask:"Was the seller someone who could never have claimed on these fixtures themselves — a landlord letting homes, a housing association, a charity, or a body outside the tax net?",
-      help:"If the seller was never able to claim, the rules about a previous owner’s claim may not reach your purchase at all. It is usually clear from who they were and what they did with the building.",
-      opts:[["yes","Yes — they could never have claimed on these fixtures"],
-            ["no","No — they could have claimed"],
-            ["unsure","Not sure"]],
-      showIf:function(s){ return CB_CTA.s187a_needs_entitled_owner && isPurchase(s); },
-      onSet:function(s,v){ s.prior_owner_s35_barred = (v === "yes") ? true : (v === "no" ? false : null);
-        if(v === "yes") flag(s,"SELLER ARGUABLY NEVER ENTITLED (E-8) — evidence what the seller was and how the building was used in their hands. This removes a ceiling, so it needs to be right."); }});
+    /* E-8 — switch CB_CTA.s187a_needs_entitled_owner (12851716705, E-Q4).
+       PHASE 153b, 4 October 2026 (Word question 73): THE EXTRA QUESTION IS GONE.
+       Until today, with the switch on, a second question (x51barred) asked
+       "Was the seller someone who could never have claimed ...?" after the
+       client had already told us who the seller was. Lakhbir: "Do not ask
+       anything, Just find out who they purchased the property off". The seller
+       question (x12, "Who did you buy the property from?" / "What was the
+       previous owner?") already records the fact E-8 reads: "A private landlord
+       who let it out as homes" sets prior_owner_s35_barred, every other answer
+       leaves it unset, and "Not sure" leaves it unset too (N4). So the switch
+       now reads that answer and nothing else, and the evidence flag the extra
+       question raised is raised by the seller question instead, only while the
+       switch is on (see place() below). Answering the extra question could also
+       overwrite the seller answer's fact; with it gone it cannot. */
 
     /* E-8 NARROWING — PHASE 132, 14 September 2026, RETIRED BY PHASE 132i ON 16
        September 2026. Phase 132 asked the earlier-owner question a second time
@@ -937,6 +1045,32 @@ var CB_CTAQ = (function(){
       showIf:function(s){ return CB_CTA.income_tax_taper_band === true && !!s.claimant_type && s.claimant_type !== "company"; },
       onSet:function(s,v){ if(v === "yes") s.taper_band = true; else if(v === "below" || v === "above") s.taper_band = false; else delete s.taper_band; }});
 
+    /* EL-C2 - switch CB_CTA.election_value_cut_to_lawful_max (Word question
+       98). PHASE 153b, 4 October 2026. The seller's own cost of the fixtures
+       the election covers: one of the two limits in s.198(3). The other, the
+       price paid, the flow already asks. Moved straight after the election
+       amount by place(). Blank is not known, never nil (N4). */
+    Q.push({id:p+"51elcost", group:g, type:"currency", optional:true,
+      ask:"What did the seller originally pay for the fixtures the election covers?",
+      help:"An election cannot fix a value higher than what the seller paid for those fixtures, or higher than the price you paid. The seller\u2019s capital allowances records or their replies to your solicitor\u2019s questions usually show it. Leave it blank if you do not know.",
+      showIf:function(s){ return CB_CTA.election_value_cut_to_lawful_max === true && s.election_document === "held" && !!s.election_quantified; },
+      onSet:function(s,v){ if(typeof v === "number" && isFinite(v) && v > 0) s.election_seller_cost = v; else delete s.election_seller_cost; }});
+
+    /* Word question 226 - PHASE 153b, 4 October 2026. Not a CB_CTA switch:
+       it is DORMANT UNTIL WE ARE VAT-REGISTERED (CB_FEE.NO_CLAIM_VAT), and
+       until then it is never shown and nothing reads it. Whether the client
+       can reclaim VAT on the WORKS tells us about VAT on OUR FEE only where the
+       business that paid for the works is the one we would invoice, and its
+       VAT position has not changed since; this asks exactly that. Moved
+       straight after the works-VAT question by place(). */
+    Q.push({id:p+"51vatfee", group:g, type:"single",
+      ask:"Is the business that paid for the works the one making this claim, with the same VAT position today?",
+      help:"If it is, your answer about VAT on the works also tells us whether you can get back VAT on our fee. If anything has changed, we will not assume either way.",
+      opts:[["yes","Yes \u2014 same business, nothing has changed"],["no","No \u2014 a different business, or the VAT position has changed"],["unsure","Not sure"]],
+      showIf:function(s){ return typeof CB_FEE !== "undefined" && CB_FEE.NO_CLAIM_VAT.we_are_vat_registered === true &&
+                                 (s.works_vat === "reclaim" || s.works_vat === "exempt"); },
+      onSet:function(s,v){ if(v === "yes") s.works_vat_same_business = true; else if(v === "no") s.works_vat_same_business = false; else delete s.works_vat_same_business; }});
+
     return Q;
   }
 
@@ -951,7 +1085,8 @@ var CB_CTAQ = (function(){
      just after the grant amount (x17r), taking that question's group. Nothing
      moves while its question is absent, and a flow without x12b or x17r is
      left as it was. */
-  function place(Q, p){
+  function place(Q, p, flag){
+    flag = flag || function(st, f){ if(st && Array.isArray(st.flags) && st.flags.indexOf(f) === -1) st.flags.push(f); };
     var at = function(id){ for(var i = 0; i < Q.length; i++) if(Q[i] && Q[i].id === id) return i; return -1; };
     var move = function(id, anchor, after){
       if(at(id) === -1 || at(anchor) === -1) return;
@@ -959,10 +1094,51 @@ var CB_CTAQ = (function(){
       if(after) q.group = Q[j].group;
       Q.splice(after ? j + 1 : j, 0, q);
     };
-    move(p + "51barred", p + "12b", false);
     move(p + "51gtr", p + "17r", true);
+    /* PHASE 153b - the seller's cost of the fixtures (EL-C2) reads whether the
+       election is held and states an amount, so it goes straight after the
+       question that asks the amount (x14v), taking its group. */
+    move(p + "51elcost", p + "14v", true);
+
+    /* PHASE 153b, 4 October 2026 - E-8 READS THE SELLER QUESTION (Word
+       question 73). With CB_CTA.s187a_needs_entitled_owner on, "A private
+       landlord who let it out as homes" raises the evidence flag the retired
+       x51barred question raised on "yes". Off, the seller question does
+       exactly what it did. The wrapper calls the question's own onSet first,
+       so the fact it records is the question's, never ours. */
+    var seller = at(p + "12");
+    if(seller !== -1 && typeof Q[seller].onSet === "function"){
+      var sellerSet = Q[seller].onSet;
+      Q[seller].onSet = function(st, v){
+        var out = sellerSet(st, v);
+        if(CB_CTA.s187a_needs_entitled_owner === true && v === "residential_landlord" && st) flag(st, E8_SELLER_FLAG);
+        return out;
+      };
+    }
+
+    /* PHASE 153b, 4 October 2026 - THE WORKS-VAT ANSWER IS KEPT (Word question
+       226). Each flow asks "Was VAT charged on the spend(ing), and can the
+       business/practice reclaim it?" and, outside supported living, kept the
+       answer nowhere on the session. It is now kept as works_vat, alongside
+       whatever the question already did, so CB_FEE.clientVatFromWorks can read
+       it. It moves no figure: what it may tell us about VAT on OUR fee is read
+       only with the confirmation below, and only once we are VAT-registered. */
+    for(var k = 0; k < Q.length; k++){
+      if(Q[k] && /^Was VAT charged on the spend/.test(Q[k].ask || "") && typeof Q[k].onSet === "function"){
+        (function(q){
+          var own = q.onSet;
+          q.onSet = function(st, v){ var out = own(st, v); if(st){ if(typeof v === "string" && v) st.works_vat = v; else delete st.works_vat; } return out; };
+        })(Q[k]);
+        move(p + "51vatfee", Q[k].id, true);
+        break;
+      }
+    }
     return Q;
   }
+
+  /* The flag the seller question raises for E-8 with its switch on - the words
+     the retired x51barred question used. */
+  var E8_SELLER_FLAG = "SELLER ARGUABLY NEVER ENTITLED (E-8) \u2014 evidence what the seller was and how the building was used in their hands. This removes a ceiling, so it needs to be right.";
 
   return { questions:questions, place:place };
 })();
@@ -1445,7 +1621,11 @@ var CB_ELECTION = (function(){
     if(!deadline) return null;
     var trib = parseDate(s.tribunal_application_date);
     if(trib && trib <= deadline && s.tribunal_status === "undetermined") return true;
-    return new Date() <= deadline;
+    /* PHASE 153f, 4 October 2026 (noted 2 Oct): the clock the engine is GIVEN (s.__now, as the back end's legal check
+       passes it), and the real clock only when none is given. It read the real clock before, so a case run for a
+       fixed date could get the wrong answer either side of the deadline. */
+    var today = s.__now ? parseDate(s.__now) : null;
+    return (today || new Date()) <= deadline;
   }
 
   /* -------------------------------------------------------------------------
@@ -1685,6 +1865,24 @@ var CB_ELECTION = (function(){
     return true;
   }
 
+  /* EL-C2 - the most an election may fix (s.198(3)), from what is KNOWN. */
+  function lawfulMax(s){
+    if(CB_CTA.election_value_cut_to_lawful_max !== true || !s) return null;
+    var v = s.election_value;
+    if(!(typeof v === "number" && isFinite(v) && v > 0)) return null;
+    var num = function(x){ return (typeof x === "number" && isFinite(x) && x > 0) ? x : null; };
+    var bought = Array.isArray(s.trigger) ? s.trigger.indexOf("purchase") !== -1 : String(s.trigger || "").indexOf("purchase") !== -1;
+    var limits = [];
+    var cost = num(s.election_seller_cost);
+    if(cost !== null) limits.push({ key:"seller_cost", amount:cost, words:"what the seller paid for the fixtures" });
+    var price = bought ? num(s.base_amount) : null;
+    if(price !== null) limits.push({ key:"price_paid", amount:price, words:"the price you paid" });
+    var lowest = null;
+    limits.forEach(function(l){ if(lowest === null || l.amount < lowest.amount) lowest = l; });
+    return { applied: lowest !== null && v > lowest.amount, to: lowest !== null ? Math.min(v, lowest.amount) : v,
+             by: lowest, seller_cost_known: cost !== null, price_known: price !== null };
+  }
+
   /* Row E-B9 - made under the wrong section. */
   function wrongSection(s){
     var sec = section(s);
@@ -1758,6 +1956,18 @@ var CB_ELECTION = (function(){
     for(var i=0;i<CONTENT.length;i++)
       if(have.indexOf(CONTENT[i].key) === -1) missing.push(CONTENT[i]);
 
+    /* EL-U1 - PHASE 153b, 4 October 2026, Word question 95. Off by default
+       (CB_CTA.election_missing_utr_fixable). With it on, a document missing
+       ONLY the tax references, once the window is KNOWN to have closed, is
+       read as an election with a fixable slip rather than as no election.
+       Inside the window, or where the window is not known, nothing changes. */
+    var lenient = [];
+    if(CB_CTA.election_missing_utr_fixable === true && missing.length === 1 &&
+       missing[0].key === "utrs" && windowOpen(s) === false){
+      missing = [];
+      lenient.push("utrs");
+    }
+
     if(missing.length){
       var win = windowOpen(s);
       var named = missing.map(function(m){ return m.label + " (" + m.prov + ")"; }).join("; ");
@@ -1790,8 +2000,15 @@ var CB_ELECTION = (function(){
                action:"specialist and CTA review \u2014 Rulebook C row E-B11" };
     }
 
-    /* Row E-B9 - complete, but made under the wrong section. */
-    if(wrongSection(s)){
+    /* Row E-B9 - complete, but made under the wrong section.
+       EL-W1 - PHASE 153b, 4 October 2026, Word question 96. Off by default
+       (CB_CTA.election_wrong_section_accepted). With it on, a complete
+       election under the wrong label, once the window is KNOWN to have
+       closed, is read under the section these facts require: the label is a
+       slip. Inside the window, or where it is not known, nothing changes. */
+    if(wrongSection(s) && CB_CTA.election_wrong_section_accepted === true && windowOpen(s) === false)
+      lenient.push("section");
+    else if(wrongSection(s)){
       var win2 = windowOpen(s);
       var right = section(s);
       var msg = "the document is expressed to be made under " + s.election_section
@@ -1819,7 +2036,18 @@ var CB_ELECTION = (function(){
     var rs = rateSplit(s);
     applyRateSplitToPool(s);
 
+    /* EL-C2 - PHASE 153b, 4 October 2026, Word question 98. Off by default
+       (CB_CTA.election_value_cut_to_lawful_max). s.198(3): the amount fixed
+       may not exceed the smaller of the seller's own cost of the fixtures
+       (through the disposal value, s.62) and the price paid. With it on, an
+       elected figure above a limit we KNOW is cut down to it and the client is
+       told; a limit we do not know cuts nothing and is said to be unchecked
+       (N4). `value` is the figure the claim rests on; `value_as_elected` is
+       the figure on the document. */
+    var cut = lawfulMax(s);
+
     return { outcome:OUT.CAP_ELECT, held:true, missing:[], scope:scopeOf(s),
+             lenient:lenient, value_as_elected:s.election_value, cut:cut,
              rateSplit:rs, splitRisk:(rs.safe === false),
              splitAction:(rs.safe === false
                ? (windowOpen(s) === true
@@ -1827,8 +2055,10 @@ var CB_ELECTION = (function(){
                    : "the window has closed, so the split cannot be corrected by re-election. The elected total stands; the allocation between pools goes to the surveyor and the CTA")
                : null),
              section:(sec ? sec.section : null), item:(sec ? sec.item : null),
-             value:s.election_value,
+             value:(cut && cut.applied ? cut.to : s.election_value),
              why:"the election is complete on its face against all six statutory content requirements"
+                 + (lenient.indexOf("utrs") !== -1 ? " but one: it has no tax references, which on a switched reading (Word question 95) is a slip that can be put right with HMRC rather than a reason it is not an election" : "")
+                 + (lenient.indexOf("section") !== -1 ? ". It is labelled " + s.election_section + ", but on a switched reading (Word question 96) it is read under " + sec.section + ", which these facts require, because it meets that section\u2019s rules" : "")
                  + (sec && sec.section ? ", and is made under the section these facts require (" + sec.section + ", " + sec.why + ")" : "") };
   }
 
@@ -1908,6 +2138,21 @@ var CB_ELECTION = (function(){
     switch(el.outcome){
 
       case OUT.CAP_ELECT:
+        /* PHASE 153b - the switched readings say so, every time they act. */
+        if(el.lenient && el.lenient.indexOf("utrs") !== -1){
+          A && A.push("the election has no tax references, but everything else it needs is there and the window to remake it has closed \u2014 it has been treated as a valid election with a slip to put right with HMRC");
+          flag && flag("ELECTION WITHOUT TAX REFERENCES TREATED AS VALID (EL-U1) \u2014 a SWITCHED position (CB_CTA.election_missing_utr_fixable) that stands only if Word question 95 is answered that way. Check the parties, the property and the value can all be identified from the document, and put the references right with HMRC.");
+        }
+        if(el.lenient && el.lenient.indexOf("section") !== -1){
+          A && A.push("the election names the wrong section of the law, but it meets every rule of the right one, so it has been read under the right one");
+          flag && flag("WRONGLY LABELLED ELECTION TREATED AS VALID (EL-W1) \u2014 a SWITCHED position (CB_CTA.election_wrong_section_accepted) that stands only if Word question 96 is answered that way. Check the document meets every requirement of the section these facts require.");
+        }
+        if(el.cut && el.cut.applied){
+          A && A.push("the election states \u00a3" + Math.round(el.value_as_elected).toLocaleString("en-GB") + ", which is more than the law lets it fix: it cannot be more than " + el.cut.by.words + " (\u00a3" + Math.round(el.cut.to).toLocaleString("en-GB") + "), so your claim on these fixtures is limited to that");
+          flag && flag("ELECTED VALUE CUT DOWN (EL-C2) \u2014 the election states \u00a3" + Math.round(el.value_as_elected).toLocaleString("en-GB") + ", above " + el.cut.by.words + "; the claim uses \u00a3" + Math.round(el.cut.to).toLocaleString("en-GB") + " (s.198(3)). A SWITCHED position (CB_CTA.election_value_cut_to_lawful_max) that stands only if Word question 98 is answered that way.");
+        } else if(el.cut && !el.cut.seller_cost_known){
+          flag && flag("Elected value not checked against what the seller paid for the fixtures (EL-C2) \u2014 that figure is not known, so the election\u2019s amount has not been tested against it. It is not assumed to pass.");
+        }
         if(el.value > 0) return scopedCap(el, lo, hi, A, flag);
         flag && flag("Election valid on its face but no amount captured \u2014 read the figure off the document");
         return [0, hi];
@@ -1947,6 +2192,7 @@ var CB_ELECTION = (function(){
            windowOpen:windowOpen, section:section,
            notifiedInTime:notifiedInTime, electionDeadline:electionDeadline,
            wrongSection:wrongSection, s196Item:s196Item, s183UnknownFlag:s183UnknownFlag,
+           lawfulMax:lawfulMax,
            rateSplit:rateSplit, applyRateSplitToPool:applyRateSplitToPool,
            s203Position:s203Position,
            SCOPE:SCOPE, scopeOf:scopeOf, scopedCap:scopedCap,
@@ -3560,6 +3806,62 @@ var CB_S187A = (function(){
     return true;
   }
 
+  /* -------------------------------------------------------------------------
+     PHASE 154a1 (line 13), 4 October 2026 — R-B1, THE POOLING REQUIREMENT
+     (s.187A(4)). The harness's oldest xfail (Suite G, C1), logged by Phase 2.
+
+     THE DEFECT. A purchase from a seller who could claim but never did got the
+     whole range with no cap and no flag: the flows applied s.187A only where
+     the seller was KNOWN to have claimed, and a seller who never claimed never
+     pooled. Rulebook B branch C, row C1: an entitled past owner who did not
+     pool, where the requirement is in force, takes the claim to NIL - for this
+     buyer and every later one (s.187A(3)). Rulebook A Addendum 1, F1: this is
+     asked FIRST, before the fixed value requirement, because the reason for a
+     nil differs and the report must name it.
+
+     THE READING, AND WHAT IT LEANS ON.
+       - Only a seller KNOWN to have been able to claim (prior_owner_entitled
+         "yes"). An unknown entitlement is unchanged here.
+       - A claim is a pooling (s.202(3)), so a seller who claimed has pooled
+         and the fixed value requirement takes over, as before. There is no
+         separate "pooled" answer yet (Rulebook B, defect 9): "never claimed"
+         is read as "never pooled".
+       - The requirement is in force where the seller stopped owning the
+         fixtures after April 2014 (FA 2012 Sch 10 para 13(2),
+         poolingRequirementInForce). A KNOWN earlier date takes it out of force
+         (branch D) and nothing changes. An UNKNOWN date leaves it in force -
+         but then the answer is unresolved with nil at the bottom (row C9's
+         treatment), never a firm nil, because the date could clear it.
+       - Never claimed, date known and after April 2014: NIL.
+       - Never claimed, date not known: INDET, nil at the bottom.
+       - Claim history "not sure" or never asked: INDET, nil at the bottom
+         (row C9). N4: an unknown claim history never relieves - it gets the
+         same unresolved answer whether it was "not sure" or absent.
+     The seller may still pool: in a tax period that began on or before the
+     day it sold (s.187A(4)), which includes the period of the sale, while that
+     return can be amended. The words say what would satisfy it.
+     ------------------------------------------------------------------------- */
+  var POOLING_WOULD_SATISFY = "This is met only if the seller put what it spent on these fixtures into its capital allowances pool in a tax period that began on or before the day it sold them to you (s.187A(4)). A seller that has not done so may still be able to, by amending its tax return for the period of the sale while that return can still be amended. Ask the seller for its replies to the standard property enquiries on capital allowances, and for the tax computation that shows the pool.";
+
+  function poolingAssess(s){
+    s = s || {};
+    if(s.prior_owner_entitled !== "yes") return null;
+    if(s.prior_owner_claimed === "yes") return null;
+    if(regimeOff(s)) return null;
+    var known = !!parseDate(s.past_owner_cessation_date);
+    if(known && !poolingRequirementInForce(s)) return null;
+    var di = disposalItem(s);
+    if(s.prior_owner_claimed === "no" && known)
+      return { outcome:OUT.NIL, item:di.item, track:TRACK.UNKNOWN, pooling:true, requirement:"POOLING",
+               why:"you have told us the seller was a tax-paying business that never claimed capital allowances on these fixtures, so it never pooled what it spent on them, and it stopped owning them after April 2014, when the requirement to pool first applies. If that is right, the fixtures claim on this purchase is nil, for you and for anyone who buys from you",
+               action:POOLING_WOULD_SATISFY };
+    return { outcome:OUT.INDET, item:di.item, track:TRACK.UNKNOWN, pooling:true, requirement:"POOLING",
+             why:(s.prior_owner_claimed === "no"
+               ? "you have told us the seller was a tax-paying business that never claimed capital allowances on these fixtures, so it never pooled what it spent on them. If it stopped owning them after April 2014 the fixtures claim on this purchase is nil, and we do not yet know when it stopped owning them"
+               : "the seller was a tax-paying business that could have claimed capital allowances on these fixtures, and whether it ever did, and so whether it pooled what it spent on them, is not known. If it never did, the fixtures claim on this purchase may be nil"),
+             action:POOLING_WOULD_SATISFY + (known ? "" : " And tell us the date the seller stopped owning the property.") };
+  }
+
   /* -----------------------------------------------------------------------
      A-2 (12921346993), switch CB_CTA.s187a_6b_statements_route, A-Q8.
 
@@ -3617,6 +3919,19 @@ var CB_S187A = (function(){
                why:"nobody in the ownership history was ever able to claim capital allowances on these fixtures, so the second-hand fixtures conditions in s.187A do not apply at all",
                action:"s.185 can still cap the claim if an earlier owner did claim — that is assessed separately" };
 
+    if(regimeOff(s))
+      return { outcome:OUT.OFF, item:di.item, track:TRACK.UNKNOWN, pooling:pooling,
+               why:"the owner who last claimed had already stopped owning the fixtures before the second-hand fixtures rules came in (FA 2012 Sch 10 para 13(1)), so s.187A does not apply to this purchase",
+               action:"s.185 can still cap the claim at the disposal value that owner brought into account — that is assessed separately" };
+
+    /* F1 - PHASE 154a1 (line 13): the pooling requirement, BEFORE the fixed
+       value requirement and before the A-3 switch (Rulebook A Addendum 1, F1
+       before F2). A past owner who never pooled takes the claim to nil
+       whichever reading of the fixed value requirement is switched on, so the
+       A-3 switch cannot reach a case this decides. poolingAssess, above. */
+    var pooled = poolingAssess(s);
+    if(pooled) return pooled;
+
     /* A-3 — the fixed value requirement needs a past owner who was required to
        bring a disposal value into account. OFF by default; switch
        CB_CTA.fvr_requires_past_owner_claim, waits on B-Q4. */
@@ -3626,10 +3941,6 @@ var CB_S187A = (function(){
                why:"the owner before you never actually claimed capital allowances on these fixtures, so they never had to bring a disposal value into account for them. The requirement to fix the value between the two of you is a requirement about that disposal value, so on this reading it does not apply to your purchase at all",
                action:"this does NOT decide the separate question of whether that owner was required to have pooled the expenditure first (s.187A(4)) \u2014 that is assessed on its own facts. s.185 can still cap the claim if an earlier owner did claim." };
 
-    if(regimeOff(s))
-      return { outcome:OUT.OFF, item:di.item, track:TRACK.UNKNOWN, pooling:pooling,
-               why:"the owner who last claimed had already stopped owning the fixtures before the second-hand fixtures rules came in (FA 2012 Sch 10 para 13(1)), so s.187A does not apply to this purchase",
-               action:"s.185 can still cap the claim at the disposal value that owner brought into account — that is assessed separately" };
 
     /* F4 - has a relevant apportionment ALREADY been made? Row A-F12.
        This limb comes before the track fork on purpose. A valid joint election
@@ -3751,6 +4062,12 @@ var CB_S187A = (function(){
         return [Math.min(lo, a.value), Math.min(hi, a.value)];
 
       case OUT.NIL:
+        /* PHASE 154a1 (line 13): a nil names the requirement that failed (Rulebook A Addendum 1, the report). */
+        if(a.requirement === "POOLING"){
+          A && A.push("the fixtures claim on this purchase is nil, because the seller never pooled what it spent on them — " + a.why);
+          flag && flag("s.187A(4) POOLING REQUIREMENT NOT MET — NIL (s.187A(3)) — " + a.why + ". " + (a.action || ""));
+          return [0, 0];
+        }
         A && A.push("the fixtures the earlier owner disposed of are nil — " + a.why);
         flag && flag("s.187A(3)(c) NIL — " + a.why + (a.action ? " " + a.action : ""));
         return [0, 0];
@@ -3762,7 +4079,8 @@ var CB_S187A = (function(){
 
       default: /* INDET */
         A && A.push("this cannot be settled on what is known so far, so the bottom of the range is shown as nil — " + a.why);
-        flag && flag("s.187A POSITION UNPROVEN — " + a.why + (a.action ? " " + a.action : ""));
+        flag && flag((a.requirement === "POOLING" ? "s.187A(4) POOLING POSITION UNPROVEN — " : "s.187A POSITION UNPROVEN — ")
+          + a.why + (a.action ? (a.requirement === "POOLING" ? ". " : " ") + a.action : ""));
         return [0, hi];
     }
   }
@@ -3833,7 +4151,12 @@ var CB_S187A = (function(){
       {id:p+"14pod", group:g, type:"date", optional:true,
        ask:"On what date did that earlier owner stop owning the property?",
        help:"Leave it blank if you don’t know. This date does real work: it decides whether the second-hand fixtures rules apply to your purchase at all, and where a written statement of value is needed it is the date the deadline for that statement runs from. It is on the Land Registry title register.",
-       showIf:gate,
+       /* PHASE 154a1 (line 13): the caller's own gate, never the A-3 one. This
+          date also decides whether the pooling requirement is in force
+          (poolingAssess), which A-3 does not touch - so a seller who never
+          claimed is still asked it with that switch on. Switch off, the two
+          gates are the same and the flow is unchanged. */
+       showIf:rawGate,
        onSet:(s,v)=>{ s.past_owner_cessation_date=v||null;
          if(!v) flag(s,"Past owner’s cessation of ownership date not captured — the FA 2012 Sch 10 para 13(1) and 13(2) transitionals and the s.187A(11) statement deadline all run from it. Both transitionals are treated as NOT applying until it is known (A-5)"); } },
 
@@ -3917,6 +4240,7 @@ var CB_S187A = (function(){
            windowStart:windowStart, fvrWindow:fvrWindow,
            dvsAssess:dvsAssess, relevantApportionmentMade:relevantApportionmentMade,
            pastOwnerBroughtNoDisposalValue:pastOwnerBroughtNoDisposalValue,
+           poolingAssess:poolingAssess,
            statementsRoute:statementsRoute,
            assess:assess, applyOutcome:applyOutcome,
            questions:questions };
@@ -4778,9 +5102,14 @@ var CB_FRONTDOOR = (function(){
       gates:false, derived:null,
       onSet:function(s,v){
         s.previous_owner_claimed = v;
-        /* Feed the engine's own vocabulary rather than a parallel one. */
+        /* Feed the engine's own vocabulary rather than a parallel one.
+           PHASE 154a1 (line 13): "no" is a seller who did not CLAIM, which is not a
+           seller who could not - a tax-paying seller who never claimed is the one
+           the pooling requirement takes to nil (R-B1). So "no" records the claim
+           history only and leaves entitlement to its own question; it used to set
+           prior_owner_entitled "no", the best case, which inverted that rule. */
         if(v === "yes") s.prior_owner_entitled = "yes";
-        else if(v === "no") s.prior_owner_entitled = "no";
+        else if(v === "no") s.prior_owner_claimed = "no";
         /* "don't know" deliberately sets nothing — unresolved, not guessed. */
       } },
 
@@ -5053,6 +5382,18 @@ var CB_FEE = (function(){
       profits:      ctx && ctx.profits
     }));
 
+    /* PHASE 153b, 4 October 2026 - Word question 59 (the director's: "Once we
+       charge VAT, should the fee comparison include VAT for clients who cannot
+       reclaim it?") and question 226. The no-claim test's VAT rule (Phase
+       151b, below) carried into this comparison, behind its own switch,
+       CB_FEEGUARD.fee_comparison_counts_vat, and DORMANT WHILE WE ARE NOT
+       VAT-REGISTERED: until we are, the comparison is returned exactly as it
+       was, whichever way the switch sits. The client's VAT position on our fee
+       is the caller's ctx.client_vat where it gives one, otherwise what the
+       session's works-VAT answer can tell us (clientVatFromWorks, below). */
+    var clientVat = (ctx && ctx.client_vat) || (ctx && ctx.session ? clientVatFromWorks(ctx.session) : null);
+    comparison = withFeeVat(comparison, fee, ctx, taxRate, allowances, clientVat);
+
     if(!r){
       /* PHASE 113d. The gate is assessed here too, and it comes back
          UNDETERMINED naming expected_fee — which is N4 exactly: a case whose
@@ -5064,7 +5405,7 @@ var CB_FEE = (function(){
                comparison:comparison, warning:null,
                capped:false, uncapped_amount:null,
                gate:CB_GATE.assess({ fee:null, sector:ctx && ctx.sector }),
-               recommendation_threshold:recommendationThreshold(null, comparison, false, ctx && ctx.client_vat) };
+               recommendation_threshold:recommendationThreshold(null, comparison, false, clientVat) };
     }
 
     /* Switch (a). Caps ONLY where the benefit model is determined: capping
@@ -5075,6 +5416,11 @@ var CB_FEE = (function(){
        comparison.determined && comparison.fee_exceeds_year_one_benefit === true){
       uncapped = amount;
       amount = comparison.year_one_benefit;
+      /* Phase 153b: where VAT on our fee is counted (the client cannot reclaim
+         it), the cap is the fee whose VAT-inclusive cost is the year-one
+         benefit, so the client is not capped at a figure plus VAT. */
+      if(comparison.fee_vat && comparison.fee_vat.treatment === "COUNTED_CLIENT_CANNOT_RECLAIM" && comparison.fee_vat.vat_rate)
+        amount = Math.round(comparison.year_one_benefit / (1 + comparison.fee_vat.vat_rate) * 100) / 100;
       capped = true;
     }
 
@@ -5100,7 +5446,7 @@ var CB_FEE = (function(){
        our fee ("can_reclaim" / "cannot_reclaim"; anything else is not known),
        is handed on so the test can count VAT where it must. It is data the
        caller passes, not a question on the screen; see NO_CLAIM_VAT below. */
-    var threshold = recommendationThreshold(amount, comparison, gate.withholds_quote, ctx && ctx.client_vat);
+    var threshold = recommendationThreshold(amount, comparison, gate.withholds_quote, clientVat);
 
     if(gate.withholds_quote){
       /* The one behavioural change the switch buys. No figure is rendered;
@@ -5266,6 +5612,63 @@ var CB_FEE = (function(){
     return out;
   }
 
+  /* PHASE 153b, 4 October 2026 - Word question 226 ("Can a client's answer
+     about VAT on their building work tell us whether they can reclaim VAT on
+     our fee?"). Our recommendation, for the tax adviser to check: only where
+     the business that paid for the works is the one we would invoice and its
+     VAT position has not changed (works_vat_same_business, asked only once we
+     are VAT-registered). Then "Reclaimed in full" means it can reclaim VAT on
+     our fee and "Not reclaimable (exempt)" means it cannot. Every other answer
+     - partly, mixed, dispensing, zero-rated, not sure, none - and every case
+     without that confirmation stays NOT KNOWN (null), which the no-claim test
+     and the comparison treat as not known (N4). */
+  function clientVatFromWorks(s){
+    if(!s || s.works_vat_same_business !== true) return null;
+    if(s.works_vat === "reclaim") return "can_reclaim";
+    if(s.works_vat === "exempt") return "cannot_reclaim";
+    return null;
+  }
+
+  /* PHASE 153b, 4 October 2026 - VAT IN THE FEE-VERSUS-BENEFIT COMPARISON
+     (Word question 59, for the director). The same rule as the no-claim test
+     (vatInNoClaim): VAT on our fee is counted only where we are VAT-registered
+     and the client cannot reclaim it; a client who can is compared on the fee
+     alone; a client whose position is not known gets no verdict unless the
+     comparison comes out the same with and without the VAT (N4). Not
+     registered (today), or the switch off: the comparison is returned
+     untouched - not one field added. Where it acts it adds fee_vat (the
+     vatInNoClaim report) and fee_counted, and `fee` stays the fee before VAT. */
+  function withFeeVat(c, fee, ctx, taxRate, allowances, clientVat){
+    if(!c || c.computed !== true) return c;
+    if(CB_FEEGUARD.fee_comparison_counts_vat !== true) return c;
+    var v = vatInNoClaim(fee, clientVat);
+    if(v.treatment === "NOT_REGISTERED_NO_VAT") return c;
+    var assessed = function(){ return CB_BENEFIT.assess({
+      allowances: allowances, main: ctx && ctx.main, special: ctx && ctx.special, tax_rate: taxRate,
+      period_start: ctx && ctx.period_start, is_company: ctx && ctx.is_company, years: ctx && ctx.years,
+      first_year: ctx && ctx.first_year, profits: ctx && ctx.profits }); };
+    var out;
+    if(v.treatment === "COUNTED_CLIENT_CANNOT_RECLAIM" && typeof v.vat === "number"){
+      out = CB_BENEFIT.compare(fee + v.vat, assessed());
+      out.fee = c.fee; out.fee_counted = fee + v.vat;
+    } else if(v.treatment === "NOT_COUNTED_CLIENT_CAN_RECLAIM"){
+      out = c; out.fee_counted = c.fee;
+    } else {
+      /* Not known (or a registered flag with no usable rate): the verdicts
+         stand only where the fee alone and the fee with VAT agree. */
+      var rate = NO_CLAIM_VAT.vat_rate;
+      var withVat = (typeof rate === "number" && isFinite(rate) && rate > 0 && typeof fee === "number")
+        ? CB_BENEFIT.compare(Math.round(fee * (1 + rate) * 100) / 100, assessed()) : null;
+      out = c;
+      ["fee_exceeds_year_one_benefit", "fee_exceeds_cumulative_benefit"].forEach(function(k){
+        if(!withVat || withVat[k] !== c[k]) out[k] = null; });
+      out.fee_to_year_one_benefit = null; out.fee_to_cumulative_benefit = null;
+      out.fee_counted = null;
+    }
+    out.fee_vat = v;
+    return out;
+  }
+
   function recommendationThreshold(fee, comparison, quoteWithheld, clientVat){
     var c = comparison || {};
     var line = NO_CLAIM_THRESHOLD.relief_after_fee_below;
@@ -5340,7 +5743,8 @@ var CB_FEE = (function(){
            MULTI_SITE_DISCOUNT:MULTI_SITE_DISCOUNT,
            NO_CLAIM_THRESHOLD:NO_CLAIM_THRESHOLD,
            NO_CLAIM_VAT:NO_CLAIM_VAT,
-           recommendationThreshold:recommendationThreshold };
+           recommendationThreshold:recommendationThreshold,
+           clientVatFromWorks:clientVatFromWorks };
 })();
 
 
@@ -5411,7 +5815,15 @@ var CB_FEEGUARD = {
      The standing DISCLOSURE is NOT replaced, reworded or softened by this
      switch and must not be: it is a legal-facing sentence and it applies to
      every client whether or not this particular one trips the comparison. */
-  fee_warn_when_exceeds_benefit: false
+  fee_warn_when_exceeds_benefit: false,
+
+  /* Word question 59 - PHASE 153b, 4 October 2026. For the director, who asks
+     the accountant. ON => once we are VAT-registered, the fee-versus-benefit
+     comparison counts VAT on our fee where the client cannot reclaim it, as
+     the no-claim test already does (CB_FEE.withFeeVat). It does NOTHING while
+     we are not registered, on or off. Off is today's comparison: the fee
+     alone. A funnel switch like the two above, not a CB_CTA tax switch. */
+  fee_comparison_counts_vat: false
 };
 
 
@@ -6286,7 +6698,30 @@ var CB_BAND = (function(){
     return { low: Math.round(spend * b[0]), high: Math.round(spend * b[1]), band:b };
   }
 
-  return { BANDS:BANDS, bandKey:bandKey, bandFor:bandFor, rangeFor:rangeFor };
+  /* PHASE 153e, 4 October 2026 (Word question 138, the surveyor's): supported living's range read for its own
+     trigger, behind a switch that ships OFF. Today the calculation reads the refurbishment and fit-out band whatever
+     the trigger; its three bands are identical (10% to 25%), so the switch changes no figure until the surveyor sets
+     separate ranges from finished claims (the back end's src/web/sector-ranges.ts proposes them). A trigger list with
+     more than one trigger takes the band with the LOWEST ceiling (never the one that relieves); no trigger: none. */
+  var SWITCHES = { sl_band_by_trigger: false };
+  function slBandKey(t){
+    if(t === "purchase") return "purchase";
+    if(t === "new_build") return "new_build";
+    if(t === "conversion" || t === "fitout" || t === "fit_out" || t === "refurb") return "refurb_fitout";
+    return null;
+  }
+  function slBand(triggers){
+    var list = Array.isArray(triggers) ? triggers : (typeof triggers === "string" ? [triggers] : []);
+    var best = null;
+    for(var i = 0; i < list.length; i++){
+      var k = slBandKey(list[i]);
+      var b = k ? BANDS.supported_living[k] : null;
+      if(b && (best === null || b[1] < best[1])) best = b;
+    }
+    return best;
+  }
+
+  return { BANDS:BANDS, bandKey:bandKey, bandFor:bandFor, rangeFor:rangeFor, SWITCHES:SWITCHES, slBandKey:slBandKey, slBand:slBand };
 })();
 
 

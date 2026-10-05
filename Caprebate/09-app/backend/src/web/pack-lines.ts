@@ -81,6 +81,49 @@ export const ROOM_BASIS: Readonly<Record<string, Readonly<Record<string, readonl
   PH: Object.freeze({ 'theatre count': Object.freeze(['PH-R2']), 'imaging room count': Object.freeze(['PH-R4', 'PH-R5']) }),
 });
 
+/**
+ * PHASE 153e, 4 October 2026 — TEST DEFAULTS FOR THE SURVEYOR TO CONFIRM, laid over the fixture list without changing it.
+ *
+ * SUITE_ROWS (Word question 148): a theatre row is counted from the suite's spaces that carry its equipment, each
+ * counted, not from the theatres alone. Ultra-clean ventilation and the operating lights stay with the theatre.
+ *
+ * PLACEMENT (Word questions 134 and 135), from the answers typed under the questions:
+ *   - ordinary powered ventilation, air cooling and air purification are integral features (special rate). Dental
+ *     extract and ordinary GP treatment-room ventilation are NOT automatically medical equipment: special rate here.
+ *   - theatre ultra-clean ventilation and isolation-room ventilation are FLAGGED: the pool is left to the surveyor on
+ *     each job, by the system's function, specification and purpose.
+ *   - emergency lighting is part of the electrical and lighting system (LS-SR-001); commercial kitchen extract is part
+ *     of the ventilation system (LS-SR-004); clinical flooring and ordinary security glazing stay with the building
+ *     (nothing qualifies unless a specific rule applies); drug storage and standby generators are their own plant.
+ * Each default says so in its source text, so a surveyor reads it as a default, not a decision.
+ */
+export const SUITE_ROWS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  'LS-PH-002': Object.freeze(['PH-R2']),
+  'LS-PH-004': Object.freeze(['PH-R2', 'PH-R2A', 'PH-R2D']),
+  'LS-PH-005': Object.freeze(['PH-R2', 'PH-R2A', 'PH-R2C', 'PH-R2D']),
+  'LS-PH-006': Object.freeze(['PH-R2']),
+});
+
+export const TEST_DEFAULT_WORDS = 'Test default (Phase 153e), for the surveyor to confirm';
+
+type Placement = { readonly pool?: Pool | null; readonly qpct_bp?: number; readonly status?: string; readonly note: string };
+export const PLACEMENT: Readonly<Record<string, Placement>> = Object.freeze({
+  'LS-DEN-015': { pool: 'SR', note: 'treated as normal air flow, not medical kit (question 134)' },
+  'LS-GP-008': { pool: 'SR', note: 'treated as normal air flow in a treatment room (question 134)' },
+  'LS-PH-002': { pool: null, status: 'CONTESTED', note: 'flagged: the surveyor decides on each job by function, specification and purpose (question 134)' },
+  'LS-PH-003': { pool: null, status: 'CONTESTED', note: 'flagged: the surveyor decides on each job by function, specification and purpose (question 134)' },
+  'LS-SR-001': { note: 'includes emergency lighting (question 135)' },
+  'LS-SR-004': { note: 'includes commercial kitchen extract (question 135)' },
+  'LS-MP-013': { qpct_bp: 0, note: 'floors stay with the building. None of it counts unless a rule says so (question 135)' },
+});
+
+/** Rows the fixture list does not have, added by sector as their own plant (question 135). */
+const ADDED_ROWS: Readonly<Record<string, readonly { element_id: string; label: string; unit: string }[]>> = Object.freeze({
+  CH: [{ element_id: 'TD-CH-DRUGS', label: 'Medication and controlled-drug storage', unit: 'items' }],
+  PH: [{ element_id: 'TD-PH-DRUGS', label: 'Medication and controlled-drug storage on wards', unit: 'items' },
+    { element_id: 'TD-PH-STANDBY', label: 'Standby generator and UPS', unit: 'items' }],
+});
+
 /** Units a count of rooms can stand for. A row measured in metres or points is not a room count, whatever drives it. */
 const COUNT_UNITS = new Set(['no', 'room']);
 
@@ -93,7 +136,9 @@ export type LineTemplate = {
   readonly label: string;
   readonly unit: string;
   /** How the quantity is drafted: from the floor area, from room counts, or not at all. */
-  readonly qty_from: { readonly kind: 'GIA' } | { readonly kind: 'ROOMS'; readonly rooms: readonly string[] } | { readonly kind: 'NONE' };
+  readonly qty_from: { readonly kind: 'GIA' } | { readonly kind: 'ROOMS'; readonly rooms: readonly string[] } | { readonly kind: 'NONE' }
+    /** PHASE 153e: supported living's common parts, from the shared areas on the floor plans (else the 25% fallback). */
+    | { readonly kind: 'SHARED' };
   readonly pool: Pool | null;
   /** Hundredths of a per cent, or null where the list leaves it to the surveyor. */
   readonly qpct_bp: number | null;
@@ -123,20 +168,33 @@ export function linesForSector(sector: string): LineTemplate[] {
     let qty_from: LineTemplate['qty_from'] = { kind: 'NONE' };
     let unit = UNIT_WORDS[unitCode] ?? unitCode;
     if (/^(communal )?GIA m2\b/i.test(basis)) { qty_from = { kind: 'GIA' }; unit = 'm² of floor'; }
+    else if (code === 'PH' && SUITE_ROWS[r['element_id'] ?? ''] !== undefined && COUNT_UNITS.has(unitCode)) {
+      qty_from = { kind: 'ROOMS', rooms: SUITE_ROWS[r['element_id'] ?? ''] as readonly string[] }; unit = 'rooms in the theatre suite';
+    }
     else if (rooms[basis] !== undefined && COUNT_UNITS.has(unitCode)) { qty_from = { kind: 'ROOMS', rooms: rooms[basis] as readonly string[] }; unit = 'rooms'; }
     // Communal floor area in supported living is not the whole floor area: never drafted from it.
-    if (qty_from.kind === 'GIA' && /^communal/i.test(basis)) { qty_from = { kind: 'NONE' }; unit = 'm² of common parts'; }
+    // PHASE 153e (Word question 133): drafted from the shared areas the surveyor reads off the floor plans instead; with
+    // none, a flat 25% of the floor area, labelled as the fallback it is (src/web/survey-pack.ts, sharedDraft).
+    if (qty_from.kind === 'GIA' && /^communal/i.test(basis)) { qty_from = { kind: 'SHARED' }; unit = 'm² of common parts'; }
     const pct = (r['qualifying_pct'] ?? '').trim();
     const qpct_bp = /^\d{1,3}$/.test(pct) && Number(pct) <= 100 ? Number(pct) * 100 : null;
+    const place = PLACEMENT[r['element_id'] ?? ''];
+    const authority = (r['authority'] ?? '').trim();
     out.push(Object.freeze({
       element_id: r['element_id'] ?? '',
       label: sentence(r['element_name'] ?? ''),
       unit, qty_from,
-      pool: POOL_OF[listPool] ?? null,
-      qpct_bp,
-      authority: (r['authority'] ?? '').trim(),
-      status: (r['status'] ?? '').trim(),
+      pool: place !== undefined && place.pool !== undefined ? place.pool : POOL_OF[listPool] ?? null,
+      qpct_bp: place?.qpct_bp ?? qpct_bp,
+      authority: place === undefined ? authority : `${authority === '' ? '' : `${authority} · `}${TEST_DEFAULT_WORDS}: ${place.note}`,
+      status: place?.status ?? (r['status'] ?? '').trim(),
       basis,
+    }));
+  }
+  for (const a of ADDED_ROWS[code] ?? []) {
+    out.push(Object.freeze({
+      element_id: a.element_id, label: a.label, unit: a.unit, qty_from: { kind: 'NONE' } as const, pool: 'MP' as Pool, qpct_bp: 10000,
+      authority: `${TEST_DEFAULT_WORDS}: its own plant, not part of the building’s systems (question 135)`, status: 'JUDGEMENT', basis: 'room schedule',
     }));
   }
   return out;

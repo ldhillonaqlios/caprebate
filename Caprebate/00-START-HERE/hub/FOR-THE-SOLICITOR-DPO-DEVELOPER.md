@@ -922,6 +922,12 @@ Signed .............................  Date ..........................
 
  **For the data protection officer. Board item 12927931400.**
 
+ _5 October 2026 (planning): WhatsApp by manual upload (Lakhbir's choice; Phase 156c). Staff talk to clients on the WhatsApp phone; to keep a conversation they export that one chat and upload it, with its photos, to the client's record. The back office makes no connection to Meta and sends nothing, so there is no transfer to Meta from our system (the live connection already built stays switched off). Two questions for you, Phase 156c A2: (a) do the uploaded chats and photos follow the client-message retention rule? (b) messages dated before the client ticked the WhatsApp box — keep them, or leave them out on upload? Until you answer they are kept, with a warning on upload. Group chats are refused, so nobody but the client is added._
+
+ _4 October 2026 (planning): Google Analytics is dropped for now (Lakhbir); it is off and receives nothing, so its row below needs no check until the marketing team picks it up again._
+
+ _4 October 2026 (Phase 153a): the list is now v1.4. Six processors are added — Zoom, WhatsApp (Meta), GoAddress, Cloudflare Turnstile, Turso and Google Analytics (marked for you to check) — and the test website's Vercel host and Vercel Blob file store are named under P5 and P4. Your approval of the Zoom, WhatsApp and GoAddress transfers for testing only, relayed by Lakhbir on 30 September 2026, is recorded in their rows; none is approved for a real client. Everything these services hold today is invented test data._
+
 |  **What it is** |  The recipients list Article 15(1)(c) and Article 19 require: **five recipients we disclose to** — the surveyor, the tax adviser, the client's own accountant, HMRC, and the registers, which are listed **only to say they receive nothing** — and **seven processors**, who are recipients too under Article 4(9). For each, whether anything has actually been disclosed to date. |
 | --- | --- |
 |  **What state it is in** |  **Written 8 September 2026 and attached to the board item.** It was assembly rather than discovery: the components sat in four documents nobody in the data-protection workstream opens. **The honest previous position was not "there is no list" but "there are four partial lists, none of them written for Article 19".** |
@@ -956,6 +962,8 @@ Signed .............................  Date ..........................
 ```
 
 ## SDP-P7 · The public notices page — two statutory duties that cannot be performed today
+
+ _4 October 2026 (Phase 153a, with Phase 153c line 13): the cookies section's one Google gap is filled from Google's published terms — who provides Google Analytics, the transfer safeguards Google names, and the visitor's yes as the legal reason — and marked for you to check. Analytics stays off: no measurement id is set._
 
  **For the data protection officer, and one part is for the director. Board item 12946752268. This page is described in a note above; this is its entry, and it carries the item number the note did not.**
 
@@ -1250,10 +1258,14 @@ Signed .............................  Date ..........................
 
  **SDP-P25 · The six breach and transparency communications.** Board item 12927894775. Every template is headed DRAFT — NOT APPROVED. Approve them with SDP-P24, which points at them. Since 13 September 2026 the pack also carries two drafted answers that need your specific approval: what the regulator's breach form asks for (section 2.7, from the regulator's own pages) and the automated-decision answer in the Article 14 letter (section 7.5, from Articles 22A to 22D, now read). **Unblocks** notifying the regulator and the people affected within the time the law allows.
 
+ _4 October 2026 (Phase 153a): the letter's paragraph on sending information outside the UK (section 7, PL-P17) now has a proposed redraft from the updated recipients list (v1.4), without monday.com, with the services used only for testing in a bracket to fill on the day. It is a proposal for you; nothing is sent with it._
+
 
  **Added 15 September 2026 by Phase 132c.** The Article 14 letter's answer on sending information outside the UK (section 7.5, item 6, and its placeholder) now states what Microsoft, monday.com and IONOS publish about where they hold data. Our own accounts are still unchecked, so the placeholder is only partly filled. The breach letters themselves still name the Information Commissioner without the change of 30 September 2026; that is carried to the next phase.
 
  **SDP-P26 · The Article 14 assessment for people named in documents clients upload.** Board item 12927987812. Approve the transparency position. It does not decide the lawful basis and must not be read as deciding it. Since 13 September 2026 it also carries a drafted automated-decision answer (section 6.9, from Articles 22A to 22D) for you to approve. **Unblocks** publishing the notice wording in its section 8, which may not appear anywhere until you approve it. Corrected 15 September 2026: section 6.9 no longer says a person acts on every value read from a document. As built, only values below their confidence threshold go to a person, the per-type review switch is off for every type, and no model reads client documents today. Article 36, prior consultation, is now read (section 13.3), and condition A14-D9 points to risk R11 in the risk register.
+
+ _4 October 2026 (Phase 153a): its letter's section 7 (PL-P17) now has a proposed redraft from the updated recipients list (v1.4), naming only the services a client's uploaded document can reach. It is a proposal for you; nothing is sent with it._
 
 
  **Added 15 September 2026 by Phase 132c.** The placeholder for sending information outside the UK now states what the three providers publish, and is marked partly filled: our own accounts are not checked, and no document-reading provider has been chosen. The notices page carries the same wording. Whether the Article 14 letter may be sent with that placeholder only partly filled is for you to judge.
@@ -1263,6 +1275,8 @@ Signed .............................  Date ..........................
  **SDP-P28 · The client-document ingestion control, and its 1 September reconciliation.** Board item 12928074627. The code is built, tested and called by the upload handler; the policy it enforces — what is kept from an upload and what is removed on receipt — is not approved. **Unblocks** that control being agreed policy rather than our default.
 
  **SDP-P29 · The business continuity and disaster recovery plan.** Board item 12552682536. Its own header says DRAFT, not yet in force. It is with you first because its breach scenario hands the personal-data half of an incident to the procedure in SDP-P24; Sadique Maskeen approves the plan as a whole after (Lakhbir until 18 September 2026). **Unblocks** a recovery plan anyone may rely on.
+
+ _4 October 2026 (Phase 153a): the plan now has proposed recovery rows for the systems in use — the test website on Vercel, its Turso database, the Vercel Blob file store (now holding survey photos and videos), GitHub, IONOS email and the back office in §3, and Zoom, WhatsApp Cloud, GoAddress, Cloudflare Turnstile, cron-job.org, Companies House, Postcodes.io, Didit and the file store in §5. Every recovery time and recovery point in them is marked "proposed — Sadique Maskeen, as plan owner, to set"; nothing is set until he sets it._
 
  **SDP-P30 · The annual data protection audit — checklist and schedule.** Board item 12552683056. It names Sadique Maskeen as approver (Lakhbir until 18 September 2026). It is with you first because an audit of the data protection position is yours to run, and its checklist asks for your sign-off on any change to the lawful basis. **Unblocks** the first audit having an agreed list to check against.
 
@@ -1721,6 +1735,8 @@ Name:                                  Date:
 
  **SDP-P37, added to. The reader now has a caller, and it is still switched off.** When Phase 146e built the reader on 22 September 2026 it was called from nowhere: a finished upload stopped after the strip, and steps 8, 9 and 10 of the receipt contract — the record of what we hold, the reading, and writing what was read — ran in the tests and nowhere else. Phase 146g wired them in on 23 September 2026, **behind the same switch, which is still off**. With it off a finished upload behaves exactly as it did before: nothing is sent, nothing is read, and every question the document might have answered is still asked of the client. With it on, only the parts the strip let through are sent, one record is kept of exactly which parts left (their kind and page, never their words), and a reading that fails leaves every question asked rather than filling one in. **Nothing you have already been asked to approve has changed.**
 
+ _4 October 2026 (planning): Google Analytics is dropped for now (Lakhbir: the marketing team can pick it up later if needed). The code stays off — with no measurement id the page shows no cookie choice and loads nothing from Google — so this amendment, and Google Analytics' row in the recipients list (SDP-P6), need nothing from you until the marketing team picks it up again._
+
  **A Measurement Plan amendment is drafted and waiting for you.** Four of the six assessment screens send no screen name to Google Analytics at all — only a number — so a funnel report can put them in order and cannot say what they are. The amendment names four short labels for them, and it is drafted in full in section 5.3 of the Developer Spec. **None of them is personal data and none is anything a client typed**: they are four fixed words chosen in advance. It is written up as a question for you in the Word questions document. **Nothing changes in the code until you have reviewed it** — the build-time check fails if the code's list and the plan's list differ, which is that control working rather than an obstacle to it.
 
  **This register's size, re-derived at the close of Phase 146g on 23 September 2026**, counted the way the register check counts them — one line for each entry and each board item it covers: **seventy-two entries covering sixty-three board items**, one more of each than at the close of Phase 146d, which was seventy-one covering sixty-two.
@@ -1888,3 +1904,136 @@ Name:                                  Date:
 -  **SDP-V8.** Nothing to install; only the address supplier's answers remain.
 
  **This register's size, re-derived at the close of Phase 153 by the register check** — one entry in (SDP-P40) and one out (SDP-L4, now a mention): the count is the check's, printed at the close, not quoted here.
+
+---
+
+## Phase 153a, 4 October 2026 — dated lines on five entries; nothing moved in or out
+
+ The recipients list (SDP-P6, now v1.4), the breach and transparency communications (SDP-P25), the Article 14 assessment (SDP-P26), the public notices page (SDP-P7) and the business continuity plan (SDP-P29) each carry a dated line under their entry. **Nothing moved into or out of this register.**
+
+ **And the board's own total at the close of Phase 153a, 4 October 2026, counted in code: 120 items carry that status**: forty-six in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Forty-six plus nine plus sixty-five is 120.
+
+---
+
+## Phase 153b, 4 October 2026 — one proposal for the data protection officer; nothing moved in or out
+
+ **The company's type from Companies House (Word question 198, and a new question for the officer).** To fill in "what kind of business are you" from Companies House, we must keep the company's type ("ltd", "plc", "llp" …) from the search result. It is a fact about the company, not about a person, but the source register's permitted fields for Companies House did not include it. Phase 153b added it as a **proposed** permitted field (04-phase-work/phase3/caprebate-source-register.ts) and built the mapping behind its own switch, `COMPANY_TYPE_FROM_REGISTER`, **off**: while it is off the type is not kept at all. The officer is asked in the Word questions document whether it may be kept. Nothing moved into or out of this register.
+
+ **And the board's own total at the close of Phase 153b, 4 October 2026, counted in code: 124 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-five is 124.
+
+---
+
+## Phase 153c, 4 October 2026 — data protection and the back office, built on our recommendation for Sadique Maskeen to check; two entries in, dated lines on fourteen
+
+ On 29 September 2026 Lakhbir set the rule: build what needs signing off, in the test system, then ask whether it is viable. Phase 153c built seventeen of Sadique's questions that way. **Every item below is built, in the test system, with invented data only, and awaits Sadique's viability check.** Nothing touches a real client. Where you say no, we correct it to your answer.
+
+### Two new entries
+
+-  **SDP-P41 — NEW ENTRY. A list of healthcare premises from open registers, and nothing that contacts anyone (Word question 183).** Board item 13200780219. An import (`node src/cli.ts import-premises`, src/web/premises-import.ts, migration 080) of four things only: the business's name, the address, the sector and the source with its own reference. It reads the Care Quality Commission's care directory and NHS England's lists of dental and GP practices, all under the Open Government Licence. Any other column — a registered manager, a telephone number — is never read. A business name that may be a person's ("Dr A Patel Dental Practice") is held back and counted, never kept. The table has no column for a person, an email or a telephone number, and nothing in the system reads it to contact anyone. **What we are asking you:** is this acceptable, and which contact methods may we use (we recommend post, or email to company addresses with a clear opt-out, after a short assessment and notice wording you approve)?
+
+-  **SDP-P42 — NEW ENTRY. Closed website enquiries deleted twelve months after they were closed (Word question 222).** Board item 13200745490. A clean-up job (`ENQUIRY_RETENTION`, src/web/enquiry-retention.ts, `node src/cli.ts sweep-enquiries`), **built and switched off**. With it on, a contact-form enquiry closed more than twelve months ago is deleted, and a deletion-log line is written first: its kind and id, never a word of it, never the person. A legal hold stops it. A funnel enquiry is a lead in our sales records, tied to its organisation and bookings, so this job only counts those; their deletion path is written into the sweep phase. **What we are asking you:** is twelve months right? Approving it, and recording who approved it, is what switches the job on.
+
+### Dated lines on entries you already hold
+
+-  **SDP-P3, Retention Determinations — section 14 added.** Three seven-year **test readings**: the address lookup's address and property number (Homedata, and GoAddress, which "Find my address" uses) kept with the claim file, never in a report, until the suppliers answer (question 37); "our copy, seven years" for what the document reader takes from a document, beside your question on Anthropic's terms (question 192); and kept originals on the test website (question 219). No period in sections 1 to 13 changed.
+-  **SDP-L9, the register terms and licensing review.** The source register now keeps the address lookup seven years as our test reading (reports still closed), and the care regulator's facts 30 days, each shown with "Source: Care Quality Commission, Open Government Licence" (questions 37 and 201).
+-  **SDP-P37, Anthropic as the document reader.** Page pictures from a scanned document go to the reader only for three kinds: contractor cost breakdowns, O&M manuals and building regulations certificates. Every other kind, or none, is refused before the switch or the key is looked at (question 193).
+-  **SDP-P40, keeping client uploads.** On for the test website only, seven years, invented files only; the shipped setting stays off. Sales opens a kept original only for a client it owns — the business's owner or a claim's — and a client owned by nobody is opened by no one in Sales (question 219).
+-  **SDP-G1, where the breach register lives (question 181).** The back office's breach register is the record. The names a breach may need are kept apart, in a restricted list linked from the entry only by its annex reference (ANX-001 …). Only you and one Admin named as deputy in writing may open it; every opening and refusal is in the audit log; the list is never edited or deleted.
+-  **SDP-P21, your instrument of appointment.** A one-page **draft letter of authority** from CAP REBATE LTD to Lakhbir, for breach decisions only when you cannot be reached in time, a director countersigning each, is filed with it (06-commercial-and-governance/Caprebate-Letter-of-Authority-Breach-Deputy-DRAFT-v0.1.md, question 184). For the solicitor too.
+-  **SDP-P22, the complaints pack, and SDP-P18, the rights-request procedure.** A draft deputy route (question 56): when you are away, or a complaint is about your own decision, Lakhbir decides as deputy, a director countersigns, and the reply names the Information Commission.
+-  **SDP-P13, the complaints log.** Each complaint shows our next update due (28 days after we last told them) and a target outcome (a month after it came in), labelled as our own targets, not legal deadlines (question 178).
+-  **SDP-P8 and SDP-P15, notices and the identity store.** "Through the client" now saves only when the notice is also recorded on our published notices page for the same person; the database refuses it too (question 162).
+-  **SDP-P26, the Article 14 assessment, and SDP-L12, the risk register.** The short review the old trigger called for is written (06-commercial-and-governance/Caprebate-Notices-Page-Position-Review-2026-10-04.md). It found nothing has changed; the next review is when the notices page goes live (question 165).
+-  **SDP-P10, the privacy notice; SDP-P9, the governance policies; SDP-P18, the lawful-basis assessment.** All three now split enquirers: a sole trader or partner enquiring for themselves is on "steps before a contract"; someone enquiring for a company is on legitimate interests, assessed in the lawful-basis assessment's new section 16 (question 182).
+-  **The surveyor breach clause (question 55).** An email-only test version, 24 hours to data.protection@caprebate.co.uk, is beside the current draft in 06-commercial-and-governance/Caprebate-Supplier-Breach-Notification-Duties-v1.md (2C-T). For the solicitor too.
+-  **The analytics labels (question 208).** The first four screens are counted as prior_claim, prior_owner_claim, entity and trigger: in the measurement plan's list, the site's allow-list and the funnel.
+
+### One new question for you
+
+-  **May the surveyor see what each grant on a claim paid?** Chapter 15 of the survey pack showed it, but the surveyor's released list carries no amount. Built on our recommendation: the surveyor sees who paid (as a class), what it paid for, and the pack's own totals, but not each grant's amount (`GRANT_AMOUNTS_TO_SURVEYOR`, off). If you say yes, it is switched on and the pack goes on the released list.
+
+ **Line 18 of the phase (one test call per keyed connector) is not built here**: it moved into Phase 156, part B3, with Companies House and the Anthropic key added.
+
+ **This register's size, re-derived at the close of Phase 153c on 4 October 2026**, counted the way the register check counts them — one line for each entry and each board item it covers: **seventy-six entries covering sixty-seven board items**, two more of each than at the close of Phase 146i, which was seventy-four covering sixty-five (Phase 153 moved one in and one out).
+
+ **And the board's own total at the close of Phase 153c, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+---
+
+## Phase 153d, 4 October 2026 — the commercial papers in test form, for the director and the solicitor; dated lines on five entries, nothing moved in or out
+
+ Built on our recommendation in the test system, each awaiting the director's agreement and the solicitor's check. **Every filled term is marked "test default, not agreed". The real engagement letter's brackets are not filled.**
+
+-  **SDP-L3, the engagement letter (Word questions 33, 34 and 196).** A **test-only copy** beside it, `06-commercial-and-governance/Caprebate Engagement Letter - TEST DEFAULTS, not agreed.docx`: clause 5, a break fee of £995 a property plus the charges of any surveyor already booked, at cost; clause 7(d), "they are named in our privacy notice"; clause 13, any reduction, and a settlement the client accepts counts. A TEST COPY line sits under its title. Only the test website shows it (`testLetter`, passed by api/index.mjs alone), and it can never be signed, whatever the signing switch says. The refund was run against it in a test: on a claim cut from £240,000 to £200,000, it credits £1,200, 3% of the difference. **For the solicitor:** is £995 a fair estimate of our losses; does clause 13 work; is "named in our privacy notice" sound?
+-  **SDP-L15, the accountant referral network (Word question 42).** One-page **introducer terms** and a client disclosure line, `06-commercial-and-governance/Caprebate-Introducer-Terms-DRAFT-v0.1.md`: a firm is registered once it is on our list and has signed; 10% of our fee as invoiced, not counting VAT; reduced if clause 13 cuts the fee; the client told in writing before signing. The 10% share stays off. **For the solicitor:** is the disclosure line enough, and when must it be given?
+-  **SDP-L10, the AML/KYC position paper (Word question 45).** The back office's check gains, as test defaults: a risk level of low, medium or high, beside the risk in words; anyone owning more than 25% treated as an owner to check; and ordinary partnerships, LLPs and trusts as kinds of claimant, with an LLP's designated member as the person with authority. The check stays switched off. **For the solicitor:** are the scale, the threshold and the three kinds right?
+-  **SDP-L12, the risk register (Word question 62).** R12, the free enquiry support, is scored 12 (High) before safeguards: Possible times Major. The score after safeguards waits on a broker. A one-page list of nine covers to ask a broker about is at `06-commercial-and-governance/Caprebate-Insurance-Covers-to-Ask-a-Broker-v0.1.md`, beside the broker brief.
+-  **The disposal fee (Word question 23), for the director.** A fixed fee of £290 for the review and the drafted election, at cost from the job cost model; never a percentage. It is in FOR THE ACCOUNTANT under ACC-C3, the disposal note.
+
+ **And the board's own total at the close of Phase 153d, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153e, 4 October 2026 — nothing moved in or out
+
+ Phase 153e built the surveyor's workbench. Nothing here changes. For the developer: one new migration (082, the pack's VAT position and shared area, the own-transaction shape with its foreign-key guard) and one new staff route, `/staff/survey/:job/pack/extra`. Homedata's floor-area estimate is built behind its switch, off.
+
+ **And the board's own total at the close of Phase 153e, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153f, 4 October 2026 — work found on 3 October that no phase held; dated lines on three entries and two readings, nothing moved in or out
+
+-  **SDP-P6, the recipients list.** Your approvals of 30 September for testing — Zoom, WhatsApp (Meta) and GoAddress — are now Word questions 242, 243 and 244, recorded as answered, each "still to confirm before real clients". Two more for you to see: (1) a photo or document someone sends us on WhatsApp is now fetched from Meta's file host (lookaside.fbsbx.com) when a member of staff presses "Get it", kept sealed here; **our reading** is that this is the same processor under the same approval; (2) the report's site plan asks Ordnance Survey (UK) for the building outlines in a small square round the property's postcode — no name, no address.
+-  **SDP-P40, keeping uploads.** Lakhbir's answer of 2 October for survey photos and videos ("Keep them, test only": seven years, encrypted, opened by Admin, Sales, you, the client and the assigned surveyor) is now in the Word document under question 219.
+-  **The free lookups on the test website.** On 2 October Lakhbir said "All the free ones": on the test website only, and only for its invented clients, the energy certificate, price paid, planning (PlanIt) and the care regulator lookups are switched on under a recorded waiver (`TEST_WEBSITE_LOOKUPS`); the shipped switches stay off. That work sat on a branch nobody merged; Phase 153f brought it across. Before real visitors: publish the notice, then take the waiver out.
+-  **The funnel's contact box, against Word answer 164.** Answer 164 removed the contact form's "you may contact me" tick. The four-stage funnel still had one, and it was what your WhatsApp approval for testing leaned on. Now the funnel says "Sending this asks us to contact you about this enquiry. You do not need to tick anything", with the privacy notice link, and asks a separate, optional question: "You may also message me on WhatsApp about this enquiry." The answer is kept on the contact (migration 086); contacts made through the old box keep their WhatsApp permission for testing. The WhatsApp page marks a contact who did not tick it. **For you to decide:** may staff WhatsApp a contact who did not tick it (for example someone whose number staff typed in)?
+
+**A READING FOR YOU — how long WhatsApp messages and their files are kept (Phase 153f line 6(b)).** Nothing deletes a WhatsApp message or a fetched file today. **Our recommendation:** the same rule as client messages and the team chat (`MESSAGE_RETENTION`, waiting on your answer to "How long do we keep client messages and the team chat?"). For a company with a claim, its WhatsApp messages and files go with the claim file, the later of its accounting period end and the report's first issue, plus the claim file's years. For a company with no claim, they go some months after the last message on any channel. A message nobody filed goes that many months after it arrived. A legal hold keeps it. If a claim's date is not known, nothing on that company is due. Meta keeps its own copy for its own period (about 30 days for a file); deleting ours does not delete theirs. **Nothing is built:** one answer from you sets both rules.
+
+ **And the board's own total at the close of Phase 153f, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153g, 4 October 2026 — nothing moved in or out
+
+ For the developer: migration 087 (`survey_pack_words`: the surveyor's own words, never edited or deleted) and one staff route, `/staff/survey/{job}/pack/words`. No personal data beyond the surveyor's name on each change.
+
+ **And the board's own total at the close of Phase 153g, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 154a1, 4 October 2026 — the faults the 3 October sweep found, fixed; nothing moved in or out
+
+ **For the data protection officer — two things that touch personal data, both made safer.**
+-  **The test website's function log no longer prints emails.** It printed every new email in the outbox — the address, the subject and the body, sign-up links included — against the Developer Spec's rule of no personal data in logs. It now prints how many, of which kinds, and how many were sent: "3 new emails in the outbox - FREE_TYPED 1, SIGN_UP 2; 1 sent, 2 not sent". Nothing else changed in what is sent.
+-  **Invisible characters are taken out of what people type.** A null and a right-to-left override typed into a claim note or a portal message were stored and shown back as typed; the override can make a file name read backwards. Every form the website reads now drops control characters (keeping tabs and line breaks) and the direction marks and overrides. A password is never altered.
+
+ **For the developer.** No migration and no new route. Line by line, with its test in `09-app/backend/test/phase154a1.test.ts`:
+-  A body over its cap is read and dropped (up to 8 MB more) and the 413 says `Connection: close` (`src/web/router.ts` `readBody`, `bindResponse`); the JSON API's cap is now a 413 too, not a 500 (`src/server.ts` `readJson`). Before, the next request on that connection hung six seconds and was reset.
+-  The compliance person search cuts its term to 200 characters and says so (`SEARCH_TERM_MAX`); 50,000 characters was a 500.
+-  A contact, an introducer's person or a firm with no name field at all is refused (`crm.ts`, `introducers.ts`); the firm was a 500.
+-  A double-clicked task is one task: the same person, the same fields, within ten seconds (`tasks.ts` `DOUBLE_CLICK_MS`).
+-  Every label names its box and no heading skips a level on any page any login reaches; a test walks them all.
+-  The drift checker counts the back end over the test files git tracks, and names any untracked one.
+
+ **And the board's own total at the close of Phase 154a1, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 155, 4 October 2026 — the services the plans named but nobody had built; nothing moved in or out
+
+ **For the data protection officer — two care regulators' lists, kept without a single name.** The Welsh and Scottish care regulators publish their registers as downloadable files, under the Open Government Licence. They are now imported onto our own server by Admin, and a lookup reads them there; nothing about a client is sent anywhere. Both files name people — Wales its Responsible Individuals and Registered Persons, Scotland each service's manager, with a telephone number and an email — and both give the provider's name, which for a sole trader is a person's. **None of it is read**: the import reads named columns only (the service's reference, its kind, its places and beds, its address for matching, the council area, the provider's reference number and type). The name exclusion register has an entry for each (subitems 16 and 17). Both lookups are switched off, behind the same free gate as every other register. Example: a care home at an invented Welsh postcode is matched to its CIW reference and its 42 places, and that is all that is kept.
+
+ **For the solicitor — the valuation office's rating list may not be used by us, as its terms stand.** Read on 4 October 2026: "An open government licence does not apply", and use is "restricted to Non Domestic Rating (NDR) purposes only". Our own source register had recorded it as open data; that is corrected, with every use shut. Nothing imports it. The licence email to the Valuation Office (waiting on Lakhbir) is the only way to change that.
+
+ **For the developer.** Migrations 088 (`mailbox_reads`: when replies were last read, times only) and 089 (`register_file_rows`, `register_file_imports`: never edited or deleted). Two commands: `node src/cli.ts import-register <CIW|CARE_INSPECTORATE> <file> --by <admin>` and `node src/cli.ts import-bcis-index <file>` (kept outside the repository: BCIS's licence). Admin's home warns when replies have not been read for over an hour in working hours. And the three files a production server must carry — the postcode table, the OSTN15 grid and the land boundary folder — are written up in the Developer Spec, §5.1a: what each is, where it comes from, its licence and its size. No route changed.
+
+
+ **And the board's own total at the close of Phase 155, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

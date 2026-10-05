@@ -179,7 +179,8 @@ if (argv.includes("--self-test")) {
   const { selfTest } = require(path.join(__dirname, "caprebate-figure-classify.cjs"));
   const classifierOk = selfTest();
   const twinsOk = twinSelfTest();
-  process.exit(classifierOk && twinsOk ? 0 : 1);
+  const trackedOk = trackedSelfTest();
+  process.exit(classifierOk && twinsOk && trackedOk ? 0 : 1);
 }
 
 const twinRootArg = argv.indexOf("--twin-root");
@@ -308,8 +309,8 @@ function runBackendCheck(dir) {
      snapshots out - Phase 102 recorded a glob from the project root silently
      running thirteen of them. The totals still arrive behind the multi-byte
      glyph, so match unanchored exactly as runNodeTest does. */
-  const testDir = path.join(dir, "test");
-  const files = fs.readdirSync(testDir).filter(f => /\.test\.ts$/.test(f)).sort();
+  const listed = backendTestFiles(dir);
+  const files = listed.files;
   if (!files.length) throw new Error("no *.test.ts files found in 09-app/backend/test");
   let out;
   try {
@@ -319,7 +320,56 @@ function runBackendCheck(dir) {
   const pass = /pass (\d+)/.exec(out);
   const fail = /fail (\d+)/.exec(out);
   if (!pass) throw new Error("could not parse the back end's pass total from `node --test`");
-  return { pass: +pass[1], fail: fail ? +fail[1] : null, files: files.length, failed: failingTestNames(out) };
+  return { pass: +pass[1], fail: fail ? +fail[1] : null, files: files.length, failed: failingTestNames(out),
+    untracked: listed.untracked, how: listed.how };
+}
+
+/* PHASE 154a1 (line 11), 4 October 2026 — THE BACK END IS COUNTED OVER THE TEST FILES GIT TRACKS, as every phase counts
+   it (`git ls-files 'test/*.test.ts'`). On 3 October the register check, which runs this, was red on the Mac only
+   because stray untracked test files sat in test/ and this read every file in the folder. An untracked file is left
+   out and NAMED in the output, so it can never turn the count red and never hides. If git cannot be asked (a copy of
+   the tree with no repository), every test file on disk is run and the output says so. */
+function backendTestFiles(dir) {
+  const onDisk = fs.readdirSync(path.join(dir, "test")).filter(f => /\.test\.ts$/.test(f)).sort();
+  let tracked;
+  try {
+    tracked = execFileSync("git", ["ls-files", "--", "test/*.test.ts"], { cwd: dir, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })
+      .split("\n").filter(l => /^test\/[^/]+\.test\.ts$/.test(l)).map(l => l.slice(5));
+  } catch (e) {
+    return { files: onDisk, untracked: [], how: "git could not be asked, so every test file on disk was run" };
+  }
+  const known = new Set(tracked);
+  return { files: onDisk.filter(f => known.has(f)), untracked: onDisk.filter(f => !known.has(f)), how: "the test files git tracks" };
+}
+
+function trackedSelfTest() {
+  const os = require("os");
+  console.log("\nTRACKED-FILES SELF-TEST (Phase 154a1, line 11) — an untracked test file is left out of the back end's count, and named");
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "caprebate-tracked-selftest-"));
+  fs.mkdirSync(path.join(tmp, "test"));
+  fs.writeFileSync(path.join(tmp, "test", "kept.test.ts"), "// tracked\n");
+  fs.writeFileSync(path.join(tmp, "test", "kept.test.ts.bak-phase1"), "// a backup, never a test\n");
+  const git = (...a) => execFileSync("git", a, { cwd: tmp, stdio: ["ignore", "pipe", "ignore"] });
+  const cases = [];
+  try {
+    git("init", "-q"); git("add", "test/kept.test.ts");
+    fs.writeFileSync(path.join(tmp, "test", "stray.test.ts"), "// untracked\n");
+    const r = backendTestFiles(tmp);
+    cases.push(["a tracked test file is run", r.files.length === 1 && r.files[0] === "kept.test.ts"]);
+    cases.push(["an untracked test file is left out and named", r.untracked.length === 1 && r.untracked[0] === "stray.test.ts"]);
+    cases.push(["it says which files it counted", r.how === "the test files git tracks"]);
+  } catch (e) {
+    cases.push(["git could be run for the self-test", false]);
+  }
+  fs.rmSync(path.join(tmp, ".git"), { recursive: true, force: true });
+  const r2 = backendTestFiles(tmp);
+  cases.push(["with no repository, every test file on disk is run and it says so",
+    r2.files.length === 2 && /git could not be asked/.test(r2.how)]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+  let ok = 0;
+  for (const [name, good] of cases) { console.log((good ? "  ✔ " : "  ✘ ") + name); if (good) ok++; }
+  console.log("\n" + ok + " of " + cases.length + " tracked-file cases held" + (ok === cases.length ? "." : " - " + (cases.length - ok) + " FAILED."));
+  return ok === cases.length;
 }
 
 let truth;
@@ -372,7 +422,9 @@ console.log("  phase9        " + truth.phase9.pass + " pass"
   + (truth.phase9.files ? " across " + truth.phase9.files + " files" : ""));
 console.log("  PROJECT TOTAL " + TOTAL.toLocaleString("en-GB") + " passing assertions");
 console.log("  back end      " + truth.backend.pass + " pass"
-  + (truth.backend.files ? " across " + truth.backend.files + " files, whole `npm run check`" : ""));
+  + (truth.backend.files ? " across " + truth.backend.files + " files, whole `npm run check`" : "")
+  + (truth.backend.how ? " (" + truth.backend.how + (truth.backend.untracked && truth.backend.untracked.length
+      ? "; left out, untracked: " + truth.backend.untracked.join(", ") : "; none untracked") + ")" : ""));
 console.log("");
 
 /* A RED SUITE IS NOT A FIGURE. CRM 9 of 10, 12 September 2026. A suite that failed

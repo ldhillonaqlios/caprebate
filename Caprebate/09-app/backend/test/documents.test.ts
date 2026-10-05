@@ -194,7 +194,8 @@ function favourable(action: string, role: AppRole): Obj {
   if (action.startsWith('document_type.')) return { type: 'document_type', id: '__document_types__' };
   if (action.startsWith('document_request.')) return { type: 'document_request', id: 'r-1', business_id: 'biz-1' };
   // PHASE 140: shown to the client — the most favourable object says so; test/phase140.test.ts refuses the rest.
-  return { type: 'document', id: 'd-1', business_id: 'biz-1', readers: 'CLAIM_EVIDENCE', carries_value: false, letter_signed: true, assigned_surveyor_ids: [`u-${role}`], shown_to_client: true };
+  // PHASE 153c: Sales opens a kept original only for its own clients — the most favourable object names them an owner.
+  return { type: 'document', id: 'd-1', business_id: 'biz-1', readers: 'CLAIM_EVIDENCE', carries_value: false, letter_signed: true, assigned_surveyor_ids: [`u-${role}`], shown_to_client: true, owner_ids: [`u-${role}`] };
 }
 
 /** document.read, per reader class: who is admitted. Every other role is refused. */

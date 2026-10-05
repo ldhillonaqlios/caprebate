@@ -411,6 +411,32 @@ export type TaskInsert = {
 };
 
 /**
+ * PHASE 154a1 (line 7), 4 October 2026 — A DOUBLE CLICK MAKES ONE TASK. The 3 October sweep posted the same task twice
+ * at once and got two. The same person adding the same task - every field the form sets, about the same things - within
+ * DOUBLE_CLICK_MS of the first is taken as the same click: the task already made is the answer, and nothing is written
+ * or audited twice. A different person, a different field, or a later click is a new task. Read inside the write's own
+ * transaction, so two posts at once cannot both miss each other.
+ */
+export const DOUBLE_CLICK_MS = 10_000;
+function sameTaskJustMade(
+  d: TaskDeps, actor: Actor,
+  s: { business_id: string | null; property_id: string | null; claim_id: string | null; lead_id: string | null; contact_id: string | null },
+  v: { title: string | null; description: string | null; owner_id: string | null; owner_role: string | null; due_on: string | null;
+    priority: string | null; activity_type: string | null; recurrence: string | null },
+  asNext: boolean,
+): string | null {
+  const since = new Date(Date.parse(d.now()) - DOUBLE_CLICK_MS).toISOString();
+  return d.db.get<{ id: string }>(
+    "SELECT id FROM staff_tasks WHERE created_by = ? AND origin = 'STAFF' AND status = 'OPEN' AND created_at >= ? AND title = ? " +
+      'AND description IS ? AND owner_id IS ? AND owner_role IS ? AND due_on IS ? AND priority IS ? AND activity_type IS ? ' +
+      'AND recurrence IS ? AND is_next_action = ? AND business_id IS ? AND property_id IS ? AND claim_id IS ? AND lead_id IS ? ' +
+      'AND contact_id IS ? ORDER BY created_at DESC, id LIMIT 1',
+    [actor.id, since, v.title ?? '', v.description, v.owner_id, v.owner_id === null ? v.owner_role : null, v.due_on, v.priority,
+      v.activity_type ?? 'TASK', v.recurrence, asNext ? 1 : 0, s.business_id, s.property_id, s.claim_id, s.lead_id, s.contact_id],
+  )?.id ?? null;
+}
+
+/**
  * THE ROW, WRITTEN. No authorisation and no validation: every caller has done
  * both — the store functions below, the automation runner, the seed, and the
  * introducer's contact log. The database's own CHECKs and triggers still refuse a
@@ -589,16 +615,20 @@ export function createTask(d: TaskDeps, actor: Actor, input: Fields): TaskResult
     if (v.value.owner_id === null) return { ok: false, why: 'A claim’s next action has an owner: choose the person who will do it.', field: 'owner_id' };
     if (v.value.due_on === null) return { ok: false, why: 'A claim’s next action has a due date.', field: 'due_on' };
   }
-  const id = d.db.tx(() => {
+  const made = d.db.tx(() => {
+    const again = sameTaskJustMade(d, actor, s, v.value, asNext);
+    if (again !== null) return { id: again, again: true };
     if (asNext && s.claim_id !== null) clearNextAction(d.db, s.claim_id, d.now());
-    return insertTask(d.db, d.now, d.newId, {
+    return { again: false, id: insertTask(d.db, d.now, d.newId, {
       title: v.value.title ?? '', description: v.value.description, owner_id: v.value.owner_id, owner_role: v.value.owner_role,
       due_on: v.value.due_on, priority: v.value.priority, activity_type: v.value.activity_type ?? 'TASK',
       business_id: s.business_id, property_id: s.property_id, claim_id: s.claim_id, lead_id: s.lead_id,
       contact_id: s.contact_id, fact_id: null, recurrence: v.value.recurrence, recurred_from_id: null,
       is_next_action: asNext, origin: 'STAFF', automation_run_id: null, created_by: actor.id,
-    });
+    }) };
   });
+  const id = made.id;
+  if (made.again) return { ok: true, id };
   audit(d, actor, asNext ? 'NEXT_ACTION_SET' : 'STAFF_TASK_CREATED', 'staff_task', id, {
     task: id, business: s.business_id, claim: s.claim_id, lead: s.lead_id, activity: v.value.activity_type, route: 'staff',
   });

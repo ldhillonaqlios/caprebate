@@ -434,6 +434,13 @@ asking, and at what point does a persistent gap force a visit rather than anothe
 set these numbers because they are a judgement about evidential sufficiency, which is yours.
 *(Question Q-VW-3 below.)*
 
+*Built in the test system, 4 October 2026 (Phase 153e), on Word question 131 — placeholders for you to
+set:* the coverage score is counted per job from the checklist: a `required` item counts when it has a
+photo or is marked "not here"; "not safe" does not count, and `optional` items (voids, the water tank,
+outside shading, other electrical) never count. It shows on the photos page, the client's portal card
+and chapter 2 of the pack. The pass mark is a PLACEHOLDER 80%; under it the evidence level becomes a
+site visit. The number of re-shoot attempts is not built: it waits for your answer.
+
 ---
 
 ## Part D — Questions this puts to the surveyor

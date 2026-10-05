@@ -659,6 +659,12 @@ theatres or theatre spaces. For a room-driven fixture count, that is a factor of
 the most valuable rooms we handle. **Which is it, and does the fixture list differ between the
 theatre proper and the anaesthetic / prep / recovery spaces?**
 
+*Built in the test system, 4 October 2026 (Phase 153e), on the answer to Word question 148 — a test
+default for you to confirm:* the room list now has the theatre (`PH-R2`) and four suite spaces
+(anaesthetic `PH-R2A`, preparation `PH-R2B`, scrub `PH-R2C`, recovery `PH-R2D`), each counted. Ultra-clean
+ventilation and the operating lights stay with the theatre; medical gases and monitoring are counted
+from every space that carries them (`SUITE_ROWS` in `09-app/backend/src/web/pack-lines.ts`).
+
 **Q-S9-2 — Is the room-driven detection count right in size, not just in shape?** We believe
 detection follows compartmentation and we have rebuilt the method accordingly. On a 268 m² dental
 fit-out that gives us 15–19 detection points against 2.4–4.8 on the area reading. **Is 15–19 the

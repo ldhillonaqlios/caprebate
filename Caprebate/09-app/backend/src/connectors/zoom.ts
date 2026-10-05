@@ -10,6 +10,11 @@
  *     (ZAK) when a member of staff opens the call. Scopes: meeting:write:meeting:admin, meeting:update:meeting:admin,
  *     meeting:delete:meeting:admin, and user:read:token:admin — the first live call (30 Sep 2026) showed the start token
  *     needs that one ("user:read:zak:admin" is not enough: Zoom answered 4711).
+ *     PHASE 153f, 4 Oct 2026: to read how long a call lasted and who came, two more, NOT YET ASKED FOR OR USED:
+ *     meeting:read:past_meeting:admin (GET /v2/past_meetings/{meetingId}: its duration) and
+ *     meeting:read:list_past_participants:admin (GET /v2/past_meetings/{meetingId}/participants). Phase 156 A6.
+ *     EACH CALL HAS ITS OWN HOST (Phase 153f): the meeting is made under the assigned member of staff's email, which
+ *     must be a user on our Zoom account (a paid licence each, for calls over 40 minutes).
  *   · a MEETING SDK app — ZOOM_SDK_CLIENT_ID, ZOOM_SDK_CLIENT_SECRET. Its secret signs each join ON THIS SERVER (a JWT,
  *     HMAC-SHA256: appKey, mn, role, iat, exp, tokenExp), so the meeting runs inside our page with Zoom's own Web SDK.
  *     Meetings on our own account need no Zoom review; since 2 March 2026 only joining OTHER accounts' meetings does.
@@ -161,23 +166,42 @@ async function api(d: ZoomDeps, k: Keys, method: 'GET' | 'POST' | 'PATCH' | 'DEL
 
 export type MadeMeeting =
   | { readonly state: 'MADE'; readonly meeting_id: string; readonly join_url: string; readonly passcode: string | null }
-  | { readonly state: 'NOT_MADE'; readonly why: string };
+  | { readonly state: 'NOT_MADE'; readonly why: string; /** PHASE 153f: true when the host asked for is not a Zoom user on our account. */ readonly host_unknown?: boolean };
+
+/**
+ * PHASE 153f, 4 October 2026 — ZOOM'S "NO SUCH USER". A meeting made, or a start token asked for, under an email that
+ * is not a user on our Zoom account answers 404, or an error carrying code 1001 ("User does not exist") or 1120.
+ */
+function hostUnknown(r: { readonly status: number | null; readonly body: string | null }): boolean {
+  if (r.status === 404) return true;
+  try { const j = JSON.parse(r.body ?? '') as { code?: unknown }; return j.code === 1001 || j.code === 1120; } catch { return false; }
+}
 
 /** Zoom's start_time in UTC, to the second: "2026-10-02T09:00:00Z". */
 function zoomTime(iso: string): string { return new Date(iso).toISOString().replace(/\.\d{3}Z$/, 'Z'); }
 
 /** Make the meeting for one call. At most one token call and one meeting call; never throws. */
 /** 2 Oct 2026: `record` — a survey walkthrough call (src/web/survey-evidence.ts) is recorded to Zoom's cloud. */
-export async function makeZoomMeeting(d: ZoomDeps, startsAt: string, minutes: number, opts: { readonly record?: boolean } = {}): Promise<MadeMeeting> {
+/**
+ * PHASE 153f, 4 October 2026: `host` — the email of the member of staff the call is assigned to, so each call has its
+ * own Zoom host and two calls at the same time can both run (one Zoom user hosts one meeting at a time). Absent: the
+ * shared host (ZOOM_HOST_EMAIL, else the account's owner). A host who is not a user on our account is NOT_MADE with
+ * `host_unknown`, so the caller can say so and use the shared host instead.
+ */
+export async function makeZoomMeeting(d: ZoomDeps, startsAt: string, minutes: number, opts: { readonly record?: boolean; readonly host?: string } = {}): Promise<MadeMeeting> {
   const missing = blocked(d);
   if (missing.length > 0) return { state: 'NOT_MADE', why: missing.join(' ') };
   const k = keys(d.secrets)!;
-  const r = await api(d, k, 'POST', '/v2/users/{user}/meetings', { user: k.host }, {
+  const host = opts.host !== undefined && opts.host.trim() !== '' ? opts.host.trim() : k.host;
+  const r = await api(d, k, 'POST', '/v2/users/{user}/meetings', { user: host }, {
     topic: MEETING_TOPIC, type: 2, start_time: zoomTime(startsAt), duration: minutes, timezone: 'Europe/London',
     settings: { join_before_host: false, waiting_room: true, mute_upon_entry: false, host_video: true, participant_video: true, approval_type: 2, auto_recording: opts.record === true ? 'cloud' : 'none' },
   });
   if (r === null) return { state: 'NOT_MADE', why: 'Zoom did not give us a token: check the Server-to-Server app’s keys and that it is activated.' };
-  if (r.outcome !== 'OK' || r.body === null) return { state: 'NOT_MADE', why: `Zoom did not make the meeting (${r.why}).` };
+  if (r.outcome !== 'OK' || r.body === null) {
+    if (host !== k.host && hostUnknown(r)) return { state: 'NOT_MADE', why: 'That member of staff has no Zoom user on our account.', host_unknown: true };
+    return { state: 'NOT_MADE', why: `Zoom did not make the meeting (${r.why}).` };
+  }
   try {
     const j = JSON.parse(r.body) as { id?: unknown; join_url?: unknown; password?: unknown };
     const id = typeof j.id === 'number' ? String(j.id) : typeof j.id === 'string' ? j.id : '';
@@ -228,11 +252,14 @@ export async function cancelZoomMeeting(d: ZoomDeps, meetingId: string): Promise
   return r !== null && (r.outcome === 'OK' || r.status === 404);
 }
 
-/** The host's start token (ZAK), so a member of staff starts the call as its host inside our page. Null if refused. */
-export async function hostZak(d: ZoomDeps): Promise<string | null> {
+/**
+ * The host's start token (ZAK), so a member of staff starts the call as its host inside our page. Null if refused.
+ * PHASE 153f: `host` — the email the meeting was made under (src/web/video-calls.ts, meetingHost); absent, the shared host.
+ */
+export async function hostZak(d: ZoomDeps, host?: string): Promise<string | null> {
   if (blocked(d).length > 0) return null;
   const k = keys(d.secrets)!;
-  const r = await api(d, k, 'GET', '/v2/users/{user}/token', { user: k.host }, undefined, { type: 'zak' });
+  const r = await api(d, k, 'GET', '/v2/users/{user}/token', { user: host !== undefined && host.trim() !== '' ? host.trim() : k.host }, undefined, { type: 'zak' });
   if (r === null || r.outcome !== 'OK' || r.body === null) return null;
   try { const j = JSON.parse(r.body) as { token?: unknown }; return typeof j.token === 'string' && j.token !== '' ? j.token : null; } catch { return null; }
 }

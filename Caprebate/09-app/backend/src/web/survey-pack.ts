@@ -22,6 +22,7 @@
  * they cannot anchor on it). The pack cannot: section 562 shares out the price, so the price is its first input. This
  * follows Lakhbir's decision of 1 October 2026 that the surveyor works from a pre-filled pack and approves it.
  */
+import { vatReading, VAT_POSITION_CODES, type VatReading } from './pack-vat.ts';
 import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { authorise, can, type Actor } from '../authz.ts';
@@ -31,10 +32,42 @@ import {
   packSums, parseMoney, parsePercent, parseQuantity, parseRate,
   type PackInputs, type PackLine, type PackSums, type Pool, type Source, type Valued,
 } from './pack-sums.ts';
+import { applyGrants, type GrantReading, type GrantSwitches } from './pack-grants.ts';
+import { elementName, packGrantsFor } from './claim-facts.ts';
+import { shippedGrantSwitches } from './grant-checks.ts';
 
-export type PackDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
+/**
+ * `grantSwitches` (Phase 153a) is for the tests alone: it stands in for CB_CTA's two grant switches so chapter 15 can be
+ * proved both ways. Nothing in src/ or api/ passes it, so a pack always takes the switches as they ship.
+ */
+export type PackDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; grantSwitches?: GrantSwitches };
 
-export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed';
+/** Chapter 15's grants: the claim's, as the pack takes them (src/web/pack-grants.ts). */
+export type PackGrants = {
+  /** The claim the survey job is on; null for a job on no claim, which has no grants to read. */
+  readonly claim_id: string | null;
+  readonly list: readonly {
+    readonly id: string; readonly kind: string; readonly payer_class: string; readonly amount_pence: number | null;
+    readonly traced: string; readonly element_ids: readonly string[]; readonly element_names: readonly string[];
+  }[];
+  readonly switches: GrantSwitches;
+  readonly reading: GrantReading;
+  /** False for the surveyor (Phase 153c): what each grant paid, and what each takes off, is not shown to them. */
+  readonly amounts_shown: boolean;
+};
+
+/**
+ * PHASE 153c, 4 October 2026 — MAY THE SURVEYOR SEE WHAT EACH GRANT PAID? Built on our recommendation, for Sadique Maskeen
+ * (data protection officer) to check. The surveyor's released list (src/payload.ts, releasedFactReader) carries no
+ * amount, so the pack does not show one either: chapter 15 shows the surveyor who paid (as a class), what it paid for
+ * and how it comes off, but not each grant's amount or what each takes off. The pack's totals — before grants, less
+ * grants, the spend that qualifies — are still shown, because they are in the figures the surveyor approves. Every
+ * other role sees the amounts. If Sadique says the surveyor may see them, this becomes true and the pack goes on the
+ * released list instead.
+ */
+export const GRANT_AMOUNTS_TO_SURVEYOR = false;
+
+export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed' | 'vat_position' | 'vat' | 'shared_area';
 export const PACK_INPUT_FIELDS = Object.freeze(['price_paid', 'land', 'gia', 'building_rate'] as const);
 export type PackInputField = (typeof PACK_INPUT_FIELDS)[number];
 
@@ -63,7 +96,13 @@ export type PackView = {
   readonly property_choices: readonly PropertyChoice[];
   readonly inputs: PackInputs;
   readonly lines: readonly ViewLine[];
+  /** The pack's sums AFTER the claim's grants (Phase 153a, chapter 15); the figures before them are `grants.reading.before`. */
   readonly sums: PackSums;
+  readonly grants: PackGrants;
+  /** PHASE 153e: chapter 15's VAT half (src/web/pack-vat.ts). Its counted VAT is in `sums`, added to the price paid. */
+  readonly vat: VatReading;
+  /** PHASE 153e: supported living's shared areas from the floor plans, in thousandths of a m² (the surveyor's, with a reason). */
+  readonly shared_area: Valued;
   /** The pack's counter as this view was read. A change must carry it back. */
   readonly seq: number;
   readonly may_edit: boolean;
@@ -158,7 +197,12 @@ function surveyorSource(e: EntryRow): Source {
 const FIELD_WORDS: Readonly<Record<PackField, string>> = Object.freeze({
   price_paid: 'price paid', land: 'bare land', gia: 'floor area', building_rate: 'whole-building rate',
   qty: 'how much', rate: 'rate', qpct: 'share that qualifies', pool: 'pool', removed: 'taken out',
+  vat_position: 'VAT position', vat: 'VAT that could not be reclaimed', shared_area: 'shared areas from the floor plans',
 });
+
+/** PHASE 153e (Word question 133): the share of the floor area used when no floor plans give the shared areas. */
+export const SHARED_FALLBACK_BP = 2500;
+export const SHARED_FALLBACK_WORDS = 'Fallback: a flat 25% of the floor area. A test default, not yet checked by a surveyor';
 
 export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   const { job, obj } = packJob(d.db, actor, job_id);
@@ -186,6 +230,14 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     building_rate_pence: resolve(null, 'building_rate', none),
   };
 
+  // PHASE 153e (Word question 133): the common parts, by floor area from the floor plans, or the labelled 25% fallback.
+  const shared_area = resolve(null, 'shared_area', none);
+  const sharedDraft: Valued = shared_area.value !== null
+    ? { value: shared_area.value, source: { kind: 'SURVEYOR', text: 'The shared areas from the floor plans (chapter 9)', by_name: shared_area.source?.by_name ?? null, at: shared_area.source?.at ?? null } }
+    : inputs.gia_milli_m2.value !== null
+      ? { value: Math.round((inputs.gia_milli_m2.value * SHARED_FALLBACK_BP) / 10000), source: { kind: 'DRAFT', text: SHARED_FALLBACK_WORDS } }
+      : none;
+
   const lineFrom = (id: string, label: string, unit: string, t: LineTemplate | null, added: ViewLine['added']): ViewLine => {
     const qtyDraft: Valued = t === null ? none
       // A whole-building system follows the pack's floor area, whoever gave it (the certificate, or the surveyor in
@@ -194,6 +246,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
         kind: inputs.gia_milli_m2.source?.kind ?? 'EVIDENCE', text: 'The floor area (chapter 9)',
         by_name: inputs.gia_milli_m2.source?.by_name ?? null, at: inputs.gia_milli_m2.source?.at ?? null } })
       : t.qty_from.kind === 'ROOMS' ? roomDraft(d.db, job.id, t.qty_from.rooms)
+      : t.qty_from.kind === 'SHARED' ? sharedDraft
       : none;
     const draftSrc = (what: string): Source | null => t === null ? null : { kind: 'DRAFT', text: `Fixture list ${t.element_id}${t.authority === '' ? '' : ` — ${t.authority}`}${what}` };
     const poolEntry = last(id, 'pool');
@@ -229,9 +282,28 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
       : `set the ${FIELD_WORDS[e.field]}`,
   }));
 
+  // PHASE 153a — the claim's grants come off the sums here, so every total, the legal check, approval and the report
+  // read the figure after them. With no grant on the claim the sums are exactly packSums's.
+  const switches = d.grantSwitches ?? shippedGrantSwitches();
+  const onClaim = job.claim_id === null ? [] : packGrantsFor(d.db, job.claim_id);
+  // PHASE 153e: VAT the client could not reclaim is part of the price that is shared out (Module 00 C23). The price
+  // shown stays the price paid; the sums read it with the counted VAT added.
+  const vat = vatReading(resolve(null, 'vat_position', none), resolve(null, 'vat', none));
+  const forSums: PackInputs = vat.counted_pence > 0 && inputs.price_paid_pence.value !== null
+    ? { ...inputs, price_paid_pence: { value: inputs.price_paid_pence.value + vat.counted_pence, source: inputs.price_paid_pence.source } }
+    : inputs;
+  const before = packSums(forSums, lines);
+  const reading = applyGrants(forSums, lines, before, onClaim, switches);
+  const grants: PackGrants = {
+    claim_id: job.claim_id, switches, reading,
+    amounts_shown: actor.role !== 'SURVEYING' || GRANT_AMOUNTS_TO_SURVEYOR,
+    list: onClaim.map((g) => ({ id: g.id, kind: g.kind, payer_class: g.payer_class, amount_pence: g.amount_pence, traced: g.traced,
+      element_ids: g.element_ids, element_names: g.element_ids.map(elementName) })),
+  };
+
   return {
     job, pack_id: pack?.id ?? null, property, property_choices: choices,
-    inputs, lines, sums: packSums(inputs, lines),
+    inputs, lines, sums: reading.sums, grants, vat, shared_area,
     seq: entries.length === 0 ? 0 : (entries[entries.length - 1] as EntryRow).seq,
     may_edit: can(actor, 'surveyor_job.commit', obj),
     changes,
@@ -271,6 +343,9 @@ function begin(d: PackDeps, actor: Actor, job_id: string, reason: string, expect
   });
 }
 
+/** PHASE 153g: the same guard for the surveyor's own words (src/web/pack-words.ts): who may, the reason, a page out of date. */
+export const beginPackChange = begin;
+
 function insertEntry(d: PackDeps, actor: Actor, pack_id: string, line_key: string | null, field: PackField, value: number | null, pool: Pool | null, reason: string): void {
   d.db.run(
     'INSERT INTO survey_pack_entries (id, pack_id, seq, line_key, field, value, pool, by_user, reason, at) ' +
@@ -303,6 +378,38 @@ export function savePackValue(d: PackDeps, actor: Actor, job_id: string, f: { fi
     const isMine = isEntry(now.source);
     if (value === null && !isMine) return { ok: false, field: 'value', why: 'Type a value. (An empty box puts our figure back, and this one is not yours to put back.)' };
     if (value !== null && isMine && now.value === value) return { ok: false, field: 'value', why: 'That is already the value. Nothing changed.' };
+    insertEntry(d, actor, pack_id, null, field, value, null, f.reason);
+    audit(d, actor, view, 'value', null, [field]);
+    return { ok: true };
+  });
+}
+
+/**
+ * PHASE 153e — THE PACK'S EXTRA VALUES: chapter 15's VAT position (one of four) and the amount not reclaimed, and
+ * supported living's shared areas from the floor plans. Each the surveyor's, with a reason. Empty: back to not recorded.
+ */
+export function savePackExtra(d: PackDeps, actor: Actor, job_id: string, f: { field: string; value: string; reason: string; seq: string }): PackResult {
+  if (f.field !== 'vat_position' && f.field !== 'vat' && f.field !== 'shared_area') return { ok: false, field: 'field', why: 'That is not one of the pack’s values.' };
+  const field: PackField = f.field;
+  const raw = f.value.trim();
+  let value: number | null = null;
+  if (raw !== '') {
+    if (field === 'vat_position') {
+      const i = VAT_POSITION_CODES.indexOf(raw as (typeof VAT_POSITION_CODES)[number]);
+      if (i < 0) return { ok: false, field: 'value', why: 'Choose one of the four answers.' };
+      value = i;
+    } else {
+      const p = field === 'shared_area' ? parseQuantity(raw) : parseMoney(raw);
+      if (!p.ok) return { ok: false, field: 'value', why: p.why };
+      value = p.value;
+    }
+  }
+  return begin(d, actor, job_id, f.reason, f.seq, ({ view, pack_id }) => {
+    const now = field === 'vat_position' ? view.vat.position_source : field === 'vat' ? view.vat.amount_source : view.shared_area.source;
+    const was = field === 'vat_position' ? (view.vat.position_source === null ? null : VAT_POSITION_CODES.indexOf(view.vat.position))
+      : field === 'vat' ? view.vat.amount_pence : view.shared_area.value;
+    if (value === null && now === null) return { ok: false, field: 'value', why: 'Nothing is recorded yet, so there is nothing to clear.' };
+    if (value !== null && now !== null && was === value) return { ok: false, field: 'value', why: 'That is already the value. Nothing changed.' };
     insertEntry(d, actor, pack_id, null, field, value, null, f.reason);
     audit(d, actor, view, 'value', null, [field]);
     return { ok: true };

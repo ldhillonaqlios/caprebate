@@ -884,6 +884,7 @@ function paragraphDisclaims(lines, i) {
 }
 
 let section5 = null;
+let backendCounted = null;   // PHASE 154a1 (line 11)
 {
   const FAST = flag("--fast");
   const expectArg = value("--expect", "");
@@ -942,6 +943,10 @@ let section5 = null;
       const block = at < 0 ? "" : out.slice(at).split(/\n\s*\n/)[0];
       const totals = [...block.matchAll(/^\s{2}\S[^\n]*?\s(\d{2,5}) pass/gm)].map(m => +m[1]);
       if (totals.length === 4) live = new Set(totals);
+      /* PHASE 154a1 (line 11): the drift checker counts the back end over the test files git tracks, and names any
+         untracked one it left out. Carried into this output so a reader of the register check sees it too. */
+      const backendLine = /^\s{2}back end\s[^\n]*$/m.exec(block);
+      if (backendLine) backendCounted = backendLine[0].trim();
       else section5 = { skipped: "the four suite totals could not be derived - run the drift checker on its own and read its first four lines"
         + (at < 0 ? " (it exited " + exitCode + " and printed no \"Re-derived, not inherited:\" block)"
                   : " (its \"Re-derived, not inherited:\" block carried " + totals.length + " pass lines, not four)") };
@@ -1050,6 +1055,7 @@ if (section5.skipped) {
   console.log("  Not the same as passing. Nothing below was checked.");
 } else {
   console.log("  live suite totals: " + section5.live.join(", "));
+  if (backendCounted) console.log("  the back end as the drift checker counted it: " + backendCounted);
   for (const d of section5.docs) {
     if (d.missing) { console.log("    ? " + d.name + " — not in the snapshot, so NOT checked"); continue; }
     console.log("    " + (d.claims.length ? "✘" : "✔") + " " + d.name

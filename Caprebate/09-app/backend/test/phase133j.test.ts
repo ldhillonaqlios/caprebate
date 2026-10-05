@@ -76,16 +76,17 @@ async function staff(role: string) {
 /** A visitor through the whole assessment to the thank-you page. */
 async function funnel(): Promise<{ visitor: ReturnType<typeof makeClient>; page: Res }> {
   const visitor = makeClient(base);
+  // PHASE 153f: the six old screens are retired; the same answers go through the four-stage funnel.
   await visitor.req('/assessment');
-  await visitor.post('/assessment/Q1', { own_prior_claim: 'no' });
-  await visitor.post('/assessment/Q1a', { previous_owner_claimed: 'dont_know' });
-  await visitor.post('/assessment/Q1b', { is_uk_taxpayer: 'yes', current_year_position: 'profitable' });
-  await visitor.post('/assessment/Q1c', { trigger_default: 'purchase' });
-  await visitor.post('/assessment/Q2', { p0_address: 'Meadowcroft House, ZZ9 9ZZ', p0_sector: 'care_homes',
-    p0_entity_type: 'ltd', p0_trigger: 'purchase', p0_spend: '2400000', p0_date: '06/2021' });
-  await visitor.post('/assessment/Q3', { p0_works: 'no' });
-  const page = await visitor.post('/assessment/close', { full_name: 'A Person', business_name: 'Meadowcroft Care Limited',
-    job_role: 'owner', channel: 'email', contact_value: 'a.person@example.invalid', contact_consent: 'on' });
+  await visitor.post('/assessment/buildings', { b0_sector: 'care_homes' });
+  await visitor.post('/assessment/spend-on', { b0_trigger: 'purchase' });
+  await visitor.post('/assessment/amounts', { b0_spend: '2400000', b0_date: '06/2021' });
+  await visitor.post('/assessment/tax', { b0_tax: 'yes', b0_profit: 'profitable' });
+  await visitor.post('/assessment/claims', { b0_prior: 'no', b0_seller: 'dont_know' });
+  await visitor.post('/assessment/works', { b0_works: 'no' });
+  await visitor.post('/assessment/details', { b0_business: 'Meadowcroft Care Limited', b0_entity: 'ltd', b0_line1: 'Meadowcroft House', b0_postcode: 'ZZ9 9ZZ' });
+  const page = await visitor.post('/assessment/close', { first_name: 'A', surname: 'Person',
+    job_role: 'owner_director', channel: 'email', email: 'a.person@example.invalid', contact_consent: 'on' });
   assert.equal(page.status, 200, 'the funnel did not close');
   return { visitor, page };
 }

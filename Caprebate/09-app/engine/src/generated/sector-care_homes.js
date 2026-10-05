@@ -553,7 +553,7 @@ const Q = [
      msg:"It looks like the building\u2019s fixtures have already been claimed, and they can only be claimed once.",
      pivot:"If you\u2019re not certain that covered the embedded fixtures (rather than loose equipment), it\u2019s worth a quick check \u2014 there\u2019s sometimes more available than a general claim captured."} : null }
 ];
-CB_CTAQ.place(Q, "Q");   /* Phase 132i - no question reads an answer given after it; see CB_CTAQ.place */
+CB_CTAQ.place(Q, "Q", function(s,f){ pushFlag(s,f); });   /* Phase 132i - no question reads an answer given after it; see CB_CTAQ.place */
 answerTakesBack(Q, null, lrrFromAnswers);   /* Phase 132g, every question since Phase 132h - see answerTakesBack below; lrrFromAnswers since Phase 132j */
 
 /* PHASE 132j, 16 September 2026 - LAND REMEDIATION FOLLOWS BOTH ANSWERS, as the
@@ -998,6 +998,20 @@ function runEngine(s){
     QE_lo = Math.min(QE_lo, __dv); QE_hi = Math.min(QE_hi, __dv);
   }
 
+  // PHASE 154a1 (line 13), R-B1 — THE POOLING REQUIREMENT (s.187A(4)). A seller
+  // KNOWN to have been able to claim who never claimed (so never pooled), or
+  // whose claim history is unknown: nil, or unresolved with nil at the bottom.
+  // The caps block below runs only on a seller who claimed, so this is the
+  // only place such a purchase meets s.187A. CB_S187A.poolingAssess.
+  if(dom==="purchase" && s.prior_owner_claimed!=="yes" && !__s187aOff && !__s538Carve){
+    var __pool = CB_S187A.poolingAssess(s);
+    if(__pool){
+      s.s187a = __pool;
+      var __pr = CB_S187A.applyOutcome(__pool, QE_lo, QE_hi, A, function(f){ pushFlag(s,f); });
+      QE_lo = __pr[0]; QE_hi = __pr[1];
+    }
+  }
+
   // Stage 5 — caps (purchase + prior claim)
   if(dom==="purchase" && s.prior_owner_claimed==="yes" && !__s187aOff && !__s538Carve){
     // C-1 — an ASSERTED election is not an election. s.187B(1) puts the
@@ -1114,7 +1128,7 @@ function runEngine(s){
   if(__cash.mechanism === CB_CASH.MECHANISM.AMEND){
     speed += " Because this reaches an already-filed return, the cash benefit here can include an actual refund from HMRC, not just a lower bill.";
   } else if(__cash.mechanism === CB_CASH.MECHANISM.LOSS_CARRYBACK){
-    speed += " Because the claim increases a loss carried back against an earlier year's profits, part of this can also come back as a refund of tax already paid.";
+    speed += " Because the claim increases a loss carried back against an earlier year's profits, part of this can also come back as a repayment of tax paid for last year.";   /* Phase 153b, Word question 92: a loss carried back repays an earlier year's tax - Rulebook A s.4's exception to "refund" */
   } else if(__cash.mechanism === CB_CASH.MECHANISM.CURRENT_YEAR){
     speed += " This reaches a return that hasn't been filed yet, so it reduces what's due rather than producing a refund of tax already paid.";
   } else if(__cash.mechanism === CB_CASH.MECHANISM.WDA_FORWARD){

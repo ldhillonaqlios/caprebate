@@ -112,7 +112,9 @@ describe('the assessment in the home page’s colours', () => {
     const r = await get('/assessment');
     assert.equal(r.status, 303);
     const cookie = (r.headers.getSetCookie()[0] ?? '').split(';')[0] ?? '';
-    const q1 = await (await fetch(`${base}/assessment/Q1`, { headers: { cookie } })).text();
+    // PHASE 153f: the first screen is the four-stage funnel's stage 1 (the old Q1 is retired, and sends a person there).
+    assert.equal((await fetch(`${base}/assessment/Q1`, { headers: { cookie }, redirect: 'manual' })).headers.get('location'), '/assessment/buildings');
+    const q1 = await (await fetch(`${base}/assessment/buildings`, { headers: { cookie } })).text();
     assert.match(q1, /<body class="public">/);
     assert.match(q1, /<a class="brandmark" href="\/" aria-label="Cap Rebate, home"><svg class="mark"/);
     assert.match(q1, /<a class="navcta" href="\/assessment">Am I eligible\?<\/a>/);

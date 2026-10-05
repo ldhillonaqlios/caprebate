@@ -29,8 +29,8 @@ import type { Actor } from '../authz.ts';
 import { outboxTransport } from '../stubs/email.ts';
 import { tipsOff } from './templates.ts';
 import {
-  ClockInputError, LIMB_LABELS, LIMBS, EXTENSION_GROUNDS, acknowledgementClock, limbClock,
-  type AckClock, type Limb, type LimbClock, type LimbClockInput,
+  ClockInputError, LIMB_LABELS, LIMBS, EXTENSION_GROUNDS, acknowledgementClock, limbClock, complaintTargets,
+  type AckClock, type ComplaintTargets, type Limb, type LimbClock, type LimbClockInput,
 } from './compliance-clock.ts';
 import {
   assertComplianceRead, assertComplianceWrite, dateField, has, holdsForEntry, linksFor, momentField, nextRef, NotFoundAsRefusal,
@@ -699,6 +699,8 @@ export function closeComplaint(d: ComplianceDeps, actor: Actor, id: string, inpu
 export type ComplaintView = {
   readonly complaint: ComplaintRow;
   readonly ack: AckClock;
+  /** Phase 153c (Word question 178): our own targets — the next update and the outcome. Not legal deadlines. */
+  readonly targets: ComplaintTargets;
   readonly progress: readonly { told_on: string; said: string }[];
   readonly links: readonly LinkLine[];
   readonly holds: readonly HoldRow[];
@@ -711,9 +713,11 @@ export type ComplaintView = {
 export function complaintView(db: Db, actor: Actor, id: string): ComplaintView {
   assertComplianceRead(actor);
   const c = loadComplaint(db, id);
+  const progress = db.all<{ told_on: string; said: string }>('SELECT told_on, said FROM complaint_progress_updates WHERE complaint_id = ? ORDER BY told_on', [id]);
   return {
     complaint: c, ack: acknowledgementClock(ukDay(c.received_at), day(c.acknowledged_at)),
-    progress: db.all<{ told_on: string; said: string }>('SELECT told_on, said FROM complaint_progress_updates WHERE complaint_id = ? ORDER BY told_on', [id]),
+    targets: complaintTargets(ukDay(c.received_at), day(c.acknowledged_at), progress.map((p) => p.told_on), day(c.outcome_notified_at)),
+    progress,
     links: linksFor(db, 'COMPLAINT', id), holds: holdsForEntry(db, 'complaint_id', id), limitation: TWO_PERSON_LIMITATION,
     letters: Object.entries(LETTERS).filter(([, v]) => v.register === 'COMPLAINT').map(([kind, v]) => ({ kind, label: v.label })),
     draft_note: LETTER_DRAFT_NOTE,
@@ -721,13 +725,16 @@ export function complaintView(db: Db, actor: Actor, id: string): ComplaintView {
   };
 }
 
-export function complaintsLog(db: Db, actor: Actor): { id: string; ref: string; received: string; classified: string; ack_deadline: string; ack_in_time: string; status: string }[] {
+export function complaintsLog(db: Db, actor: Actor): { id: string; ref: string; received: string; classified: string; ack_deadline: string; ack_in_time: string; status: string; next_update_due: string | null; target_outcome: string }[] {
   assertComplianceRead(actor);
   return db.all<ComplaintRow>('SELECT * FROM complaints ORDER BY received_at DESC LIMIT 500').map((c) => {
     const ack = acknowledgementClock(ukDay(c.received_at), day(c.acknowledged_at));
+    const told = db.all<{ told_on: string }>('SELECT told_on FROM complaint_progress_updates WHERE complaint_id = ?', [c.id]).map((p) => p.told_on);
+    const t = complaintTargets(ukDay(c.received_at), day(c.acknowledged_at), told, day(c.outcome_notified_at));
     return {
       id: c.id, ref: c.complaint_ref, received: ukDay(c.received_at), classified: c.is_164a === null ? 'NOT CLASSIFIED' : words(IS_164A, c.is_164a, c.is_164a),
       ack_deadline: ack.acknowledgement_deadline, ack_in_time: ack.ack_in_time ?? 'not acknowledged yet', status: c.status,
+      next_update_due: c.status === 'CLOSED' ? null : t.next_update_due, target_outcome: t.target_outcome,
     };
   });
 }
@@ -753,7 +760,19 @@ export function complaintCount(db: Db, actor: Actor, from: string, to: string): 
  * ================================================================== */
 
 export type SearchHit = { readonly store: string; readonly how: string; readonly id: string; readonly label: string; readonly link: string | null };
-export type SearchResult = { readonly hits: readonly SearchHit[]; readonly scope: readonly string[]; readonly s2_note: string };
+export type SearchResult = {
+  readonly hits: readonly SearchHit[]; readonly scope: readonly string[]; readonly s2_note: string;
+  /** PHASE 154a1 (line 1): what was searched, at most SEARCH_TERM_MAX characters, and whether the typed term was longer. */
+  readonly term: string; readonly cut: boolean;
+};
+
+/**
+ * PHASE 154a1 (line 1), 4 October 2026: THE TERM IS CAPPED, AS THE OTHER SEARCHES ARE. The 3 October sweep posted 50,000
+ * characters here and got a 500: the LIKE pattern built from it was over SQLite's 50,000-byte limit. The S2 name search
+ * stops at 200 (compliance-identity.ts) and the back office search cuts to 100 (search.ts); this one cuts to 200 and the
+ * page says so, so nobody thinks the whole of what they typed was searched.
+ */
+export const SEARCH_TERM_MAX = 200;
 
 export const SEARCH_SCOPE: readonly string[] = Object.freeze([
   'contacts on an organisation', 'contacts on a lead with no organisation', 'people at an introducing firm',
@@ -763,8 +782,11 @@ export const SEARCH_SCOPE: readonly string[] = Object.freeze([
 
 export function searchPerson(d: ComplianceDeps, actor: Actor, term: string): SearchResult {
   assertComplianceRead(actor);
-  const t = term.trim().toLowerCase();
-  if (t.length < 2) return { hits: [], scope: SEARCH_SCOPE, s2_note: S2_NOTE };
+  const typed = term.trim();
+  const cut = typed.length > SEARCH_TERM_MAX;
+  const shown = typed.slice(0, SEARCH_TERM_MAX);
+  const t = shown.toLowerCase();
+  if (t.length < 2) return { hits: [], scope: SEARCH_SCOPE, s2_note: S2_NOTE, term: shown, cut };
   const escaped = t.replace(/[\\%_]/g, (m) => `\\${m}`);
   const pattern = ['%', escaped, '%'].join('');
   const db = d.db;
@@ -808,7 +830,7 @@ export function searchPerson(d: ComplianceDeps, actor: Actor, term: string): Sea
   const counts: Record<string, number> = {};
   for (const h of hits) counts[h.store] = (counts[h.store] ?? 0) + 1;
   record(d, actor, 'RIGHTS_SEARCH_RUN', 'ALLOWED', 'compliance', 'rights-search', { counts, total: hits.length });
-  return { hits, scope: SEARCH_SCOPE, s2_note: S2_NOTE };
+  return { hits, scope: SEARCH_SCOPE, s2_note: S2_NOTE, term: shown, cut };
 }
 
 export const S2_NOTE =

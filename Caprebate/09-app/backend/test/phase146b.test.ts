@@ -334,7 +334,9 @@ describe('one way to call outside, and every call is written down', () => {
       if (p.base_url !== null) assert.equal(new URL(p.base_url).protocol, 'https:', p.service_id);
       // 30 Sep 2026: an approved transfer is allowed, but only the ones named here — the data protection officer's
       // approval of Zoom (relayed by Lakhbir, for testing). Any other row turned on outside the UK and EU is refused.
-      const APPROVED_TRANSFERS = ['ZOOM_OAUTH', 'ZOOM_API', 'WHATSAPP_CLOUD', 'GOADDRESS'];
+      // PHASE 153f, 4 Oct 2026: WHATSAPP_MEDIA is Meta's file host for the same WhatsApp Cloud API — the same processor and
+      // the same approval for testing (OUR reading, put to the data protection officer with the WhatsApp retention reading).
+      const APPROVED_TRANSFERS = ['ZOOM_OAUTH', 'ZOOM_API', 'WHATSAPP_CLOUD', 'WHATSAPP_MEDIA', 'GOADDRESS'];
       if (p.region !== 'UK' && p.region !== 'EU') {
         if (APPROVED_TRANSFERS.includes(p.service_id)) assert.equal(policyRefusal(p), null, `${p.service_id} was approved`);
         else assert.notEqual(policyRefusal(p), null, `${p.service_id} can be called outside the UK and EU`);

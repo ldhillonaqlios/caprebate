@@ -277,7 +277,11 @@ function scanReaderFrom(d: UploadDeps): UploadDeps['scan_reader'] {
   if (switches.SCANNED_PAGES !== true) return undefined;
   const ctx = readingContext(d);
   if (ctx === null) return undefined;
-  return async (doc_id, images) => (await readScannedPages(ctx, doc_id, images)).pages;
+  // Phase 153c: the document's kind travels with it, and only the kinds on SCANNED_PAGE_KINDS are sent (Word question 193).
+  return async (doc_id, images) => {
+    const kind = d.db.get<{ type_code: string | null }>('SELECT type_code FROM documents WHERE id = ?', [doc_id])?.type_code ?? null;
+    return (await readScannedPages(ctx, doc_id, images, kind)).pages;
+  };
 }
 
 function handlerDeps(d: UploadDeps, doc_id?: string): UploadHandlerDeps {

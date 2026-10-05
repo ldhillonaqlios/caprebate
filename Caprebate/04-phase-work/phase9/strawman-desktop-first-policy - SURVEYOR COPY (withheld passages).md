@@ -6,6 +6,8 @@
 
 **v0.2, 12 September 2026 (Phase 129):** [Withheld until after the first session]
 
+**Built in the test system, 4 October 2026 (Phase 153e) — not a settled policy.** The grid is coded with placeholder values, all for you to set. You are shown the evidence level for a job and nothing else. The coverage score counts the script's required items filmed or marked "not here"; under the pass mark the level becomes a site visit.
+
 > **THIS IS A DRAFT FOR A CHARTERED SURVEYOR TO CORRECT. IT IS NOT PROFESSIONAL ADVICE, AND IT
 > IS NOT A SETTLED POLICY.** No RICS-registered surveyor has been appointed to this project at the
 > time of writing (27 Aug 2026). Everything below was drafted by a non-surveyor working from the

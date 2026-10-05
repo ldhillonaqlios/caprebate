@@ -29,6 +29,8 @@
 !/Caprebate/06-commercial-and-governance/
 /Caprebate/06-commercial-and-governance/*
 !/Caprebate/06-commercial-and-governance/Caprebate Engagement Letter.docx
+# Phase 153d, 4 Oct 2026: the test-only copy with test defaults, read by the test website alone (testLetter in api/index.mjs).
+!/Caprebate/06-commercial-and-governance/Caprebate Engagement Letter - TEST DEFAULTS, not agreed.docx
 # Phase 151d, 25 Sep 2026: monday.com was dropped, so the plan, the phase history, the three
 # sign-off registers, the tracker (the old board) and the claim lock are files, committed here.
 # .vercelignore keeps this folder OUT of the test deploy, which serves committed files publicly.

@@ -425,6 +425,11 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
       CF.fact(app, c, 'GRANTS_EXIST', 'YES');
       assert.equal(F.recordGrant(d, actor('SALES'), c, { kind: 'GRANT', payer_class: 'nhs', traced: 'YES', traced_elements: 'nurse call', source_id: 'CLIENT_DOC' }).ok, true);
       assert.equal(traced(), true);
+      // PHASE 153a: a grant now also needs the client's check with whoever paid it, and — taken off in equal share, as
+      // every grant is while CB_CTA.grant_traced_to_elements is off — its papers or the tax adviser's view.
+      assert.equal(fwd(app, 'SALES', c, 'TAX_ADVISER_SIGNOFF').ok, false, 'traced, but neither grant check answered, passed');
+      CF.fact(app, c, 'GRANT_PROVIDER_CHECKED', 'YES');
+      CF.fact(app, c, 'GRANT_SPLIT_ADVISER_VIEW', 'YES', 'CTA');
       assert.equal(fwd(app, 'SALES', c, 'TAX_ADVISER_SIGNOFF').ok, true);
     } finally { app.close(); }
   });

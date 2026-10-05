@@ -543,7 +543,7 @@ function claimInvoicePage(d: FinanceDeps, actor: Actor, v: I.ClaimInvoiceView, s
         <tbody>${v.received.map((p) => h`<tr><td>${p.received_on}</td><td>${p.amount}</td><td>${p.method}</td>
           <td>${p.confirmed_off_email ? p.bank_details : h`<strong>${p.bank_details}</strong>`}</td><td>${p.recorded}${p.voided === null ? raw('') : h` — ${p.voided}`}</td>
           <td>${p.voided === null && v.may.void_received
-            ? h`<form method="post" action="/staff/finance/received/${p.id}/void"><input name="reason" placeholder="why it is voided">
+            ? h`<form method="post" action="/staff/finance/received/${p.id}/void"><input name="reason" placeholder="why it is voided" aria-label="Why it is voided">
                 <button type="submit">Void</button></form>` : raw('')}</td></tr>`)}</tbody></table>`}
 
       ${v.may.record_received ? h`

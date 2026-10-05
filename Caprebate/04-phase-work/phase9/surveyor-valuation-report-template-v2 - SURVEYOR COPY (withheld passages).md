@@ -516,7 +516,7 @@ acquisition, and on what evidence?*
 | Comparables relied on | Which transactions, and why are they comparable to a healthcare site? |
 | VOA basis / reference | Is there a VOA figure, and does it help or is it the wrong basis? |
 | Date of valuation | Acquisition date, or another date — see Q-RT-04 |
-| Planning assumption | **Q-RT-19** |
+| Planning assumption | **Q-RT-19** — _test wording, Phase 153e: see below_ |
 
 **No default or "typical" land fraction is stated anywhere in this document.** The client-facing sample
 report calls the land value "the single biggest lever" on the whole apportionment precisely because it
@@ -532,6 +532,10 @@ the healthcare use that is actually there? As if consented for the highest alter
 give materially different land values, and **because a higher land value gives a lower qualifying
 figure, the assumption chosen moves the claim in a direction that is not neutral.** We would rather
 this were an explicit stated assumption on the face of every report than an implicit choice.
+
+> **Test wording, 4 October 2026 (Phase 153e, Word question 145) — for you to approve or reword.** Every report
+> the test system approves now carries, under "What we assume": _We assume the property’s current use is lawful. We assume no planning rule or action we were not told about changes its value. We did not check the planning records, unless this report says so. Any planning permission, limit or doubt we know of is named separately._ It states the assumption; it does not answer
+> which planning basis the bare site is valued on, which is still Q-RT-19's question for you.
 
 ---
 
@@ -780,6 +784,12 @@ in an old plant room looks like a new boiler. If the answer is "only from the sp
 looking", then this section's evidence comes from documents and your role in it is smaller than we
 have drawn it.
 
+> **Built on our recommendation, 4 October 2026 (Phase 153e, Word question 150) — for you to check.** Lakhbir
+> answered "No": like-for-like cannot be told from a visit alone. So every finding in the report now carries one of
+> two labels: **Seen on site** (you inspected on site, as chapter 2 records, and set that item's figures or pool
+> yourself) or **From documents** (everything else, with "and the client's photos" where the client photographed it).
+> A video or photos are not a visit. The survey pack shows the same label against each line.
+
 ---
 
 # SECTION 21 — Limitations, Assumptions & Restriction on Use `[MIXED]`
@@ -798,6 +808,7 @@ have drawn it.
   beyond anything stated; information supplied by the client and their advisers is accurate and
   complete; no allowance is made for any matter that would only be revealed by a survey outside the
   agreed scope.
+- **Planning** _(test wording, 4 October 2026, Phase 153e, for you to approve; see section 11, Q-RT-19)_. We assume the property’s current use is lawful. We assume no planning rule or action we were not told about changes its value. We did not check the planning records, unless this report says so. Any planning permission, limit or doubt we know of is named separately.
 - **Reliance.** Prepared for the stated claimant and their professional advisers only. Not to be relied
   on by any other party; no responsibility is accepted to any third party.
 - **Currency of rates and law.** Tax rates and thresholds are stated as at the basis date in Section 3

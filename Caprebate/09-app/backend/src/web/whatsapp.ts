@@ -30,9 +30,10 @@ import { SENT_SECRET_KINDS } from '../stubs/email-provider.ts';
 import { localStamp } from './localtime.ts';
 import { clientThread } from './messages.ts';
 import {
-  MAX_WHATSAPP_TEXT, WINDOW_HOURS, readWebhook, sendWhatsAppOpening, sendWhatsAppText, signatureHolds, waNumber,
+  MAX_WHATSAPP_TEXT, WINDOW_HOURS, fetchWhatsAppMedia, readWebhook, sendWhatsAppOpening, sendWhatsAppText, signatureHolds, waNumber,
   type WhatsAppDeps,
 } from '../connectors/whatsapp.ts';
+import { WHATSAPP_PREFIX, type FsObjectStore } from './objectstore.ts';
 
 export function whatsappDeps(app: App): WhatsAppDeps {
   return { audit: app.audit, now: app.now, transport: app.outside, secrets: app.secrets,
@@ -41,7 +42,8 @@ export function whatsappDeps(app: App): WhatsAppDeps {
 
 const obj = (db: Db, business_id: string) => ({ type: 'client_message' as const, id: business_id, business_id });
 
-export type PhoneContact = { readonly id: string; readonly name: string; readonly first: string; readonly number: string; readonly shown: string; readonly open_until: string | null };
+export type PhoneContact = { readonly id: string; readonly name: string; readonly first: string; readonly number: string; readonly shown: string; readonly open_until: string | null;
+  /** PHASE 153f (migration 086): whether they agreed to WhatsApp, on the funnel's optional box. */ readonly agreed: boolean };
 
 /** When the 24-hour window with this number closes, or null when it is closed. */
 export function windowOpenUntil(db: Db, number: string, nowIso: string): string | null {
@@ -54,11 +56,11 @@ export function windowOpenUntil(db: Db, number: string, nowIso: string): string 
 /** The company's contacts WhatsApp can reach: those with a telephone number we can read. */
 export function phoneContacts(db: Db, business_id: string, nowIso: string): PhoneContact[] {
   const out: PhoneContact[] = [];
-  for (const c of db.all<{ id: string; full_name: string; phone: string | null }>(
-    "SELECT id, full_name, phone FROM contacts WHERE business_id = ? AND phone IS NOT NULL AND trim(phone) <> '' ORDER BY full_name", [business_id])) {
+  for (const c of db.all<{ id: string; full_name: string; phone: string | null; whatsapp_optin: number }>(
+    "SELECT id, full_name, phone, whatsapp_optin FROM contacts WHERE business_id = ? AND phone IS NOT NULL AND trim(phone) <> '' ORDER BY full_name", [business_id])) {
     const n = waNumber(c.phone);
     if (n === null) continue;
-    out.push({ id: c.id, name: c.full_name, first: c.full_name.trim().split(/\s+/)[0] ?? '', number: n, shown: c.phone ?? '', open_until: windowOpenUntil(db, n, nowIso) });
+    out.push({ id: c.id, name: c.full_name, first: c.full_name.trim().split(/\s+/)[0] ?? '', number: n, shown: c.phone ?? '', open_until: windowOpenUntil(db, n, nowIso), agreed: c.whatsapp_optin === 1 });
   }
   return out;
 }
@@ -122,6 +124,11 @@ export function receiveWhatsApp(app: App, raw: string, signature: string | null)
       'INSERT OR IGNORE INTO whatsapp_messages (id, business_id, contact_id, direction, phone, kind, body, wa_id, status, created_at, status_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [id, business, contacts.length === 1 ? contacts[0]!.contact : null, 'IN', m.from, m.kind, m.body, m.wa_id, 'RECEIVED', m.at, now]);
     if (r.changes !== 1) continue; // the same message delivered again
+    // PHASE 153f: an attachment's id is kept with the message; a person fetches the file (fetchWhatsAppAttachment).
+    if (m.media !== null) {
+      app.db.run('INSERT INTO whatsapp_media (message_id, media_id, media_type, mime, sha256, filename) VALUES (?, ?, ?, ?, ?, ?)',
+        [id, m.media.id, m.media.type, m.media.mime, m.media.sha256, m.media.filename]);
+    }
     kept++;
     if (business === null) unfiled++;
     app.audit.append({ at: now, kind: 'WHATSAPP_RECEIVED', outcome: 'ALLOWED', actor_id: null, actor_role: null, object_type: 'whatsapp_message', object_id: id,
@@ -192,4 +199,58 @@ export function conversation(db: Db, actor: Actor, business_id: string, nowIso: 
       subject: null, body: w.body, state: ours ? `${WA_STATE[w.status] ?? w.status}${w.error === null ? '' : ` — ${w.error}`}` : null });
   }
   return items.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+}
+
+/* ================================================================== *
+ * PHASE 153f, 4 OCTOBER 2026 — A FILE SOMEONE SENT US ON WHATSAPP, KEPT HERE
+ * ================================================================== */
+
+export type Attachment = {
+  readonly message_id: string; readonly business_id: string | null; readonly media_type: string; readonly mime: string | null;
+  readonly filename: string | null; readonly object_key: string | null; readonly bytes: number | null; readonly fetched_at: string | null;
+};
+
+export function attachmentOf(db: Db, message_id: string): Attachment | undefined {
+  return db.get<Attachment>(
+    'SELECT m.message_id, w.business_id, m.media_type, m.mime, m.filename, m.object_key, m.bytes, m.fetched_at FROM whatsapp_media m ' +
+    'JOIN whatsapp_messages w ON w.id = m.message_id WHERE m.message_id = ?', [message_id]);
+}
+
+/** The words for an attachment on the WhatsApp page. */
+export const ATTACHMENT_WORDS: Readonly<Record<string, string>> = { image: 'the photo', video: 'the video', audio: 'the voice note', document: 'the document', sticker: 'the sticker' };
+
+/**
+ * Fetch the file from Meta and keep it SEALED in the file store, as a survey photo is. Admin or Sales, for a message
+ * filed under a company (one waiting to be filed is filed first). Once fetched it is kept and never fetched again.
+ */
+export async function fetchWhatsAppAttachment(app: App, store: FsObjectStore, actor: Actor, message_id: string): Promise<{ ok: true } | { ok: false; why: string }> {
+  const a = attachmentOf(app.db, message_id);
+  if (a === undefined) return { ok: false, why: 'That WhatsApp message has no file.' };
+  if (a.business_id === null) return { ok: false, why: 'File the message under its company first.' };
+  authorise(actor, 'client_message.write', obj(app.db, a.business_id));
+  if (a.fetched_at !== null) return { ok: true };
+  if (!store.canSeal) return { ok: false, why: 'We cannot keep files yet: the key that encrypts them is not set.' };
+  const media = app.db.get<{ media_id: string }>('SELECT media_id FROM whatsapp_media WHERE message_id = ?', [message_id])!.media_id;
+  const got = await fetchWhatsAppMedia(whatsappDeps(app), media);
+  if (got.state !== 'FETCHED') {
+    app.audit.append({ at: app.now(), kind: 'WHATSAPP_MEDIA_NOT_FETCHED', outcome: 'REFUSED', actor_id: actor.id, actor_role: actor.role, object_type: 'whatsapp_message', object_id: message_id, detail: {} });
+    return { ok: false, why: got.why };
+  }
+  const objectKey = `${WHATSAPP_PREFIX}${message_id}`;
+  await store.putSealed(objectKey, got.bytes);
+  app.db.run('UPDATE whatsapp_media SET object_key = ?, bytes = ?, mime = ?, sha256 = ?, fetched_by = ?, fetched_at = ? WHERE message_id = ? AND fetched_at IS NULL',
+    [objectKey, got.bytes.length, got.mime, got.sha256, actor.id, app.now(), message_id]);
+  app.audit.append({ at: app.now(), kind: 'WHATSAPP_MEDIA_FETCHED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'whatsapp_message', object_id: message_id,
+    detail: { bytes: got.bytes.length } });
+  return { ok: true };
+}
+
+/** The kept file, for Admin and Sales who may read the company's messages. Null when there is none. */
+export async function whatsAppAttachmentBytes(app: App, store: FsObjectStore, actor: Actor, message_id: string): Promise<{ bytes: Buffer; mime: string; filename: string } | null> {
+  const a = attachmentOf(app.db, message_id);
+  if (a === undefined || a.business_id === null || a.object_key === null) return null;
+  authorise(actor, 'client_message.read', obj(app.db, a.business_id));
+  const ext = (a.mime ?? '').split('/')[1]?.replace(/[^a-z0-9]/gi, '').slice(0, 8) ?? 'bin';
+  const name = (a.filename ?? `whatsapp-${a.media_type}.${ext || 'bin'}`).replace(/[^A-Za-z0-9 ._-]/g, '_').slice(0, 120);
+  return { bytes: await store.getSealed(a.object_key), mime: a.mime ?? 'application/octet-stream', filename: name };
 }

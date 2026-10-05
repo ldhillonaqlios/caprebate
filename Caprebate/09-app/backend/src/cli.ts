@@ -9,6 +9,9 @@
  *   node src/cli.ts send-outbox       send every email saved while sending was on (EMAIL_SENDING; off, so none)
  *   node src/cli.ts read-mailbox      read new replies to contact@caprebate.co.uk, read-only (INBOUND_EMAIL; off, so none)
  *   node src/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
+ *   node src/cli.ts sweep-enquiries   delete every closed website enquiry past its period (ENQUIRY_RETENTION, Phase 153c; off, so none)
+ *   node src/cli.ts import-premises <CQC_CARE_DIRECTORY|NHS_ODS_DENTAL|NHS_ODS_GP> <file> --by <user id>   healthcare premises, no names (Phase 153c)
+ *   node src/cli.ts sector-ranges     propose each sector's range from approved survey packs; changes nothing (Phase 153e)
  *   node src/cli.ts sweep-land-boundaries   delete every kept land boundary file past the licence's 35 days
  *   node src/cli.ts seal-app-secrets  seal every authenticator app secret still kept as text (CAPREBATE_MFA_KEY, Phase 151k)
  *   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who W --why Y   one logged test lookup (Phase 151g)
@@ -109,6 +112,104 @@ async function main(): Promise<number> {
       const r = sweepMessages({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() }, MESSAGE_RETENTION, null);
       console.log(r.state === 'OFF' ? `Messages are not being cleaned up yet:\n  ${r.missing.join('\n  ')}`
         : `${r.client_messages} client message${r.client_messages === 1 ? '' : 's'}, ${r.team_messages} team message${r.team_messages === 1 ? '' : 's'} and ${r.emails} emailed repl${r.emails === 1 ? 'y' : 'ies'} deleted because their time was up.`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  if (cmd === 'sweep-enquiries') {
+    /* PHASE 153c (Word question 222). ENQUIRY_RETENTION is off, so this deletes nothing and says why. */
+    const db = new Db(DEFAULT_DB);
+    try {
+      const { sweepEnquiries, ENQUIRY_RETENTION } = await import('./web/enquiry-retention.ts');
+      const r = sweepEnquiries({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() }, ENQUIRY_RETENTION, null);
+      console.log(r.state === 'OFF' ? `Closed enquiries are not being cleaned up yet:\n  ${r.missing.join('\n  ')}`
+        : `${r.deleted} closed website enquir${r.deleted === 1 ? 'y' : 'ies'} deleted because their time was up; ${r.funnel_leads_due_not_deleted} lost funnel lead${r.funnel_leads_due_not_deleted === 1 ? '' : 's'} past the period, not deleted (no path yet).`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  if (cmd === 'import-premises') {
+    /* PHASE 153c (Word question 183). Business name, address, sector and source only; a name that may be a person's is
+       held back. Nothing reads the list to contact anyone. */
+    const [source, file] = [process.argv[3], process.argv[4]];
+    const byAt = process.argv.indexOf('--by');
+    const by = byAt > 0 ? process.argv[byAt + 1] : undefined;
+    const { importPremises, PREMISES_SOURCES } = await import('./web/premises-import.ts');
+    if (source === undefined || !(source in PREMISES_SOURCES) || file === undefined || by === undefined) {
+      console.error(`Usage: node src/cli.ts import-premises <${Object.keys(PREMISES_SOURCES).join('|')}> <file> --by <user id>`);
+      return 1;
+    }
+    const { readFileSync } = await import('node:fs');
+    const db = new Db(DEFAULT_DB);
+    try {
+      const user = db.get<{ role: string }>('SELECT role FROM users WHERE id = ? AND disabled_at IS NULL', [by]);
+      if (user === undefined || user.role !== 'ADMIN') { console.error('Only an active Admin may import premises.'); return 1; }
+      const r = importPremises({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() },
+        source as keyof typeof PREMISES_SOURCES, readFileSync(file, 'utf8'), { id: by, role: user.role });
+      console.log(`${r.kept} kept, ${r.already_held} already held, ${r.held_back_may_name_a_person} held back (the name may be a person's), ${r.skipped_unreadable} unreadable, ${r.skipped_not_our_sector} not a sector we serve.`);
+      return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  if (cmd === 'import-register') {
+    /* PHASE 155 (lines 1-2). The Welsh or Scottish care regulator's downloaded list into a table on this server
+       (src/web/register-files.ts). Importing switches nothing on: each lookup stays behind its own switch, off. */
+    const [source, file] = [process.argv[3], process.argv[4]];
+    const byAt = process.argv.indexOf('--by');
+    const by = byAt > 0 ? process.argv[byAt + 1] : undefined;
+    const { importRegisterFile, decodeRegisterFile, FILE_SOURCES } = await import('./web/register-files.ts');
+    if (source === undefined || !(source in FILE_SOURCES) || file === undefined || by === undefined) {
+      console.error(`Usage: node src/cli.ts import-register <${Object.keys(FILE_SOURCES).join('|')}> <file> --by <user id>`);
+      for (const f of Object.values(FILE_SOURCES)) console.error(`  ${f.source_id}: ${f.download}`);
+      return 1;
+    }
+    const { readFileSync } = await import('node:fs');
+    const db = new Db(DEFAULT_DB);
+    try {
+      const user = db.get<{ role: string }>('SELECT role FROM users WHERE id = ? AND disabled_at IS NULL', [by]);
+      if (user === undefined || user.role !== 'ADMIN') { console.error('Only an active Admin may import a register file.'); return 1; }
+      const id = source as keyof typeof FILE_SOURCES;
+      const r = importRegisterFile({ db, audit: new AuditLog(db), now: () => new Date().toISOString() },
+        id, decodeRegisterFile(readFileSync(file), id), file, { id: by, role: user.role });
+      console.log(`${r.kept} services kept, ${r.skipped_unreadable} skipped (no reference, or no postcode we can read), ${r.replaced} replaced from the last import. The lookup is still switched off.`);
+      return 0;
+    } catch (e) {
+      console.error(e instanceof Error ? e.message : String(e));
+      return 1;
+    } finally {
+      db.close();
+    }
+  }
+
+  if (cmd === 'import-bcis-index') {
+    /* PHASE 155 (line 4). The BCIS index from a file Lakhbir downloads, kept OUTSIDE the repository (src/web/bcis-index.ts). */
+    const file = process.argv[3];
+    if (file === undefined) { console.error('Usage: node src/cli.ts import-bcis-index <the CSV downloaded from BCIS>'); return 1; }
+    const { readFileSync } = await import('node:fs');
+    const { importBcisIndex } = await import('./web/bcis-index.ts');
+    const r = importBcisIndex(readFileSync(file, 'utf8'), file, new Date().toISOString());
+    if (!r.ok) { console.error(r.why); return 1; }
+    console.log(`${r.points} index points, ${r.from} to ${r.to}, kept at ${r.path}${r.passed_over === 0 ? '' : ` (${r.passed_over} row${r.passed_over === 1 ? '' : 's'} with no figure passed over)`}. ` +
+      'The survey pack does not use it yet: wiring the cost model into the pack is Phase 157.');
+    return 0;
+  }
+
+  if (cmd === 'sector-ranges') {
+    /* PHASE 153e (Word question 138). Reads the approved survey packs and proposes a range per sector, supported living
+       per trigger. It changes no band: a person changes the engine, with the surveyor's agreement. */
+    const db = new Db(DEFAULT_DB);
+    try {
+      const { proposeRanges } = await import('./web/sector-ranges.ts');
+      const r = proposeRanges(db);
+      if (r.proposals.length === 0) console.log('No approved survey pack yet, so there is nothing to propose.');
+      for (const p of r.proposals) console.log(`${p.sector}${p.trigger === null ? '' : ` (${p.trigger})`}: ${p.words}`);
+      if (r.left_out > 0) console.log(`${String(r.left_out)} approved pack(s) left out: no price paid or no qualifying figure.`);
       return 0;
     } finally {
       db.close();

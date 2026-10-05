@@ -431,8 +431,13 @@ describe('4 · KEEP_ORIGINALS — built, and switched off', () => {
       assert.ok(got.bytes.equals(Buffer.from(bytes)), 'Admin got the original back, byte for byte');
       assert.equal(db.get<{ n: number }>("SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'DOCUMENT_ORIGINAL_OPENED'")?.n, 1);
       // Word question 219 (24 Sep 2026): Sales, Admin and the data protection officer may open a kept original.
+      // Phase 153c: Sales only for its OWN clients — the business's or a claim's owner. Owned by nobody, nobody in Sales.
       const sales = await w.signIn('sales');
-      assert.equal((await sales.req(`/staff/documents/${lid}/download`)).status, 200, 'Sales could not open an original');
+      db.run('UPDATE businesses SET owner_id = NULL WHERE id = ?', [w.business]);
+      db.run('UPDATE claims SET owner_id = NULL WHERE business_id = ?', [w.business]);
+      assert.equal((await sales.req(`/staff/documents/${lid}/download`)).status, 403, 'Sales opened the original of a client that is not theirs');
+      db.run('UPDATE businesses SET owner_id = ? WHERE id = ?', [w.staff('SALES').id, w.business]);
+      assert.equal((await sales.req(`/staff/documents/${lid}/download`)).status, 200, 'Sales could not open its own client’s original');
       const accounting = await w.signIn('accounting');
       assert.equal((await accounting.req(`/staff/documents/${lid}/download`)).status, 403, 'Accounting opened an original');
 

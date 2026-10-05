@@ -110,6 +110,12 @@ export type FeeComparison = {
   readonly breakeven_fee_rate_year_one_range: readonly [number, number] | null;
   readonly unknowns: readonly string[];
   readonly assumptions: readonly string[];
+  /**
+   * PHASE 153b (Word question 59) — present ONLY where CB_FEEGUARD.fee_comparison_counts_vat is on AND we are
+   * VAT-registered: how VAT on our fee was treated, and the fee the verdicts were taken on. Absent today.
+   */
+  readonly fee_vat?: NoClaimVatReading;
+  readonly fee_counted?: number | null;
 };
 
 export type FeeDisplay = {
@@ -322,6 +328,18 @@ export function noClaimThreshold(): {
       awaiting_tax_adviser_review: v?.awaiting_tax_adviser_review !== false,
     },
   };
+}
+
+/**
+ * PHASE 153b (Word question 226) — what a session's works-VAT answer tells us about the client's VAT on OUR fee:
+ * 'can_reclaim' or 'cannot_reclaim' only for the same business with nothing changed, and null (not known) otherwise.
+ * The engine's rule (CB_FEE.clientVatFromWorks), narrowed here; null where the engine does not carry it.
+ */
+export function clientVatFromWorks(session: unknown): 'can_reclaim' | 'cannot_reclaim' | null {
+  const f = (FEE as { clientVatFromWorks?: unknown }).clientVatFromWorks;
+  if (typeof f !== 'function') return null;
+  const v = (f as (s: unknown) => unknown)(session);
+  return v === 'can_reclaim' || v === 'cannot_reclaim' ? v : null;
 }
 
 /** The two switches, read rather than assumed. Both ship off. */

@@ -243,6 +243,8 @@ export type AuditKind =
   | 'COMPLAINT_LOGGED' | 'COMPLAINT_CLASSIFIED' | 'COMPLAINT_PROGRESS_RECORDED' | 'COMPLAINT_UPDATED' | 'COMPLAINT_CLOSED'
   | 'BREACH_OPENED' | 'BREACH_UPDATED' | 'BREACH_AWARENESS_CORRECTED' | 'BREACH_DECISION_RECORDED'
   | 'BREACH_PHASE_RECORDED' | 'BREACH_NOTIFICATION_RECORDED' | 'BREACH_CLOSED'
+  /** Phase 153c (Word question 181): the restricted names list — a name added, the list read, a read refused. */
+  | 'BREACH_NAME_ADDED' | 'BREACH_NAMES_READ' | 'BREACH_NAMES_REFUSED' | 'PREMISES_IMPORTED' | 'REGISTER_FILE_IMPORTED'
   | 'IDENTITY_RECORDED' | 'IDENTITY_READ' | 'IDENTITY_SEARCHED' | 'IDENTITY_UPDATED'
   | 'CONSENT_RECORDED' | 'RETENTION_LIST_READ'
   /**
@@ -364,6 +366,10 @@ export type AuditKind =
   // 1 Oct 2026: the Communication tab — a Zoom call staff started or booked, a telephone call staff logged, a video call
   // first opened by its host (src/web/communication.ts). Ids and outcomes only.
   | 'BOOKING_CREATED' | 'CALL_LOGGED' | 'VIDEO_CALL_OPENED'
+  // PHASE 153f: a video call made under the shared Zoom host because its member of staff has no Zoom user.
+  | 'VIDEO_CALL_SHARED_HOST'
+  // PHASE 153f: a file someone sent us on WhatsApp, fetched from Meta and kept sealed (or not, and why in words on the page).
+  | 'WHATSAPP_MEDIA_FETCHED' | 'WHATSAPP_MEDIA_NOT_FETCHED'
   /** 1 Oct 2026: a surveyor changed the survey pack (src/web/survey-pack.ts): what, which line, which fields — never a value. */
   | 'SURVEY_PACK_CHANGED'
   /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/web/pack-approve.ts): the version and its fingerprint. */
@@ -375,6 +381,9 @@ export type AuditKind =
   | 'SURVEY_EVIDENCE_ADDED'
   /** 2 Oct 2026: photos sent in one go put under checklist items by Admin or Sales, or taken back. Counts only. */
   | 'SURVEY_PHOTOS_SORTED'
+  /** 2 Oct 2026: a site plan fetched for a survey job's report (src/web/site-plan.ts): how many buildings, and how the
+   *  client's was picked. Never the postcode, never a coordinate. */
+  | 'SITE_PLAN_FETCHED'
   /** Phase 151f: a signed word from the service that the check is still under way, or about something other than a
    *  check's status. Acknowledged and not kept as a result. The status word and why only. */
   | 'IDENTITY_RESULT_NOT_KEPT'

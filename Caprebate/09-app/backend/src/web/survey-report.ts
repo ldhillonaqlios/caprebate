@@ -16,8 +16,9 @@
  *   4  the legal check, and what happens next
  *   5  the surveyor's declaration, their name and RICS number, the fingerprint, and how the report was made
  *
- * The building's outline from Ordnance Survey's free maps joins page 1 at stage 6. The site boundary (INSPIRE) is never
- * in it (Lakhbir's rule, 1 Oct 2026).
+ * Page 1 also shows the site plan, when the version has one (stage 6, 2 Oct 2026): the client's building and the buildings
+ * round it, from Ordnance Survey's free maps (src/web/site-plan.ts). The site boundary (INSPIRE) is never in it
+ * (Lakhbir's rule, 1 Oct 2026).
  */
 import { h, raw, type Safe } from './html.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
@@ -25,6 +26,7 @@ import { answerWords, legalQuestions } from './pack-legal.ts';
 import type { Snapshot } from './pack-approve.ts';
 import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from './pdf-canvas.ts';
 import { minutesWords } from './survey-video.ts';
+import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from './site-plan.ts';
 
 export const REPORT_TITLE = 'Capital allowances survey report';
 
@@ -35,6 +37,8 @@ export type ReportRow = {
   readonly cost: string; readonly qpct: string; readonly qpct_chip: Chip; readonly qualifying: string;
   /** This item's share of the qualifying total, as a whole percentage, for its bar. */
   readonly share: number;
+  /** PHASE 153e: seen on site, or from documents. Null in a version approved before. */
+  readonly seen: string | null;
 };
 
 export type ReportModel = {
@@ -60,6 +64,18 @@ export type ReportModel = {
   readonly automation_note: string;
   /** 2 Oct 2026: how the building was inspected, and what the client sent (src/web/survey-evidence.ts). Null in a version approved before. */
   readonly inspection: string | null;
+  /** PHASE 153e: the assumptions the version was approved on (the planning assumption). Empty in a version approved before. */
+  readonly assumptions: readonly string[];
+  /** 2 Oct 2026, stage 6: the site plan from Ordnance Survey's free maps, as approved; null when the version has none. */
+  readonly site_plan: SitePlan | null;
+  /** PHASE 153g: the surveyor's chapters (5, 8, 11, 14, 16 to 20, 22) as approved. Empty in a version approved before. */
+  readonly chapters: readonly ReportChapter[];
+};
+
+export type ReportChapter = {
+  readonly n: number; readonly title: string; readonly applies: boolean; readonly not_applies_words: string | null;
+  readonly rows: readonly { readonly label: string; readonly value: string | null; readonly missing: string }[];
+  readonly items: readonly { readonly label: string; readonly detail: string }[];
 };
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -100,6 +116,11 @@ function inspectionWords(i: Snapshot['inspection'] | undefined): string | null {
 
 export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
   const s = x.sums;
+  // PHASE 153a: a version approved before grants came off has no `grants`; one with grants that took nothing off reads as before.
+  const gr = (x as { grants?: Snapshot['grants'] }).grants;
+  const off = gr !== undefined && gr.reduction_pence !== null && gr.reduction_pence > 0 ? gr : null;
+  const beforeShare = s.rebuild_pence === null || s.rebuild_pence === 0 || s.elements_qualifying_pence === null ? null
+    : Math.round((s.elements_qualifying_pence * 10000) / s.rebuild_pence);
   const q = (s.qualifying_pence ?? 0);
   const main = s.main_pool_pence ?? 0;
   const mainPct = q === 0 ? 0 : Math.round((main * 100) / q);
@@ -112,6 +133,7 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     cost: poundsWords(l.cost_pence), qpct: percentWords(l.qpct_bp.value), qpct_chip: chipOf(l.qpct_bp.source, true),
     qualifying: poundsWords(l.qualifying_pence),
     share: totalQ === 0 || l.qualifying_pence === null ? 0 : Math.round((l.qualifying_pence * 100) / totalQ),
+    seen: (l as { seen?: string }).seen ?? null,
   });
   const sr = live.filter((l) => l.pool === 'SR');
   const mp = live.filter((l) => l.pool === 'MP');
@@ -140,14 +162,22 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     ],
     flow: [
       { label: 'Price paid', value: poundsWords(iv.price_paid_pence.value), note: 'what you paid' },
+      // PHASE 153e: VAT the client could not reclaim, where the version counted any. A version approved before has none.
+      ...(((x as { vat?: { counted_pence: number } }).vat?.counted_pence ?? 0) > 0
+        ? [{ label: 'Plus VAT not reclaimed', value: `+ ${poundsWords((x as { vat?: { counted_pence: number } }).vat?.counted_pence ?? 0)}`, note: 'part of what you spent' }] : []),
       { label: 'Less bare land', value: `– ${poundsWords(iv.land_pence.value)}`, note: 'the land alone' },
       { label: 'The building', value: poundsWords(s.building_price_pence), note: 'price less land' },
       { label: 'Rebuild cost', value: poundsWords(s.rebuild_pence), note: `${area(iv.gia_milli_m2.value)} × ${poundsWords(iv.building_rate_pence.value)}` },
+      ...(off === null ? [] : [{ label: 'Less grants', value: `– ${poundsWords(off.reduction_pence)}`, note: 'paid by others' }]),
       { label: 'Qualifies', value: poundsWords(s.qualifying_pence), note: `${percentWords(s.share_bp)} of the building` },
     ],
-    sum_words: [
+    sum_words: off === null ? [
       `The qualifying items would cost ${poundsWords(s.elements_qualifying_pence)} to rebuild, out of ${poundsWords(s.rebuild_pence)} for the whole building. That is ${percentWords(s.share_bp)}.`,
       `So ${percentWords(s.share_bp)} of what you paid for the building qualifies: ${poundsWords(s.building_price_pence)} × ${poundsWords(s.elements_qualifying_pence)} ÷ ${poundsWords(s.rebuild_pence)} = ${poundsWords(s.qualifying_pence)}.`,
+    ] : [
+      `The qualifying items would cost ${poundsWords(s.elements_qualifying_pence)} to rebuild, out of ${poundsWords(s.rebuild_pence)} for the whole building. That is ${percentWords(beforeShare)}.`,
+      `So ${percentWords(beforeShare)} of what you paid for the building qualifies before grants: ${poundsWords(s.building_price_pence)} × ${poundsWords(s.elements_qualifying_pence)} ÷ ${poundsWords(s.rebuild_pence)} = ${poundsWords(off.before_qualifying_pence)}.`,
+      `Others paid for part of it, so ${poundsWords(off.reduction_pence)} comes off${off.element_trace ? '' : ', in equal share across every item'}: ${poundsWords(s.qualifying_pence)} qualifies.`,
     ],
     pools: {
       main: { total: poundsWords(s.main_pool_pence), items: mp.map((l) => l.label) },
@@ -181,6 +211,10 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     declaration: [...x.declaration],
     automation_note: x.automation_note,
     inspection: inspectionWords((x as { inspection?: Snapshot['inspection'] }).inspection),
+    assumptions: (x as { assumptions?: readonly string[] }).assumptions ?? [],
+    site_plan: (x as { site_plan?: SitePlan }).site_plan ?? null,
+    chapters: ((x as { chapters?: readonly ReportChapter[] }).chapters ?? []).map((c) => ({ n: c.n, title: c.title, applies: c.applies, not_applies_words: c.not_applies_words,
+      rows: c.rows.map((r) => ({ label: r.label, value: r.value, missing: r.missing })), items: c.items.map((i) => ({ label: i.label, detail: i.detail })) })),
   };
 }
 
@@ -210,6 +244,9 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
           <div class="rp-facts"><h2>About the building</h2><dl>${m.facts.map((f) => h`<div><dt>${f.label}</dt><dd>${f.value}</dd></div>`)}</dl></div>
         </div>
         <div class="rp-sign"><span class="rp-seal" aria-hidden="true">✓</span><p><b>Approved by the surveyor on ${m.approved_on}.</b> Version ${String(m.version)}. Each figure in this report says where it came from, and every figure the surveyor set carries their name.<br><span class="rp-note">Report reference (fingerprint): ${m.fingerprint.slice(0, 8)}…${m.fingerprint.slice(-7)}</span></p></div>
+        ${m.site_plan === null ? raw('') : h`<div class="rp-plan">${sitePlanSvg(m.site_plan, `Site plan: the building at ${m.property}, and the buildings round it`)}
+          <div><h2>Site plan</h2><p>${pickWords(m.site_plan)} The grey ones are the buildings round it. North is up.</p>
+          <p class="rp-note">The plan shows buildings only, not the legal boundary of the site. ${m.site_plan.attribution}.</p></div></div>`}
         ${links.pdf === null ? raw('') : h`<p><a class="cta" href="${links.pdf}">Download the PDF</a></p>`}
       </div>
     </section>
@@ -234,7 +271,7 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
       <p class="rp-lede">Each item’s rebuild cost is how much there is × the rate. The share that qualifies gives its qualifying cost.</p>
       <div class="pk-scroll"><table class="rp-table rp-items"><thead><tr><th>Item</th><th class="n">How much</th><th class="n">Rate</th><th class="n">Rebuild cost</th><th class="n">Qualifies</th><th class="n">Qualifying cost</th></tr></thead>
         ${m.groups.map((g) => h`<tbody><tr class="rp-grp"><th colspan="6" scope="rowgroup">${g.title}</th></tr>${g.rows.map((r) => h`<tr>
-          <td>${r.label}<br><span class="rp-note">${r.unit}</span><span class="rp-bar"><i class="rp-bar-${g.pool === 'SR' ? 'sr' : 'mp'} ${w5(r.share)}"></i></span></td>
+          <td>${r.label}<br><span class="rp-note">${r.unit}${r.seen === null ? '' : ` · ${r.seen}`}</span><span class="rp-bar"><i class="rp-bar-${g.pool === 'SR' ? 'sr' : 'mp'} ${w5(r.share)}"></i></span></td>
           <td class="n">${r.qty}<br>${chipHtml(r.qty_chip)}</td><td class="n">${r.rate}<br>${chipHtml(r.rate_chip)}</td><td class="n">${r.cost}</td>
           <td class="n">${r.qpct}<br>${chipHtml(r.qpct_chip)}</td><td class="n">${r.qualifying}</td></tr>`)}</tbody>`)}
         <tbody><tr class="rp-tot"><th scope="row">Total</th><td></td><td></td><td class="n">${m.totals.cost}</td><td></td><td class="n">${m.totals.qualifying}</td></tr></tbody></table></div>
@@ -257,11 +294,20 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
       <div class="rp-decl"><ol>${m.declaration.map((d) => h`<li>${d}</li>`)}</ol>
         <div class="rp-sigrow"><div><b>${m.surveyor.name}</b>Surveyor</div><div><b>RICS no. ${m.surveyor.rics}</b>${m.surveyor.firm ?? ''}</div><div><b>${m.approved_on}, ${m.approved_clock}</b>Approved online, version ${String(m.version)}</div></div></div>
       ${m.inspection === null ? raw('') : h`<h3>How the building was inspected</h3><p>${m.inspection}</p>`}
+      ${m.assumptions.length === 0 ? raw('') : h`<h3>What we assume</h3>${m.assumptions.map((a) => h`<p>${a}</p>`)}`}
       <h3>The report’s fingerprint</h3>
       <p>This code belongs to this exact report. If a single figure were changed, the code would change. We keep the approved report and its code.</p>
       <p class="pk-fp">${m.fingerprint}</p>
       <div class="rp-ai"><h3>How this report was made</h3><p>${m.automation_note}</p></div>
     </section>
+    ${m.chapters.length === 0 ? raw('') : h`<section class="rp-sheet">
+      <h2 class="rp-h"><span>06</span>The surveyor’s chapters</h2>
+      <p>Each chapter as the surveyor approved it. Anything not on file says so; nothing is filled in for them.</p>
+      ${m.chapters.map((c) => h`<h3>${String(c.n)} · ${c.title}</h3>
+        ${c.applies ? raw('') : h`<p>${c.not_applies_words ?? ''}</p>`}
+        ${c.rows.length === 0 ? raw('') : h`<table class="rp-table"><tbody>${c.rows.map((r) => h`<tr><th scope="row">${r.label}</th><td>${r.value ?? r.missing}</td></tr>`)}</tbody></table>`}
+        ${c.items.length === 0 ? raw('') : h`<ul>${c.items.map((i) => h`<li><b>${i.label}</b> ${i.detail}</li>`)}</ul>`}`)}
+    </section>`}
   </div>`;
 }
 
@@ -393,6 +439,20 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
   c.text(L + 66, 546, `Approved by the surveyor on ${m.approved_on}. Version ${String(m.version)}.`, 'Helvetica-Bold', 10.5, C.ink);
   c.text(L + 66, 561, 'Each figure says where it came from. Every figure the surveyor set carries their name.', 'Helvetica', 9.5, C.body);
   c.text(L + 66, 577, `Report reference (fingerprint): ${m.fingerprint.slice(0, 8)}…${m.fingerprint.slice(-7)}`, 'Helvetica', 8.5, C.mut);
+  // 2 Oct 2026, stage 6: the site plan, from Ordnance Survey's free maps, when the version has one.
+  if (m.site_plan !== null) {
+    const top = 612;
+    const side = 150; // the box ends at the page's bottom margin (BOTTOM, 778)
+    c.ops.push({ k: 'rect', x: L, y: top, w: W, h: side + 16, r: 8, stroke: C.line, lw: 0.8 });
+    c.ops.push(...sitePlanOps(m.site_plan, L + 8, top + 8, side));
+    const tx = L + side + 26;
+    const tw = W - side - 40;
+    c.text(tx, top + 26, 'Site plan', 'Times-Bold', 13, C.ink);
+    let py = top + 46;
+    for (const line of wrapText(`${pickWords(m.site_plan)} The grey ones are the buildings round it. North is up.`, 'Helvetica', 9.5, tw)) { c.text(tx, py, line, 'Helvetica', 9.5, C.body); py += 13; }
+    py += 6;
+    for (const line of wrapText(`The plan shows buildings only, not the legal boundary of the site. ${m.site_plan.attribution}.`, 'Helvetica', 8, tw)) { c.text(tx, py, line, 'Helvetica', 8, C.mut); py += 11; }
+  }
 
   /* ---------------------------------------------------------- 2 · how it is worked out */
   c.page();
@@ -480,7 +540,7 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
       if (c.y + rh > BOTTOM) { c.page(); tableHead(); }
       const top = c.y;
       lines.forEach((line, i) => c.text(L + 2, top + 14 + i * 12, line, 'Helvetica', 9.5, C.ink));
-      c.text(L + 2, top + 14 + lines.length * 12, fit(r.unit, 'Helvetica', 7.5, itemW), 'Helvetica', 7.5, C.mut);
+      c.text(L + 2, top + 14 + lines.length * 12, fit(r.seen === null ? r.unit : `${r.unit} · ${r.seen}`, 'Helvetica', 7.5, itemW), 'Helvetica', 7.5, C.mut);
       const by = top + 19 + lines.length * 12;
       c.ops.push({ k: 'rect', x: L + 2, y: by, w: itemW * 0.85, h: 4, r: 2, fill: C.track });
       if (r.share > 0) c.ops.push({ k: 'rect', x: L + 2, y: by, w: Math.max(4, (itemW * 0.85 * r.share) / 100), h: 4, r: 2, fill: g.pool === 'SR' ? C.sr : C.mp });
@@ -574,6 +634,12 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
     c.para(m.inspection, { after: 16 });
     c.y += 10;
   }
+  if (m.assumptions.length > 0) {
+    c.text(L, c.y, 'What we assume', 'Times-Bold', 13, C.ink);
+    c.y += 6;
+    for (const a of m.assumptions) c.para(a, { after: 8 });
+    c.y += 10;
+  }
   c.text(L, c.y, 'The report’s fingerprint', 'Times-Bold', 13, C.ink);
   c.y += 6;
   c.para('This code belongs to this exact report. If a single figure were changed, the code would change. We keep the approved report and its code.', { after: 4 });
@@ -583,6 +649,23 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
   c.ops.push({ k: 'rect', x: L, y: c.y, w: W, h: ai.length * 13 + 40, r: 8, fill: C.mist });
   c.text(L + 16, c.y + 22, 'How this report was made', 'Times-Bold', 11.5, C.ink);
   ai.forEach((line, i) => c.text(L + 16, c.y + 38 + i * 13, line, 'Helvetica', 9.5, C.body));
+  c.y += ai.length * 13 + 52;
+
+  /* ---------------------------------------------------------- 6 · PHASE 153g: the surveyor's chapters */
+  if (m.chapters.length > 0) {
+    c.page();
+    c.heading('06', 'The surveyor’s chapters');
+    c.para('Each chapter as the surveyor approved it. Anything not on file says so; nothing is filled in for them.', { after: 10 });
+    for (const ch of m.chapters) {
+      c.need(40);
+      c.text(L, c.y, `${String(ch.n)} · ${ch.title}`, 'Times-Bold', 12.5, C.ink);
+      c.y += 6;
+      if (!ch.applies && ch.not_applies_words !== null) c.para(ch.not_applies_words, { after: 6 });
+      for (const r of ch.rows) c.para(`${r.label}: ${r.value ?? r.missing}`, { after: 4 });
+      for (const i of ch.items) c.para(`${i.label} — ${i.detail}`, { after: 4 });
+      c.y += 10;
+    }
+  }
 
   return buildCanvasPdf(c.finish(), { title: `${REPORT_TITLE} · ${m.company} · version ${String(m.version)}` });
 }

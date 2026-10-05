@@ -311,7 +311,8 @@ describe('line 10 — a data protection officer role — defined, scoped to the 
 
   test('THE DPO ROLE SWITCHED ON: it holds the compliance registers, S2, the disclosure log’s reading, the back office’s door and its own account, and is refused every other registered action — the audit log, users and roles, settings, claims, documents and money among them; a disabled DPO holds nothing', () => {
     const on = { ...DPO_ROLE_SWITCH, enabled: true };
-    assert.deepEqual([...DPO_SCOPE].sort(), ['backoffice.enter', 'compliance.identity_read', 'compliance.identity_write', 'compliance.read', 'compliance.write',
+    // Phase 153c: compliance.breach_names — the restricted list of names a breach entry may need (Word question 181).
+    assert.deepEqual([...DPO_SCOPE].sort(), ['backoffice.enter', 'compliance.breach_names', 'compliance.identity_read', 'compliance.identity_write', 'compliance.read', 'compliance.write',
       'disclosure.read', 'document.read_original', 'user.change_own_password', 'user.change_own_profile', 'user.read_self']);
     for (const action of DPO_SCOPE) assert.ok(REGISTERED_ACTIONS.includes(action), `${action} is not a registered action`);
     for (const action of REGISTERED_ACTIONS) {

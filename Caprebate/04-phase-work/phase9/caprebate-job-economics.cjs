@@ -140,6 +140,20 @@ const pos   = v => isNum(v) && v > 0;
    8 September 2026 and the published research names this as its weakest input.
    ============================================================================= */
 
+/* PHASE 153b, 4 October 2026 (Word question 191, Lakhbir's: "Should our job cost model still count a tax adviser's
+   review on every surveyor job?"). The `cta` line is RENAMED, NOT CHANGED: under clause 1 of the engagement letter
+   the client's own accountant or adviser signs the tax position, and we pay a tax adviser only if we introduce one
+   (switched off). So the line is "our own tax adviser, if we introduce one" - LINE_NAMES below - kept on every
+   surveyor job as a safety margin until ten real jobs show how often a client asks us for one; then cta_share is set
+   to that share. Every figure is unchanged, and the key stays `cta` because the business plan model and the agreement
+   test read it by that name. */
+const LINE_NAMES = Object.freeze({
+  surveyor: "Surveyor",
+  cta: "Our own tax adviser, if we introduce one",
+  internal: "Our own time",
+  data: "Data and lookups"
+});
+
 const SECTOR_DIRECT = {
   dental:           { surveyor: 1500, cta: 600,  hours: 8,  rate: 60, data: 50 },
   gp:               { surveyor: 2200, cta: 900,  hours: 12, rate: 60, data: 50 },
@@ -174,7 +188,7 @@ const ROUTES = {
     label: "Surveyor engaged to produce the valuation, attending the property",
     surveyor_factor: 1,          /* full sector surveyor cost */
     surveyor_absolute: null,
-    cta_share: 1,                /* a CTA review on every job */
+    cta_share: 1,                /* our own tax adviser, if we introduce one, on every job - a safety margin (Phase 153b) */
     hours_factor: 1,
     hours_absolute: null,
     fail_hours: 2,
@@ -370,7 +384,8 @@ function surveyorCost(sectorId, routeId) {
   return s.surveyor * r.surveyor_factor;
 }
 
-/* What the CTA line costs. cta_share is the proportion of jobs a CTA reads. */
+/* What the "our own tax adviser, if we introduce one" line costs (LINE_NAMES.cta). cta_share is the proportion of jobs
+   that adviser reads. */
 function ctaCost(sectorId, routeId) {
   const s = sector(sectorId), r = route(routeId);
   return s.cta * r.cta_share;
@@ -1427,9 +1442,44 @@ function gateThreshold(loaded, targetMargin) {
   return loaded * (1 + m);
 }
 
+/* =============================================================================
+   11. THE DISPOSAL FEE — PHASE 153d, 4 October 2026 (Word question 23, the director's)
+
+   Built on our recommendation, for the director to check: when a client sells a property, our help - reading the
+   sale and the claim file, working out the disposal value for each pool, and drafting the s.198 election and its
+   covering note - is a FIXED FEE, costed here from the same inputs as every other job: our own hours at the model's
+   £60 rate, plus the data line. Never a percentage of the sale price or of the election figure: a percentage of the
+   election figure would pay us more for the outcome that costs our client more tax. No allowance is found on a
+   disposal, so 3% of the allowances would be nothing.
+
+   AT COST, NO MARGIN: £290. Any margin is the director's to set. Lakhbir's note on question 23 ("a flat 3%" when no
+   allowance is made) did not say 3% of what, so it is recorded with the question rather than built. A TEST DEFAULT,
+   NOT AGREED: the disposal note and the staff task say so wherever the figure is shown.
+   ============================================================================= */
+const DISPOSAL_WORK = Object.freeze({
+  hours: 4,
+  rate: SECTOR_DIRECT.dental.rate,
+  data: SECTOR_DIRECT.dental.data,
+  covers: "reading the sale and the claim file, the disposal value for each pool, and the drafted s.198 election with its covering note",
+  status: "TEST_DEFAULT_NOT_AGREED",
+  awaiting: "the director (Word question 23)"
+});
+
+/** The fixed disposal fee in pounds, worked out from DISPOSAL_WORK: hours x rate + data. */
+function disposalFee() {
+  const w = DISPOSAL_WORK;
+  const pounds = w.hours * w.rate + w.data;
+  return Object.freeze({
+    pounds, pence: pounds * 100, hours: w.hours, rate: w.rate, data: w.data, covers: w.covers,
+    status: w.status, awaiting: w.awaiting,
+    words: "£" + pounds + ", fixed, for " + w.covers + ". A test default, not agreed: the director decides the figure."
+  });
+}
+
 module.exports = {
   JobEconError,
-  SECTOR_DIRECT, SECTORS, ROUTES, PARAMS, MODELLING, BANDS,
+  DISPOSAL_WORK, disposalFee,
+  SECTOR_DIRECT, SECTORS, ROUTES, PARAMS, MODELLING, BANDS, LINE_NAMES,
   SECTOR_INVARIANT_SURVEYOR,
   DESK_DEFENSIBILITY_ANSWERED,
   FEE_DECISION,

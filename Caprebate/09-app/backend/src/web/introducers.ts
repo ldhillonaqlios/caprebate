@@ -658,7 +658,8 @@ function firmValues(db: Db, input: Fields, stored: FirmValues, firmId: string | 
   });
   for (const c of [name, type, owner, started, notes, notice]) if (!c.ok) return c;
   if (!name.ok || !type.ok || !owner.ok || !started.ok || !notes.ok || !notice.ok) return { ok: false, why: 'That was not saved, because one of the values is not one this form accepts. Check each field and send it again.' };
-  if (name.value === null) return { ok: false, why: 'An introducer is a firm, and needs its name.', field: 'firm_name' };
+  // PHASE 154a1 (line 2): as a contact's name (src/web/crm.ts) - a new firm starts from '', so blank is no name.
+  if (name.value === null || name.value.trim() === '') return { ok: false, why: 'An introducer is a firm, and needs its name.', field: 'firm_name' };
   return {
     ok: true,
     value: {
@@ -773,7 +774,8 @@ function personValues(input: Fields, stored: PersonValues): Check<PersonValues> 
   const notes = take(input, 'notes', stored.notes, (v) => textField(v, 8000, 'The notes'));
   for (const c of [name, title, email, phone, notes]) if (!c.ok) return c;
   if (!name.ok || !title.ok || !email.ok || !phone.ok || !notes.ok) return { ok: false, why: 'That was not saved, because one of the values is not one this form accepts. Check each field and send it again.' };
-  if (name.value === null) return { ok: false, why: 'A contact is a person, and needs a name.', field: 'full_name' };
+  // PHASE 154a1 (line 2): as above - a new person starts from '', so blank is no name.
+  if (name.value === null || name.value.trim() === '') return { ok: false, why: 'A contact is a person, and needs a name.', field: 'full_name' };
   return { ok: true, value: { full_name: name.value, job_role_other: title.value, email: email.value, phone: phone.value, notes: notes.value } };
 }
 

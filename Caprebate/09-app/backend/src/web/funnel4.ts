@@ -28,8 +28,12 @@
  * CB_BAND); a building whose owner pays no UK tax is left out and named; the words under the figure are the engine's
  * assumptions, with each building's tax condition added under its own name. Nothing here is a new number.
  *
- * THE OLD SIX SCREENS (Q1 to Q3) STILL WORK for a draft that uses them — every earlier link and test — but a draft
- * becomes a four-stage draft the moment its first building is saved, and `/assessment` now opens stage 1.
+ * THE OLD SIX SCREENS (Q1 to Q3) ARE RETIRED (Phase 153f, 4 October 2026): an old link opens stage 1, and nothing
+ * they recorded is changed. `/assessment` opens stage 1.
+ *
+ * NOT YET HERE: the old address screen offered "answer it myself" instead of the lookups (Word answer 180), only where
+ * the free lookups could run, which today they cannot. When the free gate opens, it belongs on the details screen
+ * (Phase 156 B3).
  */
 
 import { h, raw, type Safe } from './html.ts';
@@ -38,7 +42,7 @@ import { OPTIONS, addressFrom, submit, type Draft, type FunnelState } from './as
 import { openLeadForGatedExit } from './leads.ts';
 import type { Db } from '../db.ts';
 import { normalisePostcode } from '../connectors/postcode-check.ts';
-import type { CompanyCandidate } from '../connectors/company-search.ts';
+import { entityFromCompanyType, type CompanyCandidate } from '../connectors/company-search.ts';
 import type { FoundAddress } from '../connectors/address-lookup.ts';
 import { slotPicker, slotDayProblem } from './slot-picker.ts';
 
@@ -53,6 +57,19 @@ export const STAGES = Object.freeze([
   { name: 'Your details', screens: ['details'] },
   { name: 'Your figure', screens: [] },
 ] as const);
+
+/**
+ * PHASE 153c, 4 October 2026 (Word question 208, Sadique's) — THE NAMES WE COUNT EACH SCREEN BY, on the approved list
+ * (the step names the site's one analytics wrapper accepts). The first four screens of the old estimate were its own earlier claim, the seller's
+ * claim, the kind of business and what brought them here; in this funnel those are asked on "spend-on" (what brought
+ * them here), "claims" (both claim questions) and "details" (the kind of business). Nothing here sends anything: this
+ * page is served by the back end, which loads no analytics, and the map is what a count of these screens must use.
+ */
+export const F4_STEP_LABELS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  'spend-on': Object.freeze(['trigger']),
+  claims: Object.freeze(['prior_claim', 'prior_owner_claim']),
+  details: Object.freeze(['entity']),
+});
 
 /** What each screen asks. Plain words; the question titles cover every answer offered. */
 export const F4_TEXT: Readonly<Record<F4Screen, { heading: string; help: string }>> = Object.freeze({
@@ -290,6 +307,18 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
         }
         const ent = f.get(`b${i}_entity`);
         b['entity_type'] = ent !== null && Object.hasOwn(ENTITY, ent) ? ent : null;
+        /* PHASE 153b (Word question 198), off: with COMPANY_TYPE_FROM_REGISTER on and no kind of business chosen, a
+           company picked from Companies House fills it in — a limited company or a plc as "Limited company"; an LLP
+           only when the person confirms it, so the screen is kept and asks; any other type is asked as before. */
+        delete b['entity_suggested'];
+        if (b['entity_type'] === null && chosen !== undefined) {
+          const m = entityFromCompanyType(chosen.company_type);
+          if (m !== null && !m.confirm) b['entity_type'] = m.entity;
+          else if (m !== null) {
+            b['entity_suggested'] = m.entity;
+            errors.push(`Companies House says ${chosen.name} is an LLP. We treat an LLP like a partnership for tax. Choose "LLP" below to confirm.`);
+          }
+        }
       }
       const before = b['postcode'];
       b['line1'] = clip(f.get(`b${i}_line1`), 200);
@@ -459,7 +488,7 @@ export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; post
           <label class="opt"><input type="radio" name="b${i}_company_number" value="none"> None of these</label></div>`}
         ${note === null ? raw('') : h`<p class="help">${note}</p>`}
         <p class="fl">What kind of business is it?</p>
-        ${radios(`b${i}_entity`, entityOpts, b['entity_type'])}
+        ${radios(`b${i}_entity`, entityOpts, b['entity_type'] ?? b['entity_suggested'] ?? null)}
       </div>
       <label class="fl" for="b${i}-postcode">Postcode</label>
       <input class="fi" id="b${i}-postcode" name="b${i}_postcode" value="${typeof b['postcode'] === 'string' ? b['postcode'] : ''}" autocomplete="postal-code">
@@ -557,7 +586,8 @@ export function figureBody(s: S, slots: { available: true; slots: readonly { sta
           <input class="fi" id="r-email" name="email" type="email" value="${reach === 'video' || reach === 'email' ? v('contact_value') : ''}" autocomplete="email">
           <p class="help f4-for-video-note">We will email you the link for the video call.</p></div>
       </fieldset>
-      <div class="f4-consent"><label class="ck"><input type="checkbox" name="contact_consent"${raw(c['contact_consent'] === true ? ' checked' : '')}> Yes, you may contact me about this enquiry.</label>
+      <div class="f4-consent"><p class="help">Sending this asks us to contact you about this enquiry. You do not need to tick anything. <a href="/privacy/">How we use your details</a>.</p>
+      <label class="ck"><input type="checkbox" name="whatsapp_optin"${raw(c['whatsapp_optin'] === true ? ' checked' : '')}> You may also message me on WhatsApp about this enquiry. (Optional.)</label>
       <label class="ck"><input type="checkbox" name="marketing_optin"${raw(c['marketing_optin'] === true ? ' checked' : '')}> Separately, you may send me occasional updates. (Optional, and never a condition of sending.)</label></div>
       <button class="cta" type="submit">Send</button>
     </form>`;
@@ -573,6 +603,7 @@ export function applyReach(s: S, f: URLSearchParams, roles: readonly (readonly [
   c['first_name'] = first; c['surname'] = surname;
   c['job_role'] = roles.some(([k]) => k === role) ? role : null;
   c['marketing_optin'] = f.get('marketing_optin') === 'on';
+  c['whatsapp_optin'] = f.get('whatsapp_optin') === 'on';
   if (first === null || surname === null) return 'We need your first name and surname.';
   if (c['job_role'] === null) return 'Choose your position in the business.';
   if (channel === undefined) return 'Choose how you would like us to reach you: telephone, video call or email.';
@@ -581,7 +612,12 @@ export function applyReach(s: S, f: URLSearchParams, roles: readonly (readonly [
   c['contact_value'] = value;
   const wrong = problem(channel.capture, value);
   if (wrong !== undefined) return wrong;
-  if (f.get('contact_consent') !== 'on') return 'We need your permission to contact you about this. It is not marketing consent.';
+  /* PHASE 153f, 4 October 2026 (Word answer 164, closed 24 September 2026): NO TICK. The contact form's required "you may
+     contact me" box was replaced by a statement and a link to the privacy notice, because a person who sends an enquiry
+     has asked to be answered, and a tick box would misdescribe the basis as consent. The funnel now says the same.
+     `contact_consent` stays true — it records that the person asked to be contacted about this enquiry, by sending it —
+     and is never marketing consent. WhatsApp is its own, optional box (`whatsapp_optin`): Meta's rules want a person to
+     have agreed to WhatsApp, and Sadique's approval for testing (30 Sep 2026) leaned on the old box. */
   c['full_name'] = `${first} ${surname}`;
   c['contact_consent'] = true;
   c['sms_variant'] = null;

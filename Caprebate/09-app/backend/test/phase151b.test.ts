@@ -499,6 +499,8 @@ const LE10: Fixture = { status: 200, body: JSON.stringify({ status: 200, result:
 
 describe('3 · the postcode check runs on this server, and off it changes nothing', () => {
   // Shipped OFF until 30 Sep 2026, when Lakhbir switched it on for testing; this is the check switched off.
+  // PHASE 153f, 4 October 2026: the old property screen (Q2) is retired. The address question is the four-stage funnel's
+  // "details" screen, where the check runs only when "Check postcode" is pressed; switched off, pressing it does nothing.
   test('switched off, saving the property screen sends nothing, keeps nothing, and the screen is exactly the typed address', async () => {
     const w = await world();
     try {
@@ -508,18 +510,29 @@ describe('3 · the postcode check runs on this server, and off it changes nothin
       const draft = newDraft(w.db, w.app.now, () => 'draft-151b');
       const c = client(w.base);
       const headers = { cookie: `cb_draft=${draft.token}`, 'content-type': 'application/x-www-form-urlencoded' };
-      const r = await c.raw('/assessment/Q2', new URLSearchParams({ p0_address: 'Invented House, LE10 1DA', lookups_declined: 'on' }).toString(), headers);
+      const send = (path: string, f: Record<string, string>) => c.raw(path, new URLSearchParams(f).toString(), headers);
+      await send('/assessment/buildings', { b0_sector: 'care_homes' });
+      await send('/assessment/spend-on', { b0_trigger: 'purchase' });
+      await send('/assessment/amounts', { b0_spend: '2400000', b0_date: '06/2021' });
+      await send('/assessment/tax', { b0_tax: 'yes', b0_profit: 'profitable' });
+      await send('/assessment/claims', { b0_prior: 'no', b0_seller: 'dont_know' });
+      await send('/assessment/works', { b0_works: 'no' });
+      const r = await send('/assessment/details', { b0_business: 'Invented Care Limited', b0_entity: 'ltd', b0_line1: 'Invented House', b0_postcode: 'LE10 1DA',
+        find: 'postcode:0', lookups_declined: 'on' });
       assert.equal(r.status, 303);
       assert.equal(t.seen.length, 0, 'a postcode left the server while the check was off');
       const saved = loadDraft(w.db, draft.token)!;
       const p = ((saved.state as Record<string, unknown>)['properties'] as Record<string, unknown>[])[0]!;
       assert.equal(p['address'], 'Invented House, LE10 1DA', 'the typed address was changed');
       assert.equal('postcode_checked' in p, false);
+      assert.equal('postcode_check' in p, false, 'the four-stage screen kept a check that was switched off');
       assert.equal('lookups_declined' in (saved.state as Record<string, unknown>), false, 'a choice nobody was offered was kept');
-      const shown = await fetch(`${w.base}/assessment/Q2`, { headers: { cookie: `cb_draft=${draft.token}` } }).then((x) => x.text());
+      const shown = await fetch(`${w.base}/assessment/details`, { headers: { cookie: `cb_draft=${draft.token}` } }).then((x) => x.text());
       assert.doesNotMatch(shown, /We found the postcode/);
       assert.doesNotMatch(shown, /answer the questions about the property myself/);
-      assert.match(shown, /name="p0_address" value="Invented House, LE10 1DA"/);
+      assert.doesNotMatch(shown, /Check postcode/, 'the check is offered while it is off');
+      assert.match(shown, /name="b0_postcode" value="LE10 1DA"/);
+      assert.match(shown, /name="b0_line1" value="Invented House"/);
     } finally { w.close(); }
   });
 

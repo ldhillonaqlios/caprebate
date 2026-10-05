@@ -31,10 +31,10 @@
 import type { AuditLog } from '../audit.ts';
 import type { SecretStore } from '../secrets.ts';
 import { RateLimiter, type CallResult, type Transport } from './http.ts';
-import { runConnector, REGISTER_SWITCHES, type ConnectorContext } from './registers.ts';
+import { runConnector, REGISTER_SWITCHES, type Bundle, type ConnectorContext } from './registers.ts';
 import { FREE_CONNECTORS } from './free-registers.ts';
 import { PAID_CONNECTORS, PAID_NOT_CHOSEN } from './paid-registers.ts';
-import type { ResearchSubject } from './nations.ts';
+import type { Nation, ResearchSubject } from './nations.ts';
 import type { PostcodeStore } from '../web/postcode-port.ts';
 
 /** Every source a smoke test can be run for, free first. A source with no connector is not on the list. */
@@ -69,6 +69,10 @@ export type SmokeValues = {
   address_line_1: string;
   town: string;
   postcode: string;
+  /** PHASE 156a: the part of the UK, when the person running the test says it (--nation). Otherwise the ONS table. */
+  nation?: Nation | null;
+  /** PHASE 156a: the council area, when the person running the test says it (--council). CQC searches by council. */
+  council?: string | null;
 };
 
 /** A subject built from typed values and from no database at all. `business_id` and the property's id are not real. */
@@ -84,9 +88,10 @@ export function smokeSubject(v: SmokeValues): ResearchSubject {
       address_line_2: null,
       town: v.town === '' ? null : v.town,
       postcode: v.postcode === '' ? null : v.postcode,
-      // Left unsaid on purpose: the ONS lookup is what says which part of the UK a postcode is in, and a smoke test
-      // that asserted England would hide exactly the mistake it is meant to catch.
-      jurisdiction: null,
+      // Left unsaid unless the person running the test says it (--nation, Phase 156a): the ONS lookup is what says which
+      // part of the UK a postcode is in, and a smoke test that ASSUMED England would hide the mistake it is meant to
+      // catch. Without the ONS table (none is installed on the Mac or the test website), EPC and CQC never called.
+      jurisdiction: v.nation ?? null,
     },
   };
 }
@@ -155,7 +160,10 @@ export async function smokeOne(source_id: string, values: SmokeValues, d: SmokeD
     gate: { free_gate_open: false, engagement_signed: false, switched_on: true },
     secrets: null,
   };
-  const query = built.query(smokeSubject(values), new Map(), d.postcodeStore ?? null);
+  // PHASE 156a: a council area the person typed stands where the ONS table's answer would (CQC searches by council).
+  const earlier = new Map<string, Bundle>();
+  if (values.council != null && values.council.trim() !== '') earlier.set('ONS_POSTCODE', { records: [], facts: { ons_lad_name: values.council.trim() } });
+  const query = built.query(smokeSubject(values), earlier, d.postcodeStore ?? null);
   const run = await runConnector(built.connector, ctx, query, { state: 'NOT_RUN', detail: '' }, d.secrets, switches);
   const call: CallResult | null = run.call;
   const accepted = run.state === 'FIRED' || acceptedBy(call);

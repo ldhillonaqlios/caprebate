@@ -35,6 +35,19 @@ export type AddressLookupConfig = {
   readonly waiver_record?: string | null;
 };
 
+/**
+ * PHASE 153c, 4 October 2026 — HOW LONG THE PICKED ADDRESS IS KEPT (Word question 37). Built on our recommendation, for
+ * the officer to check: seven years with the claim file, in the test system. Neither GoAddress nor Homedata publishes a
+ * period, so this is OUR TEST READING, awaiting their written answers; and nothing from either reaches a client,
+ * accountant or HMRC report (the source register keeps those channels closed: HOMEDATA_TERMS).
+ */
+export const ADDRESS_KEEP_UNTIL = Object.freeze({
+  days: 2557,
+  reading: 'Seven years with the claim file. A test reading, not the supplier\'s figure.',
+  reports_closed: true,
+  awaiting: 'Homedata\'s written answer to our drafted email, and the same question to GoAddress.',
+} as const);
+
 export const ADDRESS_LOOKUP: AddressLookupConfig = Object.freeze({
   enabled: true, named_in_privacy_notice: false,
   papers_waived_for_testing: true,

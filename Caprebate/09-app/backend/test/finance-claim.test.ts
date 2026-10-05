@@ -43,7 +43,7 @@ import * as A from '../src/web/automation.ts';
 import * as M from '../src/web/templates.ts';
 import * as TL from '../src/web/timeline.ts';
 import { feeDisplay, multiSiteDiscount } from '../src/web/engine.ts';
-import { loadLetter, unresolvedTerms } from '../src/web/letter.ts';
+import { loadLetter, unresolvedTerms, TEST_LETTER_PATH } from '../src/web/letter.ts';
 import { actor, fixedClock, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
 
@@ -420,6 +420,28 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
       assert.throws(() => app.db.run("INSERT INTO invoice_credit_notes (id, invoice_id, basis, amount_pence, vat_pence, issued_on, reason, recorded_by, recorded_at) VALUES ('x', ?, 'CREDIT_IN_FULL', 1, 0, '2026-09-08', 'x', 'u-ACCOUNTING', ?)", [id, T0]), /E_CREDIT_EXCEEDS_INVOICE/);
       assert.throws(() => app.db.run('UPDATE invoice_credit_notes SET amount_pence = 1'), /never changed/);
       assert.throws(() => app.db.run('DELETE FROM invoice_credit_notes'), /never deleted/);
+    } finally { app.close(); }
+  });
+
+  test('PHASE 153d — CLAUSE 13 RUN AGAINST THE TEST-ONLY LETTER (Word question 34): any reduction, settlements counting; the credit is the fee on the corrected figure, and the real letter still refuses', async () => {
+    const app = await testApp();
+    try {
+      staff(app);
+      const { claim } = readyToInvoice(app);
+      const id = raise(app, claim);
+      assert.equal(I.markSent(deps(app), ACC, id, {}).ok, true);
+      const rdeps = CF.recordDeps(app);
+      const opened = R.openEnquiry(rdeps, SALES, claim, { opened_on: '2026-09-01' });
+      assert.equal(opened.ok, true, opened.ok ? '' : opened.why);
+      const outcome = Object.keys(R.ENQUIRY_OUTCOMES).find((k) => k !== 'NO_CHANGE') ?? '';
+      assert.equal(R.closeEnquiry(rdeps, SALES, claim, opened.ok ? opened.id : '', { closed_on: '2026-09-05', outcome, amended_figure: '200000' }).ok, true);
+      const real = I.creditClause13(deps(app), ACC, id, {}, { clawback: { enabled: true }, letter: loadLetter() });
+      assert.equal(real.ok, false, 'the real letter, its clause 13 still blank, gave a credit');
+      const testCopy = loadLetter({ path: TEST_LETTER_PATH });
+      const c13 = I.creditClause13(deps(app), ACC, id, {}, { clawback: { enabled: true }, letter: testCopy });
+      assert.equal(c13.ok, true, c13.ok ? '' : c13.why);
+      assert.equal(app.db.get<{ amount_pence: number }>('SELECT amount_pence FROM invoice_credit_notes WHERE basis = ?', ['CLAUSE_13_REDUCTION'])?.amount_pence,
+        7_200_00 - 6_000_00, 'clause 13 against the test copy did not credit 3% of the difference');
     } finally { app.close(); }
   });
 

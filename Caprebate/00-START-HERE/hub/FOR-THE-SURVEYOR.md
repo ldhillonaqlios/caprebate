@@ -971,3 +971,91 @@ reasonably be established remotely should require a site inspection before a sur
 -  **The location and job-size adjustment** (the Spon's section of this register, "Which books they are" onward) was tested against an invented table shaped like BCIS's: the model accepts a table declared on BCIS's base of a UK mean of 100 and still refuses a table from another book, a missing base and a bare mean. It stays switched off; the real factors wait on the purchase. What that section says about Spon's is the record of the books we set aside, not the plan.
 -  **SV-S6, preliminaries.** Unchanged in substance. The convention you are asked for applies to whichever published index we use — BCIS, not Spon's.
 -  **Your first session's papers.** The two copies with the pre-fill rule and the 63%, 46% and 80% figures withheld are ready, so Lakhbir's choice is one word (Word question 187). The handoff index now points at the current report template (v2.3), not the superseded v1.
+
+---
+
+## Phase 153a, 4 October 2026 — nothing moved into or out of this register
+
+ **Marked 4 October 2026 by Phase 153a. Nothing moved into or out of this register, and its own size has not changed: nine entries covering nine board items, all nine at Built — awaiting sign-off.** One entry was added to FOR THE ACCOUNTANT — a grant matched to the items it paid for. **One thing is worth your knowing:** the survey pack now has a chapter 15, "Grants and VAT", which you open before approving. It shows the claim's grants and what each takes off the spend that qualifies; nothing in it is yours to type, and its VAT half is not built yet.
+
+ **And the board's own total at the close of Phase 153a, 4 October 2026, counted in code: 120 items carry that status**: forty-six in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Forty-six plus nine plus sixty-five is 120.
+
+---
+
+## Phase 153b, 4 October 2026 — nothing moved into or out of this register
+
+ **Marked 4 October 2026 by Phase 153b. Nothing moved into or out of this register, and its own size has not changed: nine entries covering nine board items, all nine at Built — awaiting sign-off.** Phase 153b's readings are the tax adviser's; FOR THE ACCOUNTANT gained four entries.
+
+ **And the board's own total at the close of Phase 153b, 4 October 2026, counted in code: 124 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-five is 124.
+
+---
+
+## Phase 153c, 4 October 2026 — nothing moved into or out of this register
+
+ Phase 153c built data protection and back office work for the data protection officer to check. Two items were added to FOR THE SOLICITOR, THE DPO AND THE DEVELOPER (SDP-P41 and SDP-P42); none here.
+
+ **And the board's own total at the close of Phase 153c, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153d, 4 October 2026
+
+ Phase 153d built the commercial papers in test form for the director and the solicitor. Nothing moved into or out of this register.
+
+ **And the board's own total at the close of Phase 153d, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153e, 4 October 2026 — your workbench, built on our recommendation for you to check; dated lines on seven entries, nothing moved in or out
+
+ Phase 153e built sixteen of your questions in the test system, each from the answer typed under it, each marked as a test default or a placeholder for you to set. **Nothing here is calibrated and nothing is presented to you as settled.** No entry changes state.
+
+-  **SV-S5, desk first and the video (Word questions 129 to 131).** The grid is coded with placeholder limits; desk-only only when every document is in and no warning sign fires. Your job page shows the evidence level in words and nothing else. The coverage score counts required items filmed or marked "not here"; under a placeholder pass mark of 80% the level becomes a site visit.
+-  **SV-S1, quantities (questions 133 and 148).** Supported living's common parts come from the shared areas you read off the floor plans; with none, a flat 25% of the floor area, labelled as the fallback. A theatre suite is counted space by space (theatre, anaesthetic, preparation, scrub, recovery).
+-  **SV-S2, the room-by-room list (questions 134 and 135).** Dental and GP treatment ventilation are special rate by default; theatre and isolation ventilation are flagged for you on each job; emergency lighting and kitchen extract sit inside their systems; flooring and ordinary glazing stay with the building; drug storage and standby power are their own plant. Each is labelled "Test default (Phase 153e), for the surveyor to confirm".
+-  **SV-S6, preliminaries (question 136).** Preliminaries by job size, from placeholder bands, behind a switch that ships off; the cost model's own test system runs it.
+-  **SV-S7, the insurance figure (question 137).** The cross-check is built: like for like first, then within a test limit of 10% it "supports"; an unknown basis is "not comparable". The word "corroborates" is never used.
+-  **SV-S8, your rates (questions 147 and 149).** The index factor from a table and two dates (the real table ships empty; a placeholder table in test only); a £/m² figure more than 10% from the blank control is flagged for review.
+-  **SV-S4, the report (questions 145 and 150).** The planning assumption is in every version approved from now and in your template; each finding says "Seen on site" or "From documents".
+-  **Outside any entry.** Sector ranges are proposed from approved packs once five claims exist (question 138), with the engine's supported-living band by trigger behind a switch, off. The past-claim test (question 139) checks GC-01 within 5% and £25,000, and keeps an empty slot for a second case rather than inventing one.
+
+ **And the board's own total at the close of Phase 153e, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153f, 4 October 2026 — six more chapters of your pack; nothing moved in or out
+
+ **SV-S4, the report.** Six more chapters of the survey pack are built, each showing what the pack already holds and saying "not on file", "not counted" or "needed" for anything missing: 1 Report and property (with the site plan from Ordnance Survey's free building outlines, never the legal boundary), 3 Purpose and basis, 6 Room schedule, 12 Fixtures item by item, 13 Pools, and 21 Limits. You open each before approving. The other ten are Phase 153g. **SV-S5:** each video call is now hosted on Zoom by the member of staff it is assigned to.
+
+ **And the board's own total at the close of Phase 153f, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153g, 4 October 2026 — every chapter of your pack is built; nothing moved in or out
+
+ **SV-S4, the report.** The other ten chapters are built: 5 The building, 8 Dwellings, 11 Bare land, 14 Qualifying share, 16 Leaseback, 17 Structures allowance, 18 Other reliefs, 19 Judgement calls, 20 Repairs or capital and 22 Findings. Each shows what we hold, says where each line came from, and says "not on file", "not written yet" or "not worked out yet" for anything missing. **Nothing is drafted for you:** no land fraction, no dwelling fraction, no qualifying percentage, no narrative. Where the report template asks for your words (construction type, your land comparables and planning basis, the basis for each percentage, a disposal value, your sector's main judgement, what you saw of any works, and the four narrative questions), each has its own box, kept with your reason under your name. You open all 22 chapters before approving, and the client's report now carries the ten as its section 06.
+
+ **And the board's own total at the close of Phase 153g, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 154a1, 4 October 2026 — nothing moved in or out
+
+ **The pack's legal check and the online estimate now agree on one thing they did not.** Where the client bought from a tax-paying business that could have claimed allowances on the fixtures but never did, and it sold after April 2014, the legal check shows red, says the fixtures claim is nil, and names what would change that (the seller pooling the spending in a period that began on or before the sale). If we do not know when the seller stopped owning, or whether it ever claimed, it shows amber. Nothing for you to decide: it is the tax adviser's to check (FOR THE ACCOUNTANT, Phase 154a1). It does mean the date the seller stopped owning, from the title register, is worth having in the pack.
+
+ **And the board's own total at the close of Phase 154a1, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 155, 4 October 2026 — nothing moved in or out
+
+ **The building price index can be loaded the day BCIS is bought.** The cost model turns today's rebuild price back to the purchase date with an index (your question 147). Until now it had only a table of invented points, labelled as such. Now one command reads the index file downloaded from BCIS — monthly or quarterly figures — and keeps it on our server, outside the code, because BCIS's licence lets named users use it but not copy it. Nothing for you to decide: which BCIS product is bought is Lakhbir's (Word question 218), and the survey pack starts using the index when the pack is joined to the cost model (Phase 157). **And in Wales and Scotland**, a care home's registered places now come from the regulator's own published list, as they already did from the CQC in England, once the lookups are switched on.
+
+
+ **And the board's own total at the close of Phase 155, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

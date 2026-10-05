@@ -284,11 +284,33 @@ describe('the accountant’s sign-off', () => {
     assert.match(page.body, /I sign off these figures/);
     const pdf = await req('anon', `/signoff/${token}/report.pdf`);
     assert.equal(pdf.type, 'application/pdf');
-    for (const bad of [`${token.slice(0, -1)}A`, 'short', `${token}x`, '../../etc']) {
+    // Phase 153b: the last character is changed to one it is not — a token that already ended in "A" (1 in 64) made
+    // this "wrong" link the right one, and the test failed now and then.
+    for (const bad of [`${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`, 'short', `${token}x`, '../../etc']) {
       const r = await req('anon', `/signoff/${bad}`);
       assert.ok(r.status === 404, `${bad}: ${String(r.status)}`);
       assert.doesNotMatch(r.body, /Report Practice/);
     }
+  });
+
+  /* PHASE 153b, 4 October 2026 — Word question 121: beside the PDF, the return entries for each year as a spreadsheet. */
+  test('beside the PDF: the return entries for each year as a spreadsheet — attached to the email, and on the accountant’s link and the staff page', async () => {
+    const o = made.app.db.get<{ id: string }>("SELECT id FROM outbox WHERE kind = 'REPORT_FOR_SIGNOFF'")!;
+    const files = made.app.db.all<{ filename: string; content_type: string; bytes: Uint8Array }>('SELECT filename, content_type, bytes FROM outbox_inline_files WHERE outbox_id = ? ORDER BY part_no', [o.id]);
+    assert.deepEqual(files.map((f) => [f.filename, f.content_type]), [['survey-report-version-1.pdf', 'application/pdf'], ['return-entries-version-1.csv', 'text/csv; charset=utf-8']]);
+    const attached = Buffer.from(files[1]!.bytes).toString('utf8');
+    assert.match(attached, /^Return,Accounting period,Pool,Entry,Amount \(£\),How it is worked out\r\n/);
+    assert.match(attached, /Special rate pool,Writing-down allowance,[0-9]+\.[0-9]{2},6% of the balance on the pool\./);
+    const kept = approvedVersion(deps(), SAM, JOB, 1)!;
+    assert.ok(attached.includes(kept.row.fingerprint), 'the spreadsheet names the version it was made from');
+    const link = await req('anon', `/signoff/${token}/return-entries.csv`);
+    assert.equal(link.type, 'text/csv; charset=utf-8');
+    assert.equal(link.body, attached, 'the link gives the same spreadsheet as the email');
+    assert.match((await req('anon', `/signoff/${token}`)).body, /the return entries for each year, as a spreadsheet \(CSV\)/);
+    const staff = await req('u-sr-sales', `${P_}/version/1/return-entries.csv`);
+    assert.equal(staff.status, 200);
+    assert.equal(staff.body, attached);
+    assert.match((await req('u-sr-sales', `${P_}?ch=23`)).body, /The return entries \(CSV\)/);
   });
 
   test('signing off needs a registered firm, a title and the tick; it is answered once', async () => {

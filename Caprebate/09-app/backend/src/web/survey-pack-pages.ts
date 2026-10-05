@@ -21,6 +21,7 @@
  * Every number on these pages says where it came from: the evidence, our draft, or the surveyor's own name. Every form
  * carries the pack's counter (`seq`), so a change from an out-of-date page is refused, never applied blind.
  */
+import { VAT_POSITION_WORDS } from './pack-vat.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
@@ -30,7 +31,9 @@ import * as L from './pack-legal.ts';
 import * as A from './pack-approve.ts';
 import { sendPanel } from './report-pages.ts';
 import { inspectionChapter, lineEvidence } from './evidence-pages.ts';
-import { evidenceByLine } from './survey-evidence.ts';
+import { basisOf, evidenceByLine } from './survey-evidence.ts';
+import { findingSeen } from './finding-source.ts';
+import { fetchSitePlan, pickWords, sitePlanOf, sitePlanSvg } from './site-plan.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 
 export type PackPageDeps = {
@@ -46,6 +49,13 @@ import { CHAPTERS } from './pack-chapters.ts';
 import * as S from './surveyor.ts';
 import { jobSite, setJobMenu } from './surveyor-pages.ts';
 import { lateBadge, siteOf } from './look.ts';
+import { PAYER_CLASSES } from './claim-facts.ts';
+import { deskFirstReading } from './desk-first.ts';
+import { roomsFor } from './rooms.ts';
+import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
+import { TEST_DEFAULT_WORDS } from './pack-lines.ts';
+import { packSheet, SHEET_CHAPTERS, type SheetRow } from './pack-sheets.ts';
+import { savePackWords, WORD_FIELDS } from './pack-words.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });
@@ -70,7 +80,7 @@ export async function handleSurveyPack(
     res.end(versionPage(d, actor, v, kept));
     return 'handled';
   }
-  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve)?$/.exec(url.pathname);
+  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/extra|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve|\/site-plan|\/words)?$/.exec(url.pathname);
   if (m === null) return 'not-mine';
   const job = m[1] ?? '';
   const act = m[2]?.slice(1);
@@ -102,9 +112,19 @@ export async function handleSurveyPack(
     redirect(res, `${base(job)}?ch=23&done=approved&v=${String(r.version ?? '')}`);
     return 'handled';
   }
+  if (act === 'site-plan') {
+    // 2 Oct 2026, stage 6: the site plan for the report's cover, from Ordnance Survey's free maps (src/web/site-plan.ts).
+    const r = await fetchSitePlan({ db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId, transport: d.app.outside, secrets: d.app.secrets }, actor, job);
+    if (!r.ok) return d.problem(res, actor, 'No site plan', r.why, `${base(job)}?ch=9#site-plan`);
+    redirect(res, `${base(job)}?ch=9&done=plan#site-plan`);
+    return 'handled';
+  }
   let r: P.PackResult;
   switch (act) {
     case 'value': r = P.savePackValue(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
+    case 'extra': r = P.savePackExtra(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
+    // PHASE 153g: the surveyor's own words in chapters 5, 8, 11, 14, 16, 19, 20 and 22 (src/web/pack-words.ts).
+    case 'words': r = savePackWords(deps, actor, job, { field: f.get('field') ?? '', words: f.get('words') ?? '', reason, seq }); break;
     case 'line': r = P.saveLine(deps, actor, job, { line, qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq }); break;
     case 'revert': r = P.revertLine(deps, actor, job, { line, reason, seq }); break;
     case 'remove': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, true); break;
@@ -151,6 +171,7 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
   const notes: Safe[] = [];
   if (q.get('done') === 'approved') notes.push(h`<div class="gate" role="status">Approved. The report is kept exactly as it stands, with its fingerprint.</div>`);
   if (q.get('done') === 'saved') notes.push(h`<div class="gate" role="status">Saved, under your name. Every total follows.</div>`);
+  if (q.get('done') === 'plan') notes.push(h`<div class="gate" role="status">Site plan fetched. It goes on the report’s cover when you approve.</div>`);
   if (q.get('stale') === '1') notes.push(h`<div class="gate" role="alert"><strong>This pack changed since you opened it.</strong> Here it is again with that change. Make yours again if it still applies.</div>`);
   const body = h`
     ${notes}
@@ -164,8 +185,12 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
       <article class="pack-book">
         <h1>${String(chapter.n)} · ${chapter.title}</h1>
         ${ch === 4 ? summaryChapter(v) : ch === 7 ? legalChapter(d, v, lv, ch, q) : ch === 9 ? inputsChapter(d, v, ch, q) : ch === 10 ? elementsChapter(d, v, ch, q)
+          : ch === 15 ? h`${grantsChapter(v)}${vatSection(d, v, ch)}`
           : ch === 2 ? inspectionChapter(d.app, actor, v.job.id, q)
           : ch === 23 ? signChapter(d, actor, v, ready, q)
+          : ch === 1 ? reportChapter(d, actor, v) : ch === 3 ? purposeChapter(d, v) : ch === 6 ? roomsChapter(d, v)
+          : ch === 12 ? itemsChapter(d, v) : ch === 13 ? poolsChapter(v) : ch === 21 ? limitsChapter()
+          : SHEET_CHAPTERS.includes(ch) ? sheetChapter(d, v, ch)
           : h`<p class="help">This chapter is filled in at the next stage of the build. For now, the sums are in chapters 4, 9 and 10.</p>`}
       </article>
       <aside class="pack-side">${approveCard(v, ready)}${totalsCard(v)}${legalCard(v, lv)}${changesCard(d, v)}</aside>
@@ -217,9 +242,11 @@ function summaryChapter(v: P.PackView): Safe {
     <p class="lede">How the price paid becomes the spend that qualifies. Each box comes from the chapters after it.</p>
     <div class="pathway">
       <div>Price paid<b>${PENCE(i.price_paid_pence.value)}</b><span>Chapter 9</span></div>
+      ${v.vat.counted_pence === 0 ? raw('') : h`<div>Plus VAT not reclaimed<b>+ ${PENCE(v.vat.counted_pence)}</b><span>Chapter 15</span></div>`}
       <div>Less bare land<b>${i.land_pence.value === null ? '—' : `− ${PENCE(i.land_pence.value)}`}</b><span>Chapter 9</span></div>
       <div>The building<b>${PENCE(s.building_price_pence)}</b><span>price less land</span></div>
       <div>Rebuild cost today<b>${PENCE(s.rebuild_pence)}</b><span>floor area × rate</span></div>
+      ${v.grants.list.length === 0 ? raw('') : h`<div>Less grants<b>${v.grants.reading.reduction_pence === null ? '—' : `− ${PENCE(v.grants.reading.reduction_pence)}`}</b><span>Chapter 15</span></div>`}
       <div class="pathway-end">Spend that qualifies<b>${PENCE(s.qualifying_pence)}</b><span>${s.share_bp === null ? 'not worked out yet' : `${PCT(s.share_bp)} of the building`}</span></div>
     </div>
     ${mainPct === null ? raw('') : h`<p><strong>Where it sits.</strong> Main pool ${PENCE(s.main_pool_pence)} (${String(mainPct)}%) · Special rate pool ${PENCE(s.special_pool_pence)} (${String(100 - mainPct)}%)</p>
@@ -242,18 +269,220 @@ function neededList(v: P.PackView): Safe {
  */
 function neededGroups(v: P.PackView): Safe {
   const s = v.sums;
-  const link = (n: (typeof s.needed)[number]): string => `${base(v.job.id)}?ch=${n.where === 'INPUT' ? '9' : '10'}${n.line_id === null ? '' : `&edit=${encodeURIComponent(n.line_id)}#l-${n.line_id}`}`;
+  const link = (n: (typeof s.needed)[number]): string => n.where === 'GRANT' ? `${base(v.job.id)}?ch=15`
+    : `${base(v.job.id)}?ch=${n.where === 'INPUT' ? '9' : '10'}${n.line_id === null ? '' : `&edit=${encodeURIComponent(n.line_id)}#l-${n.line_id}`}`;
   const inputs = s.needed.filter((n) => n.where === 'INPUT');
-  const lines = s.needed.filter((n) => n.where !== 'INPUT');
+  const lines = s.needed.filter((n) => n.where === 'LINE');
+  const grants = s.needed.filter((n) => n.where === 'GRANT');
   return h`<h2>Still needed: ${String(s.needed.length)}</h2>
       <p class="help">There is no total until every value is in. We never fill a gap with a guess.</p>
       <table class="pk-table pk-groups"><thead><tr><th>What is missing</th><th>How many</th><th></th></tr></thead><tbody>
         ${inputs.length === 0 ? raw('') : h`<tr><td>Price, land and floor area<br><span class="help">${inputs.map((n) => n.words).join(' ')}</span></td><td>${lateBadge(String(inputs.length))}</td><td><a href="${base(v.job.id)}?ch=9">Go to chapter 9</a></td></tr>`}
         ${lines.length === 0 ? raw('') : h`<tr><td>Rebuild cost and split, line by line<br><span class="help">How much, the rate, and for some the pool.</span></td><td>${lateBadge(String(lines.length))}</td><td><a href="${base(v.job.id)}?ch=10">Go to chapter 10</a></td></tr>`}
+        ${grants.length === 0 ? raw('') : h`<tr><td>Grants on the claim<br><span class="help">How much each grant paid. It is recorded on the claim, not here.</span></td><td>${lateBadge(String(grants.length))}</td><td><a href="${base(v.job.id)}?ch=15">Go to chapter 15</a></td></tr>`}
       </tbody></table>
       <details class="morelist"><summary>Show all ${String(s.needed.length)}, one per line</summary>
         <ul class="pk-needed">${s.needed.slice(0, 60).map((n) => h`<li><a href="${link(n)}">${n.words}</a></li>`)}</ul>
         ${s.needed.length > 60 ? h`<p class="help">… and ${String(s.needed.length - 60)} more.</p>` : raw('')}</details>`;
+}
+
+/* ------------------------------------------------------------ PHASE 153f: chapters 1, 3, 6, 12, 13 and 21 */
+
+const SECTOR_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  care_homes: 'Care home', dental: 'Dental practice', supported_living: 'Supported living', gp: 'GP surgery', private_hospital: 'Private hospital or clinic',
+});
+
+/** Chapter 1 — who the report is for and which property. Nothing typed here: it comes from the claim and the job. */
+export function reportChapter(d: PackPageDeps, actor: Actor, v: P.PackView): Safe {
+  const job = S.surveyorJobs(d.app.db, actor).find((j) => j.job_id === v.job.id);
+  const plan = sitePlanOf(d.app.db, v.job.id);
+  const row = (k: string, val: string | null) => h`<tr><th scope="row">${k}</th><td>${val === null || val === '' ? h`<span class="pk-src pk-need">not on file</span>` : val}</td></tr>`;
+  return h`<p class="lede">Who the report is for, and which property. It comes from the claim and the survey job.</p>
+    <table class="pk-table"><tbody>
+      ${row('Client', v.job.business_name)}
+      ${row('Property', v.property === null ? null : v.property.label)}
+      ${row('Postcode', v.property?.postcode ?? job?.property_postcode ?? null)}
+      ${row('Kind of property', SECTOR_WORDS[v.job.sector] ?? v.job.sector)}
+      ${row('Claim reference', job?.claim_ref ?? null)}
+      ${row('Surveyor', v.job.surveyor_name)}
+    </tbody></table>
+    ${plan === null ? h`<p class="help">No site plan yet. Get it in chapter 9; it goes on the report’s cover.</p>`
+      : h`<div class="rp-plan">${sitePlanSvg(plan, `Site plan round ${plan.postcode}`)}<p class="help">${pickWords(plan)} ${plan.attribution}. Not the legal boundary of the site.</p></div>`}`;
+}
+
+/** Chapter 3 — what the report is for, and the basis it was made on (Phase 153e lines 1 to 3: the evidence level). */
+export function purposeChapter(d: PackPageDeps, v: P.PackView): Safe {
+  const b = basisOf(d.app.db, v.job.id);
+  const level = deskFirstReading(d.app.db, v.job.id);
+  return h`<p class="lede">What the report is for, and what it rests on.</p>
+    <p><strong>The report.</strong> A capital allowances valuation report. Until you sign it, it is a working draft, not tax advice.</p>
+    <p><strong>Its purpose.</strong> To find the spend on plant and machinery that qualifies for a capital allowances claim on this property. The price paid is split in a just and reasonable way (section 562 of the Capital Allowances Act 2001).</p>
+    <p><strong>How you inspected.</strong> ${b === null ? h`<span class="pk-src pk-need">not recorded</span> Say it in chapter 2.` : h`${b.words}${b.note === null ? '' : `: ${b.note}`} <span class="help">(${b.by_name})</span>`}</p>
+    <p><strong>How much evidence this job needs.</strong> ${level === null ? 'Not worked out yet.' : level.level_words}</p>
+    <p class="help">The standard assumptions are in chapter 21. Write any special assumption, and why, in chapter 21 when it is built; for now, in your notes.</p>`;
+}
+
+/** Chapter 6 — the room counts recorded on the job (they size the per-room lines of chapter 10), and what each room is. */
+export function roomsChapter(d: PackPageDeps, v: P.PackView): Safe {
+  const r = roomsFor(v.job.sector);
+  if (r === null) return h`<p class="help">This kind of property has no room list.</p>`;
+  const counts = new Map(d.app.db.all<{ room_id: string; room_count: number | null }>(
+    'SELECT room_id, room_count FROM surveyor_room_counts WHERE job_id = ?', [v.job.id]).map((x) => [x.room_id, x.room_count] as const));
+  const missing = r.rooms.filter((x) => (counts.get(x.room_id) ?? null) === null).length;
+  return h`<p class="lede">The rooms, counted. A count sizes every line of chapter 10 that is counted per room. This sector scales on ${r.scales_on}.</p>
+    ${missing === 0 ? raw('') : h`<p class="gate" role="note">${String(missing)} of ${String(r.rooms.length)} rooms not counted yet. Count them on <a href="/staff/survey/${v.job.id}">the survey job</a>.</p>`}
+    <table class="pk-table"><thead><tr><th>Room</th><th>How it is counted</th><th>Count</th></tr></thead><tbody>
+      ${r.rooms.map((x) => { const c = counts.get(x.room_id) ?? null; return h`<tr><td>${x.label}${x.caveat === undefined ? '' : h`<br><span class="help">${x.caveat}</span>`}</td><td>${x.driver}</td><td>${c === null ? h`<span class="pk-src pk-need">not counted</span>` : String(c)}</td></tr>`; })}
+    </tbody></table>
+    ${r.note === undefined ? raw('') : h`<p class="help">${r.note}</p>`}`;
+}
+
+/** Chapter 12 — every fixture, item by item: its pool, its share, our default where it is one, and how it was seen. */
+export function itemsChapter(d: PackPageDeps, v: P.PackView): Safe {
+  const evidence = evidenceByLine(d.app.db, v.job.id);
+  const basis = basisOf(d.app.db, v.job.id)?.basis ?? null;
+  const live = v.lines.filter((l) => !l.removed);
+  const out = v.lines.filter((l) => l.removed);
+  return h`<p class="lede">Every fixture, item by item. Chapter 10 is where you change one; this is how the report lists them.</p>
+    <table class="pk-table"><thead><tr><th>Item</th><th>Pool</th><th>Share that qualifies</th><th>Seen</th></tr></thead><tbody>
+      ${live.map((l) => h`<tr><td>${l.label}${l.template === null || !l.template.authority.includes(TEST_DEFAULT_WORDS) ? raw('') : h`<br><span class="help">${l.template.authority.slice(l.template.authority.indexOf(TEST_DEFAULT_WORDS))}</span>`}</td>
+        <td>${l.pool === null ? h`<span class="pk-src pk-need">not decided</span>` : POOL_WORDS[l.pool] ?? l.pool}</td>
+        <td>${l.qpct_bp.value === null ? h`<span class="pk-src pk-need">needed</span>` : PCT(l.qpct_bp.value)}</td>
+        <td>${findingSeen(basis, l, evidence.get(l.element_id ?? '')?.count ?? 0)}</td></tr>`)}
+    </tbody></table>
+    ${out.length === 0 ? raw('') : h`<p class="help">Taken out, so not in the report: ${out.map((l) => l.label).join(', ')}.</p>`}`;
+}
+
+const POOL_WORDS: Readonly<Record<string, string>> = Object.freeze({ MP: 'Main pool', SR: 'Special rate pool' });
+
+/** Chapter 13 — the two pools: what is in each, from chapter 10's lines. Nothing is counted until it is complete. */
+export function poolsChapter(v: P.PackView): Safe {
+  const sum = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
+  const group = (pool: string | null) => v.lines.filter((l) => !l.removed && l.pool === pool);
+  const total = (ls: readonly P.ViewLine[]) => { let t = 0; for (const l of ls) { const q = sum.get(l.id)?.qualifying_pence ?? null; if (q === null) return null; t += q; } return t; };
+  const undecided = group(null);
+  return h`<p class="lede">Where the spend that qualifies sits: the main pool, or the special rate pool.</p>
+    <table class="pk-table"><thead><tr><th>Pool</th><th>Items</th><th>Qualifying spend</th></tr></thead><tbody>
+      ${(['MP', 'SR'] as const).map((p) => { const ls = group(p); const t = total(ls); return h`<tr><td>${POOL_WORDS[p]!}</td><td>${String(ls.length)}</td><td>${t === null ? h`<span class="pk-src pk-need">not complete</span>` : PENCE(t)}</td></tr>`; })}
+    </tbody></table>
+    ${v.sums.qualifying_pence === null ? h`<p class="help">The pools are final only when every value is in (chapter 4 lists what is missing).</p>`
+      : h`<p><strong>After the price is shared out:</strong> main pool ${PENCE(v.sums.main_pool_pence)} · special rate pool ${PENCE(v.sums.special_pool_pence)}.</p>`}
+    ${undecided.length === 0 ? raw('') : h`<p class="gate" role="note">${String(undecided.length)} item${undecided.length === 1 ? '' : 's'} with no pool yet: ${undecided.map((l) => l.label).join(', ')}. Decide each in chapter 10.</p>`}`;
+}
+
+/** Chapter 21 — the report's limits and standard assumptions, with the planning assumption (Phase 153e line 11). */
+export function limitsChapter(): Safe {
+  return h`<p class="lede">What the report does not cover, and what it assumes. Test wording, for you to approve.</p>
+    <ul>
+      <li><strong>Scope.</strong> This report is for capital allowances only. It is not a market valuation or a survey of the building’s condition. It is not for a loan or for insurance.</li>
+      <li><strong>Basis.</strong> A just and reasonable split of the price paid (section 562). The plant is valued at what it would cost to replace. The rest goes to the building and the bare land.</li>
+      <li><strong>Standard assumptions.</strong> Title is good. No undisclosed rights or covenants change the value. The land is not contaminated beyond anything stated. What the client and their advisers told us is accurate and complete.</li>
+      ${REPORT_ASSUMPTIONS.map((a) => h`<li><strong>Planning.</strong> ${a}</li>`)}
+      <li><strong>Reliance.</strong> Prepared for the client and their advisers only. Nobody else may rely on it.</li>
+      <li><strong>Not tax advice.</strong> The claim itself is the tax adviser’s.</li>
+    </ul>
+    <p class="help">Write any special assumption in your notes for now. Do the same for a limit on what you could inspect, or anything you were asked to leave out.</p>`;
+}
+
+/* ------------------------------------------------------------ PHASE 153g: the other ten chapters */
+
+const FROM_CLASS: Readonly<Record<string, string>> = Object.freeze({ 'the surveyor': 'pk-sv', 'the pack': 'pk-dr', 'worked out': 'pk-dr', 'fixed wording': 'pk-dr' });
+
+/**
+ * PHASE 153g — chapters 5, 8, 11, 14, 16, 17, 18, 19, 20 and 22, from one reading (src/web/pack-sheets.ts): each row
+ * says where it comes from, and a row with nothing behind it says so in words. The surveyor's words are each a form, kept
+ * with a reason under their name; Admin and Sales read them.
+ */
+export function sheetChapter(d: PackPageDeps, v: P.PackView, ch: number): Safe {
+  const s = packSheet(d.app.db, v, ch);
+  if (s === null) return raw('');
+  const cell = (r: SheetRow) => r.value === null
+    ? h`<span class="pk-src pk-need">${r.missing}</span>`
+    : h`${r.value} <span class="pk-src ${FROM_CLASS[r.from] ?? 'pk-ev'}">${r.from === 'the surveyor' && r.by !== undefined ? r.by : r.from}</span>`;
+  return h`<p class="lede">${s.lede}</p>
+    ${s.applies ? raw('') : h`<p class="gate" role="note">${s.not_applies_words ?? ''}</p>`}
+    ${s.rows.length === 0 ? raw('') : h`<table class="pk-table"><tbody>${s.rows.map((r) => h`<tr><th scope="row">${r.label}</th><td>${cell(r)}</td></tr>`)}</tbody></table>`}
+    ${s.items.length === 0 ? (s.n === 19 ? h`<p class="help">No item in this pack is marked as a judgement call.</p>` : raw(''))
+      : h`<h2>Items that are judgement calls (${String(s.items.length)})</h2><ul class="pk-needed">${s.items.map((i) => h`<li><strong>${i.label}</strong><br><span class="help">${i.detail}</span></li>`)}</ul>`}
+    ${!v.may_edit || v.property === null ? raw('') : s.words.map((f) => {
+      const w = WORD_FIELDS[f];
+      const now = s.rows.find((r) => r.label === w.label)?.value ?? '';
+      return h`<form method="post" action="${base(v.job.id)}/words" class="pblock" id="w-${f}">${hidden(v, ch)}<input type="hidden" name="field" value="${f}">
+        <label class="fl" for="w-${f}-t">${w.label}</label><p class="help">${w.ask}</p>
+        <textarea class="fi" id="w-${f}-t" name="words" rows="3" maxlength="4000">${now}</textarea>
+        <label class="fl" for="w-${f}-r">Why</label><input class="fi" id="w-${f}-r" name="reason" maxlength="500" required>
+        <button class="btn-quiet" type="submit">Save</button></form>`;
+    })}`;
+}
+
+/* ------------------------------------------------------------ chapter 15: grants and VAT */
+
+const ROUTE_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  ITEMS: 'Off the items it paid for', EQUAL_SHARE: 'Off every item, in equal share', NOT_TAKEN_OFF: 'Not taken off',
+});
+
+/**
+ * PHASE 153a, 4 October 2026 — F-15's remainder. The claim's grants, read from the claim record, and what each takes off
+ * (src/web/pack-grants.ts). Nothing is typed here: a grant is recorded, matched and removed on the claim, by Sales or
+ * Admin, so the surveyor sees what the claim holds and the figure it gives. VAT is not in the pack yet.
+ */
+export function grantsChapter(v: P.PackView): Safe {
+  const g = v.grants;
+  const r = g.reading;
+  const effect = new Map(r.effects.map((e) => [e.grant_id, e] as const));
+  const lineLabel = new Map(v.lines.map((l) => [l.id, l.label] as const));
+  const how = g.switches.element_trace
+    ? 'A grant matched to rows of our fixture list comes off only those items. A grant not matched to rows comes off every item in equal share.'
+    : 'Every grant comes off every item in equal share: the grant as a share of the price paid. Taking a grant off only the items it paid for is built, and switched off until the tax adviser says it is right.';
+  return h`
+    <p class="lede">Money from someone else — the NHS, a council, a landlord — reduces the spend it paid for. Insurance money after damage does not.</p>
+    <p>${how}</p>
+    ${g.amounts_shown ? raw('') : h`<p class="help">What each grant paid is held by the office, not shown here. The totals below are the pack’s own, and they are in the figures you approve.</p>`}
+    ${g.claim_id === null ? h`<p class="gate">This survey job is on no claim, so there are no grants to read. Grants are recorded on the claim.</p>`
+      : g.list.length === 0 ? h`<p class="gate">No grant is recorded on the claim. If anyone else paid for any of the work, it is recorded on the claim, and comes off here.</p>`
+      : h`<table class="pk-table"><thead><tr><th scope="col">Who paid</th><th scope="col" class="n">How much</th><th scope="col">What it paid for</th><th scope="col">How it comes off</th><th scope="col" class="n">Takes off</th></tr></thead>
+        <tbody>${g.list.map((x) => {
+          const e = effect.get(x.id);
+          const met = (e?.line_ids ?? []).map((id) => lineLabel.get(id) ?? id);
+          return h`<tr><td>${PAYER_CLASSES[x.payer_class] ?? 'Not known'}<br><span class="help">${x.kind === 'GRANT' ? 'A grant' : 'A payment towards the work'}</span></td>
+            <td class="n">${x.amount_pence === null ? h`<span class="pk-gap">not known</span>` : g.amounts_shown ? PENCE(x.amount_pence) : h`<span class="help">Held by the office</span>`}</td>
+            <td>${x.element_names.length > 0 ? x.element_names.join('; ') : x.traced === 'YES' ? 'Matched in words only' : 'Not matched yet'}</td>
+            <td>${ROUTE_WORDS[e?.route ?? ''] ?? '—'}<br><span class="help">${e?.words ?? ''}${met.length === 0 ? '' : ` Lines: ${met.join('; ')}.`}</span></td>
+            <td class="n">${e?.reduction_pence === null || e === undefined || !g.amounts_shown ? '—' : PENCE(e.reduction_pence)}</td></tr>`;
+        })}</tbody>
+        <tbody><tr class="pk-tot"><th scope="row">Before grants</th><td></td><td></td><td></td><td class="n">${PENCE(r.before.qualifying_pence)}</td></tr>
+          <tr class="pk-tot"><th scope="row">Less grants</th><td></td><td></td><td></td><td class="n">${r.reduction_pence === null ? '—' : `− ${PENCE(r.reduction_pence)}`}</td></tr>
+          <tr class="pk-tot"><th scope="row">Spend that qualifies</th><td></td><td></td><td></td><td class="n">${PENCE(v.sums.qualifying_pence)}</td></tr></tbody></table>
+        ${r.reduction_pence === null ? h`<p class="gate" role="alert">There is no total until every grant’s amount is known, and the rest of the pack is complete. Record the amount on the claim.</p>` : raw('')}`}
+`;
+}
+
+/**
+ * PHASE 153e — CHAPTER 15'S VAT HALF (src/web/pack-vat.ts; Module 00 C23). The surveyor records whether the client could
+ * reclaim the VAT, and the VAT not reclaimed, each with a reason. Only "exempt" adds it to the price paid; partly exempt
+ * waits for the tax adviser; not known adds nothing (N4).
+ */
+function vatSection(d: PackPageDeps, v: P.PackView, ch: number): Safe {
+  const t = v.vat;
+  const opt = (k: string, w: string) => h`<option value="${k}"${t.position_source !== null && t.position === k ? raw(' selected') : raw('')}>${w}</option>`;
+  return h`<h2>VAT</h2>
+    <p class="lede">VAT the client paid and could not reclaim is part of what they spent, so it is added to the price before it is shared out. Healthcare is mostly VAT-exempt.</p>
+    <table class="pk-table"><tbody>
+      <tr><th scope="row">Could the client reclaim the VAT?</th><td>${t.position_source === null ? h`<span class="pk-src pk-need">not recorded</span>` : h`${VAT_POSITION_WORDS[t.position]} ${sourceTag(d, t.position_source, true)}`}</td></tr>
+      <tr><th scope="row">VAT not reclaimed</th><td>${t.amount_pence === null ? h`<span class="pk-src pk-need">not recorded</span>` : h`${PENCE(t.amount_pence)} ${sourceTag(d, t.amount_source, true)}`}</td></tr>
+      <tr><th scope="row">Added to the price</th><td class="n">${PENCE(t.counted_pence)}</td></tr>
+    </tbody></table>
+    <p class="help">${t.words}</p>
+    ${!v.may_edit || v.property === null ? raw('') : h`<details class="pk-add"><summary>Record the VAT position</summary>
+      <form method="post" action="${base(v.job.id)}/extra">${hidden(v, ch)}<input type="hidden" name="field" value="vat_position"><div class="pk-fields">
+        <label>Could the client reclaim it?
+<select class="fi" name="value"><option value="">Not recorded</option>${opt('RECLAIMS', VAT_POSITION_WORDS.RECLAIMS)}${opt('EXEMPT', VAT_POSITION_WORDS.EXEMPT)}${opt('PARTLY_EXEMPT', VAT_POSITION_WORDS.PARTLY_EXEMPT)}${opt('NOT_KNOWN', VAT_POSITION_WORDS.NOT_KNOWN)}</select></label>
+        <label>Why <input class="fi" name="reason" maxlength="500" required placeholder="For example: their VAT return shows no VAT reclaimed"></label></div>
+        <button class="cta" type="submit">Save</button></form>
+      <form method="post" action="${base(v.job.id)}/extra">${hidden(v, ch)}<input type="hidden" name="field" value="vat"><div class="pk-fields">
+        <label>VAT not reclaimed, in pounds <input class="fi" name="value" inputmode="decimal" value="${t.amount_pence === null ? '' : String(t.amount_pence / 100)}"></label>
+        <label>Why <input class="fi" name="reason" maxlength="500" required placeholder="For example: the VAT on the purchase invoice"></label></div>
+        <button class="cta" type="submit">Save</button></form></details>`}`;
 }
 
 /* ------------------------------------------------------------ chapter 7 */
@@ -345,7 +574,36 @@ function inputsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchP
           <p class="help">${w.hint} Leave it empty to put our figure back.</p>
           <div class="sendrow"><button class="cta" type="submit">Save — every total follows</button><a href="${base(v.job.id)}?ch=9#l-${field}">Cancel</a></div></form></td></tr>` : raw('')}`;
     })}</tbody></table>
-    ${v.inputs.building_rate_pence.value === null ? h`<p class="help">The whole-building rate comes from BCIS. Until BCIS is bought, the surveyor types it, and it is theirs.</p>` : raw('')}`;
+    ${v.inputs.building_rate_pence.value === null ? h`<p class="help">The whole-building rate comes from BCIS. Until BCIS is bought, the surveyor types it, and it is theirs.</p>` : raw('')}
+    ${v.job.sector === 'supported_living' ? sharedAreaBlock(d, v, ch) : raw('')}
+    ${sitePlanPanel(d, v, ch)}`;
+}
+
+/**
+ * PHASE 153e (Word question 133): supported living's shared areas, measured from the floor plans. The common-parts
+ * rows are drafted from it; with none, a flat 25% of the floor area, labelled as the fallback it is.
+ */
+function sharedAreaBlock(d: PackPageDeps, v: P.PackView, ch: number): Safe {
+  const s = v.shared_area;
+  return h`<h2>Shared areas, from the floor plans</h2>
+    <p class="help">The common parts are measured from the floor plans where we have them. Without them, we use a flat 25% of the floor area. That share is not checked against real jobs.</p>
+    <p>${s.value === null ? h`<span class="pk-src pk-need">not measured</span> · ${P.SHARED_FALLBACK_WORDS}` : h`${QTY(s.value)} m² ${sourceTag(d, s.source, true)}`}</p>
+    ${!v.may_edit || v.property === null ? raw('') : h`<form method="post" action="${base(v.job.id)}/extra">${hidden(v, ch)}<input type="hidden" name="field" value="shared_area"><div class="pk-fields">
+      <label>Shared areas, in m² <input class="fi" name="value" inputmode="decimal" value="${s.value === null ? '' : String(s.value / 1000)}"></label>
+      <label>Why <input class="fi" name="reason" maxlength="500" required placeholder="For example: the corridors, lounge and staff rooms on the floor plans"></label></div>
+      <button class="cta" type="submit">Save</button></form>`}`;
+}
+
+/** 2 Oct 2026, stage 6: the site plan for the report's cover. Fetched with one button; the newest is shown. */
+function sitePlanPanel(d: PackPageDeps, v: P.PackView, ch: number): Safe {
+  const plan = sitePlanOf(d.app.db, v.job.id);
+  return h`<section class="pk-card" id="site-plan"><h2>Site plan for the report</h2>
+    ${plan === null
+      ? h`<p>No site plan yet. We draw it from Ordnance Survey’s free maps, round the property’s postcode. It shows buildings only, never the site’s legal boundary.</p>`
+      : h`<div class="rp-plan">${sitePlanSvg(plan, `Site plan round ${plan.postcode}`)}<div><p>${pickWords(plan)} Placed by the postcode ${plan.postcode}. Fetched ${d.stamp(plan.fetched_at)}.</p>
+        <p class="help">If the dark building is the wrong one, check the property’s postcode, then get it again. The plan goes on the report’s cover as it stands when you approve. ${plan.attribution}.</p></div></div>`}
+    ${v.may_edit ? h`<form method="post" action="${base(v.job.id)}/site-plan">${hidden(v, ch)}<button class="${plan === null ? 'cta' : 'btn-quiet'}" type="submit">${plan === null ? 'Get the site plan' : 'Get it again'}</button></form>` : raw('')}
+  </section>`;
 }
 
 /* ------------------------------------------------------------ chapter 10 */
@@ -356,6 +614,8 @@ function elementsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearc
   const live = v.lines.filter((l) => !l.removed);
   // 2 Oct 2026: each line's photos from the client (src/web/survey-evidence.ts).
   const evidence = evidenceByLine(d.app.db, v.job.id);
+  // PHASE 153e (Word question 150): each line says whether it was seen on site or comes from documents.
+  const basis = basisOf(d.app.db, v.job.id)?.basis ?? null;
   const groups: { title: string; lines: P.ViewLine[] }[] = [
     { title: 'Special rate pool — integral features', lines: live.filter((l) => l.pool === 'SR' && l.added === null) },
     { title: 'Main pool — plant and machinery', lines: live.filter((l) => l.pool === 'MP' && l.added === null) },
@@ -368,7 +628,7 @@ function elementsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearc
     const open = editing === l.id && v.may_edit && v.property !== null;
     const judgement = l.template !== null && /CONTESTED|JUDGEMENT/.test(l.template.status);
     return h`<tr id="l-${l.id}"${l.qty_milli.source?.kind === 'SURVEYOR' || l.rate_pence.source?.kind === 'SURVEYOR' ? raw(' class="pk-mine"') : raw('')}>
-      <td>${l.label}<br><span class="help">${l.element_id ?? 'Added'}${l.unit === '' ? '' : ` · ${l.unit}`}${judgement ? ' · a judgement call' : ''}</span>${evidence.has(l.element_id ?? '') ? h`<br>${lineEvidence(evidence, v.job.id, l.element_id)}` : raw('')}
+      <td>${l.label}<br><span class="help">${l.element_id ?? 'Added'}${l.unit === '' ? '' : ` · ${l.unit}`}${judgement ? ' · a judgement call' : ''} · ${findingSeen(basis, l, evidence.get(l.element_id ?? '')?.count ?? 0)}</span>${evidence.has(l.element_id ?? '') ? h`<br>${lineEvidence(evidence, v.job.id, l.element_id)}` : raw('')}
         ${l.added === null ? raw('') : h`<br><span class="help">Added by ${l.added.by_name}: “${l.added.reason}”</span>`}</td>
       ${valueCell(d, l.qty_milli, QTY)}${valueCell(d, l.rate_pence, PENCE)}
       <td class="n">${PENCE(sum?.cost_pence ?? null)}</td>
@@ -437,6 +697,8 @@ function totalsCard(v: P.PackView): Safe {
   const s = v.sums;
   return h`<section class="pk-card"><h2>The pack’s totals</h2>
     <dl class="pk-dl">
+      ${v.grants.list.length === 0 ? raw('') : h`<div><dt>Before grants</dt><dd>${PENCE(v.grants.reading.before.qualifying_pence)}</dd></div>
+      <div><dt>Less grants</dt><dd>${v.grants.reading.reduction_pence === null ? '—' : `− ${PENCE(v.grants.reading.reduction_pence)}`}</dd></div>`}
       <div><dt>Spend that qualifies</dt><dd>${PENCE(s.qualifying_pence)}</dd></div>
       <div><dt>Main pool</dt><dd>${PENCE(s.main_pool_pence)}</dd></div>
       <div><dt>Special rate pool</dt><dd>${PENCE(s.special_pool_pence)}</dd></div>

@@ -1199,3 +1199,26 @@ test("H9 the sector spread the documents quote is the DIRECT one, not the loaded
   assert.ok(loaded("dental", 16) / loaded("dental", 200) >
             loaded("private_hospital", 100) / loaded("dental", 100));
 });
+
+test("Phase 153b (Word question 191): the tax adviser line is named \"our own tax adviser, if we introduce one\", and no figure moved", () => {
+  assert.equal(M.LINE_NAMES.cta, "Our own tax adviser, if we introduce one");
+  /* Figures unchanged: the line's amounts as they stood before the rename, read here rather than restated elsewhere. */
+  assert.deepEqual(M.SECTORS.map(s => M.SECTOR_DIRECT[s].cta), [600, 900, 1200, 1300]);
+  assert.equal(M.ROUTES.SURVEYOR_VISIT.cta_share, 1);
+  assert.equal(M.loadedCost("dental", "SURVEYOR_VISIT", 120).cta, 600);
+});
+
+/* PHASE 153d, 4 October 2026 (Word question 23): the fixed disposal fee, from the model's own rate and data line. */
+test("DF1 the disposal fee is fixed, worked out as our hours at the model's rate plus the data line: £290, at cost", () => {
+  const f = M.disposalFee();
+  assert.equal(f.pounds, M.DISPOSAL_WORK.hours * M.SECTOR_DIRECT.dental.rate + M.SECTOR_DIRECT.dental.data);
+  assert.equal(f.pounds, 290);
+  assert.equal(f.pence, 29000);
+  assert.equal(f.status, "TEST_DEFAULT_NOT_AGREED");
+  assert.match(f.words, /test default, not agreed/i);
+});
+
+test("DF2 the disposal fee is never a percentage: it takes no sale price or election figure", () => {
+  assert.equal(M.disposalFee.length, 0, "disposalFee takes an argument");
+  assert.deepEqual(M.disposalFee(), M.disposalFee());
+});

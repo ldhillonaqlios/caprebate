@@ -20,14 +20,18 @@
  * own stages read them exactly as before. If any of that is refused, nothing is kept. The form carries both counters,
  * so a page drawn before a change cannot approve the changed pack, and a second click on the same state is refused.
  */
+import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
+import { sheetsForVersion } from './pack-sheets.ts';
 import { createHash } from 'node:crypto';
 import { authorise, can, type Actor } from '../authz.ts';
 import { amendFigures, commitFigures, jobHasEstimate, packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult, type PackView } from './survey-pack.ts';
 import { legalAllows, legalView, type LegalView } from './pack-legal.ts';
 import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
-import { basisOf, checklistView, walkthroughsOf } from './survey-evidence.ts';
+import { basisOf, checklistView, evidenceByLine, walkthroughsOf } from './survey-evidence.ts';
+import { findingSeen } from './finding-source.ts';
 import { videosOf } from './survey-video.ts';
+import { sitePlanOf, type SitePlan } from './site-plan.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
   'I have reviewed this report to the extent it sets out.',
@@ -162,8 +166,16 @@ function inspectionOf(d: { db: PackDeps['db'] }, job_id: string) {
   };
 }
 
+function siteOf(d: { db: PackDeps['db'] }, job_id: string): { site_plan?: SitePlan } {
+  const p = sitePlanOf(d.db, job_id);
+  return p === null ? {} : { site_plan: p };
+}
+
 export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at: string; by: { id: string; name: string }; details: Details }, d: { db: PackDeps['db'] }) {
   const sumOf = new Map(v.sums.lines.map((l) => [l.line_id, l] as const));
+  // PHASE 153e (Word question 150): each finding, seen on site or from documents, frozen with the version.
+  const basis = basisOf(d.db, v.job.id)?.basis ?? null;
+  const photosByLine = evidenceByLine(d.db, v.job.id);
   return {
     format: 'cap-rebate-survey-pack/1',
     version: a.version,
@@ -179,6 +191,7 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
       id: l.id, label: l.label, element_id: l.element_id, unit: l.unit, pool: l.pool, pool_source: l.pool_source,
       qty_milli: l.qty_milli, rate_pence: l.rate_pence, qpct_bp: l.qpct_bp, removed: l.removed, removed_source: l.removed_source,
       cost_pence: sumOf.get(l.id)?.cost_pence ?? null, qualifying_pence: sumOf.get(l.id)?.qualifying_pence ?? null,
+      seen: findingSeen(basis, l, photosByLine.get(l.element_id ?? '')?.count ?? 0),
     })),
     sums: {
       rebuild_pence: v.sums.rebuild_pence, building_price_pence: v.sums.building_price_pence,
@@ -186,8 +199,30 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
       qualifying_pence: v.sums.qualifying_pence, main_pool_pence: v.sums.main_pool_pence,
       special_pool_pence: v.sums.special_pool_pence, share_bp: v.sums.share_bp,
     },
+    // PHASE 153a — chapter 15: the claim's grants and what each took off. `sums` above is the figure after them.
+    grants: {
+      element_trace: v.grants.switches.element_trace,
+      before_qualifying_pence: v.grants.reading.before.qualifying_pence,
+      before_main_pool_pence: v.grants.reading.before.main_pool_pence,
+      before_special_pool_pence: v.grants.reading.before.special_pool_pence,
+      reduction_pence: v.grants.reading.reduction_pence,
+      list: v.grants.list.map((g) => {
+        const e = v.grants.reading.effects.find((x) => x.grant_id === g.id);
+        return { id: g.id, kind: g.kind, payer_class: g.payer_class, amount_pence: g.amount_pence, element_ids: g.element_ids,
+          route: e?.route ?? null, words: e?.words ?? null, line_ids: e?.line_ids ?? [], reduction_pence: e?.reduction_pence ?? null };
+      }),
+    },
     changes: v.changes,
     inspection: inspectionOf(d, v.job.id),
+    // PHASE 153e: chapter 15's VAT half, frozen with the version. Its counted VAT is already in `sums`.
+    vat: { position: v.vat.position, amount_pence: v.vat.amount_pence, counted_pence: v.vat.counted_pence, words: v.vat.words },
+    // PHASE 153e (Word question 145): the planning assumption, frozen with the version (a test reading for the surveyor).
+    assumptions: [...REPORT_ASSUMPTIONS],
+    // 2 Oct 2026, stage 6: the site plan as it stood at approval (src/web/site-plan.ts), so the report never changes after.
+    // Only when there is one: a version approved without a plan keeps the shape every earlier version has.
+    ...siteOf(d, v.job.id),
+    // PHASE 153g: chapters 5, 8, 11, 14, 16 to 20 and 22, as they stood at approval (src/web/pack-sheets.ts).
+    chapters: sheetsForVersion(d.db, v),
     legal: {
       verdict: lv.verdict,
       answers: lv.asked.filter((q) => lv.answers.has(q.id)).map((q) => {

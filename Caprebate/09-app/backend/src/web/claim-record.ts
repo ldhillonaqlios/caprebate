@@ -33,6 +33,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import type { Db } from '../db.ts';
 import { _canonical, type AuditLog } from '../audit.ts';
 import { authorise, can, type Actor, type Obj } from '../authz.ts';
@@ -965,6 +966,15 @@ export type AftercarePanel = {
 export const DISPOSAL_NOTE_PATH = '08-monday-doc-exports/12830181411__Disposal-note-the-election-the-client-signs-on-a-future-sale.md';
 export const DISPOSAL_TASK_TITLE = 'The election on a future sale — read the Disposal Note';
 
+/**
+ * PHASE 153d, 4 October 2026 (Word question 23, the director's): THE FIXED DISPOSAL FEE, read from the job cost model
+ * (04-phase-work/phase9/caprebate-job-economics.cjs, `disposalFee`), never restated here. Built on our recommendation:
+ * a fixed fee for the review and the drafted election, never a percentage of the sale or the election figure. A TEST
+ * DEFAULT, NOT AGREED, and every place it is shown says so. The director decides the figure.
+ */
+export type DisposalFee = { readonly pounds: number; readonly pence: number; readonly words: string; readonly status: string };
+export const DISPOSAL_FEE: DisposalFee = (createRequire(import.meta.url)('../../../../04-phase-work/phase9/caprebate-job-economics.cjs') as { disposalFee: () => DisposalFee }).disposalFee();
+
 export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { openTerms?: readonly OpenTerm[] } = {}): AftercarePanel {
   const c = loadClaim(db, claim_id);
   authorise(actor, 'claim_facts.read', { type: 'claim_facts', id: c.id, business_id: c.business_id, assigned_surveyor_ids: [] });
@@ -984,7 +994,7 @@ export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { o
     correspondence: `Letters with HMRC are stored as Correspondence. ${NO_RECEIPT_POLICY} Still to decide: ${RECEIPT_QUESTION}`,
     clawback: clawbackReading(opts.openTerms === undefined ? {} : { openTerms: opts.openTerms }),
     disposal: {
-      note: 'If the property gets a sale date, or a sale is expected, Sales gets a task to read the Disposal Note.',
+      note: `If the property gets a sale date, or a sale is expected, Sales gets a task to read the Disposal Note. Our fee for that work: ${DISPOSAL_FEE.words}`,
       tasks,
     },
     may_record: can(actor, 'hmrc_enquiry.record', { type: 'hmrc_enquiry', id: c.id, business_id: c.business_id }),
@@ -1079,7 +1089,8 @@ export function raiseDisposalTask(
   const id = insertTask(d.db, d.now, d.newId, {
     title: DISPOSAL_TASK_TITLE,
     description: `${why} Read the Disposal Note (${DISPOSAL_NOTE_PATH}) with the client before heads of terms. A s.198 election on the sale ` +
-      'cannot be undone. It must be notified to HMRC within two years of completion. It may also start a three-month s.203 clock.',
+      'cannot be undone. It must be notified to HMRC within two years of completion. It may also start a three-month s.203 clock. ' +
+      `Our fee for this work: ${DISPOSAL_FEE.words}`,
     owner_id: null, owner_role: 'SALES', due_on: null, priority: null, activity_type: 'TASK',
     business_id: property.business_id, property_id: property.id, claim_id: null, lead_id: null, contact_id: null, fact_id: null,
     recurrence: null, recurred_from_id: null, is_next_action: false, origin: 'STAFF', automation_run_id: null, created_by: actor.id,

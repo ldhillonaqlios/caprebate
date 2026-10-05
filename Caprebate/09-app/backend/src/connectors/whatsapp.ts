@@ -30,7 +30,7 @@
  * No key is ever printed or logged. What is sent to Meta is the number and the words staff typed, nothing else.
  */
 
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import type { AuditLog } from '../audit.ts';
 import type { SecretStore } from '../secrets.ts';
 import { callOutside, isLiveTransport, policyRefusal, type Transport } from './http.ts';
@@ -156,7 +156,9 @@ export function signatureHolds(store: SecretStore, raw: string, header: string |
   return got.length === want.length && timingSafeEqual(got, want);
 }
 
-export type Incoming = { readonly from: string; readonly wa_id: string; readonly at: string; readonly kind: 'text' | 'media' | 'other'; readonly body: string; readonly name: string | null };
+/** PHASE 153f: what Meta's webhook says about an attachment. The file itself is fetched later, by a person (fetchWhatsAppMedia). */
+export type IncomingMedia = { readonly id: string; readonly type: 'image' | 'video' | 'audio' | 'document' | 'sticker'; readonly mime: string | null; readonly sha256: string | null; readonly filename: string | null };
+export type Incoming = { readonly from: string; readonly wa_id: string; readonly at: string; readonly kind: 'text' | 'media' | 'other'; readonly body: string; readonly name: string | null; readonly media: IncomingMedia | null };
 export type StatusChange = { readonly wa_id: string; readonly status: 'SENT' | 'DELIVERED' | 'READ' | 'FAILED'; readonly at: string; readonly error: string | null };
 
 const STATUS: Readonly<Record<string, StatusChange['status']>> = { sent: 'SENT', delivered: 'DELIVERED', read: 'READ', failed: 'FAILED' };
@@ -185,10 +187,16 @@ export function readWebhook(raw: string): { incoming: Incoming[]; statuses: Stat
         const text = obj(o['text'])['body'];
         const caption = obj(o[type])['caption'];
         const kind: Incoming['kind'] = type === 'text' ? 'text' : MEDIA[type] !== undefined ? 'media' : 'other';
+        // PHASE 153f: a file Meta holds for us (a photo, video, voice note, document or sticker) can be fetched here.
+        const mo = obj(o[type]);
+        const str = (v: unknown, n: number): string | null => (typeof v === 'string' && v !== '' ? v.slice(0, n) : null);
+        const fileType = (['image', 'video', 'audio', 'document', 'sticker'] as const).find((t) => t === type);
+        const media: IncomingMedia | null = fileType !== undefined && typeof mo['id'] === 'string' && /^[A-Za-z0-9_.-]{1,200}$/.test(mo['id'])
+          ? { id: mo['id'], type: fileType, mime: str(mo['mime_type'], 100), sha256: str(mo['sha256'], 100), filename: str(mo['filename'], 200) } : null;
         const body = type === 'text' && typeof text === 'string' ? text.slice(0, MAX_WHATSAPP_TEXT)
-          : MEDIA[type] !== undefined ? `They sent ${MEDIA[type]} on WhatsApp.${typeof caption === 'string' && caption !== '' ? ` With it: ${caption.slice(0, 1000)}` : ''} Open WhatsApp to see it.`
+          : MEDIA[type] !== undefined ? `They sent ${MEDIA[type]} on WhatsApp.${typeof caption === 'string' && caption !== '' ? ` With it: ${caption.slice(0, 1000)}` : ''} ${media !== null ? 'Get it on their WhatsApp page.' : 'Open WhatsApp to see it.'}`
           : 'They sent a kind of WhatsApp message we cannot show here. Open WhatsApp to see it.';
-        incoming.push({ from, wa_id: id, at: when(o['timestamp']), kind, body, name: names.get(from) ?? null });
+        incoming.push({ from, wa_id: id, at: when(o['timestamp']), kind, body, name: names.get(from) ?? null, media });
       }
       for (const s of arr(v['statuses'])) {
         const o = obj(s);
@@ -202,6 +210,48 @@ export function readWebhook(raw: string): { incoming: Incoming[]; statuses: Stat
     }
   }
   return { incoming, statuses };
+}
+
+export const WHATSAPP_MEDIA_SERVICE = 'WHATSAPP_MEDIA';
+/** Our own limit on one attachment fetched from Meta. */
+export const MAX_MEDIA_BYTES = 16 * 1024 * 1024;
+
+export type FetchedMedia = { readonly state: 'FETCHED'; readonly bytes: Buffer; readonly mime: string; readonly sha256: string }
+  | { readonly state: 'NOT_FETCHED'; readonly why: string };
+
+/**
+ * PHASE 153f, 4 October 2026 — FETCH A FILE SOMEONE SENT US (developers.facebook.com, WhatsApp Cloud API, "Media",
+ * read 4 Oct 2026). Two calls, both with our token: GET /v25.0/{media-id} answers the file's address on Meta's file host
+ * (lookaside.fbsbx.com, valid for a few minutes), its type, size and SHA-256; then GET that address answers the bytes.
+ * Refused, in words, when WhatsApp is not on here, when the address is not Meta's file host, when it is larger than
+ * 16 MB, or when the bytes do not match Meta's SHA-256. Never throws; nothing is kept here (the caller seals it).
+ */
+export async function fetchWhatsAppMedia(d: WhatsAppDeps, media_id: string): Promise<FetchedMedia> {
+  const missing = whatsappMissing(d.secrets, d.policy_override, { outside: d.transport, ...(d.env === undefined ? {} : { env: d.env }) });
+  if (missing.length > 0) return { state: 'NOT_FETCHED', why: missing.join(' ') };
+  if (!/^[A-Za-z0-9_.-]{1,200}$/.test(media_id)) return { state: 'NOT_FETCHED', why: 'That is not a WhatsApp file.' };
+  const deps = { audit: d.audit, now: d.now, transport: d.transport, ...(d.policy_override === undefined ? {} : { policy_override: d.policy_override }) };
+  const auth = { authorization: `Bearer ${key(d.secrets, 'WHATSAPP_ACCESS_TOKEN')}` };
+  const gate = { free_gate_open: false, engagement_signed: false, switched_on: true } as const;
+  const info = await callOutside(deps, { service_id: WHATSAPP_SERVICE, endpoint: `/${GRAPH_VERSION}/{media_id}`, params: { media_id }, method: 'GET',
+    headers: auth, actor_id: null, actor_role: null, claim_id: null, gate });
+  if (info.outcome !== 'OK' || info.body === null) return { state: 'NOT_FETCHED', why: `WhatsApp did not give us the file (${info.why}). Meta keeps a file for about 30 days.` };
+  let j: { url?: unknown; mime_type?: unknown; sha256?: unknown; file_size?: unknown } = {};
+  try { j = JSON.parse(info.body) as typeof j; } catch { /* read below */ }
+  let where: URL;
+  try { where = new URL(typeof j.url === 'string' ? j.url : ''); } catch { return { state: 'NOT_FETCHED', why: 'WhatsApp’s answer did not carry the file’s address.' }; }
+  if (where.protocol !== 'https:' || where.host !== 'lookaside.fbsbx.com') return { state: 'NOT_FETCHED', why: 'WhatsApp gave an address that is not Meta’s file host, so we did not go there.' };
+  if (typeof j.file_size === 'number' && j.file_size > MAX_MEDIA_BYTES) return { state: 'NOT_FETCHED', why: 'The file is larger than 16 MB, so we did not fetch it. Open it in WhatsApp.' };
+  const query: Record<string, string> = {};
+  where.searchParams.forEach((v, k) => { query[k] = v; });
+  const got = await callOutside(deps, { service_id: WHATSAPP_MEDIA_SERVICE, endpoint: where.pathname, query, method: 'GET', headers: auth, as_bytes: true,
+    actor_id: null, actor_role: null, claim_id: null, gate });
+  if (got.outcome === 'TOO_LARGE') return { state: 'NOT_FETCHED', why: 'The file is larger than 16 MB, so we did not keep it. Open it in WhatsApp.' };
+  if (got.outcome !== 'OK' || got.bytes === undefined) return { state: 'NOT_FETCHED', why: `Meta did not give us the file (${got.why}). Try again: its address lasts only a few minutes.` };
+  const sha = createHash('sha256').update(got.bytes).digest('hex');
+  if (typeof j.sha256 === 'string' && j.sha256 !== '' && j.sha256.toLowerCase() !== sha) return { state: 'NOT_FETCHED', why: 'The file we got does not match what WhatsApp said it sent, so we did not keep it.' };
+  const mime = typeof j.mime_type === 'string' && /^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(j.mime_type.split(';')[0]!.trim()) ? j.mime_type.split(';')[0]!.trim().toLowerCase() : 'application/octet-stream';
+  return { state: 'FETCHED', bytes: got.bytes, mime, sha256: sha };
 }
 
 /** For the start-up log: whether WhatsApp can send, and if not why. Names only. */

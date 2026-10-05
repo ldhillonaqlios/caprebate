@@ -68,22 +68,23 @@ async function world() {
   return { made, db, admin, deps, client, close: () => { made.server.close(); made.close(); } };
 }
 
-/** The website's assessment, as a person fills it in, up to the close. */
+/** The website's assessment, as a person fills it in, up to the close. PHASE 153f: through the four-stage funnel (the six
+ *  old screens are retired); the close is the reach form under the figure. */
 async function toTheClose(c: ReturnType<Awaited<ReturnType<typeof world>>['client']>) {
   await c.req('/assessment');
-  await c.post('/assessment/Q1', { own_prior_claim: 'no' });
-  await c.post('/assessment/Q1a', { previous_owner_claimed: 'dont_know' });
-  await c.post('/assessment/Q1b', { is_uk_taxpayer: 'yes', current_year_position: 'profitable' });
-  await c.post('/assessment/Q1c', { trigger_default: 'purchase' });
-  await c.post('/assessment/Q2', { p0_address: 'Invented House, ZZ9 9ZZ', p0_sector: 'care_homes', p0_trigger: 'purchase', p0_spend: '2400000', p0_date: '06/2021' });
-  await c.post('/assessment/Q3', { p0_works: 'no' });
-  await c.req('/assessment/figure');
-  const page = await c.req('/assessment/close');
+  await c.post('/assessment/buildings', { b0_sector: 'care_homes' });
+  await c.post('/assessment/spend-on', { b0_trigger: 'purchase' });
+  await c.post('/assessment/amounts', { b0_spend: '2400000', b0_date: '06/2021' });
+  await c.post('/assessment/tax', { b0_tax: 'yes', b0_profit: 'profitable' });
+  await c.post('/assessment/claims', { b0_prior: 'no', b0_seller: 'dont_know' });
+  await c.post('/assessment/works', { b0_works: 'no' });
+  await c.post('/assessment/details', { b0_business: 'Invented Care Limited', b0_entity: 'ltd', b0_line1: 'Invented House', b0_postcode: 'ZZ9 9ZZ' });
+  const page = await c.req('/assessment/figure');
   assert.equal(page.status, 200);
   return page.body;
 }
-const closeWith = (channel: string, contact_value: string) => ({
-  full_name: 'Invented Person', business_name: 'Invented Care Limited', job_role: 'owner', channel, contact_value, contact_consent: 'on',
+const closeWith = (channel: 'email' | 'phone', value: string) => ({
+  first_name: 'Invented', surname: 'Person', job_role: 'owner_director', channel, [channel === 'phone' ? 'phone' : 'email']: value, contact_consent: 'on',
 });
 const count = (db: Awaited<ReturnType<typeof world>>['db'], sql: string) => db.get<{ n: number }>(sql)?.n ?? 0;
 
@@ -103,7 +104,9 @@ describe('151e line 6 · 1 · the website cannot save a client without a way to 
       try {
         const c = w.client();
         const form = await toTheClose(c);
-        assert.match(form, /name="contact_value" required/, 'the box is not marked as needed');
+        // PHASE 153f: the four-stage close asks for the telephone number or the email address in its own box, by channel.
+        assert.match(form, /name="phone" type="tel"/, 'no box for a telephone number');
+        assert.match(form, /name="email" type="email"/, 'no box for an email address');
         const before = count(w.db, 'SELECT COUNT(*) AS n FROM businesses');
         const r = await c.post('/assessment/close', closeWith(channel, value));
         assert.equal(r.status, 400, r.body.slice(0, 200));

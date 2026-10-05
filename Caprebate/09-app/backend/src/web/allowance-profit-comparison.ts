@@ -67,7 +67,7 @@
 
 import type { Db } from '../db.ts';
 import {
-  estimate, feeDisplay, BENEFIT,
+  estimate, feeDisplay, BENEFIT, clientVatFromWorks,
   type SectorId, type Session, type BenefitContext, type EngineResult,
 } from './engine.ts';
 import { funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
@@ -228,6 +228,9 @@ function benefitOf(result: EngineResult | null, session: Session, basis: Benefit
     is_company: s['claimant_type'] === 'company',
     profits: basis.profits ?? null,
     first_year: reliefs(s, dom),
+    /* PHASE 153b (Word question 226): what the works-VAT answer tells us about VAT on our fee — not known unless the
+       same business, unchanged, answered "reclaimed in full" or "exempt". Counts for nothing while we are not VAT-registered. */
+    client_vat: clientVatFromWorks(s),
   } as unknown as BenefitContext;
   const c = feeDisplay(allowances ?? null, basis.tax_rate ?? null, ctx).comparison;
   const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);

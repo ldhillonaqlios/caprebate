@@ -29,6 +29,9 @@ const TABLE: readonly (readonly [RegExp, PlainNeed])[] = [
   [/ is received — /, { words: 'A required document from the client', fix: { href: '#claim-documents', label: 'Request a document' } }],
   [/^The surveyor’s commitment is recorded/, { words: 'The surveyor’s figures', fix: { href: '#add-task', label: 'Ask the surveyor' } }],
   [/^Every grant or contribution traced/, { words: 'Trace every grant to the costs it paid for', fix: { href: '#claim-facts', label: 'Record the fact' } }],
+  // Phase 153a (src/web/grant-checks.ts): the grant papers or the tax adviser's view; the client's check with the payer.
+  [/^No grant is split in equal share/, { words: 'The grant papers, or the tax adviser’s view on splitting a grant', fix: { href: '#claim-grants', label: 'Open the grants' } }],
+  [/^The client has checked with whoever paid/, { words: 'The client’s confirmation that they checked with whoever paid the grant', fix: { href: '#claim-grants', label: 'Record it' } }],
   [/^Valuation signed by the surveyor/, { words: 'The surveyor’s signed valuation', fix: { href: '#add-task', label: 'Ask the surveyor' } }],
   [/^The tax adviser’s sign-off is on record/, { words: 'The tax adviser’s sign-off', fix: { href: '#claim-figures', label: 'Record the sign-off' } }],
   [/^The client report is issued/, { words: 'Issue the client report', fix: { href: '#claim-deliverables', label: 'Open the reports' } }],

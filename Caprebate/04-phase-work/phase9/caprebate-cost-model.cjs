@@ -83,6 +83,11 @@ const CB_P9_GATES = {
      alternatives: both on refuses with E_GATE_CONFLICT. */
   leg_e2_oncosts_by_price_source: false,
 
+  /* PHASE 153e (4 October 2026, Word question 136): preliminaries by JOB SIZE, from a PLACEHOLDER banded table
+     (PRELIMS_BANDS_PLACEHOLDER), wherever the flat 18% default would be used. A job with no stated size refuses (N4).
+     Off as shipped; on in TEST_SYSTEM_GATES with the by-source rule, for the surveyor to set the bands. */
+  leg_e2_prelims_banded_by_job_size: false,
+
   /* LEG-E3 (12804380489) - replace the flat 15% professional fee uplift with
      the VOA banded fee scale. BLOCKED on the VOA licence. Genuinely so. */
   leg_e3_voa_fee_scale: false,
@@ -688,6 +693,33 @@ function resolvePriceSource(priceSource, opts, gateName) {
 const COST_BASIS = { RESIDUAL: "residual_replacement_cost", INVOICE: "invoice_cost_package" };
 
 const SPEC_PRELIMS_DEFAULT = 0.18;   /* spec 4.2. No source cited - register R-B9. */
+
+/* PHASE 153e, 4 October 2026 (Word question 136, the surveyor's). The answer typed under the question: "The percentage
+   should not be fixed at 18% for every job; it should reflect project size…". PLACEHOLDER BANDS, by the job's
+   construction cost in pounds before preliminaries: [floor, ceiling, rate], ceiling null = open top. Not calibrated:
+   the surveyor sets them. */
+const PRELIMS_BANDS_PLACEHOLDER = Object.freeze({
+  status: "PLACEHOLDER - not calibrated; for the surveyor to set (Word question 136)",
+  bands: Object.freeze([
+    Object.freeze([0, 250000, 0.18]),
+    Object.freeze([250000, 1000000, 0.15]),
+    Object.freeze([1000000, 5000000, 0.12]),
+    Object.freeze([5000000, null, 0.10])
+  ])
+});
+
+/** The rate used where no rate is stated: the flat 18%, or (gate on) the job-size band. */
+function defaultPrelimsRate(input, opts) {
+  if (!gateOn("leg_e2_prelims_banded_by_job_size", opts)) return SPEC_PRELIMS_DEFAULT;
+  const size = input && input.job_size_pounds;
+  if (typeof size !== "number" || !isFinite(size) || size < 0) {
+    fail("E_JOB_SIZE_REQUIRED",
+      "leg_e2_prelims_banded_by_job_size is on, so the preliminaries rate is read from the job's size, and " +
+      "job_size_pounds was not given. It is never defaulted (N4).", { given: size });
+  }
+  const band = PRELIMS_BANDS_PLACEHOLDER.bands.find(b => size >= b[0] && (b[1] === null || size < b[1]));
+  return band[2];
+}
 const SPEC_FEES_DEFAULT    = 0.15;   /* spec 4.2. No source cited - register R-B9. */
 
 function prelimsFactor(input, opts) {
@@ -706,7 +738,7 @@ function prelimsFactor(input, opts) {
   /* The invoice path is untouched by LEG-E2 whatever the gate says. */
   if (basis === COST_BASIS.INVOICE) {
     const rate = (input.prelims_rate === undefined || input.prelims_rate === null)
-      ? SPEC_PRELIMS_DEFAULT : input.prelims_rate;
+      ? defaultPrelimsRate(input, opts) : input.prelims_rate;
     return {
       factor: 1 + rate,
       rate: rate,
@@ -754,7 +786,7 @@ function prelimsFactor(input, opts) {
     }
     if (includes === false) {
       const rate = (input.prelims_rate === undefined || input.prelims_rate === null)
-        ? SPEC_PRELIMS_DEFAULT : input.prelims_rate;
+        ? defaultPrelimsRate(input, opts) : input.prelims_rate;
       return {
         factor: 1 + rate,
         rate: rate,
@@ -783,7 +815,7 @@ function prelimsFactor(input, opts) {
 
   if (!dropOn) {
     const rate = (input.prelims_rate === undefined || input.prelims_rate === null)
-      ? SPEC_PRELIMS_DEFAULT : input.prelims_rate;
+      ? defaultPrelimsRate(input, opts) : input.prelims_rate;
     return {
       factor: 1 + rate,
       rate: rate,
@@ -1835,11 +1867,18 @@ function residualApportionment(input, opts) {
      with that gate off it is carried and ignored. */
   const prelims = prelimsFactor(
     { cost_basis: costBasis, prelims_rate: input.prelims_rate,
-      price_source: input.price_source }, opts);
+      price_source: input.price_source, job_size_pounds: input.job_size_pounds }, opts);
   flags.push.apply(flags, prelims.flags);
 
-  const index = (input.index_factor === undefined || input.index_factor === null)
-    ? 1 : input.index_factor;
+  /* PHASE 153e (Word question 147): the index factor can be worked out from an index table and two dates
+     (input.index_dates = { purchase, valuation }) instead of being typed. Both at once refuses. */
+  const hasDates = input.index_dates !== undefined && input.index_dates !== null;
+  if (hasDates && input.index_factor !== undefined && input.index_factor !== null) {
+    fail("E_INDEX_CONFLICT", "give index_factor or index_dates, not both", {});
+  }
+  const index = hasDates
+    ? indexFactorFromTable(requireTable(opts, "CB_BCIS_INDEX", "index_dates"), input.index_dates.purchase, input.index_dates.valuation).factor
+    : (input.index_factor === undefined || input.index_factor === null) ? 1 : input.index_factor;
   if (typeof index !== "number" || !isFinite(index) || index <= 0) {
     fail("E_INDEX_INVALID", "index_factor must be a positive number", { given: index });
   }
@@ -2087,9 +2126,204 @@ function residualApportionment(input, opts) {
   };
 }
 
+/* ============================================================================
+   PHASE 153e, 4 October 2026 — FOUR OF THE SURVEYOR'S QUESTIONS, BUILT ON OUR RECOMMENDATION, IN THIS MODEL'S OWN
+   TEST SYSTEM (its suites, and TEST_SYSTEM_GATES / TEST_SYSTEM_TABLES below). NOTE WHICH TEST SYSTEM: the back end's
+   survey pack (09-app/backend/src/web/pack-sums.ts) does not call this model at all, so none of this reaches the test
+   website until the pack is wired to it. That wiring has no phase yet; it is written into the sweep (Phase 157).
+   ============================================================================ */
+
+/* Question 147: which index turns today's rebuild cost back to the purchase date. Lakhbir: "BCIS is the guide we will
+   use". BCIS is not bought (Word question 218), so the real table is an EMPTY STUB, and a PLACEHOLDER table with
+   INVENTED points stands in for the test system. Never extrapolated: a date outside the table refuses. */
+const CB_BCIS_INDEX = Object.freeze({
+  loaded: false,
+  source: "BCIS building price index - NOT BOUGHT (Word question 218); empty until it is",
+  licence: "BCIS (RICS) - not held",
+  verified_at: null,
+  points: Object.freeze([])
+});
+/* Registered with the other tables here, after its definition: an empty stub, like them, until BCIS is bought. */
+CB_P9_TABLES.CB_BCIS_INDEX = CB_BCIS_INDEX;
+const CB_BCIS_INDEX_PLACEHOLDER = Object.freeze({
+  loaded: true,
+  source: "PLACEHOLDER - INVENTED POINTS, NOT BCIS DATA. For the test system only (Phase 153e).",
+  licence: "none - invented",
+  points: Object.freeze([
+    ["2018-01", 300], ["2019-01", 309], ["2020-01", 315], ["2021-01", 322],
+    ["2022-01", 350], ["2023-01", 372], ["2024-01", 380], ["2025-01", 388], ["2026-01", 396]
+  ].map(p => Object.freeze(p)))
+});
+
+/* PHASE 155 (line 4), 4 October 2026 — THE REAL INDEX, FROM A FILE LAKHBIR DOWNLOADS. BCIS publishes no API licence
+   and the product is not bought (Word question 218), so nothing here calls BCIS. Once it is bought, Lakhbir downloads
+   the index series from BCIS as a spreadsheet saved as CSV, and `parseIndexTable` turns it into a table of exactly
+   CB_BCIS_INDEX's shape. The back end keeps it OUTSIDE the repository (09-app/backend/src/web/bcis-index.ts, the
+   command `import-bcis-index`): BCIS's licence (BCIS_COMMERCIAL in the source register) lets named users use the rates
+   and does not let the table be reproduced, so it is never committed and never published.
+   WHAT IT READS: two columns per row - a period and an index figure. A period is a month (2024-01, 2024-01-31,
+   "Jan 2024", "January 2024") or a quarter ("1Q 2024", "Q1 2024", "2024 Q1", taken as its first month). A row whose
+   figure is not a number (a heading, a note, a blank) is passed over and counted. REFUSED WHOLE, never guessed (N4):
+   a period that cannot be read, a figure of nil or less, the same period twice, or fewer than two points. */
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+function indexPeriod(raw) {
+  const t = String(raw || "").trim().replace(/^"|"$/g, "").trim();
+  let m;
+  if ((m = /^(\d{4})-(\d{2})(?:-\d{2})?$/.exec(t))) return +m[2] >= 1 && +m[2] <= 12 ? m[1] + "-" + m[2] : null;
+  if ((m = /^([A-Za-z]{3,9})\.?\s+(\d{4})$/.exec(t))) {
+    const i = MONTHS.indexOf(m[1].slice(0, 3).toLowerCase());
+    return i < 0 ? null : m[2] + "-" + String(i + 1).padStart(2, "0");
+  }
+  if ((m = /^(?:([1-4])\s*Q|Q\s*([1-4]))\s*(\d{4})$/i.exec(t)) || (m = /^(\d{4})\s*Q\s*([1-4])$/i.exec(t))) {
+    const q = m.length === 4 ? +(m[1] || m[2]) : +m[2];
+    const year = m.length === 4 ? m[3] : m[1];
+    return year + "-" + String((q - 1) * 3 + 1).padStart(2, "0");
+  }
+  return null;
+}
+function parseIndexTable(text, meta) {
+  meta = meta || {};
+  const points = [];
+  const seen = new Set();
+  let passedOver = 0;
+  const rows = String(text || "").replace(/^\uFEFF/, "").split(/\r?\n/);
+  rows.forEach((line, n) => {
+    if (line.trim() === "") return;
+    const cells = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+    const figure = (cells[1] || "").replace(/,/g, "");
+    if (!/^-?\d+(\.\d+)?$/.test(figure)) { passedOver++; return; }
+    const period = indexPeriod(cells[0]);
+    if (period === null) fail("E_INDEX_FILE_PERIOD", "row " + (n + 1) + ": the period " + JSON.stringify(cells[0]) + " is not a month or a quarter this reads", { row: n + 1 });
+    const value = Number(figure);
+    if (!(value > 0)) fail("E_INDEX_FILE_FIGURE", "row " + (n + 1) + ": an index figure must be more than nil", { row: n + 1, value });
+    if (seen.has(period)) fail("E_INDEX_FILE_DUPLICATE", "the period " + period + " appears twice", { period });
+    seen.add(period);
+    points.push(Object.freeze([period, value]));
+  });
+  if (points.length < 2) fail("E_INDEX_FILE_TOO_SHORT", "an index table needs at least two points; this file has " + points.length, { points: points.length });
+  points.sort((a, b) => (a[0] < b[0] ? -1 : 1));
+  return Object.freeze({
+    table: Object.freeze({
+      loaded: true,
+      source: meta.source || "BCIS building price index, imported from a file",
+      licence: meta.licence || "BCIS (RICS) subscription - named users only; not for reports until BCIS confirms (BCIS_COMMERCIAL)",
+      verified_at: meta.verified_at || null,
+      points: Object.freeze(points)
+    }),
+    passed_over: passedOver
+  });
+}
+
+/** The factor that turns a cost priced at the valuation date back to the purchase date: index(purchase) / index(valuation). */
+function indexFactorFromTable(table, purchase, valuation) {
+  const iso = /^\d{4}-\d{2}(-\d{2})?$/;
+  if (typeof purchase !== "string" || !iso.test(purchase) || typeof valuation !== "string" || !iso.test(valuation)) {
+    fail("E_INDEX_DATES_REQUIRED", "index_dates needs purchase and valuation dates, like 2021-06-30", { purchase, valuation });
+  }
+  const at = (date) => {
+    const month = date.slice(0, 7);
+    const pts = table.points;
+    if (!pts.length || month < pts[0][0] || month > pts[pts.length - 1][0].slice(0, 4) + "-12") {
+      fail("E_INDEX_DATE_OUTSIDE_TABLE", "the date " + date + " is outside the index table; it is never extrapolated",
+        { date, from: pts.length ? pts[0][0] : null, to: pts.length ? pts[pts.length - 1][0] : null });
+    }
+    let v = null;
+    for (const p of pts) { if (p[0] <= month) v = p[1]; }
+    return v;
+  };
+  const ip = at(purchase), iv = at(valuation);
+  return { factor: ip / iv, index_at_purchase: ip, index_at_valuation: iv, source: table.source };
+}
+
+/* Question 137: an insurance rebuild figure is support only after a like-for-like adjustment. The answer typed under
+   the question: adjust both to the same valuation date and the same scope - demolition, professional fees,
+   preliminaries - and "do not describe an insurance valuation as independent support until this like-for-like
+   reconciliation has been completed". The 10% limit is a TEST DEFAULT for the surveyor to confirm. NEVER
+   "CORROBORATES": the result is SUPPORTS, DOES_NOT_SUPPORT or NOT_COMPARABLE. A basis not known on either side is
+   NOT_COMPARABLE (N4): an unknown never lets a figure support ours. */
+const INSURANCE_SUPPORT_LIMIT_TEST = 0.10;
+
+function insuranceCrossCheck(input, opts) {
+  const ours = input && input.ours, ins = input && input.insurance;
+  const add = (input && input.adjustments) || {};
+  const pos = (x) => typeof x === "number" && isFinite(x) && x > 0;
+  if (!ours || !ins || !pos(ours.amount) || !pos(ins.amount)) {
+    fail("E_INSURANCE_INPUTS_REQUIRED", "both our rebuild cost and the insurance figure are needed", {});
+  }
+  const steps = [];
+  let insAmount = ins.amount;
+  if (ours.date !== ins.date) {
+    if (!ours.date || !ins.date) {
+      return { verdict: "NOT_COMPARABLE", gap: null, limit: INSURANCE_SUPPORT_LIMIT_TEST, steps,
+        why: "the date of one figure is not known, so they cannot be brought to the same date" };
+    }
+    const f = indexFactorFromTable(requireTable(opts, "CB_BCIS_INDEX", "insurance cross-check"), ours.date, ins.date);
+    insAmount = insAmount * f.factor;
+    steps.push("insurance figure brought from " + ins.date + " to " + ours.date + " (index factor " + f.factor.toFixed(4) + ")");
+  }
+  let ourAmount = ours.amount;
+  for (const item of ["demolition", "fees", "prelims"]) {
+    const a = ours.includes && ours.includes[item], b = ins.includes && ins.includes[item];
+    if (a !== true && a !== false || b !== true && b !== false) {
+      return { verdict: "NOT_COMPARABLE", gap: null, limit: INSURANCE_SUPPORT_LIMIT_TEST, steps,
+        why: "whether " + item + " is included is not known for " + (a !== true && a !== false ? "our figure" : "the insurance figure") };
+    }
+    if (a === b) continue;
+    const rate = item === "demolition" ? null : add[item + "_rate"];
+    const amount = item === "demolition" ? add.demolition_amount : null;
+    if (item === "demolition" ? !(typeof amount === "number" && amount >= 0) : !(typeof rate === "number" && rate >= 0)) {
+      return { verdict: "NOT_COMPARABLE", gap: null, limit: INSURANCE_SUPPORT_LIMIT_TEST, steps,
+        why: item + " is in one figure and not the other, and the adjustment for it was not given" };
+    }
+    if (a) { insAmount = item === "demolition" ? insAmount + amount : insAmount * (1 + rate); steps.push(item + " added to the insurance figure"); }
+    else { ourAmount = item === "demolition" ? ourAmount + amount : ourAmount * (1 + rate); steps.push(item + " added to our figure"); }
+  }
+  const gap = Math.abs(ourAmount - insAmount) / insAmount;
+  return {
+    verdict: gap <= INSURANCE_SUPPORT_LIMIT_TEST ? "SUPPORTS" : "DOES_NOT_SUPPORT",
+    gap: Math.round(gap * 10000) / 10000, limit: INSURANCE_SUPPORT_LIMIT_TEST, steps,
+    ours_adjusted: ourAmount, insurance_adjusted: insAmount,
+    why: gap <= INSURANCE_SUPPORT_LIMIT_TEST
+      ? "within " + (INSURANCE_SUPPORT_LIMIT_TEST * 100) + "% after the like-for-like adjustment (a test limit, for the surveyor to confirm)"
+      : "more than " + (INSURANCE_SUPPORT_LIMIT_TEST * 100) + "% apart after the like-for-like adjustment: it does not back our figure up"
+  };
+}
+
+/* Question 139: a past claim passes only within BOTH a percentage and a pound limit on each money figure, and within
+   0.01 on the split multiplier. TEST DEFAULTS from the review (5%, £25,000, 0.01), for the surveyor and the
+   accountant to confirm. Returns every miss, named. */
+const PAST_CLAIM_LIMITS_TEST = Object.freeze({ pct: 0.05, pounds: 25000, split: 0.01 });
+
+function pastClaimWithin(expected, actual, limits) {
+  const L = limits || PAST_CLAIM_LIMITS_TEST;
+  const misses = [];
+  for (const k of Object.keys(expected.money || {})) {
+    const e = expected.money[k], a = actual.money && actual.money[k];
+    if (typeof a !== "number" || !isFinite(a)) { misses.push(k + ": no figure"); continue; }
+    const diff = Math.abs(a - e);
+    if (diff > L.pounds) misses.push(k + ": " + Math.round(diff) + " pounds apart, over " + L.pounds);
+    if (e !== 0 && diff / Math.abs(e) > L.pct) misses.push(k + ": " + (Math.round(diff / Math.abs(e) * 1000) / 10) + "% apart, over " + (L.pct * 100) + "%");
+  }
+  if (typeof expected.split === "number") {
+    const a = actual.split;
+    if (typeof a !== "number" || Math.abs(a - expected.split) > L.split) misses.push("split: " + a + " against " + expected.split + ", over " + L.split);
+  }
+  return { passes: misses.length === 0, misses };
+}
+
+/* The two settings the TEST SYSTEM runs with (questions 136 and 147): preliminaries by price source and by job size,
+   and the placeholder index table. Off everywhere else. */
+const TEST_SYSTEM_GATES = Object.freeze({ leg_e2_oncosts_by_price_source: true, leg_e2_prelims_banded_by_job_size: true });
+const TEST_SYSTEM_TABLES = Object.freeze({ CB_BCIS_INDEX: CB_BCIS_INDEX_PLACEHOLDER });
+
 /* --------------------------------------------------------------- exports -- */
 
 module.exports = {
+  PRELIMS_BANDS_PLACEHOLDER, defaultPrelimsRate,
+  CB_BCIS_INDEX, CB_BCIS_INDEX_PLACEHOLDER, indexFactorFromTable, parseIndexTable, indexPeriod,
+  INSURANCE_SUPPORT_LIMIT_TEST, insuranceCrossCheck,
+  PAST_CLAIM_LIMITS_TEST, pastClaimWithin,
+  TEST_SYSTEM_GATES, TEST_SYSTEM_TABLES,
   CostModelError,
   CB_P9_GATES,
   CB_P9_TABLES,

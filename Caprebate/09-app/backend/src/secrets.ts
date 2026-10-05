@@ -51,6 +51,8 @@ export type SecretOwner =
   | 'WHATSAPP'
   /** 30 Sep 2026: "Find my address" at the assessment (src/connectors/address-lookup.ts). */
   | 'GOADDRESS'
+  /** 2 Oct 2026: the building outlines for the report's site plan, from Ordnance Survey's free maps (src/connectors/os-buildings.ts). */
+  | 'OS_MAPS'
   /** 1 Oct 2026: the outside timer that wakes the website to read email replies (POST /hooks/read-replies). */
   | 'REPLY_TIMER';
 
@@ -142,6 +144,7 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'WHATSAPP_OPENING_TEMPLATE', owner: 'WHATSAPP', secret: false, phase: 'whatsapp', what: 'the name of our approved opening message template, with one {{1}} for the first name' },
   { name: 'WHATSAPP_TEMPLATE_LANGUAGE', owner: 'WHATSAPP', secret: false, phase: 'whatsapp', what: 'the language code of that template; en_GB if empty' },
   { name: 'GOADDRESS_API_KEY', owner: 'GOADDRESS', secret: true, phase: 'goaddress', what: 'the GoAddress API token, from its portal. It finds the addresses at a postcode.' },
+  { name: 'OS_DATA_HUB_API_KEY', owner: 'OS_MAPS', secret: true, phase: 'site-plan', what: 'the Ordnance Survey Data Hub project key (the free OS OpenData plan, with the OS Features API added). It fetches the building outlines for the report’s site plan.' },
   { name: 'REPLY_TIMER_TOKEN', owner: 'REPLY_TIMER', secret: true, phase: 'reply-timer', what: 'a long random word, 32 characters or more. Only the outside timer sends it. It wakes the website to read email replies.' },
 ]);
 

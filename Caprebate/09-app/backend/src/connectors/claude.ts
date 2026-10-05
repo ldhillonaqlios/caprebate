@@ -117,7 +117,21 @@ export type ClaudeContext = {
   readonly gate: GateSnapshot;
 };
 
-export type ReadState = 'READ' | 'SWITCHED_OFF' | 'NOT_CONFIGURED' | 'NOTHING_TO_SEND' | 'FAILED';
+export type ReadState = 'READ' | 'SWITCHED_OFF' | 'NOT_CONFIGURED' | 'NOTHING_TO_SEND' | 'FAILED' | 'KIND_NOT_ALLOWED';
+
+/**
+ * PHASE 153c, 4 October 2026 — WHICH KINDS OF DOCUMENT MAY HAVE THEIR SCANNED PAGES SENT WHOLE (Word question 193,
+ * Sadique's: "Can a scanned page be sent to the AI company whole, before we remove anyone's details?"). Built on our
+ * recommendation for him to check: only kinds that rarely hold anyone's personal details — a contractor's cost
+ * breakdown, an operation and maintenance manual, a building regulations completion certificate. EVERY OTHER KIND IS
+ * REFUSED, a fire risk assessment, a lease and planning papers among them, and so is a document whose kind is not
+ * known (N4). This narrows SCANNED_PAGES; it switches nothing on, and SCANNED_PAGES stays off.
+ */
+export const SCANNED_PAGE_KINDS: readonly string[] = Object.freeze(['CONTRACTOR_COST_BREAKDOWN', 'OM_MANUAL', 'BUILDING_REGS_COMPLETION']);
+
+export function scannedPagesAllowedFor(type_code: string | null | undefined): boolean {
+  return typeof type_code === 'string' && SCANNED_PAGE_KINDS.includes(type_code);
+}
 
 export type ModelRead = {
   readonly state: ReadState;
@@ -398,10 +412,15 @@ function writePagesRow(ctx: ClaudeContext, at: string, doc_id: string, pages: re
  * empty, the whole document is null.
  */
 export async function readScannedPages(
-  ctx: ClaudeContext, doc_id: string, images: readonly PageImage[],
+  ctx: ClaudeContext, doc_id: string, images: readonly PageImage[], type_code?: string | null,
 ): Promise<{ pages: ExtractedPage[] | null; state: ReadState; why: string }> {
   const at = ctx.deps.now();
   const numbers = images.map((i) => i.page);
+  // Phase 153c: the kind decides first. A kind not on the list never reaches the switch or the key.
+  if (!scannedPagesAllowedFor(type_code)) {
+    writePagesRow(ctx, at, doc_id, numbers, 'KIND_NOT_ALLOWED', null, null, 0);
+    return { pages: null, state: 'KIND_NOT_ALLOWED', why: 'nothing was sent: this kind of document is never sent to the reader as page pictures' };
+  }
   const ready = claudeReadiness('SCANNED_PAGES', ctx.secrets, ctx.switches);
   if (ready.state !== 'READY') {
     writePagesRow(ctx, at, doc_id, numbers, ready.state, null, null, 0);

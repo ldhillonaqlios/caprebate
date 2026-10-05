@@ -354,7 +354,8 @@
   "unblocks": "Sending the pack to the surveyor.",
   "stops_claude": false,
   "build_task": "",
-  "_src": "director"
+  "_src": "director",
+  "answered": "Answered by Lakhbir in chat, 1 Oct 2026: the drafts go to the surveyor pre-filled (the originals). In the Word document since 4 Oct 2026 (Phase 153e)."
  },
  {
   "n": 188,
@@ -541,7 +542,8 @@
   "unblocks": "Keeping client uploads, and the matching lines in the privacy notice and the retention schedule.",
   "stops_claude": false,
   "build_task": "Switch keeping uploads on in the test system only (invented files), with a test proving Sales cannot open another team's client file.",
-  "_src": "director"
+  "_src": "director",
+  "answered": "Answered by Lakhbir in chat, 2 Oct 2026, for survey photos and videos: \"Keep them, test only\" (7 years, encrypted). In the Word document 4 Oct 2026 (Phase 153f). Still for Sadique to approve before real clients."
  },
  {
   "n": 227,
@@ -575,7 +577,8 @@
   "unblocks": "Closing both test-website storage questions: identity check results that always arrive, and uploaded files that stay put.",
   "stops_claude": false,
   "build_task": "",
-  "_src": "director"
+  "_src": "director",
+  "answered": "Closed 4 Oct 2026 (Phase 153f): Turso works for every copy of the test website since 1 Oct 2026. In the Word document."
  },
  {
   "n": 231,
@@ -592,7 +595,8 @@
   "unblocks": "",
   "stops_claude": false,
   "build_task": "",
-  "_src": "director"
+  "_src": "director",
+  "answered": "Closed 4 Oct 2026 (Phase 153f): the private Blob store works. In the Word document."
  },
  {
   "n": 235,

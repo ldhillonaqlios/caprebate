@@ -38,6 +38,8 @@ import { authorise, can, type Actor, type Obj } from '../authz.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
 import { SOURCES as REGISTER_SOURCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
 import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type EngineWindow, type SectorId } from './engine.ts';
+import { TAXONOMY_SECTOR, taxonomy } from './pack-lines.ts';
+import type { PackGrant } from './pack-grants.ts';
 import {
   CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, claimObjFor, claimantTypeForGate, isCompanyOrRoleToken, propertyJurisdiction,
 } from './crm.ts';
@@ -140,6 +142,15 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
   /* Phase 151 — whether the sale contract and the CPSE replies must arrive (Word answer 47, question 220). Migration
      045 adds the key. */
   BOUGHT_THE_BUILDING: { label: 'The client bought the building, rather than built or refitted it', kind: 'choice', choices: YES_NO },
+  /* Phase 153a, 4 October 2026 (Phase 153b lines 12 and 13, with the same grant data). Migration 078 adds both keys.
+     Read by src/web/grant-checks.ts, the gate out of valuation. */
+  GRANT_PROVIDER_CHECKED: {
+    label: 'The client has checked with whoever paid the grant that claiming will not make them pay it back', kind: 'choice', choices: YES_NO,
+  },
+  GRANT_SPLIT_ADVISER_VIEW: {
+    label: 'The tax adviser has said how to split a grant with no breakdown. Only counts if the tax adviser told us',
+    kind: 'choice', choices: YES_NO,
+  },
 });
 
 /* ================================================================== *
@@ -439,14 +450,42 @@ type GrantRow = {
   id: string; kind: string; payer_class: string; amount_pence: number | null; amount_basis: string; traced: string;
   traced_elements: string | null; source_id: string; note: string | null; recorded_at: string; recorder: string | null;
   withdrawn_at: string | null; withdraw_reason: string | null;
+  /** Phase 153a: the fixture-list rows it paid for (migration 078), in the list's order. Empty: matched in words only, or not at all. */
+  element_ids: readonly string[];
 };
 
 function grantRows(db: Db, claim_id: string, activeOnly: boolean): GrantRow[] {
-  return db.all<GrantRow>(
+  const rows = db.all<Omit<GrantRow, 'element_ids'>>(
     'SELECT g.id, g.kind, g.payer_class, g.amount_pence, g.amount_basis, g.traced, g.traced_elements, g.source_id, g.note, ' +
       'g.recorded_at, u.display_name AS recorder, g.withdrawn_at, g.withdraw_reason FROM claim_grants g ' +
       'LEFT JOIN users u ON u.id = g.recorded_by WHERE g.claim_id = ? ORDER BY g.recorded_at ASC, g.rowid ASC',
     [claim_id]).filter((g) => !activeOnly || g.withdrawn_at === null);
+  const links = db.all<{ grant_id: string; element_id: string }>(
+    'SELECT e.grant_id, e.element_id FROM claim_grant_elements e JOIN claim_grants g ON g.id = e.grant_id WHERE g.claim_id = ?', [claim_id]);
+  const order = new Map(taxonomy().map((r, i) => [r['element_id'] ?? '', i] as const));
+  return rows.map((g) => ({
+    ...g,
+    element_ids: links.filter((l) => l.grant_id === g.id).map((l) => l.element_id)
+      .sort((a, b) => (order.get(a) ?? 1e9) - (order.get(b) ?? 1e9) || a.localeCompare(b)),
+  }));
+}
+
+/** A fixture-list row's name, in a sentence, with its id; an id the list does not hold is shown as itself. */
+export function elementName(element_id: string): string {
+  const r = taxonomy().find((x) => x['element_id'] === element_id);
+  if (r === undefined) return element_id;
+  const n = (r['element_name'] ?? '').trim();
+  return `${n.charAt(0).toUpperCase()}${n.slice(1)} (${element_id})`;
+}
+
+/**
+ * PHASE 153a — THE CLAIM'S GRANTS AS THE SURVEY PACK TAKES THEM (src/web/pack-grants.ts, chapter 15): every grant not
+ * withdrawn, with its payer class, its amount and the fixture-list rows it paid for.
+ */
+export function packGrantsFor(db: Db, claim_id: string): (PackGrant & { readonly kind: string; readonly traced: string })[] {
+  return grantRows(db, claim_id, true).map((g) => ({
+    id: g.id, kind: g.kind, traced: g.traced, payer_class: g.payer_class, amount_pence: g.amount_pence, element_ids: g.element_ids,
+  }));
 }
 
 /**
@@ -485,6 +524,8 @@ export type GrantLine = {
   /* PHASE 143, 22 September 2026 — the same row's stored keys, so the grants section can total and word it. Read only;
      nothing here is written, and the surveyor's released list never reaches this type. */
   readonly payer_key: string; readonly amount_pence: number | null; readonly traced_key: string; readonly note: string | null;
+  /** Phase 153a: the fixture-list rows it paid for, and their names. */
+  readonly element_ids: readonly string[]; readonly element_names: readonly string[];
 };
 
 export type OwnerLine = {
@@ -516,7 +557,11 @@ export type FactsPanel = {
     readonly resolved: { readonly met: boolean; readonly why: string };
     readonly prior_owner_chain: readonly OwnerLine[];
   };
-  readonly grants: { readonly exist: FactReading; readonly lines: readonly GrantLine[]; readonly traced: { readonly met: boolean; readonly why: string } };
+  readonly grants: {
+    readonly exist: FactReading; readonly lines: readonly GrantLine[]; readonly traced: { readonly met: boolean; readonly why: string };
+    /* Phase 153a: the two grant facts the valuation gate reads (src/web/grant-checks.ts), and the switch the pack reads. */
+    readonly provider_checked: FactReading; readonly split_view: FactReading; readonly switch: SwitchLine;
+  };
   readonly acquisition_costs: { readonly costs: FactReading; readonly transaction_tax: FactReading; readonly switch: SwitchLine };
   readonly buyer_alterations: { readonly made: FactReading; readonly amount: FactReading; readonly switch: SwitchLine };
   readonly may_record: boolean;
@@ -578,8 +623,13 @@ export function factsPanel(db: Db, actor: Actor, claim_id: string, todayIso: str
         source: registerSource(g.source_id, false, `record ${g.id}`, g.recorded_at, g.recorder ?? 'a former user'),
         withdrawn: g.withdrawn_at === null ? null : `withdrawn ${localStamp(g.withdrawn_at)} — ${g.withdraw_reason ?? ''}`,
         payer_key: g.payer_class, amount_pence: g.amount_pence, traced_key: g.traced, note: g.note,
+        element_ids: g.element_ids, element_names: g.element_ids.map(elementName),
       })),
       traced: grantsTraced(db, c.id),
+      provider_checked: captured(f, 'GRANT_PROVIDER_CHECKED'),
+      split_view: captured(f, 'GRANT_SPLIT_ADVISER_VIEW'),
+      switch: switchLine('grant_traced_to_elements',
+        'Off. In the survey pack every grant comes off every item in equal share — a share of the price paid. Switched on, a grant matched to rows of our fixture list would come off only those items. First the tax adviser must answer this. "When a grant’s papers say which items it paid for, should it come off only those items?"'),
     },
     acquisition_costs: {
       costs: captured(f, 'ACQUISITION_COSTS'), transaction_tax: captured(f, 'TRANSACTION_TAX'),
@@ -732,11 +782,38 @@ export const PUBLIC_PAYERS: readonly string[] = Object.freeze(['nhs', 'local_aut
  * PHASE 143 — the step-by-step "Add a grant" pages draw nothing a login may not record. The same authorisation
  * recordGrant runs, asked before a step is drawn; the company's name is for the heading (the client is the company).
  */
-export function grantFormClaim(db: Db, actor: Actor, claim_id: string): { readonly id: string; readonly business_id: string; readonly company: string } {
+export function grantFormClaim(db: Db, actor: Actor, claim_id: string): { readonly id: string; readonly business_id: string; readonly company: string; readonly sector: string | null } {
   const c = loadFactClaim(db, claim_id);
   authorise(actor, 'claim_facts.record', factsObj(db, c));
-  const b = db.get<{ name: string }>('SELECT name FROM businesses WHERE id = ?', [c.business_id]);
-  return { id: c.id, business_id: c.business_id, company: b?.name ?? 'This company' };
+  const b = db.get<{ name: string; sector: string | null }>('SELECT name, sector FROM businesses WHERE id = ?', [c.business_id]);
+  // Phase 153a: the sector, so the step that matches a grant offers that sector's rows of the fixture list.
+  return { id: c.id, business_id: c.business_id, company: b?.name ?? 'This company', sector: b?.sector ?? null };
+}
+
+/**
+ * PHASE 153a — the fixture-list rows a grant may be matched to on this claim: the sector's own and the rows every sector
+ * shares, in the list's order, with their names. Every row, whatever its pool: a grant that paid only for items that
+ * never qualify is matched to those, and then takes nothing off (Word question 79). A sector the list does not know
+ * is offered the shared rows.
+ */
+export function grantElementChoices(sector: string | null): readonly { readonly id: string; readonly name: string; readonly pool: string }[] {
+  const code = sector === null ? undefined : TAXONOMY_SECTOR[sector];
+  return taxonomy().filter((r) => r['sector'] === 'ALL' || (code !== undefined && r['sector'] === code))
+    .map((r) => ({ id: r['element_id'] ?? '', name: elementName(r['element_id'] ?? ''), pool: r['pool'] ?? '' }));
+}
+
+/**
+ * PHASE 153a — the fixture-list rows a grant paid for, as posted: ids separated by commas, spaces or new lines. Every id
+ * must be a row of 02-modules-and-build-prep/Caprebate-Fixture-Taxonomy-v1.csv; repeats are taken once; at most 60.
+ */
+export function parseElementIds(raw: string | null): { ok: true; value: string[] } | { ok: false; why: string } {
+  const parts = (raw ?? '').split(/[\s,]+/).map((x) => x.trim()).filter((x) => x !== '');
+  const unique = [...new Set(parts)];
+  if (unique.length > 60) return { ok: false, why: 'Choose at most 60 items from our list.' };
+  const known = new Set(taxonomy().map((r) => r['element_id'] ?? ''));
+  const bad = unique.filter((x) => !known.has(x));
+  if (bad.length > 0) return { ok: false, why: `${bad.length === 1 ? 'One item is' : `${String(bad.length)} items are`} not on our fixture list. Choose from the list.` };
+  return { ok: true, value: unique };
 }
 
 /** RECORD A GRANT OR CONTRIBUTION. A payer class, never a name; traced only with the elements written. */
@@ -755,6 +832,15 @@ export function recordGrant(d: FactDeps, actor: Actor, claim_id: string, input: 
   if (!has(TRACED, traced)) return { ok: false, field: 'traced', why: 'Say if it is matched to the items it paid for — yes, no or not sure.' };
   const elements = text(input['traced_elements'], 4000, 'The list of items it paid for');
   if (!elements.ok) return elements;
+  // PHASE 153a: the fixture-list rows it paid for (migration 078), each checked against the list itself. Matched to rows
+  // only when it is marked matched; the words then default to the rows' names, so a reader never sees a bare code.
+  const ids = parseElementIds(input['element_ids'] ?? null);
+  if (!ids.ok) return { ok: false, field: 'element_ids', why: ids.why };
+  if (ids.value.length > 0 && traced !== 'YES') return { ok: false, field: 'traced', why: 'You chose items from our list, so mark it matched — or clear the items.' };
+  if (traced === 'YES' && elements.value === null && ids.value.length > 0) {
+    const named = ids.value.map(elementName).join('; ');
+    elements.value = named.length <= 4000 ? named : `${named.slice(0, 3997)}...`;
+  }
   if (traced === 'YES' && elements.value === null) return { ok: false, field: 'traced_elements', why: 'To mark it matched, first write the items it paid for. Never take a share of everything.' };
   const source = input['source_id'] ?? null;
   if (!has(CAPTURE_SOURCES, source)) return { ok: false, field: 'source_id', why: 'Say where this came from.' };
@@ -762,14 +848,17 @@ export function recordGrant(d: FactDeps, actor: Actor, claim_id: string, input: 
   if (!note.ok) return note;
   const id = d.newId();
   const at = d.now();
-  d.db.run(
-    'INSERT INTO claim_grants (id, claim_id, kind, payer_class, amount_pence, amount_basis, traced, traced_elements, source_id, note, recorded_by, recorded_at) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, c.id, kind, payer, amount, basis, traced, elements.value, source, note.value, actor.id, at],
-  );
-  d.audit.append({
-    at, kind: 'CLAIM_GRANT_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
-    object_type: 'claim', object_id: c.id, detail: { grant: id, grant_kind: kind, traced, business: c.business_id },
+  d.db.tx(() => {
+    d.db.run(
+      'INSERT INTO claim_grants (id, claim_id, kind, payer_class, amount_pence, amount_basis, traced, traced_elements, source_id, note, recorded_by, recorded_at) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, c.id, kind, payer, amount, basis, traced, elements.value, source, note.value, actor.id, at],
+    );
+    for (const e of ids.value) d.db.run('INSERT INTO claim_grant_elements (grant_id, element_id) VALUES (?, ?)', [id, e]);
+    d.audit.append({
+      at, kind: 'CLAIM_GRANT_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+      object_type: 'claim', object_id: c.id, detail: { grant: id, grant_kind: kind, traced, business: c.business_id, items: ids.value.length },
+    });
   });
   return { ok: true, id };
 }

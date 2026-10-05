@@ -254,6 +254,10 @@ function runChecks(tree) {
        JSON.stringify(Object.keys(T.PARAMS)));
     const blocked = PLAN_NEVER_SEND.map(probeOf).filter(p => !T.NEVER_SEND.some(re => re.test(p)));
     const fresh = () => loadWrapper(tree.site);
+    /* Phase 153c (Word question 208): the four labels for the first screens are on step_id's list. */
+    is("B2d", "step_id carries the four first-screen labels: prior_claim, prior_owner_claim, entity, trigger",
+       ["prior_claim", "prior_owner_claim", "entity", "trigger"].every(v => T.PARAMS.step_id && (T.PARAMS.step_id.oneOf || []).indexOf(v) !== -1),
+       JSON.stringify(T.PARAMS.step_id));
     is("B2c", "its never-send list blocks every 5.4 name and wildcard", blocked.length === 0 && PLAN_NEVER_SEND.length === T.NEVER_SEND.length,
        "not blocked: " + blocked.join(", ") + " (" + T.NEVER_SEND.length + " patterns)");
 

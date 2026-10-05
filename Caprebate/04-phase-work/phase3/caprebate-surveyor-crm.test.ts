@@ -10,7 +10,7 @@ import {
   RATE_FIELDS, CALIBRATION_ORIGIN, MIN_N_FOR_RATE, ADOPTION_GOOD, BIAS_THRESHOLD,
   // Phase 52 — the calibration instrument (item 12830166861)
   drift, DRIFT_COHORT_SIZE, DRIFT_THRESHOLD,
-  isBlankControl, ControlStore, blankControlComparison,
+  isBlankControl, ControlStore, blankControlComparison, BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2,
   calibrationInstrument, CALIBRATION_MODE,
   type Context, type RecordInput, type PlatformDefaults,
 } from './caprebate-surveyor-crm.ts';
@@ -522,7 +522,7 @@ test('D18 a thin arm reports INSUFFICIENT_DATA rather than a verdict on two obse
   assert.equal(r.control_n, 1);
 });
 
-test('D19 a non-percentage field reports the gap but withholds the pass/fail call', () => {
+test('D19 a GBP/m2 field more than the 10% test limit apart is FLAGGED FOR REVIEW, never retired (Phase 153e, Word question 149)', () => {
   const s = new OverrideStore();
   const c = new ControlStore();
   for (let i = 0; i < 7; i++) {
@@ -534,8 +534,22 @@ test('D19 a non-percentage field reports the gap but withholds the pass/fail cal
   const r = blankControlComparison(s, c, RATE_FIELD_GBP);
   assert.equal(r.unit, 'GBP/m2');
   assert.equal(r.gap, 50);
-  assert.equal(r.verdict, 'THRESHOLD_NOT_DEFINED_FOR_UNIT');
-  assert.match(r.note, /withheld/);
+  assert.equal(r.verdict, 'FLAG_FOR_REVIEW', '£450 against £400 is 12.5% apart');
+  assert.match(r.note, /flagged for review, not a fail/);
+  assert.equal(BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2, 0.10);
+});
+
+test('D19b a GBP/m2 field within 10% is within the test limit (Phase 153e)', () => {
+  const s = new OverrideStore();
+  const c = new ControlStore();
+  for (let i = 0; i < 7; i++) {
+    s.record(ev({ job_id: `H${i}`, at: AT(i), field_id: RATE_FIELD_GBP, prefilled_value: 400, final_value: 400 }));
+  }
+  for (let i = 0; i < 4; i++) {
+    c.record({ job_id: `CH${i}`, surveyor_id: `sv-${i}`, field_id: RATE_FIELD_GBP, context: CTX, value: 430, at: AT(i), anchor_verdict: 'CLEAN' });
+  }
+  const r = blankControlComparison(s, c, RATE_FIELD_GBP);
+  assert.equal(r.verdict, 'WITHIN_TEST_LIMIT', '£430 against £400 is 7.5% apart');
 });
 
 /* ---- D20-D24: the assembled instrument ----------------------------- */

@@ -34,11 +34,13 @@ describe('Phase 153 — the privacy notice link at the address question', () => 
     assert.doesNotMatch(out, /type="checkbox"|<input|I agree|consent/i);
   });
 
+  // PHASE 153f, 4 October 2026: the old address screen (Q2) is retired; the four-stage funnel's address screen
+  // ("details", stage 3) draws the same link, from the same switch.
   test('the served address question reads CB_REGISTRY.precondition through registryGate, and nothing else', () => {
     const src = readFileSync(new URL('../src/web/router.ts', import.meta.url), 'utf8');
-    const q2 = src.slice(src.indexOf("if (id === 'Q2') {"), src.indexOf('Where is it?</label>'));
-    assert.ok(q2.length > 0, 'the Q2 screen was not found');
-    assert.match(q2, /noticeAtAddress\(registryGate\(\)\)/);
+    const f4 = src.slice(src.indexOf('function f4Page('), src.indexOf('function f4FigurePage('));
+    assert.ok(f4.length > 0, 'the four-stage screen was not found');
+    assert.match(f4, /id === 'details' \? noticeAtAddress\(registryGate\(\)\)/);
     assert.equal((src.match(/noticeAtAddress\(/g) ?? []).length, 1, 'drawn in exactly one place');
   });
 
@@ -60,15 +62,20 @@ describe('Phase 153 — the privacy notice link at the address question', () => 
         headers: { cookie, 'content-type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams(fields).toString(),
       }));
+      // PHASE 153f: the address question is the four-stage funnel's "details" screen.
       await get('/assessment');
-      await post('/assessment/Q1', { own_prior_claim: 'no' });
-      await post('/assessment/Q1a', { previous_owner_claimed: 'dont_know' });
-      await post('/assessment/Q1b', { is_uk_taxpayer: 'yes', current_year_position: 'profitable' });
-      await post('/assessment/Q1c', { trigger_default: 'purchase' });
-      const page = await (await get('/assessment/Q2')).text();
-      assert.match(page, /Where is it\?/, 'the address question was reached');
+      await post('/assessment/buildings', { b0_sector: 'care_homes' });
+      await post('/assessment/spend-on', { b0_trigger: 'purchase' });
+      await post('/assessment/amounts', { b0_spend: '2400000', b0_date: '06/2021' });
+      await post('/assessment/tax', { b0_tax: 'yes', b0_profit: 'profitable' });
+      await post('/assessment/claims', { b0_prior: 'no', b0_seller: 'dont_know' });
+      await post('/assessment/works', { b0_works: 'no' });
+      const page = await (await get('/assessment/details')).text();
+      assert.match(page, /Who owns each building, and where is it\?/, 'the address question was reached');
       assert.doesNotMatch(page, /href="\/notices\/"[^>]*>Our privacy notice/);
       assert.doesNotMatch(page, /id="q2-notice"/);
+      // and an old link to the retired address screen opens the four-stage funnel.
+      assert.equal((await get('/assessment/Q2')).headers.get('location'), '/assessment/buildings');
     } finally {
       made.close();
     }

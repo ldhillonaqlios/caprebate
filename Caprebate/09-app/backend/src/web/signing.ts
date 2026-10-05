@@ -81,6 +81,8 @@ export type ShownLetter = {
   readonly open_terms: number;
   readonly specimens: number;
   readonly business_name: string;
+  /** Phase 153d: the test-only copy, with terms nobody has agreed. Never signed. */
+  readonly test_copy: boolean;
 };
 
 export function sha256(data: string | Uint8Array): string {
@@ -97,12 +99,15 @@ export function shownLetter(business: { name: string; company_number?: string | 
   return {
     paragraphs: letter.paragraphs, text, sha256: sha256(text),
     open_terms: letter.openTerms.length, specimens: letter.specimens.length, business_name: business.name,
+    test_copy: letter.test_copy,
   };
 }
 
 /** What is still missing before a client can sign — each in plain words. Empty means signing is on for this letter. */
-export function signingMissing(cfg: EngagementSigning, letter: Pick<ShownLetter, 'open_terms' | 'specimens'>): string[] {
+export function signingMissing(cfg: EngagementSigning, letter: Pick<ShownLetter, 'open_terms' | 'specimens'> & { readonly test_copy?: boolean }): string[] {
   const out: string[] = [];
+  // Phase 153d: the test-only copy carries terms nobody has agreed. It is shown on the test website and never signed.
+  if (letter.test_copy === true) out.push('This is the test copy of the letter. Its terms are not agreed, so it can never be signed.');
   if (cfg.solicitor_confirmed !== true) out.push('Our solicitor must confirm that typing your name is a good enough way to sign this letter.');
   if (letter.open_terms > 0 || letter.specimens > 0) out.push('Some terms in the letter are not settled yet, so it cannot be signed.');
   if (cfg.enabled !== true) out.push('Then signing must be switched on.');

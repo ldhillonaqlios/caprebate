@@ -161,6 +161,7 @@ export const ACTION_WORDS: Readonly<Record<string, readonly [string, string]>> =
   'compliance.write': ['Registers and records', 'Change the compliance registers'],
   'compliance.identity_read': ['Registers and records', 'See people named in documents'],
   'compliance.identity_write': ['Registers and records', 'Record people named in documents'],
+  'compliance.breach_names': ['Registers and records', 'Open the restricted list of names in a breach'],
   'disclosure.read': ['Registers and records', 'See what we shared and with whom'],
   'disclosure.record': ['Registers and records', 'Record something we shared'],
   'audit.read': ['Registers and records', 'Read the audit log'],

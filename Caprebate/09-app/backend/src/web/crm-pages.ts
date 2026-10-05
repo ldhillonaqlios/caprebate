@@ -117,6 +117,20 @@ const CLAIM_FIELDS = ['owner_id', 'surveyor_id', 'priority', 'workstream', 'prop
  * THE ROUTER
  * ------------------------------------------------------------------ */
 
+/**
+ * PHASE 154a1 (line 5), 4 October 2026 — WHERE A SAVED CONTACT GOES BACK TO: the page of whoever the contact belongs to,
+ * read from the contact itself. It was the business_id the form posted, so a post without one went to
+ * /staff/clients/?done=contact, a 404 (the 3 October sweep), and a wrong one went to somebody else's page.
+ */
+function contactHome(db: CrmPageDeps['app']['db'], contact_id: string): string {
+  const c = db.get<{ business_id: string | null; lead_id: string | null; introducer_id: string | null }>(
+    'SELECT business_id, lead_id, introducer_id FROM contacts WHERE id = ?', [contact_id]);
+  if (c?.business_id) return `/staff/clients/${c.business_id}`;
+  if (c?.lead_id) return `/staff/leads/${c.lead_id}`;
+  if (c?.introducer_id) return `/staff/introducers/${c.introducer_id}`;
+  return '/staff/clients';
+}
+
 export async function handleCrm(
   d: CrmPageDeps, req: IncomingMessage, res: ServerResponse, url: URL,
   method: string, actor: Actor,
@@ -173,7 +187,7 @@ export async function handleCrm(
   const contact = /^\/staff\/contacts\/([A-Za-z0-9-]+)$/.exec(path);
   if (contact && method === 'POST') {
     const f = await form(req);
-    const back = `/staff/clients/${f.get('business_id') ?? ''}`;
+    const back = contactHome(db, contact[1] ?? '');
     const r = C.updateContact(deps, actor, contact[1] ?? '', posted(f, CONTACT_FIELDS));
     if (!r.ok) return d.problem(res, actor, 'Contact not saved', r.why, `${back}#contacts`);
     redirect(res, `${back}?done=contact#contacts`);
@@ -433,7 +447,7 @@ function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonl
       <table><tbody>${p.confirmations.map((c) => h`<tr><td>${c.label}</td><td>${c.recorded === null
         ? h`<span class="help">not confirmed since the claim entered this stage</span>` : h`confirmed ${c.recorded}`}</td>
         <td>${c.recorded === null && m?.may_record === true ? h`<form method="post" action="/staff/claims/${id}/milestones" class="inline">
-          <input type="hidden" name="milestone" value="${c.key}"><input name="note" placeholder="note">
+          <input type="hidden" name="milestone" value="${c.key}"><input name="note" placeholder="note" aria-label="A note on ${c.label}">
           <button type="submit">Confirm</button></form>` : raw('')}</td></tr>`)}</tbody></table>`}
     ${p.claimable_figure === undefined ? raw('') : h`<div class="help">A claimable figure for the client: ${p.claimable_figure.released
       ? 'released' : 'not released yet'}.${p.claimable_figure.released ? raw('') : why(p.claimable_figure.why)}</div>`}

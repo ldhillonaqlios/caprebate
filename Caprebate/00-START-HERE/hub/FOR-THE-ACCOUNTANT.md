@@ -29,6 +29,10 @@
 
  Every reading of the law in this document that would make a claim **bigger** has been coded, tested both ways, and left **off**. The engine behaves today exactly as it behaved before any of the work was done. Eleven rulebooks are written with the statute cited throughout. Twenty-four engine readings sit in the live source behind named switches, each set to the behaviour the engine already had — counted by the extraction verifier and checked against the code on 15 September 2026 — plus one switch for the break-even answer (ACC-A13), which sits in the back end's funnel rather than in the engine. Of the twenty-four, fifteen would make a claim bigger if switched on, three can only make one smaller, four move money either way, one changes the basis of a figure and one removes false negatives. The ones that can only make a claim smaller are off too: off means today's behaviour, not the safer reading. (Corrected 14 September 2026 by Phase 131: this said seventeen. Corrected 15 September 2026 by Phase 132: this said nineteen. Phase 132 built five more — the aggregation of repairs into a replacement, the corporation tax rate from the associated-company count, the 60% band where the personal allowance is withdrawn, the later company deadline for a partnership with a company partner, and a landlord's contribution in supported living.)
 
+ **Added 4 October 2026 by Phase 153a:** there are now twenty-five engine readings. The twenty-fifth, ACC-A16, takes a grant matched to named items off only those items, and it moves money either way; it is read by the surveyor's working file, not by the online estimate. The split above is counted for the first twenty-four. It is being re-derived for all of them in code, by switching each on alone against the same set of cases, once the readings Phase 153b adds are built.
+
+ **Added 4 October 2026 by Phase 153b — twenty-nine readings now, and which way each moves a claim, counted in code rather than read off our own notes.** Phase 153b built four more, each off: ACC-A17 (an election with no tax references), ACC-A18 (an election under the wrong section), ACC-A19 (an elected figure above the law's limit) and ACC-A20 (a housing association's payment in supported living). Then each of the twenty-nine was switched on alone against all of them off, on the same set of cases — 6,000 seeded walks through each sector's own questions with every switch's questions answered, plus 40 cases taken from our own test fixtures for the rare ones — and the figures compared: the qualifying spend, the tax saving and the cash, both ends of each range, and whether the money arrives as a repayment or over years (03-app/caprebate-switch-direction.cjs). **Of the twenty-nine: seventeen make a claim bigger, four only smaller, six move it either way, and two act only in the surveyor's working file** (ACC-A6, which moves it bigger there, because the online estimate already applies no fixed-value cap where the seller never claimed; and ACC-A16, either way). Four differ from what our notes said: ACC-A7 (the seller who was never entitled) makes claims bigger, not "removes false negatives"; ACC-A8 (the grant traced to the common parts) moves money either way, because a traced share above the scheme-wide rate takes more off; ACC-A11 (the trade-purpose flat) is simply bigger; and ACC-A18 narrows the range — the floor rises to the elected figure and the top comes down to it. The split in the paragraph above is kept as written for the record; this one replaces it.
+
 
  **We are not asking you to bless a position we have already taken. We have not taken it.**
 
@@ -562,6 +566,114 @@ Signed .............................  Date ..........................
 Roll the year end forward
 ```
 
+### ACC-A16 · When a grant's papers say which items it paid for, should it come off only those items?
+
+> Added 4 October 2026 by Phase 153a. It is numbered ACC-A16 because ACC-A15 was the last number, and it sits here, after ACC-A15, because it is the item-by-item half of the grant question ACC-A8 asks for supported living. Money moves either way on it: a grant that paid for qualifying items takes more off than an equal share would, and a grant that paid only for items that never qualify takes nothing off.
+
+|  What it is |  Section 532 reduces spend "to the extent that" someone else met it, and Rulebook F's rule F3 says to trace a grant to the items it paid for before sharing anything out. Until 4 October 2026 nothing in our software could: a grant on a claim was matched to its items in words only. Now each grant on the claim record can name the rows of our fixture list it paid for (the electrics, the fire alarm, the nurse call), and the survey pack — the surveyor's working file for a claim — takes the claim's grants off its figures in a new chapter, "Grants and VAT". A worked example: price paid £1,000,000, land £200,000, so the building is £800,000; £120,000 of it qualifies (£40,000 for the fire alarm in the main pool, £80,000 for the electrics in the special rate pool); the NHS paid £40,000 towards the fire alarm. |
+| --- | --- |
+|  What state it is in |  Built and tested both ways. Off, as it ships, every grant comes off every item in equal share — the grant as a share of the price paid, which is how our online estimate has always treated a grant: £40,000 on £1,000,000 is 4%, so £115,200 qualifies. On, a grant matched to rows of the list comes off only those rows: the fire alarm's £40,000 was met in full, so £80,000 qualifies, all of it in the special rate pool. A grant matched only in words, or not at all, keeps the equal share — we never treat an unknown trace as having paid for nothing. Insurance money after damage is not taken off either way. A grant whose amount is not known gives no figure at all until it is known. The online estimate does not change either way: it holds no item-by-item spend. |
+|  Which way the money moves |  EITHER WAY, and only on the switch. In the example, on takes £40,000 off where off takes £4,800. A grant that paid only for the flats or the walls, which never qualify, takes nothing off when on, where off takes its share. |
+|  What we are asking you to do |  Answer the question in the Word questions document under your name: "When a grant's papers say which items it paid for, should it come off only those items?" And tell us if a grant matched to several items should be shared between them by their rebuild cost, which is what we built, or in some other way. |
+|  If you agree |  One-line switch. Nothing else needs building. |
+|  If you do not |  The switch stays off and every grant keeps the equal share. Before any claim moves on, the gate already asks for the grant papers or your view on the split (built the same day, for the question "How should we split a grant when we cannot tell what it paid for?"). |
+|  What it unblocks |  Whether a grant reduces only what it paid for, in every sector — and with it the supported-living case in ACC-A8, where most of a grant bought flats that never qualify. |
+
+```
+SIGN-OFF        Confirmed  /  Amended  /  Rejected      (delete two)
+
+(a) Does a grant traced to named items reduce only those items'
+    qualifying spend?                                     Yes / No
+(b) Where it paid for several items, may it be shared between them
+    by their rebuild cost?        Yes  /  No  /  Another basis: ........
+
+Your amendment or reasoning:
+.....................................................................
+.....................................................................
+
+Signed .............................  Date ..........................
+```
+
+---
+
+### ACC-A17 · An election with no tax references, once the window has closed — a fixable slip, or no election?
+
+> Added 4 October 2026 by Phase 153b, on our recommendation for you to check (Word question 95, "Does a missing tax reference make an election invalid, or can it be fixed?"). Lakhbir's typed view is that it is a fixable administrative error; that is his view, not a sign-off.
+
+|  What it is |  Section 201(3)(f) asks for both parties' tax references. Older elections often have none. Today our software treats a document without them as no election at all: inside the two-year window we tell the client to remake it; once the window has closed, the fixtures are nil. Worked example: an election from 2019 names both parties, the building, the items and £80,000, but no tax references. Today, outside the window: nil. |
+| --- | --- |
+|  What state it is in |  Built and tested both ways, switched off (`election_missing_utr_fixable`). On: where the tax references are the only thing missing and the window is known to have closed, the election stands at its figure — £80,000 — and is flagged as a slip to put right with HMRC. Inside the window, and where the window is not known, nothing changes. Anything else missing still fails it. |
+|  Which way the money moves |  BIGGER — nil becomes the elected figure (counted in code). |
+|  What we are asking you to do |  Answer question 95 in the Word questions document: count it if everything else is in order and the parties and value can be identified? |
+|  If you agree |  One-line switch. |
+|  If you do not |  The switch stays off: today's strict reading. |
+
+```
+SIGN-OFF        Confirmed  /  Amended  /  Rejected      (delete two)
+Your amendment or reasoning: .........................................
+Signed .............................  Date ..........................
+```
+
+---
+
+### ACC-A18 · An election made under the wrong section — valid if it meets every rule of the right one?
+
+> Added 4 October 2026 by Phase 153b, on our recommendation for you to check (Word question 96, "Is an election made under the wrong section of the law still valid?"). Lakhbir's typed view is that a wrong label does not by itself make it invalid; that is his view, not a sign-off.
+
+|  What it is |  Many elections carry the wrong label, because of the market shorthand "section 198 for a freehold, 199 for a lease". Today a complete election under the wrong label is sent to be remade inside the window and left unresolved — bottom of the range nil — outside it. Worked example: a freehold sale, an election labelled section 199 that has everything section 198 needs, at £60,000; window closed. Today: unresolved, nil at the bottom. |
+| --- | --- |
+|  What state it is in |  Built and tested both ways, switched off (`election_wrong_section_accepted`). On: where the window is known to have closed, it is read under the section the facts require and the label treated as a slip; the claim on those fixtures is the elected figure. Inside the window, and where it is not known, nothing changes. |
+|  Which way the money moves |  EITHER WAY — the range narrows to the elected figure: the bottom rises from nil, and the top comes down to it, because a valid election caps the fixtures it covers (counted in code). |
+|  What we are asking you to do |  Answer question 96. |
+|  If you agree |  One-line switch. |
+|  If you do not |  The switch stays off. |
+
+```
+SIGN-OFF        Confirmed  /  Amended  /  Rejected      (delete two)
+Your amendment or reasoning: .........................................
+Signed .............................  Date ..........................
+```
+
+---
+
+### ACC-A19 · An election that sets too high a value from the start — cut down to the most the law allows?
+
+> Added 4 October 2026 by Phase 153b, on our recommendation for you to check (Word question 98, "What happens if an election sets too high a value from the start?"). Lakhbir's typed view: not void, limited to the permitted amount; that is his view, not a sign-off.
+
+|  What it is |  Section 198(3) says the amount fixed may not exceed the smaller of what the seller could bring in as a disposal value (never more than their own cost, s.62) and the price paid. The law covers a maximum that falls later (s.200); it is silent on a figure too high from the start. Today our software caps the claim at whatever the election states. Worked example: the election says £300,000; the seller's own cost of those fixtures was £250,000. |
+| --- | --- |
+|  What state it is in |  Built and tested both ways, switched off (`election_value_cut_to_lawful_max`). On: a new question asks what the seller paid for the fixtures; the figure is cut to the lower of that and the price paid where each is known — £250,000 in the example — and the client is told why. A limit not known cuts nothing and is flagged as not checked. The survey pack's legal check caps the pack at the cut figure and says so. |
+|  Which way the money moves |  SMALLER (counted in code). |
+|  What we are asking you to do |  Answer question 98: still effective but cut down, rather than void or effective as written? |
+|  If you agree |  One-line switch. |
+|  If you do not |  The switch stays off: the figure the election states. |
+
+```
+SIGN-OFF        Confirmed  /  Amended  /  Rejected      (delete two)
+Your amendment or reasoning: .........................................
+Signed .............................  Date ..........................
+```
+
+---
+
+### ACC-A20 · Is a private housing association a public body for the grants rule?
+
+> Added 4 October 2026 by Phase 153b, on our recommendation for you to check (Word question 108, "Is a private social housing provider a public body for tax relief rules?"). Lakhbir's typed view: not a public body just because it is registered; that is his view, not a sign-off.
+
+|  What it is |  Money from a public body always comes off a claim (s.532); a private payment that gets the payer no tax relief can stay in (s.536). The supported-living funding question offers "a grant or public subsidy" and "a private payment with no relief", but nothing for a housing association, so its money is usually taken off like a grant. Worked example: a housing association pays £80,000 towards the shared-area works and gets no relief on it. As a public body: £80,000 comes off. As a private body: it stays in. |
+| --- | --- |
+|  What state it is in |  Built and tested both ways, switched off (`registered_provider_not_public_body`). On: the question also offers "A housing association or registered provider of social housing"; it is treated as not a public body, so its payment stays in, and a flag says to check the provider is not itself a public body and got no tax relief. Off: the answer is not offered. |
+|  Which way the money moves |  BIGGER (counted in code, against the same client answering "a grant or public subsidy" with the switch off). |
+|  What we are asking you to do |  Answer question 108. |
+|  If you agree |  One-line switch. |
+|  If you do not |  The switch stays off. |
+
+```
+SIGN-OFF        Confirmed  /  Amended  /  Rejected      (delete two)
+Your amendment or reasoning: .........................................
+Signed .............................  Date ..........................
+```
+
 ---
 
 ### Section A — the summary you can work from
@@ -583,8 +695,15 @@ Roll the year end forward
 |  ACC-A13 |  "Roughly break-even" read as not enough taxable profit |  More cautious — never a better-looking claim |  Yes, off |
 |  ACC-A14 |  A new lease for a premium with no joint election, not item 9 of the disposal table |  Either way |  Yes, off |
 |  ACC-A15 |  The amendment window where the money was spent after the year end the client gave |  Bigger — only where the client's dates do not sit together |  Yes, off (the other half is live, because it can only close a window) |
+|  ACC-A16 |  A grant matched to the items it paid for comes off only those items |  Either way |  Yes, off |
+|  ACC-A17 |  An election with no tax references stands, once the window has closed |  Bigger |  Yes, off (added 4 Oct 2026) |
+|  ACC-A18 |  An election under the wrong section is read under the right one, once the window has closed |  Either way — the range narrows to the elected figure |  Yes, off (added 4 Oct 2026) |
+|  ACC-A19 |  An elected figure above the law's limit is cut down to it |  Smaller |  Yes, off (added 4 Oct 2026) |
+|  ACC-A20 |  A housing association's payment in supported living is not a public body's |  Bigger |  Yes, off (added 4 Oct 2026) |
 
- **Answer ACC-A4 with ACC-A7. Do not couple ACC-A8 with ACC-A9, and read ACC-A12 beside ACC-A8.** In the table above, ACC-A1 to ACC-A6 and ACC-A8 to ACC-A10 make claims bigger; ACC-A11 changes the basis; ACC-A7 removes false negatives; ACC-A12 can only make a claim smaller; ACC-A13 can only make one more cautious; ACC-A14 moves money either way; and ACC-A15 can only make a claim bigger, and only on its switch. Until 13 September 2026 this sentence counted nine of twelve, and said ACC-A12 had no row because a row cannot be added to a table here. The table has since been replaced whole, with every earlier row carried word for word and rows for ACC-A12, ACC-A13 and ACC-A14 added — and replaced whole again on 13 September 2026 by Phase 129b, carrying ACC-A1 to ACC-A14 word for word and adding a row for ACC-A15. **A firm that only ever finds arguments in its own favour is a firm to be suspicious of, and we know that** — which is why the direction is printed here rather than left for you to notice.
+ **Answer ACC-A4 with ACC-A7. Do not couple ACC-A8 with ACC-A9, and read ACC-A12 beside ACC-A8.** In the table above, ACC-A1 to ACC-A6 and ACC-A8 to ACC-A10 make claims bigger; ACC-A11 changes the basis; ACC-A7 removes false negatives; ACC-A12 can only make a claim smaller; ACC-A13 can only make one more cautious; ACC-A14 moves money either way; ACC-A15 can only make a claim bigger, and only on its switch; and ACC-A16, added 4 October 2026, moves money either way. Until 13 September 2026 this sentence counted nine of twelve, and said ACC-A12 had no row because a row cannot be added to a table here. The table has since been replaced whole, with every earlier row carried word for word and rows for ACC-A12, ACC-A13 and ACC-A14 added — and replaced whole again on 13 September 2026 by Phase 129b, carrying ACC-A1 to ACC-A14 word for word and adding a row for ACC-A15. **A firm that only ever finds arguments in its own favour is a firm to be suspicious of, and we know that** — which is why the direction is printed here rather than left for you to notice.
+
+ **Counted in code, 4 October 2026 (Phase 153b).** Each of the twenty-nine engine switches switched on alone against all off, on the same cases (03-app/caprebate-switch-direction.cjs; how, in the note at the top of this register). Where a row above says otherwise, this is what the engine does: **bigger** — ACC-A1 (both switches), ACC-A2, ACC-A3, ACC-A4, ACC-A5, ACC-A7, ACC-A9, ACC-A10, ACC-A11, ACC-A15, ACC-A17, ACC-A20, the repairs aggregation and a partnership's later company deadline (Rulebooks G and A, Section B), the shared lounge (ACC-D3.1) and the purchase clock (ACC-D3.2); **smaller** — ACC-A12, ACC-A19, the flats reading (ACC-D2) and supported living's landlord contribution (with ACC-A9's item); **either way** — ACC-A8, ACC-A14, ACC-A18, and from Rulebook I the Scottish rate band, the corporation tax rate from associated companies and the 60% band; **only in the surveyor's working file** — ACC-A6 (bigger there) and ACC-A16 (either way). ACC-A13 is a funnel switch, outside the twenty-nine.
 
 
 ---
@@ -1084,6 +1203,11 @@ supervised
 |  ACC-A9 connected contributor |  12852267228 |
 |  ACC-A10 provision of / commissioning |  12843022045 |
 |  ACC-A11 trade-purpose flat |  12851716860 |
+|  ACC-A16 grant matched to its items (added 4 Oct 2026) |  13200627626 |
+|  ACC-A17 election with no tax references (added 4 Oct 2026) |  13200700684 |
+|  ACC-A18 election under the wrong section (added 4 Oct 2026) |  13200701317 |
+|  ACC-A19 elected value above the law's limit (added 4 Oct 2026) |  13200702306 |
+|  ACC-A20 a housing association's payment (added 4 Oct 2026) |  13200704047 |
 |  B1-B11 rulebooks |  A 12830061109 / A add 12921255840 / B 12830061291 / C 12830037336 / D 12830044150 / E 12830037617 / F 12830044153 / G 12830061107 / H 12830043662 / I 12830060773 / I add 12889350666 |
 |  B file carrier
  |  12921255840 (A addendum) — the A–F carriers 12830178875 / 12830182172 / 12841288962 / 12851645135 / 12910751557 / 12910769642 were closed 12 Sep 2026; their files are byte-identical copies of the files on the Rulebook items.
@@ -1099,7 +1223,7 @@ supervised
 |  ACC-E2 cover note |  12804375491 |
 |  F1-F13 |  CAPREBATE QUESTIONS, section three |
 
- **The twenty-four switches all live in one object, ****`CB_CTA`****, in ****`Caprebate site.html`****. There is nowhere else to look.** Every one is asserted both ways in `03-app/caprebate-regression.cjs`, Suite H — and four of the five Phase 132 built in Suite X. **Flipping one makes its branch-B assertion fail — that failure is the harness telling you a tax position has been taken, and it is answered by updating the harness deliberately, never by muting it.** (Corrected 15 September 2026 by Phase 132: this said seventeen.)
+ **The twenty-four switches all live in one object, ****`CB_CTA`****, in ****`Caprebate site.html`****. There is nowhere else to look.** Every one is asserted both ways in `03-app/caprebate-regression.cjs`, Suite H — and four of the five Phase 132 built in Suite X. **Flipping one makes its branch-B assertion fail — that failure is the harness telling you a tax position has been taken, and it is answered by updating the harness deliberately, never by muting it.** (Corrected 15 September 2026 by Phase 132: this said seventeen.) _4 October 2026 (Phase 153b): there are twenty-nine now, all off, counted by the extraction verifier; the four Phase 153b built are asserted in Suite AI. The fee comparison's VAT switch (Word question 59) is in `CB_FEEGUARD`, beside the two fee-guard switches, not in `CB_CTA`._
 
 
  **Register size, re-derived from the board on 5 September 2026.** 32 numbered entries — 11 in Section A, 11 rulebooks under one sign-off block in Section B, 4 in Section C, **4**** in Section D** (ACC-D1 the review pack, ACC-D2 the claim-increasing disclosure, and ACC-D3.1 and ACC-D3.2, the two claim-reducing readings shipped behind no switch, added 5 September 2026), 2 in Section E — plus 13 questions in Section F. **Board items covered: 35, unchanged** — ACC-D3.1 and ACC-D3.2 are disclosures about live engine behaviour and about questions already inside the review pack at ACC-D1, so they add entries and no items. 
@@ -1363,6 +1487,8 @@ Signed .............................  Date ..........................
 
  Added 15 September 2026 by Phase 132. Three corrections to the procedures. The enquiry scope now describes a trading business with healthcare property in the UK. The assessment's owner line now matches the flow as built. And the sign-off stage is now a tax adviser's sign-off — the client's own accountant or tax adviser, or our own chartered tax adviser, who is not yet appointed — following clause 1 of the engagement letter. Stage 8's "accountant confirms" is unchanged, pending Lakhbir. Please confirm the sign-off stage as now worded.
 
+ _Added 4 October 2026 by Phase 153a. One correction to the procedures, in two places (SOP 4, step 3, and the data protection officer's retention question near the end): they no longer keep an HM Land Registry owner-name exception. No owner's name is taken from the title register — a person reads it and types at most seven facts, none of them a name — and an uploaded official copy that names a private owner is kept whole and read only by a person, as the data protection officer agreed on 27 September 2026. Nothing you are asked to sign about tax changed._
+
  **ACC-H2 · The business plan — pricing and the 24-month forecast.** Board item 12552682421. "A draft for approval by Sadique Maskeen, Data Protection Officer, and adoption by CAP REBATE LTD, by a director. Nothing here is decided." (Until 18 September 2026 the plan said "a draft for Lakhbir Dhillon to approve"; Lakhbir, who has no affiliation with CAP REBATE LTD, set the approver that day — Phase 133i.) Rebuilt on the decided fee base on 9 September, and brought up to date on 14 September 2026: advise-or-support decided, clauses 1 and 13, no minimum job size, and four figures in the risk section re-derived from the model. The pricing and forecast figures did not move. On 15 September 2026 the risk section's count of questions put to the tax adviser was corrected to forty-four, and a note now says that the dental cost range and ratio in section 6 are not printed by the plan's model — they come from the job-economics module, at 16 and 200 jobs. **For the practising accountant:** check the pricing and forecast arithmetic before the company relies on it. **Unblocks** the plan being approved and adopted.
 
 
@@ -1610,3 +1736,110 @@ Signed .............................  Date ..........................
 -  **The tax adviser's switches.** The extraction verifier now counts twenty-four, every one off; which way each one moves a claim is being re-counted in Phase 153a.
 
  **This register's size is unchanged by Phase 153**: no item moved into or out of it. The count is the register check's.
+
+---
+
+## Phase 153a, 4 October 2026 — one entry more: ACC-A16, a grant matched to the items it paid for
+
+ **This register gains one entry and one board item.** ACC-A16 sits in Section A after ACC-A15, with a row in Section A's summary table and in Appendix 3's index. It is the twenty-fifth engine switch — built, tested both ways and switched off — and it moves money either way. Two more checks were built the same day on the way a claim leaves valuation: the grant papers or your view before a grant split in equal share moves on, and the client's confirmation that they have checked with whoever paid the grant. They answer the recommendations under "How should we split a grant when we cannot tell what it paid for?" and "Is a warning enough when claiming relief might force a grant to be repaid?", and both questions now say so. **Board items covered: 46.**
+
+ **And the board's own total at the close of Phase 153a, 4 October 2026, counted in code: 120 items carry that status**: forty-six in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Forty-six plus nine plus sixty-five is 120.
+
+---
+
+## Phase 153b, 4 October 2026 — four entries more (ACC-A17 to ACC-A20), dated lines on eleven, and which way every switch moves a claim
+
+ **This register gains four entries and four board items**: ACC-A17 to ACC-A20, each a tax adviser's switch built, tested both ways and left off, with a row in Section A's summary and in Appendix 3. Every one of the twenty-nine switches now has its direction counted in code (the note at the top of this register, and the paragraph under Section A's summary). Everything else Phase 153b built is something you are asked to check, and it is listed here against the entry it belongs to. **None of it is switched on.** Each question was asked on 29 September in the review document beside the main questions document, with our recommendation; nobody had answered any of them when this was built, so each is built to the recommendation. **Board items covered: 50.**
+
+-  **ACC-A7, the seller who was never entitled (question 73).** The extra question the switch used to ask ("Was the seller someone who could never have claimed …?") is gone, as Lakhbir asked: the switch now reads the client's own answer to "Who did you buy the property from?" — a private landlord who let it out as homes — and nothing else.
+-  **ACC-A2, high-care supported living (question 77).** With the switch on, the documents we ask a supported-living client for gain two: the lease or contract with the care provider, and a letter from the care provider confirming the care given on site. Lakhbir has his own template for that letter; until it is filed, ours is a draft.
+-  **ACC-A9's item, the landlord's contribution in supported living (question 86).** A new question behind the same switch: did the landlord's payment pay for the shared parts? A known yes takes it straight off the shared parts, never below nil; any other answer keeps the even spread, and "not sure" is flagged. In the review's example — £400,000 spent, the landlord paid 30%, shared parts 25% — spread, the claim is £70,000 of shared parts; tied, it is nil.
+-  **ACC-B10, Rulebook I, and ACC-C2, the two tax summaries (question 85).** The same-business exception to the loss relief cap (ITA 2007 s.24A(7)(b)) is written into Rulebook I §6.4 and both summaries now show the capped and uncapped lines side by side; neither is chosen until you confirm. Example: a GP partner with £120,000 of income sets an £80,000 loss against last year's income from the same practice: capped, £50,000 now; with the exception, all £80,000.
+-  **ACC-C2, the partnership summary (question 88).** A warning where the repayment is first mentioned: a repayment follows the partners of the year amended, so part may belong to former partners.
+-  **ACC-B1, Rulebook A, and ACC-C1, the client report (question 92).** Rulebook A §4 now carries the loss-carried-back exception: on W2, cash comes back as a repayment only where the client says the claim makes a loss that is carried back. The estimate's words changed from "a refund of tax already paid" to "a repayment of tax paid for last year".
+-  **ACC-B7, Rulebook F (question 111).** The dental help text now says there is "no general NHS premises grant scheme like the GP one", not that there is none; any grant a dental client names still comes off like any other.
+-  **ACC-B3, Rulebook B (question 113).** The stopping rule is written (§8a), with the ownership-history checklist: no fixed number of years; stop at the last owner who could have claimed, or where the law stops the look-back; if the title history and the seller's replies run out first, record "unable to establish" and keep nil at the bottom.
+-  **ACC-C8, VAT on our fee (questions 226 and 59).** The client's answer about VAT on their building works now tells us whether they can reclaim VAT on our fee — "reclaimed in full" can, "exempt" cannot — but only where the business that paid for the works is the one we would invoice and nothing has changed; that confirmation is asked only once we are VAT-registered, and every other answer stays not known. And the fee-versus-benefit comparison can count VAT on our fee the same way the £1,000 no-claim test does, behind its own switch (question 59, the director's), dormant until we are registered.
+-  **Part 2, "In what format would you like us to send our results?" (question 121).** Beside the signed PDF report, the return entries for each year, as a spreadsheet: the spend added to each pool in the first return, then five years of writing-down allowances and balances, at the rates in Rulebook I. It is attached to the sign-off email and is on your private link. Where the claim's accounting period is not recorded, the main pool's rows are left blank and say why.
+-  **Part 2, the LLP question (question 198).** Companies House says what type a company is. Built and off: a limited company or a plc filled in as "Limited company"; an LLP only once the client confirms it; anything else asked. Keeping the company type also needs the data protection officer's yes — it is now a proposed field of the source register, for him.
+
+ **Two of Phase 153b's lines are Lakhbir's, not yours, and are not in this register:** the job cost model's tax adviser line is renamed "our own tax adviser, if we introduce one", with every figure unchanged (question 191); and Homedata is marked as the chosen planning source, still off until the account opens (question 202).
+
+ **One thing the count found, for you to know about:** where a seller who could have claimed never did, the online estimate applies no cap and raises no flag about the pooling requirement — it applies the election and fixed-value caps only to a seller known to have claimed. The surveyor's working file does assess it. It is written into the sweep's phase of faults to check against Rulebook B. *Done by Phase 154a1 on 4 October 2026 — see that phase's section at the end of this register.*
+
+ **And the board's own total at the close of Phase 153b, 4 October 2026, counted in code: 124 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-five with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-five is 124.
+
+---
+
+## Phase 153c, 4 October 2026 — nothing moved into or out of this register
+
+ Phase 153c built data protection and back office work for the data protection officer to check. Two items were added to FOR THE SOLICITOR, THE DPO AND THE DEVELOPER (SDP-P41 and SDP-P42); none here.
+
+ **And the board's own total at the close of Phase 153c, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153d, 4 October 2026
+
+ Phase 153d built the commercial papers in test form for the director and the solicitor. **One dated line here: ACC-C3, the disposal note (Word question 23).** The test system shows a fixed fee of **£290** for the review and the drafted election, costed in the job cost model as four hours of our time at £60 plus the £50 data line, at cost, never a percentage of the sale or the election figure. It is marked "a test default, not agreed" in both disposal notes, on the staff disposal task and on the aftercare panel. The director decides the figure. Nothing moved into or out of this register.
+
+ **And the board's own total at the close of Phase 153d, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153e, 4 October 2026
+
+ Phase 153e built the surveyor's workbench on our recommendation. **One dated line here: ACC-A16, chapter 15's VAT half (line 17 of the phase, added by Phase 153a).** The surveyor records the claimant's VAT position with a reason. Only an exempt claimant's VAT not reclaimed is added to the price before it is shared out; a claimant that reclaims VAT adds nothing; a partly exempt claimant changes nothing and waits for you; not known and not recorded count nothing. It is a test reading, for you to check.
+
+ **And the board's own total at the close of Phase 153e, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153f, 4 October 2026 — a date fault fixed in the election check; nothing moved in or out
+
+ **The election window now reads the date it is given.** The engine's check of whether a fresh election can still be made (the two-year window) read the computer's own clock, not the date a case was run for. The back end's legal check passes a date, so a case run for a fixed date could get the wrong answer either side of the deadline. Fixed, with a test a day either side; no switch, no figure moved for a case run today.
+
+ **And the board's own total at the close of Phase 153f, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 153g, 4 October 2026 — nothing moved in or out
+
+ Phase 153g built the surveyor's last ten pack chapters. Three of them hold facts for you, and decide nothing: 17 Structures allowance (the structure left after the plant and the land, worked out, never carried across from a plant answer), 18 Other reliefs (land remediation flags), and 20 Repairs or capital, which records what the surveyor saw of any works, for your repair-or-capital call. **One gap for you:** nothing in the assessment or on the claim asks whether the property was sold and leased back, or whether contamination was taken on from someone else, so chapters 16 and 18 say "not on file". Should either be asked, and where?
+
+ **And the board's own total at the close of Phase 153g, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+---
+
+## Phase 154a1, 4 October 2026 — the pooling requirement now applies in the online estimate; nothing moved in or out
+
+ **What was wrong.** A client who bought from a tax-paying business that could have claimed capital allowances on the fixtures, but never did, got the full range with no cap and no warning. The estimate only looked at the second-hand fixtures rules where the seller was known to have claimed. Rulebook B (branch C, row C1) says the opposite: a seller who could claim but never pooled the spending, and stopped owning after April 2014, leaves the buyer nil (s.187A(4) and (3)).
+
+ **What it does now, in all five sectors and in the surveyor's legal check alike.** It is built on, not behind a switch, because it puts the estimate back in line with Rulebook B, and it can only make a figure smaller or unsettled, never bigger.
+-  **The seller could claim, never did, and stopped owning after April 2014:** nil. The flag names the pooling requirement and says what would meet it: the seller putting the spending into its pool in a tax period that began on or before the sale, which it may still be able to do by amending its return for the period of the sale. Example: a care home bought for £2,000,000 in June 2019 from a trading company that never claimed — nil, where it was a range up to the top of the band.
+-  **The same seller, but we do not know when it stopped owning:** unsettled, with nil at the bottom and the top of the range shown, flagged. The date could take the rule out of force, so it is never a firm nil.
+-  **The seller could claim and we do not know whether it did** ("not sure", or never asked): unsettled in the same way, nil at the bottom (row C9). "Not sure" and no answer give the same result.
+-  **Unchanged:** a seller who claimed (the fixed-value rules apply, as before); a seller who could never claim (still the best case); a sale before April 2014, when the pooling requirement was not yet in force (branch D); a seller whose entitlement itself is not known (see the second point below).
+
+ **Three things for you to check. None of them is a new question; each is already in your review pack.**
+1.  **"Never claimed" is read as "never pooled".** We do not ask separately whether the seller pooled (Rulebook B, defect 9; your review pack, B-Q6, which proposes splitting the question). A claim is a pooling (s.202(3)), so a seller who claimed has pooled; we treat a seller who never claimed as one that never pooled. If a seller can pool without ever claiming an allowance, that reading is too harsh and the question needs splitting first.
+2.  **How an unsettled case is shown.** We show a range with nil at the bottom and a flag, the way every other unproven s.187A position is shown, rather than no figure at all. That is your review pack's B-Q2; Rulebook B section 6 leans towards showing no figure.
+3.  **A seller whose entitlement is not known, who never claimed, still gets the upper half of the band.** Rulebook B says that seller sits between branches B and C. It is not changed here; it is written into the sweep's phase to build, with nil at the bottom, and the wording for a branch D seller corrected.
+
+ **One switch, checked again.** "The fixed value requirement needs a past owner who claimed" (fvr_requires_past_owner_claim) is now read after the pooling requirement, as Rulebook A's addendum orders them, so it cannot clear a case the pooling requirement takes to nil. Counted in code again: it still moves no figure in the online estimate, and only the surveyor's legal check, for a seller who sold before April 2014. Every other switch kept its direction.
+
+ **And the board's own total at the close of Phase 154a1, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+
+
+---
+
+## Phase 155, 4 October 2026 — nothing moved in or out
+
+ Phase 155 built register lookups and a cost index import; none of it is a tax reading. One correction of fact you may meet: the valuation office's rating list is **not** open data (our records said it was) — its terms restrict it to business rates purposes, so nothing of ours uses it.
+
+
+ **And the board's own total at the close of Phase 155, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.

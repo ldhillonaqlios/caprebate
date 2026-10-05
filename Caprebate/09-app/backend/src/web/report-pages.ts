@@ -4,10 +4,12 @@
  *
  *   GET  /staff/survey/{job}/pack/version/{n}/report       the report as the client will see it (surveyor_job.read)
  *   GET  /staff/survey/{job}/pack/version/{n}/report.pdf   its PDF
+ *   GET  /staff/survey/{job}/pack/version/{n}/return-entries.csv   beside it, the return entries for each year (Phase 153b)
  *   POST /staff/survey/{job}/pack/version/{n}/send         email it to the company's accountant to sign off (email.queue)
  *   POST /staff/survey/{job}/pack/answer/{id}/record       put their signed answer on the claim (tax_signoff.record)
  *   POST /staff/survey/{job}/pack/version/{n}/tell         tell the client it is in their portal (client_message.write)
  *   GET  /signoff/{token}  · POST /signoff/{token} · GET /signoff/{token}/report.pdf     the accountant's link, no login
+ *   GET  /signoff/{token}/return-entries.csv                 and its return entries, beside the PDF (Phase 153b)
  *   GET  /portal/report    · GET /portal/report.pdf          the client's released version (src/web/report-signoff.ts)
  *
  * The report and the PDF are made again from the approved version every time (src/web/survey-report.ts): nothing about
@@ -22,6 +24,8 @@ import type { PackView } from './survey-pack.ts';
 import { reportHtml, reportModel, reportPdf, longDate, REPORT_TITLE } from './survey-report.ts';
 import * as S from './report-signoff.ts';
 import { poundsWords } from './pack-sums.ts';
+import { csvName, returnContext, returnEntriesCsv } from './return-entries.ts';
+import { packJob } from './surveyor.ts';
 
 export type ReportPageDeps = {
   app: App;
@@ -44,6 +48,16 @@ function sendPdf(res: ServerResponse, bytes: Uint8Array, filename: string): void
   res.end(Buffer.from(bytes));
 }
 
+/** PHASE 153b (Word question 121): the return entries for each year, as a spreadsheet beside the PDF. */
+function sendCsv(res: ServerResponse, text: string, filename: string): void {
+  const bytes = Buffer.from(text, 'utf8');
+  res.writeHead(200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${filename}"`,
+    'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'content-length': String(bytes.length) });
+  res.end(bytes);
+}
+
+const csvLink = (href: string) => h`<p class="help">Beside the PDF: <a href="${href}">the return entries for each year, as a spreadsheet (CSV)</a> — what goes on each tax return, so nobody retypes the figures.</p>`;
+
 const pdfName = (company: string, version: number) =>
   `${company.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'client'}-survey-report-v${String(version)}.pdf`;
 
@@ -55,7 +69,7 @@ export async function handleReportStaff(
   d: ReportPageDeps, req: IncomingMessage, res: ServerResponse, url: URL, method: string, actor: Actor,
   form: (r: IncomingMessage) => Promise<URLSearchParams>,
 ): Promise<'handled' | 'not-mine'> {
-  const v = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack\/version\/(\d{1,6})\/(report|report\.pdf|send|tell)$/.exec(url.pathname);
+  const v = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack\/version\/(\d{1,6})\/(report|report\.pdf|return-entries\.csv|send|tell)$/.exec(url.pathname);
   const a = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack\/answer\/([A-Za-z0-9-]+)\/record$/.exec(url.pathname);
   if (v === null && a === null) return 'not-mine';
   const deps = { db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId };
@@ -71,19 +85,25 @@ export async function handleReportStaff(
   }
   const version = Number(v?.[2]);
   const what = v?.[3];
-  if (what === 'report' || what === 'report.pdf') {
+  if (what === 'report' || what === 'report.pdf' || what === 'return-entries.csv') {
     if (method !== 'GET') return 'not-mine';
     const kept = approvedVersion(deps, actor, job, version);
     if (kept === null) return d.problem(res, actor, 'No such version', 'This pack has no approved version with that number.', back);
     const m = reportModel(kept.snapshot, kept.row.fingerprint);
     if (what === 'report.pdf') { sendPdf(res, reportPdf(m).bytes, pdfName(m.company, m.version)); return 'handled'; }
+    if (what === 'return-entries.csv') {
+      const { job: j } = packJob(d.app.db, actor, job);
+      sendCsv(res, returnEntriesCsv(kept.snapshot, returnContext(d.app.db, j.claim_id, j.business_id), kept.row.fingerprint), csvName(m.company, m.version));
+      return 'handled';
+    }
     res.writeHead(200, HTML_HEADERS);
     res.end(page({ title: `${REPORT_TITLE} · ${m.company}`, nav: d.nav(actor), wide: true, body: h`
       <p class="eyebrow">${m.company} · Survey pack · version ${String(m.version)}</p>
       <div class="gate" role="note">${kept.fingerprint_holds ? 'This is the report exactly as the client will see it, once a tax adviser has signed off its figures.'
         : h`<strong>The fingerprint does not match.</strong> This copy is not what was approved. Do not send it. Tell the office.`}
         <a href="${back}#send">Back to the pack</a></div>
-      ${reportHtml(m, { pdf: `/staff/survey/${job}/pack/version/${String(version)}/report.pdf` })}` }));
+      ${reportHtml(m, { pdf: `/staff/survey/${job}/pack/version/${String(version)}/report.pdf` })}
+      ${csvLink(`/staff/survey/${job}/pack/version/${String(version)}/return-entries.csv`)}` }));
     return 'handled';
   }
   if (method !== 'POST') return 'not-mine';
@@ -127,7 +147,7 @@ export function sendPanel(d: { app: App; stamp: (iso: string) => string }, actor
     ${done !== null && notes[done] !== undefined ? h`<div class="gate" role="status">${notes[done]!}</div>` : raw('')}
     <p class="help">Version ${String(latest.version)}, approved by ${latest.approver_name} on ${d.stamp(latest.approved_at)}. The report and its PDF are made from that version, and never change.</p>
     <div class="pk-step pk-step-done"><span class="pk-step-n" aria-hidden="true">✓</span><div><b>The surveyor approved it.</b><br>
-      <a href="${ver(latest.version)}/report">See the report</a> · <a href="${ver(latest.version)}/report.pdf">Download the PDF</a></div></div>
+      <a href="${ver(latest.version)}/report">See the report</a> · <a href="${ver(latest.version)}/report.pdf">Download the PDF</a> · <a href="${ver(latest.version)}/return-entries.csv">The return entries (CSV)</a></div></div>
     <div class="pk-step"><span class="pk-step-n" aria-hidden="true">2</span><div><b>A tax adviser checks it and signs off.</b>
       <p><strong>Our own tax adviser:</strong> Admin or Sales record their sign-off on the claim, as before${v.job.claim_id === null ? '.' : h` — <a href="/staff/claims/${v.job.claim_id}">open the claim</a>.`} The figure is ${poundsWords(qualifying)}.</p>
       <p><strong>The client’s accountant:</strong> we email them the PDF and a private link. They read it and sign off, or send it back. Only with the client’s permission.</p>
@@ -191,7 +211,7 @@ export async function handleSignoffLink(
   app: App, newId: () => string, req: IncomingMessage, res: ServerResponse, url: URL, method: string,
   form: (r: IncomingMessage) => Promise<URLSearchParams>,
 ): Promise<'handled' | 'not-mine'> {
-  const m = /^\/signoff\/([A-Za-z0-9_-]{1,100})(\/report\.pdf)?$/.exec(url.pathname);
+  const m = /^\/signoff\/([A-Za-z0-9_-]{1,100})(\/report\.pdf|\/return-entries\.csv)?$/.exec(url.pathname);
   if (m === null) return 'not-mine';
   const token = m[1] ?? '';
   let err: { why: string; field?: string } | null = null;
@@ -216,6 +236,10 @@ export async function handleSignoffLink(
   const model = reportModel(v.snapshot, v.fingerprint);
   if (m[2] !== undefined) {
     if (!v.fingerprint_holds) return linkPage(res, 409, 'Not available', h`<div class="card"><h1>This report cannot be opened</h1><p>It does not match what the surveyor approved. Tell Cap Rebate.</p></div>`);
+    if (m[2] === '/return-entries.csv') {
+      sendCsv(res, returnEntriesCsv(v.snapshot, returnContext(app.db, v.claim_id, v.business_id), v.fingerprint), csvName(model.company, model.version));
+      return 'handled';
+    }
     sendPdf(res, reportPdf(model).bytes, pdfName(model.company, model.version));
     return 'handled';
   }
@@ -224,6 +248,7 @@ export async function handleSignoffLink(
       This link is for you alone. It works once, until ${longDate(v.expires_at)}.</p></div>
     ${v.fingerprint_holds ? raw('') : h`<div class="gate" role="alert"><strong>This report does not match what the surveyor approved.</strong> Do not rely on it. Tell Cap Rebate.</div>`}
     ${reportHtml(model, { pdf: `/signoff/${token}/report.pdf` })}
+    ${v.fingerprint_holds ? csvLink(`/signoff/${token}/return-entries.csv`) : raw('')}
     ${v.fingerprint_holds ? linkForms(token, err, posted) : raw('')}`);
 }
 

@@ -42,6 +42,7 @@ import * as S from './surveyor.ts';
 import { registerAttribution } from './research.ts';
 import { formatPence } from './shown-range.ts';
 import { surveyorThreadPanel } from './messages-pages.ts';
+import { deskFirstReading } from './desk-first.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -373,6 +374,11 @@ function quarantinePanel(d: SurveyorDeps, w: S.Workspace): Safe {
              and search it. We do not just hide it on screen — we never send it.</p>`}
       <p class="help">What you always get:
         ${w.payload.quarantine.released_always.join(' · ')}.</p>
+      ${(() => {
+        // PHASE 153e (Word question 131): the evidence level, worked out from the price paid. The level only.
+        const r = deskFirstReading(d.app.db, w.job.job_id);
+        return r === null ? raw('') : h`<p><strong>How much evidence:</strong> ${r.level_words}</p>`;
+      })()}
     </div>`;
 }
 

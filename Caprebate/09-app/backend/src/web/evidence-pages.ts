@@ -33,6 +33,7 @@ import { localDate, localClock, ukDate } from './localtime.ts';
 import { activeMeeting, clientJoinUrl } from './video-calls.ts';
 import * as U from './photo-upload.ts';
 import * as SV from './survey-video.ts';
+import { coverageOf, deskFirstReading, videoCoverage, type Coverage } from './desk-first.ts';
 
 function redirect(res: ServerResponse, to: string): void {
   res.writeHead(303, { location: to, 'content-type': 'text/plain; charset=utf-8' });
@@ -186,6 +187,7 @@ function photosPage(v: E.ChecklistView, actor: Actor, q: URLSearchParams): Safe 
     ${may ? manyForm(job, v.unsorted) : raw('')}
     <section class="ev-box" id="items"><h2>Or go item by item</h2>
       <p class="help">The checklist, in the filming guide’s order: it starts outside and ends above the ceiling. ${String(v.done + v.marked)} of ${String(v.total)} done.</p>
+      <p class="help">Covered so far: ${coverageWords(coverageOf(v))}</p>
       ${hidden.length === 0 ? raw('') : h`<p class="help">${showHidden
         ? h`Showing the ${String(hidden.length)} item${hidden.length === 1 ? '' : 's'} you don’t have. <a href="/portal/building/photos?job=${job}#items">Hide them</a>`
         : h`${String(hidden.length)} item${hidden.length === 1 ? '' : 's'} you don’t have ${hidden.length === 1 ? 'is' : 'are'} hidden. <a href="/portal/building/photos?job=${job}&amp;hidden=1#items">Show ${hidden.length === 1 ? 'it' : 'them'}</a>`}</p>`}
@@ -288,7 +290,8 @@ function guidePage(v: E.ChecklistView): Safe {
     <ol>${GROUPS.map((g) => {
       const items = v.items.filter((i) => i.group === g);
       return items.length === 0 ? raw('') : h`<li><strong>${g}</strong><ul>${items.map((i) => h`<li>${i.title}: ${i.what}</li>`)}</ul></li>`;
-    })}</ol>
+    })}
+      <li><strong>Anything you skipped</strong><ul><li>Last of all, say out loud what you skipped and why, or write it in a note. A gap you tell us about is fine.</li></ul></li></ol>
     <p><a href="/portal/building?job=${v.job.id}">Back to “Show us your building”</a></p></div>`;
 }
 
@@ -491,6 +494,7 @@ export function portalEvidenceCard(db: App['db'], business_id: string): Safe {
   const left = v.total - v.done - v.marked;
   return h`<section class="card ev-card" id="show-us"><h2>Show us your building</h2>
     <p>${left === 0 ? 'Thank you: every item on the photo checklist is done.' : `${String(v.done + v.marked)} of ${String(v.total)} done on the photo checklist. Your surveyor uses these to value the fixtures.`}</p>
+    <p class="help">Covered: ${coverageWords(videoCoverage(db, j.id))}</p>
     <p><a class="cta" href="/portal/building">${v.done + v.marked === 0 ? 'Start' : 'Carry on'}</a></p></section>`;
 }
 
@@ -674,6 +678,16 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
 <select class="fi" name="slot">${slots.map((s) => h`<option value="${s.starts_at}">${when(s.starts_at)}</option>`)}</select></label></div>
           <p class="help">A Zoom video call, recorded to Zoom’s cloud. You host it and guide the client round; they join on their phone. They get the invitation and the filming guide.</p>
           <button class="cta" type="submit">Book it</button></form></details>`}
+    ${(() => {
+      // PHASE 153e (Word questions 129 to 131): the desk-first reading. The surveyor sees the level only; staff also see why.
+      const r = deskFirstReading(app.db, job_id);
+      if (r === null) return raw('');
+      return h`<div class="pk-add"><h2>How much evidence this job needs (a test reading)</h2>
+        <p><strong>${r.level_words}</strong></p>
+        <p class="help">Photo checklist coverage: ${coverageWords(r.coverage)}</p>
+        ${isSurveyor ? raw('') : h`<details><summary>Why (staff only: it names the value band)</summary><ul>${r.why.map((w) => h`<li>${w}</li>`)}</ul>
+          ${r.signs.length === 0 ? raw('') : h`<p class="help">Warning signs that force a visit:</p><ul>${r.signs.map((w) => h`<li>${w}</li>`)}</ul>`}</details>`}</div>`;
+    })()}
     <div class="pk-add"><h2>How you inspected</h2>
       ${basis === null ? h`<p class="help">Not said yet. It goes in the report, and approval waits for it.</p>` : h`<p><strong>${basis.words}</strong>${basis.note === null ? '' : `: “${basis.note}”`} <span class="pk-src pk-sv">${basis.by_name} · ${when(basis.at)}</span></p>`}
       ${isSurveyor ? h`<form method="post" action="${base}/basis"><div class="pk-fields"><label>How
@@ -681,6 +695,15 @@ export function inspectionChapter(app: App, actor: Actor, job_id: string, q: URL
         <label>A note (optional) <input class="fi" name="note" maxlength="500" placeholder="For example: the client’s photos of every room; the plant room by video" value="${basis?.note ?? ''}"></label></div>
         <button class="cta" type="submit">Save</button></form>` : h`<p class="help">The assigned surveyor says this.</p>`}</div>
   </div>`;
+}
+
+/**
+ * PHASE 153e (Word question 130): the coverage of the filming guide's required items, and the PLACEHOLDER pass mark.
+ * It measures how much of the guide was captured, never whether the figure is right.
+ */
+function coverageWords(c: Coverage | null): string {
+  if (c === null) return '';
+  return `${String(c.covered)} of ${String(c.required)} required items (${String(c.percent)}%). Our test pass mark is ${String(c.pass_mark_percent)}%: a placeholder until the surveyor sets it.`;
 }
 
 /** A pack line's photos, as a chip linking to them. */

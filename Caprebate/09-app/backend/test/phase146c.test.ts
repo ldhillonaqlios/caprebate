@@ -323,10 +323,11 @@ describe('CQC: the key in its header; searched by council area because the API h
     assert.equal(locationFields({ locationId: '1-X', numberOfBeds: 0 })?.['beds_registered'], 0);
   });
 
-  test('CIW and the Care Inspectorate stay unbuilt, and the panel says so', () => {
-    assert.equal(FREE_CONNECTORS['CIW'], undefined);
-    assert.match(NOT_BUILT['CIW'] ?? '', /Welsh care regulator/);
-    assert.match(NOT_BUILT['CIW'] ?? '', /Scottish/);
+  // PHASE 155 (lines 1-2), 4 October 2026: built, from each regulator's downloaded list on this server — so this test now
+  // asserts the opposite of what it did, and test/phase155.test.ts proves what they do.
+  test('CIW and the Care Inspectorate are built (Phase 155), and the panel no longer calls them unbuilt', () => {
+    assert.ok(FREE_CONNECTORS['CIW'] !== undefined && FREE_CONNECTORS['CARE_INSPECTORATE'] !== undefined);
+    assert.equal(NOT_BUILT['CIW'], undefined);
   });
 });
 
@@ -610,7 +611,8 @@ describe('"Run the research" runs a connector only for what the gates allow — 
       ONS_POSTCODE: 'FIRED', CH_COMPANY: 'FIRED', CQC: 'FIRED', EPC: 'FIRED', HMLR_PPD: 'NOT_RUN', PLANNING: 'FIRED', CIW: 'NOT_RUN', VOA: 'NOT_RUN',
     });
     assert.match(by['HMLR_PPD']!.detail, /homes only/);
-    assert.match(by['CIW']!.detail, /no connector for the Welsh care regulator/);
+    // Phase 155: the Welsh regulator has a connector now; this client's property is in England, so it is not asked.
+    assert.match(by['CIW']!.detail, /not in Wales/);
     app.db.tx(() => R.storeResearchOutcomes(d, id, out, app.now()));
     const rows = app.db.all<{ source_id: string; state: string; fired_at: string | null; retrieved_at: string | null; failure_code: string | null }>(
       'SELECT source_id, state, fired_at, retrieved_at, failure_code FROM research_sources WHERE business_id = ?', [id]);
@@ -711,9 +713,9 @@ describe('only fields both registers permit; the supplier docs recorded and date
     }
   });
 
-  test('THE SOURCE REGISTER: the EPC endpoint is the API host; CQC’s cache window is 0; every service row’s address is in SUPPLIER_DOCS, dated', () => {
+  test('THE SOURCE REGISTER: the EPC endpoint is the API host; CQC’s cache window is 30 days in the test system (Phase 153c); every service row’s address is in SUPPLIER_DOCS, dated', () => {
     assert.equal(REGISTER_SOURCES.find((s) => s.source_id === 'EPC')?.endpoint, 'https://api.get-energy-performance-data.communities.gov.uk');
-    assert.equal(LICENCES.find((l) => l.licence_id === 'CQC_SYNDICATION')?.cache_max_age_days, 0);
+    assert.equal(LICENCES.find((l) => l.licence_id === 'CQC_SYNDICATION')?.cache_max_age_days, 30);
     // This phase's sources. The paid lookups' rows (Homedata, the title register) are Phase 146d's to document.
     for (const p of Object.values(CALL_POLICIES)) {
       if (p.register_source === null || p.base_url === null || FREE_CONNECTORS[p.register_source] === undefined) continue;
@@ -724,7 +726,8 @@ describe('only fields both registers permit; the supplier docs recorded and date
     for (const sid of Object.keys(FREE_CONNECTORS)) {
       const d = SUPPLIER_DOCS.find((x) => x.source_id === sid);
       assert.ok(d, `${sid} was built without its documentation recorded`);
-      assert.equal(d.read_on, '2026-09-23');
+      // Phase 155 read the Welsh and Scottish regulators' terms on 4 October 2026, before building them.
+      assert.equal(d.read_on, ['CIW', 'CARE_INSPECTORATE'].includes(sid) ? '2026-10-04' : '2026-09-23', sid);
       assert.ok(d.docs.length > 0 && d.docs.every((u) => u.startsWith('https://')));
     }
   });

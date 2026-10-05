@@ -27,7 +27,7 @@
 import type { RegisterConnector, Bundle } from './registers.ts';
 import { CALL_POLICIES } from './sources.ts';
 import { nationOf, type ResearchSubject } from './nations.ts';
-import { homedataAddress, homedataCostPence, HOMEDATA_SLUGS, type HomedataQuery } from './homedata.ts';
+import { homedataAddress, homedataCostPence, homedataSlugs, type HomedataQuery } from './homedata.ts';
 import { hmlrTitle, type TitleQuery } from './hmlr-title.ts';
 import { homedataPlanning, PLANNING_HISTORY_TOKENS, type HomedataPlanningQuery } from './homedata-planning.ts';
 
@@ -65,7 +65,7 @@ export const PAID_CONNECTORS: Readonly<Record<string, Built<unknown>>> = Object.
   HOMEDATA_ADDRESS: built<HomedataQuery>({
     connector: homedataAddress,
     query: (s) => ({ property: s.property }),
-    before_pence: homedataCostPence(HOMEDATA_SLUGS),
+    before_pence: homedataCostPence(homedataSlugs()),
   }),
 });
 
