@@ -7,7 +7,7 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 0 |
-| Ready - Lakhbir action | 31 |
+| Ready - Lakhbir action | 30 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 2 |
 | Blocked - licence or purchase | 3 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
 | Done | 297 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1349,7 +1349,7 @@
 
 ### Phase 156e - Homedata, Anthropic, GoAddress, Didit, the Connections page and the care regulators' lists (Google Analytics dropped for now)
 
-`13201538874` · **Ready - Lakhbir action** · owner Lakhbir
+`13201538874` · **Working on it** · owner Lakhbir · **CLAIMED BY Lakhbir's Mac**
 
 - Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538874.
 - Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): Step A5 (Google Analytics) dropped for now by Lakhbir; renamed on monday and here.
