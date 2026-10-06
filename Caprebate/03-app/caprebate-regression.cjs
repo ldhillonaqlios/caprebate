@@ -8592,7 +8592,7 @@ if (startSuite("AL", "Phase 157a — the questions after a pooling nil are not a
     [false, true].map(on => SECTORS.map(sec => { const L = ids(sec, on), at = sfx => L.indexOf(PFX[sec] + sfx);
       return at("14pod") >= 0 && at("14pod") < at("14fvr") && at("14fvr") < at("14po") && at("14po") < at("14iv"); })),
     [false, true].map(() => SECTORS.map(() => true)));
-  check("AL2 — on a pooling nil every question after the date is hidden: x14fvr and the block's other eleven, in all five flows (each one shown when the seller DID claim)",
+  check("AL2 — on a pooling nil every question after the date is hidden: x14fvr and the block's other ten, in all five flows (each one shown when the seller DID claim)",
     SECTORS.map(sec => HIDDEN.map(([sfx, extra, on]) => [shown(sec, sfx, on, session(extra)), shown(sec, sfx, on, session(Object.assign({}, extra, { prior_owner_claimed: "yes" })))])),
     SECTORS.map(() => HIDDEN.map(() => [false, true])));
   check("AL3 — and the date itself is still asked on a nil, switches off and on (it is what decides the nil)",

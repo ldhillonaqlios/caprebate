@@ -1843,3 +1843,19 @@ Signed .............................  Date ..........................
 
 
  **And the board's own total at the close of Phase 157 (the sweep), 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.
+
+
+---
+
+## Phase 157a, 6 October 2026 — the seller whose entitlement is not known, and the questions after a pooling nil; nothing moved in or out
+
+ **Point 3 of Phase 154a1's note above is now built.** A seller whose entitlement to claim is "not sure" or was never asked, and who is not known to have claimed, sits between Rulebook B's branches B (never able to claim: a full apportionment) and C (able, never pooled: nil). Until today the online estimate gave that seller the upper half of the band and called it "the best case".
+
+-  **What it does now, in care homes, dental, GP and private hospitals** (supported living never had that step): nil at the bottom of the range, the top unchanged, and a flag naming both branches and what settles it, usually the seller's replies to the standard property enquiries. "Not sure" and no answer give the same result. Example: a care home bought for £2,000,000 from a seller whose position is not known — £600,000 to £800,000 before, now nil to £800,000, sent to a person rather than shown as an estimate.
+-  **A seller who could claim, never did, and sold between April 2012 and April 2014 (branch D):** the figure is unchanged, £600,000 to £800,000 in the same example, and the words now say why: it did not have to pool, so no value had to be fixed with the buyer. Before April 2012 (row A4) they say the second-hand fixtures rules had not begun. Neither says "no prior entitlement" any more.
+-  **The questions after a pooling nil are not asked.** Where the seller could claim, never did, and stopped owning after April 2014, the claim is already nil (Phase 154a1). The date it stopped owning is now asked before the fixed-value question, and on that nil the fixed-value question and the ten questions about how the seller stopped owning, owners in between and written statements are not asked. "Not sure", or no date, asks them all as before.
+-  **Unchanged:** a seller who could never claim (still the best case, branch B1); a seller who claimed; every switch's direction, counted in code again at 6,000 walks a sector (seventeen bigger, six either way, two only in the survey pack, four smaller).
+
+ **One thing for you to check, already in your review pack (B-Q2).** As before, an unsettled case shows a range with nil at the bottom and a flag rather than no figure at all. Rulebook B section 6 leans towards no figure.
+
+ **And the board's own total at the close of Phase 157a, 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.

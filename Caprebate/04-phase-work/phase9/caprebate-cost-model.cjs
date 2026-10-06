@@ -31,7 +31,7 @@
              prelimsFactor(). It was once marked blocked on the VOA licence;
              since 4 Oct 2026 nothing here waits on that licence.
      LEG-E3  needs a professional-fees figure. Since 4 Oct 2026 the surveyor
-             sets the percentage (call question 9, SV-S10); the Valuation
+             sets the percentage (call question 9a, SV-S10); the Valuation
              Office's fee scale is not used and its table stays empty.
      LEG-E4  needs a commercial cost library: BCIS, chosen over Spon's on
              24 September 2026 (Word answers 6 and 8). No Spon's book is
@@ -93,7 +93,7 @@ const CB_P9_GATES = {
 
   /* LEG-E3 (12804380489) - replace the flat 15% professional fee uplift with
      a banded fee table. Waits on the SURVEYOR, who sets the fees percentage
-     (call question 9, SV-S10), not on the Valuation Office, whose licence
+     (call question 9a, SV-S10), not on the Valuation Office, whose licence
      email was dropped on 4 Oct 2026. */
   leg_e3_voa_fee_scale: false,
 
@@ -138,7 +138,7 @@ const CB_P9_GATES = {
 
   /* LEG-E5 (12804317685) - per-element depreciation from obsolescence scales
      and CIBSE plant lives. Waits on the SURVEYOR's ageing method (call
-     question 9a, SV-S10) and on CIBSE; not on the Valuation Office, whose
+     question 9, the valuation basis; tracker 12927234437) and on CIBSE; not on the Valuation Office, whose
      licence email was dropped on 4 Oct 2026. */
   leg_e5_per_element_depreciation: false,
 
@@ -183,7 +183,7 @@ function emptyTable(id, source, licence, shape) {
 const CB_VOA_FEE_SCALE = emptyTable(
   "CB_VOA_FEE_SCALE",
   "Valuation Office Agency - professional fee scale",
-  "NOT CLEARED - board item 12804380489: waits on the surveyor, who sets the professional-fees percentage (surveyor call question 9; FOR THE SURVEYOR SV-S10). The Valuation Office's fee scale is not used: its licence email was dropped on 4 Oct 2026",
+  "NOT CLEARED - board item 12804380489: waits on the surveyor, who sets the professional-fees percentage (surveyor call question 9a; FOR THE SURVEYOR SV-S10). The Valuation Office's fee scale is not used: its licence email was dropped on 4 Oct 2026",
   { bands: [] }
 );
 
@@ -195,7 +195,7 @@ const CB_VOA_FEE_SCALE = emptyTable(
 const CB_VOA_FEE_BUILDING_TYPE_ADDERS = emptyTable(
   "CB_VOA_FEE_BUILDING_TYPE_ADDERS",
   "Valuation Office Agency - professional fee scale, building-type adders",
-  "NOT CLEARED - board item 12927234375: waits on the surveyor, same as CB_VOA_FEE_SCALE (surveyor call question 9; SV-S10). No Valuation Office figure is used",
+  "NOT CLEARED - board item 12927234375: waits on the surveyor, same as CB_VOA_FEE_SCALE (surveyor call question 9a; SV-S10). No Valuation Office figure is used",
   { adders: {} }
 );
 
@@ -329,7 +329,7 @@ const CB_CONTRACT_SIZE_ADJUSTMENT = emptyTable(
 const CB_VOA_OBSOLESCENCE = emptyTable(
   "CB_VOA_OBSOLESCENCE",
   "Valuation Office Agency - obsolescence / age-depreciation scales",
-  "NOT CLEARED - board item 12804317685: waits on the surveyor, who sets the ageing method (surveyor call question 9a; SV-S10). The Valuation Office's scales are not used: its licence email was dropped on 4 Oct 2026",
+  "NOT CLEARED - board item 12804317685: waits on the surveyor, who sets the ageing method (surveyor call question 9, the valuation basis; tracker 12927234437). The Valuation Office's scales are not used: its licence email was dropped on 4 Oct 2026",
   { scales: {} }
 );
 
@@ -363,7 +363,7 @@ const CB_VOA_BUILDING_OBSOLESCENCE = emptyTable(
   "CB_VOA_BUILDING_OBSOLESCENCE",
   "Valuation Office Agency - whole-building age/obsolescence allowance",
   "NOT CLEARED - board item 12804317685: waits on the surveyor's ageing method, as " +
-    "CB_VOA_OBSOLESCENCE (surveyor call question 9a; SV-S10). No Valuation Office figure is used",
+    "CB_VOA_OBSOLESCENCE (surveyor call question 9; tracker 12927234437). No Valuation Office figure is used",
   { scales: {} }
 );
 

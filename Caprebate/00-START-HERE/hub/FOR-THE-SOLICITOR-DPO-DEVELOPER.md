@@ -2049,3 +2049,14 @@ Name:                                  Date:
 **This register's size, re-derived at the close of Phase 157 on 6 October 2026**, counted the way the register check counts them — one line for each entry and each board item it covers: **seventy-seven entries covering sixty-eight board items**, one more of each than at the close of Phase 153c (SDP-P43 added; SDP-V8 closed but still listed, on a board item that stays here for SDP-P38).
 
  **And the board's own total at the close of Phase 157 (the sweep), 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.
+
+
+---
+
+## Phase 157a, 6 October 2026 — for the developer: the survey pack reads the cost model; nothing moved in or out
+
+-  **Migration 095** rebuilds `survey_pack_entries` the way 082 did (the own-transaction shape, every row copied, its index and both never-edited and never-deleted triggers made again, the foreign-key guard), adding five whole-pack values, each the surveyor's with a reason: the valuation date, the insurance rebuild figure, its date, and what each figure includes. A date is kept as YYYYMMDD and an "includes" answer as 0 to 7; the table refuses anything else.
+-  **`src/web/pack-cost-model.ts`** reads `04-phase-work/phase9/caprebate-cost-model.cjs` for one pack, as `bcis-index.ts` already did (the deploy's `includeFiles` takes `Caprebate/**`), and the phase3 CRM's £/m² limit. Its readings show in chapters 11, 14 and 22 and are kept out of the approved version and the client's report (`SheetRow.internal`). No personal data, no outside call, no new route: the values post to the pack's existing `/extra` route.
+-  **The test system** for its placeholders is the deployed test website, or a copy started with `CAPREBATE_COST_MODEL_TEST=1`. The real BCIS index file, once imported, is read first and stays outside the repository, as Phase 155 set it.
+
+ **And the board's own total at the close of Phase 157a, 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.

@@ -1067,3 +1067,17 @@ reasonably be established remotely should require a site inspection before a sur
 **Marked 6 October 2026 by Phase 157 (the sweep): one entry moved into this register, so its size is now ten entries covering ten board items, all ten at Built — awaiting sign-off.**
 
  **And the board's own total at the close of Phase 157 (the sweep), 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.
+
+
+---
+
+## Phase 157a, 6 October 2026 — four of your answers now show in the survey pack; dated lines on three entries, nothing moved in or out
+
+ Phase 153e built four of your questions in the cost model's own tests. Until today the survey pack did not read the cost model at all. Now it does, and **each reading is a test placeholder for you to check: it changes no figure in the pack, and it is not in the approved version or the client's report.** Every switch in the cost model is still off.
+
+-  **SV-S6, preliminaries (question 136).** Chapter 14 shows the flat 18% the model ships with, and, on the test website, what the placeholder bands would give for this job's rebuild cost. Example: a £1,280,000 rebuild falls in the £1m to £5m band, so 12%. The bands are still ours, not yours: please set them.
+-  **SV-S7, the insurance figure (question 137).** Chapter 14 now takes the insurance rebuild figure, its date, and what it and our rebuild cost each include (demolition, fees, site costs). It shows "supports", "does not support" or "not comparable", against a test limit of 10%. A date or an answer not given is "not comparable", never a pass. Example: our £1,280,000 against an insurer's £1,300,000 on the same date and the same basis is 1.5% apart, so it supports.
+-  **SV-S8, your rates (questions 147 and 149).** Chapter 11 shows the purchase date, the valuation date you give, and the index factor between them. It uses the real BCIS index once one is imported; the table of invented points only on the test website; otherwise it says it is not worked out. Chapter 22 compares this pack's whole-building rate with the middle rate of the sector's approved packs, once five exist: more than 10% apart is flagged for your review, never a fail.
+-  **SV-S10, the professional fees, and the ageing method.** The cost model's own notes said its fee and ageing tables waited on a Valuation Office licence. They now say they wait on you: the fees percentage (your call question 9a) and the ageing method (call question 9, the valuation basis). The tables and switches are unchanged.
+
+ **And the board's own total at the close of Phase 157a, 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.

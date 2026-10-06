@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 305 |
-| Working on it | 1 |
+| Done | 306 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1079,6 +1079,7 @@
 - File: `08-monday-doc-exports/12927234437__Depreciation-both-methods-built-neither-chosen.md`
 - File: `08-monday-doc-exports/12927234437__F-3-Prepared-Patch-CIBSE-to-taxonomy-crosswalk-completeness-gate.md`
 - Note 2026-10-04 (Planning (Valuation Office email not sent)): The Valuation Office is not being asked for its ageing scale (Lakhbir: 'dont send it'). The ageing method stays the surveyor's ruling (call question 9); CIBSE Guide M gives plant lives. Posted on monday.
+- Note 2026-10-06 (Phase 157a): The cost model's text no longer says the ageing scales wait on a VOA licence: they wait on the surveyor's ageing method (call question 9, the valuation basis). Gates and tables unchanged.
 
 ### Adjust building costs for where the property is and how big the job is
 
@@ -1088,6 +1089,7 @@
 - Note 2026-09-28 (Phase 153): Its blocker is BCIS and Word question 218 (which product, and whether its licence lets our software use its rates) - not Spon's at £330: Spon's is not being bought (24 Sep 2026).
 - Note 2026-09-28 (Phase 153): Tested on BCIS, 28 Sep (Phase 153). BCIS's own page: 'All of our location factors are set in relation to a UK mean factor of 100' (bcis.co.uk/insight/bcis-basics-using-location-factors-in-construction/). The model already takes that base (national_mean with a UK mean row at 100) - no generalising was needed. New tests D30-D34 in caprebate-cost-model.test.cjs, on an invented BCIS-shaped table: accepted on BCIS's base; another book's table, a missing base, a base written 1.00 and a bare mean all refused; the gate ships off. All five fail on the pre-Phase-132 model. Left for the purchase: the real factors, and whether BCIS's contract-sum study fits the job-size table's shape (not public).
 - Note 2026-10-06 (Phase 157 (sweep)): The purchase (BCIS) is Lakhbir's, so the owner is his. The buildable half - the cost model reading a BCIS-shaped table, and the index import of Phase 155 - is in Phase 157a.
+- Note 2026-10-06 (Phase 157a): Its buildable half is built: the survey pack reads the BCIS index the cost model takes (chapter 11's index factor, src/web/pack-cost-model.ts), from a file imported with import-bcis-index; the cost model's invented placeholder table only on the test website. What is left is the purchase of BCIS itself (Word question 218), Lakhbir's.
 
 ### Build the calibration set from surveyor overrides — the only honest evidence about whether the pre-fills are right
 
@@ -1106,7 +1108,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1165,6 +1167,7 @@
 
 `12804374366` · **Built - awaiting sign-off** · owner Surveyor
 
+- Note 2026-10-06 (Phase 157a): Preliminaries by job size now show in the survey pack's chapter 14, as a test placeholder on the test website only: the shipped flat 18% beside what the placeholder bands give for that job's rebuild cost. The switch stays off.
 
 ### Replace the flat 15% professional fees with a proper scale
 
@@ -1174,6 +1177,7 @@
 - Note 2026-09-28 (Phase 153): Proved built, interlocked and off on 28 Sep (Phase 153): phase9 node --test 398/398 with A1 (every gate ships false), A2 (every table ships empty) and C1-C15; the model prints leg_e3_voa_fee_scale false, leg_e3_building_type_adder false, 0 fee bands, 0 adders, and either switch on over the empty tables refuses E_TABLE_NOT_LOADED; the scale on without the adder refuses E_BUILDING_TYPE_ADDER_REQUIRED (C10). Nothing more is buildable: the bands are the Valuation Office's data (licence enquiry 12933604947) and a regressive scale needs the tax adviser.
 - Note 2026-10-04 (Planning (Valuation Office email not sent)): The Valuation Office is not being asked (Lakhbir: 'dont send it'). The fees percentage now comes from the surveyor (call question 9a). The flat 15% is the client's design-team fees on top of the build cost, not our 3% fee. Status Blocked - question on monday and here; the empty fee table and switches stay off.
 - Note 2026-10-06 (Phase 157 (sweep)): Built and off; nothing waits on a licence any more (the Valuation Office email was dropped, 4 Oct): it waits only on the surveyor's percentage (call question 9a). Moved from Blocked - question; housed as SV-S10 in FOR THE SURVEYOR.
+- Note 2026-10-06 (Phase 157a): The cost model's text no longer says this waits on a VOA licence: it waits on the surveyor's fees percentage (call question 9a, SV-S10). Gates and tables unchanged.
 
 ### Land boundary maps for site size - fetcher built and switched off 24 Sep 2026; its first download is a test lookup under the five conditions (smoke HMLR_INSPIRE, built 28 Sep 2026). Lakhbir, or a person he names, runs it; switching it on is Lakhbir's
 
@@ -1321,12 +1325,6 @@
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 - Note 2026-10-06 (Phase 157 (sweep)): The tool is built and refuses to run until the officer answers Word question 200; nothing is left to build, so it waits like any built item. Housed as SDP-P43.
 
-### Phase 157a - the engine and the cost model: the pooling questions, the unknown seller, and the cost model in the survey pack
-
-`13215798638` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir’s MacBook Pro**
-
-- Note 2026-10-06 (Phase 157 (sweep)): Written by the Phase 157 sweep: 154a1 (a) and (b) and the cost model in the survey pack (153e, 153g, 155). Runs next.
-
 ### Phase 157b - the papers the 4 to 6 October decisions overtook, and the rate-card uplifts
 
 `13215798640` · **Ready - Claude can build** · owner Claude
@@ -1337,7 +1335,7 @@
 
 ## Z · Complete / Not Applicable
 
-305 items.
+306 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3142,4 +3140,11 @@
 `13215703505` · **Done** · owner Claude
 
 - Note 2026-10-06 (Phase 157 (sweep)): Sweep done 6 Oct 2026: every check green and every negative control red; funnel enquiry deletion path and introducer terms signature built (off); 12 tracker rows corrected; Word 172 recorded, 207, 230, 231 closed; Phases 157a and 157b written; sweep renumbered 158. Back end 2,533, total 4,751.
+
+### Phase 157a - the engine and the cost model: the pooling questions, the unknown seller, and the cost model in the survey pack
+
+`13215798638` · **Done** · owner Claude
+
+- Note 2026-10-06 (Phase 157 (sweep)): Written by the Phase 157 sweep: 154a1 (a) and (b) and the cost model in the survey pack (153e, 153g, 155). Runs next.
+- Note 2026-10-06 (Phase 157a): Done 6 Oct 2026: the cessation date before the fixed-value question and the block hidden on a pooling nil (Suite AL); the unknown seller nil at the bottom with a flag, branch D and A4 words (Suite AM); the cost model in the survey pack (chapters 11, 14, 22; migration 095; test/phase157a.test.ts); the cost model's VOA text corrected. 4,790 passing. Record in PHASE-HISTORY.
 
