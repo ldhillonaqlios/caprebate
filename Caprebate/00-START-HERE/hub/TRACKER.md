@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 1 |
 | Ready - Lakhbir action | 24 |
 | Built - awaiting sign-off | 128 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 307 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1333,7 +1333,7 @@
 
 ### Phase 157d - signing from an emailed link, a second signer, two upload checks and four document types
 
-`13217880529` · **Ready - Claude can build** · owner Claude
+`13217880529` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir’s MacBook Pro**
 
 - Note 2026-10-06 (Phase 157c): Written by Phase 157c: signing from an emailed link and a second signer (each off until the solicitor answers), duplicates (F18), a damaged PDF (F19), and the four document types nothing can receive yet (F16, moved from 157c).
 
