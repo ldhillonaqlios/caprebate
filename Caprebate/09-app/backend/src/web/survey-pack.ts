@@ -67,7 +67,18 @@ export type PackGrants = {
  */
 export const GRANT_AMOUNTS_TO_SURVEYOR = false;
 
-export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed' | 'vat_position' | 'vat' | 'shared_area';
+export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed' | 'vat_position' | 'vat' | 'shared_area'
+  | CostField;
+
+/**
+ * PHASE 157a, 6 October 2026 — THE COST MODEL'S FIVE VALUES (migration 095; src/web/pack-cost-model.ts). Each the
+ * surveyor's, with a reason, for the index dates in chapter 11 and the insurance check in chapter 14. A date is kept as
+ * YYYYMMDD; what a figure includes is 1 demolition + 2 professional fees + 4 preliminaries. Never drafted (N4).
+ */
+export const COST_FIELDS = Object.freeze(['valuation_date', 'insurance', 'insurance_date', 'insurance_includes', 'rebuild_includes'] as const);
+export type CostField = (typeof COST_FIELDS)[number];
+export type CostValues = Readonly<Record<CostField, Valued>>;
+export const INCLUDES_BITS = Object.freeze({ demolition: 1, fees: 2, prelims: 4 } as const);
 export const PACK_INPUT_FIELDS = Object.freeze(['price_paid', 'land', 'gia', 'building_rate'] as const);
 export type PackInputField = (typeof PACK_INPUT_FIELDS)[number];
 
@@ -103,6 +114,8 @@ export type PackView = {
   readonly vat: VatReading;
   /** PHASE 153e: supported living's shared areas from the floor plans, in thousandths of a m² (the surveyor's, with a reason). */
   readonly shared_area: Valued;
+  /** PHASE 157a: the cost model's five values (chapter 11's valuation date, chapter 14's insurance check). */
+  readonly cost: CostValues;
   /** The pack's counter as this view was read. A change must carry it back. */
   readonly seq: number;
   readonly may_edit: boolean;
@@ -198,6 +211,8 @@ const FIELD_WORDS: Readonly<Record<PackField, string>> = Object.freeze({
   price_paid: 'price paid', land: 'bare land', gia: 'floor area', building_rate: 'whole-building rate',
   qty: 'how much', rate: 'rate', qpct: 'share that qualifies', pool: 'pool', removed: 'taken out',
   vat_position: 'VAT position', vat: 'VAT that could not be reclaimed', shared_area: 'shared areas from the floor plans',
+  valuation_date: 'valuation date', insurance: 'insurance rebuild figure', insurance_date: 'date of the insurance figure',
+  insurance_includes: 'what the insurance figure includes', rebuild_includes: 'what our rebuild cost includes',
 });
 
 /** PHASE 153e (Word question 133): the share of the floor area used when no floor plans give the shared areas. */
@@ -301,9 +316,15 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
       element_ids: g.element_ids, element_names: g.element_ids.map(elementName) })),
   };
 
+  const cost: CostValues = {
+    valuation_date: resolve(null, 'valuation_date', none), insurance: resolve(null, 'insurance', none),
+    insurance_date: resolve(null, 'insurance_date', none), insurance_includes: resolve(null, 'insurance_includes', none),
+    rebuild_includes: resolve(null, 'rebuild_includes', none),
+  };
+
   return {
     job, pack_id: pack?.id ?? null, property, property_choices: choices,
-    inputs, lines, sums: reading.sums, grants, vat, shared_area,
+    inputs, lines, sums: reading.sums, grants, vat, shared_area, cost,
     seq: entries.length === 0 ? 0 : (entries[entries.length - 1] as EntryRow).seq,
     may_edit: can(actor, 'surveyor_job.commit', obj),
     changes,
@@ -389,6 +410,8 @@ export function savePackValue(d: PackDeps, actor: Actor, job_id: string, f: { fi
  * supported living's shared areas from the floor plans. Each the surveyor's, with a reason. Empty: back to not recorded.
  */
 export function savePackExtra(d: PackDeps, actor: Actor, job_id: string, f: { field: string; value: string; reason: string; seq: string }): PackResult {
+  const cost = COST_FIELDS.find((x) => x === f.field);
+  if (cost !== undefined) return saveCostValue(d, actor, job_id, cost, f);
   if (f.field !== 'vat_position' && f.field !== 'vat' && f.field !== 'shared_area') return { ok: false, field: 'field', why: 'That is not one of the pack’s values.' };
   const field: PackField = f.field;
   const raw = f.value.trim();
@@ -410,6 +433,53 @@ export function savePackExtra(d: PackDeps, actor: Actor, job_id: string, f: { fi
       : field === 'vat' ? view.vat.amount_pence : view.shared_area.value;
     if (value === null && now === null) return { ok: false, field: 'value', why: 'Nothing is recorded yet, so there is nothing to clear.' };
     if (value !== null && now !== null && was === value) return { ok: false, field: 'value', why: 'That is already the value. Nothing changed.' };
+    insertEntry(d, actor, pack_id, null, field, value, null, f.reason);
+    audit(d, actor, view, 'value', null, [field]);
+    return { ok: true };
+  });
+}
+
+/** A date typed as 2026-10-06 (the date box's own form), kept as 20261006; a date that does not exist is refused. */
+export function parsePackDate(raw: string): { ok: true; value: number } | { ok: false; why: string } {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw.trim());
+  if (m === null) return { ok: false, why: 'Give the date as day, month and year.' };
+  const [y, mo, da] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const t = new Date(Date.UTC(y, mo - 1, da));
+  if (t.getUTCFullYear() !== y || t.getUTCMonth() !== mo - 1 || t.getUTCDate() !== da) return { ok: false, why: 'That date does not exist.' };
+  if (y < 1900 || y > 2100) return { ok: false, why: 'Give a date between 1900 and 2100.' };
+  return { ok: true, value: y * 10000 + mo * 100 + da };
+}
+
+/** 20261006 as 2026-10-06, for the cost model and the date box; null for nothing. */
+export function packDateIso(v: number | null): string | null {
+  if (v === null) return null;
+  const s = String(v);
+  return /^\d{8}$/.test(s) ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : null;
+}
+
+/** PHASE 157a: one of the cost model's five values (COST_FIELDS). Empty: back to not recorded. */
+function saveCostValue(d: PackDeps, actor: Actor, job_id: string, field: CostField, f: { value: string; reason: string; seq: string }): PackResult {
+  const raw = f.value.trim();
+  let value: number | null = null;
+  if (raw !== '') {
+    if (field === 'valuation_date' || field === 'insurance_date') {
+      const p = parsePackDate(raw);
+      if (!p.ok) return { ok: false, field: 'value', why: p.why };
+      value = p.value;
+    } else if (field === 'insurance') {
+      const p = parseMoney(raw);
+      if (!p.ok) return { ok: false, field: 'value', why: p.why };
+      if (p.value === 0) return { ok: false, field: 'value', why: 'An insurance figure of nothing cannot be compared. Leave it empty if there is none.' };
+      value = p.value;
+    } else {
+      if (!/^[0-7]$/.test(raw)) return { ok: false, field: 'value', why: 'Choose one of the answers.' };
+      value = Number(raw);
+    }
+  }
+  return begin(d, actor, job_id, f.reason, f.seq, ({ view, pack_id }) => {
+    const now = view.cost[field];
+    if (value === null && now.source === null) return { ok: false, field: 'value', why: 'Nothing is recorded yet, so there is nothing to clear.' };
+    if (value !== null && now.source !== null && now.value === value) return { ok: false, field: 'value', why: 'That is already the value. Nothing changed.' };
     insertEntry(d, actor, pack_id, null, field, value, null, f.reason);
     audit(d, actor, view, 'value', null, [field]);
     return { ok: true };

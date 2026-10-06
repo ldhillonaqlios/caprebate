@@ -232,7 +232,7 @@ test("A4 the refusal names the gate and the licence, so the reader knows who to 
     assert.fail("should have thrown");
   } catch (e) {
     assert.equal(e.detail.gate, "leg_e3_voa_fee_scale");
-    assert.match(e.detail.licence, /VOA licence/);
+    assert.match(e.detail.licence, /waits on the surveyor/);   /* Phase 157a: the fee scale waits on the surveyor since 4 Oct 2026, not on a VOA licence */
   }
 });
 
@@ -1447,7 +1447,7 @@ test("E7 an element with no age refuses — age is the whole input", () => {
     "E_ELEMENT_AGE_REQUIRED");
 });
 
-test("E8 E5 needs BOTH sources — the VOA licence alone does not unblock it", () => {
+test("E8 E5 needs BOTH sources — the ageing scales alone do not unblock it", () => {
   /* CIBSE loaded, VOA obsolescence still an empty stub */
   const halfCleared = {
     gates: { leg_e5_per_element_depreciation: true },

@@ -27,10 +27,13 @@ import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
 import { ESTIMATED_AREA_LABEL } from '../connectors/homedata.ts';
 import { BAND } from './engine.ts';
 import { poundsWords, percentWords, quantityWords } from './pack-sums.ts';
+import { indexReading, insuranceReading, prelimsReading, rateFlagReading, INCLUDES_WORDS } from './pack-cost-model.ts';
+import { packDateIso } from './survey-pack.ts';
+import type { Env } from '../connectors/place.ts';
 
 /** Where a row's value comes from — shown beside it, so nothing reads as more certain than it is. */
 export type RowFrom = 'the pack' | 'the claim' | 'Land Registry' | 'the energy certificate' | 'Homedata (estimate)' | 'the client'
-  | 'worked out' | 'fixed wording' | 'the surveyor' | 'the documents';
+  | 'worked out' | 'fixed wording' | 'the surveyor' | 'the documents' | 'the property record' | 'the cost model (test)';
 
 export type SheetRow = {
   readonly label: string;
@@ -41,6 +44,8 @@ export type SheetRow = {
   readonly by?: string;
   /** The word for a missing value: "not on file", "not written yet", "not worked out yet". */
   readonly missing: string;
+  /** PHASE 157a: shown to the surveyor and kept out of the approved version and the client's report (a test placeholder). */
+  readonly internal?: boolean;
 };
 
 export type Sheet = {
@@ -85,6 +90,8 @@ type Ctx = {
   readonly words: ReturnType<typeof packWords>;
   readonly triggers: readonly string[] | null;
   readonly funnel: Record<string, unknown> | undefined;
+  /** PHASE 157a: where this copy runs, for the cost model's test placeholders (src/web/pack-cost-model.ts). */
+  readonly env: Env;
 };
 
 function wordsRow(c: Ctx, f: WordField): SheetRow {
@@ -169,9 +176,37 @@ function bareLand(c: Ctx): Sheet {
       wordsRow(c, 'land_comparables'), wordsRow(c, 'land_voa'), wordsRow(c, 'land_date'), wordsRow(c, 'land_planning_basis'),
       // Phase 153e line 11: the planning assumption, as it goes in the report.
       ...REPORT_ASSUMPTIONS.map((a) => ({ label: 'What we assume about planning', value: a, from: 'fixed wording' as const, missing: NOT_ON_FILE })),
+      // Phase 153e line 12 (Word question 147), wired by Phase 157a: the index dates and the factor between them.
+      ...indexRows(c),
     ],
-    words: ['land_comparables', 'land_voa', 'land_date', 'land_planning_basis'], items: [], carries: '153e line 11 (line 12, the index dates, waits for the cost model in the pack: Phase 157)',
+    words: ['land_comparables', 'land_voa', 'land_date', 'land_planning_basis'], items: [], carries: '153e lines 11 and 12 (12 wired by Phase 157a)',
   };
+}
+
+/** PHASE 157a — chapter 11's index dates (Word question 147): the purchase date, the valuation date, and the factor. */
+function indexRows(c: Ctx): SheetRow[] {
+  const r = indexReading(c.db, c.v, c.env);
+  const vd = c.v.cost.valuation_date;
+  return [
+    { label: 'Purchase date', value: r.purchase, from: 'the property record', missing: NOT_ON_FILE, internal: true },
+    { label: 'Valuation date (the date the rebuild cost is priced at)', value: packDateIso(vd.value), from: 'the surveyor', ...(vd.source?.by_name ? { by: vd.source.by_name } : {}), missing: 'not given yet', internal: true },
+    { label: 'Index factor, purchase date to valuation date', value: r.words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
+  ];
+}
+
+/** PHASE 157a — chapter 14's checks (Word questions 136, 137 and 139). */
+function checkRows(c: Ctx): SheetRow[] {
+  const ins = c.v.cost.insurance;
+  const inc = (x: number | null) => (x === null ? null : INCLUDES_WORDS[x] ?? null);
+  return [
+    { label: 'Site costs (preliminaries) by job size', value: prelimsReading(c.v, c.env).words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
+    { label: 'Insurance rebuild figure', value: ins.value === null ? null : `${poundsWords(ins.value)}${packDateIso(c.v.cost.insurance_date.value) === null ? '' : `, dated ${packDateIso(c.v.cost.insurance_date.value) as string}`}`,
+      from: 'the surveyor', ...(ins.source?.by_name ? { by: ins.source.by_name } : {}), missing: 'not recorded', internal: true },
+    { label: 'What the insurance figure includes', value: inc(c.v.cost.insurance_includes.value), from: 'the surveyor', missing: 'not recorded', internal: true },
+    { label: 'What our rebuild cost includes', value: inc(c.v.cost.rebuild_includes.value), from: 'the surveyor', missing: 'not recorded', internal: true },
+    { label: 'Insurance figure against our rebuild cost', value: insuranceReading(c.v, c.env).words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
+    { label: 'Past-claim limits', value: 'We use these to test the cost model on past claims, not on one pack. They are 5%, £25,000 and 0.01 on the split. The surveyor and the accountant set them.', from: 'fixed wording', missing: NOT_ON_FILE, internal: true },
+  ];
 }
 
 /** Qualifying spend as a share of cost, over the counted lines of one kind; null if any of them is not complete. */
@@ -202,10 +237,10 @@ function qualifyingShare(c: Ctx): Sheet {
       { label: `Judgement or contested items (${String(jd.count)})`, value: jd.pct, from: 'worked out', missing: jd.count === 0 ? 'none in this pack' : NOT_WORKED },
       { label: 'The building’s structure (what is left after the plant)', value: residual === null ? null : poundsWords(residual), from: 'worked out', missing: NOT_WORKED },
       wordsRow(c, 'qpct_basis'),
-      // Phase 153e lines 7, 8 and 10: built in the cost model's own tests; not in the pack until Phase 157 wires it in.
-      { label: 'Cost model checks', value: 'Three checks are built in the cost model’s own tests: site costs by job size, the insurance figure, and a past claim. They are not in this pack yet.', from: 'fixed wording', missing: NOT_ON_FILE },
+      // Phase 153e lines 7, 8 and 10, wired by Phase 157a (src/web/pack-cost-model.ts): test placeholders, for the surveyor.
+      ...checkRows(c),
     ],
-    words: ['qpct_basis'], items: [], carries: '153e lines 7, 8 and 10',
+    words: ['qpct_basis'], items: [], carries: '153e lines 7, 8 and 10 (wired by Phase 157a)',
   };
 }
 
@@ -328,28 +363,31 @@ function findings(c: Ctx): Sheet {
       { label: 'Items seen on site', value: `${String(site)} of ${String(live.length)}`, from: 'worked out', missing: NOT_WORKED },
       { label: 'Items from documents', value: `${String(live.length - site)} of ${String(live.length)}`, from: 'worked out', missing: NOT_WORKED },
       { label: 'How much evidence this job needs', value: level?.level_words ?? null, from: 'worked out', missing: NOT_WORKED },
+      // Phase 153e line 14 (Word question 149), wired by Phase 157a: the phase3 module's £/m² review flag.
+      { label: 'Whole-building rate against approved packs', value: rateFlagReading(db, v).words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
       wordsRow(c, 'narrative_description'), wordsRow(c, 'narrative_condition'), wordsRow(c, 'narrative_departures'), wordsRow(c, 'narrative_opinion'),
     ],
-    words: ['narrative_description', 'narrative_condition', 'narrative_departures', 'narrative_opinion'], items: [], carries: '153e lines 1 to 3 and 15 (line 14, the £/m² review flag, lives in the phase3 module the back end does not read: Phase 157)',
+    words: ['narrative_description', 'narrative_condition', 'narrative_departures', 'narrative_opinion'], items: [], carries: '153e lines 1 to 3, 14 and 15 (14 wired by Phase 157a)',
   };
 }
 
 /** All ten sheets, in chapter order. */
-export function packSheets(db: Db, v: PackView): Sheet[] {
+export function packSheets(db: Db, v: PackView, env: Env = process.env): Sheet[] {
   const t = triggersOf(db, v);
-  const c: Ctx = { db, v, words: packWords(db, v.pack_id), triggers: t.triggers, funnel: t.funnel };
+  const c: Ctx = { db, v, words: packWords(db, v.pack_id), triggers: t.triggers, funnel: t.funnel, env };
   return [building(c), dwellings(c), bareLand(c), qualifyingShare(c), leaseback(c), structures(c), otherReliefs(c), judgementCalls(c), repairsOrCapital(c), findings(c)];
 }
 
-export function packSheet(db: Db, v: PackView, n: number): Sheet | null {
-  return packSheets(db, v).find((s) => s.n === n) ?? null;
+export function packSheet(db: Db, v: PackView, n: number, env: Env = process.env): Sheet | null {
+  return packSheets(db, v, env).find((s) => s.n === n) ?? null;
 }
 
 /** The sheets as an approved version keeps them: words and figures only, nothing that would change later. */
 export function sheetsForVersion(db: Db, v: PackView): { n: number; title: string; applies: boolean; not_applies_words: string | null; rows: { label: string; value: string | null; from: string; by: string | null; missing: string }[]; items: { label: string; detail: string }[] }[] {
   return packSheets(db, v).map((s) => ({
     n: s.n, title: s.title, applies: s.applies, not_applies_words: s.not_applies_words,
-    rows: s.rows.map((r) => ({ label: r.label, value: r.value, from: r.from, by: r.by ?? null, missing: r.missing })),
+    // PHASE 157a: a test placeholder (the cost model's readings) is the surveyor's to see, never the version's or the report's.
+    rows: s.rows.filter((r) => r.internal !== true).map((r) => ({ label: r.label, value: r.value, from: r.from, by: r.by ?? null, missing: r.missing })),
     items: s.items.map((i) => ({ ...i })),
   }));
 }

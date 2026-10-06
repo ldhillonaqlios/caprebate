@@ -415,13 +415,19 @@ const Q = [
   showIf:(s)=> s.election_document==="held",
   onSet:(s,v)=>s.election_notified_date=v },
 
+ /* PHASE 157a - the date the seller stopped owning, asked BEFORE the fixed-value
+    question, so a pooling nil (CB_S187A.poolingNil) can hide what follows. */
+ ...CB_S187A.cessation({ prefix:"S", group:"History of the property",
+   gate:(s)=> s.trigger.includes("purchase") && (s.prior_owner_entitled==="yes"||s.prior_owner_entitled==="unsure"||s.earlier_entitled_owner==="yes"||s.earlier_entitled_owner==="unsure"),
+   flag:function(s,f){ pushFlag(s,f); } }),
+
  {id:"S14fvr", group:"History of the property", type:"single",   // s.187A(7) — board item 12829983662: a DIFFERENT two-year window from s.201(1) notification, reachable even with no election document at all
   ask:"Has it been more than two years since you took on the property without anyone — you or the seller — fixing the fixtures value, by an election or by applying to the tribunal?",
   help:"This is not the same two-year window as the election notification deadline above. It is the separate 'fixed value requirement' window (s.187A(7)): once it closes with no election and no tribunal application made inside it, that route to fixing the value is shut for good, whether or not you later turn up an election-shaped document.",
   opts:[["yes","Yes — more than two years have passed and nothing has fixed the value"],
         ["no","No — it's within two years, or a value has already been fixed"],
         ["unsure","Not sure"]],
-  showIf:(s)=> s.trigger.includes("purchase") && (s.prior_owner_entitled==="yes"||s.prior_owner_entitled==="unsure"||s.earlier_entitled_owner==="yes"||s.earlier_entitled_owner==="unsure"),
+  showIf:(s)=> s.trigger.includes("purchase") && (s.prior_owner_entitled==="yes"||s.prior_owner_entitled==="unsure"||s.earlier_entitled_owner==="yes"||s.earlier_entitled_owner==="unsure") && !CB_S187A.poolingNil(s),   // PHASE 157a: not asked once the pooling answer has already made the claim nil
   onSet:(s,v)=>{ s.fvr_window_closed=v;
      /* A-1 — board item 12921346992. This question asks the client about THEIR
         own dates. s.187A(9) runs the relevant two-year period from the

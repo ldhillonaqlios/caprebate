@@ -4085,6 +4085,68 @@ var CB_S187A = (function(){
     }
   }
 
+  /* PHASE 157a, 6 October 2026 - THE SELLER WHOSE ENTITLEMENT IS NOT KNOWN, AND
+     THE WORDS FOR ONE WHO NEVER CLAIMED (from Phase 154a1 line 13(b); Rulebook
+     B sections 5 and 6). Stage 3 of four flows (care homes, dental, GP, private
+     hospital; supported living has no best-case step) read "never claimed" as
+     the best case whatever the seller was, and said "no prior entitlement" of
+     a seller the client had called a tax-paying business.
+       - Entitlement "not sure" or never asked, and no claim known (never
+         claimed, "not sure" or never asked - knowing less must never give a
+         better floor than knowing it never claimed): Rulebook B cannot
+         tell branch B (a seller never able to claim: a full apportionment) from
+         branch C (able, never pooled: nil). Undetermined, so the bottom of the
+         range is nil, with a flag (N4: "not sure" and absent the same).
+       - Entitlement KNOWN, never claimed: the figure is unchanged (the pooling
+         requirement, applied after Stage 3, decides the C cases), and the words
+         say what is actually known - including branch D, a seller that stopped
+         owning between April 2012 and April 2014, and A4, before April 2012. */
+  var UNKNOWN_SELLER_WORDS = "whether the seller was able to claim capital allowances on these fixtures is not yet known. If it was not, a full apportionment may be available; if it was, and it never claimed, the fixtures claim on this purchase may be nil. Until we know, the bottom of the range is nil";
+  var UNKNOWN_SELLER_FLAG = "SELLER'S ENTITLEMENT NOT KNOWN, AND NO CLAIM BY IT KNOWN (Rulebook B, branches B and C): a seller never able to claim leaves a full apportionment (B1); a seller able to claim that never pooled leaves nil (C1). The bottom of the range is nil until the seller's position is established, usually from its replies to the standard property enquiries on capital allowances (CPSE)";
+  function neverClaimedWords(s){
+    s = s || {};
+    var known = !!parseDate(s.past_owner_cessation_date);
+    if(known && regimeOff(s))
+      return "you have told us the seller was a tax-paying business that never claimed capital allowances on these fixtures, and it stopped owning them before April 2012, before the second-hand fixtures rules began. On the information given a full apportionment is available, subject to confirming the earlier ownership chain (s.185)";
+    if(known && !poolingRequirementInForce(s))
+      return "you have told us the seller was a tax-paying business that never claimed capital allowances on these fixtures, and it stopped owning them between April 2012 and April 2014, before it had to pool what it spent on them. So it brought no value into account that had to be fixed with you, and on the information given a full apportionment is available, subject to confirming the earlier ownership chain (s.185)";
+    return "you have told us the seller was a tax-paying business that never claimed capital allowances on these fixtures. What that leaves depends on when it stopped owning them: after April 2014 it had to pool what it spent first, and the pooling requirement below decides it";
+  }
+
+  /* PHASE 157a, 6 October 2026 - THE CESSATION DATE COMES FIRST (from 154a1
+     line 13(a)). poolingAssess reads the date the seller stopped owning, so it
+     must be known before the sector's fixed-value question and the questions
+     above can be hidden on a nil. It was the fourth question of the block,
+     after 14po, 14pol and 14pold, and the block came after x14fvr in all five
+     sectors. Each sector now asks it on its own, just before x14fvr, with the
+     same cfg it gives questions(); nothing else moves, so x14fvr still comes
+     before x14iv, as AF3 needs.
+     A-5 - the date both FA 2012 transitionals and the A-4 clock read. */
+  function cessation(cfg){
+    var p = cfg.prefix, g = cfg.group, rawGate = cfg.gate;
+    var flag = cfg.flag || function(){};
+    return [
+      {id:p+"14pod", group:g, type:"date", optional:true,
+       ask:"On what date did that earlier owner stop owning the property?",
+       help:"Leave it blank if you don’t know. This date does real work: it decides whether the second-hand fixtures rules apply to your purchase at all, and where a written statement of value is needed it is the date the deadline for that statement runs from. It is on the Land Registry title register.",
+       /* PHASE 154a1 (line 13): the caller's own gate, never the A-3 one. This
+          date also decides whether the pooling requirement is in force
+          (poolingAssess), which A-3 does not touch - so a seller who never
+          claimed is still asked it with that switch on. Switch off, the two
+          gates are the same and the flow is unchanged. */
+       showIf:rawGate,
+       onSet:(s,v)=>{ s.past_owner_cessation_date=v||null;
+         if(!v) flag(s,"Past owner’s cessation of ownership date not captured — the FA 2012 Sch 10 para 13(1) and 13(2) transitionals and the s.187A(11) statement deadline all run from it. Both transitionals are treated as NOT applying until it is known (A-5)"); } }
+    ];
+  }
+
+  /* PHASE 157a: true only where poolingAssess gives NIL - the case the
+     questions after the cessation date cannot change. */
+  function poolingNil(s){
+    var p = poolingAssess(s);
+    return !!(p && p.outcome === OUT.NIL);
+  }
+
   /* -------------------------------------------------------------------------
      The client-facing questions, defined once rather than five times.
 
@@ -4107,6 +4169,13 @@ var CB_S187A = (function(){
     var gate = function(s){
       if(!rawGate(s)) return false;
       if(CB_CTA.fvr_requires_past_owner_claim && pastOwnerBroughtNoDisposalValue(s)) return false;
+      /* PHASE 157a (from 154a1 line 13(a)): a seller KNOWN able to claim, who
+         never claimed and stopped owning after April 2014, already takes the
+         claim to nil (poolingAssess, F1). Nothing these questions could add
+         changes that, so they are not asked. Only a NIL hides them: "not
+         sure", or a date not given, leaves the position open and they are
+         asked as before (N4). */
+      if(poolingNil(s)) return false;
       return true;
     };
     var ivAsked = function(s){ return gate(s) && interveningOwner(s) !== "no"; };
@@ -4146,19 +4215,6 @@ var CB_S187A = (function(){
        help:"The clock for fixing the fixtures value runs from this date — not from when you bought.",
        showIf:(s)=> gate(s) && s.past_owner_disposal_mode==="new_lease_premium",
        onSet:(s,v)=>s.past_owner_lease_grant_date=v||null },
-
-      /* A-5 - the date both FA 2012 transitionals and the A-4 clock read. */
-      {id:p+"14pod", group:g, type:"date", optional:true,
-       ask:"On what date did that earlier owner stop owning the property?",
-       help:"Leave it blank if you don’t know. This date does real work: it decides whether the second-hand fixtures rules apply to your purchase at all, and where a written statement of value is needed it is the date the deadline for that statement runs from. It is on the Land Registry title register.",
-       /* PHASE 154a1 (line 13): the caller's own gate, never the A-3 one. This
-          date also decides whether the pooling requirement is in force
-          (poolingAssess), which A-3 does not touch - so a seller who never
-          claimed is still asked it with that switch on. Switch off, the two
-          gates are the same and the flow is unchanged. */
-       showIf:rawGate,
-       onSet:(s,v)=>{ s.past_owner_cessation_date=v||null;
-         if(!v) flag(s,"Past owner’s cessation of ownership date not captured — the FA 2012 Sch 10 para 13(1) and 13(2) transitionals and the s.187A(11) statement deadline all run from it. Both transitionals are treated as NOT applying until it is known (A-5)"); } },
 
       /* A-1 - the fact that moves the clock off the client's own date. */
       {id:p+"14iv", group:g, type:"single",
@@ -4240,10 +4296,11 @@ var CB_S187A = (function(){
            windowStart:windowStart, fvrWindow:fvrWindow,
            dvsAssess:dvsAssess, relevantApportionmentMade:relevantApportionmentMade,
            pastOwnerBroughtNoDisposalValue:pastOwnerBroughtNoDisposalValue,
-           poolingAssess:poolingAssess,
+           poolingAssess:poolingAssess, poolingNil:poolingNil,
+           UNKNOWN_SELLER_WORDS:UNKNOWN_SELLER_WORDS, UNKNOWN_SELLER_FLAG:UNKNOWN_SELLER_FLAG, neverClaimedWords:neverClaimedWords,
            statementsRoute:statementsRoute,
            assess:assess, applyOutcome:applyOutcome,
-           questions:questions };
+           cessation:cessation, questions:questions };
 })();
 
 

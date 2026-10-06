@@ -55,6 +55,7 @@ import { roomsFor } from './rooms.ts';
 import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
 import { TEST_DEFAULT_WORDS } from './pack-lines.ts';
 import { packSheet, SHEET_CHAPTERS, type SheetRow } from './pack-sheets.ts';
+import { INCLUDES_WORDS } from './pack-cost-model.ts';
 import { savePackWords, WORD_FIELDS } from './pack-words.ts';
 
 function redirect(res: ServerResponse, to: string): void {
@@ -386,7 +387,7 @@ export function limitsChapter(): Safe {
 
 /* ------------------------------------------------------------ PHASE 153g: the other ten chapters */
 
-const FROM_CLASS: Readonly<Record<string, string>> = Object.freeze({ 'the surveyor': 'pk-sv', 'the pack': 'pk-dr', 'worked out': 'pk-dr', 'fixed wording': 'pk-dr' });
+const FROM_CLASS: Readonly<Record<string, string>> = Object.freeze({ 'the surveyor': 'pk-sv', 'the pack': 'pk-dr', 'worked out': 'pk-dr', 'fixed wording': 'pk-dr', 'the cost model (test)': 'pk-dr' });
 
 /**
  * PHASE 153g — chapters 5, 8, 11, 14, 16, 17, 18, 19, 20 and 22, from one reading (src/web/pack-sheets.ts): each row
@@ -412,7 +413,38 @@ export function sheetChapter(d: PackPageDeps, v: P.PackView, ch: number): Safe {
         <textarea class="fi" id="w-${f}-t" name="words" rows="3" maxlength="4000">${now}</textarea>
         <label class="fl" for="w-${f}-r">Why</label><input class="fi" id="w-${f}-r" name="reason" maxlength="500" required>
         <button class="btn-quiet" type="submit">Save</button></form>`;
-    })}`;
+    })}
+    ${(ch === 11 || ch === 14) ? costForms(v, ch) : raw('')}`;
+}
+
+/**
+ * PHASE 157a — the cost model's values (src/web/pack-cost-model.ts): chapter 11's valuation date, chapter 14's
+ * insurance figure, its date, and what each figure includes. Each the surveyor's, with a reason; empty clears it.
+ */
+function costForms(v: P.PackView, ch: number): Safe {
+  const note = h`<p class="help">These readings are test placeholders for you to check. They change no figure in the pack, and they are not in the approved version or the client’s report.</p>`;
+  if (!v.may_edit || v.property === null) return note;
+  const dateForm = (field: P.CostField, label: string, help: string) => h`<form method="post" action="${base(v.job.id)}/extra" class="pblock" id="c-${field}">${hidden(v, ch)}<input type="hidden" name="field" value="${field}">
+      <label class="fl" for="c-${field}-v">${label}</label><p class="help">${help}</p>
+      <input class="fi" type="date" id="c-${field}-v" name="value" value="${P.packDateIso(v.cost[field].value) ?? ''}">
+      <label class="fl" for="c-${field}-r">Why</label><input class="fi" id="c-${field}-r" name="reason" maxlength="500" required>
+      <button class="btn-quiet" type="submit">Save</button></form>`;
+  const incForm = (field: P.CostField, label: string) => h`<form method="post" action="${base(v.job.id)}/extra" class="pblock" id="c-${field}">${hidden(v, ch)}<input type="hidden" name="field" value="${field}">
+      <label class="fl" for="c-${field}-v">${label}</label><p class="help">Does it include demolition, fees and site costs? Pick the ones it does.</p>
+      <select class="fi" id="c-${field}-v" name="value"><option value="">Not recorded</option>${INCLUDES_WORDS.map((w, i) => h`<option value="${String(i)}"${v.cost[field].value === i ? raw(' selected') : raw('')}>${w}</option>`)}</select>
+      <label class="fl" for="c-${field}-r">Why</label><input class="fi" id="c-${field}-r" name="reason" maxlength="500" required>
+      <button class="btn-quiet" type="submit">Save</button></form>`;
+  if (ch === 11) return h`${note}${dateForm('valuation_date', 'Valuation date', 'The date the rebuild cost in chapter 10 is priced at. The index runs from this date back to the purchase date.')}`;
+  const ins = v.cost.insurance.value;
+  return h`${note}<details class="pk-add"><summary>Record the insurance figure</summary>
+    <form method="post" action="${base(v.job.id)}/extra" class="pblock" id="c-insurance">${hidden(v, ch)}<input type="hidden" name="field" value="insurance">
+      <label class="fl" for="c-insurance-v">Insurance rebuild figure, in pounds</label><p class="help">The rebuild figure on the insurance schedule. Empty clears it.</p>
+      <input class="fi" id="c-insurance-v" name="value" inputmode="decimal" value="${ins === null ? '' : String(ins / 100)}">
+      <label class="fl" for="c-insurance-r">Why</label><input class="fi" id="c-insurance-r" name="reason" maxlength="500" required>
+      <button class="btn-quiet" type="submit">Save</button></form>
+    ${dateForm('insurance_date', 'Date of the insurance figure', 'The date the insurer’s figure was set, from the schedule.')}
+    ${incForm('insurance_includes', 'What the insurance figure includes')}
+    ${incForm('rebuild_includes', 'What our rebuild cost includes')}</details>`;
 }
 
 /* ------------------------------------------------------------ chapter 15: grants and VAT */

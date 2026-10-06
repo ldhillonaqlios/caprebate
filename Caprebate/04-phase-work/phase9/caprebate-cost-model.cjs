@@ -28,9 +28,11 @@
 
    WHAT IS LICENSED AND WHAT IS NOT - read this before touching the gates
      LEG-E2  needs NO data at all. It removes a multiplier. See the note at
-             prelimsFactor(). This item is marked blocked on the VOA licence and
-             that block is queried on the board.
-     LEG-E3  needs the VOA professional fee scale. Genuinely licensed.
+             prelimsFactor(). It was once marked blocked on the VOA licence;
+             since 4 Oct 2026 nothing here waits on that licence.
+     LEG-E3  needs a professional-fees figure. Since 4 Oct 2026 the surveyor
+             sets the percentage (call question 9a, SV-S10); the Valuation
+             Office's fee scale is not used and its table stays empty.
      LEG-E4  needs a commercial cost library: BCIS, chosen over Spon's on
              24 September 2026 (Word answers 6 and 8). No Spon's book is
              bought. It IS a licence question after all: BCIS's licence
@@ -67,7 +69,8 @@ const fail = (code, message, detail) => { throw new CostModelError(code, message
 
 const CB_P9_GATES = {
   /* LEG-E2 (12804374366) - stop multiplying replacement cost by (1 + prelims).
-     BLOCKED on the board against the VOA licence. Queried - see prelimsFactor. */
+     Once marked blocked on the VOA licence; that licence was dropped on 4 Oct
+     2026 and nothing here needs it - see prelimsFactor. */
   leg_e2_drop_prelims_from_erc: false,
 
   /* PHASE 132 (14 September 2026) - "Stop counting site overheads twice in the
@@ -89,7 +92,9 @@ const CB_P9_GATES = {
   leg_e2_prelims_banded_by_job_size: false,
 
   /* LEG-E3 (12804380489) - replace the flat 15% professional fee uplift with
-     the VOA banded fee scale. BLOCKED on the VOA licence. Genuinely so. */
+     a banded fee table. Waits on the SURVEYOR, who sets the fees percentage
+     (call question 9a, SV-S10), not on the Valuation Office, whose licence
+     email was dropped on 4 Oct 2026. */
   leg_e3_voa_fee_scale: false,
 
   /* F-1 (12927234375) - the professional-fee rate by BUILDING TYPE: the VOA
@@ -131,8 +136,10 @@ const CB_P9_GATES = {
      Record's mandatory pre-flip step skipped. */
   leg_e5_crosswalk_completeness_gate: false,
 
-  /* LEG-E5 (12804317685) - per-element depreciation from VOA obsolescence
-     scales and CIBSE plant lives. BLOCKED on the VOA licence and on CIBSE. */
+  /* LEG-E5 (12804317685) - per-element depreciation from obsolescence scales
+     and CIBSE plant lives. Waits on the SURVEYOR's ageing method (call
+     question 9, the valuation basis; tracker 12927234437) and on CIBSE; not on the Valuation Office, whose
+     licence email was dropped on 4 Oct 2026. */
   leg_e5_per_element_depreciation: false,
 
   /* LEG-E5b (12927234437, Phase 52) - WHOLE-BUILDING depreciation: one
@@ -176,7 +183,7 @@ function emptyTable(id, source, licence, shape) {
 const CB_VOA_FEE_SCALE = emptyTable(
   "CB_VOA_FEE_SCALE",
   "Valuation Office Agency - professional fee scale",
-  "NOT CLEARED - board item 12804380489 blocked on VOA licence",
+  "NOT CLEARED - board item 12804380489: waits on the surveyor, who sets the professional-fees percentage (surveyor call question 9a; FOR THE SURVEYOR SV-S10). The Valuation Office's fee scale is not used: its licence email was dropped on 4 Oct 2026",
   { bands: [] }
 );
 
@@ -188,7 +195,7 @@ const CB_VOA_FEE_SCALE = emptyTable(
 const CB_VOA_FEE_BUILDING_TYPE_ADDERS = emptyTable(
   "CB_VOA_FEE_BUILDING_TYPE_ADDERS",
   "Valuation Office Agency - professional fee scale, building-type adders",
-  "NOT CLEARED - board item 12927234375 waits on the VOA licence, same as CB_VOA_FEE_SCALE",
+  "NOT CLEARED - board item 12927234375: waits on the surveyor, same as CB_VOA_FEE_SCALE (surveyor call question 9a; SV-S10). No Valuation Office figure is used",
   { adders: {} }
 );
 
@@ -322,7 +329,7 @@ const CB_CONTRACT_SIZE_ADJUSTMENT = emptyTable(
 const CB_VOA_OBSOLESCENCE = emptyTable(
   "CB_VOA_OBSOLESCENCE",
   "Valuation Office Agency - obsolescence / age-depreciation scales",
-  "NOT CLEARED - board item 12804317685 blocked on VOA licence",
+  "NOT CLEARED - board item 12804317685: waits on the surveyor, who sets the ageing method (surveyor call question 9, the valuation basis; tracker 12927234437). The Valuation Office's scales are not used: its licence email was dropped on 4 Oct 2026",
   { scales: {} }
 );
 
@@ -355,8 +362,8 @@ const CB_CIBSE_PLANT_LIVES = emptyTable(
 const CB_VOA_BUILDING_OBSOLESCENCE = emptyTable(
   "CB_VOA_BUILDING_OBSOLESCENCE",
   "Valuation Office Agency - whole-building age/obsolescence allowance",
-  "NOT CLEARED - board item 12804317685 blocked on VOA licence (same licence as " +
-    "CB_VOA_OBSOLESCENCE, different table)",
+  "NOT CLEARED - board item 12804317685: waits on the surveyor's ageing method, as " +
+    "CB_VOA_OBSOLESCENCE (surveyor call question 9; tracker 12927234437). No Valuation Office figure is used",
   { scales: {} }
 );
 
@@ -604,7 +611,8 @@ function interpolateScale(scale, value, what, options) {
    ------------------------------------------------------------------------
    IS THIS ACTUALLY LICENCE-GATED? A QUESTION FOR LAKHBIR, NOT A DECISION.
 
-   The board marks this blocked on VOA licence clearance. Reading the change
+   The board marked this blocked on VOA licence clearance (that licence was
+   dropped on 4 Oct 2026; Phase 157a corrected this text). Reading the change
    itself: turning this gate on sets a multiplier to 1.0 and deletes a
    parameter. It reproduces no VOA table, quotes no VOA figure, and needs no
    VOA data to compute. The only VOA-derived thing involved is the KNOWLEDGE
@@ -2130,7 +2138,9 @@ function residualApportionment(input, opts) {
    PHASE 153e, 4 October 2026 — FOUR OF THE SURVEYOR'S QUESTIONS, BUILT ON OUR RECOMMENDATION, IN THIS MODEL'S OWN
    TEST SYSTEM (its suites, and TEST_SYSTEM_GATES / TEST_SYSTEM_TABLES below). NOTE WHICH TEST SYSTEM: the back end's
    survey pack (09-app/backend/src/web/pack-sums.ts) does not call this model at all, so none of this reaches the test
-   website until the pack is wired to it. That wiring has no phase yet; it is written into the sweep (Phase 157).
+   website until the pack is wired to it. PHASE 157a (6 October 2026) wired it: 09-app/backend/src/web/pack-cost-model.ts
+   reads the preliminaries bands, the index factor and the insurance check for one pack, as test placeholders (chapters
+   11 and 14), and every gate here stays off.
    ============================================================================ */
 
 /* Question 147: which index turns today's rebuild cost back to the purchase date. Lakhbir: "BCIS is the guide we will

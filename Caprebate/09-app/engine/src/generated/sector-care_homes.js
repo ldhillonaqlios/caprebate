@@ -368,13 +368,19 @@ const Q = [
   showIf:(s)=> s.election_document==="held",
   onSet:(s,v)=>s.election_notified_date=v },
 
+ /* PHASE 157a - the date the seller stopped owning, asked BEFORE the fixed-value
+    question, so a pooling nil (CB_S187A.poolingNil) can hide what follows. */
+ ...CB_S187A.cessation({ prefix:"Q", group:"History of the building",
+   gate:(s)=> s.trigger.includes("purchase") && s.deal==="property" && (s.prior_owner_entitled==="yes"||s.prior_owner_entitled==="unsure"||s.earlier_entitled_owner==="yes"||s.earlier_entitled_owner==="unsure"),
+   flag:function(s,f){ pushFlag(s,f); } }),
+
  {id:"Q14fvr", group:"History of the building", type:"single",   // s.187A(7) — board item 12829983662: a DIFFERENT two-year window from s.201(1) notification, and reachable even with no election document at all
   ask:"Has it been more than two years since you took on the property without anyone — you or the seller — fixing the fixtures value, by an election or by applying to the tribunal?",
   help:"This is not the same two-year window as the election notification deadline above. It is the separate ‘fixed value requirement’ window (s.187A(7)): once it closes with no election and no tribunal application made inside it, that route to fixing the value is shut for good, whether or not you later turn up an election-shaped document.",
   opts:[["yes","Yes — more than two years have passed and nothing has fixed the value"],
         ["no","No — it’s within two years, or a value has already been fixed"],
         ["unsure","Not sure"]],
-  showIf:(s)=> s.trigger.includes("purchase") && s.deal==="property" && (s.prior_owner_entitled==="yes"||s.prior_owner_entitled==="unsure"||s.earlier_entitled_owner==="yes"||s.earlier_entitled_owner==="unsure"),
+  showIf:(s)=> s.trigger.includes("purchase") && s.deal==="property" && (s.prior_owner_entitled==="yes"||s.prior_owner_entitled==="unsure"||s.earlier_entitled_owner==="yes"||s.earlier_entitled_owner==="unsure") && !CB_S187A.poolingNil(s),   // PHASE 157a: not asked once the pooling answer has already made the claim nil
   onSet:(s,v)=>{ s.fvr_window_closed=v;
      /* A-1 — board item 12921346992. This question asks the client about THEIR
         own dates. s.187A(9) runs the relevant two-year period from the
@@ -919,8 +925,12 @@ function runEngine(s){
         (s.earlier_disposal_value ? " — capped at the disposal value fixed at that earlier sale" : " — the cap cannot yet be sized without that owner's disposal value, so the full range is shown pending it"));
     } else if(s.prior_owner_entitled==="no" && s.earlier_entitled_owner==="unsure"){
       A.push("seller not entitled, but an earlier entitled owner further back cannot be ruled out — the full range is shown pending the ownership history (s.185)");
-    } else if(s.prior_owner_entitled==="no" || s.prior_owner_claimed==="no"){
+    } else if(s.prior_owner_entitled==="no"){
       qLo=mid(qLo,qHi); A.push("no prior entitlement — upper half of the band used (best case)");
+    } else if(s.prior_owner_claimed==="no" && s.prior_owner_entitled==="yes"){   // PHASE 157a: the figure as before; the words say what is known (Rulebook B branches C and D)
+      qLo=mid(qLo,qHi); A.push(CB_S187A.neverClaimedWords(s));
+    } else if(s.prior_owner_entitled!=="yes" && s.prior_owner_claimed!=="yes"){   // PHASE 157a: entitlement "not sure" or never asked, and no claim known - branch B or C undetermined, so nil at the bottom (N4)
+      qLo=0; A.push(CB_S187A.UNKNOWN_SELLER_WORDS); pushFlag(s, CB_S187A.UNKNOWN_SELLER_FLAG);
     } else if(s.prior_owner_claimed==="yes" && s.prior_owner_entitled==="yes"){
       qHi=mid(qLo,qHi); A.push("a previous owner could and did claim \u2014 lower half of the band, before any cap");
     } else {

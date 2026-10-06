@@ -7608,8 +7608,12 @@ if (startSuite("AE", "Phase 132h — flags taken back, hidden questions, land re
     SECTORS.map(() => []));
 
   check("AE3 — the funding question, all five: \"Not sure\" then \"No\" is an estimate, exactly as \"No\" alone; \"Not sure\" alone is a referral",
+    /* PHASE 157a, 6 October 2026: the session now names a seller that could never claim and nobody before it who
+       could. full() gives no seller at all, and since Phase 157a a purchase whose seller's entitlement is not known has
+       nil at the bottom and a flag (Rulebook B, branches B and C undetermined), which is a referral before the funding
+       question is read. This check is about the funding question, so it holds the seller fixed. */
     SECTORS.map(sec => safe(() => { const q = qOf(sec, PFX[sec] + "17", false), E = mod(sec, false);
-      const o = seq => { const s = full(sec); seq.forEach(v => q.onSet(s, v)); return E.runEngine(s); };
+      const o = seq => { const s = Object.assign(full(sec), { prior_owner_entitled: "no", earlier_entitled_owner: "no" }); seq.forEach(v => q.onSet(s, v)); return E.runEngine(s); };
       return [o(["unsure", "no"]).outcome, J(o(["unsure", "no"])) === J(o(["no"])), o(["unsure"]).outcome]; })),
     SECTORS.map(() => ["estimate", true, "referral"]));
 
@@ -7658,7 +7662,12 @@ if (startSuite("AE", "Phase 132h — flags taken back, hidden questions, land re
        (Word question 86). Changed, off and on: the works-VAT question (Q18, D18, S18, G19, H18), which now also keeps
        its answer as works_vat. Changed with switches on only: the seller question (x12), which raises the E-8 evidence
        flag the retired question raised, and S17, which offers the registered-provider answer (Word question 108). */
-    "25bac5481c4b4f8421d45dc26d52b41946a960b6");
+    /* RE-PINNED BY PHASE 157a, 6 October 2026, from "25bac5481c4b4f8421d45dc26d52b41946a960b6". Proved question by
+       question with CB_AE5_DUMP against Caprebate site.html.bak-phase157a served through the redirect hook (3 reads),
+       switches off and on: 904 lines against 904, and the two dumps SORTED are identical - every question gives a
+       byte-identical single-answer session. The hash moved only because x14pod (all five flows, off and on) now comes
+       before x14fvr instead of after x14pold: the pooling nil needs the date before the questions it hides. */
+    "c69430ae6e195f57a373ce2572869189505f47ff");
 
   const conds = (sec, on) => handlers(sec, on).filter(q => typeof q.showIf === "function");
   check("AE6 — hidden, every conditional question with a handler, all five, switches off and on, every option: hidden gives back the session as it was before the answer; still shown is untouched; shown again and answered is the single answer; a question before the one answered is never taken",
@@ -8548,6 +8557,122 @@ if (startSuite("AK", "Phase 153f — the election window reads the clock it is g
     [W({ __now: "2025-12-01" }), W(Object.assign({}, PAST)), W(Object.assign({}, FUTURE))], [null, false, true]);
   check("AK5 — a clock that cannot be read falls back to the real one rather than opening the window",
     [W(Object.assign({ __now: "not a date" }, PAST))], [false]);
+}
+
+if (startSuite("AL", "Phase 157a — the questions after a pooling nil are not asked (from 154a1 line 13(a))")) {
+  const safe = fn => { try { return fn(); } catch (e) { return "threw: " + e.message; } };
+  const PFX = { care_homes: "Q", dental: "D", supported_living: "S", gp: "G", private_hospital: "H" };
+  const ALL_GATES = (layerSrc.slice(layerSrc.indexOf("var CB_CTA"), layerSrc.indexOf("};", layerSrc.indexOf("var CB_CTA")))
+    .match(/^\s*([a-z0-9_]+)\s*:\s*false/gm) || []).map(x => x.replace(/:.*$/, "").trim());
+  const MODS = {}; const mod = (sec, on) => (MODS[sec + on] = MODS[sec + on] || liftGated(sec, on ? ALL_GATES : []));
+  const ids = (sec, on) => (mod(sec, on).Q || []).map(q => q.id);
+  const qOf = (sec, id, on) => (mod(sec, on).Q || []).find(q => q.id === id);
+  /* The two A-2 questions are tested with THEIR switch alone: with every switch on, A-3
+     (fvr_requires_past_owner_claim) hides the block for any seller who never claimed, nil or not - its own rule. */
+  const A2 = {}; const modA2 = sec => (A2[sec] = A2[sec] || liftGated(sec, ["s187a_6b_statements_route"]));
+  const J = x => JSON.stringify(x);
+  /* A seller known able to claim (a tax-paying business), who never claimed, and stopped owning in 2019: poolingAssess
+     gives NIL. Each case below changes ONE fact of it. */
+  const NIL = { trigger: ["purchase"], deal: "property", claimant_type: "company", prior_owner_entitled: "yes", prior_owner_claimed: "no",
+                past_owner_cessation_date: "2019-06-01" };
+  const session = extra => Object.assign({ flags: [], assumptions: [] }, JSON.parse(JSON.stringify(NIL)), extra || {});
+  const drop = (o, k) => { const c = Object.assign({}, o); delete c[k]; return c; };
+  /* Each hidden question, with the facts that would otherwise show it (its own earlier answers), and whether it needs
+     the switches on (the two A-2 questions are shown only with CB_CTA.s187a_6b_statements_route on). */
+  const HIDDEN = [["14fvr", {}, false], ["14po", {}, false],
+    ["14pol", { past_owner_disposal_mode: "new_lease_premium" }, false], ["14pold", { past_owner_disposal_mode: "new_lease_premium" }, false],
+    ["14iv", { intervening_owner: "yes" }, false], ["14ivd", { intervening_owner: "yes" }, false],
+    ["14dvs", { past_owner_disposal_mode: "sold_undervalue" }, false],
+    ["14dvsd", { past_owner_disposal_mode: "sold_undervalue", dvs_statement: "held" }, false],
+    ["14dvsv", { past_owner_disposal_mode: "sold_undervalue", dvs_statement: "held" }, false],
+    ["14ivne", { intervening_owner: "yes" }, true], ["14st8", { intervening_owner_never_entitled: "yes" }, true]];
+  const shown = (sec, sfx, on, s) => safe(() => !!((on ? modA2(sec) : mod(sec, false)).Q || []).find(q => q.id === PFX[sec] + sfx).showIf(s));
+
+  check("AL1 — the date the seller stopped owning (x14pod) comes before the fixed-value question (x14fvr), and x14fvr still comes before the rest of the block (x14po, x14iv), in all five flows, switches off and on",
+    [false, true].map(on => SECTORS.map(sec => { const L = ids(sec, on), at = sfx => L.indexOf(PFX[sec] + sfx);
+      return at("14pod") >= 0 && at("14pod") < at("14fvr") && at("14fvr") < at("14po") && at("14po") < at("14iv"); })),
+    [false, true].map(() => SECTORS.map(() => true)));
+  check("AL2 — on a pooling nil every question after the date is hidden: x14fvr and the block's other ten, in all five flows (each one shown when the seller DID claim)",
+    SECTORS.map(sec => HIDDEN.map(([sfx, extra, on]) => [shown(sec, sfx, on, session(extra)), shown(sec, sfx, on, session(Object.assign({}, extra, { prior_owner_claimed: "yes" })))])),
+    SECTORS.map(() => HIDDEN.map(() => [false, true])));
+  check("AL3 — and the date itself is still asked on a nil, switches off and on (it is what decides the nil)",
+    [false, true].map(on => SECTORS.map(sec => safe(() => !!qOf(sec, PFX[sec] + "14pod", on).showIf(session())))), [false, true].map(() => SECTORS.map(() => true)));
+  check("AL4 N4 — the claim history \"not sure\" and never given (both asserted), and the date not given: nothing is hidden, in all five flows",
+    SECTORS.map(sec => [session({ prior_owner_claimed: "unsure" }), drop(session(), "prior_owner_claimed"), drop(session(), "past_owner_cessation_date"),
+                        session({ past_owner_cessation_date: null })]
+      .map(s => HIDDEN.every(([sfx, extra, on]) => shown(sec, sfx, on, Object.assign({}, s, extra))))),
+    SECTORS.map(() => [true, true, true, true]));
+  check("AL5 — a seller who stopped owning before the pooling requirement came in (June 2013) is no nil: nothing is hidden",
+    SECTORS.map(sec => HIDDEN.every(([sfx, extra, on]) => shown(sec, sfx, on, session(Object.assign({}, extra, { past_owner_cessation_date: "2013-06-01" })))) ),
+    SECTORS.map(() => true));
+  check("AL6 — a seller KNOWN never able to claim, or 'not sure' whether it could, is no pooling nil: the fixed-value question is asked as before",
+    SECTORS.map(sec => [shown(sec, "14fvr", false, session({ prior_owner_entitled: "unsure" })), shown(sec, "14fvr", false, session({ prior_owner_entitled: "no", earlier_entitled_owner: "yes" }))]),
+    SECTORS.map(() => [true, true]));
+  check("AL7 — CB_S187A.poolingNil agrees with poolingAssess: true on the nil, false on every other case above",
+    safe(() => [CB_S187A.poolingNil(session()), CB_S187A.poolingNil(session({ prior_owner_claimed: "unsure" })), CB_S187A.poolingNil(drop(session(), "prior_owner_claimed")),
+      CB_S187A.poolingNil(drop(session(), "past_owner_cessation_date")), CB_S187A.poolingNil(session({ past_owner_cessation_date: "2013-06-01" })),
+      CB_S187A.poolingNil(session({ prior_owner_claimed: "yes" })), CB_S187A.poolingNil({})]),
+    [true, false, false, false, false, false, false]);
+  check("AL8 — the fixed-value answer given earlier is taken back once the date makes the claim nil (Back, then a new date), in all five flows",
+    SECTORS.map(sec => safe(() => { const M = mod(sec, false), Q = M.Q, fvr = qOf(sec, PFX[sec] + "14fvr", false), pod = qOf(sec, PFX[sec] + "14pod", false);
+      const s = session({ past_owner_cessation_date: "2013-06-01" });
+      fvr.onSet(s, "yes"); const before = s.fvr_window_closed;
+      pod.onSet(s, "2019-06-01"); M.hide(Q, s, pod);
+      return [before, s.fvr_window_closed === undefined || s.fvr_window_closed === null]; })),
+    SECTORS.map(() => ["yes", true]));
+  check("AL9 — the figure is the same nil whether the hidden answers were given or not (runEngine, all five flows)",
+    SECTORS.map(sec => safe(() => { const E = mod(sec, false);
+      const a = E.runEngine(session({ base_amount: 1000000 })), b = E.runEngine(session({ base_amount: 1000000, fvr_window_closed: "no", past_owner_disposal_mode: "sold_market", intervening_owner: "no" }));
+      return [a.QE && a.QE[1], J(a.QE) === J(b.QE)]; })),
+    SECTORS.map(() => [0, true]));
+}
+
+if (startSuite("AM", "Phase 157a — the seller whose entitlement is not known, and the words for one who never claimed (from 154a1 line 13(b))")) {
+  const safe = fn => { try { return fn(); } catch (e) { return "threw: " + e.message; } };
+  const FOUR = ["care_homes", "dental", "gp", "private_hospital"];
+  const MODS = {}; const E = sec => (MODS[sec] = MODS[sec] || liftGated(sec, []));
+  const base = (sec, extra) => Object.assign({ sector: sec, trigger: ["purchase"], deal: "property", base_amount: 2000000, claimant_type: "company",
+    claimant_raw: "company", activity: "trade", dwelling_setting: "institution_commercial", acuity: "normal", flags: [], assumptions: [], lrr: false,
+    return_in_time: false, nation: "england", plant_serves: "individual", funding: "no" }, extra || {});
+  const run = (sec, extra) => safe(() => { const s = base(sec, extra); const r = E(sec).runEngine(s);
+    return { lo: r.QE ? r.QE[0] : NaN, hi: r.QE ? r.QE[1] : NaN, flags: s.flags.slice(), A: (r.assumptions || s.assumptions || []).slice() }; });
+  const UNK = /SELLER'S ENTITLEMENT NOT KNOWN/;
+  const BEST = /\(best case\)/;
+  const drop = (o, k) => { const c = Object.assign({}, o); delete c[k]; return c; };
+  const CASES = [{ prior_owner_entitled: "unsure", prior_owner_claimed: "no" }, { prior_owner_claimed: "no" },
+                 { prior_owner_entitled: "unsure", prior_owner_claimed: "unsure" }, {}];
+
+  check("AM1 N4 — entitlement 'not sure' and never asked (both asserted), with no claim known ('no', 'not sure', never asked): nil at the bottom, flagged, never called the best case - four flows",
+    FOUR.map(sec => CASES.map(c => { const r = run(sec, c); return [r.lo, r.hi > 0, r.flags.some(f => UNK.test(f)), r.A.some(a => BEST.test(a))]; })),
+    FOUR.map(() => CASES.map(() => [0, true, true, false])));
+  check("AM2 — and the top of the range is where it was: the same as for a seller that could never claim",
+    FOUR.map(sec => CASES.map(c => run(sec, c).hi === run(sec, { prior_owner_entitled: "no", earlier_entitled_owner: "no", prior_owner_claimed: "no" }).hi)),
+    FOUR.map(() => CASES.map(() => true)));
+  check("AM3 — a seller that could never claim (branch B1) is unchanged: upper half, the best case, no new flag",
+    FOUR.map(sec => { const r = run(sec, { prior_owner_entitled: "no", earlier_entitled_owner: "no", prior_owner_claimed: "no" });
+      return [r.lo > 0, r.A.some(a => BEST.test(a)), r.flags.some(f => UNK.test(f))]; }),
+    FOUR.map(() => [true, true, false]));
+  const D = { prior_owner_entitled: "yes", prior_owner_claimed: "no", past_owner_cessation_date: "2013-06-01" };
+  check("AM4 — branch D (able to claim, never did, stopped owning April 2012 to April 2014): the same figure as a seller that could never claim, and words that say so - not 'no prior entitlement' or 'never able to claim'",
+    FOUR.map(sec => { const r = run(sec, D), b = run(sec, { prior_owner_entitled: "no", earlier_entitled_owner: "no", prior_owner_claimed: "no", past_owner_cessation_date: "2013-06-01" });
+      return [r.lo === b.lo && r.hi === b.hi, r.A.some(a => /between April 2012 and April 2014/.test(a)), r.A.some(a => /no prior entitlement|never able to claim|\(best case\)/.test(a))]; }),
+    FOUR.map(() => [true, true, false]));
+  check("AM5 — before April 2012 (Rulebook B row A4): a figure, and words that say the second-hand fixtures rules had not begun",
+    FOUR.map(sec => { const r = run(sec, Object.assign({}, D, { past_owner_cessation_date: "2011-06-01" }));
+      return [r.hi > 0, r.A.some(a => /before April 2012, before the second-hand fixtures rules began/.test(a))]; }),
+    FOUR.map(() => [true, true]));
+  check("AM6 — able to claim, never did, stopped owning in 2019 (C1): still nil, and no longer described as a seller never able to claim",
+    FOUR.map(sec => { const r = run(sec, Object.assign({}, D, { past_owner_cessation_date: "2019-06-01" }));
+      return [r.lo, r.hi, r.A.some(a => /no prior entitlement|never able to claim/.test(a))]; }),
+    FOUR.map(() => [0, 0, false]));
+  check("AM7 — a seller that claimed, and a purchase where the seller's entitlement is known, raise no unknown-seller flag",
+    FOUR.map(sec => [run(sec, { prior_owner_entitled: "yes", prior_owner_claimed: "yes" }), run(sec, { prior_owner_entitled: "unsure", prior_owner_claimed: "yes" }),
+      run(sec, D)].map(r => r.flags.some(f => UNK.test(f)))),
+    FOUR.map(() => [false, false, false]));
+  check("AM8 — supported living, which has no best-case step, is untouched: no unknown-seller flag",
+    CASES.map(c => run("supported_living", c).flags.some(f => UNK.test(f))), CASES.map(() => false));
+  check("AM9 — not a purchase: nothing changes",
+    FOUR.map(sec => run(sec, { trigger: ["new_build"], prior_owner_claimed: "no" }).flags.some(f => UNK.test(f))), FOUR.map(() => false));
 }
 
 /* ------------------------------------------------------------------- report */
