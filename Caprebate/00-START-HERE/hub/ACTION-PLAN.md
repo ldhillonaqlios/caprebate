@@ -1341,23 +1341,19 @@ LOOSE ENDS THAT HAD THEIR HOME HERE, AND WHERE EACH WENT (the Phase 157 sweep, 6
   MOVED TO PHASE 157a: the cost model in the survey pack (153e, 153g, 155); the
     two s.187A engine changes (154a1 (a) and (b)), with what the sweep found
     about the question order.
+  ANSWERED 6 OCT 2026 (after the sweep closed):
+      156e (a), the Zoom test call: "Lasted 4 minutes. 2 people joined." The
+      free plan gives a call's length and attendees; written in
+      KEYS-AND-SWITCHES' Zoom row. PLAN_REFUSAL needs no change.
+      The land-boundary download (12830205914): parked, Homedata's title
+      outline instead. The contact@ test email (13093310525): it arrived. The
+      "DELETE" files (13053370722): moved to the OneDrive recycle bin by Claude
+      on Lakhbir's yes.
   STILL HERE:
   FROM PHASE 156e (5 Oct 2026):
-  (a) BUILDABLE once Lakhbir holds one short Zoom test call (156d B1, then
-      156e B5; he said "I'll do it later"): ask him what "Ask Zoom how long
-      it lasted" showed on that call's page, or its Meeting ID and run
-      CAPREBATE_LOCAL_ZOOM=1 node src/cli.ts zoom-call-length <id>. Write
-      FOUND or "not on our plan" in hub/KEYS-AND-SWITCHES.md's Zoom row; if
-      Zoom's refusal reads as NOT_FOUND, widen PLAN_REFUSAL in
-      src/connectors/zoom.ts to its real words, a test red first.
   (c) BLOCKED on the published privacy notice (Sadique; the free gate):
       156e B2, "answer it myself" (Word answer 180) on the four-stage
       funnel's details screen, when the free gate opens. Built then.
-  FROM THE PHASE 157 SWEEP, for Lakhbir's one-word answers (none blocks a build):
-      whether the free land-boundary test download (12830205914) is still wanted
-      now Homedata's title outline gives the site area; whether a test email to
-      contact@ reached his inbox (13093310525); and whether the "DELETE" files
-      on the OneDrive web page are gone (13053370722).
 ═══════════════════════════════════
 
 DO NOT REOPEN what COORDINATES lists under "DECIDED - DO NOT REOPEN" (added
