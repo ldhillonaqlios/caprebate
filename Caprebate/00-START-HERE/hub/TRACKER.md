@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 1 |
 | Ready - Lakhbir action | 24 |
 | Built - awaiting sign-off | 128 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 305 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1323,7 +1323,7 @@
 
 ### Phase 157a - the engine and the cost model: the pooling questions, the unknown seller, and the cost model in the survey pack
 
-`13215798638` · **Ready - Claude can build** · owner Claude
+`13215798638` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir’s MacBook Pro**
 
 - Note 2026-10-06 (Phase 157 (sweep)): Written by the Phase 157 sweep: 154a1 (a) and (b) and the cost model in the survey pack (153e, 153g, 155). Runs next.
 
