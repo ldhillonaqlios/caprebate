@@ -310,7 +310,7 @@ describe('line 7 — where the client has no accountant, the client’s own writ
  * LINE 10 — REWARD MODEL C: A PERCENTAGE OF OUR FEE ACTUALLY INVOICED
  * ================================================================== */
 
-async function referredAtInvoice(firmType = 'ACCOUNTANT_FIRM'): Promise<{ app: TApp; business: string; claim: string; firm: string }> {
+async function referredAtInvoice(firmType = 'ACCOUNTANT_FIRM', signed = true): Promise<{ app: TApp; business: string; claim: string; firm: string }> {
   const app = await testApp();
   for (const role of ['ADMIN', 'SALES', 'ACCOUNTING', 'SURVEYING'] as const) {
     app.db.run('INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,NULL)',
@@ -339,6 +339,9 @@ async function referredAtInvoice(firmType = 'ACCOUNTANT_FIRM'): Promise<{ app: T
   const f = I.createIntroducer(CF.recordDeps(app) as never, actor('ADMIN'), { firm_name: `Ledger ${orgN} LLP`, introducer_type: firmType });
   assert.ok(f.ok, f.ok ? '' : f.why);
   const firm = f.ok ? f.id : '';
+  // Phase 157: a REGISTERED accountancy firm has signed our introducer terms (migration 094); test/phase157 proves an
+  // unsigned one accrues nothing.
+  if (signed) assert.ok(I.recordTermsSigned(CF.recordDeps(app) as never, actor('ADMIN'), firm, { signed_on: '2026-09-01', firm_signatory: 'An Invented Partner', our_signatory: 'An Invented Director' }).ok);
   app.db.run(
     "INSERT INTO leads (id, business_id, claim_id, origin, source, introducer_id, lead_date, status, converted_at, created_at, updated_at) VALUES (?, ?, ?, 'REFERRAL', ?, ?, '2026-09-08', 'CONVERTED', ?, ?, ?)",
     [randomUUID(), business, made.id, firmType === 'ACCOUNTANT_FIRM' ? 'ACCOUNTANT' : 'ADVISER', firm, T0, T0, T0]);
@@ -412,6 +415,33 @@ describe('line 10 — model C: 10% of our fee as invoiced, off, refused while cl
       assert.equal(INV.raiseInvoice(invoiceDeps(other.app), actor('ACCOUNTING'), other.claim, { kind: 'FEE' }).ok, true);
       assert.deepEqual(entries(other.app), [], 'a firm that is not a registered accountancy firm accrued model C');
     } finally { other.app.close(); }
+  });
+
+  // PHASE 157 (the sweep): the draft introducer terms' clause 1 — registered means SIGNED, not merely marked an accountancy firm.
+  test('PHASE 157: an accountancy firm that has not signed our introducer terms accrues nothing; once its signature is recorded, it does', async () => {
+    const { app, claim, firm } = await referredAtInvoice('ACCOUNTANT_FIRM', false);
+    try {
+      assert.ok(I.setRewardModel(CF.recordDeps(app) as never, actor('ADMIN'), { model: 'C_PERCENT_OF_INVOICED_FEE' }, { openTerms: [] }).ok);
+      assert.equal(I.termsSignature(app.db, firm), null);
+      const first = INV.raiseInvoice(invoiceDeps(app), actor('ACCOUNTING'), claim, { kind: 'FEE' });
+      assert.equal(first.ok, true, first.ok ? '' : first.why);
+      assert.deepEqual(entries(app), [], 'an unsigned firm accrued model C');
+      // Refused: no date, a future date, no names. Accounting may not record one.
+      for (const bad of [{}, { signed_on: '2099-01-01', firm_signatory: 'A B', our_signatory: 'C D' }, { signed_on: '2026-09-01', firm_signatory: '', our_signatory: 'C D' }]) {
+        assert.equal(I.recordTermsSigned(CF.recordDeps(app) as never, actor('ADMIN'), firm, bad).ok, false, JSON.stringify(bad));
+      }
+      assert.throws(() => I.recordTermsSigned(CF.recordDeps(app) as never, actor('ACCOUNTING'), firm, { signed_on: '2026-09-01', firm_signatory: 'A B', our_signatory: 'C D' }));
+      const sig = I.recordTermsSigned(CF.recordDeps(app) as never, actor('SALES'), firm, { signed_on: '2026-09-01', firm_signatory: 'An Invented Partner', our_signatory: 'An Invented Director' });
+      assert.ok(sig.ok);
+      assert.equal(I.termsSignature(app.db, firm)?.version, I.INTRODUCER_TERMS.version);
+      assert.throws(() => app.db.run('UPDATE introducer_terms_signatures SET signed_on = ?', ['2026-01-01']), /never edited/);
+      assert.throws(() => app.db.run('DELETE FROM introducer_terms_signatures'), /never deleted/);
+      const audit = app.db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'INTRODUCER_TERMS_SIGNED'")!.detail;
+      assert.ok(!audit.includes('Invented Partner'), 'a name reached the audit log');
+      I.onFeeInvoiced(CF.recordDeps(app) as never, actor('ACCOUNTING'), first.ok ? first.id : '');
+      assert.equal(entries(app).length, 1, 'the signed firm did not accrue');
+      assert.equal(I.INTRODUCER_TERMS.agreed, false, 'the terms are still a draft');
+    } finally { app.close(); }
   });
 
   test('CLAUSE 13: A REDUCED FEE WRITES A REVERSING ENTRY — the accrual is kept, never edited or deleted, and the net is 10% of the fee left', async () => {

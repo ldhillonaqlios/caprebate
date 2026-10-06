@@ -128,6 +128,50 @@ export const REFERRAL_PERCENTAGE = Object.freeze({
 
 export const REWARD_QUESTION = 'Is anything paid to the accountant?';
 
+/**
+ * PHASE 157 (the sweep), 6 October 2026 — THE INTRODUCER TERMS A FIRM SIGNS (Phase 153d's draft, Word question 42). A firm
+ * is a REGISTERED introducer only once it is on our list and has signed them (their clause 1). The signature is a dated,
+ * append-only row (migration 094); model C accrues only for a firm with one. The terms are a draft: the director agrees
+ * them and the solicitor checks them. Until then model C stays off, and a signature can be recorded only in the test
+ * system, against the draft's version.
+ */
+export const INTRODUCER_TERMS = Object.freeze({
+  version: 'DRAFT v0.1',
+  file: '06-commercial-and-governance/Caprebate-Introducer-Terms-DRAFT-v0.1.md',
+  agreed: false,
+  question: 42,
+});
+
+export type TermsSignature = { readonly version: string; readonly signed_on: string; readonly recorded: string };
+
+/** The firm's latest signature of the terms, or null: not registered. */
+export function termsSignature(db: Db, introducer_id: string): TermsSignature | null {
+  const r = db.get<{ terms_version: string; signed_on: string; recorded_at: string }>(
+    'SELECT terms_version, signed_on, recorded_at FROM introducer_terms_signatures WHERE introducer_id = ? ORDER BY signed_on DESC, recorded_at DESC, rowid DESC LIMIT 1',
+    [introducer_id]);
+  return r === undefined ? null : { version: r.terms_version, signed_on: r.signed_on, recorded: localStamp(r.recorded_at) };
+}
+
+/** Record that the terms were signed for the firm and for us. Admin and Sales, as any change to a firm. */
+export function recordTermsSigned(d: IntroducerDeps, actor: Actor, introducer_id: string, input: Fields): WriteResult {
+  const r = loadIntroducer(d.db, introducer_id);
+  authorise(actor, 'introducer.write', introducerObj(r.id));
+  const signed_on = (input['signed_on'] ?? '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(signed_on) || signed_on > d.now().slice(0, 10)) {
+    return { ok: false, why: 'Give the date the terms were signed. It cannot be in the future.', field: 'signed_on' };
+  }
+  const firm = (input['firm_signatory'] ?? '').trim().slice(0, 200);
+  const ours = (input['our_signatory'] ?? '').trim().slice(0, 200);
+  if (firm.length < 2) return { ok: false, why: 'Give the name that signed for the firm, as on the signed copy.', field: 'firm_signatory' };
+  if (ours.length < 2) return { ok: false, why: 'Give the director who signed for us, as on the signed copy.', field: 'our_signatory' };
+  const id = d.newId();
+  d.db.run('INSERT INTO introducer_terms_signatures (id, introducer_id, terms_version, signed_on, firm_signatory, our_signatory, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, r.id, INTRODUCER_TERMS.version, signed_on, firm, ours, actor.id, d.now()]);
+  // Ids and the version only: the names are on the row.
+  record(d, actor, 'INTRODUCER_TERMS_SIGNED', 'ALLOWED', 'introducer', r.id, { signature: id, terms_version: INTRODUCER_TERMS.version });
+  return { ok: true, id };
+}
+
 export const FEE_STATES: Vocab = Object.freeze({ ACCRUED: 'Accrued', PAID: 'Paid to the firm' });
 
 export const SHARE_DECISIONS: Vocab = Object.freeze({
@@ -511,6 +555,8 @@ export type IntroducerView = {
     readonly next_contact: { readonly label: string; readonly overdue: boolean; readonly open: number };
     readonly notes: string | null;
     readonly from_public_form: boolean;
+    /** Phase 157: the firm's signature of our introducer terms; null: not registered, so model C pays it nothing. */
+    readonly terms: TermsSignature | null;
   };
   readonly contacts?: readonly IntroducerContactView[];
   readonly contact_log?: readonly ContactLine[];
@@ -604,6 +650,8 @@ export function introducerView(db: Db, actor: Actor, id: string, nowIso: string)
         next_contact: nextContact(db, r.id, nowIso),
         notes: r.notes,
         from_public_form: r.created_via === 'PUBLIC_FORM',
+        // Phase 157: whether the firm has signed our introducer terms, so is registered (migration 094).
+        terms: termsSignature(db, r.id),
       },
       pipeline: pipelineFigures(db, r.id),
       contact_log: contactLog(db, actor, r.id, nowIso),
@@ -1598,8 +1646,11 @@ export function onFeeInvoiced(d: IntroducerDeps, actor: Actor | null, invoice_id
   const v = d.db.get<{ id: string; claim_id: string | null; business_id: string; kind: string; fee_pence: number }>(
     'SELECT id, claim_id, business_id, kind, fee_pence FROM invoices WHERE id = ?', [invoice_id]);
   if (v === undefined || v.claim_id === null || v.kind !== 'FEE' || v.fee_pence <= 0) return;
+  /* PHASE 157: a REGISTERED accountancy firm — one that has signed our introducer terms (migration 094), as their
+     clause 1 says. Marked as an accountancy firm is not enough. */
   const l = d.db.get<{ introducer_id: string }>(
-    "SELECT l.introducer_id FROM leads l JOIN introducers i ON i.id = l.introducer_id WHERE l.claim_id = ? AND i.introducer_type = 'ACCOUNTANT_FIRM'",
+    "SELECT l.introducer_id FROM leads l JOIN introducers i ON i.id = l.introducer_id WHERE l.claim_id = ? AND i.introducer_type = 'ACCOUNTANT_FIRM' " +
+      'AND EXISTS (SELECT 1 FROM introducer_terms_signatures s WHERE s.introducer_id = i.id)',
     [v.claim_id]);
   if (l === undefined) return;
   if (d.db.get<{ id: string }>("SELECT id FROM introducer_percentage_entries WHERE invoice_id = ? AND entry_kind = 'ACCRUAL'", [v.id]) !== undefined) return;

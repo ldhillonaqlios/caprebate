@@ -1842,4 +1842,4 @@ Signed .............................  Date ..........................
  Phase 155 built register lookups and a cost index import; none of it is a tax reading. One correction of fact you may meet: the valuation office's rating list is **not** open data (our records said it was) — its terms restrict it to business rates purposes, so nothing of ours uses it.
 
 
- **And the board's own total at the close of Phase 155, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+ **And the board's own total at the close of Phase 157 (the sweep), 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.

@@ -127,7 +127,7 @@ async function main(): Promise<number> {
       const { sweepEnquiries, ENQUIRY_RETENTION } = await import('./web/enquiry-retention.ts');
       const r = sweepEnquiries({ db, audit: new AuditLog(db), now: () => new Date().toISOString(), newId: () => randomUUID() }, ENQUIRY_RETENTION, null);
       console.log(r.state === 'OFF' ? `Closed enquiries are not being cleaned up yet:\n  ${r.missing.join('\n  ')}`
-        : `${r.deleted} closed website enquir${r.deleted === 1 ? 'y' : 'ies'} deleted because their time was up; ${r.funnel_leads_due_not_deleted} lost funnel lead${r.funnel_leads_due_not_deleted === 1 ? '' : 's'} past the period, not deleted (no path yet).`);
+        : `${r.deleted} closed website enquir${r.deleted === 1 ? 'y' : 'ies'} deleted because their time was up; ${r.funnel_leads_deleted} lost funnel lead${r.funnel_leads_deleted === 1 ? '' : 's'} deleted with ${r.funnel_leads_deleted === 1 ? 'its' : 'their'} own rows; ${r.funnel_leads_kept.length} kept (${r.funnel_leads_kept.map((k) => k.why).filter((w, i, a) => a.indexOf(w) === i).join('; ') || 'none'}).`);
       return 0;
     } finally {
       db.close();

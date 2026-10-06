@@ -188,6 +188,8 @@ export type AuditKind =
    */
   | 'INTRODUCER_CREATED' | 'INTRODUCER_UPDATED'
   | 'SHARE_CONSENT_RECORDED' | 'INTRODUCER_NOTICE'
+  /** Phase 157: a firm's signature of our introducer terms recorded (migration 094). */
+  | 'INTRODUCER_TERMS_SIGNED'
   | 'INTRODUCER_REWARD_SWITCHED' | 'INTRODUCER_FEE_ACCRUED' | 'INTRODUCER_PERCENTAGE_ACCRUED' | 'INTRODUCER_PERCENTAGE_REVERSED' | 'INTRODUCER_FEE_DISCLOSED' | 'INTRODUCER_FEE_PAID'
   /**
    * CRM 6 of 10. A claim fact recorded — or refused because a better source

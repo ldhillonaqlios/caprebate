@@ -30,8 +30,6 @@
 218) Which BCIS product did you agree to, and does its licence let our software use its rates?
 219) How long do we keep the files clients upload, and who may open them?
 227) May the site area we work out from a land boundary go in a client's report?
-230) Can the test website keep its records in a database that lasts?
-231) Can the test website keep uploaded files in a private store on Vercel?
 235) Do the old extra charges stay: the add-on for complicated jobs and the £1,500 manual-handling charge?
 236) Two tasks are marked done with nothing on file: startup funding and the back-end developer meeting. Were they done?
 238) Which solicitor gave the answers of 24 and 27 September, and are they instructed?
@@ -151,7 +149,6 @@
 201) How up to date must information from the care regulator be when we use it?
 204) May we buy our contamination checks from one company instead of four free government ones?
 206) A planning description can mention somebody's name. Should we still keep it?
-207) Two things only someone with the supplier's own pack or a live key can confirm
 208) What should we call the first four screens of our online estimate when we count how many people reach each one?
 209) May a member of our team see a few nearby buildings' register entries to settle one address?
 210) May a member of our team say that a name on a client's document belongs to an organisation and not a person?
@@ -221,6 +218,8 @@
 205) The key file is missing the password for the Land Registry certificate. Can you add it?
 5) Where do Microsoft, monday.com and IONOS actually store our data?
 202) Should we pay for planning history, or keep the free one that asks us to go slowly?
+230) Can the test website keep its records in a database that lasts?
+231) Can the test website keep uploaded files in a private store on Vercel?
 93) In a Scottish sale, which date starts our time limits?
 154) Should WordPress replace our whole system, or sit beside it?
 156) May we briefly check two public register names without saving them?
@@ -243,3 +242,4 @@
 233) May we keep an uploaded Land Registry official copy that names a private owner?
 234) May figures from a Land Registry official copy go in the client's accountant's pack?
 244) Do you approve GoAddress for "Find my address"?
+207) Two things only someone with the supplier's own pack or a live key can confirm
