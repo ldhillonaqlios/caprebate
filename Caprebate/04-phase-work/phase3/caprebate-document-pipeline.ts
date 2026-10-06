@@ -85,7 +85,15 @@ export type DocType =
   // buys the official copy of the register and the title plan and uploads them. HUMAN-READ-ONLY, like CPSE_REPLIES and
   // SALE_CONTRACT: the proprietorship register names an owner who holds the property personally, and a charge can name
   // an individual lender, so no model reads it. A person reads it and records the facts on the property page.
-  | 'TITLE_REGISTER';
+  | 'TITLE_REGISTER'
+  // Phase 157d (the Friary House run, finding F16): four types the claim asks clients for, which nothing could receive.
+  // All four are MODEL-EXTRACTABLE on the recommendation recorded by Phase 129 (receipt-recommendations.ts): strip the
+  // individuals, keep the figures. Every field below is a date, a number, a sum of money or a room's label; none is a
+  // person's, and none is a contractor's or a party's name (a sole trader's name is a person's).
+  | 'COMPLETION_STATEMENT'
+  | 'ACCOUNTS'
+  | 'CONTRACTOR_INVOICE'
+  | 'PLANS';
 
 /** Never reach extract()/sanitise()/callModel() — see section 9, captureHumanRead(). */
 export const HUMAN_READ_ONLY_TYPES: readonly DocType[] = ['CPSE_REPLIES', 'SALE_CONTRACT', 'TITLE_REGISTER'];
@@ -113,6 +121,16 @@ export type SegmentKind =
   | 'TAX_ENTITY_DETAILS'
   | 'TAX_PROFIT_COMPUTATION'
   | 'CAPITAL_ALLOWANCES_COMPUTATION'
+  // Phase 157d — the four document types. Each names figures, never a person: the price and its parts on a
+  // completion statement; the balance sheet, the profit and the fixed-asset note in accounts; the lines and totals of a
+  // contractor's invoice; the room schedule and the floor plans' labels on drawings. The parties, the solicitors, the
+  // bank details, the directors' report and a drawing's title block land in no kind here, so they are UNCLASSIFIED and
+  // never kept.
+  | 'COMPLETION_FIGURES'
+  | 'ACCOUNTS_STATEMENTS'
+  | 'FIXED_ASSET_NOTE'
+  | 'INVOICE_LINES'
+  | 'DRAWING_SCHEDULE'
   // NEVER permitted, anywhere, for any document type
   | 'REPRESENTATIONS'
   | 'CONSULTEE_RESPONSES'
@@ -401,6 +419,63 @@ export const DOC_SPECS: readonly DocSpec[] = [
       'annual investment allowance already used, and the profit it is set against. The preparer\'s name, and an ' +
       'individual taxpayer\'s tax reference or National Insurance number, are not needed and are not kept.',
   },
+  /*
+   * PHASE 157d — FOUR MORE TYPES THE CLAIM ASKS FOR (the Friary House run, F16). On Phase 129's recorded
+   * recommendation for each (src/web/receipt-recommendations.ts): strip the individuals, keep the figures. The
+   * completion statement and the accounts are read by the claim team only, so their figures are GATE, never
+   * APPORTIONMENT (which sends a review to a surveyor). A contractor's invoice and plans are claim evidence, which a
+   * surveyor reads.
+   */
+  {
+    doc_type: 'COMPLETION_STATEMENT',
+    permitted_segments: ['COMPLETION_FIGURES'],
+    fields: [
+      f('cs_completion_date', 'GATE', ['COMPLETION_FIGURES'], 'the day the purchase completed — the acquisition date'),
+      f('cs_purchase_price_pence', 'GATE', ['COMPLETION_FIGURES'], 'integer pence: the price, before adjustments'),
+      f('cs_price_apportionment', 'GATE', ['COMPLETION_FIGURES'],
+        'list: part (land, buildings, fixtures, chattels, goodwill), amount in pence — where the statement splits the price'),
+      f('cs_stamp_duty_pence', 'NARRATIVE', ['COMPLETION_FIGURES'], 'SDLT or LTT, where shown'),
+    ],
+    why: 'The price, its apportionment, the stamp duty and the date are what the claim needs. The fee earners, any ' +
+      'individual party and the bank details for completion money are not.',
+  },
+  {
+    doc_type: 'ACCOUNTS',
+    permitted_segments: ['ACCOUNTS_STATEMENTS', 'FIXED_ASSET_NOTE', 'TAX_PROFIT_COMPUTATION', 'CAPITAL_ALLOWANCES_COMPUTATION'],
+    fields: [
+      f('acc_period_end', 'GATE', ['ACCOUNTS_STATEMENTS', 'FIXED_ASSET_NOTE'], 'the balance sheet date'),
+      f('acc_profit_before_tax_pence', 'GATE', ['ACCOUNTS_STATEMENTS', 'TAX_PROFIT_COMPUTATION'], 'integer pence, a loss negative'),
+      f('acc_fixed_asset_additions', 'GATE', ['FIXED_ASSET_NOTE'],
+        'list: asset class (land and buildings, fixtures and fittings, plant), additions in the year in pence'),
+      f('acc_land_and_buildings_cost_pence', 'GATE', ['FIXED_ASSET_NOTE'], 'cost at the period end'),
+      f('acc_capital_allowances_claimed_pence', 'GATE', ['CAPITAL_ALLOWANCES_COMPUTATION'], 'where the tax note shows them'),
+    ],
+    why: 'The balance sheet and the fixed-asset and tax notes say whether the company can use the allowances and what it ' +
+      'has already capitalised; the directors, the preparer and anyone in a related-party note are not needed for that.',
+  },
+  {
+    doc_type: 'CONTRACTOR_INVOICE',
+    permitted_segments: ['INVOICE_LINES', 'COST_SCHEDULE', 'PRELIMS_AND_FEES'],
+    fields: [
+      f('inv_lines', 'APPORTIONMENT', ['INVOICE_LINES', 'COST_SCHEDULE'], 'list: description of the work, amount in pence'),
+      f('inv_total_net_pence', 'APPORTIONMENT', ['INVOICE_LINES', 'COST_SCHEDULE'], 'the total before VAT'),
+      f('inv_vat_pence', 'NARRATIVE', ['INVOICE_LINES']),
+      f('inv_date', 'NARRATIVE', ['INVOICE_LINES'], 'the invoice or valuation date — when the cost was incurred'),
+    ],
+    why: 'Line items, amounts and dates are actual cost, which beats any apportionment. A sole-trader contractor\'s name, ' +
+      'a signatory and anybody\'s bank details are not needed for it, and no field holds a contractor\'s name.',
+  },
+  {
+    doc_type: 'PLANS',
+    permitted_segments: ['DRAWING_SCHEDULE'],
+    fields: [
+      f('plans_rooms', 'TAXONOMY', ['DRAWING_SCHEDULE'], 'list: room label, floor, area in m² where shown'),
+      f('plans_gia_m2', 'TAXONOMY', ['DRAWING_SCHEDULE'], 'the gross internal area, where a schedule of accommodation gives it'),
+      f('plans_drawing_date', 'NARRATIVE', ['DRAWING_SCHEDULE']),
+    ],
+    why: 'Room labels and schedules locate the plant. The title block\'s drawn-by, checked-by and client names are not ' +
+      'needed. Only the text layer passes the strip.',
+  },
 ];
 
 /**
@@ -456,6 +531,11 @@ export const PERSON_REVIEW_BY_DOC_TYPE: Readonly<Record<ExtractableDocType, bool
   // decides otherwise — Phase 146e's rule for this table. Not decided here.
   TAX_RETURN: false,
   TAX_COMPUTATION: false,
+  // Phase 157d. Off, by the same rule.
+  COMPLETION_STATEMENT: false,
+  ACCOUNTS: false,
+  CONTRACTOR_INVOICE: false,
+  PLANS: false,
 });
 
 export function specFor(t: DocType): DocSpec {
@@ -522,6 +602,26 @@ const HEADING_RULES: { kind: SegmentKind; patterns: RegExp[] }[] = [
   { kind: 'TAX_ENTITY_DETAILS', patterns: [
     /\bcompany\s+(information|details|name|registration|number)/i, /\bcompany'?s?\s+(tax\s+reference|unique\s+taxpayer|utr)/i,
     /return\s+period/i, /accounting\s+period/i, /period\s+covered/i,
+  ] },
+  // Phase 157d — the four types. LAST again, so no heading an earlier type used changes kind (test TX2).
+  { kind: 'COMPLETION_FIGURES', patterns: [
+    /completion\s+statement/i, /purchase\s+price/i, /\bconsideration\b/i, /apportion/i, /stamp\s+duty/i, /\bsdlt\b/i,
+    /land\s+transaction\s+tax/i, /completion\s+date/i, /balance\s+(due|required)/i,
+  ] },
+  { kind: 'ACCOUNTS_STATEMENTS', patterns: [
+    /balance\s+sheet/i, /statement\s+of\s+financial\s+position/i, /profit\s+and\s+loss/i, /income\s+statement/i,
+    /statement\s+of\s+comprehensive\s+income/i,
+  ] },
+  { kind: 'FIXED_ASSET_NOTE', patterns: [
+    /tangible\s+(fixed\s+)?assets/i, /\bfixed\s+assets/i, /property,?\s+plant\s+and\s+equipment/i, /depreciation/i,
+  ] },
+  { kind: 'INVOICE_LINES', patterns: [
+    /\binvoice\b/i, /application\s+for\s+payment/i, /payment\s+(application|certificate)/i, /description\s+of\s+(works|services)/i,
+    /amount\s+due/i, /\binterim\s+valuation/i,
+  ] },
+  { kind: 'DRAWING_SCHEDULE', patterns: [
+    /room\s+(schedule|data|layout)/i, /schedule\s+of\s+accommodation/i, /floor\s+plan/i, /drawing\s+(schedule|register|list)/i,
+    /\b(ground|first|second|third|lower\s+ground|basement)\s+floor\b/i, /gross\s+internal\s+area/i, /\bgia\b/i,
   ] },
 ];
 

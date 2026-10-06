@@ -31,7 +31,7 @@
  * a receipt policy of its own name, so it can now be received. Its row below is NOT deleted and NOT changed: it is the
  * record of what the officer was asked, the table in migration 021 is never edited, and the two must stay identical.
  * What changes is how it reads: a type that now has its own receipt policy reads BOUND, with the policy's own words,
- * whatever the recommendation says. Thirteen of the fourteen are still unbound.
+ * whatever the recommendation says. Nine of the fourteen are still unbound: Phase 157d (migration 099) bound the completion statement, accounts, contractor's invoices and plans, on these recommendations.
  */
 
 import type { Db } from '../db.ts';

@@ -2447,7 +2447,10 @@ if (startSuite("K", "Phase 14 — BUILDING_REGS_COMPLETION and GRANT_FUNDING_AGR
     /* K1 — the two ungated types are specified, and CPSE_REPLIES / SALE_CONTRACT are not */
     const types = PIPE.DOC_SPECS.map(d => d.doc_type).sort();
     /* Phase 151b: the tax return and the tax computation have specs of their own (Word question 223) — eleven. */
-    check("K1 — eleven document types now have a spec", types.length, 11);
+    /* Phase 157d: and the four the Friary House run found nothing could receive (F16) — fifteen. */
+    check("K1 — fifteen document types now have a spec", types.length, 15);
+    check("K1 — COMPLETION_STATEMENT, ACCOUNTS, CONTRACTOR_INVOICE and PLANS are specified (Phase 157d)",
+      ["COMPLETION_STATEMENT", "ACCOUNTS", "CONTRACTOR_INVOICE", "PLANS"].every(t => types.indexOf(t) >= 0), true);
     check("K1 — TAX_RETURN and TAX_COMPUTATION are specified (Phase 151b)",
       types.indexOf("TAX_RETURN") >= 0 && types.indexOf("TAX_COMPUTATION") >= 0, true);
     check("K1 — BUILDING_REGS_COMPLETION is specified", types.indexOf("BUILDING_REGS_COMPLETION") >= 0, true);

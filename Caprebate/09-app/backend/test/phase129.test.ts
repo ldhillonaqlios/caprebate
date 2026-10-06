@@ -337,7 +337,9 @@ const FOURTEEN = ['ACCOUNTS', 'CA_REPORT', 'CLAIM_DOCUMENTATION', 'COMPLETION_ST
   'INVOICE', 'OTHER', 'PLANS', 'SURVEY_PHOTOS', 'SURVEY_REPORT', 'TAX_COMPUTATION', 'VALUATION'];
 
 /** Phase 151b: the fourteen less the tax computation, which has its own receipt policy now (Word question 223). */
-const STILL_UNBOUND = FOURTEEN.filter((c) => c !== 'TAX_COMPUTATION');
+/** Phase 157d: and the four the Friary House run found nothing could receive (F16), bound by migration 099. */
+const NOW_BOUND = ['TAX_COMPUTATION', 'COMPLETION_STATEMENT', 'ACCOUNTS', 'CONTRACTOR_INVOICE', 'PLANS'];
+const STILL_UNBOUND = FOURTEEN.filter((c) => !NOW_BOUND.includes(c));
 
 describe('line 13 — a recommended receipt strip per new document type — recorded, not approved, binding nothing', () => {
   test('RECEIPT STRIP RECOMMENDATIONS: one for each of the fourteen types with no receipt policy, each with its reason, identical in the module and in migration 021 — recorded, not approved', async () => {
@@ -347,7 +349,7 @@ describe('line 13 — a recommended receipt strip per new document type — reco
     try {
       const unbound = a.db.all<{ code: string }>("SELECT code FROM document_types WHERE handler_type IS NULL AND source = 'CRM_SPECIFICATION' ORDER BY code").map((x) => x.code);
       // Phase 151b: the tax computation has its own receipt policy now (Word question 223); its recommendation stays as the record.
-      assert.deepEqual(unbound, FOURTEEN.filter((c) => c !== 'TAX_COMPUTATION'));
+      assert.deepEqual(unbound, STILL_UNBOUND);
       assert.deepEqual(RR.RECEIPT_RECOMMENDATIONS.types.map((t) => t.type_code).sort(), FOURTEEN);
       const by = (s: RR.RecommendedStrip) => RR.RECEIPT_RECOMMENDATIONS.types.filter((t) => t.strip === s).map((t) => t.type_code).sort();
       assert.deepEqual(by('KEEP_WHOLE'), ['CA_REPORT', 'CLAIM_DOCUMENTATION', 'ENGAGEMENT_LETTER', 'INVOICE', 'SURVEY_REPORT']);

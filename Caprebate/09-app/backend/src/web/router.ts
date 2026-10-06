@@ -48,7 +48,7 @@ import { ADDRESS_LOOKUP, addressLookupMissing, findAddresses, searchesToday } fr
 import { ADDRESS_LOOKUP_JS } from './address-lookup-script.ts';
 import { loadLetter } from './letter.ts';
 import * as P from './portal.ts';
-import { ENGAGEMENT_SIGNING, shownLetter, signEngagement, signingMissing, type EngagementSigning } from './signing.ts';
+import { ENGAGEMENT_SIGNING, SIGN_WORDS, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning } from './signing.ts';
 import { portalMessagesBody, readPortalSend, sendFromPortal } from './messages-pages.ts';
 import { clientMessage, type ThreadMessage as MessageView } from './messages.ts';
 import { FsObjectStore } from './objectstore.ts';
@@ -75,7 +75,7 @@ import { joinSignature } from '../connectors/zoom.ts';
 import { VIDEO_CALL_JS } from './video-call-script.ts';
 import { PHOTO_UPLOAD_JS } from './photo-upload-script.ts';
 import { SIGNATURE_PAD_JS } from './signature-pad-script.ts';
-import { signedCopy } from './engagement-send.ts';
+import { letterState, letterSteps, signedCopy } from './engagement-send.ts';
 import { WHATSAPP_IMPORT_JS } from './whatsapp-import-script.ts';
 import { REGISTER_IMPORT_JS } from './register-import-script.ts';
 import { sweepUploads } from './photo-upload.ts';
@@ -85,7 +85,7 @@ import { webhookChallenge } from '../connectors/whatsapp.ts';
 import { EMAIL_SENDING, mailWhere, sendingOn, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
 import { bookingInviteFile, sendVideoInvite } from './booking-invite.ts';
 import { ga4MeasurementId, sitePolicy, withMeasurementId } from '../analytics.ts';
-import { localStamp, localWhen, ukDate, ukDatesIn, zoneNotice } from './localtime.ts';
+import { localDate, localStamp, localWhen, ukDate, ukDatesIn, zoneNotice } from './localtime.ts';
 import { formatPence, formatShownRange, toPence, RANGE_QUALIFIER } from './shown-range.ts';
 import { linkBookingToLead, SECTORS } from './leads.ts';
 import { fireAutomation } from './automation.ts';
@@ -343,6 +343,42 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   }
   /* 30 Sep 2026: THE CLIENT'S JOIN PAGE, /call/<token>. The token is the only key: 64 hex characters, made when the
      meeting was made and sent only to the client. It opens from half an hour before the call until an hour after. */
+  /* PHASE 157d: SIGNING FROM THE LINK IN THE LETTER EMAIL — no login. The link is the key: single use, out of date
+     after SIGN_LINK_DAYS, one login's, one letter's. Opening it (a GET, which email scanners also make) signs nothing and
+     uses nothing; only the signed form uses the link. Off unless the signing setting says `links`. */
+  const signMatch = /^\/sign\/([0-9a-f]{64})$/.exec(path);
+  if (signMatch && (method === 'GET' || method === 'POST')) {
+    const token = signMatch[1] ?? '';
+    const cfg = d.signing ?? ENGAGEMENT_SIGNING;
+    const link = signLinkFor(d.app.db, token, now());
+    const nope = (status: number, title: string, why: string) => { html(res, status, page({ title, nav: nav(actor), body: h`<h1>${title}</h1><p>${why}</p><p><a class="cta" href="/login">Sign in to the portal</a></p>` })); return 'handled' as const; };
+    if (cfg.links !== true) return nope(404, 'Signing link not available', SIGN_WORDS.links_off);
+    if (link === null) return nope(404, 'This link does not work', SIGN_WORDS.link);
+    const business = { id: link.business_id, name: link.business_name, company_number: link.company_number };
+    const engOf = (): P.EngagementView | null => d.app.db.get<P.EngagementView>(
+      'SELECT letter_state AS state, signed_at FROM engagements WHERE id = ?', [link.engagement_id]) ?? null;
+    const extra = { ...letterExtra(d.app.db, link.business_id, link.user_id), action: `/sign/${token}`, byLink: true };
+    if (method === 'GET') {
+      d.app.db.run("UPDATE engagements SET letter_state = 'VIEWED', viewed_at = COALESCE(viewed_at, ?) WHERE id = ? AND letter_state = 'SENT'", [now(), link.engagement_id]);
+      letterHtml(res, 200, letterPage(actor, business, engOf(), undefined, undefined, d.letterPath, cfg, extra));
+      return 'handled';
+    }
+    const f = await form(req);
+    const typed = { full_name: f.get('full_name') ?? '', role: f.get('signer_role') ?? '' };
+    const r = signByLink({ db: d.app.db, audit: d.app.audit, email: d.app.email, now, newId }, token, {
+      ...typed, authorised: f.get('authorised') === 'on', letter_sha256: f.get('letter_sha256') ?? '',
+      signature_strokes: f.get('signature_strokes') ?? '', typed_as_signature: f.get('typed_as_signature') === 'on',
+    }, clientIp(req), { cfg, ...(d.letterPath === undefined ? {} : { letterPath: d.letterPath }) });
+    if (!r.ok) {
+      letterHtml(res, 400, letterPage(actor, business, engOf(), r.why, typed, d.letterPath, cfg, extra));
+      return 'handled';
+    }
+    html(res, 200, page({ title: 'Letter signed', nav: nav(actor), body: h`<h1>${r.complete ? 'Thank you — the letter is signed' : 'Thank you — you have signed'}</h1>
+      <p>We have recorded your signature. ${r.complete ? 'A copy of the signed letter, with a certificate of completion, is saved to be emailed to you.' : 'The letter needs one more signature. We will email the signed copy when it has it.'}</p>
+      <p class="help">This link has now been used, and will not open the letter again.</p>` }));
+    return 'handled';
+  }
+
   const callMatch = /^\/call\/([0-9a-f]{64})$/.exec(path);
   if (callMatch && method === 'GET') {
     const m = d.app.db.get<{ booking_id: string; meeting_id: string; join_url: string; passcode: string | null; starts_at: string | null; ends_at: string | null; cancelled_at: string | null; business_id: string | null; lead_id: string | null }>(
@@ -908,11 +944,11 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const rerender = async (href: string): Promise<{ status: number; body: string }> => {
       const u = new URL(href, 'http://localhost');
       const cap = captureResponse();
-      await inContext(d, u.pathname, () => handleStaff({ app: d.app, store: d.store, newId, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, cap.res, u, 'GET', actor, form, readBody));
+      await inContext(d, u.pathname, () => handleStaff({ app: d.app, store: d.store, newId, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }), ...(d.signing === undefined ? {} : { signing: d.signing }) }, req, cap.res, u, 'GET', actor, form, readBody));
       return cap.done;
     };
     return inContext(d, path, () => handleStaff(
-      { app: d.app, store: d.store, newId, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form, readBody,
+      { app: d.app, store: d.store, newId, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }), ...(d.signing === undefined ? {} : { signing: d.signing }) }, req, res, url, method, actor, form, readBody,
     ), rerender);
   }
 
@@ -969,9 +1005,10 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       html(res, 422, simple('Not accepted', 'We could not use this file, so we have deleted it. Please send another.'));
       return 'handled';
     }
-    html(res, 200, simple('Received', done.received_request === null || done.received_request === undefined
+    const again = r.sent_before === null ? '' : ` You sent us this same file on ${ukDate(localDate(r.sent_before))}; we have kept both.`;
+    html(res, 200, simple('Received', (done.received_request === null || done.received_request === undefined
       ? 'We read it, then deleted the file.'
-      : 'We read it, then deleted the file. What we asked you for is now marked received.'));
+      : 'We read it, then deleted the file. What we asked you for is now marked received.') + again));
     return 'handled';
   }
 
@@ -1094,7 +1131,7 @@ async function portalRoutes(
     // 2 Oct 2026: the survey report's card leads, once a tax adviser's sign-off has released it (src/web/report-pages.ts).
     const dashboard = h`${portalReportCard(d.app, business_id)}${portalEvidenceCard(db, business_id)}${portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins })}`;
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
-      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', joins, dashboard, ...(welcome === undefined ? {} : { welcome }) }));
+      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(/^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('again') ?? '') ? { sentBefore: url.searchParams.get('again') as string } : {}), joins, dashboard, ...(welcome === undefined ? {} : { welcome }) }));
     return 'handled';
   }
 
@@ -1163,7 +1200,7 @@ async function portalRoutes(
     const { business } = P.progress(db, actor, business_id);
     P.markViewed(db, actor, business_id, now);
     const eng = P.engagement(db, actor, business_id);
-    letterHtml(res, 200, letterPage(actor, business, eng, undefined, undefined, d.letterPath, d.signing));
+    letterHtml(res, 200, letterPage(actor, business, eng, undefined, undefined, d.letterPath, d.signing, letterExtra(db, business_id, actor.id)));
     return 'handled';
   }
 
@@ -1190,12 +1227,14 @@ async function portalRoutes(
         signature_strokes: f.get('signature_strokes') ?? '', typed_as_signature: f.get('typed_as_signature') === 'on',
       }, { ip: clientIp(req), session_id }, { ...(d.letterPath === undefined ? {} : { letterPath: d.letterPath }), ...(d.signing === undefined ? {} : { cfg: d.signing }) });
     if (!r.ok) {
-      letterHtml(res, 400, letterPage(actor, business, P.engagement(db, actor, business_id), r.why, typed, d.letterPath, d.signing));
+      letterHtml(res, 400, letterPage(actor, business, P.engagement(db, actor, business_id), r.why, typed, d.letterPath, d.signing, letterExtra(db, business_id, actor.id)));
       return 'handled';
     }
-    html(res, 200, page({ title: 'Letter signed', nav: nav(actor), body: h`<h1>Thank you — the letter is signed</h1>
+    html(res, 200, page({ title: 'Letter signed', nav: nav(actor), body: r.complete ? h`<h1>Thank you — the letter is signed</h1>
       <p>We have recorded your signature. A copy of the signed letter, with a signature page and a certificate of completion, is saved to be emailed to you.</p>
       <p><a class="btn" href="/portal/letter/signed.pdf">Download your signed copy</a></p>
+      <p><a class="cta" href="/portal">Back to your claims</a></p>` : h`<h1>Thank you — you have signed</h1>
+      <p>We have recorded your signature. The letter needs one more signature, from the other person we agreed with your business. We will email the signed copy to you both when it has it.</p>
       <p><a class="cta" href="/portal">Back to your claims</a></p>` }));
     return 'handled';
   }
@@ -1254,7 +1293,8 @@ async function portalRoutes(
       type_code: up.fields.type_code ?? null, logical_document_id: up.fields.document ?? null, request_id: up.fields.request ?? null, claim_id: null,
     }, up.bytes);
     if (!r.ok) { html(res, 400, simple('Not sent', r.why)); return 'handled'; }
-    redirect(res, '/portal?sent=1#documents');
+    // PHASE 157d (F18): the same file sent before — the day only, which says nothing about anyone.
+    redirect(res, r.sent_before === null ? '/portal?sent=1#documents' : `/portal?sent=1&again=${localDate(r.sent_before)}#documents`);
     return 'handled';
   }
 
@@ -2002,7 +2042,7 @@ function portalPage(
   slots: ReturnType<typeof publicSlots>, nowIso: string,
   dlv: readonly ClientDeliverable[] = [],
   share: readonly ClientShareChoice[] = [],
-  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[]; readonly sent?: boolean; readonly joins?: Readonly<Record<string, string>>; readonly dashboard?: Safe } = {},
+  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[]; readonly sent?: boolean; readonly sentBefore?: string; readonly joins?: Readonly<Record<string, string>>; readonly dashboard?: Safe } = {},
 ): string {
   const open = tks.filter((t) => t.state === 'OPEN');
   const asked = reqs.filter((r) => r.state === 'REQUESTED');
@@ -2151,7 +2191,8 @@ function portalPage(
       </section>
 
       <section class="card" id="documents"><div class="card-h"><h2>Documents</h2></div>
-      ${extra.sent === true ? savedMessage('Thank you. We have your file.') : raw('')}
+      ${extra.sent === true ? savedMessage(extra.sentBefore === undefined ? 'Thank you. We have your file.'
+        : `Thank you. We have your file. You sent us this same file on ${ukDate(extra.sentBefore)}. We have kept both, so nothing is lost, and you do not need to send it again.`) : raw('')}
       ${dcs.length === 0 ? h`<p class="help">Nothing uploaded yet.</p>` : h`
         <table><thead><tr><th>Document</th><th>Version</th><th>State</th><th></th></tr></thead><tbody>
         ${dcs.map((x) => h`<tr><td>${x.type_label === null ? x.filename : `${x.type_label} ${x.seq ?? ''}`}</td>
@@ -2260,8 +2301,10 @@ function letterHtml(res: ServerResponse, status: number, body: string): void {
 }
 
 function letterPage(
-  actor: Actor, business: P.Business, eng: P.EngagementView | null,
+  actor: Actor | undefined, business: Pick<P.Business, 'id' | 'name' | 'company_number'>, eng: P.EngagementView | null,
   problem?: string, typed?: { full_name: string; role: string }, letterPath?: string, signing: EngagementSigning = ENGAGEMENT_SIGNING,
+  /** PHASE 157d: where the form posts (the portal, or a signing link), whether this signer has signed, and the steps so far. */
+  extra: { readonly action?: string; readonly mine?: boolean; readonly progress?: readonly string[]; readonly byLink?: boolean } = {},
 ): string {
   // The record's number travels with its name. Absent is omitted, never passed as undefined; a blank is passed and
   // letter.ts treats it as absent — the specimen stays and is flagged, never read as the client's (N4).
@@ -2292,8 +2335,13 @@ function letterPage(
         ? h`<p class="clause">${p.text}</p>`
         : h`<p>${p.text}</p>`)}</div>
 
-      ${eng !== null && eng.state === 'SIGNED' ? h`<p><strong>You signed this letter${eng.signed_at === null ? '' : ` on ${localWhen(eng.signed_at)}`}.</strong> <a class="btn" href="/portal/letter/signed.pdf">Download your signed copy</a></p>` : canSign ? h`
-      <form method="post" action="/portal/letter/sign" class="sign">
+      ${extra.progress === undefined || extra.progress.length === 0 ? raw('') : h`<ul class="plain">${extra.progress.map((w) => h`<li>${w}</li>`)}</ul>`}
+      ${eng !== null && eng.state === 'SIGNED' ? (extra.byLink === true
+        ? h`<p><strong>This letter is signed${eng.signed_at === null ? '' : ` (${localWhen(eng.signed_at)})`}.</strong> We have emailed the signed copy.</p>`
+        : h`<p><strong>You signed this letter${eng.signed_at === null ? '' : ` on ${localWhen(eng.signed_at)}`}.</strong> <a class="btn" href="/portal/letter/signed.pdf">Download your signed copy</a></p>`)
+        : extra.mine === true ? h`<p><strong>You have signed this letter.</strong> It needs one more signature. We will email the signed copy when it has it.</p>`
+        : canSign ? h`
+      <form method="post" action="${extra.action ?? '/portal/letter/sign'}" class="sign">
         <h2>Sign the letter</h2>
         <input type="hidden" name="letter_sha256" value="${shown.sha256}">
         <label>Your full name <input name="full_name" required maxlength="200" autocomplete="name" value="${typed?.full_name ?? ''}"></label>
@@ -2313,6 +2361,13 @@ function letterPage(
       ${missing.length === 0 ? raw('') : h`<div class="gate">Signing is not switched on yet.${why(h`${missing.join(' ')}`)}</div>`}` : raw('')}
       <div class="gate">When you sign, we keep a record of it.${why(h`We keep your name, your role, your signature and the time. We keep the internet address you signed from. We keep a fingerprint of this exact letter. You get a copy of the signed letter by email, and you can download it here. We never take a payment here.`)}</div>`,
   });
+}
+
+/** PHASE 157d: the letter page's second-signer facts — whether this login has signed, and the steps so far. */
+function letterExtra(db: Db, business_id: string, user_id: string): { mine: boolean; progress: string[] } {
+  const ls = letterState(db, business_id);
+  return { mine: ls.state !== 'SIGNED' && ls.signed_by.some((x) => x.user_id === user_id),
+    progress: ls.named.length === 0 && ls.signed_by.length === 0 ? [] : letterSteps(ls).filter((w) => /^(To be signed|Signed by|Waiting)/.test(w)) };
 }
 
 /**

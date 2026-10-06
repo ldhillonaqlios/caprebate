@@ -34,8 +34,8 @@ import * as C from './crm.ts';
 import * as D from './documents.ts';
 import type { FsObjectStore } from './objectstore.ts';
 import { singleFile } from './multipart.ts';
-import { acceptClientBytes, finishUpload, issuedJob, sweepOriginals, readerFor } from './uploads.ts';
-import { UPLOAD_LIMITS, sniffAccepted } from './upload-handler-port.ts';
+import { acceptClientBytes, finishUpload, issuedJob, sweepOriginals, readerFor, DAMAGED_PDF } from './uploads.ts';
+import { UPLOAD_LIMITS, pdfLooksComplete, sniffAccepted } from './upload-handler-port.ts';
 import { NO_DUE_DATE } from './tasks.ts';
 import { ANSWER_WORDS, EARLY_VOUCH_PREFIX, VOUCH_ANSWERS, earlyVouchesFrom } from './document-reading.ts';
 
@@ -73,10 +73,12 @@ const NOT_ACCEPTED = 'We cannot take that kind of file. Send a PDF, a photo (JPE
  */
 export async function receiveFile(
   d: { app: App; store: FsObjectStore; newId: () => string }, actor: Actor, args: D.StartArgs, bytes: Uint8Array,
-): Promise<{ ok: true; logical_document_id: string } | { ok: false; why: string }> {
+): Promise<{ ok: true; logical_document_id: string; sent_before: string | null } | { ok: false; why: string }> {
   if (bytes.length === 0) return { ok: false, why: 'That file is empty. Choose it again.' };
   if (bytes.length > UPLOAD_LIMITS.max_bytes) return { ok: false, why: TOO_BIG };
   if (sniffAccepted(bytes) === null) return { ok: false, why: NOT_ACCEPTED };
+  // PHASE 157d (F19): a PDF with no end is damaged. acceptClientBytes refuses it too; this only says so first.
+  if (sniffAccepted(bytes) === 'pdf' && !pdfLooksComplete(bytes)) return { ok: false, why: 'That PDF is damaged or incomplete: it stops part-way. Save or export it again, then send it.' };
   const db = d.app.db;
   const now = d.app.now;
   const b = await D.startDocumentUpload({ db, audit: d.app.audit, now, newId: d.newId, store: d.store }, actor, args);
@@ -91,14 +93,14 @@ export async function receiveFile(
   const deps = { db, store: d.store, now, actor: actor.id, newId: d.newId, audit: d.app.audit,
     reading: readerFor(d.app, args.business_id, actor.role) };
   const r = await acceptClientBytes(deps, { doc_id: b.doc_id, token, bytes });
-  if (!r.ok) return { ok: false, why: r.status === 413 ? TOO_BIG : r.status === 415 ? NOT_ACCEPTED : 'Something went wrong. Try again.' };
+  if (!r.ok) return { ok: false, why: r.status === 413 ? TOO_BIG : r.status === 415 ? NOT_ACCEPTED : r.why === DAMAGED_PDF ? 'That PDF is damaged or incomplete: it stops part-way. Save or export it again, then send it.' : 'Something went wrong. Try again.' };
   const done = await finishUpload(deps, job, r.written_at);
   if (done.error !== undefined) {
     return { ok: false, why: done.error.code === 'E_UNRECOGNISED_DOC_TYPE'
       ? 'We could not read it as that kind of document. Check what it is and try again.'
       : 'We could not use that file. Try again, or send it as a PDF.' };
   }
-  return { ok: true, logical_document_id: b.logical_document_id };
+  return { ok: true, logical_document_id: b.logical_document_id, sent_before: r.sent_before };
 }
 
 /** A multipart upload's file and fields, or why not. */

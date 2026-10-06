@@ -1097,6 +1097,60 @@ export const CLIENT_DOC_RECEIPT_POLICY: readonly ClientDocReceiptPolicy[] = [
       'are the capture rule (the facts are typed on the property page, which has no box for a person\'s name) and the ' +
       'retention clock. The title plan is a map and names nobody.',
   },
+  /*
+   * PHASE 157d, 6 OCTOBER 2026 (the Friary House run, finding F16). Four types the claim asks clients for, bound on
+   * Phase 129's recorded recommendation for each: STRIP_INDIVIDUALS_KEEP_FIGURES. Spec-derived, like the tax types:
+   * only the figures' segments are kept; the parties, the people and the bank details land in no permitted segment.
+   */
+  {
+    doc_type: 'COMPLETION_STATEMENT',
+    mode: 'SPEC_DERIVED',
+    retained_segments: specDerivedSegments('COMPLETION_STATEMENT'),
+    roles_to_triage: [
+      { role: 'TRANSACTION_PARTY', frequency: 'usually', note: 'the seller and the buyer; either may be a person' },
+      { role: 'AGENT_OR_REPRESENTATIVE', frequency: 'always', note: 'the fee earner at each firm of solicitors' },
+    ],
+    why:
+      'Kept: the price, its apportionment, the stamp duty and the completion date. Removed on receipt: the parties where ' +
+      'they are people, the solicitors\' fee earners, and the bank details for the completion money.',
+  },
+  {
+    doc_type: 'ACCOUNTS',
+    mode: 'SPEC_DERIVED',
+    retained_segments: specDerivedSegments('ACCOUNTS'),
+    roles_to_triage: [
+      { role: 'OFFICER_OR_CASE_OFFICER', frequency: 'always', note: 'the directors, named in the directors\' report and on the balance sheet approval' },
+      { role: 'AGENT_OR_REPRESENTATIVE', frequency: 'usually', note: 'the accountant who prepared them' },
+      { role: 'PERSON_NAMED_IN_PROSE', frequency: 'sometimes', note: 'a related-party note naming a director or a family member' },
+    ],
+    why:
+      'Kept: the balance sheet, the profit, the fixed-asset note and the tax note. Removed on receipt: the directors\' ' +
+      'report, the approval and signature, the preparer and any related-party note.',
+  },
+  {
+    doc_type: 'CONTRACTOR_INVOICE',
+    mode: 'SPEC_DERIVED',
+    retained_segments: specDerivedSegments('CONTRACTOR_INVOICE'),
+    roles_to_triage: [
+      { role: 'TRANSACTION_PARTY', frequency: 'sometimes', note: 'the contractor, where a sole trader — then a person' },
+      { role: 'INDIVIDUAL_SIGNATORY', frequency: 'sometimes', note: 'where an invoice or a valuation is signed' },
+    ],
+    why:
+      'Kept: the lines, the amounts, the VAT and the date: actual cost. Removed on receipt: the contractor\'s and anyone\'s ' +
+      'name and address block, a signatory, and the bank details for payment.',
+  },
+  {
+    doc_type: 'PLANS',
+    mode: 'SPEC_DERIVED',
+    retained_segments: specDerivedSegments('PLANS'),
+    roles_to_triage: [
+      { role: 'PROFESSIONAL_CERTIFIER', frequency: 'usually', note: 'the architect or designer in the title block: drawn by, checked by' },
+      { role: 'TRANSACTION_PARTY', frequency: 'sometimes', note: 'the client named in the title block, where a person' },
+    ],
+    why:
+      'Kept: the room labels, the schedule of accommodation and the floor references, which locate the plant. Removed on ' +
+      'receipt: the title block. Only the text layer passes the strip; the picture is kept only if the raw-file rule keeps the file.',
+  },
 ];
 
 export function receiptPolicyFor(t: DocType): ClientDocReceiptPolicy {

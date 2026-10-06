@@ -12257,3 +12257,32 @@ NOTHING LEFT  beyond those lines.
 ### Note, 6 October 2026 (after Phase 157c) — signing switched on for testing
 
 Lakhbir: "Signing itself is still switched off. switch this on for test purposes at the moment". Built as `ENGAGEMENT_SIGNING_TEST` (`src/web/signing.ts`): on, with `test_copy_only`, so the solicitor's answer is waived for the TEST COPY of the letter and nothing else; `signingMissing` refuses the real letter under it, even one with every term settled. The test website asks for it (`testSigning: true` beside `testLetter: true` in api/index.mjs); a local copy with `CAPREBATE_SIGNING_TEST=1`. The certificate of a test-copy signature says "TEST: … It is not a contract." `ENGAGEMENT_SIGNING`, for real clients, stays off. The case stamp reads the new switch. `test/signing-for-testing.test.ts` (9). 4,834 passing (back end 2,598 over 159 files). Branch `claude/signing-on-for-testing`, its own pull request against main.
+
+## Phase 157d — signing from an emailed link, a second signer, two upload checks and four document types — 6 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Built the rest of the DocuSign-style signing: a single-use, 7-day link in the letter email that signs without a login, and a second signer (staff name one or two; the letter is signed only when both have; both on the certificate). Both are off for real clients and on for the test copy on the test website. A file sent twice is recognised and the client told when; a PDF that stops part-way is refused. The completion statement, accounts, contractor's invoices and plans can now be received. 4,854 passing.
+
+- **Claim.** hub/CLAIM.md and the tracker row 13217880529 (board and tracker: Working on it, this machine), pushed before work began. Branch `claude/phase-157d` from main after PR 32 merged. (PR 33, Phase 157b, was found unmerged — it conflicted with PR 32 — and was brought up to date with main the same evening so it can merge.)
+- **1. Signing from the emailed link.** `createSignLink`, `signLinkFor`, `signByLink` (`src/web/signing.ts`); `EngagementSigning.links` (on in `ENGAGEMENT_SIGNING_TEST` only); `SIGN_LINK_DAYS` 7 (a test default). Sending the letter emails each signer their own `/sign/{token}` (32 random bytes; only the SHA-256 kept). `GET /sign/{token}` shows the letter and the pad and uses nothing (email scanners open links); `POST` signs once as `EMAIL_LINK`, with the link and no session, and marks it used in the same transaction. Out of date, used, unknown, or a disabled login: "This link does not work". The certificate: "Signed from the link we emailed to: …". **Word question 246** added under the solicitor (both documents; the headings list).
+- **2. A second signer.** `setRequiredSigners` (`engagement.send`; one or two of the client's own logins; refused once anyone has signed), `requiredSigners`, `signaturesNeeded`; `POST /staff/clients/{id}/engagement/signers` and "Who must sign" on the client page's letter section. A login not named is refused; nobody signs twice; the letter is SIGNED, and `checkSignature` passes, only with every named signature; each signature's PDF carries all so far and one certificate listing each signer. Version 3 records bind `signer_seq` and `link_id`. Word question 194 carries a dated note.
+- **Migration 098** rebuilds `engagement_signatures` (two a letter; `EMAIL_LINK`; the session/link CHECK) and adds `engagement_required_signers` and `engagement_sign_links` (never deleted; used once).
+- **3. A file sent twice (F18).** Migration 097, `documents.content_sha256`. `acceptClientBytes` keeps the fingerprint and finds the same bytes from the same business; the copy is kept and the client told "You sent us this same file on …" (portal and upload page).
+- **4. A damaged PDF (F19).** `pdfLooksComplete` (phase3 upload handler, through the port): no `%%EOF` in the last 1,024 bytes is refused before writing, by `acceptClientBytes` and `receiveFile`.
+- **5. Four document types (F16).** Migration 099 (056's rebuild) binds COMPLETION_STATEMENT (now carries a value), ACCOUNTS, CONTRACTOR_INVOICE and PLANS to receipt policies of their own names, RET-7, on Phase 129's recommendation (strip individuals, keep figures). phase3: `DocType`, five segment kinds with heading rules appended last, four `DOC_SPECS` (sixteen fields, none a name), four receipt policies, `PERSON_REVIEW_BY_DOC_TYPE`, the name-exclusion keep list. SDP-P36 noted (register and tracker): its approval now covers these four in use.
+- **The checks.** `test/phase157d.test.ts` (19) — red against main as a whole (the functions it tests do not exist there). Restated: phase3 C1, C7, C8, P21; back end documents, phase129, phase151b-documents, web (a test PDF now ends with `%%EOF`), phase157c (version 3 records and wording); harness K1 (fifteen specified types). Site harness 1,382 in both modes; phase3 440; phase9 415; back end 2,617 over 160 tracked files; **4,854**. Fold check: fifteen references remapped — green. Register and tracker green. **Drift: one line,** Build-Prep 06's phase9 figure, 417, which is true once PR 33 (157b) merges; this branch does not carry 157b.
+- **Documents.** Developer Spec (a Phase 157d section, three routes, the figures and line references); FOR THE SOLICITOR, THE DPO AND THE DEVELOPER; KEYS-AND-SWITCHES; Word questions 194 and 246; Build-Prep 06, Decided-and-Not-Decided and the README's harness figure.
+
+```
+DONE          Signing from an emailed link and a second signer (on for the test copy only); a file
+              sent twice recognised; a damaged PDF refused; four document types receivable;
+              migrations 097-099; 19 tests; 4,854 passing.
+NOT DONE      Signing links and the second signer for real clients - BLOCKED on the solicitor
+              (Word questions 194 and 246) - FOR THE SOLICITOR.
+              The four types' receipt strips approved - BLOCKED on the data protection officer
+              (SDP-P36) - FOR THE SOLICITOR, THE DPO AND THE DEVELOPER.
+              Phase 157b's merge (PR 33) - Lakhbir's click; then this branch takes main and
+              its phase9 figure.
+NOTHING LEFT  beyond those lines.
+```
+
+ **Claim cleared** in the commit that carries this record.

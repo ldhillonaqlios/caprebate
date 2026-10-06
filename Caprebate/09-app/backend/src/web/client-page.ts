@@ -127,6 +127,7 @@ const SAVED: Readonly<Record<string, string>> = Object.freeze({
   // PHASE 157c (F21)
   'letter-sent': 'The engagement letter is sent. The client is emailed a link to read and sign it in their portal.',
   'letter-resent': 'The link to the engagement letter is sent again.',
+  'letter-signers': 'Who must sign the letter is saved.',
 });
 
 /**
@@ -138,7 +139,7 @@ const OPEN_AFTER: Readonly<Record<string, string>> = Object.freeze({
   // PHASE 157c (the Friary House run, F11): the "Run the research" links open the Lookups section; "#sources" alone
   // pointed into a closed tab and showed nothing.
   lookups: 'sources',
-  'letter-sent': 'letter', 'letter-resent': 'letter', letter: 'letter',
+  'letter-sent': 'letter', 'letter-resent': 'letter', 'letter-signers': 'letter', letter: 'letter',
   sent: 'questions', answered: 'questions', withdrawn: 'questions',
   checked: 'checks', unchecked: 'checks', told: 'checks', takenback: 'checks',
   'identity-sent': 'identity',
@@ -325,6 +326,8 @@ function clientPage(
      copy once there is one. Only for a login that may read the letter (Admin, Sales). */
   if (can(actor, 'engagement.read', { type: 'engagement', id: org.id, business_id: org.id })) {
     const ls = letterState(db, org.id);
+    // PHASE 157d: the client's logins, for "Who must sign".
+    const clientLogins = db.all<{ id: string; name: string; email: string }>("SELECT id, display_name AS name, email FROM users WHERE business_id = ? AND role = 'CLIENT' AND disabled_at IS NULL ORDER BY created_at ASC, id ASC", [org.id]);
     const maySend = can(actor, 'engagement.send', { type: 'engagement', id: org.id, business_id: org.id }) && ls.state !== 'SIGNED';
     sections.push({
       key: 'client.letter', id: 'letter', kind: 'documents', heading: 'Engagement letter',
@@ -336,7 +339,13 @@ function clientPage(
         ${ls.copy ? h`<p><a class="btn" href="/staff/clients/${org.id}/engagement/signed.pdf">Download the signed copy</a> <span class="help">The letter, the signature page and the certificate of completion, as one PDF.</span></p>` : raw('')}
         ${!maySend ? raw('') : ls.logins === 0 ? h`<p class="help">The client has no login yet, so the letter cannot be sent. They can create one from the thank-you page after the assessment.</p>`
           : h`<form method="post" action="/staff/clients/${org.id}/engagement/send"><button class="cta" type="submit">${ls.state === 'NONE' || ls.state === 'NOT_SENT' ? 'Prepare and send the engagement letter' : 'Send the link again'}</button>
-            <span class="help">The client is emailed a link to read and sign it in their portal.</span></form>`}`,
+            <span class="help">The client is emailed a link to read and sign it in their portal.</span></form>`}
+        ${!maySend || ls.prepared_at === null || ls.signed_by.length > 0 || clientLogins.length < 2 ? raw('') : h`
+          <form method="post" action="/staff/clients/${org.id}/engagement/signers" class="signers">
+            <fieldset><legend>Who must sign</legend>
+            <p class="help">Tick the one or two people who must sign, for example a partnership's two partners. With two ticked, the letter is signed only when both have signed. With none ticked, any one of them may sign.</p>
+            ${clientLogins.map((u) => h`<label class="ck"><input type="checkbox" name="signer" value="${u.id}"${ls.named.some((n) => n.user_id === u.id) ? raw(' checked') : raw('')}> ${u.name} <span class="help">${u.email}</span></label>`)}
+            <button class="btn-quiet" type="submit">Save who must sign</button></fieldset></form>`}`,
     });
   }
 

@@ -20,9 +20,13 @@ import type { AuditLog } from '../audit.ts';
 import type { EmailTransport } from '../stubs/email.ts';
 import { authorise, can, type Actor } from '../authz.ts';
 import { localWhen } from './localtime.ts';
-import { checkSignature } from './signing.ts';
+import { checkSignature, createSignLink, requiredSigners, ENGAGEMENT_SIGNING, SIGN_LINK_DAYS, type EngagementSigning } from './signing.ts';
 
-export type SendDeps = { db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string; origin?: string };
+export type SendDeps = {
+  db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string; origin?: string;
+  /** PHASE 157d: the signing setting this copy runs under. Signing links are made only where it says `links`. */
+  signing?: EngagementSigning;
+};
 
 export const SEND_WORDS = Object.freeze({
   signed: 'This client has already signed the letter. There is nothing to send.',
@@ -40,6 +44,9 @@ export type LetterState = {
   /** A signed copy can be handed out: the letter is signed and its record checks out. */
   readonly copy: boolean;
   readonly logins: number;
+  /** PHASE 157d: who must sign (staff's choice; empty is any one login), and who has. */
+  readonly named: readonly { readonly user_id: string; readonly name: string }[];
+  readonly signed_by: readonly { readonly user_id: string | null; readonly name: string; readonly signed_at: string; readonly by_link: boolean }[];
 };
 
 export function letterState(db: Db, business_id: string): LetterState {
@@ -47,11 +54,15 @@ export function letterState(db: Db, business_id: string): LetterState {
     'SELECT e.id, e.letter_state, e.created_at, e.sent_at, u.display_name AS sent_by, e.viewed_at, e.signed_at FROM engagements e LEFT JOIN users u ON u.id = e.sent_by WHERE e.business_id = ?',
     [business_id]);
   const logins = db.get<{ n: number }>("SELECT COUNT(*) AS n FROM users WHERE business_id = ? AND role = 'CLIENT' AND disabled_at IS NULL", [business_id])?.n ?? 0;
-  if (e === undefined) return { state: 'NONE', prepared_at: null, sent_at: null, sent_by: null, viewed_at: null, signed_at: null, copy: false, logins };
+  if (e === undefined) return { state: 'NONE', prepared_at: null, sent_at: null, sent_by: null, viewed_at: null, signed_at: null, copy: false, logins, named: [], signed_by: [] };
   const state = e.letter_state as LetterState['state'];
+  const signed_by = db.all<{ user_id: string | null; name: string; signed_at: string; origin: string }>(
+    'SELECT user_id, signer_name AS name, signed_at, origin FROM engagement_signatures WHERE engagement_id = ? ORDER BY signer_seq ASC', [e.id])
+    .map((x) => ({ user_id: x.user_id, name: x.name, signed_at: x.signed_at, by_link: x.origin === 'EMAIL_LINK' }));
   return {
     state, prepared_at: e.created_at, sent_at: e.sent_at, sent_by: e.sent_by, viewed_at: e.viewed_at, signed_at: e.signed_at,
     copy: state === 'SIGNED' && checkSignature(db, e.id).ok, logins,
+    named: requiredSigners(db, e.id).map((n) => ({ user_id: n.user_id, name: n.name })), signed_by,
   };
 }
 
@@ -80,12 +91,20 @@ export function sendEngagementLetter(d: SendDeps, actor: Actor, business_id: str
     });
   });
   const link = `${d.origin ?? ''}/portal/letter`;
+  /* PHASE 157d: where signing links are on, each login is also sent its own single-use link that opens the letter for
+     signing without signing in. Where staff named who must sign, only they are sent one. */
+  const cfg = d.signing ?? ENGAGEMENT_SIGNING;
+  const eng = d.db.get<{ id: string }>('SELECT id FROM engagements WHERE business_id = ?', [business_id]);
+  const named = eng === undefined ? [] : requiredSigners(d.db, eng.id).map((n) => n.user_id);
   for (const u of logins) {
+    const signLink = cfg.links === true && eng !== undefined && (named.length === 0 || named.includes(u.id))
+      ? `${d.origin ?? ''}/sign/${createSignLink(d, eng.id, u, actor.id)}` : null;
     d.email.send({
       to_email: u.email,
       subject: 'Your engagement letter from Cap Rebate',
       body: `Our engagement letter for ${b.name} is ready for you to read${resent ? ' (we are sending the link again)' : ''}.\n\n` +
-        `Read it, and sign it when you are ready, here: ${link}\nYou will be asked to sign in.\n\n` +
+        (signLink === null ? '' : `Read and sign it here, without signing in: ${signLink}\nThis link is for you only. It works once, for ${String(SIGN_LINK_DAYS)} days.\n\n`) +
+        `Or read it, and sign it when you are ready, in your portal: ${link}\nYou will be asked to sign in.\n\n` +
         'It says what we will do, what it costs and what we need from you. Nothing is charged by signing it.',
       kind: 'NOTIFICATION',
       business_id,
@@ -99,7 +118,8 @@ export function signedCopy(db: Db, actor: Actor, business_id: string): { pdf: Ui
   if (!can(actor, 'engagement.read', { type: 'engagement', id: business_id, business_id })) return null;
   const e = db.get<{ id: string; letter_state: string }>('SELECT id, letter_state FROM engagements WHERE business_id = ?', [business_id]);
   if (e === undefined || e.letter_state !== 'SIGNED' || !checkSignature(db, e.id).ok) return null;
-  const r = db.get<{ pdf: Uint8Array; signed_at: string }>('SELECT pdf, signed_at FROM engagement_signatures WHERE engagement_id = ?', [e.id]);
+  // PHASE 157d: the latest signature's PDF carries every signature on the letter.
+  const r = db.get<{ pdf: Uint8Array; signed_at: string }>('SELECT pdf, signed_at FROM engagement_signatures WHERE engagement_id = ? ORDER BY signer_seq DESC LIMIT 1', [e.id]);
   if (r === undefined) return null;
   return { pdf: new Uint8Array(r.pdf), filename: `engagement-letter-signed-${r.signed_at.slice(0, 10)}.pdf` };
 }
@@ -111,6 +131,8 @@ export function letterSteps(s: LetterState): string[] {
     s.prepared_at === null ? 'Not prepared yet.' : `Prepared ${w(s.prepared_at) as string}.`,
     ...(s.sent_at === null ? [] : [`Sent ${w(s.sent_at) as string}${s.sent_by === null ? '' : `, by ${s.sent_by}`}.`]),
     ...(s.viewed_at === null ? [] : [`First opened by the client ${w(s.viewed_at) as string}.`]),
-    ...(s.signed_at === null ? [] : [`Signed ${w(s.signed_at) as string}.`]),
+    ...(s.named.length === 0 ? [] : [`To be signed by ${s.named.map((n) => n.name).join(' and ')}.`]),
+    ...s.signed_by.map((x) => `Signed by ${x.name} ${w(x.signed_at) as string}${x.by_link ? ', from the emailed link' : ''}.`),
+    ...(s.state !== 'SIGNED' && s.signed_by.length > 0 ? ['Waiting for the other signature.'] : []),
   ];
 }

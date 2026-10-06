@@ -326,10 +326,10 @@ test('P20 an extracted VALUE that looks like a person is refused on the way out'
 test('P21 all eleven document types have a spec, a why, and at least three fields (nine until Phase 151b added the two tax documents)', () => {
   const types = DOC_SPECS.map((d) => d.doc_type).sort();
   assert.deepEqual(types, [
-    'ASBESTOS_REGISTER', 'BUILDING_REGS_COMPLETION', 'CONTRACTOR_COST_BREAKDOWN', 'FIRE_RISK_ASSESSMENT',
-    'GRANT_FUNDING_AGREEMENT', 'INSURANCE_REINSTATEMENT', 'LEASE', 'OM_MANUAL', 'PLANNING',
-    'TAX_COMPUTATION', 'TAX_RETURN',
-  ]);
+    'ACCOUNTS', 'ASBESTOS_REGISTER', 'BUILDING_REGS_COMPLETION', 'COMPLETION_STATEMENT', 'CONTRACTOR_COST_BREAKDOWN',
+    'CONTRACTOR_INVOICE', 'FIRE_RISK_ASSESSMENT', 'GRANT_FUNDING_AGREEMENT', 'INSURANCE_REINSTATEMENT', 'LEASE', 'OM_MANUAL',
+    'PLANNING', 'PLANS', 'TAX_COMPUTATION', 'TAX_RETURN',
+  ]); // Phase 157d added the four the Friary House run found nothing could receive (F16)
   for (const d of DOC_SPECS) {
     assert.ok(d.fields.length >= 3, `${d.doc_type} has too few fields`);
     assert.ok(d.why.length > 30, `${d.doc_type} does not say why it matters`);

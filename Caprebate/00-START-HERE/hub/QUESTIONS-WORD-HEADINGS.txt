@@ -160,6 +160,7 @@
 241) May the survey pack show the surveyor how much each grant on a claim paid?
 242) Do you approve Zoom, a US company, for our video calls?
 243) Do you approve WhatsApp (Meta), a US company, for messages with clients?
+246) May a client sign our engagement letter from a link in an email, without logging in to the portal?
 1) What do we do when our fee is more than the client saves in year one?
 3) Has the privacy email inbox been set up, and is someone reading it?
 4) Should the business email inboxes be set up on IONOS or Microsoft 365?
