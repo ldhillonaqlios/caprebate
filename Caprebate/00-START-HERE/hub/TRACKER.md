@@ -7,14 +7,14 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 2 |
-| Ready - Lakhbir action | 27 |
+| Ready - Lakhbir action | 24 |
 | Built - awaiting sign-off | 128 |
 | Blocked - question | 0 |
 | Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
-| Parked - deliberate | 10 |
-| Done | 303 |
+| Parked - deliberate | 11 |
+| Done | 305 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -71,7 +71,7 @@
 
 ## 01 · FOR LAKHBIR — decisions, appointments, company, governance
 
-75 items.
+73 items.
 
 ### Register with the ICO and put the data protection basics in place
 
@@ -605,17 +605,6 @@
 `13092540283` · **Built - awaiting sign-off** · owner Solicitor/DPO
 
 - Note 2026-09-28 (Phase 153): Lakhbir answered Word question 219 (24 Sep): 7 years; Sales, Admin and the officer may open them. So it waits on the officer, not Lakhbir: Built - awaiting sign-off, entry SDP-P40 in FOR THE SOLICITOR, THE DPO AND THE DEVELOPER, with the privacy notice's two lines drafted in its draft section 6 (Phase 153).
-
-### Mailboxes: Sadique reads all three; test email sent 24 Sep from contact@ to you. Left: confirm it arrived in your inbox (not junk), shows Cap Rebate as sender, and replies go to contact@
-
-`13093310525` · **Ready - Lakhbir action** · owner Lakhbir
-
-
-### DELETE, on the OneDrive WEB PAGE: the folder "DELETE - files to delete (sweep 25 Sep 2026)" (143 MB) and the files named "DELETE - ..." in Health Capital Allowances - they are still in the cloud
-
-`13053370722` · **Ready - Lakhbir action** · owner Lakhbir
-
-- Note 2026-09-28 (Phase 152 (sweep)): The sweep, 28 Sep 2026, reading the cloud folder itself: the competitor program folder in Development is gone (Phase 151f). But OneDrive still holds the 143 MB folder "DELETE - files to delete (sweep 25 Sep 2026)", recorded as deleted by Lakhbir on 25 Sep, and 17 files named "DELETE - ..." in Health Capital Allowances, while the Mac shows six of the files and no folder. So a deletion on the Mac did not reach OneDrive. Delete them on the OneDrive web page (they go to its recycle bin), then the next sweep reads the folder again. One of them is new today: "DELETE - Caprebate_Questions (a second item 25-28 Sep ...)" - the questions document as a second item, now written into the item your link opens.
 
 ### Healthcare premises from open registers: business name, address, sector and source only; no names, no outreach (Word question 183; built in test, for the DPO)
 
@@ -1188,11 +1177,12 @@
 
 ### Land boundary maps for site size - fetcher built and switched off 24 Sep 2026; its first download is a test lookup under the five conditions (smoke HMLR_INSPIRE, built 28 Sep 2026). Lakhbir, or a person he names, runs it; switching it on is Lakhbir's
 
-`12830205914` · **Ready - Lakhbir action** · owner Lakhbir · Lakhbir Dhillon
+`12830205914` · **Parked - deliberate** · owner Lakhbir · Lakhbir Dhillon
 
 - File: `08-monday-doc-exports/12830205914__Pull-in-land-boundary-maps-to-get-site-size-waiting-on-the-licence.md`
 - Note 2026-09-28 (Phase 151g): Word question 170 was answered on 25 Sep 2026 (yes, on five conditions) and Phase 151g built the conditions into the smoke command, which does not cover a boundary download. The first download, as a test lookup under the same conditions and confirming the GML shape, is Phase 151l. Switching the fetcher on stays Lakhbir's.
 - Note 2026-09-28 (Phase 151l): Phase 151l built the first download as a test lookup: smoke HMLR_INSPIRE, in the smoke command, under the same five conditions and log (src/connectors/boundary-test-lookup.ts, test/phase151l.test.ts). Default: City of Westminster's file, looking for 70 Whitehall's published grid reference. Nothing has been downloaded yet. In the way: Lakhbir, or a person he names, records the switch-on (smoke-switched-on HMLR_INSPIRE) and runs it; switching the fetcher on for the application stays his.
+- Note 2026-10-06 (Phase 157 (sweep)): Parked 6 Oct 2026, Lakhbir: 'use home data'. Site boundary comes from Homedata's title outline (Phase 156f, HOMEDATA_BOUNDARY, 5p, tied to the UPRN and title number). The free land-boundary download test is dropped; the fetcher stays built and switched off, kept only as a fallback if Homedata will not allow the area in client reports (Word question 245).
 
 ### DPO: allow company names on conveyancing uploads, strip individuals?
 
@@ -1347,7 +1337,7 @@
 
 ## Z · Complete / Not Applicable
 
-303 items.
+305 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -1396,6 +1386,12 @@
 
 - Note 2026-09-28 (Phase 152 (sweep)): Done: Word question 46 ("Is it true we have no existing client records to bring in?") was answered and closed on 24 Sep 2026 - nothing to import; the developer's price stands. Found by the sweep; the label had not followed the answer.
 
+### Mailboxes: Sadique reads all three; test email sent 24 Sep from contact@ to you. Left: confirm it arrived in your inbox (not junk), shows Cap Rebate as sender, and replies go to contact@
+
+`13093310525` · **Done** · owner Lakhbir
+
+- Note 2026-10-06 (Phase 157 (sweep)): Done 6 Oct 2026: Lakhbir confirmed the contact@ test email went through.
+
 ### Keys: Claude API, IONOS sending and Didit done (in Health Capital Allowances > Private - keys). Left: Companies House, CQC, EPC, Homedata, IONOS reading, Google Analytics
 
 `13104162940` · **Done** · owner Lakhbir
@@ -1405,6 +1401,13 @@
 - Note 2026-09-29 (29 Sep review): Checked by name only on 29 Sep 2026 (no value read): the key file now holds Companies House, CQC, EPC and Homedata keys as well as Claude, IONOS sending and Didit. Still missing: the IONOS reading (IMAP) login, the Google Analytics measurement id, and CAPREBATE_MFA_KEY. No test lookup has been run on any key yet (~/.caprebate-test-lookups.jsonl does not exist).
 - Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): Google Analytics is no longer a key to get: dropped for now by Lakhbir (the marketing team may pick it up later).
 - Note 2026-10-06 (Phase 157 (sweep)): Done: checked by name only, every key this item named is set in the key file (Companies House, CQC, EPC, Homedata, the four IONOS reading keys) and in Vercel where the test website reads it; Google Analytics was dropped for now (4 Oct).
+
+### DELETE, on the OneDrive WEB PAGE: the folder "DELETE - files to delete (sweep 25 Sep 2026)" (143 MB) and the files named "DELETE - ..." in Health Capital Allowances - they are still in the cloud
+
+`13053370722` · **Done** · owner Lakhbir
+
+- Note 2026-09-28 (Phase 152 (sweep)): The sweep, 28 Sep 2026, reading the cloud folder itself: the competitor program folder in Development is gone (Phase 151f). But OneDrive still holds the 143 MB folder "DELETE - files to delete (sweep 25 Sep 2026)", recorded as deleted by Lakhbir on 25 Sep, and 17 files named "DELETE - ..." in Health Capital Allowances, while the Mac shows six of the files and no folder. So a deletion on the Mac did not reach OneDrive. Delete them on the OneDrive web page (they go to its recycle bin), then the next sweep reads the folder again. One of them is new today: "DELETE - Caprebate_Questions (a second item 25-28 Sep ...)" - the questions document as a second item, now written into the item your link opens.
+- Note 2026-10-06 (Phase 157 (sweep)): Done 6 Oct 2026 on Lakhbir's yes: Claude moved the 143 MB folder and the 16 'DELETE - ...' files to the OneDrive recycle bin through the Microsoft 365 connector (recoverable for 93 days). The folder held only DELETE-named copies, backups and the retired sign-off snapshot. Cloud listing of Health Capital Allowances re-read afterwards: no DELETE items left.
 
 ### SCRAPPED, NOT DONE (Lakhbir, 4 Oct 2026: 'scrap the VOA rating') - pull in the government valuation database. Its licence is for business rates only; floor area comes from the EPC register and the surveyor. Archived on monday.com
 
