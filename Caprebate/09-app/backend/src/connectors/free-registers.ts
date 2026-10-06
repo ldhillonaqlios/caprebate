@@ -106,9 +106,13 @@ export const FREE_CONNECTORS: Readonly<Record<string, Built<unknown>>> = Object.
   CARE_INSPECTORATE: built<FileRegisterQuery>({ connector: careInspectorate, query: (s, e, _store, db) => ({ property: s.property, nation: nationOf(s, e), db: db ?? null }) }),
 });
 
-/** The order a click runs the lookups in: FREE_CONNECTORS's order first, then everything else as the catalogue lists it. */
+/**
+ * The order a click runs the lookups in: the postcode table, then (PHASE 156f) the paid address lookup and the site
+ * boundary read off it — so a click after signing hands the property's UPRN to the energy certificates and to Homedata
+ * planning — then FREE_CONNECTORS's order, then everything else as the catalogue lists it.
+ */
 export function runOrder(source_ids: readonly string[]): string[] {
-  const first = Object.keys(FREE_CONNECTORS);
+  const first = ['ONS_POSTCODE', 'HOMEDATA_ADDRESS', 'HOMEDATA_BOUNDARY', ...Object.keys(FREE_CONNECTORS).filter((k) => k !== 'ONS_POSTCODE')];
   return [...source_ids].sort((a, b) => {
     const ia = first.indexOf(a); const ib = first.indexOf(b);
     return (ia === -1 ? first.length : ia) - (ib === -1 ? first.length : ib);

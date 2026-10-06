@@ -1,0 +1,16 @@
+{
+ "postcode": "SW1A 2AA",
+ "count": 1,
+ "addresses": [
+  {
+   "uprn": 100023336956,
+   "uprn_token": "(removed: an opaque token of Homedata's)",
+   "address": "PRIME MINISTER & FIRST LORD OF THE TREASURY, 10 DOWNING STREET, LONDON, SW1A 2AA",
+   "building_name": "",
+   "building_number": "10",
+   "sub_building": "",
+   "street": "Downing Street",
+   "town": "London"
+  }
+ ]
+}

@@ -52,7 +52,8 @@ const LAPTOP = Object.freeze({});
 // PHASE 156e (5 Oct 2026): the Welsh and Scottish care regulators' lists joined the four (Lakhbir: "Yes, include them").
 const FOUR = ['CARE_INSPECTORATE', 'CIW', 'CQC', 'EPC', 'HMLR_PPD', 'PLANNING'];
 // 6 Oct 2026: the paid address lookup, switched on for the test website too - but no gate is waived for it.
-const PAID = ['HOMEDATA_ADDRESS'];
+// Phase 156f: planning and the site boundary from Homedata join the address lookup.
+const PAID = ['HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING', 'HOMEDATA_BOUNDARY'];
 
 /** Every piece of text the PDF draws, decoded from its hexadecimal strings. */
 function pdfText(bytes: Uint8Array): string {
@@ -145,7 +146,6 @@ describe('the free lookups, switched on for the test website only', () => {
       assert.equal(C.switchesHere(TEST_SITE)[id], true, id);
       assert.equal(C.switchesHere(LAPTOP)[id], false, id);
     }
-    assert.equal(C.switchesHere(TEST_SITE)['HOMEDATA_PLANNING'], false, 'Homedata planning has no connector a click runs');
     const app = await testApp();
     await seed(app.db, app.hasher, app.now);
     const signed = app.db.get<{ id: string }>("SELECT business_id AS id FROM engagements WHERE letter_state = 'SIGNED' ORDER BY business_id LIMIT 1")!.id;

@@ -324,15 +324,19 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
       b['line1'] = clip(f.get(`b${i}_line1`), 200);
       b['town'] = clip(f.get(`b${i}_town`), 100);
       let pcTyped = clip(f.get(`b${i}_postcode`), 10);
-      // 30 Sep 2026: an address picked from "Find my address" (GoAddress) fills the lines, the town and the postcode.
+      /* An address picked from "Find my address" fills the lines, the town and the postcode. PHASE 156f: the list is
+         Homedata's, so the pick carries the property's UPRN, kept on the building and then on the property (submit). */
       const found = (b['address_results'] ?? []) as FoundAddress[];
       const pick = f.get(`b${i}_address_pick`);
       const chosen = pick !== null && pick !== 'none' ? found.find((a) => a.id === pick) : undefined;
-      if (chosen !== undefined) { b['line1'] = chosen.line1; b['town'] = chosen.town; pcTyped = chosen.postcode; b['address_id'] = chosen.id; }
-      else if (pick === 'none') b['address_id'] = null;
+      if (chosen !== undefined) { b['line1'] = chosen.line1; b['town'] = chosen.town; pcTyped = chosen.postcode; b['address_id'] = chosen.id; b['uprn'] = chosen.uprn ?? null; }
+      else if (pick === 'none') { b['address_id'] = null; b['uprn'] = null; }
       const pc = pcTyped === null ? null : normalisePostcode(pcTyped);
       b['postcode'] = pc;
-      if (pc !== before) { delete b['postcode_check']; if (chosen === undefined) { delete b['address_results']; b['address_id'] = null; } }
+      if (pc !== before) {
+        delete b['postcode_check'];
+        if (chosen === undefined) { delete b['address_results']; delete b['address_searched_for']; b['address_id'] = null; b['uprn'] = null; }
+      }
       const address = addressFrom({ line1: b['line1'] as string | null, town: b['town'] as string | null, postcode: pc ?? pcTyped });
       if (address !== null) b['address'] = address;
       if (b['business_name'] === null || b['business_name'] === undefined) errors.push(`Tell us the name of the business that owns ${label(b, i)}.`);
@@ -494,7 +498,7 @@ export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; post
       <input class="fi" id="b${i}-postcode" name="b${i}_postcode" value="${typeof b['postcode'] === 'string' ? b['postcode'] : ''}" autocomplete="postal-code">
       ${lookups.address === true ? h`<p><button type="submit" name="find" value="address:${String(i)}" class="btn-quiet" formnovalidate>Find my address</button></p>`
         : lookups.postcode ? h`<p><button type="submit" name="find" value="postcode:${String(i)}" class="btn-quiet" formnovalidate>Check postcode</button></p>` : raw('')}
-      ${addressPicker(b, i)}
+      <div class="f4-addr" id="b${i}-address-list" data-building="${String(i)}" data-searched="${typeof b['address_searched_for'] === 'string' ? b['address_searched_for'] : ''}">${addressPicker(b, i)}</div>
       <label class="fl" for="b${i}-line1">Building name or number, and street</label>
       <input class="fi" id="b${i}-line1" name="b${i}_line1" value="${typeof b['line1'] === 'string' ? b['line1'] : ''}" autocomplete="address-line1">
       <label class="fl" for="b${i}-town">Town</label>
@@ -504,14 +508,15 @@ export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; post
   })}`;
 }
 
-/** 30 Sep 2026: the addresses "Find my address" found, to pick one; or that it is not there, and it is typed below. */
+/** The addresses "Find my address" found, to pick one; or that it is not there, and it is typed below. Phase 156f: each
+ *  carries its line and town, so the page's script can fill the boxes below when one is picked. */
 function addressPicker(b: B, i: number): Safe {
   const note = typeof b['address_note'] === 'string' ? b['address_note'] : null;
   const found = (b['address_results'] ?? []) as FoundAddress[];
   if (found.length === 0) return note === null ? raw('') : h`<p class="help">${note}</p>`;
   const chosen = typeof b['address_id'] === 'string' ? b['address_id'] : null;
   return h`<fieldset class="f4-addresses"><legend class="fl">Choose your address</legend>
-    <div class="opts f4-address-list">${found.map((a) => h`<label class="opt"><input type="radio" name="b${String(i)}_address_pick" value="${a.id}"${checked(chosen, a.id)}> ${a.label}</label>`)}
+    <div class="opts f4-address-list">${found.map((a) => h`<label class="opt"><input type="radio" name="b${String(i)}_address_pick" value="${a.id}" data-line1="${a.line1}" data-town="${a.town ?? ''}"${checked(chosen, a.id)}> ${a.label}</label>`)}
       <label class="opt"><input type="radio" name="b${String(i)}_address_pick" value="none"> My address is not in the list — I will type it below</label></div>
     <p class="help">Picked yours? You do not need to type it below.</p></fieldset>`;
 }

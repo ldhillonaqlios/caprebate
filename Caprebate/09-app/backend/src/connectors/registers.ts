@@ -143,8 +143,15 @@ export const REGISTER_SWITCHES: Readonly<Record<string, boolean>> = Object.freez
      register source it reads for is PLANNING — so it is a switch with no catalogue entry.
      PHASE 153b, 4 October 2026 (Word question 202, Lakhbir's): CHOSEN, on our recommendation — Homedata, by the
      property's own number, about 5p on the same click as the address lookup, after the engagement letter is signed;
-     PlanIt kept built as the free fallback. See PLANNING_ROUTE below. STILL OFF until the Homedata account is open. */
+     PlanIt kept built as the free fallback. See PLANNING_ROUTE below. STILL OFF until the Homedata account is open.
+     PHASE 156f, 6 October 2026: the account is open (Lakhbir: "planning history - use homedata"). Still false here, for
+     real clients; on for the test website only, through TEST_WEBSITE_PAID_LOOKUPS below. */
   HOMEDATA_PLANNING: false,
+  /* PHASE 156f (B4), 6 October 2026 — THE SITE BOUNDARY FROM HOMEDATA (Lakhbir: "site boundary - use home data"). The
+     title outline (`title_boundary`, 5p) on the paid address lookup's own property call, kept as one area under its own
+     source (src/connectors/title-boundary.ts). A paid lookup: after signing, on the click. False here; on for the test
+     website only, through TEST_WEBSITE_PAID_LOOKUPS. */
+  HOMEDATA_BOUNDARY: false,
   /* PHASE 150, 24 September 2026: the land boundary. NOT A SECOND SWITCH — it IS the boundary module's own
      BOUNDARY_FETCHING_SWITCHED_ON, read here so the research panel shows the same answer the fetcher obeys
      (src/connectors/inspire.ts). It is false. */
@@ -167,8 +174,13 @@ export const PLANNING_ROUTE = Object.freeze({
   fallback: 'PLANNING',
   question: 202,
   chosen_on: '2026-10-04',
-  words: 'Chosen route: Homedata planning. It finds the property by its own number, for about 5p, once the letter is ' +
-    'signed. It is switched off until our Homedata account is open. PlanIt, the free route, stays built as a fallback.',
+  /* PHASE 156f, 6 October 2026: confirmed by Lakhbir ("planning history - use homedata") and built to run. Before the
+     letter is signed the free route answers; after it, Homedata by the property's number, and its answer is the one used
+     and shown (src/connectors/homedata-planning.ts, preferHomedataPlanning). */
+  confirmed_on: '2026-10-06',
+  words: 'Homedata planning after the letter is signed: it finds the property by its own number, for about 5p. Before ' +
+    'signing, the free route (planning.data.gov.uk, then PlanIt) answers. Where both have run, Homedata\'s answer is ' +
+    'the one we use and show.',
 } as const);
 
 /** Only `true` is on. An absent source, and anything else, is off. */
@@ -202,17 +214,19 @@ export const TEST_WEBSITE_LOOKUPS = Object.freeze({
 });
 
 /**
- * 6 OCTOBER 2026 — THE PAID ADDRESS LOOKUP, SWITCHED ON FOR THE TEST WEBSITE ONLY. Lakhbir opened the Homedata account
+ * 6 OCTOBER 2026 — THE PAID HOMEDATA LOOKUPS, SWITCHED ON FOR THE TEST WEBSITE ONLY. Lakhbir opened the Homedata account
  * (a card added, 6 Oct 2026), put HOMEDATA_API_KEY into Vercel and asked for it to work on the test website; a logged
  * test lookup passed the same morning (5p). Kept apart from TEST_WEBSITE_LOOKUPS on purpose: THIS LIST WAIVES NOTHING.
  * It only turns the switch on where the waiver holds. A paid lookup still runs only for a client whose engagement letter
  * is signed and only when a person clicks "Run the research" (on the test website, the seeded invented clients), and it
- * still needs its key. HOMEDATA_PLANNING is not here: it has no connector a click runs (PAID_NOT_CHOSEN).
+ * still needs its key. PHASE 156f, the same day: planning from Homedata (HOMEDATA_PLANNING, in place of the free route
+ * after signing) and the site boundary (HOMEDATA_BOUNDARY), from Lakhbir's decisions in the chat.
  */
 export const TEST_WEBSITE_PAID_LOOKUPS = Object.freeze({
-  sources: Object.freeze(['HOMEDATA_ADDRESS']) as readonly string[],
+  sources: Object.freeze(['HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING', 'HOMEDATA_BOUNDARY']) as readonly string[],
   record: 'Lakhbir Dhillon, 6 October 2026, in the chat with Claude. He added a card to the Homedata account. ' +
-    'He put the key into Vercel. He asked for Homedata to work on the test website. Test website only.',
+    'He put the key into Vercel. He asked for Homedata to work on the test website. Test website only. ' +
+    'Later that day: "planning history - use homedata" and "site boundary - use home data".',
 });
 
 export const LOOKUPS_LOCAL_OPT_IN = 'CAPREBATE_LOOKUPS_HERE';

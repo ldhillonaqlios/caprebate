@@ -940,6 +940,27 @@ export const SOURCES: readonly Source[] = [
     endpoint: 'https://api.homedata.co.uk/address/',
   },
   {
+    /**
+     * PHASE 156f (B4), 6 October 2026 — THE SITE AREA FROM THE TITLE OUTLINE, VIA HOMEDATA. Lakhbir: "site boundary - use
+     * home data". Homedata's `title_boundary` slug (5 tokens) on the paid address lookup's own property call; the outline
+     * is turned into one area by the boundary module (09-app/backend/src/connectors/title-boundary.ts) and THE OUTLINE IS
+     * NEVER KEPT. Its own source, so nobody reads the area as HM Land Registry's own file (HMLR_INSPIRE) or as an address
+     * fact (HOMEDATA_ADDRESS). Grade B at best, as HMLR_INSPIRE: a reseller's copy of HM Land Registry's index polygon,
+     * which "cannot" establish the extent of a title. HOMEDATA_TERMS keeps every report channel closed: internal only,
+     * as the INSPIRE area is, until Homedata's terms for title outlines are confirmed.
+     */
+    source_id: 'HOMEDATA_BOUNDARY',
+    publisher: 'Homedata (supplier); underlying data HM Land Registry title outlines, as the supplier states',
+    dataset: 'Title boundary (the title_boundary item on a property) — kept only as its area',
+    licence_id: 'HOMEDATA_TERMS',
+    default_prov: 'API',
+    max_grade: 'B',
+    permitted_fields: ['site_area_m2', 'site_area_m2_grade', 'uprn'],
+    excluded_fields: ['*_name', 'title_number', 'occupier_*', 'resident_*', 'owner_*', 'proprietor_*'],
+    personal_name_exceptions: NO_NAMES,
+    endpoint: 'https://api.homedata.co.uk/property/',
+  },
+  {
     source_id: 'CLIENT_ANSWER',
     publisher: 'Client',
     dataset: 'Assessment answers',

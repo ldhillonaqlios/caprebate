@@ -40,6 +40,7 @@ import {
   type SiteAreaInput, type SiteAreaOutcome, type SiteAreaState,
 } from '../connectors/site-area.ts';
 import { ostn15Grid, type Ostn15Grid } from '../connectors/ostn15.ts';
+import { TITLE_BOUNDARY_LABEL, TITLE_BOUNDARY_SOURCE_ID } from '../connectors/title-boundary.ts';
 import { inspireStoreFromEnv, type InspireFileStore } from '../connectors/inspire-store.ts';
 import type { RateLimiter, Transport } from '../connectors/http.ts';
 import { DECLINED_LINE } from './address-check.ts';
@@ -209,13 +210,14 @@ function preview(db: Db, business_id: string, p: PropertyRow, gates: SiteAreaGat
   };
 }
 
-/** The site area held for a property, as a line, or null when none is held. */
+/** The site area held for a property, as a line, or null when none is held. HM Land Registry's land boundary first;
+ *  PHASE 156f (B4): else the area from the title outline Homedata sold on the paid address lookup. */
 function held(db: Db, business_id: string, p: PropertyRow): SiteAreaLine | null {
   const r = db.get<{ fields_json: string; obtained_at: string }>(
     'SELECT fields_json, obtained_at FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id = ?',
     [business_id, SITE_AREA_SOURCE_ID, `property:${p.id}`],
   );
-  if (r === undefined) return null;
+  if (r === undefined) return heldFromTitleOutline(db, business_id, p);
   let area: number | null = null; let grade: string | null = null;
   try {
     const f = JSON.parse(r.fields_json) as Record<string, unknown>;
@@ -228,6 +230,30 @@ function held(db: Db, business_id: string, p: PropertyRow): SiteAreaLine | null 
       ? 'We hold a site area from HM Land Registry\'s land boundary, but it could not be read back.'
       : `Site area ${area} square metres, from HM Land Registry's land boundary, marked confidence ${grade ?? 'not stated'}. ` +
         'For our own checks only: the boundary itself is not kept and never goes in a report.',
+    site_area_m2: area, grade, at: r.obtained_at,
+  };
+}
+
+/** PHASE 156f (B4): the area from Homedata's title outline for this property, as a line, or null. */
+function heldFromTitleOutline(db: Db, business_id: string, p: PropertyRow): SiteAreaLine | null {
+  const r = db.get<{ fields_json: string; obtained_at: string }>(
+    'SELECT fields_json, obtained_at FROM register_records WHERE business_id = ? AND source_id = ? AND property_id = ? ' +
+      'ORDER BY obtained_at DESC, id DESC LIMIT 1',
+    [business_id, TITLE_BOUNDARY_SOURCE_ID, p.id],
+  );
+  if (r === undefined) return null;
+  let area: number | null = null; let grade: string | null = null;
+  try {
+    const f = JSON.parse(r.fields_json) as Record<string, unknown>;
+    area = typeof f['site_area_m2'] === 'number' ? f['site_area_m2'] : null;
+    grade = typeof f['site_area_m2_grade'] === 'string' ? f['site_area_m2_grade'] : null;
+  } catch { /* shown as held, without a figure */ }
+  return {
+    property_id: p.id, property: p.label, state: 'STORED',
+    words: area === null
+      ? `We hold a site area ${TITLE_BOUNDARY_LABEL}, but it could not be read back.`
+      : `Site area ${area} square metres, ${TITLE_BOUNDARY_LABEL}, marked confidence ${grade ?? 'not stated'}. ` +
+        'For our own checks only: the outline itself is not kept and never goes in a report.',
     site_area_m2: area, grade, at: r.obtained_at,
   };
 }

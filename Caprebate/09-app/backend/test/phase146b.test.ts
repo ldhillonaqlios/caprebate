@@ -341,7 +341,8 @@ describe('one way to call outside, and every call is written down', () => {
       // PHASE 156e, 5 Oct 2026: CLAUDE_DOCUMENTS, approved for testing by Sadique and signed by the director (relayed by
       // Lakhbir); its reading switches still ship off (src/connectors/claude.ts).
       // 5 Oct 2026: CLOUDFLARE_TURNSTILE, the contact form's check, approved for testing by Sadique (relayed by Lakhbir).
-      const APPROVED_TRANSFERS = ['ZOOM_OAUTH', 'ZOOM_API', 'WHATSAPP_CLOUD', 'WHATSAPP_MEDIA', 'GOADDRESS', 'CLAUDE_DOCUMENTS', 'CLOUDFLARE_TURNSTILE'];
+      // PHASE 156f, 6 Oct 2026: GOADDRESS removed (Homedata, in the UK, answers the address box instead).
+      const APPROVED_TRANSFERS = ['ZOOM_OAUTH', 'ZOOM_API', 'WHATSAPP_CLOUD', 'WHATSAPP_MEDIA', 'CLAUDE_DOCUMENTS', 'CLOUDFLARE_TURNSTILE'];
       if (p.region !== 'UK' && p.region !== 'EU') {
         if (APPROVED_TRANSFERS.includes(p.service_id)) assert.equal(policyRefusal(p), null, `${p.service_id} was approved`);
         else assert.notEqual(policyRefusal(p), null, `${p.service_id} can be called outside the UK and EU`);

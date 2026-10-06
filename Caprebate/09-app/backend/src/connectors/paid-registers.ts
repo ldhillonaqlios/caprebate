@@ -9,8 +9,10 @@
  *                      looked up by hand, and took the Business Gateway details out of the key file. It is in
  *                      `PAID_RETIRED` below, not in `PAID_CONNECTORS`, and src/web/title-by-hand.ts is where a person
  *                      records what the official copy says.
- *   HOMEDATA_PLANNING  planning by UPRN — built beside PlanIt, not chosen, and not a row on the research panel
- *                                                                               src/connectors/homedata-planning.ts
+ *   HOMEDATA_PLANNING  planning by UPRN — CHOSEN (Phase 156f): after signing it answers the PLANNING row in place of
+ *                      the free route, keyed on the UPRN the address lookup found   src/connectors/homedata-planning.ts
+ *   HOMEDATA_BOUNDARY  the site area from the title outline, read off the address lookup's own call (Phase 156f)
+ *                                                                               src/connectors/title-boundary.ts
  *
  * THE ORDER IS NOT A PREFERENCE, IT IS A DEPENDENCY. The address lookup runs first because everything after it is
  * keyed on the UPRN it returns and on the penny pre-check it makes: the title register uses the pre-check to decide
@@ -30,6 +32,8 @@ import { nationOf, type ResearchSubject } from './nations.ts';
 import { homedataAddress, homedataCostPence, homedataSlugs, type HomedataQuery } from './homedata.ts';
 import { hmlrTitle, type TitleQuery } from './hmlr-title.ts';
 import { homedataPlanning, PLANNING_HISTORY_TOKENS, type HomedataPlanningQuery } from './homedata-planning.ts';
+import { homedataBoundary, TITLE_BOUNDARY_TOKENS, type TitleBoundaryArea, type TitleBoundaryQuery } from './title-boundary.ts';
+import { switchedOn, switchesHere } from './registers.ts';
 
 type Built<Q> = {
   readonly connector: RegisterConnector<Q>;
@@ -61,11 +65,34 @@ export function preCheckFrom(earlier: ReadonlyMap<string, Bundle>): { has_title:
   };
 }
 
+/** PHASE 156f: what the address lookup worked out from the title outline on this click, if it asked for it. */
+export function boundaryFrom(earlier: ReadonlyMap<string, Bundle>): TitleBoundaryArea | null {
+  const v = earlier.get('HOMEDATA_ADDRESS')?.facts['title_boundary_area'];
+  return v !== null && typeof v === 'object' && typeof (v as { ok?: unknown }).ok === 'boolean' ? v as TitleBoundaryArea : null;
+}
+
 export const PAID_CONNECTORS: Readonly<Record<string, Built<unknown>>> = Object.freeze({
   HOMEDATA_ADDRESS: built<HomedataQuery>({
     connector: homedataAddress,
-    query: (s) => ({ property: s.property }),
+    /* PHASE 156f: the title outline is asked for on the same call when HOMEDATA_BOUNDARY is on. A click passes its own
+       switches (src/web/research.ts sets `boundary` from them); this default reads the copy's own. */
+    query: (s) => ({ property: s.property, boundary: switchedOn('HOMEDATA_BOUNDARY', switchesHere()) }),
     before_pence: homedataCostPence(homedataSlugs()),
+  }),
+  /* PHASE 156f (B4): no call of its own. Its 5p is the title_boundary slug on the address lookup's call, counted here so
+     the figure before the click includes it only when this switch is on. */
+  HOMEDATA_BOUNDARY: built<TitleBoundaryQuery>({
+    connector: homedataBoundary,
+    query: (_s, e) => ({ area: boundaryFrom(e), uprn: uprnFrom(e) }),
+    before_pence: TITLE_BOUNDARY_TOKENS,
+  }),
+  /* PHASE 156f (B3): CHOSEN AND RUNNABLE (Lakhbir, 6 Oct 2026: "planning history - use homedata"). It is not a row of
+     its own: after signing it answers the PLANNING row in place of the free route (src/web/research.ts,
+     planningRoute), keyed on the UPRN the address lookup found and checked on this click. */
+  HOMEDATA_PLANNING: built<HomedataPlanningQuery>({
+    connector: homedataPlanning,
+    query: (s, e) => ({ nation: nationOf(s, e), uprn: uprnFrom(e) }),
+    before_pence: PLANNING_HISTORY_TOKENS,
   }),
 });
 
@@ -85,22 +112,13 @@ export const PAID_RETIRED: Readonly<Record<string, Built<unknown>>> = Object.fre
 });
 
 /**
- * BUILT, SWITCHED OFF, AND DELIBERATELY NOT IN THE MAP ABOVE.
- *
- * `PAID_CONNECTORS` is what a click runs. This one is not in it because PlanIt remains the source of record for
- * planning and a click must not run two connectors for one register source — that would buy an answer we already
- * have for nothing, and write two provenance records for one fact. It is exported so that turning it on is a real
- * one-line change rather than a rewrite, and so a test can prove it is built and off.
+ * BUILT AND NOT CHOSEN. Empty since Phase 156f (6 October 2026), when Homedata planning was chosen and moved into the
+ * map above. Kept so a route built and not chosen has one place to wait, as Homedata planning did from 146d to 156f.
  */
-export const PAID_NOT_CHOSEN: Readonly<Record<string, Built<unknown>>> = Object.freeze({
-  HOMEDATA_PLANNING: built<HomedataPlanningQuery>({
-    connector: homedataPlanning,
-    query: (s, e) => ({ nation: nationOf(s, e), uprn: uprnFrom(e) }),
-    before_pence: PLANNING_HISTORY_TOKENS,
-  }),
-});
+export const PAID_NOT_CHOSEN: Readonly<Record<string, Built<unknown>>> = Object.freeze({});
 
-/** The order a click runs the paid lookups in. The address lookup first; everything else is keyed on what it found. */
+/** The order a click runs the paid lookups in. The address lookup first; everything else is keyed on what it found.
+ *  HOMEDATA_PLANNING is in it but is never a row of its own: it answers the PLANNING row (src/web/research.ts). */
 export const PAID_ORDER: readonly string[] = Object.freeze(Object.keys(PAID_CONNECTORS));
 
 /**
@@ -109,7 +127,10 @@ export const PAID_ORDER: readonly string[] = Object.freeze(Object.keys(PAID_CONN
  * click. The figure after it comes from the calls themselves.
  */
 export function totalBeforePence(source_ids: readonly string[], on: (source_id: string) => boolean): number {
-  return source_ids.reduce((n, id) => {
+  /* PHASE 156f: Homedata planning answers the PLANNING row after signing, so its 5p counts when PLANNING is asked and
+     its own switch is on. */
+  const ids = source_ids.includes('PLANNING') && !source_ids.includes('HOMEDATA_PLANNING') ? [...source_ids, 'HOMEDATA_PLANNING'] : source_ids;
+  return ids.reduce((n, id) => {
     const b = PAID_CONNECTORS[id];
     return b === undefined || !on(id) ? n : n + b.before_pence;
   }, 0);
