@@ -1,0 +1,92 @@
+{
+ "uprn": 100023336956,
+ "planning_history": {
+  "count": 6,
+  "applications": [
+   {
+    "reference": "26/01372/LBC",
+    "proposal": null,
+    "address": "10 Downing Street London SW1A 2AA",
+    "authority": "London Borough of Westminster",
+    "status": null,
+    "decision": null,
+    "application_type": null,
+    "received_date": "2026-02-25",
+    "validated_date": "2026-02-25",
+    "decision_date": null,
+    "url": "https://idoxpa.westminster.gov.uk/online-applications/applicationDetails.do?keyVal=TBDEXTRP04Y00&activeTab=summary",
+    "postcode_matches_property": true
+   },
+   {
+    "reference": "25/09398/FULL",
+    "proposal": null,
+    "address": "10 Downing Street London SW1A 2AA",
+    "authority": "London Borough of Westminster",
+    "status": null,
+    "decision": null,
+    "application_type": null,
+    "received_date": "2025-11-24",
+    "validated_date": "2025-11-24",
+    "decision_date": null,
+    "url": "https://idoxpa.westminster.gov.uk/online-applications/applicationDetails.do?keyVal=TAWZ8ZRP2XR00&activeTab=summary",
+    "postcode_matches_property": true
+   },
+   {
+    "reference": "25/08032/LBC",
+    "proposal": null,
+    "address": "10 Downing Street London SW1A 2AA",
+    "authority": "London Borough of Westminster",
+    "status": null,
+    "decision": null,
+    "application_type": null,
+    "received_date": "2025-10-24",
+    "validated_date": "2025-11-24",
+    "decision_date": null,
+    "url": "https://idoxpa.westminster.gov.uk/online-applications/applicationDetails.do?keyVal=T593KXRP2XR00&activeTab=summary",
+    "postcode_matches_property": true
+   },
+   {
+    "reference": "24/00440/LBC",
+    "proposal": null,
+    "address": "10 Downing Street London SW1A 2AA",
+    "authority": "London Borough of Westminster",
+    "status": null,
+    "decision": null,
+    "application_type": null,
+    "received_date": "2024-01-17",
+    "validated_date": "2024-01-17",
+    "decision_date": null,
+    "url": "https://idoxpa.westminster.gov.uk/online-applications/applicationDetails.do?keyVal=S7PQR0RP04Y00&activeTab=summary",
+    "postcode_matches_property": true
+   },
+   {
+    "reference": "20/02729/LBC",
+    "proposal": null,
+    "address": "10 Downing Street London SW1A 2AA",
+    "authority": "London Borough of Westminster",
+    "status": null,
+    "decision": null,
+    "application_type": null,
+    "received_date": "2020-04-27",
+    "validated_date": "2020-04-27",
+    "decision_date": null,
+    "url": "https://idoxpa.westminster.gov.uk/online-applications/applicationDetails.do?keyVal=Q9G1WFRP2AM00&activeTab=summary",
+    "postcode_matches_property": true
+   },
+   {
+    "reference": "20/00535/LBC",
+    "proposal": null,
+    "address": "10 Downing Street London SW1A 2AA",
+    "authority": "London Borough of Westminster",
+    "status": null,
+    "decision": null,
+    "application_type": null,
+    "received_date": "2020-01-27",
+    "validated_date": "2020-01-27",
+    "decision_date": null,
+    "url": "https://idoxpa.westminster.gov.uk/online-applications/applicationDetails.do?keyVal=Q4RMG1RP2AM00&activeTab=summary",
+    "postcode_matches_property": true
+   }
+  ]
+ }
+}

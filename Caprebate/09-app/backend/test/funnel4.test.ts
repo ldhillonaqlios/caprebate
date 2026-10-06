@@ -485,37 +485,36 @@ describe('stage 3 lookups, switched on for testing', () => {
   });
 });
 
-// 30 Sep 2026, Lakhbir: "for address look up for the client rather than typeing this would be better" (GoAddress), and
-// "sadique approves". Recorded answers only: nothing here goes out.
-describe('"Find my address" (GoAddress)', () => {
-  // The shape of GoAddress's real answer (the first live lookup, 30 Sep 2026), with invented addresses.
+// PHASE 156f, 6 Oct 2026, Lakhbir: "one address box on Homedata, with GoAddress removed - yes". Recorded answers only:
+// nothing here goes out. (GoAddress's own tests went with it; test/phase156f.test.ts covers the box in full.)
+describe('"Find my address" (Homedata)', () => {
+  // Homedata's real answer shape (read live at a public postcode, 6 Oct 2026), with invented addresses.
   const ANSWER: Fixture = { status: 200, headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-    postcode: 'LE101DA', total: 2, addresses: ['Invented Care Home, 1 Invented Street', '3 Invented Street'],
-    new_address_res: [
-      { addressid: 'a1', raw_address: 'Invented Care Home, 1 Invented Street', flat: null, house_no: null, building_name: 'Invented Care Home', organisation: null, street: '1 Invented Street', postcode: 'LE101DA', post_town: 'Hinckley', city: 'Hinckley and Bosworth', town: 'Hinckley', county: 'Leicestershire', country: 'England' },
-      { addressid: 'a2', raw_address: '3 Invented Street', flat: null, house_no: '3', building_name: null, organisation: null, street: 'Invented Street', postcode: 'LE101DA', post_town: 'Hinckley', county: 'Leicestershire', country: 'England' }],
-    new_address_res2: [
-      { addressid: 'a1', line_1: 'Invented Care Home, 1 Invented Street', line_2: 'Leicestershire', line_3: 'LE101DA', line_4: 'England' },
-      { addressid: 'a2', line_1: '3 Invented Street', line_2: 'Leicestershire', line_3: 'LE101DA', line_4: 'England' }],
-    address_info: { postcode: 'LE101DA', post_town: 'Hinckley' }, extra_info: null, usage_today: 1, daily_limit: 100, remaining_today: 99 }) };
-  test('switched on for testing and approved; needs only its key; the answer is read into lines, town and postcode', () => {
+    postcode: 'LE10 1DA', count: 3, addresses: [
+      { uprn: 100090000001, uprn_token: 'x', address: 'INVENTED CARE HOME, 1 INVENTED STREET, HINCKLEY, LE10 1DA', building_name: 'Invented Care Home', building_number: '1', sub_building: '', street: 'Invented Street', town: 'Hinckley' },
+      { uprn: 100090000003, uprn_token: 'x', address: '3 INVENTED STREET, HINCKLEY, LE10 1DA', building_name: '', building_number: '3', sub_building: '', street: 'Invented Street', town: 'Hinckley' },
+      { uprn: 100090000009, uprn_token: 'x', address: 'ADSHEL ADVERTISING RIGHT, INVENTED STREET, HINCKLEY, LE10 1DA', building_name: 'Adshel Advertising Right', building_number: '', sub_building: '', street: 'Invented Street', town: 'Hinckley' }] }) };
+  test('switched on for testing; needs only the Homedata key; the answer is read into lines, town, postcode and UPRN, with what is not a building left out', () => {
     assert.equal(ADDRESS_LOOKUP.enabled, true);
     assert.equal(ADDRESS_LOOKUP.named_in_privacy_notice, false, 'the waiver never pretends the notice names it');
-    assert.match(ADDRESS_LOOKUP.waiver_record ?? '', /"sadique approves"/);
-    assert.equal(CALL_POLICIES['GOADDRESS']?.international_transfer_approved, true);
-    assert.deepEqual(addressLookupMissing(ADDRESS_LOOKUP, secretsFromValues({})), ['Put the GoAddress key in the key file: GOADDRESS_API_KEY.']);
-    assert.deepEqual(addressLookupMissing(ADDRESS_LOOKUP, secretsFromValues({ GOADDRESS_API_KEY: 'k' })), []);
-    assert.deepEqual(readAddresses(ANSWER.body, 'LE10 1DA').map((a) => [a.id, a.line1, a.town, a.postcode]), [
-      ['a1', 'Invented Care Home, 1 Invented Street', 'Hinckley', 'LE10 1DA'], ['a2', '3 Invented Street', 'Hinckley', 'LE10 1DA']]);
-    assert.deepEqual(readAddresses('not json', 'LE10 1DA'), []);
+    assert.match(ADDRESS_LOOKUP.waiver_record ?? '', /"one address box on Homedata, with GoAddress removed - yes"/);
+    assert.equal(CALL_POLICIES['GOADDRESS'], undefined, 'GoAddress is still a service we may call');
+    assert.equal(CALL_POLICIES['HOMEDATA_POSTCODE']?.region, 'UK');
+    assert.deepEqual(addressLookupMissing(ADDRESS_LOOKUP, secretsFromValues({})), ['Put the Homedata key in the key file: HOMEDATA_API_KEY.']);
+    assert.deepEqual(addressLookupMissing(ADDRESS_LOOKUP, secretsFromValues({ HOMEDATA_API_KEY: 'k' })), []);
+    const read = readAddresses(ANSWER.body, 'LE10 1DA');
+    assert.deepEqual(read.addresses.map((a) => [a.uprn, a.line1, a.town, a.postcode]), [
+      ['100090000001', 'Invented Care Home, 1 Invented Street', 'Hinckley', 'LE10 1DA'], ['100090000003', '3 Invented Street', 'Hinckley', 'LE10 1DA']]);
+    assert.equal(read.hidden, 1, 'the advertising right was shown');
+    assert.deepEqual(readAddresses('not json', 'LE10 1DA').addresses, []);
   });
 
   test('the postcode alone is sent; the person picks theirs and it fills the address; "not in the list" keeps what they typed', async () => {
     const was = { outside: made.app.outside, secrets: made.app.secrets };
     try {
-      const t = fixtureTransport({ 'GET /api/address/LE101DA': ANSWER });
+      const t = fixtureTransport({ 'GET /address/postcode/LE10%201DA/': ANSWER });
       made.app.outside = t;
-      made.app.secrets = secretsFromValues({ GOADDRESS_API_KEY: 'invented-goaddress-token' });
+      made.app.secrets = secretsFromValues({ HOMEDATA_API_KEY: 'invented-homedata-key' });
       const c = client();
       await toDetails(c);
       let page = (await c.req('/assessment/details')).body;
@@ -524,14 +523,15 @@ describe('"Find my address" (GoAddress)', () => {
       assert.ok(page.indexOf('name="b0_postcode"') < page.indexOf('name="b0_line1"'), 'the postcode should come first');
       await c.post('/assessment/details', { ...DETAILS, b0_line1: '', b0_town: '', find: 'address:0' });
       assert.equal(t.seen.length, 1);
-      assert.match(t.seen[0]!.url, /\/api\/address\/LE101DA$/);
-      assert.equal(t.seen[0]!.headers['authorization'], 'Bearer invented-goaddress-token');
+      assert.match(t.seen[0]!.url, /^https:\/\/api\.homedata\.co\.uk\/address\/postcode\/LE10%201DA\/$/);
+      assert.equal(t.seen[0]!.headers['authorization'], 'Api-Key invented-homedata-key');
       assert.equal(t.seen[0]!.body, undefined, 'something beside the postcode was sent');
       page = (await c.req('/assessment/details')).body;
       assert.match(page, /Choose your address/);
-      assert.match(page, /name="b0_address_pick" value="a2"> 3 Invented Street, Hinckley<\/label>/);
+      assert.match(page, /name="b0_address_pick" value="100090000003" data-line1="3 Invented Street" data-town="Hinckley"> 3 Invented Street, Hinckley<\/label>/);
+      assert.doesNotMatch(page, /Adshel/i);
       assert.match(page, /value="none"> My address is not in the list/);
-      const next = await c.post('/assessment/details', { ...DETAILS, b0_line1: '', b0_town: '', b0_address_pick: 'a2' });
+      const next = await c.post('/assessment/details', { ...DETAILS, b0_line1: '', b0_town: '', b0_address_pick: '100090000003' });
       assert.equal(next.location, '/assessment/figure', next.body.slice(0, 300));
       assert.match((await c.req('/assessment/figure')).body, /Building 1 · Care home — 3 Invented Street, Hinckley, LE10 1DA/);
       // "Not in the list": what they typed stands.

@@ -199,12 +199,15 @@ describe('B3 · the Connections page', () => {
     assert.equal(r.status, 200);
     for (const c of CONNECTIONS) assert.ok(r.body.includes(`id="conn-${c.id}"`), c.id);
     assert.doesNotMatch(r.body, /ch-fixture-value-156e/, 'a key value is on the page');
-    const ch = r.body.slice(r.body.indexOf('id="conn-COMPANIES_HOUSE"'), r.body.indexOf('id="conn-GOADDRESS"'));
+    const ch = r.body.slice(r.body.indexOf('id="conn-COMPANIES_HOUSE"'), r.body.indexOf('id="conn-CQC"'));
     assert.match(ch, /<code>COMPANIES_HOUSE_API_KEY<\/code> <span class="chip key-on">There<\/span>/);
     assert.match(ch, /: worked \(200\)/);
     assert.match(ch, /Testing only/);
-    const goaddr = r.body.slice(r.body.indexOf('id="conn-GOADDRESS"'), r.body.indexOf('id="conn-CQC"'));
-    assert.match(goaddr, /<code>GOADDRESS_API_KEY<\/code> <span class="chip key-off">Not set<\/span>/);
+    // Phase 156f: GoAddress is gone; Homedata's key answers the address box.
+    assert.ok(!r.body.includes('id="conn-GOADDRESS"'));
+    const hd = r.body.slice(r.body.indexOf('id="conn-HOMEDATA"'), r.body.indexOf('id="conn-DIDIT"'));
+    assert.match(hd, /<code>HOMEDATA_API_KEY<\/code> <span class="chip key-off">Not set<\/span>/);
+    assert.match(hd, /Address box today: 0 of 50 searches/);
     assert.match(r.body, /none is on for real clients yet/);
     for (const who of ['sales', 'accounting', 'surveying', 'readonly'] as const) {
       const n = await H.get(who, '/staff/connections');

@@ -515,8 +515,9 @@ describe('the live smoke test says whether a service took our call, and nothing 
     assert.deepEqual(Object.keys(SMOKE_SOURCES).sort(),
       // Phase 146k: no HMLR_TITLE — the title register is looked up by hand, and its connector is retired.
       // Phase 155: the Welsh and Scottish care regulators, read from their imported lists, join it.
-      ['CARE_INSPECTORATE', 'CH_COMPANY', 'CH_PSC', 'CIW', 'CQC', 'EPC', 'HMLR_PPD', 'HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING', 'ONS_POSTCODE', 'PLANNING']);
-    assert.equal(SMOKE_SOURCES['HOMEDATA_PLANNING'], 'not chosen', 'built and not chosen is still smoke-testable');
+      // Phase 156f: Homedata planning chosen (paid, no longer "not chosen"), and the site boundary read off the address call.
+      ['CARE_INSPECTORATE', 'CH_COMPANY', 'CH_PSC', 'CIW', 'CQC', 'EPC', 'HMLR_PPD', 'HOMEDATA_ADDRESS', 'HOMEDATA_BOUNDARY', 'HOMEDATA_PLANNING', 'ONS_POSTCODE', 'PLANNING']);
+    assert.equal(SMOKE_SOURCES['HOMEDATA_PLANNING'], 'paid', 'the chosen route is still smoke-testable');
   });
 
   test('G23 — the values it asks about are public and belong to nobody we act for', () => {

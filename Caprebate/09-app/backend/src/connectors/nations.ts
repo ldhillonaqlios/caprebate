@@ -20,6 +20,11 @@ export type TypedProperty = {
   readonly postcode: string | null;
   /** As recorded; null when nobody has said. Never assumed to be England. */
   readonly jurisdiction: Nation | null;
+  /**
+   * PHASE 156f: the UPRN the client picked from the Homedata list at the assessment (migration 092), or null. A
+   * client's pick, not a register fact: the paid address lookup checks it belongs to this address before it uses it.
+   */
+  readonly uprn?: string | null;
 };
 
 export type ResearchSubject = {
@@ -37,8 +42,8 @@ const NATIONS: readonly Nation[] = ['england', 'wales', 'scotland', 'northern_ir
 export function researchSubject(db: Db, business_id: string): ResearchSubject {
   const b = db.get<{ name: string; legal_name: string | null; company_number: string | null; sector: string | null }>(
     'SELECT name, legal_name, company_number, sector FROM businesses WHERE id = ?', [business_id]);
-  const p = db.get<{ id: string; address_line_1: string | null; address_line_2: string | null; town: string | null; postcode: string | null; jurisdiction: string | null }>(
-    'SELECT id, address_line_1, address_line_2, town, postcode, jurisdiction FROM properties WHERE business_id = ? ' +
+  const p = db.get<{ id: string; address_line_1: string | null; address_line_2: string | null; town: string | null; postcode: string | null; jurisdiction: string | null; uprn: string | null }>(
+    'SELECT id, address_line_1, address_line_2, town, postcode, jurisdiction, uprn FROM properties WHERE business_id = ? ' +
       'ORDER BY created_at ASC, id ASC LIMIT 1', [business_id]);
   const legal = b?.legal_name?.trim() ?? '';
   const number = b?.company_number?.trim() ?? '';
@@ -50,6 +55,7 @@ export function researchSubject(db: Db, business_id: string): ResearchSubject {
     property: p === undefined ? null : {
       id: p.id, address_line_1: p.address_line_1, address_line_2: p.address_line_2, town: p.town, postcode: p.postcode,
       jurisdiction: (NATIONS as readonly string[]).includes(p.jurisdiction ?? '') ? p.jurisdiction as Nation : null,
+      uprn: p.uprn,
     },
   };
 }

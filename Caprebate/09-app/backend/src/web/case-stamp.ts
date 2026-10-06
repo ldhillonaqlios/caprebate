@@ -152,7 +152,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   INBOUND_EMAIL                reading replies to contact@ (Phase 142)       src/stubs/email-inbound.ts
  *   IDENTITY_CHECK               the online identity check (Phase 151)          src/connectors/identity-check.ts
  *   POSTCODE_CHECK               the free postcode check (Phase 151)            src/connectors/postcode-check.ts
- *   ADDRESS_LOOKUP               "Find my address", GoAddress (30 Sep 2026)     src/connectors/address-lookup.ts
+ *   ADDRESS_LOOKUP               "Find my address", Homedata since 156f (6 Oct)  src/connectors/address-lookup.ts
  *   COMPANY_TYPE_FROM_REGISTER   the company type from Companies House (153b)   src/connectors/company-search.ts
  *   ENGAGEMENT_SIGNING           the built-in letter signature (Phase 146f)      src/web/signing.ts
  *   MESSAGE_RETENTION            the message clean-up job (Phase 142a)           src/web/message-retention.ts

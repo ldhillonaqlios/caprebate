@@ -626,16 +626,19 @@ describe('the paid map beside the free one, every switch off, and BCIS unbuilt a
 
   test('EVERY SWITCH IS STILL OFF, THE NEW ONES INCLUDED', () => {
     for (const [k, v] of Object.entries(C.REGISTER_SWITCHES)) assert.equal(v, false, k);
-    for (const k of ['HOMEDATA_ADDRESS', 'HMLR_TITLE', 'HOMEDATA_PLANNING', 'BCIS']) {
+    for (const k of ['HOMEDATA_ADDRESS', 'HMLR_TITLE', 'HOMEDATA_PLANNING', 'HOMEDATA_BOUNDARY', 'BCIS']) {
       assert.ok(Object.hasOwn(C.REGISTER_SWITCHES, k), k);
     }
   });
 
-  test('THE PAID PLANNING ROUTE IS BUILT AND NOT CHOSEN: PlanIt stays the source of record and a click runs one of them', () => {
-    assert.ok(PAID_NOT_CHOSEN['HOMEDATA_PLANNING'], 'the route is not built');
-    assert.equal(PAID_CONNECTORS['HOMEDATA_PLANNING'], undefined, 'a click would run it');
+  /* PHASE 156f, 6 Oct 2026 (Lakhbir: "planning history - use homedata"): CHOSEN and runnable. It is in the paid map, and
+     after signing it answers the PLANNING row in place of the free route (test/phase156f proves the click). The row itself
+     is still the free one, with PlanIt behind it before signing. */
+  test('THE PAID PLANNING ROUTE IS CHOSEN (156f): in the paid map, switched off here, and the PLANNING row is still the free one', () => {
+    assert.ok(PAID_CONNECTORS['HOMEDATA_PLANNING'], 'the chosen route is not runnable');
+    assert.equal(PAID_NOT_CHOSEN['HOMEDATA_PLANNING'], undefined);
     assert.equal(C.REGISTER_SWITCHES['HOMEDATA_PLANNING'], false);
-    // PlanIt is still what the PLANNING row is consulted at, and it is still FREE.
+    // PlanIt is still what the PLANNING row is consulted at before signing, and the row is still FREE.
     assert.equal(FREE_CONNECTORS['PLANNING']?.connector.service_id, 'PLANNING');
     assert.equal(R.catalogue().find((e) => e.source_id === 'PLANNING')?.tier, 'FREE');
     // Its records are written under PLANNING — the register source — not under the supplier's name.

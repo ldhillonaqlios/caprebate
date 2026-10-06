@@ -95,7 +95,7 @@ import type { Transport, RateLimiter } from '../connectors/http.ts';
 import type { SecretStore } from '../secrets.ts';
 import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../connectors/free-registers.ts';
 import type { PickQuery } from '../connectors/matching.ts';
-import { PAID_CONNECTORS, PAID_ORDER, totalBeforePence, pounds } from '../connectors/paid-registers.ts';
+import { PAID_CONNECTORS, PAID_ORDER, totalBeforePence, pounds, uprnFrom } from '../connectors/paid-registers.ts';
 import { ingestRegisterRecord } from '../stubs/registers.ts';
 import { lookAgainShort } from './take-back.ts';
 import { postcodeStore } from './postcode.ts';
@@ -152,6 +152,8 @@ const TIER_BY_SOURCE: Readonly<Record<string, Tier>> = Object.freeze({
   BCIS: 'PAID',
   /* "Homedata address lookup" is the first entry in the documents' tier 2. */
   HOMEDATA_ADDRESS: 'PAID',
+  /* PHASE 156f (B4): the site area from Homedata's title outline, bought on the address lookup's own call. */
+  HOMEDATA_BOUNDARY: 'PAID',
 });
 
 /**
@@ -653,6 +655,15 @@ export function stateUnderGates(
   };
 }
 
+/** PHASE 156f (B3): what the PLANNING row says while Homedata planning is due after signing. */
+export const HOMEDATA_PLANNING_DUE = 'the free planning route answered before the letter was signed. Now it is signed. ' +
+  'On the next click Homedata will read the planning history by the property\'s own number. We use its answer';
+
+/** PHASE 156f (B3): whether the PLANNING row should be asked again, so Homedata answers it. */
+export function homedataPlanningDue(row: { readonly state: string; readonly route: string | null } | undefined, signed: boolean, env?: Env): boolean {
+  return signed && switchedOn('HOMEDATA_PLANNING', switchesHere(env)) && row?.state === 'FIRED' && row.route !== 'HOMEDATA_PLANNING';
+}
+
 /**
  * Every source and where it stands.
  *
@@ -676,9 +687,9 @@ export function sourcesFor(
   const stored = new Map(
     db.all<{
       source_id: string; state: string; fired_at: string | null; retrieved_at: string | null;
-      attempts: number; failure_code: string | null; detail: string | null;
+      attempts: number; failure_code: string | null; detail: string | null; route: string | null;
     }>(
-      'SELECT source_id, state, fired_at, retrieved_at, attempts, failure_code, detail ' +
+      'SELECT source_id, state, fired_at, retrieved_at, attempts, failure_code, detail, route ' +
         'FROM research_sources WHERE business_id = ?',
       [business_id],
     ).map((r) => [r.source_id, r] as const),
@@ -699,8 +710,12 @@ export function sourcesFor(
 
   const sources = catalogue().map((entry) => {
     const row = stored.get(entry.source_id);
-    const current = (row?.state ?? 'NOT_RUN') as SourceState;
-    const resolved = stateUnderGates(entry, current, freeGateFor(free, entry.source_id, opts.env), engagement, lookupsDeclined(db, business_id));
+    /* PHASE 156f (B3): the free planning route answered before signing; now the letter is signed and Homedata planning is
+       on, the row is asked again, and Homedata answers it by the property's own number. */
+    const due = entry.source_id === 'PLANNING' && homedataPlanningDue(row, engagement.signed === true, opts.env);
+    const current = (due ? 'NOT_RUN' : row?.state ?? 'NOT_RUN') as SourceState;
+    const gated = stateUnderGates(entry, current, freeGateFor(free, entry.source_id, opts.env), engagement, lookupsDeclined(db, business_id));
+    const resolved = due && gated.state === 'NOT_RUN' ? { ...gated, detail: HOMEDATA_PLANNING_DUE } : gated;
     /* PHASE 146k: a source looked up by hand is "looked up" once a person has recorded it, and still to do until then —
        read off what is held, never off a row a click wrote. Before signing it waits like any paid source. */
     const hand = BY_HAND[entry.source_id];
@@ -867,6 +882,8 @@ export type SourceOutcome = {
   readonly bundle: Bundle | null;
   /** PHASE 146d: what this lookup spent, in pence, from the calls it made. 0 for a free one and for one that failed. */
   readonly cost_pence: number;
+  /** PHASE 156f (B3): the connector that answered when it was not the source's own (HOMEDATA_PLANNING for PLANNING). */
+  readonly route?: string | null;
 };
 
 /**
@@ -910,14 +927,18 @@ export async function consultAllowed(
        source; a source in neither has no connector in this build and says so. The gate has already been decided
        above — a paid source reaches this line only when the engagement letter is signed, and that is not re-decided
        here any more than the free gate is. */
-    const built = FREE_CONNECTORS[x.entry.source_id] ?? PAID_CONNECTORS[x.entry.source_id];
     if (x.state !== 'NOT_RUN' || d.outside === undefined) { out.push(keep); continue; }
+    const o = d.outside;
+    const switches = o.switches ?? switchesHere(o.env);
+    /* PHASE 156f (B3): PLANNING HAS TWO ROUTES. After signing, with Homedata planning on and the property's number found
+       by the paid address lookup on this click, Homedata answers (paid, about 5p); otherwise the free route, as before. */
+    const route = x.entry.source_id === 'PLANNING' && gates.engagement_signed && switchedOn('HOMEDATA_PLANNING', switches) && uprnFrom(earlier) !== null
+      ? 'HOMEDATA_PLANNING' : null;
+    const built = route !== null ? PAID_CONNECTORS[route] : FREE_CONNECTORS[x.entry.source_id] ?? PAID_CONNECTORS[x.entry.source_id];
     if (built === undefined) {
       out.push({ ...keep, detail: NOT_BUILT[x.entry.source_id] ?? keep.detail });
       continue;
     }
-    const o = d.outside;
-    const switches = o.switches ?? switchesHere(o.env);
     const ctx: ConnectorContext = {
       deps: {
         audit: d.audit, now: d.now, transport: o.transport,
@@ -925,10 +946,12 @@ export async function consultAllowed(
         ...(o.sleep === undefined ? {} : { sleep: o.sleep }),
       },
       actor_id: actor.id, actor_role: actor.role, claim_id: null,
-      gate: { ...gates, free_gate_open: gates.free_gate_open || freeGateWaived(x.entry.source_id, o.env), switched_on: switchedOn(x.entry.source_id, switches) },
+      gate: { ...gates, free_gate_open: gates.free_gate_open || freeGateWaived(x.entry.source_id, o.env), switched_on: switchedOn(route ?? x.entry.source_id, switches) },
       secrets: null,
     };
     let query = built.query(subject, earlier, o.postcodeStore === undefined ? postcodeStore() : o.postcodeStore, d.db);
+    /* PHASE 156f (B4): the title outline is asked for on the address lookup's call by THIS click's switches. */
+    if (x.entry.source_id === 'HOMEDATA_ADDRESS') query = { ...(query as Record<string, unknown>), boundary: switchedOn('HOMEDATA_BOUNDARY', switches) };
     /* 2 Oct 2026: THE CARE REGULATOR'S COUNCIL AREA ON THE TEST WEBSITE. The care regulator is searched by council area,
        which the ONS postcode table gives; the test website has no such table. Where the waiver holds, and only then,
        the council area comes from postcodes.io, which the postcode check already uses (only the postcode is sent). */
@@ -947,7 +970,8 @@ export async function consultAllowed(
     const run = await runConnector(built.connector, ctx, asked, { state: 'NOT_RUN', detail: x.detail }, o.secrets, switches);
     if (run.state === 'FIRED' && run.bundle !== null) earlier.set(x.entry.source_id, run.bundle);
     out.push({
-      entry: x.entry, state: run.state, detail: run.detail,
+      entry: x.entry, state: run.state, route,
+      detail: route === null || run.state !== 'FIRED' ? run.detail : `${run.detail}. Homedata's answer is the one we use and show`,
       retrieved_at: run.state === 'FIRED' ? (run.retrieved_at ?? null) : null,
       failure_code: run.state === 'FAILED' ? (run.failure_code ?? 'ERROR') : null,
       bundle: run.state === 'FIRED' ? run.bundle : null,
@@ -1306,9 +1330,12 @@ export async function retryFailedSource(
 function upsertSource(
   d: RunDeps, business_id: string, entry: CatalogueEntry,
   state: SourceState, detail: string, at: string,
-  read: { readonly retrieved_at: string | null; readonly failure_code: string | null } = { retrieved_at: null, failure_code: null },
+  read: { readonly retrieved_at: string | null; readonly failure_code: string | null; readonly route?: string | null } = { retrieved_at: null, failure_code: null },
 ): void {
   const fired = state === 'FIRED' && read.retrieved_at !== null;
+  /* PHASE 156f (B3): which route answered a FIRED row (HOMEDATA_PLANNING, or null for the source's own). Kept only on a
+     fire, so a later refusal does not forget that Homedata already answered. */
+  const route = read.route ?? null;
   const existing = d.db.get<{ id: string; attempts: number }>(
     'SELECT id, attempts FROM research_sources WHERE business_id = ? AND source_id = ?',
     [business_id, entry.source_id],
@@ -1316,20 +1343,20 @@ function upsertSource(
   if (existing === undefined) {
     d.db.run(
       'INSERT INTO research_sources (id, business_id, source_id, tier, state, fired_at, detail, ' +
-        'publisher, licence_id, retrieved_at, failure_code, attempts) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'publisher, licence_id, retrieved_at, failure_code, attempts, route) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [d.newId(), business_id, entry.source_id, entry.tier, state, fired ? at : null, detail,
        entry.publisher, entry.licence_id, fired ? read.retrieved_at : null,
-       state === 'FAILED' ? read.failure_code : null, state === 'NOT_PERMITTED_YET' ? 0 : 1],
+       state === 'FAILED' ? read.failure_code : null, state === 'NOT_PERMITTED_YET' ? 0 : 1, fired ? route : null],
     );
     return;
   }
   d.db.run(
     'UPDATE research_sources SET tier = ?, state = ?, detail = ?, publisher = ?, licence_id = ?, attempts = ?, ' +
-      'failure_code = ?' + (fired ? ', fired_at = ?, retrieved_at = ?' : '') + ' WHERE id = ?',
+      'failure_code = ?' + (fired ? ', fired_at = ?, retrieved_at = ?, route = ?' : '') + ' WHERE id = ?',
     [entry.tier, state, detail, entry.publisher, entry.licence_id,
      existing.attempts + (state === 'NOT_PERMITTED_YET' ? 0 : 1),
      state === 'FAILED' ? read.failure_code : null,
-     ...(fired ? [at, read.retrieved_at] : []), existing.id],
+     ...(fired ? [at, read.retrieved_at, route] : []), existing.id],
   );
 }

@@ -39,6 +39,7 @@ import { missingFacts, sectionOfFact } from './engaged.ts';
 import { registerAttribution } from './research.ts';
 import { FACTS, captured, factsPanel, latestFacts, recordFact, type FactReading } from './claim-facts.ts';
 import type { ProcedureKey } from './stages.ts';
+import { preferHomedataPlanning, supersededPlanning } from '../connectors/homedata-planning.ts';
 
 export type ApprovalDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type Result = { readonly ok: true } | { readonly ok: false; readonly why: string; readonly field?: string };
@@ -95,6 +96,8 @@ export const REGISTER_CHIPS: Readonly<Record<string, string>> = Object.freeze({
   EPC: 'EPC register', HMLR_PPD: 'HM Land Registry', HMLR_TITLE: 'HM Land Registry',
   CQC: 'Care regulator', CIW: 'Care regulator', CARE_INSPECTORATE: 'Care regulator', VOA: 'Valuation office', PLANNING: 'Planning register',
   ONS_POSTCODE: 'Postcode register', HOMEDATA_ADDRESS: 'Address lookup',
+  // PHASE 156f (B4): the site area from the title outline.
+  HOMEDATA_BOUNDARY: 'Land Registry title outline, via Homedata',
 });
 
 /** The registers that describe the company. Every other register describes a property. */
@@ -227,9 +230,12 @@ type RawFact = Omit<CheckFact, 'approved' | 'untick' | 'approvable' | 'why_not'>
 
 function registerFacts(db: Db, business_id: string, claims: readonly ClaimRow[]): RawFact[] {
   const out: RawFact[] = [];
+  // PHASE 156f (B3): once Homedata has answered planning, the free route's planning records are kept, not shown.
+  const homedataPlanning = preferHomedataPlanning(db, business_id);
   for (const r of db.all<{ id: string; source_id: string; entity_id: string; fields_json: string; obtained_at: string; property_id: string | null }>(
     'SELECT id, source_id, entity_id, fields_json, obtained_at, property_id FROM register_records WHERE business_id = ? ORDER BY obtained_at ASC, id ASC',
     [business_id])) {
+    if (supersededPlanning(r, homedataPlanning)) continue;
     let fields: Record<string, unknown>;
     try { fields = JSON.parse(r.fields_json) as Record<string, unknown>; } catch { continue; }
     const company = COMPANY_REGISTERS.includes(r.source_id);

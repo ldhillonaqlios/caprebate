@@ -16,6 +16,7 @@
  * one copy of the website is read by every copy at its next request.
  */
 
+import { ADDRESS_LOOKUP } from '../connectors/address-lookup.ts';
 import { createCipheriv, createDecipheriv, randomBytes, randomUUID } from 'node:crypto';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
@@ -27,7 +28,6 @@ import { EMAIL_SENDING } from '../stubs/email-provider.ts';
 import { INBOUND_EMAIL } from '../stubs/email-inbound.ts';
 import { IDENTITY_CHECK } from '../connectors/identity-check.ts';
 import { COMPANY_SEARCH } from '../connectors/company-search.ts';
-import { ADDRESS_LOOKUP } from '../connectors/address-lookup.ts';
 import { lookupsWaivedHere, switchedOn, switchesHere } from '../connectors/registers.ts';
 import { CLAUDE_SWITCHES } from '../connectors/claude.ts';
 import { zoomBlockers } from './video-calls.ts';
@@ -115,7 +115,8 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
     case 'COMPANIES_HOUSE': return COMPANY_SEARCH.enabled || switchedOn('CH_COMPANY') ? { on: true, why: '' } : off('The Companies House search is not switched on.');
     case 'CQC': return switchedOn('CQC', switchesHere()) ? { on: true, why: '' } : off('The care regulator lookup is not switched on.');
     case 'EPC': return switchedOn('EPC', switchesHere()) ? { on: true, why: '' } : off('The energy certificate lookup is not switched on.');
-    case 'HOMEDATA_ADDRESS': return switchedOn('HOMEDATA_ADDRESS', switchesHere()) ? { on: true, why: '' } : off('The Homedata address lookup is not switched on.');
+    // Phase 156f: the same key answers "Find my address" at the assessment (ADDRESS_LOOKUP), in place of GoAddress.
+    case 'HOMEDATA_ADDRESS': return ADDRESS_LOOKUP.enabled || switchedOn('HOMEDATA_ADDRESS', switchesHere()) ? { on: true, why: '' } : off('Neither the address box nor the Homedata lookups are switched on.');
     case 'IONOS_EMAIL': return EMAIL_SENDING.enabled ? { on: true, why: '' } : off('Sending email is not switched on.');
     case 'IONOS_MAILBOX': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
     case 'GOOGLE_ANALYTICS': return ga4MeasurementId(st) !== null ? { on: true, why: '' } : off('It is not a Google Analytics id (G- then letters and numbers).');
@@ -127,7 +128,6 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
     case 'ZOOM': { const m = zoomBlockers(app); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'WHATSAPP': { const m = whatsappMissing(st, app.whatsappPolicy, { outside: app.outside }); return m.length === 0 ? { on: true, why: '' } : off(m.join(' ')); }
     case 'REPLY_TIMER': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
-    case 'GOADDRESS': return ADDRESS_LOOKUP.enabled ? { on: true, why: '' } : off('“Find my address” is not switched on.');
     // 2 Oct 2026: the report's site plan (src/web/site-plan.ts), fetched on the test website only, for now.
     case 'OS_MAPS': return lookupsWaivedHere() ? { on: true, why: '' } : off('Site plans are fetched on the test website only, for now.');
     default: return off('Nothing uses this key yet.');

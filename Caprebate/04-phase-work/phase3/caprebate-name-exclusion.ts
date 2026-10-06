@@ -436,6 +436,28 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'straight to the register\'s proprietor, and nothing here needs it.',
   },
   {
+    /*
+     * Subitem 18. PHASE 156f, 6 October 2026 — THE SITE AREA FROM HOMEDATA'S TITLE OUTLINE (Lakhbir: "site boundary - use
+     * home data"). Without an entry the one door would refuse the area with E_UNKNOWN_SOURCE, so the entry comes with the
+     * code that writes it (09-app/backend/src/connectors/title-boundary.ts), as HMLR_INSPIRE's did.
+     *
+     * The answer Homedata sends (read live on a public address, 6 Oct 2026) is a title number and a polygon. The title
+     * number is excluded for the reason HMLR_INSPIRE gives: it leads straight to the register's proprietor. The polygon
+     * is turned into one area and never kept. What is kept is the area, its grade and the property's UPRN.
+     */
+    sourceId: 'HOMEDATA_BOUNDARY',
+    subitem: 18,
+    publisher: 'Homedata (supplier); underlying data HM Land Registry title outlines',
+    datasetLabel: 'Title boundary — the site area worked out from the title outline',
+    riskLevel: 'standard',
+    keptFields: ['site_area_m2', 'site_area_m2_grade', 'uprn'],
+    excludedNameFields: ['*_name', 'proprietor_*', 'owner_*', 'occupier_*', 'resident_*', 'title_number'],
+    nameExceptions: [],
+    note:
+      'An area, its grade and the property\'s UPRN, and nothing about anybody. The title number and the outline itself ' +
+      'are not kept.',
+  },
+  {
     /**
      * Subitem 16. PHASE 155 (line 1), 4 October 2026 — Care Inspectorate Wales, BUILT AT LAST, so it needs its own
      * entry: the one door writes under the SOURCE REGISTER's id, CIW, and subitem 2 (CARE_REGULATORS_DEVOLVED) is a

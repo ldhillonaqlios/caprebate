@@ -72,11 +72,13 @@ describe('line 1 — Word question 37: the address lookup kept seven years in th
     assert.match(lic.notes ?? '', /TEST READING[\s\S]*awaiting Homedata/);
     assert.deepEqual(lic.redistribution, { client_report: false, accountant_report: false, hmrc_pack: false, internal: true });
   });
-  test('GoAddress, which "Find my address" uses, carries the same reading, and says it is not the supplier’s figure', () => {
+  // Phase 156f: "Find my address" is Homedata's since GoAddress was removed (6 Oct 2026).
+  test('"Find my address" carries the same reading, and says it is not the supplier’s figure', () => {
     assert.equal(ADDRESS_KEEP_UNTIL.days, 2557);
     assert.equal(ADDRESS_KEEP_UNTIL.reports_closed, true);
     assert.match(ADDRESS_KEEP_UNTIL.reading, /test reading, not the supplier/);
-    assert.match(ADDRESS_KEEP_UNTIL.awaiting, /Homedata[\s\S]*GoAddress/);
+    assert.match(ADDRESS_KEEP_UNTIL.awaiting, /Homedata/);
+    assert.doesNotMatch(ADDRESS_KEEP_UNTIL.awaiting, /GoAddress/);
   });
 });
 

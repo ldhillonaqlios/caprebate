@@ -44,7 +44,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       documented layout and tested on invented files only (Phase 156c). Put it in 09-app/backend/test/fixtures/whatsapp-export.
 - [x] Sadique: approve Cloudflare (US) for testing, so the contact form's server check can run (Phase 156a A3.6). _(Approved 5 Oct 2026, relayed by Lakhbir; `sources.ts` updated the same day.)_
 - [ ] The API steps in Phase 156 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
-      Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom: two free scopes and a check that the host is contact@ (no payment, one shared host: both DONE 5 Oct 2026, Phase 156d), Anthropic paperwork (DONE for testing, 5 Oct 2026), GoAddress (who they are and where hosted; the paid plan after 100 lookups), Didit (how long it keeps results, in its console), Homedata (its key in Vercel and a balance)). Phase 156e, 5 Oct 2026, left these three as yours.
+      Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom: two free scopes and a check that the host is contact@ (no payment, one shared host: both DONE 5 Oct 2026, Phase 156d), Anthropic paperwork (DONE for testing, 5 Oct 2026), GoAddress (REMOVED 6 Oct 2026, Phase 156f: Homedata answers the address box; left for Lakhbir: delete `GOADDRESS_API_KEY` from the key file and close the GoAddress account), Didit (how long it keeps results, in its console), Homedata (its key in Vercel and a balance)). Phase 156e, 5 Oct 2026, left these three as yours.
 - [ ] Zoom: hold one short test call and press "Ask Zoom how long it lasted" on its page — say what it shows (whether the free plan gives a call's length). Carried to the sweep, Phase 157. Now Phases 156a to 156e. _Google Analytics was dropped for now on 4 Oct 2026; the marketing team may pick it up later._
 - [ ] Send a test video from the iPhone through "Show us your building", and supply the tall hero video for the home
       page (PHASE-HISTORY ~11112-11160).
@@ -79,8 +79,8 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Approve the retention schedule, the document-pipeline impact assessment (DPIA), the breach procedure and the
       upload boundary.
 - [ ] Approve and publish the privacy notice naming every service (IONOS, Didit, Postcodes.io, Companies House, Zoom,
-      GoAddress, Cloudflare, Google, Anthropic…). Then the testing waivers in the code are switched to "named".
-- [ ] Approve each US transfer for real clients: Zoom, WhatsApp (Meta), GoAddress, Anthropic, Cloudflare, Didit. _(WhatsApp, 5 Oct 2026: no transfer to Meta from us any more — chats are exported on the phone and uploaded to the record, Phase 156c. Sadique's two questions are 156c A2.)_
+      Homedata, Cloudflare, Google, Anthropic…). Then the testing waivers in the code are switched to "named". _(GoAddress removed 6 Oct 2026, Phase 156f: Homedata, in the UK, answers the address box.)_
+- [ ] Approve each US transfer for real clients: Zoom, WhatsApp (Meta), Anthropic, Cloudflare, Didit. _(GoAddress removed 6 Oct 2026, Phase 156f.)_ _(WhatsApp, 5 Oct 2026: no transfer to Meta from us any more — chats are exported on the phone and uploaded to the record, Phase 156c. Sadique's two questions are 156c A2.)_
 - [ ] With the director: are keys saved through the website's Admin tab (sealed with CAPREBATE_MFA_KEY) acceptable?
 - [ ] Approve Cloudflare (Turnstile) as a processor.
 - [ ] About 38 register entries in FOR-THE-SOLICITOR-DPO-DEVELOPER.md, and 26 Word questions.

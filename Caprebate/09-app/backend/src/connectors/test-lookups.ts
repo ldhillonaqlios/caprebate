@@ -43,9 +43,9 @@
  * src/cli.ts hands in the live ones, and the tests hand in recorded answers.
  */
 
-import { appendFileSync, closeSync, existsSync, openSync, readFileSync } from 'node:fs';
+import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { isAbsolute, join, resolve } from 'node:path';
+import { isAbsolute, join, resolve, resolve as resolvePath } from 'node:path';
 
 import { AuditLog } from '../audit.ts';
 import { Db, migrate } from '../db.ts';
@@ -280,6 +280,8 @@ export function notTheDefaults(v: SmokeValues): string[] {
   if (normaliseCompanyName(v.address_line_1) !== normaliseCompanyName(d.address_line_1)) out.push('address');
   if (normaliseCompanyName(v.town) !== normaliseCompanyName(d.town)) out.push('town');
   if (normalisePostcode(v.postcode) !== normalisePostcode(d.postcode)) out.push('postcode');
+  // PHASE 156f: a property number is never a default, so it always needs --not-a-client.
+  if (v.uprn != null) out.push('property number');
   return out;
 }
 
@@ -327,6 +329,24 @@ export type SmokeCommandDeps = CommandDeps & {
   readonly sleep?: (ms: number) => Promise<void>;
 };
 
+/**
+ * PHASE 156f: a transport that also writes each answer's body to a file in `dir` (one per call, numbered, named by the
+ * path without its query). The key is in a header and is never written; the path and the body are.
+ */
+export function savingTransport(t: Transport, dir: string, out: (line: string) => void): Transport {
+  let n = 0;
+  return async (url, init) => {
+    const res = await t(url, init);
+    const body = await res.clone().text();
+    n++;
+    mkdirSync(dir, { recursive: true });
+    const name = `${String(n).padStart(2, '0')}${new URL(url).pathname.replace(/[^A-Za-z0-9]+/g, '-')}.json`;
+    writeFileSync(join(dir, name), body);
+    out(`  saved the answer to ${join(dir, name)} (${String(body.length)} characters, status ${String(res.status)})`);
+    return res;
+  };
+}
+
 /** `--name value`. A flag with no value, or whose value is the next flag, reads as absent. */
 function flag(argv: readonly string[], name: string): string | null {
   const i = argv.indexOf(`--${name}`);
@@ -344,7 +364,7 @@ function whoAndWhy(argv: readonly string[]): { who: string; why: string } | stri
   return { who, why };
 }
 
-const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--nation england|wales|scotland|northern_ireland] [--council C] [--not-a-client]\n' +
+const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--nation england|wales|scotland|northern_ireland] [--council C] [--not-a-client] [--uprn U] [--save-answers <folder outside the repository>]\n' +
   `       CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke OS_FEATURES --who "<name>" --why "<reason>"   (the public test point only)\n` +
   `       CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke ${BOUNDARY_TEST_SOURCE} --who "<name>" --why "<reason>" [--easting E --northing N] [--council <ONS code or HM Land Registry file name>] [--not-a-client]`;
 /** The four values --nation takes (src/connectors/nations.ts). */
@@ -484,6 +504,14 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
       return result;
     };
   } else {
+    /* PHASE 156f: --save-answers <folder> keeps each answer's body, as the service sent it, in a folder OUTSIDE the
+       repository, so a person can make a recorded answer (a test fixture) from a real one. Public values only, as every
+       smoke test; the log line is the same. The folder is the person's to read and then delete. */
+    const saveTo = flag(argv, 'save-answers');
+    if (saveTo !== null && isInside(resolvePath(saveTo), d.repoRoot ?? repositoryRoot())) {
+      d.err('refused: --save-answers must be a folder outside the repository, so an answer is never committed by mistake.');
+      return 1;
+    }
     const values: SmokeValues = {
       company_number: flag(argv, 'company-number') ?? SMOKE_DEFAULTS.company_number,
       company_name: flag(argv, 'company-name') ?? SMOKE_DEFAULTS.company_name,
@@ -498,6 +526,12 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
       if (!SMOKE_NATIONS.includes(n)) { d.err('refused: --nation must be england, wales, scotland or northern_ireland.'); return 1; }
       values.nation = n as Nation;
     }
+    // PHASE 156f: --uprn, for Homedata planning, which is keyed on the property's number. A public property's only.
+    const uprnSaid = flag(argv, 'uprn');
+    if (uprnSaid !== null) {
+      if (!/^\d{1,14}$/.test(uprnSaid.trim())) { d.err('refused: --uprn must be a property number (digits only).'); return 1; }
+      values.uprn = uprnSaid.trim();
+    }
     const councilSaid = flag(argv, 'council');
     if (councilSaid !== null && councilSaid.trim() !== '') values.council = councilSaid.trim().slice(0, 100);
     const client = clientCheck(env, (db) => clientMatchIn(db, values), notTheDefaults(values), not_a_client);
@@ -505,7 +539,7 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
     ask = `asking ${source_id} about ${values.company_name} (${values.company_number}), ${values.postcode}\n`;
     call = async (audit) => {
       const r = await smokeOne(source_id, values, {
-        audit, now: d.now, transport: d.transport, secrets: d.secrets,
+        audit, now: d.now, transport: saveTo === null ? d.transport : savingTransport(d.transport, resolvePath(saveTo), (l) => d.out(l)), secrets: d.secrets,
         ...(d.postcodeStore === undefined ? {} : { postcodeStore: d.postcodeStore }),
         ...(d.sleep === undefined ? {} : { sleep: d.sleep }),
       });

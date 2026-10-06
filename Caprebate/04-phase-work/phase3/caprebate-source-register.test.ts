@@ -308,7 +308,8 @@ test('T28 sources awaiting solicitor/DPO licence clearance are listed, not assum
   const ids = r.awaitingLegalReview().map((s) => s.source_id).sort();
   // Phase 146m: HMLR_TITLE cleared — the solicitor said yes to the accountant's pack (relayed by Lakhbir, 27 Sep 2026).
   // Phase 155 (line 3), 4 Oct 2026: VOA's licence, read at last, restricts it to business rates purposes — so it is listed.
-  assert.deepEqual(ids, ['BCIS', 'CQC', 'HOMEDATA_ADDRESS', 'VOA']);
+  // Phase 156f, 6 Oct 2026: HOMEDATA_BOUNDARY shares HOMEDATA_TERMS, still awaiting legal review (and Word question 245).
+  assert.deepEqual(ids, ['BCIS', 'CQC', 'HOMEDATA_ADDRESS', 'HOMEDATA_BOUNDARY', 'VOA']);
   const voa = LICENCES.find((l) => l.licence_id === 'VOA_RATING_LIST')!;
   assert.deepEqual(Object.values(voa.redistribution), [false, false, false, false], 'not even internal use: not a rating purpose');
   const lic = LICENCES.find((l) => l.licence_id === 'HMLR_TITLE')!;

@@ -37,6 +37,7 @@ import { POSTCODE_CHECK } from '../connectors/postcode-check.ts';
 import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError, type FileSourceId } from './register-files.ts';
 import { singleFile } from './multipart.ts';
 import { localStamp, localPartsOf } from './localtime.ts';
+import { ADDRESS_SEARCH_CAP, searchesToday } from '../connectors/address-lookup.ts';
 
 /** One outside service as the page shows it. */
 export type Connection = {
@@ -55,6 +56,8 @@ export type Connection = {
   readonly waits: string;
   /** A regulator's list imported from a file. */
   readonly file?: FileSourceId;
+  /** PHASE 156f: a count for today, in words, shown under the service (the address box's searches against its cap). */
+  readonly today?: (app: App) => string;
 };
 
 const yes = { on: true, why: '' };
@@ -71,9 +74,6 @@ export const CONNECTIONS: readonly Connection[] = Object.freeze([
   { id: 'COMPANIES_HOUSE', name: 'Companies House', does: '“Find my company” at the assessment; the company’s facts after sign-up.', owner: 'COMPANIES_HOUSE',
     calls: ['COMPANIES_HOUSE', 'COMPANIES_HOUSE_DOCUMENTS'], switch_name: 'COMPANY_SEARCH; CH_COMPANY for research',
     waits: 'For real clients: the published privacy notice naming Companies House.' },
-  { id: 'GOADDRESS', name: 'GoAddress', does: '“Find my address” at the assessment.', owner: 'GOADDRESS', calls: ['GOADDRESS'],
-    switch_name: 'ADDRESS_LOOKUP',
-    waits: 'Who GoAddress is and where it is hosted (Lakhbir); its paid plan after 100 free lookups; the privacy notice; Sadique for real clients.' },
   { id: 'CQC', name: 'Care Quality Commission (England)', does: 'Care registrations and places, after a client signs.', owner: 'CQC', calls: ['CQC'],
     switch_name: 'REGISTER_SWITCHES.CQC', waits: 'For real clients: the privacy notice, once it is published.' },
   { id: 'CIW', name: 'Care Inspectorate Wales', does: 'Care services in Wales, from its downloaded list.', owner: null, calls: [], file: 'CIW',
@@ -93,14 +93,17 @@ export const CONNECTIONS: readonly Connection[] = Object.freeze([
   { id: 'PLANNING', name: 'Planning history', does: 'Planning applications for the site (planning.data.gov.uk, PlanIt).', owner: null, calls: ['PLANNING', 'PLANNING_DATA'],
     switch_name: 'REGISTER_SWITCHES.PLANNING',
     on: () => (switchedOn('PLANNING', switchesHere()) ? yes : off('Looked up on the test website only.')),
-    waits: 'For real clients: the privacy notice. Homedata will replace PlanIt once its account is open.' },
+    waits: 'For real clients: the privacy notice. After a client signs, Homedata answers instead, by the property’s own number.' },
   { id: 'HMLR_INSPIRE', name: 'HM Land Registry land boundaries', does: 'Site area, from a council’s boundary file.', owner: null, calls: ['HMLR_INSPIRE'],
     switch_name: 'REGISTER_SWITCHES (land boundary)', on: () => off('Switched off: it needs files a real server keeps.'),
     waits: 'A real server that can keep the boundary files. The developers set it up.' },
   { id: 'OS_FEATURES', name: 'Ordnance Survey building outlines', does: 'The building outlines on the report’s site plan.', owner: 'OS_MAPS', calls: ['OS_FEATURES'],
     switch_name: 'lookupsWaivedHere', waits: 'Nothing for testing. For real clients: the published privacy notice.' },
-  { id: 'HOMEDATA', name: 'Homedata', does: 'Paid address, planning and floor area, after a client signs.', owner: 'HOMEDATA_ADDRESS', calls: ['HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING'],
-    switch_name: 'REGISTER_SWITCHES.HOMEDATA_ADDRESS; TEST_WEBSITE_PAID_LOOKUPS', waits: 'On for testing (6 Oct 2026), the address lookup only, for a client whose letter is signed. Homedata planning is not built to run. For real clients: the privacy notice.' },
+  { id: 'HOMEDATA', name: 'Homedata', does: '“Find my address” at the assessment. After a client signs: the address, planning history and site boundary.', owner: 'HOMEDATA_ADDRESS',
+    calls: ['HOMEDATA_POSTCODE', 'HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING'],
+    switch_name: 'ADDRESS_LOOKUP; REGISTER_SWITCHES.HOMEDATA_*; TEST_WEBSITE_PAID_LOOKUPS',
+    today: (app) => `Address box today: ${String(searchesToday(app.db, app.now()))} of ${String(ADDRESS_SEARCH_CAP.per_day)} searches (2p each).`,
+    waits: 'On for testing (6 Oct 2026). For real clients: the privacy notice naming Homedata.' },
   { id: 'DIDIT', name: 'Didit', does: 'The online identity check.', owner: 'DIDIT_IDV', calls: ['DIDIT_IDV'],
     switch_name: 'IDENTITY_CHECK', waits: 'How long Didit keeps results. Set it in Didit once Sadique agrees how long we keep things. Then the privacy notice.' },
   { id: 'IONOS_EMAIL', name: 'IONOS email sending', does: 'Emails from staff, sign-in codes and calendar invites.', owner: 'IONOS_EMAIL', calls: [],
@@ -249,7 +252,7 @@ export function connectionsPage(app: App, actor: Actor, nav: Safe, done: string 
       <p class="help">A key shows only as there or not, never its value. Keys are changed on Home’s Admin tab. This page changes nothing else.</p>
       <table class="stack dash-table conn-table"><thead><tr><th>Service</th><th>Key</th><th>Switched on</th><th>For</th><th>Last call</th><th>Waits on</th></tr></thead><tbody>${
         rows.map((r) => h`<tr id="conn-${r.c.id}">
-          <td data-label="Service"><strong>${r.c.name}</strong><br><span class="help">${r.c.does}</span>${fileCell(r, now)}</td>
+          <td data-label="Service"><strong>${r.c.name}</strong><br><span class="help">${r.c.does}</span>${r.c.today === undefined ? raw('') : h`<p class="help conn-today">${r.c.today(app)}</p>`}${fileCell(r, now)}</td>
           <td data-label="Key">${r.keys.length === 0 ? h`<span class="help">No key needed</span>` : h`<ul class="dash-list">${r.keys.map((k) => h`<li><code>${k.name}</code> <span class="chip ${k.present ? 'key-on' : 'key-off'}">${k.present ? 'There' : 'Not set'}</span></li>`)}</ul>`}</td>
           <td data-label="Switched on">${r.on ? h`<span class="chip key-on">On</span>` : h`<span class="chip key-idle">Off</span> <span class="help">${r.why_off}</span>`}<br><span class="help"><code>${r.c.switch_name}</code></span></td>
           <td data-label="For">${r.use === 'TESTING' ? 'Testing only' : 'Nothing yet'}</td>

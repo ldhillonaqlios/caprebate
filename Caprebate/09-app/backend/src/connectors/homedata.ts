@@ -71,6 +71,7 @@ import {
   type Candidate, type MeasureHook, type PickQuery,
 } from './matching.ts';
 import type { TypedProperty } from './nations.ts';
+import { TITLE_BOUNDARY_SLUG, titleBoundaryArea } from './title-boundary.ts';
 
 export type HomedataQuery = {
   readonly property: TypedProperty | null;
@@ -78,6 +79,11 @@ export type HomedataQuery = {
   readonly measure?: MeasureHook;
   /** PHASE 153e: TESTS ONLY. Absent, HOMEDATA_DIMENSIONS governs, and it is off. */
   readonly dimensions?: HomedataDimensions;
+  /**
+   * PHASE 156f (B4): ask for the title outline too (`title_boundary`, 5 tokens) on the same property call. Set from the
+   * HOMEDATA_BOUNDARY switch (paid-registers.ts and research.ts); absent or false, the slug is not asked for.
+   */
+  readonly boundary?: boolean;
 } & PickQuery;
 
 /**
@@ -102,9 +108,10 @@ export const DIMENSIONS_QUESTION = 'Can we use a measured floor area when a buil
 export const HOMEDATA_DIMENSIONS: HomedataDimensions = Object.freeze({ enabled: false, question: DIMENSIONS_QUESTION });
 export const ESTIMATED_AREA_LABEL = 'estimated from the building’s shape';
 
-/** The slugs for one lookup: the two always asked, and `dimensions` only with its switch on. */
-export function homedataSlugs(d: HomedataDimensions = HOMEDATA_DIMENSIONS): readonly string[] {
-  return d.enabled ? [...HOMEDATA_SLUGS, 'dimensions'] : HOMEDATA_SLUGS;
+/** The slugs for one lookup: the two always asked, `dimensions` only with its switch on, and (Phase 156f) the title
+ *  outline only with HOMEDATA_BOUNDARY on. */
+export function homedataSlugs(d: HomedataDimensions = HOMEDATA_DIMENSIONS, boundary = false): readonly string[] {
+  return [...HOMEDATA_SLUGS, ...(d.enabled ? ['dimensions'] : []), ...(boundary ? [TITLE_BOUNDARY_SLUG] : [])];
 }
 
 /** The floor-area estimate from the dimensions item: a positive number under a named key, or nothing (N4). */
@@ -204,7 +211,9 @@ export function candidateOf(r: Record<string, unknown>, searched: string): Candi
   const uprn = uprnOf(r['uprn'] ?? r['UPRN'] ?? r['uprn_id']);
   if (uprn === null) return null;
   const single = str(r['address'] ?? r['address_line'] ?? r['full_address'] ?? r['formatted_address']);
-  const lines = [str(r['sub_building_name']), str(r['building_name']), str(r['building_number']), str(r['thoroughfare']) ?? str(r['street'])]
+  /* PHASE 156f: the names the live answer uses (read 6 Oct 2026 at a public postcode): sub_building, building_name,
+     building_number, street, town. The older names from the supplier's prose are still read. */
+  const lines = [str(r['sub_building']) ?? str(r['sub_building_name']), str(r['building_name']), str(r['building_number']), str(r['street']) ?? str(r['thoroughfare'])]
     .filter((x): x is string => x !== null);
   const parts = lines.length > 0 ? lines : single === null ? [] : [single.replace(/,?\s*[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}\s*$/i, '')];
   return {
@@ -253,8 +262,12 @@ export type TitlePreCheck = {
 export function preCheckOf(v: unknown): TitlePreCheck {
   const t = obj(v);
   if (t === null) return { has_title: false, title_number: null, tenure: null, restrictions: null };
-  const number = str(t['title_number'] ?? t['titleNumber'] ?? t['number']);
-  const raw = str(t['tenure'])?.toLowerCase() ?? null;
+  /* PHASE 156f: the live answer (6 Oct 2026, 10 Downing Street) names it `title_no`, and gives no `tenure` but a
+     `title_class` ("Absolute freehold title"). Until then this read only the prose's names and said "no registered
+     title" for a property that has one. */
+  const number = str(t['title_no'] ?? t['title_number'] ?? t['titleNumber'] ?? t['number']);
+  const cls = str(t['title_class'])?.toLowerCase() ?? '';
+  const raw = str(t['tenure'])?.toLowerCase() ?? (/\bleasehold\b/.test(cls) ? 'leasehold' : /\bfreehold\b/.test(cls) ? 'freehold' : null);
   const list = t['restrictions'];
   return {
     has_title: number !== null,
@@ -267,6 +280,19 @@ export function preCheckOf(v: unknown): TitlePreCheck {
 /** A path with a tier segment on it. Exported for the test that this connector never sends one. */
 export function isTierPath(path: string): boolean {
   return HOMEDATA_TIER_PATHS.some((t) => new RegExp(`/property/[^/]+/${t}/?$`).test(path));
+}
+
+/**
+ * PHASE 156f (B1): DOES THE UPRN THE CLIENT PICKED BELONG TO THE ADDRESS AND POSTCODE THEY GAVE? The property call's own
+ * answer is read back: its postcode must be the property's, and its address must match the one typed at the EPC
+ * threshold (accept, not review). Anything less is a mismatch, and the lookup goes back to the postcode search.
+ */
+export function uprnBelongs(fields: Record<string, unknown>, typed: ReturnType<typeof addressFromLines>, postcode: string): boolean {
+  if (postcodeKey(typeof fields['postcode'] === 'string' ? fields['postcode'] : null) !== postcode) return false;
+  const line = typeof fields['address_line'] === 'string' ? fields['address_line'] : null;
+  if (line === null) return false;
+  const m = matchAddress(typed, [{ address: addressFromLines([line], postcode, null), payload: 'given' }], MATCH_THRESHOLDS.EPC, 'the address the client picked');
+  return m.status === 'ACCEPT';
 }
 
 export const homedataAddress = defineSteppedConnector<HomedataQuery>({
@@ -288,6 +314,32 @@ export const homedataAddress = defineSteppedConnector<HomedataQuery>({
       calls.push(c);
       return c;
     };
+    const slugs = homedataSlugs(q.dimensions ?? HOMEDATA_DIMENSIONS, q.boundary === true);
+    const detailOf = (uprn: string): Promise<CallResult> =>
+      call({ endpoint: '/property/{uprn}/', params: { uprn }, query: { with: slugs.join(',') } });
+    const parse = (c: CallResult): Record<string, unknown> | null => {
+      if (c.outcome !== 'OK' || c.body === null) return null;
+      try { return obj(JSON.parse(c.body)); } catch { return null; }
+    };
+    const typed = addressFromLines([q.property.address_line_1, q.property.address_line_2], q.property.postcode, q.property.town);
+
+    /* 0 · PHASE 156f (B1): THE UPRN THE CLIENT PICKED AT THE ASSESSMENT, so the 2p postcode search is not made again. It
+       is used only when its own answer belongs to the address and postcode they gave (uprnBelongs); a mismatch goes
+       back to the postcode search below. A back-office pick (`chosen`, `review`) is about the search's list, so a
+       click carrying one goes straight to the search. */
+    const given = uprnOf(q.property.uprn ?? null);
+    let tried: { uprn: string; parsed: Record<string, unknown> } | null = null;
+    if (given !== null && q.chosen == null && q.review === undefined) {
+      const detail = await detailOf(given);
+      if (detail.outcome !== 'OK' || detail.body === null) return { kind: 'CALL_FAILED', call: detail, calls };
+      const parsed = parse(detail);
+      if (parsed === null) return { kind: 'UNREADABLE', call: detail, calls };
+      const fields = addressFields(obj(parsed['address']) ?? parsed, given, pc);
+      if (uprnBelongs(fields, typed, pc)) {
+        return readOf(parsed, given, pc, q, calls, 'it is the address the client picked at the assessment, and it matches the address and postcode they gave');
+      }
+      tried = { uprn: given, parsed };
+    }
 
     // 1 · every address at the typed postcode, 2 tokens. The postcode goes in the PATH, so no key and no address
     //     ever reaches the query string, whose parameter names an audit row records.
@@ -297,7 +349,6 @@ export const homedataAddress = defineSteppedConnector<HomedataQuery>({
     if (list === null) return { kind: 'UNREADABLE', call: search, calls };
 
     const candidates = list.flatMap((r) => { const o = obj(r); const c = o === null ? null : candidateOf(o, pc); return c === null ? [] : [c]; });
-    const typed = addressFromLines([q.property.address_line_1, q.property.address_line_2], q.property.postcode, q.property.town);
     const m = matchAddress(typed, candidates, MATCH_THRESHOLDS.EPC, 'the paid address lookup');
     q.measure?.({ profile: 'EPC', register: 'homedata', match: m, top_address: m.top?.candidate.address ?? null });
     /* PHASE 146h: the REVIEW band's list to the back office, or a person's choice back, keyed on the UPRN — the key
@@ -311,39 +362,46 @@ export const homedataAddress = defineSteppedConnector<HomedataQuery>({
       return {
         kind: 'NOT_MATCHED',
         code: m.status === 'REVIEW' ? 'MATCH_REVIEW' : m.status === 'INSUFFICIENT_INPUT' ? 'INSUFFICIENT_INPUT' : 'NO_MATCH',
-        why: m.why, calls,
+        why: tried === null ? m.why : `the address the client picked did not match what they typed, and ${m.why}`, calls,
       };
     }
     const uprn = took.candidate.payload;
+    const mismatch = tried === null ? '' : '; the address the client picked at the assessment did not match, so the postcode search was used';
 
     // 2 · the matched property's address fields and coordinates, and the penny title pre-check. Named slugs, summed
-    //     weights, no tier.
-    const detail = await call({
-      endpoint: '/property/{uprn}/', params: { uprn }, query: { with: homedataSlugs(q.dimensions ?? HOMEDATA_DIMENSIONS).join(',') },
-    });
+    //     weights, no tier. Not asked twice: the property already read for the client's pick is used if it is this one.
+    if (tried !== null && tried.uprn === uprn) return readOf(tried.parsed, uprn, pc, q, calls, `${how}${mismatch}`);
+    const detail = await detailOf(uprn);
     if (detail.outcome !== 'OK' || detail.body === null) return { kind: 'CALL_FAILED', call: detail, calls };
-    let parsed: Record<string, unknown> | null = null;
-    try { parsed = obj(JSON.parse(detail.body)); } catch { parsed = null; }
+    const parsed = parse(detail);
     if (parsed === null) return { kind: 'UNREADABLE', call: detail, calls };
-    const addressPart = obj(parsed['address']) ?? parsed;
-    const fields = addressFields(addressPart, uprn, pc);
-    const pre = preCheckOf(parsed['lr_title']);
-
-    const bundle: Bundle = {
-      records: [{ sourceId: 'HOMEDATA_ADDRESS', entityId: uprn, fields }],
-      /* `uprn` is repeated in the facts on purpose: the facts are what the next lookup on this click reads, and the
-         energy certificate lookup takes the UPRN from here to turn its fuzzy postcode match into an exact key. */
-      facts: { ...fields, title_pre_check: pre,
-        // Phase 153e: only with the dimensions switch on, and never a register fact: labelled as the estimate it is.
-        ...((q.dimensions ?? HOMEDATA_DIMENSIONS).enabled ? { estimated_floor_area: dimensionsEstimate(parsed['dimensions']) } : {}) },
-    };
-    const coords = fields['latitude'] === undefined ? ' It gives no coordinates, so the spatial screen stays unfed.' : '';
-    const title = pre.has_title
-      ? ` A registered title exists${pre.tenure === null ? '' : ` and it is ${pre.tenure}`}, so the title register is worth buying.`
-      : ' It found no registered title, so buying one would spend £7 on nothing.';
-    return {
-      kind: 'READ', bundle, calls,
-      note: `looked up — ${how}, and we keep the property's identifier, its address and where it came from.${coords}${title}`,
-    };
+    return readOf(parsed, uprn, pc, q, calls, `${how}${mismatch}`);
   },
 });
+
+/** The property call's answer, as the bundle and the note. */
+function readOf(parsed: Record<string, unknown>, uprn: string, pc: string, q: HomedataQuery, calls: CallResult[], how: string): LookupResult {
+  const addressPart = obj(parsed['address']) ?? parsed;
+  const fields = addressFields(addressPart, uprn, pc);
+  const pre = preCheckOf(parsed['lr_title']);
+  /* PHASE 156f (B4): the title outline's area, worked out here and handed on in the facts; the HOMEDATA_BOUNDARY
+     lookup on the same click keeps it (paid-registers.ts). The outline itself goes no further than this function. */
+  const outline = q.boundary === true ? titleBoundaryArea(parsed[TITLE_BOUNDARY_SLUG], { uprn, retrieved_at: 'the research click' }) : null;
+  const bundle: Bundle = {
+    records: [{ sourceId: 'HOMEDATA_ADDRESS', entityId: uprn, fields }],
+    /* `uprn` is repeated in the facts on purpose: the facts are what the next lookup on this click reads, and the
+       energy certificate lookup takes the UPRN from here to turn its fuzzy postcode match into an exact key. */
+    facts: { ...fields, title_pre_check: pre,
+      // Phase 153e: only with the dimensions switch on, and never a register fact: labelled as the estimate it is.
+      ...((q.dimensions ?? HOMEDATA_DIMENSIONS).enabled ? { estimated_floor_area: dimensionsEstimate(parsed['dimensions']) } : {}),
+      ...(outline === null ? {} : { title_boundary_area: outline }) },
+  };
+  const coords = fields['latitude'] === undefined ? ' It gives no coordinates, so the spatial screen stays unfed.' : '';
+  const title = pre.has_title
+    ? ` A registered title exists${pre.tenure === null ? '' : ` and it is ${pre.tenure}`}, so the title register is worth buying.`
+    : ' It found no registered title, so buying one would spend £7 on nothing.';
+  return {
+    kind: 'READ', bundle, calls,
+    note: `looked up — ${how}, and we keep the property's identifier, its address and where it came from.${coords}${title}`,
+  };
+}

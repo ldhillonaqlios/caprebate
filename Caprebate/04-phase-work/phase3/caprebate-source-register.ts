@@ -486,7 +486,13 @@ export const LICENCES: readonly Licence[] = [
       'pages: Ordnance Survey AddressBase (the UPRN) and Royal Mail PAF. Cache window, attribution wording, ' +
       'licence name and per-channel reproduction are NOT PUBLISHED; 0 days and false are our refusals, not ' +
       'their terms. Coverage is published inconsistently: /pricing says "England and Wales only", ' +
-      '/data/postcode says Scotland is covered. Confirm all of it with legal@homedata.co.uk on opening the account.',
+      '/data/postcode says Scotland is covered. Confirm all of it with legal@homedata.co.uk on opening the account. ' +
+      'PHASE 156f, 6 Oct 2026: the terms page read again for title outlines (title_boundary, HOMEDATA_BOUNDARY): ' +
+      'section 4 bars reselling or redistributing "our data without authorisation", section 7 gives a "limited, ' +
+      'non-exclusive licence to use the data in accordance with your subscription plan", and nothing is said about ' +
+      'title outlines, HM Land Registry data or reports. So the site area from a title outline is for our own checks ' +
+      'only, as the INSPIRE one is, until Homedata says in writing it may go in a client report (Word question for ' +
+      'Lakhbir, Phase 156f).',
   },
   {
     /**
@@ -940,6 +946,27 @@ export const SOURCES: readonly Source[] = [
     endpoint: 'https://api.homedata.co.uk/address/',
   },
   {
+    /**
+     * PHASE 156f (B4), 6 October 2026 — THE SITE AREA FROM THE TITLE OUTLINE, VIA HOMEDATA. Lakhbir: "site boundary - use
+     * home data". Homedata's `title_boundary` slug (5 tokens) on the paid address lookup's own property call; the outline
+     * is turned into one area by the boundary module (09-app/backend/src/connectors/title-boundary.ts) and THE OUTLINE IS
+     * NEVER KEPT. Its own source, so nobody reads the area as HM Land Registry's own file (HMLR_INSPIRE) or as an address
+     * fact (HOMEDATA_ADDRESS). Grade B at best, as HMLR_INSPIRE: a reseller's copy of HM Land Registry's index polygon,
+     * which "cannot" establish the extent of a title. HOMEDATA_TERMS keeps every report channel closed: internal only,
+     * as the INSPIRE area is, until Homedata's terms for title outlines are confirmed.
+     */
+    source_id: 'HOMEDATA_BOUNDARY',
+    publisher: 'Homedata (supplier); underlying data HM Land Registry title outlines, as the supplier states',
+    dataset: 'Title boundary (the title_boundary item on a property) — kept only as its area',
+    licence_id: 'HOMEDATA_TERMS',
+    default_prov: 'API',
+    max_grade: 'B',
+    permitted_fields: ['site_area_m2', 'site_area_m2_grade', 'uprn'],
+    excluded_fields: ['*_name', 'title_number', 'occupier_*', 'resident_*', 'owner_*', 'proprietor_*'],
+    personal_name_exceptions: NO_NAMES,
+    endpoint: 'https://api.homedata.co.uk/property/',
+  },
+  {
     source_id: 'CLIENT_ANSWER',
     publisher: 'Client',
     dataset: 'Assessment answers',
@@ -1248,7 +1275,19 @@ export const SUPPLIER_DOCS: readonly SupplierDocs[] = [
       'marketing prose also still offers "bonus tokens with an optional monthly subscription", which is a ' +
       'subscription, not an allowance, and does not contradict "nothing resets". Its planning_history slug is ' +
       'named on the pricing page but does not appear in the module list the deprecated plural endpoint publishes, ' +
-      'so that one slug is taken from the price list and must be confirmed on the first discovery call.',
+      'so that one slug is taken from the price list and must be confirmed on the first discovery call. ' +
+      'PHASE 156f, 6 OCTOBER 2026 — THE SHAPES, READ LIVE on one logged test lookup at a public address (10 Downing ' +
+      'Street, SW1A 2AA; fixtures in 09-app/backend/test/fixtures/phase156f/): /address/postcode/{postcode}/ answers ' +
+      '{postcode, count, addresses: [{uprn, uprn_token, address, building_name, building_number, sub_building, street, ' +
+      'town}]}, empty parts as "" — at a hospital\'s postcode (SE1 7EH, read the same day) the list also holds ' +
+      'advertising rights, moored vessels and a development site. /property/{uprn}/?with=address,lr_title,' +
+      'title_boundary answers {uprn, address: {address, full_address, postcode, latitude, longitude, easting, ' +
+      'northing, udprn, usrn, toid, ...}, lr_title: {title_no, title_class ("Absolute freehold title"), ' +
+      'estate_interest, ...}, title_boundary: {title_no, geometry: a GeoJSON Polygon in longitude and latitude}}. ' +
+      'THE PRE-CHECK HAD READ title_number, so until this read it said "no registered title" for every property; it ' +
+      'now reads title_no and the freehold or leasehold word in title_class. The property call was charged 11 tokens ' +
+      '(5 + 1 + 5), the sum of its slugs, as the price list says. planning_history was not called (no test lookup was ' +
+      'spent on it); its shape is still the prose\'s and the first signed client\'s click confirms it.',
   },
   {
     /* PHASE 146d, 23 September 2026. Nothing here can be called without the network access agreement, so every

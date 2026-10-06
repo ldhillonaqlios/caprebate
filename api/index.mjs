@@ -129,8 +129,6 @@ export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_S
   'IONOS_SMTP_HOST', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'IONOS_SMTP_PASSWORD',
   // 30 Sep 2026: WhatsApp with each client (src/connectors/whatsapp.ts; Meta's transfer approved for testing, 30 Sep 2026).
   'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_TEMPLATE_LANGUAGE',
-  // 30 Sep 2026: "Find my address" at the assessment (src/connectors/address-lookup.ts).
-  'GOADDRESS_API_KEY',
   // 2 Oct 2026: the free lookups switched on for the test website (src/connectors/registers.ts, TEST_WEBSITE_LOOKUPS),
   // and Ordnance Survey's key for the report's site plan (src/connectors/os-buildings.ts).
   'EPC_API_TOKEN', 'CQC_SUBSCRIPTION_KEY', 'OS_DATA_HUB_API_KEY',
@@ -142,6 +140,7 @@ export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_S
   // page; the secret is used because Sadique approved the transfer to Cloudflare for testing (sources.ts, 5 Oct 2026).
   'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY',
   // 6 Oct 2026: the paid address lookup, on for the test website (src/connectors/registers.ts, TEST_WEBSITE_PAID_LOOKUPS).
+  // Phase 156f: the same key answers "Find my address" at the assessment, in place of GoAddress (removed).
   'HOMEDATA_API_KEY']);
 
 export async function configureTestDeploy(made, env) {

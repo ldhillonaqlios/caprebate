@@ -70,6 +70,7 @@ import { anyStageLabel, stage as stageOf } from './stages.ts';
 /* Phase 110. The region a rate library entry is keyed on. resolveProperty
    never throws and never guesses — see the comment on REGION_NOT_CAPTURED. */
 import { resolveProperty } from './postcode.ts';
+import { preferHomedataPlanning, supersededPlanning } from '../connectors/homedata-planning.ts';
 
 export { NotFoundAsRefusal };
 
@@ -257,10 +258,11 @@ function inputsFor(db: Db, r: JobDbRow): JobInputs {
       'SELECT ord, question_id, question_text, state, value FROM assessment_answers ' +
         'WHERE assessment_id = ? ORDER BY ord ASC', [r.assessment_id],
     ),
-    register_records: db.all<{ source_id: string; fields_json: string }>(
-      'SELECT source_id, fields_json FROM register_records WHERE business_id = ? ORDER BY source_id ASC',
+    // PHASE 156f (B3): once Homedata has answered planning, the free route's planning records are kept, not shown.
+    register_records: db.all<{ source_id: string; entity_id: string; fields_json: string }>(
+      'SELECT source_id, entity_id, fields_json FROM register_records WHERE business_id = ? ORDER BY source_id ASC',
       [r.business_id],
-    ).map((x) => ({ source_id: x.source_id, fields: withoutAmounts(x.source_id, safeParse(x.fields_json)) })),
+    ).filter((x) => !supersededPlanning(x, preferHomedataPlanning(db, r.business_id))).map((x) => ({ source_id: x.source_id, fields: withoutAmounts(x.source_id, safeParse(x.fields_json)) })),
     properties: db.all<{ label: string; postcode: string | null }>(
       'SELECT label, postcode FROM properties WHERE business_id = ? ORDER BY label ASC', [r.business_id],
     ),

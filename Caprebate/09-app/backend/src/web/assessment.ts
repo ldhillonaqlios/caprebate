@@ -311,14 +311,20 @@ export function submit(
     const start = (s as unknown as { start?: StartAnswers }).start;
     const startPostcode = start?.postcode !== undefined && start.postcode !== null ? normalisePostcode(start.postcode) : null;
     let firstProperty: string | null = null;
-    for (const p of (s.properties ?? []) as { address?: string | null }[]) {
+    for (const p of (s.properties ?? []) as { address?: string | null; line1?: unknown; town?: unknown; postcode?: unknown; uprn?: unknown }[]) {
       const property_id = id();
       const first = firstProperty === null;
       firstProperty ??= property_id;
-      const pc = first && startPostcode !== null && typeof p.address === 'string'
-        && p.address.toUpperCase().replace(/\s+/g, '').includes(startPostcode.replace(' ', '')) ? startPostcode : null;
-      db.run('INSERT INTO properties (id, business_id, label, postcode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-        [property_id, business_id, p.address ?? 'Unnamed property', pc, at, at]);
+      /* PHASE 156f: the four-stage funnel asks each building's own postcode, street and town (and, picked from the
+         Homedata list, its UPRN). They go on the property, so the paid research after signing can check the UPRN
+         against them and start from it. The old funnel's first-screen postcode stands where a building has none. */
+      const own = typeof p.postcode === 'string' ? normalisePostcode(p.postcode) : null;
+      const pc = own ?? (first && startPostcode !== null && typeof p.address === 'string'
+        && p.address.toUpperCase().replace(/\s+/g, '').includes(startPostcode.replace(' ', '')) ? startPostcode : null);
+      const text = (v: unknown, max: number): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, max) : null);
+      const uprn = typeof p.uprn === 'string' && /^\d{1,14}$/.test(p.uprn) ? p.uprn : null;
+      db.run('INSERT INTO properties (id, business_id, label, postcode, address_line_1, town, uprn, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [property_id, business_id, p.address ?? 'Unnamed property', pc, text(p.line1, 200), text(p.town, 100), uprn, at, at]);
     }
     db.run(
       'INSERT INTO assessments (id, business_id, sector, submitted_at, shown_low_pence, shown_high_pence, created_at) ' +

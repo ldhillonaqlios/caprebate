@@ -43,8 +43,9 @@ import {
 } from './assessment.ts';
 import { F4_ROUTE, F4_SCREENS, F4_TEXT, applyF4, applyReach, allGated, buildings, figureBody, firstIncomplete, isFunnel4, screenBody, stageBar, stageOf, submitEnquiry, type F4Screen } from './funnel4.ts';
 import { searchCompanies, companySearchOffered, COMPANY_SEARCH } from '../connectors/company-search.ts';
-import { checkPostcode, postcodeCheckMissing, POSTCODE_CHECK } from '../connectors/postcode-check.ts';
-import { ADDRESS_LOOKUP, addressLookupMissing, findAddresses } from '../connectors/address-lookup.ts';
+import { checkPostcode, normalisePostcode, postcodeCheckMissing, POSTCODE_CHECK } from '../connectors/postcode-check.ts';
+import { ADDRESS_LOOKUP, addressLookupMissing, findAddresses, searchesToday } from '../connectors/address-lookup.ts';
+import { ADDRESS_LOOKUP_JS } from './address-lookup-script.ts';
 import { loadLetter } from './letter.ts';
 import * as P from './portal.ts';
 import { ENGAGEMENT_SIGNING, shownLetter, signEngagement, signingMissing } from './signing.ts';
@@ -153,6 +154,10 @@ const FAVICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"
   '<rect x="16" y="35.5" width="4" height="4" rx="1"/><rect x="22" y="35.5" width="4" height="4" rx="1"/><rect x="28" y="35.5" width="4" height="4" rx="1"/></g></g></svg>';
 const FAVICON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
   'content-type': 'image/svg+xml', 'x-content-type-options': 'nosniff', 'cache-control': 'public, max-age=86400',
+});
+
+const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
+  'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
@@ -319,6 +324,10 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   // PHASE 156e: the Connections page's one script, which trims a care regulator's list on the Admin's computer.
   if (path === '/assets/register-import.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(REGISTER_IMPORT_JS); return 'handled';
+  }
+  // PHASE 156f: the assessment's address box's one script (src/web/address-lookup-script.ts).
+  if (path === '/assets/address-lookup.js' && method === 'GET') {
+    res.writeHead(200, SITE_JS_HEADERS); res.end(ADDRESS_LOOKUP_JS); return 'handled';
   }
   // 2 Oct 2026: the photo page's one script (src/web/photo-upload-script.ts).
   if (path === '/assets/photo-upload.js' && method === 'GET') {
@@ -535,6 +544,33 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* 30 SEPTEMBER 2026: THE FOUR-STAGE FUNNEL (src/web/funnel4.ts). Buildings, then the checks per building, then who
      owns each and where, then the figure. The server keeps a person on the first screen that is not complete, and a
      follow-up that does not apply is not kept. */
+  /* PHASE 156f (B1): THE ADDRESS BOX'S LIST, FOR THE PAGE'S SCRIPT. The postcode a person has typed on "Your details",
+     once it is a complete UK postcode: the addresses there, as JSON, through the same search (and the same £1 a day
+     cap) as the "Find my address" button. Only for an assessment already at that screen. */
+  if (path === '/assessment/details/addresses' && method === 'POST') {
+    const draft = loadDraft(d.app.db, cookie(req, DRAFT_COOKIE));
+    const s = draft === undefined ? undefined : draft.state as unknown as Record<string, unknown>;
+    const lookups = f4Lookups(d.app);
+    const f = await form(req);
+    const b = s !== undefined && isFunnel4(s) && F4_SCREENS.indexOf(firstIncomplete(s) ?? 'details') >= F4_SCREENS.indexOf('details')
+      ? buildings(s)[Number(f.get('building') ?? 'x')] : undefined;
+    if (draft === undefined || s === undefined || b === undefined || !lookups.address) {
+      res.writeHead(404, JSON_HEADERS); res.end(JSON.stringify({ addresses: [], why: 'Please type your address below.' })); return 'handled';
+    }
+    const pc = normalisePostcode(f.get('postcode') ?? '');
+    if (pc === null) { res.writeHead(200, JSON_HEADERS); res.end(JSON.stringify({ addresses: [], why: null })); return 'handled'; }
+    if (b['postcode'] !== pc) { b['postcode'] = pc; delete b['postcode_check']; delete b['address_results']; delete b['address_searched_for']; b['address_id'] = null; b['uprn'] = null; }
+    await addressSearch(d.app, s, b);
+    saveDraft(d.app.db, draft, now);
+    const found = (b['address_results'] ?? []) as { uprn: string; label: string; line1: string; town: string | null }[];
+    res.writeHead(200, JSON_HEADERS);
+    res.end(JSON.stringify({
+      addresses: found.map((a) => ({ uprn: a.uprn, label: a.label, line1: a.line1, town: a.town })),
+      why: found.length > 0 ? null : typeof b['address_note'] === 'string' ? b['address_note'] : null,
+    }));
+    return 'handled';
+  }
+
   const f4 = F4_ROUTE.exec(path);
   if (f4 && (method === 'GET' || method === 'POST')) {
     const id = f4[1] as F4Screen;
@@ -546,7 +582,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const gap = isFunnel4(s) ? firstIncomplete(s) : 'buildings';
     if (gap !== null && F4_SCREENS.indexOf(id) > F4_SCREENS.indexOf(gap)) { redirect(res, `/assessment/${gap}`); return 'handled'; }
     if (isFunnel4(s) && allGated(s) && F4_SCREENS.indexOf(id) > F4_SCREENS.indexOf('tax')) { redirect(res, '/assessment/no-claim'); return 'handled'; }
-    if (method === 'GET') { html(res, 200, f4Page(draft, id, actor, lookups, [])); return 'handled'; }
+    if (method === 'GET') { f4Html(res, 200, f4Page(draft, id, actor, lookups, []), id, lookups); return 'handled'; }
     const posted = await form(req);
     const find = posted.get('find');
     const r = applyF4(s, id, posted);
@@ -566,18 +602,12 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
         b['postcode_check'] = got.state === 'CHECKED' ? { postcode: got.postcode, council_area: got.council_area, region: got.region, country: got.country }
           : { not_found: got.state === 'NOT_FOUND' ? 'We could not find that postcode. Check it, or carry on with it as typed.' : got.why };
       }
-      if (b !== undefined && what === 'address' && lookups.address) {
-        const got = await findAddresses({ postcode: typeof b['postcode'] === 'string' ? b['postcode'] : '', secrets: d.app.secrets,
-          deps: { audit: d.app.audit, now: d.app.now, transport: d.app.outside },
-          ...(d.app.addressLookup === undefined ? {} : { config: d.app.addressLookup.config, ...(d.app.addressLookup.policy === undefined ? {} : { policy_override: d.app.addressLookup.policy }) }) });
-        b['address_results'] = got.state === 'FOUND' ? got.addresses : [];
-        b['address_note'] = got.state === 'FOUND' ? null : got.why;
-      }
+      if (b !== undefined && what === 'address' && lookups.address) await addressSearch(d.app, s, b);
       saveDraft(d.app.db, draft, now); redirect(res, `/assessment/details#b${at ?? '0'}`); return 'handled';
     }
     saveDraft(d.app.db, draft, now);
     if (r.stay === true) { redirect(res, `/assessment/${id}`); return 'handled'; }
-    if (r.errors.length > 0) { html(res, 400, f4Page(draft, id, actor, lookups, r.errors)); return 'handled'; }
+    if (r.errors.length > 0) { f4Html(res, 400, f4Page(draft, id, actor, lookups, r.errors), id, lookups); return 'handled'; }
     if (id === 'tax' && allGated(s)) { redirect(res, '/assessment/no-claim'); return 'handled'; }
     const next = F4_SCREENS[F4_SCREENS.indexOf(id) + 1];
     redirect(res, next === undefined ? '/assessment/figure' : `/assessment/${next}`); return 'handled';
@@ -1506,7 +1536,7 @@ function home(actor: Actor | undefined): string {
 type F4Lookups = {
   readonly gate: ReturnType<typeof freeGate>; readonly company: boolean; readonly postcode: boolean;
   readonly companyConfig: typeof COMPANY_SEARCH; readonly postcodeConfig: typeof POSTCODE_CHECK;
-  /** 30 Sep 2026: "Find my address" (GoAddress): its switch, its key and its approval. */
+  /** "Find my address" (Homedata since Phase 156f): its switch, its key and its outside-call row. */
   readonly address: boolean;
 };
 
@@ -1521,6 +1551,37 @@ function f4Lookups(app: WebDeps['app']): F4Lookups {
     postcode: postcodeCheckMissing(postcodeConfig, gate).length === 0,
     address: addressLookupMissing(app.addressLookup?.config ?? ADDRESS_LOOKUP, app.secrets, app.addressLookup?.policy).length === 0 };
 }
+
+/**
+ * PHASE 156f (B1): ONE SEARCH FOR THE ADDRESS BOX, for the button and the page's script alike. A postcode already searched
+ * in this assessment is not searched again (the list stands, and narrowing it is free); otherwise Homedata is asked once,
+ * inside the £1 a day cap (today's searches from the audit log, and this visitor's from the draft).
+ */
+async function addressSearch(app: WebDeps['app'], s: Record<string, unknown>, b: Record<string, unknown>): Promise<void> {
+  const pc = typeof b['postcode'] === 'string' ? normalisePostcode(b['postcode']) : null;
+  if (pc !== null && b['address_searched_for'] === pc) return;
+  const visitor = typeof s['address_searches'] === 'number' ? s['address_searches'] : 0;
+  const got = await findAddresses({
+    postcode: typeof b['postcode'] === 'string' ? b['postcode'] : '', secrets: app.secrets,
+    deps: { audit: app.audit, now: app.now, transport: app.outside },
+    used: { today: searchesToday(app.db, app.now()), visitor },
+    ...(app.addressLookup === undefined ? {} : { config: app.addressLookup.config, ...(app.addressLookup.policy === undefined ? {} : { policy_override: app.addressLookup.policy }) }),
+  });
+  if (got.searched) { s['address_searches'] = visitor + 1; b['address_searched_for'] = pc; }
+  b['address_results'] = got.state === 'FOUND' ? got.addresses : [];
+  b['address_note'] = got.state === 'FOUND' ? null : got.why;
+}
+
+/** PHASE 156f: the funnel's pages, with the address box's one script on "Your details" while "Find my address" is on. */
+function f4Html(res: ServerResponse, status: number, body: string, id: F4Screen, lookups: F4Lookups): void {
+  if (id !== 'details' || !lookups.address) { html(res, status, body); return; }
+  res.writeHead(status, { ...HTML_HEADERS, 'content-security-policy': ADDRESS_PAGE_CSP });
+  res.end(body.replace('</body>', '<script src="/assets/address-lookup.js" defer></script></body>'));
+}
+
+/** The details page's policy: every page's, plus OUR OWN script and calls back to this site. Nothing else loosened. */
+export const ADDRESS_PAGE_CSP = "default-src 'none'; style-src 'self'; img-src 'self' data:; script-src 'self'; connect-src 'self'; " +
+  "form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
 
 function f4Page(draft: Draft, id: F4Screen, actor: Actor | undefined, lookups: F4Lookups, errors: readonly string[]): string {
   const s = draft.state as unknown as Record<string, unknown>;

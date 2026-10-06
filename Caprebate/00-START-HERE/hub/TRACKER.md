@@ -6,15 +6,15 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
-| Ready - Lakhbir action | 30 |
+| Ready - Claude can build | 0 |
+| Ready - Lakhbir action | 29 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 2 |
 | Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 298 |
+| Done | 300 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -71,7 +71,7 @@
 
 ## 01 · FOR LAKHBIR — decisions, appointments, company, governance
 
-78 items.
+77 items.
 
 ### Register with the ICO and put the data protection basics in place
 
@@ -149,14 +149,6 @@
 `12975918660` · **Ready - Lakhbir action** · owner Lakhbir
 
 - Note 2026-09-25 (Phase 151f): Owner type back to Lakhbir: Lakhbir, 25 Sep 2026, "leave as lakhbir and not director".
-
-### Homedata address lookup - you said yes on 22 Sep 2026. Open the account (read the Developer Spec's £50 note first); our lookup is 8p a property, only after signing
-
-`12830173693` · **Ready - Lakhbir action** · owner Lakhbir · Lakhbir Dhillon
-
-- File: `08-monday-doc-exports/12830173693__Does-Homedata-cover-Scotland.md`
-- File: `08-monday-doc-exports/12830173693__Homedata-trial-test-plan.md`
-- Note 2026-09-28 (Phase 153): One email closes this and the address lookup licence row (13003875907): the licence facts come back on the same thread as the account.
 
 ### Do the information governance training and record that it was done
 
@@ -345,6 +337,7 @@
 
 - File: `04-phase-work/phase3/caprebate-address-lookup-source-register-row.md` (attached as 13003875907__Address-lookup-source-register-row.md)
 - Note 2026-09-28 (Phase 153): One email closes this and the Homedata account row (12830173693): the licence email to Homedata answers the cache window, attribution and report use, and the account is opened from the same thread.
+- Note 2026-10-06 (Phase 156f): Same email to Homedata now also asks whether the site area from its title outline may go in a client report (Word question 245; the area stays internal until then).
 
 ### Rate card on the flat 3% fee: the multi-site discount is decided - case by case, agreed by a person, never the engine (24 Sep). Left: whether the uplifts survive
 
@@ -1137,7 +1130,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-33 items.
+32 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1347,17 +1340,11 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 156f - Homedata as the property source: one address box (GoAddress removed), a £1-a-day cap, planning after signing, the site boundary
-
-`13215385357` · **Ready - Claude can build** · owner Claude
-
-- Note 2026-10-06 (Planning 6 Oct 2026): Written 6 Oct 2026 from Lakhbir's decisions (one Homedata address box, GoAddress removed; £1-a-day cap; Homedata planning after signing, PlanIt before; Homedata site boundary; listed buildings not built). On the monday board as item 13215385357. Runs after PR 27.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-298 items.
+300 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -1374,6 +1361,15 @@
 - Note 2026-10-04 (Planning (VOA scrapped)): The Valuation Office's rating list is SCRAPPED (Lakhbir: 'scrap the VOA rating'); not to be asked for. Email 1 is now only about the Rating Cost Guide (fee scale and ageing tables); whether to send it, and the Ordnance Survey email (Word question 11), is Lakhbir's decision. Posted on monday the same day.
 - Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): The Ordnance Survey email DROPPED (Lakhbir: 'OS email no we dont need to send it'). Nothing waits on it: site size and a boundary plan rest on HM Land Registry's conditions; the building outlines use Ordnance Survey's free open data (no letter). Only the Rating Cost Guide question is left, Lakhbir's. Renamed on monday and here.
 - Note 2026-10-04 (Planning (Valuation Office email not sent)): CLOSED, NOT SENT. Lakhbir on the Rating Cost Guide email: 'dont send it'. Neither licence email is sent. The surveyor sets the fee percentage and the ageing method (free 45-minute call, Q9 and Q9a). Done, group Z, on monday and here.
+
+### Homedata address lookup - you said yes on 22 Sep 2026. Open the account (read the Developer Spec's £50 note first); our lookup is 8p a property, only after signing
+
+`12830173693` · **Done** · owner Lakhbir · Lakhbir Dhillon
+
+- File: `08-monday-doc-exports/12830173693__Does-Homedata-cover-Scotland.md`
+- File: `08-monday-doc-exports/12830173693__Homedata-trial-test-plan.md`
+- Note 2026-09-28 (Phase 153): One email closes this and the address lookup licence row (13003875907): the licence facts come back on the same thread as the account.
+- Note 2026-10-06 (Phase 156f): Done: the Homedata account is open (card), HOMEDATA_API_KEY in Vercel and the key file, three logged test lookups PASS on public addresses 6 Oct. Homedata answers Find my address (£1/day cap) and, after signing, address, planning and site boundary on the test website. Licence facts stay on 13003875907 and Word question 245.
 
 ### Confirm there is no existing client data to import into the CRM - the developer's price assumes nothing to import
 
@@ -3100,4 +3096,11 @@
 - Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538874.
 - Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): Step A5 (Google Analytics) dropped for now by Lakhbir; renamed on monday and here.
 - Note 2026-10-05 (Phase 156e): Phase 156e closed 5 Oct 2026: the Admin Connections page; the Welsh and Scottish care regulators' lists on the test website, imported from the page (trimmed on the Admin's computer) with a monthly reminder; Anthropic approved for testing (Sadique, director signed; relayed by Lakhbir) and one invented page read - PASS; Companies House's first test call - PASS. Left (in the sweep): Lakhbir's Zoom test call, the Anthropic answer into the Word document, 'answer it myself' once the notice is published. Homedata, GoAddress, Didit steps stay Lakhbir's. Board: Done, group Z.
+
+### Phase 156f - Homedata as the property source: one address box (GoAddress removed), a £1-a-day cap, planning after signing, the site boundary
+
+`13215385357` · **Done** · owner Claude
+
+- Note 2026-10-06 (Planning 6 Oct 2026): Written 6 Oct 2026 from Lakhbir's decisions (one Homedata address box, GoAddress removed; £1-a-day cap; Homedata planning after signing, PlanIt before; Homedata site boundary; listed buildings not built). On the monday board as item 13215385357. Runs after PR 27.
+- Note 2026-10-06 (Phase 156f): Phase 156f done 6 Oct 2026: Homedata address box (GoAddress removed), £1/day cap, UPRN onto the property and used by the paid research, Homedata planning after signing, site area from the title outline (internal only), title pre-check bug fixed; back end 2,525 pass, total 4,743. Left: Word question 245 (Lakhbir); GoAddress key-file line and account (Lakhbir).
 

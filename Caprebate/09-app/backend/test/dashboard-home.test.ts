@@ -182,32 +182,32 @@ describe('Admin’s tab: people and API keys', () => {
   test('API keys: where each comes from, never a value; saved only with Admin’s own password, sealed, and in use at once; taken off, the key file’s again', async () => {
     const before = made.app.secrets;
     const sealKey = Buffer.alloc(32, 7).toString('base64');
-    made.app.secrets = secretsFromValues({ CAPREBATE_MFA_KEY: sealKey, GOADDRESS_API_KEY: 'file-value-0001', CQC_SUBSCRIPTION_KEY: 'cqc-value-0001' });
+    made.app.secrets = secretsFromValues({ CAPREBATE_MFA_KEY: sealKey, HOMEDATA_API_KEY: 'file-value-0001', CQC_SUBSCRIPTION_KEY: 'cqc-value-0001' });
     try {
       const page = section((await req('admin', '/staff?view=admin')).body, 'keys');
       // 1 Oct 2026, Lakhbir: "not set = red, active = green, set but not active = amber".
-      assert.match(page, /<code>GOADDRESS_API_KEY<\/code> <span class="chip key-on">In use<\/span><\/summary>\s*<p class="help">[^<]*\. From the key file or the website’s settings\.<\/p>/);
+      assert.match(page, /<code>HOMEDATA_API_KEY<\/code> <span class="chip key-on">In use<\/span><\/summary>\s*<p class="help">[^<]*\. From the key file or the website’s settings\.<\/p>/);
       assert.match(page, /<code>ZOOM_CLIENT_SECRET<\/code> <span class="chip key-off">Not set<\/span>/);
       assert.match(page, /<code>CQC_SUBSCRIPTION_KEY<\/code> <span class="chip key-idle">Set, not in use<\/span>[\s\S]*?<p class="help key-why">Why it is not in use: The care regulator lookup is not switched on\.<\/p>/);
       assert.doesNotMatch(page, /CAPREBATE_MFA_KEY<\/code>|HMLR_BG_PASSWORD/, 'the sealing key, or a retired one, was offered');
       assert.doesNotMatch(page, /file-value-0001/);
-      assert.match(page, /<input class="fi" id="kv-GOADDRESS_API_KEY" name="value" type="password"/);
+      assert.match(page, /<input class="fi" id="kv-HOMEDATA_API_KEY" name="value" type="password"/);
       // Not Sales'; and not without Admin's own password.
-      assert.match((await post('sales', '/staff/keys/GOADDRESS_API_KEY', { value: 'x', password: PASSWORD })).body, /Only Admin can change a key/);
-      assert.match((await post('admin', '/staff/keys/GOADDRESS_API_KEY', { value: 'new-value-23456', password: 'not it' })).body, /That is not the password you sign in to this site with/);
+      assert.match((await post('sales', '/staff/keys/HOMEDATA_API_KEY', { value: 'x', password: PASSWORD })).body, /Only Admin can change a key/);
+      assert.match((await post('admin', '/staff/keys/HOMEDATA_API_KEY', { value: 'new-value-23456', password: 'not it' })).body, /That is not the password you sign in to this site with/);
       assert.equal(made.app.db.get<{ n: number }>('SELECT count(*) AS n FROM saved_keys')!.n, 0);
-      const r = await post('admin', '/staff/keys/GOADDRESS_API_KEY', { value: 'new-value-23456', password: PASSWORD });
-      assert.equal(r.location, '/staff?view=admin&done=key-saved#key-GOADDRESS_API_KEY');
+      const r = await post('admin', '/staff/keys/HOMEDATA_API_KEY', { value: 'new-value-23456', password: PASSWORD });
+      assert.equal(r.location, '/staff?view=admin&done=key-saved#key-HOMEDATA_API_KEY');
       const row = made.app.db.get<{ sealed: string }>('SELECT sealed FROM saved_keys')!;
       assert.match(row.sealed, /^cbkey1:/);
       assert.ok(!row.sealed.includes('new-value-23456'), 'kept as text');
-      assert.equal(made.app.secrets.forOwner('GOADDRESS').get('GOADDRESS_API_KEY'), 'new-value-23456', 'not in use');
+      assert.equal(made.app.secrets.forOwner('HOMEDATA_ADDRESS').get('HOMEDATA_API_KEY'), 'new-value-23456', 'not in use');
       assert.equal(made.app.secrets.forOwner('SIGN_IN').get('CAPREBATE_MFA_KEY'), sealKey, 'the other keys were lost');
       const after = (await req('admin', '/staff?view=admin&done=key-saved')).body;
-      assert.match(section(after, 'keys'), /<code>GOADDRESS_API_KEY<\/code> <span class="chip key-on">In use<\/span><\/summary>\s*<p class="help">[^<]*\. Saved here, [^<]*by Dash admin\.<\/p>/);
+      assert.match(section(after, 'keys'), /<code>HOMEDATA_API_KEY<\/code> <span class="chip key-on">In use<\/span><\/summary>\s*<p class="help">[^<]*\. Saved here, [^<]*by Dash admin\.<\/p>/);
       assert.doesNotMatch(after, /new-value-23456/);
       const audit = made.app.db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'KEY_SAVED'")!;
-      assert.equal(JSON.parse(audit.detail).key, 'GOADDRESS_API_KEY');
+      assert.equal(JSON.parse(audit.detail).key, 'HOMEDATA_API_KEY');
       assert.ok(!audit.detail.includes('new-value'), 'the value is in the audit log');
       // A sealed value copied onto another key's name does not open: it is never used, and the page says so.
       made.app.db.run('INSERT INTO saved_keys (id, name, sealed, set_by, set_at) VALUES (?, ?, ?, ?, ?)', [randomUUID(), 'ZOOM_CLIENT_SECRET', row.sealed, 'u-dh-admin', T]);
@@ -215,14 +215,14 @@ describe('Admin’s tab: people and API keys', () => {
       assert.equal(made.app.secrets.forOwner('ZOOM').get('ZOOM_CLIENT_SECRET'), null);
       assert.throws(() => made.app.db.run('UPDATE saved_keys SET sealed = NULL'), /never edited/);
       // Taken off: the key file's value again.
-      assert.equal((await post('admin', '/staff/keys/GOADDRESS_API_KEY/unsave', { password: PASSWORD })).location, '/staff?view=admin&done=key-unsaved#key-GOADDRESS_API_KEY');
-      assert.equal(made.app.secrets.forOwner('GOADDRESS').get('GOADDRESS_API_KEY'), 'file-value-0001');
+      assert.equal((await post('admin', '/staff/keys/HOMEDATA_API_KEY/unsave', { password: PASSWORD })).location, '/staff?view=admin&done=key-unsaved#key-HOMEDATA_API_KEY');
+      assert.equal(made.app.secrets.forOwner('HOMEDATA_ADDRESS').get('HOMEDATA_API_KEY'), 'file-value-0001');
     } finally { made.app.secrets = before; delete (made.app as { baseSecrets?: unknown }).baseSecrets; }
   });
 
   test('without the sealing key nothing can be saved, and the page says what is missing', async () => {
     const before = made.app.secrets;
-    made.app.secrets = secretsFromValues({ GOADDRESS_API_KEY: 'file-value-0001' });
+    made.app.secrets = secretsFromValues({ HOMEDATA_API_KEY: 'file-value-0001' });
     const was = (made.app as { baseSecrets?: unknown }).baseSecrets;
     (made.app as { baseSecrets?: unknown }).baseSecrets = made.app.secrets;
     try {

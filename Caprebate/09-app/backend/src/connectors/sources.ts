@@ -314,18 +314,19 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     rate_basis: 'Meta limits by the number’s messaging tier (read 30 Sep 2026); sixty a minute is OUR cautious limit',
     timeout_ms: 15_000, max_bytes: 64 * 1024, max_attempts: 1,
   },
-  GOADDRESS: {
-    /* 30 SEPTEMBER 2026 — "Find my address" at the assessment (src/connectors/address-lookup.ts). A PROCESSOR: GoAddress,
-       https://portal.goaddress.io/api/address/{postcode} with a bearer token (goaddress.io/docs.html, read 30 Sep 2026).
-       Its site names no company and no hosting place, so the row says US (outside the UK) until GoAddress says where,
-       and the transfer was APPROVED FOR TESTING on 30 September 2026 by Sadique Maskeen, relayed by Lakhbir ("sadique
-       approves"). What is sent: a postcode, nothing else. The free plan is 100 lookups; paid plans count a day's lookups,
-       so sixty a minute is OUR cautious limit. A lookup is safe to repeat. */
-    service_id: 'GOADDRESS', register_source: null,
-    base_url: 'https://portal.goaddress.io', region: 'US', international_transfer_approved: true,
-    rate: { limit: 60, window_ms: 60 * 1000 },
-    rate_basis: 'GoAddress limits lookups a day by plan (read 30 Sep 2026); sixty a minute is OUR cautious limit',
-    timeout_ms: 8_000, max_bytes: 512 * 1024, max_attempts: 2,
+  HOMEDATA_POSTCODE: {
+    /* PHASE 156f, 6 OCTOBER 2026 — "Find my address" at the assessment (src/connectors/address-lookup.ts), in place of
+       GoAddress (removed the same day). Homedata's postcode search: GET /address/postcode/{postcode}/, 2 tokens (2p).
+       What is sent: a postcode, nothing else. UK, so no transfer. Its own row, not HOMEDATA_ADDRESS's, because it is not
+       a register lookup for a signed client: it runs on the public assessment, before anything is signed, and nothing
+       from it is stored as a register fact. It shares Homedata's bucket (one API key is what the supplier limits).
+       Past our own £1 a day cap (ADDRESS_SEARCH_CAP) the box makes no call at all. */
+    service_id: 'HOMEDATA_POSTCODE', register_source: null,
+    base_url: 'https://api.homedata.co.uk', region: 'UK', international_transfer_approved: false,
+    rate: { limit: 100, window_ms: FIVE_MIN }, rate_bucket: 'HOMEDATA',
+    rate_basis: 'NOT PUBLISHED, as for the address lookup: per API key, 429, no number given anywhere (read 23 Sep 2026)',
+    timeout_ms: 8_000, max_bytes: 1 * MB, max_attempts: 2,
+    cost_pence: 2,
   },
   CLAUDE_DOCUMENTS: {
     /* THE TRANSFER: Approved FOR TESTING on 5 October 2026 - Sadique Maskeen (data protection officer) approved Anthropic
