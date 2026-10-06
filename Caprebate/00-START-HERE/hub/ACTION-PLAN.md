@@ -1047,7 +1047,207 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 157 — Sweep and stress-test (the recurring one, always last)
+## PHASE 157a — the engine and the cost model: the pooling questions, the unknown seller, and the cost model in the survey pack
+
+ **Model: Opus. Written 6 October 2026 by the Phase 157 sweep** from three loose ends the sweep held (Phases 153e, 153g, 154a1 and 155 parked them there). All three are buildable today; nothing waits on anybody. Each change to the engine is a change to the site file, so the harness must stay green in both modes and every new check must be proved red on the pre-change copy first.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch FROM MAIN; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet (update_doc add_markdown_content with no after_block_id; the API
+   doc id for adding is 46840326). Same entry at the top of your record.
+3. DELETE THIS SECTION from the top of the run sheet AND from
+   hub/ACTION-PLAN.md.
+4. Set this phase's board item to its true status and clear "Claimed by";
+   write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+RULES FOR EVERY STEP: the engine is "Caprebate site.html", one level above the
+tree; change it there and re-run the extractor (never hand-edit generated/).
+N4 throughout: "not sure" and never-asked behave the same, and neither relieves.
+Every new harness check is proved red against a .bak copy (COORDINATES: the
+site redirect hook) before it is counted.
+
+1. THE FIXED-VALUE QUESTIONS AFTER A POOLING NIL (from Phase 154a1, line 13(a)).
+   Rulebook A Addendum 1 gates the fixed-value questions behind the pooling
+   answer: a seller KNOWN to have been able to claim, who never claimed, and who
+   stopped owning the fixtures after April 2014 already takes the claim to nil
+   (CB_S187A.poolingAssess, F1), so the questions after it are not asked.
+   WHAT THE SWEEP FOUND, SO NOBODY RE-DERIVES IT: hiding them is not one line.
+   In every sector (prefixes Q, D, S, G, H) the sector's own x14fvr question
+   comes BEFORE the CB_S187A block, and inside the block 14po, 14pol and 14pold
+   come BEFORE 14pod - the cessation date poolingAssess reads. So:
+     (a) ask 14pod first in the block, and the block before x14fvr (or move
+         x14fvr after 14pod), in all five sectors;
+     (b) hide x14fvr and the block's other questions (14po, 14pol, 14pold, 14iv,
+         14ivd, 14dvs, 14dvsd, 14dvsv, and the CB_CTAQ questions that read the
+         fixed-value track) when poolingAssess(s) gives OUT.NIL; keep 14pod on
+         rawGate (it already is, Phase 154a1);
+     (c) harness checks both ways (hidden on a nil, asked otherwise, and the
+         "not sure" and absent cases asked), the pack's legal check
+         (src/web/pack-legal.ts) still reading the same facts, and the AE5
+         fingerprints re-pinned question by question (CB_AE5_DUMP) with the
+         re-pin proved against the pre-change copy.
+2. THE SELLER WHOSE ENTITLEMENT IS NOT KNOWN (from Phase 154a1, line 13(b)).
+   A seller whose ENTITLEMENT is "not sure" or never asked, and who never claimed,
+   still gets the upper half of the band at Stage 3 with the words "no prior
+   entitlement ... (best case)" (site file, the five sectors' Stage 3: search
+   "best case"). Rulebook B says that seller is undetermined between branches B
+   and C, so the figure is nil at the bottom with a flag. And for a seller KNOWN
+   entitled who never claimed and sold before April 2014 (branch D) the figure is
+   right but the words are not: use Rulebook B section 6's replacement wording.
+   Harness checks for "not sure" AND absent; re-run
+   03-app/caprebate-switch-direction.cjs and update its counts where they move.
+3. THE COST MODEL IN THE SURVEY PACK (from Phase 153e, with 153g's and 155's
+   additions). 04-phase-work/phase9/caprebate-cost-model.cjs has preliminaries by
+   job size, the index factor from a table, the insurance cross-check and the
+   past-claim limits, all run in its own test system (TEST_SYSTEM_GATES). The back
+   end's survey pack does not use it at all. Wire it in: the preliminaries, the
+   index and the insurance check, each shown to the surveyor as a test placeholder,
+   with tests, every gate still off in the shipped model. Show its results in the
+   pack's chapters: the index dates in chapter 11, the checks in chapter 14, and
+   the phase3 module's £/m² review flag (Phase 153e line 14) in chapter 22. The
+   index factor reads the real BCIS table where one has been imported
+   (bcisIndexTable, 09-app/backend/src/web/bcis-index.ts; node src/cli.ts
+   import-bcis-index), and the labelled placeholder only in the test system -
+   never a guess (tracker 12804374707's buildable half).
+   ALSO: the cost model's own text still says three of its tables are "NOT
+   CLEARED - ... VOA licence" (lines 179, 191 and 325 on 6 Oct 2026: the
+   professional fees 12804380489, the ageing 12927234375 and 12804317685). The
+   Valuation Office emails were dropped on 4 Oct 2026: the surveyor sets the fees
+   percentage and the ageing method (call questions 9 and 9a; SV-S10 since the
+   6 Oct sweep). Correct the text, not the gates.
+```
+
+---
+
+## PHASE 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts
+
+ **Model: Opus. Written 6 October 2026 by the Phase 157 sweep**, from the tracker audit it ran: seven papers still describe GoAddress, a live WhatsApp transfer, the Valuation Office or a Homedata account not yet opened, and one decision is buildable as a test default. None needs anybody to answer anything first. Every paper stays a draft for its reviewer; change what is out of date and mark what changed, never the reviewer's own words.
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch FROM MAIN; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet (update_doc add_markdown_content with no after_block_id; the API
+   doc id for adding is 46840326). Same entry at the top of your record.
+3. DELETE THIS SECTION from the top of the run sheet AND from
+   hub/ACTION-PLAN.md.
+4. Set this phase's board item to its true status and clear "Claimed by";
+   write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+RULES FOR EVERY STEP: the facts to write from are in ACTION-PLAN.md's DECIDED -
+DO NOT REOPEN list and the Phase 156c, 156e and 156f records in PHASE-HISTORY.md.
+GoAddress was removed on 6 Oct 2026 (Homedata, in the UK, answers "Find my
+address", postcode only, capped at £1 a day). WhatsApp is a manual upload since
+5 Oct (no transfer to Meta from our system). Google Analytics is dropped for now.
+The Valuation Office's rating list is scrapped. Homedata's account is open with
+a card since 6 Oct. Each paper's tracker row is named below; note each change on
+it and on the board.
+
+1. The privacy notice draft (12818279787;
+   08-monday-doc-exports/12818279787__Section-1-Who-we-are-and-how-to-contact-us.md):
+   the VOA source row (about line 123) goes; Homedata is used at the assessment
+   (the postcode only, to list addresses) as well as after signing (about line
+   141); "[No account has been opened yet ...]" (about line 224) is out of date.
+2. The list of who receives client personal data (12927931400;
+   06-commercial-and-governance/Caprebate-Recipients-of-Client-Personal-Data-v1.md,
+   about lines 49 and 60): GoAddress (P12) removed; WhatsApp (P11) is a manual
+   upload with no transfer from us; Google Analytics (P15) dropped for now;
+   Homedata at the assessment added.
+3. Three papers with the same stale rows: Retention Determinations (12945903194,
+   about line 645: "GoAddress, which 'Find my address' now uses"); the Business
+   Continuity and Disaster Recovery Plan (12552682536, about lines 92 and 169:
+   GoAddress and WhatsApp Cloud recovery rows); Breach and Transparency
+   Communications (12927894775, about line 1500: the WhatsApp and GoAddress
+   transfers).
+4. The suppliers' breach duties (12927625052;
+   06-commercial-and-governance/Caprebate-Supplier-Breach-Notification-Duties-v1.md):
+   Homedata "Account not opened" (about line 28) is out of date; read and add the
+   published terms of Didit, Cloudflare, Zoom and Turso, and read Vercel's terms
+   (the paper says "not read for this page"). Checking any SIGNED account terms
+   stays Lakhbir's.
+5. The job cost model (12955448913;
+   04-phase-work/phase9/caprebate-job-economics.cjs, about lines 301-328, and its
+   .md section 6): it still uses Homedata's 8p list price and says an enquiry
+   that never signs cannot have cost a lookup. Since Phase 156f the address box
+   costs 2p before signing (capped at £1 a day) and the paid research about 17p
+   after (1p property, 5p address, 1p title check, 5p planning, 5p boundary).
+   Correct it with its phase9 test, and check the SHAPE the sweep's point 3a
+   names (a price read once and never re-read) everywhere Homedata's price is
+   written.
+6. The rate-card uplifts (12804368154, Word question 235): build them as a
+   switched test default, the way Phase 153d built questions 33 and 34, off,
+   with tests, and turn the question into a viability check for Lakhbir.
+```
+
+---
+
+## PHASE 158 — Sweep and stress-test (the recurring one, always last)
 
 
  **Model: Opus.** **This is the one section that is never deleted.** It renumbers itself forward each time it runs and stays at the bottom of this list.
@@ -1118,64 +1318,29 @@ COUNT THE SUITE as `node --test $(git ls-files 'test/*.test.ts')` (plus any new
   OneDrive stalled - wait and run it again.
 SAY WHICH COPY YOU READ: the Mac, or a cloud clone (where five Mac-only tests
   always fail: Disposal, invoice-fraud SOP, rulebooks, logo, phase144a).
-WORD QUESTIONS 230 AND 231 are settled in practice: Turso rebuilt on 1 Oct and
-  Lakhbir said "yes its working" (PHASE-HISTORY ~11017); the Blob store holds the
-  survey photos (~11132, ~11155). Write both answers into the Word document.
+WORD QUESTIONS 230 AND 231 ARE CLOSED (the Phase 157 sweep, 6 Oct 2026): Turso
+  rebuilt on 1 Oct ("yes its working", PHASE-HISTORY ~11017) and the Blob store
+  holds the survey photos (the first iPhone send arrived, 2 Oct). The "STILL OPEN,
+  AND ONLY LAKHBIR CAN CLOSE THEM" paragraph in step 3 below is history.
 THE VERCEL CONNECTOR now reaches the project (caprebate-test): deployments,
   setting NAMES (never values) and redeploys; the browser pane reads the site
   while Lakhbir is signed in. The "Claude cannot" lines below are out of date.
 THE NOTES AT THE END (the Acer copy, update_block, 06-.../_doc.xml) are history:
   the Acer is retired and _doc.xml is gone.
-THE NUMBER: phases 153f, 154a1, 155 and 156 were added above this one on 3 Oct, so
-  this sweep's heading is now PHASE 157.
-FROM PHASE 153c (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the enquiry
-  clean-up (src/web/enquiry-retention.ts, sweep-enquiries) deletes closed
-  contact-form enquiries only. A funnel enquiry is a CRM lead (migration 061,
-  leads.enquiry_id), tied to its organisation, contacts and bookings, so the
-  job only COUNTS lost funnel leads past twelve months. Write the deletion path
-  for a lead (what goes, what stays, the deletion-log entry), with its test,
-  for the officer to check alongside Word question 222.
-FROM PHASE 153d (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the draft
-  introducer terms (06-commercial-and-governance/Caprebate-Introducer-Terms-
-  DRAFT-v0.1.md) say a firm is "registered" once it has SIGNED them. The back
-  office counts any firm marked ACCOUNTANT_FIRM (introducers.ts onFeeInvoiced).
-  Once the director and the solicitor agree the terms, record the signature
-  (a dated, append-only row) and pay model C only to a firm with one, with
-  its test. Model C stays off until then.
-FROM PHASE 153e (4 Oct 2026), A LOOSE END WITH ITS HOME HERE: the cost model
-  (04-phase-work/phase9/caprebate-cost-model.cjs) now has preliminaries by job
-  size, the index factor from a table, the insurance cross-check and the
-  past-claim limits, all run in its own test system (TEST_SYSTEM_GATES). The
-  back end's survey pack does not use the cost model at all. Wire it into the
-  pack (the preliminaries, the index and the insurance check, each shown as a
-  test placeholder to the surveyor), with tests, and keep each gate off in the
-  shipped model.
-  ADDED 4 Oct 2026 by Phase 153g: when it is wired in, show its results in the
-  pack's chapters too — the index dates in chapter 11 and the checks in 14 —
-  and bring the phase3 module's £/m² review flag (Phase 153e line 14) into
-  chapter 22. Neither is in the back end today.
-  ADDED 4 Oct 2026 by Phase 155: the index factor (Phase 153e line 12) is to
-  read the real BCIS table when one has been imported (bcisIndexTable in
-  09-app/backend/src/web/bcis-index.ts; node src/cli.ts import-bcis-index),
-  and the labelled placeholder only in the test system; never a guess.
-FROM PHASE 154a1 (4 Oct 2026), TWO LOOSE ENDS WITH THEIR HOME HERE, both
-  buildable today. Line 13 built the s.187A pooling requirement (R-B1,
-  CB_S187A.poolingAssess) for a seller KNOWN to have been able to claim.
-  (a) The fixed-value questions (14po, 14fvr and the rest) are still asked
-      of a seller the pooling requirement already takes to nil. Rulebook A
-      Addendum 1 says they are gated behind the pooling answer. Hide them
-      then - keep the sale-date question (14pod), which the pooling check
-      reads - with harness checks both ways and the pack's legal check.
-  (b) A seller whose ENTITLEMENT is not known ("not sure" or never asked) and
-      who never claimed still gets the upper half of the band at Stage 3,
-      with the words "no prior entitlement ... (best case)". Rulebook B says
-      that seller is undetermined between branches B and C, so it should
-      be nil at the bottom with a flag (N4: "not sure" and absent alike).
-      And for a seller known entitled who never claimed and sold before
-      April 2014 (branch D) the figure is right but those words are not:
-      use Rulebook B section 6's replacement wording. Re-run
-      03-app/caprebate-switch-direction.cjs after both.
-FROM PHASE 156e (5 Oct 2026), THREE LOOSE ENDS WITH THEIR HOME HERE.
+THE NUMBER: phases 153f, 154a1, 155 and 156 were added above this one on 3 Oct, and
+  the Phase 157 sweep (6 Oct 2026) inserted 157a and 157b before it, so this
+  sweep's heading is now PHASE 158.
+LOOSE ENDS THAT HAD THEIR HOME HERE, AND WHERE EACH WENT (the Phase 157 sweep, 6 Oct 2026):
+  DONE BY PHASE 157: the lost funnel enquiry's deletion path (from 153c;
+    leadDeletionPlan, migration 093, test/phase157.test.ts); the introducer terms
+    signature and model C only for a signed firm (from 153d; migration 094); the
+    Anthropic answer in the Word document under question 172 (156e (b)); Word
+    questions 230 and 231 closed (Turso and the Blob store work), and 207 closed.
+  MOVED TO PHASE 157a: the cost model in the survey pack (153e, 153g, 155); the
+    two s.187A engine changes (154a1 (a) and (b)), with what the sweep found
+    about the question order.
+  STILL HERE:
+  FROM PHASE 156e (5 Oct 2026):
   (a) BUILDABLE once Lakhbir holds one short Zoom test call (156d B1, then
       156e B5; he said "I'll do it later"): ask him what "Ask Zoom how long
       it lasted" showed on that call's page, or its Meeting ID and run
@@ -1183,15 +1348,14 @@ FROM PHASE 156e (5 Oct 2026), THREE LOOSE ENDS WITH THEIR HOME HERE.
       FOUND or "not on our plan" in hub/KEYS-AND-SWITCHES.md's Zoom row; if
       Zoom's refusal reads as NOT_FOUND, widen PLAN_REFUSAL in
       src/connectors/zoom.ts to its real words, a test red first.
-  (b) BUILDABLE: write the answer into the Word questions document
-      (AMENDMENT 2) under "Which AI provider reads client documents, and on
-      what terms?": "Recorded answer (5 Oct 2026, Lakhbir, in chat): Sadique
-      approved Anthropic as the document reader and the director signed,
-      for testing - 'Yes, for testing'." Leave the question open for real
-      clients; rebuild QUESTIONS-WORD-HEADINGS.txt if a title moves.
   (c) BLOCKED on the published privacy notice (Sadique; the free gate):
       156e B2, "answer it myself" (Word answer 180) on the four-stage
       funnel's details screen, when the free gate opens. Built then.
+  FROM THE PHASE 157 SWEEP, for Lakhbir's one-word answers (none blocks a build):
+      whether the free land-boundary test download (12830205914) is still wanted
+      now Homedata's title outline gives the site area; whether a test email to
+      contact@ reached his inbox (13093310525); and whether the "DELETE" files
+      on the OneDrive web page are gone (13053370722).
 ═══════════════════════════════════
 
 DO NOT REOPEN what COORDINATES lists under "DECIDED - DO NOT REOPEN" (added
@@ -1702,7 +1866,11 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 154a1 — the faults the 3 October sweep found, fixed (13 lines) — **done 4 Oct 2026**, see PHASE HISTORY |  Lakhbir, 3 Oct: "these should be fixed in phase 154a1" |
 |  Claude |  Phase 155 — the services the plans name but nobody has built (CIW, the Care Inspectorate, the VOA list, BCIS, the reply timer, the three server files) — **done 4 Oct 2026**, see PHASE HISTORY (the VOA list not built: its licence forbids our use) |  Lakhbir, 3 Oct: "this needs to be phase 156" (renumbered 155 when the services phase moved near the end) |
 |  Claude and Lakhbir |  Phases 156a to 156e — every outside service, split on 4 Oct 2026 (156a the missing keys in Vercel, Ordnance Survey and Cloudflare — **done 5 Oct 2026**, see PHASE HISTORY; 156b email — **done 5 Oct 2026**; 156c WhatsApp by manual upload — **done 5 Oct 2026**; 156c WhatsApp; 156d Zoom on the free plan, one shared host — **done 5 Oct 2026**; 156e the Connections page, the care regulators' lists and the Anthropic and Companies House test reads — **done 5 Oct 2026** (three loose ends in the sweep); 156e the rest): PART A is Lakhbir's, step by step; PART B is Claude's, after each step |  Lakhbir, 3 Oct: "all API's needed should be phase 155" |
-|  Claude |  Phase 157 — the sweep, always last |  The standing rule |
+|  Claude |  Phase 156f — Homedata as the property source — **done 6 Oct 2026**, see PHASE HISTORY |  Lakhbir's decisions of 6 Oct |
+|  Claude |  Phase 157 — the sweep — **done 6 Oct 2026**, see PHASE HISTORY; it inserted 157a and 157b |  The standing rule |
+|  Claude |  Phase 157a — the engine and the cost model: the pooling questions, the unknown seller, the cost model in the survey pack |  Loose ends the sweep held since 153e and 154a1 |
+|  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
+|  Claude |  Phase 158 — the sweep, always last |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 

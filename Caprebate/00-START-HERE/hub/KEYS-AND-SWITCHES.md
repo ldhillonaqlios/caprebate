@@ -14,7 +14,7 @@ database is in AWS us-east-1, in the USA; the Blob store's region is not stated)
 when the production host is chosen — the spec's UK-residency rule (DS-W11). Lakhbir, 3 Oct 2026: "we are currently in
 test mode, developers will change this".
 
-**4 October 2026 (planning): Phase 156 was split into 156a to 156e.** A "156 A…" or "156 B…" step named below is the old numbering; the table in PHASE-HISTORY.md's Phase 156a record (5 Oct 2026; Phase 156a itself is done and removed from the plan) says where each one wentmd says where each one went (for example 156 A1 Turnstile is now 156a A3; 156 A5 CQC and EPC is now 156a A1). The keys still missing from Vercel (EPC, CQC, Ordnance Survey, the two Turnstile keys) are Phase 156a, step by step.
+**4 October 2026 (planning): Phase 156 was split into 156a to 156e.** A "156 A…" or "156 B…" step named below is the old numbering; the table in PHASE-HISTORY.md's Phase 156a record (5 Oct 2026; Phase 156a itself is done and removed from the plan) says where each one wentmd says where each one went (for example 156 A1 Turnstile is now 156a A3; 156 A5 CQC and EPC is now 156a A1). The keys that were missing from Vercel (EPC, CQC, Ordnance Survey, the two Turnstile keys) were set by Lakhbir on 5 Oct 2026 (Phase 156a, done).
 
 **The Admin "Connections" page** (`/staff/connections`, Phase 156e, 5 Oct 2026) shows the same thing live from the code: each service's keys by name (there or not), its switch, testing only or not, its last call and what it waits on. When this page and that one differ, the website is right.
 
@@ -31,7 +31,7 @@ test mode, developers will change this".
 | Companies House "Find my company" | Company search at the assessment | `COMPANIES_HOUSE_API_KEY` (yes) | Live under a testing waiver | Privacy notice |
 | Postcodes.io | Postcode check | none | Live under a testing waiver | Privacy notice |
 | Homedata "Find my address" | The address box at the assessment (Phase 156f, 6 Oct 2026, in place of GoAddress) | `HOMEDATA_API_KEY` (yes) | Live under a testing waiver: the postcode only, 2p a search, **capped at £1 a day** (50 a UK day, 5 per visitor; `ADDRESS_SEARCH_CAP`); the Connections page shows today's count | Privacy notice naming Homedata (UK, so no transfer) |
-| ~~GoAddress~~ | REMOVED 6 Oct 2026 (Phase 156f): connector, key, call row, tests and Connections row taken out. Lakhbir deleted `GOADDRESS_API_KEY` from Vercel; the key file line and the GoAddress account are his to delete and close (never take its paid plan) | — | — | — |
+| ~~GoAddress~~ | REMOVED 6 Oct 2026 (Phase 156f): connector, key, call row, tests and Connections row taken out. Lakhbir deleted `GOADDRESS_API_KEY` from Vercel and the key file and closed the GoAddress account (6 Oct 2026) | — | — | — |
 
 ## Built, but missing keys or switched off
 

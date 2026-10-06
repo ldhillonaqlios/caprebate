@@ -4,7 +4,7 @@
   "_how_it_stays_honest": "The check FAILS when a register's text contains a board id this file does not classify, and FAILS when this file names an id the register's text no longer contains. So it cannot quietly go stale: adding an entry to a register without recording it here is a red run, and so is deleting one.",
   "_entry_shapes_in_use": "Two, and the second exists because of a tooling limit recorded in COORDINATES: a row in the register's Appendix 3 index table, or a prose note declaring an entry. A row cannot be added to an existing Monday table through the document API, so every entry added after a register's table was built is declared in prose beside it. SV-S7, SV-S8, SDP-L3, SDP-V3, SDP-L4, SDP-L5, SDP-P5 to SDP-P8 and SDP-V4 are all of that second kind. Since 15 September 2026 (Phase 132d) every entry code in all three registers carries its register's prefix - SV- for FOR THE SURVEYOR, ACC- for FOR THE ACCOUNTANT, SDP- for FOR THE SOLICITOR, THE DPO AND THE DEVELOPER - in the registers themselves and in the refs here; the check matches board ids and counts, never a ref's code.",
   "version": "1.6",
-  "written": "4 October 2026",
+  "written": "6 October 2026",
   "writtenBy": "Phase 153c (two entries added: SDP-P41 and SDP-P42, built on our recommendation for the data protection officer to check). Phase 153b (four entries added: ACC-A17 to ACC-A20, tax-adviser switches twenty-six to twenty-nine). Phase 153a (one entry added: ACC-A16, the twenty-fifth tax-adviser switch). Phase 151d wrote v1.3 (the register files moved to 00-START-HERE/hub/ when monday.com was dropped; no entry changed). Phase 146i wrote v1.2, Phase 146h v1.1, Phase 146g v1.0",
   "board": 18422317809,
   "awaitingLabel": "Built - awaiting sign-off",
@@ -391,6 +391,12 @@
           "id": "12955448913",
           "how": "prose",
           "why": "Written up in full on 9 September 2026 with a sign-off block and no board item number, which is why the first run of the check reported it as housed nowhere. The number was added to the register the same day."
+        },
+        {
+          "ref": "SV-S10 the professional fees on top of the build cost",
+          "id": "12804380489",
+          "how": "prose",
+          "why": "Added by Phase 157 (the sweep), 6 Oct 2026: built and switched off, waiting only on the surveyor's percentage (call question 9a); moved from Blocked - question to Built - awaiting sign-off, owner Surveyor. Prose entry in the Phase 157 note at the end of the register."
         }
       ],
       "mentions": [
@@ -835,6 +841,12 @@
           "id": "13200745490",
           "how": "prose",
           "why": "Added by Phase 153c, 4 Oct 2026: the clean-up job ENQUIRY_RETENTION, built and switched off (Word question 222), awaiting the officer's approval of the period. Created on monday.com in group 01 at Built - awaiting sign-off with owner Solicitor/DPO. Prose entry in the Phase 153c note at the end of the register."
+        },
+        {
+          "ref": "SDP-P43 measuring the address match on 200 real properties",
+          "id": "13199468746",
+          "how": "prose",
+          "why": "Added by Phase 157 (the sweep), 6 Oct 2026: the tool is built and refuses to run until the officer answers Word question 200; moved from Blocked - question to Built - awaiting sign-off. Prose entry in the Phase 157 note at the end of the register."
         }
       ],
       "mentions": [

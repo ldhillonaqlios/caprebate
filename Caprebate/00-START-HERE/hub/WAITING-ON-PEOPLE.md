@@ -44,7 +44,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       documented layout and tested on invented files only (Phase 156c). Put it in 09-app/backend/test/fixtures/whatsapp-export.
 - [x] Sadique: approve Cloudflare (US) for testing, so the contact form's server check can run (Phase 156a A3.6). _(Approved 5 Oct 2026, relayed by Lakhbir; `sources.ts` updated the same day.)_
 - [ ] The API steps in Phase 156 PART A (Turnstile, WhatsApp, the reply timer, IONOS DKIM, CQC/EPC/Homedata keys into
-      Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom: two free scopes and a check that the host is contact@ (no payment, one shared host: both DONE 5 Oct 2026, Phase 156d), Anthropic paperwork (DONE for testing, 5 Oct 2026), GoAddress (REMOVED 6 Oct 2026, Phase 156f: Homedata answers the address box; left for Lakhbir: delete `GOADDRESS_API_KEY` from the key file and close the GoAddress account), Didit (how long it keeps results, in its console), Homedata (its key in Vercel and a balance)). Phase 156e, 5 Oct 2026, left these three as yours.
+      Vercel, a free Ordnance Survey Data Hub key into Vercel (`OS_DATA_HUB_API_KEY`, for the report's site plan, Phase 153f), Zoom: two free scopes and a check that the host is contact@ (no payment, one shared host: both DONE 5 Oct 2026, Phase 156d), Anthropic paperwork (DONE for testing, 5 Oct 2026), GoAddress (REMOVED 6 Oct 2026, Phase 156f: Homedata answers the address box; Lakhbir deleted `GOADDRESS_API_KEY` from the key file and closed the GoAddress account the same day), Didit (how long it keeps results, in its console), Homedata (its key in Vercel and a balance)). Phase 156e, 5 Oct 2026, left these three as yours.
 - [ ] Zoom: hold one short test call and press "Ask Zoom how long it lasted" on its page — say what it shows (whether the free plan gives a call's length). Carried to the sweep, Phase 157. Now Phases 156a to 156e. _Google Analytics was dropped for now on 4 Oct 2026; the marketing team may pick it up later._
 - [ ] Send a test video from the iPhone through "Show us your building", and supply the tall hero video for the home
       page (PHASE-HISTORY ~11112-11160).
@@ -69,7 +69,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 ## The DPO (Sadique Maskeen)
 
 - [ ] Sign his own appointment.
-- [ ] The 200-address matching test (Word question 200) — the only item at "Blocked - question".
+- [ ] The 200-address matching test (Word question 200) — the tool is built and waits on your answer (SDP-P43; moved to "Built - awaiting sign-off" by the 6 Oct 2026 sweep, which left no item at "Blocked - question").
 - [ ] May we keep a company's type from Companies House ("ltd", "plc", "llp")? Proposed as a permitted field on 4 Oct 2026 (Phase 153b), with its switch off — Word question 240.
 - [ ] Check the Phase 153c builds, each built on our recommendation in the test system (Word questions 37, 55, 56, 162, 165, 178, 181, 182, 183, 184, 192, 193, 201, 208, 219 and 222, each marked "Built 4 October 2026 (Phase 153c)"); the new entries SDP-P41 (healthcare premises import) and SDP-P42 (the enquiry clean-up, off until you approve twelve months).
 - [ ] May the survey pack show the surveyor how much each grant paid? Built hidden — Word question 241 (Phase 153c).
@@ -110,12 +110,12 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       insurance and past-claim limits (10%; 5% and £25,000); the index table; the planning sentence; "Seen on site" or
       "From documents". How many re-shoots before a visit is not built: it waits for your answer.
 - [ ] A second finished claim, not used to tune the cost model, for the past-claim test's empty slot (Word question 139).
-- [ ] The Homedata five-home floor-area comparison waits on the Homedata account and its balance (Phase 156 A5/B3).
+- [ ] The Homedata five-home floor-area comparison: five homes whose floor areas you know (Word question 203). The Homedata account is open with a card since 6 Oct 2026, so nothing else waits.
 
 ## Licences and purchases
 
 - [ ] BCIS; the location and job-size adjustment; the professional fees percentage (from the surveyor, not the Valuation Office: 4 Oct 2026); CIBSE plant
-      lives; Homedata balance; Zoom Pro — before real clients only, not needed for testing (Lakhbir, 5 Oct 2026: Phase 156d runs on the free plan with one shared host, contact@caprebate.co.uk; calls stop at 40 minutes, Zoom keeps no recording, one call at a time; staff as their own Zoom hosts later, when Lakhbir asks: each a free Zoom user under their Cap Rebate sign-in email, and the code already uses it - Phase 153f); GoAddress plan after 100 lookups. (WhatsApp: no cost — since 5 Oct 2026 chats are exported on the phone and uploaded to the record; no Meta connection.)
+      lives; Zoom Pro — before real clients only, not needed for testing (Lakhbir, 5 Oct 2026: Phase 156d runs on the free plan with one shared host, contact@caprebate.co.uk; calls stop at 40 minutes, Zoom keeps no recording, one call at a time; staff as their own Zoom hosts later, when Lakhbir asks: each a free Zoom user under their Cap Rebate sign-in email, and the code already uses it - Phase 153f). (GoAddress: removed 6 Oct 2026, Phase 156f; its key-file line deleted and its account closed by Lakhbir. Homedata: the account is open with a card since 6 Oct 2026.) (WhatsApp: no cost — since 5 Oct 2026 chats are exported on the phone and uploaded to the record; no Meta connection.)
 
 ## For the developers (production, not test)
 

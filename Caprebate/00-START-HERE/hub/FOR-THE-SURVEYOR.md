@@ -1060,4 +1060,10 @@ reasonably be established remotely should require a site inspection before a sur
  **The building price index can be loaded the day BCIS is bought.** The cost model turns today's rebuild price back to the purchase date with an index (your question 147). Until now it had only a table of invented points, labelled as such. Now one command reads the index file downloaded from BCIS — monthly or quarterly figures — and keeps it on our server, outside the code, because BCIS's licence lets named users use it but not copy it. Nothing for you to decide: which BCIS product is bought is Lakhbir's (Word question 218), and the survey pack starts using the index when the pack is joined to the cost model (Phase 157). **And in Wales and Scotland**, a care home's registered places now come from the regulator's own published list, as they already did from the CQC in England, once the lookups are switched on.
 
 
- **And the board's own total at the close of Phase 155, 4 October 2026, counted in code: 126 items carry that status**: fifty in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-seven with the solicitor, the data protection officer and the developer. Fifty plus nine plus sixty-seven is 126.
+## Note added 6 October 2026 (Phase 157, the sweep) — one new entry
+
+-  **SV-S10 — NEW ENTRY. The professional fees on top of the build cost (your call question 9a).** Board item 12804380489. The cost model adds a flat 15% for the design team's fees the client paid on top of the build cost (not our own fee). A banded scale with building-type adders is built and switched off, with empty tables, waiting on your percentage. It was filed as "Blocked - question" behind a Valuation Office licence we no longer need: since 4 October the percentage is yours to set (call question 9a). **What we are asking you:** what percentage, or which bands, should the model use?
+
+**Marked 6 October 2026 by Phase 157 (the sweep): one entry moved into this register, so its size is now ten entries covering ten board items, all ten at Built — awaiting sign-off.**
+
+ **And the board's own total at the close of Phase 157 (the sweep), 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.
