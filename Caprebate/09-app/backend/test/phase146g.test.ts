@@ -121,7 +121,8 @@ async function runUpload(w: World, o: Opts = {}): Promise<{
     secrets: o.keyed === false ? emptySecrets() : secretsFromValues({ ANTHROPIC_API_KEY: FAKE_KEY }),
     switches: o.switches ?? CLAUDE_SWITCHES,
     limiter: new RateLimiter(), sleep: async () => {},
-    ...(o.approved === false ? {} : { policy_override: APPROVED }),
+    // PHASE 156e: the row is approved for testing now (5 Oct 2026), so "not approved" is said here rather than inherited.
+    policy_override: o.approved === false ? { international_transfer_approved: false } : APPROVED,
     actor_role: 'CLIENT',
     gate: { free_gate_open: false, engagement_signed: true, switched_on: (o.switches ?? CLAUDE_SWITCHES).DOCUMENT_READING },
     ...(o.discriminants === undefined ? {} : { discriminants: o.discriminants }),

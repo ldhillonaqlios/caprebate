@@ -306,7 +306,9 @@ describe('one way to call outside, and every call is written down', () => {
        The refusal itself still has to work, so it is now asked of a row whose address is taken away for this one
        call. That tests the mechanism rather than an accident of configuration. */
     assert.match((await call('EPC', { ...d, policy_override: { base_url: null } })).why, /address is not confirmed/);
-    assert.match((await call('CLAUDE_DOCUMENTS')).why, /outside the UK and EU/);
+    /* 5 OCT 2026: Cloudflare, the last service outside the UK and EU still waiting, was approved for testing, so no row is
+       left unapproved. As with the address above, the approval is taken away for this one call to test the mechanism. */
+    assert.match((await call('CLOUDFLARE_TURNSTILE', { ...d, policy_override: { international_transfer_approved: false } })).why, /outside the UK and EU/);
     assert.match((await call('NOBODY')).why, /not in the list/);
     const live = await call('EPC', { ...d, transport: liveTransport, env: { NODE_TEST_CONTEXT: 'child-v8' } });
     assert.match(live.why, /tests use recorded answers/);
@@ -336,7 +338,10 @@ describe('one way to call outside, and every call is written down', () => {
       // approval of Zoom (relayed by Lakhbir, for testing). Any other row turned on outside the UK and EU is refused.
       // PHASE 153f, 4 Oct 2026: WHATSAPP_MEDIA is Meta's file host for the same WhatsApp Cloud API — the same processor and
       // the same approval for testing (OUR reading, put to the data protection officer with the WhatsApp retention reading).
-      const APPROVED_TRANSFERS = ['ZOOM_OAUTH', 'ZOOM_API', 'WHATSAPP_CLOUD', 'WHATSAPP_MEDIA', 'GOADDRESS'];
+      // PHASE 156e, 5 Oct 2026: CLAUDE_DOCUMENTS, approved for testing by Sadique and signed by the director (relayed by
+      // Lakhbir); its reading switches still ship off (src/connectors/claude.ts).
+      // 5 Oct 2026: CLOUDFLARE_TURNSTILE, the contact form's check, approved for testing by Sadique (relayed by Lakhbir).
+      const APPROVED_TRANSFERS = ['ZOOM_OAUTH', 'ZOOM_API', 'WHATSAPP_CLOUD', 'WHATSAPP_MEDIA', 'GOADDRESS', 'CLAUDE_DOCUMENTS', 'CLOUDFLARE_TURNSTILE'];
       if (p.region !== 'UK' && p.region !== 'EU') {
         if (APPROVED_TRANSFERS.includes(p.service_id)) assert.equal(policyRefusal(p), null, `${p.service_id} was approved`);
         else assert.notEqual(policyRefusal(p), null, `${p.service_id} can be called outside the UK and EU`);

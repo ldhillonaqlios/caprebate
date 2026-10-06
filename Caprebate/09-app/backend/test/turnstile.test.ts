@@ -26,6 +26,8 @@ const TEST_SECRET_FAILS = '2x0000000000000000000000000000000AA';
 const LIVE_SHAPED_SITE_KEY = '0x4AAAAAAAInventedSiteKey01';
 const ANSWER = 'XXXX.DUMMY.TOKEN.XXXX';
 const APPROVED = { international_transfer_approved: true } as const;
+// 5 Oct 2026: the row as shipped is approved (Sadique), so the refusal is now asked of a row with the approval taken away.
+const NOT_APPROVED = { international_transfer_approved: false } as const;
 const OK: Fixture = { status: 200, body: JSON.stringify({ success: true, 'error-codes': [], challenge_ts: '2026-09-29T10:00:00.000Z', hostname: 'caprebate-test.vercel.app' }), headers: { 'content-type': 'application/json' } };
 const NO: Fixture = { status: 200, body: JSON.stringify({ success: false, 'error-codes': ['invalid-input-response'] }), headers: { 'content-type': 'application/json' } };
 const DOWN: Fixture = { status: 503, body: 'unavailable' };
@@ -43,7 +45,7 @@ after(() => made.close());
 
 const deps = (secrets: Record<string, string>, fixtures: Record<string, Fixture>, approved = true) => {
   const t = fixtureTransport(fixtures);
-  return { t, d: { audit: made.app.audit, now: made.app.now, transport: t, secrets: secretsFromValues(secrets), ...(approved ? { policy_override: APPROVED } : {}) } };
+  return { t, d: { audit: made.app.audit, now: made.app.now, transport: t, secrets: secretsFromValues(secrets), policy_override: approved ? APPROVED : NOT_APPROVED } };
 };
 
 describe('the check itself', () => {
@@ -53,9 +55,8 @@ describe('the check itself', () => {
     assert.equal(t.seen.length, 0);
   });
 
-  test('a key, but Cloudflare (US) is not approved: nothing is sent, and that is the row as shipped', async () => {
+  test('a key, but Cloudflare (US) is not approved: nothing is sent', async () => {
     assert.equal(CALL_POLICIES.CLOUDFLARE_TURNSTILE?.region, 'US');
-    assert.equal(CALL_POLICIES.CLOUDFLARE_TURNSTILE?.international_transfer_approved, false);
     const { t, d } = deps({ TURNSTILE_SECRET_KEY: TEST_SECRET_PASSES }, { [KEY]: OK }, false);
     assert.deepEqual(await checkTurnstile(d, ANSWER, null), { state: 'NOT_CHECKED', reason: 'transfer_not_approved' });
     assert.equal(t.seen.length, 0);
@@ -101,6 +102,12 @@ describe('the check itself', () => {
 });
 
 describe('the keys, and what the log says', () => {
+  test('the transfer to Cloudflare is approved for testing as shipped (Sadique, 5 Oct 2026), with nothing overridden', () => {
+    assert.equal(CALL_POLICIES.CLOUDFLARE_TURNSTILE?.international_transfer_approved, true);
+    const on = turnstileWhy(secretsFromValues({ TURNSTILE_SECRET_KEY: TEST_SECRET_PASSES, TURNSTILE_SITE_KEY: LIVE_SHAPED_SITE_KEY }));
+    assert.match(on, /is checked on the server with Cloudflare/);
+  });
+
   test('both names are known, owned by the check, and listed with no value in secrets.example.env', () => {
     const mine = SECRET_KEYS.filter((k) => k.owner === 'CLOUDFLARE_TURNSTILE').map((k) => [k.name, k.secret]);
     assert.deepEqual(mine, [['TURNSTILE_SITE_KEY', false], ['TURNSTILE_SECRET_KEY', true]]);
@@ -111,7 +118,7 @@ describe('the keys, and what the log says', () => {
 
   test('the start-up line says which of the three states holds, and never prints a key', () => {
     const none = turnstileWhy(secretsFromValues({}));
-    const waiting = turnstileWhy(secretsFromValues({ TURNSTILE_SECRET_KEY: TEST_SECRET_PASSES }));
+    const waiting = turnstileWhy(secretsFromValues({ TURNSTILE_SECRET_KEY: TEST_SECRET_PASSES }), NOT_APPROVED);
     const on = turnstileWhy(secretsFromValues({ TURNSTILE_SECRET_KEY: TEST_SECRET_PASSES, TURNSTILE_SITE_KEY: LIVE_SHAPED_SITE_KEY }), APPROVED);
     const noSite = turnstileWhy(secretsFromValues({ TURNSTILE_SECRET_KEY: TEST_SECRET_PASSES }), APPROVED);
     assert.match(none, /not checked on the server: no TURNSTILE_SECRET_KEY/);
@@ -154,7 +161,7 @@ describe('the enquiry form, end to end', () => {
     const t = fixtureTransport(fixtures);
     made.app.secrets = secretsFromValues(secrets);
     made.app.outside = t;
-    if (approved) made.app.turnstilePolicy = APPROVED; else delete made.app.turnstilePolicy;
+    made.app.turnstilePolicy = approved ? APPROVED : NOT_APPROVED;
     return t;
   };
 

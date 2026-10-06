@@ -7,14 +7,14 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 0 |
-| Ready - Lakhbir action | 31 |
+| Ready - Lakhbir action | 30 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 2 |
 | Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 297 |
+| Done | 298 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -1137,7 +1137,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-33 items.
+32 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1347,18 +1347,11 @@
 - Note 2026-09-28 (Phase 153): Created by Phase 153 from S10, the matching spec (12819677135, Done), whose "measure the real failure rate on 200 properties before coding" had no row. Proved 28 Sep: node tools/match-measure.ts --run exits 2 (refuses), --self-test prints "every check held". Blocked on Word question 200, "May we run our address-matching test on 200 real addresses?" (the officer). Standing rule 13 says the fuzzy match is neither good enough nor not until this runs.
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 
-### Phase 156e - Homedata, Anthropic, GoAddress, Didit, the Connections page and the care regulators' lists (Google Analytics dropped for now)
-
-`13201538874` · **Ready - Lakhbir action** · owner Lakhbir
-
-- Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538874.
-- Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): Step A5 (Google Analytics) dropped for now by Lakhbir; renamed on monday and here.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-297 items.
+298 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3093,4 +3086,12 @@
 - Note 2026-10-05 (Planning 5 Oct 2026): Rewritten 5 Oct 2026 so nothing is paid for (Lakhbir: 'yes change 156d so i dont pay'): staff added as free Basic users, two free scopes, then Claude finds out whether the free plan gives call length and attendees; the 40-minute limit said plainly; Zoom Pro moved to before real clients. Same change on the monday board and the run sheet.
 - Note 2026-10-05 (Planning 5 Oct 2026): One shared host for now (Lakhbir, 5 Oct 2026: 'contact@caprebate is enough'): no staff Zoom users; Lakhbir only checks ZOOM_HOST_EMAIL is contact@. Added to the phase: walkthrough calls stop asking Zoom for a cloud recording on the free plan, and a warning when two video calls overlap. Same change on the board and the run sheet.
 - Note 2026-10-05 (Phase 156d): Phase 156d closed 5 Oct 2026: Zoom on the free plan with one shared host built (the 40 minutes said, a warning for two calls at once, 'Ask Zoom how long it lasted', walkthrough calls not recorded, ZOOM_PLAN for later); record in PHASE-HISTORY.md. Whether the free plan gives a call's length is not yet asked of the real Zoom: moved to Phase 156e B5 (Lakhbir). Board: Done, group Z.
+
+### Phase 156e - Homedata, Anthropic, GoAddress, Didit, the Connections page and the care regulators' lists (Google Analytics dropped for now)
+
+`13201538874` · **Done** · owner Lakhbir
+
+- Note 2026-10-04 (Planning 4 Oct 2026): Created 4 Oct 2026 when Lakhbir asked for Phase 156 to be broken down; on the monday board as item 13201538874.
+- Note 2026-10-04 (Planning (GA4 dropped, OS email dropped)): Step A5 (Google Analytics) dropped for now by Lakhbir; renamed on monday and here.
+- Note 2026-10-05 (Phase 156e): Phase 156e closed 5 Oct 2026: the Admin Connections page; the Welsh and Scottish care regulators' lists on the test website, imported from the page (trimmed on the Admin's computer) with a monthly reminder; Anthropic approved for testing (Sadique, director signed; relayed by Lakhbir) and one invented page read - PASS; Companies House's first test call - PASS. Left (in the sweep): Lakhbir's Zoom test call, the Anthropic answer into the Word document, 'answer it myself' once the notice is published. Homedata, GoAddress, Didit steps stay Lakhbir's. Board: Done, group Z.
 

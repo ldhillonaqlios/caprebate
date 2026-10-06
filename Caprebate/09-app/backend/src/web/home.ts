@@ -288,6 +288,8 @@ export function adminRow(actor: Actor, app: App): Safe[] {
   const tiles: HomeTile[] = [
     { href: '/staff/users', name: 'Users', lines: [plural(staff.length, 'person can sign in', 'people can sign in')] },
     { href: '/staff/admin-settings', name: 'Switches', lines: ['Turn features on or off'] },
+    // PHASE 156e: the outside services on one page.
+    { href: '/staff/connections', name: 'Connections', lines: ['Every outside service'] },
     {
       href: '/staff/audit', name: 'Audit log', late: !log.chain.intact,
       lines: [log.chain.intact ? 'Checked — nothing changed' : 'Problem found — tell Lakhbir'],

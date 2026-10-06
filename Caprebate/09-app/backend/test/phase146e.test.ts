@@ -9,6 +9,8 @@
  */
 import { test, describe, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { secretsFromValues, emptySecrets, forgetRegisteredSecretsForTest } from '../src/secrets.ts';
 import { fixtureTransport, fetchThroughCallOutside, RateLimiter, OutsideCallFailed, type CallDeps, type GateSnapshot, type Fixture } from '../src/connectors/http.ts';
@@ -37,7 +39,8 @@ async function world(fixtures: Record<string, Fixture | readonly Fixture[]>, opt
   const t = fixtureTransport(fixtures);
   const deps: CallDeps = {
     audit: app.audit, now: app.now, transport: t, limiter: new RateLimiter(), sleep: async () => {},
-    ...(opts.approved === false ? {} : { policy_override: APPROVED }), ...opts.more,
+    // PHASE 156e: the row is approved for testing now, so "not approved" is said here rather than inherited.
+    policy_override: opts.approved === false ? { international_transfer_approved: false } : APPROVED, ...opts.more,
   };
   const ctx: CL.ClaudeContext = {
     deps, secrets: opts.keyed === false ? emptySecrets() : secretsFromValues({ ANTHROPIC_API_KEY: FAKE_KEY }),
@@ -96,11 +99,15 @@ async function readFra(ctx: CL.ClaudeContext) {
  * ================================================================== */
 
 describe('as shipped, nothing is sent and every field stays asked', () => {
-  test('BOTH SWITCHES ARE OFF, and the Claude API row still refuses a transfer outside the UK and EU', () => {
+  // PHASE 156e (5 Oct 2026): the transfer is approved FOR TESTING (Sadique and the director, relayed by Lakhbir); the
+  // switches are what keep it off, and they still ship off.
+  test('BOTH SWITCHES ARE OFF; the Claude API row is approved for testing only, and says so', () => {
     assert.deepEqual(CL.CLAUDE_SWITCHES, { DOCUMENT_READING: false, SCANNED_PAGES: false });
     assert.equal(Object.isFrozen(CL.CLAUDE_SWITCHES), true);
     const row = CALL_POLICIES.CLAUDE_DOCUMENTS!;
-    assert.deepEqual([row.region, row.international_transfer_approved, row.base_url], ['US', false, 'https://api.anthropic.com']);
+    assert.deepEqual([row.region, row.international_transfer_approved, row.base_url], ['US', true, 'https://api.anthropic.com']);
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'connectors', 'sources.ts'), 'utf8');
+    assert.match(src, /CLAUDE_DOCUMENTS: \{\s*\/\* THE TRANSFER: Approved FOR TESTING on 5 October 2026/, 'the approval is not recorded beside the row');
     assert.equal(CL.CLAUDE_MODEL, 'claude-opus-5');
   });
 

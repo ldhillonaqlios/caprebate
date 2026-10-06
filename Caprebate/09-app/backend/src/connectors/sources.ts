@@ -260,12 +260,13 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
        register source: the server sends Cloudflare the widget's answer and the visitor's address, and Cloudflare says
        whether the answer is real. Address and call from developers.cloudflare.com/turnstile/get-started/server-side-
        validation (read 29 Sep 2026). Cloudflare, Inc. is a US company with a global network; it publishes no region
-       for this call, so the row says US and the transfer is NOT APPROVED: until the data protection officer approves
-       it, nothing is sent and every enquiry is kept unchecked (src/connectors/turnstile.ts says so in the log). The
-       widget in the visitor's browser already talks to Cloudflare, so the privacy notice needs a line either way.
+       for this call, so the row says US. Until the data protection officer approved the transfer, nothing was sent and
+       every enquiry was kept unchecked (src/connectors/turnstile.ts says which in the log). The widget in the visitor's
+       browser already talks to Cloudflare, so the privacy notice needs a line either way.
        ONE TRY: an answer is good once, so a retry would be refused as a duplicate. Turnstile is free. */
+    /* THE TRANSFER: Approved 5 October 2026 by Sadique Maskeen (data protection officer), as relayed by Lakhbir in the chat with Claude: "cloud fare - its approved". A test build; the approval is for testing and is to be confirmed before real clients. From now on the server checks each enquiry's answer with Cloudflare, and an enquiry whose answer is missing or rejected is refused. */
     service_id: 'CLOUDFLARE_TURNSTILE', register_source: null,
-    base_url: 'https://challenges.cloudflare.com', region: 'US', international_transfer_approved: false,
+    base_url: 'https://challenges.cloudflare.com', region: 'US', international_transfer_approved: true,
     rate: { limit: 60, window_ms: 60 * 1000 },
     rate_basis: 'NOT PUBLISHED for siteverify (read 29 Sep 2026); sixty a minute is OUR cautious limit - one check an enquiry, and enquiries are limited per address',
     timeout_ms: 8_000, max_bytes: 16 * 1024, max_attempts: 1,
@@ -327,8 +328,13 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     timeout_ms: 8_000, max_bytes: 512 * 1024, max_attempts: 2,
   },
   CLAUDE_DOCUMENTS: {
+    /* THE TRANSFER: Approved FOR TESTING on 5 October 2026 - Sadique Maskeen (data protection officer) approved Anthropic
+       as the document reader and the director signed, as relayed by Lakhbir in the chat with Claude (Phase 156e A2):
+       "Yes, for testing". Invented documents only. This opens the transfer and nothing else: both reading switches
+       (src/connectors/claude.ts, CLAUDE_SWITCHES) stay OFF, and ANTHROPIC_API_KEY is in the key file only, not in
+       Vercel and not in TEST_DEPLOY_KEYS, so the test website reads nothing. To be confirmed before real clients. */
     service_id: 'CLAUDE_DOCUMENTS', register_source: null,
-    base_url: 'https://api.anthropic.com', region: 'US', international_transfer_approved: false,
+    base_url: 'https://api.anthropic.com', region: 'US', international_transfer_approved: true,
     rate: { limit: 50, window_ms: 60 * 1000 }, rate_basis: 'depends on the account tier; cautious',
     timeout_ms: 120_000, max_bytes: 8 * MB, max_attempts: 3,
   },

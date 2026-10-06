@@ -20,6 +20,8 @@ export type Harness = {
   readonly made: Made;
   get(who: Login, path: string): Promise<Res>;
   post(who: Login, path: string, fields: Record<string, string>): Promise<Res>;
+  /** PHASE 156e: any request as that login (a multipart upload, a script's FormData). */
+  send(who: Login, path: string, init: RequestInit): Promise<Res>;
   actor(who: Login): Actor;
   close(): void;
 };
@@ -51,6 +53,7 @@ export async function startHarness(name: string): Promise<Harness> {
   return {
     made,
     get: (who, path) => send(who, path),
+    send,
     post: (who, path, fields) => send(who, path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams(fields).toString() }),
     actor: (who) => {

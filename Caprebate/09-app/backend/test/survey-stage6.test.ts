@@ -49,7 +49,8 @@ const fx = (name: string): Fixture => ({ status: 200, body: readFileSync(join(HE
 const TEST_SITE = Object.freeze({ VERCEL: '1', VERCEL_ENV: 'production', VERCEL_URL: 'caprebate-test.vercel.app' });
 const PREVIEW = Object.freeze({ VERCEL: '1', VERCEL_ENV: 'preview', VERCEL_URL: 'caprebate-git-x.vercel.app' });
 const LAPTOP = Object.freeze({});
-const FOUR = ['CQC', 'EPC', 'HMLR_PPD', 'PLANNING'];
+// PHASE 156e (5 Oct 2026): the Welsh and Scottish care regulators' lists joined the four (Lakhbir: "Yes, include them").
+const FOUR = ['CARE_INSPECTORATE', 'CIW', 'CQC', 'EPC', 'HMLR_PPD', 'PLANNING'];
 
 /** Every piece of text the PDF draws, decoded from its hexadecimal strings. */
 function pdfText(bytes: Uint8Array): string {
@@ -62,7 +63,7 @@ function pdfText(bytes: Uint8Array): string {
  * ================================================================== */
 
 describe('the free lookups, switched on for the test website only', () => {
-  test('the waiver holds on the test website and a copy that asks for it, for EPC, price paid, planning and CQC only', () => {
+  test('the waiver holds on the test website and a copy that asks for it, for EPC, price paid, planning, CQC and (Phase 156e) the Welsh and Scottish lists only', () => {
     assert.deepEqual([...C.TEST_WEBSITE_LOOKUPS.sources].sort(), FOUR);
     assert.match(C.TEST_WEBSITE_LOOKUPS.waiver_record, /Lakhbir Dhillon, 2 October 2026.*"All the free ones"/);
     for (const env of [TEST_SITE, PREVIEW, { CAPREBATE_LOOKUPS_HERE: '1' }]) {

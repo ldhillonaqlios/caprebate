@@ -5,7 +5,7 @@
  * the test website it could never work: api/index.mjs reads only the names in TEST_DEPLOY_KEYS from Vercel's
  * settings, and TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY were not among them. So keys added in Vercel would be
  * ignored and the page would keep Cloudflare's test key. These tests prove both names are read, that the page then
- * carries the configured site key, and that the transfer to Cloudflare stays NOT approved (Sadique's decision).
+ * carries the configured site key, and that the transfer to Cloudflare is approved for testing (Sadique, 5 Oct 2026).
  * The keys used are Cloudflare's published test keys, never real ones.
  */
 import { test, describe } from 'node:test';
@@ -56,19 +56,19 @@ describe('156a B2 · the Cloudflare keys reach the test website', () => {
     } finally { made.close(); }
   });
 
-  test('with the secret read, the start-up line moves from "no key" to "not approved": nothing is sent until Sadique says yes', async () => {
+  test('with the secret read, the start-up line moves from "no key" to "checked with Cloudflare" (approved 5 Oct 2026)', async () => {
     const { configureTestDeploy } = await entry();
     const made = await made156a();
     try {
       await configureTestDeploy(made, { CAPREBATE_TEST_PASSWORD: 'an-invented-test-password-156a', TURNSTILE_SECRET_KEY: SECRET_ALWAYS_FAILS });
       const why = turnstileWhy(made.app.secrets);
-      assert.match(why, /not approved/);
-      assert.doesNotMatch(why, /no TURNSTILE_SECRET_KEY/);
+      assert.match(why, /checked on the server/);
+      assert.doesNotMatch(why, /no TURNSTILE_SECRET_KEY|not approved/);
     } finally { made.close(); }
   });
 
-  test('the transfer to Cloudflare (a US company) is still NOT approved as shipped', () => {
-    assert.equal(CALL_POLICIES['CLOUDFLARE_TURNSTILE']?.international_transfer_approved, false);
+  test('the transfer to Cloudflare (a US company) is approved for testing as shipped (Sadique, 5 Oct 2026)', () => {
+    assert.equal(CALL_POLICIES['CLOUDFLARE_TURNSTILE']?.international_transfer_approved, true);
   });
 });
 

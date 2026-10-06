@@ -1689,6 +1689,8 @@ Name:                                  Date:
 
 -  **The list of who receives personal data** now names Anthropic at P6, marked as awaiting your approval.
 
+-  **Added 5 October 2026 by Phase 156e — approved by you for TESTING, as Lakhbir relayed it ("Yes, for testing": you approved Anthropic as the reader and the director signed).** So the code now records the transfer as approved, and says it is for testing. Nothing reads a client's document yet: both switches are still off, and the key is not on the test website. One test read of a made-up contractor's cost breakdown was run from Lakhbir's Mac and worked. **For real clients we will ask you to confirm again**, with the privacy notice and the retention answer.
+
  **This register's size, re-derived:** counted the way the register check counts them — one line for each entry and each board item it covers — sixty-eight entries covering sixty-one board items. SDP-L3 is two of those lines and SDP-V7 three, each still one entry. SDP-L1 and SDP-L2 share one item, and SDP-L8 and SDP-P12 to SDP-P17 share another. On the live board, counted in code at the close of Phase 146e on 22 September 2026, 115 items carry that status: forty-five in FOR THE ACCOUNTANT, nine in FOR THE SURVEYOR, and sixty-one here. Forty-five plus nine plus sixty-one is 115.
 
 ## Added 23 September 2026 by Phase 146d — the two lookups we pay for are built and switched off, and there is one thing for each of you

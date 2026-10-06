@@ -59,15 +59,33 @@ import {
   BOUNDARY_TEST_DEFAULTS, BOUNDARY_TEST_SOURCE, boundaryClientMatchIn, boundaryTestOne, boundaryValuesFrom, notTheBoundaryDefaults,
 } from './boundary-test-lookup.ts';
 import { buildingsAround, OS_SERVICE_ID } from './os-buildings.ts';
+import { readPayloadWithClaude, SERVICE_ID as CLAUDE_SERVICE_ID } from './claude.ts';
+import { sanitise, type Segment } from '../../../../04-phase-work/phase3/caprebate-document-pipeline.ts';
 
 /** PHASE 156a: the Ordnance Survey building outlines (the report's site plan). Only ever at the public test point. */
 export const OS_TEST_SOURCE = OS_SERVICE_ID;
 
 /**
+ * PHASE 156e, 5 October 2026 (B1): THE DOCUMENT READER, ONE READ OF ONE INVENTED PAGE. Anthropic was approved for
+ * testing that day (src/connectors/sources.ts, CLAUDE_DOCUMENTS). The page is a contractor's cost breakdown made up
+ * here, with no name, address or number of anyone: it goes through the pipeline's own strip (`sanitise`) and its guard,
+ * exactly as a client's would. The reading switch is turned on FOR THIS ONE CALL ONLY, in this process; the switch that
+ * ships stays off. Nothing is kept: the answer is counted and thrown away.
+ */
+export const CLAUDE_TEST_SOURCE = CLAUDE_SERVICE_ID;
+export const CLAUDE_TEST_PAGE: readonly Segment[] = Object.freeze([
+  { kind: 'COST_SCHEDULE', heading: 'COST SCHEDULE', page: 1,
+    text: 'Element | Description | Qty | Unit | Rate | Total\nElectrical | Lighting to treatment rooms | 6 | nr | 1,250.00 | 7,500.00\n' +
+      'Mechanical | Extract ventilation to sterilisation room | 1 | item | 9,800.00 | 9,800.00\nProvisional sum | Fire alarm upgrade | 1 | item | 4,000.00 | 4,000.00\n' +
+      'Contingency | 5% of works | 1 | item | 1,065.00 | 1,065.00' },
+  { kind: 'PRELIMS_AND_FEES', heading: 'PRELIMINARIES AND FEES', page: 2, text: 'Preliminaries: 12% of works. Professional fees: 10% of works plus preliminaries.' },
+]) as readonly Segment[];
+
+/**
  * EVERY CONNECTOR A TEST LOOKUP CAN BE RUN FOR: the registers the smoke test knows, and (Phase 151l) the land boundary
  * download. One list, so `smoke` and `smoke-switched-on` can never disagree about what a connector is.
  */
-export const TEST_LOOKUP_SOURCES: readonly string[] = Object.freeze([...Object.keys(SMOKE_SOURCES), BOUNDARY_TEST_SOURCE, OS_TEST_SOURCE]);
+export const TEST_LOOKUP_SOURCES: readonly string[] = Object.freeze([...Object.keys(SMOKE_SOURCES), BOUNDARY_TEST_SOURCE, OS_TEST_SOURCE, CLAUDE_TEST_SOURCE]);
 const isTestLookupSource = (s: string): boolean => TEST_LOOKUP_SOURCES.includes(s);
 
 /** Condition 1, in Lakhbir's number. */
@@ -401,7 +419,33 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
   const not_a_client = argv.includes('--not-a-client');
   let ask: string;
   let call: (audit: AuditLog) => Promise<'PASS' | 'NO'>;
-  if (source_id === OS_TEST_SOURCE) {
+  if (source_id === CLAUDE_TEST_SOURCE) {
+    if (['company-number', 'company-name', 'address', 'town', 'postcode', 'easting', 'northing', 'council', 'file', 'page'].some((f) => flag(argv, f) !== null)) {
+      d.err('refused: the document reader test reads only its own invented page; it takes no document, company or address.');
+      return 1;
+    }
+    if ((d.secrets.forOwner('CLAUDE_DOCUMENTS').get('ANTHROPIC_API_KEY') ?? '').trim() === '') {
+      d.err('refused: no ANTHROPIC_API_KEY in the key file, so there is nothing to test.');
+      return 1;
+    }
+    ask = 'asking Anthropic to read one invented page: a contractor\'s cost breakdown with no one\'s name, address or number in it.\n';
+    call = async (audit) => {
+      const { payload } = sanitise('test-lookup-page', 'CONTRACTOR_COST_BREAKDOWN', CLAUDE_TEST_PAGE);
+      const { read } = await readPayloadWithClaude({
+        deps: { audit, now: d.now, transport: d.transport, ...(d.sleep === undefined ? {} : { sleep: d.sleep }) },
+        secrets: d.secrets, switches: { DOCUMENT_READING: true, SCANNED_PAGES: false },
+        actor_id: null, actor_role: 'test', claim_id: null,
+        gate: { free_gate_open: false, engagement_signed: false, switched_on: true },
+      }, payload);
+      const result = read.state === 'READ' ? 'PASS' : 'NO';
+      d.out(`${result}  ${CLAUDE_TEST_SOURCE} (paid, by the token)`);
+      d.out(`  ${read.why}${read.model === null ? '' : `; answered by ${read.model}`}.`);
+      if (read.call !== null) d.out(`  call: ${read.call.outcome}${read.call.status === null ? '' : ` ${read.call.status}`} after ${read.call.attempts} ${read.call.attempts === 1 ? 'try' : 'tries'}`);
+      d.out('\nA PASS means the key, the account and the approved transfer are right, and the reader understood the page.');
+      d.out('Nothing was kept. The reading switch that ships is still off.');
+      return result;
+    };
+  } else if (source_id === OS_TEST_SOURCE) {
     /* PHASE 156a: ONE square of map round the public test point (70 Whitehall, Historic England's grid reference, the
        same point the land boundary test uses). No point, postcode or address may be typed, so no client's can be. */
     if (['easting', 'northing', 'postcode', 'address', 'council'].some((f) => flag(argv, f) !== null)) {
