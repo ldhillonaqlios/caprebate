@@ -48,7 +48,7 @@ import { ADDRESS_LOOKUP, addressLookupMissing, findAddresses, searchesToday } fr
 import { ADDRESS_LOOKUP_JS } from './address-lookup-script.ts';
 import { loadLetter } from './letter.ts';
 import * as P from './portal.ts';
-import { ENGAGEMENT_SIGNING, shownLetter, signEngagement, signingMissing } from './signing.ts';
+import { ENGAGEMENT_SIGNING, shownLetter, signEngagement, signingMissing, type EngagementSigning } from './signing.ts';
 import { portalMessagesBody, readPortalSend, sendFromPortal } from './messages-pages.ts';
 import { clientMessage, type ThreadMessage as MessageView } from './messages.ts';
 import { FsObjectStore } from './objectstore.ts';
@@ -120,6 +120,8 @@ export type WebDeps = {
   publicOrigin?: string;
   /** PHASE 153d: the test-only letter (src/web/letter.ts, TEST_LETTER_PATH). Absent is the real letter. Only the test website passes it. */
   letterPath?: string;
+  /** 6 Oct 2026: signing on for testing (ENGAGEMENT_SIGNING_TEST, the test copy only). Absent is ENGAGEMENT_SIGNING, off. */
+  signing?: EngagementSigning;
 };
 
 /* ------------------------------------------------------------------ *
@@ -1161,7 +1163,7 @@ async function portalRoutes(
     const { business } = P.progress(db, actor, business_id);
     P.markViewed(db, actor, business_id, now);
     const eng = P.engagement(db, actor, business_id);
-    letterHtml(res, 200, letterPage(actor, business, eng, undefined, undefined, d.letterPath));
+    letterHtml(res, 200, letterPage(actor, business, eng, undefined, undefined, d.letterPath, d.signing));
     return 'handled';
   }
 
@@ -1186,9 +1188,9 @@ async function portalRoutes(
       : signEngagement({ db, audit: d.app.audit, email: d.app.email, now, newId }, actor, business_id, {
         ...typed, authorised: f.get('authorised') === 'on', letter_sha256: f.get('letter_sha256') ?? '',
         signature_strokes: f.get('signature_strokes') ?? '', typed_as_signature: f.get('typed_as_signature') === 'on',
-      }, { ip: clientIp(req), session_id }, d.letterPath === undefined ? {} : { letterPath: d.letterPath });
+      }, { ip: clientIp(req), session_id }, { ...(d.letterPath === undefined ? {} : { letterPath: d.letterPath }), ...(d.signing === undefined ? {} : { cfg: d.signing }) });
     if (!r.ok) {
-      letterHtml(res, 400, letterPage(actor, business, P.engagement(db, actor, business_id), r.why, typed, d.letterPath));
+      letterHtml(res, 400, letterPage(actor, business, P.engagement(db, actor, business_id), r.why, typed, d.letterPath, d.signing));
       return 'handled';
     }
     html(res, 200, page({ title: 'Letter signed', nav: nav(actor), body: h`<h1>Thank you — the letter is signed</h1>
@@ -2259,7 +2261,7 @@ function letterHtml(res: ServerResponse, status: number, body: string): void {
 
 function letterPage(
   actor: Actor, business: P.Business, eng: P.EngagementView | null,
-  problem?: string, typed?: { full_name: string; role: string }, letterPath?: string,
+  problem?: string, typed?: { full_name: string; role: string }, letterPath?: string, signing: EngagementSigning = ENGAGEMENT_SIGNING,
 ): string {
   // The record's number travels with its name. Absent is omitted, never passed as undefined; a blank is passed and
   // letter.ts treats it as absent — the specimen stays and is flagged, never read as the client's (N4).
@@ -2269,7 +2271,7 @@ function letterPage(
     clientName: business.name,
     ...(business.company_number === undefined || business.company_number === null ? {} : { companyNumber: business.company_number }),
   });
-  const missing = signingMissing(ENGAGEMENT_SIGNING, shown);
+  const missing = signingMissing(signing, shown);
   const canSign = eng !== null && (eng.state === 'SENT' || eng.state === 'VIEWED');
   return page({
     title: 'Engagement letter', nav: nav(actor),
