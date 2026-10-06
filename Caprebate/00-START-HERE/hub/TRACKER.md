@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 1 |
 | Ready - Lakhbir action | 24 |
 | Built - awaiting sign-off | 128 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 307 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1327,7 +1327,7 @@
 
 ### Phase 157b - the papers the 4 to 6 October decisions overtook, and the rate-card uplifts
 
-`13215798640` · **Ready - Claude can build** · owner Claude
+`13215798640` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir’s MacBook Pro**
 
 - Note 2026-10-06 (Phase 157 (sweep)): Written by the Phase 157 sweep from its tracker audit: seven papers overtaken by the 4-6 Oct decisions, and the rate-card uplifts as a test default.
 
