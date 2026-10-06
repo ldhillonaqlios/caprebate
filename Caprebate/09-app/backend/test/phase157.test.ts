@@ -13,6 +13,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createApp } from '../src/server.ts';
+import { readFileSync } from 'node:fs';
+import { Db, migrate } from '../src/db.ts';
+import { MIGRATIONS_DIR } from '../src/app.ts';
+import { FUNNEL_EDGES } from '../src/web/funnel-edges.ts';
+import { funnelEdges, render } from '../tools/gen-funnel-edges.ts';
 import {
   ENQUIRY_RETENTION, FUNNEL_DELETABLE, leadDeletionPlan, sweepEnquiries, type EnquiryRetention,
 } from '../src/web/enquiry-retention.ts';
@@ -66,8 +71,16 @@ describe('1 · a lost funnel enquiry past the period is deleted with its own row
     return 'u-157-admin';
   };
   const sweep = (cfg: EnquiryRetention = ON) => sweepEnquiries({ db: made.app.db, audit: made.app.audit, now: () => NOW, newId: randomUUID }, cfg);
+  /** Literal statements only (tools/lint-sql.cjs): the counts these tests read. */
+  const COUNT_SQL: Readonly<Record<string, string>> = {
+    'leads|id = ?': 'SELECT COUNT(*) AS n FROM leads WHERE id = ?',
+    'businesses|id = ?': 'SELECT COUNT(*) AS n FROM businesses WHERE id = ?',
+    'contacts|lead_id = ? OR business_id = ?': 'SELECT COUNT(*) AS n FROM contacts WHERE lead_id = ? OR business_id = ?',
+    'properties|business_id = ?': 'SELECT COUNT(*) AS n FROM properties WHERE business_id = ?',
+    'assessments|business_id = ?': 'SELECT COUNT(*) AS n FROM assessments WHERE business_id = ?',
+  };
   const count = (table: string, where: string, args: unknown[]): number =>
-    made.app.db.get<{ n: number }>(`SELECT COUNT(*) AS n FROM "${table}" WHERE ${where}`, args as string[])?.n ?? -1;
+    made.app.db.get<{ n: number }>(COUNT_SQL[`${table}|${where}`] ?? 'SELECT -1 AS n', args as string[])?.n ?? -1;
 
   test('off, as it ships: nothing is deleted', async () => {
     const e = await enquiry('Olive');
@@ -136,6 +149,15 @@ describe('1 · a lost funnel enquiry past the period is deleted with its own row
     if (!plan.delete) assert.match(plan.why, /website_enquiries/);
     sweep();
     assert.equal(count('leads', 'id = ?', [e.lead]), 1);
+  });
+
+  test('the walk is the schema: src/web/funnel-edges.ts is what tools/gen-funnel-edges.ts writes from today\'s migrations', async () => {
+    const db = new Db(':memory:');
+    migrate(db, MIGRATIONS_DIR);
+    assert.equal(render(funnelEdges(db)), readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'funnel-edges.ts'), 'utf8'),
+      'the schema gained or lost a foreign key on a funnel table: run node tools/gen-funnel-edges.ts and read the change');
+    db.close();
+    assert.ok(FUNNEL_EDGES.some((e) => e.parent === 'leads' && e.child === 'website_enquiries'), 'a blocking table is missing from the walk');
   });
 
   test('the triggers: a lead is still never deleted except under its own deletion-log entry', async () => {

@@ -34,6 +34,8 @@ import type { AuditLog } from '../audit.ts';
 import { liveHeldIds } from './compliance.ts';
 import { addMonths } from './message-retention.ts';
 import { BACKUP_CYCLE, knownBackupCycleDays } from './upload-handler-port.ts';
+import { FUNNEL_DELETABLE_TABLES, type FunnelEdge } from './funnel-deletable.ts';
+import { FUNNEL_DELETE_SQL, FUNNEL_EDGES } from './funnel-edges.ts';
 
 export type EnquiryRetention = {
   readonly enabled: boolean;
@@ -102,39 +104,17 @@ export type EnquirySweep =
  * PHASE 157 — THE DELETION PATH FOR A LOST FUNNEL ENQUIRY
  * ================================================================== */
 
-/**
- * THE FUNNEL'S OWN ROWS: the only tables a funnel lead's deletion may reach. A row in ANY other table that hangs off the
- * lead or its organisation is a reason to keep everything (it has a retention rule of its own, or is evidence).
- */
-export const FUNNEL_DELETABLE: ReadonlySet<string> = new Set([
-  'leads', 'contacts', 'consent_answers', 'bookings', 'booking_changes', 'video_meetings', 'outbox', 'outbox_attachments',
-  'outbox_inline_files', 'staff_tasks', 'automation_runs', 'enquiry_checks',
-  // the organisation, only when every lead of it goes
-  'businesses', 'properties', 'assessments', 'assessment_answers', 'estimates', 'assessment_drafts', 'research_sources',
-  'research_runs', 'lookups_declined', 'thread_reads', 'channel_reads',
-  // the portal sign-up the funnel offered at its close, never taken up (one taken up made a login: see below)
-  'client_signups',
-]);
+/** THE FUNNEL'S OWN TABLES (src/web/funnel-deletable.ts): the only tables a funnel lead's deletion may reach. */
+export const FUNNEL_DELETABLE: ReadonlySet<string> = new Set(FUNNEL_DELETABLE_TABLES);
 
 type RowRef = { readonly table: string; readonly rowid: number };
-type Fk = { readonly from_table: string; readonly from: readonly string[]; readonly to: readonly string[] };
 
-/** Every foreign key in the database, grouped per referenced table (composite keys kept together). */
-function foreignKeys(db: Db): Map<string, Fk[]> {
-  const out = new Map<string, Fk[]>();
-  for (const { name } of db.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")) {
-    const rows = db.all<{ id: number; seq: number; table: string; from: string; to: string | null }>(`PRAGMA foreign_key_list("${name}")`);
-    const byId = new Map<number, typeof rows>();
-    for (const r of rows) byId.set(r.id, [...(byId.get(r.id) ?? []), r]);
-    for (const parts of byId.values()) {
-      const sorted = [...parts].sort((a, b) => a.seq - b.seq);
-      const target = sorted[0]!.table;
-      const fk: Fk = { from_table: name, from: sorted.map((p) => p.from), to: sorted.map((p) => p.to ?? 'rowid') };
-      out.set(target, [...(out.get(target) ?? []), fk]);
-    }
-  }
-  return out;
-}
+/** The edges, by the table they leave from. */
+const EDGES_FROM: ReadonlyMap<string, readonly FunnelEdge[]> = (() => {
+  const m = new Map<string, FunnelEdge[]>();
+  for (const e of FUNNEL_EDGES) m.set(e.parent, [...(m.get(e.parent) ?? []), e]);
+  return m;
+})();
 
 export type LeadDeletionPlan =
   | { readonly delete: true; readonly lead_ids: readonly string[]; readonly business_ids: readonly string[]; readonly rows: readonly RowRef[]; readonly tables: Readonly<Record<string, number>> }
@@ -143,8 +123,9 @@ export type LeadDeletionPlan =
 /**
  * WHAT DELETING THIS FUNNEL LEAD WOULD TAKE WITH IT, OR WHY IT MUST STAY. Reads only. The organisation goes too only
  * when every lead of it is a lost funnel enquiry past the period (`due`). Every row that hangs off what goes is found
- * through the database's own foreign keys, so a table added later is never missed: if it is not one of the funnel's
- * own (FUNNEL_DELETABLE), its row keeps the lot.
+ * through the database's own foreign keys, written out as literal statements (src/web/funnel-edges.ts, generated from
+ * the schema; a test fails when the schema gains one the file lacks): if it is not one of the funnel's own
+ * (FUNNEL_DELETABLE), its row keeps the lot.
  */
 export function leadDeletionPlan(db: Db, lead_id: string, due: (lead_id: string) => boolean): LeadDeletionPlan {
   const lead = db.get<{ id: string; business_id: string | null; status: string; enquiry_id: string | null }>(
@@ -165,7 +146,6 @@ export function leadDeletionPlan(db: Db, lead_id: string, due: (lead_id: string)
       return { delete: false, why: 'the client made a portal login for the organisation' };
     }
   }
-  const fks = foreignKeys(db);
   const seen = new Map<string, RowRef>();
   const order: RowRef[] = [];
   const queue: RowRef[] = [];
@@ -180,15 +160,14 @@ export function leadDeletionPlan(db: Db, lead_id: string, due: (lead_id: string)
   if (wholeBusiness && business !== null) add('businesses', db.get<{ rowid: number }>('SELECT rowid FROM businesses WHERE id = ?', [business])!.rowid);
   while (queue.length > 0) {
     const r = queue.shift()!;
-    for (const fk of fks.get(r.table) ?? []) {
-      const values = db.get<Record<string, unknown>>(`SELECT ${fk.to.map((c) => `"${c}"`).join(', ')} FROM "${r.table}" WHERE rowid = ?`, [r.rowid]);
-      if (values === undefined || fk.to.some((c) => values[c] === null || values[c] === undefined)) continue;
-      const where = fk.from.map((c) => `"${c}" = ?`).join(' AND ');
-      for (const hit of db.all<{ rowid: number }>(`SELECT rowid FROM "${fk.from_table}" WHERE ${where}`, fk.to.map((c) => values[c] as string | number))) {
-        if (!FUNNEL_DELETABLE.has(fk.from_table)) {
-          return { delete: false, why: `a row of ${fk.from_table} hangs off it, and that has a reason of its own to stay` };
+    for (const e of EDGES_FROM.get(r.table) ?? []) {
+      const values = db.get<Record<string, string | number | null>>(e.parent_sql, [r.rowid]);
+      if (values === undefined || e.parent_cols.some((c) => values[c] === null || values[c] === undefined)) continue;
+      for (const hit of db.all<{ rowid: number }>(e.child_sql, e.parent_cols.map((c) => values[c] as string | number))) {
+        if (!FUNNEL_DELETABLE.has(e.child)) {
+          return { delete: false, why: `a row of ${e.child} hangs off it, and that has a reason of its own to stay` };
         }
-        add(fk.from_table, hit.rowid);
+        add(e.child, hit.rowid);
       }
     }
   }
@@ -246,7 +225,7 @@ export function sweepEnquiries(
       for (const b of plan.business_ids) logEntry('FUNNEL_BUSINESS', b, 'The organisation a lost website enquiry made', null);
       // Every row at once, the funnel's own only; the foreign keys are checked when the transaction ends.
       d.db.run('PRAGMA defer_foreign_keys = ON');
-      for (const r of [...plan.rows].reverse()) d.db.run(`DELETE FROM "${r.table}" WHERE rowid = ?`, [r.rowid]);
+      for (const r of [...plan.rows].reverse()) d.db.run(FUNNEL_DELETE_SQL[r.table] as string, [r.rowid]);
       for (const l of plan.lead_ids) { goneLeads.add(l); funnelDeleted.push(l); }
     }
   });

@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
-| Done | 302 |
-| Working on it | 1 |
+| Done | 303 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1117,7 +1117,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-35 items.
+34 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1331,11 +1331,6 @@
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 - Note 2026-10-06 (Phase 157 (sweep)): The tool is built and refuses to run until the officer answers Word question 200; nothing is left to build, so it waits like any built item. Housed as SDP-P43.
 
-### Phase 157 - Sweep and stress-test (6 Oct 2026): the whole tracker against the disk, every check re-run, and the loose ends parked in the sweep
-
-`13215703505` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro (Mac)**
-
-
 ### Phase 157a - the engine and the cost model: the pooling questions, the unknown seller, and the cost model in the survey pack
 
 `13215798638` · **Ready - Claude can build** · owner Claude
@@ -1352,7 +1347,7 @@
 
 ## Z · Complete / Not Applicable
 
-302 items.
+303 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3137,4 +3132,10 @@
 
 - Note 2026-10-06 (Planning 6 Oct 2026): Written 6 Oct 2026 from Lakhbir's decisions (one Homedata address box, GoAddress removed; £1-a-day cap; Homedata planning after signing, PlanIt before; Homedata site boundary; listed buildings not built). On the monday board as item 13215385357. Runs after PR 27.
 - Note 2026-10-06 (Phase 156f): Phase 156f done 6 Oct 2026: Homedata address box (GoAddress removed), £1/day cap, UPRN onto the property and used by the paid research, Homedata planning after signing, site area from the title outline (internal only), title pre-check bug fixed; back end 2,525 pass, total 4,743. Left: Word question 245 (Lakhbir); GoAddress key-file line and account (Lakhbir).
+
+### Phase 157 - Sweep and stress-test (6 Oct 2026): the whole tracker against the disk, every check re-run, and the loose ends parked in the sweep
+
+`13215703505` · **Done** · owner Claude
+
+- Note 2026-10-06 (Phase 157 (sweep)): Sweep done 6 Oct 2026: every check green and every negative control red; funnel enquiry deletion path and introducer terms signature built (off); 12 tracker rows corrected; Word 172 recorded, 207, 230, 231 closed; Phases 157a and 157b written; sweep renumbered 158. Back end 2,533, total 4,751.
 
