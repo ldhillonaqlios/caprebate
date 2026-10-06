@@ -10,8 +10,9 @@
  * (BCIS_COMMERCIAL in the source register), so it is never committed and never published on the test website.
  *
  * UNTIL THEN: the shipped CB_BCIS_INDEX stays an empty stub, and the cost model's test system uses its PLACEHOLDER table
- * of invented points, labelled as such. Using the real table in the survey pack waits on the pack being wired to the
- * cost model at all — Phase 157's loose end from Phase 153e, which also carries Phase 153e line 12's index factor.
+ * of invented points, labelled as such. PHASE 157a (6 October 2026) wired the survey pack to it: chapter 11's index factor
+ * reads this table first (src/web/pack-cost-model.ts, indexTableHere), the placeholder only in the test system, and
+ * otherwise nothing.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';

@@ -252,6 +252,12 @@ const TARGETED = [
     acquisition_date: "2015-01-01", election_notified_date: "2015-06-01" }) },
   { from: "Suite AI, AI7 (EL-C2)", facts: Object.assign({}, ELECTION, { election_seller_cost: 250000, acquisition_date: "2015-01-01",
     election_notified_date: "2015-06-01" }) },
+  /* PHASE 157a, 6 October 2026: added when the reordered s.187A questions (x14pod before x14fvr) moved the seeded walks
+     off the three care-home states that had reached this switch, and the 6,000-walk run read it "no figure moved". The
+     same three states, run through the new engine, still move up with it on; this fixed state keeps it counted. */
+  { from: "Suite H, H18 (CL-1), on 31 August 2026", clock: "2026-08-31T12:00:00Z", facts: { prior_owner_entitled: "no", earlier_entitled_owner: "yes",
+    prior_owner_claimed: "yes", election_document: "no", past_owner_disposal_mode: "sold_market", intervening_owner: "yes",
+    intervening_owner_acquisition_date: "2020-01-01", acquisition_date: "2025-06-01" } },
   { from: "Suite X, X5 (AW-2), on 15 February 2026", clock: "2026-02-15T12:00:00Z", facts: { trigger: ["refurb_fitout"], claimant_type: "partnership",
     partnership_has_company_member: true, accounting_period_end: "2024-03-31", return_filed: "yes", completion_date: "2023-10-01" } },
 ];

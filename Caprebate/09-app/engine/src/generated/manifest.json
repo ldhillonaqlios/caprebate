@@ -1,7 +1,7 @@
 {
   "generatedBy": "09-app/engine/tools/extract.cjs",
   "source": "Caprebate site.html",
-  "sourceSha256": "3c03ef66154fa7af341796388d7a9678e79ca62dbc2a66a10388c2e12050ceb8",
+  "sourceSha256": "ade7e01be35f61d88c350d60d26cda4dd2bff8da8ac40521f5d9bf65f38e6b07",
   "sharedModules": [
     "CB_PLANT",
     "CB_CTA",
@@ -36,22 +36,22 @@
   ],
   "slices": {
     "shared.js": {
-      "bytes": 414632
+      "bytes": 419400
     },
     "sector-care_homes.js": {
-      "bytes": 93541
+      "bytes": 94650
     },
     "sector-dental.js": {
-      "bytes": 90000
+      "bytes": 91097
     },
     "sector-supported_living.js": {
-      "bytes": 106943
+      "bytes": 107516
     },
     "sector-gp.js": {
-      "bytes": 98634
+      "bytes": 99763
     },
     "sector-private_hospital.js": {
-      "bytes": 108480
+      "bytes": 109589
     }
   }
 }
