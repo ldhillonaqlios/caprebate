@@ -100,7 +100,7 @@ export const CONNECTIONS: readonly Connection[] = Object.freeze([
   { id: 'OS_FEATURES', name: 'Ordnance Survey building outlines', does: 'The building outlines on the report’s site plan.', owner: 'OS_MAPS', calls: ['OS_FEATURES'],
     switch_name: 'lookupsWaivedHere', waits: 'Nothing for testing. For real clients: the published privacy notice.' },
   { id: 'HOMEDATA', name: 'Homedata', does: 'Paid address, planning and floor area, after a client signs.', owner: 'HOMEDATA_ADDRESS', calls: ['HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING'],
-    switch_name: 'REGISTER_SWITCHES.HOMEDATA_ADDRESS; HOMEDATA_DIMENSIONS', waits: 'Its key in Vercel and money on the account (Lakhbir); a signed engagement for each client.' },
+    switch_name: 'REGISTER_SWITCHES.HOMEDATA_ADDRESS; TEST_WEBSITE_PAID_LOOKUPS', waits: 'On for testing (6 Oct 2026), the address lookup only, for a client whose letter is signed. Homedata planning is not built to run. For real clients: the privacy notice.' },
   { id: 'DIDIT', name: 'Didit', does: 'The online identity check.', owner: 'DIDIT_IDV', calls: ['DIDIT_IDV'],
     switch_name: 'IDENTITY_CHECK', waits: 'How long Didit keeps results. Set it in Didit once Sadique agrees how long we keep things. Then the privacy notice.' },
   { id: 'IONOS_EMAIL', name: 'IONOS email sending', does: 'Emails from staff, sign-in codes and calendar invites.', owner: 'IONOS_EMAIL', calls: [],
