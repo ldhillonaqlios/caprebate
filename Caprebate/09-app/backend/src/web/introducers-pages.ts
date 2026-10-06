@@ -135,6 +135,15 @@ export async function handleIntroducers(
     redirect(res, `/staff/introducers/${id}?done=saved`);
     return 'handled';
   }
+  // Phase 157: record that the firm signed our introducer terms (migration 094), so it is registered.
+  const signed = /^\/staff\/introducers\/([A-Za-z0-9-]+)\/terms-signed$/.exec(path);
+  if (signed && method === 'POST') {
+    const id = signed[1] ?? '';
+    const r = I.recordTermsSigned(deps, actor, id, posted(await form(req), ['signed_on', 'firm_signatory', 'our_signatory']));
+    if (!r.ok) return d.problem(res, actor, 'Signature not recorded', r.why, `/staff/introducers/${id}`, r.field);
+    redirect(res, `/staff/introducers/${id}?done=saved`);
+    return 'handled';
+  }
   const planned = /^\/staff\/introducers\/([A-Za-z0-9-]+)\/next-contact$/.exec(path);
   if (planned && method === 'POST') {
     const id = planned[1] ?? '';
@@ -476,6 +485,17 @@ function firmPage(d: IntroducerPageDeps, actor: Actor, v: I.IntroducerView, msg:
           a joint one-pager or faster turnaround.</p>`}</div>`}
 
       ${v.fees === undefined ? raw('') : h`<div class="pblock" id="fees"><div class="pnum">Fees to this firm under reward model B</div>${feeTable(v.fees)}</div>`}
+
+      ${v.details === undefined ? raw('') : h`<div class="pblock" id="terms"><div class="pnum">Our introducer terms</div>
+        <p>${v.details.terms === null
+          ? 'Not signed. Until the firm signs our introducer terms it is not a registered introducer, and the 10% share (model C) pays it nothing.'
+          : `Signed on ${v.details.terms.signed_on} (terms ${v.details.terms.version}). The firm is a registered introducer.`}</p>
+        <p class="help">The terms are a draft until the director agrees them and the solicitor checks them. The 10% share stays off until then.</p>
+        ${e === undefined ? raw('') : h`<details class="formfold"><summary>Record that the terms were signed</summary><form method="post" action="/staff/introducers/${v.id}/terms-signed">
+          <label>Signed on <input name="signed_on" type="date" required></label>
+          <label>Signed for the firm by <input name="firm_signatory" required maxlength="200"></label>
+          <label>Signed for us by (a director) <input name="our_signatory" required maxlength="200"></label>
+          <button type="submit">Record the signature</button></form></details>`}</div>`}
 
       ${e === undefined || v.details === undefined ? raw('') : h`<div class="pblock" id="change"><div class="pnum">Change the firm</div>
         <details class="formfold"><summary>Change the firm's details</summary><form method="post" action="/staff/introducers/${v.id}">

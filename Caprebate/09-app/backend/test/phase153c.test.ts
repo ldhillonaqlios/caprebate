@@ -351,10 +351,12 @@ describe('line 17 — Word question 222: closed website enquiries deleted twelve
     } finally { a.close(); }
   });
 
-  test('funnel leads are counted, never deleted, by this job', async () => {
+  // PHASE 157 (the sweep) built the funnel leads' deletion path, under the same switch; test/phase157.test.ts proves it.
+  test('funnel leads are deleted only through their own plan and deletion-log entries, never by a plain statement', async () => {
     const src = readFileSync(join(import.meta.dirname, '..', 'src', 'web', 'enquiry-retention.ts'), 'utf8');
-    assert.ok(!/DELETE FROM leads/i.test(src), 'the enquiry clean-up deletes a lead');
+    assert.ok(!/DELETE FROM leads/i.test(src), 'the enquiry clean-up deletes leads in bulk');
     assert.match(src, /FROM leads WHERE enquiry_id IS NOT NULL AND status = 'LOST'/);
+    assert.match(src, /leadDeletionPlan/);
   });
 });
 
