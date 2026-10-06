@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 30 |
 | Built - awaiting sign-off | 126 |
 | Blocked - question | 2 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 10 |
 | Done | 298 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1349,7 +1349,7 @@
 
 ### Phase 156f - Homedata as the property source: one address box (GoAddress removed), a £1-a-day cap, planning after signing, the site boundary
 
-`13215385357` · **Ready - Claude can build** · owner Claude
+`13215385357` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro (Mac)**
 
 - Note 2026-10-06 (Planning 6 Oct 2026): Written 6 Oct 2026 from Lakhbir's decisions (one Homedata address box, GoAddress removed; £1-a-day cap; Homedata planning after signing, PlanIt before; Homedata site boundary; listed buildings not built). On the monday board as item 13215385357. Runs after PR 27.
 
