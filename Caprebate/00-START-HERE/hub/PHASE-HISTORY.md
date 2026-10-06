@@ -12254,6 +12254,10 @@ NOTHING LEFT  beyond those lines.
 
  **Claim cleared** in the commit that carries this record.
 
+### Note, 6 October 2026 (after Phase 157c) — signing switched on for testing
+
+Lakhbir: "Signing itself is still switched off. switch this on for test purposes at the moment". Built as `ENGAGEMENT_SIGNING_TEST` (`src/web/signing.ts`): on, with `test_copy_only`, so the solicitor's answer is waived for the TEST COPY of the letter and nothing else; `signingMissing` refuses the real letter under it, even one with every term settled. The test website asks for it (`testSigning: true` beside `testLetter: true` in api/index.mjs); a local copy with `CAPREBATE_SIGNING_TEST=1`. The certificate of a test-copy signature says "TEST: … It is not a contract." `ENGAGEMENT_SIGNING`, for real clients, stays off. The case stamp reads the new switch. `test/signing-for-testing.test.ts` (9). 4,834 passing (back end 2,598 over 159 files). Branch `claude/signing-on-for-testing`, its own pull request against main.
+
 ## Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts — 6 October 2026 (Claude Code, on the Mac's OneDrive copy)
 
 **Actions and outcomes (the same short entry is at the end of the run sheet).** Brought six papers up to date with the 4 to 6 October decisions: GoAddress removed, Homedata (UK) the property source, WhatsApp a manual upload, Google Analytics dropped, the Valuation Office's list scrapped. Read and added five suppliers' published breach terms. Corrected the job cost model's Homedata prices. Built the old rate card's extra charges as a switched test default, off, with a viability check in Word question 235. 4,834 passing.
@@ -12284,3 +12288,5 @@ NOTHING LEFT  beyond those lines.
 ```
 
  **Claim cleared** in the commit that carries this record.
+
+ **Merged with main the same evening** (after PR 32, signing on for testing): the spec's figure lines and two case-stamp line references resolved; the merged tree re-run: harness 1,381, phase3 440, phase9 417, back end 2,605 over 160 files — **4,843**; drift, fold, register and tracker checks green.

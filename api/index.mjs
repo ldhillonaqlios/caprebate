@@ -46,6 +46,9 @@ async function build() {
     // 4 OCTOBER 2026 (Phase 153d, Word questions 33, 34 and 196): the portal shows the TEST-ONLY engagement letter, its
     // clauses 5, 7(d) and 13 filled with test defaults, not agreed. It is never signed. This file only - never the default.
     testLetter: true,
+    // 6 OCTOBER 2026 (Lakhbir: "switch this on for test purposes at the moment"): signing ON FOR TESTING - invented
+    // clients sign the TEST COPY of the letter end to end. The real letter is never signable under it. This file only.
+    testSigning: true,
     ...(publicOrigin === undefined ? {} : { publicOrigin }),
   }, 10_000, await sharedDocumentOptions(docs, lasting));
   const made = opened.made;
