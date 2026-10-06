@@ -12257,3 +12257,36 @@ NOTHING LEFT  beyond those lines.
 ### Note, 6 October 2026 (after Phase 157c) — signing switched on for testing
 
 Lakhbir: "Signing itself is still switched off. switch this on for test purposes at the moment". Built as `ENGAGEMENT_SIGNING_TEST` (`src/web/signing.ts`): on, with `test_copy_only`, so the solicitor's answer is waived for the TEST COPY of the letter and nothing else; `signingMissing` refuses the real letter under it, even one with every term settled. The test website asks for it (`testSigning: true` beside `testLetter: true` in api/index.mjs); a local copy with `CAPREBATE_SIGNING_TEST=1`. The certificate of a test-copy signature says "TEST: … It is not a contract." `ENGAGEMENT_SIGNING`, for real clients, stays off. The case stamp reads the new switch. `test/signing-for-testing.test.ts` (9). 4,834 passing (back end 2,598 over 159 files). Branch `claude/signing-on-for-testing`, its own pull request against main.
+
+## Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts — 6 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Brought six papers up to date with the 4 to 6 October decisions: GoAddress removed, Homedata (UK) the property source, WhatsApp a manual upload, Google Analytics dropped, the Valuation Office's list scrapped. Read and added five suppliers' published breach terms. Corrected the job cost model's Homedata prices. Built the old rate card's extra charges as a switched test default, off, with a viability check in Word question 235. 4,834 passing.
+
+- **Claim.** hub/CLAIM.md and the tracker row 13215798640 (board and tracker: Working on it, this machine), pushed before work began. Branch `claude/phase-157b` from main after PR 31 merged.
+- **1. The privacy notice draft (12818279787).** The VOA row removed; Homedata at the assessment (the postcode only, "Find my address") and after signing (the address; property, title check, planning, boundary), in the UK, in Section 4's table and stage 1 and in Section 6; "[No account has been opened yet]" corrected. A dated notes entry for the DPO.
+- **2. Who receives client personal data (12927931400), v1.5.** P7 Homedata in use; P11 WhatsApp by manual upload, nothing sent to Meta from us; P12 GoAddress removed; P15 Google Analytics dropped for now. Of the three transfers approved for testing on 30 September, only Zoom's is still used.
+- **3. Three papers.** Retention Determinations' T-ADDR row (12945903194); the BC/DR plan's outside-services, WhatsApp and GoAddress rows (12552682536); the Breach and Transparency pack's outside-the-UK wording (12927894775). Each with a dated note.
+- **4. The suppliers' breach duties (12927625052), v1.2.** Homedata's account open. The published terms of Didit (48 hours, the only number besides Microsoft's 72), Cloudflare, Zoom and Vercel ("without undue delay"; Vercel's addendum covers Pro and Enterprise only) and Turso (no public addendum: it is downloaded from the account) read on 6 October 2026, from each supplier's own pages, and added in §1 and a new §2D. Three checks added for Lakhbir (§4, items 7 to 9: Turso's addendum, Vercel's plan, the terms Zoom's and Didit's accounts were opened on).
+- **5. The job cost model (12955448913).** `homedata_cost_per_lookup` 0.17 (17 tokens a signed property: property 1, address 5, title check 1, planning 5, boundary 5; 19 where the address was typed, as the postcode search runs again), its basis now the account's price. The address search at the assessment modelled on its own (`addressSearchCost`: 2p a press, 5 a visitor, £1 a day), carried through the conversion rate (8p a signed job at one in four), into `loaded_including_address_lookup` only. **The shape the sweep named (a price read once and never re-read):** the 8p was written as current in the job cost model and its .md section 6, the Developer Spec's two Homedata rows and its 10,000-token note, and the plan's Homedata entry; each now carries the correction. Board names and background papers that record what was true on a date are left as records. phase9 D1 restated, D7 and D11 count the search, D12 and D13 new; red against the old model.
+- **6. The rate-card uplifts (12804368154, Word question 235).** Built the way Phase 153d built questions 33 and 34. `FEE_CONTROLS.uplifts` (off), `RATE_CARD_UPLIFTS` (+0.5 points for each of five complications, at most +1.5; £1,500 for manual handling; each marked "test default, not agreed"), `upliftReading`, `upliftPreview`. On, `computeFee` adds them after the first-year control and never on top of a fee that control lowered. The case stamp reads the switch. Word question 235 (both documents) now carries a dated note with the worked figures and the check: "would you say these out loud to a client?". `test/phase157b.test.ts` (7); finance-claim's shipped-off check names the new switch.
+- **The checks.** Site harness 1,381 pass / 0 fail / 3 xfail in both modes; phase3 440; phase9 417; back end `npm run check` 2,596 over 159 tracked files; **4,834** in all. CRM fold check: three line references moved, remapped — green. Register, tracker and drift checks green (the Build-Prep 06 phase9 figure brought to 417).
+- **Documents.** The six papers; the rate card paper's Step 3 note; the Developer Spec (a Phase 157b section, the fee controls line, the figures, the Homedata prices); FOR THE SOLICITOR, THE DPO AND THE DEVELOPER (the Phase 157b note).
+- **Board and tracker.** Notes on all eight paper items, the same on the board. This phase's item Done. The build queue holds Phase 157d. The signing-for-testing change is its own pull request (32), not in this one.
+
+```
+DONE          Six papers made true to the 4 to 6 October decisions; five suppliers' breach terms
+              read and added; the job cost model's Homedata prices corrected and the search
+              before signing modelled; the rate-card uplifts built as a switched test default,
+              off, with a viability check (Word question 235); 4,834 passing.
+NOT DONE      Whether the old extra charges stay - BLOCKED on Lakhbir (Word question 235, now a
+              viability check) - tracker 12804368154.
+              Turso's addendum, Vercel's plan, Zoom's and Didit's account terms - BLOCKED on
+              Lakhbir (account log-ins) - the breach duties paper §4, items 7 to 9.
+              The papers' approval - BLOCKED on the data protection officer - FOR THE SOLICITOR,
+              THE DPO AND THE DEVELOPER.
+NOTHING LEFT  beyond those lines.
+```
+
+ **Claim cleared** in the commit that carries this record.
+
+ **Merged with main the same evening** (after PR 32, signing on for testing): the spec's figure lines and two case-stamp line references resolved; the merged tree re-run: harness 1,381, phase3 440, phase9 417, back end 2,605 over 160 files — **4,843**; drift, fold, register and tracker checks green.
