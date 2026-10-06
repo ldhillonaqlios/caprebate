@@ -420,6 +420,31 @@ describe('B3 — planning history: Homedata after signing, and its answer is the
     app.close();
   });
 
+  test('the real planning answer (10 Downing Street, one logged lookup): six applications, read by reference and date; a "not this postcode" one is left out', async () => {
+    const real = FIX('homedata-planning-10-downing-street.json');
+    const app = await testApp();
+    const t = routes([[/\/property\/100023336956\/$/, real]]);
+    const ctx = { deps: { audit: app.audit, now: app.now, transport: t, limiter: new RateLimiter() }, actor_id: null, claim_id: null,
+      gate: { free_gate_open: false, engagement_signed: true, switched_on: true }, secrets: KEYS.forOwner('HOMEDATA_ADDRESS') } as C.ConnectorContext;
+    const r = await PAID_CONNECTORS['HOMEDATA_PLANNING']!.connector.lookup(ctx, { nation: 'england', uprn: '100023336956' });
+    assert.equal(r.kind, 'READ');
+    if (r.kind === 'READ') {
+      assert.equal(r.bundle.records.length, 6);
+      assert.deepEqual(r.bundle.records[0], { sourceId: 'PLANNING', entityId: `${HOMEDATA_PLANNING_ENTITY}26/01372/LBC`,
+        fields: { planning_reference: '26/01372/LBC', planning_uprn: '100023336956', planning_received_date: '2026-02-25' } });
+    }
+    const one = JSON.parse(real) as { planning_history: { applications: Record<string, unknown>[] } };
+    one.planning_history.applications[0]!['postcode_matches_property'] = false;
+    one.planning_history.applications[1]!['proposal'] = 'Invented: a new lift.';
+    const t2 = routes([[/\/property\/100023336956\/$/, JSON.stringify(one)]]);
+    const r2 = await PAID_CONNECTORS['HOMEDATA_PLANNING']!.connector.lookup({ ...ctx, deps: { ...ctx.deps, transport: t2 } }, { nation: 'england', uprn: '100023336956' });
+    if (r2.kind === 'READ') {
+      assert.equal(r2.bundle.records.length, 5);
+      assert.equal(r2.bundle.records[0]!.fields['planning_description'], 'Invented: a new lift.');
+    } else assert.fail(r2.kind);
+    app.close();
+  });
+
   test('without the property’s number, after signing, the free route still answers', async () => {
     assert.equal(R.homedataPlanningDue({ state: 'FIRED', route: 'HOMEDATA_PLANNING' }, true, TEST_SITE), false);
     assert.equal(R.homedataPlanningDue({ state: 'FIRED', route: null }, false, TEST_SITE), false, 'before signing');

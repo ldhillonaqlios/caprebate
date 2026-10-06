@@ -102,7 +102,8 @@ export function applicationFields(r: Record<string, unknown>, uprn: string): Rec
   if (decided !== null) f.planning_decision_date = decided;
   const received = day(r['submitted_date'] ?? r['received_date'] ?? r['start_date']);
   if (received !== null) f.planning_received_date = received;
-  const description = str(r['description']);
+  // PHASE 156f: the live answer (6 Oct 2026, 10 Downing Street) names it `proposal`; `description` is the prose's name.
+  const description = str(r['description'] ?? r['proposal']);
   if (description !== null) f.planning_description = description;
   return f;
 }
@@ -138,7 +139,9 @@ export const homedataPlanning = defineSteppedConnector<HomedataPlanningQuery>({
     if (list === null) return { kind: 'UNREADABLE', call: c, calls };
 
     const records = list
-      .flatMap((r) => { const o = obj(r); const f = o === null ? null : applicationFields(o, q.uprn as string); return f === null ? [] : [f]; })
+      /* PHASE 156f: the live answer says of each application whether its postcode matches the property's. One that says
+         it does not is left out: it is not known to be this building's (N4). */
+      .flatMap((r) => { const o = obj(r); const f = o === null || o['postcode_matches_property'] === false ? null : applicationFields(o, q.uprn as string); return f === null ? [] : [f]; })
       .sort((a, b) => String(b['planning_received_date'] ?? '').localeCompare(String(a['planning_received_date'] ?? '')))
       .slice(0, MAX_KEPT)
       /* PHASE 156f: its own entity ids, so a reference the free route already holds is kept beside it, not skipped. */

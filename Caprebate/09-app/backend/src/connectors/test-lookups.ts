@@ -280,6 +280,8 @@ export function notTheDefaults(v: SmokeValues): string[] {
   if (normaliseCompanyName(v.address_line_1) !== normaliseCompanyName(d.address_line_1)) out.push('address');
   if (normaliseCompanyName(v.town) !== normaliseCompanyName(d.town)) out.push('town');
   if (normalisePostcode(v.postcode) !== normalisePostcode(d.postcode)) out.push('postcode');
+  // PHASE 156f: a property number is never a default, so it always needs --not-a-client.
+  if (v.uprn != null) out.push('property number');
   return out;
 }
 
@@ -362,7 +364,7 @@ function whoAndWhy(argv: readonly string[]): { who: string; why: string } | stri
   return { who, why };
 }
 
-const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--nation england|wales|scotland|northern_ireland] [--council C] [--not-a-client] [--save-answers <folder outside the repository>]\n' +
+const SMOKE_USAGE = 'usage: CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke <SOURCE> --who "<name>" --why "<reason>" [--postcode P] [--company-number N] [--company-name X] [--address A] [--town T] [--nation england|wales|scotland|northern_ireland] [--council C] [--not-a-client] [--uprn U] [--save-answers <folder outside the repository>]\n' +
   `       CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke OS_FEATURES --who "<name>" --why "<reason>"   (the public test point only)\n` +
   `       CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke ${BOUNDARY_TEST_SOURCE} --who "<name>" --why "<reason>" [--easting E --northing N] [--council <ONS code or HM Land Registry file name>] [--not-a-client]`;
 /** The four values --nation takes (src/connectors/nations.ts). */
@@ -523,6 +525,12 @@ export async function runSmokeCommand(argv: readonly string[], env: Record<strin
       const n = nationSaid.trim().toLowerCase();
       if (!SMOKE_NATIONS.includes(n)) { d.err('refused: --nation must be england, wales, scotland or northern_ireland.'); return 1; }
       values.nation = n as Nation;
+    }
+    // PHASE 156f: --uprn, for Homedata planning, which is keyed on the property's number. A public property's only.
+    const uprnSaid = flag(argv, 'uprn');
+    if (uprnSaid !== null) {
+      if (!/^\d{1,14}$/.test(uprnSaid.trim())) { d.err('refused: --uprn must be a property number (digits only).'); return 1; }
+      values.uprn = uprnSaid.trim();
     }
     const councilSaid = flag(argv, 'council');
     if (councilSaid !== null && councilSaid.trim() !== '') values.council = councilSaid.trim().slice(0, 100);

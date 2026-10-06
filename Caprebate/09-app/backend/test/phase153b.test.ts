@@ -143,7 +143,7 @@ describe('line 19 — Word question 202: the planning route', () => {
     const rows = catalogue();
     const planning = rows.find((r) => r.source_id === 'PLANNING');
     // Phase 156f: confirmed and built to run — Homedata after signing, the free route before, Homedata's answer used.
-    assert.match(planning?.chosen_route ?? '', /Homedata planning after the letter is signed.*Before signing, the free route.*Homedata's answer is the one we use and show/);
+    assert.match(planning?.chosen_route ?? '', /Homedata planning once the letter is signed.*Before signing, the free route.*Homedata's answer is the one we use and show/);
     assert.deepEqual(rows.filter((r) => r.chosen_route !== null).map((r) => r.source_id), ['PLANNING']);
   });
 });

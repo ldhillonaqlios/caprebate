@@ -495,6 +495,27 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     off. (Earlier the same day he chose a live "coexistence" connection,
     phone first; he replaced that with this.) Built by Phase 156c, 5 Oct 2026.
 
+  HOMEDATA IS THE PROPERTY SOURCE (Lakhbir, 6 Oct 2026; built by Phase 156f).
+    - ONE ADDRESS BOX, ON HOMEDATA, POSTCODE ONLY ("one address box on
+      Homedata, with GoAddress removed - yes"). GOADDRESS IS REMOVED: its
+      connector, key, call row, tests and Connections row are gone; never
+      take its paid plan or put it back.
+    - A £1-A-DAY CAP on the box ("yes please"): 50 searches a UK day at 2p,
+      5 per visitor (ADDRESS_SEARCH_CAP).
+    - PLANNING HISTORY: HOMEDATA AFTER SIGNING, the free route (planning.data
+      .gov.uk, then PlanIt) before ("planning history - use homedata"; Word
+      question 202). Homedata's answer is the one used and shown.
+    - THE SITE BOUNDARY FROM HOMEDATA's title outline ("site boundary - use
+      home data"), kept as one area, internal only until Homedata agrees in
+      writing that it may go in a report.
+    - NOT BUILT, ON PURPOSE: LISTED BUILDINGS AND CONSERVATION AREAS ("dont
+      built this": they do not change what qualifies; Historic England's list
+      is free if ever wanted), and A STREET-NAME TYPE-AHEAD (Homedata's
+      /address/find/, 2p a search, rejected: postcode route only).
+    Cost accepted: about 2p a postcode at the assessment, and about 17p a
+    signed client after (1p property, 5p address, 1p title check, 5p
+    planning, 5p boundary) - about 19p a company.
+
 WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   ACTION-PLAN.md                    this document
   PHASE-HISTORY.md                  what every completed phase did; append a

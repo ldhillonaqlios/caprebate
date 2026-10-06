@@ -73,6 +73,8 @@ export type SmokeValues = {
   nation?: Nation | null;
   /** PHASE 156a: the council area, when the person running the test says it (--council). CQC searches by council. */
   council?: string | null;
+  /** PHASE 156f: a public property's UPRN, standing where the paid address lookup's would (Homedata planning is keyed on it). */
+  uprn?: string | null;
 };
 
 /** A subject built from typed values and from no database at all. `business_id` and the property's id are not real. */
@@ -163,6 +165,7 @@ export async function smokeOne(source_id: string, values: SmokeValues, d: SmokeD
   // PHASE 156a: a council area the person typed stands where the ONS table's answer would (CQC searches by council).
   const earlier = new Map<string, Bundle>();
   if (values.council != null && values.council.trim() !== '') earlier.set('ONS_POSTCODE', { records: [], facts: { ons_lad_name: values.council.trim() } });
+  if (values.uprn != null && /^\d{1,14}$/.test(values.uprn)) earlier.set('HOMEDATA_ADDRESS', { records: [], facts: { uprn: values.uprn } });
   const query = built.query(smokeSubject(values), earlier, d.postcodeStore ?? null);
   const run = await runConnector(built.connector, ctx, query, { state: 'NOT_RUN', detail: '' }, d.secrets, switches);
   const call: CallResult | null = run.call;

@@ -656,8 +656,8 @@ export function stateUnderGates(
 }
 
 /** PHASE 156f (B3): what the PLANNING row says while Homedata planning is due after signing. */
-export const HOMEDATA_PLANNING_DUE = 'the free planning route answered before the letter was signed. Now it is signed, ' +
-  'Homedata will read the planning history by the property\'s own number on the next click, and its answer is the one we use';
+export const HOMEDATA_PLANNING_DUE = 'the free planning route answered before the letter was signed. Now it is signed. ' +
+  'On the next click Homedata will read the planning history by the property\'s own number. We use its answer';
 
 /** PHASE 156f (B3): whether the PLANNING row should be asked again, so Homedata answers it. */
 export function homedataPlanningDue(row: { readonly state: string; readonly route: string | null } | undefined, signed: boolean, env?: Env): boolean {

@@ -178,7 +178,7 @@ export const PLANNING_ROUTE = Object.freeze({
      letter is signed the free route answers; after it, Homedata by the property's number, and its answer is the one used
      and shown (src/connectors/homedata-planning.ts, preferHomedataPlanning). */
   confirmed_on: '2026-10-06',
-  words: 'Homedata planning after the letter is signed: it finds the property by its own number, for about 5p. Before ' +
+  words: 'Homedata planning once the letter is signed. It finds the property by its own number, for about 5p. Before ' +
     'signing, the free route (planning.data.gov.uk, then PlanIt) answers. Where both have run, Homedata\'s answer is ' +
     'the one we use and show.',
 } as const);
@@ -226,7 +226,7 @@ export const TEST_WEBSITE_PAID_LOOKUPS = Object.freeze({
   sources: Object.freeze(['HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING', 'HOMEDATA_BOUNDARY']) as readonly string[],
   record: 'Lakhbir Dhillon, 6 October 2026, in the chat with Claude. He added a card to the Homedata account. ' +
     'He put the key into Vercel. He asked for Homedata to work on the test website. Test website only. ' +
-    'Later that day: "planning history - use homedata" and "site boundary - use home data".',
+    'Later he said to use Homedata for planning and for the site boundary.',
 });
 
 export const LOOKUPS_LOCAL_OPT_IN = 'CAPREBATE_LOOKUPS_HERE';
