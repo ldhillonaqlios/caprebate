@@ -51,6 +51,8 @@ const PREVIEW = Object.freeze({ VERCEL: '1', VERCEL_ENV: 'preview', VERCEL_URL: 
 const LAPTOP = Object.freeze({});
 // PHASE 156e (5 Oct 2026): the Welsh and Scottish care regulators' lists joined the four (Lakhbir: "Yes, include them").
 const FOUR = ['CARE_INSPECTORATE', 'CIW', 'CQC', 'EPC', 'HMLR_PPD', 'PLANNING'];
+// 6 Oct 2026: the paid address lookup, switched on for the test website too - but no gate is waived for it.
+const PAID = ['HOMEDATA_ADDRESS'];
 
 /** Every piece of text the PDF draws, decoded from its hexadecimal strings. */
 function pdfText(bytes: Uint8Array): string {
@@ -69,7 +71,7 @@ describe('the free lookups, switched on for the test website only', () => {
     for (const env of [TEST_SITE, PREVIEW, { CAPREBATE_LOOKUPS_HERE: '1' }]) {
       assert.equal(C.lookupsWaivedHere(env), true, JSON.stringify(env));
       const sw = C.switchesHere(env);
-      for (const id of Object.keys(C.REGISTER_SWITCHES)) assert.equal(sw[id], FOUR.includes(id) ? true : C.REGISTER_SWITCHES[id], id);
+      for (const id of Object.keys(C.REGISTER_SWITCHES)) assert.equal(sw[id], FOUR.includes(id) || PAID.includes(id) ? true : C.REGISTER_SWITCHES[id], id);
       for (const id of FOUR) assert.equal(C.freeGateWaived(id, env), true, id);
       for (const id of ['CH_COMPANY', 'CH_PSC', 'HOMEDATA_ADDRESS', 'HMLR_INSPIRE', 'ONS_POSTCODE', 'POSTCODES_IO']) assert.equal(C.freeGateWaived(id, env), false, id);
     }
@@ -123,13 +125,41 @@ describe('the free lookups, switched on for the test website only', () => {
     assert.notEqual(panel.get('HMLR_PPD')!.state, 'FIRED');
     for (const s of ['CH_COMPANY', 'CH_PSC', 'HOMEDATA_ADDRESS', 'HMLR_INSPIRE']) {
       assert.equal(panel.get(s)!.state, 'NOT_PERMITTED_YET', s);
-      assert.equal(panel.get(s)!.switched_on, false, s);
+      // 6 Oct 2026: Homedata is switched on here, but this client's letter is not signed, so it is still not permitted.
+      assert.equal(panel.get(s)!.switched_on, s === 'HOMEDATA_ADDRESS', s);
     }
     assert.ok(app.db.get<{ n: number }>("SELECT count(*) AS n FROM register_records WHERE business_id = ? AND source_id = 'EPC'", [id])!.n >= 1);
     // Each call's audit row says the free gate was open for it, as the waiver made it; never a closed gate called through.
     const epcCalls = app.db.all<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'CONNECTOR_CALLED' AND detail LIKE '%EPC%'");
     assert.ok(epcCalls.length > 0);
     for (const c of epcCalls) assert.equal((JSON.parse(c.detail) as { free_gate_open: boolean }).free_gate_open, true);
+    app.close();
+  });
+
+  test('6 Oct 2026: Homedata (paid) is on for the test website only, waives nothing, and runs only for a client whose letter is signed', async () => {
+    assert.deepEqual([...C.TEST_WEBSITE_PAID_LOOKUPS.sources], PAID);
+    assert.match(C.TEST_WEBSITE_PAID_LOOKUPS.record, /Lakhbir Dhillon, 6 October 2026/);
+    for (const id of PAID) {
+      assert.equal(C.TEST_WEBSITE_LOOKUPS.sources.includes(id), false, `${id} must not have its free gate waived`);
+      assert.equal(C.freeGateWaived(id, TEST_SITE), false, id);
+      assert.equal(C.switchesHere(TEST_SITE)[id], true, id);
+      assert.equal(C.switchesHere(LAPTOP)[id], false, id);
+    }
+    assert.equal(C.switchesHere(TEST_SITE)['HOMEDATA_PLANNING'], false, 'Homedata planning has no connector a click runs');
+    const app = await testApp();
+    await seed(app.db, app.hasher, app.now);
+    const signed = app.db.get<{ id: string }>("SELECT business_id AS id FROM engagements WHERE letter_state = 'SIGNED' ORDER BY business_id LIMIT 1")!.id;
+    const admin = app.db.get<{ id: string }>("SELECT id FROM users WHERE role = 'ADMIN' ORDER BY id LIMIT 1")!.id;
+    const keys = secretsFromValues({ HOMEDATA_API_KEY: 'homedata-fixture-key' });
+    const run = async (env: Record<string, string>) => {
+      const t = fixtureTransport({});
+      await R.runResearch({ db: app.db, audit: app.audit, now: app.now, newId, outside: { transport: t, secrets: keys, env } }, actor('ADMIN', admin), signed);
+      return t.seen.filter((x) => new URL(x.url).host === 'api.homedata.co.uk');
+    };
+    const here = await run(TEST_SITE);
+    assert.ok(here.length >= 1, 'the signed client was not looked up on Homedata on the test website');
+    assert.equal(here[0]!.headers['authorization'], 'Api-Key homedata-fixture-key');
+    assert.deepEqual(await run(LAPTOP), [], 'a copy on a computer called Homedata');
     app.close();
   });
 

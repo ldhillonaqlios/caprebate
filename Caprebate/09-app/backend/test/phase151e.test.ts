@@ -117,11 +117,11 @@ describe('151e line 2 · the test website shows no file of ours (Word question 2
 
 describe('151e line 3 · Didit on the test website: keys from its settings, and only behind a password of its own', () => {
   test('secretsFromEnvironment reads the names it is given and nothing else, and ignores an empty one', () => {
-    const s = secretsFromEnvironment({ ...DIDIT_ENV, HOMEDATA_API_KEY: 'x', DIDIT_WORKFLOW_ID: '' }, ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
+    const s = secretsFromEnvironment({ ...DIDIT_ENV, ANTHROPIC_API_KEY: 'x', DIDIT_WORKFLOW_ID: '' }, ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
     const mine = s.forOwner('DIDIT_IDV');
     assert.equal(mine.has('DIDIT_API_KEY'), true);
     assert.equal(mine.has('DIDIT_WORKFLOW_ID'), false, 'an empty value is not a key');
-    assert.equal(s.forOwner('HOMEDATA_ADDRESS').has('HOMEDATA_API_KEY'), false, 'a name it was not given was read');
+    assert.equal(s.forOwner('CLAUDE_DOCUMENTS').has('ANTHROPIC_API_KEY'), false, 'a name it was not given was read');
     assert.ok(!String(s).includes(DIDIT_ENV.DIDIT_API_KEY), 'the store printed a key');
   });
 
@@ -154,17 +154,18 @@ describe('151e line 3 · Didit on the test website: keys from its settings, and 
     const made = await made151e();
     try {
       const pw = 'an-invented-test-password-151e';
-      const r = await configureTestDeploy(made, { ...DIDIT_ENV, HOMEDATA_API_KEY: 'must-not-load', CAPREBATE_TEST_PASSWORD: pw });
+      // 6 Oct 2026: the specimen of a key the test website never reads moved from Homedata (now read) to Anthropic.
+      const r = await configureTestDeploy(made, { ...DIDIT_ENV, ANTHROPIC_API_KEY: 'must-not-load', CAPREBATE_TEST_PASSWORD: pw });
       assert.equal(r.password_changed, true);
       assert.deepEqual([...r.keys_loaded].sort(), ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
       // PHASE 151k added the fourth: the key that seals the authenticator app secret (src/mfa-seal.ts).
-      assert.deepEqual([...TEST_DEPLOY_KEYS].sort(), ['CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY', 'CQC_SUBSCRIPTION_KEY', 'DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'EPC_API_TOKEN', 'GOADDRESS_API_KEY', 'IONOS_IMAP_HOST', 'IONOS_IMAP_PASSWORD', 'IONOS_IMAP_PORT', 'IONOS_IMAP_USER', 'IONOS_SMTP_HOST', 'IONOS_SMTP_PASSWORD', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'OS_DATA_HUB_API_KEY', 'REPLY_TIMER_TOKEN', 'TURNSTILE_SECRET_KEY', 'TURNSTILE_SITE_KEY', 'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_APP_SECRET', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_TEMPLATE_LANGUAGE', 'WHATSAPP_VERIFY_TOKEN', 'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_HOST_EMAIL', 'ZOOM_PLAN', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET']);
+      assert.deepEqual([...TEST_DEPLOY_KEYS].sort(), ['CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY', 'CQC_SUBSCRIPTION_KEY', 'DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'EPC_API_TOKEN', 'GOADDRESS_API_KEY', 'HOMEDATA_API_KEY', 'IONOS_IMAP_HOST', 'IONOS_IMAP_PASSWORD', 'IONOS_IMAP_PORT', 'IONOS_IMAP_USER', 'IONOS_SMTP_HOST', 'IONOS_SMTP_PASSWORD', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'OS_DATA_HUB_API_KEY', 'REPLY_TIMER_TOKEN', 'TURNSTILE_SECRET_KEY', 'TURNSTILE_SITE_KEY', 'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_APP_SECRET', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_TEMPLATE_LANGUAGE', 'WHATSAPP_VERIFY_TOKEN', 'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_HOST_EMAIL', 'ZOOM_PLAN', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET']);
       for (const u of hashes(made)) {
         assert.equal(await made.app.hasher.verify(u.password_hash, pw), true, `${u.email} did not move to the test password`);
         assert.equal(await made.app.hasher.verify(u.password_hash, SEED_PASSWORD), false, `${u.email} still takes the public seed password`);
       }
       assert.deepEqual(identityCheckMissing(IDENTITY_CHECK, made.app.secrets), []);
-      assert.equal(made.app.secrets.forOwner('HOMEDATA_ADDRESS').has('HOMEDATA_API_KEY'), false);
+      assert.equal(made.app.secrets.forOwner('CLAUDE_DOCUMENTS').has('ANTHROPIC_API_KEY'), false);
     } finally { made.close(); }
   });
 });

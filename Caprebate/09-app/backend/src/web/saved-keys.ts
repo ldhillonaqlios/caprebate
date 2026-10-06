@@ -115,7 +115,7 @@ export function serviceOn(app: App, owner: SecretOwner): { on: boolean; why: str
     case 'COMPANIES_HOUSE': return COMPANY_SEARCH.enabled || switchedOn('CH_COMPANY') ? { on: true, why: '' } : off('The Companies House search is not switched on.');
     case 'CQC': return switchedOn('CQC', switchesHere()) ? { on: true, why: '' } : off('The care regulator lookup is not switched on.');
     case 'EPC': return switchedOn('EPC', switchesHere()) ? { on: true, why: '' } : off('The energy certificate lookup is not switched on.');
-    case 'HOMEDATA_ADDRESS': return switchedOn('HOMEDATA_ADDRESS') ? { on: true, why: '' } : off('The Homedata address lookup is not switched on.');
+    case 'HOMEDATA_ADDRESS': return switchedOn('HOMEDATA_ADDRESS', switchesHere()) ? { on: true, why: '' } : off('The Homedata address lookup is not switched on.');
     case 'IONOS_EMAIL': return EMAIL_SENDING.enabled ? { on: true, why: '' } : off('Sending email is not switched on.');
     case 'IONOS_MAILBOX': return INBOUND_EMAIL.enabled ? { on: true, why: '' } : off('Reading email replies is not switched on.');
     case 'GOOGLE_ANALYTICS': return ga4MeasurementId(st) !== null ? { on: true, why: '' } : off('It is not a Google Analytics id (G- then letters and numbers).');

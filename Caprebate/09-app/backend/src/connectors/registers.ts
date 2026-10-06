@@ -201,6 +201,20 @@ export const TEST_WEBSITE_LOOKUPS = Object.freeze({
     'the Welsh and Scottish care regulators\' downloaded lists (CIW, CARE_INSPECTORATE), he answered "Yes, include them".',
 });
 
+/**
+ * 6 OCTOBER 2026 — THE PAID ADDRESS LOOKUP, SWITCHED ON FOR THE TEST WEBSITE ONLY. Lakhbir opened the Homedata account
+ * (a card added, 6 Oct 2026), put HOMEDATA_API_KEY into Vercel and asked for it to work on the test website; a logged
+ * test lookup passed the same morning (5p). Kept apart from TEST_WEBSITE_LOOKUPS on purpose: THIS LIST WAIVES NOTHING.
+ * It only turns the switch on where the waiver holds. A paid lookup still runs only for a client whose engagement letter
+ * is signed and only when a person clicks "Run the research" (on the test website, the seeded invented clients), and it
+ * still needs its key. HOMEDATA_PLANNING is not here: it has no connector a click runs (PAID_NOT_CHOSEN).
+ */
+export const TEST_WEBSITE_PAID_LOOKUPS = Object.freeze({
+  sources: Object.freeze(['HOMEDATA_ADDRESS']) as readonly string[],
+  record: 'Lakhbir Dhillon, 6 October 2026, in the chat with Claude. He added a card to the Homedata account. ' +
+    'He put the key into Vercel. He asked for Homedata to work on the test website. Test website only.',
+});
+
 export const LOOKUPS_LOCAL_OPT_IN = 'CAPREBATE_LOOKUPS_HERE';
 
 /** True where the waiver holds: the test website, or a copy started with CAPREBATE_LOOKUPS_HERE=1. */
@@ -213,10 +227,11 @@ export function freeGateWaived(source_id: string, env: Env = process.env): boole
   return lookupsWaivedHere(env) && TEST_WEBSITE_LOOKUPS.sources.includes(source_id);
 }
 
-/** The switches for this copy: REGISTER_SWITCHES, with the waived sources on where the waiver holds. */
+/** The switches for this copy: REGISTER_SWITCHES, with the waived sources (and the test website's paid ones) on where the waiver holds. */
 export function switchesHere(env: Env = process.env): Readonly<Record<string, boolean>> {
   if (!lookupsWaivedHere(env)) return REGISTER_SWITCHES;
-  return Object.freeze({ ...REGISTER_SWITCHES, ...Object.fromEntries(TEST_WEBSITE_LOOKUPS.sources.map((id) => [id, true])) });
+  const on = [...TEST_WEBSITE_LOOKUPS.sources, ...TEST_WEBSITE_PAID_LOOKUPS.sources];
+  return Object.freeze({ ...REGISTER_SWITCHES, ...Object.fromEntries(on.map((id) => [id, true])) });
 }
 
 /* ================================================================== *
