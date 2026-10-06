@@ -74,6 +74,8 @@ import * as IE from './inbound-email.ts';
 import { joinSignature } from '../connectors/zoom.ts';
 import { VIDEO_CALL_JS } from './video-call-script.ts';
 import { PHOTO_UPLOAD_JS } from './photo-upload-script.ts';
+import { SIGNATURE_PAD_JS } from './signature-pad-script.ts';
+import { signedCopy } from './engagement-send.ts';
 import { WHATSAPP_IMPORT_JS } from './whatsapp-import-script.ts';
 import { REGISTER_IMPORT_JS } from './register-import-script.ts';
 import { sweepUploads } from './photo-upload.ts';
@@ -328,6 +330,10 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   // PHASE 156f: the assessment's address box's one script (src/web/address-lookup-script.ts).
   if (path === '/assets/address-lookup.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(ADDRESS_LOOKUP_JS); return 'handled';
+  }
+  // PHASE 157c: the engagement letter's signing pad (src/web/signature-pad-script.ts).
+  if (path === '/assets/signature-pad.js' && method === 'GET') {
+    res.writeHead(200, SITE_JS_HEADERS); res.end(SIGNATURE_PAD_JS); return 'handled';
   }
   // 2 Oct 2026: the photo page's one script (src/web/photo-upload-script.ts).
   if (path === '/assets/photo-upload.js' && method === 'GET') {
@@ -1155,7 +1161,16 @@ async function portalRoutes(
     const { business } = P.progress(db, actor, business_id);
     P.markViewed(db, actor, business_id, now);
     const eng = P.engagement(db, actor, business_id);
-    html(res, 200, letterPage(actor, business, eng, undefined, undefined, d.letterPath));
+    letterHtml(res, 200, letterPage(actor, business, eng, undefined, undefined, d.letterPath));
+    return 'handled';
+  }
+
+  /* PHASE 157c: the signed copy - the letter, the signature page and the certificate of completion - for the client. */
+  if (path === '/portal/letter/signed.pdf' && method === 'GET') {
+    const c = signedCopy(db, actor, business_id);
+    if (c === null) { html(res, 404, simple('No signed copy', 'Your letter is not signed yet.')); return 'handled'; }
+    res.writeHead(200, { 'content-type': 'application/pdf', 'content-disposition': `attachment; filename="${c.filename}"`, 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' });
+    res.end(Buffer.from(c.pdf));
     return 'handled';
   }
 
@@ -1170,13 +1185,15 @@ async function portalRoutes(
       ? { ok: false as const, why: 'Please sign in again, then sign the letter.' }
       : signEngagement({ db, audit: d.app.audit, email: d.app.email, now, newId }, actor, business_id, {
         ...typed, authorised: f.get('authorised') === 'on', letter_sha256: f.get('letter_sha256') ?? '',
+        signature_strokes: f.get('signature_strokes') ?? '', typed_as_signature: f.get('typed_as_signature') === 'on',
       }, { ip: clientIp(req), session_id }, d.letterPath === undefined ? {} : { letterPath: d.letterPath });
     if (!r.ok) {
-      html(res, 400, letterPage(actor, business, P.engagement(db, actor, business_id), r.why, typed, d.letterPath));
+      letterHtml(res, 400, letterPage(actor, business, P.engagement(db, actor, business_id), r.why, typed, d.letterPath));
       return 'handled';
     }
     html(res, 200, page({ title: 'Letter signed', nav: nav(actor), body: h`<h1>Thank you — the letter is signed</h1>
-      <p>We have recorded your signature. A copy of the signed letter, with a signature page, is saved to be emailed to you.</p>
+      <p>We have recorded your signature. A copy of the signed letter, with a signature page and a certificate of completion, is saved to be emailed to you.</p>
+      <p><a class="btn" href="/portal/letter/signed.pdf">Download your signed copy</a></p>
       <p><a class="cta" href="/portal">Back to your claims</a></p>` }));
     return 'handled';
   }
@@ -1773,12 +1790,12 @@ function submittedPage(
       ${booked.booked_at !== null
         ? h`<p>We have held <strong>${clockOf(booked.booked_at)}</strong> for your ${video === undefined ? 'call' : 'video call'}.</p>
             ${video === undefined ? raw('') : video.join !== null
-              ? h`<p>Your video call link: <a href="${video.join}">join the call here</a>. It opens half an hour before the call. We have also emailed it to you, with Zoom's own link if you would rather use the Zoom app.</p>`
+              ? h`<p>Your video call link: <a href="${video.join}">join the call here</a>. It opens half an hour before the call.${sending ? " We are emailing it to you too, with Zoom's own link if you would rather use the Zoom app." : ''}</p>`
               : h`<p class="help">We will email you the link for the video call before it starts.</p>`}
             <p class="help">${sending ? 'We are emailing you the calendar invitation now.' : 'The calendar invitation has not been sent yet.'}</p>`
         : h`<p class="help">No time is held yet. Either the way you chose to talk does not book a time,
             or the time you picked had gone. We will ring you to arrange one.</p>`}
-      <p class="help">Your reference: <code>${out.assessment_id}</code>. Nothing has been looked up about your property.</p>
+      <p class="help">Your reference: <code>${out.assessment_id}</code>. We looked up your postcode only to find your address. No property registers have been checked yet.</p>
       ${offer === undefined ? h`<p><a href="/login">Log in to your claim</a></p>` : h`
       <div class="pblock"><div class="pnum">Follow your claim online</div>
         <p class="help">Create a login to see your claim, your call and your documents. We send a link to your email address
@@ -1973,7 +1990,7 @@ const BOOKED_FROM: Readonly<Record<string, string>> = Object.freeze({
  */
 export const CLIENT_RANGE_BASIS =
   'An indicative range, built only from what you told us in the assessment. It is the top of the range: our research ' +
-  'can move it down, not up. Nothing has been looked up about you or your property yet.';
+  'can move it down, not up. No property registers have been checked yet.';
 
 function portalPage(
   actor: Actor, business: P.Business, progress: ReturnType<typeof P.progress>['progress'],
@@ -1998,7 +2015,7 @@ function portalPage(
     ...(extra.dashboard === undefined ? [] : [{ href: '#where-you-are', label: 'Where your claim is' }]),
     { href: '#waiting-on-you', label: 'What we need from you', ...(open.length + asked.length > 0 ? { note: String(open.length + asked.length) } : {}) },
     { href: '#done-so-far', label: 'What we have done' },
-    { href: '#your-range', label: 'The range you were shown' },
+    { href: '#your-range', label: 'The figure you were shown' },
     { href: '#letter', label: 'Your engagement letter' },
     { href: '#appointment', label: 'Your appointment' },
     { href: '#documents', label: 'Documents' },
@@ -2021,10 +2038,12 @@ function portalPage(
       ${clientStepsCard(extra.done ?? [], cls.map((c) => ({ id: c.id, name: propertyIn(business.name, c.property) ?? 'Your claim' })))}
       ${cls.length === 0 && progress.known ? clientStageBar(progress.steps.map((s) => ({ label: stepName(s.stage, named), state: s.state }))) : raw('')}
 
-      <section class="card" id="your-range"><div class="card-h"><h2>The range you were shown</h2></div>
+      <section class="card" id="your-range"><div class="card-h"><h2>The figure you were shown</h2></div>
       ${rng === null
         ? h`<p class="help">No assessment has been recorded for this business.</p>`
-        : h`<p class="figbig">${formatShownRange(rng)}</p>
+        /* PHASE 157c (the Friary House run, F13): the assessment shows a ceiling, "up to £X", and never a low end, so
+           this says the same. It said "£127,500 to £255,000", a range the client was never shown. */
+        : h`<p class="figbig">${formatShownRange({ low_pence: null, high_pence: rng.high_pence })}</p>
             <p class="help">${CLIENT_RANGE_BASIS}</p>`}
       </section>
 
@@ -2113,7 +2132,7 @@ function portalPage(
       ${eng === null
         ? h`<p class="help">No engagement letter has been prepared yet.</p>`
         : h`<p>Status: <strong>${eng.state.toLowerCase().replace('_', ' ')}</strong>${eng.signed_at !== null ? h`, ${localStamp(eng.signed_at, nowIso)}` : raw('')}.</p>
-            <p><a class="cta" href="/portal/letter">Read the letter</a></p>`}
+            <p><a class="cta" href="/portal/letter">${eng.state === 'SIGNED' ? 'Read the letter' : 'Read and sign the letter'}</a>${eng.state === 'SIGNED' ? h` <a class="btn" href="/portal/letter/signed.pdf">Download your signed copy</a>` : raw('')}</p>`}
       </section>
 
       <section class="card" id="appointment"><div class="card-h"><h2>Your appointment</h2></div>
@@ -2188,7 +2207,8 @@ function portalSteps(db: Db, actor: Actor, business_id: string): ClientStep[] {
 
 function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, named: boolean, done: readonly ClientStep[] = []): string {
   const property = propertyIn(business.name, c.property);
-  const where = [property, c.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
+  // PHASE 157c (F8): the town only where the property's words do not already carry it.
+  const where = [property, c.town !== null && property !== null && property.toLowerCase().includes(c.town.trim().toLowerCase()) ? null : c.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
   return page({
     title: `${business.name} — ${property ?? 'your claim'}`, nav: nav(actor), wide: true,
     body: h`${breadcrumb([{ label: business.name, href: '/portal' }, { label: property ?? 'Your claim' }])}
@@ -2226,6 +2246,17 @@ export function clientIp(req: IncomingMessage): string {
   try { return req.socket?.remoteAddress ?? 'unknown'; } catch { return 'unknown'; }
 }
 
+/**
+ * PHASE 157c: the letter page. While the letter can be signed (the signing form, and its pad, are on the page), every
+ * page's policy plus OUR OWN script, the signing pad's. Otherwise exactly every page's policy, with no script at all.
+ */
+export const LETTER_PAGE_CSP = "default-src 'none'; style-src 'self'; img-src 'self' data:; script-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
+function letterHtml(res: ServerResponse, status: number, body: string): void {
+  if (!body.includes('data-sig-pad')) { res.writeHead(status, HTML_HEADERS); res.end(body); return; }
+  res.writeHead(status, { ...HTML_HEADERS, 'content-security-policy': LETTER_PAGE_CSP });
+  res.end(body.replace('</body>', '<script src="/assets/signature-pad.js" defer></script></body>'));
+}
+
 function letterPage(
   actor: Actor, business: P.Business, eng: P.EngagementView | null,
   problem?: string, typed?: { full_name: string; role: string }, letterPath?: string,
@@ -2259,17 +2290,26 @@ function letterPage(
         ? h`<p class="clause">${p.text}</p>`
         : h`<p>${p.text}</p>`)}</div>
 
-      ${eng !== null && eng.state === 'SIGNED' ? h`<p><strong>You signed this letter${eng.signed_at === null ? '' : ` on ${localWhen(eng.signed_at)}`}.</strong></p>` : canSign ? h`
+      ${eng !== null && eng.state === 'SIGNED' ? h`<p><strong>You signed this letter${eng.signed_at === null ? '' : ` on ${localWhen(eng.signed_at)}`}.</strong> <a class="btn" href="/portal/letter/signed.pdf">Download your signed copy</a></p>` : canSign ? h`
       <form method="post" action="/portal/letter/sign" class="sign">
         <h2>Sign the letter</h2>
         <input type="hidden" name="letter_sha256" value="${shown.sha256}">
         <label>Your full name <input name="full_name" required maxlength="200" autocomplete="name" value="${typed?.full_name ?? ''}"></label>
         <label>Your role in the business <input name="signer_role" required maxlength="120" autocomplete="organization-title" value="${typed?.role ?? ''}"></label>
+        <fieldset class="sig"><legend>Your signature</legend>
+          ${missing.length > 0 ? raw('') /* PHASE 157c: the pad, and its one script, only while the letter can be signed */ : h`<div class="sig-pad" data-sig-pad hidden>
+            <canvas class="sig-canvas" width="600" height="200" aria-label="Draw your signature here"></canvas>
+            <p class="help" data-sig-note></p>
+            <button type="button" class="btn-quiet" data-sig-clear>Clear and draw again</button>
+          </div>`}
+          <input type="hidden" name="signature_strokes" value="">
+          <label class="ck"><input type="checkbox" name="typed_as_signature"> Use my typed name as my signature (if you cannot, or would rather not, draw it)</label>
+        </fieldset>
         <label class="ck"><input type="checkbox" name="authorised" required> I confirm I may sign this letter for ${business.name}.</label>
         <button class="cta" type="submit">Sign</button>
       </form>
       ${missing.length === 0 ? raw('') : h`<div class="gate">Signing is not switched on yet.${why(h`${missing.join(' ')}`)}</div>`}` : raw('')}
-      <div class="gate">When you sign, we keep a record of it.${why(h`We keep your name, your role and the time. We keep the internet address you signed from. We keep a fingerprint of this exact letter. You get a copy of the signed letter by email. We never take a payment here.`)}</div>`,
+      <div class="gate">When you sign, we keep a record of it.${why(h`We keep your name, your role, your signature and the time. We keep the internet address you signed from. We keep a fingerprint of this exact letter. You get a copy of the signed letter by email, and you can download it here. We never take a payment here.`)}</div>`,
   });
 }
 

@@ -73,6 +73,15 @@ export function nationOf(subject: ResearchSubject, earlier: ReadonlyMap<string, 
     : code.startsWith('N') ? 'northern_ireland' : null;
 }
 
+/**
+ * PHASE 157c: the nation from the postcode check's country (postcodes.io: "England", "Wales", "Scotland", "Northern
+ * Ireland"). Anything else - the Channel Islands, the Isle of Man, a blank - is not a nation we cover, so null (N4).
+ */
+export function nationFromCountry(country: string | null | undefined): Nation | null {
+  const c = (country ?? '').trim().toLowerCase();
+  return c === 'england' ? 'england' : c === 'wales' ? 'wales' : c === 'scotland' ? 'scotland' : c === 'northern ireland' ? 'northern_ireland' : null;
+}
+
 /** CB_JURIS's register for this nation, read from the engine and never restated: "EPC", "CQC", "HMLR_PPD", or another. */
 export function jurisSource(nation: Nation | null, key: 'epc' | 'price_paid' | 'regulator_social' | 'regulator_health' | 'planning'): string | null {
   if (nation === null) return null;

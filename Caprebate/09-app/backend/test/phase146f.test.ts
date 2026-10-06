@@ -357,7 +357,7 @@ describe('5 · the built-in signature', () => {
   test('ON: the record holds name, role, business, time, address, session and the letter’s fingerprint; the chain holds the record’s hash and no name', async (t) => {
     const x = await signingWorld(); t.after(() => x.w.made.close());
     const r = signEngagement(x.deps, x.actor, x.biz,
-      { full_name: '  Ada   Lovelace ', role: 'Director', authorised: true, letter_sha256: x.shown.sha256 },
+      { full_name: '  Ada   Lovelace ', role: 'Director', authorised: true, letter_sha256: x.shown.sha256, typed_as_signature: true },
       { ip: '203.0.113.9', session_id: x.session }, { cfg: SIGNING_ON, letterPath: x.letterPath });
     assert.equal(r.ok, true, r.ok ? '' : r.why);
     const row = x.db.get<{ signer_name: string; signer_role: string; business_name: string; ip: string; session_id: string; user_id: string; signed_at: string; letter_sha256: string; letter_text: string; pdf: Uint8Array; origin: string }>(
@@ -388,7 +388,7 @@ describe('5 · the built-in signature', () => {
     assert.equal(copy?.content_type, 'application/pdf');
     assert.deepEqual(Buffer.from(copy?.bytes ?? new Uint8Array()), Buffer.from(row.pdf));
     // signed once
-    const again = signEngagement(x.deps, x.actor, x.biz, { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: x.shown.sha256 },
+    const again = signEngagement(x.deps, x.actor, x.biz, { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: x.shown.sha256, typed_as_signature: true },
       { ip: '203.0.113.9', session_id: x.session }, { cfg: SIGNING_ON, letterPath: x.letterPath });
     assert.deepEqual(again, { ok: false, why: 'This letter is already signed. You do not need to sign it again.' });
   });
@@ -396,7 +396,7 @@ describe('5 · the built-in signature', () => {
   test('every refusal is a sentence: one word for a name, no role, no tick, a letter that changed, a letter not sent', async (t) => {
     const x = await signingWorld(); t.after(() => x.w.made.close());
     const go = (input: Partial<{ full_name: string; role: string; authorised: boolean; letter_sha256: string }>) =>
-      signEngagement(x.deps, x.actor, x.biz, { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: x.shown.sha256, ...input },
+      signEngagement(x.deps, x.actor, x.biz, { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: x.shown.sha256, typed_as_signature: true, ...input },
         { ip: '203.0.113.9', session_id: x.session }, { cfg: SIGNING_ON, letterPath: x.letterPath });
     assert.match(String((go({ full_name: 'Ada' }) as { why: string }).why), /first name and your last name/);
     assert.match(String((go({ role: ' ' }) as { why: string }).why), /role in the business/);
@@ -420,7 +420,7 @@ describe('5 · the built-in signature', () => {
     assert.equal(byHand.signed, false);
     assert.match(byHand.why, /no signature record/);
     x.db.run("UPDATE engagements SET letter_state = 'SENT', signed_at = NULL WHERE id = ?", [x.eng]);
-    const r = signEngagement(x.deps, x.actor, x.biz, { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: x.shown.sha256 },
+    const r = signEngagement(x.deps, x.actor, x.biz, { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: x.shown.sha256, typed_as_signature: true },
       { ip: '203.0.113.9', session_id: x.session }, { cfg: SIGNING_ON, letterPath: x.letterPath });
     assert.equal(r.ok, true);
     assert.equal(checkSignature(x.db, x.eng).ok, true);

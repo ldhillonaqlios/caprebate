@@ -512,6 +512,8 @@ const RULES: RuleTable = {
   'engagement.read': {
     ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType>,
   },
+  /* PHASE 157c: prepare the engagement letter and send it to the client's logins (src/web/engagement-send.ts). */
+  'engagement.send': { ADMIN: always, SALES: always },
   'research.run': { ADMIN: always, SALES: always },
   'research.read': { ADMIN: always, SALES: always },
   'register_record.read': { ADMIN: always, SALES: always, SURVEYING: always },
@@ -1044,6 +1046,7 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'booking.write': NO(WRITES),
   'booking.move_own': NO('the client\'s own action; also a write'),
   'engagement.read': YES('whether the letter is sent, viewed or signed — a state, with no fee in it'),
+  'engagement.send': NO(WRITES),
   'research.run': NO('a write, and it could fire paid calls'),
   'research.read': NO('paid register research can carry the purchase price, an anchor; decided conservatively'),
   'register_record.read': YES('the free register records, as the surveyor reads'),

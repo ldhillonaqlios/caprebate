@@ -940,7 +940,8 @@ function claimPage(
   const biz = v.client.business_id;
   // PHASE 134: THE COMPANY IS THE FRAME. The heading is the company's name; the property and the reference sit under it.
   const property = v.header?.property ?? null;
-  const where = property === null ? null : [propertyIn(v.client.name, property.label), property.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
+  // PHASE 157c (F8): the town only where the label does not already carry it ("…, Plymouth, PL4 9BH, Plymouth").
+  const where = property === null ? null : [propertyIn(v.client.name, property.label), property.town !== null && property.label.toLowerCase().includes(property.town.trim().toLowerCase()) ? null : property.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
   const tasks = claimTasksBlock(v.id, v.tasks, taskChoices(db));
   const docs = claimDocumentsBlock(v.id, v.documents, false);
   const email = emailBlock(biz, v.id, x.contacts);
@@ -983,7 +984,10 @@ function claimPage(
       status: over ? 'DONE' : 'WORKING',
       working: over ? `This claim is closed: ${pl.stage.label}.`
         : pl.gate === undefined ? `Stage: ${pl.stage.label}.`
-          : pl.gate.open ? `Ready to move on from ${pl.gate.label}.` : `Getting ready to move on: ${plainNeed(firstNeed?.what ?? '').words}`,
+          // PHASE 157c (the Friary House run, F9): a move also needs one next action; "Ready" with none was refused.
+          : pl.gate.open ? (v.header !== undefined && v.header.next_action === null
+            ? `Ready to move on from ${pl.gate.label} once the claim has a next action (Set the next action).`
+            : `Ready to move on from ${pl.gate.label}.`) : `Getting ready to move on: ${plainNeed(firstNeed?.what ?? '').words}`,
       need: [], from: ['our step-by-step procedure', 'you and your team'],
       body: h`${v.overview === undefined ? raw('') : fields([
           { label: 'Workstream', value: v.overview.workstream.label },

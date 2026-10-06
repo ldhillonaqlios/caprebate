@@ -38,7 +38,7 @@ export type TabKey = 'chat' | 'claims' | 'properties' | 'questions' | 'people' |
 /** Which tab each section lives in. A section not named here goes under Activity, so nothing is ever lost. */
 export const TAB_OF_SECTION: Readonly<Record<string, TabKey>> = Object.freeze({
   chat: 'chat', claims: 'claims', properties: 'properties', questions: 'questions', answers: 'questions',
-  details: 'people', contacts: 'people', identity: 'people', checks: 'checks', sources: 'checks', documents: 'files',
+  details: 'people', contacts: 'people', identity: 'people', checks: 'checks', sources: 'checks', documents: 'files', letter: 'files',
   activity: 'activity',
 });
 
@@ -126,7 +126,7 @@ export function lookupsCard(src: SourcesPanel | null, nowIso: string): Safe {
     <p class="lk-summary">${groups.map((x) => h`<span class="lk lk-g-${x.g.toLowerCase().replace(/\s+/g, '-')}">${x.g} ${String(x.items.length)}</span>`)}</p>
     <details class="lk-list"><summary>See each lookup</summary>
       <ul>${rows.map((x) => h`<li><span>${x.r.publisher}<span class="help"> · ${x.r.dataset}</span></span> <span class="lk lk-${x.r.state.toLowerCase().replace(/_/g, '-')}${x.group === 'Not switched on' ? ' lk-off' : ''}">${x.words}</span></li>`)}</ul></details>
-    <p><a href="#sources">${src.outstanding > 0 && src.rate.allowed ? 'Run the research' : 'Open the lookups'}</a></p></section>`;
+    <p><a href="?done=lookups#sources">${src.outstanding > 0 && src.rate.allowed ? 'Run the research' : 'Open the lookups'}</a></p></section>`;
 }
 
 /** The sections, in their tabs. Inside a tab each keeps its own open-or-closed rule (work open, done folded, the person's

@@ -281,11 +281,35 @@ export function jurisdictionReading(db: Db, property_id: string | null, store?: 
   };
 }
 
+/**
+ * PHASE 157c (the Friary House run, F14): what the client said at the assessment about this property's purchase - its
+ * rough date ("06/2019") - found by the property's own address among the assessment's answers. Shown beside an unknown
+ * acquisition date, never stored as it: the client gave a month and a rough figure, not a completion date (N4).
+ */
+export function clientSaidPurchaseDate(db: Db, property_id: string): string | null {
+  const p = db.get<{ business_id: string; label: string }>('SELECT business_id, label FROM properties WHERE id = ?', [property_id]);
+  if (p === undefined) return null;
+  const a = db.get<{ id: string }>('SELECT id FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [p.business_id]);
+  if (a === undefined) return null;
+  const at = db.get<{ question_id: string }>(
+    "SELECT question_id FROM assessment_answers WHERE assessment_id = ? AND question_id LIKE 'Q2-%-address' AND state = 'ANSWERED' AND value = ?",
+    [a.id, p.label]);
+  const n = at === undefined ? null : /^Q2-(\d+)-address$/.exec(at.question_id)?.[1] ?? null;
+  if (n === null) return null;
+  const trigger = db.get<{ value: string | null }>("SELECT value FROM assessment_answers WHERE assessment_id = ? AND question_id = ? AND state = 'ANSWERED'", [a.id, `Q2-${n}-trigger`])?.value;
+  if (trigger !== 'purchase') return null;
+  return db.get<{ value: string | null }>("SELECT value FROM assessment_answers WHERE assessment_id = ? AND question_id = ? AND state = 'ANSWERED'", [a.id, `Q2-${n}-date`])?.value ?? null;
+}
+
 export function acquisitionDateReading(db: Db, property_id: string | null): FactReading {
   const label = 'The acquisition date';
   if (property_id === null) return unknown('ACQUISITION_DATE', label, false, null);
   const p = db.get<{ acquisition_date: string | null }>('SELECT acquisition_date FROM properties WHERE id = ?', [property_id]);
-  if (p?.acquisition_date === null || p?.acquisition_date === undefined) return unknown('ACQUISITION_DATE', label, false, null);
+  if (p?.acquisition_date === null || p?.acquisition_date === undefined) {
+    const said = clientSaidPurchaseDate(db, property_id);
+    const u = unknown('ACQUISITION_DATE', label, false, null);
+    return said === null ? u : { ...u, display: `not known: at the assessment the client said they bought it around ${said}. Confirm the completion date and record it on the property.` };
+  }
   return { key: 'ACQUISITION_DATE', label, known: true, value: p.acquisition_date, display: p.acquisition_date, capturable: false, source: staffSource('the property record') };
 }
 

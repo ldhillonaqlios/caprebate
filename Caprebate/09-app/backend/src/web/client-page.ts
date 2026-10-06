@@ -50,6 +50,7 @@ import { askButton, businessPageHtml, DONE_WORDS, panel1, panel2, panel3, panel4
 import { checksPanelIfPermitted } from './approvals.ts';
 import { checksBlock, checksSummary, STEP_ANCHOR } from './approvals-pages.ts';
 import { clientFolder } from './documents.ts';
+import { letterState, letterSteps } from './engagement-send.ts';
 import { filesButton, folderTiles } from './client-files-pages.ts';
 import { emailButton } from './free-email-pages.ts';
 import { identityChecks, identityPanel } from './identity-checks.ts';
@@ -123,6 +124,9 @@ function clientStatusBadge(key: string | null, label: string): Safe {
 const SAVED: Readonly<Record<string, string>> = Object.freeze({
   saved: 'Saved.', contact: 'The contact is saved.', task: 'The task is saved.',
   'identity-sent': 'The identity check was sent. Give the person their link, in Identity check below.',
+  // PHASE 157c (F21)
+  'letter-sent': 'The engagement letter is sent. The client is emailed a link to read and sign it in their portal.',
+  'letter-resent': 'The link to the engagement letter is sent again.',
 });
 
 /**
@@ -131,6 +135,10 @@ const SAVED: Readonly<Record<string, string>> = Object.freeze({
  */
 const OPEN_AFTER: Readonly<Record<string, string>> = Object.freeze({
   saved: 'details', contact: 'contacts', task: 'activity', research: 'sources', retry: 'sources',
+  // PHASE 157c (the Friary House run, F11): the "Run the research" links open the Lookups section; "#sources" alone
+  // pointed into a closed tab and showed nothing.
+  lookups: 'sources',
+  'letter-sent': 'letter', 'letter-resent': 'letter', letter: 'letter',
   sent: 'questions', answered: 'questions', withdrawn: 'questions',
   checked: 'checks', unchecked: 'checks', told: 'checks', takenback: 'checks',
   'identity-sent': 'identity',
@@ -313,6 +321,25 @@ function clientPage(
     });
   }
 
+  /* PHASE 157c (the Friary House run, F21): THE ENGAGEMENT LETTER — its steps, the button that sends it, and the signed
+     copy once there is one. Only for a login that may read the letter (Admin, Sales). */
+  if (can(actor, 'engagement.read', { type: 'engagement', id: org.id, business_id: org.id })) {
+    const ls = letterState(db, org.id);
+    const maySend = can(actor, 'engagement.send', { type: 'engagement', id: org.id, business_id: org.id }) && ls.state !== 'SIGNED';
+    sections.push({
+      key: 'client.letter', id: 'letter', kind: 'documents', heading: 'Engagement letter',
+      status: ls.state === 'SIGNED' ? 'DONE' : ls.state === 'NONE' || ls.state === 'NOT_SENT' ? 'NOT_STARTED' : 'WAITING',
+      working: ls.state === 'SIGNED' ? 'Nothing: the letter is signed.' : ls.state === 'NONE' || ls.state === 'NOT_SENT' ? 'Not sent yet.' : 'Waiting for the client to sign it.',
+      need: ls.state === 'SIGNED' ? [] : [{ label: ls.state === 'NONE' || ls.state === 'NOT_SENT' ? 'Send the engagement letter' : 'The client to sign the letter' }],
+      from: ['Cap Rebate', 'the client'],
+      body: h`<ul class="plain">${letterSteps(ls).map((w) => h`<li>${w}</li>`)}</ul>
+        ${ls.copy ? h`<p><a class="btn" href="/staff/clients/${org.id}/engagement/signed.pdf">Download the signed copy</a> <span class="help">The letter, the signature page and the certificate of completion, as one PDF.</span></p>` : raw('')}
+        ${!maySend ? raw('') : ls.logins === 0 ? h`<p class="help">The client has no login yet, so the letter cannot be sent. They can create one from the thank-you page after the assessment.</p>`
+          : h`<form method="post" action="/staff/clients/${org.id}/engagement/send"><button class="cta" type="submit">${ls.state === 'NONE' || ls.state === 'NOT_SENT' ? 'Prepare and send the engagement letter' : 'Send the link again'}</button>
+            <span class="help">The client is emailed a link to read and sign it in their portal.</span></form>`}`,
+    });
+  }
+
   /* PHASE 140: THE COMPANY'S FILES, AS FOLDERS. The same folders the Files page draws, each a tile that opens it there. */
   const folder = clientFolder({ db, now: d.app.now }, actor, org);
   const waitingFiles = folder.asked?.length ?? 0;
@@ -329,7 +356,7 @@ function clientPage(
   const quick: QuickAction[] = [
     ...s.quick,
     ...(mayEmail ? [{ href: `/staff/clients/${org.id}/email`, label: 'Write an email' }] : []),
-    ...(work !== null && work.sources.rate.allowed ? [{ href: '#sources', label: 'Run the research' }] : []),
+    ...(work !== null && work.sources.rate.allowed ? [{ href: `/staff/clients/${org.id}?done=lookups#sources`, label: 'Run the research' }] : []),
     ...(p !== null && p.missing.length > 0 ? [{ href: '#questions', label: 'Ask the client for something' }] : []),
   ];
   const legal = org.legal_name.value !== null && org.legal_name.value !== org.trading_name ? org.legal_name.display : null;

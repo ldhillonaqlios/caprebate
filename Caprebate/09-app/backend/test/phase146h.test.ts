@@ -328,7 +328,7 @@ async function signedClient(app: Awaited<ReturnType<typeof testApp>>): Promise<s
   const shown = shownLetter({ name: 'Riverside Supported Living' }, letterPath);
   const signed = signEngagement(
     { db: app.db, audit: app.audit, email: app.email, now: app.now, newId: randomUUID }, client, id,
-    { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: shown.sha256 },
+    { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: shown.sha256, typed_as_signature: true },
     { ip: '203.0.113.9', session_id: session }, { cfg: SIGNING_ON, letterPath },
   );
   assert.equal(signed.ok, true, signed.ok ? '' : signed.why);

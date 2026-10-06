@@ -115,7 +115,7 @@ describe('one section component, on both pages', () => {
     assert.equal(r.status, 200);
     const all = sections(r.body);
     // Phase 139 added "Check and tell the client" after the claims; Phase 142 added "Chat" before the activity.
-    assert.deepEqual(all.map((x) => x.id), ['chat', 'properties', 'questions', 'answers', 'details', 'contacts', 'checks', 'sources', 'documents', 'activity'] /* 30 Sep 2026: grouped by tab; UI tidy phase 7: the claims are boxes above the tabs (#claims) */);
+    assert.deepEqual(all.map((x) => x.id), ['chat', 'properties', 'questions', 'answers', 'details', 'contacts', 'checks', 'sources', 'letter', 'documents', 'activity'] /* 30 Sep 2026: grouped by tab; UI tidy phase 7: the claims are boxes above the tabs (#claims); Phase 157c: the engagement letter, on the Files tab */);
     const words: Record<string, string> = { company: 'Company', property: 'Property', facts: 'Facts and figures', documents: 'Documents', money: 'Money', messages: 'Messages' };
     for (const x of all) {
       assert.match(x.html, /<span class="secicon" aria-hidden="true"><svg /, `#${x.id} has no icon`);

@@ -175,7 +175,10 @@ export async function reconcileVideoMeeting(app: App, booking_id: string): Promi
   const record = app.db.get('SELECT 1 AS x FROM survey_walkthroughs WHERE booking_id = ?', [booking_id]) !== undefined;
   // PHASE 153f: made under the assigned member of staff, so two calls at once can both run; if they have no Zoom user
   // on our account, under the shared host instead, and the audit line says so.
-  const host = callHost(app.db, booking_id);
+  /* PHASE 157c (the Friary House run, F5): on the free plan every call is the shared host's (Phase 156d: "contact@caprebate
+     is enough"), so it goes straight there - asking under the assigned member of staff first cost a refused call and an
+     error row on every booking. On a paid plan, as Phase 153f built it: the assigned member of staff, else the shared host. */
+  const host = zoomPlanIsFree(app.secrets) ? null : callHost(app.db, booking_id);
   const unreachable: MadeMeeting = { state: 'NOT_MADE', why: 'Zoom could not be reached.' };
   let made: MadeMeeting = await makeZoomMeeting(zd, b.starts_at, SLOT_MINUTES, { record, ...(host === null ? {} : { host: host.email }) }).catch(() => unreachable);
   let hostId: string | null = host === null ? null : host.user_id;

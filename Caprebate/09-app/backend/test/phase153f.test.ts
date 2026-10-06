@@ -74,7 +74,8 @@ beforeEach(() => { forgetZoomToken(); made.app.outside = liveTransport; made.app
 function zoomOn() {
   const t = fixtureTransport(FIXTURES);
   made.app.outside = t;
-  made.app.secrets = secretsFromValues(KEYS);
+  // PHASE 157c: a host per member of staff is the paid plan's; on the free plan every call is the shared host's (phase157c).
+  made.app.secrets = secretsFromValues({ ...KEYS, ZOOM_PLAN: 'pro' });
   made.app.zoomPolicy = APPROVED;
   return t;
 }

@@ -76,6 +76,7 @@ export const ACTION_WORDS: Readonly<Record<string, readonly [string, string]>> =
   'property.read': ['Clients and properties', 'See a property'],
   'property.write': ['Clients and properties', 'Add or change a property'],
   'engagement.read': ['Clients and properties', 'See where the engagement letter is'],
+  'engagement.send': ['Clients and properties', 'Send the engagement letter to the client'],
   'claim.enter': ['Claims', 'Open the claims area'],
   'claim.read': ['Claims', 'See a claim'],
   'claim.read_value': ['Claims', 'See what a claim is worth'],

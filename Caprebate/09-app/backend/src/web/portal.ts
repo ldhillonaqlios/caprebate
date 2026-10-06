@@ -193,9 +193,9 @@ export function engagement(db: Db, actor: Actor, business_id: string): Engagemen
 export function markViewed(db: Db, actor: Actor, business_id: string, now: () => string): void {
   const e = engagement(db, actor, business_id);
   if (e === null || e.state !== 'SENT') return;
-  db.run('UPDATE engagements SET letter_state = ? WHERE business_id = ? AND letter_state = ?',
-    ['VIEWED', business_id, 'SENT']);
-  void now;
+  // PHASE 157c: the moment the client first opened it is kept, for the certificate of completion.
+  db.run('UPDATE engagements SET letter_state = ?, viewed_at = COALESCE(viewed_at, ?) WHERE business_id = ? AND letter_state = ?',
+    ['VIEWED', now(), business_id, 'SENT']);
 }
 
 /* ------------------------------------------------------ 3 · THE APPOINTMENT */

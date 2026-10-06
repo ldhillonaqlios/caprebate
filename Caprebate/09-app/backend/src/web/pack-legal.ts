@@ -27,6 +27,7 @@ import { CB, getSector, newSession } from './engine.ts';
 import { packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult } from './survey-pack.ts';
 import { poundsWords } from './pack-sums.ts';
+import { claimantTypeForGate } from './crm.ts';
 
 export type EngineQuestion = {
   readonly id: string;
@@ -111,9 +112,14 @@ function poundsToPence(v: unknown): number | null {
   return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.round(v * 100) : null;
 }
 
-/** The engine's claimant type. Unknown is read as a company: its earlier start date never relieves (CB_S187A). */
-function claimantFor(db: Db, business_id: string): string {
-  const t = db.get<{ t: string | null }>('SELECT claimant_type AS t FROM businesses WHERE id = ?', [business_id])?.t ?? null;
+/**
+ * The engine's claimant type. Unknown is read as a company: its earlier start date never relieves (CB_S187A).
+ * PHASE 157c (the Friary House run, F15): read as every other gate reads it (claimantTypeForGate) - the client's own
+ * answer at the assessment first, then what staff recorded. It read only the recorded column, so a partnership that
+ * said so at the assessment was checked on a company's dates.
+ */
+export function claimantFor(db: Db, business_id: string): string {
+  const t = claimantTypeForGate(db, business_id).value;
   return t === null || t === 'COMPANY' || t === 'UNKNOWN' ? 'company' : t.toLowerCase();
 }
 

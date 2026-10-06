@@ -481,7 +481,9 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
       ${recordLayout(h`${([
         { key: 'lead.details', id: 'details', kind: 'company', heading: 'The lead',
           status: converted ? 'DONE' : 'WORKING',
-          working: converted ? 'Nothing — this lead is now a claim.' : leadNeed.length === 0 ? 'Every check is a yes. Convert it to open the claim.'
+          working: converted ? 'Nothing — this lead is now a claim.' : leadNeed.length === 0
+            // PHASE 157c (the Friary House run, F7): the Convert button shows only once the lead is Qualified; say so.
+            ? (v.status.key === 'QUALIFIED' ? 'Every check is a yes. Convert it to open the claim.' : 'Every check is a yes. Set the status to Qualified (Change the lead, below), then convert it to open the claim.')
             : 'Checking whether this is a claim we can take on.',
           need: converted ? [] : leadNeed, from: ['the client', v.source.label], body: h`
       <div class="pblock">${fields([

@@ -131,6 +131,9 @@ export function singleFile(
     return { ok: false, why: e instanceof MultipartError ? e.message : 'that upload could not be read' };
   }
   const files = parts.filter((p) => p.filename !== undefined && p.bytes.length > 0);
+  // PHASE 157c (the Friary House run, F17): a file that was chosen but holds nothing arrives with its name and no bytes;
+  // a browser with no file chosen sends a part with an empty name. Say which, rather than "choose a file" for both.
+  if (files.length === 0 && parts.some((p) => p.filename !== undefined && p.filename !== '' && p.bytes.length === 0)) return { ok: false, why: 'that file is empty' };
   if (files.length === 0) return { ok: false, why: 'no file was attached' };
   if (files.length > 1) return { ok: false, why: 'attach one file, not several' };
   const fields: Record<string, string> = {};
@@ -159,6 +162,9 @@ export function manyFiles(
     return { ok: false, why: e instanceof MultipartError ? e.message : 'that upload could not be read' };
   }
   const files = parts.filter((p) => p.filename !== undefined && p.bytes.length > 0);
+  // PHASE 157c (the Friary House run, F17): a file that was chosen but holds nothing arrives with its name and no bytes;
+  // a browser with no file chosen sends a part with an empty name. Say which, rather than "choose a file" for both.
+  if (files.length === 0 && parts.some((p) => p.filename !== undefined && p.filename !== '' && p.bytes.length === 0)) return { ok: false, why: 'that file is empty' };
   if (files.length === 0) return { ok: false, why: 'no file was attached' };
   if (files.length > max) return { ok: false, why: `attach at most ${String(max)} files at a time` };
   const fields: Record<string, string> = {};

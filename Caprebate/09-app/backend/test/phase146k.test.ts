@@ -70,7 +70,7 @@ async function client(sign = true): Promise<{ app: TestApp; id: string; property
   const signed = signEngagement(
     { db: app.db, audit: app.audit, email: app.email, now: app.now, newId: randomUUID },
     { id: user.id, role: 'CLIENT', business_id: id, disabled: false }, id,
-    { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: shownLetter({ name: 'X' }, letterPath).sha256 },
+    { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: shownLetter({ name: 'X' }, letterPath).sha256, typed_as_signature: true },
     { ip: '203.0.113.9', session_id: session }, { cfg: SIGNING_ON, letterPath },
   );
   assert.equal(signed.ok, true, signed.ok ? '' : signed.why);

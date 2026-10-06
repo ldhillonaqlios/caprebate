@@ -31,6 +31,7 @@ import { localStamp } from './localtime.ts';
 import { RANGE_QUALIFIER } from './shown-range.ts';
 import * as E from './engaged.ts';
 import * as R from './research.ts';
+import { sendEngagementLetter, signedCopy } from './engagement-send.ts';
 import * as A from './approvals.ts';
 import { STEP_ANCHOR } from './approvals-pages.ts';
 import { clientList, clientListPage, type ClientSort } from './client-list.ts';
@@ -82,6 +83,24 @@ export async function handleEngaged(
   }
 
   /* PHASE 134: GET /staff/clients/:id is the ONE client page, drawn by src/web/client-page.ts, which is mounted first. */
+
+  /* PHASE 157c (the Friary House run, F21): prepare and send the engagement letter; and the signed copy. */
+  const sendLetter = /^\/staff\/clients\/([A-Za-z0-9-]+)\/engagement\/send$/.exec(path);
+  if (sendLetter && method === 'POST') {
+    const id = sendLetter[1] ?? '';
+    const r = sendEngagementLetter({ ...deps, email: d.app.email, ...(d.publicOrigin === undefined ? {} : { origin: d.publicOrigin }) }, actor, id);
+    if (!r.ok) return d.problem(res, actor, 'Not sent', r.why, `/staff/clients/${id}?done=letter#letter`);
+    redirect(res, `/staff/clients/${id}?done=${r.resent ? 'letter-resent' : 'letter-sent'}#letter`);
+    return 'handled';
+  }
+  const copy = /^\/staff\/clients\/([A-Za-z0-9-]+)\/engagement\/signed\.pdf$/.exec(path);
+  if (copy && method === 'GET') {
+    const c = signedCopy(db, actor, copy[1] ?? '');
+    if (c === null) return d.problem(res, actor, 'No signed copy', 'There is no signed letter for this client yet.', `/staff/clients/${copy[1] ?? ''}`);
+    res.writeHead(200, { 'content-type': 'application/pdf', 'content-disposition': `attachment; filename="${c.filename}"`, 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' });
+    res.end(Buffer.from(c.pdf));
+    return 'handled';
+  }
 
   /* ---- panel 2 · the one button, and the one exception ---- */
   const run = /^\/staff\/clients\/([A-Za-z0-9-]+)\/research$/.exec(path);

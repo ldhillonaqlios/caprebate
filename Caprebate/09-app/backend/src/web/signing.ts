@@ -132,19 +132,68 @@ export type SignatureFields = {
   readonly ip: string;
   readonly letter_sha256: string;
   readonly pdf_sha256: string;
+  /** PHASE 157c: absent or 1, the record as Phase 146f made it; 2, with the signature and the certificate's times. */
+  readonly record_version?: 1 | 2;
+  readonly signature_method?: 'DRAWN' | 'TYPED' | null;
+  /** The drawn strokes as stored (JSON), or null for a typed signature. */
+  readonly signature_ink?: string | null;
+  readonly signer_email?: string | null;
+  readonly letter_prepared_at?: string | null;
+  readonly letter_sent_at?: string | null;
+  readonly letter_viewed_at?: string | null;
 };
 
 /** The record's own hash: every field, in this order, joined by a line feed. Changing any one changes it. */
 export function recordHash(f: SignatureFields): string {
-  return sha256([
+  const v1 = [
     'caprebate-engagement-signature-v1', f.id, f.engagement_id, f.business_id, f.origin, f.user_id ?? '', f.session_id ?? '',
     f.signer_name, f.signer_role, f.business_name, 'authority_confirmed', f.signed_at, f.ip, f.letter_sha256, f.pdf_sha256,
+  ];
+  if ((f.record_version ?? 1) === 1) return sha256(v1.join('\n'));
+  /* PHASE 157c: version 2 also binds the signature itself (its method and every stroke) and the certificate's facts. */
+  return sha256([
+    'caprebate-engagement-signature-v2', ...v1.slice(1), f.signature_method ?? '', f.signature_ink ?? '', f.signer_email ?? '',
+    f.letter_prepared_at ?? '', f.letter_sent_at ?? '', f.letter_viewed_at ?? '',
   ].join('\n'));
 }
 
-/** The signed PDF: the letter as shown, then a signature page. */
+/* ================================================================== *
+ * PHASE 157c — THE DRAWN SIGNATURE
+ * ================================================================== */
+
+/** The strokes the signing pad sends (src/web/signature-pad-script.ts): numbers 0 to 1000, within these limits. */
+export const INK_LIMITS = Object.freeze({ max_strokes: 60, max_points: 3000, min_points: 8, min_span: 60 });
+
+/**
+ * Read the pad's strokes, or say why they are not a signature. A mark too small or too short to be anybody's signature
+ * (fewer than eight points, or under 6% of the box across) is refused, so an accidental tap is never signed.
+ */
+export function parseInk(raw: string): { ok: true; strokes: readonly (readonly [number, number])[][]; json: string } | { ok: false; why: string } {
+  let v: unknown;
+  try { v = JSON.parse(raw); } catch { return { ok: false, why: 'empty' }; }
+  if (!Array.isArray(v) || v.length === 0 || v.length > INK_LIMITS.max_strokes) return { ok: false, why: 'empty' };
+  const strokes: [number, number][][] = [];
+  let points = 0, minX = 1000, maxX = 0;
+  for (const st of v) {
+    if (!Array.isArray(st) || st.length === 0) return { ok: false, why: 'empty' };
+    const out: [number, number][] = [];
+    for (const pt of st) {
+      if (!Array.isArray(pt) || pt.length !== 2 || !Number.isInteger(pt[0]) || !Number.isInteger(pt[1])) return { ok: false, why: 'empty' };
+      const x = pt[0] as number, y = pt[1] as number;
+      if (x < 0 || x > 1000 || y < 0 || y > 1000) return { ok: false, why: 'empty' };
+      out.push([x, y]); points++; minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+    }
+    strokes.push(out);
+  }
+  if (points > INK_LIMITS.max_points) return { ok: false, why: 'empty' };
+  if (points < INK_LIMITS.min_points || maxX - minX < INK_LIMITS.min_span) return { ok: false, why: 'small' };
+  return { ok: true, strokes, json: JSON.stringify(strokes) };
+}
+
+/** The signed PDF: the letter as shown, then a signature page (version 2: then a certificate of completion). */
 export function signedPdf(letter: ShownLetter, f: Omit<SignatureFields, 'pdf_sha256'>): Uint8Array {
   const body: PdfLine[] = letter.paragraphs.map((p) => (p.heading ? { text: p.text, bold: true, gap: 4 } : { text: p.text }));
+  if ((f.record_version ?? 1) === 2) return buildPdf([...flow(body), ...flow(signaturePageV2(f)), ...flow(certificate(letter, f))], { title: `Engagement letter, signed by ${f.signer_name}` }).bytes;
   const page: PdfLine[] = [
     { text: 'Signature page', bold: true, size: 14, gap: 10 },
     { text: `Signed online by: ${f.signer_name}` },
@@ -161,6 +210,49 @@ export function signedPdf(letter: ShownLetter, f: Omit<SignatureFields, 'pdf_sha
   return buildPdf([...flow(body), ...flow(page)], { title: `Engagement letter, signed by ${f.signer_name}` }).bytes;
 }
 
+/** PHASE 157c: the signature page, with the drawn signature (or the typed name, where they chose it). */
+function signaturePageV2(f: Omit<SignatureFields, 'pdf_sha256'>): PdfLine[] {
+  const ink = f.signature_method === 'DRAWN' && f.signature_ink ? parseInk(f.signature_ink) : null;
+  return [
+    { text: 'Signature page', bold: true, size: 14, gap: 10 },
+    ...(ink !== null && ink.ok
+      ? [{ text: 'Signature, drawn by the signer:', gap: 2 }, { text: '', ink: { strokes: ink.strokes, width: 240, height: 80 }, gap: 2 }]
+      : [{ text: 'Signature, typed by the signer and adopted as their signature:', gap: 2 }, { text: f.signer_name, bold: true, size: 16, gap: 6 }]),
+    { text: `Signed online by: ${f.signer_name}` },
+    { text: `Their role: ${f.signer_role}` },
+    { text: `For: ${f.business_name}. They confirmed they may sign for it.` },
+    { text: `Signed: ${localWhen(f.signed_at)} (${f.signed_at} UTC)`, gap: 8 },
+    { text: 'The certificate of completion on the next page records how this letter was sent, opened and signed.' },
+  ];
+}
+
+/** PHASE 157c: the certificate of completion - every step of the letter, with its time, and the fingerprints. */
+function certificate(letter: ShownLetter, f: Omit<SignatureFields, 'pdf_sha256'>): PdfLine[] {
+  const when = (t: string | null | undefined) => (t ? `${localWhen(t)} (${t} UTC)` : 'not recorded');
+  return [
+    { text: 'Certificate of completion', bold: true, size: 14, gap: 10 },
+    { text: `Document: Cap Rebate engagement letter for ${f.business_name}` },
+    { text: `Signature record: ${f.id}`, gap: 8 },
+    { text: 'What happened', bold: true, gap: 4 },
+    { text: `Letter prepared: ${when(f.letter_prepared_at)}` },
+    { text: `Letter sent to the client: ${when(f.letter_sent_at)}` },
+    { text: `Letter first opened by the client: ${when(f.letter_viewed_at)}` },
+    { text: `Letter signed: ${when(f.signed_at)}`, gap: 8 },
+    { text: 'Who signed', bold: true, gap: 4 },
+    { text: `Name: ${f.signer_name}` },
+    { text: `Role: ${f.signer_role}` },
+    { text: `Signed in as: ${f.signer_email ?? 'not recorded'}` },
+    { text: `How they signed: ${f.signature_method === 'DRAWN' ? 'drew their signature' : 'adopted their typed name as their signature'}` },
+    { text: `From the internet address: ${f.ip}` },
+    { text: `Session: ${f.session_id ?? 'none (demonstration data)'}`, gap: 8 },
+    { text: 'The letter they saw', bold: true, gap: 4 },
+    { text: 'The letter above is the exact text they saw when they signed. Its digital fingerprint is:', gap: 2 },
+    { text: letter.sha256, size: 9, gap: 8 },
+    { text: 'It was signed in the Cap Rebate portal. CAP REBATE LTD keeps the signature record.' },
+    { text: 'A fingerprint of that record covers this signature and every time above. It is kept in our audit log, which cannot be changed.' },
+  ];
+}
+
 type Deps = { db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string };
 
 /** Write one record, move the letter to SIGNED, and bind the record into the audit chain. One transaction. */
@@ -175,9 +267,13 @@ function writeSignature(
   d.db.tx(() => {
     d.db.run(
       'INSERT INTO engagement_signatures (id, engagement_id, business_id, origin, user_id, session_id, signer_name, signer_role, business_name, ' +
-        'authority_confirmed, signed_at, ip, letter_text, letter_sha256, pdf, pdf_sha256, record_sha256) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?)',
+        'authority_confirmed, signed_at, ip, letter_text, letter_sha256, pdf, pdf_sha256, record_sha256, ' +
+        'record_version, signature_method, signature_ink, signer_email, letter_prepared_at, letter_sent_at, letter_viewed_at) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [full.id, engagement_id, full.business_id, full.origin, full.user_id, full.session_id, full.signer_name, full.signer_role, full.business_name,
-        full.signed_at, full.ip, letter.text, full.letter_sha256, pdf, full.pdf_sha256, record_sha256]);
+        full.signed_at, full.ip, letter.text, full.letter_sha256, pdf, full.pdf_sha256, record_sha256,
+        full.record_version ?? 1, full.signature_method ?? null, full.signature_ink ?? null, full.signer_email ?? null,
+        full.letter_prepared_at ?? null, full.letter_sent_at ?? null, full.letter_viewed_at ?? null]);
     d.db.run("UPDATE engagements SET letter_state = 'SIGNED', signed_at = ? WHERE id = ?", [full.signed_at, engagement_id]);
     d.audit.append({
       at: full.signed_at, kind: 'ENGAGEMENT_SIGNED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
@@ -188,7 +284,13 @@ function writeSignature(
   return { record_sha256, pdf };
 }
 
-export type SignInput = { readonly full_name: string; readonly role: string; readonly authorised: boolean; readonly letter_sha256: string };
+export type SignInput = {
+  readonly full_name: string; readonly role: string; readonly authorised: boolean; readonly letter_sha256: string;
+  /** PHASE 157c: the signing pad's strokes (JSON), or empty. */
+  readonly signature_strokes?: string;
+  /** PHASE 157c: the client chose their typed name as their signature (when they cannot, or would rather not, draw). */
+  readonly typed_as_signature?: boolean;
+};
 export type SignContext = { readonly ip: string; readonly session_id: string };
 
 /** Plain words for every refusal. */
@@ -200,6 +302,8 @@ export const SIGN_WORDS = Object.freeze({
   role: 'Type your role in the business, for example Director or Partner.',
   authorised: 'Tick the box to confirm you may sign this letter for the business.',
   changed: 'The letter changed while you were reading it. Please read it again, then sign.',
+  signature: 'Draw your signature in the box, or tick "Use my typed name as my signature".',
+  small: 'That mark is too small to be a signature. Clear the box and draw your signature again.',
 });
 
 function fullName(s: string): string | null {
@@ -232,15 +336,31 @@ export function signEngagement(
   if (role.length < 2 || role.length > 120) return { ok: false, why: SIGN_WORDS.role };
   if (input.authorised !== true) return { ok: false, why: SIGN_WORDS.authorised };
   if (input.letter_sha256 !== letter.sha256) return { ok: false, why: SIGN_WORDS.changed };
+  /* PHASE 157c: a signature, drawn or adopted. A drawing wins over the tick; neither is refused, never assumed. */
+  const strokes = (input.signature_strokes ?? '').trim();
+  let method: 'DRAWN' | 'TYPED'; let ink: string | null = null;
+  if (strokes !== '') {
+    const parsed = parseInk(strokes);
+    if (!parsed.ok) return { ok: false, why: parsed.why === 'small' ? SIGN_WORDS.small : SIGN_WORDS.signature };
+    method = 'DRAWN'; ink = parsed.json;
+  } else if (input.typed_as_signature === true) {
+    method = 'TYPED';
+  } else {
+    return { ok: false, why: SIGN_WORDS.signature };
+  }
 
-  const eng = d.db.get<{ id: string }>('SELECT id FROM engagements WHERE business_id = ?', [b.id]);
+  const eng = d.db.get<{ id: string; created_at: string; sent_at: string | null; viewed_at: string | null }>(
+    'SELECT id, created_at, sent_at, viewed_at FROM engagements WHERE business_id = ?', [b.id]);
   if (eng === undefined) return { ok: false, why: SIGN_WORDS.none };
   const id = d.newId();
   const signed_at = d.now();
   const ip = ctx.ip.replace(/[^0-9A-Fa-f.:]/g, '').slice(0, 64) || 'unknown';
+  const signer_email = d.db.get<{ email: string }>('SELECT email FROM users WHERE id = ?', [actor.id])?.email ?? null;
   const { record_sha256, pdf } = writeSignature(d, eng.id, letter, {
     id, engagement_id: eng.id, business_id: b.id, origin: 'PORTAL', user_id: actor.id, session_id: ctx.session_id,
     signer_name: name, signer_role: role, business_name: b.name, signed_at, ip,
+    record_version: 2, signature_method: method, signature_ink: ink, signer_email,
+    letter_prepared_at: eng.created_at, letter_sent_at: eng.sent_at, letter_viewed_at: eng.viewed_at,
   }, { id: actor.id, role: actor.role });
 
   // Their copy, to the address of the login that signed. Saved to the outbox; sent the day sending is on.
@@ -250,7 +370,7 @@ export function signEngagement(
       to_email: to,
       subject: 'Your signed engagement letter',
       body: `Thank you. You signed our engagement letter for ${b.name} on ${localWhen(signed_at)}.\n\n` +
-        'Your signed copy is attached. It ends with a signature page that shows what was recorded.\n\n' +
+        'Your signed copy is attached. It ends with your signature and a certificate of completion, which shows when the letter was sent, opened and signed.\n\n' +
         'Not sent yet. Sending email is not switched on. This message and your copy are saved with the emails waiting to send.',
       kind: 'SIGNED_LETTER',
       business_id: b.id,
@@ -294,7 +414,8 @@ export type SignatureCheck =
 export function checkSignature(db: Db, engagement_id: string): SignatureCheck {
   const r = db.get<SignatureFields & { letter_text: string; pdf: Uint8Array; record_sha256: string }>(
     'SELECT id, engagement_id, business_id, origin, user_id, session_id, signer_name, signer_role, business_name, signed_at, ip, ' +
-      'letter_text, letter_sha256, pdf, pdf_sha256, record_sha256 FROM engagement_signatures WHERE engagement_id = ?', [engagement_id]);
+      'letter_text, letter_sha256, pdf, pdf_sha256, record_sha256, record_version, signature_method, signature_ink, signer_email, ' +
+      'letter_prepared_at, letter_sent_at, letter_viewed_at FROM engagement_signatures WHERE engagement_id = ?', [engagement_id]);
   if (r === undefined) return { ok: false, why: 'the letter is marked signed, but there is no signature record for it' };
   if (sha256(r.letter_text) !== r.letter_sha256 || sha256(new Uint8Array(r.pdf)) !== r.pdf_sha256 || recordHash(r) !== r.record_sha256) {
     return { ok: false, why: 'the signature record does not match its own fingerprint' };
