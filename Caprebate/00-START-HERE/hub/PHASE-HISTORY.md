@@ -12253,3 +12253,7 @@ NOTHING LEFT  beyond those lines.
 ```
 
  **Claim cleared** in the commit that carries this record.
+
+### Note, 6 October 2026 (after Phase 157c) — signing switched on for testing
+
+Lakhbir: "Signing itself is still switched off. switch this on for test purposes at the moment". Built as `ENGAGEMENT_SIGNING_TEST` (`src/web/signing.ts`): on, with `test_copy_only`, so the solicitor's answer is waived for the TEST COPY of the letter and nothing else; `signingMissing` refuses the real letter under it, even one with every term settled. The test website asks for it (`testSigning: true` beside `testLetter: true` in api/index.mjs); a local copy with `CAPREBATE_SIGNING_TEST=1`. The certificate of a test-copy signature says "TEST: … It is not a contract." `ENGAGEMENT_SIGNING`, for real clients, stays off. The case stamp reads the new switch. `test/signing-for-testing.test.ts` (9). 4,834 passing (back end 2,598 over 159 files). Branch `claude/signing-on-for-testing`, its own pull request against main.

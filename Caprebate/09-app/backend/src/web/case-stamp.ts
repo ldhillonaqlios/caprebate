@@ -54,7 +54,7 @@ import { KEEP_ORIGINALS, KEEP_ORIGINALS_TEST_WEBSITE } from './originals.ts';
 import { ENQUIRY_RETENTION } from './enquiry-retention.ts';
 import { MESSAGE_RETENTION } from './message-retention.ts';
 import { EMAIL_SENDING } from '../stubs/email-provider.ts';
-import { ENGAGEMENT_SIGNING } from './signing.ts';
+import { ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST } from './signing.ts';
 import { INBOUND_EMAIL } from '../stubs/email-inbound.ts';
 import { IDENTITY_CHECK } from '../connectors/identity-check.ts';
 import { POSTCODE_CHECK } from '../connectors/postcode-check.ts';
@@ -155,6 +155,7 @@ export type BackendSwitchReading = { readonly switch: string; readonly on: boole
  *   ADDRESS_LOOKUP               "Find my address", Homedata since 156f (6 Oct)  src/connectors/address-lookup.ts
  *   COMPANY_TYPE_FROM_REGISTER   the company type from Companies House (153b)   src/connectors/company-search.ts
  *   ENGAGEMENT_SIGNING           the built-in letter signature (Phase 146f)      src/web/signing.ts
+ *   ENGAGEMENT_SIGNING_TEST      signing on for testing, test copy only (6 Oct)  src/web/signing.ts
  *   MESSAGE_RETENTION            the message clean-up job (Phase 142a)           src/web/message-retention.ts
  *   ENQUIRY_RETENTION            the closed-enquiry clean-up job (Phase 153c)    src/web/enquiry-retention.ts
  *   DEFENCE_PACK_GENERATOR       the defence pack manifest                       src/web/defence-pack.ts
@@ -196,6 +197,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'COMPANY_TYPE_FROM_REGISTER', on: COMPANY_TYPE_FROM_REGISTER.enabled, home: 'src/connectors/company-search.ts' },
     { switch: 'ADDRESS_LOOKUP', on: ADDRESS_LOOKUP.enabled, home: 'src/connectors/address-lookup.ts' },
     { switch: 'ENGAGEMENT_SIGNING', on: ENGAGEMENT_SIGNING.enabled, home: 'src/web/signing.ts' },
+    { switch: 'ENGAGEMENT_SIGNING_TEST', on: ENGAGEMENT_SIGNING_TEST.enabled, home: 'src/web/signing.ts' }, // 6 Oct 2026: the test copy only, test website
     { switch: 'MESSAGE_RETENTION', on: MESSAGE_RETENTION.enabled, home: 'src/web/message-retention.ts' },
     { switch: 'ENQUIRY_RETENTION', on: ENQUIRY_RETENTION.enabled, home: 'src/web/enquiry-retention.ts' },
     { switch: 'DEFENCE_PACK_GENERATOR', on: DEFENCE_PACK_GENERATOR.enabled, home: 'src/web/defence-pack.ts' },

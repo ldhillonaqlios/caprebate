@@ -57,6 +57,14 @@ export type EngagementSigning = {
   /** Our solicitor has confirmed that a typed name and a tick for authority suit this letter. */
   readonly solicitor_confirmed: boolean;
   readonly question: string;
+  /**
+   * 6 October 2026 (Lakhbir): ON FOR TESTING. Under this setting the solicitor's answer is waived and the TEST COPY of
+   * the letter may be signed — and nothing else: the real letter is refused, whatever else holds. Only
+   * ENGAGEMENT_SIGNING_TEST sets it, and only the test website (api/index.mjs) or a local copy started with
+   * CAPREBATE_SIGNING_TEST=1 uses that.
+   */
+  readonly test_copy_only?: boolean;
+  readonly waiver_record?: string;
 };
 
 /** The question under the solicitor in the Word questions document. Quoted, not paraphrased. */
@@ -68,6 +76,25 @@ export const ENGAGEMENT_SIGNING: EngagementSigning = Object.freeze({
   solicitor_confirmed: false,
   question: SIGNING_QUESTION,
 });
+
+/**
+ * SIGNING ON FOR TESTING — 6 October 2026. The test website (and a local copy started with CAPREBATE_SIGNING_TEST=1)
+ * lets an invented client sign the TEST COPY of the letter end to end: the drawn signature, the record, the certificate
+ * of completion and the signed copy. The real letter cannot be signed under it (`signingMissing`), and the switch real
+ * clients would use, ENGAGEMENT_SIGNING above, stays off until the solicitor answers Word question 194.
+ */
+export const ENGAGEMENT_SIGNING_TEST: EngagementSigning = Object.freeze({
+  enabled: true,
+  solicitor_confirmed: false,
+  question: SIGNING_QUESTION,
+  test_copy_only: true,
+  waiver_record: 'Lakhbir Dhillon, 6 October 2026, in the chat with Claude: "Signing itself is still switched off. switch this on for test purposes at the moment". The test copy of the letter only, invented clients only; the real letter keeps its blanks and ENGAGEMENT_SIGNING stays off.',
+});
+
+/** Which signing setting this copy runs under: the test one only where it was asked for. */
+export function signingHere(test: boolean): EngagementSigning {
+  return test ? ENGAGEMENT_SIGNING_TEST : ENGAGEMENT_SIGNING;
+}
 
 /* ================================================================== *
  * THE LETTER AS SHOWN
@@ -106,6 +133,13 @@ export function shownLetter(business: { name: string; company_number?: string | 
 /** What is still missing before a client can sign — each in plain words. Empty means signing is on for this letter. */
 export function signingMissing(cfg: EngagementSigning, letter: Pick<ShownLetter, 'open_terms' | 'specimens'> & { readonly test_copy?: boolean }): string[] {
   const out: string[] = [];
+  /* 6 October 2026: signing on for testing signs the test copy and nothing else. The test copy's open terms carry test
+     defaults (each marked "test default, not agreed"); they are what is being tested, so they do not refuse it here. */
+  if (cfg.test_copy_only === true) {
+    if (letter.test_copy !== true) out.push('Signing is switched on for testing only, and only the test copy of the letter can be signed there.');
+    if (cfg.enabled !== true) out.push('Then signing must be switched on.');
+    return out;
+  }
   // Phase 153d: the test-only copy carries terms nobody has agreed. It is shown on the test website and never signed.
   if (letter.test_copy === true) out.push('This is the test copy of the letter. Its terms are not agreed, so it can never be signed.');
   if (cfg.solicitor_confirmed !== true) out.push('Our solicitor must confirm that typing your name is a good enough way to sign this letter.');
@@ -231,6 +265,7 @@ function certificate(letter: ShownLetter, f: Omit<SignatureFields, 'pdf_sha256'>
   const when = (t: string | null | undefined) => (t ? `${localWhen(t)} (${t} UTC)` : 'not recorded');
   return [
     { text: 'Certificate of completion', bold: true, size: 14, gap: 10 },
+    ...(letter.test_copy ? [{ text: 'TEST: signed on the test system, on the test copy of the letter. It is not a contract.', bold: true, gap: 8 }] : []),
     { text: `Document: Cap Rebate engagement letter for ${f.business_name}` },
     { text: `Signature record: ${f.id}`, gap: 8 },
     { text: 'What happened', bold: true, gap: 4 },

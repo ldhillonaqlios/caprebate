@@ -22,6 +22,7 @@
  */
 
 import { TEST_LETTER_PATH } from './web/letter.ts';
+import { ENGAGEMENT_SIGNING_TEST } from './web/signing.ts';
 import { turnstileWhy } from './connectors/turnstile.ts';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
@@ -120,6 +121,8 @@ export type ServerOptions = {
   keepOriginals?: KeepOriginals;
   /** PHASE 153d: show the TEST-ONLY engagement letter (test defaults, never signed). Absent is the real letter. api/index.mjs alone passes it. */
   testLetter?: boolean;
+  /** 6 Oct 2026: signing on for testing — the test copy of the letter only (ENGAGEMENT_SIGNING_TEST). Needs testLetter. api/index.mjs passes it; locally CAPREBATE_SIGNING_TEST=1. */
+  testSigning?: boolean;
   /** PHASE 140: the key a kept original is encrypted with. Absent is CAPREBATE_ORIGINALS_KEY; with neither, nothing is kept. */
   sealKey?: Buffer | null;
 };
@@ -219,7 +222,7 @@ export async function createApp(
     // so the JSON API below is unchanged and nothing is shadowed by accident.
     try {
       const publicOrigin = opts.publicOrigin ?? process.env.CAPREBATE_PUBLIC_ORIGIN;
-      if (await handleWeb({ app, store, ...(opts.referralForm === undefined ? {} : { referralForm: opts.referralForm }), ...(opts.names === undefined ? {} : { names: opts.names }), ...(publicOrigin === undefined ? {} : { publicOrigin }), ...(opts.testLetter === true ? { letterPath: TEST_LETTER_PATH } : {}) }, req, res) === 'handled') return;
+      if (await handleWeb({ app, store, ...(opts.referralForm === undefined ? {} : { referralForm: opts.referralForm }), ...(opts.names === undefined ? {} : { names: opts.names }), ...(publicOrigin === undefined ? {} : { publicOrigin }), ...(opts.testLetter === true ? { letterPath: TEST_LETTER_PATH } : {}), ...(opts.testLetter === true && opts.testSigning === true ? { signing: ENGAGEMENT_SIGNING_TEST } : {}) }, req, res) === 'handled') return;
     } catch (e) {
       // PHASE 133a: A REFUSED SCREEN IS STILL REFUSED — 403 — BUT AS A PAGE. A person who follows an address they may not
       // open gets the application's header and a sentence, not a line of JSON. The page names no object, so a refusal
@@ -368,10 +371,13 @@ export async function createApp(
 if (import.meta.filename === process.argv[1]) {
   const port = Number(process.env.PORT ?? 8103);
   const location = process.env.CAPREBATE_DB ?? 'caprebate.db';
-  void createApp(location).then(({ server, app }) => {
+  // 6 Oct 2026: CAPREBATE_SIGNING_TEST=1 runs this copy with the test letter and signing on for testing (the test copy only).
+  const signingTest = (process.env.CAPREBATE_SIGNING_TEST ?? '').trim() === '1';
+  void createApp(location, signingTest ? { testLetter: true, testSigning: true } : {}).then(({ server, app }) => {
     server.listen(port, () => {
       console.log(`caprebate back end on http://localhost:${port}`);
       console.log(`  ${turnstileWhy(app.secrets)}`); // 29 Sep 2026: the contact form's security check, said at start-up
+      if (signingTest) console.log('  signing ON FOR TESTING: the test copy of the engagement letter only');
     });
   });
 }
