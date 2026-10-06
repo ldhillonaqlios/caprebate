@@ -541,6 +541,7 @@ describe('2 · the fee controls: built, shipped off, and off is exactly today’
     assert.deepEqual(JSON.parse(JSON.stringify(FC.FEE_CONTROLS)), {
       above_benefit: { enabled: false, mode: null },
       break_and_abort: { enabled: false },
+      uplifts: { enabled: false }, // Phase 157b: the old extra charges, at test defaults, off (Word question 235)
     });
     for (const figure of [5_000_00, 123_456_78, 240_000_00, 3_500_000_00]) {
       for (const entity of [null, 'company'] as const) {

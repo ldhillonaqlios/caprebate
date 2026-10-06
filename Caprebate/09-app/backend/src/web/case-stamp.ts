@@ -185,6 +185,7 @@ export function backendSwitchReadings(): readonly BackendSwitchReading[] {
     { switch: 'CONVEYANCING_STRIP', on: CONVEYANCING_STRIP.enabled, home: 'src/web/conveyancing-strip.ts' },
     { switch: 'FEE_CONTROLS.above_benefit', on: FEE_CONTROLS.above_benefit.enabled, home: 'src/web/fee-controls.ts' },
     { switch: 'FEE_CONTROLS.break_and_abort', on: FEE_CONTROLS.break_and_abort.enabled, home: 'src/web/fee-controls.ts' },
+    { switch: 'FEE_CONTROLS.uplifts', on: FEE_CONTROLS.uplifts?.enabled === true, home: 'src/web/fee-controls.ts' }, // Phase 157b, Word question 235
     { switch: 'MANDATORY_DOCUMENTS', on: MANDATORY_DOCUMENTS.enabled, home: 'src/web/mandatory-documents.ts' },
     { switch: 'KEEP_ORIGINALS', on: KEEP_ORIGINALS.enabled, home: 'src/web/originals.ts' },
     { switch: 'KEEP_ORIGINALS_TEST_WEBSITE', on: KEEP_ORIGINALS_TEST_WEBSITE.enabled, home: 'src/web/originals.ts (the test website only, through api/index.mjs)' },
