@@ -7,7 +7,14 @@
  * many there were. The output is the same bytes for the same input, so its SHA-256 means something.
  */
 
-export type PdfLine = { readonly text: string; readonly bold?: boolean; readonly size?: number; readonly gap?: number };
+export type PdfLine = { readonly text: string; readonly bold?: boolean; readonly size?: number; readonly gap?: number; readonly ink?: Ink };
+
+/**
+ * PHASE 157c, 6 October 2026 — A DRAWN SIGNATURE. Strokes as points from 0 to 1000 across and down a box, drawn as
+ * plain vector lines (no image), so the same strokes always give the same bytes. `width` and `height` are the box's
+ * size in points. A line with ink has no text; it takes the box's height on the page.
+ */
+export type Ink = { readonly strokes: readonly (readonly (readonly [number, number])[])[]; readonly width: number; readonly height: number };
 export type PdfPage = readonly PdfLine[];
 
 /** Unicode to WinAnsi (cp1252) for the characters a letter uses. Everything else outside Latin-1 becomes "?". */
@@ -54,6 +61,13 @@ export function flow(paragraphs: readonly PdfLine[], maxChars = 92): PdfPage[] {
   const pages: PdfLine[][] = [[]];
   let y = PAGE_H - MARGIN;
   for (const p of paragraphs) {
+    if (p.ink !== undefined) {
+      if (y - p.ink.height < MARGIN) { pages.push([]); y = PAGE_H - MARGIN; }
+      const gap = p.gap ?? 6;
+      pages[pages.length - 1]?.push({ text: '', ink: p.ink }, { text: '', size: 1, gap });
+      y -= p.ink.height + gap;
+      continue;
+    }
     const size = p.size ?? 10;
     const lead = size * 1.35;
     const lines = wrap(p.text, Math.floor(maxChars * (10 / size)));
@@ -67,6 +81,23 @@ export function flow(paragraphs: readonly PdfLine[], maxChars = 92): PdfPage[] {
     pages[pages.length - 1]?.push({ text: '', size: 1, gap });
   }
   return pages;
+}
+
+/** The PDF path operators for one drawn signature, its box's top-left corner at (left, top) in page points. */
+function inkOps(ink: Ink, left: number, top: number): string[] {
+  const out = ['q', '0.9 w', '1 J', '1 j', '0.07 0.07 0.07 RG'];
+  const px = (v: number) => (left + (Math.min(1000, Math.max(0, v)) / 1000) * ink.width).toFixed(2);
+  const py = (v: number) => (top - (Math.min(1000, Math.max(0, v)) / 1000) * ink.height).toFixed(2);
+  for (const stroke of ink.strokes) {
+    const [first, ...rest] = stroke;
+    if (first === undefined) continue;
+    out.push(`${px(first[0])} ${py(first[1])} m`);
+    if (rest.length === 0) out.push(`${px(first[0])} ${py(first[1])} l`);
+    for (const [x, yy] of rest) out.push(`${px(x)} ${py(yy)} l`);
+    out.push('S');
+  }
+  out.push('Q');
+  return out;
 }
 
 export function buildPdf(pages: readonly PdfPage[], info: { title: string }): { bytes: Uint8Array; unshown: number } {
@@ -87,13 +118,20 @@ export function buildPdf(pages: readonly PdfPage[], info: { title: string }): { 
   for (const page of pages) {
     let y = PAGE_H - MARGIN;
     const ops: string[] = ['BT'];
+    const drawn: string[] = [];
     for (const line of page) {
+      if (line.ink !== undefined) {
+        const top = y;
+        y -= line.ink.height;
+        drawn.push(...inkOps(line.ink, MARGIN, top));
+        continue;
+      }
       const size = line.size ?? 10;
       if (line.text === '' && line.gap !== undefined) { y -= line.gap; continue; }
       y -= size * 1.35;
       ops.push(`/${line.bold === true ? 'F2' : 'F1'} ${size} Tf 1 0 0 1 ${MARGIN} ${y.toFixed(2)} Tm ${hex(line.text)} Tj`);
     }
-    ops.push('ET');
+    ops.push('ET', ...drawn);
     const stream = ops.join('\n');
     const contentId = add(`<< /Length ${Buffer.byteLength(stream, 'latin1')} >>\nstream\n${stream}\nendstream`);
     pageIds.push(add(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] ` +

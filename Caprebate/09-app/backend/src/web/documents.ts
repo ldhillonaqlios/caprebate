@@ -641,7 +641,7 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
   if (t.handler_type === null) return { ok: false, why: NO_RECEIPT_POLICY };
 
   let claimToLink: string | null = null;
-  let linkVia: 'STAFF' | 'REQUEST' | null = null;
+  let linkVia: 'STAFF' | 'REQUEST' | 'CLIENT_ONE_CLAIM' | null = null;
   if (a.claim_id !== null && a.claim_id !== '') {
     const probe: DocObj = {
       type: 'document', id: '__new__', business_id: biz.id, readers: t.readers, carries_value: t.carries_value === 1,
@@ -657,6 +657,14 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
     // the request's — staff chose the claim when they asked — not the uploader's.
     claimToLink = request.claim_id;
     linkVia = 'REQUEST';
+  } else if (logical === null && actor.role === 'CLIENT') {
+    /* PHASE 157c (the Friary House run, F20): a file the client sends from the portal, with no request, sat on the
+       business and never reached the claim ("Documents 0" while six files were in). Where the client has exactly one
+       open claim, it goes on that claim; with two or more, staff choose, as before. */
+    const open = d.db.all<{ id: string }>(
+      "SELECT id FROM claims WHERE business_id = ? AND stage IN ('ENQUIRY','ASSESSMENT','ENGAGEMENT','DATA_GATHERING','SURVEY','VALUATION','TAX_ADVISER_SIGNOFF','REPORTS','INVOICE','DEFENCE_PACK','ON_HOLD')",
+      [biz.id]);
+    if (open.length === 1) { claimToLink = (open[0] as { id: string }).id; linkVia = 'CLIENT_ONE_CLAIM'; }
   }
 
   const handlerType = t.handler_type;

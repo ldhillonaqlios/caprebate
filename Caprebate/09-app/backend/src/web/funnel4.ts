@@ -525,7 +525,8 @@ function addressPicker(b: B, i: number): Safe {
 function teaser(bs: readonly B[]): Safe {
   const kinds = [...new Set(bs.map((b) => b['sector']).filter((x): x is string => typeof x === 'string'))];
   if (kinds.length === 0) return raw('');
-  const names = kinds.map((k) => (SECTOR[k] ?? k).toLowerCase().replace(/^gp/, 'GP'));
+  /* PHASE 157c (the Friary House run, F2): "A GP / primary care holds" read oddly; the sentence names a building. */
+  const names = kinds.map((k) => (k === 'gp' ? 'GP surgery' : (SECTOR[k] ?? k).toLowerCase()));
   return h`<div class="f4-teaser"><p class="f4-kicker">Good news</p>
     <p>${kinds.length === 1 ? `A ${names[0]}` : `Your ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`} ${kinds.length === 1 ? 'holds' : 'hold'} fixtures that can qualify:</p>
     <ul>${kinds.map((k) => h`<li><strong>${SECTOR[k] ?? k}:</strong> ${HOLDS[k] ?? ''}</li>`)}</ul>

@@ -91,6 +91,7 @@ import { SOURCES as REGISTER_SOURCES, LICENCES } from '../../../../04-phase-work
 import { switchedOn, runConnector, REGISTER_SWITCHES, PLANNING_ROUTE, switchesHere, freeGateWaived, gateStatus, type Bundle, type ConnectorContext } from '../connectors/registers.ts';
 import type { Env } from '../connectors/place.ts';
 import { checkPostcode } from '../connectors/postcode-check.ts';
+import { nationFromCountry } from '../connectors/nations.ts';
 import type { Transport, RateLimiter } from '../connectors/http.ts';
 import type { SecretStore } from '../secrets.ts';
 import { FREE_CONNECTORS, NOT_BUILT, researchSubject, runOrder } from '../connectors/free-registers.ts';
@@ -737,7 +738,10 @@ export function sourcesFor(
       retrieved_at: row?.retrieved_at ?? null,
       attempts: row?.attempts ?? 0,
       failure_code: row?.failure_code ?? null,
-      detail: resolved.state === 'FAILED' && row?.detail ? row.detail : resolved.detail,
+      /* PHASE 157c (F12b): a row the last click left NOT_RUN keeps the reason that click wrote (the nation not known,
+         say), rather than the fixed "not switched on yet", which is wrong for a lookup that is switched on. */
+      detail: (resolved.state === 'FAILED' || (resolved.state === 'NOT_RUN' && row?.state === 'NOT_RUN' && (row.attempts ?? 0) > 0 && !due)) && row?.detail
+        ? row.detail : resolved.detail,
       may_retry: resolved.state === 'FAILED',
       switched_on: switchedOn(entry.source_id, switchesHere(opts.env)),
       picked: picked.has(entry.source_id) && resolved.state === 'FIRED',
@@ -918,9 +922,26 @@ export async function consultAllowed(
   picks?: Readonly<Record<string, PickQuery>>,
 ): Promise<SourceOutcome[]> {
   const out: SourceOutcome[] = [];
-  const subject = researchSubject(d.db, business_id);
+  let subject = researchSubject(d.db, business_id);
   const earlier = new Map<string, Bundle>();
   const order = runOrder(decided.map((x) => x.entry.source_id));
+  /* PHASE 157c, 6 October 2026 (the Friary House run, finding F12). Every waived free lookup (CQC, EPC, planning, price
+     paid) needs to know which part of the UK the property is in, and that came only from a recorded nation or the ONS
+     table, which this copy of the website does not have. So on a click where the waiver holds and a waived lookup is
+     about to run, the postcode check (postcodes.io: the postcode only) is asked ONCE, its country is used for every
+     lookup on this click, and its council area for the care regulator. Nothing is written here; nothing is assumed:
+     a country it does not give, or a check that fails, leaves the nation unknown, exactly as before. */
+  let postcodeChecked: Awaited<ReturnType<typeof checkPostcode>> | null = null;
+  const waivedToRun = decided.some((x) => x.state === 'NOT_RUN' && freeGateWaived(x.entry.source_id, d.outside?.env));
+  if (d.outside !== undefined && waivedToRun && subject.property !== null && subject.property.jurisdiction === null && subject.property.postcode) {
+    const o = d.outside;
+    postcodeChecked = await checkPostcode({
+      postcode: subject.property.postcode, gate: gateStatus({ precondition: registryGate() }),
+      deps: { audit: d.audit, now: d.now, transport: o.transport, ...(o.limiter === undefined ? {} : { limiter: o.limiter }), ...(o.sleep === undefined ? {} : { sleep: o.sleep }) },
+    });
+    const nation = postcodeChecked.state === 'CHECKED' ? nationFromCountry(postcodeChecked.country) : null;
+    if (nation !== null) subject = { ...subject, property: { ...subject.property, jurisdiction: nation } };
+  }
   for (const x of [...decided].sort((a, b) => order.indexOf(a.entry.source_id) - order.indexOf(b.entry.source_id))) {
     const keep: SourceOutcome = { entry: x.entry, state: x.state, detail: x.detail, retrieved_at: null, failure_code: null, bundle: null, cost_pence: 0 };
     /* PHASE 146d: THE PAID LOOKUPS SIT BESIDE THE FREE ONES HERE AND NOWHERE ELSE. One map or the other answers for a
@@ -956,7 +977,7 @@ export async function consultAllowed(
        which the ONS postcode table gives; the test website has no such table. Where the waiver holds, and only then,
        the council area comes from postcodes.io, which the postcode check already uses (only the postcode is sent). */
     if (x.entry.source_id === 'CQC' && freeGateWaived('CQC', o.env) && (query as { council?: unknown }).council === null && subject.property?.postcode) {
-      const pc = await checkPostcode({
+      const pc = postcodeChecked ?? await checkPostcode({
         postcode: subject.property.postcode, gate: gateStatus({ precondition: registryGate() }),
         deps: { audit: d.audit, now: d.now, transport: o.transport, ...(o.limiter === undefined ? {} : { limiter: o.limiter }), ...(o.sleep === undefined ? {} : { sleep: o.sleep }) },
       });

@@ -33,7 +33,7 @@ describe('UI tidy phase 16: the portal’s header and menu', () => {
     const items = [...(/<ul class="subnav">([\s\S]*?)<\/ul>/.exec(nav(body))?.[1] ?? '').matchAll(/<a href="#([a-z-]+)">([^<]+?)(?: <span class="subnote">\d+<\/span>)?<\/a>/g)].map((m) => [m[1], m[2]]);
     assert.deepEqual(items, [
       ['where-you-are', 'Where your claim is'], ['waiting-on-you', 'What we need from you'], ['done-so-far', 'What we have done'],
-      ['your-range', 'The range you were shown'], ['letter', 'Your engagement letter'], ['appointment', 'Your appointment'],
+      ['your-range', 'The figure you were shown'], ['letter', 'Your engagement letter'], ['appointment', 'Your appointment'],
       ['documents', 'Documents'], ['contact-us', 'How to contact us'],
     ]);
     for (const [id] of items) assert.equal((body.match(new RegExp(`id="${id ?? ''}"`, 'g')) ?? []).length, 1, id ?? '');

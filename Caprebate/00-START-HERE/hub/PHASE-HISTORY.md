@@ -12223,3 +12223,33 @@ NOTHING LEFT  beyond those lines: everything buildable in the phase is built.
 ```
 
  **Claim cleared** in the commit that carries this record.
+
+## Phase 157c — what the Friary House run found: sending the letter, a DocuSign-style signature, and fifteen fixes — 6 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Built sending the engagement letter from the client page (who and when, the client emailed, the first time they open it kept) and a DocuSign-style signature: drawn in a box or the typed name adopted, the record's fingerprint covering the drawing, a certificate of completion at the end of the signed PDF, and the signed copy downloadable by the client and by staff. Signing stays OFF. Fixed fifteen of the Friary House findings. The classifier refused, twice, a local override letting the simulation sign the TEST letter, so the run still stops at signing on Claude's side. 4,825 passing.
+
+- **Claim.** hub/CLAIM.md and the tracker row 13217233117 (board and tracker: Working on it, this machine), pushed before work began. Branch `claude/phase-157c` from main after PR 30 merged.
+- **Where it came from.** The end-to-end simulation of an invented client, Friary House Surgery, Plymouth (`04-phase-work/sim-2026-10-06/Friary-House-simulation-findings.md`, OneDrive; findings F1 to F21). It reached the engagement letter and stopped: nothing prepared or sent one (F21), and it could not be signed (F10). Lakhbir said yes to the phase and asked: "cant it be a docusign style document which captures a signed digital copy?"
+- **Sending the letter (F21).** `src/web/engagement-send.ts`: `POST /staff/clients/{id}/engagement/send` (`engagement.send`, Admin and Sales; Read only refused). Raises the engagement if there is none, marks it SENT with `sent_at` and `sent_by`, audits `ENGAGEMENT_LETTER_SENT` (no address in it), and emails every client login the portal link through the outbox. Again: re-sends, the first sent time kept. Refused when signed, or with no client login. The client page has an "Engagement letter" section on the Files tab with each step and its time. `markViewed` keeps the first opened time.
+- **The signature.** `src/web/signing.ts`, `src/web/signature-pad-script.ts`, `src/web/pdf.ts`. Drawn (strokes 0 to 1000, `parseInk`, `INK_LIMITS`; a tap is "too small") or adopted (the typed-name tick); neither is refused. A version 2 record binds the method, every stroke, the login's email and the letter's prepared, sent and opened times into its fingerprint; version 1 records are checked as before. The PDF draws the strokes and ends with a certificate of completion. Signed copy at `/portal/letter/signed.pdf` and `/staff/clients/{id}/engagement/signed.pdf`, checked against the record first. The pad and its one script appear only while the letter can be signed; as shipped, the page carries no script and every page's policy. **Migration 096**, ADD COLUMN only.
+- **The other findings fixed.** F12 the waived free lookups ask the postcode check once for the nation; F12b a stopped lookup keeps its reason; F15 the legal check reads the client's claimant answer; F14 the purchase month the client gave beside an unknown date; F20 a client's file goes on their one open claim, and staff Home lists new client files; F17 an empty file is "that file is empty"; F5 Zoom's free plan straight to the shared host; F7 set Qualified before converting; F9 a converted claim takes the lead's follow-up as its next action, and the stage line says when one is still needed; F11 "Run the research" opens its tab; F8 the town not repeated; F13 the portal shows "up to" the figure shown; F2 "A GP surgery holds…"; F4 and F4b the thank-you page's words; F6 the fourth check's label; F1 a hidden button stays hidden.
+- **Moved to 157d.** F16 (the four document types: the document_types table needs rebuilding, its CHECK list from 056 refuses them), F18, F19, signing from an emailed link and a second signer.
+- **Not done, and why.** The simulation past Engagement. Signing the TEST letter on the Mac copy needed a local override; the safety classifier refused it twice, and it was not tried another way. Lakhbir decides: a reviewed code change he merges, or he runs that step himself.
+- **The checks.** `test/phase157c.test.ts` (35). Run against the pre-157c code in a scratch worktree (the brand-new functions copied in so it loads): 26 red, 9 green, the nine being controls ("exactly as before") or the copied new functions. Existing tests restated: phase146f, 146h, 146j, 146k sign with the typed tick; phase153f's host per member of staff on the paid plan; phase133b, 138, client-redesign for the letter section and the research link; ui-tidy-portal for "The figure you were shown". Site harness 1,381 pass / 0 fail / 3 xfail in both modes; phase3 440; phase9 415; back end `npm run check` 2,589 over 158 tracked files; **4,825** in all. Extraction unchanged. Plain words: two sentences shortened. CRM fold check: two routes described, twenty-one line references remapped by a line diff — green. Register check green; tracker check green; figure drift green.
+- **Documents.** Developer Spec (a Phase 157c section, the route table, the signature row, the figures); FOR THE SOLICITOR, THE DPO AND THE DEVELOPER (the Phase 157c note); KEYS-AND-SWITCHES (Zoom's free plan, the signing row); Word question 194 (a dated note in both Word documents: it covers a drawn signature too). The action plan: F16 moved into 157d, 157c removed.
+- **Board and tracker.** 13217233117 Done, in Z, claim cleared. New item 13217880529, Phase 157d, Ready - Claude can build, in 05. Run sheet: 157d added after 157b; this entry at the end.
+
+```
+DONE          Sending the engagement letter; a signature drawn or adopted, fingerprinted, with a
+              certificate of completion and a signed copy (migration 096, still OFF); fifteen of
+              the Friary House findings; 35 tests; 4,825 passing.
+NOT DONE      Signing switched on - BLOCKED on the solicitor (Word question 194) and the letter's
+              open terms - FOR THE SOLICITOR.
+              The simulation past Engagement - BLOCKED on Lakhbir (a reviewed test-only change, or
+              he signs the TEST letter himself) - this record and the reply to him.
+              F16, F18, F19, an emailed signing link, a second signer - BUILDABLE - Phase 157d
+              (tracker 13217880529).
+NOTHING LEFT  beyond those lines.
+```
+
+ **Claim cleared** in the commit that carries this record.

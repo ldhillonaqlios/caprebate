@@ -45,7 +45,7 @@ import {
   recordOpened, type CheckKey, type EnquiryReading,
 } from './pipeline.ts';
 import { fireAutomation } from './automation.ts';
-import { createTask, insertTask, setTaskStatus } from './tasks.ts';
+import { createTask, insertTask, setNextAction, setTaskStatus } from './tasks.ts';
 import { mayTake, vocabLabel } from './vocabularies.ts';
 import {
   PROSPECT_EVENTS, REFERRAL_SOURCES, introducerChoices, introducerExists, leadReferral, onLeadConverted, type LeadReferral,
@@ -692,6 +692,19 @@ export function convertLead(d: CrmDeps, actor: Actor, id: string, input: Fields)
   onLeadConverted(d, actor, r.id, made.id);
   // CRM 3 of 10: the claim comes into being at ASSESSMENT, which is a stage entered.
   fireAutomation(d, actor, { trigger: 'STAGE_ENTERED', claim_id: made.id, stage: 'ASSESSMENT' });
+  /* PHASE 157c (the Friary House run, F9): THE LEAD'S FOLLOW-UP BECOMES THE CLAIM'S NEXT ACTION. A converted claim had
+     none, so its first move was refused ("This claim has no next action") while the page said "Ready". The lead's
+     earliest open task, with a due date, is carried over as the claim's next action: its own owner, else the lead's
+     owner. With no due date, or nobody to own it, nothing is invented and the claim asks for one, as before. */
+  const follow = d.db.get<{ title: string; owner_id: string | null; due_on: string | null; activity_type: string | null }>(
+    "SELECT title, owner_id, due_on, activity_type FROM staff_tasks WHERE lead_id = ? AND status IN ('OPEN','IN_PROGRESS') AND due_on IS NOT NULL ORDER BY due_on ASC, created_at ASC, id ASC LIMIT 1",
+    [r.id]);
+  const followOwner = follow?.owner_id ?? r.owner_id;
+  if (follow !== undefined && follow.due_on !== null && followOwner !== null) {
+    try {
+      setNextAction(d, actor, made.id, { title: follow.title, owner_id: followOwner, due_on: follow.due_on, activity_type: follow.activity_type ?? 'TASK' });
+    } catch { /* a login that may convert but not write the claim leaves it to be set, as before */ }
+  }
   return { ok: true, id: made.id };
 }
 

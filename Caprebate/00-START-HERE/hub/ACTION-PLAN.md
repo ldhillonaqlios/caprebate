@@ -1145,6 +1145,69 @@ it and on the board.
 
 ---
 
+## PHASE 157d — signing from an emailed link, a second signer, two upload checks and four document types
+
+ **Model: Opus. Written 6 October 2026 with Phase 157c**, from the rest of Lakhbir's "docusign style" request and three findings of the Friary House run (F18, F19, and F16 moved from 157c).
+
+```
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)"; if it has no
+item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
+claude/... branch FROM MAIN; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make (status, owner, note, new item) is written to
+  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
+  node 03-app/caprebate-tracker.cjs check passes. If the board and the
+  tracker disagree, stop and ask Lakhbir which is right.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
+   sheet (update_doc add_markdown_content with no after_block_id; the API
+   doc id for adding is 46840326). Same entry at the top of your record.
+3. DELETE THIS SECTION from the top of the run sheet AND from
+   hub/ACTION-PLAN.md.
+4. Set this phase's board item to its true status and clear "Claimed by";
+   write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+1. SIGNING FROM AN EMAILED LINK. A single-use, time-limited link in the letter email that opens the letter for signing
+   without a portal login; what it proves (the email address) recorded on the certificate. Off until the solicitor's
+   answer covers it (a question in the Word document under the solicitor, the AMENDMENT 2 way).
+2. A SECOND SIGNER. Where the business needs two signatures (a partnership's two partners, a company's two directors),
+   the letter is signed only when both have signed; each on the certificate. Who must sign is recorded by staff.
+3. DUPLICATES (F18). The same file sent twice is kept once more as a version, and the client is told "you sent this
+   file on <date>".
+4. A DAMAGED PDF (F19). A PDF with no end-of-file marker is refused as damaged at upload, in plain words.
+5. FOUR DOCUMENT TYPES (F16, moved from 157c). Plans and drawings, contractor's invoices, the completion statement
+   and accounts become receivable: their receipt policy set by a migration from the recommendations already recorded
+   (phase3 caprebate-client-doc-ingestion.ts, the document-check specs, and the document_types table rebuilt, since
+   its CHECK list from migration 056 does not allow them). Requested from the claim page and sent from the portal.
+```
+
+---
+
 ## PHASE 158 — Sweep and stress-test (the recurring one, always last)
 
 

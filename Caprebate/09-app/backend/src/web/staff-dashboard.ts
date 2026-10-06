@@ -207,6 +207,29 @@ function messagesCard(app: App, actor: Actor): Safe | null {
         <a class="btn act-cta" href="/staff/clients/${x.id}?chat=all#chat">Read and reply</a></li>`)}</ul>`);
 }
 
+/* ------------------------------------------------------------------ new documents from clients */
+
+/** PHASE 157c (the Friary House run, F20): files a client sent from the portal in the last 14 days. Nobody was told. */
+export const NEW_DOCUMENT_DAYS = 14;
+
+export function newClientDocuments(app: App, actor: Actor, now: string): { id: string; name: string; n: number }[] {
+  const since = new Date(Date.parse(now) - NEW_DOCUMENT_DAYS * 86_400_000).toISOString();
+  return organisationList(app.db, actor)
+    .map((o) => ({ id: o.id, name: o.trading_name, n: app.db.get<{ n: number }>(
+      "SELECT COUNT(*) AS n FROM documents d JOIN users u ON u.id = d.uploaded_by WHERE d.business_id = ? AND u.role = 'CLIENT' AND d.created_at >= ?",
+      [o.id, since])?.n ?? 0 }))
+    .filter((x) => x.n > 0)
+    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
+}
+
+function documentsCard(app: App, actor: Actor, now: string): Safe | null {
+  if (!can(actor, 'client_message.read', { type: 'client_message', id: '__home__', business_id: '__home__' })) return null;
+  const fresh = newClientDocuments(app, actor, now);
+  return card('new-documents', 'New documents from clients', fresh.length === 0 ? h`<p class="empty">No client has sent a file in the last ${String(NEW_DOCUMENT_DAYS)} days.</p>`
+    : h`<ul class="dash-list">${fresh.map((x) => h`<li><a href="/staff/clients/${x.id}#tab-files">${x.name}</a>${newDot(x.n)}
+        <a class="btn act-cta" href="/staff/clients/${x.id}#tab-files">Open their files</a></li>`)}</ul>`);
+}
+
 /* ------------------------------------------------------------------ who is working (Admin) */
 
 export type WorkingRow = { readonly name: string; readonly role: string; readonly now: boolean; readonly first: string | null; readonly last: string | null };
@@ -348,6 +371,7 @@ export function dashboard(app: App, actor: Actor, view: DashView, q: { week: str
       ? organisationList(app.db, actor).reduce((n, o) => n + M.newFromClient(app.db, actor, o.id), 0) : 0;
     const [newLeads, nextActions] = leadsRows(actor, app, now);
     const msgCard = messagesCard(app, actor);
+    const docCard = documentsCard(app, actor, now);
     const record = can(actor, 'lead.write', { type: 'lead', id: '__lead_section__', business_id: null })
       ? h`<p><a class="btn btn-primary" href="/staff/leads?record=1#record-lead">Record a lead</a></p>` : raw('');
     return h`${head(now, lateJobs, record)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${kpiRow([
@@ -357,7 +381,7 @@ export function dashboard(app: App, actor: Actor, view: DashView, q: { week: str
       callBox,
       { label: 'Claims in progress', value: String(inPipe), tone: 'total', href: '/staff/pipeline' },
     ])}${columns(
-      [todayRow(actor, app, now), todayActivities(app, actor), h`<div class="home-pair">${newLeads ?? raw('')}${msgCard ?? raw('')}</div>`, nextActions ?? raw('')],
+      [todayRow(actor, app, now), todayActivities(app, actor), h`<div class="home-pair">${newLeads ?? raw('')}${msgCard ?? raw('')}</div>`, docCard ?? raw(''), nextActions ?? raw('')],
       [...pipelineRow(actor, app, now), calendarCard(app, actor, view, q.week, q.done)],
     )}`;
   }

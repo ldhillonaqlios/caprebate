@@ -20,7 +20,7 @@ const TABLE: readonly (readonly [RegExp, PlainNeed])[] = [
   [/^The property is healthcare property in the UK/, { words: 'Confirm it is UK healthcare property', fix: { href: '#enquiry-gate', label: 'Record the check' } }],
   [/^The client is a trading business/, { words: 'Confirm the client is a trading business', fix: { href: '#enquiry-gate', label: 'Record the check' } }],
   [/^The enquirer is the owner/, { words: 'Confirm who owns the building, or that the enquirer acts for the owner', fix: { href: '#enquiry-gate', label: 'Record the check' } }],
-  [/^There is no existing claim conflict/, { words: 'Confirm nobody else has claimed on this property', fix: { href: '#enquiry-gate', label: 'Record the check' } }],
+  [/^There is no existing claim conflict/, { words: 'Confirm no conflicting claim, ours or another adviser’s, on this property', fix: { href: '#enquiry-gate', label: 'Record the check' } }],
   [/^An assessment is on record/, { words: 'An assessment from the client', fix: { href: '#add-task', label: 'Ask the client' } }],
   [/^A signed engagement letter/, { words: 'The signed engagement letter', fix: { href: '#add-task', label: 'Chase the letter' } }],
   [/due diligence/i, { words: 'Customer due diligence', fix: { href: '/staff/compliance/aml', label: 'Open due diligence' } }],

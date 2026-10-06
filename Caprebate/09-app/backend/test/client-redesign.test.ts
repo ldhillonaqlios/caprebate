@@ -114,7 +114,7 @@ describe('the client page, laid out again', () => {
     assert.match(card, new RegExp(`Lookups <span class="help">${doneRows} of ${rows.length} done</span>`));
     const groups = [...card.matchAll(/<span class="lk lk-g-[a-z-]+">(Failed|Done|Waiting|Not run yet|Not switched on) (\d+)<\/span>/g)];
     assert.equal(groups.reduce((n, g) => n + Number(g[2]), 0), rows.length);
-    assert.match(card, /href="#sources"/);
+    assert.match(card, /href="\?done=lookups#sources"/); // Phase 157c (F11): the link opens the tab the section is on
   });
 });
 

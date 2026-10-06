@@ -658,6 +658,8 @@ details.why .whytext{display:block;color:var(--body);font-size:16px;border-left:
 .badge.b-info{background:var(--white);color:var(--ink);border-color:var(--ink)}
 
 /* ---------------- BUTTONS AND FORMS ---------------- */
+/* PHASE 157c (the Friary House run, F1): a button the page script hides stays hidden; this rule outranked [hidden]. */
+button[hidden],.btn[hidden],.cta[hidden]{display:none!important}
 button,.btn,.cta{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:2.5rem;padding:.45rem 1rem;border:1px solid var(--ink);border-radius:var(--radius);background:var(--white);color:var(--ink);font:inherit;font-size:16px;font-weight:600;cursor:pointer;text-decoration:none;line-height:1.2}
 button:hover,.btn:hover{background:var(--mist)}
 .cta,.btn-primary,button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet){background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -726,6 +728,9 @@ table.compact{margin:0}table.compact td{padding:.3rem .35rem}
 .assumebox ul{margin:.5rem 0 0;padding-left:1.1rem}.assumebox li{margin:.3rem 0;font-size:16px;color:var(--body)}
 .clause{margin:1.3rem 0 .4rem;font-weight:600}
 .letter p{font-size:16px}
+/* PHASE 157c: the engagement letter's signing pad. touch-action:none so a finger draws instead of scrolling the page. */
+fieldset.sig{border:0;padding:0;margin:1rem 0}
+.sig-canvas{display:block;width:100%;max-width:600px;height:auto;aspect-ratio:3/1;border:1px solid #9aa6a2;border-radius:8px;background:#fff;touch-action:none;cursor:crosshair}
 .steps{list-style:none;padding:0;margin:1rem 0}
 .steps li{padding:.65rem 0 .65rem 1.7rem;border-bottom:1px solid var(--line);position:relative}
 .steps li::before{position:absolute;left:0;top:.65rem;font-size:16px}

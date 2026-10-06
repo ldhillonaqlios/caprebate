@@ -77,6 +77,8 @@ export type AuditKind =
    * line carries a name (the rule at the top of this file).
    */
   | 'MAIL_SERVER_CONNECTED' | 'EMAIL_BOUNCED' | 'ENGAGEMENT_SIGNED'
+  /** PHASE 157c: the engagement letter sent (or sent again) to the client's logins; whether it was a re-send, and how many. */
+  | 'ENGAGEMENT_LETTER_SENT'
   /**
    * Phase 146g, 23 September 2026. A member of staff said an address that bounced for good works again
    * (src/web/settings.ts). Whether a lift happened, and nothing else: the address itself is the new row in
