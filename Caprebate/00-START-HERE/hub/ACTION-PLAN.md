@@ -549,8 +549,8 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   take CAPREBATE_TEST_PASSWORD from its settings, and only when that is set
   are DIDIT_API_KEY, DIDIT_WEBHOOK_SECRET and DIDIT_WORKFLOW_ID read from its
   settings too (api/index.mjs, configureTestDeploy).
-  ITS RECORDS ARE IN MEMORY until a lasting database is set (Phase 151e, 27
-  Sep 2026): with TURSO_DATABASE_URL and TURSO_AUTH_TOKEN (what Vercel's
+  ITS RECORDS ARE IN ONE TURSO DATABASE since 1 Oct 2026 (Word question 230,
+  closed 6 Oct 2026; Phase 151e, 27 Sep 2026, built it): with TURSO_DATABASE_URL and TURSO_AUTH_TOKEN (what Vercel's
   Turso integration adds; CAPREBATE_DB_URL and CAPREBATE_DB_TOKEN win) AND
   the test password, every copy uses one Turso database and the seed runs
   only when it is empty (lastingDatabase, seedOnce). If it cannot be opened,
@@ -564,11 +564,14 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   copy keeps them in that one store (src/web/shared-objectstore.ts;
   sharedDocumentStore in api/index.mjs); anything less, the temporary disk.
   Every Blob call is private and a public store refuses it; no Blob address
-  is kept. Word question 231 asks Lakhbir. The audit log reads the chain's
+  is kept. The store is connected and holds the survey photos (Word question
+  231, closed 6 Oct 2026). The audit log reads the chain's
   end once and retries a clash on seq; Db.tx begins IMMEDIATE.
-  WHAT CLAUDE CAN SEE OF IT (Phase 152): the Vercel connector's only team,
-  ldhillonaqlios, holds no projects - caprebate-test is not found there - so
-  its logs are Lakhbir's to read. GitHub keeps each deploy's status and own
+  WHAT CLAUDE CAN SEE OF IT: since 3 Oct 2026 the Vercel connector reaches
+  the project caprebate-test - its deployments, its setting NAMES (never
+  values) and redeploys (call filter_project_envs WITHOUT teamId; with it,
+  404); its runtime logs answer 403, so the logs are still Lakhbir's to read
+  (Phase 152 found no project there on 28 Sep). GitHub keeps each deploy's status and own
   address (gh api repos/ldhillonaqlios/caprebate/deployments, then its
   /statuses); that address is behind Vercel's sign-in. The public address is
   https://caprebate-test.vercel.app. Each copy logs "test deployment: this
@@ -1320,8 +1323,7 @@ SAY WHICH COPY YOU READ: the Mac, or a cloud clone (where five Mac-only tests
   always fail: Disposal, invoice-fraud SOP, rulebooks, logo, phase144a).
 WORD QUESTIONS 230 AND 231 ARE CLOSED (the Phase 157 sweep, 6 Oct 2026): Turso
   rebuilt on 1 Oct ("yes its working", PHASE-HISTORY ~11017) and the Blob store
-  holds the survey photos (the first iPhone send arrived, 2 Oct). The "STILL OPEN,
-  AND ONLY LAKHBIR CAN CLOSE THEM" paragraph in step 3 below is history.
+  holds the survey photos (the first iPhone send arrived, 2 Oct).
 THE VERCEL CONNECTOR now reaches the project (caprebate-test): deployments,
   setting NAMES (never values) and redeploys; the browser pane reads the site
   while Lakhbir is signed in. The "Claude cannot" lines below are out of date.
@@ -1463,18 +1465,8 @@ after that phase.
    Caprebate_Questions.docx, and the closed document's item likewise. Read
    the listing for DELETE files too: deletions made on the Mac on 25 Sep
    never reached OneDrive (the DELETE row, 13053370722).
-   STILL OPEN, AND ONLY LAKHBIR CAN CLOSE THEM:
-     Word question 230 ("set up Turso", recorded 28 Sep): prove the test
-     website runs on it. He signs in there and opens a client's Identity
-     check - no "Records kept in memory" box means Turso - or reads the
-     function log's "test deployment:" lines. Claude cannot: the Vercel
-     connector's only team holds no projects, and signing in there is his.
-     When he says which, close 230 naming Phase 151e lines 4 to 7 and Phase
-     151i follow-ups 3 to 5.
-     Word question 231 (the private Blob store, recorded 28 Sep): the same,
-     plus the log line "uploaded documents are kept in the private document
-     store" and an invented file uploaded through one sign-in opening in
-     another after a redeploy. Then close 231 naming Phase 151i.
+   WORD QUESTIONS 230 AND 231 (Turso and the private Blob store) were CLOSED
+     by the Phase 157 sweep on 6 Oct 2026: both work on the test website.
    Each copy of the test website now logs "test deployment: this copy
    started in N ms" (Phase 152): read it whenever the log is read. The first
    request after a deploy answered 200 in about 5 s on 28 Sep; if one ever
