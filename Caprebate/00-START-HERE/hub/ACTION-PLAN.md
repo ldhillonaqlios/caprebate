@@ -1061,9 +1061,9 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 158a — the Friary House run past the engagement letter, the F3 wording, and question 187 closed
+## PHASE 158b — opening a survey job, the letter's party and property, and the rest of the Friary House run
 
- **Model: Opus. Written 7 October 2026 by the Phase 158 sweep**, from loose ends it found with no home: the end-to-end run of the invented client stopped at the engagement letter because nothing could sign it (Phase 157c), and signing has since been switched on for the TEST copy of the letter only (`ENGAGEMENT_SIGNING_TEST`, PR 32, merged) — so what stopped it has gone. F3 of the same run was never given a home, and Word question 187 was answered and built but never closed. Nobody needs to answer anything first.
+ **Model: Opus. Written 7 October 2026 by Phase 158a**, from its run of the invented client past the engagement letter (findings F22 to F33 in `04-phase-work/sim-2026-10-06/Friary-House-simulation-findings.md`, OneDrive). The run signed the TEST letter, ran the paid research and reached SURVEY, then stopped: nothing in the application can open a survey job. Nobody needs to answer anything first.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1079,8 +1079,9 @@ STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
 and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
 (commit and push first; a claim already there stops you). Set this phase's
 board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; Lakhbir merges. Retag what
-you touch and give every loose end a home.
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
 
 KEEP ONEDRIVE UP TO DATE, all the way through:
 - monday is where we run and track the work; OneDrive (the repository) is the
@@ -1103,37 +1104,68 @@ WHEN THE PHASE IS DONE, in this order:
    plain lines what was done and what is next.
 ═══════════════════════════════════
 
-1. THE FRIARY HOUSE RUN, ON FROM THE ENGAGEMENT LETTER. The run of 6 Oct
-   2026 (04-phase-work/sim-2026-10-06/Friary-House-simulation-findings.md,
-   OneDrive; F1 to F21) stopped at ENGAGEMENT. Phases 157c and 157d built
-   sending the letter, the signature, signing from a link and a second signer;
-   signing is ON FOR THE TEST COPY OF THE LETTER ONLY (ENGAGEMENT_SIGNING_TEST;
-   locally CAPREBATE_SIGNING_TEST=1). Pick the run up there, with the same
-   invented client and invented data only, on a local copy or the test
-   website: send the letter, sign the TEST letter as the invented client, then
-   every step after it - the paid research (Homedata property, title,
-   planning, boundary: about 17p a signed client, a cost Lakhbir accepted on
-   6 Oct - COORDINATES, HOMEDATA IS THE PROPERTY SOURCE),
-   data gathering, the survey job and pack, the legal check, the tax adviser
-   sign-off screen, the client report and the accountant's pack, the filing
-   confirmation, the invoice and the defence pack. Write each finding as F22
-   onwards in the same file, the same way. Fix what is small and safe in this
-   phase, each with a test that fails first; put anything larger in a new
-   lettered phase before the sweep, and anything that needs a person in the
-   Word questions document. IF SIGNING THE TEST LETTER IS REFUSED AGAIN (the
-   classifier refused a local override twice on 6 Oct), stop at that step,
-   say so plainly and record it; do not look for another way round.
-2. F3, THE WORDING. "What did you spend on each building?" takes one answer;
-   a building bought AND later refurbished must pick "bought" and give the
-   works on the "other work" step. Say so on that page, in plain words (the
-   plain-words check at grade 9), in the site file, with a harness check that
-   fails on the old file; re-run the extractor.
-3. WORD QUESTION 187 IS ANSWERED AND BUILT, SO IT LEAVES THE DOCUMENT. Lakhbir
-   answered it in chat on 1 Oct 2026 (the drafts go to the surveyor
-   pre-filled) and Phase 153e built it. Move it, unchanged, to "Caprebate_
-   Questions - answered and closed.docx" with "Closed (<date>): ...", the
-   AMENDMENT 2 way - BACK UP WITH cp, NEVER mv (Phases 151e3 and 157c both
-   used mv and broke Lakhbir's link); rebuild hub/QUESTIONS-WORD-HEADINGS.txt.
+Each fix below gets a test that fails on the code before it. Plain words at
+grade 9 on every screen. Fix what is small and safe; anything larger goes in
+a new lettered phase before the sweep; anything that needs a person goes in
+the Word questions document (AMENDMENT 2 - cp, never mv).
+
+1. F31, THE BLOCKER: OPENING A SURVEY JOB. Nothing in the application creates
+   a survey job: surveyor_jobs and estimates are written only by src/seed.ts
+   and the tests. A claim at SURVEY needs "the surveyor's commitment ... on a
+   survey job on this claim", and the surveyor's commit refuses a job with no
+   locked estimate ("Tell the office - do not work around it"). Build, on the
+   claim page at SURVEY: choose a surveyor (a SURVEYING login) and open the
+   job. Opening it seals the estimate for that claim's assessment - the figure
+   the four-stage funnel showed the client, as an `estimates` row, the shape
+   surveyor.ts sealedEstimate reads - and links the job to the claim. Decide
+   who may open one (Admin and Sales, as engagement.send), write it into the
+   permission table, and keep the estimate out of every surveyor page (the
+   payload proof must still find none as surveyor and all seven as admin).
+   One job per claim at a time; say plainly when one is already open.
+2. F22, THE LETTER NAMES THE WRONG PARTY AND NO PROPERTY. The letter shown for
+   signing named the client "a company registered ... under company number
+   98604417" (the specimen) although the client said Partnership and gave no
+   number, and left "Date:" and "Subject property:" blank although the claim
+   has a property. Fill the client line from the business's claimant type and
+   its company number (a partnership or sole trader is described as one, with
+   no company number), and the property and date from the claim. A letter that
+   would still carry the specimen number is refused for sending, as a blank
+   clause already is. The TEST copy follows the same rule.
+3. F28, AN ANSWER THE CLIENT GAVE IS LOST. "How did you come by this one?
+   purchase" at the assessment is not carried to the claim's fact
+   BOUGHT_THE_BUILDING at conversion, so Data gathering asks staff to record
+   it, and the contract and CPSE are not asked for until they do. Write it at
+   conversion (source CLIENT_ANSWER, a note saying so), and the other
+   assessment answers that have a claim fact, where one exists.
+4. F27 and F30, WHAT THE CLIENT IS SHOWN. (a) The claim page's "the client's
+   page shows ..." read "The engine runs" at ENGAGEMENT, "Engagement - letter,
+   data & AI consent, fee basis" at DATA GATHERING and "Chartered sign-off" at
+   SURVEY: it went down and jumped, though it says a move "never lowers it".
+   Find the mapping and make it follow the stages. (b) After the research ran,
+   the portal still said "What Cap Rebate has done: Nothing yet" and "No
+   property registers have been checked yet". Say what was checked.
+5. THE WORDING (F23, F24, F32). (a) The letter page's "We will not issue the
+   letter until they are" above a TEST copy that was issued: say what is true
+   of the test copy. (b) The client page's lookups list still shows the
+   Valuation Office rating list as "Waiting", and the Data gathering criterion
+   says "no unresolved VOA licence block": the rating list was SCRAPPED on
+   4 Oct (DO NOT REOPEN) - correct the words, not the decision. (c) The staff
+   footer says "no signature provider is connected": signing is in-house now.
+   (d) F29, minor: the address normaliser reads "St Judes" as "STREET JUDES".
+6. THE RUN, ON FROM SURVEY. With item 1 built, pick the Friary House run up
+   again (same invented client, a local copy, CAPREBATE_SIGNING_TEST=1): open
+   the job, the surveyor's figures and the survey pack, VALUATION, the legal
+   check, the tax adviser sign-off screen, the client report and the
+   accountant's pack, the filing confirmation, the invoice and the defence
+   pack. Write each finding as F34 onwards in the same file. Phase 158a's
+   scratch database had one job inserted by hand (F31); start the job again
+   through the new screen.
+7. F26, FOR A PERSON TO LOOK AT. The care regulator lists one location at the
+   surgery's postcode and its address scored 0.00 against ours; the field
+   names match the documentation, so it is most likely another service.
+   cqc.org.uk refuses automated reading, and a test lookup on a client's
+   property is not allowed (Word question 170). If a person confirms it is
+   another service, nothing to fix; otherwise find why.
 ```
 
 ---

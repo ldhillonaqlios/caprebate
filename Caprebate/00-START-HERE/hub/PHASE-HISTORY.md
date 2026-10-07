@@ -12375,3 +12375,53 @@ NOTHING LEFT  beyond those lines.
  **Claim cleared** in the commit that carries this record.
 
 _7 October 2026, after the close (Lakhbir: "you merge them all", "yes move it", "yes delete it"). Claude merged PR 34 (157d) and then PR 35 (this sweep) into main, both with green checks and clean. The DELETE copy of the Word questions document went to the OneDrive recycle bin through the Microsoft 365 connector, and it is gone from the Mac too. The linked `Caprebate_Questions.docx` is unchanged (109,403 bytes). `Development/_claude-sweep158-transfer/` was deleted (git-ignored; nothing in it was tracked)._
+
+
+---
+
+## Phase 158a — the Friary House run past the engagement letter, the F3 wording, and question 187 closed — 7 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Took the invented client (Friary House) on from the engagement letter, on a local copy with signing on for the test letter only. Sent the letter, signed the TEST copy from the emailed link and ran the paid research (12p). Gathered the documents and reached Survey. The run stopped there: nothing in the application can open a survey job, or lock the estimate the surveyor's figures release. That, and ten more findings, are now Phase 158b. Fixed in this phase: the planning answer for a property with no applications, and the "what did you spend" wording (F3). Word question 187 was moved to the closed document. 4,869 passing.
+
+- **Claim.** hub/CLAIM.md and board item 13228935943 (board and tracker: Working on it, Lakhbir's Mac), pushed first (`5a3438f`). Branch `claude/phase-158a` from main after PRs 34, 35 and 36 merged (Lakhbir: "you merge them all", then "merge 36 and run 158a").
+- **1. The run, from the letter** (findings F22 to F33 in `04-phase-work/sim-2026-10-06/Friary-House-simulation-findings.md`, OneDrive, git-ignored).
+  - **Set-up.** The 6 October database was copied into this session's scratchpad and migrated to main on start. It ran on localhost:8111 with `CAPREBATE_SIGNING_TEST=1`, lookups on and emails held in the outbox. Staff and the surveyor used the seed's development password; their sign-in codes came from the outbox.
+  - **Sending and signing.** Staff "Prepare and send the engagement letter" queued an email with a 7-day signing link. The link opened the TEST letter without a login. The letter was **signed as the invented contact**, with the typed name adopted as the signature. Nothing refused it, so the 6 October blocker (F10) is gone for the test copy. The portal's signed PDF downloads (36 KB).
+  - **Research.** Homedata property 11p, the site area from the title outline (1,396.2 m², confidence B), EPC by the property's own number and postcodes.io all answered. Homedata planning 1p came back as "unreadable" (F25, fixed below). CQC found no match (F26).
+  - **Data gathering.** Bought YES and no s.198 election were recorded. The six 6 October uploads were linked by staff; they predate 157c's fix. The client then uploaded a TEST tax return, tax computation, plans and completion statement. The four types 157d opened all went onto the claim by themselves. Data gathering was confirmed and the claim moved to Survey.
+  - **F31, the stop.** Nothing creates a survey job: `surveyor_jobs` and `estimates` are written only by `src/seed.ts` and the tests. One job was inserted into the scratch database the way the seed does it. The surveyor saw it with every assessment answer and counted the rooms. The commit was refused: "This job has no locked estimate, so committing would release nothing. Tell the office - do not work around it". **The run stopped there, as the page says.**
+  - **Other findings.**
+    - F22: the letter names the specimen company number for a partnership, and leaves the property and date blank.
+    - F23: the test letter says it "will not issue".
+    - F24: VOA wording after the 4 October scrap.
+    - F27: the client's step label goes down, then jumps.
+    - F28: "bought" is not carried to the claim.
+    - F29: "St Judes" is read as "STREET JUDES".
+    - F30: the portal says "nothing yet" after the research ran.
+    - F32: the footer says "no signature provider".
+    - F33: a new member of staff sets up a second step on first sign-in (correct; noted only).
+- **2. F25 fixed** (`src/connectors/homedata-planning.ts`). An answer with a count of 0 is read as no applications, with the note "Homedata holds no planning applications for this property". An answer with no planning history at all is not matched, and the question stays asked, in those words. Anything else unreadable is still unreadable.
+- **3. F3 fixed** (`src/web/funnel4.ts`). Under "What did you spend on each building?": "If you bought it and later did work on it, choose “We bought it”. You can tell us about the work a few questions on." The brief named the site file, but the question a client meets is the four-stage funnel's. The site file's older funnel (`screenQ1c`) is not served at /assessment, so it was left alone. Seen on the page in the browser.
+- **4. Word question 187 closed** (AMENDMENT 2).
+  - **Before writing.** The folder listing showed `Caprebate_Questions.docx` as the linked item (01MGXUCTLKJIP4DY6BJZGL7KO5ZTZZABK3). Cloud copies of all three documents matched the Mac files. Backups were taken with `cp` (`.bak-phase158a`), and the documents were checked again right before writing.
+  - **The edit.** The question was moved unchanged to the end of Section 1 of the closed document, with "Closed (7 October 2026): the drafts go to the surveyor pre-filled ... Moved here by Phase 158a". It was moved to the appendix of the 29 September document, with its Answer line marked closed.
+  - **After writing.** The documents were written in place (same inode numbers). They were copied down again from the cloud and are equal byte for byte, with no conflict copies. The nine temporary copies went to the recycle bin. `hub/QUESTIONS-WORD-HEADINGS.txt` was rebuilt from the cloud copies; it has one line moved.
+- **5. Phase 158b written** (board 13231249101, Ready - Claude can build; in ACTION-PLAN.md and on the run sheet, read back equal). It covers F31 (opening a survey job, which seals the funnel's figure as the estimate), F22, F28, F27 and F30, the wording (F23, F24, F32, F29), the run on from Survey, and F26 for a person to look at.
+- **The checks.** `test/phase158a.test.ts` (six tests): Five of six were red against the code before it; the control held. Restated: none.
+  - **Figures.** Site harness 1,382 pass / 0 fail / 3 xfail (unchanged; the site file was not touched). phase3 440. phase9 417. Back end `npm run check` 2,630 pass / 0 fail over 162 tracked files. **4,869** in all.
+  - **Other checks.** Plain words: green. CRM fold check: green. Extraction: verified, and `extract --check` up to date. Payload proof: PASS. Tracker: green.
+  - **Drift.** It first named two Developer Spec lines (the back end's figure and the total), which were updated. Then `--fast --expect 1382,440,417,2630` gave exit 0. The negative control `--expect 999,998,997,996` gave exit 1.
+  - **Register check.** Green at the close.
+
+```
+DONE          The run from the letter to Survey (F22-F33 written); F25 and F3 fixed with tests;
+              Word question 187 closed in both documents; Phase 158b written.
+NOT DONE      Opening a survey job, the letter's party and property, the lost "bought" answer,
+              what the client is shown, the wording, and the run on from Survey - BUILDABLE -
+              Phase 158b.
+              Whether the care regulator's one location at the postcode is another service (F26)
+              - a person to look - Phase 158b item 7.
+NOTHING LEFT  beyond those lines.
+```
+
+ **Claim cleared** in the commit that carries this record.
