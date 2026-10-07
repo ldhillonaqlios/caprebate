@@ -1,6 +1,6 @@
 # Waiting on people — what only a person can do
 
-**As found on 3 October 2026.** The rule (Lakhbir, 29 Sep 2026): **we build everything in test, then the right person
+**As found on 3 October 2026; brought up to date by the Phase 158 sweep, 7 October 2026.** The rule (Lakhbir, 29 Sep 2026): **we build everything in test, then the right person
 signs it off** — "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its
 viable and if not we then correct it". So nothing here stops a build; each line is what turns a built thing into a
 signed-off one, or what only a person can buy, send, sign or decide.
@@ -23,12 +23,13 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Engage a chartered tax adviser.
 - [ ] Decide on the two British Standards; buy BCIS (which product: Word question 218).
 - [ ] Do the information governance training and record it.
-- [ ] Run the land boundary's first test download.
-- [ ] Look once at the test website to confirm Turso and the Blob store (Word questions 230 and 231).
-- [ ] Delete the "DELETE" files on the OneDrive web page.
+- [x] ~~Run the land boundary's first test download.~~ Dropped 6 Oct 2026 (Lakhbir: "use home data"): the site boundary comes from Homedata's title outline; the fetcher stays built and off (tracker 12830205914, Parked).
+- [x] Look once at the test website to confirm Turso and the Blob store (Word questions 230 and 231). Both work; closed 6 Oct 2026 by the Phase 157 sweep.
+- [x] Delete the "DELETE" files on the OneDrive web page. Done 6 Oct 2026: moved to the OneDrive recycle bin on your yes.
+- [ ] One new "DELETE - Caprebate_Questions (a second item 6-7 Oct 2026, made by Phase 157c's mv backup).docx" in the Health Capital Allowances folder (Phase 158 sweep, 7 Oct 2026): Phase 157c backed up the questions document with `mv`, so your link opened a copy frozen at 10:22 on 6 Oct while four phases wrote to a second file. The sweep gave your linked file its name back and wrote the latest document into it. Nothing you typed was lost (the frozen copy was never edited). Say yes and Claude moves the DELETE copy to the recycle bin.
 - [ ] File your own care-provider confirming-letter template (Word question 77) in `05-reports-and-templates/`; until then the supported-living list points at our draft, `Caprebate-Care-Provider-Confirming-Letter-Template-DRAFT-v0.1.md` (Phase 153b, 4 Oct 2026).
-- [ ] Confirm the two Phase 153b builds that are yours: the job cost model's line renamed "our own tax adviser, if we introduce one" (Word question 191), and Homedata as the chosen planning source, still off (Word question 202).
-- [ ] Answer Word questions 235, 236, 238, 187 and 34 (237 is for the tax adviser).
+- [ ] Confirm the two Phase 153b builds that are yours: the job cost model's line renamed "our own tax adviser, if we introduce one" (Word question 191), and Homedata as the chosen planning source (Word question 202 - closed 6 Oct 2026 by Phase 156f: Homedata answers planning history after signing).
+- [ ] Answer Word questions 235, 236, 238 and 34 (237 is for the tax adviser). (187 was answered by you in chat on 1 Oct 2026 - the drafts go to the surveyor pre-filled - and built by Phase 153e; Phase 158a moves it to the closed document.)
 - [ ] Confirm the two Phase 153c readings that are yours: "data is stored for 7 years" read as OUR copy (Word question 192), and the address lookup kept seven years in test until Homedata answers (Word question 37, and send Homedata the drafted email when the account opens).
 - [ ] Others in the tracker: break and abort fee, clawback clause 13, Homedata licence facts, rate-card uplifts,
       solicitor brief, mailbox confirmation, Google Business Profile, bank and insurance, HMRC corporation tax,
@@ -37,7 +38,8 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       and a production deploy made. EPC and CQC test lookups PASSED from the Mac the same day.
 - [x] The three key-file lines (OS and both Turnstile) — added by Lakhbir 5 Oct 2026; the Ordnance Survey test lookup PASSED.
 - [x] PRs 9 to 18 into main — done 5 Oct 2026 through PR 19 (claude/plan-156 into main); the live test site reads the keys.
-- [ ] Close PRs 10 to 17 on GitHub: their work is in main through PR 19.
+- [x] Close PRs 10 to 17 on GitHub: their work is in main through PR 19. All eight closed (checked 7 Oct 2026).
+- [ ] Merge PR 34 (Phase 157d), then PR 35 (the Phase 158 sweep, stacked on it). The sweep brought 157d up to date with main on 7 Oct 2026, so 34 merges cleanly now.
 - [ ] Sadique: confirm the two WhatsApp answers Lakhbir gave on 5 Oct 2026 (uploaded chats follow the client-message
       retention rule; messages from before the client ticked the WhatsApp box are kept) — FOR-THE-SOLICITOR-DPO-DEVELOPER.
 - [ ] An Android WhatsApp export, made-up content, when one is to hand: the reader was built for Android from WhatsApp's

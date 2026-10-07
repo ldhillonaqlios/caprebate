@@ -2798,7 +2798,7 @@ node 03-app/caprebate-regression.cjs --package      1382 pass / 0 fail / 3 xfail
 cd 04-phase-work/phase3 && node --test              440 pass / 0 fail   (11 files)
 cd 04-phase-work/phase9 && node --test              417 pass / 0 fail   (9 files)
 cd 09-app/backend && npm run check                  2624 pass / 0 fail   (161 tracked files)
-node 09-app/engine/tools/verify-extraction.cjs      21 checks, 0 failures — 25 CTA switches counted
+node 09-app/engine/tools/verify-extraction.cjs      21 checks, 0 failures — 29 CTA switches counted (re-derived 7 Oct 2026 by the Phase 158 sweep; it said 25 from Phase 153a, before Phase 153b built four more)
 node 09-app/engine/tools/extract.cjs --check        exit 0 — the package matches the site
 node 03-app/caprebate-figure-drift.cjs              exit 0 at the close of Phase 146h
 node 03-app/caprebate-figure-drift.cjs --self-test  14 classifier cases and 8 guard cases, every one holds

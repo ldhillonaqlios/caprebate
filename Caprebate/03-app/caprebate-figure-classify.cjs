@@ -111,6 +111,14 @@
    still matched on its own. The prompt said "N of N assertions pass" was
    invisible too; it was not - the SECOND figure was already seen, so the case
    only hid a first figure that differed from the second. Both are now seen.
+   A BLIND SPOT OUT OF SCOPE, WRITTEN DOWN (Phase 158 sweep, 7 October 2026):
+   this file reads PASS figures only. A COUNT OF ENGINE SWITCHES ("N CTA
+   switches counted", "the twenty-four switches") is a different kind of figure
+   and nothing compares it with what verify-extraction.cjs counts: the Developer
+   Spec's section 4 said 25 and FOR THE ACCOUNTANT said twenty-four, in the
+   present tense, while the engine held 29. Both corrected by hand. A sweep
+   compares them by eye: run verify-extraction and grep the live documents for
+   "switches". */
    Bare "N engine assertions" with no verb is NOT added - see the list below. */
 const PASS_RE = /(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d{2,5})\s*(?:pass(?:ing|es|ed)?\b|\/\s*0\s*fail\b|\/\s*0\s*\/\s*\d+\b|(?:assertions?|tests?)\s+pass(?:ing|es|ed)?\b|(?:assertions?|tests?)\s*,\s*0\s+fail(?:s|ures?)?\b|assertions\b|(?=(?:(?:of\s+\d[\d,]*|[A-Za-z][\w-]*)\s+){1,3}(?:assertions?|tests?)(?:\s+pass(?:ing|es|ed)?\b|\s*,\s*0\s+fail(?:s|ures?)?\b)))/g;
 
