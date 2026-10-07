@@ -360,3 +360,25 @@ describe('F37 — on the claim page', () => {
     } finally { w.made.close(); }
   });
 });
+
+/* ================================================================== *
+ * F41 — the invoice sent before the claim moves past Invoice
+ * ================================================================== */
+import * as I from '../src/web/invoices.ts';
+
+describe('F41 — the Invoice gate needs the fee invoice sent, not only raised', () => {
+  test('raised: not met, and it says so; recorded as sent: met', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'INVOICE');
+    const need = () => gateNeed(app, c.claim, 'Our fee invoice is sent');
+    assert.equal(need()?.met, false);
+    assert.match(need()?.why ?? '', /no live fee invoice is raised on this claim/);
+    const inv = CF.claimInvoiceRow(app, c.business, c.claim);
+    assert.equal(need()?.met, false);
+    assert.match(need()?.why ?? '', /raised but not sent yet/);
+    assert.equal(I.markSent({ db: app.db, audit: app.audit, now: app.now, newId: randomUUID }, actor('ACCOUNTING'), inv, {}).ok, true);
+    assert.equal(need()?.met, true);
+    assert.match(need()?.why ?? '', /sent on /);
+    app.close();
+  });
+});

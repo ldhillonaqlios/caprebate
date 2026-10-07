@@ -410,7 +410,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
       step('INVOICE');
       confirm(app, c, 'HMRC_PROCESSED_RELIEF');
       // CRM 7 of 10: the gate reads THIS claim's own fee invoice — an organisation's no longer opens it.
-      CF.claimInvoiceRow(app, org.business, c);
+      CF.claimInvoiceRow(app, org.business, c, { status: 'SENT' }); // PHASE 158c (F41): sent, not only raised
       step('DEFENCE_PACK');
       // CRM 6 of 10: the pack complete is the register's issued defence pack, with its hash; the confirmation is retired.
       CF.issue(app, c, 'DEFENCE_PACK');

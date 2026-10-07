@@ -936,22 +936,25 @@ describe('5 · the invoice email is not built', () => {
  * ================================================================== */
 
 describe('6 · the claim’s own invoice, everywhere the organisation’s was read', () => {
-  test('THE INVOICE GATE reads this claim’s invoice: an organisation’s, another claim’s, a cancelled one and one credited in full do not open it', async () => {
+  test('THE INVOICE GATE reads this claim’s invoice, sent: an organisation’s, another claim’s, one raised and not sent, a cancelled one and one credited in full do not open it', async () => {
     const app = await testApp();
     try {
       staff(app);
       const x = readyToInvoice(app);
       const y = readyToInvoice(app, { org: x.org });
       const need = (claim: string): boolean => P.gateOut(app.db, P.loadPipelineClaim(app.db, claim), 'INVOICE', { today: app.now() })
-        .needs.find((q) => /fee invoice is raised on this claim/.test(q.what))?.met ?? false;
+        .needs.find((q) => /fee invoice is sent to the client on this claim/.test(q.what))?.met ?? false;
       app.db.run("INSERT INTO invoices (id,business_id,claim_value_pence,fee_pence,invoice_status,payment_status,vat_position,created_at) VALUES ('org-invoice', ?, NULL, 150000, 'RAISED', 'UNPAID', 'x', ?)", [x.org.business, T0]);
       assert.equal(need(x.claim), false, 'an organisation’s invoice opened a claim’s gate');
       const onY = raise(app, y.claim);
-      assert.equal(need(x.claim), false, 'another claim’s invoice opened this claim’s gate');
-      assert.equal(need(y.claim), true);
+      // PHASE 158c (F41): raised and not sent does not open it.
+      assert.equal(need(y.claim), false, 'an invoice raised and not sent opened the gate');
       assert.equal(I.cancelInvoice(deps(app), ACC, onY, { reason: 'the test' }).ok, true);
       assert.equal(need(y.claim), false, 'a cancelled invoice kept the gate open');
       const again = raise(app, y.claim);
+      assert.equal(I.markSent(deps(app), ACC, again, {}).ok, true);
+      assert.equal(need(x.claim), false, 'another claim’s invoice opened this claim’s gate');
+      assert.equal(need(y.claim), true);
       assert.equal(I.creditInFull(deps(app), ACC, again, { reason: 'the test' }).ok, true);
       assert.equal(need(y.claim), false, 'an invoice credited in full kept the gate open');
     } finally { app.close(); }

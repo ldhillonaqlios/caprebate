@@ -610,10 +610,18 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // CRM 7 of 10: THE CLAIM'S OWN INVOICE. Until invoices sat on the claim this read any invoice raised for the
       // organisation, so one claim's invoice opened every claim of the same client.
       const live = liveFeeInvoiceCount(db, c.id);
+      /* PHASE 158c (F41, the Friary House run): the claim moved on with the fee "raised, not sent" - the client had not been
+         invoiced. A live fee invoice must be recorded as SENT (finance's "sent", src/web/invoices.ts markSent). */
+      const sent = db.get<{ sent_on: string | null }>(
+        "SELECT i.sent_on FROM invoices i WHERE i.claim_id = ? AND i.kind = 'FEE' AND i.invoice_status = 'SENT' " +
+          'AND i.fee_pence > COALESCE((SELECT SUM(n.amount_pence) FROM invoice_credit_notes n WHERE n.invoice_id = i.id), 0) ORDER BY i.sent_on DESC LIMIT 1',
+        [c.id]);
       needs.push({
-        what: 'Our fee invoice is raised on this claim',
-        met: live > 0,
-        why: live > 0 ? 'a fee invoice is raised on this claim and is not credited in full' : 'no live fee invoice is raised on this claim',
+        what: 'Our fee invoice is sent to the client on this claim',
+        met: sent !== undefined,
+        why: sent !== undefined ? `sent on ${sent.sent_on ?? 'a day not recorded'}, and not credited in full`
+          : live > 0 ? 'a fee invoice is raised but not sent yet. Accounting records it as sent once it has gone to the client'
+            : 'no live fee invoice is raised on this claim',
       });
       break;
     }

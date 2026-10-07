@@ -147,9 +147,10 @@ function checks(app: App, subject: P.EnquirySubject, answers: Partial<Record<P.C
   }
 }
 
-/** CRM 7 of 10: THE CLAIM'S OWN fee invoice. An organisation's invoice no longer opens the gate — test/finance-claim.test.ts. */
+/** CRM 7 of 10: THE CLAIM'S OWN fee invoice. An organisation's invoice no longer opens the gate — test/finance-claim.test.ts.
+ *  PHASE 158c (F41): and it is SENT to the client — raised and not sent does not open it (test/phase158c.test.ts). */
 function raiseInvoice(app: App, business: string, claim: string): void {
-  CF.claimInvoiceRow(app, business, claim);
+  CF.claimInvoiceRow(app, business, claim, { status: 'SENT' });
 }
 
 const ALL_YES = { UK_HEALTHCARE_PROPERTY: 'YES', TRADING_CLIENT: 'YES', OWNER_OR_AUTHORISED: 'YES', NO_CLAIM_CONFLICT: 'YES' } as const;
