@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 309 |
-| Working on it | 1 |
+| Done | 310 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1121,7 +1121,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1340,11 +1340,6 @@
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 - Note 2026-10-06 (Phase 157 (sweep)): The tool is built and refuses to run until the officer answers Word question 200; nothing is left to build, so it waits like any built item. Housed as SDP-P43.
 
-### Phase 158 - Sweep and stress-test (7 Oct 2026): the whole tracker against the disk, every check re-run, and 157d brought up to date with main
-
-`13227325844` · **Working on it** · owner Claude · **CLAIMED BY Claude cloud session + Mac tree (Cowork VM)**
-
-
 ### Phase 158a - the Friary House run past the engagement letter, the F3 wording, and Word question 187 closed
 
 `13228935943` · **Ready - Claude can build** · owner Claude
@@ -1355,7 +1350,7 @@
 
 ## Z · Complete / Not Applicable
 
-309 items.
+310 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3189,4 +3184,10 @@
 - Note 2026-10-06 (Phase 157c): Written by Phase 157c: signing from an emailed link and a second signer (each off until the solicitor answers), duplicates (F18), a damaged PDF (F19), and the four document types nothing can receive yet (F16, moved from 157c).
 - Note 2026-10-06 (Phase 157d): Done 6 Oct 2026: signing from an emailed link and a second signer (test copy only), duplicate uploads recognised, damaged PDFs refused, four document types receivable; migrations 097-099; 4,854 passing.
 - Note 2026-10-07 (Phase 158 (sweep)): The Phase 158 sweep merged main (Phase 157b, PR 33) into this branch on 7 Oct 2026 and re-derived the figures: 1,382 + 440 + 417 + 2,624 = 4,863. PR 34 can now merge.
+
+### Phase 158 - Sweep and stress-test (7 Oct 2026): the whole tracker against the disk, every check re-run, and 157d brought up to date with main
+
+`13227325844` · **Done** · owner Claude
+
+- Note 2026-10-07 (Phase 158 (sweep)): Done 7 Oct 2026: tracker against the disk, every check re-run (4,863 passing); 157d brought up to date with main (PR 34 mergeable); the Word questions link restored; the social media item tracked; switch counts, waiting list and plan made true; the figure classifier's syntax fault fixed on the Mac; Phase 158a written; the sweep renumbered to 159. Record in PHASE-HISTORY.
 

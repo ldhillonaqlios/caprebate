@@ -39,7 +39,8 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [x] The three key-file lines (OS and both Turnstile) — added by Lakhbir 5 Oct 2026; the Ordnance Survey test lookup PASSED.
 - [x] PRs 9 to 18 into main — done 5 Oct 2026 through PR 19 (claude/plan-156 into main); the live test site reads the keys.
 - [x] Close PRs 10 to 17 on GitHub: their work is in main through PR 19. All eight closed (checked 7 Oct 2026).
-- [ ] Merge PR 34 (Phase 157d), then PR 35 (the Phase 158 sweep, stacked on it). The sweep brought 157d up to date with main on 7 Oct 2026, so 34 merges cleanly now.
+- [ ] Merge PR 34 (Phase 157d), then the Phase 158 sweep's PR (against main; it also carries 157d's commits, so merging it alone brings 157d in too). The sweep brought 157d up to date with main on 7 Oct 2026, so 34 merges cleanly now.
+- [ ] Say yes and Claude deletes `Development/_claude-sweep158-transfer/` (git-ignored; the Phase 158 cloud session's patches, all now on the branch).
 - [ ] Sadique: confirm the two WhatsApp answers Lakhbir gave on 5 Oct 2026 (uploaded chats follow the client-message
       retention rule; messages from before the client ticked the WhatsApp box are kept) — FOR-THE-SOLICITOR-DPO-DEVELOPER.
 - [ ] An Android WhatsApp export, made-up content, when one is to hand: the reader was built for Android from WhatsApp's

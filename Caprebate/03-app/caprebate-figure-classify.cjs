@@ -118,7 +118,7 @@
    Spec's section 4 said 25 and FOR THE ACCOUNTANT said twenty-four, in the
    present tense, while the engine held 29. Both corrected by hand. A sweep
    compares them by eye: run verify-extraction and grep the live documents for
-   "switches". */
+   "switches".
    Bare "N engine assertions" with no verb is NOT added - see the list below. */
 const PASS_RE = /(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d{2,5})\s*(?:pass(?:ing|es|ed)?\b|\/\s*0\s*fail\b|\/\s*0\s*\/\s*\d+\b|(?:assertions?|tests?)\s+pass(?:ing|es|ed)?\b|(?:assertions?|tests?)\s*,\s*0\s+fail(?:s|ures?)?\b|assertions\b|(?=(?:(?:of\s+\d[\d,]*|[A-Za-z][\w-]*)\s+){1,3}(?:assertions?|tests?)(?:\s+pass(?:ing|es|ed)?\b|\s*,\s*0\s+fail(?:s|ures?)?\b)))/g;
 

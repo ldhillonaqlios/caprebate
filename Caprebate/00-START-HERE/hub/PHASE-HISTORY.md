@@ -12319,3 +12319,57 @@ NOTHING LEFT  beyond those lines.
 ```
 
  **Claim cleared** in the commit that carries this record.
+
+
+---
+
+## Phase 158 — Sweep and stress-test — 7 October 2026 (a Claude cloud session from 12:15, with checks on a copy of the Mac tree in the Cowork VM; finished by Claude Code on the Mac's OneDrive copy from 18:15)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Swept the whole tracker against the disk and re-ran every check. Phase 157d's branch had fallen behind main once PR 33 merged, so the sweep merged main into it; PR 34 now merges cleanly. Lakhbir's link to the Word questions document had broken again: Phase 157c backed it up with `mv`. The sweep gave the linked file its name back and wrote the latest document into it. One board item was missing from the tracker, the social media account; it is now tracked. The switch count was stale in two documents (it said 24 and 25; there are 29). The waiting list and the plan were made true. One new phase was written: 158a, the Friary House run past the engagement letter. The sweep is now Phase 159. 4,863 passing.
+
+- **Who ran it, and where.** A Claude cloud session claimed the phase at 12:15 (`43b7083`; board item 13227325844) and ran the checks on a copy of the Mac tree in the Cowork VM. It pushed its findings at 15:50 (`4603f4c`) and set the board item to Done in group Z at 15:39. It then stopped before writing this record, before the run sheet and before opening a pull request, and left the claim in place. Claude Code on the Mac picked it up at 18:15 the same evening: same phase, same branch, no other claim. Nothing was lost. Its working patch in `Development/_claude-sweep158-transfer/` (git-ignored) matches the branch except for one file (below).
+- **Phase 157d brought up to date with main** (`e7da5da`, `27c0762`, pushed to `claude/phase-157d`). PR 34 conflicted once PR 33 (157b) merged; 157d's record had left "this branch takes main" as a sentence. The plan, registers, history, tracker and Developer Spec conflicts were resolved; two case-stamp line references were remapped; the figures were re-derived as 1,382 + 440 + 417 + 2,624 = 4,863. **PR 34 is mergeable: `gh api repos/ldhillonaqlios/caprebate/pulls/34` gave `mergeable: true`, `clean` at 18:30.**
+- **The Word document's link broke a second time (AMENDMENT 2).** Phase 157c took its backup with `mv` at 10:22 on 6 October. The item Lakhbir's link opens became `Caprebate_Questions.docx.bak-phase157c`, and Phases 157b and 157d wrote to a second, new item. The sweep named the second item `DELETE - Caprebate_Questions (a second item 6-7 Oct 2026, made by Phase 157c's mv backup).docx`, gave the linked item its name back, and wrote the latest document into it with `cp`. Both copies were kept first. Nobody had typed in the frozen copy. On the Mac at the close: `Caprebate_Questions.docx` and the DELETE copy are both 109,403 bytes. The DELETE copy waits on Lakhbir's yes (WAITING-ON-PEOPLE). How to read the listing (each name's own `file:///` address follows that name) is written into AMENDMENT 2.
+- **(e) A finished thing with no tracker row.** Board item 13169912823, "Create Social media account", had been on the board alone since 30 September, with no status or owner. It mirrors Lakhbir's request to the 786 Marketing team on the Health Requests board (13169893947). It is now on the tracker at Ready - Lakhbir action, owner Lakhbir. Claude cannot create accounts. The brand guidelines and the ASA claim review (12830181513) apply before anything is posted.
+- **A count of switches went stale where no check could see it.** The Developer Spec section 4 said "25 CTA switches counted". FOR THE ACCOUNTANT said "the twenty-four switches", in the present tense. The ACTION-PLAN's evidence table and section 8 said twenty-four. `verify-extraction.cjs` counts 29. All were corrected. The split is 17 bigger, 4 smaller, 6 either way and 2 working file only (`03-app/caprebate-switch-direction.cjs`: 3 smaller moved and 1, grant_after_ceilings, moves no walked figure). The drift checker reads pass figures only. The blind spot is written into `03-app/caprebate-figure-classify.cjs`, not widened.
+- **The board's claims about itself.** ACTION-PLAN section 7 said three items sat at Blocked - question; there are none since the Phase 157 sweep. Section 7's old tally of 23 September is now marked as a record, pointing to TRACKER.md's live tables (481 items, 0 at Blocked - question, 128 awaiting sign-off). Section 3 rows 13 to 15 (the land-boundary download, the Turso check, the DELETE files) were struck through with what happened to each.
+- **WAITING-ON-PEOPLE made true.** The boundary download was dropped (Homedata instead). Turso and the Blob store were done. The DELETE files went to the recycle bin. PRs 10 to 17 were all closed (checked 7 Oct). Word question 202 was closed by 156f. Question 187 was answered by Lakhbir on 1 October and built by 153e, so Phase 158a closes it. The new DELETE Word copy was added.
+- **Loose ends with no home → Phase 158a** (board 13228935943, Ready - Claude can build). (1) The Friary House run stopped at the engagement letter (157c). Signing is now on for the TEST copy (PR 32), so the run can go on from there (F22 onwards). (2) F3, the "bought and later refurbished" wording, was never given a home. (3) Word question 187 is to be moved to the closed document. Nothing waits on a person.
+- **Closing on the Mac (18:15 onwards).**
+  - **A fault the sweep left: the figure classifier would not load.** Commit `4603f4c` added a note to `03-app/caprebate-figure-classify.cjs` and closed its comment one line early. `node --check` failed ("Unexpected string"), which would stop the drift checker. The transfer patch held the fix, but it was never committed. Fixed by removing the early `*/`. `--self-test`: 27 of 27 cases held. Lesson: run the checks on the committed tree, not on the copy a patch was applied to.
+  - **The run sheet.** Phase 158a was inserted above the sweep. The sweep's heading was renumbered to PHASE 159 and its block was replaced with the file's. Both were read back equal, character for character (159: 22,752; 158a: 4,459).
+  - **WAITING-ON-PEOPLE's PR line was corrected.** It said "PR 35, stacked on it"; PRs go against main (Lakhbir, 5 Oct). The sweep's PR is against main, and it carries 157d's commits.
+  - **Tracker matched to the board:** 13227325844 is at Done, group Z, claimed-by cleared (the board was set at 15:39; the tracker row still said Working on it).
+- **The checks, run on the Mac at the close** (`claude/phase-158` with the classifier fix):
+  - Site harness: `pass 1382 fail 0 xfail 3`, both modes (`--package` the same).
+  - `04-phase-work/phase3`: 440 pass / 0 fail.
+  - `04-phase-work/phase9`: 417 pass / 0 fail.
+  - Back end `npm run check`: 2,624 pass / 0 fail over 161 tracked files.
+  - **4,863** in all.
+  - `verify-extraction`: 21 checks, 0 failures, 29 switches. `extract --check`: up to date.
+  - Tracker check: green (481 items, 131 subitems). Tracker self-test: every planted fault failed.
+  - Drift self-test: held. **Drift negative control `--fast --expect 999,998,997,996`: exit 1, eleven lines.**
+  - CRM fold check and its self-test: green.
+  - Notices acceptance: 25 structural checks.
+  - Gated-exit proof: 14 of 14; **against `.bak-phase127`: RED, 9 of 14.**
+  - Cash route proof: 18 of 18; **against `.bak-phase129b`: RED, 3 of 18.**
+  - Brand: green. Plain words: green. Analytics allow-list: 26 checks, 0 failures. Register self-test: 11 of 11 controls.
+  - Payload proof: PASS (surveyor 0 of 7, admin 7 of 7).
+  - Drift checker: exit 0, "nothing asserts a stale harness figure as current fact". It derived 1382 / 440 / 417 / 2624 over 161 files, with no untracked file. Its "no marker either way" list (216) was read: every line is a dated record.
+  - Register check: exit 0. Every awaiting item is in exactly one register, the counts match, and no hub document asserts a stale figure.
+
+```
+DONE          Tracker against the disk; every check re-run (4,863); 157d brought up to date
+              with main (PR 34 mergeable); the Word document's link restored; the social media
+              item tracked; the switch counts, the waiting list and the plan made true; the
+              classifier's syntax fault fixed; Phase 158a written; the sweep renumbered to 159
+              in both places.
+NOT DONE      The Friary House run past the letter, F3, Word question 187 - Phase 158a.
+              The DELETE copy of the Word document - BLOCKED on Lakhbir's yes - WAITING-ON-PEOPLE.
+              The git-ignored folder Development/_claude-sweep158-transfer/ (the cloud
+              session's patches) - Lakhbir's yes to delete it.
+              Merging PR 34 and this sweep's PR - Lakhbir's clicks.
+NOTHING LEFT  beyond those lines.
+```
+
+ **Claim cleared** in the commit that carries this record.
