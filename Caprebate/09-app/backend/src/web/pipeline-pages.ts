@@ -40,6 +40,7 @@ import { listControls, mayShareViews, requestParams, sortHeading, type SortBy } 
 import { timelineIfPermitted } from './timeline.ts';
 import { referralBlock } from './introducers-pages.ts';
 import * as E from './enquiries.ts';
+import * as SO from './survey-open.ts';
 import { leadSectionCounts, leadSections, type CardDeps } from './lead-cards.ts';
 
 export type WebResult = 'handled' | 'not-mine';
@@ -249,6 +250,17 @@ export async function handlePipeline(
     });
     if (!r.ok) return d.problem(res, actor, 'Not moved', r.why, back, r.field);
     redirect(res, `${back}${back.includes('?') ? '&' : '?'}done=moved`);
+    return 'handled';
+  }
+
+  /* PHASE 158b (F31): open the claim's survey job for the surveyor chosen; it seals the estimate (src/web/survey-open.ts). */
+  const surveyJob = /^\/staff\/claims\/([A-Za-z0-9-]+)\/survey-job$/.exec(path);
+  if (surveyJob && method === 'POST') {
+    const id = surveyJob[1] ?? '';
+    const f = await form(req);
+    const r = SO.openSurveyJob(deps, actor, id, nonBlank(f.get('surveyor_id')));
+    if (!r.ok) return d.problem(res, actor, 'Survey job not opened', r.why, `/staff/claims/${id}`, r.field);
+    redirect(res, `/staff/claims/${id}?done=survey-job#survey-job`);
     return 'handled';
   }
 

@@ -71,6 +71,7 @@ import { anyStageLabel, stage as stageOf } from './stages.ts';
    never throws and never guesses — see the comment on REGION_NOT_CAPTURED. */
 import { resolveProperty } from './postcode.ts';
 import { preferHomedataPlanning, supersededPlanning } from '../connectors/homedata-planning.ts';
+import { estimateBasis } from './survey-open.ts';
 
 export { NotFoundAsRefusal };
 
@@ -1205,6 +1206,8 @@ export type Workspace = {
   /** True where THIS actor is the assigned surveyor and may commit. */
   readonly may_commit: boolean;
   readonly signature: string;
+  /** PHASE 158b: what the RELEASED estimate was built from (migration 100); null before release, or for an older row. */
+  readonly estimate_basis: string | null;
 };
 
 /**
@@ -1221,9 +1224,10 @@ export const SIGNATURE_STUB =
 
 export function workspace(d: Deps, actor: Actor, job_id: string): Workspace {
   const r = loadJob(d.db, actor, job_id);
+  const payload = payloadFor(d, actor, job_id);
   return {
     job: toRow(d.db, r),
-    payload: payloadFor(d, actor, job_id),
+    payload,
     rooms: roomSchedule(d.db, actor, job_id),
     rates: rateLibrary(d.db, actor, job_id),
     evidence: evidenceFor(d.db, actor, job_id),
@@ -1231,5 +1235,6 @@ export function workspace(d: Deps, actor: Actor, job_id: string): Workspace {
     quarantine_notice: QUARANTINE_NOTICE,
     may_commit: can(actor, 'surveyor_job.commit', objOf(r)),
     signature: SIGNATURE_STUB,
+    estimate_basis: payload.estimate === undefined ? null : estimateBasis(d.db, r.assessment_id),
   };
 }

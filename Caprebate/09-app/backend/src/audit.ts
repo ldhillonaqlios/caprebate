@@ -81,6 +81,8 @@ export type AuditKind =
   | 'ENGAGEMENT_LETTER_SENT'
   // PHASE 157d: staff recorded who must sign the letter
   | 'ENGAGEMENT_SIGNERS_SET'
+  // PHASE 158b: staff opened a survey job on a claim (src/web/survey-open.ts); whether an estimate was sealed with it. No figure.
+  | 'SURVEY_JOB_OPENED'
   /**
    * Phase 146g, 23 September 2026. A member of staff said an address that bounced for good works again
    * (src/web/settings.ts). Whether a lift happened, and nothing else: the address itself is the new row in
