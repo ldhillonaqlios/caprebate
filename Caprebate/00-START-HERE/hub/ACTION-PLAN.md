@@ -381,7 +381,16 @@ Sep 2026 by the Phase 152 sweep)
   230", and reported a Mac-to-cloud fault that never existed - the Mac file
   reached the cloud every time. Phase 152 renamed the second item "DELETE -
   Caprebate_Questions (a second item ...)", gave the linked item its name
-  back, and wrote the document into it, proved byte for byte. THE RULE: take
+  back, and wrote the document into it, proved byte for byte. IT HAPPENED
+  AGAIN on 6 Oct 2026: Phase 157c backed up with mv at 10:22, the linked item
+  became "Caprebate_Questions.docx.bak-phase157c", and 157b and 157d wrote to a
+  second item until the Phase 158 sweep (7 Oct) renamed the second item
+  "DELETE - Caprebate_Questions (a second item 6-7 Oct 2026, ...)", gave the
+  linked item its name back and wrote the latest document into it (cp in
+  place; both copies kept in the VM first; nobody had typed in the frozen
+  copy). READING THE LISTING: read_resource prints each NAME, then its size,
+  then ITS OWN file:/// address - the id after a name belongs to that name, not
+  the next one. THE RULE: take
   a backup with cp, NEVER mv, and write the new document INTO the existing
   Mac file (cp new.docx Caprebate_Questions.docx keeps the same file, so the
   same item; ls -i shows the same number before and after).
@@ -1052,7 +1061,85 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 158 — Sweep and stress-test (the recurring one, always last)
+## PHASE 158a — the Friary House run past the engagement letter, the F3 wording, and question 187 closed
+
+ **Model: Opus. Written 7 October 2026 by the Phase 158 sweep**, from loose ends it found with no home: the end-to-end run of the invented client stopped at the engagement letter because nothing could sign it (Phase 157c), and signing has since been switched on for the TEST copy of the letter only (`ENGAGEMENT_SIGNING_TEST`, PR 32, merged) — so what stopped it has gone. F3 of the same run was never given a home, and Word question 187 was answered and built but never closed. Nobody needs to answer anything first.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; Lakhbir merges. Retag what
+you touch and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
+   and the same entry at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+1. THE FRIARY HOUSE RUN, ON FROM THE ENGAGEMENT LETTER. The run of 6 Oct
+   2026 (04-phase-work/sim-2026-10-06/Friary-House-simulation-findings.md,
+   OneDrive; F1 to F21) stopped at ENGAGEMENT. Phases 157c and 157d built
+   sending the letter, the signature, signing from a link and a second signer;
+   signing is ON FOR THE TEST COPY OF THE LETTER ONLY (ENGAGEMENT_SIGNING_TEST;
+   locally CAPREBATE_SIGNING_TEST=1). Pick the run up there, with the same
+   invented client and invented data only, on a local copy or the test
+   website: send the letter, sign the TEST letter as the invented client, then
+   every step after it - the paid research (Homedata property, title,
+   planning, boundary: about 17p a signed client, a cost Lakhbir accepted on
+   6 Oct - COORDINATES, HOMEDATA IS THE PROPERTY SOURCE),
+   data gathering, the survey job and pack, the legal check, the tax adviser
+   sign-off screen, the client report and the accountant's pack, the filing
+   confirmation, the invoice and the defence pack. Write each finding as F22
+   onwards in the same file, the same way. Fix what is small and safe in this
+   phase, each with a test that fails first; put anything larger in a new
+   lettered phase before the sweep, and anything that needs a person in the
+   Word questions document. IF SIGNING THE TEST LETTER IS REFUSED AGAIN (the
+   classifier refused a local override twice on 6 Oct), stop at that step,
+   say so plainly and record it; do not look for another way round.
+2. F3, THE WORDING. "What did you spend on each building?" takes one answer;
+   a building bought AND later refurbished must pick "bought" and give the
+   works on the "other work" step. Say so on that page, in plain words (the
+   plain-words check at grade 9), in the site file, with a harness check that
+   fails on the old file; re-run the extractor.
+3. WORD QUESTION 187 IS ANSWERED AND BUILT, SO IT LEAVES THE DOCUMENT. Lakhbir
+   answered it in chat on 1 Oct 2026 (the drafts go to the surveyor
+   pre-filled) and Phase 153e built it. Move it, unchanged, to "Caprebate_
+   Questions - answered and closed.docx" with "Closed (<date>): ...", the
+   AMENDMENT 2 way - BACK UP WITH cp, NEVER mv (Phases 151e3 and 157c both
+   used mv and broke Lakhbir's link); rebuild hub/QUESTIONS-WORD-HEADINGS.txt.
+```
+
+---
+
+
+## PHASE 159 — Sweep and stress-test (the recurring one, always last)
 
 
  **Model: Opus.** **This is the one section that is never deleted.** It renumbers itself forward each time it runs and stays at the bottom of this list.
@@ -1131,9 +1218,26 @@ THE VERCEL CONNECTOR now reaches the project (caprebate-test): deployments,
   while Lakhbir is signed in. The "Claude cannot" lines below are out of date.
 THE NOTES AT THE END (the Acer copy, update_block, 06-.../_doc.xml) are history:
   the Acer is retired and _doc.xml is gone.
-THE NUMBER: phases 153f, 154a1, 155 and 156 were added above this one on 3 Oct, and
-  the Phase 157 sweep (6 Oct 2026) inserted 157a and 157b before it, so this
-  sweep's heading is now PHASE 158.
+THE NUMBER: phases 153f, 154a1, 155 and 156 were added above this one on 3 Oct, the
+  Phase 157 sweep (6 Oct 2026) inserted 157a and 157b before it, and the Phase 158
+  sweep (7 Oct 2026) inserted 158a, so this sweep's heading is now PHASE 159.
+ADDED 7 OCT 2026 BY THE PHASE 158 SWEEP:
+  RUNNING IT FROM A CLOUD SESSION. A cloud clone cannot run the site harness (it
+    reads OneDrive-only files). Phase 158 ran every check on a copy of the Mac
+    tree in the Cowork VM (device_bash; Node 24 installed there from npm), with
+    the branch's changes applied as a patch, and did the git work in the cloud
+    clone. Each device_bash call ends in 180 s and kills anything it started, so
+    run the back end in chunks of 12 files, and run phase146b in a git checkout
+    (it reads .gitignore through git).
+  A PHASE BRANCH THAT FALLS BEHIND MAIN IS A FINDING: PR 34 (157d) could not
+    merge after PR 33 (157b) went in; 157d's record left "this branch takes main"
+    as a sentence. The sweep merged main into it (plan, registers, history,
+    tracker, Developer Spec) and re-derived the figures. Check every open PR's
+    mergeable state: gh api repos/ldhillonaqlios/caprebate/pulls/<n>.
+  THE WORD DOCUMENT'S LINK BROKE AGAIN (Phase 157c, mv): see AMENDMENT 2.
+  A COUNT OF SWITCHES IS NOT A PASS FIGURE: the drift checker cannot see it
+    (written down in caprebate-figure-classify.cjs). Compare by eye with
+    verify-extraction.cjs.
 LOOSE ENDS THAT HAD THEIR HOME HERE, AND WHERE EACH WENT (the Phase 157 sweep, 6 Oct 2026):
   DONE BY PHASE 157: the lost funnel enquiry's deletion path (from 153c;
     leadDeletionPlan, migration 093, test/phase157.test.ts); the introducer terms
@@ -1494,7 +1598,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  **The Developer Spec** |  `09-app/CAPREBATE-DEVELOPER-SPEC.md` — user cases, every screen, every API, a table naming every stub by file and line, and the current test figures in its section 4. **The figures live there and are deliberately not repeated here**: the ones this table used to carry went three days stale and no check could see them |
 |  **Eleven statutory rulebooks** |  `01-rulebooks/`. All written, all awaiting the tax adviser |
 |  **Twenty-four tax-adviser switches, all off**
- |  Fifteen would make a claim bigger if switched on; three can only make one smaller; four move money either way — the Scottish rate band, whether a lease granted for a premium with no joint election is item 9 of the disposal table, the corporation tax rate from the associated-company count, and the 60% band where the personal allowance is withdrawn; and two change a basis or remove false negatives. Three of them were readings already live before they were switched. Five were added by Phase 132 on 14 September 2026. The count is taken at runtime by node 09-app/engine/tools/verify-extraction.cjs, and the harness fails if any switch is flipped without its assertions being changed deliberately
+ |  (Phase 158 sweep, 7 Oct 2026: twenty-nine switches now - 17 bigger, 4 smaller, 6 either way, 2 working file only; the rest of this cell is the count of 15 September.) Fifteen would make a claim bigger if switched on; three can only make one smaller; four move money either way — the Scottish rate band, whether a lease granted for a premium with no joint election is item 9 of the disposal table, the corporation tax rate from the associated-company count, and the 60% band where the personal allowance is withdrawn; and two change a basis or remove false negatives. Three of them were readings already live before they were switched. Five were added by Phase 132 on 14 September 2026. The count is taken at runtime by node 09-app/engine/tools/verify-extraction.cjs, and the harness fails if any switch is flipped without its assertions being changed deliberately
  |
 |  **The client-document upload handler** |  `04-phase-work/phase3/caprebate-upload-handler.ts`, all twelve contract steps, called by the back end since Phase 104 |
 |  **The fee-versus-benefit model** |  Reproduces a real competitor's published schedule line for line. Both its switches are off |
@@ -1512,10 +1616,10 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 
 ## Two different kinds of stuck, and they were being counted as one
 
- **Nothing on this board blocks Claude from building except three items at Blocked - question.** Everything else that looks stuck is waiting on a person, a signature or a licence, and that stops us **trading**, not building. Conflating the two is what made this project look four times more stuck than it is. (Corrected 22 September 2026 by the Phase 145 sweep: this said two items, and listed the company existing among the things we wait on. CAP REBATE LTD exists.)
+ **Nothing on this board blocks Claude from building: since the Phase 157 sweep (6 October 2026) no item sits at Blocked - question** (it said three items until the Phase 158 sweep corrected it on 7 October). Everything else that looks stuck is waiting on a person, a signature or a licence, and that stops us **trading**, not building. Conflating the two is what made this project look four times more stuck than it is. (Corrected 22 September 2026 by the Phase 145 sweep: this said two items, and listed the company existing among the things we wait on. CAP REBATE LTD exists.)
 
 
- **Re-derived from the live board by the Phase 147 sweep on 23 September 2026** and tallied in code, with its own claim counted back to where it sits when cleared. It must sum to the item count or one of the two is wrong. The table below replaced one taken by the Phase 145 sweep on 22 September, which read 407 items and 114 awaiting sign-off. All 423 items:
+ **This table is the tally of 23 September 2026 and is kept as a record. The live tally is the two tables at the top of hub/TRACKER.md, counted by the tool at every write** (Phase 158 sweep, 7 October 2026: 481 items, 0 at Blocked - question, 128 awaiting sign-off). **Re-derived from the live board by the Phase 147 sweep on 23 September 2026** and tallied in code, with its own claim counted back to where it sits when cleared. It must sum to the item count or one of the two is wrong. The table below replaced one taken by the Phase 145 sweep on 22 September, which read 407 items and 114 awaiting sign-off. All 423 items:
 
 
 |  State |  Items |  What it actually means |
@@ -1566,9 +1670,9 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  **11** |  **Do the information governance training and record it** |  The duty is on the board and the record is what evidences it |  1 hr |  A control the data protection position asserts |
 |  **12** |  The remaining ten — Homedata trial, cyber security, hardware, brand and online presence, analytics, mailbox provisioning, the business-request template, surveyor steps 2 and 3, and the legal clearance to use government valuation data commercially
  |  Real, but none of them gates anything else today |  — |  — |
-|  **13** |  **Run the land boundary's first download** (added 28 September 2026 by Phase 151l) |  The tool is built and keeps your five conditions. From 09-app/backend: first `node src/cli.ts smoke-switched-on HMLR_INSPIRE --who "<you>" --why "<reason>"`, then `CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE --who "<you>" --why "<reason>"`. It downloads Westminster's file and looks for 70 Whitehall; nothing about a client leaves, and nothing is kept but one line of PASS or NO. You may name someone else to run it. Switching the fetcher on is a separate decision, and yours |  10 min, plus the download |  Proof that HM Land Registry's file reads, which is what switching on the site area waits for |
-|  **14** |  **Look once at the test website: is it on Turso, and does a file stay put?** (added 28 September 2026 by the Phase 152 sweep) |  Sign in at caprebate-test.vercel.app and open any client's Identity check. If there is no box saying "Records kept in memory", the records are in the lasting database. Then upload an invented file as one person and open it as another. Tell us what you saw. Or, in Vercel, read the function log's lines that begin "test deployment:". We cannot see either: the connector reaches no project of yours |  5 min |  Closing Word questions 230 and 231 |
-|  **15** |  **Delete the DELETE files on the OneDrive web page, not the Mac** (added 28 September 2026 by the Phase 152 sweep) |  In OneDrive on the web, Health Capital Allowances: the folder "DELETE - files to delete (sweep 25 Sep 2026)" (143 MB) and the files whose names begin "DELETE -". The folder was deleted on the Mac on 25 September and is still in the cloud, so deleting there did not reach OneDrive |  5 min |  A folder that holds only the live documents and their dated backups |
+|  **13** |  **DROPPED 6 October 2026 (Lakhbir: "use home data"; Homedata's title outline gives the site area).** ~~Run the land boundary's first download~~ (added 28 September 2026 by Phase 151l) |  The tool is built and keeps your five conditions. From 09-app/backend: first `node src/cli.ts smoke-switched-on HMLR_INSPIRE --who "<you>" --why "<reason>"`, then `CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE --who "<you>" --why "<reason>"`. It downloads Westminster's file and looks for 70 Whitehall; nothing about a client leaves, and nothing is kept but one line of PASS or NO. You may name someone else to run it. Switching the fetcher on is a separate decision, and yours |  10 min, plus the download |  Proof that HM Land Registry's file reads, which is what switching on the site area waits for |
+|  **14** |  **DONE - Word questions 230 and 231 closed 6 October 2026 (Turso and the Blob store work).** ~~Look once at the test website: is it on Turso, and does a file stay put?~~ (added 28 September 2026 by the Phase 152 sweep) |  Sign in at caprebate-test.vercel.app and open any client's Identity check. If there is no box saying "Records kept in memory", the records are in the lasting database. Then upload an invented file as one person and open it as another. Tell us what you saw. Or, in Vercel, read the function log's lines that begin "test deployment:". We cannot see either: the connector reaches no project of yours |  5 min |  Closing Word questions 230 and 231 |
+|  **15** |  **DONE 6 October 2026 (moved to the recycle bin on Lakhbir's yes). One NEW DELETE file since 7 October: the second questions item Phase 157c's mv backup made (WAITING-ON-PEOPLE.md).** ~~Delete the DELETE files on the OneDrive web page, not the Mac~~ (added 28 September 2026 by the Phase 152 sweep) |  In OneDrive on the web, Health Capital Allowances: the folder "DELETE - files to delete (sweep 25 Sep 2026)" (143 MB) and the files whose names begin "DELETE -". The folder was deleted on the Mac on 25 September and is still in the cloud, so deleting there did not reach OneDrive |  5 min |  A folder that holds only the live documents and their dated backups |
 |  **16** |  **Answer three new questions** (added 28 September 2026 by the Phase 152 sweep) |  235: do the old extra charges stay - the add-on for complicated jobs and the £1,500 manual-handling charge? (question 60's answer covered the discount, not these). 236: two tasks are marked done with nothing on file - startup funding and the back-end developer meeting. Were they done? And 237 is for the tax adviser, when one is engaged: may the estimate say "refund" when a claim through the pool creates a loss that is carried back? |  10 min |  The rate card; two task records; whether the estimate or the rulebook is corrected |
 |  **17** |  **Three one-word answers, and who the solicitor is** (added 28 September 2026 by Phase 153) |  238: which solicitor gave the answers of 24 and 27 September (filing a client's return; title figures in the accountant's pack), and are they formally instructed? 187: send the surveyor the four drafts as they are, or the two copies with the pre-fill rule and the 63/46/80 figures withheld - the copies are ready. 34: the clawback clause's two bracketed terms (any reduction or only a large one; whether a settlement the client accepts counts) - the clause now waits on you, not the solicitor. |  10 min |  The solicitor's answers counted as advice; the surveyor pack sent; clause 13 finished |
 
@@ -1777,7 +1881,7 @@ _ |
 
 ### Things we deliberately have not done, so nobody "fixes" them
 
- **No claim-increasing reading is switched on.** Twenty-four switches are built, tested and inert. Fifteen would make a claim bigger if switched on; three can only make one smaller - a grant taken off after the ceilings, the flats reading, and a landlord's contribution in supported living; four move money either way - the Scottish rate band, whether a lease granted for a premium with no joint election is item 9 of the disposal table, the corporation tax rate from the associated-company count, and the 60% band where the personal allowance is withdrawn; and two more change the basis of a figure or remove false negatives. Three of the twenty-four - the flats, the shared lounge and the purchase clock - are readings that were already live before anyone asked, so for those three, off is the live reading and on is the other one. They all stay off until a qualified adviser confirms them, because a client assessed for an over-claim is defended by an adviser's opinion and not by ours. (Corrected 15 September 2026 by Phase 132: this said nineteen; Phase 132 built five more.)
+ **No claim-increasing reading is switched on.** **Corrected 7 October 2026 by the Phase 158 sweep: there are twenty-nine switches now, not twenty-four - counted in code on 4 and 6 October (03-app/caprebate-switch-direction.cjs): 17 would make a claim bigger, 4 smaller, 6 move money either way, and 2 change only the surveyor's working file. The lists in this paragraph are the twenty-four of 15 September; FOR THE ACCOUNTANT names every switch, and `node 09-app/engine/tools/verify-extraction.cjs` counts them.** Twenty-four switches are built, tested and inert. Fifteen would make a claim bigger if switched on; three can only make one smaller - a grant taken off after the ceilings, the flats reading, and a landlord's contribution in supported living; four move money either way - the Scottish rate band, whether a lease granted for a premium with no joint election is item 9 of the disposal table, the corporation tax rate from the associated-company count, and the 60% band where the personal allowance is withdrawn; and two more change the basis of a figure or remove false negatives. Three of the twenty-four - the flats, the shared lounge and the purchase clock - are readings that were already live before anyone asked, so for those three, off is the live reading and on is the other one. They all stay off until a qualified adviser confirms them, because a client assessed for an over-claim is defended by an adviser's opinion and not by ours. (Corrected 15 September 2026 by Phase 132: this said nineteen; Phase 132 built five more.)
 
 
  **No register lookup fires before a signature.** The whole pre-signature derivation layer is built and switched off, because it processes personal data at a point where no contract exists and the privacy notice it depends on is not published. **Do not switch it on to make a demo look better.**
