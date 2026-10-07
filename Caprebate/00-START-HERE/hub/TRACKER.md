@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 25 |
 | Built - awaiting sign-off | 128 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 312 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1342,7 +1342,7 @@
 
 ### Phase 158c - the steps staff tick for other people: the surveyor's valuation, the reports, the client's acceptance, the invoice and the filing
 
-`13231736097` · **Ready - Claude can build** · owner Claude
+`13231736097` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac (Claude Code)**
 
 - Note 2026-10-07 (Phase 158b): Written by Phase 158b: the run goes end to end; left are the controls - the valuation read from the pack approval (F34, F35), reports issued from the app's own report (F36, F38), the client's acceptance in the portal (F39), the window warned early (F37), the invoice sent (F41), the filing recorded before close (F42); then the run once more. Nothing waits on anyone.
 
