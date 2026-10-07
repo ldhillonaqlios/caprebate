@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 25 |
 | Built - awaiting sign-off | 128 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 311 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1342,7 +1342,7 @@
 
 ### Phase 158b - opening a survey job, the letter's party and property, and the rest of the Friary House run
 
-`13231249101` · **Ready - Claude can build** · owner Claude
+`13231249101` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac (Claude Code)**
 
 - Note 2026-10-07 (Phase 158a): Written by Phase 158a: the run stopped at Survey - nothing can open a survey job or lock its estimate (F31); the letter's specimen company number and blank property (F22); the bought answer lost at conversion (F28); the client's step label and the portal's 'nothing yet' (F27, F30); three wording fixes; then the run on from Survey. Nothing waits on anyone.
 
