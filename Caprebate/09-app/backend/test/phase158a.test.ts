@@ -6,12 +6,18 @@
  *   F25  Homedata's planning answer for a property with no applications was recorded as "not in a form we could
  *        read", after a charged call. A count of 0 is an answer: no applications. An answer with no planning
  *        history at all says nothing either way, so the question stays asked, in plain words.
+ *   F3   "What did you spend on each building?" takes one answer. A building bought and later refurbished must pick
+ *        "We bought it" and give the works on the "other work" step. The page now says so. (The phase brief named the
+ *        site file; the question a client meets is the four-stage funnel's, src/web/funnel4.ts.)
  */
-import { describe, test } from 'node:test';
+import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createApp } from '../src/server.ts';
+import { F4_TEXT } from '../src/web/funnel4.ts';
 import { RateLimiter, type Transport } from '../src/connectors/http.ts';
 import { secretsFromValues } from '../src/secrets.ts';
 import { PAID_CONNECTORS } from '../src/connectors/paid-registers.ts';
@@ -76,5 +82,37 @@ describe('F25 — Homedata planning: an answer with no applications is read, not
     const real = await planningFor(REAL);
     assert.equal(real.kind, 'READ');
     if (real.kind === 'READ') assert.equal(real.bundle.records.length, 6);
+  });
+});
+
+describe('F3 — "What did you spend on each building?" says what to pick for a building bought and later refurbished', () => {
+  let made: Awaited<ReturnType<typeof createApp>>;
+  let base = '';
+  before(async () => {
+    made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-158a-')), publicOrigin: 'https://caprebate.example.invalid' });
+    await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
+    const a = made.server.address();
+    base = `http://127.0.0.1:${typeof a === 'object' && a !== null ? a.port : 0}`;
+  });
+  after(() => made.close());
+
+  test('the help under the question names the case and where the works go', () => {
+    assert.match(F4_TEXT['spend-on'].help, /bought it and later did work on it, choose “We bought it”/);
+    assert.match(F4_TEXT['spend-on'].help, /tell us about the work a few questions on/);
+    assert.match(F4_TEXT.works.heading, /Any other work done to these buildings\?/, 'the step it points to is still called that');
+  });
+
+  test('a visitor sees it on the page itself', async () => {
+    let cookie = '';
+    const req = async (path: string, init: RequestInit = {}): Promise<string> => {
+      const r = await fetch(base + path, { redirect: 'manual', ...init, headers: { ...(init.headers as Record<string, string> ?? {}), ...(cookie ? { cookie } : {}) } });
+      for (const s of r.headers.getSetCookie()) { const f = s.split(';')[0] ?? ''; const k = f.split('=')[0]; cookie = [...cookie.split('; ').filter((x) => x && x.split('=')[0] !== k), f].join('; '); }
+      return r.text();
+    };
+    await req('/assessment');
+    await req('/assessment/buildings', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'b0_sector=gp' });
+    const page = await req('/assessment/spend-on');
+    assert.match(page, /What did you spend on each building\?/);
+    assert.match(page, /If you bought it and later did work on it, choose “We bought it”\./);
   });
 });
