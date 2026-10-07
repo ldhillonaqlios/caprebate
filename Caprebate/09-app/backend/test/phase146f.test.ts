@@ -344,12 +344,12 @@ describe('5 · the built-in signature', () => {
       'Our solicitor must confirm that typing your name is a good enough way to sign this letter.',
       'Some terms in the letter are not settled yet, so it cannot be signed.',
       // PHASE 158b (F22): 'Test Signing Ltd' has no company number on record, so the letter still names the specimen.
-      'The letter does not yet say which business is signing: the client’s company number, or what kind of business they are, is not on record.',
+      'We do not know yet which business is signing. Their company number, or what kind of business they are, is not on record.',
       'Then signing must be switched on.',
     ]);
     // switched on, a letter with a blank in it is still refused
     assert.deepEqual(signingMissing(SIGNING_ON, real), ['Some terms in the letter are not settled yet, so it cannot be signed.',
-      'The letter does not yet say which business is signing: the client’s company number, or what kind of business they are, is not on record.']);
+      'We do not know yet which business is signing. Their company number, or what kind of business they are, is not on record.']);
     const x = await signingWorld(); t.after(() => x.w.made.close());
     const r = signEngagement(x.deps, x.actor, x.biz, { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: real.sha256 }, { ip: '203.0.113.9', session_id: x.session });
     assert.deepEqual(r, { ok: false, why: 'Signing is not switched on yet. Our solicitor must confirm that typing your name is a good enough way to sign this letter.' });

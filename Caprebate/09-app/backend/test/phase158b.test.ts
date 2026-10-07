@@ -265,7 +265,7 @@ describe('F22 — the letter says who the client is, and what it is about', () =
     const party = { name: 'D Ltd', company_number: null };
     const test = shownLetter(party, TEST_LETTER_PATH, { claimant_type: 'COMPANY', property: 'Main site', date: '7 Oct 2026', range: 'up to £1' });
     assert.equal(test.party_unknown, true);
-    assert.match(signingMissing(ENGAGEMENT_SIGNING_TEST, test).join(' '), /does not yet say which business/);
+    assert.match(signingMissing(ENGAGEMENT_SIGNING_TEST, test).join(' '), /which business is signing/);
     const ok = shownLetter({ name: 'P', company_number: null }, TEST_LETTER_PATH, { claimant_type: 'PARTNERSHIP', property: 'Main site', date: '7 Oct 2026', range: 'up to £1' });
     assert.equal(ok.party_unknown, false);
     assert.deepEqual(signingMissing(ENGAGEMENT_SIGNING_TEST, ok), []);
@@ -310,6 +310,73 @@ describe('F28 — the client said they bought it, and the claim reads that', () 
     app.db.run('INSERT INTO assessment_answers (id,assessment_id,ord,question_id,question_text,state,value) VALUES (?,?,?,?,?,?,?)',
       [randomUUID(), c.assessment, 2, 'Q2-1-entity', 'entity', 'ANSWERED', 'partnership']);
     assert.equal(letterFacts(app.db, c.business).claimant_type, 'PARTNERSHIP');
+    app.close();
+  });
+});
+
+/* ================================================================== *
+ * F27 — the claim page quotes the client's step as the portal shows it, numbered, so a later step never reads as an earlier one
+ * ================================================================== */
+import { portalStepLine } from '../src/web/portal-steps.ts';
+import * as P from '../src/web/pipeline.ts';
+
+describe('F27 — "the client’s page shows" is the portal’s own line', () => {
+  test('numbered, in the portal’s words under either name switch', () => {
+    assert.equal(portalStepLine('ASSESSMENT_SUBMITTED', true), 'Step 1 of 6: Your estimate');
+    assert.equal(portalStepLine('ENGAGEMENT_SIGNED', true), 'Step 2 of 6: Engagement letter signed');
+    assert.equal(portalStepLine('AT_SURVEY', true), 'Step 4 of 6: Expert sign-off');
+    assert.equal(portalStepLine('ENGAGEMENT_SIGNED', false), 'Step 2 of 6: Engagement — letter, data & AI consent, fee basis');
+  });
+
+  test('on the claim page the step number goes up as the claim moves, and never down', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'ENGAGEMENT');
+    const seen: number[] = [];
+    for (const stage of ['ENGAGEMENT', 'DATA_GATHERING', 'SURVEY']) {
+      app.db.run('UPDATE claims SET stage = ? WHERE id = ?', [stage, c.claim]);
+      P.raiseBusinessStage(app.db, c.business, app.now());
+      const pc = app.db.get<P.PipelineClaim>('SELECT * FROM claims WHERE id = ?', [c.claim])!;
+      const shows = P.pipelinePanel(app.db, actor('SALES'), pc).portal?.shows ?? '';
+      const m = /^Step (\d) of 6: /.exec(shows);
+      assert.ok(m !== null, shows);
+      seen.push(Number(m?.[1]));
+    }
+    assert.deepEqual(seen, [1, 2, 4]);
+    app.close();
+  });
+});
+
+/* ================================================================== *
+ * F30 — after the research ran, the portal says registers were checked, and the client's step is "We research your property"
+ * ================================================================== */
+import { CLIENT_RANGE_BASIS, CLIENT_RANGE_BASIS_AFTER_RESEARCH, rangeBasisFor } from '../src/web/router.ts';
+
+describe('F30 — what the client is shown once the research has run', () => {
+  test('the note under the figure says the checks have started once any register answered', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'DATA_GATHERING');
+    assert.equal(rangeBasisFor(app.db, c.business), CLIENT_RANGE_BASIS);
+    app.db.run("INSERT INTO research_sources (id, business_id, source_id, tier, state, fired_at, detail, attempts) VALUES (?, ?, 'EPC', 'FREE', 'FIRED', ?, 'looked up', 1)",
+      [randomUUID(), c.business, T0]);
+    assert.equal(rangeBasisFor(app.db, c.business), CLIENT_RANGE_BASIS_AFTER_RESEARCH);
+    assert.match(CLIENT_RANGE_BASIS_AFTER_RESEARCH, /We have now started checking the property records/);
+    assert.doesNotMatch(CLIENT_RANGE_BASIS_AFTER_RESEARCH, /No property registers have been checked yet/);
+    app.close();
+  });
+
+  test('raiseToResearch: step 3 after the letter is signed and a register answered; never before signing, never down', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'DATA_GATHERING');
+    const stageOf = () => app.db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [c.business])?.stage;
+    app.db.run("UPDATE businesses SET stage = 'ENGAGEMENT_SIGNED' WHERE id = ?", [c.business]);
+    assert.equal(P.raiseToResearch(app.db, c.business, T0, { signed: false, fired: 3 }), false);
+    assert.equal(P.raiseToResearch(app.db, c.business, T0, { signed: true, fired: 0 }), false);
+    assert.equal(stageOf(), 'ENGAGEMENT_SIGNED');
+    assert.equal(P.raiseToResearch(app.db, c.business, T0, { signed: true, fired: 2 }), true);
+    assert.equal(stageOf(), 'RESEARCH_PART_RUN');
+    app.db.run("UPDATE businesses SET stage = 'AT_SURVEY' WHERE id = ?", [c.business]);
+    assert.equal(P.raiseToResearch(app.db, c.business, T0, { signed: true, fired: 2 }), false);
+    assert.equal(stageOf(), 'AT_SURVEY', 'never lowered');
     app.close();
   });
 });

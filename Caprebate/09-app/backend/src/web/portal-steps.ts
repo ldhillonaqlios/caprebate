@@ -16,7 +16,7 @@
  * A STEP'S NAME CHANGES; ITS MEANING DOES NOT. The key, the order and what counts as done are stages.ts's, unchanged.
  */
 
-import type { StageKey } from './stages.ts';
+import { STAGES, type StageKey } from './stages.ts';
 
 export const PROPOSED_STEP_NAMES: Readonly<Record<StageKey, string>> = Object.freeze({
   ASSESSMENT_SUBMITTED: '1 Your estimate',
@@ -30,4 +30,17 @@ export const PROPOSED_STEP_NAMES: Readonly<Record<StageKey, string>> = Object.fr
 /** A step's name under the switch. */
 export function stepName(stage: { readonly key: StageKey; readonly label: string }, proposed: boolean): string {
   return proposed ? PROPOSED_STEP_NAMES[stage.key] : stage.label;
+}
+
+/**
+ * PHASE 158b (F27, the Friary House run): the line the client's portal shows for a step - "Step 2 of 6: Engagement
+ * letter signed" - so the claim page can quote it as the client sees it. The claim page quoted the business flow's own
+ * labels with no number, and "Engagement - letter, data & AI consent" read as a step BEFORE "The engine runs" when it is
+ * the one after it.
+ */
+export function portalStepLine(key: StageKey, proposed: boolean): string {
+  const i = STAGES.findIndex((s) => s.key === key);
+  const s = STAGES[i];
+  if (s === undefined) return 'a step the client’s page does not show';
+  return `Step ${String(i + 1)} of ${String(STAGES.length)}: ${stepName(s, proposed).replace(/^\d+\s+/, '')}`;
 }

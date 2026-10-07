@@ -189,7 +189,7 @@ export function signingMissing(cfg: EngagementSigning, letter: Pick<ShownLetter,
   /* PHASE 158b (F22): a letter that still names the specimen company number does not say which business is signing.
      Refused in every mode, the test copy's included: the Friary House run signed a partnership in as "company number
      98604417". The client's kind of business (or a company's number) on their record clears it. */
-  const party = 'The letter does not yet say which business is signing: the client’s company number, or what kind of business they are, is not on record.';
+  const party = 'We do not know yet which business is signing. Their company number, or what kind of business they are, is not on record.';
   /* 6 October 2026: signing on for testing signs the test copy and nothing else. The test copy's open terms carry test
      defaults (each marked "test default, not agreed"); they are what is being tested, so they do not refuse it here. */
   if (cfg.test_copy_only === true) {

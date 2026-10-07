@@ -1131,7 +1131,7 @@ async function portalRoutes(
     // 2 Oct 2026: the survey report's card leads, once a tax adviser's sign-off has released it (src/web/report-pages.ts).
     const dashboard = h`${portalReportCard(d.app, business_id)}${portalEvidenceCard(db, business_id)}${portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins })}`;
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
-      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(/^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('again') ?? '') ? { sentBefore: url.searchParams.get('again') as string } : {}), joins, dashboard, ...(welcome === undefined ? {} : { welcome }) }));
+      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(/^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('again') ?? '') ? { sentBefore: url.searchParams.get('again') as string } : {}), joins, dashboard, rangeBasis: rangeBasisFor(db, business_id), ...(welcome === undefined ? {} : { welcome }) }));
     return 'handled';
   }
 
@@ -2033,6 +2033,18 @@ const BOOKED_FROM: Readonly<Record<string, string>> = Object.freeze({
 export const CLIENT_RANGE_BASIS =
   'An indicative range, built only from what you told us in the assessment. It is the top of the range: our research ' +
   'can move it down, not up. No property registers have been checked yet.';
+/**
+ * PHASE 158b (F30, the Friary House run): once a register has answered, "No property registers have been checked yet"
+ * is no longer true of the client's claim, though it is still true of the figure. So the note says both.
+ */
+export const CLIENT_RANGE_BASIS_AFTER_RESEARCH =
+  'An indicative range, built only from what you told us in the assessment. It is the top of the range: our research ' +
+  'can move it down, not up. We worked it out before checking any property records. We have now started checking the property records.';
+
+export function rangeBasisFor(db: Db, business_id: string): string {
+  const fired = db.get<{ n: number }>("SELECT COUNT(*) AS n FROM research_sources WHERE business_id = ? AND state = 'FIRED'", [business_id])?.n ?? 0;
+  return fired > 0 ? CLIENT_RANGE_BASIS_AFTER_RESEARCH : CLIENT_RANGE_BASIS;
+}
 
 function portalPage(
   actor: Actor, business: P.Business, progress: ReturnType<typeof P.progress>['progress'],
@@ -2042,7 +2054,7 @@ function portalPage(
   slots: ReturnType<typeof publicSlots>, nowIso: string,
   dlv: readonly ClientDeliverable[] = [],
   share: readonly ClientShareChoice[] = [],
-  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[]; readonly sent?: boolean; readonly sentBefore?: string; readonly joins?: Readonly<Record<string, string>>; readonly dashboard?: Safe } = {},
+  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[]; readonly sent?: boolean; readonly sentBefore?: string; readonly joins?: Readonly<Record<string, string>>; readonly dashboard?: Safe; readonly rangeBasis?: string } = {},
 ): string {
   const open = tks.filter((t) => t.state === 'OPEN');
   const asked = reqs.filter((r) => r.state === 'REQUESTED');
@@ -2086,7 +2098,7 @@ function portalPage(
         /* PHASE 157c (the Friary House run, F13): the assessment shows a ceiling, "up to £X", and never a low end, so
            this says the same. It said "£127,500 to £255,000", a range the client was never shown. */
         : h`<p class="figbig">${formatShownRange({ low_pence: null, high_pence: rng.high_pence })}</p>
-            <p class="help">${CLIENT_RANGE_BASIS}</p>`}
+            <p class="help">${extra.rangeBasis ?? CLIENT_RANGE_BASIS}</p>`}
       </section>
 
       ${extra.dashboard !== undefined ? raw('') : h`<section class="card" id="waiting-on-you"><div class="card-h"><h2>What we need from you</h2><span class="count">${open.length + asked.length}</span></div>

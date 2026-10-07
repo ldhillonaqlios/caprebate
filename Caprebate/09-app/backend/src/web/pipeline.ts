@@ -60,6 +60,8 @@ import {
   nextProcedureKey, procedureIndex, procedureStage, stage as clientStage, stageIndex,
   type ExitKey, type ProcedureKey, type StageKey,
 } from './stages.ts';
+import { portalStepLine } from './portal-steps.ts';
+import { nameSwitches } from './navigation.ts';
 
 export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
@@ -660,6 +662,20 @@ export function raiseBusinessStage(db: Db, business_id: string, at: string): Sta
 }
 
 /**
+ * PHASE 158b (F30, the Friary House run): no claim stage maps to the client's step 3, "We research your property", so a
+ * client went from step 2 to step 4 while we researched. A research run that got an answer from at least one register,
+ * on a client whose letter is signed, raises the client's step to it. Raise only, as raiseBusinessStage: a business
+ * already past it stays where it is, and one whose letter is not signed is never shown a step it has not reached.
+ */
+export function raiseToResearch(db: Db, business_id: string, at: string, run: { readonly signed: boolean; readonly fired: number }): boolean {
+  if (!run.signed || run.fired === 0) return false;
+  const b = db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [business_id]);
+  if (b === undefined || stageIndex(b.stage) >= stageIndex('RESEARCH_PART_RUN')) return false;
+  db.run('UPDATE businesses SET stage = ?, updated_at = ? WHERE id = ?', ['RESEARCH_PART_RUN', at, business_id]);
+  return true;
+}
+
+/**
  * THE MOVE A CLAIM MAKES WHEN IT COMES INTO BEING — so its age on the board and
  * its days in a stage are read from one place. Call inside the transaction that
  * inserted the claim.
@@ -1092,8 +1108,11 @@ export function pipelinePanel(db: Db, actor: Actor, c: PipelineClaim, opts: Gate
     ...base,
     ...(s.kind === 'ON_HOLD' ? { hold: { reason: c.hold_reason, returns_to: anyStageLabel(c.hold_return_stage) } } : {}),
     portal: {
-      shows: clientStage(business?.stage ?? '')?.label ?? 'a step the client’s page does not show',
-      this_claim_evidences: evidences === null ? null : (clientStage(evidences)?.label ?? evidences),
+      // PHASE 158b (F27): the portal's own line, numbered, in the words the portal is showing (the name switch).
+      shows: clientStage(business?.stage ?? '') === undefined ? 'a step the client’s page does not show'
+        : portalStepLine(business?.stage as StageKey, nameSwitches().portalSteps),
+      this_claim_evidences: evidences === null ? null
+        : clientStage(evidences) === undefined ? evidences : portalStepLine(evidences as StageKey, nameSwitches().portalSteps),
     },
     ...(gate === undefined ? {} : { gate }),
     ...(here === 'ENQUIRY'
