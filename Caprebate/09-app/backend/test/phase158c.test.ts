@@ -74,3 +74,74 @@ describe('F34, F35 — the surveyor’s valuation is the surveyor’s approval o
     app.close();
   });
 });
+
+/* ================================================================== *
+ * F38, F36 — the client report and the accountant's pack are the application's own report, never a typed fingerprint
+ * ================================================================== */
+import * as R from '../src/web/claim-record.ts';
+
+const deliver = (app: App, claim: string, kind: string, action: string, extra: Record<string, string> = {}) =>
+  R.recordDeliverable(CF.recordDeps(app), actor('SALES'), claim, { kind, action, ...extra });
+
+describe('F38, F36 — reports issued from the survey report the surveyor approved', () => {
+  test('the client report is refused until a version is released, then issued with that version’s own fingerprint', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'REPORTS');
+    CF.signOffRow(app, c.business, c.assessment, c.claim, 195_000_00);
+    assert.equal(deliver(app, c.claim, 'CLIENT_REPORT', 'DRAFT').ok, true);
+    const typed = 'a'.repeat(64);
+    const early = deliver(app, c.claim, 'CLIENT_REPORT', 'ISSUE', { issued_on: app.now().slice(0, 10), content_hash: typed });
+    assert.equal(early.ok, false);
+    if (!early.ok) assert.match(early.why, /from the survey report the surveyor approved/);
+    // The surveyor approves a version stating £195,000; a sign-off of that figure is recorded after it: released.
+    CF.packApprovedOn(app, c.business, c.assessment, c.claim, 'u-SURVEYING', 195_000_00);
+    CF.signOffRow(app, c.business, c.assessment, c.claim, 195_000_00);
+    const fp = app.db.get<{ fingerprint: string }>(
+      'SELECT a.fingerprint FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id WHERE j.claim_id = ?', [c.claim])!.fingerprint;
+    const ok = deliver(app, c.claim, 'CLIENT_REPORT', 'ISSUE', { issued_on: app.now().slice(0, 10), content_hash: typed });
+    assert.equal(ok.ok, true, ok.ok ? '' : ok.why);
+    const row = app.db.get<{ content_hash: string }>("SELECT content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' AND state = 'ISSUED'", [c.claim])!;
+    assert.equal(row.content_hash, fp, 'the fingerprint is the approved version’s, not the one typed');
+    // The accountant's pack likewise.
+    assert.equal(deliver(app, c.claim, 'ACCOUNTANT_COMPUTATION_PACK', 'DRAFT').ok, true);
+    assert.equal(deliver(app, c.claim, 'ACCOUNTANT_COMPUTATION_PACK', 'ISSUE', { issued_on: app.now().slice(0, 10) }).ok, true);
+    assert.equal(app.db.get<{ content_hash: string }>("SELECT content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'ACCOUNTANT_COMPUTATION_PACK' AND state = 'ISSUED'", [c.claim])?.content_hash, fp);
+    app.close();
+  });
+
+  test('a version whose figure no sign-off matches is not released, so the report cannot be issued', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'REPORTS');
+    CF.packApprovedOn(app, c.business, c.assessment, c.claim, 'u-SURVEYING', 195_000_00);
+    CF.signOffRow(app, c.business, c.assessment, c.claim, 180_000_00);
+    assert.equal(deliver(app, c.claim, 'CLIENT_REPORT', 'DRAFT').ok, true);
+    assert.equal(deliver(app, c.claim, 'CLIENT_REPORT', 'ISSUE', { issued_on: app.now().slice(0, 10) }).ok, false);
+    app.close();
+  });
+
+  test('the table says what is true of each: made here, receivable under its rule, or not storable yet', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'REPORTS');
+    const lines = new Map(R.deliverablesPanel(app.db, actor('SALES'), c.claim).lines.map((l) => [l.kind, l.stored] as const));
+    assert.match(lines.get('CLIENT_REPORT') ?? '', /Made here from the survey report the surveyor approved/);
+    assert.match(lines.get('ACCOUNTANT_COMPUTATION_PACK') ?? '', /Made here from the survey report the surveyor approved/);
+    assert.match(lines.get('DEFENCE_PACK') ?? '', /It cannot be stored yet/);
+    assert.doesNotMatch(R.deliverablesPanel(app.db, actor('SALES'), c.claim).generation, /None can be stored yet/);
+    app.close();
+  });
+});
+
+describe('F38 — the issue form asks for no fingerprint where the application works it out', () => {
+  test('no SHA-256 box for the client report or the accountant’s pack; the defence pack keeps its own', async () => {
+    const { deliverablesBlock } = await import('../src/web/claim-record-pages.ts');
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'REPORTS');
+    CF.signOffRow(app, c.business, c.assessment, c.claim, 195_000_00);
+    for (const k of ['CLIENT_REPORT', 'DEFENCE_PACK']) assert.equal(deliver(app, c.claim, k, 'DRAFT').ok, true, k);
+    const html = String(deliverablesBlock(c.claim, R.deliverablesPanel(app.db, actor('SALES'), c.claim)));
+    const formOf = (k: string) => new RegExp(`name="kind" value="${k}"><input type="hidden" name="action" value="ISSUE">([\\s\\S]*?)</form>`).exec(html)?.[1] ?? '';
+    assert.doesNotMatch(formOf('CLIENT_REPORT'), /content_hash/);
+    assert.match(formOf('DEFENCE_PACK'), /name="content_hash"/);
+    app.close();
+  });
+});

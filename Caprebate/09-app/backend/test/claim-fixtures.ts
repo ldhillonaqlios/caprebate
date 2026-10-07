@@ -92,8 +92,8 @@ export function commitmentOn(app: FixtureApp, business: string, assessment: stri
  * PHASE 158c (F35): THE SURVEYOR'S APPROVAL OF THE SURVEY PACK, on a job on THIS claim (the claim's own job if it has one),
  * written as its rows. The Valuation gate reads it in place of the retired VALUATION_SIGNED tick. Returns the approval's id.
  */
-export function packApprovedOn(app: FixtureApp, business: string, assessment: string, claim: string, surveyor = 'u-SURVEYING'): string {
-  const at = app.now();
+export function packApprovedOn(app: FixtureApp, business: string, assessment: string, claim: string, surveyor = 'u-SURVEYING', figure_pence: number | null = null, approved_at?: string): string {
+  const at = approved_at ?? app.now();
   let job = app.db.get<{ id: string }>('SELECT id FROM surveyor_jobs WHERE claim_id = ? ORDER BY created_at ASC LIMIT 1', [claim])?.id;
   if (job === undefined) {
     job = randomUUID();
@@ -107,7 +107,8 @@ export function packApprovedOn(app: FixtureApp, business: string, assessment: st
   }
   const version = (app.db.get<{ v: number | null }>('SELECT MAX(version) AS v FROM survey_pack_approvals WHERE pack_id = ?', [pack])?.v ?? 0) + 1;
   const id = randomUUID();
-  const snapshot = JSON.stringify({ fixture: true, version });
+  // The figure the report states, where a test needs the report released (a sign-off of the same figure, recorded after).
+  const snapshot = JSON.stringify({ fixture: true, version, ...(figure_pence === null ? {} : { sums: { qualifying_pence: figure_pence } }) });
   app.db.run('INSERT INTO survey_pack_approvals (id, pack_id, version, pack_seq, legal_seq, snapshot_json, fingerprint, approved_by, approved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [id, pack, version, version, 0, snapshot, createHash('sha256').update(snapshot).digest('hex'), surveyor, at]);
   return id;
@@ -132,8 +133,24 @@ export function signOffRow(app: FixtureApp, business: string, assessment: string
   return id;
 }
 
+/**
+ * PHASE 158c (F38): the client report and the accountant's pack are issued from the survey report the surveyor approved,
+ * once a sign-off of its figure is on the claim. A test that issues either gets that version here: approved as of the
+ * claim's latest sign-off, stating its figure. With no sign-off, nothing is written and the store refuses, as it should.
+ */
+export function releaseReportFor(app: FixtureApp, claim: string): void {
+  if (R.releasedReportFingerprint(app.db, claim) !== null) return;
+  const s = app.db.get<{ figure_pence: number; recorded_at: string; recorded_by: string }>(
+    'SELECT figure_pence, recorded_at, recorded_by FROM tax_adviser_signoffs WHERE claim_id = ? ORDER BY recorded_at DESC LIMIT 1', [claim]);
+  const c = app.db.get<{ business_id: string; assessment_id: string | null }>('SELECT business_id, assessment_id FROM claims WHERE id = ?', [claim]);
+  if (s === undefined || c === undefined || c.assessment_id === null) return;
+  const who = app.db.get<{ id: string }>("SELECT id FROM users WHERE id = 'u-SURVEYING'")?.id ?? s.recorded_by;
+  packApprovedOn(app, c.business_id, c.assessment_id, claim, who, s.figure_pence, s.recorded_at);
+}
+
 /** Draft and issue a deliverable through the register, as SALES. */
 export function issue(app: FixtureApp, claim: string, kind: R.DeliverableKind, content_hash: string | null = null): string {
+  if (R.MADE_FROM_REPORT.has(kind)) releaseReportFor(app, claim);
   const d = recordDeps(app);
   const drafted = R.recordDeliverable(d, actor('SALES'), claim, { kind, action: 'DRAFT' });
   assert.equal(drafted.ok, true, drafted.ok ? '' : drafted.why);
