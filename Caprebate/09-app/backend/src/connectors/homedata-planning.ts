@@ -130,12 +130,21 @@ export const homedataPlanning = defineSteppedConnector<HomedataPlanningQuery>({
     const calls: CallResult[] = [c];
     if (c.outcome !== 'OK' || c.body === null) return { kind: 'CALL_FAILED', call: c, calls };
     let list: unknown[] | null = null;
+    let noHistory = false;
     try {
       const j = obj(JSON.parse(c.body));
       const held = j?.[PLANNING_HISTORY_SLUG];
       const inner = obj(held);
       list = Array.isArray(held) ? held : Array.isArray(inner?.['applications']) ? inner['applications'] as unknown[] : null;
+      /* PHASE 158a (F25, the Friary House run): a property with no applications was called "not in a form we could
+         read", after a charged call. A count of 0 is an answer: none. An answer with no history at all says nothing
+         either way, so the question stays asked - in those words, not "unreadable". */
+      if (list === null && inner?.['count'] === 0) list = [];
+      noHistory = j !== null && (held === null || held === undefined);
     } catch { list = null; }
+    if (noHistory) {
+      return { kind: 'NOT_MATCHED', code: 'NO_MATCH', why: 'Homedata answered, but sent no planning history for this property. So the question stays asked', calls };
+    }
     if (list === null) return { kind: 'UNREADABLE', call: c, calls };
 
     const records = list
@@ -150,8 +159,10 @@ export const homedataPlanning = defineSteppedConnector<HomedataPlanningQuery>({
     const bundle: Bundle = { records, facts: { planning_applications: records.length } };
     return {
       kind: 'READ', bundle, calls,
-      note: `looked up the property’s own planning history by its identifier, and we keep ${records.length} ` +
-        `planning ${records.length === 1 ? 'application' : 'applications'} and where they came from`,
+      note: list.length === 0
+        ?'looked up the property’s own planning history by its identifier. Homedata holds no planning applications for this property'
+        : `looked up the property’s own planning history by its identifier, and we keep ${records.length} ` +
+          `planning ${records.length === 1 ? 'application' : 'applications'} and where they came from`,
     };
   },
 });

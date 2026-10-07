@@ -75,7 +75,9 @@ export const F4_STEP_LABELS: Readonly<Record<string, readonly string[]>> = Objec
 export const F4_TEXT: Readonly<Record<F4Screen, { heading: string; help: string }>> = Object.freeze({
   buildings: { heading: 'What type of business do you have?',
     help: 'Choose one for each building. If you have more than one building, add another.' },
-  'spend-on': { heading: 'What did you spend on each building?', help: 'Choose the one that fits best for each building.' },
+  // PHASE 158a (F3, the Friary House run): one answer per building, so say which one a bought-then-refurbished building takes.
+  'spend-on': { heading: 'What did you spend on each building?',
+    help: 'Choose the one that fits best for each building. If you bought it and later did work on it, choose “We bought it”. You can tell us about the work a few questions on.' },
   amounts: { heading: 'Roughly how much, and when?', help: 'A rough figure is fine. If you do not know, tick the box.' },
   tax: { heading: 'Does the business that owns each building pay UK tax?',
     help: 'Capital allowances reduce a bill for UK income tax or corporation tax, so there has to be one to claim against. Buildings owned by different companies can have different answers.' },
