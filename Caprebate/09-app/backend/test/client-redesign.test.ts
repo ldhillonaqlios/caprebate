@@ -105,14 +105,15 @@ describe('the client page, laid out again', () => {
     const r = await as('sales').get(`/staff/clients/${dunmarrow}`);
     const card = /<section class="clookups"[\s\S]*?<\/section>/.exec(r.body)?.[0] ?? '';
     assert.match(card, /Lookups <span class="help">\d+ of \d+ done<\/span>/);
-    assert.match(card, /<p class="lk-summary">(<span class="lk lk-g-[a-z-]+">(Failed|Done|Waiting|Not run yet|Not switched on) \d+<\/span>)+<\/p>/);
+    // PHASE 158b (F24): the Valuation Office rating list (scrapped 4 Oct 2026) reads "Not used".
+    assert.match(card, /<p class="lk-summary">(<span class="lk lk-g-[a-z-]+">(Failed|Done|Waiting|Not run yet|Not switched on|Not used) \d+<\/span>)+<\/p>/);
     const rows = [...card.matchAll(/<li><span>([^<]+)<span class="help"> · [^<]+<\/span><\/span> <span class="lk lk-[a-z-]+( lk-off)?">([^<]+)<\/span><\/li>/g)].map((m) => [m[0], m[1], m[3]]);
     assert.ok(rows.length >= 5, `${rows.length} lookups listed`);
-    for (const row of rows) assert.match(row[2] ?? '', /^(Done · .+|Failed|Not run yet|Waiting|Not switched on)$/);
+    for (const row of rows) assert.match(row[2] ?? '', /^(Done · .+|Failed|Not run yet|Waiting|Not switched on|Not used)$/);
     // The counts are the rows: "X of Y done" and each group's number agree with the lookups listed under them.
     const doneRows = rows.filter((x) => /^Done · /.test(x[2] ?? '')).length;
     assert.match(card, new RegExp(`Lookups <span class="help">${doneRows} of ${rows.length} done</span>`));
-    const groups = [...card.matchAll(/<span class="lk lk-g-[a-z-]+">(Failed|Done|Waiting|Not run yet|Not switched on) (\d+)<\/span>/g)];
+    const groups = [...card.matchAll(/<span class="lk lk-g-[a-z-]+">(Failed|Done|Waiting|Not run yet|Not switched on|Not used) (\d+)<\/span>/g)];
     assert.equal(groups.reduce((n, g) => n + Number(g[2]), 0), rows.length);
     assert.match(card, /href="\?done=lookups#sources"/); // Phase 157c (F11): the link opens the tab the section is on
   });

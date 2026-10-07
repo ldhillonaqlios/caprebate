@@ -52,10 +52,11 @@ import { plainNeed } from './next-step.ts';
 import { openClaimQuestions } from './engaged.ts';
 import { claimNextStep } from './next-step.ts';
 import { dueWords, localStamp, ukDate } from './localtime.ts';
-import { navContext } from './navigation.ts';
+import { nameSwitches, navContext } from './navigation.ts';
 import * as SI from './site-area-inputs.ts';
 import * as TH from './title-by-hand.ts';
 import * as SO from './survey-open.ts';
+import { portalStepLine } from './portal-steps.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };
 
@@ -440,8 +441,8 @@ function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonl
     ${p.gate === undefined ? raw('') : h`<h3>Moving on from ${p.gate.label}: ${p.gate.open ? badge('Ready', 'ok') : badge('Not ready yet')}</h3>
       <p class="help">What this step needs: “${brandName(p.gate.procedure_gate)}” Who owns this step: ${brandName(p.gate.owner)}</p>
       <table><tbody>${p.gate.needs.map((n) => h`<tr><td>${n.met ? 'Done' : 'Still needed'}</td><td>${n.what}</td><td>${n.why}</td></tr>`)}</tbody></table>`}
-    ${p.portal === undefined ? raw('') : h`<div class="help">The client’s page shows “${p.portal.shows}”.${why(h`${p.portal.this_claim_evidences === null ? 'This claim’s stage matches no step on the client’s page.'
-        : `This claim’s stage matches “${p.portal.this_claim_evidences}” on the client’s page.`} A move raises the client’s step and never lowers it.`)}</div>`}
+    ${p.portal === undefined ? raw('') : h`<div class="help">The client’s page shows “${p.portal.shows_key === null ? p.portal.shows : portalStepLine(p.portal.shows_key, nameSwitches().portalSteps)}”.${why(h`${p.portal.this_claim_evidences === null ? 'This claim’s stage matches no step on the client’s page.'
+        : `This claim’s stage matches “${p.portal.evidences_key === null ? p.portal.this_claim_evidences : portalStepLine(p.portal.evidences_key, nameSwitches().portalSteps)}” on the client’s page.`} A move raises the client’s step and never lowers it.`)}</div>`}
     </details>`}
     ${p.enquiry === undefined ? raw('') : h`<div id="enquiry-gate">${enquiryBlock(p.enquiry, m?.may_record === true ? `/staff/claims/${id}/checks` : null)}</div>`}
     ${p.confirmations === undefined || p.confirmations.length === 0 ? raw('') : h`<h3>Confirmations at this stage</h3>
