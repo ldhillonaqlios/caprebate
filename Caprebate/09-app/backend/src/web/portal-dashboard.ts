@@ -78,7 +78,7 @@ export function portalDashboard(x: PortalDashInput): Safe {
   const items: Safe[] = [
     ...(unread > 0 ? [h`<li class="pdash-new"><strong>${unread === 1 ? 'A new message from us' : `${String(unread)} new messages from us`}</strong> <a class="cta" href="/portal/messages">Read ${unread === 1 ? 'it' : 'them'}</a></li>`] : []),
     ...told.slice(0, 3).map((d) => h`<li>${d.words} <span class="help">· ${ukDate(d.on)}</span></li>`),
-    ...issued.map((d) => h`<li>We issued your ${d.label} <span class="help">· ${ukDate(d.issued_on)}</span></li>`),
+    ...issued.map((d) => h`<li>${issuedLine(d.label)} <span class="help">· ${ukDate(d.issued_on)}</span></li>`),
   ];
   const fresh = card('new-for-you', 'New for you', items.length === 0
     ? h`<p class="empty">Nothing new in the last 30 days.</p>`
@@ -92,4 +92,10 @@ export function portalDashboard(x: PortalDashInput): Safe {
       asked.map((r) => h`<li${r.due.overdue ? raw(' class="late"') : raw('')}><span>${r.type.label} <span class="help">— a document, ${ukDatesIn(r.due.label)}</span></span> <a class="cta" href="#request-${r.id}">Send it</a></li>`)}</ul>`);
 
   return h`<div class="pdash">${where}${needs}${working}${call}${fresh}</div>`;
+}
+
+/** PHASE 158b (F40, the Friary House run): "We issued your The client report". The label's own "The" goes, and it reads in the sentence. */
+export function issuedLine(label: string): string {
+  const name = label.replace(/^the\s+/i, '');
+  return `We issued your ${name.charAt(0).toLowerCase()}${name.slice(1)}`;
 }

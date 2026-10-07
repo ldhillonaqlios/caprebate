@@ -413,3 +413,14 @@ describe('F29 — ST at the start of a name is a saint', () => {
     assert.equal(normalizeAddress({ street: 'St', postcode: 'PL4 9BH' }).street, 'STREET');
   });
 });
+
+/* F40 (from 158b's own run): "We issued your The client report" */
+import { issuedLine } from '../src/web/portal-dashboard.ts';
+
+describe('F40 — what the portal says when we issue a deliverable', () => {
+  test('"We issued your client report", not "your The client report"', () => {
+    assert.equal(issuedLine('The client report'), 'We issued your client report');
+    assert.equal(issuedLine('The defence pack'), 'We issued your defence pack');
+    assert.equal(issuedLine('Survey report'), 'We issued your survey report');
+  });
+});
