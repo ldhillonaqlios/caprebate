@@ -24,6 +24,7 @@ export {
   UPLOAD_LIMITS,
   UploadHandlerError,
   sniffAccepted,
+  pdfLooksComplete,
   quarantineKeyFor,
   durableKeyFor,
   retainedTextKeyFor,

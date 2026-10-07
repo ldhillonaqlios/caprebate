@@ -432,7 +432,7 @@ describe('5 · a DocuSign-style signature: drawn or adopted, fingerprinted, with
       const r = x.sign({ signature_strokes: WAVE, typed_as_signature: true });
       assert.equal(r.ok, true, r.ok ? '' : r.why);
       const row = x.a.db.get<Record<string, unknown>>('SELECT * FROM engagement_signatures WHERE business_id = ?', [x.biz])!;
-      assert.equal(row['record_version'], 2);
+      assert.equal(row['record_version'], 3); // version 3 since Phase 157d: it also binds the signer's number and any link
       assert.equal(row['signature_method'], 'DRAWN', 'a drawing wins over the tick');
       assert.deepEqual(JSON.parse(String(row['signature_ink'])), JSON.parse(WAVE));
       assert.equal(row['signer_email'], 'signer@example.invalid');
@@ -443,7 +443,7 @@ describe('5 · a DocuSign-style signature: drawn or adopted, fingerprinted, with
       const pdf = pdfText(row['pdf'] as Uint8Array);
       assert.match(pdf, / RG\n/);
       assert.match(pdf, /\d+(\.\d+)? \d+(\.\d+)? m\n[\s\S]* l\n[\s\S]*S\nQ/);
-      for (const words of ['Certificate of completion', 'Letter sent to the client:', 'Letter first opened by the client:', 'Signed in as: signer@example.invalid', 'How they signed: drew their signature', x.shown.sha256]) {
+      for (const words of ['Certificate of completion', 'Letter sent to the client:', 'Letter first opened by the client:', 'Signed in to the Cap Rebate portal as: signer@example.invalid' /* version 3's wording, Phase 157d */, 'How they signed: drew their signature', x.shown.sha256]) {
         assert.ok(pdf.includes(hexOf(words)), `the certificate does not say "${words}"`);
       }
     } finally { x.a.close(); }
@@ -535,7 +535,7 @@ describe('5 · a DocuSign-style signature: drawn or adopted, fingerprinted, with
       const eng2 = randomUUID();
       x.a.db.run("INSERT INTO engagements (id, business_id, letter_state, signed_at, created_at) VALUES (?, ?, 'SENT', NULL, ?)", [eng2, biz2, T0]);
       const to2 = { engagement_id: eng2, business_id: biz2, record_sha256: 'e'.repeat(64), pdf_sha256: 'd'.repeat(64) };
-      assert.throws(() => insert({ ...to2, record_version: 3 }), /CHECK/);
+      assert.throws(() => insert({ ...to2, record_version: 4 }) /* 1, 2 and (since 157d) 3 are allowed */, /CHECK/);
       assert.throws(() => insert({ ...to2, signature_method: 'STAMPED' }), /CHECK/);
       assert.throws(() => insert({ ...to2, signature_ink: '{not json' }), /CHECK/);
       assert.doesNotThrow(() => insert({ ...to2, signature_method: 'DRAWN', signature_ink: WAVE }), 'the control row was refused');

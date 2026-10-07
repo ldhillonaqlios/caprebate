@@ -24,6 +24,7 @@
  * claim in a footer.
  */
 
+import type { EngagementSigning } from './signing.ts';
 import { handleWhatsAppImport } from './whatsapp-import-pages.ts';
 import { handleConnections } from './connections.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -94,6 +95,8 @@ export type StaffDeps = {
   newId: () => string;
   /** 30 Sep 2026: the site's address, for a video call's join page in its invitation. */
   publicOrigin?: string;
+  /** PHASE 157d: the signing setting this copy runs under (src/web/signing.ts), for the letter's links. */
+  signing?: EngagementSigning;
 };
 
 export type WebResult = 'handled' | 'not-mine';
@@ -444,7 +447,7 @@ export async function handleStaff(
 
   /* ------------------------------ SECTION 3 · engaged clients (Phase 106) */
   const engaged = await handleEngaged(
-    { app: d.app, newId: d.newId, nav, stamp, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form,
+    { app: d.app, newId: d.newId, nav, stamp, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }), ...(d.signing === undefined ? {} : { signing: d.signing }) }, req, res, url, method, actor, form,
   );
   if (engaged === 'handled') return 'handled';
 

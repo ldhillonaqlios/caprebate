@@ -42,11 +42,11 @@
  * letter: each is a sentence the client reads.
  */
 
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import type { EmailTransport } from '../stubs/email.ts';
-import type { Actor } from '../authz.ts';
+import { authorise, type Actor } from '../authz.ts';
 import { loadLetter } from './letter.ts';
 import { engagement, readBusiness } from './portal.ts';
 import { localWhen } from './localtime.ts';
@@ -65,7 +65,19 @@ export type EngagementSigning = {
    */
   readonly test_copy_only?: boolean;
   readonly waiver_record?: string;
+  /**
+   * PHASE 157d: SIGNING FROM A LINK IN THE EMAIL, without a portal login. Off for real clients until the solicitor's
+   * answer covers it (Word question, under the solicitor: SIGNING_LINK_QUESTION); on with ENGAGEMENT_SIGNING_TEST.
+   */
+  readonly links?: boolean;
 };
+
+/** PHASE 157d: the solicitor's question for signing from an emailed link. Quoted, not paraphrased. */
+export const SIGNING_LINK_QUESTION =
+  'May a client sign our engagement letter from a link in an email, without logging in to the portal?';
+
+/** PHASE 157d: how long a signing link works, from the moment it is sent. A test default, not agreed. */
+export const SIGN_LINK_DAYS = 7;
 
 /** The question under the solicitor in the Word questions document. Quoted, not paraphrased. */
 export const SIGNING_QUESTION =
@@ -88,6 +100,7 @@ export const ENGAGEMENT_SIGNING_TEST: EngagementSigning = Object.freeze({
   solicitor_confirmed: false,
   question: SIGNING_QUESTION,
   test_copy_only: true,
+  links: true,
   waiver_record: 'Lakhbir Dhillon, 6 October 2026, in the chat with Claude: "Signing itself is still switched off. switch this on for test purposes at the moment". The test copy of the letter only, invented clients only; the real letter keeps its blanks and ENGAGEMENT_SIGNING stays off.',
 });
 
@@ -156,7 +169,7 @@ export type SignatureFields = {
   readonly id: string;
   readonly engagement_id: string;
   readonly business_id: string;
-  readonly origin: 'PORTAL' | 'SEED';
+  readonly origin: 'PORTAL' | 'SEED' | 'EMAIL_LINK';
   readonly user_id: string | null;
   readonly session_id: string | null;
   readonly signer_name: string;
@@ -167,7 +180,7 @@ export type SignatureFields = {
   readonly letter_sha256: string;
   readonly pdf_sha256: string;
   /** PHASE 157c: absent or 1, the record as Phase 146f made it; 2, with the signature and the certificate's times. */
-  readonly record_version?: 1 | 2;
+  readonly record_version?: 1 | 2 | 3;
   readonly signature_method?: 'DRAWN' | 'TYPED' | null;
   /** The drawn strokes as stored (JSON), or null for a typed signature. */
   readonly signature_ink?: string | null;
@@ -175,6 +188,9 @@ export type SignatureFields = {
   readonly letter_prepared_at?: string | null;
   readonly letter_sent_at?: string | null;
   readonly letter_viewed_at?: string | null;
+  /** PHASE 157d (version 3): which signature on the letter this is (1 or 2), and the link it was signed through. */
+  readonly signer_seq?: 1 | 2;
+  readonly link_id?: string | null;
 };
 
 /** The record's own hash: every field, in this order, joined by a line feed. Changing any one changes it. */
@@ -185,10 +201,13 @@ export function recordHash(f: SignatureFields): string {
   ];
   if ((f.record_version ?? 1) === 1) return sha256(v1.join('\n'));
   /* PHASE 157c: version 2 also binds the signature itself (its method and every stroke) and the certificate's facts. */
-  return sha256([
-    'caprebate-engagement-signature-v2', ...v1.slice(1), f.signature_method ?? '', f.signature_ink ?? '', f.signer_email ?? '',
+  const v2 = [
+    ...v1.slice(1), f.signature_method ?? '', f.signature_ink ?? '', f.signer_email ?? '',
     f.letter_prepared_at ?? '', f.letter_sent_at ?? '', f.letter_viewed_at ?? '',
-  ].join('\n'));
+  ];
+  if (f.record_version === 2) return sha256(['caprebate-engagement-signature-v2', ...v2].join('\n'));
+  /* PHASE 157d: version 3 also binds which signature on the letter it is, and the link it came through. */
+  return sha256(['caprebate-engagement-signature-v3', ...v2, String(f.signer_seq ?? 1), f.link_id ?? ''].join('\n'));
 }
 
 /* ================================================================== *
@@ -225,9 +244,20 @@ export function parseInk(raw: string): { ok: true; strokes: readonly (readonly [
 }
 
 /** The signed PDF: the letter as shown, then a signature page (version 2: then a certificate of completion). */
-export function signedPdf(letter: ShownLetter, f: Omit<SignatureFields, 'pdf_sha256'>): Uint8Array {
+export function signedPdf(
+  letter: ShownLetter, f: Omit<SignatureFields, 'pdf_sha256'>,
+  /** PHASE 157d: the signatures already on this letter, first signer first. Version 3 shows them all. */
+  earlier: readonly Omit<SignatureFields, 'pdf_sha256'>[] = [],
+  /** PHASE 157d: how many signatures the letter needs, for the certificate. */
+  needed = 1,
+): Uint8Array {
   const body: PdfLine[] = letter.paragraphs.map((p) => (p.heading ? { text: p.text, bold: true, gap: 4 } : { text: p.text }));
   if ((f.record_version ?? 1) === 2) return buildPdf([...flow(body), ...flow(signaturePageV2(f)), ...flow(certificate(letter, f))], { title: `Engagement letter, signed by ${f.signer_name}` }).bytes;
+  if (f.record_version === 3) {
+    const all = [...earlier, f];
+    return buildPdf([...flow(body), ...all.flatMap((x) => flow(signaturePageV2(x))), ...flow(certificateV3(letter, all, needed))],
+      { title: `Engagement letter, signed by ${all.map((x) => x.signer_name).join(' and ')}` }).bytes;
+  }
   const page: PdfLine[] = [
     { text: 'Signature page', bold: true, size: 14, gap: 10 },
     { text: `Signed online by: ${f.signer_name}` },
@@ -288,35 +318,109 @@ function certificate(letter: ShownLetter, f: Omit<SignatureFields, 'pdf_sha256'>
   ];
 }
 
+/**
+ * PHASE 157d: the certificate of completion for one or two signers, each with how they signed — in the portal, signed
+ * in as their login, or from the link emailed to their address, which is what that link proves.
+ */
+function certificateV3(letter: ShownLetter, all: readonly Omit<SignatureFields, 'pdf_sha256'>[], needed: number): PdfLine[] {
+  const when = (t: string | null | undefined) => (t ? `${localWhen(t)} (${t} UTC)` : 'not recorded');
+  const first = all[0] as Omit<SignatureFields, 'pdf_sha256'>;
+  const last = all[all.length - 1] as Omit<SignatureFields, 'pdf_sha256'>;
+  const complete = all.length >= needed;
+  return [
+    { text: 'Certificate of completion', bold: true, size: 14, gap: 10 },
+    ...(letter.test_copy ? [{ text: 'TEST: signed on the test system, on the test copy of the letter. It is not a contract.', bold: true, gap: 8 }] : []),
+    { text: `Document: Cap Rebate engagement letter for ${first.business_name}` },
+    { text: complete
+      ? `Signatures: ${String(all.length)} of ${String(needed)}. The letter is signed.`
+      : `Signatures: ${String(all.length)} of ${String(needed)}. It is signed only when every signer named by us has signed.`, gap: 8 },
+    { text: 'What happened', bold: true, gap: 4 },
+    { text: `Letter prepared: ${when(last.letter_prepared_at)}` },
+    { text: `Letter sent to the client: ${when(last.letter_sent_at)}` },
+    { text: `Letter first opened by the client: ${when(last.letter_viewed_at)}`, gap: 8 },
+    ...all.flatMap((x, i) => [
+      { text: `Signer ${String(i + 1)}`, bold: true, gap: 4 },
+      { text: `Name: ${x.signer_name}` },
+      { text: `Role: ${x.signer_role}` },
+      { text: `Signed: ${when(x.signed_at)}` },
+      x.origin === 'EMAIL_LINK'
+        ? { text: `Signed from the link we emailed to: ${x.signer_email ?? 'not recorded'}. The link worked once, for this letter only.` }
+        : { text: `Signed in to the Cap Rebate portal as: ${x.signer_email ?? 'not recorded'}` },
+      { text: `How they signed: ${x.signature_method === 'DRAWN' ? 'drew their signature' : 'adopted their typed name as their signature'}` },
+      { text: `From the internet address: ${x.ip}` },
+      { text: `Signature record: ${x.id}`, gap: 8 },
+    ]),
+    { text: 'The letter they saw', bold: true, gap: 4 },
+    { text: 'The letter above is the exact text every signer saw when they signed. Its digital fingerprint is:', gap: 2 },
+    { text: letter.sha256, size: 9, gap: 8 },
+    { text: 'CAP REBATE LTD keeps each signature record.' },
+    { text: 'A fingerprint of each record covers that signature and every time above. It is kept in our audit log, which cannot be changed.' },
+  ];
+}
+
 type Deps = { db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string };
 
-/** Write one record, move the letter to SIGNED, and bind the record into the audit chain. One transaction. */
+/**
+ * PHASE 157d: WHO MUST SIGN. The client logins staff recorded (engagement_required_signers), first signer first; none
+ * recorded means any one client login of the business signs, as before.
+ */
+export type RequiredSigner = { readonly user_id: string; readonly seq: 1 | 2; readonly name: string; readonly email: string };
+export function requiredSigners(db: Db, engagement_id: string): RequiredSigner[] {
+  return db.all<RequiredSigner>(
+    'SELECT r.user_id, r.seq, u.display_name AS name, u.email FROM engagement_required_signers r JOIN users u ON u.id = r.user_id ' +
+      'WHERE r.engagement_id = ? ORDER BY r.seq ASC', [engagement_id]);
+}
+/** How many signatures the letter needs: one, or the number staff named (at most two). */
+export function signaturesNeeded(db: Db, engagement_id: string): number {
+  return Math.max(1, requiredSigners(db, engagement_id).length);
+}
+
+type StoredSignature = SignatureFields & { letter_text: string; pdf: Uint8Array; record_sha256: string };
+function storedSignatures(db: Db, engagement_id: string): StoredSignature[] {
+  return db.all<StoredSignature>(
+    'SELECT id, engagement_id, business_id, origin, user_id, session_id, signer_name, signer_role, business_name, signed_at, ip, ' +
+      'letter_text, letter_sha256, pdf, pdf_sha256, record_sha256, record_version, signature_method, signature_ink, signer_email, ' +
+      'letter_prepared_at, letter_sent_at, letter_viewed_at, signer_seq, link_id FROM engagement_signatures WHERE engagement_id = ? ORDER BY signer_seq ASC',
+    [engagement_id]);
+}
+
+/**
+ * Write one record, bind it into the audit chain, and move the letter to SIGNED once every signature it needs is on it.
+ * One transaction; a signing link, where one was used, is marked used in the same transaction.
+ */
 function writeSignature(
   d: Pick<Deps, 'db' | 'audit'>, engagement_id: string, letter: ShownLetter, f: Omit<SignatureFields, 'pdf_sha256' | 'letter_sha256'>,
   actor: { id: string | null; role: string },
-): { record_sha256: string; pdf: Uint8Array } {
+  more: { readonly earlier?: readonly Omit<SignatureFields, 'pdf_sha256'>[]; readonly needed?: number } = {},
+): { record_sha256: string; pdf: Uint8Array; complete: boolean } {
   const base = { ...f, letter_sha256: letter.sha256 };
-  const pdf = signedPdf(letter, base);
+  const needed = more.needed ?? 1;
+  const pdf = signedPdf(letter, base, more.earlier ?? [], needed);
   const full: SignatureFields = { ...base, pdf_sha256: sha256(pdf) };
   const record_sha256 = recordHash(full);
+  const complete = (f.signer_seq ?? 1) >= needed;
   d.db.tx(() => {
     d.db.run(
       'INSERT INTO engagement_signatures (id, engagement_id, business_id, origin, user_id, session_id, signer_name, signer_role, business_name, ' +
         'authority_confirmed, signed_at, ip, letter_text, letter_sha256, pdf, pdf_sha256, record_sha256, ' +
-        'record_version, signature_method, signature_ink, signer_email, letter_prepared_at, letter_sent_at, letter_viewed_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'record_version, signature_method, signature_ink, signer_email, letter_prepared_at, letter_sent_at, letter_viewed_at, signer_seq, link_id) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [full.id, engagement_id, full.business_id, full.origin, full.user_id, full.session_id, full.signer_name, full.signer_role, full.business_name,
         full.signed_at, full.ip, letter.text, full.letter_sha256, pdf, full.pdf_sha256, record_sha256,
         full.record_version ?? 1, full.signature_method ?? null, full.signature_ink ?? null, full.signer_email ?? null,
-        full.letter_prepared_at ?? null, full.letter_sent_at ?? null, full.letter_viewed_at ?? null]);
-    d.db.run("UPDATE engagements SET letter_state = 'SIGNED', signed_at = ? WHERE id = ?", [full.signed_at, engagement_id]);
+        full.letter_prepared_at ?? null, full.letter_sent_at ?? null, full.letter_viewed_at ?? null, full.signer_seq ?? 1, full.link_id ?? null]);
+    if (full.link_id !== null && full.link_id !== undefined) {
+      d.db.run('UPDATE engagement_sign_links SET used_at = ? WHERE id = ? AND used_at IS NULL', [full.signed_at, full.link_id]);
+    }
+    if (complete) d.db.run("UPDATE engagements SET letter_state = 'SIGNED', signed_at = ? WHERE id = ?", [full.signed_at, engagement_id]);
     d.audit.append({
       at: full.signed_at, kind: 'ENGAGEMENT_SIGNED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'engagement', object_id: engagement_id,
-      detail: { signature: full.id, record: record_sha256, letter: full.letter_sha256, pdf: full.pdf_sha256, session: full.session_id, origin: full.origin },
+      detail: { signature: full.id, record: record_sha256, letter: full.letter_sha256, pdf: full.pdf_sha256, session: full.session_id, origin: full.origin,
+        seq: full.signer_seq ?? 1, needed, complete },
     });
   });
-  return { record_sha256, pdf };
+  return { record_sha256, pdf, complete };
 }
 
 export type SignInput = {
@@ -339,6 +443,10 @@ export const SIGN_WORDS = Object.freeze({
   changed: 'The letter changed while you were reading it. Please read it again, then sign.',
   signature: 'Draw your signature in the box, or tick "Use my typed name as my signature".',
   small: 'That mark is too small to be a signature. Clear the box and draw your signature again.',
+  not_named: 'This letter is to be signed by the people we agreed with your business, and you are not one of them. Please ask them to sign, or ask us.',
+  you_signed: 'You have signed this letter. We are waiting for the other signature.',
+  link: 'This signing link does not work. It may have been used already, or be out of date. Ask us to send the letter again, or sign in to the portal.',
+  links_off: 'Signing from a link in an email is not switched on yet. Please sign in to the portal to read and sign the letter.',
 });
 
 function fullName(s: string): string | null {
@@ -348,20 +456,19 @@ function fullName(s: string): string | null {
   return words.length >= 2 ? t : null;
 }
 
-/**
- * THE CLIENT SIGNS. The client's own business only (readBusiness refuses any other), the switch on, the letter complete,
- * sent to them and not yet signed, a full name, a role, the tick, and the fingerprint of the letter they read.
- */
-export function signEngagement(
-  d: Deps, actor: Actor, business_id: string, input: SignInput, ctx: SignContext,
-  opts: { cfg?: EngagementSigning; letterPath?: string } = {},
-): { ok: true; signature_id: string; record_sha256: string } | { ok: false; why: string } {
-  const b = readBusiness(d.db, actor, business_id);
-  if (actor.role !== 'CLIENT' || actor.business_id !== b.id) return { ok: false, why: 'Only the client can sign their own engagement letter.' };
-  const e = engagement(d.db, actor, b.id);
-  if (e === null) return { ok: false, why: SIGN_WORDS.none };
-  if (e.state === 'SIGNED') return { ok: false, why: SIGN_WORDS.already };
-  if (e.state === 'NOT_SENT') return { ok: false, why: SIGN_WORDS.not_sent };
+/** Who is signing: a portal login with its session, or the login a signing link was emailed to. */
+type Signer = {
+  readonly user_id: string; readonly role: string; readonly origin: 'PORTAL' | 'EMAIL_LINK';
+  readonly session_id: string | null; readonly link_id: string | null; readonly email: string | null;
+};
+
+/** The checks and the write every signature shares, whichever way it came. */
+function signAs(
+  d: Deps, who: Signer, b: { id: string; name: string; company_number?: string | null }, state: string, input: SignInput, ip: string,
+  opts: { cfg?: EngagementSigning; letterPath?: string },
+): { ok: true; signature_id: string; record_sha256: string; complete: boolean } | { ok: false; why: string } {
+  if (state === 'SIGNED') return { ok: false, why: SIGN_WORDS.already };
+  if (state === 'NOT_SENT') return { ok: false, why: SIGN_WORDS.not_sent };
   const letter = shownLetter(b, opts.letterPath);
   const missing = signingMissing(opts.cfg ?? ENGAGEMENT_SIGNING, letter);
   if (missing.length > 0) return { ok: false, why: `Signing is not switched on yet. ${missing[0]}` };
@@ -387,32 +494,137 @@ export function signEngagement(
   const eng = d.db.get<{ id: string; created_at: string; sent_at: string | null; viewed_at: string | null }>(
     'SELECT id, created_at, sent_at, viewed_at FROM engagements WHERE business_id = ?', [b.id]);
   if (eng === undefined) return { ok: false, why: SIGN_WORDS.none };
+  /* PHASE 157d: who must sign, and whether this login has. */
+  const named = requiredSigners(d.db, eng.id);
+  if (named.length > 0 && !named.some((n) => n.user_id === who.user_id)) return { ok: false, why: SIGN_WORDS.not_named };
+  const earlier = storedSignatures(d.db, eng.id);
+  if (earlier.some((x) => x.user_id === who.user_id)) return { ok: false, why: SIGN_WORDS.you_signed };
+  const needed = Math.max(1, named.length);
+  if (earlier.length >= needed) return { ok: false, why: SIGN_WORDS.already };
+  const seq = (earlier.length + 1) as 1 | 2;
+
   const id = d.newId();
   const signed_at = d.now();
-  const ip = ctx.ip.replace(/[^0-9A-Fa-f.:]/g, '').slice(0, 64) || 'unknown';
-  const signer_email = d.db.get<{ email: string }>('SELECT email FROM users WHERE id = ?', [actor.id])?.email ?? null;
-  const { record_sha256, pdf } = writeSignature(d, eng.id, letter, {
-    id, engagement_id: eng.id, business_id: b.id, origin: 'PORTAL', user_id: actor.id, session_id: ctx.session_id,
-    signer_name: name, signer_role: role, business_name: b.name, signed_at, ip,
-    record_version: 2, signature_method: method, signature_ink: ink, signer_email,
+  const cleanIp = ip.replace(/[^0-9A-Fa-f.:]/g, '').slice(0, 64) || 'unknown';
+  const signer_email = who.email ?? d.db.get<{ email: string }>('SELECT email FROM users WHERE id = ?', [who.user_id])?.email ?? null;
+  const { record_sha256, pdf, complete } = writeSignature(d, eng.id, letter, {
+    id, engagement_id: eng.id, business_id: b.id, origin: who.origin, user_id: who.user_id, session_id: who.session_id,
+    signer_name: name, signer_role: role, business_name: b.name, signed_at, ip: cleanIp,
+    record_version: 3, signature_method: method, signature_ink: ink, signer_email,
     letter_prepared_at: eng.created_at, letter_sent_at: eng.sent_at, letter_viewed_at: eng.viewed_at,
-  }, { id: actor.id, role: actor.role });
+    signer_seq: seq, link_id: who.link_id,
+  }, { id: who.user_id, role: who.role }, { earlier, needed });
 
-  // Their copy, to the address of the login that signed. Saved to the outbox; sent the day sending is on.
-  const to = d.db.get<{ email: string }>('SELECT email FROM users WHERE id = ?', [actor.id])?.email;
-  if (to !== undefined) {
+  // Their copy, to the address that signed. Saved to the outbox; sent the day sending is on.
+  if (signer_email !== null) {
     d.email.send({
-      to_email: to,
-      subject: 'Your signed engagement letter',
+      to_email: signer_email,
+      subject: complete ? 'Your signed engagement letter' : 'You have signed our engagement letter',
       body: `Thank you. You signed our engagement letter for ${b.name} on ${localWhen(signed_at)}.\n\n` +
-        'Your signed copy is attached. It ends with your signature and a certificate of completion, which shows when the letter was sent, opened and signed.\n\n' +
+        (complete
+          ? 'Your signed copy is attached. It ends with your signature and a certificate of completion, which shows when the letter was sent, opened and signed.\n\n'
+          : 'It needs one more signature before it is signed. Your copy so far is attached; we will send the finished copy when it is signed.\n\n') +
         'Not sent yet. Sending email is not switched on. This message and your copy are saved with the emails waiting to send.',
       kind: 'SIGNED_LETTER',
       business_id: b.id,
-      inline_files: [{ filename: 'engagement-letter-signed.pdf', content_type: 'application/pdf', bytes: pdf }],
+      inline_files: [{ filename: complete ? 'engagement-letter-signed.pdf' : 'engagement-letter-signed-so-far.pdf', content_type: 'application/pdf', bytes: pdf }],
     });
   }
-  return { ok: true, signature_id: id, record_sha256 };
+  return { ok: true, signature_id: id, record_sha256, complete };
+}
+
+/**
+ * THE CLIENT SIGNS IN THE PORTAL. The client's own business only (readBusiness refuses any other), the switch on, the
+ * letter complete, sent to them and not yet signed, a full name, a role, the tick, the fingerprint of the letter they
+ * read — and, since Phase 157d, one of the people staff named, if they named any.
+ */
+export function signEngagement(
+  d: Deps, actor: Actor, business_id: string, input: SignInput, ctx: SignContext,
+  opts: { cfg?: EngagementSigning; letterPath?: string } = {},
+): { ok: true; signature_id: string; record_sha256: string; complete: boolean } | { ok: false; why: string } {
+  const b = readBusiness(d.db, actor, business_id);
+  if (actor.role !== 'CLIENT' || actor.business_id !== b.id) return { ok: false, why: 'Only the client can sign their own engagement letter.' };
+  const e = engagement(d.db, actor, b.id);
+  if (e === null) return { ok: false, why: SIGN_WORDS.none };
+  return signAs(d, { user_id: actor.id, role: actor.role, origin: 'PORTAL', session_id: ctx.session_id, link_id: null, email: null }, b, e.state, input, ctx.ip, opts);
+}
+
+/* ================================================================== *
+ * PHASE 157d — SIGNING FROM A LINK IN THE EMAIL
+ * ================================================================== */
+
+export const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
+
+/** A new link for one client login: the token goes in the email and nowhere else; only its SHA-256 is kept. */
+export function createSignLink(
+  d: Pick<Deps, 'db' | 'now' | 'newId'>, engagement_id: string, user: { id: string; email: string }, created_by: string | null,
+): string {
+  const token = randomBytes(32).toString('hex');
+  const at = d.now();
+  const expires = new Date(Date.parse(at) + SIGN_LINK_DAYS * 86_400_000).toISOString();
+  d.db.run('INSERT INTO engagement_sign_links (id, engagement_id, user_id, token_sha256, sent_to, created_by, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [d.newId(), engagement_id, user.id, sha256Hex(token), user.email, created_by, at, expires]);
+  return token;
+}
+
+export type SignLink = {
+  readonly id: string; readonly engagement_id: string; readonly user_id: string; readonly sent_to: string;
+  readonly business_id: string; readonly business_name: string; readonly company_number: string | null; readonly letter_state: string;
+};
+/** The link behind a token, if it still works: known, not used, not out of date, its login still active. */
+export function signLinkFor(db: Db, token: string, nowIso: string): SignLink | null {
+  if (!/^[0-9a-f]{64}$/.test(token)) return null;
+  const l = db.get<SignLink & { used_at: string | null; expires_at: string; disabled_at: string | null }>(
+    'SELECT k.id, k.engagement_id, k.user_id, k.sent_to, k.used_at, k.expires_at, e.business_id, e.letter_state, b.name AS business_name, ' +
+      'b.company_number, u.disabled_at FROM engagement_sign_links k JOIN engagements e ON e.id = k.engagement_id ' +
+      'JOIN businesses b ON b.id = e.business_id JOIN users u ON u.id = k.user_id WHERE k.token_sha256 = ?', [sha256Hex(token)]);
+  if (l === undefined || l.used_at !== null || l.expires_at <= nowIso || l.disabled_at !== null) return null;
+  return { id: l.id, engagement_id: l.engagement_id, user_id: l.user_id, sent_to: l.sent_to, business_id: l.business_id,
+    business_name: l.business_name, company_number: l.company_number, letter_state: l.letter_state };
+}
+
+/**
+ * SIGNING THROUGH THE LINK. Every check the portal makes, plus: the link works (once, in time) and links are switched
+ * on. The certificate records the address the link was emailed to — which is what it proves — instead of a login.
+ */
+export function signByLink(
+  d: Deps, token: string, input: SignInput, ip: string, opts: { cfg?: EngagementSigning; letterPath?: string } = {},
+): { ok: true; signature_id: string; record_sha256: string; complete: boolean } | { ok: false; why: string } {
+  if ((opts.cfg ?? ENGAGEMENT_SIGNING).links !== true) return { ok: false, why: SIGN_WORDS.links_off };
+  const l = signLinkFor(d.db, token, d.now());
+  if (l === null) return { ok: false, why: SIGN_WORDS.link };
+  return signAs(d, { user_id: l.user_id, role: 'CLIENT', origin: 'EMAIL_LINK', session_id: null, link_id: l.id, email: l.sent_to },
+    { id: l.business_id, name: l.business_name, company_number: l.company_number }, l.letter_state, input, ip, opts);
+}
+
+/**
+ * PHASE 157d: STAFF RECORD WHO MUST SIGN — one or two of the business's client logins. Refused once anyone has signed,
+ * because the letter's signatures are counted against it. An empty list goes back to "any one client login".
+ */
+export function setRequiredSigners(
+  d: Pick<Deps, 'db' | 'audit' | 'now' | 'newId'>, actor: Actor, business_id: string, user_ids: readonly string[],
+): { ok: true } | { ok: false; why: string } {
+  authorise(actor, 'engagement.send', { type: 'engagement', id: business_id, business_id });
+  const eng = d.db.get<{ id: string }>('SELECT id FROM engagements WHERE business_id = ?', [business_id]);
+  if (eng === undefined) return { ok: false, why: 'Prepare and send the letter first, then say who must sign it.' };
+  const ids = [...new Set(user_ids.filter((x) => x.trim() !== ''))];
+  if (ids.length > 2) return { ok: false, why: 'At most two people sign the letter.' };
+  for (const id of ids) {
+    const u = d.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM users WHERE id = ? AND business_id = ? AND role = 'CLIENT' AND disabled_at IS NULL", [id, business_id])?.n ?? 0;
+    if (u === 0) return { ok: false, why: 'Choose people who have a login for this client.' };
+  }
+  if ((d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM engagement_signatures WHERE engagement_id = ?', [eng.id])?.n ?? 0) > 0) {
+    return { ok: false, why: 'Somebody has already signed, so who must sign cannot change now.' };
+  }
+  const at = d.now();
+  d.db.tx(() => {
+    d.db.run('DELETE FROM engagement_required_signers WHERE engagement_id = ?', [eng.id]);
+    ids.forEach((u, i) => d.db.run('INSERT INTO engagement_required_signers (id, engagement_id, user_id, seq, set_by, set_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [d.newId(), eng.id, u, i + 1, actor.id, at]));
+    d.audit.append({ at, kind: 'ENGAGEMENT_SIGNERS_SET', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+      object_type: 'engagement', object_id: eng.id, detail: { signers: ids.length } });
+  });
+  return { ok: true };
 }
 
 /**
@@ -439,25 +651,27 @@ export function seedSignatureRecord(
  * ================================================================== */
 
 export type SignatureCheck =
-  | { readonly ok: true; readonly signature_id: string; readonly origin: 'PORTAL' | 'SEED'; readonly signed_at: string }
+  | { readonly ok: true; readonly signature_id: string; readonly origin: 'PORTAL' | 'SEED' | 'EMAIL_LINK'; readonly signed_at: string }
   | { readonly ok: false; readonly why: string };
 
 /**
- * THE RECORD, CHECKED. Present; its hash recomputed from its own fields; the letter text and the PDF matching their
- * fingerprints; and an ENGAGEMENT_SIGNED row in the audit chain carrying that hash. Any one wrong is "not signed".
+ * THE RECORDS, CHECKED. Each present; its hash recomputed from its own fields; the letter text and the PDF matching their
+ * fingerprints; and an ENGAGEMENT_SIGNED row in the audit chain carrying that hash. And, since Phase 157d, as many as the
+ * letter needs. Any one wrong is "not signed". The latest signature is the one returned: its PDF carries them all.
  */
 export function checkSignature(db: Db, engagement_id: string): SignatureCheck {
-  const r = db.get<SignatureFields & { letter_text: string; pdf: Uint8Array; record_sha256: string }>(
-    'SELECT id, engagement_id, business_id, origin, user_id, session_id, signer_name, signer_role, business_name, signed_at, ip, ' +
-      'letter_text, letter_sha256, pdf, pdf_sha256, record_sha256, record_version, signature_method, signature_ink, signer_email, ' +
-      'letter_prepared_at, letter_sent_at, letter_viewed_at FROM engagement_signatures WHERE engagement_id = ?', [engagement_id]);
-  if (r === undefined) return { ok: false, why: 'the letter is marked signed, but there is no signature record for it' };
-  if (sha256(r.letter_text) !== r.letter_sha256 || sha256(new Uint8Array(r.pdf)) !== r.pdf_sha256 || recordHash(r) !== r.record_sha256) {
-    return { ok: false, why: 'the signature record does not match its own fingerprint' };
+  const rows = storedSignatures(db, engagement_id);
+  if (rows.length === 0) return { ok: false, why: 'the letter is marked signed, but there is no signature record for it' };
+  for (const r of rows) {
+    if (sha256(r.letter_text) !== r.letter_sha256 || sha256(new Uint8Array(r.pdf)) !== r.pdf_sha256 || recordHash(r) !== r.record_sha256) {
+      return { ok: false, why: 'the signature record does not match its own fingerprint' };
+    }
+    const chained = db.get<{ n: number }>(
+      "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'ENGAGEMENT_SIGNED' AND object_id = ? AND json_extract(detail, '$.record') = ?",
+      [engagement_id, r.record_sha256])?.n ?? 0;
+    if (chained === 0) return { ok: false, why: 'the signature record is not in the audit log' };
   }
-  const chained = db.get<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'ENGAGEMENT_SIGNED' AND object_id = ? AND json_extract(detail, '$.record') = ?",
-    [engagement_id, r.record_sha256])?.n ?? 0;
-  if (chained === 0) return { ok: false, why: 'the signature record is not in the audit log' };
+  if (rows.length < signaturesNeeded(db, engagement_id)) return { ok: false, why: 'the letter is waiting for another signature' };
+  const r = rows[rows.length - 1] as StoredSignature;
   return { ok: true, signature_id: r.id, origin: r.origin, signed_at: r.signed_at };
 }

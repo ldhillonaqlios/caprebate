@@ -1184,7 +1184,7 @@ export async function runSignatoryCheck(
 ): Promise<SignatoryRun> {
   const signed = gates.engagement_signed === true
     ? d.db.get<{ engagement_id: string; signer_name: string }>(
-      'SELECT s.engagement_id, s.signer_name FROM engagement_signatures s JOIN engagements e ON e.id = s.engagement_id WHERE e.business_id = ?',
+      'SELECT s.engagement_id, s.signer_name FROM engagement_signatures s JOIN engagements e ON e.id = s.engagement_id WHERE e.business_id = ? ORDER BY s.signer_seq ASC',
       [business_id])
     : undefined;
   const engagement_id = signed?.engagement_id ?? null;

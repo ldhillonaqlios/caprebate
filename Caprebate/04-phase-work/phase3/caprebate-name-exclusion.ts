@@ -527,7 +527,7 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     sourceId: 'CLIENT_DOC',
     subitem: 13,
     publisher: 'The client — portal upload or email attachment',
-    datasetLabel: 'Client-supplied transaction, building and tax documents, and the Land Registry official copy (fourteen types)',
+    datasetLabel: 'Client-supplied transaction, building and tax documents, and the Land Registry official copy (eighteen types)',
     riskLevel: 'highest',
     // Exactly the field_ids of DOC_SPECS and HUMAN_CAPTURE_SPECS, enumerated
     // literally rather than imported, for the reason Part E gives: a spec that
@@ -587,6 +587,17 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       // TITLE_REGISTER
       'oc_title_number', 'oc_tenure', 'oc_price_paid_pence', 'oc_price_paid_date', 'oc_restriction_count',
       'oc_proprietor_company_number', 'oc_prior_owner_count',
+      // PHASE 157d, 6 October 2026 — four more types (the Friary House run, F16). Dates, sums, lists of figures and room
+      // labels; no field holds a party's, a contractor's or anybody's name.
+      // COMPLETION_STATEMENT
+      'cs_completion_date', 'cs_purchase_price_pence', 'cs_price_apportionment', 'cs_stamp_duty_pence',
+      // ACCOUNTS
+      'acc_period_end', 'acc_profit_before_tax_pence', 'acc_fixed_asset_additions', 'acc_land_and_buildings_cost_pence',
+      'acc_capital_allowances_claimed_pence',
+      // CONTRACTOR_INVOICE
+      'inv_lines', 'inv_total_net_pence', 'inv_vat_pence', 'inv_date',
+      // PLANS
+      'plans_rooms', 'plans_gia_m2', 'plans_drawing_date',
     ],
     // No spec has any of these fields today. They are listed because the roles
     // EXIST on the face of the documents (Phase 40 §4.2 works them through type
@@ -645,7 +656,9 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       "Phase 151b added the tax return and the tax computation, thirteen types in all: their thirteen fields are " +
       "dates, a company number, sums and figures by pool, and none is a name or a tax reference. " +
       "Phase 146l added the official copy of the Land Registry title register, read by a person, fourteen types in " +
-      "all: its seven fields are a title number, a tenure, a price and its date, a company number and two counts.",
+      "all: its seven fields are a title number, a tenure, a price and its date, a company number and two counts. " +
+      "Phase 157d added the completion statement, the accounts, a contractor's invoice and plans, eighteen types in all: " +
+      "their sixteen fields are dates, sums, lists of figures and room labels, and none is a name.",
   },
 ];
 

@@ -27,6 +27,7 @@ import { receiveByUpload } from './documents.ts';
 import { ingestRegisterRecord } from '../stubs/registers.ts';
 import { freeGate, assertSignedEngagement } from './research.ts';
 import type { RateLimiter, Transport, GateSnapshot } from '../connectors/http.ts';
+import { createHash } from 'node:crypto';
 import type { SecretStore } from '../secrets.ts';
 import {
   CLAUDE_SWITCHES, claudeReadiness, prepareClaudeModel, readScannedPages,
@@ -36,7 +37,7 @@ import type { EgressEntry } from '../../../../04-phase-work/phase3/caprebate-doc
 import type { ClientDocDiscriminants } from '../../../../04-phase-work/phase3/caprebate-client-doc-ingestion.ts';
 import { discriminantsFor, recordReading, VOUCHED_FIELDS } from './document-reading.ts';
 import {
-  UPLOAD_LIMITS, UploadHandlerError, sniffAccepted, quarantineKeyFor,
+  UPLOAD_LIMITS, UploadHandlerError, sniffAccepted, pdfLooksComplete, quarantineKeyFor,
   issueUploadUrl, recordUploadComplete, processUpload, openTransparency, runExtraction, writeClaims,
   assertContractCovered, FAIL_CLOSED_SETTINGS, DOC_SPECS, HUMAN_READ_ONLY_TYPES, durableKeyFor,
   type AuditEvent, type AuditSink, type DocType, type DocTypeClassifier,
@@ -355,10 +356,13 @@ export async function beginUpload(
  * bytes. Removing either one would be wrong for a different reason.
  * ------------------------------------------------------------------ */
 
+/** PHASE 157d (F19): the words for a PDF with no end. */
+export const DAMAGED_PDF = 'that PDF is damaged or incomplete: it stops part-way. Save or export it again, then send it.';
+
 export async function acceptClientBytes(
   d: UploadDeps,
   args: { doc_id: string; token: string; bytes: Uint8Array },
-): Promise<{ ok: true; written_at: string } | { ok: false; status: number; why: string }> {
+): Promise<{ ok: true; written_at: string; sent_before: string | null } | { ok: false; status: number; why: string }> {
   const key = quarantineKeyFor(args.doc_id);
 
   const v = d.store.verifyPutToken(args.token, key);
@@ -373,12 +377,22 @@ export async function acceptClientBytes(
   if (sniffAccepted(args.bytes) === null) {
     return { ok: false, status: 415, why: 'that file type is not one we accept' };
   }
+  // PHASE 157d (F19): a PDF with no end is damaged — cut off, or saved wrongly — and is refused before it is written.
+  if (sniffAccepted(args.bytes) === 'pdf' && !pdfLooksComplete(args.bytes)) {
+    return { ok: false, status: 400, why: DAMAGED_PDF };
+  }
 
   await d.store.putClientBytes(key, args.bytes);
   const written_at = d.now();
-  d.db.run('UPDATE documents SET byte_size = ?, sniffed_as = ? WHERE id = ?',
-    [args.bytes.length, sniffAccepted(args.bytes), args.doc_id]);
-  return { ok: true, written_at };
+  /* PHASE 157d (F18): the fingerprint of the bytes as they arrived, and whether this business sent the very same bytes
+     before. The copy is kept either way, as a version; the client is told when they sent it, not refused. */
+  const sha = createHash('sha256').update(args.bytes).digest('hex');
+  const before = d.db.get<{ created_at: string }>(
+    'SELECT e.created_at FROM documents e JOIN documents me ON me.id = ? WHERE e.business_id = me.business_id AND e.content_sha256 = ? AND e.id <> me.id ORDER BY e.created_at ASC LIMIT 1',
+    [args.doc_id, sha]);
+  d.db.run('UPDATE documents SET byte_size = ?, sniffed_as = ?, content_sha256 = ? WHERE id = ?',
+    [args.bytes.length, sniffAccepted(args.bytes), sha, args.doc_id]);
+  return { ok: true, written_at, sent_before: before?.created_at ?? null };
 }
 
 /* ------------------------------------------------------------------ *

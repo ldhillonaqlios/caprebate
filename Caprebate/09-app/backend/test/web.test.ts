@@ -391,7 +391,7 @@ test('an unclassifiable upload is refused AND its quarantine object is still del
   });
   const token = new URL('http://x' + b.url).searchParams.get('token') ?? '';
   const w = await acceptClientBytes(deps, {
-    doc_id: b.doc_id, token, bytes: new Uint8Array(Buffer.from('%PDF-1.4\nsomething\n')),
+    doc_id: b.doc_id, token, bytes: new Uint8Array(Buffer.from('%PDF-1.4\nsomething\n%%EOF\n')), // Phase 157d: a complete PDF ends with %%EOF
   });
   assert.equal(w.ok, true, 'the bytes are a valid PDF, so the format check passes');
 

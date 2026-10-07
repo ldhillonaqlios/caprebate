@@ -221,6 +221,21 @@ export const UPLOAD_LIMITS = {
   ],
 } as const;
 
+/**
+ * PHASE 157d, 6 OCTOBER 2026 (the Friary House run, finding F19): A PDF THAT STOPS PART-WAY IS REFUSED AS DAMAGED.
+ * Every complete PDF ends with an end-of-file marker, `%%EOF`, in its last few hundred bytes (a later saved edit adds
+ * another, later on). One cut off in the middle of sending, or truncated by the program that made it, has none: it
+ * passes the `%PDF` check above and then reads as nothing. The marker is looked for in the last 1,024 bytes, which
+ * allows for the trailing spaces and line ends some programs add after it. Only a PDF is checked; the other formats
+ * have no such marker.
+ */
+export const PDF_EOF_WINDOW = 1024;
+export function pdfLooksComplete(bytes: Uint8Array): boolean {
+  const from = Math.max(0, bytes.length - PDF_EOF_WINDOW);
+  const tail = Buffer.from(bytes.buffer, bytes.byteOffset + from, bytes.length - from).toString('latin1');
+  return tail.includes('%%EOF');
+}
+
 export function sniffAccepted(bytes: Uint8Array): string | null {
   for (const m of UPLOAD_LIMITS.accepted_magic) {
     if (bytes.length < m.bytes.length) continue;

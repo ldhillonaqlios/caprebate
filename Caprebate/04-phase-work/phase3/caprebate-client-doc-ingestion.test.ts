@@ -82,6 +82,8 @@ const ALL_TYPES: readonly DocType[] = [
   'TITLE_REGISTER',
   // Phase 151b, Word question 223
   'TAX_RETURN', 'TAX_COMPUTATION',
+  // Phase 157d, the Friary House run (F16)
+  'COMPLETION_STATEMENT', 'ACCOUNTS', 'CONTRACTOR_INVOICE', 'PLANS',
 ];
 
 const seg = (kind: Segment['kind'], heading: string, page = 1, text = 'body'): Segment =>
@@ -92,7 +94,7 @@ const seg = (kind: Segment['kind'], heading: string, page = 1, text = 'body'): S
  * ================================================================== */
 
 test('C1 every document type has a receipt policy, and there are exactly thirteen (eleven until Phase 151b)', () => {
-  assert.equal(CLIENT_DOC_RECEIPT_POLICY.length, 14); // fourteen since Phase 146l: the Land Registry official copy
+  assert.equal(CLIENT_DOC_RECEIPT_POLICY.length, 18); // fourteen since Phase 146l: the Land Registry official copy; eighteen since Phase 157d
   for (const t of ALL_TYPES) assert.ok(receiptPolicyFor(t), `no policy for ${t}`);
 });
 
@@ -169,11 +171,14 @@ test('C7 NO FIELD IN ANY OF THE ELEVEN SPECIFICATIONS IS A PERSON\'S NAME — as
   // Phase 151b re-ran it for the thirteen tax fields (44 + 13): six on the
   // return, seven on the computation — dates, sums of money, lists of sums by
   // pool, and one company number. None is a name or a tax reference.
-  assert.equal(DOC_SPECS.reduce((a, s) => a + s.fields.length, 0), 57);
+  // Phase 157d re-ran it for the sixteen fields of its four types (57 + 16 = 73): a completion date, a price and its
+  // parts, stamp duty; a period end, a profit, fixed-asset additions and costs, allowances claimed; invoice lines and
+  // totals, VAT and a date; room labels, an area and a drawing date. None is a name, an address or a reference to anyone.
+  assert.equal(DOC_SPECS.reduce((a, s) => a + s.fields.length, 0), 73);
   // Phase 146l re-ran it for the seven official-copy fields (9 + 7 = 16 on the human path): a title number, a tenure,
   // a price, its date, a company number and two counts. None is a name, an address or a personal reference.
   assert.equal(HUMAN_CAPTURE_SPECS.reduce((a, s) => a + s.fields.length, 0), 16);
-  assert.equal(fields.length, 73, 'the field count changed — re-run the field-by-field check before touching this number');
+  assert.equal(fields.length, 89, 'the field count changed — re-run the field-by-field check before touching this number');
 });
 
 /*
@@ -199,7 +204,7 @@ test('C8 every spec field is on the CLIENT_DOC keep list, so no live field fails
     ...DOC_SPECS.flatMap((s) => s.fields.map((f) => f.field_id)),
     ...HUMAN_CAPTURE_SPECS.flatMap((s) => s.fields.map((f) => f.field_id)),
   ];
-  assert.equal(fields.length, 73);
+  assert.equal(fields.length, 89);
   // grant_funder_name and brc_issuing_body need their discriminants; supply both.
   assert.doesNotThrow(() =>
     assertClaimsWritable(

@@ -32,6 +32,7 @@ import { RANGE_QUALIFIER } from './shown-range.ts';
 import * as E from './engaged.ts';
 import * as R from './research.ts';
 import { sendEngagementLetter, signedCopy } from './engagement-send.ts';
+import { setRequiredSigners, type EngagementSigning } from './signing.ts';
 import * as A from './approvals.ts';
 import { STEP_ANCHOR } from './approvals-pages.ts';
 import { clientList, clientListPage, type ClientSort } from './client-list.ts';
@@ -48,6 +49,8 @@ export type EngagedDeps = {
   problem: (res: ServerResponse, actor: Actor, title: string, why: string, back: string, field?: string) => 'handled';
   /** 30 Sep 2026: the site's address, for the portal link in the "Tell the client and move on" email. */
   publicOrigin?: string;
+  /** PHASE 157d: the signing setting this copy runs under, for the letter's links. */
+  signing?: EngagementSigning;
 };
 
 function html(res: ServerResponse, status: number, body: string): void {
@@ -88,9 +91,19 @@ export async function handleEngaged(
   const sendLetter = /^\/staff\/clients\/([A-Za-z0-9-]+)\/engagement\/send$/.exec(path);
   if (sendLetter && method === 'POST') {
     const id = sendLetter[1] ?? '';
-    const r = sendEngagementLetter({ ...deps, email: d.app.email, ...(d.publicOrigin === undefined ? {} : { origin: d.publicOrigin }) }, actor, id);
+    const r = sendEngagementLetter({ ...deps, email: d.app.email, ...(d.publicOrigin === undefined ? {} : { origin: d.publicOrigin }), ...(d.signing === undefined ? {} : { signing: d.signing }) }, actor, id);
     if (!r.ok) return d.problem(res, actor, 'Not sent', r.why, `/staff/clients/${id}?done=letter#letter`);
     redirect(res, `/staff/clients/${id}?done=${r.resent ? 'letter-resent' : 'letter-sent'}#letter`);
+    return 'handled';
+  }
+  /* PHASE 157d: who must sign — one or two of the client's logins, or any one (none ticked). */
+  const signers = /^\/staff\/clients\/([A-Za-z0-9-]+)\/engagement\/signers$/.exec(path);
+  if (signers && method === 'POST') {
+    const id = signers[1] ?? '';
+    const f = await form(req);
+    const r = setRequiredSigners(deps, actor, id, f.getAll('signer'));
+    if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, `/staff/clients/${id}?done=letter#letter`);
+    redirect(res, `/staff/clients/${id}?done=letter-signers#letter`);
     return 'handled';
   }
   const copy = /^\/staff\/clients\/([A-Za-z0-9-]+)\/engagement\/signed\.pdf$/.exec(path);

@@ -307,7 +307,7 @@ describe('4 · the tax computation’s recommendation is kept as the record, and
         assert.ok(!r.label.includes(D.NO_RECEIPT_POLICY), 'a bound type still says it cannot be received');
         assert.match(r.label, /^Switched on\./);
         assert.equal(r.recommended?.strip, 'STRIP_INDIVIDUALS_KEEP_FIGURES');
-        for (const code of ['ACCOUNTS', 'VALUATION', 'ENGAGEMENT_LETTER', 'OTHER']) {
+        for (const code of ['VALUATION', 'ENGAGEMENT_LETTER', 'OTHER']) { // Phase 157d: ACCOUNTS is bound now (migration 099)
           const other = RR.recommendationReading(db, sales, code, rec);
           assert.equal(other.state, rec.approved ? 'APPROVED_NOT_BOUND' : 'RECOMMENDED_NOT_APPROVED');
           assert.ok(other.label.includes(D.NO_RECEIPT_POLICY));
@@ -318,7 +318,7 @@ describe('4 · the tax computation’s recommendation is kept as the record, and
       const mod = RR.RECEIPT_RECOMMENDATIONS.types.find((t) => t.type_code === 'TAX_COMPUTATION');
       assert.deepEqual({ ...row }, { strip: mod?.strip, modelled_on: mod?.modelled_on, reason: mod?.reason });
       const unbound = db.all<{ code: string }>("SELECT code FROM document_types WHERE handler_type IS NULL AND source = 'CRM_SPECIFICATION'").map((x) => x.code);
-      assert.equal(unbound.length, 13);
+      assert.equal(unbound.length, 9); // thirteen until Phase 157d bound four more
       assert.equal(unbound.includes('TAX_COMPUTATION'), false);
     } finally { w.close(); }
   });

@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 24 |
 | Built - awaiting sign-off | 128 |
 | Blocked - question | 0 |
@@ -14,7 +14,7 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 308 |
+| Done | 309 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -1115,7 +1115,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-33 items.
+32 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1239,6 +1239,7 @@
 
 `13024760177` · **Built - awaiting sign-off** · owner Solicitor/DPO
 
+- Note 2026-10-06 (Phase 157d): Phase 157d bound four of the fourteen on their recorded recommendations (completion statement, accounts, contractor's invoices, plans: strip individuals, keep figures; migration 099), under the build-then-check rule. Nine stay unbound. The approval asked here now covers those four in use.
 
 ### Sharing a referred client's progress with the firm — the opt-in wording, and what the privacy notice must say before the referral form opens
 
@@ -1333,17 +1334,11 @@
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 - Note 2026-10-06 (Phase 157 (sweep)): The tool is built and refuses to run until the officer answers Word question 200; nothing is left to build, so it waits like any built item. Housed as SDP-P43.
 
-### Phase 157d - signing from an emailed link, a second signer, two upload checks and four document types
-
-`13217880529` · **Ready - Claude can build** · owner Claude
-
-- Note 2026-10-06 (Phase 157c): Written by Phase 157c: signing from an emailed link and a second signer (each off until the solicitor answers), duplicates (F18), a damaged PDF (F19), and the four document types nothing can receive yet (F16, moved from 157c).
-
 ---
 
 ## Z · Complete / Not Applicable
 
-308 items.
+309 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3168,4 +3163,11 @@
 `13217233117` · **Done** · owner Claude
 
 - Note 2026-10-06 (Phase 157c): Done 6 Oct 2026: sending the letter, a signature drawn or adopted with a certificate of completion and a signed copy (signing still off), and fifteen of the Friary House findings fixed; 35 tests, 4,825 passing; 157d written for the rest.
+
+### Phase 157d - signing from an emailed link, a second signer, two upload checks and four document types
+
+`13217880529` · **Done** · owner Claude
+
+- Note 2026-10-06 (Phase 157c): Written by Phase 157c: signing from an emailed link and a second signer (each off until the solicitor answers), duplicates (F18), a damaged PDF (F19), and the four document types nothing can receive yet (F16, moved from 157c).
+- Note 2026-10-06 (Phase 157d): Done 6 Oct 2026: signing from an emailed link and a second signer (test copy only), duplicate uploads recognised, damaged PDFs refused, four document types receivable; migrations 097-099; 4,854 passing.
 
