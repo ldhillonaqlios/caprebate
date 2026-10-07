@@ -20,6 +20,7 @@ import { createApp } from '../src/server.ts';
 import {
   ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST, SIGN_LINK_DAYS, SIGN_WORDS, checkSignature, requiredSigners, setRequiredSigners,
   shownLetter, signByLink, signEngagement, signLinkFor, sha256Hex,
+  letterFacts,
 } from '../src/web/signing.ts';
 import { TEST_LETTER_PATH } from '../src/web/letter.ts';
 import { letterState, letterSteps, sendEngagementLetter, signedCopy } from '../src/web/engagement-send.ts';
@@ -42,7 +43,7 @@ const PDF = (body = 'invented') => new Uint8Array(Buffer.from(`%PDF-1.4\n${body}
 function world0(a: TestApp) {
   a.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES ('u-SALES','sales@example.invalid','sales@example.invalid','Sales Person','SALES','x',?,?,NULL)", [T0, T0]);
   const biz = randomUUID();
-  a.db.run('INSERT INTO businesses (id,name,sector,stage,created_at,source) VALUES (?,?,?,?,?,?)', [biz, 'Invented Partners Surgery', 'gp', 'ENGAGEMENT', T0, 'WEBSITE']);
+  a.db.run('INSERT INTO businesses (id,name,sector,stage,created_at,source,claimant_type) VALUES (?,?,?,?,?,?,?)', [biz, 'Invented Partners Surgery', 'gp', 'ENGAGEMENT', T0, 'WEBSITE', 'PARTNERSHIP']);
   const login = (id: string, name: string) => {
     a.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,'CLIENT','x',?,?,?)",
       [id, `${id}@example.invalid`, `${id}@example.invalid`, name, T0, T0, biz]);
@@ -51,11 +52,15 @@ function world0(a: TestApp) {
       [session, id, randomBytes(16).toString('hex'), T0, '2099-01-01T00:00:00.000Z', T0]);
     return { actor: { id, role: 'CLIENT', business_id: biz, disabled: false } as Actor, session };
   };
+  SIGNING_IN = { db: a.db, biz };
   return { biz, login };
 }
 const deps = (a: TestApp) => ({ db: a.db, audit: a.audit, email: a.email, now: a.now, newId: randomUUID });
 const SALES = actor('SALES', 'u-SALES');
-const sha = () => shownLetter({ name: 'Invented Partners Surgery' }, TEST_LETTER_PATH).sha256;
+/* PHASE 158b (F22): the letter shown now carries what the records say (letterFacts), so the fingerprint a signer saw
+   is worked out from the same facts; world0 names the database the current test signs in. */
+let SIGNING_IN: { db: TestApp['db']; biz: string } | null = null;
+const sha = () => shownLetter({ name: 'Invented Partners Surgery' }, TEST_LETTER_PATH, SIGNING_IN === null ? undefined : letterFacts(SIGNING_IN.db, SIGNING_IN.biz)).sha256;
 const input = (name: string) => ({ full_name: name, role: 'Partner', authorised: true, letter_sha256: sha(), typed_as_signature: true });
 const OPTS = { cfg: ENGAGEMENT_SIGNING_TEST, letterPath: TEST_LETTER_PATH };
 

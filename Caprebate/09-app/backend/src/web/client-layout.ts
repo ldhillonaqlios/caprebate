@@ -106,7 +106,12 @@ export function nextStepCard(db: Db, c: ChecksPanel | null, todayIso: string): S
 const STATE_WORDS: Readonly<Record<string, string>> = { FIRED: 'Done', FAILED: 'Failed', NOT_RUN: 'Not run yet', NOT_PERMITTED_YET: 'Waiting' };
 
 /** A lookup's state in words, and its group on the card. */
+/* PHASE 158b (F24, the Friary House run): the Valuation Office rating list was scrapped on 4 October 2026 (Lakhbir,
+   "scrap the VOA rating"; DO NOT REOPEN). It stays in the source register, but the card no longer says it is waiting. */
+const DECIDED_NOT_USED: ReadonlySet<string> = new Set(['VOA']);
+
 function lookupWords(r: SourcesPanel['sources'][number], nowIso: string): { group: string; words: string } {
+  if (DECIDED_NOT_USED.has(r.source_id) && r.state !== 'FIRED') return { group: 'Not used', words: 'Not used' };
   if (r.state === 'FIRED') return { group: 'Done', words: `Done · ${r.fired_at === null ? '' : localStamp(r.fired_at, nowIso)}` };
   if (r.state === 'NOT_RUN' && !r.switched_on) return { group: 'Not switched on', words: 'Not switched on' };
   const w = STATE_WORDS[r.state] ?? r.state;
@@ -119,7 +124,7 @@ export function lookupsCard(src: SourcesPanel | null, nowIso: string): Safe {
   if (src === null) return raw('');
   const rows = src.sources.map((r) => ({ r, ...lookupWords(r, nowIso) }));
   const done = rows.filter((x) => x.r.state === 'FIRED').length;
-  const order = ['Failed', 'Done', 'Waiting', 'Not run yet', 'Not switched on'];
+  const order = ['Failed', 'Done', 'Waiting', 'Not run yet', 'Not switched on', 'Not used'];
   const groups = order.map((g) => ({ g, items: rows.filter((x) => x.group === g) })).filter((x) => x.items.length > 0);
   return h`<section class="clookups" aria-labelledby="clookups-h">
     <p class="eyebrow" id="clookups-h">Lookups <span class="help">${String(done)} of ${String(rows.length)} done</span></p>

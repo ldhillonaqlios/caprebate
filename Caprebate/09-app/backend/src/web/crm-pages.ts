@@ -52,9 +52,11 @@ import { plainNeed } from './next-step.ts';
 import { openClaimQuestions } from './engaged.ts';
 import { claimNextStep } from './next-step.ts';
 import { dueWords, localStamp, ukDate } from './localtime.ts';
-import { navContext } from './navigation.ts';
+import { nameSwitches, navContext } from './navigation.ts';
 import * as SI from './site-area-inputs.ts';
 import * as TH from './title-by-hand.ts';
+import * as SO from './survey-open.ts';
+import { portalStepLine } from './portal-steps.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };
 
@@ -439,8 +441,8 @@ function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonl
     ${p.gate === undefined ? raw('') : h`<h3>Moving on from ${p.gate.label}: ${p.gate.open ? badge('Ready', 'ok') : badge('Not ready yet')}</h3>
       <p class="help">What this step needs: “${brandName(p.gate.procedure_gate)}” Who owns this step: ${brandName(p.gate.owner)}</p>
       <table><tbody>${p.gate.needs.map((n) => h`<tr><td>${n.met ? 'Done' : 'Still needed'}</td><td>${n.what}</td><td>${n.why}</td></tr>`)}</tbody></table>`}
-    ${p.portal === undefined ? raw('') : h`<div class="help">The client’s page shows “${p.portal.shows}”.${why(h`${p.portal.this_claim_evidences === null ? 'This claim’s stage matches no step on the client’s page.'
-        : `This claim’s stage matches “${p.portal.this_claim_evidences}” on the client’s page.`} A move raises the client’s step and never lowers it.`)}</div>`}
+    ${p.portal === undefined ? raw('') : h`<div class="help">The client’s page shows “${p.portal.shows_key === null ? p.portal.shows : portalStepLine(p.portal.shows_key, nameSwitches().portalSteps)}”.${why(h`${p.portal.this_claim_evidences === null ? 'This claim’s stage matches no step on the client’s page.'
+        : `This claim’s stage matches “${p.portal.evidences_key === null ? p.portal.this_claim_evidences : portalStepLine(p.portal.evidences_key, nameSwitches().portalSteps)}” on the client’s page.`} A move raises the client’s step and never lowers it.`)}</div>`}
     </details>`}
     ${p.enquiry === undefined ? raw('') : h`<div id="enquiry-gate">${enquiryBlock(p.enquiry, m?.may_record === true ? `/staff/claims/${id}/checks` : null)}</div>`}
     ${p.confirmations === undefined || p.confirmations.length === 0 ? raw('') : h`<h3>Confirmations at this stage</h3>
@@ -926,6 +928,28 @@ function askableFacts(p: F.FactsPanel): readonly F.FactReading[] {
 /** UI TIDY PHASE 18: a claim section's state, short enough for the left-hand menu. Done and not started say nothing. */
 export const SECTION_STATUS_NOTE: Readonly<Record<'WORKING' | 'WAITING', string>> = Object.freeze({ WORKING: 'to do', WAITING: 'waiting' });
 
+/**
+ * PHASE 158b (F31): the claim's survey job. At Survey, with none open, Admin and Sales choose a surveyor and open it,
+ * which seals the estimate (src/web/survey-open.ts). Once open, whose it is and whether the figures are in. Never a
+ * figure: this page is read by roles the estimate is hidden from.
+ */
+function surveyJobBlock(claim_id: string, p: SO.SurveyJobPanel | null, preferred: string | null): Safe {
+  if (p === null || (!p.at_survey && p.job === null)) return raw('');
+  if (p.job !== null) {
+    return h`<div class="pblock" id="survey-job"><h3>Survey job</h3>
+      <p>${p.job.figures_in ? badge('Figures in', 'ok') : badge('Waiting for the surveyor’s figures')}
+        Open with <strong>${p.job.surveyor ?? 'nobody assigned'}</strong>, since ${localStamp(p.job.opened_at)}.</p></div>`;
+  }
+  if (!p.may_open) return raw('');
+  return h`<div class="pblock" id="survey-job"><h3>Survey job</h3>
+    <p class="help">No survey job is open yet. Opening one gives it to the surveyor and locks our estimate, so the
+      surveyor gives their own figures first.${why('The surveyor sees the figure we showed the client only after they commit theirs.')}</p>
+    ${p.surveyors.length === 0 ? h`<p>${badge('No surveyor login yet', 'warn')} Ask an administrator to add one.</p>`
+      : h`<form method="post" action="/staff/claims/${claim_id}/survey-job">
+      <label>Surveyor <select name="surveyor_id" required>${people(p.surveyors, p.surveyors.some((s) => s.id === preferred) ? preferred : null, 'choose a surveyor')}</select></label>
+      <button type="submit">Open the survey job</button></form>`}</div>`;
+}
+
 function claimPage(
   d: CrmPageDeps, actor: Actor, v: C.ClaimView, msg: string | undefined,
   x: {
@@ -947,6 +971,7 @@ function claimPage(
   const email = emailBlock(biz, v.id, x.contacts);
   const notes = notesBlock(v.timeline, x.may_note ? `/staff/claims/${v.id}/notes` : null, [], biz);
   const pipe = pipelineBlock(v.id, v.pipeline, v.tasks?.may_set_next_action === true ? (v.tasks.owner_choices ?? []) : []);
+  const surveyJob = surveyJobBlock(v.id, SO.surveyJobPanel(db, actor, v.id), v.edit?.current.surveyor_id ?? null);
   const quick: QuickAction[] = [
     ...(tasks.html.includes('action="/staff/tasks"') ? [{ href: '#add-task', label: 'Log a call or add a task' }] : []),
     ...(tasks.html.includes('/next-action"') ? [{ href: '#claim-tasks', label: 'Set the next action' }] : []),
@@ -996,6 +1021,7 @@ function claimPage(
           { label: 'Lost reason', value: v.overview.lost_reason },
         ])}
         ${pipe}
+        ${surveyJob}
         ${v.edit === undefined ? raw('') : h`<details id="change-claim"><summary>Change the owner, surveyor or priority</summary>
           <div class="help">The stage is not changed here.${why('It moves through the steps above.')}</div>
           <form method="post" action="/staff/claims/${v.id}">

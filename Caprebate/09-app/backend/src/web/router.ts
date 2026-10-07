@@ -48,7 +48,7 @@ import { ADDRESS_LOOKUP, addressLookupMissing, findAddresses, searchesToday } fr
 import { ADDRESS_LOOKUP_JS } from './address-lookup-script.ts';
 import { loadLetter } from './letter.ts';
 import * as P from './portal.ts';
-import { ENGAGEMENT_SIGNING, SIGN_WORDS, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning } from './signing.ts';
+import { ENGAGEMENT_SIGNING, SIGN_WORDS, letterFacts, letterOptions, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning, type LetterFacts } from './signing.ts';
 import { portalMessagesBody, readPortalSend, sendFromPortal } from './messages-pages.ts';
 import { clientMessage, type ThreadMessage as MessageView } from './messages.ts';
 import { FsObjectStore } from './objectstore.ts';
@@ -1131,7 +1131,7 @@ async function portalRoutes(
     // 2 Oct 2026: the survey report's card leads, once a tax adviser's sign-off has released it (src/web/report-pages.ts).
     const dashboard = h`${portalReportCard(d.app, business_id)}${portalEvidenceCard(db, business_id)}${portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins })}`;
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
-      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(/^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('again') ?? '') ? { sentBefore: url.searchParams.get('again') as string } : {}), joins, dashboard, ...(welcome === undefined ? {} : { welcome }) }));
+      publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(/^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('again') ?? '') ? { sentBefore: url.searchParams.get('again') as string } : {}), joins, dashboard, rangeBasis: rangeBasisFor(db, business_id), ...(welcome === undefined ? {} : { welcome }) }));
     return 'handled';
   }
 
@@ -2033,6 +2033,18 @@ const BOOKED_FROM: Readonly<Record<string, string>> = Object.freeze({
 export const CLIENT_RANGE_BASIS =
   'An indicative range, built only from what you told us in the assessment. It is the top of the range: our research ' +
   'can move it down, not up. No property registers have been checked yet.';
+/**
+ * PHASE 158b (F30, the Friary House run): once a register has answered, "No property registers have been checked yet"
+ * is no longer true of the client's claim, though it is still true of the figure. So the note says both.
+ */
+export const CLIENT_RANGE_BASIS_AFTER_RESEARCH =
+  'An indicative range, built only from what you told us in the assessment. It is the top of the range: our research ' +
+  'can move it down, not up. We worked it out before checking any property records. We have now started checking the property records.';
+
+export function rangeBasisFor(db: Db, business_id: string): string {
+  const fired = db.get<{ n: number }>("SELECT COUNT(*) AS n FROM research_sources WHERE business_id = ? AND state = 'FIRED'", [business_id])?.n ?? 0;
+  return fired > 0 ? CLIENT_RANGE_BASIS_AFTER_RESEARCH : CLIENT_RANGE_BASIS;
+}
 
 function portalPage(
   actor: Actor, business: P.Business, progress: ReturnType<typeof P.progress>['progress'],
@@ -2042,7 +2054,7 @@ function portalPage(
   slots: ReturnType<typeof publicSlots>, nowIso: string,
   dlv: readonly ClientDeliverable[] = [],
   share: readonly ClientShareChoice[] = [],
-  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[]; readonly sent?: boolean; readonly sentBefore?: string; readonly joins?: Readonly<Record<string, string>>; readonly dashboard?: Safe } = {},
+  extra: { readonly proposedSteps?: boolean; readonly welcome?: Safe; readonly claims?: readonly P.PortalClaim[]; readonly done?: readonly ClientStep[]; readonly sent?: boolean; readonly sentBefore?: string; readonly joins?: Readonly<Record<string, string>>; readonly dashboard?: Safe; readonly rangeBasis?: string } = {},
 ): string {
   const open = tks.filter((t) => t.state === 'OPEN');
   const asked = reqs.filter((r) => r.state === 'REQUESTED');
@@ -2086,7 +2098,7 @@ function portalPage(
         /* PHASE 157c (the Friary House run, F13): the assessment shows a ceiling, "up to £X", and never a low end, so
            this says the same. It said "£127,500 to £255,000", a range the client was never shown. */
         : h`<p class="figbig">${formatShownRange({ low_pence: null, high_pence: rng.high_pence })}</p>
-            <p class="help">${CLIENT_RANGE_BASIS}</p>`}
+            <p class="help">${extra.rangeBasis ?? CLIENT_RANGE_BASIS}</p>`}
       </section>
 
       ${extra.dashboard !== undefined ? raw('') : h`<section class="card" id="waiting-on-you"><div class="card-h"><h2>What we need from you</h2><span class="count">${open.length + asked.length}</span></div>
@@ -2304,16 +2316,12 @@ function letterPage(
   actor: Actor | undefined, business: Pick<P.Business, 'id' | 'name' | 'company_number'>, eng: P.EngagementView | null,
   problem?: string, typed?: { full_name: string; role: string }, letterPath?: string, signing: EngagementSigning = ENGAGEMENT_SIGNING,
   /** PHASE 157d: where the form posts (the portal, or a signing link), whether this signer has signed, and the steps so far. */
-  extra: { readonly action?: string; readonly mine?: boolean; readonly progress?: readonly string[]; readonly byLink?: boolean } = {},
+  extra: { readonly action?: string; readonly mine?: boolean; readonly progress?: readonly string[]; readonly byLink?: boolean; readonly facts?: LetterFacts } = {},
 ): string {
   // The record's number travels with its name. Absent is omitted, never passed as undefined; a blank is passed and
   // letter.ts treats it as absent — the specimen stays and is flagged, never read as the client's (N4).
-  const shown = shownLetter(business, letterPath);
-  const openTerms = loadLetter({
-    ...(letterPath === undefined ? {} : { path: letterPath }),
-    clientName: business.name,
-    ...(business.company_number === undefined || business.company_number === null ? {} : { companyNumber: business.company_number }),
-  });
+  const shown = shownLetter(business, letterPath, extra.facts);
+  const openTerms = loadLetter(letterOptions(business, letterPath, extra.facts));
   const missing = signingMissing(signing, shown);
   const canSign = eng !== null && (eng.state === 'SENT' || eng.state === 'VIEWED');
   return page({
@@ -2324,7 +2332,7 @@ function letterPage(
       ${problem === undefined ? raw('') : h`<p class="err">${problem}</p>`}
 
       ${openTerms.openTerms.length > 0 ? h`<div class="flag"><strong>Some terms are not settled yet, so they are left blank on purpose.</strong>
-      ${openTerms.openTerms.length} of them. We will not issue the letter until they are.${why(h`If we guessed a figure, the contract would hold a
+      ${openTerms.openTerms.length} of them. ${shown.test_copy ? 'This is the test copy, so it is shown with them left blank. It is never a contract.' : 'We will not issue the letter until they are.'}${why(h`If we guessed a figure, the contract would hold a
       number nobody has agreed. These terms are CAP REBATE LTD’s to settle.`)}
       <ul>${openTerms.openTerms.map((t) => h`<li><strong>${t.clause}</strong> — <q class="letter-quote">${t.text}</q></li>`)}</ul></div>` : raw('')}
 
@@ -2364,9 +2372,10 @@ function letterPage(
 }
 
 /** PHASE 157d: the letter page's second-signer facts — whether this login has signed, and the steps so far. */
-function letterExtra(db: Db, business_id: string, user_id: string): { mine: boolean; progress: string[] } {
+function letterExtra(db: Db, business_id: string, user_id: string): { mine: boolean; progress: string[]; facts: LetterFacts } {
   const ls = letterState(db, business_id);
-  return { mine: ls.state !== 'SIGNED' && ls.signed_by.some((x) => x.user_id === user_id),
+  // PHASE 158b (F22): the client's kind of business, properties, the date sent and the figure shown, for the letter.
+  return { facts: letterFacts(db, business_id), mine: ls.state !== 'SIGNED' && ls.signed_by.some((x) => x.user_id === user_id),
     progress: ls.named.length === 0 && ls.signed_by.length === 0 ? [] : letterSteps(ls).filter((w) => /^(To be signed|Signed by|Waiting)/.test(w)) };
 }
 

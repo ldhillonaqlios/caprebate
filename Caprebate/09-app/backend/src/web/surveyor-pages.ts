@@ -41,6 +41,7 @@ import { setSubMenu } from './navigation.ts';
 import * as S from './surveyor.ts';
 import { registerAttribution } from './research.ts';
 import { formatPence } from './shown-range.ts';
+import { FUNNEL_CEILING, SURVEY_JOB_WORDS as SO_WORDS } from './survey-open.ts';
 import { surveyorThreadPanel } from './messages-pages.ts';
 import { deskFirstReading } from './desk-first.ts';
 
@@ -570,6 +571,8 @@ function fieldList(fields: unknown): string {
 function figuresPanel(w: S.Workspace): Safe {
   const committed = w.job.state === 'COMMITTED_AND_RELEASED';
   const est = w.payload.estimate;
+  // PHASE 158b: an estimate sealed from the funnel's figure holds no pool split or land value; say so, not "£0".
+  const notEstimated = w.estimate_basis === FUNNEL_CEILING;
 
   return h`
     <h2>Your figures</h2>
@@ -613,9 +616,9 @@ function figuresPanel(w: S.Workspace): Safe {
          <table><tbody>
            <tr><th>Spend that counts</th><td>${formatPence(est.qualifying_expenditure_pence)}</td></tr>
            <tr><th>Qualifying percentage</th><td>${Math.round(est.qualifying_pct * 1000) / 10}%</td></tr>
-           <tr><th>Main pool</th><td>${formatPence(est.pool_split_main_pence)}</td></tr>
-           <tr><th>Special rate pool</th><td>${formatPence(est.pool_split_special_pence)}</td></tr>
-           <tr><th>Bare land</th><td>${formatPence(est.bare_land_pence)}</td></tr>
+           <tr><th>Main pool</th><td>${notEstimated ? SO_WORDS.not_estimated : formatPence(est.pool_split_main_pence)}</td></tr>
+           <tr><th>Special rate pool</th><td>${notEstimated ? SO_WORDS.not_estimated : formatPence(est.pool_split_special_pence)}</td></tr>
+           <tr><th>Bare land</th><td>${notEstimated ? SO_WORDS.not_estimated : formatPence(est.bare_land_pence)}</td></tr>
          </tbody></table>
          <p class="help">You may change your own figures after seeing this, if it shows a real
            mistake. Every change now needs a reason. Without one, we cannot tell a fix from being

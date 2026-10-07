@@ -301,6 +301,30 @@ export function clientSaidPurchaseDate(db: Db, property_id: string): string | nu
   return db.get<{ value: string | null }>("SELECT value FROM assessment_answers WHERE assessment_id = ? AND question_id = ? AND state = 'ANSWERED'", [a.id, `Q2-${n}-date`])?.value ?? null;
 }
 
+/**
+ * PHASE 158b (the Friary House run, F28): whether the client said at the assessment that they bought this property -
+ * its own "how did you come by this one?" answer, found by the property's address (or, with one building on both
+ * sides, the only one). 'YES' for a purchase, 'NO' for a build, a refurbishment or a fit-out, null where it cannot be
+ * told. Read where the claim's own fact BOUGHT_THE_BUILDING is not recorded; a fact staff record always wins.
+ */
+export function clientSaidBought(db: Db, property_id: string | null): 'YES' | 'NO' | null {
+  if (property_id === null) return null;
+  const p = db.get<{ business_id: string; label: string }>('SELECT business_id, label FROM properties WHERE id = ?', [property_id]);
+  if (p === undefined) return null;
+  const a = db.get<{ id: string }>('SELECT id FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [p.business_id]);
+  if (a === undefined) return null;
+  const answers = db.all<{ question_id: string; value: string | null }>(
+    "SELECT question_id, value FROM assessment_answers WHERE assessment_id = ? AND state = 'ANSWERED' AND (question_id LIKE 'Q2-%-address' OR question_id LIKE 'Q2-%-trigger')", [a.id]);
+  const at = answers.find((x) => /^Q2-\d+-address$/.test(x.question_id) && x.value === p.label);
+  const triggers = answers.filter((x) => /^Q2-\d+-trigger$/.test(x.question_id));
+  const props = db.get<{ n: number }>('SELECT COUNT(*) AS n FROM properties WHERE business_id = ?', [p.business_id])?.n ?? 0;
+  const n = at !== undefined ? /^Q2-(\d+)-address$/.exec(at.question_id)?.[1] ?? null
+    : triggers.length === 1 && props === 1 ? /^Q2-(\d+)-trigger$/.exec(triggers[0]?.question_id ?? '')?.[1] ?? null : null;
+  if (n === null) return null;
+  const t = triggers.find((x) => x.question_id === `Q2-${n}-trigger`)?.value ?? null;
+  return t === 'purchase' ? 'YES' : t === 'new_build' || t === 'refurb' || t === 'fit_out' ? 'NO' : null;
+}
+
 export function acquisitionDateReading(db: Db, property_id: string | null): FactReading {
   const label = 'The acquisition date';
   if (property_id === null) return unknown('ACQUISITION_DATE', label, false, null);

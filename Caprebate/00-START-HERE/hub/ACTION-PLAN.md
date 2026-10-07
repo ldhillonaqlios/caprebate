@@ -1061,9 +1061,9 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 158b — opening a survey job, the letter's party and property, and the rest of the Friary House run
+## PHASE 158c — the steps staff tick for other people: the surveyor's valuation, the reports, the client's acceptance, the invoice and the filing
 
- **Model: Opus. Written 7 October 2026 by Phase 158a**, from its run of the invented client past the engagement letter (findings F22 to F33 in `04-phase-work/sim-2026-10-06/Friary-House-simulation-findings.md`, OneDrive). The run signed the TEST letter, ran the paid research and reached SURVEY, then stopped: nothing in the application can open a survey job. Nobody needs to answer anything first.
+ **Model: Opus. Written 7 October 2026 by Phase 158b**, from its run of the invented client on from Survey to Closed (findings F34 to F42 in `04-phase-work/sim-2026-10-06/Friary-House-simulation-findings.md`, OneDrive). The journey now runs end to end; what is left is controls: several steps pass on a tick a member of staff makes for somebody else, or on a report the application does not hold. Nobody needs to answer anything first; where a receipt rule is the data protection officer's, build on our recommendation and ask (build, then check).
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1109,63 +1109,45 @@ grade 9 on every screen. Fix what is small and safe; anything larger goes in
 a new lettered phase before the sweep; anything that needs a person goes in
 the Word questions document (AMENDMENT 2 - cp, never mv).
 
-1. F31, THE BLOCKER: OPENING A SURVEY JOB. Nothing in the application creates
-   a survey job: surveyor_jobs and estimates are written only by src/seed.ts
-   and the tests. A claim at SURVEY needs "the surveyor's commitment ... on a
-   survey job on this claim", and the surveyor's commit refuses a job with no
-   locked estimate ("Tell the office - do not work around it"). Build, on the
-   claim page at SURVEY: choose a surveyor (a SURVEYING login) and open the
-   job. Opening it seals the estimate for that claim's assessment - the figure
-   the four-stage funnel showed the client, as an `estimates` row, the shape
-   surveyor.ts sealedEstimate reads - and links the job to the claim. Decide
-   who may open one (Admin and Sales, as engagement.send), write it into the
-   permission table, and keep the estimate out of every surveyor page (the
-   payload proof must still find none as surveyor and all seven as admin).
-   One job per claim at a time; say plainly when one is already open.
-2. F22, THE LETTER NAMES THE WRONG PARTY AND NO PROPERTY. The letter shown for
-   signing named the client "a company registered ... under company number
-   98604417" (the specimen) although the client said Partnership and gave no
-   number, and left "Date:" and "Subject property:" blank although the claim
-   has a property. Fill the client line from the business's claimant type and
-   its company number (a partnership or sole trader is described as one, with
-   no company number), and the property and date from the claim. A letter that
-   would still carry the specimen number is refused for sending, as a blank
-   clause already is. The TEST copy follows the same rule.
-3. F28, AN ANSWER THE CLIENT GAVE IS LOST. "How did you come by this one?
-   purchase" at the assessment is not carried to the claim's fact
-   BOUGHT_THE_BUILDING at conversion, so Data gathering asks staff to record
-   it, and the contract and CPSE are not asked for until they do. Write it at
-   conversion (source CLIENT_ANSWER, a note saying so), and the other
-   assessment answers that have a claim fact, where one exists.
-4. F27 and F30, WHAT THE CLIENT IS SHOWN. (a) The claim page's "the client's
-   page shows ..." read "The engine runs" at ENGAGEMENT, "Engagement - letter,
-   data & AI consent, fee basis" at DATA GATHERING and "Chartered sign-off" at
-   SURVEY: it went down and jumped, though it says a move "never lowers it".
-   Find the mapping and make it follow the stages. (b) After the research ran,
-   the portal still said "What Cap Rebate has done: Nothing yet" and "No
-   property registers have been checked yet". Say what was checked.
-5. THE WORDING (F23, F24, F32). (a) The letter page's "We will not issue the
-   letter until they are" above a TEST copy that was issued: say what is true
-   of the test copy. (b) The client page's lookups list still shows the
-   Valuation Office rating list as "Waiting", and the Data gathering criterion
-   says "no unresolved VOA licence block": the rating list was SCRAPPED on
-   4 Oct (DO NOT REOPEN) - correct the words, not the decision. (c) The staff
-   footer says "no signature provider is connected": signing is in-house now.
-   (d) F29, minor: the address normaliser reads "St Judes" as "STREET JUDES".
-6. THE RUN, ON FROM SURVEY. With item 1 built, pick the Friary House run up
-   again (same invented client, a local copy, CAPREBATE_SIGNING_TEST=1): open
-   the job, the surveyor's figures and the survey pack, VALUATION, the legal
-   check, the tax adviser sign-off screen, the client report and the
-   accountant's pack, the filing confirmation, the invoice and the defence
-   pack. Write each finding as F34 onwards in the same file. Phase 158a's
-   scratch database had one job inserted by hand (F31); start the job again
-   through the new screen.
-7. F26, FOR A PERSON TO LOOK AT. The care regulator lists one location at the
-   surgery's postcode and its address scored 0.00 against ours; the field
-   names match the documentation, so it is most likely another service.
-   cqc.org.uk refuses automated reading, and a test lookup on a client's
-   property is not allowed (Word question 170). If a person confirms it is
-   another service, nothing to fix; otherwise find why.
+1. F35 and F34, THE SURVEYOR'S VALUATION. The Valuation gate reads the staff
+   tick VALUATION_SIGNED ("Valuation signed by the surveyor - every rate
+   sourced"), which the surveyor may not make (403) and Sales may, while the
+   survey pack had no approved version. Make the gate read the pack's own
+   approval (src/web/pack-approve.ts) on a job on the claim, so only the
+   surveyor's approval passes it; retire the staff tick for it the way CRM 6
+   retired others (refused, read by no gate), and say so on the claim page.
+2. F38 and F36, THE REPORTS THE CLAIM ISSUES. Issuing the client report, the
+   accountant's pack and the defence pack asks staff to type a date and a
+   SHA-256; the report type "cannot be stored yet", and the report built from
+   the survey pack (src/web/report-pages.ts) is not linked. Issue the client
+   report from the application's own report (its hash computed, never typed),
+   only after the pack approval and the tax adviser's sign-off; bind the
+   deliverables' document types to receipt policies on our recommendation (as
+   157d did for four types) and record the data protection officer's check.
+   Make the deliverables table's words agree with the types a client can send.
+3. F39, THE CLIENT'S REPORT AND ACCEPTANCE. The portal said "We issued your
+   client report" and gave nothing to open or accept; "The client accepted the
+   report" is only a staff tick. Show the issued report in the portal, with
+   "I accept this report" recorded against its hash (who, when); the gate reads
+   that, not a staff tick. And at Reports the client's step should not say a
+   surveyor is valuing the property: give Reports its true step.
+4. F37, THE WINDOW, EARLY. The amendment window is first tested at Reports; a
+   client who said "06/2019" travelled through the letter, the paid research and
+   the survey first. From the client's own month at the assessment, show a plain
+   warning on the claim page from Engagement on ("on the client's own date the
+   window may have closed - check before the paid research"), using the same
+   reading as Reports; it warns, it does not stop. The stop stays at Reports.
+5. F41, THE INVOICE SENT. The claim moved past Invoice with the fee "raised, not
+   sent". Make the Invoice gate need the invoice sent to the client (or say why
+   not), and keep "raised" and "sent" apart on the claim page.
+6. F42, THE FILING CONFIRMED. The claim closed, and the portal said "Claim
+   filed", with no record that the claim was filed (the reconciliation/filing
+   form exists; no gate asks for it). Make closing a claim that reached the
+   defence pack need the filing recorded, and the portal say "Claim filed" only
+   when it is.
+7. THE RUN, ONCE MORE. With 1 to 6 built, run the invented client from the
+   letter to Closed again on a local copy, with nobody ticking a step for
+   somebody else, and write any finding as F43 onwards.
 ```
 
 ---

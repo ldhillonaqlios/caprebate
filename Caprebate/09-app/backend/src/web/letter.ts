@@ -133,13 +133,42 @@ function readDocumentXml(path: string): string {
 
 const CLAUSE_RE = /^(\d{1,2})\.\s+(.+)$/;
 
+/**
+ * PHASE 158b (F22, the Friary House run): the letter named a partnership "a company registered in England and Wales
+ * under company number 98604417" - the specimen - and left "Date:" and "Subject property:" blank. The client's own
+ * kind of business now decides how the letter describes them: a partnership, a sole trader or an individual has no
+ * company number to give, so the company words and the specimen number go; an LLP is called one. A company with no
+ * number on record keeps the specimen, flagged, as before - and signing refuses it (signing.ts).
+ */
+const SPECIMEN_PARTY = `a company registered in England and Wales under company number ${SPECIMEN_COMPANY_NUMBER}`;
+const SPECIMEN_SIGNATURE_NUMBER = ` (Company No. ${SPECIMEN_COMPANY_NUMBER})`;
+const PARTY_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  PARTNERSHIP: 'a partnership', SOLE_TRADER: 'a sole trader', INDIVIDUAL: 'an individual',
+});
+
 export function loadLetter(
-  opts: { path?: string; clientName?: string; companyNumber?: string; range?: string } = {},
+  opts: {
+    path?: string; clientName?: string; companyNumber?: string; range?: string;
+    /** PHASE 158b: businesses.claimant_type, the property or properties, and the letter's date, as words. */
+    claimantType?: string | null; property?: string | null; date?: string | null;
+  } = {},
 ): Letter {
   const xml = readDocumentXml(opts.path ?? LETTER_PATH);
+  const number = opts.companyNumber?.trim() ?? '';
+  const kind = opts.claimantType ?? null;
 
   const paragraphs: { text: string; heading: boolean }[] = [];
   for (let text of docxParagraphTexts(xml)) {
+    // PHASE 158b: who the client is, before the specimen number is replaced or flagged.
+    const words = kind === null ? undefined : PARTY_WORDS[kind];
+    if (words !== undefined) {
+      text = text.split(SPECIMEN_PARTY).join(words).split(SPECIMEN_SIGNATURE_NUMBER).join('');
+    } else if (kind === 'LLP' && number.length > 0) {
+      text = text.split(SPECIMEN_PARTY).join(`a limited liability partnership registered in England and Wales under number ${number}`)
+        .split(SPECIMEN_SIGNATURE_NUMBER).join(` (Registered No. ${number})`);
+    }
+    if (text === 'Subject property:' && opts.property != null && opts.property.trim() !== '') text = `Subject property: ${opts.property.trim()}`;
+    if (text === 'Date:' && opts.date != null && opts.date.trim() !== '') text = `Date: ${opts.date.trim()}`;
     // Substitute the specimen client, or leave it and let the screen flag it.
     if (opts.clientName !== undefined && opts.clientName.length > 0) {
       text = text.split(SPECIMEN_CLIENT_WITH_SUFFIX).join(opts.clientName);

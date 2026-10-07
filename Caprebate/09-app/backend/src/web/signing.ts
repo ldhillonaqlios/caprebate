@@ -49,7 +49,9 @@ import type { EmailTransport } from '../stubs/email.ts';
 import { authorise, type Actor } from '../authz.ts';
 import { loadLetter } from './letter.ts';
 import { engagement, readBusiness } from './portal.ts';
-import { localWhen } from './localtime.ts';
+import { localWhen, ukDate } from './localtime.ts';
+import { formatPence } from './shown-range.ts';
+import { claimantTypeForGate } from './crm.ts';
 import { buildPdf, flow, type PdfLine } from './pdf.ts';
 
 export type EngagementSigning = {
@@ -123,33 +125,76 @@ export type ShownLetter = {
   readonly business_name: string;
   /** Phase 153d: the test-only copy, with terms nobody has agreed. Never signed. */
   readonly test_copy: boolean;
+  /** PHASE 158b (F22): the letter still names the specimen company number, so it does not say which business is signing. */
+  readonly party_unknown: boolean;
 };
+
+/** PHASE 158b (F22): what the letter says about this client beyond their name - from the records, never typed in. */
+export type LetterFacts = {
+  readonly claimant_type: string | null;
+  /** Every property the business holds with us, by label: one engagement covers all of them. */
+  readonly property: string | null;
+  /** The day the letter was sent, as words; null before it is sent. */
+  readonly date: string | null;
+  /** The figure the client was shown at the assessment, as the portal says it ("up to £255,000"). */
+  readonly range: string | null;
+};
+
+export function letterFacts(db: Db, business_id: string): LetterFacts {
+  const props = db.all<{ label: string }>('SELECT label FROM properties WHERE business_id = ? ORDER BY created_at ASC, id ASC', [business_id])
+    .map((p) => p.label.trim()).filter((l) => l !== '');
+  const sent = db.get<{ sent_at: string | null }>('SELECT sent_at FROM engagements WHERE business_id = ?', [business_id])?.sent_at ?? null;
+  const high = db.get<{ shown_high_pence: number | null }>(
+    'SELECT shown_high_pence FROM assessments WHERE business_id = ? ORDER BY submitted_at DESC, id DESC LIMIT 1', [business_id])?.shown_high_pence ?? null;
+  return {
+    // The client's own entity answer at the assessment, else what staff recorded on the organisation (crm.ts).
+    claimant_type: claimantTypeForGate(db, business_id).value,
+    property: props.length === 0 ? null : props.join('; '),
+    date: sent === null ? null : ukDate(sent),
+    range: high === null || !(high > 0) ? null : `up to ${formatPence(high)}`,
+  };
+}
 
 export function sha256(data: string | Uint8Array): string {
   return createHash('sha256').update(data).digest('hex');
 }
 
-export function shownLetter(business: { name: string; company_number?: string | null }, path?: string): ShownLetter {
-  const letter = loadLetter({
+/** The options loadLetter takes for this client: one place, so the letter shown, signed and listed is the same text. */
+export function letterOptions(business: { name: string; company_number?: string | null }, path?: string, facts?: LetterFacts): Parameters<typeof loadLetter>[0] {
+  return {
     clientName: business.name,
     ...(business.company_number === undefined || business.company_number === null ? {} : { companyNumber: business.company_number }),
     ...(path === undefined ? {} : { path }),
-  });
+    ...(facts === undefined ? {} : {
+      claimantType: facts.claimant_type, property: facts.property, date: facts.date,
+      ...(facts.range === null ? {} : { range: facts.range }),
+    }),
+  };
+}
+
+export function shownLetter(business: { name: string; company_number?: string | null }, path?: string, facts?: LetterFacts): ShownLetter {
+  const letter = loadLetter(letterOptions(business, path, facts));
   const text = letter.paragraphs.map((p) => p.text).join('\n');
   return {
     paragraphs: letter.paragraphs, text, sha256: sha256(text),
     open_terms: letter.openTerms.length, specimens: letter.specimens.length, business_name: business.name,
     test_copy: letter.test_copy,
+    party_unknown: letter.specimens.some((x) => x.includes('company number')),
   };
 }
 
 /** What is still missing before a client can sign — each in plain words. Empty means signing is on for this letter. */
-export function signingMissing(cfg: EngagementSigning, letter: Pick<ShownLetter, 'open_terms' | 'specimens'> & { readonly test_copy?: boolean }): string[] {
+export function signingMissing(cfg: EngagementSigning, letter: Pick<ShownLetter, 'open_terms' | 'specimens'> & { readonly test_copy?: boolean; readonly party_unknown?: boolean }): string[] {
   const out: string[] = [];
+  /* PHASE 158b (F22): a letter that still names the specimen company number does not say which business is signing.
+     Refused in every mode, the test copy's included: the Friary House run signed a partnership in as "company number
+     98604417". The client's kind of business (or a company's number) on their record clears it. */
+  const party = 'We do not know yet which business is signing. Their company number, or what kind of business they are, is not on record.';
   /* 6 October 2026: signing on for testing signs the test copy and nothing else. The test copy's open terms carry test
      defaults (each marked "test default, not agreed"); they are what is being tested, so they do not refuse it here. */
   if (cfg.test_copy_only === true) {
     if (letter.test_copy !== true) out.push('Signing is switched on for testing only, and only the test copy of the letter can be signed there.');
+    else if (letter.party_unknown === true) out.push(party);
     if (cfg.enabled !== true) out.push('Then signing must be switched on.');
     return out;
   }
@@ -157,6 +202,7 @@ export function signingMissing(cfg: EngagementSigning, letter: Pick<ShownLetter,
   if (letter.test_copy === true) out.push('This is the test copy of the letter. Its terms are not agreed, so it can never be signed.');
   if (cfg.solicitor_confirmed !== true) out.push('Our solicitor must confirm that typing your name is a good enough way to sign this letter.');
   if (letter.open_terms > 0 || letter.specimens > 0) out.push('Some terms in the letter are not settled yet, so it cannot be signed.');
+  if (letter.party_unknown === true) out.push(party);
   if (cfg.enabled !== true) out.push('Then signing must be switched on.');
   return out;
 }
@@ -469,7 +515,7 @@ function signAs(
 ): { ok: true; signature_id: string; record_sha256: string; complete: boolean } | { ok: false; why: string } {
   if (state === 'SIGNED') return { ok: false, why: SIGN_WORDS.already };
   if (state === 'NOT_SENT') return { ok: false, why: SIGN_WORDS.not_sent };
-  const letter = shownLetter(b, opts.letterPath);
+  const letter = shownLetter(b, opts.letterPath, letterFacts(d.db, b.id));
   const missing = signingMissing(opts.cfg ?? ENGAGEMENT_SIGNING, letter);
   if (missing.length > 0) return { ok: false, why: `Signing is not switched on yet. ${missing[0]}` };
   const name = fullName(input.full_name);
@@ -639,7 +685,7 @@ export function seedSignatureRecord(
   if (b === undefined || eng === undefined) throw new Error('seedSignatureRecord: no such business or engagement');
   const at = signed_at ?? eng.signed_at ?? d.now();
   const id = d.newId();
-  writeSignature(d, eng.id, shownLetter(b), {
+  writeSignature(d, eng.id, shownLetter(b, undefined, letterFacts(d.db, business_id)), {
     id, engagement_id: eng.id, business_id, origin: 'SEED', user_id: null, session_id: null,
     signer_name: 'Specimen Signer', signer_role: 'Director (demonstration data)', business_name: b.name, signed_at: at, ip: '192.0.2.1',
   }, { id: null, role: 'SYSTEM' });

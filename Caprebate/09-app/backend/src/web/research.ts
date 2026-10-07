@@ -107,6 +107,7 @@ import {
   type SignatoryGates, type SignatoryOutcome, type SignatoryReason, type SignatoryResult, type SignatorySource,
 } from '../connectors/signatory-check.ts';
 import { runSiteAreas, siteAreaLines, storeSiteAreaRuns, type SiteAreaLine, type SiteAreaSetup } from './site-area-run.ts';
+import { raiseToResearch } from './pipeline.ts';
 
 export type Tier = 'FREE' | 'PAID';
 export type SourceState = 'NOT_RUN' | 'FIRED' | 'FAILED' | 'NOT_PERMITTED_YET';
@@ -1116,6 +1117,8 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
     storeSiteAreaRuns(d, actor, business_id, site, at);
   });
   auditSignatoryChecks(d, actor, business_id, checked, at);
+  // PHASE 158b (F30): a signed client's step becomes "We research your property" once a register has answered.
+  raiseToResearch(d.db, business_id, at, { signed: engagement.signed, fired });
 
   d.audit.append({
     at, kind: 'RESEARCH_FIRED', outcome: 'ALLOWED',
