@@ -172,6 +172,37 @@ export function clientAccepted(app: FixtureApp, claim: string): string {
   return id;
 }
 
+/**
+ * PHASE 158c (F42): THE CLAIM'S FILING, RECORDED. A claim that reached the defence pack closes only once the filing is
+ * recorded on its reconciliation. The reconciliation opens with the claim's first sign-off record (written here, with
+ * the sign-off, where the claim has none); the filing date is then recorded through the store, as SALES.
+ */
+export function filingRecorded(app: FixtureApp, claim: string, filed_on = app.now().slice(0, 10)): void {
+  if (app.db.get<{ id: string }>('SELECT id FROM claim_reconciliations WHERE claim_id = ?', [claim]) === undefined) {
+    const c = app.db.get<{ business_id: string; assessment_id: string | null; claim_ref: string }>(
+      'SELECT business_id, assessment_id, claim_ref FROM claims WHERE id = ?', [claim]);
+    assert.ok(c !== undefined, 'no such claim');
+    let s = app.db.get<{ id: string; figure_pence: number; commitment_id: string }>(
+      'SELECT id, figure_pence, commitment_id FROM tax_adviser_signoffs WHERE claim_id = ? ORDER BY recorded_at, rowid LIMIT 1', [claim]);
+    if (s === undefined) {
+      signOffRow(app, c.business_id, c.assessment_id ?? '', claim);
+      s = app.db.get<{ id: string; figure_pence: number; commitment_id: string }>(
+        'SELECT id, figure_pence, commitment_id FROM tax_adviser_signoffs WHERE claim_id = ? LIMIT 1', [claim]);
+    }
+    assert.ok(s !== undefined);
+    const k = app.db.get<{ a_qualifying_plant_pence: number; figures_hash: string }>(
+      'SELECT a_qualifying_plant_pence, figures_hash FROM surveyor_commitments WHERE id = ?', [s.commitment_id]);
+    assert.ok(k !== undefined);
+    app.db.run(
+      'INSERT INTO claim_reconciliations (id, claim_id, case_id, client_sector, b_basis, surveyor_value_pence, surveyor_commitment_id, ' +
+        'surveyor_figures_hash, c_value_pence, c_date_captured, c_cta_reviewer, c_signoff_id, opened_at, snapshot_hash, status) ' +
+        "VALUES (?, ?, ?, 'gp', 'a fixture', ?, ?, ?, ?, '2026-09-01', 'CAPREBATE_CTA', ?, ?, ?, 'OPEN_OUTCOME_PENDING')",
+      [randomUUID(), claim, c.claim_ref, k.a_qualifying_plant_pence, s.commitment_id, k.figures_hash, s.figure_pence, s.id, app.now(), 'f'.repeat(64)]);
+  }
+  const r = R.recordFiling(recordDeps(app), actor('SALES'), claim, { filed_on });
+  assert.equal(r.ok, true, r.ok ? '' : r.why);
+}
+
 /** Draft and issue a deliverable through the register, as SALES. */
 export function issue(app: FixtureApp, claim: string, kind: R.DeliverableKind, content_hash: string | null = null): string {
   if (R.MADE_FROM_REPORT.has(kind)) releaseReportFor(app, claim);

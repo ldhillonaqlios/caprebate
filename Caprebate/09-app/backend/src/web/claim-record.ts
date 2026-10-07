@@ -39,7 +39,7 @@ import { _canonical, type AuditLog } from '../audit.ts';
 import { authorise, can, type Actor, type Obj } from '../authz.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
 import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from './crm.ts';
-import { enteredAt, type Need } from './pipeline.ts';
+import { enteredAt, raiseBusinessStage, type Need } from './pipeline.ts';
 import { assertSignedEngagement, freeGate } from './research.ts';
 import { ctaSwitchReadings } from './engine.ts';
 import { amendmentWindowReading, dateValue, penceValue } from './claim-facts.ts';
@@ -592,9 +592,25 @@ export function recordFiling(d: RecordDeps, actor: Actor, claim_id: string, inpu
   if (filed === null) return { ok: false, why: 'Write the filing date, like 2026-03-31.' };
   if (filed > localDate(d.now())) return { ok: false, why: 'A return cannot be recorded as filed after today.' };
   const at = d.now();
-  d.db.run('UPDATE claim_reconciliations SET filed_on = ?, filed_recorded_by = ?, filed_recorded_at = ? WHERE id = ?', [filed, actor.id, at, r.id]);
-  reconAudit(d, actor, c, 'FILED', at);
+  d.db.tx(() => {
+    d.db.run('UPDATE claim_reconciliations SET filed_on = ?, filed_recorded_by = ?, filed_recorded_at = ? WHERE id = ?', [filed, actor.id, at, r.id]);
+    reconAudit(d, actor, c, 'FILED', at);
+    // PHASE 158c (F42): the client's "5 Claim filed" waits for this record; a claim already past Invoice now shows it.
+    raiseBusinessStage(d.db, c.business_id, at);
+  });
   return { ok: true, id: r.id };
+}
+
+/**
+ * PHASE 158c (F42, the Friary House run): the claim closed, and the portal said "Claim filed", with no record that the
+ * claim was filed. Closing a claim that reached the defence pack needs the filing date on its reconciliation.
+ */
+export function filingRecordedNeed(db: Db, claim_id: string): Need {
+  const what = 'The claim’s filing is recorded, with its date';
+  const r = db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [claim_id]);
+  if (r === undefined) return { what, met: false, why: 'no figure is signed off on this claim, so there is nothing to record the filing against' };
+  if (r.filed_on === null) return { what, met: false, why: 'no filing date is recorded. Record it under Reconciliation once the amended return is filed' };
+  return { what, met: true, why: `filed on ${r.filed_on}` };
 }
 
 /** THE VARIANCE TAG — from the design's taxonomy, tagged by the tax adviser, recorded once. */

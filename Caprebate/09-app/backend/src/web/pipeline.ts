@@ -53,7 +53,7 @@ import { onClaimStageEntered } from './introducers.ts';
 import { cddGateNeed } from './compliance.ts';
 import { amendmentWindowReading, electionResolved, grantsTraced } from './claim-facts.ts';
 import { grantProviderNeed, grantSplitNeed } from './grant-checks.ts';
-import { deliverableIssuedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from './claim-record.ts';
+import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from './claim-record.ts';
 import { clientConfirmationNeed, filingRoute } from './client-filing.ts';
 import {
   EXITS, PROCEDURE_KEYS, PROCEDURE_STAGES, anyStageLabel, claimStage, clientStageFor, exitStage,
@@ -629,6 +629,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // CRM 6 of 10: the pack complete is the deliverables register's issued defence pack, immutable with its hash.
       // The confirmation that stood in for it is retired (MILESTONES below): nothing is left for a click to stand in for.
       needs.push(deliverableIssuedNeed(db, c.id, 'DEFENCE_PACK'));
+      needs.push(filingRecordedNeed(db, c.id)); // PHASE 158c (F42)
       break;
   }
   return {
@@ -704,14 +705,26 @@ export function raiseBusinessStage(db: Db, business_id: string, at: string): Sta
   const b = db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [business_id]);
   if (b === undefined) return null;
   let best: StageKey | null = null;
-  for (const c of db.all<{ stage: string | null; hold_return_stage: string | null }>(
-    'SELECT stage, hold_return_stage FROM claims WHERE business_id = ?', [business_id])) {
-    const k = clientStageFor(c.stage === 'ON_HOLD' ? c.hold_return_stage : c.stage);
+  for (const c of db.all<{ id: string; stage: string | null; hold_return_stage: string | null }>(
+    'SELECT id, stage, hold_return_stage FROM claims WHERE business_id = ?', [business_id])) {
+    const k = clientStageForClaim(db, c.id, c.stage === 'ON_HOLD' ? c.hold_return_stage : c.stage);
     if (k !== null && (best === null || stageIndex(k) > stageIndex(best))) best = k;
   }
   if (best === null || stageIndex(b.stage) >= stageIndex(best)) return null;
   db.run('UPDATE businesses SET stage = ?, updated_at = ? WHERE id = ?', [best, at, business_id]);
   return best;
+}
+
+/**
+ * PHASE 158c (F42, the Friary House run): the client's step a claim evidences. The defence pack and Closed are the
+ * client's "5 Claim filed", and the portal said so with no record that the claim was filed. Until the filing date is on
+ * the claim's reconciliation, such a claim evidences "4 Expert sign-off"; recording it raises the client's step.
+ */
+export function clientStageForClaim(db: Db, claim_id: string, key: string | null): StageKey | null {
+  const k = clientStageFor(key);
+  if (k !== 'INVOICED') return k;
+  const filed = db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [claim_id])?.filed_on ?? null;
+  return filed === null ? 'AT_SURVEY' : k;
 }
 
 /**
@@ -1133,7 +1146,7 @@ export function pipelinePanel(db: Db, actor: Actor, c: PipelineClaim, opts: Gate
 
   const business = db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [c.business_id]);
   const effective = s.kind === 'ON_HOLD' ? c.hold_return_stage : c.stage;
-  const evidences = clientStageFor(effective);
+  const evidences = clientStageForClaim(db, c.id, effective);
   const history = db.all<{
     at: string; kind: string; from_stage: string | null; to_stage: string | null; reason_code: string | null;
     reason_text: string | null; who: string | null;

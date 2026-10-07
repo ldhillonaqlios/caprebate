@@ -382,3 +382,57 @@ describe('F41 — the Invoice gate needs the fee invoice sent, not only raised',
     app.close();
   });
 });
+
+/* ================================================================== *
+ * F42 — the claim closes, and the portal says "Claim filed", only once the filing is recorded
+ * ================================================================== */
+
+describe('F42 — closing needs the filing recorded, and "Claim filed" waits for it', () => {
+  test('the defence pack gate needs the filing date on the claim’s reconciliation', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'DEFENCE_PACK');
+    const need = () => gateNeed(app, c.claim, 'The claim’s filing is recorded');
+    assert.equal(need()?.met, false);
+    assert.match(need()?.why ?? '', /no figure is signed off on this claim/);
+    // Another claim's filing does not count.
+    const other = claimAt(app, 'DEFENCE_PACK');
+    CF.filingRecorded(app, other.claim);
+    assert.equal(need()?.met, false);
+    const today = app.now().slice(0, 10);
+    CF.filingRecorded(app, c.claim, today);
+    assert.equal(need()?.met, true);
+    assert.equal(need()?.why, `filed on ${today}`);
+    app.close();
+  });
+
+  test('signed off, not filed: it says how to record it', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'DEFENCE_PACK');
+    CF.filingRecorded(app, claimAt(app, 'DEFENCE_PACK').claim); // an unrelated claim, filed
+    CF.signOffRow(app, c.business, c.assessment, c.claim);
+    // The reconciliation opens with the sign-off; written by the fixture without a filing date.
+    const s = app.db.get<{ id: string; commitment_id: string; figure_pence: number }>('SELECT id, commitment_id, figure_pence FROM tax_adviser_signoffs WHERE claim_id = ?', [c.claim]);
+    const k = app.db.get<{ figures_hash: string }>('SELECT figures_hash FROM surveyor_commitments WHERE id = ?', [s?.commitment_id ?? '']);
+    app.db.run('INSERT INTO claim_reconciliations (id, claim_id, case_id, client_sector, b_basis, surveyor_value_pence, surveyor_commitment_id, ' +
+      "surveyor_figures_hash, c_value_pence, c_date_captured, c_cta_reviewer, c_signoff_id, opened_at, snapshot_hash, status) VALUES (?, ?, 'CASE', 'gp', 'x', 1, ?, ?, ?, '2026-09-01', 'CAPREBATE_CTA', ?, ?, ?, 'OPEN_OUTCOME_PENDING')",
+      [randomUUID(), c.claim, s?.commitment_id ?? '', k?.figures_hash ?? '', s?.figure_pence ?? 1, s?.id ?? '', T0, 'f'.repeat(64)]);
+    const need = gateNeed(app, c.claim, 'The claim’s filing is recorded');
+    assert.equal(need?.met, false);
+    assert.match(need?.why ?? '', /no filing date is recorded/);
+    app.close();
+  });
+
+  test('the client’s step is "Claim filed" only once the filing is recorded', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'DEFENCE_PACK');
+    const stage = () => app.db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [c.business])?.stage;
+    P.raiseBusinessStage(app.db, c.business, app.now());
+    assert.equal(stage(), 'AT_SURVEY', 'the portal said "Claim filed" with no filing recorded');
+    const panel = () => P.pipelinePanel(app.db, actor('SALES'), P.loadPipelineClaim(app.db, c.claim));
+    assert.equal(panel().portal?.evidences_key, 'AT_SURVEY');
+    CF.filingRecorded(app, c.claim);
+    assert.equal(stage(), 'INVOICED', 'recording the filing did not move the client to "Claim filed"');
+    assert.equal(panel().portal?.evidences_key, 'INVOICED');
+    app.close();
+  });
+});

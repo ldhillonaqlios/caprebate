@@ -414,6 +414,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
       step('DEFENCE_PACK');
       // CRM 6 of 10: the pack complete is the register's issued defence pack, with its hash; the confirmation is retired.
       CF.issue(app, c, 'DEFENCE_PACK');
+      CF.filingRecorded(app, c); // PHASE 158c (F42): the filing recorded before the claim closes
       step('CLOSED');
 
       assert.deepEqual(snapshot(), before, 'a rule changed a gate, a switch, the engagement or the research');

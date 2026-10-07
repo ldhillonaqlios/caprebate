@@ -583,7 +583,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
     } finally { app.close(); }
   });
 
-  test('DEFENCE_PACK → CLOSED: the defence pack ISSUED in the register, with its hash (CRM 6 of 10) — the confirmation is retired — and the claim records its completion date', async () => {
+  test('DEFENCE_PACK → CLOSED: the defence pack ISSUED in the register, with its hash (CRM 6 of 10) — the confirmation is retired — and the filing recorded (Phase 158c, F42); the claim records its completion date', async () => {
     const app = await testApp();
     try {
       staff(app);
@@ -592,6 +592,8 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       assert.equal(P.recordMilestone(deps(app), actor('SALES'), c, 'DEFENCE_PACK_COMPLETE', null).ok, false, 'the retired confirmation was recorded');
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false);
       CF.issue(app, c, 'DEFENCE_PACK');
+      assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false, 'closed with no filing recorded');
+      CF.filingRecorded(app, c); // PHASE 158c (F42)
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, true);
       assert.ok(app.db.get<{ at: string | null }>('SELECT completed_at AS at FROM claims WHERE id = ?', [c])?.at);
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false, 'a closed claim moved on');
@@ -717,6 +719,7 @@ describe('exits keep the record — nothing is deleted', () => {
       // Not from a closed claim: it has finished.
       const closed = claimAt(app, org, 'DEFENCE_PACK');
       CF.issue(app, closed, 'DEFENCE_PACK'); // CRM 6 of 10: the register's issued pack, not a confirmation
+      CF.filingRecorded(app, closed); // PHASE 158c (F42): and the filing recorded
       assert.equal(fwd(app, 'SALES', closed, 'CLOSED').ok, true);
       assert.equal(P.moveClaim(deps(app), actor('SALES'), closed, { kind: 'EXIT', to: 'OUTSIDE_AMENDMENT_WINDOW', reason_code: 'AMENDMENT_WINDOW_CLOSED' }).ok, false);
     } finally { app.close(); }
