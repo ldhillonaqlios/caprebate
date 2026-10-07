@@ -12373,3 +12373,5 @@ NOTHING LEFT  beyond those lines.
 ```
 
  **Claim cleared** in the commit that carries this record.
+
+_7 October 2026, after the close (Lakhbir: "you merge them all", "yes move it", "yes delete it"). Claude merged PR 34 (157d) and then PR 35 (this sweep) into main, both with green checks and clean. The DELETE copy of the Word questions document went to the OneDrive recycle bin through the Microsoft 365 connector, and it is gone from the Mac too. The linked `Caprebate_Questions.docx` is unchanged (109,403 bytes). `Development/_claude-sweep158-transfer/` was deleted (git-ignored; nothing in it was tracked)._
