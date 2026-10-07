@@ -44,7 +44,7 @@ import {
   CLAIMANT_TYPES, OWNER_ROLE_TOKENS, WORKSTREAMS, claimObjFor, claimantTypeForGate, isCompanyOrRoleToken, propertyJurisdiction,
 } from './crm.ts';
 import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
-import { localStamp } from './localtime.ts';
+import { localStamp, ukDate } from './localtime.ts';
 import { formatPence, toPence } from './shown-range.ts';
 import type { PostcodeStore } from './postcode-port.ts';
 
@@ -323,6 +323,34 @@ export function clientSaidBought(db: Db, property_id: string | null): 'YES' | 'N
   if (n === null) return null;
   const t = triggers.find((x) => x.question_id === `Q2-${n}-trigger`)?.value ?? null;
   return t === 'purchase' ? 'YES' : t === 'new_build' || t === 'refurb' || t === 'fit_out' ? 'NO' : null;
+}
+
+/**
+ * PHASE 158c (F37, the Friary House run): THE WINDOW, WARNED EARLY. The amendment window was first tested at Reports, so a
+ * client who said "06/2019" at the assessment went through the letter, the paid research and the survey first. From
+ * Engagement until Reports, where the client's own date (and nothing recorded yet settles it) puts the window out of reach
+ * even on the most generous reading - the latest accounting period the spend could fall in, twelve months on, and the
+ * later of the rules where the client's kind is not known - the claim page says so. It warns; it never stops a claim.
+ */
+const BEFORE_REPORTS: ReadonlySet<string> = new Set(['ENGAGEMENT', 'DATA_GATHERING', 'SURVEY', 'VALUATION', 'TAX_ADVISER_SIGNOFF']);
+
+export function earlyWindowWarning(db: Db, c: { readonly stage: string | null; readonly business_id: string; readonly property_id: string | null }, todayIso: string): string | null {
+  if (c.stage === null || !BEFORE_REPORTS.has(c.stage) || c.property_id === null) return null;
+  const said = clientSaidPurchaseDate(db, c.property_id)?.trim() ?? null;
+  if (said === null) return null;
+  const my = /^(\d{1,2})\/(\d{4})$/.exec(said);
+  const yo = /^(\d{4})$/.exec(said);
+  const spend = my !== null ? new Date(Date.UTC(Number(my[2]), Number(my[1]), 0)) : yo !== null ? new Date(Date.UTC(Number(yo[1]), 11, 31)) : null;
+  if (spend === null || Number.isNaN(spend.getTime())) return null;
+  const end = new Date(Date.UTC(spend.getUTCFullYear() + 1, spend.getUTCMonth(), spend.getUTCDate())).toISOString().slice(0, 10);
+  const t = claimantTypeForGate(db, c.business_id).value;
+  const kinds: readonly ('company' | 'partnership' | 'self_assessment')[] = t === 'COMPANY' ? ['company']
+    : t === 'PARTNERSHIP' || t === 'LLP' ? ['partnership'] : t === null || t === 'CHARITY' ? ['company', 'self_assessment'] : ['self_assessment'];
+  const windows = kinds.map((k) => amendmentWindow(end, k, todayIso, null));
+  if (windows.some((w) => !w.known || w.in_time)) return null;
+  const latest = windows.map((w) => (w.known ? w.deadline : '')).sort().at(-1) ?? '';
+  return `On the client’s own date (${said}) the amendment window has most likely closed. Even on the latest accounting period the spend could fall in, it closed on ${ukDate(latest)}. ` +
+    'Check the dates with the client before the paid research. This is a warning. The claim stops only at Reports, where the window is tested on the recorded dates.';
 }
 
 export function acquisitionDateReading(db: Db, property_id: string | null): FactReading {

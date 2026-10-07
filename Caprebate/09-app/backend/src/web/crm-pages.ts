@@ -56,6 +56,7 @@ import { nameSwitches, navContext } from './navigation.ts';
 import * as SI from './site-area-inputs.ts';
 import * as TH from './title-by-hand.ts';
 import * as SO from './survey-open.ts';
+import { earlyWindowWarning } from './claim-facts.ts';
 import { portalStepLine } from './portal-steps.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };
@@ -972,6 +973,10 @@ function claimPage(
   const notes = notesBlock(v.timeline, x.may_note ? `/staff/claims/${v.id}/notes` : null, [], biz);
   const pipe = pipelineBlock(v.id, v.pipeline, v.tasks?.may_set_next_action === true ? (v.tasks.owner_choices ?? []) : []);
   const surveyJob = surveyJobBlock(v.id, SO.surveyJobPanel(db, actor, v.id), v.edit?.current.surveyor_id ?? null);
+  // PHASE 158c (F37): the amendment window, warned from the client's own date, from Engagement until Reports.
+  const windowRow = db.get<{ stage: string | null; business_id: string; property_id: string | null }>('SELECT stage, business_id, property_id FROM claims WHERE id = ?', [v.id]);
+  const windowWarning = windowRow === undefined ? null : earlyWindowWarning(db, windowRow, nowIso());
+  const windowBlock = windowWarning === null ? raw('') : h`<div class="flag" id="window-warning"><strong>The amendment window may have closed.</strong> ${windowWarning}</div>`;
   const quick: QuickAction[] = [
     ...(tasks.html.includes('action="/staff/tasks"') ? [{ href: '#add-task', label: 'Log a call or add a task' }] : []),
     ...(tasks.html.includes('/next-action"') ? [{ href: '#claim-tasks', label: 'Set the next action' }] : []),
@@ -1020,6 +1025,7 @@ function claimPage(
           { label: 'Hold reason', value: v.overview.hold_reason },
           { label: 'Lost reason', value: v.overview.lost_reason },
         ])}
+        ${windowBlock}
         ${pipe}
         ${surveyJob}
         ${v.edit === undefined ? raw('') : h`<details id="change-claim"><summary>Change the owner, surveyor or priority</summary>

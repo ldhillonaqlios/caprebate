@@ -280,3 +280,83 @@ describe('F39 — what the portal says the team is working on, once the report i
     app.close();
   });
 });
+
+/* ================================================================== *
+ * F37 — the amendment window, warned early, from the client's own date
+ * ================================================================== */
+import * as F from '../src/web/claim-facts.ts';
+
+function said(app: App, assessment: string, label: string, month: string, entity = 'partnership'): void {
+  for (const [ord, q, v] of [[0, 'Q2-1-address', label], [1, 'Q2-1-trigger', 'purchase'], [2, 'Q2-1-date', month], [3, 'Q2-1-entity', entity]] as const) {
+    app.db.run('INSERT INTO assessment_answers (id,assessment_id,ord,question_id,question_text,state,value) VALUES (?,?,?,?,?,?,?)',
+      [randomUUID(), assessment, ord, q, q, 'ANSWERED', v]);
+  }
+}
+
+describe('F37 — a window the client’s own date already puts out of reach is warned from Engagement on', () => {
+  test('bought 06/2019, a partnership: closed even on the latest period it could fall in - warned, not stopped', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'ENGAGEMENT');
+    said(app, c.assessment, 'Main site', '06/2019');
+    const w = F.earlyWindowWarning(app.db, P.loadPipelineClaim(app.db, c.claim), '2026-10-07T12:00:00.000Z');
+    assert.ok(w !== null);
+    assert.match(w ?? '', /On the client’s own date \(06\/2019\)/);
+    assert.match(w ?? '', /it closed on \d{1,2} [A-Z][a-z]{2} 20\d\d\./);
+    assert.match(w ?? '', /before the paid research/);
+    app.close();
+  });
+
+  test('bought 06/2025: open on the latest period it could fall in - no warning; no date given - no warning', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'ENGAGEMENT');
+    said(app, c.assessment, 'Main site', '06/2025');
+    assert.equal(F.earlyWindowWarning(app.db, P.loadPipelineClaim(app.db, c.claim), '2026-10-07T12:00:00.000Z'), null);
+    const d = claimAt(app, 'ENGAGEMENT');
+    assert.equal(F.earlyWindowWarning(app.db, P.loadPipelineClaim(app.db, d.claim), '2026-10-07T12:00:00.000Z'), null);
+    app.close();
+  });
+
+  test('only before Reports, where the window is tested for real', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'REPORTS');
+    said(app, c.assessment, 'Main site', '06/2019');
+    assert.equal(F.earlyWindowWarning(app.db, P.loadPipelineClaim(app.db, c.claim), '2026-10-07T12:00:00.000Z'), null);
+    app.close();
+  });
+});
+
+/** The real server, Sales signed in. */
+async function salesWeb() {
+  const { createApp } = await import('../src/server.ts');
+  const { mkdtempSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-158c-web-')), publicOrigin: 'https://caprebate.example.invalid' });
+  await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
+  const a = made.server.address();
+  const base = `http://127.0.0.1:${typeof a === 'object' && a !== null ? a.port : 0}`;
+  const hash = await made.app.hasher.hash('Invented-Pass-158c');
+  made.app.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES ('u-SALES','sales@158c.example.invalid','sales@158c.example.invalid','Sales Person','SALES',?,?,?,NULL)", [hash, T0, T0]);
+  let cookie = '';
+  const req = async (path: string, init: RequestInit = {}) => {
+    const r = await fetch(base + path, { redirect: 'manual', ...init, headers: { ...(init.headers as Record<string, string> ?? {}), ...(cookie ? { cookie } : {}) } });
+    for (const x of r.headers.getSetCookie()) { const f = x.split(';')[0] ?? ''; const k = f.split('=')[0]; cookie = [...cookie.split('; ').filter((y) => y && y.split('=')[0] !== k), f].join('; '); }
+    return { status: r.status, body: await r.text(), location: r.headers.get('location') };
+  };
+  const post = (path: string, f: Record<string, string>) => req(path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(f).toString() });
+  assert.equal((await post('/login', { email: 'sales@158c.example.invalid', password: 'Invented-Pass-158c' })).status, 303);
+  return { made, req, post };
+}
+
+describe('F37 — on the claim page', () => {
+  test('Sales sees the warning on a claim at Engagement whose client said 06/2019', async () => {
+    const w = await salesWeb();
+    try {
+      const c = claimAt(w.made.app, 'ENGAGEMENT');
+      said(w.made.app, c.assessment, 'Main site', '06/2019');
+      const page = await w.req(`/staff/claims/${c.claim}`);
+      assert.equal(page.status, 200);
+      assert.match(page.body, /id="window-warning"[\s\S]*The amendment window may have closed\.[\s\S]*On the client’s own date \(06\/2019\)/);
+    } finally { w.made.close(); }
+  });
+});
