@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 25 |
 | Built - awaiting sign-off | 128 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 310 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1342,7 +1342,7 @@
 
 ### Phase 158a - the Friary House run past the engagement letter, the F3 wording, and Word question 187 closed
 
-`13228935943` · **Ready - Claude can build** · owner Claude
+`13228935943` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac (Claude Code)**
 
 - Note 2026-10-07 (Phase 158 (sweep)): Written by the Phase 158 sweep: the Friary House run stopped at the engagement letter (Phase 157c) and signing is now on for the TEST copy only (PR 32), so the run can go on; F3 had no home; Word question 187 is answered and built but still open. Nothing waits on anyone.
 

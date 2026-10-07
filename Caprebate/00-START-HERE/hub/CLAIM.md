@@ -2,6 +2,6 @@
 
 **One phase at a time.** Before a phase starts it writes its name, the machine and the time below, then commits and pushes. At its close it clears the lines below back to `(none)`, then commits and pushes. **If a claim is already here when you start, stop: another phase is running, or one died without clearing it.** Ask Lakhbir before overwriting it. This file replaces monday.com's "Claimed by (machine)" column since 25 September 2026.
 
-Phase:   (none)
-Machine: (none)
-Since:   (none)
+Phase:   Phase 158a - the Friary House run past the engagement letter, the F3 wording, and question 187 closed
+Machine: Lakhbir's Mac (Claude Code, OneDrive copy)
+Since:   2026-10-07 18:38 UK
