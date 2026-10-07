@@ -88,7 +88,7 @@ const STREET_SUFFIX_EXPANSIONS: Readonly<Record<string, string>> = Object.freeze
 });
 
 /** Saint names, so "ST" before one stays ST and is not read as STREET (spec A.2 step 1). A short list; the measurement says if it is short enough. */
-const SAINT_NAMES = new Set(['ALBANS', 'ANDREWS', 'ANNES', 'DAVIDS', 'GEORGES', 'HELENS', 'IVES', 'JAMES', 'JOHNS', 'LEONARDS', 'MARYS', 'MICHAELS', 'NEOTS', 'PAULS', 'PETERS', 'STEPHENS', 'THOMAS', 'MARGARETS', 'LUKES', 'MARKS', 'MATTHEWS', 'NICHOLAS', 'AUSTELL', 'BEES', 'HELIER']);
+const SAINT_NAMES = new Set(['ALBANS', 'ANDREWS', 'ANNES', 'DAVIDS', 'GEORGES', 'HELENS', 'IVES', 'JAMES', 'JOHNS', 'LEONARDS', 'MARYS', 'MICHAELS', 'NEOTS', 'PAULS', 'PETERS', 'STEPHENS', 'THOMAS', 'MARGARETS', 'LUKES', 'MARKS', 'MATTHEWS', 'NICHOLAS', 'AUSTELL', 'BEES', 'HELIER', 'JUDES']);
 
 function stripPunctuation(s: string): string {
   return s.replace(/[.,#'"’()\/\\&-]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -97,7 +97,9 @@ function stripPunctuation(s: string): string {
 function expandTokens(s: string): string {
   const toks = s.split(' ').filter(Boolean);
   return toks.map((tok, i) => {
-    if (tok === 'ST') return SAINT_NAMES.has(toks[i + 1] ?? '') ? 'ST' : 'STREET';
+    /* PHASE 158b (F29, the Friary House run): "St Judes" read as STREET JUDES. A street word comes after the name, so an
+       ST that opens a name of more than one word is a saint, whether or not the saint is on the list. */
+    if (tok === 'ST') return SAINT_NAMES.has(toks[i + 1] ?? '') || (i === 0 && toks.length > 1) ? 'ST' : 'STREET';
     return STREET_SUFFIX_EXPANSIONS[tok] ?? tok;
   }).join(' ');
 }

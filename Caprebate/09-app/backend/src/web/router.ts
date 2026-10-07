@@ -2332,7 +2332,7 @@ function letterPage(
       ${problem === undefined ? raw('') : h`<p class="err">${problem}</p>`}
 
       ${openTerms.openTerms.length > 0 ? h`<div class="flag"><strong>Some terms are not settled yet, so they are left blank on purpose.</strong>
-      ${openTerms.openTerms.length} of them. We will not issue the letter until they are.${why(h`If we guessed a figure, the contract would hold a
+      ${openTerms.openTerms.length} of them. ${shown.test_copy ? 'This is the test copy, so it is shown with them left blank. It is never a contract.' : 'We will not issue the letter until they are.'}${why(h`If we guessed a figure, the contract would hold a
       number nobody has agreed. These terms are CAP REBATE LTD’s to settle.`)}
       <ul>${openTerms.openTerms.map((t) => h`<li><strong>${t.clause}</strong> — <q class="letter-quote">${t.text}</q></li>`)}</ul></div>` : raw('')}
 

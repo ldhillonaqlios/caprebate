@@ -177,7 +177,8 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
   DATA_GATHERING_COMPLETE: {
     stage: 'DATA_GATHERING',
     // CRM 6 of 10: the election is a fact on the facts panel now, and the gate reads it; this confirms what nothing derives.
-    label: 'Data gathering complete — floor area sourced; no unresolved VOA licence block',
+    // PHASE 158b (F24): "no unresolved VOA licence block" left out - the rating list was scrapped on 4 Oct 2026, so no source needs one.
+    label: 'Data gathering complete — floor area sourced',
   },
   VALUATION_SIGNED: {
     stage: 'VALUATION',

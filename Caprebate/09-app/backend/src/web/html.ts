@@ -83,6 +83,13 @@ export const PUBLIC_MARK =
   '<rect class="mk-key" x="28" y="29.5" width="4" height="4" rx="1"/><rect class="mk-key" x="16" y="35.5" width="4" height="4" rx="1"/>' +
   '<rect class="mk-key" x="22" y="35.5" width="4" height="4" rx="1"/><rect class="mk-key" x="28" y="35.5" width="4" height="4" rx="1"/></svg>';
 
+/**
+ * PHASE 158b (F32, the Friary House run): the staff footer said "no signature provider is connected" after signing was
+ * built in house (157c) and switched on for the test copy (PR 32). What stays true: nothing is paid, and no real
+ * contract can be signed - the test copy is never one.
+ */
+export const STAFF_FOOTER = 'This is a test system. No payment is taken, and no real contract can be signed.';
+
 export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boolean }): string {
   // PHASE 133a: a header that carries its own home (the back office's or the portal's) is drawn as the application
   // header — the name, the search, my open tasks, the user menu, then the tabs. Anything else is the public header.
@@ -119,7 +126,7 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
   <p>Indicative technical reference, not tax advice. The defensible figure comes from a chartered surveyor’s survey and a
   CAA 2001 s.562 apportionment, with the filing position signed off by a tax adviser.</p>
   <p><a href="/notices/">Public notices</a> · <a href="/privacy/">Privacy</a></p>
-  ${staff ? h`<p class="build">This is a test system. No payment is taken and no signature provider is connected.</p>` : raw('')}
+  ${staff ? h`<p class="build">${STAFF_FOOTER}</p>` : raw('')}
 </footer>
 </body></html>`.html
   );

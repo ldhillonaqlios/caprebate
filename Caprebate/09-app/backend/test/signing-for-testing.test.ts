@@ -123,6 +123,9 @@ describe('signing on for testing: the test copy only', () => {
       assert.match(page.body, /<script src="\/assets\/signature-pad\.js" defer><\/script>/);
       assert.match(page.csp, /script-src 'self'/);
       assert.doesNotMatch(page.body, /Signing is not switched on yet/);
+      // PHASE 158b (F23): the test copy is shown with its open terms blank, and the page says so, not "we will not issue it".
+      assert.match(page.body, /This is the test copy, so it is shown with them left blank\. It is never a contract\./);
+      assert.doesNotMatch(page.body, /We will not issue the letter until they are/);
       const sha = /name="letter_sha256" value="([0-9a-f]{64})"/.exec(page.body)?.[1] ?? '';
       const signed = await p.post('/portal/letter/sign', { full_name: 'Ivy Inventedperson', signer_role: 'Partner', authorised: 'on', letter_sha256: sha, typed_as_signature: 'on' });
       assert.ok(signed.status === 200 || signed.status === 303, `the sign post answered ${String(signed.status)}: ${signed.body.slice(0, 300)}`);

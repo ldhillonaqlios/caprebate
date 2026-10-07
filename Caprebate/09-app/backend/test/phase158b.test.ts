@@ -380,3 +380,36 @@ describe('F30 — what the client is shown once the research has run', () => {
     app.close();
   });
 });
+
+/* ================================================================== *
+ * F23, F24, F32 — the wording
+ * ================================================================== */
+import { lookupsCard } from '../src/web/client-layout.ts';
+import { STAFF_FOOTER } from '../src/web/html.ts';
+
+describe('F23, F24, F32 — words that said something no longer true', () => {
+  test('F24: the Valuation Office rating list (scrapped 4 Oct 2026) reads "Not used", never "Waiting"', () => {
+    const row = (source_id: string, state: string) => ({ source_id, state, switched_on: true, fired_at: null, publisher: source_id === 'VOA' ? 'Valuation Office Agency' : 'MHCLG', dataset: 'x' });
+    const html = String(lookupsCard({ sources: [row('VOA', 'NOT_PERMITTED_YET'), row('EPC', 'NOT_PERMITTED_YET')], outstanding: 1, rate: { allowed: true } } as never, T0));
+    assert.match(html, /Valuation Office Agency<span class="help"> · x<\/span><\/span> <span class="lk[^"]*">Not used<\/span>/);
+    assert.match(html, /MHCLG<span class="help"> · x<\/span><\/span> <span class="lk[^"]*">Waiting<\/span>/);
+    assert.match(html, /Not used 1/);
+  });
+
+  test('F32: the staff footer no longer says no signature provider is connected', () => {
+    assert.doesNotMatch(STAFF_FOOTER, /no signature provider is connected/);
+    assert.equal(STAFF_FOOTER, 'This is a test system. No payment is taken, and no real contract can be signed.');
+  });
+});
+
+/* F29 (minor): "St Judes" is a saint's name, not a street */
+import { normalizeAddress } from '../src/connectors/matching.ts';
+
+describe('F29 — ST at the start of a name is a saint', () => {
+  test('"St Judes" stays ST; "High St" is still HIGH STREET; "St Marys Road" stays as it was', () => {
+    assert.equal(normalizeAddress({ locality: 'St Judes', postcode: 'PL4 9BH' }).locality, 'ST JUDES');
+    assert.equal(normalizeAddress({ street: 'High St', postcode: 'PL4 9BH' }).street, 'HIGH STREET');
+    assert.equal(normalizeAddress({ street: 'St Marys Road', postcode: 'PL4 9BH' }).street, 'ST MARYS ROAD');
+    assert.equal(normalizeAddress({ street: 'St', postcode: 'PL4 9BH' }).street, 'STREET');
+  });
+});
