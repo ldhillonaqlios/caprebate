@@ -41,6 +41,7 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [x] Close PRs 10 to 17 on GitHub: their work is in main through PR 19. All eight closed (checked 7 Oct 2026).
 - [x] Merge PR 34 (Phase 157d), then the Phase 158 sweep's PR (against main; it also carries 157d's commits, so merging it alone brings 157d in too). The sweep brought 157d up to date with main on 7 Oct 2026, so 34 merges cleanly now. Both merged by Claude on your word ("you merge them all"), 7 Oct 2026: PR 34, then PR 35.
 - [x] Say yes and Claude deletes `Development/_claude-sweep158-transfer/` (git-ignored; the Phase 158 cloud session's patches, all now on the branch). Deleted 7 Oct 2026 on your yes.
+- [ ] A two-minute look (Phase 158b, F26): search cqc.org.uk for "Friary House Surgery" in Plymouth (PL4 9BH) and say whether the regulator lists it at that postcode. Our lookup found one location there and could not match its address to ours; it is most likely another service. The regulator's site refuses our automated reading, and a test lookup on a client's property is not allowed (your Word question 170 conditions).
 - [ ] Sadique: confirm the two WhatsApp answers Lakhbir gave on 5 Oct 2026 (uploaded chats follow the client-message
       retention rule; messages from before the client ticked the WhatsApp box are kept) — FOR-THE-SOLICITOR-DPO-DEVELOPER.
 - [ ] An Android WhatsApp export, made-up content, when one is to hand: the reader was built for Android from WhatsApp's
