@@ -89,6 +89,31 @@ export function commitmentOn(app: FixtureApp, business: string, assessment: stri
 }
 
 /**
+ * PHASE 158c (F35): THE SURVEYOR'S APPROVAL OF THE SURVEY PACK, on a job on THIS claim (the claim's own job if it has one),
+ * written as its rows. The Valuation gate reads it in place of the retired VALUATION_SIGNED tick. Returns the approval's id.
+ */
+export function packApprovedOn(app: FixtureApp, business: string, assessment: string, claim: string, surveyor = 'u-SURVEYING'): string {
+  const at = app.now();
+  let job = app.db.get<{ id: string }>('SELECT id FROM surveyor_jobs WHERE claim_id = ? ORDER BY created_at ASC LIMIT 1', [claim])?.id;
+  if (job === undefined) {
+    job = randomUUID();
+    app.db.run('INSERT INTO surveyor_jobs (id,business_id,assessment_id,surveyor_id,state,committed_at,created_at,claim_id) VALUES (?,?,?,?,?,?,?,?)',
+      [job, business, assessment, surveyor, 'COMMITTED_AND_RELEASED', at, at, claim]);
+  }
+  let pack = app.db.get<{ id: string }>('SELECT id FROM survey_packs WHERE job_id = ?', [job])?.id;
+  if (pack === undefined) {
+    pack = randomUUID();
+    app.db.run('INSERT INTO survey_packs (id, job_id, property_id, created_at, created_by) VALUES (?, ?, NULL, ?, ?)', [pack, job, at, surveyor]);
+  }
+  const version = (app.db.get<{ v: number | null }>('SELECT MAX(version) AS v FROM survey_pack_approvals WHERE pack_id = ?', [pack])?.v ?? 0) + 1;
+  const id = randomUUID();
+  const snapshot = JSON.stringify({ fixture: true, version });
+  app.db.run('INSERT INTO survey_pack_approvals (id, pack_id, version, pack_seq, legal_seq, snapshot_json, fingerprint, approved_by, approved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, pack, version, version, 0, snapshot, createHash('sha256').update(snapshot).digest('hex'), surveyor, at]);
+  return id;
+}
+
+/**
  * THE SIGN-OFF RECORD FOR A CLAIM A TEST PLACES STRAIGHT AT A LATER STAGE —
  * written as its row, against a commitment on a job on the claim, hashed. A claim
  * walked to TAX_ADVISER_SIGNOFF records it through `R.recordSignOff` instead.

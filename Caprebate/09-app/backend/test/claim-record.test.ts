@@ -405,8 +405,10 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
     const app = await testApp();
     try {
       staff(app);
-      const c = claimAt(app, organisation(app), 'VALUATION');
-      confirm(app, c, 'VALUATION_SIGNED');
+      const org = organisation(app);
+      const c = claimAt(app, org, 'VALUATION');
+      // PHASE 158c (F35): the surveyor's approval of the pack stands where the retired VALUATION_SIGNED tick did.
+      CF.packApprovedOn(app, org.business, org.assessment ?? '', c);
       const d = CF.recordDeps(app);
       const traced = () => F.grantsTraced(app.db, c).met;
       assert.equal(traced(), false, 'ABSENT passed');
@@ -508,7 +510,9 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
     assert.ok(P.MILESTONES.DEFENCE_PACK_COMPLETE.retired);
     assert.equal(/election/i.test(P.MILESTONES.DATA_GATHERING_COMPLETE.label), false);
     assert.equal(/grant/i.test(P.MILESTONES.VALUATION_SIGNED.label), false);
-    for (const k of ['DATA_GATHERING_COMPLETE', 'VALUATION_SIGNED', 'CLIENT_ACCEPTED_REPORT', 'ACCOUNTANT_CONFIRMED_RETURN'] as const) {
+    // PHASE 158c (F35): VALUATION_SIGNED is retired too - the surveyor's approval of the survey pack derives it now.
+    assert.ok(P.MILESTONES.VALUATION_SIGNED.retired);
+    for (const k of ['DATA_GATHERING_COMPLETE', 'CLIENT_ACCEPTED_REPORT', 'ACCOUNTANT_CONFIRMED_RETURN'] as const) {
       assert.equal(P.MILESTONES[k].retired, undefined, `${k} was retired though nothing derives it`);
     }
   });

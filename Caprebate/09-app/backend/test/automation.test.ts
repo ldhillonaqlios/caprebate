@@ -392,7 +392,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
       step('SURVEY');
       commitOn(app, org, c);
       step('VALUATION');
-      confirm(app, c, 'VALUATION_SIGNED');
+      CF.packApprovedOn(app, org.business, org.assessment ?? '', c); // PHASE 158c (F35): the surveyor's approval, not a tick
       CF.noGrants(app, c);
       step('TAX_ADVISER_SIGNOFF');
       // CRM 6 of 10: the sign-off RECORD, written through the store a person uses — not a date on the claim.

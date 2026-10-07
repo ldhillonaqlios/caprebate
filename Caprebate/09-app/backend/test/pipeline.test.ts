@@ -459,15 +459,18 @@ describe('every gate is server-side, and every gate has a test that tries to ski
     } finally { app.close(); }
   });
 
-  test('VALUATION → TAX_ADVISER_SIGNOFF: every grant traced (a fact, CRM 6 of 10) AND a confirmation', async () => {
+  test('VALUATION → TAX_ADVISER_SIGNOFF: every grant traced (a fact, CRM 6 of 10) AND the surveyor’s approval of the pack (Phase 158c)', async () => {
     const app = await testApp();
     try {
       staff(app);
-      const c = claimAt(app, organisation(app), 'VALUATION');
+      const org = organisation(app);
+      const c = claimAt(app, org, 'VALUATION');
       assert.equal(fwd(app, 'SALES', c, 'TAX_ADVISER_SIGNOFF').ok, false);
-      confirm(app, c, 'VALUATION_SIGNED');
-      // CRM 6 of 10: the confirmation alone no longer passes — every grant traced is a fact, and never asked does not pass.
-      assert.equal(fwd(app, 'SALES', c, 'TAX_ADVISER_SIGNOFF').ok, false, 'a confirmation stood in for every grant traced');
+      // PHASE 158c (F35): the staff tick is retired; the surveyor's approval of the survey pack stands in its place.
+      assert.equal(P.recordMilestone(deps(app), actor('SALES'), c, 'VALUATION_SIGNED', null).ok, false, 'the retired tick was taken');
+      CF.packApprovedOn(app, org.business, org.assessment ?? '', c);
+      // CRM 6 of 10: the approval alone does not pass — every grant traced is a fact, and never asked does not pass.
+      assert.equal(fwd(app, 'SALES', c, 'TAX_ADVISER_SIGNOFF').ok, false, 'the approval stood in for every grant traced');
       CF.noGrants(app, c);
       assert.equal(fwd(app, 'SALES', c, 'TAX_ADVISER_SIGNOFF').ok, true);
     } finally { app.close(); }

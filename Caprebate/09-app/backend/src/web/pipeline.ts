@@ -183,6 +183,9 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
     stage: 'VALUATION',
     // CRM 6 of 10: every grant traced is a fact on the facts panel now, and the gate reads it; this confirms what nothing derives.
     label: 'Valuation signed by the surveyor — every rate sourced',
+    /* PHASE 158c (F34, F35, the Friary House run): Sales could tick "signed by the surveyor" - the surveyor could not -
+       while the survey pack had no approved version. The gate reads the surveyor's own approval of the pack now. */
+    retired: 'The surveyor’s own approval of the survey pack now counts. This tick is no longer used.',
   },
   CLIENT_ACCEPTED_REPORT: { stage: 'REPORTS', label: 'The client accepted the report' },
   ACCOUNTANT_CONFIRMED_RETURN: {
@@ -195,6 +198,25 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
     retired: 'The defence pack now counts as done when we issue it from the reports list. This tick is no longer used.',
   },
 });
+
+/**
+ * PHASE 158c (F35): THE SURVEYOR'S VALUATION IS THE SURVEYOR'S APPROVAL OF THE PACK (src/web/pack-approve.ts) - a version
+ * approved on a survey job on THIS claim. Approving needs every value, the legal check settled, every chapter opened,
+ * the inspection basis and a RICS number, so no tick can stand in for it.
+ */
+export function packApprovedNeed(db: Db, c: { readonly id: string }): Need {
+  const a = db.get<{ version: number; approved_at: string; name: string | null }>(
+    'SELECT a.version, a.approved_at, u.display_name AS name FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
+      'JOIN surveyor_jobs j ON j.id = p.job_id LEFT JOIN users u ON u.id = a.approved_by WHERE j.claim_id = ? ' +
+      'ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [c.id]);
+  return {
+    what: 'The surveyor approved and signed the survey pack',
+    met: a !== undefined,
+    why: a === undefined
+      ? 'the surveyor has not approved the survey pack on this claim. Only the surveyor’s approval counts.'
+      : `version ${String(a.version)} approved by ${a.name ?? 'a former user'} ${localStamp(a.approved_at)}`,
+  };
+}
 
 /* ================================================================== *
  * 3 · THE ENQUIRY GATE
@@ -529,7 +551,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       needs.push({ what: 'Every grant or contribution traced to the items it paid for', met: g.met, why: g.why });
       // PHASE 153a (Phase 153b lines 12 and 13): no grant split in equal share without its papers or the tax adviser's
       // view; the client has checked with whoever paid. Both met where no grant is left on the claim.
-      needs.push(grantSplitNeed(db, c), grantProviderNeed(db, c), confirmation(db, c, 'VALUATION_SIGNED'));
+      needs.push(grantSplitNeed(db, c), grantProviderNeed(db, c), packApprovedNeed(db, c));
       break;
     }
     case 'TAX_ADVISER_SIGNOFF':
