@@ -311,14 +311,16 @@ function withUnknownPrice(fn) {
   try { return fn(); } finally { M.PARAMS.homedata_cost_per_lookup = was; }
 }
 
-test("D1 the parameter exists, is named, and holds the 8p list price, marked as a list price", () => {
+/* Phase 157b, 6 October 2026: the 8p list price was read once (23 September) and never re-read while Phase 156f
+   changed what we call. It is now the price on our account: 17p a property after signing. */
+test("D1 the parameter exists, is named, and holds our account's 17p a property, saying where it comes from", () => {
   assert.ok("homedata_cost_per_lookup" in M.PARAMS);
-  assert.equal(M.PARAMS.homedata_cost_per_lookup, 0.08);
-  assert.match(M.PARAMS.homedata_cost_per_lookup_basis, /^list price/);
+  assert.equal(M.PARAMS.homedata_cost_per_lookup, 0.17);
+  assert.match(M.PARAMS.homedata_cost_per_lookup_basis, /^our account's price, 6 October 2026: 17 tokens a property after signing \(property 1, address 5, title check 1, planning 5, boundary 5\), 19 where the address was typed/);
   const p = M.addressLookupCost({ properties: 11 });
   assert.equal(p.known, true);
-  assert.equal(Math.round(p.cost * 100), 88, "eleven properties, 88p");
-  assert.match(p.basis, /^list price/, "a result read from the list price says so");
+  assert.equal(Math.round(p.cost * 100), 187, "eleven properties, £1.87");
+  assert.match(p.basis, /^our account's price/, "a result read from the parameter says so");
   assert.equal(M.addressLookupCost({ properties: 1, homedataCostPerLookup: 0.07 }).basis, "supplied");
 });
 
@@ -392,7 +394,7 @@ test("D6 supplied — once per property of the signed job, and nothing charged t
 test("D7 supplied — it flows through to loaded cost and to break-even", () => {
   const c = M.loadedCost("dental", "DESK_ONLY", 100, { properties: 2, homedataCostPerLookup: 3 });
   assert.equal(c.address_lookup.known, true);
-  assert.equal(c.loaded_including_address_lookup, c.loaded + 6);
+  assert.equal(c.loaded_including_address_lookup, c.loaded + 6 + c.address_search.cost_per_signed_job);
   const b = M.breakEvenAllowances("dental", "DESK_ONLY", 100, RATE,
                                   { properties: 2, homedataCostPerLookup: 3 });
   assert.equal(b.address_lookup_known, true);
@@ -429,7 +431,28 @@ test("D11 nothing in the module still calls the lookup a pre-signature cost", ()
   }
   assert.equal(M.costingForGate("dental", "SURVEYOR_VISIT", 120, opts)
                  .loaded_including_address_lookup,
-               M.costingForGate("dental", "SURVEYOR_VISIT", 120, {}).loaded + 6);
+               M.costingForGate("dental", "SURVEYOR_VISIT", 120, {}).loaded + 6 + M.addressSearchCost({}).cost_per_signed_job);
+});
+
+test("D12 the address search at the assessment (Phase 157b): 2p a press, before signing, carried by the enquiries behind a signed job", () => {
+  assert.equal(M.PARAMS.homedata_address_search_cost, 0.02);
+  assert.equal(M.PARAMS.homedata_address_search_per_visitor_cap, 5);
+  assert.equal(M.PARAMS.homedata_address_search_daily_cap, 1.00);
+  const one = M.addressSearchCost({});
+  assert.equal(one.cost_per_enquiry, 0.02);
+  assert.equal(Math.round(one.cost_per_signed_job * 100), 8, "one search an enquiry, one in four signs: 8p a signed job");
+  assert.equal(Math.round(M.addressSearchCost({ conversionRate: 0.1 }).cost_per_signed_job * 100), 20, "one in ten: 20p");
+  assert.equal(M.addressSearchCost({ searchesPerEnquiry: 0 }).cost_per_signed_job, 0, "a typed address costs nothing");
+  assert.equal(one.daily_cap, 1.00, "whatever the rate, £1 a day at most");
+  assert.match(one.when, /before signing/);
+  for (const bad of [-1, 1.5, 6]) assert.equal(codeOf(() => M.addressSearchCost({ searchesPerEnquiry: bad })), "E_BAD_SEARCH_COUNT", String(bad));
+});
+
+test("D13 the search is NOT the paid lookup: it never moves the per-property figure, and it never enters the headline", () => {
+  const c = M.loadedCost("dental", "DESK_ONLY", 100, { properties: 3 });
+  assert.equal(Math.round(c.address_lookup.cost * 100), 51, "three properties at 17p");
+  assert.equal(c.loaded, M.loadedCost("dental", "DESK_ONLY", 100, { properties: 3, searchesPerEnquiry: 5 }).loaded);
+  assert.equal(Math.round((c.loaded_including_address_lookup - c.loaded) * 100), 51 + 8);
 });
 
 test("D10 the other unpriced parameters are named and empty too", () => {

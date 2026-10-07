@@ -1051,99 +1051,6 @@ command that counts it, never the number.
 
 ---
 
-## PHASE 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts
-
- **Model: Opus. Written 6 October 2026 by the Phase 157 sweep**, from the tracker audit it ran: seven papers still describe GoAddress, a live WhatsApp transfer, the Valuation Office or a Homedata account not yet opened, and one decision is buildable as a test default. None needs anybody to answer anything first. Every paper stays a draft for its reviewer; change what is out of date and mark what changed, never the reviewer's own words.
-
-```
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)"; if it has no
-item, create one in 05 · FOR DEVELOPMENT and add it to the tracker. Work on a
-claude/... branch FROM MAIN; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make (status, owner, note, new item) is written to
-  hub/TRACKER.csv too (node 03-app/caprebate-tracker.cjs), and
-  node 03-app/caprebate-tracker.cjs check passes. If the board and the
-  tracker disagree, stop and ask Lakhbir which is right.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md (OneDrive).
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run
-   sheet (update_doc add_markdown_content with no after_block_id; the API
-   doc id for adding is 46840326). Same entry at the top of your record.
-3. DELETE THIS SECTION from the top of the run sheet AND from
-   hub/ACTION-PLAN.md.
-4. Set this phase's board item to its true status and clear "Claimed by";
-   write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-RULES FOR EVERY STEP: the facts to write from are in ACTION-PLAN.md's DECIDED -
-DO NOT REOPEN list and the Phase 156c, 156e and 156f records in PHASE-HISTORY.md.
-GoAddress was removed on 6 Oct 2026 (Homedata, in the UK, answers "Find my
-address", postcode only, capped at £1 a day). WhatsApp is a manual upload since
-5 Oct (no transfer to Meta from our system). Google Analytics is dropped for now.
-The Valuation Office's rating list is scrapped. Homedata's account is open with
-a card since 6 Oct. Each paper's tracker row is named below; note each change on
-it and on the board.
-
-1. The privacy notice draft (12818279787;
-   08-monday-doc-exports/12818279787__Section-1-Who-we-are-and-how-to-contact-us.md):
-   the VOA source row (about line 123) goes; Homedata is used at the assessment
-   (the postcode only, to list addresses) as well as after signing (about line
-   141); "[No account has been opened yet ...]" (about line 224) is out of date.
-2. The list of who receives client personal data (12927931400;
-   06-commercial-and-governance/Caprebate-Recipients-of-Client-Personal-Data-v1.md,
-   about lines 49 and 60): GoAddress (P12) removed; WhatsApp (P11) is a manual
-   upload with no transfer from us; Google Analytics (P15) dropped for now;
-   Homedata at the assessment added.
-3. Three papers with the same stale rows: Retention Determinations (12945903194,
-   about line 645: "GoAddress, which 'Find my address' now uses"); the Business
-   Continuity and Disaster Recovery Plan (12552682536, about lines 92 and 169:
-   GoAddress and WhatsApp Cloud recovery rows); Breach and Transparency
-   Communications (12927894775, about line 1500: the WhatsApp and GoAddress
-   transfers).
-4. The suppliers' breach duties (12927625052;
-   06-commercial-and-governance/Caprebate-Supplier-Breach-Notification-Duties-v1.md):
-   Homedata "Account not opened" (about line 28) is out of date; read and add the
-   published terms of Didit, Cloudflare, Zoom and Turso, and read Vercel's terms
-   (the paper says "not read for this page"). Checking any SIGNED account terms
-   stays Lakhbir's.
-5. The job cost model (12955448913;
-   04-phase-work/phase9/caprebate-job-economics.cjs, about lines 301-328, and its
-   .md section 6): it still uses Homedata's 8p list price and says an enquiry
-   that never signs cannot have cost a lookup. Since Phase 156f the address box
-   costs 2p before signing (capped at £1 a day) and the paid research about 17p
-   after (1p property, 5p address, 1p title check, 5p planning, 5p boundary).
-   Correct it with its phase9 test, and check the SHAPE the sweep's point 3a
-   names (a price read once and never re-read) everywhere Homedata's price is
-   written.
-6. The rate-card uplifts (12804368154, Word question 235): build them as a
-   switched test default, the way Phase 153d built questions 33 and 34, off,
-   with tests, and turn the question into a viability check for Lakhbir.
-```
-
----
 
 ## PHASE 158 — Sweep and stress-test (the recurring one, always last)
 
@@ -1816,7 +1723,7 @@ _ |
 
  **One honest limit on all of that:** it is one report, on one furnished holiday let, from one firm. It tells us what that firm does. It does not tell us what the profession does.
 
- **What Homedata actually costs per lookup — and this entry has now largely answered itself.** It used to say "we do not have the rate card". **We do: it was read on 23 ****Se****p****temb****er**** 2026 and it is on th****e suppl****i****er'****s ****own ****p****r****icing p****ag****e.** A hundred tokens cost £1, pay as you go, with no plan, no monthly allowance and nothing that resets — only a prepaid balance that answers with a payment error when it runs out. The lookup the connector actually makes costs 8 tokens, 8p: two for the postcode search, five for the address, one for the penny title pre-check. **Two thi****ng****s ****a****bout this ****ent****ry**** a****re worth keepi****n****g rather**** ****th****an ****d****e****le****t****ing.** The first is that a published price read once is not a fact that stays read: this one has been corrected three times, and the free tier recorded on 26 August never existed at all. The second is that the corpus stated the cost of "one lookup" two ways — 8p where it means ours, 7p where it means the supplier's find-then-retrieve. **Phase 147**** ****settle****d it**** on 24 Septemb****e****r**** ****2026:** every sentence about our cost now says 8p and says it is ours, including the worked example and the recommendation in the monday.com questions document, where they were (not in the Word one). The job cost model no longer treats the lookup as money spent before a signature. **What is ****genuinely ****still unknown is ****narrow****e****r**** ****than**** it**** ****w****a****s:** whether the price falls with volume, and whether 8p holds on a real account. Whether we buy a paid lookup at all is no longer open: Lakhbir answered yes on 22 September 2026. So the job cost model's Homedata price stays blank until the account is opened and the first lookup confirms it.
+ **What Homedata actually costs per lookup — and this entry has now largely answered itself.** It used to say "we do not have the rate card". **We do: it was read on 23 ****Se****p****temb****er**** 2026 and it is on th****e suppl****i****er'****s ****own ****p****r****icing p****ag****e.** A hundred tokens cost £1, pay as you go, with no plan, no monthly allowance and nothing that resets — only a prepaid balance that answers with a payment error when it runs out. _(Corrected 6 October 2026, Phase 157b: since Phase 156f a signed property costs 17p — property, address, title check, planning and boundary — and "Find my address" before signing 2p a search, capped at £1 a day. The rest of this paragraph is as it was read on 23 September.)_ The lookup the connector actually makes costs 8 tokens, 8p: two for the postcode search, five for the address, one for the penny title pre-check. **Two thi****ng****s ****a****bout this ****ent****ry**** a****re worth keepi****n****g rather**** ****th****an ****d****e****le****t****ing.** The first is that a published price read once is not a fact that stays read: this one has been corrected three times, and the free tier recorded on 26 August never existed at all. The second is that the corpus stated the cost of "one lookup" two ways — 8p where it means ours, 7p where it means the supplier's find-then-retrieve. **Phase 147**** ****settle****d it**** on 24 Septemb****e****r**** ****2026:** every sentence about our cost now says 8p and says it is ours, including the worked example and the recommendation in the monday.com questions document, where they were (not in the Word one). The job cost model no longer treats the lookup as money spent before a signature. **What is ****genuinely ****still unknown is ****narrow****e****r**** ****than**** it**** ****w****a****s:** whether the price falls with volume, and whether 8p holds on a real account. Whether we buy a paid lookup at all is no longer open: Lakhbir answered yes on 22 September 2026. So the job cost model's Homedata price stays blank until the account is opened and the first lookup confirms it.
 
 
  **The contact telephone number - ****answ****ere****d**** ****24 September**** ****2026: none for now, em****a****il**** ****only.** The gap where a number should have been is gone from both thank-you screens (checked in the site file on 24 September 2026), and the address to show is contact@caprebate.co.uk, which Phase 151 puts on the screens. Kept here so nobody goes looking for the placeholder.

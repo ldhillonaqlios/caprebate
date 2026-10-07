@@ -94,13 +94,89 @@ export const ABOVE_BENEFIT_MODES: Readonly<Record<AboveBenefitMode, string>> = O
 export type FeeControls = {
   readonly above_benefit: { readonly enabled: boolean; readonly mode: AboveBenefitMode | null };
   readonly break_and_abort: { readonly enabled: boolean };
+  /** PHASE 157b: the old rate card's extra charges, at their test defaults (RATE_CARD_UPLIFTS). Absent is off. */
+  readonly uplifts?: { readonly enabled: boolean };
 };
 
 /** AS SHIPPED. Every switch off and no mode chosen. There is no minimum fee — see MINIMUM_FEE_DECISION. */
 export const FEE_CONTROLS: FeeControls = Object.freeze({
   above_benefit: Object.freeze({ enabled: false, mode: null }),
   break_and_abort: Object.freeze({ enabled: false }),
+  uplifts: Object.freeze({ enabled: false }),
 });
+
+/* ================================================================== *
+ * 2a · THE OLD EXTRA CHARGES — PHASE 157b, 6 OCTOBER 2026 (Word question 235)
+ * ================================================================== */
+
+/** Word question 235, quoted. Lakhbir's. Open. */
+export const UPLIFTS_QUESTION = 'Do the old extra charges stay: the add-on for complicated jobs and the £1,500 manual-handling charge?';
+
+/** One thing that made the old card add points for a complicated job. */
+export type UpliftFactor = 'ENTITLEMENT_CHAIN' | 'PRIOR_ELECTION' | 'GRANT_FUNDING' | 'DWELLING_ELEMENT' | 'NO_COMPLETION_STATEMENT';
+
+/**
+ * THE OLD RATE CARD'S EXTRA CHARGES, AS TEST DEFAULTS — NOT AGREED. Built the way Phase 153d built Word questions 33
+ * and 34: the figures the old banded card used (the rate card paper, board item 12804368154, §3 Step 3, before Phase
+ * 132e suspended them), each marked "test default, not agreed", behind a switch that ships OFF, so Lakhbir can see
+ * what they would do to real-looking fees before deciding (the viability check, Word question 235). Nothing here is a
+ * decision: the flat 3% stands, and with the switch off no fee anywhere moves.
+ *   · a complicated job: +0.5 percentage points for each factor below, at most +1.5 points however many apply
+ *   · manual handling: a fixed £1,500 an engagement, where the client declines the automated register lookups
+ */
+export const RATE_CARD_UPLIFTS = Object.freeze({
+  mark: 'test default, not agreed',
+  question: UPLIFTS_QUESTION,
+  points_each: 0.5,
+  points_cap: 1.5,
+  factors: Object.freeze({
+    ENTITLEMENT_CHAIN: 'the entitlement chain needs tracing beyond one previous owner',
+    PRIOR_ELECTION: 'a s.198 or s.199 election exists or is suspected',
+    GRANT_FUNDING: 'grant or contribution funding is involved',
+    DWELLING_ELEMENT: 'a dwelling-house or mixed-use element',
+    NO_COMPLETION_STATEMENT: 'the client cannot produce a completion statement or a fit-out cost package',
+  } satisfies Record<UpliftFactor, string>),
+  manual_handling_pence: 150_000,
+  manual_handling_when: 'the client declines the automated register lookups, so the data is gathered by hand',
+});
+
+export type UpliftReading = {
+  readonly points: number;
+  readonly factors: readonly UpliftFactor[];
+  readonly complexity_pence: number;
+  readonly manual_handling_pence: number;
+  readonly total_pence: number;
+  readonly words: string;
+};
+
+/**
+ * What the old extra charges would add to a fee on these facts, at the test defaults. A reading, not a charge: it is
+ * what computeFee adds when the switch is on, and what the viability preview shows when it is off. An unknown factor
+ * is never assumed present; only the factors named on the facts count.
+ */
+export function upliftReading(f: Pick<FeeFacts, 'claim_value_pence' | 'uplift_factors' | 'manual_handling'>): UpliftReading {
+  const factors = [...new Set(f.uplift_factors ?? [])].filter((x): x is UpliftFactor => Object.hasOwn(RATE_CARD_UPLIFTS.factors, x));
+  const points = Math.min(RATE_CARD_UPLIFTS.points_cap, factors.length * RATE_CARD_UPLIFTS.points_each);
+  const complexity = Math.round(f.claim_value_pence * points / 100);
+  const manual = f.manual_handling === true ? RATE_CARD_UPLIFTS.manual_handling_pence : 0;
+  const parts = [
+    ...(points > 0 ? [`+${points} percentage points for a complicated job (${factors.map((x) => RATE_CARD_UPLIFTS.factors[x]).join('; ')}), ${formatPence(complexity)}`] : []),
+    ...(manual > 0 ? [`${formatPence(manual)} for manual handling (${RATE_CARD_UPLIFTS.manual_handling_when})`] : []),
+  ];
+  return {
+    points, factors, complexity_pence: complexity, manual_handling_pence: manual, total_pence: complexity + manual,
+    words: parts.length === 0 ? 'no extra charge applies on these facts' : `${parts.join('; ')} — ${RATE_CARD_UPLIFTS.mark}`,
+  };
+}
+
+/** THE VIABILITY PREVIEW: the plain fee and what it would be with the old extra charges, whatever the switch says. */
+export function upliftPreview(f: FeeFacts): { readonly plain_fee_pence: number; readonly with_uplifts_pence: number; readonly reading: UpliftReading } | null {
+  const plain = feeDisplay(f.claim_value_pence / 100, null, {});
+  if (!plain.render || plain.amount === null) return null;
+  const p = Math.round(plain.amount * 100);
+  const r = upliftReading(f);
+  return { plain_fee_pence: p, with_uplifts_pence: p + r.total_pence, reading: r };
+}
 
 /* ================================================================== *
  * 3 · WHAT THE LETTER SAYS — READ FROM THE DOCUMENT
@@ -224,6 +300,10 @@ export type FeeFacts = {
   readonly pool_split_main_pence: number | null;
   readonly pool_split_special_pence: number | null;
   readonly period_start: string | null;
+  /** PHASE 157b: what made the job complicated, as the old rate card counted it. Absent is none known. */
+  readonly uplift_factors?: readonly UpliftFactor[];
+  /** PHASE 157b: the client declined the automated register lookups. Absent is no. */
+  readonly manual_handling?: boolean;
 };
 
 export type ControlReadings = {
@@ -231,6 +311,7 @@ export type ControlReadings = {
   readonly minimum_fee: string;
   readonly multi_site_discount: string;
   readonly break_and_abort: string;
+  readonly uplifts: string;
 };
 
 export type RefusalCode = 'ENGINE_WITHHELD' | 'ABOVE_BENEFIT_UNDETERMINED';
@@ -263,6 +344,9 @@ export function controlReadings(controls: FeeControls = FEE_CONTROLS): ControlRe
     break_and_abort: controls.break_and_abort.enabled
       ? 'on — a break fee or an abort fee is raised only as the letter states it'
       : `off — no break fee and no abort fee is raised (“${BREAK_FEE_QUESTION}” is open)`,
+    uplifts: controls.uplifts?.enabled === true
+      ? `on, at test defaults not agreed — +${RATE_CARD_UPLIFTS.points_each} points for each complication, at most +${RATE_CARD_UPLIFTS.points_cap}, and ${formatPence(RATE_CARD_UPLIFTS.manual_handling_pence)} for manual handling`
+      : `off — no extra charge is added to the 3% (“${UPLIFTS_QUESTION}” is open)`,
   };
 }
 
@@ -356,6 +440,21 @@ export function computeFee(f: FeeFacts, controls: FeeControls = FEE_CONTROLS): F
       } else {
         basis.push('the first-year control is on, and the fee does not exceed the first-year saving');
       }
+    }
+  }
+
+  /* PHASE 157b: the old extra charges, only with their switch on. Not on top of a fee the first-year control has just
+     lowered: that control is a ceiling, and adding to it would undo it. */
+  if (controls.uplifts?.enabled === true) {
+    const u = upliftReading(f);
+    if (lowered) {
+      basis.push('the extra charges are not added, because the first-year control lowered the fee');
+    } else if (u.total_pence > 0) {
+      fee += u.total_pence;
+      feeRateUsed = fee / f.claim_value_pence;
+      basis.push(`with the old extra charges: ${u.words}`);
+    } else {
+      basis.push('the extra charges are on, and none applies on these facts');
     }
   }
 

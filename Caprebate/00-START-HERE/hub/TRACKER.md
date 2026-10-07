@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 24 |
 | Built - awaiting sign-off | 128 |
 | Blocked - question | 0 |
@@ -14,7 +14,7 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 308 |
+| Done | 309 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -161,6 +161,7 @@
 
 - File: `08-monday-doc-exports/12945903194__Retention-Determinations-v1.0.md`
 - Note 2026-10-06 (Phase 157 (sweep)): Overtaken text found by the sweep (GoAddress removed and Homedata the property source on 6 Oct; WhatsApp by manual upload on 5 Oct; Homedata's account open): the update is written into Phase 157b, Claude's to do. Status unchanged.
+- Note 2026-10-06 (Phase 157b): Retention Determinations T-ADDR row: GoAddress removed (6 Oct), Homedata answers Find my address; a dated note at the end.
 
 ### DPO to sign that the audit log is tamper-evident, not tamper-proof
 
@@ -187,6 +188,7 @@
 - File: `06-commercial-and-governance/Caprebate-Supplier-Breach-Notification-Duties-v1.md`
 - Note 2026-09-28 (Phase 153): Supplier breach duties paper brought up to date (Phase 153): the data protection mailbox is live and read (data.protection@, Word questions 3 and 216); monday.com dropped 25 Sep; no WordPress host - the test site is on Vercel and the production host is Word question 154; the document reader is the Claude API (Anthropic), chosen and switched off (s.2A).
 - Note 2026-10-06 (Phase 157 (sweep)): Overtaken text found by the sweep (GoAddress removed and Homedata the property source on 6 Oct; WhatsApp by manual upload on 5 Oct; Homedata's account open): the update is written into Phase 157b, Claude's to do. Status unchanged.
+- Note 2026-10-06 (Phase 157b): v1.2: Homedata's account open (6 Oct); the published terms of Didit (48 hours), Cloudflare, Zoom, Vercel (Pro/Enterprise only) and Turso (no public DPA) read and added (§1, §2D); three new asks for Lakhbir (§4 items 7-9).
 
 ### Record the four facts a breach decision turns on, and how we would find out
 
@@ -200,6 +202,7 @@
 
 - File: `06-commercial-and-governance/Caprebate-Recipients-of-Client-Personal-Data-v1.md`
 - Note 2026-10-06 (Phase 157 (sweep)): Overtaken text found by the sweep (GoAddress removed and Homedata the property source on 6 Oct; WhatsApp by manual upload on 5 Oct; Homedata's account open): the update is written into Phase 157b, Claude's to do. Status unchanged.
+- Note 2026-10-06 (Phase 157b): v1.5: P7 Homedata in use (postcode only at the assessment; the address after signing; in the UK); P11 WhatsApp by manual upload, no transfer from us; P12 GoAddress removed; P15 Google Analytics dropped for now.
 
 ### Set up Google Business Profile
 
@@ -338,6 +341,7 @@
 - File: `08-monday-doc-exports/12804368154__Rate-card-bespoke-fee-framework.md`
 - Note 2026-09-28 (Phase 153): Rate card brought into line (Phase 153): 'Saddique' is 'Sadique' throughout (Word question 69); the multi-site discount decision of 24 Sep (case by case, agreed by a person) carried into s.3-s.10, which had said it was undecided; the add-ons wait on Word question 235; who approves the rate card is still open (question 69's second half).
 - Note 2026-10-06 (Phase 157 (sweep)): Buildable as a switched test default, as Phase 153d did for questions 33 and 34: written into Phase 157b.
+- Note 2026-10-06 (Phase 157b): Word question 235: the uplifts built as a switched test default, OFF (FEE_CONTROLS.uplifts, RATE_CARD_UPLIFTS), with the worked figures in the question for Lakhbir's viability check. Status unchanged: his decision.
 
 ### Write & approve governance policies
 
@@ -362,6 +366,7 @@
 - Note 2026-09-25 (Phase 151d, closing Phase 151c): Phase 151c added a dated draft section naming Veriff and Postcodes.io for the data protection officer, with the line the notice at the address question must carry about 'answer it myself'; the empty file entry the board carried since 24 Sep is gone. Gaps the files do not settle are in square brackets for the officer. Still Built - awaiting sign-off (SDP-P10).
 - Note 2026-09-25 (Phase 151f, later): Lakhbir, 25 Sep 2026: the officer approves the Didit entry. Recorded in the draft section; Didit's company filled from its terms. The lawful basis, the selfie (Article 9), retention and Didit's own use of pseudonymised data still need his written answers, and the notice is still a draft, not published.
 - Note 2026-10-06 (Phase 157 (sweep)): Overtaken text found by the sweep (GoAddress removed and Homedata the property source on 6 Oct; WhatsApp by manual upload on 5 Oct; Homedata's account open): the update is written into Phase 157b, Claude's to do. Status unchanged.
+- Note 2026-10-06 (Phase 157b): Privacy notice draft: the VOA row removed; Homedata at the assessment (the postcode only) and after signing, in the UK, in Section 4 and Section 6; 'no account has been opened' corrected (account opened 6 Oct). A dated notes entry for the DPO.
 
 ### CRM 7 of 10 — the invoice-fraud procedure drafted into SOP 9: the invoice email waits on its sign-off
 
@@ -440,6 +445,7 @@
 
 - File: `08-monday-doc-exports/12927894775__Breach-and-Transparency-Communications.md`
 - Note 2026-10-06 (Phase 157 (sweep)): Overtaken text found by the sweep (GoAddress removed and Homedata the property source on 6 Oct; WhatsApp by manual upload on 5 Oct; Homedata's account open): the update is written into Phase 157b, Claude's to do. Status unchanged.
+- Note 2026-10-06 (Phase 157b): Breach and transparency pack: the outside-the-UK wording no longer names WhatsApp, GoAddress or Google Analytics; Homedata (UK) named; a dated note at the end.
 
 ### Article 14 assessment — SIX BLOCKS CORRECTED 1 Sep 2026 (Phase 60). §5.4's no-third-party-name fact is now half true; L5 on Art 11(2) WITHDRAWN, an index is being built
 
@@ -466,6 +472,7 @@
 
 - File: `08-monday-doc-exports/12552682536__Business-Continuity-and-Disaster-Recovery-Plan.md`
 - Note 2026-10-06 (Phase 157 (sweep)): Overtaken text found by the sweep (GoAddress removed and Homedata the property source on 6 Oct; WhatsApp by manual upload on 5 Oct; Homedata's account open): the update is written into Phase 157b, Claude's to do. Status unchanged.
+- Note 2026-10-06 (Phase 157b): BC/DR plan: the outside-services row, the WhatsApp row (manual upload since 5 Oct) and the GoAddress row (now Homedata) corrected; a dated note at the end.
 
 ### Conduct annual GDPR audit
 
@@ -1108,7 +1115,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-33 items.
+32 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1162,6 +1169,7 @@
 `12955448913` · **Built - awaiting sign-off** · owner Surveyor
 
 - Note 2026-10-06 (Phase 157 (sweep)): Overtaken text found by the sweep (GoAddress removed and Homedata the property source on 6 Oct; WhatsApp by manual upload on 5 Oct; Homedata's account open): the update is written into Phase 157b, Claude's to do. Status unchanged.
+- Note 2026-10-06 (Phase 157b): Job cost model: Homedata now 17p a signed property (19p typed), and the 2p Find my address search before signing (capped GBP 1 a day) modelled on its own (addressSearchCost; phase9 D1, D12, D13). The 8p list price, read once and never re-read, corrected in the Developer Spec and the plan too.
 
 ### Stop counting site overheads twice in the cost build-up
 
@@ -1326,17 +1334,11 @@
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 - Note 2026-10-06 (Phase 157 (sweep)): The tool is built and refuses to run until the officer answers Word question 200; nothing is left to build, so it waits like any built item. Housed as SDP-P43.
 
-### Phase 157b - the papers the 4 to 6 October decisions overtook, and the rate-card uplifts
-
-`13215798640` · **Ready - Claude can build** · owner Claude
-
-- Note 2026-10-06 (Phase 157 (sweep)): Written by the Phase 157 sweep from its tracker audit: seven papers overtaken by the 4-6 Oct decisions, and the rate-card uplifts as a test default.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-308 items.
+309 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3148,6 +3150,13 @@
 
 - Note 2026-10-06 (Phase 157 (sweep)): Written by the Phase 157 sweep: 154a1 (a) and (b) and the cost model in the survey pack (153e, 153g, 155). Runs next.
 - Note 2026-10-06 (Phase 157a): Done 6 Oct 2026: the cessation date before the fixed-value question and the block hidden on a pooling nil (Suite AL); the unknown seller nil at the bottom with a flag, branch D and A4 words (Suite AM); the cost model in the survey pack (chapters 11, 14, 22; migration 095; test/phase157a.test.ts); the cost model's VOA text corrected. 4,790 passing. Record in PHASE-HISTORY.
+
+### Phase 157b - the papers the 4 to 6 October decisions overtook, and the rate-card uplifts
+
+`13215798640` · **Done** · owner Claude
+
+- Note 2026-10-06 (Phase 157 (sweep)): Written by the Phase 157 sweep from its tracker audit: seven papers overtaken by the 4-6 Oct decisions, and the rate-card uplifts as a test default.
+- Note 2026-10-06 (Phase 157b): Done 6 Oct 2026: six papers updated, five suppliers' breach terms read, the job cost model's Homedata prices corrected, the rate-card uplifts built as a switched test default (off) with a viability check in Word question 235; 4,834 passing.
 
 ### Phase 157c - what the Friary House run found: the free lookups, the client's answers kept, documents on the claim, and a DocuSign-style signature
 

@@ -129,7 +129,15 @@ The main-rate column uses a chargeable period starting 1 April 2026 (the 14% rat
 
 ---
 
-## 6. What the address lookup costs — a cost of a signed job, once per property, still modelled as empty
+## 6. What the address lookup costs — 17p a property after signing, and a 2p search before it
+
+**Corrected 6 October 2026 (Phase 157b).** Two things here went out of date when Phase 156f made Homedata the property source on 6 October 2026, and the 8p below was a price read once, on 23 September, and never read again:
+
+- **After signing, a lookup is 17 tokens, 17p a property** (it was 8): 1 for the property call, 5 for the address, 1 for the title check, 5 for the planning history and 5 for the site boundary. Where the client picked their address at the assessment, its number is kept and no postcode search is needed; where they typed it, the 2-token postcode search runs again, so 19p. A five-property claim is 85p; eleven care homes are £1.87. `PARAMS.homedata_cost_per_lookup` is **0.17**, and its basis says it is the price on our account, opened with a card on 6 October 2026.
+- **An enquiry that never signs CAN now cost something.** "Find my address" at the assessment is a Homedata postcode search: 2p a press, the postcode only, at most 5 for one visitor and 50 a UK day — so **never more than £1 a day**, however many people use it. It is modelled on its own (`addressSearchCost()`, `PARAMS.homedata_address_search_*`), not mixed into the paid lookup: with one search an enquiry and one enquiry in four signing, a signed job carries **8p** of searches (20p at one in ten). It goes into `loaded_including_address_lookup` with the paid lookup, and never into the headline `loaded`. Suite D12 and D13 hold it.
+
+So the paragraphs below that say an enquiry that never signs cannot have cost anything are true of the paid lookup only. They are kept as the record of how the model was corrected on 24 September.
+
 
 **Rewritten 24 September 2026 by Phase 147.** This section used to call the Homedata address lookup "the only per-claim cost incurred **before a client signs anything**", charge it four times over to the enquiries that fail, and offer it as a reason to cap how many properties the free tier looks up. All three rested on one premise, and Lakhbir's rule of 4 September 2026 ended it: **a paid call fires only after the engagement letter is signed, when a member of staff clicks Run the research.** The note added on 17 September said so and left the section and the code beneath it unchanged. The old text is in `caprebate-job-economics.md.bak-phase147`.
 

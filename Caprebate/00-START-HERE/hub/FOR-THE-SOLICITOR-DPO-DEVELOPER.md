@@ -2074,6 +2074,14 @@ Name:                                  Date:
 
 ---
 
+## Phase 157b, 6 October 2026 — for the data protection officer: six papers made true to the 4 to 6 October decisions; nothing moved in or out
+
+-  **What changed in the papers you will sign** (each change marked in place, dated 6 October 2026): the privacy notice draft no longer lists the Valuation Office's rating list, and says Homedata, in the UK, receives the postcode at "Find my address" and the property's address after signing; the list of who receives client personal data (v1.5) marks GoAddress removed, WhatsApp a manual upload with nothing sent to Meta from us, and Google Analytics dropped for now; Retention Determinations, the Business Continuity and Disaster Recovery Plan and the Breach and Transparency pack drop the same three. **Of the three transfers out of the UK you approved for testing on 30 September, only Zoom's is still used.**
+-  **The suppliers' breach duties (v1.2)** now carry the published terms of Didit (a breach told within 48 hours), Cloudflare, Zoom and Vercel ("without undue delay"; Vercel's only on a Pro or Enterprise plan), and Turso, which publishes no addendum: it has to be downloaded from the account. Three checks are Lakhbir's (§4, items 7 to 9).
+-  **For the developer.** No migration and no route. `FEE_CONTROLS` gains a third switch, `uplifts`, off; the case stamp reads it.
+
+---
+
 ## Phase 157d, 6 October 2026 — signing from an emailed link, a second signer, and four document types; nothing moved in or out
 
 -  **For the solicitor: two more ways of signing, both still off for real clients.** (1) **A link in the letter email** opens the letter for signing without a portal login: one person's, used once, out of date after 7 days. The certificate says it was signed from the link we emailed to that address — what the link proves. **New Word question 246**, under you: may a client sign this way? (2) **A second signer**: our staff can name one or two people who must sign; the letter counts as signed only when both have, and both are on the certificate. Question 194 carries a dated note about it. Both run on the test website, for the test copy of the letter only.

@@ -104,6 +104,10 @@
    reader still returns known:false for a value that is not a number. The
    rule still shows in PARAMS.overhead_per_year and
    PARAMS.surveyor_review_and_sign_quote, which are null.)
+   (Updated 6 October 2026, Phase 157b: the 8p was read once on 23 September and
+   never read again, while Phase 156f changed what we call. It is now 17p a
+   property after signing, the price on our own account, and a separate 2p
+   address search before signing is modelled - PARAMS below.)
 
    RUN THE TESTS
      node --test caprebate-job-economics.test.cjs
@@ -292,16 +296,26 @@ const PARAMS = {
 
      WHEN IT IS SPENT. A paid call fires only after the engagement letter is
      signed (assertSignedEngagement, server side) and a member of staff clicks
-     Run the research. The connector that spends it is built and switched off:
-     09-app/backend/src/connectors/homedata.ts (Phase 146d). So an enquiry that
-     never signs cannot have cost a lookup, and this is a direct cost of a job
+     Run the research: 09-app/backend/src/connectors/homedata.ts (Phase 146d),
+     on for the test website since Phase 156f. This is a direct cost of a job
      that has landed, beside the £50 data line. It is NOT a loading on the
      enquiries that failed, and nothing here charges it to them.
 
-     WHAT OUR LOOKUP COSTS: 8 tokens, 8p a property - 2 for the postcode search,
-     5 for the address, 1 for the title pre-check. The connector computes it
-     (homedataCostPence()) from the price list read on 23 September 2026. The
-     SUPPLIER'S find-then-retrieve is 7 tokens, 7p; that is not what we call.
+     CORRECTED 6 OCTOBER 2026 (PHASE 157b). Since Phase 156f an enquiry that
+     never signs CAN cost something: "Find my address" at the assessment is a
+     Homedata postcode search, 2p, capped at 50 a day (£1). That is a different
+     call, before signing, and it is modelled on its own below
+     (homedata_address_search_*, addressSearchCost), not folded into this one.
+
+     WHAT OUR LOOKUP COSTS, SINCE PHASE 156f (6 October 2026): 17 tokens, 17p a
+     property - 1 for the property call, 5 for the address, 1 for the title
+     pre-check, 5 for the planning history, 5 for the site boundary. Where the
+     client picked their address at the assessment its number is kept, so no
+     postcode search is needed; where they typed it, the 2-token postcode search
+     runs again, 19p. 100 tokens = £1. The weights are HOMEDATA_SLUG_TOKENS and
+     HOMEDATA_PATH_TOKENS in 09-app/backend/src/connectors/homedata.ts.
+     (Until 6 October this said 8 tokens - postcode search, address, title
+     pre-check - from the price list read on 23 September and never re-read.)
 
      SET TO THE LIST PRICE, 24 SEPTEMBER 2026 (Phase 151). Lakhbir called the
      price nominal (Word answer 35, closed that day), so the 8p list price now
@@ -323,9 +337,26 @@ const PARAMS = {
      first real lookup's X-Call-Weight confirm it. Until then it is unknown, and
      unknown is not zero. Suite D pins null and proves the two differ.
      ------------------------------------------------------------------------ */
-  homedata_cost_per_lookup: 0.08,
-  /* What the figure above is. "list price" until an account confirms it. */
-  homedata_cost_per_lookup_basis: "list price: 8 tokens at Homedata's published 100 tokens = GBP 1, read 23 September 2026; not a price on an account",
+  homedata_cost_per_lookup: 0.17,
+  /* What the figure above is. Phase 157b: the account is open (6 Oct 2026), so it is the price on it. */
+  homedata_cost_per_lookup_basis: "our account's price, 6 October 2026: 17 tokens a property after signing (property 1, address 5, title check 1, planning 5, boundary 5), 19 where the address was typed rather than picked; 100 tokens = GBP 1",
+
+  /* ------------------------------------------------------------------------
+     THE ADDRESS SEARCH AT THE ASSESSMENT ("Find my address"). PHASE 157b, 6 OCTOBER 2026.
+
+     BEFORE SIGNING, AND SO CHARGED TO THE ENQUIRIES BEHIND A SIGNED JOB. Since
+     Phase 156f a person who presses "Find my address" makes one Homedata
+     postcode search: 2 tokens, 2p, the postcode only. It is capped: 50 a UK day
+     (£1) and 5 for one visitor (ADDRESS_SEARCH_CAP in
+     09-app/backend/src/connectors/address-lookup.ts). So the most it can cost
+     is £1 a day, whatever happens. A person who types their address costs
+     nothing. Modelled per enquiry, then per signed job through the conversion
+     rate, because the enquiries that never sign did spend it.
+     ------------------------------------------------------------------------ */
+  homedata_address_search_cost: 0.02,
+  homedata_address_search_per_visitor_cap: 5,
+  homedata_address_search_daily_cap: 1.00,
+  homedata_address_search_basis: "our account's price, 6 October 2026: the postcode search is 2 tokens (2p); at most 5 for one visitor and 50 a UK day (GBP 1)",
 
   /* The real overhead. £60,000 is the placeholder inherited from the Phase 1
      options paper and named there as a placeholder. It contains no founder
@@ -454,6 +485,7 @@ function loadedCost(sectorId, routeId, jobsPerYear, opts) {
   const drag = failedEnquiryDrag(routeId, o);
   const oh = overheadPerJob(jobsPerYear, o);
   const lookup = addressLookupCost(o);
+  const search = addressSearchCost(o);
 
   return {
     sector: sectorId,
@@ -475,11 +507,15 @@ function loadedCost(sectorId, routeId, jobsPerYear, opts) {
     loaded: direct + drag + oh,
 
     /* Never added into `loaded` while it is unknown. When it IS known the
-       caller gets loaded_including_address_lookup and can use it. It is added
-       once per property of THIS job - never through the failed-enquiry drag,
-       because an enquiry that did not sign cannot have spent it. */
+       caller gets loaded_including_address_lookup and can use it. The paid
+       lookup is added once per property of THIS job - never through the
+       failed-enquiry drag, because an enquiry that did not sign cannot have
+       spent it. Phase 157b: the address search at the assessment IS spent by
+       enquiries that never sign, so it comes in through the conversion rate
+       (addressSearchCost), and only into this figure. */
     address_lookup: lookup,
-    loaded_including_address_lookup: lookup.known ? direct + drag + oh + lookup.cost : null,
+    address_search: search,
+    loaded_including_address_lookup: lookup.known ? direct + drag + oh + lookup.cost + search.cost_per_signed_job : null,
 
     includes_founder_salary: !!o.includeFounderSalary,
     overhead_basis: isNum(o.overheadPerYear) ? o.overheadPerYear
@@ -530,11 +566,10 @@ function addressLookupCost(opts) {
       properties: properties,
       lookups: properties,
       when: when,
-      why: "what one address lookup costs us is not confirmed. Our lookup is "+
-           "8 tokens (8p) at Homedata's list price read 23 September 2026, but "+
-           "no account is open and no lookup has been bought, so the price is "+
-           "unknown rather than zero. See the Word question \"How much does a "+
-           "Homedata address lookup cost us each time?\".",
+      why: "what one address lookup costs us was not given. On our account it is "+
+           "17 tokens (17p) a property, 19 where the address was typed, but a "+
+           "value that is not a number is unknown rather than zero. See the Word "+
+           "question \"How much does a Homedata address lookup cost us each time?\".",
       /* deliberately absent: cost */
     };
   }
@@ -548,6 +583,41 @@ function addressLookupCost(opts) {
     lookups: properties,
     when: when,
     cost: per * properties
+  };
+}
+
+/* -----------------------------------------------------------------------------
+   THE ADDRESS SEARCH AT THE ASSESSMENT — PHASE 157b, 6 OCTOBER 2026.
+
+   "Find my address" before signing: a 2p Homedata postcode search per press,
+   at most 5 for one visitor and 50 a UK day (£1). Every enquiry may spend it,
+   signed or not, so a signed job carries the searches of the enquiries behind
+   it: searches per enquiry × the cost × 1 / the conversion rate. The daily cap
+   is reported, not divided in: it bounds what all enquiries together can cost
+   in one day, £1, which no conversion rate changes.
+
+   opts: searchesPerEnquiry (default 1; 0 for a person who types the address;
+   at most the per-visitor cap), conversionRate (default the model's 1 in 4).
+   --------------------------------------------------------------------------- */
+function addressSearchCost(opts) {
+  const o = opts || {};
+  const per = PARAMS.homedata_address_search_cost;
+  const searches = isNum(o.searchesPerEnquiry) ? o.searchesPerEnquiry : 1;
+  if (searches < 0 || searches !== Math.floor(searches) || searches > PARAMS.homedata_address_search_per_visitor_cap) {
+    fail("E_BAD_SEARCH_COUNT", "searches per enquiry must be a whole number from 0 to the per-visitor cap",
+         { given: o.searchesPerEnquiry, cap: PARAMS.homedata_address_search_per_visitor_cap });
+  }
+  const conversion = isNum(o.conversionRate) ? o.conversionRate : MODELLING.conversion_rate;
+  const enquiries = 1 / conversion;
+  return {
+    when: "at the assessment, before signing, each time a person presses Find my address",
+    per_search: per,
+    searches_per_enquiry: searches,
+    enquiries_per_signed_job: enquiries,
+    cost_per_enquiry: per * searches,
+    cost_per_signed_job: per * searches * enquiries,
+    daily_cap: PARAMS.homedata_address_search_daily_cap,
+    basis: PARAMS.homedata_address_search_basis,
   };
 }
 
@@ -1485,7 +1555,7 @@ module.exports = {
   FEE_DECISION,
 
   surveyorCost, ctaCost, internalCost,
-  directCost, failedEnquiryDrag, overheadPerJob, addressLookupCost, loadedCost,
+  directCost, failedEnquiryDrag, overheadPerJob, addressLookupCost, addressSearchCost, loadedCost,
 
   breakEvenAllowances, breakEvenPurchasePrice, reportsBasisChange,
   routeDecision, classifyBand,
