@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 311 |
-| Working on it | 1 |
+| Done | 312 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1121,7 +1121,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1340,12 +1340,6 @@
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 - Note 2026-10-06 (Phase 157 (sweep)): The tool is built and refuses to run until the officer answers Word question 200; nothing is left to build, so it waits like any built item. Housed as SDP-P43.
 
-### Phase 158b - opening a survey job, the letter's party and property, and the rest of the Friary House run
-
-`13231249101` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac (Claude Code)**
-
-- Note 2026-10-07 (Phase 158a): Written by Phase 158a: the run stopped at Survey - nothing can open a survey job or lock its estimate (F31); the letter's specimen company number and blank property (F22); the bought answer lost at conversion (F28); the client's step label and the portal's 'nothing yet' (F27, F30); three wording fixes; then the run on from Survey. Nothing waits on anyone.
-
 ### Phase 158c - the steps staff tick for other people: the surveyor's valuation, the reports, the client's acceptance, the invoice and the filing
 
 `13231736097` · **Ready - Claude can build** · owner Claude
@@ -1356,7 +1350,7 @@
 
 ## Z · Complete / Not Applicable
 
-311 items.
+312 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3203,4 +3197,11 @@
 
 - Note 2026-10-07 (Phase 158 (sweep)): Written by the Phase 158 sweep: the Friary House run stopped at the engagement letter (Phase 157c) and signing is now on for the TEST copy only (PR 32), so the run can go on; F3 had no home; Word question 187 is answered and built but still open. Nothing waits on anyone.
 - Note 2026-10-07 (Phase 158a): Done 7 Oct 2026: the run from the letter to Survey (signed the TEST letter, paid research 12p, documents in); stopped at Survey - nothing can open a survey job (F31). F25 and F3 fixed with tests; Word question 187 closed; Phase 158b written (13231249101). 4,869 passing.
+
+### Phase 158b - opening a survey job, the letter's party and property, and the rest of the Friary House run
+
+`13231249101` · **Done** · owner Claude
+
+- Note 2026-10-07 (Phase 158a): Written by Phase 158a: the run stopped at Survey - nothing can open a survey job or lock its estimate (F31); the letter's specimen company number and blank property (F22); the bought answer lost at conversion (F28); the client's step label and the portal's 'nothing yet' (F27, F30); three wording fixes; then the run on from Survey. Nothing waits on anyone.
+- Note 2026-10-07 (Phase 158b): Done 7 Oct 2026: a survey job opened from the claim, sealing the funnel's figure (F31); the letter's party, property, date and figure (F22); the client's bought answer (F28); the client's step and the figure's note (F27, F30); five wording fixes; the invented client run from Survey to Closed; Phase 158c written (13231736097). 4,892 passing.
 

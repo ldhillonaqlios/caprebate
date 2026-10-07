@@ -12425,3 +12425,63 @@ NOTHING LEFT  beyond those lines.
 ```
 
  **Claim cleared** in the commit that carries this record.
+
+
+---
+
+## Phase 158b — opening a survey job, the letter's party and property, and the rest of the Friary House run — 7 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Built what stopped the run at Survey: staff now open a survey job from the claim, and opening it locks the estimate the surveyor's figures release. The letter now names the client as they are (a partnership is not "a company under number 98604417"), with the property, the date and the figure they were shown, and a letter that still names the specimen number cannot be signed. The client's own "I bought it" answer now counts. The claim page shows the client's step in the portal's own numbered words, the portal says the checks have started once they have, and five wording slips are fixed. The invented client was then taken all the way from Survey to Closed. That run found nine more things, all controls (steps staff tick for other people, reports the application does not hold); they are now Phase 158c. 4,892 passing.
+
+- **Claim.** hub/CLAIM.md and board item 13231249101 (board and tracker: Working on it, Lakhbir's Mac), pushed first (`d1d84a7`). Branch `claude/phase-158b` from main after PR 37 merged (Lakhbir: "merge 37 and run 158b").
+- **1. F31, opening a survey job** (`src/web/survey-open.ts`; `POST /staff/claims/{id}/survey-job`; the existing `surveyor_job.assign`, Admin and Sales, which nothing used).
+  - **What it does.** At Survey, the claim page's new "Survey job" box lists the SURVEYING logins, preferring the claim's own surveyor, and opens one job per claim. Opening it, in one transaction, seals the assessment's estimate unless one is already sealed; a sealed estimate is never re-sealed.
+  - **What is sealed.** The spend that counts is the "up to" figure shown (`shown_high_pence`). Its share is that figure divided by the spend the client gave (`Q2-n-spend`). The pools, the land and the saving are 0, and **migration 100** (`estimates.basis`, ADD COLUMN) records FUNNEL_CEILING. The released estimate then says "not estimated at the assessment" for them (`Workspace.estimate_basis`, null before the commit).
+  - **What is logged.** `SURVEY_JOB_OPENED` is logged with no figure. The payload proof still PASSES (surveyor 0 of 7, admin 7 of 7).
+- **2. F22, the letter's party and property** (`src/web/letter.ts`; `src/web/signing.ts` `letterFacts`, `letterOptions`, `party_unknown`; `src/web/router.ts`).
+  - **The client line.** A partnership, sole trader or individual is described as one, with no company number, and the signature block drops "(Company No. ...)". An LLP is "a limited liability partnership registered ... under number X".
+  - **The lines that were blank.** "Subject property:" lists the business's properties, "Date:" the day the letter was sent, and the indicative range "up to £X". The claimant is the client's entity answer, else the organisation's record (`claimantTypeForGate`), so funnel clients are covered.
+  - **The refusal.** `signingMissing` refuses a letter still naming the specimen company number in every mode, the test copy's included. The reason comes after the existing ones, so the first reason a real client reads is unchanged.
+- **3. F28, the "bought" answer** (`clientSaidBought` in `src/web/claim-facts.ts`, read by `src/web/mandatory-documents.ts`). It is found by the property's address, or the only building on both sides. A purchase asks for the contract and the CPSE replies; a build, refurbishment or fit-out does not. A recorded fact always wins.
+- **4. F27 and F30, what the client is shown.**
+  - **F27.** The claim page's "the client's page shows" was the business flow's own labels, unnumbered: "Engagement - letter, data & AI consent" read as a step before "The engine runs". It is now the portal's own line ("Step 2 of 6: Engagement letter signed", `portalStepLine`), under the same name switch. The stage was never lowered; the labels misled.
+  - **F30, the figure note.** Once a register has answered, the note under the figure says "We worked it out before checking any property records. We have now started checking the property records." (`rangeBasisFor`).
+  - **F30, the client's step.** No claim stage mapped to "We research your property", so a client jumped from step 2 to step 4. A research run with an answer, on a signed client, now raises the step to it (`raiseToResearch`; raise only, never before signing).
+- **5. The wording.**
+  - F23: the test letter's blank terms now say "This is the test copy, so it is shown with them left blank. It is never a contract."
+  - F24: the Valuation Office rating list reads "Not used" on the lookups card, and the Data gathering confirmation no longer names a VOA licence block. The procedure's own gate words, a quote, stay.
+  - F32: `STAFF_FOOTER` now reads "No payment is taken, and no real contract can be signed."
+  - F29: an ST that opens a name is a saint ("St Judes").
+  - F40, found by this run: "We issued your client report".
+- **6. The run, on from Survey** (F34 to F42 in the findings file, OneDrive). The job inserted by hand by 158a was removed first, and the job was opened through the new screen. The estimate sealed at £255,000 and 30%. The surveyor committed, and the estimate was released with "not estimated at the assessment". Then: Valuation, sign-off (an invented firm), Reports, Invoice (CB-000004, £5,850, 3% of £195,000, no VAT), the defence pack, **Closed**. The journey now runs end to end on a local copy. Its findings:
+  - F34 and F35: the surveyor cannot confirm the valuation, Sales can, and the gate reads that tick, not the pack's approval.
+  - F36: the deliverables' "cannot be stored" words disagree with the tax computation a client can send.
+  - F37: the window is first tested at Reports. The invented 2019 purchase was outside it, so the run moved the purchase to June 2024.
+  - F38: reports are issued with a hand-typed hash.
+  - F39: the client cannot open or accept the report, and at Reports is told a surveyor is valuing.
+  - F41: the claim moves on with the invoice "raised, not sent".
+  - F42: the claim closes, and the portal says "Claim filed", with no filing recorded.
+  - Homedata spend this phase: nothing new.
+- **7. Phase 158c written** (board 13231736097, Ready - Claude can build; in ACTION-PLAN.md and on the run sheet, read back equal) for F34 to F42 and a second run with nobody ticking a step for someone else. F26, the care regulator's look, is on WAITING-ON-PEOPLE for Lakhbir (two minutes on cqc.org.uk).
+- **The checks.** `test/phase158b.test.ts` (23). Each group was red against the code before it, the new modules by import, and each control held.
+  - **Restated:** `client-redesign` (the lookups card's groups include "Not used"), `phase146f` (the real letter's reasons gain the party line), `phase157d` and `signing-for-testing` (their invented clients are partnerships, and the fingerprint is worked out from the same facts the signing reads; the test-website page gains the test-copy words).
+  - **The Developer Spec:** a Phase 158b section and the survey-job route. Twenty-four line references moved by these edits were remapped by a line diff against main and checked against their symbols, and the CRM fold check is green.
+  - **An import loop, caught by the closing run.** F27's first version imported `navigation.ts` into `pipeline.ts`, and `phase156e` failed to load ("Cannot access 'SETTINGS_TILES' before initialization"). Now `pipeline.ts` hands the client-step keys, and the claim page draws the line under the request's own name switch.
+  - **Figures.** Site harness `pass 1382 fail 0 xfail 3`. phase3 440. phase9 417. Back end `npm run check` 2,653 pass / 0 fail over 163 tracked files. **4,892** in all.
+  - **Other checks.** Extraction verified (29 switches) and up to date. CRM fold check: green. Tracker: green. Plain words: green. Brand: green. Payload proof: PASS.
+  - **Drift.** `--fast --expect 1382,440,417,2653`: exit 0. Negative control `--expect 999,998,997,996`: exit 1. Register check: green (below).
+
+```
+DONE          A survey job opened from the claim, sealing the funnel's figure (F31); the letter's party,
+              property, date and figure, and a specimen party refused (F22); the client's "bought"
+              answer (F28); the client's step and the figure's note (F27, F30); five wording fixes;
+              the invented client run from Survey to Closed; Phase 158c written.
+NOT DONE      The controls the run found - the valuation from the pack's approval, reports from the
+              application, the client's acceptance, the window warned early, the invoice sent, the
+              filing recorded (F34-F39, F41, F42) - BUILDABLE - Phase 158c.
+              Whether the care regulator lists Friary House at its postcode (F26) - Lakhbir's look -
+              WAITING-ON-PEOPLE.
+NOTHING LEFT  beyond those lines.
+```
+
+ **Claim cleared** in the commit that carries this record.
