@@ -145,3 +145,138 @@ describe('F38 — the issue form asks for no fingerprint where the application w
     app.close();
   });
 });
+
+/* ================================================================== *
+ * F39 — the client reads the report in the portal and accepts it there; the gate reads that, not a staff tick
+ * ================================================================== */
+import * as RA from '../src/web/report-accept.ts';
+
+function clientLogin(app: App, business: string, id = `u-cl-${business}`): string {
+  app.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,'CLIENT','x',?,?,?)",
+    [id, `${id}@158c.example.invalid`, `${id}@158c.example.invalid`, 'Client Person', T0, T0, business]);
+  return id;
+}
+
+/** A claim at REPORTS whose report is released and issued. */
+function released(app: App): { business: string; assessment: string; claim: string; fingerprint: string } {
+  const c = claimAt(app, 'REPORTS');
+  CF.signOffRow(app, c.business, c.assessment, c.claim, 195_000_00);
+  CF.issue(app, c.claim, 'CLIENT_REPORT');
+  const fingerprint = R.releasedReportFingerprint(app.db, c.claim) ?? '';
+  return { ...c, fingerprint };
+}
+
+describe('F39 — the client accepts the report in the portal', () => {
+  test('a client login of the business accepts the released version, once; staff and other clients cannot', async () => {
+    const app = await testApp(); staff(app);
+    const c = released(app);
+    const me = clientLogin(app, c.business);
+    const deps = { db: app.db, audit: app.audit, now: app.now, newId: randomUUID };
+    assert.throws(() => RA.acceptReport(deps, actor('SALES'), c.business), 'staff accepted for the client');
+    const stranger = claimAt(app, 'REPORTS');
+    const them = clientLogin(app, stranger.business);
+    assert.throws(() => RA.acceptReport(deps, actor('CLIENT', them, stranger.business), c.business), 'another client');
+    const r = RA.acceptReport(deps, actor('CLIENT', me, c.business), c.business);
+    assert.equal(r.ok, true, r.ok ? '' : r.why);
+    const row = app.db.get<{ claim_id: string; fingerprint: string; user_id: string }>('SELECT claim_id, fingerprint, user_id FROM client_report_acceptances')!;
+    assert.deepEqual(row, { claim_id: c.claim, fingerprint: c.fingerprint, user_id: me });
+    const again = RA.acceptReport(deps, actor('CLIENT', me, c.business), c.business);
+    assert.equal(again.ok, false);
+    if (!again.ok) assert.match(again.why, /already accepted/);
+    assert.throws(() => app.db.run('DELETE FROM client_report_acceptances'), /never/);
+    app.close();
+  });
+
+  test('with no released version there is nothing to accept', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'REPORTS');
+    const me = clientLogin(app, c.business);
+    const r = RA.acceptReport({ db: app.db, audit: app.audit, now: app.now, newId: randomUUID }, actor('CLIENT', me, c.business), c.business);
+    assert.equal(r.ok, false);
+    if (!r.ok) assert.match(r.why, /not ready yet/);
+    app.close();
+  });
+
+  test('the Reports gate reads the client’s acceptance of the issued report; the staff tick is retired', async () => {
+    const app = await testApp(); staff(app);
+    const c = released(app);
+    const me = clientLogin(app, c.business);
+    assert.ok(P.MILESTONES.CLIENT_ACCEPTED_REPORT.retired !== undefined);
+    assert.equal(P.recordMilestone(CF.recordDeps(app), actor('SALES'), c.claim, 'CLIENT_ACCEPTED_REPORT', null).ok, false);
+    const need = () => gateNeed(app, c.claim, 'The client accepted the report');
+    assert.equal(need()?.met, false);
+    assert.match(need()?.why ?? '', /in their portal/);
+    RA.acceptReport({ db: app.db, audit: app.audit, now: app.now, newId: randomUUID }, actor('CLIENT', me, c.business), c.business);
+    assert.equal(need()?.met, true);
+    assert.match(need()?.why ?? '', /accepted by Client Person/);
+    // The fee trigger's cautious reading reads the same acceptance.
+    assert.equal(P.feeTriggerReached(app.db, P.loadPipelineClaim(app.db, c.claim), 'CLIENT_ACCEPTED_REPORT').met, true);
+    app.close();
+  });
+});
+
+describe('F39 — the portal’s accept box and its route', () => {
+  test('the box offers "I accept this report", then says when this login accepted it', async () => {
+    const { acceptBox } = await import('../src/web/report-pages.ts');
+    const app = await testApp(); staff(app);
+    const c = released(app);
+    const me = clientLogin(app, c.business);
+    const who = actor('CLIENT', me, c.business);
+    const before = String(acceptBox(app, who, c.business));
+    assert.match(before, /<form method="post" action="\/portal\/report\/accept"/);
+    assert.match(before, /I accept this report/);
+    assert.doesNotMatch(before, /<script/);
+    RA.acceptReport({ db: app.db, audit: app.audit, now: app.now, newId: randomUUID }, who, c.business);
+    assert.match(String(acceptBox(app, who, c.business)), /You accepted this report on /);
+    app.close();
+  });
+
+  test('POST /portal/report/accept as the client records it; a second press is refused in plain words', async () => {
+    const { createApp } = await import('../src/server.ts');
+    const { mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-158c-')), publicOrigin: 'https://caprebate.example.invalid' });
+    await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
+    try {
+      const a = made.server.address();
+      const base = `http://127.0.0.1:${typeof a === 'object' && a !== null ? a.port : 0}`;
+      staff(made.app);
+      const c = released(made.app);
+      const hash = await made.app.hasher.hash('Invented-Pass-158c');
+      made.app.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES ('u-cl-web','cl@158c.example.invalid','cl@158c.example.invalid','Client Person','CLIENT',?,?,?,?)",
+        [hash, T0, T0, c.business]);
+      let cookie = '';
+      const req = async (path: string, init: RequestInit = {}) => {
+        const r = await fetch(base + path, { redirect: 'manual', ...init, headers: { ...(init.headers as Record<string, string> ?? {}), ...(cookie ? { cookie } : {}) } });
+        for (const x of r.headers.getSetCookie()) { const f = x.split(';')[0] ?? ''; const k = f.split('=')[0]; cookie = [...cookie.split('; ').filter((y) => y && y.split('=')[0] !== k), f].join('; '); }
+        return { status: r.status, body: await r.text(), location: r.headers.get('location') };
+      };
+      const post = (path: string, f: Record<string, string>) => req(path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(f).toString() });
+      assert.equal((await post('/login', { email: 'cl@158c.example.invalid', password: 'Invented-Pass-158c' })).status, 303);
+      const ok = await post('/portal/report/accept', {});
+      assert.equal(ok.status, 303);
+      assert.equal(ok.location, '/portal/report?done=accepted');
+      assert.equal(made.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM client_report_acceptances WHERE user_id = 'u-cl-web'")?.n, 1);
+      const again = await post('/portal/report/accept', {});
+      assert.equal(again.status, 400);
+      assert.match(again.body, /already accepted this version/);
+    } finally { made.close(); }
+  });
+});
+
+describe('F39 — what the portal says the team is working on, once the report is out', () => {
+  test('ready → accepted; before release, the step’s own words', async () => {
+    const { workingWords } = await import('../src/web/portal-dashboard.ts');
+    const app = await testApp(); staff(app);
+    const early = claimAt(app, 'REPORTS');
+    const e = clientLogin(app, early.business);
+    assert.equal(workingWords(app.db, actor('CLIENT', e, early.business), early.business, 'A chartered surveyor is valuing the property.'), 'A chartered surveyor is valuing the property.');
+    const c = released(app);
+    const me = actor('CLIENT', clientLogin(app, c.business), c.business);
+    assert.match(workingWords(app.db, me, c.business, 'A chartered surveyor is valuing the property.'), /Your survey report is ready/);
+    RA.acceptReport({ db: app.db, audit: app.audit, now: app.now, newId: randomUUID }, me, c.business);
+    assert.match(workingWords(app.db, me, c.business, null), /You accepted your survey report/);
+    app.close();
+  });
+});

@@ -509,6 +509,8 @@ const RULES: RuleTable = {
    * writing exactly as the staff path does.
    */
   'booking.move_own': { CLIENT: ownBusiness as Rule<ObjType> },
+  /* PHASE 158c (F39): the client accepts the survey report released to them, in their portal (src/web/report-accept.ts). Their own act. */
+  'client_report.accept': { CLIENT: ownBusiness as Rule<ObjType> },
   'engagement.read': {
     ADMIN: always, SALES: always, CLIENT: ownBusiness as Rule<ObjType>,
   },
@@ -1045,6 +1047,7 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'booking.read': YES('the calendar and a booking, to see who is being called when'),
   'booking.write': NO(WRITES),
   'booking.move_own': NO('the client\'s own action; also a write'),
+  'client_report.accept': NO('the client\'s own action; also a write'),
   'engagement.read': YES('whether the letter is sent, viewed or signed — a state, with no fee in it'),
   'engagement.send': NO(WRITES),
   'research.run': NO('a write, and it could fire paid calls'),

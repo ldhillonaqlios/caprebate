@@ -148,6 +148,30 @@ export function releaseReportFor(app: FixtureApp, claim: string): void {
   packApprovedOn(app, c.business_id, c.assessment_id, claim, who, s.figure_pence, s.recorded_at);
 }
 
+/**
+ * PHASE 158c (F39): THE CLIENT ACCEPTED THE REPORT, in their portal - written as its row, against the released version
+ * (made here where need be), by a client login of the business (made too where it has none). The Reports gate reads an
+ * acceptance of the issued client report's own fingerprint, so call it after the report is issued.
+ */
+export function clientAccepted(app: FixtureApp, claim: string): string {
+  releaseReportFor(app, claim);
+  const r = app.db.get<{ id: string; fingerprint: string; business_id: string }>(
+    'SELECT a.id, a.fingerprint, j.business_id FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
+      'WHERE j.claim_id = ? AND a.fingerprint = ? LIMIT 1', [claim, R.releasedReportFingerprint(app.db, claim) ?? '']);
+  assert.ok(r !== undefined, 'no released report to accept: record the sign-off first');
+  const at = app.now();
+  let who = app.db.get<{ id: string }>("SELECT id FROM users WHERE business_id = ? AND role = 'CLIENT' ORDER BY id LIMIT 1", [r.business_id])?.id;
+  if (who === undefined) {
+    who = `u-client-${r.business_id}`;
+    app.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,'A Client','CLIENT','x',?,?,?)",
+      [who, `${who}@example.invalid`, `${who}@example.invalid`, at, at, r.business_id]);
+  }
+  const id = randomUUID();
+  app.db.run('INSERT INTO client_report_acceptances (id, claim_id, approval_id, fingerprint, user_id, accepted_at) VALUES (?, ?, ?, ?, ?, ?)',
+    [id, claim, r.id, r.fingerprint, who, at]);
+  return id;
+}
+
 /** Draft and issue a deliverable through the register, as SALES. */
 export function issue(app: FixtureApp, claim: string, kind: R.DeliverableKind, content_hash: string | null = null): string {
   if (R.MADE_FROM_REPORT.has(kind)) releaseReportFor(app, claim);

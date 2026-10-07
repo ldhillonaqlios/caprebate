@@ -289,7 +289,7 @@ describe('stage entered and owner changed', () => {
 
       const i = claimAt(app, org, 'REPORTS');
       CF.readyForReports(app, org.business, org.property, org.assessment ?? '', i);
-      confirm(app, i, 'CLIENT_ACCEPTED_REPORT');
+      CF.clientAccepted(app, i); // PHASE 158c (F39): the client accepts in their portal, not a staff tick
       confirm(app, i, 'ACCOUNTANT_CONFIRMED_RETURN');
       const outbox = count(app.db, 'SELECT COUNT(*) AS n FROM outbox');
       assert.equal(fwd(app, sales, i, 'INVOICE').ok, true);
@@ -405,7 +405,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
       CF.issue(app, c, 'CLIENT_REPORT');
       CF.issue(app, c, 'ACCOUNTANT_COMPUTATION_PACK');
       step('REPORTS');
-      confirm(app, c, 'CLIENT_ACCEPTED_REPORT');
+      CF.clientAccepted(app, c); // PHASE 158c (F39)
       confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
       step('INVOICE');
       confirm(app, c, 'HMRC_PROCESSED_RELIEF');

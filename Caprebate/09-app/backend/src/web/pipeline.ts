@@ -187,7 +187,11 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
        while the survey pack had no approved version. The gate reads the surveyor's own approval of the pack now. */
     retired: 'The surveyor’s own approval of the survey pack now counts. This tick is no longer used.',
   },
-  CLIENT_ACCEPTED_REPORT: { stage: 'REPORTS', label: 'The client accepted the report' },
+  CLIENT_ACCEPTED_REPORT: {
+    stage: 'REPORTS', label: 'The client accepted the report',
+    // PHASE 158c (F39): staff ticked this for the client. The client accepts the report in their portal now.
+    retired: 'The client now accepts the report in their portal. This tick is no longer used.',
+  },
   ACCOUNTANT_CONFIRMED_RETURN: {
     stage: 'REPORTS', label: 'The client’s accountant confirmed the claim fits the return and the amendment window',
   },
@@ -198,6 +202,24 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
     retired: 'The defence pack now counts as done when we issue it from the reports list. This tick is no longer used.',
   },
 });
+
+/**
+ * PHASE 158c (F39): THE CLIENT ACCEPTED THE ISSUED REPORT, IN THEIR PORTAL (src/web/report-accept.ts) - an acceptance on
+ * this claim of the fingerprint the issued client report carries. A later version issued needs accepting again.
+ */
+export function clientAcceptedNeed(db: Db, c: { readonly id: string }): Need {
+  const a = db.get<{ accepted_at: string; name: string | null }>(
+    'SELECT x.accepted_at, u.display_name AS name FROM client_report_acceptances x LEFT JOIN users u ON u.id = x.user_id ' +
+      "WHERE x.claim_id = ? AND x.fingerprint = (SELECT content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' " +
+      "AND state = 'ISSUED' ORDER BY version DESC LIMIT 1) ORDER BY x.accepted_at ASC LIMIT 1", [c.id, c.id]);
+  return {
+    what: 'The client accepted the report, in their portal',
+    met: a !== undefined,
+    why: a === undefined
+      ? 'the client has not accepted the issued report in their portal yet. They read it there and press “I accept this report”.'
+      : `accepted by ${a.name ?? 'a former user'} ${localStamp(a.accepted_at)}`,
+  };
+}
 
 /**
  * PHASE 158c (F35): THE SURVEYOR'S VALUATION IS THE SURVEYOR'S APPROVAL OF THE PACK (src/web/pack-approve.ts) - a version
@@ -446,7 +468,8 @@ export function feeTriggerReached(db: Db, c: PipelineClaim, trigger: FeeTrigger 
         : `${d.kind === 'CLIENT_REPORT' ? 'the client report' : 'the computation pack'} was issued on ${d.on}`,
     };
   }
-  const t = confirmation(db, c, trigger);
+  // PHASE 158c (F39): the client's own acceptance, in the portal, of the issued report; no longer a tick.
+  const t = trigger === 'CLIENT_ACCEPTED_REPORT' ? clientAcceptedNeed(db, c) : confirmation(db, c, trigger);
   return {
     what: `The fee trigger is reached — ${FEE_TRIGGERS[trigger]}${trigger === FEE_TRIGGER.reading && !FEE_TRIGGER.decided ? ' (the most cautious reading, while the fee trigger is undecided)' : ''}`,
     met: t.met, why: t.why,
@@ -571,7 +594,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
         const route = filingRoute(db, c, since);
         needs.push(
           signOffNeed(db, c),
-          deliverableIssuedNeed(db, c.id, 'CLIENT_REPORT'), confirmation(db, c, 'CLIENT_ACCEPTED_REPORT'),
+          deliverableIssuedNeed(db, c.id, 'CLIENT_REPORT'), clientAcceptedNeed(db, c),
           deliverableIssuedNeed(db, c.id, 'ACCOUNTANT_COMPUTATION_PACK'),
           route.route === 'CLIENT'
             ? clientConfirmationNeed(db, c, since, amendmentWindowReading(db, c, today).deadline)

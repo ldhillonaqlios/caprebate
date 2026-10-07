@@ -521,17 +521,18 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       const org = organisation(app);
       const c = claimAt(app, org, 'REPORTS', { signoff: true });
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false);
-      confirm(app, c, 'CLIENT_ACCEPTED_REPORT');
-      assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'the accountant’s confirmation was skipped');
+      // PHASE 158c (F39): the client's acceptance is theirs, in the portal - a staff tick is refused.
+      assert.equal(P.recordMilestone(deps(app), actor('SALES'), c, 'CLIENT_ACCEPTED_REPORT', null).ok, false, 'the retired tick was taken');
       confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
-      assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'both confirmations passed with no report issued');
+      assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'the accountant’s confirmation passed with no report issued');
       CF.issue(app, c, 'CLIENT_REPORT');
       CF.issue(app, c, 'ACCOUNTANT_COMPUTATION_PACK');
+      assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'the client’s acceptance was skipped');
+      CF.clientAccepted(app, c);
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'an amendment window nobody established passed');
       CF.openWindow(app, org.business, org.property, c);
       // A claim at REPORTS with no sign-off — it can only be put there by hand — still does not pass.
       const unsigned = claimAt(app, org, 'REPORTS');
-      confirm(app, unsigned, 'CLIENT_ACCEPTED_REPORT');
       confirm(app, unsigned, 'ACCOUNTANT_CONFIRMED_RETURN');
       assert.equal(fwd(app, 'SALES', unsigned, 'INVOICE').ok, false, 'a report with no sign-off went to invoice');
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, true);
@@ -546,9 +547,9 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       staff(app);
       const org = organisation(app);
       const c = claimAt(app, org, 'REPORTS', { signoff: true });
-      confirm(app, c, 'CLIENT_ACCEPTED_REPORT');
       confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
       CF.readyForReports(app, org.business, org.property, org.assessment ?? '', c);
+      CF.clientAccepted(app, c); // PHASE 158c (F39): the client accepts in their portal
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, true);
       const gate = (claim: string, trigger?: P.FeeTrigger) =>
         P.gateOut(app.db, P.loadPipelineClaim(app.db, claim), 'INVOICE',

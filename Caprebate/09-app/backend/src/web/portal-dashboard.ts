@@ -25,6 +25,8 @@ import { localClock, localDate, localPartsOf, ukDate, ukDatesIn, WEEKDAY_NAMES }
 import { unreadCount } from './messages.ts';
 import type { ClientStep } from './approvals.ts';
 import type { ClientDeliverable } from './claim-record.ts';
+import { releasedVersion } from './report-signoff.ts';
+import { myAcceptance } from './report-accept.ts';
 
 export type PortalDashInput = {
   readonly db: Db; readonly actor: Actor; readonly business_id: string; readonly nowIso: string;
@@ -55,7 +57,7 @@ export function portalDashboard(x: PortalDashInput): Safe {
 
   const recent = [...x.done].filter((d) => d.state === 'DONE').sort((a, b) => (a.on < b.on ? 1 : a.on > b.on ? -1 : 0));
   const working = card('working-on', 'What we are working on', h`
-    <p>${stage?.toTheClient ?? 'We are working on your claim.'}</p>
+    <p>${workingWords(x.db, x.actor, x.business_id, stage?.toTheClient ?? null)}</p>
     ${recent.length === 0 ? raw('') : h`<p class="fl">Done so far</p><ul class="plain">${recent.slice(0, 3).map((d) => h`<li>✓ ${d.words} <span class="help">· ${ukDate(d.on)}</span></li>`)}</ul>`}
     <p><a href="#done-so-far">See everything we have done</a></p>`);
 
@@ -98,4 +100,18 @@ export function portalDashboard(x: PortalDashInput): Safe {
 export function issuedLine(label: string): string {
   const name = label.replace(/^the\s+/i, '');
   return `We issued your ${name.charAt(0).toLowerCase()}${name.slice(1)}`;
+}
+
+/**
+ * PHASE 158c (F39, the Friary House run): with the report issued, the client was still told "A chartered surveyor is
+ * valuing the property". Once a version is released to them the sentence says the report is ready, or that they
+ * accepted it. Otherwise the step's own words, as before.
+ */
+export function workingWords(db: PortalDashInput['db'], actor: PortalDashInput['actor'], business_id: string, step: string | null): string {
+  if (releasedVersion(db, business_id) !== null) {
+    return myAcceptance(db, actor, business_id) === null
+      ? 'Your survey report is ready. Read it in your portal, and tell us you accept it.'
+      : 'You accepted your survey report. We are preparing the papers for filing.';
+  }
+  return step ?? 'We are working on your claim.';
 }

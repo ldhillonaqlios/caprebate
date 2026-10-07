@@ -512,7 +512,9 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
     assert.equal(/grant/i.test(P.MILESTONES.VALUATION_SIGNED.label), false);
     // PHASE 158c (F35): VALUATION_SIGNED is retired too - the surveyor's approval of the survey pack derives it now.
     assert.ok(P.MILESTONES.VALUATION_SIGNED.retired);
-    for (const k of ['DATA_GATHERING_COMPLETE', 'CLIENT_ACCEPTED_REPORT', 'ACCOUNTANT_CONFIRMED_RETURN'] as const) {
+    // PHASE 158c (F39): and CLIENT_ACCEPTED_REPORT - the client accepts the report in their portal now.
+    assert.ok(P.MILESTONES.CLIENT_ACCEPTED_REPORT.retired);
+    for (const k of ['DATA_GATHERING_COMPLETE', 'ACCOUNTANT_CONFIRMED_RETURN'] as const) {
       assert.equal(P.MILESTONES[k].retired, undefined, `${k} was retired though nothing derives it`);
     }
   });

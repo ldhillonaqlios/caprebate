@@ -66,6 +66,7 @@ export const ACTION_WORDS: Readonly<Record<string, readonly [string, string]>> =
   'booking.read': ['The calendar', 'See the calendar and bookings'],
   'booking.write': ['The calendar', 'Book or move a call'],
   'booking.move_own': ['The calendar', 'Move their own booking'],
+  'client_report.accept': ['Clients and properties', 'Accept their own survey report'],
   'business.read': ['Clients and properties', 'See a client’s name'],
   'organisation.read': ['Clients and properties', 'See the clients area and a client’s record'],
   'client_billing.read': ['Clients and properties', 'See the clients area for billing: who to chase and what is owed'],
