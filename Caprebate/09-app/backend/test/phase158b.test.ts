@@ -209,3 +209,107 @@ describe('F31 — the claim page at Survey', () => {
     } finally { w.made.close(); }
   });
 });
+
+/* ================================================================== *
+ * F22 — the letter names the client as they are, and the property, the date and the figure they saw
+ * ================================================================== */
+import { loadLetter, TEST_LETTER_PATH } from '../src/web/letter.ts';
+import { letterFacts, shownLetter, signingMissing, ENGAGEMENT_SIGNING_TEST } from '../src/web/signing.ts';
+
+const line = (l: ReturnType<typeof loadLetter>, start: string): string => l.paragraphs.find((p) => p.text.startsWith(start))?.text ?? '';
+
+describe('F22 — the letter says who the client is, and what it is about', () => {
+  test('a partnership is described as one, with no company number anywhere; the specimen number is gone', () => {
+    const l = loadLetter({ clientName: 'Friary House Surgery', claimantType: 'PARTNERSHIP' });
+    assert.equal(line(l, 'Client:'), 'Client: Friary House Surgery, a partnership (“you”, “the Client”)');
+    const all = l.paragraphs.map((p) => p.text).join('\n');
+    assert.doesNotMatch(all, /98604417/);
+    assert.match(all, /^Friary House Surgery$/m, 'the signature block names the partnership with no company number');
+    assert.ok(!l.specimens.some((s) => s.includes('company number')));
+  });
+
+  test('a sole trader and an individual likewise; a company keeps its number; an LLP is called one', () => {
+    assert.match(line(loadLetter({ clientName: 'A Smith', claimantType: 'SOLE_TRADER' }), 'Client:'), /^Client: A Smith, a sole trader \(/);
+    assert.match(line(loadLetter({ clientName: 'A Smith', claimantType: 'INDIVIDUAL' }), 'Client:'), /^Client: A Smith, an individual \(/);
+    assert.match(line(loadLetter({ clientName: 'B Ltd', claimantType: 'COMPANY', companyNumber: '12345678' }), 'Client:'),
+      /a company registered in England and Wales under company number 12345678/);
+    const llp = loadLetter({ clientName: 'C LLP', claimantType: 'LLP', companyNumber: 'OC123456' });
+    assert.match(line(llp, 'Client:'), /a limited liability partnership registered in England and Wales under number OC123456/);
+    assert.match(llp.paragraphs.map((p) => p.text).join('\n'), /^C LLP \(Registered No\. OC123456\)$/m);
+    // A company with no number on record: the specimen stays, and is flagged, as before.
+    assert.ok(loadLetter({ clientName: 'D Ltd', claimantType: 'COMPANY' }).specimens.some((s) => s.includes('98604417')));
+  });
+
+  test('the property, the date and the figure the client was shown are filled in', () => {
+    for (const path of [undefined, TEST_LETTER_PATH]) {
+      const l = loadLetter({ ...(path === undefined ? {} : { path }), clientName: 'Friary House Surgery', claimantType: 'PARTNERSHIP',
+        property: 'Friary House, 2A Beaumont Road, Plymouth, PL4 9BH', date: '7 Oct 2026', range: 'up to £255,000' });
+      assert.equal(line(l, 'Subject property:'), 'Subject property: Friary House, 2A Beaumont Road, Plymouth, PL4 9BH');
+      assert.equal(line(l, 'Date:'), 'Date: 7 Oct 2026');
+      assert.match(l.paragraphs.map((p) => p.text).join('\n'), /The indicative range discussed with the Client is up to £255,000\./);
+      assert.deepEqual(l.specimens, [], 'no specimen left');
+    }
+  });
+
+  test('letterFacts reads them from the records: the type, every property, the date sent and the figure shown', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'ENGAGEMENT');
+    app.db.run("UPDATE businesses SET claimant_type = 'PARTNERSHIP' WHERE id = ?", [c.business]);
+    app.db.run("INSERT INTO engagements (id,business_id,letter_state,signed_at,created_at,sent_at,sent_by) VALUES (?,?,'SENT',NULL,?,?,?)",
+      [randomUUID(), c.business, T0, '2026-10-07T17:39:54.553Z', 'u-SALES']);
+    assert.deepEqual(letterFacts(app.db, c.business), { claimant_type: 'PARTNERSHIP', property: 'Main site', date: '7 Oct 2026', range: 'up to £255,000' });
+    app.close();
+  });
+
+  test('signing refuses a letter that still names the specimen company number - the test copy too', () => {
+    const party = { name: 'D Ltd', company_number: null };
+    const test = shownLetter(party, TEST_LETTER_PATH, { claimant_type: 'COMPANY', property: 'Main site', date: '7 Oct 2026', range: 'up to £1' });
+    assert.equal(test.party_unknown, true);
+    assert.match(signingMissing(ENGAGEMENT_SIGNING_TEST, test).join(' '), /does not yet say which business/);
+    const ok = shownLetter({ name: 'P', company_number: null }, TEST_LETTER_PATH, { claimant_type: 'PARTNERSHIP', property: 'Main site', date: '7 Oct 2026', range: 'up to £1' });
+    assert.equal(ok.party_unknown, false);
+    assert.deepEqual(signingMissing(ENGAGEMENT_SIGNING_TEST, ok), []);
+  });
+});
+
+/* ================================================================== *
+ * F28 — "bought" is the client's own answer until staff record otherwise; and letterFacts reads the entity answer
+ * ================================================================== */
+import { clientSaidBought } from '../src/web/claim-facts.ts';
+import { mandatoryDocumentNeeds, MANDATORY_DOCUMENTS } from '../src/web/mandatory-documents.ts';
+
+describe('F28 — the client said they bought it, and the claim reads that', () => {
+  test('clientSaidBought: purchase is YES, a build or a fit-out is NO, nothing said is null', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'DATA_GATHERING');
+    const prop = app.db.get<{ property_id: string }>('SELECT property_id FROM claims WHERE id = ?', [c.claim])!.property_id;
+    assert.equal(clientSaidBought(app.db, prop), 'YES');
+    app.db.run("UPDATE assessment_answers SET value = 'fit_out' WHERE assessment_id = ? AND question_id = 'Q2-1-trigger'", [c.assessment]);
+    assert.equal(clientSaidBought(app.db, prop), 'NO');
+    app.db.run("DELETE FROM assessment_answers WHERE assessment_id = ? AND question_id = 'Q2-1-trigger'", [c.assessment]);
+    assert.equal(clientSaidBought(app.db, prop), null);
+    app.close();
+  });
+
+  test('Data gathering asks for the contract and the CPSE replies on the client’s word, before anyone records the fact', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'DATA_GATHERING');
+    const prop = app.db.get<{ property_id: string }>('SELECT property_id FROM claims WHERE id = ?', [c.claim])!.property_id;
+    const needs = mandatoryDocumentNeeds(app.db, { id: c.claim, property_id: prop }, { ...MANDATORY_DOCUMENTS, enabled: true });
+    for (const t of ['Sale or purchase contract', 'Pre-contract enquiry replies']) {
+      const need = needs.find((x) => x.what.startsWith(t));
+      assert.ok(need !== undefined, t);
+      assert.match(need?.why ?? '', /has been received on this claim/, `${t} is asked for: ${need?.why ?? ''}`);
+    }
+    app.close();
+  });
+
+  test('letterFacts takes the claimant from the client’s entity answer when the organisation has none recorded', async () => {
+    const app = await testApp(); staff(app);
+    const c = claimAt(app, 'ENGAGEMENT');
+    app.db.run('INSERT INTO assessment_answers (id,assessment_id,ord,question_id,question_text,state,value) VALUES (?,?,?,?,?,?,?)',
+      [randomUUID(), c.assessment, 2, 'Q2-1-entity', 'entity', 'ANSWERED', 'partnership']);
+    assert.equal(letterFacts(app.db, c.business).claimant_type, 'PARTNERSHIP');
+    app.close();
+  });
+});

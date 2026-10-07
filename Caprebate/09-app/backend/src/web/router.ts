@@ -48,7 +48,7 @@ import { ADDRESS_LOOKUP, addressLookupMissing, findAddresses, searchesToday } fr
 import { ADDRESS_LOOKUP_JS } from './address-lookup-script.ts';
 import { loadLetter } from './letter.ts';
 import * as P from './portal.ts';
-import { ENGAGEMENT_SIGNING, SIGN_WORDS, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning } from './signing.ts';
+import { ENGAGEMENT_SIGNING, SIGN_WORDS, letterFacts, letterOptions, shownLetter, signByLink, signEngagement, signLinkFor, signingMissing, type EngagementSigning, type LetterFacts } from './signing.ts';
 import { portalMessagesBody, readPortalSend, sendFromPortal } from './messages-pages.ts';
 import { clientMessage, type ThreadMessage as MessageView } from './messages.ts';
 import { FsObjectStore } from './objectstore.ts';
@@ -2304,16 +2304,12 @@ function letterPage(
   actor: Actor | undefined, business: Pick<P.Business, 'id' | 'name' | 'company_number'>, eng: P.EngagementView | null,
   problem?: string, typed?: { full_name: string; role: string }, letterPath?: string, signing: EngagementSigning = ENGAGEMENT_SIGNING,
   /** PHASE 157d: where the form posts (the portal, or a signing link), whether this signer has signed, and the steps so far. */
-  extra: { readonly action?: string; readonly mine?: boolean; readonly progress?: readonly string[]; readonly byLink?: boolean } = {},
+  extra: { readonly action?: string; readonly mine?: boolean; readonly progress?: readonly string[]; readonly byLink?: boolean; readonly facts?: LetterFacts } = {},
 ): string {
   // The record's number travels with its name. Absent is omitted, never passed as undefined; a blank is passed and
   // letter.ts treats it as absent — the specimen stays and is flagged, never read as the client's (N4).
-  const shown = shownLetter(business, letterPath);
-  const openTerms = loadLetter({
-    ...(letterPath === undefined ? {} : { path: letterPath }),
-    clientName: business.name,
-    ...(business.company_number === undefined || business.company_number === null ? {} : { companyNumber: business.company_number }),
-  });
+  const shown = shownLetter(business, letterPath, extra.facts);
+  const openTerms = loadLetter(letterOptions(business, letterPath, extra.facts));
   const missing = signingMissing(signing, shown);
   const canSign = eng !== null && (eng.state === 'SENT' || eng.state === 'VIEWED');
   return page({
@@ -2364,9 +2360,10 @@ function letterPage(
 }
 
 /** PHASE 157d: the letter page's second-signer facts — whether this login has signed, and the steps so far. */
-function letterExtra(db: Db, business_id: string, user_id: string): { mine: boolean; progress: string[] } {
+function letterExtra(db: Db, business_id: string, user_id: string): { mine: boolean; progress: string[]; facts: LetterFacts } {
   const ls = letterState(db, business_id);
-  return { mine: ls.state !== 'SIGNED' && ls.signed_by.some((x) => x.user_id === user_id),
+  // PHASE 158b (F22): the client's kind of business, properties, the date sent and the figure shown, for the letter.
+  return { facts: letterFacts(db, business_id), mine: ls.state !== 'SIGNED' && ls.signed_by.some((x) => x.user_id === user_id),
     progress: ls.named.length === 0 && ls.signed_by.length === 0 ? [] : letterSteps(ls).filter((w) => /^(To be signed|Signed by|Waiting)/.test(w)) };
 }
 

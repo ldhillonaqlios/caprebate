@@ -13,11 +13,15 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { createApp } from '../src/server.ts';
 import {
   ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST, checkSignature, shownLetter, signEngagement, signingHere, signingMissing,
+  letterFacts,
 } from '../src/web/signing.ts';
 import { TEST_LETTER_PATH } from '../src/web/letter.ts';
 import { sendEngagementLetter } from '../src/web/engagement-send.ts';
 import { docxOf } from './document-fixtures.ts';
 import { actor, testApp } from './helpers.ts';
+
+/** PHASE 158b (F22): an invented partnership, so the letter says who is signing (a specimen company number is refused). */
+const PARTNER = { claimant_type: 'PARTNERSHIP', property: null, date: null, range: null } as const;
 
 const T0 = '2026-10-06T09:00:00.000Z';
 const hexOf = (s: string) => Buffer.from(s, 'latin1').toString('hex');
@@ -26,7 +30,7 @@ async function world() {
   const a = await testApp();
   a.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES ('u-SALES','sales@example.invalid','sales@example.invalid','Sales Person','SALES','x',?,?,NULL)", [T0, T0]);
   const biz = randomUUID();
-  a.db.run('INSERT INTO businesses (id,name,sector,stage,created_at,source) VALUES (?,?,?,?,?,?)', [biz, 'Invented Signing Surgery', 'gp', 'ENGAGEMENT', T0, 'WEBSITE']);
+  a.db.run('INSERT INTO businesses (id,name,sector,stage,created_at,source,claimant_type) VALUES (?,?,?,?,?,?,?)', [biz, 'Invented Signing Surgery', 'gp', 'ENGAGEMENT', T0, 'WEBSITE', 'PARTNERSHIP']);
   a.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES ('u-cl','ivy@example.invalid','ivy@example.invalid','Ivy','CLIENT','x',?,?,?)", [T0, T0, biz]);
   const session = randomUUID();
   a.db.run('INSERT INTO sessions (id, user_id, token_hash, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?)',
@@ -34,7 +38,7 @@ async function world() {
   const deps = { db: a.db, audit: a.audit, email: a.email, now: a.now, newId: randomUUID };
   sendEngagementLetter(deps, actor('SALES', 'u-SALES'), biz);
   const sign = (cfg: typeof ENGAGEMENT_SIGNING, letterPath: string) => signEngagement(deps, actor('CLIENT', 'u-cl', biz), biz,
-    { full_name: 'Ivy Inventedperson', role: 'Partner', authorised: true, letter_sha256: shownLetter({ name: 'Invented Signing Surgery' }, letterPath).sha256, typed_as_signature: true },
+    { full_name: 'Ivy Inventedperson', role: 'Partner', authorised: true, letter_sha256: shownLetter({ name: 'Invented Signing Surgery' }, letterPath, letterFacts(a.db, biz)).sha256, typed_as_signature: true },
     { ip: '203.0.113.9', session_id: session }, { cfg, letterPath });
   return { a, biz, sign };
 }
@@ -52,7 +56,7 @@ describe('signing on for testing: the test copy only', () => {
   });
 
   test('the test copy signs under the test setting, and is still refused under the real one', () => {
-    const copy = shownLetter({ name: 'X' }, TEST_LETTER_PATH);
+    const copy = shownLetter({ name: 'X' }, TEST_LETTER_PATH, PARTNER);
     assert.equal(copy.test_copy, true);
     assert.deepEqual(signingMissing(ENGAGEMENT_SIGNING_TEST, copy), []);
     assert.match(signingMissing(ENGAGEMENT_SIGNING, copy)[0] ?? '', /test copy of the letter.*can never be signed/);
@@ -62,7 +66,7 @@ describe('signing on for testing: the test copy only', () => {
     const dir = mkdtempSync(join(tmpdir(), 'cb-signtest-'));
     const settled = join(dir, 'letter.docx');
     writeFileSync(settled, docxOf(['ENGAGEMENT LETTER', '1. Parties', 'This letter is between CAP REBATE LTD and X.', '2. Fees', 'Our fee is 10 per cent.']));
-    for (const l of [shownLetter({ name: 'X' }), shownLetter({ name: 'X' }, settled)]) {
+    for (const l of [shownLetter({ name: 'X' }, undefined, PARTNER), shownLetter({ name: 'X' }, settled)]) {
       assert.equal(l.test_copy, false);
       assert.deepEqual(signingMissing(ENGAGEMENT_SIGNING_TEST, l), ['Signing is switched on for testing only, and only the test copy of the letter can be signed there.']);
     }
@@ -97,7 +101,7 @@ describe('signing on for testing: the test copy only', () => {
     const base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;
     const hash = await made.app.hasher.hash('Invented-Pass-sign');
     const biz = randomUUID();
-    made.app.db.run('INSERT INTO businesses (id,name,sector,stage,created_at,source) VALUES (?,?,?,?,?,?)', [biz, 'Invented Signing Surgery', 'gp', 'ENGAGEMENT', T0, 'WEBSITE']);
+    made.app.db.run('INSERT INTO businesses (id,name,sector,stage,created_at,source,claimant_type) VALUES (?,?,?,?,?,?,?)', [biz, 'Invented Signing Surgery', 'gp', 'ENGAGEMENT', T0, 'WEBSITE', 'PARTNERSHIP']);
     made.app.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES ('u-cl','ivy@example.invalid','ivy@example.invalid','Ivy','CLIENT',?,?,?,?)", [hash, T0, T0, biz]);
     made.app.db.run("INSERT INTO engagements (id, business_id, letter_state, signed_at, created_at) VALUES (?, ?, 'SENT', NULL, ?)", [randomUUID(), biz, T0]);
     let cookie = '';

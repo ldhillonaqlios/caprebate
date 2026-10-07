@@ -51,7 +51,7 @@
 
 import type { Db } from '../db.ts';
 import type { Need } from './pipeline.ts';
-import { latestFacts } from './claim-facts.ts';
+import { clientSaidBought, latestFacts } from './claim-facts.ts';
 
 export type DocumentCondition = 'ALWAYS' | 'GRANT_FUNDED' | 'ELECTION_MADE' | 'LEASEHOLD' | 'BOUGHT';
 
@@ -117,7 +117,12 @@ function applies(db: Db, c: { id: string; property_id: string | null }, conditio
   if (condition === 'ALWAYS') return { applies: true };
   if (condition === 'GRANT_FUNDED' || condition === 'ELECTION_MADE' || condition === 'BOUGHT') {
     const key = condition === 'GRANT_FUNDED' ? 'GRANTS_EXIST' : condition === 'ELECTION_MADE' ? 'ELECTION_EXISTS' : 'BOUGHT_THE_BUILDING';
-    const v = choiceFact(db, c.id, key);
+    const recorded = choiceFact(db, c.id, key);
+    // PHASE 158b (F28): where nobody has recorded whether the client bought it, the client's own assessment answer.
+    const said = recorded === null && condition === 'BOUGHT' ? clientSaidBought(db, c.property_id) : null;
+    const v = recorded ?? said;
+    if (said === 'YES') return { applies: true };
+    if (said === 'NO') return { applies: false, known: true, why: 'the client said at the assessment that they did not buy it' };
     if (v === 'YES') return { applies: true };
     if (v === 'NO') {
       return {
