@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 312 |
-| Working on it | 1 |
+| Done | 313 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1121,7 +1121,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1340,12 +1340,6 @@
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 - Note 2026-10-06 (Phase 157 (sweep)): The tool is built and refuses to run until the officer answers Word question 200; nothing is left to build, so it waits like any built item. Housed as SDP-P43.
 
-### Phase 158c - the steps staff tick for other people: the surveyor's valuation, the reports, the client's acceptance, the invoice and the filing
-
-`13231736097` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac (Claude Code)**
-
-- Note 2026-10-07 (Phase 158b): Written by Phase 158b: the run goes end to end; left are the controls - the valuation read from the pack approval (F34, F35), reports issued from the app's own report (F36, F38), the client's acceptance in the portal (F39), the window warned early (F37), the invoice sent (F41), the filing recorded before close (F42); then the run once more. Nothing waits on anyone.
-
 ### Phase 158d - the accountant's own confirmations, one purchase date, the floor area, the defence pack, and what the portal tells the client
 
 `13232676804` · **Ready - Claude can build** · owner Claude
@@ -1356,7 +1350,7 @@
 
 ## Z · Complete / Not Applicable
 
-312 items.
+313 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3210,4 +3204,11 @@
 
 - Note 2026-10-07 (Phase 158a): Written by Phase 158a: the run stopped at Survey - nothing can open a survey job or lock its estimate (F31); the letter's specimen company number and blank property (F22); the bought answer lost at conversion (F28); the client's step label and the portal's 'nothing yet' (F27, F30); three wording fixes; then the run on from Survey. Nothing waits on anyone.
 - Note 2026-10-07 (Phase 158b): Done 7 Oct 2026: a survey job opened from the claim, sealing the funnel's figure (F31); the letter's party, property, date and figure (F22); the client's bought answer (F28); the client's step and the figure's note (F27, F30); five wording fixes; the invented client run from Survey to Closed; Phase 158c written (13231736097). 4,892 passing.
+
+### Phase 158c - the steps staff tick for other people: the surveyor's valuation, the reports, the client's acceptance, the invoice and the filing
+
+`13231736097` · **Done** · owner Claude
+
+- Note 2026-10-07 (Phase 158b): Written by Phase 158b: the run goes end to end; left are the controls - the valuation read from the pack approval (F34, F35), reports issued from the app's own report (F36, F38), the client's acceptance in the portal (F39), the window warned early (F37), the invoice sent (F41), the filing recorded before close (F42); then the run once more. Nothing waits on anyone.
+- Note 2026-10-08 (Phase 158c): Done 8 Oct 2026: the Valuation gate on the surveyor's own approval (F34, F35); the client report and accountant's pack made from it, fingerprint computed (F38, F36); the client's acceptance in the portal (F39, migration 101); the window warned from Engagement (F37); the invoice sent (F41); closing and 'Claim filed' on the filing recorded (F42); the run again letter to Closed, every control held; Phase 158d written (13232676804). 4,912 passing.
 
