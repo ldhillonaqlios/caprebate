@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 315 |
-| Working on it | 1 |
+| Done | 316 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1134,7 +1134,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-42 items.
+41 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1353,12 +1353,6 @@
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 - Note 2026-10-06 (Phase 157 (sweep)): The tool is built and refuses to run until the officer answers Word question 200; nothing is left to build, so it waits like any built item. Housed as SDP-P43.
 
-### Phase 159a - one version after sign-off, the "up to" figure everywhere, and the small faults
-
-`13247775482` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro.local (the Mac)**
-
-- Note 2026-10-09 (Stress test 9 Oct 2026): Written 9 Oct 2026 from the stress test of that day (Lockwood live run L1-L12, engine E1-E20, claim stage C1-C29, coverage matrix): evidence in 04-phase-work/stress-2026-10-09/ (OneDrive); the phase is in ACTION-PLAN.md above the sweep.
-
 ### Phase 159b - the assessment figure and the engine's inputs made sound
 
 `13247799298` · **Ready - Claude can build** · owner Claude
@@ -1417,7 +1411,7 @@
 
 ## Z · Complete / Not Applicable
 
-315 items.
+316 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3292,4 +3286,11 @@
 
 - Note 2026-10-09 (Phase 159): Claimed: the sweep after Phases 158a to 158d. Nothing waits on anyone.
 - Note 2026-10-09 (Phase 159): Done 9 Oct 2026: tracker and board agree on all 484 items; every check re-run, figures unchanged at 4,934 passing; the Word document's link verified; ACC-H3 given its board item (13245993980), manifest entry and register counts; the waiting list and the plan's tally made true; the sweep renumbered to 160.
+
+### Phase 159a - one version after sign-off, the "up to" figure everywhere, and the small faults
+
+`13247775482` · **Done** · owner Claude
+
+- Note 2026-10-09 (Stress test 9 Oct 2026): Written 9 Oct 2026 from the stress test of that day (Lockwood live run L1-L12, engine E1-E20, claim stage C1-C29, coverage matrix): evidence in 04-phase-work/stress-2026-10-09/ (OneDrive); the phase is in ACTION-PLAN.md above the sweep.
+- Note 2026-10-09 (Phase 159a): Done 9 Oct 2026: locked past sign-off with Reopen the valuation; sign-off names its version (migration 104); return entries frozen once sent; up to £X everywhere; INSPIRE redirects; C2 back end, C14, C16, C22, L6, L7. 2,711 back-end tests, 4,950 in all. Carried: C2 site engine to 159d, INSPIRE live smoke to 159j.
 

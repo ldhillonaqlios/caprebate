@@ -383,33 +383,37 @@ function cookiesFrom(h: Headers): string[] {
 }
 
 /**
- * PHASE 159a (the Lockwood run, L1): ONE REQUEST, FOLLOWING AT MOST `max` REDIRECTS TO THE SAME HOST, carrying back
- * the cookies each one set. With `max` 0 the transport refuses every redirect itself, exactly as before this phase.
- * A redirect to another host, or one past the limit, is refused in words and nothing more is sent. It is all one
- * call: the caller writes one audit row for it, whatever happened in between.
+ * PHASE 159a (the Lockwood run, L1): ONE REQUEST, FOLLOWING AT MOST `max` REDIRECTS — to the same host, carrying back
+ * the cookies it set, or to a host the service's row names (`redirect_hosts`), carrying none. With `max` 0 the
+ * transport refuses every redirect itself, exactly as before this phase. A redirect anywhere else, to http, or past
+ * the limit is refused in words and nothing more is sent. The headers the caller set (a key, say) go to the same host
+ * only. It is all one call: the caller writes one audit row for it, whatever happened in between.
  */
-async function sendFollowingSameHost(
-  transport: Transport, first: URL, init: Parameters<Transport>[1], max: number,
+async function sendFollowing(
+  transport: Transport, first: URL, init: Parameters<Transport>[1], max: number, otherHosts: readonly string[],
 ): Promise<{ ok: true; res: Response } | { ok: false; status: number; why: string }> {
   if (max <= 0) return { ok: true, res: await transport(first.toString(), init) };
   const jar = new Map<string, string>();
   let url = first;
   for (let hop = 0; ; hop++) {
+    const same = url.host === first.host;
     const cookie = [...jar].map(([k, v]) => `${k}=${v}`).join('; ');
-    const headers = cookie === '' ? init.headers : { ...init.headers, cookie };
+    const headers = !same ? { accept: init.headers['accept'] ?? '*/*' } : cookie === '' ? init.headers : { ...init.headers, cookie };
     const res = await transport(url.toString(), { ...init, headers, redirect: 'manual' });
     if (!REDIRECT_STATUSES.has(res.status)) return { ok: true, res };
     await res.body?.cancel();
     const loc = res.headers.get('location');
     let next: URL | null = null;
     try { next = loc === null ? null : new URL(loc, url); } catch { next = null; }
-    if (next === null || next.protocol !== 'https:' || next.host !== first.host) {
+    if (next === null || next.protocol !== 'https:' || (next.host !== first.host && !otherHosts.includes(next.host))) {
       return { ok: false, status: res.status, why: 'the service sent us to another address, which we do not follow' };
     }
     if (hop >= max) return { ok: false, status: res.status, why: `the service redirected more than ${String(max)} times, so we stopped` };
-    for (const c of cookiesFrom(res.headers)) {
-      const i = c.indexOf('=');
-      jar.set(c.slice(0, i), c.slice(i + 1));
+    if (same) {
+      for (const c of cookiesFrom(res.headers)) {
+        const i = c.indexOf('=');
+        jar.set(c.slice(0, i), c.slice(i + 1));
+      }
     }
     url = next;
   }
@@ -498,9 +502,9 @@ export async function callOutside(deps: CallDeps, req: CallRequest): Promise<Cal
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), policy.timeout_ms);
     try {
-      const followed = await sendFollowingSameHost(deps.transport, url, {
+      const followed = await sendFollowing(deps.transport, url, {
         method, headers: { accept: 'application/json', ...req.headers }, ...(req.body === undefined ? {} : { body: req.body }), signal: ac.signal,
-      }, policy.same_host_redirects ?? 0);
+      }, policy.same_host_redirects ?? 0, policy.redirect_hosts ?? []);
       if (!followed.ok) {
         clearTimeout(timer);
         return finish({ outcome: 'NETWORK', status: followed.status, body: null, headers: {}, attempts, why: followed.why });

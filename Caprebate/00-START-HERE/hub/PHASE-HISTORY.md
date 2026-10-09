@@ -12654,3 +12654,53 @@ NOTHING LEFT  beyond those lines. No new phase: the next phase is the sweep (Pha
 - **Branch:** claude/stress-159a (pull request against main).
 
 **The lock** (hub/CLAIM.md) was held on this machine while the work ran and is clear in this commit; nothing else was running.
+
+---
+
+## Phase 159a — one version after sign-off, the "up to" figure everywhere, and the small faults — 9 October 2026
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 159a, 9 Oct 2026: past the tax adviser's sign-off (or after an exit) no survey pack is approved and the legal check takes no answer; "Reopen the valuation" (Admin, with a reason) sets aside the sign-off, the issued reports, the client's acceptance and any defence pack; the sign-off names the version it signed (migration 104) and only that version is released; a version's return entries are fixed once sent and add up to the penny; "up to £X" on every screen; HM Land Registry's INSPIRE download follows its two redirects; the window is open all of its last UK day; a nil line needs no pool; the postcode once; chapter 11 reads the one purchase date. 2,711 back-end tests, 4,950 in all. Carried: the site engine's last day to 159d, the live INSPIRE lookup to 159j. Next: Phase 159b.
+
+- **Branch** `claude/phase-159a`, made from `claude/stress-159a` (PR 42, not merged when this ran: it carries this phase's own text). The pull request is against `main`; merging it brings PR 42's commit with it.
+- **Evidence re-run first and last** (`04-phase-work/stress-2026-10-09/claim/run-all.sh`, OneDrive; the "before" outputs kept in `claim/before-159a/`). After: h5 refuses the legal answer and the approval at Reports, the window reads the signed version's purchase date, scenario B's sign-off of v1 after v2 is refused, scenario C's approval after an exit is refused; h4's penny check is 0p over 30,000 rows and the 2025-07-01 unknown-claimant rows show no rate beside a blank; h3's last day is open all day; h1 0 failures. h5 was changed to print the refusals it now meets instead of asserting the old behaviour (`h5-versions.ts.before-159a` kept).
+
+**What was built** (`09-app/backend`):
+1. **C3, C5, L3 — one version after sign-off.** `src/web/valuation-lock.ts` (new): `valuationLock` (fixed past TAX_ADVISER_SIGNOFF — Reports, Invoice, Defence pack, Closed, or on hold returning there — and at any exit), `voidLine`, `setAsideOnReopen`, `lastReopen`, `latestApprovalOnClaim`. `pack-approve.ts readiness` gains a first blocker `locked`; `pack-legal.ts answerLegal` refuses. "Reopen the valuation" is the claim's own REOPEN to Valuation (Admin, `claim.reopen`, a reason). `pipeline.ts apply` sets aside in the move's transaction (client report and accountant's pack ISSUED → SUPERSEDED; counts on the audit row as `set_aside`); every reader looks only past the latest reopen to the sign-off or earlier: `signOffSinceEntry`, `releasedVersion`, `releasedReportFingerprint`, `clientAcceptedNeed`, `defencePackRecords`, `deliverableIssued`/`deliverableIssuedNeed` (the defence pack, which never changes). Claim page: `valuationBlock` in `crm-pages.ts` (fixed, the button and what it sets aside, then who/when/why after). `claim-facts.ts acquisitionGiven` reads the purchase date from the SIGNED version's legal check before any working answer.
+2. **C4 — the sign-off names its version.** Migration 104: `tax_adviser_signoffs.approval_id` (+ trigger: a version on this claim; earlier rows back-filled with the version the old rule released; the no-update trigger put back). `recordSignOff` records the newest approved version, refuses a figure that is not that version's own and a posted `approval_id` that is not the newest (the form posts it hidden and says "version N, for £X"; `recordAnswer` passes the link's). `signOffRecordNeed` is shut while the newest version is unsigned. Release reads the version a sign-off names, at its own figure.
+3. **C29.** Migration 104 `return_entry_contexts` (never changed or deleted): the period and claimant type frozen the first time a version's spreadsheet leaves (`sendForSignoff`, `recordSignOff`); `returnContextFor` reads them for every later copy (staff download, the link).
+4. **E3.** `formatShownRange` renders "up to £X" only; labels "Figure shown" (pipeline, lists and its CSV header, client tiles, the claim page, the portal's "The figure you were shown").
+5. **L1.** `http.ts sendFollowing`; HMLR_INSPIRE row `same_host_redirects: 2`, `redirect_hosts: ['datapub-prd-s3-bucket.s3.amazonaws.com']`. **The premise was half right** (standing instruction step 8): the prompt said a same-host redirect; read live today the download is a 302 to the same address setting an AccessToken cookie, THEN a 302 to HM Land Registry's own file store on S3 (signed address; 200, 31,979,896 bytes, read by headers only). The first build (same host only) was proved wrong by two smoke lookups, both NO ("sent us to another address"), and fixed. The cookie and the caller's headers go to the same host only. Every other service still refuses every redirect.
+6. **Small faults.** C2: `engine.ts amendmentWindow` hands the engine the start of today's UK date (open all of the last UK day; 00:30 BST the next day closed). C14/C16: `return-entries.ts` works each pool in pence from the engine's rate (`inPence`); a main-pool rate stands only where every claimant reading gives the same rate. C22: `packSums` — a count of 0 adds nothing and needs nothing; a rate or share of 0 needs no pool. L6: `propertyLine` (report, pack chapter 10, the property chooser, the pack header). L7: `pack-cost-model.ts indexReading` reads `acquisitionDateReading` and says where from.
+
+**Tests.** `test/phase159a.test.ts`, 16 tests; run against the code before this phase (src and migrations swapped back for one run, then restored): **14 red, 2 controls green** (a line that could qualify still needs its pool; every other service follows no redirect). Restated: `test/claim-fixtures.ts` (`signOffRow` names the newest version; `releaseReportFor` records the sign-off again naming the version it makes, since a sign-off row never changes), `lists.test.ts` (the CSV header), `survey-report.test.ts` (a sign-off of v1's figure after v2 is now refused).
+
+**The checks, run on the Mac at the close:**
+- Back end `npm run check`: lint-sql clean, typecheck 0, **2,711 pass / 0 fail** over 166 tracked files (once, under load, `phase151g` P5 timed out at 296 s; alone it passed 23 of 23, and the closing run passed all).
+- Drift checker (re-derived): site 1382 pass / 0 fail / 3 xfail, phase3 440, phase9 417 — **4,950** in all; exit 0 after the Developer Spec was brought to 2,711 / 4,950. `--fast --expect 999,998,997,996`: **exit 1**. Self-test held.
+- CRM fold check: green after twenty §4 line references moved by this phase's edits were re-pointed (each found by its old line's text in the new file); self-test green.
+- Register check (with section 5): exit 0. Tracker check and self-test: green. Plain words (screens and guide): green. Brand: green. `extract --check`: up to date; `verify-extraction`: 21 checks, 0 failures (the site file is unchanged). Payload proof: PASS.
+- `tools/build-help.cjs --check`: matches the guide.
+
+**Documents.** Developer Spec: a Phase 159a section, the stage and sign-off routes, the figures. Admin and user guide (and Help, regenerated): "Reopen the valuation", the fixed figures, "figure shown". FOR THE ACCOUNTANT (the return-entries entry, question 121): the spreadsheet fixed once sent, every row adding up, the sign-off naming its version. No Word question opened or closed: no item in this phase was marked OUR READING, and the version rules are process, not tax readings. The top of the Word questions document was read (pages 1-2); nothing in it contradicts this phase.
+
+**Outside calls.** Two INSPIRE smoke lookups (logged NO, who and why in `~/.caprebate-test-lookups.jsonl`), which used the last two of its three test lookups since today's 11:17 switch-on; then three header-only reads of the download chain to see the second hop. Nothing about any client was sent.
+
+```
+DONE          1 C3/C5/L3 locked past sign-off and after an exit; Reopen the valuation sets aside
+                the sign-off, reports, acceptance and defence pack; the window reads the signed date
+              2 C4 the sign-off names its version (migration 104); release only that version
+              3 C29 a version's return entries frozen when first sent
+              4 E3 "up to £X" everywhere
+              5 L1 INSPIRE: same host with its cookie, then its own file store (recorded answers)
+              6 C2 (back end), C14, C16, C22, L6, L7
+              Tests 2,711 / 4,950; every check green; spec, guide, Help, FOR THE ACCOUNTANT updated.
+NOT DONE      C2 in the site engine (shared.js deriveAmendmentWindow compares a moment with the
+                deadline's midnight) - BUILDABLE - added to Phase 159d as its line 7.
+              L1 proved live end to end (the file downloaded and read by the app) - BUILDABLE once a
+                switch-on is recorded (the day's three INSPIRE test lookups are used; recording one
+                is Lakhbir's) - added to Phase 159j as its line 4, with the command.
+              Merging this phase's pull request (and PR 42 with it) - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159b to 159j; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.

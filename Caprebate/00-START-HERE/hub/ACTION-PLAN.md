@@ -1061,106 +1061,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 159a — one version after sign-off, the "up to" figure everywhere, and the small faults
-
- **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: the safety of what is released, first: nothing else is worth building on a pack that can change after the adviser signed it.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
-   and the same entry at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE EVIDENCE (OneDrive, not in git): Caprebate/04-phase-work/stress-2026-10-09/
-  COVERAGE-MATRIX.md     every variable that moves a claim, and where the app
-                         reads it (sections 1-14; gaps ranked in 14)
-  engine/FINDINGS.md     E1-E20, the estimate engine; re-run: node harness.ts
-  claim/FINDINGS.md      C1-C29, the claim stage; re-run: ./run-all.sh
-and Caprebate/04-phase-work/sim-2026-10-09-lockwood/Lockwood-Surgery-test-run.md
-(L1-L12, the live run on a real practice with every API). Re-run the harness
-for your items before you start and again at the end; it must go clean.
-
-THE TARGET (Lakhbir, 9 Oct 2026): "the highest figure we can defend" - not
-the highest figure. Every rule below is built on our recommendation and
-SWITCHED ON in test (his rule of 29 Sep 2026: build it, then ask the
-accountant / solicitor / DPO if it is viable). Each item marked OUR READING
-goes into the Word questions document (AMENDMENT 2 - cp, never mv) under the
-tax adviser as a viability check: "we built X on basis Y - is it viable?".
-
-Each fix below gets a test that fails on the code before it (turn the
-harness case into the test). Plain words at grade 9 on every screen. Fix
-what is small and safe; anything larger goes in a new lettered phase before
-the sweep; anything that needs a person goes in the Word questions document.
-
-1. C3, C5 (and L3, seen live): REFUSE pack approval and any legal-check
-   answer once the claim is past TAX_ADVISER_SIGNOFF, or has exited
-   (pack-approve.ts:95-131, pack-legal answers). The only way to change the
-   figures then is a deliberate "Reopen the valuation" with a reason, which
-   moves the claim back to VALUATION and voids the sign-off, the released
-   reports, the client's acceptance and any defence pack, each said on the
-   claim page. The window gate reads the purchase date (G9d) from the
-   RELEASED snapshot, never from a newer working pack
-   (claim-facts.ts:1121-1131).
-2. C4: keep the approval id (the version) on tax_adviser_signoffs; release
-   only the version that was signed (claim-record.ts:892-902,
-   report-signoff.ts:249-262). Never match a version by its total.
-3. C29: freeze the accounting period and claimant type into the snapshot, so
-   a version's return entries CSV never changes after it is sent.
-4. "ALWAYS SHOW THE UP TO NUMBER" (Lakhbir, 9 Oct 2026; E3). Staff screens,
-   the lead, the claim record and the portal show the figure the client was
-   shown: "up to £X". No range anywhere (assessment.ts:295 and 357 lowOf,
-   backoffice.ts:230, claim-record.ts:267, shown-range.ts:62). The engine's
-   low stays an internal reading for staff only where it already is one.
-5. L1, THE LAND BOUNDARY DOWNLOAD. HM Land Registry now answers with a 302 to
-   the same address that sets a cookie it expects back; callOutside refuses
-   every redirect (http.ts:50). Let the INSPIRE policy alone follow a
-   same-host redirect carrying that cookie, at most twice, still one audit
-   row a call. (A separate task chip offered this on 9 Oct; if its pull
-   request has merged, check it with one smoke lookup and move on.)
-6. The small faults: C2 (the window closes at the START of its last day -
-   compare UK dates, engine.ts:408 / shared.js:3160); C14 (a rate shown next
-   to a blank amount, return-entries.ts:74); C16 (CSV penny drift - work in
-   pence); C22 (a nil line with no pool blocks the total, pack-sums.ts:173);
-   L6 (the postcode printed twice on the report and pack header); L7
-   (chapter 11 says "Purchase date not on file" while the legal check holds
-   it).
-```
-
----
-
 ## PHASE 159b — the assessment figure and the engine's inputs made sound
 
  **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: the figure a client is shown must never be one we cannot defend.
@@ -1992,6 +1892,16 @@ the sweep; anything that needs a person goes in the Word questions document.
    event's route (the purchase W2, the refit W1), the allowances, the SBA
    on the refit, the report's sources on every line, the return entries.
 3. Write any finding as L13 onwards and give it a phase before you close.
+4. (Carried from Phase 159a, 9 Oct 2026.) INSPIRE, END TO END. 159a fixed
+   L1 to the live shape read that day (a 302 to the same address setting an
+   AccessToken cookie, then a 302 to HM Land Registry's own file store,
+   datapub-prd-s3-bucket.s3.amazonaws.com; the file answered 200, 32 MB,
+   read by headers only) and proved it on recorded answers. Its three test
+   lookups since the 11:17 switch-on were used that day (the Lockwood run,
+   then two of 159a's against the first, same-host-only fix), so a fourth is
+   refused until a person records a switch-on (smoke-switched-on is
+   Lakhbir's, not ours). Ask him to record one, then run
+   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE and expect PASS.
 ```
 
 ---
@@ -2639,7 +2549,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157 — the sweep — **done 6 Oct 2026**, see PHASE HISTORY; it inserted 157a and 157b |  The standing rule |
 |  Claude |  Phase 157a — the engine and the cost model: the pooling questions, the unknown seller, the cost model in the survey pack — **done 6 Oct 2026**, see PHASE HISTORY |  Loose ends the sweep held since 153e and 154a1 |
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
-|  Claude |  Phases 159a to 159j — the fixes from the 9 October 2026 stress test: one version after sign-off and the "up to" figure (159a, 13247775482); the assessment figure made sound (159b, 13247799298); several events on one building (159c, 13247778871); each event's route and the deadline gate (159d, 13247760762); the allowances and return entries (159e, 13247762244); BCIS rate drafting (159f, 13247754275); who claims and the registers (159g, 13247752841); the legal check (159h, 13247776393); grants, VAT, acquisition costs (159i, 13247762327); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
+|  Claude |  Phases 159b to 159j — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, ran on 9 Oct 2026 and is in PHASE HISTORY): the assessment figure made sound (159b, 13247799298); several events on one building (159c, 13247778871); each event's route and the deadline gate (159d, 13247760762); the allowances and return entries (159e, 13247762244); BCIS rate drafting (159f, 13247754275); who claims and the registers (159g, 13247752841); the legal check (159h, 13247776393); grants, VAT, acquisition costs (159i, 13247762327); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
 |  Claude |  Phase 160 — the sweep, always last |  The standing rule |
 

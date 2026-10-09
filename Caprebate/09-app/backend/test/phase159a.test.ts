@@ -227,7 +227,7 @@ describe('E3 — "up to £X", never a range', () => {
   });
 });
 
-describe('L1 — the INSPIRE download follows one same-host redirect, with its cookie', () => {
+describe('L1 — the INSPIRE download follows its two redirects: the same host with its cookie, then its own file store', () => {
   const GATE = { free_gate_open: true, engagement_signed: false, switched_on: true };
   function hmlr(steps: (url: string, init: Parameters<Transport>[1]) => Response): { t: Transport; seen: { url: string; cookie: string | undefined; redirect: string | undefined }[] } {
     const seen: { url: string; cookie: string | undefined; redirect: string | undefined }[] = [];
@@ -243,15 +243,19 @@ describe('L1 — the INSPIRE download follows one same-host redirect, with its c
     return { r, rows };
   }
 
-  test('a 302 to the same address with an AccessToken cookie: followed once, the cookie sent back, the file kept, one audit row', async () => {
-    const { t, seen } = hmlr((_url, init) => init.headers['cookie'] === 'AccessToken=abc'
+  test('the live shape (read 9 Oct 2026): a 302 to the same address with an AccessToken cookie, then a 302 to HM Land Registry’s own file store; the file kept, one audit row', async () => {
+    const BUCKET = 'https://datapub-prd-s3-bucket.s3.amazonaws.com/inspire/Kirklees_Council.zip?X-Amz-Signature=abc';
+    const { t, seen } = hmlr((url, init) => url.startsWith('https://datapub-prd-s3-bucket.s3.amazonaws.com/')
       ? new Response(new Uint8Array([80, 75, 3, 4]), { status: 200 })
-      : new Response(null, { status: 302, headers: { location: '/datasets/inspire/download/Kirklees_Council.zip', 'set-cookie': 'AccessToken=abc; Path=/; HttpOnly; Secure' } }));
+      : init.headers['cookie'] === 'AccessToken=abc'
+        ? new Response(null, { status: 302, headers: { location: BUCKET } })
+        : new Response(null, { status: 302, headers: { location: '/datasets/inspire/download/Kirklees_Council.zip', 'set-cookie': 'AccessToken=abc; Path=/; HttpOnly; Secure' } }));
     const { r, rows } = await call(t);
     assert.equal(r.outcome, 'OK', r.why);
-    assert.equal(seen.length, 2);
-    assert.equal(seen[1]?.cookie, 'AccessToken=abc');
+    assert.equal(seen.length, 3);
     assert.equal(seen[0]?.redirect, 'manual');
+    assert.equal(seen[1]?.cookie, 'AccessToken=abc', 'the cookie was not sent back to the same host');
+    assert.equal(seen[2]?.cookie, undefined, 'a cookie went to another host');
     assert.equal(rows.length, 1, 'one call, one audit row');
   });
 
