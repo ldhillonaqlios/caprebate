@@ -461,3 +461,32 @@ describe('F47 — the defence pack is made from the claim’s own records, its f
     } finally { w.made.close(); }
   });
 });
+
+/* ================================================================== *
+ * F48 — the portal's claim tile reads the same step as the rest of the portal (found by this phase's own run)
+ * ================================================================== */
+import * as PO from '../src/web/portal.ts';
+
+describe('F48 — the claim tile shows the step the client is at', () => {
+  const tile = (app: App, c: { business: string; user: string; claim: string }) =>
+    PO.claims(app.db, actor('CLIENT', c.user, c.business), c.business).find((x) => x.id === c.claim)?.progress;
+  const current = (p: ReturnType<typeof tile>) => p?.steps.find((s) => s.state === 'current')?.stage.key;
+
+  test('just after signing, the tile says the letter is signed, not "Your estimate"', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'ENGAGEMENT');
+    assert.equal(current(tile(app, c)), 'ASSESSMENT_SUBMITTED');
+    assert.equal(signNow(app, c).ok, true);
+    assert.equal(current(tile(app, c)), 'ENGAGEMENT_SIGNED');
+    app.close();
+  });
+
+  test('at the defence pack, the tile says "Claim filed" only once the filing is recorded', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'DEFENCE_PACK', 'AT_SURVEY');
+    assert.equal(current(tile(app, c)), 'AT_SURVEY');
+    CF.filingRecorded(app, c.claim);
+    assert.equal(current(tile(app, c)), 'INVOICED');
+    app.close();
+  });
+});
