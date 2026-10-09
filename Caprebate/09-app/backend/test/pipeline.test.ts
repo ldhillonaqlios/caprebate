@@ -525,7 +525,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false);
       // PHASE 158c (F39): the client's acceptance is theirs, in the portal - a staff tick is refused.
       assert.equal(P.recordMilestone(deps(app), actor('SALES'), c, 'CLIENT_ACCEPTED_REPORT', null).ok, false, 'the retired tick was taken');
-      confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
+      CF.accountantAnswers(app, c, 'RETURN_FIT'); // PHASE 158d (F46): the accountant's own answer, not a staff tick
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'the accountant’s confirmation passed with no report issued');
       CF.issue(app, c, 'CLIENT_REPORT');
       CF.issue(app, c, 'ACCOUNTANT_COMPUTATION_PACK');
@@ -535,7 +535,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       CF.openWindow(app, org.business, org.property, c);
       // A claim at REPORTS with no sign-off — it can only be put there by hand — still does not pass.
       const unsigned = claimAt(app, org, 'REPORTS');
-      confirm(app, unsigned, 'ACCOUNTANT_CONFIRMED_RETURN');
+      CF.accountantAnswers(app, unsigned, 'RETURN_FIT'); // PHASE 158d (F46): the accountant's own answer, not a staff tick
       assert.equal(fwd(app, 'SALES', unsigned, 'INVOICE').ok, false, 'a report with no sign-off went to invoice');
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, true);
     } finally { app.close(); }
@@ -549,7 +549,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       staff(app);
       const org = organisation(app);
       const c = claimAt(app, org, 'REPORTS', { signoff: true });
-      confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
+      CF.accountantAnswers(app, c, 'RETURN_FIT'); // PHASE 158d (F46): the accountant's own answer, not a staff tick
       CF.readyForReports(app, org.business, org.property, org.assessment ?? '', c);
       CF.clientAccepted(app, c); // PHASE 158c (F39): the client accepts in their portal
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, true);

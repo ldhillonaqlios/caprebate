@@ -62,6 +62,7 @@ import { handleStaffMessages } from './messages-pages.ts';
 import { handleSurveyor } from './surveyor-pages.ts';
 import { handleSurveyPack } from './survey-pack-pages.ts';
 import { handleReportStaff } from './report-pages.ts';
+import { handleAccountantConfirmStaff } from './accountant-confirm-pages.ts';
 import { handleStaffEvidence } from './evidence-pages.ts';
 import { handleFinance } from './finance-pages.ts';
 import { handleCrm } from './crm-pages.ts';
@@ -462,6 +463,9 @@ export async function handleStaff(
   // 2 Oct 2026: the approved report, its PDF, and sending it for sign-off (src/web/report-pages.ts).
   const report = await handleReportStaff({ app: d.app, newId: d.newId, nav, stamp, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (report === 'handled') return 'handled';
+  // PHASE 158d (F46): email the client's accountant a link to confirm for themselves (src/web/accountant-confirm-pages.ts).
+  const confirmLink = await handleAccountantConfirmStaff({ app: d.app, newId: d.newId, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
+  if (confirmLink === 'handled') return 'handled';
   // 2 Oct 2026: the client's photos, the walkthrough call and how the surveyor inspected (src/web/evidence-pages.ts).
   const evidence = await handleStaffEvidence({ app: d.app, store: d.store, newId: d.newId, nav, problem, origin: d.publicOrigin ?? 'http://localhost:8103' }, req, res, url, method, actor, form);
   if (evidence === 'handled') return 'handled';

@@ -501,7 +501,7 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
       assert.equal(invoice(app.now())?.met, true, 'an open window with no filing did not pass INVOICE');
       // After the window has closed: no filing recorded refuses; a filing recorded inside the window passes.
       assert.equal(invoice('2028-06-01T12:00:00.000Z')?.met, false, 'a closed window with no filing passed');
-      assert.equal(R.recordFiling(CF.recordDeps(app), actor('SALES'), c, { filed_on: '2026-09-01' }).ok, true);
+      CF.filingRecorded(app, c, '2026-09-01'); // PHASE 158d (F46): the accountant's own date, through their link
       assert.equal(invoice('2028-06-01T12:00:00.000Z')?.met, true, 'a claim filed inside the window was refused its fee');
       assert.equal(reports('2028-06-01T12:00:00.000Z')?.met, false, 'REPORTS passed on a closed window');
     } finally { app.close(); }
@@ -515,7 +515,9 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
     assert.ok(P.MILESTONES.VALUATION_SIGNED.retired);
     // PHASE 158c (F39): and CLIENT_ACCEPTED_REPORT - the client accepts the report in their portal now.
     assert.ok(P.MILESTONES.CLIENT_ACCEPTED_REPORT.retired);
-    for (const k of ['DATA_GATHERING_COMPLETE', 'ACCOUNTANT_CONFIRMED_RETURN'] as const) {
+    // PHASE 158d (F46): and ACCOUNTANT_CONFIRMED_RETURN - the accountant answers through their own link now.
+    assert.ok(P.MILESTONES.ACCOUNTANT_CONFIRMED_RETURN.retired);
+    for (const k of ['DATA_GATHERING_COMPLETE'] as const) {
       assert.equal(P.MILESTONES[k].retired, undefined, `${k} was retired though nothing derives it`);
     }
   });
@@ -680,8 +682,12 @@ describe('THE FOUR FIGURES — sealed and read from the record that sealed each;
       assert.equal(R.recordVariance(d, sales, c, { variance_category: 'SURVEY_FINDING', variance_notes: 'more plant found' }).ok, true);
       assert.equal(R.recordVariance(d, sales, c, { variance_category: 'SCOPE_CHANGE' }).ok, false, 'the tag changed');
       assert.equal(R.recordOutcome(d, sales, c, {}).ok, false, 'an outcome with no filing and no enquiry');
-      assert.equal(R.recordFiling(d, sales, c, { filed_on: '2026-09-01' }).ok, true);
+      // PHASE 158d (F46): the client's accountant gives the date through their link; staff cannot type it, and a second
+      // answer does not change it.
+      CF.filingRecorded(app, c, '2026-09-01');
       assert.equal(R.recordFiling(d, sales, c, { filed_on: '2026-09-02' }).ok, false, 'the filing changed');
+      CF.accountantAnswers(app, c, 'FILED', { filed_on: '2026-09-03' });
+      assert.equal(app.db.get<{ f: string }>('SELECT filed_on AS f FROM claim_reconciliations WHERE claim_id = ?', [c])?.f, '2026-09-01', 'the filing changed');
       assert.equal(R.recordOutcome(d, sales, c, {}).ok, false, 'an outcome before the enquiry window lapsed');
       const e = R.openEnquiry(d, sales, c, { opened_on: '2026-09-05' });
       assert.equal(e.ok, true);
@@ -700,7 +706,7 @@ describe('THE FOUR FIGURES — sealed and read from the record that sealed each;
       // NO ENQUIRY: the outcome is the window lapsing, twelve months after the filing.
       const lapsed = signedClaim(app, organisation(app), '100000');
       assert.equal(R.recordVariance(d, sales, lapsed, { variance_category: 'ENGINE_READ' }).ok, true);
-      assert.equal(R.recordFiling(d, sales, lapsed, { filed_on: '2025-06-01' }).ok, true);
+      CF.filingRecorded(app, lapsed, '2025-06-01'); // PHASE 158d (F46): the accountant's own date
       assert.equal(R.recordOutcome(d, sales, lapsed, {}).ok, true);
       assert.equal(app.db.get<{ p: string }>('SELECT resolution_path AS p FROM claim_reconciliations WHERE claim_id = ?', [lapsed])?.p, 'NO_ENQUIRY_WINDOW_LAPSED');
     } finally { app.close(); }

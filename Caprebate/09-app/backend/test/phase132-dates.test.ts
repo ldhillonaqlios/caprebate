@@ -96,13 +96,13 @@ describe('Phase 132 — claim-record.ts adds months without rolling into the nex
         return { path: r?.p ?? null, on: r?.on ?? null };
       };
       const leap = signedClaim(app);
-      assert.equal(R.recordFiling(d, sales, leap, { filed_on: '2024-02-29' }).ok, true);
+      CF.filingRecorded(app, leap, '2024-02-29'); // PHASE 158d (F46): the accountant's own date
       const out = R.recordOutcome(d, sales, leap, {});
       assert.equal(out.ok, true, out.ok ? '' : out.why);
       assert.deepEqual(lapse(leap), { path: 'NO_ENQUIRY_WINDOW_LAPSED', on: '2025-02-28' });
 
       const ordinary = signedClaim(app);
-      assert.equal(R.recordFiling(d, sales, ordinary, { filed_on: '2025-06-01' }).ok, true);
+      CF.filingRecorded(app, ordinary, '2025-06-01'); // PHASE 158d (F46): the accountant's own date
       assert.equal(R.recordOutcome(d, sales, ordinary, {}).ok, true);
       assert.deepEqual(lapse(ordinary), { path: 'NO_ENQUIRY_WINDOW_LAPSED', on: '2026-06-01' }, 'the negative control');
     } finally { app.close(); }

@@ -393,7 +393,8 @@ describe('F42 — closing needs the filing recorded, and "Claim filed" waits for
     const c = claimAt(app, 'DEFENCE_PACK');
     const need = () => gateNeed(app, c.claim, 'The claim’s filing is recorded');
     assert.equal(need()?.met, false);
-    assert.match(need()?.why ?? '', /no figure is signed off on this claim/);
+    // PHASE 158d (F46): with no accountant-free answer from the client, the client's accountant gives the date.
+    assert.match(need()?.why ?? '', /the client’s accountant has not confirmed the filing yet/);
     // Another claim's filing does not count.
     const other = claimAt(app, 'DEFENCE_PACK');
     CF.filingRecorded(app, other.claim);
@@ -401,7 +402,7 @@ describe('F42 — closing needs the filing recorded, and "Claim filed" waits for
     const today = app.now().slice(0, 10);
     CF.filingRecorded(app, c.claim, today);
     assert.equal(need()?.met, true);
-    assert.equal(need()?.why, `filed on ${today}`);
+    assert.equal(need()?.why, `filed on ${today}, confirmed by Test Accountant of Test Accountants LLP`);
     app.close();
   });
 
@@ -418,7 +419,7 @@ describe('F42 — closing needs the filing recorded, and "Claim filed" waits for
       [randomUUID(), c.claim, s?.commitment_id ?? '', k?.figures_hash ?? '', s?.figure_pence ?? 1, s?.id ?? '', T0, 'f'.repeat(64)]);
     const need = gateNeed(app, c.claim, 'The claim’s filing is recorded');
     assert.equal(need?.met, false);
-    assert.match(need?.why ?? '', /no filing date is recorded/);
+    assert.match(need?.why ?? '', /Send them the filing link/); // PHASE 158d (F46): the accountant gives it, through their link
     app.close();
   });
 

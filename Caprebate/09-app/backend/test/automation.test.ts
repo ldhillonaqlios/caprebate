@@ -291,7 +291,7 @@ describe('stage entered and owner changed', () => {
       const i = claimAt(app, org, 'REPORTS');
       CF.readyForReports(app, org.business, org.property, org.assessment ?? '', i);
       CF.clientAccepted(app, i); // PHASE 158c (F39): the client accepts in their portal, not a staff tick
-      confirm(app, i, 'ACCOUNTANT_CONFIRMED_RETURN');
+      CF.accountantAnswers(app, i, 'RETURN_FIT'); // PHASE 158d (F46): the accountant's own answer, not a staff tick
       const outbox = count(app.db, 'SELECT COUNT(*) AS n FROM outbox');
       assert.equal(fwd(app, sales, i, 'INVOICE').ok, true);
       assert.deepEqual(automated(i), [{ title: 'Raise the invoice for this claim in the finance view', activity_type: 'TASK', owner_role: 'ACCOUNTING' }]);
@@ -408,7 +408,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
       CF.issue(app, c, 'ACCOUNTANT_COMPUTATION_PACK');
       step('REPORTS');
       CF.clientAccepted(app, c); // PHASE 158c (F39)
-      confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
+      CF.accountantAnswers(app, c, 'RETURN_FIT'); // PHASE 158d (F46): the accountant's own answer, not a staff tick
       step('INVOICE');
       confirm(app, c, 'HMRC_PROCESSED_RELIEF');
       // CRM 7 of 10: the gate reads THIS claim's own fee invoice — an organisation's no longer opens it.

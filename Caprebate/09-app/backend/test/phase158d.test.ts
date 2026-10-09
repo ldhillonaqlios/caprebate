@@ -252,3 +252,154 @@ describe('F45 — the window reads the purchase date and year end the client or 
     app.close();
   });
 });
+
+/* ================================================================== *
+ * F46 — the client's accountant confirms for themselves
+ * ================================================================== */
+import * as AC from '../src/web/accountant-confirm.ts';
+import * as R from '../src/web/claim-record.ts';
+
+function accountantContact(app: App, business: string): string {
+  const id = randomUUID();
+  app.db.run("INSERT INTO contacts (id, business_id, full_name, contact_consent, marketing_optin, whatsapp_optin, created_at, contact_type, email) VALUES (?, ?, 'Test Accountant (TEST)', 1, 0, 0, ?, 'ACCOUNTANT', ?)",
+    [id, business, T0, `acct-${id}@example.invalid`]);
+  return id;
+}
+const tokenIn = (app: App): string => /\/confirm\/([A-Za-z0-9_-]{43})/.exec(app.db.get<{ body: string }>('SELECT body FROM outbox ORDER BY rowid DESC LIMIT 1')?.body ?? '')?.[1] ?? '';
+const send = (app: App, claim: string, kind: string, contact_id: string) => AC.sendConfirmRequest(
+  { db: app.db, audit: app.audit, now: app.now, newId: randomUUID, email: app.email }, actor('SALES'), claim, { kind, contact_id, origin: 'https://caprebate.example.invalid' });
+const answer = (app: App, token: string, f: Partial<{ outcome: string; name: string; firm: string; filed_on: string; reason: string; sure: string }>) =>
+  AC.answerConfirmLink({ db: app.db, audit: app.audit, now: app.now, newId: randomUUID }, token,
+    { outcome: 'CONFIRMED', name: 'Test Accountant', firm: 'Test Accountants LLP', filed_on: '', reason: '', sure: 'yes', ...f });
+
+describe('F46 — the accountant confirms the return fit and the filing through their own link', () => {
+  test('the staff tick is retired: nobody can tick it, and the Reports gate no longer reads it', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'REPORTS', 'AT_SURVEY');
+    assert.ok(P.MILESTONES.ACCOUNTANT_CONFIRMED_RETURN.retired !== undefined);
+    for (const role of ['SALES', 'ADMIN'] as const) {
+      assert.equal(P.recordMilestone(CF.recordDeps(app), actor(role), c.claim, 'ACCOUNTANT_CONFIRMED_RETURN', null).ok, false, role);
+    }
+    const need = P.gateOut(app.db, P.loadPipelineClaim(app.db, c.claim), 'REPORTS', { today: app.now() }).needs.find((n) => n.what.startsWith('The client’s accountant'));
+    assert.equal(need?.what, AC.RETURN_FIT_NEED);
+    assert.equal(need?.met, false);
+    assert.match(need?.why ?? '', /has not answered yet/);
+    app.close();
+  });
+
+  test('the link is sent only at its stage, only to the company’s accountant, and the accountant’s own answer opens the need', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'REPORTS', 'AT_SURVEY');
+    const other = client(app, 'REPORTS', 'AT_SURVEY');
+    const theirs = accountantContact(app, other.business);
+    assert.equal(send(app, c.claim, 'RETURN_FIT', theirs).ok, false, 'another company’s accountant was sent the link');
+    const mine = accountantContact(app, c.business);
+    assert.equal(send(app, c.claim, 'FILED', mine).ok, false, 'the filing link went out at Reports');
+    assert.equal(send(app, c.claim, 'RETURN_FIT', mine).ok, true);
+    const token = tokenIn(app);
+    assert.equal(token.length, 43);
+    // The link's token is never stored; only its fingerprint.
+    assert.equal(app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM accountant_confirm_requests WHERE token_sha256 = ?', [token])?.n, 0);
+    const need = () => P.gateOut(app.db, P.loadPipelineClaim(app.db, c.claim), 'REPORTS', { today: app.now() }).needs.find((n) => n.what === AC.RETURN_FIT_NEED);
+    assert.equal(answer(app, token, { firm: 'Just A Name' }).ok, false, 'a firm with no registered ending');
+    assert.equal(answer(app, token, { sure: '' }).ok, false, 'confirmed without the tick');
+    assert.equal(answer(app, token, {}).ok, true);
+    assert.equal(answer(app, token, {}).ok, false, 'answered twice');
+    assert.equal(need()?.met, true);
+    assert.match(need()?.why ?? '', /confirmed by Test Accountant of Test Accountants LLP/);
+    app.close();
+  });
+
+  test('"not so" keeps the need shut and says why', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'REPORTS', 'AT_SURVEY');
+    CF.accountantAnswers(app, c.claim, 'RETURN_FIT', { outcome: 'NOT_CONFIRMED', reason: 'The 2024 return is already closed.' });
+    const need = P.gateOut(app.db, P.loadPipelineClaim(app.db, c.claim), 'REPORTS', { today: app.now() }).needs.find((n) => n.what === AC.RETURN_FIT_NEED);
+    assert.equal(need?.met, false);
+    assert.match(need?.why ?? '', /said it does not: “The 2024 return is already closed\.”/);
+    app.close();
+  });
+
+  test('the filing: staff cannot type it where the accountant files; the accountant’s date becomes the claim’s, and closing reads it', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'DEFENCE_PACK', 'AT_SURVEY');
+    CF.signOffRow(app, c.business, c.assessment, c.claim);
+    const need = () => P.gateOut(app.db, P.loadPipelineClaim(app.db, c.claim), 'DEFENCE_PACK', { today: app.now() }).needs.find((n) => n.what.startsWith('The claim’s filing is recorded'));
+    assert.match(need()?.why ?? '', /has not confirmed the filing yet/);
+    // A reconciliation to hold the date (the fixture opens one with the sign-off).
+    CF.filingRecorded(app, c.claim, '2026-09-01');
+    assert.equal(need()?.met, true);
+    assert.match(need()?.why ?? '', /filed on 2026-09-01, confirmed by Test Accountant of Test Accountants LLP/);
+    assert.equal(app.db.get<{ f: string }>('SELECT filed_on AS f FROM claim_reconciliations WHERE claim_id = ?', [c.claim])?.f, '2026-09-01');
+    const typed = R.recordFiling(CF.recordDeps(app), actor('SALES'), c.claim, { filed_on: '2026-09-02' });
+    assert.equal(typed.ok, false);
+    assert.match(typed.ok ? '' : typed.why, /accountant files this return/);
+    app.close();
+  });
+
+  test('where the client has no accountant (their own written yes, and none on file), staff still record the filing as before', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'DEFENCE_PACK', 'AT_SURVEY');
+    app.db.run("INSERT INTO claim_stage_moves (id, claim_id, at, actor_id, actor_role, kind, from_stage, to_stage, reason_code, reason_text) VALUES (?, ?, ?, 'u-SALES', 'SALES', 'FORWARD', 'TAX_ADVISER_SIGNOFF', 'REPORTS', NULL, NULL)",
+      [randomUUID(), c.claim, '2026-09-01T00:00:00.000Z']);
+    app.db.run("INSERT INTO client_filing_confirmations (id, claim_id, business_id, confirmed_by_party, no_accountant_or_adviser, will_file_amendment, last_day_acknowledged, last_day_stated, remains_responsible, written_evidence, recorded_by, recorded_at) " +
+      "VALUES (?, ?, ?, 'CLIENT', 'YES', 'YES', 'YES', '2027-01-31', 'YES', 'the client’s email (TEST)', 'u-SALES', ?)", [randomUUID(), c.claim, c.business, '2026-09-02T00:00:00.000Z']);
+    assert.equal(R.accountantFiles(app.db, c.claim), false);
+    CF.filingRecorded(app, c.claim);
+    assert.equal(app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM accountant_confirm_requests WHERE claim_id = ?', [c.claim])?.n, 0);
+    app.close();
+  });
+});
+
+async function salesWeb() {
+  const { createApp } = await import('../src/server.ts');
+  const { mkdtempSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-158d-web-')), publicOrigin: 'https://caprebate.example.invalid' });
+  await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
+  const a = made.server.address();
+  const base = `http://127.0.0.1:${typeof a === 'object' && a !== null ? a.port : 0}`;
+  const hash = await made.app.hasher.hash('Invented-Pass-158d');
+  made.app.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES ('u-SALES','sales@158d.example.invalid','sales@158d.example.invalid','Sales Person','SALES',?,?,?,NULL)", [hash, T0, T0]);
+  const browser = () => {
+    let cookie = '';
+    const req = async (path: string, init: RequestInit = {}) => {
+      const r = await fetch(base + path, { redirect: 'manual', ...init, headers: { ...(init.headers as Record<string, string> ?? {}), ...(cookie ? { cookie } : {}) } });
+      for (const x of r.headers.getSetCookie()) { const f = x.split(';')[0] ?? ''; const k = f.split('=')[0]; cookie = [...cookie.split('; ').filter((y) => y && y.split('=')[0] !== k), f].join('; '); }
+      return { status: r.status, body: await r.text(), location: r.headers.get('location') };
+    };
+    const post = (path: string, f: Record<string, string>) => req(path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(f).toString() });
+    return { req, post };
+  };
+  const sales = browser();
+  assert.equal((await sales.post('/login', { email: 'sales@158d.example.invalid', password: 'Invented-Pass-158d' })).status, 303);
+  return { made, sales, outsider: browser() };
+}
+
+describe('F46 — on screen', () => {
+  test('Sales sends the link from the claim page; the accountant answers on their own page, with no login; the gate opens', async () => {
+    const w = await salesWeb();
+    try {
+      const app = w.made.app;
+      staff(app);
+      const c = client(app, 'REPORTS', 'AT_SURVEY');
+      const contact = accountantContact(app, c.business);
+      const page = await w.sales.req(`/staff/claims/${c.claim}`);
+      assert.match(page.body, /id="accountant-confirm"[\s\S]*Nobody here ticks them[\s\S]*action="\/staff\/claims\/[^"]+\/accountant-confirm"/);
+      assert.doesNotMatch(page.body, /name="milestone" value="ACCOUNTANT_CONFIRMED_RETURN"/, 'the retired tick is still offered');
+      const sent = await w.sales.post(`/staff/claims/${c.claim}/accountant-confirm`, { kind: 'RETURN_FIT', contact_id: contact });
+      assert.equal(sent.status, 303, sent.body.slice(0, 300));
+      const token = tokenIn(app);
+      const open = await w.outsider.req(`/confirm/${token}`);
+      assert.equal(open.status, 200);
+      assert.match(open.body, /The claim fits the client’s tax return, and it can still go in inside the amendment window\./);
+      const done = await w.outsider.post(`/confirm/${token}`, { outcome: 'CONFIRMED', name: 'Test Accountant', firm: 'Test Accountants LLP', sure: 'yes' });
+      assert.equal(done.status, 303);
+      assert.match((await w.outsider.req(`/confirm/${token}`)).body, /Thank you/);
+      assert.equal((await w.outsider.req('/confirm/not-a-real-link-at-all-not-a-real-link-at-al')).status, 404);
+      const after = await w.sales.req(`/staff/claims/${c.claim}`);
+      assert.match(after.body, /Confirmed[\s\S]*by Test Accountant of Test Accountants LLP/);
+    } finally { w.made.close(); }
+  });
+});

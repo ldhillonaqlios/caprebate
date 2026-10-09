@@ -40,6 +40,8 @@ import { authorise, can, type Actor, type Obj } from '../authz.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
 import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from './crm.ts';
 import { enteredAt, raiseBusinessStage, type Need } from './pipeline.ts';
+import { filingRoute } from './client-filing.ts';
+import { latestAnswer } from './accountant-confirm.ts';
 import { assertSignedEngagement, freeGate } from './research.ts';
 import { ctaSwitchReadings } from './engine.ts';
 import { amendmentWindowReading, dateValue, penceValue } from './claim-facts.ts';
@@ -584,9 +586,21 @@ function reconAudit(d: RecordDeps, actor: Actor, c: ClaimRow, step: string, at: 
   });
 }
 
+/**
+ * PHASE 158d (F46): whether the client's accountant files this claim — the Reports route (src/web/client-filing.ts) is
+ * ACCOUNTANT. Then the filing date is theirs to give, through their own link (src/web/accountant-confirm.ts).
+ */
+export function accountantFiles(db: Db, claim_id: string): boolean {
+  const c = db.get<{ id: string; business_id: string; created_at: string }>('SELECT id, business_id, created_at FROM claims WHERE id = ?', [claim_id]);
+  return c !== undefined && filingRoute(db, c, enteredAt(db, c, 'REPORTS')).route === 'ACCOUNTANT';
+}
+
 /** THE FILING — the date the return carrying the claim was filed. Once. */
 export function recordFiling(d: RecordDeps, actor: Actor, claim_id: string, input: Fields): RecordResult {
   const { c, r } = reconFor(d, actor, claim_id);
+  if (accountantFiles(d.db, c.id)) {
+    return { ok: false, why: 'The client’s accountant files this return, so they give the date themselves. Send them the filing link under “The accountant’s confirmations”.' };
+  }
   if (r.filed_on !== null) return { ok: false, why: `The filing is already recorded, on ${r.filed_on}, and does not change.` };
   const filed = dateValue(input['filed_on']);
   if (filed === null) return { ok: false, why: 'Write the filing date, like 2026-03-31.' };
@@ -607,6 +621,14 @@ export function recordFiling(d: RecordDeps, actor: Actor, claim_id: string, inpu
  */
 export function filingRecordedNeed(db: Db, claim_id: string): Need {
   const what = 'The claim’s filing is recorded, with its date';
+  // PHASE 158d (F46): where the client's accountant files, the filing is their own answer through their link.
+  if (accountantFiles(db, claim_id)) {
+    const a = latestAnswer(db, claim_id, 'FILED');
+    if (a === null) return { what, met: false, why: 'the client’s accountant has not confirmed the filing yet. Send them the filing link under “The accountant’s confirmations”' };
+    return a.outcome === 'CONFIRMED'
+      ? { what, met: true, why: `filed on ${a.filed_on ?? ''}, confirmed by ${a.signer_name} of ${a.signer_firm ?? ''}` }
+      : { what, met: false, why: `${a.signer_name} said it is not filed: “${a.reason ?? ''}”` };
+  }
   const r = db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [claim_id]);
   if (r === undefined) return { what, met: false, why: 'no figure is signed off on this claim, so there is nothing to record the filing against' };
   if (r.filed_on === null) return { what, met: false, why: 'no filing date is recorded. Record it under Reconciliation once the amended return is filed' };
