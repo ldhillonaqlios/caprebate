@@ -4507,9 +4507,10 @@ var CB_CASH = (function(){
   }
   function deriveAmendmentWindow(s, today){
     var periodEnd = s.accounting_period_end;
-    if(!periodEnd) return { known:false };
+    /* PHASE 159b (E13): a period end is a whole ISO date. "2025" or "31/03/2025" is not one: not known (N4). */
+    if(!periodEnd || typeof periodEnd !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(periodEnd)) return { known:false };
     var basis = "year_end_given";
-    var spendEnd = s.event_date ? spendPeriodEnd(periodEnd, s.event_date) : null;
+    var spendEnd = (typeof s.event_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s.event_date)) ? spendPeriodEnd(periodEnd, s.event_date) : null;
     if(spendEnd && (spendEnd < periodEnd || (spendEnd > periodEnd && CB_CTA.window_from_later_spend_period === true))){
       periodEnd = spendEnd; basis = "period_of_spend";
     }
@@ -8099,15 +8100,16 @@ var CB_BOOKING = (function(){
    =========================================================================== */
 var CB_INPUTS = (function(){
   var MONEY = ["base_amount","earlier_disposal_value","transaction_tax_amount","election_amount","grant_amount","landlord_contrib_amount"];
-  function cleanMoney(s, k){
+  function cleanMoney(s, k, notes){
     if(!(k in s)) return;
     var v = s[k];
     if(v === null || v === undefined) return;
-    if(typeof v !== "number" || !isFinite(v) || v < 0){ delete s[k]; (s.assumptions = s.assumptions || []).push("a figure given for " + k.replace(/_/g," ") + " was not a usable amount, so it has been treated as not given"); }
+    if(typeof v !== "number" || !isFinite(v) || v < 0){ delete s[k]; notes.push("a figure given for " + k.replace(/_/g," ") + " was not a usable amount, so it has been treated as not given"); }
   }
   function clean(s){
-    if(!s || typeof s !== "object") return s;
-    MONEY.forEach(function(k){ cleanMoney(s, k); });
+    if(!s || typeof s !== "object") return [];
+    var notes = [];
+    MONEY.forEach(function(k){ cleanMoney(s, k, notes); });
     Object.keys(s).forEach(function(k){
       if(!/_fraction$/.test(k)) return;
       var v = s[k];
@@ -8119,7 +8121,7 @@ var CB_INPUTS = (function(){
     if(!Array.isArray(s.trigger)) s.trigger = [];
     if(!Array.isArray(s.flags)) s.flags = [];
     if(!Array.isArray(s.assumptions)) s.assumptions = [];
-    return s;
+    return notes;
   }
   function noTax(s){
     return s.is_taxpayer === "no" || s.is_uk_taxpayer === "no" || s.charity === true ||
@@ -8131,9 +8133,10 @@ var CB_INPUTS = (function(){
     keys.forEach(function(k){ if(Array.isArray(r[k])) r[k] = r[k].map(function(x){ return typeof x === "number" ? 0 : x; }); });
   }
   function run(s, engine){
-    clean(s);
+    var notes = clean(s);
     var r = engine(s);
     if(!r || typeof r !== "object") return r;
+    if(notes.length) r.assumptions = notes.concat(r.assumptions || []);
     if(s.prior_claim_self === true){
       zero(r, ["QE","TS","cash"]);
       r.assumptions = (r.assumptions || []).concat([CLAIMED_WORDS]);
@@ -8349,9 +8352,9 @@ var CB_FUNNEL = (function(){
          2014: from then a seller who could have claimed and never pooled leaves the buyer nothing on the fixtures
          (s.187A, the pooling requirement). Before April 2014 the ceiling stands; a date not known, or one that
          could fall either side, is not known to be before, so a person checks (E6; N4);
-       · a NEW BUILD, REFURBISHMENT, EXTENSION OR FIT-OUT known to be before April 2008: most of the building's
-         wiring, lighting and water systems became claimable only then (integral features), so the band is wrong
-         for it (E12);
+       · ANY SPEND known to be before April 2008 — a purchase as well as works, because it is the client's own spend
+         that is dated: most of a building's wiring, lighting and water systems became claimable only then (integral
+         features), so the band is wrong for it (E12);
        · a date in the future (E12), or a spend above PLAUSIBLE_MAX (E10).
      A date is a month and year ("06/2021") or a year ("2021"); a year is the whole year, never 1 January (E13).
      The April 2018 structures and buildings allowance and the April 2023 full expensing change WHICH RELIEF a
@@ -8383,8 +8386,8 @@ var CB_FUNNEL = (function(){
       return "you told us its fixtures have already been claimed on. The same spend cannot be claimed twice, so an adviser will check what was claimed before we give a figure";
     if(p.trigger === "purchase" && seller === "no" && !(r && r[1] < "2014-04"))
       return "you told us the seller did not claim. Since April 2014, if the seller could have claimed and did not, the buyer usually cannot claim the fixtures either. An adviser will check the seller's position before we give a figure";
-    if(p.trigger !== "purchase" && r && r[1] < "2008-04")
-      return "this work was before April 2008, when the rules on wiring, lighting and water systems were different, so an adviser will size it with you";
+    if(r && r[1] < "2008-04")
+      return "this was before April 2008, when the rules on wiring, lighting and water systems were different, so an adviser will size it with you";
     return null;
   }
 

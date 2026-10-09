@@ -2092,4 +2092,4 @@ Name:                                  Date:
 
  One item more is awaiting sign-off on the board: ACC-H3, in FOR THE ACCOUNTANT.
 
- **And the board's own total at the close of the Phase 159 sweep, 9 October 2026, counted in code: 129 items carry that status**: fifty-one in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-one plus ten plus sixty-eight is 129.
+ **And the board's own total at the close of Phase 159b, 9 October 2026, counted in code: 130 items carry that status**: fifty-two in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-two plus ten plus sixty-eight is 130. (At the close of the Phase 159 sweep it was 129; Phase 159b added ACC-H4.)

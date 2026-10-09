@@ -80,6 +80,10 @@
 226) Can a client's answer about VAT on their building work tell us whether they can reclaim VAT on our fee?
 237) When a claim through the pool creates a loss that is carried back, may we tell the client part of it comes back as a refund?
 239) When a grant's papers say which items it paid for, should it come off only those items?
+247) We now give no figure when a client says they already claimed on a building's fixtures, or when the seller of a building bought after April 2014 did not claim. Is that viable?
+248) We now treat the date of a client's spend as moving the online figure: before April 2008 no figure, and a future date refused. Is that viable?
+249) We changed three of our yield bands: a care home's new build tops out at 40%, an extension is sized as a new build, and the 90% refurbishment tops are kept. Is that viable?
+250) Two readings we kept on purpose: a closed amendment window after a seller pooled and no election is a referral, not nil; and a loss-making client keeps the same figure, told the relief may come as a loss. Are both viable?
 116) Would you send a client to us, and what would stop you?
 117) Do you want a fee for sending clients, and what must you tell them?
 118) Who sends the corrected tax return to HMRC: you or us?

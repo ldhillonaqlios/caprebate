@@ -1873,4 +1873,15 @@ Signed .............................  Date ..........................
 
  **This register gains one entry and one board item**: ACC-H3, the accountant's own confirmation link and the defence pack's list of records (board item 13245993980). Phase 158d wrote the two checks into this register, but made no board item for them, so no count saw them. **Board items covered: 51.**
 
- **And the board's own total at the close of the Phase 159 sweep, 9 October 2026, counted in code: 129 items carry that status**: fifty-one in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-one plus ten plus sixty-eight is 129.
+ **And the board's own total at the close of Phase 159b, 9 October 2026, counted in code: 130 items carry that status**: fifty-two in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-two plus ten plus sixty-eight is 130. (At the close of the Phase 159 sweep it was 129; Phase 159b added ACC-H4.)
+
+## Phase 159b, 9 October 2026 — ACC-H4 · four readings behind the online figure, built and on in the test system
+
+ We build first and ask you second (Lakhbir, 29 September 2026). All four are on in the test system only, with invented data. Each is a question in the Word questions document, Section 2, with our recommendation and a worked example:
+
+-  **No figure on two answers.** A client who says they have already claimed on a building's fixtures, or who bought after April 2014 from a seller who did not claim, is shown no figure for that building; an adviser checks first. (Question 247.)
+-  **The date moves the figure.** Spend known to be before April 2008 gets no figure (integral features), and a future date is refused. The 2018 structures and buildings allowance and 2023 full expensing do not move this figure. (Question 248.)
+-  **Three bands.** A care home's new build tops out at 40%, not 35%; an extension is sized as a new build; the 90% refurbishment tops are kept as ceilings. (Question 249.)
+-  **Two kept on purpose.** A closed window after a seller pooled with no election stays a referral, not nil; a loss-making client keeps the same figure and is told the relief may come as a loss. (Question 250.)
+
+ **ACC-H4 · Board item 13249231366, added 9 October 2026 by Phase 159b.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 52.**

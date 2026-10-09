@@ -8711,9 +8711,12 @@ if (startSuite("AN", "Phase 159b — the assessment figure and the engine's inpu
   check("AN3b — a seller who claimed, or 'don't know', keeps the figure; and a seller answer on a new build changes nothing",
     [one({ previous_owner_claimed: "yes", date: "03/2025" }).total > 0, one({ previous_owner_claimed: "dont_know", date: "03/2025" }).total > 0,
      one({ trigger: "new_build", previous_owner_claimed: "no", date: "03/2025" }).total > 0], [true, true, true]);
-  check("AN4 E12 — a future date gives no figure; works known to be before April 2008 give none; a 2005 purchase is not cut by that rule",
-    [one({ date: "12/2099" }).total, one({ trigger: "new_build", date: "2005" }).total, one({ trigger: "refurb", date: "03/2008" }).total > 0,
-     one({ trigger: "new_build", date: "2008" }).total > 0, one({ date: "2005", previous_owner_claimed: "yes" }).total > 0], [0, 0, false, true, true]);
+  check("AN4 E12 — a future date gives no figure; spend known to be before April 2008 (works or a purchase) gives none; 2008 as a whole year, and 04/2008, are not known to be before",
+    [one({ date: "12/2099" }).total, one({ trigger: "new_build", date: "2005" }).total, one({ trigger: "refurb", date: "03/2008" }).total,
+     one({ trigger: "new_build", date: "2008" }).total > 0, one({ date: "2005", previous_owner_claimed: "yes" }).total, one({ trigger: "refurb", date: "04/2008" }).total > 0],
+    [0, 0, 0, true, 0, true]);
+  check("AN4b E13 — an amendment window needs a whole ISO period end: '2025' and '31/03/2025' are not known; '2025-03-31' is",
+    ["2025", "31/03/2025", "2025-03-31"].map(pe => CB_CASH.deriveAmendmentWindow({ accounting_period_end: pe, claimant_type: "company" }, new Date("2026-10-09")).known), [false, false, true]);
   check("AN5 E10 E17 — above £100 million a person sizes it; a ceiling under £1 is no figure; ten buildings never sum to Infinity",
     [one({ spend: 2e8 }).total, one({ spend: 0.4 }).total, isFinite(fig(Array.from({ length: 10 }, () => ({ sector: "private_hospital", trigger: "refurb", spend: 1e8 }))).total)],
     [0, 0, true]);
