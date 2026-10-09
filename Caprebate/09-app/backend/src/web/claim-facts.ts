@@ -358,6 +358,12 @@ export function acquisitionDateReading(db: Db, property_id: string | null): Fact
   if (property_id === null) return unknown('ACQUISITION_DATE', label, false, null);
   const p = db.get<{ acquisition_date: string | null }>('SELECT acquisition_date FROM properties WHERE id = ?', [property_id]);
   if (p?.acquisition_date === null || p?.acquisition_date === undefined) {
+    // PHASE 158d (F45): with nothing on the property record, the surveyor's legal-check date or the client's checked answer.
+    const given = acquisitionGiven(db, property_id);
+    if (given !== null) {
+      return { key: 'ACQUISITION_DATE', label, known: true, value: given.value, display: `${ukDate(given.value)} — from ${given.words}`, capturable: false,
+        source: { source_id: null, publisher: given.publisher, prov: null, derived: false, locator: given.locator, recorded_at: given.at, recorded_by: null } };
+    }
     const said = clientSaidPurchaseDate(db, property_id);
     const u = unknown('ACQUISITION_DATE', label, false, null);
     return said === null ? u : { ...u, display: `not known: at the assessment the client said they bought it around ${said}. Confirm the completion date and record it on the property.` };
@@ -427,9 +433,22 @@ export function amendmentWindowReading(db: Db, c: { business_id: string; propert
   const facts = latestFacts(db, c.id);
   const start = facts.get('ACCOUNTING_PERIOD_START');
   const end = facts.get('ACCOUNTING_PERIOD_END');
-  const startV = start === undefined ? null : rowValue(start);
-  const endV = end === undefined ? null : rowValue(end);
+  let startV = start === undefined ? null : rowValue(start);
+  let endV = end === undefined ? null : rowValue(end);
   const acq = acquisitionDateReading(db, c.property_id);
+  // PHASE 158d (F45): say which date the window read when it is not the property record's, and fill the accounting
+  // period from the client's checked year end where no period is recorded.
+  const readFrom: string[] = [];
+  const given = c.property_id === null ? null : acquisitionGiven(db, c.property_id);
+  if (acq.known && given !== null && given.value === acq.value) readFrom.push(`the purchase date from ${given.words} (${ukDate(given.value)})`);
+  if ((startV === null || endV === null) && acq.known && acq.value !== null) {
+    const p = periodFromYearEnd(db, c.business_id, acq.value);
+    if (p !== null) {
+      startV = p.start; endV = p.end;
+      readFrom.push(`the accounting period from the client’s year end (${ukDate(p.start)} to ${ukDate(p.end)})`);
+    }
+  }
+  const said = readFrom.length === 0 ? '' : ` Read from ${readFrom.join(', and ')}.`;
   const claimant = claimantTypeForGate(db, c.business_id).value;
   const missing: string[] = [];
   if (!acq.known) missing.push('the acquisition date');
@@ -460,7 +479,7 @@ export function amendmentWindowReading(db: Db, c: { business_id: string; propert
   if (!w.known) return { state: 'UNKNOWN', deadline: null, assumption: null, why: 'Not known — the period end could not be read as a date.' };
   return {
     state: w.in_time ? 'OPEN' : 'CLOSED', deadline: w.deadline,
-    why: w.in_time ? `open until ${w.deadline}` : `closed on ${w.deadline}`,
+    why: `${w.in_time ? `open until ${w.deadline}` : `closed on ${w.deadline}`}${said}`,
     assumption: windowAssumption(claimant, w),
   };
 }
@@ -1052,4 +1071,83 @@ export function floorAreaOnRecord(db: Db, business_id: string, property_id: stri
     why: 'No floor area is on record yet. It can come from the energy certificate or from Homedata\'s estimate. Or it can come ' +
       'from the client\'s answer to "how big is the building", once you have checked it. Ask the client, or look it up, first.',
   };
+}
+
+const MONTH_NUMBER: Readonly<Record<string, number>> = Object.freeze({
+  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12,
+});
+const monthOf = (word: string): number | undefined => MONTH_NUMBER[word.toLowerCase().slice(0, word.toLowerCase().startsWith('sept') ? 4 : 3)];
+const iso = (y: number, m: number, d: number): string | null => {
+  const t = new Date(Date.UTC(y, m - 1, d));
+  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d
+    ? `${String(y)}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` : null;
+};
+
+/**
+ * PHASE 158d (F45): a whole date in the words a client types — "2024-06-14", "14/06/2024", "14 June 2024", "June 14 2024".
+ * A month alone ("June 2024", "06/2024") is not a date, and is not read as one.
+ */
+export function clientDate(text: string): string | null {
+  const t = text.trim().replace(/(\d)(st|nd|rd|th)\b/gi, '$1').replace(/,/g, ' ').replace(/\s+/g, ' ');
+  let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
+  if (m) return iso(Number(m[1]), Number(m[2]), Number(m[3]));
+  m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(t);
+  if (m) return iso(Number(m[3]), Number(m[2]), Number(m[1]));
+  m = /^(\d{1,2}) ([A-Za-z]+) (\d{4})$/.exec(t);
+  if (m) { const mo = monthOf(m[2] ?? ''); return mo === undefined ? null : iso(Number(m[3]), mo, Number(m[1])); }
+  m = /^([A-Za-z]+) (\d{1,2}) (\d{4})$/.exec(t);
+  if (m) { const mo = monthOf(m[1] ?? ''); return mo === undefined ? null : iso(Number(m[3]), mo, Number(m[2])); }
+  return null;
+}
+
+/** PHASE 158d (F45): a year end in a client's words — "5 April", "April 5", "31/03" — as month and day, or null. */
+export function clientYearEnd(text: string): { readonly month: number; readonly day: number } | null {
+  const t = text.trim().replace(/(\d)(st|nd|rd|th)\b/gi, '$1').replace(/\s+/g, ' ');
+  let m = /^(\d{1,2}) ([A-Za-z]+)$/.exec(t);
+  let month: number | undefined; let day: number | undefined;
+  if (m) { month = monthOf(m[2] ?? ''); day = Number(m[1]); }
+  else if ((m = /^([A-Za-z]+) (\d{1,2})$/.exec(t))) { month = monthOf(m[1] ?? ''); day = Number(m[2]); }
+  else if ((m = /^(\d{1,2})[/.-](\d{1,2})$/.exec(t))) { month = Number(m[2]); day = Number(m[1]); }
+  if (month === undefined || day === undefined || iso(2023, month, day) === null) return null;
+  return { month, day };
+}
+
+/**
+ * PHASE 158d (F45, the second Friary House run): the purchase date was asked in four places and the window read only the
+ * one staff type on the property record. Where that is empty, this is the date someone else gave: the surveyor's answer
+ * to the legal check's G9d on a pack for this property, or else the client's own answer to "the completion date",
+ * checked by staff and a whole date. Never written over the property record; read, with where it came from.
+ */
+function acquisitionGiven(db: Db, property_id: string): { value: string; words: string; publisher: string; locator: string; at: string } | null {
+  const g = db.get<{ value_json: string; at: string }>(
+    'SELECT a.value_json, a.at FROM survey_pack_legal_answers a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
+      "LEFT JOIN claims c ON c.id = j.claim_id WHERE a.question_id = 'G9d' AND (p.property_id = ? OR (p.property_id IS NULL AND c.property_id = ?)) " +
+      'ORDER BY a.at DESC, a.seq DESC LIMIT 1', [property_id, property_id]);
+  if (g !== undefined) {
+    let v: unknown = null;
+    try { v = JSON.parse(g.value_json); } catch { v = null; }
+    const d = typeof v === 'string' ? clientDate(v) : null;
+    if (d !== null) return { value: d, words: 'the surveyor’s legal check', publisher: 'The surveyor', locator: 'the survey pack’s legal check, question G9d', at: g.at };
+  }
+  const biz = db.get<{ business_id: string }>('SELECT business_id FROM properties WHERE id = ?', [property_id])?.business_id;
+  const said = biz === undefined ? null : approvedClientAnswer(db, biz, 'completion_date');
+  const d = said === null ? null : clientDate(said.answer);
+  return said !== null && d !== null
+    ? { value: d, words: 'the client’s own answer, checked', publisher: 'The client', locator: 'their answer in the portal, checked by staff', at: said.at }
+    : null;
+}
+
+/** PHASE 158d (F45): the accounting period the purchase falls in, from the client's checked year end, or null. */
+function periodFromYearEnd(db: Db, business_id: string, acquired: string): { start: string; end: string } | null {
+  const said = approvedClientAnswer(db, business_id, 'year_end');
+  const ye = said === null ? null : clientYearEnd(said.answer);
+  if (ye === null) return null;
+  const y = Number(acquired.slice(0, 4));
+  const thisYear = iso(y, ye.month, ye.day);
+  if (thisYear === null) return null;
+  const end = thisYear >= acquired ? thisYear : iso(y + 1, ye.month, ye.day);
+  if (end === null) return null;
+  const prevEnd = new Date(Date.UTC(Number(end.slice(0, 4)) - 1, ye.month - 1, ye.day));
+  prevEnd.setUTCDate(prevEnd.getUTCDate() + 1);
+  return { start: prevEnd.toISOString().slice(0, 10), end };
 }

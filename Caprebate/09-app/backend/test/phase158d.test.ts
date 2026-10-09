@@ -174,3 +174,81 @@ describe('F44 — "Data gathering complete — floor area sourced" needs a floor
     app.close();
   });
 });
+
+/* ================================================================== *
+ * F45 — one purchase date, and the client's year end, read by the window
+ * ================================================================== */
+import * as F from '../src/web/claim-facts.ts';
+
+/** The surveyor's answer to the legal check's G9d ("On what date did that happen?") on a pack on this claim. */
+function surveyorSaid(app: App, c: { business: string; assessment: string; claim: string }, iso: string): void {
+  const job = randomUUID();
+  const pack = randomUUID();
+  const at = app.now();
+  app.db.run("INSERT INTO surveyor_jobs (id,business_id,assessment_id,surveyor_id,state,committed_at,created_at,claim_id) VALUES (?,?,?,'u-SURVEYING','SEALED',NULL,?,?)",
+    [job, c.business, c.assessment, at, c.claim]);
+  app.db.run("INSERT INTO survey_packs (id, job_id, property_id, created_at, created_by) VALUES (?, ?, NULL, ?, 'u-SURVEYING')", [pack, job, at]);
+  app.db.run("INSERT INTO survey_pack_legal_answers (id, pack_id, seq, question_id, value_json, by_user, source_note, at) VALUES (?, ?, 1, 'G9d', ?, 'u-SURVEYING', 'the completion statement', ?)",
+    [randomUUID(), pack, JSON.stringify(iso), at]);
+}
+
+describe('F45 — the window reads the purchase date and year end the client or the surveyor gave, and says which', () => {
+  const at = (app: App, claim: string) => {
+    const c = app.db.get<{ id: string; business_id: string; property_id: string | null }>('SELECT id, business_id, property_id FROM claims WHERE id = ?', [claim]);
+    assert.ok(c);
+    return F.amendmentWindowReading(app.db, c, app.now().slice(0, 10));
+  };
+  const setUp = async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'REPORTS', 'AT_SURVEY');
+    CF.fact(app, c.claim, 'PARTNERSHIP_HAS_COMPANY_MEMBER', 'NO');
+    return { app, c };
+  };
+
+  test('nothing given: not known, as before', async () => {
+    const { app, c } = await setUp();
+    assert.equal(at(app, c.claim).state, 'UNKNOWN');
+    assert.match(at(app, c.claim).why, /the acquisition date and the accounting period/);
+    app.close();
+  });
+
+  test('the surveyor’s completion date and the client’s checked year end are read, and the window says where each came from', async () => {
+    const { app, c } = await setUp();
+    surveyorSaid(app, c, '2024-06-14');
+    answered(app, c.business, 'year_end', '5 April');
+    const w = at(app, c.claim);
+    assert.equal(w.state, 'OPEN', w.why);
+    assert.equal(w.deadline, '2027-01-31');
+    assert.match(w.why, /the purchase date from the surveyor’s legal check \(14 Jun 2024\)/);
+    assert.match(w.why, /the accounting period from the client’s year end \(6 Apr 2024 to 5 Apr 2025\)/);
+    app.close();
+  });
+
+  test('the client’s checked completion date is read; an unchecked one is not; one with no full date is not', async () => {
+    const { app, c } = await setUp();
+    CF.fact(app, c.claim, 'ACCOUNTING_PERIOD_START', '2024-04-06');
+    CF.fact(app, c.claim, 'ACCOUNTING_PERIOD_END', '2025-04-05');
+    answered(app, c.business, 'completion_date', '14 June 2024', false);
+    assert.equal(at(app, c.claim).state, 'UNKNOWN', 'an unchecked answer was read');
+    answered(app, c.business, 'completion_date', 'June 2024');
+    assert.equal(at(app, c.claim).state, 'UNKNOWN', 'a month alone was read as a date');
+    answered(app, c.business, 'completion_date', '14 June 2024');
+    const w = at(app, c.claim);
+    assert.equal(w.state, 'OPEN', w.why);
+    assert.match(w.why, /the purchase date from the client’s own answer, checked \(14 Jun 2024\)/);
+    app.close();
+  });
+
+  test('a date on the property record wins, and recorded accounting periods win over the year end', async () => {
+    const { app, c } = await setUp();
+    surveyorSaid(app, c, '2019-06-14');
+    answered(app, c.business, 'year_end', '31 March');
+    app.db.run("UPDATE properties SET acquisition_date = '2024-06-14' WHERE id = ?", [c.property]);
+    CF.fact(app, c.claim, 'ACCOUNTING_PERIOD_START', '2024-04-06');
+    CF.fact(app, c.claim, 'ACCOUNTING_PERIOD_END', '2025-04-05');
+    const w = at(app, c.claim);
+    assert.equal(w.state, 'OPEN', w.why);
+    assert.doesNotMatch(w.why, /surveyor|year end/);
+    app.close();
+  });
+});
