@@ -300,6 +300,12 @@
           "id": "13200704047",
           "how": "table",
           "why": "Built by Phase 153b on 4 Oct 2026 as a tax-adviser switch, registered_provider_not_public_body, off (Word question 108). Created on monday.com in group 02 at Built - awaiting sign-off with owner CTA. The question it waits on is the tax adviser's, so it is housed here; the row is in the Appendix 3 table itself."
+        },
+        {
+          "ref": "ACC-H3 the accountant's own confirmation link and the defence pack's list of records (added Phase 159, 9 Oct 2026; the Phase 158d section at the end of the register)",
+          "id": "13245993980",
+          "how": "prose",
+          "why": "Built by Phase 158d on 9 Oct 2026 and on in the test system: the client's accountant confirms the return fit and the filing through their own link, and the defence pack is issued as the list of the claim's own records. The viability questions were written into the register by 158d with no board item; the Phase 159 sweep created one in group 02 at Built - awaiting sign-off with owner CTA."
         }
       ],
       "mentions": [

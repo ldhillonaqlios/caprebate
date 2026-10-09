@@ -1081,3 +1081,9 @@ reasonably be established remotely should require a site inspection before a sur
 -  **SV-S10, the professional fees, and the ageing method.** The cost model's own notes said its fee and ageing tables waited on a Valuation Office licence. They now say they wait on you: the fees percentage (your call question 9a) and the ageing method (call question 9, the valuation basis). The tables and switches are unchanged.
 
  **And the board's own total at the close of Phase 157a, 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.
+
+## Phase 159 (sweep), 9 October 2026 — nothing moved in or out of this register
+
+ One item more is awaiting sign-off on the board: ACC-H3, in FOR THE ACCOUNTANT.
+
+ **And the board's own total at the close of the Phase 159 sweep, 9 October 2026, counted in code: 129 items carry that status**: fifty-one in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-one plus ten plus sixty-eight is 129.

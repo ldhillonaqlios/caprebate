@@ -1,6 +1,6 @@
 # Waiting on people — what only a person can do
 
-**As found on 3 October 2026; brought up to date by the Phase 158 sweep, 7 October 2026.** The rule (Lakhbir, 29 Sep 2026): **we build everything in test, then the right person
+**As found on 3 October 2026; brought up to date by the Phase 159 sweep, 9 October 2026.** The rule (Lakhbir, 29 Sep 2026): **we build everything in test, then the right person
 signs it off** — "anything you need signing off we build it, we then ask the accountant/solicitor/DPO to see if its
 viable and if not we then correct it". So nothing here stops a build; each line is what turns a built thing into a
 signed-off one, or what only a person can buy, send, sign or decide.
@@ -100,8 +100,12 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 
 ## The accountant and the tax adviser
 
-- [ ] 45 built items for the tax adviser (24 switched-off tax readings, 11 rulebooks, a 53-line review pack) and 13
-      questions for the accountant on the referral channel and AML. 58 Word questions for the accountant.
+- [ ] 51 items in FOR THE ACCOUNTANT (counted by the register check, 9 Oct 2026; it said 45 and 24 switches on 3 Oct):
+      among them the 29 switched-off tax readings (verify-extraction counts them), the rulebooks and the review pack,
+      and the questions for the accountant on the referral channel and AML. The Word questions for the accountant are
+      in its Section 3.
+- [ ] Phase 158d (ACC-H3, board 13245993980): is the accountant's own confirmation link asking the right thing, and is
+      the defence pack's list of the claim's records a sound minimum? Both built and on in test.
 - [ ] Phase 153e: chapter 15's VAT half (FOR THE ACCOUNTANT, ACC-A16's dated line): only an exempt claimant's VAT not
       reclaimed is counted; a partly exempt claimant waits for you.
 
