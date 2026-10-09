@@ -16,7 +16,8 @@
  */
 
 import assert from 'node:assert/strict';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import * as AC from '../src/web/accountant-confirm.ts';
 import type { Db } from '../src/db.ts';
 import type { AuditLog } from '../src/audit.ts';
 import * as F from '../src/web/claim-facts.ts';
@@ -199,13 +200,68 @@ export function filingRecorded(app: FixtureApp, claim: string, filed_on = app.no
         "VALUES (?, ?, ?, 'gp', 'a fixture', ?, ?, ?, ?, '2026-09-01', 'CAPREBATE_CTA', ?, ?, ?, 'OPEN_OUTCOME_PENDING')",
       [randomUUID(), claim, c.claim_ref, k.a_qualifying_plant_pence, s.commitment_id, k.figures_hash, s.figure_pence, s.id, app.now(), 'f'.repeat(64)]);
   }
+  // PHASE 158d (F46): where the client's accountant files, the date is their own answer through their link.
+  if (R.accountantFiles(app.db, claim)) { accountantAnswers(app, claim, 'FILED', { filed_on }); return; }
   const r = R.recordFiling(recordDeps(app), actor('SALES'), claim, { filed_on });
   assert.equal(r.ok, true, r.ok ? '' : r.why);
+}
+
+/**
+ * PHASE 158d (F46): THE CLIENT'S ACCOUNTANT ANSWERS FOR THEMSELVES. A confirmation link on the claim (as staff would send
+ * it, with an accountant contact made where the company has none) answered through the real `answerConfirmLink`:
+ * RETURN_FIT at Reports, FILED with its date after it. Returns the request's id.
+ */
+export function accountantAnswers(
+  app: FixtureApp, claim: string, kind: 'RETURN_FIT' | 'FILED',
+  o: { outcome?: 'CONFIRMED' | 'NOT_CONFIRMED'; filed_on?: string; reason?: string } = {},
+): string {
+  const c = app.db.get<{ business_id: string }>('SELECT business_id FROM claims WHERE id = ?', [claim]);
+  assert.ok(c !== undefined, 'no such claim');
+  const at = app.now();
+  let contact = app.db.get<{ id: string; email: string }>(
+    "SELECT id, email FROM contacts WHERE business_id = ? AND contact_type IN ('ACCOUNTANT', 'ADVISER') AND email IS NOT NULL AND trim(email) <> '' ORDER BY full_name LIMIT 1", [c.business_id]);
+  if (contact === undefined) {
+    contact = { id: randomUUID(), email: `acct-${claim}@example.invalid` };
+    app.db.run("INSERT INTO contacts (id, business_id, full_name, contact_consent, marketing_optin, whatsapp_optin, created_at, contact_type, email) VALUES (?, ?, 'An Accountant (TEST)', 1, 0, 0, ?, 'ACCOUNTANT', ?)",
+      [contact.id, c.business_id, at, contact.email]);
+  }
+  const sender = app.db.get<{ id: string }>("SELECT id FROM users WHERE role IN ('SALES', 'ADMIN') ORDER BY role DESC, id LIMIT 1")?.id;
+  assert.ok(sender !== undefined, 'no Sales or Admin login to send the link');
+  const outbox = randomUUID();
+  app.db.run("INSERT INTO outbox (id, created_at, to_email, subject, body, kind, business_id, contact_id, claim_id) VALUES (?, ?, ?, 'a fixture link', 'a fixture link', 'REPORT_FOR_SIGNOFF', ?, ?, ?)",
+    [outbox, at, contact.email, c.business_id, contact.id, claim]);
+  const token = randomBytes(32).toString('base64url');
+  const id = randomUUID();
+  app.db.run('INSERT INTO accountant_confirm_requests (id, claim_id, kind, contact_id, to_email, token_sha256, outbox_id, sent_by, sent_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, claim, kind, contact.id, contact.email, createHash('sha256').update(token, 'utf8').digest('hex'), outbox, sender, at, new Date(Date.parse(at) + 30 * 86_400_000).toISOString()]);
+  const outcome = o.outcome ?? 'CONFIRMED';
+  const r = AC.answerConfirmLink({ db: app.db, audit: app.audit, now: app.now, newId: randomUUID }, token, {
+    outcome, name: 'Test Accountant', firm: 'Test Accountants LLP', filed_on: o.filed_on ?? at.slice(0, 10), reason: o.reason ?? '', sure: 'yes',
+  });
+  assert.equal(r.ok, true, r.ok ? '' : r.why);
+  return id;
+}
+
+/**
+ * PHASE 158d (F44): a floor area on record for the property — its energy certificate, as a register record — so a test
+ * that is about something else can tick "Data gathering complete — floor area sourced".
+ */
+export function floorAreaForClaim(app: FixtureApp, claim: string): void {
+  const c = app.db.get<{ business_id: string; property_id: string | null }>('SELECT business_id, property_id FROM claims WHERE id = ?', [claim]);
+  assert.ok(c !== undefined && c.property_id !== null, 'the claim has no property to hold a floor area');
+  if (app.db.get<{ id: string }>("SELECT id FROM register_records WHERE source_id = 'EPC' AND property_id = ?", [c.property_id]) !== undefined) return;
+  floorAreaOnRecord(app, c.business_id, c.property_id);
+}
+
+export function floorAreaOnRecord(app: FixtureApp, business: string, property: string, m2 = 450): void {
+  app.db.run('INSERT INTO register_records (id, business_id, source_id, entity_id, fields_json, obtained_at, property_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [randomUUID(), business, 'EPC', `epc-${property}`, JSON.stringify({ epc_total_floor_area_m2: m2, epc_rrn: '0000-0000-0000-0000-0000' }), app.now(), property]);
 }
 
 /** Draft and issue a deliverable through the register, as SALES. */
 export function issue(app: FixtureApp, claim: string, kind: R.DeliverableKind, content_hash: string | null = null): string {
   if (R.MADE_FROM_REPORT.has(kind)) releaseReportFor(app, claim);
+  if (kind === 'DEFENCE_PACK') defenceReady(app, claim);
   const d = recordDeps(app);
   const drafted = R.recordDeliverable(d, actor('SALES'), claim, { kind, action: 'DRAFT' });
   assert.equal(drafted.ok, true, drafted.ok ? '' : drafted.why);
@@ -214,6 +270,25 @@ export function issue(app: FixtureApp, claim: string, kind: R.DeliverableKind, c
   });
   assert.equal(issued.ok, true, issued.ok ? '' : issued.why);
   return issued.ok ? issued.id : '';
+}
+
+/**
+ * PHASE 158d (F47): THE DEFENCE PACK'S RECORDS, IN PLACE. It is made from the claim's own records, so a test that issues
+ * it gets each one that is missing: the sign-off, the client report and the accountant's pack issued, the client's
+ * acceptance, our fee invoice as sent, and the filing. Records already there are kept as they are.
+ */
+export function defenceReady(app: FixtureApp, claim: string): void {
+  const c = app.db.get<{ business_id: string; assessment_id: string | null }>('SELECT business_id, assessment_id FROM claims WHERE id = ?', [claim]);
+  assert.ok(c !== undefined, 'no such claim');
+  if (app.db.get<{ id: string }>('SELECT id FROM tax_adviser_signoffs WHERE claim_id = ?', [claim]) === undefined) signOffRow(app, c.business_id, c.assessment_id ?? '', claim);
+  const issuedOf = (kind: string) => app.db.get<{ id: string }>("SELECT id FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED'", [claim, kind]);
+  for (const kind of ['CLIENT_REPORT', 'ACCOUNTANT_COMPUTATION_PACK'] as const) if (issuedOf(kind) === undefined) issue(app, claim, kind);
+  const hash = app.db.get<{ h: string | null }>("SELECT content_hash AS h FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' AND state = 'ISSUED' ORDER BY version DESC LIMIT 1", [claim])?.h ?? '';
+  if (app.db.get<{ id: string }>('SELECT id FROM client_report_acceptances WHERE claim_id = ? AND fingerprint = ?', [claim, hash]) === undefined) clientAccepted(app, claim);
+  if (app.db.get<{ id: string }>("SELECT id FROM invoices WHERE claim_id = ? AND kind = 'FEE' AND invoice_status = 'SENT'", [claim]) === undefined) {
+    claimInvoiceRow(app, c.business_id, claim, { status: 'SENT' });
+  }
+  if (app.db.get<{ f: string | null }>('SELECT filed_on AS f FROM claim_reconciliations WHERE claim_id = ?', [claim])?.f == null) filingRecorded(app, claim, '2026-09-01');
 }
 
 /**

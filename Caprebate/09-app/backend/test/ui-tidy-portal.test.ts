@@ -50,7 +50,11 @@ describe('UI tidy phase 16: the portal’s header and menu', () => {
 describe('UI tidy phase 16: what we need from you, said once', () => {
   test('with nothing asked, the card says so and the two lists are not drawn', async () => {
     const body = await portal();
-    assert.match(body, /<section class="pdash-card" id="waiting-on-you"[\s\S]*?Nothing at the moment\./);
+    // PHASE 158d (F43): the seed's client has a claim at Data gathering with no tax papers in, so the card lists what that
+    // step waits on from them, though nobody has asked; the lists of questions and requests are still not drawn.
+    const waiting = /<section class="pdash-card" id="waiting-on-you"[\s\S]*?<\/section>/.exec(body)?.[0] ?? '';
+    assert.match(waiting, /Tax return <span class="help">— a document we need<\/span>/);
+    assert.doesNotMatch(waiting, /— a question|#request-/);
     assert.doesNotMatch(body, /Questions we still need answered|Documents we have asked you for/);
     assert.doesNotMatch(body, /<section class="pdash-card" id="(next-call|new-for-you)"[^>]*>(?:(?!<\/section>)[\s\S])*Send us a message/);
   });

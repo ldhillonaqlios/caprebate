@@ -85,6 +85,8 @@ export type AuditKind =
   | 'SURVEY_JOB_OPENED'
   // PHASE 158c: a client accepted the survey report released to them (src/web/report-accept.ts). The version, never a figure.
   | 'CLIENT_REPORT_ACCEPTED'
+  | 'ACCOUNTANT_CONFIRM_SENT'
+  | 'ACCOUNTANT_CONFIRM_ANSWERED'
   /**
    * Phase 146g, 23 September 2026. A member of staff said an address that bounced for good works again
    * (src/web/settings.ts). Whether a lift happened, and nothing else: the address itself is the new row in

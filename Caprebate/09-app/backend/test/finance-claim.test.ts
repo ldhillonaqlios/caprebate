@@ -791,9 +791,7 @@ describe('4 · the finance dashboard: ACCOUNTING and ADMIN, and money only', () 
       const waiting = claimAt(app, org, 'REPORTS');
       CF.readyForReports(app, org.business, org.property, org.assessment, waiting);
       CF.clientAccepted(app, waiting); // PHASE 158c (F39): the client accepts in their portal, not a staff tick
-      for (const m of ['ACCOUNTANT_CONFIRMED_RETURN']) {
-        assert.equal(P.recordMilestone({ ...app, newId: randomUUID }, SALES, waiting, m, null).ok, true);
-      }
+      CF.accountantAnswers(app, waiting, 'RETURN_FIT'); // PHASE 158d (F46): the accountant's own answer, not a staff tick
       const moved = P.moveClaim({ ...app, newId: randomUUID }, SALES, waiting, { kind: 'FORWARD', to: 'INVOICE' });
       assert.equal(moved.ok, true, moved.ok ? '' : moved.why);
       const tasksBefore = count(app.db, 'SELECT COUNT(*) AS n FROM staff_tasks');

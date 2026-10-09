@@ -178,3 +178,12 @@ export function mandatoryDocumentNeeds(
       : { what, met: true, why: 'received — we read it, then deleted the file' };
   });
 }
+
+/**
+ * PHASE 158d (F43): the documents the gate is waiting on from the client — the type codes that apply to this claim and
+ * have not been received. One whose condition is not known is left out: that fact is ours to establish first.
+ */
+export function missingDocuments(db: Db, c: { id: string; property_id: string | null }, m: MandatoryDocuments = MANDATORY_DOCUMENTS): string[] {
+  if (!m.enabled) return [];
+  return m.requires.filter((req) => applies(db, c, req.condition).applies && receivedOnClaim(db, c, req.type_code) === undefined).map((req) => req.type_code);
+}

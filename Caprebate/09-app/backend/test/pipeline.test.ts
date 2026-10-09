@@ -41,6 +41,7 @@ import * as S from '../src/web/stages.ts';
 import * as T from '../src/web/tasks.ts';
 import { actor, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
+import * as R from '../src/web/claim-record.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';
@@ -136,6 +137,7 @@ function commitOn(app: App, org: Org, claim: string | null): void {
 }
 
 function confirm(app: App, claim: string, milestone: string): void {
+  if (milestone === 'DATA_GATHERING_COMPLETE') CF.floorAreaForClaim(app, claim); // PHASE 158d (F44): a floor area on record first
   const r = P.recordMilestone(deps(app), actor('SALES'), claim, milestone, null);
   assert.equal(r.ok, true, r.ok ? '' : r.why);
 }
@@ -524,7 +526,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false);
       // PHASE 158c (F39): the client's acceptance is theirs, in the portal - a staff tick is refused.
       assert.equal(P.recordMilestone(deps(app), actor('SALES'), c, 'CLIENT_ACCEPTED_REPORT', null).ok, false, 'the retired tick was taken');
-      confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
+      CF.accountantAnswers(app, c, 'RETURN_FIT'); // PHASE 158d (F46): the accountant's own answer, not a staff tick
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'the accountant’s confirmation passed with no report issued');
       CF.issue(app, c, 'CLIENT_REPORT');
       CF.issue(app, c, 'ACCOUNTANT_COMPUTATION_PACK');
@@ -534,7 +536,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       CF.openWindow(app, org.business, org.property, c);
       // A claim at REPORTS with no sign-off — it can only be put there by hand — still does not pass.
       const unsigned = claimAt(app, org, 'REPORTS');
-      confirm(app, unsigned, 'ACCOUNTANT_CONFIRMED_RETURN');
+      CF.accountantAnswers(app, unsigned, 'RETURN_FIT'); // PHASE 158d (F46): the accountant's own answer, not a staff tick
       assert.equal(fwd(app, 'SALES', unsigned, 'INVOICE').ok, false, 'a report with no sign-off went to invoice');
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, true);
     } finally { app.close(); }
@@ -548,7 +550,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       staff(app);
       const org = organisation(app);
       const c = claimAt(app, org, 'REPORTS', { signoff: true });
-      confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
+      CF.accountantAnswers(app, c, 'RETURN_FIT'); // PHASE 158d (F46): the accountant's own answer, not a staff tick
       CF.readyForReports(app, org.business, org.property, org.assessment ?? '', c);
       CF.clientAccepted(app, c); // PHASE 158c (F39): the client accepts in their portal
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, true);
@@ -591,9 +593,14 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false);
       assert.equal(P.recordMilestone(deps(app), actor('SALES'), c, 'DEFENCE_PACK_COMPLETE', null).ok, false, 'the retired confirmation was recorded');
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false);
-      CF.issue(app, c, 'DEFENCE_PACK');
-      assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false, 'closed with no filing recorded');
+      // PHASE 158d (F47): the pack is made from the claim's records, the filing among them, so it cannot be issued first.
+      const d = CF.recordDeps(app);
+      assert.equal(R.recordDeliverable(d, actor('SALES'), c, { kind: 'DEFENCE_PACK', action: 'DRAFT' }).ok, true);
+      assert.equal(R.recordDeliverable(d, actor('SALES'), c, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: '2026-09-01' }).ok, false, 'issued with no filing');
       CF.filingRecorded(app, c); // PHASE 158c (F42)
+      assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false, 'closed with no defence pack');
+      CF.defenceReady(app, c);
+      assert.equal(R.recordDeliverable(d, actor('SALES'), c, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: '2026-09-01' }).ok, true);
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, true);
       assert.ok(app.db.get<{ at: string | null }>('SELECT completed_at AS at FROM claims WHERE id = ?', [c])?.at);
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false, 'a closed claim moved on');
@@ -773,6 +780,10 @@ describe('businesses.stage stays the sort key and the portal’s source — a mo
       letter(app, org.business, 'SIGNED');
       const stage = () => app.db.get<{ s: string }>('SELECT stage AS s FROM businesses WHERE id = ?', [org.business])?.s;
       const c = claimAt(app, org, 'ENGAGEMENT');
+      // PHASE 158d (F43): the signature itself now raises the client to step 2. To prove the MOVE raises it too, the stored
+      // stage is put back as a client who signed before 158d would have it.
+      assert.equal(stage(), 'ENGAGEMENT_SIGNED', 'the signature did not raise the client to step 2');
+      app.db.run("UPDATE businesses SET stage = 'ASSESSMENT_SUBMITTED' WHERE id = ?", [org.business]);
       assert.equal(stage(), 'ASSESSMENT_SUBMITTED', 'placing a fixture moved the stored stage');
       assert.equal(fwd(app, 'SALES', c, 'DATA_GATHERING').ok, true);
       assert.equal(stage(), 'ENGAGEMENT_SIGNED');

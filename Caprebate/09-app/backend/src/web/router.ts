@@ -101,6 +101,7 @@ import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } f
 import { freeGate, recordLookupsDeclined } from './address-check.ts';
 import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from './identity-checks.ts';
 import { handleSignoffLink, portalReport, portalReportCard } from './report-pages.ts';
+import { handleConfirmLink } from './accountant-confirm-pages.ts';
 import { acceptReport } from './report-accept.ts';
 import { handlePortalEvidence, portalEvidenceCard } from './evidence-pages.ts';
 
@@ -473,6 +474,11 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
      as its SHA-256, answered once, for 30 days. */
   if (path.startsWith('/signoff/')) {
     const r = await handleSignoffLink(d.app, newId, req, res, url, method, form);
+    if (r === 'handled') return 'handled';
+  }
+  /* PHASE 158d (F46): the client's accountant confirms for themselves, by the link alone (src/web/accountant-confirm-pages.ts). */
+  if (path.startsWith('/confirm/')) {
+    const r = await handleConfirmLink(d.app, newId, req, res, url, method, form);
     if (r === 'handled') return 'handled';
   }
   /* 30 SEP 2026: WHATSAPP — THE ADDRESS META CALLS (src/web/whatsapp.ts). No login: Meta has none. GET is Meta checking

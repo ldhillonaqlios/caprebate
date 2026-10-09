@@ -102,6 +102,7 @@ function fwd(app: App, who: Actor, claim: string, to: string): P.MoveResult {
 }
 
 function confirm(app: App, claim: string, milestone: string): void {
+  if (milestone === 'DATA_GATHERING_COMPLETE') CF.floorAreaForClaim(app, claim); // PHASE 158d (F44): a floor area on record first
   const r = P.recordMilestone(deps(app), actor('SALES'), claim, milestone, null);
   assert.equal(r.ok, true, r.ok ? '' : r.why);
 }
@@ -290,7 +291,7 @@ describe('stage entered and owner changed', () => {
       const i = claimAt(app, org, 'REPORTS');
       CF.readyForReports(app, org.business, org.property, org.assessment ?? '', i);
       CF.clientAccepted(app, i); // PHASE 158c (F39): the client accepts in their portal, not a staff tick
-      confirm(app, i, 'ACCOUNTANT_CONFIRMED_RETURN');
+      CF.accountantAnswers(app, i, 'RETURN_FIT'); // PHASE 158d (F46): the accountant's own answer, not a staff tick
       const outbox = count(app.db, 'SELECT COUNT(*) AS n FROM outbox');
       assert.equal(fwd(app, sales, i, 'INVOICE').ok, true);
       assert.deepEqual(automated(i), [{ title: 'Raise the invoice for this claim in the finance view', activity_type: 'TASK', owner_role: 'ACCOUNTING' }]);
@@ -370,6 +371,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
         assert.equal(P.recordEnquiryCheck(d, sales, { claim_id: c }, { check_key, answer: 'YES', note: null }).ok, true);
       }
       letter(app, org.business);
+      CF.floorAreaForClaim(app, c); // PHASE 158d (F44): the floor area on record before the walk, so the snapshot counts it
       const snapshot = (): Record<string, unknown> => ({
         free_gate_open: registryGate().enabled,
         cta: JSON.stringify(SHARED.CB_CTA),
@@ -406,7 +408,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
       CF.issue(app, c, 'ACCOUNTANT_COMPUTATION_PACK');
       step('REPORTS');
       CF.clientAccepted(app, c); // PHASE 158c (F39)
-      confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
+      CF.accountantAnswers(app, c, 'RETURN_FIT'); // PHASE 158d (F46): the accountant's own answer, not a staff tick
       step('INVOICE');
       confirm(app, c, 'HMRC_PROCESSED_RELIEF');
       // CRM 7 of 10: the gate reads THIS claim's own fee invoice — an organisation's no longer opens it.

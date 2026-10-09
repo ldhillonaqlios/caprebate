@@ -23,7 +23,9 @@ import { BOOKING } from './engine.ts';
 import { booksATime } from './video-calls.ts';
 import { localWhen } from './localtime.ts';
 import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES, isBookable } from './schedule.ts';
-import { claimStage, clientStageFor, progressFor, type Progress } from './stages.ts';
+import { claimStage, progressFor, type Progress } from './stages.ts';
+// Read inside functions only, so the import loop through pipeline.ts is never touched while the modules load.
+import { clientStageForClaim } from './pipeline.ts';
 import { RECEIVED_ONLY_BY_UPLOAD, requestsFor, versionObj, type RequestView } from './documents.ts';
 
 export type Business = {
@@ -93,11 +95,16 @@ const PORTAL_CLAIM_SELECT =
   'SELECT c.id, c.claim_ref, c.business_id, c.stage, c.hold_return_stage, p.label AS property, p.town FROM claims c ' +
   'LEFT JOIN properties p ON p.id = c.property_id ';
 
-function portalClaim(r: PortalClaimRow): PortalClaim {
+function portalClaim(db: Db, r: PortalClaimRow): PortalClaim {
   const kind = claimStage(r.stage).kind;
   const base = { id: r.id, ref: r.claim_ref, property: r.property, town: r.town };
   if (kind === 'EXIT') return { ...base, state: 'CLOSED', progress: { known: false, steps: [] } };
-  const key = clientStageFor(kind === 'ON_HOLD' ? r.hold_return_stage : r.stage);
+  // PHASE 158d (F48): the same step the rest of the portal reads — signed at Engagement, and "Claim filed" only once filed.
+  const stored = clientStageForClaim(db, r.id, kind === 'ON_HOLD' ? r.hold_return_stage : r.stage);
+  // A claim at Engagement whose letter is signed is "2 Engagement letter signed" (F43): signing is the step. Read here,
+  // not in pipeline.ts, which reads the letter only through assertSignedEngagement - the one gate (test/pipeline.test.ts).
+  const signed = db.get<{ s: string }>('SELECT letter_state AS s FROM engagements WHERE business_id = ?', [r.business_id])?.s === 'SIGNED';
+  const key = stored === 'ASSESSMENT_SUBMITTED' && r.stage === 'ENGAGEMENT' && signed ? 'ENGAGEMENT_SIGNED' : stored;
   if (key === null) return { ...base, state: 'UNKNOWN', progress: { known: false, steps: [] } };
   return { ...base, state: kind === 'CLOSED' ? 'FINISHED' : 'OPEN', progress: progressFor(key) };
 }
@@ -107,7 +114,7 @@ export function claims(db: Db, actor: Actor, business_id: string): PortalClaim[]
   const b = readBusiness(db, actor, business_id);
   return db.all<PortalClaimRow>(`${PORTAL_CLAIM_SELECT}WHERE c.business_id = ? ORDER BY p.label IS NULL, p.label ASC, c.claim_ref ASC`, [b.id])
     .filter((r) => can(actor, 'claim.progress_read', { type: 'claim', id: r.id, business_id: r.business_id, assigned_surveyor_ids: [] }))
-    .map(portalClaim);
+    .map((r) => portalClaim(db, r));
 }
 
 /**
@@ -119,7 +126,7 @@ export function claim(db: Db, actor: Actor, business_id: string, claim_id: strin
   const r = db.get<PortalClaimRow>(`${PORTAL_CLAIM_SELECT}WHERE c.id = ? AND c.business_id = ?`, [claim_id, b.id]);
   if (r === undefined) return null;
   authorise(actor, 'claim.progress_read', { type: 'claim', id: r.id, business_id: r.business_id, assigned_surveyor_ids: [] });
-  return portalClaim(r);
+  return portalClaim(db, r);
 }
 
 /* ------------------------------------------------------- 1 · PROGRESS */

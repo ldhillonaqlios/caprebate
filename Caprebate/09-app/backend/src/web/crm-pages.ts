@@ -58,6 +58,7 @@ import * as TH from './title-by-hand.ts';
 import * as SO from './survey-open.ts';
 import { earlyWindowWarning } from './claim-facts.ts';
 import { portalStepLine } from './portal-steps.ts';
+import { accountantConfirmBlock } from './accountant-confirm-pages.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };
 
@@ -1028,6 +1029,7 @@ function claimPage(
         ${windowBlock}
         ${pipe}
         ${surveyJob}
+        ${accountantConfirmBlock(db, actor, v.id)}
         ${v.edit === undefined ? raw('') : h`<details id="change-claim"><summary>Change the owner, surveyor or priority</summary>
           <div class="help">The stage is not changed here.${why('It moves through the steps above.')}</div>
           <form method="post" action="/staff/claims/${v.id}">

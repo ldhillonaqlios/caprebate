@@ -106,6 +106,7 @@ function fwd(app: App, who: AppRole, claim: string, to: string): P.MoveResult {
 }
 
 function confirm(app: App, claim: string, milestone: string): void {
+  if (milestone === 'DATA_GATHERING_COMPLETE') CF.floorAreaForClaim(app, claim); // PHASE 158d (F44): a floor area on record first
   const r = P.recordMilestone(CF.recordDeps(app), actor('SALES'), claim, milestone, null);
   assert.equal(r.ok, true, r.ok ? '' : r.why);
 }
@@ -500,7 +501,7 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
       assert.equal(invoice(app.now())?.met, true, 'an open window with no filing did not pass INVOICE');
       // After the window has closed: no filing recorded refuses; a filing recorded inside the window passes.
       assert.equal(invoice('2028-06-01T12:00:00.000Z')?.met, false, 'a closed window with no filing passed');
-      assert.equal(R.recordFiling(CF.recordDeps(app), actor('SALES'), c, { filed_on: '2026-09-01' }).ok, true);
+      CF.filingRecorded(app, c, '2026-09-01'); // PHASE 158d (F46): the accountant's own date, through their link
       assert.equal(invoice('2028-06-01T12:00:00.000Z')?.met, true, 'a claim filed inside the window was refused its fee');
       assert.equal(reports('2028-06-01T12:00:00.000Z')?.met, false, 'REPORTS passed on a closed window');
     } finally { app.close(); }
@@ -514,7 +515,9 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
     assert.ok(P.MILESTONES.VALUATION_SIGNED.retired);
     // PHASE 158c (F39): and CLIENT_ACCEPTED_REPORT - the client accepts the report in their portal now.
     assert.ok(P.MILESTONES.CLIENT_ACCEPTED_REPORT.retired);
-    for (const k of ['DATA_GATHERING_COMPLETE', 'ACCOUNTANT_CONFIRMED_RETURN'] as const) {
+    // PHASE 158d (F46): and ACCOUNTANT_CONFIRMED_RETURN - the accountant answers through their own link now.
+    assert.ok(P.MILESTONES.ACCOUNTANT_CONFIRMED_RETURN.retired);
+    for (const k of ['DATA_GATHERING_COMPLETE'] as const) {
       assert.equal(P.MILESTONES[k].retired, undefined, `${k} was retired though nothing derives it`);
     }
   });
@@ -679,8 +682,12 @@ describe('THE FOUR FIGURES — sealed and read from the record that sealed each;
       assert.equal(R.recordVariance(d, sales, c, { variance_category: 'SURVEY_FINDING', variance_notes: 'more plant found' }).ok, true);
       assert.equal(R.recordVariance(d, sales, c, { variance_category: 'SCOPE_CHANGE' }).ok, false, 'the tag changed');
       assert.equal(R.recordOutcome(d, sales, c, {}).ok, false, 'an outcome with no filing and no enquiry');
-      assert.equal(R.recordFiling(d, sales, c, { filed_on: '2026-09-01' }).ok, true);
+      // PHASE 158d (F46): the client's accountant gives the date through their link; staff cannot type it, and a second
+      // answer does not change it.
+      CF.filingRecorded(app, c, '2026-09-01');
       assert.equal(R.recordFiling(d, sales, c, { filed_on: '2026-09-02' }).ok, false, 'the filing changed');
+      CF.accountantAnswers(app, c, 'FILED', { filed_on: '2026-09-03' });
+      assert.equal(app.db.get<{ f: string }>('SELECT filed_on AS f FROM claim_reconciliations WHERE claim_id = ?', [c])?.f, '2026-09-01', 'the filing changed');
       assert.equal(R.recordOutcome(d, sales, c, {}).ok, false, 'an outcome before the enquiry window lapsed');
       const e = R.openEnquiry(d, sales, c, { opened_on: '2026-09-05' });
       assert.equal(e.ok, true);
@@ -699,7 +706,7 @@ describe('THE FOUR FIGURES — sealed and read from the record that sealed each;
       // NO ENQUIRY: the outcome is the window lapsing, twelve months after the filing.
       const lapsed = signedClaim(app, organisation(app), '100000');
       assert.equal(R.recordVariance(d, sales, lapsed, { variance_category: 'ENGINE_READ' }).ok, true);
-      assert.equal(R.recordFiling(d, sales, lapsed, { filed_on: '2025-06-01' }).ok, true);
+      CF.filingRecorded(app, lapsed, '2025-06-01'); // PHASE 158d (F46): the accountant's own date
       assert.equal(R.recordOutcome(d, sales, lapsed, {}).ok, true);
       assert.equal(app.db.get<{ p: string }>('SELECT resolution_path AS p FROM claim_reconciliations WHERE claim_id = ?', [lapsed])?.p, 'NO_ENQUIRY_WINDOW_LAPSED');
     } finally { app.close(); }
@@ -723,7 +730,9 @@ describe('THE DELIVERABLES REGISTER — tracked, never generated', () => {
       assert.equal(line('CLIENT_REPORT')?.state, 'NOT_STARTED');
       // PHASE 158c (F38, F36): the client report is made here from the approved survey report; the defence pack still cannot be stored.
       assert.match(line('CLIENT_REPORT')?.stored ?? '', /Made here from the survey report the surveyor approved/);
-      assert.match(line('DEFENCE_PACK')?.stored ?? '', /cannot be stored yet/);
+      // PHASE 158d (F47): the defence pack is made here from the claim's records; the reasoned negative still cannot be stored.
+      assert.match(line('DEFENCE_PACK')?.stored ?? '', /Made here from the claim’s own records/);
+      assert.match(line('REASONED_NEGATIVE')?.stored ?? '', /cannot be stored yet/);
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'CLIENT_REPORT', action: 'DRAFT' }).ok, false, 'a report stating a figure drafted before the sign-off');
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'ACCOUNTANT_COMPUTATION_PACK', action: 'DRAFT' }).ok, false);
       CF.signOffRow(app, org.business, org.assessment, c);
@@ -754,13 +763,17 @@ describe('THE DELIVERABLES REGISTER — tracked, never generated', () => {
       const d = CF.recordDeps(app);
       const sales = actor('SALES');
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'DEFENCE_PACK', action: 'DRAFT' }).ok, true);
-      assert.equal(R.recordDeliverable(d, sales, c, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: '2026-09-01' }).ok, false, 'a defence pack issued without its hash');
+      // PHASE 158d (F47): it is made here from the claim's records, and refused while they are missing; a typed hash is not used.
+      assert.equal(R.recordDeliverable(d, sales, c, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: '2026-09-01', content_hash: 'b'.repeat(64) }).ok, false, 'a defence pack issued without its records');
+      CF.defenceReady(app, c);
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: '2026-09-01', content_hash: 'b'.repeat(64) }).ok, true);
       assert.throws(() => app.db.run("UPDATE claim_deliverables SET state = 'SUPERSEDED' WHERE kind = 'DEFENCE_PACK'"));
       assert.throws(() => app.db.run("UPDATE claim_deliverables SET content_hash = ? WHERE kind = 'DEFENCE_PACK'", ['c'.repeat(64)]));
       CF.issue(app, c, 'DEFENCE_PACK', 'd'.repeat(64));
-      const packs = app.db.all<{ version: number; state: string; content_hash: string }>("SELECT version, state, content_hash FROM claim_deliverables WHERE kind = 'DEFENCE_PACK' ORDER BY version", [c].slice(1));
-      assert.deepEqual(packs.map((x) => [x.version, x.state, x.content_hash]), [[1, 'ISSUED', 'b'.repeat(64)], [2, 'ISSUED', 'd'.repeat(64)]]);
+      const packs = app.db.all<{ version: number; state: string; content_hash: string; kept: string }>(
+        "SELECT d.version, d.state, d.content_hash, m.fingerprint AS kept FROM claim_deliverables d JOIN defence_pack_manifests m ON m.deliverable_id = d.id WHERE d.kind = 'DEFENCE_PACK' ORDER BY d.version");
+      assert.deepEqual(packs.map((x) => [x.version, x.state, x.content_hash === x.kept]), [[1, 'ISSUED', true], [2, 'ISSUED', true]]);
+      assert.equal(packs.some((x) => x.content_hash === 'b'.repeat(64) || x.content_hash === 'd'.repeat(64)), false, 'a typed hash was kept');
     } finally { app.close(); }
   });
 

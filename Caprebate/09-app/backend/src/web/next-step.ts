@@ -40,7 +40,8 @@ const TABLE: readonly (readonly [RegExp, PlainNeed])[] = [
   [/^The accountant’s computation pack is issued/, { words: 'Issue the accountant’s computation pack', fix: { href: '#claim-deliverables', label: 'Open the reports' } }],
   [/^The defence pack is issued/, { words: 'Issue the defence pack', fix: { href: '#claim-deliverables', label: 'Open the reports' } }],
   [/^The client accepted the report/, { words: 'The client’s acceptance of the report, in their portal', fix: { href: '#add-task', label: 'Ask the client' } }],
-  [/^The client’s accountant confirmed/, { words: 'The accountant’s confirmation that the claim fits the return', fix: { href: '#move', label: 'Confirm it' } }],
+  // Phase 158d (F46): the accountant answers through their own link; nobody here ticks it.
+  [/^The client’s accountant confirmed/, { words: 'The accountant’s own confirmation that the claim fits the return', fix: { href: '#accountant-confirm', label: 'Send them the link' } }],
   [/^The client confirmed in writing/, { words: 'The client’s written confirmation that they will file the amendment', fix: { href: '#claim-facts', label: 'Record it' } }],
   [/^The claim is within the amendment window/, { words: 'The claim must go in inside the amendment window', fix: { href: '#claim-facts', label: 'Check the dates' } }],
   [/^The amendment window is open/, { words: 'The amendment window must still be open', fix: { href: '#claim-facts', label: 'Check the dates' } }],

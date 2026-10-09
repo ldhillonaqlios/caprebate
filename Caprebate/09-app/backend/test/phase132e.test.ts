@@ -39,6 +39,7 @@ import { loadLetter, unresolvedTerms } from '../src/web/letter.ts';
 import * as FC from '../src/web/fee-controls.ts';
 import * as FD from '../src/web/fee-discounts.ts';
 import { feeRate } from '../src/web/engine.ts';
+import * as AC from '../src/web/accountant-confirm.ts';
 
 type Res = { status: number; body: string; location: string | null };
 type Client = { get(path: string): Promise<Res>; post(path: string, fields: Record<string, string>): Promise<Res> };
@@ -177,7 +178,8 @@ async function reportsClaim(): Promise<{ app: TApp; business: string; claim: str
 }
 
 const CLIENT_NEED = /the client’s own confirmation, not an accountant’s/;
-const ACCOUNTANT_NEED = P.MILESTONES.ACCOUNTANT_CONFIRMED_RETURN.label;
+// PHASE 158d (F46): the accountant's route reads their own answer through their link now, not the retired staff tick.
+const ACCOUNTANT_NEED = AC.RETURN_FIT_NEED;
 
 function gate(app: TApp, claim: string, today = TODAY): P.GateReading {
   return P.gateOut(app.db, P.loadPipelineClaim(app.db, claim), 'REPORTS', { today });

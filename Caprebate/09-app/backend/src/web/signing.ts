@@ -53,6 +53,7 @@ import { localWhen, ukDate } from './localtime.ts';
 import { formatPence } from './shown-range.ts';
 import { claimantTypeForGate } from './crm.ts';
 import { buildPdf, flow, type PdfLine } from './pdf.ts';
+import { stageIndex } from './stages.ts';
 
 export type EngagementSigning = {
   readonly enabled: boolean;
@@ -458,7 +459,15 @@ function writeSignature(
     if (full.link_id !== null && full.link_id !== undefined) {
       d.db.run('UPDATE engagement_sign_links SET used_at = ? WHERE id = ? AND used_at IS NULL', [full.signed_at, full.link_id]);
     }
-    if (complete) d.db.run("UPDATE engagements SET letter_state = 'SIGNED', signed_at = ? WHERE id = ?", [full.signed_at, engagement_id]);
+    if (complete) {
+      d.db.run("UPDATE engagements SET letter_state = 'SIGNED', signed_at = ? WHERE id = ?", [full.signed_at, engagement_id]);
+      // PHASE 158d (F43, the second Friary House run): the client signed and their portal still said "Step 1 of 6: Your
+      // estimate" until staff moved the claim. Signing is the step: it raises the client to it, and never lowers one past it.
+      const now = d.db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [full.business_id])?.stage ?? '';
+      if (stageIndex(now) < stageIndex('ENGAGEMENT_SIGNED')) {
+        d.db.run('UPDATE businesses SET stage = ?, updated_at = ? WHERE id = ?', ['ENGAGEMENT_SIGNED', full.signed_at, full.business_id]);
+      }
+    }
     d.audit.append({
       at: full.signed_at, kind: 'ENGAGEMENT_SIGNED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'engagement', object_id: engagement_id,

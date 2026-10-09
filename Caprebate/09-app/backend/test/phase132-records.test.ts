@@ -191,12 +191,14 @@ describe('line 2 — every sealed case stamped with the engine version, the rule
         'INSERT INTO claim_version_stamps (id, claim_id, deliverable_id, engine_version, rulebook_modules_json, switch_readings_json, signoff_refs_json, stamp_hash, stamped_by, stamped_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
         [randomUUID(), claim, draft.id, null, '[]', '{}', '[]', 'd'.repeat(64), 'u-SALES', T0]), /issued deliverable of its own claim/, 'a draft took a stamp');
 
+      CF.defenceReady(a, claim); // PHASE 158d (F47): the pack is made from the claim's own records, so they must be there
+      const before = count(a, 'SELECT COUNT(*) AS n FROM claim_version_stamps'); // its two reports were issued, and stamped, on the way
       ok(R.recordDeliverable(d, SALES, claim, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: '2026-09-01', content_hash: 'a'.repeat(64) }));
-      assert.equal(count(a, 'SELECT COUNT(*) AS n FROM claim_version_stamps'), 1, 'the defence pack, issued, is stamped like every kind');
+      assert.equal(count(a, 'SELECT COUNT(*) AS n FROM claim_version_stamps'), before + 1, 'the defence pack, issued, is stamped like every kind');
       assert.throws(() => a.db.run("UPDATE claim_version_stamps SET engine_version = '9.9.9'"), /never changes/);
       assert.throws(() => a.db.run("UPDATE claim_version_stamps SET stamp_hash = ?", ['e'.repeat(64)]), /never changes/);
       assert.throws(() => a.db.run('DELETE FROM claim_version_stamps'), /never deleted/);
-      assert.equal(count(a, 'SELECT COUNT(*) AS n FROM claim_version_stamps'), 1);
+      assert.equal(count(a, 'SELECT COUNT(*) AS n FROM claim_version_stamps'), before + 1);
     } finally { a.close(); }
   });
 

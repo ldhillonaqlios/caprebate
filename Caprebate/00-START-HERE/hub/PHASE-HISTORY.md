@@ -12529,3 +12529,62 @@ NOTHING LEFT  beyond those lines.
 ```
 
  **Claim cleared** in the commit that carries this record.
+
+
+---
+
+## Phase 158d — the accountant's own confirmations, one purchase date, the floor area, the defence pack, and what the portal tells the client — 9 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Closed the five things Phase 158c's second run found.
+- **The accountant.** The client's accountant now confirms for themselves, through a private link: that the claim fits the return and the window, and later the day it was filed. Nobody ticks either for them.
+- **The purchase date.** The window reads the date the surveyor or the client gave, and the client's year end, and says which.
+- **The floor area.** "Floor area sourced" needs a floor area on record.
+- **The defence pack.** It is made from the claim's own records; its fingerprint is worked out, never typed.
+- **The portal.** It says the letter is signed at once, and lists what the claim is waiting on from the client.
+
+The invented client was run a third time, from the letter to Closed. Every control held. The only tick any member of staff made was the analyst's own. One small new thing, the claim tile lagging, was fixed in the phase (F48). Nothing is left for a new phase: next is the sweep, Phase 159. 4,934 passing.
+
+- **Claim.** hub/CLAIM.md and board item 13232676804 (board and tracker: Working on it, Lakhbir's Mac), pushed first (`45c3374`). Branch `claude/phase-158d` from main after PR 39 merged (Lakhbir: "merge and Phase 158d").
+- **1. F43 and F48, what the portal says** (`signAs` in `src/web/signing.ts`; `alsoNeeded`, `signedSince` in `src/web/portal-dashboard.ts`; `missingDocuments` in `src/web/mandatory-documents.ts`; `portalClaim` in `src/web/portal.ts`).
+  - **Signing.** It raises the client to "2 Engagement letter signed" at once (raise only), and "New for you" says "You signed your engagement letter".
+  - **"What we need from you".** It lists each document a claim at Data gathering is waiting on from the client, asked for or not, once each. At Reports it lists the report to accept.
+  - **F48, found by this phase's run.** The claim tile under "Your claims" read the claim's raw stage, so it still said "1 Your estimate" after signing. It now reads the same step as the rest of the portal: signed at Engagement, and "Claim filed" only once filed. The "signed" part is read in portal.ts, because a guard test keeps pipeline.ts from ever reading the letter itself.
+- **2. F44, the floor area** (`floorAreaOnRecord`, `approvedClientAnswer` in `src/web/claim-facts.ts`; `recordMilestone` in `src/web/pipeline.ts`).
+  - "Data gathering complete — floor area sourced" is refused until a floor area is on record. Three sources count: the property's energy certificate, Homedata's estimate, or the client's answer to "how big is the building" with a number in it, checked by staff.
+  - It stays the analyst's own tick. The refusal says where a floor area comes from.
+- **3. F45, one purchase date** (`acquisitionGiven`, `clientDate`, `clientYearEnd`, `periodFromYearEnd` in `src/web/claim-facts.ts`).
+  - With no acquisition date on the property record, the window reads the surveyor's legal-check answer (G9d), else the client's checked "completion date" answer. Only a whole date counts; a month alone is not read.
+  - With no accounting period recorded, the client's checked year end gives the period the purchase falls in.
+  - These are read, never written over the record. The window says "Read from ...".
+- **4. F46, the accountant confirms for themselves** (`src/web/accountant-confirm.ts`, `src/web/accountant-confirm-pages.ts`; **migration 102**).
+  - **The link.** Admin or Sales email one of the company's accountants a private link (`email.queue`): RETURN_FIT at Reports, FILED at Invoice or the defence pack. Only its SHA-256 is kept. It works for 30 days and is answered once. It goes as the sign-off link goes: outbox kind REPORT_FOR_SIGNOFF, blanked once sent.
+  - **The answer.** The accountant confirms (name, firm, and for FILED the day) or says not, with why.
+  - **What reads it.** The Reports gate reads a confirmed RETURN_FIT, and `ACCOUNTANT_CONFIRMED_RETURN` is retired. A FILED confirmation writes the reconciliation's filing date, under the member of staff who sent the link, and raises the client's step. Closing reads it.
+  - **What is refused.** Typing a filing date is refused where the accountant files. Where the client has no accountant, the client route is unchanged.
+  - **On screen.** The claim page has "The accountant's confirmations"; the accountant's page is `/confirm/{token}`, with no login.
+- **5. F47, the defence pack** (`defencePackRecords`, `MADE_HERE` in `src/web/claim-record.ts`; **migration 103** `defence_pack_manifests`).
+  - Issuing it reads the claim's own records: the released survey report, the sign-off, both reports as issued, the client's acceptance, the fee invoice as sent, and the filing. With any missing it is refused, naming them.
+  - The list is kept and its SHA-256 is the deliverable's fingerprint; a typed one is not used.
+  - The Phase 132 generator (`src/web/defence-pack.ts`) is untouched and still off, waiting on the tax adviser's sign-off of the Defence Pack Template. Under "build, then check", FOR-THE-ACCOUNTANT now asks whether this list is a sound minimum, and whether the confirmation link asks the right thing.
+- **6. The run, a third time** (findings file, OneDrive, "The run a third time ..."). A fresh copy of the 6 Oct database, lookups off: no outside call, Homedata spend nothing. It was driven by scripts, each step by its own person.
+  - F43 to F47 all held: the steps above, end to end, to Closed.
+  - The only staff tick on the claim was "floor area sourced", made after the client's checked answer.
+  - F48 was found and fixed (item 1).
+- **The checks.** `test/phase158d.test.ts` (22). Each group was red against the code before it (F46 and F47 proved by putting back the old gate files), and each control held.
+  - **Restated:** `automation`, `claim-record`, `finance-claim`, `follow-on`, `phase132-dates`, `phase132-records`, `phase132e`, `phase151b-documents`, `phase158c`, `pipeline`, `ui-tidy-portal`, and `test/claim-fixtures.ts` (`floorAreaForClaim`, `accountantAnswers`, `defenceReady`). `phase158b` had a flaky check that could fail when a random id held "255"; it now reads the log line without the id. `src/web/funnel-edges.ts` was regenerated for the two new tables.
+  - **The Developer Spec:** a Phase 158d section; the `/confirm/{token}` and `/staff/claims/{id}/accountant-confirm` routes; the filing and deliverables rows. The line references these edits moved were remapped by a line diff against main and checked against their symbols (six short ones by hand). CRM fold check green.
+  - **Figures.** Site harness `pass 1382 fail 0 xfail 3`. phase3 440. phase9 417. Back end `npm run check` 2,695 pass / 0 fail over 165 tracked files. **4,934** in all.
+  - **Other checks.** Extraction verified and up to date. CRM fold check: green (and its self-test). Tracker: green (and its self-test). Figure drift: OK; its negative control fails as it should. Notices, gated-exit and cash-route proofs pass, and their negative controls fail as they should. Brand, plain words, analytics allow-list, switch direction: green. Payload proof: PASS. The sign-off register check first failed on Phase 158c's own tracker note: "the client report ... 4,912 passing" reads as a present-tense claim, because "report" is one of the checker's present-tense words. The note was reworded ("the client's and the accountant's papers"), and the check is green.
+
+```
+DONE          The accountant confirms the return fit and the filing through their own link (F46); one
+              purchase date and year end read by the window (F45); "floor area sourced" needs a floor area
+              (F44); the defence pack made from the claim's records (F47); the portal says the letter is
+              signed and what the claim waits on, and the claim tile agrees (F43, F48); the run a third
+              time, letter to Closed, every control held.
+NOT DONE      Whether the confirmation link asks the right thing, and whether the defence pack's list is a
+              sound minimum - the accountant's view - FOR-THE-ACCOUNTANT, Phase 158d section.
+NOTHING LEFT  beyond those lines. Next: the sweep, Phase 159.
+```
+
+ **Claim cleared** in the commit that carries this record.
