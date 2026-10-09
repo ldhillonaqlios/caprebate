@@ -89,6 +89,32 @@ export function commitmentOn(app: FixtureApp, business: string, assessment: stri
 }
 
 /**
+ * PHASE 158c (F35): THE SURVEYOR'S APPROVAL OF THE SURVEY PACK, on a job on THIS claim (the claim's own job if it has one),
+ * written as its rows. The Valuation gate reads it in place of the retired VALUATION_SIGNED tick. Returns the approval's id.
+ */
+export function packApprovedOn(app: FixtureApp, business: string, assessment: string, claim: string, surveyor = 'u-SURVEYING', figure_pence: number | null = null, approved_at?: string): string {
+  const at = approved_at ?? app.now();
+  let job = app.db.get<{ id: string }>('SELECT id FROM surveyor_jobs WHERE claim_id = ? ORDER BY created_at ASC LIMIT 1', [claim])?.id;
+  if (job === undefined) {
+    job = randomUUID();
+    app.db.run('INSERT INTO surveyor_jobs (id,business_id,assessment_id,surveyor_id,state,committed_at,created_at,claim_id) VALUES (?,?,?,?,?,?,?,?)',
+      [job, business, assessment, surveyor, 'COMMITTED_AND_RELEASED', at, at, claim]);
+  }
+  let pack = app.db.get<{ id: string }>('SELECT id FROM survey_packs WHERE job_id = ?', [job])?.id;
+  if (pack === undefined) {
+    pack = randomUUID();
+    app.db.run('INSERT INTO survey_packs (id, job_id, property_id, created_at, created_by) VALUES (?, ?, NULL, ?, ?)', [pack, job, at, surveyor]);
+  }
+  const version = (app.db.get<{ v: number | null }>('SELECT MAX(version) AS v FROM survey_pack_approvals WHERE pack_id = ?', [pack])?.v ?? 0) + 1;
+  const id = randomUUID();
+  // The figure the report states, where a test needs the report released (a sign-off of the same figure, recorded after).
+  const snapshot = JSON.stringify({ fixture: true, version, ...(figure_pence === null ? {} : { sums: { qualifying_pence: figure_pence } }) });
+  app.db.run('INSERT INTO survey_pack_approvals (id, pack_id, version, pack_seq, legal_seq, snapshot_json, fingerprint, approved_by, approved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, pack, version, version, 0, snapshot, createHash('sha256').update(snapshot).digest('hex'), surveyor, at]);
+  return id;
+}
+
+/**
  * THE SIGN-OFF RECORD FOR A CLAIM A TEST PLACES STRAIGHT AT A LATER STAGE —
  * written as its row, against a commitment on a job on the claim, hashed. A claim
  * walked to TAX_ADVISER_SIGNOFF records it through `R.recordSignOff` instead.
@@ -107,8 +133,79 @@ export function signOffRow(app: FixtureApp, business: string, assessment: string
   return id;
 }
 
+/**
+ * PHASE 158c (F38): the client report and the accountant's pack are issued from the survey report the surveyor approved,
+ * once a sign-off of its figure is on the claim. A test that issues either gets that version here: approved as of the
+ * claim's latest sign-off, stating its figure. With no sign-off, nothing is written and the store refuses, as it should.
+ */
+export function releaseReportFor(app: FixtureApp, claim: string): void {
+  if (R.releasedReportFingerprint(app.db, claim) !== null) return;
+  const s = app.db.get<{ figure_pence: number; recorded_at: string; recorded_by: string }>(
+    'SELECT figure_pence, recorded_at, recorded_by FROM tax_adviser_signoffs WHERE claim_id = ? ORDER BY recorded_at DESC LIMIT 1', [claim]);
+  const c = app.db.get<{ business_id: string; assessment_id: string | null }>('SELECT business_id, assessment_id FROM claims WHERE id = ?', [claim]);
+  if (s === undefined || c === undefined || c.assessment_id === null) return;
+  const who = app.db.get<{ id: string }>("SELECT id FROM users WHERE id = 'u-SURVEYING'")?.id ?? s.recorded_by;
+  packApprovedOn(app, c.business_id, c.assessment_id, claim, who, s.figure_pence, s.recorded_at);
+}
+
+/**
+ * PHASE 158c (F39): THE CLIENT ACCEPTED THE REPORT, in their portal - written as its row, against the released version
+ * (made here where need be), by a client login of the business (made too where it has none). The Reports gate reads an
+ * acceptance of the issued client report's own fingerprint, so call it after the report is issued.
+ */
+export function clientAccepted(app: FixtureApp, claim: string): string {
+  releaseReportFor(app, claim);
+  const r = app.db.get<{ id: string; fingerprint: string; business_id: string }>(
+    'SELECT a.id, a.fingerprint, j.business_id FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
+      'WHERE j.claim_id = ? AND a.fingerprint = ? LIMIT 1', [claim, R.releasedReportFingerprint(app.db, claim) ?? '']);
+  assert.ok(r !== undefined, 'no released report to accept: record the sign-off first');
+  const at = app.now();
+  let who = app.db.get<{ id: string }>("SELECT id FROM users WHERE business_id = ? AND role = 'CLIENT' ORDER BY id LIMIT 1", [r.business_id])?.id;
+  if (who === undefined) {
+    who = `u-client-${r.business_id}`;
+    app.db.run("INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,'A Client','CLIENT','x',?,?,?)",
+      [who, `${who}@example.invalid`, `${who}@example.invalid`, at, at, r.business_id]);
+  }
+  const id = randomUUID();
+  app.db.run('INSERT INTO client_report_acceptances (id, claim_id, approval_id, fingerprint, user_id, accepted_at) VALUES (?, ?, ?, ?, ?, ?)',
+    [id, claim, r.id, r.fingerprint, who, at]);
+  return id;
+}
+
+/**
+ * PHASE 158c (F42): THE CLAIM'S FILING, RECORDED. A claim that reached the defence pack closes only once the filing is
+ * recorded on its reconciliation. The reconciliation opens with the claim's first sign-off record (written here, with
+ * the sign-off, where the claim has none); the filing date is then recorded through the store, as SALES.
+ */
+export function filingRecorded(app: FixtureApp, claim: string, filed_on = app.now().slice(0, 10)): void {
+  if (app.db.get<{ id: string }>('SELECT id FROM claim_reconciliations WHERE claim_id = ?', [claim]) === undefined) {
+    const c = app.db.get<{ business_id: string; assessment_id: string | null; claim_ref: string }>(
+      'SELECT business_id, assessment_id, claim_ref FROM claims WHERE id = ?', [claim]);
+    assert.ok(c !== undefined, 'no such claim');
+    let s = app.db.get<{ id: string; figure_pence: number; commitment_id: string }>(
+      'SELECT id, figure_pence, commitment_id FROM tax_adviser_signoffs WHERE claim_id = ? ORDER BY recorded_at, rowid LIMIT 1', [claim]);
+    if (s === undefined) {
+      signOffRow(app, c.business_id, c.assessment_id ?? '', claim);
+      s = app.db.get<{ id: string; figure_pence: number; commitment_id: string }>(
+        'SELECT id, figure_pence, commitment_id FROM tax_adviser_signoffs WHERE claim_id = ? LIMIT 1', [claim]);
+    }
+    assert.ok(s !== undefined);
+    const k = app.db.get<{ a_qualifying_plant_pence: number; figures_hash: string }>(
+      'SELECT a_qualifying_plant_pence, figures_hash FROM surveyor_commitments WHERE id = ?', [s.commitment_id]);
+    assert.ok(k !== undefined);
+    app.db.run(
+      'INSERT INTO claim_reconciliations (id, claim_id, case_id, client_sector, b_basis, surveyor_value_pence, surveyor_commitment_id, ' +
+        'surveyor_figures_hash, c_value_pence, c_date_captured, c_cta_reviewer, c_signoff_id, opened_at, snapshot_hash, status) ' +
+        "VALUES (?, ?, ?, 'gp', 'a fixture', ?, ?, ?, ?, '2026-09-01', 'CAPREBATE_CTA', ?, ?, ?, 'OPEN_OUTCOME_PENDING')",
+      [randomUUID(), claim, c.claim_ref, k.a_qualifying_plant_pence, s.commitment_id, k.figures_hash, s.figure_pence, s.id, app.now(), 'f'.repeat(64)]);
+  }
+  const r = R.recordFiling(recordDeps(app), actor('SALES'), claim, { filed_on });
+  assert.equal(r.ok, true, r.ok ? '' : r.why);
+}
+
 /** Draft and issue a deliverable through the register, as SALES. */
 export function issue(app: FixtureApp, claim: string, kind: R.DeliverableKind, content_hash: string | null = null): string {
+  if (R.MADE_FROM_REPORT.has(kind)) releaseReportFor(app, claim);
   const d = recordDeps(app);
   const drafted = R.recordDeliverable(d, actor('SALES'), claim, { kind, action: 'DRAFT' });
   assert.equal(drafted.ok, true, drafted.ok ? '' : drafted.why);

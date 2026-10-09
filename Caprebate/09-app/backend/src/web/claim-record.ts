@@ -39,7 +39,7 @@ import { _canonical, type AuditLog } from '../audit.ts';
 import { authorise, can, type Actor, type Obj } from '../authz.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
 import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from './crm.ts';
-import { enteredAt, type Need } from './pipeline.ts';
+import { enteredAt, raiseBusinessStage, type Need } from './pipeline.ts';
 import { assertSignedEngagement, freeGate } from './research.ts';
 import { ctaSwitchReadings } from './engine.ts';
 import { amendmentWindowReading, dateValue, penceValue } from './claim-facts.ts';
@@ -592,9 +592,25 @@ export function recordFiling(d: RecordDeps, actor: Actor, claim_id: string, inpu
   if (filed === null) return { ok: false, why: 'Write the filing date, like 2026-03-31.' };
   if (filed > localDate(d.now())) return { ok: false, why: 'A return cannot be recorded as filed after today.' };
   const at = d.now();
-  d.db.run('UPDATE claim_reconciliations SET filed_on = ?, filed_recorded_by = ?, filed_recorded_at = ? WHERE id = ?', [filed, actor.id, at, r.id]);
-  reconAudit(d, actor, c, 'FILED', at);
+  d.db.tx(() => {
+    d.db.run('UPDATE claim_reconciliations SET filed_on = ?, filed_recorded_by = ?, filed_recorded_at = ? WHERE id = ?', [filed, actor.id, at, r.id]);
+    reconAudit(d, actor, c, 'FILED', at);
+    // PHASE 158c (F42): the client's "5 Claim filed" waits for this record; a claim already past Invoice now shows it.
+    raiseBusinessStage(d.db, c.business_id, at);
+  });
   return { ok: true, id: r.id };
+}
+
+/**
+ * PHASE 158c (F42, the Friary House run): the claim closed, and the portal said "Claim filed", with no record that the
+ * claim was filed. Closing a claim that reached the defence pack needs the filing date on its reconciliation.
+ */
+export function filingRecordedNeed(db: Db, claim_id: string): Need {
+  const what = 'The claim’s filing is recorded, with its date';
+  const r = db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [claim_id]);
+  if (r === undefined) return { what, met: false, why: 'no figure is signed off on this claim, so there is nothing to record the filing against' };
+  if (r.filed_on === null) return { what, met: false, why: 'no filing date is recorded. Record it under Reconciliation once the amended return is filed' };
+  return { what, met: true, why: `filed on ${r.filed_on}` };
 }
 
 /** THE VARIANCE TAG — from the design's taxonomy, tagged by the tax adviser, recorded once. */
@@ -761,7 +777,8 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
   const rows = db.all<DeliverableRow>('SELECT * FROM claim_deliverables WHERE claim_id = ? ORDER BY kind ASC, version DESC', [c.id]);
   const types = new Map(db.all<{ code: string; label: string }>('SELECT code, label FROM document_types').map((t) => [t.code, t.label] as const));
   return {
-    generation: 'We track these here, but we do not write them here. Each is a document on the claim. None can be stored yet — no storage rule is set for their types.',
+    // PHASE 158c (F36, F38): what is true of each line, not one sentence for all of them.
+    generation: 'The client report and the accountant’s pack are made here, from the survey report the surveyor approved. The others are documents on the claim, tracked here.',
     may_record: mayRecord,
     lines: KINDS.map((kind) => {
       const def = DELIVERABLES[kind];
@@ -774,7 +791,9 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
         state: current?.state ?? 'NOT_STARTED', state_label: DELIVERABLE_STATES[current?.state ?? 'NOT_STARTED'] ?? 'Not started',
         version: current?.version ?? null, issued_on: current?.issued_on ?? null, content_hash: current?.content_hash ?? null,
         document_type: types.get(def.document_type) ?? def.document_type,
-        stored: `It cannot be stored yet. ${NO_RECEIPT_POLICY} Still to decide: ${RECEIPT_QUESTION}`,
+        stored: MADE_FROM_REPORT.has(kind)
+          ? 'Made here from the survey report the surveyor approved, once a tax adviser has signed off its figure. Its fingerprint is recorded when it is issued.'
+          : `It cannot be stored yet. ${NO_RECEIPT_POLICY} Still to decide: ${RECEIPT_QUESTION}`,
         history: mine.map((r) => ({ version: r.version, state: DELIVERABLE_STATES[r.state] ?? r.state, issued_on: r.issued_on })),
         may_draft: mayRecord && draft === undefined && blocked === null,
         may_issue: mayRecord && draft !== undefined,
@@ -789,6 +808,28 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
  * Issuing a new version supersedes the one before it — except the defence pack,
  * whose every issued version stays exactly as issued, with its hash.
  */
+/**
+ * PHASE 158c (F38, the Friary House run): THE CLIENT REPORT AND THE ACCOUNTANT'S PACK ARE THE APPLICATION'S OWN REPORT.
+ * They were issued with a fingerprint staff typed, while the report built from the survey pack (src/web/report-pages.ts)
+ * went unread. Now each is issued from the version the client may see - the newest approved version of a survey pack on a
+ * job on THIS claim, with a tax adviser's sign-off of that version's figure recorded after it was approved, and its
+ * fingerprint holding: report-signoff.ts's `releasedVersion` rule, read here for one claim (an import of that module
+ * would loop back to this one). Its fingerprint is the deliverable's.
+ */
+export const MADE_FROM_REPORT: ReadonlySet<DeliverableKind> = new Set<DeliverableKind>(['CLIENT_REPORT', 'ACCOUNTANT_COMPUTATION_PACK']);
+
+export function releasedReportFingerprint(db: Db, claim_id: string): string | null {
+  const rows = db.all<{ fingerprint: string; snapshot_json: string }>(
+    'SELECT a.fingerprint, a.snapshot_json FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
+      'WHERE j.claim_id = ? AND EXISTS (SELECT 1 FROM tax_adviser_signoffs s WHERE s.claim_id = j.claim_id ' +
+      "AND s.recorded_at >= a.approved_at AND s.figure_pence = json_extract(a.snapshot_json, '$.sums.qualifying_pence')) " +
+      'ORDER BY a.approved_at DESC, a.version DESC', [claim_id]);
+  for (const r of rows) {
+    if (createHash('sha256').update(r.snapshot_json, 'utf8').digest('hex') === r.fingerprint) return r.fingerprint;
+  }
+  return null;
+}
+
 export function recordDeliverable(d: RecordDeps, actor: Actor, claim_id: string, input: Fields): RecordResult {
   const c = loadClaim(d.db, claim_id);
   const kind = input['kind'] ?? null;
@@ -822,7 +863,12 @@ export function recordDeliverable(d: RecordDeps, actor: Actor, claim_id: string,
     const issuedOn = dateValue(input['issued_on']);
     if (issuedOn === null) return { ok: false, why: 'Write the issue date, like 2026-03-31.' };
     if (issuedOn > localDate(at)) return { ok: false, why: 'The issue date cannot be after today.' };
-    const rawHash = (input['content_hash'] ?? '').trim().toLowerCase();
+    // PHASE 158c (F38): the report and the accountant's pack carry the released version's own fingerprint, never one typed.
+    const made = MADE_FROM_REPORT.has(kind as DeliverableKind) ? releasedReportFingerprint(d.db, c.id) : undefined;
+    if (made === null) {
+      return { ok: false, why: `${def.label} is issued from the survey report the surveyor approved, once a tax adviser has signed off its figure. There is no such version on this claim yet.` };
+    }
+    const rawHash = made ?? (input['content_hash'] ?? '').trim().toLowerCase();
     if (rawHash !== '' && !/^[0-9a-f]{64}$/.test(rawHash)) return { ok: false, why: 'The fingerprint of the issued document is 64 characters: 0 to 9 and a to f.' };
     if (kind === 'DEFENCE_PACK' && rawHash === '') {
       return { ok: false, why: 'An issued defence pack never changes, so we record its fingerprint. Give the fingerprint of the pack as issued.' };

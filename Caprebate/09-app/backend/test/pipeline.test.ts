@@ -147,9 +147,10 @@ function checks(app: App, subject: P.EnquirySubject, answers: Partial<Record<P.C
   }
 }
 
-/** CRM 7 of 10: THE CLAIM'S OWN fee invoice. An organisation's invoice no longer opens the gate — test/finance-claim.test.ts. */
+/** CRM 7 of 10: THE CLAIM'S OWN fee invoice. An organisation's invoice no longer opens the gate — test/finance-claim.test.ts.
+ *  PHASE 158c (F41): and it is SENT to the client — raised and not sent does not open it (test/phase158c.test.ts). */
 function raiseInvoice(app: App, business: string, claim: string): void {
-  CF.claimInvoiceRow(app, business, claim);
+  CF.claimInvoiceRow(app, business, claim, { status: 'SENT' });
 }
 
 const ALL_YES = { UK_HEALTHCARE_PROPERTY: 'YES', TRADING_CLIENT: 'YES', OWNER_OR_AUTHORISED: 'YES', NO_CLAIM_CONFLICT: 'YES' } as const;
@@ -459,15 +460,18 @@ describe('every gate is server-side, and every gate has a test that tries to ski
     } finally { app.close(); }
   });
 
-  test('VALUATION → TAX_ADVISER_SIGNOFF: every grant traced (a fact, CRM 6 of 10) AND a confirmation', async () => {
+  test('VALUATION → TAX_ADVISER_SIGNOFF: every grant traced (a fact, CRM 6 of 10) AND the surveyor’s approval of the pack (Phase 158c)', async () => {
     const app = await testApp();
     try {
       staff(app);
-      const c = claimAt(app, organisation(app), 'VALUATION');
+      const org = organisation(app);
+      const c = claimAt(app, org, 'VALUATION');
       assert.equal(fwd(app, 'SALES', c, 'TAX_ADVISER_SIGNOFF').ok, false);
-      confirm(app, c, 'VALUATION_SIGNED');
-      // CRM 6 of 10: the confirmation alone no longer passes — every grant traced is a fact, and never asked does not pass.
-      assert.equal(fwd(app, 'SALES', c, 'TAX_ADVISER_SIGNOFF').ok, false, 'a confirmation stood in for every grant traced');
+      // PHASE 158c (F35): the staff tick is retired; the surveyor's approval of the survey pack stands in its place.
+      assert.equal(P.recordMilestone(deps(app), actor('SALES'), c, 'VALUATION_SIGNED', null).ok, false, 'the retired tick was taken');
+      CF.packApprovedOn(app, org.business, org.assessment ?? '', c);
+      // CRM 6 of 10: the approval alone does not pass — every grant traced is a fact, and never asked does not pass.
+      assert.equal(fwd(app, 'SALES', c, 'TAX_ADVISER_SIGNOFF').ok, false, 'the approval stood in for every grant traced');
       CF.noGrants(app, c);
       assert.equal(fwd(app, 'SALES', c, 'TAX_ADVISER_SIGNOFF').ok, true);
     } finally { app.close(); }
@@ -518,17 +522,18 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       const org = organisation(app);
       const c = claimAt(app, org, 'REPORTS', { signoff: true });
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false);
-      confirm(app, c, 'CLIENT_ACCEPTED_REPORT');
-      assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'the accountant’s confirmation was skipped');
+      // PHASE 158c (F39): the client's acceptance is theirs, in the portal - a staff tick is refused.
+      assert.equal(P.recordMilestone(deps(app), actor('SALES'), c, 'CLIENT_ACCEPTED_REPORT', null).ok, false, 'the retired tick was taken');
       confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
-      assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'both confirmations passed with no report issued');
+      assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'the accountant’s confirmation passed with no report issued');
       CF.issue(app, c, 'CLIENT_REPORT');
       CF.issue(app, c, 'ACCOUNTANT_COMPUTATION_PACK');
+      assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'the client’s acceptance was skipped');
+      CF.clientAccepted(app, c);
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, false, 'an amendment window nobody established passed');
       CF.openWindow(app, org.business, org.property, c);
       // A claim at REPORTS with no sign-off — it can only be put there by hand — still does not pass.
       const unsigned = claimAt(app, org, 'REPORTS');
-      confirm(app, unsigned, 'CLIENT_ACCEPTED_REPORT');
       confirm(app, unsigned, 'ACCOUNTANT_CONFIRMED_RETURN');
       assert.equal(fwd(app, 'SALES', unsigned, 'INVOICE').ok, false, 'a report with no sign-off went to invoice');
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, true);
@@ -543,9 +548,9 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       staff(app);
       const org = organisation(app);
       const c = claimAt(app, org, 'REPORTS', { signoff: true });
-      confirm(app, c, 'CLIENT_ACCEPTED_REPORT');
       confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
       CF.readyForReports(app, org.business, org.property, org.assessment ?? '', c);
+      CF.clientAccepted(app, c); // PHASE 158c (F39): the client accepts in their portal
       assert.equal(fwd(app, 'SALES', c, 'INVOICE').ok, true);
       const gate = (claim: string, trigger?: P.FeeTrigger) =>
         P.gateOut(app.db, P.loadPipelineClaim(app.db, claim), 'INVOICE',
@@ -578,7 +583,7 @@ describe('every gate is server-side, and every gate has a test that tries to ski
     } finally { app.close(); }
   });
 
-  test('DEFENCE_PACK → CLOSED: the defence pack ISSUED in the register, with its hash (CRM 6 of 10) — the confirmation is retired — and the claim records its completion date', async () => {
+  test('DEFENCE_PACK → CLOSED: the defence pack ISSUED in the register, with its hash (CRM 6 of 10) — the confirmation is retired — and the filing recorded (Phase 158c, F42); the claim records its completion date', async () => {
     const app = await testApp();
     try {
       staff(app);
@@ -587,6 +592,8 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       assert.equal(P.recordMilestone(deps(app), actor('SALES'), c, 'DEFENCE_PACK_COMPLETE', null).ok, false, 'the retired confirmation was recorded');
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false);
       CF.issue(app, c, 'DEFENCE_PACK');
+      assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false, 'closed with no filing recorded');
+      CF.filingRecorded(app, c); // PHASE 158c (F42)
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, true);
       assert.ok(app.db.get<{ at: string | null }>('SELECT completed_at AS at FROM claims WHERE id = ?', [c])?.at);
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false, 'a closed claim moved on');
@@ -712,6 +719,7 @@ describe('exits keep the record — nothing is deleted', () => {
       // Not from a closed claim: it has finished.
       const closed = claimAt(app, org, 'DEFENCE_PACK');
       CF.issue(app, closed, 'DEFENCE_PACK'); // CRM 6 of 10: the register's issued pack, not a confirmation
+      CF.filingRecorded(app, closed); // PHASE 158c (F42): and the filing recorded
       assert.equal(fwd(app, 'SALES', closed, 'CLOSED').ok, true);
       assert.equal(P.moveClaim(deps(app), actor('SALES'), closed, { kind: 'EXIT', to: 'OUTSIDE_AMENDMENT_WINDOW', reason_code: 'AMENDMENT_WINDOW_CLOSED' }).ok, false);
     } finally { app.close(); }

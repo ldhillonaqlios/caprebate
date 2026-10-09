@@ -289,7 +289,7 @@ describe('stage entered and owner changed', () => {
 
       const i = claimAt(app, org, 'REPORTS');
       CF.readyForReports(app, org.business, org.property, org.assessment ?? '', i);
-      confirm(app, i, 'CLIENT_ACCEPTED_REPORT');
+      CF.clientAccepted(app, i); // PHASE 158c (F39): the client accepts in their portal, not a staff tick
       confirm(app, i, 'ACCOUNTANT_CONFIRMED_RETURN');
       const outbox = count(app.db, 'SELECT COUNT(*) AS n FROM outbox');
       assert.equal(fwd(app, sales, i, 'INVOICE').ok, true);
@@ -392,7 +392,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
       step('SURVEY');
       commitOn(app, org, c);
       step('VALUATION');
-      confirm(app, c, 'VALUATION_SIGNED');
+      CF.packApprovedOn(app, org.business, org.assessment ?? '', c); // PHASE 158c (F35): the surveyor's approval, not a tick
       CF.noGrants(app, c);
       step('TAX_ADVISER_SIGNOFF');
       // CRM 6 of 10: the sign-off RECORD, written through the store a person uses — not a date on the claim.
@@ -405,15 +405,16 @@ describe('what no rule may do — each refused, and each with a test', () => {
       CF.issue(app, c, 'CLIENT_REPORT');
       CF.issue(app, c, 'ACCOUNTANT_COMPUTATION_PACK');
       step('REPORTS');
-      confirm(app, c, 'CLIENT_ACCEPTED_REPORT');
+      CF.clientAccepted(app, c); // PHASE 158c (F39)
       confirm(app, c, 'ACCOUNTANT_CONFIRMED_RETURN');
       step('INVOICE');
       confirm(app, c, 'HMRC_PROCESSED_RELIEF');
       // CRM 7 of 10: the gate reads THIS claim's own fee invoice — an organisation's no longer opens it.
-      CF.claimInvoiceRow(app, org.business, c);
+      CF.claimInvoiceRow(app, org.business, c, { status: 'SENT' }); // PHASE 158c (F41): sent, not only raised
       step('DEFENCE_PACK');
       // CRM 6 of 10: the pack complete is the register's issued defence pack, with its hash; the confirmation is retired.
       CF.issue(app, c, 'DEFENCE_PACK');
+      CF.filingRecorded(app, c); // PHASE 158c (F42): the filing recorded before the claim closes
       step('CLOSED');
 
       assert.deepEqual(snapshot(), before, 'a rule changed a gate, a switch, the engagement or the research');

@@ -1061,9 +1061,9 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 158c — the steps staff tick for other people: the surveyor's valuation, the reports, the client's acceptance, the invoice and the filing
+## PHASE 158d — the accountant's own confirmations, one purchase date, the floor area, the defence pack, and what the portal tells the client
 
- **Model: Opus. Written 7 October 2026 by Phase 158b**, from its run of the invented client on from Survey to Closed (findings F34 to F42 in `04-phase-work/sim-2026-10-06/Friary-House-simulation-findings.md`, OneDrive). The journey now runs end to end; what is left is controls: several steps pass on a tick a member of staff makes for somebody else, or on a report the application does not hold. Nobody needs to answer anything first; where a receipt rule is the data protection officer's, build on our recommendation and ask (build, then check).
+ **Model: Opus. Written 7 October 2026 by Phase 158c**, from its second run of the invented client from the letter to Closed with nobody ticking a step for somebody else (findings F43 to F47 in `04-phase-work/sim-2026-10-06/Friary-House-simulation-findings.md`, OneDrive). Every 158c control held. What is left: two confirmations staff still make for the client's accountant, a tick nothing checks, one date asked for in four places, the last deliverable issued on a typed fingerprint, and a portal that tells the client less than the gate knows. Nobody needs to answer anything first; build, then check.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1109,45 +1109,41 @@ grade 9 on every screen. Fix what is small and safe; anything larger goes in
 a new lettered phase before the sweep; anything that needs a person goes in
 the Word questions document (AMENDMENT 2 - cp, never mv).
 
-1. F35 and F34, THE SURVEYOR'S VALUATION. The Valuation gate reads the staff
-   tick VALUATION_SIGNED ("Valuation signed by the surveyor - every rate
-   sourced"), which the surveyor may not make (403) and Sales may, while the
-   survey pack had no approved version. Make the gate read the pack's own
-   approval (src/web/pack-approve.ts) on a job on the claim, so only the
-   surveyor's approval passes it; retire the staff tick for it the way CRM 6
-   retired others (refused, read by no gate), and say so on the claim page.
-2. F38 and F36, THE REPORTS THE CLAIM ISSUES. Issuing the client report, the
-   accountant's pack and the defence pack asks staff to type a date and a
-   SHA-256; the report type "cannot be stored yet", and the report built from
-   the survey pack (src/web/report-pages.ts) is not linked. Issue the client
-   report from the application's own report (its hash computed, never typed),
-   only after the pack approval and the tax adviser's sign-off; bind the
-   deliverables' document types to receipt policies on our recommendation (as
-   157d did for four types) and record the data protection officer's check.
-   Make the deliverables table's words agree with the types a client can send.
-3. F39, THE CLIENT'S REPORT AND ACCEPTANCE. The portal said "We issued your
-   client report" and gave nothing to open or accept; "The client accepted the
-   report" is only a staff tick. Show the issued report in the portal, with
-   "I accept this report" recorded against its hash (who, when); the gate reads
-   that, not a staff tick. And at Reports the client's step should not say a
-   surveyor is valuing the property: give Reports its true step.
-4. F37, THE WINDOW, EARLY. The amendment window is first tested at Reports; a
-   client who said "06/2019" travelled through the letter, the paid research and
-   the survey first. From the client's own month at the assessment, show a plain
-   warning on the claim page from Engagement on ("on the client's own date the
-   window may have closed - check before the paid research"), using the same
-   reading as Reports; it warns, it does not stop. The stop stays at Reports.
-5. F41, THE INVOICE SENT. The claim moved past Invoice with the fee "raised, not
-   sent". Make the Invoice gate need the invoice sent to the client (or say why
-   not), and keep "raised" and "sent" apart on the claim page.
-6. F42, THE FILING CONFIRMED. The claim closed, and the portal said "Claim
-   filed", with no record that the claim was filed (the reconciliation/filing
-   form exists; no gate asks for it). Make closing a claim that reached the
-   defence pack need the filing recorded, and the portal say "Claim filed" only
-   when it is.
-7. THE RUN, ONCE MORE. With 1 to 6 built, run the invented client from the
-   letter to Closed again on a local copy, with nobody ticking a step for
-   somebody else, and write any finding as F43 onwards.
+1. F46, THE ACCOUNTANT CONFIRMS FOR THEMSELVES. "The client's accountant
+   confirmed the claim fits the return and the amendment window"
+   (ACCOUNTANT_CONFIRMED_RETURN) and the filing date on the reconciliation are
+   both typed by Sales for the accountant. The accountant already signs off the
+   figures through their own private link (src/web/report-signoff.ts). Let the
+   same kind of link carry both: "it fits the return and the window" at
+   Reports, and "filed on <date>" after it. The gates read those answers; the
+   staff tick is retired the way 158c retired VALUATION_SIGNED (refused, read by
+   no gate, said on the claim page). Where the client has no accountant, the
+   client-filing route (src/web/client-filing.ts) stays as it is.
+2. F45, ONE PURCHASE DATE. The date is asked at the assessment (month), in the
+   portal ("the completion date"), in the pack's legal check (G9d) and on the
+   property record, and the window reads only the last, which staff type. Make
+   an approved client answer, or the surveyor's G9d, fill the property's
+   acquisition date when it is empty (never overwrite one recorded), with where
+   it came from; and the client's year end fill the accounting period the same
+   way. Say on the claim page which one the window read.
+3. F44, THE FLOOR AREA. "Data gathering complete - floor area sourced" passed
+   with no floor area recorded anywhere. Make the confirmation need a floor area
+   on record (a register's, a document's, or the client's approved answer to
+   "how big is the building"), or say why not; it stays the analyst's own tick.
+4. F47, THE DEFENCE PACK. It is the last deliverable issued on a typed SHA-256,
+   for a file the application cannot hold. Make it from the application's own
+   records (the approved report, the sign-off, the acceptance, the invoice, the
+   filing), its fingerprint computed, never typed; bind its receipt policy on
+   our recommendation and record the data protection officer's check, as 158c
+   did for the reports.
+5. F43, WHAT THE PORTAL SAYS. Signing the letter moves the client to "Step 2 of
+   6" at once (raise only), and "New for you" says the letter is signed. "What
+   we need from you" lists what the gate is waiting on from the client: each
+   required document not yet received (with or without a staff request) and,
+   at Reports, accepting the report.
+6. THE RUN, ONCE MORE. Run the invented client from the letter to Closed on a
+   fresh local copy, lookups off, with nobody ticking a step for somebody else,
+   and write any finding as F48 onwards.
 ```
 
 ---

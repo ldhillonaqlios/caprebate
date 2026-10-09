@@ -83,6 +83,8 @@ export type AuditKind =
   | 'ENGAGEMENT_SIGNERS_SET'
   // PHASE 158b: staff opened a survey job on a claim (src/web/survey-open.ts); whether an estimate was sealed with it. No figure.
   | 'SURVEY_JOB_OPENED'
+  // PHASE 158c: a client accepted the survey report released to them (src/web/report-accept.ts). The version, never a figure.
+  | 'CLIENT_REPORT_ACCEPTED'
   /**
    * Phase 146g, 23 September 2026. A member of staff said an address that bounced for good works again
    * (src/web/settings.ts). Whether a lift happened, and nothing else: the address itself is the new row in

@@ -53,7 +53,7 @@ import { onClaimStageEntered } from './introducers.ts';
 import { cddGateNeed } from './compliance.ts';
 import { amendmentWindowReading, electionResolved, grantsTraced } from './claim-facts.ts';
 import { grantProviderNeed, grantSplitNeed } from './grant-checks.ts';
-import { deliverableIssuedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from './claim-record.ts';
+import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from './claim-record.ts';
 import { clientConfirmationNeed, filingRoute } from './client-filing.ts';
 import {
   EXITS, PROCEDURE_KEYS, PROCEDURE_STAGES, anyStageLabel, claimStage, clientStageFor, exitStage,
@@ -183,8 +183,15 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
     stage: 'VALUATION',
     // CRM 6 of 10: every grant traced is a fact on the facts panel now, and the gate reads it; this confirms what nothing derives.
     label: 'Valuation signed by the surveyor — every rate sourced',
+    /* PHASE 158c (F34, F35, the Friary House run): Sales could tick "signed by the surveyor" - the surveyor could not -
+       while the survey pack had no approved version. The gate reads the surveyor's own approval of the pack now. */
+    retired: 'The surveyor’s own approval of the survey pack now counts. This tick is no longer used.',
   },
-  CLIENT_ACCEPTED_REPORT: { stage: 'REPORTS', label: 'The client accepted the report' },
+  CLIENT_ACCEPTED_REPORT: {
+    stage: 'REPORTS', label: 'The client accepted the report',
+    // PHASE 158c (F39): staff ticked this for the client. The client accepts the report in their portal now.
+    retired: 'The client now accepts the report in their portal. This tick is no longer used.',
+  },
   ACCOUNTANT_CONFIRMED_RETURN: {
     stage: 'REPORTS', label: 'The client’s accountant confirmed the claim fits the return and the amendment window',
   },
@@ -195,6 +202,43 @@ export const MILESTONES: Readonly<Record<MilestoneKey, {
     retired: 'The defence pack now counts as done when we issue it from the reports list. This tick is no longer used.',
   },
 });
+
+/**
+ * PHASE 158c (F39): THE CLIENT ACCEPTED THE ISSUED REPORT, IN THEIR PORTAL (src/web/report-accept.ts) - an acceptance on
+ * this claim of the fingerprint the issued client report carries. A later version issued needs accepting again.
+ */
+export function clientAcceptedNeed(db: Db, c: { readonly id: string }): Need {
+  const a = db.get<{ accepted_at: string; name: string | null }>(
+    'SELECT x.accepted_at, u.display_name AS name FROM client_report_acceptances x LEFT JOIN users u ON u.id = x.user_id ' +
+      "WHERE x.claim_id = ? AND x.fingerprint = (SELECT content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' " +
+      "AND state = 'ISSUED' ORDER BY version DESC LIMIT 1) ORDER BY x.accepted_at ASC LIMIT 1", [c.id, c.id]);
+  return {
+    what: 'The client accepted the report, in their portal',
+    met: a !== undefined,
+    why: a === undefined
+      ? 'the client has not accepted the issued report in their portal yet. They read it there and press “I accept this report”.'
+      : `accepted by ${a.name ?? 'a former user'} ${localStamp(a.accepted_at)}`,
+  };
+}
+
+/**
+ * PHASE 158c (F35): THE SURVEYOR'S VALUATION IS THE SURVEYOR'S APPROVAL OF THE PACK (src/web/pack-approve.ts) - a version
+ * approved on a survey job on THIS claim. Approving needs every value, the legal check settled, every chapter opened,
+ * the inspection basis and a RICS number, so no tick can stand in for it.
+ */
+export function packApprovedNeed(db: Db, c: { readonly id: string }): Need {
+  const a = db.get<{ version: number; approved_at: string; name: string | null }>(
+    'SELECT a.version, a.approved_at, u.display_name AS name FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
+      'JOIN surveyor_jobs j ON j.id = p.job_id LEFT JOIN users u ON u.id = a.approved_by WHERE j.claim_id = ? ' +
+      'ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [c.id]);
+  return {
+    what: 'The surveyor approved and signed the survey pack',
+    met: a !== undefined,
+    why: a === undefined
+      ? 'the surveyor has not approved the survey pack on this claim. Only the surveyor’s approval counts.'
+      : `version ${String(a.version)} approved by ${a.name ?? 'a former user'} ${localStamp(a.approved_at)}`,
+  };
+}
 
 /* ================================================================== *
  * 3 · THE ENQUIRY GATE
@@ -424,7 +468,8 @@ export function feeTriggerReached(db: Db, c: PipelineClaim, trigger: FeeTrigger 
         : `${d.kind === 'CLIENT_REPORT' ? 'the client report' : 'the computation pack'} was issued on ${d.on}`,
     };
   }
-  const t = confirmation(db, c, trigger);
+  // PHASE 158c (F39): the client's own acceptance, in the portal, of the issued report; no longer a tick.
+  const t = trigger === 'CLIENT_ACCEPTED_REPORT' ? clientAcceptedNeed(db, c) : confirmation(db, c, trigger);
   return {
     what: `The fee trigger is reached — ${FEE_TRIGGERS[trigger]}${trigger === FEE_TRIGGER.reading && !FEE_TRIGGER.decided ? ' (the most cautious reading, while the fee trigger is undecided)' : ''}`,
     met: t.met, why: t.why,
@@ -529,7 +574,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       needs.push({ what: 'Every grant or contribution traced to the items it paid for', met: g.met, why: g.why });
       // PHASE 153a (Phase 153b lines 12 and 13): no grant split in equal share without its papers or the tax adviser's
       // view; the client has checked with whoever paid. Both met where no grant is left on the claim.
-      needs.push(grantSplitNeed(db, c), grantProviderNeed(db, c), confirmation(db, c, 'VALUATION_SIGNED'));
+      needs.push(grantSplitNeed(db, c), grantProviderNeed(db, c), packApprovedNeed(db, c));
       break;
     }
     case 'TAX_ADVISER_SIGNOFF':
@@ -549,7 +594,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
         const route = filingRoute(db, c, since);
         needs.push(
           signOffNeed(db, c),
-          deliverableIssuedNeed(db, c.id, 'CLIENT_REPORT'), confirmation(db, c, 'CLIENT_ACCEPTED_REPORT'),
+          deliverableIssuedNeed(db, c.id, 'CLIENT_REPORT'), clientAcceptedNeed(db, c),
           deliverableIssuedNeed(db, c.id, 'ACCOUNTANT_COMPUTATION_PACK'),
           route.route === 'CLIENT'
             ? clientConfirmationNeed(db, c, since, amendmentWindowReading(db, c, today).deadline)
@@ -565,10 +610,18 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // CRM 7 of 10: THE CLAIM'S OWN INVOICE. Until invoices sat on the claim this read any invoice raised for the
       // organisation, so one claim's invoice opened every claim of the same client.
       const live = liveFeeInvoiceCount(db, c.id);
+      /* PHASE 158c (F41, the Friary House run): the claim moved on with the fee "raised, not sent" - the client had not been
+         invoiced. A live fee invoice must be recorded as SENT (finance's "sent", src/web/invoices.ts markSent). */
+      const sent = db.get<{ sent_on: string | null }>(
+        "SELECT i.sent_on FROM invoices i WHERE i.claim_id = ? AND i.kind = 'FEE' AND i.invoice_status = 'SENT' " +
+          'AND i.fee_pence > COALESCE((SELECT SUM(n.amount_pence) FROM invoice_credit_notes n WHERE n.invoice_id = i.id), 0) ORDER BY i.sent_on DESC LIMIT 1',
+        [c.id]);
       needs.push({
-        what: 'Our fee invoice is raised on this claim',
-        met: live > 0,
-        why: live > 0 ? 'a fee invoice is raised on this claim and is not credited in full' : 'no live fee invoice is raised on this claim',
+        what: 'Our fee invoice is sent to the client on this claim',
+        met: sent !== undefined,
+        why: sent !== undefined ? `sent on ${sent.sent_on ?? 'a day not recorded'}, and not credited in full`
+          : live > 0 ? 'a fee invoice is raised but not sent yet. Accounting records it as sent once it has gone to the client'
+            : 'no live fee invoice is raised on this claim',
       });
       break;
     }
@@ -576,6 +629,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // CRM 6 of 10: the pack complete is the deliverables register's issued defence pack, immutable with its hash.
       // The confirmation that stood in for it is retired (MILESTONES below): nothing is left for a click to stand in for.
       needs.push(deliverableIssuedNeed(db, c.id, 'DEFENCE_PACK'));
+      needs.push(filingRecordedNeed(db, c.id)); // PHASE 158c (F42)
       break;
   }
   return {
@@ -651,14 +705,26 @@ export function raiseBusinessStage(db: Db, business_id: string, at: string): Sta
   const b = db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [business_id]);
   if (b === undefined) return null;
   let best: StageKey | null = null;
-  for (const c of db.all<{ stage: string | null; hold_return_stage: string | null }>(
-    'SELECT stage, hold_return_stage FROM claims WHERE business_id = ?', [business_id])) {
-    const k = clientStageFor(c.stage === 'ON_HOLD' ? c.hold_return_stage : c.stage);
+  for (const c of db.all<{ id: string; stage: string | null; hold_return_stage: string | null }>(
+    'SELECT id, stage, hold_return_stage FROM claims WHERE business_id = ?', [business_id])) {
+    const k = clientStageForClaim(db, c.id, c.stage === 'ON_HOLD' ? c.hold_return_stage : c.stage);
     if (k !== null && (best === null || stageIndex(k) > stageIndex(best))) best = k;
   }
   if (best === null || stageIndex(b.stage) >= stageIndex(best)) return null;
   db.run('UPDATE businesses SET stage = ?, updated_at = ? WHERE id = ?', [best, at, business_id]);
   return best;
+}
+
+/**
+ * PHASE 158c (F42, the Friary House run): the client's step a claim evidences. The defence pack and Closed are the
+ * client's "5 Claim filed", and the portal said so with no record that the claim was filed. Until the filing date is on
+ * the claim's reconciliation, such a claim evidences "4 Expert sign-off"; recording it raises the client's step.
+ */
+export function clientStageForClaim(db: Db, claim_id: string, key: string | null): StageKey | null {
+  const k = clientStageFor(key);
+  if (k !== 'INVOICED') return k;
+  const filed = db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [claim_id])?.filed_on ?? null;
+  return filed === null ? 'AT_SURVEY' : k;
 }
 
 /**
@@ -1080,7 +1146,7 @@ export function pipelinePanel(db: Db, actor: Actor, c: PipelineClaim, opts: Gate
 
   const business = db.get<{ stage: string }>('SELECT stage FROM businesses WHERE id = ?', [c.business_id]);
   const effective = s.kind === 'ON_HOLD' ? c.hold_return_stage : c.stage;
-  const evidences = clientStageFor(effective);
+  const evidences = clientStageForClaim(db, c.id, effective);
   const history = db.all<{
     at: string; kind: string; from_stage: string | null; to_stage: string | null; reason_code: string | null;
     reason_text: string | null; who: string | null;

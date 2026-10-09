@@ -210,7 +210,7 @@ describe('line 7 — where the client has no accountant, the client’s own writ
   test('ALL THREE A YES, NO ACCOUNTANT, THE DATE AS WE STATE IT: the client route’s need is met, the accountant’s is not asked, and the claim moves', async () => {
     const { app, claim, deadline } = await reportsClaim();
     try {
-      P.recordMilestone(CF.recordDeps(app), actor('SALES'), claim, 'CLIENT_ACCEPTED_REPORT', null);
+      CF.clientAccepted(app, claim); // PHASE 158c (F39): the client accepts in their portal, not a staff tick
       assert.equal(confirmByClient(app, claim, { no_accountant_or_adviser: 'YES', will_file_amendment: 'YES', last_day_acknowledged: 'YES', last_day_stated: deadline, remains_responsible: 'YES' }).ok, true);
       const g = gate(app, claim);
       assert.equal(clientNeed(app, claim)?.met, true, JSON.stringify(g.needs));

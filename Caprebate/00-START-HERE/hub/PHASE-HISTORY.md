@@ -12485,3 +12485,47 @@ NOTHING LEFT  beyond those lines.
 ```
 
  **Claim cleared** in the commit that carries this record.
+
+
+---
+
+## Phase 158c — the steps staff ticked for other people: the surveyor's valuation, the reports, the client's acceptance, the invoice and the filing — 7 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Closed the gaps Phase 158b's run found, where a step passed on a tick a member of staff made for someone else. The Valuation step now needs the surveyor's own approval of the survey pack. The client report and the accountant's pack are made from that approved report, with their fingerprint worked out, never typed. The client reads the report in their portal and presses "I accept this report", and the Reports step reads that. The claim page warns from Engagement when the client's own date says the window has probably closed. The invoice must be sent, not only raised. A claim closes, and the client reads "Claim filed", only once the filing is recorded. Then the invented client was run again, from the letter to Closed, with each step done by its own person: every one of these controls held. That run found five more things (F43 to F47), now Phase 158d. 4,912 passing.
+
+- **Claim.** hub/CLAIM.md and board item 13231736097 (board and tracker: Working on it, Lakhbir's Mac), pushed first (`45a9650`). Branch `claude/phase-158c` from main after PR 38 merged (Lakhbir: "merge 38 and run 158c").
+- **1. F34 and F35, the surveyor's valuation** (`packApprovedNeed` in `src/web/pipeline.ts`). The Valuation gate reads an approval of the survey pack on a survey job on this claim: "The surveyor approved and signed the survey pack ... Only the surveyor's approval counts." The staff tick `VALUATION_SIGNED` is retired (refused to everyone, read by no gate, said on the claim page), the way CRM 6 retired others.
+- **2. F38 and F36, the reports** (`MADE_FROM_REPORT`, `releasedReportFingerprint` in `src/web/claim-record.ts`; `src/web/claim-record-pages.ts`).
+  - The client report and the accountant's computation pack are issued only from the survey report version the surveyor approved, once a tax adviser's sign-off of that same figure is recorded after the approval, and while its fingerprint holds. Their fingerprint is that version's, computed; the form asks for the date only. Otherwise: "...is issued from the survey report the surveyor approved, once a tax adviser has signed off its figure. There is no such version on this claim yet."
+  - The deliverables table's words now say how each is made. The receipt policies for the deliverable types stay as they are: these two are no longer uploads, so no new type was opened.
+- **3. F39, the client's report and acceptance** (`src/web/report-accept.ts`; `POST /portal/report/accept`; `client_report.accept`, a CLIENT login of the business only, refused on the view-only role; **migration 101** `client_report_acceptances`, never updated or deleted).
+  - The client opens the released report at /portal/report and presses "I accept this report": who, when, which version and its fingerprint are kept. `CLIENT_REPORT_ACCEPTED` is logged.
+  - The Reports gate (`clientAcceptedNeed`) reads an acceptance of the issued client report's own fingerprint, so a later version must be accepted again. The staff tick `CLIENT_ACCEPTED_REPORT` is retired; the fee trigger's "client accepted" reading reads the same acceptance.
+  - At Reports the portal says "Your survey report is ready. Read it in your portal, and tell us you accept it." (`workingWords` in `src/web/portal-dashboard.ts`), not that a surveyor is valuing.
+- **4. F37, the window, early** (`earlyWindowWarning` in `src/web/claim-facts.ts`; the claim page's `#window-warning`). From Engagement until Reports, from the client's own month at the assessment and the latest accounting period it could fall in: "The amendment window may have closed. On the client's own date (06/2019) the amendment window has most likely closed..." It warns; the stop stays at Reports.
+- **5. F41, the invoice sent.** The Invoice gate needs a live fee invoice recorded as sent on this claim and not credited in full ("Our fee invoice is sent to the client on this claim"). Raised and not sent says "a fee invoice is raised but not sent yet. Accounting records it as sent once it has gone to the client".
+- **6. F42, the filing** (`filingRecordedNeed` in `src/web/claim-record.ts`; `clientStageForClaim` in `src/web/pipeline.ts`). Closing a claim at the defence pack needs the filing date on its reconciliation. The defence pack and Closed show the client "5 Claim filed" only once the filing is recorded (until then "4 Expert sign-off"); recording it raises the client's step.
+- **The next-step card** (`src/web/next-step.ts`) has plain readings for the four new needs.
+- **7. The run, once more** (findings file, OneDrive, "The run again, from the letter to Closed ..."). A fresh copy of the 6 Oct database, the invented client at Engagement with no letter, lookups off (no outside call; Homedata spend nothing).
+  - Each step was done by its own person: the client signed, uploaded four documents and answered three questions in the portal and accepted the report; the surveyor filled the 41 values and the legal check and approved version 1 (£196,540); an invented accountant signed off through their private link; Accounting raised the fee (£5,896.20) and recorded it sent.
+  - **Every 158c control held** (F34/35, F37, F38, F39, F41, F42), and the 158b fixes (F22, F23, F31) held too.
+  - **Found:** F43, the portal tells the client less than the gate knows (still "Step 1" just after signing; "Nothing at the moment" while documents or the acceptance are needed). F44, "Data gathering complete - floor area sourced" passed with no floor area anywhere. F45, the purchase date is asked in four places and the window reads only the staff-typed one. F46, the accountant's "it fits the return" and the filing date are still typed by Sales for the accountant (the run ticked both, labelled). F47, the defence pack is still issued on a typed fingerprint.
+- **8. Phase 158d written** (board 13232676804, Ready - Claude can build; in ACTION-PLAN.md and on the run sheet, read back equal) for F43 to F47 and the run once more.
+- **The checks.** `test/phase158c.test.ts` (20). Each group was red against the code before it, and each control held.
+  - **Restated:** `pipeline`, `claim-record`, `automation`, `finance-claim`, `follow-on`, `phase132e`, `phase132-records`, `phase133c` (by its plain readings) and `test/claim-fixtures.ts` (`packApprovedOn`, `releaseReportFor`, `clientAccepted`, `filingRecorded`; `claimInvoiceRow` with status SENT).
+  - **The Developer Spec:** a Phase 158c section, the `POST /portal/report/accept` route, the deliverables and filing rows. The line references these edits moved were remapped by a line diff against main and checked against their symbols (three short ones by hand); the disposition table's renamed test title updated. CRM fold check green.
+  - **Figures.** Site harness `pass 1382 fail 0 xfail 3`. phase3 440. phase9 417. Back end 2,673 over 164 tracked files (the closing `npm run check` lost one file, phase133a, to a connection reset after the Mac slept for nine minutes mid-run; that file passes 28 of 28 on its own, and the full suite passed 2,673 of 2,673 on the same code before the documents were edited). **4,912** in all.
+  - **Other checks.** Extraction verified and up to date. CRM fold check: green. Tracker: green (and its self-test). Figure drift: OK; its negative control fails as it should. Notices, gated-exit and cash-route proofs pass, and their negative controls fail as they should. Brand, plain words, analytics allow-list, switch direction, sign-off register (and its self-test): green. Payload proof: PASS.
+
+```
+DONE          The Valuation gate on the surveyor's own approval (F34, F35); the client report and the
+              accountant's pack made from it, fingerprint computed (F38, F36); the client's acceptance
+              in the portal (F39); the window warned from Engagement (F37); the invoice sent (F41);
+              closing and "Claim filed" on the filing recorded (F42); the run again, letter to Closed,
+              every control held; Phase 158d written.
+NOT DONE      The accountant's two confirmations, one purchase date, the floor area, the defence pack's
+              fingerprint, what the portal tells the client (F43-F47) - BUILDABLE - Phase 158d.
+NOTHING LEFT  beyond those lines.
+```
+
+ **Claim cleared** in the commit that carries this record.

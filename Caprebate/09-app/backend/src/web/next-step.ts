@@ -32,18 +32,21 @@ const TABLE: readonly (readonly [RegExp, PlainNeed])[] = [
   // Phase 153a (src/web/grant-checks.ts): the grant papers or the tax adviser's view; the client's check with the payer.
   [/^No grant is split in equal share/, { words: 'The grant papers, or the tax adviser’s view on splitting a grant', fix: { href: '#claim-grants', label: 'Open the grants' } }],
   [/^The client has checked with whoever paid/, { words: 'The client’s confirmation that they checked with whoever paid the grant', fix: { href: '#claim-grants', label: 'Record it' } }],
-  [/^Valuation signed by the surveyor/, { words: 'The surveyor’s signed valuation', fix: { href: '#add-task', label: 'Ask the surveyor' } }],
+  // Phase 158c: the surveyor's own approval of the survey pack (F34, F35), the client's acceptance in their portal (F39),
+  // the invoice sent (F41) and the filing recorded (F42). Staff ticks no longer stand in for any of them.
+  [/^The surveyor approved and signed the survey pack/, { words: 'The surveyor’s approval of the survey pack', fix: { href: '#add-task', label: 'Ask the surveyor' } }],
   [/^The tax adviser’s sign-off is on record/, { words: 'The tax adviser’s sign-off', fix: { href: '#claim-figures', label: 'Record the sign-off' } }],
   [/^The client report is issued/, { words: 'Issue the client report', fix: { href: '#claim-deliverables', label: 'Open the reports' } }],
   [/^The accountant’s computation pack is issued/, { words: 'Issue the accountant’s computation pack', fix: { href: '#claim-deliverables', label: 'Open the reports' } }],
   [/^The defence pack is issued/, { words: 'Issue the defence pack', fix: { href: '#claim-deliverables', label: 'Open the reports' } }],
-  [/^The client accepted the report/, { words: 'The client’s acceptance of the report', fix: { href: '#move', label: 'Confirm it' } }],
+  [/^The client accepted the report/, { words: 'The client’s acceptance of the report, in their portal', fix: { href: '#add-task', label: 'Ask the client' } }],
   [/^The client’s accountant confirmed/, { words: 'The accountant’s confirmation that the claim fits the return', fix: { href: '#move', label: 'Confirm it' } }],
   [/^The client confirmed in writing/, { words: 'The client’s written confirmation that they will file the amendment', fix: { href: '#claim-facts', label: 'Record it' } }],
   [/^The claim is within the amendment window/, { words: 'The claim must go in inside the amendment window', fix: { href: '#claim-facts', label: 'Check the dates' } }],
   [/^The amendment window is open/, { words: 'The amendment window must still be open', fix: { href: '#claim-facts', label: 'Check the dates' } }],
   [/^The fee trigger is reached/, { words: 'The point at which our fee is due', fix: { href: '#move', label: 'Confirm it' } }],
-  [/^Our fee invoice is raised/, { words: 'Our fee invoice on this claim', fix: { href: '#add-task', label: 'Ask Accounting' } }],
+  [/^Our fee invoice is sent/, { words: 'Our fee invoice, sent to the client', fix: { href: '#add-task', label: 'Ask Accounting' } }],
+  [/^The claim’s filing is recorded/, { words: 'The date the claim was filed', fix: { href: '#claim-figures', label: 'Record the filing' } }],
 ];
 
 /** The plain reading of one need. Unknown wording is shown as it is, with no invented action. */

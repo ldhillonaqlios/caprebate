@@ -471,7 +471,8 @@ describe('reports with a period — the dashboard over a period is the reports s
       assert.match(completed({ period: 'MONTH' }), /^0 claims/);
       assert.match(completed({}), /^1 claim/);
 
-      assert.deepEqual(db.all("SELECT name FROM sqlite_master WHERE name LIKE '%period%' OR name LIKE '%report%'"), [], 'something is stored for a report');
+      // PHASE 158c: the client's acceptance of their survey report (migration 101) is a record of the claim, not a stored report.
+      assert.deepEqual(db.all("SELECT name FROM sqlite_master WHERE (name LIKE '%period%' OR name LIKE '%report%') AND name NOT LIKE '%client_report_acceptances%'"), [], 'something is stored for a report');
       const surveyor = await h.signIn('surveying');
       const s = await surveyor.get('/staff/dashboard/view.json?period=QUARTER');
       assert.equal(s.status, 200);

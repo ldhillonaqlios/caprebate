@@ -101,6 +101,7 @@ import { offerSignup, requestSignup, verifyOpen, confirmSignup, MIN_PASSWORD } f
 import { freeGate, recordLookupsDeclined } from './address-check.ts';
 import { IDENTITY_HOOK_MAX_BYTES, IDENTITY_HOOK_PATH, IDENTITY_SIGNATURE_HEADERS, receiveIdentityResult, storageReason } from './identity-checks.ts';
 import { handleSignoffLink, portalReport, portalReportCard } from './report-pages.ts';
+import { acceptReport } from './report-accept.ts';
 import { handlePortalEvidence, portalEvidenceCard } from './evidence-pages.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
@@ -1129,7 +1130,7 @@ async function portalRoutes(
     for (const b of bks) { const m = b.channel === 'video' ? activeMeeting(db, b.id) : undefined; if (m !== undefined) joins[b.id] = `/call/${m.client_token}`; }
     // 1 Oct 2026: the top of the portal as a dashboard (src/web/portal-dashboard.ts).
     // 2 Oct 2026: the survey report's card leads, once a tax adviser's sign-off has released it (src/web/report-pages.ts).
-    const dashboard = h`${portalReportCard(d.app, business_id)}${portalEvidenceCard(db, business_id)}${portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins })}`;
+    const dashboard = h`${portalReportCard(d.app, business_id, actor)}${portalEvidenceCard(db, business_id)}${portalDashboard({ db, actor, business_id, nowIso: now(), bookings: bks, tasks: tks, requests: reqs, done, delivered: dlv, joins })}`;
     html(res, 200, portalPage(actor, business, progress, eng, bks, tks, dcs, reqs, receivableTypes(db), rng,
       publicSlots(db, now()), now(), dlv, shr, { proposedSteps: nameSwitches().portalSteps, claims: cls, done, sent: url.searchParams.get('sent') === '1', ...(/^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('again') ?? '') ? { sentBefore: url.searchParams.get('again') as string } : {}), joins, dashboard, rangeBasis: rangeBasisFor(db, business_id), ...(welcome === undefined ? {} : { welcome }) }));
     return 'handled';
@@ -1144,6 +1145,14 @@ async function portalRoutes(
     if (r === 'handled') return 'handled';
   }
   /* 2 OCT 2026: THE CLIENT'S SURVEY REPORT — only the version a tax adviser's sign-off has released (src/web/report-pages.ts). */
+  /* PHASE 158c (F39): the client accepts the released report (src/web/report-accept.ts). */
+  if (path === '/portal/report/accept' && method === 'POST') {
+    P.progress(db, actor, business_id); // the business is asked of the rule table, as every portal page does
+    const r = acceptReport({ db, audit: d.app.audit, now, newId }, actor, business_id);
+    if (!r.ok) { html(res, 400, simple('Not accepted', r.why)); return 'handled'; }
+    redirect(res, '/portal/report?done=accepted');
+    return 'handled';
+  }
   if ((path === '/portal/report' || path === '/portal/report.pdf') && method === 'GET') {
     P.progress(db, actor, business_id); // the business is asked of the rule table, as every portal page does
     return portalReport(d.app, actor, business_id, path, res, nav(actor));

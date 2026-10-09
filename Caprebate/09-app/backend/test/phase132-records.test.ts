@@ -120,6 +120,7 @@ describe('line 2 — every sealed case stamped with the engine version, the rule
       const d = CF.recordDeps(a);
       ok(R.recordDeliverable(d, SALES, claim, { kind: 'CLIENT_REPORT', action: 'DRAFT' }));
       assert.equal(count(a, 'SELECT COUNT(*) AS n FROM claim_version_stamps'), 0, 'a draft was stamped');
+      CF.releaseReportFor(a, claim); // PHASE 158c (F38): the report is issued from the approved, signed-off version
       const issued = R.recordDeliverable(d, SALES, claim, { kind: 'CLIENT_REPORT', action: 'ISSUE', issued_on: '2026-09-01', content_hash: 'b'.repeat(64) });
       assert.ok(issued.ok);
       const rows = a.db.all<StampRow>('SELECT * FROM claim_version_stamps');
@@ -161,6 +162,7 @@ describe('line 2 — every sealed case stamped with the engine version, the rule
       assert.equal(count(a, "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'CASE_STAMPED'"), 1);
 
       ok(R.recordDeliverable(d, SALES, claim, { kind: 'CLIENT_REPORT', action: 'DRAFT' }));
+      CF.releaseReportFor(a, claim); // PHASE 158c (F38): the report is issued from the approved, signed-off version
       const second = R.recordDeliverable(d, SALES, claim, { kind: 'CLIENT_REPORT', action: 'ISSUE', issued_on: '2026-09-02', content_hash: 'c'.repeat(64) });
       assert.ok(second.ok);
       assert.equal(count(a, 'SELECT COUNT(*) AS n FROM claim_version_stamps'), 2);
@@ -520,9 +522,11 @@ describe('line 6 — the raw-file record’s claim period end and report deliver
       assert.equal(D.ret7Limbs(a.db, doc).claim_period_end, '2026-03-31T00:00:00.000Z', 'the known value');
       CF.fact(a, claim, 'ACCOUNTING_PERIOD_END', null);
       assert.equal(D.ret7Limbs(a.db, doc).claim_period_end, null, 'the latest answer is the answer: a later “not known” is not overridden by an earlier date');
+      CF.releaseReportFor(a, claim); // PHASE 158c (F38): the report is issued from the approved, signed-off version
       ok(R.recordDeliverable(CF.recordDeps(a), SALES, claim, { kind: 'CLIENT_REPORT', action: 'ISSUE', issued_on: '2026-09-03' }));
       assert.equal(D.ret7Limbs(a.db, doc).report_delivered_at, '2026-09-03T00:00:00.000Z', 'the issued report');
       ok(R.recordDeliverable(CF.recordDeps(a), SALES, claim, { kind: 'CLIENT_REPORT', action: 'DRAFT' }));
+      CF.releaseReportFor(a, claim); // PHASE 158c (F38): the report is issued from the approved, signed-off version
       ok(R.recordDeliverable(CF.recordDeps(a), SALES, claim, { kind: 'CLIENT_REPORT', action: 'ISSUE', issued_on: '2026-09-05' }));
       assert.equal(D.ret7Limbs(a.db, doc).report_delivered_at, '2026-09-03T00:00:00.000Z', 'the EARLIEST delivery, superseded or not');
 
@@ -552,6 +556,7 @@ describe('line 6 — the raw-file record’s claim period end and report deliver
       CF.signOffRow(a, org.business, org.assessment, claim);
       ok(R.recordDeliverable(CF.recordDeps(a), SALES, claim, { kind: 'CLIENT_REPORT', action: 'DRAFT' }));
       const later = { ...CF.recordDeps(a), now: () => '2027-09-20T12:00:00.000Z' };
+      CF.releaseReportFor(a, claim); // PHASE 158c (F38): the report is issued from the approved, signed-off version
       ok(R.recordDeliverable(later, SALES, claim, { kind: 'CLIENT_REPORT', action: 'ISSUE', issued_on: '2027-09-15' }));
       const limbs = D.ret7Limbs(a.db, doc);
       assert.equal(limbs.claim_period_end, '2027-03-31T00:00:00.000Z');

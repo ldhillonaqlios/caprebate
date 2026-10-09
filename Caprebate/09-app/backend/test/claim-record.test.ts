@@ -405,8 +405,10 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
     const app = await testApp();
     try {
       staff(app);
-      const c = claimAt(app, organisation(app), 'VALUATION');
-      confirm(app, c, 'VALUATION_SIGNED');
+      const org = organisation(app);
+      const c = claimAt(app, org, 'VALUATION');
+      // PHASE 158c (F35): the surveyor's approval of the pack stands where the retired VALUATION_SIGNED tick did.
+      CF.packApprovedOn(app, org.business, org.assessment ?? '', c);
       const d = CF.recordDeps(app);
       const traced = () => F.grantsTraced(app.db, c).met;
       assert.equal(traced(), false, 'ABSENT passed');
@@ -508,7 +510,11 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
     assert.ok(P.MILESTONES.DEFENCE_PACK_COMPLETE.retired);
     assert.equal(/election/i.test(P.MILESTONES.DATA_GATHERING_COMPLETE.label), false);
     assert.equal(/grant/i.test(P.MILESTONES.VALUATION_SIGNED.label), false);
-    for (const k of ['DATA_GATHERING_COMPLETE', 'VALUATION_SIGNED', 'CLIENT_ACCEPTED_REPORT', 'ACCOUNTANT_CONFIRMED_RETURN'] as const) {
+    // PHASE 158c (F35): VALUATION_SIGNED is retired too - the surveyor's approval of the survey pack derives it now.
+    assert.ok(P.MILESTONES.VALUATION_SIGNED.retired);
+    // PHASE 158c (F39): and CLIENT_ACCEPTED_REPORT - the client accepts the report in their portal now.
+    assert.ok(P.MILESTONES.CLIENT_ACCEPTED_REPORT.retired);
+    for (const k of ['DATA_GATHERING_COMPLETE', 'ACCOUNTANT_CONFIRMED_RETURN'] as const) {
       assert.equal(P.MILESTONES[k].retired, undefined, `${k} was retired though nothing derives it`);
     }
   });
@@ -715,15 +721,18 @@ describe('THE DELIVERABLES REGISTER — tracked, never generated', () => {
       const sales = actor('SALES');
       const line = (kind: R.DeliverableKind) => R.deliverablesPanel(app.db, sales, c).lines.find((l) => l.kind === kind);
       assert.equal(line('CLIENT_REPORT')?.state, 'NOT_STARTED');
-      assert.match(line('CLIENT_REPORT')?.stored ?? '', /cannot be stored yet/);
+      // PHASE 158c (F38, F36): the client report is made here from the approved survey report; the defence pack still cannot be stored.
+      assert.match(line('CLIENT_REPORT')?.stored ?? '', /Made here from the survey report the surveyor approved/);
+      assert.match(line('DEFENCE_PACK')?.stored ?? '', /cannot be stored yet/);
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'CLIENT_REPORT', action: 'DRAFT' }).ok, false, 'a report stating a figure drafted before the sign-off');
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'ACCOUNTANT_COMPUTATION_PACK', action: 'DRAFT' }).ok, false);
       CF.signOffRow(app, org.business, org.assessment, c);
+      CF.releaseReportFor(app, c); // PHASE 158c (F38): the report is issued from the approved, signed-off version
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'CLIENT_REPORT', action: 'ISSUE', issued_on: '2026-09-01' }).ok, false, 'issued with no draft');
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'CLIENT_REPORT', action: 'DRAFT' }).ok, true);
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'CLIENT_REPORT', action: 'DRAFT' }).ok, false, 'two drafts at once');
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'CLIENT_REPORT', action: 'ISSUE', issued_on: '2027-01-01' }).ok, false, 'issued ahead of today');
-      assert.equal(R.recordDeliverable(d, sales, c, { kind: 'CLIENT_REPORT', action: 'ISSUE', issued_on: '2026-09-01', content_hash: 'not-a-hash' }).ok, false);
+      // PHASE 158c (F38): a typed fingerprint is no longer read for the client report - test/phase158c.test.ts holds that.
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'CLIENT_REPORT', action: 'ISSUE', issued_on: '2026-09-01' }).ok, true);
       assert.equal(line('CLIENT_REPORT')?.state, 'ISSUED');
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'CLIENT_REPORT', action: 'DRAFT' }).ok, true);
