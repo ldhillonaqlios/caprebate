@@ -1567,11 +1567,14 @@ body.public .f4-times-h{font-weight:700;margin:.4rem 0}
 body.public .f4-time-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
 body.public .f4-time{position:relative;display:flex;align-items:center;justify-content:center;min-height:3rem;border:1px solid #3e4945;border-radius:12px;background:#1b201e;color:#EDEAE2;font-weight:700;cursor:pointer}
 body.public .f4-none{margin-top:.8rem}
+body.public .f4-work{border-top:1px solid #3e4945;padding-top:.6rem;margin-top:.6rem}
+body.public .f4-work-n{font-weight:700;margin:.2rem 0}
+body.public .f4-events{margin:.3rem 0 0;padding-left:1.1rem;font-size:14px;color:#b9c2be}
 @supports selector(:has(*)){
  body.public .f4-follow,body.public .f4-if-cosmetic,body.public .f4-for-slot,body.public .f4-for-phone,body.public .f4-for-email,body.public .f4-for-video-note{display:none}
  body.public .f4-own:has(.f4-tax input[value="yes"]:checked) .f4-if-tax-yes{display:block}
  body.public .f4-own:has(.f4-works input[value="yes"]:checked) .f4-if-works-yes{display:block}
- body.public .f4-follow:has(.f4-kind input[value="cosmetic"]:checked) .f4-if-cosmetic{display:block}
+ body.public .f4-work:has(.f4-kind input[value="cosmetic"]:checked) .f4-if-cosmetic{display:block}
  body.public .f4-b:has(.f4-same input:checked) .f4-own{display:none}
  body.public .f4-channels:has(input[value="phone"]:checked) .f4-for-slot,body.public .f4-channels:has(input[value="video"]:checked) .f4-for-slot{display:block}
  body.public .f4-channels:has(input[value="phone"]:checked) .f4-for-phone{display:block}

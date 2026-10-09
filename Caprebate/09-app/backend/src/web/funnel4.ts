@@ -12,6 +12,8 @@
  *                             spend-on  (what was spent on each)
  *                             amounts   (roughly how much, and when, each)
  *   STAGE 2  CHECKS           tax, claims, works — each asked PER BUILDING, with "same as Building 1"
+ *                             works = "add an event": each piece of work since, with its own kind, cost and date
+ *                             (Phase 159c), priced on its own band and added to the building's figure
  *   STAGE 3  YOUR DETAILS     details   (per building: the business that owns it, its legal form, the address)
  *   STAGE 4  YOUR FIGURE      the climbing reveal, then how to reach you: telephone, video call or email
  *
@@ -50,6 +52,8 @@ export const F4_SCREENS = ['buildings', 'spend-on', 'amounts', 'tax', 'claims', 
 export type F4Screen = (typeof F4_SCREENS)[number];
 export const F4_ROUTE = /^\/assessment\/(buildings|spend-on|amounts|tax|claims|works|details)$/;
 export const MAX_BUILDINGS = 10;
+/** PHASE 159c: the most pieces of work after the first event on one building. */
+export const MAX_WORKS = 10;
 
 export const STAGES = Object.freeze([
   { name: 'Your buildings', screens: ['buildings', 'spend-on', 'amounts'] },
@@ -75,9 +79,10 @@ export const F4_STEP_LABELS: Readonly<Record<string, readonly string[]>> = Objec
 export const F4_TEXT: Readonly<Record<F4Screen, { heading: string; help: string }>> = Object.freeze({
   buildings: { heading: 'What type of business do you have?',
     help: 'Choose one for each building. If you have more than one building, add another.' },
-  // PHASE 158a (F3, the Friary House run): one answer per building, so say which one a bought-then-refurbished building takes.
+  // PHASE 159c: this is the FIRST event on each building. Work done since is added as its own event, a few screens on,
+  // and priced on its own (F3, one answer per building, is gone).
   'spend-on': { heading: 'What did you spend on each building?',
-    help: 'Choose the one that fits best for each building. If you bought it and later did work on it, choose “We bought it”. You can tell us about the work a few questions on.' },
+    help: 'Start with how you came to have each building. If you did work on it later, like a refit or an extension, you can add each piece of work a few questions on.' },
   // PHASE 159b (E11): an extension is its own answer below — new space, sized like a new build.
   amounts: { heading: 'Roughly how much, and when?', help: 'A rough figure is fine. If you do not know, tick the box.' },
   tax: { heading: 'Does the business that owns each building pay UK tax?',
@@ -86,7 +91,8 @@ export const F4_TEXT: Readonly<Record<F4Screen, { heading: string; help: string 
   // and for a purchase a seller who claimed is what makes your claim possible. The seller has its own question.
   claims: { heading: 'Have you claimed on these buildings before?',
     help: 'Most people do not know, and that is fine. Not sure does not stop a claim.' },
-  works: { heading: 'Any other work done to these buildings?', help: 'Work done after you bought, built or fitted out the building.' },
+  works: { heading: 'Any other work done to these buildings?',
+    help: 'Work done after you bought, built or fitted out the building. Add each piece of work on its own, with its cost and when. Each is sized on its own.' },
   details: { heading: 'Who owns each building, and where is it?',
     help: 'Each building can belong to a different business. We use these to prepare your figure and to find the right records.' },
 });
@@ -169,6 +175,34 @@ function firstMonth(d: string): string | null {
   return r === null ? null : r[0];
 }
 const thisMonth = (): string => new Date().toISOString().slice(0, 7);
+
+/* ------------------------------------------------------------------ PHASE 159c: events */
+
+/** One event on a building: what was done, what it cost and when. The first is the building's trigger, spend and date. */
+export type BuildingEvent = {
+  type: string | null; cost: number | null; cost_unknown: boolean; date: string | null; date_unknown: boolean;
+  vat: string | null; first?: boolean;
+};
+const EVENTS = FUNNEL as unknown as {
+  eventsOf: (p: B) => BuildingEvent[]; EVENT_LABEL: Record<string, string>; LATER_TYPES: string[];
+  eventFigure: (p: B, s: S, e: BuildingEvent) => EventFigure;
+};
+export type EventFigure = { type: string | null; cost: number | null; date: string | null; first: boolean;
+  ceiling: number | null; low: number | null; high: number | null; why: string | null; referral: boolean };
+export const EVENT_LABEL: Readonly<Record<string, string>> = EVENTS.EVENT_LABEL;
+/** The kinds of work offered after the first event, in the engine's own order and words. */
+export const WORK_TYPES: readonly { value: string; label: string }[] = Object.freeze(EVENTS.LATER_TYPES.map((v) => ({ value: v, label: EVENTS.EVENT_LABEL[v] ?? v })));
+/** Every event on a building, the first first (CB_FUNNEL.eventsOf). */
+export function eventsOf(b: B): BuildingEvent[] { return EVENTS.eventsOf(b); }
+/** The work after the first event. */
+export function laterEvents(b: B): BuildingEvent[] { return eventsOf(b).slice(1); }
+/** Keep b.events as the full list: the first event's mirror, then the work since. */
+function setEvents(b: B, later: BuildingEvent[]): void {
+  const first = eventsOf({ ...b, events: [] })[0]!;
+  b['events'] = [first, ...later.map((e) => ({ ...e, first: false }))];
+}
+/** An old draft's one works answer, read once into an event. */
+const OLD_WORKS_TYPE: Readonly<Record<string, string>> = Object.freeze({ full: 'refurb', extension: 'extension', cosmetic: 'cosmetic', other: 'other' });
 const MONTH_YEAR = /^(0?[1-9]|1[0-2])\/(19|20)\d{2}$|^(19|20)\d{2}$/;
 const YEAR = /^(19|20)\d{2}$/;
 
@@ -183,7 +217,8 @@ export function firstIncomplete(s: S): F4Screen | null {
     || (b['date'] === null || b['date'] === undefined) && b['date_unknown'] !== true)) return 'amounts';
   if (bs.some((b) => typeof b['is_uk_taxpayer'] !== 'string' || (b['is_uk_taxpayer'] === 'yes' && typeof b['current_year_position'] !== 'string'))) return 'tax';
   if (bs.some((b) => typeof b['own_prior_claim'] !== 'string' || (b['trigger'] === 'purchase' && typeof b['previous_owner_claimed'] !== 'string'))) return 'claims';
-  if (bs.some((b) => typeof b['works'] !== 'string')) return 'works';
+  if (bs.some((b) => typeof b['works'] !== 'string' || (b['works'] === 'yes' && (laterEvents(b).length === 0 || laterEvents(b).some((e) =>
+    e.type === null || (e.cost === null && !e.cost_unknown) || (e.date === null && !e.date_unknown)))))) return 'works';
   if (bs.some((b) => typeof b['business_name'] !== 'string' || typeof b['entity_type'] !== 'string'
     || typeof b['line1'] !== 'string' || typeof b['postcode'] !== 'string')) return 'details';
   return null;
@@ -198,6 +233,8 @@ export function allGated(s: S): boolean {
 /** The whole-assessment answers the engine and the old pages read, from the buildings'. */
 function mirror(s: S): void {
   const bs = buildings(s);
+  // PHASE 159c: each building's events start with its first event, kept in step with its trigger, spend and date.
+  for (const b of bs) setEvents(b, laterEvents(b));
   const tax = bs.map((b) => b['is_uk_taxpayer']);
   s['is_uk_taxpayer'] = tax.length > 0 && tax.every((t) => t === 'no') ? 'no' : tax.includes('yes') ? 'yes' : tax.length > 0 ? 'not sure' : null;
   s['current_year_position'] = (bs.find((b) => b['is_uk_taxpayer'] === 'yes')?.['current_year_position'] as string | undefined) ?? null;
@@ -290,33 +327,68 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
   }
 
   if (id === 'works') {
+    /* PHASE 159c — "ADD AN EVENT". Each piece of work since the first event is its own row: what kind, roughly how much,
+       and when (a month and year, or a year). "+ Add another piece of work" and "Remove" keep the screen, with what
+       was typed kept. A page from before this phase posts the one works answer (b0_works_type, _spend, _year); it is
+       read as the first row. The old works_* fields are no longer written: b.events holds the work. */
+    const addTo = f.get('add_work');
+    const removeAt = f.get('remove_work');
+    let stay = false;
     bs.forEach((b, i) => {
       if (same(i, 'works')) {
-        copy(i, ['works', 'works_type', 'works_spend', 'works_spend_unknown', 'works_year', 'works_year_unknown']);
+        b['works'] = bs[0]?.['works'] ?? null;
+        setEvents(b, (bs[0]?.['works'] === 'yes' ? laterEvents(bs[0]) : []).map((e) => ({ ...e })));
         b['same_works'] = true;
         return;
       }
       b['same_works'] = false;
       b['works'] = pick(f.get(`b${i}_works`), OPTIONS.works);
+      for (const k of ['works_type', 'works_spend', 'works_year']) b[k] = null;
+      b['works_spend_unknown'] = false; b['works_year_unknown'] = false;
       if (b['works'] !== 'yes') {
         // "No" asks nothing more, and anything typed under "yes" before is not kept.
-        for (const k of ['works_type', 'works_spend', 'works_year']) b[k] = null;
-        b['works_spend_unknown'] = false; b['works_year_unknown'] = false;
+        setEvents(b, []);
         if (b['works'] === null) errors.push(`Tell us whether any other work was done to ${label(b, i)}.`);
         return;
       }
-      b['works_type'] = pick(f.get(`b${i}_works_type`), OPTIONS.works_type);
-      b['works_spend_unknown'] = f.get(`b${i}_works_spend_unknown`) === 'on';
-      const wmoney = parseMoney(f.get(`b${i}_works_spend`));
-      b['works_spend'] = b['works_spend_unknown'] === true ? null : wmoney.value;
-      if (b['works_spend_unknown'] !== true && wmoney.why !== null) errors.push(`For the work on ${label(b, i)}: ${wmoney.why}`);
-      b['works_year_unknown'] = f.get(`b${i}_works_year_unknown`) === 'on';
-      const y = clip(f.get(`b${i}_works_year`), 4);
-      b['works_year'] = b['works_year_unknown'] === true ? null : y !== null && YEAR.test(y) ? y : null;
-      if (b['works_type'] === null) errors.push(`Tell us what kind of work was done to ${label(b, i)}.`);
-      if (b['works_spend'] === null && b['works_spend_unknown'] !== true && wmoney.why === null) errors.push(`Tell us roughly how much the work on ${label(b, i)} cost, or tick "I don't know".`);
-      if (b['works_year'] === null && b['works_year_unknown'] !== true) errors.push(`Tell us the year of the work on ${label(b, i)}, like 2023, or tick "I don't know".`);
+      const rows: BuildingEvent[] = [];
+      const oldForm = f.get(`b${i}_w0_type`) === null && f.get(`b${i}_w0_spend`) === null
+        && (f.get(`b${i}_works_type`) !== null || f.get(`b${i}_works_spend`) !== null || f.get(`b${i}_works_year`) !== null);
+      const count = oldForm ? 1 : Math.min(MAX_WORKS, Math.max(1, Number(f.get(`b${i}_works_count`) ?? '1') || 1));
+      for (let j = 0; j < count; j++) {
+        const g = (k: string): string | null => oldForm ? f.get(`b${i}_works_${k.replace(/^date/, 'year')}`) : f.get(`b${i}_w${j}_${k}`);
+        const rawType = g('type');
+        const type = oldForm ? (rawType !== null && Object.hasOwn(OLD_WORKS_TYPE, rawType) ? OLD_WORKS_TYPE[rawType]! : null)
+          : pick(rawType, WORK_TYPES);
+        const cost_unknown = g('spend_unknown') === 'on';
+        const money = parseMoney(g('spend'));
+        const date_unknown = g('date_unknown') === 'on';
+        const date = clip(g('date'), 10);
+        rows.push({ type, cost: cost_unknown ? null : money.value, cost_unknown, date: date_unknown ? null : date, date_unknown, vat: null });
+        (rows[j] as BuildingEvent & { why?: string | null }).why = cost_unknown ? null : money.why;
+      }
+      if (addTo === String(i) && rows.length < MAX_WORKS) { rows.push({ type: null, cost: null, cost_unknown: false, date: null, date_unknown: false, vat: null }); stay = true; }
+      if (removeAt !== null && removeAt.startsWith(`${i}:`)) {
+        const j = Number(removeAt.slice(String(i).length + 1));
+        if (Number.isInteger(j) && j >= 0 && j < rows.length && rows.length > 1) rows.splice(j, 1);
+        stay = true;
+      }
+      rows.forEach((e, j) => {
+        const which = rows.length === 1 ? `the work on ${label(b, i)}` : `work ${j + 1} on ${label(b, i)}`;
+        const why = (e as BuildingEvent & { why?: string | null }).why ?? null;
+        delete (e as BuildingEvent & { why?: string | null }).why;
+        if (e.type === null) errors.push(`Tell us what kind of work was done to ${label(b, i)}${rows.length === 1 ? '' : ` (work ${j + 1})`}.`);
+        if (why !== null) errors.push(`For ${which}: ${why}`);
+        else if (e.cost === null && !e.cost_unknown) errors.push(`Tell us roughly how much ${which} cost, or tick "I don't know".`);
+        if (!e.date_unknown) {
+          if (e.date === null) errors.push(`Tell us roughly when ${which} was done, like 06/2023 or 2023, or tick "I don't know".`);
+          else if (!MONTH_YEAR.test(e.date)) { e.date = null; errors.push(`For ${which}, write the date as month and year, like 06/2023, or just the year.`); }
+          else if ((firstMonth(e.date) ?? '') > thisMonth()) { e.date = null; errors.push(`For ${which}, the date is in the future. Give the date it was done, or tick "I don't know".`); }
+        }
+      });
+      setEvents(b, rows);
     });
+    if (stay) { mirror(s); return { errors: [], stay: true }; }
   }
 
   if (id === 'details') {
@@ -391,6 +463,8 @@ export type BuildingFigure = {
   readonly high: number | null; readonly low: number | null;
   /** Why this building is not counted, in words; null when it is. */
   readonly left_out: string | null;
+  /** PHASE 159c: each event on the building with its own figure, or why it has none. */
+  readonly events: readonly EventFigure[];
 };
 
 export function figureF4(s: S): { high: number; low: number; parts: BuildingFigure[]; assumptions: string[] } {
@@ -398,16 +472,18 @@ export function figureF4(s: S): { high: number; low: number; parts: BuildingFigu
   const parts: BuildingFigure[] = bs.map((b, i) => {
     const base = { index: i, label: label(b, i), address: typeof b['address'] === 'string' ? b['address'] : null };
     if (b['is_uk_taxpayer'] === 'no') {
-      return { ...base, high: null, low: null, left_out: 'Not included: the business that owns it does not pay UK income tax or corporation tax, so there is no bill to reduce.' };
+      return { ...base, high: null, low: null, events: [], left_out: 'Not included: the business that owns it does not pay UK income tax or corporation tax, so there is no bill to reduce.' };
     }
     const one = FUNNEL.figure({ ...(s as object), properties: [b] } as unknown as FunnelState) as unknown as {
-      total?: number; breakdown?: { low?: number; high?: number; ceiling?: number }[]; unpricedProperties?: { why?: string; referral?: boolean }[] };
+      total?: number; breakdown?: { low?: number; high?: number; ceiling?: number; events?: EventFigure[] }[];
+      unpricedProperties?: { why?: string; referral?: boolean; events?: EventFigure[] }[] };
     const row = one.breakdown?.[0];
     const high = typeof row?.ceiling === 'number' ? row.ceiling : typeof row?.high === 'number' ? row.high : null;
     // PHASE 159b: where the engine will not size a building (an earlier claim, the seller, the date, its size), its words.
     const cut = one.unpricedProperties?.[0];
     const why = cut?.referral === true && typeof cut.why === 'string' ? `No figure for this one yet: ${cut.why}.` : null;
-    return { ...base, high, low: typeof row?.low === 'number' ? row.low : null,
+    const events = row?.events ?? cut?.events ?? [];
+    return { ...base, high, low: typeof row?.low === 'number' ? row.low : null, events,
       left_out: high === null ? (why ?? 'We need a rough figure for what was spent on this one before we can size it.') : null };
   });
   const counted = parts.filter((p) => p.high !== null);
@@ -496,22 +572,33 @@ export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; post
         ${radios(`b${i}_seller`, OPTIONS.previous_owner_claimed, b['previous_owner_claimed'])}` : raw('')}`))}`;
   }
   if (id === 'works') {
-    return h`${bs.map((b, i) => card(b, i, h`${sameBox(i, 'works', b['same_works'], 'Same answer as Building 1')}
+    /* PHASE 159c: "add an event" — one row per piece of work, each with its own kind, cost and date. */
+    return h`${bs.map((b, i) => {
+      const later = laterEvents(b);
+      const rows = later.length === 0 ? [{ type: null, cost: null, cost_unknown: false, date: null, date_unknown: false, vat: null } as BuildingEvent] : later;
+      return card(b, i, h`${sameBox(i, 'works', b['same_works'], 'Same answer as Building 1')}
       <div class="f4-own">
         <p class="fl">Has any other work been done to this building since?</p>
         ${radios(`b${i}_works`, OPTIONS.works, b['works'], 'f4-works')}
         <div class="f4-follow f4-if-works-yes">
-          <p class="fl">What kind?</p>
-          ${radios(`b${i}_works_type`, OPTIONS.works_type, b['works_type'], 'f4-kind')}
-          <p class="help f4-if-cosmetic">Worth knowing: cosmetic work usually counts as a repair. A repair is not a capital improvement. That is often better for you — it comes off your tax bill straight away — but it is a different claim from this one.</p>
-          <label class="fl" for="b${i}-wspend">Roughly how much?</label>
-          <input class="fi" id="b${i}-wspend" name="b${i}_works_spend" inputmode="numeric" placeholder="£" value="${b['works_spend'] === null || b['works_spend'] === undefined ? '' : String(b['works_spend'])}">
-          <label class="ck"><input type="checkbox" name="b${i}_works_spend_unknown"${raw(b['works_spend_unknown'] === true ? ' checked' : '')}> I don't know</label>
-          <label class="fl" for="b${i}-wyear">Roughly when? (the year)</label>
-          <input class="fi" id="b${i}-wyear" name="b${i}_works_year" inputmode="numeric" placeholder="YYYY" value="${typeof b['works_year'] === 'string' ? b['works_year'] : ''}">
-          <label class="ck"><input type="checkbox" name="b${i}_works_year_unknown"${raw(b['works_year_unknown'] === true ? ' checked' : '')}> I don't know</label>
+          <input type="hidden" name="b${i}_works_count" value="${String(rows.length)}">
+          ${rows.map((e, j) => h`<div class="f4-work" id="b${i}-w${j}">
+            ${rows.length === 1 ? raw('') : h`<p class="f4-work-n">Work ${String(j + 1)}</p>`}
+            <p class="fl">What kind of work?</p>
+            ${radios(`b${i}_w${j}_type`, WORK_TYPES, e.type, 'f4-kind')}
+            <p class="help f4-if-cosmetic">Worth knowing: painting and repairs are not improvements. They come off your tax bill straight away, which is often better for you. But that is a different claim from this one.</p>
+            <label class="fl" for="b${i}-w${j}-spend">Roughly how much?</label>
+            <input class="fi" id="b${i}-w${j}-spend" name="b${i}_w${j}_spend" inputmode="numeric" placeholder="£" value="${e.cost === null ? '' : String(e.cost)}">
+            <label class="ck"><input type="checkbox" name="b${i}_w${j}_spend_unknown"${raw(e.cost_unknown ? ' checked' : '')}> I don't know</label>
+            <label class="fl" for="b${i}-w${j}-date">Roughly when?</label>
+            <input class="fi" id="b${i}-w${j}-date" name="b${i}_w${j}_date" placeholder="MM/YYYY" value="${e.date ?? ''}">
+            <label class="ck"><input type="checkbox" name="b${i}_w${j}_date_unknown"${raw(e.date_unknown ? ' checked' : '')}> I don't know</label>
+            ${rows.length === 1 ? raw('') : h`<p><button type="submit" name="remove_work" value="${String(i)}:${String(j)}" class="btn-quiet" formnovalidate>Remove work ${String(j + 1)}</button></p>`}
+          </div>`)}
+          ${rows.length < MAX_WORKS ? h`<p><button type="submit" name="add_work" value="${String(i)}" class="btn-quiet f4-add" formnovalidate>+ Add another piece of work</button></p>` : raw('')}
         </div>
-      </div>`))}`;
+      </div>`);
+    })}`;
   }
   // details
   const entityOpts = Object.keys(ENTITY).map((k) => ({ value: k, label: ENTITY[k] ?? k }));
@@ -609,7 +696,8 @@ export function figureBody(s: S, slots: { available: true; slots: readonly { sta
       <p class="help">Each building below says why. An adviser will go through it with you.</p>`}
     </div>
     <div class="f4-parts">${fig.parts.map((p) => h`<div class="f4-part"><p class="f4-part-name">${p.label}${p.address === null ? '' : ` — ${p.address}`}</p>
-      ${p.high === null ? h`<p class="help">${p.left_out ?? ''}</p>` : h`<p class="f4-part-figure">up to £${Math.round(p.high).toLocaleString('en-GB')}</p>`}</div>`)}</div>
+      ${p.high === null ? h`<p class="help">${p.left_out ?? ''}</p>` : h`<p class="f4-part-figure">up to £${Math.round(p.high).toLocaleString('en-GB')}</p>`}
+      ${p.events.length > 1 ? eventLines(p.events) : raw('')}</div>`)}</div>
     <details class="f4-assume"><summary>What this figure assumes</summary><ul>${fig.assumptions.map((a) => h`<li>${a}</li>`)}</ul></details>
 
     <h2 id="reach">How should we reach you?</h2>
@@ -638,6 +726,18 @@ export function figureBody(s: S, slots: { available: true; slots: readonly { sta
       <label class="ck"><input type="checkbox" name="marketing_optin"${raw(c['marketing_optin'] === true ? ' checked' : '')}> Separately, you may send me occasional updates. (Optional, and never a condition of sending.)</label></div>
       <button class="cta" type="submit">Send</button>
     </form>`;
+}
+
+/** PHASE 159c: each event on a building, with its own "up to" or the reason it has none. */
+export function eventLine(e: EventFigure): string {
+  const what = EVENT_LABEL[e.type ?? ''] ?? 'Other work';
+  const when = e.date === null ? '' : ` (${e.date})`;
+  const cost = e.cost === null ? '' : `, £${Math.round(e.cost).toLocaleString('en-GB')}`;
+  return e.high !== null ? `${what}${cost}${when}: up to £${Math.round(e.high).toLocaleString('en-GB')}` : `${what}${cost}${when}: ${e.type === 'cosmetic' ? 'not counted in this figure' : 'not counted yet'}. ${upper(e.why ?? '')}.`;
+}
+const upper = (t: string): string => t === '' ? t : t[0]!.toUpperCase() + t.slice(1);
+function eventLines(events: readonly EventFigure[]): Safe {
+  return h`<ul class="f4-events">${events.map((e) => h`<li>${eventLine(e)}</li>`)}</ul>`;
 }
 
 /** Read "how should we reach you". Undefined when it is complete; otherwise what is missing, in words. */
@@ -727,7 +827,9 @@ export function submitEnquiry(db: Db, d: Draft, now: () => string, id: () => str
       continue;
     }
     // A building in this business whose owner pays no UK tax is kept as a property, and counted as nothing.
-    const counted = { ...(gs as unknown as S), properties: gb.map((b) => b['is_uk_taxpayer'] === 'no' ? { ...b, spend: null, spend_unknown: true } : b) } as unknown as FunnelState;
+    // PHASE 159c: and its work since is counted as nothing too — each event's cost, not only the first.
+    const counted = { ...(gs as unknown as S), properties: gb.map((b) => b['is_uk_taxpayer'] === 'no'
+      ? { ...b, spend: null, spend_unknown: true, events: eventsOf(b).map((e) => ({ ...e, cost: null, cost_unknown: true })) } : b) } as unknown as FunnelState;
     const out = submit(db, { token: d.token, state: counted, screen: d.screen }, now, id);
     parts.push({ name: g.name, business_id: out.business_id, assessment_id: out.assessment_id, lead_id: out.lead_id, low_pence: out.low_pence, high_pence: out.high_pence });
   }

@@ -33,6 +33,7 @@
  * nothing.
  */
 
+import { writeAssessmentEvents } from './property-events.ts';
 import { normalisePostcode } from '../connectors/postcode-check.ts';
 import { randomUUID } from 'node:crypto';
 import type { Db } from '../db.ts';
@@ -292,7 +293,12 @@ export function submit(
   // The ceiling the client was shown, in integer pence. `total` is a ceiling,
   // so it is the HIGH end; the low end comes from the same breakdown.
   const high = typeof figure.total === 'number' ? Math.round(figure.total * 100) : null;
-  const low = lowOf(figure);
+  /* PHASE 159c (line 8, E3): NO LOW END IS STORED. Since Phase 159a the client is shown "up to £X" alone, and the band's
+     low end was above the engine's own low on a purchase (where an unknown seller can leave nothing). Storing it made a
+     low end nobody was shown, and the reconciliation's "range shown" read it. The client saw the ceiling only, so that
+     is what is kept; the reconciliation says so. */
+  const low: number | null = null;
+  void lowOf;
 
   let lead_id = '';
   db.tx(() => {
@@ -311,8 +317,10 @@ export function submit(
     const start = (s as unknown as { start?: StartAnswers }).start;
     const startPostcode = start?.postcode !== undefined && start.postcode !== null ? normalisePostcode(start.postcode) : null;
     let firstProperty: string | null = null;
+    const written: { property_id: string; p: Record<string, unknown> }[] = [];
     for (const p of (s.properties ?? []) as { address?: string | null; line1?: unknown; town?: unknown; postcode?: unknown; uprn?: unknown }[]) {
       const property_id = id();
+      written.push({ property_id, p: p as Record<string, unknown> });
       const first = firstProperty === null;
       firstProperty ??= property_id;
       /* PHASE 156f: the four-stage funnel asks each building's own postcode, street and town (and, picked from the
@@ -331,6 +339,10 @@ export function submit(
         'VALUES (?, ?, ?, ?, ?, ?, ?)',
       [assessment_id, business_id, sector, at, low, high, at],
     );
+    /* PHASE 159c: WHAT HAPPENED TO EACH BUILDING, IN ORDER — its first event, then each piece of work since, each with its
+       own date and cost (CB_FUNNEL.eventsOf), kept on the property (migration 105) for the lead, the claim and the pack. */
+    const eventsOf = (FUNNEL as unknown as { eventsOf: (p: Record<string, unknown>) => { type: unknown; cost: unknown; cost_unknown: unknown; date: unknown; date_unknown: unknown }[] }).eventsOf;
+    for (const w of written) writeAssessmentEvents(db, id, { property_id: w.property_id, business_id, assessment_id, at }, eventsOf(w.p));
     /* THE LEAD — CRM 2 of 10. A submission is a lead, NEW, from the website,
        carrying this organisation and this assessment. CRM 1 of 10 opened a claim
        here, and that put every prospect into the procedure's second stage with
@@ -449,10 +461,16 @@ export function answerRows(s: FunnelState): AnswerRow[] {
     q(`Q2-${n}-spend`, `Property ${n}: roughly what was spent?`, pr.spend, pr.spend_unknown === true);
     q(`Q2-${n}-date`, `Property ${n}: roughly when?`, pr.date, pr.date_unknown === true);
     q(`Q3-${n}-works`, `Property ${n}: any other work done?`, pr.works);
+    /* PHASE 159c: each piece of work since is its own event, so each is its own three rows (Q3-n-wJ-...). An assessment
+       from before keeps its one Q3-n-works-... set; the lead's spend total reads both. */
     if (pr.works === 'yes') {
-      q(`Q3-${n}-works-type`, `Property ${n}: what kind of work?`, pr.works_type);
-      q(`Q3-${n}-works-spend`, `Property ${n}: roughly how much?`, pr.works_spend, pr.works_spend_unknown === true);
-      q(`Q3-${n}-works-year`, `Property ${n}: roughly when?`, pr.works_year, pr.works_year_unknown === true);
+      (FUNNEL as unknown as { eventsOf: (p: Record<string, unknown>) => { type: string | null; cost: number | null; cost_unknown: boolean; date: string | null; date_unknown: boolean }[] })
+        .eventsOf(pr).slice(1).forEach((e, j) => {
+          const w = `Work ${j + 1}`;
+          q(`Q3-${n}-w${j + 1}-type`, `Property ${n}, ${w}: what kind of work?`, e.type);
+          q(`Q3-${n}-w${j + 1}-spend`, `Property ${n}, ${w}: roughly how much?`, e.cost, e.cost_unknown);
+          q(`Q3-${n}-w${j + 1}-date`, `Property ${n}, ${w}: roughly when?`, e.date, e.date_unknown);
+        });
     }
   });
   return rows;

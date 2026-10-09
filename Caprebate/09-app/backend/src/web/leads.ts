@@ -31,6 +31,7 @@
  * 011, disposition row E22). Still one table a person lives in; never a column here.
  */
 
+import { dateWords, KIND_WORDS, type EventKind } from './property-events.ts';
 import type { Db } from '../db.ts';
 import { authorise, can, type Actor, type Obj } from '../authz.ts';
 import { NotFoundAsRefusal, answerLabel, contactFor, contactForLead } from './backoffice.ts';
@@ -255,6 +256,9 @@ export type LeadView = {
   readonly person?: { readonly name: string; readonly role: string | null; readonly reach: string | null };
   /** 7.5 — the client's own spend answers, with the question, never parsed into a value. */
   readonly initial_property_value: readonly { readonly question: string; readonly answer: string }[];
+  /** PHASE 159c: each building's events from the assessment — the purchase, then each piece of work — in order. Read under
+   *  the same rule as the answers. */
+  readonly events: readonly { readonly property: string; readonly what: string; readonly when: string; readonly cost: string }[];
   /** 7.6 — the range they were shown and the sealed estimate, for `estimate.read` alone. */
   readonly opportunity_value?: {
     readonly shown_range: string;
@@ -286,7 +290,7 @@ export function leadView(db: Db, actor: Actor, id: string): LeadView {
     : db.all<{ question_id: string; question_text: string; state: string; value: string | null }>(
       'SELECT question_id, question_text, state, value FROM assessment_answers WHERE assessment_id = ? ORDER BY ord ASC',
       [r.assessment_id]);
-  const spend = answers.filter((a) => /^Q2-\d+-spend$/.test(a.question_id) || /^Q3-\d+-works-spend$/.test(a.question_id))
+  const spend = answers.filter((a) => /^Q2-\d+-spend$/.test(a.question_id) || /^Q3-\d+-works-spend$/.test(a.question_id) || /^Q3-\d+-w\d+-spend$/.test(a.question_id))   // PHASE 159c: each piece of work
     .map((a) => ({ question: a.question_text, answer: answerLabel(a.state, a.value) }));
 
   const range = shownRangeFor(db, actor, r);
@@ -352,6 +356,10 @@ export function leadView(db: Db, actor: Actor, id: string): LeadView {
     contact_channel: r.business_id !== null || contact.channel !== null ? contact.label : null,
     ...(person === undefined ? {} : { person }),
     initial_property_value: spend,
+    events: answers.length === 0 || r.assessment_id === null ? [] : db.all<{ label: string; kind: EventKind; event_date: string | null; cost_pence: number | null }>(
+      'SELECT p.label, e.kind, e.event_date, e.cost_pence FROM property_events e JOIN properties p ON p.id = e.property_id ' +
+        'WHERE e.assessment_id = ? ORDER BY p.created_at ASC, p.id ASC, e.ord ASC', [r.assessment_id])
+      .map((e) => ({ property: e.label, what: KIND_WORDS[e.kind], when: dateWords(e.event_date), cost: e.cost_pence === null ? 'cost not known' : `£${(e.cost_pence / 100).toLocaleString('en-GB')}` })),
     ...(range === undefined ? {} : { opportunity_value: { shown_range: range, estimate } }),
     enquiry: { ...enquiryGate(db, { lead_id: r.id }), evidence: enquiryEvidence(db, actor, r.business_id, r.prospect_sector) },
     may_write: mayWrite,

@@ -296,7 +296,7 @@ const Q = [
 
  {id:"H8", group:"What happened", type:"multi",
   ask:"What prompted this assessment? Tick all that apply.",
-  help:"New builds and theatre/ward refurbishments are common and large here. Different events are claimed in different ways. If you tick more than one, this demo uses the highest-yielding band (the full engine apportions each).",
+  help:"New builds and theatre/ward refurbishments are common and large here. Different events are claimed in different ways. If you tick more than one, give the purchase price if you bought it: one amount is read as the purchase alone, or on the lower band. Work done since is priced on its own cost.",
   opts:[["purchase","Bought an existing hospital / clinic"],["new_build","Built a new facility"],
         ["refurb","Refurbished a theatre / ward / clinical area"],["fitout","Fitted out leased premises"],
         ["equipment","Major equipment installation"]],
@@ -1064,10 +1064,13 @@ function __runEngine(s){
   // Stage 2 — band (dominant trigger by midpoint)
   const norm=t=> t==="purchase"?"purchase": t==="new_build"?"new_build":"refurb_fitout";
   const triggers=(s.trigger.length?s.trigger:["purchase"]).map(norm);   // PHASE 159b (E16): no trigger is read as a purchase in every sector (types.ts), never as the richest band
-  let dom=triggers[0];
-  triggers.forEach(t=>{ const m=mid(...YIELD_BAND.private_hospital[t]); if(m>mid(...YIELD_BAND.private_hospital[dom])) dom=t; });
+  // PHASE 159c (E4): ONE AMOUNT AND SEVERAL EVENTS TICKED. The amount cannot be split between them, so it is read the
+  // cautious way: as the purchase price on the purchase band (with the s.187A reading) where a purchase is ticked, else
+  // on the lowest band ticked. Never the richest band on the whole amount. Each event priced on its own cost is
+  // CB_INPUTS.run's per-event reading (s.events).
+  let dom=CB_INPUTS.cautiousTrigger(triggers, YIELD_BAND.private_hospital, mid);
   let [qLo,qHi]=YIELD_BAND.private_hospital[dom];
-  if(s.trigger.length>1) A.push("more than one event ticked \u2014 the highest-yielding band ("+dom.replace("_","/")+") applied to the whole figure (the full engine apportions each)");
+  if(s.trigger.length>1) A.push(CB_INPUTS.severalEventsWords(dom));
 
   // Stage 3 — conditioning
   if(dom==="purchase"){

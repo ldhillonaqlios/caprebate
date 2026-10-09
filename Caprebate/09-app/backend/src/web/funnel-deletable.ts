@@ -13,6 +13,8 @@ export const FUNNEL_DELETABLE_TABLES: readonly string[] = Object.freeze([
   // the organisation, only when every lead of it goes
   'businesses', 'properties', 'assessments', 'assessment_answers', 'estimates', 'assessment_drafts', 'research_sources',
   'research_runs', 'lookups_declined', 'thread_reads', 'channel_reads',
+  // PHASE 159c: each building's events, as the assessment gave them (migration 105) — the funnel's own answers, kept on the property
+  'property_events',
   // the portal sign-up the funnel offered at its close, never taken up (one taken up made a login)
   'client_signups',
 ]);

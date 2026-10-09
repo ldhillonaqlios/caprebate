@@ -52,7 +52,7 @@
  */
 
 import type { Db } from '../db.ts';
-import { newSession, type SectorId, type Session } from './engine.ts';
+import { newSession, FUNNEL, type SectorId, type Session } from './engine.ts';
 
 /* ------------------------------------------------------------------ *
  * READING THE STATE
@@ -339,6 +339,22 @@ export function sessionFromFunnel(
       const seller = known(only.previous_owner_claimed);
       if (seller === 'yes' || seller === 'no') put('prior_owner_claimed', seller);
     }
+
+    /* PHASE 159c (E1): THE WORK DONE SINCE, AS EVENTS — NOT ADDED TO THE AMOUNT. Every event on the building, the first
+     * first, each with its own type and its own cost (CB_FUNNEL.eventsOf), goes on the session as `events`. The
+     * engine prices each costed event on its own band and adds them (CB_INPUTS.run), so the purchase keeps the
+     * purchase band and the s.187A reading on the price, and the works are priced on the works cost only. That is
+     * why the double counting the old note below feared cannot happen: `base_amount` stays the first event's money,
+     * and the works never join it. An event with no cost carries no amount (N4). */
+    const events = (FUNNEL as unknown as { eventsOf: (p: FunnelStateRow) => { type: unknown; cost: unknown; cost_unknown: unknown; date: unknown }[] }).eventsOf(only);
+    if (events.length > 1) {
+      (session as Record<string, unknown>).events = events.map((e) => ({
+        type: typeof e.type === 'string' ? e.type : null,
+        cost: e.cost_unknown === true ? null : knownAmount(e.cost),
+        date: typeof e.date === 'string' ? e.date : null,
+      }));
+      set.push('events');
+    }
   }
 
   return { session, set, from_funnel: true };
@@ -379,7 +395,9 @@ export function sessionFromFunnel(
  *   client, and the funnel never asks for the accounting period end anyway, so
  *   the window cannot be derived from what the six screens hold.
  *
- * Q3 works -> any spend fact   IT WOULD DOUBLE-COUNT, AND CB_FRONTDOOR HAS A
+ * Q3 works -> `base_amount`   (PHASE 159c: the works ARE now mapped, as `events`
+ *   above, each event on its own cost; what follows is why they are never added
+ *   to the one amount.) IT WOULD DOUBLE-COUNT, AND CB_FRONTDOOR HAS A
  *   FUNCTION WHOSE ONLY JOB IS TO PREVENT THAT. `worksHeadingFor` re-words the
  *   works question for a refurbishment or a fit-out because "asking 'any work
  *   done?' against that property invites the client to enter the same money a
@@ -388,7 +406,6 @@ export function sessionFromFunnel(
  *   it would be that inflation, and putting it anywhere else would be
  *   inventing a fact.
  *
- * `previous_owner_claimed` "no", `works_type`, `works_year`,
  * `lease_start_year`, `address`, `contact`, `account`   NO ENGINE FACT READS
  *   THEM, or the one that might is covered above. An address is not a session
  *   fact; the contact block and the account block are CB_BOOKING's and are

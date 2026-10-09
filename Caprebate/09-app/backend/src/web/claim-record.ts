@@ -465,7 +465,10 @@ function openReconciliation(
     a_estimate_hash: est?.estimate_hash ?? null, a_engine_version: readEngineVersion(),
     b_range_low_pence: range?.shown_low_pence ?? null, b_range_high_pence: range?.shown_high_pence ?? null,
     b_date_captured: letter.signed_at,
-    b_basis: 'Desk only. This is the range the client saw before signing the engagement letter. The letter gives no figure, so there is no quoted figure, and we do not make up a midpoint',
+    // PHASE 159c (line 8): an assessment from 9 October 2026 stores no low end, because the client saw only "up to £X".
+    b_basis: range?.shown_low_pence === null || range?.shown_low_pence === undefined
+      ? 'Desk only. The client was shown "up to" this figure before signing the engagement letter, and no low end, so none is kept. The letter gives no figure, so there is no quoted figure, and we do not make up a midpoint'
+      : 'Desk only. This is the range the client saw before signing the engagement letter. The letter gives no figure, so there is no quoted figure, and we do not make up a midpoint',
     surveyor_value_pence: k.a_qualifying_plant_pence, surveyor_commitment_id: k.id, surveyor_figures_hash: k.figures_hash,
     c_value_pence: s.figure_pence, c_date_captured: s.signed_on, c_cta_reviewer: s.adviser, c_signoff_id: s.id, opened_at: at,
   };

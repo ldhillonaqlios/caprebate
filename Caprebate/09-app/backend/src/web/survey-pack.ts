@@ -29,9 +29,10 @@ import { authorise, can, type Actor } from '../authz.ts';
 import { packJob, type PackJob } from './surveyor.ts';
 import { linesForSector, type LineTemplate } from './pack-lines.ts';
 import {
-  packSums, parseMoney, parsePercent, parseQuantity, parseRate,
-  type PackInputs, type PackLine, type PackSums, type Pool, type Source, type Valued,
+  packSums, parseMoney, parsePercent, parseQuantity, parseRate, worksSums, WORKS_FIELDS,
+  type PackInputs, type PackLine, type PackSums, type Pool, type Source, type Valued, type WorksField, type WorksInputs, type WorksSums,
 } from './pack-sums.ts';
+import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from './property-events.ts';
 import { applyGrants, type GrantReading, type GrantSwitches } from './pack-grants.ts';
 import { elementName, packGrantsFor } from './claim-facts.ts';
 import { shippedGrantSwitches } from './grant-checks.ts';
@@ -68,7 +69,16 @@ export type PackGrants = {
 export const GRANT_AMOUNTS_TO_SURVEYOR = false;
 
 export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed' | 'vat_position' | 'vat' | 'shared_area'
-  | CostField;
+  | CostField | WorksField;
+
+/** PHASE 159c: one piece of work on the building, priced on its own cost (chapter 9; src/web/pack-sums.ts worksSums). */
+export type WorksView = {
+  readonly event: PropertyEvent;
+  /** "A refurbishment or refit, June 2025". */
+  readonly label: string;
+  readonly inputs: WorksInputs;
+  readonly sums: WorksSums;
+};
 
 /**
  * PHASE 157a, 6 October 2026 — THE COST MODEL'S FIVE VALUES (migration 095; src/web/pack-cost-model.ts). Each the
@@ -127,6 +137,14 @@ export type PackView = {
   readonly shared_area: Valued;
   /** PHASE 157a: the cost model's five values (chapter 11's valuation date, chapter 14's insurance check). */
   readonly cost: CostValues;
+  /** PHASE 159c: what happened to the building, in order (migration 105). Empty for a building with none recorded. */
+  readonly events: readonly PropertyEvent[];
+  /** PHASE 159c: false where the building was not bought (no purchase recorded among its events): no price to share out. */
+  readonly purchase_applies: boolean;
+  /** PHASE 159c: the purchase's own sums (section 562, after grants). `sums` is these plus every piece of work. */
+  readonly purchase_sums: PackSums;
+  /** PHASE 159c: each piece of work since, on its own cost. */
+  readonly works: readonly WorksView[];
   /** The pack's counter as this view was read. A change must carry it back. */
   readonly seq: number;
   readonly may_edit: boolean;
@@ -224,7 +242,38 @@ const FIELD_WORDS: Readonly<Record<PackField, string>> = Object.freeze({
   vat_position: 'VAT position', vat: 'VAT that could not be reclaimed', shared_area: 'shared areas from the floor plans',
   valuation_date: 'valuation date', insurance: 'insurance rebuild figure', insurance_date: 'date of the insurance figure',
   insurance_includes: 'what the insurance figure includes', rebuild_includes: 'what our rebuild cost includes',
+  works_total: 'final account', works_main: 'plant and machinery', works_special: 'integral features',
+  works_bwic: 'builder’s work in connection', works_demolition: 'demolition of old plant', works_other: 'work that does not qualify',
+  works_repairs: 'repair part', works_prelims: 'preliminaries', works_fees: 'professional fees',
 });
+
+/**
+ * PHASE 159c: THE PACK'S TOTAL IS THE PURCHASE AND EVERY PIECE OF WORK. Where the building was bought (or has no events
+ * recorded: every pack from before), the purchase's section 562 sums stand as they were. Each piece of work adds its own
+ * cost-led figure. There is a total only when every part has one (N4). A grant on a building with work since is not
+ * yet taken off any part but the purchase, so it stops the total until Phase 159i says which spend it paid for: a grant
+ * left on the wrong spend is an over-claim.
+ */
+function combined(purchase: PackSums, applies: boolean, works: readonly WorksView[], grants: number): PackSums {
+  if (works.length === 0) return purchase;
+  const needed = [...(applies ? purchase.needed : []), ...works.flatMap((w) => w.sums.needed)];
+  const problems = [...(applies ? purchase.problems : []), ...works.flatMap((w) => w.sums.problems)];
+  if (grants > 0) problems.push({ code: 'GRANTS_ON_EVENTS', words: 'A grant is on this claim, and the building has work done since. Which spend the grant paid for is not recorded yet, so it is not taken off. There is no total until it is (Phase 159i).' });
+  const complete = (applies ? purchase.complete : true) && works.every((w) => w.sums.complete) && problems.length === 0;
+  const add = (pick: (x: { qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null }) => number | null): number | null => {
+    if (!complete) return null;
+    return [...(applies ? [purchase] : []), ...works.map((w) => w.sums)].reduce((a, x) => a + (pick(x) ?? 0), 0);
+  };
+  return {
+    ...purchase,
+    building_price_pence: applies ? purchase.building_price_pence : null,
+    share_bp: applies ? purchase.share_bp : null,
+    qualifying_pence: add((x) => x.qualifying_pence),
+    main_pool_pence: add((x) => x.main_pool_pence),
+    special_pool_pence: add((x) => x.special_pool_pence),
+    needed, problems, complete,
+  };
+}
 
 /** PHASE 153e (Word question 133): the share of the floor area used when no floor plans give the shared areas. */
 export const SHARED_FALLBACK_BP = 2500;
@@ -300,6 +349,8 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   }
 
   const labelOf = new Map(lines.map((l) => [l.id, l.label] as const));
+  // PHASE 159c: a works value's line is the event; it is named by its kind and date.
+  for (const e of eventsOfProperty(d.db, property?.id ?? null)) labelOf.set(e.id, `${KIND_WORDS[e.kind]}, ${dateWords(e.event_date)}`);
   const changes: Change[] = [...entries].reverse().map((e) => ({
     seq: e.seq, at: e.at, by_name: e.by_name, reason: e.reason, line_key: e.line_key,
     line_label: e.line_key === null ? null : labelOf.get(e.line_key) ?? null, field: e.field,
@@ -333,9 +384,23 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     rebuild_includes: resolve(null, 'rebuild_includes', none),
   };
 
+  // PHASE 159c: each piece of work on the building, on its own cost. The final account is drafted from what the client
+  // said it cost, as evidence of their word; every part of it is the surveyor's, from the final account itself.
+  const events = eventsOfProperty(d.db, property?.id ?? null);
+  const applies = purchaseApplies(events);
+  const works: WorksView[] = worksEvents(events).map((e) => {
+    const label = `${KIND_WORDS[e.kind]}, ${dateWords(e.event_date)}`;
+    const draft = (f: WorksField): Valued => f === 'works_total' && e.cost_pence !== null
+      ? { value: e.cost_pence, source: { kind: 'EVIDENCE', text: e.source === 'ASSESSMENT' ? 'What the client said it cost, at the assessment' : 'What the claim records it cost' } }
+      : none;
+    const winputs = Object.fromEntries(WORKS_FIELDS.map((f) => [f, resolve(e.id, f, draft(f))])) as unknown as WorksInputs;
+    return { event: e, label, inputs: winputs, sums: worksSums(e.id, label, winputs) };
+  });
+
   return {
     job, pack_id: pack?.id ?? null, property, property_choices: choices,
-    inputs, lines, sums: reading.sums, grants, vat, shared_area, cost,
+    inputs, lines, sums: combined(reading.sums, applies, works, onClaim.length), grants, vat, shared_area, cost,
+    events, purchase_applies: applies, purchase_sums: reading.sums, works,
     seq: entries.length === 0 ? 0 : (entries[entries.length - 1] as EntryRow).seq,
     may_edit: can(actor, 'surveyor_job.commit', obj),
     changes,
@@ -493,6 +558,36 @@ function saveCostValue(d: PackDeps, actor: Actor, job_id: string, field: CostFie
     if (value !== null && now.source !== null && now.value === value) return { ok: false, field: 'value', why: 'That is already the value. Nothing changed.' };
     insertEntry(d, actor, pack_id, null, field, value, null, f.reason);
     audit(d, actor, view, 'value', null, [field]);
+    return { ok: true };
+  });
+}
+
+/**
+ * PHASE 159c: A PIECE OF WORK'S COST-LED VALUES, from its final account. Only what differs from the value as it stands
+ * is written, each as its own entry under the one reason. An empty box leaves that value as it is.
+ */
+export function saveWorks(d: PackDeps, actor: Actor, job_id: string, f: { event: string; values: Readonly<Partial<Record<WorksField, string>>>; reason: string; seq: string }): PackResult {
+  const parsed: Partial<Record<WorksField, number>> = {};
+  for (const k of WORKS_FIELDS) {
+    const raw = (f.values[k] ?? '').trim();
+    if (raw === '') continue;
+    const p = parseMoney(raw);
+    if (!p.ok) return { ok: false, field: k, why: p.why };
+    parsed[k] = p.value;
+  }
+  return begin(d, actor, job_id, f.reason, f.seq, ({ view, pack_id }) => {
+    const w = view.works.find((x) => x.event.id === f.event);
+    if (w === undefined) return { ok: false, field: 'event', why: 'That work is not on this building.' };
+    const changed: string[] = [];
+    for (const k of WORKS_FIELDS) {
+      const v = parsed[k];
+      if (v === undefined) continue;
+      if (w.inputs[k].value === v && isEntry(w.inputs[k].source)) continue;
+      insertEntry(d, actor, pack_id, w.event.id, k, v, null, f.reason);
+      changed.push(k);
+    }
+    if (changed.length === 0) return { ok: false, why: 'Nothing changed. Type a new value in at least one box.' };
+    audit(d, actor, view, 'works', w.event.id, changed);
     return { ok: true };
   });
 }

@@ -97,8 +97,9 @@ describe('F3 — "What did you spend on each building?" says what to pick for a 
   after(() => made.close());
 
   test('the help under the question names the case and where the works go', () => {
-    assert.match(F4_TEXT['spend-on'].help, /bought it and later did work on it, choose “We bought it”/);
-    assert.match(F4_TEXT['spend-on'].help, /tell us about the work a few questions on/);
+    // Restated by Phase 159c: F3's one answer per building is gone. This is the FIRST event; the work since is its own event.
+    assert.match(F4_TEXT['spend-on'].help, /Start with how you came to have each building/);
+    assert.match(F4_TEXT['spend-on'].help, /add each piece of work a few questions on/);
     assert.match(F4_TEXT.works.heading, /Any other work done to these buildings\?/, 'the step it points to is still called that');
   });
 
@@ -113,6 +114,6 @@ describe('F3 — "What did you spend on each building?" says what to pick for a 
     await req('/assessment/buildings', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'b0_sector=gp' });
     const page = await req('/assessment/spend-on');
     assert.match(page, /What did you spend on each building\?/);
-    assert.match(page, /If you bought it and later did work on it, choose “We bought it”\./);
+    assert.match(page, /If you did work on it later, like a refit or an extension, you can add each piece of work a few questions on\./);
   });
 });

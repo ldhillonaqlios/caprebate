@@ -560,6 +560,8 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
         <p class="help">Read, never re-keyed. A spend is shown as the client gave it, with the question.</p>
         ${v.initial_property_value.length === 0 ? h`<p class="help">No spend answer is held for this lead.</p>`
           : h`<table><tbody>${v.initial_property_value.map((a) => h`<tr><th>${a.question}</th><td>${a.answer}</td></tr>`)}</tbody></table>`}
+        ${v.events.length === 0 ? raw('') : h`<p class="fl">What happened to each building</p>
+          <table><tbody>${v.events.map((e) => h`<tr><th>${e.property}</th><td>${e.what}, ${e.when}, ${e.cost}</td></tr>`)}</tbody></table>`}
         ${v.opportunity_value === undefined ? raw('') : h`<p>The figure the client was shown: <strong>${v.opportunity_value.shown_range}</strong></p>`}
       </div>
 
