@@ -122,3 +122,55 @@ describe('F43 — the portal says what the claim knows', () => {
     app.close();
   });
 });
+
+/* ================================================================== *
+ * F44 — "floor area sourced" needs a floor area on record
+ * ================================================================== */
+import * as P from '../src/web/pipeline.ts';
+
+/** A client question put and answered in the portal, and its answer ticked by Sales as checked (or not). */
+function answered(app: App, business: string, fact_id: string, answer: string, approve = true): string {
+  const id = `ct-${randomUUID()}`;
+  const at = app.now();
+  app.db.run('INSERT INTO client_tasks (id, business_id, asked_by, question, why, holds_up, state, answer_state, answer, answered_at, answered_by, answered_by_role, created_at, fact_id, sent_to_portal_at) ' +
+    "VALUES (?, ?, 'u-SALES', 'a question', 'why', 'this claim', 'ANSWERED', 'ANSWERED', ?, ?, NULL, 'CLIENT', ?, ?, ?)", [id, business, answer, at, at, fact_id, at]);
+  if (approve) app.db.run("INSERT INTO fact_approvals (id, business_id, fact_ref, action, reason, actor_id, at) VALUES (?, ?, ?, 'APPROVED', NULL, 'u-SALES', ?)", [randomUUID(), business, `ans.${id}`, at]);
+  return id;
+}
+
+describe('F44 — "Data gathering complete — floor area sourced" needs a floor area on record', () => {
+  const tick = (app: App, claim: string) => P.recordMilestone(CF.recordDeps(app), actor('SALES'), claim, 'DATA_GATHERING_COMPLETE', null);
+
+  test('with no floor area anywhere the tick is refused, and says where one comes from', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'DATA_GATHERING', 'ENGAGEMENT_SIGNED');
+    const r = tick(app, c.claim);
+    assert.equal(r.ok, false);
+    assert.match(r.ok ? '' : r.why, /No floor area is on record yet/);
+    assert.match(r.ok ? '' : r.why, /energy certificate/);
+    app.close();
+  });
+
+  test('the energy certificate of this property counts; another property’s does not', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'DATA_GATHERING', 'ENGAGEMENT_SIGNED');
+    const other = client(app, 'DATA_GATHERING', 'ENGAGEMENT_SIGNED');
+    CF.floorAreaOnRecord(app, other.business, other.property, 300);
+    assert.equal(tick(app, c.claim).ok, false);
+    CF.floorAreaOnRecord(app, c.business, c.property, 450);
+    assert.equal(tick(app, c.claim).ok, true);
+    app.close();
+  });
+
+  test('the client’s answer to "how big is the building" counts once it is checked, and only with a number in it', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'DATA_GATHERING', 'ENGAGEMENT_SIGNED');
+    answered(app, c.business, 'floor_area_m2', 'about 450 square metres', false);
+    assert.equal(tick(app, c.claim).ok, false, 'an answer nobody checked counted');
+    answered(app, c.business, 'floor_area_m2', 'not sure');
+    assert.equal(tick(app, c.claim).ok, false, 'an answer with no number counted');
+    answered(app, c.business, 'floor_area_m2', 'about 450 square metres');
+    assert.equal(tick(app, c.claim).ok, true);
+    app.close();
+  });
+});

@@ -1010,3 +1010,46 @@ export function withdrawOwner(d: FactDeps, actor: Actor, claim_id: string, owner
   });
   return { ok: true, id: o.id };
 }
+
+/**
+ * PHASE 158d: the client's own answer to one of our questions, once a member of staff has checked it — the newest
+ * answered question for `fact_id` whose latest tick is APPROVED. "I don't know" is not an answer; an unchecked answer and
+ * one whose tick was taken off are not read.
+ */
+export function approvedClientAnswer(db: Db, business_id: string, fact_id: string): { readonly answer: string; readonly at: string; readonly task_id: string } | null {
+  for (const t of db.all<{ id: string; answer: string | null; answered_at: string | null }>(
+    "SELECT id, answer, answered_at FROM client_tasks WHERE business_id = ? AND fact_id = ? AND state = 'ANSWERED' AND answer_state = 'ANSWERED' " +
+      'ORDER BY answered_at DESC, rowid DESC', [business_id, fact_id])) {
+    const tick = db.get<{ action: string }>('SELECT action FROM fact_approvals WHERE business_id = ? AND fact_ref = ? ORDER BY at DESC, rowid DESC LIMIT 1',
+      [business_id, `ans.${t.id}`]);
+    if (tick?.action === 'APPROVED' && t.answer !== null && t.answered_at !== null) return { answer: t.answer, at: t.answered_at, task_id: t.id };
+  }
+  return null;
+}
+
+/**
+ * PHASE 158d (F44, the second Friary House run): "Data gathering complete — floor area sourced" passed with no floor area
+ * recorded anywhere. A floor area is on record when one of these holds it: the property's energy certificate (a register
+ * record of this property, or the business's only one where it names no property), Homedata's estimate for the address,
+ * or the client's own answer to "how big is the building", checked, with a number in it.
+ */
+export function floorAreaOnRecord(db: Db, business_id: string, property_id: string | null): { readonly known: boolean; readonly why: string } {
+  const rows = db.all<{ source_id: string; fields_json: string; property_id: string | null }>(
+    "SELECT source_id, fields_json, property_id FROM register_records WHERE business_id = ? AND source_id IN ('EPC', 'HOMEDATA_ADDRESS') ORDER BY obtained_at DESC",
+    [business_id]);
+  const read = (j: string): Record<string, unknown> => { try { return JSON.parse(j) as Record<string, unknown>; } catch { return {}; } };
+  const epcs = rows.filter((r) => r.source_id === 'EPC');
+  const epc = epcs.find((r) => r.property_id !== null && r.property_id === property_id) ?? (epcs.length === 1 && epcs[0]?.property_id === null ? epcs[0] : undefined);
+  const a = epc === undefined ? undefined : read(epc.fields_json)['epc_total_floor_area_m2'];
+  if (typeof a === 'number' && a > 0) return { known: true, why: `${String(a)} m², on the energy certificate` };
+  const hd = rows.find((r) => r.source_id === 'HOMEDATA_ADDRESS' && r.property_id !== null && r.property_id === property_id);
+  const est = hd === undefined ? undefined : (read(hd.fields_json)['estimated_floor_area'] as { floor_area_m2?: unknown } | undefined)?.floor_area_m2;
+  if (typeof est === 'number' && est > 0) return { known: true, why: `${String(est)} m², Homedata's estimate` };
+  const said = approvedClientAnswer(db, business_id, 'floor_area_m2');
+  if (said !== null && /\d/.test(said.answer)) return { known: true, why: `"${said.answer}", the client's own answer, checked` };
+  return {
+    known: false,
+    why: 'No floor area is on record yet. It can come from the energy certificate or from Homedata\'s estimate. Or it can come ' +
+      'from the client\'s answer to "how big is the building", once you have checked it. Ask the client, or look it up, first.',
+  };
+}

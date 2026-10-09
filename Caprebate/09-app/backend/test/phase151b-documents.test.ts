@@ -40,6 +40,7 @@ import {
 } from '../src/web/upload-handler-port.ts';
 import { pdfOf } from './document-fixtures.ts';
 import { fixedClock } from './helpers.ts';
+import * as CF from './claim-fixtures.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 
@@ -221,6 +222,7 @@ describe('3 · the must-arrive documents are switched on — Lakhbir’s four, a
       assert.ok(c);
       // Everything else the gate reads, settled — so what shuts it below is the documents and nothing else.
       assert.equal(F.recordFact(d, sales, c.id, { fact_key: 'ELECTION_EXISTS', answer: 'VALUE', value: 'NO', source_id: 'CLIENT_DOC', note: null }).ok, true);
+      CF.floorAreaForClaim(w.made.app, c.id); // PHASE 158d (F44): a floor area on record first
       assert.equal(P.recordMilestone(d, sales, c.id, 'DATA_GATHERING_COMPLETE', null).ok, true);
       const pc = () => P.loadPipelineClaim(db, c.id);
       const off = P.gateOut(db, pc(), 'DATA_GATHERING', { mandatoryDocuments: { ...MD.MANDATORY_DOCUMENTS, enabled: false } });

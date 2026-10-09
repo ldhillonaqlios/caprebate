@@ -102,6 +102,7 @@ function fwd(app: App, who: Actor, claim: string, to: string): P.MoveResult {
 }
 
 function confirm(app: App, claim: string, milestone: string): void {
+  if (milestone === 'DATA_GATHERING_COMPLETE') CF.floorAreaForClaim(app, claim); // PHASE 158d (F44): a floor area on record first
   const r = P.recordMilestone(deps(app), actor('SALES'), claim, milestone, null);
   assert.equal(r.ok, true, r.ok ? '' : r.why);
 }
@@ -370,6 +371,7 @@ describe('what no rule may do — each refused, and each with a test', () => {
         assert.equal(P.recordEnquiryCheck(d, sales, { claim_id: c }, { check_key, answer: 'YES', note: null }).ok, true);
       }
       letter(app, org.business);
+      CF.floorAreaForClaim(app, c); // PHASE 158d (F44): the floor area on record before the walk, so the snapshot counts it
       const snapshot = (): Record<string, unknown> => ({
         free_gate_open: registryGate().enabled,
         cta: JSON.stringify(SHARED.CB_CTA),

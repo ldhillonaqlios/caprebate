@@ -50,6 +50,7 @@ import { localDate } from '../src/web/localtime.ts';
 import { anyStageLabel, stage as stageOf } from '../src/web/stages.ts';
 import { distinctReasons } from '../src/web/tasks-pages.ts';
 import { actor, fixedClock, keys } from './helpers.ts';
+import * as CF from './claim-fixtures.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; body: string; location: string | null };
@@ -664,6 +665,7 @@ describe('mandatory documents at a stage — built, and switched off', () => {
       assert.ok(c);
       // Everything else the gate reads, recorded — so what shuts it below is the documents and nothing else.
       assert.equal(F.recordFact(d, sales, c.id, { fact_key: 'ELECTION_EXISTS', answer: 'VALUE', value: 'NO', source_id: 'CLIENT_DOC', note: null }).ok, true);
+      CF.floorAreaForClaim(h.made.app, c.id); // PHASE 158d (F44): a floor area on record first
       assert.equal(P.recordMilestone(d, sales, c.id, 'DATA_GATHERING_COMPLETE', null).ok, true);
       const pc = () => P.loadPipelineClaim(db, c.id);
       assert.equal(P.gateOut(db, pc(), 'DATA_GATHERING', { mandatoryDocuments: { ...MD.MANDATORY_DOCUMENTS, enabled: false } }).open, true, 'off, the gate is open on the same records — both ways');

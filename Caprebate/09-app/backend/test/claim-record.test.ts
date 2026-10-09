@@ -106,6 +106,7 @@ function fwd(app: App, who: AppRole, claim: string, to: string): P.MoveResult {
 }
 
 function confirm(app: App, claim: string, milestone: string): void {
+  if (milestone === 'DATA_GATHERING_COMPLETE') CF.floorAreaForClaim(app, claim); // PHASE 158d (F44): a floor area on record first
   const r = P.recordMilestone(CF.recordDeps(app), actor('SALES'), claim, milestone, null);
   assert.equal(r.ok, true, r.ok ? '' : r.why);
 }

@@ -136,6 +136,7 @@ function commitOn(app: App, org: Org, claim: string | null): void {
 }
 
 function confirm(app: App, claim: string, milestone: string): void {
+  if (milestone === 'DATA_GATHERING_COMPLETE') CF.floorAreaForClaim(app, claim); // PHASE 158d (F44): a floor area on record first
   const r = P.recordMilestone(deps(app), actor('SALES'), claim, milestone, null);
   assert.equal(r.ok, true, r.ok ? '' : r.why);
 }
@@ -773,6 +774,10 @@ describe('businesses.stage stays the sort key and the portal’s source — a mo
       letter(app, org.business, 'SIGNED');
       const stage = () => app.db.get<{ s: string }>('SELECT stage AS s FROM businesses WHERE id = ?', [org.business])?.s;
       const c = claimAt(app, org, 'ENGAGEMENT');
+      // PHASE 158d (F43): the signature itself now raises the client to step 2. To prove the MOVE raises it too, the stored
+      // stage is put back as a client who signed before 158d would have it.
+      assert.equal(stage(), 'ENGAGEMENT_SIGNED', 'the signature did not raise the client to step 2');
+      app.db.run("UPDATE businesses SET stage = 'ASSESSMENT_SUBMITTED' WHERE id = ?", [org.business]);
       assert.equal(stage(), 'ASSESSMENT_SUBMITTED', 'placing a fixture moved the stored stage');
       assert.equal(fwd(app, 'SALES', c, 'DATA_GATHERING').ok, true);
       assert.equal(stage(), 'ENGAGEMENT_SIGNED');

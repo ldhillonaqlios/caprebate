@@ -51,7 +51,7 @@ import {
 import { fireAutomation } from './automation.ts';
 import { onClaimStageEntered } from './introducers.ts';
 import { cddGateNeed } from './compliance.ts';
-import { amendmentWindowReading, electionResolved, grantsTraced } from './claim-facts.ts';
+import { amendmentWindowReading, electionResolved, floorAreaOnRecord, grantsTraced } from './claim-facts.ts';
 import { grantProviderNeed, grantSplitNeed } from './grant-checks.ts';
 import { deliverableIssuedNeed, filingRecordedNeed, invoiceWindowNeed, reportsWindowNeed, signOffRecordNeed } from './claim-record.ts';
 import { clientConfirmationNeed, filingRoute } from './client-filing.ts';
@@ -1007,6 +1007,11 @@ export function recordMilestone(
       ok: false,
       why: `“${m.label}” is confirmed while the claim is at ${stageLabel(m.stage)}; this claim is at ${claimStage(c.stage).label}.`,
     };
+  }
+  // PHASE 158d (F44): "floor area sourced" is the analyst's own tick, and it now needs a floor area on record to tick.
+  if (milestone === 'DATA_GATHERING_COMPLETE') {
+    const area = floorAreaOnRecord(d.db, c.business_id, c.property_id);
+    if (!area.known) return { ok: false, why: area.why };
   }
   const note = text(noteIn, 2000, 'The note');
   if (!note.ok) return note;

@@ -203,6 +203,22 @@ export function filingRecorded(app: FixtureApp, claim: string, filed_on = app.no
   assert.equal(r.ok, true, r.ok ? '' : r.why);
 }
 
+/**
+ * PHASE 158d (F44): a floor area on record for the property — its energy certificate, as a register record — so a test
+ * that is about something else can tick "Data gathering complete — floor area sourced".
+ */
+export function floorAreaForClaim(app: FixtureApp, claim: string): void {
+  const c = app.db.get<{ business_id: string; property_id: string | null }>('SELECT business_id, property_id FROM claims WHERE id = ?', [claim]);
+  assert.ok(c !== undefined && c.property_id !== null, 'the claim has no property to hold a floor area');
+  if (app.db.get<{ id: string }>("SELECT id FROM register_records WHERE source_id = 'EPC' AND property_id = ?", [c.property_id]) !== undefined) return;
+  floorAreaOnRecord(app, c.business_id, c.property_id);
+}
+
+export function floorAreaOnRecord(app: FixtureApp, business: string, property: string, m2 = 450): void {
+  app.db.run('INSERT INTO register_records (id, business_id, source_id, entity_id, fields_json, obtained_at, property_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [randomUUID(), business, 'EPC', `epc-${property}`, JSON.stringify({ epc_total_floor_area_m2: m2, epc_rrn: '0000-0000-0000-0000-0000' }), app.now(), property]);
+}
+
 /** Draft and issue a deliverable through the register, as SALES. */
 export function issue(app: FixtureApp, claim: string, kind: R.DeliverableKind, content_hash: string | null = null): string {
   if (R.MADE_FROM_REPORT.has(kind)) releaseReportFor(app, claim);
