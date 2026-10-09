@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 25 |
 | Built - awaiting sign-off | 128 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 313 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1342,7 +1342,7 @@
 
 ### Phase 158d - the accountant's own confirmations, one purchase date, the floor area, the defence pack, and what the portal tells the client
 
-`13232676804` · **Ready - Claude can build** · owner Claude
+`13232676804` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac (Claude Code)**
 
 - Note 2026-10-07 (Phase 158c): Written by Phase 158c from its second run, nobody ticking for anyone else: the accountant confirms the return fit and the filing through their own link (F46), one purchase date and year end feed the window (F45), the floor area on record before Data gathering passes (F44), the defence pack made by the application (F47), the portal says what the gate waits for (F43); then the run once more. Nothing waits on anyone.
 
