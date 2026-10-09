@@ -41,6 +41,7 @@ import * as S from '../src/web/stages.ts';
 import * as T from '../src/web/tasks.ts';
 import { actor, signatureRecordFor, testApp } from './helpers.ts';
 import * as CF from './claim-fixtures.ts';
+import * as R from '../src/web/claim-record.ts';
 
 const T0 = '2026-09-08T00:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';
@@ -592,9 +593,14 @@ describe('every gate is server-side, and every gate has a test that tries to ski
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false);
       assert.equal(P.recordMilestone(deps(app), actor('SALES'), c, 'DEFENCE_PACK_COMPLETE', null).ok, false, 'the retired confirmation was recorded');
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false);
-      CF.issue(app, c, 'DEFENCE_PACK');
-      assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false, 'closed with no filing recorded');
+      // PHASE 158d (F47): the pack is made from the claim's records, the filing among them, so it cannot be issued first.
+      const d = CF.recordDeps(app);
+      assert.equal(R.recordDeliverable(d, actor('SALES'), c, { kind: 'DEFENCE_PACK', action: 'DRAFT' }).ok, true);
+      assert.equal(R.recordDeliverable(d, actor('SALES'), c, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: '2026-09-01' }).ok, false, 'issued with no filing');
       CF.filingRecorded(app, c); // PHASE 158c (F42)
+      assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false, 'closed with no defence pack');
+      CF.defenceReady(app, c);
+      assert.equal(R.recordDeliverable(d, actor('SALES'), c, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: '2026-09-01' }).ok, true);
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, true);
       assert.ok(app.db.get<{ at: string | null }>('SELECT completed_at AS at FROM claims WHERE id = ?', [c])?.at);
       assert.equal(fwd(app, 'SALES', c, 'CLOSED').ok, false, 'a closed claim moved on');

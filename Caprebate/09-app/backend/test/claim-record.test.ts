@@ -730,7 +730,9 @@ describe('THE DELIVERABLES REGISTER — tracked, never generated', () => {
       assert.equal(line('CLIENT_REPORT')?.state, 'NOT_STARTED');
       // PHASE 158c (F38, F36): the client report is made here from the approved survey report; the defence pack still cannot be stored.
       assert.match(line('CLIENT_REPORT')?.stored ?? '', /Made here from the survey report the surveyor approved/);
-      assert.match(line('DEFENCE_PACK')?.stored ?? '', /cannot be stored yet/);
+      // PHASE 158d (F47): the defence pack is made here from the claim's records; the reasoned negative still cannot be stored.
+      assert.match(line('DEFENCE_PACK')?.stored ?? '', /Made here from the claim’s own records/);
+      assert.match(line('REASONED_NEGATIVE')?.stored ?? '', /cannot be stored yet/);
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'CLIENT_REPORT', action: 'DRAFT' }).ok, false, 'a report stating a figure drafted before the sign-off');
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'ACCOUNTANT_COMPUTATION_PACK', action: 'DRAFT' }).ok, false);
       CF.signOffRow(app, org.business, org.assessment, c);
@@ -761,13 +763,17 @@ describe('THE DELIVERABLES REGISTER — tracked, never generated', () => {
       const d = CF.recordDeps(app);
       const sales = actor('SALES');
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'DEFENCE_PACK', action: 'DRAFT' }).ok, true);
-      assert.equal(R.recordDeliverable(d, sales, c, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: '2026-09-01' }).ok, false, 'a defence pack issued without its hash');
+      // PHASE 158d (F47): it is made here from the claim's records, and refused while they are missing; a typed hash is not used.
+      assert.equal(R.recordDeliverable(d, sales, c, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: '2026-09-01', content_hash: 'b'.repeat(64) }).ok, false, 'a defence pack issued without its records');
+      CF.defenceReady(app, c);
       assert.equal(R.recordDeliverable(d, sales, c, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: '2026-09-01', content_hash: 'b'.repeat(64) }).ok, true);
       assert.throws(() => app.db.run("UPDATE claim_deliverables SET state = 'SUPERSEDED' WHERE kind = 'DEFENCE_PACK'"));
       assert.throws(() => app.db.run("UPDATE claim_deliverables SET content_hash = ? WHERE kind = 'DEFENCE_PACK'", ['c'.repeat(64)]));
       CF.issue(app, c, 'DEFENCE_PACK', 'd'.repeat(64));
-      const packs = app.db.all<{ version: number; state: string; content_hash: string }>("SELECT version, state, content_hash FROM claim_deliverables WHERE kind = 'DEFENCE_PACK' ORDER BY version", [c].slice(1));
-      assert.deepEqual(packs.map((x) => [x.version, x.state, x.content_hash]), [[1, 'ISSUED', 'b'.repeat(64)], [2, 'ISSUED', 'd'.repeat(64)]]);
+      const packs = app.db.all<{ version: number; state: string; content_hash: string; kept: string }>(
+        "SELECT d.version, d.state, d.content_hash, m.fingerprint AS kept FROM claim_deliverables d JOIN defence_pack_manifests m ON m.deliverable_id = d.id WHERE d.kind = 'DEFENCE_PACK' ORDER BY d.version");
+      assert.deepEqual(packs.map((x) => [x.version, x.state, x.content_hash === x.kept]), [[1, 'ISSUED', true], [2, 'ISSUED', true]]);
+      assert.equal(packs.some((x) => x.content_hash === 'b'.repeat(64) || x.content_hash === 'd'.repeat(64)), false, 'a typed hash was kept');
     } finally { app.close(); }
   });
 

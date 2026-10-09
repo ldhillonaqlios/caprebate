@@ -327,7 +327,7 @@ export function deliverablesBlock(claim_id: string, p: R.DeliverablesPanel | und
     ${p.lines.map((l) => h`<tr><td>${l.label}</td><td>${l.state_label}</td><td>${l.version ?? '—'}</td><td>${l.issued_on ?? '—'}${l.content_hash === null ? '' : h`<br><span class="help">${l.content_hash}</span>`}</td>
       <td>${l.document_type}<br><span class="help">${l.stored}</span></td>
       <td>${l.may_draft ? h`<form method="post" action="/staff/claims/${claim_id}/deliverables" class="inline"><input type="hidden" name="kind" value="${l.kind}"><input type="hidden" name="action" value="DRAFT"><button type="submit">Start a draft</button></form>` : raw('')}
-        ${l.may_issue ? h`<form method="post" action="/staff/claims/${claim_id}/deliverables" class="inline"><input type="hidden" name="kind" value="${l.kind}"><input type="hidden" name="action" value="ISSUE"><input name="issued_on" type="date">${R.MADE_FROM_REPORT.has(l.kind) ? raw('') : h`<input name="content_hash" placeholder="SHA-256">`}<button type="submit">Issue</button></form>` : raw('')}
+        ${l.may_issue ? h`<form method="post" action="/staff/claims/${claim_id}/deliverables" class="inline"><input type="hidden" name="kind" value="${l.kind}"><input type="hidden" name="action" value="ISSUE"><input name="issued_on" type="date">${R.MADE_HERE.has(l.kind) ? raw('') : h`<input name="content_hash" placeholder="SHA-256">`}<button type="submit">Issue</button></form>` : raw('')}
         ${l.refused_why === null ? raw('') : h`<span class="help">${l.refused_why}</span>`}</td></tr>`)}
     </tbody></table></div>`;
 }

@@ -72,7 +72,9 @@ describe('F31 — staff open a survey job from the claim at Survey, and it seals
     assert.match(String(e['estimate_hash']), /^[0-9a-f]{64}$/);
     const a = app.audit.entries().filter((x) => x.kind === 'SURVEY_JOB_OPENED');
     assert.equal(a.length, 1);
-    assert.doesNotMatch(JSON.stringify(a[0]?.detail ?? {}), /255|0\.3/, 'no estimate figure in the log line');
+    // PHASE 158d: read without the job's random id, which can itself contain "255" (a flaky failure on 8 Oct 2026).
+    const { job_id: _job, ...rest } = (a[0]?.detail ?? {}) as Record<string, unknown>;
+    assert.doesNotMatch(JSON.stringify(rest), /255|0\.3/, 'no estimate figure in the log line');
     app.close();
   });
 

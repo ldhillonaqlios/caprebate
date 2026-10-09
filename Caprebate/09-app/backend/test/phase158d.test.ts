@@ -403,3 +403,61 @@ describe('F46 — on screen', () => {
     } finally { w.made.close(); }
   });
 });
+
+/* ================================================================== *
+ * F47 — the defence pack, made from the claim's own records
+ * ================================================================== */
+import { createHash } from 'node:crypto';
+
+describe('F47 — the defence pack is made from the claim’s own records, its fingerprint worked out', () => {
+  const draftAndIssue = (app: App, claim: string, content_hash?: string) => {
+    const d = CF.recordDeps(app);
+    R.recordDeliverable(d, actor('SALES'), claim, { kind: 'DEFENCE_PACK', action: 'DRAFT' });
+    return R.recordDeliverable(d, actor('SALES'), claim, { kind: 'DEFENCE_PACK', action: 'ISSUE', issued_on: app.now().slice(0, 10), ...(content_hash === undefined ? {} : { content_hash }) });
+  };
+
+  test('with the claim’s records missing it is refused, and says which; a typed fingerprint does not stand in', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'DEFENCE_PACK', 'AT_SURVEY');
+    const r = draftAndIssue(app, c.claim, 'a'.repeat(64));
+    assert.equal(r.ok, false);
+    assert.match(r.ok ? '' : r.why, /made here from the claim’s own records\. Still missing: .*the tax adviser’s sign-off.*the client’s acceptance of the report.*our fee invoice, sent.*the filing date/);
+    app.close();
+  });
+
+  test('with every record there it is issued; the fingerprint is the kept list’s own, and the list names each record', async () => {
+    const app = await testApp(); staff(app);
+    const c = client(app, 'DEFENCE_PACK', 'AT_SURVEY');
+    CF.signOffRow(app, c.business, c.assessment, c.claim);
+    CF.issue(app, c.claim, 'CLIENT_REPORT');
+    CF.issue(app, c.claim, 'ACCOUNTANT_COMPUTATION_PACK');
+    CF.clientAccepted(app, c.claim);
+    CF.claimInvoiceRow(app, c.business, c.claim, { status: 'SENT' });
+    CF.filingRecorded(app, c.claim, '2026-09-01');
+    const r = draftAndIssue(app, c.claim, 'b'.repeat(64));
+    assert.equal(r.ok, true, r.ok ? '' : r.why);
+    const issued = app.db.get<{ content_hash: string; id: string }>("SELECT id, content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'DEFENCE_PACK' AND state = 'ISSUED'", [c.claim]);
+    const kept = app.db.get<{ manifest_json: string; fingerprint: string }>('SELECT manifest_json, fingerprint FROM defence_pack_manifests WHERE deliverable_id = ?', [issued?.id ?? '']);
+    assert.ok(kept !== undefined);
+    assert.notEqual(issued?.content_hash, 'b'.repeat(64), 'the typed fingerprint was kept');
+    assert.equal(issued?.content_hash, kept.fingerprint);
+    assert.equal(createHash('sha256').update(kept.manifest_json, 'utf8').digest('hex'), kept.fingerprint);
+    const m = JSON.parse(kept.manifest_json) as Record<string, unknown>;
+    for (const k of ['survey_report', 'signoff', 'client_report', 'accountant_pack', 'client_acceptance', 'fee_invoice', 'filing']) assert.ok(m[k] !== undefined && m[k] !== null, k);
+    assert.throws(() => app.db.run('UPDATE defence_pack_manifests SET fingerprint = fingerprint'), /never changed/);
+    app.close();
+  });
+
+  test('the deliverables table says so, and offers no fingerprint box for it', async () => {
+    const w = await salesWeb();
+    try {
+      const app = w.made.app; staff(app);
+      const c = client(app, 'DEFENCE_PACK', 'AT_SURVEY');
+      CF.signOffRow(app, c.business, c.assessment, c.claim);
+      R.recordDeliverable(CF.recordDeps(app), actor('SALES'), c.claim, { kind: 'DEFENCE_PACK', action: 'DRAFT' });
+      const page = (await w.sales.req(`/staff/claims/${c.claim}`)).body;
+      assert.match(page, /Made here from the claim’s own records, from the approved report to the filing/);
+      assert.doesNotMatch(page, /name="content_hash"/);
+    } finally { w.made.close(); }
+  });
+});

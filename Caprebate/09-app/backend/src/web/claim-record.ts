@@ -800,7 +800,7 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
   const types = new Map(db.all<{ code: string; label: string }>('SELECT code, label FROM document_types').map((t) => [t.code, t.label] as const));
   return {
     // PHASE 158c (F36, F38): what is true of each line, not one sentence for all of them.
-    generation: 'The client report and the accountant’s pack are made here, from the survey report the surveyor approved. The others are documents on the claim, tracked here.',
+    generation: 'The client report, the accountant’s pack and the defence pack are made here, from the claim’s own records. The others are documents on the claim, tracked here.',
     may_record: mayRecord,
     lines: KINDS.map((kind) => {
       const def = DELIVERABLES[kind];
@@ -815,7 +815,10 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
         document_type: types.get(def.document_type) ?? def.document_type,
         stored: MADE_FROM_REPORT.has(kind)
           ? 'Made here from the survey report the surveyor approved, once a tax adviser has signed off its figure. Its fingerprint is recorded when it is issued.'
-          : `It cannot be stored yet. ${NO_RECEIPT_POLICY} Still to decide: ${RECEIPT_QUESTION}`,
+          : kind === 'DEFENCE_PACK'
+            // PHASE 158d (F47)
+            ? 'Made here from the claim’s own records, from the approved report to the filing. Its fingerprint is recorded when it is issued.'
+            : `It cannot be stored yet. ${NO_RECEIPT_POLICY} Still to decide: ${RECEIPT_QUESTION}`,
         history: mine.map((r) => ({ version: r.version, state: DELIVERABLE_STATES[r.state] ?? r.state, issued_on: r.issued_on })),
         may_draft: mayRecord && draft === undefined && blocked === null,
         may_issue: mayRecord && draft !== undefined,
@@ -839,6 +842,52 @@ export function deliverablesPanel(db: Db, actor: Actor, claim_id: string): Deliv
  * would loop back to this one). Its fingerprint is the deliverable's.
  */
 export const MADE_FROM_REPORT: ReadonlySet<DeliverableKind> = new Set<DeliverableKind>(['CLIENT_REPORT', 'ACCOUNTANT_COMPUTATION_PACK']);
+
+/** PHASE 158d (F47): every deliverable the application makes itself; none takes a typed fingerprint. */
+export const MADE_HERE: ReadonlySet<DeliverableKind> = new Set<DeliverableKind>([...MADE_FROM_REPORT, 'DEFENCE_PACK']);
+
+/**
+ * PHASE 158d (F47, the second Friary House run): THE DEFENCE PACK, MADE FROM THE CLAIM'S OWN RECORDS. It was the last
+ * deliverable issued on a SHA-256 staff typed. Now it is the list of what defends the claim, read from rows that never
+ * change: the survey report the surveyor approved (released to the client), the tax adviser's sign-off, the client report
+ * and the accountant's pack as issued, the client's acceptance of that report, our fee invoice as sent, and the filing.
+ * All must be there; otherwise it says which are missing. Its fingerprint is the SHA-256 of the list as kept.
+ */
+export function defencePackRecords(db: Db, claim_id: string): { ok: true; manifest: Record<string, unknown>; fingerprint: string } | { ok: false; missing: string[] } {
+  const missing: string[] = [];
+  const c = db.get<{ claim_ref: string }>('SELECT claim_ref FROM claims WHERE id = ?', [claim_id]);
+  const report = releasedReportFingerprint(db, claim_id);
+  if (report === null) missing.push('the survey report the surveyor approved, with its sign-off');
+  const signoff = db.get<{ id: string; record_hash: string; figure_pence: number; signed_on: string }>(
+    'SELECT id, record_hash, figure_pence, signed_on FROM tax_adviser_signoffs WHERE claim_id = ? ORDER BY recorded_at DESC, rowid DESC LIMIT 1', [claim_id]);
+  if (signoff === undefined) missing.push('the tax adviser’s sign-off');
+  const issued = (kind: string) => db.get<{ version: number; issued_on: string; content_hash: string | null }>(
+    "SELECT version, issued_on, content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED' ORDER BY version DESC LIMIT 1", [claim_id, kind]);
+  const clientReport = issued('CLIENT_REPORT');
+  if (clientReport === undefined) missing.push('the client report, issued');
+  const pack = issued('ACCOUNTANT_COMPUTATION_PACK');
+  if (pack === undefined) missing.push('the accountant’s computation pack, issued');
+  const accepted = clientReport?.content_hash == null ? undefined : db.get<{ accepted_at: string; fingerprint: string }>(
+    'SELECT accepted_at, fingerprint FROM client_report_acceptances WHERE claim_id = ? AND fingerprint = ? ORDER BY accepted_at LIMIT 1', [claim_id, clientReport.content_hash]);
+  if (accepted === undefined) missing.push('the client’s acceptance of the report');
+  const invoice = db.get<{ seq: number | null; sent_on: string | null; fee_pence: number | null }>(
+    "SELECT (SELECT n.seq FROM invoice_numbers n WHERE n.invoice_id = i.id AND n.kind = 'INVOICE') AS seq, i.sent_on, i.fee_pence FROM invoices i " +
+      "WHERE i.claim_id = ? AND i.kind = 'FEE' AND i.invoice_status = 'SENT' ORDER BY i.sent_on DESC LIMIT 1", [claim_id]);
+  if (invoice === undefined) missing.push('our fee invoice, sent');
+  const filed = db.get<{ filed_on: string | null; snapshot_hash: string }>('SELECT filed_on, snapshot_hash FROM claim_reconciliations WHERE claim_id = ?', [claim_id]);
+  if (filed?.filed_on == null) missing.push('the filing date');
+  if (missing.length > 0 || c === undefined) return { ok: false, missing };
+  const manifest: Record<string, unknown> = {
+    claim: c.claim_ref,
+    survey_report: { fingerprint: report },
+    signoff: { id: signoff?.id, record_hash: signoff?.record_hash, figure_pence: signoff?.figure_pence, signed_on: signoff?.signed_on },
+    client_report: clientReport, accountant_pack: pack,
+    client_acceptance: accepted,
+    fee_invoice: invoice,
+    filing: { filed_on: filed?.filed_on, reconciliation_snapshot: filed?.snapshot_hash },
+  };
+  return { ok: true, manifest, fingerprint: createHash('sha256').update(_canonical(manifest), 'utf8').digest('hex') };
+}
 
 export function releasedReportFingerprint(db: Db, claim_id: string): string | null {
   const rows = db.all<{ fingerprint: string; snapshot_json: string }>(
@@ -890,7 +939,12 @@ export function recordDeliverable(d: RecordDeps, actor: Actor, claim_id: string,
     if (made === null) {
       return { ok: false, why: `${def.label} is issued from the survey report the surveyor approved, once a tax adviser has signed off its figure. There is no such version on this claim yet.` };
     }
-    const rawHash = made ?? (input['content_hash'] ?? '').trim().toLowerCase();
+    // PHASE 158d (F47): the defence pack is made here too, from the claim's own records; its fingerprint is worked out.
+    const defence = kind === 'DEFENCE_PACK' ? defencePackRecords(d.db, c.id) : undefined;
+    if (defence !== undefined && !defence.ok) {
+      return { ok: false, why: `The defence pack is made here from the claim’s own records. Still missing: ${defence.missing.join('; ')}.` };
+    }
+    const rawHash = defence?.ok === true ? defence.fingerprint : made ?? (input['content_hash'] ?? '').trim().toLowerCase();
     if (rawHash !== '' && !/^[0-9a-f]{64}$/.test(rawHash)) return { ok: false, why: 'The fingerprint of the issued document is 64 characters: 0 to 9 and a to f.' };
     if (kind === 'DEFENCE_PACK' && rawHash === '') {
       return { ok: false, why: 'An issued defence pack never changes, so we record its fingerprint. Give the fingerprint of the pack as issued.' };
@@ -912,6 +966,10 @@ export function recordDeliverable(d: RecordDeps, actor: Actor, claim_id: string,
       }
       d.db.run("UPDATE claim_deliverables SET state = 'ISSUED', issued_on = ?, content_hash = ?, updated_by = ?, updated_at = ? WHERE id = ?",
         [issuedOn, rawHash === '' ? null : rawHash, actor.id, at, draft.id]);
+      if (defence?.ok === true) {
+        d.db.run('INSERT INTO defence_pack_manifests (deliverable_id, claim_id, manifest_json, fingerprint, made_at) VALUES (?, ?, ?, ?, ?)',
+          [draft.id, c.id, _canonical(defence.manifest), defence.fingerprint, at]);
+      }
       return writeCaseStamp(d.db, { id: d.newId(), claim_id: c.id, deliverable_id: draft.id, stamped_by: actor.id, stamped_at: at });
     });
     d.audit.append({

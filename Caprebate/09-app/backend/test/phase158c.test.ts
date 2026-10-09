@@ -125,7 +125,9 @@ describe('F38, F36 — reports issued from the survey report the surveyor approv
     const lines = new Map(R.deliverablesPanel(app.db, actor('SALES'), c.claim).lines.map((l) => [l.kind, l.stored] as const));
     assert.match(lines.get('CLIENT_REPORT') ?? '', /Made here from the survey report the surveyor approved/);
     assert.match(lines.get('ACCOUNTANT_COMPUTATION_PACK') ?? '', /Made here from the survey report the surveyor approved/);
-    assert.match(lines.get('DEFENCE_PACK') ?? '', /It cannot be stored yet/);
+    // PHASE 158d (F47): the defence pack is made here too; the reasoned negative still cannot be stored.
+    assert.match(lines.get('DEFENCE_PACK') ?? '', /Made here from the claim’s own records/);
+    assert.match(lines.get('REASONED_NEGATIVE') ?? '', /It cannot be stored yet/);
     assert.doesNotMatch(R.deliverablesPanel(app.db, actor('SALES'), c.claim).generation, /None can be stored yet/);
     app.close();
   });
@@ -141,7 +143,7 @@ describe('F38 — the issue form asks for no fingerprint where the application w
     const html = String(deliverablesBlock(c.claim, R.deliverablesPanel(app.db, actor('SALES'), c.claim)));
     const formOf = (k: string) => new RegExp(`name="kind" value="${k}"><input type="hidden" name="action" value="ISSUE">([\\s\\S]*?)</form>`).exec(html)?.[1] ?? '';
     assert.doesNotMatch(formOf('CLIENT_REPORT'), /content_hash/);
-    assert.match(formOf('DEFENCE_PACK'), /name="content_hash"/);
+    assert.doesNotMatch(formOf('DEFENCE_PACK'), /content_hash/); // PHASE 158d (F47): made here, its fingerprint worked out
     app.close();
   });
 });

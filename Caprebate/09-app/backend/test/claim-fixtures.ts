@@ -261,6 +261,7 @@ export function floorAreaOnRecord(app: FixtureApp, business: string, property: s
 /** Draft and issue a deliverable through the register, as SALES. */
 export function issue(app: FixtureApp, claim: string, kind: R.DeliverableKind, content_hash: string | null = null): string {
   if (R.MADE_FROM_REPORT.has(kind)) releaseReportFor(app, claim);
+  if (kind === 'DEFENCE_PACK') defenceReady(app, claim);
   const d = recordDeps(app);
   const drafted = R.recordDeliverable(d, actor('SALES'), claim, { kind, action: 'DRAFT' });
   assert.equal(drafted.ok, true, drafted.ok ? '' : drafted.why);
@@ -269,6 +270,25 @@ export function issue(app: FixtureApp, claim: string, kind: R.DeliverableKind, c
   });
   assert.equal(issued.ok, true, issued.ok ? '' : issued.why);
   return issued.ok ? issued.id : '';
+}
+
+/**
+ * PHASE 158d (F47): THE DEFENCE PACK'S RECORDS, IN PLACE. It is made from the claim's own records, so a test that issues
+ * it gets each one that is missing: the sign-off, the client report and the accountant's pack issued, the client's
+ * acceptance, our fee invoice as sent, and the filing. Records already there are kept as they are.
+ */
+export function defenceReady(app: FixtureApp, claim: string): void {
+  const c = app.db.get<{ business_id: string; assessment_id: string | null }>('SELECT business_id, assessment_id FROM claims WHERE id = ?', [claim]);
+  assert.ok(c !== undefined, 'no such claim');
+  if (app.db.get<{ id: string }>('SELECT id FROM tax_adviser_signoffs WHERE claim_id = ?', [claim]) === undefined) signOffRow(app, c.business_id, c.assessment_id ?? '', claim);
+  const issuedOf = (kind: string) => app.db.get<{ id: string }>("SELECT id FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED'", [claim, kind]);
+  for (const kind of ['CLIENT_REPORT', 'ACCOUNTANT_COMPUTATION_PACK'] as const) if (issuedOf(kind) === undefined) issue(app, claim, kind);
+  const hash = app.db.get<{ h: string | null }>("SELECT content_hash AS h FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' AND state = 'ISSUED' ORDER BY version DESC LIMIT 1", [claim])?.h ?? '';
+  if (app.db.get<{ id: string }>('SELECT id FROM client_report_acceptances WHERE claim_id = ? AND fingerprint = ?', [claim, hash]) === undefined) clientAccepted(app, claim);
+  if (app.db.get<{ id: string }>("SELECT id FROM invoices WHERE claim_id = ? AND kind = 'FEE' AND invoice_status = 'SENT'", [claim]) === undefined) {
+    claimInvoiceRow(app, c.business_id, claim, { status: 'SENT' });
+  }
+  if (app.db.get<{ f: string | null }>('SELECT filed_on AS f FROM claim_reconciliations WHERE claim_id = ?', [claim])?.f == null) filingRecorded(app, claim, '2026-09-01');
 }
 
 /**
