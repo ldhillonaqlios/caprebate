@@ -12704,3 +12704,42 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159b to 
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+---
+
+## Phase 159b — the assessment figure and the engine's inputs made sound — 9 October 2026
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 159b, 9 Oct 2026: the engine now checks what it is given and applies the reasoned negatives however it is called (no UK tax, the client's own fixtures claim); supported living's online figure goes through its common parts, so the client sees the engine's figure; no figure where the client already claimed, where a seller after April 2014 did not claim, where the spend is before April 2008 or in the future, or above £100 million — each says why; amounts are read as typed (650k, 1.5m) or refused with a reason; an extension is its own answer on the new-build band; a care home's new build tops out at 40%; ISO dates only in the engine; the figure's words say checking can move it down and later work can add to it. Questions 247-250 to the tax adviser (ACC-H4). 4,977 checks in all. Next: Phase 159c.
+
+- **Branch** `claude/phase-159b`, from `main` after PRs 42 and 43 merged.
+- **Evidence re-run first and last** (`04-phase-work/stress-2026-10-09/engine/harness.ts`, OneDrive; results before kept in `engine/before-159b/`). Before: 58 classes of finding. After: 15, none of them this phase's: E4 (four classes, multi-trigger purchase with works) and E1 (three, works ignored) in Phase 159c; the stored low end above the engine's low (four classes, 836 cases) carried to Phase 159c line 8; E14 (the two-year clock) in Phase 159d; E15, E6's election case and the closed-window reading are questions 247 and 250. The harness was changed to accept a refusal or a referral where its own expectation said "or refuse" or "a referral" (`harness.ts.before-159b` kept); each change is marked "Phase 159b" in it.
+
+**What was built:**
+1. **E7, E8 — `CB_INPUTS`** (new shared module, the site's twenty-fourth): every sector's `runEngine` runs through `CB_INPUTS.run`. Money figures that are not finite, non-negative numbers are taken as not given and said so; every `_fraction` is read between 0 and 1 (above 100% as 100%). No UK tax or a charity: nil saving and cash, a referral. The client's own fixtures claim: nil spend, saving and cash, a referral.
+2. **E2, E11, E16, E18 — one band table.** Every sector's `YIELD_BAND` and supported living's `COMMON_PARTS` read from `CB_BAND`; the online ceiling for supported living goes through the common parts (£650,000 now shows up to £40,625, the engine's figure, not £162,500); exact rounding; no figure under £1; switch `care_home_new_build_top_at_purchase` on (40%); `extension` on the new-build band; an empty trigger is a purchase in all five engines (three read it as a refurbishment or fit-out).
+3. **E5, E6, E10, E12, E13 — `CB_FUNNEL.cutFor`**, with `monthRange`: the client's own claim; a seller who did not claim unless the purchase is known to be before April 2014; spend known to be before April 2008 (a purchase as well as works); a future date; a spend over £100 million. The engine's two `parseDate` take ISO only; `deriveAmendmentWindow` needs a whole ISO period end.
+4. **The back end:** `funnel4.ts` `parseMoney`, future dates refused, the extension answer, "Have you, or your business, already claimed", the engine's reason per building and never "up to £0", the loss sentence; `funnel-session.ts` maps the client's own "yes" to `prior_claim_self` and the seller's answer to `prior_owner_claimed` (funnel 4, a purchase); `router.ts` `CLIENT_RANGE_BASIS` no longer says "down, not up".
+5. **Item 8** — the words, in the site's assumptions, the figure page and the portal's basis line.
+
+**Premise re-derived (step 8).** The prompt's "1990-2027 must not all give the same figure where the law differs — 2008, 2012/2014, 2018 SBA, 2023 full expensing": the 2018 structures and buildings allowance and the 2023 full expensing change which relief a spend gets and when, not how much of it qualifies as plant, so they do not move this ceiling; they belong to the allowances and return entries (Phase 159e). 2008 and 2014 do move it, and now do. E14 belongs to 159d as the prompt says; it was not touched.
+
+**Tests.** Site harness: **1,399 pass / 0 fail / 3 xfail**, both modes (Suite AN, fifteen checks: **thirteen red** on `.bak-phase159b` through the redirect hook, the two controls green on both; P1, Q2 and Q4 restated for the extension and the cuts). `test/phase159b.test.ts`, ten tests, **all ten red** with the site, the generated engine, `funnel4.ts`, `funnel-session.ts` and `router.ts` put back for one run, then restored. `test/funnel4.test.ts` restated for the extension answer.
+
+**The checks, at the close:** back end `npm run check` **2,721 pass / 0 fail** over 167 tracked files; phase3 440; phase9 417; **4,977** in all (drift checker exit 0; `--expect 999,998,997,996` exit 1; self-test held). `extract --check` up to date (24 shared modules); `verify-extraction` 21 checks, 0 failures. Gated-exit proof 14 of 14; cash-route proof 18 of 18. CRM fold check green after fifteen §4 line references were re-pointed; register check exit 0 (130 awaiting: 52 + 10 + 68) and self-test 11 of 11; tracker check and self-test green; plain words, brand, notices (25), analytics (26), payload proof: all green.
+
+**Documents.** Word questions 247-250 under the tax adviser, written into Caprebate_Questions.docx and the 29 September re-sectioned copy (cloud items checked unchanged before, written in place — same inode — and the cloud copy compared byte for byte after; temporary copies to the recycle bin); QUESTIONS-WORD-HEADINGS.txt rebuilt. FOR THE ACCOUNTANT: ACC-H4 (board item 13249231366, added to the board and the tracker, and to the register manifest); the three registers' totals to 130. Developer Spec: a Phase 159b section and the figures. Build-Prep-06, the decided-and-not-decided list and the file index: the site harness figure.
+
+```
+DONE          E2, E5, E6, E7, E8, E9, E10, E11 (bands built and on), E12, E13, E16, E17, E18, E19, item 8;
+              questions 247-250 and ACC-H4; tests 4,977; every check green.
+NOT DONE      E14 (one calendar rule for the two-year clock) - BUILDABLE - already Phase 159d item 4.
+              E15 (closed window a referral, not nil) - BUILT as it stands, on purpose; nothing to
+                build - question 250 under the tax adviser asks whether it is viable.
+              The stored low end above the engine's low (E3's second half) - BUILDABLE - added to
+                Phase 159c as its line 8.
+              E1 and E4 (works and several events) - BUILDABLE - already Phase 159c items 1-2.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159c to 159j; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.

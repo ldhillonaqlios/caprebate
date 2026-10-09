@@ -1061,104 +1061,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 159b — the assessment figure and the engine's inputs made sound
-
- **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: the figure a client is shown must never be one we cannot defend.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
-   and the same entry at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE EVIDENCE (OneDrive, not in git): Caprebate/04-phase-work/stress-2026-10-09/
-  COVERAGE-MATRIX.md     every variable that moves a claim, and where the app
-                         reads it (sections 1-14; gaps ranked in 14)
-  engine/FINDINGS.md     E1-E20, the estimate engine; re-run: node harness.ts
-  claim/FINDINGS.md      C1-C29, the claim stage; re-run: ./run-all.sh
-and Caprebate/04-phase-work/sim-2026-10-09-lockwood/Lockwood-Surgery-test-run.md
-(L1-L12, the live run on a real practice with every API). Re-run the harness
-for your items before you start and again at the end; it must go clean.
-
-THE TARGET (Lakhbir, 9 Oct 2026): "the highest figure we can defend" - not
-the highest figure. Every rule below is built on our recommendation and
-SWITCHED ON in test (his rule of 29 Sep 2026: build it, then ask the
-accountant / solicitor / DPO if it is viable). Each item marked OUR READING
-goes into the Word questions document (AMENDMENT 2 - cp, never mv) under the
-tax adviser as a viability check: "we built X on basis Y - is it viable?".
-
-Each fix below gets a test that fails on the code before it (turn the
-harness case into the test). Plain words at grade 9 on every screen. Fix
-what is small and safe; anything larger goes in a new lettered phase before
-the sweep; anything that needs a person goes in the Word questions document.
-
-1. E2, SUPPORTED LIVING SHOWN FOUR TIMES TOO HIGH. The funnel's ceiling is
-   25% of spend; the engine's is 6.25% (the common-parts factor is missing
-   from CB_FUNNEL, shared.js:6729; the engine applies it at
-   sector-supported_living.js:46, 997). One figure, the engine's reading.
-2. E5, E6: the answers that should cut the figure must reach it. "Has anyone
-   already claimed on these fixtures?" (stored today as the client's own
-   claim, funnel4.ts:455) and "did the seller claim?" (NOT MAPPED in
-   funnel-session.ts) go to the engine; a taxpaying seller that never pooled,
-   after April 2014, makes the purchase nil or a referral, never the full
-   ceiling. OUR READING on wording.
-3. E7: runEngine itself refuses or nils a non-taxpayer, a charity or a prior
-   claim on the same spend - not only the question flow (engaged.ts:805 and
-   allowance-profit-comparison.ts:210 call it directly).
-4. E8, E9, E10, E17: validate inside the engine (no negative, NaN, Infinity,
-   text; grant share 0-1); the spend box reads "650k" and "1.5m" or refuses
-   them, never £650 or £1.50; a plausibility cap with a referral above it,
-   never "£∞"; no figure under £1.
-5. E12, E13: the purchase date is used (refuse a future date; 1990-2027 must
-   not all give the same figure where the law differs - 2008 integral
-   features, 2012/2014 fixtures rules, 2018 SBA, 2023 full expensing); ISO
-   dates only, a bare year is "unknown", never 1 January.
-6. E16: no trigger is read as a purchase in every sector (types.ts:70). E18:
-   exact decimal rounding.
-7. Built and switched on, then put to the tax adviser: E11 (care home new
-   build below its purchase band; extensions on the refurbishment band; the
-   90% refurbishment tops), E14 (one calendar rule for the two-year clock -
-   do it with C10 in 159d), E15 (a closed window is a referral, not nil),
-   E19 (tell a loss-making client the relief may come as a loss).
-8. The figure's own words: "Researching your buildings will move it down,
-   not up" stops being true once 159c adds works. Say what is true.
-```
-
----
-
 ## PHASE 159c — several events on one building: a purchase, then the works
 
  **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: Lockwood's £90,000 refurbishment reached no figure; on a bought-then-refitted surgery the works are often worth more than the purchase.
@@ -1250,6 +1152,13 @@ the sweep; anything that needs a person goes in the Word questions document.
    lists.
 7. Lockwood's case passes: GP purchase £650k (2025) plus a £90k refurbishment
    (2025) shows both in the ceiling, the pack, the report and the return.
+8. (Carried from Phase 159b, 9 Oct 2026.) THE STORED LOW END (E3). Since 159a
+   no screen shows a low end, but each assessment still stores one
+   (assessments.shown_low_pence, from the band's low) and it is above the
+   engine's own low on purchases (the engine harness's class (i), about 840
+   cases; it feeds the reconciliation's "range shown"). When the figure is
+   worked per event here, store the engine's low, or none (the client was
+   shown "up to £X" only), and say which in the reconciliation.
 ```
 
 ---
@@ -2549,7 +2458,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157 — the sweep — **done 6 Oct 2026**, see PHASE HISTORY; it inserted 157a and 157b |  The standing rule |
 |  Claude |  Phase 157a — the engine and the cost model: the pooling questions, the unknown seller, the cost model in the survey pack — **done 6 Oct 2026**, see PHASE HISTORY |  Loose ends the sweep held since 153e and 154a1 |
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
-|  Claude |  Phases 159b to 159j — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, ran on 9 Oct 2026 and is in PHASE HISTORY): the assessment figure made sound (159b, 13247799298); several events on one building (159c, 13247778871); each event's route and the deadline gate (159d, 13247760762); the allowances and return entries (159e, 13247762244); BCIS rate drafting (159f, 13247754275); who claims and the registers (159g, 13247752841); the legal check (159h, 13247776393); grants, VAT, acquisition costs (159i, 13247762327); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
+|  Claude |  Phases 159c to 159j — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, and 159b, the assessment figure made sound, ran on 9 Oct 2026 and are in PHASE HISTORY): several events on one building (159c, 13247778871); each event's route and the deadline gate (159d, 13247760762); the allowances and return entries (159e, 13247762244); BCIS rate drafting (159f, 13247754275); who claims and the registers (159g, 13247752841); the legal check (159h, 13247776393); grants, VAT, acquisition costs (159i, 13247762327); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
 |  Claude |  Phase 160 — the sweep, always last |  The standing rule |
 

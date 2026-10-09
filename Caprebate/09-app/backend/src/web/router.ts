@@ -2045,16 +2045,17 @@ const BOOKED_FROM: Readonly<Record<string, string>> = Object.freeze({
  * stated underneath" (slide 49). The same facts as RANGE_QUALIFIER, which the back office still shows, in the client's
  * words and with no build language.
  */
+// PHASE 159b (item 8): "move it down, not up" stops being true once later works are measured (Phase 159c), so it says what is.
 export const CLIENT_RANGE_BASIS =
-  'An indicative range, built only from what you told us in the assessment. It is the top of the range: our research ' +
-  'can move it down, not up. No property registers have been checked yet.';
+  'An indicative figure, built only from what you told us in the assessment. It is the top of the range for that. Checking the records ' +
+  'can move it down. Work you have done since, measured by our surveyor, can add to it. No property registers have been checked yet.';
 /**
  * PHASE 158b (F30, the Friary House run): once a register has answered, "No property registers have been checked yet"
  * is no longer true of the client's claim, though it is still true of the figure. So the note says both.
  */
 export const CLIENT_RANGE_BASIS_AFTER_RESEARCH =
-  'An indicative range, built only from what you told us in the assessment. It is the top of the range: our research ' +
-  'can move it down, not up. We worked it out before checking any property records. We have now started checking the property records.';
+  'An indicative figure, built only from what you told us in the assessment. It is the top of the range for that. Checking the records ' +
+  'can move it down. Work you have done since, measured by our surveyor, can add to it. We worked it out before checking any property records. We have now started checking the property records.';
 
 export function rangeBasisFor(db: Db, business_id: string): string {
   const fired = db.get<{ n: number }>("SELECT COUNT(*) AS n FROM research_sources WHERE business_id = ? AND state = 'FIRED'", [business_id])?.n ?? 0;

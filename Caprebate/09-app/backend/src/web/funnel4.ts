@@ -78,11 +78,14 @@ export const F4_TEXT: Readonly<Record<F4Screen, { heading: string; help: string 
   // PHASE 158a (F3, the Friary House run): one answer per building, so say which one a bought-then-refurbished building takes.
   'spend-on': { heading: 'What did you spend on each building?',
     help: 'Choose the one that fits best for each building. If you bought it and later did work on it, choose “We bought it”. You can tell us about the work a few questions on.' },
+  // PHASE 159b (E11): an extension is its own answer below — new space, sized like a new build.
   amounts: { heading: 'Roughly how much, and when?', help: 'A rough figure is fine. If you do not know, tick the box.' },
   tax: { heading: 'Does the business that owns each building pay UK tax?',
     help: 'Capital allowances reduce a bill for UK income tax or corporation tax, so there has to be one to claim against. Buildings owned by different companies can have different answers.' },
-  claims: { heading: 'Has anyone claimed on these buildings before?',
-    help: 'Most people do not know, and that is fine. It does not stop a claim.' },
+  // PHASE 159b (E5): the first question is about YOUR OWN earlier claim. "Has anyone claimed" mixed it with the seller's,
+  // and for a purchase a seller who claimed is what makes your claim possible. The seller has its own question.
+  claims: { heading: 'Have you claimed on these buildings before?',
+    help: 'Most people do not know, and that is fine. Not sure does not stop a claim.' },
   works: { heading: 'Any other work done to these buildings?', help: 'Work done after you bought, built or fitted out the building.' },
   details: { heading: 'Who owns each building, and where is it?',
     help: 'Each building can belong to a different business. We use these to prepare your figure and to find the right records.' },
@@ -92,7 +95,8 @@ export const F4_TEXT: Readonly<Record<F4Screen, { heading: string; help: string 
 export const SPEND_ON: Readonly<Record<string, string>> = Object.freeze({
   purchase: 'We bought it',
   new_build: 'We built it (new build)',
-  refurb: 'We refurbished or extended it',
+  refurb: 'We refurbished it',
+  extension: 'We extended it (added new space)',
   fit_out: 'We fitted out a building we lease',
 });
 
@@ -139,14 +143,32 @@ const clip = (v: string | null, max: number): string | null => {
   const t = (v ?? '').trim().replace(/\s+/g, ' ');
   return t === '' ? null : t.slice(0, max);
 };
-/** Digits only, and an unparseable figure stays NULL. It never becomes 0. */
-function num(v: string | null): number | null {
-  if (v === null) return null;
-  const cleaned = v.replace(/[^0-9.]/g, '');
-  if (cleaned === '') return null;
-  const n = Number(cleaned);
-  return Number.isFinite(n) && n > 0 ? n : null;
+/**
+ * PHASE 159b (E9): AN AMOUNT AS A PERSON TYPES IT. "£650,000", "650000", "650k", "1.5m", "£1.25 million" are read as
+ * they are meant; "-50000", "1e6", "1,5" and "1.000.000" are refused with a reason rather than read as 50000, 16, 15
+ * or nothing. An amount under £1 is refused. An unparseable figure stays NULL; it never becomes 0.
+ */
+export function parseMoney(v: string | null): { value: number | null; why: string | null } {
+  if (v === null) return { value: null, why: null };
+  const t = v.trim().toLowerCase().replace(/^£\s*/, '').replace(/\s+/g, ' ');
+  if (t === '') return { value: null, why: null };
+  if (t.startsWith('-')) return { value: null, why: 'Type the amount without a minus sign.' };
+  const m = /^((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)\s*(k|thousand|m|mn|million)?$/.exec(t);
+  if (m === null) return { value: null, why: 'Type the amount in pounds, like 650000, £650,000, 650k or 1.5m.' };
+  const n = Number((m[1] ?? '').replace(/,/g, ''));
+  const unit = m[2] ?? '';
+  const value = Math.round(n * (unit === 'k' || unit === 'thousand' ? 1000 : unit === '' ? 1 : 1000000) * 100) / 100;
+  if (!Number.isFinite(value) || value < 1) return { value: null, why: 'Type an amount of at least £1.' };
+  return { value, why: null };
 }
+function num(v: string | null): number | null { return parseMoney(v).value; }
+
+/** PHASE 159b (E12): the first month a "MM/YYYY" or "YYYY" answer could mean, as "YYYY-MM", or null. */
+function firstMonth(d: string): string | null {
+  const r = (FUNNEL as unknown as { monthRange: (x: string) => [string, string] | null }).monthRange(d);
+  return r === null ? null : r[0];
+}
+const thisMonth = (): string => new Date().toISOString().slice(0, 7);
 const MONTH_YEAR = /^(0?[1-9]|1[0-2])\/(19|20)\d{2}$|^(19|20)\d{2}$/;
 const YEAR = /^(19|20)\d{2}$/;
 
@@ -224,14 +246,18 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
   if (id === 'amounts') {
     bs.forEach((b, i) => {
       b['spend_unknown'] = f.get(`b${i}_spend_unknown`) === 'on';
-      b['spend'] = b['spend_unknown'] === true ? null : num(f.get(`b${i}_spend`));
+      const money = parseMoney(f.get(`b${i}_spend`));
+      b['spend'] = b['spend_unknown'] === true ? null : money.value;
+      if (b['spend_unknown'] !== true && money.why !== null) errors.push(`For ${label(b, i)}: ${money.why}`);
       b['date_unknown'] = f.get(`b${i}_date_unknown`) === 'on';
       const date = clip(f.get(`b${i}_date`), 10);
       b['date'] = b['date_unknown'] === true ? null : date;
-      if (b['spend'] === null && b['spend_unknown'] !== true) errors.push(`Tell us roughly how much for ${label(b, i)}, or tick "I don't know".`);
+      if (b['spend'] === null && b['spend_unknown'] !== true && money.why === null) errors.push(`Tell us roughly how much for ${label(b, i)}, or tick "I don't know".`);
       if (b['date_unknown'] !== true) {
         if (date === null) errors.push(`Tell us roughly when for ${label(b, i)}, or tick "I don't know".`);
         else if (!MONTH_YEAR.test(date)) { b['date'] = null; errors.push(`For ${label(b, i)}, write the date as month and year, like 06/2021, or just the year.`); }
+        // PHASE 159b (E12): a date that has not happened yet is refused.
+        else if ((firstMonth(date) ?? '') > thisMonth()) { b['date'] = null; errors.push(`For ${label(b, i)}, the date is in the future. Give the date it happened, or tick "I don't know".`); }
       }
     });
   }
@@ -281,12 +307,14 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
       }
       b['works_type'] = pick(f.get(`b${i}_works_type`), OPTIONS.works_type);
       b['works_spend_unknown'] = f.get(`b${i}_works_spend_unknown`) === 'on';
-      b['works_spend'] = b['works_spend_unknown'] === true ? null : num(f.get(`b${i}_works_spend`));
+      const wmoney = parseMoney(f.get(`b${i}_works_spend`));
+      b['works_spend'] = b['works_spend_unknown'] === true ? null : wmoney.value;
+      if (b['works_spend_unknown'] !== true && wmoney.why !== null) errors.push(`For the work on ${label(b, i)}: ${wmoney.why}`);
       b['works_year_unknown'] = f.get(`b${i}_works_year_unknown`) === 'on';
       const y = clip(f.get(`b${i}_works_year`), 4);
       b['works_year'] = b['works_year_unknown'] === true ? null : y !== null && YEAR.test(y) ? y : null;
       if (b['works_type'] === null) errors.push(`Tell us what kind of work was done to ${label(b, i)}.`);
-      if (b['works_spend'] === null && b['works_spend_unknown'] !== true) errors.push(`Tell us roughly how much the work on ${label(b, i)} cost, or tick "I don't know".`);
+      if (b['works_spend'] === null && b['works_spend_unknown'] !== true && wmoney.why === null) errors.push(`Tell us roughly how much the work on ${label(b, i)} cost, or tick "I don't know".`);
       if (b['works_year'] === null && b['works_year_unknown'] !== true) errors.push(`Tell us the year of the work on ${label(b, i)}, like 2023, or tick "I don't know".`);
     });
   }
@@ -372,11 +400,15 @@ export function figureF4(s: S): { high: number; low: number; parts: BuildingFigu
     if (b['is_uk_taxpayer'] === 'no') {
       return { ...base, high: null, low: null, left_out: 'Not included: the business that owns it does not pay UK income tax or corporation tax, so there is no bill to reduce.' };
     }
-    const one = FUNNEL.figure({ ...(s as object), properties: [b] } as unknown as FunnelState) as unknown as { total?: number; breakdown?: { low?: number; high?: number; ceiling?: number }[] };
+    const one = FUNNEL.figure({ ...(s as object), properties: [b] } as unknown as FunnelState) as unknown as {
+      total?: number; breakdown?: { low?: number; high?: number; ceiling?: number }[]; unpricedProperties?: { why?: string; referral?: boolean }[] };
     const row = one.breakdown?.[0];
     const high = typeof row?.ceiling === 'number' ? row.ceiling : typeof row?.high === 'number' ? row.high : null;
+    // PHASE 159b: where the engine will not size a building (an earlier claim, the seller, the date, its size), its words.
+    const cut = one.unpricedProperties?.[0];
+    const why = cut?.referral === true && typeof cut.why === 'string' ? `No figure for this one yet: ${cut.why}.` : null;
     return { ...base, high, low: typeof row?.low === 'number' ? row.low : null,
-      left_out: high === null ? 'We need a rough figure for what was spent on this one before we can size it.' : null };
+      left_out: high === null ? (why ?? 'We need a rough figure for what was spent on this one before we can size it.') : null };
   });
   const counted = parts.filter((p) => p.high !== null);
   const high = counted.reduce((a, p) => a + (p.high ?? 0), 0);
@@ -390,8 +422,12 @@ export function figureF4(s: S): { high: number; low: number; parts: BuildingFigu
     if (b['is_uk_taxpayer'] === 'no') return;
     const g = FRONTDOOR.gateQ1b({ is_uk_taxpayer: b['is_uk_taxpayer'] as string | null, current_year_position: b['current_year_position'] as string | null } as never) as { condition?: string | null };
     if (typeof g.condition === 'string' && g.condition !== '') out.push(`${label(b, i)}: ${g.condition}`);
-    if (b['own_prior_claim'] === 'yes' || b['own_prior_claim'] === 'not sure') {
+    if (b['own_prior_claim'] === 'not sure') {
       out.push(`${label(b, i)}: you told us a claim may already have been made on its fixtures. That does not stop the assessment, but an adviser will go through it with you before any figure is relied on.`);
+    }
+    // PHASE 159b (E19): a business not making a profit still has the allowances; they come as a loss to carry.
+    if (b['current_year_position'] === 'loss' || b['current_year_position'] === 'breakeven' || b['current_year_position'] === 'unsure') {
+      out.push(`${label(b, i)}: if the business is not making a profit, the relief does not cut this year's tax. It makes a loss, which can usually be set against other profits or carried to later years.`);
     }
   });
   return { high, low, parts, assumptions: out };
@@ -452,7 +488,7 @@ export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; post
   if (id === 'claims') {
     return h`${bs.map((b, i) => card(b, i, h`${sameBox(i, 'claims', b['same_claims'], 'Same answer as Building 1')}
       <div class="f4-own">
-        <p class="fl">Has anyone already claimed on the fixtures in this building, such as the wiring and heating?</p>
+        <p class="fl">Have you, or your business, already claimed on the fixtures in this building, such as the wiring and heating?</p>
         ${radios(`b${i}_prior`, OPTIONS.own_prior_claim, b['own_prior_claim'])}
       </div>
       ${b['trigger'] === 'purchase' ? h`<p class="fl">You bought this one. Do you know whether the seller claimed?</p>
@@ -565,9 +601,12 @@ export function figureBody(s: S, slots: { available: true; slots: readonly { sta
   const reach = typeof c['channel'] === 'string' ? c['channel'] as string : '';
   return h`<div class="f4-reveal">
       <p class="f4-kicker">Your figure</p>
-      <p class="f4-lead">Your buildings could hold qualifying fixtures worth up to</p>
+      ${fig.high > 0 ? h`<p class="f4-lead">Your buildings could hold qualifying fixtures worth up to</p>
       ${revealAmount(fig.high)}
-      <p class="help">A ceiling, not a forecast. Researching your buildings will move it down, not up.</p>
+      <p class="help">A ceiling, not a forecast, for what you have told us. Checking the records can move it down. Work you have done since, measured by our surveyor, can add to it.</p>`
+        // PHASE 159b: no building we could size is never "up to £0" — that reads as "you are owed nothing".
+        : h`<p class="f4-lead">We cannot give you a figure yet.</p>
+      <p class="help">Each building below says why. An adviser will go through it with you.</p>`}
     </div>
     <div class="f4-parts">${fig.parts.map((p) => h`<div class="f4-part"><p class="f4-part-name">${p.label}${p.address === null ? '' : ` — ${p.address}`}</p>
       ${p.high === null ? h`<p class="help">${p.left_out ?? ''}</p>` : h`<p class="f4-part-figure">up to £${Math.round(p.high).toLocaleString('en-GB')}</p>`}</div>`)}</div>

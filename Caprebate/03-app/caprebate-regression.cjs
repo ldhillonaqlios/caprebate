@@ -3875,13 +3875,14 @@ if (startSuite("P", "Phase 71 — the multi-property front door")) {
 
   check("P1 — a purchase apportions; everything else is invoice analysis",
     CB_FRONTDOOR.TRIGGERS.map(t => CB_FRONTDOOR.methodFor(t)),
-    ["s562_apportionment","invoice_analysis","invoice_analysis","invoice_analysis"]);
+    // PHASE 159b (E11): an extension is its own answer, fourth of five; it is invoice analysis like the other works.
+    ["s562_apportionment","invoice_analysis","invoice_analysis","invoice_analysis","invoice_analysis"]);
 
   /* The spend pair follows the property's OWN trigger. A client who bought
      one and built another must be asked correctly on each. */
   check("P1 — each trigger asks for its own spend pair",
     CB_FRONTDOOR.TRIGGERS.map(t => CB_FRONTDOOR.spendFieldsFor(t).amount),
-    ["purchase_price","build_cost","works_cost","fitout_cost"]);
+    ["purchase_price","build_cost","works_cost","works_cost","fitout_cost"]);   // PHASE 159b: the extension's cost is a works cost
 
   check("P1 — a leasehold fit-out also asks when the lease began",
     CB_FRONTDOOR.spendFieldsFor("fit_out").extra, "lease_start_year");
@@ -4097,9 +4098,10 @@ if (startSuite("Q", "Phase 72 — the funnel, wired in")) {
 
   /* The four front-door triggers collapse onto three band keys. A
      refurbishment and a fit-out share a band; they do not share a method. */
-  check("Q2 — the four triggers map onto three band keys",
+  // PHASE 159b (E11): five triggers now; an extension is new space and takes the new-build band.
+  check("Q2 — the five triggers map onto three band keys, an extension onto the new-build one",
     CB_FRONTDOOR.TRIGGERS.map(t => CB_BAND.bandKey(t)),
-    ["purchase","new_build","refurb_fitout","refurb_fitout"]);
+    ["purchase","new_build","refurb_fitout","new_build","refurb_fitout"]);
 
   check("Q2 — an unknown trigger yields no band rather than a default one",
     CB_BAND.bandFor("gp","something_else"), null);
@@ -4149,8 +4151,9 @@ if (startSuite("Q", "Phase 72 — the funnel, wired in")) {
     S.properties = [{ address:"A", sector:"gp", trigger:"purchase", spend:1200000 }];
     const a = CB_FUNNEL.assumptions(S);
 
-    check("Q4 — the ceiling is described as a ceiling that moves down",
-      a.some(x => /ceiling, not a forecast/i.test(x) && /moves it down/i.test(x)), true);
+    // PHASE 159b (item 8): still a ceiling for what was told; checking can move it down, later work can add to it.
+    check("Q4 — the ceiling is described as a ceiling: checking can move it down, later work can add to it",
+      a.some(x => /ceiling, not a forecast/i.test(x) && /can move it down/i.test(x) && /can add to it/i.test(x)), true);
 
     check("Q4 — the band is described as assessed, not independently calibrated",
       a.some(x => /assessed, not independently calibrated/i.test(x)), true);
@@ -4175,8 +4178,13 @@ if (startSuite("Q", "Phase 72 — the funnel, wired in")) {
     const S = CB_FUNNEL.blankState();
     S.is_uk_taxpayer = "yes"; S.own_prior_claim = "yes";
     S.properties = [{ address:"A", sector:"gp", trigger:"purchase", spend:1200000 }];
-    check("Q4 — a prior claim appears in the assumptions rather than stopping the flow",
-      CB_FUNNEL.assumptions(S).some(x => /claim may already have been made/i.test(x)), true);
+    // PHASE 159b (E5): a KNOWN earlier claim on these fixtures now takes the property's figure away (an adviser checks);
+    // "not sure" still does not stop the flow, and is still said.
+    check("Q4 — a known earlier claim on these fixtures: no figure for that property, and the reason given",
+      [CB_FUNNEL.figure(S).total, CB_FUNNEL.figure(S).unpricedProperties.length, /already been claimed on/.test(CB_FUNNEL.figure(S).unpricedProperties[0].why)], [0, 1, true]);
+    S.own_prior_claim = "not sure";
+    check("Q4 — a prior claim 'not sure' appears in the assumptions rather than stopping the flow",
+      [CB_FUNNEL.assumptions(S).some(x => /claim may already have been made/i.test(x)), CB_FUNNEL.figure(S).total > 0], [true, true]);
   })();
 
   /* Multiple properties get the arithmetic explained, because adding
@@ -8676,6 +8684,66 @@ if (startSuite("AM", "Phase 157a — the seller whose entitlement is not known, 
     CASES.map(c => run("supported_living", c).flags.some(f => UNK.test(f))), CASES.map(() => false));
   check("AM9 — not a purchase: nothing changes",
     FOUR.map(sec => run(sec, { trigger: ["new_build"], prior_owner_claimed: "no" }).flags.some(f => UNK.test(f))), FOUR.map(() => false));
+}
+
+if (startSuite("AN", "Phase 159b — the assessment figure and the engine's inputs made sound (the stress test of 9 October 2026, E2-E19)")) {
+  const safe = fn => { try { return fn(); } catch (e) { return "threw: " + e.message; } };
+  const ALL = ["care_homes", "dental", "supported_living", "gp", "private_hospital"];
+  const J = x => JSON.stringify(x);
+  const MODS = {}; const E = sec => (MODS[sec] = MODS[sec] || liftGated(sec, []));
+  const base = (sec, extra) => Object.assign({ sector: sec, trigger: ["purchase"], deal: "property", base_amount: 650000, claimant_type: "company",
+    claimant_raw: "company", activity: "trade", dwelling_setting: "institution_commercial", acuity: "normal", flags: [], assumptions: [], lrr: false,
+    return_in_time: false, nation: "england", plant_serves: "individual", funding: "no" }, extra || {});
+  const run = (sec, extra) => safe(() => E(sec).runEngine(base(sec, extra)));
+  const fig = (props, extra) => { const S = Object.assign(CB_FUNNEL.blankState(), { is_uk_taxpayer: "yes", __now: "2026-10-09T12:00:00Z" }, extra || {});
+    S.properties = props; return CB_FUNNEL.figure(S); };
+  const one = (p, extra) => fig([Object.assign({ address: "A", sector: "gp", trigger: "purchase", spend: 650000 }, p)], extra);
+
+  check("AN1 E2 — supported living: the client's ceiling is the engine's (band x 25% common parts), £40,625 on £650,000, on every trigger",
+    ["purchase", "new_build", "refurb", "extension", "fit_out"].map(t => one({ sector: "supported_living", trigger: t }).total), [40625, 40625, 40625, 40625, 40625]);
+  check("AN1b — and the engine gives the same top",
+    safe(() => Math.round(run("supported_living", { trigger: ["refurb"] }).QE[1])), 40625);
+  check("AN2 E5 — the client's own earlier claim on these fixtures: 'yes' takes the figure away; 'not sure' and 'no' keep it",
+    ["yes", "not sure", "no"].map(v => one({ own_prior_claim: v }).total > 0), [false, true, true]);
+  check("AN3 E6 N4 — a purchase where the seller did NOT claim: a figure only when it is known to be before April 2014 (month or whole year); after, straddling, or not known, none",
+    ["03/2025", "2015", "2014", "04/2014", null, "03/2014", "2013"].map(d => one({ previous_owner_claimed: "no", date: d }).total > 0),
+    [false, false, false, false, false, true, true]);
+  check("AN3b — a seller who claimed, or 'don't know', keeps the figure; and a seller answer on a new build changes nothing",
+    [one({ previous_owner_claimed: "yes", date: "03/2025" }).total > 0, one({ previous_owner_claimed: "dont_know", date: "03/2025" }).total > 0,
+     one({ trigger: "new_build", previous_owner_claimed: "no", date: "03/2025" }).total > 0], [true, true, true]);
+  check("AN4 E12 — a future date gives no figure; spend known to be before April 2008 (works or a purchase) gives none; 2008 as a whole year, and 04/2008, are not known to be before",
+    [one({ date: "12/2099" }).total, one({ trigger: "new_build", date: "2005" }).total, one({ trigger: "refurb", date: "03/2008" }).total,
+     one({ trigger: "new_build", date: "2008" }).total > 0, one({ date: "2005", previous_owner_claimed: "yes" }).total, one({ trigger: "refurb", date: "04/2008" }).total > 0],
+    [0, 0, 0, true, 0, true]);
+  check("AN4b E13 — an amendment window needs a whole ISO period end: '2025' and '31/03/2025' are not known; '2025-03-31' is",
+    ["2025", "31/03/2025", "2025-03-31"].map(pe => CB_CASH.deriveAmendmentWindow({ accounting_period_end: pe, claimant_type: "company" }, new Date("2026-10-09")).known), [false, false, true]);
+  check("AN5 E10 E17 — above £100 million a person sizes it; a ceiling under £1 is no figure; ten buildings never sum to Infinity",
+    [one({ spend: 2e8 }).total, one({ spend: 0.4 }).total, isFinite(fig(Array.from({ length: 10 }, () => ({ sector: "private_hospital", trigger: "refurb", spend: 1e8 }))).total)],
+    [0, 0, true]);
+  check("AN6 E18 — exact rounding: £650 at 35% is £228, not £227",
+    CB_BAND.rangeFor("private_hospital", "new_build", 650).low, 228);
+  check("AN7 E11 — a care home's new-build top is at least its purchase top (switched on), every sector; an extension takes the new-build band",
+    [CB_BAND.SWITCHES.care_home_new_build_top_at_purchase, ALL.every(sec => CB_BAND.BANDS[sec].new_build[1] >= CB_BAND.BANDS[sec].purchase[1]),
+     J(CB_BAND.bandFor("gp", "extension")) === J(CB_BAND.BANDS.gp.new_build)], [true, true, true]);
+  check("AN8 E16 — no trigger is read as a purchase in all five engines",
+    ALL.map(sec => safe(() => J(run(sec, { trigger: [] }).QE) === J(run(sec, { trigger: ["purchase"] }).QE))), ALL.map(() => true));
+  check("AN9 E8 — a base that is negative, Infinity, NaN or text, or a grant share of 150% or -50%: never a negative, NaN or infinite figure, in all five engines",
+    ALL.map(sec => [{ base_amount: -1000 }, { base_amount: Infinity }, { base_amount: NaN }, { base_amount: "650000" }, { grant_fraction: 1.5 }, { grant_fraction: -0.5 }]
+      .every(x => { const r = run(sec, x); return r && r.QE && r.QE.every(v => typeof v === "number" && isFinite(v) && v >= 0) && r.TS.every(v => typeof v === "number" && isFinite(v) && v >= 0); })),
+    ALL.map(() => true));
+  check("AN9b — and a grant above 100% is read as 100%: nothing left to claim",
+    ALL.map(sec => safe(() => Math.round(run(sec, { grant_fraction: 1.5 }).QE[1]))), ALL.map(() => 0));
+  check("AN10 E7 — called directly: no UK tax (or a charity) gives no saving and a referral; the client's own fixtures claim gives no spend and no saving",
+    ALL.map(sec => [run(sec, { is_taxpayer: "no" }), run(sec, { charity: true }), run(sec, { prior_claim_self: true })]
+      .map((r, i) => [i === 2 ? r.QE[1] : "-", r.TS[1], r.outcome])),
+    ALL.map(() => [["-", 0, "referral"], ["-", 0, "referral"], [0, 0, "referral"]]));
+  check("AN11 E13 — a cessation date is ISO or not known: '2019' and '01/06/2019' relieve nothing and decide nothing; '2019-06-01' is the nil",
+    safe(() => ["2019-06-01", "2019", "01/06/2019"].map(d => CB_S187A.poolingNil({ flags: [], assumptions: [], trigger: ["purchase"], deal: "property", claimant_type: "company",
+      prior_owner_entitled: "yes", prior_owner_claimed: "no", past_owner_cessation_date: d }))), [true, false, false]);
+  check("AN12 E19 — a loss, break-even or 'not sure' says the relief may come as a loss; a profit does not",
+    ["loss", "breakeven", "unsure", "profitable"].map(v => { const S = Object.assign(CB_FUNNEL.blankState(), { is_uk_taxpayer: "yes", current_year_position: v });
+      S.properties = [{ address: "A", sector: "gp", trigger: "purchase", spend: 650000 }]; return CB_FUNNEL.assumptions(S).some(x => /It makes a loss/.test(x)); }),
+    [true, true, true, false]);
 }
 
 /* ------------------------------------------------------------------- report */
