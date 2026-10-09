@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 7 |
+| Ready - Claude can build | 6 |
 | Ready - Lakhbir action | 26 |
 | Built - awaiting sign-off | 131 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 318 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1367,7 +1367,7 @@
 
 ### Phase 159d - each event's route: the deadline gate, and "do you still own it"
 
-`13247760762` · **Ready - Claude can build** · owner Claude
+`13247760762` · **Working on it** · owner Claude · **CLAIMED BY the Mac**
 
 - Note 2026-10-09 (Stress test 9 Oct 2026): Written 9 Oct 2026 from the stress test of that day (Lockwood live run L1-L12, engine E1-E20, claim stage C1-C29, coverage matrix): evidence in 04-phase-work/stress-2026-10-09/ (OneDrive); the phase is in ACTION-PLAN.md above the sweep.
 
