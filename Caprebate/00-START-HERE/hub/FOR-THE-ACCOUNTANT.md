@@ -1873,7 +1873,7 @@ Signed .............................  Date ..........................
 
  **This register gains one entry and one board item**: ACC-H3, the accountant's own confirmation link and the defence pack's list of records (board item 13245993980). Phase 158d wrote the two checks into this register, but made no board item for them, so no count saw them. **Board items covered: 51.**
 
- **And the board's own total at the close of Phase 159b, 9 October 2026, counted in code: 130 items carry that status**: fifty-two in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-two plus ten plus sixty-eight is 130. (At the close of the Phase 159 sweep it was 129; Phase 159b added ACC-H4.)
+ **And the board's own total at the close of Phase 159c, 9 October 2026, counted in code: 131 items carry that status**: fifty-three in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-three plus ten plus sixty-eight is 131. (At the close of Phase 159b it was 130; Phase 159c added ACC-H5.)
 
 ## Phase 159b, 9 October 2026 — ACC-H4 · four readings behind the online figure, built and on in the test system
 
@@ -1885,3 +1885,12 @@ Signed .............................  Date ..........................
 -  **Two kept on purpose.** A closed window after a seller pooled with no election stays a referral, not nil; a loss-making client keeps the same figure and is told the relief may come as a loss. (Question 250.)
 
  **ACC-H4 · Board item 13249231366, added 9 October 2026 by Phase 159b.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 52.**
+
+## Phase 159c, 9 October 2026 — ACC-H5 · several events on one building: the works counted on their own, and priced on what they cost
+
+ We build first and ask you second (Lakhbir, 29 September 2026). Both are on in the test system only, with invented data. Each is a question in the Word questions document, Section 2, with our recommendation and a worked example:
+
+-  **Each spend on a building is its own event.** A purchase is sized on the purchase range, with the second-hand fixtures rules on the price; each refit, extension, fit-out or conversion since is sized on its own range, on its own cost; the building's figure is the sum. One amount given for a purchase and works together is read as the purchase price only. The client's own earlier claim on a building stops every event on it until an adviser checks. Lockwood Surgery, bought for £650,000 and refurbished for £90,000: up to £258,000, where it showed £195,000. (Question 251.)
+-  **Work the client paid for is priced on what it cost.** In the survey pack each piece of work has its own values from the final account by element. The plant, with the builder's work and the demolition of old plant that serve it, qualifies, with a share of the preliminaries and fees in proportion to the direct costs. The repair part is shown as a deduction from profits, not an allowance. The report and the return entries show each spend on its own line. (Question 252.)
+
+ **ACC-H5 · Board item 13250219042, added 9 October 2026 by Phase 159c.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 53.**
