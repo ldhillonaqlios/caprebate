@@ -12639,3 +12639,18 @@ NOTHING LEFT  beyond those lines. No new phase: the next phase is the sweep (Pha
 ```
 
  **Claim cleared** in the commit that carries this record.
+
+---
+
+## Stress test — 9 October 2026 (not a numbered phase: it wrote Phases 159a to 159j)
+
+**Stress test, 9 Oct 2026.** Lakhbir asked for a test run on a real practice (Lockwood Surgery, Huddersfield HD1 3XH, NHS ODS B85641) with every API firing and every pack built, then: "We need to ensure that the engine is sound and looks at every variable so you need to stress test this - and fixes need to be phases."
+
+- **Did:** ran Lockwood twice on a local copy (lookups on, the TEST letter signable, emails held) from the assessment to Closed. Live and passing: Companies House search, company profile and PSC (the last two by the smoke command), Homedata (postcode, property and title boundary, planning), postcodes.io, CQC, EPC (a display certificate, 265.9 m²), planning (planning.data.gov.uk and PlanIt), Ordnance Survey, Zoom (made and cancelled), Didit, and the document reader. Failing: INSPIRE (L1). Not run: Price Paid (wrongly, L11). Packs built and exported to `04-phase-work/sim-2026-10-09-lockwood/packs/` (OneDrive). Then three independent stress tests: the estimate engine (363,611 checks, E1-E20), the claim stage (pack sums, window, return entries, versions, 20,367 legal paths; C1-C29), and a coverage matrix of about 75 variables against the code. Evidence: `04-phase-work/stress-2026-10-09/` (OneDrive; harnesses re-run from there).
+- **Found (the largest):** works after a purchase reach no figure (one event per building); the deadline gate kills claims the W2 route allows; return entries are writing-down allowances only; rates have no source and no BCIS; a pack version can be approved after sign-off and the released set stays on the old one; supported living shown four times too high at the assessment; staff see a range the client never saw; Price Paid holds category B records for surgeries; a dormant company was offered as the owner; INSPIRE now needs a cookie on its redirect.
+- **Decided by Lakhbir, 9 Oct 2026:** "the highest figure we can defend"; always show the "up to" figure; the several-events gap "is needed"; the W2 route agreed "but then remember refurbishment and also tax allowances" (route and allowances per event); BCIS rate drafting "needs to happen"; BCIS "said its fine for us to do what we are doing" (relayed by Lakhbir).
+- **Left, and where it now lives:** every finding is BUILDABLE and is in Phases 159a-159j (board items 13247775482, 13247799298, 13247778871, 13247760762, 13247762244, 13247754275, 13247752841, 13247776393, 13247762327, 13247759654), in ACTION-PLAN.md and the run sheet above the sweep. The BCIS data itself is a Lakhbir action (13247762330). The OUR READING items go to the tax adviser as viability checks from inside the phase that builds each.
+- **Tests:** no application code changed; the suite is unchanged. Tracker check green (497 items, 131 subitems), self-test green; no orphans at "Ready - Claude can build" before the phases were added.
+- **Branch:** claude/stress-159a (pull request against main).
+
+**The lock** (hub/CLAIM.md) was held on this machine while the work ran and is clear in this commit; nothing else was running.
