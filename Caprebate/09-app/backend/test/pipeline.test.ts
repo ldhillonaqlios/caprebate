@@ -707,6 +707,8 @@ describe('exits keep the record — nothing is deleted', () => {
       // by the store (test/finance-claim.test.ts) — it is kept here so the exit is still tried with an invoice on record.
       app.db.run("INSERT INTO invoices (id,business_id,claim_value_pence,fee_pence,invoice_status,payment_status,vat_position,created_at) VALUES (?,?,NULL,NULL,'RAISED','UNPAID','not VAT registered',?)",
         [randomUUID(), org.business, T0]);
+      // PHASE 159d: the exit ends a claim only where nothing is left to claim — every part W3. The property sold is that.
+      app.db.run("UPDATE properties SET disposal_date = '2025-01-01' WHERE business_id = ?", [org.business]);
       for (const stage of S.PROCEDURE_KEYS) {
         const c = claimAt(app, org, stage, { signoff: true });
         const r = P.moveClaim(deps(app), actor('SALES'), c, { kind: 'EXIT', to: 'OUTSIDE_AMENDMENT_WINDOW', reason_code: 'AMENDMENT_WINDOW_CLOSED' });

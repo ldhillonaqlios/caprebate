@@ -77,6 +77,8 @@ export type ReportModel = {
   readonly headline_note: string | null;
   /** PHASE 159c: the opening of section 01, which says how the figure was worked out. */
   readonly method_lede: string;
+  /** PHASE 159d (item 6): which way each part of the claim goes in, as approved. Empty in a version approved before. */
+  readonly routes: readonly { readonly label: string; readonly words: string }[];
 };
 
 export const PURCHASE_LEDE = 'When you buy a building, its price is split three ways. There is the land, the building itself, and the fixtures that qualify for tax relief. The law says how (section 562 of the Capital Allowances Act 2001). We share it out by what each part would cost to build again today.';
@@ -84,6 +86,7 @@ const WORKS_LEDE = 'Work you paid for is claimed on what it cost. The surveyor t
 
 type SnapEvents = {
   purchase_applies: boolean;
+  purchase_w3?: boolean;
   purchase: { qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null } | null;
   works: { label: string; inputs: Record<string, number | null>; qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null; repairs_pence: number | null }[];
 };
@@ -237,6 +240,7 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     chapters: ((x as { chapters?: readonly ReportChapter[] }).chapters ?? []).map((c) => ({ n: c.n, title: c.title, applies: c.applies, not_applies_words: c.not_applies_words,
       rows: c.rows.map((r) => ({ label: r.label, value: r.value, missing: r.missing })), items: c.items.map((i) => ({ label: i.label, detail: i.detail })) })),
     ...eventsPart(ev),
+    routes: ((x as { routes?: readonly { label: string; route: string; words: string }[] }).routes ?? []).map((r) => ({ label: r.label === 'The claim' ? 'Your claim' : r.label, words: r.words })),
   };
 }
 
@@ -244,6 +248,9 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
 function eventsPart(ev: SnapEvents | undefined): Pick<ReportModel, 'events' | 'headline_note' | 'method_lede'> & Partial<Pick<ReportModel, 'flow' | 'sum_words'>> {
   if (ev === undefined) return { events: [], headline_note: null, method_lede: PURCHASE_LEDE };
   const rows = [
+    // PHASE 159d (item 8): a purchase that failed the legal check is named, with no figure.
+    ...(ev.purchase_w3 === true ? [{ label: 'The purchase', qualifying: '£0', main: '£0', special: '£0',
+      note: 'Not claimed. The purchase does not pass the second-hand fixtures rules (section 187A), so only the work done since is claimed.' }] : []),
     ...(ev.purchase_applies && ev.purchase !== null ? [{ label: 'The purchase', qualifying: poundsWords(ev.purchase.qualifying_pence), main: poundsWords(ev.purchase.main_pool_pence),
       special: poundsWords(ev.purchase.special_pool_pence), note: 'Shared out from the price, by what each part would cost to build again (section 562).' }] : []),
     ...ev.works.map((w) => ({ label: w.label, qualifying: poundsWords(w.qualifying_pence), main: poundsWords(w.main_pool_pence), special: poundsWords(w.special_pool_pence),
@@ -328,6 +335,7 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
       <p>A buyer from a business that could claim may get nothing on the fixtures. The value must have been fixed in time (sections 187A and 198 of the Act). We asked the questions below. Each answer says where it came from.</p>
       ${m.legal.answers.length === 0 ? raw('') : h`<table class="rp-table"><thead><tr><th>Question</th><th>Answer</th><th>From</th></tr></thead><tbody>
         ${m.legal.answers.map((a) => h`<tr><td>${a.ask}</td><td>${a.answer}</td><td>${a.source}</td></tr>`)}</tbody></table>`}
+      ${m.routes.length === 0 ? raw('') : h`<h3>How each part goes in</h3><ul>${m.routes.map((r) => h`<li><b>${r.label}.</b> ${r.words}</li>`)}</ul>`}
       <h2 class="rp-h"><span>04</span>What happens next</h2>
       <ol class="rp-steps">${m.next.map((s) => h`<li><b>${s.title}</b> ${s.words}</li>`)}</ol>
     </section>
@@ -650,6 +658,14 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
     c.ops.push({ k: 'line', x1: L, y1: c.y, x2: R, y2: c.y, color: C.line, lw: 0.5 });
   }
   c.y += 16;
+  // PHASE 159d (item 6): which way each part of the claim goes in.
+  if (m.routes.length > 0) {
+    c.need(40);
+    c.text(L, c.y, 'How each part goes in', 'Times-Bold', 13, C.ink);
+    c.y += 8;
+    for (const r of m.routes) c.para(`${r.label}. ${r.words}`, { size: 9.5, after: 4 });
+    c.y += 8;
+  }
   c.heading('04', 'What happens next');
   m.next.forEach((s, i) => {
     const title = wrapText(s.title, 'Helvetica-Bold', 10, W - 36);

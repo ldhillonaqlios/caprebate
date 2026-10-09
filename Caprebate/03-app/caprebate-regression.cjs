@@ -2666,20 +2666,25 @@ if (startSuite("L", "s.187A requirements and clocks — A-1, A-4, A-5, A-6")) {
 
   check("A-1 — a window open on the right date is reported LIVE",
     S.assess(direct(sameDate)).outcome, "LIVE");
-  check("A-1 — a closed window is INDET, NOT nil: s.187A(6)(b) is A-2 and is not built",
-    S.assess(direct({ past_owner_disposal_mode: "sold_market",
-                      acquisition_date: "2015-01-01" })).outcome, "INDET");
+  /* PHASE 159d (C27): restated. Bought STRAIGHT from an owner who claimed, the period closed and nothing fixing the
+     value: nil — the s.187A(6)(b) route needs an owner in between. With an owner in between the closed window is still
+     INDET, not nil (A-2), as it was; and a tribunal application lodged in time keeps the direct case open. */
+  check("A-1 — a closed window, bought straight from an owner who claimed, is NIL (C27); with an owner in between it is INDET, NOT nil: s.187A(6)(b) is A-2",
+    [S.assess(direct({ past_owner_disposal_mode: "sold_market", acquisition_date: "2015-01-01" })).outcome,
+     S.assess(chained({ past_owner_disposal_mode: "sold_market", acquisition_date: "2015-01-01", intervening_owner_acquisition_date: "2014-06-01" })).outcome,
+     S.assess(direct({ past_owner_disposal_mode: "sold_market", acquisition_date: "2015-01-01", tribunal_application_date: "2016-06-01", tribunal_status: "undetermined" })).outcome],
+    ["NIL", "INDET", "INDET"]);
   /* PHASE 53 correction. This asserted the board id was in `action`, which is
      the string rendered to the CLIENT in the "Why a specialist needs to look"
      panel. The handoff still has to be traceable, so it moved to `ref`, and
      the assertion moved with it — plus its mirror, which is the one that
      matters: the client-facing string must NOT carry it. */
   check("A-1 — the closed-window handoff still names A-2, in the INTERNAL ref field",
-    /12921346993/.test(S.assess(direct({ past_owner_disposal_mode: "sold_market",
-                      acquisition_date: "2015-01-01" })).ref), true);
+    /12921346993/.test(S.assess(chained({ past_owner_disposal_mode: "sold_market",
+                      acquisition_date: "2015-01-01", intervening_owner_acquisition_date: "2014-06-01" })).ref), true);   // PHASE 159d: the case that is still INDET
   check("A-1 — and the CLIENT-FACING text does not carry a board item number",
-    /12921346993|board item/i.test(S.assess(direct({ past_owner_disposal_mode: "sold_market",
-                      acquisition_date: "2015-01-01" })).action), false);
+    /12921346993|board item/i.test(S.assess(chained({ past_owner_disposal_mode: "sold_market",
+                      acquisition_date: "2015-01-01", intervening_owner_acquisition_date: "2014-06-01" })).action), false);
 
   /* the F4 limb, and its A-1 guard */
   const SIX_L = ["amount", "plant", "land", "interest", "utrs", "both"];
@@ -6407,11 +6412,14 @@ if (startSuite("X", "Phase 132 — s.33B, the company rate, the taper band, part
     const P = (extra, pe) => Object.assign({ claimant_type: "partnership", accounting_period_end: pe }, extra);
     const earlyCo = pe => pe.slice(5) >= "04-06" || pe.slice(5) <= "01-30";
     const lateCo = pe => pe.slice(5) >= "02-01" && pe.slice(5) <= "04-05";
+    /* PHASE 159d: the grid is every period end in 2023, before the basis period reform (C25) moves the individual date of
+       a period ending from 6 April 2024 that is not on 31 March to 5 April. X5 is about the company partner's date,
+       s.12AA(5B), and reads the same there; the reform has its own checks in Suite AP. */
     const grid = [];
-    for (let t = Date.UTC(2024, 0, 1); t <= Date.UTC(2024, 11, 31); t += 86400000) {
+    for (let t = Date.UTC(2023, 0, 1); t <= Date.UTC(2023, 11, 31); t += 86400000) {
       const pe = iso(new Date(t));
       const days = [];
-      for (let y = 2025; y <= 2028; y++) for (let m = 0; m < 12; m++) days.push(new Date(Date.UTC(y, m, 15)));
+      for (let y = 2024; y <= 2027; y++) for (let m = 0; m < 12; m++) days.push(new Date(Date.UTC(y, m, 15)));
       [CB_CASH.saDeadline(pe), CB_CASH.ctDeadline(pe)].forEach(d => { if (d) { days.push(d); days.push(new Date(d.getTime() + 86400000)); } });
       days.forEach(day => grid.push({ pe, day }));
     }
@@ -6419,15 +6427,15 @@ if (startSuite("X", "Phase 132 — s.33B, the company rate, the taper band, part
     const noOff = g => W(OFF, P({ partnership_has_company_member: false }, g.pe), g.day);
     const yesOn = g => W(AW, P({ partnership_has_company_member: true }, g.pe), g.day);
     const closedByYes = grid.filter(g => noOff(g).inTime && !yesOff(g).inTime);
-    check("X5 — over " + grid.length + " states (every period end in 2024 against four years of days and each deadline), as shipped a KNOWN company partner never opens a window the individual date had closed",
+    check("X5 — over " + grid.length + " states (every period end in 2023 against four years of days and each deadline), as shipped a KNOWN company partner never opens a window the individual date had closed",
       grid.filter(g => !noOff(g).inTime && yesOff(g).inTime).length, 0);
     check("X5 — and it does close some, every one a period end from 6 April to 30 January",
       [closedByYes.length > 0, closedByYes.every(g => earlyCo(g.pe))], [true, true]);
     check("X5 — a KNOWN \"no\" is the individual date, exactly as every partnership had before",
       grid.filter(g => JSON.stringify(noOff(g)) !== JSON.stringify(W(OFF, { claimant_type: "individual", accounting_period_end: g.pe }, g.day))).length, 0);
-    check("X5 — 31 December 2024, company partner, on 15 January 2027: closed on 31 December 2026, where the individual date kept it open to 31 January 2027",
-      [wOf(yesOff({ pe: "2024-12-31", day: new Date("2027-01-15T00:00:00Z") })), wOf(noOff({ pe: "2024-12-31", day: new Date("2027-01-15T00:00:00Z") }))],
-      [["2026-12-31", false], ["2027-01-31", true]]);
+    check("X5 — 31 December 2023, company partner, on 15 January 2026: closed on 31 December 2025, where the individual date kept it open to 31 January 2026",
+      [wOf(yesOff({ pe: "2023-12-31", day: new Date("2026-01-15T00:00:00Z") })), wOf(noOff({ pe: "2023-12-31", day: new Date("2026-01-15T00:00:00Z") }))],
+      [["2025-12-31", false], ["2026-01-31", true]]);
     const changedByOn = grid.filter(g => JSON.stringify(wOf(yesOff(g))) !== JSON.stringify(wOf(yesOn(g))));
     check("X5 AW-2 branch B — the switch ships OFF", OFF.CB_CTA.window_company_member_date, false);
     check("X5 AW-2 branch A — on, it changes only period ends from 1 February to 5 April, never closes a window off had open, and opens some: money moves UP",
@@ -6453,11 +6461,11 @@ if (startSuite("X", "Phase 132 — s.33B, the company rate, the taper band, part
         JSON.stringify(W(OFF, { claimant_type: ct, accounting_period_end: g.pe }, g.day))))).length, 0);
     check("X5 — the sentence: a company partner cites s.12AA(5B) and says (5C) is not assumed; a later company date not applied says it is unsettled; a known \"no\" is the shipped sentence word for word",
       safe(() => {
-        const d1 = new Date("2027-01-15T00:00:00Z"), d2 = new Date("2026-02-15T00:00:00Z");
-        const y = P({ partnership_has_company_member: true }, "2024-12-31"), l = P({ partnership_has_company_member: true }, "2024-03-31"), n = P({ partnership_has_company_member: false }, "2024-12-31");
+        const d1 = new Date("2026-01-15T00:00:00Z"), d2 = new Date("2026-02-15T00:00:00Z");   // PHASE 159d: 2023-12-31, before the reform
+        const y = P({ partnership_has_company_member: true }, "2023-12-31"), l = P({ partnership_has_company_member: true }, "2024-03-31"), n = P({ partnership_has_company_member: false }, "2023-12-31");
         const ty = CB_CASH.describeWindow(y, W(OFF, y, d1)), tl = CB_CASH.describeWindow(l, W(OFF, l, d2)), tn = CB_CASH.describeWindow(n, W(OFF, n, d1));
         return [/s\.12AA\(5B\)/.test(ty), /s\.12AA\(5C\)/.test(ty) && /not assumed/.test(ty), /not yet settled/.test(tl),
-                tn === "amendment window derived from the accounting year end given (2024-12-31): the return is still open to amend (ordinary-case rule of thumb, confirm the exact statutory filing date with your accountant)"];
+                tn === "amendment window derived from the accounting year end given (2023-12-31): the return is still open to amend (ordinary-case rule of thumb, confirm the exact statutory filing date with your accountant)"];
       }), [true, true, true, true]);
 
     SECTORS.forEach(sec => {
@@ -8791,6 +8799,42 @@ if (startSuite("AO", "Phase 159c — several events on one building: a purchase,
     [true, false]);
   check("AO9 (control) — a building with one spend and no work since is priced exactly as before",
     safe(() => one({}).total), 195000);
+}
+
+if (startSuite("AP", "Phase 159d — each event's route: the two-year clock, the last day, basis period reform, and the closed direct purchase (the stress test of 9 October 2026, C2, C10, C25, C27)")) {
+  const safe = fn => { try { return fn(); } catch (e) { return "threw: " + e.message; } };
+  const isoD = d => (d instanceof Date ? d.toISOString().slice(0, 10) : d);
+  const W = (s, now) => CB_CASH.deriveAmendmentWindow(s, new Date(now));
+  check("AP1 C10 E14 — two years beginning with a date end the day before the second anniversary: 1 June 2025 to 31 May 2027; 29 February 2024 to 28 February 2026; across a leap day the same rule",
+    [isoD(CB_ELECTION.electionDeadline({ acquisition_date: "2025-06-01" })), isoD(CB_ELECTION.electionDeadline({ acquisition_date: "2024-02-29" })),
+     isoD(CB_ELECTION.electionDeadline({ acquisition_date: "2026-03-01" }))],
+    ["2027-05-31", "2026-02-28", "2028-02-29"]);
+  check("AP2 C10 — an election notified on the second anniversary is late; the day before, in time",
+    [CB_ELECTION.notifiedInTime({ acquisition_date: "2025-06-01", election_notified_date: "2027-06-01" }),
+     CB_ELECTION.notifiedInTime({ acquisition_date: "2025-06-01", election_notified_date: "2027-05-31" })], [false, true]);
+  check("AP3 C10 — the fixed value window is open all of its last UK day, and shut the next",
+    [S187A_open("2027-05-31T22:30:00Z"), S187A_open("2027-05-30T23:30:00Z"), S187A_open("2027-06-01T00:30:00Z")], [true, true, false]);
+  function S187A_open(now){ return safe(() => CB_S187A.fvrWindow({ __now: now, claimant_type: "company", prior_owner_entitled: "yes", prior_owner_claimed: "yes", past_owner_disposal_mode: "sold_market", acquisition_date: "2025-06-01" }).open); }
+  check("AP4 — the April 2014 threshold: the pooling requirement applies to a seller who stopped owning on 1 April 2014 (a company) or 6 April 2014, and not the day before",
+    [CB_S187A.poolingRequirementInForce({ claimant_type: "company", past_owner_cessation_date: "2014-04-01" }), CB_S187A.poolingRequirementInForce({ claimant_type: "company", past_owner_cessation_date: "2014-03-31" }),
+     CB_S187A.poolingRequirementInForce({ claimant_type: "individual", past_owner_cessation_date: "2014-04-06" }), CB_S187A.poolingRequirementInForce({ claimant_type: "individual", past_owner_cessation_date: "2014-04-05" })],
+    [true, false, true, false]);
+  check("AP5 C2 item 7 — the site's own amendment window is open all of its last UK day (a company, period 2023-10-01 to 2024-09-30, deadline 30 September 2026)",
+    ["2026-09-30T00:00:01Z", "2026-09-30T22:59:00Z", "2026-09-30T23:30:00Z"].map(t => safe(() => W({ claimant_type: "company", accounting_period_end: "2024-09-30" }, t).inTime)),
+    [true, true, false]);
+  check("AP6 C25 — basis period reform: a sole trader's 12 months to 30 June 2025 reach the 2024-25 return (amend by 31 January 2027, not 2028); a 31 December 2024 period reaches 2023-24 (31 January 2026)",
+    [isoD(CB_CASH.saDeadline("2025-06-30")), isoD(CB_CASH.saDeadline("2024-12-31"))], ["2027-01-31", "2026-01-31"]);
+  check("AP6b (control) — a year end on 31 March to 5 April, and any period ending before 6 April 2024, are unchanged",
+    [isoD(CB_CASH.saDeadline("2025-04-05")), isoD(CB_CASH.saDeadline("2025-03-31")), isoD(CB_CASH.saDeadline("2023-12-31")), isoD(CB_CASH.saDeadline("2024-03-31"))],
+    ["2027-01-31", "2027-01-31", "2026-01-31", "2026-01-31"]);
+  const D = extra => Object.assign({ __now: "2026-10-09", claimant_type: "company", prior_owner_entitled: "yes", prior_owner_claimed: "yes", past_owner_disposal_mode: "sold_market", acquisition_date: "2019-06-01" }, extra || {});
+  check("AP7 C27 — bought straight from an owner who claimed, the two years gone, nothing fixing the value: NIL",
+    safe(() => CB_S187A.assess(D()).outcome), "NIL");
+  check("AP7b (controls) — not nil: a tribunal application lodged in time and undetermined; the seller's claim history not known; an owner in between",
+    [safe(() => CB_S187A.assess(D({ tribunal_application_date: "2020-06-01", tribunal_status: "undetermined" })).outcome),
+     safe(() => CB_S187A.assess(D({ prior_owner_claimed: "unsure" })).outcome),
+     safe(() => CB_S187A.assess(D({ prior_owner_entitled: "no", earlier_entitled_owner: "yes", intervening_owner_acquisition_date: "2018-06-01" })).outcome)],
+    ["INDET", "INDET", "INDET"]);
 }
 
 /* ------------------------------------------------------------------- report */

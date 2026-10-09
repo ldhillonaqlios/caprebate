@@ -2939,7 +2939,20 @@ var CB_ELECTION = (function(){
      tribunal under s.187A(7)(a) within the period and is still undetermined
      (Rulebook C row E-B3).
      ------------------------------------------------------------------------- */
-  var TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
+  var TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;   /* PHASE 159d: no longer read here - twoYearsFrom */
+  /* PHASE 159d (C10, E14): "THE PERIOD OF 2 YEARS BEGINNING WITH" A DATE, IN CALENDAR TERMS. It ends on the day before
+     the second anniversary (a 1 June 2025 purchase: 31 May 2027), whatever leap days fall inside it. It was 730.5 days
+     after the date, which put the end at noon on the anniversary, or a day later across a 29 February. OUR READING, put to
+     the tax adviser; it can only close a period, by a day. */
+  function twoYearsFrom(d){
+    if(!(d instanceof Date) || isNaN(d.getTime())) return null;
+    return new Date(Date.UTC(d.getUTCFullYear() + 2, d.getUTCMonth(), d.getUTCDate()) - 24 * 60 * 60 * 1000);
+  }
+  /* PHASE 159d: a moment as its UK date, "YYYY-MM-DD", so the last day of a period is open all day. */
+  function ukDayOf(d){
+    try { return new Intl.DateTimeFormat("en-CA", { timeZone:"Europe/London", year:"numeric", month:"2-digit", day:"2-digit" }).format(d); }
+    catch(e){ return d.toISOString().slice(0, 10); }
+  }
 
   /* PHASE 159b (E13): an ISO date ("2014-04-01", or with a time) or a Date, and nothing else. "01/04/2014" was read
      the American way (4 January), and a bare year "2014" as 1 January 2014 — a relieving reading of a date that
@@ -2954,7 +2967,7 @@ var CB_ELECTION = (function(){
   /* The deadline: two years from acquisition or grant. */
   function electionDeadline(s){
     var acq = parseDate(s && (s.acquisition_date || s.grant_date));
-    return acq ? new Date(acq.getTime() + TWO_YEARS_MS) : null;
+    return acq ? twoYearsFrom(acq) : null;
   }
 
   /* Was the EXISTING election notified in time? true / false / null(unknown). */
@@ -4460,15 +4473,39 @@ var CB_CASH = (function(){
     if(isNaN(d.getTime())) return null;
     return addMonths(d, 24);
   }
+  function taxYearEndYearOf(d){
+    var beforeApril5 = (d.getUTCMonth() < 3) || (d.getUTCMonth() === 3 && d.getUTCDate() <= 5);
+    return beforeApril5 ? d.getUTCFullYear() : d.getUTCFullYear() + 1;
+  }
   function saDeadline(periodEndISO){
     var d = new Date(periodEndISO + "T00:00:00Z");
     if(isNaN(d.getTime())) return null;
-    var beforeApril5 = (d.getUTCMonth() < 3) || (d.getUTCMonth() === 3 && d.getUTCDate() <= 5);
-    var taxYearEndYear = beforeApril5 ? d.getUTCFullYear() : d.getUTCFullYear() + 1;
+    var taxYearEndYear = taxYearEndYearOf(d);
+    /* PHASE 159d (C25) — BASIS PERIOD REFORM. From the 2024-25 tax year a sole trader's or a partnership's profits, and
+       so its capital allowances, are taxed by tax year: a period of account that does not end between 31 March and 5
+       April is shared between the two tax years it straddles. The spend in it reaches the EARLIER year's return too,
+       and that return closes a year sooner. OUR READING, put to the tax adviser: the window is the earlier return's
+       (a 12-month period ending 30 June 2025 reaches the 2024-25 return: amendable until 31 January 2027, not 2028).
+       Live: it can only close a window, by a year. */
+    var aligned = (d.getUTCMonth() === 2 && d.getUTCDate() === 31) || (d.getUTCMonth() === 3 && d.getUTCDate() <= 5);
+    if(!aligned && periodEndISO >= "2024-04-06"){
+      var start = addMonths(d, -12);
+      start = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+      var startYear = taxYearEndYearOf(start);
+      if(startYear < taxYearEndYear) taxYearEndYear = startYear;
+    }
     // filing deadline is 31 Jan after the tax year end; amend within 12
     // further months of THAT date, not of the tax year end itself
     var filingDeadline = new Date(Date.UTC(taxYearEndYear + 1, 0, 31));
     return addMonths(filingDeadline, 12);   // Phase 132: the same month arithmetic as ctDeadline
+  }
+  /* PHASE 159d (item 7, C2 in the site engine) — THE LAST DAY IS A WHOLE UK DAY. The window compared a moment with the
+     deadline's midnight, so the site's own reading closed at 00:00:01 on the last day. It compares UK dates now. */
+  function inTimeOn(now, deadline){
+    var day;
+    try { day = new Intl.DateTimeFormat("en-CA", { timeZone:"Europe/London", year:"numeric", month:"2-digit", day:"2-digit" }).format(now); }
+    catch(e){ day = now.toISOString().slice(0, 10); }
+    return day <= deadline.toISOString().slice(0, 10);
   }
   /* PHASE 129b, 13 September 2026 (item 13034238993) - THE WINDOW IS THE ONE
      FOR THE YEAR THE MONEY WAS SPENT IN. Rulebook A v2, section 4: the annual
@@ -4518,7 +4555,7 @@ var CB_CASH = (function(){
     if(s.claimant_type !== "partnership" && s.claimant_type !== "llp"){
       var deadline = (s.claimant_type === "company") ? ctDeadline(periodEnd) : saDeadline(periodEnd);
       if(!deadline) return { known:false };
-      return { known:true, deadline:deadline, inTime: now.getTime() <= deadline.getTime(), periodEnd:periodEnd, basis:basis };
+      return { known:true, deadline:deadline, inTime: inTimeOn(now, deadline), periodEnd:periodEnd, basis:basis };
     }
     /* PHASE 132, 14 September 2026 - A PARTNERSHIP WITH A COMPANY PARTNER FILES
        ON THE COMPANY DATE. TMA 1970 s.12ABA(4)(b): for "a partnership which
@@ -4547,17 +4584,17 @@ var CB_CASH = (function(){
     if(!sa || !co) return { known:false };
     var deadlines = { individual:sa, company:co };
     if(s.partnership_has_company_member === false)
-      return { known:true, deadline:sa, inTime: now.getTime() <= sa.getTime(), periodEnd:periodEnd, basis:basis };
+      return { known:true, deadline:sa, inTime: inTimeOn(now, sa), periodEnd:periodEnd, basis:basis };
     if(s.partnership_has_company_member === true){
       var companyDate = (co.getTime() <= sa.getTime()) || CB_CTA.window_company_member_date === true;
       var used = companyDate ? co : sa;
-      return { known:true, deadline:used, inTime: now.getTime() <= used.getTime(), periodEnd:periodEnd, basis:basis,
+      return { known:true, deadline:used, inTime: inTimeOn(now, used), periodEnd:periodEnd, basis:basis,
                member:"company", memberDate: companyDate ? "company" : "individual_company_later", deadlines:deadlines };
     }
     var early = (co.getTime() <= sa.getTime()) ? co : sa, late = (early === co) ? sa : co;
-    if(now.getTime() <= early.getTime())
+    if(inTimeOn(now, early))
       return { known:true, deadline:early, inTime:true, periodEnd:periodEnd, basis:basis, member:"not_known", deadlines:deadlines };
-    if(now.getTime() > late.getTime())
+    if(!inTimeOn(now, late))
       return { known:true, deadline:late, inTime:false, periodEnd:periodEnd, basis:basis, member:"not_known", deadlines:deadlines };
     return { known:false, ambiguous:true, periodEnd:periodEnd, basis:basis, member:"not_known", deadlines:deadlines };
   }
@@ -4862,7 +4899,20 @@ var CB_S187A = (function(){
     INDET:  "INDET"      /* cannot be established; conservative floor nil  */
   };
 
-  var TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
+  var TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;   /* PHASE 159d: no longer read here - twoYearsFrom */
+  /* PHASE 159d (C10, E14): "THE PERIOD OF 2 YEARS BEGINNING WITH" A DATE, IN CALENDAR TERMS. It ends on the day before
+     the second anniversary (a 1 June 2025 purchase: 31 May 2027), whatever leap days fall inside it. It was 730.5 days
+     after the date, which put the end at noon on the anniversary, or a day later across a 29 February. OUR READING, put to
+     the tax adviser; it can only close a period, by a day. */
+  function twoYearsFrom(d){
+    if(!(d instanceof Date) || isNaN(d.getTime())) return null;
+    return new Date(Date.UTC(d.getUTCFullYear() + 2, d.getUTCMonth(), d.getUTCDate()) - 24 * 60 * 60 * 1000);
+  }
+  /* PHASE 159d: a moment as its UK date, "YYYY-MM-DD", so the last day of a period is open all day. */
+  function ukDayOf(d){
+    try { return new Intl.DateTimeFormat("en-CA", { timeZone:"Europe/London", year:"numeric", month:"2-digit", day:"2-digit" }).format(d); }
+    catch(e){ return d.toISOString().slice(0, 10); }
+  }
 
   /* PHASE 159b (E13): an ISO date ("2014-04-01", or with a time) or a Date, and nothing else. "01/04/2014" was read
      the American way (4 January), and a bare year "2014" as 1 January 2014 — a relieving reading of a date that
@@ -4988,7 +5038,7 @@ var CB_S187A = (function(){
     s = s || {};
     var cess = parseDate(s.past_owner_cessation_date);
     if(!cess) return true;                        /* unknown -> stays in force */
-    var limit = new Date(commencementDate(s).getTime() + TWO_YEARS_MS);
+    var limit = twoYearsFrom(commencementDate(s));
     return cess > limit;
   }
 
@@ -5071,8 +5121,8 @@ var CB_S187A = (function(){
     var st = windowStart(s);
     if(!st.derivable)
       return { start:null, deadline:null, open:null, basis:st.basis, why:st.why };
-    var deadline = new Date(st.date.getTime() + TWO_YEARS_MS);
-    return { start:st.date, deadline:deadline, open:(now(s) <= deadline),
+    var deadline = twoYearsFrom(st.date);
+    return { start:st.date, deadline:deadline, open:(ukDayOf(now(s)) <= deadline.toISOString().slice(0, 10)),
              basis:st.basis, why:st.why };
   }
 
@@ -5114,7 +5164,7 @@ var CB_S187A = (function(){
                why:"a statement has been produced, but it is not dated, so it cannot be shown to have been made inside the two-year period s.187A(11) allows",
                action:"establish the date the statement was made" };
 
-    if(made > new Date(cess.getTime() + TWO_YEARS_MS))
+    if(made > twoYearsFrom(cess))
       return { outcome:OUT.NIL, value:null,
                why:"the statement was made more than two years after that owner ceased to own the fixtures. s.187A(11) requires it inside that period, so the requirement is not satisfied and s.187A(3)(c) treats the expenditure on those fixtures as nil",
                action:"none available — the period cannot be extended, and an election is not an alternative on these facts" };
@@ -5388,6 +5438,19 @@ var CB_S187A = (function(){
                switched:"s187a_6b_statements_route",
                why:w.why + ", and that period has now closed. " + __sr.why,
                action:__sr.action };
+
+    /* PHASE 159d (C27) — A DIRECT PURCHASE, THE PERIOD CLOSED, NOTHING FIXING THE VALUE: NIL. The s.187A(6)(b) route
+       needs an owner IN BETWEEN who could never claim; where the client bought straight from an owner KNOWN to have claimed there
+       is no such owner, so that route cannot open, and a tribunal application had to be made inside the period. Unless
+       one was (lodged in time and undetermined), the requirement is not met and the fixtures are nil (s.187A(3)). OUR
+       READING, put to the tax adviser; it narrows question 250's "a referral, not nil" to a purchase with an owner in
+       between. Live: it can only close a claim. */
+    var __trib = parseDate(s.tribunal_application_date);
+    var __tribInTime = __trib && w.deadline && __trib <= w.deadline && s.tribunal_status === "undetermined";
+    if(interveningOwner(s) === "no" && s.prior_owner_claimed === "yes" && !__tribInTime)
+      return { outcome:OUT.NIL, item:di.item, track:TRACK.FVR, pooling:pooling, window:w,
+               why:w.why + ", and that period has now closed with nothing on record fixing the value. You bought straight from the owner who claimed, so the route under s.187A(6)(b), which needs an owner in between who could never claim, is not open. The fixed value requirement is not met, and the spend on the fixtures counts as nil (s.187A(3))",
+               action:"none available on these facts, unless a tribunal application was made inside the two years (s.187A(7)(a)) or an election was made in time and has not been recorded" };
 
     return { outcome:OUT.INDET, item:di.item, track:TRACK.FVR, pooling:pooling, window:w,
              why:w.why + ", and that period has now closed with nothing on record fixing the value. A further route exists under s.187A(6)(b) where the owner in between was never able to claim, and that route has no time limit — so this is not yet a settled nil, but the bottom of the range is shown as nil",
@@ -6451,7 +6514,7 @@ var CB_FRONTDOOR = (function(){
     var commencement = CB_S187A.commencementDate(s);
     return {
       inForce: inForce,
-      thresholdISO: new Date(commencement.getTime() + 2*365.25*24*60*60*1000).toISOString().slice(0,10),
+      thresholdISO: new Date(Date.UTC(commencement.getUTCFullYear() + 2, commencement.getUTCMonth(), commencement.getUTCDate())).toISOString().slice(0,10),   // PHASE 159d: the first day the requirement applies - the day after the two years end
       why: inForce
         ? "the property changed hands after the fixtures pooling rules came in, so what the seller did with the fixtures matters to what you can claim"
         : "the seller's ownership ended early enough that the pooling requirement does not apply to this purchase"

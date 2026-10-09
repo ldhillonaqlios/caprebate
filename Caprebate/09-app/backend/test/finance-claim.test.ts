@@ -313,6 +313,8 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
     try {
       staff(app);
       const outside = readyToInvoice(app);
+      // PHASE 159d: the window exit needs every part W3 — the building sold.
+      app.db.run("UPDATE properties SET disposal_date = '2025-01-01' WHERE id = (SELECT property_id FROM claims WHERE id = ?)", [outside.claim]);
       const moved = P.moveClaim({ ...app, newId: randomUUID }, SALES, outside.claim, { kind: 'EXIT', to: 'OUTSIDE_AMENDMENT_WINDOW', reason_code: 'AMENDMENT_WINDOW_CLOSED' });
       assert.equal(moved.ok, true, moved.ok ? '' : moved.why);
       for (const kind of ['FEE', 'BREAK_FEE', 'ABORT_FEE']) {

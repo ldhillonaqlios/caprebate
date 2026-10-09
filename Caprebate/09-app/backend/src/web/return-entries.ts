@@ -169,7 +169,7 @@ export function returnContext(db: Db, claim_id: string | null, business_id: stri
   const f = claim_id === null ? undefined : latestFacts(db, claim_id).get('ACCOUNTING_PERIOD_START');
   const start = f !== undefined && f.answer === 'VALUE' ? (f.value_date ?? f.value_text ?? null) : null;
   const t = claimantTypeForGate(db, business_id).value;
-  const is_company = t === 'COMPANY' ? true : t !== null && ['LLP', 'PARTNERSHIP', 'SOLE_TRADER', 'INDIVIDUAL'].includes(t) ? false : null;
+  const is_company = t === 'COMPANY' || t === 'CHARITY_COMPANY' ? true : t !== null && ['LLP', 'PARTNERSHIP', 'SOLE_TRADER', 'INDIVIDUAL', 'CHARITABLE_TRUST'].includes(t) ? false : null;
   return { period_start: start, is_company };
 }
 

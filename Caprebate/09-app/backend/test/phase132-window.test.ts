@@ -35,7 +35,10 @@ type ClaimRef = { id: string; business_id: string; property_id: string | null };
 const T0 = '2026-09-08T00:00:00.000Z';
 const KEY = 'PARTNERSHIP_HAS_COMPANY_MEMBER';
 /** 31 December 2024: the company date is 31 December 2026, the individual date 31 January 2027. This day is between. */
-const BETWEEN = '2027-01-15T00:00:00.000Z';
+// PHASE 159d: a year earlier, with every date below. A partnership's individual date for a 2024 period end that is not
+// on 31 March to 5 April now reaches the earlier tax year (basis period reform, C25); 2023 is before it, so this file
+// still tests the company partner's date (s.12AA(5B)) alone.
+const BETWEEN = '2026-01-15T00:00:00.000Z';
 
 function staff(app: App): void {
   for (const role of ['ADMIN', 'SALES', 'ACCOUNTING', 'SURVEYING'] as const) {
@@ -59,13 +62,13 @@ function partnershipClaim(app: App, claimant = 'PARTNERSHIP'): ClaimRef {
     'INSERT INTO assessments (id,business_id,sector,submitted_at,shown_low_pence,shown_high_pence,created_at) VALUES (?,?,?,?,?,?,?)',
     [assessment, business, 'dental', T0, 100_000_00, 200_000_00, T0]);
   app.db.run('UPDATE businesses SET claimant_type = ? WHERE id = ?', [claimant, business]);
-  app.db.run('UPDATE properties SET acquisition_date = ? WHERE id = ?', ['2024-06-01', property]);
+  app.db.run('UPDATE properties SET acquisition_date = ? WHERE id = ?', ['2023-06-01', property]);
   const made = C.insertClaim(app.db, app.now, randomUUID, {
     business_id: business, property_id: property, assessment_id: assessment, workstream: 'PLANT_AND_MACHINERY',
     stage: 'REPORTS', owner_id: null, surveyor_id: null,
   });
-  CF.fact(app, made.id, 'ACCOUNTING_PERIOD_START', '2024-01-01');
-  CF.fact(app, made.id, 'ACCOUNTING_PERIOD_END', '2024-12-31');
+  CF.fact(app, made.id, 'ACCOUNTING_PERIOD_START', '2023-01-01');
+  CF.fact(app, made.id, 'ACCOUNTING_PERIOD_END', '2023-12-31');
   return { id: made.id, business_id: business, property_id: property };
 }
 
@@ -73,21 +76,21 @@ const pick = (w: EngineWindow): readonly (string | boolean)[] => (w.known ? [w.d
 
 describe('Phase 132, line 20 — the amendment window for a partnership with a company partner', () => {
   test('THE ENGINE BRIDGE: a company and a sole trader read exactly as before; a company partner is on the company date where it is earlier and on the individual date where it is later (AW-2 off); a partner not known is open only on both dates', () => {
-    assert.deepEqual(amendmentWindow('2024-12-31', 'company', '2026-12-01T00:00:00.000Z'), { known: true, deadline: '2026-12-31', in_time: true });
-    assert.deepEqual(amendmentWindow('2024-12-31', 'self_assessment', '2026-12-01T00:00:00.000Z'), { known: true, deadline: '2027-01-31', in_time: true });
+    assert.deepEqual(amendmentWindow('2023-12-31', 'company', '2025-12-01T00:00:00.000Z'), { known: true, deadline: '2025-12-31', in_time: true });
+    assert.deepEqual(amendmentWindow('2023-12-31', 'self_assessment', '2025-12-01T00:00:00.000Z'), { known: true, deadline: '2026-01-31', in_time: true });
     // The defect, fixed live: 29 February plus 24 months is 28 February, not 1 March.
     assert.deepEqual(amendmentWindow('2024-02-29', 'company', '2026-03-01T00:00:00.000Z'), { known: true, deadline: '2026-02-28', in_time: false });
-    assert.deepEqual(pick(amendmentWindow('2024-12-31', 'partnership', BETWEEN, true)), ['2026-12-31', false], 'a company partner did not close the window on the company date');
-    assert.deepEqual(pick(amendmentWindow('2024-12-31', 'partnership', BETWEEN, false)), ['2027-01-31', true], 'no company partner did not keep the individual date');
-    assert.deepEqual(pick(amendmentWindow('2024-12-31', 'partnership', BETWEEN, null)), ['ambiguous'], 'a partner not known was treated as settled between the two dates');
-    const ambiguous = amendmentWindow('2024-12-31', 'partnership', BETWEEN, null);
-    assert.deepEqual(ambiguous.known ? null : ambiguous.deadlines, { individual: '2027-01-31', company: '2026-12-31' });
+    assert.deepEqual(pick(amendmentWindow('2023-12-31', 'partnership', BETWEEN, true)), ['2025-12-31', false], 'a company partner did not close the window on the company date');
+    assert.deepEqual(pick(amendmentWindow('2023-12-31', 'partnership', BETWEEN, false)), ['2026-01-31', true], 'no company partner did not keep the individual date');
+    assert.deepEqual(pick(amendmentWindow('2023-12-31', 'partnership', BETWEEN, null)), ['ambiguous'], 'a partner not known was treated as settled between the two dates');
+    const ambiguous = amendmentWindow('2023-12-31', 'partnership', BETWEEN, null);
+    assert.deepEqual(ambiguous.known ? null : ambiguous.deadlines, { individual: '2026-01-31', company: '2025-12-31' });
     // 31 March 2024, the usual GP year end: the company date (31 March 2026) is LATER, so with AW-2 off the individual date decides.
     assert.deepEqual(pick(amendmentWindow('2024-03-31', 'partnership', '2026-02-15T00:00:00.000Z', true)), ['2026-01-31', false]);
     assert.equal((w => w.known && w.company_date_later_not_applied === true)(amendmentWindow('2024-03-31', 'partnership', '2026-02-15T00:00:00.000Z', true)), true);
     // Not known: open where open on both, closed where closed on both.
-    assert.deepEqual(pick(amendmentWindow('2024-12-31', 'partnership', '2026-12-01T00:00:00.000Z', null)), ['2026-12-31', true]);
-    assert.deepEqual(pick(amendmentWindow('2024-12-31', 'partnership', '2027-02-01T00:00:00.000Z', null)), ['2027-01-31', false]);
+    assert.deepEqual(pick(amendmentWindow('2023-12-31', 'partnership', '2025-12-01T00:00:00.000Z', null)), ['2025-12-31', true]);
+    assert.deepEqual(pick(amendmentWindow('2023-12-31', 'partnership', '2026-02-01T00:00:00.000Z', null)), ['2026-01-31', false]);
   });
 
   test('THE RECORDED FACT: YES closes the window on the company date, NO keeps the individual date, and a fact recorded as NOT KNOWN reads exactly as one never recorded — for a partnership and for an LLP (N4)', async () => {
@@ -103,10 +106,10 @@ describe('Phase 132, line 20 — the amendment window for a partnership with a c
         const no = partnershipClaim(app, claimant);
         CF.fact(app, no.id, KEY, 'NO');
         const read = (c: ClaimRef): F.WindowReading => F.amendmentWindowReading(app.db, c, BETWEEN);
-        assert.deepEqual([read(yes).state, read(yes).deadline], ['CLOSED', '2026-12-31'], `${claimant}: YES`);
+        assert.deepEqual([read(yes).state, read(yes).deadline], ['CLOSED', '2025-12-31'], `${claimant}: YES`);
         assert.match(read(yes).assumption ?? '', /s\.12AA\(5B\)/);
         assert.match(read(yes).assumption ?? '', /s\.12AA\(5C\)/);
-        assert.deepEqual([read(no).state, read(no).deadline], ['OPEN', '2027-01-31'], `${claimant}: NO`);
+        assert.deepEqual([read(no).state, read(no).deadline], ['OPEN', '2026-01-31'], `${claimant}: NO`);
         assert.equal(read(absent).state, 'UNKNOWN', `${claimant}: a partner never recorded was a window`);
         assert.match(read(absent).why, /we do not know if any partner or member is a company/);
         assert.deepEqual(read(unknownRow), read(absent), `${claimant}: a fact recorded as NOT KNOWN did not read exactly as one never recorded`);
@@ -119,7 +122,7 @@ describe('Phase 132, line 20 — the amendment window for a partnership with a c
       const before = F.amendmentWindowReading(app.db, company, BETWEEN);
       CF.fact(app, company.id, KEY, 'NO');
       assert.deepEqual(F.amendmentWindowReading(app.db, company, BETWEEN), before);
-      assert.deepEqual([before.state, before.deadline], ['CLOSED', '2026-12-31']);
+      assert.deepEqual([before.state, before.deadline], ['CLOSED', '2025-12-31']);
     } finally { app.close(); }
   });
 

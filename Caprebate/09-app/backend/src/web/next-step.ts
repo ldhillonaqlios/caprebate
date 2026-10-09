@@ -45,6 +45,9 @@ const TABLE: readonly (readonly [RegExp, PlainNeed])[] = [
   [/^The client confirmed in writing/, { words: 'The client’s written confirmation that they will file the amendment', fix: { href: '#claim-facts', label: 'Record it' } }],
   [/^The claim is within the amendment window/, { words: 'The claim must go in inside the amendment window', fix: { href: '#claim-facts', label: 'Check the dates' } }],
   [/^The amendment window is open/, { words: 'The amendment window must still be open', fix: { href: '#claim-facts', label: 'Check the dates' } }],
+  // PHASE 159d: the route each part of the claim takes (src/web/claim-route.ts), and a legal deadline read again.
+  [/^Each part of the claim has a route/, { words: 'Each part of the claim needs its route: the year it goes in, or this year’s pool if the client still owns the building', fix: { href: '#claim-facts', label: 'Check the dates and ownership' } }],
+  [/^A legal check that was clear only until a deadline/, { words: 'The deadline to fix the value must not have passed, or the election made in time must be recorded', fix: { href: '#claim-facts', label: 'Check the election' } }],
   [/^The fee trigger is reached/, { words: 'The point at which our fee is due', fix: { href: '#move', label: 'Confirm it' } }],
   [/^Our fee invoice is sent/, { words: 'Our fee invoice, sent to the client', fix: { href: '#add-task', label: 'Ask Accounting' } }],
   [/^The claim’s filing is recorded/, { words: 'The date the claim was filed', fix: { href: '#claim-figures', label: 'Record the filing' } }],

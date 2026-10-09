@@ -143,6 +143,10 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
   /* Phase 151 — whether the sale contract and the CPSE replies must arrive (Word answer 47, question 220). Migration
      045 adds the key. */
   BOUGHT_THE_BUILDING: { label: 'The client bought the building, rather than built or refitted it', kind: 'choice', choices: YES_NO },
+  /* Phase 159d — "do you still own it": W2 (the window closed, the spend pooled in the first open period) needs it. YES
+     only on evidence — the client's checked answer, or the title register — and never with a sale date on the
+     property. Migration 106 adds the key. Read by src/web/claim-route.ts. */
+  STILL_OWNED: { label: 'The client still owns the building today', kind: 'choice', choices: YES_NO },
   /* Phase 153a, 4 October 2026 (Phase 153b lines 12 and 13, with the same grant data). Migration 078 adds both keys.
      Read by src/web/grant-checks.ts, the gate out of valuation. */
   GRANT_PROVIDER_CHECKED: {
@@ -346,12 +350,16 @@ export function earlyWindowWarning(db: Db, c: { readonly stage: string | null; r
   const end = new Date(Date.UTC(spend.getUTCFullYear() + 1, spend.getUTCMonth(), spend.getUTCDate())).toISOString().slice(0, 10);
   const t = claimantTypeForGate(db, c.business_id).value;
   const kinds: readonly ('company' | 'partnership' | 'self_assessment')[] = t === 'COMPANY' ? ['company']
-    : t === 'PARTNERSHIP' || t === 'LLP' ? ['partnership'] : t === null || t === 'CHARITY' ? ['company', 'self_assessment'] : ['self_assessment'];
+    : t === 'PARTNERSHIP' || t === 'LLP' ? ['partnership'] : t === null || t === 'CHARITY' ? ['company', 'self_assessment']
+    : t === 'CHARITY_COMPANY' ? ['company'] : ['self_assessment'];   // PHASE 159d (C24): a charitable trust is self assessment
   const windows = kinds.map((k) => amendmentWindow(end, k, todayIso, null));
   if (windows.some((w) => !w.known || w.in_time)) return null;
   const latest = windows.map((w) => (w.known ? w.deadline : '')).sort().at(-1) ?? '';
-  return `On the client’s own date (${said}) the amendment window has most likely closed. Even on the latest accounting period the spend could fall in, it closed on ${ukDate(latest)}. ` +
-    'Check the dates with the client before the paid research. This is a warning. The claim stops only at Reports, where the window is tested on the recorded dates.';
+  /* PHASE 159d: a closed old return is not the end. While the client owns the building the spend goes into this year's
+     pool (W2), written down over the years ahead, with no refund of past tax (src/web/claim-route.ts). */
+  return `On the client’s own date (${said}) the return for that year has most likely closed. Even on the latest accounting period the spend could fall in, it closed on ${ukDate(latest)}. ` +
+    'The old return is closed; the relief comes through this year’s pool instead, while the client still owns the building. It is written down over the years ahead, with no refund of past tax. ' +
+    'Check the dates, and that they still own it, with the client before the paid research. This is a warning. At Reports each part of the claim is given its route on the recorded dates.';
 }
 
 export function acquisitionDateReading(db: Db, property_id: string | null): FactReading {
@@ -458,11 +466,28 @@ export function amendmentWindowReading(db: Db, c: { business_id: string; propert
   if (missing.length > 0) {
     return { state: 'UNKNOWN', deadline: null, assumption: null, why: `Not known yet — we still need ${missing.join(' and ')}. A window we cannot work out does not pass.` };
   }
-  if (claimant !== 'COMPANY' && !SELF_ASSESSMENT_CLAIMANTS.includes(claimant ?? '')) {
-    return { state: 'UNKNOWN', deadline: null, assumption: null, why: 'Not known — a charity may file as a company or not, so we cannot pick the rule.' };
-  }
   if ((acq.value ?? '') < (startV ?? '') || (acq.value ?? '') > (endV ?? '')) {
     return { state: 'UNKNOWN', deadline: null, assumption: null, why: 'Not known — the acquisition date is outside the accounting period recorded. So that is not the period the spend falls in.' };
+  }
+  return windowForPeriod(db, c, endV ?? '', todayIso, said);
+}
+
+/**
+ * PHASE 159d: THE WINDOW FOR ONE ACCOUNTING PERIOD, by its last day — the claimant's rule and the engine's date. Read by
+ * the window above, by each piece of work's own period, and by the search for the first open period (W2;
+ * src/web/claim-route.ts). C24: a charitable company files a company return, a charitable trust a trust return under
+ * self assessment; a charity recorded without saying which is not known, and says so.
+ */
+export function windowForPeriod(db: Db, c: { business_id: string; id: string }, endV: string, todayIso: string, said = ''): WindowReading {
+  const facts = latestFacts(db, c.id);
+  const raw = claimantTypeForGate(db, c.business_id).value;
+  if (raw === null) return { state: 'UNKNOWN', deadline: null, assumption: null, why: 'Not known yet — we still need the claimant type. A window we cannot work out does not pass.' };
+  if (raw === 'CHARITY') {
+    return { state: 'UNKNOWN', deadline: null, assumption: null, why: 'Not known — record whether the charity is a charitable company (a company tax return) or a charitable trust (a trust tax return). The two have different deadlines.' };
+  }
+  const claimant = raw === 'CHARITY_COMPANY' ? 'COMPANY' : raw === 'CHARITABLE_TRUST' ? 'SOLE_TRADER' : raw;
+  if (claimant !== 'COMPANY' && !SELF_ASSESSMENT_CLAIMANTS.includes(claimant)) {
+    return { state: 'UNKNOWN', deadline: null, assumption: null, why: `Not known — we have no window rule for a claimant recorded as ${raw.toLowerCase().replace(/_/g, ' ')}.` };
   }
   // PHASE 132 — a partnership or LLP reads whether a partner or member is a company. A row recorded as NOT KNOWN
   // and no row read the same: null, which the engine receives as no answer (N4).
@@ -481,7 +506,9 @@ export function amendmentWindowReading(db: Db, c: { business_id: string; propert
   return {
     state: w.in_time ? 'OPEN' : 'CLOSED', deadline: w.deadline,
     why: `${w.in_time ? `open until ${w.deadline}` : `closed on ${w.deadline}`}${said}`,
-    assumption: windowAssumption(claimant, w),
+    assumption: raw === 'CHARITABLE_TRUST' ? 'A charitable trust files a trust tax return under self assessment, so the usual self assessment rule. Check the real filing date with the accountant.'
+      : raw === 'CHARITY_COMPANY' ? 'A charitable company files a company tax return, so the usual company rule. Check the real filing date with the accountant.'
+      : windowAssumption(claimant, w),
   };
 }
 
@@ -1160,7 +1187,7 @@ function acquisitionGiven(db: Db, property_id: string): { value: string; words: 
 }
 
 /** PHASE 158d (F45): the accounting period the purchase falls in, from the client's checked year end, or null. */
-function periodFromYearEnd(db: Db, business_id: string, acquired: string): { start: string; end: string } | null {
+export function periodFromYearEnd(db: Db, business_id: string, acquired: string): { start: string; end: string } | null {
   const said = approvedClientAnswer(db, business_id, 'year_end');
   const ye = said === null ? null : clientYearEnd(said.answer);
   if (ye === null) return null;

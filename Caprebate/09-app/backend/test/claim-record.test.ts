@@ -485,7 +485,9 @@ describe('THE GATES THE FACTS DECIDE — N4 on every one: the recorded UNKNOWN a
       staff(app);
       const org = organisation(app);
       const c = signedClaim(app, org);
-      const reports = (today?: string) => need(app, c, 'REPORTS', 'The amendment window is open', today);
+      // PHASE 159d: REPORTS reads each part's route now (W1 here, while the window is open); a closed window with
+      // ownership not recorded is no route, and still refuses (test/phase159d.test.ts proves W2 and W3).
+      const reports = (today?: string) => need(app, c, 'REPORTS', 'Each part of the claim has a route, and at least one goes in', today);
       const invoice = (today?: string) => need(app, c, 'INVOICE', 'The claim is within the amendment window', today);
       assert.equal(reports(app.now())?.met, false, 'REPORTS passed on an ABSENT window');
       assert.equal(invoice(app.now())?.met, false, 'INVOICE passed on an ABSENT window');

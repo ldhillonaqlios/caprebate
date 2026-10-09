@@ -32,6 +32,7 @@
  * tracked — its state, version, issue date and the document type it is.
  */
 
+import { claimAlive, claimRoutes, legalDeadlineNeed, routesWhy } from './claim-route.ts';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import type { Db } from '../db.ts';
@@ -368,6 +369,9 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
       : `The surveyor approved version ${String(latest.version)} after the version this adviser signed. Send version ${String(latest.version)} for sign-off.` };
   }
   const approval_id = latest?.id ?? null;
+  // PHASE 159d (C9): a legal check clear only until a deadline that has passed is not signed off.
+  const lapse = legalDeadlineNeed(d.db, c, d.now());
+  if (!lapse.met) return { ok: false, why: `Not signed off: ${lapse.why}.` };
   const adviser = text(input['adviser'], 300, 'The adviser');
   if (!adviser.ok) return adviser;
   // PHASE 151b, Word answer 169: the FIRM, and only the firm — not a role in its place, and never a person's name.
@@ -1282,27 +1286,45 @@ export function raiseDisposalTask(
  * 7 · THE GATE NEEDS THE WINDOW ADDS
  * ================================================================== */
 
-/** REPORTS: the amendment window is OPEN today. UNKNOWN does not pass, and neither does CLOSED. */
+/**
+ * REPORTS — PHASE 159d (C1, L9): EVERY PART OF THE CLAIM HAS A ROUTE, AND ONE IS CLAIMED. It read "the amendment window
+ * is open today", so a building bought in 2019 and still owned was turned away, though its spend goes into this year's
+ * pool (W2). Now each event on the building takes its route (src/web/claim-route.ts): W1 the window for its own period
+ * is open, W2 it is closed but the building is still owned, W3 not owned, or the purchase fails the legal check. The
+ * gate passes when every part has a known route and at least one is W1 or W2. NOT_KNOWN passes nothing (N4).
+ */
 export function reportsWindowNeed(db: Db, c: { id: string; business_id: string; property_id: string | null }, todayIso: string): Need {
-  const w = amendmentWindowReading(db, c, todayIso);
-  return { what: 'The amendment window is open', met: w.state === 'OPEN', why: w.why };
+  const routes = claimRoutes(db, c, todayIso);
+  const { alive, settled } = claimAlive(routes);
+  const what = 'Each part of the claim has a route, and at least one goes in';
+  if (!settled) return { what, met: false, why: routesWhy(routes) };
+  if (!alive) return { what, met: false, why: `nothing is left to claim: ${routesWhy(routes)}` };
+  return { what, met: true, why: routesWhy(routes) };
 }
 
 /**
- * INVOICE: the claim went in INSIDE the window. Where the filing is recorded, it
- * is the filing date that must fall on or before the window's end — a window
- * that closed after the return went in does not stop the fee. Where it is not,
- * the window must be open today. UNKNOWN passes neither way.
+ * INVOICE — PHASE 159d: THE RETURN EACH ROUTE NAMES WENT IN, OR CAN STILL GO IN. W1 names the return for the event's own
+ * period; W2 names the return of the first open period. Where the filing is recorded, it must fall on or before that
+ * return's deadline — a window that closed after the return went in does not stop the fee. Where it is not, that window
+ * must be open today. A part with no route passes nothing; a part that is W3 is not claimed and asks nothing.
  */
 export function invoiceWindowNeed(db: Db, c: { id: string; business_id: string; property_id: string | null }, todayIso: string): Need {
-  const w = amendmentWindowReading(db, c, todayIso);
+  const routes = claimRoutes(db, c, todayIso);
   const filed = db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [c.id])?.filed_on ?? null;
   const what = 'The claim is within the amendment window';
-  if (w.state === 'UNKNOWN' || w.deadline === null) return { what, met: false, why: w.why };
-  if (filed !== null) {
-    return filed <= w.deadline
-      ? { what, met: true, why: `filed on ${filed}, inside the window that ran until ${w.deadline}` }
-      : { what, met: false, why: `filed on ${filed}, after the window closed on ${w.deadline}` };
-  }
-  return { what, met: w.state === 'OPEN', why: `${w.why} — and no filing is recorded` };
+  const live = routes.filter((r) => r.route !== 'W3');
+  if (live.length === 0) return { what, met: false, why: `nothing is left to claim: ${routesWhy(routes)}` };
+  // A part passes on a filing recorded inside the window of the return its route names — its own (W1), or, through the
+  // pool, the first open one (W2) — or, with no filing yet, that window open today. A filing inside a part's own window
+  // passes whatever today's route reads: the return went in while it could (the window has closed since).
+  const today = localDate(todayIso);
+  const ok = (r: (typeof live)[number]): boolean => filed !== null
+    ? (r.window.deadline !== null && filed <= r.window.deadline) || (r.route === 'W2' && r.deadline !== null && filed <= r.deadline)
+    : (r.route === 'W1' || r.route === 'W2') && r.deadline !== null && today <= r.deadline;
+  const say = (r: (typeof live)[number]): string => r.route === 'NOT_KNOWN' && !(filed !== null && r.window.deadline !== null)
+    ? `${r.label}: no route yet — ${r.why}`
+    : `${r.label}: ${filed !== null ? `filed on ${filed}, ` : ''}${r.route === 'W2' ? 'the first open return' : 'its own return'} can be amended until ${(r.route === 'W2' ? r.deadline : r.window.deadline) ?? 'a date not known'}`;
+  const bad = live.filter((r) => !ok(r));
+  if (bad.length > 0) return { what, met: false, why: `${bad.map(say).join('; ')}${filed === null ? ' — and no filing is recorded' : ''}` };
+  return { what, met: true, why: live.map(say).join('; ') };
 }

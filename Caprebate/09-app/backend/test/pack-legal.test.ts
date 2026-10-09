@@ -72,12 +72,15 @@ describe('the legal check’s questions and verdicts', () => {
   test('bought within two years with nothing fixed: clear with the deadline; bought years ago: not settled, a specialist must look', () => {
     const live = ask({ ...FROM_TAXPAYER('2025-06-01'), G14fvr: 'no' });
     assert.equal(live.verdict.level, 'URGENT', JSON.stringify(live.verdict));
-    assert.equal(live.verdict.deadline, '2027-06-01');
-    assert.match(live.verdict.headline, /by 2027-06-01/);
+    // PHASE 159d (C10): two years beginning with 1 June 2025 end on 31 May 2027, the day before the anniversary.
+    assert.equal(live.verdict.deadline, '2027-05-31');
+    assert.match(live.verdict.headline, /by 2027-05-31/);
     assert.equal(legalAllows(live.verdict, 5_000_000).ok, true);
+    // PHASE 159d (C27): bought years ago STRAIGHT from the owner who claimed, nothing fixed, no tribunal: it fails. (With an
+    // owner in between the closed window is still not settled: the site harness's A-1 checks.)
     const old = ask({ ...FROM_TAXPAYER('2019-06-01'), G14fvr: 'yes' });
-    assert.equal(old.verdict.level, 'AMBER');
-    assert.match(old.verdict.headline, /specialist or a tax adviser/);
+    assert.equal(old.verdict.level, 'RED');
+    assert.match(old.verdict.headline, /claim on the fixtures fails/);
     assert.equal(legalAllows(old.verdict, 1).ok, false);
   });
 
@@ -208,7 +211,7 @@ describe('the legal check, through the pack’s pages', () => {
     const v = lv();
     assert.equal(v.verdict.level, 'URGENT', JSON.stringify(v.verdict));
     const after = (await req('u-lg-sam', `${P}?ch=7`)).body;
-    assert.match(after, /There is still time to fix the value — by 1 Jun 2027\./);
+    assert.match(after, /There is still time to fix the value — by 31 May 2027\./);
     assert.match(after, /This does not stop approval\./);
 
     assert.match(after, /Bought an existing surgery <span class="pk-src pk-sv">Sam Surveyor · [^<]+<\/span> <span class="help">From: The CPSE replies, section 32<\/span>/);
