@@ -32,6 +32,7 @@ import type { Db } from '../db.ts';
 import type { PackView } from './survey-pack.ts';
 import { INCLUDES_BITS, packDateIso } from './survey-pack.ts';
 import { bcisIndexTable } from './bcis-index.ts';
+import { acquisitionDateReading } from './claim-facts.ts';
 import { onTestWebsite, type Env } from '../connectors/place.ts';
 import { MIN_CLAIMS } from './sector-ranges.ts';
 import { BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2 } from '../../../../04-phase-work/phase3/caprebate-surveyor-crm.ts';
@@ -79,6 +80,8 @@ const pounds = (p: number) => `£${Math.round(p / 100).toLocaleString('en-GB')}`
 
 export type IndexReading = {
   readonly purchase: string | null;
+  /** PHASE 159a (L7): where the purchase date came from, in words — the property record, the legal check, the client. */
+  readonly purchase_from: 'the property record' | 'the surveyor' | 'the client';
   readonly valuation: string | null;
   readonly kind: 'BCIS' | 'PLACEHOLDER' | null;
   readonly factor: number | null;
@@ -88,20 +91,28 @@ export type IndexReading = {
   readonly words: string;
 };
 
-function purchaseDateOf(db: Db, v: PackView): string | null {
-  if (v.property === null) return null;
-  const d = db.get<{ a: string | null }>('SELECT acquisition_date AS a FROM properties WHERE id = ?', [v.property.id])?.a ?? null;
-  return d !== null && /^\d{4}-\d{2}-\d{2}/.test(d) ? d.slice(0, 10) : null;
+/**
+ * PHASE 159a (the Lockwood run, L7): THE ONE PURCHASE DATE, as the amendment window reads it (src/web/claim-facts.ts
+ * acquisitionDateReading, Phase 158d): the property record, else the surveyor's legal check, else the client's checked
+ * answer. Chapter 11 read the property record alone, so it said "not on file" while the legal check held the date.
+ */
+function purchaseDateOf(db: Db, v: PackView): { date: string | null; from: IndexReading['purchase_from'] } {
+  if (v.property === null) return { date: null, from: 'the property record' };
+  const r = acquisitionDateReading(db, v.property.id);
+  const d = r.known && typeof r.value === 'string' ? r.value : null;
+  const pub = r.source?.publisher;
+  const from = pub === 'The surveyor' ? 'the surveyor' : pub === 'The client' ? 'the client' : 'the property record';
+  return { date: d !== null && /^\d{4}-\d{2}-\d{2}/.test(d) ? d.slice(0, 10) : null, from };
 }
 
 /** Chapter 11: the purchase and valuation dates, and the index factor between them. */
 export function indexReading(db: Db, v: PackView, env: Env = process.env): IndexReading {
-  const purchase = purchaseDateOf(db, v);
+  const { date: purchase, from: purchase_from } = purchaseDateOf(db, v);
   const valuation = packDateIso(v.cost.valuation_date.value);
   const t = indexTableHere(env);
-  const base = { purchase, valuation, kind: t.table === null ? null : t.kind, factor: null, at_purchase: null, at_valuation: null };
+  const base = { purchase, purchase_from, valuation, kind: t.table === null ? null : t.kind, factor: null, at_purchase: null, at_valuation: null };
   if (t.table === null) return { ...base, words: `Not worked out: ${t.why}.` };
-  if (purchase === null) return { ...base, words: 'Not worked out: the purchase date is not on the property record.' };
+  if (purchase === null) return { ...base, words: 'Not worked out: the purchase date is not on the property record, the legal check or the client’s checked answer.' };
   if (valuation === null) return { ...base, words: 'Not worked out: give the valuation date below.' };
   try {
     const f = CM.indexFactorFromTable(t.table, purchase, valuation);

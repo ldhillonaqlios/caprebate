@@ -56,6 +56,12 @@ export type CallPolicy = {
    * puts it on the audit row.
    */
   readonly cost_pence?: number;
+  /**
+   * PHASE 159a (the Lockwood run, L1, 9 Oct 2026): HOW MANY SAME-HOST REDIRECTS A CALL MAY FOLLOW, carrying back the
+   * cookie each one sets. Absent or 0: none, and every redirect is refused, as before. Only HM Land Registry's INSPIRE
+   * download carries one: it answers with a 302 to the same address and an AccessToken cookie it expects back.
+   */
+  readonly same_host_redirects?: number;
 };
 
 const FIVE_MIN = 5 * 60 * 1000;
@@ -203,6 +209,8 @@ export const CALL_POLICIES: Readonly<Record<string, CallPolicy>> = Object.freeze
     rate_basis: 'NOT PUBLISHED on the dataset, download, guidance or API pages (read 24 Sep 2026); five in five ' +
       'minutes and forty a day is OUR cautious guess for whole-file downloads',
     timeout_ms: 300_000, max_bytes: 400 * MB, max_attempts: 2,
+    // PHASE 159a (L1): the download now answers 302 to the same address with an AccessToken cookie; two are followed.
+    same_host_redirects: 2,
   },
   POSTCODES_IO: {
     /* PHASE 151, 24 September 2026 — the free postcode check at the address question (src/connectors/postcode-check.ts),

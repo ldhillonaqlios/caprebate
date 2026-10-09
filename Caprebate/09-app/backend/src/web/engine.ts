@@ -20,6 +20,7 @@
  */
 
 import { createRequire } from 'node:module';
+import { localDate } from './localtime.ts';
 import * as ENGINE from '../../../engine/src/index.ts';
 
 export const {
@@ -405,7 +406,10 @@ export function amendmentWindow(periodEnd: string, claimant: WindowClaimant, tod
     claimant_type: claimant === 'company' ? 'company' : claimant === 'partnership' ? 'partnership' : 'individual',
   };
   if (claimant === 'partnership' && companyMember !== null) s['partnership_has_company_member'] = companyMember;
-  const r = fn(s, new Date(todayIso));
+  /* PHASE 159a (C2): THE LAST DAY IS A WHOLE UK DAY. The engine compares the moment it is handed with the deadline's
+     midnight, so at 09:00 on the last day it read the window as closed. Handed the start of today's UK date, its
+     comparison is a comparison of UK dates: open all of the last day, closed from the next one. */
+  const r = fn(s, new Date(`${localDate(todayIso)}T00:00:00.000Z`));
   if (r.known !== true || !(r.deadline instanceof Date) || typeof r.inTime !== 'boolean') {
     const d = r.deadlines;
     if (r.ambiguous === true && d !== undefined && d.individual instanceof Date && d.company instanceof Date) {

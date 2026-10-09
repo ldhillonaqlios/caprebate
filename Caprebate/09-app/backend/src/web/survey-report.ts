@@ -20,6 +20,7 @@
  * round it, from Ordnance Survey's free maps (src/web/site-plan.ts). The site boundary (INSPIRE) is never in it
  * (Lakhbir's rule, 1 Oct 2026).
  */
+import { propertyLine } from './survey-pack.ts';
 import { h, raw, type Safe } from './html.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 import { answerWords, legalQuestions } from './pack-legal.ts';
@@ -144,7 +145,7 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
   const questions = legalQuestions(x.job.sector);
   return {
     company: x.business.name,
-    property: x.property === null ? '' : `${x.property.label}${x.property.postcode === null ? '' : `, ${x.property.postcode}`}`,
+    property: x.property === null ? '' : propertyLine(x.property),
     surveyor: { name: x.surveyor.name, rics: x.surveyor.rics_number, firm: x.surveyor.firm },
     version: x.version,
     approved_on: longDate(x.approved_at),

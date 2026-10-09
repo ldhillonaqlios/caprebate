@@ -18,8 +18,11 @@
  * same for everyone and always given. No first-year allowance or annual investment allowance is assumed: the
  * client's accountant chooses those, and the last row says so.
  *
- * MADE AGAIN EVERY TIME, LIKE THE PDF: nothing is stored. Every cell is quoted where it must be, and a cell that a
- * spreadsheet would read as a formula is made plain text.
+ * MADE AGAIN EVERY TIME, LIKE THE PDF — from the same facts once it has been sent. PHASE 159a (C29): the first time a
+ * version's spreadsheet leaves us (emailed for sign-off, or its sign-off recorded) the claim's accounting period and
+ * claimant type are kept with the version (`freezeReturnContext`, table return_entry_contexts), and every later copy of
+ * that version is made from them (`returnContextFor`). Before then it reads the claim as it stands. Every cell is quoted
+ * where it must be, and a cell that a spreadsheet would read as a formula is made plain text.
  */
 import type { Db } from '../db.ts';
 import { BENEFIT } from './engine.ts';
@@ -52,7 +55,6 @@ type Schedule = (o: Record<string, unknown>) => { rows: Row[] };
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const pct = (r: number) => `${String(Math.round(r * 10000) / 100)}%`;
-const pence = (pounds: number) => (Number.isFinite(pounds) ? Math.round(pounds * 100) : null);
 
 function run(main: number, special: number, start: string | null, isCo: boolean): Row[] {
   const schedule = (BENEFIT as { schedule?: unknown }).schedule as Schedule | undefined;
@@ -60,19 +62,44 @@ function run(main: number, special: number, start: string | null, isCo: boolean)
   return schedule({ main, special, tax_rate: 0, years: RETURN_YEARS, period_start: start, is_company: isCo, first_year: {} }).rows;
 }
 
+/** A pool worked in whole pence from the engine's rate for each year: the allowance is rounded once, and the balance
+ * carried forward is the balance less it, so every row adds up to the penny (PHASE 159a, C16). */
+function inPence(start: number, rates: readonly number[]): { wda: number; cf: number }[] {
+  let bal = start;
+  return rates.map((r) => {
+    const wda = Number.isFinite(r) ? Math.round(bal * r) : Number.NaN;
+    const cf = bal - wda;
+    bal = cf;
+    return { wda, cf };
+  });
+}
+
+/** Two readings of one rate are the same rate (a rate is a fraction; the readings differ by far more than this when they differ). */
+const sameRate = (a: number, b: number) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) < 1e-9;
+
 /** The entries for each return, from an approved version and what the claim records about its period and claimant. */
 export function returnEntries(s: Snapshot, ctx: ReturnContext): ReturnEntry[] {
-  const main = (s.sums.main_pool_pence ?? 0) / 100;
-  const special = (s.sums.special_pool_pence ?? 0) / 100;
+  const mainP = s.sums.main_pool_pence ?? 0;
+  const specialP = s.sums.special_pool_pence ?? 0;
+  const main = mainP / 100;
+  const special = specialP / 100;
   const start = ctx.period_start !== null && ISO.test(ctx.period_start) ? ctx.period_start : null;
   // Run both claimant readings where the type is not known; a main-pool figure stands only where they agree.
   const readings = ctx.is_company === null ? [run(main, special, start, true), run(main, special, start, false)] : [run(main, special, start, ctx.is_company)];
   const first = readings[0] ?? [];
-  const agreed = (pick: (r: Row) => number, i: number): number | null => {
-    const vals = readings.map((rs) => rs[i] === undefined ? Number.NaN : pick(rs[i] as Row));
-    const v = vals[0] ?? Number.NaN;
-    return vals.every((x) => Number.isFinite(x) && Math.abs(x - v) < 0.005) ? v : null;
-  };
+  /* PHASE 159a (C14): THE RATE AND THE AMOUNT STAND OR FALL TOGETHER. The two readings' main-pool rates were compared
+     within 0.005 — so 17.01% and 17.06% "agreed", and the rate was shown beside a blank amount. Now a year's main-pool
+     rate stands only where every reading gives the same rate, and then its amounts are worked from it. */
+  const mainRates = Array.from({ length: RETURN_YEARS }, (_x, i) => {
+    const rs = readings.map((rows) => rows[i]?.main_wda_rate ?? Number.NaN);
+    const r0 = rs[0] ?? Number.NaN;
+    return rs.every((r) => sameRate(r, r0)) ? r0 : Number.NaN;
+  });
+  // A year whose rate is not agreed leaves every later year's balance unknown too.
+  const firstUnknown = mainRates.findIndex((r) => !Number.isFinite(r));
+  const mainRows = inPence(mainP, mainRates.map((r, i) => (firstUnknown >= 0 && i >= firstUnknown ? Number.NaN : r)));
+  const specialRates = Array.from({ length: RETURN_YEARS }, (_x, i) => first[i]?.special_wda_rate ?? Number.NaN);
+  const specialRows = inPence(specialP, specialRates);
   const periodOf = (i: number): string => {
     const r = first[i];
     return r !== undefined && r.period_start !== null && r.period_end !== null ? `${r.period_start} to ${r.period_end}`
@@ -80,26 +107,27 @@ export function returnEntries(s: Snapshot, ctx: ReturnContext): ReturnEntry[] {
   };
   const mainMissing = start === null ? 'The accounting period is not on the claim yet. The main pool rate depends on it.'
     : 'We do not know if the client is a company. A company and a person get a different rate here.';
+  const known = (n: number | undefined): number | null => (n !== undefined && Number.isFinite(n) ? n : null);
   const out: ReturnEntry[] = [
-    { return_no: 1, period: periodOf(0), pool: 'Main pool', entry: 'Spend that counts, added to the pool', amount_pence: s.sums.main_pool_pence ?? 0,
+    { return_no: 1, period: periodOf(0), pool: 'Main pool', entry: 'Spend that counts, added to the pool', amount_pence: mainP,
       how: 'From the approved survey report: the main pool, after any grant.' },
-    { return_no: 1, period: periodOf(0), pool: 'Special rate pool', entry: 'Spend that counts, added to the pool', amount_pence: s.sums.special_pool_pence ?? 0,
+    { return_no: 1, period: periodOf(0), pool: 'Special rate pool', entry: 'Spend that counts, added to the pool', amount_pence: specialP,
       how: 'From the approved survey report: the special rate pool, after any grant.' },
   ];
   for (let i = 0; i < RETURN_YEARS; i++) {
-    const mRate = agreed((r) => r.main_wda_rate, i);
-    const mWda = agreed((r) => r.main_wda, i);
-    const mCf = agreed((r) => r.main_pool_cf, i);
-    const r0 = first[i];
-    const sRate = r0?.special_wda_rate ?? Number.NaN;
+    const mWda = known(mainRows[i]?.wda);
+    const mCf = known(mainRows[i]?.cf);
+    const mRate = mWda === null ? null : (mainRates[i] ?? null);
+    const sWda = known(specialRows[i]?.wda);
+    const sRate = specialRates[i] ?? Number.NaN;
     out.push(
-      { return_no: i + 1, period: periodOf(i), pool: 'Main pool', entry: 'Writing-down allowance', amount_pence: mWda === null ? null : pence(mWda),
+      { return_no: i + 1, period: periodOf(i), pool: 'Main pool', entry: 'Writing-down allowance', amount_pence: mWda,
         how: mRate === null ? `Not worked out. ${mainMissing}` : `${pct(mRate)} of the balance on the pool.` },
-      { return_no: i + 1, period: periodOf(i), pool: 'Special rate pool', entry: 'Writing-down allowance', amount_pence: r0 === undefined ? null : pence(r0.special_wda),
-        how: Number.isFinite(sRate) ? `${pct(sRate)} of the balance on the pool.` : 'Not worked out.' },
-      { return_no: i + 1, period: periodOf(i), pool: 'Main pool', entry: 'Balance carried forward', amount_pence: mCf === null ? null : pence(mCf),
+      { return_no: i + 1, period: periodOf(i), pool: 'Special rate pool', entry: 'Writing-down allowance', amount_pence: sWda,
+        how: sWda !== null ? `${pct(sRate)} of the balance on the pool.` : 'Not worked out.' },
+      { return_no: i + 1, period: periodOf(i), pool: 'Main pool', entry: 'Balance carried forward', amount_pence: mCf,
         how: mCf === null ? `Not worked out. ${mainMissing}` : 'The balance less the writing-down allowance.' },
-      { return_no: i + 1, period: periodOf(i), pool: 'Special rate pool', entry: 'Balance carried forward', amount_pence: r0 === undefined ? null : pence(r0.special_pool_cf),
+      { return_no: i + 1, period: periodOf(i), pool: 'Special rate pool', entry: 'Balance carried forward', amount_pence: known(specialRows[i]?.cf),
         how: 'The balance less the writing-down allowance.' },
     );
   }
@@ -135,3 +163,23 @@ export function returnContext(db: Db, claim_id: string | null, business_id: stri
 
 export const csvName = (company: string, version: number) =>
   `${company.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'client'}-return-entries-v${String(version)}.csv`;
+
+/** PHASE 159a (C29): the facts a version's spreadsheet was first sent on, or null if it has not been sent. */
+export function frozenReturnContext(db: Db, approval_id: string): ReturnContext | null {
+  const r = db.get<{ period_start: string | null; is_company: number | null }>(
+    'SELECT period_start, is_company FROM return_entry_contexts WHERE approval_id = ?', [approval_id]);
+  return r === undefined ? null : { period_start: r.period_start, is_company: r.is_company === null ? null : r.is_company === 1 };
+}
+
+/** Keep the facts a version's spreadsheet is sent on — once. A later call for the same version changes nothing. */
+export function freezeReturnContext(db: Db, approval_id: string, ctx: ReturnContext, by: 'SENT_FOR_SIGNOFF' | 'SIGNOFF_RECORDED', at: string): ReturnContext {
+  const start = ctx.period_start !== null && ISO.test(ctx.period_start) ? ctx.period_start : null;
+  db.run('INSERT OR IGNORE INTO return_entry_contexts (approval_id, period_start, is_company, frozen_by, frozen_at) VALUES (?, ?, ?, ?, ?)',
+    [approval_id, start, ctx.is_company === null ? null : ctx.is_company ? 1 : 0, by, at]);
+  return frozenReturnContext(db, approval_id) ?? ctx;
+}
+
+/** The facts a version's spreadsheet is made from: as first sent, or, before it has been sent, the claim as it stands. */
+export function returnContextFor(db: Db, approval_id: string, claim_id: string | null, business_id: string): ReturnContext {
+  return frozenReturnContext(db, approval_id) ?? returnContext(db, claim_id, business_id);
+}

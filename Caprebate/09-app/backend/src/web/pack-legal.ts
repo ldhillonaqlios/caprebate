@@ -28,6 +28,7 @@ import { packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult } from './survey-pack.ts';
 import { poundsWords } from './pack-sums.ts';
 import { claimantTypeForGate } from './crm.ts';
+import { valuationLock } from './valuation-lock.ts';
 
 export type EngineQuestion = {
   readonly id: string;
@@ -283,6 +284,9 @@ export function parseAnswer(q: EngineQuestion, raw: readonly string[]): { ok: tr
 export function answerLegal(d: PackDeps, actor: Actor, job_id: string, f: { question: string; values: readonly string[]; source: string; seq: string }): PackResult {
   const { job, obj } = packJob(d.db, actor, job_id);
   if (!mayAnswer(d, actor, job, obj)) authorise(actor, 'surveyor_job.commit', obj);
+  // PHASE 159a (C3, L3): once the claim is past the tax adviser's sign-off, or has stopped, the legal check is fixed too.
+  const lock = valuationLock(d.db, job.claim_id);
+  if (lock.locked) return { ok: false, why: lock.why };
   const source = f.source.trim();
   if (source === '') return { ok: false, field: 'source', why: 'Say where this answer came from — for example the election notice, the CPSE replies, or the client.' };
   if (source.length > 300) return { ok: false, field: 'source', why: 'Keep it under 300 characters.' };

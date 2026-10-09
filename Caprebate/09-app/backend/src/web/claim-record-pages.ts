@@ -129,7 +129,7 @@ export async function handleClaimRecord(
   if (m) {
     const id = m[1] ?? '';
     const f = await form(req);
-    const fields = { ...posted(f, ['adviser', 'credential', 'signed_on', 'scope', 'method_note', 'figure']), confirmed_switches: f.getAll('switch').join(',') };
+    const fields = { ...posted(f, ['adviser', 'credential', 'signed_on', 'scope', 'method_note', 'figure', 'approval_id']), confirmed_switches: f.getAll('switch').join(',') };
     return finish(id, R.recordSignOff(deps, actor, id, fields), 'Sign-off not recorded', 'saved');
   }
   m = new RegExp(`^/staff/claims/${ID}/deliverables$`).exec(path);
@@ -293,6 +293,8 @@ export function figuresBlock(claim_id: string, p: R.FiguresPanel | undefined): S
       <dt>Recorded</dt><dd>${p.signoff.recorded} · ${p.signoff.record_hash}</dd></dl>`}
     ${form === undefined ? raw('') : !form.open ? h`<p class="help">Record the sign-off: ${form.why}.</p>` : h`
       <form method="post" action="/staff/claims/${claim_id}/signoff"><h3>Record the tax adviser’s sign-off</h3>
+        ${form.version === null ? raw('') : h`<input type="hidden" name="approval_id" value="${form.version.id}">
+        <p class="help">This records a sign-off of the survey report, version ${String(form.version.version)}, for ${form.version.figure}. If the adviser read another version, send this one to them first.</p>`}
         <label>The adviser’s firm, as registered <input name="adviser" placeholder="e.g. Example Tax Advisers LLP"></label>
         <label>Credential <input name="credential"></label>
         <label>Signed on <input name="signed_on" type="date"></label>

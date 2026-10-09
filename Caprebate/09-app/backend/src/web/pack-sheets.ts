@@ -28,7 +28,7 @@ import { ESTIMATED_AREA_LABEL } from '../connectors/homedata.ts';
 import { BAND } from './engine.ts';
 import { poundsWords, percentWords, quantityWords } from './pack-sums.ts';
 import { indexReading, insuranceReading, prelimsReading, rateFlagReading, INCLUDES_WORDS } from './pack-cost-model.ts';
-import { packDateIso } from './survey-pack.ts';
+import { packDateIso, propertyLine } from './survey-pack.ts';
 import type { Env } from '../connectors/place.ts';
 
 /** Where a row's value comes from — shown beside it, so nothing reads as more certain than it is. */
@@ -128,7 +128,7 @@ function building(c: Ctx): Sheet {
     n: 5, title: 'The building', applies: true, not_applies_words: null,
     lede: 'What the building is, from the records we hold and your own words. Floor area and construction drive the whole split.',
     rows: [
-      { label: 'Address', value: v.property === null ? null : `${v.property.label}${v.property.postcode === null ? '' : `, ${v.property.postcode}`}`, from: 'the pack', missing: NOT_ON_FILE },
+      { label: 'Address', value: v.property === null ? null : propertyLine(v.property), from: 'the pack', missing: NOT_ON_FILE },
       { label: 'Title number', value: str(title?.['title_number']), from: 'Land Registry', missing: NOT_ON_FILE },
       { label: 'Floor area in the pack', value: gia === null ? null : `${quantityWords(gia)} m²`, from: 'the pack', missing: 'needed (chapter 9)' },
       { label: 'Floor area on the energy certificate', value: str(epc?.['epc_total_floor_area_m2']) === null ? null : `${str(epc?.['epc_total_floor_area_m2'])} m²`, from: 'the energy certificate', missing: NOT_ON_FILE },
@@ -188,7 +188,7 @@ function indexRows(c: Ctx): SheetRow[] {
   const r = indexReading(c.db, c.v, c.env);
   const vd = c.v.cost.valuation_date;
   return [
-    { label: 'Purchase date', value: r.purchase, from: 'the property record', missing: NOT_ON_FILE, internal: true },
+    { label: 'Purchase date', value: r.purchase, from: r.purchase_from, missing: NOT_ON_FILE, internal: true },
     { label: 'Valuation date (the date the rebuild cost is priced at)', value: packDateIso(vd.value), from: 'the surveyor', ...(vd.source?.by_name ? { by: vd.source.by_name } : {}), missing: 'not given yet', internal: true },
     { label: 'Index factor, purchase date to valuation date', value: r.words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
   ];

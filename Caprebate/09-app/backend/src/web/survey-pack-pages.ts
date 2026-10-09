@@ -213,7 +213,9 @@ function packHead(app: App, actor: Actor, v: P.PackView, ch: number): Safe {
     .sort((a, b) => (a.claim_ref ?? '').localeCompare(b.claim_ref ?? '') || a.job_id.localeCompare(b.job_id));
   const job = all.find((j) => j.job_id === v.job.id);
   const site = v.property !== null ? siteOf(v.job.business_name, v.property.label) : job === undefined ? 'no site recorded' : jobSite(job);
-  const postcode = v.property?.postcode ?? job?.property_postcode ?? null;
+  const pc = v.property?.postcode ?? job?.property_postcode ?? null;
+  // PHASE 159a (L6): the postcode once — not again here when the site's own words already end with it.
+  const postcode = pc === null || P.propertyLine({ label: site, postcode: pc }) === site ? null : pc;
   const n = all.findIndex((j) => j.job_id === v.job.id);
   const facts = [job?.claim_ref ?? null, postcode, all.length > 1 && n >= 0 ? `survey job ${String(n + 1)} of ${String(all.length)} for this client` : null]
     .filter((x): x is string => x !== null);
@@ -229,7 +231,7 @@ function propertyChooser(v: P.PackView, ch: number): Safe {
   if (!v.may_edit) return h`<div class="gate" role="alert">The company has more than one property. The surveyor says which one this pack is for.</div>`;
   return h`<form method="post" action="${base(v.job.id)}/property" class="gate pk-choose">${hidden(v, ch)}
     <label for="pk-prop"><strong>Which property is this pack for?</strong> The company has more than one.</label>
-    <select id="pk-prop" name="property_id" class="fi">${v.property_choices.map((p) => h`<option value="${p.id}">${p.label}${p.postcode === null ? '' : `, ${p.postcode}`}</option>`)}</select>
+    <select id="pk-prop" name="property_id" class="fi">${v.property_choices.map((p) => h`<option value="${p.id}">${P.propertyLine(p)}</option>`)}</select>
     <button class="cta" type="submit">This one</button></form>`;
 }
 
@@ -823,7 +825,7 @@ function versionPage(d: PackPageDeps, actor: Actor, v: P.PackView, kept: NonNull
       : h`<div class="pk-fp-bad" role="alert"><strong>The fingerprint does not match.</strong> This copy is not what was approved. Do not rely on it, and tell the office.</div>`}
     <p>Approved by <strong>${x.surveyor.name}</strong>, RICS number ${x.surveyor.rics_number}${x.surveyor.firm === null ? '' : `, ${x.surveyor.firm}`}, ${d.stamp(x.approved_at)}.</p>
     <p class="help">Fingerprint: <span class="pk-fp">${kept.row.fingerprint}</span></p>
-    <p>Property: ${x.property === null ? '—' : `${x.property.label}${x.property.postcode === null ? '' : `, ${x.property.postcode}`}`}</p>
+    <p>Property: ${x.property === null ? '—' : P.propertyLine(x.property)}</p>
     <h2>The sums</h2>
     <dl class="pk-dl">
       <div><dt>Price paid</dt><dd>${PENCE(x.inputs.price_paid_pence.value)}</dd></div>

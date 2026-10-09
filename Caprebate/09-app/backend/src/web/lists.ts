@@ -102,7 +102,7 @@ export const LEAD_SORTS: Vocab = Object.freeze({
   newest: 'Newest first',
   next_action: 'Next action due, soonest first',
   age: 'Age, oldest first',
-  value: 'Range shown, highest first',
+  value: 'Figure shown, highest first',
   priority: 'Priority, highest first',
 });
 
@@ -458,7 +458,7 @@ export function leadsList(db: Db, actor: Actor, p: ListParams, ignored: readonly
   }
   let sort = p.sort;
   if (sort === 'value' && !mayValue) {
-    said.push('Sort: the range shown is not shown to this role, so the list is newest first');
+    said.push('Sort: the figure shown is not shown to this role, so the list is newest first');
     sort = 'newest';
   }
   const highOf = (r: LeadListDb): number | null => (rangeOf(r) === undefined ? null : r.shown_high_pence);
@@ -608,7 +608,7 @@ const CLAIM_COLUMNS: Readonly<Record<ListShape, readonly (readonly [keyof ClaimL
     ['expected_completion', 'Expected completion'], ['opened', 'Opened'], ['claim_ref', 'Reference']],
   VALUE: [['client', 'Company'], ['property', 'Property'], ['workstream', 'Workstream'], ['stage', 'Stage'],
     ['owner', 'Owner'], ['priority', 'Priority'], ['next_action', 'Next action'], ['next_action_due', 'Next action due'],
-    ['expected_completion', 'Expected completion'], ['opened', 'Opened'], ['shown_range', 'Estimated value — the range shown'], ['claim_ref', 'Reference']],
+    ['expected_completion', 'Expected completion'], ['opened', 'Opened'], ['shown_range', 'Estimated value — the figure shown'], ['claim_ref', 'Reference']],
 });
 
 const LEAD_COLUMNS: Readonly<Record<'WORKING' | 'VALUE', readonly (readonly [string, string])[]>> = Object.freeze({
@@ -617,7 +617,7 @@ const LEAD_COLUMNS: Readonly<Record<'WORKING' | 'VALUE', readonly (readonly [str
     ['claim', 'Claim']],
   VALUE: [['organisation', 'Organisation'], ['source', 'Source'], ['origin', 'What made it a lead'], ['lead_date', 'Date'],
     ['owner', 'Owner'], ['priority', 'Priority'], ['status', 'Status'], ['next_action', 'Next action'], ['next_action_due', 'Next action due'],
-    ['claim', 'Claim'], ['shown_range', 'Range shown']],
+    ['claim', 'Claim'], ['shown_range', 'Figure shown']],
 });
 
 function cellOf(row: Readonly<Record<string, unknown>>, key: string): string {

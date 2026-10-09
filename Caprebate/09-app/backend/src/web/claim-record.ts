@@ -52,6 +52,8 @@ import { NO_RECEIPT_POLICY } from './documents.ts';
 import { formatPence, formatShownRange } from './shown-range.ts';
 import { localDate, localStamp } from './localtime.ts';
 import { readEngineVersion, writeCaseStamp } from './case-stamp.ts';
+import { latestApprovalOnClaim, laterOf, voidLine } from './valuation-lock.ts';
+import { freezeReturnContext, returnContext } from './return-entries.ts';
 
 export type RecordDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 export type RecordResult = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string };
@@ -97,19 +99,24 @@ type SignoffRow = {
   id: string; claim_id: string; adviser: string; credential: string; signed_on: string; scope: string; method_note: string;
   switch_readings_json: string; figure_pence: number; commitment_id: string; record_hash: string; recorded_at: string;
   recorder: string | null;
+  /** PHASE 159a (C4): the approved version the adviser signed; null on a claim with no approved survey pack. */
+  approval_id: string | null;
 };
 
 const SIGNOFF_SELECT =
   'SELECT s.id, s.claim_id, s.adviser, s.credential, s.signed_on, s.scope, s.method_note, s.switch_readings_json, s.figure_pence, ' +
-  's.commitment_id, s.record_hash, s.recorded_at, u.display_name AS recorder FROM tax_adviser_signoffs s LEFT JOIN users u ON u.id = s.recorded_by ';
+  's.commitment_id, s.record_hash, s.recorded_at, u.display_name AS recorder, s.approval_id FROM tax_adviser_signoffs s LEFT JOIN users u ON u.id = s.recorded_by ';
 
 export function latestSignOff(db: Db, claim_id: string): SignoffRow | undefined {
   return db.get<SignoffRow>(`${SIGNOFF_SELECT}WHERE s.claim_id = ? ORDER BY s.recorded_at DESC, s.rowid DESC LIMIT 1`, [claim_id]);
 }
 
-/** The sign-off record a gate may use: one recorded since the claim last ENTERED TAX_ADVISER_SIGNOFF. */
+/**
+ * The sign-off record a gate may use: one recorded since the claim last ENTERED TAX_ADVISER_SIGNOFF — and, PHASE 159a,
+ * since the valuation was last reopened (src/web/valuation-lock.ts), which sets every earlier sign-off aside.
+ */
 export function signOffSinceEntry(db: Db, c: { id: string; created_at: string }): SignoffRow | undefined {
-  const since = enteredAt(db, c, 'TAX_ADVISER_SIGNOFF');
+  const since = laterOf(enteredAt(db, c, 'TAX_ADVISER_SIGNOFF'), voidLine(db, c.id));
   return db.get<SignoffRow>(
     `${SIGNOFF_SELECT}WHERE s.claim_id = ? AND s.recorded_at >= ? ORDER BY s.recorded_at DESC, s.rowid DESC LIMIT 1`, [c.id, since]);
 }
@@ -121,12 +128,17 @@ export function signOffSinceEntry(db: Db, c: { id: string; created_at: string })
  */
 export function signOffRecordNeed(db: Db, c: { id: string; created_at: string }): Need {
   const s = signOffSinceEntry(db, c);
+  // PHASE 159a (C4): where the claim has an approved survey pack, the sign-off must be of its NEWEST version.
+  const latest = latestApprovalOnClaim(db, c.id);
+  const stale = s !== undefined && latest !== null && s.approval_id !== latest.id;
   return {
     what: 'The tax adviser’s sign-off is on record',
-    met: s !== undefined,
+    met: s !== undefined && !stale,
     why: s === undefined
       ? 'No sign-off is recorded since the claim reached the tax adviser. Nothing else counts in its place.'
-      : `signed off on ${s.signed_on}, recorded ${localStamp(s.recorded_at)}`,
+      : stale
+        ? `the surveyor approved version ${String(latest?.version ?? 0)} after the version the adviser signed. Send version ${String(latest?.version ?? 0)} for sign-off.`
+        : `signed off on ${s.signed_on}, recorded ${localStamp(s.recorded_at)}`,
   };
 }
 
@@ -242,6 +254,8 @@ export type FiguresPanel = {
     readonly switches: readonly { readonly switch: string; readonly on: boolean }[];
     readonly adviser_tokens: Vocab;
     readonly adviser_question: string;
+    /** PHASE 159a (C4): the version this form records a sign-off of — the newest approved one — or null where there is none. */
+    readonly version: { readonly id: string; readonly version: number; readonly figure: string } | null;
   };
 };
 
@@ -297,9 +311,18 @@ export function figuresPanel(db: Db, actor: Actor, claim_id: string, todayIso: s
         why: c.stage !== 'TAX_ADVISER_SIGNOFF' ? 'a sign-off can only be recorded while the claim is with the tax adviser'
           : k === undefined ? 'the surveyor has not committed figures on this claim yet' : '',
         switches: ctaSwitchReadings(), adviser_tokens: ADVISER_TOKENS, adviser_question: ADVISER_NAME_QUESTION,
+        version: signoffVersion(db, c.id),
       },
     } : {}),
   };
+}
+
+/** PHASE 159a (C4): the newest approved version on the claim, with its figure, for the sign-off form to name. */
+function signoffVersion(db: Db, claim_id: string): { id: string; version: number; figure: string } | null {
+  const v = latestApprovalOnClaim(db, claim_id);
+  if (v === null) return null;
+  const f = db.get<{ f: number | null }>("SELECT json_extract(snapshot_json, '$.sums.qualifying_pence') AS f FROM survey_pack_approvals WHERE id = ?", [v.id])?.f ?? null;
+  return { id: v.id, version: v.version, figure: formatPence(f) };
 }
 
 /* ================================================================== *
@@ -335,6 +358,16 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
   }
   const k = commitmentOnClaim(d.db, c.id);
   if (k === undefined) return { ok: false, why: 'The surveyor has not committed figures on this claim, so there is nothing to sign off.' };
+  /* PHASE 159a (C4): THE SIGN-OFF NAMES THE VERSION IT SIGNED — the newest approved version on the claim. One sent for
+     sign-off names its own (report-signoff.ts recordAnswer), and is refused if the surveyor has approved a newer one. */
+  const latest = latestApprovalOnClaim(d.db, c.id);
+  const asked = input['approval_id'] ?? null;
+  if (asked !== null && (latest === null || asked !== latest.id)) {
+    return { ok: false, why: latest === null
+      ? 'That version is not an approved version on this claim.'
+      : `The surveyor approved version ${String(latest.version)} after the version this adviser signed. Send version ${String(latest.version)} for sign-off.` };
+  }
+  const approval_id = latest?.id ?? null;
   const adviser = text(input['adviser'], 300, 'The adviser');
   if (!adviser.ok) return adviser;
   // PHASE 151b, Word answer 169: the FIRM, and only the firm — not a role in its place, and never a person's name.
@@ -360,6 +393,13 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
   if (figure === null) {
     return { ok: false, why: 'Write the figure the adviser signed, in pounds, more than £0. A £0 result is a reasoned negative, not a sign-off.' };
   }
+  // PHASE 159a (C4): the figure is the version's own. A different figure is a different version: the surveyor approves it first.
+  if (approval_id !== null) {
+    const vf = d.db.get<{ f: number | null }>("SELECT json_extract(snapshot_json, '$.sums.qualifying_pence') AS f FROM survey_pack_approvals WHERE id = ?", [approval_id])?.f ?? null;
+    if (vf !== null && vf !== figure) {
+      return { ok: false, why: `The figure signed must be the approved version’s own: ${formatPence(vf)} (version ${String(latest?.version ?? 0)}). A different figure needs the surveyor to approve a new version first.` };
+    }
+  }
   const known = ctaSwitchReadings();
   const confirmed = (input['confirmed_switches'] ?? '').split(',').map((x) => x.trim()).filter((x) => x !== '');
   const readings: { switch: string; on: boolean }[] = [];
@@ -374,20 +414,23 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
     id, claim_id: c.id, adviser: adviser.value, credential: credential.value, signed_on: signedOn, scope: scope.value,
     method_note: method.value, switch_readings: readings, figure_pence: figure, commitment_id: k.id,
     kind: 'RECORD_NOT_A_SIGNATURE', recorded_by: actor.id, recorded_at: at,
+    ...(approval_id === null ? {} : { approval_id }),
   };
   const hash = sha256(record);
   const opened = d.db.tx(() => {
     d.db.run(
       'INSERT INTO tax_adviser_signoffs (id, claim_id, adviser, credential, signed_on, scope, method_note, switch_readings_json, ' +
-        'figure_pence, commitment_id, kind, record_hash, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'figure_pence, commitment_id, kind, record_hash, recorded_by, recorded_at, approval_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [id, c.id, adviser.value, credential.value, signedOn, scope.value, method.value, JSON.stringify(readings), figure, k.id,
-        'RECORD_NOT_A_SIGNATURE', hash, actor.id, at],
+        'RECORD_NOT_A_SIGNATURE', hash, actor.id, at, approval_id],
     );
+    // PHASE 159a (C29): the signed version's return entries are fixed from here, on the facts as they stand now.
+    if (approval_id !== null) freezeReturnContext(d.db, approval_id, returnContext(d.db, c.id, c.business_id), 'SIGNOFF_RECORDED', at);
     return openReconciliation(d, c, { id, figure_pence: figure, signed_on: signedOn, adviser: adviser.value ?? '' }, k, at);
   });
   d.audit.append({
     at, kind: 'TAX_SIGNOFF_RECORDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
-    object_type: 'claim', object_id: c.id, detail: { signoff: id, commitment: k.id, switches_confirmed: readings.length, business: c.business_id },
+    object_type: 'claim', object_id: c.id, detail: { signoff: id, commitment: k.id, switches_confirmed: readings.length, business: c.business_id, ...(approval_id === null ? {} : { approval: approval_id }) },
   });
   if (opened !== null) {
     d.audit.append({
@@ -745,14 +788,16 @@ type DeliverableRow = {
   content_hash: string | null; logical_document_id: string | null; created_at: string; updated_at: string;
 };
 
+/** PHASE 159a: an issued deliverable counts only if it was issued after the valuation was last reopened (a defence pack). */
 export function deliverableIssued(db: Db, claim_id: string, kind: DeliverableKind): boolean {
-  return db.get<{ n: number }>("SELECT COUNT(*) AS n FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED'", [claim_id, kind])?.n !== 0;
+  return db.get<{ n: number }>("SELECT COUNT(*) AS n FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED' AND updated_at >= ?",
+    [claim_id, kind, voidLine(db, claim_id) ?? ''])?.n !== 0;
 }
 
 export function deliverableIssuedNeed(db: Db, claim_id: string, kind: DeliverableKind): Need {
   const issued = db.get<{ issued_on: string; version: number }>(
-    "SELECT issued_on, version FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED' ORDER BY version DESC LIMIT 1",
-    [claim_id, kind]);
+    "SELECT issued_on, version FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED' AND updated_at >= ? ORDER BY version DESC LIMIT 1",
+    [claim_id, kind, voidLine(db, claim_id) ?? '']);
   const def = DELIVERABLES[kind];
   return {
     what: `${def.label} is issued`,
@@ -858,8 +903,9 @@ export function defencePackRecords(db: Db, claim_id: string): { ok: true; manife
   const c = db.get<{ claim_ref: string }>('SELECT claim_ref FROM claims WHERE id = ?', [claim_id]);
   const report = releasedReportFingerprint(db, claim_id);
   if (report === null) missing.push('the survey report the surveyor approved, with its sign-off');
+  const since = voidLine(db, claim_id) ?? '';
   const signoff = db.get<{ id: string; record_hash: string; figure_pence: number; signed_on: string }>(
-    'SELECT id, record_hash, figure_pence, signed_on FROM tax_adviser_signoffs WHERE claim_id = ? ORDER BY recorded_at DESC, rowid DESC LIMIT 1', [claim_id]);
+    'SELECT id, record_hash, figure_pence, signed_on FROM tax_adviser_signoffs WHERE claim_id = ? AND recorded_at >= ? ORDER BY recorded_at DESC, rowid DESC LIMIT 1', [claim_id, since]);
   if (signoff === undefined) missing.push('the tax adviser’s sign-off');
   const issued = (kind: string) => db.get<{ version: number; issued_on: string; content_hash: string | null }>(
     "SELECT version, issued_on, content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = ? AND state = 'ISSUED' ORDER BY version DESC LIMIT 1", [claim_id, kind]);
@@ -868,7 +914,7 @@ export function defencePackRecords(db: Db, claim_id: string): { ok: true; manife
   const pack = issued('ACCOUNTANT_COMPUTATION_PACK');
   if (pack === undefined) missing.push('the accountant’s computation pack, issued');
   const accepted = clientReport?.content_hash == null ? undefined : db.get<{ accepted_at: string; fingerprint: string }>(
-    'SELECT accepted_at, fingerprint FROM client_report_acceptances WHERE claim_id = ? AND fingerprint = ? ORDER BY accepted_at LIMIT 1', [claim_id, clientReport.content_hash]);
+    'SELECT accepted_at, fingerprint FROM client_report_acceptances WHERE claim_id = ? AND fingerprint = ? AND accepted_at >= ? ORDER BY accepted_at LIMIT 1', [claim_id, clientReport.content_hash, since]);
   if (accepted === undefined) missing.push('the client’s acceptance of the report');
   const invoice = db.get<{ seq: number | null; sent_on: string | null; fee_pence: number | null }>(
     "SELECT (SELECT n.seq FROM invoice_numbers n WHERE n.invoice_id = i.id AND n.kind = 'INVOICE') AS seq, i.sent_on, i.fee_pence FROM invoices i " +
@@ -889,12 +935,13 @@ export function defencePackRecords(db: Db, claim_id: string): { ok: true; manife
   return { ok: true, manifest, fingerprint: createHash('sha256').update(_canonical(manifest), 'utf8').digest('hex') };
 }
 
+/** PHASE 159a (C4): the version a sign-off NAMES, recorded since the valuation was last reopened — never one matched by its total. */
 export function releasedReportFingerprint(db: Db, claim_id: string): string | null {
   const rows = db.all<{ fingerprint: string; snapshot_json: string }>(
     'SELECT a.fingerprint, a.snapshot_json FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
       'WHERE j.claim_id = ? AND EXISTS (SELECT 1 FROM tax_adviser_signoffs s WHERE s.claim_id = j.claim_id ' +
-      "AND s.recorded_at >= a.approved_at AND s.figure_pence = json_extract(a.snapshot_json, '$.sums.qualifying_pence')) " +
-      'ORDER BY a.approved_at DESC, a.version DESC', [claim_id]);
+      "AND s.approval_id = a.id AND s.figure_pence = json_extract(a.snapshot_json, '$.sums.qualifying_pence') AND s.recorded_at >= ?) " +
+      'ORDER BY a.approved_at DESC, a.version DESC', [claim_id, voidLine(db, claim_id) ?? '']);
   for (const r of rows) {
     if (createHash('sha256').update(r.snapshot_json, 'utf8').digest('hex') === r.fingerprint) return r.fingerprint;
   }

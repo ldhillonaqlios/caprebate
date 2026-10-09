@@ -169,11 +169,20 @@ export function packSums(inputs: PackInputs, lines: readonly PackLine[]): PackSu
   const out: LineSum[] = [];
   for (const l of lines) {
     if (l.removed) { out.push({ line_id: l.id, cost_pence: null, qualifying_pence: null, counted: false }); continue; }
+    /* PHASE 159a (C22): A LINE OF NOTHING NEEDS NO POOL. A count of 0 is the line taken out by its number: it adds
+       nothing and asks for nothing more. A rate or a share of 0 still adds its cost to the elements, but qualifies
+       nothing, so it needs no pool either. Before, such a line blocked the total until a pool was chosen for it. */
+    if (known(l.qty_milli, LIMITS.qty_milli) && l.qty_milli.value === 0) {
+      out.push({ line_id: l.id, cost_pence: 0, qualifying_pence: 0, counted: true });
+      continue;
+    }
+    const qualifiesNothing = (known(l.rate_pence, LIMITS.rate_pence) && l.rate_pence.value === 0)
+      || (known(l.qpct_bp, LIMITS.qpct_bp) && l.qpct_bp.value === 0);
     const gaps: string[] = [];
     if (!known(l.qty_milli, LIMITS.qty_milli)) gaps.push('how much');
     if (!known(l.rate_pence, LIMITS.rate_pence)) gaps.push('the rate');
     if (!known(l.qpct_bp, LIMITS.qpct_bp)) gaps.push('the share that qualifies');
-    if (l.pool !== 'MP' && l.pool !== 'SR') gaps.push('the pool');
+    if (l.pool !== 'MP' && l.pool !== 'SR' && !qualifiesNothing) gaps.push('the pool');
     if (gaps.length > 0) {
       allLinesComplete = false;
       needed.push({ where: 'LINE', key: 'line', line_id: l.id, words: `${l.label}: ${gaps.join(', ')}.` });

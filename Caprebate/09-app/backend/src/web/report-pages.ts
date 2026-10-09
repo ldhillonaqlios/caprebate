@@ -26,7 +26,7 @@ import * as S from './report-signoff.ts';
 import { ACCEPT_WORDS, myAcceptance } from './report-accept.ts';
 import { ukDate } from './localtime.ts';
 import { poundsWords } from './pack-sums.ts';
-import { csvName, returnContext, returnEntriesCsv } from './return-entries.ts';
+import { csvName, returnContextFor, returnEntriesCsv } from './return-entries.ts';
 import { packJob } from './surveyor.ts';
 
 export type ReportPageDeps = {
@@ -95,7 +95,7 @@ export async function handleReportStaff(
     if (what === 'report.pdf') { sendPdf(res, reportPdf(m).bytes, pdfName(m.company, m.version)); return 'handled'; }
     if (what === 'return-entries.csv') {
       const { job: j } = packJob(d.app.db, actor, job);
-      sendCsv(res, returnEntriesCsv(kept.snapshot, returnContext(d.app.db, j.claim_id, j.business_id), kept.row.fingerprint), csvName(m.company, m.version));
+      sendCsv(res, returnEntriesCsv(kept.snapshot, returnContextFor(d.app.db, kept.row.id, j.claim_id, j.business_id), kept.row.fingerprint), csvName(m.company, m.version));
       return 'handled';
     }
     res.writeHead(200, HTML_HEADERS);
@@ -239,7 +239,7 @@ export async function handleSignoffLink(
   if (m[2] !== undefined) {
     if (!v.fingerprint_holds) return linkPage(res, 409, 'Not available', h`<div class="card"><h1>This report cannot be opened</h1><p>It does not match what the surveyor approved. Tell Cap Rebate.</p></div>`);
     if (m[2] === '/return-entries.csv') {
-      sendCsv(res, returnEntriesCsv(v.snapshot, returnContext(app.db, v.claim_id, v.business_id), v.fingerprint), csvName(model.company, model.version));
+      sendCsv(res, returnEntriesCsv(v.snapshot, returnContextFor(app.db, v.approval_id, v.claim_id, v.business_id), v.fingerprint), csvName(model.company, model.version));
       return 'handled';
     }
     sendPdf(res, reportPdf(model).bytes, pdfName(model.company, model.version));

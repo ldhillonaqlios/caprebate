@@ -1449,6 +1449,15 @@ tax allowances": the route is decided PER EVENT (159c), not per claim.
    C25: basis period reform for sole traders and partnerships (OUR READING).
 6. The portal and the report say which route each event took, in plain
    words.
+7. (Carried from Phase 159a, 9 Oct 2026.) C2 IN THE SITE ENGINE. 159a made
+   the BACK END read the window by UK date (engine.ts amendmentWindow hands
+   the engine the start of today's UK date). The engine itself still
+   compares a moment with the deadline's midnight (shared.js
+   deriveAmendmentWindow, the inTime lines at 3160, 3189, 3193 and the
+   not-known branch at 3197-3200), so the website's own reading closes at
+   00:00:01 on the last day. Make the site file compare UK dates, re-extract
+   (extract.cjs --check, verify-extraction), and prove the last day open
+   with a harness case that fails on .bak-phase159a.
 ```
 
 ---

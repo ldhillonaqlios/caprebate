@@ -402,7 +402,7 @@ function due(d: string | null | undefined): string {
 
 function valuePanel(v: C.ClaimValue): Safe {
   return v.established
-    ? h`<dl><dt>The range the client was shown</dt><dd>${v.shown_range}</dd>
+    ? h`<dl><dt>The figure the client was shown</dt><dd>${v.shown_range}</dd>
         <dt>Estimated spend that counts</dt><dd>${v.qualifying_expenditure}</dd>
         <dt>Indicative lifetime tax saving</dt><dd>${v.indicative_lifetime_saving}</dd></dl>`
     : h`<p class="help">No value yet — ${v.why}.</p>`;
@@ -426,6 +426,24 @@ function nextActionFields(owners: readonly Owner[]): Safe {
     <label>Owner <select name="next_action_owner"><option value="">keep the claim’s current next action</option>${
       owners.map((o) => h`<option value="${o.id}">${o.name}</option>`)}</select></label>
     <label>Due <input name="next_action_due" type="date"></label></details>`;
+}
+
+/**
+ * PHASE 159a: ONE VERSION AFTER SIGN-OFF, ON THE CLAIM PAGE. Once the figures are fixed it says so; an admin gets
+ * "Reopen the valuation", with what that sets aside; and after a reopen, what it set aside and why.
+ */
+function valuationBlock(id: string, v: NonNullable<PipelinePanel['valuation']>, reopen: { readonly words: string } | null): Safe {
+  if (v.locked === null && v.reopened === null) return raw('');
+  return h`<div id="valuation" class="help">
+    ${v.locked === null ? raw('') : h`<p><strong>The figures are fixed.</strong> ${v.locked}</p>`}
+    ${v.reopened === null ? raw('') : h`<p><strong>The valuation was reopened</strong> ${v.reopened.at} by ${v.reopened.who}, back to ${v.reopened.to}. Why: ${v.reopened.reason}.
+      It set aside the sign-off, the reports, the client’s acceptance and any defence pack. Each is done again on the new figures.</p>`}
+    ${reopen === null ? raw('') : h`<form method="post" action="/staff/claims/${id}/stage">
+      <input type="hidden" name="kind" value="REOPEN"><input type="hidden" name="to" value="VALUATION">
+      <p>${reopen.words}</p>
+      <label>Why it must change <input name="reason" required></label>
+      <button type="submit">Reopen the valuation</button></form>`}
+  </div>`;
 }
 
 function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonly Owner[] = []): Safe {
@@ -455,6 +473,7 @@ function pipelineBlock(id: string, p: PipelinePanel | undefined, owners: readonl
           <button type="submit">Confirm</button></form>` : raw('')}</td></tr>`)}</tbody></table>`}
     ${p.claimable_figure === undefined ? raw('') : h`<div class="help">A claimable figure for the client: ${p.claimable_figure.released
       ? 'released' : 'not released yet'}.${p.claimable_figure.released ? raw('') : why(p.claimable_figure.why)}</div>`}
+    ${p.valuation === undefined ? raw('') : valuationBlock(id, p.valuation, m?.reopen_valuation ?? null)}
     ${p.fee_trigger === undefined ? raw('') : h`<div class="help">When our fee is due: ${p.fee_trigger.reading}.${why(h`${
       p.fee_trigger.decided ? 'This is decided.' : 'This is the most cautious reading, while it is undecided.'} The open question: “${p.fee_trigger.question}”`)}</div>`}
     ${m === undefined ? raw('') : h`<h3>Move the claim</h3>
