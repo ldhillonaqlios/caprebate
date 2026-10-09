@@ -13,7 +13,7 @@
 */
 
 const SHARED = require("./shared.js");
-const { CB_PLANT, CB_CTA, CB_CTAQ, CB_POOL, CB_S25, CB_S33B, CB_ELECTION, CB_JURIS, CB_ACQ, CB_RATES, CB_TAXPOS, CB_CASH, CB_S187A, CB_REGISTRY, CB_FRONTDOOR, CB_FEE, CB_FEEGUARD, CB_BENEFIT, CB_GATE_CONFIG, CB_GATE, CB_BOOKING, CB_BAND, CB_FUNNEL } = SHARED;
+const { CB_PLANT, CB_CTA, CB_CTAQ, CB_POOL, CB_S25, CB_S33B, CB_ELECTION, CB_JURIS, CB_ACQ, CB_RATES, CB_TAXPOS, CB_CASH, CB_S187A, CB_REGISTRY, CB_FRONTDOOR, CB_FEE, CB_FEEGUARD, CB_BENEFIT, CB_GATE_CONFIG, CB_GATE, CB_BOOKING, CB_INPUTS, CB_BAND, CB_FUNNEL } = SHARED;
 
 /* @@CAPREBATE-SHIM-OPEN@@ */
 /* RENDERER SHIM - the only lines in this file the extractor wrote itself.
@@ -34,7 +34,7 @@ function render() {
 // ============================================================================
 //  ENGINE PARAMETERS (mirror of Build-Prep-05 §3, §6 — private-hospital band)
 // ============================================================================
-const YIELD_BAND = { private_hospital:{purchase:[0.25,0.45], new_build:[0.35,0.45], refurb_fitout:[0.50,0.85]} };
+const YIELD_BAND = { private_hospital:CB_BAND.BANDS.private_hospital }; // PHASE 159b: read from CB_BAND, the one place (was {purchase:[0.25,0.45], new_build:[0.35,0.45], refurb_fitout:[0.50,0.85]})
 // LEG-E1 — MARGINAL_RATE and RATE_BASIS were declared here and in four other
 // sector modules, and the basis dates had already drifted. Both now come from
 // CB_RATES, which is sourced from Rulebook I.
@@ -987,7 +987,9 @@ function lrrFromAnswers(s, l, phase, id){
 // ============================================================================
 //  THE ESTIMATE ENGINE  (full pipeline, Build-Prep-05 §5; private-hospital parameters)
 // ============================================================================
-function runEngine(s){
+/* PHASE 159b (E7, E8): the engine checks what it is given, and applies the reasoned negatives, however it is called. */
+function runEngine(s){ return CB_INPUTS.run(s, __runEngine); }
+function __runEngine(s){
   const A=[];
   CB_PLANT.bandCaveats().forEach(function(c){ A.push(c); }); // D-1 — List C is not qualification
   CB_S25.caveats(s, A); // D-4 — alterations incidental to installing plant
@@ -1061,7 +1063,7 @@ function runEngine(s){
 
   // Stage 2 — band (dominant trigger by midpoint)
   const norm=t=> t==="purchase"?"purchase": t==="new_build"?"new_build":"refurb_fitout";
-  const triggers=(s.trigger.length?s.trigger:["refurb"]).map(norm);
+  const triggers=(s.trigger.length?s.trigger:["purchase"]).map(norm);   // PHASE 159b (E16): no trigger is read as a purchase in every sector (types.ts), never as the richest band
   let dom=triggers[0];
   triggers.forEach(t=>{ const m=mid(...YIELD_BAND.private_hospital[t]); if(m>mid(...YIELD_BAND.private_hospital[dom])) dom=t; });
   let [qLo,qHi]=YIELD_BAND.private_hospital[dom];

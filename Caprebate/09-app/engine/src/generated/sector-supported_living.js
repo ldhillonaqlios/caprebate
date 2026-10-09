@@ -13,7 +13,7 @@
 */
 
 const SHARED = require("./shared.js");
-const { CB_PLANT, CB_CTA, CB_CTAQ, CB_POOL, CB_S25, CB_S33B, CB_ELECTION, CB_JURIS, CB_ACQ, CB_RATES, CB_TAXPOS, CB_CASH, CB_S187A, CB_REGISTRY, CB_FRONTDOOR, CB_FEE, CB_FEEGUARD, CB_BENEFIT, CB_GATE_CONFIG, CB_GATE, CB_BOOKING, CB_BAND, CB_FUNNEL } = SHARED;
+const { CB_PLANT, CB_CTA, CB_CTAQ, CB_POOL, CB_S25, CB_S33B, CB_ELECTION, CB_JURIS, CB_ACQ, CB_RATES, CB_TAXPOS, CB_CASH, CB_S187A, CB_REGISTRY, CB_FRONTDOOR, CB_FEE, CB_FEEGUARD, CB_BENEFIT, CB_GATE_CONFIG, CB_GATE, CB_BOOKING, CB_INPUTS, CB_BAND, CB_FUNNEL } = SHARED;
 
 /* @@CAPREBATE-SHIM-OPEN@@ */
 /* RENDERER SHIM - the only lines in this file the extractor wrote itself.
@@ -42,8 +42,8 @@ function render() {
 // is common parts" (spatial/spend apportionment). Neither has independent calibration,
 // and their product (a compound ceiling around 6%) is even less defensible than either
 // number alone unless BOTH are disclosed — see runEngine Stage 1/2 for the disclosure.
-const YIELD_BAND = { supported_living:{purchase:[0.10,0.25], new_build:[0.10,0.25], refurb_fitout:[0.10,0.25]} };
-const COMMON_PARTS = 0.25; // E-1/E-2 fix — ceiling, not a range; segregation-gated (Hora Tevfik; CA11520; CA23060). Not independently calibrated (R-B8).
+const YIELD_BAND = { supported_living:CB_BAND.BANDS.supported_living }; // PHASE 159b: read from CB_BAND, the one place (was {purchase:[0.10,0.25], new_build:[0.10,0.25], refurb_fitout:[0.10,0.25]})
+const COMMON_PARTS = CB_BAND.SL_COMMON_PARTS; // PHASE 159b: the one place, CB_BAND (0.25). E-1/E-2 fix — ceiling, not a range; segregation-gated (Hora Tevfik; CA11520; CA23060). Not independently calibrated (R-B8).
 // LEG-E1 — MARGINAL_RATE and RATE_BASIS were declared here and in four other
 // sector modules, and the basis dates had already drifted. Both now come from
 // CB_RATES, which is sourced from Rulebook I.
@@ -869,7 +869,9 @@ function answerTakesBack(questions, ids, derive){
 // ============================================================================
 //  THE ESTIMATE ENGINE  (supported-living: two-stage reduction)
 // ============================================================================
-function runEngine(s){
+/* PHASE 159b (E7, E8): the engine checks what it is given, and applies the reasoned negatives, however it is called. */
+function runEngine(s){ return CB_INPUTS.run(s, __runEngine); }
+function __runEngine(s){
   const A=[];
   CB_PLANT.bandCaveats().forEach(function(c){ A.push(c); }); // D-1 — List C is not qualification
   CB_S25.caveats(s, A); // D-4 — alterations incidental to installing plant

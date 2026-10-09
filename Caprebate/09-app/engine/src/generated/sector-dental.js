@@ -13,7 +13,7 @@
 */
 
 const SHARED = require("./shared.js");
-const { CB_PLANT, CB_CTA, CB_CTAQ, CB_POOL, CB_S25, CB_S33B, CB_ELECTION, CB_JURIS, CB_ACQ, CB_RATES, CB_TAXPOS, CB_CASH, CB_S187A, CB_REGISTRY, CB_FRONTDOOR, CB_FEE, CB_FEEGUARD, CB_BENEFIT, CB_GATE_CONFIG, CB_GATE, CB_BOOKING, CB_BAND, CB_FUNNEL } = SHARED;
+const { CB_PLANT, CB_CTA, CB_CTAQ, CB_POOL, CB_S25, CB_S33B, CB_ELECTION, CB_JURIS, CB_ACQ, CB_RATES, CB_TAXPOS, CB_CASH, CB_S187A, CB_REGISTRY, CB_FRONTDOOR, CB_FEE, CB_FEEGUARD, CB_BENEFIT, CB_GATE_CONFIG, CB_GATE, CB_BOOKING, CB_INPUTS, CB_BAND, CB_FUNNEL } = SHARED;
 
 /* @@CAPREBATE-SHIM-OPEN@@ */
 /* RENDERER SHIM - the only lines in this file the extractor wrote itself.
@@ -35,7 +35,7 @@ function render() {
 //  ENGINE PARAMETERS (mirror of Build-Prep-05 §3, §6 — dental bands)
 //  refurb_fitout applies to FIT-OUT SPEND; new_build applies to WHOLE BUILD COST
 // ============================================================================
-const YIELD_BAND = { dental:{purchase:[0.15,0.30], new_build:[0.30,0.40], refurb_fitout:[0.50,0.90]} };
+const YIELD_BAND = { dental:CB_BAND.BANDS.dental }; // PHASE 159b: read from CB_BAND, the one place (was {purchase:[0.15,0.30], new_build:[0.30,0.40], refurb_fitout:[0.50,0.90]})
 // LEG-E1 — MARGINAL_RATE and RATE_BASIS were declared here and in four other
 // sector modules, and the basis dates had already drifted. Both now come from
 // CB_RATES, which is sourced from Rulebook I.
@@ -807,7 +807,9 @@ function answerTakesBack(questions, ids, derive){
 // ============================================================================
 //  THE ESTIMATE ENGINE
 // ============================================================================
-function runEngine(s){
+/* PHASE 159b (E7, E8): the engine checks what it is given, and applies the reasoned negatives, however it is called. */
+function runEngine(s){ return CB_INPUTS.run(s, __runEngine); }
+function __runEngine(s){
   const A=[]; s.assumptions.forEach(a=>A.push(a));
   CB_PLANT.bandCaveats().forEach(function(c){ A.push(c); }); // D-1 — List C is not qualification
   CB_S25.caveats(s, A); // D-4 — alterations incidental to installing plant
@@ -875,7 +877,7 @@ function runEngine(s){
 
   // band (dominant trigger by midpoint) — note the BASE differs: fit-out spend vs whole build cost
   const norm=t=> t==="purchase"?"purchase": t==="new_build"?"new_build":"refurb_fitout";
-  const triggers=(s.trigger.length?s.trigger:["fitout"]).map(norm);
+  const triggers=(s.trigger.length?s.trigger:["purchase"]).map(norm);   // PHASE 159b (E16): no trigger is read as a purchase in every sector (types.ts), never as the richest band
   let dom=triggers[0];
   triggers.forEach(t=>{ if(mid(...YIELD_BAND.dental[t])>mid(...YIELD_BAND.dental[dom])) dom=t; });
   let [qLo,qHi]=YIELD_BAND.dental[dom];

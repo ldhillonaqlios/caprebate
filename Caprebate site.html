@@ -2941,9 +2941,13 @@ var CB_ELECTION = (function(){
      ------------------------------------------------------------------------- */
   var TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
 
+  /* PHASE 159b (E13): an ISO date ("2014-04-01", or with a time) or a Date, and nothing else. "01/04/2014" was read
+     the American way (4 January), and a bare year "2014" as 1 January 2014 — a relieving reading of a date that
+     could be any day that year. Anything else is NOT KNOWN, and an unknown date relieves nothing (N4). */
   function parseDate(v){
     if(!v) return null;
-    var d = (v instanceof Date) ? v : new Date(v);
+    if(!(v instanceof Date) && !(typeof v === "string" && /^\d{4}-\d{2}-\d{2}(?:T[\d:.]+(?:Z|[+-]\d{2}:\d{2})?)?$/.test(v.trim()))) return null;
+    var d = (v instanceof Date) ? v : new Date(v.trim().length === 10 ? v.trim() + "T00:00:00Z" : v.trim());
     return isNaN(d.getTime()) ? null : d;
   }
 
@@ -4859,9 +4863,13 @@ var CB_S187A = (function(){
 
   var TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
 
+  /* PHASE 159b (E13): an ISO date ("2014-04-01", or with a time) or a Date, and nothing else. "01/04/2014" was read
+     the American way (4 January), and a bare year "2014" as 1 January 2014 — a relieving reading of a date that
+     could be any day that year. Anything else is NOT KNOWN, and an unknown date relieves nothing (N4). */
   function parseDate(v){
     if(!v) return null;
-    var d = (v instanceof Date) ? v : new Date(v);
+    if(!(v instanceof Date) && !(typeof v === "string" && /^\d{4}-\d{2}-\d{2}(?:T[\d:.]+(?:Z|[+-]\d{2}:\d{2})?)?$/.test(v.trim()))) return null;
+    var d = (v instanceof Date) ? v : new Date(v.trim().length === 10 ? v.trim() + "T00:00:00Z" : v.trim());
     return isNaN(d.getTime()) ? null : d;
   }
 
@@ -6307,7 +6315,8 @@ var CB_FRONTDOOR = (function(){
      the client adds, which is what keeps a multi-property funnel from growing
      a question — see propertyDefaults().
      ------------------------------------------------------------------------- */
-  var TRIGGERS = ["purchase", "new_build", "refurb", "fit_out"];
+  /* PHASE 159b (E11): an extension is its own answer — new space, on the new-build band. */
+  var TRIGGERS = ["purchase", "new_build", "refurb", "extension", "fit_out"];
 
   function methodFor(trigger){
     return (trigger === "purchase") ? "s562_apportionment" : "invoice_analysis";
@@ -6324,6 +6333,8 @@ var CB_FRONTDOOR = (function(){
                                  label:"Build cost", dateLabel:"Completed" };
       case "refurb":    return { amount:"works_cost", date:"works_year",
                                  label:"Cost of works", dateLabel:"When" };
+      case "extension": return { amount:"works_cost", date:"completion_date",
+                                 label:"Cost of the extension", dateLabel:"Completed" };
       case "fit_out":   return { amount:"fitout_cost", date:"works_year",
                                  label:"Fit-out cost", dateLabel:"When",
                                  extra:"lease_start_year" };
@@ -6369,10 +6380,12 @@ var CB_FRONTDOOR = (function(){
      by exactly the amount they were most sure about.
      ------------------------------------------------------------------------- */
   function worksHeadingFor(trigger){
-    if(trigger === "refurb" || trigger === "fit_out")
+    if(trigger === "refurb" || trigger === "fit_out" || trigger === "extension")
       return { heading:"Any further work since?",
                sub:(trigger === "refurb"
                     ? "You have already told us about the refurbishment above — this is anything on top of it."
+                    : trigger === "extension"
+                    ? "You have already told us about the extension above — this is anything on top of it."
                     : "You have already told us about the fit-out above — this is anything on top of it."),
                alreadyCaptured:true };
     return { heading:"Any work done to this property?", sub:null, alreadyCaptured:false };
@@ -8061,6 +8074,84 @@ var CB_BOOKING = (function(){
 
 
 /* ===========================================================================
+   CB_INPUTS — THE ENGINE CHECKS WHAT IT IS GIVEN.  PHASE 159a-series, Phase 159b,
+   9 October 2026, from the stress test of that day (E7, E8).
+
+   runEngine is called by the question flow AND directly — the back end's engaged
+   page and its profit comparison hand it a session nobody walked through the
+   questions. So the checks the flow makes cannot live only in the flow:
+
+     clean(s)  every money figure a finite number of pounds, never negative,
+               never text; every share (a "_fraction") between 0 and 1. A figure
+               that is not one is taken as NOT GIVEN — never as 0 or as a limit
+               (N4) — and a share above 100% is read as 100%, the cautious end.
+     run(s,f)  runs one sector's engine on the cleaned session, then applies the
+               three reasoned negatives the flow's gates apply, so a direct
+               caller gets the same answer the flow would give:
+                 · no UK tax to reduce (is_taxpayer / is_uk_taxpayer "no", or a
+                   charity) — the tax saving and the cash are nil; the spend
+                   that qualifies is still shown, because it is a fact about the
+                   building, not about the client;
+                 · these fixtures already claimed by the client (prior_claim_self)
+                   — nothing is left to claim on them: the spend, the saving and
+                   the cash are nil.
+               Each says why, and each makes the outcome a referral.
+   =========================================================================== */
+var CB_INPUTS = (function(){
+  var MONEY = ["base_amount","earlier_disposal_value","transaction_tax_amount","election_amount","grant_amount","landlord_contrib_amount"];
+  function cleanMoney(s, k){
+    if(!(k in s)) return;
+    var v = s[k];
+    if(v === null || v === undefined) return;
+    if(typeof v !== "number" || !isFinite(v) || v < 0){ delete s[k]; (s.assumptions = s.assumptions || []).push("a figure given for " + k.replace(/_/g," ") + " was not a usable amount, so it has been treated as not given"); }
+  }
+  function clean(s){
+    if(!s || typeof s !== "object") return s;
+    MONEY.forEach(function(k){ cleanMoney(s, k); });
+    Object.keys(s).forEach(function(k){
+      if(!/_fraction$/.test(k)) return;
+      var v = s[k];
+      if(v === null || v === undefined) return;
+      if(typeof v !== "number" || !isFinite(v)){ delete s[k]; return; }
+      if(v < 0) s[k] = 0;
+      else if(v > 1) s[k] = 1;
+    });
+    if(!Array.isArray(s.trigger)) s.trigger = [];
+    if(!Array.isArray(s.flags)) s.flags = [];
+    if(!Array.isArray(s.assumptions)) s.assumptions = [];
+    return s;
+  }
+  function noTax(s){
+    return s.is_taxpayer === "no" || s.is_uk_taxpayer === "no" || s.charity === true ||
+           s.claimant_type === "charity" || s.claimant_raw === "charity";
+  }
+  var NO_TAX_WORDS = "the business that would claim pays no UK income tax or corporation tax (or is a charity), so there is no bill for these allowances to reduce — the tax saving and the cash are nil. The spend that qualifies is shown because it belongs to the building, and matters if the building is sold";
+  var CLAIMED_WORDS = "you told us these fixtures have already been claimed on. The same spend cannot be claimed twice, so nothing is left to claim on it — an adviser will check what was claimed and whether any of it was missed";
+  function zero(r, keys){
+    keys.forEach(function(k){ if(Array.isArray(r[k])) r[k] = r[k].map(function(x){ return typeof x === "number" ? 0 : x; }); });
+  }
+  function run(s, engine){
+    clean(s);
+    var r = engine(s);
+    if(!r || typeof r !== "object") return r;
+    if(s.prior_claim_self === true){
+      zero(r, ["QE","TS","cash"]);
+      r.assumptions = (r.assumptions || []).concat([CLAIMED_WORDS]);
+      r.flags = (r.flags || []).concat(["FIXTURES ALREADY CLAIMED (E7) — the client's own earlier claim on these fixtures leaves nothing to claim on the same spend. A reasoned negative unless the adviser finds spend that was missed."]);
+      r.outcome = "referral";
+    } else if(noTax(s)){
+      zero(r, ["TS","cash"]);
+      r.assumptions = (r.assumptions || []).concat([NO_TAX_WORDS]);
+      r.flags = (r.flags || []).concat(["NO UK TAX TO REDUCE (E7) — a non-taxpayer or a charity: no tax saving. A reasoned negative for the allowances."]);
+      r.outcome = "referral";
+    }
+    return r;
+  }
+  return { clean:clean, run:run, noTax:noTax, MONEY:MONEY };
+})();
+
+
+/* ===========================================================================
    CB_BAND — the sector yield bands, in ONE place.  PHASE 72.
 
    Each of the five sector engines carries its own YIELD_BAND constant, and the
@@ -8079,19 +8170,29 @@ var CB_BOOKING = (function(){
    =========================================================================== */
 var CB_BAND = (function(){
 
+  /* PHASE 159b (E11), BUILT AND SWITCHED ON, for the tax adviser to confirm: a care home's NEW BUILD band was below its
+     PURCHASE band at the top (35% against 40%), though a new build's fixtures are newer and at least as dense. With
+     the switch on, its top is the purchase top, 40%. Off: 35%, as before. Every sector engine reads its band here. */
+  var SWITCHES = { sl_band_by_trigger: false, care_home_new_build_top_at_purchase: true };
   var BANDS = {
-    care_homes:       { purchase:[0.20,0.40], new_build:[0.25,0.35], refurb_fitout:[0.60,0.90] },
+    care_homes:       { purchase:[0.20,0.40], new_build:[0.25,(SWITCHES.care_home_new_build_top_at_purchase ? 0.40 : 0.35)], refurb_fitout:[0.60,0.90] },
     dental:           { purchase:[0.15,0.30], new_build:[0.30,0.40], refurb_fitout:[0.50,0.90] },
     supported_living: { purchase:[0.10,0.25], new_build:[0.10,0.25], refurb_fitout:[0.10,0.25] },
     gp:               { purchase:[0.15,0.30], new_build:[0.30,0.40], refurb_fitout:[0.40,0.70] },
     private_hospital: { purchase:[0.25,0.45], new_build:[0.35,0.45], refurb_fitout:[0.50,0.85] }
   };
 
+  /* PHASE 159b (E2): supported living is sized on its COMMON PARTS only — a quarter of the scheme at most (E-1/E-2;
+     CA11520; CA23060) — and then the band. The sector engine applied the quarter and the front door did not, so the
+     client was shown four times the engine's figure. One number, read by both. */
+  var SL_COMMON_PARTS = 0.25;
+
   /* The front door's four triggers collapse onto the engines' three band keys.
-     A refurbishment and a fit-out share a band; they do not share a method. */
+     A refurbishment and a fit-out share a band; they do not share a method.
+     PHASE 159b (E11): an EXTENSION is new space, built — the new-build band, not the refurbishment one. */
   function bandKey(trigger){
     if(trigger === "purchase")  return "purchase";
-    if(trigger === "new_build") return "new_build";
+    if(trigger === "new_build" || trigger === "extension") return "new_build";
     if(trigger === "refurb" || trigger === "fit_out") return "refurb_fitout";
     return null;
   }
@@ -8105,10 +8206,16 @@ var CB_BAND = (function(){
   /* Returns BOTH bounds. The screen displays the upper one as an "up to"
      ceiling; the stored run keeps the range, because a stored ceiling cannot be
      explained later or replayed after a CTA switch moves. */
+  /* PHASE 159b (E18): worked in basis points so a half pound rounds as a person would (£650 at 35% is £228, not
+     £227); supported living through its common parts (E2); (E17) a ceiling under £1 is no figure at all. */
+  function exact(spend, fraction){ return Math.round(spend * Math.round(fraction * 1000000) / 1000000 * 100) / 100; }
   function rangeFor(sector, trigger, spend){
     var b = bandFor(sector, trigger);
-    if(!b || typeof spend !== "number" || !(spend > 0)) return null;
-    return { low: Math.round(spend * b[0]), high: Math.round(spend * b[1]), band:b };
+    if(!b || typeof spend !== "number" || !isFinite(spend) || !(spend > 0)) return null;
+    var f = sector === "supported_living" ? SL_COMMON_PARTS : 1;
+    var low = Math.round(exact(spend, b[0] * f)), high = Math.round(exact(spend, b[1] * f));
+    if(!(high >= 1)) return null;
+    return { low: low, high: high, band:b, common_parts: sector === "supported_living" ? SL_COMMON_PARTS : null };
   }
 
   /* PHASE 153e, 4 October 2026 (Word question 138, the surveyor's): supported living's range read for its own
@@ -8116,10 +8223,9 @@ var CB_BAND = (function(){
      the trigger; its three bands are identical (10% to 25%), so the switch changes no figure until the surveyor sets
      separate ranges from finished claims (the back end's src/web/sector-ranges.ts proposes them). A trigger list with
      more than one trigger takes the band with the LOWEST ceiling (never the one that relieves); no trigger: none. */
-  var SWITCHES = { sl_band_by_trigger: false };
   function slBandKey(t){
     if(t === "purchase") return "purchase";
-    if(t === "new_build") return "new_build";
+    if(t === "new_build" || t === "extension") return "new_build";
     if(t === "conversion" || t === "fitout" || t === "fit_out" || t === "refurb") return "refurb_fitout";
     return null;
   }
@@ -8134,7 +8240,8 @@ var CB_BAND = (function(){
     return best;
   }
 
-  return { BANDS:BANDS, bandKey:bandKey, bandFor:bandFor, rangeFor:rangeFor, SWITCHES:SWITCHES, slBandKey:slBandKey, slBand:slBand };
+  return { BANDS:BANDS, bandKey:bandKey, bandFor:bandFor, rangeFor:rangeFor, SWITCHES:SWITCHES, slBandKey:slBandKey, slBand:slBand,
+           SL_COMMON_PARTS:SL_COMMON_PARTS, exact:exact };
 })();
 
 
@@ -8178,7 +8285,8 @@ var CB_FUNNEL = (function(){
   var TRIGGER_LABEL = {
     purchase:"I bought the property",
     new_build:"We built it — new build",
-    refurb:"We refurbished or extended a property we already owned",
+    refurb:"We refurbished a property we already owned",
+    extension:"We extended a property we already owned (added new space)",
     fit_out:"We fitted out a property we lease"
   };
 
@@ -8231,11 +8339,63 @@ var CB_FUNNEL = (function(){
      silently and it is not given a default: it comes back marked, to be named
      on its own line. An unknown routes to capture, never to a guess.
      --------------------------------------------------------------------------- */
+  /* ---------------------------------------------------------------------------
+     PHASE 159b, 9 October 2026 — THE ANSWERS THAT CUT THE FIGURE NOW REACH IT (the stress test's E5, E6, E10, E12).
+
+     Each is a reason this property gets NO "up to" figure from us, said in words, so a person sizes it instead —
+     never the full ceiling on an answer that says the ceiling cannot be had. OUR READING, put to the tax adviser:
+       · the client says these fixtures have ALREADY been claimed on: the same spend is not claimed twice (E5);
+       · a PURCHASE where the client says the seller did NOT claim, unless the purchase is known to be before April
+         2014: from then a seller who could have claimed and never pooled leaves the buyer nothing on the fixtures
+         (s.187A, the pooling requirement). Before April 2014 the ceiling stands; a date not known, or one that
+         could fall either side, is not known to be before, so a person checks (E6; N4);
+       · a NEW BUILD, REFURBISHMENT, EXTENSION OR FIT-OUT known to be before April 2008: most of the building's
+         wiring, lighting and water systems became claimable only then (integral features), so the band is wrong
+         for it (E12);
+       · a date in the future (E12), or a spend above PLAUSIBLE_MAX (E10).
+     A date is a month and year ("06/2021") or a year ("2021"); a year is the whole year, never 1 January (E13).
+     The April 2018 structures and buildings allowance and the April 2023 full expensing change WHICH RELIEF a
+     spend gets and when, not how much of it qualifies as plant, so they do not move this ceiling.
+     --------------------------------------------------------------------------- */
+  var PLAUSIBLE_MAX = 100000000;
+  function monthRange(d){
+    if(typeof d !== "string") return null;
+    var t = d.trim(), m;
+    if((m = /^(0?[1-9]|1[0-2])\/((?:19|20)\d{2})$/.exec(t))){ var k = m[2] + "-" + ("0" + m[1]).slice(-2); return [k, k]; }
+    if((m = /^((?:19|20)\d{2})$/.exec(t))) return [m[1] + "-01", m[1] + "-12"];
+    if((m = /^((?:19|20)\d{2})-(\d{2})(?:-\d{2})?$/.exec(t))){ var k2 = m[1] + "-" + m[2]; return [k2, k2]; }
+    return null;
+  }
+  function thisMonth(state){
+    var n = state && state.__now ? new Date(state.__now) : new Date();
+    if(isNaN(n.getTime())) n = new Date();
+    return n.getUTCFullYear() + "-" + ("0" + (n.getUTCMonth() + 1)).slice(-2);
+  }
+  function cutFor(p, state){
+    var prior = (p.own_prior_claim !== undefined && p.own_prior_claim !== null) ? p.own_prior_claim : state.own_prior_claim;
+    var seller = (p.previous_owner_claimed !== undefined && p.previous_owner_claimed !== null) ? p.previous_owner_claimed : state.previous_owner_claimed;
+    var r = monthRange(p.date);
+    if(typeof p.spend === "number" && p.spend > PLAUSIBLE_MAX)
+      return "this spend is larger than we size here, so an adviser will size it with you";
+    if(r && r[0] > thisMonth(state))
+      return "the date you gave is in the future, so we cannot size this one yet";
+    if(prior === "yes")
+      return "you told us its fixtures have already been claimed on. The same spend cannot be claimed twice, so an adviser will check what was claimed before we give a figure";
+    if(p.trigger === "purchase" && seller === "no" && !(r && r[1] < "2014-04"))
+      return "you told us the seller did not claim. Since April 2014, if the seller could have claimed and did not, the buyer usually cannot claim the fixtures either. An adviser will check the seller's position before we give a figure";
+    if(p.trigger !== "purchase" && r && r[1] < "2008-04")
+      return "this work was before April 2008, when the rules on wiring, lighting and water systems were different, so an adviser will size it with you";
+    return null;
+  }
+
   function figure(state){
     var parts = (state.properties || []).map(function(p){
-      if(p.spend_unknown || typeof p.spend !== "number" || !(p.spend > 0))
+      if(p.spend_unknown || typeof p.spend !== "number" || !isFinite(p.spend) || !(p.spend > 0))
         return { address:p.address, sector:p.sector, ceiling:null,
                  incomplete:true, why:"we need a rough figure for this one" };
+
+      var cut = cutFor(p, state);
+      if(cut) return { address:p.address, sector:p.sector, ceiling:null, incomplete:true, referral:true, why:cut };
 
       var r = CB_BAND.rangeFor(p.sector, p.trigger, p.spend);
       if(!r) return { address:p.address, sector:p.sector, ceiling:null,
@@ -8256,15 +8416,20 @@ var CB_FUNNEL = (function(){
      it is built here rather than assembled by whoever draws the screen. */
   function assumptions(state){
     var a = [
-      "This is a ceiling, not a forecast — the top of a range, and researching the property moves it down, not up.",
+      /* PHASE 159b (item 8): it is still the top of a range for what you told us, but research no longer only moves it
+         down: works done after a purchase, and the surveyor's measured costs, can add to it. */
+      "This is a ceiling, not a forecast — the top of a range for what you have told us. Checking the records can move it down; work you have done since, measured by the surveyor, can add to it.",
       "It is sized by a sector yield band that is assessed, not independently calibrated.",
       "It is based only on what you have told us. No registers have been checked.",
       "Capital allowances are income or corporation tax relief — not capital gains tax."
     ];
     var cond = CB_FRONTDOOR.gateQ1b(state).condition;
     if(cond) a.unshift(cond);
-    if(state.own_prior_claim === "yes" || state.own_prior_claim === "not sure")
+    if(state.own_prior_claim === "not sure")
       a.push("You have told us a claim may already have been made on these fixtures. That does not stop the assessment, but an adviser will go through it with you before any figure is relied on.");
+    /* PHASE 159b (E19): a business making a loss still has the allowances; they come as a bigger loss to carry. */
+    if(state.current_year_position === "loss" || state.current_year_position === "breakeven" || state.current_year_position === "unsure")
+      a.push("If the business is not making a profit, the relief does not cut this year's tax. It makes a loss, which can usually be set against other profits or carried to later years.");
     var f = figure(state);
     if(f.count > 1)
       a.push("Where more than one property is included, the headline adds the top of each property's range together. Each property is its own claim and each is assessed separately.");
@@ -8274,7 +8439,7 @@ var CB_FUNNEL = (function(){
   return { SCREENS:SCREENS, SECTOR_LABEL:SECTOR_LABEL, TRIGGER_LABEL:TRIGGER_LABEL,
            ENTITY_LABEL:ENTITY_LABEL, ROLES:ROLES,
            blankProperty:blankProperty, blankState:blankState,
-           figure:figure, assumptions:assumptions };
+           figure:figure, assumptions:assumptions, cutFor:cutFor, monthRange:monthRange, PLAUSIBLE_MAX:PLAUSIBLE_MAX };
 })();
 
 
@@ -8283,7 +8448,7 @@ var CB_FUNNEL = (function(){
 // ============================================================================
 //  ENGINE PARAMETERS (mirror of Build-Prep-05 §3, §6)
 // ============================================================================
-const YIELD_BAND = { care_homes:{purchase:[0.20,0.40], new_build:[0.25,0.35], refurb_fitout:[0.60,0.90]} };
+const YIELD_BAND = { care_homes:CB_BAND.BANDS.care_homes }; // PHASE 159b: read from CB_BAND, the one place (was {purchase:[0.20,0.40], new_build:[0.25,0.35], refurb_fitout:[0.60,0.90]})
 // LEG-E1 — MARGINAL_RATE and RATE_BASIS were declared here and in four other
 // sector modules, and the basis dates had already drifted. Both now come from
 // CB_RATES, which is sourced from Rulebook I.
@@ -9062,7 +9227,9 @@ function answerTakesBack(questions, ids, derive){
 // ============================================================================
 //  THE ESTIMATE ENGINE  (full pipeline, Build-Prep-05 §5; care-home parameters)
 // ============================================================================
-function runEngine(s){
+/* PHASE 159b (E7, E8): the engine checks what it is given, and applies the reasoned negatives, however it is called. */
+function runEngine(s){ return CB_INPUTS.run(s, __runEngine); }
+function __runEngine(s){
   const A=[]; // assumptions
   CB_PLANT.bandCaveats().forEach(function(c){ A.push(c); }); // D-1 — List C is not qualification
   CB_S25.caveats(s, A); // D-4 — alterations incidental to installing plant
@@ -9577,7 +9744,7 @@ RS["care_homes"]=__enter; SECTORS["care_homes"]={start:__enter};
 //  ENGINE PARAMETERS (mirror of Build-Prep-05 §3, §6 — dental bands)
 //  refurb_fitout applies to FIT-OUT SPEND; new_build applies to WHOLE BUILD COST
 // ============================================================================
-const YIELD_BAND = { dental:{purchase:[0.15,0.30], new_build:[0.30,0.40], refurb_fitout:[0.50,0.90]} };
+const YIELD_BAND = { dental:CB_BAND.BANDS.dental }; // PHASE 159b: read from CB_BAND, the one place (was {purchase:[0.15,0.30], new_build:[0.30,0.40], refurb_fitout:[0.50,0.90]})
 // LEG-E1 — MARGINAL_RATE and RATE_BASIS were declared here and in four other
 // sector modules, and the basis dates had already drifted. Both now come from
 // CB_RATES, which is sourced from Rulebook I.
@@ -10349,7 +10516,9 @@ function answerTakesBack(questions, ids, derive){
 // ============================================================================
 //  THE ESTIMATE ENGINE
 // ============================================================================
-function runEngine(s){
+/* PHASE 159b (E7, E8): the engine checks what it is given, and applies the reasoned negatives, however it is called. */
+function runEngine(s){ return CB_INPUTS.run(s, __runEngine); }
+function __runEngine(s){
   const A=[]; s.assumptions.forEach(a=>A.push(a));
   CB_PLANT.bandCaveats().forEach(function(c){ A.push(c); }); // D-1 — List C is not qualification
   CB_S25.caveats(s, A); // D-4 — alterations incidental to installing plant
@@ -10417,7 +10586,7 @@ function runEngine(s){
 
   // band (dominant trigger by midpoint) — note the BASE differs: fit-out spend vs whole build cost
   const norm=t=> t==="purchase"?"purchase": t==="new_build"?"new_build":"refurb_fitout";
-  const triggers=(s.trigger.length?s.trigger:["fitout"]).map(norm);
+  const triggers=(s.trigger.length?s.trigger:["purchase"]).map(norm);   // PHASE 159b (E16): no trigger is read as a purchase in every sector (types.ts), never as the richest band
   let dom=triggers[0];
   triggers.forEach(t=>{ if(mid(...YIELD_BAND.dental[t])>mid(...YIELD_BAND.dental[dom])) dom=t; });
   let [qLo,qHi]=YIELD_BAND.dental[dom];
@@ -10799,8 +10968,8 @@ RS["dental"]=__enter; SECTORS["dental"]={start:__enter};
 // is common parts" (spatial/spend apportionment). Neither has independent calibration,
 // and their product (a compound ceiling around 6%) is even less defensible than either
 // number alone unless BOTH are disclosed — see runEngine Stage 1/2 for the disclosure.
-const YIELD_BAND = { supported_living:{purchase:[0.10,0.25], new_build:[0.10,0.25], refurb_fitout:[0.10,0.25]} };
-const COMMON_PARTS = 0.25; // E-1/E-2 fix — ceiling, not a range; segregation-gated (Hora Tevfik; CA11520; CA23060). Not independently calibrated (R-B8).
+const YIELD_BAND = { supported_living:CB_BAND.BANDS.supported_living }; // PHASE 159b: read from CB_BAND, the one place (was {purchase:[0.10,0.25], new_build:[0.10,0.25], refurb_fitout:[0.10,0.25]})
+const COMMON_PARTS = CB_BAND.SL_COMMON_PARTS; // PHASE 159b: the one place, CB_BAND (0.25). E-1/E-2 fix — ceiling, not a range; segregation-gated (Hora Tevfik; CA11520; CA23060). Not independently calibrated (R-B8).
 // LEG-E1 — MARGINAL_RATE and RATE_BASIS were declared here and in four other
 // sector modules, and the basis dates had already drifted. Both now come from
 // CB_RATES, which is sourced from Rulebook I.
@@ -11626,7 +11795,9 @@ function answerTakesBack(questions, ids, derive){
 // ============================================================================
 //  THE ESTIMATE ENGINE  (supported-living: two-stage reduction)
 // ============================================================================
-function runEngine(s){
+/* PHASE 159b (E7, E8): the engine checks what it is given, and applies the reasoned negatives, however it is called. */
+function runEngine(s){ return CB_INPUTS.run(s, __runEngine); }
+function __runEngine(s){
   const A=[];
   CB_PLANT.bandCaveats().forEach(function(c){ A.push(c); }); // D-1 — List C is not qualification
   CB_S25.caveats(s, A); // D-4 — alterations incidental to installing plant
@@ -12146,7 +12317,7 @@ RS["supported_living"]=__enter; SECTORS["supported_living"]={start:__enter};
 // ============================================================================
 //  ENGINE PARAMETERS (mirror of Build-Prep-05 §3, §6 — GP band)
 // ============================================================================
-const YIELD_BAND = { gp:{purchase:[0.15,0.30], new_build:[0.30,0.40], refurb_fitout:[0.40,0.70]} };
+const YIELD_BAND = { gp:CB_BAND.BANDS.gp }; // PHASE 159b: read from CB_BAND, the one place (was {purchase:[0.15,0.30], new_build:[0.30,0.40], refurb_fitout:[0.40,0.70]})
 // LEG-E1 — MARGINAL_RATE and RATE_BASIS were declared here and in four other
 // sector modules, and the basis dates had already drifted. Both now come from
 // CB_RATES, which is sourced from Rulebook I.
@@ -12978,7 +13149,9 @@ function advisoryCheck(){
 // ============================================================================
 //  THE ESTIMATE ENGINE  (full pipeline, Build-Prep-05 §5; GP parameters)
 // ============================================================================
-function runEngine(s){
+/* PHASE 159b (E7, E8): the engine checks what it is given, and applies the reasoned negatives, however it is called. */
+function runEngine(s){ return CB_INPUTS.run(s, __runEngine); }
+function __runEngine(s){
   const A=[]; // assumptions seeded from the flow, then engine-specific
   CB_PLANT.bandCaveats().forEach(function(c){ A.push(c); }); // D-1 — List C is not qualification
   CB_S25.caveats(s, A); // D-4 — alterations incidental to installing plant
@@ -13069,7 +13242,7 @@ function runEngine(s){
 
   // Stage 2 — band (dominant trigger by midpoint)
   const norm=t=> t==="purchase"?"purchase": t==="new_build"?"new_build":"refurb_fitout";
-  const triggers=(s.trigger.length?s.trigger:["refurb"]).map(norm);
+  const triggers=(s.trigger.length?s.trigger:["purchase"]).map(norm);   // PHASE 159b (E16): no trigger is read as a purchase in every sector (types.ts), never as the richest band
   let dom=triggers[0];
   triggers.forEach(t=>{ const m=mid(...YIELD_BAND.gp[t]); if(m>mid(...YIELD_BAND.gp[dom])) dom=t; });
   let [qLo,qHi]=YIELD_BAND.gp[dom];
@@ -13511,7 +13684,7 @@ RS["gp"]=__enter; SECTORS["gp"]={start:__enter};
 // ============================================================================
 //  ENGINE PARAMETERS (mirror of Build-Prep-05 §3, §6 — private-hospital band)
 // ============================================================================
-const YIELD_BAND = { private_hospital:{purchase:[0.25,0.45], new_build:[0.35,0.45], refurb_fitout:[0.50,0.85]} };
+const YIELD_BAND = { private_hospital:CB_BAND.BANDS.private_hospital }; // PHASE 159b: read from CB_BAND, the one place (was {purchase:[0.25,0.45], new_build:[0.35,0.45], refurb_fitout:[0.50,0.85]})
 // LEG-E1 — MARGINAL_RATE and RATE_BASIS were declared here and in four other
 // sector modules, and the basis dates had already drifted. Both now come from
 // CB_RATES, which is sourced from Rulebook I.
@@ -14464,7 +14637,9 @@ function lrrFromAnswers(s, l, phase, id){
 // ============================================================================
 //  THE ESTIMATE ENGINE  (full pipeline, Build-Prep-05 §5; private-hospital parameters)
 // ============================================================================
-function runEngine(s){
+/* PHASE 159b (E7, E8): the engine checks what it is given, and applies the reasoned negatives, however it is called. */
+function runEngine(s){ return CB_INPUTS.run(s, __runEngine); }
+function __runEngine(s){
   const A=[];
   CB_PLANT.bandCaveats().forEach(function(c){ A.push(c); }); // D-1 — List C is not qualification
   CB_S25.caveats(s, A); // D-4 — alterations incidental to installing plant
@@ -14538,7 +14713,7 @@ function runEngine(s){
 
   // Stage 2 — band (dominant trigger by midpoint)
   const norm=t=> t==="purchase"?"purchase": t==="new_build"?"new_build":"refurb_fitout";
-  const triggers=(s.trigger.length?s.trigger:["refurb"]).map(norm);
+  const triggers=(s.trigger.length?s.trigger:["purchase"]).map(norm);   // PHASE 159b (E16): no trigger is read as a purchase in every sector (types.ts), never as the richest band
   let dom=triggers[0];
   triggers.forEach(t=>{ const m=mid(...YIELD_BAND.private_hospital[t]); if(m>mid(...YIELD_BAND.private_hospital[dom])) dom=t; });
   let [qLo,qHi]=YIELD_BAND.private_hospital[dom];

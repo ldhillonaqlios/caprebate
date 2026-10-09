@@ -104,7 +104,8 @@ describe('stage 1: your buildings', () => {
     await c.post('/assessment/buildings', { b0_sector: 'care_homes', b1_sector: 'dental' });
     const on = (await c.req('/assessment/spend-on')).body;
     assert.match(on, /What did you spend on each building\?/);
-    for (const w of ['We bought it', 'We built it \\(new build\\)', 'We refurbished or extended it', 'We fitted out a building we lease']) assert.match(on, new RegExp(w));
+    // PHASE 159b (E11): the extension is its own answer.
+    for (const w of ['We bought it', 'We built it \\(new build\\)', 'We refurbished it', 'We extended it \\(added new space\\)', 'We fitted out a building we lease']) assert.match(on, new RegExp(w));
     await c.post('/assessment/spend-on', { b0_trigger: 'purchase', b1_trigger: 'fit_out' });
     const am = (await c.req('/assessment/amounts')).body;
     assert.match(am, /<legend>Building 1 · Care home<\/legend>[\s\S]*Purchase price[\s\S]*Completion date/);

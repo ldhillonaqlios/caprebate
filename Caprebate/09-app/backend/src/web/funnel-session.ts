@@ -159,6 +159,8 @@ const TRIGGER: Readonly<Record<string, string>> = Object.freeze({
   new_build: 'new_build',
   refurb: 'refurb',
   fit_out: 'fitout',
+  // PHASE 159b (E11): an extension is new space; the engine sizes it as a new build.
+  extension: 'new_build',
 });
 
 /**
@@ -247,7 +249,7 @@ export function sessionFromFunnel(
 ): MappedSession {
   const session = newSession(sector);
   const set: string[] = [];
-  const put = (key: string, value: string | number): void => {
+  const put = (key: string, value: string | number | boolean): void => {
     (session as Record<string, unknown>)[key] = value;
     set.push(key);
   };
@@ -261,6 +263,12 @@ export function sessionFromFunnel(
    * It does NOT set `prior_claim_self` — see NOT MAPPED below. */
   const prior = known(state.own_prior_claim);
   if (prior !== null) put('own_prior_claim', prior);
+  /* PHASE 159b (E5): THE FOUR-STAGE FUNNEL ASKS THE NARROW QUESTION. Its claims screen asks "Have you, or your business,
+   * already claimed on the fixtures in this building, such as the wiring and heating?" — a fixtures claim of the
+   * client's own, not a van or a repair, which is the objection under NOT MAPPED below. So for a funnel-4 assessment a
+   * "yes" sets `prior_claim_self`, and the engine leaves nothing to claim on that spend (CB_INPUTS.run). "Not sure"
+   * sets nothing. The older six-screen funnel keeps its broader question and is not mapped. */
+  if (state['funnel'] === 4 && prior === 'yes') put('prior_claim_self', true);
 
   /* ---- Q1b · the tax position ----------------------------------------- *
    * TWO KEYS, BOTH READ FROM THE CODE. CB_FRONTDOOR.gateQ1b reads
@@ -322,6 +330,15 @@ export function sessionFromFunnel(
      * CB_FRONTDOOR.spendFieldsFor gives it. */
     const spend = only.spend_unknown === true ? null : knownAmount(only.spend);
     if (spend !== null) put('base_amount', spend);
+
+    /* PHASE 159b (E6): THE SELLER'S CLAIM, ON A PURCHASE OF THE BUILDING. The funnel-4 claims screen asks it only of a
+     * building the client says "We bought it" of — buying the building, which is the engine's own "deal: property".
+     * "yes" and "no" reach `prior_owner_claimed`, so the s.187A reading runs; "don't know" sets nothing (N4). The
+     * older funnel asks it of every client on every trigger, and is still not mapped (NOT MAPPED, Q1a). */
+    if (state['funnel'] === 4 && known(only.trigger) === 'purchase') {
+      const seller = known(only.previous_owner_claimed);
+      if (seller === 'yes' || seller === 'no') put('prior_owner_claimed', seller);
+    }
   }
 
   return { session, set, from_funnel: true };
