@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 313 |
-| Working on it | 1 |
+| Done | 314 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1121,7 +1121,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-33 items.
+32 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1340,17 +1340,11 @@
 - Note 2026-10-03 (Board sync): Created on the monday.com board, which gave it this id; until then the tracker's id was 13133268313 (board sync, Lakhbir's yes).
 - Note 2026-10-06 (Phase 157 (sweep)): The tool is built and refuses to run until the officer answers Word question 200; nothing is left to build, so it waits like any built item. Housed as SDP-P43.
 
-### Phase 158d - the accountant's own confirmations, one purchase date, the floor area, the defence pack, and what the portal tells the client
-
-`13232676804` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac (Claude Code)**
-
-- Note 2026-10-07 (Phase 158c): Written by Phase 158c from its second run, nobody ticking for anyone else: the accountant confirms the return fit and the filing through their own link (F46), one purchase date and year end feed the window (F45), the floor area on record before Data gathering passes (F44), the defence pack made by the application (F47), the portal says what the gate waits for (F43); then the run once more. Nothing waits on anyone.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-313 items.
+314 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3210,5 +3204,12 @@
 `13231736097` · **Done** · owner Claude
 
 - Note 2026-10-07 (Phase 158b): Written by Phase 158b: the run goes end to end; left are the controls - the valuation read from the pack approval (F34, F35), reports issued from the app's own report (F36, F38), the client's acceptance in the portal (F39), the window warned early (F37), the invoice sent (F41), the filing recorded before close (F42); then the run once more. Nothing waits on anyone.
-- Note 2026-10-08 (Phase 158c): Done 8 Oct 2026: the Valuation gate on the surveyor's own approval (F34, F35); the client report and accountant's pack made from it, fingerprint computed (F38, F36); the client's acceptance in the portal (F39, migration 101); the window warned from Engagement (F37); the invoice sent (F41); closing and 'Claim filed' on the filing recorded (F42); the run again letter to Closed, every control held; Phase 158d written (13232676804). 4,912 passing.
+- Note 2026-10-08 (Phase 158c): Done 8 Oct 2026: the Valuation gate on the surveyor's own approval (F34, F35); the client's and the accountant's papers made from it, fingerprint computed (F38, F36); the client's acceptance in the portal (F39, migration 101); the window warned from Engagement (F37); the invoice sent (F41); closing and 'Claim filed' on the filing recorded (F42); the run again letter to Closed, every control held; Phase 158d written (13232676804). 4,912 passing.
+
+### Phase 158d - the accountant's own confirmations, one purchase date, the floor area, the defence pack, and what the portal tells the client
+
+`13232676804` · **Done** · owner Claude
+
+- Note 2026-10-07 (Phase 158c): Written by Phase 158c from its second run, nobody ticking for anyone else: the accountant confirms the return fit and the filing through their own link (F46), one purchase date and year end feed the window (F45), the floor area on record before Data gathering passes (F44), the defence pack made by the application (F47), the portal says what the gate waits for (F43); then the run once more. Nothing waits on anyone.
+- Note 2026-10-09 (Phase 158d): Done 9 Oct 2026: the accountant confirms the return fit and the filing through their own link (F46); one purchase date and year end read by the window (F45); floor area sourced needs a floor area (F44); the defence pack made from the claim's records (F47); the portal says the letter is signed and what the claim waits on, and the claim tile agrees (F43, F48); the run a third time, letter to Closed, every control held. Next is the sweep. 4,934 passing.
 
