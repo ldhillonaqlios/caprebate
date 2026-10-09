@@ -12,7 +12,9 @@
  *   · the surveyor has opened every built chapter — and the legal check again since anyone else last answered it;
  *   · their RICS number is on file;
  *   · the job has its locked estimate (approving commits the figures, which releases it — the existing rule);
- *   · this exact state of the pack is not already approved.
+ *   · this exact state of the pack is not already approved;
+ *   · PHASE 159a (C3, C5, L3): the claim is not past the tax adviser's sign-off, and has not stopped. After that the
+ *     signed figures are fixed, and only "Reopen the valuation" on the claim page changes that (src/web/valuation-lock.ts).
  *
  * ONE CLICK, AND THEN: the whole report as it stands is written down as one JSON document (keys in a fixed order), its
  * SHA-256 is its fingerprint, and both are kept for ever as the next version. In the same transaction the surveyor's
@@ -32,6 +34,7 @@ import { basisOf, checklistView, evidenceByLine, walkthroughsOf } from './survey
 import { findingSeen } from './finding-source.ts';
 import { videosOf } from './survey-video.ts';
 import { sitePlanOf, type SitePlan } from './site-plan.ts';
+import { valuationLock } from './valuation-lock.ts';
 
 export const DECLARATION: readonly string[] = Object.freeze([
   'I have reviewed this report to the extent it sets out.',
@@ -97,6 +100,9 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
   const surveyor = v.job.surveyor_id;
   const blockers: Blocker[] = [];
   const may = can(actor, 'surveyor_job.commit', obj);
+  // PHASE 159a: first, because nothing else on the pack matters once the claim's figures are fixed.
+  const lock = valuationLock(d.db, v.job.claim_id);
+  if (lock.locked) blockers.push({ key: 'locked', words: lock.why, href: v.job.claim_id === null ? null : `/staff/claims/${v.job.claim_id}#valuation` });
   if (surveyor === null) blockers.push({ key: 'surveyor', words: 'No surveyor is assigned to this job.', href: null });
   if (v.property === null) blockers.push({ key: 'property', words: 'Say which property this pack is for.', href: `${base(job_id)}?ch=10` });
   if (!v.sums.complete) {

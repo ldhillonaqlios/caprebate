@@ -31,7 +31,8 @@ import type { EmailTransport } from '../stubs/email.ts';
 import { packJob } from './surveyor.ts';
 import { approvedVersion, type ApprovalRow, type Snapshot } from './pack-approve.ts';
 import { reportModel, reportPdf, longDate, REPORT_TITLE } from './survey-report.ts';
-import { returnContext, returnEntriesCsv } from './return-entries.ts';
+import { freezeReturnContext, returnContext, returnEntriesCsv } from './return-entries.ts';
+import { voidLine } from './valuation-lock.ts';
 import { recordSignOff } from './claim-record.ts';
 import { postClientMessage } from './messages.ts';
 import { localDate } from './localtime.ts';
@@ -119,9 +120,10 @@ export function sendForSignoff(
   const at = d.now();
   const expires = new Date(Date.parse(at) + LINK_DAYS * 86_400_000).toISOString();
   const pdf = reportPdf(reportModel(kept.snapshot, kept.row.fingerprint));
-  // PHASE 153b (Word question 121): the return entries for each year, as a spreadsheet, beside the PDF.
-  const csv = returnEntriesCsv(kept.snapshot, returnContext(d.db, job.claim_id, job.business_id), kept.row.fingerprint);
   return d.db.tx(() => {
+    // PHASE 153b (Word question 121): the return entries for each year, as a spreadsheet, beside the PDF. PHASE 159a
+    // (C29): the facts it is made from are kept with the version the first time it is sent, and read from then on.
+    const csv = returnEntriesCsv(kept.snapshot, freezeReturnContext(d.db, kept.row.id, returnContext(d.db, job.claim_id, job.business_id), 'SENT_FOR_SIGNOFF', at), kept.row.fingerprint);
     const sent = d.email.send({
       to_email: who.email.trim(), subject: `Survey report to sign off: ${job.business_name}`,
       body: emailBody(who.name, job.business_name, kept.snapshot, `${f.origin}/signoff/${token}`, expires),
@@ -150,6 +152,8 @@ export type LinkView =
   | { readonly state: 'ANSWERED'; readonly outcome: 'SIGNED' | 'SENT_BACK'; readonly answered_at: string }
   | { readonly state: 'OPEN'; readonly request_id: string; readonly contact_name: string; readonly company: string; readonly snapshot: Snapshot;
       readonly fingerprint: string; readonly fingerprint_holds: boolean; readonly expires_at: string;
+      /** Phase 159a: the approved version the link is for. */
+      readonly approval_id: string;
       /** Phase 153b: the job's claim and business, for the return-entries spreadsheet. */
       readonly claim_id: string | null; readonly business_id: string };
 
@@ -157,8 +161,8 @@ export type LinkView =
 export function linkView(db: Db, now: string, token: string): LinkView {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return { state: 'NONE' };
   const r = db.get<{ id: string; expires_at: string; name: string; company: string; snapshot_json: string; fingerprint: string;
-    outcome: 'SIGNED' | 'SENT_BACK' | null; answered_at: string | null; claim_id: string | null; business_id: string }>(
-    'SELECT r.id, r.expires_at, c.full_name AS name, b.name AS company, a.snapshot_json, a.fingerprint, x.outcome, x.answered_at, j.claim_id, j.business_id ' +
+    outcome: 'SIGNED' | 'SENT_BACK' | null; answered_at: string | null; claim_id: string | null; business_id: string; approval_id: string }>(
+    'SELECT r.id, r.approval_id, r.expires_at, c.full_name AS name, b.name AS company, a.snapshot_json, a.fingerprint, x.outcome, x.answered_at, j.claim_id, j.business_id ' +
       'FROM pack_signoff_requests r JOIN survey_pack_approvals a ON a.id = r.approval_id JOIN contacts c ON c.id = r.contact_id ' +
       'JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id JOIN businesses b ON b.id = j.business_id ' +
       'LEFT JOIN pack_signoff_answers x ON x.request_id = r.id WHERE r.token_sha256 = ?', [hashToken(token)]);
@@ -167,7 +171,7 @@ export function linkView(db: Db, now: string, token: string): LinkView {
   if (now >= r.expires_at) return { state: 'EXPIRED' };
   return { state: 'OPEN', request_id: r.id, contact_name: r.name, company: r.company, snapshot: JSON.parse(r.snapshot_json) as Snapshot,
     fingerprint: r.fingerprint, fingerprint_holds: createHash('sha256').update(r.snapshot_json, 'utf8').digest('hex') === r.fingerprint, expires_at: r.expires_at,
-    claim_id: r.claim_id, business_id: r.business_id };
+    claim_id: r.claim_id, business_id: r.business_id, approval_id: r.approval_id };
 }
 
 /** The accountant's answer, once: signed, or sent back with a reason. */
@@ -235,6 +239,8 @@ export function recordAnswer(d: Omit<SignoffDeps, 'email'>, actor: Actor, job_id
       scope: `The ${REPORT_TITLE.toLowerCase()}, version ${String(s.version)} (fingerprint ${kept.row.fingerprint}): the spend that qualifies, its two pools and the share of the building.`,
       method_note: `Signed off by ${ans.signer_name} of ${ans.signer_firm ?? ''} through Cap Rebate’s private sign-off link on ${longDate(ans.answered_at)}, after reading the report.`,
       figure: pounds(s.sums.qualifying_pence ?? 0), confirmed_switches: '',
+      // PHASE 159a (C4): the sign-off names this version, and is refused if the surveyor has approved a newer one.
+      approval_id: kept.row.id,
     });
     if (!r.ok) return r;
     d.db.run('INSERT INTO pack_signoff_recorded (answer_id, signoff_id, recorded_by, recorded_at) VALUES (?, ?, ?, ?)', [ans.id, r.id, actor.id, d.now()]);
@@ -243,17 +249,20 @@ export function recordAnswer(d: Omit<SignoffDeps, 'email'>, actor: Actor, job_id
 }
 
 /**
- * The version the client may see: the newest approved version of any of their survey packs for which a sign-off of
- * that version's figure is on the claim, recorded after it was approved — and only while its fingerprint holds.
+ * The version the client may see: the newest approved version of any of their survey packs for which a sign-off
+ * NAMING THAT VERSION is on the claim (PHASE 159a, C4: never one matched by its total), recorded since the valuation was
+ * last reopened (src/web/valuation-lock.ts) — and only while its fingerprint holds.
  */
 export function releasedVersion(db: Db, business_id: string): { row: ApprovalRow & { job_id: string; claim_id: string }; snapshot: Snapshot } | null {
   const rows = db.all<ApprovalRow & { job_id: string; claim_id: string; snapshot_json: string }>(
     'SELECT a.id, a.version, a.pack_seq, a.legal_seq, a.fingerprint, a.approved_by, u.display_name AS approver_name, a.approved_at, a.snapshot_json, j.id AS job_id, j.claim_id ' +
       'FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id JOIN users u ON u.id = a.approved_by ' +
       'WHERE j.business_id = ? AND j.claim_id IS NOT NULL AND EXISTS (SELECT 1 FROM tax_adviser_signoffs s WHERE s.claim_id = j.claim_id ' +
-      "AND s.recorded_at >= a.approved_at AND s.figure_pence = json_extract(a.snapshot_json, '$.sums.qualifying_pence')) " +
+      "AND s.approval_id = a.id AND s.figure_pence = json_extract(a.snapshot_json, '$.sums.qualifying_pence')) " +
       'ORDER BY a.approved_at DESC, a.version DESC', [business_id]);
   for (const r of rows) {
+    const since = voidLine(db, r.claim_id);
+    if (since !== null && db.get<{ n: number }>('SELECT COUNT(*) AS n FROM tax_adviser_signoffs WHERE approval_id = ? AND recorded_at >= ?', [r.id, since])?.n === 0) continue;
     if (createHash('sha256').update(r.snapshot_json, 'utf8').digest('hex') !== r.fingerprint) continue;
     const { snapshot_json, ...row } = r;
     return { row, snapshot: JSON.parse(snapshot_json) as Snapshot };

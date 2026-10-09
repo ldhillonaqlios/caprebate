@@ -41,13 +41,15 @@ export type Transport = (url: string, init: {
   readonly headers: Record<string, string>;
   readonly body?: string;
   readonly signal: AbortSignal;
+  /** PHASE 159a: 'manual' hands a redirect back unfollowed, for callOutside to judge; absent, every redirect is refused. */
+  readonly redirect?: 'manual';
 }) => Promise<Response>;
 
 const LIVE_MARK = Symbol('live transport');
 
 /** THE ONLY `fetch` CALL IN src/. */
 export const liveTransport: Transport = Object.assign(
-  (url: string, init: Parameters<Transport>[1]) => fetch(url, { ...init, redirect: 'error' }),
+  (url: string, init: Parameters<Transport>[1]) => fetch(url, { ...init, redirect: init.redirect === 'manual' ? 'manual' : 'error' }),
   { [LIVE_MARK]: true },
 );
 
@@ -370,6 +372,53 @@ export function chargeFromHeaders(h: Headers | Record<string, string>): { charge
   };
 }
 
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
+/** The name=value part of each Set-Cookie header, never its attributes. */
+function cookiesFrom(h: Headers): string[] {
+  const all = typeof (h as { getSetCookie?: () => string[] }).getSetCookie === 'function'
+    ? (h as { getSetCookie: () => string[] }).getSetCookie()
+    : (h.get('set-cookie') === null ? [] : [h.get('set-cookie') as string]);
+  return all.map((c) => c.split(';')[0]?.trim() ?? '').filter((c) => /^[^=\s]+=/.test(c));
+}
+
+/**
+ * PHASE 159a (the Lockwood run, L1): ONE REQUEST, FOLLOWING AT MOST `max` REDIRECTS — to the same host, carrying back
+ * the cookies it set, or to a host the service's row names (`redirect_hosts`), carrying none. With `max` 0 the
+ * transport refuses every redirect itself, exactly as before this phase. A redirect anywhere else, to http, or past
+ * the limit is refused in words and nothing more is sent. The headers the caller set (a key, say) go to the same host
+ * only. It is all one call: the caller writes one audit row for it, whatever happened in between.
+ */
+async function sendFollowing(
+  transport: Transport, first: URL, init: Parameters<Transport>[1], max: number, otherHosts: readonly string[],
+): Promise<{ ok: true; res: Response } | { ok: false; status: number; why: string }> {
+  if (max <= 0) return { ok: true, res: await transport(first.toString(), init) };
+  const jar = new Map<string, string>();
+  let url = first;
+  for (let hop = 0; ; hop++) {
+    const same = url.host === first.host;
+    const cookie = [...jar].map(([k, v]) => `${k}=${v}`).join('; ');
+    const headers = !same ? { accept: init.headers['accept'] ?? '*/*' } : cookie === '' ? init.headers : { ...init.headers, cookie };
+    const res = await transport(url.toString(), { ...init, headers, redirect: 'manual' });
+    if (!REDIRECT_STATUSES.has(res.status)) return { ok: true, res };
+    await res.body?.cancel();
+    const loc = res.headers.get('location');
+    let next: URL | null = null;
+    try { next = loc === null ? null : new URL(loc, url); } catch { next = null; }
+    if (next === null || next.protocol !== 'https:' || (next.host !== first.host && !otherHosts.includes(next.host))) {
+      return { ok: false, status: res.status, why: 'the service sent us to another address, which we do not follow' };
+    }
+    if (hop >= max) return { ok: false, status: res.status, why: `the service redirected more than ${String(max)} times, so we stopped` };
+    if (same) {
+      for (const c of cookiesFrom(res.headers)) {
+        const i = c.indexOf('=');
+        jar.set(c.slice(0, i), c.slice(i + 1));
+      }
+    }
+    url = next;
+  }
+}
+
 /**
  * MAKE ONE CALL. Never throws. Writes exactly one audit row.
  */
@@ -453,9 +502,14 @@ export async function callOutside(deps: CallDeps, req: CallRequest): Promise<Cal
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), policy.timeout_ms);
     try {
-      const res = await deps.transport(url.toString(), {
+      const followed = await sendFollowing(deps.transport, url, {
         method, headers: { accept: 'application/json', ...req.headers }, ...(req.body === undefined ? {} : { body: req.body }), signal: ac.signal,
-      });
+      }, policy.same_host_redirects ?? 0, policy.redirect_hosts ?? []);
+      if (!followed.ok) {
+        clearTimeout(timer);
+        return finish({ outcome: 'NETWORK', status: followed.status, body: null, headers: {}, attempts, why: followed.why });
+      }
+      const res = followed.res;
       const retryable = res.status === 429 || res.status >= 500;
       if (retryable && attempts < policy.max_attempts) {
         await res.body?.cancel();

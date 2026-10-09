@@ -457,13 +457,13 @@ function leadsPage(
       a score built on the estimate would rank the unknowns. Converting opens the claim.`)}</div>
       ${rows.length === 0 ? h`<p class="empty">No leads yet. <a href="${RECORD_LEAD_HREF}">Record your first lead</a></p>` : h`<div class="tablewrap"><table class="stack">
         <thead><tr><th>Company</th><th>Source</th><th>What made it a lead</th><th>${sortBy('newest', 'Date')}</th><th>Owner</th>
-        <th>Status</th><th>${sortBy('next_action', 'Next action')}</th><th>Claim</th><th>${sortBy('value', 'Range shown')}</th></tr></thead>
+        <th>Status</th><th>${sortBy('next_action', 'Next action')}</th><th>Claim</th><th>${sortBy('value', 'Figure shown')}</th></tr></thead>
         <tbody>${rows.map((r) => h`<tr><td><a href="/staff/leads/${r.id}">${r.organisation}</a>${
           r.organisation_recorded ? raw('') : h`<br><span class="help">No company record yet</span>`}</td>
           <td data-label="Source">${r.source}</td><td data-label="What made it a lead">${r.origin}</td><td class="when" data-label="Date">${ukDatesIn(r.lead_date)}</td><td data-label="Owner">${orNot(r.owner, '—')}</td>
           <td data-label="Status">${r.status.label}</td><td data-label="Next action">${orNot(r.next_action, '—')}</td>
           <td data-label="Claim">${r.claim === null ? h`<span class="help">—</span>` : h`<a href="/staff/claims/${r.claim.id}">Open the claim</a> ${claimRef(r.claim.claim_ref)}`}</td>
-          <td data-label="Range shown">${r.shown_range === undefined ? h`<span class="help">${r.range_note ?? 'not shown to this role'}</span>` : h`${r.shown_range}`}</td></tr>`)}</tbody></table></div>`}
+          <td data-label="Figure shown">${r.shown_range === undefined ? h`<span class="help">${r.range_note ?? 'not shown to this role'}</span>` : h`${r.shown_range}`}</td></tr>`)}</tbody></table></div>`}
 
       ${recordLeadForm(d, orgs, openForm)}`,
   });
@@ -560,7 +560,7 @@ function leadPage(d: PipelinePageDeps, actor: Actor, v: L.LeadView, msg: string 
         <p class="help">Read, never re-keyed. A spend is shown as the client gave it, with the question.</p>
         ${v.initial_property_value.length === 0 ? h`<p class="help">No spend answer is held for this lead.</p>`
           : h`<table><tbody>${v.initial_property_value.map((a) => h`<tr><th>${a.question}</th><td>${a.answer}</td></tr>`)}</tbody></table>`}
-        ${v.opportunity_value === undefined ? raw('') : h`<p>The range the client was shown: <strong>${v.opportunity_value.shown_range}</strong></p>`}
+        ${v.opportunity_value === undefined ? raw('') : h`<p>The figure the client was shown: <strong>${v.opportunity_value.shown_range}</strong></p>`}
       </div>
 
 ` },
@@ -592,7 +592,7 @@ function card(c: C.BoardCard): Safe {
   return h`<li class="cardlet"><p class="ref"><a href="/staff/claims/${c.id}">${c.client}</a></p>
     <p class="help">${c.property ?? 'no property recorded'} ${claimRef(c.claim_ref)}<br>owner: ${c.owner ?? 'nobody yet'} ·
     ${c.age_days} day${c.age_days === 1 ? '' : 's'} since its last move</p>
-    ${c.next_action === null ? raw('') : h`<p>Next action: ${c.next_action}</p>`}${c.value === undefined ? raw('') : h`<p class="help">Range shown ${c.value}</p>`}
+    ${c.next_action === null ? raw('') : h`<p>Next action: ${c.next_action}</p>`}${c.value === undefined ? raw('') : h`<p class="help">Figure shown: ${c.value}</p>`}
     ${c.hold === undefined ? raw('') : h`<p class="help">On hold: ${c.hold.reason ?? 'no reason recorded'} — returns to ${c.hold.returns_to}</p>`}
     ${c.next === undefined ? raw('') : h`<form method="post" action="/staff/claims/${c.id}/stage">
       <input type="hidden" name="kind" value="FORWARD"><input type="hidden" name="to" value="${c.next.key}">
@@ -651,7 +651,7 @@ function pipelineRow(c: C.BoardCard, nowIso: string, withValue: boolean): Safe {
       <input type="hidden" name="back" value="board"><button type="submit" class="btn-quiet">Move to ${c.next.label}</button></form>`}</td>
     <td data-label="Due">${dueCell(c, nowIso)}</td>
     <td data-label="Owner">${c.owner ?? nobodyBadge('Nobody yet')}</td>
-    ${withValue ? h`<td data-label="Range shown">${c.value ?? ''}</td>` : raw('')}</tr>`;
+    ${withValue ? h`<td data-label="Figure shown">${c.value ?? ''}</td>` : raw('')}</tr>`;
 }
 
 /** The latest next step first; then a step with a date before one without; then by reference. */

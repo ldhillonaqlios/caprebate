@@ -94,6 +94,17 @@ export type ViewLine = PackLine & {
 
 export type PropertyChoice = { readonly id: string; readonly label: string; readonly postcode: string | null };
 
+/**
+ * PHASE 159a (the Lockwood run, L6): A PROPERTY AS ONE LINE — its label, then its postcode only where the label does not
+ * already end with it. A label typed as a full address ("3 Meltham Road, Huddersfield, HD1 3XH") printed its postcode
+ * twice on the report and the pack.
+ */
+export function propertyLine(p: { readonly label: string; readonly postcode: string | null }): string {
+  if (p.postcode === null || p.postcode.trim() === '') return p.label;
+  const squash = (t: string) => t.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return squash(p.label).endsWith(squash(p.postcode)) ? p.label : `${p.label}, ${p.postcode}`;
+}
+
 export type Change = {
   readonly seq: number; readonly at: string; readonly by_name: string; readonly reason: string;
   readonly line_key: string | null; readonly line_label: string | null; readonly field: PackField; readonly words: string;

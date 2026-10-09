@@ -62,6 +62,7 @@ import {
   type ExitKey, type ProcedureKey, type StageKey,
 } from './stages.ts';
 import { portalStepLine } from './portal-steps.ts';
+import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from './valuation-lock.ts';
 
 export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
 /** PHASE 133d (D4): `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
@@ -214,7 +215,8 @@ export function clientAcceptedNeed(db: Db, c: { readonly id: string }): Need {
   const a = db.get<{ accepted_at: string; name: string | null }>(
     'SELECT x.accepted_at, u.display_name AS name FROM client_report_acceptances x LEFT JOIN users u ON u.id = x.user_id ' +
       "WHERE x.claim_id = ? AND x.fingerprint = (SELECT content_hash FROM claim_deliverables WHERE claim_id = ? AND kind = 'CLIENT_REPORT' " +
-      "AND state = 'ISSUED' ORDER BY version DESC LIMIT 1) ORDER BY x.accepted_at ASC LIMIT 1", [c.id, c.id]);
+      // PHASE 159a: an acceptance from before the valuation was last reopened is set aside (src/web/valuation-lock.ts).
+      "AND state = 'ISSUED' ORDER BY version DESC LIMIT 1) AND x.accepted_at >= ? ORDER BY x.accepted_at ASC LIMIT 1", [c.id, c.id, voidLine(db, c.id) ?? '']);
   return {
     what: 'The client accepted the report, in their portal',
     met: a !== undefined,
@@ -777,7 +779,10 @@ type Apply = {
 function apply(d: PipelineDeps, actor: Actor, c: PipelineClaim, m: Apply, next: NextActionWrite | null = null): MoveResult {
   const at = d.now();
   const id = d.newId();
+  // PHASE 159a: a reopen to the tax adviser's sign-off or earlier sets aside what was released (src/web/valuation-lock.ts).
+  const aside: { set: SetAside | null } = { set: null };
   const { raised, nextTask } = d.db.tx(() => {
+    if (m.kind === 'REOPEN' && VOIDING_REOPEN_STAGES.includes(m.to)) aside.set = setAsideOnReopen(d.db, c.id, at, actor.id);
     d.db.run(
       'UPDATE claims SET stage = ?, hold_return_stage = ?, hold_reason = ?, completed_at = ?, updated_at = ? WHERE id = ?',
       [m.to, m.hold_return_stage, m.hold_reason, m.to === 'CLOSED' ? at : null, at, c.id],
@@ -797,6 +802,7 @@ function apply(d: PipelineDeps, actor: Actor, c: PipelineClaim, m: Apply, next: 
     detail: {
       move: id, kind: m.kind, from: c.stage, to: m.to, reason: m.reason_code, business: c.business_id,
       ...(raised === null ? {} : { business_stage_raised_to: raised }),
+      ...(aside.set === null ? {} : { set_aside: aside.set }),
     },
   });
   if (nextTask !== null) {
@@ -1119,6 +1125,13 @@ export type PipelinePanel = {
     readonly resume: { readonly to: string; readonly label: string } | null;
     readonly reopen: readonly { readonly key: string; readonly label: string }[];
     readonly may_record: boolean;
+    /** PHASE 159a: "Reopen the valuation" — offered to an admin once the figures are fixed, with what it sets aside. */
+    readonly reopen_valuation: { readonly words: string } | null;
+  };
+  /** PHASE 159a: whether the figures are fixed, and the latest valuation reopen with what it set aside. */
+  readonly valuation?: {
+    readonly locked: string | null;
+    readonly reopened: { readonly at: string; readonly who: string; readonly reason: string; readonly to: string } | null;
   };
 };
 
@@ -1204,6 +1217,7 @@ export function pipelinePanel(db: Db, actor: Actor, c: PipelineClaim, opts: Gate
     fee_trigger: { reading: FEE_TRIGGERS[FEE_TRIGGER.reading], decided: FEE_TRIGGER.decided, question: FEE_TRIGGER.question },
     claimable_figure: claimableFigureReleased(db, c),
     history,
+    valuation: valuationPanel(db, c),
     ...(mayMove || mayReopen ? {
       moves: {
         forward: !mayMove || next === null || gate === undefined ? null : { to: next, label: stageLabel(next), open: gate.open },
@@ -1214,8 +1228,20 @@ export function pipelinePanel(db: Db, actor: Actor, c: PipelineClaim, opts: Gate
           ? { to: c.hold_return_stage ?? '', label: anyStageLabel(c.hold_return_stage) } : null,
         reopen: mayReopen ? reopenTargets(db, c).map((k) => ({ key: k, label: stageLabel(k) })) : [],
         may_record: mayMove,
+        reopen_valuation: mayReopen && valuationLock(db, c.id).locked && reopenTargets(db, c).includes('VALUATION')
+          ? { words: REOPEN_VOIDS_WORDS } : null,
       },
     } : {}),
+  };
+}
+
+/** PHASE 159a: the valuation's state for the claim page — fixed or not, and the latest reopen that set things aside. */
+function valuationPanel(db: Db, c: PipelineClaim): NonNullable<PipelinePanel['valuation']> {
+  const lock = valuationLock(db, c.id);
+  const r = lastReopen(db, c.id);
+  return {
+    locked: lock.locked ? lock.why : null,
+    reopened: r === null ? null : { at: localStamp(r.at), who: r.who ?? 'a former user', reason: r.reason ?? '', to: anyStageLabel(r.to) },
   };
 }
 

@@ -126,11 +126,15 @@ export function signOffRow(app: FixtureApp, business: string, assessment: string
   const commitment = existing?.id ?? commitmentOn(app, business, assessment, claim);
   const id = randomUUID();
   const at = app.now();
+  // PHASE 159a (C4): a sign-off names the version it signed — the newest approved version on the claim, if there is one.
+  const approval = app.db.get<{ id: string }>(
+    'SELECT a.id FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
+      'WHERE j.claim_id = ? ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [claim])?.id ?? null;
   app.db.run(
     'INSERT INTO tax_adviser_signoffs (id, claim_id, adviser, credential, signed_on, scope, method_note, switch_readings_json, ' +
-      "figure_pence, commitment_id, kind, record_hash, recorded_by, recorded_at) VALUES (?, ?, 'CAPREBATE_CTA', 'Chartered Tax Adviser', " +
-      "'2026-09-01', 'the fixture claim', 'a fixture method', '[]', ?, ?, 'RECORD_NOT_A_SIGNATURE', ?, 'u-SALES', ?)",
-    [id, claim, figure_pence, commitment, createHash('sha256').update(id).digest('hex'), at]);
+      "figure_pence, commitment_id, kind, record_hash, recorded_by, recorded_at, approval_id) VALUES (?, ?, 'CAPREBATE_CTA', 'Chartered Tax Adviser', " +
+      "'2026-09-01', 'the fixture claim', 'a fixture method', '[]', ?, ?, 'RECORD_NOT_A_SIGNATURE', ?, 'u-SALES', ?, ?)",
+    [id, claim, figure_pence, commitment, createHash('sha256').update(id).digest('hex'), at, approval]);
   return id;
 }
 
@@ -141,12 +145,20 @@ export function signOffRow(app: FixtureApp, business: string, assessment: string
  */
 export function releaseReportFor(app: FixtureApp, claim: string): void {
   if (R.releasedReportFingerprint(app.db, claim) !== null) return;
-  const s = app.db.get<{ figure_pence: number; recorded_at: string; recorded_by: string }>(
-    'SELECT figure_pence, recorded_at, recorded_by FROM tax_adviser_signoffs WHERE claim_id = ? ORDER BY recorded_at DESC LIMIT 1', [claim]);
+  const s = app.db.get<Record<string, string | number | null>>(
+    'SELECT * FROM tax_adviser_signoffs WHERE claim_id = ? ORDER BY recorded_at DESC, rowid DESC LIMIT 1', [claim]);
   const c = app.db.get<{ business_id: string; assessment_id: string | null }>('SELECT business_id, assessment_id FROM claims WHERE id = ?', [claim]);
   if (s === undefined || c === undefined || c.assessment_id === null) return;
-  const who = app.db.get<{ id: string }>("SELECT id FROM users WHERE id = 'u-SURVEYING'")?.id ?? s.recorded_by;
-  packApprovedOn(app, c.business_id, c.assessment_id, claim, who, s.figure_pence, s.recorded_at);
+  const who = app.db.get<{ id: string }>("SELECT id FROM users WHERE id = 'u-SURVEYING'")?.id ?? String(s['recorded_by']);
+  const approval = packApprovedOn(app, c.business_id, c.assessment_id, claim, who, Number(s['figure_pence']), String(s['recorded_at']));
+  /* PHASE 159a (C4): the sign-off must NAME the version, and a sign-off record never changes — so the fixture records the
+     same sign-off again, naming this version, at the same moment. */
+  const id = randomUUID();
+  app.db.run(
+    'INSERT INTO tax_adviser_signoffs (id, claim_id, adviser, credential, signed_on, scope, method_note, switch_readings_json, ' +
+      'figure_pence, commitment_id, kind, record_hash, recorded_by, recorded_at, approval_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, claim, s['adviser'] ?? null, s['credential'] ?? null, s['signed_on'] ?? null, s['scope'] ?? null, s['method_note'] ?? null, s['switch_readings_json'] ?? null,
+      s['figure_pence'] ?? null, s['commitment_id'] ?? null, s['kind'] ?? null, createHash('sha256').update(id).digest('hex'), s['recorded_by'] ?? null, s['recorded_at'] ?? null, approval]);
 }
 
 /**

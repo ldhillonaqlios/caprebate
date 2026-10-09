@@ -46,6 +46,7 @@ import {
 import { FUNNEL_SWITCHES, funnelStateFor, sessionFromFunnel } from './funnel-session.ts';
 import { localStamp, ukDate } from './localtime.ts';
 import { formatPence, toPence } from './shown-range.ts';
+import { VOIDING_REOPEN_STAGES } from './valuation-lock.ts';
 import type { PostcodeStore } from './postcode-port.ts';
 
 export type FactDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
@@ -1119,7 +1120,28 @@ export function clientYearEnd(text: string): { readonly month: number; readonly 
  * checked by staff and a whole date. Never written over the property record; read, with where it came from.
  */
 function acquisitionGiven(db: Db, property_id: string): { value: string; words: string; publisher: string; locator: string; at: string } | null {
-  const g = db.get<{ value_json: string; at: string }>(
+  /* PHASE 159a (C3, L3): ONCE A VERSION IS SIGNED, ITS PURCHASE DATE IS THE ONE READ. The newest version a tax adviser's
+     sign-off names, on a pack for this property, since the valuation was last reopened: its legal check's G9d as it was
+     approved. A newer working answer in the pack is never read in its place. */
+  const signed = db.get<{ snapshot_json: string; version: number; approved_at: string; claim_id: string }>(
+    'SELECT a.snapshot_json, a.version, a.approved_at, j.claim_id FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
+      'JOIN surveyor_jobs j ON j.id = p.job_id LEFT JOIN claims c ON c.id = j.claim_id ' +
+      'JOIN tax_adviser_signoffs s ON s.approval_id = a.id AND s.claim_id = j.claim_id ' +
+      'WHERE (p.property_id = ? OR (p.property_id IS NULL AND c.property_id = ?)) ' +
+      "AND s.recorded_at >= COALESCE((SELECT MAX(m.at) FROM claim_stage_moves m WHERE m.claim_id = j.claim_id AND m.kind = 'REOPEN' " +
+      "AND m.to_stage IN (SELECT value FROM json_each(?))), '') " +
+      'ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [property_id, property_id, JSON.stringify(VOIDING_REOPEN_STAGES)]);
+  if (signed !== undefined) {
+    let snap: { legal?: { answers?: { question_id: string; value: unknown }[] } } = {};
+    try { snap = JSON.parse(signed.snapshot_json) as typeof snap; } catch { snap = {}; }
+    const v = snap.legal?.answers?.find((x) => x.question_id === 'G9d')?.value;
+    const d = typeof v === 'string' ? clientDate(v) : null;
+    if (d !== null) {
+      return { value: d, words: `the surveyor’s legal check, in the signed report (version ${String(signed.version)})`, publisher: 'The surveyor',
+        locator: `the signed survey report, version ${String(signed.version)}, legal check question G9d`, at: signed.approved_at };
+    }
+  }
+  const g = signed !== undefined ? undefined : db.get<{ value_json: string; at: string }>(
     'SELECT a.value_json, a.at FROM survey_pack_legal_answers a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
       "LEFT JOIN claims c ON c.id = j.claim_id WHERE a.question_id = 'G9d' AND (p.property_id = ? OR (p.property_id IS NULL AND c.property_id = ?)) " +
       'ORDER BY a.at DESC, a.seq DESC LIMIT 1', [property_id, property_id]);

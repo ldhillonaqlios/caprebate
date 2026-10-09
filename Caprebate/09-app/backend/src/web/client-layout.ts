@@ -197,7 +197,7 @@ export function claimBoxes(company: string, claims: readonly ClaimSummary[], now
     const site = propertyIn(company, c.property) ?? 'no property recorded';
     return h`<article class="claimbox">${groupBand(stageGroupOf(c.stage_key), `Claim ${String(i + 1)} of ${String(claims.length)} · ${c.stage}`)}
       <div class="claimbox-body"><h2 class="claimbox-site"><a href="${claimHref(c.business_id, c.id)}">${site}</a></h2>
-        <p class="help">${claimRef(c.claim_ref)}${c.town === null ? '' : ` · ${c.town}`}${c.value?.established === true ? ` · range shown ${c.value.shown_range}` : ''}</p>
+        <p class="help">${claimRef(c.claim_ref)}${c.town === null ? '' : ` · ${c.town}`}${c.value?.established === true ? ` · figure shown: ${c.value.shown_range}` : ''}</p>
         <div class="nextbox"><p class="nextbox-h"><span>Next step</span>${c.next_action === null ? raw('') : dueLabel(c.next_action_due, nowIso)}</p>
           <p class="nextbox-t">${c.next_action ?? 'No next step yet — open the claim to set one'}</p></div>
         <p class="claimbox-go"><a class="btn" href="${claimHref(c.business_id, c.id)}">Open the claim</a></p></div></article>`;

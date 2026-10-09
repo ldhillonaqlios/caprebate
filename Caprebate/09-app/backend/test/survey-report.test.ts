@@ -409,12 +409,14 @@ describe('to the claim, and to the client', () => {
       assert.equal(S.releasedVersion(made.app.db, 'b-sr')?.row.version, 1);
       assert.match((await req('u-sr-sales', `${P_}?ch=23`)).body, /The client can see version 1 in their portal\.|Not yet\./);
       assert.match((await post('u-sr-sales', `${P_}/version/2/tell`, {})).body, /cannot see this version yet/);
-      // A sign-off recorded after version 2, but for version 1's figure, does not release version 2.
+      // A sign-off recorded after version 2, but for version 1's figure, does not release version 2. PHASE 159a (C4): it is
+      // now refused outright — a sign-off names the newest version, and its figure must be that version's own.
       clock = '2026-10-02T11:00:00.000Z';
       const v1 = approvedVersion(deps(), SAM, JOB, 1)!.snapshot.sums.qualifying_pence ?? 0;
       const r = R.recordSignOff(deps(), SALES, CLAIM, { adviser: 'Taxwise Advisers LLP', credential: 'Chartered Tax Adviser', signed_on: '2026-10-02',
         scope: 'Version 1 again', method_note: 'Read it', figure: `${String(Math.floor(v1 / 100))}.${String(v1 % 100).padStart(2, '0')}`, confirmed_switches: '' });
-      assert.equal(r.ok, true, JSON.stringify(r));
+      assert.equal(r.ok, false, JSON.stringify(r));
+      assert.match(r.ok ? '' : r.why, /approved version’s own/);
       assert.equal(S.releasedVersion(made.app.db, 'b-sr')?.row.version, 1, 'version 2 was released by a sign-off of another figure');
     } finally { clock = T0; }
   });
@@ -434,7 +436,8 @@ describe('to the claim, and to the client', () => {
     const reqId = db.get<{ id: string }>('SELECT r.id FROM pack_signoff_requests r LEFT JOIN pack_signoff_answers x ON x.request_id = r.id WHERE x.id IS NULL LIMIT 1')!.id;
     assert.throws(() => db.run("INSERT INTO pack_signoff_answers (id, request_id, outcome, signer_name, signer_firm, signer_credential, reason, answered_at) VALUES ('x1', ?, 'SIGNED', 'A Person', NULL, 'CA', NULL, ?)", [reqId, clock]), /CHECK/);
     const rec = db.get<{ answer_id: string; signoff_id: string }>('SELECT answer_id, signoff_id FROM pack_signoff_recorded')!;
-    const other = db.get<{ id: string }>('SELECT id FROM tax_adviser_signoffs WHERE id <> ?', [rec.signoff_id])!.id;
+    // PHASE 159a: the earlier test's second sign-off is now refused, so there may be no other one; a made-up id does.
+    const other = db.get<{ id: string }>('SELECT id FROM tax_adviser_signoffs WHERE id <> ?', [rec.signoff_id])?.id ?? 'no-such-signoff';
     assert.throws(() => db.run('INSERT INTO pack_signoff_recorded (answer_id, signoff_id, recorded_by, recorded_at) VALUES (?, ?, ?, ?)', [rec.answer_id, other, 'u-sr-sales', clock]), /UNIQUE|PRIMARY/, 'one answer recorded twice');
     assert.throws(() => db.run('INSERT INTO pack_signoff_recorded (answer_id, signoff_id, recorded_by, recorded_at) VALUES (?, ?, ?, ?)', ['x2', rec.signoff_id, 'u-sr-sales', clock]), /UNIQUE|FOREIGN/, 'one sign-off recorded for two answers');
     // A link to version 1, then version 1's kept text altered underneath (it cannot be through the app).

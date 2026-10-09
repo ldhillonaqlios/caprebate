@@ -274,7 +274,7 @@ no manager role of its own. There is no tax reviewer role either.
 | **ACCOUNTING** | Our own finance staff | The finance screen. A claim's client, reference and money. A firm's name and money. The reward page (read only) and the dashboard. Nothing else. On the demo, it could not open Users. It could not open Automation. It could not open Templates or Document types. It could not open Admin settings or Compliance either |
 | **SURVEYING** | The surveyor | Their own survey jobs, the ones given to them. A claim or a site, but only through one of those jobs. It is refused every Admin screen |
 | **CLIENT** | A client business | Their own portal only. When they sign in, they land on the portal, not the back office |
-| **READ_ONLY** | Someone who should see the work and change nothing. **Nobody holds it until you give it to them** | It lands in the back office. It reads organisations, and contacts one at a time. It reads sites, and claims **without their value**. It reads leads **without the range shown**, and the pipeline. It reads the calendar, bookings, tasks and the timeline. It reads documents that carry no value, and the list of what we have sent. It reads the dashboard's pipeline tiles and the settings screens. It **writes nothing**, except to change its own password. It **never** sees our estimate, a claim's value or figures, or a claim's tax facts. It never sees the survey workspace, invoices or any money. Our fee is a share of the claim value, so a fee would give the value away. It never sees internal notes or paid research. Nor does it see the compliance registers. It never sees People named on documents, the disclosure log or the audit log. It **cannot export** a list. In the code, every rule says yes or no for this role. A test fails if someone adds a rule without one |
+| **READ_ONLY** | Someone who should see the work and change nothing. **Nobody holds it until you give it to them** | It lands in the back office. It reads organisations, and contacts one at a time. It reads sites, and claims **without their value**. It reads leads **without the figure shown**, and the pipeline. It reads the calendar, bookings, tasks and the timeline. It reads documents that carry no value, and the list of what we have sent. It reads the dashboard's pipeline tiles and the settings screens. It **writes nothing**, except to change its own password. It **never** sees our estimate, a claim's value or figures, or a claim's tax facts. It never sees the survey workspace, invoices or any money. Our fee is a share of the claim value, so a fee would give the value away. It never sees internal notes or paid research. Nor does it see the compliance registers. It never sees People named on documents, the disclosure log or the audit log. It **cannot export** a list. In the code, every rule says yes or no for this role. A test fails if someone adds a rule without one |
 
 **A seventh role is built but switched off. You will not find it on this page.** It is a data protection officer role.
 It would reach the compliance registers and nothing else. It would not reach the audit log or Users and roles. It would
@@ -2249,7 +2249,7 @@ surveyor is not shown **All leads**. *Observed on a freshly started demo, 21 Sep
 assessments** reads "6 submitted, newest first."
 
 **Where things are on the page.** The leads list has **Filter, sort and save** beside it. The underlined headings
-(Date, Next action, Range shown) sort it. **Record a lead**, at the top, opens the form. A lead's page opens
+(Date, Next action, Figure shown) sort it. **Record a lead**, at the top, opens the form. A lead's page opens
 with its highlights. These are the status, owner, source, next action and lead date. Once the lead is converted, the
 claim is there too. Then come three parts:
 - **Details**: the lead, the enquiry checks, **Change the lead** and **Convert**.
@@ -2325,7 +2325,7 @@ what it needs are under **Owner and what this step needs**. On a phone, each row
 **What it is for**
 It shows every claim on the ten steps, one column each. Below is a lane for claims on hold and the claims that have
 stopped. Each column shows who owns the step and what it needs. Each card shows the reference, client, property and
-owner. It shows the days since the last move and the next action. For Admin and Sales, it shows the range too. The
+owner. It shows the days since the last move and the next action. For Admin and Sales, it shows the figure the client was shown too. The
 page says: "A claim moves one step at a time, and each move is checked when you press it."
 
 **Who can open it**
@@ -2340,6 +2340,11 @@ Address: `/staff/pipeline` · a move: sent from a card or the claim page
 3. Press the row's **Move to …** button. It asks for exactly the next stage.
 4. If the move is refused, open the claim. Its pipeline panel lists each need with ✗ or ✓ and the reason.
 5. To exit or hold, use the claim page. To exit, use **Close the claim here**, with **Exit to** and **Reason**. The record is kept. To hold, use **Put on hold**, with **Hold reason**.
+6. After the tax adviser signs off, the figures are fixed. The claim page says so. The surveyor cannot approve a new
+   version, and the legal check takes no new answer. To change the figures, an Admin presses **Reopen the valuation**
+   and says why. The claim goes back to Valuation. The sign-off, the reports, the client's acceptance and any defence
+   pack are set aside. Nothing is deleted. Each is done again on the new figures. The page then says who reopened it,
+   when and why.
 
 **What it will refuse, and why** (the page is headed **Not moved**)
 - A skipped stage: "A claim moves one step at a time, and each step is checked. From Assessment the next step is Engagement."
@@ -2349,6 +2354,8 @@ Address: `/staff/pipeline` · a move: sent from a card or the claim page
 - No next action: "A claim moving to … needs one next step, with an owner and a due date. This one has not: … Set the claim's next step first."
 - A claim on hold: "This claim is on hold. Resume it at the stage it was held at first."
 - Sales tries to reopen a claim, or a surveyor tries to move one. Both are refused with "not authorised".
+- The surveyor approves a pack once the claim is past the sign-off. The pack says "The signed figures are fixed." It
+  says an admin reopens the valuation, with a reason.
 
 **Try it on the demo**
 As Sales, go to **Pipeline**. Press **Move to Assessment** on CR-2026-0007. You see **Not moved**, with all four enquiry
@@ -3006,7 +3013,7 @@ Address: `/staff/claims` · `/staff/leads` · export: `/staff/claims/export.csv`
 As Sales, show **Stage** = Survey: "3 shown". Add an unknown filter by hand (…&colour=red). The page names it as not
 applied. Save the view "Claims at survey". **Saved views** shows "Claims at survey — yours" with **Retire**. Now
 export. Sales' file starts with this line:
-`Reference,Client,Property,Workstream,Stage,Owner,Priority,Next action,Next action due,Expected completion,Opened,Estimated value — the range shown`.
+`Reference,Client,Property,Workstream,Stage,Owner,Priority,Next action,Next action due,Expected completion,Opened,Estimated value — the figure shown`.
 Accounting's starts `Reference,Client,Opened`. The surveyor is refused.
 
 **Check yourself**

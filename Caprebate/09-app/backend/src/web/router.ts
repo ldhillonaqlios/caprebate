@@ -1843,7 +1843,7 @@ function submittedPage(
       through the channel you chose.</p>
       ${upTo && out.high_pence !== null
         ? h`<p>The figure you were shown: <strong>up to ${formatPence(out.high_pence)}</strong>.</p>`
-        : h`<p>The range you were shown: <strong>${formatShownRange(out)}</strong>.</p>`}
+        : h`<p>The figure you were shown: <strong>${formatShownRange(out)}</strong>.</p>`}
       ${booked.booked_at !== null
         ? h`<p>We have held <strong>${clockOf(booked.booked_at)}</strong> for your ${video === undefined ? 'call' : 'video call'}.</p>
             ${video === undefined ? raw('') : video.join !== null

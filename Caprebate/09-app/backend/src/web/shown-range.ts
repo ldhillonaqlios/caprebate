@@ -51,20 +51,25 @@ export type ShownRange = {
 };
 
 /**
- * The range as one line.
+ * The figure the client was shown, as one line: "up to £X".
  *
  * THE HIGH END IS THE FIGURE. `CB_FUNNEL.figure` produces a CEILING and the
  * client's screen says so in terms — "A ceiling, not a forecast … researching
- * the property will move it DOWN, not up". So where there is only a high end
- * this renders "up to £X" and not a bare number, because a bare number is the
- * one thing that phrasing exists to prevent.
+ * the property will move it DOWN, not up". So this renders "up to £X" and not a
+ * bare number, because a bare number is the one thing that phrasing exists to
+ * prevent.
+ *
+ * PHASE 159a (E3; Lakhbir, 9 October 2026: "always show the up to number"): AND
+ * NEVER A RANGE. The client is shown "up to £X" alone, so the lead, the claim
+ * record, the staff assessment pages and the portal show that too. They showed
+ * "£130,000 to £260,000", a low end the client never saw, and one the engine's own
+ * low did not support. The stored low stays where it is, an internal reading for
+ * the reconciliation; it is not drawn on any screen through here.
  */
 export function formatShownRange(r: ShownRange): string {
   const hi = r.high_pence;
-  const lo = r.low_pence;
   if (hi === null || hi === undefined) return 'no figure was shown';
-  if (lo === null || lo === undefined || lo >= hi) return `up to ${formatPence(hi)}`;
-  return `${formatPence(lo)} to ${formatPence(hi)}`;
+  return `up to ${formatPence(hi)}`;
 }
 
 /** The qualifier that travels with every one of these figures, in one place. */
