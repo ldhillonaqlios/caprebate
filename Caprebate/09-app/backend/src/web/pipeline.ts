@@ -605,7 +605,9 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
           deliverableIssuedNeed(db, c.id, 'CLIENT_REPORT'), clientAcceptedNeed(db, c),
           deliverableIssuedNeed(db, c.id, 'ACCOUNTANT_COMPUTATION_PACK'),
           route.route === 'CLIENT'
-            ? clientConfirmationNeed(db, c, since, amendmentWindowReading(db, c, today).deadline)
+            // PHASE 159d: the deadline of the return the route names — under W2 the first open year's, not the closed one.
+            ? clientConfirmationNeed(db, c, since, claimRoutes(db, c, today).filter((r) => r.route === 'W1' || r.route === 'W2')
+              .map((r) => r.deadline).filter((x): x is string => x !== null).sort()[0] ?? amendmentWindowReading(db, c, today).deadline)
             : accountantFitNeed(db, c.id, since), // PHASE 158d (F46): the accountant's own answer, not a staff tick
           reportsWindowNeed(db, c, today),
           legalDeadlineNeed(db, c, today),   // PHASE 159d (C9)

@@ -12785,3 +12785,41 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159d to 
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 159d — each event's route: the deadline gate, and "do you still own it" — 9 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 159d, 9 Oct 2026: each event's route. A closed amendment window no longer turns a claim away: each part of a claim (the purchase, each piece of work) now takes a route of its own. W1, its own year's return can still be amended. W2, that window has closed but the client still owns the building, so the spend goes into the pool of the first year still open (a 2019 purchase now goes into the 2024 pool). W3, not owned, or the purchase fails the second-hand fixtures rules. A claim stops for the window only when every part is W3. "Do you still own it" is a fact on the claim, read from the client's checked answer or the title register. A legal check that was clear only until a deadline is read again at sign-off and Reports. A purchase that fails the legal check is dropped on its own and the works stand. Two-year periods end the day before the anniversary; the last day is open all day; basis period reform gives sole traders and partnerships the earlier deadline; a closed direct purchase is nil; charitable companies and trusts have their own dates. The report and the portal say how each part goes in. Questions 253-256 to the tax adviser (ACC-H6). 5,024 checks in all. Next: Phase 159e.
+
+- **Branch** `claude/phase-159d`, from `main` after PR 45 (Phase 159c) merged at Lakhbir's word ("merge and run 159d").
+- **Evidence re-run first and last.** The claim harness (`claim/run-all.sh`; before in `claim/before-159d/`): the 2019, 2020 and 2023 company purchases were CLOSED at Reports and Invoice; with "still owned" recorded (a block added to `h3-window.ts`, marked Phase 159d; `h3-window.ts.before-159d` kept) each is now W2 into the 2024 pool, amendable until 31 December 2026, and passes both gates; without it they still refuse (N4). The engine harness: 3 classes to 2, both kept on purpose (questions 247 and 250). Its two-year clock check computed the anniversary as the last day against its own comment ("acq + 2y - 1 day") and this phase's prompt; it now reads as its comment says (`harness.ts.before-159d` kept).
+- **Premise re-derived (step 8).** C2 in the site engine held (the window compared a moment with midnight). C10's 730.5 days held in four places, not two, plus the April 2014 threshold display; all now read the calendar. The prompt's "the engine already routes W2 (CB_CASH)" is the engine's cash route; the back end's gates did override it, as said. C27 is narrower than "a direct purchase, seller pooled": it needs the seller known to have claimed and no tribunal application in time, or it would decide an unknown history (N4).
+
+**What was built:**
+1. **Each event's route (items 1, 3).** `src/web/claim-route.ts`: W1, W2 (the first open period, `firstOpen`), W3 and NOT_KNOWN per event; a piece of work placed by the client's checked year end only where its whole date falls in one period; repairs take no route. `windowForPeriod` (claim-facts.ts) for any period. Reports and Invoice read the routes (claim-record.ts); the window exit only where every part is W3 (pipeline.ts `moveClaim`); the early warning points at this year's pool; the client's filing confirmation names the route's deadline.
+2. **STILL_OWNED (item 2)** — migration 106; `stillOwned`: a sale date is NO; the recorded fact; the title register naming the client's company number is YES.
+3. **C9, C10, C27 (item 4).** `legalDeadlineNeed`: a lapsed URGENT legal check stops the sign-off gate, Reports and `recordSignOff`, unless the check is now clear. The engine's two-year periods end the day before the anniversary (`twoYearsFrom`), and the fixed value window is open all of its last UK day. A closed direct purchase from an owner known to have claimed, no tribunal application in time: NIL.
+4. **C24, C25 (item 5).** `CHARITY_COMPANY` and `CHARITABLE_TRUST` (crm.ts, migration 106's triggers); `CHARITY` alone is not known, and says why. Basis period reform: `saDeadline` takes the earlier tax year for a self assessment period ending from 6 April 2024 outside 31 March to 5 April.
+5. **Item 6** — the approved version keeps `routes`; the report (page and PDF) and the portal's claim page say how each part goes in.
+6. **Item 7 (C2 in the site engine)** — `deriveAmendmentWindow` compares UK dates (`inTimeOn`).
+7. **Item 8** — the legal check is the purchase's: RED with work since is W3 for the purchase alone (`purchase_w3`); approval is not blocked; the report says the purchase is not claimed.
+
+**Tests.** Site harness: **1,419 pass / 0 fail / 3 xfail**, both modes (Suite AP, nine checks: **seven red** on `.bak-phase159d` through the redirect hook — 3 reads served — the two controls green on both; A-1 restated for C27 and X5 moved to 2023 period ends, before the reform). `test/phase159d.test.ts`, twelve tests: on the commit before this phase the route module does not exist, so the file does not load at all (all twelve red). Restated: `claim-record` (the Reports need's name), `finance-claim` and `pipeline` (the window exit with the building sold), `pack-legal` (31 May 2027; C27), `phase132-window` (2023 period ends).
+
+**The checks, at the close:** back end `npm run check` **2,748 pass / 0 fail** over 169 tracked files; phase3 440; phase9 417; **5,024** in all (drift checker re-derived them; seven stale figures fixed). `extract --check` up to date; `verify-extraction` 21 checks, 0 failures. CRM fold check green after nineteen §4 line references moved by the inserted lines were re-pointed. Register check exit 0 (132 awaiting: 54 + 10 + 68); tracker check green; plain words green.
+
+**Documents.** Word questions 253 to 256 under the tax adviser, in Caprebate_Questions.docx and the 29 September re-sectioned copy (both cloud items checked unchanged twice, backed up with cp, written in place — same inodes — and each cloud copy compared byte for byte after; six temporary copies to the recycle bin); QUESTIONS-WORD-HEADINGS.txt rebuilt. FOR THE ACCOUNTANT: ACC-H6 (board item 13250825382, created on monday in group 02, added to the tracker and the register manifest); the registers' totals to 132. Developer Spec: a Phase 159d section and the figures. The run sheet: 159d deleted, its outcome at the end, and 159e and 159g given the same new lines as this plan.
+
+```
+DONE          items 1-8: each event's route (W1, W2 through the first open period's pool, W3); STILL_OWNED;
+              the gates and the window exit on the routes; the early warning; C9, C10, C27; C24, C25; the
+              routes on the report and the portal; C2 in the site engine; the purchase's legal check alone.
+              Questions 253-256, ACC-H6. 5,024 checks; every check green.
+NOT DONE      A W2 part's return entries start in its first open period - BUILDABLE - Phase 159e item 8.
+              Ownership from the title register for a person (a sole trader, partners) - BUILDABLE - Phase 159g item 6.
+              Whether each route, the two-year last day, the reform deadline and the closed direct purchase are
+                viable - BUILT; BLOCKED only on the tax adviser's view - questions 253-256 (ACC-H6).
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159e to 159j; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.
