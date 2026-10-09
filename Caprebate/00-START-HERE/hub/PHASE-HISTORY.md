@@ -12588,3 +12588,54 @@ NOTHING LEFT  beyond those lines. Next: the sweep, Phase 159.
 ```
 
  **Claim cleared** in the commit that carries this record.
+
+---
+
+## Phase 159 — Sweep and stress-test — 9 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**Actions and outcomes (the same short entry is at the end of the run sheet).** Swept the tracker against the board and the disk after Phases 158a to 158d, and re-ran every check. Board and tracker agree on every item. Nothing was lost: the four suites print what 158d recorded. The Word questions document's link holds. One gap was found and closed. Phase 158d had written two "is it viable?" checks into FOR THE ACCOUNTANT with no board item, so no count saw them; they are now ACC-H3 (board 13245993980, Built - awaiting sign-off, CTA). Two stale lines were made true: the waiting list's tax-adviser count, and the plan's tally note. No new phase is needed. The sweep is now Phase 160. 4,934 passing.
+
+- **Claim.** hub/CLAIM.md and a new board item, 13246009649 (159 had none), Working on it, Lakhbir's Mac; pushed first (`63b3027`). Branch `claude/phase-159` from main after PR 40 (158d) was merged (it was already merged when the sweep began; Lakhbir: "Merge 40, then run 159").
+- **1. The tracker against the board.** All 484 board items match their tracker rows on status, group and claimed-by, read in code. One tracker row is not on the board: 12830205481, the scrapped VOA item, archived on monday on 4 October on purpose. So it no longer lists. Not a finding.
+- **The statuses read against the content.** 0 at Ready - Claude can build; 0 at Blocked - question; 1 at Working on it (this sweep). The 25 Ready - Lakhbir action, 3 licence, 3 live-jobs and 11 parked items were read with their latest notes. Six carry no note, file or document (governance training, hardware, the officer's five decisions, Scotland, the request template, the benefit-direction measurement). Each has archived comments that say what it waits for, so each label holds.
+- **2. (e) A finished thing with no board item: ACC-H3.** Phase 158d added two viability checks to FOR THE ACCOUNTANT (the accountant's own confirmation link; the defence pack's list of records) without a board item. The sweep made:
+  - board item 13245993980 in group 02, Built - awaiting sign-off, owner CTA;
+  - its tracker row;
+  - its manifest entry in `03-app/caprebate-signoff-registers.json` (prose);
+  - the ACC-H3 label in the register;
+  - a dated count line in all three registers: 129 awaiting (51 / 10 / 68), and 51 board items covered in FOR THE ACCOUNTANT.
+  The register check named each sentence that needed the new count, and it is green.
+- **The Word questions document (AMENDMENT 2).** The folder listing, read through the Microsoft 365 connector, shows item 01MGXUCTLKJIP4DY6BJZGL7KO5ZTZZABK3 still named `Caprebate_Questions.docx`, at 108,890 bytes, the same as the Mac file. The closed document's item, 01MGXUCTIA3HHQAUXJ2JCIIXWRUKNXO7BI, keeps its name. There are no DELETE files.
+- **Open pull requests:** none (PR 40 merged).
+- **Made true.**
+  - WAITING-ON-PEOPLE's tax-adviser line said "45 built items ... 24 switched-off tax readings". It now says 51 items (the register check's count) and 29 switches (`verify-extraction`), and adds ACC-H3.
+  - The plan's tally note now reads 486 items, 0 at Blocked - question and 129 awaiting (it read 481 and 128 on 7 Oct).
+- **A fault the sweep made and caught.** Two tracker rows (this sweep's claim and ACC-H3) were appended by hand. The tracker check stayed green, but its `--self-test` failed: "the CSV reads and writes back byte for byte". A first rewrite called the tool's writer wrongly and cut the CSV to 9 KB. It was restored at once from the copy taken just before, and checked: only the new row differed from the commit. It was then rewritten through the tool's own `load()` and `toCSV()`; only the two rows' quoting changed. The self-test now passes. The lesson is in the sweep's block.
+- **Renumbered.** The sweep is PHASE 160 in hub/ACTION-PLAN.md and on the run sheet. Its block took this sweep's three lessons (rows through the tool; a viability ask needs a board item; "report" is a present-tense marker), and THE NUMBER line. The run sheet's block was read back equal to the file's, character for character (23,912).
+- **The checks, run on the Mac** (the committed tree at the claim, then the closing ones again after the edits):
+  - Site harness: `pass 1382 fail 0 xfail 3`, both modes.
+  - `04-phase-work/phase3`: 440 pass / 0 fail.
+  - `04-phase-work/phase9`: 417 pass / 0 fail.
+  - Back end `npm run check`: 2,695 pass / 0 fail over 165 tracked files.
+  - **4,934** in all, the same as Phase 158d recorded.
+  - `verify-extraction`: 21 checks, 0 failures, 29 switches; `extract --check` up to date.
+  - Tracker check: green (486 items, 131 subitems), and its self-test now passes (see above).
+  - Drift self-test: held. **Drift negative control `--fast --expect 999,998,997,996`: exit 1.** Drift checker against 1382,440,417,2695: exit 0. Its "no marker either way" list (216) is the same size as the Phase 158 sweep read.
+  - CRM fold check and its self-test: green.
+  - Notices acceptance: 25 structural checks.
+  - Gated-exit proof: 14 of 14; **against `.bak-phase127`: RED, 9 of 14.** Cash route proof: 18 of 18; **against `.bak-phase129b`: RED, 3 of 18.**
+  - Brand, plain words, switch direction: green. Analytics allow-list: 26 checks, 0 failures. Register self-test passed.
+  - Payload proof: PASS (surveyor 0 of 7, admin 7 of 7).
+  - Register check: exit 0 after ACC-H3.
+
+```
+DONE          Tracker against the board (484 of 484 agree) and the disk; every check re-run (4,934,
+              unchanged); the Word document's link verified; ACC-H3 given its board item, manifest
+              entry and counts; the waiting list and the plan's tally made true; the tracker's
+              hand-written rows fixed through the tool; the sweep renumbered to 160 in both places.
+NOT DONE      ACC-H3 itself - the tax adviser's view - FOR THE ACCOUNTANT and WAITING-ON-PEOPLE.
+              Merging this sweep's PR - Lakhbir's click.
+NOTHING LEFT  beyond those lines. No new phase: the next phase is the sweep (Phase 160) when work lands.
+```
+
+ **Claim cleared** in the commit that carries this record.

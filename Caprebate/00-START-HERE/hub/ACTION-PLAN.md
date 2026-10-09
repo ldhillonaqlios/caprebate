@@ -1061,7 +1061,7 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 159 — Sweep and stress-test (the recurring one, always last)
+## PHASE 160 — Sweep and stress-test (the recurring one, always last)
 
 
  **Model: Opus.** **This is the one section that is never deleted.** It renumbers itself forward each time it runs and stays at the bottom of this list.
@@ -1142,7 +1142,23 @@ THE NOTES AT THE END (the Acer copy, update_block, 06-.../_doc.xml) are history:
   the Acer is retired and _doc.xml is gone.
 THE NUMBER: phases 153f, 154a1, 155 and 156 were added above this one on 3 Oct, the
   Phase 157 sweep (6 Oct 2026) inserted 157a and 157b before it, and the Phase 158
-  sweep (7 Oct 2026) inserted 158a, so this sweep's heading is now PHASE 159.
+  sweep (7 Oct 2026) inserted 158a; 158a, 158b and 158c each wrote the next
+  (158b, 158c, 158d) from their runs of the invented client, and the Phase 159
+  sweep (9 Oct 2026) inserted none, so this sweep's heading is now PHASE 160.
+ADDED 9 OCT 2026 BY THE PHASE 159 SWEEP:
+  A NEW TRACKER ROW GOES IN THROUGH THE TOOL: node 03-app/caprebate-tracker.cjs add,
+    or load() and toCSV() together, never a row appended by hand. Two
+    hand-written rows (159's own claim and ACC-H3) were quoted differently from
+    the tool's, the tracker check stayed green, and only --self-test ("the CSV
+    reads and writes back byte for byte") went red. Run the self-test too.
+  A VIABILITY ASK WRITTEN INTO A REGISTER NEEDS A BOARD ITEM: Phase 158d put two
+    "is it viable?" checks into FOR THE ACCOUNTANT with no item, so no count saw
+    them. The sweep made the item (ACC-H3, 13245993980, Built - awaiting
+    sign-off, CTA), its manifest entry, and the count lines in all three
+    registers (129: 51 / 10 / 68).
+  "REPORT" IS A PRESENT-TENSE MARKER to the figure checks: a tracker note saying
+    "the client report ... 4,912 passing" was failed as a live claim once the
+    total moved. Keep a pass figure away from that word in any hub note.
 ADDED 7 OCT 2026 BY THE PHASE 158 SWEEP:
   RUNNING IT FROM A CLOUD SESSION. A cloud clone cannot run the site harness (it
     reads OneDrive-only files). Phase 158 ran every check on a copy of the Mac
@@ -1541,7 +1557,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
  **Nothing on this board blocks Claude from building: since the Phase 157 sweep (6 October 2026) no item sits at Blocked - question** (it said three items until the Phase 158 sweep corrected it on 7 October). Everything else that looks stuck is waiting on a person, a signature or a licence, and that stops us **trading**, not building. Conflating the two is what made this project look four times more stuck than it is. (Corrected 22 September 2026 by the Phase 145 sweep: this said two items, and listed the company existing among the things we wait on. CAP REBATE LTD exists.)
 
 
- **This table is the tally of 23 September 2026 and is kept as a record. The live tally is the two tables at the top of hub/TRACKER.md, counted by the tool at every write** (Phase 158 sweep, 7 October 2026: 481 items, 0 at Blocked - question, 128 awaiting sign-off). **Re-derived from the live board by the Phase 147 sweep on 23 September 2026** and tallied in code, with its own claim counted back to where it sits when cleared. It must sum to the item count or one of the two is wrong. The table below replaced one taken by the Phase 145 sweep on 22 September, which read 407 items and 114 awaiting sign-off. All 423 items:
+ **This table is the tally of 23 September 2026 and is kept as a record. The live tally is the two tables at the top of hub/TRACKER.md, counted by the tool at every write** (Phase 159 sweep, 9 October 2026: 486 items, 0 at Blocked - question, 129 awaiting sign-off; the Phase 158 sweep, 7 October, read 481 items and 128). **Re-derived from the live board by the Phase 147 sweep on 23 September 2026** and tallied in code, with its own claim counted back to where it sits when cleared. It must sum to the item count or one of the two is wrong. The table below replaced one taken by the Phase 145 sweep on 22 September, which read 407 items and 114 awaiting sign-off. All 423 items:
 
 
 |  State |  Items |  What it actually means |
