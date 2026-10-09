@@ -1061,108 +1061,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 159c — several events on one building: a purchase, then the works
-
- **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: Lockwood's £90,000 refurbishment reached no figure; on a bought-then-refitted surgery the works are often worth more than the purchase.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
-   and the same entry at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE EVIDENCE (OneDrive, not in git): Caprebate/04-phase-work/stress-2026-10-09/
-  COVERAGE-MATRIX.md     every variable that moves a claim, and where the app
-                         reads it (sections 1-14; gaps ranked in 14)
-  engine/FINDINGS.md     E1-E20, the estimate engine; re-run: node harness.ts
-  claim/FINDINGS.md      C1-C29, the claim stage; re-run: ./run-all.sh
-and Caprebate/04-phase-work/sim-2026-10-09-lockwood/Lockwood-Surgery-test-run.md
-(L1-L12, the live run on a real practice with every API). Re-run the harness
-for your items before you start and again at the end; it must go clean.
-
-THE TARGET (Lakhbir, 9 Oct 2026): "the highest figure we can defend" - not
-the highest figure. Every rule below is built on our recommendation and
-SWITCHED ON in test (his rule of 29 Sep 2026: build it, then ask the
-accountant / solicitor / DPO if it is viable). Each item marked OUR READING
-goes into the Word questions document (AMENDMENT 2 - cp, never mv) under the
-tax adviser as a viability check: "we built X on basis Y - is it viable?".
-
-Each fix below gets a test that fails on the code before it (turn the
-harness case into the test). Plain words at grade 9 on every screen. Fix
-what is small and safe; anything larger goes in a new lettered phase before
-the sweep; anything that needs a person goes in the Word questions document.
-
-"THAT'S A DESIGN GAP - THIS IS NEEDED" (Lakhbir, 9 Oct 2026).
-1. EVENTS, NOT ONE TRIGGER. Each property carries events[]: type (purchase,
-   new build, extension, refurbishment, fit-out, conversion), date, cost,
-   VAT. The assessment's "What did you spend on each building?" lists them
-   ("add another"); the works screen becomes "add an event" (funnel4.ts,
-   assessment.ts Q2/Q3, funnel-session.ts "NOT MAPPED: Q3 works"). F3 goes.
-2. E1, E4: the engine prices each event on its own band - the purchase on
-   the purchase band with s.187A on the price, works on the works band on the
-   works cost only (today the highest band is applied to the whole price and
-   the pooling nil is skipped: gp:962, care_homes:907, dental:880,
-   private_hospital:1066; gp:1062 etc.). The ceiling is the sum.
-3. The lead, the claim and the property hold the events; the claim page shows
-   each with its own figure and documents.
-4. THE PACK GETS A COST-LED MODE for own-cost works: contract sum or final
-   account by element, preliminaries and fees apportioned to plant, builder's
-   work in connection (s.25), demolition. The s.562 price mode stays for the
-   purchase. One survey job can carry both, or one job per event - choose
-   the simpler and say why.
-5. pack-sheets.ts:331 reads funnel['buildings'] where the state key is
-   'properties': a straight bug - chapter 20 never sees the works.
-   Chapter 20 (repairs or capital) runs per works event; the repair part is a
-   revenue deduction and is said so.
-6. F16+: contractor invoices, the final account, plans and drawings, the
-   completion statement and accounts are on the client's and staff's upload
-   lists.
-7. Lockwood's case passes: GP purchase £650k (2025) plus a £90k refurbishment
-   (2025) shows both in the ceiling, the pack, the report and the return.
-8. (Carried from Phase 159b, 9 Oct 2026.) THE STORED LOW END (E3). Since 159a
-   no screen shows a low end, but each assessment still stores one
-   (assessments.shown_low_pence, from the band's low) and it is above the
-   engine's own low on purchases (the engine harness's class (i), about 840
-   cases; it feeds the reconciliation's "range shown"). When the figure is
-   worked per event here, store the engine's low, or none (the client was
-   shown "up to £X" only), and say which in the reconciliation.
-```
-
----
-
 ## PHASE 159d — each event's route: the deadline gate, and "do you still own it"
 
  **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: the gate turned away claims the law allows: an old purchase can still be pooled in this year's return while the building is owned.
@@ -1228,7 +1126,7 @@ what is small and safe; anything larger goes in a new lettered phase before
 the sweep; anything that needs a person goes in the Word questions document.
 
 AGREED (Lakhbir, 9 Oct 2026), "but then remember refurbishment and also
-tax allowances": the route is decided PER EVENT (159c), not per claim.
+tax allowances": the route is decided PER EVENT (159c built the events), not per claim.
 1. C1, L9: replace reportsWindowNeed and invoiceWindowNeed
    (claim-record.ts:1236-1259, pipeline.ts:586-611) with a route reading per
    event:
@@ -1267,6 +1165,14 @@ tax allowances": the route is decided PER EVENT (159c), not per claim.
    00:00:01 on the last day. Make the site file compare UK dates, re-extract
    (extract.cjs --check, verify-extraction), and prove the last day open
    with a harness case that fails on .bak-phase159a.
+8. (Carried from Phase 159c, 9 Oct 2026.) THE LEGAL CHECK IS THE PURCHASE'S.
+   159c gave each building its events (migration 105, property_events; the
+   pack's packView().works) and prices each piece of work on its own cost.
+   But approval still reads the legal check against the whole pack
+   (pack-approve.ts readiness, legalAllows(lv.verdict, v.sums.qualifying_pence)),
+   so a purchase that fails s.187A also stops the refit. Make a RED or nil
+   legal result W3 for the purchase event only; the works stand on their own
+   route (W1 or W2, item 1).
 ```
 
 ---
@@ -1361,6 +1267,13 @@ the sweep; anything that needs a person goes in the Word questions document.
    accruals for the period"; no fixtures claim while on the cash basis.
 6. The report and the return entries show, per event: its route, its
    period, each allowance, the year-one relief and the pool carried on.
+7. (Carried from Phase 159c, 9 Oct 2026.) EACH EVENT IN ITS OWN PERIOD. 159c
+   adds each spend on its own return-1 row (return-entries.ts, "Spend that
+   counts, added to the pool: the purchase" / ": A refurbishment or refit,
+   2025"), but every event falls in one period, the claim's
+   ACCOUNTING_PERIOD_START. Put each in the period its own date falls in
+   (property_events.event_date; the version's events.works[].event_date),
+   with its own first-year relief from item 1.
 ```
 
 ---
@@ -1721,6 +1634,14 @@ the sweep; anything that needs a person goes in the Word questions document.
    s.33B aggregation switch. Coverage matrix section 13 lists the seventeen
    readings built and left off - turn on every one this phase can stand
    behind and list the rest with why.
+4. (Carried from Phase 159c, 9 Oct 2026.) GRANTS AND VAT PER EVENT. A grant
+   on a claim whose building has work since now STOPS the pack's total
+   (survey-pack.ts combined, problem GRANTS_ON_EVENTS), because a grant left
+   on the purchase when it paid for the refit is an over-claim. Record which
+   event each grant paid for, and take it off that event's figure (its
+   cost-led values, or the purchase's sums). Each event's VAT
+   (property_events.vat, carried NULL since 159c): ask it on the claim, and
+   add VAT the client could not reclaim to that event's cost.
 ```
 
 ---
@@ -1811,6 +1732,13 @@ the sweep; anything that needs a person goes in the Word questions document.
    refused until a person records a switch-on (smoke-switched-on is
    Lakhbir's, not ours). Ask him to record one, then run
    CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE and expect PASS.
+5. (Carried from Phase 159c, 9 Oct 2026.) A DOCUMENT NAMES ITS EVENT. 159c's
+   claim page lists each event's documents by type, with how many of that
+   type the client's records hold (property-events.ts DOCUMENTS_FOR), so two
+   pieces of work share one count of contractor's invoices. Give a document
+   an optional event (documents, a nullable event id; a choice on the staff
+   upload form; the client's "What we need from you" asks for each piece of
+   work's final account and invoices), and count each event's own.
 ```
 
 ---
@@ -2458,7 +2386,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157 — the sweep — **done 6 Oct 2026**, see PHASE HISTORY; it inserted 157a and 157b |  The standing rule |
 |  Claude |  Phase 157a — the engine and the cost model: the pooling questions, the unknown seller, the cost model in the survey pack — **done 6 Oct 2026**, see PHASE HISTORY |  Loose ends the sweep held since 153e and 154a1 |
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
-|  Claude |  Phases 159c to 159j — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, and 159b, the assessment figure made sound, ran on 9 Oct 2026 and are in PHASE HISTORY): several events on one building (159c, 13247778871); each event's route and the deadline gate (159d, 13247760762); the allowances and return entries (159e, 13247762244); BCIS rate drafting (159f, 13247754275); who claims and the registers (159g, 13247752841); the legal check (159h, 13247776393); grants, VAT, acquisition costs (159i, 13247762327); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
+|  Claude |  Phases 159d to 159j — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, 159b, the assessment figure made sound, and 159c, several events on one building, ran on 9 Oct 2026 and are in PHASE HISTORY): each event's route and the deadline gate (159d, 13247760762); the allowances and return entries (159e, 13247762244); BCIS rate drafting (159f, 13247754275); who claims and the registers (159g, 13247752841); the legal check (159h, 13247776393); grants, VAT, acquisition costs (159i, 13247762327); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
 |  Claude |  Phase 160 — the sweep, always last |  The standing rule |
 

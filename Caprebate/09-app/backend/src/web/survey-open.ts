@@ -76,10 +76,11 @@ export function surveyJobPanel(db: Db, actor: Actor, claim_id: string): SurveyJo
   };
 }
 
-/** What the client said was spent on the buildings (the funnel's `Q2-N-spend` answers), in pounds; null if none. */
+/** What the client said was spent on the buildings (the funnel's `Q2-N-spend` answers, and since Phase 159c each piece of
+ *  work's `Q3-N-wJ-spend`, which the figure now counts too), in pounds; null if none. */
 function spendSaid(db: Db, assessment_id: string): number | null {
   const rows = db.all<{ value: string | null }>(
-    "SELECT value FROM assessment_answers WHERE assessment_id = ? AND state = 'ANSWERED' AND question_id GLOB 'Q2-[0-9]*-spend'", [assessment_id]);
+    "SELECT value FROM assessment_answers WHERE assessment_id = ? AND state = 'ANSWERED' AND (question_id GLOB 'Q2-[0-9]*-spend' OR question_id GLOB 'Q3-[0-9]*-w[0-9]*-spend')", [assessment_id]);
   const total = rows.reduce((s, r) => { const v = Number(r.value); return Number.isFinite(v) && v > 0 ? s + v : s; }, 0);
   return total > 0 ? total : null;
 }

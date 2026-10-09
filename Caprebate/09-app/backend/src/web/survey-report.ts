@@ -71,6 +71,21 @@ export type ReportModel = {
   readonly site_plan: SitePlan | null;
   /** PHASE 153g: the surveyor's chapters (5, 8, 11, 14, 16 to 20, 22) as approved. Empty in a version approved before. */
   readonly chapters: readonly ReportChapter[];
+  /** PHASE 159c: each spend on the building, with its own figure, where there is work since. Empty otherwise. */
+  readonly events: readonly { readonly label: string; readonly qualifying: string; readonly main: string; readonly special: string; readonly note: string }[];
+  /** PHASE 159c: what the cover's figure is for, where it is more than one purchase. Null otherwise (the cover says the share). */
+  readonly headline_note: string | null;
+  /** PHASE 159c: the opening of section 01, which says how the figure was worked out. */
+  readonly method_lede: string;
+};
+
+export const PURCHASE_LEDE = 'When you buy a building, its price is split three ways. There is the land, the building itself, and the fixtures that qualify for tax relief. The law says how (section 562 of the Capital Allowances Act 2001). We share it out by what each part would cost to build again today.';
+const WORKS_LEDE = 'Work you paid for is claimed on what it cost. The surveyor took each part from the final account. The plant qualifies, with the builder’s work that serves it. So does a fair share of the fees. Any repair part comes off your profits instead.';
+
+type SnapEvents = {
+  purchase_applies: boolean;
+  purchase: { qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null } | null;
+  works: { label: string; inputs: Record<string, number | null>; qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null; repairs_pence: number | null }[];
 };
 
 export type ReportChapter = {
@@ -116,14 +131,19 @@ function inspectionWords(i: Snapshot['inspection'] | undefined): string | null {
 }
 
 export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
-  const s = x.sums;
+  // PHASE 159c: a version with work since keeps each spend (`events`); `sums` is their total. The section 562 sum below is
+  // the purchase's own, so it reads the purchase's figures; the cover reads the total.
+  const ev = (x as { events?: SnapEvents }).events;
+  const total = x.sums;
+  const s = ev === undefined ? total : { ...total,
+    qualifying_pence: ev.purchase?.qualifying_pence ?? null, main_pool_pence: ev.purchase?.main_pool_pence ?? null, special_pool_pence: ev.purchase?.special_pool_pence ?? null };
   // PHASE 153a: a version approved before grants came off has no `grants`; one with grants that took nothing off reads as before.
   const gr = (x as { grants?: Snapshot['grants'] }).grants;
   const off = gr !== undefined && gr.reduction_pence !== null && gr.reduction_pence > 0 ? gr : null;
   const beforeShare = s.rebuild_pence === null || s.rebuild_pence === 0 || s.elements_qualifying_pence === null ? null
     : Math.round((s.elements_qualifying_pence * 10000) / s.rebuild_pence);
-  const q = (s.qualifying_pence ?? 0);
-  const main = s.main_pool_pence ?? 0;
+  const q = (total.qualifying_pence ?? 0);
+  const main = total.main_pool_pence ?? 0;
   const mainPct = q === 0 ? 0 : Math.round((main * 100) / q);
   const live = x.lines.filter((l) => !l.removed);
   const totalQ = s.elements_qualifying_pence ?? 0;
@@ -152,8 +172,8 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     approved_clock: clock(x.approved_at),
     fingerprint,
     headline: {
-      qualifying: poundsWords(s.qualifying_pence), share: percentWords(s.share_bp), building: poundsWords(s.building_price_pence),
-      main: poundsWords(s.main_pool_pence), special: poundsWords(s.special_pool_pence), main_pct: mainPct,
+      qualifying: poundsWords(total.qualifying_pence), share: percentWords(s.share_bp), building: poundsWords(s.building_price_pence),
+      main: poundsWords(total.main_pool_pence), special: poundsWords(total.special_pool_pence), main_pct: mainPct,
     },
     facts: [
       { label: 'Floor area', value: value(iv.gia_milli_m2, area) },
@@ -181,8 +201,8 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
       `Others paid for part of it, so ${poundsWords(off.reduction_pence)} comes off${off.element_trace ? '' : ', in equal share across every item'}: ${poundsWords(s.qualifying_pence)} qualifies.`,
     ],
     pools: {
-      main: { total: poundsWords(s.main_pool_pence), items: mp.map((l) => l.label) },
-      special: { total: poundsWords(s.special_pool_pence), items: sr.map((l) => l.label) },
+      main: { total: poundsWords(total.main_pool_pence), items: mp.map((l) => l.label) },
+      special: { total: poundsWords(total.special_pool_pence), items: sr.map((l) => l.label) },
     },
     sources: [
       { label: 'Price paid', value: poundsWords(iv.price_paid_pence.value), chip: chipOf(iv.price_paid_pence.source), reason: iv.price_paid_pence.source?.reason ?? (iv.price_paid_pence.source?.kind === 'EVIDENCE' ? iv.price_paid_pence.source.text : null) },
@@ -216,7 +236,25 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
     site_plan: (x as { site_plan?: SitePlan }).site_plan ?? null,
     chapters: ((x as { chapters?: readonly ReportChapter[] }).chapters ?? []).map((c) => ({ n: c.n, title: c.title, applies: c.applies, not_applies_words: c.not_applies_words,
       rows: c.rows.map((r) => ({ label: r.label, value: r.value, missing: r.missing })), items: c.items.map((i) => ({ label: i.label, detail: i.detail })) })),
+    ...eventsPart(ev),
   };
+}
+
+/** PHASE 159c: each spend on the building, and what the cover's figure is for. A version with no work since: nothing. */
+function eventsPart(ev: SnapEvents | undefined): Pick<ReportModel, 'events' | 'headline_note' | 'method_lede'> & Partial<Pick<ReportModel, 'flow' | 'sum_words'>> {
+  if (ev === undefined) return { events: [], headline_note: null, method_lede: PURCHASE_LEDE };
+  const rows = [
+    ...(ev.purchase_applies && ev.purchase !== null ? [{ label: 'The purchase', qualifying: poundsWords(ev.purchase.qualifying_pence), main: poundsWords(ev.purchase.main_pool_pence),
+      special: poundsWords(ev.purchase.special_pool_pence), note: 'Shared out from the price, by what each part would cost to build again (section 562).' }] : []),
+    ...ev.works.map((w) => ({ label: w.label, qualifying: poundsWords(w.qualifying_pence), main: poundsWords(w.main_pool_pence), special: poundsWords(w.special_pool_pence),
+      note: `On its own cost: ${poundsWords(w.inputs['works_total'] ?? null)} in all, from the final account.${(w.repairs_pence ?? 0) > 0 ? ` ${poundsWords(w.repairs_pence)} of it is a repair, which comes off your profits instead and is not in this figure.` : ''}` })),
+  ];
+  if (ev.purchase_applies) return { events: rows, headline_note: 'for the purchase and the work done since, each worked out on its own', method_lede: PURCHASE_LEDE };
+  const cost = ev.works.reduce((a, w) => a + (w.inputs['works_total'] ?? 0), 0);
+  const q = ev.works.reduce((a, w) => a + (w.qualifying_pence ?? 0), 0);
+  return { events: rows, headline_note: 'for the work done on the building, each piece worked out on its own cost', method_lede: WORKS_LEDE,
+    flow: [{ label: 'What the work cost', value: poundsWords(cost), note: 'the final accounts' }, { label: 'Qualifies', value: poundsWords(q), note: 'the plant and its share' }],
+    sum_words: ev.works.map((w) => `${w.label}: ${poundsWords(w.qualifying_pence)} of ${poundsWords(w.inputs['works_total'] ?? null)} qualifies.`) };
 }
 
 /* ================================================================== *
@@ -239,7 +277,7 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
           <div><span>Prepared by</span><b>${m.surveyor.name}</b>RICS no. ${m.surveyor.rics}${m.surveyor.firm === null ? '' : ` · ${m.surveyor.firm}`}</div></div>
         <div class="rp-hero">
           <div class="rp-big"><p class="rp-lbl">Spend that qualifies</p><p class="rp-fig">${m.headline.qualifying}</p>
-            <p>${m.headline.share} of the ${m.headline.building} paid for the building</p>
+            <p>${m.headline_note ?? `${m.headline.share} of the ${m.headline.building} paid for the building`}</p>
             <div class="rp-split" role="img" aria-label="Main pool ${String(m.headline.main_pct)} per cent, special rate pool ${String(100 - m.headline.main_pct)} per cent"><span class="rp-mp ${w5(m.headline.main_pct)}"></span><span class="rp-sr"></span></div>
             <p class="rp-legend"><span><i class="rp-dot rp-dot-mp"></i>Main pool ${m.headline.main}</span><span><i class="rp-dot rp-dot-sr"></i>Special rate pool ${m.headline.special}</span></p></div>
           <div class="rp-facts"><h2>About the building</h2><dl>${m.facts.map((f) => h`<div><dt>${f.label}</dt><dd>${f.value}</dd></div>`)}</dl></div>
@@ -254,13 +292,17 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
 
     <section class="rp-sheet">
       <h2 class="rp-h"><span>01</span>How the figure is worked out</h2>
-      <p class="rp-lede">When you buy a building, its price is split three ways. There is the land, the building itself, and the fixtures that qualify for tax relief. The law says how (section 562 of the Capital Allowances Act 2001). We share it out by what each part would cost to build again today.</p>
+      <p class="rp-lede">${m.method_lede}</p>
       <ol class="rp-flow">${m.flow.map((f, i) => h`<li${i === m.flow.length - 1 ? raw(' class="rp-end"') : raw('')}>${f.label}<b>${f.value}</b><small>${f.note}</small></li>`)}</ol>
       <div class="rp-calc"><p><b>The sum, in full.</b> ${m.sum_words.join(' ')}</p></div>
       <div class="rp-cards">
         <div><h3>Main pool · ${m.pools.main.total}</h3><p>Plant and machinery that is not part of the building’s own systems.${m.pools.main.items.length === 0 ? '' : ` Here: ${m.pools.main.items.join('; ')}.`}</p></div>
         <div><h3>Special rate pool · ${m.pools.special.total}</h3><p>The building’s own systems, called integral features.${m.pools.special.items.length === 0 ? '' : ` Here: ${m.pools.special.items.join('; ')}.`}</p></div>
       </div>
+      ${m.events.length === 0 ? raw('') : h`<h3>Each spend on the building</h3>
+      <table class="rp-table"><thead><tr><th>Spend</th><th class="n">Qualifies</th><th class="n">Main pool</th><th class="n">Special rate pool</th></tr></thead><tbody>
+        ${m.events.map((e) => h`<tr><td>${e.label}<br><span class="rp-note">${e.note}</span></td><td class="n">${e.qualifying}</td><td class="n">${e.main}</td><td class="n">${e.special}</td></tr>`)}
+        <tr class="rp-tot"><th scope="row">Total</th><td class="n">${m.headline.qualifying}</td><td class="n">${m.headline.main}</td><td class="n">${m.headline.special}</td></tr></tbody></table>`}
       <h3>Where each number came from</h3>
       <table class="rp-table"><thead><tr><th>Value</th><th class="n">Figure</th><th>Source</th></tr></thead><tbody>
         ${m.sources.map((r) => h`<tr><td>${r.label}</td><td class="n">${r.value}</td><td>${chipHtml(r.chip)}${r.reason === null ? '' : ` “${r.reason}”`}</td></tr>`)}</tbody></table>
@@ -412,7 +454,7 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
   c.text(L + 16, 336, 'SPEND THAT QUALIFIES', 'Helvetica', 8, C.mut, 'left', 0.9);
   c.text(L + 16, 374, m.headline.qualifying, 'Times-Bold', 32, C.ink);
   let yy = 396;
-  for (const line of wrapText(`${m.headline.share} of the ${m.headline.building} paid for the building`, 'Helvetica', 10.5, bw - 32)) { c.text(L + 16, yy, line, 'Helvetica', 10.5, C.body); yy += 14; }
+  for (const line of wrapText(m.headline_note ?? `${m.headline.share} of the ${m.headline.building} paid for the building`, 'Helvetica', 10.5, bw - 32)) { c.text(L + 16, yy, line, 'Helvetica', 10.5, C.body); yy += 14; }
   const barY = 440;
   const barW = bw - 32;
   c.ops.push({ k: 'rect', x: L + 16, y: barY, w: barW, h: 11, r: 3, fill: C.sr });
@@ -458,7 +500,7 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
   /* ---------------------------------------------------------- 2 · how it is worked out */
   c.page();
   c.heading('01', 'How the figure is worked out');
-  c.para('When you buy a building, its price is split three ways. There is the land, the building itself, and the fixtures that qualify for tax relief. The law says how (section 562 of the Capital Allowances Act 2001). We share it out by what each part would cost to build again today.', { size: 11, color: C.ink, after: 12 });
+  c.para(m.method_lede, { size: 11, color: C.ink, after: 12 });
   const boxW = W / m.flow.length;
   m.flow.forEach((f, i) => {
     const x = L + i * boxW;
@@ -489,6 +531,14 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
     poolLines[i]?.forEach((line, j) => c.text(x + 12, c.y + 38 + j * 13, line, 'Helvetica', 9.5, C.body));
   });
   c.y += ph + 22;
+  // PHASE 159c: each spend on the building, where there is work since.
+  if (m.events.length > 0) {
+    c.need(40);
+    c.text(L, c.y, 'Each spend on the building', 'Times-Bold', 13, C.ink);
+    c.y += 8;
+    for (const e of m.events) c.para(`${e.label}: ${e.qualifying} qualifies (main pool ${e.main}, special rate pool ${e.special}). ${e.note}`, { size: 9.5, after: 4 });
+    c.para(`Total: ${m.headline.qualifying} qualifies.`, { font: 'Helvetica-Bold', size: 9.5, color: C.ink, after: 14 });
+  }
   c.text(L, c.y, 'Where each number came from', 'Times-Bold', 13, C.ink);
   c.y += 16;
   const srcHead = (y: number) => {

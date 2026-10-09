@@ -6776,7 +6776,90 @@ var CB_INPUTS = (function(){
   function zero(r, keys){
     keys.forEach(function(k){ if(Array.isArray(r[k])) r[k] = r[k].map(function(x){ return typeof x === "number" ? 0 : x; }); });
   }
+  /* PHASE 159c (E4). One amount, several events: the purchase where one is ticked, else the band with the lowest
+     midpoint. The amount is the price on a purchase, and the s.187A reading runs on it; the works need their own cost. */
+  function cautiousTrigger(triggers, bands, mid){
+    if(triggers.indexOf("purchase") >= 0) return "purchase";
+    var dom = triggers[0];
+    triggers.forEach(function(t){ if(bands[t] && mid.apply(null, bands[t]) < mid.apply(null, bands[dom])) dom = t; });
+    return dom;
+  }
+  function severalEventsWords(dom){
+    return dom === "purchase"
+      ? "more than one event ticked with one amount \u2014 the amount is read as the purchase price, on the purchase band. Work done since is priced on its own cost once we have it"
+      : "more than one event ticked with one amount \u2014 the amount cannot be split between them, so the lower band (" + dom.replace("_","/") + ") is applied to it. Each piece of work is priced on its own cost once we have it";
+  }
+
+  /* PHASE 159c (E1, E4) — EACH EVENT ON ITS OWN BAND. A session may carry `events`: what happened to the building, in
+     order, each with its own type and cost — a purchase, then a refit, say. Where two or more of them have a cost, the
+     sector's engine is run ONCE PER EVENT on a copy of the session (that event's cost as the amount, that event as the
+     only trigger), and the results are added: the purchase on the purchase band with the s.187A reading on the price,
+     each piece of work on its own band on its own cost. A purchase's seller and election facts reach only the purchase,
+     because every sector engine reads them only when its trigger is a purchase. An event with no cost, a repair
+     ("cosmetic") or an unknown kind is not priced and is named. */
+  var EVENT_TRIGGER = { purchase:"purchase", new_build:"new_build", extension:"new_build", refurb:"refurb",
+                        fit_out:"fitout", fitout:"fitout", conversion:"refurb" };
+  var EVENT_NAME = { purchase:"the purchase", new_build:"the new build", extension:"the extension", refurb:"the refurbishment",
+                     fit_out:"the fit-out", fitout:"the fit-out", conversion:"the conversion", cosmetic:"the redecoration or repairs", other:"the other work" };
+  function costed(e){ return !!e && typeof e.cost === "number" && isFinite(e.cost) && e.cost > 0 && Object.prototype.hasOwnProperty.call(EVENT_TRIGGER, e.type); }
+  function addPair(a, b){
+    if(!Array.isArray(a) || !Array.isArray(b)) return null;
+    return a.map(function(x, i){ return (typeof x === "number" && typeof b[i] === "number") ? x + b[i] : null; });
+  }
+  function gbp(n){ return "\u00a3" + Math.round(n).toLocaleString("en-GB"); }
+  function byEvent(s, engine){
+    var evs = s.events.filter(costed);
+    var skipped = s.events.filter(function(e){ return !costed(e); });
+    var runs = evs.map(function(e){
+      var c = JSON.parse(JSON.stringify(s));
+      delete c.events;
+      c.base_amount = e.cost;
+      c.trigger = [EVENT_TRIGGER[e.type]];
+      c.flags = []; c.assumptions = [];
+      return { e:e, r:run(c, engine), c:c };
+    });
+    var first = runs[0].r;
+    var out = {};
+    Object.keys(first).forEach(function(k){ out[k] = first[k]; });
+    out.QE = runs.reduce(function(a, x){ return a === undefined ? x.r.QE : addPair(a, x.r.QE); }, undefined);
+    out.TS = runs.reduce(function(a, x){ return a === undefined ? x.r.TS : addPair(a, x.r.TS); }, undefined);
+    out.cash = runs.every(function(x){ return Array.isArray(x.r.cash); })
+      ? runs.reduce(function(a, x){ return a === undefined ? x.r.cash : addPair(a, x.r.cash); }, undefined) : null;
+    var routes = runs.map(function(x){ return x.r.cashRoute; });
+    out.cashRoute = routes.every(function(r){ return r === routes[0]; }) ? routes[0] : null;
+    out.cashBlocked = runs.some(function(x){ return !!x.r.cashBlocked; });
+    var pools = runs.map(function(x){ return x.r.pool; });
+    out.pool = pools.every(function(p){ return p && p.determined; })
+      ? { basis:pools[0].basis, determined:true, flagCode:null,
+          main:pools.reduce(function(a, p){ return a === undefined ? p.main : addPair(a, p.main); }, undefined),
+          special:pools.reduce(function(a, p){ return a === undefined ? p.special : addPair(a, p.special); }, undefined) }
+      : (pools.filter(function(p){ return !p || !p.determined; })[0] || null);
+    var flags = [];
+    runs.forEach(function(x){ (x.r.flags || []).forEach(function(f){ if(flags.indexOf(f) < 0) flags.push(f); }); });
+    out.flags = flags;
+    var A = ["priced event by event \u2014 " + runs.map(function(x){ return EVENT_NAME[x.e.type] + " (" + gbp(x.e.cost) + ")"; }).join(", ") +
+             " \u2014 each on its own band and its own cost, and the results added"];
+    runs.forEach(function(x){
+      A.push("for " + EVENT_NAME[x.e.type] + ": qualifying spend " + gbp(x.r.QE[0]) + " to " + gbp(x.r.QE[1]));
+      (x.r.assumptions || []).forEach(function(a){ if(A.indexOf(a) < 0) A.push(a); });
+    });
+    skipped.forEach(function(e){
+      var what = (e && EVENT_NAME[e.type]) || "one event";
+      A.push(what + " is not priced here: " + (e && (e.type === "cosmetic")
+        ? "redecoration and repairs usually come off the tax bill as a repair, which is a different claim from this one"
+        : e && Object.prototype.hasOwnProperty.call(EVENT_TRIGGER, e.type) ? "we do not have its cost yet" : "we need to know what kind of work it was"));
+    });
+    out.assumptions = A;
+    out.outcome = runs.some(function(x){ return x.r.outcome === "referral"; }) ? "referral" : first.outcome;
+    out.lrr = runs.some(function(x){ return !!x.r.lrr; });
+    out.grant = runs.some(function(x){ return !!x.r.grant; });
+    out.events = runs.map(function(x){ return { type:x.e.type, cost:x.e.cost, date:x.e.date || null, QE:x.r.QE, TS:x.r.TS, outcome:x.r.outcome }; });
+    if(Array.isArray(s.flags)) flags.forEach(function(f){ if(s.flags.indexOf(f) < 0) s.flags.push(f); });
+    return out;
+  }
+
   function run(s, engine){
+    if(s && typeof s === "object" && Array.isArray(s.events) && s.events.filter(costed).length >= 2) return byEvent(s, engine);
     var notes = clean(s);
     var r = engine(s);
     if(!r || typeof r !== "object") return r;
@@ -6794,7 +6877,8 @@ var CB_INPUTS = (function(){
     }
     return r;
   }
-  return { clean:clean, run:run, noTax:noTax, MONEY:MONEY };
+  return { clean:clean, run:run, noTax:noTax, MONEY:MONEY, cautiousTrigger:cautiousTrigger, severalEventsWords:severalEventsWords,
+           EVENT_TRIGGER:EVENT_TRIGGER, EVENT_NAME:EVENT_NAME, costed:costed };
 })();
 
 
@@ -6840,7 +6924,7 @@ var CB_BAND = (function(){
   function bandKey(trigger){
     if(trigger === "purchase")  return "purchase";
     if(trigger === "new_build" || trigger === "extension") return "new_build";
-    if(trigger === "refurb" || trigger === "fit_out") return "refurb_fitout";
+    if(trigger === "refurb" || trigger === "fit_out" || trigger === "conversion") return "refurb_fitout";   // PHASE 159c: a conversion is building work
     return null;
   }
 
@@ -6957,8 +7041,40 @@ var CB_FUNNEL = (function(){
              spend:null, spend_unknown:false, date:null, date_unknown:false,
              lease_start_year:null,
              works:null, works_type:null, works_spend:null, works_spend_unknown:false,
-             works_year:null, works_year_unknown:false };
+             works_year:null, works_year_unknown:false, events:[] };
   }
+
+  /* ---------------------------------------------------------------------------
+     PHASE 159c, 9 October 2026 — EVENTS, NOT ONE TRIGGER (the stress test's E1; Lakhbir: "that's a design gap - this
+     is needed"). A building is bought, then refitted; built, then extended. Each is its own spend, with its own date
+     and its own band (CAA 2001 ss.11, 58), and works after a purchase are often worth more than the purchase.
+
+     eventsOf(p) is every event on a property, in order. The FIRST is how the client came to have the building — the
+     property's own trigger, spend and date, which every older reader still reads. The rest are the work done since:
+     p.events, after its first entry (an entry with first:true is the first event's mirror and is not read again);
+     or, on a draft from before this phase, the one works answer (works, works_type, works_spend, works_year).
+     Each event: { type, cost, cost_unknown, date, date_unknown, vat, first }. `vat` is carried, not yet read: what
+     a VAT-inclusive cost does to the figure is Phase 159i's.
+     --------------------------------------------------------------------------- */
+  var EVENT_LABEL = {
+    purchase:"Bought it", new_build:"Built it (new build)", extension:"Extended it (added new space)",
+    refurb:"Refurbished or refitted it", fit_out:"Fitted out a building we lease", conversion:"Converted it to a new use",
+    cosmetic:"Redecoration or repairs", other:"Something else"
+  };
+  var LATER_TYPES = ["refurb","extension","fit_out","conversion","new_build","cosmetic","other"];
+  var OLD_WORKS_TYPE = { full:"refurb", extension:"extension", cosmetic:"cosmetic", other:"other" };
+  function firstEvent(p){
+    return { type:p.trigger || null, cost:(typeof p.spend === "number" ? p.spend : null), cost_unknown:p.spend_unknown === true,
+             date:(typeof p.date === "string" ? p.date : null), date_unknown:p.date_unknown === true, vat:null, first:true };
+  }
+  function laterEvents(p){
+    if(Array.isArray(p.events)) return p.events.filter(function(e){ return e && typeof e === "object" && e.first !== true; });
+    if(p.works === "yes") return [{ type:OLD_WORKS_TYPE[p.works_type] || null,
+      cost:(typeof p.works_spend === "number" ? p.works_spend : null), cost_unknown:p.works_spend_unknown === true,
+      date:(typeof p.works_year === "string" ? p.works_year : null), date_unknown:p.works_year_unknown === true, vat:null }];
+    return [];
+  }
+  function eventsOf(p){ return p ? [firstEvent(p)].concat(laterEvents(p)) : []; }
 
   function blankState(){
     return {
@@ -7018,38 +7134,56 @@ var CB_FUNNEL = (function(){
     if(isNaN(n.getTime())) n = new Date();
     return n.getUTCFullYear() + "-" + ("0" + (n.getUTCMonth() + 1)).slice(-2);
   }
-  function cutFor(p, state){
+  /* PHASE 159c: each cut reads ONE EVENT — its own cost, its own date, and the seller only on the purchase. The client's
+     own earlier claim on the building's fixtures stops every event on it: it is asked of the building. */
+  function cutFor(p, state, ev){
+    var e = ev || firstEvent(p);
     var prior = (p.own_prior_claim !== undefined && p.own_prior_claim !== null) ? p.own_prior_claim : state.own_prior_claim;
     var seller = (p.previous_owner_claimed !== undefined && p.previous_owner_claimed !== null) ? p.previous_owner_claimed : state.previous_owner_claimed;
-    var r = monthRange(p.date);
-    if(typeof p.spend === "number" && p.spend > PLAUSIBLE_MAX)
+    var r = monthRange(e.date);
+    if(typeof e.cost === "number" && e.cost > PLAUSIBLE_MAX)
       return "this spend is larger than we size here, so an adviser will size it with you";
     if(r && r[0] > thisMonth(state))
       return "the date you gave is in the future, so we cannot size this one yet";
     if(prior === "yes")
       return "you told us its fixtures have already been claimed on. The same spend cannot be claimed twice, so an adviser will check what was claimed before we give a figure";
-    if(p.trigger === "purchase" && seller === "no" && !(r && r[1] < "2014-04"))
+    if(e.type === "purchase" && seller === "no" && !(r && r[1] < "2014-04"))
       return "you told us the seller did not claim. Since April 2014, if the seller could have claimed and did not, the buyer usually cannot claim the fixtures either. An adviser will check the seller's position before we give a figure";
     if(r && r[1] < "2008-04")
       return "this was before April 2008, when the rules on wiring, lighting and water systems were different, so an adviser will size it with you";
     return null;
   }
 
+  /* PHASE 159c: one event's figure, or why it has none. */
+  function eventFigure(p, state, e){
+    var out = { type:e.type, cost:e.cost, date:e.date, first:e.first === true, ceiling:null, low:null, high:null, why:null, referral:false };
+    if(e.type === "cosmetic"){ out.why = "redecoration and repairs usually come off your tax bill as a repair. That is often better for you, but it is a different claim from this one"; return out; }
+    if(e.type === "other" || !e.type){ out.why = "we need to know what kind of work this was"; out.referral = true; return out; }
+    if(e.cost_unknown || typeof e.cost !== "number" || !isFinite(e.cost) || !(e.cost > 0)){ out.why = "we need a rough figure for this one"; out.incomplete = true; return out; }
+    var cut = cutFor(p, state, e);
+    if(cut){ out.why = cut; out.referral = true; return out; }
+    var r = CB_BAND.rangeFor(p.sector, e.type, e.cost);
+    if(!r){ out.why = "we could not size this one from what was given"; out.incomplete = true; return out; }
+    out.ceiling = r.high; out.low = r.low; out.high = r.high;
+    return out;
+  }
+
   function figure(state){
     var parts = (state.properties || []).map(function(p){
-      if(p.spend_unknown || typeof p.spend !== "number" || !isFinite(p.spend) || !(p.spend > 0))
-        return { address:p.address, sector:p.sector, ceiling:null,
-                 incomplete:true, why:"we need a rough figure for this one" };
-
-      var cut = cutFor(p, state);
-      if(cut) return { address:p.address, sector:p.sector, ceiling:null, incomplete:true, referral:true, why:cut };
-
-      var r = CB_BAND.rangeFor(p.sector, p.trigger, p.spend);
-      if(!r) return { address:p.address, sector:p.sector, ceiling:null,
-                      incomplete:true, why:"we could not size this one from what was given" };
-
-      return { address:p.address, sector:p.sector,
-               ceiling:r.high, low:r.low, high:r.high };
+      /* PHASE 159c (E1): EVERY EVENT ON ITS OWN BAND, AND THE BUILDING'S CEILING IS THE SUM. A purchase on the purchase
+         band, a refit on the refurbishment band on the refit's own cost. An event that cannot be sized is named on the
+         building and leaves the others standing; a building with none sized has no figure, as before. */
+      var events = eventsOf(p).map(function(e){ return eventFigure(p, state, e); });
+      var priced = events.filter(function(e){ return typeof e.ceiling === "number"; });
+      if(!priced.length){
+        var lead = events[0];
+        var row = { address:p.address, sector:p.sector, ceiling:null, incomplete:true, why:lead.why, events:events };
+        if(lead.referral) row.referral = true;
+        return row;
+      }
+      var high = priced.reduce(function(a, e){ return a + e.high; }, 0);
+      var low = priced.reduce(function(a, e){ return a + e.low; }, 0);
+      return { address:p.address, sector:p.sector, ceiling:high, low:low, high:high, events:events };
     });
 
     var c = CB_FRONTDOOR.combineCeilings(parts);
@@ -7080,13 +7214,17 @@ var CB_FUNNEL = (function(){
     var f = figure(state);
     if(f.count > 1)
       a.push("Where more than one property is included, the headline adds the top of each property's range together. Each property is its own claim and each is assessed separately.");
+    /* PHASE 159c: a building with more than one spend is sized spend by spend. */
+    if((f.breakdown || []).some(function(r){ return (r.events || []).filter(function(e){ return typeof e.ceiling === "number"; }).length > 1; }))
+      a.push("Where a building had more than one spend, such as a purchase and then a refit, each is sized on its own band and the figures are added.");
     return a;
   }
 
   return { SCREENS:SCREENS, SECTOR_LABEL:SECTOR_LABEL, TRIGGER_LABEL:TRIGGER_LABEL,
            ENTITY_LABEL:ENTITY_LABEL, ROLES:ROLES,
            blankProperty:blankProperty, blankState:blankState,
-           figure:figure, assumptions:assumptions, cutFor:cutFor, monthRange:monthRange, PLAUSIBLE_MAX:PLAUSIBLE_MAX };
+           figure:figure, assumptions:assumptions, cutFor:cutFor, monthRange:monthRange, PLAUSIBLE_MAX:PLAUSIBLE_MAX,
+           eventsOf:eventsOf, EVENT_LABEL:EVENT_LABEL, LATER_TYPES:LATER_TYPES, eventFigure:eventFigure };
 })();
 
 

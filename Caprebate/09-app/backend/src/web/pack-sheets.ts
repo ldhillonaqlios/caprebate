@@ -25,7 +25,10 @@ import { basisOf, evidenceByLine } from './survey-evidence.ts';
 import { findingSeen, FINDING_LABELS } from './finding-source.ts';
 import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
 import { ESTIMATED_AREA_LABEL } from '../connectors/homedata.ts';
-import { BAND } from './engine.ts';
+import { BAND, FUNNEL } from './engine.ts';
+
+/** PHASE 159c: the funnel's own words for each kind of event. */
+const FUNNEL_LABEL = (FUNNEL as unknown as { EVENT_LABEL: Record<string, string> }).EVENT_LABEL;
 import { poundsWords, percentWords, quantityWords } from './pack-sums.ts';
 import { indexReading, insuranceReading, prelimsReading, rateFlagReading, INCLUDES_WORDS } from './pack-cost-model.ts';
 import { packDateIso, propertyLine } from './survey-pack.ts';
@@ -326,26 +329,39 @@ function judgementCalls(c: Ctx): Sheet {
 
 function repairsOrCapital(c: Ctx): Sheet {
   const t = c.triggers;
-  const works = t !== null && t.some((x) => /refurb|fit_?out|conversion/.test(x));
+  /* PHASE 159c (item 5): PER PIECE OF WORK. Where the building's events are recorded (migration 105), the chapter runs for
+     each piece of work since the first event, and for a first event that was itself work (a new build, a fit-out). Each
+     says what the client said it cost and when, and, once the pack prices it, the part that is a repair — a deduction
+     from profits in the year it was spent, not an allowance, and not in the figure. */
+  const works = c.v.works;
+  const fromTriggers = t !== null && t.some((x) => /refurb|fit_?out|conversion/.test(x));
+  const applies = works.length > 0 || fromTriggers;
+  /* PHASE 159c: the client's own words were read from funnel['buildings'] — but the state keeps them under 'properties'
+     (src/web/funnel4.ts), so this row always said "not on file". It reads 'properties', and every piece of work. */
   const said = (() => {
-    const b = c.funnel?.['buildings'];
+    const b = c.funnel?.['properties'];
     const first = Array.isArray(b) ? b[0] as Record<string, unknown> | undefined : undefined;
     if (first === undefined) return null;
-    const parts = [str(first['works_type']), str(first['works_spend']) === null ? null : `£${str(first['works_spend'])}`, str(first['works_year'])].filter((x): x is string => x !== null);
-    return parts.length === 0 ? null : parts.join(', ');
+    const later = (FUNNEL as unknown as { eventsOf: (p: Record<string, unknown>) => { type: string | null; cost: number | null; date: string | null }[] }).eventsOf(first).slice(1);
+    const parts = later.map((e) => [FUNNEL_LABEL[e.type ?? ''] ?? e.type, e.cost === null ? null : `£${Math.round(e.cost).toLocaleString('en-GB')}`, e.date].filter((x): x is string => typeof x === 'string' && x !== '').join(', '));
+    return parts.length === 0 ? null : parts.join('; ');
   })();
+  const perWork: SheetRow[] = works.flatMap((w) => [
+    { label: `${w.label}: what the claim records`, value: [w.event.cost_pence === null ? null : `${poundsWords(w.event.cost_pence)} in all`, w.event.source === 'ASSESSMENT' ? 'as the client said at the assessment' : 'as recorded on the claim'].filter((x): x is string => x !== null).join(', '), from: 'the claim' as const, missing: NOT_ON_FILE },
+    { label: `${w.label}: the repair part`, value: w.sums.complete ? (w.sums.repairs_pence === 0 ? 'None: all of it is an improvement or new.' : `${poundsWords(w.sums.repairs_pence)}. A repair comes off the profits in the year it was spent. It is a deduction, not an allowance, and it is not in the figure.`) : null, from: 'worked out' as const, missing: 'not worked out yet (chapter 9)' },
+  ]);
   return {
-    n: 20, title: 'Repairs or capital', applies: works,
-    not_applies_words: works ? null : `Only for refurbishment or fit-out works. This job is ${t === null ? 'of a kind not recorded' : t.map((x) => TRIGGER_WORDS[x] ?? x).join(' and ')}.`,
+    n: 20, title: 'Repairs or capital', applies,
+    not_applies_words: applies ? null : `Only for refurbishment or fit-out works. This job is ${t === null ? 'of a kind not recorded' : t.map((x) => TRIGGER_WORDS[x] ?? x).join(' and ')}.`,
     lede: 'For refurbishment works: what physically changed. The tax adviser decides repair or capital; your part is what was done.',
-    rows: !works ? [] : [
-      { label: 'What the client said about the works', value: said, from: 'the client', missing: NOT_ON_FILE },
+    rows: !applies ? [] : [
+      ...(works.length === 0 ? [{ label: 'What the client said about the works', value: said, from: 'the client' as const, missing: NOT_ON_FILE }] : perWork),
       wordsRow(c, 'works_scope'),
       // Phase 153e line 15 (Word question 150): like for like cannot be told from a visit alone.
       { label: 'Like for like', value: 'Whether old kit was swapped for the same kind cannot be told from a visit alone. Each item says whether it was seen on site or comes from documents.', from: 'fixed wording', missing: NOT_ON_FILE },
       { label: 'Grants', value: 'Grant-funded spend is taken off first (chapter 15), and never classified here.', from: 'fixed wording', missing: NOT_ON_FILE },
     ],
-    words: works ? ['works_scope'] : [], items: [], carries: '153e line 15',
+    words: applies ? ['works_scope'] : [], items: [], carries: '153e line 15; 159c item 5',
   };
 }
 

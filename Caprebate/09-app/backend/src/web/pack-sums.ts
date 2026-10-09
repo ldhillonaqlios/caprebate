@@ -76,10 +76,12 @@ export type PackInputs = {
 };
 
 /** INPUT: chapter 9. LINE: chapter 10. GRANT (Phase 153a): a grant on the claim whose amount is not known, chapter 15 —
- *  `line_id` then holds the grant's id. */
-export type Needed = { readonly where: 'INPUT' | 'LINE' | 'GRANT'; readonly key: string; readonly line_id: string | null; readonly words: string };
+ *  `line_id` then holds the grant's id. WORKS (Phase 159c): a cost-led value for a piece of work, chapter 9 — `line_id`
+ *  holds the event's id. */
+export type Needed = { readonly where: 'INPUT' | 'LINE' | 'GRANT' | 'WORKS'; readonly key: string; readonly line_id: string | null; readonly words: string };
 
-export type ProblemCode = 'LAND_NOT_BELOW_PRICE' | 'ELEMENTS_EXCEED_BUILDING' | 'NO_REBUILD_COST' | 'TOO_LARGE';
+export type ProblemCode = 'LAND_NOT_BELOW_PRICE' | 'ELEMENTS_EXCEED_BUILDING' | 'NO_REBUILD_COST' | 'TOO_LARGE'
+  /* PHASE 159c: a piece of work priced on its own cost */ | 'WORKS_PARTS_NOT_TOTAL' | 'NO_WORKS_COST' | 'GRANTS_ON_EVENTS';
 export type Problem = { readonly code: ProblemCode; readonly words: string };
 
 export type LineSum = {
@@ -250,6 +252,87 @@ export function packSums(inputs: PackInputs, lines: readonly PackLine[]): PackSu
     problems,
     complete,
   };
+}
+
+/* ------------------------------------------------------------------ PHASE 159c: works priced on their own cost */
+
+/**
+ * THE COST-LED MODE, FOR WORK THE CLIENT PAID FOR (Phase 159c, item 4). Section 562 shares a PRICE out by rebuild cost,
+ * which is how a purchase is claimed. Work the client paid for — a refit, an extension, a fit-out, a new build — is
+ * claimed on what it COST, from the final account or the contract sum by element. So each piece of work has its own
+ * values, the surveyor's from the final account, in whole pence:
+ *
+ *   total        the final account (or contract sum): the check every part must add up to
+ *   main         plant and machinery (main pool)            special   integral features (special rate pool)
+ *   bwic         builder's work in connection with the plant (s.25) — it follows the plant it serves
+ *   demolition   taking out old plant (s.26) — it follows the new plant
+ *   other        building work that does not qualify        repairs   the part that is a repair (a revenue deduction)
+ *   prelims      preliminaries                               fees      professional fees
+ *
+ * THE SUM: what qualifies directly is the plant (main + special) with the builder's work and the demolition that follow
+ * it; the preliminaries and the fees are shared out over every direct cost in the same proportion, so the share on the
+ * plant qualifies and the share on the repairs goes with the repairs. The pools split what qualifies as the plant does:
+ * main rounded, special the rest, so the two add up to the penny. With no plant in it, nothing qualifies.
+ *
+ * N4 AND THE CHECK. Every value must be given (0 is a value); one missing and there is no total. The parts must add up to
+ * the final account exactly, or there is no total and the difference is named.
+ */
+export const WORKS_FIELDS = Object.freeze(['works_total', 'works_main', 'works_special', 'works_bwic', 'works_demolition',
+  'works_other', 'works_repairs', 'works_prelims', 'works_fees'] as const);
+export type WorksField = (typeof WORKS_FIELDS)[number];
+export type WorksInputs = Readonly<Record<WorksField, Valued>>;
+
+export const WORKS_WORDS: Readonly<Record<WorksField, string>> = Object.freeze({
+  works_total: 'The final account, or the contract sum: what the work cost in all.',
+  works_main: 'Plant and machinery in it (main pool).',
+  works_special: 'Integral features in it: wiring, lighting, heating, water, lifts (special rate pool).',
+  works_bwic: 'Builder’s work in connection with that plant (s.25).',
+  works_demolition: 'Taking out old plant (s.26).',
+  works_other: 'The rest of the building work, which does not qualify.',
+  works_repairs: 'The part that is a repair, not an improvement.',
+  works_prelims: 'The preliminaries.',
+  works_fees: 'The professional fees.',
+});
+
+export type WorksSums = {
+  readonly event_id: string;
+  readonly direct_pence: number | null;
+  readonly oncost_pence: number | null;
+  readonly qualifying_pence: number | null;
+  readonly main_pool_pence: number | null;
+  readonly special_pool_pence: number | null;
+  /** The repair part, with its share of the preliminaries and fees: a deduction from profits, never an allowance. */
+  readonly repairs_pence: number | null;
+  readonly needed: readonly Needed[];
+  readonly problems: readonly Problem[];
+  readonly complete: boolean;
+};
+
+export function worksSums(event_id: string, label: string, w: WorksInputs): WorksSums {
+  const needed: Needed[] = [];
+  const problems: Problem[] = [];
+  for (const k of WORKS_FIELDS) {
+    if (!known(w[k], LIMITS.money_pence)) needed.push({ where: 'WORKS', key: k, line_id: event_id, words: `${label}: ${WORKS_WORDS[k]}` });
+  }
+  const none = { event_id, direct_pence: null, oncost_pence: null, qualifying_pence: null, main_pool_pence: null, special_pool_pence: null, repairs_pence: null };
+  if (needed.length > 0) return { ...none, needed, problems, complete: false };
+  const v = (k: WorksField): bigint => BigInt(w[k].value as number);
+  const plant = v('works_main') + v('works_special');
+  const direct = plant + v('works_bwic') + v('works_demolition') + v('works_other') + v('works_repairs');
+  const oncost = v('works_prelims') + v('works_fees');
+  const total = v('works_total');
+  if (direct + oncost !== total) {
+    problems.push({ code: 'WORKS_PARTS_NOT_TOTAL', words: `${label}: the parts add up to ${poundsWords(Number(direct + oncost))}, but the final account says ${poundsWords(Number(total))}. Check the parts.` });
+  }
+  if (direct === 0n) problems.push({ code: 'NO_WORKS_COST', words: `${label}: nothing is entered as the cost of the work itself. Check the parts.` });
+  if (problems.length > 0) return { ...none, needed, problems, complete: false };
+  const qd = plant === 0n ? 0n : plant + v('works_bwic') + v('works_demolition');
+  const qualifying = qd + mulDivRound(oncost, qd, direct);
+  const main = plant === 0n ? 0n : mulDivRound(qualifying, v('works_main'), plant);
+  const repairs = v('works_repairs') + mulDivRound(oncost, v('works_repairs'), direct);
+  return { event_id, direct_pence: Number(direct), oncost_pence: Number(oncost), qualifying_pence: Number(qualifying),
+    main_pool_pence: Number(main), special_pool_pence: Number(qualifying - main), repairs_pence: Number(repairs),
+    needed, problems, complete: true };
 }
 
 /* ------------------------------------------------------------------ reading what a person types */

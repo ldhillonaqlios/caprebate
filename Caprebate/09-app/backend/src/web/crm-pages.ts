@@ -33,7 +33,9 @@ import * as C from './crm.ts';
 import type * as F from './claim-facts.ts';
 import type { PipelinePanel } from './pipeline.ts';
 import { enquiryBlock } from './pipeline-pages.ts';
-import { can } from '../authz.ts';
+import { authorise, can } from '../authz.ts';
+import { addStaffEvent, eventsOnClaim, EVENT_KINDS, KIND_WORDS, type EventOnClaim } from './property-events.ts';
+import { poundsWords } from './pack-sums.ts';
 import { claimTasksBlock, emailBlock, newTaskForm, notesBlock, timelineBlock } from './tasks-pages.ts';
 import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
 import { timelineIfPermitted, type Timeline } from './timeline.ts';
@@ -322,6 +324,27 @@ export async function handleCrm(
     return 'handled';
   }
 
+  /* ----------------------------------------------- PHASE 159c: an event on the claim's building */
+  const addEvent = /^\/staff\/claims\/([A-Za-z0-9-]+)\/events$/.exec(path);
+  if (addEvent && method === 'POST') {
+    const id = addEvent[1] ?? '';
+    const row = C.loadClaimRow(db, id);
+    authorise(actor, 'claim.write', C.claimObjFor(db, row));
+    if (row.property_id === null) return d.problem(res, actor, 'Not added', 'This claim has no building yet. Choose its property first.', `/staff/claims/${id}`);
+    const f = await form(req);
+    const at = d.app.now();
+    const r = db.tx(() => {
+      const out = addStaffEvent(db, d.newId, at, actor.id, { property_id: row.property_id as string, business_id: row.business_id },
+        { kind: f.get('kind') ?? '', date: f.get('date') ?? '', cost: f.get('cost') ?? '' });
+      if (out.ok) d.app.audit.append({ at, kind: 'PROPERTY_EVENT_ADDED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+        object_type: 'claim', object_id: id, detail: { event: out.id, property: row.property_id as string, kind: f.get('kind') ?? '' } });
+      return out;
+    });
+    if (!r.ok) return d.problem(res, actor, 'Not added', r.why, `/staff/claims/${id}#claim-events`, r.field);
+    redirect(res, `/staff/claims/${id}?done=event#claim-events`);
+    return 'handled';
+  }
+
   /* ----------------------------------------------- the claim team (the CRM follow-on) */
   const team = /^\/staff\/claims\/([A-Za-z0-9-]+)\/team$/.exec(path);
   if (team && method === 'POST') {
@@ -341,6 +364,27 @@ export async function handleCrm(
   }
 
   return 'not-mine';
+}
+
+/**
+ * PHASE 159c: each event on the claim's building — what it was, when, what it cost and its own "up to" (for a login that
+ * may read the claim's value), and the documents that prove it, each with whether we hold one. Then a form to add one.
+ */
+function eventsBlock(claim_id: string, evs: readonly EventOnClaim[], value: boolean, mayAdd: boolean): Safe {
+  return h`${evs.length === 0 ? h`<p class="help">Nothing is recorded yet. The assessment records the purchase and any work since; add anything it missed below.</p>`
+    : h`<ol class="events">${evs.map((e) => h`<li><p><strong>${e.words}</strong>, ${e.when}${value ? `, ${e.cost_pence === null ? 'cost not known' : `${poundsWords(e.cost_pence)}`}` : ''}${e.source === 'STAFF' ? ' (added on the claim)' : ''}</p>
+      ${value ? h`<p class="help">${e.ceiling_pence === null ? `No figure for this one yet. ${e.ceiling_why ?? ''}` : `Up to ${poundsWords(e.ceiling_pence)} on the sector’s range for this kind of spend, until the survey prices it.`}</p>` : raw('')}
+      <p class="help">Its documents: ${e.documents.map((x, i) => h`${i === 0 ? '' : '; '}${x.label} (${x.held === 0 ? 'not received yet' : `${String(x.held)} held`})`)}.</p></li>`)}</ol>`}
+    ${!mayAdd ? raw('') : h`<details class="morelist"><summary>Add an event</summary>
+      <form method="post" action="/staff/claims/${claim_id}/events" class="stack">
+        <label class="fl" for="ev-kind">What happened</label>
+        <select class="fi" id="ev-kind" name="kind" required><option value="">Choose…</option>${EVENT_KINDS.map((k) => h`<option value="${k}">${KIND_WORDS[k]}</option>`)}</select>
+        <label class="fl" for="ev-date">When (month and year, like 06/2025, or the year)</label>
+        <input class="fi" id="ev-date" name="date" placeholder="MM/YYYY">
+        <label class="fl" for="ev-cost">What it cost, in pounds (leave empty if not known)</label>
+        <input class="fi" id="ev-cost" name="cost" inputmode="decimal" placeholder="£">
+        <button class="cta" type="submit">Add the event</button>
+      </form></details>`}`;
 }
 
 /**
@@ -1162,6 +1206,31 @@ function claimPage(
           { label: 'Allowances claimed before?', value: o.existing_ca_claimed.label, keep: true },
         ])}`,
     });
+  }
+
+  /* PHASE 159c: WHAT HAPPENED TO THE BUILDING, EVENT BY EVENT — a purchase, then each piece of work — each with its own
+     figure and the documents that prove it. The figure (the engine's band on that event's own cost, until the survey
+     prices it) and the cost are the claim's value: shown only to a login that may read it. */
+  {
+    const row = C.loadClaimRow(db, v.id);
+    const obj = C.claimObjFor(db, row);
+    const sector = db.get<{ sector: string | null }>('SELECT sector FROM businesses WHERE id = ?', [row.business_id])?.sector ?? null;
+    const evs = eventsOnClaim(db, { property_id: row.property_id, business_id: row.business_id, sector });
+    const value = can(actor, 'claim.read_value', obj);
+    const mayAdd = can(actor, 'claim.write', obj) && row.property_id !== null;
+    if (evs.length > 0 || mayAdd) {
+      const missing = evs.flatMap((e) => e.documents.filter((x) => x.held === 0)).length;
+      sections.push({
+        key: 'claim.events', id: 'claim-events', kind: 'property', heading: 'What happened to the building',
+        ...(evs.length > 0 ? { count: evs.length } : {}),
+        status: evs.length === 0 ? 'NOT_STARTED' : missing === 0 ? 'DONE' : 'WORKING',
+        working: evs.length === 0 ? 'Nothing is recorded about the building’s purchase or works yet.'
+          : missing === 0 ? 'Nothing right now.' : 'Gathering the documents for each event.',
+        need: [], from: ['the client', 'you and your team'],
+        body: eventsBlock(v.id, evs, value, mayAdd),
+        ...(msg === 'event' ? { open_now: true } : {}),
+      });
+    }
   }
 
   if (v.team !== undefined || v.origin !== undefined) {

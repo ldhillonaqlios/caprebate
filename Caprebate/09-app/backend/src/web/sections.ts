@@ -32,6 +32,8 @@ export const SECTION_KEYS: readonly string[] = Object.freeze([
   'lead.details', 'lead.related', 'lead.activity',
   // PHASE 143: grants and contributions, out of the claim's facts into a section of its own
   'claim.grants',
+  // PHASE 159c: what happened to the building, event by event, each with its own figure and documents
+  'claim.events',
   // PHASE 151b: the online identity check, on the client page (Admin, who keeps the registers)
   'client.identity',
 ]);

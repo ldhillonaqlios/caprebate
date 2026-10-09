@@ -34,7 +34,7 @@ import { inspectionChapter, lineEvidence } from './evidence-pages.ts';
 import { basisOf, evidenceByLine } from './survey-evidence.ts';
 import { findingSeen } from './finding-source.ts';
 import { fetchSitePlan, pickWords, sitePlanOf, sitePlanSvg } from './site-plan.ts';
-import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
+import { percentWords, poundsWords, quantityWords, WORKS_FIELDS, WORKS_WORDS, type Source, type Valued, type WorksField } from './pack-sums.ts';
 
 export type PackPageDeps = {
   app: App;
@@ -81,7 +81,7 @@ export async function handleSurveyPack(
     res.end(versionPage(d, actor, v, kept));
     return 'handled';
   }
-  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/extra|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve|\/site-plan|\/words)?$/.exec(url.pathname);
+  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/extra|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve|\/site-plan|\/words|\/works)?$/.exec(url.pathname);
   if (m === null) return 'not-mine';
   const job = m[1] ?? '';
   const act = m[2]?.slice(1);
@@ -131,6 +131,9 @@ export async function handleSurveyPack(
     case 'remove': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, true); break;
     case 'restore': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, false); break;
     case 'add': r = P.addLine(deps, actor, job, { label: f.get('label') ?? '', unit: f.get('unit') ?? '', qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq }); break;
+    // PHASE 159c: a piece of work's cost-led values, from its final account (chapter 9).
+    case 'works': r = P.saveWorks(deps, actor, job, { event: f.get('event') ?? '', reason, seq,
+      values: Object.fromEntries(WORKS_FIELDS.map((k) => [k, f.get(k) ?? ''])) as Partial<Record<WorksField, string>> }); break;
     case 'details': r = A.saveDetails(deps, actor, job, { rics_number: f.get('rics_number') ?? '', firm: f.get('firm') ?? '' }); break;
     case 'legal': r = L.answerLegal(deps, actor, job, { question: f.get('question') ?? '', values: f.getAll('answer'), source: f.get('source') ?? '', seq }); break;
     default: r = P.choosePackProperty(deps, actor, job, f.get('property_id') ?? '');
@@ -252,9 +255,22 @@ function summaryChapter(v: P.PackView): Safe {
       ${v.grants.list.length === 0 ? raw('') : h`<div>Less grants<b>${v.grants.reading.reduction_pence === null ? '—' : `− ${PENCE(v.grants.reading.reduction_pence)}`}</b><span>Chapter 15</span></div>`}
       <div class="pathway-end">Spend that qualifies<b>${PENCE(s.qualifying_pence)}</b><span>${s.share_bp === null ? 'not worked out yet' : `${PCT(s.share_bp)} of the building`}</span></div>
     </div>
+    ${eventParts(v)}
     ${mainPct === null ? raw('') : h`<p><strong>Where it sits.</strong> Main pool ${PENCE(s.main_pool_pence)} (${String(mainPct)}%) · Special rate pool ${PENCE(s.special_pool_pence)} (${String(100 - mainPct)}%)</p>
       <div class="pk-bar" role="img" aria-label="Main pool ${String(mainPct)} per cent, special rate pool ${String(100 - mainPct)} per cent"><span class="pk-bar-mp pk-w${String(Math.round(mainPct / 5) * 5)}"></span><span class="pk-bar-sr"></span></div>`}
     ${neededList(v)}`;
+}
+
+/** PHASE 159c: where the building has work done since, each part of the total on its own line. */
+function eventParts(v: P.PackView): Safe {
+  if (v.works.length === 0) return raw('');
+  return h`<h2>Each spend on the building</h2>
+    <p class="help">The purchase is shared out from the price (chapters 9 and 10). Each piece of work is priced on what it cost, from its final account (chapter 9). The total adds them.</p>
+    <table class="pk-table"><thead><tr><th>Spend</th><th class="n">Qualifies</th><th class="n">Main pool</th><th class="n">Special rate pool</th></tr></thead><tbody>
+      ${v.purchase_applies ? h`<tr><th scope="row">The purchase</th><td class="n">${PENCE(v.purchase_sums.qualifying_pence)}</td><td class="n">${PENCE(v.purchase_sums.main_pool_pence)}</td><td class="n">${PENCE(v.purchase_sums.special_pool_pence)}</td></tr>` : raw('')}
+      ${v.works.map((w) => h`<tr><th scope="row"><a href="${base(v.job.id)}?ch=9#works-${w.event.id}">${w.label}</a></th><td class="n">${PENCE(w.sums.qualifying_pence)}</td><td class="n">${PENCE(w.sums.main_pool_pence)}</td><td class="n">${PENCE(w.sums.special_pool_pence)}</td></tr>`)}
+      <tr class="pk-total"><th scope="row">Total</th><td class="n">${PENCE(v.sums.qualifying_pence)}</td><td class="n">${PENCE(v.sums.main_pool_pence)}</td><td class="n">${PENCE(v.sums.special_pool_pence)}</td></tr>
+    </tbody></table>`;
 }
 
 function neededList(v: P.PackView): Safe {
@@ -273,15 +289,18 @@ function neededList(v: P.PackView): Safe {
 function neededGroups(v: P.PackView): Safe {
   const s = v.sums;
   const link = (n: (typeof s.needed)[number]): string => n.where === 'GRANT' ? `${base(v.job.id)}?ch=15`
+    : n.where === 'WORKS' ? `${base(v.job.id)}?ch=9#works-${n.line_id ?? ''}`
     : `${base(v.job.id)}?ch=${n.where === 'INPUT' ? '9' : '10'}${n.line_id === null ? '' : `&edit=${encodeURIComponent(n.line_id)}#l-${n.line_id}`}`;
   const inputs = s.needed.filter((n) => n.where === 'INPUT');
   const lines = s.needed.filter((n) => n.where === 'LINE');
   const grants = s.needed.filter((n) => n.where === 'GRANT');
+  const works = s.needed.filter((n) => n.where === 'WORKS');
   return h`<h2>Still needed: ${String(s.needed.length)}</h2>
       <p class="help">There is no total until every value is in. We never fill a gap with a guess.</p>
       <table class="pk-table pk-groups"><thead><tr><th>What is missing</th><th>How many</th><th></th></tr></thead><tbody>
         ${inputs.length === 0 ? raw('') : h`<tr><td>Price, land and floor area<br><span class="help">${inputs.map((n) => n.words).join(' ')}</span></td><td>${lateBadge(String(inputs.length))}</td><td><a href="${base(v.job.id)}?ch=9">Go to chapter 9</a></td></tr>`}
         ${lines.length === 0 ? raw('') : h`<tr><td>Rebuild cost and split, line by line<br><span class="help">How much, the rate, and for some the pool.</span></td><td>${lateBadge(String(lines.length))}</td><td><a href="${base(v.job.id)}?ch=10">Go to chapter 10</a></td></tr>`}
+        ${works.length === 0 ? raw('') : h`<tr><td>Work done since, from each final account<br><span class="help">What each piece of work cost, and its parts.</span></td><td>${lateBadge(String(works.length))}</td><td><a href="${base(v.job.id)}?ch=9#works">Go to chapter 9</a></td></tr>`}
         ${grants.length === 0 ? raw('') : h`<tr><td>Grants on the claim<br><span class="help">How much each grant paid. It is recorded on the claim, not here.</span></td><td>${lateBadge(String(grants.length))}</td><td><a href="${base(v.job.id)}?ch=15">Go to chapter 15</a></td></tr>`}
       </tbody></table>
       <details class="morelist"><summary>Show all ${String(s.needed.length)}, one per line</summary>
@@ -610,7 +629,33 @@ function inputsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchP
     })}</tbody></table>
     ${v.inputs.building_rate_pence.value === null ? h`<p class="help">The whole-building rate comes from BCIS. Until BCIS is bought, the surveyor types it, and it is theirs.</p>` : raw('')}
     ${v.job.sector === 'supported_living' ? sharedAreaBlock(d, v, ch) : raw('')}
+    ${worksBlock(d, v, ch)}
     ${sitePlanPanel(d, v, ch)}`;
+}
+
+/**
+ * PHASE 159c — WORK DONE SINCE, PRICED ON ITS OWN COST. Each piece of work on the building, from its final account (or
+ * contract sum) by element: what it cost in all, and its parts. The plant, with the builder's work and the demolition
+ * that serve it, qualifies; the preliminaries and the fees are shared out over the rest; the repair part is a deduction
+ * from profits, never an allowance (chapter 20). The parts must add up to the final account.
+ */
+function worksBlock(d: PackPageDeps, v: P.PackView, ch: number): Safe {
+  if (v.works.length === 0) return raw('');
+  return h`<h2 id="works">Work done since, priced on its own cost</h2>
+    ${v.purchase_applies ? h`<p class="help">The purchase above is shared out from the price. The work below is the client’s own spend, so it is claimed on what it cost. Take each value from the final account, or the contract sum by element. Include any VAT the client could not reclaim.</p>`
+      : h`<p class="help">This building was not bought, so there is no price to share out: the values above do not apply. Each piece of work below is claimed on what it cost. Take each value from the final account, or the contract sum by element. Include any VAT the client could not reclaim.</p>`}
+    ${v.works.map((w) => h`<section class="pk-card" id="works-${w.event.id}"><h3>${w.label}</h3>
+      <table class="pk-table"><thead><tr><th>Value</th><th class="n">Now</th><th>Where it came from</th></tr></thead><tbody>
+        ${WORKS_FIELDS.map((k) => h`<tr><th scope="row">${WORKS_WORDS[k]}</th><td class="n">${PENCE(w.inputs[k].value)}</td><td>${sourceTag(d, w.inputs[k].source)}</td></tr>`)}
+      </tbody></table>
+      ${w.sums.problems.map((p) => h`<p class="gate pk-problem" role="alert"><strong>Check this.</strong> ${p.words}</p>`)}
+      <p>${w.sums.complete ? h`<strong>Qualifies: ${PENCE(w.sums.qualifying_pence)}</strong> (main pool ${PENCE(w.sums.main_pool_pence)}, special rate pool ${PENCE(w.sums.special_pool_pence)}).${(w.sums.repairs_pence ?? 0) > 0 ? ` The repair part, ${PENCE(w.sums.repairs_pence)}, comes off the profits as a repair instead. It is not in this figure.` : ''}`
+        : h`<span class="pk-src pk-need">not worked out yet</span> ${String(w.sums.needed.length)} value${w.sums.needed.length === 1 ? '' : 's'} still needed.`}</p>
+      ${!v.may_edit || v.property === null ? raw('') : h`<form method="post" action="${base(v.job.id)}/works">${hidden(v, ch)}<input type="hidden" name="event" value="${w.event.id}">
+        <div class="pk-fields">${WORKS_FIELDS.map((k) => h`<label>${WORKS_WORDS[k]} <input class="fi" name="${k}" inputmode="decimal" autocomplete="off" value="${w.inputs[k].value === null ? '' : String(w.inputs[k].value / 100)}"></label>`)}
+        <label>Why are you changing it? <input class="fi pk-why" name="reason" maxlength="500" required placeholder="For example: from the final account dated 30 June 2025"></label></div>
+        <button class="cta" type="submit">Save — every total follows</button></form>`}
+    </section>`)}`;
 }
 
 /**

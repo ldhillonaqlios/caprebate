@@ -878,9 +878,10 @@ function __runEngine(s){
   // band (dominant trigger by midpoint) — note the BASE differs: fit-out spend vs whole build cost
   const norm=t=> t==="purchase"?"purchase": t==="new_build"?"new_build":"refurb_fitout";
   const triggers=(s.trigger.length?s.trigger:["purchase"]).map(norm);   // PHASE 159b (E16): no trigger is read as a purchase in every sector (types.ts), never as the richest band
-  let dom=triggers[0];
-  triggers.forEach(t=>{ if(mid(...YIELD_BAND.dental[t])>mid(...YIELD_BAND.dental[dom])) dom=t; });
+  // PHASE 159c (E4): one amount and several events - the cautious band, never the richest (see care_homes).
+  let dom=CB_INPUTS.cautiousTrigger(triggers, YIELD_BAND.dental, mid);
   let [qLo,qHi]=YIELD_BAND.dental[dom];
+  if(s.trigger.length>1) A.push(CB_INPUTS.severalEventsWords(dom));
   if(dom==="new_build") A.push("new-build band applied to the whole build cost (the structure dilutes the plant share; the residue is SBA)");
   else if(dom==="refurb_fitout") A.push("fit-out band applied to the fit-out spend");
 

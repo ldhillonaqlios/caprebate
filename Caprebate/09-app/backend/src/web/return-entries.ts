@@ -108,12 +108,24 @@ export function returnEntries(s: Snapshot, ctx: ReturnContext): ReturnEntry[] {
   const mainMissing = start === null ? 'The accounting period is not on the claim yet. The main pool rate depends on it.'
     : 'We do not know if the client is a company. A company and a person get a different rate here.';
   const known = (n: number | undefined): number | null => (n !== undefined && Number.isFinite(n) ? n : null);
-  const out: ReturnEntry[] = [
+  /* PHASE 159c: A BUILDING WITH WORK SINCE ADDS EACH SPEND ON ITS OWN ROW — the purchase, then each piece of work — so
+     the return shows where every pound came from. They add up to the pool; the allowances below run on the pool. Which
+     period each spend belongs to, and its own first-year allowance, are Phase 159e's: here they all fall in one. */
+  const ev = (s as { events?: { purchase_applies: boolean; purchase: { main_pool_pence: number | null; special_pool_pence: number | null } | null;
+    works: { label: string; main_pool_pence: number | null; special_pool_pence: number | null }[] } }).events;
+  const parts = ev === undefined ? null : [
+    ...(ev.purchase_applies && ev.purchase !== null ? [{ what: 'the purchase', main: ev.purchase.main_pool_pence, special: ev.purchase.special_pool_pence }] : []),
+    ...ev.works.map((w) => ({ what: w.label, main: w.main_pool_pence, special: w.special_pool_pence })),
+  ];
+  const out: ReturnEntry[] = parts === null ? [
     { return_no: 1, period: periodOf(0), pool: 'Main pool', entry: 'Spend that counts, added to the pool', amount_pence: mainP,
       how: 'From the approved survey report: the main pool, after any grant.' },
     { return_no: 1, period: periodOf(0), pool: 'Special rate pool', entry: 'Spend that counts, added to the pool', amount_pence: specialP,
       how: 'From the approved survey report: the special rate pool, after any grant.' },
-  ];
+  ] : (['Main pool', 'Special rate pool'] as const).flatMap((pool) => parts.map((x) => ({
+    return_no: 1, period: periodOf(0), pool, entry: `Spend that counts, added to the pool: ${x.what}`,
+    amount_pence: pool === 'Main pool' ? x.main : x.special,
+    how: `From the approved survey report: the ${pool === 'Main pool' ? 'main pool' : 'special rate pool'} of ${x.what}${x.what === 'the purchase' ? ', after any grant' : ', on its own cost'}.` })));
   for (let i = 0; i < RETURN_YEARS; i++) {
     const mWda = known(mainRows[i]?.wda);
     const mCf = known(mainRows[i]?.cf);

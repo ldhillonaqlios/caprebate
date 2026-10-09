@@ -8746,6 +8746,53 @@ if (startSuite("AN", "Phase 159b — the assessment figure and the engine's inpu
     [true, true, true, false]);
 }
 
+if (startSuite("AO", "Phase 159c — several events on one building: a purchase, then the works (the stress test of 9 October 2026, E1, E4)")) {
+  const safe = fn => { try { return fn(); } catch (e) { return "threw: " + e.message; } };
+  const ALL = ["care_homes", "dental", "supported_living", "gp", "private_hospital"];
+  const FOUR = ["care_homes", "dental", "gp", "private_hospital"];
+  const MODS = {}; const E = sec => (MODS[sec] = MODS[sec] || liftGated(sec, []));
+  const base = (sec, extra) => Object.assign({ sector: sec, trigger: ["purchase"], deal: "property", base_amount: 650000, claimant_type: "company",
+    claimant_raw: "company", activity: "trade", dwelling_setting: "institution_commercial", acuity: "normal", flags: [], assumptions: [], lrr: false,
+    return_in_time: false, nation: "england", plant_serves: "individual", funding: "no" }, extra || {});
+  const run = (sec, extra) => safe(() => E(sec).runEngine(base(sec, extra)));
+  const hi = r => (r && r.QE ? Math.round(r.QE[1]) : r);
+  const fig = (props, extra) => { const S = Object.assign(CB_FUNNEL.blankState(), { is_uk_taxpayer: "yes", own_prior_claim: "no", __now: "2026-10-09T12:00:00Z" }, extra || {});
+    S.properties = props; return CB_FUNNEL.figure(S); };
+  const one = (p, extra) => safe(() => fig([Object.assign({ address: "A", sector: "gp", trigger: "purchase", spend: 650000, date: "03/2025", previous_owner_claimed: "dont_know" }, p)], extra));
+  const REFIT = { events: [{ first: true }, { type: "refurb", cost: 90000, date: "2025" }] };
+
+  check("AO1 E1 — Lockwood: a GP bought for £650,000 (03/2025) and refurbished for £90,000 (2025): up to £258,000, the purchase £195,000 on its band and the refit £63,000 on its own",
+    safe(() => { const f = one(REFIT); return [f.total, f.breakdown[0].events.map(e => e.ceiling)]; }), [258000, [195000, 63000]]);
+  check("AO2 — a draft from before, with its one works answer, is read the same way",
+    safe(() => one({ works: "yes", works_type: "full", works_spend: 90000, works_year: "2025" }).total), 258000);
+  check("AO3 — redecoration or repairs, work of an unknown kind, and work with no cost add nothing (and the purchase stands)",
+    [one({ events: [{ first: true }, { type: "cosmetic", cost: 90000, date: "2025" }] }).total, one({ events: [{ first: true }, { type: "other", cost: 90000, date: "2025" }] }).total,
+     one({ events: [{ first: true }, { type: "refurb", cost: null, cost_unknown: true, date: "2025" }] }).total], [195000, 195000, 195000]);
+  check("AO4 — each event meets its own cut: a seller who did not claim stops the purchase and leaves the refit; the client's own earlier claim stops the building",
+    [one(Object.assign({ previous_owner_claimed: "no" }, REFIT)).total, one(Object.assign({ own_prior_claim: "yes" }, REFIT)).total,
+     one({ events: [{ first: true }, { type: "refurb", cost: 90000, date: "2005" }] }).total], [63000, 0, 195000]);
+  check("AO5 E4 — one amount with a purchase and a refit ticked: the purchase band (and its s.187A reading) on the price, never the refit band on the whole, in all four sectors",
+    FOUR.map(sec => hi(run(sec, { trigger: ["purchase", "refurb"] })) === hi(run(sec, { trigger: ["purchase"] }))), FOUR.map(() => true));
+  check("AO5b — one amount and two kinds of work: the lower band, not the richer one",
+    FOUR.map(sec => hi(run(sec, { trigger: ["new_build", "refurb"] })) === Math.min(hi(run(sec, { trigger: ["new_build"] })), hi(run(sec, { trigger: ["refurb"] })))), FOUR.map(() => true));
+  check("AO6 E1 E4 — each event with its own cost, on its own band: the engine's top is the purchase's on £650,000 plus the refit's on £90,000, in all five sectors",
+    ALL.map(sec => hi(run(sec, { events: [{ type: "purchase", cost: 650000 }, { type: "refurb", cost: 90000 }] }))
+      === hi(run(sec, { trigger: ["purchase"], base_amount: 650000 })) + hi(run(sec, { trigger: ["refurb"], base_amount: 90000 }))), ALL.map(() => true));
+  check("AO6b — and it says so, and keeps each event's own figure",
+    safe(() => { const r = run("gp", { events: [{ type: "purchase", cost: 650000 }, { type: "refurb", cost: 90000 }] });
+      return [r.events.length, r.assumptions.some(a => /priced event by event/.test(a))]; }), [2, true]);
+  check("AO7 — a conversion is building work, on the refurbishment band",
+    JSON.stringify(CB_BAND.bandFor("gp", "conversion")), JSON.stringify(CB_BAND.BANDS.gp.refurb_fitout));
+  check("AO8 — the figure's words say each spend is sized on its own band (and a building with one spend does not)",
+    [safe(() => { const S = Object.assign(CB_FUNNEL.blankState(), { is_uk_taxpayer: "yes" });
+      S.properties = [Object.assign({ address: "A", sector: "gp", trigger: "purchase", spend: 650000, date: "03/2025" }, REFIT)]; return CB_FUNNEL.assumptions(S).some(x => /each is sized on its own band/.test(x)); }),
+     safe(() => { const S = Object.assign(CB_FUNNEL.blankState(), { is_uk_taxpayer: "yes" });
+      S.properties = [{ address: "A", sector: "gp", trigger: "purchase", spend: 650000, date: "03/2025" }]; return CB_FUNNEL.assumptions(S).some(x => /each is sized on its own band/.test(x)); })],
+    [true, false]);
+  check("AO9 (control) — a building with one spend and no work since is priced exactly as before",
+    safe(() => one({}).total), 195000);
+}
+
 /* ------------------------------------------------------------------- report */
 console.log("\n" + "=".repeat(72));
 console.log("  pass " + results.pass + "   fail " + results.fail +

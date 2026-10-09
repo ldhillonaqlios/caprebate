@@ -551,8 +551,10 @@ describe('the timeline is a read over what is already recorded — not a second 
     for (const f of readdirSync(MIGRATIONS).filter((x) => x.endsWith('.sql') && x < '012')) copyFileSync(join(MIGRATIONS, f), join(dir, f));
     const before = new Db(':memory:');
     migrate(before, dir);
+    // PHASE 159c: property_events (migration 105) is named for a building's events — what was bought or built, and when —
+    // facts about the building, not a log of what people did. It is the one event-named table that is not a second log.
     const eventish = (db: Db): string[] => db.all<{ name: string }>(
-      "SELECT name FROM sqlite_master WHERE type = 'table' AND (name LIKE '%event%' OR name LIKE '%timeline%' OR name LIKE '%activit%') ORDER BY name",
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND (name LIKE '%event%' OR name LIKE '%timeline%' OR name LIKE '%activit%') AND name <> 'property_events' ORDER BY name",
     ).map((r) => r.name);
     const app = await testApp();
     try {

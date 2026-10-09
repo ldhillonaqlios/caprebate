@@ -238,7 +238,29 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     },
     pack_seq: v.seq,
     legal_seq: lv.seq,
+    // PHASE 159c: where the building has work done since, each spend as approved: the purchase's own sums and each piece of
+    // work on its own cost. `sums` above is their total. A version with no work keeps the shape every earlier version has.
+    ...eventsOf(v),
   };
+}
+
+/** PHASE 159c: the events part of a version, only where there is work since. */
+function eventsOf(v: PackView): { events?: {
+  purchase_applies: boolean;
+  purchase: { qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null } | null;
+  works: { event_id: string; kind: string; event_date: string | null; label: string;
+    inputs: Record<string, number | null>; qualifying_pence: number | null; main_pool_pence: number | null;
+    special_pool_pence: number | null; repairs_pence: number | null }[];
+} } {
+  if (v.works.length === 0) return {};
+  return { events: {
+    purchase_applies: v.purchase_applies,
+    purchase: v.purchase_applies ? { qualifying_pence: v.purchase_sums.qualifying_pence, main_pool_pence: v.purchase_sums.main_pool_pence, special_pool_pence: v.purchase_sums.special_pool_pence } : null,
+    works: v.works.map((w) => ({ event_id: w.event.id, kind: w.event.kind, event_date: w.event.event_date, label: w.label,
+      inputs: Object.fromEntries(Object.entries(w.inputs).map(([k, x]) => [k, x.value])),
+      qualifying_pence: w.sums.qualifying_pence, main_pool_pence: w.sums.main_pool_pence, special_pool_pence: w.sums.special_pool_pence,
+      repairs_pence: w.sums.repairs_pence })),
+  } };
 }
 
 /** An approved version as kept: what snapshotOf wrote, read back from its JSON. */
@@ -281,12 +303,20 @@ export function approvePack(d: PackDeps, actor: Actor, job_id: string, f: { seq:
         [d.newId(), pack_id, version, v.seq, lv.seq, json, fingerprint, actor.id, at]);
 
       // The surveyor's figures, committed to the job as the workspace commits them — so the claim reads them as before.
+      /* PHASE 159c: with work since, the figure is the purchase and every piece of work. The building figure is the
+         purchase's building plus what the work cost; with no purchase it is what the work cost, on no land; the share
+         is what qualifies of that. A pack with no work commits exactly as before. */
+      const worksCost = v.works.reduce((a, w) => a + (w.inputs.works_total.value ?? 0), 0);
+      const building = (v.purchase_applies ? (s.building_price_pence as number) : 0) + worksCost;
       const figures = {
         a_qualifying_plant: poundsString(s.qualifying_pence as number),
-        b_building: poundsString(s.building_price_pence as number),
-        c_bare_land: poundsString(v.inputs.land_pence.value as number),
-        qualifying_pct: String((s.share_bp as number) / 100),
-        method_note: `Survey pack version ${String(version)}, fingerprint ${fingerprint}. Section 562 by rebuild cost, element by element, from the evidence and the surveyor's own changes.`,
+        b_building: poundsString(building),
+        c_bare_land: poundsString(v.purchase_applies ? (v.inputs.land_pence.value as number) : 0),
+        qualifying_pct: v.works.length === 0 ? String((s.share_bp as number) / 100)
+          : String(building === 0 ? 0 : Math.round(((s.qualifying_pence as number) * 10000) / building) / 100),
+        method_note: v.works.length === 0
+          ? `Survey pack version ${String(version)}, fingerprint ${fingerprint}. Section 562 by rebuild cost, element by element, from the evidence and the surveyor's own changes.`
+          : `Survey pack version ${String(version)}, fingerprint ${fingerprint}. ${v.purchase_applies ? 'The purchase by section 562, by rebuild cost, element by element; ' : ''}each piece of work since on its own cost, from its final account by element (${v.works.map((w) => w.label).join('; ')}).`,
         rates: [],
       };
       const committed = v.job.state === 'SEALED'
