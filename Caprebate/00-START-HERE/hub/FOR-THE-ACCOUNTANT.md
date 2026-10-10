@@ -1873,7 +1873,7 @@ Signed .............................  Date ..........................
 
  **This register gains one entry and one board item**: ACC-H3, the accountant's own confirmation link and the defence pack's list of records (board item 13245993980). Phase 158d wrote the two checks into this register, but made no board item for them, so no count saw them. **Board items covered: 51.**
 
- **And the board's own total at the close of Phase 159g, 10 October 2026, counted in code: 137 items carry that status**: fifty-six in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Fifty-six plus twelve plus sixty-nine is 137. (At the close of Phase 159f it was 134; Phase 159g added ACC-H8, SV-S12 and SDP-P44.)
+ **And the board's own total at the close of Phase 159h, 10 October 2026, counted in code: 138 items carry that status**: fifty-seven in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Fifty-seven plus twelve plus sixty-nine is 138. (At the close of Phase 159g it was 137; Phase 159h added ACC-H9.)
 
 ## Phase 159b, 9 October 2026 — ACC-H4 · four readings behind the online figure, built and on in the test system
 
@@ -1927,3 +1927,17 @@ Signed .............................  Date ..........................
 -  **The year end from Companies House.** For a company, the claim now uses the accounting reference date on the register, and shows the client's answer beside it when they differ, for staff to check. Lockwood's test year end was 31 March; Companies House says 31 May. (Question 264, for the accountant.)
 
  **ACC-H8 · Board item 13254543097, added 10 October 2026 by Phase 159g.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 56.**
+
+## Phase 159h, 10 October 2026 — ACC-H9 · the legal check: five readings on who could claim, and what a tenant can
+
+ We build first and ask you second (Lakhbir, 29 September 2026). All five are on in the test system only, with invented data. The stress test of 9 October walked over 20,000 paths through the legal check; these are the places where the law needed a reading of ours. Each is a question in the Word questions document, Section 2, with our recommendation and a worked example:
+
+-  **A landlord who let the building as homes.** Barred from claiming by section 35, so never "entitled to claim": the check looks past it to an earlier owner, as for an NHS seller. (Question 268.)
+-  **A charity or another body that pays no tax.** A seller recorded as "a private individual / other" is asked whether it was one; yes means it could never claim. (Question 269.)
+-  **A premium for a new lease.** The fixtures pass to the tenant with a joint section 183 election, or under section 184 where the landlord could never claim; with no election from a landlord who could, they stay the landlord's. How the client took the property on is now asked on every purchase. (Question 270.)
+-  **Section 185, past a seller who could never claim.** The claim is capped at the value fixed when the earlier owner who could claim sold on, and is not settled until that value is known. (Question 271.)
+-  **Tenants, landlords and an ended lease.** A tenant claims what it paid for, not a share of a purchase price; a landlord leaves out its tenant's fixtures; a lease that has ended is a disposal (section 188). (Question 272.)
+
+ Three more are the law, not readings, so they are not questions: answers that contradict each other are never clear; no election is available on a transfer below value; and an election that splits out the integral features caps each pool by its own figure.
+
+ **ACC-H9 · Board item 13254716714, added 10 October 2026 by Phase 159h.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 57.**
