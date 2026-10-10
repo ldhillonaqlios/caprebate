@@ -4070,21 +4070,82 @@ var CB_RATES = (function(){
 
   var CHANGE_DATE = { ct:"2026-04-01", it:"2026-04-06" };
 
-  /* CA23222 day-count hybrid, rounded UP to two decimals as HMRC requires.
-     HMRC's worked example: 1 Jan 2026 to 31 Dec 2026 gives 14.99%. */
-  function hybridMainRate(periodStart, periodEnd, isCompany){
-    var s = new Date(periodStart), e = new Date(periodEnd);
-    if(isNaN(s.getTime()) || isNaN(e.getTime())) return null;
-    var change = new Date(isCompany ? CHANGE_DATE.ct : CHANGE_DATE.it);
+  /* PHASE 159e, 9-10 OCTOBER 2026 (C13): THE RATES BY DATE. The stress test of
+     9 October 2026 found a special rate pool written down at 6% in a 2018 period
+     (8% until April 2019) and a main pool at 18% before April 2012 (20%). Each
+     rate is now read from its own dated table, Rulebook I section 1 (the table
+     at its lines 20-30): each row the first day of a chargeable period it applies
+     to, for corporation tax and for income tax, and the rate. A period that
+     straddles a change takes the day-count hybrid (CA23222), rounded UP to two
+     decimals of a per cent as HMRC requires; a period wholly inside one row takes
+     that row's rate. Before the special rate pool existed (April 2008) it has no
+     rate, and the answer is null, never a default. */
+  var WDA_TABLE = {
+    main:    [[null,         null,         0.25],
+              ["2008-04-01", "2008-04-06", 0.20],    /* FA 2008 */
+              ["2012-04-01", "2012-04-06", 0.18],    /* FA 2011 */
+              ["2026-04-01", "2026-04-06", 0.14]],   /* FA 2026 */
+    special: [["2008-04-01", "2008-04-06", 0.10],    /* FA 2008 */
+              ["2012-04-01", "2012-04-06", 0.08],    /* FA 2011 */
+              ["2019-04-01", "2019-04-06", 0.06]]    /* FA 2018 */
+  };
+
+  /* The structures and buildings allowance, Rulebook I section 4: 2% from 29
+     October 2018, 3% for chargeable periods from 1 April 2020 (CT) or 6 April 2020
+     (IT); a straddling period apportioned by days. Not rounded: the allowance is
+     the cost times the days' share, worked in pence by whoever calls it. */
+  var SBA = { from:"2018-10-29", years:100/3,
+              table:[["2018-10-29", "2018-10-29", 0.02], ["2020-04-01", "2020-04-06", 0.03]] };
+
+  /* s.56A, CA23225: a main or special rate pool of GBP 1,000 or less (before the
+     allowance, for a 12-month period; proportionately for a longer or shorter one)
+     may be written off in full instead of the normal allowance. */
+  var SMALL_POOL_LIMIT = 1000;
+
+  /* The super-deduction, Rulebook I section 3.3: companies only, new and unused
+     plant, expenditure incurred from 1 April 2021 to 31 March 2023 (130% main
+     rate, 50% special rate), and NOT on a contract signed before 3 March 2021. */
+  var SUPER_DEDUCTION = { from:"2021-04-01", to:"2023-03-31", main:1.30, special:0.50, contract_from:"2021-03-03" };
+
+  function dayOf(iso){ var d = new Date(iso + "T00:00:00Z"); return isNaN(d.getTime()) ? null : d; }
+
+  /* The weighted rate across a period, from a dated table. round: true rounds a
+     straddle up to two decimals of a per cent (CA23222). */
+  function datedRate(table, periodStart, periodEnd, isCompany, round){
+    var s = dayOf(String(periodStart).slice(0, 10)), e = dayOf(String(periodEnd).slice(0, 10));
+    if(!s || !e) return null;
     var DAY = 86400000;
     var total = Math.round((e - s) / DAY) + 1;
     if(total <= 0) return null;
-    if(e < change)  return WDA.main_2012_to_2026;
-    if(s >= change) return WDA.main_from_2026;
-    var before = Math.round((change - s) / DAY);
-    var after  = total - before;
-    var r = (before / total) * WDA.main_2012_to_2026 + (after / total) * WDA.main_from_2026;
-    return Math.ceil(r * 10000) / 10000;
+    var acc = 0, covered = 0, rates = [];
+    for(var i = 0; i < table.length; i++){
+      var fromIso = table[i][isCompany ? 0 : 1];
+      var toIso = i + 1 < table.length ? table[i + 1][isCompany ? 0 : 1] : null;
+      var from = fromIso === null ? s : dayOf(fromIso);
+      var to = toIso === null ? null : dayOf(toIso);          /* exclusive */
+      var a = from > s ? from : s;
+      var b = (to !== null && to <= e) ? new Date(to.getTime() - DAY) : e;
+      if(b < a) continue;
+      var days = Math.round((b - a) / DAY) + 1;
+      acc += days * table[i][2]; covered += days; rates.push(table[i][2]);
+    }
+    if(covered !== total) return null;                       /* part of the period has no rate */
+    if(rates.length === 1) return rates[0];
+    var r = acc / total;
+    return round ? Math.ceil(r * 10000 - 1e-9) / 10000 : r;
+  }
+
+  /* CA23222 day-count hybrid, rounded UP to two decimals as HMRC requires.
+     HMRC's worked example: 1 Jan 2026 to 31 Dec 2026 gives 14.99%. Since Phase
+     159e it reads the dated table, so a period before April 2012 gets its own rate. */
+  function hybridMainRate(periodStart, periodEnd, isCompany){
+    return datedRate(WDA_TABLE.main, periodStart, periodEnd, isCompany, true);
+  }
+  function specialRate(periodStart, periodEnd, isCompany){
+    return datedRate(WDA_TABLE.special, periodStart, periodEnd, isCompany, true);
+  }
+  function sbaRate(periodStart, periodEnd, isCompany){
+    return datedRate(SBA.table, periodStart, periodEnd, isCompany, false);
   }
 
   function rangeFor(key){ return MARGINAL_RATE[key] || MARGINAL_RATE.uninc_ruk; }
@@ -4291,6 +4352,9 @@ var CB_RATES = (function(){
            FIRST_YEAR:FIRST_YEAR, FYA_NEW_FROM:FYA_NEW_FROM, FE_FROM:FE_FROM,
            SCOTLAND_BY_YEAR:SCOTLAND_BY_YEAR, taperBandRate:taperBandRate,
            hybridMainRate:hybridMainRate, rangeFor:rangeFor,
+           /* Phase 159e - the rates by date, the structures allowance, small pools */
+           WDA_TABLE:WDA_TABLE, specialRate:specialRate, datedRate:datedRate, SBA:SBA, sbaRate:sbaRate,
+           SMALL_POOL_LIMIT:SMALL_POOL_LIMIT, SUPER_DEDUCTION:SUPER_DEDUCTION,
            rangeForYear:rangeForYear, describe:describe, basisNote:basisNote,
            /* Phase 132 - AC-1 and TP-1 */
            CT_MARGINAL:CT_MARGINAL, companyBasis:companyBasis, companyRange:companyRange,
@@ -7444,7 +7508,10 @@ var CB_BENEFIT = (function(){
        engine's own speed narrative already states that a second-hand purchase
        cannot use full expensing; this is that sentence made computable. */
     var isCompany = s.claimant_type === "company";
-    var secondHand = (dom === "purchase");
+    /* PHASE 159e (OUR READING, put to the tax adviser): a building bought NEW AND
+       UNUSED from the developer who built it is not second-hand - nobody has used
+       its fixtures - so it is not barred here. Only on a known yes (N4). */
+    var secondHand = (dom === "purchase") && s.bought_new_from_developer !== true;
     if(secondHand){
       out.missing.push("a second-hand purchase cannot use full expensing or a first-year allowance - the fixtures are not new and unused");
     } else if(!isCompany){
@@ -7542,9 +7609,17 @@ var CB_BENEFIT = (function(){
       var pEnd = pStart ? endOf(pStart) : null;
       var mRate = (pStart && pEnd) ? CB_RATES.hybridMainRate(pStart, pEnd, isCo) : o.main_wda_rate;
       if(!isNum(mRate)) mRate = o.main_wda_rate;
-      var sRate = CB_RATES.WDA.special;
+      /* PHASE 159e (C13): the special rate pool's rate by date too - 8% before
+         April 2019, blended across the change - and (C17) a pool of GBP 1,000 or
+         less written off in full (s.56A). */
+      var sRate = (pStart && pEnd) ? CB_RATES.specialRate(pStart, pEnd, isCo) : null;
+      if(!isNum(sRate)) sRate = isNum(o.special_wda_rate) ? o.special_wda_rate : CB_RATES.WDA.special;
 
       var mWda = mainPool * mRate, sWda = srPool * sRate;
+      var smallMain = mainPool > 0 && mainPool <= CB_RATES.SMALL_POOL_LIMIT;
+      var smallSr = srPool > 0 && srPool <= CB_RATES.SMALL_POOL_LIMIT;
+      if(smallMain) mWda = mainPool;
+      if(smallSr) sWda = srPool;
       mainPool -= mWda; srPool -= sWda;
 
       var allowance = (i === 0 ? fyRelieved : 0) + mWda + sWda;
@@ -7569,6 +7644,7 @@ var CB_BENEFIT = (function(){
         main_wda_rate: mRate, special_wda_rate: sRate,
         first_year_allowance: (i === 0 ? fyRelieved : 0),
         main_wda: mWda, special_wda: sWda,
+        small_pool_main: smallMain, small_pool_special: smallSr,
         allowance: allowance,
         relieved: used, loss_carried_forward: lossCf,
         relief: relief,

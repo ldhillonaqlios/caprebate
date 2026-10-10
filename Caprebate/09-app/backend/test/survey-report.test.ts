@@ -18,6 +18,8 @@
  *     sign-off for that version's figure, and never a version whose fingerprint fails; told once;
  *   · none of the new records is ever edited or deleted; the sent link leaves the outbox.
  */
+// PHASE 159e: the report's allowances read the facts the version was sent on.
+import { contextForApproval } from '../src/web/return-entries.ts';
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -121,6 +123,11 @@ before(async () => {
     ['e-sr', 'as-sr', 'b-sr', 5_000_000, 0.05, 3_000_000, 2_000_000, 15_000_000, 1, 1_000_000, T0, 'test-not-a-real-hash']);
   CLAIM = C.insertClaim(db, made.app.now, randomUUID, { business_id: 'b-sr', property_id: 'p-sr', assessment_id: 'as-sr', workstream: 'PLANT_AND_MACHINERY', stage: 'TAX_ADVISER_SIGNOFF', owner_id: null, surveyor_id: null }).id;
   P.recordOpened({ db, now: made.app.now, newId: randomUUID }, null, CLAIM, 'TAX_ADVISER_SIGNOFF', 'a test fixture');
+  // PHASE 159e (item 4): a version is approved only with the claim's accounting period known.
+  for (const [k, d] of [['ACCOUNTING_PERIOD_START', '2023-04-01'], ['ACCOUNTING_PERIOD_END', '2024-03-31']] as const) {
+    db.run('INSERT INTO claim_facts (id, claim_id, fact_key, answer, value_text, value_pence, value_date, source_id, note, recorded_by, recorded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [randomUUID(), CLAIM, k, 'VALUE', null, null, d, 'CLIENT_DOC', null, 'u-sr-sales', T0]);
+  }
   db.run('INSERT INTO surveyor_jobs (id,business_id,assessment_id,surveyor_id,state,committed_at,created_at,claim_id) VALUES (?,?,?,?,?,?,?,?)', [JOB, 'b-sr', 'as-sr', 'u-sr-sam', 'SEALED', null, T0, CLAIM]);
   db.run('INSERT INTO register_records (id,business_id,source_id,entity_id,fields_json,obtained_at,property_id) VALUES (?,?,?,?,?,?,?)',
     ['rr-epc-sr', 'b-sr', 'EPC', 'INVENTED-RRN-SR', JSON.stringify({ epc_total_floor_area_m2: 640.5 }), T0, 'p-sr']);
@@ -266,7 +273,7 @@ describe('the accountant’s sign-off', () => {
     const f = made.app.db.get<{ filename: string; content_type: string; bytes: Uint8Array }>('SELECT filename, content_type, bytes FROM outbox_inline_files WHERE outbox_id = ?', [o.id])!;
     const kept = approvedVersion(deps(), SAM, JOB, 1)!;
     assert.deepEqual([f.filename, f.content_type], ['survey-report-version-1.pdf', 'application/pdf']);
-    assert.deepEqual(new Uint8Array(f.bytes), reportPdf(reportModel(kept.snapshot, kept.row.fingerprint)).bytes, 'the attachment is not the report');
+    assert.deepEqual(new Uint8Array(f.bytes), reportPdf(reportModel(kept.snapshot, kept.row.fingerprint, contextForApproval(made.app.db, kept.row.id))).bytes, 'the attachment is not the report');
     const audit = made.app.db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'REPORT_SENT_FOR_SIGNOFF'")!;
     assert.equal(audit.detail.includes(token), false);
     // Once really sent, the email's words leave the outbox; until then, and for any other kind, they never change.
@@ -385,7 +392,7 @@ describe('to the claim, and to the client', () => {
     const page = await req('u-sr-client', '/portal/report');
     assert.equal(page.status, 200);
     const kept = approvedVersion(deps(), SAM, JOB, 1)!;
-    const m = reportModel(kept.snapshot, kept.row.fingerprint);
+    const m = reportModel(kept.snapshot, kept.row.fingerprint, contextForApproval(made.app.db, kept.row.id));
     assert.ok(page.body.includes(m.headline.qualifying));
     const pdf = await req('u-sr-client', '/portal/report.pdf');
     assert.deepEqual(pdf.bytes, reportPdf(m).bytes);

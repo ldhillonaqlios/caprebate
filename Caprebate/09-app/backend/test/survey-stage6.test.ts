@@ -237,6 +237,11 @@ before(async () => {
     ['e-s6', 'as-s6', 'b-s6', 5_000_000, 0.05, 3_000_000, 2_000_000, 15_000_000, 1, 1_000_000, T0, 'test-not-a-real-hash']);
   const claim = CRM.insertClaim(db, made.app.now, randomUUID, { business_id: 'b-s6', property_id: 'p-s6', assessment_id: 'as-s6', workstream: 'PLANT_AND_MACHINERY', stage: 'TAX_ADVISER_SIGNOFF', owner_id: null, surveyor_id: null }).id;
   PL.recordOpened({ db, now: made.app.now, newId: randomUUID }, null, claim, 'TAX_ADVISER_SIGNOFF', 'a test fixture');
+  // PHASE 159e (item 4): a version is approved only with the claim's accounting period known.
+  for (const [k, d] of [['ACCOUNTING_PERIOD_START', '2023-04-01'], ['ACCOUNTING_PERIOD_END', '2024-03-31']] as const) {
+    db.run('INSERT INTO claim_facts (id, claim_id, fact_key, answer, value_text, value_pence, value_date, source_id, note, recorded_by, recorded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [randomUUID(), claim, k, 'VALUE', null, null, d, 'CLIENT_DOC', null, 'u-s6-sales', T0]);
+  }
   db.run('INSERT INTO surveyor_jobs (id,business_id,assessment_id,surveyor_id,state,committed_at,created_at,claim_id) VALUES (?,?,?,?,?,?,?,?)', [JOB, 'b-s6', 'as-s6', 'u-s6-sam', 'SEALED', null, T0, claim]);
   db.run('INSERT INTO register_records (id,business_id,source_id,entity_id,fields_json,obtained_at,property_id) VALUES (?,?,?,?,?,?,?)',
     ['rr-epc-s6', 'b-s6', 'EPC', 'INVENTED-RRN-S6', JSON.stringify({ epc_total_floor_area_m2: 640.5 }), T0, 'p-s6']);

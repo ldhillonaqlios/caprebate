@@ -24,6 +24,7 @@ import { deskFirstReading } from './desk-first.ts';
 import { basisOf, evidenceByLine } from './survey-evidence.ts';
 import { findingSeen, FINDING_LABELS } from './finding-source.ts';
 import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
+import { RATES } from './engine.ts';
 import { ESTIMATED_AREA_LABEL } from '../connectors/homedata.ts';
 import { BAND, FUNNEL } from './engine.ts';
 
@@ -259,10 +260,14 @@ function leaseback(c: Ctx): Sheet {
   };
 }
 
+/** The structures allowance's rate today, from the engine's dated table (Rulebook I rule 7.1: no rate stated here). */
+const SBA_NOW: number = ((RATES as { SBA: { table: readonly (readonly [string, string, number])[] } }).SBA.table.at(-1)?.[2]) ?? Number.NaN;
+
 function structures(c: Ctx): Sheet {
   const { db, v } = c;
   const facts = v.job.claim_id === null ? null : latestFacts(db, v.job.claim_id);
   const sba = facts === null ? null : captured(facts, 'SBA_QUALIFYING_EXPENDITURE');
+  const statement = facts === null ? null : captured(facts, 'SBA_STATEMENT_HELD');
   // The LATEST year written: a renovation after 29 October 2018 counts as much as the build (the template's own field).
   const years = [...(c.words.get('build_year')?.words ?? '').matchAll(/\b(?:19|20)\d{2}\b/g)].map((m) => Number(m[0]));
   const year = years.length === 0 ? null : String(Math.max(...years));
@@ -273,8 +278,18 @@ function structures(c: Ctx): Sheet {
     lede: 'The structures and buildings allowance, which is tested separately from plant. The tax adviser decides it; this chapter holds the facts.',
     rows: [
       { label: 'Built or renovated after 29 October 2018', value: post2018, from: 'worked out', missing: year === null ? 'not known: no year in chapter 5' : 'not known: 2018 needs the exact date' },
-      { label: 'The seller’s allowance statement', value: null, from: 'the documents', missing: 'not on file' },
+      // PHASE 159e (item 2): whether the seller's statement (s.270IA) is on file — the buyer's allowance runs on its figure.
+      { label: 'The seller’s allowance statement', value: statement === null ? null : statement.known && statement.value === 'YES' ? 'On file' : statement.known && statement.value === 'NO' ? 'Not on file' : null,
+        from: 'the claim', missing: 'not recorded: ask for it where the building was bought from 29 October 2018' },
       { label: 'What is left after the plant and the land', value: residual === null ? null : poundsWords(residual), from: 'worked out', missing: NOT_WORKED },
+      // PHASE 159e (item 2): each piece of work's own base — the final account less the plant and the repair part — worked
+      // out at 3% a year (2% before April 2020) on the return entries and the report, from the month after the work.
+      ...v.works.map((w) => {
+        const t = w.inputs.works_total.value, q = w.sums.qualifying_pence, r = w.sums.repairs_pence;
+        const base = t === null || q === null || r === null ? null : Math.max(0, t - q - r);
+        return { label: `${w.label}: the building work that is not plant or repair`, value: base === null ? null : `${poundsWords(base)}, about ${poundsWords(Math.round(base * SBA_NOW))} a year at ${String(SBA_NOW * 100)}%`,
+          from: 'worked out' as const, missing: NOT_WORKED };
+      }),
       { label: 'Recorded on the claim', value: sba !== null && sba.known && typeof sba.value === 'string' ? sba.display : null, from: 'the claim', missing: NOT_ON_FILE },
       { label: 'On a later sale', value: 'The structures allowance lowers the base cost for capital gains tax; plant allowances do not.', from: 'fixed wording', missing: NOT_ON_FILE },
     ],

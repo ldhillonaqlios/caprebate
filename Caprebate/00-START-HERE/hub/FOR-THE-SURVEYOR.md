@@ -1086,4 +1086,4 @@ reasonably be established remotely should require a site inspection before a sur
 
  One item more is awaiting sign-off on the board: ACC-H3, in FOR THE ACCOUNTANT.
 
- **And the board's own total at the close of Phase 159d, 9 October 2026, counted in code: 132 items carry that status**: fifty-four in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-four plus ten plus sixty-eight is 132. (At the close of Phase 159c it was 131; Phase 159d added ACC-H6.)
+ **And the board's own total at the close of Phase 159e, 10 October 2026, counted in code: 133 items carry that status**: fifty-five in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-five plus ten plus sixty-eight is 133. (At the close of Phase 159d it was 132; Phase 159e added ACC-H7.)

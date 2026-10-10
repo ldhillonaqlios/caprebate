@@ -25,6 +25,8 @@ import { h, raw, type Safe } from './html.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 import { answerWords, legalQuestions } from './pack-legal.ts';
 import type { Snapshot } from './pack-approve.ts';
+import { allowancesFor, allowanceWords, type AllowanceWords } from './allowances.ts';
+import type { ReturnContext } from './return-entries.ts';
 import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from './pdf-canvas.ts';
 import { minutesWords } from './survey-video.ts';
 import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from './site-plan.ts';
@@ -79,6 +81,9 @@ export type ReportModel = {
   readonly method_lede: string;
   /** PHASE 159d (item 6): which way each part of the claim goes in, as approved. Empty in a version approved before. */
   readonly routes: readonly { readonly label: string; readonly words: string }[];
+  /** PHASE 159e (item 6): each part's year, its allowances and the pools carried on, from the version and the facts it
+   *  was sent on (src/web/allowances.ts) — the same figures as the return entries. */
+  readonly allowances: AllowanceWords;
 };
 
 export const PURCHASE_LEDE = 'When you buy a building, its price is split three ways. There is the land, the building itself, and the fixtures that qualify for tax relief. The law says how (section 562 of the Capital Allowances Act 2001). We share it out by what each part would cost to build again today.';
@@ -133,7 +138,7 @@ function inspectionWords(i: Snapshot['inspection'] | undefined): string | null {
   return `${i.words}${i.note === null ? '' : ` (${i.note})`}.${sent.length === 0 ? '' : ` The surveyor had ${sent.join(', and ')}.`}`;
 }
 
-export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
+export function reportModel(x: Snapshot, fingerprint: string, ctx: ReturnContext = { period_start: null, is_company: null, facts: null }): ReportModel {
   // PHASE 159c: a version with work since keeps each spend (`events`); `sums` is their total. The section 562 sum below is
   // the purchase's own, so it reads the purchase's figures; the cover reads the total.
   const ev = (x as { events?: SnapEvents }).events;
@@ -241,6 +246,7 @@ export function reportModel(x: Snapshot, fingerprint: string): ReportModel {
       rows: c.rows.map((r) => ({ label: r.label, value: r.value, missing: r.missing })), items: c.items.map((i) => ({ label: i.label, detail: i.detail })) })),
     ...eventsPart(ev),
     routes: ((x as { routes?: readonly { label: string; route: string; words: string }[] }).routes ?? []).map((r) => ({ label: r.label === 'The claim' ? 'Your claim' : r.label, words: r.words })),
+    allowances: allowanceWords(allowancesFor(x, ctx)),
   };
 }
 
@@ -336,6 +342,13 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
       ${m.legal.answers.length === 0 ? raw('') : h`<table class="rp-table"><thead><tr><th>Question</th><th>Answer</th><th>From</th></tr></thead><tbody>
         ${m.legal.answers.map((a) => h`<tr><td>${a.ask}</td><td>${a.answer}</td><td>${a.source}</td></tr>`)}</tbody></table>`}
       ${m.routes.length === 0 ? raw('') : h`<h3>How each part goes in</h3><ul>${m.routes.map((r) => h`<li><b>${r.label}.</b> ${r.words}</li>`)}</ul>`}
+      <h3>The allowances, part by part</h3>
+      <p>Each part goes into the year its route names. A first-year relief is shown only where the facts on your claim allow it. Your accountant may choose less.</p>
+      <table class="rp-table"><thead><tr><th>Part</th><th>How it goes in</th><th>The year it goes in</th><th>Relief in that year</th><th>Added to the pool</th><th>Structures allowance</th></tr></thead><tbody>
+        ${m.allowances.parts.map((p) => h`<tr><td>${p.part}</td><td>${p.route}</td><td>${p.year}</td><td>${p.reliefs}</td><td>${p.to_pool}</td><td>${p.sba}</td></tr>`)}</tbody></table>
+      <h3>Year by year</h3>
+      <table class="rp-table"><thead><tr><th>Year</th><th>First-year relief</th><th>Main pool</th><th>Special rate pool</th><th>Structures allowance</th><th>All allowances</th><th>Main pool carried on</th><th>Special rate pool carried on</th></tr></thead><tbody>
+        ${m.allowances.years.map((y) => h`<tr><td>${y.year}</td><td>${y.first_year}</td><td>${y.main}</td><td>${y.special}</td><td>${y.sba}</td><td><b>${y.total}</b></td><td>${y.main_cf}</td><td>${y.special_cf}</td></tr>`)}</tbody></table>
       <h2 class="rp-h"><span>04</span>What happens next</h2>
       <ol class="rp-steps">${m.next.map((s) => h`<li><b>${s.title}</b> ${s.words}</li>`)}</ol>
     </section>
@@ -666,6 +679,20 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
     for (const r of m.routes) c.para(`${r.label}. ${r.words}`, { size: 9.5, after: 4 });
     c.y += 8;
   }
+  // PHASE 159e (item 6): each part's year and allowances, then year by year.
+  c.need(40);
+  c.text(L, c.y, 'The allowances, part by part', 'Times-Bold', 13, C.ink);
+  c.y += 8;
+  for (const p of m.allowances.parts) {
+    c.para(`${p.part}. ${p.route} The year it goes in: ${p.year}. Relief in that year: ${p.reliefs} Added to the pool: ${p.to_pool}. Structures allowance: ${p.sba}`, { size: 9.5, after: 4 });
+  }
+  c.need(40);
+  c.text(L, c.y + 8, 'Year by year', 'Times-Bold', 13, C.ink);
+  c.y += 16;
+  for (const y of m.allowances.years) {
+    c.para(`${y.year}: all allowances ${y.total} (first-year relief ${y.first_year}; main pool ${y.main}; special rate pool ${y.special}; structures allowance ${y.sba}). Carried on: main pool ${y.main_cf}, special rate pool ${y.special_cf}.`, { size: 9.5, after: 4 });
+  }
+  c.y += 8;
   c.heading('04', 'What happens next');
   m.next.forEach((s, i) => {
     const title = wrapText(s.title, 'Helvetica-Bold', 10, W - 36);

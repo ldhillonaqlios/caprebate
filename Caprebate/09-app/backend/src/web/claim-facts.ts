@@ -147,6 +147,18 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
      only on evidence — the client's checked answer, or the title register — and never with a sale date on the
      property. Migration 106 adds the key. Read by src/web/claim-route.ts. */
   STILL_OWNED: { label: 'The client still owns the building today', kind: 'choice', choices: YES_NO },
+  /* Phase 159e — the allowances on each event (src/web/allowances.ts). Migration 107 adds the three keys. N4: not recorded
+     grants nothing. CASH_BASIS: on the cash basis there is no claim on fixtures for the period (OUR READING, Word
+     question 260). BOUGHT_NEW_FROM_DEVELOPER: a building bought new and unused from its developer is not second-hand, so
+     full expensing and the first-year allowances are open to it (OUR READING, Word question 258). SBA_STATEMENT_HELD: the
+     seller's structures allowance statement is on file, so SBA_QUALIFYING_EXPENDITURE is the figure the buyer's
+     allowance runs on (s.270IA). */
+  CASH_BASIS: {
+    label: 'How the accounts for the period are drawn up: the cash basis, or accruals', kind: 'choice',
+    choices: Object.freeze({ CASH: 'The cash basis — no claim on fixtures for the period', ACCRUALS: 'Accruals — the usual basis' }),
+  },
+  BOUGHT_NEW_FROM_DEVELOPER: { label: 'The building was bought new and never used, from the developer who built it', kind: 'choice', choices: YES_NO },
+  SBA_STATEMENT_HELD: { label: 'The seller’s structures and buildings allowance statement is on file', kind: 'choice', choices: YES_NO },
   /* Phase 153a, 4 October 2026 (Phase 153b lines 12 and 13, with the same grant data). Migration 078 adds both keys.
      Read by src/web/grant-checks.ts, the gate out of valuation. */
   GRANT_PROVIDER_CHECKED: {
@@ -1184,6 +1196,17 @@ function acquisitionGiven(db: Db, property_id: string): { value: string; words: 
   return said !== null && d !== null
     ? { value: d, words: 'the client’s own answer, checked', publisher: 'The client', locator: 'their answer in the portal, checked by staff', at: said.at }
     : null;
+}
+
+/** PHASE 159e (C15, L4): is the claim's accounting period known — recorded in full, or the client's checked year end —
+ *  so each part's period can be worked out? Read at approval: the year end is asked at data gathering and a version is
+ *  not approved without it, because the return entries are made from the version and never ask for it afterwards. */
+export function yearEndKnown(db: Db, c: { id: string; business_id: string }): boolean {
+  const said = approvedClientAnswer(db, c.business_id, 'year_end');
+  if (said !== null && clientYearEnd(said.answer) !== null) return true;
+  const f = latestFacts(db, c.id);
+  const s = f.get('ACCOUNTING_PERIOD_START'), e = f.get('ACCOUNTING_PERIOD_END');
+  return s !== undefined && e !== undefined && rowValue(s) !== null && rowValue(e) !== null;
 }
 
 /** PHASE 158d (F45): the accounting period the purchase falls in, from the client's checked year end, or null. */

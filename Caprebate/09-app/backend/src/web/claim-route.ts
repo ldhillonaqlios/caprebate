@@ -45,6 +45,10 @@ export type EventRoute = {
   readonly route: Route;
   /** The window for the event's own period. */
   readonly window: WindowReading;
+  /** PHASE 159e: the event's own date ("2025-06", "2025", or the purchase's day), and the accounting period it falls in,
+   *  where known — the period a W1 part goes into (src/web/allowances.ts). */
+  readonly event_date: string | null;
+  readonly period: { readonly start: string; readonly end: string } | null;
   /** W2: the first period whose return is still open, and when that window closes. */
   readonly first_open: { readonly start: string; readonly end: string; readonly deadline: string } | null;
   /** The deadline the return this route names can be filed by (W1: the event's own window; W2: the first open one). */
@@ -118,8 +122,9 @@ function firstOpen(db: Db, c: { id: string; business_id: string }, from: { start
   return null;
 }
 
-/** The period the PURCHASE falls in — the recorded one, else from the client's year end — for the W2 search. */
-function purchasePeriod(db: Db, c: { id: string; business_id: string; property_id: string | null }): { start: string; end: string } | null {
+/** The period the PURCHASE falls in — the recorded one, else from the client's year end — for the W2 search. PHASE 159e
+ *  (C15, L4): the return entries read this same period, so the window and the spreadsheet can never disagree. */
+export function purchasePeriod(db: Db, c: { id: string; business_id: string; property_id: string | null }): { start: string; end: string } | null {
   const f = latestFacts(db, c.id);
   const s = f.get('ACCOUNTING_PERIOD_START'), e = f.get('ACCOUNTING_PERIOD_END');
   const sv = s?.answer === 'VALUE' ? (s.value_date ?? s.value_text) : null, ev = e?.answer === 'VALUE' ? (e.value_date ?? e.value_text) : null;
@@ -131,6 +136,7 @@ function purchasePeriod(db: Db, c: { id: string; business_id: string; property_i
 /** Each event on the claim's building with its route. A claim with no events recorded takes one route, the purchase's. */
 export function claimRoutes(db: Db, c: { id: string; business_id: string; property_id: string | null }, todayIso: string): EventRoute[] {
   const owned = stillOwned(db, c);
+  const cash = cashBasis(db, c);
   const legal = legalVerdictForClaim(db, c.id, todayIso);
   const events: (PropertyEvent | null)[] = eventsOfProperty(db, c.property_id).filter((e) => e.kind !== 'REPAIRS');
   const list = events.length === 0 ? [null] : events;
@@ -140,6 +146,8 @@ export function claimRoutes(db: Db, c: { id: string; business_id: string; proper
     const isPurchase = kind === 'PURCHASE';
     let window: WindowReading;
     let period: { start: string; end: string } | null = null;
+    const acq = isPurchase || e === null ? acquisitionDateReading(db, c.property_id) : null;
+    const event_date = e !== null && !isPurchase ? e.event_date : acq !== null && acq.known ? acq.value : e?.event_date ?? null;
     if (isPurchase || e === null) {
       window = amendmentWindowReading(db, c, todayIso);
       period = window.state === 'UNKNOWN' ? null : purchasePeriod(db, c);
@@ -149,7 +157,7 @@ export function claimRoutes(db: Db, c: { id: string; business_id: string; proper
       else { period = p; window = windowForPeriod(db, c, p.end, todayIso, ` The work falls in the period ${p.start} to ${p.end}.`); }
     }
     const make = (route: Route, why: string, first_open: EventRoute['first_open'] = null): EventRoute => ({
-      event_id: e?.id ?? null, kind, label, route, window, first_open,
+      event_id: e?.id ?? null, kind, label, route, window, event_date, period, first_open,
       deadline: route === 'W1' ? window.deadline : route === 'W2' ? first_open?.deadline ?? null : null, why,
       words: route === 'W2' && first_open !== null
         ? `${ROUTE_WORDS.W2} The first year still open ends on ${first_open.end}.` : ROUTE_WORDS[route],
@@ -157,6 +165,8 @@ export function claimRoutes(db: Db, c: { id: string; business_id: string; proper
     // W3: the purchase fails the legal check (item 8 of Phase 159d), or the building is no longer owned.
     if (isPurchase && legal !== null && legal.level === 'RED') return make('W3', `the purchase fails the legal check: ${legal.headline}`);
     if (owned.value === 'NO') return make('W3', `${owned.why}, so there is no claim for this`);
+    // PHASE 159e (item 5, OUR READING): accounts on the cash basis claim no allowances on fixtures for the period.
+    if (cash.on) return make('W3', cash.why);
     if (window.state === 'OPEN') return make('W1', `the window for its own period is ${window.why}`);
     if (window.state === 'UNKNOWN') return make('NOT_KNOWN', window.why);
     if (owned.value !== 'YES') return make('NOT_KNOWN', `the window for its own period ${window.why}, and ${owned.why}. Through the pool it needs the building still owned`);
@@ -164,6 +174,26 @@ export function claimRoutes(db: Db, c: { id: string; business_id: string; proper
     if (fo === null) return make('NOT_KNOWN', `the window for its own period ${window.why}; the client still owns it, but the first open period cannot be worked out yet. Record the client’s year end`);
     return make('W2', `the window for its own period ${window.why}, and ${owned.why}: it goes into the pool of the period ${fo.start} to ${fo.end}, whose return can be amended until ${fo.deadline}`, fo);
   });
+}
+
+/** PHASE 159e (item 5): the claim's accounts are on the cash basis — a recorded CASH, for a claimant that may use it (a
+ *  company may not, so for a company the fact is read as not applying). Not recorded is not the cash basis (N4: it
+ *  never takes a claim away on a guess either way; the question is asked at data gathering). */
+export function cashBasis(db: Db, c: { id: string; business_id: string }): { on: boolean; recorded: 'CASH' | 'ACCRUALS' | null; why: string } {
+  const f = latestFacts(db, c.id).get('CASH_BASIS');
+  const recorded = f !== undefined && f.answer === 'VALUE' && (f.value_text === 'CASH' || f.value_text === 'ACCRUALS') ? f.value_text : null;
+  // Where nobody has recorded it, the client's own assessment answer (Q3, asked of an unincorporated care home); a fact
+  // staff record always wins, as with BOUGHT_THE_BUILDING. "Not sure" is not an answer either way (N4).
+  const said = recorded !== null ? null : db.get<{ value: string | null }>(
+    "SELECT x.value FROM assessment_answers x JOIN assessments a ON a.id = x.assessment_id WHERE a.business_id = ? AND x.question_id = 'Q3' AND x.state = 'ANSWERED' ORDER BY a.submitted_at DESC, a.id DESC LIMIT 1",
+    [c.business_id])?.value ?? null;
+  const v = recorded ?? (said === 'cash' ? 'CASH' : said === 'accruals' ? 'ACCRUALS' : null);
+  const t = db.get<{ claimant_type: string | null }>('SELECT claimant_type FROM businesses WHERE id = ?', [c.business_id])?.claimant_type ?? null;
+  const company = t === 'COMPANY' || t === 'CHARITY_COMPANY';
+  if (v === 'CASH' && !company) {
+    return { on: true, recorded: v, why: 'the accounts for the period are on the cash basis, as recorded: there is no claim on the fixtures while they are. Once the accounts move to accruals, the spend not yet relieved can be claimed' };
+  }
+  return { on: false, recorded: v, why: v === 'CASH' ? 'a company cannot use the cash basis, so the recorded answer does not apply' : v === 'ACCRUALS' ? 'the accounts are on accruals, as recorded' : 'how the accounts are drawn up is not recorded' };
 }
 
 /** True when every part of the claim takes a known route and at least one is claimed (W1 or W2). */

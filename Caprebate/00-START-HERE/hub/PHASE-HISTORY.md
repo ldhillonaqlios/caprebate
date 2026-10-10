@@ -12823,3 +12823,46 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159e to 
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 159e — the allowances on each event, and the return entries — 10 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 159e, 10 Oct 2026: the allowances on each event. Each part of a claim (the purchase, each piece of work since) now goes into its own year: its own year where that return can still be amended, or the first year still open. A recent refit takes its first-year relief: a company's full expensing and 50% allowance on new plant from April 2023, the 40% allowance from January 2026, and the annual investment allowance where this year's headroom is recorded (special rate first; never for a partnership with a company partner). A purchase is second-hand, so no full expensing, unless bought new and unused from its developer. The structures and buildings allowance is worked out on work and on a purchase. Rates now go by date (8% special rate before April 2019) and a pool of £1,000 or less is written off. The spreadsheet reads the same year as the window, and no version is approved without the client's year end. The cash basis stops a claim on fixtures. The report shows each part's year and allowances, and year by year. A June 2025 £90,000 refit: £50,400 of relief in 2025 (£63,000 with headroom recorded). Questions 257-260 to the tax adviser (ACC-H7). 5,045 checks in all. Next: Phase 159f.
+
+- **Branch** `claude/phase-159e`, from `main` after PR 46 (Phase 159d) merged at Lakhbir's word ("merge and run 159e").
+- **Evidence re-run first and last.** The claim harness (`claim/run-all.sh`; the 9 October outputs kept in `claim/before-159e/`): h4 crashed on the new "Small pool written off" row, so `h4-returns.ts` now accepts it (`h4-returns.ts.before-159e` kept) and has a Phase 159e block: C13 now 8%, 6.5% across April 2019, 6%; C15 the window and the spreadsheet both read 1 April 2024; C17 £800 written off; C18 the refit's full expensing and 50% allowance, or AIA with headroom. The penny check holds (30,000 rows, worst 0p). h1 0 failures; h5's fingerprints changed because a version now keeps each route's period. The engine harness: 2 violation classes, the same two kept on purpose since 159d.
+- **Premise re-derived (step 8).** The prompt said a second-hand purchase takes writing-down allowances only. The annual investment allowance is not limited to new plant (Rulebook I section 2), so a W1 purchase takes it where headroom is recorded; full expensing and the first-year allowances stay barred to it. Put to the tax adviser (question 257). The prompt's C15 premise held: the spreadsheet read only a recorded period start, the window also the year end.
+
+**What was built:**
+1. **Each part in its own year (items 4, 7, 8)** — `src/web/allowances.ts` `allowancesFor`, from the approved version alone: W1 the part's own period, W2 the first open one, W3 not claimed; the periods frozen with the version (`snapshotOf` keeps each route's `event_id`, `kind`, `event_date`, `period`, `first_open`). Returns run from the earliest part's year: five, or to the year after the last part's.
+2. **First-year relief by event, route and claimant (item 1, C18)** — on W1 only: AIA on recorded headroom (`AIA_HEADROOM` NONE or `AIA_HEADROOM_AMOUNT`), special rate first, shared per year, not for a partnership with a company partner or one not known, not spent where full expensing covers; full expensing and the 50% allowance (company, new plant, from 1 April 2023); the 40% allowance (s.45U, from 1 January 2026); remainders join the pool next year. New plant = own-cost works, or a purchase with `BOUGHT_NEW_FROM_DEVELOPER` YES (OUR READING; also in the engine's `reliefsEstablished`). The super-deduction is named, not taken.
+3. **The structures and buildings allowance (item 2)** — work: final account less plant less repair, work wholly from November 2018 (its date standing for its contract date), from the month after it; purchase from 29 October 2018: `SBA_QUALIFYING_EXPENDITURE` with `SBA_STATEMENT_HELD` YES (NO: none; not recorded: not worked out, and the year's total not known); W2 from the first open year; none on supported living. A line per piece of work in chapter 17; rows on the return entries; the report.
+4. **Rates by date and small pools (item 3; C13, C17)** — engine: `CB_RATES.WDA_TABLE`/`datedRate` (main 25/20/18/14%, special 10/8/6%, CT and IT dates, straddles rounded up), `specialRate`, `sbaRate`, `SMALL_POOL_LIMIT`, `SUPER_DEDUCTION`; `CB_BENEFIT.schedule` uses both.
+5. **One period source (item 4; C15, L4)** — `returnContext` reads `purchasePeriod` (the window's); `readiness` refuses approval until `yearEndKnown`.
+6. **The cash basis (item 5)** — `CASH_BASIS` (migration 107, with `BOUGHT_NEW_FROM_DEVELOPER` and `SBA_STATEMENT_HELD`; `return_entry_contexts.facts_json`); `cashBasis` makes every part W3 for a non-company on the cash basis; the client's own assessment answer (Q3) where nothing is recorded.
+7. **The report and the return entries (item 6)** — `returnEntries` rewritten on `allowancesFor` (a part with no relief keeps its old row); `reportModel(..., ctx)`: "The allowances, part by part" and "Year by year", page and PDF.
+
+**Tests.** Site harness: **1,426 pass / 0 fail / 3 xfail**, both modes (Suite AQ, seven checks: **all seven red** on `.bak-phase159e` through the redirect hook — 3 reads served). `test/phase159e.test.ts`, fourteen tests: on the commit before, `allowances.ts` does not exist, so the file does not load. Restated: `phase153b` (the new rows), `phase159a` (the small pool; the period now frozen in the version, so the live control records AIA headroom), `survey-report` and `survey-stage6` (a period recorded before approval; the report read with its facts).
+
+**The checks, at the close:** back end `npm run check` **2,762 pass / 0 fail** over 170 tracked files; phase3 440; phase9 417; **5,045** in all (drift checker re-derived them; seven stale figures fixed). `extract --check` up to date; `verify-extraction` 21 checks, 0 failures. CRM fold check green after eleven §4 line references moved by CB_RATES's new lines were re-pointed. Register check exit 0 (133 awaiting: 55 + 10 + 68); tracker check green; plain words green.
+
+**Documents.** Word questions 257 to 260 under the tax adviser, in Caprebate_Questions.docx and the 29 September re-sectioned copy. **A slip, caught and put right the same morning:** the backups were taken with `cp -p`, which copied OneDrive's identity, so the linked items were renamed `.bak-phase159e` and the new documents became second items. The second items are renamed "DELETE - ... (a second item 10 Oct 2026, Phase 159e backup taken with cp -p)" (they hold the same new document; Lakhbir may delete them), the linked items have their names back and the new documents in place (written with `cat`, compared byte for byte in the cloud), and the backups were made server-side. AMENDMENT 2 now says never `cp -p`. Nobody had typed in either document (both compared unchanged before writing). QUESTIONS-WORD-HEADINGS.txt rebuilt from the cloud copy (260 = 176 + 84). FOR THE ACCOUNTANT: ACC-H7 (board item 13254229838, created on monday in group 02, in the tracker and the register manifest); the three registers' totals to 133. Developer Spec: a Phase 159e section and the figures. The run sheet: 159e deleted, its outcome at the end, and 159i given item 5. The plan: 159e deleted, 159i item 5, section 6's row, and "Three first-year reliefs are named and not modelled" under what we deliberately have not done.
+
+```
+DONE          items 1-8: each part in its own year (W1 own, W2 first open); first-year relief by event, route and
+              claimant; a new building from its developer; the structures and buildings allowance on work and on a
+              purchase; the rates by date and small pools; one period source and the year end before approval; the
+              cash basis; the report and the return entries per part and per year. Questions 257-260, ACC-H7.
+              5,045 checks; every check green.
+NOT DONE      The seller's structures allowance statement as an uploadable, required document - BUILDABLE - Phase 159i item 5.
+              Whether first-year relief by event, a developer's new building, the structures allowance as built, and the
+                cash basis are viable - BUILT; BLOCKED only on the tax adviser's view - questions 257-260 (ACC-H7).
+              The claim when a cash-basis business moves to accruals - BLOCKED on the tax adviser saying whether and how
+                (question 260).
+              The super-deduction, pre-2019 AIA limits and the freeport structures allowance - deliberately not built, no
+                such year is open (ACTION-PLAN section 8, "Three first-year reliefs are named and not modelled").
+              Two "DELETE - ..." items in Lakhbir's OneDrive folder - his to delete (they duplicate the new documents).
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159f to 159j; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.
