@@ -13029,3 +13029,45 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds Phases 159j and 159k
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 159j — the stress suite in the build, and Lockwood once more with every API — 10 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 159j, 10 Oct 2026: the stress test now runs on every check. The estimate engine's grids, 20,000 seeded packs, 10,000 grant runs, 3,000 sets of pools through the return entries and the amendment window for every claimant type, year end and purchase year are tests in the build, each proved to fail when the code is broken on purpose. A document can now say which piece of work it proves, so a purchase and a refit each count their own invoices, and one button asks the client for a piece of work's final account and invoices by name. Lockwood Surgery was run again with every outside service live, a June 2020 purchase and a 2025 refit: every check held (the purchase into this year's pool, the refit in its own year, the allowances, the structures allowance on the refit, a source on every rate, the dormant company, the year end, Price Paid, the lease, the site size, Kirklees). It found nine more things: three fixed (the claim page now says a test reading is on when the pack uses it; the early window warning goes once each part has its route; the PDF's dates), one question to the tax adviser (278, ACC-H11) and five in the new Phase 159l. 5,107 checks in all. Next: Phase 159k, then 159l.
+
+- **Branch** `claude/phase-159j`, from `main` after PR 51 (Phase 159i) merged at Lakhbir's word ("merge 51 and run Next is Phase 159j").
+- **Evidence re-run first** (`04-phase-work/stress-2026-10-09/engine/before-159j/`, `claim/before-159j/`): the engine harness gave 363,611 checks and two violation classes, both kept on purpose (Word questions 247 and 250); h1 0 failures; h3, h4, h6, h6b as recorded; **h5 had gone stale** — since Phase 159f approval needs a source on every rate, and its fill gave none. The harness copy was given rate sources (`h5-versions.ts.before-159j` kept): all three scenarios now hold (no answer and no approval past the sign-off; a sign-off of an older version refused; no approval on an exited claim).
+- **Premise re-derived (step 8).** The prompt asked for the legal-path walk and the version scenarios in the suite: the walk has been `test/legal-paths.test.ts` since Phase 159h, and the version scenarios are Phase 159a's C3-C5 tests; neither is repeated. Item 5 said "documents, a nullable event id": the counts read `logical_documents` and every version of one document proves the same work, so the event is on the document (`logical_documents.event_id`), not on each version. The 9 October run's driver scripts (run0.sh, run1-3.py) no longer existed; the run was driven afresh.
+
+**What was built:**
+1. **The stress suite (item 1)** — `test/stress-engine-walk.ts` (the engine harness, its grids unchanged and its multi-building funnels on their fixed seed), `test/stress-pack-walk.ts` (packs against s.562 in BigInt; grants, C23; return entries, C16), `test/stress-window-walk.ts` with `test/fixtures/phase159j/window-table.csv` (408 rows, recorded by `node tools/window-table-record.ts`, identical to the harness's table) and its named cases; `test/phase159j.test.ts` runs them in `npm run check`. Five deliberate breaks, one at a time, each turned its test red and was restored: half-up rounding to floor, a grant row +1p, the company window at 25 months, supported living's common parts at 50%, a balance carried forward +1p.
+2. **The second Lockwood run (items 2, 3, 6)** — `04-phase-work/sim-2026-10-10-lockwood/` (OneDrive): a fresh local copy, driven over HTTP by each person's own login; Companies House, Homedata (address, property and boundary, planning), postcodes.io, CQC, EPC, Price Paid, Ordnance Survey, Zoom, Didit and the document reader all PASS; INSPIRE refused (its three test lookups used). 51p. Item 2's hand checks: the purchase W2 into 1 Jun 2024 - 31 May 2025, the refit W1 in 1 Jun 2025 - 31 May 2026; purchase £199,689.12 and refit £63,000; the allowances re-worked by hand, all right; SBA £22,500 at 3% from 1 Jul 2025; every rate line sourced on the page and the PDF. Item 6: all PASS. Findings L13-L21 (written up in `Lockwood-Surgery-run-2.md`).
+3. **The run's small fixes** — L14 (`packSwitchReadings`, `money-readings.ts`: the facts panel and the sign-off form read the adviser's switches as the pack applies them), L16 (no early window warning once every part has its route), L17 (`reportModel`'s route words through `ukDatesIn`, so the PDF matches the page). Each has a test that fails on the code before (`phase159j` L14; `phase158c` F37 and `phase159d` item 6 restated).
+4. **A document names its event (item 5)** — migration 111 (`logical_documents.event_id`, `client_tasks.event_id`; `logical_documents_fixed` made again so only the event may change); the staff upload and request forms ask "Which piece of work is it for?" where a building has more than one event; a request names the work in every list; the document that answers a request takes its event; the document page ties or unties it (`DOCUMENT_EVENT_SET` in the audit log); "Ask the client for this work's final account and invoices" asks each once; each event counts its own documents, a document naming none counted apart where there are several events. `src/web/funnel-edges.ts` regenerated.
+5. **INSPIRE end to end (item 4)** — not done: its switch-on is Lakhbir's to record (`smoke-switched-on`), and none was recorded by the close (he was asked in the chat). Carried to Phase 159l item 7.
+
+**Tests.** `test/phase159j.test.ts`, twelve tests; `test/phase158c.test.ts` and `test/phase159d.test.ts` restated (one assertion each).
+
+**The checks, at the close:** site 1,426 pass (3 xfail); phase3 440; phase9 417; back end `npm run check` 2,824 pass / 0 fail over 176 tracked files; **5,107** in all (re-derived by the drift checker: its first run was red on one plain-words sentence, its second green on every suite, and with the Developer Spec's two figure lines updated its file check shows none stale). CRM fold check green (two new addresses described, one line reference moved). Register check green (140 awaiting: 59 + 12 + 69). Tracker check green. Plain words green after one sentence was split. SQL lint and typecheck green.
+
+**Documents.** Word question 278 for the tax adviser in both documents, the safe way (server-side backups, written in place, byte for byte in the cloud, no conflict copy); headings 278. Register ACC-H11 (13255398510). New Phase 159l (13255398509), on monday, in the tracker, in the plan and on the run sheet above the sweep. Developer Spec: a Phase 159j section, and the figures.
+
+```
+DONE          item 1: the engine, pack, grant, return-entry and window harnesses as seeded tests in npm run check, each
+              proved to fail on a deliberate break; items 2, 3 and 6: Lockwood again with every API live, every hand
+              check and every register check held, findings L13-L21 written; item 5: a document names its event
+              (migration 111). L14, L16, L17 fixed. Question 278; ACC-H11. 5,107 checks; all green.
+NOT DONE      INSPIRE end to end (item 4) - BLOCKED on Lakhbir recording its switch-on (smoke-switched-on is his) -
+                Phase 159l item 7, which runs it once he has.
+              L13 the dormant flag before the letter - BUILDABLE - new Phase 159l item 1.
+              L15 a filing per return - BUILDABLE - new Phase 159l item 2.
+              L18 the research panel's postcode check - BUILDABLE - new Phase 159l item 3.
+              L19 the events' figures after the survey - BUILDABLE - new Phase 159l item 4.
+              L20 the work's own costs on the report - BUILDABLE - new Phase 159l item 5.
+              L17's remainder, BCIS's base quarter "at 2026-01" - BUILDABLE - new Phase 159l item 6.
+              L21 when the other half of a 50% allowance joins the pool - BUILT; BLOCKED only on the tax adviser -
+                Word question 278 (ACC-H11).
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue holds Phases 159k and 159l; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.

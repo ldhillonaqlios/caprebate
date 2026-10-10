@@ -784,7 +784,7 @@ export function factsPanel(db: Db, actor: Actor, claim_id: string, todayIso: str
       split_view: captured(f, 'GRANT_SPLIT_ADVISER_VIEW'),
       switch: switchLine('grant_traced_to_elements',
         'Off. In the survey pack every grant comes off every item in equal share — a share of the price paid. Switched on, a grant matched to rows of our fixture list would come off only those items. First the tax adviser must answer this. "When a grant’s papers say which items it paid for, should it come off only those items?"',
-        'On, on the test system. In the survey pack a grant matched to rows of our fixture list comes off only those items, and a grant not traced to items comes off in full. The tax adviser is asked whether this is viable.'),
+        'On, on the test system. In the survey pack a grant matched to rows of our fixture list comes off only those items. A grant not traced to items comes off in full. The tax adviser is asked whether this is viable.'),
     },
     acquisition_costs: {
       costs: captured(f, 'ACQUISITION_COSTS'), transaction_tax: captured(f, 'TRANSACTION_TAX'),

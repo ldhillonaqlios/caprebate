@@ -1086,7 +1086,7 @@ reasonably be established remotely should require a site inspection before a sur
 
  One item more is awaiting sign-off on the board: ACC-H3, in FOR THE ACCOUNTANT.
 
- **And the board's own total at the close of Phase 159i, 10 October 2026, counted in code: 139 items carry that status**: fifty-eight in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Fifty-eight plus twelve plus sixty-nine is 139. (At the close of Phase 159h it was 138; Phase 159i added ACC-H10.)
+ **And the board's own total at the close of Phase 159j, 10 October 2026, counted in code: 140 items carry that status**: fifty-nine in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Fifty-nine plus twelve plus sixty-nine is 140. (At the close of Phase 159i it was 139; Phase 159j added ACC-H11.)
 
 ## Phase 159f, 10 October 2026 — SV-S11 · the pack drafts its rates from BCIS, and every rate names its source
 
