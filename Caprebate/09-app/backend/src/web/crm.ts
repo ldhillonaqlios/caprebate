@@ -55,6 +55,7 @@ import { lastContactFor, timelineIfPermitted, type Timeline } from './timeline.t
 import { fireAutomation } from './automation.ts';
 import { claimDocumentsPanel, type ClaimDocumentsPanel, organisationDocumentsPanel, propertyDocumentsPanel, type PlaceDocumentsPanel } from './documents.ts';
 import { factsObj, factsPanel, releasedFactReader, type FactsPanel } from './claim-facts.ts';
+import { propertyTenure, ROLE_LABELS } from './who-claims.ts';
 import {
   aftercarePanel, deliverablesPanel, figuresPanel, raiseDisposalTask,
   type AftercarePanel, type DeliverablesPanel, type FiguresPanel,
@@ -114,6 +115,8 @@ export const CONTACT_TYPES: Vocab = Object.freeze({
 });
 
 export const TENURES: Vocab = Object.freeze({ FREEHOLD: 'Freehold', LEASEHOLD: 'Leasehold', UNKNOWN: 'Not known' });
+/** PHASE 159g: how the client holds the building — whose claim it is (src/web/who-claims.ts ROLE_LABELS, the same words). */
+export const CLAIMANT_ROLES: Vocab = Object.freeze({ OWNER_OCCUPIER: 'Owner who uses it', LANDLORD: 'Landlord (lets it out)', TENANT: 'Tenant (rents it)' });
 
 export const PRIOR_CLAIM: Vocab = Object.freeze({ YES: 'Yes', NO: 'No', UNKNOWN: 'Not known' });
 
@@ -1186,6 +1189,7 @@ type PropertyDbRow = {
   disposal_date: string | null; previous_owner: string | null; construction_notes: string | null;
   existing_ca_claimed: string | null; prior_claim_notes: string | null; updated_at: string | null;
   sale_in_prospect: string | null;
+  claimant_role: string | null; lease_end_date: string | null; landlord: string | null;
   business_name: string;
 };
 
@@ -1193,7 +1197,7 @@ const PROPERTY_SELECT =
   'SELECT p.id, p.business_id, p.label, p.postcode, p.created_at, p.address_line_1, p.address_line_2, p.town, ' +
   'p.jurisdiction, p.property_type, p.property_use, p.tenure, p.occupier, p.acquisition_date, ' +
   'p.acquisition_price_pence, p.completion_date, p.disposal_date, p.previous_owner, p.construction_notes, ' +
-  'p.existing_ca_claimed, p.prior_claim_notes, p.updated_at, p.sale_in_prospect, b.name AS business_name ' +
+  'p.existing_ca_claimed, p.prior_claim_notes, p.updated_at, p.sale_in_prospect, p.claimant_role, p.lease_end_date, p.landlord, b.name AS business_name ' +
   'FROM properties p JOIN businesses b ON b.id = p.business_id ';
 
 /**
@@ -1307,6 +1311,8 @@ export type PropertyView = {
   readonly prior_claim_notes: string | null;
   /** CRM 6 of 10: a sale that is coming. YES raises a task pointing at the Disposal Note; NULL reads as UNKNOWN does. */
   readonly sale_in_prospect: Reading;
+  /** PHASE 159g (item 4): how the client holds the building, and its tenure, lease and landlord in words, with sources. */
+  readonly holding: { readonly role: string | null; readonly role_words: string; readonly tenure_words: string; readonly lease_end_date: string | null; readonly landlord: string | null };
   readonly from_the_assessment: readonly AssessmentLine[];
   readonly claims: readonly ClaimSummary[];
   /** CRM 9 of 10: the documents linked to this property the reader may read — for a surveyor, only what `document.read` admits. */
@@ -1347,6 +1353,7 @@ export function propertyView(db: Db, actor: Actor, id: string, opts: { store?: P
     construction_notes: r.construction_notes,
     existing_ca_claimed: priorClaimFor(db, r),
     prior_claim_notes: r.prior_claim_notes,
+    holding: (() => { const t = propertyTenure(db, r.id); return { role: t.role.role, role_words: t.role.role === null ? t.role.words : `${ROLE_LABELS[t.role.role]}${t.role.source === null ? '' : ` (${t.role.source})`}`, tenure_words: t.words, lease_end_date: r.lease_end_date, landlord: r.landlord }; })(),
     sale_in_prospect: r.sale_in_prospect === 'YES' ? { known: true, value: 'YES', label: 'Yes — a sale is coming' }
       : r.sale_in_prospect === 'NO' ? { known: true, value: 'NO', label: 'No' } : { known: false, value: null, label: 'not known' },
     from_the_assessment: fromTheAssessment(db, actor, r),
@@ -1425,6 +1432,14 @@ export function updateProperty(
   // CRM 6 of 10: a sale that is coming — yes, no or not known. It sits outside the list below and is written on its own.
   const sale = take(input, 'sale_in_prospect', stored.sale_in_prospect, (v) => vocabField(v, PRIOR_CLAIM, 'Whether a sale is in prospect'));
   if (!sale.ok) return sale;
+  /* PHASE 159g (item 4): how the client holds the building, the day a lease ends and the landlord — each written on its
+     own, as the sale is, with "recorded by staff" as its source. A landlord is a company or a role, never a person. */
+  const role = take(input, 'claimant_role', r.claimant_role, (v) => vocabField(v, CLAIMANT_ROLES, 'How the client holds the building'));
+  if (!role.ok) return role;
+  const leaseEnd = take(input, 'lease_end_date', r.lease_end_date, (v) => dateField(v, 'The day the lease ends'));
+  if (!leaseEnd.ok) return leaseEnd;
+  const landlord = take(input, 'landlord', r.landlord, companyOrToken('The landlord'));
+  if (!landlord.ok) return landlord;
   const label = take(input, 'label', stored.label as string | null, (v) => textField(v, 300, 'The property’s name'));
   const postcode = take(input, 'postcode', stored.postcode, (v) => {
     const t = textField(v, 10, 'A postcode');
@@ -1490,9 +1505,15 @@ export function updateProperty(
     construction_notes: construction.value, existing_ca_claimed: priorClaim, prior_claim_notes: priorNotes.value,
   };
   const saleChanged = sale.value !== stored.sale_in_prospect && Object.hasOwn(input, 'sale_in_prospect');
-  const changed = [...changedKeys(stored, after), ...(saleChanged ? ['sale_in_prospect'] : [])];
+  const holdingChanged = ([['claimant_role', role.value, r.claimant_role], ['lease_end_date', leaseEnd.value, r.lease_end_date], ['landlord', landlord.value, r.landlord]] as const)
+    .filter(([k, v, was]) => Object.hasOwn(input, k) && (v ?? null) !== was).map(([k]) => k);
+  const changed = [...changedKeys(stored, after), ...(saleChanged ? ['sale_in_prospect'] : []), ...holdingChanged];
   if (changed.length === 0) return { ok: true, id: r.id };
   if (saleChanged) d.db.run('UPDATE properties SET sale_in_prospect = ?, updated_at = ? WHERE id = ?', [sale.value ?? null, d.now(), r.id]);
+  if (holdingChanged.includes('claimant_role')) d.db.run('UPDATE properties SET claimant_role = ?, claimant_role_source = ?, updated_at = ? WHERE id = ?', [role.value ?? null, role.value === null ? null : 'recorded by staff', d.now(), r.id]);
+  if (holdingChanged.includes('lease_end_date')) d.db.run('UPDATE properties SET lease_end_date = ?, updated_at = ? WHERE id = ?', [leaseEnd.value ?? null, d.now(), r.id]);
+  if (holdingChanged.includes('landlord')) d.db.run('UPDATE properties SET landlord = ?, updated_at = ? WHERE id = ?', [landlord.value ?? null, d.now(), r.id]);
+  if (changed.includes('tenure')) d.db.run('UPDATE properties SET tenure_source = ? WHERE id = ?', [after.tenure === null || after.tenure === 'UNKNOWN' ? null : 'recorded by staff', r.id]);
   /* CRM 6 of 10: a disposal date newly set, or a sale newly in prospect, raises the task pointing at the Disposal Note —
      after the write, and once per property while one is open. Never asked and not known raise nothing. */
   const disposalSet = changed.includes('disposal_date') && after.disposal_date !== null;

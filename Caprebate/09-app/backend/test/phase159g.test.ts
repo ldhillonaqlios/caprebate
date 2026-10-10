@@ -233,6 +233,23 @@ describe('4 · item 4 — tenure from the registers, with its source', () => {
   });
 });
 
+describe('4b · item 4 — the client gives the rest on the property page', () => {
+  test('how the client holds it, the day the lease ends and the landlord are recorded by staff, each with its source; a bad value is refused', async () => {
+    const app = await testApp();
+    const { p } = business(app, 'form');
+    const sales = actor('SALES');
+    assert.equal(C.updateProperty(deps(app), sales, p, { claimant_role: 'TENANT', lease_end_date: '2040-03-31', landlord: 'NHS_BODY', tenure: 'LEASEHOLD' }, { store: null }).ok, true);
+    const r = W.propertyTenure(app.db, p);
+    assert.deepEqual([r.tenure, r.source, r.role.role, r.role.source, r.lease_end_date, r.landlord], ['LEASEHOLD', 'recorded by staff', 'TENANT', 'recorded by staff', '2040-03-31', 'NHS_BODY']);
+    assert.equal(C.propertyView(app.db, sales, p, { store: null }).holding.role_words, 'Tenant (rents it) (recorded by staff)');
+    assert.equal(C.updateProperty(deps(app), sales, p, { claimant_role: 'SQUATTER' }, { store: null }).ok, false);
+    // Cleared: back to not known, and its source with it.
+    assert.equal(C.updateProperty(deps(app), sales, p, { claimant_role: '' }, { store: null }).ok, true);
+    assert.equal(W.claimantRole(app.db, p).role, null);
+    app.close();
+  });
+});
+
 describe('5 · item 5 — a site area far larger than the building', () => {
   test('8,170 m² against a 266 m² surgery is flagged for the surveyor; a plot in proportion is not; unknown is never flagged', () => {
     assert.match(W.siteAreaFlag(8170, 266) ?? '', /site area \(8,170 m²\) is 31 times the building’s floor area \(266 m²\).*never used as the plot/);

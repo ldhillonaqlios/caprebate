@@ -1873,7 +1873,7 @@ Signed .............................  Date ..........................
 
  **This register gains one entry and one board item**: ACC-H3, the accountant's own confirmation link and the defence pack's list of records (board item 13245993980). Phase 158d wrote the two checks into this register, but made no board item for them, so no count saw them. **Board items covered: 51.**
 
- **And the board's own total at the close of Phase 159f, 10 October 2026, counted in code: 134 items carry that status**: fifty-five in FOR THE ACCOUNTANT, eleven in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-five plus eleven plus sixty-eight is 134. (At the close of Phase 159e it was 133; Phase 159f added SV-S11.)
+ **And the board's own total at the close of Phase 159g, 10 October 2026, counted in code: 137 items carry that status**: fifty-six in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Fifty-six plus twelve plus sixty-nine is 137. (At the close of Phase 159f it was 134; Phase 159g added ACC-H8, SV-S12 and SDP-P44.)
 
 ## Phase 159b, 9 October 2026 — ACC-H4 · four readings behind the online figure, built and on in the test system
 
@@ -1918,3 +1918,12 @@ Signed .............................  Date ..........................
  The return entries now also carry the rates by date (8% on the special rate pool before April 2019, 20% on the main pool before April 2012, blended across a change) and write off a pool of £1,000 or less (s.56A). Those are the law, not readings, so they are not questions.
 
  **ACC-H7 · Board item 13254229838, added 10 October 2026 by Phase 159e.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 55.**
+
+## Phase 159g, 10 October 2026 — ACC-H8 · who claims: a landlord's property business, and which year end
+
+ We build first and ask you second (Lakhbir, 29 September 2026). Both are on in the test system only, with invented data. Each is a question in the Word questions document, with our recommendation and a worked example:
+
+-  **A landlord can claim, through its property business.** Our first check used to turn away any client that did not trade. The law (Capital Allowances Act 2001, section 15) also counts a profession and a UK property business. So a landlord or a property company that owns a surgery, a dental practice or a care home and lets it to another business can claim on the fixtures it owns; the tenant claims only on what it paid for itself. The check now asks for a qualifying activity, and the assessment asks who uses the building (owner, landlord or tenant). Letting homes stays out (section 35), and a dormant company has no activity at all. (Question 263, for the tax adviser.)
+-  **The year end from Companies House.** For a company, the claim now uses the accounting reference date on the register, and shows the client's answer beside it when they differ, for staff to check. Lockwood's test year end was 31 March; Companies House says 31 May. (Question 264, for the accountant.)
+
+ **ACC-H8 · Board item 13254543097, added 10 October 2026 by Phase 159g.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 56.**

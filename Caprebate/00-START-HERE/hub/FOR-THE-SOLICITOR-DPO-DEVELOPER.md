@@ -2092,4 +2092,11 @@ Name:                                  Date:
 
  One item more is awaiting sign-off on the board: ACC-H3, in FOR THE ACCOUNTANT.
 
- **And the board's own total at the close of Phase 159f, 10 October 2026, counted in code: 134 items carry that status**: fifty-five in FOR THE ACCOUNTANT, eleven in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-five plus eleven plus sixty-eight is 134. (At the close of Phase 159e it was 133; Phase 159f added SV-S11.)
+ **And the board's own total at the close of Phase 159g, 10 October 2026, counted in code: 137 items carry that status**: fifty-six in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Fifty-six plus twelve plus sixty-nine is 137. (At the close of Phase 159f it was 134; Phase 159g added ACC-H8, SV-S12 and SDP-P44.)
+
+## Phase 159g, 10 October 2026 — SDP-P44 · an owner's name checked and not kept; two company facts kept
+
+-  **SDP-P44 — NEW ENTRY. For the data protection officer (Word question 267).** Board item 13254520473. (1) A sole trader's or a partnership's building is registered to the people themselves. Staff may now type the owner's name from the official copy of the title register; it is compared there and then with the client's own contacts, and only "yes" or "no" is kept (`proprietor_personal_match` on the title record). The name is not saved: the same pattern as the director check you agreed in question 156. (2) Two facts about a company are now kept from Companies House: the type of its latest accounts (for example "dormant") and the date they were made up to (`accounts_type`, `accounts_made_up_to`), added to the source register's permitted fields and the name exclusion register's kept fields. Neither is about a person. (3) For testing only, the Companies House company profile and people with significant control are read on the test website under a recorded waiver (Lakhbir, 10 October 2026); the people with significant control still wait for the signed letter.
+-  **For the developer.** Migration 109 (`properties.claimant_role`, `claimant_role_source`, `tenure_source`, `lease_end_date`, `landlord`, `council_area`, `council_area_source`). The assessment's details screen asks who uses the building (`Q2-n-use`). Price Paid is asked for every sector and keeps `ppd_category`. `src/web/who-claims.ts` holds the readings.
+
+ **This register now has seventy-eight entries covering sixty-nine board items.**

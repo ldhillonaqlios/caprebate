@@ -1064,7 +1064,7 @@ reasonably be established remotely should require a site inspection before a sur
 
 -  **SV-S10 — NEW ENTRY. The professional fees on top of the build cost (your call question 9a).** Board item 12804380489. The cost model adds a flat 15% for the design team's fees the client paid on top of the build cost (not our own fee). A banded scale with building-type adders is built and switched off, with empty tables, waiting on your percentage. It was filed as "Blocked - question" behind a Valuation Office licence we no longer need: since 4 October the percentage is yours to set (call question 9a). **What we are asking you:** what percentage, or which bands, should the model use?
 
-**Marked 6 October 2026 by Phase 157 (the sweep): one entry moved into this register. Marked again 10 October 2026 by Phase 159f: SV-S11 added, so its size is now eleven entries covering eleven board items, all eleven at Built — awaiting sign-off.**
+**Marked 6 October 2026 by Phase 157 (the sweep): one entry moved into this register. Marked again 10 October 2026 by Phase 159f: SV-S11 added; and by Phase 159g the same day: SV-S12 added, so its size is now twelve entries covering twelve board items, all twelve at Built — awaiting sign-off.**
 
  **And the board's own total at the close of Phase 157 (the sweep), 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.
 
@@ -1086,7 +1086,7 @@ reasonably be established remotely should require a site inspection before a sur
 
  One item more is awaiting sign-off on the board: ACC-H3, in FOR THE ACCOUNTANT.
 
- **And the board's own total at the close of Phase 159f, 10 October 2026, counted in code: 134 items carry that status**: fifty-five in FOR THE ACCOUNTANT, eleven in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-five plus eleven plus sixty-eight is 134. (At the close of Phase 159e it was 133; Phase 159f added SV-S11.)
+ **And the board's own total at the close of Phase 159g, 10 October 2026, counted in code: 137 items carry that status**: fifty-six in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Fifty-six plus twelve plus sixty-nine is 137. (At the close of Phase 159f it was 134; Phase 159g added ACC-H8, SV-S12 and SDP-P44.)
 
 ## Phase 159f, 10 October 2026 — SV-S11 · the pack drafts its rates from BCIS, and every rate names its source
 
@@ -1098,3 +1098,12 @@ reasonably be established remotely should require a site inspection before a sur
 
  **SV-S11 · Board item 13254340860, added 10 October 2026 by Phase 159f.** One entry, at Built - awaiting sign-off, owner the surveyor. **This register now has eleven entries covering eleven board items.**
 
+## Phase 159g, 10 October 2026 — SV-S12 · what the registers already say, shown to you in chapter 9
+
+ We build first and ask you second. Both are on in the test system only. Chapter 9 now has a short section, "What the registers say", for you to confirm. Nothing in it is counted until you put a value in.
+
+-  **A sale from the Land Registry's price list, as a lead.** We now look every building up in HM Land Registry's Price Paid list, whatever its sector. A sale of category B ("additional price paid": to a company, a buy-to-let, a repossession or a transfer), or of type "Other", is shown as a lead, never as the price. Lockwood Surgery: sold 3 June 2020 for £540,000, leasehold, type "Other", category B. (Question 265.)
+-  **A site far bigger than the building.** A site more than ten times the building's floor area is flagged, and it is never used as the plot. Lockwood: 8,170 m² against 266 m², 31 times. (Question 266.)
+-  **And two drafts for you to change.** The tenure, and how the client holds the building (owner, landlord or tenant), are shown with where they came from. The BCIS location is now drafted from the property's council area, where the BCIS table names it; your choice of area, the UK mean included, always wins.
+
+ **SV-S12 · Board item 13254543146, added 10 October 2026 by Phase 159g.** One entry, at Built - awaiting sign-off, owner the surveyor. **This register now has twelve entries covering twelve board items.**

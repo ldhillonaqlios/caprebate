@@ -93,6 +93,7 @@
 258) Is a building bought new and never used, from the developer who built it, “second-hand” for full expensing? We built it as not second-hand.
 259) We now work out the structures and buildings allowance on work and on a purchase. Is the way we do it viable?
 260) A business whose accounts are on the cash basis cannot claim on fixtures. We built it so. Is that right, and should we add the claim when it moves to accruals?
+263) Can a landlord that lets a surgery or care home to another business claim the allowances, through its property business?
 116) Would you send a client to us, and what would stop you?
 117) Do you want a fee for sending clients, and what must you tell them?
 118) Who sends the corrected tax return to HMRC: you or us?
@@ -106,6 +107,7 @@
 126) What would make you look bad in front of your client?
 127) Has another capital allowances firm contacted you before, and what happened?
 128) Do we need to be supervised under anti-money-laundering rules?
+264) When Companies House gives a different year end from the one the client told us, which should the claim use?
 129) Can you value a building safely without ever visiting it?
 130) When can a video walkthrough replace a site visit?
 131) Should the site-visit decision use our hidden estimate or the price paid?
@@ -135,6 +137,8 @@
 203) Can we use a measured floor area when a building has no energy certificate?
 261) Section 562 asks for the price to be shared out justly. We use the proportional way and show the residual way beside it. Which should the report use?
 262) The pack now drafts rates from BCIS. Is the way it does it how you would price them?
+265) When the Land Registry's price list shows a sale to a company, or a sale of type "Other", how should we use it?
+266) Is a site ten times bigger than the building the right point to warn you that the site area may be wrong?
 155) Can the host leave our two client-document folders out of its backups?
 157) Exactly who can run the website, including the host's own staff?
 159) Must personal names be removed from an upload before it is stored, or just after?
@@ -175,6 +179,7 @@
 242) Do you approve Zoom, a US company, for our video calls?
 243) Do you approve WhatsApp (Meta), a US company, for messages with clients?
 246) May a client sign our engagement letter from a link in an email, without logging in to the portal?
+267) May we check an owner's name from the title register against the client's own people, and keep only yes or no?
 1) What do we do when our fee is more than the client saves in year one?
 3) Has the privacy email inbox been set up, and is someone reading it?
 4) Should the business email inboxes be set up on IONOS or Microsoft 365?

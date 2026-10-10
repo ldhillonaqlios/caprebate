@@ -12907,3 +12907,48 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159g to 
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 159g — who claims, and what the registers already say — 10 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 159g, 10 Oct 2026: who claims, and what the registers already say. "Find this company" now shows each match's status and accounts type, and flags a dormant company at once (Lockwood Surgery Prime Health Ltd shows as dormant, checked live). The research reads Companies House's company profile on the test website, and the claim's year end comes from the register, with the client's shown beside it when they differ. The first check now asks for a qualifying activity (a trade, a profession or letting the building to a business), so a landlord is not turned away, and the assessment asks who uses the building: owner, landlord or tenant. Price Paid is asked for every sector; a sale to a company or of type "Other" is shown to the surveyor as a lead, never the price. Tenure, the lease's end, the landlord and the council area are kept on the property with their sources. A site far bigger than the building is flagged. A sole trader's or partnership's building named to one of their own people counts as still owned (only yes or no is kept). The BCIS location is drafted from the council area. Questions 263-267 (the tax adviser, the accountant, the surveyor, the data protection officer). Carried: the legal check reading who claims, to 159h; the live check, to 159j. 5,072 checks in all. Next: Phase 159h.
+
+- **Branch** `claude/phase-159g`, from `main` after PR 48 (Phase 159f) merged at Lakhbir's word ("merge and run 159g").
+- **Evidence re-run.** The claim harness (`claim/run-all.sh`; outputs before kept in `claim/before-159g/`): h1 0 failures, every output identical to before apart from the process id. The engine harness: `results.json` identical apart from its timestamp (`engine/before-159g/`). Neither covers 159g's items, which came from the live run (L2, L8, L11) and the coverage matrix; those are proved by the phase's own tests and a live search. The harness was not run before the build started, only after (both unchanged, so nothing moved).
+- **Premise re-derived (step 8).** The brief said the trading-client check sat at pipeline.ts:264 and 343-345: it did (the check's label at 294, the evidence comment at 374). Price Paid's sector refusal was at price-paid.ts:112 as said. The engine's own `residentialOnly` rule on Price Paid (derive() offering "Our records show you paid…") was left as it is on purpose: it keeps a Price Paid figure from ever being offered to a client as a price outside supported living, which is what item 3 asks.
+
+**What was built:**
+1. **The company on the register (item 1, L2, L8)** — each match's profile read for its accounts type (at most eight calls); status and accounts type on the screen; a dormant company flagged. `accounts_type` and `accounts_made_up_to` kept on the Companies House record (added to the source register and the name exclusion register). CH_COMPANY and CH_PSC waived for the test website, recorded (the PSC still after signing). The register's year end is the claim's; the client's is compared and a difference said (facts panel). Proved live on a local copy: "Lockwood Surgery" lists LOCKWOOD SURGERY PRIME HEALTH LTD "active · dormant accounts", flagged.
+2. **A qualifying activity (item 2)** — the check's words (key unchanged), SOP 1's gate and step 2 (the stage map transcribes them). "Who uses the building?" on the details screen; answer row `Q2-n-use`; `properties.claimant_role` with its source at submission; the evidence beside the check names a dormant company and each building's role.
+3. **Price Paid for every sector (item 3, L11)** — no sector refused; `ppd_category` kept; category B, "Other" or no category is a lead (desk-first skips it; chapter 9 shows it with the attribution).
+4. **Tenure and occupier on the property (item 4)** — migration 109 (`claimant_role`, `claimant_role_source`, `tenure_source`, `lease_end_date`, `landlord`, `council_area`, `council_area_source`); tenure filled from the title typed by hand, then Price Paid, after each research run and title entry, never over a recorded one; the property page records the role, the lease end and the landlord. `propertyTenure` is the one reading.
+5. **The site area (item 5)** — flagged above ten times the floor area, on the site-area lines and in chapter 9; never the plot.
+6. **A person named as owner (item 6, from 159d)** — the title typed by hand takes the owner's name where it is a person, compares it with the client's contacts in memory, and keeps only YES or NO; `stillOwned` reads it for a sole trader, a partnership or an individual.
+7. **The BCIS location (item 7, from 159f)** — the council area kept on the property (postcode check at submission, or the research's postcodes.io answer); the pack drafts its location from it where the table names it; the surveyor's choice wins.
+
+**Tests.** `test/phase159g.test.ts`, seventeen tests: on the commit before, `src/web/who-claims.ts` does not exist, so the file does not load. Restated where this phase changed the premise: `phase146c` (Price Paid asked for every sector; the new kept fields), `phase153b` (a candidate carries its accounts type), `survey-stage6` (the waiver list, and what the test website now reaches: Companies House and Price Paid too).
+
+**The checks, at the close:** back end `npm run check` **2,789 pass / 0 fail** over 172 tracked files; phase3 440; phase9 417; site 1,426; **5,072** in all (the drift checker re-derived them; the spec's two figures fixed). CRM fold check green after twenty line references in the spec were moved to where the code now is. Register check exit 0 (137 awaiting: 56 + 12 + 69). Tracker check green. Plain words green. Brand check green.
+
+**Documents.** Word questions 263 (the tax adviser), 264 (the accountant), 265-266 (the surveyor) and 267 (the data protection officer), in the main document and the 29 September copy, written the safe way (server-side backups to the `.bak-phase159g` names, written in with `cat`, same inode, each cloud copy compared byte for byte after, no conflict copy); QUESTIONS-WORD-HEADINGS.txt rebuilt (267 = 182 + 85). Registers: ACC-H8 (13254543097), SV-S12 (13254543146), SDP-P44 (13254520473), each created on monday and in the tracker, and in the register manifest. SOP 1 (the monday export in 08-) given the qualifying-activity wording. Developer Spec: a Phase 159g section, the title route's note, the figures. The run sheet: 159g deleted, 159h item 7 and 159j item 6 added in full, the outcome at the end. The plan: 159g deleted, the same two carried items, section 6's row.
+
+```
+DONE          items 1-7: each match's accounts type with a dormant company flagged (proved live on Lockwood); the
+              company profile and PSC waived for test; the register's year end compared with the client's; a
+              qualifying activity; who uses the building as the property's claimant role; Price Paid for every sector
+              as a lead; tenure, lease end, landlord and council area on the property with sources; the site-area flag;
+              a personal owner matched with no name kept; the BCIS location from the council area. Questions 263-267;
+              ACC-H8, SV-S12, SDP-P44. 5,072 checks; every check green.
+NOT DONE      The legal check and the route reading the claimant role, tenure and lease end - BUILDABLE - Phase 159h item 7.
+              The live check of the rest of 159g on the Lockwood run (year end, Price Paid lead, site flag, Kirklees) -
+                BUILDABLE - Phase 159j item 6.
+              Whether a landlord's claim and the register's year end are viable - BUILT; BLOCKED only on the tax adviser
+                and the accountant - questions 263-264 (ACC-H8).
+              Whether the Price Paid lead and the ten-times site warning are right - BUILT; BLOCKED only on the surveyor -
+                questions 265-266 (SV-S12).
+              Whether the owner-name check and the two kept company facts are viable - BUILT; BLOCKED only on the data
+                protection officer - question 267 (SDP-P44).
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159h to 159j; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.

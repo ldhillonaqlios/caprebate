@@ -113,7 +113,8 @@ const ORGANISATION_FIELDS = ['legal_name', 'company_number', 'claimant_type', 'r
 const CONTACT_FIELDS = ['full_name', 'job_title', 'contact_type', 'is_decision_maker', 'email', 'phone', 'notes'] as const;
 const PROPERTY_FIELDS = ['label', 'postcode', 'address_line_1', 'address_line_2', 'town', 'jurisdiction', 'property_type',
   'property_use', 'tenure', 'occupier', 'acquisition_date', 'acquisition_price', 'completion_date', 'disposal_date',
-  'previous_owner', 'construction_notes', 'existing_ca_claimed', 'prior_claim_notes', 'sale_in_prospect'] as const;
+  'previous_owner', 'construction_notes', 'existing_ca_claimed', 'prior_claim_notes', 'sale_in_prospect',
+  'claimant_role', 'lease_end_date', 'landlord'] as const;
 // CRM 3 of 10: the next action is a task, set in its own panel, so the form does not draw it. THE CRM FOLLOW-ON: it is
 // still READ here when posted, so `updateClaim` refuses it with its reason — dropping it answered "saved" and wrote nothing.
 const CLAIM_FIELDS = ['owner_id', 'surveyor_id', 'priority', 'workstream', 'property_id',
@@ -817,6 +818,8 @@ function propertyPage(
         { label: 'Property type', value: v.property_type === null ? null : v.property_type_label },
         { label: 'Property use', value: v.property_use },
         { label: 'Tenure', value: v.tenure.label },
+        { label: 'How the client holds it', value: v.holding.role_words, keep: true },
+        { label: 'Tenure, lease and landlord', value: v.holding.tenure_words, keep: true },
         { label: 'Occupier', value: v.occupier },
         { label: 'Acquired', value: v.acquisition_date === null ? null : ukDate(v.acquisition_date) },
         { label: 'Acquisition price', value: v.acquisition_price },
@@ -850,6 +853,9 @@ function propertyPage(
           <label>Property type <select name="property_type">${options(vocabulary(d.app.db, 'PROPERTY_TYPE', v.property_type), v.property_type, 'not recorded')}</select></label>
           <label>Property use <input name="property_use" value="${v.property_use ?? ''}"></label>
           <label>Tenure <select name="tenure">${options(C.TENURES, v.tenure.value, 'not recorded')}</select></label>
+          <label>How the client holds it <select name="claimant_role">${options(C.CLAIMANT_ROLES, v.holding.role, 'not known')}</select></label>
+          <label>The day the lease ends <input name="lease_end_date" type="date" value="${v.holding.lease_end_date ?? ''}"></label>
+          <label>Landlord — a company name, or one of ${Object.keys(C.OWNER_ROLE_TOKENS).join(', ')} <input name="landlord" value="${v.holding.landlord ?? ''}"></label>
           <label>Occupier — a company name or a role, never a person <input name="occupier"></label>
           <label>Acquisition date <input name="acquisition_date" type="date" value="${v.acquisition_date ?? ''}"></label>
           <label>Acquisition price, in pounds <input name="acquisition_price"></label>

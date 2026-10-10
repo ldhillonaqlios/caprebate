@@ -16,9 +16,10 @@
  *   · a person named as owner on the title register, matched against the client's own people (item 6).
  *
  * N4 throughout: a fact not known is not known. Nothing here turns an absent answer into a yes, a no or a figure.
- * OUR READING, put to the tax adviser as viability checks (Word questions 263-265): that a landlord letting a
- * healthcare building has a qualifying activity and is a client; that the register's accounting year end is the
- * claim's year end where the client has not said otherwise; and that a category B sale is a lead, not a price.
+ * OUR READING, built and put as viability checks in the Word questions document: that a landlord letting a healthcare
+ * building has a qualifying activity and is a client (263, the tax adviser); that the register's accounting year end is
+ * the claim's (264, the accountant); that a category B or "Other" sale is a lead, not a price, and that a site ten times
+ * the building is the warning point (265-266, the surveyor); and the owner-name check that keeps no name (267, the DPO).
  *
  * This file imports nothing from claim-facts.ts, which imports from here.
  */
