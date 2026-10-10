@@ -37,6 +37,7 @@
  * and this file owns how it moves.
  */
 
+import { claimRoutes, legalDeadlineNeed, routesWhy } from './claim-route.ts';
 import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { authorise, can, type Actor } from '../authz.ts';
@@ -584,6 +585,8 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
     }
     case 'TAX_ADVISER_SIGNOFF':
       needs.push(signOffNeed(db, c));
+      // PHASE 159d (C9): a legal check clear only until a deadline is read again.
+      needs.push(legalDeadlineNeed(db, c, opts.today ?? new Date().toISOString()));
       break;
     case 'REPORTS':
       // "No tax adviser sign-off (carried forward from SOP 7): no report is drafted stating a figure to the client."
@@ -602,9 +605,12 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
           deliverableIssuedNeed(db, c.id, 'CLIENT_REPORT'), clientAcceptedNeed(db, c),
           deliverableIssuedNeed(db, c.id, 'ACCOUNTANT_COMPUTATION_PACK'),
           route.route === 'CLIENT'
-            ? clientConfirmationNeed(db, c, since, amendmentWindowReading(db, c, today).deadline)
+            // PHASE 159d: the deadline of the return the route names — under W2 the first open year's, not the closed one.
+            ? clientConfirmationNeed(db, c, since, claimRoutes(db, c, today).filter((r) => r.route === 'W1' || r.route === 'W2')
+              .map((r) => r.deadline).filter((x): x is string => x !== null).sort()[0] ?? amendmentWindowReading(db, c, today).deadline)
             : accountantFitNeed(db, c.id, since), // PHASE 158d (F46): the accountant's own answer, not a staff tick
           reportsWindowNeed(db, c, today),
+          legalDeadlineNeed(db, c, today),   // PHASE 159d (C9)
         );
       }
       break;
@@ -913,6 +919,16 @@ export function moveClaim(d: PipelineDeps, actor: Actor, claim_id: string, req: 
     }
     if (reason.code === 'OTHER' && note.value === null) {
       return refuse(d, actor, c, kind, to, '“Another reason” needs the reason written in the note.', 'reason');
+    }
+    /* PHASE 159d: "OUTSIDE THE AMENDMENT WINDOW" ENDS A CLAIM ONLY WHERE NOTHING IS LEFT TO CLAIM — every part W3 (not
+       owned, or the purchase fails the legal check). A closed window with the building still owned is W2, through this
+       year's pool, and a part with no route yet is not settled: neither stops the job. */
+    if (exit.key === 'OUTSIDE_AMENDMENT_WINDOW') {
+      const routes = claimRoutes(d.db, c, opts.today ?? d.now());
+      if (!routes.every((r) => r.route === 'W3')) {
+        return refuse(d, actor, c, kind, to,
+          `This claim does not stop for the window. ${routesWhy(routes)}. A closed window with the building still owned goes into this year’s pool instead.`);
+      }
     }
     return apply(d, actor, c, {
       kind, to: exit.key, reason_code: reason.code, reason_text: note.value, hold_return_stage: null, hold_reason: c.hold_reason,

@@ -23,6 +23,7 @@
  *    string concatenation of markup anywhere in this file.
  */
 
+import { claimRoutes } from './claim-route.ts';
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { cleanForm } from './typed.ts';
@@ -1207,7 +1208,11 @@ async function portalRoutes(
         <p>It may have been typed wrongly.</p><p><a class="btn btn-primary" href="/portal">See your claims</a></p></div>` }));
       return 'handled';
     }
-    html(res, 200, portalClaimPage(actor, business, c, nameSwitches().portalSteps, portalSteps(db, actor, business_id)));
+    // PHASE 159d (item 6): which way each part of the claim goes in — the claim the portal has already authorised.
+    const row = db.get<{ property_id: string | null }>('SELECT property_id FROM claims WHERE id = ? AND business_id = ?', [c.id, business_id]);
+    const routes = row === undefined || c.state !== 'OPEN' ? [] : claimRoutes(db, { id: c.id, business_id, property_id: row.property_id }, new Date().toISOString())
+      .map((r) => ({ label: r.label === 'The claim' ? 'Your claim' : r.label, words: r.words }));
+    html(res, 200, portalClaimPage(actor, business, c, nameSwitches().portalSteps, portalSteps(db, actor, business_id), routes));
     return 'handled';
   }
 
@@ -2276,7 +2281,8 @@ function portalSteps(db: Db, actor: Actor, business_id: string): ClientStep[] {
   return can(actor, 'client_step.read', { type: 'client_steps', id: business_id, business_id }) ? clientSteps(db, actor, business_id) : [];
 }
 
-function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, named: boolean, done: readonly ClientStep[] = []): string {
+function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, named: boolean, done: readonly ClientStep[] = [],
+  routes: readonly { readonly label: string; readonly words: string }[] = []): string {
   const property = propertyIn(business.name, c.property);
   // PHASE 157c (F8): the town only where the property's words do not already carry it.
   const where = [property, c.town !== null && property !== null && property.toLowerCase().includes(c.town.trim().toLowerCase()) ? null : c.town].filter((x): x is string => x !== null && x.trim() !== '').join(', ');
@@ -2294,6 +2300,8 @@ function portalClaimPage(actor: Actor, business: P.Business, c: P.PortalClaim, n
               : h`<p>${c.progress.current.toTheClient}</p>`}
       </section>
       ${clientStepsCard(done, [{ id: c.id, name: property ?? 'Your claim' }], c.id)}
+      ${routes.length === 0 ? raw('') : h`<section class="card" id="routes"><div class="card-h"><h2>How each part goes in</h2></div>
+        <ul>${routes.map((r) => h`<li><strong>${r.label}.</strong> ${r.words}</li>`)}</ul></section>`}
       <section class="card"><div class="card-h"><h2>What we need from you</h2></div>
         <p>Questions, documents and messages for all your claims are in one place.</p>
         <p><a class="btn btn-primary" href="/portal#waiting-on-you">See what we need from you</a></p>

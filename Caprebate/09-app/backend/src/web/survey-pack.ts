@@ -33,6 +33,7 @@ import {
   type PackInputs, type PackLine, type PackSums, type Pool, type Source, type Valued, type WorksField, type WorksInputs, type WorksSums,
 } from './pack-sums.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from './property-events.ts';
+import { legalVerdictForJob } from './pack-legal.ts';
 import { applyGrants, type GrantReading, type GrantSwitches } from './pack-grants.ts';
 import { elementName, packGrantsFor } from './claim-facts.ts';
 import { shippedGrantSwitches } from './grant-checks.ts';
@@ -145,6 +146,9 @@ export type PackView = {
   readonly purchase_sums: PackSums;
   /** PHASE 159c: each piece of work since, on its own cost. */
   readonly works: readonly WorksView[];
+  /** PHASE 159d (item 8): the purchase fails the legal check (RED) and there is work since: the purchase is W3 — not
+   *  claimed — and the works stand on their own. False otherwise: a pack with no work stops at the legal check as before. */
+  readonly purchase_w3: boolean;
   /** The pack's counter as this view was read. A change must carry it back. */
   readonly seq: number;
   readonly may_edit: boolean;
@@ -397,10 +401,13 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     return { event: e, label, inputs: winputs, sums: worksSums(e.id, label, winputs) };
   });
 
+  // PHASE 159d (item 8): the legal check is the purchase's. Failed, with work since, it stops the purchase only.
+  const purchaseW3 = applies && works.length > 0 && legalVerdictForJob(d.db, job.id, d.now())?.level === 'RED';
+
   return {
     job, pack_id: pack?.id ?? null, property, property_choices: choices,
-    inputs, lines, sums: combined(reading.sums, applies, works, onClaim.length), grants, vat, shared_area, cost,
-    events, purchase_applies: applies, purchase_sums: reading.sums, works,
+    inputs, lines, sums: combined(reading.sums, applies && !purchaseW3, works, onClaim.length), grants, vat, shared_area, cost,
+    events, purchase_applies: applies, purchase_sums: reading.sums, works, purchase_w3: purchaseW3,
     seq: entries.length === 0 ? 0 : (entries[entries.length - 1] as EntryRow).seq,
     may_edit: can(actor, 'surveyor_job.commit', obj),
     changes,

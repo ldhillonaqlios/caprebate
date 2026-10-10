@@ -22,6 +22,7 @@
  * own stages read them exactly as before. If any of that is refused, nothing is kept. The form carries both counters,
  * so a page drawn before a change cannot approve the changed pack, and a second click on the same state is refused.
  */
+import { claimRoutes } from './claim-route.ts';
 import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
 import { sheetsForVersion } from './pack-sheets.ts';
 import { createHash } from 'node:crypto';
@@ -111,7 +112,8 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
       words: n > 0 ? `${n} value${n === 1 ? ' is' : 's are'} still needed. There is no total until then.` : (v.sums.problems[0]?.words ?? 'The sums are not complete.') });
   }
   const legal = legalAllows(lv.verdict, v.sums.qualifying_pence);
-  if (!legal.ok) blockers.push({ key: 'legal', words: `The legal check: ${legal.why}`, href: `${base(job_id)}?ch=7` });
+  // PHASE 159d (item 8): a purchase that fails the legal check, with work since, is not claimed; the works go on.
+  if (!legal.ok && !v.purchase_w3) blockers.push({ key: 'legal', words: `The legal check: ${legal.why}`, href: `${base(job_id)}?ch=7` });
 
   // Every built chapter opened by the surveyor — and the legal check again since anyone else last answered it.
   const reads = surveyor === null ? [] : d.db.all<{ chapter: number; seq: number }>(
@@ -241,12 +243,16 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     // PHASE 159c: where the building has work done since, each spend as approved: the purchase's own sums and each piece of
     // work on its own cost. `sums` above is their total. A version with no work keeps the shape every earlier version has.
     ...eventsOf(v),
+    // PHASE 159d (item 6): which way each part of the claim goes in, as it stood at approval (src/web/claim-route.ts).
+    ...(v.job.claim_id === null ? {} : { routes: claimRoutes(d.db, { id: v.job.claim_id, business_id: v.job.business_id, property_id: v.property?.id ?? null }, a.at)
+      .map((r) => ({ label: r.label, route: r.route, words: r.words })) }),
   };
 }
 
 /** PHASE 159c: the events part of a version, only where there is work since. */
 function eventsOf(v: PackView): { events?: {
   purchase_applies: boolean;
+  purchase_w3?: boolean;
   purchase: { qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null } | null;
   works: { event_id: string; kind: string; event_date: string | null; label: string;
     inputs: Record<string, number | null>; qualifying_pence: number | null; main_pool_pence: number | null;
@@ -254,8 +260,10 @@ function eventsOf(v: PackView): { events?: {
 } } {
   if (v.works.length === 0) return {};
   return { events: {
-    purchase_applies: v.purchase_applies,
-    purchase: v.purchase_applies ? { qualifying_pence: v.purchase_sums.qualifying_pence, main_pool_pence: v.purchase_sums.main_pool_pence, special_pool_pence: v.purchase_sums.special_pool_pence } : null,
+    purchase_applies: v.purchase_applies && !v.purchase_w3,
+    // PHASE 159d (item 8): the purchase failed the legal check, so it is not claimed; the report says so.
+    ...(v.purchase_w3 ? { purchase_w3: true } : {}),
+    purchase: v.purchase_applies && !v.purchase_w3 ? { qualifying_pence: v.purchase_sums.qualifying_pence, main_pool_pence: v.purchase_sums.main_pool_pence, special_pool_pence: v.purchase_sums.special_pool_pence } : null,
     works: v.works.map((w) => ({ event_id: w.event.id, kind: w.event.kind, event_date: w.event.event_date, label: w.label,
       inputs: Object.fromEntries(Object.entries(w.inputs).map(([k, x]) => [k, x.value])),
       qualifying_pence: w.sums.qualifying_pence, main_pool_pence: w.sums.main_pool_pence, special_pool_pence: w.sums.special_pool_pence,
@@ -307,11 +315,12 @@ export function approvePack(d: PackDeps, actor: Actor, job_id: string, f: { seq:
          purchase's building plus what the work cost; with no purchase it is what the work cost, on no land; the share
          is what qualifies of that. A pack with no work commits exactly as before. */
       const worksCost = v.works.reduce((a, w) => a + (w.inputs.works_total.value ?? 0), 0);
-      const building = (v.purchase_applies ? (s.building_price_pence as number) : 0) + worksCost;
+      const purchaseCounts = v.purchase_applies && !v.purchase_w3;   // PHASE 159d (item 8)
+      const building = (purchaseCounts ? (s.building_price_pence as number) : 0) + worksCost;
       const figures = {
         a_qualifying_plant: poundsString(s.qualifying_pence as number),
         b_building: poundsString(building),
-        c_bare_land: poundsString(v.purchase_applies ? (v.inputs.land_pence.value as number) : 0),
+        c_bare_land: poundsString(purchaseCounts ? (v.inputs.land_pence.value as number) : 0),
         qualifying_pct: v.works.length === 0 ? String((s.share_bp as number) / 100)
           : String(building === 0 ? 0 : Math.round(((s.qualifying_pence as number) * 10000) / building) / 100),
         method_note: v.works.length === 0

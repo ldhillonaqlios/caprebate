@@ -1873,7 +1873,7 @@ Signed .............................  Date ..........................
 
  **This register gains one entry and one board item**: ACC-H3, the accountant's own confirmation link and the defence pack's list of records (board item 13245993980). Phase 158d wrote the two checks into this register, but made no board item for them, so no count saw them. **Board items covered: 51.**
 
- **And the board's own total at the close of Phase 159c, 9 October 2026, counted in code: 131 items carry that status**: fifty-three in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-three plus ten plus sixty-eight is 131. (At the close of Phase 159b it was 130; Phase 159c added ACC-H5.)
+ **And the board's own total at the close of Phase 159d, 9 October 2026, counted in code: 132 items carry that status**: fifty-four in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-four plus ten plus sixty-eight is 132. (At the close of Phase 159c it was 131; Phase 159d added ACC-H6.)
 
 ## Phase 159b, 9 October 2026 — ACC-H4 · four readings behind the online figure, built and on in the test system
 
@@ -1894,3 +1894,14 @@ Signed .............................  Date ..........................
 -  **Work the client paid for is priced on what it cost.** In the survey pack each piece of work has its own values from the final account by element. The plant, with the builder's work and the demolition of old plant that serve it, qualifies, with a share of the preliminaries and fees in proportion to the direct costs. The repair part is shown as a deduction from profits, not an allowance. The report and the return entries show each spend on its own line. (Question 252.)
 
  **ACC-H5 · Board item 13250219042, added 9 October 2026 by Phase 159c.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 53.**
+
+## Phase 159d, 9 October 2026 — ACC-H6 · each part of a claim takes its own route, and four readings on the dates
+
+ We build first and ask you second (Lakhbir, 29 September 2026). All four are on in the test system only, with invented data. Each is a question in the Word questions document, Section 2, with our recommendation and a worked example:
+
+-  **A closed window is not the end while the client still owns the building.** Each part of a claim (the purchase, and each piece of work since) takes a route: W1, its own year's return can still be amended; W2, that window has closed but the building is still owned, so the spend goes into the pool of the first year still open, writing-down allowances only; W3, not owned, or the purchase fails the second-hand fixtures rules. A claim stops for the window only where every part is W3. Ownership counts only on the client's checked answer or the title register. (Question 253; Rulebook A section 9, question 2(c).)
+-  **The last day of a two-year period.** The election notice, the fixed value requirement and the disposal value statement now each end on the day before the second anniversary, open all of that day. (Question 254.)
+-  **Basis period reform.** For a sole trader, a partnership or a charitable trust whose year ends outside 31 March to 5 April, the earlier tax year's amendment deadline. A charitable company is on the company dates. (Question 255.)
+-  **A closed direct purchase.** Bought straight from an owner who claimed, the period closed with nothing fixing the value and no tribunal application in time: nil. This narrows question 250. (Question 256.)
+
+ **ACC-H6 · Board item 13250825382, added 9 October 2026 by Phase 159d.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 54.**

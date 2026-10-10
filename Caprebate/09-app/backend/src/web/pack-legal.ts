@@ -209,6 +209,30 @@ export function assessLegal(sector: string, answers: ReadonlyMap<string, unknown
   return { asked, unanswered, verdict };
 }
 
+/**
+ * PHASE 159d: THE LEGAL CHECK FOR A CLAIM, read without a login — for the claim's routes (src/web/claim-route.ts) and
+ * the gates that re-check a deadline (C9). The newest survey job on the claim, its pack's answers, today's verdict. Null
+ * where the claim has no survey pack yet: no answer, and nothing is decided on it.
+ */
+export function legalVerdictForClaim(db: Db, claim_id: string, nowIso: string): LegalVerdict | null {
+  const job = db.get<{ id: string }>('SELECT id FROM surveyor_jobs WHERE claim_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1', [claim_id]);
+  return job === undefined ? null : legalVerdictForJob(db, job.id, nowIso);
+}
+
+/** The same for one survey job, by its id. */
+export function legalVerdictForJob(db: Db, job_id: string, nowIso: string): LegalVerdict | null {
+  const job = db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM surveyor_jobs WHERE id = ?', [job_id]);
+  if (job === undefined) return null;
+  const pack = db.get<{ id: string }>('SELECT id FROM survey_packs WHERE job_id = ?', [job.id]);
+  if (pack === undefined) return null;
+  const sector = db.get<{ sector: string }>('SELECT sector FROM businesses WHERE id = ?', [job.business_id])?.sector ?? '';
+  const values = new Map<string, unknown>();
+  for (const r of db.all<{ question_id: string; value_json: string }>('SELECT question_id, value_json FROM survey_pack_legal_answers WHERE pack_id = ? ORDER BY seq ASC', [pack.id])) {
+    values.set(r.question_id, JSON.parse(r.value_json) as unknown);
+  }
+  return assessLegal(sector, values, nowIso, claimantFor(db, job.business_id)).verdict;
+}
+
 /** May this pack be approved, as far as the legal check goes? (Stage 3 asks this.) */
 export function legalAllows(v: LegalVerdict, qualifying_pence: number | null): { ok: boolean; why: string } {
   if (v.level === 'RED' || v.level === 'AMBER') return { ok: false, why: v.headline };

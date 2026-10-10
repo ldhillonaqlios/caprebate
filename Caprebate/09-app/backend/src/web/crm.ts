@@ -88,6 +88,9 @@ export const CLAIMANT_TYPES: Vocab = Object.freeze({
   SOLE_TRADER: 'Sole trader',
   INDIVIDUAL: 'An individual holding the property personally',
   CHARITY: 'Charity',
+  // PHASE 159d (C24): which kind of charity decides which tax return it files, and so its deadline.
+  CHARITY_COMPANY: 'Charitable company (files a company tax return)',
+  CHARITABLE_TRUST: 'Charitable trust (files a trust tax return)',
   UNKNOWN: 'Not known',
 });
 
