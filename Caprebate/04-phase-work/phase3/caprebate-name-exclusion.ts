@@ -177,6 +177,9 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     keptFields: [
       'company_number', 'company_status', 'sic_codes', 'accounts_year_end',
       'incorporation_date', 'group_link_*', 'company_name',
+      // PHASE 159g, 10 October 2026 (the Lockwood run, L2): the latest accounts' type and their date. Facts about the
+      // company, not a person: a dormant company has no tax for allowances to relieve.
+      'accounts_type', 'accounts_made_up_to',
     ],
     excludedNameFields: ['director_name', 'director_*', 'secretary_name', 'secretary_*'],
     excludedOtherPersonalFields: ['officer_dob', 'service_address_*', 'residential_address_*'],
@@ -240,6 +243,11 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     keptFields: [
       'title_number', 'tenure', 'proprietor_company_number', 'proprietor_name_company',
       'lease_term_*', 'restriction_*', 'price_paid', 'transaction_date', 'prior_owner_count',
+      /* PHASE 159g, 10 October 2026 (item 6): YES or NO — the person the register names as owner is one of the
+         client's own people (a sole trader, or a partner). Asked when a person types the official copy in, against the
+         client's contacts, in memory; THE NAME ITSELF IS NEVER KEPT (title-by-hand.ts has no box that keeps one), as
+         the officers check keeps only its answer (Word answer 156). A yes or no is not a name. */
+      'proprietor_personal_match',
     ],
     excludedNameFields: ['former_proprietor_name', 'former_proprietor_*', 'charge_holder_individual_*'],
     nameExceptions: [
@@ -271,7 +279,8 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
     publisher: 'HM Land Registry',
     datasetLabel: 'Price Paid Data',
     riskLevel: 'standard',
-    keptFields: ['price_paid', 'transaction_date', 'tenure', 'property_type_ppd', 'new_build_flag'],
+    // PHASE 159g (L11): and the sale's category, A or B. A category B sale is a lead for the surveyor, never the price.
+    keptFields: ['price_paid', 'transaction_date', 'tenure', 'property_type_ppd', 'new_build_flag', 'ppd_category'],
     excludedNameFields: [],
     nameExceptions: [],
     note: 'No personal data at all. Price Paid Data is a transaction record, not a persons record.',

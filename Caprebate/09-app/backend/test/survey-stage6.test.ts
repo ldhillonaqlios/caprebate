@@ -50,7 +50,8 @@ const TEST_SITE = Object.freeze({ VERCEL: '1', VERCEL_ENV: 'production', VERCEL_
 const PREVIEW = Object.freeze({ VERCEL: '1', VERCEL_ENV: 'preview', VERCEL_URL: 'caprebate-git-x.vercel.app' });
 const LAPTOP = Object.freeze({});
 // PHASE 156e (5 Oct 2026): the Welsh and Scottish care regulators' lists joined the four (Lakhbir: "Yes, include them").
-const FOUR = ['CARE_INSPECTORATE', 'CIW', 'CQC', 'EPC', 'HMLR_PPD', 'PLANNING'];
+// PHASE 159g: and Companies House's company profile and people with significant control (the PSC still after signing).
+const FOUR = ['CARE_INSPECTORATE', 'CH_COMPANY', 'CH_PSC', 'CIW', 'CQC', 'EPC', 'HMLR_PPD', 'PLANNING'];
 // 6 Oct 2026: the paid address lookup, switched on for the test website too - but no gate is waived for it.
 // Phase 156f: planning and the site boundary from Homedata join the address lookup.
 const PAID = ['HOMEDATA_ADDRESS', 'HOMEDATA_PLANNING', 'HOMEDATA_BOUNDARY'];
@@ -66,7 +67,7 @@ function pdfText(bytes: Uint8Array): string {
  * ================================================================== */
 
 describe('the free lookups, switched on for the test website only', () => {
-  test('the waiver holds on the test website and a copy that asks for it, for EPC, price paid, planning, CQC and (Phase 156e) the Welsh and Scottish lists only', () => {
+  test('the waiver holds on the test website and a copy that asks for it, for EPC, price paid, planning, CQC, (Phase 156e) the Welsh and Scottish lists and (Phase 159g) Companies House only', () => {
     assert.deepEqual([...C.TEST_WEBSITE_LOOKUPS.sources].sort(), FOUR);
     assert.match(C.TEST_WEBSITE_LOOKUPS.waiver_record, /Lakhbir Dhillon, 2 October 2026.*"All the free ones"/);
     for (const env of [TEST_SITE, PREVIEW, { CAPREBATE_LOOKUPS_HERE: '1' }]) {
@@ -74,7 +75,7 @@ describe('the free lookups, switched on for the test website only', () => {
       const sw = C.switchesHere(env);
       for (const id of Object.keys(C.REGISTER_SWITCHES)) assert.equal(sw[id], FOUR.includes(id) || PAID.includes(id) ? true : C.REGISTER_SWITCHES[id], id);
       for (const id of FOUR) assert.equal(C.freeGateWaived(id, env), true, id);
-      for (const id of ['CH_COMPANY', 'CH_PSC', 'HOMEDATA_ADDRESS', 'HMLR_INSPIRE', 'ONS_POSTCODE', 'POSTCODES_IO']) assert.equal(C.freeGateWaived(id, env), false, id);
+      for (const id of ['HOMEDATA_ADDRESS', 'HMLR_INSPIRE', 'ONS_POSTCODE', 'POSTCODES_IO']) assert.equal(C.freeGateWaived(id, env), false, id);
     }
     for (const env of [LAPTOP, { VERCEL: '1', VERCEL_ENV: 'development', VERCEL_URL: 'x' }, { VERCEL: '1', VERCEL_ENV: 'production', VERCEL_URL: '' }, { CAPREBATE_LOOKUPS_HERE: 'yes' }]) {
       assert.equal(C.lookupsWaivedHere(env), false, JSON.stringify(env));
@@ -85,7 +86,7 @@ describe('the free lookups, switched on for the test website only', () => {
     for (const [id, on] of Object.entries(C.REGISTER_SWITCHES)) assert.equal(on, false, id);
     const shut = { open: false, requires: 'a published privacy notice' };
     assert.deepEqual(R.freeGateFor(shut, 'EPC', TEST_SITE), { open: true, requires: 'a published privacy notice' });
-    assert.equal(R.freeGateFor(shut, 'CH_COMPANY', TEST_SITE), shut);
+    assert.equal(R.freeGateFor(shut, 'ONS_POSTCODE', TEST_SITE), shut);
     assert.equal(R.freeGateFor(shut, 'EPC', LAPTOP), shut);
   });
 
@@ -108,26 +109,30 @@ describe('the free lookups, switched on for the test website only', () => {
   }
   const hosts = (t: ReturnType<typeof fixtureTransport>) => [...new Set(t.seen.map((s) => new URL(s.url).host))].sort();
 
-  test('"Run the research" on the test website reaches EPC, planning and the care regulator (its council area from postcodes.io), and nothing else', async () => {
+  test('"Run the research" on the test website reaches EPC, planning, the care regulator (its council area from postcodes.io), and (Phase 159g) Companies House and Price Paid, and nothing else', async () => {
     const app = await testApp();
     const { id, admin } = await client(app);
     const t = fixtureTransport(ANSWERS);
     const out = await R.runResearch({ db: app.db, audit: app.audit, now: app.now, newId, outside: { transport: t, secrets: KEYS, env: TEST_SITE } }, actor('ADMIN', admin), id);
     assert.equal(out.ok, true);
-    assert.deepEqual(hosts(t), [ 'api.get-energy-performance-data.communities.gov.uk', 'api.postcodes.io', 'api.service.cqc.org.uk', 'www.planit.org.uk', 'www.planning.data.gov.uk']);
+    // PHASE 159g: Companies House's company profile (waived for testing) and Price Paid (now asked for every sector) too.
+    assert.deepEqual(hosts(t), ['api.company-information.service.gov.uk', 'api.get-energy-performance-data.communities.gov.uk', 'api.postcodes.io', 'api.service.cqc.org.uk', 'landregistry.data.gov.uk', 'www.planit.org.uk', 'www.planning.data.gov.uk']);
     const cqcAsk = t.seen.find((s) => new URL(s.url).pathname === '/public/v1/locations')!;
     assert.equal(new URL(cqcAsk.url).searchParams.get('localAuthority'), 'Nowhere', 'the council area is not postcodes.io’s');
     const pcAsk = t.seen.find((s) => new URL(s.url).host === 'api.postcodes.io')!;
     assert.equal(new URL(pcAsk.url).search, '', 'postcodes.io was sent more than the postcode');
     const panel = new Map(R.sourcesFor(app.db, actor('ADMIN', admin), id, { env: TEST_SITE }).sources.map((s) => [s.source_id, s] as const));
     for (const s of ['EPC', 'PLANNING', 'CQC']) assert.equal(panel.get(s)!.state, 'FIRED', s);
-    // Price paid is homes only: a care home is not asked about, and says so.
+    // PHASE 159g (L11): Price Paid is asked for a care home too; this fixture holds no sale, so it does not fire.
     assert.equal(panel.get('HMLR_PPD')!.switched_on, true);
     assert.notEqual(panel.get('HMLR_PPD')!.state, 'FIRED');
-    for (const s of ['CH_COMPANY', 'CH_PSC', 'HOMEDATA_ADDRESS', 'HMLR_INSPIRE']) {
+    // PHASE 159g: the company profile is waived for testing and is asked; the PSC still waits for the signed letter.
+    assert.equal(panel.get('CH_COMPANY')!.switched_on, true);
+    assert.notEqual(panel.get('CH_COMPANY')!.state, 'NOT_PERMITTED_YET');
+    for (const s of ['CH_PSC', 'HOMEDATA_ADDRESS', 'HMLR_INSPIRE']) {
       assert.equal(panel.get(s)!.state, 'NOT_PERMITTED_YET', s);
       // 6 Oct 2026: Homedata is switched on here, but this client's letter is not signed, so it is still not permitted.
-      assert.equal(panel.get(s)!.switched_on, s === 'HOMEDATA_ADDRESS', s);
+      assert.equal(panel.get(s)!.switched_on, s === 'HOMEDATA_ADDRESS' || s === 'CH_PSC', s);
     }
     assert.ok(app.db.get<{ n: number }>("SELECT count(*) AS n FROM register_records WHERE business_id = ? AND source_id = 'EPC'", [id])!.n >= 1);
     // Each call's audit row says the free gate was open for it, as the waiver made it; never a closed gate called through.

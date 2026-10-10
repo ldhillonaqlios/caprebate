@@ -32,6 +32,7 @@
  *     which can read nothing that is not on that list.
  */
 
+import { registerCompany, yearEndFrom, dormantWarning, propertyTenure, ROLE_LABELS, type YearEndReading } from './who-claims.ts';
 import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { authorise, can, type Actor, type Obj } from '../authz.ts';
@@ -466,7 +467,8 @@ export function amendmentWindowReading(db: Db, c: { business_id: string; propert
     const p = periodFromYearEnd(db, c.business_id, acq.value);
     if (p !== null) {
       startV = p.start; endV = p.end;
-      readFrom.push(`the accounting period from the client’s year end (${ukDate(p.start)} to ${ukDate(p.end)})`);
+      const from = yearEndReading(db, c.business_id).from === 'REGISTER' ? 'Companies House’s year end for the company' : 'the client’s year end';
+      readFrom.push(`the accounting period from ${from} (${ukDate(p.start)} to ${ukDate(p.end)})`);
     }
   }
   const said = readFrom.length === 0 ? '' : ` Read from ${readFrom.join(', and ')}.`;
@@ -679,6 +681,10 @@ export type FactsPanel = {
   /** Phase 132, 15 September 2026 — recordable since 14 September and shown nowhere until now. */
   readonly partnership_company_member: FactReading;
   readonly amendment_window: WindowReading;
+  /** PHASE 159g (L8): the claim's year end — the register's, else the client's — and whether the two differ. */
+  readonly year_end: YearEndReading;
+  /** PHASE 159g (L2, item 2, item 4): who claims — a dormant company flagged, how the client holds the building, its tenure. */
+  readonly who_claims: { readonly dormant: string | null; readonly role: string; readonly tenure: string };
   readonly taxable_profit: {
     readonly sufficient_profit: FactReading;
     readonly breakeven_switch: { readonly name: string; readonly on: boolean; readonly question: string };
@@ -736,6 +742,11 @@ export function factsPanel(db: Db, actor: Actor, claim_id: string, todayIso: str
     accounting_period: { start: captured(f, 'ACCOUNTING_PERIOD_START'), end: captured(f, 'ACCOUNTING_PERIOD_END') },
     partnership_company_member: captured(f, 'PARTNERSHIP_HAS_COMPANY_MEMBER'),
     amendment_window: amendmentWindowReading(db, c, todayIso),
+    year_end: yearEndReading(db, c.business_id),
+    who_claims: (() => {
+      const t = propertyTenure(db, c.property_id);
+      return { dormant: dormantWarning(db, c.business_id), role: t.role.role === null ? t.role.words : `${ROLE_LABELS[t.role.role]}. ${t.role.words}${t.role.source === null ? '' : ` (${t.role.source})`}`, tenure: t.words };
+    })(),
     taxable_profit: { sufficient_profit: sufficientProfitReading(db, c, f), breakeven_switch: breakevenSwitch() },
     allowance_headroom: { position: captured(f, 'AIA_HEADROOM'), amount: captured(f, 'AIA_HEADROOM_AMOUNT') },
     pool_split: { main: captured(f, 'POOL_SPLIT_MAIN'), special: captured(f, 'POOL_SPLIT_SPECIAL') },
@@ -1202,17 +1213,23 @@ function acquisitionGiven(db: Db, property_id: string): { value: string; words: 
  *  so each part's period can be worked out? Read at approval: the year end is asked at data gathering and a version is
  *  not approved without it, because the return entries are made from the version and never ask for it afterwards. */
 export function yearEndKnown(db: Db, c: { id: string; business_id: string }): boolean {
-  const said = approvedClientAnswer(db, c.business_id, 'year_end');
-  if (said !== null && clientYearEnd(said.answer) !== null) return true;
+  if (yearEndReading(db, c.business_id).used !== null) return true;
   const f = latestFacts(db, c.id);
   const s = f.get('ACCOUNTING_PERIOD_START'), e = f.get('ACCOUNTING_PERIOD_END');
   return s !== undefined && e !== undefined && rowValue(s) !== null && rowValue(e) !== null;
 }
 
-/** PHASE 158d (F45): the accounting period the purchase falls in, from the client's checked year end, or null. */
-export function periodFromYearEnd(db: Db, business_id: string, acquired: string): { start: string; end: string } | null {
+/** PHASE 159g (L8): the claim's year end — Companies House's accounting reference date for a company that has one, else
+ *  the client's checked answer — with the two compared (src/web/who-claims.ts yearEndFrom). */
+export function yearEndReading(db: Db, business_id: string): YearEndReading {
   const said = approvedClientAnswer(db, business_id, 'year_end');
-  const ye = said === null ? null : clientYearEnd(said.answer);
+  return yearEndFrom(said === null ? null : clientYearEnd(said.answer), registerCompany(db, business_id));
+}
+
+/** PHASE 158d (F45): the accounting period the purchase falls in, from the claim's year end (Phase 159g: the register's,
+ *  else the client's checked answer), or null. */
+export function periodFromYearEnd(db: Db, business_id: string, acquired: string): { start: string; end: string } | null {
+  const ye = yearEndReading(db, business_id).used;
   if (ye === null) return null;
   const y = Number(acquired.slice(0, 4));
   const thisYear = iso(y, ye.month, ye.day);

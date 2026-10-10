@@ -33,6 +33,7 @@
  * nothing.
  */
 
+import { USE_TO_ROLE } from './who-claims.ts';
 import { writeAssessmentEvents } from './property-events.ts';
 import { normalisePostcode } from '../connectors/postcode-check.ts';
 import { randomUUID } from 'node:crypto';
@@ -331,8 +332,15 @@ export function submit(
         && p.address.toUpperCase().replace(/\s+/g, '').includes(startPostcode.replace(' ', '')) ? startPostcode : null);
       const text = (v: unknown, max: number): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, max) : null);
       const uprn = typeof p.uprn === 'string' && /^\d{1,14}$/.test(p.uprn) ? p.uprn : null;
-      db.run('INSERT INTO properties (id, business_id, label, postcode, address_line_1, town, uprn, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [property_id, business_id, p.address ?? 'Unnamed property', pc, text(p.line1, 200), text(p.town, 100), uprn, at, at]);
+      /* PHASE 159g: how the client holds the building (owner, landlord, tenant), and the council area the postcode check
+         found, each with where it came from. Neither is guessed: no answer, or "Not sure", leaves it empty (N4). */
+      const pr = p as Record<string, unknown>;
+      const role = typeof pr['use'] === 'string' ? USE_TO_ROLE[pr['use']] ?? null : null;
+      const pcc = pr['postcode_check'] as { council_area?: unknown } | undefined;
+      const council = pcc !== undefined && typeof pcc.council_area === 'string' && pcc.council_area.trim() !== '' ? pcc.council_area.trim().slice(0, 100) : null;
+      db.run('INSERT INTO properties (id, business_id, label, postcode, address_line_1, town, uprn, created_at, updated_at, claimant_role, claimant_role_source, council_area, council_area_source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [property_id, business_id, p.address ?? 'Unnamed property', pc, text(p.line1, 200), text(p.town, 100), uprn, at, at,
+          role, role === null ? null : 'the client’s own answer in the assessment', council, council === null ? null : 'the postcode check at the assessment (postcodes.io)']);
     }
     db.run(
       'INSERT INTO assessments (id, business_id, sector, submitted_at, shown_low_pence, shown_high_pence, created_at) ' +
@@ -458,6 +466,8 @@ export function answerRows(s: FunnelState): AnswerRow[] {
     q(`Q2-${n}-sector`, `Property ${n}: what kind of business operates here?`, pr.sector);
     q(`Q2-${n}-entity`, `Property ${n}: which kind of legal entity holds it?`, pr.entity_type);
     q(`Q2-${n}-trigger`, `Property ${n}: how did you come by this one?`, pr.trigger);
+    /* PHASE 159g (item 2): owner, landlord or tenant. Only where it was asked: an assessment from before has no row. */
+    if (pr.use !== undefined && pr.use !== null) q(`Q2-${n}-use`, `Property ${n}: who uses the building?`, pr.use === 'unsure' ? null : pr.use, pr.use === 'unsure');
     q(`Q2-${n}-spend`, `Property ${n}: roughly what was spent?`, pr.spend, pr.spend_unknown === true);
     q(`Q2-${n}-date`, `Property ${n}: roughly when?`, pr.date, pr.date_unknown === true);
     q(`Q3-${n}-works`, `Property ${n}: any other work done?`, pr.works);

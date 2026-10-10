@@ -1516,6 +1516,7 @@ body.public .f4-h{font-size:clamp(28px,4vw,42px);margin:.2rem 0 .6rem}
 body.public .f4-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
 body.public .f4-add{border-style:dashed;width:100%;min-height:3.2rem;font-weight:700;color:#ABEDD8;border-color:#3e4945}
 body.public .f4-same{display:block;margin:.2rem 0 1rem;color:#ABEDD8;font-weight:700}
+body.public .f4-dormant{display:block;margin:.3rem 0 0;padding:.4rem .6rem;border-left:3px solid #ABEDD8;color:#EDEAE2;font-size:14px}
 body.public .f4-nav{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:1.6rem}
 body.public .f4-back{color:#c9ccc8}
 body.public .f4-teaser,body.public .f4-ready{border:1px solid #ABEDD8;border-radius:16px;padding:1.2rem 1.4rem;margin:0 0 1.6rem;background:rgba(171,237,216,.06)}

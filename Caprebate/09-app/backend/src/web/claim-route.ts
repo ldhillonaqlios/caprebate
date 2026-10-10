@@ -25,6 +25,7 @@ import type { Db } from '../db.ts';
 import { acquisitionDateReading, amendmentWindowReading, latestFacts, periodFromYearEnd, windowForPeriod, type WindowReading } from './claim-facts.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS, type EventKind, type PropertyEvent } from './property-events.ts';
 import { legalVerdictForClaim } from './pack-legal.ts';
+import { registerNamesClientPerson } from './who-claims.ts';
 import { localDate } from './localtime.ts';
 
 export type Route = 'W1' | 'W2' | 'W3' | 'NOT_KNOWN';
@@ -77,6 +78,10 @@ export function stillOwned(db: Db, c: { id: string; business_id: string; propert
     try { n = t === undefined ? null : (JSON.parse(t.fields_json) as Record<string, unknown>)['proprietor_company_number']; } catch { n = null; }
     if (typeof n === 'string' && n.trim().toUpperCase() === co.trim().toUpperCase()) return { value: 'YES', why: 'the current title register names the client’s company as the owner' };
   }
+  /* PHASE 159g (item 6, carried from 159d): A SOLE TRADER OR A PARTNERSHIP is named on the register as the people
+     themselves. Where the register names one of the client's own people (the title check's yes, or a name kept under
+     name exception 2, compared now), that is evidence too, so W2 does not wait on a recorded answer. */
+  if (registerNamesClientPerson(db, c.business_id, c.property_id)) return { value: 'YES', why: 'the current title register names one of the client’s own people as the owner' };
   return { value: null, why: 'whether the client still owns the building is not recorded' };
 }
 

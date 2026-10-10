@@ -289,6 +289,14 @@ export function bcisDataHere(env: Env = process.env): { data: BcisData } | { dat
   return real;
 }
 
+/** PHASE 159g (item 7): the loaded location table's own name for an area (a council area, say), or null when it has none. */
+export function bcisLocationNamed(area: string, env: Env = process.env): string | null {
+  const here = bcisDataHere(env);
+  if (here.data === null) return null;
+  const want = norm(area);
+  return here.data.locations.find((l) => norm(l.area) === want)?.area ?? null;
+}
+
 /* ------------------------------------------------------------------ the drafts */
 
 type IndexTable = { loaded: boolean; source: string; points: readonly (readonly [string, number])[] };

@@ -232,6 +232,10 @@ export function factsBlock(claim_id: string, facts: F.FactsPanel | ReleasedFacts
       ${reading(p.claimant_type)}${reading(p.scottish_taxpayer)}${reading(p.jurisdiction)}${reading(p.acquisition_date)}
       ${reading(p.accounting_period.start)}${reading(p.accounting_period.end)}
       ${reading(p.partnership_company_member, 'Only for a partnership or an LLP. If a partner is a company, the return is due on the company date where that is earlier (TMA 1970 s.12AA(5B)). If this is not known, the window counts as open only if it is open on both dates.')}
+      <tr><td>The year end</td><td>${p.year_end.differs || p.year_end.used === null ? h`<span class="help">${p.year_end.words}</span>` : p.year_end.words}</td><td><span class="help">${p.year_end.from === 'REGISTER' ? 'Companies House' : p.year_end.from === 'CLIENT' ? 'the client, checked' : 'not known'}</span></td></tr>
+      ${p.who_claims.dormant === null ? raw('') : h`<tr><td>The company</td><td><strong>${p.who_claims.dormant}</strong></td><td><span class="help">Companies House</span></td></tr>`}
+      <tr><td>Whose claim</td><td>${p.who_claims.role}</td><td><span class="help">how the client holds the building</span></td></tr>
+      <tr><td>Tenure</td><td>${p.who_claims.tenure}</td><td><span class="help">the title check, Price Paid or the client</span></td></tr>
       <tr><td>The amendment window</td><td>${w.state === 'UNKNOWN' ? h`<span class="help">${w.why}</span>` : w.why}</td><td><span class="help">${w.assumption ?? 'our amendment window rule'}</span></td></tr>
       ${reading(p.taxable_profit.sufficient_profit)}
       <tr><td>The break-even switch</td><td>${p.taxable_profit.breakeven_switch.on ? 'on' : 'off'}</td><td><span class="help">${p.taxable_profit.breakeven_switch.question}</span></td></tr>

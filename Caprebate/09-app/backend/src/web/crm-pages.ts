@@ -275,6 +275,7 @@ export async function handleCrm(
         title_number: f.get('title_number'), tenure: f.get('tenure'), price_paid: f.get('price_paid'),
         transaction_date: f.get('transaction_date'), restriction_count: f.get('restriction_count'),
         proprietor_company_number: f.get('proprietor_company_number'), prior_owner_count: f.get('prior_owner_count'),
+        owner_person_name: f.get('owner_person_name'),
       })
       : TH.takeBackTitleByHand(deps, actor, id, f.get('reason'));
     if (!r.ok) return d.problem(res, actor, titleHand[2] === undefined ? 'Not saved' : 'Not taken back', r.why, `/staff/properties/${id}#title-register`, r.field);
@@ -771,6 +772,8 @@ function titleBlock(id: string, t: TH.TitleByHandView): Safe {
         <label>Date of that price <input name="transaction_date" type="date"></label>
         <label>How many restrictions <input name="restriction_count" inputmode="numeric" autocomplete="off"></label>
         <label>Owner’s company number, if the owner is a company <input name="proprietor_company_number" autocomplete="off"></label>
+        <label>Owner’s name, if the owner is a person <input name="owner_person_name" autocomplete="off" maxlength="200"></label>
+        <p class="help">We check the name against the client’s own people and keep only yes or no. The name itself is not saved.</p>
         <label>How many earlier owners it names <input name="prior_owner_count" inputmode="numeric" autocomplete="off"></label>
         <button type="submit">Save</button></form>`}
   </div>`;
