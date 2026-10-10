@@ -24,10 +24,21 @@ export type MoneyReadings = {
   readonly legal_fees_in_base: boolean;
   readonly s185_plus_own_s25: boolean;
   readonly vat_shared_with_land: boolean;
+  /** PHASE 159k (item 2): plant with an expected life of 25 years or more goes to the special rate pool where a year's
+   *  long-life spend passes £100,000 (s.90-104; src/web/allowances.ts). */
+  readonly long_life_test: boolean;
+  /** PHASE 159k (item 2): removing asbestos that was there when a company acquired the land is land remediation relief, a
+   *  150% deduction (CTA 2009 Part 14), shown in the return entries — never an allowance. */
+  readonly asbestos_lrr: boolean;
+  /** PHASE 159k (item 2, #20): repairs to an integral feature that pass half its replacement cost in twelve months are
+   *  capital (s.33B), read across the building's pieces of work (src/web/survey-pack.ts). */
+  readonly s33b_aggregation: boolean;
 };
 
-const ALL_ON: MoneyReadings = Object.freeze({ grant_untraced_full: true, transaction_tax_in_base: true, legal_fees_in_base: true, s185_plus_own_s25: true, vat_shared_with_land: true });
-const ALL_OFF: MoneyReadings = Object.freeze({ grant_untraced_full: false, transaction_tax_in_base: false, legal_fees_in_base: false, s185_plus_own_s25: false, vat_shared_with_land: false });
+const ALL_ON: MoneyReadings = Object.freeze({ grant_untraced_full: true, transaction_tax_in_base: true, legal_fees_in_base: true, s185_plus_own_s25: true, vat_shared_with_land: true,
+  long_life_test: true, asbestos_lrr: true, s33b_aggregation: true });
+const ALL_OFF: MoneyReadings = Object.freeze({ grant_untraced_full: false, transaction_tax_in_base: false, legal_fees_in_base: false, s185_plus_own_s25: false, vat_shared_with_land: false,
+  long_life_test: false, asbestos_lrr: false, s33b_aggregation: false });
 
 /** True on the test system: the test website, or a copy started with CAPREBATE_COST_MODEL_TEST=1. */
 export function testSystemHere(env: Env = process.env): boolean {
@@ -49,6 +60,7 @@ export function moneyReadingsHere(env: Env = process.env): MoneyReadings {
 export const PACK_SWITCH_OF: Readonly<Record<string, keyof MoneyReadings>> = Object.freeze({
   transaction_tax_in_base: 'transaction_tax_in_base', legal_fees_in_base: 'legal_fees_in_base',
   s185_plus_own_s25: 's185_plus_own_s25', grant_traced_to_elements: 'grant_untraced_full',
+  s33b_aggregation: 's33b_aggregation',   // PHASE 159k
 });
 
 export function packSwitchReadings(cta: readonly { readonly switch: string; readonly on: boolean }[], money: MoneyReadings = moneyReadingsHere()):

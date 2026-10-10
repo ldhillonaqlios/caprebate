@@ -232,8 +232,9 @@ describe('L14 — the adviser’s switches read as the survey pack reads them', 
     const cta = ctaSwitchReadings();
     assert.equal(cta.find((x) => x.switch === 'transaction_tax_in_base')?.on, false, 'the public estimate’s own switch stays off');
     const on = packSwitchReadings(cta, MONEY_READINGS_ON);
-    for (const k of ['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements']) assert.equal(on.find((x) => x.switch === k)?.on, true, k);
-    assert.deepEqual(on.filter((x) => !['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements'].includes(x.switch)), cta.filter((x) => !['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements'].includes(x.switch)));
+    // Phase 159k: and s.33B's aggregation (#20), applied by the pack in test.
+    for (const k of ['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements', 's33b_aggregation']) assert.equal(on.find((x) => x.switch === k)?.on, true, k);
+    assert.deepEqual(on.filter((x) => !['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements', 's33b_aggregation'].includes(x.switch)), cta.filter((x) => !['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements', 's33b_aggregation'].includes(x.switch)));
     assert.deepEqual(packSwitchReadings(cta, MONEY_READINGS_OFF), [...cta]);
     const { app, claimFor } = await windowRig();
     const c = claimFor('COMPANY', '2025-06-15', '2025-01-01', '2025-12-31');

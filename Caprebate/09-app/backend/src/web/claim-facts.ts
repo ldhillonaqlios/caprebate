@@ -164,6 +164,9 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
   /* PHASE 159i (item 2, migration 110): a VAT capital goods scheme adjustment on the building, in pounds. A fact and a note: the
      survey pack shows it beside the VAT that counts and does not change the figure; the tax adviser says how it reaches the claim. */
   VAT_CGS_ADJUSTMENT: { label: 'A VAT capital goods scheme adjustment on the building (a note, not counted)', kind: 'pence' },
+  /* PHASE 159k (item 2, migration 113): the asbestos was there when the client acquired the land (CTA 2009 s.1145).
+     Land remediation relief on its removal needs it; not known, none is given. */
+  ASBESTOS_AT_ACQUISITION: { label: 'Asbestos was in the building when the client acquired the land', kind: 'choice', choices: YES_NO },
   /* Phase 153a, 4 October 2026 (Phase 153b lines 12 and 13, with the same grant data). Migration 078 adds both keys.
      Read by src/web/grant-checks.ts, the gate out of valuation. */
   GRANT_PROVIDER_CHECKED: {

@@ -117,6 +117,24 @@ export function returnEntries(s: Snapshot, ctx: ReturnContext): ReturnEntry[] {
           amount_pence: null, how: `Not worked out. ${p.sba.why}` });
       }
     }
+    // PHASE 159k (item 2): long-life plant moved to the special rate pool, said where the part goes in.
+    for (const p of entering) {
+      if (p.long_life !== null && p.long_life.moved !== false) {
+        out.push({ return_no: i + 1, period, pool: 'Special rate pool', entry: `Long-life plant${suffix(p.what)}`,
+          amount_pence: p.long_life.moved === true ? p.long_life.pence : null, how: p.long_life.why });
+      }
+    }
+    // PHASE 159k (item 2): land remediation relief on asbestos removal: a deduction from profits, not an allowance.
+    for (const p of entering) {
+      if (p.lrr === null) continue;
+      if (p.lrr.applies === true) {
+        out.push({ return_no: i + 1, period, pool: 'All', entry: `Land remediation relief: the spend${suffix(p.what)}`, amount_pence: p.lrr.deduction_pence, how: p.lrr.why });
+        out.push({ return_no: i + 1, period, pool: 'All', entry: `Land remediation relief: the extra 50%${suffix(p.what)}`, amount_pence: p.lrr.additional_pence,
+          how: 'A deduction from profits on top of the spend itself (CTA 2009 s.1149). It is not an allowance, so it is not in the total below.' });
+      } else if (p.lrr.applies === null) {
+        out.push({ return_no: i + 1, period, pool: 'All', entry: `Land remediation relief${suffix(p.what)}`, amount_pence: null, how: `Not worked out. ${p.lrr.why}` });
+      }
+    }
     if (a.parts.some((p) => p.reliefs.length > 0 || p.sba.applies !== false)) {
       out.push({ return_no: i + 1, period, pool: 'All', entry: 'All the allowances in this return', amount_pence: per.total_pence,
         how: per.total_pence === null ? 'Not worked out: one of the figures above is not known.' : 'Add up the first-year relief, the two writing-down allowances and the structures allowance.' });
@@ -174,6 +192,8 @@ export function returnContext(db: Db, claim_id: string | null, business_id: stri
       sba_purchase_pence: pence('SBA_QUALIFYING_EXPENDITURE'),
       purchase_date: acq.known && typeof acq.value === 'string' && ISO.test(acq.value) ? acq.value : null,
       residential: sector === null ? null : sector === 'supported_living',
+      // PHASE 159k (item 2): read for land remediation relief on asbestos removal.
+      asbestos_at_acquisition: choice('ASBESTOS_AT_ACQUISITION') === 'YES' ? true : choice('ASBESTOS_AT_ACQUISITION') === 'NO' ? false : null,
     },
   };
 }
