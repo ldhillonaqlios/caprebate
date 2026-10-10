@@ -301,7 +301,8 @@ function eventsOf(v: PackView): { events?: {
   purchase: { qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null } | null;
   works: { event_id: string; kind: string; event_date: string | null; label: string;
     inputs: Record<string, number | null>; qualifying_pence: number | null; main_pool_pence: number | null;
-    special_pool_pence: number | null; repairs_pence: number | null }[];
+    special_pool_pence: number | null; repairs_pence: number | null;
+    input_sources: Record<string, { kind: string; text: string; by_name: string | null; reason: string | null } | null> }[];
 } } {
   if (v.works.length === 0) return {};
   return { events: {
@@ -312,7 +313,10 @@ function eventsOf(v: PackView): { events?: {
     works: v.works.map((w) => ({ event_id: w.event.id, kind: w.event.kind, event_date: w.event.event_date, label: w.label,
       inputs: Object.fromEntries(Object.entries(w.inputs).map(([k, x]) => [k, x.value])),
       qualifying_pence: w.sums.qualifying_pence, main_pool_pence: w.sums.main_pool_pence, special_pool_pence: w.sums.special_pool_pence,
-      repairs_pence: w.sums.repairs_pence })),
+      repairs_pence: w.sums.repairs_pence,
+      // PHASE 159l (item 5, L20): where each value came from, so the report can say it as it does for every rate.
+      input_sources: Object.fromEntries(Object.entries(w.inputs).map(([k, x]) => [k, x.source === null
+        ? null : { kind: x.source.kind, text: x.source.text, by_name: x.source.by_name ?? null, reason: x.source.reason ?? null }])) })),
   } };
 }
 

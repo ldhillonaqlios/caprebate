@@ -42,7 +42,7 @@ import { NotFoundAsRefusal } from './backoffice.ts';
 import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from './crm.ts';
 import { enteredAt, raiseBusinessStage, type Need } from './pipeline.ts';
 import { filingRoute } from './client-filing.ts';
-import { latestAnswer } from './accountant-confirm.ts';
+import { latestAnswer, returnFilings, type ReturnFiling } from './accountant-confirm.ts';
 import { assertSignedEngagement, freeGate } from './research.ts';
 import { ctaSwitchReadings } from './engine.ts';
 import { packSwitchReadings } from './money-readings.ts';
@@ -670,10 +670,19 @@ export function recordFiling(d: RecordDeps, actor: Actor, claim_id: string, inpu
  * PHASE 158c (F42, the Friary House run): the claim closed, and the portal said "Claim filed", with no record that the
  * claim was filed. Closing a claim that reached the defence pack needs the filing date on its reconciliation.
  */
-export function filingRecordedNeed(db: Db, claim_id: string): Need {
+export function filingRecordedNeed(db: Db, claim_id: string, todayIso: string = new Date().toISOString()): Need {
   const what = 'The claim’s filing is recorded, with its date';
   // PHASE 158d (F46): where the client's accountant files, the filing is their own answer through their link.
   if (accountantFiles(db, claim_id)) {
+    /* PHASE 159l (item 2, L15): a claim whose parts go into more than one return needs each return that is already due
+       confirmed filed, by its own link; a return not yet due is held in aftercare with its due date. */
+    const each = returnFilings(db, claim_id, todayIso);
+    if (each !== null) {
+      const due = each.filter((r) => r.state !== 'NOT_DUE');
+      const met = due.length > 0 && due.every((r) => r.state === 'FILED');
+      return { what: 'Each tax return the claim goes into is filed, or not due yet and held in aftercare', met,
+        why: due.length === 0 ? `no return is due yet, so none is filed: ${each.map((r) => r.words).join('; ')}` : each.map((r) => r.words).join('; ') };
+    }
     const a = latestAnswer(db, claim_id, 'FILED');
     if (a === null) return { what, met: false, why: 'the client’s accountant has not confirmed the filing yet. Send them the filing link under “The accountant’s confirmations”' };
     return a.outcome === 'CONFIRMED'
@@ -1141,6 +1150,8 @@ export type AftercarePanel = {
   readonly correspondence: string;
   readonly clawback: ClawbackReading;
   readonly disposal: { readonly note: string; readonly tasks: readonly { readonly id: string; readonly title: string; readonly status: string }[] };
+  /** PHASE 159l (L15): a return the claim goes into that is not due yet, held here with its due date. */
+  readonly returns_to_file: readonly ReturnFiling[];
   readonly may_record: boolean;
 };
 
@@ -1156,7 +1167,7 @@ export const DISPOSAL_TASK_TITLE = 'The election on a future sale — read the D
 export type DisposalFee = { readonly pounds: number; readonly pence: number; readonly words: string; readonly status: string };
 export const DISPOSAL_FEE: DisposalFee = (createRequire(import.meta.url)('../../../../04-phase-work/phase9/caprebate-job-economics.cjs') as { disposalFee: () => DisposalFee }).disposalFee();
 
-export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { openTerms?: readonly OpenTerm[] } = {}): AftercarePanel {
+export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { openTerms?: readonly OpenTerm[]; today?: string } = {}): AftercarePanel {
   const c = loadClaim(db, claim_id);
   authorise(actor, 'claim_facts.read', { type: 'claim_facts', id: c.id, business_id: c.business_id, assigned_surveyor_ids: [] });
   const enquiries = db.all<EnquiryRow>(
@@ -1178,6 +1189,7 @@ export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { o
       note: `If the property gets a sale date, or a sale is expected, Sales gets a task to read the Disposal Note. Our fee for that work: ${DISPOSAL_FEE.words}`,
       tasks,
     },
+    returns_to_file: accountantFiles(db, c.id) ? (returnFilings(db, c.id, opts.today ?? new Date().toISOString()) ?? []).filter((r) => r.state === 'NOT_DUE') : [],
     may_record: can(actor, 'hmrc_enquiry.record', { type: 'hmrc_enquiry', id: c.id, business_id: c.business_id }),
   };
 }

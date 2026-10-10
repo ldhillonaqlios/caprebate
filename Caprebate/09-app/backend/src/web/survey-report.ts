@@ -25,7 +25,7 @@ import { h, raw, type Safe } from './html.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 import { answerWords, legalQuestions } from './pack-legal.ts';
 import type { Snapshot } from './pack-approve.ts';
-import { BASIS_WORDS } from './bcis-data.ts';
+import { BASIS_WORDS, baseWords } from './bcis-data.ts';
 import { allowancesFor, allowanceWords, type AllowanceWords } from './allowances.ts';
 import type { ReturnContext } from './return-entries.ts';
 import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from './pdf-canvas.ts';
@@ -99,8 +99,27 @@ type SnapEvents = {
   purchase_applies: boolean;
   purchase_w3?: boolean;
   purchase: { qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null } | null;
-  works: { label: string; inputs: Record<string, number | null>; qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null; repairs_pence: number | null }[];
+  works: { label: string; inputs: Record<string, number | null>; qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null; repairs_pence: number | null;
+    /** PHASE 159l (item 5): each value's source, as approved. A version approved before has none. */
+    input_sources?: Record<string, Source | null> }[];
 };
+
+/** PHASE 159l (item 5, L20): each piece of work's final-account values, in the order the pack asks them. */
+const WORK_VALUE_LABELS: readonly (readonly [string, string])[] = [
+  ['works_total', 'the final account, in all'], ['works_main', 'plant and machinery (main pool)'], ['works_special', 'integral features (special rate pool)'],
+  ['works_bwic', 'builder’s work for that plant'], ['works_demolition', 'taking out old plant'], ['works_other', 'other building work, which does not qualify'],
+  ['works_repairs', 'the repair part'], ['works_prelims', 'preliminaries'], ['works_fees', 'professional fees'],
+];
+
+/** Each work's values as rows of "Where each number came from", with their source, as every rate line has one. */
+function workSources(ev: SnapEvents | undefined): ReportModel['sources'] {
+  if (ev === undefined) return [];
+  return ev.works.flatMap((w) => WORK_VALUE_LABELS.map(([k, label]) => {
+    const src = w.input_sources === undefined ? undefined : w.input_sources[k] ?? null;
+    return { label: `${w.label}: ${label}`, value: poundsWords(w.inputs[k] ?? null), chip: src === undefined || src === null ? { kind: 'NONE' as const, words: '' } : chipOf(src),
+      reason: src === undefined ? 'Its source was not kept with this version.' : src === null ? 'Not given.' : src.reason ?? (src.kind === 'EVIDENCE' ? src.text : null) };
+  }));
+}
 
 export type ReportChapter = {
   readonly n: number; readonly title: string; readonly applies: boolean; readonly not_applies_words: string | null;
@@ -138,8 +157,13 @@ function rateSourceWords(s: Source | null): string {
   if (b === null || b === undefined) return 'No source recorded.';
   const loc = b.location === undefined || b.location === null ? '' : `, location factor ${b.location.factor.toFixed(2)}${b.location.area === null ? ' (the UK mean)' : ` (${b.location.area})`}`;
   const ix = b.index === undefined || b.index === null || b.index.factor === null ? '' : `, indexed ×${b.index.factor.toFixed(4)}`;
-  return `${BASIS_WORDS[b.kind]}: ${b.ref}${loc}${ix}${b.priced_at === null ? '' : `, priced at ${longDate(b.priced_at)}`}.`;
+  // PHASE 159l (item 6): a version approved before says BCIS's quarter as "at 2026-01"; it is read as "at January 2026".
+  const ref = b.ref.replace(/ at (\d{4}-(?:0[1-9]|1[0-2]))(?![\d-])/g, (_m, q: string) => ` at ${baseWords(q)}`);
+  return `${BASIS_WORDS[b.kind]}: ${ref}${loc}${ix}${b.priced_at === null ? '' : `, priced at ${longDate(b.priced_at)}`}.`;
 }
+
+/** For the tests alone: a rate's source in the report's words. */
+export const rateWordsForTest = (s: Source | null): string => rateSourceWords(s);
 
 /** A value's source as a label. In the item table (`short`) a surveyor's value says "Surveyor": their name is on page 5. */
 function chipOf(s: Source | null, short = false): Chip {
@@ -243,6 +267,7 @@ export function reportModel(x: Snapshot, fingerprint: string, ctx: ReturnContext
       { label: 'Bare land', value: poundsWords(iv.land_pence.value), chip: chipOf(iv.land_pence.source), reason: iv.land_pence.source?.reason ?? (iv.land_pence.source?.kind === 'EVIDENCE' ? iv.land_pence.source.text : null) },
       { label: 'Floor area', value: area(iv.gia_milli_m2.value), chip: chipOf(iv.gia_milli_m2.source), reason: iv.gia_milli_m2.source?.reason ?? (iv.gia_milli_m2.source?.kind === 'EVIDENCE' ? iv.gia_milli_m2.source.text : null) },
       { label: 'Whole-building rebuild rate', value: perM2(iv.building_rate_pence.value), chip: chipOf(iv.building_rate_pence.source), reason: iv.building_rate_pence.source?.reason ?? (iv.building_rate_pence.source?.kind === 'EVIDENCE' ? iv.building_rate_pence.source.text : null) },
+      ...workSources(ev),
     ],
     groups: [
       { pool: 'SR' as const, title: 'Special rate pool — the building’s own systems', rows: sr.map(row) },

@@ -14,7 +14,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CB, clientVatFromWorks } from '../src/web/engine.ts';
-import { assessLegal } from '../src/web/pack-legal.ts';
+import { assessLegal, assessLegalUnder } from '../src/web/pack-legal.ts';
 import { csvCell, returnEntries, returnEntriesCsv, RETURN_YEARS } from '../src/web/return-entries.ts';
 import { COMPANY_TYPE_FROM_REGISTER, entityFromCompanyType, searchCompanies } from '../src/connectors/company-search.ts';
 import { PLANNING_ROUTE, REGISTER_SWITCHES } from '../src/connectors/registers.ts';
@@ -177,9 +177,12 @@ describe('line 21 — the two switches that act only in the survey pack, each on
   test('fvr_requires_past_owner_claim — BIGGER in the pack: a seller who never claimed, bought in 2013, is unsettled off and clear on', () => {
     const st = new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2013-06-01', G11: 'no', G12: 'taxpaying', G14: 'no', G14s: 'sale',
       G14po: 'sold_market', G14pod: '2013-06-01', G14iv: 'no', G14t: 'none', G15: 'no', G14fvr: 'yes' }));
-    const off = assessLegal('gp', st, NOW, 'company').verdict.level;
-    const on = withSwitch('fvr_requires_past_owner_claim', () => assessLegal('gp', st, NOW, 'company').verdict.level);
+    // PHASE 159l (item 8): the pack holds the reading on for its own legal check, so the reading is shown both ways here.
+    const off = assessLegalUnder({ s187a_6b_statements_route: false, fvr_requires_past_owner_claim: false }, 'gp', st, NOW, 'company').verdict.level;
+    const on = assessLegalUnder({ s187a_6b_statements_route: false, fvr_requires_past_owner_claim: true }, 'gp', st, NOW, 'company').verdict.level;
     assert.deepEqual([off, on], ['AMBER', 'GREEN']);
+    assert.equal(assessLegal('gp', st, NOW, 'company').verdict.level, 'GREEN', 'the pack reads it on');
+    assert.equal(CTA['fvr_requires_past_owner_claim'], false, 'the public estimate’s own switch is put back');
   });
   test('grant_traced_to_elements — EITHER WAY in the pack: off, £40,000 of NHS money takes £5,600 off a £140,000 pack; on, matched to the fire alarm it takes £40,000, matched to items that never qualify it takes nothing', async () => {
     const { packSums } = await import('../src/web/pack-sums.ts');

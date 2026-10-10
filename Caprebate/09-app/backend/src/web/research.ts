@@ -937,6 +937,7 @@ export async function consultAllowed(
      lookup on this click, and its council area for the care regulator. Nothing is written here; nothing is assumed:
      a country it does not give, or a check that fails, leaves the nation unknown, exactly as before. */
   let postcodeChecked: Awaited<ReturnType<typeof checkPostcode>> | null = null;
+  let researchPostcodeCheck: Awaited<ReturnType<typeof checkPostcode>> | null = null;
   const waivedToRun = decided.some((x) => x.state === 'NOT_RUN' && freeGateWaived(x.entry.source_id, d.outside?.env));
   if (d.outside !== undefined && waivedToRun && subject.property !== null && subject.property.jurisdiction === null && subject.property.postcode) {
     const o = d.outside;
@@ -983,10 +984,10 @@ export async function consultAllowed(
        which the ONS postcode table gives; the test website has no such table. Where the waiver holds, and only then,
        the council area comes from postcodes.io, which the postcode check already uses (only the postcode is sent). */
     if (x.entry.source_id === 'CQC' && freeGateWaived('CQC', o.env) && (query as { council?: unknown }).council === null && subject.property?.postcode) {
-      const pc = postcodeChecked ?? await checkPostcode({
+      const pc = postcodeChecked ?? (researchPostcodeCheck = await checkPostcode({
         postcode: subject.property.postcode, gate: gateStatus({ precondition: registryGate() }),
         deps: { audit: d.audit, now: d.now, transport: o.transport, ...(o.limiter === undefined ? {} : { limiter: o.limiter }), ...(o.sleep === undefined ? {} : { sleep: o.sleep }) },
-      });
+      }));
       if (pc.state === 'CHECKED' && pc.council_area !== null) {
         query = { ...(query as Record<string, unknown>), council: pc.council_area };
         if (found !== undefined) found.council = { property_id: subject.property.id, area: pc.council_area };
@@ -1012,6 +1013,20 @@ export async function consultAllowed(
          not read at all is null, never 0, and is left out of the sum rather than counted as free. */
       cost_pence: run.cost_pence,
     });
+  }
+  /* PHASE 159l (item 3, L18): THE POSTCODES.IO ROW SAYS WHAT HAPPENED. On the Lockwood run the panel said postcodes.io
+     was "Waiting" for the privacy notice while the research's own postcode check had called it and kept the council
+     area. They are two things: the row is the postcode check at the address question (its own gate, the notice); the
+     call is the research's country check above. The row now says so, and what that check did on this click. */
+  const pcAt = out.findIndex((o) => o.entry.source_id === 'POSTCODES_IO' && o.state === 'NOT_PERMITTED_YET');
+  const pcRow = out[pcAt];
+  if (pcRow !== undefined) {
+    const ran = researchPostcodeCheck ?? postcodeChecked;
+    const did = ran === null ? ''
+      : ran.state === 'CHECKED'
+        ? ` On this run the research checked the postcode with postcodes.io itself, to learn which part of the UK the building is in: it gave ${ran.country ?? 'no country'}${ran.council_area === null ? '' : ` and the council area ${ran.council_area}, kept on the property where none was recorded`}.`
+        : ' On this run the research tried to check the postcode with postcodes.io itself, and it gave no answer.';
+    out[pcAt] = { ...pcRow, detail: `This row is the postcode check at the address question, which is a different step from the research. ${pcRow.detail}.${did}`.replace(/\.\./g, '.') };
   }
   return out;
 }

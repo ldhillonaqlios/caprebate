@@ -30,6 +30,7 @@ import { poundsWords } from './pack-sums.ts';
 import { claimantTypeForGate } from './crm.ts';
 import { valuationLock } from './valuation-lock.ts';
 import { claimantRole, type ClaimantRole } from './who-claims.ts';
+import { LEGAL_ENGINE_SWITCHES } from './money-readings.ts';
 
 export type EngineQuestion = {
   readonly id: string;
@@ -66,7 +67,32 @@ export const LEGAL_READINGS = Object.freeze({
   /** C7: a non-entitled seller with an earlier owner who could claim — the claim is capped at the value fixed when that
    *  earlier owner sold on (s.185), and is not settled while that value is not known. */
   s185_earlier_cap: true,
+  /** PHASE 159l (item 8, #9; Word question 284): the s.187A(6)(b) statements route — where an owner in between could
+   *  never claim, two written statements fix the value with no deadline. The engine's CB_CTA.s187a_6b_statements_route,
+   *  held on for the pack's legal check only (G14ivne and G14st8 are asked). */
+  s187a_6b_statements_route: true,
+  /** PHASE 159l (item 8, #10; Word question 285): the fixed value requirement needs a past owner who CLAIMED; a past
+   *  owner known never to have claimed brings no disposal value, so the requirement does not bite. The engine's
+   *  CB_CTA.fvr_requires_past_owner_claim, held on for the pack's legal check only. */
+  fvr_requires_past_owner_claim: true,
 } as const);
+
+/** PHASE 159l (item 8): the engine's own switches the pack's legal check reads, by the reading that holds them. */
+export { LEGAL_ENGINE_SWITCHES };
+export type LegalEngineReadings = Readonly<Record<(typeof LEGAL_ENGINE_SWITCHES)[number], boolean>>;
+
+/**
+ * THE ENGINE'S TWO SWITCHES, HELD FOR ONE CALL (Phase 159l, item 8). CB_S187A.assess and the two questions' showIf read
+ * CB_CTA as they run, so the pack sets them, runs the whole legal flow, and puts them back — in a finally, and
+ * synchronously, so no other request ever sees them set. The public estimate never runs inside this, and keeps CB_CTA as
+ * it ships (the site harness asserts it off).
+ */
+export function withLegalEngineReadings<T>(readings: LegalEngineReadings, fn: () => T): T {
+  const cta = (CB as unknown as { CB_CTA: Record<string, unknown> }).CB_CTA;
+  const was = LEGAL_ENGINE_SWITCHES.map((k) => [k, cta[k]] as const);
+  for (const k of LEGAL_ENGINE_SWITCHES) cta[k] = readings[k];
+  try { return fn(); } finally { for (const [k, v] of was) cta[k] = v; }
+}
 
 /** C28: the question added after the seller question where the seller is "a private individual / other". */
 const NON_TAXPAYER_Q: EngineQuestion = Object.freeze({
@@ -187,6 +213,19 @@ export function claimantFor(db: Db, business_id: string): string {
 export function assessLegal(sector: string, answers: ReadonlyMap<string, unknown>, nowIso: string, claimant: string,
   /** PHASE 159h (item 7): how the client holds the building, from the property (who-claims.ts propertyTenure). Absent:
    *  not read at all (a caller with no property). Present and null: not known — asked, never assumed (N4). */
+  holding?: { readonly role: ClaimantRole | null },
+): { asked: EngineQuestion[]; unanswered: EngineQuestion[]; verdict: LegalVerdict } {
+  return assessLegalUnder(LEGAL_READINGS, sector, answers, nowIso, claimant, holding);
+}
+
+/** The same, under readings a caller names: the tests, to show what each reading moves. The pack uses `assessLegal`. */
+export function assessLegalUnder(readings: LegalEngineReadings, sector: string, answers: ReadonlyMap<string, unknown>, nowIso: string, claimant: string,
+  holding?: { readonly role: ClaimantRole | null },
+): { asked: EngineQuestion[]; unanswered: EngineQuestion[]; verdict: LegalVerdict } {
+  return withLegalEngineReadings(readings, () => assessLegalHeld(sector, answers, nowIso, claimant, holding));
+}
+
+function assessLegalHeld(sector: string, answers: ReadonlyMap<string, unknown>, nowIso: string, claimant: string,
   holding?: { readonly role: ClaimantRole | null },
 ): {
   asked: EngineQuestion[]; unanswered: EngineQuestion[]; verdict: LegalVerdict;

@@ -34,7 +34,7 @@ import type * as F from './claim-facts.ts';
 import type { PipelinePanel } from './pipeline.ts';
 import { enquiryBlock } from './pipeline-pages.ts';
 import { authorise, can } from '../authz.ts';
-import { addStaffEvent, eventsOnClaim, setEventVat, EVENT_KINDS, KIND_WORDS, type EventOnClaim } from './property-events.ts';
+import { addStaffEvent, approvedEventFigures, eventsOnClaim, setEventVat, EVENT_KINDS, KIND_WORDS, type ApprovedEventFigure, type EventOnClaim } from './property-events.ts';
 import { requestWorkDocuments } from './documents.ts';
 import { claimRoutes } from './claim-route.ts';
 
@@ -406,10 +406,20 @@ export async function handleCrm(
  * PHASE 159c: each event on the claim's building — what it was, when, what it cost and its own "up to" (for a login that
  * may read the claim's value), and the documents that prove it, each with whether we hold one. Then a form to add one.
  */
-function eventsBlock(claim_id: string, evs: readonly EventOnClaim[], value: boolean, mayAdd: boolean, mayAsk = false): Safe {
+/** PHASE 159l (L19): once the survey has priced an event, its approved figure; until then, the sector's band. */
+function eventFigure(e: EventOnClaim, approved: ReadonlyMap<string, ApprovedEventFigure>): string {
+  const a = approved.get(e.kind === 'PURCHASE' ? 'PURCHASE' : e.id);
+  if (a !== undefined) {
+    if (a.not_claimed) return `Not claimed: the purchase did not pass the legal check in survey version ${String(a.version)}.`;
+    if (a.qualifying_pence !== null) return `${poundsWords(a.qualifying_pence)} qualifies, as the survey approved it in version ${String(a.version)}.`;
+  }
+  return e.ceiling_pence === null ? `No figure for this one yet. ${e.ceiling_why ?? ''}` : `Up to ${poundsWords(e.ceiling_pence)} on the sector’s range for this kind of spend, until the survey prices it.`;
+}
+
+function eventsBlock(claim_id: string, evs: readonly EventOnClaim[], value: boolean, mayAdd: boolean, mayAsk = false, approved: ReadonlyMap<string, ApprovedEventFigure> = new Map()): Safe {
   return h`${evs.length === 0 ? h`<p class="help">Nothing is recorded yet. The assessment records the purchase and any work since; add anything it missed below.</p>`
     : h`<ol class="events">${evs.map((e) => h`<li><p><strong>${e.words}</strong>, ${e.when}${value ? `, ${e.cost_pence === null ? 'cost not known' : `${poundsWords(e.cost_pence)}`}` : ''}${e.source === 'STAFF' ? ' (added on the claim)' : ''}</p>
-      ${value ? h`<p class="help">${e.ceiling_pence === null ? `No figure for this one yet. ${e.ceiling_why ?? ''}` : `Up to ${poundsWords(e.ceiling_pence)} on the sector’s range for this kind of spend, until the survey prices it.`}</p>` : raw('')}
+      ${value ? h`<p class="help">${eventFigure(e, approved)}</p>` : raw('')}
       <p class="help">Its documents: ${e.documents.map((x, i) => h`${i === 0 ? '' : '; '}${x.label} (${x.held === 0 ? 'not received yet' : `${String(x.held)} held`}${x.untied > 0 ? `; ${String(x.untied)} more not tied to one piece of work yet` : ''})`)}.</p>
       ${mayAsk && e.kind !== 'PURCHASE' && e.documents.some((x) => (x.code === 'CONTRACTOR_COST_BREAKDOWN' || x.code === 'CONTRACTOR_INVOICE') && x.held === 0)
         ? h`<form method="post" action="/staff/claims/${claim_id}/events/${e.id}/ask-documents" class="inline"><button class="btn-quiet" type="submit">Ask the client for this work’s final account and invoices</button></form>` : raw('')}
@@ -1284,7 +1294,8 @@ function claimPage(
         working: evs.length === 0 ? 'Nothing is recorded about the building’s purchase or works yet.'
           : missing === 0 ? 'Nothing right now.' : 'Gathering the documents for each event.',
         need: [], from: ['the client', 'you and your team'],
-        body: eventsBlock(v.id, evs, value, mayAdd, can(actor, 'document_request.create', { type: 'document_request', id: row.business_id, business_id: row.business_id })),
+        body: eventsBlock(v.id, evs, value, mayAdd, can(actor, 'document_request.create', { type: 'document_request', id: row.business_id, business_id: row.business_id }),
+          value ? approvedEventFigures(db, v.id) : new Map()),
         ...(msg === 'event' ? { open_now: true } : {}),
       });
     }

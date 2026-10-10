@@ -102,10 +102,29 @@ export function yearEndFrom(client: { month: number; day: number } | null, reg: 
   return { used: null, from: null, client: null, register: null, differs: false, words: 'Not known: the client has not given a year end and Companies House has not been read.' };
 }
 
-/** The dormant warning for a client, or null. */
+export type SearchedCompany = { readonly number: string; readonly status: string | null; readonly accounts_type: string | null; readonly dormant: boolean };
+
+/**
+ * PHASE 159l (L13): WHAT THE COMPANY SEARCH READ AT THE ASSESSMENT — the company the person picked, its status and its
+ * latest accounts' type (migration 114), from the newest assessment that picked one. The register record the paid
+ * research writes is newer and wins wherever it exists; this is what is known before it. A type not read is not known.
+ */
+export function companyAtAssessment(db: Db, business_id: string): SearchedCompany | null {
+  const r = db.get<{ company_number: string; company_status: string | null; company_accounts_type: string | null }>(
+    'SELECT company_number, company_status, company_accounts_type FROM assessments WHERE business_id = ? AND company_number IS NOT NULL ORDER BY submitted_at DESC, id DESC LIMIT 1',
+    [business_id]);
+  if (r === undefined) return null;
+  return { number: r.company_number, status: r.company_status, accounts_type: r.company_accounts_type, dormant: isDormant(r.company_accounts_type) };
+}
+
+const SEARCH_SOURCE = 'the company search at the assessment';
+
+/** The dormant warning for a client, or null: the register's where the research has read it, else the search's. */
 export function dormantWarning(db: Db, business_id: string): string | null {
   const r = registerCompany(db, business_id);
-  return r !== null && r.dormant ? `${DORMANT_WORDS}${r.accounts_made_up_to === null ? '' : ` (accounts made up to ${r.accounts_made_up_to})`}` : null;
+  if (r !== null) return r.dormant ? `${DORMANT_WORDS}${r.accounts_made_up_to === null ? '' : ` (accounts made up to ${r.accounts_made_up_to})`}` : null;
+  const a = companyAtAssessment(db, business_id);
+  return a !== null && a.dormant ? `${DORMANT_WORDS} (from ${SEARCH_SOURCE}, company number ${a.number})` : null;
 }
 
 /* ================================================================== *
@@ -139,7 +158,8 @@ export function claimantRole(db: Db, property_id: string | null): RoleReading {
 
 /**
  * THE QUALIFYING-ACTIVITY CHECK, IN WORDS — what the records say, for the person answering the enquiry check (it is
- * still a person who answers it). A dormant company is said first; then how the client holds each building.
+ * still a person who answers it). A dormant company is said first — the register's, or before the research the company
+ * search's at the assessment (Phase 159l, L13); then how the client holds each building.
  */
 export function qualifyingActivityEvidence(db: Db, business_id: string): string[] {
   const out: string[] = [];
@@ -148,6 +168,13 @@ export function qualifyingActivityEvidence(db: Db, business_id: string): string[
     const kind = reg.accounts_type === null ? 'accounts type not known' : `${reg.accounts_type.replace(/-/g, ' ')} accounts`;
     out.push(`Companies House: ${reg.status ?? 'status not known'}, ${kind}${reg.accounts_made_up_to === null ? '' : ` made up to ${reg.accounts_made_up_to}`}.`);
     if (reg.dormant) out.push(DORMANT_WORDS);
+  } else {
+    const a = companyAtAssessment(db, business_id);
+    if (a !== null) {
+      const kind = a.accounts_type === null ? 'accounts type not known' : `${a.accounts_type.replace(/-/g, ' ')} accounts`;
+      out.push(`Companies House, from ${SEARCH_SOURCE}: company number ${a.number}, ${a.status ?? 'status not known'}, ${kind}.`);
+      if (a.dormant) out.push(DORMANT_WORDS);
+    }
   }
   for (const p of db.all<{ id: string; label: string }>('SELECT id, label FROM properties WHERE business_id = ? ORDER BY created_at ASC, id ASC', [business_id])) {
     const r = claimantRole(db, p.id);

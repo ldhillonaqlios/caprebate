@@ -214,6 +214,46 @@ export function claimAlive(routes: readonly EventRoute[]): { alive: boolean; set
   return { alive: routes.some((r) => r.route === 'W1' || r.route === 'W2'), settled: routes.every((r) => r.route !== 'NOT_KNOWN') };
 }
 
+/** The day a return is due: twelve months before the end of its amendment window (TMA 1970 s.9ZA, FA 1998 Sch 18
+ *  para 15 — the window runs twelve months from the filing date, under every rule windowForPeriod applies). */
+export function dueFromAmendBy(amend_by: string): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(amend_by);
+  if (m === null) return null;
+  const y = Number(m[1]) - 1, mo = Number(m[2]), d = Number(m[3]);
+  const last = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  return `${String(y)}-${m[2] ?? ''}-${String(Math.min(d, last)).padStart(2, '0')}`;
+}
+
+export type ClaimReturn = {
+  /** The last day of the accounting period whose return carries these parts. */
+  readonly period_end: string;
+  /** The day that return is due, and the last day it can be amended. */
+  readonly due_on: string | null;
+  readonly amend_by: string | null;
+  /** The parts of the claim that go into it, by label. */
+  readonly parts: readonly string[];
+};
+
+/**
+ * PHASE 159l (item 2, L15): THE RETURNS A CLAIM GOES INTO, one per accounting period, from each claimed part's route —
+ * W1 its own period's return, W2 the first open period's. On Lockwood the purchase (W2) went into the return for the
+ * year to 31 May 2025 and the 2025 refit (W1) into the year to 31 May 2026: two returns, filed a year apart. Null where a
+ * claimed part does not name its period yet (N4: not known is not one return); empty where nothing is claimed.
+ */
+export function claimReturns(routes: readonly EventRoute[]): ClaimReturn[] | null {
+  const by = new Map<string, { amend_by: string | null; parts: string[] }>();
+  for (const r of routes) {
+    if (r.route !== 'W1' && r.route !== 'W2') continue;
+    const end = r.route === 'W1' ? r.period?.end ?? null : r.first_open?.end ?? null;
+    if (end === null) return null;
+    const g = by.get(end) ?? { amend_by: r.deadline, parts: [] };
+    g.parts.push(r.label);
+    by.set(end, g);
+  }
+  return [...by.entries()].sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([period_end, g]) => ({ period_end, amend_by: g.amend_by, due_on: g.amend_by === null ? null : dueFromAmendBy(g.amend_by), parts: g.parts }));
+}
+
 /** One line per route, for a gate's "why". */
 export function routesWhy(routes: readonly EventRoute[]): string {
   return routes.map((r) => `${r.label}: ${r.route === 'NOT_KNOWN' ? 'no route yet' : r.route} — ${r.why}`).join('; ');

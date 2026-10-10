@@ -1071,124 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 159l — what the second Lockwood run found: the dormant flag before the letter, a filing per return, and the screens
-
- **Model: Opus. Written 10 October 2026 by Phase 159j**, from the second Lockwood Surgery run (findings L13 to L21; L14, L16 and L17 were fixed by 159j, L21 is Word question 278). Why now: each makes the claim the client and the accountant see match what the system knows, and none needs anybody to answer anything first.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
-   and the same entry at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE EVIDENCE (OneDrive, not in git): Caprebate/04-phase-work/sim-2026-10-10-lockwood/
-  Lockwood-Surgery-run-2.md   the run of 10 Oct 2026, every API live, the
-                              purchase (June 2020, W2) and the 2025 refit (W1);
-                              findings L13-L21 with their files and lines
-  packs/                      every pack, report, CSV and email it made
-and the 9 Oct run: Caprebate/04-phase-work/sim-2026-10-09-lockwood/ (L1-L12).
-The stress suite is in the build since Phase 159j (test/phase159j.test.ts):
-it runs in npm run check, and every item below must leave it green.
-
-Each fix below gets a test that fails on the code before it. Plain words at
-grade 9 on every screen. Fix what is small and safe; anything larger goes in
-a new lettered phase before the sweep; anything that needs a person goes in
-the Word questions document (AMENDMENT 2).
-
-1. L13 (RISK) THE DORMANT FLAG BEFORE THE LETTER. "Find this company" flags a
-   dormant match (159g), but submit() keeps none of the accounts type it read,
-   and the lead's qualifying-activity evidence (pipeline.ts:416 ->
-   who-claims.ts:144-151) reads only the CH_COMPANY register record, which only
-   the paid research writes - so on Lockwood the letter was signed and 16p of
-   Homedata paid before "dormant" first showed. Keep the accounts type (and
-   the company number) the search read with the assessment, and show it
-   beside the qualifying-activity check on the lead and the claim before
-   Engagement. Nothing refuses (rule 13(c)); it warns.
-2. L15 (GAP) A FILING PER RETURN. One filing date closes a claim whose parts
-   go into two returns (accountant-confirm.ts:49; one filed_on per claim,
-   migration 015). On Lockwood the purchase went into the amended return for
-   the year to 31 May 2025 and the refit into the return for the year to 31
-   May 2026, not due until 31 May 2027, and the claim closed on one answer.
-   Ask the accountant to confirm each return a part goes into (from the
-   claim's routes, src/web/claim-route.ts), and close the claim only when each
-   is filed - or hold the later return in aftercare with its due date. Say
-   which, in the record.
-3. L18 (display) THE RESEARCH PANEL'S POSTCODE CHECK. The panel says
-   postcodes.io is "Waiting" (the privacy-notice gate) though the research's
-   own country check called it and kept the council area on the property
-   (research.ts:939-948; the POSTCODES_IO source row stays NOT_PERMITTED_YET).
-   Show what the check did on that click (called, council area kept), or say
-   plainly that the row is the address-question lookup, which is a different
-   gate.
-4. L19 (display) THE EVENTS' FIGURES AFTER THE SURVEY. "What happened to the
-   building" keeps "Up to £162,000 / Up to £63,000 ... until the survey prices
-   it" after the survey priced both and the claim closed (crm-pages.ts
-   eventsBlock). Once an approved version exists, show each event's approved
-   figure from it (the purchase's and each work's qualifying amount).
-5. L20 (GAP) THE WORK'S OWN COSTS ON THE REPORT. The report says the refit is
-   "On its own cost: £90,000 in all, from the final account. £4,500 of it is a
-   repair" but not the nine final-account values (main, special, builder's
-   work, demolition, other, repairs, preliminaries, fees) or their source,
-   which pack chapter 9 holds; "Where each number came from" lists only the
-   price, the land, the floor area and the building rate. Print each work's
-   values and source on the report (page and PDF), as every rate line is.
-6. L17's remainder (display): BCIS's base quarter prints "at 2026-01" on the
-   page and the PDF. Say it as a quarter or a month ("January 2026").
-7. INSPIRE END TO END (carried from Phase 159a by Phase 159j item 4). Its three
-   test lookups were used on 9 Oct; a fourth is refused until Lakhbir records
-   a switch-on (smoke-switched-on is his, never ours). If he has, run
-   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE and expect PASS;
-   if not, ask him once, and carry it on if he has not.
-8. (Carried from Phase 159k, item 3.) TWO MORE READINGS IN THE PACK'S LEGAL
-   CHECK, ON IN TEST: the s.187A(6)(b) statements route (CB_CTA
-   s187a_6b_statements_route, #9; the questions G14ivne and G14st8) and the
-   fixed value requirement needing a past owner who claimed (CB_CTA
-   fvr_requires_past_owner_claim, #10). The engine reads both from CB_CTA
-   inside CB_S187A.assess AND in the two questions' showIf, so the pack must
-   hold them on for the whole legal flow (legalQuestions, legalView,
-   assessLegal), and so must test/legal-paths-walk.ts: add them to
-   LEGAL_READINGS (src/web/pack-legal.ts), apply them by a scoped override
-   (set, run, restore; synchronous, so no other request sees it), never in the
-   public estimate (the site harness asserts CB_CTA off). Re-record the walk
-   (node tools/legal-paths-record.ts) and read every moved path. A Word
-   question for each under the tax adviser.
-```
-
----
-
 ## PHASE 160 — Sweep and stress-test (the recurring one, always last)
 
 
@@ -1499,6 +1381,25 @@ after that phase.
    reports the pipe's exit code; node --test from the root does not run; a
    DOCX zip may use backslash entry paths; vercel.json's outputDirectory set
    back to "." would publish every committed file on the test website.
+
+═══ CARRIED IN BY PHASE 159l, 10 OCTOBER 2026 - two jobs, do both ═══
+A. INSPIRE END TO END (carried from Phase 159a by 159j item 4, then 159l item
+   7). Its three test lookups were used on 9 Oct 2026; a fourth is refused
+   until Lakhbir records a switch-on (smoke-switched-on is his, never ours).
+   Read ~/.caprebate-test-lookups.jsonl for a HMLR_INSPIRE "switched_on" line
+   after 2026-10-09. If there is one, run from 09-app/backend:
+   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE and expect PASS.
+   If not, ask him once more; Phase 159l asked on 10 Oct 2026.
+B. A FILING PER RETURN ON THE STAFF ROUTE (BUILDABLE). Phase 159l made the
+   accountant's filing link name one return at a time (claim-route.ts
+   claimReturns, accountant-confirm.ts returnFilings, migration 115) and the
+   defence pack's close read each return. Where the client has NO accountant
+   (client-filing.ts route CLIENT), recordFiling (claim-record.ts) still takes
+   one filed_on for the claim. Do the same there: a staff filing record per
+   return (its period end), the close needing each return already due, a
+   later one held in aftercare with its due date. A test that fails on the
+   code before. Word question 283 covers the reading.
+═══════════════════════════════════
 
 THE PATTERN TO HUNT, in thirteen variants, because each pass finds a different one.
  (i)   Complete on its own terms, silently incomplete on the next person's. WHEN A
@@ -1832,7 +1733,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157 — the sweep — **done 6 Oct 2026**, see PHASE HISTORY; it inserted 157a and 157b |  The standing rule |
 |  Claude |  Phase 157a — the engine and the cost model: the pooling questions, the unknown seller, the cost model in the survey pack — **done 6 Oct 2026**, see PHASE HISTORY |  Loose ends the sweep held since 153e and 154a1 |
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
-|  Claude |  Phase 159l — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, 159b, the assessment figure made sound, 159c, several events on one building, and 159d, each event's route, ran on 9 Oct 2026, and 159e, the allowances on each event and the return entries, and 159f, BCIS rate drafting and every rate sourced, and 159g, who claims and what the registers say, and 159h, the legal check, and 159i, the money adjustments, and 159j, the stress suite in the build and the second Lockwood run, and 159k, the seller's allowance statement and three readings, on 10 Oct 2026; all are in PHASE HISTORY): what the second Lockwood run found, and two legal-check readings carried by 159k (159l, 13255398509, written by 159j) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
+|  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
 |  Claude |  Phase 160 — the sweep, always last |  The standing rule |
 

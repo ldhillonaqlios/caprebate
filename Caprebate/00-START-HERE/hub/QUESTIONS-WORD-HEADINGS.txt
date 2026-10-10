@@ -109,6 +109,8 @@
 280) We give a company land remediation relief, the spend plus 50% more, for removing asbestos that was in the building when it acquired the land. Is that viable?
 281) When repairs to an integral feature come to more than half the cost of replacing it within twelve months, we treat them as capital, across all the work on a building. Is that viable?
 282) We ask for the seller's structures allowance statement only when the claim takes that allowance on a purchase. Is that right?
+284) If an owner in between could never claim, do two written statements fix the fixtures' value with no deadline?
+285) If the owner before our client never claimed on the fixtures, does the fixed value requirement apply at all?
 116) Would you send a client to us, and what would stop you?
 117) Do you want a fee for sending clients, and what must you tell them?
 118) Who sends the corrected tax return to HMRC: you or us?
@@ -123,6 +125,7 @@
 127) Has another capital allowances firm contacted you before, and what happened?
 128) Do we need to be supervised under anti-money-laundering rules?
 264) When Companies House gives a different year end from the one the client told us, which should the claim use?
+283) A claim that goes into two tax returns: may it close once the first is filed, with the second followed up later?
 129) Can you value a building safely without ever visiting it?
 130) When can a video walkthrough replace a site visit?
 131) Should the site-visit decision use our hidden estimate or the price paid?
