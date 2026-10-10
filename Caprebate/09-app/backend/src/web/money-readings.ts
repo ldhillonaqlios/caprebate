@@ -39,5 +39,22 @@ export function moneyReadingsHere(env: Env = process.env): MoneyReadings {
   return testSystemHere(env) ? ALL_ON : ALL_OFF;
 }
 
+/**
+ * PHASE 159j (Lockwood finding L14), 10 October 2026: THE TAX ADVISER'S SWITCHES AS THE SURVEY PACK READS THEM. The pack
+ * applies the readings above on the test system, but the claim page's facts panel and the sign-off form read the public
+ * estimate's own switches (CB_CTA), which stay off, so a person signing off read "Off ... not added" beside a figure that
+ * had added the stamp duty. Each CB_CTA switch the pack honours from these readings reads ON here when the pack applies
+ * it; every other switch reads as CB_CTA says. Nothing here changes CB_CTA.
+ */
+export const PACK_SWITCH_OF: Readonly<Record<string, keyof MoneyReadings>> = Object.freeze({
+  transaction_tax_in_base: 'transaction_tax_in_base', legal_fees_in_base: 'legal_fees_in_base',
+  s185_plus_own_s25: 's185_plus_own_s25', grant_traced_to_elements: 'grant_untraced_full',
+});
+
+export function packSwitchReadings(cta: readonly { readonly switch: string; readonly on: boolean }[], money: MoneyReadings = moneyReadingsHere()):
+  { readonly switch: string; readonly on: boolean }[] {
+  return cta.map((s) => { const m = PACK_SWITCH_OF[s.switch]; return m !== undefined && money[m] ? { switch: s.switch, on: true } : { switch: s.switch, on: s.on }; });
+}
+
 export const MONEY_READINGS_ON = ALL_ON;
 export const MONEY_READINGS_OFF = ALL_OFF;

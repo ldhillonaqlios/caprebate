@@ -39,6 +39,7 @@ import { authorise, can, type Actor, type Obj } from '../authz.ts';
 import { NotFoundAsRefusal } from './backoffice.ts';
 import { SOURCES as REGISTER_SOURCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
 import { amendmentWindow, ctaSwitchReadings, electionNotifiedInTime, type EngineWindow, type SectorId } from './engine.ts';
+import { packSwitchReadings } from './money-readings.ts';
 import { TAXONOMY_SECTOR, taxonomy } from './pack-lines.ts';
 import type { PackGrant } from './pack-grants.ts';
 import {
@@ -714,9 +715,10 @@ export type FactsPanel = {
   readonly may_record: boolean;
 };
 
-function switchLine(name: string, says: string): SwitchLine {
-  const s = ctaSwitchReadings().find((x) => x.switch === name);
-  return { name, on: s?.on === true, says };
+/** PHASE 159j (L14): read as the survey pack reads it (`packSwitchReadings`), and said in the words for that state. */
+function switchLine(name: string, saysOff: string, saysOn: string): SwitchLine {
+  const s = packSwitchReadings(ctaSwitchReadings()).find((x) => x.switch === name);
+  return { name, on: s?.on === true, says: s?.on === true ? saysOn : saysOff };
 }
 
 function ownerRows(db: Db, claim_id: string): OwnerLine[] {
@@ -781,17 +783,20 @@ export function factsPanel(db: Db, actor: Actor, claim_id: string, todayIso: str
       provider_checked: captured(f, 'GRANT_PROVIDER_CHECKED'),
       split_view: captured(f, 'GRANT_SPLIT_ADVISER_VIEW'),
       switch: switchLine('grant_traced_to_elements',
-        'Off. In the survey pack every grant comes off every item in equal share — a share of the price paid. Switched on, a grant matched to rows of our fixture list would come off only those items. First the tax adviser must answer this. "When a grant’s papers say which items it paid for, should it come off only those items?"'),
+        'Off. In the survey pack every grant comes off every item in equal share — a share of the price paid. Switched on, a grant matched to rows of our fixture list would come off only those items. First the tax adviser must answer this. "When a grant’s papers say which items it paid for, should it come off only those items?"',
+        'On, on the test system. In the survey pack a grant matched to rows of our fixture list comes off only those items, and a grant not traced to items comes off in full. The tax adviser is asked whether this is viable.'),
     },
     acquisition_costs: {
       costs: captured(f, 'ACQUISITION_COSTS'), transaction_tax: captured(f, 'TRANSACTION_TAX'),
       switch: switchLine('transaction_tax_in_base',
-        'Off. Land transaction tax recorded here is shown, but not added to the price we apportion. First the tax adviser must answer this. "When a building is bought, is the stamp duty part of the price we apportion?"'),
+        'Off. Land transaction tax recorded here is shown, but not added to the price we apportion. First the tax adviser must answer this. "When a building is bought, is the stamp duty part of the price we apportion?"',
+        'On, on the test system. The stamp duty and the purchase fees recorded here are added to the price we apportion, and the land takes its share. The tax adviser is asked whether this is viable.'),
     },
     buyer_alterations: {
       made: captured(f, 'BUYER_ALTERATIONS'), amount: captured(f, 'BUYER_ALTERATIONS_AMOUNT'),
       switch: switchLine('s185_plus_own_s25',
-        'Off. The buyer’s own alteration spend is shown, but not added on top of an agreed figure. First the tax adviser must answer this. "When someone buys a building, can they add their own alteration costs on top of an agreed figure?"'),
+        'Off. The buyer’s own alteration spend is shown, but not added on top of an agreed figure. First the tax adviser must answer this. "When someone buys a building, can they add their own alteration costs on top of an agreed figure?"',
+        'On, on the test system. The buyer’s own alteration spend is added on top of an agreed figure. The tax adviser is asked whether this is viable.'),
     },
     may_record: can(actor, 'claim_facts.record', obj),
   };

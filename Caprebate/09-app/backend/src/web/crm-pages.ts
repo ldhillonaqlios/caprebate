@@ -36,6 +36,7 @@ import { enquiryBlock } from './pipeline-pages.ts';
 import { authorise, can } from '../authz.ts';
 import { addStaffEvent, eventsOnClaim, setEventVat, EVENT_KINDS, KIND_WORDS, type EventOnClaim } from './property-events.ts';
 import { requestWorkDocuments } from './documents.ts';
+import { claimRoutes } from './claim-route.ts';
 
 /** PHASE 159i: an event's VAT position, in words (migration 105's three). */
 const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({ INCLUDED_NOT_RECLAIMABLE: 'The client could not reclaim it', EXCLUDED_OR_RECLAIMED: 'The client reclaimed it, or none was charged', NOT_KNOWN: 'Not known' });
@@ -1092,7 +1093,10 @@ function claimPage(
   const surveyJob = surveyJobBlock(v.id, SO.surveyJobPanel(db, actor, v.id), v.edit?.current.surveyor_id ?? null);
   // PHASE 158c (F37): the amendment window, warned from the client's own date, from Engagement until Reports.
   const windowRow = db.get<{ stage: string | null; business_id: string; property_id: string | null }>('SELECT stage, business_id, property_id FROM claims WHERE id = ?', [v.id]);
-  const windowWarning = windowRow === undefined ? null : earlyWindowWarning(db, windowRow, nowIso());
+  /* PHASE 159j (Lockwood L16): the warning is for before the dates are checked. Once every part of the claim has its
+     route on the recorded dates (W1, W2 or W3), it has said what it was for, so it goes. */
+  const routesDecided = windowRow !== undefined && (() => { const r = claimRoutes(db, { id: v.id, business_id: windowRow.business_id, property_id: windowRow.property_id }, nowIso()); return r.length > 0 && r.every((x) => x.route !== 'NOT_KNOWN'); })();
+  const windowWarning = windowRow === undefined || routesDecided ? null : earlyWindowWarning(db, windowRow, nowIso());
   const windowBlock = windowWarning === null ? raw('') : h`<div class="flag" id="window-warning"><strong>The amendment window may have closed.</strong> ${windowWarning}</div>`;
   const quick: QuickAction[] = [
     ...(tasks.html.includes('action="/staff/tasks"') ? [{ href: '#add-task', label: 'Log a call or add a task' }] : []),

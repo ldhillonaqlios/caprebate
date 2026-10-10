@@ -10,6 +10,7 @@
  *   returns    the same file — 3,000 seeded pools: every row's brought forward less allowance is carried forward (h4, C16).
  *   window     test/stress-window-walk.ts — six claimant types x four year ends x every purchase year, against the table
  *              recorded in test/fixtures/phase159j/window-table.csv (h3), and its named cases.
+ * L14 (the Lockwood run of 10 October 2026): the claim page and the sign-off read the adviser's switches as the pack does.
  * Item 5 (carried from Phase 159c): a document names the piece of work it proves, and each event counts its own.
  * Already in the suite before this phase, so not repeated here: the version scenarios (claim/h5) are Phase 159a's C3,
  * C4 and C5 tests (test/phase159a.test.ts), and the legal-path walk (claim/h6) is test/legal-paths.test.ts (Phase 159h).
@@ -25,6 +26,9 @@ import { seed } from '../src/seed.ts';
 import * as D from '../src/web/documents.ts';
 import { addStaffEvent, eventsOnClaim } from '../src/web/property-events.ts';
 import type { Actor } from '../src/authz.ts';
+import { factsPanel } from '../src/web/claim-facts.ts';
+import { MONEY_READINGS_OFF, MONEY_READINGS_ON, packSwitchReadings } from '../src/web/money-readings.ts';
+import { ctaSwitchReadings } from '../src/web/engine.ts';
 import { runEngineStress } from './stress-engine-walk.ts';
 import { runGrantStress, runPackStress, runReturnStress } from './stress-pack-walk.ts';
 import { WINDOW_HEADER, WINDOW_NOW, periodContaining, windowRig, windowTable } from './stress-window-walk.ts';
@@ -220,5 +224,34 @@ describe('item 5 — a document names its event, and each event counts its own',
       const elsewhere = D.createDocumentRequest(w.deps, w.sales, { business_id: w.j.business_id, claim_id: w.j.claim_id, type_code: 'CONTRACTOR_INVOICE', event_id: r.ok ? r.id : '', why: 'w', holds_up: 'h', due_on: null });
       assert.equal(elsewhere.ok, false);
     } finally { w.made.close(); }
+  });
+});
+
+describe('L14 — the adviser’s switches read as the survey pack reads them', () => {
+  test('on the test system the pack’s money readings read ON on the claim page and the sign-off form; elsewhere every switch reads as CB_CTA says', async () => {
+    const cta = ctaSwitchReadings();
+    assert.equal(cta.find((x) => x.switch === 'transaction_tax_in_base')?.on, false, 'the public estimate’s own switch stays off');
+    const on = packSwitchReadings(cta, MONEY_READINGS_ON);
+    for (const k of ['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements']) assert.equal(on.find((x) => x.switch === k)?.on, true, k);
+    assert.deepEqual(on.filter((x) => !['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements'].includes(x.switch)), cta.filter((x) => !['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements'].includes(x.switch)));
+    assert.deepEqual(packSwitchReadings(cta, MONEY_READINGS_OFF), [...cta]);
+    const { app, claimFor } = await windowRig();
+    const c = claimFor('COMPANY', '2025-06-15', '2025-01-01', '2025-12-31');
+    const ADMIN: Actor = { id: 'u-ADMIN', role: 'ADMIN', business_id: null, disabled: false };
+    const was = process.env['CAPREBATE_COST_MODEL_TEST'];
+    try {
+      process.env['CAPREBATE_COST_MODEL_TEST'] = '1';
+      const p = factsPanel(app.db, ADMIN, c.id, WINDOW_NOW);
+      assert.equal(p.acquisition_costs.switch.on, true);
+      assert.match(p.acquisition_costs.switch.says, /^On, on the test system\. The stamp duty and the purchase fees recorded here are added/);
+      assert.equal(p.buyer_alterations.switch.on, true);
+      assert.equal(p.grants.switch.on, true);
+      delete process.env['CAPREBATE_COST_MODEL_TEST'];
+      const q = factsPanel(app.db, ADMIN, c.id, WINDOW_NOW);
+      assert.equal(q.acquisition_costs.switch.on, false);
+      assert.match(q.acquisition_costs.switch.says, /^Off\. Land transaction tax recorded here is shown, but not added/);
+    } finally {
+      if (was === undefined) delete process.env['CAPREBATE_COST_MODEL_TEST']; else process.env['CAPREBATE_COST_MODEL_TEST'] = was;
+    }
   });
 });

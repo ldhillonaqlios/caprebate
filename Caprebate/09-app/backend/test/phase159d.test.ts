@@ -302,6 +302,10 @@ describe('9 · item 6 — the report and the portal say how each part goes in', 
     assert.deepEqual(m.routes.map((r) => r.label), ['The purchase, June 2025']);
     assert.match(m.routes[0]?.words ?? '', /can still be amended/);
     assert.match(String(REP.reportHtml(m, { pdf: null })), /How each part goes in/);
+    // PHASE 159j (Lockwood L17): a route's words carry a day as the page does — "31 Dec 2024", never "2024-12-31".
+    const w2 = { route: 'W2', label: 'The purchase, June 2019', words: 'It goes into the pool of the first year still open. The first year still open ends on 2024-12-31.' };
+    const m2 = REP.reportModel({ ...kept.snapshot, routes: [w2] } as never, kept.row.fingerprint);
+    assert.equal(m2.routes[0]?.words, 'It goes into the pool of the first year still open. The first year still open ends on 31 Dec 2024.');
     app.close();
   });
 
