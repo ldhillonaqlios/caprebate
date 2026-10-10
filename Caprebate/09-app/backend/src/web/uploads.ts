@@ -24,6 +24,7 @@ import type { AuditLog } from '../audit.ts';
 import { FsObjectStore } from './objectstore.ts';
 import { extractPages, isScanMarker, pdfPageImages, type ExtractedPage, type PageImage } from './extract-text.ts';
 import { receiveByUpload } from './documents.ts';
+import { recordSbaStatementHeld } from './claim-facts.ts';
 import { ingestRegisterRecord } from '../stubs/registers.ts';
 import { freeGate, assertSignedEngagement } from './research.ts';
 import type { RateLimiter, Transport, GateSnapshot } from '../connectors/http.ts';
@@ -428,6 +429,8 @@ export async function finishUpload(
     // document request be received — and `receiveByUpload` reads both off the row
     // rather than taking this function's word for them.
     const request = d.audit === undefined ? null : receiveByUpload({ db: d.db, audit: d.audit, now: d.now }, r.job.doc_id);
+    // PHASE 159k (item 1): a seller's structures allowance statement, received, puts SBA_STATEMENT_HELD on its claims.
+    if (d.audit !== undefined) recordSbaStatementHeld({ db: d.db, audit: d.audit, now: d.now, newId: d.newId ?? randomUUID }, r.job.doc_id);
     return { job: r.job, discharged: r.discharged, received_request: request, reading };
   } catch (e) {
     // A REFUSED UPLOAD IS A NORMAL OUTCOME, NOT A CRASH. The handler has

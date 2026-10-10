@@ -172,7 +172,7 @@ describe('2 · a claim is never held at the gate by a document nobody can upload
         "SELECT c.id, c.business_id FROM claims c JOIN businesses b ON b.id = c.business_id WHERE b.name = 'Corvale Supported Living Limited'");
       assert.ok(c);
       const receivable = D.receivableTypes(db).map((t) => t.code);
-      assert.equal(MD.MANDATORY_DOCUMENTS.requires.length, 4);
+      assert.equal(MD.MANDATORY_DOCUMENTS.requires.length, 5); // Phase 159k: and the seller's structures allowance statement
       for (const req of MD.MANDATORY_DOCUMENTS.requires) {
         const t = db.get<{ handler_type: string | null; active: number }>('SELECT handler_type, active FROM document_types WHERE code = ?', [req.type_code]);
         assert.ok(t && t.handler_type !== null && t.active === 1, `${req.type_code} is required and nobody can upload one`);
@@ -207,7 +207,7 @@ describe('3 · the must-arrive documents are switched on — Lakhbir’s four, a
       { switch: 'MANDATORY_DOCUMENTS', on: true, home: 'src/web/mandatory-documents.ts' });
     assert.match(MD.MANDATORY_DOCUMENTS_ALSO_WAITS_ON, /^nothing now/);
     assert.deepEqual(MD.MANDATORY_DOCUMENTS.requires.map((r) => `${r.type_code}:${r.condition}`),
-      ['SALE_CONTRACT:BOUGHT', 'CPSE_REPLIES:BOUGHT', 'TAX_RETURN:ALWAYS', 'TAX_COMPUTATION:ALWAYS']);
+      ['SALE_CONTRACT:BOUGHT', 'CPSE_REPLIES:BOUGHT', 'TAX_RETURN:ALWAYS', 'TAX_COMPUTATION:ALWAYS', 'SBA_ALLOWANCE_STATEMENT:SBA_ON_PURCHASE']);
   });
 
   test('THE SKIP TEST, AS SHIPPED: the gate stays shut until all four arrive; not known and never recorded read alike; then the claim moves', async () => {
@@ -285,7 +285,7 @@ describe('3 · the must-arrive documents are switched on — Lakhbir’s four, a
       assert.ok(c);
       assert.equal(F.recordFact(deps(w.made), sales, c.id, { fact_key: 'BOUGHT_THE_BUILDING', answer: 'VALUE', value: 'NO', source_id: 'CLIENT_ANSWER', note: null }).ok, true);
       const needs = MD.mandatoryDocumentNeeds(db, P.loadPipelineClaim(db, c.id));
-      assert.deepEqual(needs.map((n) => n.met), [true, true, false, false]);
+      assert.deepEqual(needs.map((n) => n.met), [true, true, false, false, true]); // Phase 159k: no structures allowance taken, so no statement
       assert.match(needs[0]?.why ?? '', /did not buy the building/);
     } finally { w.close(); }
   });

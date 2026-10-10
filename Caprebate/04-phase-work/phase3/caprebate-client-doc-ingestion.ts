@@ -1151,6 +1151,22 @@ export const CLIENT_DOC_RECEIPT_POLICY: readonly ClientDocReceiptPolicy[] = [
       'Kept: the room labels, the schedule of accommodation and the floor references, which locate the plant. Removed on ' +
       'receipt: the title block. Only the text layer passes the strip; the picture is kept only if the raw-file rule keeps the file.',
   },
+  /*
+   * PHASE 159k (item 1) — the seller's structures and buildings allowance statement, on the same recommendation: strip
+   * the individuals, keep the figures. The seller may be a person; the statement is signed by someone.
+   */
+  {
+    doc_type: 'SBA_ALLOWANCE_STATEMENT',
+    mode: 'SPEC_DERIVED',
+    retained_segments: specDerivedSegments('SBA_ALLOWANCE_STATEMENT'),
+    roles_to_triage: [
+      { role: 'TRANSACTION_PARTY', frequency: 'usually', note: 'the seller who made the statement, where a person' },
+      { role: 'AGENT_OR_REPRESENTATIVE', frequency: 'sometimes', note: 'whoever signed it for the seller' },
+    ],
+    why:
+      'Kept: the date of the earliest construction contract, the date of first use and the qualifying expenditure. ' +
+      'Removed on receipt: the seller where a person, the signatory and any address.',
+  },
 ];
 
 export function receiptPolicyFor(t: DocType): ClientDocReceiptPolicy {

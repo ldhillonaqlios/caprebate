@@ -51,9 +51,9 @@
 
 import type { Db } from '../db.ts';
 import type { Need } from './pipeline.ts';
-import { clientSaidBought, latestFacts } from './claim-facts.ts';
+import { acquisitionDateReading, clientSaidBought, latestFacts } from './claim-facts.ts';
 
-export type DocumentCondition = 'ALWAYS' | 'GRANT_FUNDED' | 'ELECTION_MADE' | 'LEASEHOLD' | 'BOUGHT';
+export type DocumentCondition = 'ALWAYS' | 'GRANT_FUNDED' | 'ELECTION_MADE' | 'LEASEHOLD' | 'BOUGHT' | 'SBA_ON_PURCHASE';
 
 export type MandatoryDocuments = {
   readonly enabled: boolean;
@@ -95,6 +95,9 @@ export const MANDATORY_DOCUMENTS: MandatoryDocuments = Object.freeze({
     Object.freeze({ type_code: 'CPSE_REPLIES', condition: 'BOUGHT' as const }),
     Object.freeze({ type_code: 'TAX_RETURN', condition: 'ALWAYS' as const }),
     Object.freeze({ type_code: 'TAX_COMPUTATION', condition: 'ALWAYS' as const }),
+    /* PHASE 159k (item 1): the seller's structures allowance statement, where the claim takes the structures allowance on
+       a purchase from 29 October 2018 — s.270IA gives the buyer no allowance without it. */
+    Object.freeze({ type_code: 'SBA_ALLOWANCE_STATEMENT', condition: 'SBA_ON_PURCHASE' as const }),
   ]),
 });
 
@@ -104,7 +107,11 @@ export const CONDITION_WORDS: Readonly<Record<DocumentCondition, string>> = Obje
   ELECTION_MADE: 'where a s.198 or s.199 election affects the property — the claim’s own fact',
   LEASEHOLD: 'where the property is leasehold — the property’s tenure',
   BOUGHT: 'where the client bought the building — the claim’s own fact',
+  SBA_ON_PURCHASE: 'where the claim takes the structures allowance on a purchase from 29 October 2018 — the claim’s own fact',
 });
+
+/** PHASE 159k: the day the structures and buildings allowance began (CAA 2001 s.270AA). */
+export const SBA_START = '2018-10-29';
 
 type Applies = { readonly applies: true } | { readonly applies: false; readonly known: boolean; readonly why: string };
 
@@ -115,6 +122,21 @@ function choiceFact(db: Db, claim_id: string, key: string): string | null {
 
 function applies(db: Db, c: { id: string; property_id: string | null }, condition: DocumentCondition): Applies {
   if (condition === 'ALWAYS') return { applies: true };
+  /* PHASE 159k (item 1). The phase asked for the statement on every purchase from 29 October 2018. Most healthcare
+     buildings were built before then and their sellers have no statement to give, so that would stop at this gate a claim
+     that takes no structures allowance at all. The law needs the statement only where the buyer takes the allowance
+     (s.270IA), which on a claim is SBA_QUALIFYING_EXPENDITURE recorded as a figure. Not taking it is the cautious way, so
+     not recorded excuses the document (it relieves nobody; N4 is about gates that do). A figure recorded on a purchase
+     whose date is not known still needs it. */
+  if (condition === 'SBA_ON_PURCHASE') {
+    const f = latestFacts(db, c.id).get('SBA_QUALIFYING_EXPENDITURE');
+    if (f === undefined || f.answer !== 'VALUE') return { applies: false, known: true, why: 'no structures allowance is taken on the purchase: none is recorded' };
+    const acq = acquisitionDateReading(db, c.property_id);
+    if (acq.known && acq.value !== null && acq.value < SBA_START) {
+      return { applies: false, known: true, why: 'bought before 29 October 2018, when the structures allowance began: no statement exists' };
+    }
+    return { applies: true };
+  }
   if (condition === 'GRANT_FUNDED' || condition === 'ELECTION_MADE' || condition === 'BOUGHT') {
     const key = condition === 'GRANT_FUNDED' ? 'GRANTS_EXIST' : condition === 'ELECTION_MADE' ? 'ELECTION_EXISTS' : 'BOUGHT_THE_BUILDING';
     const recorded = choiceFact(db, c.id, key);

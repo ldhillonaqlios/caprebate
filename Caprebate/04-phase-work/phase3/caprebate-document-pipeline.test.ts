@@ -328,8 +328,8 @@ test('P21 all eleven document types have a spec, a why, and at least three field
   assert.deepEqual(types, [
     'ACCOUNTS', 'ASBESTOS_REGISTER', 'BUILDING_REGS_COMPLETION', 'COMPLETION_STATEMENT', 'CONTRACTOR_COST_BREAKDOWN',
     'CONTRACTOR_INVOICE', 'FIRE_RISK_ASSESSMENT', 'GRANT_FUNDING_AGREEMENT', 'INSURANCE_REINSTATEMENT', 'LEASE', 'OM_MANUAL',
-    'PLANNING', 'PLANS', 'TAX_COMPUTATION', 'TAX_RETURN',
-  ]); // Phase 157d added the four the Friary House run found nothing could receive (F16)
+    'PLANNING', 'PLANS', 'SBA_ALLOWANCE_STATEMENT', 'TAX_COMPUTATION', 'TAX_RETURN',
+  ]); // Phase 157d added the four the Friary House run found nothing could receive (F16); Phase 159k the seller's SBA statement
   for (const d of DOC_SPECS) {
     assert.ok(d.fields.length >= 3, `${d.doc_type} has too few fields`);
     assert.ok(d.why.length > 30, `${d.doc_type} does not say why it matters`);
