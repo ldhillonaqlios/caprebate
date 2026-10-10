@@ -1873,7 +1873,7 @@ Signed .............................  Date ..........................
 
  **This register gains one entry and one board item**: ACC-H3, the accountant's own confirmation link and the defence pack's list of records (board item 13245993980). Phase 158d wrote the two checks into this register, but made no board item for them, so no count saw them. **Board items covered: 51.**
 
- **And the board's own total at the close of Phase 159d, 9 October 2026, counted in code: 132 items carry that status**: fifty-four in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-four plus ten plus sixty-eight is 132. (At the close of Phase 159c it was 131; Phase 159d added ACC-H6.)
+ **And the board's own total at the close of Phase 159e, 10 October 2026, counted in code: 133 items carry that status**: fifty-five in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-five plus ten plus sixty-eight is 133. (At the close of Phase 159d it was 132; Phase 159e added ACC-H7.)
 
 ## Phase 159b, 9 October 2026 — ACC-H4 · four readings behind the online figure, built and on in the test system
 
@@ -1905,3 +1905,16 @@ Signed .............................  Date ..........................
 -  **A closed direct purchase.** Bought straight from an owner who claimed, the period closed with nothing fixing the value and no tribunal application in time: nil. This narrows question 250. (Question 256.)
 
  **ACC-H6 · Board item 13250825382, added 9 October 2026 by Phase 159d.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 54.**
+
+## Phase 159e, 10 October 2026 — ACC-H7 · the allowances on each part of a claim, and the return entries
+
+ We build first and ask you second (Lakhbir, 29 September 2026). All four are on in the test system only, with invented data. Each is a question in the Word questions document, Section 2, with our recommendation and a worked example:
+
+-  **First-year relief, part by part.** Each part of a claim (the purchase, and each piece of work since) goes into its own year: its own year where that return can still be amended (W1), or the first year still open (W2). On W1 only: the annual investment allowance where this year's headroom is recorded, set against the special rate pool first, never for a partnership with a company partner; then on new plant a company's full expensing and 50% allowance for spend from 1 April 2023, or the 40% allowance for spend from 1 January 2026. Work the client paid for is new plant; a purchase is second-hand, but still takes the annual investment allowance. W2 is writing-down allowances only. A June 2025 refit of £90,000 for a company: £50,400 of relief in 2025 with no headroom recorded, £63,000 with it. (Question 257.)
+-  **A new building bought from its developer.** Never used, bought from the developer who built it: not second-hand, so full expensing is open to it. Only on a recorded yes. (Question 258.)
+-  **The structures and buildings allowance.** On work: the final account less the plant and the repair part, from the month after the work, 2% a year before April 2020 and 3% after, its date standing for its contract date. On a purchase from 29 October 2018: from the seller's allowance statement. None on homes. (Question 259.)
+-  **The cash basis.** A sole trader, a partnership or a charitable trust on the cash basis has no claim on the fixtures; a company's answer does not apply. (Question 260.)
+
+ The return entries now also carry the rates by date (8% on the special rate pool before April 2019, 20% on the main pool before April 2012, blended across a change) and write off a pool of £1,000 or less (s.56A). Those are the law, not readings, so they are not questions.
+
+ **ACC-H7 · Board item 13254229838, added 10 October 2026 by Phase 159e.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 55.**

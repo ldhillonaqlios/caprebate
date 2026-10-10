@@ -394,6 +394,16 @@ Sep 2026 by the Phase 152 sweep)
   a backup with cp, NEVER mv, and write the new document INTO the existing
   Mac file (cp new.docx Caprebate_Questions.docx keeps the same file, so the
   same item; ls -i shows the same number before and after).
+  AND NEVER cp -p (Phase 159e, 10 Oct 2026): -p copies the file's extended
+  attributes, OneDrive's identity among them, so OneDrive took the backup for
+  the item - the linked item was renamed .bak-phase159e and the new document
+  became a second item, exactly as a mv does. Fixed the same day: the second
+  items renamed "DELETE - ... (a second item 10 Oct 2026 ...)", the linked
+  items given their names back, the backups made server-side
+  (sharepoint_copy_item to the .bak name), and the new documents written in
+  with cat new.docx > Caprebate_Questions.docx, checked byte for byte in the
+  cloud. SAFEST BACKUP: sharepoint_copy_item of the linked item, by id, to
+  the .bak name; or cat file > file.bak on the Mac.
   Read  copy the ITEM, by id, to a new name in the same folder
         (sharepoint_copy_item; the copy syncs down to the Mac within a
         minute), then read that with python-docx. read_resource on the item
@@ -1061,114 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 159e — the allowances on each event, and the return entries
-
- **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: the return entries only ever showed writing-down allowances; a recent refit can take 100% in year one.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
-   and the same entry at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE EVIDENCE (OneDrive, not in git): Caprebate/04-phase-work/stress-2026-10-09/
-  COVERAGE-MATRIX.md     every variable that moves a claim, and where the app
-                         reads it (sections 1-14; gaps ranked in 14)
-  engine/FINDINGS.md     E1-E20, the estimate engine; re-run: node harness.ts
-  claim/FINDINGS.md      C1-C29, the claim stage; re-run: ./run-all.sh
-and Caprebate/04-phase-work/sim-2026-10-09-lockwood/Lockwood-Surgery-test-run.md
-(L1-L12, the live run on a real practice with every API). Re-run the harness
-for your items before you start and again at the end; it must go clean.
-
-THE TARGET (Lakhbir, 9 Oct 2026): "the highest figure we can defend" - not
-the highest figure. Every rule below is built on our recommendation and
-SWITCHED ON in test (his rule of 29 Sep 2026: build it, then ask the
-accountant / solicitor / DPO if it is viable). Each item marked OUR READING
-goes into the Word questions document (AMENDMENT 2 - cp, never mv) under the
-tax adviser as a viability check: "we built X on basis Y - is it viable?".
-
-Each fix below gets a test that fails on the code before it (turn the
-harness case into the test). Plain words at grade 9 on every screen. Fix
-what is small and safe; anything larger goes in a new lettered phase before
-the sweep; anything that needs a person goes in the Word questions document.
-
-1. FIRST-YEAR RELIEF BY EVENT, ROUTE AND CLAIMANT (C18): pass first_year
-   into BENEFIT.schedule (return-entries.ts:57-61, 122). W1 own-cost works:
-   the annual investment allowance (£1m, shared across a group or related
-   businesses; NOT for a partnership with a company member - read
-   PARTNERSHIP_HAS_COMPANY_MEMBER); a company: full expensing (main pool) and
-   the 50% special rate first-year allowance on NEW and unused plant; any
-   other first-year allowance in force for the period (check Rulebook I).
-   A second-hand purchase: writing-down allowances, except a new unused
-   building bought from its developer (shared.js:6014 treats every purchase
-   as second-hand - OUR READING). W2: writing-down allowances only.
-2. THE STRUCTURES AND BUILDINGS ALLOWANCE IS COMPUTED: works - the non-plant
-   construction cost of contracts from 29 Oct 2018 at 3% a year (2% before
-   April 2020); a purchase - from the seller's allowance statement, which
-   becomes a required document on a post-2018 purchase. Residential use test
-   (s.270CF). A line in the pack (chapter 17), the report and the return.
-3. Writing-down rates from a dated table (C13: 8% special rate before April
-   2019, blended across a change; main pool changes such as 18% to 14%);
-   the small pools write-off (C17, s.56A, £1,000).
-4. ONE PERIOD SOURCE (C15, L4): the CSV reads the period the window reads,
-   from the client's checked year end; the year end is asked at data
-   gathering and is an approval blocker (pack-approve.ts:96-130), never
-   asked after the pack is frozen.
-5. The cash basis (OUR READING): a claim fact "accounts on the cash basis or
-   accruals for the period"; no fixtures claim while on the cash basis.
-6. The report and the return entries show, per event: its route, its
-   period, each allowance, the year-one relief and the pool carried on.
-7. (Carried from Phase 159c, 9 Oct 2026.) EACH EVENT IN ITS OWN PERIOD. 159c
-   adds each spend on its own return-1 row (return-entries.ts, "Spend that
-   counts, added to the pool: the purchase" / ": A refurbishment or refit,
-   2025"), but every event falls in one period, the claim's
-   ACCOUNTING_PERIOD_START. Put each in the period its own date falls in
-   (property_events.event_date; the version's events.works[].event_date),
-   with its own first-year relief from item 1.
-8. (Carried from Phase 159d, 9 Oct 2026.) A W2 PART STARTS IN ITS FIRST OPEN
-   PERIOD. 159d gives each part a route (src/web/claim-route.ts claimRoutes;
-   the approved version's routes): under W2 the spend goes into the pool of
-   the first period whose return is still open (EventRoute.first_open), with
-   writing-down allowances only. The return entries still start every part
-   in the claim's ACCOUNTING_PERIOD_START. Start a W2 part's rows in its
-   first open period, with no first-year allowance (item 1 says W2: WDA only).
-```
-
----
-
 ## PHASE 159f — BCIS: the pack drafts every rate, and every rate names its source
 
  **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: report pages 4-6 labelled each rate "Surveyor" with no source; a split HMRC cannot trace to a published cost is the weak point of every purchase claim.
@@ -1541,6 +1443,17 @@ the sweep; anything that needs a person goes in the Word questions document.
    cost-led values, or the purchase's sums). Each event's VAT
    (property_events.vat, carried NULL since 159c): ask it on the claim, and
    add VAT the client could not reclaim to that event's cost.
+5. (Carried from Phase 159e, 10 Oct 2026.) THE SELLER'S STRUCTURES ALLOWANCE
+   STATEMENT AS A DOCUMENT. 159e works the buyer's structures and buildings
+   allowance from SBA_QUALIFYING_EXPENDITURE with SBA_STATEMENT_HELD
+   (src/web/allowances.ts sbaOf; "Not worked out ... Ask for it and record
+   it" until then), but the statement (s.270IA) has no document type, so it
+   cannot be uploaded. Add the type with its own receipt policy (a rebuild
+   migration, as 099 did; its policy in 04-phase-work/phase3's ingestion
+   module), put it in DOCUMENTS_FOR.PURCHASE, and make it a required document
+   on a purchase from 29 October 2018 (mandatory-documents.ts, a new
+   condition). Its figure fills SBA_QUALIFYING_EXPENDITURE, and its upload
+   records SBA_STATEMENT_HELD YES.
 ```
 
 ---
@@ -2285,7 +2198,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157 — the sweep — **done 6 Oct 2026**, see PHASE HISTORY; it inserted 157a and 157b |  The standing rule |
 |  Claude |  Phase 157a — the engine and the cost model: the pooling questions, the unknown seller, the cost model in the survey pack — **done 6 Oct 2026**, see PHASE HISTORY |  Loose ends the sweep held since 153e and 154a1 |
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
-|  Claude |  Phases 159e to 159j — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, 159b, the assessment figure made sound, 159c, several events on one building, and 159d, each event's route, ran on 9 Oct 2026 and are in PHASE HISTORY): the allowances and return entries (159e, 13247762244); BCIS rate drafting (159f, 13247754275); who claims and the registers (159g, 13247752841); the legal check (159h, 13247776393); grants, VAT, acquisition costs (159i, 13247762327); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
+|  Claude |  Phases 159f to 159j — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, 159b, the assessment figure made sound, 159c, several events on one building, and 159d, each event's route, ran on 9 Oct 2026, and 159e, the allowances on each event and the return entries, on 10 Oct 2026; all are in PHASE HISTORY): BCIS rate drafting (159f, 13247754275); who claims and the registers (159g, 13247752841); the legal check (159h, 13247776393); grants, VAT, acquisition costs (159i, 13247762327); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
 |  Claude |  Phase 160 — the sweep, always last |  The standing rule |
 
@@ -2410,6 +2323,8 @@ _ |
  **Unknown never routes to the favourable answer.** Where a fact is missing the system asks, or takes the lower figure. It never guesses, never interpolates, and never carries a value forward as an average. **"I don't know" is a first-class answer on every field**, and the estimate is allowed to have a gap in it.
 
  **The surveyor never sees our number first.** Structurally, not by hiding it on screen — our figures are not in the data their session receives at all. It is the only way to measure whether our estimates are any good.
+
+ **Three first-year reliefs are named and not modelled (Phase 159e, 10 October 2026), because no year they apply to can still be amended.** The super-deduction (130%, company spend from April 2021 to March 2023) needs a contract signed after 3 March 2021, which nothing records; the annual investment allowance limits before 2019 (£200,000 and earlier); and the freeport and investment zone structures allowance (10% a year). A company's amendment window for any of those years closed by March 2025, so a part dated then is W2 (writing-down allowances only) or W3. The return entries say so on the part. Build them only if a claim with such a year still open ever appears.
 
  **`.bak-`**** snapshots keep their old filenames.** A dated snapshot of a file that was called something else on the day it was taken should say so.
 

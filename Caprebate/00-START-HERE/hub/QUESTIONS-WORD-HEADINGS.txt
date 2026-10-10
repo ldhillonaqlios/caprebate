@@ -90,6 +90,10 @@
 254) We now read “the period of two years beginning with” a date as ending on the day before the second anniversary. Is that right?
 255) For a sole trader, a partnership or a charitable trust whose year ends outside 31 March to 5 April, we now use the earlier tax year's amendment deadline. Is that right?
 256) A purchase straight from an owner who claimed, where the two-year period has closed with nothing fixing the value, is now nil. Is that right?
+257) We now give each part of a claim its own first-year relief: the annual investment allowance where this year’s headroom is recorded, and full expensing or the 40% or 50% allowances on new plant. Is that viable?
+258) Is a building bought new and never used, from the developer who built it, “second-hand” for full expensing? We built it as not second-hand.
+259) We now work out the structures and buildings allowance on work and on a purchase. Is the way we do it viable?
+260) A business whose accounts are on the cash basis cannot claim on fixtures. We built it so. Is that right, and should we add the claim when it moves to accruals?
 116) Would you send a client to us, and what would stop you?
 117) Do you want a fee for sending clients, and what must you tell them?
 118) Who sends the corrected tax return to HMRC: you or us?
