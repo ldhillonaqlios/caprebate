@@ -164,6 +164,9 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
   /* PHASE 159i (item 2, migration 110): a VAT capital goods scheme adjustment on the building, in pounds. A fact and a note: the
      survey pack shows it beside the VAT that counts and does not change the figure; the tax adviser says how it reaches the claim. */
   VAT_CGS_ADJUSTMENT: { label: 'A VAT capital goods scheme adjustment on the building (a note, not counted)', kind: 'pence' },
+  /* PHASE 159k (item 2, migration 113): the asbestos was there when the client acquired the land (CTA 2009 s.1145).
+     Land remediation relief on its removal needs it; not known, none is given. */
+  ASBESTOS_AT_ACQUISITION: { label: 'Asbestos was in the building when the client acquired the land', kind: 'choice', choices: YES_NO },
   /* Phase 153a, 4 October 2026 (Phase 153b lines 12 and 13, with the same grant data). Migration 078 adds both keys.
      Read by src/web/grant-checks.ts, the gate out of valuation. */
   GRANT_PROVIDER_CHECKED: {
@@ -926,6 +929,43 @@ export function recordFact(d: FactDeps, actor: Actor, claim_id: string, input: F
     object_type: 'claim', object_id: c.id, detail: { fact: key, answer, source, business: c.business_id },
   });
   return { ok: true, id };
+}
+
+/**
+ * PHASE 159k (item 1) — THE SELLER'S STRUCTURES ALLOWANCE STATEMENT, RECEIVED, IS ON FILE. When a version of an
+ * SBA_ALLOWANCE_STATEMENT is received by the upload handler (its strip recorded, its quarantine discharged, no refusal),
+ * every claim it is linked to — directly, or through its property — records SBA_STATEMENT_HELD as YES, from the client's
+ * document, by whoever sent it. A claim that already says YES records nothing again. It never records NO and never
+ * touches the figure: SBA_QUALIFYING_EXPENDITURE is the figure staff read off the statement and record on the facts panel.
+ * Returns the claims it recorded on.
+ */
+export const SBA_STATEMENT_TYPE = 'SBA_ALLOWANCE_STATEMENT';
+
+export function recordSbaStatementHeld(d: { db: Db; audit: AuditLog; now: () => string; newId: () => string }, doc_id: string): string[] {
+  const v = d.db.get<{ logical_document_id: string; uploaded_by: string; role: string | null; version_no: number | null }>(
+    'SELECT d.logical_document_id, d.uploaded_by, u.role, d.version_no FROM documents d JOIN logical_documents l ON l.id = d.logical_document_id ' +
+      'LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.id = ? AND l.type_code = ? AND d.strip_recorded_at IS NOT NULL ' +
+      'AND d.quarantine_discharged_at IS NOT NULL AND d.failure_code IS NULL', [doc_id, SBA_STATEMENT_TYPE]);
+  if (v === undefined) return [];
+  const claims = d.db.all<{ id: string; business_id: string }>(
+    'SELECT DISTINCT c.id, c.business_id FROM document_links k JOIN claims c ON c.id = k.claim_id OR (k.property_id IS NOT NULL AND c.property_id = k.property_id) ' +
+      'WHERE k.logical_document_id = ? AND k.unlinked_at IS NULL ORDER BY c.id', [v.logical_document_id]);
+  const done: string[] = [];
+  for (const c of claims) {
+    const was = latestFacts(d.db, c.id).get('SBA_STATEMENT_HELD');
+    if (was?.answer === 'VALUE' && was.value_text === 'YES') continue;
+    const at = d.now();
+    d.db.run(
+      'INSERT INTO claim_facts (id, claim_id, fact_key, answer, value_text, value_pence, value_date, source_id, note, recorded_by, recorded_at) ' +
+        "VALUES (?, ?, 'SBA_STATEMENT_HELD', 'VALUE', 'YES', NULL, NULL, 'CLIENT_DOC', ?, ?, ?)",
+      [d.newId(), c.id, `The seller’s allowance statement was received (version ${String(v.version_no ?? 1)}).`, v.uploaded_by, at]);
+    d.audit.append({
+      at, kind: 'CLAIM_FACT_RECORDED', outcome: 'ALLOWED', actor_id: v.uploaded_by, actor_role: v.role,
+      object_type: 'claim', object_id: c.id, detail: { fact: 'SBA_STATEMENT_HELD', answer: 'VALUE', source: 'CLIENT_DOC', business: c.business_id, document: v.logical_document_id },
+    });
+    done.push(c.id);
+  }
+  return done;
 }
 
 /**

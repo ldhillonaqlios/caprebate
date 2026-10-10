@@ -35,7 +35,7 @@ import { inspectionChapter, lineEvidence } from './evidence-pages.ts';
 import { basisOf, evidenceByLine } from './survey-evidence.ts';
 import { findingSeen } from './finding-source.ts';
 import { fetchSitePlan, pickWords, sitePlanOf, sitePlanSvg } from './site-plan.ts';
-import { percentWords, poundsWords, quantityWords, WORKS_FIELDS, WORKS_WORDS, type Source, type Valued, type WorksField } from './pack-sums.ts';
+import { percentWords, poundsWords, quantityWords, WORKS_FIELDS, WORKS_WORDS, WORKS_PART_FIELDS, WORKS_PART_WORDS, type Source, type Valued, type WorksField, type WorksPartField } from './pack-sums.ts';
 
 export type PackPageDeps = {
   app: App;
@@ -139,7 +139,7 @@ export async function handleSurveyPack(
     case 'add': r = P.addLine(deps, actor, job, { label: f.get('label') ?? '', unit: f.get('unit') ?? '', qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq, ...src }); break;
     // PHASE 159c: a piece of work's cost-led values, from its final account (chapter 9).
     case 'works': r = P.saveWorks(deps, actor, job, { event: f.get('event') ?? '', reason, seq,
-      values: Object.fromEntries(WORKS_FIELDS.map((k) => [k, f.get(k) ?? ''])) as Partial<Record<WorksField, string>> }); break;
+      values: Object.fromEntries([...WORKS_FIELDS, ...WORKS_PART_FIELDS].map((k) => [k, f.get(k) ?? ''])) as Partial<Record<WorksField | WorksPartField, string>> }); break;
     case 'details': r = A.saveDetails(deps, actor, job, { rics_number: f.get('rics_number') ?? '', firm: f.get('firm') ?? '' }); break;
     case 'legal': r = L.answerLegal(deps, actor, job, { question: f.get('question') ?? '', values: f.getAll('answer'), source: f.get('source') ?? '', seq }); break;
     default: r = P.choosePackProperty(deps, actor, job, f.get('property_id') ?? '');
@@ -665,6 +665,7 @@ function inputsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchP
     ${bcisBlock(d, v, ch, q)}
     ${v.job.sector === 'supported_living' ? sharedAreaBlock(d, v, ch) : raw('')}
     ${worksBlock(d, v, ch)}
+    ${v.purchase_applies && v.money.readings.long_life_test ? longLifeBlock(d, v, ch) : raw('')}
     ${sitePlanPanel(d, v, ch)}`;
 }
 
@@ -719,14 +720,47 @@ function worksBlock(d: PackPageDeps, v: P.PackView, ch: number): Safe {
       <table class="pk-table"><thead><tr><th>Value</th><th class="n">Now</th><th>Where it came from</th></tr></thead><tbody>
         ${WORKS_FIELDS.map((k) => h`<tr><th scope="row">${WORKS_WORDS[k]}</th><td class="n">${PENCE(w.inputs[k].value)}</td><td>${sourceTag(d, w.inputs[k].source)}</td></tr>`)}
       </tbody></table>
+      ${partsTable(d, v, w)}
       ${w.sums.problems.map((p) => h`<p class="gate pk-problem" role="alert"><strong>Check this.</strong> ${p.words}</p>`)}
       <p>${w.sums.complete ? h`<strong>Qualifies: ${PENCE(w.sums.qualifying_pence)}</strong> (main pool ${PENCE(w.sums.main_pool_pence)}, special rate pool ${PENCE(w.sums.special_pool_pence)}).${(w.sums.repairs_pence ?? 0) > 0 ? ` The repair part, ${PENCE(w.sums.repairs_pence)}, comes off the profits as a repair instead. It is not in this figure.` : ''}`
         : h`<span class="pk-src pk-need">not worked out yet</span> ${String(w.sums.needed.length)} value${w.sums.needed.length === 1 ? '' : 's'} still needed.`}</p>
       ${!v.may_edit || v.property === null ? raw('') : h`<form method="post" action="${base(v.job.id)}/works">${hidden(v, ch)}<input type="hidden" name="event" value="${w.event.id}">
         <div class="pk-fields">${WORKS_FIELDS.map((k) => h`<label>${WORKS_WORDS[k]} <input class="fi" name="${k}" inputmode="decimal" autocomplete="off" value="${w.inputs[k].value === null ? '' : String(w.inputs[k].value / 100)}"></label>`)}
         <label>Why are you changing it? <input class="fi pk-why" name="reason" maxlength="500" required placeholder="For example: from the final account dated 30 June 2025"></label></div>
+        <details class="pk-add"><summary>Parts for the long-life test, asbestos and s.33B (if any)</summary>
+          <div class="pk-fields">${WORKS_PART_FIELDS.map((k) => h`<label>${WORKS_PART_WORDS[k]} <input class="fi" name="${k}" inputmode="decimal" autocomplete="off" value="${w.parts[k].value === null ? '' : String(w.parts[k].value / 100)}"></label>`)}</div></details>
         <button class="cta" type="submit">Save — every total follows</button></form>`}
     </section>`)}`;
+}
+
+/**
+ * PHASE 159k (item 2): a piece of work's parts for the three readings, shown where any is given or a reading has
+ * something to say. Each is a part of a value above, from the final account.
+ */
+function partsTable(d: PackPageDeps, v: P.PackView, w: P.WorksView): Safe {
+  const given = WORKS_PART_FIELDS.filter((k) => w.parts[k].value !== null);
+  if (given.length === 0 && w.s33b.words === null) return raw('');
+  return h`<table class="pk-table"><thead><tr><th>Part, for a reading</th><th class="n">Now</th><th>Where it came from</th></tr></thead><tbody>
+      ${given.map((k) => h`<tr><th scope="row">${WORKS_PART_WORDS[k]}</th><td class="n">${PENCE(w.parts[k].value)}</td><td>${sourceTag(d, w.parts[k].source)}</td></tr>`)}
+    </tbody></table>
+    ${w.s33b.words === null ? raw('') : h`<p class="help">${w.s33b.words}</p>`}
+    ${w.long_life_pence === null || !v.money.readings.long_life_test ? raw('') : h`<p class="help">Long-life plant in the main pool: ${PENCE(w.long_life_pence)}. The return entries test it against the year’s limit.</p>`}
+    ${w.asbestos_pence === null || !v.money.readings.asbestos_lrr ? raw('') : h`<p class="help">Asbestos removal, with its share of the preliminaries and fees: ${PENCE(w.asbestos_pence)}. For a company whose land had it when acquired, this is land remediation relief in the return entries, not an allowance.</p>`}`;
+}
+
+/**
+ * PHASE 159k (item 2): the purchase's long-life part — of its main pool, what has an expected life of 25 years or more.
+ * The surveyor's, with a reason; the return entries apply the test year by year.
+ */
+function longLifeBlock(d: PackPageDeps, v: P.PackView, ch: number): Safe {
+  const l = v.long_life;
+  return h`<h2 id="long-life">Long-life plant in the purchase</h2>
+    <p class="help">Plant expected to last 25 years or more is long-life. Where a year’s long-life spend is more than £100,000, it goes to the special rate pool. Give how much of the purchase’s main pool is long-life, if any.</p>
+    <p>${l.value === null ? h`<span class="pk-src pk-need">not given</span> · The long-life test is not applied to the purchase.` : h`${PENCE(l.value)} ${sourceTag(d, l.source, true)}`}</p>
+    ${!v.may_edit || v.property === null ? raw('') : h`<form method="post" action="${base(v.job.id)}/extra">${hidden(v, ch)}<input type="hidden" name="field" value="long_life"><div class="pk-fields">
+      <label>Long-life part of the main pool, in pounds <input class="fi" name="value" inputmode="decimal" value="${l.value === null ? '' : String(l.value / 100)}"></label>
+      <label>Why <input class="fi" name="reason" maxlength="500" required placeholder="For example: the lift and the boilers, from the surveyor’s inspection"></label></div>
+      <button class="cta" type="submit">Save</button></form>`}`;
 }
 
 /**

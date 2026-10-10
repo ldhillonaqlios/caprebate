@@ -607,6 +607,9 @@ export const NAME_EXCLUSION_POLICY: readonly SourceNamePolicy[] = [
       'inv_lines', 'inv_total_net_pence', 'inv_vat_pence', 'inv_date',
       // PLANS
       'plans_rooms', 'plans_gia_m2', 'plans_drawing_date',
+      // PHASE 159k, 10 October 2026 — the seller's structures allowance statement: two dates and a sum, no name.
+      // SBA_ALLOWANCE_STATEMENT
+      'sba_earliest_contract_date', 'sba_first_use_date', 'sba_qualifying_expenditure_pence',
     ],
     // No spec has any of these fields today. They are listed because the roles
     // EXIST on the face of the documents (Phase 40 §4.2 works them through type

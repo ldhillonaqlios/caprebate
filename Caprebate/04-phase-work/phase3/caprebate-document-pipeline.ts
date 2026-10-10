@@ -93,7 +93,10 @@ export type DocType =
   | 'COMPLETION_STATEMENT'
   | 'ACCOUNTS'
   | 'CONTRACTOR_INVOICE'
-  | 'PLANS';
+  | 'PLANS'
+  // Phase 159k (item 1): the seller's structures and buildings allowance statement (CAA 2001 s.270IA). MODEL-EXTRACTABLE:
+  // a date, a date and a sum of money; the seller's name, the signatory and any individual are never fields.
+  | 'SBA_ALLOWANCE_STATEMENT';
 
 /** Never reach extract()/sanitise()/callModel() — see section 9, captureHumanRead(). */
 export const HUMAN_READ_ONLY_TYPES: readonly DocType[] = ['CPSE_REPLIES', 'SALE_CONTRACT', 'TITLE_REGISTER'];
@@ -131,6 +134,8 @@ export type SegmentKind =
   | 'FIXED_ASSET_NOTE'
   | 'INVOICE_LINES'
   | 'DRAWING_SCHEDULE'
+  // Phase 159k — the seller's structures allowance statement: its dates and its qualifying expenditure, never the seller.
+  | 'SBA_STATEMENT_FIGURES'
   // NEVER permitted, anywhere, for any document type
   | 'REPRESENTATIONS'
   | 'CONSULTEE_RESPONSES'
@@ -476,6 +481,25 @@ export const DOC_SPECS: readonly DocSpec[] = [
     why: 'Room labels and schedules locate the plant. The title block\'s drawn-by, checked-by and client names are not ' +
       'needed. Only the text layer passes the strip.',
   },
+  /*
+   * PHASE 159k (item 1) — THE SELLER'S STRUCTURES AND BUILDINGS ALLOWANCE STATEMENT (s.270IA). A buyer's structures
+   * allowance on a purchase runs on the qualifying expenditure the statement gives, from the dates it gives; without one
+   * there is no allowance. Read by the claim team only, so its figures are GATE.
+   */
+  {
+    doc_type: 'SBA_ALLOWANCE_STATEMENT',
+    permitted_segments: ['SBA_STATEMENT_FIGURES', 'CAPITAL_ALLOWANCES_COMPUTATION'],
+    fields: [
+      f('sba_earliest_contract_date', 'GATE', ['SBA_STATEMENT_FIGURES', 'CAPITAL_ALLOWANCES_COMPUTATION'],
+        'the date of the earliest written contract for the construction — on or after 29 October 2018'),
+      f('sba_first_use_date', 'GATE', ['SBA_STATEMENT_FIGURES', 'CAPITAL_ALLOWANCES_COMPUTATION'],
+        'the date the building was first brought into non-residential use'),
+      f('sba_qualifying_expenditure_pence', 'GATE', ['SBA_STATEMENT_FIGURES', 'CAPITAL_ALLOWANCES_COMPUTATION'],
+        'integer pence: the qualifying expenditure the allowance runs on'),
+    ],
+    why: 'The two dates and the qualifying expenditure are what the buyer\'s allowance runs on. The seller, the signatory ' +
+      'and anybody\'s address are not needed for it, and no field holds a name.',
+  },
 ];
 
 /**
@@ -536,6 +560,8 @@ export const PERSON_REVIEW_BY_DOC_TYPE: Readonly<Record<ExtractableDocType, bool
   ACCOUNTS: false,
   CONTRACTOR_INVOICE: false,
   PLANS: false,
+  // Phase 159k. Off, by the same rule.
+  SBA_ALLOWANCE_STATEMENT: false,
 });
 
 export function specFor(t: DocType): DocSpec {
@@ -622,6 +648,12 @@ const HEADING_RULES: { kind: SegmentKind; patterns: RegExp[] }[] = [
   { kind: 'DRAWING_SCHEDULE', patterns: [
     /room\s+(schedule|data|layout)/i, /schedule\s+of\s+accommodation/i, /floor\s+plan/i, /drawing\s+(schedule|register|list)/i,
     /\b(ground|first|second|third|lower\s+ground|basement)\s+floor\b/i, /gross\s+internal\s+area/i, /\bgia\b/i,
+  ] },
+  // Phase 159k — the seller's structures allowance statement. LAST again (test TX2). A heading naming "structures and
+  // buildings" is already CAPITAL_ALLOWANCES_COMPUTATION, which the statement's spec permits too.
+  { kind: 'SBA_STATEMENT_FIGURES', patterns: [
+    /allowance\s+statement/i, /section\s+270ia/i, /\bs\.?\s*270ia\b/i, /qualifying\s+expenditure/i,
+    /earliest\s+(written\s+)?contract/i, /first\s+(brought\s+into\s+)?(non-residential\s+)?use/i,
   ] },
 ];
 

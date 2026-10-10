@@ -260,6 +260,9 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     // PHASE 159c: where the building has work done since, each spend as approved: the purchase's own sums and each piece of
     // work on its own cost. `sums` above is their total. A version with no work keeps the shape every earlier version has.
     ...eventsOf(v),
+    // PHASE 159k (item 2): the readings' parts as approved, and whether each reading was on. Only where a part is given:
+    // a version with none keeps the shape every earlier version has.
+    ...readingsOf(v),
     // PHASE 159f: how the rates were priced — the day they are all at, BCIS's drafts and location, and section 562 the
     // residual way beside the proportional one. A version approved before has none and reads as it did.
     pricing: { priced_at: v.pricing.priced_at, purchase: v.pricing.purchase, bcis_kind: v.pricing.bcis.kind, bcis_words: v.pricing.bcis.words,
@@ -271,6 +274,24 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
       .map((r) => ({ label: r.label, route: r.route, words: r.words, event_id: r.event_id, kind: r.kind, event_date: r.event_date,
         period: r.period, first_open: r.first_open })) }),
   };
+}
+
+/** PHASE 159k (item 2): the long-life and asbestos parts the allowances read, frozen with the version, with the readings
+ *  as they stood (money-readings.ts). s.33B is already in the sums. */
+function readingsOf(v: PackView): { readings_159k?: {
+  long_life_test: boolean; asbestos_lrr: boolean; s33b_aggregation: boolean;
+  purchase_long_life_pence: number | null;
+  works: { event_id: string; long_life_pence: number | null; asbestos_pence: number | null; s33b_capital_pence: number; s33b_words: string | null }[];
+} } {
+  const any = v.long_life.value !== null || v.works.some((w) => w.long_life_pence !== null || w.asbestos_pence !== null || w.s33b.capital_pence > 0 || w.s33b.words !== null);
+  if (!any) return {};
+  const main = v.purchase_sums.main_pool_pence;
+  return { readings_159k: {
+    long_life_test: v.money.readings.long_life_test, asbestos_lrr: v.money.readings.asbestos_lrr, s33b_aggregation: v.money.readings.s33b_aggregation,
+    purchase_long_life_pence: v.long_life.value === null || main === null ? null : Math.min(v.long_life.value, main),
+    works: v.works.map((w) => ({ event_id: w.event.id, long_life_pence: w.long_life_pence, asbestos_pence: w.asbestos_pence,
+      s33b_capital_pence: w.s33b.capital_pence, s33b_words: w.s33b.words })),
+  } };
 }
 
 /** PHASE 159c: the events part of a version, only where there is work since. */

@@ -86,7 +86,8 @@ export type PackInputs = {
 export type Needed = { readonly where: 'INPUT' | 'LINE' | 'GRANT' | 'WORKS'; readonly key: string; readonly line_id: string | null; readonly words: string };
 
 export type ProblemCode = 'LAND_NOT_BELOW_PRICE' | 'ELEMENTS_EXCEED_BUILDING' | 'NO_REBUILD_COST' | 'TOO_LARGE'
-  /* PHASE 159c: a piece of work priced on its own cost */ | 'WORKS_PARTS_NOT_TOTAL' | 'NO_WORKS_COST' | 'GRANTS_ON_EVENTS';
+  /* PHASE 159c: a piece of work priced on its own cost */ | 'WORKS_PARTS_NOT_TOTAL' | 'NO_WORKS_COST' | 'GRANTS_ON_EVENTS'
+  /* PHASE 159k: a reading's part is more than the figure it is part of */ | 'WORKS_PART_TOO_BIG';
 export type Problem = { readonly code: ProblemCode; readonly words: string };
 
 export type LineSum = {
@@ -338,6 +339,39 @@ export function worksSums(event_id: string, label: string, w: WorksInputs): Work
   return { event_id, direct_pence: Number(direct), oncost_pence: Number(oncost), qualifying_pence: Number(qualifying),
     main_pool_pence: Number(main), special_pool_pence: Number(qualifying - main), repairs_pence: Number(repairs),
     needed, problems, complete: true };
+}
+
+/**
+ * PHASE 159k (item 2) — THE THREE READINGS' PARTS OF A PIECE OF WORK. Each is a PART of a value above, optional, the
+ * surveyor's from the final account, with a reason. Not given: that reading is not applied to the work, and says so.
+ *   long_life       of the plant (works_main), what has an expected life of 25 years or more (s.91)
+ *   asbestos        of the work that does not qualify (works_other), what was spent removing asbestos (CTA 2009 Part 14)
+ *   repairs_if      of the repair part (works_repairs), what was spent on integral features (s.33B)
+ *   if_replacement  what replacing those integral features would cost: s.33B's yardstick, not a part of the account
+ */
+export const WORKS_PART_FIELDS = Object.freeze(['works_long_life', 'works_asbestos', 'works_repairs_if', 'works_if_replacement'] as const);
+export type WorksPartField = (typeof WORKS_PART_FIELDS)[number];
+export const WORKS_PART_OF: Readonly<Record<WorksPartField, WorksField | null>> = Object.freeze({
+  works_long_life: 'works_main', works_asbestos: 'works_other', works_repairs_if: 'works_repairs', works_if_replacement: null,
+});
+export const WORKS_PART_WORDS: Readonly<Record<WorksPartField, string>> = Object.freeze({
+  works_long_life: 'Of the plant, what has an expected life of 25 years or more.',
+  works_asbestos: 'Of the work that does not qualify, what was spent removing asbestos.',
+  works_repairs_if: 'Of the repair part, what was spent on integral features (wiring, lighting, heating, water, lifts).',
+  works_if_replacement: 'What replacing those integral features would cost.',
+});
+
+/** PHASE 159k: a part more than the figure it is part of is a problem, and the work has no total until it is put right. */
+export function worksPartProblems(label: string, w: WorksInputs, parts: Readonly<Record<WorksPartField, Valued>>): Problem[] {
+  const out: Problem[] = [];
+  for (const k of WORKS_PART_FIELDS) {
+    const of = WORKS_PART_OF[k];
+    const v = parts[k].value, whole = of === null ? null : w[of].value;
+    if (of !== null && v !== null && whole !== null && v > whole) {
+      out.push({ code: 'WORKS_PART_TOO_BIG', words: `${label}: ${WORKS_PART_WORDS[k]} It is ${poundsWords(v)}, more than the ${poundsWords(whole)} it is part of. Check it.` });
+    }
+  }
+  return out;
 }
 
 /* ------------------------------------------------------------------ reading what a person types */

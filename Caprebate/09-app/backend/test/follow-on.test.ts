@@ -625,7 +625,7 @@ describe('mandatory documents at a stage — built, and switched off', () => {
     assert.equal(MD.MANDATORY_DOCUMENTS_QUESTION, 'May we accept tax returns and tax computations as uploads, and what must be removed from them?');
     assert.match(MD.MANDATORY_DOCUMENTS_ALSO_WAITS_ON, /nothing now/);
     assert.deepEqual(MD.MANDATORY_DOCUMENTS.requires.map((r) => `${r.type_code}:${r.condition}`),
-      ['SALE_CONTRACT:BOUGHT', 'CPSE_REPLIES:BOUGHT', 'TAX_RETURN:ALWAYS', 'TAX_COMPUTATION:ALWAYS']);
+      ['SALE_CONTRACT:BOUGHT', 'CPSE_REPLIES:BOUGHT', 'TAX_RETURN:ALWAYS', 'TAX_COMPUTATION:ALWAYS', 'SBA_ALLOWANCE_STATEMENT:SBA_ON_PURCHASE']); // Phase 159k
     const h = await boot();
     try {
       const db = h.made.app.db;
@@ -639,7 +639,7 @@ describe('mandatory documents at a stage — built, and switched off', () => {
       // On, as shipped: the four documents are needed on top — and nothing else changes.
       const shipped = P.gateOut(db, pc, 'DATA_GATHERING');
       assert.deepEqual(shipped.needs.slice(0, 2).map((n) => n.what), off.needs.map((n) => n.what));
-      assert.equal(shipped.needs.length, off.needs.length + 4);
+      assert.equal(shipped.needs.length, off.needs.length + 5); // Phase 159k: and the seller's structures allowance statement
     } finally { h.close(); }
   });
 

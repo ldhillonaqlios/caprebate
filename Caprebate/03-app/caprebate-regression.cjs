@@ -2448,7 +2448,9 @@ if (startSuite("K", "Phase 14 — BUILDING_REGS_COMPLETION and GRANT_FUNDING_AGR
     const types = PIPE.DOC_SPECS.map(d => d.doc_type).sort();
     /* Phase 151b: the tax return and the tax computation have specs of their own (Word question 223) — eleven. */
     /* Phase 157d: and the four the Friary House run found nothing could receive (F16) — fifteen. */
-    check("K1 — fifteen document types now have a spec", types.length, 15);
+    /* Phase 159k: and the seller's structures allowance statement (s.270IA) — sixteen. */
+    check("K1 — sixteen document types now have a spec", types.length, 16);
+    check("K1 — SBA_ALLOWANCE_STATEMENT is specified (Phase 159k)", types.indexOf("SBA_ALLOWANCE_STATEMENT") >= 0, true);
     check("K1 — COMPLETION_STATEMENT, ACCOUNTS, CONTRACTOR_INVOICE and PLANS are specified (Phase 157d)",
       ["COMPLETION_STATEMENT", "ACCOUNTS", "CONTRACTOR_INVOICE", "PLANS"].every(t => types.indexOf(t) >= 0), true);
     check("K1 — TAX_RETURN and TAX_COMPUTATION are specified (Phase 151b)",

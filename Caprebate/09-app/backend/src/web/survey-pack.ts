@@ -30,7 +30,7 @@ import { authorise, can, type Actor } from '../authz.ts';
 import { packJob, type PackJob } from './surveyor.ts';
 import { linesForSector, type LineTemplate } from './pack-lines.ts';
 import {
-  packSums, parseMoney, parsePercent, parseQuantity, parseRate, worksSums, WORKS_FIELDS,
+  packSums, parseMoney, parsePercent, parseQuantity, parseRate, poundsWords, worksSums, WORKS_FIELDS, WORKS_PART_FIELDS, worksPartProblems, type WorksPartField,
   mulDivRound, type PackInputs, type PackLine, type PackSums, type Pool, type Source, type Valued, type WorksField, type WorksInputs, type WorksSums,
 } from './pack-sums.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from './property-events.ts';
@@ -74,7 +74,8 @@ export type PackGrants = {
 export const GRANT_AMOUNTS_TO_SURVEYOR = false;
 
 export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed' | 'vat_position' | 'vat' | 'shared_area'
-  | CostField | WorksField | 'location';
+  | CostField | WorksField | 'location'
+  /* PHASE 159k (item 2): the three readings' parts */ | WorksPartField | 'long_life';
 
 /** PHASE 159c: one piece of work on the building, priced on its own cost (chapter 9; src/web/pack-sums.ts worksSums). */
 export type WorksView = {
@@ -83,6 +84,14 @@ export type WorksView = {
   readonly label: string;
   readonly inputs: WorksInputs;
   readonly sums: WorksSums;
+  /** PHASE 159k (item 2): the readings' parts of this work — each optional, the surveyor's, with a reason. */
+  readonly parts: Readonly<Record<WorksPartField, Valued>>;
+  /** PHASE 159k: s.33B on this work — the repairs on integral features made capital, in pence (0: not), and why. */
+  readonly s33b: { readonly capital_pence: number; readonly words: string | null };
+  /** PHASE 159k: of this work's main pool, what is long-life (s.91), and of its cost, the asbestos removal with its share
+   *  of the preliminaries and fees (Part 14); null where not given. */
+  readonly long_life_pence: number | null;
+  readonly asbestos_pence: number | null;
 };
 
 /**
@@ -229,6 +238,9 @@ export type PackView = {
   readonly pricing: Pricing;
   /** PHASE 159i: the money added to or taken off the purchase, in words and pence. */
   readonly money: PackMoney;
+  /** PHASE 159k (item 2): of the purchase's main pool, what has an expected life of 25 years or more (s.91) — the
+   *  surveyor's, with a reason; not given, the long-life test is not applied to the purchase. */
+  readonly long_life: Valued;
   /** PHASE 159g: the register leads for chapter 9. */
   readonly leads: RegisterLeads;
   /** The pack's counter as this view was read. A change must carry it back. */
@@ -334,6 +346,8 @@ const FIELD_WORDS: Readonly<Record<PackField, string>> = Object.freeze({
   works_bwic: 'builder’s work in connection', works_demolition: 'demolition of old plant', works_other: 'work that does not qualify',
   works_repairs: 'repair part', works_prelims: 'preliminaries', works_fees: 'professional fees',
   location: 'BCIS location',
+  works_long_life: 'long-life part of the plant', works_asbestos: 'asbestos removal part', works_repairs_if: 'repairs on integral features',
+  works_if_replacement: 'replacement cost of those integral features', long_life: 'long-life part of the main pool',
 });
 
 /**
@@ -363,6 +377,44 @@ function combined(purchase: PackSums, applies: boolean, works: readonly WorksVie
     special_pool_pence: add((x) => x.special_pool_pence),
     needed, problems, complete,
   };
+}
+
+/**
+ * PHASE 159k (item 2, OUR READING, on in test) — s.33B ACROSS THE BUILDING'S PIECES OF WORK. Where, in any twelve months,
+ * repairs on integral features pass half of what replacing them would cost, the spend is capital, not a repair: it goes
+ * to the special rate pool. Each piece of work gives its repairs on integral features and that replacement cost (both
+ * parts of its final account, the surveyor's). A work's repairs are read with every other work's within twelve months of
+ * it (by month), against its own replacement cost. A work with no month known is read on its own. Not given: not applied.
+ */
+export type S33b = { readonly capital: boolean; readonly words: string };
+
+const monthOf = (d: string | null): number | null => {
+  const m = d === null ? null : /^(\d{4})-(\d{2})/.exec(d);
+  return m === null ? null : Number(m[1]) * 12 + Number(m[2]) - 1;
+};
+
+export function s33bDecisions(works: readonly { id: string; date: string | null; parts: Readonly<Record<WorksPartField, Valued>> }[]): Map<string, S33b> {
+  const out = new Map<string, S33b>();
+  for (const w of works) {
+    const r = w.parts.works_repairs_if.value, R0 = w.parts.works_if_replacement.value;
+    if (r === null || R0 === null) continue;
+    if (R0 === 0) { out.set(w.id, { capital: false, words: 's.33B: no cost to replace the integral features is given. So the repairs stay repairs. Check it.' }); continue; }
+    const m = monthOf(w.date);
+    const within = works.filter((x) => x.parts.works_repairs_if.value !== null && (x.id === w.id || (m !== null && monthOf(x.date) !== null && Math.abs((monthOf(x.date) as number) - m) <= 11)));
+    const total = within.reduce((a, x) => a + (x.parts.works_repairs_if.value as number), 0);
+    const capital = total * 2 > R0;
+    out.set(w.id, { capital, words: capital
+      ? `s.33B: ${poundsWords(total)} on integral features within twelve months${within.length > 1 ? ` (across ${String(within.length)} pieces of work)` : ''} is more than half of ${poundsWords(R0)}, what replacing them would cost. So this work’s ${poundsWords(r)} of it is capital, in the special rate pool, not a repair.`
+      : `s.33B: ${poundsWords(total)} on integral features within twelve months is not more than half of ${poundsWords(R0)}, what replacing them would cost. So the repairs stay repairs.` });
+  }
+  return out;
+}
+
+/** PHASE 159k: a work with a repair part whose s.33B parts are not given says so (while the reading is on). */
+function s33Unchecked(on: boolean, w: WorksInputs, parts: Readonly<Record<WorksPartField, Valued>>): string | null {
+  if (!on || (w.works_repairs.value ?? 0) === 0) return null;
+  if (parts.works_repairs_if.value !== null && parts.works_if_replacement.value !== null) return null;
+  return 's.33B not checked: give how much of the repairs was on integral features, and what replacing them would cost. Until then the repairs stay repairs.';
 }
 
 /** PHASE 153e (Word question 133): the share of the floor area used when no floor plans give the shared areas. */
@@ -570,15 +622,38 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   // said it cost, as evidence of their word; every part of it is the surveyor's, from the final account itself.
   const events = eventsOfProperty(d.db, property?.id ?? null);
   const applies = purchaseApplies(events);
-  const works: WorksView[] = worksEvents(events).map((e) => {
+  const worksBase = worksEvents(events).map((e) => {
     const label = `${KIND_WORDS[e.kind]}, ${dateWords(e.event_date)}`;
     const draft = (f: WorksField): Valued => f === 'works_total' && e.cost_pence !== null
       ? { value: e.cost_pence, source: { kind: 'EVIDENCE', text: e.source === 'ASSESSMENT' ? 'What the client said it cost, at the assessment' : 'What the claim records it cost' } }
       : none;
     const winputs = Object.fromEntries(WORKS_FIELDS.map((f) => [f, resolve(e.id, f, draft(f))])) as unknown as WorksInputs;
+    // PHASE 159k (item 2): the readings' parts, each optional; a part more than its whole stops the work's total.
+    const parts = Object.fromEntries(WORKS_PART_FIELDS.map((f) => [f, resolve(e.id, f, none)])) as unknown as Record<WorksPartField, Valued>;
+    const raw = worksSums(e.id, label, winputs);
+    const tooBig = worksPartProblems(label, winputs, parts);
+    const base: WorksSums = tooBig.length === 0 ? raw : { ...raw, qualifying_pence: null, main_pool_pence: null, special_pool_pence: null, repairs_pence: null, problems: [...raw.problems, ...tooBig], complete: false };
+    return { e, label, winputs, parts, base };
+  });
+  const s33 = money.s33b_aggregation ? s33bDecisions(worksBase.map((w) => ({ id: w.e.id, date: w.e.event_date, parts: w.parts }))) : new Map<string, S33b>();
+  const works: WorksView[] = worksBase.map(({ e, label, winputs, parts, base }) => {
     // PHASE 159i (item 4): this work's own grants (the client's, recorded against it) and its irrecoverable VAT.
     const own = allGrants.filter((g) => g.event_id === e.id && g.paid_to !== 'PAST_OWNER' && payerReduces(g.payer_class, switches).reduces).map((g) => g.amount_pence);
-    return { event: e, label, inputs: winputs, sums: adjustWorks(worksSums(e.id, label, winputs), e.vat_pence, own, winputs.works_total.value) };
+    // PHASE 159k (item 2, s.33B): repairs on integral features made capital go to the special rate pool, before VAT and grants.
+    const d33 = s33.get(e.id) ?? { capital: false, words: s33Unchecked(money.s33b_aggregation, winputs, parts) };
+    const capital = d33.capital && base.complete && base.direct_pence !== null && base.oncost_pence !== null && parts.works_repairs_if.value !== null
+      ? parts.works_repairs_if.value + Number(mulDivRound(BigInt(base.oncost_pence), BigInt(parts.works_repairs_if.value), BigInt(base.direct_pence))) : 0;
+    const moved: WorksSums = capital > 0 && base.qualifying_pence !== null && base.special_pool_pence !== null && base.repairs_pence !== null
+      ? { ...base, qualifying_pence: base.qualifying_pence + capital, special_pool_pence: base.special_pool_pence + capital, repairs_pence: Math.max(0, base.repairs_pence - capital) }
+      : base;
+    const sums = adjustWorks(moved, e.vat_pence, own, winputs.works_total.value);
+    const ll = parts.works_long_life.value, main = winputs.works_main.value;
+    const long_life_pence = ll === null || main === null || sums.main_pool_pence === null ? null
+      : main === 0 ? 0 : Number(mulDivRound(BigInt(sums.main_pool_pence), BigInt(Math.min(ll, main)), BigInt(main)));
+    const asb = parts.works_asbestos.value;
+    const asbestos_pence = asb === null || base.direct_pence === null || base.oncost_pence === null || base.direct_pence === 0 ? null
+      : asb + Number(mulDivRound(BigInt(base.oncost_pence), BigInt(asb), BigInt(base.direct_pence)));
+    return { event: e, label, inputs: winputs, sums, parts, s33b: { capital_pence: capital, words: d33.words }, long_life_pence, asbestos_pence };
   });
 
   // PHASE 159d (item 8): the legal check is the purchase's. Failed, with work since, it stops the purchase only.
@@ -588,6 +663,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     job, pack_id: pack?.id ?? null, property, property_choices: choices,
     inputs, lines, sums: combined(reading.sums, applies && !purchaseW3, works, onClaim.filter((g) => g.paid_to !== 'PAST_OWNER' && (g.event_id === null || g.event_id === undefined)).length), grants, vat, shared_area, cost,
     events, purchase_applies: applies, purchase_sums: reading.sums, works, purchase_w3: purchaseW3, pricing, money: moneyView, leads,
+    long_life: resolve(null, 'long_life', none),
     seq: entries.length === 0 ? 0 : (entries[entries.length - 1] as EntryRow).seq,
     may_edit: can(actor, 'surveyor_job.commit', obj),
     changes,
@@ -719,7 +795,7 @@ export function savePackLocation(d: PackDeps, actor: Actor, job_id: string, f: {
 export function savePackExtra(d: PackDeps, actor: Actor, job_id: string, f: { field: string; value: string; reason: string; seq: string }): PackResult {
   const cost = COST_FIELDS.find((x) => x === f.field);
   if (cost !== undefined) return saveCostValue(d, actor, job_id, cost, f);
-  if (f.field !== 'vat_position' && f.field !== 'vat' && f.field !== 'shared_area') return { ok: false, field: 'field', why: 'That is not one of the pack’s values.' };
+  if (f.field !== 'vat_position' && f.field !== 'vat' && f.field !== 'shared_area' && f.field !== 'long_life') return { ok: false, field: 'field', why: 'That is not one of the pack’s values.' };
   const field: PackField = f.field;
   const raw = f.value.trim();
   let value: number | null = null;
@@ -735,9 +811,9 @@ export function savePackExtra(d: PackDeps, actor: Actor, job_id: string, f: { fi
     }
   }
   return begin(d, actor, job_id, f.reason, f.seq, ({ view, pack_id }) => {
-    const now = field === 'vat_position' ? view.vat.position_source : field === 'vat' ? view.vat.amount_source : view.shared_area.source;
+    const now = field === 'vat_position' ? view.vat.position_source : field === 'vat' ? view.vat.amount_source : field === 'long_life' ? view.long_life.source : view.shared_area.source;
     const was = field === 'vat_position' ? (view.vat.position_source === null ? null : VAT_POSITION_CODES.indexOf(view.vat.position))
-      : field === 'vat' ? view.vat.amount_pence : view.shared_area.value;
+      : field === 'vat' ? view.vat.amount_pence : field === 'long_life' ? view.long_life.value : view.shared_area.value;
     if (value === null && now === null) return { ok: false, field: 'value', why: 'Nothing is recorded yet, so there is nothing to clear.' };
     if (value !== null && now !== null && was === value) return { ok: false, field: 'value', why: 'That is already the value. Nothing changed.' };
     insertEntry(d, actor, pack_id, null, field, value, null, f.reason);
@@ -797,9 +873,10 @@ function saveCostValue(d: PackDeps, actor: Actor, job_id: string, field: CostFie
  * PHASE 159c: A PIECE OF WORK'S COST-LED VALUES, from its final account. Only what differs from the value as it stands
  * is written, each as its own entry under the one reason. An empty box leaves that value as it is.
  */
-export function saveWorks(d: PackDeps, actor: Actor, job_id: string, f: { event: string; values: Readonly<Partial<Record<WorksField, string>>>; reason: string; seq: string }): PackResult {
-  const parsed: Partial<Record<WorksField, number>> = {};
-  for (const k of WORKS_FIELDS) {
+export function saveWorks(d: PackDeps, actor: Actor, job_id: string, f: { event: string; values: Readonly<Partial<Record<WorksField | WorksPartField, string>>>; reason: string; seq: string }): PackResult {
+  const parsed: Partial<Record<WorksField | WorksPartField, number>> = {};
+  // PHASE 159k (item 2): the readings' parts are saved the same way, each with the one reason.
+  for (const k of [...WORKS_FIELDS, ...WORKS_PART_FIELDS]) {
     const raw = (f.values[k] ?? '').trim();
     if (raw === '') continue;
     const p = parseMoney(raw);
@@ -810,10 +887,11 @@ export function saveWorks(d: PackDeps, actor: Actor, job_id: string, f: { event:
     const w = view.works.find((x) => x.event.id === f.event);
     if (w === undefined) return { ok: false, field: 'event', why: 'That work is not on this building.' };
     const changed: string[] = [];
-    for (const k of WORKS_FIELDS) {
+    for (const k of [...WORKS_FIELDS, ...WORKS_PART_FIELDS]) {
       const v = parsed[k];
       if (v === undefined) continue;
-      if (w.inputs[k].value === v && isEntry(w.inputs[k].source)) continue;
+      const now = (WORKS_FIELDS as readonly string[]).includes(k) ? w.inputs[k as WorksField] : w.parts[k as WorksPartField];
+      if (now.value === v && isEntry(now.source)) continue;
       insertEntry(d, actor, pack_id, w.event.id, k, v, null, f.reason);
       changed.push(k);
     }

@@ -42,6 +42,7 @@
  */
 import { BENEFIT, RATES } from './engine.ts';
 import type { Snapshot } from './pack-approve.ts';
+import { longLifeLimitFor, LONG_LIFE_YEARS, LRR_ADDITIONAL } from './long-life-and-remediation.ts';
 
 export const RETURN_YEARS = 5;
 /** The longest run of returns a version can show — a guard, not a rule. */
@@ -63,6 +64,8 @@ export type AllowanceFacts = {
   readonly purchase_date: string | null;
   /** True for a building of homes (supported living), false otherwise; null where the sector is not known. */
   readonly residential: boolean | null;
+  /** PHASE 159k: the asbestos was there when the client acquired the land (CTA 2009 s.1145); absent on a version sent before. */
+  readonly asbestos_at_acquisition?: boolean | null;
 };
 
 export const NO_FACTS: AllowanceFacts = Object.freeze({
@@ -94,6 +97,12 @@ export type PartResult = {
   readonly to_pool_now: { readonly main: number; readonly special: number };
   readonly to_pool_next: { readonly main: number; readonly special: number };
   readonly sba: { readonly base_pence: number | null; readonly from: string | null; readonly applies: boolean | null; readonly why: string; readonly by_return: readonly (number | null)[] };
+  /** PHASE 159k (item 2): the long-life test on this part — its long-life part, whether it went to the special rate pool
+   *  (null: could not be decided), and why. Null where no long-life part is given or the reading is off. */
+  readonly long_life: { readonly pence: number; readonly moved: boolean | null; readonly why: string } | null;
+  /** PHASE 159k (item 2): land remediation relief on this part's asbestos removal — a deduction, never an allowance.
+   *  Null where no asbestos part is given or the reading is off. */
+  readonly lrr: { readonly applies: boolean | null; readonly base_pence: number; readonly deduction_pence: number; readonly additional_pence: number; readonly why: string } | null;
 };
 
 export type PeriodResult = {
@@ -105,6 +114,9 @@ export type PeriodResult = {
   readonly sba_pence: number | null;
   /** Every allowance in this return: first-year reliefs, both writing-down allowances and the structures allowance. */
   readonly total_pence: number | null;
+  /** PHASE 159k: land remediation relief in this return (the deduction and the additional 50%): not an allowance, so not
+   *  in total_pence. */
+  readonly lrr_pence: number;
 };
 
 export type Allowances = {
@@ -180,23 +192,32 @@ export function allowancesFor(s: Snapshot, ctx: { period_start: string | null; i
 
   // 1 · THE PARTS, each with its route as frozen at approval.
   type Raw = { what: string | null; kind: string; event_id: string | null; date: string | null; main: number | null; special: number | null;
-    sba_base: number | null; sba_inputs_known: boolean };
+    sba_base: number | null; sba_inputs_known: boolean; long_life: number | null; asbestos: number | null };
   const raws: Raw[] = [];
+  // PHASE 159k (item 2): the readings' parts as approved (pack-approve.ts readingsOf); a version without them has none.
+  const rd = (s as { readings_159k?: { long_life_test?: boolean; asbestos_lrr?: boolean; purchase_long_life_pence?: number | null;
+    works?: { event_id: string; long_life_pence: number | null; asbestos_pence: number | null }[] } }).readings_159k;
+  const rdWork = (id: string | null | undefined) => rd?.works?.find((x) => x.event_id === id);
   const purchaseRoute = routes.find((r) => r.kind === 'PURCHASE' || r.event_id === null || r.event_id === undefined) ?? routes[0];
   if (ev === undefined) {
     raws.push({ what: null, kind: 'PURCHASE', event_id: null, date: purchaseRoute?.event_date ?? facts.purchase_date,
-      main: s.sums.main_pool_pence ?? 0, special: s.sums.special_pool_pence ?? 0, sba_base: null, sba_inputs_known: true });
+      main: s.sums.main_pool_pence ?? 0, special: s.sums.special_pool_pence ?? 0, sba_base: null, sba_inputs_known: true,
+      long_life: rd?.purchase_long_life_pence ?? null, asbestos: null });
   } else {
     if (ev.purchase_applies && ev.purchase !== null) {
       raws.push({ what: 'the purchase', kind: 'PURCHASE', event_id: null, date: purchaseRoute?.event_date ?? facts.purchase_date,
-        main: ev.purchase.main_pool_pence, special: ev.purchase.special_pool_pence, sba_base: null, sba_inputs_known: true });
+        main: ev.purchase.main_pool_pence, special: ev.purchase.special_pool_pence, sba_base: null, sba_inputs_known: true,
+        long_life: rd?.purchase_long_life_pence ?? null, asbestos: null });
     }
     for (const w of ev.works) {
       const total = w.inputs?.['works_total'] ?? null;
       const known = typeof total === 'number' && typeof w.qualifying_pence === 'number' && typeof w.repairs_pence === 'number';
+      // PHASE 159k: asbestos removal is remediation of the land, not construction: never in the structures allowance's base.
+      const asb = rdWork(w.event_id)?.asbestos_pence ?? null;
       raws.push({ what: w.label, kind: w.kind ?? 'OTHER', event_id: w.event_id ?? null, date: w.event_date ?? null,
         main: w.main_pool_pence, special: w.special_pool_pence,
-        sba_base: known ? Math.max(0, (total as number) - (w.qualifying_pence as number) - (w.repairs_pence as number)) : null, sba_inputs_known: known });
+        sba_base: known ? Math.max(0, (total as number) - (w.qualifying_pence as number) - (w.repairs_pence as number) - (asb ?? 0)) : null, sba_inputs_known: known,
+        long_life: rdWork(w.event_id)?.long_life_pence ?? null, asbestos: asb });
     }
   }
   const routeOf = (r: Raw) => r.kind === 'PURCHASE' ? purchaseRoute : routes.find((x) => x.event_id !== undefined && x.event_id !== null && x.event_id === r.event_id);
@@ -223,13 +244,42 @@ export function allowancesFor(s: Snapshot, ctx: { period_start: string | null; i
   const count = Math.min(MAX_RETURNS, Math.max(RETURN_YEARS, lastIndex + 2));
   const periods = periodsFrom(first, count);
 
+  /* 2b · PHASE 159k (item 2, OUR READING, on in test) — THE LONG-LIFE TEST (s.90-104). Plant with an expected life of
+     25 years or more is long-life asset expenditure where a period's long-life spend passes the s.99 de minimis
+     (£100,000, in proportion for a short period); it then goes to the special rate pool. A building used as homes is
+     outside it (s.93). A period not known cannot be decided: the part stays where the survey put it, and says so. */
+  const cashPre = facts.cash_basis === 'CASH' && isCo !== true;
+  const llByIdx = new Map<number, number>();
+  const llOn = rd?.long_life_test === true;
+  raws.forEach((r, k) => {
+    const e = entries[k]!;
+    if (!llOn || r.long_life === null || r.long_life <= 0 || e.route === 'W3' || cashPre) return;
+    const i = e.entry === null ? -1 : indexOf(e.entry);
+    llByIdx.set(i, (llByIdx.get(i) ?? 0) + Math.min(r.long_life, r.main ?? 0));
+  });
+  const longLifeOf = (r: Raw, k: number): PartResult['long_life'] => {
+    if (!llOn || r.long_life === null || r.long_life <= 0) return null;
+    const pence = Math.min(r.long_life, r.main ?? 0);
+    if (residential === true) return { pence, moved: false, why: 'Plant in a building used as homes is never long-life (s.93), so it stays in the main pool.' };
+    const e = entries[k]!;
+    const i = e.entry === null ? -1 : indexOf(e.entry);
+    const limit = i < 0 ? null : longLifeLimitFor(periods[i] ?? null);
+    if (limit === null) return { pence, moved: null, why: `Of the main pool, ${pounds(pence)} has an expected life of ${String(LONG_LIFE_YEARS)} years or more. The year it goes in is not known, so the long-life test is not decided: it stays in the main pool for now.` };
+    const year = llByIdx.get(i) ?? 0;
+    return year > limit
+      ? { pence, moved: true, why: `Long-life plant is expected to last ${String(LONG_LIFE_YEARS)} years or more. This year has ${pounds(year)} of it, over the ${pounds(limit)} limit (s.99). So ${pounds(pence)} goes to the special rate pool (s.104A).` }
+      : { pence, moved: false, why: `Long-life plant: ${pounds(year)} in this year is not more than the ${pounds(limit)} limit (s.99), so it stays in the main pool.` };
+  };
+
   // 3 · FIRST-YEAR RELIEF, PART BY PART, sharing each period's annual investment allowance.
   const aiaLeft = new Map<number, number>();
   const aiaCap = R.FIRST_YEAR.aia_limit * 100;
   const parts: PartResult[] = raws.map((r, k) => {
     const { route, entry, rt } = entries[k]!;
     const idx = entry === null ? 0 : indexOf(entry);
-    const main = r.main, special = r.special;
+    const ll = longLifeOf(r, k);
+    const shift = ll !== null && ll.moved === true ? ll.pence : 0;
+    const main = r.main === null ? null : r.main - shift, special = r.special === null ? null : r.special + shift;
     const reliefs: Relief[] = [];
     const why: string[] = [];
     let mNow = main ?? 0, sNow = special ?? 0, mNext = 0, sNext = 0;
@@ -298,13 +348,31 @@ export function allowancesFor(s: Snapshot, ctx: { period_start: string | null; i
       }
     }
     const sba = sbaOf(r, route, claimed, idx, entry, facts, residential, isCo, periods);
+    /* PHASE 159k (item 2, OUR READING, on in test) — LAND REMEDIATION RELIEF on asbestos removal (CTA 2009 Part 14): a
+       company's deduction of the spend and an additional 50%, where the asbestos was there when it acquired the land, in
+       the return for the year of the work (W1). Never an allowance, and never in the structures allowance's base. */
+    const lrr: PartResult['lrr'] = rd?.asbestos_lrr !== true || r.asbestos === null || r.asbestos <= 0 ? null : (() => {
+      const base = r.asbestos;
+      const no = (applies: boolean | null, why: string) => ({ applies, base_pence: base, deduction_pence: 0, additional_pence: 0, why });
+      if (isCo === false) return no(false, 'Only a company gets land remediation relief. So the asbestos removal gets none here.');
+      if (isCo === null) return no(null, 'We do not know if the client is a company. Land remediation relief is for companies only, so it is not counted.');
+      if (facts.asbestos_at_acquisition === false) return no(false, 'The asbestos was not there when the land was acquired, as recorded, so there is no land remediation relief.');
+      if (facts.asbestos_at_acquisition !== true) return no(null, 'Record whether the asbestos was there when the client acquired the land. Until then there is no land remediation relief.');
+      if (!claimed || route === 'W3') return no(false, 'This work is not claimed, so neither is its asbestos removal.');
+      if (route !== 'W1') return no(route === 'W2' ? false : null, route === 'W2'
+        ? 'The return for the year of the work is closed. A deduction goes in the year it is spent, so there is no land remediation relief now.'
+        : 'How this work goes in is not settled, so land remediation relief is not counted.');
+      const add = Math.round(base * LRR_ADDITIONAL);
+      return { applies: true, base_pence: base, deduction_pence: base, additional_pence: add,
+        why: `Asbestos removal of ${pounds(base)}. It was there when the land was bought. All of it comes off the profits, plus ${pounds(add)} more (50%). That is ${pounds(base + add)} in all (CTA 2009 Part 14).` };
+    })();
     return {
       what: r.what, kind: r.kind, route, route_words: rt?.words ?? null, claimed, not_claimed_why: notClaimedWhy,
       entry: entry ?? (idx === 0 ? periods[0] ?? null : null), entry_index: idx, main_pence: main, special_pence: special,
       reliefs: claimed ? reliefs : [], no_relief_why: why,
       to_pool_now: claimed ? { main: mNow, special: sNow } : { main: 0, special: 0 },
       to_pool_next: claimed ? { main: mNext, special: sNext } : { main: 0, special: 0 },
-      sba,
+      sba, long_life: ll, lrr,
     };
   });
 
@@ -342,10 +410,11 @@ export function allowancesFor(s: Snapshot, ctx: { period_start: string | null; i
     const sba = sbaUnknown ? null : sbas.reduce((a, b) => a + (b ?? 0), 0);
     const m = mainRun[i]!, sp = specialRun[i]!;
     const total = m.wda === null || sp.wda === null || sba === null ? null : fy + m.wda + sp.wda + sba;
+    const lrr = parts.filter((x) => x.entry_index === i && x.lrr?.applies === true).reduce((a, x) => a + (x.lrr?.deduction_pence ?? 0) + (x.lrr?.additional_pence ?? 0), 0);
     return {
       index: i, period: p,
       label: p !== null ? `${p.start} to ${p.end}` : i === 0 ? 'the accounting period the spend falls in (not recorded yet)' : `the accounting period ${String(i)} after that`,
-      first_year_pence: fy, pools: { 'Main pool': m, 'Special rate pool': sp }, sba_pence: sba, total_pence: total,
+      first_year_pence: fy, pools: { 'Main pool': m, 'Special rate pool': sp }, sba_pence: sba, total_pence: total, lrr_pence: lrr,
     };
   });
   const main_missing = first === null ? 'The accounting period is not on the claim yet. The main pool rate depends on it.'

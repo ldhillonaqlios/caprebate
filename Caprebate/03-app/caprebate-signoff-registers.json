@@ -354,6 +354,12 @@
           "id": "13255398510",
           "how": "prose",
           "why": "Built by Phase 159e (src/web/allowances.ts) and found on Phase 159j's second Lockwood run (L21): the first year's balance carried forward leaves the other half out; the allowances are the same either way. Word question 278 for the tax adviser; board item created in group 02 at Built - awaiting sign-off with owner CTA."
+        },
+        {
+          "ref": "ACC-H12 the 159k readings: long-life plant, land remediation relief on asbestos, s.33B across a building's work, and the seller's SBA statement only where taken (Phase 159k, 10 Oct 2026; the Phase 159k section at the end of the register)",
+          "id": "13255545092",
+          "how": "prose",
+          "why": "Built by Phase 159k on 10 Oct 2026 and switched on in the test system (money-readings.ts long_life_test, asbestos_lrr, s33b_aggregation; allowances.ts; survey-pack.ts; mandatory-documents.ts SBA_ON_PURCHASE). Word questions 279-282 for the tax adviser; board item created in group 02 at Built - awaiting sign-off with owner CTA."
         }
       ],
       "mentions": [

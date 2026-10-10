@@ -13071,3 +13071,41 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds Phases 159k and 159l
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 159k — the remaining money items: the seller's allowance statement, and three readings — 10 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 159k, 10 Oct 2026: the seller's structures and buildings allowance statement is now a document we can ask for and receive; when it arrives, the claim records it as on file. It is listed among a purchase's documents from 29 October 2018, and is a must-have at data gathering only where the claim takes that allowance on a purchase. Three readings are built and on in the test system: plant expected to last 25 years or more goes to the special rate pool where a year's long-life spend is over £100,000; a company that removes asbestos which was there when it acquired the land gets land remediation relief, the spend and 50% more, in the return entries; and repairs to integral features that pass half their replacement cost within twelve months, across a building's work, are capital (s.33B). Questions 279-282 to the tax adviser (ACC-H12). Two more legal-check readings are carried to Phase 159l. 5,117 checks in all. Next: Phase 159l.
+
+- **Branch** `claude/phase-159k`, from `main` after PR 52 (Phase 159j) merged at Lakhbir's word ("merge 52 and run Next is Phase 159k").
+- **Evidence.** The stress harnesses run in the suite since Phase 159j (`test/phase159j.test.ts`), green before and after this phase; one of its tests restated, the L14 list of switches the pack applies, now with s.33B.
+- **Premise re-derived (step 8).** Item 1 asked for the statement as a must-have "on a purchase from 29 October 2018". The statement exists only where the building's construction contract is from that date, and s.270IA needs it only for the buyer's own structures allowance; as written, every post-2018 purchase of an older surgery would stop at the data-gathering gate for a document that cannot exist. Built instead as a must-have where the claim takes the allowance on a purchase from that date (SBA_QUALIFYING_EXPENDITURE recorded), and asked as Word question 282. Item 2 named a CIBSE Guide M life for the long-life test: the cost model's CIBSE table is empty (its licence is not cleared), so the long-life part is the surveyor's, with a reason.
+
+**What was built:**
+1. **The seller's statement (item 1)** — migration 112 (the document-types rebuild), phase3's type, segment kind, spec, receipt policy and keep list; `recordSbaStatementHeld` on receipt; `DOCUMENTS_FOR.PURCHASE` from 29 October 2018; the `SBA_ON_PURCHASE` gate condition.
+2. **Three readings (item 2)** — migration 113 (five optional pack values, the ASBESTOS_AT_ACQUISITION fact); s.33B across a building's pieces of work in the pack; the long-life test and land remediation relief in `allowancesFor` and the return entries; `src/web/long-life-and-remediation.ts` holds the two statutory figures the engine does not (s.99's £100,000, s.1149's 50%); the parts frozen with the version; the pack's chapter 9 forms.
+3. **The seventeen readings (item 3)** — re-read and recorded in the Developer Spec: built in the pack now #1, #11, #13, #25, #5 (legal), #20; #9 and #10 buildable in the legal check but only with the switch held across the whole legal flow — carried to Phase 159l item 8; #7 off (F-Q1); the rest act in the public estimate, each on its own question.
+
+**Tests.** `test/phase159k.test.ts`, nine tests (on the code before, the migrations and modules do not exist). Restated: phase3 C1, C7, C8 (the three new fields checked by hand: two dates and a sum, no name), P21; back end documents (two counts), phase151b-documents, follow-on, phase159j; harness K1 (sixteen types).
+
+**The checks, at the close:** site 1,427 pass (3 xfail) in both modes; phase3 440; phase9 417; back end `npm test` 2,833 pass / 0 fail over 177 tracked files; **5,117** in all (re-derived by the drift checker; the seven lines it found quoting the earlier figures were updated: the Developer Spec, Build-Prep 06, Decided-and-Not-Decided and the README). CRM fold check green (eleven of §4's line references moved by this phase's added lines). Register check green (141 awaiting: 60 + 12 + 69). Tracker check green. Plain words green after five sentences were simplified. SQL lint and typecheck green.
+
+**Documents.** Word questions 279-282 for the tax adviser in both documents, the safe way; headings 282. Register ACC-H12 (13255545092). Phase 159l gains item 8, in the plan and on the run sheet. Developer Spec: a Phase 159k section, and the figures.
+
+```
+DONE          item 1: the seller's structures allowance statement is a document type with its own receipt policy;
+              receiving it records the statement as held; a purchase lists it from 29 Oct 2018; a must-have where the
+              claim takes the allowance on a purchase. item 2: the long-life test, land remediation relief on asbestos
+              and s.33B across a building's work, built and on in test. item 3: the seventeen re-read. Questions
+              279-282; ACC-H12. 5,117 checks; all green.
+NOT DONE      #9 (the s.187A(6)(b) statements route) and #10 (the fixed value requirement needing a past owner who
+                claimed) in the pack's legal check - BUILDABLE - Phase 159l item 8.
+              Whether the four readings are viable - BUILT; BLOCKED only on the tax adviser - questions 279-282 (ACC-H12).
+              The other readings of the seventeen that act in the public estimate - BLOCKED on the tax adviser, each on
+                its own Word question (unchanged from Phase 159i).
+              A CIBSE life per element to draft the long-life part - BLOCKED on the CIBSE licence (CIBSE_KNOWLEDGE, not
+                cleared); the surveyor gives the part until then.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue holds Phase 159l; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.

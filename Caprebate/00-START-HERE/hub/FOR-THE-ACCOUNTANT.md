@@ -1873,7 +1873,7 @@ Signed .............................  Date ..........................
 
  **This register gains one entry and one board item**: ACC-H3, the accountant's own confirmation link and the defence pack's list of records (board item 13245993980). Phase 158d wrote the two checks into this register, but made no board item for them, so no count saw them. **Board items covered: 51.**
 
- **And the board's own total at the close of Phase 159j, 10 October 2026, counted in code: 140 items carry that status**: fifty-nine in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Fifty-nine plus twelve plus sixty-nine is 140. (At the close of Phase 159i it was 139; Phase 159j added ACC-H11.)
+ **And the board's own total at the close of Phase 159k, 10 October 2026, counted in code: 141 items carry that status**: sixty in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Sixty plus twelve plus sixty-nine is 141. (At the close of Phase 159j it was 140; Phase 159k added ACC-H12.)
 
 ## Phase 159b, 9 October 2026 — ACC-H4 · four readings behind the online figure, built and on in the test system
 
@@ -1961,3 +1961,14 @@ Signed .............................  Date ..........................
  We build first and ask you second (Lakhbir, 29 September 2026). Found on the second Lockwood Surgery test run (invented figures): a company takes the 50% first-year allowance on a June 2025 refit's special rate items. The return entries add the other half to the special rate pool the year after, so the first year's balance carried forward leaves it out (£111,657.49, where adding it at the end of that year, after its writing-down allowance, gives £124,257.49). The allowances each year are the same either way; only the balance shown differs. We recommend showing it in the first year's balance carried forward. (Question 278.)
 
  **ACC-H11 · Board item 13255398510, added 10 October 2026 by Phase 159j.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 59.**
+
+## Phase 159k, 10 October 2026 — ACC-H12 · the long-life test, asbestos relief, s.33B, and the seller's allowance statement
+
+ We build first and ask you second (Lakhbir, 29 September 2026). All are on in the test system only, with invented data. Each is a question in the Word questions document, Section 2, with our recommendation and a worked example:
+
+-  **Long-life plant.** Plant expected to last 25 years or more goes to the special rate pool where a year's long-life spend is over £100,000 (less for a shorter year, s.99); homes are outside it (s.93). We use the limit for every client, not only companies. (Question 279.)
+-  **Land remediation relief on asbestos.** A company that removes asbestos which was there when it acquired the land deducts the spend and 50% more (CTA 2009 Part 14), in the year of the work; it is kept out of the structures and buildings allowance. (Question 280.)
+-  **s.33B across a building's work.** Repairs on integral features within twelve months, across every piece of work on the building, that come to more than half the cost of replacing them are capital, in the special rate pool. (Question 281.)
+-  **The seller's structures allowance statement.** It can now be asked for and received; it is a must-have at data gathering only where the claim takes the structures allowance on a purchase. (Question 282.)
+
+ **ACC-H12 · Board item 13255545092, added 10 October 2026 by Phase 159k.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 60.**

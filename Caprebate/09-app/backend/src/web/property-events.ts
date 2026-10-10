@@ -156,9 +156,16 @@ export function eventCeiling(sector: string | null, e: Pick<PropertyEvent, 'kind
   return r === null ? { high_pence: null, why: 'We could not size this one from what is recorded.' } : { high_pence: Math.round(r.high * 100), why: null };
 }
 
-/** The documents that prove each kind of event. Every one is on the upload lists (it has a receipt policy). */
+/** PHASE 159k: an event date ("2019-06" or "2019") known to be before the structures allowance began (29 October 2018). */
+function beforeSba(d: string | null): boolean {
+  if (d === null) return false;
+  return d.length === 4 ? d < '2018' : d < '2018-10';
+}
+
+/** The documents that prove each kind of event. Every one is on the upload lists (it has a receipt policy). PHASE 159k:
+ *  a purchase's include the seller's structures allowance statement, from 29 October 2018. */
 export const DOCUMENTS_FOR: Readonly<Record<EventKind, readonly string[]>> = Object.freeze({
-  PURCHASE: Object.freeze(['COMPLETION_STATEMENT', 'SALE_CONTRACT', 'CPSE_REPLIES', 'ACCOUNTS']),
+  PURCHASE: Object.freeze(['COMPLETION_STATEMENT', 'SALE_CONTRACT', 'CPSE_REPLIES', 'ACCOUNTS', 'SBA_ALLOWANCE_STATEMENT']),
   NEW_BUILD: Object.freeze(['CONTRACTOR_COST_BREAKDOWN', 'CONTRACTOR_INVOICE', 'PLANS', 'ACCOUNTS']),
   EXTENSION: Object.freeze(['CONTRACTOR_COST_BREAKDOWN', 'CONTRACTOR_INVOICE', 'PLANS', 'ACCOUNTS']),
   REFURBISHMENT: Object.freeze(['CONTRACTOR_COST_BREAKDOWN', 'CONTRACTOR_INVOICE', 'PLANS', 'ACCOUNTS']),
@@ -189,7 +196,8 @@ export function eventsOnClaim(db: Db, c: { property_id: string | null; business_
   return evs.map((e) => {
     const f = eventCeiling(c.sector, e);
     return { ...e, words: KIND_WORDS[e.kind], when: dateWords(e.event_date), ceiling_pence: f.high_pence, ceiling_why: f.why,
-      documents: DOCUMENTS_FOR[e.kind].map((code) => {
+      // PHASE 159k: no structures allowance statement exists for a purchase known to be before 29 October 2018.
+      documents: DOCUMENTS_FOR[e.kind].filter((code) => code !== 'SBA_ALLOWANCE_STATEMENT' || !beforeSba(e.event_date)).map((code) => {
         const loose = untied(code);
         return { code, label: label(code), held: own(code, e.id) + (one ? loose : 0), untied: one ? 0 : loose };
       }) };
