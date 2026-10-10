@@ -204,7 +204,7 @@ function packed(app: App, tag: string, events: Ev[], acquired: string) {
 }
 /** The legal check for a purchase from a tax-paying seller who claimed, directly, with no election and no tribunal. */
 function legalPurchase(app: App, job: string, date: string) {
-  const answers: [string, string[]][] = [['G8', ['purchase']], ['G8a', ['property']], ['G9d', [date]], ['G11', ['yes']], ['G12', ['taxpaying']],
+  const answers: [string, string[]][] = [['G8', ['purchase']], ['G8a', ['property']], ['G9d', [date]], ['G11', ['yes']], ['G12', ['taxpaying']], ['G14s', ['sale']],
     ['G14', ['no']], ['G14po', ['sold_market']], ['G14pod', [date]], ['G14t', ['none']], ['G15', ['no']], ['G14fvr', ['no']]];
   for (const [q, v] of answers) {
     if (!lview(app, job).asked.some((x) => x.id === q)) continue;
