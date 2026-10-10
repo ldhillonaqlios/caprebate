@@ -1071,7 +1071,7 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 160 — Sweep and stress-test (the recurring one, always last)
+## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 
  **Model: Opus.** **This is the one section that is never deleted.** It renumbers itself forward each time it runs and stays at the bottom of this list.
@@ -1154,7 +1154,24 @@ THE NUMBER: phases 153f, 154a1, 155 and 156 were added above this one on 3 Oct, 
   Phase 157 sweep (6 Oct 2026) inserted 157a and 157b before it, and the Phase 158
   sweep (7 Oct 2026) inserted 158a; 158a, 158b and 158c each wrote the next
   (158b, 158c, 158d) from their runs of the invented client, and the Phase 159
-  sweep (9 Oct 2026) inserted none, so this sweep's heading is now PHASE 160.
+  sweep (9 Oct 2026) inserted none; the stress test of 9 Oct wrote 159a-159j,
+  which wrote 159k and 159l, and the Phase 160 sweep (10 Oct 2026) inserted
+  none, so this sweep's heading is now PHASE 161.
+ADDED 10 OCT 2026 BY THE PHASE 160 SWEEP:
+  A CLOSED QUESTION LEAVES ITS OLD WORDS BEHIND. Word question 218 (BCIS) closed
+    on 10 Oct, but the source register's licence still refused BCIS in every
+    report while the report printed BCIS rates, and a dozen live lines (the cost
+    model, the harness, the index reader's message, three registers, the
+    waiting list, two monday doc exports) still called it open or BCIS unbought.
+    When a question closes, grep its NUMBER across the live tree, and read the
+    licence or switch it governs, not only the item it names.
+  A LOOSE END CAN RIDE THE SWEEP FOREVER. INSPIRE end to end went 159a -> 159j
+    -> 159l -> the sweep while its purpose (the site boundary) had been parked
+    for Homedata since 6 Oct. Give a carried job the home whose trigger it
+    shares (here the parked item 12830205914), not the next sweep.
+  TWO JOBS PHASE 159l CARRIED IN, AND WHERE THEY WENT: job B (a filing per
+    return where staff record it) BUILT by the Phase 160 sweep (migration 116,
+    test/phase160.test.ts); job A (INSPIRE end to end) moved to 12830205914.
 ADDED 9 OCT 2026 BY THE PHASE 159 SWEEP:
   A NEW TRACKER ROW GOES IN THROUGH THE TOOL: node 03-app/caprebate-tracker.cjs add,
     or load() and toCSV() together, never a row appended by hand. Two
@@ -1381,25 +1398,6 @@ after that phase.
    reports the pipe's exit code; node --test from the root does not run; a
    DOCX zip may use backslash entry paths; vercel.json's outputDirectory set
    back to "." would publish every committed file on the test website.
-
-═══ CARRIED IN BY PHASE 159l, 10 OCTOBER 2026 - two jobs, do both ═══
-A. INSPIRE END TO END (carried from Phase 159a by 159j item 4, then 159l item
-   7). Its three test lookups were used on 9 Oct 2026; a fourth is refused
-   until Lakhbir records a switch-on (smoke-switched-on is his, never ours).
-   Read ~/.caprebate-test-lookups.jsonl for a HMLR_INSPIRE "switched_on" line
-   after 2026-10-09. If there is one, run from 09-app/backend:
-   CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE and expect PASS.
-   If not, ask him once more; Phase 159l asked on 10 Oct 2026.
-B. A FILING PER RETURN ON THE STAFF ROUTE (BUILDABLE). Phase 159l made the
-   accountant's filing link name one return at a time (claim-route.ts
-   claimReturns, accountant-confirm.ts returnFilings, migration 115) and the
-   defence pack's close read each return. Where the client has NO accountant
-   (client-filing.ts route CLIENT), recordFiling (claim-record.ts) still takes
-   one filed_on for the claim. Do the same there: a staff filing record per
-   return (its period end), the close needing each return already due, a
-   later one held in aftercare with its due date. A test that fails on the
-   code before. Word question 283 covers the reading.
-═══════════════════════════════════
 
 THE PATTERN TO HUNT, in thirteen variants, because each pass finds a different one.
  (i)   Complete on its own terms, silently incomplete on the next person's. WHEN A
@@ -1735,7 +1733,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
-|  Claude |  Phase 160 — the sweep, always last |  The standing rule |
+|  Claude |  Phase 161 — the sweep, always last (Phase 160, the sweep after 159a-159l, done 10 Oct 2026; see PHASE HISTORY) |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 

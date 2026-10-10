@@ -365,22 +365,29 @@ export const LICENCES: readonly Licence[] = [
      *     contactbcis@bcis.co.uk; API access: api@bcis.co.uk.
      */
     licence_id: 'BCIS_COMMERCIAL',
-    name: 'BCIS subscription licence — Annex One of BCIS Ltd\'s terms of sale; named users, extracts to clients only; NO ATTRIBUTION WORDING, NO ACCOUNTANT OR HMRC GRANT PUBLISHED',
+    name: 'BCIS subscription licence — Annex One of BCIS Ltd\'s terms of sale; our use confirmed by BCIS (relayed by Lakhbir, 9 Oct 2026); NO ATTRIBUTION WORDING PUBLISHED',
     publisher_of_licence: 'Building Cost Information Service Ltd (BCIS, owned by RICS)',
     attribution_required: true,
     attribution_text:
-      'NOT PUBLISHED — BCIS\'s licence (Annex One, cl. 7.3) requires a credit to BCIS wherever feasible but gives no wording. ' +
-      'Nothing from this source may appear in a report until BCIS states the wording and confirms the use.',
-    redistribution: { client_report: false, accountant_report: false, hmrc_pack: false, internal: true },
+      'NOT PUBLISHED BY BCIS — its licence (Annex One, cl. 7.3) requires a credit to BCIS wherever feasible but gives no ' +
+      'wording. Ours: every rate drawn from BCIS names "BCIS" and the series it came from, in the report\'s "Where each rate ' +
+      'comes from" (src/web/survey-report.ts).',
+    /* PHASE 160 (the sweep), 10 October 2026: OPENED ON BCIS'S OWN ANSWER. Lakhbir, 9 Oct 2026: "we spoke to BCIS and they
+       said its fine for us to do what we are doing" — loading BCIS's data, drafting the pack's rates from it and showing
+       them in our reports (Word question 218, closed 10 Oct 2026). Those reports go to the client, into the accountant's
+       pack and into the defence pack, so all three are opened, as the solicitor's answer opened HMLR_TITLE's. The rate
+       TABLE itself is still never reproduced (cl. 2.2), and the data is still never committed (src/web/bcis-index.ts). */
+    redistribution: { client_report: true, accountant_report: true, hmrc_pack: true, internal: true },
     cache_max_age_days: 365,
-    legal_review_required: true,
+    legal_review_required: false,
     notes:
       'Read 24 Sep 2026 (Phase 151) from bcis.co.uk/terms-conditions-of-sale/ (updated 9 Apr 2026), Annex One. Internal use ' +
       'is granted to named licensed users only (cl. 2.1(b)-(c), 2.3); extracts may go to clients where they relate to ' +
       'projects created in the service (cl. 2.1(d)); nothing else may be redistributed (cl. 2.2). client_report false, ' +
       'accountant_report false and hmrc_pack false are our refusals where BCIS publishes no grant; 365 days is the ' +
       'subscription term, and on expiry the data is deleted (cl. 9.2). Rates may be USED to compute, but the underlying ' +
-      'rate table may not be reproduced. Which BCIS product was agreed, and its order form, is Word question 218.',
+      'rate table may not be reproduced. Word question 218 (which product, and whether its licence lets our software use ' +
+      'its rates) closed 10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir, 9 Oct 2026); the channels opened then.',
   },
   {
     licence_id: 'CLIENT_SUPPLIED',

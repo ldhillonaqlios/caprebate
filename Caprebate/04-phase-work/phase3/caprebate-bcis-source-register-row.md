@@ -52,6 +52,11 @@ The licensor is **Building Cost Information Service Ltd**, not RICS itself.
 ## What is left, and whose it is
 
 Word question 218, for Lakhbir: "Which BCIS product did you agree to, and does its licence let our software use its rates?"
+
+**Closed 10 October 2026.** BCIS confirmed our use (relayed by Lakhbir, 9 October 2026: "we spoke to BCIS and they said its
+fine for us to do what we are doing"), and the Phase 160 sweep opened `BCIS_COMMERCIAL` to the client report, the accountant's
+pack and the HMRC pack to match; the table itself is still never reproduced. What is left is the BCIS export (tracker
+13254356802). The paragraph below is how this read before:
 The answer is the product name and its order form (user count, office, any special terms). Until then the LEG-E4 tables in
 `04-phase-work/phase9/caprebate-cost-model.cjs` stay empty and the gate stays off. Permissions and licensing:
 contactbcis@bcis.co.uk; API access: api@bcis.co.uk.

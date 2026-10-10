@@ -2165,7 +2165,8 @@ if (startSuite("H", "Phase 8 — prepared patches, gated on the CTA")) {
      LEG-E3  12804380489  VOA licence — genuinely so; the fee scale IS the data.
      LEG-E4  12804374707  BCIS (chosen over Spon's, 24 Sep 2026) — a
                           subscription AND a licence: Word question 218,
-                          item 12804374406.
+                          closed 10 Oct 2026 (BCIS confirmed our use); the
+                          export is item 13254356802.
      LEG-E5  12804317685  TWO sources — VOA obsolescence scales AND CIBSE plant
                           lives. Clearing the VOA licence alone does not
                           unblock it.
@@ -2296,7 +2297,7 @@ if (startSuite("I", "Phase 9 — prepared cost model, gated on licence and purch
     check("I7 — the shipped engine carries the LEG-E4 location factor",
       /location_factor|CB_LOCATION_FACTORS/.test(siteSrc), true,
       { xfail: "LEG-E4 12804374707 — prepared, not shipped; blocked on the cost " +
-               "library, BCIS: its product and licence are Word question 218 (item 12804374406)" });
+               "library, BCIS: its use is confirmed (Word question 218, closed 10 Oct 2026); the export is item 13254356802" });
 
     check("I8 — the shipped engine carries the valuation basis switch",
       /valuation_basis|replacement_new/.test(siteSrc), true,

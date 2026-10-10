@@ -2282,7 +2282,8 @@ test("P155-4a the index table read from a downloaded file: months and quarters, 
   assert.equal(r.passed_over, 3, "the title, the heading and the empty pair");
   assert.equal(r.table.loaded, true);
   assert.equal(r.table.source, "an invented file");
-  assert.match(r.table.licence, /named users only; not for reports until BCIS confirms/);
+  // Phase 160: BCIS confirmed our use (Word question 218, closed 10 Oct 2026).
+  assert.match(r.table.licence, /our use confirmed by BCIS, reports included.*the table itself is never reproduced/);
   assert.equal(near(M.indexFactorFromTable(r.table, "2024-05-01", "2026-01-15").factor, 384 / 396), true);
   assert.deepEqual(["2024-03", "2024-03-31", "Mar 2024", "March 2024", "1Q 2024", "Q1 2024", "2024 Q1", "1q2024"].map(M.indexPeriod),
     ["2024-03", "2024-03", "2024-03", "2024-03", "2024-01", "2024-01", "2024-01", "2024-01"]);

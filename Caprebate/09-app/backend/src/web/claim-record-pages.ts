@@ -22,6 +22,7 @@ import { badge, breadcrumb, claimHref, moreDetail, why } from './components.ts';
 import { can } from '../authz.ts';
 import { openClaimQuestions, sendTaskToPortal } from './engaged.ts';
 import { formatPence } from './shown-range.ts';
+import { ukDate } from './localtime.ts';
 import * as F from './claim-facts.ts';
 import * as R from './claim-record.ts';
 import { recordClientFilingConfirmation } from './client-filing.ts';
@@ -143,7 +144,7 @@ export async function handleClaimRecord(
   if (m) {
     const id = m[1] ?? '';
     const f = await form(req);
-    const r = m[2] === 'filing' ? R.recordFiling(deps, actor, id, posted(f, ['filed_on']))
+    const r = m[2] === 'filing' ? R.recordFiling(deps, actor, id, posted(f, ['filed_on', 'period_end']))
       : m[2] === 'variance' ? R.recordVariance(deps, actor, id, posted(f, ['variance_category', 'variance_notes']))
         : R.recordOutcome(deps, actor, id, posted(f, ['withdrawn', 'amount_realised']));
     return finish(id, r, 'Reconciliation not recorded', 'saved');
@@ -321,7 +322,11 @@ export function figuresBlock(claim_id: string, p: R.FiguresPanel | undefined): S
       <dt>Variance</dt><dd>${rec.variance.variance_category ?? 'not tagged'}<br><span class="help">${rec.variance.review_why}</span></dd>
       <dt>Snapshot</dt><dd>${rec.opened} · ${rec.snapshot_hash}</dd></dl>
       ${!p.may_reconcile ? raw('') : h`
-        <form method="post" action="/staff/claims/${claim_id}/reconciliation/filing" class="inline"><label>Filed on <input name="filed_on" type="date"></label><button type="submit">Record the filing</button></form>
+        ${p.filing_returns === null ? h`<form method="post" action="/staff/claims/${claim_id}/reconciliation/filing" class="inline"><label>Filed on <input name="filed_on" type="date"></label><button type="submit">Record the filing</button></form>`
+          : h`<p class="help">This claim goes into ${String(p.filing_returns.length)} tax returns. Record each one's filing on its own.</p>
+          <ul class="plain">${p.filing_returns.map((x) => h`<li>${x.words}</li>`)}</ul>
+          ${p.filing_returns.some((x) => x.state !== 'FILED') ? h`<form method="post" action="/staff/claims/${claim_id}/reconciliation/filing" class="inline">
+            <label>Which return <select name="period_end" required><option value="">choose</option>${p.filing_returns.filter((x) => x.state !== 'FILED').map((x) => h`<option value="${x.period_end}">The period ending ${ukDate(x.period_end)}${x.due_on === null ? '' : `, due ${ukDate(x.due_on)}`}</option>`)}</select></label><label>Filed on <input name="filed_on" type="date"></label><button type="submit">Record the filing</button></form>` : raw('')}`}
         <form method="post" action="/staff/claims/${claim_id}/reconciliation/variance" class="inline"><label>Variance <select name="variance_category">${options(R.VARIANCE_CATEGORIES)}</select></label><label>Notes <input name="variance_notes"></label><button type="submit">Record the tag</button></form>
         <form method="post" action="/staff/claims/${claim_id}/reconciliation/outcome" class="inline"><label>Realised (£) <input name="amount_realised"></label><label><input type="checkbox" name="withdrawn" value="yes"> withdrawn</label><button type="submit">Record the outcome</button></form>`}`}
   </div>`;
