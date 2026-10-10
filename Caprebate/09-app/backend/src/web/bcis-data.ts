@@ -353,7 +353,7 @@ export function bcisDrafts(o: { sector: string; area: string | null; purchase: s
   // The location: the area the surveyor chose, if the table holds it; else the UK mean (it cancels in the share).
   const loc = o.area === null ? null : d.locations.find((l) => norm(l.area) === norm(o.area ?? '')) ?? null;
   const location = loc !== null ? { area: loc.area, factor: loc.factor, words: `${loc.area}, ${loc.factor.toFixed(2)}` }
-    : { area: null, factor: 1, words: o.area === null ? 'the UK mean (choose the area in chapter 9)' : `the UK mean: “${o.area}” is not in the location table` };
+    : { area: null, factor: 1, words: o.area === null ? 'the UK mean' : `the UK mean, as “${o.area}” is not in the location table` };
   // The index: BCIS's base quarter to the purchase date.
   const ix = o.purchase === null ? { factor: null, words: 'the purchase date is not known, so the rates stay at BCIS’s base quarter' } : indexBetween(d.base, o.purchase.slice(0, 10), env);
   const priced_at = ix.factor !== null ? (o.purchase ?? '').slice(0, 10) : `${d.base}-01`;
@@ -380,5 +380,5 @@ export function bcisDrafts(o: { sector: string; area: string | null; purchase: s
     lines.set(id, { value: Math.round(sum * k), basis: basisOf(`${type.name}, element ${names2}, ${pounds(sum)}/m² at ${d.base}`),
       text: `${lead}${type.name}, element ${names2}: ${pounds(sum)} a m² of floor at ${d.base} ${tail}` });
   }
-  return { kind: d.kind, words: `${test ? `${PLACEHOLDER_WORDS}. ` : ''}Rates drafted from ${type.name}${nearest}, ${d.source}, ${tail}.`, type_name: type.name, building_rate, lines, location, index: { factor: ix.factor, words: ix.words }, priced_at };
+  return { kind: d.kind, words: `Drafted from ${test ? 'test figures for' : 'BCIS’s'} ${type.name}${nearest}${test ? '' : ` (${d.source})`}, ${tail}.`, type_name: type.name, building_rate, lines, location, index: { factor: ix.factor, words: ix.words }, priced_at };
 }

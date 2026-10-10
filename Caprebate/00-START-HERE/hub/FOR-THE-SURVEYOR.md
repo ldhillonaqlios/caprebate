@@ -1064,7 +1064,7 @@ reasonably be established remotely should require a site inspection before a sur
 
 -  **SV-S10 — NEW ENTRY. The professional fees on top of the build cost (your call question 9a).** Board item 12804380489. The cost model adds a flat 15% for the design team's fees the client paid on top of the build cost (not our own fee). A banded scale with building-type adders is built and switched off, with empty tables, waiting on your percentage. It was filed as "Blocked - question" behind a Valuation Office licence we no longer need: since 4 October the percentage is yours to set (call question 9a). **What we are asking you:** what percentage, or which bands, should the model use?
 
-**Marked 6 October 2026 by Phase 157 (the sweep): one entry moved into this register, so its size is now ten entries covering ten board items, all ten at Built — awaiting sign-off.**
+**Marked 6 October 2026 by Phase 157 (the sweep): one entry moved into this register. Marked again 10 October 2026 by Phase 159f: SV-S11 added, so its size is now eleven entries covering eleven board items, all eleven at Built — awaiting sign-off.**
 
  **And the board's own total at the close of Phase 157 (the sweep), 6 October 2026, counted in code: 128 items carry that status**: fifty in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty plus ten plus sixty-eight is 128.
 
@@ -1086,4 +1086,15 @@ reasonably be established remotely should require a site inspection before a sur
 
  One item more is awaiting sign-off on the board: ACC-H3, in FOR THE ACCOUNTANT.
 
- **And the board's own total at the close of Phase 159e, 10 October 2026, counted in code: 133 items carry that status**: fifty-five in FOR THE ACCOUNTANT, ten in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-five plus ten plus sixty-eight is 133. (At the close of Phase 159d it was 132; Phase 159e added ACC-H7.)
+ **And the board's own total at the close of Phase 159f, 10 October 2026, counted in code: 134 items carry that status**: fifty-five in FOR THE ACCOUNTANT, eleven in FOR THE SURVEYOR, and sixty-eight with the solicitor, the data protection officer and the developer. Fifty-five plus eleven plus sixty-eight is 134. (At the close of Phase 159e it was 133; Phase 159f added SV-S11.)
+
+## Phase 159f, 10 October 2026 — SV-S11 · the pack drafts its rates from BCIS, and every rate names its source
+
+ Lakhbir, 9 October 2026: "With BCIS data loaded, the pack could draft each rate from the right building type — this needs to happen." And BCIS confirmed our use: storing, drafting from and printing its rates (relayed by Lakhbir; Word question 218, now closed). We build first and ask you second. All of this is on in the test system only, with invented test rates until BCIS's export is imported:
+
+-  **The drafts.** The whole-building rate is the mean for the sector's BCIS building function (a dental practice is priced as a health centre, the nearest). Each line measured by floor area is drafted from BCIS's elements: electrical (5.8), water (5.4), heating (5.6) and ventilation (5.7). Each draft is multiplied by the location factor for the area you choose (the UK mean until you do) and by the tender price index from BCIS's quarter to the purchase date. Lines counted per room or item are not drafted. You accept a draft by leaving it, or type your own with its source. Example: £2,500 a m² at the second quarter of 2026, Kirklees 0.95, indexed back 0.9524 to June 2025: £2,262 a m². (Question 262.)
+-  **Every rate names its source.** A rate you type needs its source — BCIS, a quantity surveyor's priced schedule, the contractor's invoice or a price book — its reference, and the day it is priced at. A pack is not approved without one on every counted rate, nor while its rates sit at different days the index cannot bring together. The report names each rate's source, lists them in full, and prints a test rate as a test rate.
+-  **Section 562 both ways.** The report uses the proportional way. Chapter 22 shows the residual way beside it, with the share against the sector's ceiling (above it is flagged for your review, never refused). Which way the report should use is yours and the tax adviser's (question 261).
+
+ **SV-S11 · Board item 13254340860, added 10 October 2026 by Phase 159f.** One entry, at Built - awaiting sign-off, owner the surveyor. **This register now has eleven entries covering eleven board items.**
+

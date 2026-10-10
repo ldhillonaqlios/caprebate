@@ -427,6 +427,12 @@
           "id": "12804380489",
           "how": "prose",
           "why": "Added by Phase 157 (the sweep), 6 Oct 2026: built and switched off, waiting only on the surveyor's percentage (call question 9a); moved from Blocked - question to Built - awaiting sign-off, owner Surveyor. Prose entry in the Phase 157 note at the end of the register."
+        },
+        {
+          "ref": "SV-S11 the pack drafts its rates from BCIS, every rate names its source, and section 562 both ways (Phase 159f, 10 Oct 2026; the Phase 159f section at the end of the register)",
+          "id": "13254340860",
+          "how": "prose",
+          "why": "Built by Phase 159f on 10 Oct 2026 and switched on in the test system: rates drafted from BCIS (building function mean, NRM elements, location factor, TPI to the purchase date), a structured source on every rate, one pricing day, the report naming each source, the residual way beside the proportional one. Word questions 261-262 for the surveyor; board item created in group 04 at Built - awaiting sign-off with owner Surveyor."
         }
       ],
       "mentions": [

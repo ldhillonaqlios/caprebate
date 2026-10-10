@@ -274,7 +274,7 @@ function summaryChapter(v: P.PackView): Safe {
       ${v.vat.counted_pence === 0 ? raw('') : h`<div>Plus VAT not reclaimed<b>+ ${PENCE(v.vat.counted_pence)}</b><span>Chapter 15</span></div>`}
       <div>Less bare land<b>${i.land_pence.value === null ? '—' : `− ${PENCE(i.land_pence.value)}`}</b><span>Chapter 9</span></div>
       <div>The building<b>${PENCE(s.building_price_pence)}</b><span>price less land</span></div>
-      <div>Rebuild cost today<b>${PENCE(s.rebuild_pence)}</b><span>floor area × rate</span></div>
+      <div>Rebuild cost<b>${PENCE(s.rebuild_pence)}</b><span>floor area × rate${v.pricing.priced_at === null ? '' : `, priced at ${v.pricing.priced_at}`}</span></div>
       ${v.grants.list.length === 0 ? raw('') : h`<div>Less grants<b>${v.grants.reading.reduction_pence === null ? '—' : `− ${PENCE(v.grants.reading.reduction_pence)}`}</b><span>Chapter 15</span></div>`}
       <div class="pathway-end">Spend that qualifies<b>${PENCE(s.qualifying_pence)}</b><span>${s.share_bp === null ? 'not worked out yet' : `${PCT(s.share_bp)} of the building`}</span></div>
     </div>
@@ -922,7 +922,7 @@ function versionPage(d: PackPageDeps, actor: Actor, v: P.PackView, kept: NonNull
       <div><dt>Price paid</dt><dd>${PENCE(x.inputs.price_paid_pence.value)}</dd></div>
       <div><dt>Bare land</dt><dd>${PENCE(x.inputs.land_pence.value)}</dd></div>
       <div><dt>The building</dt><dd>${PENCE(x.sums.building_price_pence)}</dd></div>
-      <div><dt>Rebuild cost today</dt><dd>${PENCE(x.sums.rebuild_pence)}</dd></div>
+      <div><dt>Rebuild cost${(x as { pricing?: { priced_at: string | null } }).pricing?.priced_at ? `, priced at ${(x as { pricing?: { priced_at: string | null } }).pricing?.priced_at ?? ''}` : ''}</dt><dd>${PENCE(x.sums.rebuild_pence)}</dd></div>
       <div><dt>Spend that qualifies</dt><dd>${PENCE(x.sums.qualifying_pence)}</dd></div>
       <div><dt>Main pool</dt><dd>${PENCE(x.sums.main_pool_pence)}</dd></div>
       <div><dt>Special rate pool</dt><dd>${PENCE(x.sums.special_pool_pence)}</dd></div>
