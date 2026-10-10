@@ -99,6 +99,11 @@
 270) When a client pays a premium for a new lease, when do the fixtures pass to it?
 271) If the seller could never claim but an earlier owner could, should the claim be capped at the value fixed when that earlier owner sold?
 272) Have we read correctly what a tenant, a landlord and a tenant whose lease has ended can each claim?
+273) When a grant's papers do not say what it paid for, should all of it come off the claim?
+274) If an earlier owner received a grant, should it lower the cap from that owner's sale rather than the client's price?
+275) Should the stamp duty and the legal fees on a purchase be part of the price we share out?
+276) Can a buyer claim its own work to install plant on top of the figure the seller's election fixes?
+277) Should VAT the client could not reclaim be shared between the land and the building?
 116) Would you send a client to us, and what would stop you?
 117) Do you want a fee for sending clients, and what must you tell them?
 118) Who sends the corrected tax return to HMRC: you or us?

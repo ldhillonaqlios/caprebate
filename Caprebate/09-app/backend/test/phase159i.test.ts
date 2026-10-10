@@ -73,6 +73,11 @@ describe('1 · item 1 — grants to the extent they paid', () => {
       const rows = r.effects.reduce((t, e) => t + (e.reduction_pence ?? 0), 0);
       assert.equal(rows, r.reduction_pence, JSON.stringify(sw));
     }
+    // Two traced grants on the same line, together more than its spend: the line loses no more than all it qualifies for,
+    // and the two rows share exactly that (the harness's worst case before this phase was £287,760 apart).
+    const both = run([G('t1', 30_000, { element_ids: ['LS-MP-003'] }), G('t2', 30_000, { element_ids: ['LS-MP-003'] })], TEST);
+    assert.equal(both.effects.reduce((t, e) => t + (e.reduction_pence ?? 0), 0), both.reduction_pence);
+    assert.equal(both.reduction_pence, gbp(40_000), 'the fire alarm’s whole £40,000 qualifying share, once');
   });
 
   test('an earlier owner’s grant lowers the cap from the earlier sale; not known is not settled; with no cap it is said', () => {

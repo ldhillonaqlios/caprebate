@@ -237,6 +237,20 @@ export function applyGrants(inputs: PackInputs, lines: readonly PackLine[], sums
   };
   const fullRows = share(fullGrants, fullOff);
   const shareRows = share(shareGrants, Q1 - Q2);
+  /* The traced grants: each one's own loss on its lines, scaled to what the route actually took off together (lines two
+     grants both paid for cannot lose more than all they qualify for), the pennies to the largest remainders. */
+  const ownLoss = new Map<string, bigint>();
+  for (const x of itemGrants) { let own = ZERO; for (const [id, a] of metBy(x.g, linesFor(x.g))) own += loss(id, a); ownLoss.set(x.g.id, own); }
+  const itemRows = ((): Map<string, bigint> => {
+    const out = new Map<string, bigint>();
+    const sumOwn = [...ownLoss.values()].reduce((t, v) => t + v, ZERO);
+    if (sumOwn === ZERO) { for (const k of ownLoss.keys()) out.set(k, ZERO); return out; }
+    const parts = itemGrants.map((x) => { const n = T * (ownLoss.get(x.g.id) ?? ZERO); return { id: x.g.id, q: n / sumOwn, r: n % sumOwn }; });
+    let left = T - parts.reduce((t, p) => t + p.q, ZERO);
+    for (const p of [...parts].sort((a, b) => (a.r === b.r ? 0 : a.r > b.r ? -1 : 1))) { if (left <= ZERO) break; p.q += 1n; left -= 1n; }
+    for (const p of parts) out.set(p.id, p.q);
+    return out;
+  })();
 
   const effects: GrantEffect[] = routed.map((x) => {
     if (x.route === 'NOT_TAKEN_OFF' || x.route === 'PAST_OWNER') return { grant_id: x.g.id, route: x.route, words: x.words, line_ids: [], reduction_pence: 0 };
@@ -245,8 +259,7 @@ export function applyGrants(inputs: PackInputs, lines: readonly PackLine[], sums
       return { grant_id: x.g.id, route: x.route, words: x.words, line_ids: [], reduction_pence: Number(shareRows.get(x.g.id) ?? ZERO) };
     }
     const ls = linesFor(x.g);
-    let own = ZERO;
-    for (const [id, a] of metBy(x.g, ls)) own += loss(id, a);
+    const own = itemRows.get(x.g.id) ?? ZERO;
     const words = ls.length === 0
       ? 'It paid only for items this pack does not count. Those items never qualify, or were taken out. So it takes nothing off.'
       : x.words;

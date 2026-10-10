@@ -635,7 +635,8 @@ function grantStepPage(d: ClaimRecordPageDeps, res: ServerResponse, actor: Actor
       <fieldset><legend><h2>Was it a grant?</h2></legend>${choice('kind', { GRANT: 'A grant', CONTRIBUTION: 'Another payment towards the work' }, x.kind)}</fieldset>
       <fieldset><legend><h2>Who received it?</h2></legend>${choice('paid_to', { CLIENT: 'The client', PAST_OWNER: 'An earlier owner of the building' }, x.paid_to === '' ? 'CLIENT' : x.paid_to)}
         <p class="help">An earlier owner’s grant does not come off the client’s price. It lowers what could pass on from that owner.</p></fieldset>
-      ${evs.length === 0 ? raw('') : h`<label>Which spend did it pay for? <select name="event_id"><option value="">Not known yet</option>${evs.map((e) => h`<option value="${e.id}"${x.event_id === e.id ? raw(' selected') : raw('')}>${KIND_WORDS[e.kind]}, ${dateWords(e.event_date)}</option>`)}</select></label>`}
+      ${evs.length === 0 ? raw('') : h`
+        <label>Which spend did it pay for? <select name="event_id"><option value="">Not known yet</option>${evs.map((e) => h`<option value="${e.id}"${x.event_id === e.id ? raw(' selected') : raw('')}>${KIND_WORDS[e.kind]}, ${dateWords(e.event_date)}</option>`)}</select></label>`}
       <div class="help">${why('A loan is not a grant or a payment towards the work, and nor is regular income such as rent support. Insurance money after damage is added here too — it usually does not reduce the claim.')}</div>
       ${nav(false)}</form>`;
   } else if (step === 2) {

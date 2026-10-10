@@ -1071,110 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 159i — the money adjustments: grants, VAT, acquisition costs and builder's work
-
- **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: each one moves the defensible figure, up or down, on almost every claim.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
-   and the same entry at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE EVIDENCE (OneDrive, not in git): Caprebate/04-phase-work/stress-2026-10-09/
-  COVERAGE-MATRIX.md     every variable that moves a claim, and where the app
-                         reads it (sections 1-14; gaps ranked in 14)
-  engine/FINDINGS.md     E1-E20, the estimate engine; re-run: node harness.ts
-  claim/FINDINGS.md      C1-C29, the claim stage; re-run: ./run-all.sh
-and Caprebate/04-phase-work/sim-2026-10-09-lockwood/Lockwood-Surgery-test-run.md
-(L1-L12, the live run on a real practice with every API). Re-run the harness
-for your items before you start and again at the end; it must go clean.
-
-THE TARGET (Lakhbir, 9 Oct 2026): "the highest figure we can defend" - not
-the highest figure. Every rule below is built on our recommendation and
-SWITCHED ON in test (his rule of 29 Sep 2026: build it, then ask the
-accountant / solicitor / DPO if it is viable). Each item marked OUR READING
-goes into the Word questions document (AMENDMENT 2 - cp, never mv) under the
-tax adviser as a viability check: "we built X on basis Y - is it viable?".
-
-Each fix below gets a test that fails on the code before it (turn the
-harness case into the test). Plain words at grade 9 on every screen. Fix
-what is small and safe; anything larger goes in a new lettered phase before
-the sweep; anything that needs a person goes in the Word questions document.
-
-1. GRANTS TO THE EXTENT THEY PAID (s.532; Rulebook F, F-R12). Equal-share
-   reduction (pack-grants.ts:105) is replaced: a grant with papers is traced
-   to the elements it paid for (the ITEMS route); where tracing fails, the
-   conservative full deduction against qualifying lines. On a purchase, the
-   PAST owner's grant reduces the s.185 cap, not the buyer's price. NHS
-   improvement grants are named. C23: grant rows add up to the total.
-2. C12: irrecoverable VAT is shared between land and building before the
-   split (survey-pack.ts:306-310). The VAT capital goods scheme adjustment
-   is a fact and a note.
-3. Built and switched ON in test, each then put to the tax adviser: stamp
-   duty and legal fees into the base (the pack calls CB_ACQ.addToBase,
-   shared.js:2513, and reads TRANSACTION_TAX, ACQUISITION_COSTS); the
-   buyer's own alterations (s.25) on top of the cap (BUYER_ALTERATIONS);
-   the long-life asset test; Land Remediation Relief for asbestos; the
-   s.33B aggregation switch. Coverage matrix section 13 lists the seventeen
-   readings built and left off - turn on every one this phase can stand
-   behind and list the rest with why.
-4. (Carried from Phase 159c, 9 Oct 2026.) GRANTS AND VAT PER EVENT. A grant
-   on a claim whose building has work since now STOPS the pack's total
-   (survey-pack.ts combined, problem GRANTS_ON_EVENTS), because a grant left
-   on the purchase when it paid for the refit is an over-claim. Record which
-   event each grant paid for, and take it off that event's figure (its
-   cost-led values, or the purchase's sums). Each event's VAT
-   (property_events.vat, carried NULL since 159c): ask it on the claim, and
-   add VAT the client could not reclaim to that event's cost.
-5. (Carried from Phase 159e, 10 Oct 2026.) THE SELLER'S STRUCTURES ALLOWANCE
-   STATEMENT AS A DOCUMENT. 159e works the buyer's structures and buildings
-   allowance from SBA_QUALIFYING_EXPENDITURE with SBA_STATEMENT_HELD
-   (src/web/allowances.ts sbaOf; "Not worked out ... Ask for it and record
-   it" until then), but the statement (s.270IA) has no document type, so it
-   cannot be uploaded. Add the type with its own receipt policy (a rebuild
-   migration, as 099 did; its policy in 04-phase-work/phase3's ingestion
-   module), put it in DOCUMENTS_FOR.PURCHASE, and make it a required document
-   on a purchase from 29 October 2018 (mandatory-documents.ts, a new
-   condition). Its figure fills SBA_QUALIFYING_EXPENDITURE, and its upload
-   records SBA_STATEMENT_HELD YES.
-```
-
----
-
 ## PHASE 159j — the stress suite in the build, and Lockwood once more with every API
 
  **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: the stress test must run on every phase from now on, not once.
@@ -1279,6 +1175,105 @@ the sweep; anything that needs a person goes in the Word questions document.
    property's tenure filled as leasehold from it; Homedata's 8,170 m² site is
    flagged against the 266 m² surgery; the BCIS location drafts as Kirklees
    from the council area.
+```
+
+---
+
+## PHASE 159k — the remaining money items: the seller's allowance statement, and three readings
+
+ **Model: Opus. Written 10 October 2026 by Phase 159i**, from the items it could not finish safely in one phase (the carry-forward rule). Why now: each moves the defensible figure on a purchase or a refit, and none needs anybody to answer anything first.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
+   and the same entry at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE EVIDENCE (OneDrive, not in git): Caprebate/04-phase-work/stress-2026-10-09/
+  COVERAGE-MATRIX.md     every variable that moves a claim, and where the app
+                         reads it (sections 1-14; gaps ranked in 14)
+  engine/FINDINGS.md     E1-E20, the estimate engine; re-run: node harness.ts
+  claim/FINDINGS.md      C1-C29, the claim stage; re-run: ./run-all.sh
+and Caprebate/04-phase-work/sim-2026-10-09-lockwood/Lockwood-Surgery-test-run.md
+(L1-L12, the live run on a real practice with every API). Re-run the harness
+for your items before you start and again at the end; it must go clean.
+
+THE TARGET (Lakhbir, 9 Oct 2026): "the highest figure we can defend" - not
+the highest figure. Every rule below is built on our recommendation and
+SWITCHED ON in test (his rule of 29 Sep 2026: build it, then ask the
+accountant / solicitor / DPO if it is viable). Each item marked OUR READING
+goes into the Word questions document (AMENDMENT 2 - cp, never mv) under the
+tax adviser as a viability check: "we built X on basis Y - is it viable?".
+
+Each fix below gets a test that fails on the code before it (turn the
+harness case into the test). Plain words at grade 9 on every screen. Fix
+what is small and safe; anything larger goes in a new lettered phase before
+the sweep; anything that needs a person goes in the Word questions document.
+
+1. (Carried from Phase 159i, item 5, first carried from 159e.) THE SELLER'S
+   STRUCTURES ALLOWANCE STATEMENT AS A DOCUMENT. 159e works the buyer's
+   structures and buildings allowance from SBA_QUALIFYING_EXPENDITURE with
+   SBA_STATEMENT_HELD (src/web/allowances.ts sbaOf), but the statement
+   (s.270IA) has no document type. Add the type with its own receipt policy:
+   a document_types rebuild migration (as 099 did: the handler_type CHECK
+   widened, the four triggers made again, the fk-check guard); its DocType,
+   DOC_SPECS entry (the figure and the date) and CLIENT_DOC_RECEIPT_POLICY
+   entry in 04-phase-work/phase3 (caprebate-document-pipeline.ts,
+   caprebate-client-doc-ingestion.ts); put it in DOCUMENTS_FOR.PURCHASE
+   (property-events.ts); make it a required document on a purchase from 29
+   October 2018 (mandatory-documents.ts: a new DocumentCondition with a date
+   branch in applies()). Its upload records SBA_STATEMENT_HELD YES, and the
+   figure staff type from it fills SBA_QUALIFYING_EXPENDITURE.
+2. (Carried from Phase 159i, item 3.) THREE READINGS NOT YET BUILT IN THE
+   PACK, each built here, switched ON in test (src/web/money-readings.ts,
+   moneyReadingsHere) and put to the tax adviser:
+   - THE LONG-LIFE ASSET TEST (s.90-104): plant with an expected life of 25
+     years or more goes to the special rate pool where the year's long-life
+     spend passes £100,000; a line's life from CIBSE Guide M (the cost
+     model's plant lives); the surveyor confirms.
+   - LAND REMEDIATION RELIEF FOR ASBESTOS (CTA 2009 Part 14): asbestos
+     removal on land bought in a contaminated state is a 150% deduction for a
+     company, not an allowance; a line kind in the cost-led works (beside the
+     repair part) and its own line in the return entries.
+   - THE s.33B AGGREGATION (CB_CTA.s33b_aggregation, #20): spend on one
+     integral feature over 12 months that passes half its replacement cost is
+     capital, the whole of it; read across a building's events.
+3. Coverage matrix section 13 and the Phase 159i record list every one of the
+   seventeen claim-increasing readings with its state: re-read that list, and
+   build any that can now be built in the pack.
 ```
 
 ---
@@ -1926,7 +1921,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157 — the sweep — **done 6 Oct 2026**, see PHASE HISTORY; it inserted 157a and 157b |  The standing rule |
 |  Claude |  Phase 157a — the engine and the cost model: the pooling questions, the unknown seller, the cost model in the survey pack — **done 6 Oct 2026**, see PHASE HISTORY |  Loose ends the sweep held since 153e and 154a1 |
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
-|  Claude |  Phases 159i and 159j — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, 159b, the assessment figure made sound, 159c, several events on one building, and 159d, each event's route, ran on 9 Oct 2026, and 159e, the allowances on each event and the return entries, and 159f, BCIS rate drafting and every rate sourced, and 159g, who claims and what the registers say, and 159h, the legal check, on 10 Oct 2026; all are in PHASE HISTORY): grants, VAT, acquisition costs (159i, 13247762327); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
+|  Claude |  Phases 159j and 159k — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, 159b, the assessment figure made sound, 159c, several events on one building, and 159d, each event's route, ran on 9 Oct 2026, and 159e, the allowances on each event and the return entries, and 159f, BCIS rate drafting and every rate sourced, and 159g, who claims and what the registers say, and 159h, the legal check, and 159i, the money adjustments, on 10 Oct 2026; all are in PHASE HISTORY): the remaining money items (159k, 13254813789, written by 159i); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
 |  Claude |  Phase 160 — the sweep, always last |  The standing rule |
 
