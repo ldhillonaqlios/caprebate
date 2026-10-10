@@ -360,6 +360,12 @@
           "id": "13255545092",
           "how": "prose",
           "why": "Built by Phase 159k on 10 Oct 2026 and switched on in the test system (money-readings.ts long_life_test, asbestos_lrr, s33b_aggregation; allowances.ts; survey-pack.ts; mandatory-documents.ts SBA_ON_PURCHASE). Word questions 279-282 for the tax adviser; board item created in group 02 at Built - awaiting sign-off with owner CTA."
+        },
+        {
+          "ref": "ACC-H13 the 159l readings: a filing per return with a later return held in aftercare, the s.187A(6)(b) statements route, and the fixed value requirement needing a past owner who claimed (Phase 159l, 10 Oct 2026; the Phase 159l section at the end of the register)",
+          "id": "13255820733",
+          "how": "prose",
+          "why": "Built by Phase 159l on 10 Oct 2026 and switched on in the test system (claim-route.ts claimReturns, accountant-confirm.ts returnFilings, migration 115; pack-legal.ts LEGAL_READINGS #9 and #10 held by withLegalEngineReadings). Word question 283 for the accountant and 284-285 for the tax adviser; board item created in group 02 at Built - awaiting sign-off with owner CTA."
         }
       ],
       "mentions": [

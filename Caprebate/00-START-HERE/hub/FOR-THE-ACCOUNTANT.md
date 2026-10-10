@@ -1873,7 +1873,7 @@ Signed .............................  Date ..........................
 
  **This register gains one entry and one board item**: ACC-H3, the accountant's own confirmation link and the defence pack's list of records (board item 13245993980). Phase 158d wrote the two checks into this register, but made no board item for them, so no count saw them. **Board items covered: 51.**
 
- **And the board's own total at the close of Phase 159k, 10 October 2026, counted in code: 141 items carry that status**: sixty in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Sixty plus twelve plus sixty-nine is 141. (At the close of Phase 159j it was 140; Phase 159k added ACC-H12.)
+ **And the board's own total at the close of Phase 159l, 10 October 2026, counted in code: 142 items carry that status**: sixty-one in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Sixty-one plus twelve plus sixty-nine is 142. (At the close of Phase 159k it was 141; Phase 159l added ACC-H13.)
 
 ## Phase 159b, 9 October 2026 — ACC-H4 · four readings behind the online figure, built and on in the test system
 
@@ -1972,3 +1972,13 @@ Signed .............................  Date ..........................
 -  **The seller's structures allowance statement.** It can now be asked for and received; it is a must-have at data gathering only where the claim takes the structures allowance on a purchase. (Question 282.)
 
  **ACC-H12 · Board item 13255545092, added 10 October 2026 by Phase 159k.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 60.**
+
+## Phase 159l, 10 October 2026 — ACC-H13 · a filing per return, and two readings in the legal check
+
+ We build first and ask you second (Lakhbir, 29 September 2026). All are on in the test system only, with invented data. Each is a question in the Word questions document, with our recommendation and a worked example:
+
+-  **A filing per return.** A claim whose parts go into two tax returns (a 2020 purchase into the amended return for the year to 31 May 2025, a 2025 refit into the return for the year to 31 May 2026) is confirmed one return at a time, by the accountant's own link for each. It closes once every return already due is filed; a return not yet due is held under aftercare with its due date. (Question 283, for the accountant.)
+-  **The statements route.** Where an owner in between could never claim, written statements from both earlier owners fix the fixtures' value with no deadline (s.187A(6)(b)). The survey pack's legal check now asks for them. (Question 284.)
+-  **No claim, no fixed value requirement.** Where the owner before our client is known never to have claimed on the fixtures, the fixed value requirement does not apply. The survey pack's legal check reads it so; the public online estimate does not. (Question 285.)
+
+ **ACC-H13 · Board item 13255820733, added 10 October 2026 by Phase 159l.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 61.**

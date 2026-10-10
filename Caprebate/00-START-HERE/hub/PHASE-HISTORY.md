@@ -13109,3 +13109,45 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds Phase 159l; no orpha
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 159l — what the second Lockwood run found, and two legal-check readings — 10 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 159l, 10 Oct 2026: a dormant company now shows on the lead and the claim as soon as the client picks it from the company search, before the letter is signed, not only after the paid research. A claim whose parts go into two tax returns is now confirmed one return at a time by the accountant's own link; it closes once every return already due is filed, and a later one is held under aftercare with its due date. The research panel's postcodes.io row now says it is the address question's check, and what the research's own postcode check found. "What happened to the building" shows each event's approved figure once the survey has priced it. The report prints each piece of work's nine final-account values with their source, on the page and in the PDF. BCIS's base quarter reads "January 2026". The survey pack's legal check now holds two more readings on: the statements route where an owner in between could never claim, and no fixed value requirement where the owner before never claimed. INSPIRE was not run (no new switch-on recorded). Questions 283-285 (ACC-H13). 5,130 checks in all. Next: Phase 160, the sweep.
+
+- **Branch** `claude/phase-159l`, from `main` after PR 53 (Phase 159k) merged at Lakhbir's word ("merge 53 and run Next is Phase 159l").
+- **Evidence.** The second Lockwood run, `04-phase-work/sim-2026-10-10-lockwood/Lockwood-Surgery-run-2.md` (OneDrive), findings L13, L15, L17-L20; the stress suite (`test/phase159j.test.ts`) green before and after.
+- **Premise re-derived (step 8).** L13: the funnel's search result for each match (`company_results`, with `accounts_type` since 159g) was already in the draft; only `submit` dropped it, so the fix keeps it rather than searching again. L15: one `filed_on` per claim (migration 015) was as the brief said; the returns a claim goes into were derivable from the routes, but not as a list, so `claimReturns` was written. L18: the POSTCODES_IO row is a different gate from the research's own country check, as the brief said. L20: the snapshot kept each work's values but not their sources, so the sources are now frozen with the version (an older version says it kept none). Item 8: the two questions' `showIf` run only inside `assessLegal`, so holding the switches round `assessLegal` covers `legalView` and the walk; the readings are always on, as 159h's four are, so the facts panel and the sign-off form read them on everywhere.
+
+**What was built:**
+1. **The dormant flag before the letter (item 1, L13)** — migration 114 (`assessments.company_number`, `company_status`, `company_accounts_type`); `companyAtAssessment`; `qualifyingActivityEvidence` and `dormantWarning` fall back to the search's reading until the research's register record exists.
+2. **A filing per return (item 2, L15)** — `claimReturns`, `dueFromAmendBy` (`claim-route.ts`); migration 115 (`accountant_confirm_requests.period_end`); `sendConfirmRequest`, `askFor`, `returnFilings` (`accountant-confirm.ts`); `filingRecordedNeed` per return; `aftercarePanel.returns_to_file`; the send form asks which return. **Which:** the claim closes once each return already due is filed; a return not yet due is held in aftercare with its due date (Word question 283).
+3. **The research panel (item 3, L18)** — `consultAllowed` rewrites the POSTCODES_IO row's words after the click.
+4. **The events' figures (item 4, L19)** — `approvedEventFigures`; `eventsBlock` shows the approved figure.
+5. **The work's costs on the report (item 5, L20)** — `snapshotOf` `input_sources`; `workSources` in "Where each number came from", page and PDF.
+6. **BCIS's quarter (item 6)** — `baseWords`; the report reads older versions' "at 2026-01" the same way.
+7. **INSPIRE (item 7)** — not run: the test lookup log has no HMLR_INSPIRE switch-on after 9 Oct 2026 (three NO results that day). Lakhbir asked in the closing message; carried to Phase 160.
+8. **Two legal-check readings (item 8)** — `LEGAL_READINGS` #9 and #10; `withLegalEngineReadings` (set, run, restore in a finally); `assessLegalUnder`; `LEGAL_ENGINE_SWITCHES` read ON by `packSwitchReadings`; the walk enumerates G14ivne and G14st8 and was re-recorded: 16,689 paths (GREEN 1,826, URGENT 527, AMBER 11,855, RED 2,481; before, 18,302 paths: GREEN 361, URGENT 467, AMBER 14,474, RED 3,000). Every path read against the readings off: 1,515 not known → clear, 183 → clear with a deadline, 206 → fails (a £1 or £60,000 election now assessed because the requirement no longer masks it, or a lease-route failure on a path that asks one question more with the readings off); none moved from clear to worse.
+
+**Tests.** `test/phase159l.test.ts`, thirteen tests; all thirteen fail on `main` (run in a worktree of `main` with only this file added) and pass here. Restated: phase153b (#10 shown both ways), phase159f (BCIS's quarter), phase159h (the readings), phase159j (L14's switch list); the legal walk's fixture re-recorded.
+
+**The checks, at the close:** site 1,427 pass (3 xfail) in both modes; phase3 440; phase9 417; back end 2,846 pass / 0 fail over 178 tracked files; **5,130** in all (re-derived by the drift checker; the two Developer Spec lines quoting 5,117 updated). CRM fold check green (six §4 line references moved by this phase's lines). Register check green (142 awaiting: 61 + 12 + 69). Tracker check green. Plain words green. SQL lint and typecheck green. The engine package unchanged and up to date.
+
+**Documents.** Word questions 283 (the accountant) and 284-285 (the tax adviser) in both documents, the safe way. Register ACC-H13 (13255820733), on monday, in the tracker, the register manifest and FOR THE ACCOUNTANT; the tallies in all three registers. Developer Spec: a Phase 159l section, the figures and §4. The sweep (Phase 160) gains two jobs, in the plan and on the run sheet.
+
+```
+DONE          item 1: the company search's accounts type kept with the assessment and shown on the lead and the claim
+              before the research. item 2: a filing per return, the claim closing once each return due is filed, a later
+              one in aftercare. item 3: the research panel's postcode row. item 4: the events' approved figures. item 5:
+              each work's nine values and their source on the report. item 6: BCIS's quarter as a month. item 8: the
+              statements route and the fixed value requirement in the legal check, scoped, the walk re-recorded.
+              Questions 283-285; ACC-H13. 5,130 checks; all green.
+NOT DONE      INSPIRE end to end (item 7) - BLOCKED on Lakhbir recording a switch-on (smoke-switched-on is his) - asked in
+                the closing message; carried to Phase 160 (job A) to run once he has.
+              A filing per return on the staff route (client with no accountant) - BUILDABLE - Phase 160 (job B).
+              Whether the three readings are viable - BUILT; BLOCKED only on the accountant and the tax adviser -
+                questions 283-285 (ACC-H13).
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue is empty; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.
