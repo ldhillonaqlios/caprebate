@@ -68,7 +68,9 @@ describe('line 16 — Word question 121: the return entries for each year, besid
   }) as unknown as Snapshot;
   test('a company with its accounting period recorded: both pools added in return 1, then five years of allowances at the engine’s rates', () => {
     const rows = returnEntries(snap(10_000_000, 5_000_000), { period_start: '2026-04-01', is_company: true });
-    assert.equal(rows.length, 2 + RETURN_YEARS * 4);
+    // PHASE 159e: and one row saying the structures allowance is not worked out (no purchase date on this bare version),
+    // and each return's total of every allowance in it.
+    assert.equal(rows.length, 2 + RETURN_YEARS * 4 + 1 + RETURN_YEARS);
     assert.deepEqual(rows.slice(0, 2).map((r) => [r.return_no, r.pool, r.entry, r.amount_pence]),
       [[1, 'Main pool', 'Spend that counts, added to the pool', 10_000_000], [1, 'Special rate pool', 'Spend that counts, added to the pool', 5_000_000]]);
     const y1 = rows.filter((r) => r.return_no === 1 && r.entry === 'Writing-down allowance');

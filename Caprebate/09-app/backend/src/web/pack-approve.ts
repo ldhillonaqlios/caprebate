@@ -23,6 +23,7 @@
  * so a page drawn before a change cannot approve the changed pack, and a second click on the same state is refused.
  */
 import { claimRoutes } from './claim-route.ts';
+import { yearEndKnown } from './claim-facts.ts';
 import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
 import { sheetsForVersion } from './pack-sheets.ts';
 import { createHash } from 'node:crypto';
@@ -130,6 +131,11 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
   if (basisOf(d.db, job_id) === null) blockers.push({ key: 'basis', words: 'Say how you inspected the building, in chapter 2.', href: `${base(job_id)}?ch=2#inspection` });
   const details = detailsOf(d.db, surveyor);
   if (details === null) blockers.push({ key: 'details', words: 'Add your RICS number below. It goes on the report with your name.', href: `${base(job_id)}?ch=23#details` });
+  // PHASE 159e (item 4; C15, L4): each part's year comes from the client's year end, read once at approval.
+  if (v.job.claim_id !== null && !yearEndKnown(d.db, { id: v.job.claim_id, business_id: v.job.business_id })) {
+    blockers.push({ key: 'year_end', href: `/staff/claims/${v.job.claim_id}#facts`,
+      words: 'Record the client’s year end first. Each part of the claim goes into the year it falls in, and that comes from the year end. Ask the client for it, or record the accounting period on the claim.' });
+  }
   if (!jobHasEstimate(d.db, job_id)) blockers.push({ key: 'estimate', words: 'This job has no locked estimate, so approving would release nothing. Tell the office.', href: null });
 
   const approvals = approvalsOf(d.db, v.pack_id);
@@ -245,7 +251,10 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     ...eventsOf(v),
     // PHASE 159d (item 6): which way each part of the claim goes in, as it stood at approval (src/web/claim-route.ts).
     ...(v.job.claim_id === null ? {} : { routes: claimRoutes(d.db, { id: v.job.claim_id, business_id: v.job.business_id, property_id: v.property?.id ?? null }, a.at)
-      .map((r) => ({ label: r.label, route: r.route, words: r.words })) }),
+      /* PHASE 159e (items 4, 7, 8): with each part's own period and, for W2, the first open one — so the return entries
+         put each spend in its own period from the facts as they stood at approval, the same period the window read. */
+      .map((r) => ({ label: r.label, route: r.route, words: r.words, event_id: r.event_id, kind: r.kind, event_date: r.event_date,
+        period: r.period, first_open: r.first_open })) }),
   };
 }
 

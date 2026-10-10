@@ -26,7 +26,7 @@ import * as S from './report-signoff.ts';
 import { ACCEPT_WORDS, myAcceptance } from './report-accept.ts';
 import { ukDate } from './localtime.ts';
 import { poundsWords } from './pack-sums.ts';
-import { csvName, returnContextFor, returnEntriesCsv } from './return-entries.ts';
+import { contextForApproval, csvName, returnContextFor, returnEntriesCsv } from './return-entries.ts';
 import { packJob } from './surveyor.ts';
 
 export type ReportPageDeps = {
@@ -91,7 +91,7 @@ export async function handleReportStaff(
     if (method !== 'GET') return 'not-mine';
     const kept = approvedVersion(deps, actor, job, version);
     if (kept === null) return d.problem(res, actor, 'No such version', 'This pack has no approved version with that number.', back);
-    const m = reportModel(kept.snapshot, kept.row.fingerprint);
+    const m = reportModel(kept.snapshot, kept.row.fingerprint, contextForApproval(d.app.db, kept.row.id));
     if (what === 'report.pdf') { sendPdf(res, reportPdf(m).bytes, pdfName(m.company, m.version)); return 'handled'; }
     if (what === 'return-entries.csv') {
       const { job: j } = packJob(d.app.db, actor, job);
@@ -235,7 +235,7 @@ export async function handleSignoffLink(
   if (v.state === 'ANSWERED') {
     return linkPage(res, err === null ? 200 : 409, 'Thank you', h`<div class="card">${err === null ? raw('') : h`<p role="alert"><strong>${err.why}</strong></p>`}<h1>Thank you</h1><p>${v.outcome === 'SIGNED' ? 'You signed off this report' : 'You sent this report back'} on ${longDate(v.answered_at)}. We have your answer. This link does nothing more.</p></div>`);
   }
-  const model = reportModel(v.snapshot, v.fingerprint);
+  const model = reportModel(v.snapshot, v.fingerprint, returnContextFor(app.db, v.approval_id, v.claim_id, v.business_id));
   if (m[2] !== undefined) {
     if (!v.fingerprint_holds) return linkPage(res, 409, 'Not available', h`<div class="card"><h1>This report cannot be opened</h1><p>It does not match what the surveyor approved. Tell Cap Rebate.</p></div>`);
     if (m[2] === '/return-entries.csv') {
@@ -267,7 +267,7 @@ export function portalReport(app: App, actor: Actor, business_id: string, path: 
     res.end(page({ title: 'Your survey report', nav, wide: true, body: h`<div class="card"><h1>Your survey report is not ready yet</h1><p>It appears here once your surveyor has approved it and a tax adviser has signed off its figures. We will tell you.</p><p><a href="/portal">Back to your portal</a></p></div>` }));
     return 'handled';
   }
-  const m = reportModel(r.snapshot, r.row.fingerprint);
+  const m = reportModel(r.snapshot, r.row.fingerprint, contextForApproval(app.db, r.row.id));
   if (path === '/portal/report.pdf') { sendPdf(res, reportPdf(m).bytes, pdfName(m.company, m.version)); return 'handled'; }
   res.writeHead(200, HTML_HEADERS);
   res.end(page({ title: `Your survey report · ${m.company}`, nav, wide: true, body: h`<p><a href="/portal">Back to your portal</a></p>${acceptBox(app, actor, business_id)}${reportHtml(m, { pdf: '/portal/report.pdf' })}` }));
@@ -289,7 +289,7 @@ export function acceptBox(app: App, actor: Actor, business_id: string): Safe {
 export function portalReportCard(app: App, business_id: string, actor?: Actor): Safe {
   const r = S.releasedVersion(app.db, business_id);
   if (r === null) return raw('');
-  const m = reportModel(r.snapshot, r.row.fingerprint);
+  const m = reportModel(r.snapshot, r.row.fingerprint, contextForApproval(app.db, r.row.id));
   return h`<section class="card rp-portal" id="survey-report" aria-labelledby="survey-report-h">
     <h2 id="survey-report-h">Your survey report is ready</h2>
     <p>Approved by your surveyor, ${m.surveyor.name}, and signed off by a tax adviser.</p>

@@ -31,7 +31,7 @@ import type { EmailTransport } from '../stubs/email.ts';
 import { packJob } from './surveyor.ts';
 import { approvedVersion, type ApprovalRow, type Snapshot } from './pack-approve.ts';
 import { reportModel, reportPdf, longDate, REPORT_TITLE } from './survey-report.ts';
-import { freezeReturnContext, returnContext, returnEntriesCsv } from './return-entries.ts';
+import { freezeReturnContext, returnContext, returnContextFor, returnEntriesCsv } from './return-entries.ts';
 import { voidLine } from './valuation-lock.ts';
 import { recordSignOff } from './claim-record.ts';
 import { postClientMessage } from './messages.ts';
@@ -119,7 +119,7 @@ export function sendForSignoff(
   const token = randomBytes(32).toString('base64url');
   const at = d.now();
   const expires = new Date(Date.parse(at) + LINK_DAYS * 86_400_000).toISOString();
-  const pdf = reportPdf(reportModel(kept.snapshot, kept.row.fingerprint));
+  const pdf = reportPdf(reportModel(kept.snapshot, kept.row.fingerprint, returnContextFor(d.db, kept.row.id, job.claim_id, job.business_id)));
   return d.db.tx(() => {
     // PHASE 153b (Word question 121): the return entries for each year, as a spreadsheet, beside the PDF. PHASE 159a
     // (C29): the facts it is made from are kept with the version the first time it is sent, and read from then on.

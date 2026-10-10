@@ -8837,6 +8837,33 @@ if (startSuite("AP", "Phase 159d — each event's route: the two-year clock, the
     ["INDET", "INDET", "INDET"]);
 }
 
+if (startSuite("AQ", "Phase 159e — the rates by date, the small pools, the structures allowance, and a new building bought from its developer (the stress test of 9 October 2026, C13, C17, C18)")) {
+  const safe = fn => { try { return fn(); } catch (e) { return "threw: " + e.message; } };
+  const sp = (a, b, co) => safe(() => CB_RATES.specialRate(a, b, co));
+  check("AQ1 C13 — the special rate pool by date: 8% in a 2018 period, 6.5% for a company's calendar 2019 (90 days at 8%, 275 at 6%, rounded up), 6% from April 2019; for income tax the change is 6 April",
+    [sp("2018-01-01", "2018-12-31", true), sp("2019-01-01", "2019-12-31", true), sp("2020-01-01", "2020-12-31", true), sp("2019-04-06", "2020-04-05", false)],
+    [0.08, 0.065, 0.06, 0.06]);
+  check("AQ1b — before April 2008 there was no special rate pool, so no rate (null, never a default)",
+    [sp("2007-01-01", "2007-12-31", true)], [null]);
+  check("AQ2 C13 — the main pool by date: 20% in 2011, 18.5% for a company's calendar 2012 (91 days at 20%, 275 at 18%, rounded up), and HMRC's own example: 14.99% for calendar 2026",
+    [safe(() => CB_RATES.hybridMainRate("2011-01-01", "2011-12-31", true)), safe(() => CB_RATES.hybridMainRate("2012-01-01", "2012-12-31", true)),
+     safe(() => CB_RATES.hybridMainRate("2026-01-01", "2026-12-31", true))],
+    [0.20, 0.185, 0.1499]);
+  check("AQ3 item 2 — the structures allowance by date: 2% in 2019, 3% in 2021, a company's 2020 apportioned by days (not rounded); nothing before 29 October 2018",
+    [safe(() => CB_RATES.sbaRate("2019-01-01", "2019-12-31", true)), safe(() => CB_RATES.sbaRate("2021-01-01", "2021-12-31", true)),
+     safe(() => Math.round(CB_RATES.sbaRate("2020-01-01", "2020-12-31", true) * 1e6) / 1e6), safe(() => CB_RATES.sbaRate("2018-01-01", "2018-12-31", true))],
+    [0.02, 0.03, Math.round((91 * 0.02 + 275 * 0.03) / 366 * 1e6) / 1e6, null]);
+  const row0 = o => safe(() => { const r = CB_BENEFIT.schedule(Object.assign({ tax_rate: 0.25, years: 2, period_start: "2024-01-01", is_company: true }, o)).rows[0]; return [r.main_wda, r.special_wda, r.small_pool_main, r.small_pool_special]; });
+  check("AQ4 C17 — a pool of GBP 1,000 or less is written off in full (s.56A); GBP 1,001 is not",
+    [row0({ main: 800, special: 0 }), row0({ main: 1001, special: 0 })],
+    [[800, 0, true, false], [1001 * 0.18, 0, false, false]]);
+  check("AQ5 C13 — the benefit schedule writes the special rate pool down at 8% in a 2018 period, not 6%",
+    safe(() => CB_BENEFIT.schedule({ main: 0, special: 100000, tax_rate: 0.25, years: 1, period_start: "2018-01-01", is_company: true }).rows[0].special_wda), 8000);
+  const est = extra => safe(() => CB_BENEFIT.reliefsEstablished(Object.assign({ return_in_time: true, claimant_type: "company", new_and_unused: true }, extra), "purchase").full_expensing);
+  check("AQ6 item 1 (OUR READING) — a building bought new and unused from its developer is not second-hand: full expensing is open; any other purchase stays barred, and not known is barred (N4)",
+    [est({ bought_new_from_developer: true }), est({}), est({ bought_new_from_developer: "unsure" })], [true, false, false]);
+}
+
 /* ------------------------------------------------------------------- report */
 console.log("\n" + "=".repeat(72));
 console.log("  pass " + results.pass + "   fail " + results.fail +

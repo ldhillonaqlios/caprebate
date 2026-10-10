@@ -211,6 +211,9 @@ describe('C29 — a version’s return entries never change once sent', () => {
     const sent = RE.returnEntriesCsv(k.snapshot, RE.returnContextFor(app.db, k.row.id, c.claim, c.b), k.row.fingerprint);
     // The facts change afterwards.
     CF.fact(app, c.claim, 'ACCOUNTING_PERIOD_START', '2026-01-01');
+    // PHASE 159e: each part's period is now frozen in the version itself (its route), so a new period changes nothing
+    // even live. What the live context still reads is the facts the allowances turn on: this year's AIA headroom.
+    CF.fact(app, c.claim, 'AIA_HEADROOM_AMOUNT', '1000000');
     const again = RE.returnEntriesCsv(k.snapshot, RE.returnContextFor(app.db, k.row.id, c.claim, c.b), k.row.fingerprint);
     assert.equal(again, sent, 'the spreadsheet of a sent version changed');
     assert.notEqual(RE.returnEntriesCsv(k.snapshot, RE.returnContext(app.db, c.claim, c.b), k.row.fingerprint), sent, 'the control: the live facts did change');
@@ -309,7 +312,8 @@ describe('C14, C16 — the return entries', () => {
       for (const pool of ['Main pool', 'Special rate pool'] as const) {
         let bf = pool === 'Main pool' ? mp : sr;
         for (let i = 1; i <= RE.RETURN_YEARS; i++) {
-          const w = es.find((e) => e.return_no === i && e.pool === pool && e.entry === 'Writing-down allowance')?.amount_pence as number;
+          // PHASE 159e (C17): a pool of £1,000 or less is written off in full, on its own row.
+          const w = es.find((e) => e.return_no === i && e.pool === pool && (e.entry === 'Writing-down allowance' || e.entry === 'Small pool written off'))?.amount_pence as number;
           const cf = es.find((e) => e.return_no === i && e.pool === pool && e.entry === 'Balance carried forward')?.amount_pence as number;
           worst = Math.max(worst, Math.abs(bf - w - cf)); bf = cf;
         }
