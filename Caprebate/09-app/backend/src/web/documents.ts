@@ -56,6 +56,7 @@ import { RET7, type DocType, type UploadJob } from './upload-handler-port.ts';
 import { dueReading, type DueReading } from './tasks.ts';
 import { fireAutomation, type RunOutcome } from './automation.ts';
 import { beginUpload } from './uploads.ts';
+import { eventLabel, eventOfBusiness, eventsOfProperty } from './property-events.ts';
 import {
   adoptRequestVouch, earlyVouchQuestions, isVouchAnswer, readingsFor, vouchedFieldFor, vouchesFor, vouchKeeps, vouchView, writeRequestVouch, writeVouch,
   type ReadingView, type VouchAnswer, type VouchView,
@@ -582,6 +583,10 @@ export type StartArgs = {
   readonly request_id: string | null;
   /** Staff only: link a new document to this claim. */
   readonly claim_id: string | null;
+  /** PHASE 159j (item 5), staff only: the event on the building this NEW document proves (property_events). Absent or
+   *  empty: the request's event, where it answers one that names an event; otherwise none. A new version keeps its
+   *  document's. */
+  readonly event_id?: string | null;
   /**
    * PHASE 140, staff only: whether the client can see a NEW document. Absent is no — Lakhbir's default. A client's own
    * upload is theirs to see by rule, and a new version keeps its document's answer.
@@ -614,14 +619,14 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
   const biz = d.db.get<{ id: string }>('SELECT id FROM businesses WHERE id = ?', [a.business_id]);
   if (biz === undefined) throw new NotFoundAsRefusal();
 
-  let request: { id: string; requested_type: string; claim_id: string | null } | null = null;
+  let request: { id: string; requested_type: string; claim_id: string | null; event_id: string | null } | null = null;
   if (a.request_id !== null && a.request_id !== '') {
-    const r = d.db.get<{ id: string; business_id: string; kind: string; state: string; requested_type: string | null; claim_id: string | null }>(
-      'SELECT id, business_id, kind, state, requested_type, claim_id FROM client_tasks WHERE id = ?', [a.request_id]);
+    const r = d.db.get<{ id: string; business_id: string; kind: string; state: string; requested_type: string | null; claim_id: string | null; event_id: string | null }>(
+      'SELECT id, business_id, kind, state, requested_type, claim_id, event_id FROM client_tasks WHERE id = ?', [a.request_id]);
     if (r === undefined || r.business_id !== biz.id || r.kind !== 'DOCUMENT' || r.requested_type === null) return { ok: false, why: 'not found' };
     authorise(actor, 'document_request.read', { type: 'document_request', id: r.id, business_id: r.business_id });
     if (r.state !== 'OPEN') return { ok: false, why: 'that request is no longer open — it has been received or withdrawn.' };
-    request = { id: r.id, requested_type: r.requested_type, claim_id: r.claim_id };
+    request = { id: r.id, requested_type: r.requested_type, claim_id: r.claim_id, event_id: r.event_id };
   }
 
   let logical: LogicalRow | null = null;
@@ -639,6 +644,19 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
   if (request !== null && request.requested_type !== t.code) return { ok: false, why: 'that request asks for a different kind of document; upload one of those against it.' };
   if (t.active !== 1) return { ok: false, why: 'that document type has been retired.' };
   if (t.handler_type === null) return { ok: false, why: NO_RECEIPT_POLICY };
+
+  /* PHASE 159j (item 5): WHICH PIECE OF WORK A NEW DOCUMENT PROVES. Chosen by staff on the upload form, or taken from the
+     request it answers; checked to be an event on one of this client's buildings. */
+  let eventId: string | null = null;
+  if (logical === null) {
+    const chosen = (a.event_id ?? '').trim();
+    if (chosen !== '') {
+      if (actor.role === 'CLIENT' || eventOfBusiness(d.db, biz.id, chosen) === null) return { ok: false, why: 'that piece of work is not on this client’s buildings.' };
+      eventId = chosen;
+    } else {
+      eventId = request?.event_id ?? null;
+    }
+  }
 
   let claimToLink: string | null = null;
   let linkVia: 'STAFF' | 'REQUEST' | 'CLIENT_ONE_CLAIM' | null = null;
@@ -683,8 +701,8 @@ export async function startDocumentUpload(d: DocDeps & { store: FsObjectStore },
           lid = d.newId();
           seq = (d.db.get<{ m: number | null }>(
             'SELECT MAX(seq) AS m FROM logical_documents WHERE business_id = ? AND type_code = ?', [biz.id, t.code])?.m ?? 0) + 1;
-          d.db.run('INSERT INTO logical_documents (id, business_id, type_code, seq, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-            [lid, biz.id, t.code, seq, actor.id, at]);
+          d.db.run('INSERT INTO logical_documents (id, business_id, type_code, seq, created_by, created_at, event_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [lid, biz.id, t.code, seq, actor.id, at, eventId]);
           // PHASE 140: staff say, on every new document, whether the client can see it. The default is no.
           if (actor.role !== 'CLIENT') {
             d.db.run('INSERT INTO document_visibility (id, logical_document_id, shown_to_client, set_by, set_at) VALUES (?, ?, ?, ?, ?)',
@@ -872,6 +890,9 @@ export const REQUEST_WORDS: Readonly<Record<RequestState, string>> = Object.free
 export type RequestInput = {
   readonly business_id: string;
   readonly claim_id: string | null;
+  /** PHASE 159j (item 5): the event on the building the document is for ("the final account for the 2025 refit").
+   *  Absent or empty: none. On a claim, it must be an event on the claim's building. */
+  readonly event_id?: string | null;
   readonly type_code: string | null;
   readonly why: string | null;
   readonly holds_up: string | null;
@@ -903,6 +924,12 @@ export function createDocumentRequest(
     if (c === undefined || c.business_id !== biz.id) return { ok: false, why: 'not found' };
     claim = c.id;
   }
+  /* PHASE 159j (item 5): the piece of work the document is for, on this client's buildings (the claim's, on a claim). */
+  const evId = (i.event_id ?? '').trim();
+  const ev = evId === '' ? null : eventOfBusiness(d.db, biz.id, evId);
+  if (evId !== '' && (ev === null || (claim !== null && d.db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [claim])?.p !== ev.property_id))) {
+    return { ok: false, why: 'that piece of work is not on this claim’s building.', field: 'event_id' };
+  }
   const t = d.db.get<TypeRow>(`${TYPE_SELECT}WHERE code = ?`, [(i.type_code ?? '').trim()]);
   // PHASE 133d (D4): each refusal about one field names it, so the form draws it beside that field.
   if (t === undefined) return { ok: false, why: 'choose the kind of document you are asking for.', field: 'type_code' };
@@ -922,12 +949,12 @@ export function createDocumentRequest(
   d.db.tx(() => {
     d.db.run(
       'INSERT INTO client_tasks (id, business_id, asked_by, question, why, holds_up, state, created_at, fact_id, sent_to_portal_at, due_on, ' +
-        'kind, requested_type, claim_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)',
-      [id, biz.id, actor.id, `Please upload: ${t.label}`, why, holds, 'OPEN', at, at, due === '' ? null : due, 'DOCUMENT', t.code, claim]);
+        'kind, requested_type, claim_id, event_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?)',
+      [id, biz.id, actor.id, `Please upload: ${t.label}${ev === null ? '' : ` — for ${eventLabel(ev)}`}`, why, holds, 'OPEN', at, at, due === '' ? null : due, 'DOCUMENT', t.code, claim, ev?.id ?? null]);
     d.audit.append({
       at, kind: 'DOCUMENT_REQUESTED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'client_task', object_id: id,
-      detail: { business: biz.id, claim: claim ?? '(none)', type: t.code, due: due === '' ? '(none)' : due },
+      detail: { business: biz.id, claim: claim ?? '(none)', type: t.code, due: due === '' ? '(none)' : due, ...(ev === null ? {} : { event: ev.id }) },
     });
     /* PHASE 146j: the question about a name, answered where the type is chosen. */
     const f = t.handler_type === null ? null : vouchedFieldFor(t.handler_type);
@@ -974,15 +1001,18 @@ export function withdrawDocumentRequest(d: DocDeps, actor: Actor, id: string): D
 const REQUEST_SELECT =
   'SELECT ct.id, ct.business_id, ct.claim_id, c.claim_ref, ct.requested_type, t.label AS type_label, ct.state, ct.why, ct.holds_up, ' +
   'ct.due_on, ct.created_at, ct.withdrawn_at, ct.answered_at, ab.display_name AS asked_by, d.logical_document_id AS received_document, ' +
-  'd.version_no AS received_version, (SELECT v.answer FROM document_field_vouches v WHERE v.request_id = ct.id LIMIT 1) AS early_answer ' +
+  'd.version_no AS received_version, (SELECT v.answer FROM document_field_vouches v WHERE v.request_id = ct.id LIMIT 1) AS early_answer, ' +
+  'ct.event_id, pe.kind AS event_kind, pe.event_date AS event_date ' +
   'FROM client_tasks ct JOIN document_types t ON t.code = ct.requested_type ' +
-  'LEFT JOIN claims c ON c.id = ct.claim_id LEFT JOIN users ab ON ab.id = ct.asked_by LEFT JOIN documents d ON d.id = ct.received_document_id ';
+  'LEFT JOIN claims c ON c.id = ct.claim_id LEFT JOIN users ab ON ab.id = ct.asked_by LEFT JOIN documents d ON d.id = ct.received_document_id ' +
+  'LEFT JOIN property_events pe ON pe.id = ct.event_id ';
 
 type RequestRow = {
   id: string; business_id: string; claim_id: string | null; claim_ref: string | null; requested_type: string; type_label: string;
   state: string; why: string; holds_up: string; due_on: string | null; created_at: string; withdrawn_at: string | null;
   answered_at: string | null; asked_by: string | null; received_document: string | null; received_version: number | null;
   early_answer: string | null;
+  event_id: string | null; event_kind: string | null; event_date: string | null;
 };
 
 export type RequestView = {
@@ -999,12 +1029,17 @@ export type RequestView = {
   readonly received: { readonly document_id: string; readonly version_no: number | null; readonly at: string } | null;
   /** PHASE 146j: the answer given on the request to the question about a name, where there was one. */
   readonly early_answer: VouchAnswer | null;
+  /** PHASE 159j (item 5): the piece of work it is for, where the request names one. `type.label` then ends "— for …",
+   *  so every list that names the request says which work. */
+  readonly event: { readonly id: string; readonly label: string } | null;
 };
 
 function requestView(r: RequestRow, nowIso: string): RequestView {
   const state = requestState(r.state);
+  const evLabel = r.event_id === null || r.event_kind === null ? null : eventLabel({ kind: r.event_kind as never, event_date: r.event_date });
   return {
-    id: r.id, type: { code: r.requested_type, label: r.type_label },
+    id: r.id, type: { code: r.requested_type, label: evLabel === null ? r.type_label : `${r.type_label} — for ${evLabel}` },
+    event: r.event_id === null || evLabel === null ? null : { id: r.event_id, label: evLabel },
     claim: r.claim_id === null || r.claim_ref === null ? null : { id: r.claim_id, claim_ref: r.claim_ref },
     state, state_words: REQUEST_WORDS[state], why: r.why, holds_up: r.holds_up,
     due: dueReading(r.due_on, nowIso, state !== 'REQUESTED'),
@@ -1119,6 +1154,9 @@ export type ClaimDocumentsPanel = {
   readonly linkable?: readonly { readonly id: string; readonly label: string }[];
   /** PHASE 146j: the question about a name, asked on the request and upload forms where the type is chosen. */
   readonly early_questions?: readonly { readonly field_id: string; readonly question: string; readonly types: readonly string[] }[];
+  /** PHASE 159j (item 5): the events on the claim's building, offered on the request and upload forms ("Which piece of
+   *  work is it for?"). Absent where the reader may do neither, or the building has none. */
+  readonly events?: readonly { readonly id: string; readonly label: string }[];
 };
 
 /**
@@ -1155,6 +1193,10 @@ export function claimDocumentsPanel(db: Db, actor: Actor, claim: { id: string; b
     may_request: mayRequest, may_link: mayLink, may_upload: mayUpload,
     ...(mayRequest || mayUpload ? { request_types: receivableTypes(db), early_questions: earlyQuestionsFor(actor, claim.business_id, receivableTypes(db)) } : {}),
     ...(linkable === null ? {} : { linkable }),
+    ...(mayRequest || mayUpload ? (() => {
+      const evs = eventsOfProperty(db, db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [claim.id])?.p ?? null);
+      return evs.length === 0 ? {} : { events: evs.map((e) => ({ id: e.id, label: eventLabel(e) })) };
+    })() : {}),
   };
 }
 
@@ -1190,6 +1232,10 @@ export type DocumentPage = {
   readonly may_show: boolean;
   readonly from_client: boolean;
   readonly linkable_claims?: readonly { readonly id: string; readonly claim_ref: string; readonly property: string | null }[];
+  /** PHASE 159j (item 5): the piece of work this document proves, if it names one; staff only. */
+  readonly event: { readonly id: string; readonly label: string } | null;
+  /** PHASE 159j (item 5): the events on the client's buildings it may be tied to, for a reader who may link it. */
+  readonly event_choices?: readonly { readonly id: string; readonly label: string }[];
   /**
    * PHASE 146i. The question a person must answer before one of the two conditional fields can be kept, where this
    * kind of document has one. Null on every other type, and null for the client, who never sees this page.
@@ -1263,9 +1309,82 @@ export function documentPage(d: { db: Db; audit: AuditLog; now: () => string }, 
     vouch: staff
       ? vouchView(d.db, l.id, l.handler_type, can(actor, 'document.vouch', obj), localStamp, (u) => personWords(d.db, u))
       : null,
+    event: staff ? documentEvent(d.db, l.id) : null,
+    ...(staff && mayLink ? { event_choices: businessEvents(d.db, l.business_id) } : {}),
     readings: staff ? readingsFor(d.db, l.id, localStamp) : [],
     ...(nowIso === '' ? {} : {}),
   };
+}
+
+/** PHASE 159j (item 5): the event a document names, in words, or null. */
+function documentEvent(db: Db, logical_id: string): { id: string; label: string } | null {
+  const e = db.get<{ id: string; kind: string; event_date: string | null }>(
+    'SELECT pe.id, pe.kind, pe.event_date FROM logical_documents l JOIN property_events pe ON pe.id = l.event_id WHERE l.id = ?', [logical_id]);
+  return e === undefined ? null : { id: e.id, label: eventLabel({ kind: e.kind as never, event_date: e.event_date }) };
+}
+
+/** PHASE 159j (item 5): every event on a business's buildings, with the building where it has more than one. */
+function businessEvents(db: Db, business_id: string): { id: string; label: string }[] {
+  const rows = db.all<{ id: string; kind: string; event_date: string | null; property: string | null; property_id: string }>(
+    'SELECT pe.id, pe.kind, pe.event_date, p.label AS property, pe.property_id FROM property_events pe JOIN properties p ON p.id = pe.property_id ' +
+      'WHERE pe.business_id = ? ORDER BY p.label ASC, pe.ord ASC', [business_id]);
+  const many = new Set(rows.map((r) => r.property_id)).size > 1;
+  return rows.map((r) => ({ id: r.id, label: `${eventLabel({ kind: r.kind as never, event_date: r.event_date })}${many ? `, ${r.property ?? 'a building'}` : ''}` }));
+}
+
+/**
+ * PHASE 159j (item 5) — TIE A DOCUMENT TO THE PIECE OF WORK IT PROVES, or untie it (empty). Staff who may link a
+ * document may do this; the event must be on one of the same client's buildings. Each change is in the audit log.
+ */
+export function setDocumentEvent(d: DocDeps, actor: Actor, logical_id: string, event_id: string | null): DocResult {
+  const l = loadLogical(d.db, logical_id);
+  authorise(actor, 'document.link', documentObj(d.db, l));
+  const chosen = (event_id ?? '').trim();
+  if (chosen !== '' && eventOfBusiness(d.db, l.business_id, chosen) === null) return { ok: false, why: 'that piece of work is not on this client’s buildings.' };
+  const was = d.db.get<{ e: string | null }>('SELECT event_id AS e FROM logical_documents WHERE id = ?', [l.id])?.e ?? null;
+  const now = chosen === '' ? null : chosen;
+  if (was === now) return { ok: true, id: l.id };
+  d.db.tx(() => {
+    d.db.run('UPDATE logical_documents SET event_id = ? WHERE id = ?', [now, l.id]);
+    d.audit.append({
+      at: d.now(), kind: 'DOCUMENT_EVENT_SET', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+      object_type: 'document', object_id: l.id, detail: { event: now ?? '(none)', was: was ?? '(none)' },
+    });
+  });
+  return { ok: true, id: l.id };
+}
+
+/** PHASE 159j (item 5): the documents that prove a piece of work, asked of the client on the claim. */
+export const WORK_DOCUMENTS: readonly string[] = Object.freeze(['CONTRACTOR_COST_BREAKDOWN', 'CONTRACTOR_INVOICE']);
+
+/**
+ * PHASE 159j (item 5) — ASK FOR ONE PIECE OF WORK'S FINAL ACCOUNT AND INVOICES. One request for each of the two, naming
+ * the work, so the client's "What we need from you" lists them for that work. A type already asked for that work and
+ * still open, or already held for it, is not asked again. A purchase is not a piece of work: its documents are the
+ * completion statement and the contract, asked as before.
+ */
+export function requestWorkDocuments(d: DocDeps, actor: Actor, claim_id: string, event_id: string):
+  { readonly ok: true; readonly asked: number } | { readonly ok: false; readonly why: string } {
+  const c = d.db.get<{ business_id: string; property_id: string | null }>('SELECT business_id, property_id FROM claims WHERE id = ?', [claim_id]);
+  if (c === undefined) throw new NotFoundAsRefusal();
+  authorise(actor, 'document_request.create', { type: 'document_request', id: c.business_id, business_id: c.business_id });
+  const ev = eventOfBusiness(d.db, c.business_id, event_id);
+  if (ev === null || ev.property_id !== c.property_id) return { ok: false, why: 'that piece of work is not on this claim’s building.' };
+  if (ev.kind === 'PURCHASE') return { ok: false, why: 'the purchase is not a piece of work. Ask for its completion statement and contract instead.' };
+  let asked = 0;
+  for (const code of WORK_DOCUMENTS) {
+    const open = d.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM client_tasks WHERE kind = 'DOCUMENT' AND state = 'OPEN' AND requested_type = ? AND event_id = ?", [code, ev.id])?.n ?? 0;
+    const held = d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM logical_documents WHERE business_id = ? AND type_code = ? AND event_id = ?', [c.business_id, code, ev.id])?.n ?? 0;
+    if (open > 0 || held > 0) continue;
+    const r = createDocumentRequest(d, actor, {
+      business_id: c.business_id, claim_id, type_code: code, event_id: ev.id, due_on: null,
+      why: `It shows what ${eventLabel(ev)} cost, item by item, so each part can be claimed on its own cost.`,
+      holds_up: 'The survey of this piece of work.',
+    });
+    if (!r.ok) return { ok: false, why: r.why };
+    asked += 1;
+  }
+  return { ok: true, asked };
 }
 
 /**

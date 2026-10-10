@@ -10,12 +10,21 @@
  *   returns    the same file — 3,000 seeded pools: every row's brought forward less allowance is carried forward (h4, C16).
  *   window     test/stress-window-walk.ts — six claimant types x four year ends x every purchase year, against the table
  *              recorded in test/fixtures/phase159j/window-table.csv (h3), and its named cases.
+ * Item 5 (carried from Phase 159c): a document names the piece of work it proves, and each event counts its own.
  * Already in the suite before this phase, so not repeated here: the version scenarios (claim/h5) are Phase 159a's C3,
  * C4 and C5 tests (test/phase159a.test.ts), and the legal-path walk (claim/h6) is test/legal-paths.test.ts (Phase 159h).
  */
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { createApp } from '../src/server.ts';
+import { seed } from '../src/seed.ts';
+import * as D from '../src/web/documents.ts';
+import { addStaffEvent, eventsOnClaim } from '../src/web/property-events.ts';
+import type { Actor } from '../src/authz.ts';
 import { runEngineStress } from './stress-engine-walk.ts';
 import { runGrantStress, runPackStress, runReturnStress } from './stress-pack-walk.ts';
 import { WINDOW_HEADER, WINDOW_NOW, periodContaining, windowRig, windowTable } from './stress-window-walk.ts';
@@ -104,5 +113,112 @@ describe('item 1 — the amendment window, every claimant type, year end and pur
     }
     for (const acq of ['2023-12-31', '2025-01-01']) assert.equal(amendmentWindowReading(app.db, claimFor('COMPANY', acq, '2024-01-01', '2024-12-31'), WINDOW_NOW).state, 'UNKNOWN', acq);
     assert.equal(amendmentWindowReading(app.db, claimFor('COMPANY', '2019-06-15', '2025-01-01', '2025-12-31'), WINDOW_NOW).state, 'UNKNOWN', 'the current period is not the period of a 2019 purchase');
+  });
+});
+
+describe('item 5 — a document names its event, and each event counts its own', () => {
+  async function world() {
+    const made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-159j-')) });
+    await seed(made.app.db, made.app.hasher, made.app.now);
+    const db = made.app.db;
+    const j = db.get<{ business_id: string; claim_id: string }>('SELECT business_id, claim_id FROM surveyor_jobs WHERE claim_id IS NOT NULL LIMIT 1');
+    assert.ok(j);
+    const property = db.get<{ p: string }>('SELECT property_id AS p FROM claims WHERE id = ?', [j.claim_id])?.p;
+    assert.ok(property, 'the seeded claim has a building');
+    db.run('DELETE FROM property_events WHERE property_id = ?', [property]);
+    const user = (role: string) => db.get<{ id: string }>('SELECT id FROM users WHERE role = ? LIMIT 1', [role])?.id ?? '';
+    const sales: Actor = { id: user('SALES'), role: 'SALES', business_id: null, disabled: false };
+    const add = (kind: string, date: string, cost: string) => {
+      const r = addStaffEvent(db, randomUUID, made.app.now(), sales.id, { property_id: property, business_id: j.business_id }, { kind, date, cost });
+      assert.equal(r.ok, true, JSON.stringify(r));
+      return r.ok ? r.id : '';
+    };
+    const deps = { db, audit: made.app.audit, now: made.app.now, newId: randomUUID, store: made.store };
+    const start = (who: Actor, a: Partial<D.StartArgs>) => D.startDocumentUpload(deps, who, { business_id: j.business_id, type_code: 'CONTRACTOR_INVOICE', logical_document_id: null, request_id: null, claim_id: null, ...a });
+    const events = () => eventsOnClaim(db, { property_id: property, business_id: j.business_id, sector: 'gp' });
+    const invoices = (event: string) => events().find((e) => e.id === event)?.documents.find((x) => x.code === 'CONTRACTOR_INVOICE');
+    return { made, db, j, property, sales, add, deps, start, events, invoices };
+  }
+
+  test('with one event, a document that names none is its own, as before', async () => {
+    const w = await world();
+    try {
+      const purchase = w.add('PURCHASE', '03/2025', '650000');
+      assert.equal((await w.start(w.sales, { type_code: 'COMPLETION_STATEMENT', claim_id: w.j.claim_id })).ok, true);
+      const done = w.events().find((e) => e.id === purchase)?.documents.find((x) => x.code === 'COMPLETION_STATEMENT');
+      assert.deepEqual([done?.held, done?.untied], [1, 0]);
+      const panel = D.claimDocumentsPanel(w.db, w.sales, { id: w.j.claim_id, business_id: w.j.business_id }, w.made.app.now());
+      assert.equal(panel.events?.length, 1, 'one event is offered; the form shows no question for it');
+    } finally { w.made.close(); }
+  });
+
+  test('a purchase and a refit: an invoice for the refit counts to the refit alone; one that names none is counted apart', async () => {
+    const w = await world();
+    try {
+      const purchase = w.add('PURCHASE', '03/2025', '650000');
+      const refit = w.add('REFURBISHMENT', '06/2025', '90000');
+      const tied = await w.start(w.sales, { claim_id: w.j.claim_id, event_id: refit });
+      assert.equal(tied.ok, true, JSON.stringify(tied));
+      assert.equal(w.db.get<{ e: string | null }>('SELECT event_id AS e FROM logical_documents WHERE id = ?', [tied.ok ? tied.logical_document_id : ''])?.e, refit);
+      assert.deepEqual([w.invoices(refit)?.held, w.invoices(refit)?.untied], [1, 0]);
+      const loose = await w.start(w.sales, { claim_id: w.j.claim_id });
+      assert.equal(loose.ok, true);
+      assert.deepEqual([w.invoices(refit)?.held, w.invoices(refit)?.untied], [1, 1], 'two events: the untied invoice is not counted to either');
+      assert.equal(w.events().find((e) => e.id === purchase)?.documents.some((x) => x.code === 'CONTRACTOR_INVOICE'), false, 'a purchase is not proved by an invoice');
+      // A person ties it, and the audit log says who and what it was before.
+      const lid = loose.ok ? loose.logical_document_id : '';
+      assert.equal(D.setDocumentEvent(w.deps, w.sales, lid, refit).ok, true);
+      assert.deepEqual([w.invoices(refit)?.held, w.invoices(refit)?.untied], [2, 0]);
+      const row = w.db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'DOCUMENT_EVENT_SET' AND object_id = ?", [lid]);
+      assert.match(row?.detail ?? '', new RegExp(`"event":"${refit}".*"was":"\\(none\\)"`));
+      // The document page names it and offers the events.
+      const page = D.documentPage(w.deps, w.sales, lid, 'test', w.made.app.now());
+      assert.equal(page.event?.label, 'a refurbishment or refit (June 2025)');
+      assert.deepEqual(page.event_choices?.map((e) => e.label), ['the purchase (March 2025)', 'a refurbishment or refit (June 2025)']);
+      // Refusals: another client's event; the client naming one; untie with an empty choice.
+      w.db.run("INSERT INTO businesses (id,name,sector,stage,created_at) VALUES ('b-other','Other Practice Ltd','gp','ASSESSMENT_SUBMITTED',?)", [w.made.app.now()]);
+      w.db.run("INSERT INTO properties (id,business_id,label,created_at) VALUES ('p-other','b-other','Other',?)", [w.made.app.now()]);
+      const r = addStaffEvent(w.db, randomUUID, w.made.app.now(), w.sales.id, { property_id: 'p-other', business_id: 'b-other' }, { kind: 'REFURBISHMENT', date: '2024', cost: '' });
+      const foreign = r.ok ? r.id : '';
+      assert.match((await w.start(w.sales, { claim_id: w.j.claim_id, event_id: foreign }) as { why: string }).why, /not on this client’s buildings/);
+      assert.equal(D.setDocumentEvent(w.deps, w.sales, lid, foreign).ok, false);
+      const client = w.db.get<{ id: string }>("SELECT id FROM users WHERE role = 'CLIENT' AND business_id = ?", [w.j.business_id]);
+      if (client !== undefined) {
+        const byClient = await w.start({ id: client.id, role: 'CLIENT', business_id: w.j.business_id, disabled: false }, { event_id: refit });
+        assert.equal(byClient.ok, false, 'a client does not choose the event: the request does');
+      }
+      assert.equal(D.setDocumentEvent(w.deps, w.sales, lid, '').ok, true);
+      assert.deepEqual([w.invoices(refit)?.held, w.invoices(refit)?.untied], [1, 1]);
+      assert.throws(() => w.db.run('UPDATE logical_documents SET type_code = ? WHERE id = ?', ['ACCOUNTS', lid]), /nothing about a document changes/, 'only its event may change');
+    } finally { w.made.close(); }
+  });
+
+  test('the client is asked for each piece of work’s final account and invoices, by name, and what answers a request takes its event', async () => {
+    const w = await world();
+    try {
+      const purchase = w.add('PURCHASE', '03/2025', '650000');
+      const refit = w.add('REFURBISHMENT', '06/2025', '90000');
+      assert.match((D.requestWorkDocuments(w.deps, w.sales, w.j.claim_id, purchase) as { why: string }).why, /not a piece of work/);
+      const first = D.requestWorkDocuments(w.deps, w.sales, w.j.claim_id, refit);
+      assert.deepEqual(first, { ok: true, asked: 2 });
+      assert.deepEqual(D.requestWorkDocuments(w.deps, w.sales, w.j.claim_id, refit), { ok: true, asked: 0 }, 'asked once, not twice');
+      const asked = w.db.all<{ question: string; event_id: string }>("SELECT question, event_id FROM client_tasks WHERE kind = 'DOCUMENT' AND event_id = ? ORDER BY question", [refit]);
+      assert.deepEqual(asked.map((x) => x.question), [
+        'Please upload: Contractor\'s invoices for the works — for a refurbishment or refit (June 2025)',
+        'Please upload: Final account, or the contractor\'s cost breakdown by element — for a refurbishment or refit (June 2025)',
+      ]);
+      const views = D.requestsFor(w.db, w.sales, { business_id: w.j.business_id, claim_id: w.j.claim_id }, w.made.app.now()).filter((r) => r.event !== null);
+      assert.ok(views.some((r) => r.type.label === 'Contractor\'s invoices for the works — for a refurbishment or refit (June 2025)'), 'every list that names the request says which work');
+      // The file that answers the request takes the work it was asked for.
+      const req = w.db.get<{ id: string }>("SELECT id FROM client_tasks WHERE requested_type = 'CONTRACTOR_INVOICE' AND event_id = ?", [refit]);
+      const answered = await w.start(w.sales, { request_id: req?.id ?? '' });
+      assert.equal(answered.ok, true, JSON.stringify(answered));
+      assert.equal(w.db.get<{ e: string | null }>('SELECT event_id AS e FROM logical_documents WHERE id = ?', [answered.ok ? answered.logical_document_id : ''])?.e, refit);
+      // A request on a claim may only name an event on that claim's building.
+      w.db.run("INSERT INTO properties (id,business_id,label,created_at) VALUES ('p-second',?,'Second site',?)", [w.j.business_id, w.made.app.now()]);
+      const r = addStaffEvent(w.db, randomUUID, w.made.app.now(), w.sales.id, { property_id: 'p-second', business_id: w.j.business_id }, { kind: 'FIT_OUT', date: '2024', cost: '' });
+      const elsewhere = D.createDocumentRequest(w.deps, w.sales, { business_id: w.j.business_id, claim_id: w.j.claim_id, type_code: 'CONTRACTOR_INVOICE', event_id: r.ok ? r.id : '', why: 'w', holds_up: 'h', due_on: null });
+      assert.equal(elsewhere.ok, false);
+    } finally { w.made.close(); }
   });
 });

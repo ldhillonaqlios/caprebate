@@ -243,6 +243,16 @@ export async function handleDocuments(
     }));
     return 'handled';
   }
+  // PHASE 159j (item 5): tie a document to the piece of work it proves, or untie it.
+  const docEvent = /^\/staff\/documents\/([A-Za-z0-9-]+)\/event$/.exec(path);
+  if (docEvent && method === 'POST') {
+    const id = docEvent[1] ?? '';
+    const f = await form(req);
+    const r = D.setDocumentEvent(deps, actor, id, f.get('event_id'));
+    if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, `/staff/documents/${id}`);
+    redirect(res, `/staff/documents/${id}?done=saved`);
+    return 'handled';
+  }
   const docLink = /^\/staff\/documents\/([A-Za-z0-9-]+)\/links$/.exec(path);
   if (docLink && method === 'POST') {
     const id = docLink[1] ?? '';
@@ -295,7 +305,7 @@ export async function handleDocuments(
     if (!up.ok) return d.problem(res, actor, 'Not uploaded', up.why, `/staff/claims/${id}`);
     const r = await receiveFile(d, actor, {
       business_id, type_code: up.fields.type_code ?? null, logical_document_id: null, request_id: null, claim_id: id,
-      shown_to_client: up.fields.shown_to_client === 'yes',
+      shown_to_client: up.fields.shown_to_client === 'yes', event_id: up.fields.event_id ?? null,
       // PHASE 146j: the question about a name, answered where the type is chosen.
       early_vouch: earlyVouchesFrom((n) => up.fields[n]),
     }, up.bytes);
@@ -317,7 +327,7 @@ export async function handleDocuments(
     const id = claimRequest[1] ?? '';
     const f = await form(req);
     const r = D.createDocumentRequest(deps, actor, {
-      business_id: D.businessOfClaim(db, id), claim_id: id, type_code: f.get('type_code'),
+      business_id: D.businessOfClaim(db, id), claim_id: id, type_code: f.get('type_code'), event_id: f.get('event_id'),
       why: f.get('why'), holds_up: f.get('holds_up'), due_on: f.get('due_on'),
       // PHASE 146j: the question about a name, answered where the type is chosen — kept with the request, and taken
       // up by the file that answers it before that file is read.
@@ -376,6 +386,15 @@ export function placeDocumentsBlock(p: D.PlaceDocumentsPanel | undefined, proper
   </div>`;
 }
 
+/** PHASE 159j (item 5): "Which piece of work is it for?" — offered where the building has more than one event. With one,
+ *  a document that names none is counted to it anyway, so the question would only be noise. */
+function eventChoice(evs: readonly { readonly id: string; readonly label: string }[] | undefined, chosen: string | null = null): Safe {
+  if (evs === undefined || evs.length < 2) return raw('');
+  const options = evs.map((e) => h`<option value="${e.id}"${e.id === chosen ? raw(' selected') : raw('')}>${e.label}</option>`);
+  return h`<label>Which piece of work is it for?
+    <select name="event_id"><option value="">Not one piece of work</option>${options}</select></label>`;
+}
+
 /** DOCUMENTS ON THE CLAIM. Drawn from `claimDocumentsPanel`, which built it for this reader. */
 export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel | undefined, heading = true): Safe {
   if (p === undefined) return raw('');
@@ -402,6 +421,7 @@ export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel |
     ${p.may_request && types.length > 0 ? h`<form method="post" action="/staff/claims/${claim_id}/document-requests">
       <p><strong>Ask the client for a document</strong> <span class="help">— it goes to their portal. You can only ask for a type we can accept.</span></p>
       <label>Document <select name="type_code">${types.map((t) => h`<option value="${t.code}">${t.label}</option>`)}</select></label>
+      ${eventChoice(p.events)}
       <label>Why we need it <input name="why" required></label>
       <label>What it holds up <input name="holds_up" required></label>
       <label>Due <input name="due_on" type="date"></label>
@@ -413,6 +433,7 @@ export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel |
       <label class="dropzone" for="claim-file-${claim_id}"><span class="dropwords">Drop a file here, or tap to choose one</span>
         <input id="claim-file-${claim_id}" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>
       <label>What is it? <select name="type_code">${types.map((t) => h`<option value="${t.code}">${t.label}</option>`)}</select></label>
+      ${eventChoice(p.events)}
       <label class="tickbox"><input type="checkbox" name="shown_to_client" value="yes"> Let the client see this file</label>
       ${earlyQuestions(p.early_questions, `cu-${claim_id}`)}
       <button type="submit">Upload</button></form>` : raw('')}
@@ -441,7 +462,11 @@ function documentPageHtml(d: DocumentPageDeps, actor: Actor, p: D.DocumentPage, 
         <dt>Who may read it</dt><dd>${p.type.readers}</dd>
         <dt>What we did with the file</dt><dd>${p.type.strip.label}</dd>
         <dt>When files of this type are deleted</dt><dd>${clockCell(p.type.clock_now)}</dd>
-      </dl></div>
+        ${p.event === null && (p.event_choices ?? []).length === 0 ? raw('') : h`<dt>The piece of work it proves</dt><dd>${p.event === null ? h`<span class="help">Not tied to one piece of work</span>` : p.event.label}</dd>`}
+      </dl>
+      ${(p.event_choices ?? []).length === 0 ? raw('') : h`<form method="post" action="/staff/documents/${p.id}/event" class="inline">
+        <label>Which piece of work does it prove? <select name="event_id"><option value="">Not one piece of work</option>${(p.event_choices ?? []).map((e) => h`<option value="${e.id}"${e.id === p.event?.id ? raw(' selected') : raw('')}>${e.label}</option>`)}</select></label>
+        <button type="submit">Save</button></form>`}</div>
 
       <div class="pblock"><div class="pnum">Linked to</div>
         ${p.links.length === 0 ? h`<p class="help">Not linked to a claim or a property. It belongs to the company. If it is claim evidence, a surveyor on any of its jobs may read it.</p>` : h`<table>

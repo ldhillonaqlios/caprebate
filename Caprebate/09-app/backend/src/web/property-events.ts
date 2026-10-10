@@ -65,6 +65,20 @@ export function dateWords(d: string | null): string {
   return m === null ? d : `${MONTHS[Number(m[2]) - 1] ?? ''} ${m[1] ?? ''}`;
 }
 
+/** PHASE 159j (item 5): an event named inside a sentence — "a refurbishment or refit (June 2025)". */
+export function eventLabel(e: Pick<PropertyEvent, 'kind' | 'event_date'>): string {
+  const w = KIND_WORDS[e.kind];
+  return `${w.charAt(0).toLowerCase()}${w.slice(1)} (${dateWords(e.event_date)})`;
+}
+
+/** PHASE 159j (item 5): an event on one of this business's buildings, or null — the check before a document or a
+ *  request names it. */
+export function eventOfBusiness(db: Db, business_id: string, event_id: string): PropertyEvent | null {
+  return db.get<PropertyEvent>(
+    'SELECT id, property_id, business_id, ord, kind, event_date, cost_pence, vat, source, created_at, vat_pence FROM property_events WHERE id = ? AND business_id = ?',
+    [event_id, business_id]) ?? null;
+}
+
 /** One building's events, first first. */
 export function eventsOfProperty(db: Db, property_id: string | null): PropertyEvent[] {
   if (property_id === null) return [];
@@ -158,17 +172,27 @@ export type EventOnClaim = PropertyEvent & {
   readonly words: string; readonly when: string;
   /** The engine's band for this event on its own cost, until a survey prices it. */
   readonly ceiling_pence: number | null; readonly ceiling_why: string | null;
-  readonly documents: readonly { readonly code: string; readonly label: string; readonly held: number }[];
+  /** PHASE 159j (item 5): `held` counts the documents that name THIS event. On a building with one event, a document
+   *  that names none is its, as before; with several, it is counted apart, as `untied`, until a person ties it. */
+  readonly documents: readonly { readonly code: string; readonly label: string; readonly held: number; readonly untied: number }[];
 };
 
 /** Each event on a claim's building, with its own figure and its own documents. */
 export function eventsOnClaim(db: Db, c: { property_id: string | null; business_id: string; sector: string | null }): EventOnClaim[] {
   const label = (code: string): string => db.get<{ label: string }>('SELECT label FROM document_types WHERE code = ?', [code])?.label ?? code;
-  const held = (code: string): number => db.get<{ n: number }>('SELECT COUNT(*) AS n FROM logical_documents WHERE business_id = ? AND type_code = ?', [c.business_id, code])?.n ?? 0;
-  return eventsOfProperty(db, c.property_id).map((e) => {
+  const own = (code: string, event_id: string): number => db.get<{ n: number }>(
+    'SELECT COUNT(*) AS n FROM logical_documents WHERE business_id = ? AND type_code = ? AND event_id = ?', [c.business_id, code, event_id])?.n ?? 0;
+  const untied = (code: string): number => db.get<{ n: number }>(
+    'SELECT COUNT(*) AS n FROM logical_documents WHERE business_id = ? AND type_code = ? AND event_id IS NULL', [c.business_id, code])?.n ?? 0;
+  const evs = eventsOfProperty(db, c.property_id);
+  const one = evs.length === 1;
+  return evs.map((e) => {
     const f = eventCeiling(c.sector, e);
     return { ...e, words: KIND_WORDS[e.kind], when: dateWords(e.event_date), ceiling_pence: f.high_pence, ceiling_why: f.why,
-      documents: DOCUMENTS_FOR[e.kind].map((code) => ({ code, label: label(code), held: held(code) })) };
+      documents: DOCUMENTS_FOR[e.kind].map((code) => {
+        const loose = untied(code);
+        return { code, label: label(code), held: own(code, e.id) + (one ? loose : 0), untied: one ? 0 : loose };
+      }) };
   });
 }
 

@@ -344,6 +344,11 @@ export type AuditKind =
    */
   | 'DOCUMENT_FIELD_VOUCHED'
   /**
+   * Phase 159j (item 5), 10 October 2026: a document tied to the piece of work on a building it proves, or untied —
+   * the event it now names and the one it named before (ids only), so each event counts its own documents.
+   */
+  | 'DOCUMENT_EVENT_SET'
+  /**
    * Phase 146j, 25 September 2026: the two one-way doors of Phases 146h and 146i, given a way back, each with its own
    * kind beside the one that opened it. REGISTER_MATCH_TAKEN_BACK: a person's pick for a close match taken back — the
    * lookup, the reason in their own words, that the one record the pick wrote was removed, and what must be looked at
