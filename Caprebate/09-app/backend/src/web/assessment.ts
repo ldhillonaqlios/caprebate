@@ -342,10 +342,16 @@ export function submit(
         [property_id, business_id, p.address ?? 'Unnamed property', pc, text(p.line1, 200), text(p.town, 100), uprn, at, at,
           role, role === null ? null : 'the client’s own answer in the assessment', council, council === null ? null : 'the postcode check at the assessment (postcodes.io)']);
     }
+    /* PHASE 159l (L13): what the company search read of the company picked — its status and its latest accounts' type —
+       kept with the assessment, so a dormant company shows on the lead before the letter, not only after the research. */
+    const picked = chosenNumber === null ? undefined : ((s.properties ?? []) as { company_results?: unknown }[])
+      .flatMap((p) => (Array.isArray(p.company_results) ? p.company_results as { number?: unknown; status?: unknown; accounts_type?: unknown }[] : []))
+      .find((c) => c.number === chosenNumber);
+    const read = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, 60) : null);
     db.run(
-      'INSERT INTO assessments (id, business_id, sector, submitted_at, shown_low_pence, shown_high_pence, created_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [assessment_id, business_id, sector, at, low, high, at],
+      'INSERT INTO assessments (id, business_id, sector, submitted_at, shown_low_pence, shown_high_pence, created_at, company_number, company_status, company_accounts_type) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [assessment_id, business_id, sector, at, low, high, at, chosenNumber, read(picked?.status), read(picked?.accounts_type)],
     );
     /* PHASE 159c: WHAT HAPPENED TO EACH BUILDING, IN ORDER — its first event, then each piece of work since, each with its
        own date and cost (CB_FUNNEL.eventsOf), kept on the property (migration 105) for the lead, the claim and the pack. */
