@@ -194,10 +194,10 @@ function packed(app: App, tag: string, events: Ev[], acquired: string) {
     [`rr-title-${tag}`, a.b, 'HMLR_TITLE', `ZZ${tag}`, JSON.stringify({ title_number: `ZZ${tag}`, price_paid: 650000 }), T, a.p]);
   const keep = view(app, job).lines.slice(0, 2).map((l) => l.id);
   for (const l of view(app, job).lines) { if (keep.includes(l.id) || l.removed) continue; ok(SP.setLineRemoved(deps(app), SAM, job, { line: l.id, reason: 'Not here', seq: String(view(app, job).seq) }, true)); }
-  ok(SP.saveLine(deps(app), SAM, job, { line: keep[0] as string, qty: '10', rate: '2000', qpct: '100', pool: 'SR', reason: 'Counted', seq: String(view(app, job).seq) }));
-  ok(SP.saveLine(deps(app), SAM, job, { line: keep[1] as string, qty: '100', rate: '300', qpct: '100', pool: 'MP', reason: 'Counted', seq: String(view(app, job).seq) }));
+  ok(SP.saveLine(deps(app), SAM, job, { line: keep[0] as string, qty: '10', rate: '2000', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'SR', reason: 'Counted', seq: String(view(app, job).seq) }));
+  ok(SP.saveLine(deps(app), SAM, job, { line: keep[1] as string, qty: '100', rate: '300', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'MP', reason: 'Counted', seq: String(view(app, job).seq) }));
   ok(SP.savePackValue(deps(app), SAM, job, { field: 'land', value: '150000', reason: 'Land registry', seq: String(view(app, job).seq) }));
-  ok(SP.savePackValue(deps(app), SAM, job, { field: 'building_rate', value: '1500', reason: 'BCIS', seq: String(view(app, job).seq) }));
+  ok(SP.savePackValue(deps(app), SAM, job, { field: 'building_rate', value: '1500', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', reason: 'BCIS', seq: String(view(app, job).seq) }));
   ok(EV.setBasis(deps(app), SAM, job, { basis: 'DESKTOP_EVIDENCE', note: '' }));
   A.saveDetails(deps(app), SAM, job, { rics_number: '1234567', firm: 'Survey Firm' });
   return { ...a, job };

@@ -166,16 +166,16 @@ function approveOnce(rate: string): void {
   if (view().lines.filter((l) => !l.removed).length > 2) {
     const keep = view().lines.slice(0, 2).map((l) => l.id);
     for (const l of view().lines) if (!keep.includes(l.id) && !l.removed) ok(setLineRemoved(deps(), SAM, JOB, { line: l.id, reason: 'Not in this building', seq: String(view().seq) }, true));
-    ok(saveLine(deps(), SAM, JOB, { line: keep[1]!, qty: '100', rate: '300', qpct: '50', pool: 'MP', reason: 'Counted on the walkthrough', seq: String(view().seq) }));
+    ok(saveLine(deps(), SAM, JOB, { line: keep[1]!, qty: '100', rate: '300', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '50', pool: 'MP', reason: 'Counted on the walkthrough', seq: String(view().seq) }));
     ok(savePackValue(deps(), SAM, JOB, { field: 'land', value: '150000', reason: 'Local land sales', seq: String(view().seq) }));
-    ok(savePackValue(deps(), SAM, JOB, { field: 'building_rate', value: '1500', reason: 'BCIS, GP surgeries', seq: String(view().seq) }));
+    ok(savePackValue(deps(), SAM, JOB, { field: 'building_rate', value: '1500', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', reason: 'BCIS, GP surgeries', seq: String(view().seq) }));
     for (const [q, v] of [['G8', ['new_build']], ['G9d', ['2023-05-01']]] as const) {
       ok(answerLegal(deps(), SAM, JOB, { question: q, values: v, source: 'The building contract', seq: String(legalView(deps(), SAM, JOB).seq) }));
     }
     ok(saveDetails(deps(), SAM, JOB, { rics_number: '1234567', firm: 'Sam Surveyors LLP' }));
     ok(setBasis(deps(), SAM, JOB, { basis: 'DESKTOP_EVIDENCE', note: '' }));
   }
-  ok(saveLine(deps(), SAM, JOB, { line: view().lines[0]!.id, qty: '10', rate, qpct: '100', pool: 'SR', reason: 'Counted on the walkthrough', seq: String(view().seq) }));
+  ok(saveLine(deps(), SAM, JOB, { line: view().lines[0]!.id, qty: '10', rate, rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'SR', reason: 'Counted on the walkthrough', seq: String(view().seq) }));
   for (const c of chaptersToRead()) made.app.db.run('INSERT OR IGNORE INTO survey_pack_reads (id, job_id, user_id, chapter, legal_seq, at) VALUES (?, ?, ?, ?, ?, ?)',
     [`rd-${(++n).toString()}`, JOB, 'u-sr-sam', c, legalView(deps(), SAM, JOB).seq, clock]);
   ok(approvePack(deps(), SAM, JOB, { seq: String(view().seq), legal_seq: String(legalView(deps(), SAM, JOB).seq) }));
@@ -193,7 +193,9 @@ describe('the report', () => {
     assert.equal(m.fingerprint, kept.row.fingerprint);
     assert.equal(m.headline.qualifying, `£${(Math.floor((s.qualifying_pence ?? 0) / 100)).toLocaleString('en-GB')}.${String((s.qualifying_pence ?? 0) % 100).padStart(2, '0')}`.replace(/\.00$/, ''));
     assert.equal(m.groups.map((g) => g.pool).join(','), 'SR,MP');
-    assert.equal(m.groups[0]!.rows[0]!.rate_chip.words, 'Surveyor', 'in the item table a surveyor’s value says Surveyor');
+    // PHASE 159f (item 4): a rate names its own source in the item table, never just "Surveyor"; the full reference is listed.
+    assert.equal(m.groups[0]!.rows[0]!.rate_chip.words, 'QS schedule', 'in the item table a rate names its source');
+    assert.ok(m.rate_sources.some((r) => /Quantity surveyor’s priced schedule: Test schedule, item 1, priced at 1 September 2026\./.test(r.words)), JSON.stringify(m.rate_sources));
     assert.equal(m.sources.find((x) => x.label === 'Bare land')!.chip.words, 'Sam Surveyor', 'among the four values it carries their name');
     assert.equal(m.sources.find((x) => x.label === 'Floor area')!.chip.kind, 'EVIDENCE');
     assert.equal(m.taken_out.length, view().lines.filter((l) => l.removed).length);

@@ -25,6 +25,7 @@ import { h, raw, type Safe } from './html.ts';
 import { percentWords, poundsWords, quantityWords, type Source, type Valued } from './pack-sums.ts';
 import { answerWords, legalQuestions } from './pack-legal.ts';
 import type { Snapshot } from './pack-approve.ts';
+import { BASIS_WORDS } from './bcis-data.ts';
 import { allowancesFor, allowanceWords, type AllowanceWords } from './allowances.ts';
 import type { ReturnContext } from './return-entries.ts';
 import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from './pdf-canvas.ts';
@@ -84,6 +85,10 @@ export type ReportModel = {
   /** PHASE 159e (item 6): each part's year, its allowances and the pools carried on, from the version and the facts it
    *  was sent on (src/web/allowances.ts) — the same figures as the return entries. */
   readonly allowances: AllowanceWords;
+  /** PHASE 159f (item 4): where each rate comes from, in full — the short chip in the table, the whole source here. */
+  readonly rate_sources: readonly { readonly label: string; readonly words: string }[];
+  /** PHASE 159f (L12): true where any rate is a test rate (invented figures, not BCIS): the report says so at the top. */
+  readonly test_rates: boolean;
 };
 
 export const PURCHASE_LEDE = 'When you buy a building, its price is split three ways. There is the land, the building itself, and the fixtures that qualify for tax relief. The law says how (section 562 of the Capital Allowances Act 2001). We share it out by what each part would cost to build again today.';
@@ -113,6 +118,26 @@ export function longDate(iso: string): string {
 
 function clock(iso: string): string {
   return new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
+}
+
+/** PHASE 159f (item 4): a rate's own source as a label — BCIS, a QS schedule, an invoice, a price book, a test rate, or no
+ *  source — never just "Surveyor". The full reference is listed under "Where each rate comes from". */
+function rateChip(s: Source | null): Chip {
+  const b = s?.basis ?? null;
+  if (s === null || s === undefined) return { kind: 'NONE', words: '' };
+  if (b === null || b === undefined) return { kind: 'SURVEYOR', words: 'No source' };
+  const words = b.kind === 'BCIS' ? 'BCIS' : b.kind === 'TEST_PLACEHOLDER' ? 'TEST RATE' : b.kind === 'QS_SCHEDULE' ? 'QS schedule' : b.kind === 'CONTRACTOR_INVOICE' ? 'Invoice' : 'Price book';
+  return { kind: s.kind === 'DRAFT' ? 'DRAFT' : 'SURVEYOR', words };
+}
+
+/** The full words for a rate's source: what, its reference, the day it is priced at, and how a BCIS rate was adjusted. */
+function rateSourceWords(s: Source | null): string {
+  const b = s?.basis ?? null;
+  if (s === null || s === undefined) return 'No rate.';
+  if (b === null || b === undefined) return 'No source recorded.';
+  const loc = b.location === undefined || b.location === null ? '' : `, location factor ${b.location.factor.toFixed(2)}${b.location.area === null ? ' (the UK mean)' : ` (${b.location.area})`}`;
+  const ix = b.index === undefined || b.index === null || b.index.factor === null ? '' : `, indexed ×${b.index.factor.toFixed(4)}`;
+  return `${BASIS_WORDS[b.kind]}: ${b.ref}${loc}${ix}${b.priced_at === null ? '' : `, priced at ${longDate(b.priced_at)}`}.`;
 }
 
 /** A value's source as a label. In the item table (`short`) a surveyor's value says "Surveyor": their name is on page 5. */
@@ -158,7 +183,7 @@ export function reportModel(x: Snapshot, fingerprint: string, ctx: ReturnContext
   const row = (l: Snapshot['lines'][number]): ReportRow => ({
     label: l.label, unit: l.unit,
     qty: quantityWords(l.qty_milli.value), qty_chip: chipOf(l.qty_milli.source, true),
-    rate: poundsWords(l.rate_pence.value), rate_chip: chipOf(l.rate_pence.source, true),
+    rate: poundsWords(l.rate_pence.value), rate_chip: rateChip(l.rate_pence.source),
     cost: poundsWords(l.cost_pence), qpct: percentWords(l.qpct_bp.value), qpct_chip: chipOf(l.qpct_bp.source, true),
     qualifying: poundsWords(l.qualifying_pence),
     share: totalQ === 0 || l.qualifying_pence === null ? 0 : Math.round((l.qualifying_pence * 100) / totalQ),
@@ -187,7 +212,7 @@ export function reportModel(x: Snapshot, fingerprint: string, ctx: ReturnContext
       { label: 'Floor area', value: value(iv.gia_milli_m2, area) },
       { label: 'Price paid', value: value(iv.price_paid_pence, poundsWords) },
       { label: 'Bare land', value: value(iv.land_pence, poundsWords) },
-      { label: 'Rebuild rate', value: value(iv.building_rate_pence, perM2) },
+      { label: 'Rebuild rate', value: `${value(iv.building_rate_pence, perM2)}${iv.building_rate_pence.source?.basis === undefined || iv.building_rate_pence.source.basis === null ? '' : ` (${rateChip(iv.building_rate_pence.source).words})`}` },
     ],
     flow: [
       { label: 'Price paid', value: poundsWords(iv.price_paid_pence.value), note: 'what you paid' },
@@ -244,15 +269,32 @@ export function reportModel(x: Snapshot, fingerprint: string, ctx: ReturnContext
     site_plan: (x as { site_plan?: SitePlan }).site_plan ?? null,
     chapters: ((x as { chapters?: readonly ReportChapter[] }).chapters ?? []).map((c) => ({ n: c.n, title: c.title, applies: c.applies, not_applies_words: c.not_applies_words,
       rows: c.rows.map((r) => ({ label: r.label, value: r.value, missing: r.missing })), items: c.items.map((i) => ({ label: i.label, detail: i.detail })) })),
-    ...eventsPart(ev),
+    ...eventsPart(ev, purchaseLede(x)),
     routes: ((x as { routes?: readonly { label: string; route: string; words: string }[] }).routes ?? []).map((r) => ({ label: r.label === 'The claim' ? 'Your claim' : r.label, words: r.words })),
     allowances: allowanceWords(allowancesFor(x, ctx)),
+    rate_sources: [{ label: 'The whole-building rate', words: rateSourceWords(iv.building_rate_pence.source) },
+      ...live.filter((l) => l.rate_pence.value !== null).map((l) => ({ label: l.label, words: rateSourceWords(l.rate_pence.source) }))],
+    test_rates: [iv.building_rate_pence, ...live.map((l) => l.rate_pence)].some((v) => v.source?.basis?.kind === 'TEST_PLACEHOLDER'),
   };
 }
 
+/**
+ * PHASE 159f (C19, item 6): THE METHOD, IN WORDS THAT MATCH THE ARITHMETIC. Every rate is priced at one day (the purchase
+ * date where the index reaches it), so the report says that day, not "build again today"; and it names the way section
+ * 562's just apportionment is done. A version approved before Phase 159f keeps the words it was approved with.
+ */
+function purchaseLede(x: Snapshot): string {
+  const p = (x as { pricing?: { priced_at: string | null; purchase: string | null } }).pricing;
+  if (p === undefined || p.priced_at === null) return PURCHASE_LEDE;
+  const day = `${longDate(p.priced_at)}${p.priced_at === p.purchase ? ', the purchase date' : ''}`;
+  return 'When you buy a building, its price is split three ways. There is the land, the building itself, and the fixtures that qualify for tax relief. ' +
+    'The law says the price must be shared out justly (section 562 of the Capital Allowances Act 2001). We use the proportional way. ' +
+    `The building’s price is shared out as the cost to build each part is. Every cost is priced at ${day}.`;
+}
+
 /** PHASE 159c: each spend on the building, and what the cover's figure is for. A version with no work since: nothing. */
-function eventsPart(ev: SnapEvents | undefined): Pick<ReportModel, 'events' | 'headline_note' | 'method_lede'> & Partial<Pick<ReportModel, 'flow' | 'sum_words'>> {
-  if (ev === undefined) return { events: [], headline_note: null, method_lede: PURCHASE_LEDE };
+function eventsPart(ev: SnapEvents | undefined, lede: string = PURCHASE_LEDE): Pick<ReportModel, 'events' | 'headline_note' | 'method_lede'> & Partial<Pick<ReportModel, 'flow' | 'sum_words'>> {
+  if (ev === undefined) return { events: [], headline_note: null, method_lede: lede };
   const rows = [
     // PHASE 159d (item 8): a purchase that failed the legal check is named, with no figure.
     ...(ev.purchase_w3 === true ? [{ label: 'The purchase', qualifying: '£0', main: '£0', special: '£0',
@@ -262,7 +304,7 @@ function eventsPart(ev: SnapEvents | undefined): Pick<ReportModel, 'events' | 'h
     ...ev.works.map((w) => ({ label: w.label, qualifying: poundsWords(w.qualifying_pence), main: poundsWords(w.main_pool_pence), special: poundsWords(w.special_pool_pence),
       note: `On its own cost: ${poundsWords(w.inputs['works_total'] ?? null)} in all, from the final account.${(w.repairs_pence ?? 0) > 0 ? ` ${poundsWords(w.repairs_pence)} of it is a repair, which comes off your profits instead and is not in this figure.` : ''}` })),
   ];
-  if (ev.purchase_applies) return { events: rows, headline_note: 'for the purchase and the work done since, each worked out on its own', method_lede: PURCHASE_LEDE };
+  if (ev.purchase_applies) return { events: rows, headline_note: 'for the purchase and the work done since, each worked out on its own', method_lede: lede };
   const cost = ev.works.reduce((a, w) => a + (w.inputs['works_total'] ?? 0), 0);
   const q = ev.works.reduce((a, w) => a + (w.qualifying_pence ?? 0), 0);
   return { events: rows, headline_note: 'for the work done on the building, each piece worked out on its own cost', method_lede: WORKS_LEDE,
@@ -305,6 +347,7 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
 
     <section class="rp-sheet">
       <h2 class="rp-h"><span>01</span>How the figure is worked out</h2>
+      ${m.test_rates ? h`<p class="rp-test" role="note"><b>Test rates.</b> Some rates in this report are invented test figures, not BCIS. It is not a real valuation.</p>` : raw('')}
       <p class="rp-lede">${m.method_lede}</p>
       <ol class="rp-flow">${m.flow.map((f, i) => h`<li${i === m.flow.length - 1 ? raw(' class="rp-end"') : raw('')}>${f.label}<b>${f.value}</b><small>${f.note}</small></li>`)}</ol>
       <div class="rp-calc"><p><b>The sum, in full.</b> ${m.sum_words.join(' ')}</p></div>
@@ -333,6 +376,8 @@ export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe 
         <tbody><tr class="rp-tot"><th scope="row">Total</th><td></td><td></td><td class="n">${m.totals.cost}</td><td></td><td class="n">${m.totals.qualifying}</td></tr></tbody></table></div>
       <p class="rp-note">The bars show each item’s share of the qualifying total. These are rebuild costs. The figure on the cover is the same share of what was actually paid.</p>
       ${m.taken_out.length === 0 ? raw('') : h`<h3>Checked and not in this building (${String(m.taken_out.length)})</h3><p class="rp-note">${m.taken_out.join('; ')}. The surveyor took each out with a reason, kept with this report.</p>`}
+      <h3>Where each rate comes from</h3>
+      <ul class="rp-sources">${m.rate_sources.map((r) => h`<li><b>${r.label}.</b> ${r.words}</li>`)}</ul>
     </section>
 
     <section class="rp-sheet">
@@ -521,6 +566,8 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
   /* ---------------------------------------------------------- 2 · how it is worked out */
   c.page();
   c.heading('01', 'How the figure is worked out');
+  // PHASE 159f (L12): a report with any test rate says so before anything else in the method.
+  if (m.test_rates) c.para('TEST RATES. Some rates in this report are invented test figures, not BCIS. It is not a real valuation.', { size: 11, color: C.ink, after: 8 });
   c.para(m.method_lede, { size: 11, color: C.ink, after: 12 });
   const boxW = W / m.flow.length;
   m.flow.forEach((f, i) => {
@@ -642,6 +689,12 @@ export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number 
     c.y += 6;
     c.para(`${m.taken_out.join('; ')}. The surveyor took each out with a reason, kept with this report.`, { size: 8.5, color: C.mut });
   }
+  // PHASE 159f (item 4): where each rate comes from, in full.
+  c.need(40);
+  c.y += 10;
+  c.text(L, c.y, 'Where each rate comes from', 'Times-Bold', 13, C.ink);
+  c.y += 6;
+  for (const r of m.rate_sources) c.para(`${r.label}. ${r.words}`, { size: 8.5, color: C.mut, after: 2 });
 
   /* ---------------------------------------------------------- 4 · the legal check, and next */
   c.page();

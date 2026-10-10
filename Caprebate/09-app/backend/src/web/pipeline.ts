@@ -246,6 +246,33 @@ export function packApprovedNeed(db: Db, c: { readonly id: string }): Need {
   };
 }
 
+/**
+ * PHASE 159f (item 3): "EVERY RATE SOURCED" — the SOP's Valuation gate (src/web/stages.ts), a test now and not the
+ * surveyor's word. Read from the newest approved version: the whole-building rate and every counted line's rate carry a
+ * structured source (BCIS's draft, or the surveyor's QS schedule, invoice or price book, with a reference and a day). A
+ * version approved before Phase 159f has none, and is not met: approve the pack again with the sources.
+ */
+export function ratesSourcedNeed(db: Db, c: { readonly id: string }): Need {
+  const what = 'Every rate in the survey pack names its source';
+  const a = db.get<{ snapshot_json: string; version: number }>(
+    'SELECT a.snapshot_json, a.version FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
+      'WHERE j.claim_id = ? ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [c.id]);
+  if (a === undefined) return { what, met: false, why: 'no survey pack is approved on this claim yet' };
+  type V = { value?: number | null; source?: { basis?: unknown } | null };
+  let s: { inputs?: { building_rate_pence?: V }; lines?: { label?: string; removed?: boolean; qty_milli?: V; rate_pence?: V }[] };
+  try { s = JSON.parse(a.snapshot_json) as typeof s; } catch { return { what, met: false, why: 'the approved version could not be read' }; }
+  const missing: string[] = [];
+  const has = (v: V | undefined) => v?.source?.basis !== undefined && v.source.basis !== null;
+  const br = s.inputs?.building_rate_pence;
+  if (br !== undefined && typeof br.value === 'number' && !has(br)) missing.push('the whole-building rate');
+  for (const l of s.lines ?? []) {
+    if (l.removed === true || l.qty_milli?.value === 0 || typeof l.rate_pence?.value !== 'number') continue;
+    if (!has(l.rate_pence)) missing.push(l.label ?? 'a line');
+  }
+  return { what, met: missing.length === 0,
+    why: missing.length === 0 ? `every rate in version ${String(a.version)} names its source` : `version ${String(a.version)} has rates with no source: ${missing.join('; ')}. Approve the pack again with a source on each` };
+}
+
 /* ================================================================== *
  * 3 · THE ENQUIRY GATE
  * ================================================================== */
@@ -575,12 +602,14 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       break;
     }
     case 'VALUATION': {
-      // CRM 6 of 10: every grant traced is a fact now; every rate sourced stays the surveyor's confirmation.
+      // CRM 6 of 10: every grant traced is a fact now. PHASE 159f: every rate sourced is a fact too (ratesSourcedNeed).
       const g = grantsTraced(db, c.id);
       needs.push({ what: 'Every grant or contribution traced to the items it paid for', met: g.met, why: g.why });
       // PHASE 153a (Phase 153b lines 12 and 13): no grant split in equal share without its papers or the tax adviser's
       // view; the client has checked with whoever paid. Both met where no grant is left on the claim.
       needs.push(grantSplitNeed(db, c), grantProviderNeed(db, c), packApprovedNeed(db, c));
+      // PHASE 159f (item 3): every rate sourced — the stage's own gate, now a test of the approved version.
+      needs.push(ratesSourcedNeed(db, c));
       break;
     }
     case 'TAX_ADVISER_SIGNOFF':

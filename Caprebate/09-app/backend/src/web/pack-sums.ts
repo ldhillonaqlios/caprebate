@@ -29,6 +29,8 @@
  */
 
 /** Where a value came from. EVIDENCE: a register, a document, the client. DRAFT: Cap Rebate's. SURVEYOR: theirs. */
+import type { RateBasis } from './bcis-data.ts';
+
 export type SourceKind = 'EVIDENCE' | 'DRAFT' | 'SURVEYOR';
 
 export type Source = {
@@ -39,6 +41,9 @@ export type Source = {
   readonly by_name?: string | null;
   readonly at?: string | null;
   readonly reason?: string | null;
+  /** PHASE 159f: a rate's structured source — BCIS (its reference, base date, location factor and index), a QS's priced
+   *  schedule, the contractor's invoice or a price book — and the day it is priced at. A rate without one is not sourced. */
+  readonly basis?: RateBasis | null;
 };
 
 export type Valued = { readonly value: number | null; readonly source: Source | null };

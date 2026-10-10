@@ -32,6 +32,8 @@ import type { Db } from '../db.ts';
 import type { PackView } from './survey-pack.ts';
 import { INCLUDES_BITS, packDateIso } from './survey-pack.ts';
 import { bcisIndexTable } from './bcis-index.ts';
+import { indexBetween } from './bcis-data.ts';
+import { BAND } from './engine.ts';
 import { acquisitionDateReading } from './claim-facts.ts';
 import { onTestWebsite, type Env } from '../connectors/place.ts';
 import { MIN_CLAIMS } from './sector-ranges.ts';
@@ -204,27 +206,55 @@ function median(xs: readonly number[]): number {
  * version, this one left out), once MIN_CLAIMS exist. More than the phase3 module's 10% test limit apart: flagged for
  * review, never a fail.
  */
-export function rateFlagReading(db: Db, v: PackView, min = MIN_CLAIMS): RateFlagReading {
+export function rateFlagReading(db: Db, v: PackView, min = MIN_CLAIMS, env: Env = process.env): RateFlagReading {
   const rows = db.all<{ snapshot_json: string; job_id: string }>(
     'SELECT a.snapshot_json, p.job_id FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id ' +
       'WHERE a.version = (SELECT MAX(x.version) FROM survey_pack_approvals x WHERE x.pack_id = a.pack_id)');
+  /* PHASE 159f (C20): EVERY RATE REBASED TO ONE DAY before it is compared — this pack's own pricing day. A rate priced
+     at another day is brought to it by the index; one that cannot be (an older version with no pricing day, or no
+     index) is left out of the middle rate, and the sentence says how many. */
+  const target = v.pricing.priced_at;
   const rates: number[] = [];
+  let leftOut = 0;
   for (const r of rows) {
     if (r.job_id === v.job.id) continue;
-    let s: { job?: { sector?: unknown }; inputs?: { building_rate_pence?: { value?: unknown } } };
+    let s: { job?: { sector?: unknown }; inputs?: { building_rate_pence?: { value?: unknown } }; pricing?: { priced_at?: unknown } };
     try { s = JSON.parse(r.snapshot_json) as typeof s; } catch { continue; }
     const rate = s.inputs?.building_rate_pence?.value;
-    if (s.job?.sector === v.job.sector && typeof rate === 'number' && Number.isFinite(rate) && rate > 0) rates.push(rate);
+    if (s.job?.sector !== v.job.sector || typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0) continue;
+    const day = typeof s.pricing?.priced_at === 'string' ? s.pricing.priced_at : null;
+    if (target === null || day === null) { leftOut++; continue; }
+    if (day === target) { rates.push(rate); continue; }
+    const ix = indexBetween(day, target, env);
+    if (ix.factor === null) { leftOut++; continue; }
+    rates.push(Math.round(rate * ix.factor));
   }
   const mine = v.inputs.building_rate_pence.value;
+  const out = leftOut === 0 ? '' : ` ${String(leftOut)} approved pack${leftOut === 1 ? '' : 's'} could not be brought to ${target ?? 'one day'} and ${leftOut === 1 ? 'is' : 'are'} left out.`;
   const limit = `${pct(BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2)} (a test limit, for the surveyor to confirm: Word question 149)`;
   if (rates.length < min) return { packs: rates.length, median_pence: null, verdict: null,
-    words: `${String(rates.length)} approved pack${rates.length === 1 ? '' : 's'} in this sector give a rate; ${String(min)} are needed before this pack’s rate is compared.` };
+    words: `${String(rates.length)} approved pack${rates.length === 1 ? '' : 's'} in this sector give a rate at ${target ?? 'one day'}; ${String(min)} are needed before this pack’s rate is compared.${out}` };
   const mid = median(rates);
   if (mine === null) return { packs: rates.length, median_pence: mid, verdict: null, words: `The middle rate of ${String(rates.length)} approved packs is ${pounds(mid)} a square metre. This pack has no whole-building rate yet (chapter 9).` };
   const rel = Math.abs(mine - mid) / mid;
   const flagged = rel > BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2;
   return { packs: rates.length, median_pence: mid, verdict: flagged ? 'FLAG_FOR_REVIEW' : 'WITHIN_TEST_LIMIT',
-    words: `${pounds(mine)} a square metre against a middle rate of ${pounds(mid)} from ${String(rates.length)} approved packs: ${pct(rel)} apart. ` +
-      (flagged ? `More than ${limit}, so it is flagged for your review. It is not a fail.` : `Within ${limit}.`) };
+    words: `${pounds(mine)} a square metre against a middle rate of ${pounds(mid)} from ${String(rates.length)} approved packs, all priced at ${target ?? 'one day'}: ${pct(rel)} apart. ` +
+      (flagged ? `More than ${limit}, so it is flagged for your review. It is not a fail.` : `Within ${limit}.`) + out };
+}
+
+/**
+ * PHASE 159f (C21): THE QUALIFYING SHARE AGAINST THE SECTOR'S CEILING. The engine's purchase band (CB_BAND) tops out at a
+ * share for each sector; a pack whose share is above it is FLAGGED FOR REVIEW — never refused. A whole building that
+ * qualifies is possible, but rare, and the surveyor should look again.
+ */
+export function shareFlagReading(v: PackView): { readonly verdict: 'WITHIN' | 'FLAG_FOR_REVIEW' | null; readonly words: string } {
+  const band = (BAND as { bandFor: (s: string, t: string) => readonly [number, number] | null }).bandFor(v.job.sector, 'purchase');
+  const share = v.purchase_sums.share_bp;
+  if (band === null) return { verdict: null, words: 'This sector has no purchase band to compare with.' };
+  if (share === null) return { verdict: null, words: `Not worked out until the purchase's share is known. The sector's ceiling is ${pct(band[1])}.` };
+  const s = share / 10000;
+  return s > band[1] + 1e-9
+    ? { verdict: 'FLAG_FOR_REVIEW', words: `${pct(s)} of the building qualifies, above this sector's ceiling of ${pct(band[1])}. It is flagged for your review. It is not a fail.` }
+    : { verdict: 'WITHIN', words: `${pct(s)} of the building qualifies, within this sector's ceiling of ${pct(band[1])}.` };
 }

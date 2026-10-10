@@ -271,16 +271,16 @@ function approveOnce(rate: string): number {
   if (view().lines.filter((l) => !l.removed).length > 2) {
     const keep = view().lines.slice(0, 2).map((l) => l.id);
     for (const l of view().lines) if (!keep.includes(l.id) && !l.removed) ok(setLineRemoved(deps(), SAM, JOB, { line: l.id, reason: 'Not in this building', seq: String(view().seq) }, true));
-    ok(saveLine(deps(), SAM, JOB, { line: keep[1]!, qty: '100', rate: '300', qpct: '50', pool: 'MP', reason: 'Counted on the walkthrough', seq: String(view().seq) }));
+    ok(saveLine(deps(), SAM, JOB, { line: keep[1]!, qty: '100', rate: '300', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '50', pool: 'MP', reason: 'Counted on the walkthrough', seq: String(view().seq) }));
     ok(savePackValue(deps(), SAM, JOB, { field: 'land', value: '150000', reason: 'Local land sales', seq: String(view().seq) }));
-    ok(savePackValue(deps(), SAM, JOB, { field: 'building_rate', value: '1500', reason: 'BCIS, GP surgeries', seq: String(view().seq) }));
+    ok(savePackValue(deps(), SAM, JOB, { field: 'building_rate', value: '1500', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', reason: 'BCIS, GP surgeries', seq: String(view().seq) }));
     for (const [q, v] of [['G8', ['new_build']], ['G9d', ['2023-05-01']]] as const) {
       ok(answerLegal(deps(), SAM, JOB, { question: q, values: v, source: 'The building contract', seq: String(legalView(deps(), SAM, JOB).seq) }));
     }
     ok(saveDetails(deps(), SAM, JOB, { rics_number: '1234567', firm: 'Sam Surveyors LLP' }));
     ok(setBasis(deps(), SAM, JOB, { basis: 'DESKTOP_EVIDENCE', note: '' }));
   }
-  ok(saveLine(deps(), SAM, JOB, { line: view().lines[0]!.id, qty: '10', rate, qpct: '100', pool: 'SR', reason: 'Counted on the walkthrough', seq: String(view().seq) }));
+  ok(saveLine(deps(), SAM, JOB, { line: view().lines[0]!.id, qty: '10', rate, rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'SR', reason: 'Counted on the walkthrough', seq: String(view().seq) }));
   for (const c of chaptersToRead()) made.app.db.run('INSERT OR IGNORE INTO survey_pack_reads (id, job_id, user_id, chapter, legal_seq, at) VALUES (?, ?, ?, ?, ?, ?)',
     [`rd-${(++n).toString()}`, JOB, 'u-s6-sam', c, legalView(deps(), SAM, JOB).seq, clock]);
   const r = approvePack(deps(), SAM, JOB, { seq: String(view().seq), legal_seq: String(legalView(deps(), SAM, JOB).seq) });

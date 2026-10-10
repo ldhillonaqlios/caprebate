@@ -72,7 +72,7 @@ before(async () => {
     ok(setLineRemoved(deps(), SAM, 'j-den', { line: l.id, reason: 'Not in this building', seq: seq() }, true));
   }
   ok(savePackValue(deps(), SAM, 'j-den', { field: 'gia', value: '640', reason: 'Measured', seq: seq() }));
-  ok(savePackValue(deps(), SAM, 'j-den', { field: 'building_rate', value: '2000', reason: 'BCIS, dental', seq: seq() }));
+  ok(savePackValue(deps(), SAM, 'j-den', { field: 'building_rate', value: '2000', reason: 'BCIS, dental', seq: seq(), rate_basis: 'BCIS', rate_ref: 'Dental surgeries, mean', rate_priced_at: '2026-09-01' }));
 });
 after(() => made.close());
 
@@ -219,12 +219,13 @@ describe('chapter 14 — preliminaries and the insurance check (Word questions 1
   });
 });
 
+// PHASE 159f (C20): every rate is compared at one day, so each version and this pack carry their pricing day.
 describe('chapter 22 — the £/m² review flag (Word question 149)', () => {
   const approve = (job: string, rate: number, sector: string) => {
     const db = made.app.db;
     db.run('INSERT INTO survey_packs (id, job_id, property_id, created_at, created_by) VALUES (?,?,?,?,?)', [`pk-${job}`, `j-${job}`, `p-${job}`, T, 'u-a-sam']);
     db.run('INSERT INTO survey_pack_approvals (id, pack_id, version, pack_seq, legal_seq, snapshot_json, fingerprint, approved_by, approved_at) VALUES (?,?,?,?,?,?,?,?,?)',
-      [`ap-${job}`, `pk-${job}`, 1, 1, 0, JSON.stringify({ job: { id: `j-${job}`, sector }, inputs: { building_rate_pence: { value: rate } } }), 'a'.repeat(64), 'u-a-sam', T]);
+      [`ap-${job}`, `pk-${job}`, 1, 1, 0, JSON.stringify({ job: { id: `j-${job}`, sector }, inputs: { building_rate_pence: { value: rate } }, pricing: { priced_at: '2026-09-01' } }), 'a'.repeat(64), 'u-a-sam', T]);
   };
 
   test('the limit is the phase3 module’s own, 10%', () => assert.equal(BLANK_CONTROL_RELATIVE_LIMIT_GBP_M2, 0.10));
@@ -245,7 +246,7 @@ describe('chapter 22 — the £/m² review flag (Word question 149)', () => {
     approve('d5', 230_000, 'dental');
     const within = rateFlagReading(made.app.db, view());
     assert.deepEqual([within.packs, within.median_pence, within.verdict], [5, 200_000, 'WITHIN_TEST_LIMIT']);
-    ok(savePackValue(deps(), SAM, 'j-den', { field: 'building_rate', value: '2300', reason: 'A dearer specification', seq: seq() }));
+    ok(savePackValue(deps(), SAM, 'j-den', { field: 'building_rate', value: '2300', reason: 'A dearer specification', seq: seq(), rate_basis: 'BCIS', rate_ref: 'Dental surgeries, mean', rate_priced_at: '2026-09-01' }));
     const far = rateFlagReading(made.app.db, view());
     assert.equal(far.verdict, 'FLAG_FOR_REVIEW');
     assert.match(far.words, /15% apart\. More than 10% \(a test limit, for the surveyor to confirm: Word question 149\), so it is flagged for your review\. It is not a fail\./);

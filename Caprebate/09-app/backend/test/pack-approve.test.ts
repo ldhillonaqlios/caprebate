@@ -101,10 +101,10 @@ function fill(job = JOB): void {
     assert.equal(r.ok, true, JSON.stringify(r));
   }
   const ok = (r: { ok: boolean }) => assert.equal(r.ok, true, JSON.stringify(r));
-  ok(saveLine(deps(), SAM, job, { line: keep[0]!, qty: '10', rate: '2000', qpct: '100', pool: 'SR', reason: 'Counted on the walkthrough', seq: String(view(job).seq) }));
-  ok(saveLine(deps(), SAM, job, { line: keep[1]!, qty: '100', rate: '300', qpct: '50', pool: 'MP', reason: 'Counted on the walkthrough', seq: String(view(job).seq) }));
+  ok(saveLine(deps(), SAM, job, { line: keep[0]!, qty: '10', rate: '2000', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'SR', reason: 'Counted on the walkthrough', seq: String(view(job).seq) }));
+  ok(saveLine(deps(), SAM, job, { line: keep[1]!, qty: '100', rate: '300', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '50', pool: 'MP', reason: 'Counted on the walkthrough', seq: String(view(job).seq) }));
   ok(savePackValue(deps(), SAM, job, { field: 'land', value: '150000', reason: 'The land registry and local sales', seq: String(view(job).seq) }));
-  ok(savePackValue(deps(), SAM, job, { field: 'building_rate', value: '1500', reason: 'BCIS, GP surgeries, rebased', seq: String(view(job).seq) }));
+  ok(savePackValue(deps(), SAM, job, { field: 'building_rate', value: '1500', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', reason: 'BCIS, GP surgeries, rebased', seq: String(view(job).seq) }));
   // 2 Oct 2026 (stage 5): how the surveyor inspected, in chapter 2.
   ok(setBasis(deps(), SAM, job, { basis: 'DESKTOP_EVIDENCE', note: '' }));
 }
@@ -261,7 +261,7 @@ describe('the approval of the survey pack', () => {
     assert.equal(again.status, 400);
     assert.match(again.body, /This version is approved: version 1/);
     const old = approveForm();
-    assert.equal(saveLine(deps(), SAM, JOB, { line: view().lines[0]!.id, qty: '11', rate: '2000', qpct: '100', pool: 'SR', reason: 'One more on a second look', seq: String(view().seq) }).ok, true);
+    assert.equal(saveLine(deps(), SAM, JOB, { line: view().lines[0]!.id, qty: '11', rate: '2000', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'SR', reason: 'One more on a second look', seq: String(view().seq) }).ok, true);
     const stale = await post('u-ap-sam', `${P()}/approve`, old);
     assert.equal(stale.location, `${P()}?ch=23&stale=1`);
     // A legal answer given since the page was drawn makes it out of date too, even with the pack itself unchanged.
@@ -333,7 +333,7 @@ describe('the approval of the survey pack', () => {
     assert.equal(db.get<{ c: number }>('SELECT COUNT(*) AS c FROM surveyor_commitments WHERE job_id = ?', [JOB_NO_ESTIMATE])!.c, 1);
     // The job is put back underneath to "not yet committed", so the commitment fails on the one already kept: the
     // approval fails with it, and nothing is kept — not the version, not a second commitment, not an audit line.
-    assert.equal(saveLine(deps(), SAM, JOB_NO_ESTIMATE, { line: view(JOB_NO_ESTIMATE).lines[0]!.id, qty: '12', rate: '2000', qpct: '100', pool: 'SR', reason: 'A third look', seq: String(view(JOB_NO_ESTIMATE).seq) }).ok, true);
+    assert.equal(saveLine(deps(), SAM, JOB_NO_ESTIMATE, { line: view(JOB_NO_ESTIMATE).lines[0]!.id, qty: '12', rate: '2000', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'SR', reason: 'A third look', seq: String(view(JOB_NO_ESTIMATE).seq) }).ok, true);
     db.run("UPDATE surveyor_jobs SET state = 'SEALED' WHERE id = ?", [JOB_NO_ESTIMATE]);
     const audits = db.get<{ c: number }>('SELECT COUNT(*) AS c FROM audit_log')!.c;
     assert.throws(() => approvePack(deps(), SAM, JOB_NO_ESTIMATE, { seq: String(view(JOB_NO_ESTIMATE).seq), legal_seq: String(lview(JOB_NO_ESTIMATE).seq) }), /UNIQUE constraint failed: surveyor_commitments/);

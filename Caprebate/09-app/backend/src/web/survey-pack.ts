@@ -10,7 +10,8 @@
  *   DRAFT     Cap Rebate's, from the fixture list: a line's pool and the share that qualifies, with its authority;
  *   SURVEYOR  typed by the surveyor: their name, the time and their reason, kept for ever (migration 070).
  * Nothing else fills a box. A value we do not hold is NEEDED, and the sums give no total until it is there
- * (src/web/pack-sums.ts). Rates are never drafted: they are BCIS's, and until BCIS is bought they are the surveyor's.
+ * (src/web/pack-sums.ts). PHASE 159f: rates are DRAFTED from BCIS (src/web/bcis-data.ts) — the whole-building rate and every
+ * line measured by floor area — at the purchase date; the surveyor accepts each or types their own with its source.
  *
  * WHO MAY CHANGE IT: the surveyor the job is assigned to (`surveyor_job.commit`, the rule the workspace's figures use).
  * Everyone who may open the job may read the pack.
@@ -35,7 +36,8 @@ import {
 import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from './property-events.ts';
 import { legalVerdictForJob } from './pack-legal.ts';
 import { applyGrants, type GrantReading, type GrantSwitches } from './pack-grants.ts';
-import { elementName, packGrantsFor } from './claim-facts.ts';
+import { acquisitionDateReading, elementName, packGrantsFor } from './claim-facts.ts';
+import { bcisDataHere, bcisDrafts, indexBetween, type BcisDraft, type RateBasis } from './bcis-data.ts';
 import { shippedGrantSwitches } from './grant-checks.ts';
 
 /**
@@ -70,7 +72,7 @@ export type PackGrants = {
 export const GRANT_AMOUNTS_TO_SURVEYOR = false;
 
 export type PackField = 'price_paid' | 'land' | 'gia' | 'building_rate' | 'qty' | 'rate' | 'qpct' | 'pool' | 'removed' | 'vat_position' | 'vat' | 'shared_area'
-  | CostField | WorksField;
+  | CostField | WorksField | 'location';
 
 /** PHASE 159c: one piece of work on the building, priced on its own cost (chapter 9; src/web/pack-sums.ts worksSums). */
 export type WorksView = {
@@ -96,6 +98,26 @@ export type PackInputField = (typeof PACK_INPUT_FIELDS)[number];
 type EntryRow = {
   id: string; seq: number; line_key: string | null; field: PackField; value: number | null; pool: Pool | null;
   by_user: string; by_name: string; reason: string; at: string;
+  /** PHASE 159f (migration 108): a typed rate's source, all three or none; on 'location', rate_ref is the BCIS area. */
+  rate_basis: RateBasis['kind'] | null; rate_ref: string | null; rate_priced_at: string | null;
+};
+
+/**
+ * PHASE 159f — HOW THE PACK'S RATES ARE PRICED (chapters 9, 10 and 11). The BCIS drafts, the day every rate is brought to
+ * (the purchase date, C19), the rates that could not be brought to it, the rates with no source, and section 562 both
+ * ways (item 6): the proportional apportionment the report uses, and the residual one beside it for the surveyor.
+ */
+export type Pricing = {
+  readonly bcis: BcisDraft;
+  /** The day every rate is priced at, where they are all at one day; else null (see `mixed`). */
+  readonly priced_at: string | null;
+  /** The purchase date, the day every rate is brought to where the index reaches it. */
+  readonly purchase: string | null;
+  /** Rates at a day of their own that could not be brought to the purchase date: "Lighting: 2024-03-01". */
+  readonly mixed: readonly string[];
+  /** Counted rates with no source: the whole-building rate, or a line's label. */
+  readonly unsourced: readonly string[];
+  readonly residual: { readonly qualifying_pence: number | null; readonly words: string };
 };
 
 export type ViewLine = PackLine & {
@@ -149,6 +171,8 @@ export type PackView = {
   /** PHASE 159d (item 8): the purchase fails the legal check (RED) and there is work since: the purchase is W3 — not
    *  claimed — and the works stand on their own. False otherwise: a pack with no work stops at the legal check as before. */
   readonly purchase_w3: boolean;
+  /** PHASE 159f: how the rates are priced — the BCIS drafts, one day, their sources, and section 562 both ways. */
+  readonly pricing: Pricing;
   /** The pack's counter as this view was read. A change must carry it back. */
   readonly seq: number;
   readonly may_edit: boolean;
@@ -237,7 +261,9 @@ function isEntry(s: Source | null): boolean {
 }
 
 function surveyorSource(e: EntryRow): Source {
-  return { kind: 'SURVEYOR', text: e.by_name, by_name: e.by_name, at: e.at, reason: e.reason };
+  const basis: RateBasis | null = e.rate_basis !== null && e.rate_ref !== null
+    ? { kind: e.rate_basis, ref: e.rate_ref, priced_at: e.rate_priced_at } : null;
+  return { kind: 'SURVEYOR', text: e.by_name, by_name: e.by_name, at: e.at, reason: e.reason, ...(basis === null ? {} : { basis }) };
 }
 
 const FIELD_WORDS: Readonly<Record<PackField, string>> = Object.freeze({
@@ -249,6 +275,7 @@ const FIELD_WORDS: Readonly<Record<PackField, string>> = Object.freeze({
   works_total: 'final account', works_main: 'plant and machinery', works_special: 'integral features',
   works_bwic: 'builder’s work in connection', works_demolition: 'demolition of old plant', works_other: 'work that does not qualify',
   works_repairs: 'repair part', works_prelims: 'preliminaries', works_fees: 'professional fees',
+  location: 'BCIS location',
 });
 
 /**
@@ -288,7 +315,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   const pack = d.db.get<{ id: string; property_id: string | null }>('SELECT id, property_id FROM survey_packs WHERE job_id = ?', [job.id]);
   const { property, choices } = propertyOf(d.db, job, pack?.property_id);
   const entries = pack === undefined ? [] : d.db.all<EntryRow>(
-    'SELECT e.id, e.seq, e.line_key, e.field, e.value, e.pool, e.by_user, u.display_name AS by_name, e.reason, e.at ' +
+    'SELECT e.id, e.seq, e.line_key, e.field, e.value, e.pool, e.by_user, u.display_name AS by_name, e.reason, e.at, e.rate_basis, e.rate_ref, e.rate_priced_at ' +
       'FROM survey_pack_entries e JOIN users u ON u.id = e.by_user WHERE e.pack_id = ? ORDER BY e.seq ASC', [pack.id]);
   const latest = new Map<string, EntryRow>();
   for (const e of entries) latest.set(`${e.line_key ?? ''}|${e.field}`, e);
@@ -302,11 +329,19 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
 
   const ev = evidenceInputs(d.db, job.business_id, property);
   const none: Valued = { value: null, source: null };
-  const inputs: PackInputs = {
+  // PHASE 159f: BCIS's drafts, at the purchase date, for the pack's chosen location (src/web/bcis-data.ts).
+  const acq = property === null ? null : acquisitionDateReading(d.db, property.id);
+  const purchase = acq !== null && acq.known && typeof acq.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(acq.value) ? acq.value.slice(0, 10) : null;
+  const locEntry = last(null, 'location');
+  const area = locEntry !== undefined && locEntry.value !== null ? locEntry.rate_ref : null;
+  const bcis = bcisDrafts({ sector: job.sector, area, purchase, lineIds: linesForSector(job.sector).map((t) => t.element_id) });
+  const draftOf = (x: { value: number; basis: RateBasis; text: string } | null | undefined): Valued =>
+    x === null || x === undefined ? none : { value: x.value, source: { kind: 'DRAFT', text: x.text, basis: x.basis } };
+  let inputs: PackInputs = {
     price_paid_pence: resolve(null, 'price_paid', ev.price),
     land_pence: resolve(null, 'land', none),
     gia_milli_m2: resolve(null, 'gia', ev.gia),
-    building_rate_pence: resolve(null, 'building_rate', none),
+    building_rate_pence: resolve(null, 'building_rate', draftOf(bcis.building_rate)),
   };
 
   // PHASE 153e (Word question 133): the common parts, by floor area from the floor plans, or the labelled 25% fallback.
@@ -335,7 +370,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     return {
       id, label, element_id: t?.element_id ?? null, unit, pool, pool_source,
       qty_milli: resolve(id, 'qty', qtyDraft),
-      rate_pence: resolve(id, 'rate', none),
+      rate_pence: resolve(id, 'rate', t === null ? none : draftOf(bcis.lines.get(t.element_id))),
       qpct_bp: resolve(id, 'qpct', t === null || t.qpct_bp === null ? none : { value: t.qpct_bp, source: draftSrc('') }),
       removed: rem !== undefined && rem.value === 1,
       removed_source: rem === undefined ? null : surveyorSource(rem),
@@ -343,7 +378,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
     };
   };
 
-  const lines: ViewLine[] = linesForSector(job.sector).map((t) => lineFrom(t.element_id, t.label, t.unit, t, null));
+  let lines: ViewLine[] = linesForSector(job.sector).map((t) => lineFrom(t.element_id, t.label, t.unit, t, null));
   if (pack !== undefined) {
     for (const a of d.db.all<{ id: string; label: string; unit: string; by_name: string; added_at: string; reason: string }>(
       'SELECT a.id, a.label, a.unit, u.display_name AS by_name, a.added_at, a.reason FROM survey_pack_added_lines a JOIN users u ON u.id = a.added_by WHERE a.pack_id = ? ORDER BY a.added_at ASC, a.id ASC',
@@ -351,6 +386,31 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
       lines.push(lineFrom(a.id, a.label, a.unit, null, { by_name: a.by_name, at: a.added_at, reason: a.reason }));
     }
   }
+
+  /* PHASE 159f (C19): EVERY RATE AT ONE DAY. The share is the qualifying parts' rebuild cost over the whole building's,
+     so the two must be priced at the same day or the arithmetic does not match the words. Every sourced rate priced at a
+     day other than the purchase date is brought to it by the index; one that cannot be (no index, or no purchase date)
+     stays at its own day and is listed, and the pack is not approved while its rates sit at more than one day. */
+  const at: { label: string; day: string }[] = [];
+  const mixed: string[] = [];
+  const unsourced: string[] = [];
+  const atPurchase = (label: string, v: Valued, counted: boolean): Valued => {
+    if (v.value === null || !counted) return v;
+    const b = v.source?.basis ?? null;
+    if (b === null || b === undefined) { unsourced.push(label); return v; }
+    if (b.priced_at === null) { at.push({ label, day: 'not known' }); return v; }
+    if (purchase === null || b.priced_at === purchase) { at.push({ label, day: b.priced_at }); return v; }
+    const ix = indexBetween(b.priced_at, purchase);
+    if (ix.factor === null) { at.push({ label, day: b.priced_at }); return v; }
+    at.push({ label, day: purchase });
+    return { value: Math.round(v.value * ix.factor), source: { ...(v.source as Source),
+      text: `${v.source?.text ?? ''} — ${(v.value / 100).toFixed(2)} priced at ${b.priced_at}, brought to the purchase date ${purchase} by the index (×${ix.factor.toFixed(4)})`,
+      basis: { ...b, priced_at: purchase, index: { factor: ix.factor, from: b.priced_at, to: purchase } } } };
+  };
+  inputs = { ...inputs, building_rate_pence: atPurchase('The whole-building rate', inputs.building_rate_pence, true) };
+  lines = lines.map((l) => (l.removed || l.qty_milli.value === 0 ? l : { ...l, rate_pence: atPurchase(l.label, l.rate_pence, true) }));
+  const days = new Set(at.map((x) => x.day));
+  if (days.size > 1) for (const x of at) mixed.push(`${x.label}: ${x.day}`);
 
   const labelOf = new Map(lines.map((l) => [l.id, l.label] as const));
   // PHASE 159c: a works value's line is the event; it is named by its kind and date.
@@ -382,6 +442,19 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
       element_ids: g.element_ids, element_names: g.element_ids.map(elementName) })),
   };
 
+  // PHASE 159f (item 6): section 562 the other way, beside the proportional sum the report uses. The building's own
+  // rebuild cost (the whole less the parts that qualify) comes off the price first; the fixtures take what is left, never
+  // more than their own rebuild cost nor the price. Shown to the surveyor; which one is used is put to the tax adviser.
+  const ps = reading.sums;
+  const residual: Pricing['residual'] = !ps.complete || ps.building_price_pence === null || ps.rebuild_pence === null || ps.elements_qualifying_pence === null
+    ? { qualifying_pence: null, words: 'Not worked out until the sums are complete.' }
+    : (() => {
+      const shell = ps.rebuild_pence - ps.elements_qualifying_pence;
+      const q = Math.max(0, Math.min(ps.building_price_pence, ps.elements_qualifying_pence, ps.building_price_pence - shell));
+      return { qualifying_pence: q, words: `The residual way: the building less its own rebuild cost (${(shell / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP' })}) leaves ${(q / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP' })} for the fixtures. The proportional way, which the report uses, gives ${((ps.qualifying_pence ?? 0) / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP' })}. Which is used is a question for the surveyor and the tax adviser.` };
+    })();
+  const pricing: Pricing = { bcis, priced_at: days.size === 1 ? [...days][0] ?? null : null, purchase, mixed, unsourced, residual };
+
   const cost: CostValues = {
     valuation_date: resolve(null, 'valuation_date', none), insurance: resolve(null, 'insurance', none),
     insurance_date: resolve(null, 'insurance_date', none), insurance_includes: resolve(null, 'insurance_includes', none),
@@ -407,7 +480,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   return {
     job, pack_id: pack?.id ?? null, property, property_choices: choices,
     inputs, lines, sums: combined(reading.sums, applies && !purchaseW3, works, onClaim.length), grants, vat, shared_area, cost,
-    events, purchase_applies: applies, purchase_sums: reading.sums, works, purchase_w3: purchaseW3,
+    events, purchase_applies: applies, purchase_sums: reading.sums, works, purchase_w3: purchaseW3, pricing,
     seq: entries.length === 0 ? 0 : (entries[entries.length - 1] as EntryRow).seq,
     may_edit: can(actor, 'surveyor_job.commit', obj),
     changes,
@@ -450,11 +523,28 @@ function begin(d: PackDeps, actor: Actor, job_id: string, reason: string, expect
 /** PHASE 153g: the same guard for the surveyor's own words (src/web/pack-words.ts): who may, the reason, a page out of date. */
 export const beginPackChange = begin;
 
-function insertEntry(d: PackDeps, actor: Actor, pack_id: string, line_key: string | null, field: PackField, value: number | null, pool: Pool | null, reason: string): void {
+function insertEntry(d: PackDeps, actor: Actor, pack_id: string, line_key: string | null, field: PackField, value: number | null, pool: Pool | null, reason: string,
+  src: { basis: string | null; ref: string | null; priced_at: string | null } = { basis: null, ref: null, priced_at: null }): void {
   d.db.run(
-    'INSERT INTO survey_pack_entries (id, pack_id, seq, line_key, field, value, pool, by_user, reason, at) ' +
-      'SELECT ?, ?, COALESCE(MAX(seq), 0) + 1, ?, ?, ?, ?, ?, ?, ? FROM survey_pack_entries WHERE pack_id = ?',
-    [d.newId(), pack_id, line_key, field, value, pool, actor.id, reason.trim(), d.now(), pack_id]);
+    'INSERT INTO survey_pack_entries (id, pack_id, seq, line_key, field, value, pool, by_user, reason, at, rate_basis, rate_ref, rate_priced_at) ' +
+      'SELECT ?, ?, COALESCE(MAX(seq), 0) + 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM survey_pack_entries WHERE pack_id = ?',
+    [d.newId(), pack_id, line_key, field, value, pool, actor.id, reason.trim(), d.now(), src.basis, src.ref, src.priced_at, pack_id]);
+}
+
+/** PHASE 159f: the sources a surveyor may give a rate they type (BCIS's own drafts carry theirs). */
+export const RATE_BASES = Object.freeze(['BCIS', 'QS_SCHEDULE', 'CONTRACTOR_INVOICE', 'PRICE_BOOK'] as const);
+export type RateSourceForm = { rate_basis?: string; rate_ref?: string; rate_priced_at?: string };
+
+/** A typed rate's source: all three, or none (then the rate has no source, and the pack is not approved with it). */
+function parseRateSource(f: RateSourceForm): { ok: true; src: { basis: string | null; ref: string | null; priced_at: string | null } } | { ok: false; why: string; field: string } {
+  const basis = (f.rate_basis ?? '').trim(), ref = (f.rate_ref ?? '').replace(/\s+/g, ' ').trim(), at = (f.rate_priced_at ?? '').trim();
+  if (basis === '' && ref === '' && at === '') return { ok: true, src: { basis: null, ref: null, priced_at: null } };
+  if (!(RATE_BASES as readonly string[]).includes(basis)) return { ok: false, field: 'rate_basis', why: 'Say where the rate comes from: BCIS, a quantity surveyor’s priced schedule, the contractor’s invoice, or a price book.' };
+  if (ref === '') return { ok: false, field: 'rate_ref', why: 'Say which one: the BCIS reference, the schedule’s item, the invoice number or the price book’s page.' };
+  if (ref.length > 200) return { ok: false, field: 'rate_ref', why: 'Keep the reference under 200 characters.' };
+  const d = parsePackDate(at);
+  if (!d.ok) return { ok: false, field: 'rate_priced_at', why: `The day the rate is priced at: ${d.why}` };
+  return { ok: true, src: { basis, ref, priced_at: packDateIso(d.value) } };
 }
 
 function audit(d: PackDeps, actor: Actor, view: PackView, what: string, line: string | null, fields: readonly string[]): void {
@@ -467,9 +557,12 @@ const PARSE: Readonly<Record<PackInputField, (raw: string) => ReturnType<typeof 
 });
 
 /** One of the four values that belong to the whole pack. Empty: our draft (or the evidence) again. */
-export function savePackValue(d: PackDeps, actor: Actor, job_id: string, f: { field: string; value: string; reason: string; seq: string }): PackResult {
+export function savePackValue(d: PackDeps, actor: Actor, job_id: string, f: { field: string; value: string; reason: string; seq: string } & RateSourceForm): PackResult {
   const field = PACK_INPUT_FIELDS.find((x) => x === f.field);
   if (field === undefined) return { ok: false, field: 'field', why: 'That is not one of the pack’s values.' };
+  const rs = parseRateSource(f);
+  if (!rs.ok) return { ok: false, why: rs.why, field: rs.field };
+  if (rs.src.basis !== null && (field !== 'building_rate' || f.value.trim() === '')) return { ok: false, field: 'rate_basis', why: 'A source goes with a rate you type. Leave it empty here.' };
   const raw = f.value.trim();
   let value: number | null = null;
   if (raw !== '') {
@@ -481,9 +574,33 @@ export function savePackValue(d: PackDeps, actor: Actor, job_id: string, f: { fi
     const now = view.inputs[INPUT_SUM_KEY[field]];
     const isMine = isEntry(now.source);
     if (value === null && !isMine) return { ok: false, field: 'value', why: 'Type a value. (An empty box puts our figure back, and this one is not yours to put back.)' };
-    if (value !== null && isMine && now.value === value) return { ok: false, field: 'value', why: 'That is already the value. Nothing changed.' };
-    insertEntry(d, actor, pack_id, null, field, value, null, f.reason);
+    const sameSource = now.source?.basis?.ref === (rs.src.ref ?? undefined);
+    if (value !== null && isMine && now.value === value && sameSource) return { ok: false, field: 'value', why: 'That is already the value. Nothing changed.' };
+    insertEntry(d, actor, pack_id, null, field, value, null, f.reason, rs.src);
     audit(d, actor, view, 'value', null, [field]);
+    return { ok: true };
+  });
+}
+
+/**
+ * PHASE 159f: THE PACK'S BCIS LOCATION — the area the location factor is read for, as the loaded location table names
+ * it. Empty puts the UK mean back. The surveyor's, with a reason. The factor is kept with it, so the version says what
+ * was used even if the table is imported again.
+ */
+export function savePackLocation(d: PackDeps, actor: Actor, job_id: string, f: { area: string; reason: string; seq: string }): PackResult {
+  const want = f.area.replace(/\s+/g, ' ').trim();
+  const here = bcisDataHere();
+  if (want !== '' && here.data === null) return { ok: false, field: 'area', why: `There is no BCIS location table to choose from: ${here.why}.` };
+  const loc = want === '' || here.data === null ? null : here.data.locations.find((l) => l.area.toLowerCase() === want.toLowerCase()) ?? null;
+  if (want !== '' && loc === null) return { ok: false, field: 'area', why: 'That area is not in the BCIS location table. Choose one from the list.' };
+  return begin(d, actor, job_id, f.reason, f.seq, ({ view, pack_id }) => {
+    const now = view.pricing.bcis.location.area;
+    if ((loc?.area ?? null) === now) return { ok: false, field: 'area', why: 'That is already the location. Nothing changed.' };
+    d.db.run(
+      'INSERT INTO survey_pack_entries (id, pack_id, seq, line_key, field, value, pool, by_user, reason, at, rate_ref) ' +
+        "SELECT ?, ?, COALESCE(MAX(seq), 0) + 1, NULL, 'location', ?, NULL, ?, ?, ?, ? FROM survey_pack_entries WHERE pack_id = ?",
+      [d.newId(), pack_id, loc === null ? null : Math.round(loc.factor * 1000), actor.id, f.reason.trim(), d.now(), loc?.area ?? null, pack_id]);
+    audit(d, actor, view, 'location', null, ['location']);
     return { ok: true };
   });
 }
@@ -599,7 +716,7 @@ export function saveWorks(d: PackDeps, actor: Actor, job_id: string, f: { event:
   });
 }
 
-export type LineForm = { line: string; qty: string; rate: string; qpct: string; pool: string; reason: string; seq: string };
+export type LineForm = { line: string; qty: string; rate: string; qpct: string; pool: string; reason: string; seq: string } & RateSourceForm;
 
 type Parsed = { qty: number | null; rate: number | null; qpct: number | null; pool: Pool | null };
 function parseLine(f: Omit<LineForm, 'line' | 'reason' | 'seq'>): { ok: true; v: Parsed } | { ok: false; why: string; field: string } {
@@ -619,6 +736,10 @@ function parseLine(f: Omit<LineForm, 'line' | 'reason' | 'seq'>): { ok: true; v:
 export function saveLine(d: PackDeps, actor: Actor, job_id: string, f: LineForm): PackResult {
   const p = parseLine(f);
   if (!p.ok) return { ok: false, why: p.why, field: p.field };
+  // PHASE 159f: a rate typed with its source; a source with no rate typed is refused, so nothing is half-said.
+  const rs = parseRateSource(f);
+  if (!rs.ok) return { ok: false, why: rs.why, field: rs.field };
+  if (rs.src.basis !== null && p.v.rate === null) return { ok: false, field: 'rate', why: 'Type the rate the source is for.' };
   return begin(d, actor, job_id, f.reason, f.seq, ({ view, pack_id }) => {
     const l = view.lines.find((x) => x.id === f.line);
     if (l === undefined) return { ok: false, field: 'line', why: 'That line is not in this pack.' };
@@ -626,7 +747,8 @@ export function saveLine(d: PackDeps, actor: Actor, job_id: string, f: LineForm)
     const changed: string[] = [];
     // Typing the draft's own value stamps it as theirs; typing their own value again changes nothing.
     if (p.v.qty !== null && !(l.qty_milli.value === p.v.qty && isEntry(l.qty_milli.source))) { insertEntry(d, actor, pack_id, l.id, 'qty', p.v.qty, null, f.reason); changed.push('qty'); }
-    if (p.v.rate !== null && !(l.rate_pence.value === p.v.rate && isEntry(l.rate_pence.source))) { insertEntry(d, actor, pack_id, l.id, 'rate', p.v.rate, null, f.reason); changed.push('rate'); }
+    const sameSource = l.rate_pence.source?.basis?.kind === (rs.src.basis ?? undefined) && l.rate_pence.source?.basis?.ref === (rs.src.ref ?? undefined);
+    if (p.v.rate !== null && !(l.rate_pence.value === p.v.rate && isEntry(l.rate_pence.source) && sameSource)) { insertEntry(d, actor, pack_id, l.id, 'rate', p.v.rate, null, f.reason, rs.src); changed.push('rate'); }
     if (p.v.qpct !== null && !(l.qpct_bp.value === p.v.qpct && isEntry(l.qpct_bp.source))) { insertEntry(d, actor, pack_id, l.id, 'qpct', p.v.qpct, null, f.reason); changed.push('qpct'); }
     if (p.v.pool !== null && !(l.pool === p.v.pool && isEntry(l.pool_source))) { insertEntry(d, actor, pack_id, l.id, 'pool', null, p.v.pool, f.reason); changed.push('pool'); }
     if (changed.length === 0) return { ok: false, why: 'Nothing changed. Type a new value in at least one box.' };
@@ -665,7 +787,9 @@ export function setLineRemoved(d: PackDeps, actor: Actor, job_id: string, f: { l
 }
 
 /** Add a line the fixture list does not have. */
-export function addLine(d: PackDeps, actor: Actor, job_id: string, f: { label: string; unit: string; qty: string; rate: string; qpct: string; pool: string; reason: string; seq: string }): PackResult {
+export function addLine(d: PackDeps, actor: Actor, job_id: string, f: { label: string; unit: string; qty: string; rate: string; qpct: string; pool: string; reason: string; seq: string } & RateSourceForm): PackResult {
+  const rs = parseRateSource(f);
+  if (!rs.ok) return { ok: false, why: rs.why, field: rs.field };
   const label = f.label.trim().replace(/\s+/g, ' ');
   const unit = f.unit.trim().replace(/\s+/g, ' ');
   if (label === '' || label.length > 200) return { ok: false, field: 'label', why: 'Name the line, in under 200 characters.' };
@@ -680,7 +804,7 @@ export function addLine(d: PackDeps, actor: Actor, job_id: string, f: { label: s
     d.db.run('INSERT INTO survey_pack_added_lines (id, pack_id, label, unit, added_by, added_at, reason) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [id, pack_id, label, unit, actor.id, d.now(), f.reason.trim()]);
     if (p.v.qty !== null) insertEntry(d, actor, pack_id, id, 'qty', p.v.qty, null, f.reason);
-    if (p.v.rate !== null) insertEntry(d, actor, pack_id, id, 'rate', p.v.rate, null, f.reason);
+    if (p.v.rate !== null) insertEntry(d, actor, pack_id, id, 'rate', p.v.rate, null, f.reason, rs.src);
     if (p.v.qpct !== null) insertEntry(d, actor, pack_id, id, 'qpct', p.v.qpct, null, f.reason);
     if (p.v.pool !== null) insertEntry(d, actor, pack_id, id, 'pool', null, p.v.pool, f.reason);
     // An added line with nothing typed still moves the counter, so an older page cannot miss it.

@@ -191,14 +191,35 @@ async function main(): Promise<number> {
 
   if (cmd === 'import-bcis-index') {
     /* PHASE 155 (line 4). The BCIS index from a file Lakhbir downloads, kept OUTSIDE the repository (src/web/bcis-index.ts). */
-    const file = process.argv[3];
-    if (file === undefined) { console.error('Usage: node src/cli.ts import-bcis-index <the CSV downloaded from BCIS>'); return 1; }
+    /* PHASE 159f: --tpi names it BCIS's All-in Tender Price Index, the series the pack's drafts are indexed by. */
+    const args = process.argv.slice(3);
+    const tpi = args.includes('--tpi');
+    const file = args.find((x) => !x.startsWith('--'));
+    if (file === undefined) { console.error('Usage: node src/cli.ts import-bcis-index [--tpi] <the CSV downloaded from BCIS>'); return 1; }
     const { readFileSync } = await import('node:fs');
     const { importBcisIndex } = await import('./web/bcis-index.ts');
-    const r = importBcisIndex(readFileSync(file, 'utf8'), file, new Date().toISOString());
+    const r = importBcisIndex(readFileSync(file, 'utf8'), file, new Date().toISOString(), process.env, undefined, tpi ? 'TPI' : 'BPI');
     if (!r.ok) { console.error(r.why); return 1; }
     console.log(`${r.points} index points, ${r.from} to ${r.to}, kept at ${r.path}${r.passed_over === 0 ? '' : ` (${r.passed_over} row${r.passed_over === 1 ? '' : 's'} with no figure passed over)`}. ` +
-      'The survey pack does not use it yet: wiring the cost model into the pack is Phase 157.');
+      'The survey pack reads it for chapter 11 and to bring every rate to the purchase date.');
+    return 0;
+  }
+
+  if (cmd === 'import-bcis-data') {
+    /* PHASE 159f. BCIS's exports — the average prices by building function (required), the elemental analyses and the
+       location factors — kept OUTSIDE the repository (src/web/bcis-data.ts). The pack drafts its rates from them. */
+    const args = process.argv.slice(3);
+    const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
+    const rates = opt('--rates');
+    if (rates === undefined) { console.error('Usage: node src/cli.ts import-bcis-data --rates <average prices CSV> [--elements <elemental CSV>] [--locations <location factors CSV>] [--base 2026-04]'); return 1; }
+    const { readFileSync } = await import('node:fs');
+    const { importBcisData } = await import('./web/bcis-data.ts');
+    const read = (f: string | undefined) => (f === undefined ? undefined : { text: readFileSync(f, 'utf8'), name: f });
+    const el = read(opt('--elements')), lo = read(opt('--locations')), base = opt('--base');
+    const r = importBcisData({ rates: { text: readFileSync(rates, 'utf8'), name: rates }, ...(el === undefined ? {} : { elements: el }), ...(lo === undefined ? {} : { locations: lo }) },
+      new Date().toISOString(), base === undefined ? {} : { base });
+    if (!r.ok) { console.error(r.why); return 1; }
+    console.log(`${String(r.types)} building functions, ${String(r.elements)} element rates and ${String(r.locations)} location factors, rebased to ${r.base}, kept at ${r.path}. The survey pack drafts its rates from them.`);
     return 0;
   }
 

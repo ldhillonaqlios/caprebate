@@ -31,7 +31,7 @@ import { BAND, FUNNEL } from './engine.ts';
 /** PHASE 159c: the funnel's own words for each kind of event. */
 const FUNNEL_LABEL = (FUNNEL as unknown as { EVENT_LABEL: Record<string, string> }).EVENT_LABEL;
 import { poundsWords, percentWords, quantityWords } from './pack-sums.ts';
-import { indexReading, insuranceReading, prelimsReading, rateFlagReading, INCLUDES_WORDS } from './pack-cost-model.ts';
+import { indexReading, insuranceReading, prelimsReading, rateFlagReading, shareFlagReading, INCLUDES_WORDS } from './pack-cost-model.ts';
 import { packDateIso, propertyLine } from './survey-pack.ts';
 import type { Env } from '../connectors/place.ts';
 
@@ -195,6 +195,10 @@ function indexRows(c: Ctx): SheetRow[] {
     { label: 'Purchase date', value: r.purchase, from: r.purchase_from, missing: NOT_ON_FILE, internal: true },
     { label: 'Valuation date (the date the rebuild cost is priced at)', value: packDateIso(vd.value), from: 'the surveyor', ...(vd.source?.by_name ? { by: vd.source.by_name } : {}), missing: 'not given yet', internal: true },
     { label: 'Index factor, purchase date to valuation date', value: r.words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
+    // PHASE 159f: the BCIS drafts, and the one day every rate is priced at (C19).
+    { label: 'BCIS drafts', value: c.v.pricing.bcis.words, from: 'worked out', missing: NOT_WORKED, internal: true },
+    { label: 'Every rate priced at', value: c.v.pricing.priced_at === null ? null : `${c.v.pricing.priced_at}${c.v.pricing.priced_at === c.v.pricing.purchase ? ' (the purchase date)' : ''}`,
+      from: 'worked out', missing: c.v.pricing.mixed.length > 0 ? `not one day: ${c.v.pricing.mixed.join('; ')}` : 'no rate yet', internal: true },
   ];
 }
 
@@ -395,7 +399,10 @@ function findings(c: Ctx): Sheet {
       { label: 'Items from documents', value: `${String(live.length - site)} of ${String(live.length)}`, from: 'worked out', missing: NOT_WORKED },
       { label: 'How much evidence this job needs', value: level?.level_words ?? null, from: 'worked out', missing: NOT_WORKED },
       // Phase 153e line 14 (Word question 149), wired by Phase 157a: the phase3 module's £/m² review flag.
-      { label: 'Whole-building rate against approved packs', value: rateFlagReading(db, v).words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
+      { label: 'Whole-building rate against approved packs', value: rateFlagReading(db, v, undefined, c.env).words, from: 'the cost model (test)', missing: NOT_WORKED, internal: true },
+      // PHASE 159f (C21, item 6): the share against the sector's ceiling, and section 562 the residual way beside ours.
+      { label: 'The share that qualifies against the sector’s ceiling', value: shareFlagReading(v).words, from: 'worked out', missing: NOT_WORKED, internal: true },
+      { label: 'Section 562 the residual way', value: v.pricing.residual.words, from: 'worked out', missing: NOT_WORKED, internal: true },
       wordsRow(c, 'narrative_description'), wordsRow(c, 'narrative_condition'), wordsRow(c, 'narrative_departures'), wordsRow(c, 'narrative_opinion'),
     ],
     words: ['narrative_description', 'narrative_condition', 'narrative_departures', 'narrative_opinion'], items: [], carries: '153e lines 1 to 3, 14 and 15 (14 wired by Phase 157a)',
