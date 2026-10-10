@@ -188,8 +188,23 @@ export function companyFields(p: Record<string, unknown>): Record<string, unknow
   if (day !== null && month !== null && /^\d{1,2}$/.test(day) && /^\d{1,2}$/.test(month)) f.accounts_year_end = `${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   const created = str(p['date_of_creation']);
   if (created !== null && /^\d{4}-\d{2}-\d{2}$/.test(created)) f.incorporation_date = created;
+  /* PHASE 159g (L2): the latest accounts' type and the day they were made up to, from the profile. A dormant company
+     carries on no trade and no property business, so it has no tax for allowances to relieve. */
+  const last = obj(obj(p['accounts'])?.['last_accounts']);
+  const type = str(last?.['type']);
+  if (type !== null && /^[a-z-]{2,40}$/.test(type)) f.accounts_type = type;
+  const made = str(last?.['period_end_on']) ?? str(last?.['made_up_to']);
+  if (made !== null && /^\d{4}-\d{2}-\d{2}$/.test(made)) f.accounts_made_up_to = made;
   return f;
 }
+
+/** PHASE 159g (L2): true only where the register says the latest accounts are dormant accounts. Not known is not dormant. */
+export function isDormant(accounts_type: unknown): boolean {
+  return typeof accounts_type === 'string' && accounts_type.trim().toLowerCase() === 'dormant';
+}
+
+/** The words for a dormant company, wherever one is shown. */
+export const DORMANT_WORDS = 'This company files dormant accounts. A dormant company has no tax to relieve. Which business owns or uses the building?';
 
 const fail = (call: CallResult, calls: CallResult[]): LookupResult => ({ kind: 'CALL_FAILED', call, calls });
 
@@ -262,11 +277,15 @@ export const companiesHouse = defineSteppedConnector<CompanyQuery>({
     const filings = history.outcome !== 'OK' ? ' Its filings could not be read this time.'
       : historyBody === null ? ' Its filings came back in a form we could not read.' : ` ${accountsWords(accounts)}`;
 
+    // PHASE 159g (L2): the filing history's type is the newer reading where it was read.
+    if (accounts?.accounts_type !== null && accounts?.accounts_type !== undefined && /^[a-z-]{2,40}$/.test(accounts.accounts_type)) fields.accounts_type = accounts.accounts_type;
+    if (accounts?.made_up_to !== null && accounts?.made_up_to !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(accounts.made_up_to)) fields.accounts_made_up_to = accounts.made_up_to;
+    const dormant = isDormant(fields['accounts_type']) ? ` ${DORMANT_WORDS}` : '';
     const bundle: Bundle = {
       records: [{ sourceId: 'CH_COMPANY', entityId: number, fields }],
       facts: { ...fields, ...(accounts === null ? {} : { accounts_filed: accounts }) },
     };
-    return { kind: 'READ', bundle, calls, note: `looked up — found ${how}, and we keep the company’s facts and where they came from.${filings}` };
+    return { kind: 'READ', bundle, calls, note: `looked up — found ${how}, and we keep the company’s facts and where they came from.${filings}${dormant}` };
   },
 });
 

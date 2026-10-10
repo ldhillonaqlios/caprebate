@@ -217,7 +217,7 @@ export type ProcedureStage = {
 
 export const PROCEDURE_STAGES: readonly ProcedureStage[] = Object.freeze([
   { key: 'ENQUIRY', sop: 1, label: 'Enquiry', owner: 'Cap Rebate principal … or analyst',
-    gate: 'does the enquiry fit Cap Rebate\'s scope (a trading business with healthcare property in the UK — England and Wales at launch, Scotland second, Northern Ireland third — the owner or acting with the owner\'s authority, no existing claim conflict)?',
+    gate: 'does the enquiry fit Cap Rebate\'s scope (a business with a qualifying activity — a trade, a profession or a property business — and healthcare property in the UK — England and Wales at launch, Scotland second, Northern Ireland third — the owner or acting with the owner\'s authority, no existing claim conflict)?',
     exit: 'DECLINED_AT_ENQUIRY', client: 'ASSESSMENT_SUBMITTED' },
   { key: 'ASSESSMENT', sop: 2, label: 'Assessment',
     owner: 'Client (completes the assessment and sees the indicative figure as soon as it is finished); Cap Rebate staff (triage the filled assessment afterwards, in the back office).',

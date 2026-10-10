@@ -21,6 +21,7 @@
  * Every number on these pages says where it came from: the evidence, our draft, or the surveyor's own name. Every form
  * carries the pack's counter (`seq`), so a change from an out-of-date page is refused, never applied blind.
  */
+import { PRICE_PAID_ATTRIBUTION } from '../connectors/price-paid.ts';
 import { VAT_POSITION_WORDS } from './pack-vat.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
@@ -651,10 +652,27 @@ function inputsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchP
           <p class="help">${w.hint} Leave it empty to put our figure back.</p>
           <div class="sendrow"><button class="cta" type="submit">Save — every total follows</button><a href="${base(v.job.id)}?ch=9#l-${field}">Cancel</a></div></form></td></tr>` : raw('')}`;
     })}</tbody></table>
+    ${leadsBlock(v)}
     ${bcisBlock(d, v, ch, q)}
     ${v.job.sector === 'supported_living' ? sharedAreaBlock(d, v, ch) : raw('')}
     ${worksBlock(d, v, ch)}
     ${sitePlanPanel(d, v, ch)}`;
+}
+
+/**
+ * PHASE 159g — WHAT THE REGISTERS ALREADY SAY, for the surveyor to confirm: Price Paid's sale at the address (a lead,
+ * never the price, where it is category B or "Other"), a site area far larger than the building (never the plot), and
+ * how the client holds the building. Shown here; nothing in it is counted.
+ */
+function leadsBlock(v: P.PackView): Safe {
+  const l = v.leads;
+  return h`<section class="pk-leads" id="l-leads"><h2>What the registers say</h2>
+    <p class="help">For you to confirm. None of this is counted until you put a value in above.</p>
+    <ul>
+      <li>${l.tenure}</li>
+      ${l.price_paid === null ? raw('') : h`<li>${l.price_paid} <span class="help">${PRICE_PAID_ATTRIBUTION}</span></li>`}
+      ${l.site_area === null ? raw('') : h`<li><strong>${l.site_area}</strong></li>`}
+    </ul></section>`;
 }
 
 /**
@@ -669,7 +687,7 @@ function bcisBlock(_d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchPara
   return h`<section class="pk-bcis" id="l-location"><h2>Rates from BCIS</h2>
     ${b.kind === 'PLACEHOLDER' ? h`<p class="formerr" role="note"><strong>${PLACEHOLDER_WORDS}.</strong> Every rate drafted here is a test rate.</p>` : raw('')}
     <p>${b.words}</p>
-    <p>Location: <b>${b.location.words}</b>. ${areas.length > 0 && v.may_edit && v.property !== null && !open ? h`<a href="${base(v.job.id)}?ch=9&edit=location#l-location">Choose the area</a>` : raw('')}</p>
+    <p>Location: <b>${b.location.words}</b>${v.pricing.location_from === 'COUNCIL' ? ', drafted from the property’s council area' : ''}. ${areas.length > 0 && v.may_edit && v.property !== null && !open ? h`<a href="${base(v.job.id)}?ch=9&edit=location#l-location">Choose the area</a>` : raw('')}</p>
     ${open ? h`<form method="post" action="${base(v.job.id)}/location">${hidden(v, ch)}<div class="pk-fields">
       <label>BCIS area <select class="fi" name="area"><option value="">The UK mean</option>${areas.map((a) => h`<option${a === b.location.area ? raw(' selected') : raw('')}>${a}</option>`)}</select></label>
       <label>Why? <input class="fi pk-why" name="reason" maxlength="500" required></label></div>

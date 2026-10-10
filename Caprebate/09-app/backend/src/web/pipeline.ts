@@ -37,6 +37,7 @@
  * and this file owns how it moves.
  */
 
+import { qualifyingActivityEvidence } from './who-claims.ts';
 import { claimRoutes, legalDeadlineNeed, routesWhy } from './claim-route.ts';
 import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
@@ -288,10 +289,18 @@ export type CheckKey = 'UK_HEALTHCARE_PROPERTY' | 'TRADING_CLIENT' | 'OWNER_OR_A
  * TRADING, NOT OWNER-OCCUPIED. The map's gate says "owner-occupied or recently
  * acquired"; rule 13(a) settles that commercial means the CLIENT, not the
  * building, so the check is that the client trades — and supported living is in.
+ *
+ * PHASE 159g (item 2, the coverage matrix 2.5): A QUALIFYING ACTIVITY, NOT ONLY A
+ * TRADE. CAA 2001 s.15(1): a trade, a profession or vocation, and an ordinary UK
+ * property business are all qualifying activities. A landlord or a property
+ * company that lets a surgery or a care home to another business can claim on the
+ * fixtures it owns; the old wording turned them away, which the law does not. The
+ * check's key stays TRADING_CLIENT, so every answer already recorded still reads.
+ * OUR READING, put to the tax adviser (Word question 263).
  */
 export const ENQUIRY_CHECKS: Readonly<Record<CheckKey, string>> = Object.freeze({
   UK_HEALTHCARE_PROPERTY: 'The property is healthcare property in the UK — England and Wales at launch, Scotland second, Northern Ireland third',
-  TRADING_CLIENT: 'The client is a trading business — commercial means the client, not the building, so supported living is in',
+  TRADING_CLIENT: 'The client has a qualifying activity: it trades, works in a profession, or lets the building to a business',
   OWNER_OR_AUTHORISED: 'The enquirer is the owner, or acts for the owner with their consent',
   NO_CLAIM_CONFLICT: 'There is no existing claim conflict',
 });
@@ -371,8 +380,9 @@ function checkReading(key: CheckKey, r: CheckDbRow | undefined): CheckReading {
  *
  * DERIVE, DO NOT RE-KEY, and here is why a derived answer does not simply fill
  * the check in: none of these is the same fact as the check. A healthcare sector
- * is not a UK property; paying tax is not trading (a property investment company
- * pays tax and is not a client under 13(a)); "how did you come by this one" is
+ * is not a UK property; paying tax is not a qualifying activity (a dormant
+ * company pays nothing, and a holding company that neither trades nor lets has
+ * none — Phase 159g; a landlord that lets the building has one); "how did you come by this one" is
  * not authority to act; and a client's own "no prior claim" is not the same as no
  * conflict. So the evidence sits beside the question, with its source, and a
  * person answers it — which is SOP 1's own owner doing SOP 1's own step.
@@ -397,12 +407,14 @@ export function enquiryEvidence(
       [latest.id]);
     for (const a of answers) {
       const line = `${a.question_text} — ${answerLabel(a.state, a.value)} (the client’s own answer)`;
-      if (a.question_id === 'Q1b' || a.question_id === 'Q1b-profit') out.TRADING_CLIENT.push(line);
+      if (a.question_id === 'Q1b' || a.question_id === 'Q1b-profit' || /^Q2-\d+-use$/.test(a.question_id)) out.TRADING_CLIENT.push(line);
       if (/^Q2-\d+-(address|sector)$/.test(a.question_id)) out.UK_HEALTHCARE_PROPERTY.push(line);
       if (/^Q2-\d+-trigger$/.test(a.question_id) || /^Q2-\d+-entity$/.test(a.question_id)) out.OWNER_OR_AUTHORISED.push(line);
       if (a.question_id === 'Q1' || a.question_id === 'Q1a') out.NO_CLAIM_CONFLICT.push(line);
     }
   }
+  // PHASE 159g (L2, item 2): the register's company — a dormant one flagged — and how the client holds each building.
+  out.TRADING_CLIENT.push(...qualifyingActivityEvidence(db, business_id));
   for (const p of db.all<{ business_id: string; label: string; existing_ca_claimed: string | null }>(
     'SELECT business_id, label, existing_ca_claimed FROM properties WHERE business_id = ? ORDER BY created_at ASC, id ASC', [business_id])) {
     // The CRM follow-on: derived from the client's own answer where it settles it, and said where it came from.

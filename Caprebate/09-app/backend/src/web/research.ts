@@ -82,6 +82,7 @@
  * any call outside. The land boundary's own row in the table points at those lines.
  */
 
+import { keepCouncilArea, fillTenureFromRegisters } from './who-claims.ts';
 import type { Db } from '../db.ts';
 import { authorise, can, type Actor } from '../authz.ts';
 import type { AuditLog } from '../audit.ts';
@@ -921,6 +922,9 @@ export async function consultAllowed(
    * condition on top — a signed engagement, whatever the source's tier — and it asserts that itself.
    */
   picks?: Readonly<Record<string, PickQuery>>,
+  /** PHASE 159g (item 7): where the postcode check answers on this click, its council area is handed back here, for
+   *  the caller to keep on the property inside its own transaction. Nothing is written in this function. */
+  found?: { council?: { property_id: string; area: string } },
 ): Promise<SourceOutcome[]> {
   const out: SourceOutcome[] = [];
   let subject = researchSubject(d.db, business_id);
@@ -941,6 +945,7 @@ export async function consultAllowed(
       deps: { audit: d.audit, now: d.now, transport: o.transport, ...(o.limiter === undefined ? {} : { limiter: o.limiter }), ...(o.sleep === undefined ? {} : { sleep: o.sleep }) },
     });
     const nation = postcodeChecked.state === 'CHECKED' ? nationFromCountry(postcodeChecked.country) : null;
+    if (postcodeChecked.state === 'CHECKED' && postcodeChecked.council_area !== null && found !== undefined) found.council = { property_id: subject.property.id, area: postcodeChecked.council_area };
     if (nation !== null) subject = { ...subject, property: { ...subject.property, jurisdiction: nation } };
   }
   for (const x of [...decided].sort((a, b) => order.indexOf(a.entry.source_id) - order.indexOf(b.entry.source_id))) {
@@ -982,7 +987,10 @@ export async function consultAllowed(
         postcode: subject.property.postcode, gate: gateStatus({ precondition: registryGate() }),
         deps: { audit: d.audit, now: d.now, transport: o.transport, ...(o.limiter === undefined ? {} : { limiter: o.limiter }), ...(o.sleep === undefined ? {} : { sleep: o.sleep }) },
       });
-      if (pc.state === 'CHECKED' && pc.council_area !== null) query = { ...(query as Record<string, unknown>), council: pc.council_area };
+      if (pc.state === 'CHECKED' && pc.council_area !== null) {
+        query = { ...(query as Record<string, unknown>), council: pc.council_area };
+        if (found !== undefined) found.council = { property_id: subject.property.id, area: pc.council_area };
+      }
     }
     /* The pick's two keys are added to the query the builder made, rather than passed through every builder: a
        builder's job is to say what to ask the register about this client, and a pick does not change that — it
@@ -1080,8 +1088,9 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
   const decided = panel.sources.filter((s) => s.state !== 'FIRED' && !s.by_hand).map((s) => ({
     entry: s, ...stateUnderGates(s, s.state === 'FAILED' ? 'NOT_RUN' : s.state, freeGateFor(free, s.source_id, env), engagement, lookupsDeclined(d.db, business_id)),
   }));
+  const found: { council?: { property_id: string; area: string } } = {};
   const outcomes = await consultAllowed(d, actor, business_id, decided,
-    { free_gate_open: free.open, engagement_signed: engagement.signed === true });
+    { free_gate_open: free.open, engagement_signed: engagement.signed === true }, undefined, found);
   /* PHASE 151b: ONE MORE STEP — who signed, checked against the registers, under the same gates and switches. */
   const signatory = await runSignatoryCheck(d, actor, business_id,
     { free_gate_open: free.open, engagement_signed: engagement.signed === true }, outcomes);
@@ -1115,6 +1124,10 @@ export async function runResearch(d: RunDeps, actor: Actor, business_id: string)
     );
     checked = storeSignatoryChecks(d, actor, business_id, signatory, at);
     storeSiteAreaRuns(d, actor, business_id, site, at);
+    /* PHASE 159g (items 4 and 7): what this click read, kept on the property where nothing is kept yet — the council
+       area the postcode check gave, and the tenure from the title check or Price Paid. Never over a recorded value. */
+    if (found.council !== undefined) keepCouncilArea(d.db, found.council.property_id, found.council.area, 'the postcode check in the research (postcodes.io)', at);
+    for (const p of d.db.all<{ id: string }>('SELECT id FROM properties WHERE business_id = ?', [business_id])) fillTenureFromRegisters(d.db, p.id, at);
   });
   auditSignatoryChecks(d, actor, business_id, checked, at);
   // PHASE 158b (F30): a signed client's step becomes "We research your property" once a register has answered.

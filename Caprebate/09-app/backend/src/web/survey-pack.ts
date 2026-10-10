@@ -37,7 +37,8 @@ import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, 
 import { legalVerdictForJob } from './pack-legal.ts';
 import { applyGrants, type GrantReading, type GrantSwitches } from './pack-grants.ts';
 import { acquisitionDateReading, elementName, packGrantsFor } from './claim-facts.ts';
-import { bcisDataHere, bcisDrafts, indexBetween, type BcisDraft, type RateBasis } from './bcis-data.ts';
+import { bcisDataHere, bcisDrafts, bcisLocationNamed, indexBetween, type BcisDraft, type RateBasis } from './bcis-data.ts';
+import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAreaFlag, siteAreaOf } from './who-claims.ts';
 import { shippedGrantSwitches } from './grant-checks.ts';
 
 /**
@@ -118,6 +119,19 @@ export type Pricing = {
   /** Counted rates with no source: the whole-building rate, or a line's label. */
   readonly unsourced: readonly string[];
   readonly residual: { readonly qualifying_pence: number | null; readonly words: string };
+  /** PHASE 159g (item 7): where the BCIS location came from — the surveyor's choice, the property's council area, or
+   *  neither (the UK mean). The council area is a draft: still the surveyor's to change, with a reason. */
+  readonly location_from: 'SURVEYOR' | 'COUNCIL' | null;
+};
+
+/** PHASE 159g: what the registers already say, for the surveyor to confirm — never a value the pack counts. */
+export type RegisterLeads = {
+  /** Price Paid's sale at the address, as a lead or a price, in words (items 3 and 4); null when none is held. */
+  readonly price_paid: string | null;
+  /** A site area far larger than the building (item 5); null when there is none to flag. */
+  readonly site_area: string | null;
+  /** How the client holds the building and its tenure (items 2 and 4). */
+  readonly tenure: string;
 };
 
 export type ViewLine = PackLine & {
@@ -173,6 +187,8 @@ export type PackView = {
   readonly purchase_w3: boolean;
   /** PHASE 159f: how the rates are priced — the BCIS drafts, one day, their sources, and section 562 both ways. */
   readonly pricing: Pricing;
+  /** PHASE 159g: the register leads for chapter 9. */
+  readonly leads: RegisterLeads;
   /** The pack's counter as this view was read. A change must carry it back. */
   readonly seq: number;
   readonly may_edit: boolean;
@@ -333,7 +349,13 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   const acq = property === null ? null : acquisitionDateReading(d.db, property.id);
   const purchase = acq !== null && acq.known && typeof acq.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(acq.value) ? acq.value.slice(0, 10) : null;
   const locEntry = last(null, 'location');
-  const area = locEntry !== undefined && locEntry.value !== null ? locEntry.rate_ref : null;
+  /* PHASE 159g (item 7, carried from 159f): THE LOCATION FROM THE PROPERTY'S COUNCIL AREA. Until the surveyor chooses
+     (an entry, the UK mean included), the drafts are read at the property's council area where the loaded BCIS table
+     names it. The surveyor's choice always wins. */
+  const council = locEntry !== undefined || property === null ? null : councilAreaOf(d.db, property.id);
+  const fromCouncil = council === null ? null : bcisLocationNamed(council.area);
+  const area = locEntry !== undefined ? (locEntry.value !== null ? locEntry.rate_ref : null) : fromCouncil;
+  const location_from: Pricing['location_from'] = locEntry !== undefined && locEntry.value !== null ? 'SURVEYOR' : locEntry === undefined && fromCouncil !== null ? 'COUNCIL' : null;
   const bcis = bcisDrafts({ sector: job.sector, area, purchase, lineIds: linesForSector(job.sector).map((t) => t.element_id) });
   const draftOf = (x: { value: number; basis: RateBasis; text: string } | null | undefined): Valued =>
     x === null || x === undefined ? none : { value: x.value, source: { kind: 'DRAFT', text: x.text, basis: x.basis } };
@@ -453,7 +475,13 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
       const q = Math.max(0, Math.min(ps.building_price_pence, ps.elements_qualifying_pence, ps.building_price_pence - shell));
       return { qualifying_pence: q, words: `The residual way: the building less its own rebuild cost (${(shell / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP' })}) leaves ${(q / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP' })} for the fixtures. The proportional way, which the report uses, gives ${((ps.qualifying_pence ?? 0) / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP' })}. Which is used is a question for the surveyor and the tax adviser.` };
     })();
-  const pricing: Pricing = { bcis, priced_at: days.size === 1 ? [...days][0] ?? null : null, purchase, mixed, unsourced, residual };
+  const pricing: Pricing = { bcis, priced_at: days.size === 1 ? [...days][0] ?? null : null, purchase, mixed, unsourced, residual, location_from };
+  // PHASE 159g: what the registers already say, for chapter 9 — shown, never counted.
+  const leads: RegisterLeads = property === null ? { price_paid: null, site_area: null, tenure: 'No property is chosen for this pack.' } : {
+    price_paid: pricePaidSale(d.db, job.business_id, property.id)?.words ?? null,
+    site_area: siteAreaFlag(siteAreaOf(d.db, job.business_id, property.id), inputs.gia_milli_m2.value === null ? floorAreaForSite(d.db, job.business_id, property.id) : inputs.gia_milli_m2.value / 1000),
+    tenure: propertyTenure(d.db, property.id).words,
+  };
 
   const cost: CostValues = {
     valuation_date: resolve(null, 'valuation_date', none), insurance: resolve(null, 'insurance', none),
@@ -480,7 +508,7 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
   return {
     job, pack_id: pack?.id ?? null, property, property_choices: choices,
     inputs, lines, sums: combined(reading.sums, applies && !purchaseW3, works, onClaim.length), grants, vat, shared_area, cost,
-    events, purchase_applies: applies, purchase_sums: reading.sums, works, purchase_w3: purchaseW3, pricing,
+    events, purchase_applies: applies, purchase_sums: reading.sums, works, purchase_w3: purchaseW3, pricing, leads,
     seq: entries.length === 0 ? 0 : (entries[entries.length - 1] as EntryRow).seq,
     may_edit: can(actor, 'surveyor_job.commit', obj),
     changes,

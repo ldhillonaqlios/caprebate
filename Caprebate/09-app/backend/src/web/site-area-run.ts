@@ -31,6 +31,7 @@
  * WHAT NEVER APPEARS HERE: the polygon, a map of it, or any coordinate from it. A line carries a number, a grade, the
  * councils read and a reason.
  */
+import { siteAreaFlag, floorAreaForSite } from './who-claims.ts';
 import type { Db } from '../db.ts';
 import type { Actor } from '../authz.ts';
 import type { AuditLog } from '../audit.ts';
@@ -229,9 +230,15 @@ function held(db: Db, business_id: string, p: PropertyRow): SiteAreaLine | null 
     words: area === null
       ? 'We hold a site area from HM Land Registry\'s land boundary, but it could not be read back.'
       : `Site area ${area} square metres, from HM Land Registry's land boundary, marked confidence ${grade ?? 'not stated'}. ` +
-        'For our own checks only: the boundary itself is not kept and never goes in a report.',
+        'For our own checks only: the boundary itself is not kept and never goes in a report.' + flagFor(db, business_id, p.id, area),
     site_area_m2: area, grade, at: r.obtained_at,
   };
+}
+
+/** PHASE 159g (item 5): a site area far larger than the building is flagged for the surveyor, never used as the plot. */
+function flagFor(db: Db, business_id: string, property_id: string, area: number | null): string {
+  const f = siteAreaFlag(area, floorAreaForSite(db, business_id, property_id));
+  return f === null ? '' : ` ${f}`;
 }
 
 /** PHASE 156f (B4): the area from Homedata's title outline for this property, as a line, or null. */
@@ -253,7 +260,7 @@ function heldFromTitleOutline(db: Db, business_id: string, p: PropertyRow): Site
     words: area === null
       ? `We hold a site area ${TITLE_BOUNDARY_LABEL}, but it could not be read back.`
       : `Site area ${area} square metres, ${TITLE_BOUNDARY_LABEL}, marked confidence ${grade ?? 'not stated'}. ` +
-        'For our own checks only: the outline itself is not kept and never goes in a report.',
+        'For our own checks only: the outline itself is not kept and never goes in a report.' + flagFor(db, business_id, p.id, area),
     site_area_m2: area, grade, at: r.obtained_at,
   };
 }

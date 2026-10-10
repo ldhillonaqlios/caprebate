@@ -21,6 +21,7 @@
  * NOTHING HERE DECIDES: the surveyor records the inspection basis (survey-evidence.ts, chapter 2), and approval waits
  * for that, as before. This is a reading beside it.
  */
+import { isPricePaidLead } from './who-claims.ts';
 import type { Db } from '../db.ts';
 import { checklistView, type ChecklistView } from './survey-evidence.ts';
 import { mandatoryDocumentNeeds } from './mandatory-documents.ts';
@@ -113,7 +114,10 @@ function pricePaidPence(db: Db, job: JobRow): number | null {
     const r = pid === null ? (rows.length === 1 ? rows[0] : undefined) : rows.find((x) => x.property_id === pid);
     if (r === undefined) continue;
     try {
-      const p = (JSON.parse(r.fields_json) as Record<string, unknown>)['price_paid'];
+      const f = JSON.parse(r.fields_json) as Record<string, unknown>;
+      // PHASE 159g (L11): a Price Paid sale of category B or type "Other" is a lead for the surveyor, never the price.
+      if (source === 'HMLR_PPD' && isPricePaidLead(f)) continue;
+      const p = f['price_paid'];
       if (typeof p === 'number' && Number.isFinite(p) && p > 0) return Math.round(p * 100);
     } catch { /* unreadable: not known */ }
   }

@@ -6,8 +6,8 @@
  * asks Companies House (its public search, /search/companies) and the page lists up to eight companies to choose from,
  * or "none of these". The page itself makes no call: every search is a form sent to this server, so the key stays here.
  *
- * WHAT IS KEPT FROM A RESULT, AND ONLY THAT: the company's name, its number, its status and its registered office's
- * POSTCODE — the source register's permitted fields for CH_COMPANY (company_number, company_status,
+ * WHAT IS KEPT FROM A RESULT, AND ONLY THAT: the company's name, its number, its status, its registered office's
+ * POSTCODE and (Phase 159g) the type of its latest accounts — the source register's permitted fields for CH_COMPANY (company_number, company_status,
  * registered_office_postcode), and the name the person is choosing as their own. Never an officer, a director or an
  * address line. THE COMPANY'S TYPE ONLY WITH COMPANY_TYPE_FROM_REGISTER ON (below, Phase 153b, Word question 198): the
  * register now lists `company_type` as a PROPOSED permitted field for the data protection officer to agree, and while
@@ -51,7 +51,37 @@ export type CompanyCandidate = {
   readonly office_postcode: string | null;
   /** Companies House's company type ("ltd", "plc", "llp" ...). Kept ONLY with COMPANY_TYPE_FROM_REGISTER on. */
   readonly company_type?: string | null;
+  /** PHASE 159g (L2): the type of its latest accounts, from its profile ("dormant", "micro-entity" ...). Null when none
+   *  is filed or the profile could not be read — not known, never "not dormant" (N4). */
+  readonly accounts_type?: string | null;
 };
+
+/*
+ * PHASE 159g, 10 October 2026 — THE LOCKWOOD RUN, L2. "Find this company" offered LOCKWOOD SURGERY PRIME HEALTH LTD
+ * first: the right name and postcode, but it files DORMANT accounts, so it has no tax for allowances to relieve, and
+ * nothing on the screen said so. Each match now shows its status AND its accounts type, read from its profile
+ * (/company/{company_number}: accounts.last_accounts.type), and a dormant company is flagged at once. One profile call
+ * per match, at most eight, under the same key, switch and recorded waiver as the search, inside Companies House's
+ * published 600 in five minutes. A profile that cannot be read leaves the accounts type not known, and the match is
+ * still offered.
+ */
+export const COMPANY_SEARCH_PROFILE_LIMIT = 8;
+
+/** The accounts type in a company profile's JSON, or null. */
+export function accountsTypeOfProfile(body: string | null): string | null {
+  if (body === null) return null;
+  try {
+    const p = JSON.parse(body) as { accounts?: { last_accounts?: { type?: unknown } } };
+    const t = p.accounts?.last_accounts?.type;
+    return typeof t === 'string' && /^[a-z-]{2,40}$/.test(t.trim()) ? t.trim() : null;
+  } catch { return null; }
+}
+
+/** The accounts type in words, for the list of matches. */
+export function accountsTypeWords(t: string | null | undefined): string | null {
+  if (typeof t !== 'string' || t === '') return null;
+  return `${t.replace(/-/g, ' ')} accounts`;
+}
 
 /*
  * PHASE 153b, 4 October 2026 — WORD QUESTION 198 ("When Companies House says a client is an LLP, what kind of business
@@ -140,5 +170,18 @@ export async function searchCompanies(i: {
     const candidate: CompanyCandidate = { name, number, status: str(o['company_status']), office_postcode: pc !== null && POSTCODE.test(pc) ? pc.toUpperCase() : null };
     candidates.push(keepType ? { ...candidate, company_type: str(o['company_type']) } : candidate);
   }
-  return candidates.length === 0 ? { state: 'NONE' } : { state: 'FOUND', candidates };
+  if (candidates.length === 0) return { state: 'NONE' };
+  // PHASE 159g (L2): each match's accounts type, from its profile, one call each.
+  const withAccounts: CompanyCandidate[] = [];
+  for (const [n, c] of candidates.entries()) {
+    if (n >= COMPANY_SEARCH_PROFILE_LIMIT) { withAccounts.push({ ...c, accounts_type: null }); continue; }
+    const p = await callOutside(i.deps, {
+      service_id: 'COMPANIES_HOUSE', endpoint: '/company/{company_number}', params: { company_number: c.number },
+      headers: { authorization: 'Basic ' + Buffer.from(`${key}:`).toString('base64') },
+      actor_id: null, actor_role: null, claim_id: null,
+      gate: { free_gate_open: i.gate.free_enabled, engagement_signed: false, switched_on: true },
+    });
+    withAccounts.push({ ...c, accounts_type: p.outcome === 'OK' ? accountsTypeOfProfile(p.body) : null });
+  }
+  return { state: 'FOUND', candidates: withAccounts };
 }

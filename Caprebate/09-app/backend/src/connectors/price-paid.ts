@@ -1,17 +1,20 @@
 /**
- * HM LAND REGISTRY PRICE PAID DATA — WHAT A RESIDENTIAL PROPERTY SOLD FOR, AND WHEN. SUPPORTED LIVING ONLY.
- * Phase 146c, 23 September 2026. Switched off: REGISTER_SWITCHES.HMLR_PPD is false.
+ * HM LAND REGISTRY PRICE PAID DATA — WHAT A PROPERTY SOLD FOR, AND WHEN. EVERY SECTOR SINCE PHASE 159g.
+ * Phase 146c, 23 September 2026. Switched off: REGISTER_SWITCHES.HMLR_PPD is false (on for the test website only).
  *
  * Built against HM Land Registry's published guidance and its linked-data documentation (read 23 September 2026; the
  * addresses and date are in the source register's SUPPLIER_DOCS). No key: the linked-data API at
  * https://landregistry.data.gov.uk, `/data/ppi/transaction-record.json?propertyAddress.postcode=…`.
  *
- * RESIDENTIAL ONLY. The dataset "includes information on all residential property sales in England and Wales that are
- * sold for value". A care home, a dental practice, a surgery and a hospital are commercial and are not in it, so for
- * those four sectors this lookup is not made at all — asking would get nothing back and read like a register that is
- * down (CB_REGISTRY's own note, Phase 71). Supported living is the exception: CB_REGISTRY.RESIDENTIAL_SECTORS, read
- * from the engine and never restated here. A property outside England and Wales, or whose nation or sector nobody has
- * recorded, is not asked about either.
+ * PHASE 159g, 10 October 2026 — ASKED FOR EVERY SECTOR (the Lockwood run, L11). Until now this lookup was made for
+ * supported living only, on the reading that a surgery, a care home or a dental practice is commercial and never in
+ * the dataset. That was wrong for Lockwood Surgery: HM Land Registry holds 3 Meltham Road, sold 3 June 2020 for
+ * £540,000, leasehold, type "Other", category B. Category B is "additional price paid" — sales to companies, buy-to-lets,
+ * repossessions, transfers — and a healthcare building that was once a house, or was bought by a company, can be in
+ * it. So it is asked for every sector, by postcode and the building's number and street, and the sale's category is
+ * kept (`ppd_category`, A or B). A category B sale, or one of type "Other", is a LEAD for the surveyor to confirm and
+ * never the price (src/web/who-claims.ts isPricePaidLead; the desk-first reading skips it). A property outside England
+ * and Wales, or whose nation nobody has recorded, is still not asked about.
  *
  * THE LOOKUP: every sale at the typed postcode, their addresses split and scored against the typed one; sales at the
  * same address count as one, and the latest is the one kept — the most recent sale is the likeliest to be our
@@ -31,7 +34,6 @@ import {
   type Candidate, type MeasureHook, type PickQuery,
 } from './matching.ts';
 import { jurisSource, type Nation, type TypedProperty } from './nations.ts';
-import { REGISTRY } from '../web/engine.ts';
 import { LICENCES } from '../../../../04-phase-work/phase3/caprebate-source-register.ts';
 
 export type PricePaidQuery = {
@@ -50,7 +52,17 @@ type Sale = {
   readonly tenure: string | null;
   readonly type: string | null;
   readonly new_build: boolean | null;
+  /** PHASE 159g: A, a standard sale at full market value; B, "additional price paid". Null when it is not stated. */
+  readonly category: 'A' | 'B' | null;
 };
+
+/** The sale's category from its linked-data term: "standard…" is A, "additional…" is B; anything else is not known. */
+export function categoryOf(v: unknown): 'A' | 'B' | null {
+  const l = (label(v) ?? '').toLowerCase();
+  if (l.startsWith('standard')) return 'A';
+  if (l.startsWith('additional')) return 'B';
+  return null;
+}
 
 const MONTHS: Readonly<Record<string, string>> = Object.freeze({
   Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12',
@@ -90,6 +102,7 @@ export function saleOf(item: Record<string, unknown>): Sale | null {
     tenure: tenure === 'freehold' || tenure === 'leasehold' ? tenure : null,
     type: label(item['propertyType']),
     new_build: typeof item['newBuild'] === 'boolean' ? item['newBuild'] : null,
+    category: categoryOf(item['transactionCategory']),
   };
 }
 
@@ -98,6 +111,7 @@ export function saleFields(s: Sale): Record<string, unknown> {
   if (s.tenure !== null) f.tenure = s.tenure;
   if (s.type !== null) f.property_type_ppd = s.type;
   if (s.new_build !== null) f.new_build_flag = s.new_build;
+  if (s.category !== null) f.ppd_category = s.category;
   return f;
 }
 
@@ -107,10 +121,7 @@ export const pricePaid = defineSteppedConnector<PricePaidQuery>({
   async lookup(step, q): Promise<LookupResult> {
     if (q.nation === null) return { kind: 'NOT_COVERED', why: 'we do not know which part of the UK the property is in, and sale prices are published for England and Wales only' };
     if (jurisSource(q.nation, 'price_paid') !== 'HMLR_PPD') return { kind: 'NOT_COVERED', why: 'sale prices are published for England and Wales only' };
-    const covers = (REGISTRY as unknown as { sourceCoversSector?: (spec: { residentialOnly: boolean }, sector: string | null) => boolean }).sourceCoversSector;
-    if (typeof covers !== 'function' || !covers({ residentialOnly: true }, q.sector)) {
-      return { kind: 'NOT_COVERED', why: 'HM Land Registry publishes sale prices for homes only, and this property is not recorded as supported living' };
-    }
+    // PHASE 159g (L11): no sector is left out. A category B or "Other" sale is kept as a lead, never the price.
     const pc = postcodeKey(q.property?.postcode);
     if (q.property === null || pc === '') return { kind: 'NOT_MATCHED', code: 'INSUFFICIENT_INPUT', why: 'there is no postcode we can read for the property', calls: [] };
 
@@ -148,7 +159,8 @@ export const pricePaid = defineSteppedConnector<PricePaidQuery>({
     return {
       kind: 'READ', calls,
       bundle: { records: [{ sourceId: 'HMLR_PPD', entityId: sale.id, fields }], facts: { ...fields, attribution: PRICE_PAID_ATTRIBUTION } },
-      note: `looked up — ${how}, and we keep the latest sale at that address and where it came from. ${PRICE_PAID_ATTRIBUTION}`,
+      note: `looked up — ${how}, and we keep the latest sale at that address and where it came from.${sale.category === 'B' || (sale.type ?? '').toLowerCase() === 'other' || sale.category === null
+        ? ' It is a lead for the surveyor to confirm, not the price: ' + (sale.category === 'B' ? 'a category B sale may be to a company, a buy-to-let or a transfer.' : sale.category === null ? 'its category is not stated.' : 'its type is “Other”.') : ''} ${PRICE_PAID_ATTRIBUTION}`,
     };
   },
 });

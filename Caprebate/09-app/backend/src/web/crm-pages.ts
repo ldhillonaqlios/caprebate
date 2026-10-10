@@ -113,7 +113,8 @@ const ORGANISATION_FIELDS = ['legal_name', 'company_number', 'claimant_type', 'r
 const CONTACT_FIELDS = ['full_name', 'job_title', 'contact_type', 'is_decision_maker', 'email', 'phone', 'notes'] as const;
 const PROPERTY_FIELDS = ['label', 'postcode', 'address_line_1', 'address_line_2', 'town', 'jurisdiction', 'property_type',
   'property_use', 'tenure', 'occupier', 'acquisition_date', 'acquisition_price', 'completion_date', 'disposal_date',
-  'previous_owner', 'construction_notes', 'existing_ca_claimed', 'prior_claim_notes', 'sale_in_prospect'] as const;
+  'previous_owner', 'construction_notes', 'existing_ca_claimed', 'prior_claim_notes', 'sale_in_prospect',
+  'claimant_role', 'lease_end_date', 'landlord'] as const;
 // CRM 3 of 10: the next action is a task, set in its own panel, so the form does not draw it. THE CRM FOLLOW-ON: it is
 // still READ here when posted, so `updateClaim` refuses it with its reason — dropping it answered "saved" and wrote nothing.
 const CLAIM_FIELDS = ['owner_id', 'surveyor_id', 'priority', 'workstream', 'property_id',
@@ -275,6 +276,7 @@ export async function handleCrm(
         title_number: f.get('title_number'), tenure: f.get('tenure'), price_paid: f.get('price_paid'),
         transaction_date: f.get('transaction_date'), restriction_count: f.get('restriction_count'),
         proprietor_company_number: f.get('proprietor_company_number'), prior_owner_count: f.get('prior_owner_count'),
+        owner_person_name: f.get('owner_person_name'),
       })
       : TH.takeBackTitleByHand(deps, actor, id, f.get('reason'));
     if (!r.ok) return d.problem(res, actor, titleHand[2] === undefined ? 'Not saved' : 'Not taken back', r.why, `/staff/properties/${id}#title-register`, r.field);
@@ -771,6 +773,8 @@ function titleBlock(id: string, t: TH.TitleByHandView): Safe {
         <label>Date of that price <input name="transaction_date" type="date"></label>
         <label>How many restrictions <input name="restriction_count" inputmode="numeric" autocomplete="off"></label>
         <label>Owner’s company number, if the owner is a company <input name="proprietor_company_number" autocomplete="off"></label>
+        <label>Owner’s name, if the owner is a person <input name="owner_person_name" autocomplete="off" maxlength="200"></label>
+        <p class="help">We check the name against the client’s own people and keep only yes or no. The name itself is not saved.</p>
         <label>How many earlier owners it names <input name="prior_owner_count" inputmode="numeric" autocomplete="off"></label>
         <button type="submit">Save</button></form>`}
   </div>`;
@@ -814,6 +818,8 @@ function propertyPage(
         { label: 'Property type', value: v.property_type === null ? null : v.property_type_label },
         { label: 'Property use', value: v.property_use },
         { label: 'Tenure', value: v.tenure.label },
+        { label: 'How the client holds it', value: v.holding.role_words, keep: true },
+        { label: 'Tenure, lease and landlord', value: v.holding.tenure_words, keep: true },
         { label: 'Occupier', value: v.occupier },
         { label: 'Acquired', value: v.acquisition_date === null ? null : ukDate(v.acquisition_date) },
         { label: 'Acquisition price', value: v.acquisition_price },
@@ -847,6 +853,9 @@ function propertyPage(
           <label>Property type <select name="property_type">${options(vocabulary(d.app.db, 'PROPERTY_TYPE', v.property_type), v.property_type, 'not recorded')}</select></label>
           <label>Property use <input name="property_use" value="${v.property_use ?? ''}"></label>
           <label>Tenure <select name="tenure">${options(C.TENURES, v.tenure.value, 'not recorded')}</select></label>
+          <label>How the client holds it <select name="claimant_role">${options(C.CLAIMANT_ROLES, v.holding.role, 'not known')}</select></label>
+          <label>The day the lease ends <input name="lease_end_date" type="date" value="${v.holding.lease_end_date ?? ''}"></label>
+          <label>Landlord — a company name, or one of ${Object.keys(C.OWNER_ROLE_TOKENS).join(', ')} <input name="landlord" value="${v.holding.landlord ?? ''}"></label>
           <label>Occupier — a company name or a role, never a person <input name="occupier"></label>
           <label>Acquisition date <input name="acquisition_date" type="date" value="${v.acquisition_date ?? ''}"></label>
           <label>Acquisition price, in pounds <input name="acquisition_price"></label>

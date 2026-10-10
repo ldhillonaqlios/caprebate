@@ -330,6 +330,12 @@
           "id": "13254229838",
           "how": "prose",
           "why": "Built by Phase 159e on 10 Oct 2026 and switched on in the test system: each part in its own year (W1) or the first open one (W2); AIA on recorded headroom, full expensing and the 50% and 40% allowances on new plant, W2 writing-down only; a new unused building from its developer not second-hand; the structures and buildings allowance on work and on a purchase; no claim on the cash basis. Word questions 257-260 under the tax adviser; board item created in group 02 at Built - awaiting sign-off with owner CTA."
+        },
+        {
+          "ref": "ACC-H8 who claims: a landlord's property business, and the year end from Companies House (Phase 159g, 10 Oct 2026; the Phase 159g section at the end of the register)",
+          "id": "13254543097",
+          "how": "prose",
+          "why": "Built by Phase 159g on 10 Oct 2026 and switched on in the test system: the enquiry check asks for a qualifying activity (a trade, a profession or a property business), the assessment asks who uses the building, and the register's accounting reference date is the claim's year end, compared with the client's. Word questions 263 (the tax adviser) and 264 (the accountant); board item created in group 02 at Built - awaiting sign-off with owner CTA."
         }
       ],
       "mentions": [
@@ -433,6 +439,12 @@
           "id": "13254340860",
           "how": "prose",
           "why": "Built by Phase 159f on 10 Oct 2026 and switched on in the test system: rates drafted from BCIS (building function mean, NRM elements, location factor, TPI to the purchase date), a structured source on every rate, one pricing day, the report naming each source, the residual way beside the proportional one. Word questions 261-262 for the surveyor; board item created in group 04 at Built - awaiting sign-off with owner Surveyor."
+        },
+        {
+          "ref": "SV-S12 Price Paid for every sector as a lead, and the site area flagged at ten times the floor area (Phase 159g, 10 Oct 2026; the Phase 159g section at the end of the register)",
+          "id": "13254543146",
+          "how": "prose",
+          "why": "Built by Phase 159g on 10 Oct 2026 and switched on in the test system: chapter 9's 'What the registers say' shows a category B or 'Other' Price Paid sale as a lead, never the price, flags a site more than ten times the floor area, and shows the tenure and how the client holds the building; the BCIS location drafted from the council area. Word questions 265-266 for the surveyor; board item created in group 04 at Built - awaiting sign-off with owner Surveyor."
         }
       ],
       "mentions": [
@@ -883,6 +895,12 @@
           "id": "13199468746",
           "how": "prose",
           "why": "Added by Phase 157 (the sweep), 6 Oct 2026: the tool is built and refuses to run until the officer answers Word question 200; moved from Blocked - question to Built - awaiting sign-off. Prose entry in the Phase 157 note at the end of the register."
+        },
+        {
+          "ref": "SDP-P44 an owner's name from the title register checked against the client's people and not kept; the company's accounts type and date kept (Phase 159g, 10 Oct 2026)",
+          "id": "13254520473",
+          "how": "prose",
+          "why": "Built by Phase 159g on 10 Oct 2026 and switched on in the test system: proprietor_personal_match (YES or NO, no name) on a title typed by hand, and accounts_type and accounts_made_up_to on CH_COMPANY, each added to the source register and the name exclusion register. Word question 267 for the data protection officer; board item created in group 05 at Built - awaiting sign-off with owner Solicitor/DPO."
         }
       ],
       "mentions": [

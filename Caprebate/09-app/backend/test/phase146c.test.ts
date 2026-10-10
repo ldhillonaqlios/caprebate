@@ -166,6 +166,8 @@ describe('Companies House: search, profile, filing history — PSC only after si
     const rec = run.bundle?.records[0];
     assert.deepEqual(rec?.fields, {
       company_number: '09999991', company_status: 'active', sic_codes: '87100, 87300', accounts_year_end: '03-31', incorporation_date: '2011-05-03',
+      // PHASE 159g (L2): the latest accounts' type and date, from the filing history.
+      accounts_type: 'total-exemption-full', accounts_made_up_to: '2025-03-31',
     });
     assert.ok(run.retrieved_at, 'FIRED with no time read');
     // The typed name went in the query, and no audit row carries it.
@@ -395,14 +397,20 @@ describe('energy certificates: non-domestic and display, domestic for supported 
  * 5 · SALE PRICES
  * ================================================================== */
 
-describe('HM Land Registry sale prices: supported living only, the latest sale at the address, the attribution word for word', () => {
-  test('a care home is not asked at all — nothing is sent', async () => {
+describe('HM Land Registry sale prices: every sector (Phase 159g), the latest sale at the address, the attribution word for word', () => {
+  test('PHASE 159g (L11): every sector is asked — a care home, a dental practice, a surgery and a hospital too; a nation not known is not', async () => {
     const { app, t, ctx } = await rig({ 'GET /data/ppi/transaction-record.json': ok('ppd-transactions.json') });
     for (const sector of ['care_homes', 'dental', 'gp', 'private_hospital', null]) {
       const run = await C.runConnector(pricePaid, ctx, { property: HOME, nation: 'england', sector }, ALLOWED, emptySecrets(), ALL_ON);
-      assert.equal(run.state, 'NOT_RUN', String(sector));
+      assert.equal(run.state, 'FIRED', String(sector));
+      // The fixture's sale is category B: kept, and said to be a lead for the surveyor, not the price.
+      assert.equal(run.bundle?.records[0]?.fields['ppd_category'], 'B', String(sector));
+      assert.match(run.detail, /a lead for the surveyor to confirm, not the price/);
     }
-    assert.equal(t.seen.length, 0);
+    assert.equal(t.seen.length, 5);
+    const none = await C.runConnector(pricePaid, ctx, { property: HOME, nation: null, sector: 'gp' }, ALLOWED, emptySecrets(), ALL_ON);
+    assert.notEqual(none.state, 'FIRED');
+    assert.equal(t.seen.length, 5);
     app.close();
   });
 
@@ -413,7 +421,7 @@ describe('HM Land Registry sale prices: supported living only, the latest sale a
     assert.equal(new URL(t.seen[0]!.url).searchParams.get('propertyAddress.postcode'), 'ZZ3 3ZZ');
     assert.deepEqual(run.bundle?.records[0], {
       sourceId: 'HMLR_PPD', entityId: 'INVENTED-TX-0002',
-      fields: { price_paid: 465000, transaction_date: '2021-10-11', tenure: 'freehold', property_type_ppd: 'detached', new_build_flag: false },
+      fields: { price_paid: 465000, transaction_date: '2021-10-11', tenure: 'freehold', property_type_ppd: 'detached', new_build_flag: false, ppd_category: 'B' },
     });
     assert.equal(run.bundle?.facts['attribution'], PRICE_PAID_ATTRIBUTION);
     assert.ok(run.detail.includes(PRICE_PAID_ATTRIBUTION));
@@ -608,9 +616,11 @@ describe('"Run the research" runs a connector only for what the gates allow — 
     const out = await R.consultAllowed(d, actor('ADMIN'), id, decided, { free_gate_open: true, engagement_signed: false });
     const by = Object.fromEntries(out.map((o) => [o.entry.source_id, o]));
     assert.deepEqual(Object.fromEntries(out.map((o) => [o.entry.source_id, o.state])), {
-      ONS_POSTCODE: 'FIRED', CH_COMPANY: 'FIRED', CQC: 'FIRED', EPC: 'FIRED', HMLR_PPD: 'NOT_RUN', PLANNING: 'FIRED', CIW: 'NOT_RUN', VOA: 'NOT_RUN',
+      ONS_POSTCODE: 'FIRED', CH_COMPANY: 'FIRED', CQC: 'FIRED', EPC: 'FIRED', HMLR_PPD: 'FAILED', PLANNING: 'FIRED', CIW: 'NOT_RUN', VOA: 'NOT_RUN',
     });
-    assert.match(by['HMLR_PPD']!.detail, /homes only/);
+    // PHASE 159g (L11): Price Paid is asked for a care home too. This fixture set holds no answer for it, so it fails,
+    // and says so; it is no longer "homes only".
+    assert.doesNotMatch(by['HMLR_PPD']!.detail, /homes only/);
     // Phase 155: the Welsh regulator has a connector now; this client's property is in England, so it is not asked.
     assert.match(by['CIW']!.detail, /not in Wales/);
     app.db.tx(() => R.storeResearchOutcomes(d, id, out, app.now()));
@@ -695,11 +705,11 @@ describe('only fields both registers permit; the supplier docs recorded and date
 
   test('EVERY FIELD A CONNECTOR KEEPS IS ONE THE ONE DOOR ACCEPTS — the fields each fixture run produced, checked against the name exclusion register', () => {
     const fields: Record<string, string[]> = {
-      CH_COMPANY: ['company_number', 'company_status', 'sic_codes', 'accounts_year_end', 'incorporation_date'],
+      CH_COMPANY: ['company_number', 'company_status', 'sic_codes', 'accounts_year_end', 'incorporation_date', 'accounts_type', 'accounts_made_up_to'],
       CH_PSC: ['psc_name', 'psc_kind', 'psc_natures_of_control', 'psc_ceased_on', 'company_number'],
       CQC: ['cqc_location_id', 'cqc_provider_id', 'registration_status', 'registration_date', 'beds_registered', 'regulated_activities', 'service_types', 'specialisms'],
       EPC: ['epc_rrn', 'epc_total_floor_area_m2', 'epc_property_type', 'epc_lodgement_date'],
-      HMLR_PPD: ['price_paid', 'transaction_date', 'tenure', 'property_type_ppd', 'new_build_flag'],
+      HMLR_PPD: ['price_paid', 'transaction_date', 'tenure', 'property_type_ppd', 'new_build_flag', 'ppd_category'],
       PLANNING: ['planning_reference', 'planning_decision', 'planning_decision_date', 'planning_received_date', 'planning_description'],
     };
     for (const [source, list] of Object.entries(fields)) {

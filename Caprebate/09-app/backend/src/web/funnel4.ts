@@ -44,7 +44,8 @@ import { OPTIONS, addressFrom, submit, type Draft, type FunnelState } from './as
 import { openLeadForGatedExit } from './leads.ts';
 import type { Db } from '../db.ts';
 import { normalisePostcode } from '../connectors/postcode-check.ts';
-import { entityFromCompanyType, type CompanyCandidate } from '../connectors/company-search.ts';
+import { entityFromCompanyType, accountsTypeWords, type CompanyCandidate } from '../connectors/company-search.ts';
+import { isDormant } from '../connectors/companies-house.ts';
 import type { FoundAddress } from '../connectors/address-lookup.ts';
 import { slotPicker, slotDayProblem } from './slot-picker.ts';
 
@@ -191,6 +192,14 @@ export type EventFigure = { type: string | null; cost: number | null; date: stri
   ceiling: number | null; low: number | null; high: number | null; why: string | null; referral: boolean };
 export const EVENT_LABEL: Readonly<Record<string, string>> = EVENTS.EVENT_LABEL;
 /** The kinds of work offered after the first event, in the engine's own order and words. */
+/** PHASE 159g (item 2): how the business holds the building. Owner, landlord or tenant decides whose claim it is; "Not
+ *  sure", and no answer, are not known (N4) and are asked again at the call. Not required, so nobody is stopped here. */
+export const BUILDING_USE: readonly { value: string; label: string }[] = Object.freeze([
+  { value: 'own_use', label: 'The business owns it and works from it' },
+  { value: 'let_out', label: 'The business owns it and rents it out to another business' },
+  { value: 'rented', label: 'The business rents it from the owner' },
+  { value: 'unsure', label: 'Not sure' },
+]);
 export const WORK_TYPES: readonly { value: string; label: string }[] = Object.freeze(EVENTS.LATER_TYPES.map((v) => ({ value: v, label: EVENTS.EVENT_LABEL[v] ?? v })));
 /** Every event on a building, the first first (CB_FUNNEL.eventsOf). */
 export function eventsOf(b: B): BuildingEvent[] { return EVENTS.eventsOf(b); }
@@ -422,6 +431,8 @@ export function applyF4(s: S, id: F4Screen, f: URLSearchParams): Applied {
           }
         }
       }
+      const use = f.get(`b${i}_use`);
+      b['use'] = use !== null && BUILDING_USE.some((o) => o.value === use) ? use : (b['use'] ?? null);
       const before = b['postcode'];
       b['line1'] = clip(f.get(`b${i}_line1`), 200);
       b['town'] = clip(f.get(`b${i}_town`), 100);
@@ -613,12 +624,16 @@ export function screenBody(s: S, id: F4Screen, lookups: { company: boolean; post
         <input class="fi" id="b${i}-business" name="b${i}_business" value="${typeof b['business_name'] === 'string' ? b['business_name'] : ''}" autocomplete="organization">
         ${lookups.company ? h`<p><button type="submit" name="find" value="company:${String(i)}" class="btn-quiet" formnovalidate>Find this company</button></p>` : raw('')}
         ${results.length === 0 ? raw('') : h`<div class="opts">${results.map((c) => h`<label class="opt"><input type="radio" name="b${i}_company_number" value="${c.number}"${checked(chosen, c.number)}>
-          ${c.name} <span class="help">· company number ${c.number}${c.status === null ? '' : ` · ${c.status}`}${c.office_postcode === null ? '' : ` · registered office ${c.office_postcode}`}</span></label>`)}
+          ${c.name} <span class="help">· company number ${c.number}${c.status === null ? '' : ` · ${c.status}`}${accountsTypeWords(c.accounts_type) === null ? '' : ` · ${accountsTypeWords(c.accounts_type) ?? ''}`}${c.office_postcode === null ? '' : ` · registered office ${c.office_postcode}`}</span>
+          ${isDormant(c.accounts_type) ? h`<span class="f4-dormant"><strong>Dormant:</strong> a dormant company has no tax to relieve. Which business owns or uses the building?</span>` : raw('')}</label>`)}
           <label class="opt"><input type="radio" name="b${i}_company_number" value="none"> None of these</label></div>`}
         ${note === null ? raw('') : h`<p class="help">${note}</p>`}
         <p class="fl">What kind of business is it?</p>
         ${radios(`b${i}_entity`, entityOpts, b['entity_type'] ?? b['entity_suggested'] ?? null)}
       </div>
+      <p class="fl">Who uses the building?</p>
+      <p class="help">This tells us whose claim it is. A business that rents its building out can claim too.</p>
+      ${radios(`b${i}_use`, BUILDING_USE, b['use'] ?? null)}
       <label class="fl" for="b${i}-postcode">Postcode</label>
       <input class="fi" id="b${i}-postcode" name="b${i}_postcode" value="${typeof b['postcode'] === 'string' ? b['postcode'] : ''}" autocomplete="postal-code">
       ${lookups.address === true ? h`<p><button type="submit" name="find" value="address:${String(i)}" class="btn-quiet" formnovalidate>Find my address</button></p>`

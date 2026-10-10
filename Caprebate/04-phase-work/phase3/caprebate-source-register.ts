@@ -641,6 +641,10 @@ export const SOURCES: readonly Source[] = [
       // corrections of 3 October said "change the permitted fields first (and ask Sadique), then map". Nothing reads
       // it until COMPANY_TYPE_FROM_REGISTER (09-app/backend/src/connectors/company-search.ts) is switched on, and it is off.
       'company_type',
+      // PHASE 159g, 10 October 2026 (the Lockwood run, L2): the type of the latest accounts ("dormant", "micro-entity",
+      // "full" ...) and the day they were made up to — facts about the company, not about a person. A dormant company
+      // has no trade or property business, so no tax for allowances to relieve; until now the type was read and dropped.
+      'accounts_type', 'accounts_made_up_to',
     ],
     excluded_fields: ['officer_*', 'director_*', 'secretary_*', '*_dob', 'service_address*', 'residential_address*'],
     personal_name_exceptions: NO_NAMES,
@@ -668,7 +672,11 @@ export const SOURCES: readonly Source[] = [
     licence_id: 'HMLR_PPD',
     default_prov: 'API',
     max_grade: 'A',
-    permitted_fields: ['price_paid', 'transaction_date', 'tenure', 'property_type_ppd', 'new_build_flag'],
+    /* PHASE 159g, 10 October 2026 (the Lockwood run, L11): `ppd_category` — A, a standard sale at full market value, or
+       B, "additional price paid" (a sale to a company, a buy-to-let, a repossession, a transfer). A category B sale, or
+       one of type "Other", is a lead for the surveyor to confirm and never the price. Price Paid is now asked for every
+       sector: a surgery that was once a house, or was bought by a company, can be in it. */
+    permitted_fields: ['price_paid', 'transaction_date', 'tenure', 'property_type_ppd', 'new_build_flag', 'ppd_category'],
     excluded_fields: ['*_name'],
     personal_name_exceptions: NO_NAMES,
     endpoint: 'https://landregistry.data.gov.uk',
@@ -694,6 +702,8 @@ export const SOURCES: readonly Source[] = [
     permitted_fields: [
       'title_number', 'tenure', 'proprietor_name_personal', 'proprietor_company_number',
       'lease_term_*', 'restriction_*', 'price_paid', 'transaction_date', 'prior_owner_count',
+      // PHASE 159g (item 6): YES or NO, the owner named is one of the client's own people; the name is never kept.
+      'proprietor_personal_match',
     ],
     excluded_fields: ['charge_holder_individual_*', 'former_proprietor_*'],
     personal_name_exceptions: ['proprietor_name_personal'],

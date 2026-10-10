@@ -28,6 +28,7 @@
  * out from it while it stood (src/web/take-back.ts), and keeps the entry with who took it back and why.
  */
 
+import { personIsClients, fillTenureFromRegisters } from './who-claims.ts';
 import type { Db } from '../db.ts';
 import type { AuditLog } from '../audit.ts';
 import { authorise, can, type Actor } from '../authz.ts';
@@ -75,6 +76,9 @@ export type TitleForm = {
   readonly restriction_count?: string | null;
   readonly proprietor_company_number?: string | null;
   readonly prior_owner_count?: string | null;
+  /** PHASE 159g (item 6): where the owner is a PERSON, their name as the register shows it — compared with the client's
+   *  own people when it is saved, and only the answer kept. The name itself is never stored. */
+  readonly owner_person_name?: string | null;
 };
 
 const blank = (v: string | null | undefined): boolean => v === null || v === undefined || v.trim() === '';
@@ -155,6 +159,16 @@ export function recordTitleByHand(d: TitleDeps, actor: Actor, property_id: strin
   }
   const read = titleFields(form);
   if (!read.ok) return { ok: false, why: `${read.why} Nothing was saved.`, field: read.field };
+  /* PHASE 159g (item 6): A PERSON NAMED AS OWNER. A sole trader's or a partnership's building is registered to the people
+     themselves, so no company number can match it and "do you still own it" waited on a recorded answer. The name typed
+     here is compared with the client's own people now, in memory, and only YES or NO is kept — as the officers check
+     keeps only its answer (Word answer 156). */
+  const person = (form.owner_person_name ?? '').replace(/\s+/g, ' ').trim();
+  if (person !== '') {
+    if (read.fields['proprietor_company_number'] !== undefined) return { ok: false, field: 'owner_person_name', why: 'The owner is either a company or a person. Give the company number or the person’s name, not both. Nothing was saved.' };
+    if (person.length > 200) return { ok: false, field: 'owner_person_name', why: 'That name is too long. Nothing was saved.' };
+    read.fields['proprietor_personal_match'] = personIsClients(d.db, p.business_id, person) ? 'YES' : 'NO';
+  }
   const entity = `${BY_HAND_PREFIX}${read.title}`;
   if (d.db.get('SELECT id FROM register_records WHERE business_id = ? AND source_id = ? AND entity_id = ?', [p.business_id, TITLE_SOURCE, entity]) !== undefined) {
     return { ok: false, why: 'That title is already recorded for this client, on another of its properties. Nothing was saved.' };
@@ -166,6 +180,8 @@ export function recordTitleByHand(d: TitleDeps, actor: Actor, property_id: strin
     d.db.run(
       'INSERT INTO title_by_hand (id, business_id, property_id, record_id, title_number, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [d.newId(), p.business_id, p.id, record_id, read.title, actor.id, at]);
+    // PHASE 159g (item 4): the tenure the register gives, on the property, where none is recorded yet.
+    fillTenureFromRegisters(d.db, p.id, at);
     d.audit.append({
       at, kind: 'TITLE_RECORDED_BY_HAND', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
       object_type: 'property', object_id: p.id,
@@ -173,7 +189,8 @@ export function recordTitleByHand(d: TitleDeps, actor: Actor, property_id: strin
       detail: { business: p.business_id, fields: Object.keys(read.fields).sort().join(',') },
     });
   });
-  return { ok: true, why: 'Saved. What the title register says is on this property now, marked as entered by hand.' };
+  const match = read.fields['proprietor_personal_match'];
+  return { ok: true, why: `Saved. What the title register says is on this property now, marked as entered by hand.${match === 'YES' ? ' The owner it names is one of the client’s own people. We kept only that, not the name.' : match === 'NO' ? ' The owner it names is not one of the client’s people on our records. We kept only that, not the name.' : ''}` };
 }
 
 /* ================================================================== *
@@ -241,6 +258,7 @@ export const OFFICIAL_COPY_TYPE = 'TITLE_REGISTER';
 const LABELS: Readonly<Record<string, string>> = Object.freeze({
   title_number: 'Title number', tenure: 'Freehold or leasehold', price_paid: 'Price paid', transaction_date: 'Date of that price',
   restriction_count: 'Restrictions on the register', proprietor_company_number: 'Owner’s company number', prior_owner_count: 'Earlier owners named',
+  proprietor_personal_match: 'The owner is one of the client’s own people',
 });
 
 function nameOf(db: Db, user_id: string | null): string {
@@ -250,6 +268,7 @@ function nameOf(db: Db, user_id: string | null): string {
 
 function valueWords(k: string, v: unknown): string {
   if (k === 'price_paid' && typeof v === 'number') return `£${v.toLocaleString('en-GB')}`;
+  if (k === 'proprietor_personal_match') return v === 'YES' ? 'Yes' : v === 'NO' ? 'No' : String(v);
   return String(v);
 }
 

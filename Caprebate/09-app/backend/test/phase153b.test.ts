@@ -131,7 +131,8 @@ describe('line 18 — Word question 198: Companies House’s company type', () =
       config: { enabled: true, named_in_privacy_notice: true }, typeConfig: { enabled } });
     const off = await go(false), on = await go(true);
     assert.equal(off.state, 'FOUND');
-    assert.deepEqual(off.state === 'FOUND' ? off.candidates[0] : null, { name: 'INVENTED DENTAL LLP', number: 'OC123456', status: 'active', office_postcode: 'LE10 1AA' });
+    // PHASE 159g (L2): every candidate now carries its accounts type from its profile — null here, as this fixture has no profile.
+    assert.deepEqual(off.state === 'FOUND' ? off.candidates[0] : null, { name: 'INVENTED DENTAL LLP', number: 'OC123456', status: 'active', office_postcode: 'LE10 1AA', accounts_type: null });
     assert.equal(on.state === 'FOUND' ? on.candidates[0]?.company_type : null, 'llp');
   });
 });
