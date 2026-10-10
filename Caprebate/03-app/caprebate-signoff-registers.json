@@ -342,6 +342,12 @@
           "id": "13254716714",
           "how": "prose",
           "why": "Built by Phase 159h on 10 Oct 2026 and switched on in the test system (LEGAL_READINGS in src/web/pack-legal.ts; the route and stillOwned in claim-route.ts). Word questions 268-272 for the tax adviser; board item created in group 02 at Built - awaiting sign-off with owner CTA."
+        },
+        {
+          "ref": "ACC-H10 the money readings: an untraced grant off in full, an earlier owner's grant off the cap, stamp duty and fees in the base, the buyer's own alterations on top, VAT shared with the land (Phase 159i, 10 Oct 2026; the Phase 159i section at the end of the register)",
+          "id": "13254826447",
+          "how": "prose",
+          "why": "Built by Phase 159i on 10 Oct 2026 and switched on in the test system (src/web/money-readings.ts; pack-grants.ts FULL and PAST_OWNER; survey-pack.ts). Word questions 273-277 for the tax adviser; board item created in group 02 at Built - awaiting sign-off with owner CTA."
         }
       ],
       "mentions": [

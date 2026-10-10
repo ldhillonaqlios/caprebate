@@ -80,7 +80,7 @@ export const YES_NO: Vocab = Object.freeze({ YES: 'Yes', NO: 'No' });
 
 /** Rulebook F's payer classes, in its own words. A class, never a name. */
 export const PAYER_CLASSES: Vocab = Object.freeze({
-  nhs: 'The NHS', local_authority: 'A local authority', homes_england_gla: 'Homes England or the GLA',
+  nhs: 'The NHS (an NHS improvement grant or premises funding)', local_authority: 'A local authority', homes_england_gla: 'Homes England or the GLA',
   other_public: 'Another public body', landlord_unconnected: 'A landlord not connected to the client',
   landlord_connected: 'A landlord connected to the client', group_company: 'A company in the client’s group',
   charity: 'A charity', individual: 'A private person — not named here', insurer: 'An insurer', UNKNOWN: 'Not known',
@@ -160,6 +160,9 @@ export const FACTS: Readonly<Record<string, FactDef>> = Object.freeze({
   },
   BOUGHT_NEW_FROM_DEVELOPER: { label: 'The building was bought new and never used, from the developer who built it', kind: 'choice', choices: YES_NO },
   SBA_STATEMENT_HELD: { label: 'The seller’s structures and buildings allowance statement is on file', kind: 'choice', choices: YES_NO },
+  /* PHASE 159i (item 2, migration 110): a VAT capital goods scheme adjustment on the building, in pounds. A fact and a note: the
+     survey pack shows it beside the VAT that counts and does not change the figure; the tax adviser says how it reaches the claim. */
+  VAT_CGS_ADJUSTMENT: { label: 'A VAT capital goods scheme adjustment on the building (a note, not counted)', kind: 'pence' },
   /* Phase 153a, 4 October 2026 (Phase 153b lines 12 and 13, with the same grant data). Migration 078 adds both keys.
      Read by src/web/grant-checks.ts, the gate out of valuation. */
   GRANT_PROVIDER_CHECKED: {
@@ -587,6 +590,8 @@ type GrantRow = {
   id: string; kind: string; payer_class: string; amount_pence: number | null; amount_basis: string; traced: string;
   traced_elements: string | null; source_id: string; note: string | null; recorded_at: string; recorder: string | null;
   withdrawn_at: string | null; withdraw_reason: string | null;
+  /** Phase 159i (migration 110): who received it, and the event on the building it paid for. */
+  paid_to: string; event_id: string | null;
   /** Phase 153a: the fixture-list rows it paid for (migration 078), in the list's order. Empty: matched in words only, or not at all. */
   element_ids: readonly string[];
 };
@@ -594,7 +599,7 @@ type GrantRow = {
 function grantRows(db: Db, claim_id: string, activeOnly: boolean): GrantRow[] {
   const rows = db.all<Omit<GrantRow, 'element_ids'>>(
     'SELECT g.id, g.kind, g.payer_class, g.amount_pence, g.amount_basis, g.traced, g.traced_elements, g.source_id, g.note, ' +
-      'g.recorded_at, u.display_name AS recorder, g.withdrawn_at, g.withdraw_reason FROM claim_grants g ' +
+      'g.recorded_at, u.display_name AS recorder, g.withdrawn_at, g.withdraw_reason, g.paid_to, g.event_id FROM claim_grants g ' +
       'LEFT JOIN users u ON u.id = g.recorded_by WHERE g.claim_id = ? ORDER BY g.recorded_at ASC, g.rowid ASC',
     [claim_id]).filter((g) => !activeOnly || g.withdrawn_at === null);
   const links = db.all<{ grant_id: string; element_id: string }>(
@@ -622,6 +627,7 @@ export function elementName(element_id: string): string {
 export function packGrantsFor(db: Db, claim_id: string): (PackGrant & { readonly kind: string; readonly traced: string })[] {
   return grantRows(db, claim_id, true).map((g) => ({
     id: g.id, kind: g.kind, traced: g.traced, payer_class: g.payer_class, amount_pence: g.amount_pence, element_ids: g.element_ids,
+    paid_to: g.paid_to === 'PAST_OWNER' ? 'PAST_OWNER' as const : 'CLIENT' as const, event_id: g.event_id,
   }));
 }
 
@@ -992,13 +998,24 @@ export function recordGrant(d: FactDeps, actor: Actor, claim_id: string, input: 
   if (!has(CAPTURE_SOURCES, source)) return { ok: false, field: 'source_id', why: 'Say where this came from.' };
   const note = text(input['note'], 2000, 'The note');
   if (!note.ok) return note;
+  // PHASE 159i (items 1 and 4): who received it — the client, or an earlier owner — and which event on the building it paid for.
+  const paidTo = (input['paid_to'] ?? '').trim() === '' ? 'CLIENT' : input['paid_to'];
+  if (paidTo !== 'CLIENT' && paidTo !== 'PAST_OWNER') return { ok: false, field: 'paid_to', why: 'Say who received it: the client, or an earlier owner.' };
+  const ev = (input['event_id'] ?? '').trim() === '' ? null : (input['event_id'] ?? '').trim();
+  if (ev !== null) {
+    const pid = d.db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [c.id])?.p ?? null;
+    if (pid === null || d.db.get('SELECT id FROM property_events WHERE id = ? AND property_id = ?', [ev, pid]) === undefined) {
+      return { ok: false, field: 'event_id', why: 'Choose the purchase or a piece of work on this claim’s building.' };
+    }
+    if (paidTo === 'PAST_OWNER') return { ok: false, field: 'event_id', why: 'A grant paid to an earlier owner did not pay for the client’s spend. Leave the event empty.' };
+  }
   const id = d.newId();
   const at = d.now();
   d.db.tx(() => {
     d.db.run(
-      'INSERT INTO claim_grants (id, claim_id, kind, payer_class, amount_pence, amount_basis, traced, traced_elements, source_id, note, recorded_by, recorded_at) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, c.id, kind, payer, amount, basis, traced, elements.value, source, note.value, actor.id, at],
+      'INSERT INTO claim_grants (id, claim_id, kind, payer_class, amount_pence, amount_basis, traced, traced_elements, source_id, note, recorded_by, recorded_at, paid_to, event_id) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, c.id, kind, payer, amount, basis, traced, elements.value, source, note.value, actor.id, at, paidTo, ev],
     );
     for (const e of ids.value) d.db.run('INSERT INTO claim_grant_elements (grant_id, element_id) VALUES (?, ?)', [id, e]);
     d.audit.append({

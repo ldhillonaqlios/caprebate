@@ -12990,3 +12990,42 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159i and
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 159i — the money adjustments: grants, VAT, acquisition costs and the buyer's own work — 10 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 159i, 10 Oct 2026: the money adjustments. A grant whose papers do not say what it paid for now comes off the claim in full; one matched to items comes off those items. A grant paid to an earlier owner no longer comes off the client's price: it lowers the cap from that owner's sale. Each grant's line now adds up to the total taken off. VAT the client could not reclaim, and (on in test) the stamp duty and purchase fees, are added to the price and shared between the land and the building. The buyer's own alterations to install plant are claimed on top of any cap. A grant can be recorded against the purchase or a piece of work, and comes off that spend; each piece of work's VAT is recorded on the claim and added to its cost. A capital goods scheme adjustment is kept as a note. Questions 273-277 to the tax adviser (ACC-H10). New Phase 159k carries the seller's allowance statement as a document, the long-life asset test, asbestos relief and the s.33B aggregation. 5,095 checks in all. Next: Phase 159j.
+
+- **Branch** `claude/phase-159i`, from `main` after PR 50 (Phase 159h) merged at Lakhbir's word ("merge and run 159i").
+- **Evidence re-run, before and after.** The claim harness was run before any change (`claim/before-159i/`) and after. h1's grant check: per-grant rows that did not add up to the total went from 1,767 of 10,000 runs (worst £287,760.04) to 0; the two-grants-above-the-price case now shows £222,222.22 + £277,777.78 = £500,000 (the harness's own label still reads "rows add to more than the total"; the figures are what changed). h1 0 failures; h3, h4, h5, h6 and h6b identical apart from the process id. The engine is not changed.
+- **Premise re-derived (step 8).** pack-grants.ts:105 (equal share) and survey-pack.ts:306-310 (VAT) were as the brief said. CB_ACQ.addToBase (shared.js:2530) works in pounds on the engine's own session: the pack does the same sum from the claim facts instead, so the public estimate's switches stay untouched (the site harness asserts them off). The brief's "Land Remediation Relief for asbestos", "the long-life asset test" and "the s.33B aggregation" are not switches the pack can turn on: each needs a new input and a pool rule, so each is a build, and they went to Phase 159k with item 5.
+
+**What was built:**
+1. **Grants (item 1)** — the `FULL` route (an untraced grant off in full, after the traced ones, pools sharing it) and `PAST_OWNER` (nothing off the buyer's sums; `withPastOwnerGrants` lowers the cap, AMBER while the amount is not known); C23, every route's rows shared by amount to the penny (the traced route scaled to what its lines actually lost); the NHS payer named as an improvement grant or premises funding.
+2. **VAT (item 2, C12)** — irrecoverable VAT shared between the land and the building in the price's proportion; `VAT_CGS_ADJUSTMENT`, a claim fact shown as a note in chapter 15.
+3. **Readings (item 3)** — `src/web/money-readings.ts`, on on the test system: stamp duty and fees into the price (#11, #13), shared with the land; the buyer's own alterations on top of the cap (#1, `capped`); the grant routes. The seventeen readings are reviewed in the Developer Spec's 159i section: #1, #11, #13 on in test in the pack (#5 in the legal check since 159h); #7 left off (F-Q1 open, the law's default deducts); the other twelve act in the public estimate or engines a claim does not re-run, so each waits on its own Word question; #20 goes to 159k.
+4. **Per event (item 4)** — migration 110 (`claim_grants.paid_to`, `event_id`; `property_events.vat_pence`; the new fact); a grant recorded against a piece of work comes off it (`adjustWorks`); each event's VAT recorded on the claim (`setEventVat`, its form on the claim page) and added to the work's cost; `GRANTS_ON_EVENTS` only for a grant whose spend is not recorded. The grant steps ask who received it and which spend it paid for.
+5. **Item 5** (the seller's structures allowance statement as a document type) — not built: carried to Phase 159k.
+
+**Tests.** `test/phase159i.test.ts`, nine tests (on the code before, `money-readings.ts` does not exist, so the file does not load). `src/web/funnel-edges.ts` regenerated for the new foreign key (one edge added; `test/phase157.test.ts` checks it).
+
+**The checks, at the close:** back end `npm run check` **2,812 pass / 0 fail** over 175 tracked files; phase3 440; phase9 417; site 1,426; **5,095** in all (re-derived by the drift checker). CRM fold check green after one spec line reference moved. Register check green (139 awaiting: 58 + 12 + 69). Tracker check green. Plain words green; the SQL lint green after a dropdown's markup was moved off the line its template began on.
+
+**Documents.** Word questions 273-277 for the tax adviser in both documents, the safe way (byte for byte in the cloud; headings 277 = 192 + 85). Register ACC-H10 (13254826447); new Phase 159k (13254813789), on monday, in the tracker, in the plan and on the run sheet above the sweep. Developer Spec: a Phase 159i section with the seventeen readings, and the figures.
+
+```
+DONE          items 1-4: untraced grants off in full, traced ones off their items, an earlier owner's grant off the cap,
+              rows that add up (C23, 1,767 runs to 0); VAT and purchase costs shared with the land (C12); stamp duty and
+              fees in the base and the buyer's own alterations on top (on in test); grants and VAT per event; the CGS
+              adjustment a note; the seventeen readings reviewed. Questions 273-277; ACC-H10. 5,095 checks; all green.
+NOT DONE      The seller's SBA statement as a document type (item 5) - BUILDABLE - new Phase 159k item 1.
+              The long-life asset test, Land Remediation Relief for asbestos and the s.33B aggregation (item 3) -
+                BUILDABLE - new Phase 159k item 2.
+              The other readings of the seventeen - BLOCKED on the tax adviser, each on its own Word question (they act in
+                the public estimate, whose switches move every visitor's figure); 159k item 3 re-reads the list.
+              Whether the five money readings are viable - BUILT; BLOCKED only on the tax adviser - questions 273-277
+                (ACC-H10).
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue holds Phases 159j and 159k; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.

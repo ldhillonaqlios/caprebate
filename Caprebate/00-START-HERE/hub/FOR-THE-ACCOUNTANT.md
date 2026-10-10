@@ -1873,7 +1873,7 @@ Signed .............................  Date ..........................
 
  **This register gains one entry and one board item**: ACC-H3, the accountant's own confirmation link and the defence pack's list of records (board item 13245993980). Phase 158d wrote the two checks into this register, but made no board item for them, so no count saw them. **Board items covered: 51.**
 
- **And the board's own total at the close of Phase 159h, 10 October 2026, counted in code: 138 items carry that status**: fifty-seven in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Fifty-seven plus twelve plus sixty-nine is 138. (At the close of Phase 159g it was 137; Phase 159h added ACC-H9.)
+ **And the board's own total at the close of Phase 159i, 10 October 2026, counted in code: 139 items carry that status**: fifty-eight in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and sixty-nine with the solicitor, the data protection officer and the developer. Fifty-eight plus twelve plus sixty-nine is 139. (At the close of Phase 159h it was 138; Phase 159i added ACC-H10.)
 
 ## Phase 159b, 9 October 2026 — ACC-H4 · four readings behind the online figure, built and on in the test system
 
@@ -1941,3 +1941,17 @@ Signed .............................  Date ..........................
  Three more are the law, not readings, so they are not questions: answers that contradict each other are never clear; no election is available on a transfer below value; and an election that splits out the integral features caps each pool by its own figure.
 
  **ACC-H9 · Board item 13254716714, added 10 October 2026 by Phase 159h.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 57.**
+
+## Phase 159i, 10 October 2026 — ACC-H10 · the money: grants, VAT, stamp duty and fees, and the buyer's own work
+
+ We build first and ask you second (Lakhbir, 29 September 2026). All five are on in the test system only, with invented data. Each is a question in the Word questions document, Section 2, with our recommendation and a worked example:
+
+-  **A grant that cannot be traced comes off in full.** A grant matched to items from its papers comes off those items; one that cannot be matched comes off what qualifies in full, not as an equal share of the price (section 532). (Question 273.)
+-  **An earlier owner's grant lowers the cap, not the price.** It lowered what that owner could claim (section 62), so it lowers what could pass on (section 185). (Question 274.)
+-  **Stamp duty and purchase fees are part of the price shared out**, the land taking its share. (Question 275.)
+-  **The buyer's own alterations sit on top of the cap** (section 25), in the main pool. (Question 276.)
+-  **VAT the client could not reclaim is shared between the land and the building**; a capital goods scheme adjustment is recorded as a note. (Question 277.)
+
+ Also built, and the arithmetic rather than a reading: grants recorded against the purchase or a piece of work come off that spend; each piece of work's irrecoverable VAT is added to its cost; and every route's grant rows add up to its total.
+
+ **ACC-H10 · Board item 13254826447, added 10 October 2026 by Phase 159i.** One entry, at Built - awaiting sign-off, owner the tax adviser. **Board items covered: 58.**

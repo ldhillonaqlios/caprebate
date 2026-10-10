@@ -30,7 +30,7 @@ import { createHash } from 'node:crypto';
 import { authorise, can, type Actor } from '../authz.ts';
 import { amendFigures, commitFigures, jobHasEstimate, packJob } from './surveyor.ts';
 import { packView, type PackDeps, type PackResult, type PackView } from './survey-pack.ts';
-import { legalAllows, legalView, type LegalView } from './pack-legal.ts';
+import { capped, legalAllows, legalView, type LegalView } from './pack-legal.ts';
 import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { basisOf, checklistView, evidenceByLine, walkthroughsOf } from './survey-evidence.ts';
 import { findingSeen } from './finding-source.ts';
@@ -112,7 +112,7 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
     blockers.push({ key: 'sums', href: `${base(job_id)}?ch=4`,
       words: n > 0 ? `${n} value${n === 1 ? ' is' : 's are'} still needed. There is no total until then.` : (v.sums.problems[0]?.words ?? 'The sums are not complete.') });
   }
-  const legal = legalAllows(lv.verdict, v.sums.qualifying_pence, { main_pence: v.sums.main_pool_pence, special_pence: v.sums.special_pool_pence });
+  const legal = legalAllows(lv.verdict, ...capped(v));
   // PHASE 159d (item 8): a purchase that fails the legal check, with work since, is not claimed; the works go on.
   if (!legal.ok && !v.purchase_w3) blockers.push({ key: 'legal', words: `The legal check: ${legal.why}`, href: `${base(job_id)}?ch=7` });
 

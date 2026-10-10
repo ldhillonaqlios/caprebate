@@ -213,7 +213,7 @@ function packPage(d: PackPageDeps, actor: Actor, v: P.PackView, lv: L.LegalView,
       <article class="pack-book">
         <h1>${String(chapter.n)} · ${chapter.title}</h1>
         ${ch === 4 ? summaryChapter(v) : ch === 7 ? legalChapter(d, v, lv, ch, q) : ch === 9 ? inputsChapter(d, v, ch, q) : ch === 10 ? elementsChapter(d, v, ch, q)
-          : ch === 15 ? h`${grantsChapter(v)}${vatSection(d, v, ch)}`
+          : ch === 15 ? h`${grantsChapter(v)}${vatSection(d, v, ch)}${moneySection(v)}`
           : ch === 2 ? inspectionChapter(d.app, actor, v.job.id, q)
           : ch === 23 ? signChapter(d, actor, v, ready, q)
           : ch === 1 ? reportChapter(d, actor, v) : ch === 3 ? purposeChapter(d, v) : ch === 6 ? roomsChapter(d, v)
@@ -534,6 +534,15 @@ export function grantsChapter(v: P.PackView): Safe {
 `;
 }
 
+/** PHASE 159i: what the money readings added to or took off the purchase (src/web/money-readings.ts), in words. */
+function moneySection(v: P.PackView): Safe {
+  const m = v.money;
+  if (m.words.length === 0) return raw('');
+  return h`<section class="pk-money" id="l-money"><h2>Other money in the figure</h2>
+    <ul>${m.words.map((w) => h`<li>${w}</li>`)}</ul>
+    <p class="help">These readings are on in the test system only, each for the tax adviser to confirm.</p></section>`;
+}
+
 /**
  * PHASE 153e — CHAPTER 15'S VAT HALF (src/web/pack-vat.ts; Module 00 C23). The surveyor records whether the client could
  * reclaim the VAT, and the VAT not reclaimed, each with a reason. Only "exempt" adds it to the price paid; partly exempt
@@ -569,7 +578,7 @@ const LEVEL_WORDS: Readonly<Record<L.Level, string>> = Object.freeze({
 });
 
 function legalCard(v: P.PackView, lv: L.LegalView): Safe {
-  const allows = L.legalAllows(lv.verdict, v.sums.qualifying_pence, { main_pence: v.sums.main_pool_pence, special_pence: v.sums.special_pool_pence });
+  const allows = L.legalAllows(lv.verdict, ...L.capped(v));
   return h`<section class="pk-card"><h2>The legal check</h2>
     <p><span class="pk-lv pk-lv-${lv.verdict.level.toLowerCase()}">${LEVEL_WORDS[lv.verdict.level]}</span></p>
     <p class="help"><a href="${base(v.job.id)}?ch=7">${allows.ok ? 'It does not stop approval.' : 'It stops approval until it is settled.'}</a></p></section>`;
@@ -593,7 +602,7 @@ function questionForm(v: P.PackView, lv: L.LegalView, q: L.EngineQuestion, ch: n
 
 function legalChapter(d: PackPageDeps, v: P.PackView, lv: L.LegalView, ch: number, q: URLSearchParams): Safe {
   const verdict = lv.verdict;
-  const allows = L.legalAllows(verdict, v.sums.qualifying_pence, { main_pence: v.sums.main_pool_pence, special_pence: v.sums.special_pool_pence });
+  const allows = L.legalAllows(verdict, ...L.capped(v));
   const open = q.get('q');
   const unanswered = new Set(lv.unanswered.map((x) => x.id));
   return h`
