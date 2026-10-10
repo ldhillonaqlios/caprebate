@@ -342,6 +342,9 @@ export function deliverablesBlock(claim_id: string, p: R.DeliverablesPanel | und
 export function aftercareBlock(claim_id: string, p: R.AftercarePanel | undefined): Safe {
   if (p === undefined) return raw('');
   return h`<div class="pblock">
+    ${p.returns_to_file.length === 0 ? raw('') : h`<h3>Returns still to be filed</h3>
+    <p class="help">This claim goes into more than one tax return. These are not due yet, so the claim could close without them. When each is filed, send the accountant its filing link under “The accountant’s confirmations”.</p>
+    <ul class="plain">${p.returns_to_file.map((r) => h`<li>${r.words}</li>`)}</ul>`}
     <h3>HMRC enquiries</h3>
     ${p.enquiries.length === 0 ? h`<p class="help">No enquiry is recorded.</p>` : h`<table><tbody>${p.enquiries.map((e) => h`<tr>
       <td>opened ${e.opened_on}</td><td>${e.open ? 'open' : h`closed ${e.closed_on ?? ''} — ${e.outcome ?? ''}${e.amended_figure === null ? '' : ` at ${e.amended_figure}`}`}</td><td>${e.note ?? ''}</td>

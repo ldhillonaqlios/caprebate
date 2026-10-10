@@ -28,6 +28,7 @@ import { authorise, type Actor } from '../authz.ts';
 import { localDate, ukDate } from './localtime.ts';
 // Read inside functions only: pipeline.ts reads this module's need the same way, so the loop is never touched at load.
 import { raiseBusinessStage } from './pipeline.ts';
+import { claimReturns, claimRoutes, type ClaimReturn } from './claim-route.ts';
 
 export type ConfirmKind = 'RETURN_FIT' | 'FILED';
 export type ConfirmDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; email: EmailTransport };
@@ -47,10 +48,24 @@ export const CONFIRM_ASKS: Readonly<Record<ConfirmKind, { readonly ask: string; 
   },
   FILED: {
     ask: 'The amended return carrying this claim has been filed.',
-    stages: ['INVOICE', 'DEFENCE_PACK'],
+    // PHASE 159l (L15): and once the claim is closed, for a return held in aftercare (a claim with more than one return).
+    stages: ['INVOICE', 'DEFENCE_PACK', 'CLOSED'],
     subject: 'Please confirm the amended return was filed',
   },
 });
+
+/** PHASE 159l (L15): a FILED link that names its return asks about that return alone. */
+export function askFor(kind: ConfirmKind, period_end: string | null): string {
+  return kind === 'FILED' && period_end !== null
+    ? `The tax return for the period ending ${ukDate(period_end)}, carrying its part of this claim, has been filed.`
+    : CONFIRM_ASKS[kind].ask;
+}
+
+/** The returns this claim goes into, from its parts' routes (src/web/claim-route.ts), or null where they are not settled. */
+export function returnsOf(db: Db, claim_id: string, todayIso: string): ClaimReturn[] | null {
+  const c = db.get<{ id: string; business_id: string; property_id: string | null }>('SELECT id, business_id, property_id FROM claims WHERE id = ?', [claim_id]);
+  return c === undefined ? null : claimReturns(claimRoutes(db, c, todayIso));
+}
 
 export const RETURN_FIT_NEED = 'The client’s accountant confirmed, through their own link, that the claim fits the return and the amendment window';
 
@@ -66,14 +81,14 @@ export function accountantContacts(db: Db, business_id: string): { id: string; n
       "AND email IS NOT NULL AND trim(email) <> '' ORDER BY full_name", [business_id]);
 }
 
-function emailBody(name: string, company: string, ref: string, kind: ConfirmKind, link: string, expires: string): string {
+function emailBody(name: string, company: string, ref: string, kind: ConfirmKind, link: string, expires: string, period_end: string | null): string {
   return [
     `Dear ${name},`,
     '',
     `We are working with ${company} on their capital allowances claim (our reference ${ref}). You signed off its figures, or you look after their tax return.`,
     '',
     'Please tell us, for yourself, whether this is true:',
-    CONFIRM_ASKS[kind].ask,
+    askFor(kind, period_end),
     '',
     kind === 'FILED' ? 'If it is, give us the day it was filed. If not, tell us why.' : 'If it is not, tell us why.',
     link,
@@ -86,7 +101,7 @@ function emailBody(name: string, company: string, ref: string, kind: ConfirmKind
 
 /** Email one of the company's accountants a private link for one confirmation. */
 export function sendConfirmRequest(
-  d: ConfirmDeps, actor: Actor, claim_id: string, f: { kind: string; contact_id: string; origin: string },
+  d: ConfirmDeps, actor: Actor, claim_id: string, f: { kind: string; contact_id: string; origin: string; period_end?: string },
 ): Result & { readonly requested?: boolean } {
   const c = claimOf(d.db, claim_id);
   if (c === undefined) return { ok: false, why: 'There is no such claim.' };
@@ -100,22 +115,36 @@ export function sendConfirmRequest(
   }
   const who = accountantContacts(d.db, c.business_id).find((a) => a.id === f.contact_id);
   if (who === undefined) return { ok: false, field: 'contact_id', why: 'Choose one of the company’s accountants or advisers with an email address. Add them as a contact first.' };
+  /* PHASE 159l (L15): a claim whose parts go into more than one return asks about each return by its own link. */
+  let period_end: string | null = null;
+  if (kind === 'FILED') {
+    const returns = returnsOf(d.db, c.id, d.now()) ?? [];
+    const given = (f.period_end ?? '').trim();
+    if (c.stage === 'CLOSED' && returns.length <= 1) return { ok: false, why: 'This claim is closed, and its filing is already recorded.' };
+    if (returns.length > 1) {
+      const r = returns.find((x) => x.period_end === given);
+      if (r === undefined) return { ok: false, field: 'period_end', why: 'This claim goes into more than one tax return. Choose which return the accountant is asked about.' };
+      period_end = r.period_end;
+    } else if (returns.length === 1) {
+      period_end = returns[0]?.period_end ?? null;
+    }
+  }
   const token = randomBytes(32).toString('base64url');
   const at = d.now();
   const expires = new Date(Date.parse(at) + CONFIRM_LINK_DAYS * 86_400_000).toISOString();
   return d.db.tx(() => {
     const sent = d.email.send({
       to_email: who.email.trim(), subject: `${CONFIRM_ASKS[kind].subject}: ${c.company}`,
-      body: emailBody(who.name, c.company, c.claim_ref, kind, `${f.origin}/confirm/${token}`, expires),
+      body: emailBody(who.name, c.company, c.claim_ref, kind, `${f.origin}/confirm/${token}`, expires, period_end),
       kind: 'REPORT_FOR_SIGNOFF', business_id: c.business_id, contact_id: who.id, written_by: actor.id, claim_id: c.id,
     });
     if (sent.id === null) return { ok: false as const, why: 'This company asked us not to contact them. Nothing was sent.' };
     const id = d.newId();
-    d.db.run('INSERT INTO accountant_confirm_requests (id, claim_id, kind, contact_id, to_email, token_sha256, outbox_id, sent_by, sent_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, c.id, kind, who.id, who.email.trim(), sha(token), sent.id, actor.id, at, expires]);
+    d.db.run('INSERT INTO accountant_confirm_requests (id, claim_id, kind, contact_id, to_email, token_sha256, outbox_id, sent_by, sent_at, expires_at, period_end) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, c.id, kind, who.id, who.email.trim(), sha(token), sent.id, actor.id, at, expires, period_end]);
     const requested = d.db.get<{ r: number }>('SELECT send_requested AS r FROM outbox WHERE id = ?', [sent.id])?.r === 1;
     d.audit.append({ at, kind: 'ACCOUNTANT_CONFIRM_SENT', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
-      object_type: 'claim', object_id: c.id, detail: { request: id, confirm: kind, contact: who.id, sending: requested } });
+      object_type: 'claim', object_id: c.id, detail: { request: id, confirm: kind, contact: who.id, sending: requested, period_end } });
     return { ok: true as const, id, requested };
   });
 }
@@ -125,20 +154,20 @@ export type ConfirmLinkView =
   | { readonly state: 'EXPIRED' }
   | { readonly state: 'ANSWERED'; readonly outcome: 'CONFIRMED' | 'NOT_CONFIRMED'; readonly answered_at: string }
   | { readonly state: 'OPEN'; readonly request_id: string; readonly kind: ConfirmKind; readonly contact_name: string; readonly company: string;
-      readonly claim_ref: string; readonly expires_at: string };
+      readonly claim_ref: string; readonly expires_at: string; readonly period_end: string | null };
 
 /** What a confirmation link opens, by the link alone. */
 export function confirmLinkView(db: Db, now: string, token: string): ConfirmLinkView {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return { state: 'NONE' };
   const r = db.get<{ id: string; kind: ConfirmKind; expires_at: string; name: string; company: string; claim_ref: string;
-    outcome: 'CONFIRMED' | 'NOT_CONFIRMED' | null; answered_at: string | null }>(
-    'SELECT r.id, r.kind, r.expires_at, k.full_name AS name, b.name AS company, c.claim_ref, x.outcome, x.answered_at ' +
+    outcome: 'CONFIRMED' | 'NOT_CONFIRMED' | null; answered_at: string | null; period_end: string | null }>(
+    'SELECT r.id, r.kind, r.expires_at, r.period_end, k.full_name AS name, b.name AS company, c.claim_ref, x.outcome, x.answered_at ' +
       'FROM accountant_confirm_requests r JOIN contacts k ON k.id = r.contact_id JOIN claims c ON c.id = r.claim_id JOIN businesses b ON b.id = c.business_id ' +
       'LEFT JOIN accountant_confirm_answers x ON x.request_id = r.id WHERE r.token_sha256 = ?', [sha(token)]);
   if (r === undefined) return { state: 'NONE' };
   if (r.outcome !== null) return { state: 'ANSWERED', outcome: r.outcome, answered_at: r.answered_at ?? '' };
   if (now >= r.expires_at) return { state: 'EXPIRED' };
-  return { state: 'OPEN', request_id: r.id, kind: r.kind, contact_name: r.name, company: r.company, claim_ref: r.claim_ref, expires_at: r.expires_at };
+  return { state: 'OPEN', request_id: r.id, kind: r.kind, contact_name: r.name, company: r.company, claim_ref: r.claim_ref, expires_at: r.expires_at, period_end: r.period_end };
 }
 
 /** The accountant's answer, once. A FILED confirmation becomes the claim's filing date. */
@@ -199,25 +228,28 @@ export function answerConfirmLink(
 export type ConfirmRow = {
   readonly id: string; readonly kind: ConfirmKind; readonly contact_name: string; readonly to_email: string; readonly sent_by_name: string;
   readonly sent_at: string; readonly expires_at: string;
+  /** FILED only: the return the link asks about (PHASE 159l), or null for the claim as a whole. */
+  readonly period_end: string | null;
   readonly answer: null | { readonly outcome: 'CONFIRMED' | 'NOT_CONFIRMED'; readonly signer_name: string; readonly signer_firm: string | null;
     readonly filed_on: string | null; readonly reason: string | null; readonly answered_at: string };
 };
 
 /** Every confirmation link sent on the claim, newest first, with its answer. */
 export function confirmRequestsOf(db: Db, claim_id: string): ConfirmRow[] {
-  return db.all<{ id: string; kind: ConfirmKind; contact_name: string; to_email: string; sent_by_name: string; sent_at: string; expires_at: string;
+  return db.all<{ id: string; kind: ConfirmKind; contact_name: string; to_email: string; sent_by_name: string; sent_at: string; expires_at: string; period_end: string | null;
     outcome: 'CONFIRMED' | 'NOT_CONFIRMED' | null; signer_name: string | null; signer_firm: string | null; filed_on: string | null; reason: string | null; answered_at: string | null }>(
-    'SELECT r.id, r.kind, k.full_name AS contact_name, r.to_email, u.display_name AS sent_by_name, r.sent_at, r.expires_at, ' +
+    'SELECT r.id, r.kind, k.full_name AS contact_name, r.to_email, u.display_name AS sent_by_name, r.sent_at, r.expires_at, r.period_end, ' +
       'x.outcome, x.signer_name, x.signer_firm, x.filed_on, x.reason, x.answered_at FROM accountant_confirm_requests r ' +
       'JOIN contacts k ON k.id = r.contact_id JOIN users u ON u.id = r.sent_by LEFT JOIN accountant_confirm_answers x ON x.request_id = r.id ' +
       'WHERE r.claim_id = ? ORDER BY r.sent_at DESC, r.rowid DESC', [claim_id])
-    .map((r) => ({ id: r.id, kind: r.kind, contact_name: r.contact_name, to_email: r.to_email, sent_by_name: r.sent_by_name, sent_at: r.sent_at, expires_at: r.expires_at,
+    .map((r) => ({ id: r.id, kind: r.kind, contact_name: r.contact_name, to_email: r.to_email, sent_by_name: r.sent_by_name, sent_at: r.sent_at, expires_at: r.expires_at, period_end: r.period_end,
       answer: r.outcome === null ? null : { outcome: r.outcome, signer_name: r.signer_name ?? '', signer_firm: r.signer_firm, filed_on: r.filed_on, reason: r.reason, answered_at: r.answered_at ?? '' } }));
 }
 
-/** The newest answer of a kind on the claim, answered on or after `since`. */
-export function latestAnswer(db: Db, claim_id: string, kind: ConfirmKind, since = ''): ConfirmRow['answer'] | null {
-  return confirmRequestsOf(db, claim_id).filter((r) => r.kind === kind && r.answer !== null && r.answer.answered_at >= since)
+/** The newest answer of a kind on the claim, answered on or after `since` — for one return's period, where given. */
+export function latestAnswer(db: Db, claim_id: string, kind: ConfirmKind, since = '', period_end?: string): ConfirmRow['answer'] | null {
+  return confirmRequestsOf(db, claim_id).filter((r) => r.kind === kind && r.answer !== null && r.answer.answered_at >= since
+      && (period_end === undefined || r.period_end === period_end))
     .sort((a, b) => ((a.answer?.answered_at ?? '') < (b.answer?.answered_at ?? '') ? 1 : -1))[0]?.answer ?? null;
 }
 
@@ -231,4 +263,39 @@ export function accountantFitNeed(db: Db, claim_id: string, since: string): Need
   return a.outcome === 'CONFIRMED'
     ? { what: RETURN_FIT_NEED, met: true, why: `confirmed by ${a.signer_name} of ${a.signer_firm ?? ''}, ${ukDate(localDate(a.answered_at))}` }
     : { what: RETURN_FIT_NEED, met: false, why: `${a.signer_name} said it does not: “${a.reason ?? ''}”` };
+}
+
+export type ReturnFiling = ClaimReturn & {
+  readonly state: 'FILED' | 'NOT_FILED' | 'NOT_DUE';
+  readonly filed_on: string | null;
+  readonly words: string;
+};
+
+/**
+ * PHASE 159l (item 2, L15): EACH RETURN THE CLAIM GOES INTO, AND WHETHER IT IS FILED — on the accountant route, from the
+ * accountant's own FILED answers, each for its own return. OUR READING (Word question 283, the accountant): a return
+ * already due must be confirmed filed before the claim closes; a return not yet due (the 2025 refit's, due 31 May 2027,
+ * when the purchase's amended return was filed in 2026) does not hold the claim open — it is held in aftercare with its
+ * due date. A link sent before this phase, for the claim as a whole, counts for the earliest return only.
+ * Null where the claim goes into one return or fewer, or its returns are not settled (one answer, as before).
+ */
+export function returnFilings(db: Db, claim_id: string, todayIso: string): ReturnFiling[] | null {
+  const returns = returnsOf(db, claim_id, todayIso);
+  if (returns === null || returns.length <= 1) return null;
+  const today = localDate(todayIso);
+  return returns.map((r, i): ReturnFiling => {
+    const own = latestAnswer(db, claim_id, 'FILED', '', r.period_end);
+    const whole = i === 0 ? confirmRequestsOf(db, claim_id).find((x) => x.kind === 'FILED' && x.period_end === null && x.answer?.outcome === 'CONFIRMED')?.answer ?? null : null;
+    const a = own ?? whole;
+    const name = `The return for the period ending ${ukDate(r.period_end)} (${r.parts.join('; ')})`;
+    if (a !== null && a.outcome === 'CONFIRMED') {
+      return { ...r, state: 'FILED', filed_on: a.filed_on, words: `${name}: filed on ${a.filed_on === null ? 'a day not given' : ukDate(a.filed_on)}, confirmed by ${a.signer_name} of ${a.signer_firm ?? ''}` };
+    }
+    if (r.due_on !== null && r.due_on > today) {
+      return { ...r, state: 'NOT_DUE', filed_on: null, words: `${name}: not due until ${ukDate(r.due_on)}. Held in aftercare: send the accountant its filing link once it is filed` };
+    }
+    return { ...r, state: 'NOT_FILED', filed_on: null, words: a !== null
+      ? `${name}: ${a.signer_name} said it is not filed: “${a.reason ?? ''}”`
+      : `${name}: the accountant has not confirmed it is filed. Send them the filing link for this return under “The accountant’s confirmations”` };
+  });
 }

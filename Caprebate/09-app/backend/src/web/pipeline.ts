@@ -681,7 +681,7 @@ export function gateOut(db: Db, c: PipelineClaim, from: ProcedureKey, opts: Gate
       // CRM 6 of 10: the pack complete is the deliverables register's issued defence pack, immutable with its hash.
       // The confirmation that stood in for it is retired (MILESTONES below): nothing is left for a click to stand in for.
       needs.push(deliverableIssuedNeed(db, c.id, 'DEFENCE_PACK'));
-      needs.push(filingRecordedNeed(db, c.id)); // PHASE 158c (F42)
+      needs.push(filingRecordedNeed(db, c.id, opts.today ?? new Date().toISOString())); // PHASE 158c (F42); per return since 159l
       break;
   }
   return {

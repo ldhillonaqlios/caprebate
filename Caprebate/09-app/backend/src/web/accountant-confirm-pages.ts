@@ -30,17 +30,23 @@ export function accountantConfirmBlock(db: Db, actor: Actor, claim_id: string): 
   const mayAsk = kind !== undefined && accountantFiles(db, claim_id) && can(actor, 'email.queue', { type: 'email', id: c.business_id, business_id: c.business_id });
   if (rows.length === 0 && !mayAsk) return raw('');
   const people = mayAsk ? A.accountantContacts(db, c.business_id) : [];
+  const returns = mayAsk && kind === 'FILED' ? A.returnsOf(db, claim_id, new Date().toISOString()) ?? [] : [];
+  // A closed claim asks only about a return held in aftercare (PHASE 159l).
+  if (c.stage === 'CLOSED' && returns.length <= 1 && rows.length === 0) return raw('');
+  const asking = mayAsk && !(c.stage === 'CLOSED' && returns.length <= 1);
   return h`<div class="pblock" id="accountant-confirm"><h3>The accountant’s confirmations</h3>
     <p class="help">The client’s accountant confirms these for themselves, through a private link we email them. Nobody here ticks them.</p>
-    ${rows.length === 0 ? raw('') : h`<ul class="plain">${rows.map((r) => h`<li>${KIND_WORDS[r.kind]} — ${r.answer === null
+    ${rows.length === 0 ? raw('') : h`<ul class="plain">${rows.map((r) => h`<li>${KIND_WORDS[r.kind]}${r.period_end === null ? '' : ` (the period ending ${ukDate(r.period_end)})`} — ${r.answer === null
       ? h`${badge('Waiting for an answer')} sent to ${r.contact_name} by ${r.sent_by_name}, ${localStamp(r.sent_at)}`
       : r.answer.outcome === 'CONFIRMED'
         ? h`${badge('Confirmed', 'ok')} by ${r.answer.signer_name} of ${r.answer.signer_firm ?? ''}${r.answer.filed_on === null ? '' : `, filed on ${ukDate(r.answer.filed_on)}`}, ${localStamp(r.answer.answered_at)}`
         : h`${badge('Not confirmed', 'warn')} ${r.answer.signer_name}: “${r.answer.reason ?? ''}”, ${localStamp(r.answer.answered_at)}`}</li>`)}</ul>`}
-    ${!mayAsk || kind === undefined ? raw('') : people.length === 0
+    ${!asking || kind === undefined ? raw('') : people.length === 0
       ? h`<p>${badge('No accountant to ask', 'warn')} Add the client’s accountant as a contact, with their email address, first.</p>`
       : h`<form method="post" action="/staff/claims/${claim_id}/accountant-confirm"><input type="hidden" name="kind" value="${kind}">
-        <p>Ask them: <strong>${A.CONFIRM_ASKS[kind].ask}</strong></p>
+        <p>Ask them: <strong>${kind === 'FILED' && returns.length > 1 ? 'The tax return you choose below, carrying its part of this claim, has been filed.' : A.askFor(kind, kind === 'FILED' ? returns[0]?.period_end ?? null : null)}</strong></p>
+        ${kind === 'FILED' && returns.length > 1 ? h`<p class="help">This claim goes into ${String(returns.length)} tax returns. Each is confirmed by its own link.</p>
+        <label>Which return <select name="period_end" required><option value="">choose</option>${returns.map((r) => h`<option value="${r.period_end}">The period ending ${ukDate(r.period_end)}${r.due_on === null ? '' : `, due ${ukDate(r.due_on)}`} (${r.parts.join('; ')})</option>`)}</select></label>` : raw('')}
         <label>Their accountant <select name="contact_id" required><option value="">choose</option>${people.map((p) => h`<option value="${p.id}">${p.name} (${p.email})</option>`)}</select></label>
         <button type="submit">Email them the link</button></form>`}</div>`;
 }
@@ -55,7 +61,7 @@ export async function handleAccountantConfirmStaff(
   const id = m[1] ?? '';
   const f = await form(req);
   const r = A.sendConfirmRequest({ db: d.app.db, audit: d.app.audit, now: d.app.now, newId: d.newId, email: d.app.email }, actor, id,
-    { kind: f.get('kind') ?? '', contact_id: f.get('contact_id') ?? '', origin: d.origin });
+    { kind: f.get('kind') ?? '', contact_id: f.get('contact_id') ?? '', origin: d.origin, period_end: f.get('period_end') ?? '' });
   if (!r.ok) return d.problem(res, actor, 'Not sent', r.why, `/staff/claims/${id}#accountant-confirm`, r.field);
   res.writeHead(303, { location: `/staff/claims/${id}?done=${r.requested === true ? 'emailed' : 'saved-email'}#accountant-confirm` });
   res.end();
@@ -101,7 +107,7 @@ export async function handleConfirmLink(
   return linkPage(res, err === null ? 200 : 400, 'Please confirm', h`
     <div class="card"><h1>${v.company} — please confirm</h1>
       <p><strong>Dear ${v.contact_name},</strong> we are working with ${v.company} on their capital allowances claim (our reference ${v.claim_ref}). Please tell us, for yourself, whether this is true:</p>
-      <p class="pdash-big">${A.CONFIRM_ASKS[v.kind].ask}</p>
+      <p class="pdash-big">${A.askFor(v.kind, v.period_end)}</p>
       <p class="help">This link is for you alone. It works once, until ${ukDate(localDate(v.expires_at))}.</p></div>
     ${err === null ? raw('') : h`<div class="gate" role="alert"><strong>Not saved.</strong> ${err.why}</div>`}
     <div class="rp-forms">
