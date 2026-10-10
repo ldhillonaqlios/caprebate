@@ -669,7 +669,7 @@ export function staffReturnFilings(db: Db, claim_id: string, todayIso: string): 
     const name = `The return for the period ending ${ukDate(r.period_end)} (${r.parts.join('; ')})`;
     if (filed !== null && filed !== undefined) return { ...r, state: 'FILED', filed_on: filed, words: `${name}: filed on ${ukDate(filed)}, as recorded` };
     if (r.due_on !== null && r.due_on > today) {
-      return { ...r, state: 'NOT_DUE', filed_on: null, words: `${name}: not due until ${ukDate(r.due_on)}. Held in aftercare: record its filing under Reconciliation once it is filed` };
+      return { ...r, state: 'NOT_DUE', filed_on: null, words: `${name}: not due until ${ukDate(r.due_on)}. Held in aftercare. Record it under Reconciliation when it is filed` };
     }
     return { ...r, state: 'NOT_FILED', filed_on: null, words: `${name}: no filing is recorded. Record it under Reconciliation once the return is filed` };
   });

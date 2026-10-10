@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 328 |
-| Working on it | 1 |
+| Done | 329 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1288,6 +1288,7 @@
 - Note 2026-09-28 (Phase 151g): Word question 170 was answered on 25 Sep 2026 (yes, on five conditions) and Phase 151g built the conditions into the smoke command, which does not cover a boundary download. The first download, as a test lookup under the same conditions and confirming the GML shape, is Phase 151l. Switching the fetcher on stays Lakhbir's.
 - Note 2026-09-28 (Phase 151l): Phase 151l built the first download as a test lookup: smoke HMLR_INSPIRE, in the smoke command, under the same five conditions and log (src/connectors/boundary-test-lookup.ts, test/phase151l.test.ts). Default: City of Westminster's file, looking for 70 Whitehall's published grid reference. Nothing has been downloaded yet. In the way: Lakhbir, or a person he names, records the switch-on (smoke-switched-on HMLR_INSPIRE) and runs it; switching the fetcher on for the application stays his.
 - Note 2026-10-06 (Phase 157 (sweep)): Parked 6 Oct 2026, Lakhbir: 'use home data'. Site boundary comes from Homedata's title outline (Phase 156f, HOMEDATA_BOUNDARY, 5p, tied to the UPRN and title number). The free land-boundary download test is dropped; the fetcher stays built and switched off, kept only as a fallback if Homedata will not allow the area in client reports (Word question 245).
+- Note 2026-10-10 (Phase 160): INSPIRE end to end (from Phase 159a; carried by 159j and 159l to the sweep) now lives here, with this item's trigger: the site boundary comes from Homedata's title outline (Lakhbir, 6 Oct 2026), so proving the INSPIRE download live feeds nothing in use. No switch-on recorded after 9 Oct 2026 (three NO lookups that day). If Homedata's outline is ever dropped, Lakhbir records a switch-on (node src/cli.ts smoke-switched-on HMLR_INSPIRE --who --why), then CAPREBATE_LIVE_SMOKE=1 node src/cli.ts smoke HMLR_INSPIRE, expecting PASS.
 
 ### DPO: allow company names on conveyancing uploads, strip individuals?
 
@@ -1433,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160 - Sweep and stress-test (10 Oct 2026): the whole tracker against the disk after Phases 159a-159l, every check re-run, and the two jobs 159l carried in
-
-`13255959284` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro.local**
-
-- Note 2026-10-10 (Phase 160): Claimed: the sweep after Phases 159a to 159l, with the two jobs Phase 159l carried in (INSPIRE end to end; a filing per return on the staff route). Created on monday in group 05.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-328 items.
+329 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3409,4 +3404,11 @@
 
 - Note 2026-10-10 (Phase 159j): Written 10 Oct 2026 by Phase 159j from the second Lockwood Surgery run (L13, L15, L18, L19, L20 and L17's BCIS quarter; INSPIRE end to end once Lakhbir records the switch-on): evidence in 04-phase-work/sim-2026-10-10-lockwood/ (OneDrive); the phase is in ACTION-PLAN.md above the sweep. Created on monday in group 05.
 - Note 2026-10-10 (Phase 159l): Done: items 1-6 and 8 built and tested (test/phase159l.test.ts, thirteen tests; migrations 114 and 115); Word questions 283-285, ACC-H13 (13255820733); INSPIRE end to end and the staff route's filing per return carried to Phase 160; 5,130 checks; record in PHASE-HISTORY.md; moved to group Z on monday
+
+### Phase 160 - Sweep and stress-test (10 Oct 2026): the whole tracker against the disk after Phases 159a-159l, every check re-run, and the two jobs 159l carried in
+
+`13255959284` · **Done** · owner Claude
+
+- Note 2026-10-10 (Phase 160): Claimed: the sweep after Phases 159a to 159l, with the two jobs Phase 159l carried in (INSPIRE end to end; a filing per return on the staff route). Created on monday in group 05.
+- Note 2026-10-10 (Phase 160): Done: 513 of 513 board items agree with the tracker; every check re-run (5,132 checks); the BCIS licence opened on BCIS's own answer and every live line holding question 218 open corrected; a duplicate BCIS item closed into 13254356802; job B built (migration 116, test/phase160.test.ts); job A rehomed to 12830205914; the sweep renumbered to 161; record in PHASE-HISTORY.md; moved to group Z on monday
 
