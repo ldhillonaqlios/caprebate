@@ -31,12 +31,13 @@ import { packJob, type PackJob } from './surveyor.ts';
 import { linesForSector, type LineTemplate } from './pack-lines.ts';
 import {
   packSums, parseMoney, parsePercent, parseQuantity, parseRate, worksSums, WORKS_FIELDS,
-  type PackInputs, type PackLine, type PackSums, type Pool, type Source, type Valued, type WorksField, type WorksInputs, type WorksSums,
+  mulDivRound, type PackInputs, type PackLine, type PackSums, type Pool, type Source, type Valued, type WorksField, type WorksInputs, type WorksSums,
 } from './pack-sums.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS, purchaseApplies, worksEvents, type PropertyEvent } from './property-events.ts';
 import { legalVerdictForJob } from './pack-legal.ts';
-import { applyGrants, type GrantReading, type GrantSwitches } from './pack-grants.ts';
-import { acquisitionDateReading, elementName, packGrantsFor } from './claim-facts.ts';
+import { applyGrants, payerReduces, type GrantReading, type GrantSwitches } from './pack-grants.ts';
+import { moneyReadingsHere, type MoneyReadings } from './money-readings.ts';
+import { acquisitionDateReading, elementName, latestFacts, packGrantsFor } from './claim-facts.ts';
 import { bcisDataHere, bcisDrafts, bcisLocationNamed, indexBetween, type BcisDraft, type RateBasis } from './bcis-data.ts';
 import { councilAreaOf, floorAreaForSite, pricePaidSale, propertyTenure, siteAreaFlag, siteAreaOf } from './who-claims.ts';
 import { shippedGrantSwitches } from './grant-checks.ts';
@@ -45,7 +46,7 @@ import { shippedGrantSwitches } from './grant-checks.ts';
  * `grantSwitches` (Phase 153a) is for the tests alone: it stands in for CB_CTA's two grant switches so chapter 15 can be
  * proved both ways. Nothing in src/ or api/ passes it, so a pack always takes the switches as they ship.
  */
-export type PackDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; grantSwitches?: GrantSwitches };
+export type PackDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string; grantSwitches?: GrantSwitches; money?: MoneyReadings };
 
 /** Chapter 15's grants: the claim's, as the pack takes them (src/web/pack-grants.ts). */
 export type PackGrants = {
@@ -124,6 +125,45 @@ export type Pricing = {
   readonly location_from: 'SURVEYOR' | 'COUNCIL' | null;
 };
 
+/** PHASE 159i: the purchase's money adjustments (money-readings.ts), each shown with what it did. */
+export type PackMoney = {
+  readonly readings: MoneyReadings;
+  /** Stamp duty and acquisition fees added to the price shared out (on in test). */
+  readonly costs_pence: number;
+  /** The land's share of the VAT and those costs, added to the land (C12). */
+  readonly land_share_pence: number;
+  /** The buyer's own alterations to install plant, claimed on top of the cap (s.25; on in test). */
+  readonly alterations_pence: number;
+  /** A VAT capital goods scheme adjustment recorded on the claim: a note, not counted. */
+  readonly cgs_pence: number | null;
+  readonly words: readonly string[];
+};
+
+/** PHASE 159i (item 4): a piece of work's own grants and its irrecoverable VAT, applied to its cost-led sums. VAT the
+ *  client could not reclaim follows every part of the cost; a grant that paid for this work comes off what qualifies in
+ *  full (it cannot be traced to rows of a final account), the pools sharing it. */
+export function adjustWorks(w: WorksSums, vat_pence: number | null, grants_pence: readonly (number | null)[], total_pence: number | null): WorksSums {
+  if (!w.complete || w.qualifying_pence === null || w.main_pool_pence === null || w.special_pool_pence === null) return w;
+  if (grants_pence.some((g) => g === null)) {
+    return { ...w, qualifying_pence: null, main_pool_pence: null, special_pool_pence: null, complete: false,
+      needed: [...w.needed, { where: 'GRANT', key: 'grant_amount', line_id: w.event_id, words: 'How much a grant that paid for this work paid. Until it is known there is no total.' }] };
+  }
+  let q = BigInt(w.qualifying_pence), m = BigInt(w.main_pool_pence), r = BigInt(w.repairs_pence ?? 0);
+  if (vat_pence !== null && vat_pence > 0 && total_pence !== null && total_pence > 0) {
+    const T = BigInt(total_pence), V = BigInt(vat_pence);
+    q = mulDivRound(q, T + V, T); m = mulDivRound(m, T + V, T); r = mulDivRound(r, T + V, T);
+    if (m > q) m = q;
+  }
+  const g = grants_pence.reduce<bigint>((t, x) => t + BigInt(x as number), 0n);
+  if (g > 0n) {
+    const q1 = g >= q ? 0n : q - g;
+    m = q === 0n ? 0n : mulDivRound(m, q1, q);
+    if (m > q1) m = q1;
+    q = q1;
+  }
+  return { ...w, qualifying_pence: Number(q), main_pool_pence: Number(m), special_pool_pence: Number(q - m), repairs_pence: w.repairs_pence === null ? null : Number(r) };
+}
+
 /** PHASE 159g: what the registers already say, for the surveyor to confirm — never a value the pack counts. */
 export type RegisterLeads = {
   /** Price Paid's sale at the address, as a lead or a price, in words (items 3 and 4); null when none is held. */
@@ -187,6 +227,8 @@ export type PackView = {
   readonly purchase_w3: boolean;
   /** PHASE 159f: how the rates are priced — the BCIS drafts, one day, their sources, and section 562 both ways. */
   readonly pricing: Pricing;
+  /** PHASE 159i: the money added to or taken off the purchase, in words and pence. */
+  readonly money: PackMoney;
   /** PHASE 159g: the register leads for chapter 9. */
   readonly leads: RegisterLeads;
   /** The pack's counter as this view was read. A change must carry it back. */
@@ -305,7 +347,8 @@ function combined(purchase: PackSums, applies: boolean, works: readonly WorksVie
   if (works.length === 0) return purchase;
   const needed = [...(applies ? purchase.needed : []), ...works.flatMap((w) => w.sums.needed)];
   const problems = [...(applies ? purchase.problems : []), ...works.flatMap((w) => w.sums.problems)];
-  if (grants > 0) problems.push({ code: 'GRANTS_ON_EVENTS', words: 'A grant is on this claim, and the building has work done since. Which spend the grant paid for is not recorded yet, so it is not taken off. There is no total until it is (Phase 159i).' });
+  // PHASE 159i (item 4): only a grant whose spend is not recorded stops the total now; one recorded against an event comes off it.
+  if (grants > 0) problems.push({ code: 'GRANTS_ON_EVENTS', words: 'A grant is on this claim, and the building has work done since. Say which spend it paid for: the purchase or a piece of work. Until then it is not taken off, and there is no total.' });
   const complete = (applies ? purchase.complete : true) && works.every((w) => w.sums.complete) && problems.length === 0;
   const add = (pick: (x: { qualifying_pence: number | null; main_pool_pence: number | null; special_pool_pence: number | null }) => number | null): number | null => {
     if (!complete) return null;
@@ -447,16 +490,50 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
 
   // PHASE 153a — the claim's grants come off the sums here, so every total, the legal check, approval and the report
   // read the figure after them. With no grant on the claim the sums are exactly packSums's.
-  const switches = d.grantSwitches ?? shippedGrantSwitches();
-  const onClaim = job.claim_id === null ? [] : packGrantsFor(d.db, job.claim_id);
+  // PHASE 159i: the money readings (on in test, money-readings.ts) choose the grant routes too: traced grants off their
+  // items, an untraced one off in full.
+  const money = d.money ?? moneyReadingsHere();
+  const switches = d.grantSwitches ?? (money.grant_untraced_full ? { ...shippedGrantSwitches(), element_trace: true, untraced_full: true } : shippedGrantSwitches());
+  const allGrants = job.claim_id === null ? [] : packGrantsFor(d.db, job.claim_id);
+  // PHASE 159i (item 4): a grant recorded against a piece of work comes off that work, below; the rest are the purchase's.
+  const eventsHere = eventsOfProperty(d.db, property?.id ?? null);
+  const worksIds = new Set(worksEvents(eventsHere).map((e) => e.id));
+  const onClaim = allGrants.filter((g) => g.event_id === null || g.event_id === undefined || !worksIds.has(g.event_id));
+  const facts = job.claim_id === null ? new Map() : latestFacts(d.db, job.claim_id);
+  const pence = (k: string): number => { const r = facts.get(k); return r !== undefined && r.answer === 'VALUE' && typeof r.value_pence === 'number' && r.value_pence > 0 ? r.value_pence : 0; };
+  const yes = (k: string): boolean => { const r = facts.get(k); return r !== undefined && r.answer === 'VALUE' && r.value_text === 'YES'; };
   // PHASE 153e: VAT the client could not reclaim is part of the price that is shared out (Module 00 C23). The price
   // shown stays the price paid; the sums read it with the counted VAT added.
   const vat = vatReading(resolve(null, 'vat_position', none), resolve(null, 'vat', none));
-  const forSums: PackInputs = vat.counted_pence > 0 && inputs.price_paid_pence.value !== null
-    ? { ...inputs, price_paid_pence: { value: inputs.price_paid_pence.value + vat.counted_pence, source: inputs.price_paid_pence.source } }
+  /* PHASE 159i (item 3, OUR READINGS, on in test): the stamp duty or land transaction tax paid (#11) and the legal and
+     other acquisition fees (#13) are part of the price shared out. And C12: that money, and the VAT, is shared between
+     the land and the building in the same proportion as the price, so the land takes its part and the fixtures do not
+     take all of it. Off, the VAT goes to the building alone, as before. */
+  const costs = (money.transaction_tax_in_base ? pence('TRANSACTION_TAX') : 0) + (money.legal_fees_in_base ? pence('ACQUISITION_COSTS') : 0);
+  const added = vat.counted_pence + costs;
+  const price0 = inputs.price_paid_pence.value, land0 = inputs.land_pence.value;
+  const landShare = money.vat_shared_with_land && added > 0 && price0 !== null && price0 > 0 && land0 !== null && land0 > 0
+    ? Number(mulDivRound(BigInt(land0), BigInt(added), BigInt(price0))) : 0;
+  const forSums: PackInputs = added > 0 && price0 !== null
+    ? { ...inputs, price_paid_pence: { value: price0 + added, source: inputs.price_paid_pence.source },
+        ...(landShare > 0 && land0 !== null ? { land_pence: { value: land0 + landShare, source: inputs.land_pence.source } } : {}) }
     : inputs;
   const before = packSums(forSums, lines);
-  const reading = applyGrants(forSums, lines, before, onClaim, switches);
+  const graded = applyGrants(forSums, lines, before, onClaim, switches);
+  /* PHASE 159i (item 3, s.185 plus own s.25, #1, on in test): the buyer's own alterations to install plant are its own
+     spend under s.25, claimed in the main pool on top of whatever caps the price's share. Only on a recorded yes with an
+     amount. */
+  const alterations = money.s185_plus_own_s25 && yes('BUYER_ALTERATIONS') ? pence('BUYER_ALTERATIONS_AMOUNT') : 0;
+  const reading: GrantReading = alterations > 0 && graded.sums.complete && graded.sums.qualifying_pence !== null && graded.sums.main_pool_pence !== null
+    ? { ...graded, sums: { ...graded.sums, qualifying_pence: graded.sums.qualifying_pence + alterations, main_pool_pence: graded.sums.main_pool_pence + alterations } }
+    : graded;
+  const cgs = pence('VAT_CGS_ADJUSTMENT');
+  const moneyWords: string[] = [];
+  if (costs > 0) moneyWords.push(`Stamp duty and purchase fees of £${(costs / 100).toLocaleString('en-GB')} are added to the price shared out.`);
+  if (landShare > 0) moneyWords.push(`The land takes its share of the VAT and those costs, £${(landShare / 100).toLocaleString('en-GB')}, in the same proportion as the price.`);
+  if (alterations > 0) moneyWords.push(`The buyer’s own alterations to install plant, £${(alterations / 100).toLocaleString('en-GB')}, are claimed on top, in the main pool (s.25).`);
+  if (cgs > 0) moneyWords.push(`A VAT capital goods scheme adjustment of £${(cgs / 100).toLocaleString('en-GB')} is recorded. It is a note: it does not change the figure until the tax adviser says how it counts.`);
+  const moneyView: PackMoney = { readings: money, costs_pence: costs, land_share_pence: landShare, alterations_pence: alterations, cgs_pence: cgs > 0 ? cgs : null, words: moneyWords };
   const grants: PackGrants = {
     claim_id: job.claim_id, switches, reading,
     amounts_shown: actor.role !== 'SURVEYING' || GRANT_AMOUNTS_TO_SURVEYOR,
@@ -499,7 +576,9 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
       ? { value: e.cost_pence, source: { kind: 'EVIDENCE', text: e.source === 'ASSESSMENT' ? 'What the client said it cost, at the assessment' : 'What the claim records it cost' } }
       : none;
     const winputs = Object.fromEntries(WORKS_FIELDS.map((f) => [f, resolve(e.id, f, draft(f))])) as unknown as WorksInputs;
-    return { event: e, label, inputs: winputs, sums: worksSums(e.id, label, winputs) };
+    // PHASE 159i (item 4): this work's own grants (the client's, recorded against it) and its irrecoverable VAT.
+    const own = allGrants.filter((g) => g.event_id === e.id && g.paid_to !== 'PAST_OWNER' && payerReduces(g.payer_class, switches).reduces).map((g) => g.amount_pence);
+    return { event: e, label, inputs: winputs, sums: adjustWorks(worksSums(e.id, label, winputs), e.vat_pence, own, winputs.works_total.value) };
   });
 
   // PHASE 159d (item 8): the legal check is the purchase's. Failed, with work since, it stops the purchase only.
@@ -507,8 +586,8 @@ export function packView(d: PackDeps, actor: Actor, job_id: string): PackView {
 
   return {
     job, pack_id: pack?.id ?? null, property, property_choices: choices,
-    inputs, lines, sums: combined(reading.sums, applies && !purchaseW3, works, onClaim.length), grants, vat, shared_area, cost,
-    events, purchase_applies: applies, purchase_sums: reading.sums, works, purchase_w3: purchaseW3, pricing, leads,
+    inputs, lines, sums: combined(reading.sums, applies && !purchaseW3, works, onClaim.filter((g) => g.paid_to !== 'PAST_OWNER' && (g.event_id === null || g.event_id === undefined)).length), grants, vat, shared_area, cost,
+    events, purchase_applies: applies, purchase_sums: reading.sums, works, purchase_w3: purchaseW3, pricing, money: moneyView, leads,
     seq: entries.length === 0 ? 0 : (entries[entries.length - 1] as EntryRow).seq,
     may_edit: can(actor, 'surveyor_job.commit', obj),
     changes,

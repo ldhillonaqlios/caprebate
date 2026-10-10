@@ -366,7 +366,31 @@ export function legalVerdictForJob(db: Db, job_id: string, nowIso: string): Lega
   for (const r of db.all<{ question_id: string; value_json: string }>('SELECT question_id, value_json FROM survey_pack_legal_answers WHERE pack_id = ? ORDER BY seq ASC', [pack.id])) {
     values.set(r.question_id, JSON.parse(r.value_json) as unknown);
   }
-  return assessLegal(sector, values, nowIso, claimantFor(db, job.business_id), holdingFor(db, job.id)).verdict;
+  return withPastOwnerGrants(assessLegal(sector, values, nowIso, claimantFor(db, job.business_id), holdingFor(db, job.id)).verdict, pastOwnerGrants(db, job.id));
+}
+
+/** PHASE 159i (item 1): the grants an EARLIER owner received, on the job's claim — their amounts, in pence (null: not known). */
+function pastOwnerGrants(db: Db, job_id: string): (number | null)[] {
+  return db.all<{ amount_pence: number | null }>(
+    "SELECT g.amount_pence FROM claim_grants g JOIN surveyor_jobs j ON j.claim_id = g.claim_id WHERE j.id = ? AND g.paid_to = 'PAST_OWNER' AND g.withdrawn_at IS NULL",
+    [job_id]).map((r) => r.amount_pence);
+}
+
+/**
+ * PHASE 159i (item 1, Rulebook F; s.185 with s.62): AN EARLIER OWNER'S GRANT LOWERS THE CAP FROM THE EARLIER SALE, never
+ * the buyer's price. That owner could claim only what it paid less the grant, so what passes on is lower by it. Where
+ * a cap stands it comes down by the grant; an amount not known leaves the check not settled (N4); with no cap, the
+ * surveyor is told to size one.
+ */
+export function withPastOwnerGrants(v: LegalVerdict, grants: readonly (number | null)[]): LegalVerdict {
+  if (grants.length === 0 || (v.level !== 'GREEN' && v.level !== 'URGENT')) return v;
+  if (grants.some((g) => g === null)) {
+    return { ...v, level: 'AMBER', headline: 'An earlier owner received a grant, and its amount is not known. It lowers what could pass to the client.', actions: [...v.actions, 'Find how much the earlier owner’s grant paid.'] };
+  }
+  const total = grants.reduce<number>((t, g) => t + (g as number), 0);
+  if (v.cap_pence === null) return { ...v, actions: [...v.actions, `An earlier owner received grants of ${poundsWords(total)}. They lower what could pass to the client (s.185 and s.62): size the cap from the earlier sale.`] };
+  const cap = Math.max(0, v.cap_pence - total);
+  return { ...v, cap_pence: cap, cap_words: `${v.cap_words ?? 'the cap'}, less the earlier owner’s grant of ${poundsWords(total)}` };
 }
 
 /** PHASE 159h (item 7): how the client holds the pack's building — the pack's chosen property, else its claim's. */
@@ -374,6 +398,15 @@ function holdingFor(db: Db, job_id: string): { role: ClaimantRole | null } | und
   const p = db.get<{ p: string | null }>(
     'SELECT COALESCE(sp.property_id, c.property_id) AS p FROM surveyor_jobs j LEFT JOIN survey_packs sp ON sp.job_id = j.id LEFT JOIN claims c ON c.id = j.claim_id WHERE j.id = ?', [job_id])?.p ?? null;
   return p === null ? undefined : { role: claimantRole(db, p).role };
+}
+
+/** PHASE 159i (item 3): what the cap is checked against — the pack's figure and pools, less the buyer's own alterations
+ *  (s.25), which are claimed on top of the cap. */
+export function capped(v: { readonly sums: { readonly qualifying_pence: number | null; readonly main_pool_pence: number | null; readonly special_pool_pence: number | null }; readonly money?: { readonly alterations_pence: number } }):
+  [number | null, { main_pence: number | null; special_pence: number | null }] {
+  const a = v.money?.alterations_pence ?? 0;
+  const less = (x: number | null) => (x === null ? null : Math.max(0, x - a));
+  return [less(v.sums.qualifying_pence), { main_pence: less(v.sums.main_pool_pence), special_pence: v.sums.special_pool_pence }];
 }
 
 /** May this pack be approved, as far as the legal check goes? (Stage 3 asks this.) */
@@ -413,7 +446,8 @@ export function legalView(d: PackDeps, actor: Actor, job_id: string): LegalView 
   const answers = new Map<string, LegalAnswer>();
   for (const h of history) answers.set(h.question_id, h);
   const values = new Map<string, unknown>([...answers].map(([k, v]) => [k, v.value] as const));
-  const r = assessLegal(job.sector, values, d.now(), claimantFor(d.db, job.business_id), holdingFor(d.db, job.id));
+  const r0 = assessLegal(job.sector, values, d.now(), claimantFor(d.db, job.business_id), holdingFor(d.db, job.id));
+  const r = { ...r0, verdict: withPastOwnerGrants(r0.verdict, pastOwnerGrants(d.db, job.id)) };
   const askedIds = new Set(r.asked.map((q) => q.id));
   return {
     questions: legalQuestions(job.sector), asked: r.asked, unanswered: r.unanswered,

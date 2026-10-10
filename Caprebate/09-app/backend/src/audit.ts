@@ -388,6 +388,8 @@ export type AuditKind =
   | 'WHATSAPP_EXPORT_UPLOADED' | 'WHATSAPP_EXPORT_SAVED'
   /** PHASE 159c: a person added an event to a building on its claim (src/web/property-events.ts): ids and the kind — never a cost. */
   | 'PROPERTY_EVENT_ADDED'
+  /** PHASE 159i: a person recorded an event's VAT on its claim: the event and the field — never an amount. */
+  | 'PROPERTY_EVENT_CHANGED'
   /** 1 Oct 2026: a surveyor changed the survey pack (src/web/survey-pack.ts): what, which line, which fields — never a value. */
   | 'SURVEY_PACK_CHANGED'
   /** 2 Oct 2026: the surveyor approved a version of the survey pack (src/web/pack-approve.ts): the version and its fingerprint. */

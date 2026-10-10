@@ -33,6 +33,11 @@
  * is left. Every amount is whole pence in BigInt, each rounding the nearest penny, a half up (pack-sums.ts's own rule).
  * Main pool + special rate pool = what qualifies, to the penny, after grants as before them.
  *
+ * PHASE 159i (item 1, Rulebook F F-R12): A THIRD ROUTE, FULL, replaces the equal share where `untraced_full` is on (on
+ * in test): a grant that cannot be traced to the items it paid for comes off what qualifies in full — the conservative
+ * deduction — after the traced ones. A grant paid to an EARLIER owner (PAST_OWNER) takes nothing off the buyer's sums;
+ * it lowers the cap from the earlier sale (s.185, pack-legal.ts). And C23: every route's rows add up to its total.
+ *
  * NOTHING HERE READS A DATABASE, A CLOCK OR A SWITCH: the switches are arguments, so both ways are tested
  * (test/pack-grants.test.ts) while the one that ships is off. Whether a grant reduces qualifying spend item by item is
  * the tax adviser's to confirm — FOR THE ACCOUNTANT, ACC-A16.
@@ -50,6 +55,11 @@ const CONNECTED: readonly string[] = Object.freeze(['landlord_connected', 'group
 
 export type PackGrant = {
   readonly id: string;
+  /** PHASE 159i: who received it. A PAST owner's grant lowered what that owner could claim, so it lowers the s.185 cap
+   *  (pack-legal.ts), never the buyer's price. Absent is the client's own, as before. */
+  readonly paid_to?: 'CLIENT' | 'PAST_OWNER';
+  /** PHASE 159i (item 4): the event on the building it paid for (property_events.id); null: not recorded. */
+  readonly event_id?: string | null;
   /** Who paid, as a class from the closed list. A key not on it is read as not known. */
   readonly payer_class: string;
   readonly amount_pence: number | null;
@@ -62,9 +72,13 @@ export type GrantSwitches = {
   readonly element_trace: boolean;
   /** CB_CTA.connected_contributor_no_reduction. */
   readonly connected_no_reduction: boolean;
+  /** PHASE 159i (item 1, Rulebook F F-R12): a grant that cannot be traced to the items it paid for comes off what
+   *  qualifies IN FULL — the conservative reading of "to the extent that" (s.532) — in place of the equal share. On in
+   *  test. Absent is off. */
+  readonly untraced_full?: boolean;
 };
 
-export type GrantRoute = 'ITEMS' | 'EQUAL_SHARE' | 'NOT_TAKEN_OFF';
+export type GrantRoute = 'ITEMS' | 'FULL' | 'EQUAL_SHARE' | 'NOT_TAKEN_OFF' | 'PAST_OWNER';
 
 export type GrantEffect = {
   readonly grant_id: string;
@@ -100,8 +114,13 @@ export function payerReduces(payer_class: string, sw: GrantSwitches): { readonly
 
 /** The route each grant takes, before any sum. */
 export function grantRoute(g: PackGrant, sw: GrantSwitches): { readonly route: GrantRoute; readonly words: string } {
+  if (g.paid_to === 'PAST_OWNER') return { route: 'PAST_OWNER', words: 'Paid to an earlier owner. It lowered what that owner could pass on, so it lowers the cap from the earlier sale (s.185), not your price.' };
   const r = payerReduces(g.payer_class, sw);
   if (!r.reduces) return { route: 'NOT_TAKEN_OFF', words: r.words };
+  const traced = sw.element_trace && g.element_ids.length > 0;
+  if (sw.untraced_full === true && !traced) {
+    return { route: 'FULL', words: 'Not matched to the items it paid for, so all of it comes off what qualifies. Match it to items from its papers to take off only what it paid for.' };
+  }
   if (!sw.element_trace) {
     return { route: 'EQUAL_SHARE', words: 'Taken off every item in equal share — the grant as a share of the price paid. Matching it to items waits on the tax adviser.' };
   }
@@ -120,7 +139,7 @@ const ZERO = 0n;
 export function applyGrants(inputs: PackInputs, lines: readonly PackLine[], sums: PackSums, grants: readonly PackGrant[], sw: GrantSwitches): GrantReading {
   const before = { qualifying_pence: sums.qualifying_pence, main_pool_pence: sums.main_pool_pence, special_pool_pence: sums.special_pool_pence };
   const routed = grants.map((g) => ({ g, ...grantRoute(g, sw) }));
-  const reducing = routed.filter((x) => x.route !== 'NOT_TAKEN_OFF');
+  const reducing = routed.filter((x) => x.route !== 'NOT_TAKEN_OFF' && x.route !== 'PAST_OWNER');
 
   const needed: Needed[] = reducing.filter((x) => x.g.amount_pence === null || !Number.isSafeInteger(x.g.amount_pence) || x.g.amount_pence <= 0)
     .map((x) => ({ where: 'GRANT', key: 'grant_amount', line_id: x.g.id, words: 'How much a grant on the claim paid. Until it is known there is no total.' }));
@@ -133,11 +152,11 @@ export function applyGrants(inputs: PackInputs, lines: readonly PackLine[], sums
 
   const total = sums.complete && needed.length === 0;
   if (reducing.length === 0) {
-    return { effects: routed.map((x) => ({ grant_id: x.g.id, route: x.route, words: x.words, line_ids: [], reduction_pence: x.route === 'NOT_TAKEN_OFF' ? 0 : null })), before, reduction_pence: 0, sums };
+    return { effects: routed.map((x) => ({ grant_id: x.g.id, route: x.route, words: x.words, line_ids: [], reduction_pence: x.route === 'NOT_TAKEN_OFF' || x.route === 'PAST_OWNER' ? 0 : null })), before, reduction_pence: 0, sums };
   }
   if (!total) {
     return {
-      effects: routed.map((x) => ({ grant_id: x.g.id, route: x.route, words: x.words, line_ids: x.route === 'ITEMS' ? linesFor(x.g).map((l) => l.id) : [], reduction_pence: x.route === 'NOT_TAKEN_OFF' ? 0 : null })),
+      effects: routed.map((x) => ({ grant_id: x.g.id, route: x.route, words: x.words, line_ids: x.route === 'ITEMS' ? linesFor(x.g).map((l) => l.id) : [], reduction_pence: x.route === 'NOT_TAKEN_OFF' || x.route === 'PAST_OWNER' ? 0 : null })),
       before, reduction_pence: null,
       sums: { ...sums, qualifying_pence: null, main_pool_pence: null, special_pool_pence: null, share_bp: null, needed: [...sums.needed, ...needed], complete: false },
     };
@@ -182,9 +201,17 @@ export function applyGrants(inputs: PackInputs, lines: readonly PackLine[], sums
   }
   if (T > Q) T = Q;
   if (TM > M) TM = M;
-  const Q1 = Q - T;
+  const Q0 = Q - T;
   // A line rounded on its own can leave the special pool a penny short of its lines' losses: the pools still add up.
-  let M1 = M - TM;
+  let M0 = M - TM;
+  if (M0 > Q0) M0 = Q0;
+
+  // 1b. PHASE 159i: FULL — each untraced grant's whole amount off what is left, the pools sharing it in proportion.
+  const fullGrants = reducing.filter((x) => x.route === 'FULL');
+  const AF = fullGrants.reduce((t, x) => t + BigInt(x.g.amount_pence as number), ZERO);
+  const fullOff = AF >= Q0 ? Q0 : AF;
+  const Q1 = Q0 - fullOff;
+  let M1 = Q0 === ZERO ? ZERO : mulDivRound(M0, Q1, Q0);
   if (M1 > Q1) M1 = Q1;
 
   // 2. EQUAL SHARE — the grants' total as a share of the price paid, off what is left.
@@ -196,11 +223,26 @@ export function applyGrants(inputs: PackInputs, lines: readonly PackLine[], sums
   if (M2 > Q2) M2 = Q2;
   const S2 = Q2 - M2;
 
+  /* PHASE 159i (C23): THE ROWS ADD UP TO THE TOTAL. Each route's total is shared across its grants by amount, the
+     pennies left by rounding going to the largest remainders, so the rows always sum to what the route took off. */
+  const share = (xs: typeof reducing, total: bigint): Map<string, bigint> => {
+    const out = new Map<string, bigint>();
+    const sumA = xs.reduce((t, x) => t + BigInt(x.g.amount_pence as number), ZERO);
+    if (sumA === ZERO) return out;
+    const parts = xs.map((x) => { const n = total * BigInt(x.g.amount_pence as number); return { id: x.g.id, q: n / sumA, r: n % sumA }; });
+    let left = total - parts.reduce((t, p) => t + p.q, ZERO);
+    for (const p of [...parts].sort((a, b) => (a.r === b.r ? 0 : a.r > b.r ? -1 : 1))) { if (left <= ZERO) break; p.q += 1n; left -= 1n; }
+    for (const p of parts) out.set(p.id, p.q);
+    return out;
+  };
+  const fullRows = share(fullGrants, fullOff);
+  const shareRows = share(shareGrants, Q1 - Q2);
+
   const effects: GrantEffect[] = routed.map((x) => {
-    if (x.route === 'NOT_TAKEN_OFF') return { grant_id: x.g.id, route: x.route, words: x.words, line_ids: [], reduction_pence: 0 };
+    if (x.route === 'NOT_TAKEN_OFF' || x.route === 'PAST_OWNER') return { grant_id: x.g.id, route: x.route, words: x.words, line_ids: [], reduction_pence: 0 };
+    if (x.route === 'FULL') return { grant_id: x.g.id, route: x.route, words: x.words, line_ids: [], reduction_pence: Number(fullRows.get(x.g.id) ?? ZERO) };
     if (x.route === 'EQUAL_SHARE') {
-      const a = BigInt(x.g.amount_pence as number);
-      return { grant_id: x.g.id, route: x.route, words: x.words, line_ids: [], reduction_pence: Number(mulDivRound(Q1, a >= P ? P : a, P)) };
+      return { grant_id: x.g.id, route: x.route, words: x.words, line_ids: [], reduction_pence: Number(shareRows.get(x.g.id) ?? ZERO) };
     }
     const ls = linesFor(x.g);
     let own = ZERO;

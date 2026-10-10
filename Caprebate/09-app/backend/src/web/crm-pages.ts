@@ -34,7 +34,10 @@ import type * as F from './claim-facts.ts';
 import type { PipelinePanel } from './pipeline.ts';
 import { enquiryBlock } from './pipeline-pages.ts';
 import { authorise, can } from '../authz.ts';
-import { addStaffEvent, eventsOnClaim, EVENT_KINDS, KIND_WORDS, type EventOnClaim } from './property-events.ts';
+import { addStaffEvent, eventsOnClaim, setEventVat, EVENT_KINDS, KIND_WORDS, type EventOnClaim } from './property-events.ts';
+
+/** PHASE 159i: an event's VAT position, in words (migration 105's three). */
+const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({ INCLUDED_NOT_RECLAIMABLE: 'The client could not reclaim it', EXCLUDED_OR_RECLAIMED: 'The client reclaimed it, or none was charged', NOT_KNOWN: 'Not known' });
 import { poundsWords } from './pack-sums.ts';
 import { claimTasksBlock, emailBlock, newTaskForm, notesBlock, timelineBlock } from './tasks-pages.ts';
 import { mayCreateTask, taskOwnerChoices } from './tasks.ts';
@@ -326,6 +329,25 @@ export async function handleCrm(
     return 'handled';
   }
 
+  /* ----------------------------------------------- PHASE 159i (item 4): one event's VAT */
+  const eventVat = /^\/staff\/claims\/([A-Za-z0-9-]+)\/events\/([A-Za-z0-9-]+)\/vat$/.exec(path);
+  if (eventVat && method === 'POST') {
+    const id = eventVat[1] ?? '';
+    const row = C.loadClaimRow(db, id);
+    authorise(actor, 'claim.write', C.claimObjFor(db, row));
+    if (row.property_id === null) return d.problem(res, actor, 'Not saved', 'This claim has no building yet.', `/staff/claims/${id}`);
+    const f = await form(req);
+    const raw0 = (f.get('amount') ?? '').replace(/[£,\s]/g, '');
+    if (raw0 !== '' && !/^\d{1,9}(\.\d{1,2})?$/.test(raw0)) return d.problem(res, actor, 'Not saved', 'Give the VAT in pounds, for example 18000.', `/staff/claims/${id}#claim-events`, 'amount');
+    const at = d.app.now();
+    const r = setEventVat(db, at, row.property_id, eventVat[2] ?? '', { position: f.get('position'), amount_pence: raw0 === '' ? null : Math.round(Number(raw0) * 100) });
+    if (!r.ok) return d.problem(res, actor, 'Not saved', r.why, `/staff/claims/${id}#claim-events`);
+    d.app.audit.append({ at, kind: 'PROPERTY_EVENT_CHANGED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
+      object_type: 'claim', object_id: id, detail: { event: eventVat[2] ?? '', fields: 'vat' } });
+    redirect(res, `/staff/claims/${id}?done=saved#claim-events`);
+    return 'handled';
+  }
+
   /* ----------------------------------------------- PHASE 159c: an event on the claim's building */
   const addEvent = /^\/staff\/claims\/([A-Za-z0-9-]+)\/events$/.exec(path);
   if (addEvent && method === 'POST') {
@@ -376,7 +398,16 @@ function eventsBlock(claim_id: string, evs: readonly EventOnClaim[], value: bool
   return h`${evs.length === 0 ? h`<p class="help">Nothing is recorded yet. The assessment records the purchase and any work since; add anything it missed below.</p>`
     : h`<ol class="events">${evs.map((e) => h`<li><p><strong>${e.words}</strong>, ${e.when}${value ? `, ${e.cost_pence === null ? 'cost not known' : `${poundsWords(e.cost_pence)}`}` : ''}${e.source === 'STAFF' ? ' (added on the claim)' : ''}</p>
       ${value ? h`<p class="help">${e.ceiling_pence === null ? `No figure for this one yet. ${e.ceiling_why ?? ''}` : `Up to ${poundsWords(e.ceiling_pence)} on the sector’s range for this kind of spend, until the survey prices it.`}</p>` : raw('')}
-      <p class="help">Its documents: ${e.documents.map((x, i) => h`${i === 0 ? '' : '; '}${x.label} (${x.held === 0 ? 'not received yet' : `${String(x.held)} held`})`)}.</p></li>`)}</ol>`}
+      <p class="help">Its documents: ${e.documents.map((x, i) => h`${i === 0 ? '' : '; '}${x.label} (${x.held === 0 ? 'not received yet' : `${String(x.held)} held`})`)}.</p>
+      ${value ? h`<p class="help">VAT: ${VAT_WORDS[e.vat ?? ''] ?? 'not recorded'}${e.vat_pence === null ? '' : `, ${poundsWords(e.vat_pence)} that could not be reclaimed, added to its cost in the survey pack`}.</p>` : raw('')}
+      ${mayAdd && value && e.kind !== 'REPAIRS' ? h`<div class="ev-vat">
+        <form method="post" action="/staff/claims/${claim_id}/events/${e.id}/vat" class="stack">
+          <label class="fl" for="vat-${e.id}">What happened to the VAT on this spend?</label>
+          <select class="fi" id="vat-${e.id}" name="position"><option value="">Not recorded</option>${Object.entries(VAT_WORDS).map(([k, w]) => h`<option value="${k}"${e.vat === k ? raw(' selected') : raw('')}>${w}</option>`)}</select>
+          <label class="fl" for="vatp-${e.id}">VAT the client could not reclaim, in pounds (only for that answer)</label>
+          <input class="fi" id="vatp-${e.id}" name="amount" inputmode="decimal" placeholder="£" value="${e.vat_pence === null ? '' : String(e.vat_pence / 100)}">
+          <button class="btn-quiet" type="submit">Save the VAT</button>
+        </form></div>` : raw('')}</li>`)}</ol>`}
     ${!mayAdd ? raw('') : h`<details class="morelist"><summary>Add an event</summary>
       <form method="post" action="/staff/claims/${claim_id}/events" class="stack">
         <label class="fl" for="ev-kind">What happened</label>

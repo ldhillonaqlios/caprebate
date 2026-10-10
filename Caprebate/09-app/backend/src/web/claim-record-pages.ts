@@ -13,6 +13,7 @@
  * derivation. Every staff-supplied value is drawn through `h`, which escapes it.
  */
 
+import { dateWords, eventsOfProperty, KIND_WORDS } from './property-events.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
@@ -83,7 +84,7 @@ export async function handleClaimRecord(
   if (m) {
     const id = m[1] ?? '';
     return finish(id, F.recordGrant(deps, actor, id, posted(await form(req),
-      ['kind', 'payer_class', 'amount', 'amount_basis', 'traced', 'traced_elements', 'element_ids', 'source_id', 'note'])), 'Grant not saved', 'grants', GRANTS_ANCHOR);
+      ['kind', 'payer_class', 'amount', 'amount_basis', 'traced', 'traced_elements', 'element_ids', 'source_id', 'note', 'paid_to', 'event_id'])), 'Grant not saved', 'grants', GRANTS_ANCHOR);
   }
   // PHASE 153a: the two grant facts the gate out of valuation reads (src/web/grant-checks.ts), from the grants section,
   // and back to it. Only those two keys: every other fact is recorded on the facts panel, as before.
@@ -553,7 +554,7 @@ function answerGrantsQuestion(
 
 /* ---------------- "Add a grant or contribution", one question per step ---------------- */
 
-const DRAFT_KEYS = ['kind', 'payer_class', 'amount', 'amount_basis', 'source_id', 'traced_elements', 'element_ids', 'note', 'traced'] as const;
+const DRAFT_KEYS = ['kind', 'payer_class', 'amount', 'amount_basis', 'source_id', 'traced_elements', 'element_ids', 'note', 'traced', 'paid_to', 'event_id'] as const;
 type Draft = Record<(typeof DRAFT_KEYS)[number], string>;
 const STEP_NAMES = ['Who paid', 'How much', 'What it paid for', 'Matched'] as const;
 
@@ -580,6 +581,8 @@ function checkStep(step: number, x: Draft): string | null {
   if (step === 1) {
     if (!Object.hasOwn(F.PAYER_CLASSES, x.payer_class)) return 'Choose who paid. If you do not know, choose Not known.';
     if (x.kind !== 'GRANT' && x.kind !== 'CONTRIBUTION') return 'Say whether it was a grant or another payment.';
+    if (x.paid_to !== '' && x.paid_to !== 'CLIENT' && x.paid_to !== 'PAST_OWNER') return 'Say who received it.';
+    if (x.paid_to === 'PAST_OWNER' && x.event_id !== '') return 'A grant paid to an earlier owner did not pay for the client’s spend. Leave the spend empty.';
   }
   if (step === 2) {
     if (x.amount !== '' && F.penceValue(x.amount) === null) return 'Write the amount in pounds, more than nothing — or leave it blank if nobody knows.';
@@ -625,9 +628,14 @@ function grantStepPage(d: ClaimRecordPageDeps, res: ServerResponse, actor: Actor
     <a href="${claimHref(c.business_id, c.id)}${GRANTS_ANCHOR}">Cancel</a></p>`;
   let body: Safe;
   if (step === 1) {
-    body = h`<form method="post" action="${self}" class="gstep"><input type="hidden" name="step" value="1">${carry(x, ['payer_class', 'kind'])}
+    // PHASE 159i (items 1 and 4): who received it, and which spend on the building it paid for.
+    const evs = eventsOfProperty(d.app.db, d.app.db.get<{ p: string | null }>('SELECT property_id AS p FROM claims WHERE id = ?', [c.id])?.p ?? null).filter((e) => e.kind !== 'REPAIRS');
+    body = h`<form method="post" action="${self}" class="gstep"><input type="hidden" name="step" value="1">${carry(x, ['payer_class', 'kind', 'paid_to', 'event_id'])}
       <fieldset><legend><h2>Who paid?</h2></legend>${choice('payer_class', F.PAYER_CLASSES, x.payer_class, { individual: 'A private person — we do not write their name' })}</fieldset>
       <fieldset><legend><h2>Was it a grant?</h2></legend>${choice('kind', { GRANT: 'A grant', CONTRIBUTION: 'Another payment towards the work' }, x.kind)}</fieldset>
+      <fieldset><legend><h2>Who received it?</h2></legend>${choice('paid_to', { CLIENT: 'The client', PAST_OWNER: 'An earlier owner of the building' }, x.paid_to === '' ? 'CLIENT' : x.paid_to)}
+        <p class="help">An earlier owner’s grant does not come off the client’s price. It lowers what could pass on from that owner.</p></fieldset>
+      ${evs.length === 0 ? raw('') : h`<label>Which spend did it pay for? <select name="event_id"><option value="">Not known yet</option>${evs.map((e) => h`<option value="${e.id}"${x.event_id === e.id ? raw(' selected') : raw('')}>${KIND_WORDS[e.kind]}, ${dateWords(e.event_date)}</option>`)}</select></label>`}
       <div class="help">${why('A loan is not a grant or a payment towards the work, and nor is regular income such as rent support. Insurance money after damage is added here too — it usually does not reduce the claim.')}</div>
       ${nav(false)}</form>`;
   } else if (step === 2) {

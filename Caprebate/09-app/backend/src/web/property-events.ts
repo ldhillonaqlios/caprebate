@@ -42,6 +42,8 @@ export type PropertyEvent = {
   readonly id: string; readonly property_id: string; readonly business_id: string; readonly ord: number;
   readonly kind: EventKind; readonly event_date: string | null; readonly cost_pence: number | null;
   readonly vat: string | null; readonly source: 'ASSESSMENT' | 'STAFF'; readonly created_at: string;
+  /** PHASE 159i (migration 110): the VAT on its cost the client could not reclaim, in pence; null: none recorded. */
+  readonly vat_pence: number | null;
 };
 
 /** "06/2021" or "2021-06" as "2021-06"; "2021" as "2021"; anything else as null. */
@@ -67,7 +69,7 @@ export function dateWords(d: string | null): string {
 export function eventsOfProperty(db: Db, property_id: string | null): PropertyEvent[] {
   if (property_id === null) return [];
   return db.all<PropertyEvent>(
-    'SELECT id, property_id, business_id, ord, kind, event_date, cost_pence, vat, source, created_at FROM property_events WHERE property_id = ? ORDER BY ord ASC',
+    'SELECT id, property_id, business_id, ord, kind, event_date, cost_pence, vat, source, created_at, vat_pence FROM property_events WHERE property_id = ? ORDER BY ord ASC',
     [property_id]);
 }
 
@@ -168,4 +170,19 @@ export function eventsOnClaim(db: Db, c: { property_id: string | null; business_
     return { ...e, words: KIND_WORDS[e.kind], when: dateWords(e.event_date), ceiling_pence: f.high_pence, ceiling_why: f.why,
       documents: DOCUMENTS_FOR[e.kind].map((code) => ({ code, label: label(code), held: held(code) })) };
   });
+}
+
+/** PHASE 159i (item 4): THE VAT ON ONE EVENT'S COST — its position (migration 105) and, where the client could not
+ *  reclaim it, the amount (migration 110), added to that event's cost in the survey pack. Staff record it on the claim. */
+export function setEventVat(db: Db, at: string, property_id: string, event_id: string, f: { position: string | null; amount_pence: number | null }):
+  { ok: true } | { ok: false; why: string } {
+  const e = db.get<{ id: string }>('SELECT id FROM property_events WHERE id = ? AND property_id = ?', [event_id, property_id]);
+  if (e === undefined) return { ok: false, why: 'That is not an event on this claim’s building.' };
+  const pos = f.position === null || f.position === '' ? null : f.position;
+  if (pos !== null && pos !== 'INCLUDED_NOT_RECLAIMABLE' && pos !== 'EXCLUDED_OR_RECLAIMED' && pos !== 'NOT_KNOWN') return { ok: false, why: 'Choose what happened to the VAT.' };
+  if (pos !== 'INCLUDED_NOT_RECLAIMABLE' && f.amount_pence !== null) return { ok: false, why: 'Give an amount only for VAT the client could not reclaim.' };
+  if (f.amount_pence !== null && (!Number.isSafeInteger(f.amount_pence) || f.amount_pence <= 0)) return { ok: false, why: 'Give the VAT in pounds, more than £0.' };
+  db.run('UPDATE property_events SET vat = ?, vat_pence = ? WHERE id = ?', [pos, f.amount_pence, event_id]);
+  void at;
+  return { ok: true };
 }
