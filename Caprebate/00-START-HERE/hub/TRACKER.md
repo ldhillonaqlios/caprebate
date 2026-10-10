@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 27 |
 | Built - awaiting sign-off | 141 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 326 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1433,7 +1433,7 @@
 
 ### Phase 159l - what the second Lockwood run found: the dormant flag before the letter, a filing per return, the research panel, the events' figures, the work's own costs on the report
 
-`13255398509` · **Ready - Claude can build** · owner Claude
+`13255398509` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro.local**
 
 - Note 2026-10-10 (Phase 159j): Written 10 Oct 2026 by Phase 159j from the second Lockwood Surgery run (L13, L15, L18, L19, L20 and L17's BCIS quarter; INSPIRE end to end once Lakhbir records the switch-on): evidence in 04-phase-work/sim-2026-10-10-lockwood/ (OneDrive); the phase is in ACTION-PLAN.md above the sweep. Created on monday in group 05.
 
