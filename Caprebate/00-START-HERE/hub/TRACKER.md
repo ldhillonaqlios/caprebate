@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 3 |
+| Ready - Claude can build | 2 |
 | Ready - Lakhbir action | 27 |
 | Built - awaiting sign-off | 137 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 322 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1403,7 +1403,7 @@
 
 ### Phase 159h - the legal check: every path ends where the law does
 
-`13247776393` · **Ready - Claude can build** · owner Claude
+`13247776393` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac (Claude Code)**
 
 - Note 2026-10-09 (Stress test 9 Oct 2026): Written 9 Oct 2026 from the stress test of that day (Lockwood live run L1-L12, engine E1-E20, claim stage C1-C29, coverage matrix): evidence in 04-phase-work/stress-2026-10-09/ (OneDrive); the phase is in ACTION-PLAN.md above the sweep.
 
