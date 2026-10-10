@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 1 |
 | Ready - Lakhbir action | 27 |
 | Built - awaiting sign-off | 140 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 325 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1427,7 +1427,7 @@
 
 ### Phase 159k - the remaining money items: the seller's allowance statement, and three readings
 
-`13254813789` · **Ready - Claude can build** · owner Claude
+`13254813789` · **Working on it** · owner Claude · **CLAIMED BY the Mac (Claude Code)**
 
 - Note 2026-10-10 (Phase 159i): Written 10 Oct 2026 by Phase 159i from its carried items (the seller's SBA statement as a document type; the long-life asset test, Land Remediation Relief for asbestos, the s.33B aggregation); the phase is in ACTION-PLAN.md above the sweep. Created on monday in group 05.
 
