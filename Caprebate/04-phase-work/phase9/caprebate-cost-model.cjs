@@ -38,8 +38,10 @@
              bought. It IS a licence question after all: BCIS's licence
              (Annex One of its terms of sale, read by Phase 151) grants
              internal use to named users and extracts to clients only - see
-             BCIS_COMMERCIAL in phase3's source register. Which BCIS product
-             and order form: Word question 218. Board item 12804374406.
+             BCIS_COMMERCIAL in phase3's source register. Word question 218
+             closed 10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir),
+             reports included. Board items 12804374406 and, for the export,
+             13254356802.
      LEG-E5  needs VOA obsolescence scales (licensed) AND CIBSE plant lives
              (a separate source with its own terms). Two tables, two sources.
      BASIS   needs nothing. It is a switch. It is complete and it is live.
@@ -970,8 +972,9 @@ function feesFactor(input, opts) {
    GBP 330, with no licence question. BCIS is a subscription, not a book, and its
    licence (Annex One of its terms of sale) grants internal use to named users
    and extracts to clients only: BCIS_COMMERCIAL in phase3's source register
-   holds every term it does not publish as a refusal. Which product, and its
-   order form, is Word question 218; board item 12804374406. The Spon's
+   holds every term it does not publish as a refusal. Word question 218 closed
+   10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir); the export is board
+   item 13254356802 (and 12804374406 the blind re-run). The Spon's
    paragraphs below record what Spon's said; BCIS's own guidance on applying
    its factors is read when its product is named.
 
@@ -2166,7 +2169,7 @@ const CB_BCIS_INDEX_PLACEHOLDER = Object.freeze({
 });
 
 /* PHASE 155 (line 4), 4 October 2026 — THE REAL INDEX, FROM A FILE LAKHBIR DOWNLOADS. BCIS publishes no API licence
-   and the product is not bought (Word question 218), so nothing here calls BCIS. Once it is bought, Lakhbir downloads
+   and nothing here calls BCIS (Word question 218, closed 10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir, 9 Oct 2026); the export is board item 13254356802). Lakhbir downloads
    the index series from BCIS as a spreadsheet saved as CSV, and `parseIndexTable` turns it into a table of exactly
    CB_BCIS_INDEX's shape. The back end keeps it OUTSIDE the repository (09-app/backend/src/web/bcis-index.ts, the
    command `import-bcis-index`): BCIS's licence (BCIS_COMMERCIAL in the source register) lets named users use the rates
@@ -2216,7 +2219,7 @@ function parseIndexTable(text, meta) {
     table: Object.freeze({
       loaded: true,
       source: meta.source || "BCIS building price index, imported from a file",
-      licence: meta.licence || "BCIS (RICS) subscription - named users only; not for reports until BCIS confirms (BCIS_COMMERCIAL)",
+      licence: meta.licence || "BCIS (RICS) subscription - our use confirmed by BCIS, reports included (relayed by Lakhbir, 9 Oct 2026); the table itself is never reproduced (BCIS_COMMERCIAL)",
       verified_at: meta.verified_at || null,
       points: Object.freeze(points)
     }),

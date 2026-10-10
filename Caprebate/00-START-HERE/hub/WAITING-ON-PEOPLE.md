@@ -21,7 +21,8 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Book the free 45-minute surveyor call.
 - [ ] Get the DPO appointment signed by Sadique and the company, and its five blanks filled.
 - [ ] Engage a chartered tax adviser.
-- [ ] Decide on the two British Standards; buy BCIS (which product: Word question 218).
+- [ ] Decide on the two British Standards.
+- [ ] Get the BCIS export (average prices, elements, location factors, the tender price index) or API access, for the survey pack's rates (tracker 13254356802). Our use is confirmed: Word question 218, closed 10 Oct 2026: BCIS confirmed our use (relayed by Lakhbir, 9 Oct 2026).
 - [ ] Do the information governance training and record it.
 - [x] ~~Run the land boundary's first test download.~~ Dropped 6 Oct 2026 (Lakhbir: "use home data"): the site boundary comes from Homedata's title outline; the fetcher stays built and off (tracker 12830205914, Parked).
 - [x] Look once at the test website to confirm Turso and the Blob store (Word questions 230 and 231). Both work; closed 6 Oct 2026 by the Phase 157 sweep.

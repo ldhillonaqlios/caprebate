@@ -127,7 +127,7 @@ describe('line 4: the BCIS index from a file Lakhbir downloads, kept outside the
     const { importBcisIndex, bcisIndexTable } = await import('../src/web/bcis-index.ts');
     const out = join(mkdtempSync(join(tmpdir(), 'cb-bcis-')), 'index.json');
     const env = { CAPREBATE_BCIS_INDEX_FILE: out };
-    assert.deepEqual(bcisIndexTable(env), { table: null, why: 'no BCIS index has been imported: BCIS is not bought yet (Word question 218)' });
+    assert.deepEqual(bcisIndexTable(env), { table: null, why: 'no BCIS index has been imported yet: the BCIS export has not arrived' }); // Phase 160: Word question 218 closed
     const r = importBcisIndex(FILE, '/Users/someone/Downloads/bcis-tpi.csv', '2026-10-04T15:00:00.000Z', env);
     assert.deepEqual(r, { ok: true, path: out, points: 4, from: '2024-01', to: '2026-01', passed_over: 1 });
     const t = bcisIndexTable(env);

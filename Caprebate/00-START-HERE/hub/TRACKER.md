@@ -7,14 +7,14 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 0 |
-| Ready - Lakhbir action | 27 |
+| Ready - Lakhbir action | 26 |
 | Built - awaiting sign-off | 142 |
 | Blocked - question | 0 |
 | Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 327 |
+| Done | 328 |
 | Working on it | 1 |
 
 | Owner type | Items |
@@ -71,7 +71,7 @@
 
 ## 01 · FOR LAKHBIR — decisions, appointments, company, governance
 
-76 items.
+75 items.
 
 ### Register with the ICO and put the data protection basics in place
 
@@ -631,12 +631,6 @@
 
 - Note 2026-10-07 (Phase 158 (sweep)): Added to the tracker by the Phase 158 sweep: it was on the board alone, with no status or owner, since 30 Sep 2026. It mirrors Lakhbir's request on the Health Requests board (13169893947) to the 786 Marketing team: a Meta business account for Cap Rebate. Claude cannot create accounts, so it waits on Lakhbir and the marketing team. Before anything is posted: the brand guidelines and the ASA claim review (12830181513) apply.
 
-### BCIS data for the pack - get the export or API access from the subscription (licence confirmed fine by BCIS, relayed 9 Oct 2026)
-
-`13247762330` · **Ready - Lakhbir action** · owner Lakhbir
-
-- Note 2026-10-09 (Stress test 9 Oct 2026): Lakhbir, 9 Oct 2026: BCIS said our use is fine (relayed by Lakhbir). Phase 159f builds the importer and rate drafting on an invented fixture, switched off until this data arrives.
-
 ### Get the BCIS export (average prices by building function, elemental analyses, location factors, All-in TPI) or API access from the BCIS subscription, so the pack drafts from real BCIS rates (Phase 159f)
 
 `13254356802` · **Ready - Lakhbir action** · owner Lakhbir
@@ -1150,13 +1144,14 @@
 - File: `08-monday-doc-exports/12819697866__Video-walkthrough-capture-script-v1-what-is-drafted-and-what-the-surve.md`
 - File: `02-modules-and-build-prep/Build-Prep-Video-Capture-Protocol.md`
 
-### BCIS: most likely CapX, not bought yet (24 Sep). When it is bought, send the order form or licence terms (Word question 218)
+### BCIS blind re-run: our use is confirmed (Word question 218, closed 10 Oct 2026); the re-run waits on the BCIS export (13254356802) and a pricer
 
 `12804374406` · **Blocked - licence or purchase** · owner Lakhbir · Lakhbir Dhillon
 
 - File: `08-monday-doc-exports/12804374406__Spon-s-blind-re-run-protocol.md`
 - Note 2026-09-28 (Phase 153): The blind re-run protocol is rewritten for BCIS as a draft (08-monday-doc-exports/12804374406__BCIS-blind-re-run-protocol-DRAFT.md), marked as waiting on Word question 218; the Spon's version is kept as history with a dated pointer.
 - Note 2026-10-04 (Phase 155): Phase 155 line 4 built the import for when BCIS is bought: node src/cli.ts import-bcis-index <the CSV downloaded from BCIS> keeps the index outside the repository (BCIS's licence); the placeholder stays labelled until then.
+- Note 2026-10-10 (Phase 160): Renamed by the sweep: Word question 218 closed 10 Oct 2026 (BCIS confirmed our use, relayed by Lakhbir, 9 Oct 2026), so 'not bought yet ... send the licence terms' was stale. What is left is the blind re-run: it waits on the BCIS export (13254356802, Lakhbir) and a pricer. The protocol draft carries a dated update; the source register's BCIS_COMMERCIAL licence was opened to reports the same day.
 
 ### Decide whether to buy the two British Standards behind the quantity model
 
@@ -1182,6 +1177,7 @@
 - Note 2026-09-28 (Phase 153): Tested on BCIS, 28 Sep (Phase 153). BCIS's own page: 'All of our location factors are set in relation to a UK mean factor of 100' (bcis.co.uk/insight/bcis-basics-using-location-factors-in-construction/). The model already takes that base (national_mean with a UK mean row at 100) - no generalising was needed. New tests D30-D34 in caprebate-cost-model.test.cjs, on an invented BCIS-shaped table: accepted on BCIS's base; another book's table, a missing base, a base written 1.00 and a bare mean all refused; the gate ships off. All five fail on the pre-Phase-132 model. Left for the purchase: the real factors, and whether BCIS's contract-sum study fits the job-size table's shape (not public).
 - Note 2026-10-06 (Phase 157 (sweep)): The purchase (BCIS) is Lakhbir's, so the owner is his. The buildable half - the cost model reading a BCIS-shaped table, and the index import of Phase 155 - is in Phase 157a.
 - Note 2026-10-06 (Phase 157a): Its buildable half is built: the survey pack reads the BCIS index the cost model takes (chapter 11's index factor, src/web/pack-cost-model.ts), from a file imported with import-bcis-index; the cost model's invented placeholder table only on the test website. What is left is the purchase of BCIS itself (Word question 218), Lakhbir's.
+- Note 2026-10-10 (Phase 160): Read by the sweep: the location half is built (Phase 159f, the BCIS location factor from the council area); the job-size table and the real factors come with the BCIS export (13254356802). Label holds.
 
 ### Build the calibration set from surveyor overrides — the only honest evidence about whether the pre-fills are right
 
@@ -1447,7 +1443,7 @@
 
 ## Z · Complete / Not Applicable
 
-327 items.
+328 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3392,6 +3388,13 @@
 
 - Note 2026-10-09 (Stress test 9 Oct 2026): Written 9 Oct 2026 from the stress test of that day (Lockwood live run L1-L12, engine E1-E20, claim stage C1-C29, coverage matrix): evidence in 04-phase-work/stress-2026-10-09/ (OneDrive); the phase is in ACTION-PLAN.md above the sweep.
 - Note 2026-10-10 (Phase 159j): Done 10 Oct 2026: the stress suite in the build (test/phase159j.test.ts), the second Lockwood run (04-phase-work/sim-2026-10-10-lockwood/), a document names its event (migration 111); L14, L16, L17 fixed; L13-L20 to Phase 159l (13255398509); L21 to Word question 278 (ACC-H11, 13255398510). Record in PHASE-HISTORY.
+
+### CLOSED, NOT DONE (the work is 13254356802) - BCIS data for the pack - get the export or API access (licence confirmed fine by BCIS, relayed 9 Oct 2026)
+
+`13247762330` · **Done** · owner Lakhbir
+
+- Note 2026-10-09 (Stress test 9 Oct 2026): Lakhbir, 9 Oct 2026: BCIS said our use is fine (relayed by Lakhbir). Phase 159f builds the importer and rate drafting on an invented fixture, switched off until this data arrives.
+- Note 2026-10-10 (Phase 160): Closed by the sweep as a duplicate: Phase 159f created 13254356802 for the same export the next day, with the import commands. That item holds the work; this one is closed, not done. Moved to group Z on monday.
 
 ### Phase 159k - the remaining money items: the seller's allowance statement, and three readings
 

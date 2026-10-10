@@ -296,11 +296,14 @@ test('T26 attributions are collected verbatim, deduplicated and sorted', () => {
 
 test('T27 a licence-restricted figure is caught before it reaches the client report', () => {
   const r = reg();
-  const rate = record<number>(r, { entity_id: 'J1', field_id: 'bcis_rate_substructure', source_id: 'BCIS', retrieval: ret({ locator: 'BCIS elemental, rebased 2026Q2' }), value: 310 });
-  const breaches = redistributionCheck(r, [rate as AnyCell], 'client_report');
+  // PHASE 160: BCIS was the example until its use was confirmed (Word question 218); the title register is restricted still.
+  const price = record<number>(r, { entity_id: 'J1', field_id: 'price_paid', source_id: 'HMLR_TITLE', retrieval: ret({ locator: 'official copy, title ZZ1' }), value: 650000 });
+  const breaches = redistributionCheck(r, [price as AnyCell], 'client_report');
   assert.equal(breaches.length, 1);
-  assert.equal(breaches[0].licence_id, 'BCIS_COMMERCIAL');
-  assert.equal(redistributionCheck(r, [rate as AnyCell], 'internal').length, 0);
+  assert.equal(breaches[0].licence_id, 'HMLR_TITLE');
+  assert.equal(redistributionCheck(r, [price as AnyCell], 'internal').length, 0);
+  const rate = record<number>(r, { entity_id: 'J1', field_id: 'bcis_rate_substructure', source_id: 'BCIS', retrieval: ret({ locator: 'BCIS elemental, rebased 2026Q2' }), value: 310 });
+  assert.equal(redistributionCheck(r, [rate as AnyCell], 'client_report').length, 0, 'BCIS confirmed our use');
 });
 
 test('T28 sources awaiting solicitor/DPO licence clearance are listed, not assumed clear', () => {
@@ -309,7 +312,8 @@ test('T28 sources awaiting solicitor/DPO licence clearance are listed, not assum
   // Phase 146m: HMLR_TITLE cleared — the solicitor said yes to the accountant's pack (relayed by Lakhbir, 27 Sep 2026).
   // Phase 155 (line 3), 4 Oct 2026: VOA's licence, read at last, restricts it to business rates purposes — so it is listed.
   // Phase 156f, 6 Oct 2026: HOMEDATA_BOUNDARY shares HOMEDATA_TERMS, still awaiting legal review (and Word question 245).
-  assert.deepEqual(ids, ['BCIS', 'CQC', 'HOMEDATA_ADDRESS', 'HOMEDATA_BOUNDARY', 'VOA']);
+  // Phase 160, 10 Oct 2026: BCIS cleared — BCIS confirmed our use (relayed by Lakhbir, 9 Oct 2026; Word question 218).
+  assert.deepEqual(ids, ['CQC', 'HOMEDATA_ADDRESS', 'HOMEDATA_BOUNDARY', 'VOA']);
   const voa = LICENCES.find((l) => l.licence_id === 'VOA_RATING_LIST')!;
   assert.deepEqual(Object.values(voa.redistribution), [false, false, false, false], 'not even internal use: not a rating purpose');
   const lic = LICENCES.find((l) => l.licence_id === 'HMLR_TITLE')!;
@@ -482,20 +486,20 @@ test('T-CQ1 the CQC endpoint is the current Syndication host, never the keyless 
 test('T-BC1 the BCIS licence holds every unpublished term as a refusal, not a default', () => {
   const lic = LICENCES.find((l) => l.licence_id === 'BCIS_COMMERCIAL')!;
   assert.ok(lic, 'the BCIS licence is registered');
-  assert.equal(lic.legal_review_required, true);
+  // Phase 160: cleared on BCIS's own answer (relayed by Lakhbir, 9 Oct 2026); the credit is ours, as BCIS gives no wording.
+  assert.equal(lic.legal_review_required, false);
   assert.equal(lic.attribution_required, true);
-  assert.match(lic.attribution_text ?? '', /^NOT PUBLISHED/, 'BCIS publishes no credit wording');
+  assert.match(lic.attribution_text ?? '', /^NOT PUBLISHED BY BCIS.*Ours: every rate drawn from BCIS names "BCIS"/, 'BCIS publishes no credit wording');
   assert.match(lic.name, /Annex One/);
   assert.equal(lic.cache_max_age_days, 365, 'the published subscription term, not "no limit"');
 });
 
-test('T-BC2 only internal use is open, because only named licensed users are granted it', () => {
+test('T-BC2 the reports are open on BCIS’s own answer, and nothing more', () => {
   const lic = LICENCES.find((l) => l.licence_id === 'BCIS_COMMERCIAL')!;
-  for (const ch of ['client_report', 'accountant_report', 'hmrc_pack'] as const) {
-    assert.equal(lic.redistribution[ch], false, `${ch} is open without a published BCIS grant`);
-  }
-  assert.equal(lic.redistribution.internal, true);
-  assert.match(lic.notes, /question 218/);
+  // Phase 160: Lakhbir, 9 Oct 2026, "we spoke to BCIS and they said its fine for us to do what we are doing".
+  for (const ch of ['client_report', 'accountant_report', 'hmrc_pack', 'internal'] as const) assert.equal(lic.redistribution[ch], true, ch);
+  assert.match(lic.notes, /question 218.*closed 10 Oct 2026/);
+  assert.match(lic.notes, /rate table may not be reproduced/, 'the table itself is still never reproduced');
 });
 
 test('T-BC3 BCIS stays a source with no endpoint: no API licence is published, so nothing is fetched', () => {

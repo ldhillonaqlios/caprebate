@@ -1,8 +1,8 @@
 /**
  * THE BCIS INDEX TABLE, FROM A FILE LAKHBIR DOWNLOADS — KEPT OUTSIDE THE REPOSITORY. Phase 155 (line 4), 4 October 2026.
  *
- * BCIS is the chosen cost source (Word answers 6 and 8) but publishes no API licence, and the product is not bought
- * (Word question 218). So nothing here calls BCIS. Once it is bought, Lakhbir downloads the index series as a
+ * BCIS is the chosen cost source (Word answers 6 and 8) but publishes no API licence, so nothing here calls BCIS (our
+ * use is confirmed: Word question 218, closed 10 Oct 2026). Once the export arrives, Lakhbir downloads the index series as a
  * spreadsheet saved as CSV and runs `node src/cli.ts import-bcis-index <file>`. The cost model's own reader
  * (04-phase-work/phase9/caprebate-cost-model.cjs, parseIndexTable) turns it into a table of exactly CB_BCIS_INDEX's
  * shape, and this file writes it to CAPREBATE_BCIS_INDEX_FILE, or ~/.caprebate-bcis-index.json — NEVER inside the
@@ -69,7 +69,7 @@ export function bcisIndexTable(env: Record<string, string | undefined> = process
   { readonly table: IndexTable } | { readonly table: null; readonly why: string } {
   const path = bcisIndexPath(env);
   if (isInside(path, repoRoot)) return { table: null, why: 'the BCIS index file is inside the repository, so it is not read' };
-  if (!existsSync(path)) return { table: null, why: 'no BCIS index has been imported: BCIS is not bought yet (Word question 218)' };
+  if (!existsSync(path)) return { table: null, why: 'no BCIS index has been imported yet: the BCIS export has not arrived' };
   try {
     const t = JSON.parse(readFileSync(path, 'utf8')) as Partial<IndexTable>;
     const ok = t.loaded === true && typeof t.source === 'string' && Array.isArray(t.points) && t.points.length >= 2 &&
