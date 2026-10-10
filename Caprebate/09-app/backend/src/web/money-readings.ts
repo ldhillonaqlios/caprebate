@@ -63,9 +63,14 @@ export const PACK_SWITCH_OF: Readonly<Record<string, keyof MoneyReadings>> = Obj
   s33b_aggregation: 's33b_aggregation',   // PHASE 159k
 });
 
-export function packSwitchReadings(cta: readonly { readonly switch: string; readonly on: boolean }[], money: MoneyReadings = moneyReadingsHere()):
+/** PHASE 159l (item 8): the engine's switches the pack's legal check holds on for itself (pack-legal.ts
+ *  withLegalEngineReadings, LEGAL_READINGS #9 and #10). They read ON here, as the pack the adviser signs reads them. */
+export const LEGAL_ENGINE_SWITCHES = Object.freeze(['s187a_6b_statements_route', 'fvr_requires_past_owner_claim'] as const);
+
+export function packSwitchReadings(cta: readonly { readonly switch: string; readonly on: boolean }[], money: MoneyReadings = moneyReadingsHere(),
+  legal: readonly string[] = LEGAL_ENGINE_SWITCHES):
   { readonly switch: string; readonly on: boolean }[] {
-  return cta.map((s) => { const m = PACK_SWITCH_OF[s.switch]; return m !== undefined && money[m] ? { switch: s.switch, on: true } : { switch: s.switch, on: s.on }; });
+  return cta.map((s) => { const m = PACK_SWITCH_OF[s.switch]; return (m !== undefined && money[m]) || legal.includes(s.switch) ? { switch: s.switch, on: true } : { switch: s.switch, on: s.on }; });
 }
 
 export const MONEY_READINGS_ON = ALL_ON;

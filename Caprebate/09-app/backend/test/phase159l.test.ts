@@ -13,6 +13,9 @@
  *   item 5 (L20)  the report prints each piece of work's nine final-account values with their source (page and PDF),
  *                 frozen with the version; a version approved before says its sources were not kept
  *   item 6 (L17)  BCIS's base quarter is said as a month ("January 2026"), on new drafts and on older versions alike
+ *   item 8        two more readings in the pack's legal check (#9 the s.187A(6)(b) statements route, #10 the fixed value
+ *                 requirement needing a past owner who claimed): held on by a scoped override for the whole legal flow,
+ *                 put back after, and never in the public estimate; the walk re-recorded
  */
 import { describe, test, before, after } from 'node:test';
 import { mkdtempSync } from 'node:fs';
@@ -46,6 +49,7 @@ import * as EV from '../src/web/survey-evidence.ts';
 import * as CH from '../src/web/pack-chapters.ts';
 import * as REP from '../src/web/survey-report.ts';
 import { baseWords } from '../src/web/bcis-data.ts';
+import { CB } from '../src/web/engine.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T = '2026-10-10T09:00:00.000Z';
@@ -402,5 +406,45 @@ describe('items 5 and 6 (L20, L17) — the work’s own costs on the report, and
     assert.equal(typeof words, 'function');
     assert.equal(words!(src), 'BCIS: Health centres, clinics, group practice surgeries, mean £2,650/m² at January 2026.');
     assert.match(words!({ ...src, basis: { ...src.basis, ref: 'schedule dated at 2026-01-31' } }), /at 2026-01-31/);
+  });
+});
+
+/* ================================================================== */
+
+describe('item 8 — the statements route and the fixed value requirement, in the pack’s legal check', () => {
+  const NOW = '2026-10-09T09:00:00.000Z';
+  const CTA = (CB as unknown as { CB_CTA: Record<string, unknown> }).CB_CTA;
+  const OFF = { s187a_6b_statements_route: false, fvr_requires_past_owner_claim: false };
+  /** A walk path (test/legal-paths-walk.ts) where the owner in between could never claim and both statements are held. */
+  const STATEMENTS = new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2025-06-01', G11: 'yes', G12: 'other', 'LC-seller-nontax': 'yes', G12b: 'unsure',
+    G14: 'held', G14s: 'lease_premium', G14s3: 'unsure', G14sx: 's.198', G14d: '2025-06-01', G14n: '2025-09-01', G14fvr: 'yes', G14po: 'new_lease_premium', G14pol: 'yes',
+    G14pold: '2019-06-01', G14iv: 'unsure', G14ivne: 'no', G14st8: 'held', G14rs: 'split', G14rsv: 50000, G14sc: 'listed_items', G14mp: 'no',
+    G14c: ['amount', 'plant', 'land', 'interest', 'utrs', 'both'], G14v: 60000, G15: 'no' }));
+
+  test('#9: the pack asks the two statements questions and the route clears the claim; off, they are not asked and it is not settled', () => {
+    const on = L.assessLegal('gp', STATEMENTS, NOW, 'company');
+    assert.ok(on.asked.some((q) => q.id === 'G14ivne') && on.asked.some((q) => q.id === 'G14st8'));
+    assert.equal(on.verdict.level, 'GREEN');
+    assert.ok(on.verdict.why.some((w) => /two written statements s\.187A\(8\) requires\. That route has no time limit/.test(w)), on.verdict.why.join(' | '));
+    const off = L.assessLegalUnder(OFF, 'gp', STATEMENTS, NOW, 'company');
+    assert.ok(!off.asked.some((q) => q.id === 'G14ivne' || q.id === 'G14st8'));
+    assert.equal(off.verdict.level, 'AMBER');
+    // N4: "not sure" about the statements, or never answered, is never the route.
+    for (const v of ['unsure', undefined]) {
+      const a = new Map(STATEMENTS);
+      if (v === undefined) a.delete('G14st8'); else a.set('G14st8', v);
+      assert.notEqual(L.assessLegal('gp', a, NOW, 'company').verdict.level, 'GREEN', String(v));
+    }
+  });
+
+  test('the override is scoped: the engine’s switches are off before and after, even when the flow throws, and the public estimate never sees them on', () => {
+    assert.deepEqual([CTA['s187a_6b_statements_route'], CTA['fvr_requires_past_owner_claim']], [false, false]);
+    let inside: unknown[] = [];
+    L.withLegalEngineReadings(L.LEGAL_READINGS, () => { inside = [CTA['s187a_6b_statements_route'], CTA['fvr_requires_past_owner_claim']]; });
+    assert.deepEqual(inside, [true, true]);
+    assert.throws(() => L.withLegalEngineReadings(L.LEGAL_READINGS, () => { throw new Error('boom'); }), /boom/);
+    L.assessLegal('gp', STATEMENTS, NOW, 'company');
+    assert.deepEqual([CTA['s187a_6b_statements_route'], CTA['fvr_requires_past_owner_claim']], [false, false]);
+    assert.deepEqual([...L.LEGAL_ENGINE_SWITCHES], ['s187a_6b_statements_route', 'fvr_requires_past_owner_claim']);
   });
 });

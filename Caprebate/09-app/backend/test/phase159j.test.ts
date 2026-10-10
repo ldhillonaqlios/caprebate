@@ -233,9 +233,12 @@ describe('L14 — the adviser’s switches read as the survey pack reads them', 
     assert.equal(cta.find((x) => x.switch === 'transaction_tax_in_base')?.on, false, 'the public estimate’s own switch stays off');
     const on = packSwitchReadings(cta, MONEY_READINGS_ON);
     // Phase 159k: and s.33B's aggregation (#20), applied by the pack in test.
-    for (const k of ['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements', 's33b_aggregation']) assert.equal(on.find((x) => x.switch === k)?.on, true, k);
-    assert.deepEqual(on.filter((x) => !['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements', 's33b_aggregation'].includes(x.switch)), cta.filter((x) => !['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements', 's33b_aggregation'].includes(x.switch)));
-    assert.deepEqual(packSwitchReadings(cta, MONEY_READINGS_OFF), [...cta]);
+    // Phase 159l (item 8): and the two engine switches the pack's legal check holds on for itself, on test or not.
+    const APPLIED = ['transaction_tax_in_base', 'legal_fees_in_base', 's185_plus_own_s25', 'grant_traced_to_elements', 's33b_aggregation', 's187a_6b_statements_route', 'fvr_requires_past_owner_claim'];
+    for (const k of APPLIED) assert.equal(on.find((x) => x.switch === k)?.on, true, k);
+    assert.deepEqual(on.filter((x) => !APPLIED.includes(x.switch)), cta.filter((x) => !APPLIED.includes(x.switch)));
+    assert.deepEqual(packSwitchReadings(cta, MONEY_READINGS_OFF, []), [...cta]);
+    assert.deepEqual(packSwitchReadings(cta, MONEY_READINGS_OFF).filter((x) => x.on).map((x) => x.switch), ['s187a_6b_statements_route', 'fvr_requires_past_owner_claim']);
     const { app, claimFor } = await windowRig();
     const c = claimFor('COMPANY', '2025-06-15', '2025-01-01', '2025-12-31');
     const ADMIN: Actor = { id: 'u-ADMIN', role: 'ADMIN', business_id: null, disabled: false };

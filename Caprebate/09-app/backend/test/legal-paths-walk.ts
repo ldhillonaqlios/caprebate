@@ -10,6 +10,8 @@
  *
  * Phase 159h added the questions it made route-deciding to the full enumeration: how the property was taken on (G14s),
  * the s.183 election on a new lease (G14s3), and whether a seller was a charity or another body that pays no tax.
+ * Phase 159l (item 8) added the two questions the statements route asks (G14ivne, G14st8), which the pack now holds on
+ * with the fixed value requirement's reading (pack-legal.ts LEGAL_READINGS #9 and #10), and re-recorded the walk.
  */
 import { createHash } from 'node:crypto';
 import { assessLegal } from '../src/web/pack-legal.ts';
@@ -57,7 +59,7 @@ export type LegalLeaf = { readonly key: string; readonly answers: Record<string,
 
 /** Every complete answer path, in a fixed order. */
 export function walkLegalPaths(sector = 'gp', claimant = 'company', walks = 4): LegalLeaf[] {
-  const FULL = new Set(['8', '8a', '9d', '11', '12', 'C-seller-nontax', '12b', '14', '14s', '14s3', '14po', '14iv', '14pod']);
+  const FULL = new Set(['8', '8a', '9d', '11', '12', 'C-seller-nontax', '12b', '14', '14s', '14s3', '14po', '14iv', '14pod', '14ivne', '14st8']);
   let seed = 12345;
   const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
   const leaves: LegalLeaf[] = [];

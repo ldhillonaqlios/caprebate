@@ -31,8 +31,9 @@ const ELECTION = (value: number, sr: number) => ({
 });
 
 describe('0 · the readings are on, and named', () => {
-  test('four readings, each on in test and each put to the tax adviser', () => {
-    assert.deepEqual({ ...LEGAL_READINGS }, { s35_seller_not_entitled: true, non_taxpayer_seller: true, lease_route: true, s185_earlier_cap: true });
+  test('four readings, each on in test and each put to the tax adviser (and, since Phase 159l, two of the engine’s)', () => {
+    assert.deepEqual({ ...LEGAL_READINGS }, { s35_seller_not_entitled: true, non_taxpayer_seller: true, lease_route: true, s185_earlier_cap: true,
+      s187a_6b_statements_route: true, fvr_requires_past_owner_claim: true });
     const ids = legalQuestions('gp').map((q) => q.id);
     assert.ok(ids.includes('G12bv'), 'the earlier owner’s disposal value is asked');
     assert.ok(ids.includes('G14s') && ids.includes('G14s3'), 'how the property was taken on, and the s.183 election, are asked');
