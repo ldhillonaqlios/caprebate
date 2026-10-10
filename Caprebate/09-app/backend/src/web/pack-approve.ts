@@ -112,7 +112,7 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
     blockers.push({ key: 'sums', href: `${base(job_id)}?ch=4`,
       words: n > 0 ? `${n} value${n === 1 ? ' is' : 's are'} still needed. There is no total until then.` : (v.sums.problems[0]?.words ?? 'The sums are not complete.') });
   }
-  const legal = legalAllows(lv.verdict, v.sums.qualifying_pence);
+  const legal = legalAllows(lv.verdict, v.sums.qualifying_pence, { main_pence: v.sums.main_pool_pence, special_pence: v.sums.special_pool_pence });
   // PHASE 159d (item 8): a purchase that fails the legal check, with work since, is not claimed; the works go on.
   if (!legal.ok && !v.purchase_w3) blockers.push({ key: 'legal', words: `The legal check: ${legal.why}`, href: `${base(job_id)}?ch=7` });
 

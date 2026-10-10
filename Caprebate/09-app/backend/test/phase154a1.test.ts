@@ -354,7 +354,7 @@ describe('line 10: the test website’s start file', () => {
 
 describe('line 13: the pooling requirement (s.187A(4)) in the survey pack, as in the five flows', () => {
   const NOW = '2026-10-04T09:00:00.000Z';
-  const seller = (extra: Record<string, unknown>) => new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2019-06-01', G12: 'taxpaying',
+  const seller = (extra: Record<string, unknown>) => new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2019-06-01', G12: 'taxpaying', G14s: 'sale',
     G14: 'no', G14po: 'sold_market', G14pod: '2019-06-01', G14iv: 'no', G14t: 'none', G15: 'no', G14fvr: 'yes', ...extra }));
   const legal = async () => (await import('../src/web/pack-legal.ts')).assessLegal;
   const cta = async () => (await import('../src/web/engine.ts')).CB.CB_CTA as unknown as Record<string, unknown>;

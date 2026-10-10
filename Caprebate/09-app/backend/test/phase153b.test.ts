@@ -33,7 +33,7 @@ function withSwitch<T>(key: string, fn: () => T): T {
 }
 
 describe('line 10 — Word question 98: an elected figure above the law’s limit, in the survey pack', () => {
-  const PURCHASE = { G8: ['purchase'], G8a: 'property', G9d: '2024-03-01' };
+  const PURCHASE = { G8: ['purchase'], G8a: 'property', G9d: '2024-03-01', G14s: 'sale' };
   const ELECTION = (value: number, extra: Record<string, unknown> = {}) => new Map(Object.entries({
     ...PURCHASE, G11: 'yes', G12: 'taxpaying', G14: 'held', G14sx: 's.198', G14d: '2024-03-01', G14n: '2024-09-01', G14po: 'sold_market', G14pod: '2024-03-01',
     G14iv: 'no', G14t: 'none', G14rs: 'split', G14rsv: Math.floor(value / 3), G14sc: 'all_fixtures', G14mp: 'no',
@@ -175,7 +175,7 @@ describe('line 21 — the two switches that act only in the survey pack, each on
   // could no longer move this pack (RED both ways; test/phase154a1.test.ts line 13). Sold in June 2013 the pooling
   // requirement is not in force (FA 2012 Sch 10 para 13(2)) and this switch is again the only thing that decides it.
   test('fvr_requires_past_owner_claim — BIGGER in the pack: a seller who never claimed, bought in 2013, is unsettled off and clear on', () => {
-    const st = new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2013-06-01', G11: 'no', G12: 'taxpaying', G14: 'no',
+    const st = new Map(Object.entries({ G8: ['purchase'], G8a: 'property', G9d: '2013-06-01', G11: 'no', G12: 'taxpaying', G14: 'no', G14s: 'sale',
       G14po: 'sold_market', G14pod: '2013-06-01', G14iv: 'no', G14t: 'none', G15: 'no', G14fvr: 'yes' }));
     const off = assessLegal('gp', st, NOW, 'company').verdict.level;
     const on = withSwitch('fvr_requires_past_owner_claim', () => assessLegal('gp', st, NOW, 'company').verdict.level);

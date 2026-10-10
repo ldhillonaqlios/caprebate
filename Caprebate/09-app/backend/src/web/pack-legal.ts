@@ -29,6 +29,7 @@ import { packView, type PackDeps, type PackResult } from './survey-pack.ts';
 import { poundsWords } from './pack-sums.ts';
 import { claimantTypeForGate } from './crm.ts';
 import { valuationLock } from './valuation-lock.ts';
+import { claimantRole, type ClaimantRole } from './who-claims.ts';
 
 export type EngineQuestion = {
   readonly id: string;
@@ -43,7 +44,44 @@ export type EngineQuestion = {
 };
 
 /** The facts that decide the legal check. A question that sets one of these is asked. */
-const LEGAL_FACT = /^(trigger|deal|event_date|acquisition_date|prior_owner_(claimed|entitled|s35_barred)|earlier_entitled_owner|election(_[a-z0-9_]+)?|s183_election_made|past_owner_[a-z0-9_]+|intervening_owner[a-z0-9_]*|dvs_[a-z_]+|s187a_8_statements|tribunal_[a-z_]+|seller_pre_2008|fvr_window_closed)$/;
+const LEGAL_FACT = /^(trigger|deal|event_date|acquisition_date|prior_owner_(claimed|entitled|s35_barred)|earlier_entitled_owner|earlier_disposal_value|transaction_type|election(_[a-z0-9_]+)?|s183_election_made|past_owner_[a-z0-9_]+|intervening_owner[a-z0-9_]*|dvs_[a-z_]+|s187a_8_statements|tribunal_[a-z_]+|seller_pre_2008|fvr_window_closed)$/;
+/* PHASE 159h (C7, C8): `earlier_disposal_value` (G12bv — the value fixed when an earlier owner sold on, the s.185 cap)
+   and `transaction_type` (G14s — how the client took the property on) were missing, so neither was ever asked. */
+
+/**
+ * PHASE 159h, 10 October 2026 — READINGS BUILT ON OUR RECOMMENDATION AND SWITCHED ON IN TEST (Lakhbir, 29 September
+ * 2026: build it, then ask). Each is a viability question to the tax adviser in the Word questions document (268-272).
+ * Off, the legal check reads exactly as before Phase 159h on that point.
+ */
+export const LEGAL_READINGS = Object.freeze({
+  /** C26 (engine switch E-8's reading): a landlord who let the building as homes was barred from claiming by s.35, so
+   *  is not an owner "entitled to claim"; the check looks past them to an earlier owner, as for an NHS seller. */
+  s35_seller_not_entitled: true,
+  /** C28: a seller recorded as "a private individual / other" is asked whether it was a charity or another body that
+   *  pays no UK tax; yes means it could never claim. */
+  non_taxpayer_seller: true,
+  /** C8: a new lease for a premium takes the lease route — with a joint s.183 election the fixtures pass to the tenant;
+   *  with none, they stay the landlord's where the landlord could claim (s.183), and pass where it could not (s.184). */
+  lease_route: true,
+  /** C7: a non-entitled seller with an earlier owner who could claim — the claim is capped at the value fixed when that
+   *  earlier owner sold on (s.185), and is not settled while that value is not known. */
+  s185_earlier_cap: true,
+} as const);
+
+/** C28: the question added after the seller question where the seller is "a private individual / other". */
+const NON_TAXPAYER_Q: EngineQuestion = Object.freeze({
+  id: 'LC-seller-nontax', group: 'History of the premises', type: 'single',
+  ask: 'Was that seller a charity, or another body that pays no UK tax?',
+  help: 'A charity or another body that pays no tax could never claim allowances on the fixtures. Then we look further back, to an earlier owner who could.',
+  opts: Object.freeze([['yes', 'Yes, a charity or another body that pays no tax'], ['no', 'No, a person or a business that pays tax'], ['unsure', 'Not sure']] as const) as unknown as readonly (readonly [string, string])[],
+  showIf: (s: Record<string, unknown>) => s['__seller_answer'] === 'other' && LEGAL_READINGS.non_taxpayer_seller,
+  onSet: (s: Record<string, unknown>, v: unknown) => { if (v === 'yes') { s['prior_owner_entitled'] = 'no'; s['__seller_non_taxpayer'] = true; } },
+});
+
+/** Does this engine question set who the seller was (prior_owner_entitled)? Found by its effect, as LEGAL_FACT is. */
+const setsSeller = (q: EngineQuestion): boolean => factsSetBy(q).includes('prior_owner_entitled');
+/** Does it set how the client took the property on (transaction_type)? */
+const setsTransaction = (q: EngineQuestion): boolean => factsSetBy(q).includes('transaction_type');
 
 /** The facts each question sets, found by setting it once on a scratch session (a sample answer for its type). */
 function factsSetBy(q: EngineQuestion): string[] {
@@ -65,9 +103,22 @@ export function legalQuestions(sector: string): readonly EngineQuestion[] {
   if (hit !== undefined) return hit;
   let all: readonly EngineQuestion[] = [];
   try { all = (getSector(sector as never) as unknown as { Q: readonly EngineQuestion[] }).Q ?? []; } catch { all = []; }
-  const picked = Object.freeze(all.filter((q) => factsSetBy(q).some((k) => LEGAL_FACT.test(k))));
-  cache.set(sector, picked);
-  return picked;
+  const engine = all.filter((q) => factsSetBy(q).some((k) => LEGAL_FACT.test(k)));
+  const picked: EngineQuestion[] = [];
+  for (const q of engine) {
+    /* PHASE 159h (C8): HOW THE CLIENT TOOK THE PROPERTY ON is asked on every purchase of the property, not only where an
+       election is held: a new lease for a premium, or a transfer below value, changes the route whether or not there
+       is an election (no election is available at all on s.196 Table items 2 and 3). */
+    if (setsTransaction(q)) {
+      picked.push(Object.freeze({ ...q, showIf: (st: Record<string, unknown>) => Array.isArray(st['trigger']) && (st['trigger'] as string[]).includes('purchase') && (st['deal'] === 'property' || st['deal'] === 'buyin') }));
+      continue;
+    }
+    picked.push(q);
+    if (setsSeller(q)) picked.push(NON_TAXPAYER_Q);
+  }
+  const frozen = Object.freeze(picked);
+  cache.set(sector, frozen);
+  return frozen;
 }
 
 export type LegalAnswer = {
@@ -87,6 +138,11 @@ export type LegalVerdict = {
   /** Where an election or a statement caps the claim on the fixtures: the cap, in pence. */
   readonly cap_pence: number | null;
   readonly cap_words: string | null;
+  /** PHASE 159h (C11): where an election over the fixtures generally gives separate figures, the integral features'
+   *  figure caps the special rate pool and the rest caps the main pool. Null where there is no split. */
+  readonly pool_caps?: { readonly special_pence: number; readonly main_pence: number } | null;
+  /** PHASE 159h (item 7): the purchase is not the client's to claim on as a tenant (the route reads it as W3). */
+  readonly tenant_purchase?: boolean;
 };
 
 export type LegalView = {
@@ -128,7 +184,11 @@ export function claimantFor(db: Db, business_id: string): string {
  * Replay the answers through the sector's own flow and ask the engine. Pure: the same answers and the same day give
  * the same verdict.
  */
-export function assessLegal(sector: string, answers: ReadonlyMap<string, unknown>, nowIso: string, claimant: string): {
+export function assessLegal(sector: string, answers: ReadonlyMap<string, unknown>, nowIso: string, claimant: string,
+  /** PHASE 159h (item 7): how the client holds the building, from the property (who-claims.ts propertyTenure). Absent:
+   *  not read at all (a caller with no property). Present and null: not known — asked, never assumed (N4). */
+  holding?: { readonly role: ClaimantRole | null },
+): {
   asked: EngineQuestion[]; unanswered: EngineQuestion[]; verdict: LegalVerdict;
 } {
   const qs = legalQuestions(sector);
@@ -143,6 +203,11 @@ export function assessLegal(sector: string, answers: ReadonlyMap<string, unknown
     asked.push(q);
     if (!answers.has(q.id)) { if (q.optional !== true) unanswered.push(q); continue; }
     try { q.onSet?.(s, answers.get(q.id)); } catch { unanswered.push(q); }
+    if (setsSeller(q)) {
+      s['__seller_answer'] = answers.get(q.id);
+      // PHASE 159h (C26, OUR READING): a landlord barred by s.35 was never entitled to claim; look past them.
+      if (LEGAL_READINGS.s35_seller_not_entitled && s['prior_owner_s35_barred'] === true) s['prior_owner_entitled'] = 'no';
+    }
   }
   const verdict = ((): LegalVerdict => {
     const none = { deadline: null, cap_pence: null, cap_words: null };
@@ -157,6 +222,35 @@ export function assessLegal(sector: string, answers: ReadonlyMap<string, unknown
     const deal = s['deal'];
     if (deal === 'shares') return { level: 'GREEN', headline: 'The company’s shares were bought, not the building. The building did not change hands, so these rules do not apply.', why: [], actions: [], ...none };
     if (deal !== 'property' && deal !== 'buyin') return { level: 'AMBER', headline: 'Find out whether the building itself, or a company’s shares, were bought.', why: [], actions: [], ...none };
+
+    /* PHASE 159h (C6): ANSWERS THAT CANNOT ALL BE TRUE ARE NEVER CLEAR. "A previous owner claimed", with a seller who
+       could never claim and nobody earlier who could, contradicts itself; the engine read the last two and switched the
+       rules off. Until a person settles which answer is wrong, the check is not known. */
+    if (s['prior_owner_claimed'] === 'yes' && s['prior_owner_entitled'] === 'no' && s['earlier_entitled_owner'] === 'no') {
+      return { level: 'AMBER', headline: 'The answers disagree. A previous owner claimed, but the seller could never claim and nobody earlier could. Check which answer is wrong.',
+        why: ['You said a previous owner claimed. You also said the seller could never claim, and nor could anyone before. Both cannot be true.'], actions: ['Check the property enquiry replies and the title history. Then correct the wrong answer.'], ...none };
+    }
+
+    /* PHASE 159h (C8, OUR READING): THE LEASE ROUTE. A premium for a new lease: the fixtures pass to the tenant only on a
+       joint s.183 election where the landlord could claim; where it could not (an NHS body, a developer, a charity),
+       s.184 treats the tenant as owner. Whether an election was made, where it matters, must be known. */
+    if (LEGAL_READINGS.lease_route && s['transaction_type'] === 'lease_premium') {
+      const landlordCould = s['prior_owner_entitled'];
+      const s183 = s['s183_election_made'];
+      if (landlordCould === 'yes' && s183 === 'no') {
+        return { level: 'RED', headline: 'On these answers, the fixtures stay the landlord’s. A new lease with no joint election does not pass them to the tenant.',
+          why: ['A premium was paid for a new lease. The landlord could claim, and no joint election was made (s.183). So the landlord still owns the fixtures (s.176), and the premium buys the tenant no claim on them.'],
+          actions: ['Claim only the fixtures the client paid for itself, as a tenant’s fit-out.'], ...none };
+      }
+      if (landlordCould === 'yes' && s183 !== 'yes') {
+        return { level: 'AMBER', headline: 'Find out whether a joint election was made when the lease was granted. It decides whether the fixtures pass to the tenant.',
+          why: ['a premium was paid for a new lease from a landlord who could claim; only a joint s.183 election passes the fixtures to the tenant'], actions: ['Ask for the lease and any s.183 election made with it.'], ...none };
+      }
+      if (landlordCould !== 'no' && landlordCould !== 'yes') {
+        return { level: 'AMBER', headline: 'Find out whether the landlord who granted the lease could claim allowances. It decides whether the fixtures pass to the tenant.',
+          why: ['on a new lease for a premium, s.183 (a landlord who could claim) and s.184 (one who could not) lead to different answers'], actions: ['Establish who the landlord was.'], ...none };
+      }
+    }
 
     const el = (CB as unknown as { CB_ELECTION: { assess: (s: unknown) => Outcome; electionDeadline: (s: unknown) => Date | null; OUT: Record<string, string> } }).CB_ELECTION;
     const fx = (CB as unknown as { CB_S187A: { assess: (s: unknown) => Outcome; OUT: Record<string, string> } }).CB_S187A;
@@ -198,15 +292,57 @@ export function assessLegal(sector: string, answers: ReadonlyMap<string, unknown
       const v = poundsToPence(a.value);
       if (v !== null && (cap === null || v < cap)) { cap = v; cap_words = 'the value in the earlier owner’s written statement'; }
     }
+    /* PHASE 159h (C7, OUR READING): SECTION 185 LOOKS PAST A SELLER WHO COULD NEVER CLAIM to the earlier owner who
+       could. The claim is capped at the value fixed when that owner sold on (G12bv), and is not settled while it is not
+       known. */
+    if (LEGAL_READINGS.s185_earlier_cap && s['prior_owner_entitled'] === 'no' && s['earlier_entitled_owner'] === 'yes') {
+      const v = poundsToPence(s['earlier_disposal_value']);
+      if (v === null || v === 0) {
+        return { level: 'AMBER', headline: 'Find the value the fixtures were fixed at when the earlier owner sold on. Section 185 caps the claim at it.',
+          why: [...why, 'The seller could never claim, but an earlier owner could. Section 185 caps the claim at the value fixed when that owner sold on. We do not know that value yet.'],
+          actions: [...actions, 'Trace the earlier sale in the title history, and its election or the price put on the fixtures.'], ...none };
+      }
+      if (cap === null || v < cap) { cap = v; cap_words = 'the value fixed when the earlier owner sold on (section 185)'; }
+    }
+    /* PHASE 159h (C11): AN ELECTION IS CHECKED POOL BY POOL. Where it gives the integral features a figure of their own,
+       that figure caps the special rate pool and the rest caps the main pool — not only the total. */
+    let pool_caps: LegalVerdict['pool_caps'] = null;
+    if (e.outcome === el.OUT['CAP_ELECT'] && e.scope?.mode === 'all_fixtures' && s['election_rate_split'] === 'split') {
+      const total = poundsToPence(e.value), sr = poundsToPence(s['election_value_sr']);
+      if (total !== null && sr !== null && sr <= total) pool_caps = { special_pence: sr, main_pence: total - sr };
+    }
     if (e.outcome === el.OUT['LIVE'] || a.outcome === fx.OUT['LIVE']) {
       const deadline = iso(a.window?.deadline ?? null) ?? iso(el.electionDeadline(s));
       return { level: 'URGENT', headline: `There is still time to fix the value${deadline === null ? '' : ` — by ${deadline}`}. The claim can go ahead, and someone must act before then.`,
-        why, actions, deadline, cap_pence: cap, cap_words };
+        why, actions, deadline, cap_pence: cap, cap_words, pool_caps };
     }
     return { level: 'GREEN', headline: cap === null ? 'The purchase rules are met, or do not reach this claim.' : 'The purchase rules are met. The claim on the fixtures is capped.',
-      why, actions, deadline: null, cap_pence: cap, cap_words };
+      why, actions, deadline: null, cap_pence: cap, cap_words, pool_caps };
   })();
-  return { asked, unanswered, verdict };
+  return { asked, unanswered, verdict: holding === undefined ? verdict : withHolding(verdict, holding.role, s) };
+}
+
+/**
+ * PHASE 159h (item 7, carried from 159g): WHO CLAIMS, READ BY THE LEGAL CHECK.
+ *   TENANT    its claim is on the fixtures it paid for (its own fit-out), never a share of a purchase price — unless it
+ *             paid a premium for a new lease, which takes the lease route above (s.183 / s.184). A tenant who bought
+ *             an existing lease takes over only the outgoing tenant's fixtures, never the landlord's: a person must say
+ *             which. Either way the purchase is not settled here.
+ *   LANDLORD  its claim is on the fixtures it owns; a fixture the tenant put in is the tenant's (s.176).
+ *   not known asked, never assumed (N4): the check says so and decides nothing on it.
+ */
+function withHolding(v: LegalVerdict, role: ClaimantRole | null, s: Record<string, unknown>): LegalVerdict {
+  const trigger = Array.isArray(s['trigger']) ? s['trigger'] as string[] : [];
+  const purchase = trigger.includes('purchase') && (s['deal'] === 'property' || s['deal'] === 'buyin');
+  if (role === null) return { ...v, actions: [...v.actions, 'Ask who owns the building and who uses it: an owner, a landlord and a tenant claim different things.'] };
+  if (role === 'LANDLORD') return { ...v, actions: [...v.actions, 'The client lets this building. Leave out any fixture the tenant put in: it is the tenant’s to claim (s.176).'] };
+  if (role === 'TENANT' && purchase && s['transaction_type'] !== 'lease_premium' && (v.level === 'GREEN' || v.level === 'URGENT')) {
+    return { ...v, level: 'AMBER', tenant_purchase: true,
+      headline: 'The client rents this building. A tenant claims the fixtures it paid for itself, not a share of a purchase price.',
+      why: [...v.why, 'The client is a tenant, so it claims the fixtures it paid for (s.176). A new lease bought for a premium can bring fixtures with it. So can a lease bought from the last tenant, but only that tenant’s, never the landlord’s.'],
+      actions: [...v.actions, 'Price the tenant’s own fit-out as work done. If it bought an existing lease, list the fixtures the outgoing tenant owned.'], cap_pence: null, cap_words: null };
+  }
+  return v;
 }
 
 /**
@@ -230,14 +366,30 @@ export function legalVerdictForJob(db: Db, job_id: string, nowIso: string): Lega
   for (const r of db.all<{ question_id: string; value_json: string }>('SELECT question_id, value_json FROM survey_pack_legal_answers WHERE pack_id = ? ORDER BY seq ASC', [pack.id])) {
     values.set(r.question_id, JSON.parse(r.value_json) as unknown);
   }
-  return assessLegal(sector, values, nowIso, claimantFor(db, job.business_id)).verdict;
+  return assessLegal(sector, values, nowIso, claimantFor(db, job.business_id), holdingFor(db, job.id)).verdict;
+}
+
+/** PHASE 159h (item 7): how the client holds the pack's building — the pack's chosen property, else its claim's. */
+function holdingFor(db: Db, job_id: string): { role: ClaimantRole | null } | undefined {
+  const p = db.get<{ p: string | null }>(
+    'SELECT COALESCE(sp.property_id, c.property_id) AS p FROM surveyor_jobs j LEFT JOIN survey_packs sp ON sp.job_id = j.id LEFT JOIN claims c ON c.id = j.claim_id WHERE j.id = ?', [job_id])?.p ?? null;
+  return p === null ? undefined : { role: claimantRole(db, p).role };
 }
 
 /** May this pack be approved, as far as the legal check goes? (Stage 3 asks this.) */
-export function legalAllows(v: LegalVerdict, qualifying_pence: number | null): { ok: boolean; why: string } {
+export function legalAllows(v: LegalVerdict, qualifying_pence: number | null, pools?: { main_pence: number | null; special_pence: number | null }): { ok: boolean; why: string } {
   if (v.level === 'RED' || v.level === 'AMBER') return { ok: false, why: v.headline };
   if (v.cap_pence !== null && qualifying_pence !== null && qualifying_pence > v.cap_pence) {
     return { ok: false, why: `The pack’s figure is above ${v.cap_words ?? 'the cap'}. The claim on the fixtures cannot be more than that.` };
+  }
+  // PHASE 159h (C11): each pool against its own part of the election.
+  if (v.pool_caps !== null && v.pool_caps !== undefined && pools !== undefined) {
+    if (pools.special_pence !== null && pools.special_pence > v.pool_caps.special_pence) {
+      return { ok: false, why: `The pack’s special rate pool is above the election’s figure for the integral features, ${poundsWords(v.pool_caps.special_pence)}. Move the excess or lower it.` };
+    }
+    if (pools.main_pence !== null && pools.main_pence > v.pool_caps.main_pence) {
+      return { ok: false, why: `The pack’s main pool is above the election’s figure for the other fixtures, ${poundsWords(v.pool_caps.main_pence)}.` };
+    }
   }
   return { ok: true, why: v.headline };
 }
@@ -261,7 +413,7 @@ export function legalView(d: PackDeps, actor: Actor, job_id: string): LegalView 
   const answers = new Map<string, LegalAnswer>();
   for (const h of history) answers.set(h.question_id, h);
   const values = new Map<string, unknown>([...answers].map(([k, v]) => [k, v.value] as const));
-  const r = assessLegal(job.sector, values, d.now(), claimantFor(d.db, job.business_id));
+  const r = assessLegal(job.sector, values, d.now(), claimantFor(d.db, job.business_id), holdingFor(d.db, job.id));
   const askedIds = new Set(r.asked.map((q) => q.id));
   return {
     questions: legalQuestions(job.sector), asked: r.asked, unanswered: r.unanswered,

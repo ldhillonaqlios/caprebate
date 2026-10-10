@@ -336,6 +336,12 @@
           "id": "13254543097",
           "how": "prose",
           "why": "Built by Phase 159g on 10 Oct 2026 and switched on in the test system: the enquiry check asks for a qualifying activity (a trade, a profession or a property business), the assessment asks who uses the building, and the register's accounting reference date is the claim's year end, compared with the client's. Word questions 263 (the tax adviser) and 264 (the accountant); board item created in group 02 at Built - awaiting sign-off with owner CTA."
+        },
+        {
+          "ref": "ACC-H9 the legal check's readings: s.35 and non-taxpayer sellers, the lease route, the s.185 cap from the earlier sale, tenants, landlords and an ended lease (Phase 159h, 10 Oct 2026; the Phase 159h section at the end of the register)",
+          "id": "13254716714",
+          "how": "prose",
+          "why": "Built by Phase 159h on 10 Oct 2026 and switched on in the test system (LEGAL_READINGS in src/web/pack-legal.ts; the route and stillOwned in claim-route.ts). Word questions 268-272 for the tax adviser; board item created in group 02 at Built - awaiting sign-off with owner CTA."
         }
       ],
       "mentions": [

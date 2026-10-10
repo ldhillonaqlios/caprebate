@@ -25,7 +25,7 @@ import type { Db } from '../db.ts';
 import { acquisitionDateReading, amendmentWindowReading, latestFacts, periodFromYearEnd, windowForPeriod, type WindowReading } from './claim-facts.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS, type EventKind, type PropertyEvent } from './property-events.ts';
 import { legalVerdictForClaim } from './pack-legal.ts';
-import { registerNamesClientPerson } from './who-claims.ts';
+import { propertyTenure, registerNamesClientPerson } from './who-claims.ts';
 import { localDate } from './localtime.ts';
 
 export type Route = 'W1' | 'W2' | 'W3' | 'NOT_KNOWN';
@@ -60,10 +60,16 @@ export type EventRoute = {
 };
 
 /** Whether the client still owns the building — YES only on evidence, never with a sale date on the property. */
-export function stillOwned(db: Db, c: { id: string; business_id: string; property_id: string | null }): Owned {
+export function stillOwned(db: Db, c: { id: string; business_id: string; property_id: string | null }, todayIso: string = new Date().toISOString()): Owned {
   if (c.property_id === null) return { value: null, why: 'no property is recorded on this claim' };
   const p = db.get<{ disposal_date: string | null }>('SELECT disposal_date FROM properties WHERE id = ?', [c.property_id]);
   if (p?.disposal_date !== null && p?.disposal_date !== undefined) return { value: 'NO', why: `the property record has a sale date, ${p.disposal_date}` };
+  /* PHASE 159h (item 7): A LEASE THAT HAS ENDED. The end of the lessee's interest is a disposal of its fixtures (s.188):
+     a leasehold whose recorded end date has passed is not still owned. */
+  const t = propertyTenure(db, c.property_id);
+  if (t.tenure === 'LEASEHOLD' && t.lease_end_date !== null && t.lease_end_date < localDate(todayIso)) {
+    return { value: 'NO', why: `the lease ended on ${t.lease_end_date}, and the end of a lease is a disposal of the fixtures (s.188)` };
+  }
   const f = latestFacts(db, c.id).get('STILL_OWNED');
   if (f !== undefined && f.answer === 'VALUE' && (f.value_text === 'YES' || f.value_text === 'NO')) {
     return { value: f.value_text, why: f.value_text === 'YES' ? 'the client still owns it, as recorded on the claim with its source' : 'the client no longer owns it, as recorded on the claim' };
@@ -140,7 +146,7 @@ export function purchasePeriod(db: Db, c: { id: string; business_id: string; pro
 
 /** Each event on the claim's building with its route. A claim with no events recorded takes one route, the purchase's. */
 export function claimRoutes(db: Db, c: { id: string; business_id: string; property_id: string | null }, todayIso: string): EventRoute[] {
-  const owned = stillOwned(db, c);
+  const owned = stillOwned(db, c, todayIso);
   const cash = cashBasis(db, c);
   const legal = legalVerdictForClaim(db, c.id, todayIso);
   const events: (PropertyEvent | null)[] = eventsOfProperty(db, c.property_id).filter((e) => e.kind !== 'REPAIRS');
@@ -169,6 +175,8 @@ export function claimRoutes(db: Db, c: { id: string; business_id: string; proper
     });
     // W3: the purchase fails the legal check (item 8 of Phase 159d), or the building is no longer owned.
     if (isPurchase && legal !== null && legal.level === 'RED') return make('W3', `the purchase fails the legal check: ${legal.headline}`);
+    // PHASE 159h (item 7): a tenant's claim is on its own fit-out, never a share of the purchase price.
+    if (isPurchase && legal !== null && legal.tenant_purchase === true) return make('W3', 'the client rents the building: a tenant claims the fixtures it paid for itself, not a share of a purchase price');
     if (owned.value === 'NO') return make('W3', `${owned.why}, so there is no claim for this`);
     // PHASE 159e (item 5, OUR READING): accounts on the cash basis claim no allowances on fixtures for the period.
     if (cash.on) return make('W3', cash.why);

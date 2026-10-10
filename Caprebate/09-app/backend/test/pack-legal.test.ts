@@ -29,7 +29,8 @@ const T = '2026-10-01T09:00:00.000Z';
 const PASSWORD = 'a-very-long-development-password';
 const NOW = T;
 const ask = (answers: Record<string, unknown>, claimant = 'company') => assessLegal('gp', new Map(Object.entries(answers)), NOW, claimant);
-const PURCHASE = (date: string) => ({ G8: ['purchase'], G8a: 'property', G9d: date });
+// PHASE 159h (C8): how the property was taken on is asked on every purchase of the property now.
+const PURCHASE = (date: string) => ({ G8: ['purchase'], G8a: 'property', G9d: date, G14s: 'sale' });
 /** Bought from a tax-paying business, directly, no election, no tribunal. */
 const FROM_TAXPAYER = (date: string) => ({ ...PURCHASE(date), G11: 'yes', G12: 'taxpaying', G14: 'no', G14po: 'sold_market', G14pod: date, G14iv: 'no', G14t: 'none', G15: 'no' });
 /** A complete s.198 election, notified within six months, over every fixture. */
@@ -194,7 +195,7 @@ describe('the legal check, through the pack’s pages', () => {
     assert.match((await answer('u-lg-sam', 'G8a', [''], 'x')).body, /Choose one of the answers/);
     // Answer whatever the flow asks next, as a person would, from what the papers say.
     const papers: Record<string, string[]> = {
-      G8: ['purchase'], G8a: ['property'], G9d: ['2025-06-01'], G11: ['yes'], G12: ['taxpaying'], G14: ['no'],
+      G8: ['purchase'], G8a: ['property'], G9d: ['2025-06-01'], G11: ['yes'], G12: ['taxpaying'], G14: ['no'], G14s: ['sale'],
       G14po: ['sold_market'], G14pod: ['2025-06-01'], G14t: ['none'], G15: ['no'], G14fvr: ['no'],
     };
     for (let i = 0; i < 30 && lv().unanswered.length > 0; i++) {

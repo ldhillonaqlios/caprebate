@@ -569,7 +569,7 @@ const LEVEL_WORDS: Readonly<Record<L.Level, string>> = Object.freeze({
 });
 
 function legalCard(v: P.PackView, lv: L.LegalView): Safe {
-  const allows = L.legalAllows(lv.verdict, v.sums.qualifying_pence);
+  const allows = L.legalAllows(lv.verdict, v.sums.qualifying_pence, { main_pence: v.sums.main_pool_pence, special_pence: v.sums.special_pool_pence });
   return h`<section class="pk-card"><h2>The legal check</h2>
     <p><span class="pk-lv pk-lv-${lv.verdict.level.toLowerCase()}">${LEVEL_WORDS[lv.verdict.level]}</span></p>
     <p class="help"><a href="${base(v.job.id)}?ch=7">${allows.ok ? 'It does not stop approval.' : 'It stops approval until it is settled.'}</a></p></section>`;
@@ -593,7 +593,7 @@ function questionForm(v: P.PackView, lv: L.LegalView, q: L.EngineQuestion, ch: n
 
 function legalChapter(d: PackPageDeps, v: P.PackView, lv: L.LegalView, ch: number, q: URLSearchParams): Safe {
   const verdict = lv.verdict;
-  const allows = L.legalAllows(verdict, v.sums.qualifying_pence);
+  const allows = L.legalAllows(verdict, v.sums.qualifying_pence, { main_pence: v.sums.main_pool_pence, special_pence: v.sums.special_pool_pence });
   const open = q.get('q');
   const unanswered = new Set(lv.unanswered.map((x) => x.id));
   return h`

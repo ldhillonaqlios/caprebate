@@ -12952,3 +12952,41 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159h to 
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 159h — the legal check: every path ends where the law does — 10 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 159h, 10 Oct 2026: the legal check. The stress test walked over 20,000 paths through the legal check; the wrong ones are fixed. Answers that cannot all be true ("a previous owner claimed", yet nobody could) are now never clear. Where the seller could never claim but an earlier owner could, the claim is capped at the value fixed at that earlier sale, and is not settled until it is known. How the client took the property on (bought outright, a premium for a new lease, or below value) is asked on every purchase: a new lease from a landlord who could claim needs a joint election to pass the fixtures; no election works on a transfer below value. An election that splits out the integral features now caps each pool. A landlord who let the building as homes, and a charity or other body that pays no tax, are read as never able to claim. The legal check and the claim's route read how the client holds the building: a tenant claims what it paid for, not a share of a purchase price; a landlord leaves out its tenant's fixtures; a lease that has ended is no longer owned. Every route-deciding path is now checked by a test on each change. Questions 268-272 to the tax adviser (ACC-H9). 5,086 checks in all. Next: Phase 159i.
+
+- **Branch** `claude/phase-159h`, from `main` after PR 49 (Phase 159g) merged at Lakhbir's word ("merge and run 159h").
+- **Evidence re-run, before and after.** The claim harness was run before any change (outputs kept in `claim/before-159h/`) and after. h1, h3, h4 and h5 are identical apart from the process id; h1 0 failures. h6, the legal-path walk: its S1 (a previous owner claimed, yet nobody could: clear) went from 8 paths to 0, and S2 (an earlier entitled owner behind a non-entitled seller, allowed with no s.185 cap) from 174 to 0; S3 is answered now that the transaction is asked. The harness's own full enumeration was given the new route-deciding questions (`h6-legal.ts.before-159h` kept), so it walks 142,904 paths. h6b's fifteen named cases read differently where the new question is asked. The engine harness is unaffected (no engine change).
+- **Premise re-derived (step 8).** The brief named pack-legal.ts:45 for the two missing facts: so it was. "pack-legal.ts:212-218" for the election total was the cap block, then at 192-197. The engine (the site file) was not changed: the law's assessments stay its own, and every fix is in how the back end asks the questions and reads the answers, where the findings placed the causes.
+
+**What was built:**
+1. **C6** — "a previous owner claimed" with a seller who could never claim and nobody earlier who could: AMBER, naming the contradiction.
+2. **C7** — G12bv asked; a non-entitled seller with an earlier entitled owner caps the claim at that value (s.185); AMBER while it is not known.
+3. **C8** — how the property was taken on asked on every purchase of the property; a new lease for a premium: from a landlord who could claim, a joint s.183 election passes the fixtures (none: RED; not known: AMBER); from one who could not, s.184; the s.183 question appears; on a transfer below value the engine's "no election available" is now reached.
+4. **C11** — `pool_caps`: the integral features' figure caps the special rate pool and the rest the main pool; `legalAllows` checks both, at approval and on the pack's pages.
+5. **C26, C28** — a landlord barred by s.35 read as never entitled (the check looks past it); "a private individual / other" asked whether it was a charity or a body that pays no tax.
+6. **Every path a regression** — the walk (`test/legal-paths-walk.ts`, 18,302 paths in about 23 seconds), the recorder (`tools/legal-paths-record.ts`) and the check (`test/legal-paths.test.ts`).
+7. **Who claims (from 159g)** — the legal check reads the pack's property's claimant role: a tenant's purchase is AMBER and the route W3; a landlord is told to leave out its tenant's fixtures; a role not known is asked and decides nothing. A leasehold whose lease has ended is not still owned (s.188).
+
+**Tests.** `test/phase159h.test.ts`, thirteen tests (on the code before, `LEGAL_READINGS` does not exist, so the file does not load), and `test/legal-paths.test.ts`. Restated: `pack-legal`, `phase153b`, `phase154a1` and `phase159d` answer how the property was taken on in their purchase fixtures, which the check now asks.
+
+**The checks, at the close:** back end `npm run check` **2,803 pass / 0 fail** over 174 tracked files; phase3 440; phase9 417; site 1,426; **5,086** in all (re-derived by the drift checker; the spec's figures updated). CRM fold check green. Register check green (138 awaiting: 57 + 12 + 69). Tracker check green. Plain words green.
+
+**Documents.** Word questions 268-272 for the tax adviser, in the main document and the 29 September copy, the safe way. Register: ACC-H9 (13254716714), created on monday and in the tracker and the manifest. Developer Spec: a Phase 159h section and the figures. The run sheet and the plan: 159h deleted, the outcome logged, section 6's row.
+
+```
+DONE          items 1-7: contradictions never clear (C6); the s.185 cap from the earlier sale, AMBER while unknown (C7);
+              the transaction asked on every purchase and the lease route (C8); the election pool by pool (C11); s.35 and
+              non-taxpayer sellers (C26, C28); every route-deciding path a regression test; who claims read by the check
+              and the route, an ended lease not owned. Questions 268-272; ACC-H9. 5,086 checks; every check green.
+NOT DONE      Whether the five readings are viable - BUILT; BLOCKED only on the tax adviser - questions 268-272 (ACC-H9).
+              The estimate engine's own E-8 switch (CB_CTA.s187a_needs_entitled_owner) stays off in the site file, so the
+                assessment's figure still treats a s.35 landlord seller as entitled while the back end's legal check does
+                not - BLOCKED on the same answer, question 268; turning the engine switch on is one line once it is given.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159i and 159j; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.
