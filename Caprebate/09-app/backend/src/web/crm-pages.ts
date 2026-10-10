@@ -35,6 +35,8 @@ import type { PipelinePanel } from './pipeline.ts';
 import { enquiryBlock } from './pipeline-pages.ts';
 import { authorise, can } from '../authz.ts';
 import { addStaffEvent, eventsOnClaim, setEventVat, EVENT_KINDS, KIND_WORDS, type EventOnClaim } from './property-events.ts';
+import { requestWorkDocuments } from './documents.ts';
+import { claimRoutes } from './claim-route.ts';
 
 /** PHASE 159i: an event's VAT position, in words (migration 105's three). */
 const VAT_WORDS: Readonly<Record<string, string>> = Object.freeze({ INCLUDED_NOT_RECLAIMABLE: 'The client could not reclaim it', EXCLUDED_OR_RECLAIMED: 'The client reclaimed it, or none was charged', NOT_KNOWN: 'Not known' });
@@ -348,6 +350,16 @@ export async function handleCrm(
     return 'handled';
   }
 
+  /* ----------------------------------------------- PHASE 159j (item 5): ask for one piece of work's documents */
+  const workDocs = /^\/staff\/claims\/([A-Za-z0-9-]+)\/events\/([A-Za-z0-9-]+)\/ask-documents$/.exec(path);
+  if (workDocs && method === 'POST') {
+    const id = workDocs[1] ?? '';
+    const r = requestWorkDocuments({ db, audit: d.app.audit, now: d.app.now, newId: d.newId }, actor, id, workDocs[2] ?? '');
+    if (!r.ok) return d.problem(res, actor, 'Not asked', r.why, `/staff/claims/${id}#claim-events`);
+    redirect(res, `/staff/claims/${id}?done=${r.asked === 0 ? 'nothing-to-ask' : 'requested'}#claim-events`);
+    return 'handled';
+  }
+
   /* ----------------------------------------------- PHASE 159c: an event on the claim's building */
   const addEvent = /^\/staff\/claims\/([A-Za-z0-9-]+)\/events$/.exec(path);
   if (addEvent && method === 'POST') {
@@ -394,11 +406,13 @@ export async function handleCrm(
  * PHASE 159c: each event on the claim's building — what it was, when, what it cost and its own "up to" (for a login that
  * may read the claim's value), and the documents that prove it, each with whether we hold one. Then a form to add one.
  */
-function eventsBlock(claim_id: string, evs: readonly EventOnClaim[], value: boolean, mayAdd: boolean): Safe {
+function eventsBlock(claim_id: string, evs: readonly EventOnClaim[], value: boolean, mayAdd: boolean, mayAsk = false): Safe {
   return h`${evs.length === 0 ? h`<p class="help">Nothing is recorded yet. The assessment records the purchase and any work since; add anything it missed below.</p>`
     : h`<ol class="events">${evs.map((e) => h`<li><p><strong>${e.words}</strong>, ${e.when}${value ? `, ${e.cost_pence === null ? 'cost not known' : `${poundsWords(e.cost_pence)}`}` : ''}${e.source === 'STAFF' ? ' (added on the claim)' : ''}</p>
       ${value ? h`<p class="help">${e.ceiling_pence === null ? `No figure for this one yet. ${e.ceiling_why ?? ''}` : `Up to ${poundsWords(e.ceiling_pence)} on the sector’s range for this kind of spend, until the survey prices it.`}</p>` : raw('')}
-      <p class="help">Its documents: ${e.documents.map((x, i) => h`${i === 0 ? '' : '; '}${x.label} (${x.held === 0 ? 'not received yet' : `${String(x.held)} held`})`)}.</p>
+      <p class="help">Its documents: ${e.documents.map((x, i) => h`${i === 0 ? '' : '; '}${x.label} (${x.held === 0 ? 'not received yet' : `${String(x.held)} held`}${x.untied > 0 ? `; ${String(x.untied)} more not tied to one piece of work yet` : ''})`)}.</p>
+      ${mayAsk && e.kind !== 'PURCHASE' && e.documents.some((x) => (x.code === 'CONTRACTOR_COST_BREAKDOWN' || x.code === 'CONTRACTOR_INVOICE') && x.held === 0)
+        ? h`<form method="post" action="/staff/claims/${claim_id}/events/${e.id}/ask-documents" class="inline"><button class="btn-quiet" type="submit">Ask the client for this work’s final account and invoices</button></form>` : raw('')}
       ${value ? h`<p class="help">VAT: ${VAT_WORDS[e.vat ?? ''] ?? 'not recorded'}${e.vat_pence === null ? '' : `, ${poundsWords(e.vat_pence)} that could not be reclaimed, added to its cost in the survey pack`}.</p>` : raw('')}
       ${mayAdd && value && e.kind !== 'REPAIRS' ? h`<div class="ev-vat">
         <form method="post" action="/staff/claims/${claim_id}/events/${e.id}/vat" class="stack">
@@ -1079,7 +1093,10 @@ function claimPage(
   const surveyJob = surveyJobBlock(v.id, SO.surveyJobPanel(db, actor, v.id), v.edit?.current.surveyor_id ?? null);
   // PHASE 158c (F37): the amendment window, warned from the client's own date, from Engagement until Reports.
   const windowRow = db.get<{ stage: string | null; business_id: string; property_id: string | null }>('SELECT stage, business_id, property_id FROM claims WHERE id = ?', [v.id]);
-  const windowWarning = windowRow === undefined ? null : earlyWindowWarning(db, windowRow, nowIso());
+  /* PHASE 159j (Lockwood L16): the warning is for before the dates are checked. Once every part of the claim has its
+     route on the recorded dates (W1, W2 or W3), it has said what it was for, so it goes. */
+  const routesDecided = windowRow !== undefined && (() => { const r = claimRoutes(db, { id: v.id, business_id: windowRow.business_id, property_id: windowRow.property_id }, nowIso()); return r.length > 0 && r.every((x) => x.route !== 'NOT_KNOWN'); })();
+  const windowWarning = windowRow === undefined || routesDecided ? null : earlyWindowWarning(db, windowRow, nowIso());
   const windowBlock = windowWarning === null ? raw('') : h`<div class="flag" id="window-warning"><strong>The amendment window may have closed.</strong> ${windowWarning}</div>`;
   const quick: QuickAction[] = [
     ...(tasks.html.includes('action="/staff/tasks"') ? [{ href: '#add-task', label: 'Log a call or add a task' }] : []),
@@ -1267,7 +1284,7 @@ function claimPage(
         working: evs.length === 0 ? 'Nothing is recorded about the building’s purchase or works yet.'
           : missing === 0 ? 'Nothing right now.' : 'Gathering the documents for each event.',
         need: [], from: ['the client', 'you and your team'],
-        body: eventsBlock(v.id, evs, value, mayAdd),
+        body: eventsBlock(v.id, evs, value, mayAdd, can(actor, 'document_request.create', { type: 'document_request', id: row.business_id, business_id: row.business_id })),
         ...(msg === 'event' ? { open_now: true } : {}),
       });
     }

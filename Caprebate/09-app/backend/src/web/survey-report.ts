@@ -31,6 +31,7 @@ import type { ReturnContext } from './return-entries.ts';
 import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type Rgb } from './pdf-canvas.ts';
 import { minutesWords } from './survey-video.ts';
 import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from './site-plan.ts';
+import { ukDatesIn } from './localtime.ts';
 
 export const REPORT_TITLE = 'Capital allowances survey report';
 
@@ -270,7 +271,7 @@ export function reportModel(x: Snapshot, fingerprint: string, ctx: ReturnContext
     chapters: ((x as { chapters?: readonly ReportChapter[] }).chapters ?? []).map((c) => ({ n: c.n, title: c.title, applies: c.applies, not_applies_words: c.not_applies_words,
       rows: c.rows.map((r) => ({ label: r.label, value: r.value, missing: r.missing })), items: c.items.map((i) => ({ label: i.label, detail: i.detail })) })),
     ...eventsPart(ev, purchaseLede(x)),
-    routes: ((x as { routes?: readonly { label: string; route: string; words: string }[] }).routes ?? []).map((r) => ({ label: r.label === 'The claim' ? 'Your claim' : r.label, words: r.words })),
+    routes: ((x as { routes?: readonly { label: string; route: string; words: string }[] }).routes ?? []).map((r) => ({ label: r.label === 'The claim' ? 'Your claim' : r.label, words: ukDatesIn(r.words) })), // PHASE 159j (L17): the PDF as the page
     allowances: allowanceWords(allowancesFor(x, ctx)),
     rate_sources: [{ label: 'The whole-building rate', words: rateSourceWords(iv.building_rate_pence.source) },
       ...live.filter((l) => l.rate_pence.value !== null).map((l) => ({ label: l.label, words: rateSourceWords(l.rate_pence.source) }))],

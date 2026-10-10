@@ -359,6 +359,19 @@ describe('F37 — on the claim page', () => {
       const page = await w.req(`/staff/claims/${c.claim}`);
       assert.equal(page.status, 200);
       assert.match(page.body, /id="window-warning"[\s\S]*The amendment window may have closed\.[\s\S]*On the client’s own date \(06\/2019\)/);
+      // PHASE 159j (Lockwood L16): once the dates and the ownership are recorded and every part has its route, it goes.
+      const db = w.made.app.db;
+      const prop = db.get<{ p: string }>('SELECT property_id AS p FROM claims WHERE id = ?', [c.claim])?.p ?? '';
+      db.run("UPDATE properties SET acquisition_date = '2019-06-15' WHERE id = ?", [prop]);
+      CF.fact(w.made.app, c.claim, 'ACCOUNTING_PERIOD_START', '2019-01-01');
+      CF.fact(w.made.app, c.claim, 'ACCOUNTING_PERIOD_END', '2019-12-31');
+      CF.fact(w.made.app, c.claim, 'STILL_OWNED', 'YES', 'CLIENT_ANSWER');
+      CF.fact(w.made.app, c.claim, 'PARTNERSHIP_HAS_COMPANY_MEMBER', 'NO');
+      const biz = db.get<{ b: string }>('SELECT business_id AS b FROM claims WHERE id = ?', [c.claim])?.b ?? '';
+      db.run("INSERT INTO client_tasks (id,business_id,asked_by,question,why,holds_up,state,answer_state,answer,answered_at,answered_by_role,created_at,fact_id) VALUES ('t-ye-158c',?,'u-SALES','Your year end?','w','h','ANSWERED','ANSWERED','31 December',?,'CLIENT',?,'year_end')", [biz, T0, T0]);
+      db.run("INSERT INTO fact_approvals (id,business_id,fact_ref,action,actor_id,at) VALUES ('fa-ye-158c',?,'ans.t-ye-158c','APPROVED','u-SALES',?)", [biz, T0]);
+      const after = await w.req(`/staff/claims/${c.claim}`);
+      assert.doesNotMatch(after.body, /id="window-warning"/);
     } finally { w.made.close(); }
   });
 });

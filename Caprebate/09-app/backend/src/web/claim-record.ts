@@ -45,6 +45,7 @@ import { filingRoute } from './client-filing.ts';
 import { latestAnswer } from './accountant-confirm.ts';
 import { assertSignedEngagement, freeGate } from './research.ts';
 import { ctaSwitchReadings } from './engine.ts';
+import { packSwitchReadings } from './money-readings.ts';
 import { amendmentWindowReading, dateValue, penceValue } from './claim-facts.ts';
 import { funnelStateFor } from './funnel-session.ts';
 import { loadLetter, type OpenTerm } from './letter.ts';
@@ -311,7 +312,7 @@ export function figuresPanel(db: Db, actor: Actor, claim_id: string, todayIso: s
         open: c.stage === 'TAX_ADVISER_SIGNOFF' && k !== undefined,
         why: c.stage !== 'TAX_ADVISER_SIGNOFF' ? 'a sign-off can only be recorded while the claim is with the tax adviser'
           : k === undefined ? 'the surveyor has not committed figures on this claim yet' : '',
-        switches: ctaSwitchReadings(), adviser_tokens: ADVISER_TOKENS, adviser_question: ADVISER_NAME_QUESTION,
+        switches: packSwitchReadings(ctaSwitchReadings()), adviser_tokens: ADVISER_TOKENS, adviser_question: ADVISER_NAME_QUESTION,
         version: signoffVersion(db, c.id),
       },
     } : {}),
@@ -404,7 +405,7 @@ export function recordSignOff(d: RecordDeps, actor: Actor, claim_id: string, inp
       return { ok: false, why: `The figure signed must be the approved version’s own: ${formatPence(vf)} (version ${String(latest?.version ?? 0)}). A different figure needs the surveyor to approve a new version first.` };
     }
   }
-  const known = ctaSwitchReadings();
+  const known = packSwitchReadings(ctaSwitchReadings()); // PHASE 159j (L14): as the pack the adviser signed read them
   const confirmed = (input['confirmed_switches'] ?? '').split(',').map((x) => x.trim()).filter((x) => x !== '');
   const readings: { switch: string; on: boolean }[] = [];
   for (const name of [...new Set(confirmed)]) {
