@@ -77,10 +77,10 @@ const lview = (app: App, job: string) => L.legalView(deps(app), SAM, job);
 function fill(app: App, job: string): string[] {
   const keep = view(app, job).lines.slice(0, 2).map((l: { id: string }) => l.id);
   for (const l of view(app, job).lines) { if (keep.includes(l.id) || l.removed) continue; ok(SP.setLineRemoved(deps(app), SAM, job, { line: l.id, reason: 'Not here', seq: String(view(app, job).seq) }, true)); }
-  ok(SP.saveLine(deps(app), SAM, job, { line: keep[0] as string, qty: '10', rate: '2000', qpct: '100', pool: 'SR', reason: 'Counted', seq: String(view(app, job).seq) }));
-  ok(SP.saveLine(deps(app), SAM, job, { line: keep[1] as string, qty: '100', rate: '300', qpct: '100', pool: 'MP', reason: 'Counted', seq: String(view(app, job).seq) }));
+  ok(SP.saveLine(deps(app), SAM, job, { line: keep[0] as string, qty: '10', rate: '2000', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'SR', reason: 'Counted', seq: String(view(app, job).seq) }));
+  ok(SP.saveLine(deps(app), SAM, job, { line: keep[1] as string, qty: '100', rate: '300', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'MP', reason: 'Counted', seq: String(view(app, job).seq) }));
   ok(SP.savePackValue(deps(app), SAM, job, { field: 'land', value: '150000', reason: 'Land registry', seq: String(view(app, job).seq) }));
-  ok(SP.savePackValue(deps(app), SAM, job, { field: 'building_rate', value: '1500', reason: 'BCIS', seq: String(view(app, job).seq) }));
+  ok(SP.savePackValue(deps(app), SAM, job, { field: 'building_rate', value: '1500', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', reason: 'BCIS', seq: String(view(app, job).seq) }));
   ok(EV.setBasis(deps(app), SAM, job, { basis: 'DESKTOP_EVIDENCE', note: '' }));
   A.saveDetails(deps(app), SAM, job, { rics_number: '1234567', firm: 'Survey Firm' });
   return keep;
@@ -114,7 +114,7 @@ describe('C3, C5, L3 — one version after sign-off', () => {
     assert.equal(read.value, '2025-06-01', 'the window read the working pack, not the signed version');
     // On to Reports, where the figures are fixed.
     app.db.run("UPDATE claims SET stage = 'REPORTS' WHERE id = ?", [a.claim]);
-    ok(SP.saveLine(deps(app), SAM, a.job, { line: keep[1] as string, qty: '200', rate: '300', qpct: '100', pool: 'MP', reason: 'Recount', seq: String(view(app, a.job).seq) }));
+    ok(SP.saveLine(deps(app), SAM, a.job, { line: keep[1] as string, qty: '200', rate: '300', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'MP', reason: 'Recount', seq: String(view(app, a.job).seq) }));
     const v2 = approve(app, a.job);
     assert.equal(v2.ok, false, 'a version was approved after the sign-off');
     assert.match(v2.ok ? '' : (v2 as { why: string }).why, /signed off|fixed/);
@@ -163,7 +163,7 @@ describe('C3, C5, L3 — one version after sign-off', () => {
     assert.match(after.valuation?.reopened?.reason ?? '', /purchase date was wrong/);
     assert.equal(after.valuation?.locked ?? null, null);
     // The surveyor may now change the figures and approve again.
-    ok(SP.saveLine(deps(app), SAM, a.job, { line: keep[1] as string, qty: '200', rate: '300', qpct: '100', pool: 'MP', reason: 'Recount', seq: String(view(app, a.job).seq) }));
+    ok(SP.saveLine(deps(app), SAM, a.job, { line: keep[1] as string, qty: '200', rate: '300', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'MP', reason: 'Recount', seq: String(view(app, a.job).seq) }));
     ok(approve(app, a.job));
     app.close();
   });
@@ -179,7 +179,7 @@ describe('C4 — the sign-off names the version it signed', () => {
     const b1 = snapOf(app, b.job, 1);
     // The adviser signs version 1 (recorded now), THEN the surveyor moves spend between the pools: same total.
     ok(signOff(app, b.claim, b1.snapshot.sums.qualifying_pence as number));
-    ok(SP.saveLine(deps(app), SAM, b.job, { line: keep[1] as string, qty: '100', rate: '300', qpct: '100', pool: 'SR', reason: 'An integral feature', seq: String(view(app, b.job).seq) }));
+    ok(SP.saveLine(deps(app), SAM, b.job, { line: keep[1] as string, qty: '100', rate: '300', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'SR', reason: 'An integral feature', seq: String(view(app, b.job).seq) }));
     ok(approve(app, b.job));
     const b2 = snapOf(app, b.job, 2);
     assert.equal(b2.snapshot.sums.qualifying_pence, b1.snapshot.sums.qualifying_pence);

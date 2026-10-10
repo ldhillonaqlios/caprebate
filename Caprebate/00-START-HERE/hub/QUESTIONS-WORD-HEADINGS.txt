@@ -26,7 +26,6 @@
 212) There is an old copy of this questions document on your Desktop. May we delete it?
 213) Should we get CIBSE's plant life tables, and ask CIBSE for permission to use them in client reports?
 215) Does the director of CAP REBATE LTD agree the business decisions you make for the company?
-218) Which BCIS product did you agree to, and does its licence let our software use its rates?
 219) How long do we keep the files clients upload, and who may open them?
 227) May the site area we work out from a land boundary go in a client's report?
 235) Do the old extra charges stay: the add-on for complicated jobs and the £1,500 manual-handling charge?
@@ -134,6 +133,8 @@
 153) Which London boroughs should count as Inner London?
 199) Should the surveyor see the price a property last sold for before they commit their figures?
 203) Can we use a measured floor area when a building has no energy certificate?
+261) Section 562 asks for the price to be shared out justly. We use the proportional way and show the residual way beside it. Which should the report use?
+262) The pack now drafts rates from BCIS. Is the way it does it how you would price them?
 155) Can the host leave our two client-document folders out of its backups?
 157) Exactly who can run the website, including the host's own staff?
 159) Must personal names be removed from an upload before it is stored, or just after?
@@ -235,6 +236,7 @@
 230) Can the test website keep its records in a database that lasts?
 231) Can the test website keep uploaded files in a private store on Vercel?
 187) Do the four draft documents go to the surveyor as they are, or with two passages taken out?
+218) Which BCIS product did you agree to, and does its licence let our software use its rates?
 93) In a Scottish sale, which date starts our time limits?
 154) Should WordPress replace our whole system, or sit beside it?
 156) May we briefly check two public register names without saving them?

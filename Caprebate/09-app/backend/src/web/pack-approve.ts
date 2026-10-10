@@ -127,6 +127,17 @@ export function readiness(d: PackDeps, actor: Actor, job_id: string, v: PackView
     const names = unread.map((c) => `${c} · ${CHAPTERS.find((x) => x.n === c)?.title ?? ''}`).join('; ');
     blockers.push({ key: 'read', words: `Open every chapter first. Still to open: ${names}.`, href: `${base(job_id)}?ch=${String(unread[0])}` });
   }
+  // PHASE 159f (item 3): EVERY RATE SOURCED — the SOP's Valuation gate, made a test. A BCIS draft carries its own; a rate the
+  // surveyor typed needs theirs. And (C19) every rate at one day, so the share's arithmetic matches the report's words.
+  if (v.pricing.unsourced.length > 0) {
+    const n = v.pricing.unsourced.length;
+    blockers.push({ key: 'sources', href: `${base(job_id)}?ch=10`,
+      words: `Give ${n === 1 ? 'this rate' : `these ${String(n)} rates`} a source: ${v.pricing.unsourced.join('; ')}. A source is BCIS, a QS schedule, an invoice or a price book. Say which one, and the day it is priced at.` });
+  }
+  if (v.pricing.mixed.length > 0) {
+    blockers.push({ key: 'priced_at', href: `${base(job_id)}?ch=11`,
+      words: `The rates are priced at different days, and the index cannot bring them to the purchase date: ${v.pricing.mixed.join('; ')}. Price them at one day, or record the purchase date.` });
+  }
   // 2 Oct 2026: how the surveyor inspected (chapter 2, src/web/survey-evidence.ts) goes in the report.
   if (basisOf(d.db, job_id) === null) blockers.push({ key: 'basis', words: 'Say how you inspected the building, in chapter 2.', href: `${base(job_id)}?ch=2#inspection` });
   const details = detailsOf(d.db, surveyor);
@@ -249,6 +260,10 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
     // PHASE 159c: where the building has work done since, each spend as approved: the purchase's own sums and each piece of
     // work on its own cost. `sums` above is their total. A version with no work keeps the shape every earlier version has.
     ...eventsOf(v),
+    // PHASE 159f: how the rates were priced — the day they are all at, BCIS's drafts and location, and section 562 the
+    // residual way beside the proportional one. A version approved before has none and reads as it did.
+    pricing: { priced_at: v.pricing.priced_at, purchase: v.pricing.purchase, bcis_kind: v.pricing.bcis.kind, bcis_words: v.pricing.bcis.words,
+      location: v.pricing.bcis.location, residual_pence: v.pricing.residual.qualifying_pence },
     // PHASE 159d (item 6): which way each part of the claim goes in, as it stood at approval (src/web/claim-route.ts).
     ...(v.job.claim_id === null ? {} : { routes: claimRoutes(d.db, { id: v.job.claim_id, business_id: v.job.business_id, property_id: v.property?.id ?? null }, a.at)
       /* PHASE 159e (items 4, 7, 8): with each part's own period and, for W2, the first open one — so the return entries

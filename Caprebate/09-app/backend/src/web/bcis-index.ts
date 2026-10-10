@@ -22,7 +22,7 @@ import { isInside, repositoryRoot } from '../secrets.ts';
 
 type IndexTable = { loaded: true; source: string; licence: string; verified_at: string | null; points: readonly (readonly [string, number])[] };
 const costModel = createRequire(import.meta.url)('../../../../04-phase-work/phase9/caprebate-cost-model.cjs') as {
-  parseIndexTable: (text: string, meta: { source: string; verified_at: string }) => { table: IndexTable; passed_over: number };
+  parseIndexTable: (text: string, meta: { source: string; verified_at: string; licence?: string }) => { table: IndexTable; passed_over: number };
 };
 
 export const DEFAULT_BCIS_INDEX_FILE = '~/.caprebate-bcis-index.json';
@@ -40,7 +40,7 @@ export type BcisImport =
 
 /** Read a downloaded index file and keep the table outside the repository. A file the cost model refuses is refused whole. */
 export function importBcisIndex(csv: string, fileName: string, nowIso: string,
-  env: Record<string, string | undefined> = process.env, repoRoot: string = repositoryRoot()): BcisImport {
+  env: Record<string, string | undefined> = process.env, repoRoot: string = repositoryRoot(), series: 'BPI' | 'TPI' = 'BPI'): BcisImport {
   const path = bcisIndexPath(env);
   if (isInside(path, repoRoot)) {
     return { ok: false, why: `the BCIS index may not be kept in the code folder (${repoRoot}). BCIS's licence does not let us copy it. ` +
@@ -48,7 +48,9 @@ export function importBcisIndex(csv: string, fileName: string, nowIso: string,
   }
   let parsed: { table: IndexTable; passed_over: number };
   try {
-    parsed = costModel.parseIndexTable(csv, { source: `BCIS building price index, imported from ${basename(fileName)} on ${nowIso.slice(0, 10)}`, verified_at: nowIso });
+    // PHASE 159f: the All-in Tender Price Index (--tpi) or the building price index, named; BCIS confirmed our use.
+    parsed = costModel.parseIndexTable(csv, { source: `BCIS ${series === 'TPI' ? 'All-in Tender Price Index' : 'building price index'}, imported from ${basename(fileName)} on ${nowIso.slice(0, 10)}`, verified_at: nowIso,
+      licence: 'BCIS (RICS) subscription. BCIS confirmed our use: storing, drafting from and printing its figures (relayed by Lakhbir, 9 October 2026; Word question 218).' });
   } catch (e) {
     return { ok: false, why: `the file was not imported: ${e instanceof Error ? e.message : String(e)}` };
   }

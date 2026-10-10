@@ -12866,3 +12866,44 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159f to 
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 159f — BCIS: the pack drafts every rate, and every rate names its source — 10 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 159f, 10 Oct 2026: BCIS rates in the survey pack. BCIS confirmed our use (relayed by Lakhbir), so question 218 is closed. The app now reads BCIS's own exports (average prices by building type, elemental costs, location factors and the tender price index), kept outside the code. The survey pack drafts the whole-building rate and every floor-area line from the right BCIS building type, at the location you choose and indexed to the purchase date; the surveyor accepts or overrides each with a source. Every rate must name its source (BCIS, a QS schedule, an invoice or a price book) before a pack is approved, and all rates must be priced at one day. The report names each rate's source and prints test rates as test rates. The £/m² check compares rates at one day, and a share above the sector's ceiling is flagged. The residual way of sharing the price is shown beside ours. Until the real export is imported, the test website drafts from invented test figures, labelled. Questions 261-262 to the surveyor (SV-S11). Lakhbir: get the BCIS export. 5,055 checks in all. Next: Phase 159g.
+
+- **Branch** `claude/phase-159f`, from `main` after PR 47 (Phase 159e) merged at Lakhbir's word ("merge and run 159f").
+- **Evidence re-run.** The claim harness (`claim/run-all.sh`; outputs kept in `claim/before-159f/`): h1 0 failures; its C19 case (one factor on the line rates only moves the figure 37%) is now refused at approval while rates sit at different days. The site harness is unchanged by this phase (1,426, both modes).
+- **Premise re-derived (step 8).** The brief called today's s.562 sum "residual"; the code is the proportional one (price × the qualifying parts' share of the rebuild cost). The residual way is built beside it. And "the pack never drafts a rate" stood at pack-lines.ts:20 as the brief said.
+
+**What was built:**
+1. **The importer (item 1)** — `src/web/bcis-data.ts`: BCIS's average prices (with the rebasing quarter), elemental analyses and location factors, read by their headers and refused whole when any part cannot be read; kept at `CAPREBATE_BCIS_DATA_FILE`, never inside the repository. `node src/cli.ts import-bcis-data`; `import-bcis-index --tpi` names the All-in TPI. An invented placeholder drafts on the test system only, labelled. Tracker 13254356802 (Ready - Lakhbir action): get the export or API access.
+2. **The drafts (item 2)** — the whole-building rate from the sector's BCIS building function (mean; dental as health centres, said so) and the floor-area lines from their NRM elements (5.8, 5.4, 5.6, 5.7), × the location factor (the new pack field `location`, `savePackLocation`; none: the UK mean) × the index to the purchase date. pack-lines.ts's "never drafts a rate" replaced.
+3. **Every rate sourced (item 3)** — migration 108 (survey_pack_entries rebuilt: `rate_basis`, `rate_ref`, `rate_priced_at`, all three or none, and `location`); every rate form takes the source; approval refuses an unsourced counted rate; `ratesSourcedNeed` makes the Valuation gate "every rate sourced" a test of the approved version (with its plain reading on the claim page).
+4. **The report (item 4, L12)** — each rate's chip names its source; "Where each rate comes from" lists them in full; "Test rates" at the top where any rate is one.
+5. **One day (item 5)** — C19: every sourced rate brought to the purchase date by the index; rates that cannot be are listed and stop approval; the report says "priced at <the day>, the purchase date" and names the proportional way; the pack's summary no longer says "Rebuild cost today". C20: the £/m² flag rebases every pack's rate to this pack's day (those it cannot are left out and counted). C21: a share above the sector's purchase-band top is flagged for review, never refused.
+6. **Item 6** — section 562 the residual way (the building less its own rebuild cost, bounded by the fixtures' cost and the price) beside the proportional sum, in chapter 22 and the version.
+
+**Tests.** `test/phase159f.test.ts`, ten tests: on the commit before, `bcis-data.ts` does not exist, so the file does not load. The seven suites that approve packs give their typed rates a source; restated: `phase157a` (pricing days on its fixture versions), `survey-report` (the rate chip names the source), `phase133c` (the new need's plain reading). The pack screens were looked at in a local demo on the test system (chapters 4, 9 and 10: the drafts as "TEST RATE — not BCIS", the source boxes on the rate form, the BCIS section); the screenshot crawl of the surveyor's pages found no sideways scroll, no text past its box and no banned word.
+
+**The checks, at the close:** back end `npm run check` **2,772 pass / 0 fail** over 171 tracked files; phase3 440; phase9 417; site 1,426; **5,055** in all (drift checker re-derived them; two stale figures fixed). `extract --check` up to date; `verify-extraction` 21 checks, 0 failures. CRM fold check green after the spec named `/pack/location`. Register check exit 0 (134 awaiting: 55 + 11 + 68); tracker check green; plain words green.
+
+**Documents.** Word question 218 moved to the closed document with Lakhbir's relayed answer and a closing line, in the main document and the 29 September copy's appendix; questions 261 and 262 for the surveyor in both. Written the safe way this time: backups made server-side (sharepoint_copy_item to the `.bak-phase159f` names), each compared with the Mac file first (unchanged), written in with `cat`, and each cloud copy compared byte for byte after. QUESTIONS-WORD-HEADINGS.txt rebuilt (262 = 177 + 85). FOR THE SURVEYOR: SV-S11 (board item 13254340860, created on monday in group 04); the registers' totals to 134. Developer Spec: a Phase 159f section, the route, and the figures. The run sheet: 159f deleted, its outcome at the end, 159g given item 7. The plan: 159f deleted, 159g item 7, section 6's row.
+
+```
+DONE          items 1-6: the BCIS importer and its placeholder; the drafts from the building function and the
+              elements at the location and the purchase date; a structured source on every rate, enforced at
+              approval and at the Valuation gate; the report naming every source and every test rate; one pricing
+              day (C19), the £/m² flag at one day (C20), the share flag (C21); s.562 the residual way beside ours.
+              Question 218 closed; 261-262 for the surveyor; SV-S11. 5,055 checks; every check green.
+NOT DONE      The pack's BCIS location drafted from the property's council area - BUILDABLE - Phase 159g item 7.
+              BCIS's real export, imported - BLOCKED on Lakhbir getting it from the subscription - tracker 13254356802
+                (Ready - Lakhbir action); the importer reads it the day it arrives.
+              Which way s.562 is used, and whether the drafting is how the surveyor would price - BUILT; BLOCKED only
+                on the surveyor's view - questions 261-262 (SV-S11).
+              Lines counted per room or item drafted from BCIS - BLOCKED on the surveyor saying which and how (BCIS
+                prices elements per m² of floor) - question 262.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phases 159g to 159j; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.

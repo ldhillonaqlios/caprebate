@@ -1071,108 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 159f — BCIS: the pack drafts every rate, and every rate names its source
-
- **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: report pages 4-6 labelled each rate "Surveyor" with no source; a split HMRC cannot trace to a published cost is the weak point of every purchase claim.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
-   and the same entry at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-THE EVIDENCE (OneDrive, not in git): Caprebate/04-phase-work/stress-2026-10-09/
-  COVERAGE-MATRIX.md     every variable that moves a claim, and where the app
-                         reads it (sections 1-14; gaps ranked in 14)
-  engine/FINDINGS.md     E1-E20, the estimate engine; re-run: node harness.ts
-  claim/FINDINGS.md      C1-C29, the claim stage; re-run: ./run-all.sh
-and Caprebate/04-phase-work/sim-2026-10-09-lockwood/Lockwood-Surgery-test-run.md
-(L1-L12, the live run on a real practice with every API). Re-run the harness
-for your items before you start and again at the end; it must go clean.
-
-THE TARGET (Lakhbir, 9 Oct 2026): "the highest figure we can defend" - not
-the highest figure. Every rule below is built on our recommendation and
-SWITCHED ON in test (his rule of 29 Sep 2026: build it, then ask the
-accountant / solicitor / DPO if it is viable). Each item marked OUR READING
-goes into the Word questions document (AMENDMENT 2 - cp, never mv) under the
-tax adviser as a viability check: "we built X on basis Y - is it viable?".
-
-Each fix below gets a test that fails on the code before it (turn the
-harness case into the test). Plain words at grade 9 on every screen. Fix
-what is small and safe; anything larger goes in a new lettered phase before
-the sweep; anything that needs a person goes in the Word questions document.
-
-"WITH BCIS DATA LOADED, THE PACK COULD DRAFT EACH RATE FROM THE RIGHT
-BUILDING TYPE - THIS NEEDS TO HAPPEN" (Lakhbir, 9 Oct 2026). THE LICENCE:
-"we spoke to BCIS and they said its fine for us to do what we are doing"
-(Lakhbir, 9 Oct 2026) - record it, relayed by Lakhbir, against Word
-question 218; storing, drafting and printing BCIS rates is not a question.
-1. AN IMPORTER for the BCIS data: rebuild rates by building type (£/m²),
-   elemental cost analyses, location factors, and the All-in Tender Price
-   Index (extend import-bcis-index). Build it on BCIS's own export format
-   with an invented fixture, so it works the day the data arrives; until
-   then it is off and says so. A tracker row "Ready - Lakhbir action": get
-   the export or API access from the BCIS subscription.
-2. THE PACK DRAFTS: the whole-building rate and each line's rate, from the
-   sector's BCIS building type (GP: health centres, clinics, group practice
-   surgeries; dental; care homes; supported living; private hospitals - a
-   mapping, its source written down), the location factor for the council
-   area (postcodes.io already gives it), indexed to the PURCHASE (or
-   completion) date. The surveyor accepts the draft or overrides it with a
-   reason. pack-lines.ts:20's "the pack never drafts a rate" is replaced.
-3. Every rate carries a structured source: BCIS (reference, base date,
-   location factor, index), a QS's priced schedule, the contractor's invoice,
-   or a price book. Approval needs one on every line - the SOP gate "every
-   rate sourced" (stages.ts:239) becomes a real test (pipeline.ts:574-583).
-4. THE REPORT names the source on every line instead of "Surveyor"
-   (survey-report.ts:94-100), and a test or placeholder rate is printed as
-   one (L12) - a reader of the PDF can always tell.
-5. C19: the report says "priced at <the purchase date>", not "build again
-   today" (survey-report.ts:256); the index is applied to every rate so the
-   arithmetic matches the words. C20: the £/m² review flag rebased to one
-   date. C21: a review flag (not a block) when the qualifying share is above
-   the sector's ceiling.
-6. The s.562 method is stated in the report. Build the alternative
-   (proportional) computation beside the residual one and show both to the
-   surveyor; which one the report uses is a surveyor and tax adviser
-   viability check (OUR READING).
-```
-
----
-
 ## PHASE 159g — who claims, and what the registers already say
 
  **Model: Opus. Written 9 October 2026** from the stress test of that day (the Lockwood Surgery live run, then three independent stress tests of the engine, the claim stage and every variable that moves a claim). Why now: the live run picked a dormant company as the owner, and the registers held a real sale price and tenure that nobody read.
@@ -1265,6 +1163,15 @@ the sweep; anything that needs a person goes in the Word questions document.
    proprietor_name_personal (hmlr-title.ts); match it against the client's own
    people where the register may be read for that (the name exception's rule),
    so W2 does not wait on a recorded answer.
+7. (Carried from Phase 159f, 10 Oct 2026.) THE BCIS LOCATION FROM THE
+   PROPERTY'S COUNCIL AREA. 159f drafts every BCIS rate at the location factor
+   for an area the surveyor chooses in chapter 9 (savePackLocation, the pack
+   field 'location'); none chosen is the UK mean, which cancels in the share.
+   The council area is already known (postcodes.io's admin_district in the
+   postcode check; the ONS table's councilOfPostcode) but kept nowhere the
+   pack reads. Keep it on the property when it is found, and draft the pack's
+   location from it where the loaded BCIS table names that area - still the
+   surveyor's to change, with a reason.
 ```
 
 ---
@@ -2198,7 +2105,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phase 157 — the sweep — **done 6 Oct 2026**, see PHASE HISTORY; it inserted 157a and 157b |  The standing rule |
 |  Claude |  Phase 157a — the engine and the cost model: the pooling questions, the unknown seller, the cost model in the survey pack — **done 6 Oct 2026**, see PHASE HISTORY |  Loose ends the sweep held since 153e and 154a1 |
 |  Claude |  Phase 157b — the papers the 4 to 6 October decisions overtook, and the rate-card uplifts |  The sweep's tracker audit |
-|  Claude |  Phases 159f to 159j — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, 159b, the assessment figure made sound, 159c, several events on one building, and 159d, each event's route, ran on 9 Oct 2026, and 159e, the allowances on each event and the return entries, on 10 Oct 2026; all are in PHASE HISTORY): BCIS rate drafting (159f, 13247754275); who claims and the registers (159g, 13247752841); the legal check (159h, 13247776393); grants, VAT, acquisition costs (159i, 13247762327); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
+|  Claude |  Phases 159g to 159j — the fixes from the 9 October 2026 stress test (159a, one version after sign-off and the "up to" figure, 159b, the assessment figure made sound, 159c, several events on one building, and 159d, each event's route, ran on 9 Oct 2026, and 159e, the allowances on each event and the return entries, and 159f, BCIS rate drafting and every rate sourced, on 10 Oct 2026; all are in PHASE HISTORY): who claims and the registers (159g, 13247752841); the legal check (159h, 13247776393); grants, VAT, acquisition costs (159i, 13247762327); the stress suite and the Lockwood run again (159j, 13247759654) |  The Lockwood Surgery live run and three stress tests, 9 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
 |  Claude |  Phase 160 — the sweep, always last |  The standing rule |
 

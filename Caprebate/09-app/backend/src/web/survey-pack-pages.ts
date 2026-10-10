@@ -56,6 +56,7 @@ import { REPORT_ASSUMPTIONS } from './report-assumptions.ts';
 import { TEST_DEFAULT_WORDS } from './pack-lines.ts';
 import { packSheet, SHEET_CHAPTERS, type SheetRow } from './pack-sheets.ts';
 import { INCLUDES_WORDS } from './pack-cost-model.ts';
+import { BASIS_WORDS, bcisDataHere, PLACEHOLDER_WORDS } from './bcis-data.ts';
 import { savePackWords, WORD_FIELDS } from './pack-words.ts';
 
 function redirect(res: ServerResponse, to: string): void {
@@ -81,7 +82,7 @@ export async function handleSurveyPack(
     res.end(versionPage(d, actor, v, kept));
     return 'handled';
   }
-  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/extra|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve|\/site-plan|\/words|\/works)?$/.exec(url.pathname);
+  const m = /^\/staff\/survey\/([A-Za-z0-9-]+)\/pack(\/value|\/extra|\/line|\/revert|\/remove|\/restore|\/add|\/property|\/legal|\/details|\/approve|\/site-plan|\/words|\/works|\/location)?$/.exec(url.pathname);
   if (m === null) return 'not-mine';
   const job = m[1] ?? '';
   const act = m[2]?.slice(1);
@@ -121,16 +122,20 @@ export async function handleSurveyPack(
     return 'handled';
   }
   let r: P.PackResult;
+  // PHASE 159f: a typed rate's source, from the three boxes every rate form carries.
+  const src = { rate_basis: f.get('rate_basis') ?? '', rate_ref: f.get('rate_ref') ?? '', rate_priced_at: f.get('rate_priced_at') ?? '' };
   switch (act) {
-    case 'value': r = P.savePackValue(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
+    case 'value': r = P.savePackValue(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq, ...src }); break;
+    // PHASE 159f: the BCIS location the drafts are read for.
+    case 'location': r = P.savePackLocation(deps, actor, job, { area: f.get('area') ?? '', reason, seq }); break;
     case 'extra': r = P.savePackExtra(deps, actor, job, { field: f.get('field') ?? '', value: f.get('value') ?? '', reason, seq }); break;
     // PHASE 153g: the surveyor's own words in chapters 5, 8, 11, 14, 16, 19, 20 and 22 (src/web/pack-words.ts).
     case 'words': r = savePackWords(deps, actor, job, { field: f.get('field') ?? '', words: f.get('words') ?? '', reason, seq }); break;
-    case 'line': r = P.saveLine(deps, actor, job, { line, qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq }); break;
+    case 'line': r = P.saveLine(deps, actor, job, { line, qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq, ...src }); break;
     case 'revert': r = P.revertLine(deps, actor, job, { line, reason, seq }); break;
     case 'remove': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, true); break;
     case 'restore': r = P.setLineRemoved(deps, actor, job, { line, reason, seq }, false); break;
-    case 'add': r = P.addLine(deps, actor, job, { label: f.get('label') ?? '', unit: f.get('unit') ?? '', qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq }); break;
+    case 'add': r = P.addLine(deps, actor, job, { label: f.get('label') ?? '', unit: f.get('unit') ?? '', qty: f.get('qty') ?? '', rate: f.get('rate') ?? '', qpct: f.get('qpct') ?? '', pool: f.get('pool') ?? '', reason, seq, ...src }); break;
     // PHASE 159c: a piece of work's cost-led values, from its final account (chapter 9).
     case 'works': r = P.saveWorks(deps, actor, job, { event: f.get('event') ?? '', reason, seq,
       values: Object.fromEntries(WORKS_FIELDS.map((k) => [k, f.get(k) ?? ''])) as Partial<Record<WorksField, string>> }); break;
@@ -152,9 +157,27 @@ export async function handleSurveyPack(
 function sourceTag(d: PackPageDeps, s: Source | null, short = false): Safe {
   if (s === null) return h`<span class="pk-src pk-need">needed</span>`;
   if (s.kind === 'EVIDENCE') return h`<span class="pk-src pk-ev">${short ? 'Evidence' : s.text}</span>`;
+  // PHASE 159f: a drafted rate names BCIS (or says it is a test rate); a typed rate names its own source.
+  if (s.kind === 'DRAFT' && s.basis !== undefined && s.basis !== null) {
+    return h`<span class="pk-src pk-dr" title="${s.text}">${s.basis.kind === 'TEST_PLACEHOLDER' ? 'TEST RATE — not BCIS' : 'BCIS draft'}</span>`;
+  }
   if (s.kind === 'DRAFT') return h`<span class="pk-src pk-dr">Our draft</span>`;
+  if (s.kind === 'SURVEYOR' && s.reason !== undefined && s.reason !== null && s.basis !== undefined) {
+    const b = s.basis;
+    return h`<span class="pk-src pk-sv">${s.by_name ?? s.text}</span>${b === null ? raw('') : h`<br><span class="help">${BASIS_WORDS[b.kind]}: ${b.ref}${b.priced_at === null ? '' : `, at ${b.priced_at}`}</span>`}`;
+  }
   // In a table cell, the surveyor's name; the time is in the list of changes beside it.
   return h`<span class="pk-src pk-sv">${s.by_name ?? s.text}${short || s.at === null || s.at === undefined ? '' : ` · ${d.stamp(s.at)}`}</span>`;
+}
+
+/** PHASE 159f (item 3): the three boxes a typed rate's source needs — what, which one, and the day it is priced at. */
+function rateSourceFields(cur: Source | null): Safe {
+  const b = cur?.kind === 'SURVEYOR' ? cur.basis ?? null : null;
+  const opt = (k: P.RateSourceForm['rate_basis'] & string, w: string) => h`<option value="${k}"${b?.kind === k ? raw(' selected') : raw('')}>${w}</option>`;
+  return h`<fieldset class="pk-fields pk-ratesrc"><legend>Where the rate comes from — needed for every rate you type</legend>
+    <label>Source <select class="fi" name="rate_basis"><option value="">Choose</option>${opt('BCIS', 'BCIS')}${opt('QS_SCHEDULE', BASIS_WORDS.QS_SCHEDULE)}${opt('CONTRACTOR_INVOICE', BASIS_WORDS.CONTRACTOR_INVOICE)}${opt('PRICE_BOOK', BASIS_WORDS.PRICE_BOOK)}</select></label>
+    <label>Which one <input class="fi" name="rate_ref" maxlength="200" value="${b?.ref ?? ''}" placeholder="BCIS reference, schedule item, invoice number, page"></label>
+    <label>Priced at <input class="fi" type="date" name="rate_priced_at" value="${b?.priced_at ?? ''}"></label></fieldset>`;
 }
 
 function valueCell(d: PackPageDeps, v: Valued, words: (n: number | null) => string): Safe {
@@ -251,7 +274,7 @@ function summaryChapter(v: P.PackView): Safe {
       ${v.vat.counted_pence === 0 ? raw('') : h`<div>Plus VAT not reclaimed<b>+ ${PENCE(v.vat.counted_pence)}</b><span>Chapter 15</span></div>`}
       <div>Less bare land<b>${i.land_pence.value === null ? '—' : `− ${PENCE(i.land_pence.value)}`}</b><span>Chapter 9</span></div>
       <div>The building<b>${PENCE(s.building_price_pence)}</b><span>price less land</span></div>
-      <div>Rebuild cost today<b>${PENCE(s.rebuild_pence)}</b><span>floor area × rate</span></div>
+      <div>Rebuild cost<b>${PENCE(s.rebuild_pence)}</b><span>floor area × rate${v.pricing.priced_at === null ? '' : `, priced at ${v.pricing.priced_at}`}</span></div>
       ${v.grants.list.length === 0 ? raw('') : h`<div>Less grants<b>${v.grants.reading.reduction_pence === null ? '—' : `− ${PENCE(v.grants.reading.reduction_pence)}`}</b><span>Chapter 15</span></div>`}
       <div class="pathway-end">Spend that qualifies<b>${PENCE(s.qualifying_pence)}</b><span>${s.share_bp === null ? 'not worked out yet' : `${PCT(s.share_bp)} of the building`}</span></div>
     </div>
@@ -624,13 +647,34 @@ function inputsChapter(d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchP
         ${open ? h`<tr class="pk-edit"><td colspan="4"><form method="post" action="${base(v.job.id)}/value">${hidden(v, ch)}<input type="hidden" name="field" value="${field}">
           <div class="pk-fields"><label>New value <input class="fi" name="value" inputmode="decimal" autocomplete="off" value="${val.value === null ? '' : w.words(val.value).replace(/[£,]| a m²| m²/g, '')}"></label>
           <label>Why are you changing it? <input class="fi pk-why" name="reason" maxlength="500" required></label></div>
+          ${field === 'building_rate' ? rateSourceFields(val.source) : raw('')}
           <p class="help">${w.hint} Leave it empty to put our figure back.</p>
           <div class="sendrow"><button class="cta" type="submit">Save — every total follows</button><a href="${base(v.job.id)}?ch=9#l-${field}">Cancel</a></div></form></td></tr>` : raw('')}`;
     })}</tbody></table>
-    ${v.inputs.building_rate_pence.value === null ? h`<p class="help">The whole-building rate comes from BCIS. Until BCIS is bought, the surveyor types it, and it is theirs.</p>` : raw('')}
+    ${bcisBlock(d, v, ch, q)}
     ${v.job.sector === 'supported_living' ? sharedAreaBlock(d, v, ch) : raw('')}
     ${worksBlock(d, v, ch)}
     ${sitePlanPanel(d, v, ch)}`;
+}
+
+/**
+ * PHASE 159f — THE BCIS DRAFTS AND THE LOCATION. What the drafts rest on, in words; the location the factor is read for,
+ * chosen from the loaded BCIS table (none: the UK mean, which never changes the share); a test rate said plainly.
+ */
+function bcisBlock(_d: PackPageDeps, v: P.PackView, ch: number, q: URLSearchParams): Safe {
+  const b = v.pricing.bcis;
+  const here = bcisDataHere();
+  const areas = here.data === null ? [] : here.data.locations.map((l) => l.area);
+  const open = q.get('edit') === 'location' && v.may_edit && v.property !== null;
+  return h`<section class="pk-bcis" id="l-location"><h2>Rates from BCIS</h2>
+    ${b.kind === 'PLACEHOLDER' ? h`<p class="formerr" role="note"><strong>${PLACEHOLDER_WORDS}.</strong> Every rate drafted here is a test rate.</p>` : raw('')}
+    <p>${b.words}</p>
+    <p>Location: <b>${b.location.words}</b>. ${areas.length > 0 && v.may_edit && v.property !== null && !open ? h`<a href="${base(v.job.id)}?ch=9&edit=location#l-location">Choose the area</a>` : raw('')}</p>
+    ${open ? h`<form method="post" action="${base(v.job.id)}/location">${hidden(v, ch)}<div class="pk-fields">
+      <label>BCIS area <select class="fi" name="area"><option value="">The UK mean</option>${areas.map((a) => h`<option${a === b.location.area ? raw(' selected') : raw('')}>${a}</option>`)}</select></label>
+      <label>Why? <input class="fi pk-why" name="reason" maxlength="500" required></label></div>
+      <div class="sendrow"><button class="cta" type="submit">Save — every BCIS draft follows</button><a href="${base(v.job.id)}?ch=9#l-location">Cancel</a></div></form>` : raw('')}
+    <p class="help">Leave a drafted rate to accept it. To use another, change it and say where your rate comes from.</p></section>`;
 }
 
 /**
@@ -740,6 +784,7 @@ function editRow(v: P.PackView, l: P.ViewLine, ch: number): Safe {
         <label>Pool
 <select class="fi" name="pool"><option value=""${l.pool === null ? raw(' selected') : raw('')}>Not decided</option><option value="MP"${l.pool === 'MP' ? raw(' selected') : raw('')}>Main pool</option><option value="SR"${l.pool === 'SR' ? raw(' selected') : raw('')}>Special rate pool</option></select></label>
       </div>
+      ${rateSourceFields(l.rate_pence.source)}
       <label class="pk-why-l">Why are you changing it? <input class="fi pk-why" name="reason" maxlength="500" required></label>
       <p class="help">What you type is stamped with your name and kept. Our draft stays in the record beside it.</p>
       <div class="sendrow"><button class="cta" type="submit">Save — every total follows</button><a href="${base(v.job.id)}?ch=10#l-${l.id}">Cancel</a></div>
@@ -766,6 +811,7 @@ function addForm(v: P.PackView, ch: number, open: boolean): Safe {
       <label>Pool
 <select class="fi" name="pool"><option value="">Not decided</option><option value="MP">Main pool</option><option value="SR">Special rate pool</option></select></label>
     </div>
+    ${rateSourceFields(null)}
     <label class="pk-why-l">Why add it? <input class="fi pk-why" name="reason" maxlength="500" required></label>
     <div class="sendrow"><button class="cta" type="submit">Add the line</button><a href="${base(v.job.id)}?ch=10">Cancel</a></div></form>`;
 }
@@ -876,7 +922,7 @@ function versionPage(d: PackPageDeps, actor: Actor, v: P.PackView, kept: NonNull
       <div><dt>Price paid</dt><dd>${PENCE(x.inputs.price_paid_pence.value)}</dd></div>
       <div><dt>Bare land</dt><dd>${PENCE(x.inputs.land_pence.value)}</dd></div>
       <div><dt>The building</dt><dd>${PENCE(x.sums.building_price_pence)}</dd></div>
-      <div><dt>Rebuild cost today</dt><dd>${PENCE(x.sums.rebuild_pence)}</dd></div>
+      <div><dt>Rebuild cost${(x as { pricing?: { priced_at: string | null } }).pricing?.priced_at ? `, priced at ${(x as { pricing?: { priced_at: string | null } }).pricing?.priced_at ?? ''}` : ''}</dt><dd>${PENCE(x.sums.rebuild_pence)}</dd></div>
       <div><dt>Spend that qualifies</dt><dd>${PENCE(x.sums.qualifying_pence)}</dd></div>
       <div><dt>Main pool</dt><dd>${PENCE(x.sums.main_pool_pence)}</dd></div>
       <div><dt>Special rate pool</dt><dd>${PENCE(x.sums.special_pool_pence)}</dd></div>

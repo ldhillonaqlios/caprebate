@@ -35,6 +35,8 @@ const TABLE: readonly (readonly [RegExp, PlainNeed])[] = [
   // Phase 158c: the surveyor's own approval of the survey pack (F34, F35), the client's acceptance in their portal (F39),
   // the invoice sent (F41) and the filing recorded (F42). Staff ticks no longer stand in for any of them.
   [/^The surveyor approved and signed the survey pack/, { words: 'The surveyor’s approval of the survey pack', fix: { href: '#add-task', label: 'Ask the surveyor' } }],
+  // PHASE 159f (item 3): every rate sourced, read from the approved version.
+  [/^Every rate in the survey pack names its source/, { words: 'Every rate in the survey pack needs its source: BCIS, a QS schedule, an invoice or a price book', fix: { href: '#add-task', label: 'Ask the surveyor' } }],
   [/^The tax adviser’s sign-off is on record/, { words: 'The tax adviser’s sign-off', fix: { href: '#claim-figures', label: 'Record the sign-off' } }],
   [/^The client report is issued/, { words: 'Issue the client report', fix: { href: '#claim-deliverables', label: 'Open the reports' } }],
   [/^The accountant’s computation pack is issued/, { words: 'Issue the accountant’s computation pack', fix: { href: '#claim-deliverables', label: 'Open the reports' } }],
