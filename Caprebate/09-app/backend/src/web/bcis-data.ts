@@ -159,6 +159,14 @@ function money(raw: string, where: string): number | null {
 }
 
 const QUARTER = /\b([1-4])\s*Q\s*((?:19|20)\d{2})\b|\bQ([1-4])\s*((?:19|20)\d{2})\b/i;
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+/** PHASE 159l (item 6, L17): BCIS's base quarter in words, by its first month ("2026-01" is "January 2026"). Anything
+ *  else is said as it is. */
+export function baseWords(base: string): string {
+  const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(base);
+  return m === null ? base : `${MONTHS[Number(m[2]) - 1] ?? ''} ${m[1] ?? ''}`;
+}
+
 /** "Rebased to 2Q 2026 …" anywhere above the header, as the quarter's first month ("2026-04"). */
 function baseOf(rows: string[][], upTo: number): string | null {
   for (let i = 0; i < upTo; i++) {
@@ -375,8 +383,8 @@ export function bcisDrafts(o: { sector: string; area: string | null; purchase: s
   }
   const nearest = o.sector === 'dental' && norm(type.name) !== norm('Dental surgeries') ? ' (the nearest: BCIS has no dental function of its own)' : '';
   const value = Math.round(type.mean_pence * k);
-  const building_rate = { value, basis: basisOf(`${type.name}, mean ${pounds(type.mean_pence)}/m² at ${d.base}${nearest}`),
-    text: `${lead}${type.name}${nearest}: mean ${pounds(type.mean_pence)} a m² at ${d.base} ${tail}` };
+  const building_rate = { value, basis: basisOf(`${type.name}, mean ${pounds(type.mean_pence)}/m² at ${baseWords(d.base)}${nearest}`),
+    text: `${lead}${type.name}${nearest}: mean ${pounds(type.mean_pence)} a m² at ${baseWords(d.base)} ${tail}` };
   const lines = new Map<string, { value: number; basis: RateBasis; text: string }>();
   for (const id of o.lineIds) {
     const codes = NRM_OF_LINE[id];
@@ -385,8 +393,8 @@ export function bcisDrafts(o: { sector: string; area: string | null; purchase: s
     if (els.some((e) => e === undefined)) continue;
     const sum = els.reduce((a, e) => a + (e?.rate_pence ?? 0), 0);
     const names2 = els.map((e) => `${e?.code ?? ''} ${e?.name ?? ''}`.trim()).join(' + ');
-    lines.set(id, { value: Math.round(sum * k), basis: basisOf(`${type.name}, element ${names2}, ${pounds(sum)}/m² at ${d.base}`),
-      text: `${lead}${type.name}, element ${names2}: ${pounds(sum)} a m² of floor at ${d.base} ${tail}` });
+    lines.set(id, { value: Math.round(sum * k), basis: basisOf(`${type.name}, element ${names2}, ${pounds(sum)}/m² at ${baseWords(d.base)}`),
+      text: `${lead}${type.name}, element ${names2}: ${pounds(sum)} a m² of floor at ${baseWords(d.base)} ${tail}` });
   }
   return { kind: d.kind, words: `Drafted from ${test ? 'test figures for' : 'BCIS’s'} ${type.name}${nearest}${test ? '' : ` (${d.source})`}, ${tail}.`, type_name: type.name, building_rate, lines, location, index: { factor: ix.factor, words: ix.words }, priced_at };
 }

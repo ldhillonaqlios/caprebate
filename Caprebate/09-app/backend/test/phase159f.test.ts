@@ -234,7 +234,7 @@ describe('4 · item 4, L12 — the report names every rate’s source', () => {
       const kept = A.approvedVersion(deps(app), ADMIN, a.job, 1)!;
       const m = REP.reportModel(kept.snapshot, kept.row.fingerprint);
       assert.equal(m.groups[0]!.rows[0]!.rate_chip.words, 'BCIS');
-      assert.match(m.rate_sources[0]!.words, /^BCIS: Health centres, clinics, group practice surgeries, mean £2,500\/m² at 2026-04, location factor 1\.00 \(the UK mean\), indexed ×0\.9524, priced at 1 June 2025\.$/);
+      assert.match(m.rate_sources[0]!.words, /^BCIS: Health centres, clinics, group practice surgeries, mean £2,500\/m² at April 2026, location factor 1\.00 \(the UK mean\), indexed ×0\.9524, priced at 1 June 2025\.$/);
       assert.match(m.method_lede, /proportional way\..*priced at 1 June 2025, the purchase date\./);
       assert.doesNotMatch(m.method_lede, /build again today/);
       assert.equal(m.test_rates, false);

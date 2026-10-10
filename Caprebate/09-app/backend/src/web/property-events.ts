@@ -184,6 +184,32 @@ export type EventOnClaim = PropertyEvent & {
   readonly documents: readonly { readonly code: string; readonly label: string; readonly held: number; readonly untied: number }[];
 };
 
+export type ApprovedEventFigure = { readonly version: number; readonly qualifying_pence: number | null; readonly not_claimed: boolean };
+
+/**
+ * PHASE 159l (item 4, L19): EACH EVENT'S FIGURE AS THE SURVEY APPROVED IT — from the newest approved version on the
+ * claim (pack-approve.ts snapshotOf): the purchase's own qualifying amount and each piece of work's, by its event. A
+ * version with no work since holds the purchase as the whole figure. An event added after the version is not in it.
+ */
+export function approvedEventFigures(db: Db, claim_id: string): ReadonlyMap<string, ApprovedEventFigure> {
+  const a = db.get<{ version: number; snapshot_json: string }>(
+    'SELECT a.version, a.snapshot_json FROM survey_pack_approvals a JOIN survey_packs p ON p.id = a.pack_id JOIN surveyor_jobs j ON j.id = p.job_id ' +
+      'WHERE j.claim_id = ? ORDER BY a.approved_at DESC, a.version DESC LIMIT 1', [claim_id]);
+  const out = new Map<string, ApprovedEventFigure>();
+  if (a === undefined) return out;
+  type Snap = { sums?: { qualifying_pence?: unknown }; events?: { purchase_w3?: unknown; purchase?: { qualifying_pence?: unknown } | null; works?: { event_id?: unknown; qualifying_pence?: unknown }[] } };
+  let s: Snap;
+  try { s = JSON.parse(a.snapshot_json) as Snap; } catch { return out; }
+  const pence = (v: unknown): number | null => (typeof v === 'number' && Number.isInteger(v) ? v : null);
+  if (s.events === undefined) {
+    if (s.sums !== undefined) out.set('PURCHASE', { version: a.version, qualifying_pence: pence(s.sums.qualifying_pence), not_claimed: false });
+    return out;
+  }
+  out.set('PURCHASE', { version: a.version, qualifying_pence: s.events.purchase === null || s.events.purchase === undefined ? null : pence(s.events.purchase.qualifying_pence), not_claimed: s.events.purchase_w3 === true });
+  for (const w of s.events.works ?? []) if (typeof w.event_id === 'string') out.set(w.event_id, { version: a.version, qualifying_pence: pence(w.qualifying_pence), not_claimed: false });
+  return out;
+}
+
 /** Each event on a claim's building, with its own figure and its own documents. */
 export function eventsOnClaim(db: Db, c: { property_id: string | null; business_id: string; sector: string | null }): EventOnClaim[] {
   const label = (code: string): string => db.get<{ label: string }>('SELECT label FROM document_types WHERE code = ?', [code])?.label ?? code;

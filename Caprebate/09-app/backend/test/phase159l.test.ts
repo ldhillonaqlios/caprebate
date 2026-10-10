@@ -9,8 +9,18 @@
  *                 due is confirmed filed, and a return not yet due is held in aftercare with its due date
  *   item 3 (L18)  the research panel's postcodes.io row says it is the address question's check, and what the research's
  *                 own postcode check did on the click
+ *   item 4 (L19)  "What happened to the building" shows each event's approved figure once the survey has priced it
+ *   item 5 (L20)  the report prints each piece of work's nine final-account values with their source (page and PDF),
+ *                 frozen with the version; a version approved before says its sources were not kept
+ *   item 6 (L17)  BCIS's base quarter is said as a month ("January 2026"), on new drafts and on older versions alike
  */
-import { describe, test } from 'node:test';
+import { describe, test, before, after } from 'node:test';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { createApp } from '../src/server.ts';
+import { seed } from '../src/seed.ts';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { testApp, actor } from './helpers.ts';
@@ -29,6 +39,13 @@ import { aftercareBlock } from '../src/web/claim-record-pages.ts';
 import * as RS from '../src/web/research.ts';
 import { fixtureTransport } from '../src/connectors/http.ts';
 import { secretsFromValues } from '../src/secrets.ts';
+import * as SP from '../src/web/survey-pack.ts';
+import * as L from '../src/web/pack-legal.ts';
+import * as A from '../src/web/pack-approve.ts';
+import * as EV from '../src/web/survey-evidence.ts';
+import * as CH from '../src/web/pack-chapters.ts';
+import * as REP from '../src/web/survey-report.ts';
+import { baseWords } from '../src/web/bcis-data.ts';
 
 type App = Awaited<ReturnType<typeof testApp>>;
 const T = '2026-10-10T09:00:00.000Z';
@@ -239,5 +256,151 @@ describe('item 3 (L18) — the research panel’s postcode row', () => {
     const row = await click(false);
     assert.match(row?.detail ?? '', /tried to check the postcode with postcodes\.io itself, and it gave no answer\.$/);
     assert.doesNotMatch(row?.detail ?? '', /Kirklees/);
+  });
+});
+
+/* ================================================================== */
+
+describe('item 4 (L19) — the events’ figures after the survey', () => {
+  let made: Awaited<ReturnType<typeof createApp>>;
+  let base = '';
+  const cookie = new Map<string, string>();
+  const go = async (who: string, path: string, init: RequestInit = {}) => {
+    const x = await fetch(base + path, { redirect: 'manual', ...init, headers: { cookie: cookie.get(who) ?? '', ...(init.headers as Record<string, string> | undefined) } });
+    return { status: x.status, body: await x.text() };
+  };
+  before(async () => {
+    made = await createApp(':memory:', { twoFactor: 'off', documentRoot: mkdtempSync(join(tmpdir(), 'cb-159l-')) });
+    await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
+    const addr = made.server.address();
+    base = `http://127.0.0.1:${typeof addr === 'object' && addr !== null ? addr.port : 0}`;
+    const password = (await seed(made.app.db, made.app.hasher, made.app.now)).password;
+    for (const who of ['sales', 'accounting']) {
+      const r = await fetch(`${base}/login`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ email: `${who}@example.invalid`, password }).toString() });
+      cookie.set(who, r.headers.getSetCookie().map((c) => c.split(';')[0]).join('; '));
+    }
+  });
+  after(() => made.close());
+
+  test('until the survey prices them, the band; once a version is approved, each event’s approved figure from it', async () => {
+    const db = made.app.db;
+    const c = db.get<{ id: string; business_id: string; assessment_id: string }>('SELECT id, business_id, assessment_id FROM claims WHERE property_id IS NOT NULL AND assessment_id IS NOT NULL AND id NOT IN (SELECT claim_id FROM surveyor_jobs WHERE claim_id IS NOT NULL) LIMIT 1');
+    assert.ok(c);
+    const post = (f: Record<string, string>) => go('sales', `/staff/claims/${c.id}/events`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(f).toString() });
+    assert.equal((await post({ kind: 'PURCHASE', date: '06/2020', cost: '250000' })).status, 303);
+    assert.equal((await post({ kind: 'REFURBISHMENT', date: '2025', cost: '90000' })).status, 303);
+    const section = async (who: string) => { const b = (await go(who, `/staff/claims/${c.id}`)).body; const i = b.indexOf('id="claim-events"'); return b.slice(i, b.indexOf('</details>', i)); };
+    const beforeSurvey = await section('sales');
+    assert.equal((beforeSurvey.match(/until the survey prices it/g) ?? []).length, 2);
+    // The survey approves a version: the purchase £199,689.12 and the refit £63,000, as on Lockwood.
+    const refit = db.get<{ id: string }>("SELECT id FROM property_events WHERE property_id = (SELECT property_id FROM claims WHERE id = ?) AND kind = 'REFURBISHMENT'", [c.id]);
+    assert.ok(refit);
+    CF.packApprovedOn(made.app as never, c.business_id, c.assessment_id, c.id, db.get<{ id: string }>("SELECT id FROM users WHERE role = 'SURVEYING' LIMIT 1")?.id ?? '');
+    const pack = db.get<{ id: string }>('SELECT p.id FROM survey_packs p JOIN surveyor_jobs j ON j.id = p.job_id WHERE j.claim_id = ?', [c.id])?.id ?? '';
+    const snap = JSON.stringify({ version: 2, sums: { qualifying_pence: 26_268_912 }, events: { purchase_applies: true, purchase: { qualifying_pence: 19_968_912 },
+      works: [{ event_id: refit.id, kind: 'REFURBISHMENT', qualifying_pence: 6_300_000 }] } });
+    db.run('INSERT INTO survey_pack_approvals (id, pack_id, version, pack_seq, legal_seq, snapshot_json, fingerprint, approved_by, approved_at) VALUES (?, ?, 2, 2, 0, ?, ?, ?, ?)',
+      [randomUUID(), pack, snap, createHash('sha256').update(snap).digest('hex'), db.get<{ id: string }>("SELECT id FROM users WHERE role = 'SURVEYING' LIMIT 1")?.id ?? '', made.app.now()]);
+    const afterSurvey = await section('sales');
+    assert.doesNotMatch(afterSurvey, /until the survey prices it/);
+    assert.match(afterSurvey, /£199,689\.12 qualifies, as the survey approved it in version 2\./);
+    assert.match(afterSurvey, /£63,000 qualifies, as the survey approved it in version 2\./);
+    // A login that may not read the claim's value sees neither.
+    assert.doesNotMatch(await section('accounting'), /qualifies|Up to £/);
+  });
+});
+
+/* ================================================================== */
+
+describe('items 5 and 6 (L20, L17) — the work’s own costs on the report, and BCIS’s quarter in words', () => {
+  const SAM = actor('SURVEYING', 'u-sam');
+  const deps = (app: App) => ({ db: app.db, audit: app.audit, now: app.now, newId: randomUUID });
+  const ok = (r: { ok: boolean }) => assert.equal(r.ok, true, JSON.stringify(r));
+  const view = (app: App, job: string) => SP.packView(deps(app), SAM, job);
+  const lview = (app: App, job: string) => L.legalView(deps(app), SAM, job);
+  const pdfText = (bytes: Uint8Array): string => [...Buffer.from(bytes).toString('latin1').matchAll(/<([0-9a-f]+)> Tj/g)]
+    .map((m) => Buffer.from(m[1] ?? '', 'hex').toString('latin1')).join('\n').replace(/\x92/g, '’');
+
+  /** Lockwood at the survey (as test/phase159c.test.ts): the purchase and a 2025 refit, priced and approved. */
+  async function approvedLockwood() {
+    const app = await testApp();
+    for (const [id, role] of [['u-sam', 'SURVEYING'], ['u-ADMIN', 'ADMIN'], ['u-SALES', 'SALES'], ['u-SURVEYING', 'SURVEYING']] as const) {
+      app.db.run('INSERT INTO users (id,email,email_canonical,display_name,role,password_hash,created_at,updated_at,business_id) VALUES (?,?,?,?,?,?,?,?,NULL)',
+        [id, `${id}@x.invalid`, `${id}@x.invalid`, `${id} name`, role, 'x', T, T]);
+    }
+    const b = 'b-l20', p = 'p-l20', as = 'as-l20', job = 'job-l20';
+    app.db.run('INSERT INTO businesses (id,name,sector,stage,created_at,claimant_type) VALUES (?,?,?,?,?,?)', [b, 'Lockwood L20 Limited', 'gp', 'SURVEY', T, 'COMPANY']);
+    app.db.run('INSERT INTO properties (id,business_id,label,postcode,created_at) VALUES (?,?,?,?,?)', [p, b, 'Lockwood Surgery', 'ZZ9 9ZZ', T]);
+    app.db.run('INSERT INTO assessments (id,business_id,sector,submitted_at,shown_low_pence,shown_high_pence,created_at) VALUES (?,?,?,?,?,?,?)', [as, b, 'gp', T, null, 25_800_000, T]);
+    app.db.run('INSERT INTO estimates (id,assessment_id,business_id,qualifying_expenditure_pence,qualifying_pct,pool_split_main_pence,pool_split_special_pence,bare_land_pence,multiplier,indicative_lifetime_saving_pence,sealed_at,estimate_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+      ['e-l20', as, b, 25_800_000, 0.35, 0, 0, 0, 1, 0, T, 'not-a-real-hash']);
+    PE.writeAssessmentEvents(app.db, randomUUID, { property_id: p, business_id: b, assessment_id: as, at: T },
+      [{ type: 'purchase', cost: 650000, date: '03/2025' }, { type: 'refurb', cost: 90000, date: '2025' }]);
+    const claim = C.insertClaim(app.db, app.now, randomUUID, { business_id: b, property_id: p, assessment_id: as, workstream: 'PLANT_AND_MACHINERY', stage: 'SURVEY', owner_id: null, surveyor_id: null });
+    app.db.run('INSERT INTO surveyor_jobs (id,business_id,assessment_id,surveyor_id,state,committed_at,created_at,claim_id) VALUES (?,?,?,?,?,?,?,?)', [job, b, as, 'u-sam', 'SEALED', null, T, claim.id]);
+    app.db.run('INSERT INTO register_records (id,business_id,source_id,entity_id,fields_json,obtained_at,property_id) VALUES (?,?,?,?,?,?,?)',
+      ['rr-epc-l20', b, 'EPC', 'RRN-l20', JSON.stringify({ epc_total_floor_area_m2: 640.5 }), T, p]);
+    app.db.run('INSERT INTO register_records (id,business_id,source_id,entity_id,fields_json,obtained_at,property_id) VALUES (?,?,?,?,?,?,?)',
+      ['rr-title-l20', b, 'HMLR_TITLE', 'ZZl20', JSON.stringify({ title_number: 'ZZl20', price_paid: 650000 }), T, p]);
+    CF.fact(app, claim.id, 'ACCOUNTING_PERIOD_START', '2025-04-01');
+    CF.fact(app, claim.id, 'ACCOUNTING_PERIOD_END', '2026-03-31');
+    const keep = view(app, job).lines.slice(0, 2).map((l) => l.id);
+    for (const l of view(app, job).lines) { if (keep.includes(l.id) || l.removed) continue; ok(SP.setLineRemoved(deps(app), SAM, job, { line: l.id, reason: 'Not here', seq: String(view(app, job).seq) }, true)); }
+    ok(SP.saveLine(deps(app), SAM, job, { line: keep[0] as string, qty: '10', rate: '2000', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'SR', reason: 'Counted', seq: String(view(app, job).seq) }));
+    ok(SP.saveLine(deps(app), SAM, job, { line: keep[1] as string, qty: '100', rate: '300', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', qpct: '100', pool: 'MP', reason: 'Counted', seq: String(view(app, job).seq) }));
+    ok(SP.savePackValue(deps(app), SAM, job, { field: 'land', value: '150000', reason: 'Land registry', seq: String(view(app, job).seq) }));
+    ok(SP.savePackValue(deps(app), SAM, job, { field: 'building_rate', value: '1500', rate_basis: 'QS_SCHEDULE', rate_ref: 'Test schedule, item 1', rate_priced_at: '2026-09-01', reason: 'BCIS', seq: String(view(app, job).seq) }));
+    const w = view(app, job).works[0]!;
+    ok(SP.saveWorks(deps(app), SAM, job, { event: w.event.id, values: { works_total: '90000', works_main: '30000', works_special: '20000', works_bwic: '5000', works_demolition: '1000',
+      works_other: '20000', works_repairs: '4000', works_prelims: '6000', works_fees: '4000' }, reason: 'From the final account dated 30 June 2025', seq: String(view(app, job).seq) }));
+    ok(EV.setBasis(deps(app), SAM, job, { basis: 'DESKTOP_EVIDENCE', note: '' }));
+    A.saveDetails(deps(app), SAM, job, { rics_number: '1234567', firm: 'Survey Firm' });
+    ok(L.answerLegal(deps(app), SAM, job, { question: 'G8', values: ['new_build'], source: 'The client’s contract', seq: String(lview(app, job).seq) }));
+    ok(L.answerLegal(deps(app), SAM, job, { question: 'G9d', values: ['2025-06-01'], source: 'The client’s contract', seq: String(lview(app, job).seq) }));
+    for (const c of CH.chaptersToRead()) A.recordRead(deps(app), SAM, job, c, lview(app, job).seq);
+    ok(A.approvePack(deps(app), SAM, job, { seq: String(view(app, job).seq), legal_seq: String(lview(app, job).seq) }));
+    return { app, kept: A.approvedVersion(deps(app), actor('ADMIN'), job, 1)! };
+  }
+
+  test('L20: each of the refit’s nine values is in “Where each number came from”, with the surveyor’s name and reason, on the page and in the PDF', async () => {
+    const { app, kept } = await approvedLockwood();
+    const snap = kept.snapshot as unknown as { events: { works: { input_sources: Record<string, { kind: string; reason: string | null } | null> }[] } };
+    assert.equal(Object.keys(snap.events.works[0]!.input_sources).length, 9);
+    assert.equal(snap.events.works[0]!.input_sources['works_main']?.reason, 'From the final account dated 30 June 2025');
+    const m = REP.reportModel(kept.snapshot, kept.row.fingerprint);
+    const works = m.sources.filter((r) => r.label.startsWith('A refurbishment or refit, 2025: '));
+    assert.deepEqual(works.map((r) => [r.label.replace('A refurbishment or refit, 2025: ', ''), r.value]), [
+      ['the final account, in all', '£90,000'], ['plant and machinery (main pool)', '£30,000'], ['integral features (special rate pool)', '£20,000'],
+      ['builder’s work for that plant', '£5,000'], ['taking out old plant', '£1,000'], ['other building work, which does not qualify', '£20,000'],
+      ['the repair part', '£4,000'], ['preliminaries', '£6,000'], ['professional fees', '£4,000']]);
+    for (const r of works) {
+      assert.equal(r.chip.kind, 'SURVEYOR', r.label);
+      assert.equal(r.reason, 'From the final account dated 30 June 2025', r.label);
+    }
+    const html = String(REP.reportHtml(m, { pdf: null }));
+    const where = html.slice(html.indexOf('Where each number came from'));
+    assert.match(where, /A refurbishment or refit, 2025: plant and machinery \(main pool\)<\/td><td class="n">£30,000/);
+    const pdf = pdfText(REP.reportPdf(m).bytes);
+    assert.match(pdf, /A refurbishment or refit, 2025: preliminaries/);
+    assert.match(pdf, /From the final account dated 30 June 2025/);
+    // A version approved before this phase kept no sources: the values are printed, and it says so (never a made-up source).
+    const old = JSON.parse(JSON.stringify(kept.snapshot)) as { events: { works: Record<string, unknown>[] } };
+    delete old.events.works[0]!['input_sources'];
+    const om = REP.reportModel(old as never, kept.row.fingerprint).sources.filter((r) => r.label.startsWith('A refurbishment'));
+    assert.equal(om.length, 9);
+    assert.ok(om.every((r) => r.chip.kind === 'NONE' && r.reason === 'Its source was not kept with this version.'));
+    app.close();
+  });
+
+  test('L17: BCIS’s base quarter is a month in words, on a new draft and on a version approved before', () => {
+    assert.deepEqual(['2026-01', '2026-04', '2025-10', 'not a quarter'].map(baseWords), ['January 2026', 'April 2026', 'October 2025', 'not a quarter']);
+    const src = { kind: 'DRAFT', text: 'x', basis: { kind: 'BCIS', ref: 'Health centres, clinics, group practice surgeries, mean £2,650/m² at 2026-01', priced_at: null, location: null, index: null } };
+    // A version approved before kept "at 2026-01" in its source: the report reads it "at January 2026"; a day such as
+    // 2026-01-31 is left alone.
+    const words = (REP as unknown as { rateWordsForTest?: (s: unknown) => string }).rateWordsForTest;
+    assert.equal(typeof words, 'function');
+    assert.equal(words!(src), 'BCIS: Health centres, clinics, group practice surgeries, mean £2,650/m² at January 2026.');
+    assert.match(words!({ ...src, basis: { ...src.basis, ref: 'schedule dated at 2026-01-31' } }), /at 2026-01-31/);
   });
 });
