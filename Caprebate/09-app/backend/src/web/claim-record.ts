@@ -42,7 +42,7 @@ import { NotFoundAsRefusal } from './backoffice.ts';
 import { OWNER_ROLE_TOKENS, isCompanyOrRoleToken } from './crm.ts';
 import { enteredAt, raiseBusinessStage, type Need } from './pipeline.ts';
 import { filingRoute } from './client-filing.ts';
-import { latestAnswer, returnFilings, type ReturnFiling } from './accountant-confirm.ts';
+import { latestAnswer, returnFilings, returnsOf, type ReturnFiling } from './accountant-confirm.ts';
 import { assertSignedEngagement, freeGate } from './research.ts';
 import { ctaSwitchReadings } from './engine.ts';
 import { packSwitchReadings } from './money-readings.ts';
@@ -52,7 +52,7 @@ import { loadLetter, type OpenTerm } from './letter.ts';
 import { insertTask } from './tasks.ts';
 import { NO_RECEIPT_POLICY } from './documents.ts';
 import { formatPence, formatShownRange } from './shown-range.ts';
-import { localDate, localStamp } from './localtime.ts';
+import { localDate, localStamp, ukDate } from './localtime.ts';
 import { readEngineVersion, writeCaseStamp } from './case-stamp.ts';
 import { latestApprovalOnClaim, laterOf, voidLine } from './valuation-lock.ts';
 import { freezeReturnContext, returnContext } from './return-entries.ts';
@@ -250,6 +250,8 @@ export type FiguresPanel = {
   readonly reconciliation: ReconciliationView | null;
   readonly may_record_signoff: boolean;
   readonly may_reconcile: boolean;
+  /** PHASE 160 (job B): where staff record the filing and the claim goes into more than one return, each return. */
+  readonly filing_returns: readonly ReturnFiling[] | null;
   readonly signoff_form?: {
     readonly open: boolean;
     readonly why: string;
@@ -307,6 +309,7 @@ export function figuresPanel(db: Db, actor: Actor, claim_id: string, todayIso: s
     reconciliation: reconciliationView(db, c.id, todayIso),
     may_record_signoff: mayRecordSignoff,
     may_reconcile: can(actor, 'reconciliation.record', figuresObj(c)),
+    filing_returns: accountantFiles(db, c.id) ? null : staffReturnFilings(db, c.id, todayIso),
     ...(mayRecordSignoff ? {
       signoff_form: {
         open: c.stage === 'TAX_ADVISER_SIGNOFF' && k !== undefined,
@@ -646,17 +649,59 @@ export function accountantFiles(db: Db, claim_id: string): boolean {
   return c !== undefined && filingRoute(db, c, enteredAt(db, c, 'REPORTS')).route === 'ACCOUNTANT';
 }
 
-/** THE FILING — the date the return carrying the claim was filed. Once. */
+/**
+ * PHASE 160 (the sweep; job B carried by Phase 159l): EACH RETURN, WHERE STAFF RECORD THE FILING. The client has no
+ * accountant (src/web/client-filing.ts route CLIENT), so staff record each return's filing (migration 116), as the
+ * accountant confirms each by its own link on the other route (accountant-confirm.ts returnFilings). The same reading
+ * (Word question 283): a return already due must be recorded as filed; one not yet due is held in aftercare with its
+ * due date. A filing recorded before, for the whole claim (the reconciliation's filed_on), counts for the earliest
+ * return only. Null where the claim goes into one return or fewer, or its returns are not settled (one date, as before).
+ */
+export function staffReturnFilings(db: Db, claim_id: string, todayIso: string): ReturnFiling[] | null {
+  const returns = returnsOf(db, claim_id, todayIso);
+  if (returns === null || returns.length <= 1) return null;
+  const today = localDate(todayIso);
+  const rows = new Map(db.all<{ period_end: string; filed_on: string }>('SELECT period_end, filed_on FROM claim_return_filings WHERE claim_id = ?', [claim_id])
+    .map((x) => [x.period_end, x.filed_on] as const));
+  const whole = rows.size === 0 ? db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [claim_id])?.filed_on ?? null : null;
+  return returns.map((r, i): ReturnFiling => {
+    const filed = rows.get(r.period_end) ?? (i === 0 ? whole : null);
+    const name = `The return for the period ending ${ukDate(r.period_end)} (${r.parts.join('; ')})`;
+    if (filed !== null && filed !== undefined) return { ...r, state: 'FILED', filed_on: filed, words: `${name}: filed on ${ukDate(filed)}, as recorded` };
+    if (r.due_on !== null && r.due_on > today) {
+      return { ...r, state: 'NOT_DUE', filed_on: null, words: `${name}: not due until ${ukDate(r.due_on)}. Held in aftercare: record its filing under Reconciliation once it is filed` };
+    }
+    return { ...r, state: 'NOT_FILED', filed_on: null, words: `${name}: no filing is recorded. Record it under Reconciliation once the return is filed` };
+  });
+}
+
+/** THE FILING — the date the return carrying the claim was filed. Once — once per return, where it goes into more than one. */
 export function recordFiling(d: RecordDeps, actor: Actor, claim_id: string, input: Fields): RecordResult {
   const { c, r } = reconFor(d, actor, claim_id);
   if (accountantFiles(d.db, c.id)) {
     return { ok: false, why: 'The client’s accountant files this return, so they give the date themselves. Send them the filing link under “The accountant’s confirmations”.' };
   }
-  if (r.filed_on !== null) return { ok: false, why: `The filing is already recorded, on ${r.filed_on}, and does not change.` };
   const filed = dateValue(input['filed_on']);
+  const each = staffReturnFilings(d.db, c.id, d.now());
+  if (each === null && r.filed_on !== null) return { ok: false, why: `The filing is already recorded, on ${r.filed_on}, and does not change.` };
   if (filed === null) return { ok: false, why: 'Write the filing date, like 2026-03-31.' };
   if (filed > localDate(d.now())) return { ok: false, why: 'A return cannot be recorded as filed after today.' };
   const at = d.now();
+  if (each !== null) {
+    const period = (input['period_end'] ?? '').trim();
+    const ret = each.find((x) => x.period_end === period);
+    if (ret === undefined) return { ok: false, why: 'This claim goes into more than one tax return. Choose which return was filed.' };
+    if (ret.state === 'FILED') return { ok: false, why: `That return's filing is already recorded, on ${ret.filed_on ?? ''}, and does not change.` };
+    const id = d.newId();
+    d.db.tx(() => {
+      d.db.run('INSERT INTO claim_return_filings (id, claim_id, period_end, filed_on, recorded_by, recorded_at) VALUES (?, ?, ?, ?, ?, ?)', [id, c.id, ret.period_end, filed, actor.id, at]);
+      // The first return recorded also writes the claim's filing date, so every reader of it finds one.
+      if (r.filed_on === null) d.db.run('UPDATE claim_reconciliations SET filed_on = ?, filed_recorded_by = ?, filed_recorded_at = ? WHERE id = ?', [filed, actor.id, at, r.id]);
+      reconAudit(d, actor, c, `FILED ${ret.period_end}`, at);
+      raiseBusinessStage(d.db, c.business_id, at);
+    });
+    return { ok: true, id };
+  }
   d.db.tx(() => {
     d.db.run('UPDATE claim_reconciliations SET filed_on = ?, filed_recorded_by = ?, filed_recorded_at = ? WHERE id = ?', [filed, actor.id, at, r.id]);
     reconAudit(d, actor, c, 'FILED', at);
@@ -691,6 +736,13 @@ export function filingRecordedNeed(db: Db, claim_id: string, todayIso: string = 
   }
   const r = db.get<{ filed_on: string | null }>('SELECT filed_on FROM claim_reconciliations WHERE claim_id = ?', [claim_id]);
   if (r === undefined) return { what, met: false, why: 'no figure is signed off on this claim, so there is nothing to record the filing against' };
+  // PHASE 160 (job B): where staff record it, each return already due, as on the accountant's route.
+  const each = staffReturnFilings(db, claim_id, todayIso);
+  if (each !== null) {
+    const due = each.filter((x) => x.state !== 'NOT_DUE');
+    return { what: 'Each tax return the claim goes into is filed, or not due yet and held in aftercare', met: due.length > 0 && due.every((x) => x.state === 'FILED'),
+      why: due.length === 0 ? `no return is due yet, so none is filed: ${each.map((x) => x.words).join('; ')}` : each.map((x) => x.words).join('; ') };
+  }
   if (r.filed_on === null) return { what, met: false, why: 'no filing date is recorded. Record it under Reconciliation once the amended return is filed' };
   return { what, met: true, why: `filed on ${r.filed_on}` };
 }
@@ -1189,7 +1241,7 @@ export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { o
       note: `If the property gets a sale date, or a sale is expected, Sales gets a task to read the Disposal Note. Our fee for that work: ${DISPOSAL_FEE.words}`,
       tasks,
     },
-    returns_to_file: accountantFiles(db, c.id) ? (returnFilings(db, c.id, opts.today ?? new Date().toISOString()) ?? []).filter((r) => r.state === 'NOT_DUE') : [],
+    returns_to_file: ((accountantFiles(db, c.id) ? returnFilings : staffReturnFilings)(db, c.id, opts.today ?? new Date().toISOString()) ?? []).filter((r) => r.state === 'NOT_DUE'),
     may_record: can(actor, 'hmrc_enquiry.record', { type: 'hmrc_enquiry', id: c.id, business_id: c.business_id }),
   };
 }
