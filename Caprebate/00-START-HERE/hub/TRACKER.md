@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 26 |
 | Built - awaiting sign-off | 142 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 332 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1436,7 +1436,7 @@
 
 ### Phase 160d - No em dashes in the emails, the letter and reports going forward, the text the system writes and stores, and export column names (carried from 160c)
 
-`13326319070` · **Ready - Claude can build** · owner Claude
+`13326319070` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
 
 - Note 2026-10-19 (Phase 160c): Written by Phase 160c for what it left on purpose: the emails, the letter, reports and PDFs (versioned and signed: only new versions, and only words nobody has signed off), text the system writes and stores, and export column names. In ACTION-PLAN.md above the sweep and on the run sheet. Created on monday in group 05.
 
