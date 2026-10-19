@@ -1071,6 +1071,93 @@ command that counts it, never the number.
 ---
 
 
+## PHASE 160b — The client portal in the same sidebar layout: a navy menu down the left, a top bar with where you are, cards and status labels
+
+ **Model: Opus. Written 19 October 2026 on Lakhbir's answer** to Phase 160a's closing question ("write up a phase to give the client portal the same look, and build it in test"). Phase 160a gave the back office the layout of the *Cap Rebate Simple CRM* design (OneDrive: Caprebate/04-phase-work/phase160a/) and left the portal alone on purpose. This phase gives the client's portal the same look. It changes how the portal looks, never what a client may see or do. **Branched from claude/phase-160a** while PR 56 is open; the pull request goes against main.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item (13325284491) to "Working on it" and fill "Claimed by (machine)".
+Work on a claude/... branch (from claude/phase-160a until PR 56 merges, then
+from main); never push to main; open the pull request against main;
+Lakhbir merges. Retag what you touch and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
+   and the same entry at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+WHAT IS THERE TODAY (re-derive it; rule 8): portalShell in
+src/web/navigation.ts draws the portal's header as UI tidy phase 2's black
+menu: the supplied logo on white, Help and the user menu, then "Your claims"
+(its sections open out under it on a claim) and, for a client, "Messages"
+with the unread count. Phase 160a's look is every rule under body.staffapp
+in src/web/assets.ts, drawn only for the back office.
+
+BUILD, for the CLIENT PORTAL:
+1. ONE LOOK FOR BOTH. Share Phase 160a's rules between the back office and the
+   portal (one class both bodies carry), keeping body.staffapp for what is
+   the back office's alone. The public pages keep their look.
+2. THE SIDEBAR. Navy, as the back office: the supplied logo kept (on its white
+   tile, 100 px wide or more: brand book slide 27), "Your claims" and
+   "Messages" with an icon each and the unread count, the claim's sections
+   opening out under Your claims as now. Help and the user menu leave it.
+3. THE TOP BAR. A white bar over the page: a "Cap Rebate" link to /portal,
+   the trail (Your claims or Messages, then the page), Help and the user menu.
+   No search (the portal has none). A claim page's own trail (the company,
+   then the site) moves up into it, so the page shows one trail.
+4. THE PAGE. The same grey page, white cards, table headings, status labels
+   and navy main button as the back office.
+5. NOTHING A CLIENT MAY SEE OR DO CHANGES. The same two screens; the unread
+   count; a client never sees a back-office link. No inline style or script.
+
+TESTS: a new test/phase160b.test.ts, the code broken on purpose to prove each
+test: the portal's sidebar holds the logo, Your claims and Messages and no
+Help or user menu; the top bar's trail, Help and user menu, and no search; a
+claim page's own trail moved up, one on the page; the unread count still
+shown; the public pages untouched; no style attribute or script; every rule
+of the shared block under one of the two app classes. Restate Phase 160a's
+"the portal keeps its look" tests and any portal test that pinned the old
+header (ui-tidy-portal, ui-tidy-menu, phase133c), saying which in the record.
+
+LOOK AT IT: the demo (npm run start:demo) as the client: Your claims, a claim,
+Messages, Your account and Help, at desktop and phone widths. Screenshots in
+Caprebate/04-phase-work/phase160b/.
+
+PAPERWORK: the developer spec (a section, the figures); the user guide's
+words about the client's screens if they describe the old menu (grade 7);
+PHASE-HISTORY; anything not built goes to a phase or a question (step 4).
+
+---
+
+
 ## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 
