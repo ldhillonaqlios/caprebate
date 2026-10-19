@@ -273,7 +273,7 @@ function seedClaimAtInvoice(
     "INSERT INTO claim_milestones (id, claim_id, milestone, stage_at, note, recorded_by, recorded_at) VALUES (?, ?, 'HMRC_PROCESSED_RELIEF', 'INVOICE', ?, ?, ?)",
     [newId(), claim.id, 'Invented for the seed: the accountant confirmed HMRC processed the amended return.', sales, now()]);
   insertTask(db, now, newId, {
-    title: 'Raise our fee — the claim is at the invoice stage and HMRC has processed the relief', description: null,
+    title: 'Raise our fee: the claim is at the invoice stage and HMRC has processed the relief', description: null,
     owner_id: accounting, owner_role: null, due_on: '2026-09-30', priority: null, activity_type: 'TASK',
     business_id: b4, property_id: branch, claim_id: claim.id, lead_id: null, contact_id: null, fact_id: null, recurrence: null,
     recurred_from_id: null, is_next_action: true, origin: 'STAFF', automation_run_id: null, created_by: sales,

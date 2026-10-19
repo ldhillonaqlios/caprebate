@@ -230,7 +230,7 @@ describe('export — the reader’s own columns, audited, formula injection neut
 
     const sales = LI.exportList(deps(app), as('SALES'), 'CLAIMS', q(''));
     const header = sales.body.split('\r\n')[0] ?? '';
-    assert.match(header, /Estimated value — the figure shown/);
+    assert.match(header, /Estimated value: the figure shown/); // PHASE 160d
     assert.equal(/^=|,=/.test(sales.body.split('\r\n').slice(1).join('\n')), false, 'a formula reached the CSV un-neutralised');
     assert.match(sales.body, /'=cmd/);
 

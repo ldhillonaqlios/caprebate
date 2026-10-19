@@ -604,10 +604,10 @@ export function missingFacts(db: Db, actor: Actor, business_id: string): Missing
   /** The sentence a fact carries once somebody has asked about it. */
   const askedWhy = (t: ReturnType<typeof taskFor>, base: string): string =>
     t.dont_know
-      ? 'we asked, and the client does not know — so it is still missing, and it will have to come ' +
+      ? 'we asked, and the client does not know, so it is still missing, and it will have to come ' +
         'from a document, the survey or a register'
       : t.has_task
-        ? `${base} — a question has been put and is not yet answered`
+        ? `${base}. A question has been put and is not yet answered`
         : base;
 
   /* ---- 1. the register layer's own list, with its own reasons ---- */

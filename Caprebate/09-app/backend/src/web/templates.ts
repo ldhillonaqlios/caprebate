@@ -285,7 +285,7 @@ export function mergeValues(db: Db, claim_id: string, contact_id: string | null)
 export function companyFirst(subject: string, organisation: string | null): string {
   if (organisation === null) return subject;
   const name = escapeHtml(organisation).replace(/[\r\n]+/g, ' ');
-  return subject.startsWith(name) ? subject : `${name} — ${subject}`;
+  return subject.startsWith(name) ? subject : `${name}: ${subject}`;
 }
 
 /** Merge a text. Escaped values; a visible gap for a missing one; no line break in a subject. */

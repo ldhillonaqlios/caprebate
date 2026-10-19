@@ -1208,7 +1208,9 @@ export type AftercarePanel = {
 };
 
 export const DISPOSAL_NOTE_PATH = '08-monday-doc-exports/12830181411__Disposal-note-the-election-the-client-signs-on-a-future-sale.md';
-export const DISPOSAL_TASK_TITLE = 'The election on a future sale — read the Disposal Note';
+export const DISPOSAL_TASK_TITLE = 'The election on a future sale: read the Disposal Note';
+/** PHASE 160d: the title tasks were raised under before the long dash went. Still found, so no second task is raised. */
+export const DISPOSAL_TASK_TITLE_BEFORE = 'The election on a future sale — read the Disposal Note';
 
 /**
  * PHASE 153d, 4 October 2026 (Word question 23, the director's): THE FIXED DISPOSAL FEE, read from the job cost model
@@ -1232,7 +1234,7 @@ export function aftercarePanel(db: Db, actor: Actor, claim_id: string, opts: { o
     recorded: `${localStamp(e.opened_recorded_at)} by ${e.opener ?? 'a former user'}`,
   }));
   const tasks = c.property_id === null ? [] : db.all<{ id: string; title: string; status: string }>(
-    'SELECT id, title, status FROM staff_tasks WHERE property_id = ? AND title = ? ORDER BY created_at DESC', [c.property_id, DISPOSAL_TASK_TITLE]);
+    'SELECT id, title, status FROM staff_tasks WHERE property_id = ? AND title IN (?, ?) ORDER BY created_at DESC', [c.property_id, DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE]);
   return {
     enquiries, enquiry_open: enquiries.some((e) => e.open),
     correspondence: `Letters with HMRC are stored as Correspondence. ${NO_RECEIPT_POLICY} Still to decide: ${RECEIPT_QUESTION}`,
@@ -1306,7 +1308,7 @@ export function closeEnquiry(
       });
     } else {
       insertTask(d.db, d.now, d.newId, {
-        title: 'A claim was reduced on enquiry — recalculate the fee under clause 13',
+        title: 'A claim was reduced on enquiry: recalculate the fee under clause 13',
         description: `HMRC reduced the allowances on ${closedOn}. Under clause 13 of the engagement letter, work out the fee again on the new figure. Then credit or refund the difference.`,
         owner_id: null, owner_role: 'ACCOUNTING', due_on: null, priority: null, activity_type: 'TASK',
         business_id: c.business_id, property_id: null, claim_id: c.id, lead_id: null, contact_id: null, fact_id: null,
@@ -1328,7 +1330,7 @@ export function raiseDisposalTask(
   d: RecordDeps, actor: Actor, property: { id: string; business_id: string }, trigger: 'DISPOSAL_DATE' | 'SALE_IN_PROSPECT',
 ): string | null {
   const open = d.db.get<{ id: string }>(
-    "SELECT id FROM staff_tasks WHERE property_id = ? AND title = ? AND status IN ('OPEN','IN_PROGRESS')", [property.id, DISPOSAL_TASK_TITLE]);
+    "SELECT id FROM staff_tasks WHERE property_id = ? AND title IN (?, ?) AND status IN ('OPEN','IN_PROGRESS')", [property.id, DISPOSAL_TASK_TITLE, DISPOSAL_TASK_TITLE_BEFORE]);
   if (open !== undefined) return null;
   const why = trigger === 'DISPOSAL_DATE' ? 'The property’s sale date was set.' : 'A sale of the property is expected.';
   const id = insertTask(d.db, d.now, d.newId, {

@@ -853,7 +853,7 @@ describe('panel 3 — what is still missing', () => {
       const m = E.missingFacts(h.app.db, sales, business_id).find((x) => x.fact_id === target.fact_id);
       assert.ok(m !== undefined, 'asking removed the fact before it was answered');
       assert.equal(m.task_state, 'OPEN');
-      assert.match(m.why, /a question has been put and is not yet answered/);
+      assert.match(m.why, /\. A question has been put and is not yet answered/); // PHASE 160d: a full stop, not a long dash
     } finally { h.close(); }
   });
 
