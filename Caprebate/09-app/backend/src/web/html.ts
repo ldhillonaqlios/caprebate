@@ -115,7 +115,8 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
     : h`<a class="logo" href="${home}"><img src="/assets/cap-rebate-logo.png" alt="Cap Rebate — capital allowances simplified" width="120" height="81"></a>`;
   // PHASE 160a, 19 October 2026: THE BACK OFFICE'S TOP BAR (src/web/navigation.ts, Shell.bar) — where you are, then the
   // search, Help and the user menu. A trail the page drew for itself is moved up into it, so the page never shows two.
-  const bar = staff ? (opts.nav as unknown as { bar?: (title: string, own: Safe | null) => Safe }).bar : undefined;
+  // PHASE 160b: the client portal's too (where you are, Help and the user menu; the portal has no search).
+  const bar = shell ? (opts.nav as unknown as { bar?: (title: string, own: Safe | null) => Safe }).bar : undefined;
   let bodyHtml = opts.body.html;
   let barHtml = '';
   if (bar !== undefined) {
@@ -130,7 +131,7 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
 <title>${opts.title} · Cap Rebate</title>
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-</head><body class="${shell ? (staff ? 'app staffapp' : 'app') : 'public'}">
+</head><body class="${shell ? (staff ? 'app crm staffapp' : 'app crm portalapp') : 'public'}">
 <a class="skip" href="#main">Skip to content</a>
 <header class="top"><div class="topline">${brand}${opts.nav ?? raw('')}</div></header>${raw(barHtml)}
 <main id="main" class="${opts.wide === true ? 'wide' : ''}">${raw(requiredWordsInMarkup(ukDatesInMarkup(bodyHtml)))}</main>

@@ -3594,7 +3594,9 @@ message**, **Book a call** and **Send us a document**. Then come these, in order
 
 Below them are the client's claims, what we have done, and the range. The questions and the documents asked for come
 next, but only when there is one. Then come the other parts. **How to contact us** is near the end. On a laptop, the
-left-hand menu lists the parts under **Your claims**. Press one to go to it. **Help** at the top opens this section.
+left-hand menu lists the parts under **Your claims**. Press one to go to it. The menu is dark blue, like the back
+office. The bar at the top of the page shows where the client is, such as **Cap Rebate / Your claims**. **Help** in that
+bar opens this section, and the client's name beside it opens **Your account** and **Sign out**.
 
 **What it is for**
 The client's claim page gained three things.

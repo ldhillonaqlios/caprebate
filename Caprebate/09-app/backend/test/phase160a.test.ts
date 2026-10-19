@@ -78,7 +78,7 @@ describe('Phase 160a: the menu down the left holds the login’s own sections, a
     test(`${who}: the sidebar is the name, exactly its menu and the Menu button; the search, Help and user menu are not in it`, async () => {
       const r = await get(who, '/staff');
       assert.equal(r.status, 200);
-      assert.match(r.body, /<body class="app staffapp">/);
+      assert.match(r.body, /<body class="app crm staffapp">/); // PHASE 160b: crm is the look the portal shares
       const side = sidebar(r.body);
       assert.match(side, /^<div class="topline"><a class="brand" href="\/staff">Cap Rebate<span class="brandsub">Back office<\/span><\/a><nav class="appnav" aria-label="Sections">/);
       const hrefs = [...side.matchAll(/<ul class="tabs-main">[\s\S]*?<\/ul><\/li>/g)].flatMap((g) =>
@@ -133,15 +133,15 @@ describe('Phase 160a: the top bar over the page', () => {
 });
 
 describe('Phase 160a: staff only, and nothing loosened', () => {
-  test('the client portal keeps its header and has no top bar; the public pages have neither', async () => {
+  // PHASE 160b (19 Oct 2026): the portal now shares this look on purpose (test/phase160b.test.ts); only the name's
+  // "Back office" line and the back office's own parts stay off it.
+  test('the client portal carries no back-office part; the public pages have no top bar', async () => {
     const portal = (await get('client', '/portal')).body;
-    assert.match(portal, /<body class="app">/);
-    assert.equal(topBar(portal), null);
-    assert.doesNotMatch(portal, /class="crumbbar"|class="crumbroot"|class="brandsub"/);
-    assert.match(sidebar(portal), /<div class="util"><a class="helplink" href="\/portal\/help">Help<\/a><details class="usermenu">/);
+    assert.match(portal, /<body class="app crm portalapp">/);
+    assert.doesNotMatch(portal, /staffapp|class="brandsub"|class="gsearch"|class="dash-tabs"|href="\/staff/);
     const home = (await get(null, '/login')).body;
     assert.match(home, /<body class="public">/);
-    assert.doesNotMatch(home, /class="crumbbar"|staffapp/);
+    assert.doesNotMatch(home, /class="crumbbar"|staffapp|portalapp|class="app/);
   });
 
   test('no back-office page carries a style attribute or a script', async () => {
@@ -157,16 +157,16 @@ describe('Phase 160a: staff only, and nothing loosened', () => {
     assert.equal((await get('surveying', '/staff/leads')).status, 403);
   });
 
-  test('every section has its icon, the stylesheet fetches nothing, and every rule of the block is the back office’s', () => {
+  test('every section has its icon, the stylesheet fetches nothing, and every rule of the block is under body.crm (Phase 160b)', () => {
     const from = SITE_CSS.lastIndexOf('/*', SITE_CSS.indexOf('PHASE 160a — THE BACK OFFICE IN THE LAYOUT'));
     const block = SITE_CSS.slice(from, SITE_CSS.indexOf('THE PUBLIC PAGES IN THE HOME PAGE'));
     for (const s of SECTIONS) {
-      assert.match(block, new RegExp(`body\\.staffapp \\.tabs-main>li>a\\[href="${s.href}"\\]::before\\{content:"\\\\[0-9A-F]{4}";content:"\\\\[0-9A-F]{4}" / ""\\}`), `${s.label} has no icon`);
+      assert.match(block, new RegExp(`body\\.crm \\.tabs-main>li>a\\[href="${s.href}"\\]::before\\{content:"\\\\[0-9A-F]{4}";content:"\\\\[0-9A-F]{4}" / ""\\}`), `${s.label} has no icon`);
     }
     assert.doesNotMatch(block, /url\(|@import|@font-face/);
     const rules = block.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@media[^{]*\{/g, '');
     for (const m of rules.matchAll(/([^{}]+)\{[^{}]*\}/g)) {
-      for (const one of (m[1] ?? '').split(',')) assert.match(one.trim(), /^body\.staffapp\b/, `a rule reaches past the back office: ${one}`);
+      for (const one of (m[1] ?? '').split(',')) assert.match(one.trim(), /^body\.crm\b/, `a rule reaches past the back office and the portal: ${one}`);
     }
   });
 

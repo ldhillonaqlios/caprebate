@@ -106,9 +106,11 @@ const MENU_ICONS: readonly (readonly [href: string, codepoint: string])[] = Obje
   ['/staff/introducer-rewards', '0025'],
   ['/staff/calendar', '25A5'],
   ['/staff/admin', '2699'],
+  // PHASE 160b: the client portal's two screens.
+  ['/portal', '25A4'], ['/portal/messages', '2709'],
 ]);
 const MENU_ICON_CSS = MENU_ICONS.map(([href, c]) =>
-  `body.staffapp .tabs-main>li>a[href="${href}"]::before{content:"\\${c}";content:"\\${c}" / ""}`).join('\n');
+  `body.crm .tabs-main>li>a[href="${href}"]::before{content:"\\${c}";content:"\\${c}" / ""}`).join('\n');
 
 export const SITE_CSS = `
 /* ================================================================== *
@@ -1481,116 +1483,119 @@ a.packhead-switch:hover{text-decoration:underline}
  * navy menu down the left with an icon per section, a white top bar
  * with where you are, the search, Help and the user menu, a light grey
  * page of white cards, tables with small grey column headings, and
- * coloured status labels. Staff only (body.staffapp): the client
- * portal and the public pages keep their look. Which sections a login
- * sees is unchanged (src/web/navigation.ts MENUS).
+ * coloured status labels. Which sections a login sees is unchanged
+ * (src/web/navigation.ts MENUS).
+ * PHASE 160b, 19 October 2026: the client portal too. Every rule is
+ * under body.crm, which the back office (body.staffapp) and the portal
+ * (body.portalapp) both carry; the public pages keep their look.
  * ================================================================== */
-body.staffapp{background:var(--page)}
-body.staffapp>header.top{background:var(--navy)}
-body.staffapp .topline>.brand{display:flex;flex-direction:column;align-items:flex-start;gap:0;color:var(--white);font-family:${BODY_STACK};font-size:20px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;text-decoration:none}
-body.staffapp .brandsub{display:block;color:var(--navy-mute);font-size:12px;font-weight:600;letter-spacing:.14em;margin-top:.15rem}
-body.staffapp .navlabel{color:var(--navy-mute);font-size:12px;letter-spacing:.12em;margin:1.1rem .65rem .35rem}
-body.staffapp .tabs-main>li>a{justify-content:flex-start;gap:.65rem;color:var(--white);font-size:15px;font-weight:600;padding:.5rem .7rem;border-radius:.45rem}
-body.staffapp .tabs-main>li>a::before{flex:none;width:1.1rem;text-align:center;font-size:15px;line-height:1;color:var(--navy-mute)}
-body.staffapp .tabs-main>li>a[aria-current="page"]::before,body.staffapp .tabs-main>li>a:hover::before{color:var(--white)}
-body.staffapp .tabs-main>li>a:hover{background:var(--navy-2)}
-body.staffapp .tabs-main>li>a[aria-current="page"]{background:var(--navy-2);color:var(--white);box-shadow:inset 3px 0 0 var(--mint)}
-body.staffapp .tabs-main .tabcount{margin-left:auto}
-body.staffapp .subtitle{color:var(--navy-mute)}
-body.staffapp .subnav a{color:var(--navy-mute)}
-body.staffapp .subnav a:hover{background:var(--navy-2);color:var(--white)}
-body.staffapp .subnav a[aria-current="page"]{background:var(--navy-2);color:var(--white);box-shadow:inset 3px 0 0 var(--mint)}
+body.crm{background:var(--page)}
+body.crm>header.top{background:var(--navy)}
+body.crm .topline>.brand{display:flex;flex-direction:column;align-items:flex-start;gap:0;color:var(--white);font-family:${BODY_STACK};font-size:20px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;text-decoration:none}
+body.crm .brandsub{display:block;color:var(--navy-mute);font-size:12px;font-weight:600;letter-spacing:.14em;margin-top:.15rem}
+body.crm .navlabel{color:var(--navy-mute);font-size:12px;letter-spacing:.12em;margin:1.1rem .65rem .35rem}
+body.crm .tabs-main>li>a{justify-content:flex-start;gap:.65rem;color:var(--white);font-size:15px;font-weight:600;padding:.5rem .7rem;border-radius:.45rem}
+body.crm .tabs-main>li>a::before{flex:none;width:1.1rem;text-align:center;font-size:15px;line-height:1;color:var(--navy-mute)}
+body.crm .tabs-main>li>a[aria-current="page"]::before,body.crm .tabs-main>li>a:hover::before{color:var(--white)}
+body.crm .tabs-main>li>a:hover{background:var(--navy-2)}
+body.crm .tabs-main>li>a[aria-current="page"]{background:var(--navy-2);color:var(--white);box-shadow:inset 3px 0 0 var(--mint)}
+body.crm .tabs-main .tabcount{margin-left:auto}
+body.crm .subtitle{color:var(--navy-mute)}
+body.crm .subnav a{color:var(--navy-mute)}
+body.crm .subnav a:hover{background:var(--navy-2);color:var(--white)}
+body.crm .subnav a[aria-current="page"]{background:var(--navy-2);color:var(--white);box-shadow:inset 3px 0 0 var(--mint)}
 ${MENU_ICON_CSS}
 
 /* THE TOP BAR — where you are, Admin's views, the search, Help and the user menu. */
-body.staffapp .crumbbar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .75rem;background:var(--white);border-bottom:1px solid var(--rule);padding:.55rem 1.25rem;min-height:3.5rem;box-sizing:border-box}
-body.staffapp .crumbbar .crumbroot{color:var(--thead);font-size:13px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;margin-right:-.5rem}
-body.staffapp .crumbbar .crumbroot:hover{color:var(--navy);text-decoration:underline}
-body.staffapp .crumbbar .crumbroot::after{content:"/";display:inline-block;margin:0 .25rem 0 .45rem;color:var(--thead)}
-body.staffapp .crumbbar .crumbs ol{margin:0;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--thead)}
-body.staffapp .crumbbar .crumbs a{color:var(--thead);text-decoration:none}
-body.staffapp .crumbbar .crumbs a:hover{color:var(--navy);text-decoration:underline}
-body.staffapp .crumbbar .crumbs li+li::before{content:"/";color:var(--thead);margin:0 .45rem 0 .25rem}
-body.staffapp .crumbbar .crumbs [aria-current="page"]{color:var(--navy);font-weight:700}
-body.staffapp .crumbbar .dash-tabs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;border:0;margin:0}
-body.staffapp .crumbbar .dash-tabs::before{content:"Home shows";color:var(--thead);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:0 .25rem 0 .4rem}
-body.staffapp .crumbbar .dash-tab{padding:.25rem .65rem;border:1px solid var(--rule);border-radius:999px;margin:0;font-size:13px;color:var(--navy);background:var(--white)}
-body.staffapp .crumbbar .dash-tab:hover{background:var(--page)}
-body.staffapp .crumbbar .dash-tab[aria-current="page"]{background:var(--navy);border-color:var(--navy);color:var(--white)}
-body.staffapp .crumbbar .util{display:flex;align-items:center;gap:.75rem;margin-left:auto;flex-wrap:wrap}
-body.staffapp .crumbbar .gsearch{display:flex;order:0}
-body.staffapp .crumbbar .gsearch input{width:12rem;max-width:40vw;border-color:var(--rule);background:var(--page);color:var(--ink)}
-body.staffapp .crumbbar .gsearch input::placeholder{color:var(--thead)}
-body.staffapp .crumbbar .gsearch button[type="submit"]:not(.linkish):not(.opt){background:var(--navy);border-color:var(--navy);color:var(--white)}
-body.staffapp .crumbbar .helplink{display:inline;color:var(--navy);font-size:15px;padding:0;text-decoration:none}
-body.staffapp .crumbbar .helplink:hover{text-decoration:underline}
-body.staffapp .crumbbar .usermenu{display:block}
-body.staffapp .crumbbar .usermenu summary,body.staffapp .crumbbar .usermenu summary::after{color:var(--navy)}
-body.staffapp .crumbbar .avatar{background:var(--rule);color:var(--navy);font-size:14px}
-body.staffapp .crumbbar .menu-pop{top:calc(100% + .3rem);bottom:auto;right:0;left:auto}
+body.crm .crumbbar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .75rem;background:var(--white);border-bottom:1px solid var(--rule);padding:.55rem 1.25rem;min-height:3.5rem;box-sizing:border-box}
+body.crm .crumbbar .crumbroot{color:var(--thead);font-size:13px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;margin-right:-.5rem}
+body.crm .crumbbar .crumbroot:hover{color:var(--navy);text-decoration:underline}
+body.crm .crumbbar .crumbroot::after{content:"/";display:inline-block;margin:0 .25rem 0 .45rem;color:var(--thead)}
+body.crm .crumbbar .crumbs ol{margin:0;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--thead)}
+body.crm .crumbbar .crumbs a{color:var(--thead);text-decoration:none}
+body.crm .crumbbar .crumbs a:hover{color:var(--navy);text-decoration:underline}
+body.crm .crumbbar .crumbs li+li::before{content:"/";color:var(--thead);margin:0 .45rem 0 .25rem}
+body.crm .crumbbar .crumbs [aria-current="page"]{color:var(--navy);font-weight:700}
+body.crm .crumbbar .dash-tabs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;border:0;margin:0}
+body.crm .crumbbar .dash-tabs::before{content:"Home shows";color:var(--thead);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:0 .25rem 0 .4rem}
+body.crm .crumbbar .dash-tab{padding:.25rem .65rem;border:1px solid var(--rule);border-radius:999px;margin:0;font-size:13px;color:var(--navy);background:var(--white)}
+body.crm .crumbbar .dash-tab:hover{background:var(--page)}
+body.crm .crumbbar .dash-tab[aria-current="page"]{background:var(--navy);border-color:var(--navy);color:var(--white)}
+body.crm .crumbbar .util{display:flex;align-items:center;gap:.75rem;margin-left:auto;flex-wrap:wrap}
+body.crm .crumbbar .gsearch{display:flex;order:0}
+body.crm .crumbbar .gsearch input{width:12rem;max-width:40vw;border-color:var(--rule);background:var(--page);color:var(--ink)}
+body.crm .crumbbar .gsearch input::placeholder{color:var(--thead)}
+body.crm .crumbbar .gsearch button[type="submit"]:not(.linkish):not(.opt){background:var(--navy);border-color:var(--navy);color:var(--white)}
+body.crm .crumbbar .helplink{display:inline;color:var(--navy);font-size:15px;padding:0;text-decoration:none}
+body.crm .crumbbar .helplink:hover{text-decoration:underline}
+body.crm .crumbbar .usermenu{display:block}
+body.crm .crumbbar .usermenu summary,body.crm .crumbbar .usermenu summary::after{color:var(--navy)}
+body.crm .crumbbar .avatar{background:var(--rule);color:var(--navy);font-size:14px}
+body.crm .crumbbar .menu-pop{top:calc(100% + .3rem);bottom:auto;right:0;left:auto}
 
 /* THE PAGE — a title in the body type, a line under it, its main button to the right; white cards. */
-body.staffapp main h1,body.staffapp main h2,body.staffapp main h3,body.staffapp main h4,body.staffapp main .card-h,body.staffapp main .pnum,body.staffapp main legend,body.staffapp main .stat,body.staffapp main .figbig,body.staffapp main .kpi .kpi-value{font-family:${BODY_STACK}}
-body.staffapp main h1{font-size:28px;font-weight:700;color:var(--navy);margin:.3rem 0 .35rem}
-body.staffapp main h2{font-size:22px;color:var(--navy)}
-body.staffapp main h3{font-size:18px;color:var(--navy)}
-body.staffapp main h1+p,body.staffapp main .pagehead+p{color:var(--body);font-size:15px;margin-top:0}
-body.staffapp main .pagehead{align-items:center;margin:0 0 1.1rem}
-body.staffapp main .card,body.staffapp main .pblock,body.staffapp main .assumebox,body.staffapp main .tile,body.staffapp main .cnext,body.staffapp main .clookups,body.staffapp main .tablewrap,body.staffapp main .convo-write,body.staffapp main .convo-chain,body.staffapp main .dash-stat a{background:var(--white);border:1px solid var(--rule);border-radius:12px;box-shadow:0 1px 3px rgba(23,35,59,.06)}
-body.staffapp main .cnext{border:2px solid var(--mint)}
-body.staffapp main .tile{border-top:4px solid var(--mint)}
-body.staffapp main .card-h,body.staffapp main .pnum{font-size:17px;font-weight:700;color:var(--navy);border-bottom-color:var(--rule)}
-body.staffapp main .card-h a{color:var(--navy)}
-body.staffapp main .dash-stat a:hover{border-color:var(--navy)}
-body.staffapp main .dash-num{color:var(--navy);font-family:${BODY_STACK};font-size:32px}
-body.staffapp main .kpi{border-radius:12px}
-body.staffapp main .kpi.k-total{background:var(--navy)}
-body.staffapp main .kpi.k-plain{border-color:var(--rule);color:var(--navy);box-shadow:0 1px 3px rgba(23,35,59,.06)}
-body.staffapp main .kpi.k-plain .kpi-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--thead);font-weight:700}
-body.staffapp main .dash-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--thead);font-weight:700}
+body.crm main h1,body.crm main h2,body.crm main h3,body.crm main h4,body.crm main .card-h,body.crm main .pnum,body.crm main legend,body.crm main .stat,body.crm main .figbig,body.crm main .kpi .kpi-value{font-family:${BODY_STACK}}
+body.crm main h1{font-size:28px;font-weight:700;color:var(--navy);margin:.3rem 0 .35rem}
+body.crm main h2{font-size:22px;color:var(--navy)}
+body.crm main h3{font-size:18px;color:var(--navy)}
+body.crm main h1+p,body.crm main .pagehead+p{color:var(--body);font-size:15px;margin-top:0}
+body.crm main .pagehead{align-items:center;margin:0 0 1.1rem}
+body.crm main .card,body.crm main .pblock,body.crm main .assumebox,body.crm main .tile,body.crm main .cnext,body.crm main .clookups,body.crm main .tablewrap,body.crm main .convo-write,body.crm main .convo-chain,body.crm main .dash-stat a{background:var(--white);border:1px solid var(--rule);border-radius:12px;box-shadow:0 1px 3px rgba(23,35,59,.06)}
+body.crm main .cnext{border:2px solid var(--mint)}
+body.crm main .tile{border-top:4px solid var(--mint)}
+body.crm main .card-h,body.crm main .pnum{font-size:17px;font-weight:700;color:var(--navy);border-bottom-color:var(--rule)}
+body.crm main .card-h a{color:var(--navy)}
+body.crm main .dash-stat a:hover{border-color:var(--navy)}
+body.crm main .dash-num{color:var(--navy);font-family:${BODY_STACK};font-size:32px}
+body.crm main .kpi{border-radius:12px}
+body.crm main .kpi.k-total{background:var(--navy)}
+body.crm main .kpi.k-plain{border-color:var(--rule);color:var(--navy);box-shadow:0 1px 3px rgba(23,35,59,.06)}
+body.crm main .kpi.k-plain .kpi-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--thead);font-weight:700}
+body.crm main .dash-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--thead);font-weight:700}
 
 /* TABLES — small grey capitals over a fine rule; the row lit on hover. */
-body.staffapp main table{background:var(--white)}
-body.staffapp main th{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--thead);background:var(--zebra);border-bottom:1px solid var(--rule)}
-body.staffapp main th a,body.staffapp main th a[aria-sort],body.staffapp main th .sorted{color:var(--thead)}
-body.staffapp main td{border-bottom:1px solid var(--rule)}
-body.staffapp main tbody tr:hover td{background:var(--zebra)}
+body.crm main table{background:var(--white)}
+body.crm main th{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--thead);background:var(--zebra);border-bottom:1px solid var(--rule)}
+body.crm main th a,body.crm main th a[aria-sort],body.crm main th .sorted{color:var(--thead)}
+body.crm main td{border-bottom:1px solid var(--rule)}
+body.crm main tbody tr:hover td{background:var(--zebra)}
 
 /* STATUS LABELS — pills: green done, amber in progress or waiting, red a stop, blue new or information. */
-body.staffapp .badge{padding:.12rem .6rem;border-radius:6px;font-size:13px;font-weight:700;border:1px solid transparent;background:var(--page);color:var(--navy)}
-body.staffapp .badge.b-ok{background:var(--okbg);color:var(--ok);border-color:transparent}
-body.staffapp .badge.b-warn{background:var(--warnbg);color:var(--warn);border-color:transparent}
-body.staffapp .badge.b-stop{background:var(--stopbg);color:var(--stop);border-color:transparent}
-body.staffapp .badge.b-info{background:var(--g-win-bg);color:var(--g-win-ink);border-color:transparent}
-body.staffapp .badge.b-late{background:var(--stop);color:var(--white)}
+body.crm .badge{padding:.12rem .6rem;border-radius:6px;font-size:13px;font-weight:700;border:1px solid transparent;background:var(--page);color:var(--navy)}
+body.crm .badge.b-ok{background:var(--okbg);color:var(--ok);border-color:transparent}
+body.crm .badge.b-warn{background:var(--warnbg);color:var(--warn);border-color:transparent}
+body.crm .badge.b-stop{background:var(--stopbg);color:var(--stop);border-color:transparent}
+body.crm .badge.b-info{background:var(--g-win-bg);color:var(--g-win-ink);border-color:transparent}
+body.crm .badge.b-late{background:var(--stop);color:var(--white)}
 
 /* BUTTONS — the main one navy with white words; the quiet ones white with a border. */
-body.staffapp main button,body.staffapp main .btn{border-color:var(--rule);color:var(--navy);border-radius:.5rem}
-body.staffapp main button:hover,body.staffapp main .btn:hover{background:var(--page)}
-body.staffapp .cta,body.staffapp .btn-primary,body.staffapp main .cta,body.staffapp main .btn-primary,body.staffapp main button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet){background:var(--navy);border-color:var(--navy);color:var(--white)}
-body.staffapp .cta:hover,body.staffapp .btn-primary:hover,body.staffapp main .cta:hover,body.staffapp main .btn-primary:hover,body.staffapp main button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet):hover{background:var(--navy-2);border-color:var(--navy-2);color:var(--white)}
-body.staffapp main .btn-quiet{background:var(--white);color:var(--navy);border-color:var(--rule)}
-body.staffapp main .linkish{border:0;color:var(--accent)}
+body.crm main button,body.crm main .btn{border-color:var(--rule);color:var(--navy);border-radius:.5rem}
+body.crm main button:hover,body.crm main .btn:hover{background:var(--page)}
+body.crm .cta,body.crm .btn-primary,body.crm main .cta,body.crm main .btn-primary,body.crm main button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet){background:var(--navy);border-color:var(--navy);color:var(--white)}
+body.crm .cta:hover,body.crm .btn-primary:hover,body.crm main .cta:hover,body.crm main .btn-primary:hover,body.crm main button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet):hover{background:var(--navy-2);border-color:var(--navy-2);color:var(--white)}
+body.crm main .btn-quiet{background:var(--white);color:var(--navy);border-color:var(--rule)}
+body.crm main .linkish{border:0;color:var(--accent)}
 
 @media (min-width:900px){
-  body.staffapp{grid-template-rows:auto 1fr auto}
-  body.staffapp>header.top{grid-row:1/span 3}
-  body.staffapp>.crumbbar{grid-column:2;grid-row:1;position:sticky;top:0;z-index:15}
-  body.staffapp>main{grid-row:2}
-  body.staffapp>footer{grid-column:2;grid-row:3}
-  body.staffapp .topline{gap:.2rem;padding:1.4rem .8rem}
-  body.staffapp .topline>.brand{padding:0 .6rem .9rem;margin-bottom:.4rem;border-bottom:1px solid var(--navy-2)}
+  body.crm{grid-template-rows:auto 1fr auto}
+  body.crm>header.top{grid-row:1/span 3}
+  body.crm>.crumbbar{grid-column:2;grid-row:1;position:sticky;top:0;z-index:15}
+  body.crm>main{grid-row:2}
+  body.crm>footer{grid-column:2;grid-row:3}
+  body.crm .topline{gap:.2rem;padding:1.4rem .8rem}
+  body.crm .topline>.brand{padding:0 .6rem .9rem;margin-bottom:.4rem;border-bottom:1px solid var(--navy-2)}
 }
 @media (max-width:899.98px){
-  body.staffapp .navbutton{border-color:var(--navy-mute)}
-  body.staffapp .crumbbar{padding:.5rem .75rem}
-  body.staffapp .crumbbar .util{display:contents}
-  body.staffapp .crumbbar .helplink{margin-left:auto;flex-basis:auto;order:1}
-  body.staffapp .crumbbar .usermenu{flex-basis:auto;order:2}
-  body.staffapp .crumbbar .dash-tabs{order:8;flex-basis:100%}
-  body.staffapp .crumbbar .gsearch{order:9;flex-basis:100%;min-width:0}
-  body.staffapp .crumbbar .gsearch input{width:auto;flex:1;max-width:none}
-  body.staffapp main h1{font-size:24px}
+  body.crm .navbutton{border-color:var(--navy-mute)}
+  body.crm .crumbbar{padding:.5rem .75rem}
+  body.crm .crumbbar .util{display:contents}
+  body.crm .crumbbar .crumbs{flex:1 1 15rem;min-width:0}
+  body.crm .crumbbar .helplink{margin-left:auto;flex-basis:auto;order:1}
+  body.crm .crumbbar .usermenu{flex-basis:auto;order:2}
+  body.crm .crumbbar .dash-tabs{order:8;flex-basis:100%}
+  body.crm .crumbbar .gsearch{order:9;flex-basis:100%;min-width:0}
+  body.crm .crumbbar .gsearch input{width:auto;flex:1;max-width:none}
+  body.crm main h1{font-size:24px}
 }
 
 /* ================================================================== *
