@@ -329,7 +329,17 @@ export const TASK_FILTERS: readonly Filter[] = Object.freeze([
  */
 export class Shell extends Safe {
   readonly home: string;
-  constructor(html: string, home: string) { super(html); this.home = home; }
+  /**
+   * PHASE 160a: THE BACK OFFICE'S TOP BAR, drawn by `page()` above the page once it knows the page's title — the trail
+   * that ends on that title, Admin's views, the search, Help and the user menu. Absent for the portal, which keeps its look.
+   * `own` is the trail a page drew for itself (`breadcrumb` in src/web/components.ts), moved up here unchanged so a page
+   * never shows two.
+   */
+  readonly bar?: (title: string, own: Safe | null) => Safe;
+  constructor(html: string, home: string, bar?: (title: string, own: Safe | null) => Safe) {
+    super(html); this.home = home;
+    if (bar !== undefined) this.bar = bar;
+  }
 }
 
 const ROLE_WORDS: Readonly<Record<AppRole, string>> = Object.freeze({
@@ -394,11 +404,31 @@ export function staffShell(actor: Actor, view: string | null = null): Shell {
       : h`<a href="${s.href}">${s.label}${extra}</a>`;
   };
   const help = h`<a class="helplink" href="/staff/help?screen=${helpScreenFor(path ?? '/staff', actor)}">Help</a>`;
-  const html = h`${viewTabs(actor, view)}<div class="util">${search}${help}${userMenu(displayName(ctx?.db, actor), actor, '/staff/settings')}</div>
-    <nav class="appnav" aria-label="Sections"><ul class="navgroups">${tabs.groups.map((g) => h`<li class="navgroup">${
+  /* PHASE 160a, 19 October 2026 — THE SIDEBAR LAYOUT LAKHBIR CHOSE (the Cap Rebate Simple CRM design). The menu down the
+     left holds only the login's own sections, each with its icon; the search, Help, the user menu and Admin's views move
+     to the top bar over the page, after the trail of where the person is. Which sections a login sees is still `tabsFor`. */
+  const html = h`<nav class="appnav" aria-label="Sections"><ul class="navgroups">${tabs.groups.map((g) => h`<li class="navgroup">${
       g.label === null ? raw('') : h`<p class="navlabel">${g.label}</p>`}<ul class="tabs-main">${g.sections.map((s) => h`<li>${tab(s)}${
       isCurrent(s, path) ? subMenuHtml(subMenuFor(actor, s, path)) : raw('')}</li>`)}</ul></li>`)}</ul></nav>${MENU_BUTTON}`;
-  return new Shell(html.html, '/staff');
+  const section = tabs.primary.find((s) => isCurrent(s, path)) ?? null;
+  const util = h`<div class="util">${search}${help}${userMenu(displayName(ctx?.db, actor), actor, '/staff/settings')}</div>`;
+  return new Shell(html.html, '/staff', (title, own) => h`<a class="crumbroot" href="/staff">Cap Rebate</a>${own ?? trail(section, path, title)}${viewTabs(actor, view)}${util}`);
+}
+
+/**
+ * PHASE 160a — WHERE YOU ARE: "Cap Rebate / the section / the page". "Cap Rebate" is a link drawn before the trail (so it
+ * also leads a trail a page drew for itself); the section is the one the menu marks as current; the page is the page's
+ * own title, left out where it only repeats the section (Leads on the Leads list). The last step is the page itself, so
+ * it is words, not a link.
+ */
+function trail(section: Section | null, path: string | null, title: string): Safe {
+  const steps: { label: string; href: string }[] = [];
+  if (section !== null) steps.push({ label: section.label, href: section.href });
+  if (title !== '' && title !== section?.label) steps.push({ label: title, href: path ?? '' });
+  const last = steps.length - 1;
+  return h`<nav class="crumbs" aria-label="Where you are"><ol>${steps.map((s, i) => i === last
+    ? h`<li><span aria-current="page">${s.label}</span></li>`
+    : h`<li><a href="${s.href}">${s.label}</a></li>`)}</ol></nav>`;
 }
 
 /**

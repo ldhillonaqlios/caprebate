@@ -90,6 +90,9 @@ export const PUBLIC_MARK =
  */
 export const STAFF_FOOTER = 'This is a test system. No payment is taken, and no real contract can be signed.';
 
+/** PHASE 160a: the trail a page drew for itself (`breadcrumb`, src/web/components.ts) — its first one only. */
+const OWN_TRAIL = /<nav class="crumbs" aria-label="Where you are"><ol>[\s\S]*?<\/ol><\/nav>/;
+
 export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boolean }): string {
   // PHASE 133a: a header that carries its own home (the back office's or the portal's) is drawn as the application
   // header — the name, the search, my open tasks, the user menu, then the tabs. Anything else is the public header.
@@ -108,8 +111,18 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
   const brand = !shell
     ? h`<a class="brandmark" href="/" aria-label="Cap Rebate, home">${raw(PUBLIC_MARK)}<span class="wm">Cap Rebate</span></a>`
     : staff
-    ? h`<a class="brand" href="${home}">Cap Rebate</a>`
+    ? h`<a class="brand" href="${home}">Cap Rebate<span class="brandsub">Back office</span></a>`
     : h`<a class="logo" href="${home}"><img src="/assets/cap-rebate-logo.png" alt="Cap Rebate — capital allowances simplified" width="120" height="81"></a>`;
+  // PHASE 160a, 19 October 2026: THE BACK OFFICE'S TOP BAR (src/web/navigation.ts, Shell.bar) — where you are, then the
+  // search, Help and the user menu. A trail the page drew for itself is moved up into it, so the page never shows two.
+  const bar = staff ? (opts.nav as unknown as { bar?: (title: string, own: Safe | null) => Safe }).bar : undefined;
+  let bodyHtml = opts.body.html;
+  let barHtml = '';
+  if (bar !== undefined) {
+    const own = OWN_TRAIL.exec(bodyHtml);
+    if (own !== null) bodyHtml = bodyHtml.slice(0, own.index) + bodyHtml.slice(own.index + own[0].length);
+    barHtml = h`<div class="crumbbar">${bar(opts.title, own === null ? null : raw(own[0]))}</div>`.html;
+  }
   return (
     '<!doctype html>\n' +
     h`<html lang="en-GB"><head><meta charset="utf-8">
@@ -117,10 +130,10 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
 <title>${opts.title} · Cap Rebate</title>
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-</head><body class="${shell ? 'app' : 'public'}">
+</head><body class="${shell ? (staff ? 'app staffapp' : 'app') : 'public'}">
 <a class="skip" href="#main">Skip to content</a>
-<header class="top"><div class="topline">${brand}${opts.nav ?? raw('')}</div></header>
-<main id="main" class="${opts.wide === true ? 'wide' : ''}">${raw(requiredWordsInMarkup(ukDatesInMarkup(opts.body.html)))}</main>
+<header class="top"><div class="topline">${brand}${opts.nav ?? raw('')}</div></header>${raw(barHtml)}
+<main id="main" class="${opts.wide === true ? 'wide' : ''}">${raw(requiredWordsInMarkup(ukDatesInMarkup(bodyHtml)))}</main>
 <footer class="foot">
   <p>Cap Rebate — capital allowances for healthcare property.</p>
   <p>Indicative technical reference, not tax advice. The defensible figure comes from a chartered surveyor’s survey and a

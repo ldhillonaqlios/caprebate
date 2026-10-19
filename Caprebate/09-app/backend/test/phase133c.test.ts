@@ -219,7 +219,8 @@ describe('the Cap Rebate brand', () => {
     assert.match(login, /<span class="wm">Cap Rebate<\/span><\/a>/);
     assert.match((await as('client').get('/portal')).body, /<img src="\/assets\/cap-rebate-logo.png"/);
     const staff = (await as('sales').get('/staff')).body;
-    assert.match(staff, /<a class="brand" href="\/staff">Cap Rebate<\/a>/);
+    // PHASE 160a (19 Oct 2026): the sidebar layout names the back office under the name, as the design does.
+    assert.match(staff, /<a class="brand" href="\/staff">Cap Rebate<span class="brandsub">Back office<\/span><\/a>/);
     assert.equal(/class="mark"/.test(staff), false, 'the back office draws a mark');
     assert.equal(/>C<\/span>|class="mark">C/.test(login), false, 'the invented "C" square is still drawn');
   });
