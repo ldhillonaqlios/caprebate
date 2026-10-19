@@ -260,9 +260,9 @@ describe('1 · the Email button and the form', () => {
       assert.equal(r.location, `/staff/clients/${w.biz}/email?done=saved`);
       assert.ok(!(r.location ?? '').includes('@'));
       const back = await c.get(r.location ?? '');
-      assert.match(back.body, /Saved — emails are not being sent yet\./);
+      assert.match(back.body, /Saved: emails are not being sent yet\./);
       assert.match(back.body, /Your survey date/);
-      assert.match(back.body, /Saved — not sent/);
+      assert.match(back.body, /Saved, not sent/);
       const row = w.made.app.db.get<{ kind: string; to_email: string; claim_id: string; sent_at: string | null; send_requested: number; written_by: string; contact_id: string; body: string }>(
         "SELECT kind, to_email, claim_id, sent_at, send_requested, written_by, contact_id, body FROM outbox WHERE kind = 'FREE_TYPED'");
       assert.ok(row);

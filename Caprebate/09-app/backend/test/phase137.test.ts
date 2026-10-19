@@ -212,7 +212,7 @@ describe('Home and Leads count New the same way', () => {
 describe('the buttons', () => {
   test('a lead with no owner shows one button, and pressing it makes you the owner', async () => {
     const c = card((await as('sales').get('/staff/leads')).body, 'l137-mid');
-    assert.match(c, /Nobody owns this — take it/);
+    assert.match(c, /Nobody owns this: take it/);
     assert.doesNotMatch(c, /Log a call|Mark as lost/, 'the other buttons wait until somebody owns it');
     const r = await as('sales').post('/staff/leads/l137-mid', { owner_id: userId('sales@example.invalid'), back: 'leads' });
     assert.equal(r.status, 303);
@@ -283,7 +283,7 @@ describe('Filter and List view', () => {
   test('the filters are behind one Filter button, open when a filter is on', async () => {
     assert.match((await as('sales').get('/staff/leads')).body, /<details class="filterbox"><summary>Filter<\/summary>/);
     const on = (await as('sales').get('/staff/leads?owner=none')).body;
-    assert.match(on, /<details class="filterbox" open><summary>Filter — on<\/summary>/);
+    assert.match(on, /<details class="filterbox" open><summary>Filter: on<\/summary>/);
     assert.doesNotMatch(section(on, 'new'), /Private Enquiry Limited/, 'a filter is about leads; enquiries are not drawn');
   });
 

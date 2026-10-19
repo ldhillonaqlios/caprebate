@@ -187,7 +187,7 @@ describe('the enquiry form, end to end', () => {
     const f = form({ 'cf-turnstile-response': ANSWER });
     const r = await post(f);
     assert.equal(r.status, 200);
-    assert.match(await r.text(), /Thank you — that is with us\./);
+    assert.match(await r.text(), /Thank you: that is with us\./);
     assert.equal(kept(f.get('email')), 1);
     assert.equal(lastReceived()['security_check'], 'passed');
   });

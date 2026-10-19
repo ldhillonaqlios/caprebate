@@ -215,7 +215,7 @@ describe('3 · the carried screens read in plain words, and the rules under them
     try {
       const admin = await w.signIn('admin');
       const audit = await admin.req('/staff/audit');
-      assert.match(audit.body, /Audit log checked — nothing changed/);
+      assert.match(audit.body, /Audit log checked: nothing changed/);
       assert.deepEqual(banned(audit.body), []);
       const rep = await admin.req('/staff/reports');
       assert.equal(rep.status, 200);

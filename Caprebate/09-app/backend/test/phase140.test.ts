@@ -30,6 +30,7 @@ import { KEEP_ORIGINALS, KEEP_ORIGINALS_QUESTION, READ_AND_DELETED, keptDays, se
 import { backendSwitchReadings } from '../src/web/case-stamp.ts';
 import { pdfOf } from './document-fixtures.ts';
 import { actor } from './helpers.ts';
+import { plainDashText } from '../src/web/plain-dashes.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string; bytes: Buffer; type: string | null };
@@ -294,7 +295,7 @@ describe('2 · a staff upload is a file picker, and it is the client’s own pat
       assert.match((await client.req('/portal?sent=1')).body, /Thank you. We have your file./);
       const doc = await client.req(`/portal/documents/${versionOf(w, lid)}`);
       assert.equal(doc.status, 200);
-      assert.ok(doc.body.includes(READ_AND_DELETED), 'the portal says what happened to the original, not a broken link');
+      assert.ok(doc.body.includes(plainDashText(READ_AND_DELETED)), 'the portal says what happened to the original, not a broken link');
       assert.equal(doc.body.includes('Ask for the original'), false);
     } finally { w.close(); }
   });
@@ -312,12 +313,12 @@ describe('1 · the folder, and the button that opens it', () => {
       assert.match(page.body, new RegExp(`<a class="filesbtn" href="/staff/clients/${w.business}/files">[^]*?<span class="filecount" aria-label="2 files">2</span></a>`));
       const f = await sales.req(`/staff/clients/${w.business}/files`);
       assert.equal(f.status, 200);
-      for (const name of ['From the client', 'From Cap Rebate', 'Asked for — still waiting']) assert.ok(f.body.includes(name), name);
+      for (const name of ['From the client', 'From Cap Rebate', 'Asked for: still waiting']) assert.ok(f.body.includes(name), name);
       assert.match(f.body, new RegExp(`href="/staff/clients/${w.business}/files\\?folder=claim-${w.claim}"`));
       assert.match(f.body, /The client · \d+ \w+ 2026/, 'who sent it and when');
-      assert.match(f.body, /Cap Rebate — [^·<]+ · \d+ \w+ 2026/);
+      assert.match(f.body, /Cap Rebate: [^·<]+ · \d+ \w+ 2026/);
       assert.match(f.body, /We read 1 page\./, 'what we read from it');
-      assert.ok(f.body.includes(READ_AND_DELETED), 'no original kept, and it says so — never a broken link');
+      assert.ok(f.body.includes(plainDashText(READ_AND_DELETED)), 'no original kept, and it says so — never a broken link');
       assert.match(f.body, /Only Cap Rebate can see this/);
       assert.match(f.body, /The client can see this/);
       // A folder narrows the list, by key only.

@@ -80,7 +80,8 @@ describe('Phase 160a: the menu down the left holds the login’s own sections, a
       assert.equal(r.status, 200);
       assert.match(r.body, /<body class="app crm staffapp">/); // PHASE 160b: crm is the look the portal shares
       const side = sidebar(r.body);
-      assert.match(side, /^<div class="topline"><a class="brand" href="\/staff">Cap Rebate<span class="brandsub">Back office<\/span><\/a><nav class="appnav" aria-label="Sections">/);
+      // PHASE 160c: the home page's mark and wordmark, "Back office" under the name.
+      assert.match(side, /^<div class="topline"><a class="brandmark" href="\/staff" aria-label="Cap Rebate, home"><svg class="mark"[\s\S]*?<\/svg><span class="wm">Cap Rebate<span class="brandsub">Back office<\/span><\/span><\/a><nav class="appnav" aria-label="Sections">/);
       const hrefs = [...side.matchAll(/<ul class="tabs-main">[\s\S]*?<\/ul><\/li>/g)].flatMap((g) =>
         [...(g[0] ?? '').replace(/<ul class="subnav">[\s\S]*?<\/ul>/g, '').matchAll(/<a href="([^"]+)"/g)].map((m) => m[1]));
       assert.deepEqual(hrefs, tabsFor(actorOf(who)).primary.map((s) => s.href), `${who}'s sidebar is not its menu`);
@@ -138,7 +139,7 @@ describe('Phase 160a: staff only, and nothing loosened', () => {
   test('the client portal carries no back-office part; the public pages have no top bar', async () => {
     const portal = (await get('client', '/portal')).body;
     assert.match(portal, /<body class="app crm portalapp">/);
-    assert.doesNotMatch(portal, /staffapp|class="brandsub"|class="gsearch"|class="dash-tabs"|href="\/staff/);
+    assert.doesNotMatch(portal, /staffapp|>Back office<|class="gsearch"|class="dash-tabs"|href="\/staff/);
     const home = (await get(null, '/login')).body;
     assert.match(home, /<body class="public">/);
     assert.doesNotMatch(home, /class="crumbbar"|staffapp|portalapp|class="app/);
@@ -170,15 +171,17 @@ describe('Phase 160a: staff only, and nothing loosened', () => {
     }
   });
 
-  test('the navy, the grey page and the column headings are tokens, and each pairing reads at 4.5:1 or better', () => {
+  // PHASE 160c: the navy went for the home page's ink (side, side-2, side-mute, ivory); the page, rules and headings stay.
+  test('the menu\u2019s ink, the grey page and the column headings are tokens, and each pairing reads at 4.5:1 or better', () => {
     const lum = (hex: string): number => {
       const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
       return 0.2126 * (r ?? 0) + 0.7152 * (g ?? 0) + 0.0722 * (b ?? 0);
     };
     const ratio = (a: string, b: string): number => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return ((x ?? 0) + 0.05) / ((y ?? 0) + 0.05); };
-    for (const t of ['navy', 'navy-2', 'navy-mute', 'page', 'rule', 'thead']) assert.match(BRAND_TOKENS[t] ?? '', /^#[0-9a-f]{6}$/i, t);
-    const wanted: readonly (readonly [string, string])[] = [['white', 'navy'], ['navy-mute', 'navy'], ['white', 'navy-2'], ['navy-mute', 'navy-2'],
-      ['ink', 'page'], ['body', 'page'], ['navy', 'white'], ['navy', 'page'], ['thead', 'white'], ['thead', 'page'], ['thead', 'zebra'], ['mint', 'navy']];
+    for (const t of ['side', 'side-2', 'side-mute', 'ivory', 'page', 'rule', 'thead']) assert.match(BRAND_TOKENS[t] ?? '', /^#[0-9a-f]{6}$/i, t);
+    for (const gone of ['navy', 'navy-2', 'navy-mute']) assert.equal(BRAND_TOKENS[gone], undefined, gone);
+    const wanted: readonly (readonly [string, string])[] = [['ivory', 'side'], ['side-mute', 'side'], ['ivory', 'side-2'], ['side-mute', 'side-2'],
+      ['ink', 'page'], ['body', 'page'], ['thead', 'white'], ['thead', 'page'], ['thead', 'zebra'], ['mint', 'side'], ['ink', 'mint']];
     for (const [fg, bg] of wanted) {
       assert.ok(TEXT_PAIRINGS.some(([a, b]) => a === fg && b === bg), `${fg} on ${bg} is not a listed pairing`);
       const r = ratio(BRAND_TOKENS[fg] ?? '#000000', BRAND_TOKENS[bg] ?? '#000000');

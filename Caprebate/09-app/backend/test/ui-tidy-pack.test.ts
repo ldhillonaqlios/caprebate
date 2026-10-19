@@ -47,7 +47,7 @@ describe('UI tidy phase 11: which pack this is', () => {
       const site = v.property !== null ? siteOf(j.business_name, v.property.label) : jobSite(j);
       const h = head(body);
       assert.ok(h !== null, 'no pack heading');
-      assert.equal(h.title, `${j.business_name} — ${site}`);
+      assert.equal(h.title, `${j.business_name}: ${site}`);
       const postcode = v.property?.postcode ?? j.property_postcode;
       assert.equal(h.facts, [j.claim_ref, postcode, `survey job ${i + 1} of 2 for this client`].filter((x) => x !== null).join(' · '));
       const other = dun[1 - i] as S.JobRow;
@@ -70,7 +70,7 @@ describe('UI tidy phase 11: which pack this is', () => {
     const j = jobs()[0] as S.JobRow;
     const body = (await H.get('surveying', `/staff/survey/${j.job_id}/pack?ch=4`)).body;
     const nav = /<nav class="appnav" aria-label="Sections">[\s\S]*?<\/nav>/.exec(body)?.[0] ?? '';
-    assert.ok(nav.includes(`<p class="subtitle">${j.business_name} — ${jobSite(j)}</p>`));
+    assert.ok(nav.includes(`<p class="subtitle">${j.business_name}: ${jobSite(j)}</p>`));
     assert.ok(nav.includes(`<a href="/staff/survey/${j.job_id}/pack?ch=4" aria-current="page">Survey pack</a>`));
     const onJob = (await H.get('surveying', `/staff/survey/${j.job_id}`)).body;
     assert.ok(onJob.includes(`<a href="/staff/survey/${j.job_id}/pack?ch=4">Survey pack</a>`), 'Survey pack is marked on the job page');

@@ -122,7 +122,7 @@ describe('Communication', () => {
     // Clicked: WhatsApp, the person and their number chosen.
     const wa = (await req('u-cm-sales', waHref)).body;
     assert.equal(selectedVia(wa), 'whatsapp');
-    assert.match(wa, /<option value="c-cm-pat" selected>Pat Owner — 07700 900777<\/option>/);
+    assert.match(wa, /<option value="c-cm-pat" selected>Pat Owner, 07700 900777<\/option>/);
     // Sent as a reply: in the same conversation, answering what Pat sent.
     await send('u-cm-sales', { via: 'email', thread: ours, to_email: 'pat@comms-test.invented.co.uk', subject: 'Re: Your survey', body: 'See you then.', go: 'send' });
     assert.equal(db.get<{ thread_key: string }>("SELECT thread_key FROM outbox WHERE body = 'See you then.'")!.thread_key, ours);

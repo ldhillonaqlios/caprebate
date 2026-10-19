@@ -229,7 +229,7 @@ describe('steps, and telling the client', () => {
     assert.equal(db().get<{ n: number }>("SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'CLIENT_STEP_TOLD'")?.n, 1);
     const p1 = await as('client').get('/portal');
     const card = p1.body.slice(p1.body.indexOf('id="done-so-far"'), p1.body.indexOf('</section>', p1.body.indexOf('id="done-so-far"')));
-    assert.match(card, /✓<\/span> Cap Rebate has checked your company details <span class="help">— \d{1,2} [A-Z][a-z]{2} 20\d\d<\/span>/);
+    assert.match(card, /✓<\/span> Cap Rebate has checked your company details<span class="help">, \d{1,2} [A-Z][a-z]{2} 20\d\d<\/span>/);
     // Told once; a second press is refused.
     assert.notEqual((await as('sales').post(`/staff/clients/${corvale}/steps/tell`, { step: 'COMPANY', claim_id: '', back: 'client' })).status, 303);
   });
@@ -275,7 +275,7 @@ describe('steps, and telling the client', () => {
     assert.equal(byAdmin.status, 303);
     assert.equal(db().get<{ n: number }>("SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'CLIENT_STEP_TAKEN_BACK'")?.n, 1);
     const p = await as('client').get('/portal');
-    assert.match(p.body, /↻<\/span> Your company details are being re-checked <span class="help">— since \d{1,2} [A-Z][a-z]{2} 20\d\d<\/span>/);
+    assert.match(p.body, /↻<\/span> Your company details are being re-checked<span class="help">, since \d{1,2} [A-Z][a-z]{2} 20\d\d<\/span>/);
     assert.equal(p.body.includes('Cap Rebate has checked your company details'), false);
     assert.equal(p.body.includes(REASON_BACK), false, 'the reason reached the client');
     // Staff see who took it back and why.
@@ -302,7 +302,7 @@ describe('carried from Phase 138', () => {
     const checks = sec(r.body, 'claim-checks');
     const tax = stepHtml(checks, dunmarrowBranch, 'TAX');
     const line = tax.slice(tax.indexOf(`value="ans.${t.id}"`) - 600, tax.indexOf(`value="ans.${t.id}"`) + 900);
-    assert.match(tax, /<span class="chip">You told us<\/span> <strong>The accounting period the spend falls in — its first day<\/strong>/);
+    assert.match(tax, /<span class="chip">You told us<\/span> <strong>The accounting period the spend falls in: its first day<\/strong>/);
     assert.match(line, /<input id="[^"]+" name="value" type="date" value="2025-04-01" required>/, 'the client\'s answer is not offered as the fact');
     const before1 = db().get<{ n: number }>("SELECT COUNT(*) AS n FROM claim_facts WHERE claim_id = ? AND fact_key = 'ACCOUNTING_PERIOD_START'", [dunmarrowBranch])?.n ?? 0;
     const ok = await as('sales').post(`/staff/clients/${dunmarrow}/checks/approve`, { ref: `ans.${t.id}`, value: '2025-04-01', back: `claim:${dunmarrowBranch}` });

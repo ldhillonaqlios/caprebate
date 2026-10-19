@@ -92,7 +92,7 @@ describe('the home page', () => {
     const r = await fetch(`${base}/enquiry`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ name: 'Home Page Person', firm: '', email: 'home.page@example.invalid', phone: '', ptype: 'Care home', message: '' }).toString() });
     assert.equal(r.status, 200);
-    assert.match(await r.text(), /Thank you — that is with us\./);
+    assert.match(await r.text(), /Thank you: that is with us\./);
   });
 
   test('what a person reads keeps the house voice: no "rebate" as a refund, no exclamation mark, the name is "Cap Rebate"', async () => {

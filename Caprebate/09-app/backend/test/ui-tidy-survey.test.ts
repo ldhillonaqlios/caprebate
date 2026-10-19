@@ -9,6 +9,7 @@ import { startHarness, type Harness } from './ui-tidy-harness.ts';
 import * as S from '../src/web/surveyor.ts';
 import { jobSite } from '../src/web/surveyor-pages.ts';
 import { stageGroupOf } from '../src/web/look.ts';
+import { plainDashText } from '../src/web/plain-dashes.ts';
 
 let H: Harness;
 before(async () => { H = await startHarness('uit10'); });
@@ -60,7 +61,7 @@ describe('UI tidy phase 10: a survey job', () => {
   test('the page says which job it is: the way back names the site, the heading’s line the site and claim, the highlights both', async () => {
     for (const j of dunJobs()) {
       const body = (await H.get('surveying', `/staff/survey/${j.job_id}`)).body;
-      assert.match(body, new RegExp(`<li><a href="/staff/survey">Survey jobs</a></li><li><span aria-current="page">${j.business_name} — ${jobSite(j)}</span></li>`));
+      assert.match(body, new RegExp(`<li><a href="/staff/survey">Survey jobs</a></li><li><span aria-current="page">${j.business_name}: ${jobSite(j)}</span></li>`));
       assert.ok(body.includes(`<p class="subhead">${jobSite(j)} · <span class="claimref">${j.claim_ref}</span></p>`), j.job_id);
       assert.ok(body.includes(`<div><dt>Site</dt><dd>${jobSite(j)}</dd></div><div><dt>Claim</dt><dd>${j.claim_ref}</dd></div>`), j.job_id);
     }
@@ -81,7 +82,7 @@ describe('UI tidy phase 10: a survey job', () => {
       const body = (await H.get('surveying', `/staff/survey/${j.job_id}`)).body;
       const table = /<h2>The property<\/h2>[\s\S]*?<\/table>/.exec(body)?.[0] ?? '';
       const first = /<tbody><tr( class="thisjob")?>\s*<td>([^<]*)( <span class="badge b-ok">This job<\/span>)?<\/td>/.exec(table);
-      assert.equal(first?.[2], j.property_label);
+      assert.equal(first?.[2], plainDashText(j.property_label ?? ''));
       assert.equal(first?.[1], ' class="thisjob"');
       assert.equal((table.match(/This job/g) ?? []).length, 1);
     }
@@ -92,7 +93,7 @@ describe('UI tidy phase 10: a survey job', () => {
     assert.ok(a !== undefined && b !== undefined);
     const body = (await H.get('surveying', `/staff/survey/${a.job_id}`)).body;
     const nav = /<nav class="appnav" aria-label="Sections">[\s\S]*?<\/nav>/.exec(body)?.[0] ?? '';
-    assert.ok(nav.includes(`<p class="subtitle">${a.business_name} — ${jobSite(a)}</p>`));
+    assert.ok(nav.includes(`<p class="subtitle">${a.business_name}: ${jobSite(a)}</p>`));
     const items = [...nav.matchAll(/<ul class="subnav">[\s\S]*?<\/ul>/g)].flatMap((m) => [...m[0].matchAll(/<a href="([^"]+)">([^<]+)<\/a>/g)].map((x) => [x[1], x[2]]));
     assert.deepEqual(items.slice(0, 6).map((x) => x[1]), ['The property', 'Rooms', 'Rates', 'Evidence', 'Your figures', 'The record']);
     assert.ok(items.some((x) => x[0] === `/staff/survey/${a.job_id}/pack?ch=4` && x[1] === 'Survey pack'));

@@ -184,7 +184,7 @@ describe('WE NEED asks the client', () => {
     assert.equal(sent.status, 303);
     const afterPage = await as('sales').get(`/staff/clients/${biz}`);
     const same = sec(afterPage.body, withAsk.id);
-    assert.match(same.html, /Asked — waiting/, 'the asked fact does not say it is waiting');
+    assert.match(same.html, /Asked: waiting/, 'the asked fact does not say it is waiting');
     assert.equal(made.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM client_tasks WHERE business_id = ? AND fact_id = ? AND state = 'OPEN'", [biz, fields['fact_id'] ?? ''])?.n, 1);
   });
 
@@ -197,7 +197,7 @@ describe('WE NEED asks the client', () => {
     assert.equal(fields['claim_id'], claim);
     assert.match(fields['fact_id'] ?? '', /^claim_fact\./);
     assert.equal((await as('sales').post(form[1] ?? '', fields)).status, 303);
-    assert.match(sec((await as('sales').get(`/staff/claims/${claim}`)).body, 'claim-facts').html, /Asked — waiting/);
+    assert.match(sec((await as('sales').get(`/staff/claims/${claim}`)).body, 'claim-facts').html, /Asked: waiting/);
   });
 
   test('Read only reads the company but is offered no ask, no questions, no lookups and no notes', async () => {

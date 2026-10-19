@@ -57,7 +57,8 @@ describe('Phase 160b: the portal’s menu down the left', () => {
     assert.equal(r.status, 200);
     assert.match(r.body, /<body class="app crm portalapp">/);
     const side = sidebar(r.body);
-    assert.match(side, /^<div class="topline"><a class="logo" href="\/portal"><img src="\/assets\/cap-rebate-logo.png"[^>]*width="120"/);
+    // PHASE 160c: the home page's mark and wordmark, with "Client portal" under the name, in place of the supplied lockup.
+    assert.match(side, /^<div class="topline"><a class="brandmark" href="\/portal" aria-label="Cap Rebate, home"><svg class="mark"[\s\S]*?<\/svg><span class="wm">Cap Rebate<span class="brandsub">Client portal<\/span><\/span><\/a>/);
     assert.deepEqual([...side.replace(/<ul class="subnav">[\s\S]*?<\/ul>/g, '').matchAll(/<a href="([^"]+)"/g)].map((m) => m[1]), ['/portal', '/portal/messages']);
     assert.doesNotMatch(side, /class="util"|class="helplink"|class="usermenu"|class="gsearch"/);
     assert.match(side, /<\/nav><input type="checkbox" id="navtoggle" class="navtoggle"><label for="navtoggle" class="navbutton">Menu<\/label><\/div>$/);

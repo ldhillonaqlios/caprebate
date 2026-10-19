@@ -217,11 +217,13 @@ describe('the Cap Rebate brand', () => {
     const login = await (await fetch(`${h.base}/login`)).text();
     assert.match(login, /<a class="brandmark" href="\/" aria-label="Cap Rebate, home"><svg class="mark" viewBox="0 0 48 48"[^>]*><path class="mk" pathLength="1" d="M14 43 H34[^"]*"\/>/);
     assert.match(login, /<span class="wm">Cap Rebate<\/span><\/a>/);
-    assert.match((await as('client').get('/portal')).body, /<img src="\/assets\/cap-rebate-logo.png"/);
+    // PHASE 160c (19 Oct 2026): the portal and the back office wear the home page's mark and wordmark, as Lakhbir asked
+    // ("ensure our branding from the home page matches the back end"); the supplied lockup is still served.
+    const portalBody = (await as('client').get('/portal')).body;
+    assert.match(portalBody, /<a class="brandmark" href="\/portal" aria-label="Cap Rebate, home"><svg class="mark"/);
     const staff = (await as('sales').get('/staff')).body;
     // PHASE 160a (19 Oct 2026): the sidebar layout names the back office under the name, as the design does.
-    assert.match(staff, /<a class="brand" href="\/staff">Cap Rebate<span class="brandsub">Back office<\/span><\/a>/);
-    assert.equal(/class="mark"/.test(staff), false, 'the back office draws a mark');
+    assert.match(staff, /<a class="brandmark" href="\/staff" aria-label="Cap Rebate, home"><svg class="mark"[\s\S]*?<span class="wm">Cap Rebate<span class="brandsub">Back office<\/span><\/span><\/a>/);
     assert.equal(/>C<\/span>|class="mark">C/.test(login), false, 'the invented "C" square is still drawn');
   });
 });

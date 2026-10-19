@@ -55,10 +55,14 @@ export const BRAND_TOKENS: Readonly<Record<string, string>> = Object.freeze({
   'g-sign': '#8a5300', 'g-sign-bg': '#fbecd0', 'g-sign-ink': '#6e4300',
   'g-paid': '#1d6b35', 'g-paid-bg': '#dcf0e1', 'g-paid-ink': '#185c2d',
   nodate: '#e3e8e6', zebra: '#f6f9f8',
-  // PHASE 160a, 19 October 2026: the back office in the layout Lakhbir chose (the Cap Rebate Simple CRM design). A navy
-  // menu down the left (navy, its lighter current block navy-2, its quiet words navy-mute), a light grey page (page),
-  // fine rules (rule) and grey column headings (thead).
-  navy: '#17233b', 'navy-2': '#2a3d60', 'navy-mute': '#b9c6dc', page: '#f3f5f9', rule: '#e2e7ef', thead: '#556175',
+  // PHASE 160a, 19 October 2026: the back office in the layout Lakhbir chose (the Cap Rebate Simple CRM design): a light
+  // page (page), fine rules (rule) and grey column headings (thead). Its navy went in Phase 160c, for the home page's ink.
+  page: '#f3f6f4', rule: '#dde6e2', thead: '#4f5b56',
+  // PHASE 160c, 19 October 2026: the home page's own colours replace 160a's navy (Lakhbir: "ensure our branding from the
+  // home page matches the back end"). The menu down the left is the home page's ink ground (side) with its ivory words,
+  // a lighter ink for hover (side-2) and its quiet words (side-mute); the page a pale mint-grey (page) with green-grey
+  // rules and headings (rule, thead), so the working pages stay light and tables read easily.
+  side: '#121614', 'side-2': '#232b28', 'side-mute': '#b4beb9', ivory: '#EDEAE2',
 });
 
 /**
@@ -78,9 +82,11 @@ export const TEXT_PAIRINGS: readonly (readonly [text: string, ground: string])[]
   ['g-survey-ink', 'g-survey-bg'], ['white', 'g-survey'], ['g-sign-ink', 'g-sign-bg'], ['white', 'g-sign'],
   ['g-paid-ink', 'g-paid-bg'], ['white', 'g-paid'], ['white', 'warn'], ['white', 'ok'], ['white', 'ink'], ['mint', 'ink'],
   ['ink', 'nodate'], ['ink', 'zebra'], ['body', 'zebra'],
-  // PHASE 160a: the sidebar, the top bar, the grey page, the column headings, the main button and the blue label.
-  ['white', 'navy'], ['navy-mute', 'navy'], ['white', 'navy-2'], ['navy-mute', 'navy-2'], ['ink', 'page'], ['body', 'page'],
-  ['navy', 'white'], ['navy', 'page'], ['mint', 'navy'], ['thead', 'white'], ['thead', 'page'], ['thead', 'zebra'], ['g-win-ink', 'white'],
+  // PHASE 160a: the grey page, the column headings and the blue label (its navy pairings went with the navy in 160c).
+  ['body', 'page'], ['thead', 'white'], ['thead', 'page'], ['thead', 'zebra'], ['g-win-ink', 'white'],
+  // PHASE 160c: the home page's ink menu, its ivory and mint words on it, and ink words on the mint buttons.
+  ['ivory', 'side'], ['ivory', 'side-2'], ['side-mute', 'side'], ['side-mute', 'side-2'], ['mint', 'side'], ['mint', 'side-2'],
+  ['ink', 'page'], ['ink', 'mint'],
 ]);
 
 const tokenCss = Object.entries(BRAND_TOKENS).map(([k, v]) => `--${k}:${v}`).join(';');
@@ -1485,71 +1491,89 @@ a.packhead-switch:hover{text-decoration:underline}
  * page of white cards, tables with small grey column headings, and
  * coloured status labels. Which sections a login sees is unchanged
  * (src/web/navigation.ts MENUS).
+ * PHASE 160c, 19 October 2026: in the home page's own branding, not
+ * the design's navy: its ink menu with ivory words, Cap Mint for the
+ * current page and the main buttons (pills, ink words), the brand's
+ * heading type, and its mark and wordmark at the top of the menu.
  * PHASE 160b, 19 October 2026: the client portal too. Every rule is
  * under body.crm, which the back office (body.staffapp) and the portal
  * (body.portalapp) both carry; the public pages keep their look.
  * ================================================================== */
 body.crm{background:var(--page)}
-body.crm>header.top{background:var(--navy)}
-body.crm .topline>.brand{display:flex;flex-direction:column;align-items:flex-start;gap:0;color:var(--white);font-family:${BODY_STACK};font-size:20px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;text-decoration:none}
-body.crm .brandsub{display:block;color:var(--navy-mute);font-size:12px;font-weight:600;letter-spacing:.14em;margin-top:.15rem}
-body.crm .navlabel{color:var(--navy-mute);font-size:12px;letter-spacing:.12em;margin:1.1rem .65rem .35rem}
-body.crm .tabs-main>li>a{justify-content:flex-start;gap:.65rem;color:var(--white);font-size:15px;font-weight:600;padding:.5rem .7rem;border-radius:.45rem}
-body.crm .tabs-main>li>a::before{flex:none;width:1.1rem;text-align:center;font-size:15px;line-height:1;color:var(--navy-mute)}
-body.crm .tabs-main>li>a[aria-current="page"]::before,body.crm .tabs-main>li>a:hover::before{color:var(--white)}
-body.crm .tabs-main>li>a:hover{background:var(--navy-2)}
-body.crm .tabs-main>li>a[aria-current="page"]{background:var(--navy-2);color:var(--white);box-shadow:inset 3px 0 0 var(--mint)}
+body.crm>header.top{background:var(--side)}
+body.crm .topline>.brandmark{display:flex;align-items:center;gap:10px;color:var(--ivory);text-decoration:none}
+body.crm .brandmark .mark{width:40px;height:40px;flex:none;overflow:visible}
+body.crm .brandmark .mk{fill:none;stroke:var(--ivory);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+body.crm .brandmark .mk-scr{fill:none;stroke:var(--mint);stroke-width:2.6}
+body.crm .brandmark .mk-key{fill:var(--ivory)}
+body.crm .brandmark .wm{display:flex;flex-direction:column;font-family:"Roboto Slab","Rockwell","Bookman Old Style",Georgia,serif;font-weight:800;font-size:14px;letter-spacing:.18em;text-transform:uppercase;line-height:1.3;color:var(--ivory)}
+body.crm .brandsub{display:block;font-family:${BODY_STACK};color:var(--side-mute);font-size:12px;font-weight:600;letter-spacing:.12em;margin-top:.1rem}
+body.crm .navlabel{color:var(--side-mute);font-size:12px;letter-spacing:.12em;margin:1.1rem .65rem .35rem}
+body.crm .tabs-main>li>a{justify-content:flex-start;gap:.65rem;color:var(--ivory);font-size:15px;font-weight:600;padding:.5rem .7rem;border-radius:.45rem}
+body.crm .tabs-main>li>a::before{flex:none;width:1.1rem;text-align:center;font-size:15px;line-height:1;color:var(--side-mute)}
+body.crm .tabs-main>li>a:hover::before{color:var(--ivory)}
+body.crm .tabs-main>li>a[aria-current="page"]::before{color:var(--ink)}
+body.crm .tabs-main>li>a:hover{background:var(--side-2)}
+body.crm .tabs-main>li>a[aria-current="page"]{background:var(--mint);color:var(--ink);box-shadow:none;border-radius:999px}
 body.crm .tabs-main .tabcount{margin-left:auto}
-body.crm .subtitle{color:var(--navy-mute)}
-body.crm .subnav a{color:var(--navy-mute)}
-body.crm .subnav a:hover{background:var(--navy-2);color:var(--white)}
-body.crm .subnav a[aria-current="page"]{background:var(--navy-2);color:var(--white);box-shadow:inset 3px 0 0 var(--mint)}
+body.crm .subtitle{color:var(--side-mute)}
+body.crm .subnav a{color:var(--side-mute)}
+body.crm .subnav a:hover{background:var(--side-2);color:var(--ivory)}
+body.crm .subnav a[aria-current="page"]{background:var(--side-2);color:var(--mint);box-shadow:inset 3px 0 0 var(--mint)}
 ${MENU_ICON_CSS}
 
 /* THE TOP BAR — where you are, Admin's views, the search, Help and the user menu. */
 body.crm .crumbbar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .75rem;background:var(--white);border-bottom:1px solid var(--rule);padding:.55rem 1.25rem;min-height:3.5rem;box-sizing:border-box}
 body.crm .crumbbar .crumbroot{color:var(--thead);font-size:13px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;margin-right:-.5rem}
-body.crm .crumbbar .crumbroot:hover{color:var(--navy);text-decoration:underline}
+body.crm .crumbbar .crumbroot:hover{color:var(--ink);text-decoration:underline}
 body.crm .crumbbar .crumbroot::after{content:"/";display:inline-block;margin:0 .25rem 0 .45rem;color:var(--thead)}
 body.crm .crumbbar .crumbs ol{margin:0;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--thead)}
 body.crm .crumbbar .crumbs a{color:var(--thead);text-decoration:none}
-body.crm .crumbbar .crumbs a:hover{color:var(--navy);text-decoration:underline}
+body.crm .crumbbar .crumbs a:hover{color:var(--ink);text-decoration:underline}
 body.crm .crumbbar .crumbs li+li::before{content:"/";color:var(--thead);margin:0 .45rem 0 .25rem}
-body.crm .crumbbar .crumbs [aria-current="page"]{color:var(--navy);font-weight:700}
+body.crm .crumbbar .crumbs [aria-current="page"]{color:var(--ink);font-weight:700}
 body.crm .crumbbar .dash-tabs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;border:0;margin:0}
 body.crm .crumbbar .dash-tabs::before{content:"Home shows";color:var(--thead);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:0 .25rem 0 .4rem}
-body.crm .crumbbar .dash-tab{padding:.25rem .65rem;border:1px solid var(--rule);border-radius:999px;margin:0;font-size:13px;color:var(--navy);background:var(--white)}
+body.crm .crumbbar .dash-tab{padding:.25rem .65rem;border:1px solid var(--rule);border-radius:999px;margin:0;font-size:13px;color:var(--ink);background:var(--white)}
 body.crm .crumbbar .dash-tab:hover{background:var(--page)}
-body.crm .crumbbar .dash-tab[aria-current="page"]{background:var(--navy);border-color:var(--navy);color:var(--white)}
+body.crm .crumbbar .dash-tab[aria-current="page"]{background:var(--mint);border-color:var(--mint);color:var(--ink)}
 body.crm .crumbbar .util{display:flex;align-items:center;gap:.75rem;margin-left:auto;flex-wrap:wrap}
 body.crm .crumbbar .gsearch{display:flex;order:0}
 body.crm .crumbbar .gsearch input{width:12rem;max-width:40vw;border-color:var(--rule);background:var(--page);color:var(--ink)}
 body.crm .crumbbar .gsearch input::placeholder{color:var(--thead)}
-body.crm .crumbbar .gsearch button[type="submit"]:not(.linkish):not(.opt){background:var(--navy);border-color:var(--navy);color:var(--white)}
-body.crm .crumbbar .helplink{display:inline;color:var(--navy);font-size:15px;padding:0;text-decoration:none}
+body.crm .crumbbar .gsearch button[type="submit"]:not(.linkish):not(.opt){background:var(--mint);border-color:var(--mint);color:var(--ink)}
+body.crm .crumbbar .helplink{display:inline;color:var(--ink);font-size:15px;font-weight:600;line-height:1;padding:0;margin:0;align-self:center;text-decoration:none}
 body.crm .crumbbar .helplink:hover{text-decoration:underline}
 body.crm .crumbbar .usermenu{display:block}
-body.crm .crumbbar .usermenu summary,body.crm .crumbbar .usermenu summary::after{color:var(--navy)}
-body.crm .crumbbar .avatar{background:var(--rule);color:var(--navy);font-size:14px}
+body.crm .crumbbar .usermenu summary,body.crm .crumbbar .usermenu summary::after{color:var(--ink);text-decoration:none}
+body.crm .crumbbar .usermenu summary{padding:0 .2rem;min-height:2.25rem;font-size:15px}
+body.crm .crumbbar .usermenu .uname{text-decoration:none}
+body.crm .menu-pop .who{font-weight:700;line-height:1.35;margin:.3rem .6rem .45rem}
+body.crm .menu-pop .who .help{font-weight:400;font-size:14px;color:var(--body)}
+body.crm .menu-pop form{display:block;margin:0}
+body.crm .menu-pop form>button,body.crm .menu-pop .linkish{margin:0;font-size:16px}
+body.crm .crumbbar .avatar{background:var(--mint);color:var(--ink);font-size:14px}
 body.crm .crumbbar .menu-pop{top:calc(100% + .3rem);bottom:auto;right:0;left:auto}
 
 /* THE PAGE — a title in the body type, a line under it, its main button to the right; white cards. */
-body.crm main h1,body.crm main h2,body.crm main h3,body.crm main h4,body.crm main .card-h,body.crm main .pnum,body.crm main legend,body.crm main .stat,body.crm main .figbig,body.crm main .kpi .kpi-value{font-family:${BODY_STACK}}
-body.crm main h1{font-size:28px;font-weight:700;color:var(--navy);margin:.3rem 0 .35rem}
-body.crm main h2{font-size:22px;color:var(--navy)}
-body.crm main h3{font-size:18px;color:var(--navy)}
+body.crm main h1,body.crm main h2,body.crm main h3,body.crm main h4,body.crm main .card-h,body.crm main .pnum,body.crm main legend{font-family:${HEADING_STACK}}
+/* Figures stay in the body type: the heading type draws old-style numerals, where 0 reads as a letter o. */
+body.crm main .stat,body.crm main .figbig,body.crm main .kpi .kpi-value,body.crm main .dash-num{font-family:${BODY_STACK};font-variant-numeric:lining-nums tabular-nums}
+body.crm main h1{font-size:30px;font-weight:700;line-height:1.2;color:var(--ink);margin:.3rem 0 .4rem}
+body.crm main h2{font-size:24px;line-height:1.25;color:var(--ink)}
+body.crm main h3{font-size:20px;line-height:1.3;color:var(--ink)}
 body.crm main h1+p,body.crm main .pagehead+p{color:var(--body);font-size:15px;margin-top:0}
 body.crm main .pagehead{align-items:center;margin:0 0 1.1rem}
-body.crm main .card,body.crm main .pblock,body.crm main .assumebox,body.crm main .tile,body.crm main .cnext,body.crm main .clookups,body.crm main .tablewrap,body.crm main .convo-write,body.crm main .convo-chain,body.crm main .dash-stat a{background:var(--white);border:1px solid var(--rule);border-radius:12px;box-shadow:0 1px 3px rgba(23,35,59,.06)}
+body.crm main .card,body.crm main .pblock,body.crm main .assumebox,body.crm main .tile,body.crm main .cnext,body.crm main .clookups,body.crm main .tablewrap,body.crm main .convo-write,body.crm main .convo-chain,body.crm main .dash-stat a{background:var(--white);border:1px solid var(--rule);border-radius:12px;box-shadow:0 1px 3px rgba(18,22,20,.06)}
 body.crm main .cnext{border:2px solid var(--mint)}
 body.crm main .tile{border-top:4px solid var(--mint)}
-body.crm main .card-h,body.crm main .pnum{font-size:17px;font-weight:700;color:var(--navy);border-bottom-color:var(--rule)}
-body.crm main .card-h a{color:var(--navy)}
-body.crm main .dash-stat a:hover{border-color:var(--navy)}
-body.crm main .dash-num{color:var(--navy);font-family:${BODY_STACK};font-size:32px}
+body.crm main .card-h,body.crm main .pnum{font-size:20px;font-weight:700;color:var(--ink);border-bottom-color:var(--rule)}
+body.crm main .card-h a{color:var(--ink)}
+body.crm main .dash-stat a:hover{border-color:var(--mint)}
+body.crm main .dash-num{color:var(--ink);font-size:32px}
 body.crm main .kpi{border-radius:12px}
-body.crm main .kpi.k-total{background:var(--navy)}
-body.crm main .kpi.k-plain{border-color:var(--rule);color:var(--navy);box-shadow:0 1px 3px rgba(23,35,59,.06)}
+body.crm main .kpi.k-total{background:var(--side)}
+body.crm main .kpi.k-plain{border-color:var(--rule);color:var(--ink);box-shadow:0 1px 3px rgba(18,22,20,.06)}
 body.crm main .kpi.k-plain .kpi-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--thead);font-weight:700}
 body.crm main .dash-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--thead);font-weight:700}
 
@@ -1561,19 +1585,19 @@ body.crm main td{border-bottom:1px solid var(--rule)}
 body.crm main tbody tr:hover td{background:var(--zebra)}
 
 /* STATUS LABELS — pills: green done, amber in progress or waiting, red a stop, blue new or information. */
-body.crm .badge{padding:.12rem .6rem;border-radius:6px;font-size:13px;font-weight:700;border:1px solid transparent;background:var(--page);color:var(--navy)}
+body.crm .badge{padding:.12rem .6rem;border-radius:6px;font-size:13px;font-weight:700;border:1px solid transparent;background:var(--page);color:var(--ink)}
 body.crm .badge.b-ok{background:var(--okbg);color:var(--ok);border-color:transparent}
 body.crm .badge.b-warn{background:var(--warnbg);color:var(--warn);border-color:transparent}
 body.crm .badge.b-stop{background:var(--stopbg);color:var(--stop);border-color:transparent}
 body.crm .badge.b-info{background:var(--g-win-bg);color:var(--g-win-ink);border-color:transparent}
 body.crm .badge.b-late{background:var(--stop);color:var(--white)}
 
-/* BUTTONS — the main one navy with white words; the quiet ones white with a border. */
-body.crm main button,body.crm main .btn{border-color:var(--rule);color:var(--navy);border-radius:.5rem}
+/* BUTTONS — the main one the home page's mint pill with ink words (Phase 160c); the quiet ones white with a border. */
+body.crm main button,body.crm main .btn{border-color:var(--rule);color:var(--ink);border-radius:999px}
 body.crm main button:hover,body.crm main .btn:hover{background:var(--page)}
-body.crm .cta,body.crm .btn-primary,body.crm main .cta,body.crm main .btn-primary,body.crm main button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet){background:var(--navy);border-color:var(--navy);color:var(--white)}
-body.crm .cta:hover,body.crm .btn-primary:hover,body.crm main .cta:hover,body.crm main .btn-primary:hover,body.crm main button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet):hover{background:var(--navy-2);border-color:var(--navy-2);color:var(--white)}
-body.crm main .btn-quiet{background:var(--white);color:var(--navy);border-color:var(--rule)}
+body.crm .cta,body.crm .btn-primary,body.crm main .cta,body.crm main .btn-primary,body.crm main button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet){background:var(--mint);border-color:var(--mint);color:var(--ink)}
+body.crm .cta:hover,body.crm .btn-primary:hover,body.crm main .cta:hover,body.crm main .btn-primary:hover,body.crm main button[type="submit"]:not(.linkish):not(.opt):not(.btn-quiet):hover{background:#c4f3e3;border-color:#c4f3e3;color:var(--ink)}
+body.crm main .btn-quiet{background:var(--white);color:var(--ink);border-color:var(--rule)}
 body.crm main .linkish{border:0;color:var(--accent)}
 
 @media (min-width:900px){
@@ -1583,10 +1607,10 @@ body.crm main .linkish{border:0;color:var(--accent)}
   body.crm>main{grid-row:2}
   body.crm>footer{grid-column:2;grid-row:3}
   body.crm .topline{gap:.2rem;padding:1.4rem .8rem}
-  body.crm .topline>.brand{padding:0 .6rem .9rem;margin-bottom:.4rem;border-bottom:1px solid var(--navy-2)}
+  body.crm .topline>.brandmark{padding:0 .5rem 1rem;margin-bottom:.5rem;border-bottom:1px solid var(--side-2)}
 }
 @media (max-width:899.98px){
-  body.crm .navbutton{border-color:var(--navy-mute)}
+  body.crm .navbutton{border-color:var(--side-mute);color:var(--ivory)}
   body.crm .crumbbar{padding:.5rem .75rem}
   body.crm .crumbbar .util{display:contents}
   body.crm .crumbbar .crumbs{flex:1 1 15rem;min-width:0}
