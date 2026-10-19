@@ -13249,3 +13249,29 @@ NOTHING LEFT  beyond that line. 4B: the build queue is empty (0 at Ready - Claud
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160c — the home page's branding, the text tidied, and no em dashes on screen — 19 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 160c, 19 Oct 2026: the back office and the client portal now wear the home page's branding. The menu down the left is the home page's near-black with ivory words and its calculator-house mark and CAP REBATE wordmark; the page you are on and every main button are mint pills with dark words, like "Am I eligible?"; headings use the brand's serif type. The working pages stay light so long tables read easily. The text is tidied: Help sits level with your name, your name is not underlined, and the account menu reads cleanly. And no screen shows a long dash any more: each becomes a colon, a comma, or "None" in an empty cell. Emails, the letter, reports, PDFs, text the system stores and export column names still carry some: they are Phase 160d. 5,172 checks pass (the back end 2,888, fourteen new). Branch claude/phase-160c; the pull request is Lakhbir's to merge.
+
+- **Claim.** hub/CLAIM.md and a new board item, 13326137544 (Working on it, Lakhbirs-MacBook-Pro), pushed first (`9c29f30`), with the phase in ACTION-PLAN.md above the sweep and on the run sheet, on Lakhbir's instruction with a screenshot of the portal on the test website ("polish the back end up, the text format looks all wrong and remove the — AI uses ensure our branding from the home page matches the back end").
+- **Premise re-derived (step 8).** Phase 160a's navy came from the design PDF; the home page's own branding is its ink ground (#121614), ivory type (#EDEAE2), Cap Mint pills with ink words, Bookman Old Style / Roboto Slab headings and its mark and spaced-capitals wordmark (read from the running home page). The screenshot's faults were real: Help pushed down by UI tidy phase 2's `margin-top:auto`, the name underlined by the `details>summary` rule, the role bold inside the bold name line, and `form>button`'s margin above Sign out. About 1,300 long dashes sat in the screens' strings and more in stored names ("Company — main site").
+- **Built.** (1) The branding: the shared block recoloured to the home page's tokens (`side`, `side-2`, `side-mute`, `ivory`; the navy tokens and pairings removed), mint pills for the current page and main buttons, the brand's heading type for headings and card titles, figures kept in the body type with lining numerals (the heading type's old-style 0 read as an o; found by looking), the home page's mark and wordmark, still, at the top of both menus ("Back office" / "Client portal" under the name). (2) The text: Help level, the name plain, the role in normal weight, Sign out spaced like the rest. (3) No em dashes on screen: `src/web/plain-dashes.ts`, run by `page()` over every page it draws; a colon by default, a comma before a joining word or a number, after a colon or around an aside, "None" for a dash that is all a cell holds; a leading dash's mark pulled against the word before (found by looking: "Tax return : a document"); never inside script, style, a text box, pre or code, nor in value, name or href. A first "short ending takes a comma" rule was dropped the same day: it read one name two ways.
+- **Kept on purpose.** The working pages stay light, not the home page's dark ground: long tables and forms read better on light. The emails, the letter, reports, PDFs (versioned and signed), stored generated text and export column names are left for Phase 160d.
+- **Looked at** in the demo as the client and as Admin, desktop and phone. Screenshots 01-05 in `04-phase-work/phase160c/`.
+- **Tests.** `test/phase160c.test.ts`, fourteen tests, including a crawl of up to sixty pages from each of six logins' homes with no long dash in the words the rule changes; the code was broken on purpose eight ways and each was caught. Thirty-seven older test files restated: 56 assertions that pinned a long dash in a page's words rewritten by the same rule, 12 that compared a page with a value from the data now pass it through the rule; Phase 160a's, 160b's and 133c's brand checks restated for the mark and the ink.
+- **Carried.** New Phase 160d (board 13326319070, Ready - Claude can build), in the plan above the sweep and on the run sheet.
+- **The checks, at the close:** site 1,427 pass (3 xfail); phase3 440; phase9 417 (none of the three touched); back end 2,888 pass / 0 fail over 182 tracked files, run in full on the Mac; **5,172** in all; the drift checker (fast, on those figures) finds nothing stale. CRM fold check green. Plain words green. Analytics allow-list green. Register check green. Tracker check green. Typecheck and SQL lint green. The in-app Help matches the guide.
+
+```
+DONE          the home page's branding in the back office and the portal (ink menu, ivory words, mint pills, the
+              brand's type, its mark and wordmark); Help level, the name plain, the account menu tidy; no long dash
+              on any screen page() draws. test/phase160c.test.ts (14); 37 test files restated. 5,172 checks; all
+              green. Looked at as the client and Admin, desktop and phone.
+NOT DONE      Long dashes in the emails, the letter, reports and PDFs going forward, text the system writes and
+                stores, and export column names - BUILDABLE - new Phase 160d, written and inserted before the sweep.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phase 160d, which a phase covers; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.

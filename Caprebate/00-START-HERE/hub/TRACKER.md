@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 331 |
-| Working on it | 1 |
+| Done | 332 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-35 items.
+34 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,12 +1434,6 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160c - The back office and portal in the home page's branding, the text tidied, and no em dashes on screen (19 Oct 2026)
-
-`13326137544` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-19 (Phase 160c): Written and claimed 19 Oct 2026 on Lakhbir's instruction after looking at the portal on the test website ("polish the back end up, the text format looks all wrong and remove the — AI uses ensure our branding from the home page matches the back end"). Created on monday in group 05.
-
 ### Phase 160d - No em dashes in the emails, the letter and reports going forward, the text the system writes and stores, and export column names (carried from 160c)
 
 `13326319070` · **Ready - Claude can build** · owner Claude
@@ -1450,7 +1444,7 @@
 
 ## Z · Complete / Not Applicable
 
-331 items.
+332 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3437,4 +3431,11 @@
 
 - Note 2026-10-19 (Phase 160b): Written and claimed 19 Oct 2026 on Lakhbir's answer to Phase 160a's closing question ("write up a phase to give the client portal the same look, and build it in test"). Branched from claude/phase-160a while PR 56 is open; the pull request goes against main. Created on monday in group 05.
 - Note 2026-10-19 (Phase 160b): Done 19 Oct 2026: the client portal in the same look as the back office (navy menu with the logo and icons, a top bar with where the client is, Help and their name; no search); the client's two screens and rights unchanged; test/phase160b.test.ts (8); the in-app Help rebuilt from the guide; branch claude/phase-160b, the pull request Lakhbir's to merge after PR 56. Record in PHASE-HISTORY. Done on monday and moved to group Z.
+
+### Phase 160c - The back office and portal in the home page's branding, the text tidied, and no em dashes on screen (19 Oct 2026)
+
+`13326137544` · **Done** · owner Claude
+
+- Note 2026-10-19 (Phase 160c): Written and claimed 19 Oct 2026 on Lakhbir's instruction after looking at the portal on the test website ("polish the back end up, the text format looks all wrong and remove the — AI uses ensure our branding from the home page matches the back end"). Created on monday in group 05.
+- Note 2026-10-19 (Phase 160c): Done 19 Oct 2026: the home page's branding in the back office and the portal (ink menu, ivory words, mint pills, the brand's type, its mark and wordmark), the text tidied, no long dash on any screen page() draws (src/web/plain-dashes.ts); test/phase160c.test.ts (14), 37 test files restated; emails, letter, reports, PDFs, stored text and export headers carried to Phase 160d (13326319070). Record in PHASE-HISTORY. Done on monday and moved to group Z.
 
