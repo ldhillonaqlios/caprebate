@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 329 |
-| Working on it | 1 |
+| Done | 330 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160a - The back office in the sidebar layout Lakhbir chose (19 Oct 2026): left sidebar, breadcrumbs, page header, cards and status labels; each login keeps its own menu
-
-`13324776229` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-19 (Phase 160a): Written and claimed 19 Oct 2026 on Lakhbir's instruction ("write the restyle up as the next Caprebate phase: left sidebar, cards, breadcrumbs and status labels, keeping each login's menu. Build it in test"), from the Cap Rebate Simple CRM design PDF he supplied. Created on monday in group 05.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-329 items.
+330 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3417,4 +3411,11 @@
 
 - Note 2026-10-10 (Phase 160): Claimed: the sweep after Phases 159a to 159l, with the two jobs Phase 159l carried in (INSPIRE end to end; a filing per return on the staff route). Created on monday in group 05.
 - Note 2026-10-10 (Phase 160): Done: 513 of 513 board items agree with the tracker; every check re-run (5,132 checks); the BCIS licence opened on BCIS's own answer and every live line holding question 218 open corrected; a duplicate BCIS item closed into 13254356802; job B built (migration 116, test/phase160.test.ts); job A rehomed to 12830205914; the sweep renumbered to 161; record in PHASE-HISTORY.md; moved to group Z on monday
+
+### Phase 160a - The back office in the sidebar layout Lakhbir chose (19 Oct 2026): left sidebar, breadcrumbs, page header, cards and status labels; each login keeps its own menu
+
+`13324776229` · **Done** · owner Claude
+
+- Note 2026-10-19 (Phase 160a): Written and claimed 19 Oct 2026 on Lakhbir's instruction ("write the restyle up as the next Caprebate phase: left sidebar, cards, breadcrumbs and status labels, keeping each login's menu. Build it in test"), from the Cap Rebate Simple CRM design PDF he supplied. Created on monday in group 05.
+- Note 2026-10-19 (Phase 160a): Done 19 Oct 2026: the back office in the sidebar layout (navy menu with icons, a top bar with where you are, the search, Help and the user menu, white cards, grey table headings, coloured labels); staff only, no gate changed; test/phase160a.test.ts (18); branch claude/phase-160a, the pull request Lakhbir's to merge. Record in PHASE-HISTORY. Done on monday and moved to group Z.
 
