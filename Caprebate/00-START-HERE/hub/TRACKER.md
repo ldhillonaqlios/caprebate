@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 332 |
-| Working on it | 1 |
+| Done | 333 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160d - No em dashes in the emails, the letter and reports going forward, the text the system writes and stores, and export column names (carried from 160c)
-
-`13326319070` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-19 (Phase 160c): Written by Phase 160c for what it left on purpose: the emails, the letter, reports and PDFs (versioned and signed: only new versions, and only words nobody has signed off), text the system writes and stores, and export column names. In ACTION-PLAN.md above the sweep and on the run sheet. Created on monday in group 05.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-332 items.
+333 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3438,4 +3432,11 @@
 
 - Note 2026-10-19 (Phase 160c): Written and claimed 19 Oct 2026 on Lakhbir's instruction after looking at the portal on the test website ("polish the back end up, the text format looks all wrong and remove the — AI uses ensure our branding from the home page matches the back end"). Created on monday in group 05.
 - Note 2026-10-19 (Phase 160c): Done 19 Oct 2026: the home page's branding in the back office and the portal (ink menu, ivory words, mint pills, the brand's type, its mark and wordmark), the text tidied, no long dash on any screen page() draws (src/web/plain-dashes.ts); test/phase160c.test.ts (14), 37 test files restated; emails, letter, reports, PDFs, stored text and export headers carried to Phase 160d (13326319070). Record in PHASE-HISTORY. Done on monday and moved to group Z.
+
+### Phase 160d - No em dashes in the emails, the letter and reports going forward, the text the system writes and stores, and export column names (carried from 160c)
+
+`13326319070` · **Done** · owner Claude
+
+- Note 2026-10-19 (Phase 160c): Written by Phase 160c for what it left on purpose: the emails, the letter, reports and PDFs (versioned and signed: only new versions, and only words nobody has signed off), text the system writes and stores, and export column names. In ACTION-PLAN.md above the sweep and on the run sheet. Created on monday in group 05.
+- Note 2026-10-19 (Phase 160d): Done 19 Oct 2026: no long dashes in every email but a staff member's own, the letter drawn for signing (the Word document unchanged, the solicitor asked at SDP-L3), survey reports approved from now on (older versions drawn as made), generated task titles, the export column, the calendar file and the seeded template (migration 117); test/phase160d.test.ts (10) and two report tests. Record in PHASE-HISTORY. Done on monday and moved to group Z.
 

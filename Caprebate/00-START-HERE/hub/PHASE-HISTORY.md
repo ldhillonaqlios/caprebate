@@ -13275,3 +13275,30 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phase 160d, whi
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160d — no em dashes in the emails, the letter and reports going forward, the text the system writes, and the export — 19 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 160d, 19 Oct 2026: the long dash is gone from what Cap Rebate sends and keeps from now on. Every email we write loses it on its way out (an email a member of staff types keeps their own words). The engagement letter a client signs now reads exactly as it does on screen, without long dashes; the Word document itself is unchanged, and the solicitor is asked to confirm or change it. A survey report approved from now on has none, in its PDF and on screen; a report approved before is drawn exactly as it was made, so nothing already approved or signed off changes. Task titles the system writes, the claims export's column name, the video call's calendar entry and the seeded email template are fixed too. 5,184 checks pass (the back end 2,900). Branch claude/phase-160d; the pull request is Lakhbir's to merge.
+
+- **Claim.** hub/CLAIM.md, board item 13326319070 to Working on it (Lakhbirs-MacBook-Pro), pushed first (`d1ed667`). Branch `claude/phase-160d` from main after PR 58 merged.
+- **Premise re-derived (step 8).** The brief said to rewrite the emails' strings by hand. Every email goes through one writer (`outboxTransport`), which also carries the templates Admin edits in the database; doing it there reaches every email and every future one, so that is how it was done. Only two real PDFs exist: the signed letter (stored as bytes at signing, never redrawn) and the survey report (drawn again from its version every time it is opened). No professional has signed off either's wording (SDP-L3, ACC-C1, SV-S4 awaiting review), and no hash binds rendered words. Found in passing: since Phase 160c the letter on screen had no long dashes while the PDF made at signing still had them; this phase makes them agree.
+- **Built.** Emails (all kinds but FREE_TYPED; subject and body, line by line). The letter (`loadLetter` draws the paragraphs plainly; the test-copy mark and specimens read from the raw words; the clause label kept as a code key). The report (`words: 'plain'` on versions approved from now on; `plainStrings` over the model, `plainCanvas` over the PDF's own written words; older versions marked `data-as-made` on screen and left alone by the page rule, nesting counted; a lone dash for an empty value reads "None"). Generated task titles and the "Ask for" reasons (the Disposal Note task's old title still matched, so no second task). `companyFirst` with a colon. Migration 117 (the seeded template subject, only if still as migration 032 left it). The export column. The calendar file. Two fold-check line references in the spec moved (the second fixed in a follow-up commit: the first close commit went in before the check was read, which is noted here).
+- **Told.** FOR THE SOLICITOR: a dated note at the end, on SDP-L3, asking the solicitor to confirm the punctuation or change the Word document; no entry added, no status changed.
+- **Kept on purpose.** What is already stored stays as it was: emails in the outbox, signed letters, report versions approved before today, tasks already raised. `pdf.ts` still maps "—" for the Word document's dashes.
+- **Tests.** `test/phase160d.test.ts` (ten) and two in `test/survey-report.test.ts`; the code broken on purpose eight ways (emails keep dashes, staff-typed changed, the letter keeps dashes, the old Disposal title lost, new versions not marked, an older version not shielded, the new PDF's written words, the new model) and each caught. Restated: automation, email-sending (a plain-ASCII subject is not encoded), video-calls, engaged, lists, phase134, phase142a, phase153d.
+- **The checks, at the close:** site 1,427 pass (3 xfail); phase3 440; phase9 417; back end 2,900 pass / 0 fail over 183 tracked files; **5,184** in all, re-derived by the drift checker's full run (exit 0, nothing stale). CRM fold check green (after the line-reference fix). Plain words green. Analytics allow-list green. Register check green. Tracker check green. Typecheck and SQL lint green. The in-app Help matches the guide.
+- **Board and tracker.** 13326319070 Done, moved to group Z, claim cleared, on monday and in the tracker (with a note). The run sheet: the phase's four blocks deleted, its entry added at the end. ACTION-PLAN.md: the phase's section deleted.
+
+```
+DONE          no long dash in: every email we write (staff's own typed emails excepted), the letter as signed from
+              now on, survey reports approved from now on (PDF and screen), generated task titles and reasons, the
+              export's column, the calendar file, the seeded template. Older approved reports and anything already
+              stored kept exactly as made. The solicitor asked about the letter's punctuation (SDP-L3 note).
+              test/phase160d.test.ts (10), two report tests, nine test files restated. 5,184 checks; all green.
+NOT DONE      The Word document of the letter still has its long dashes - the solicitor's to confirm or change
+                (note at SDP-L3, FOR THE SOLICITOR); the signed copy follows whatever the document says.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue is empty (0 at Ready - Claude can build); no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.
