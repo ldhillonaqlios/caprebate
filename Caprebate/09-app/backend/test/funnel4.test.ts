@@ -210,8 +210,8 @@ describe('stage 3 and the figure', () => {
     const fig = (await c.req('/assessment/figure')).body;
     assert.match(fig, /<span class="vh">£1,050,000<\/span>/);
     assert.match(fig, /<span class="f4-reel f4-r1 f4-p0">/);
-    assert.match(fig, /Building 1 · Care home — 1 Invented Street, Hinckley, LE10 1DA<\/p>\s*<p class="f4-part-figure">up to £600,000/);
-    assert.match(fig, /Building 2 · Dental practice — 2 Made Up Road, Leicester, LE1 1AA<\/p>\s*<p class="f4-part-figure">up to £450,000/);
+    assert.match(fig, /Building 1 · Care home, 1 Invented Street, Hinckley, LE10 1DA<\/p>\s*<p class="f4-part-figure">up to £600,000/);
+    assert.match(fig, /Building 2 · Dental practice, 2 Made Up Road, Leicester, LE1 1AA<\/p>\s*<p class="f4-part-figure">up to £450,000/);
     assert.match(fig, /Building 1 · Care home: .*loss|Building 1 · Care home/);
     for (const w of ['First name', 'Surname', 'Your position in the business', 'Telephone', 'Video call', 'Email', '1\\. Choose a date', '2\\. Choose a time']) assert.match(fig, new RegExp(w));
     assert.doesNotMatch(fig, /<script/);
@@ -287,7 +287,7 @@ describe('how to reach you, and what is written', () => {
     const who = { first_name: 'Ada', surname: 'Invented', job_role: 'owner_director', channel: 'phone', phone: '01632 960000', contact_consent: 'on' };
     const hidden = await c.post('/assessment/close', { ...who, day: days[1]!, slot: later[0]! });
     assert.equal(hidden.status, 400);
-    assert.match(hidden.body, /Choose a time on [A-Z][a-z]+day \d{1,2} [A-Z][a-z]+ — the time you had chosen is on /);
+    assert.match(hidden.body, /Choose a time on [A-Z][a-z]+day \d{1,2} [A-Z][a-z]+: the time you had chosen is on /);
     assert.match(hidden.body, new RegExp(`name="day" value="${days[1]}" checked`), 'the date they were looking at stays chosen');
     const none = await c.post('/assessment/close', { ...who, day: days[2]! });
     assert.equal(none.status, 400);
@@ -308,7 +308,7 @@ describe('how to reach you, and what is written', () => {
     assert.ok(slot, 'no time was offered');
     const sent = await c.post('/assessment/close', { first_name: 'Ada', surname: 'Invented', job_role: 'owner_director', channel: 'video', email: 'ada.f4@example.invalid', slot, contact_consent: 'on' });
     assert.equal(sent.status, 200, sent.body.slice(0, 300));
-    assert.match(sent.body, /Thank you — that is with us\./);
+    assert.match(sent.body, /Thank you: that is with us\./);
     // 30 Sep live check: the page says the figure as it was shown ("up to"), never a range the person did not see.
     assert.match(sent.body, /The figure you were shown: <strong>up to £1,050,000<\/strong>/);
     assert.doesNotMatch(sent.body, /The range you were shown/);
@@ -534,13 +534,13 @@ describe('"Find my address" (Homedata)', () => {
       assert.match(page, /value="none"> My address is not in the list/);
       const next = await c.post('/assessment/details', { ...DETAILS, b0_line1: '', b0_town: '', b0_address_pick: '100090000003' });
       assert.equal(next.location, '/assessment/figure', next.body.slice(0, 300));
-      assert.match((await c.req('/assessment/figure')).body, /Building 1 · Care home — 3 Invented Street, Hinckley, LE10 1DA/);
+      assert.match((await c.req('/assessment/figure')).body, /Building 1 · Care home, 3 Invented Street, Hinckley, LE10 1DA/);
       // "Not in the list": what they typed stands.
       const c2 = client();
       await toDetails(c2);
       await c2.post('/assessment/details', { ...DETAILS, find: 'address:0' });
       await c2.post('/assessment/details', { ...DETAILS, b0_line1: '9 Typed Road', b0_address_pick: 'none' });
-      assert.match((await c2.req('/assessment/figure')).body, /Building 1 · Care home — 9 Typed Road, Hinckley, LE10 1DA/);
+      assert.match((await c2.req('/assessment/figure')).body, /Building 1 · Care home, 9 Typed Road, Hinckley, LE10 1DA/);
     } finally { made.app.outside = was.outside; made.app.secrets = was.secrets; }
   });
 });

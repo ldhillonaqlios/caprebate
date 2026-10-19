@@ -66,7 +66,7 @@ describe('phase 144 · the property page’s tab title names the company once, t
     const title = /<title>([\s\S]*?)<\/title>/.exec(r.body)?.[1] ?? '';
     assert.notEqual(title, '', 'the page has no <title>');
     assert.equal(count(title, p.company), 1, `the tab names the company ${count(title, p.company)} times: ${title}`);
-    assert.ok(title.startsWith(`${p.company} — main site`), `the tab does not read "company — property": ${title}`);
+    assert.ok(title.startsWith(`${p.company}: main site`), `the tab does not read "company: property": ${title}`);
   });
 
   test('a property whose name does not start with the company keeps its whole name after the company', async () => {
@@ -81,6 +81,6 @@ describe('phase 144 · the property page’s tab title names the company once, t
     assert.equal(r.status, 200);
     const title = /<title>([\s\S]*?)<\/title>/.exec(r.body)?.[1] ?? '';
     assert.equal(count(title, p.company), 1, title);
-    assert.ok(title.startsWith(`${p.company} — Riverside annexe`), title);
+    assert.ok(title.startsWith(`${p.company}: Riverside annexe`), title);
   });
 });

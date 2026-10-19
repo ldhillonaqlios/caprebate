@@ -369,8 +369,8 @@ describe('panel 1 — questions and answers', () => {
       asAnOldRecordWithTheEntitySkipped(h.app, business_id);
       const staff = await h.signIn('SALES');
       const page = await staff.req(`/staff/clients/${business_id}`);
-      assert.match(page.body, /I don’t know — the client said so/);
-      assert.match(page.body, /Not answered — this question was skipped/);
+      assert.match(page.body, /I don’t know: the client said so/);
+      assert.match(page.body, /Not answered: this question was skipped/);
       // No cell in the answers table is empty.
       assert.equal(/<td><\/td>/.test(page.body), false, 'an empty cell reached the page');
     } finally { h.close(); }
@@ -996,7 +996,7 @@ describe('panel 4 — tasks, and the two ways to clear one', () => {
       assert.equal(row?.answer_state, 'DONT_KNOW');
       assert.equal(row?.answer, null, '“I don’t know” was stored as a value');
       const page = await staff.req(`/staff/clients/${business_id}`);
-      assert.match(page.body, /I don’t know — the client said so/);
+      assert.match(page.body, /I don’t know: the client said so/);
     } finally { h.close(); }
   });
 
@@ -1278,7 +1278,7 @@ describe('panel 4 — withdrawing a question asked in error', () => {
       const id = await askOne(h, staff, business_id);
       const before = await staff.req(`/staff/clients/${business_id}`);
       assert.match(before.body, /tasks\/withdraw/, 'panel 4 draws no withdrawal control');
-      assert.match(before.body, /Withdraw — asked in error/);
+      assert.match(before.body, /Withdraw: asked in error/);
 
       const done = await staff.post(`/staff/clients/${business_id}/tasks/withdraw`, { task_id: id });
       assert.equal(done.status, 303);

@@ -11,6 +11,7 @@ import { dueReading } from '../src/web/localtime.ts';
 import { propertyIn } from '../src/web/components.ts';
 import { stageGroupOf } from '../src/web/look.ts';
 import { SITE_CSS } from '../src/web/assets.ts';
+import { plainDashText } from '../src/web/plain-dashes.ts';
 
 let H: Harness;
 let dun = '';
@@ -52,10 +53,10 @@ describe('UI tidy phase 7: the top of a client’s page', () => {
       const g = stageGroupOf(c.stage_key);
       assert.match(box, new RegExp(`<p class="band g-${g?.key ?? 'none'}">Claim ${i + 1} of ${o.claims.length} · ${c.stage}</p>`), c.claim_ref);
       const site = propertyIn(o.trading_name, c.property) ?? '';
-      assert.ok(box.includes(`<h2 class="claimbox-site"><a href="/staff/clients/${dun}/claims/${c.id}">${site}</a></h2>`), c.claim_ref);
+      assert.ok(box.includes(`<h2 class="claimbox-site"><a href="/staff/clients/${dun}/claims/${c.id}">${plainDashText(site)}</a></h2>`), c.claim_ref);
       assert.ok(box.includes(`<p class="help"><span class="claimref">${c.claim_ref}</span>`), c.claim_ref);
       assert.doesNotMatch(box, new RegExp(`<a [^>]*>[^<]*${c.claim_ref}`), 'a claim number is the words of a link');
-      assert.ok(box.includes(`<p class="nextbox-t">${(c.next_action ?? 'No next step yet — open the claim to set one').replace(/&/g, '&amp;')}</p>`), c.claim_ref);
+      assert.ok(box.includes(`<p class="nextbox-t">${plainDashText((c.next_action ?? 'No next step yet: open the claim to set one').replace(/&/g, '&amp;'))}</p>`), c.claim_ref);
       const late = c.next_action !== null && dueReading(c.next_action_due, H.made.app.now()).overdue;
       assert.equal(/class="badge b-late">\d+ days? late</.test(box), late, c.claim_ref);
       assert.match(box, new RegExp(`<a class="btn" href="/staff/clients/${dun}/claims/${c.id}">Open the claim</a>`));

@@ -43,7 +43,7 @@ describe('UI tidy phase 16: the portal’s header and menu', () => {
     const body = await portal();
     const at = (id: string): number => body.indexOf(`id="${id}"`);
     assert.ok(at('documents') < at('contact-us') && at('contact-us') < at('account'));
-    assert.match(body, /<h2>How to contact us<\/h2><\/div>\s*<p>Write to us under <a href="\/portal\/messages">Messages<\/a> — you can send a file there too/);
+    assert.match(body, /<h2>How to contact us<\/h2><\/div>\s*<p>Write to us under <a href="\/portal\/messages">Messages<\/a>: you can send a file there too/);
   });
 });
 
@@ -53,7 +53,7 @@ describe('UI tidy phase 16: what we need from you, said once', () => {
     // PHASE 158d (F43): the seed's client has a claim at Data gathering with no tax papers in, so the card lists what that
     // step waits on from them, though nobody has asked; the lists of questions and requests are still not drawn.
     const waiting = /<section class="pdash-card" id="waiting-on-you"[\s\S]*?<\/section>/.exec(body)?.[0] ?? '';
-    assert.match(waiting, /Tax return <span class="help">— a document we need<\/span>/);
+    assert.match(waiting, /Tax return<span class="help">: a document we need<\/span>/);
     assert.doesNotMatch(waiting, /— a question|#request-/);
     assert.doesNotMatch(body, /Questions we still need answered|Documents we have asked you for/);
     assert.doesNotMatch(body, /<section class="pdash-card" id="(next-call|new-for-you)"[^>]*>(?:(?!<\/section>)[\s\S])*Send us a message/);

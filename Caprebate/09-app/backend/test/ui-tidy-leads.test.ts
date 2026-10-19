@@ -25,7 +25,7 @@ describe('UI tidy phase 5: the top of Leads', () => {
     for (const v of Object.values(n)) assert.ok(Number.isFinite(v));
     assert.match(body, new RegExp(`<h1>Leads</h1><p class="lede">${n.new} new · ${n.going} in progress · ${n.later} for later · ${n.closed} closed</p>`));
     assert.deepEqual(kpis(body), [
-      ['#leads-new', 'New — not called yet', String(n.new)], ['#leads-going', 'In progress', String(n.going)],
+      ['#leads-new', 'New, not called yet', String(n.new)], ['#leads-going', 'In progress', String(n.going)],
       ['#leads-later', 'Saved for later', String(n.later)], ['#leads-closed', 'Closed', String(n.closed)],
     ]);
   });

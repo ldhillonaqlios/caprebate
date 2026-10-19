@@ -212,7 +212,7 @@ describe('the legal check, through the pack’s pages', () => {
     const v = lv();
     assert.equal(v.verdict.level, 'URGENT', JSON.stringify(v.verdict));
     const after = (await req('u-lg-sam', `${P}?ch=7`)).body;
-    assert.match(after, /There is still time to fix the value — by 31 May 2027\./);
+    assert.match(after, /There is still time to fix the value: by 31 May 2027\./);
     assert.match(after, /This does not stop approval\./);
 
     assert.match(after, /Bought an existing surgery <span class="pk-src pk-sv">Sam Surveyor · [^<]+<\/span> <span class="help">From: The CPSE replies, section 32<\/span>/);

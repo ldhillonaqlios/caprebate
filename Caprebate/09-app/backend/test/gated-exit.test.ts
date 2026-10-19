@@ -42,6 +42,7 @@ import { isBookable } from '../src/web/schedule.ts';
 import * as L from '../src/web/leads.ts';
 import * as P from '../src/web/pipeline.ts';
 import { actor, testApp } from './helpers.ts';
+import { plainDashText } from '../src/web/plain-dashes.ts';
 
 /* ------------------------------------------------------------- fixtures */
 
@@ -255,7 +256,7 @@ describe('the call a reasoned negative offers is kept', () => {
       assert.equal(form.status, 200);
       const gated = BOOKING.offerAt('gated_exit') as { heading: string };
       const close = BOOKING.offerAt('funnel_close') as { body: string };
-      assert.ok(form.body.includes(gated.heading), 'the close speaks as the gated exit’s offer');
+      assert.ok(form.body.includes(plainDashText(gated.heading)), 'the close speaks as the gated exit’s offer');
       assert.equal(form.body.includes(close.body), false, 'the close does not refer to a figure the prospect was never shown');
 
       const before = {
@@ -364,7 +365,7 @@ describe('a contact and a booking may belong to a lead until it has an organisat
       const sales = await h.signIn('sales');
       const week = await sales.req(`/staff/calendar?view=week&date=${slot.slice(0, 10)}`);
       assert.equal(week.status, 200);
-      assert.ok(week.body.includes('Example Care Limited — a lead, no organisation yet'), 'the call is in the calendar, not lost behind an inner join');
+      assert.ok(week.body.includes('Example Care Limited: a lead, no organisation yet'), 'the call is in the calendar, not lost behind an inner join');
       const booking = await sales.req(`/staff/calendar/${call.id}`);
       assert.equal(booking.status, 200);
       assert.ok(booking.body.includes(`/staff/leads/${lead.id}`), 'the booking leads to its lead');

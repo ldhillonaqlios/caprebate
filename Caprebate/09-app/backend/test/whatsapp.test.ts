@@ -192,7 +192,7 @@ describe('WhatsApp', () => {
     assert.match(page, /Yes please, call me tomorrow/);
     const wa = (await s.req('/staff/clients/b-wa-1/whatsapp')).body;
     assert.match(wa, /<span class="via">WhatsApp<\/span> <strong>Ada Invented<\/strong> · [^<]*<\/p>\s*<p class="msgbody">Yes please, call me tomorrow/);
-    assert.match(wa, /Ada Invented — 07700 900123 — you can write freely until /);
+    assert.match(wa, /Ada Invented, 07700 900123: you can write freely until /);
     const r = await s.post('/staff/clients/b-wa-1/whatsapp', { contact_id: 'c-wa-ada', body: 'Great — we will ring at 10:00.', send: '1' });
     assert.equal(r.location, '/staff/clients/b-wa-1/whatsapp?contact=c-wa-ada&done=whatsapp');
     assert.deepEqual(JSON.parse(t.seen.at(-1)!.body ?? '{}'), { messaging_product: 'whatsapp', recipient_type: 'individual', to: '447700900123', type: 'text', text: { preview_url: false, body: 'Great — we will ring at 10:00.' } });
@@ -201,7 +201,7 @@ describe('WhatsApp', () => {
     await status('read');
     await status('delivered');
     assert.equal(byWa('wamid.text1')[0]!['status'], 'READ', 'a status went backwards');
-    assert.match((await s.req('/staff/clients/b-wa-1?chat=all')).body, /Great — we will ring at 10:00\.<\/p>/);
+    assert.match((await s.req('/staff/clients/b-wa-1?chat=all')).body, /Great: we will ring at 10:00\.<\/p>/);
   });
 
   test('a number no single company has waits to be filed by a person; filed once; nobody guesses', async () => {

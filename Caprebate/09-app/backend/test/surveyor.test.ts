@@ -741,7 +741,7 @@ describe('a surveyor’s overrides become their own library and come back on the
     const surveyor = await it.signIn('SURVEYING');
     const r = await surveyor.req(`/staff/survey/${it.job}`);
     assert.match(r.body, /We have no default rate for this field/);
-    assert.match(r.body, /nothing — see above/);
+    assert.match(r.body, /nothing: see above/);
   });
 
   test('what they entered on job one is proposed to them on job two, labelled as THEIRS', async (t) => {
@@ -767,7 +767,7 @@ describe('a surveyor’s overrides become their own library and come back on the
     const second = await surveyor.req(`/staff/survey/${it.job2}`);
     assert.equal(second.status, 200);
     // Different sector, so the library is keyed differently and offers nothing.
-    assert.match(second.body, /nothing — see above/);
+    assert.match(second.body, /nothing: see above/);
 
     /* And on a second job in the SAME sector it does come back. */
     it.app.db.run("UPDATE businesses SET sector = 'gp' WHERE id = 'biz-2'");

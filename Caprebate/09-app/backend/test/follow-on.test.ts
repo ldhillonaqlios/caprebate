@@ -775,7 +775,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
       const reads = count(db, "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'AUDIT_LOG_READ'");
       const page = await admin.get('/staff/audit?kind=LOGIN_SUCCEEDED');
       assert.equal(page.status, 200);
-      assert.match(page.body, /Audit log checked — nothing changed\. All [\d,]+ records were checked/);
+      assert.match(page.body, /Audit log checked: nothing changed\. All [\d,]+ records were checked/);
       assert.equal(count(db, "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'AUDIT_LOG_READ'"), reads + 1, 'the read was not recorded');
       const v = (await import('../src/web/audit-log.ts')).auditLogView(deps(h.made), who(db, 'ADMIN'), new URLSearchParams({ kind: 'LOGIN_SUCCEEDED', outcome: 'SOMETIMES' }));
       assert.ok(v.lines.length >= 1 && v.lines.every((l) => l.kind === 'LOGIN_SUCCEEDED'));
@@ -788,7 +788,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
       // Changed outside the application — the triggers bypassed, as sqlite3 on the file would — and the page says so.
       db.execDdl('DROP TRIGGER audit_log_no_update');
       db.run("UPDATE audit_log SET outcome = 'REFUSED' WHERE seq = 1");
-      assert.match((await admin.get('/staff/audit')).body, /Audit log problem — a record was changed or removed\. Tell the Admin now\. The problem starts at record 1\./);
+      assert.match((await admin.get('/staff/audit')).body, /Audit log problem: a record was changed or removed\. Tell the Admin now\. The problem starts at record 1\./);
     } finally { h.close(); }
   });
 
@@ -825,7 +825,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
         '/staff/compliance/breaches', '/staff/compliance/identity', '/staff/compliance/retention', `/staff/compliance/consent/${contact.id}`]) {
         const r = await admin.get(path);
         assert.equal(r.status, 200, path);
-        assert.ok(r.body.includes('KNOWN LIMITATION — ONE PERSON TODAY'), `${path} does not carry the notice`);
+        assert.ok(r.body.includes('KNOWN LIMITATION: ONE PERSON TODAY'), `${path} does not carry the notice`);
       }
     } finally { h.close(); }
   });
@@ -941,7 +941,7 @@ describe('the defects the guide found by running every exercise on the demo', ()
       const sales = await h.signIn('sales');
       // Phase 137: the range is a column of the leads' List view; the cards carry no range, by the no-lead-score rule.
       const leads = await sales.get('/staff/leads?layout=list');
-      assert.ok(leads.body.includes('no range — no assessment was filled in for this lead'));
+      assert.ok(leads.body.includes('no range: no assessment was filled in for this lead'));
       assert.equal(leads.body.includes('not shown to this role'), false, 'a lead with no range was said to be hidden');
 
       const admin = await h.signIn('admin');

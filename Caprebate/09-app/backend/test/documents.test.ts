@@ -397,7 +397,7 @@ describe('versions — a new upload of the same document is a new version; nothi
       const c = await w.signIn('sales');
       const page = await c.req(`/staff/documents/${v1.logical_document_id}`);
       assert.equal(page.status, 200);
-      assert.equal(page.body.split('Read — we kept what we need').length - 1, 2, 'both versions are on the page');
+      assert.equal(page.body.split('Read: we kept what we need').length - 1, 2, 'both versions are on the page');
       assert.match(page.body, /Version history/);
 
       // Refused by the store, and by the table.
@@ -617,7 +617,7 @@ describe('over HTTP — end to end, and every role on every sensitivity', () => 
       const replay = await client.req(put, { method: 'PUT', body: bytes, headers: { 'content-type': 'application/pdf' } });
       assert.equal(replay.status, 409, 'a used link writes nothing');
       await assert.rejects(() => w.made.store.get(quarantineKeyFor(m[2] ?? '')), 'and nothing is back in quarantine');
-      assert.match((await client.req('/portal')).body, /✓ Lease, and any licence for alterations — received/);
+      assert.match((await client.req('/portal')).body, /✓ Lease, and any licence for alterations: received/);
     } finally { w.close(); }
   });
 

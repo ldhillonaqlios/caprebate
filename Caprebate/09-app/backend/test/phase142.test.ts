@@ -153,7 +153,7 @@ describe('two threads per company, and the rule table', () => {
     const page = await sp.get(`/staff/clients/${w.dunmarrow}?chat=team`);
     assert.equal(page.status, 200);
     // 1 Oct 2026: on Communication, one conversation — the note is a "Team only" box, and "Team only" is a way to write.
-    assert.match(page.body, /<a class="it it-team[^"]*" href="[^"]+">[\s\S]*?<span class="ch ch-team">Team only<\/span>[\s\S]*?Phase 142 existing note — ask about the lift/);
+    assert.match(page.body, /<a class="it it-team[^"]*" href="[^"]+">[\s\S]*?<span class="ch ch-team">Team only<\/span>[\s\S]*?Phase 142 existing note: ask about the lift/);
     assert.match(page.body, /<option value="team">Team only \(internal note\)<\/option>/);
     assert.match(page.body, /Only your team sees this\. The client never does\./);
   });

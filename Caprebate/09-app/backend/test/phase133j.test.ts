@@ -161,7 +161,7 @@ describe('the website enquiry form', () => {
   test('a complete enquiry is kept, and the audit line names nobody', async () => {
     const r = await makeClient(base).post('/enquiry', good);
     assert.equal(r.status, 200);
-    assert.match(r.body, /Thank you — that is with us\./);
+    assert.match(r.body, /Thank you: that is with us\./);
     const row = made.app.db.get<{ full_name: string; email: string; property_type: string; status: string; contact_consent: number }>(
       'SELECT full_name, email, property_type, status, contact_consent FROM website_enquiries WHERE email = ?', [good.email]);
     assert.deepEqual({ ...row }, { full_name: good.name, email: good.email, property_type: 'Dental practice', status: 'NEW', contact_consent: 1 });

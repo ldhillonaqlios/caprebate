@@ -11,6 +11,7 @@ import { startHarness, type Harness } from './ui-tidy-harness.ts';
 import * as I from '../src/web/introducers.ts';
 import { ukDatesIn } from '../src/web/localtime.ts';
 import { firstPart, introducerCounts, rewardBadge, sentUs, RECORD_REFERRAL_HREF, ADD_FIRM_HREF } from '../src/web/introducers-pages.ts';
+import { plainDashes } from '../src/web/plain-dashes.ts';
 
 let H: Harness;
 let referred = '';
@@ -88,7 +89,7 @@ describe('UI tidy phase 14: the list', () => {
       assert.ok(d !== undefined && p !== undefined);
       assert.ok(row.includes(`<td data-label="Owner">${d.owner === null ? '<span class="badge b-nobody">Nobody yet</span>' : esc(d.owner)}</td>`), r.firm_name);
       const next = d.next_contact.overdue ? `<span class="badge b-late">${esc(d.next_contact.label)}</span>` : esc(firstPart(d.next_contact.label));
-      assert.ok(row.includes(`<td data-label="Contact">Last: ${esc(firstPart(d.last_contact))}<br>Next: ${next}</td>`), r.firm_name);
+      assert.ok(row.includes(plainDashes(`<td data-label="Contact">Last: ${esc(firstPart(d.last_contact))}<br>Next: ${next}</td>`)), r.firm_name);
       assert.ok(row.includes(`<td data-label="Sent us">${sentUs(p).html}</td>`), r.firm_name);
       assert.equal(row.includes('<span class="help">not recorded</span>'), false, 'a kind nobody recorded is not shown as one');
     }
@@ -134,7 +135,7 @@ describe('UI tidy phase 14: one firm', () => {
     const body = (await H.get('sales', `/staff/introducers/${bare}`)).body;
     assert.match(body, /<li><a href="\/staff\/introducers">Introducers<\/a><\/li><li><span aria-current="page">Pell &amp; Marsh Accountants<\/span><\/li>/);
     assert.ok(v.details !== undefined && v.pipeline !== undefined && v.details.next_contact.overdue);
-    assert.ok(body.includes(`<p class="lede"><span class="badge b-nobody">Nobody yet</span> · Next contact: <span class="badge b-late">${esc(v.details.next_contact.label)}</span></p>`));
+    assert.ok(body.includes(plainDashes(`<p class="lede"><span class="badge b-nobody">Nobody yet</span> · Next contact: <span class="badge b-late">${esc(v.details.next_contact.label)}</span></p>`)));
     assert.deepEqual(kpis(body), [
       ['win', 'Leads referred', String(v.pipeline.leads_referred)], ['survey', 'Claims opened', String(v.pipeline.claims_opened)],
       ['paid', 'Claims won', String(v.pipeline.claims_won)], ['plain', 'Reasoned negatives', String(v.pipeline.reasoned_negatives)],

@@ -200,7 +200,7 @@ describe('reading email replies, on for testing', () => {
     const page = (await s.req('/staff/replies')).body;
     const panel = /<details class="readstate" id="how-reading-stands">[\s\S]*?<\/details>/.exec(page)?.[0] ?? '';
     assert.match(panel, /Read up to message \d+ of the inbox/);
-    assert.match(panel, /<td data-label="Inbox no\.">10<\/td>[\s\S]*?<td data-label="What happened">Filed — on Reply Test Limited, when it came in<\/td>\s*<td data-label="Answers our email\?">Yes \(sent from Reply Test Limited\)<\/td>/);
+    assert.match(panel, /<td data-label="Inbox no\.">10<\/td>[\s\S]*?<td data-label="What happened">Filed: on Reply Test Limited, when it came in<\/td>\s*<td data-label="Answers our email\?">Yes \(sent from Reply Test Limited\)<\/td>/);
     assert.match(panel, /<td data-label="Inbox no\.">24<\/td>[\s\S]*?Waiting to sort: [^<]+<\/td>\s*<td data-label="Answers our email\?">No<\/td>/);
     assert.match(panel, /<td data-label="To">rae@reply-test\.invented\.co\.uk<\/td><td data-label="Company">Reply Test Limited<\/td><td data-label="Subject">Your survey<\/td>\s*<td data-label="Sent\?">Sent [^<]+<\/td><td data-label="Reply can be matched\?">Yes<\/td>/);
     assert.doesNotMatch(panel, /Early reply 10/, 'an email\u2019s words are in the panel');

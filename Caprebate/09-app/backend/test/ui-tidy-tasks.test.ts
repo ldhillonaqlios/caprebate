@@ -9,6 +9,7 @@ import { startHarness, type Harness } from './ui-tidy-harness.ts';
 import * as T from '../src/web/tasks.ts';
 import { dueCell } from '../src/web/tasks-pages.ts';
 import { SITE_CSS } from '../src/web/assets.ts';
+import { plainDashText } from '../src/web/plain-dashes.ts';
 
 let H: Harness;
 before(async () => { H = await startHarness('uit9'); });
@@ -56,7 +57,7 @@ describe('UI tidy phase 9: each task', () => {
       assert.equal(row.includes('class="badge b-late"'), t.due.overdue, t.title);
       const about = /<\/td>\s*<td>([\s\S]*?)<\/td>/.exec(row)?.[1] ?? '';
       for (const a of t.about) {
-        const shown = about.includes(`>${a.label.replace(/&/g, '&amp;')}<`);
+        const shown = about.includes(`>${plainDashText(a.label.replace(/&/g, '&amp;'))}<`);
         const repeated = a.kind === 'organisation' && t.about.some((b) => b !== a && b.label.includes(a.label));
         assert.equal(shown, !repeated, `${t.title}: ${a.label}`);
       }

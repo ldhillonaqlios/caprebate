@@ -32,7 +32,7 @@ describe('UI tidy phase 4: the top of Home', () => {
       const body = (await H.get(who, '/staff')).body;
       assert.equal((body.match(/<h1>Home<\/h1>/g) ?? []).length, 1, who);
       const n = lateCount(who);
-      const words = n === 0 ? 'Nothing is late\\.' : n === 1 ? '1 job is late — start at the top\\.' : `${n} jobs are late — start at the top\\.`;
+      const words = n === 0 ? 'Nothing is late\\.' : n === 1 ? '1 job is late: start at the top\\.' : `${n} jobs are late: start at the top\\.`;
       assert.match(body, new RegExp(`<p class="lede">${DAYS} \\d{1,2} ${MONTHS}\\. ${words}</p>`), who);
       const first = kpis(body)[0];
       assert.deepEqual(first, [n > 0 ? 'k-late' : 'k-plain', n === 1 ? 'Job late' : 'Jobs late', String(n)], who);

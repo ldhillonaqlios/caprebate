@@ -176,7 +176,7 @@ describe('the filled assessments list', () => {
       assert.match(list.body, /Meadowcroft Care Limited/, 'the business is not shown');
       assert.match(list.body, /care homes/, 'the sector is not shown');
       assert.match(list.body, /Meadowcroft House/, 'the property is not shown');
-      assert.match(list.body, /Telephone — they asked for a call/, 'the contact method is not shown');
+      assert.match(list.body, /Telephone: they asked for a call/, 'the contact method is not shown');
       // THE YEAR IS NOT WRITTEN DOWN. This read /2026-/ until CRM 9 of 10, and would have failed on every run from
       // 1 January 2027: the funnel runs on the real clock. Found by running the suite with the clock moved to
       // 2026-12-31T23:59:50Z, where this test and the next both failed.
@@ -245,8 +245,8 @@ describe('the filled assessments list', () => {
       h.app.db.run("UPDATE assessment_answers SET state = 'SKIPPED', value = NULL WHERE assessment_id = ? AND question_id = 'Q2-1-entity'", [id]);
       const page = await staff.req(`/staff/assessments/${id}`);
 
-      assert.match(page.body, /I don’t know — the client said so/);
-      assert.match(page.body, /Not answered — this question was skipped/);
+      assert.match(page.body, /I don’t know: the client said so/);
+      assert.match(page.body, /Not answered: this question was skipped/);
       // And the three states are counted on the page, so a reader can see at a
       // glance how much of this claim is actually known.
       assert.match(page.body, /answered “I don’t know”/);
@@ -347,7 +347,7 @@ describe('N1 on the staff assessment screens', () => {
       const id = /\/staff\/assessments\/([A-Za-z0-9-]+)/.exec(list.body)?.[1] ?? '';
       const detail = await surveyor.req(`/staff/assessments/${id}`);
       assert.equal(detail.body.includes(ceiling), false, 'the estimate reached the detail page');
-      assert.match(detail.body, /I don’t know — the client said so/,
+      assert.match(detail.body, /I don’t know: the client said so/,
         'the inputs a survey needs were withheld along with the estimate');
     } finally { h.close(); }
   });
@@ -760,7 +760,7 @@ describe('one booking, two views', () => {
 
       // And the screen says so, rather than the comment saying so.
       const settings = await staff.req('/staff/settings');
-      assert.match(settings.body, /<td>Saved — not sent yet<\/td>/);
+      assert.match(settings.body, /<td>Saved, not sent yet<\/td>/);
       assert.match(settings.body, /<td>Calendar invite<\/td>/);
     } finally { h.close(); }
   });

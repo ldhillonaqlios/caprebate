@@ -167,7 +167,7 @@ describe('the rows, in Lakhbir\'s order', () => {
   test('Admin\'s own row: Users, Switches, Connections, Audit log and Refused sign-ins', async () => {
     const t = tiles(row((await as('admin').get('/staff?view=admin')).body, 'admin'));
     assert.deepEqual(t.map((x) => x.lines[0]), ['Users', 'Switches', 'Connections', 'Audit log', 'Refused sign-ins']);
-    assert.equal(t[3]?.lines[1], 'Checked — nothing changed');
+    assert.equal(t[3]?.lines[1], 'Checked: nothing changed');
   });
 });
 

@@ -151,7 +151,7 @@ describe('Not sure is never No, and it asks the client', () => {
     assert.ok(g);
     assert.ok(g.open, 'the section was just changed and is closed');
     assert.match(g.html, />Not sure</);
-    assert.match(g.html, /Asked the client — waiting/);
+    assert.match(g.html, /Asked the client: waiting/);
   });
 
   test('No passes the check with nothing listed; Yes with nothing listed does not', async () => {

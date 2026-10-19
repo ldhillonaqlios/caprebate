@@ -39,6 +39,7 @@ import * as C from '../src/web/crm.ts';
 import * as L from '../src/web/leads.ts';
 import * as P from '../src/web/pipeline.ts';
 import { actor, testApp, keys, scalars } from './helpers.ts';
+import { plainDashText } from '../src/web/plain-dashes.ts';
 
 const PASSWORD = 'a-very-long-development-password';
 const T = '2026-09-08T00:00:00.000Z';
@@ -629,8 +630,9 @@ describe('N4 — existing capital allowances claimed: UNKNOWN and never-asked ar
       const b = JSON.parse((await sales.req(`/staff/properties/${neverP.id}/view.json`)).body) as { existing_ca_claimed: unknown };
       assert.deepEqual(a.existing_ca_claimed, b.existing_ca_claimed);
       const label = C.priorClaimPosition(null).label;
-      assert.ok((await sales.req(`/staff/properties/${unknownP.id}`)).body.includes(label));
-      assert.ok((await sales.req(`/staff/properties/${neverP.id}`)).body.includes(label));
+      // PHASE 160c: the page reads the label without its long dash (src/web/plain-dashes.ts).
+      assert.ok((await sales.req(`/staff/properties/${unknownP.id}`)).body.includes(plainDashText(label)));
+      assert.ok((await sales.req(`/staff/properties/${neverP.id}`)).body.includes(plainDashText(label)));
     } finally { h.close(); }
   });
 

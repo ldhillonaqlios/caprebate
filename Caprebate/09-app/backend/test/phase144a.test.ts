@@ -154,7 +154,7 @@ describe('4 · the six small things, and the breadcrumb', () => {
     try {
       const body = (await (await w.signIn('admin')).req('/staff/compliance/identity')).body;
       assert.match(body, /<h1>People named on documents<\/h1>/);
-      assert.match(body, /Search names — every search is logged/);
+      assert.match(body, /Search names: every search is logged/);
       assert.equal(/\bS2\b/.test(visible(body)), false, 'S2 is still shown');
     } finally { w.close(); }
   });

@@ -19,6 +19,7 @@
 
 import { ukDatesInMarkup } from './localtime.ts';
 import { requiredWordsInMarkup } from './required.ts';
+import { plainDashes } from './plain-dashes.ts';
 
 const ESCAPES: Readonly<Record<string, string>> = Object.freeze({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -110,9 +111,11 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
   // eligible it matches the colours of the new home page"). The client portal keeps the supplied lockup.
   const brand = !shell
     ? h`<a class="brandmark" href="/" aria-label="Cap Rebate, home">${raw(PUBLIC_MARK)}<span class="wm">Cap Rebate</span></a>`
-    : staff
-    ? h`<a class="brand" href="${home}">Cap Rebate<span class="brandsub">Back office</span></a>`
-    : h`<a class="logo" href="${home}"><img src="/assets/cap-rebate-logo.png" alt="Cap Rebate — capital allowances simplified" width="120" height="81"></a>`;
+    // PHASE 160c, 19 October 2026: the back office and the portal wear the home page's mark and wordmark (still, not
+    // animated), with a line under the name saying which side this is (Lakhbir: "ensure our branding from the home page
+    // matches the back end"). The supplied lockup is no longer drawn on these pages.
+    : h`<a class="brandmark" href="${home}" aria-label="Cap Rebate, home">${raw(PUBLIC_MARK)}<span class="wm">Cap Rebate<span class="brandsub">${
+      staff ? 'Back office' : 'Client portal'}</span></span></a>`;
   // PHASE 160a, 19 October 2026: THE BACK OFFICE'S TOP BAR (src/web/navigation.ts, Shell.bar) — where you are, then the
   // search, Help and the user menu. A trail the page drew for itself is moved up into it, so the page never shows two.
   // PHASE 160b: the client portal's too (where you are, Help and the user menu; the portal has no search).
@@ -124,7 +127,8 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
     if (own !== null) bodyHtml = bodyHtml.slice(0, own.index) + bodyHtml.slice(own.index + own[0].length);
     barHtml = h`<div class="crumbbar">${bar(opts.title, own === null ? null : raw(own[0]))}</div>`.html;
   }
-  return (
+  // PHASE 160c, 19 October 2026: no long dashes in the words a person reads (src/web/plain-dashes.ts).
+  return plainDashes(
     '<!doctype html>\n' +
     h`<html lang="en-GB"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
