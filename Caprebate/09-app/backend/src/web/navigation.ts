@@ -412,7 +412,7 @@ export function staffShell(actor: Actor, view: string | null = null): Shell {
       isCurrent(s, path) ? subMenuHtml(subMenuFor(actor, s, path)) : raw('')}</li>`)}</ul></li>`)}</ul></nav>${MENU_BUTTON}`;
   const section = tabs.primary.find((s) => isCurrent(s, path)) ?? null;
   const util = h`<div class="util">${search}${help}${userMenu(displayName(ctx?.db, actor), actor, '/staff/settings')}</div>`;
-  return new Shell(html.html, '/staff', (title, own) => h`<a class="crumbroot" href="/staff">Cap Rebate</a>${own ?? trail(section, path, title)}${viewTabs(actor, view)}${util}`);
+  return new Shell(html.html, '/staff', (title, own) => h`${crumbRoot('/staff')}${own ?? trail(section, path, title)}${viewTabs(actor, view)}${util}`);
 }
 
 /**
@@ -421,7 +421,7 @@ export function staffShell(actor: Actor, view: string | null = null): Shell {
  * own title, left out where it only repeats the section (Leads on the Leads list). The last step is the page itself, so
  * it is words, not a link.
  */
-function trail(section: Section | null, path: string | null, title: string): Safe {
+function trail(section: { readonly label: string; readonly href: string } | null, path: string | null, title: string): Safe {
   const steps: { label: string; href: string }[] = [];
   if (section !== null) steps.push({ label: section.label, href: section.href });
   if (title !== '' && title !== section?.label) steps.push({ label: title, href: path ?? '' });
@@ -429,6 +429,11 @@ function trail(section: Section | null, path: string | null, title: string): Saf
   return h`<nav class="crumbs" aria-label="Where you are"><ol>${steps.map((s, i) => i === last
     ? h`<li><span aria-current="page">${s.label}</span></li>`
     : h`<li><a href="${s.href}">${s.label}</a></li>`)}</ol></nav>`;
+}
+
+/** PHASE 160a/160b: the first step of every trail, a link to the login's own home. */
+function crumbRoot(home: string): Safe {
+  return h`<a class="crumbroot" href="${home}">Cap Rebate</a>`;
 }
 
 /**
@@ -446,11 +451,14 @@ export function portalShell(actor: Actor): Shell {
     ? unreadCount(ctx.db, actor, actor.business_id, 'CLIENT') : 0;
   const messages = h`<a href="/portal/messages"${onMessages ? raw(' aria-current="page"') : raw('')}>Messages${
     unread > 0 ? h` <span class="tabcount" aria-label="${unread} not read">${unread}</span>` : raw('')}</a>`;
-  const html = h`<div class="util"><a class="helplink" href="/portal/help">Help</a>${userMenu(name, actor, '/portal/settings')}</div>
-    <nav class="appnav portalnav" aria-label="Sections"><ul class="tabs-main"><li>${current
+  /* PHASE 160b, 19 October 2026 — THE PORTAL IN THE SAME LAYOUT AS THE BACK OFFICE (Phase 160a). The menu down the left
+     holds the logo and the client's two screens; Help and the user menu move to the top bar, after the trail. */
+  const html = h`<nav class="appnav portalnav" aria-label="Sections"><ul class="tabs-main"><li>${current
       ? h`<a href="/portal" aria-current="page">Your claims</a>${subMenuHtml(ctx === undefined ? null : SUB_MENUS.get(ctx) ?? null)}` : h`<a href="/portal">Your claims</a>`}</li>${
       actor.role === 'CLIENT' ? h`<li>${messages}</li>` : raw('')}</ul></nav>${MENU_BUTTON}`;
-  return new Shell(html.html, '/portal');
+  const section = current ? { label: 'Your claims', href: '/portal' } : onMessages ? { label: 'Messages', href: '/portal/messages' } : null;
+  const util = h`<div class="util"><a class="helplink" href="/portal/help">Help</a>${userMenu(name, actor, '/portal/settings')}</div>`;
+  return new Shell(html.html, '/portal', (title, own) => h`${crumbRoot('/portal')}${own ?? trail(section, ctx?.path ?? null, title)}${util}`);
 }
 
 /* ------------------------------------------------------------------ *
