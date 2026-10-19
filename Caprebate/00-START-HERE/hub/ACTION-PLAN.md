@@ -1071,6 +1071,94 @@ command that counts it, never the number.
 ---
 
 
+## PHASE 160c — The back office and the portal in the home page's branding, the text tidied, and no em dashes on screen
+
+ **Model: Opus. Written 19 October 2026 on Lakhbir's instruction**, sent with a screenshot of the client portal on the test website after Phases 160a and 160b merged: "polish the back end up, the text format looks all wrong and remove the — AI uses ensure our branding from the home page matches the back end". Why now: the navy in 160a came from the design PDF, not from Cap Rebate's own brand, and the screens still carry long dashes the house rule forbids in copy.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item (13326137544) to "Working on it" and fill "Claimed by (machine)".
+Work on a claude/... branch from main; never push to main; open the pull
+request against main (never stacked); Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
+   and the same entry at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE SCREENSHOT (the portal's home, 19 Oct 2026) shows: Help sitting lower
+than the user's name; the name underlined like a link; the account menu's
+role in bold and a gap above Sign out; and "Tax return — a document we need".
+
+1. THE HOME PAGE'S BRANDING, in the back office and the portal (body.crm):
+   the home page's ink ground (#121614) for the menu down the left and its
+   ivory type (#EDEAE2); Cap Mint (#ABEDD8) for the current page and the
+   main buttons, with ink words, in the home page's pill shape; headings in
+   the brand's heading type (Bookman Old Style / Roboto Slab), as the home
+   page; the home page's wordmark (CAP REBATE in spaced capitals) and its
+   calculator-house mark in the back office's menu. The working pages stay
+   light (white cards on a pale ground) so long tables read easily: say so
+   in the record. The navy tokens go; nothing white on mint; every pairing
+   at 4.5:1 (test/phase133c).
+2. THE TEXT. Help level with the user's name; the name not underlined; the
+   account menu's role in normal weight and Sign out spaced like the other
+   entries; one type scale for page titles, card titles and labels.
+3. NO EM DASHES ON SCREEN (house rule: copy never uses "—"). Every page
+   page() draws, in the back office, the portal and the public pages: an em
+   dash in the words a person reads becomes a colon, a comma or a full stop
+   by plain rules, and a dash standing for "nothing" becomes "None". Not
+   inside a script, a style, a text box or code. The documents that are
+   signed or kept as records (the engagement letter, the reports, the PDFs)
+   are NOT changed by this phase, because their versions are fixed: they,
+   and the emails, go to a NEW lettered phase before the sweep (step 4).
+   Plain words check green.
+
+TESTS: a new test/phase160c.test.ts, broken on purpose first: the branding
+tokens and the menu's ink ground; mint on the current page and the main
+button with ink words; the mark in the back office's menu; Help and the name
+level; no "—" in any page body the crawl reaches for each login, the portal
+and the public pages; the rules (colon, comma, None) on chosen sentences;
+script, style and textarea left alone. Restate the older tests that pinned
+an em dash in a page's words, saying how many and which in the record.
+
+LOOK AT IT: the demo as Admin, Sales and the client, desktop and phone.
+Screenshots in Caprebate/04-phase-work/phase160c/.
+
+PAPERWORK: the developer spec (a section, the figures); the user guide's
+words about the menu's colour (grade 7); PHASE-HISTORY; anything not built
+goes to a phase or a question (step 4).
+
+---
+
+
 ## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 
