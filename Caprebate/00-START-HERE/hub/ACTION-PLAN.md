@@ -1071,6 +1071,39 @@ command that counts it, never the number.
 ---
 
 
+## PHASE 160e — The stress test's fixes: documents over 4.5 MB, sign-in from one address, forms from other websites, the home page's long dashes
+
+ **Model: Opus. Written 19 October 2026** on Lakhbir's instruction ("stress test the website, engine, reports, and code plus website content plus portal log ins; ensure everything is working and correct before deployment"). The stress test of `main` at 85cb245 (the report: OneDrive, Health Capital Allowances/Business Development/Research/Caprebate stress test 19 Oct 2026) passed every suite, the engine fuzz, the funnel walks, the load test, 41 sign-in checks, the cross-client check and a 1,766-page crawl, and found these.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Read THE STANDING INSTRUCTION and COORDINATES in
+ACTION-PLAN.md first. Claim the work in hub/CLAIM.md (commit and push first; a
+claim already there stops you). Work on claude/phase-160e from main; never push
+to main; open the pull request against main (never stacked); Lakhbir merges.
+
+THE JOBS
+1. DOCUMENTS OVER 4.5 MB. Vercel takes at most 4.5 MB a request; every document
+   form sent its file whole, and the portal says "The most we take is 50 MB".
+   Confirmed on the test website: a 6 MB post got Vercel's own "Request Entity
+   Too Large" page. Send a file over 4 MB in pieces of 3 MB to the private store
+   (sealed), and let the form's own handler take it: readUpload (portal
+   documents, staff client files, claim documents, new versions) and
+   readPortalSend (a message's file). Nothing a document goes through changes.
+2. SIGN-IN FROM ONE NETWORK ADDRESS. The limit was per email only: 100 wrong
+   sign-ins on 100 addresses from one machine were never slowed. Add a limit per
+   network address for sign-in (30 per 15 minutes) and password resets (10), the
+   address hashed. The test website reads it from X-Forwarded-For, which Vercel
+   overwrites (CAPREBATE_TRUST_PROXY in api/index.mjs); this also makes the
+   address on a signature the client's, not the proxy's.
+3. FORMS FROM ANOTHER WEBSITE. Refuse a POST a browser marks Sec-Fetch-Site:
+   cross-site (the Origin header is "null" on our own forms under no-referrer).
+4. THE HOME PAGE'S FOUR LONG DASHES (09-app/site/home.html), which Phase 160c's
+   page() rule does not reach.
+
+TESTS: test/phase160e.test.ts, red on main first.
+```
+
 ## PHASE 160d — No em dashes in the emails, the letter and reports going forward, the text the system writes, and export column names
 
  **Model: Opus. Written 19 October 2026 by Phase 160c**, which took the long dash out of every screen `page()` draws and left these on purpose. Why now: the house rule (copy never uses "—") and Lakhbir's "remove the — AI uses" reach every word a client or a member of staff reads, not only the screens.
