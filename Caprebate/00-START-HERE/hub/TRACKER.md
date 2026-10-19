@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 330 |
-| Working on it | 1 |
+| Done | 331 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160b - The client portal in the same sidebar layout (19 Oct 2026): navy menu with icons, a top bar with where you are, Help and the user menu, cards and status labels; the client's two screens unchanged
-
-`13325284491` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-19 (Phase 160b): Written and claimed 19 Oct 2026 on Lakhbir's answer to Phase 160a's closing question ("write up a phase to give the client portal the same look, and build it in test"). Branched from claude/phase-160a while PR 56 is open; the pull request goes against main. Created on monday in group 05.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-330 items.
+331 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3424,4 +3418,11 @@
 
 - Note 2026-10-19 (Phase 160a): Written and claimed 19 Oct 2026 on Lakhbir's instruction ("write the restyle up as the next Caprebate phase: left sidebar, cards, breadcrumbs and status labels, keeping each login's menu. Build it in test"), from the Cap Rebate Simple CRM design PDF he supplied. Created on monday in group 05.
 - Note 2026-10-19 (Phase 160a): Done 19 Oct 2026: the back office in the sidebar layout (navy menu with icons, a top bar with where you are, the search, Help and the user menu, white cards, grey table headings, coloured labels); staff only, no gate changed; test/phase160a.test.ts (18); branch claude/phase-160a, the pull request Lakhbir's to merge. Record in PHASE-HISTORY. Done on monday and moved to group Z.
+
+### Phase 160b - The client portal in the same sidebar layout (19 Oct 2026): navy menu with icons, a top bar with where you are, Help and the user menu, cards and status labels; the client's two screens unchanged
+
+`13325284491` · **Done** · owner Claude
+
+- Note 2026-10-19 (Phase 160b): Written and claimed 19 Oct 2026 on Lakhbir's answer to Phase 160a's closing question ("write up a phase to give the client portal the same look, and build it in test"). Branched from claude/phase-160a while PR 56 is open; the pull request goes against main. Created on monday in group 05.
+- Note 2026-10-19 (Phase 160b): Done 19 Oct 2026: the client portal in the same look as the back office (navy menu with the logo and icons, a top bar with where the client is, Help and their name; no search); the client's two screens and rights unchanged; test/phase160b.test.ts (8); the in-app Help rebuilt from the guide; branch claude/phase-160b, the pull request Lakhbir's to merge after PR 56. Record in PHASE-HISTORY. Done on monday and moved to group Z.
 

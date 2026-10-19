@@ -13222,3 +13222,30 @@ NOTHING LEFT  beyond those lines. 4B: the build queue is empty (0 at Ready - Cla
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160b — the client portal in the same layout — 19 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 160b, 19 Oct 2026: the client's portal now has the same look as the back office. The menu down the left is dark blue, with the Cap Rebate logo on its white tile, "Your claims" and "Messages", each with a small icon, and the unread count on Messages. A white bar across the top shows where the client is (Cap Rebate / Your claims / their company), then Help and their name. Pages are light grey with white cards, the same as the back office. The client sees the same two screens and can do exactly what they could before. 5,158 checks pass (the back end 2,874, eight of them new). Branch claude/phase-160b, from claude/phase-160a while PR 56 is open; the pull request goes against main and Lakhbir merges it, after PR 56.
+
+- **Claim.** hub/CLAIM.md and a new board item, 13325284491 (Working on it, Lakhbirs-MacBook-Pro), pushed first (`491af06`), with the phase written into ACTION-PLAN.md above the sweep and onto the run sheet, on Lakhbir's answer to Phase 160a's closing question ("write up a phase to give the client portal the same look, and build it in test"). The claim's "Since" line said 15:20; it was 14:29 (a slip in typing it; cleared at close).
+- **Premise re-derived (step 8).** As the brief said: `portalShell` drew UI tidy phase 2's black menu with Help and the user menu inside it; Phase 160a's look was under `body.staffapp` only.
+- **Built.** (1) One look for both: Phase 160a's block now under `body.crm`, carried by the back office (`app crm staffapp`) and the portal (`app crm portalapp`); the public pages keep `public`. (2) The portal's sidebar: the logo, Your claims (its sections opening out under it, as before), Messages with the unread count, an icon each; Help and the user menu left it. (3) The portal's top bar: "Cap Rebate" to /portal, the trail (Your claims or Messages, then the page), Help, the user menu; no search, as before. A claim page's own trail (the company, then the site) moved up into it. (4) On a phone the trail keeps a line of its own, and Help and the client's name go under it.
+- **Looked at** in the demo as the client: Your claims, a claim, Messages, and on a phone with the menu shut and open. Found by looking and fixed: on a phone the trail broke over three lines and then squeezed beside Help. Screenshots 01-05 in `04-phase-work/phase160b/`.
+- **Tests.** `test/phase160b.test.ts`, eight tests. The code was broken on purpose seven ways (no top bar, the page's own trail ignored, "Cap Rebate" pointing at the back office, the shared class missing, the icons missing, the unread count gone, a search box in the portal); the second slipped past the first version of the trail test, which was then tightened to check the company comes first, and it was caught. Restated: `test/phase160a.test.ts` (the shared class; the portal now carries no back-office part, instead of keeping its old look; every rule of the block under `body.crm`).
+- **Found by the full run.** The in-app Help is built from the user guide, and the guide's portal paragraph had changed, so `test/phase133c.test.ts`'s Help check failed (2,873 of 2,874). Rebuilt with `node tools/build-help.cjs` (`813d6dc`); green.
+- **Documents.** Developer Spec: a Phase 160b section, the menus line and the figures. User guide: the portal paragraph (the dark blue menu, the bar at the top, Help and the client's name). Nothing for the accountant or the surveyor (steps 5 and 6).
+- **The checks, at the close:** site 1,427 pass (3 xfail); phase3 440; phase9 417; back end 2,874 pass / 0 fail over 181 tracked files; **5,158** in all (re-derived by the drift checker; nothing stale). CRM fold check green. Plain words green. Register check green. Analytics allow-list green. Tracker check green. Typecheck and SQL lint green.
+- **Board and tracker.** 13325284491 Done, moved to group Z, claim cleared, on monday and in the tracker (with a note). The run sheet: the phase's four blocks deleted, its entry added at the end. ACTION-PLAN.md: the phase's section deleted (the plan is as on main).
+
+```
+DONE          the portal's menu down the left (the logo, Your claims and Messages with icons and the unread count);
+              its top bar (where you are, Help, the user menu; no search); a claim page's own trail moved up; the
+              same grey page, cards, labels and buttons as the back office, under one shared class; phones. The
+              in-app Help rebuilt from the guide. test/phase160b.test.ts (8), phase160a restated. 5,158 checks;
+              all green. Looked at in the demo as the client, desktop and phone.
+NOT DONE      Merging the pull requests - Lakhbir's click: PR 56 (Phase 160a) first, then this phase's; the merges
+                put both on the test website.
+NOTHING LEFT  beyond that line. 4B: the build queue is empty (0 at Ready - Claude can build); no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.
