@@ -1071,6 +1071,112 @@ command that counts it, never the number.
 ---
 
 
+## PHASE 160a — The back office in the sidebar layout Lakhbir chose: a navy menu down the left, a top bar with where you are, cards and status labels
+
+ **Model: Opus. Written 19 October 2026 on Lakhbir's instruction** ("write the restyle up as the next Caprebate phase: left sidebar, cards, breadcrumbs and status labels, keeping each login's menu. Build it in test"), from the design he supplied: *Cap Rebate Simple CRM*, a 17-page PDF of 14 screens with invented data (OneDrive: Caprebate/04-phase-work/phase160a/Cap_Rebate_CRM_Design.pdf). Why now: it is how he wants the back office to look, and nothing in it waits on anybody. It changes how the staff screens look, never what a login may open.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item (13324776229) to "Working on it" and fill "Claimed by (machine)".
+Work on a claude/... branch from main; never push to main; open the pull
+request against main (never stacked); Lakhbir merges. Retag what you touch
+and give every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs), and the tracker check passes.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc on doc id 46840326, add_markdown_content, no after_block_id),
+   and the same entry at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+THE DESIGN: Caprebate/04-phase-work/phase160a/Cap_Rebate_CRM_Design.pdf
+(pages 2-16 are the screens; page 17 is its workflow and guardrails). Take
+its LAYOUT, not its list of screens or its one menu for everyone.
+
+WHAT IS THERE TODAY (re-derive it; rule 8): since UI tidy phase 2 (2 Oct
+2026) the back office and the portal draw header.top as a black menu down the
+left from 900 px (src/web/assets.ts, "UI TIDY PHASE 2 - THE LEFT-HAND MENU"),
+with the search box, Admin's "Home shows" views, Help and the user menu
+inside that menu. Each login's menu is MENUS in src/web/navigation.ts, drawn
+only where each section's gate admits the login (Phases 133a and 135).
+
+BUILD, for the BACK OFFICE ONLY (staff logins). The client portal and the
+public pages keep their look; say so in the record.
+1. THE SIDEBAR. The menu down the left becomes the design's: a dark navy
+   panel, the name "Cap Rebate" with a small line under it, the login's own
+   MENUS groups with their labels in small capitals, a small icon beside each
+   section, the current page as a lighter block with a mint edge, its
+   sub-menu opening under it as now. Search, Help, the user menu and Admin's
+   views leave the sidebar (item 2). Under 900 px it still folds behind the
+   one Menu button (no script).
+2. THE TOP BAR. A white bar over the page: a breadcrumb trail (Cap Rebate /
+   the section / the page), Admin's "Home shows" views, the search box, Help
+   and the user menu with the initial in a circle. The trail names the
+   section the menu marks as current and the page's own title, and is a
+   nav with aria-label and aria-current on the last step.
+3. THE PAGE. A light grey page; each page's title smaller and plainer (the
+   design's 28 px), the .pagehead row (title left, its one main button
+   right) as the design's; white cards with rounded corners and a soft
+   shadow (.card, .tile, .cnext, .clookups, the Home figures, .tablewrap).
+4. TABLES. Column headings in small grey capitals (12 px or more), a light
+   rule under each row, the row lit on hover.
+5. STATUS LABELS. .badge as the design's pills: green for done or
+   qualified, amber for in progress or waiting, red for a stop, blue for
+   new or for information; the stage-group colours (UI tidy phase 1) stay.
+6. BUTTONS. The main (submit) button is the sidebar's navy with white
+   words; the quiet ones stay white with a border.
+7. COLOURS. Add the navy tokens to BRAND_TOKENS and every new text-on-ground
+   pairing to TEXT_PAIRINGS, so test/phase133c.test.ts holds each at 4.5:1.
+   Nothing white on mint.
+8. NOTHING ABOUT WHO MAY OPEN WHAT CHANGES. Each login sees exactly its
+   MENUS; a section off its menu still answers 403 by its address. No inline
+   style or script (the CSP is unchanged).
+
+TESTS: a new test/phase160a.test.ts, broken on purpose first: every staff
+login's sidebar is exactly its MENUS and holds no search or user menu; the top
+bar carries the trail, the search and the user menu and ends the trail on
+the page; the portal and the public pages are unchanged; no style attribute
+or script; the new colours pass 4.5:1. Update the older tests that pinned
+the old layout (UI tidy phase 2's header, the Home views' place) to say what
+is true now, and say which in the record.
+
+LOOK AT IT: run the demo (npm run start:demo in 09-app/backend) and look at
+Home, Leads, a lead, Clients, a claim, Tasks, Finance and Settings as Admin,
+and Home as Sales, Accounting and Surveying, at desktop and phone widths.
+Put screenshots in Caprebate/04-phase-work/phase160a/.
+
+PAPERWORK: the developer spec (a section for this phase, the test counts);
+the user guide's words about where the menu, search and your name are (grade
+7); PHASE-HISTORY; anything not built goes to a phase or a question (step 4).
+
+---
+
+
 ## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 
