@@ -44,6 +44,7 @@ import { formatPence } from './shown-range.ts';
 import { FUNNEL_CEILING, SURVEY_JOB_WORDS as SO_WORDS } from './survey-open.ts';
 import { surveyorThreadPanel } from './messages-pages.ts';
 import { deskFirstReading } from './desk-first.ts';
+import { piecesPage } from './upload-pieces.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -56,8 +57,10 @@ export type SurveyorDeps = {
 };
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  const pp = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, pp.headers);
+  res.end(pp.body);
 }
 
 function redirect(res: ServerResponse, to: string): void {

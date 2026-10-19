@@ -33,6 +33,7 @@ import * as U from '../src/web/photo-upload.ts';
 import * as E from '../src/web/survey-evidence.ts';
 import { secretsFromValues } from '../src/secrets.ts';
 import { actor } from './helpers.ts';
+import { PIECES_PAGE_CSP } from '../src/web/upload-pieces.ts';
 
 /* ------------------------------------------------------------------ the phone's lock, from the page's own script */
 
@@ -394,7 +395,8 @@ describe('the page and the whole send over HTTP', () => {
     for (const id of ['many-form', 'many-progress', 'many-list', 'many-bar', 'many-end', 'many-limit', 'many-lock']) assert.ok(page.body.includes(`id="${id}"`), id);
     assert.match(page.body, /<div id="many-progress" class="ev-progress" hidden>/);
     const home = await req('u-pu-client', '/portal');
-    assert.doesNotMatch(home.headers.get('content-security-policy') ?? '', /script-src/);
+    // PHASE 160e: the portal's upload form names its own script, which may send to this site only (src/web/upload-pieces.ts).
+    assert.equal(home.headers.get('content-security-policy') ?? '', PIECES_PAGE_CSP);
     const item = await req('u-pu-client', `/portal/building/item/VOIDS?job=${JOB}`);
     assert.doesNotMatch(item.headers.get('content-security-policy') ?? '', /script-src/);
     const js = await fetch(`${base}/assets/photo-upload.js`);

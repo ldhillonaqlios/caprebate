@@ -33,7 +33,8 @@ import { badge, breadcrumb, claimRef, highlights, propertyIn, savedMessage, why 
 import * as C from './crm.ts';
 import * as D from './documents.ts';
 import type { FsObjectStore } from './objectstore.ts';
-import { singleFile } from './multipart.ts';
+import { piecedFields, singleFile } from './multipart.ts';
+import { piecesOf, piecesPage } from './upload-pieces.ts';
 import { acceptClientBytes, finishUpload, issuedJob, sweepOriginals, readerFor, DAMAGED_PDF } from './uploads.ts';
 import { UPLOAD_LIMITS, pdfLooksComplete, sniffAccepted } from './upload-handler-port.ts';
 import { NO_DUE_DATE } from './tasks.ts';
@@ -106,17 +107,28 @@ export async function receiveFile(
 /** A multipart upload's file and fields, or why not. */
 export async function readUpload(
   req: IncomingMessage, body: (r: IncomingMessage, max?: number) => Promise<Buffer>,
+  pieces?: (id: string) => Promise<{ ok: true; bytes: Uint8Array } | { ok: false; why: string }>,
 ): Promise<{ ok: true; bytes: Uint8Array; fields: Record<string, string> } | { ok: false; why: string }> {
   let raw0: Buffer;
   try { raw0 = await body(req, MAX_BODY); } catch { return { ok: false, why: TOO_BIG }; }
+  // PHASE 160e: a file over Vercel's 4.5 MB a request was sent first in pieces (src/web/upload-pieces.ts); the form
+  // comes with its file box empty and the send's id in `pieces`. Everything after this reads the bytes as before.
+  const sent = pieces === undefined ? null : piecedFields(new Uint8Array(raw0), req.headers['content-type']);
+  if (sent !== null && pieces !== undefined) {
+    const got = await pieces(sent.id);
+    if (!got.ok) return got;
+    return { ok: true, bytes: got.bytes, fields: sent.fields };
+  }
   const parsed = singleFile(new Uint8Array(raw0), req.headers['content-type']);
   if (!parsed.ok) return { ok: false, why: parsed.why === 'no file was attached' ? 'Choose a file first.' : `${parsed.why.charAt(0).toUpperCase()}${parsed.why.slice(1)}.` };
   return { ok: true, bytes: parsed.part.bytes, fields: parsed.fields };
 }
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+  const p = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, p.headers);
+  res.end(p.body);
 }
 
 function redirect(res: ServerResponse, to: string): void {
@@ -158,7 +170,7 @@ export async function handleClientFiles(
     // Asked before a byte of the body is read: a login that may not upload is refused, not told its file was malformed.
     authorise(actor, 'document.upload', { type: 'business', id: org.id });
     if (actor.role === 'CLIENT') return d.problem(res, actor, 'Not uploaded', 'Send files from your own page.', '/portal');
-    const up = await readUpload(req, body);
+    const up = await readUpload(req, body, piecesOf(d.app, d.store, actor));
     if (!up.ok) return d.problem(res, actor, 'Not uploaded', up.why, back);
     const claim = (up.fields.claim_id ?? '').trim();
     if (claim !== '' && !org.claims.some((c) => c.id === claim)) return d.problem(res, actor, 'Not uploaded', 'Choose one of this company’s claims.', back);
@@ -209,7 +221,7 @@ function fileCard(f: D.FolderFile, mayShow: boolean, folder: string | null): Saf
 
 function uploadForm(f: D.ClientFolder): Safe {
   if (!f.may_upload || f.upload_types.length === 0) return raw('');
-  return h`<form method="post" action="/staff/clients/${f.business_id}/files" enctype="multipart/form-data" class="pblock uploadbox">
+  return h`<form method="post" action="/staff/clients/${f.business_id}/files" enctype="multipart/form-data" class="pblock uploadbox" data-pieces>
     <h2>Upload a file</h2>
     <label class="dropzone" for="upload-file"><span class="dropwords">Drop a file here, or tap to choose one</span>
       <input id="upload-file" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>

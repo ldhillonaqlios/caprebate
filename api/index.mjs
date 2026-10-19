@@ -28,6 +28,10 @@ let ready;
 
 async function build() {
   const started = Date.now(); // PHASE 152: how long this copy took to start, printed below
+  // PHASE 160e, 19 October 2026: behind Vercel, the visitor's address is the first in X-Forwarded-For, which Vercel
+  // overwrites so a visitor cannot set it (vercel.com/docs/headers/request-headers). Without this, the address on a
+  // signature was Vercel's own, and the sign-in limit per network address would count every visitor as one.
+  process.env.CAPREBATE_TRUST_PROXY ??= '1';
   const { createApp } = await import('../Caprebate/09-app/backend/src/server.ts');
   const { seed } = await import('../Caprebate/09-app/backend/src/seed.ts');
   const host = process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL;

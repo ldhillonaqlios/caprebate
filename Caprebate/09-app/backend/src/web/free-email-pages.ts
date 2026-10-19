@@ -37,6 +37,7 @@ import { markChannelRead } from './messages.ts';
 import { lastReadWords, mayReadQueue, readRepliesIfDue } from './inbound-email.ts';
 import { localStamp } from './localtime.ts';
 import type { EmailChain } from './email-chains.ts';
+import { piecesPage } from './upload-pieces.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -64,8 +65,10 @@ export function emailButton(href: string): Safe {
 }
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  const pp = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, pp.headers);
+  res.end(pp.body);
 }
 
 function redirect(res: ServerResponse, to: string): void {

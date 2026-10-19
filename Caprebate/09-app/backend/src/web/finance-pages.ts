@@ -28,6 +28,7 @@ import { setSubMenu } from './navigation.ts';
 import * as F from './finance.ts';
 import * as I from './invoices.ts';
 import * as V from './vat.ts';
+import { piecesPage } from './upload-pieces.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -39,8 +40,10 @@ export type FinanceDeps = {
 };
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  const pp = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, pp.headers);
+  res.end(pp.body);
 }
 
 function json(res: ServerResponse, body: unknown): void {

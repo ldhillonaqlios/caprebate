@@ -27,6 +27,7 @@ import type { FsObjectStore } from './objectstore.ts';
 import { openKeptOriginal, sweepOriginals } from './uploads.ts';
 import { ANSWER_WORDS, LEFT_OUT_NOTE, VOUCH_ANSWERS, earlyVouchesFrom } from './document-reading.ts';
 import { earlyQuestions, readUpload, receiveFile } from './client-files-pages.ts';
+import { piecesOf, piecesPage } from './upload-pieces.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -47,8 +48,10 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+  const p = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, p.headers);
+  res.end(p.body);
 }
 
 function json(res: ServerResponse, status: number, body: unknown): void {
@@ -286,7 +289,7 @@ export async function handleDocuments(
     const business_id = D.businessOfDocument(db, id);
     // Asked before a byte of the body is read: a login that may not upload is refused, not told its file was malformed.
     authorise(actor, 'document.upload', { type: 'business', id: business_id });
-    const up = await readUpload(req, body);
+    const up = await readUpload(req, body, piecesOf(d.app, d.store, actor));
     if (!up.ok) return d.problem(res, actor, 'Not uploaded', up.why, `/staff/documents/${id}`);
     const r = await receiveFile(d, actor, { business_id, type_code: null, logical_document_id: id, request_id: null, claim_id: null }, up.bytes);
     if (!r.ok) return d.problem(res, actor, 'Not uploaded', r.why, `/staff/documents/${id}`);
@@ -301,7 +304,7 @@ export async function handleDocuments(
     const id = claimUpload[1] ?? '';
     const business_id = D.businessOfClaim(db, id);
     authorise(actor, 'document.upload', { type: 'business', id: business_id });
-    const up = await readUpload(req, body);
+    const up = await readUpload(req, body, piecesOf(d.app, d.store, actor));
     if (!up.ok) return d.problem(res, actor, 'Not uploaded', up.why, `/staff/claims/${id}`);
     const r = await receiveFile(d, actor, {
       business_id, type_code: up.fields.type_code ?? null, logical_document_id: null, request_id: null, claim_id: id,
@@ -428,7 +431,7 @@ export function claimDocumentsBlock(claim_id: string, p: D.ClaimDocumentsPanel |
       ${earlyQuestions(p.early_questions, `rq-${claim_id}`)}
       <button type="submit">Request it</button></form>` : raw('')}
 
-    ${p.may_upload && types.length > 0 ? h`<form method="post" action="/staff/claims/${claim_id}/documents" enctype="multipart/form-data" class="uploadbox">
+    ${p.may_upload && types.length > 0 ? h`<form method="post" action="/staff/claims/${claim_id}/documents" enctype="multipart/form-data" class="uploadbox" data-pieces>
       <p><strong>Upload a file to this claim</strong></p>
       <label class="dropzone" for="claim-file-${claim_id}"><span class="dropwords">Drop a file here, or tap to choose one</span>
         <input id="claim-file-${claim_id}" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>
@@ -485,7 +488,7 @@ function documentPageHtml(d: DocumentPageDeps, actor: Actor, p: D.DocumentPage, 
         <tbody>${p.versions.map((v) => h`<tr><td>${v.version_no ?? '—'}</td><td>${v.uploaded}</td><td>${v.by}</td><td>${v.state}</td>
           <td>${v.strip}</td><td>${v.original}</td><td>${clockCell(v.clock)}</td></tr>`)}</tbody></table>
         <p class="help">${p.original_href === undefined ? p.original : h`We kept the original. <a href="${p.original_href}">Open the original</a>`}</p>
-        ${p.may_upload_version ? h`<form method="post" action="/staff/documents/${p.id}/versions" enctype="multipart/form-data" class="uploadbox">
+        ${p.may_upload_version ? h`<form method="post" action="/staff/documents/${p.id}/versions" enctype="multipart/form-data" class="uploadbox" data-pieces>
           <label class="dropzone" for="version-file"><span class="dropwords">Drop the new version here, or tap to choose it</span>
             <input id="version-file" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>
           <button type="submit">Upload a new version</button></form>` : raw('')}

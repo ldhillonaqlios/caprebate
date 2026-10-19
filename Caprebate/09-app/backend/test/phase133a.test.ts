@@ -30,6 +30,7 @@ import { join } from 'node:path';
 import { createApp } from '../src/server.ts';
 import { seed } from '../src/seed.ts';
 import { SITE_CSS } from '../src/web/assets.ts';
+import { PIECES_PAGE_CSP } from '../src/web/upload-pieces.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 type Res = { status: number; location: string | null; body: string; csp: string | null; type: string | null };
@@ -213,6 +214,8 @@ describe('the menu shows each login what it can open, and nothing it cannot', ()
  * NO INLINE SCRIPT OR STYLE, AND THE CSP
  * ================================================================== */
 
+/* PHASE 160e: the one script a page with an upload form names (src/web/upload-pieces.ts) is allowed; nothing inline. */
+const withoutPiecesScript = (b: string): string => b.replace('<script src="/assets/upload-pieces.js" defer></script>', '');
 const INLINE: readonly [RegExp, string][] = [
   [/<script\b/i, 'a script element'],
   [/<style\b/i, 'a style element'],
@@ -229,8 +232,9 @@ describe('no page carries inline script or style, and the CSP is unchanged', () 
       for (const [u, r] of pages) {
         if (!(r.type ?? '').startsWith('text/html')) continue;
         html++;
-        for (const [re, what] of INLINE) assert.equal(re.test(r.body), false, `${u} (${who}) carries ${what}`);
-        assert.equal(r.csp, CSP_BEFORE, `${u} (${who}) carries a different Content-Security-Policy`);
+        for (const [re, what] of INLINE) assert.equal(re.test(withoutPiecesScript(r.body)), false, `${u} (${who}) carries ${what}`);
+        // PHASE 160e: a page with an upload form also allows its one script, sending to this site only; nothing else.
+        assert.equal(r.csp, r.body.includes('data-pieces') ? PIECES_PAGE_CSP : CSP_BEFORE, `${u} (${who}) carries a different Content-Security-Policy`);
       }
       assert.ok(html >= 3, `${who} reached only ${html} pages`);
     });

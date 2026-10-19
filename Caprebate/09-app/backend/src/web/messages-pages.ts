@@ -35,11 +35,12 @@ import { earlyQuestions, receiveFile } from './client-files-pages.ts';
 import * as W from './whatsapp.ts';
 import { whatsappPage } from './whatsapp-page.ts';
 import { communicate, composer } from './communication.ts';
-import { boundaryOf, parseMultipart, type Part } from './multipart.ts';
+import { boundaryOf, parseMultipart, piecedFields, type Part } from './multipart.ts';
 import { UPLOAD_LIMITS } from './upload-handler-port.ts';
 import { earlyQuestionsFor, receivableTypes } from './documents.ts';
 import { earlyVouchesFrom } from './document-reading.ts';
 import { cleanField } from './typed.ts';
+import { piecesPage } from './upload-pieces.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -239,8 +240,10 @@ export type StaffMessageDeps = {
 };
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+  const p = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, p.headers);
+  res.end(p.body);
 }
 
 /** The mailbox, where reading replies is on and a login is set; otherwise null, and nothing is fetched. */
@@ -462,7 +465,7 @@ export function portalMessagesBody(
         ${t.messages.length === 0 ? h`<p class="empty">No messages yet. Ask us anything below.</p>` : h`<ol class="chat">${t.messages.map((m) => bubble(m, false))}</ol>`}
       </section>
       ${t.may_write ? h`<section class="card" id="write"><div class="card-h"><h2>Write to us</h2></div>
-        <form method="post" action="/portal/messages" enctype="multipart/form-data" class="chatform">
+        <form method="post" action="/portal/messages" enctype="multipart/form-data" class="chatform" data-pieces>
           <label class="fl" for="pm-body">Your message</label>
           <textarea class="fi" id="pm-body" name="body" required maxlength="${String(M.MAX_MESSAGE)}" rows="5">${refused?.body ?? ''}</textarea>
           ${claimPicker('pm-claim', t.claims, true)}
@@ -487,6 +490,7 @@ export type PortalSend = { readonly body: string; readonly claim_id: string | nu
 export async function readPortalSend(
   req: IncomingMessage, form: (r: IncomingMessage) => Promise<URLSearchParams>,
   body: (r: IncomingMessage, max?: number) => Promise<Buffer>,
+  pieces?: (id: string) => Promise<{ ok: true; bytes: Uint8Array } | { ok: false; why: string }>,
 ): Promise<{ ok: true; send: PortalSend } | { ok: false; why: string }> {
   const type = req.headers['content-type'];
   if (/^multipart\/form-data\b/i.test(type ?? '')) {
@@ -494,6 +498,13 @@ export async function readPortalSend(
     if (boundary === null) return { ok: false, why: 'Something went wrong. Try again.' };
     let raw0: Buffer;
     try { raw0 = await body(req, UPLOAD_LIMITS.max_bytes + 64 * 1024); } catch { return { ok: false, why: `That file is too big. The most we take is ${Math.round(UPLOAD_LIMITS.max_bytes / 1024 / 1024)} MB.` }; }
+    // PHASE 160e: a file over Vercel's 4.5 MB a request came first in pieces (src/web/upload-pieces.ts).
+    const sent = pieces === undefined ? null : piecedFields(new Uint8Array(raw0), type);
+    if (sent !== null && pieces !== undefined) {
+      const got = await pieces(sent.id);
+      if (!got.ok) return got;
+      return { ok: true, send: { body: sent.fields['body'] ?? '', claim_id: sent.fields['claim_id'] ?? null, type_code: sent.fields['type_code'] ?? null, bytes: got.bytes } };
+    }
     let parts: Part[];
     try { parts = parseMultipart(new Uint8Array(raw0), boundary); } catch { return { ok: false, why: 'Something went wrong. Try again.' }; }
     // THE FILE IS NOT REQUIRED: an empty file box is a message with no file. More than one file is refused, as everywhere.

@@ -16,6 +16,7 @@ import * as CF from './configuration.ts';
 import { savedMessage, sectionList, why, type RecordTab } from './components.ts';
 import { senderSetting, setSender } from './free-email.ts';
 import { EMAIL_SENDING, sendingMissing, smtpLoginFromKeyFile } from '../stubs/email-provider.ts';
+import { piecesPage } from './upload-pieces.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -29,8 +30,10 @@ export type ConfigPageDeps = {
 const BASE = '/staff/admin-settings';
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  const pp = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, pp.headers);
+  res.end(pp.body);
 }
 
 function redirect(res: ServerResponse, to: string): void {

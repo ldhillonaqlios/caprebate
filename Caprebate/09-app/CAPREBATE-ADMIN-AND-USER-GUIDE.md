@@ -3225,6 +3225,8 @@ Address: `/staff/clients/{company}/files` — or press **Files** at the top of t
    only if they should see it. Press **Upload**. The file lands in **From Cap Rebate**, and we have already read it.
 5. You can change who sees one of our files later. On its card, press **Let the client see it** or **Hide it from the
    client**.
+6. A file over 4 MB goes in pieces first. Under the button you see "Sending your file" and how far it has got. Keep
+   the page open until it is done. The client portal works the same way.
 
 **What it will refuse, and why**
 - No file: "Choose a file first."

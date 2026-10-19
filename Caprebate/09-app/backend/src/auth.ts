@@ -100,6 +100,13 @@ function cookieFor(value: string, expires: string): SessionCookie {
 
 export const LOGIN_LIMIT = 5;
 export const RESET_LIMIT = 3;
+/**
+ * PHASE 160e, 19 October 2026: FROM ONE NETWORK ADDRESS, as well as per email. The stress test sent 100 wrong sign-ins
+ * on 100 different addresses from one machine and none was slowed (one password tried on many logins). These count
+ * every try from one address in the window, whatever the email; an office of a dozen people signing in is far below.
+ */
+export const LOGIN_SOURCE_LIMIT = 30;
+export const RESET_SOURCE_LIMIT = 10;
 const WINDOW_MS = 15 * 60 * 1000;
 
 function windowStart(nowIso: string): string {
@@ -189,7 +196,12 @@ export function nextSignInStep(d: Deps, user_id: string): SignInStep | null {
  * The password, checked: rate-limited, the same time for an unknown address, the one generic failure, and a weak
  * stored hash upgraded. It issues NOTHING — a session comes from `login` or from the steps.
  */
-export async function verifyPassword(d: Deps, email: string, password: string): Promise<User> {
+export async function verifyPassword(d: Deps, email: string, password: string, source?: string): Promise<User> {
+  // PHASE 160e: the network address first, hashed like the email (it too is personal data). Absent: not counted.
+  if (source !== undefined && !rateLimit(d, 'login-from:' + hashToken(source), LOGIN_SOURCE_LIMIT)) {
+    d.audit.append({ at: d.now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'login_from_one_address' } });
+    throw new AuthError('E_RATE_LIMITED', GENERIC_AUTH_FAILURE);
+  }
   // The bucket is the email, which IS personal data — so it is HASHED before it
   // becomes a key, and the key never reaches a log line.
   const bucket = 'login:' + hashToken(email.trim().toLowerCase());
@@ -353,8 +365,13 @@ export async function changeOwnPassword(
  * transport; it is never returned to a browser and never stored in clear.
  */
 export function requestPasswordReset(
-  d: Deps, email: string,
+  d: Deps, email: string, source?: string,
 ): { accepted: true; user?: User; plaintextToken?: string } {
+  // PHASE 160e: many addresses' resets asked from one network address are slowed too, so nobody can fill inboxes.
+  if (source !== undefined && !rateLimit(d, 'reset-from:' + hashToken(source), RESET_SOURCE_LIMIT)) {
+    d.audit.append({ at: d.now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'password_reset_from_one_address' } });
+    return { accepted: true }; // still generic
+  }
   const bucket = 'reset:' + hashToken(email.trim().toLowerCase());
   if (!rateLimit(d, bucket, RESET_LIMIT)) {
     d.audit.append({ at: d.now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'password_reset' } });

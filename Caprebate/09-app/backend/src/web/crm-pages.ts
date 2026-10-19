@@ -29,6 +29,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
 import type { Actor } from '../authz.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from './html.ts';
+import { piecesPage } from './upload-pieces.ts';
 import * as C from './crm.ts';
 import type * as F from './claim-facts.ts';
 import type { PipelinePanel } from './pipeline.ts';
@@ -87,8 +88,10 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: an upload form's page also gets the script that sends a big file in pieces.
+  const p = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, p.headers);
+  res.end(p.body);
 }
 
 function json(res: ServerResponse, status: number, body: unknown): void {
@@ -809,7 +812,7 @@ function titleBlock(id: string, t: TH.TitleByHandView): Safe {
     HM Land Registry, upload them, and type in what they say.${why('Only the facts below are kept. We never type an owner’s name: where the owner is a person, leave it out. Where the owner is a company, its company number is enough. A person reads the upload. Our reader never does.')}</div>
     ${t.copies.length === 0 ? h`<p class="help">No official copy uploaded yet.</p>`
       : h`<p>Uploaded: ${t.copies.map((c, i) => h`${i === 0 ? '' : ', '}<a href="/staff/documents/${c.id}">${c.label}</a> (${ukDate(c.at)})`)}</p>`}
-    ${t.may_upload ? h`<form method="post" action="/staff/clients/${t.business_id}/files" enctype="multipart/form-data" class="uploadbox">
+    ${t.may_upload ? h`<form method="post" action="/staff/clients/${t.business_id}/files" enctype="multipart/form-data" class="uploadbox" data-pieces>
       <input type="hidden" name="type_code" value="${TH.OFFICIAL_COPY_TYPE}">
       <label class="dropzone" for="oc-file-${id}"><span class="dropwords">Upload the official copy or the title plan</span>
         <input id="oc-file-${id}" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg"></label>

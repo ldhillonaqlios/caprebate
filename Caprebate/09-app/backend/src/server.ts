@@ -34,7 +34,7 @@ import { authenticate, logout, SESSION_COOKIE_NAME, AuthError, GENERIC_AUTH_FAIL
 import * as SI from './web/sign-in.ts';
 import { toActor } from './users.ts';
 import { payloadFor, assertSurveySection } from './web/surveyor.ts';
-import { bindResponse, handleWeb, PayloadTooLarge, readBody, refusalAsPage, sendRefusalPage } from './web/router.ts';
+import { bindResponse, clientIp, handleWeb, PayloadTooLarge, readBody, refusalAsPage, sendRefusalPage } from './web/router.ts';
 import { FsObjectStore } from './web/objectstore.ts';
 import { SharedObjectStore, type BlobClient } from './web/shared-objectstore.ts';
 import { sealKeyFromEnv, type KeepOriginals } from './web/originals.ts';
@@ -264,7 +264,7 @@ export async function createApp(
       const body = await readJson(req);
       const email = typeof body.email === 'string' ? body.email : '';
       const password = typeof body.password === 'string' ? body.password : '';
-      const r = await SI.beginSignIn(app, email, password); // the password, rate-limited and generic, as ever
+      const r = await SI.beginSignIn(app, email, password, clientIp(req)); // the password, rate-limited and generic, as ever
       if (r.kind === 'STEP') return stepAnswer(202, r.token);
       res.setHeader('set-cookie', sessionCookie(r.login));
       // The user, never the hash — `User` has no such field to leak.

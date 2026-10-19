@@ -146,6 +146,26 @@ export function singleFile(
 }
 
 /**
+ * PHASE 160e: A FORM WHOSE FILE WAS SENT FIRST IN PIECES (src/web/upload-pieces.ts) — no file in it, and the send's id
+ * in a field named `pieces`. Its text fields and that id; null for any other form, which is then read as before.
+ */
+export function piecedFields(body: Uint8Array, contentType: string | undefined): { id: string; fields: Record<string, string> } | null {
+  const boundary = boundaryOf(contentType);
+  if (boundary === null) return null;
+  let parts: Part[];
+  try { parts = parseMultipart(body, boundary); } catch { return null; }
+  if (parts.some((p) => p.filename !== undefined && p.bytes.length > 0)) return null;
+  const fields: Record<string, string> = {};
+  for (const p of parts) {
+    if (p.filename === undefined) fields[p.name] = cleanField(p.name, Buffer.from(p.bytes).toString('utf8'));
+  }
+  const id = fields['pieces'] ?? '';
+  if (!/^[A-Za-z0-9-]{8,64}$/.test(id)) return null;
+  delete fields['pieces'];
+  return { id, fields };
+}
+
+/**
  * 2 Oct 2026: SEVERAL PHOTOS IN ONE FORM — the client's "send lots of photos at once" (src/web/evidence-pages.ts).
  * The same ungenerous reader; every file part is returned, in order, up to `max` of them (the parts cap above still
  * holds). A form that posts more than `max` is refused, not cut short.
