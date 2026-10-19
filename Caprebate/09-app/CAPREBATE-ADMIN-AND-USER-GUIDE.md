@@ -61,9 +61,11 @@ goes for the chartered tax adviser. Their sign-off is a record that Sales keeps.
 
 Each login has an easy layout of its own. **Nothing a role may see or do changed** — only where things sit.
 
-- **The menu** runs down the left of every page. It is black, and the page you are on is green. At the top is
-  **Cap Rebate**, which takes you back to your home page. Then the **Search** box. This is the same search as `B41`.
-  At the foot is **Help**, and your **name**. Your name opens a small menu with **Your account** and **Sign out**.
+- **The menu** runs down the left of every page. It is dark blue. Each screen has a small picture beside it. The page
+  you are on is lighter, with a green edge. At the top is **Cap Rebate**, which takes you back to your home page.
+- **The bar at the top** of the page shows where you are, such as **Cap Rebate / Clients / Dunmarrow**. Press a name
+  in it to go back there. Then comes the **Search** box. This is the same search as `B41`. Then **Help**, and your
+  **name**. Your name opens a small menu with **Your account** and **Sign out**.
 - **The menu lists your role's screens, in groups.** It shows only the screens you work in every day. Nothing is
   hidden under **More** any more. **Tasks shows how many open tasks you have** — the number turns red when one is
   late. **No permission changed.** A screen that is not on your menu still opens by its address. It also opens from a
@@ -236,7 +238,7 @@ would be too easy to forget a flag. On a live system, nobody should ever set it.
   - a notice from an automation rule;
   - a letter from a compliance register.
 
-  Nothing sends them. To see the list, open **Your account** (the menu under your name). It is at the foot, under
+  Nothing sends them. To see the list, open **Your account** (the menu under your name, at the top right). It is at the foot, under
   **"Emails waiting to send"**. The columns are **When**, **What it is**, **Subject** and **State**. **What it is** reads,
   for example, "From a template", "Typed by staff", "An alert" or "Calendar invite". Every row's state reads **"Saved —
   not sent yet"**. A company's own email has a link, **Open the Email page**. The page says: "Emails are not being sent

@@ -102,11 +102,14 @@ async function boot(): Promise<{ made: Made; base: string; password: string; sig
   };
 }
 
-/** The links a person can follow from the header: every href in it, and the search form's address. */
+/**
+ * The links a person can follow from the header: every href in it, and the search form's address. PHASE 160a: the back
+ * office's search, Help and user menu are in the top bar over the page (div.crumbbar), so it is read with the header.
+ */
 function headerLinks(body: string): string[] {
   const m = /<header class="top">([\s\S]*?)<\/header>/.exec(body);
   assert.ok(m !== null, 'the page has no header');
-  const head = m[1] ?? '';
+  const head = (m[1] ?? '') + (/<div class="crumbbar">([\s\S]*?)<\/div>\s*<main/.exec(body)?.[1] ?? '');
   const out = new Set<string>();
   for (const x of head.matchAll(/href="([^"#]+)"/g)) out.add((x[1] ?? '').replace(/&amp;/g, '&'));
   for (const x of head.matchAll(/<form[^>]*method="get"[^>]*action="([^"]+)"/g)) out.add(x[1] ?? '');
