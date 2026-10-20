@@ -493,7 +493,9 @@ function factCell(f: C.Fact): Safe {
 }
 
 function done(msg: string | undefined): Safe {
-  return msg === undefined ? raw('') : savedMessage();
+  // PHASE 160j: what was just done to something the client sent, or asked of them, said in its own words.
+  const words: Record<string, string> = { accepted: 'Accepted.', 'asked-again': 'Asked again. It is in the client’s portal.', sent: 'Sent to the client’s portal.' };
+  return msg === undefined ? raw('') : savedMessage(words[msg] ?? 'Saved.');
 }
 
 /** The request's clock, for "Due in 3 days" and "Today, 12:32". Outside a request (a unit test) it is the wall clock. */

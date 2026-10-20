@@ -2118,6 +2118,8 @@ or ahead. The numbers show how many things are in. **Still needed** lists what i
 **Gathered** lists what we have, grouped by where it came from. Press a line to see more. A lookup shows the record it
 read and what came back. A fact shows who typed it, when and how they got it. It also shows every value before. An old
 value is never lost. The **survey pack** shows how far the surveyor has got. When you type a fact, say where you got it.
+What the client sends comes first, marked **Needs checking**. Accept it, or ask them again and say why. They see
+your reason in their portal. A fact we still need has its own box. Type it in there, or ask the client for it.
 Admin also sees a link to the client's audit log. Nobody can change or delete an entry in it.
 
 On the right are **Next action** and **Quick actions**. The quick actions are:

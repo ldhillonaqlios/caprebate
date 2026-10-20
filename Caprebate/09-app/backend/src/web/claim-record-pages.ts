@@ -13,6 +13,7 @@
  * derivation. Every staff-supplied value is drawn through `h`, which escapes it.
  */
 
+import * as CK from './client-checks.ts';
 import { dateWords, eventsOfProperty, KIND_WORDS } from './property-events.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { App } from '../app.ts';
@@ -78,7 +79,22 @@ export async function handleClaimRecord(
   let m = new RegExp(`^/staff/claims/${ID}/facts$`).exec(path);
   if (m) {
     const id = m[1] ?? '';
-    return finish(id, F.recordFact(deps, actor, id, posted(await form(req), ['fact_key', 'answer', 'value', 'source_id', 'note'])), 'Fact not recorded', 'saved');
+    const f = await form(req);
+    // PHASE 160j: a fact typed from a "still needed" line goes back to "Where this claim stands".
+    const anchor = f.get('from') === 'where' ? '#where' : '';
+    return finish(id, F.recordFact(deps, actor, id, posted(f, ['fact_key', 'answer', 'value', 'source_id', 'note'])), 'Fact not recorded', 'saved', anchor);
+  }
+  /* PHASE 160j: what the client sent, accepted or asked for again (src/web/client-checks.ts). */
+  m = new RegExp(`^/staff/claims/${ID}/sent/${ID}/accept$`).exec(path);
+  if (m) {
+    const id = m[1] ?? '';
+    return finish(id, CK.acceptSent(deps, actor, id, m[2] ?? ''), 'Not accepted', 'accepted', '#where');
+  }
+  m = new RegExp(`^/staff/claims/${ID}/sent/${ID}/ask-again$`).exec(path);
+  if (m) {
+    const id = m[1] ?? '';
+    const f = await form(req);
+    return finish(id, CK.askAgain(deps, actor, id, m[2] ?? '', f.get('reason')), 'Not asked again', 'asked-again', '#where');
   }
   // PHASE 143: the grants routes send a person back to the grants section, which opens because it was just changed.
   m = new RegExp(`^/staff/claims/${ID}/grants$`).exec(path);

@@ -255,6 +255,10 @@ export type AuditKind =
   | 'COMPLAINT_LOGGED' | 'COMPLAINT_CLASSIFIED' | 'COMPLAINT_PROGRESS_RECORDED' | 'COMPLAINT_UPDATED' | 'COMPLAINT_CLOSED'
   // PHASE 160f: a complaint sent through the public notices page's form (src/web/notices-site.ts).
   | 'COMPLAINT_FORM_RECEIVED'
+  // PHASE 160j: staff checked what a client sent through their portal (src/web/client-checks.ts): accepted, or asked
+  // again with a reason. The ids only.
+  | 'CLIENT_SENT_ACCEPTED'
+  | 'CLIENT_SENT_ASKED_AGAIN'
   | 'BREACH_OPENED' | 'BREACH_UPDATED' | 'BREACH_AWARENESS_CORRECTED' | 'BREACH_DECISION_RECORDED'
   | 'BREACH_PHASE_RECORDED' | 'BREACH_NOTIFICATION_RECORDED' | 'BREACH_CLOSED'
   /** Phase 153c (Word question 181): the restricted names list — a name added, the list read, a read refused. */

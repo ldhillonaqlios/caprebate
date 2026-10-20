@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 26 |
 | Built - awaiting sign-off | 142 |
 | Blocked - question | 0 |
@@ -14,7 +14,7 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 338 |
+| Done | 339 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160j - Carried from 160i: a client's upload or answer waits for staff to check and accept it (or ask again with a reason), and a value typed or asked for straight from a "still needed" line
-
-`13334969547` · **Ready - Claude can build** · owner Claude
-
-- Note 2026-10-20 (Phase 160i): carried from 160i, which built the claim page's overview without these two.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-338 items.
+339 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3479,4 +3473,10 @@
 `13334474623` · **Done** · owner Claude
 
 - Note 2026-10-20 (Phase 160i): Written and claimed 20 Oct 2026 on Lakhbir's instruction ("polish it and make it live", for the claim page mock-up he chose: mock-ups 5 and 2 combined, built out with uploads, typed values, sources and the audit log). | 2026-10-20 (Phase 160i): Done: where this claim stands on the claim page, the client's audit log for Admin, the fact form's source; 16 tests, 5,233 checks. Carried to Phase 160j (13334969547).
+
+### Phase 160j - Carried from 160i: a client's upload or answer waits for staff to check and accept it (or ask again with a reason), and a value typed or asked for straight from a "still needed" line
+
+`13334969547` · **Done** · owner Claude
+
+- Note 2026-10-20 (Phase 160i): carried from 160i, which built the claim page's overview without these two. | 2026-10-20 (Phase 160j): written and claimed on Lakhbir's instruction ("Do this task here"). | 2026-10-20 (Phase 160j): Done: what the client sends checked (accept or ask again), a fact found where it stands; 11 tests, 5,244 checks.
 
