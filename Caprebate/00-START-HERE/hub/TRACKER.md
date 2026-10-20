@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 334 |
-| Working on it | 1 |
+| Done | 335 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160f - The privacy notice and public notices on the test website, their four facts proposed for the DPO, and the complaint form working (20 Oct 2026)
-
-`13326319072` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-20 (Phase 160f): Written and claimed 20 Oct 2026 on Lakhbir's answer 'Build and publish on test' (the notices' four facts proposed for the DPO), after Phase 160e's stress test.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-334 items.
+335 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3452,4 +3446,11 @@
 
 - Note 2026-10-19 (Phase 160e): Written and claimed 19 Oct 2026 on Lakhbir's instruction after the stress test of main 85cb245 (stress test the website, engine, reports, code, content and portal log ins; ensure everything is working and correct before deployment).
 - Note 2026-10-19 (Phase 160e): Done 19 Oct 2026: a document over 4.5 MB sent in pieces on every upload form (src/web/upload-pieces.ts, migration 117); sign-in and resets limited from one network address, the test website trusting Vercel's X-Forwarded-For; a cross-site form refused; the home page's four long dashes; the guide's upload paragraph matched to the screens. test/phase160e.test.ts (17); four test files restated. Two decisions added to WAITING-ON-PEOPLE (the website's region; the fee wording once clause 5 is agreed).
+
+### Phase 160f - The privacy notice and public notices on the test website, their four facts proposed for the DPO, and the complaint form working (20 Oct 2026)
+
+`13326319072` · **Done** · owner Claude
+
+- Note 2026-10-20 (Phase 160f): Written and claimed 20 Oct 2026 on Lakhbir's answer 'Build and publish on test' (the notices' four facts proposed for the DPO), after Phase 160e's stress test.
+- Note 2026-10-20 (Phase 160f): Done 20 Oct 2026: the notices on the test website as a draft with eight proposed facts marked; the host, store and database named in the US; the complaint form kept, emailed and logged with its arrival time; the region checked, no move. test/phase160f.test.ts (14). The eight facts wait on the DPO (WAITING-ON-PEOPLE.md).
 
