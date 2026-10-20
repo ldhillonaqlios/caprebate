@@ -143,7 +143,9 @@ export function page(opts: { title: string; body: Safe; nav?: Safe; wide?: boole
   <p>Cap Rebate — capital allowances for healthcare property.</p>
   <p>Indicative technical reference, not tax advice. The defensible figure comes from a chartered surveyor’s survey and a
   CAA 2001 s.562 apportionment, with the filing position signed off by a tax adviser.</p>
-  <p><a href="/notices/">Public notices</a> · <a href="/privacy/">Privacy</a></p>
+  <p><a href="/notices/">Public notices</a> · <a href="/privacy/">Privacy</a> · <a href="/terms/">Terms of use</a> ·
+  <a href="/cookies/">Cookies</a> · <a href="/cookies/#choice">Cookie settings</a> · <a href="/accessibility/">Accessibility</a> ·
+  <a href="/acceptable-use/">Acceptable use</a> · <a href="/disclaimer/">Disclaimer</a></p>
   ${staff ? h`<p class="build">${STAFF_FOOTER}</p>` : raw('')}
 </footer>
 </body></html>`.html
