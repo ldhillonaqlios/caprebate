@@ -13373,3 +13373,27 @@ NOTHING LEFT  beyond those lines. 4B: the build queue is empty; no orphan.
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160i — where this claim stands: every stage, where each fact came from, and the survey pack's progress — 20 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 160i, 20 Oct 2026: Lakhbir wanted the claim page human friendly ("a list of all the stages, which stage we are on, what data we need, what data has been gathered and by where, and what % the survayor pack has been completed"), chose mock-ups 5 and 2 combined, then "polish it and make it live". The claim page now opens with "Where this claim stands", for Admin and Sales: all eleven stages down the left, each opening to what it needs; still needed (late first) and gathered, grouped by where each thing came from. Each gathered line opens to its source: a lookup shows the record it read and exactly what came back, field by field, and who started it; a fact shows who typed it, when, how they got it, and every value before, none ever overwritten. Also the survey pack's progress (chapters the surveyor has gone through, all 23 once approved) and a glossary for newcomers. Admin gets the client's audit log in plain words. The fact form asks where a value came from. test/phase160i.test.ts, 16 tests; 5,233 checks, all green. Carried to Phase 160j: a client's upload or answer waiting for staff to check it, and typing or asking straight from a "still needed" line.
+
+- **Claim.** hub/CLAIM.md and tracker row 13334474623, pushed first (`598fae1`); the phase written into the plan and the run sheet (`c95d2b6`). Branched from main while Phase 160h's pull request (63) was still open, so the two are not stacked.
+- **The design.** Five mock-ups shown in the conversation; Lakhbir chose 5 and 2 combined, then an interactive mock-up in his branding (`04-phase-work/mockups/claim-page-redesign.html`, OneDrive only: that folder is not in git), built out on his instruction with uploads, typed values, sources and the audit log.
+- **Premise re-derived (step 8).** The page runs no script (CSP), so the build uses links and `<details>`, not the mock-up's drawer. Each stage's needs already existed (`gateOut`) but only the current one was shown. Facts were already append-only with who and when, and audited (`CLAIM_FACT_RECORDED`). Lookups (`register_records`) keep exactly what came back but not who: that comes from the latest research run before it. The audit log is Admin's alone (`audit.read`), so its client view is Admin's too. The survey pack stores the chapters the surveyor opened and the approval, not "chapter finished", so the percentage counts those, honestly labelled.
+- **Built.** `src/web/claim-overview.ts` (the block, `STAGE_WORDS`, `GLOSSARY`, `lookups`, `factHistory`, `factsGathered`, `answersGathered`, `documentsGathered`, `openAsks`, `packProgress`, `overviewStages`, `claimOverview`, `overviewBlock`); drawn under the stage bar by `claimPage` (`?stage=` through `renderClaim` and the client's claim route); `/staff/audit?client=` (`src/web/audit-log.ts`, `clientAuditCount`, `kindWords`; `clientAuditPage` in `src/web/staff.ts`); the fact form's "Where did you get this?" with no answer chosen in advance; the styles in `src/web/assets.ts`.
+- **Tests.** `test/phase160i.test.ts` (sixteen). Broken on purpose eleven ways: nine caught at once; a sort the query already made was dead and is removed; the role check inside the block gained its own test, which then caught its removal. `test/follow-on.test.ts` restated: an audit line now also carries who, by name, and the kind in words, neither read from the detail. The sign-in limit from one address (Phase 160e) meant the new file signs in once per login.
+- **Seen in the browser** (the local demo, as Admin): the rail, a stage opened, a fact recorded twice showing both values newest first with the note and who typed it, a lookup's fields, and the client's audit log in plain words.
+- **The checks, at the close:** site 1,427 pass (3 xfail); phase3 440; phase9 417; back end 2,949 pass / 0 fail over 187 tracked files; **5,233** in all; drift, CRM fold, plain words, sign-off registers, analytics allow-list, Help, SQL lint, typecheck and the tracker green.
+
+```
+DONE          Where this claim stands on the claim page; the client's audit log for Admin; the fact form's source.
+              test/phase160i.test.ts (16). 5,233 checks; all green.
+NOT DONE      A client's upload or answer waiting for staff to check it, and typing or asking straight from a
+                "still needed" line - Phase 160j, board item 13334969547, Ready - Claude can build.
+              Whether Sales may read a client's audit log (today Admin alone) - a question for Lakhbir.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines.
+```
+
+**Claim cleared** in the commit that carries this record.
