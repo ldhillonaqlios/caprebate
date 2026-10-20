@@ -519,6 +519,17 @@ Signed .............................  Date ..........................
 
 Phase 160f filled the four facts nobody had supplied on the public notices page with our recommendation, and named the test website's host, file store and database. Eight facts were marked "Proposed": the legal basis for names in documents (legitimate interests, Article 6(1)(f)); the retention period (seven years from the end of the claim's accounting period, or one year after an HMRC enquiry closes); Vercel, Vercel Blob and Turso, in the United States (US East); and two dates. **Sadique Maskeen approved all eight, relayed by Lakhbir on 20 October 2026, for testing.** The marks are off and the page is live on the test website (/notices/). Still open for real clients: the page on the public website, its nine host checks, and the safeguard for sending information to the United States, which the page says will be named before the website holds anything about a real person.
 
+## Recorded 20 October 2026 (Phase 160h) · Five website legal pages and a cookie banner, drafted for you to check
+
+**For the solicitor and the data protection officer.** Lakhbir asked for "all the usual things you see on the website". Five pages are drafted and live on the test website only, each opening with a line saying it is a draft you have not checked and is not in force: **website terms of use** (/terms/), **cookie policy** (/cookies/), **acceptable use** (/acceptable-use/), **accessibility statement** (/accessibility/) and **disclaimer** (/disclaimer/, an estimate is not tax advice). The text is in `09-app/backend/src/web/legal-pages.ts`. A **cookie banner** asks a visitor who has not answered, with "Accept all" and "Reject non-essential" the same size, and keeps the answer for twelve months in a cookie of its own (`cb_cookies`), which we treat as strictly necessary. Nothing optional is loaded today, whatever the answer: Google Analytics stays off (no measurement id).
+
+What we ask:
+1. **The solicitor:** are the terms of use, acceptable use and disclaimer fit for a UK limited company's website, and is the governing law (England and Wales) right? Is the disclaimer's line between an estimate and tax advice drawn where you want it?
+2. **The data protection officer:** is the cookie policy right that `cb_session` (8 hours), `cb_step` (15 minutes), `cb_draft` (6 hours) and `cb_cookies` (12 months) are all strictly necessary, so need no consent? Is the banner's wording acceptable under PECR?
+3. **The data protection officer: one mismatch to settle.** The public notices page's cookie section, which you confirmed in Phase 160g, says the portal uses "one cookie to keep you signed in" and that the website keeps "one note" of the analytics answer. The cookie policy lists all four cookies above, by name. We have not changed the notices page's confirmed words: please say whether it should point to the cookie policy, or list the four itself.
+
+**For Lakhbir: two facts we do not have**, shown on the pages as "to be added" and never invented: our registration number with the Information Commissioner (we have not registered yet), and a telephone number for the website.
+
 ## Appendix 1 — what is NOT in this register, and why
 
  **This register covers everything on our project board that waits on a solicitor, the data protection officer, the director or a developer, and nothing else.**

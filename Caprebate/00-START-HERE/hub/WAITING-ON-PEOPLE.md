@@ -92,6 +92,10 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       and Turso named, in the US; two dates) - APPROVED by Sadique Maskeen, relayed by Lakhbir ("Sadique approves, I
       relay"), for testing. The marks are off and the page is live on the test website at /notices/. The public
       website (caprebate.co.uk) still needs the page and the nine host checks before real clients.
+- [ ] Phase 160h, 20 Oct 2026: check the five website legal pages drafted on the test website (terms of use, cookie
+      policy, acceptable use, accessibility, disclaimer) and the cookie banner; settle the notices page's cookie section
+      against the cookie policy (FOR-THE-SOLICITOR-DPO-DEVELOPER, "Recorded 20 October 2026 (Phase 160h)").
+- [ ] Lakhbir, Phase 160h: our ICO registration number (once registered) and a telephone number for the website's pages.
 - [ ] Approve and publish the privacy notice naming every service (IONOS, Didit, Postcodes.io, Companies House, Zoom,
       Homedata, Cloudflare, Google, Anthropic…). Then the testing waivers in the code are switched to "named". _(GoAddress removed 6 Oct 2026, Phase 156f: Homedata, in the UK, answers the address box.)_
 - [ ] Approve each US transfer for real clients: Zoom, WhatsApp (Meta), Anthropic, Cloudflare, Didit. _(GoAddress removed 6 Oct 2026, Phase 156f.)_ _(WhatsApp, 5 Oct 2026: no transfer to Meta from us any more — chats are exported on the phone and uploaded to the record, Phase 156c. Sadique's two questions are 156c A2.)_

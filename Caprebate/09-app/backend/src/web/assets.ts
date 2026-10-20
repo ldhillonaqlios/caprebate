@@ -1778,6 +1778,18 @@ body.public .f4-events{margin:.3rem 0 0;padding-left:1.1rem;font-size:14px;color
 }
 @media (max-width:620px){body.public .f4-names,body.public .f4-channel-cards{grid-template-columns:minmax(0,1fr)}body.public .f4-stages li{font-size:12px}}
 @media (max-width:620px){body.public .brandmark .wm{font-size:12px;letter-spacing:.14em}body.public .mark{width:44px;height:44px}body.public .top nav:not(.appnav){gap:.9rem}}
+body.public .legal .draft-note{border:1px solid #f2c46b;background:#2a2210;color:#EDEAE2;border-radius:12px;padding:.8rem 1rem;margin:1rem 0 1.5rem}
+body.public .legal .draft-note strong{color:#f2c46b}
+body.public .legal .gap{color:#f2c46b;font-weight:700}
+body.public .legal h2{margin-top:2rem}
+body.public .legal ul{padding-left:1.2rem}
+body.public .legal li{margin:.35rem 0;color:#c9ccc8}
+body.public .legal table{background:transparent}
+body.public .legal th,body.public .legal td{color:#c9ccc8;border-bottom-color:#2d3532}
+body.public .legal th{color:#EDEAE2;border-bottom:1px solid #3e4945}
+body.public .legal code{background:#1b201e;color:#ABEDD8}
+body.public .legal .legal-more{margin-top:2.5rem;padding-top:1rem;border-top:1px solid #2d3532;font-size:15px}
+body.public .foot p a{white-space:nowrap}
 `;
 
 /**

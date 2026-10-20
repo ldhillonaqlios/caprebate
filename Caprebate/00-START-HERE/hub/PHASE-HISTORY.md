@@ -13373,3 +13373,27 @@ NOTHING LEFT  beyond those lines. 4B: the build queue is empty; no orphan.
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160h — the website's other legal pages and the cookie banner — 20 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 160h, 20 Oct 2026: Lakhbir asked for "all the usual things you see on the website" with a cookie consent banner. Five pages are drafted and live on the test website only, each saying it is a draft our solicitor and data protection officer have not checked: website terms of use (/terms/), cookie policy (/cookies/), acceptable use, accessibility statement and disclaimer. A cookie banner asks visitors who have not answered, with "Accept all" and "Reject non-essential" the same size and no script, and keeps the answer for twelve months; "Cookie settings" and the pages are linked from every footer and the home page. Nothing optional loads today. Two facts are shown as "to be added", never invented: the ICO registration number and a telephone number. The drafts, and a mismatch between the notices page's confirmed cookie section and the new cookie policy, are with the solicitor and DPO (WAITING-ON-PEOPLE). test/phase160h.test.ts, 13 tests; 5,230 checks, all green.
+
+- **Claim.** hub/CLAIM.md and tracker row 13333379992, pushed first (`207a6bd`). Written as 160f, then 160g, and renamed 160h when another session took both numbers the same morning; it waited for 160f and 160g to merge (Lakhbir: "Wait until 160f is merged, then run 160g in full", then "check now").
+- **Premise re-derived (step 8).** The site sets three cookies, all strictly necessary (`cb_session` 8 hours, `cb_step` 15 minutes, `cb_draft` 6 hours), read from the code; the only consent code was Phase 146f's Google Analytics banner in the fallback page, off. No ICO registration number or telephone number is on record anywhere, so both are gaps.
+- **Built.** `src/web/legal-pages.ts` (the five pages, `LEGAL_GAPS`, the banner, `wantsBanner`, `safeBack`, `optionalAllowed`, the answer's cookie `cb_cookies`); the routes and the banner's insertion in `src/web/router.ts`, on the test website only (`testNotices`), with "This page is being prepared" elsewhere; the footers in `src/web/html.ts` and `09-app/site/home.html`; the pages' style in `src/web/assets.ts`.
+- **Tests.** `test/phase160h.test.ts` (thirteen). The code was broken on purpose nine ways (no banner added; the banner ignoring the answer; unequal buttons; "back" allowing another website; a cookie missing from the policy; no Cookie settings link; the pages not served; a made-up telephone number; the optional gate saying yes to any answer) and all nine were caught. One older test caught a CSS comment the theme check reads as a selector; the comment came out.
+- **Seen in the browser** (a local test-website server): the banner on sign-in, its answer kept, no banner after, the cookie policy's saved answer, and no sideways scroll at phone width.
+- **The checks, at the close:** site 1,427 pass (3 xfail); phase3 440; phase9 417; back end 2,946 pass / 0 fail over 187 tracked files; **5,230** in all; drift, CRM fold, plain words, sign-off registers, analytics allow-list, Help, SQL lint, typecheck and the tracker green.
+
+```
+DONE          five legal pages drafted on the test website, the cookie banner, the footers. test/phase160h.test.ts (13).
+              5,230 checks; all green.
+NOT DONE      The solicitor's and DPO's check of the five drafts, and the notices page's cookie section against the
+                cookie policy - in WAITING-ON-PEOPLE.md and the DPO register ("Recorded 20 October 2026 (Phase 160h)").
+              The ICO registration number and a telephone number - Lakhbir, in WAITING-ON-PEOPLE.md.
+              The pages on the public website (caprebate.co.uk) - with the notices page's move, already waiting.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue is empty; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.
