@@ -1,8 +1,8 @@
 /**
  * PHASE 160f, 20 OCTOBER 2026 — THE PUBLIC NOTICES ON THE TEST WEBSITE, THEIR FACTS PROPOSED, AND THE COMPLAINT FORM.
  *
- *   1  the page as served: nothing inline, a draft banner, no long dash, the footer's anchors, the eight proposed facts
- *   2  the acceptance check lists the proposed facts, and --live still refuses the page
+ *   1  the page as served: nothing inline, a banner, no long dash, the footer's anchors, the facts (proposed by 160f, confirmed by 160g)
+ *   2  the acceptance check lists proposed facts (none since Phase 160g), and --live refuses the page while any are
  *   3  served only where testNotices is on (api/index.mjs); anywhere else the placeholder stays
  *   4  the complaint form: kept with when it arrived, emailed to the data protection address, refused when incomplete,
  *      slowed from one network address
@@ -63,7 +63,8 @@ describe('1 · the page as served', () => {
   test('nothing inline, the style a file, a draft banner, and the form posting here', () => {
     assert.doesNotMatch(ed.html, /<style\b|<script\b|\sstyle\s*=|\son[a-z]+\s*=/i);
     assert.match(ed.html, /<link rel="stylesheet" href="\/assets\/notices\.css">/);
-    assert.match(ed.html, /<p class="draft-banner" role="note"><strong>Draft, on our test website\.<\/strong>/);
+    // PHASE 160g: the facts are confirmed, so the banner says only where the page is.
+    assert.match(ed.html, /<p class="draft-banner" role="note"><strong>Our test website\.<\/strong>/);
     assert.match(ed.html, /<form class="form" method="post" action="\/notices\/complaint">/);
     assert.match(ed.css, /\.proposed\{/);
     assert.match(ed.css, /\.draft-banner\{/);
@@ -83,8 +84,9 @@ describe('1 · the page as served', () => {
   test('the four facts nobody supplied are proposed, and the website\'s host, store and database are named, in the US', () => {
     const src = readFileSync(NOTICES_PATH, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
     assert.doesNotMatch(src, /\[NOT SET — /);
-    assert.equal((src.match(/<span class="proposed">Proposed, awaiting our data protection officer:<\/span>/g) ?? []).length, 8);
-    assert.match(src, /we rely on <strong>legitimate interests<\/strong> \(Article 6\(1\)\(f\) of the UK GDPR\)/);
+    // PHASE 160g: Sadique Maskeen confirmed all eight (relayed by Lakhbir, for testing), so no mark is left.
+    assert.equal((src.match(/<span class="proposed">/g) ?? []).length, 0);
+    assert.match(src, /We rely on <strong>legitimate interests<\/strong> \(Article 6\(1\)\(f\) of the UK GDPR\)/);
     assert.match(src, /seven years from the end of the accounting period the claim is made in/);
     assert.match(src, /<strong>Vercel<\/strong>, which hosts our test website/);
     assert.match(src, /<strong>Turso<\/strong>, the database behind our test website/);
@@ -94,14 +96,13 @@ describe('1 · the page as served', () => {
 });
 
 describe('2 · the acceptance check', () => {
-  test('it lists the eight proposed facts and passes; --live still refuses the page', () => {
+  test('it lists no fact as proposed once the data protection officer confirmed them, and --live passes (Phase 160g)', () => {
     const r = spawnSync(process.execPath, [CHECK], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stdout.slice(-800));
-    assert.match(r.stdout, /PROPOSED — filled with our recommendation, awaiting the data protection officer {2}\(8\)/);
-    assert.match(r.stdout, /0 facts are unset\. 8 are proposed, awaiting the data protection officer\./);
+    assert.match(r.stdout, /PROPOSED — filled with our recommendation, awaiting the data protection officer {2}\(0\)/);
+    assert.match(r.stdout, /0 facts are unset\. 0 are proposed, awaiting the data protection officer\./);
     const live = spawnSync(process.execPath, [CHECK, '--live'], { encoding: 'utf8' });
-    assert.equal(live.status, 1);
-    assert.match(live.stdout, /FAIL \(--live\): 8 fact\(s\) proposed and not yet confirmed/);
+    assert.equal(live.status, 0, live.stdout.slice(-600));
   });
 });
 
@@ -112,7 +113,7 @@ describe('3 · on the test website only', () => {
       const n = await fetch(`${b.base}/notices/`);
       assert.equal(n.status, 200);
       assert.equal(n.headers.get('content-security-policy'), HTML_HEADERS['content-security-policy']);
-      assert.match(await n.text(), /Draft, on our test website/);
+      assert.match(await n.text(), /Our test website\./);
       const css = await fetch(`${b.base}/assets/notices.css`);
       assert.equal(css.status, 200);
       assert.match(css.headers.get('content-type') ?? '', /text\/css/);

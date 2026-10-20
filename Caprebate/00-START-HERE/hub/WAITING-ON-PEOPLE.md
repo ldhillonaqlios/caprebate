@@ -87,11 +87,11 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       WhatsApp box; is fetching a WhatsApp file from Meta's file host under your WhatsApp approval (our reading)?
 - [ ] Approve the retention schedule, the document-pipeline impact assessment (DPIA), the breach procedure and the
       upload boundary.
-- [ ] Phase 160f, 20 Oct 2026: the notices page is published ON THE TEST WEBSITE (/notices/) as a draft, with eight facts
-      marked "Proposed": the legal basis (legitimate interests), the retention period (seven years from the claim's
-      accounting period end, or one year after an enquiry closes), Vercel and Turso named, the US, and two dates.
-      Confirm or correct each; then the marks come off (`caprebate-notices-acceptance.cjs --live` refuses the page until
-      they do).
+- [x] Phase 160f/160g, 20 Oct 2026: the notices page's eight proposed facts (the legal basis, legitimate interests; the
+      retention period, seven years from the claim's accounting period end or one year after an enquiry closes; Vercel
+      and Turso named, in the US; two dates) - APPROVED by Sadique Maskeen, relayed by Lakhbir ("Sadique approves, I
+      relay"), for testing. The marks are off and the page is live on the test website at /notices/. The public
+      website (caprebate.co.uk) still needs the page and the nine host checks before real clients.
 - [ ] Approve and publish the privacy notice naming every service (IONOS, Didit, Postcodes.io, Companies House, Zoom,
       Homedata, Cloudflare, Google, Anthropic…). Then the testing waivers in the code are switched to "named". _(GoAddress removed 6 Oct 2026, Phase 156f: Homedata, in the UK, answers the address box.)_
 - [ ] Approve each US transfer for real clients: Zoom, WhatsApp (Meta), Anthropic, Cloudflare, Didit. _(GoAddress removed 6 Oct 2026, Phase 156f.)_ _(WhatsApp, 5 Oct 2026: no transfer to Meta from us any more — chats are exported on the phone and uploaded to the record, Phase 156c. Sadique's two questions are 156c A2.)_
