@@ -13397,3 +13397,24 @@ NOTHING LEFT  beyond those lines.
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160j — what the client sends, checked; a fact found where it stands — 20 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 160j, 20 Oct 2026: carried from 160i on Lakhbir's instruction ("Do this task here"). Whatever the client sends through their portal, an answer or a file against a request, now comes first on the claim page marked "Needs checking". Staff accept it, or ask again and say why; the reason reaches the client's portal as a new question or document request. Each check is kept for good (migration 119) and written to the audit log, and gathered shows a client's answer only once accepted, with who checked it. Each fact the claim still needs has its own box: type it in, saying where you got it, or ask the client in their portal; both come back to the claim page. test/phase160j.test.ts, 11 tests, broken eleven ways, all caught; 5,244 checks, all green.
+
+- **Claim.** hub/CLAIM.md and tracker row 13334969547, pushed first (`7d81237`). Cut from `claude/phase-160i`, because it builds on 160i's block and PR 64 was not yet merged; its pull request is against main and carries 160i's commits until 64 merges.
+- **Premise re-derived (step 8).** A portal answer (`portal.ts answerTask`) and an upload against a request (`documents.ts receiveByUpload`) both end as an ANSWERED `client_tasks` row with `answered_by_role` CLIENT, so one rule finds both; nothing recorded a check. `sendTaskToPortal` and `createDocumentRequest` already validate and audit, so asking again reuses them inside one transaction (`db.tx` nests). The page runs no script, so each action is a form.
+- **Built.** Migration 119 `client_task_checks` (one per thing sent, never edited or deleted); `src/web/client-checks.ts` (`waitingForCheck`, `checkOf`, `acceptSent`, `askAgain`, `ASK_AGAIN_DAYS` 14); the routes `POST /staff/claims/{id}/sent/{task}/accept` and `/ask-again` (`claim-record-pages.ts`); audit kinds `CLIENT_SENT_ACCEPTED` and `CLIENT_SENT_ASKED_AGAIN`, said in words on the client's audit log, which also finds entries naming the client by `business_id`; in the overview, "Needs checking" first with what was sent and the two forms, and each fact still to find (`factsToFind`, not already asked) with a box of its kind and "Ask the client in their portal"; the facts route and the ask route return to the overview when posted from it (`from=where`); the saved message says what was done.
+- **Tests.** `test/phase160j.test.ts` (eleven), including a real client upload through the portal. Broken on purpose eleven ways; all eleven caught. One fault found on the way: a fact's label with a long dash went into the question sent to the client, in a hidden field the page's dash filter does not reach; the label is now made plain at the source.
+- **Seen in the browser** (the local demo, as Sales): the fact boxes, and "Ask the client in their portal" returning to the overview with "Sent to the client’s portal." and the fact shown as asked, not offered again.
+- **The checks, at the close:** site 1,427 pass (3 xfail); phase3 440; phase9 417; back end 2,960 pass / 0 fail over 188 tracked files; **5,244** in all; drift, CRM fold (two moved line references updated), plain words, sign-off registers, analytics allow-list, Help, SQL lint, typecheck and the tracker green.
+
+```
+DONE          Needs checking, accept or ask again with a reason; a fact found where it stands. test/phase160j.test.ts (11).
+              5,244 checks; all green.
+NOT DONE      Whether Sales may read a client's audit log (Admin only today) - carried from 160i, a question for Lakhbir.
+              Merging PR 64, then this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines.
+```
+
+**Claim cleared** in the commit that carries this record.
