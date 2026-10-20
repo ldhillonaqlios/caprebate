@@ -1071,6 +1071,33 @@ command that counts it, never the number.
 ---
 
 
+## PHASE 160f — The privacy notice and public notices on the test website, their four facts proposed, and the complaint form working
+
+ **Model: Opus. Written 20 October 2026** on Lakhbir's instruction, after the stress test (Phase 160e) found the notices unpublished while the forms collect names, emails and phone numbers: "Build and publish on test" (fill the four facts with our recommendation, marked for the data protection officer). Lakhbir also asked that the website run where its database is: the Vercel dashboard (read 20 Oct 2026) shows the Turso database in US East (Virginia) and the Blob store in IAD1, the same place as the website's code, so nothing moves; the notice says where it is.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+Read THE STANDING INSTRUCTION and COORDINATES first. Claim the work in
+hub/CLAIM.md (commit and push first). Work on claude/phase-160f from main;
+open the pull request against main (never stacked).
+
+THE JOBS
+1. 03-app/caprebate-notices-page.html: the four NOT SET facts (two dates, the
+   legal basis, the retention period) filled with our recommendation, each
+   marked "Proposed, awaiting our data protection officer". The website's
+   host, file store and database named (Vercel, Vercel Blob, Turso; US East),
+   and the US in "Sending information outside the UK", as proposed. The
+   acceptance check counts proposed facts and says so.
+2. Serve it on the test website only (api/index.mjs, testNotices) at /notices/
+   and /privacy/, with a banner saying it is a draft; its style a file; no
+   inline style; the footer's #privacy and #complaints anchors land.
+3. The complaint form (/notices/complaint) works: kept with when it arrived,
+   emailed to the data protection address, listed on the staff complaints
+   page until someone logs it into the complaints log.
+
+TESTS: test/phase160f.test.ts, red on main first.
+```
+
 ## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 
