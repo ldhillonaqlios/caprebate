@@ -17,10 +17,10 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Confirm or complete the ICO registration (ACTION-PLAN ~1828).
 - [x] DKIM, SPF and DMARC for caprebate.co.uk — checked 5 Oct 2026 (Phase 156b): all published; a test email scored 10/10 on mail-tester.com.
 - [ ] Get the director's confirmation of the 3% fee and the other terms (Word question 215).
-- [ ] Phase 160e (the stress test, 19 Oct 2026): where the website runs. Vercel serves it from London but the code
-      runs in Washington DC (iad1), so a visitor's details are handled in the US and every page waits on the Atlantic.
-      Moving it to London (`"regions": ["lhr1"]` in vercel.json) is one line; decide with where the Turso database sits,
-      since a London website reading a US database would be slower, not faster. The privacy notice must say which.
+- [x] Phase 160e: where the website runs - CHECKED 20 Oct 2026 (Phase 160f; Lakhbir: "Check the database first"). The
+      Vercel dashboard shows the Turso database in US East (Virginia) and the Blob store in IAD1, the same place as the
+      website's code (iad1), so nothing moves. Moving to London would mean a new database in London too, before real
+      clients; the notices page now says the test website is in the United States.
 - [x] Word question 11 — CLOSED 4 Oct 2026: neither licence email is sent (Lakhbir: the VOA rating list scrapped; "OS email no we dont need to send it"; on the Rating Cost Guide, "dont send it"). The fee percentage and the ageing method go to the surveyor (the free 45-minute call, Q9 and Q9a).
 - [ ] Book the free 45-minute surveyor call.
 - [ ] Get the DPO appointment signed by Sadique and the company, and its five blanks filled.
@@ -87,6 +87,11 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
       WhatsApp box; is fetching a WhatsApp file from Meta's file host under your WhatsApp approval (our reading)?
 - [ ] Approve the retention schedule, the document-pipeline impact assessment (DPIA), the breach procedure and the
       upload boundary.
+- [ ] Phase 160f, 20 Oct 2026: the notices page is published ON THE TEST WEBSITE (/notices/) as a draft, with eight facts
+      marked "Proposed": the legal basis (legitimate interests), the retention period (seven years from the claim's
+      accounting period end, or one year after an enquiry closes), Vercel and Turso named, the US, and two dates.
+      Confirm or correct each; then the marks come off (`caprebate-notices-acceptance.cjs --live` refuses the page until
+      they do).
 - [ ] Approve and publish the privacy notice naming every service (IONOS, Didit, Postcodes.io, Companies House, Zoom,
       Homedata, Cloudflare, Google, Anthropic…). Then the testing waivers in the code are switched to "named". _(GoAddress removed 6 Oct 2026, Phase 156f: Homedata, in the UK, answers the address box.)_
 - [ ] Approve each US transfer for real clients: Zoom, WhatsApp (Meta), Anthropic, Cloudflare, Didit. _(GoAddress removed 6 Oct 2026, Phase 156f.)_ _(WhatsApp, 5 Oct 2026: no transfer to Meta from us any more — chats are exported on the phone and uploaded to the record, Phase 156c. Sadique's two questions are 156c A2.)_

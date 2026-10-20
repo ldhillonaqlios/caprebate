@@ -162,6 +162,15 @@
     h2{page-break-after:avoid}
     .form{page-break-inside:avoid}
   }
+  /* PHASE 160f: what were inline style attributes, so the page needs no inline style. */
+  .inl{display:inline; font-weight:400}
+  .fw6{font-weight:600}
+  .fw4{font-weight:400}
+  .boxed{border:1px solid var(--line); border-radius:3px; margin-top:1.2rem; padding:.8rem 1rem}
+  .mt14{margin-top:1.4rem}
+  .mt06{margin-top:.6rem}
+  /* PHASE 160f: a fact we have proposed and the data protection officer has not yet confirmed. */
+  .proposed{background:var(--alertbg); color:var(--alert); font-weight:600; padding:0 .25em}
 </style>
 </head>
 <body>
@@ -188,7 +197,7 @@
      published, or failed to load. -->
 <section class="current" id="current-notices" aria-labelledby="current-notices-h">
   <p class="headline" id="current-notices-h">There are no current breach notices.</p>
-  <p class="meta">Last confirmed <span class="unset">[NOT SET — date this line was last confirmed]</span>.</p>
+  <p class="meta">Last confirmed 20 October 2026 <span class="proposed">Proposed, awaiting our data protection officer:</span> the date.</p>
 </section>
 
 <nav class="contents" aria-label="Contents">
@@ -211,6 +220,7 @@
      SOURCE: registered facts; Item 8 Privacy Notice §1 (board item 12818279787);
      Retention and Rights-Request Operating Procedure §5.2 (board item 12818099921,
      Document 2) for the Article 37(7) point and the intake route. -->
+<span id="privacy"></span>
 <section id="who-we-are">
   <h2>Who we are, and how to contact us</h2>
 
@@ -321,11 +331,13 @@
     the parties were and what was agreed. Your name is in the document that records that.
   </p>
   <p>
-    <span class="unset">[NOT SET — the legal basis for this processing, and the legitimate
-    interests relied on if the basis is Article 6(1)(f). This is undecided and it is the
-    one thing on this page that cannot be filled in from any existing document. It is Gate
-    B in the Article 14 Assessment, board item 12927987812 §9, and it is for the Data
-    Protection Officer.]</span>
+    <!-- PHASE 160f, 20 October 2026: OUR RECOMMENDATION, built on Lakhbir's answer "Build and publish on test"; Gate B in
+         the Article 14 Assessment (board item 12927987812 section 9) is still the data protection officer's to decide. -->
+    <span class="proposed">Proposed, awaiting our data protection officer:</span> we rely on <strong>legitimate interests</strong> (Article 6(1)(f) of the UK GDPR).
+    Our interest, and our client's, is working out correctly what tax relief our client can claim, which the rules
+    make depend on what earlier owners could claim and agreed. We use only what the document already says about you,
+    we do not contact you because of it, and we keep it no longer than the claim needs. We have weighed this against
+    your interests and think it fair. You can object at any time: see <a href="#object">Your right to object</a>.
   </p>
 
   <h3>How long we keep it</h3>
@@ -337,8 +349,9 @@
     a margin. Then we delete it.
   </p>
   <p>
-    <strong>The exact number of years depends on the type of return and when it was filed,
-    and we have not yet fixed it. When we do, we will publish it here.</strong>
+    <span class="proposed">Proposed, awaiting our data protection officer:</span> <strong>seven years from the end of the accounting period the claim is made in, or
+    one year after any enquiry by HM Revenue and Customs closes, whichever is later.</strong> This matches how long we
+    keep the claim's other records.
   </p>
 
   <!-- Filled 14 September 2026 (Phase 132).  SOURCE: Item 8 Privacy Notice v1.4,
@@ -370,8 +383,8 @@
          The source, Item 8 Privacy Notice section 6 (board item 12818279787), was changed the same way today. -->
     <li><strong>monday.com</strong> — our work-management system until 25 September 2026. We stopped using it that day and moved our records out of it. It no longer holds your information.</li>
     <li><strong>IONOS</strong> — our domain and email provider. It also carries the calendar invitation we send when a call is booked, moved or cancelled: the time of the call and your email address. In use today.</li>
-    <li><strong>A storage provider for documents uploaded through our client portal.</strong> Not yet chosen. It will be named here before the portal is used.</li>
-    <li><strong>The host of our website.</strong> Not yet contracted. It will be named here before the website stores anything about you.</li>
+    <li><strong>Vercel</strong>, which hosts our test website and keeps the documents uploaded to it, in a private store (Vercel Blob). <span class="proposed">Proposed, awaiting our data protection officer:</span> named here. Both are in the United States (US East). Our test website holds invented information only.</li>
+    <li><strong>Turso</strong>, the database behind our test website. <span class="proposed">Proposed, awaiting our data protection officer:</span> named here. It is in the United States (US East, Virginia).</li>
     <!-- UPDATED 28 September 2026 (Phase 153): the document reader is chosen - the Claude API (Anthropic), Word question
          172, built by Phase 146e and switched off until the data protection officer approves. This line said "We do not
          use one and none has been chosen". It claims nothing is live. Source changed the same way today (12818279787). -->
@@ -408,6 +421,12 @@
     Economic Area unless a transfer to another country becomes necessary to provide its
     service. It does not say what safeguard it would use for such a transfer.</li>
   </ul>
+  <p>
+    <span class="proposed">Proposed, awaiting our data protection officer:</span> our test website runs in the United States: Vercel hosts it and keeps uploaded
+    documents (US East), and Turso keeps its database (US East, Virginia). It holds invented information only.
+    Before it holds anything about you, our data protection officer will confirm the safeguard for sending
+    information to the United States, and this paragraph will name it.
+  </p>
   <p>
     We read what these companies publish on 15 September 2026. The automated reading described
     below is switched off. Before we switch it on, we will say here where it takes place. If you would like to know more, write to us and we will tell you what we
@@ -532,8 +551,8 @@
     We keep evidence supporting a claim until the later of: the point at which HMRC can no
     longer open an enquiry into the tax return the claim was made in, and the point at which
     any enquiry actually opened has closed — plus a margin.
-    <span class="unset">[NOT SET — the exact retention period. It is to be set by the Data
-    Protection Officer and the chartered tax adviser and has not been fixed.]</span>
+    <span class="proposed">Proposed, awaiting our data protection officer:</span> seven years from the end of the accounting period the claim is made in, or one year after any
+    enquiry closes, whichever is later, set with our chartered tax adviser.
   </p>
   <p>
     When the period ends we delete the register-derived evidence, including the two
@@ -667,6 +686,7 @@
          address and the free-text email route are not extras;
        - the form CANNOT BE A GATE, and the page has to say so in terms. -->
 <section id="complain">
+  <span id="complaints"></span>
   <h2>How to complain to us</h2>
 
   <p>
@@ -715,26 +735,26 @@
          that the person is authorised to act, and do not investigate until the
          authority arrives.  NOT required — neither control carries "required", and
          must not. -->
-    <fieldset style="border:1px solid var(--line); border-radius:3px; margin-top:1.2rem; padding:.8rem 1rem">
-      <legend style="font-weight:600">3. Are you complaining about your own personal data, or on behalf of someone else?</legend>
+    <fieldset class="boxed">
+      <legend class="fw6">3. Are you complaining about your own personal data, or on behalf of someone else?</legend>
       <span class="hint">Optional. If you are complaining for someone else, we will check you are authorised to act for them before we look into it, and tell you what we need.</span>
-      <p class="choice"><input type="radio" id="c-b1" name="on_behalf" value="self"> <label for="c-b1" style="display:inline; font-weight:400">About my own personal data</label></p>
-      <p class="choice"><input type="radio" id="c-b2" name="on_behalf" value="other"> <label for="c-b2" style="display:inline; font-weight:400">On behalf of someone else</label></p>
-      <label for="c-authority" style="font-weight:400; margin-top:.6rem">If for someone else: their name, and how you are authorised to act for them.</label>
+      <p class="choice"><input type="radio" id="c-b1" name="on_behalf" value="self"> <label for="c-b1" class="inl">About my own personal data</label></p>
+      <p class="choice"><input type="radio" id="c-b2" name="on_behalf" value="other"> <label for="c-b2" class="inl">On behalf of someone else</label></p>
+      <label for="c-authority" class="fw4 mt06">If for someone else: their name, and how you are authorised to act for them.</label>
       <input type="text" id="c-authority" name="authority_detail">
     </fieldset>
 
     <label for="c-find">4. Anything that helps us find you <span class="hint">Optional. If you know it: the company or the property our records might connect you to, or a reference from anything we have sent you. If you have no idea why we hold your name, say that instead — it is a perfectly normal answer and it tells us where to look.</span></label>
     <input type="text" id="c-find" name="matching_info">
 
-    <fieldset style="border:1px solid var(--line); border-radius:3px; margin-top:1.2rem; padding:.8rem 1rem">
-      <legend style="font-weight:600">5. What is your complaint about?</legend>
-      <p class="choice"><input type="radio" id="c-a1" name="about" value="how_obtained"> <label for="c-a1" style="display:inline; font-weight:400">How you got my personal data</label></p>
-      <p class="choice"><input type="radio" id="c-a2" name="about" value="what_doing"> <label for="c-a2" style="display:inline; font-weight:400">What you are doing with it</label></p>
-      <p class="choice"><input type="radio" id="c-a3" name="about" value="not_told"> <label for="c-a3" style="display:inline; font-weight:400">You did not tell me you had it</label></p>
-      <p class="choice"><input type="radio" id="c-a4" name="about" value="answer_to_request"> <label for="c-a4" style="display:inline; font-weight:400">How you answered a request I made</label></p>
-      <p class="choice"><input type="radio" id="c-a5" name="about" value="retention"> <label for="c-a5" style="display:inline; font-weight:400">How long you are keeping it</label></p>
-      <p class="choice"><input type="radio" id="c-a6" name="about" value="other"> <label for="c-a6" style="display:inline; font-weight:400">Something else — tell us below</label></p>
+    <fieldset class="boxed">
+      <legend class="fw6">5. What is your complaint about?</legend>
+      <p class="choice"><input type="radio" id="c-a1" name="about" value="how_obtained"> <label for="c-a1" class="inl">How you got my personal data</label></p>
+      <p class="choice"><input type="radio" id="c-a2" name="about" value="what_doing"> <label for="c-a2" class="inl">What you are doing with it</label></p>
+      <p class="choice"><input type="radio" id="c-a3" name="about" value="not_told"> <label for="c-a3" class="inl">You did not tell me you had it</label></p>
+      <p class="choice"><input type="radio" id="c-a4" name="about" value="answer_to_request"> <label for="c-a4" class="inl">How you answered a request I made</label></p>
+      <p class="choice"><input type="radio" id="c-a5" name="about" value="retention"> <label for="c-a5" class="inl">How long you are keeping it</label></p>
+      <p class="choice"><input type="radio" id="c-a6" name="about" value="other"> <label for="c-a6" class="inl">Something else — tell us below</label></p>
     </fieldset>
 
     <label for="c-what">6. What happened, in your own words <span class="hint">Tell us what happened and what you think we got wrong. You do not need to quote any law, and you do not need to know which rule applies — that is our job.</span></label>
@@ -743,17 +763,17 @@
     <label for="c-want">7. What would you like us to do? <span class="hint">Optional. If there is something specific you want — an explanation, a correction, your data deleted, or for us to stop — tell us here.</span></label>
     <textarea id="c-want" name="remedy_sought"></textarea>
 
-    <fieldset style="border:1px solid var(--line); border-radius:3px; margin-top:1.2rem; padding:.8rem 1rem">
-      <legend style="font-weight:600">8. Are you also asking us to do something with your data now?</legend>
-      <p class="choice"><input type="checkbox" id="c-r1" name="rights[]" value="access"> <label for="c-r1" style="display:inline; font-weight:400">Tell me what you hold about me</label></p>
-      <p class="choice"><input type="checkbox" id="c-r2" name="rights[]" value="rectify"> <label for="c-r2" style="display:inline; font-weight:400">Correct something</label></p>
-      <p class="choice"><input type="checkbox" id="c-r3" name="rights[]" value="erase"> <label for="c-r3" style="display:inline; font-weight:400">Delete it</label></p>
-      <p class="choice"><input type="checkbox" id="c-r4" name="rights[]" value="object"> <label for="c-r4" style="display:inline; font-weight:400">Stop using it</label></p>
-      <p class="choice"><input type="checkbox" id="c-r5" name="rights[]" value="restrict"> <label for="c-r5" style="display:inline; font-weight:400">Pause using it while we sort this out</label></p>
-      <p style="margin-top:.6rem"><em>You can do both at once. If you tick any of these we will treat it as a request about your data as well as a complaint — they have different timescales, and we will tell you both.</em></p>
+    <fieldset class="boxed">
+      <legend class="fw6">8. Are you also asking us to do something with your data now?</legend>
+      <p class="choice"><input type="checkbox" id="c-r1" name="rights[]" value="access"> <label for="c-r1" class="inl">Tell me what you hold about me</label></p>
+      <p class="choice"><input type="checkbox" id="c-r2" name="rights[]" value="rectify"> <label for="c-r2" class="inl">Correct something</label></p>
+      <p class="choice"><input type="checkbox" id="c-r3" name="rights[]" value="erase"> <label for="c-r3" class="inl">Delete it</label></p>
+      <p class="choice"><input type="checkbox" id="c-r4" name="rights[]" value="object"> <label for="c-r4" class="inl">Stop using it</label></p>
+      <p class="choice"><input type="checkbox" id="c-r5" name="rights[]" value="restrict"> <label for="c-r5" class="inl">Pause using it while we sort this out</label></p>
+      <p class="mt06"><em>You can do both at once. If you tick any of these we will treat it as a request about your data as well as a complaint — they have different timescales, and we will tell you both.</em></p>
     </fieldset>
 
-    <p style="margin-top:1.4rem"><em>After you submit: we will confirm we have received this. We will look into it and tell you the outcome. If you are not happy with how we deal with it, the next steps are set out below — you do not have to come back to us first.</em></p>
+    <p class="mt14"><em>After you submit: we will confirm we have received this. We will look into it and tell you the outcome. If you are not happy with how we deal with it, the next steps are set out below — you do not have to come back to us first.</em></p>
 
     <button type="submit">Send this complaint</button>
   </form>
@@ -890,7 +910,7 @@
        reissues a source document is responsible for re-deriving this page, and the
        re-derivation date goes here. -->
   <p>
-    Last reviewed <span class="unset">[NOT SET — date this page was last reviewed]</span>.
+    Last reviewed 20 October 2026. <span class="proposed">Proposed, awaiting our data protection officer:</span> the review.
   </p>
   <p>
     The content of this page is taken from documents we hold; where this page and one of

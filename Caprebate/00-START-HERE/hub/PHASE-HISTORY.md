@@ -13327,3 +13327,26 @@ NOTHING LEFT  beyond those lines. 4B: the build queue holds only Phase 160d, whi
 **Merged after Phase 160d, 20 October 2026.** Lakhbir: "merge and push fixes to live site". Phase 160d had merged first (PR 59); the conflicts were documents only (the tracker rows, the two phase records, the spec's entries and figures), resolved keeping both. Both phases wrote a migration 117 (`117-phase160d-template-subject-without-dash.sql`, `117-phase160e-upload-pieces.sql`); both stay, as migrations are applied by file name. The four suites re-run on the merged code: 5,201 (back end 2,917 over 184 files). Verified on Vercel before the merge: on this branch's preview a 6 MB PDF went through the portal as three pieces and arrived.
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160f — the public notices on the test website, their facts proposed, and the complaint form — 20 October 2026 (Claude Code, on the Mac, in a worktree of main)
+
+**ACTIONS AND OUTCOMES.** Phase 160f, 20 Oct 2026: the privacy notice and the public notices are now published on the test website at /notices/, as a draft. Lakhbir asked for the four facts nobody had supplied to be filled with our recommendation (legitimate interests as the legal basis; seven years as the retention period; two dates), and each is marked "Proposed, awaiting our data protection officer". The page also now names the test website's host, file store and database (Vercel, Vercel Blob, Turso) and says they are in the United States. Its complaint form works: a complaint is kept with the time it arrived, the data protection address is emailed, and staff log it into the complaints log with that time. Lakhbir also asked that the website run where its database is: the database and the file store are in US East, where the website already runs, so nothing moved.
+
+- **Claim.** hub/CLAIM.md and tracker row 13326319072, pushed first (`852a858`).
+- **Premise re-derived (step 8).** The Vercel dashboard (read 20 Oct 2026, signed in as Lakhbir): Turso database "database-aero-nest", primary region US East (Virginia); Blob store "caprebate-test-blob", region IAD1. The notices draft (03-app) already passed 25 structural checks with four facts NOT SET, and still called the website's host and document store "not yet chosen", though both were in use on the test website. The complaints log needs a member of staff as its recorder, so a form sent by the public is kept on its own first (migration 118) rather than written to the log; a staff task needs a client, lead or firm, which a public complaint has none of, so the complaints page lists it instead.
+- **Built.** (1) The page: eight proposed facts; inline styles to classes; #privacy and #complaints anchors. The acceptance check lists proposed facts; --live refuses them. (2) `src/web/notices-site.ts`: the page served at /notices/ on the test website only (testNotices, api/index.mjs), a draft banner, its style as a file, no long dash (plainDashes), refused if anything inline appears; /privacy to /notices/#privacy. (3) The complaint form: kept, emailed to data.protection@caprebate.co.uk, 10 from one network address in the window, listed on the staff complaints page, logged with its arrival time, once.
+- **Looked at** on a local copy with testNotices: the page with its banner and red proposed marks; a complaint sent through the form (reference CF-…); the staff complaints page listing it, the typed HTML shown as text; logged as CP-001 received at the time it arrived, its thirty days counted from then.
+- **Tests.** `test/phase160f.test.ts`, fourteen tests; the code was broken on purpose ten ways and nine were caught (the tenth removed a permission check `logComplaint` makes again).
+- **The checks, at the close:** site 1,427 pass (3 xfail), the same in package mode; phase3 440; phase9 417; back end 2,931 pass / 0 fail over 185 tracked files; **5,215** in all; drift, CRM fold, plain words, brand, notices (25 structural, 0 unset, 8 proposed) and the tracker green.
+
+```
+DONE          the notices published on the test website as a draft, eight facts proposed and marked; the host, store
+              and database named in the US; the complaint form working end to end; the region checked (no move).
+              test/phase160f.test.ts (14). 5,215 checks; all green. Looked at on a local copy, public and staff.
+NOT DONE      Confirming the eight proposed facts - the data protection officer - WAITING-ON-PEOPLE.md (DPO), and
+                --live refuses the page until each is confirmed.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue is empty; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.

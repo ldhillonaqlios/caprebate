@@ -24,6 +24,7 @@ import { ART33, ART34, DISCOVERY_ROUTES, FACT_VALUES, INCIDENT_KINDS, OCCURRED_S
 import type { ConsentHistory, PersonView, RetentionLine } from './compliance-identity.ts';
 import { CONSENT_DECISIONS, CONSENT_KINDS, NOTICE_ROUTES, PERSON_ROLES, ROUTE_KINDS, S2_REFUSALS } from './compliance-identity.ts';
 import { HOLD_KINDS, HOLD_REASONS, LINK_KINDS, SETTING_VALUES, SETTINGS, TWO_PERSON_LIMITATION, type HoldRow, type LinkLine, type SettingReading, type Vocab } from './compliance.ts';
+import type { WaitingForm } from './notices-site.ts';
 
 type Nav = Safe;
 
@@ -297,10 +298,17 @@ export function searchPage(nav: Nav, _term: string, s: SearchResult): string {
 
 /* ------------------------------------------------------------------ complaints */
 
-export function complaintsListPage(nav: Nav, rows: readonly { id: string; ref: string; received: string; classified: string; ack_deadline: string; ack_in_time: string; status: string; next_update_due: string | null; target_outcome: string }[], msg?: string): string {
+export function complaintsListPage(nav: Nav, rows: readonly { id: string; ref: string; received: string; classified: string; ack_deadline: string; ack_in_time: string; status: string; next_update_due: string | null; target_outcome: string }[], msg?: string,
+  waiting: readonly WaitingForm[] = []): string {
+  // PHASE 160f: complaints sent through the public notices page's form, kept with when they arrived, until logged.
+  const fromForm = waiting.length === 0 ? raw('') : h`<section class="card" id="from-the-form"><h2>Sent through the website's complaint form: ${String(waiting.length)} to log</h2>
+      <p class="help">Each one's thirty days run from when it arrived, shown here. Logging it keeps that time.</p>
+      ${waiting.map((w) => h`<div class="pblock"><p><strong>${w.ref}</strong>, arrived ${localWhen(w.received_at)}. ${w.name}, reply to ${w.reply_to}.</p>
+        <blockquote>${w.complaint_verbatim.length > 400 ? `${w.complaint_verbatim.slice(0, 400)}…` : w.complaint_verbatim}</blockquote>
+        ${form(`/staff/compliance/complaint-forms/${w.id}/log`, 'Log it in the complaints log', raw(''))}</div>`)}</section>`;
   return page({
     title: 'Complaints', nav, wide: true,
-    body: h`<h1>The complaints log</h1>${subnav()}${done(msg)}${limitation()}
+    body: h`<h1>The complaints log</h1>${subnav()}${done(msg)}${limitation()}${fromForm}
       <table><thead><tr><th>Ref</th><th>Received</th><th>s.164A?</th><th>Acknowledge by</th><th>In time</th><th>Next update by (our target)</th><th>Outcome by (our target)</th><th>Status</th></tr></thead><tbody>
       ${rows.map((r) => h`<tr><td><a href="/staff/compliance/complaints/${r.id}">${r.ref}</a></td><td>${r.received}</td><td>${r.classified}</td>
         <td>${r.ack_deadline}</td><td>${r.ack_in_time}</td><td>${r.next_update_due ?? 'none due'}</td><td>${r.target_outcome}</td><td>${r.status}</td></tr>`)}</tbody></table>

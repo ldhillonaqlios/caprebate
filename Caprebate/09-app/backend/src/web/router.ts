@@ -107,6 +107,7 @@ import { handleSignoffLink, portalReport, portalReportCard } from './report-page
 import { handleConfirmLink } from './accountant-confirm-pages.ts';
 import { acceptReport } from './report-accept.ts';
 import { handlePortalEvidence, portalEvidenceCard } from './evidence-pages.ts';
+import { noticesEdition, receiveComplaintForm } from './notices-site.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -127,6 +128,8 @@ export type WebDeps = {
   letterPath?: string;
   /** 6 Oct 2026: signing on for testing (ENGAGEMENT_SIGNING_TEST, the test copy only). Absent is ENGAGEMENT_SIGNING, off. */
   signing?: EngagementSigning;
+  /** PHASE 160f: the public notices page and its complaint form (src/web/notices-site.ts). Only the test website passes it. */
+  notices?: boolean;
 };
 
 /* ------------------------------------------------------------------ *
@@ -456,6 +459,28 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* STRESS TEST, 29 SEP 2026: THE PRIVACY NOTICE AND THE PUBLIC NOTICES ARE NOT PUBLISHED YET (03-app's notices page is a
      draft with facts not set, and the privacy notice waits on the data protection officer), but every page links to them
      and the links answered 401. Until they are published, a page that says so and how to reach us - nothing more. */
+  /* PHASE 160f, 20 October 2026: ON THE TEST WEBSITE, THE NOTICES PAGE ITSELF (src/web/notices-site.ts) - a draft,
+     its proposed facts marked - with its style as a file and its complaint form working. Anywhere else, as before. */
+  if (d.notices === true) {
+    if (path === '/assets/notices.css' && method === 'GET') {
+      const ed = noticesEdition();
+      if (ed !== undefined) { res.writeHead(200, CSS_HEADERS); res.end(ed.css); return 'handled'; }
+    }
+    if ((path === '/privacy' || path === '/privacy/') && method === 'GET') { redirect(res, '/notices/#privacy'); return 'handled'; }
+    if ((path === '/notices' || path === '/notices/') && method === 'GET') {
+      const ed = noticesEdition();
+      if (ed !== undefined) { res.writeHead(200, HTML_HEADERS); res.end(ed.html); return 'handled'; }
+    }
+    if (path === '/notices/complaint' && method === 'POST') {
+      const r = receiveComplaintForm(d.app, await form(req), clientIp(req), newId);
+      if (!r.ok) { html(res, 400, page({ title: 'Complaint not sent', nav: nav(actor), body: h`<h1>Your complaint was not sent</h1><p role="alert">${r.why}</p><p><a href="/notices/#complaints">Back to the form</a></p>` })); return 'handled'; }
+      html(res, 200, page({ title: 'Complaint received', nav: nav(actor), body: h`<h1>Thank you. We have your complaint.</h1>
+        <p>It reached us on ${ukDate(localDate(r.received_at))}. Your reference is <strong>${r.ref}</strong>.</p>
+        <p>Our data protection officer has been told. We will reply to you at the address you gave, acknowledge your complaint and tell you what happens next.</p>
+        <p><a href="/notices/">Back to the public notices</a></p>` }));
+      return 'handled';
+    }
+  }
   if ((path === '/privacy/' || path === '/privacy' || path === '/notices/' || path === '/notices') && method === 'GET') {
     html(res, 200, page({ title: 'Privacy and public notices', nav: nav(actor), body: h`<h1>Privacy and public notices</h1>
       <p>Our privacy notice and our public notices are being prepared. They will be published on this page before the website opens to clients.</p>
