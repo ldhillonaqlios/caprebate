@@ -65,7 +65,7 @@ function placeAndWords(db: Db, booking_id: string, method: InviteMethod, origin:
   }
   const link = origin === undefined ? m.join_url : clientJoinUrl(origin, m.client_token);
   return {
-    description: `A video call. Join it in your web browser: ${link}` + (origin === undefined ? '' : ` — or in the Zoom app: ${m.join_url}`) +
+    description: `A video call. Join it in your web browser: ${link}` + (origin === undefined ? '' : `, or in the Zoom app: ${m.join_url}`) +
       (m.passcode === null ? '' : ` (passcode ${m.passcode})`) + '. Reply to this email if you need to change it.',
     location: link,
   };

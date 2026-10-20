@@ -32,6 +32,7 @@ import { buildCanvasPdf, PAGE, textWidth, wrapText, type Op, type PdfFont, type 
 import { minutesWords } from './survey-video.ts';
 import { pickWords, sitePlanOps, sitePlanSvg, type SitePlan } from './site-plan.ts';
 import { ukDatesIn } from './localtime.ts';
+import { plainDashLines } from './plain-dashes.ts';
 
 export const REPORT_TITLE = 'Capital allowances survey report';
 
@@ -47,6 +48,8 @@ export type ReportRow = {
 };
 
 export type ReportModel = {
+  /** PHASE 160d: drawn without long dashes, because the version says so (`words: 'plain'`); an older version is drawn as made. */
+  readonly plain_words?: boolean;
   readonly company: string;
   readonly property: string;
   readonly surveyor: { readonly name: string; readonly rics: string; readonly firm: string | null };
@@ -188,7 +191,29 @@ function inspectionWords(i: Snapshot['inspection'] | undefined): string | null {
   return `${i.words}${i.note === null ? '' : ` (${i.note})`}.${sent.length === 0 ? '' : ` The surveyor had ${sent.join(', and ')}.`}`;
 }
 
+/**
+ * PHASE 160d, 19 October 2026 — A REPORT IS DRAWN IN THE WORDS ITS VERSION WAS MADE IN. The report is drawn again from its
+ * approved version every time it is opened, so changing the words here would change how an approved or signed-off
+ * version reads. A version approved from now on carries `words: 'plain'` and is drawn without long dashes (each becomes
+ * a colon or a comma, src/web/plain-dashes.ts); one approved before carries nothing and is drawn exactly as it was, here,
+ * in the PDF and on screen (`data-as-made`, which the page's own dash rule leaves alone).
+ */
 export function reportModel(x: Snapshot, fingerprint: string, ctx: ReturnContext = { period_start: null, is_company: null, facts: null }): ReportModel {
+  const m = reportModelAsMade(x, fingerprint, ctx);
+  return (x as { words?: string }).words === 'plain' ? { ...plainStrings(m), plain_words: true } : m;
+}
+
+/** Every string in a plain object or array, without long dashes; anything else (a number, null) as it is. */
+function plainStrings<T>(v: T): T {
+  if (typeof v === 'string') return plainDashLines(v) as T;
+  if (Array.isArray(v)) return v.map((x) => plainStrings(x)) as T;
+  if (v !== null && typeof v === 'object' && Object.getPrototypeOf(v) === Object.prototype) {
+    return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, plainStrings(x)])) as T;
+  }
+  return v;
+}
+
+function reportModelAsMade(x: Snapshot, fingerprint: string, ctx: ReturnContext): ReportModel {
   // PHASE 159c: a version with work since keeps each spend (`events`); `sums` is their total. The section 562 sum below is
   // the purchase's own, so it reads the purchase's figures; the cover reads the total.
   const ev = (x as { events?: SnapEvents }).events;
@@ -350,7 +375,7 @@ function chipHtml(c: Chip): Safe {
 }
 
 export function reportHtml(m: ReportModel, links: { pdf: string | null }): Safe {
-  return h`<div class="rp">
+  return h`<div class="rp"${m.plain_words === true ? raw('') : raw(' data-as-made')}>
     <section class="rp-sheet rp-cover">
       <div class="rp-band"><p class="rp-wm">CAP REBATE</p><h1>Capital allowances survey report</h1><p>What in your building qualifies for tax relief, and how much.</p></div>
       <div class="rp-body">
@@ -522,8 +547,25 @@ function fit(s: string, font: PdfFont, size: number, maxW: number): string {
   return `${t.trimEnd()}…`;
 }
 
+/**
+ * PHASE 160d: the canvas a version made from now on is drawn on. Every string handed to one of its methods (the words of a
+ * line, a heading, a cell) loses its long dashes on the way in; a font's name has none, so it passes unchanged. An older
+ * version gets the canvas itself, untouched.
+ */
+function plainCanvas(plain: boolean, c: Canvas): Canvas {
+  if (!plain) return c;
+  return new Proxy(c, {
+    get(target, key, receiver) {
+      const v = Reflect.get(target, key, receiver) as unknown;
+      if (typeof v !== 'function') return v;
+      return (...args: unknown[]) => (v as (...a: unknown[]) => unknown).apply(target, args.map((a) => (typeof a === 'string' ? plainDashLines(a) : a)));
+    },
+  });
+}
+
 export function reportPdf(m: ReportModel): { bytes: Uint8Array; unshown: number } {
-  const c = new Canvas(fit(`Cap Rebate · ${REPORT_TITLE} · ${m.company} · version ${String(m.version)}`, 'Helvetica', 7.5, W - 70));
+  // PHASE 160d: a version made from now on also loses the long dashes in the words written here, not only the model's.
+  const c = plainCanvas(m.plain_words === true, new Canvas(fit(`Cap Rebate · ${REPORT_TITLE} · ${m.company} · version ${String(m.version)}`, 'Helvetica', 7.5, W - 70)));
 
   /* ---------------------------------------------------------- 1 · the cover */
   c.page();

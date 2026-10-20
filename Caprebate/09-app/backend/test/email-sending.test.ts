@@ -107,8 +107,11 @@ describe('email sending, on for testing', () => {
     for (const w of NOT_SENT_WORDS) assert.ok(!row.body.includes(w), 'an email that went says it was not sent');
     assert.equal(smtp.seen.data.length, before + 1);
     assert.ok(smtp.seen.lines.includes('RCPT TO:<ada.one@invented-client.co.uk>'));
-    const subject = /^Subject: =\?UTF-8\?B\?([^?]+)\?=$/m.exec(smtp.seen.data.at(-1) ?? '')?.[1] ?? '';
-    assert.match(Buffer.from(subject, 'base64').toString('utf8'), /^Your video call with Cap Rebate — /);
+    // PHASE 160d: with no long dash the subject may be plain ASCII, so it is written as it is, not encoded.
+    const lastMail = smtp.seen.data.at(-1) ?? '';
+    const encoded = /^Subject: =\?UTF-8\?B\?([^?]+)\?=$/m.exec(lastMail)?.[1];
+    const subject = encoded !== undefined ? Buffer.from(encoded, 'base64').toString('utf8') : /^Subject: (.*)$/m.exec(lastMail)?.[1] ?? '';
+    assert.match(subject, /^Your video call with Cap Rebate: /);
   });
 
   test('an invented address (the seed\'s, the tests\') is never sent to, and the row says why', async () => {

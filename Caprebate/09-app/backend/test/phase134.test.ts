@@ -322,12 +322,12 @@ describe('SEARCH: a company-name match ranks first', () => {
 
 describe('EMAIL SUBJECTS lead with the company', () => {
   test('a client’s email: the company in front, unless the subject already starts with it', () => {
-    assert.equal(companyFirst('Documents we still need', 'Elverton Ltd'), 'Elverton Ltd — Documents we still need');
+    assert.equal(companyFirst('Documents we still need', 'Elverton Ltd'), 'Elverton Ltd: Documents we still need'); // PHASE 160d
     assert.equal(companyFirst('Elverton Ltd — the next step on your claim', 'Elverton Ltd'), 'Elverton Ltd — the next step on your claim');
     assert.equal(companyFirst('Documents', null), 'Documents');
-    assert.equal(companyFirst('x', 'A & B <Ltd>'), 'A &amp; B &lt;Ltd&gt; — x', 'the company’s name was not escaped');
+    assert.equal(companyFirst('x', 'A & B <Ltd>'), 'A &amp; B &lt;Ltd&gt;: x', 'the company’s name was not escaped');
     assert.equal(made.app.db.get<{ subject: string }>("SELECT subject FROM email_templates WHERE id = 'template-next-step'")?.subject,
-      '{{organisation}} — the next step on your claim');
+      '{{organisation}}: the next step on your claim');
   });
 
   test('a staff notice: built both ways, and ON since Lakhbir answered (Word answer 71, Phase 151) — the company leads the subject', () => {

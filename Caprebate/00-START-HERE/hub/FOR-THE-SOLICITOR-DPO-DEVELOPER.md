@@ -2100,3 +2100,7 @@ Name:                                  Date:
 -  **For the developer.** Migration 109 (`properties.claimant_role`, `claimant_role_source`, `tenure_source`, `lease_end_date`, `landlord`, `council_area`, `council_area_source`). The assessment's details screen asks who uses the building (`Q2-n-use`). Price Paid is asked for every sector and keeps `ppd_category`. `src/web/who-claims.ts` holds the readings.
 
  **This register now has seventy-eight entries covering sixty-nine board items.**
+
+---
+
+ **19 October 2026, Phase 160d. For the solicitor, on the letter at SDP-L3. It adds no entry and changes no status.** The letter a client reads and signs is now drawn without long dashes ("—"): each becomes a colon, or a comma before a joining word such as "or", "and" or "which", or before a number. Lakhbir asked for this across everything a client reads. The Word document you were sent is NOT changed and still has its dashes, so the punctuation of what a client signs differs from your copy in those places only; no word is added, removed or moved. **What we would like from you:** when you mark up the letter, either confirm that this punctuation is acceptable, or change the dashes in the Word document yourself, and the signed copy will follow your wording exactly. A letter already signed is kept exactly as it was signed and is never redrawn.

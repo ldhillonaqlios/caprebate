@@ -3016,7 +3016,7 @@ Address: `/staff/claims` · `/staff/leads` · export: `/staff/claims/export.csv`
 As Sales, show **Stage** = Survey: "3 shown". Add an unknown filter by hand (…&colour=red). The page names it as not
 applied. Save the view "Claims at survey". **Saved views** shows "Claims at survey — yours" with **Retire**. Now
 export. Sales' file starts with this line:
-`Reference,Client,Property,Workstream,Stage,Owner,Priority,Next action,Next action due,Expected completion,Opened,Estimated value — the figure shown`.
+`Reference,Client,Property,Workstream,Stage,Owner,Priority,Next action,Next action due,Expected completion,Opened,Estimated value: the figure shown`.
 Accounting's starts `Reference,Client,Opened`. The surveyor is refused.
 
 **Check yourself**

@@ -7,7 +7,8 @@
  * already passes dates and "(required)" through theirs. It changes only the words a person reads:
  *
  *   · text between tags, and the four attributes a person reads or hears (title, alt, placeholder, aria-label);
- *   · never inside a script, a style, a text box (what someone typed stays as they typed it), pre or code;
+ *   · never inside a script, a style, a text box (what someone typed stays as they typed it), pre or code, nor inside an
+ *     element marked `data-as-made` (Phase 160d: an older approved report, drawn in the words it was made in);
  *   · never an attribute a form sends back (value, name, href), so nothing a form posts is changed on its way round.
  *
  * THE RULES, for each long dash in a run of words (a spaced "a — b" or an unspaced "a—b"):
@@ -70,6 +71,9 @@ export function plainDashes(html: string): string {
   }
   let out = '';
   let skip: string | null = null;
+  // PHASE 160d: an element marked `data-as-made` (an approved report's older version) keeps its words exactly, however
+  // many elements of its own kind it holds, so the depth is counted.
+  let depth = 0;
   let last = 0;
   let before: (typeof tags)[number] | null = null;
   for (const t of tags) {
@@ -81,8 +85,9 @@ export function plainDashes(html: string): string {
     // word before, so the space before the tags in between goes.
     if (changed !== text && /^[:,]/.test(changed) && /^\s*(?:—|&mdash;|&#8212;|&#x2014;)/i.test(text)) out = out.replace(/\s+((?:<[^>]+>)*)$/, '$1');
     out += changed;
-    if (skip === null && !t.closing && SKIP.has(t.name)) skip = t.name;
-    else if (skip !== null && t.closing && t.name === skip) skip = null;
+    if (skip === null && !t.closing && (SKIP.has(t.name) || /\sdata-as-made\b/.test(t.tag))) { skip = t.name; depth = 1; }
+    else if (skip !== null && t.name === skip && !t.closing && !/\/>$/.test(t.tag)) depth += 1;
+    else if (skip !== null && t.closing && t.name === skip) { depth -= 1; if (depth === 0) skip = null; }
     out += skip === null && !t.closing && t.name !== '' ? t.tag.replace(READ_ATTRS, (_all, a: string, v: string, z: string) => a + plainDashText(v) + z) : t.tag;
     last = t.at + t.tag.length;
     before = t;
@@ -90,3 +95,15 @@ export function plainDashes(html: string): string {
   const tail = html.slice(last);
   return out + (skip === null ? plainDashText(tail) : tail);
 }
+
+/**
+ * PHASE 160d, 19 October 2026 — PLAIN TEXT, LINE BY LINE: an email's subject and body, a task's title, an export's
+ * column name. Each line is one run of words for the rules above, so a dash in one paragraph never pairs with one in
+ * another.
+ */
+export function plainDashLines(text: string): string {
+  if (!ANY_DASH.test(text)) return text;
+  // A line that is only a dash stands for "nothing here" (an empty value in a report), as a lone dash in a cell does.
+  return text.split('\n').map((line) => plainDashText(line, true)).join('\n');
+}
+
