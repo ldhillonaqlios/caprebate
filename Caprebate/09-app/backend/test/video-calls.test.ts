@@ -172,7 +172,7 @@ describe('a video call booked at the figure page', () => {
     assert.match(sent.body, new RegExp(`Your video call link: <a href="/call/${m.client_token}">join the call here</a>`));
     const mail = made.app.db.get<{ subject: string; body: string; id: string }>("SELECT id, subject, body FROM outbox WHERE to_email = 'ada.vc1@example.com' AND kind = 'CALENDAR_INVITE'");
     assert.ok(mail !== undefined, 'no invitation was saved');
-    assert.match(mail.subject, /^Your video call with Cap Rebate — /);
+    assert.match(mail.subject, /^Your video call with Cap Rebate: /);
     assert.match(mail.body, /A video call has been arranged for .*, lasting 60 minutes\./);
     assert.ok(mail.body.includes(`Join the video call in your web browser: https://caprebate.example.invalid/call/${m.client_token}`));
     assert.ok(mail.body.includes('Or open it in the Zoom app: https://us06web.zoom.us/j/81234567890?pwd=invented'));

@@ -41,6 +41,7 @@ import * as C from '../src/web/crm.ts';
 import * as P from '../src/web/pipeline.ts';
 import * as R from '../src/web/claim-record.ts';
 import { actor } from './helpers.ts';
+import { plainDashes } from '../src/web/plain-dashes.ts';
 
 /** Every piece of text the PDF draws, decoded from its hexadecimal strings. */
 function pdfText(bytes: Uint8Array): string {
@@ -235,6 +236,34 @@ describe('the report', () => {
 });
 
 let token = '';
+describe('PHASE 160d: a version approved from now on is drawn without long dashes; an older one exactly as it was made', () => {
+  const DASH = /—/;
+  test('a new version says so, and its model, page and PDF carry no long dash', () => {
+    const kept = approvedVersion(deps(), SAM, JOB, 1)!;
+    assert.equal((kept.snapshot as { words?: string }).words, 'plain', 'a version approved now is not marked plain');
+    const m = reportModel(kept.snapshot, kept.row.fingerprint);
+    assert.equal(m.plain_words, true);
+    assert.doesNotMatch(JSON.stringify(m), DASH);
+    assert.equal(m.groups.find((g) => g.pool === 'SR')!.title, 'Special rate pool: the building’s own systems');
+    const html = reportHtml(m, { pdf: null }).html;
+    assert.doesNotMatch(html, /data-as-made/);
+    assert.doesNotMatch(pdfText(reportPdf(m).bytes), DASH, 'the PDF of a new version still draws a long dash');
+  });
+
+  test('an older version (no `words`) keeps every long dash it was made with, in the model, the PDF and the page', () => {
+    const kept = approvedVersion(deps(), SAM, JOB, 1)!;
+    const older = { ...kept.snapshot } as Record<string, unknown>;
+    delete older['words'];
+    const m = reportModel(older as typeof kept.snapshot, kept.row.fingerprint);
+    assert.equal(m.plain_words, undefined);
+    assert.equal(m.groups.find((g) => g.pool === 'SR')!.title, 'Special rate pool — the building’s own systems');
+    assert.match(pdfText(reportPdf(m).bytes), DASH, 'an older version lost its long dashes in the PDF');
+    const html = reportHtml(m, { pdf: null }).html;
+    assert.match(html, /^<div class="rp" data-as-made>/);
+    assert.equal(plainDashes(html), html, 'the page rule changed an older version');
+  });
+});
+
 describe('the accountant’s sign-off', () => {
   test('sent only by Admin or Sales, only to the company’s own accountant with an address, only with the client’s permission in words', async () => {
     const page = (await req('u-sr-sales', `${P_}?ch=23`)).body;

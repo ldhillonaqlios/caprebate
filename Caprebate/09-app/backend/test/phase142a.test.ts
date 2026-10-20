@@ -441,7 +441,7 @@ describe('3 · a new message tells the other side — only while sending is on',
     assert.equal(n[0]?.to_email, 'sales@example.invalid');
     assert.equal(n[0]?.send_requested, 1);
     // Phase 151: an email to our staff leads with the company (Word answer 71); one to a client never does.
-    assert.equal(n[0]?.subject, 'Corvale Supported Living Limited — a client has sent a new message', 'the subject carries more than the switch allows');
+    assert.equal(n[0]?.subject, 'Corvale Supported Living Limited: a client has sent a new message', 'the subject carries more than the switch allows');
     assert.match(n[0]?.body ?? '', /https:\/\/caprebate\.example\.invalid\/staff\/clients\/[A-Za-z0-9-]+\?chat=client#chat/);
 
     const b = M.postClientMessage(on, w.as('SALES'), w.corvale, { body: 'Phase 142a secret words from us', claim_id: null });

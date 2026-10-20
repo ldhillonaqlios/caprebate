@@ -315,7 +315,7 @@ describe('stage entered and owner changed', () => {
       assert.equal(notices.length, 2);
       for (const x of notices) {
         // Phase 134: the notice ends with the reference. Phase 151: it leads with the company (Word answer 71).
-        assert.match(x.subject, /^.+ — you now own a claim \(CR-\d{4}-\d{4}\)$/);
+        assert.match(x.subject, /^.+: you now own a claim \(CR-\d{4}-\d{4}\)$/); // PHASE 160d: no long dash in an email
         assert.deepEqual([x.kind, x.sent_at, x.transport, x.business_id], ['NOTIFICATION', null, 'STUB', org.business]);
       }
       const before = count(app.db, 'SELECT COUNT(*) AS n FROM outbox');
@@ -325,7 +325,7 @@ describe('stage entered and owner changed', () => {
         "SELECT reason FROM automation_runs WHERE rule_id = 'rule-stage-notify-owner' AND claim_id = ? ORDER BY at DESC, rowid DESC LIMIT 1", [own])?.reason,
       'OWNER_MADE_THE_CHANGE');
       assert.equal(fwd(app, actor('SALES'), theirs, 'ENGAGEMENT').ok, true);
-      assert.match(app.db.get<{ subject: string }>('SELECT subject FROM outbox ORDER BY created_at DESC, rowid DESC LIMIT 1')?.subject ?? '', /^.+ — a claim is now at Engagement \(CR-\d{4}-\d{4}\)$/);
+      assert.match(app.db.get<{ subject: string }>('SELECT subject FROM outbox ORDER BY created_at DESC, rowid DESC LIMIT 1')?.subject ?? '', /^.+: a claim is now at Engagement \(CR-\d{4}-\d{4}\)$/);
     } finally { app.close(); }
   });
 });
@@ -529,7 +529,7 @@ describe('email templates — merged into the outbox, and nowhere else', () => {
       assert.ok(row.body.includes('The next step is: the next action. We expect it by 31 Dec 2026.')); // Phase 133c: UK dates
       assert.equal(/\{\{|\}\}/.test(row.subject + row.body), false, 'a merge field was left unfilled');
       // Phase 134: the subject leads with the company (migration 032 and `companyFirst`).
-      assert.match(row.subject, /^[^—]+ — the next step on your claim$/);
+      assert.match(row.subject, /^[^:]+: the next step on your claim$/); // PHASE 160d: migration 117
 
       const noProperty = claimAt(app, org, 'SURVEY', { property: null });
       const a = M.mergeValues(app.db, c, contact);

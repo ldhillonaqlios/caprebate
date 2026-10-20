@@ -47,6 +47,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { readZipEntry, DOCX_DOCUMENT_ENTRIES, docxParagraphTexts } from './zip.ts';
+import { plainDashText } from './plain-dashes.ts';
 
 export const LETTER_PATH = join(
   import.meta.dirname, '..', '..', '..', '..',
@@ -186,9 +187,15 @@ export function loadLetter(
   }
 
   const rendered = paragraphs.map((p) => p.text).join('\n');
+  /* PHASE 160d, 19 October 2026: THE LETTER WITHOUT LONG DASHES, as the client reads it on screen since Phase 160c and so
+     in the PDF they sign. The Word document itself is not changed (it is with the solicitor, FOR THE SOLICITOR SDP-L3); its
+     words are read as they are and each long dash becomes a colon or a comma here (src/web/plain-dashes.ts). Whether it is
+     the test copy, and which specimens it still holds, are read from the document's own words, before that. A letter
+     already signed is never drawn again: its text and PDF are kept as they were signed (src/web/signing.ts). */
+  const plain = paragraphs.map((p) => ({ ...p, text: plainDashText(p.text) }));
   return {
-    paragraphs,
-    openTerms: unresolvedTerms(paragraphs),
+    paragraphs: plain,
+    openTerms: unresolvedTerms(plain),
     test_copy: paragraphs.some((p) => p.text.startsWith(TEST_COPY_MARK)),
     specimens: [
       ...(rendered.includes(SPECIMEN_CLIENT) ? [`the specimen client name "${SPECIMEN_CLIENT}"`] : []),
@@ -211,6 +218,8 @@ export function unresolvedTerms(
   let clause = 'the preamble';
   for (const p of paragraphs) {
     const m = CLAUSE_RE.exec(p.text);
+    // Kept with its long dash: it is a key other code matches (fee-controls.ts, claim-record.ts, introducers.ts), and it
+    // reaches a person only through a screen or an email, which drop the dash themselves (Phase 160c, 160d).
     if (m) clause = `clause ${m[1]} — ${m[2]}`;
     for (const term of bracketed(p.text)) out.push({ clause, text: term });
   }

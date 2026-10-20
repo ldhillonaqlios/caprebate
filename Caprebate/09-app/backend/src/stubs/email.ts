@@ -10,6 +10,7 @@
 
 import { createHash } from 'node:crypto';
 import type { Db } from '../db.ts';
+import { plainDashLines } from '../web/plain-dashes.ts';
 
 /**
  * CALENDAR_INVITE IS THE SECOND STUBBED TRANSPORT AND IT IS NOT A SECOND STUB.
@@ -174,6 +175,11 @@ export function outboxTransport(
       const requested = sending() ? 1 : 0;
       // An email that really goes does not tell its reader it has not been sent.
       if (requested === 1) m = { ...m, body: withoutNotSentWords(m.body) };
+      // PHASE 160d, 19 October 2026: no long dash in the words we send (src/web/plain-dashes.ts, line by line), in the
+      // subject or the body. Not in an email a member of staff typed themselves (FREE_TYPED): those are their words, as a
+      // text box on a screen is left alone. The attached files (the signed letter, a report, a calendar file) are not
+      // touched here.
+      if (m.kind !== 'FREE_TYPED') m = { ...m, subject: plainDashLines(m.subject), body: plainDashLines(m.body) };
       db.run(
         'INSERT INTO outbox (id, created_at, to_email, subject, body, kind, sent_at, transport, business_id, from_header, reply_to, ' +
           'claim_id, lead_id, contact_id, written_by, send_requested, thread_key, in_reply_to, references_ids) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',

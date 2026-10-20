@@ -608,7 +608,7 @@ const CLAIM_COLUMNS: Readonly<Record<ListShape, readonly (readonly [keyof ClaimL
     ['expected_completion', 'Expected completion'], ['opened', 'Opened'], ['claim_ref', 'Reference']],
   VALUE: [['client', 'Company'], ['property', 'Property'], ['workstream', 'Workstream'], ['stage', 'Stage'],
     ['owner', 'Owner'], ['priority', 'Priority'], ['next_action', 'Next action'], ['next_action_due', 'Next action due'],
-    ['expected_completion', 'Expected completion'], ['opened', 'Opened'], ['shown_range', 'Estimated value — the figure shown'], ['claim_ref', 'Reference']],
+    ['expected_completion', 'Expected completion'], ['opened', 'Opened'], ['shown_range', 'Estimated value: the figure shown'], ['claim_ref', 'Reference']],
 });
 
 const LEAD_COLUMNS: Readonly<Record<'WORKING' | 'VALUE', readonly (readonly [string, string])[]>> = Object.freeze({

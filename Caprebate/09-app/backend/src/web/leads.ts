@@ -576,7 +576,7 @@ export function logLeadCall(d: CrmDeps, actor: Actor, id: string, input: Fields)
   if (!note.ok) return note;
   const made = createTask(d, actor, {
     lead_id: r.id, owner_id: actor.id, activity_type: 'CALL', description: note.value,
-    title: spoke === 'yes' ? 'Call — spoke to them' : 'Call — no answer',
+    title: spoke === 'yes' ? 'Call: spoke to them' : 'Call: no answer',
   });
   if (!made.ok) return made;
   const closed = setTaskStatus(d, actor, made.id, 'COMPLETED', null);

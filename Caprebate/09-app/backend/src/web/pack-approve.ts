@@ -203,6 +203,9 @@ export function snapshotOf(v: PackView, lv: LegalView, a: { version: number; at:
   const photosByLine = evidenceByLine(d.db, v.job.id);
   return {
     format: 'cap-rebate-survey-pack/1',
+    // PHASE 160d, 19 October 2026: a version approved from now on is drawn without long dashes (src/web/survey-report.ts,
+    // reportModel). One approved before has no `words` and is drawn exactly as it was made.
+    words: 'plain' as const,
     version: a.version,
     approved_at: a.at,
     surveyor: { id: a.by.id, name: a.by.name, rics_number: a.details.rics_number, firm: a.details.firm },

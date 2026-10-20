@@ -24,6 +24,7 @@ import { shownLetter, signingMissing, signEngagement } from '../src/web/signing.
 import * as A from '../src/web/compliance-aml.ts';
 import type * as C from '../src/web/compliance.ts';
 import { actor, testApp } from './helpers.ts';
+import { plainDashText } from '../src/web/plain-dashes.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const T0 = '2026-10-04T09:00:00.000Z';
@@ -58,7 +59,9 @@ describe('lines 2, 3 and 7 — Word questions 33, 34 and 196: the test-only enga
 
   test('THE TEST COPY: clause 5 is £995 a property plus a booked surveyor at cost; 7(d) names the privacy notice; 13 is any reduction and counts settlements — each marked', () => {
     assert.equal(testCopy.test_copy, true);
-    assert.ok(testCopy.paragraphs.some((p) => p.text.startsWith(TEST_COPY_MARK)));
+    // PHASE 160d: the letter is drawn without long dashes; the mark is still read from the document's own words.
+    assert.ok(testCopy.paragraphs.some((p) => p.text.startsWith(plainDashText(TEST_COPY_MARK))));
+    assert.equal(testCopy.test_copy, true);
     const fees = letterFees(testCopy);
     assert.equal(fees.break_fee.state, 'SET');
     assert.equal(fees.break_fee.state === 'SET' ? fees.break_fee.pence : 0, 99_500);
