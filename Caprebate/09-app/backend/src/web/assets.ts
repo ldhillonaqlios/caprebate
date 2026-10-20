@@ -1661,6 +1661,14 @@ body.crm .cov-list{list-style:none;margin:0;padding:0;display:grid;gap:.6rem}
 body.crm .cov-need{border-left:4px solid var(--line);padding:.2rem 0 .3rem .7rem}
 body.crm .cov-need.cov-late{border-left-color:var(--stop)}
 body.crm .cov-need.cov-asked{border-left-color:#e0a63a}
+body.crm .cov-need.cov-tocheck{border-left-color:var(--g-win)}
+body.crm .cov-act{margin-top:.4rem;background:var(--mist);border:1px solid var(--line);border-radius:.5rem;padding:.4rem .7rem}
+body.crm .cov-act>summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:15px}
+body.crm .cov-act p{margin:.4rem 0}
+body.crm .cov-act form{margin:.5rem 0 .2rem}
+body.crm .cov-act label{display:grid;gap:.2rem;font-size:15px;margin:.35rem 0}
+body.crm .cov-act textarea,body.crm .cov-act input:not([type=hidden]),body.crm .cov-act select{width:100%;max-width:28rem}
+body.crm .cov-type{border-bottom:1px solid var(--line);padding-bottom:.6rem}
 body.crm .cov-need .cov-nname{font-weight:700;color:var(--ink)}
 body.crm .cov-need .help{display:block;font-size:14px}
 body.crm .cov-group{margin-top:.75rem}

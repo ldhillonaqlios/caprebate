@@ -223,7 +223,10 @@ export async function handleEngaged(
       claim_id: emptyToNull(f.get('claim_id')),
     });
     if (!r.ok) return d.problem(res, actor, 'Not sent', r.why, `/staff/clients/${id}`);
-    redirect(res, `/staff/clients/${id}?done=sent#tasks`);
+    // PHASE 160j: asked from a claim's "Where this claim stands", the person goes back there.
+    const claimBack = emptyToNull(f.get('claim_id'));
+    redirect(res, f.get('from') === 'where' && claimBack !== null && /^[A-Za-z0-9-]+$/.test(claimBack)
+      ? `/staff/claims/${claimBack}?done=sent#where` : `/staff/clients/${id}?done=sent#tasks`);
     return 'handled';
   }
 

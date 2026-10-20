@@ -83,7 +83,7 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
         'LEFT JOIN users u ON u.id = a.actor_id WHERE (? IS NULL OR a.kind = ?) AND (? IS NULL OR a.outcome = ?) AND ' +
         '(a.object_id = ? OR a.object_id IN (SELECT id FROM claims WHERE business_id = ?) ' +
         'OR a.object_id IN (SELECT id FROM properties WHERE business_id = ?) ' +
-        "OR json_extract(a.detail, '$.business') = ? " +
+        "OR json_extract(a.detail, '$.business') = ? OR json_extract(a.detail, '$.business_id') = ? " +
         "OR json_extract(a.detail, '$.claim') IN (SELECT id FROM claims WHERE business_id = ?)) " +
         'ORDER BY a.seq DESC LIMIT ?',
     [kind, kind, outcome, outcome, ...(client === null ? [] : clientAuditParams(client.id)), AUDIT_PAGE_SIZE],
@@ -128,6 +128,8 @@ const KIND_WORDS: Readonly<Record<string, string>> = Object.freeze({
   PROPERTY_UPDATED: 'Changed a property', EMAIL_QUEUED: 'Sent an email', ENGAGEMENT_SIGNED: 'The engagement letter was signed',
   DOCUMENT_UPLOADED: 'Uploaded a document', DOCUMENT_REQUESTED: 'Asked the client for a document', RESEARCH_RUN: 'Ran the lookups',
   AUDIT_LOG_READ: 'Read the audit log',
+  CLIENT_SENT_ACCEPTED: 'Accepted what the client sent', CLIENT_SENT_ASKED_AGAIN: 'Asked the client again, saying why',
+  DOCUMENT_REQUEST_RECEIVED: 'The client sent a document we asked for',
 });
 
 export function kindWords(kind: string): string {
@@ -138,14 +140,14 @@ export function kindWords(kind: string): string {
 }
 
 /** PHASE 160i — the audit log's entries about one client: the company, its claims and properties, or naming them. */
-export const clientAuditParams = (business_id: string): string[] => [business_id, business_id, business_id, business_id, business_id];
+export const clientAuditParams = (business_id: string): string[] => [business_id, business_id, business_id, business_id, business_id, business_id];
 
 export function clientAuditCount(db: Db, business_id: string): number {
   return db.get<{ n: number }>(
     'SELECT COUNT(*) AS n FROM audit_log a WHERE ' +
       '(a.object_id = ? OR a.object_id IN (SELECT id FROM claims WHERE business_id = ?) ' +
       'OR a.object_id IN (SELECT id FROM properties WHERE business_id = ?) ' +
-      "OR json_extract(a.detail, '$.business') = ? " +
+      "OR json_extract(a.detail, '$.business') = ? OR json_extract(a.detail, '$.business_id') = ? " +
       "OR json_extract(a.detail, '$.claim') IN (SELECT id FROM claims WHERE business_id = ?)) ", clientAuditParams(business_id))?.n ?? 0;
 }
 

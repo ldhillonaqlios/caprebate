@@ -24,7 +24,10 @@ import { h, raw, type Safe } from './html.ts';
 import { gateOut, loadPipelineClaim, type Need, type PipelineClaim } from './pipeline.ts';
 import { CLOSED_STAGE, PROCEDURE_STAGES, claimStage, type ProcedureKey } from './stages.ts';
 import { plainNeed } from './next-step.ts';
-import { captured, latestFacts, type FactReading, type FactsPanel } from './claim-facts.ts';
+import { CAPTURE_SOURCES, FACTS, captured, latestFacts, type FactReading, type FactsPanel } from './claim-facts.ts';
+import { waitingForCheck, type ToCheck } from './client-checks.ts';
+import { plainDashText } from './plain-dashes.ts';
+import { claimObjFor, loadClaimRow } from './crm.ts';
 import type { ClaimDocumentsPanel } from './documents.ts';
 import { chaptersToRead, CHAPTERS } from './pack-chapters.ts';
 import { localStamp, ukDate } from './localtime.ts';
@@ -244,10 +247,13 @@ export function factsGathered(db: Db, claim_id: string, f: FactsPanel): Gathered
 
 /** What the client answered in their portal, or what our team recorded for them, on this claim or the company. */
 export function answersGathered(db: Db, business_id: string, claim_id: string): Gathered[] {
-  return db.all<{ question: string; answer: string | null; answer_state: string; answered_at: string; role: string; who: string | null }>(
-    "SELECT t.question, t.answer, t.answer_state, t.answered_at, t.answered_by_role AS role, u.display_name AS who FROM client_tasks t " +
-      "LEFT JOIN users u ON u.id = t.answered_by WHERE t.business_id = ? AND t.state = 'ANSWERED' AND t.kind = 'QUESTION' " +
-      'AND (t.claim_id = ? OR t.claim_id IS NULL) ORDER BY t.answered_at DESC', [business_id, claim_id],
+  // PHASE 160j: what the client sent counts once a member of staff has accepted it; what staff recorded needs no check.
+  return db.all<{ question: string; answer: string | null; answer_state: string; answered_at: string; role: string; who: string | null; checker: string | null; checked_at: string | null }>(
+    "SELECT t.question, t.answer, t.answer_state, t.answered_at, t.answered_by_role AS role, u.display_name AS who, " +
+      'c.display_name AS checker, k.checked_at FROM client_tasks t LEFT JOIN users u ON u.id = t.answered_by ' +
+      'LEFT JOIN client_task_checks k ON k.task_id = t.id LEFT JOIN users c ON c.id = k.checked_by ' +
+      "WHERE t.business_id = ? AND t.state = 'ANSWERED' AND t.kind = 'QUESTION' AND (t.claim_id = ? OR t.claim_id IS NULL) " +
+      "AND (t.answered_by_role = 'STAFF' OR k.outcome = 'ACCEPTED') ORDER BY t.answered_at DESC", [business_id, claim_id],
   ).map((t) => ({
     group: t.role === 'CLIENT' ? 'CLIENT' : 'TEAM', name: t.question,
     value: t.answer_state === 'DONT_KNOW' ? 'They do not know' : (t.answer ?? ''),
@@ -256,6 +262,7 @@ export function answersGathered(db: Db, business_id: string, claim_id: string): 
       ['How we got it', t.role === 'CLIENT' ? 'The client answered in their portal' : 'Our team recorded the answer'],
       ['Who', t.who ?? (t.role === 'CLIENT' ? 'the client' : 'a former user')],
       ['When', localStamp(t.answered_at)],
+      ...(t.checked_at === null ? [] : [['Checked and accepted by', `${t.checker ?? 'a former user'}, ${localStamp(t.checked_at)}`] as const]),
     ],
   } satisfies Gathered));
 }
@@ -279,10 +286,28 @@ export function documentsGathered(d: ClaimDocumentsPanel): Gathered[] {
 
 export type StillNeeded = {
   readonly name: string;
-  readonly state: 'LATE' | 'ASKED' | 'NEEDED';
+  readonly state: 'TOCHECK' | 'LATE' | 'ASKED' | 'NEEDED';
   readonly meta: string;
   readonly fix: { readonly href: string; readonly label: string } | null;
+  /** PHASE 160j: something the client sent, waiting for a member of staff to check it. */
+  readonly check?: ToCheck;
+  /** PHASE 160j: a fact the claim still needs, which can be typed in or asked of the client where it stands. */
+  readonly fact?: { readonly key: string; readonly label: string };
 };
+
+/** The claim facts a client can tell us: the same list the claim's facts section asks (crm-pages.ts askableFacts). */
+function askable(f: FactsPanel): readonly FactReading[] {
+  return [f.claimant_type, f.acquisition_date, f.accounting_period.start, f.accounting_period.end, f.taxable_profit.sufficient_profit,
+    f.allowance_headroom.position, f.election.exists, f.acquisition_costs.costs, f.buyer_alterations.made];
+}
+
+/** The facts still to find, each one we may type in, and not already asked of the client. */
+export function factsToFind(db: Db, business_id: string, f: FactsPanel): StillNeeded[] {
+  const asked = new Set(db.all<{ fact_id: string }>(
+    "SELECT fact_id FROM client_tasks WHERE business_id = ? AND state = 'OPEN' AND fact_id IS NOT NULL", [business_id]).map((r) => r.fact_id));
+  return askable(f).filter((r) => !r.known && r.capturable && FACTS[r.key] !== undefined && !asked.has(`claim_fact.${r.key}`))
+    .map((r) => ({ name: plainDashText(r.label), state: 'NEEDED', meta: 'A fact the claim needs. Type it in, or ask the client.', fix: null, fact: { key: r.key, label: plainDashText(r.label) } }));
+}
 
 /** What was asked of the client and is not back yet, on this claim or the whole company: by due date, so late first. */
 export function openAsks(db: Db, business_id: string, claim_id: string, today: string): StillNeeded[] {
@@ -351,6 +376,10 @@ export type ClaimOverview = {
   readonly pack: PackProgress | null;
   readonly may_read_audit: boolean;
   readonly audit_entries: number;
+  /** PHASE 160j: whether this login may check what the client sent and type facts in (claim.write). */
+  readonly may_write: boolean;
+  readonly claim_id: string;
+  readonly business_id: string;
 };
 
 /** The stages of one claim, each with its needs as the gates read them now. A gate that cannot be read says nothing. */
@@ -384,7 +413,11 @@ export function claimOverview(
     const p = plainNeed(n.what);
     return { name: p.words, state: 'NEEDED', meta: viewing.state === 'LATER' ? 'Needed at this stage, once it starts.' : sentence(n.why), fix: viewing.state === 'NOW' ? p.fix : null };
   });
-  const needed = viewing.state === 'NOW' ? [...openAsks(db, v.business_id, v.id, today), ...unmet] : unmet;
+  const checks: StillNeeded[] = viewing.state !== 'NOW' ? [] : waitingForCheck(db, v.business_id, v.id).map((t) => ({
+    name: t.question, state: 'TOCHECK', meta: `Sent by ${t.by} in their portal, ${localStamp(t.at)}.`, fix: null, check: t,
+  }));
+  const needed = viewing.state === 'NOW'
+    ? [...checks, ...openAsks(db, v.business_id, v.id, today), ...unmet, ...factsToFind(db, v.business_id, v.facts)] : unmet;
   const gathered = [
     ...lookups(db, v.business_id, v.property_id), ...factsGathered(db, v.id, v.facts),
     ...answersGathered(db, v.business_id, v.id), ...documentsGathered(v.documents),
@@ -393,6 +426,7 @@ export function claimOverview(
   return {
     stages, viewing, stopped, on_hold, needed, gathered, pack: packProgress(db, v.id), may_read_audit: mayAudit,
     audit_entries: mayAudit ? clientAuditCount(db, v.business_id) : 0,
+    may_write: can(actor, 'claim.write', claimObjFor(db, loadClaimRow(db, v.id))), claim_id: v.id, business_id: v.business_id,
   };
 }
 
@@ -427,6 +461,42 @@ function gatheredLine(g: Gathered): Safe {
         <p class="help">A new value never replaces an old one: each stays here and in the audit log.</p>`}
       ${g.href === undefined ? raw('') : h`<p><a href="${g.href}">${g.group === 'DOCUMENT' ? 'Open the document' : 'Change or correct it'}</a></p>`}
     </div></details>`;
+}
+
+/** PHASE 160j: what the client sent, with the two things a member of staff may do with it. No script: two forms. */
+function checkPanel(o: ClaimOverview, t: ToCheck): Safe {
+  const base = `/staff/claims/${o.claim_id}/sent/${t.task_id}`;
+  return h`<details class="cov-act" open><summary>Check it</summary>
+    <p><strong>What they sent:</strong> ${t.logical_document_id === null ? t.sent : h`<a href="/staff/documents/${t.logical_document_id}">Open the file they uploaded</a>`}</p>
+    <form method="post" action="${base}/accept" class="inline"><button type="submit">Accept it</button></form>
+    <form method="post" action="${base}/ask-again" class="cov-again">
+      <label>What is wrong? The client will see this. <textarea name="reason" rows="2" maxlength="1000" required></textarea></label>
+      <button type="submit">Ask them again</button></form>
+  </details>`;
+}
+
+/** PHASE 160j: a fact still to find, typed in where it stands, or asked of the client in their portal. */
+function factPanel(o: ClaimOverview, f: { readonly key: string; readonly label: string }): Safe {
+  const def = FACTS[f.key];
+  const box = def?.kind === 'date' ? h`<input name="value" type="date" required>`
+    : def?.kind === 'pence' ? h`<input name="value" inputmode="decimal" placeholder="25000" required>`
+      : def?.kind === 'choice' && def.choices !== undefined
+        ? h`
+          <select name="value" required><option value="">Choose one</option>${Object.entries(def.choices).map(([k, l]) => h`<option value="${k}">${l}</option>`)}</select>`
+        : h`<input name="value" required>`;
+  return h`<details class="cov-act"><summary>Type it in, or ask the client</summary>
+    <form method="post" action="/staff/claims/${o.claim_id}/facts" class="cov-type">
+      <input type="hidden" name="fact_key" value="${f.key}"><input type="hidden" name="answer" value="VALUE"><input type="hidden" name="from" value="where">
+      <label>${def?.kind === 'pence' ? 'The amount, in pounds' : 'The answer'} ${box}</label>
+      <label>Where did you get this? <select name="source_id" required><option value="">Choose one</option>${Object.entries(CAPTURE_SOURCES).map(([k, l]) => h`<option value="${k}">${l}</option>`)}</select></label>
+      <label>Note <input name="note" maxlength="2000"></label>
+      <button type="submit">Save it</button></form>
+    <form method="post" action="/staff/clients/${o.business_id}/tasks/send" class="inline">
+      <input type="hidden" name="fact_id" value="${`claim_fact.${f.key}`}"><input type="hidden" name="claim_id" value="${o.claim_id}">
+      <input type="hidden" name="question" value="${`Can you tell us this: ${f.label}?`}">
+      <input type="hidden" name="why" value="We need this to finish your claim."><input type="hidden" name="holds_up" value="this claim">
+      <input type="hidden" name="from" value="where"><button type="submit">Ask the client in their portal</button></form>
+  </details>`;
 }
 
 export function overviewBlock(o: ClaimOverview, base: string, business_id: string): Safe {
@@ -464,8 +534,11 @@ export function overviewBlock(o: ClaimOverview, base: string, business_id: strin
           <section class="cov-col" aria-labelledby="cov-need-h"><h3 id="cov-need-h">Still needed <span class="count">${String(o.needed.length)}</span></h3>
             ${o.needed.length === 0 ? h`<p class="help">Nothing. Everything this stage needs is in.</p>`
               : h`<ul class="cov-list">${o.needed.map((n) => h`<li class="cov-need cov-${n.state.toLowerCase()}">
-                <span class="cov-nname">${n.name}</span>${n.state === 'LATE' ? h` <span class="badge b-stop">Late</span>` : n.state === 'ASKED' ? h` <span class="badge b-warn">Asked</span>` : raw('')}
-                <span class="help">${n.meta}</span>${n.fix === null ? raw('') : h` <a href="${n.fix.href}">${n.fix.label}</a>`}</li>`)}</ul>`}
+                <span class="cov-nname">${n.name}</span>${n.state === 'LATE' ? h` <span class="badge b-stop">Late</span>` : n.state === 'ASKED' ? h` <span class="badge b-warn">Asked</span>`
+                  : n.state === 'TOCHECK' ? h` <span class="badge b-info">Needs checking</span>` : raw('')}
+                <span class="help">${n.meta}</span>${n.fix === null ? raw('') : h` <a href="${n.fix.href}">${n.fix.label}</a>`}
+                ${o.may_write && n.check !== undefined ? checkPanel(o, n.check) : raw('')}
+                ${o.may_write && n.fact !== undefined ? factPanel(o, n.fact) : raw('')}</li>`)}</ul>`}
           </section>
           <section class="cov-col" aria-labelledby="cov-got-h"><h3 id="cov-got-h">Gathered <span class="count">${String(o.gathered.length)}</span></h3>
             <p class="help">Open any line to see exactly where it came from, who added it and when.</p>
