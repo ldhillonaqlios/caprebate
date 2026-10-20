@@ -108,6 +108,7 @@ import { handleConfirmLink } from './accountant-confirm-pages.ts';
 import { acceptReport } from './report-accept.ts';
 import { handlePortalEvidence, portalEvidenceCard } from './evidence-pages.ts';
 import { noticesEdition, receiveComplaintForm } from './notices-site.ts';
+import { CONSENT_COOKIE, COOKIE_BANNER_CSS, consentChoice, consentSetCookie, cookieBanner, legalPageHtml, safeBack, wantsBanner } from './legal-pages.ts';
 
 const DRAFT_COOKIE = 'cb_draft';
 
@@ -338,6 +339,22 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   const session = authenticate(d.app.deps, cookie(req, SESSION_COOKIE_NAME));
   const actor: Actor | undefined = session ? toActor(session.user) : undefined;
 
+  /* PHASE 160h, 20 October 2026: THE COOKIE BANNER (src/web/legal-pages.ts), on the test website with the notices. A
+     visitor who is not signed in and has not answered gets it at the foot of any page of ours: two buttons of the same
+     size, no script. It is added as the page leaves, so every page writer (page(), the home page, the notices page)
+     carries it without knowing about it. */
+  if (d.notices === true && method === 'GET' && wantsBanner(path, actor !== undefined, consentChoice(cookie(req, CONSENT_COOKIE)))) {
+    const back = `${path}${url.search}`;
+    const end = res.end.bind(res) as (...a: unknown[]) => ServerResponse;
+    res.end = ((...args: unknown[]) => {
+      const body = args[0];
+      if (typeof body === 'string' && res.statusCode === 200 && /^<!doctype html/i.test(body) && body.includes('</body>')) {
+        args[0] = body.replace(/<\/body>(?![\s\S]*<\/body>)/, `${cookieBanner(back)}</body>`);
+      }
+      return end(...args);
+    }) as typeof res.end;
+  }
+
   /* ---------------------------------------------------------- assets */
   if (path === '/assets/site.css' && method === 'GET') {
     res.writeHead(200, CSS_HEADERS); res.end(SITE_CSS); return 'handled';
@@ -462,6 +479,24 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   /* PHASE 160f, 20 October 2026: ON THE TEST WEBSITE, THE NOTICES PAGE ITSELF (src/web/notices-site.ts) - a draft,
      its proposed facts marked - with its style as a file and its complaint form working. Anywhere else, as before. */
   if (d.notices === true) {
+    /* PHASE 160h: the website's other legal pages, the banner's styles, and the answer (src/web/legal-pages.ts). */
+    if (path === '/assets/cookie-banner.css' && method === 'GET') { res.writeHead(200, CSS_HEADERS); res.end(COOKIE_BANNER_CSS); return 'handled'; }
+    if (path === '/cookies/choice' && method === 'POST') {
+      const f = await form(req);
+      const choice = f.get('choice');
+      const back = safeBack(f.get('back'));
+      if (choice !== 'all' && choice !== 'essential') { redirect(res, back); return 'handled'; }
+      res.writeHead(303, { location: back.startsWith('/cookies/') ? '/cookies/?saved=1#choice' : back, 'set-cookie': consentSetCookie(choice), 'content-type': 'text/plain; charset=utf-8' });
+      res.end('');
+      return 'handled';
+    }
+    if (method === 'GET') {
+      const legal = legalPageHtml(path, consentChoice(cookie(req, CONSENT_COOKIE)), url.searchParams.get('saved') === '1');
+      if (legal !== undefined) {
+        if (!path.endsWith('/')) { redirect(res, `${path}/`); return 'handled'; }
+        html(res, 200, legal); return 'handled';
+      }
+    }
     if (path === '/assets/notices.css' && method === 'GET') {
       const ed = noticesEdition();
       if (ed !== undefined) { res.writeHead(200, CSS_HEADERS); res.end(ed.css); return 'handled'; }
@@ -486,6 +521,15 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
       <p>Our privacy notice and our public notices are being prepared. They will be published on this page before the website opens to clients.</p>
       <p>Until then, if you have a question about how we use your details, or you want to make a complaint, email
       <a href="mailto:contact@caprebate.co.uk">contact@caprebate.co.uk</a>. A person will read it and reply.</p>
+      <p><a href="/">Back to the home page</a></p>` }));
+    return 'handled';
+  }
+  /* PHASE 160h: away from the test website the legal pages are not served yet; their addresses say so, as the notices'
+     do, rather than answer "unknown page" to a footer link. */
+  if (method === 'GET' && /^\/(terms|cookies|acceptable-use|accessibility|disclaimer)\/?$/.test(path)) {
+    html(res, 200, page({ title: 'Being prepared', nav: nav(actor), body: h`<h1>This page is being prepared</h1>
+      <p>It will be published before the website opens to clients. Until then, email
+      <a href="mailto:contact@caprebate.co.uk">contact@caprebate.co.uk</a> with any question.</p>
       <p><a href="/">Back to the home page</a></p>` }));
     return 'handled';
   }
