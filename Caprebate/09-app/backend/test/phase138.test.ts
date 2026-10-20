@@ -309,7 +309,8 @@ describe('rules kept', () => {
     for (const path of [`/staff/clients/${biz}`, `/staff/claims/${claim}`]) {
       const got = await as('admin').get(path);
       assert.equal(got.status, 200, path);
-      const b = got.body;
+      // PHASE 160e: the claim page's upload form names the one allowed script (src/web/upload-pieces.ts); nothing inline.
+      const b = got.body.replace('<script src="/assets/upload-pieces.js" defer></script>', '');
       assert.equal(/<script|\sstyle=|\son[a-z]+=/i.test(b), false, `${path}: a script, a style attribute or a handler`);
       const ids = [...b.matchAll(/\sid="([^"]+)"/g)].map((x) => x[1] ?? '');
       assert.deepEqual([...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))], [], `${path}: an id used twice`);

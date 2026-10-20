@@ -36,6 +36,7 @@ import type { Fields } from './crm.ts';
 import { taskChoices, type TaskChoices } from './vocabularies.ts';
 import { EXITS, PROCEDURE_STAGES } from './stages.ts';
 import type { Timeline } from './timeline.ts';
+import { piecesPage } from './upload-pieces.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -55,8 +56,10 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  const pp = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, pp.headers);
+  res.end(pp.body);
 }
 
 function json(res: ServerResponse, status: number, body: unknown): void {

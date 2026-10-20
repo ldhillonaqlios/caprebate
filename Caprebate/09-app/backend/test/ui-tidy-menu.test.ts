@@ -161,7 +161,8 @@ describe('UI tidy phase 2: the phone’s Menu button and the left-hand layout', 
       const header = /<header class="top">([\s\S]*?)<\/header>/.exec(body)?.[1] ?? '';
       assert.match(header, /<\/nav><input type="checkbox" id="navtoggle" class="navtoggle"><label for="navtoggle" class="navbutton">Menu<\/label><\/div>$/, `${who} ${path}`);
       assert.equal((body.match(/id="navtoggle"/g) ?? []).length, 1);
-      assert.doesNotMatch(body, /<script/i);
+      // PHASE 160e: a page with an upload form names the one allowed script (src/web/upload-pieces.ts); nothing else.
+      assert.doesNotMatch(body.replace('<script src="/assets/upload-pieces.js" defer></script>', ''), /<script/i);
     }
   });
 

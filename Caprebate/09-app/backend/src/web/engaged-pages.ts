@@ -38,6 +38,7 @@ import { STEP_ANCHOR } from './approvals-pages.ts';
 import { clientList, clientListPage, type ClientSort } from './client-list.ts';
 import * as MR from './match-review.ts';
 import { pickPage } from './match-review-pages.ts';
+import { piecesPage } from './upload-pieces.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -54,8 +55,10 @@ export type EngagedDeps = {
 };
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  const pp = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, pp.headers);
+  res.end(pp.body);
 }
 
 function redirect(res: ServerResponse, to: string): void {

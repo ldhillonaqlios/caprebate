@@ -19,6 +19,7 @@ import * as LI from './lists.ts';
 import * as S from './search.ts';
 import { documentCentreGate } from './documents.ts';
 import { opens } from './navigation.ts';
+import { piecesPage } from './upload-pieces.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -36,8 +37,10 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 const BASE: Readonly<Record<LI.ListKey, string>> = Object.freeze({ CLAIMS: '/staff/claims', LEADS: '/staff/leads' });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  const pp = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, pp.headers);
+  res.end(pp.body);
 }
 
 function redirect(res: ServerResponse, to: string): void {

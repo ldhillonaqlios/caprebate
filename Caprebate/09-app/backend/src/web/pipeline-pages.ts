@@ -42,6 +42,7 @@ import { referralBlock } from './introducers-pages.ts';
 import * as E from './enquiries.ts';
 import * as SO from './survey-open.ts';
 import { leadSectionCounts, leadSections, type CardDeps } from './lead-cards.ts';
+import { piecesPage } from './upload-pieces.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -61,8 +62,10 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: a page with an upload form also names the script that sends a big file in pieces.
+  const pp = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, pp.headers);
+  res.end(pp.body);
 }
 
 function json(res: ServerResponse, status: number, body: unknown): void {

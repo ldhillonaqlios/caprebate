@@ -56,6 +56,8 @@ import { FsObjectStore } from './objectstore.ts';
 import { acceptClientBytes, finishUpload, issuedJob, readerFor } from './uploads.ts';
 import { singleFile } from './multipart.ts';
 import { readUpload, receiveFile } from './client-files-pages.ts';
+import { piecesOf, piecesPage, putPiece, startPieces, sweepPieces, PIECE_BYTES } from './upload-pieces.ts';
+import { UPLOAD_PIECES_JS } from './upload-pieces-script.ts';
 import { READ_AND_DELETED } from './originals.ts';
 import { receivableTypes, startDocumentUpload, readLines, type RequestView } from './documents.ts';
 import { handleStaff, handlePortalSettings } from './staff.ts';
@@ -168,8 +170,15 @@ const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, HTML_HEADERS);
-  res.end(body);
+  // PHASE 160e: a page with an upload form gets the script that sends a big file in pieces (src/web/upload-pieces.ts).
+  const p = piecesPage(HTML_HEADERS, body);
+  res.writeHead(status, p.headers);
+  res.end(p.body);
+}
+
+function piecesJson(res: ServerResponse, status: number, body: object): void {
+  res.writeHead(status, JSON_HEADERS);
+  res.end(JSON.stringify(body));
 }
 
 function redirect(res: ServerResponse, to: string): void {
@@ -313,6 +322,16 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   const newId = d.newId ?? randomUUID;
   const now = d.app.now;
 
+  /* PHASE 160e, 19 October 2026: A FORM SENT FROM ANOTHER WEBSITE IS REFUSED. The session cookie is SameSite=Lax, which
+     stops a browser sending it with another site's form; this is the second lock. Browsers mark every request with
+     where it came from (Sec-Fetch-Site), and no page of ours posts from elsewhere. The Origin header cannot be used
+     for this here: under our no-referrer policy a browser sends "Origin: null" even on our own forms. A service calling
+     us (a webhook) sends no Sec-Fetch-Site, so it is not affected. */
+  if (method !== 'GET' && method !== 'HEAD' && req.headers['sec-fetch-site'] === 'cross-site') {
+    html(res, 403, simple('Not sent', 'That form came from another website, so nothing was done. Open Cap Rebate and try again.'));
+    return 'handled';
+  }
+
   const session = authenticate(d.app.deps, cookie(req, SESSION_COOKIE_NAME));
   const actor: Actor | undefined = session ? toActor(session.user) : undefined;
 
@@ -343,6 +362,26 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   // 2 Oct 2026: the photo page's one script (src/web/photo-upload-script.ts).
   if (path === '/assets/photo-upload.js' && method === 'GET') {
     res.writeHead(200, SITE_JS_HEADERS); res.end(PHOTO_UPLOAD_JS); return 'handled';
+  }
+  // PHASE 160e: the upload forms' one script (src/web/upload-pieces-script.ts), which sends a big file in pieces.
+  if (path === '/assets/upload-pieces.js' && method === 'GET') {
+    res.writeHead(200, SITE_JS_HEADERS); res.end(UPLOAD_PIECES_JS); return 'handled';
+  }
+  /* PHASE 160e: A FILE SENT IN PIECES (src/web/upload-pieces.ts) - Vercel takes at most 4.5 MB a request. JSON for the
+     page's script only; any signed-in person, for their own send only. The form that sends the file takes it. */
+  if (path === '/upload/pieces/start' && method === 'POST') {
+    if (actor === undefined) { piecesJson(res, 401, { ok: false, why: 'You need to be signed in.' }); return 'handled'; }
+    await sweepPieces(d.app, d.store);
+    const r = startPieces({ db: d.app.db, now: d.app.now, newId }, actor, (await form(req)).get('size') ?? '');
+    piecesJson(res, r.ok ? 200 : 400, r); return 'handled';
+  }
+  const piecePut = /^\/upload\/pieces\/([A-Za-z0-9-]{8,64})\/(\d{1,3})$/.exec(path);
+  if (piecePut !== null && method === 'PUT') {
+    if (actor === undefined) { piecesJson(res, 401, { ok: false, why: 'You need to be signed in.' }); return 'handled'; }
+    let bytes: Buffer;
+    try { bytes = await readBody(req, PIECE_BYTES); } catch { piecesJson(res, 413, { ok: false, why: 'That piece is too big.' }); return 'handled'; }
+    const r = await putPiece({ db: d.app.db, now: d.app.now, newId }, d.store, actor, piecePut[1] ?? '', piecePut[2] ?? '', new Uint8Array(bytes));
+    piecesJson(res, r.ok ? 200 : 400, r); return 'handled';
   }
   /* 30 Sep 2026: THE CLIENT'S JOIN PAGE, /call/<token>. The token is the only key: 64 hex characters, made when the
      meeting was made and sent only to the client. It opens from half an hour before the call until an hour after. */
@@ -819,7 +858,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     const f = await form(req);
     try {
       // PHASE 151j: the password first, then the steps it still needs - a session only when none is left.
-      const r = await SI.beginSignIn(d.app, f.get('email') ?? '', f.get('password') ?? '');
+      const r = await SI.beginSignIn(d.app, f.get('email') ?? '', f.get('password') ?? '', clientIp(req));
       if (r.kind === 'STEP') {
         res.setHeader('set-cookie', stepCookie(r.token));
         redirect(res, '/login/step'); return 'handled';
@@ -883,7 +922,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/login/forgot' && method === 'GET') { html(res, 200, forgotPage(undefined)); return 'handled'; }
   if (path === '/login/forgot' && method === 'POST') {
     const email = ((await form(req)).get('email') ?? '').trim();
-    const r = requestPasswordReset(d.app.deps, email);
+    const r = requestPasswordReset(d.app.deps, email, clientIp(req));
     if (r.user !== undefined && r.plaintextToken !== undefined) {
       d.app.email.send({
         to_email: r.user.email, kind: 'PASSWORD_RESET',
@@ -1170,7 +1209,7 @@ async function portalRoutes(
     return 'handled';
   }
   if (path === '/portal/messages' && method === 'POST') {
-    const got = await readPortalSend(req, form, readBody);
+    const got = await readPortalSend(req, form, readBody, piecesOf(d.app, d.store, actor));
     const r = got.ok ? await sendFromPortal({ app: d.app, store: d.store, newId }, actor, business_id, got.send) : got;
     if (!r.ok) {
       // Drawn again with what they typed, so a refusal never costs a long message. Nothing was sent.
@@ -1306,7 +1345,7 @@ async function portalRoutes(
   if (path === '/portal/documents' && method === 'POST' && /^multipart\/form-data\b/i.test(req.headers['content-type'] ?? '')) {
     // PHASE 140: THE FILE COMES WITH THE FORM. One step, and exactly the path the upload address takes — the same
     // single-use key, `acceptClientBytes` and `finishUpload` — so no page ever shows an HTTP PUT address.
-    const up = await readUpload(req, readBody);
+    const up = await readUpload(req, readBody, piecesOf(d.app, d.store, actor));
     if (!up.ok) { html(res, 400, simple('Not sent', up.why)); return 'handled'; }
     const r = await receiveFile({ app: d.app, store: d.store, newId }, actor, {
       business_id: P.progress(db, actor, business_id).business.id,
@@ -2154,7 +2193,7 @@ function portalPage(
           <div class="pblock" id="request-${r.id}">
             <p><strong>${r.type.label}</strong> — ${r.due.overdue ? h`<strong>${ukDatesIn(r.due.label)}</strong>` : h`${ukDatesIn(r.due.label)}`}</p>
             <div class="help">${why(h`<em>Why we are asking:</em> ${r.why}<br><em>What it holds up:</em> ${r.holds_up}`)}</div>
-            <form method="post" action="/portal/documents" enctype="multipart/form-data">
+            <form method="post" action="/portal/documents" enctype="multipart/form-data" data-pieces>
               <input type="hidden" name="request" value="${r.id}">
               <label class="dropzone" for="send-${r.id}"><span class="dropwords">Drop the file here, or tap to choose it</span>
                 <input id="send-${r.id}" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>
@@ -2232,7 +2271,7 @@ function portalPage(
           <td>${x.version_no === null ? '—' : String(x.version_no)}</td>
           <td>${x.failure_code !== null ? 'We could not use it' : x.strip_recorded_at !== null && x.quarantine_discharged_at !== null ? 'Read' : 'Not read yet'}</td>
           <td><a href="/portal/documents/${x.id}">What we did with it</a></td></tr>`)}</tbody></table>`}
-      <form method="post" action="/portal/documents" enctype="multipart/form-data">
+      <form method="post" action="/portal/documents" enctype="multipart/form-data" data-pieces>
         <p class="fl"><strong>Send us a document</strong></p>
         <label class="dropzone" for="send-file"><span class="dropwords">Drop a file here, or tap to choose one</span>
           <input id="send-file" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>
