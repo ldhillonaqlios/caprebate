@@ -515,6 +515,10 @@ Signed .............................  Date ..........................
 
 ---
 
+## Recorded 20 October 2026 (Phase 160g) · The public notices page's eight facts, approved for testing
+
+Phase 160f filled the four facts nobody had supplied on the public notices page with our recommendation, and named the test website's host, file store and database. Eight facts were marked "Proposed": the legal basis for names in documents (legitimate interests, Article 6(1)(f)); the retention period (seven years from the end of the claim's accounting period, or one year after an HMRC enquiry closes); Vercel, Vercel Blob and Turso, in the United States (US East); and two dates. **Sadique Maskeen approved all eight, relayed by Lakhbir on 20 October 2026, for testing.** The marks are off and the page is live on the test website (/notices/). Still open for real clients: the page on the public website, its nine host checks, and the safeguard for sending information to the United States, which the page says will be named before the website holds anything about a real person.
+
 ## Appendix 1 — what is NOT in this register, and why
 
  **This register covers everything on our project board that waits on a solicitor, the data protection officer, the director or a developer, and nothing else.**

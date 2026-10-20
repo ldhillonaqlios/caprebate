@@ -33,9 +33,10 @@ export const DP_MAIL = 'data.protection@caprebate.co.uk';
 /** Complaints from one network address in the 15-minute window, before the form says to wait. */
 export const COMPLAINT_SOURCE_LIMIT = 10;
 
-const BANNER = '<p class="draft-banner" role="note"><strong>Draft, on our test website.</strong> The facts marked '
-  + '<span class="proposed">Proposed</span> are our advice. Our data protection officer has not checked them yet. '
-  + 'This page is not final.</p>';
+/* PHASE 160g, 20 October 2026: the eight facts Phase 160f proposed are confirmed by the data protection officer
+   (relayed by Lakhbir, for testing), so the page is no longer a draft; the banner says only where it is. */
+const BANNER = '<p class="draft-banner" role="note"><strong>Our test website.</strong> It holds invented information '
+  + 'only. Our public website will carry this page too.</p>';
 
 const BANNER_CSS = '\n  /* PHASE 160f: the test website says the page is a draft. */\n'
   + '  .draft-banner{border:2px solid var(--alert); background:var(--alertbg); padding:.8rem 1rem; margin:1rem 0}\n';

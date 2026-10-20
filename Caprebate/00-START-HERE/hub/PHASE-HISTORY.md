@@ -13350,3 +13350,26 @@ NOTHING LEFT  beyond those lines. 4B: the build queue is empty; no orphan.
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160g — the notices' eight proposed facts confirmed — 20 October 2026 (Claude Code, on the Mac, in a worktree of main)
+
+**ACTIONS AND OUTCOMES.** Phase 160g, 20 Oct 2026: Lakhbir relayed Sadique Maskeen's approval ("Sadique approves, I relay") of the eight facts Phase 160f proposed on the public notices page: the legal basis (legitimate interests), the retention period (seven years from the end of the claim's accounting period, or one year after an HMRC enquiry closes), Vercel, Vercel Blob and Turso named in the United States, and two dates. The "Proposed" marks are off, each fact is word for word, and the approval is recorded in the page as relayed, for testing. The page on the test website is no longer a draft.
+
+- **Claim.** hub/CLAIM.md and tracker row 13326319073, pushed first (`0d0ff5b`).
+- **Premise re-derived (step 8).** Reading each fact again without its mark found one clause that was not true: the second retention line said the period was "set with our chartered tax adviser", and no tax adviser is appointed. It came out.
+- **Built.** The marks off; the approval comment; the banner ("Our test website. It holds invented information only."); the acceptance check's --live passes on the facts and still refuses the page if a mark comes back.
+- **Tests.** `test/phase160g.test.ts` (two), `test/phase160f.test.ts` restated.
+- **The checks, at the close:** site 1,427 pass (3 xfail), the same in package mode; phase3 440; phase9 417; back end 2,933 pass / 0 fail over 186 tracked files; **5,217** in all; drift, CRM fold, plain words, notices (--live) and the tracker green.
+
+```
+DONE          the eight facts confirmed as relayed, the marks off, the page live on the test website as final for
+              testing. test/phase160g.test.ts (2). 5,217 checks; all green.
+NOT DONE      The page on the public website (caprebate.co.uk) and its nine host checks, and the safeguard for sending
+                information to the US, before real clients - already in WAITING-ON-PEOPLE.md and the DPO register.
+              The engagement letter's open terms - the solicitor - already in WAITING-ON-PEOPLE.md (Lakhbir: "Leave
+                for the solicitor").
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines. 4B: the build queue is empty; no orphan.
+```
+
+**Claim cleared** in the commit that carries this record.
