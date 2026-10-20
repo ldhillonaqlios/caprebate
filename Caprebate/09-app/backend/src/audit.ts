@@ -253,6 +253,8 @@ export type AuditKind =
   | 'RIGHTS_SEARCH_RUN' | 'COMPLIANCE_LETTER_QUEUED'
   | 'LEGAL_HOLD_SET' | 'LEGAL_HOLD_LIFTED' | 'COMPLIANCE_LINKED'
   | 'COMPLAINT_LOGGED' | 'COMPLAINT_CLASSIFIED' | 'COMPLAINT_PROGRESS_RECORDED' | 'COMPLAINT_UPDATED' | 'COMPLAINT_CLOSED'
+  // PHASE 160f: a complaint sent through the public notices page's form (src/web/notices-site.ts).
+  | 'COMPLAINT_FORM_RECEIVED'
   | 'BREACH_OPENED' | 'BREACH_UPDATED' | 'BREACH_AWARENESS_CORRECTED' | 'BREACH_DECISION_RECORDED'
   | 'BREACH_PHASE_RECORDED' | 'BREACH_NOTIFICATION_RECORDED' | 'BREACH_CLOSED'
   /** Phase 153c (Word question 181): the restricted names list — a name added, the list read, a read refused. */

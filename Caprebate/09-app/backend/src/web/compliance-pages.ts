@@ -20,6 +20,7 @@ import * as S from './compliance-identity.ts';
 import * as N from './breach-names.ts';
 import * as V from './compliance-views.ts';
 import { identityPanel, sendIdentityCheck } from './identity-checks.ts';
+import { logFormComplaint, waitingForms } from './notices-site.ts';
 
 export type WebResult = 'handled' | 'not-mine';
 
@@ -176,7 +177,13 @@ export async function handleCompliance(
   }
 
   /* ------------------------------------------------ complaints */
-  if (path === '/staff/compliance/complaints' && method === 'GET') return html(res, V.complaintsListPage(nav, R.complaintsLog(db, actor), msg));
+  if (path === '/staff/compliance/complaints' && method === 'GET') return html(res, V.complaintsListPage(nav, R.complaintsLog(db, actor), msg, waitingForms(db)));
+  // PHASE 160f: a complaint sent through the public notices page's form, logged with the time it arrived.
+  const formLog = m(`/complaint-forms/${ID}/log`);
+  if (formLog && method === 'POST') {
+    const r = logFormComplaint(deps, actor, formLog[1] ?? '');
+    return back(r, 'Complaint not logged', r.ok ? `/staff/compliance/complaints/${r.id}?done=logged` : '', '/staff/compliance/complaints');
+  }
   if (path === '/staff/compliance/complaints' && method === 'POST') {
     const r = R.logComplaint(deps, actor, posted(await form(req)));
     return back(r, 'Complaint not logged', r.ok ? `/staff/compliance/complaints/${r.id}?done=logged` : '', '/staff/compliance/complaints');

@@ -53,6 +53,9 @@ async function build() {
     // 6 OCTOBER 2026 (Lakhbir: "switch this on for test purposes at the moment"): signing ON FOR TESTING - invented
     // clients sign the TEST COPY of the letter end to end. The real letter is never signable under it. This file only.
     testSigning: true,
+    // 20 OCTOBER 2026 (Phase 160f; Lakhbir: "Build and publish on test"): the public notices page, a draft with its
+    // proposed facts marked, and its complaint form. This file only - never the default.
+    testNotices: true,
     ...(publicOrigin === undefined ? {} : { publicOrigin }),
   }, 10_000, await sharedDocumentOptions(docs, lasting));
   const made = opened.made;

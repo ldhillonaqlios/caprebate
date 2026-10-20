@@ -121,6 +121,8 @@ export type ServerOptions = {
   keepOriginals?: KeepOriginals;
   /** PHASE 153d: show the TEST-ONLY engagement letter (test defaults, never signed). Absent is the real letter. api/index.mjs alone passes it. */
   testLetter?: boolean;
+  /** PHASE 160f: the public notices page and its complaint form (src/web/notices-site.ts). api/index.mjs passes it; nothing else does. */
+  testNotices?: boolean;
   /** 6 Oct 2026: signing on for testing — the test copy of the letter only (ENGAGEMENT_SIGNING_TEST). Needs testLetter. api/index.mjs passes it; locally CAPREBATE_SIGNING_TEST=1. */
   testSigning?: boolean;
   /** PHASE 140: the key a kept original is encrypted with. Absent is CAPREBATE_ORIGINALS_KEY; with neither, nothing is kept. */
@@ -222,7 +224,7 @@ export async function createApp(
     // so the JSON API below is unchanged and nothing is shadowed by accident.
     try {
       const publicOrigin = opts.publicOrigin ?? process.env.CAPREBATE_PUBLIC_ORIGIN;
-      if (await handleWeb({ app, store, ...(opts.referralForm === undefined ? {} : { referralForm: opts.referralForm }), ...(opts.names === undefined ? {} : { names: opts.names }), ...(publicOrigin === undefined ? {} : { publicOrigin }), ...(opts.testLetter === true ? { letterPath: TEST_LETTER_PATH } : {}), ...(opts.testLetter === true && opts.testSigning === true ? { signing: ENGAGEMENT_SIGNING_TEST } : {}) }, req, res) === 'handled') return;
+      if (await handleWeb({ app, store, ...(opts.referralForm === undefined ? {} : { referralForm: opts.referralForm }), ...(opts.names === undefined ? {} : { names: opts.names }), ...(publicOrigin === undefined ? {} : { publicOrigin }), ...(opts.testLetter === true ? { letterPath: TEST_LETTER_PATH } : {}), ...(opts.testNotices === true ? { notices: true } : {}), ...(opts.testLetter === true && opts.testSigning === true ? { signing: ENGAGEMENT_SIGNING_TEST } : {}) }, req, res) === 'handled') return;
     } catch (e) {
       // PHASE 133a: A REFUSED SCREEN IS STILL REFUSED — 403 — BUT AS A PAGE. A person who follows an address they may not
       // open gets the application's header and a sentence, not a line of JSON. The page names no object, so a refusal

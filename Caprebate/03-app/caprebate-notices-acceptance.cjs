@@ -426,6 +426,12 @@ const placeholders = [...pageBody.matchAll(/\[NOT SET — ([^\]]+)\]/g)].map(m =
   .map(shorten)
   .filter(s => s && s !== "...");
 const unique = [...new Set(placeholders)];
+/* PHASE 160f, 20 October 2026: A FACT WE HAVE PROPOSED is filled with our recommendation and marked
+   <span class="proposed">Proposed, awaiting our data protection officer:</span>. It is not a confirmed fact: it is
+   listed here, and --live still refuses the page until the data protection officer has confirmed each one and the
+   mark is taken off. Each is named by the words that follow the mark. */
+const proposed = [...pageBody.matchAll(/<span class="proposed">[^<]*<\/span>\s*([\s\S]{0,1500}?)(?:<\/p>|<\/li>|$)/g)]
+  .map(m => shorten(m[1].replace(/<[^>]+>/g, "")));
 
 /* === HOST-SIDE, NAMED AND NEVER ASSERTED ================================= */
 
@@ -464,6 +470,11 @@ if (!unique.length) console.log("  none");
 for (const u of unique) console.log("  ....  " + u);
 console.log("");
 
+console.log("PROPOSED — filled with our recommendation, awaiting the data protection officer  (" + proposed.length + ")");
+if (!proposed.length) console.log("  none");
+for (const u of proposed) console.log("  ....  " + u);
+console.log("");
+
 const failed = results.filter(r => !r.ok);
 if (failed.length) {
   console.log("FAIL: " + failed.length + " structural check(s) failed.");
@@ -473,6 +484,10 @@ if (LIVE && unique.length) {
   console.log("FAIL (--live): " + unique.length + " fact(s) still unset. The page must not be published.");
   process.exit(1);
 }
+if (LIVE && proposed.length) {
+  console.log("FAIL (--live): " + proposed.length + " fact(s) proposed and not yet confirmed by the data protection officer. The page must not be published as final.");
+  process.exit(1);
+}
 console.log("OK: " + results.length + " structural checks pass. "
   + HOST_ONLY.length + " tests need the host and have NOT been checked. "
-  + unique.length + " facts are unset.");
+  + unique.length + " facts are unset. " + proposed.length + " are proposed, awaiting the data protection officer.");

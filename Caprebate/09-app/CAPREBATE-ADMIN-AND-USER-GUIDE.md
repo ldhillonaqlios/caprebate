@@ -2857,6 +2857,11 @@ Address: /staff/compliance/rights. Use **Log a request**. Give "Received": when 
 #### Complaints
 Address: /staff/compliance/complaints. Use **Log a complaint**. Decide its kind "now, on receipt": is it a s.164A complaint? *Try:* received 2026-09-11 14:00 by post, "No — not a s.164A complaint". *Observed:* **CP-001**, Acknowledge by **2026-10-10**, "not acknowledged yet", OPEN.
 
+A complaint can also come through the complaint form on the public notices page. It waits at the top of this page,
+under **Sent through the website's complaint form**, with the time it arrived. Its thirty days run from then. Press
+**Log it in the complaints log**. It goes into the log with that same time. The data protection address is emailed
+each time one arrives.
+
 #### Breaches
 Address: /staff/compliance/breaches. Use **Open an entry**. When we became aware is fixed on the day. The description box is "What happened — never bank details". *Try:* a description containing "sort code 12-34-56". *Observed:* "Entry not opened — The breach register never records bank details, and this carries a sort code."
 
