@@ -1071,27 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 160g — The notices' eight proposed facts confirmed (Sadique Maskeen, relayed by Lakhbir, for testing)
-
- **Model: Opus. Written 20 October 2026** on Lakhbir's answer "Sadique approves, I relay", for the eight facts Phase 160f proposed on the public notices page.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-Read THE STANDING INSTRUCTION and COORDINATES first. Claim the work in
-hub/CLAIM.md (commit and push first). Work on claude/phase-160g from main;
-pull request against main.
-
-THE JOB
-The eight "Proposed, awaiting our data protection officer" marks on
-03-app/caprebate-notices-page.html come off; each fact stays word for word;
-a comment records the approval as relayed by Lakhbir, for testing. The draft
-banner on the test website says the page is on the test website, not a draft.
-The acceptance check's --live then passes on the facts. The DPO lines in
-WAITING-ON-PEOPLE.md and FOR-THE-SOLICITOR-DPO-DEVELOPER.md updated.
-
-TESTS: test/phase160f.test.ts restated; test/phase160g.test.ts.
-```
-
 ## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 

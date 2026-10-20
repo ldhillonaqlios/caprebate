@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 335 |
-| Working on it | 1 |
+| Done | 336 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160g - The notices' eight proposed facts confirmed (Sadique Maskeen, relayed by Lakhbir, for testing) (20 Oct 2026)
-
-`13326319073` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-20 (Phase 160g): Written and claimed 20 Oct 2026 on Lakhbir's answer 'Sadique approves, I relay' for the eight facts Phase 160f proposed.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-335 items.
+336 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3459,4 +3453,11 @@
 
 - Note 2026-10-20 (Phase 160f): Written and claimed 20 Oct 2026 on Lakhbir's answer 'Build and publish on test' (the notices' four facts proposed for the DPO), after Phase 160e's stress test.
 - Note 2026-10-20 (Phase 160f): Done 20 Oct 2026: the notices on the test website as a draft with eight proposed facts marked; the host, store and database named in the US; the complaint form kept, emailed and logged with its arrival time; the region checked, no move. test/phase160f.test.ts (14). The eight facts wait on the DPO (WAITING-ON-PEOPLE.md).
+
+### Phase 160g - The notices' eight proposed facts confirmed (Sadique Maskeen, relayed by Lakhbir, for testing) (20 Oct 2026)
+
+`13326319073` · **Done** · owner Claude
+
+- Note 2026-10-20 (Phase 160g): Written and claimed 20 Oct 2026 on Lakhbir's answer 'Sadique approves, I relay' for the eight facts Phase 160f proposed.
+- Note 2026-10-20 (Phase 160g): Done 20 Oct 2026: the eight facts confirmed as relayed by Lakhbir for Sadique Maskeen, for testing; marks off; one untrue clause removed; test/phase160g.test.ts (2). 5,217 checks.
 
