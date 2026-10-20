@@ -779,7 +779,8 @@ describe('the defects the guide found by running every exercise on the demo', ()
       assert.equal(count(db, "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'AUDIT_LOG_READ'"), reads + 1, 'the read was not recorded');
       const v = (await import('../src/web/audit-log.ts')).auditLogView(deps(h.made), who(db, 'ADMIN'), new URLSearchParams({ kind: 'LOGIN_SUCCEEDED', outcome: 'SOMETIMES' }));
       assert.ok(v.lines.length >= 1 && v.lines.every((l) => l.kind === 'LOGIN_SUCCEEDED'));
-      for (const l of v.lines) assert.deepEqual(Object.keys(l).sort(), ['actor_id', 'actor_role', 'at', 'kind', 'object_id', 'object_type', 'outcome', 'seq']);
+      // PHASE 160i: who, by name, and the kind in plain words are added; neither is read from the detail.
+      for (const l of v.lines) assert.deepEqual(Object.keys(l).sort(), ['actor_id', 'actor_role', 'at', 'kind', 'object_id', 'object_type', 'outcome', 'seq', 'what', 'who']);
       assert.ok(v.said.some((x) => /^Outcome/.test(x)));
       // Never a value: a detail written to the log is not on the page.
       h.made.app.audit.append({ at: h.made.app.now(), kind: 'LIST_EXPORTED', outcome: 'ALLOWED', actor_id: null, actor_role: null, object_type: 'list', object_id: 'CLAIMS', detail: { columns: ['a_detail_that_must_not_be_drawn'] } });

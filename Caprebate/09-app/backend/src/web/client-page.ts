@@ -86,7 +86,7 @@ export async function handleClientPage(
       const org = C.organisationView(db, actor, v.client.business_id);
       setClientMenu(org.id, org.trading_name, org.claims, [], v.id, d.app.now());
     }
-    html(res, 200, renderClaim(d, actor, v, url.searchParams.get('done') ?? undefined, url.searchParams.get('step') ?? undefined));
+    html(res, 200, renderClaim(d, actor, v, url.searchParams.get('done') ?? undefined, url.searchParams.get('step') ?? undefined, url.searchParams.get('stage') ?? undefined));
     return 'handled';
   }
 
