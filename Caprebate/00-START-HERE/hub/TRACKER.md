@@ -14,7 +14,7 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 338 |
+| Done | 339 |
 | Working on it | 0 |
 
 | Owner type | Items |
@@ -1438,7 +1438,7 @@
 
 ## Z · Complete / Not Applicable
 
-338 items.
+339 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
