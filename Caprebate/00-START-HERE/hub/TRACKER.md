@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 26 |
 | Built - awaiting sign-off | 142 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
 | Done | 337 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1436,9 +1436,9 @@
 
 ### Phase 160j - Carried from 160i: a client's upload or answer waits for staff to check and accept it (or ask again with a reason), and a value typed or asked for straight from a "still needed" line
 
-`13334969547` · **Ready - Claude can build** · owner Claude
+`13334969547` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
 
-- Note 2026-10-20 (Phase 160i): carried from 160i, which built the claim page's overview without these two.
+- Note 2026-10-20 (Phase 160i): carried from 160i, which built the claim page's overview without these two. | 2026-10-20 (Phase 160j): written and claimed on Lakhbir's instruction ("Do this task here").
 
 ---
 
