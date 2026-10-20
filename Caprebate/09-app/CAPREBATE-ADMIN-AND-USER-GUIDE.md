@@ -1400,13 +1400,12 @@ client not knowing. The fact goes back on the list of things still to find. A bl
 answer, or tick “I don't know”". Then the page shows "✓ do you own the freehold or hold a lease — answered “I don't
 know”".
 
-**Uploading a document.** Under **Documents we have asked you for**, press **Get an upload link for this document**.
-To send one we did not ask for, use **Send us a document** → **What is it?** → **Get an upload link**. You never type
-a file name. "We name the file ourselves, so nothing personal is kept in its name."
+**Uploading a document.** Each of the **Documents we have asked you for** has its own box. Drop the file on the box,
+or tap the box to choose it, and press **Send this file**. To send one we did not ask for, use **Send us a document**:
+choose the file, pick **What is it?** and press **Send**. You never type a file name. "We name the file ourselves, so nothing personal is kept in its name."
 
-The next page is **Your upload link is ready**. It has **Choose the file**. Pick the file and press **Send the file**.
-The link works once, and then it expires. If you send with no file chosen, it answers **Not accepted**: "no file was
-attached. Choose the file and send it again."
+A file over 4 MB goes in pieces first. Under the button you see "Sending your file" and how far it has got. Keep the
+page open until it is done. If you press **Send** with no file chosen, it says "Choose a file first."
 
 When the file arrives and we have read it, the reply says: "We read it, then deleted the file. What we asked you for
 is now marked received." The request then shows as "✓ … received, version 1". There is no button to say you have sent

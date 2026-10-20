@@ -17,6 +17,10 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] Confirm or complete the ICO registration (ACTION-PLAN ~1828).
 - [x] DKIM, SPF and DMARC for caprebate.co.uk — checked 5 Oct 2026 (Phase 156b): all published; a test email scored 10/10 on mail-tester.com.
 - [ ] Get the director's confirmation of the 3% fee and the other terms (Word question 215).
+- [ ] Phase 160e (the stress test, 19 Oct 2026): where the website runs. Vercel serves it from London but the code
+      runs in Washington DC (iad1), so a visitor's details are handled in the US and every page waits on the Atlantic.
+      Moving it to London (`"regions": ["lhr1"]` in vercel.json) is one line; decide with where the Turso database sits,
+      since a London website reading a US database would be slower, not faster. The privacy notice must say which.
 - [x] Word question 11 — CLOSED 4 Oct 2026: neither licence email is sent (Lakhbir: the VOA rating list scrapped; "OS email no we dont need to send it"; on the Rating Cost Guide, "dont send it"). The fee percentage and the ageing method go to the surveyor (the free 45-minute call, Q9 and Q9a).
 - [ ] Book the free 45-minute surveyor call.
 - [ ] Get the DPO appointment signed by Sadique and the company, and its five blanks filled.
@@ -98,6 +102,8 @@ appointment not yet signed). Lakhbir Dhillon: Head of Business Development, brea
 - [ ] SDP-L2 and SDP-L9 to L21; introducer terms; the terms, complaints and consent policies.
 - [ ] Phase 153c: the email-only surveyor breach clause (Word question 55, 2C-T beside the draft), the letter of authority (question 184) and the deputy route (question 56).
 - [ ] Phase 153d: the test-only engagement letter's clauses 5, 7(d) and 13 (is £995 a fair estimate of our losses; does clause 13 work; is "named in our privacy notice" sound?), the introducer terms and disclosure line (question 42), and the money-laundering check's test defaults (question 45).
+- [ ] Phase 160e: once clause 5's break fee (and any abort fee) is agreed, the home page's "A flat fee. Our fee is 3%"
+      must still read true. If a client can owe more than the 3%, the home page says so.
 
 ## The accountant and the tax adviser
 

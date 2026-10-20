@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 332 |
-| Working on it | 1 |
+| Done | 333 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-35 items.
+34 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1440,17 +1440,11 @@
 
 - Note 2026-10-19 (Phase 160c): Written by Phase 160c for what it left on purpose: the emails, the letter, reports and PDFs (versioned and signed: only new versions, and only words nobody has signed off), text the system writes and stores, and export column names. In ACTION-PLAN.md above the sweep and on the run sheet. Created on monday in group 05.
 
-### Phase 160e - The stress test's fixes: documents over 4.5 MB in pieces, sign-in from one network address, forms from other websites, the home page's long dashes (19 Oct 2026)
-
-`13326319071` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-19 (Phase 160e): Written and claimed 19 Oct 2026 on Lakhbir's instruction after the stress test of main 85cb245 (stress test the website, engine, reports, code, content and portal log ins; ensure everything is working and correct before deployment).
-
 ---
 
 ## Z · Complete / Not Applicable
 
-332 items.
+333 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3444,4 +3438,11 @@
 
 - Note 2026-10-19 (Phase 160c): Written and claimed 19 Oct 2026 on Lakhbir's instruction after looking at the portal on the test website ("polish the back end up, the text format looks all wrong and remove the — AI uses ensure our branding from the home page matches the back end"). Created on monday in group 05.
 - Note 2026-10-19 (Phase 160c): Done 19 Oct 2026: the home page's branding in the back office and the portal (ink menu, ivory words, mint pills, the brand's type, its mark and wordmark), the text tidied, no long dash on any screen page() draws (src/web/plain-dashes.ts); test/phase160c.test.ts (14), 37 test files restated; emails, letter, reports, PDFs, stored text and export headers carried to Phase 160d (13326319070). Record in PHASE-HISTORY. Done on monday and moved to group Z.
+
+### Phase 160e - The stress test's fixes: documents over 4.5 MB in pieces, sign-in from one network address, forms from other websites, the home page's long dashes (19 Oct 2026)
+
+`13326319071` · **Done** · owner Claude
+
+- Note 2026-10-19 (Phase 160e): Written and claimed 19 Oct 2026 on Lakhbir's instruction after the stress test of main 85cb245 (stress test the website, engine, reports, code, content and portal log ins; ensure everything is working and correct before deployment).
+- Note 2026-10-19 (Phase 160e): Done 19 Oct 2026: a document over 4.5 MB sent in pieces on every upload form (src/web/upload-pieces.ts, migration 117); sign-in and resets limited from one network address, the test website trusting Vercel's X-Forwarded-For; a cross-site form refused; the home page's four long dashes; the guide's upload paragraph matched to the screens. test/phase160e.test.ts (17); four test files restated. Two decisions added to WAITING-ON-PEOPLE (the website's region; the fee wording once clause 5 is agreed).
 
