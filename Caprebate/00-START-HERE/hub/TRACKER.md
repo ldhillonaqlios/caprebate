@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 336 |
-| Working on it | 1 |
+| Done | 337 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160h - The website's other legal pages: terms of use, cookie policy with a consent banner, acceptable use, accessibility, disclaimer (drafts for the solicitor and the DPO)
-
-`13333379992` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-20 (Phase 160h): Written and claimed 20 Oct 2026 on Lakhbir's instruction ("draft up some T&C, Policy docs, Cookies (add a cookie consent banner), Privacy policy, all the usual things you see on the website. This would need to be made as a phase on monday.com"), after Phases 160f and 160g published the privacy notice and public notices. Created on monday in group 05 (first named 160f, then 160g, renamed as the other session took those numbers).
-
 ---
 
 ## Z · Complete / Not Applicable
 
-336 items.
+337 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3466,4 +3460,11 @@
 
 - Note 2026-10-20 (Phase 160g): Written and claimed 20 Oct 2026 on Lakhbir's answer 'Sadique approves, I relay' for the eight facts Phase 160f proposed.
 - Note 2026-10-20 (Phase 160g): Done 20 Oct 2026: the eight facts confirmed as relayed by Lakhbir for Sadique Maskeen, for testing; marks off; one untrue clause removed; test/phase160g.test.ts (2). 5,217 checks.
+
+### Phase 160h - The website's other legal pages: terms of use, cookie policy with a consent banner, acceptable use, accessibility, disclaimer (drafts for the solicitor and the DPO)
+
+`13333379992` · **Done** · owner Claude
+
+- Note 2026-10-20 (Phase 160h): Written and claimed 20 Oct 2026 on Lakhbir's instruction ("draft up some T&C, Policy docs, Cookies (add a cookie consent banner), Privacy policy, all the usual things you see on the website. This would need to be made as a phase on monday.com"), after Phases 160f and 160g published the privacy notice and public notices. Created on monday in group 05 (first named 160f, then 160g, renamed as the other session took those numbers).
+- Note 2026-10-20 (Phase 160h): Done: five legal pages drafted on the test website, the cookie banner and the footers; 13 tests, 5,230 checks. Waiting on the solicitor and DPO (drafts, the notices' cookie section) and Lakhbir (ICO number, phone), in WAITING-ON-PEOPLE.
 
