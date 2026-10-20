@@ -39,13 +39,15 @@ export const AUDIT_PAGE_SIZE = 200;
 export type AuditLine = {
   readonly seq: number; readonly at: string; readonly kind: string; readonly actor_role: string | null; readonly actor_id: string | null;
   readonly object_type: string | null; readonly object_id: string | null; readonly outcome: string;
+  /** PHASE 160i: who, by name, and what happened in plain words. */
+  readonly who: string | null; readonly what: string;
 };
 
 export type AuditLogView = {
   readonly chain: { readonly intact: boolean; readonly broken_at: number | null; readonly entries: number; readonly says: string };
   readonly lines: readonly AuditLine[];
   readonly kinds: readonly string[];
-  readonly applied: { readonly kind: string | null; readonly outcome: string | null };
+  readonly applied: { readonly kind: string | null; readonly outcome: string | null; readonly client: { readonly id: string; readonly name: string } | null };
   readonly said: readonly string[];
   readonly never: string;
   readonly command: string;
@@ -61,22 +63,36 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
   const askedOutcome = (q.get('outcome') ?? '').trim();
   const outcome = askedOutcome === '' ? null : Object.hasOwn(AUDIT_OUTCOMES, askedOutcome) ? askedOutcome : null;
   if (askedOutcome !== '' && outcome === null) said.push('Outcome: not allowed, refused or error, so it was not used');
-  for (const k of new Set(q.keys())) if (k !== 'kind' && k !== 'outcome') said.push(`${k.slice(0, 40)}: not a filter on this page, so it was not used`);
+  // PHASE 160i: one client's entries, from the claim page's "Open the audit log for this client".
+  const askedClient = (q.get('client') ?? '').trim();
+  const clientRow = askedClient === '' ? undefined : d.db.get<{ id: string; name: string }>('SELECT id, name FROM businesses WHERE id = ?', [askedClient]);
+  const client = clientRow === undefined ? null : { id: clientRow.id, name: clientRow.name };
+  if (askedClient !== '' && client === null) said.push('Client: not a client in this system, so it was not used');
+  for (const k of new Set(q.keys())) if (k !== 'kind' && k !== 'outcome' && k !== 'client') said.push(`${k.slice(0, 40)}: not a filter on this page, so it was not used`);
 
   const entries = d.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM audit_log')?.n ?? 0;
   const v = d.audit.verify();
   const lines = d.db.all<{
     seq: number; at: string; kind: string; actor_role: string | null; actor_id: string | null; object_type: string | null; object_id: string | null; outcome: string;
+    who: string | null;
   }>(
-    'SELECT seq, at, kind, actor_role, actor_id, object_type, object_id, outcome FROM audit_log ' +
-      'WHERE (? IS NULL OR kind = ?) AND (? IS NULL OR outcome = ?) ORDER BY seq DESC LIMIT ?',
-    [kind, kind, outcome, outcome, AUDIT_PAGE_SIZE],
-  ).map((r) => ({ ...r, at: localStamp(r.at) }));
+    client === null
+      ? 'SELECT a.seq, a.at, a.kind, a.actor_role, a.actor_id, a.object_type, a.object_id, a.outcome, u.display_name AS who FROM audit_log a ' +
+        'LEFT JOIN users u ON u.id = a.actor_id WHERE (? IS NULL OR a.kind = ?) AND (? IS NULL OR a.outcome = ?) ORDER BY a.seq DESC LIMIT ?'
+      : 'SELECT a.seq, a.at, a.kind, a.actor_role, a.actor_id, a.object_type, a.object_id, a.outcome, u.display_name AS who FROM audit_log a ' +
+        'LEFT JOIN users u ON u.id = a.actor_id WHERE (? IS NULL OR a.kind = ?) AND (? IS NULL OR a.outcome = ?) AND ' +
+        '(a.object_id = ? OR a.object_id IN (SELECT id FROM claims WHERE business_id = ?) ' +
+        'OR a.object_id IN (SELECT id FROM properties WHERE business_id = ?) ' +
+        "OR json_extract(a.detail, '$.business') = ? " +
+        "OR json_extract(a.detail, '$.claim') IN (SELECT id FROM claims WHERE business_id = ?)) " +
+        'ORDER BY a.seq DESC LIMIT ?',
+    [kind, kind, outcome, outcome, ...(client === null ? [] : clientAuditParams(client.id)), AUDIT_PAGE_SIZE],
+  ).map((r) => ({ ...r, at: localStamp(r.at), what: kindWords(r.kind) }));
 
   d.audit.append({
     at: d.now(), kind: 'AUDIT_LOG_READ', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'audit', object_id: 'audit_log',
-    detail: { filters: [...(kind === null ? [] : ['kind']), ...(outcome === null ? [] : ['outcome'])], rows: lines.length, intact: v.intact },
+    detail: { filters: [...(kind === null ? [] : ['kind']), ...(outcome === null ? [] : ['outcome']), ...(client === null ? [] : ['client'])], rows: lines.length, intact: v.intact },
   });
 
   return {
@@ -86,7 +102,7 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
         ? `Audit log checked — nothing changed. All ${entries.toLocaleString('en-GB')} records were checked, each against the one before it.`
         : `Audit log problem — a record was changed or removed. Tell the Admin now. The problem starts at record ${v.broken_at ?? '?'}.`,
     },
-    lines, kinds, applied: { kind, outcome }, said,
+    lines, kinds, applied: { kind, outcome, client }, said,
     never: 'The details of each line are never shown or read here. You see the kind, the ids and the outcome.',
     command: 'npm run verify-audit',
   };
@@ -100,3 +116,36 @@ export function auditLogView(d: AuditLogDeps, actor: Actor, q: URLSearchParams):
 export function auditLogGate(actor: Actor): void {
   authorise(actor, 'audit.read', { type: 'audit', id: 'audit_log' });
 }
+
+/**
+ * PHASE 160i — WHAT AN ENTRY'S KIND MEANS, in plain words, for the one-client view. A kind without its own words is said
+ * from its name ("CLAIM_FACT_RECORDED" reads "Claim fact recorded"), never left as a code.
+ */
+const KIND_WORDS: Readonly<Record<string, string>> = Object.freeze({
+  CLAIM_CREATED: 'Opened the claim', CLAIM_UPDATED: 'Changed the claim', CLAIM_MOVED: 'Moved the claim to another stage',
+  CLAIM_FACT_RECORDED: 'Recorded a fact on the claim', ORGANISATION_UPDATED: 'Changed the client’s details',
+  CONTACT_CREATED: 'Added a contact', CONTACT_UPDATED: 'Changed a contact', PROPERTY_CREATED: 'Added a property',
+  PROPERTY_UPDATED: 'Changed a property', EMAIL_QUEUED: 'Sent an email', ENGAGEMENT_SIGNED: 'The engagement letter was signed',
+  DOCUMENT_UPLOADED: 'Uploaded a document', DOCUMENT_REQUESTED: 'Asked the client for a document', RESEARCH_RUN: 'Ran the lookups',
+  AUDIT_LOG_READ: 'Read the audit log',
+});
+
+export function kindWords(kind: string): string {
+  const w = KIND_WORDS[kind];
+  if (w !== undefined) return w;
+  const s = kind.toLowerCase().replace(/_/g, ' ').trim();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** PHASE 160i — the audit log's entries about one client: the company, its claims and properties, or naming them. */
+export const clientAuditParams = (business_id: string): string[] => [business_id, business_id, business_id, business_id, business_id];
+
+export function clientAuditCount(db: Db, business_id: string): number {
+  return db.get<{ n: number }>(
+    'SELECT COUNT(*) AS n FROM audit_log a WHERE ' +
+      '(a.object_id = ? OR a.object_id IN (SELECT id FROM claims WHERE business_id = ?) ' +
+      'OR a.object_id IN (SELECT id FROM properties WHERE business_id = ?) ' +
+      "OR json_extract(a.detail, '$.business') = ? " +
+      "OR json_extract(a.detail, '$.claim') IN (SELECT id FROM claims WHERE business_id = ?)) ", clientAuditParams(business_id))?.n ?? 0;
+}
+

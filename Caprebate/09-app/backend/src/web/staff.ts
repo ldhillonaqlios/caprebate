@@ -896,6 +896,7 @@ function homePage(actor: Actor, rows: Safe, view: string | null = null): string 
  * tools/lint-sql.cjs reads the HTML word for one after a backtick as SQL.
  */
 function auditPage(actor: Actor, v: AuditLogView): string {
+  if (v.applied.client !== null) return clientAuditPage(actor, v, v.applied.client);
   const kinds = v.kinds.map((k) => h`<option value="${k}"${v.applied.kind === k ? raw(' selected') : raw('')}>${k}</option>`);
   const outcomes = Object.entries(AUDIT_OUTCOMES).map(([k, l]) => h`<option value="${k}"${v.applied.outcome === k ? raw(' selected') : raw('')}>${l}</option>`);
   return page({
@@ -919,6 +920,34 @@ function auditPage(actor: Actor, v: AuditLogView): string {
           <td>${l.actor_role ?? h`<span class="help">no session</span>`}</td><td>${l.actor_id ?? '—'}</td>
           <td>${l.object_type ?? '—'} ${l.object_id ?? ''}</td><td>${AUDIT_OUTCOMES[l.outcome] ?? l.outcome}</td></tr>`)}</tbody></table></div>`}`,
   });
+}
+
+/**
+ * PHASE 160i — ONE CLIENT'S AUDIT LOG, from the claim page. Who did what and when, in plain words, newest first. Nothing
+ * on it changes an entry: the log refuses any change or deletion (migration 001), and each entry is chained to the one
+ * before it, so a change would show.
+ */
+function clientAuditPage(actor: Actor, v: AuditLogView, client: { readonly id: string; readonly name: string }): string {
+  return page({
+    title: `Audit log: ${client.name}`, nav: nav(actor), wide: true,
+    body: h`
+      <div class="pagehead"><div><p class="eyebrow">Audit log</p><h1>${client.name}</h1></div></div>
+      <div class="${v.chain.intact ? 'gate' : 'flag'}"><strong>${v.chain.says}</strong></div>
+      <p>Every change on this client is written here, with who made it and when. <strong>Nobody can change or delete an
+        entry, Admin included.</strong> A correction is a new entry; the old one stays. Opening this page adds an entry too.</p>
+      <p><a href="/staff/clients/${client.id}">Back to ${client.name}</a> · <a href="/staff/audit">The whole audit log</a></p>
+      ${v.lines.length === 0 ? h`<p class="help">Nothing is recorded about this client yet.</p>` : h`<div class="tablewrap" id="audit-lines"><table>
+        <thead><tr><th>When</th><th>Who</th><th>What happened</th><th>Outcome</th></tr></thead>
+        <tbody>${v.lines.map((l) => h`<tr class="${l.outcome === 'REFUSED' ? 'overdue' : ''}"><td class="when">${l.at}</td>
+          <td>${l.who ?? (l.actor_role === null ? 'The system' : 'A former user')}${l.actor_role === null ? raw('') : h`<br><span class="help">${roleWords(l.actor_role)}</span>`}</td>
+          <td>${l.what}</td><td>${AUDIT_OUTCOMES[l.outcome] ?? l.outcome}</td></tr>`)}</tbody></table></div>`}
+      <p class="help">The newest ${AUDIT_PAGE_SIZE} entries are shown.</p>`,
+  });
+}
+
+function roleWords(role: string): string {
+  const w: Record<string, string> = { ADMIN: 'Admin', SALES: 'Sales', ACCOUNTING: 'Accounting', SURVEYING: 'Surveyor', CLIENT: 'Client', READONLY: 'View only', SYSTEM: 'The system' };
+  return w[role] ?? role.charAt(0) + role.slice(1).toLowerCase();
 }
 
 /* ------------------------------------------------- section 1 pages */

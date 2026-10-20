@@ -2112,6 +2112,14 @@ stands, such as **Working on it** or **Done**. Press a box to open it. A box you
 chose to **keep this open for me**. On a laptop, the left-hand menu lists the boxes under the claim. A box that needs
 work says **to do**. One waiting for the client says **waiting**. The stage shows in its colour at the top.
 
+**Where this claim stands.** Admin and Sales see this box under the stage bar. All eleven stages run down its left.
+A tick means a stage is done. **Now** marks where the claim is. Press any stage to see what it needs. You can look back
+or ahead. The numbers show how many things are in. **Still needed** lists what is missing. Late things come first.
+**Gathered** lists what we have, grouped by where it came from. Press a line to see more. A lookup shows the record it
+read and what came back. A fact shows who typed it, when and how they got it. It also shows every value before. An old
+value is never lost. The **survey pack** shows how far the surveyor has got. When you type a fact, say where you got it.
+Admin also sees a link to the client's audit log. Nobody can change or delete an entry in it.
+
 On the right are **Next action** and **Quick actions**. The quick actions are:
 - **Log a call or add a task**
 - **Set the next action**

@@ -261,8 +261,9 @@ export function factsBlock(claim_id: string, facts: F.FactsPanel | ReleasedFacts
         <label>Fact <select name="fact_key">${Object.entries(F.FACTS).filter(([k]) => k !== 'GRANTS_EXIST').map(([k, v]) => h`<option value="${k}">${v.label}</option>`)}</select></label>
         <label>Answer <select name="answer"><option value="VALUE">This value</option><option value="UNKNOWN">Not known</option></select></label>
         <label>Value <input name="value" placeholder="a date like 2026-03-31, pounds, or a choice like YES"></label>
-        <label>Source <select name="source_id">${options(F.CAPTURE_SOURCES)}</select></label>
-        <label>Note <input name="note"></label>
+        <label>Where did you get this? <select name="source_id" required><option value="">Choose one</option>${options(F.CAPTURE_SOURCES)}</select></label>
+        <label>Note <span class="help">Who told you, or which page of which document.</span> <input name="note"></label>
+        <p class="help">Saved with your name and the time. A new value never replaces an old one: both stay in the record and the audit log.</p>
         <button type="submit">Record the fact</button></form>
       <form method="post" action="/staff/claims/${claim_id}/owners">
         <label>Position <input name="position" type="number" min="1" max="20"></label>

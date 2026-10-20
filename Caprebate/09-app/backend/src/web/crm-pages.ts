@@ -67,6 +67,7 @@ import * as SO from './survey-open.ts';
 import { earlyWindowWarning } from './claim-facts.ts';
 import { portalStepLine } from './portal-steps.ts';
 import { accountantConfirmBlock } from './accountant-confirm-pages.ts';
+import { claimOverview, overviewBlock } from './claim-overview.ts';
 
 type Owner = { readonly id: string; readonly name: string; readonly role: string };
 
@@ -323,7 +324,7 @@ export async function handleCrm(
 
   const claim = /^\/staff\/claims\/([A-Za-z0-9-]+)$/.exec(path);
   if (claim && method === 'GET') {
-    html(res, 200, renderClaim(d, actor, C.claimView(db, actor, claim[1] ?? '', { now: d.app.now() }), done));
+    html(res, 200, renderClaim(d, actor, C.claimView(db, actor, claim[1] ?? '', { now: d.app.now() }), done, undefined, url.searchParams.get('stage') ?? undefined));
     return 'handled';
   }
   if (claim && method === 'POST') {
@@ -451,7 +452,7 @@ function eventsBlock(claim_id: string, evs: readonly EventOnClaim[], value: bool
  * THE CLAIM PAGE, FOR A VIEW ALREADY AUTHORISED — PHASE 134. The same page is drawn at /staff/claims/:id and inside its
  * company's page at /staff/clients/:company/claims/:id (src/web/client-page.ts): the company is the frame either way.
  */
-export function renderClaim(d: CrmPageDeps, actor: Actor, v: C.ClaimView, done: string | undefined, step?: string): string {
+export function renderClaim(d: CrmPageDeps, actor: Actor, v: C.ClaimView, done: string | undefined, step?: string, stage?: string): string {
   const db = d.app.db;
   const biz = v.client.business_id;
   const mayEmail = can(actor, 'email.queue', { type: 'email', id: v.id, business_id: biz });
@@ -463,6 +464,7 @@ export function renderClaim(d: CrmPageDeps, actor: Actor, v: C.ClaimView, done: 
     contacts,
     may_note: can(actor, 'internal_note.write', { type: 'internal_note', id: biz, business_id: biz }),
     ...(step !== undefined && STEP_ANCHOR.test(step) ? { step } : {}),
+    ...(stage !== undefined ? { stage } : {}),
   });
 }
 
@@ -1090,6 +1092,8 @@ function claimPage(
     may_note: boolean;
     /** Phase 139: the step just worked in, whose facts open. */
     step?: string;
+    /** PHASE 160i: the stage opened in "Where this claim stands" (?stage=). */
+    stage?: string;
   },
 ): string {
   const db = d.app.db;
@@ -1138,6 +1142,10 @@ function claimPage(
   const needFor = (fact_id: string, label: string): Need => (asked.has(fact_id) ? { label, asked: true }
     : mayAsk ? { label, ask: claimAsk(biz, v.id, fact_id, label) } : { label });
   const sections: SectionSpec[] = [];
+  // PHASE 160i: where this claim stands, for the logins that read the pipeline and the facts (Admin and Sales).
+  const overview = v.facts === undefined || 'released_to_surveyor' in v.facts ? null
+    : claimOverview(db, actor, { id: v.id, business_id: biz, property_id: windowRow?.property_id ?? null, facts: v.facts, documents: v.documents },
+      x.stage ?? null, d.app.now().slice(0, 10));
 
   if (v.pipeline !== undefined) {
     const pl = v.pipeline;
@@ -1396,6 +1404,7 @@ function claimPage(
         v.value === undefined ? null : { label: 'Value', value: v.value.established ? v.value.shown_range : 'no estimate yet' },
       ], raw(''), h`${where === null ? 'Claim' : `Claim on ${where}`} ${claimRef(v.claim_ref)}`)}
       ${v.pipeline === undefined ? raw('') : claimStageBar(v.pipeline.stage, v.pipeline.steps, v.pipeline.gate)}
+      ${overview === null ? raw('') : overviewBlock(overview, ctx.back ?? `/staff/claims/${v.id}`, biz)}
       ${recordLayout(h`${sections.map((sp) => section(sp, ctx))}`, sidePanel(nextAction, quick, raw(''), step === null ? raw('') : nextStepCard(step)))}
 
       ${dataLink(actor, `/staff/claims/${v.id}/view.json`)}`,

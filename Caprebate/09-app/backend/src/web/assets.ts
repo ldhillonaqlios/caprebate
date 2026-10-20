@@ -1622,6 +1622,89 @@ body.crm main .linkish{border:0;color:var(--accent)}
   body.crm main h1{font-size:24px}
 }
 
+/* PHASE 160i, 20 October 2026: WHERE THIS CLAIM STANDS (src/web/claim-overview.ts). The stages down the left, the
+   chosen stage's needs, still needed and gathered side by side, each source opening in place, and the survey pack. */
+body.crm .cov{background:var(--white);border:1px solid var(--rule);border-top:4px solid var(--mint);border-radius:12px;padding:1rem 1.25rem;margin:1rem 0}
+body.crm .cov-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.5rem 1rem;margin-bottom:.75rem}
+body.crm .cov-head h2{margin:0;font-size:22px}
+body.crm .cov-sum{margin:0;color:var(--body)}
+body.crm .cov-grid{display:grid;grid-template-columns:240px minmax(0,1fr);gap:1.25rem;align-items:start}
+body.crm .cov-rail ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+body.crm .cov-st{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:.5rem;align-items:center;padding:.45rem .55rem;border-radius:.45rem;text-decoration:none;color:var(--body);font-size:15px}
+body.crm .cov-st:hover{background:var(--mist)}
+body.crm .cov-st[aria-current="true"]{background:var(--mint);color:var(--ink)}
+body.crm .cov-done{color:var(--ok)}
+body.crm .cov-now{color:var(--ink);font-weight:700}
+body.crm .cov-ic{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);font-size:12px;font-weight:700;color:var(--mut)}
+body.crm .cov-ic.done{background:var(--ok);border-color:var(--ok);color:var(--white)}
+body.crm .cov-ic.now{background:var(--ink);border-color:var(--ink);color:var(--mint)}
+body.crm .cov-nowtag{font-size:12px;background:var(--ink);color:var(--mint);border-radius:999px;padding:0 .45rem;margin-left:.25rem}
+body.crm .cov-cnt{font-size:13px;color:var(--mut)}
+body.crm .cov-st[aria-current="true"] .cov-cnt{color:var(--ink)}
+body.crm .cov-rail .help{margin:.6rem .5rem 0;font-size:14px}
+body.crm .cov-main{display:grid;gap:1rem;min-width:0}
+body.crm .cov-stage{background:var(--mist);border:1px solid var(--line);border-radius:12px;padding:.9rem 1.1rem}
+body.crm .cov-stage-top{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start;flex-wrap:wrap}
+body.crm .cov-stage h3{margin:0;font-size:20px}
+body.crm .cov-stage p{margin:.4rem 0 0}
+body.crm .cov h4{font-family:inherit;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--thead);margin:.9rem 0 .35rem}
+body.crm .cov-needs{list-style:none;margin:0;padding:0;display:grid;gap:.35rem}
+body.crm .cov-needs li{display:grid;grid-template-columns:18px minmax(0,1fr);column-gap:.4rem}
+body.crm .cov-needs li .help{grid-column:2;font-size:14px}
+body.crm .cov-needs li.met>span:first-child{color:var(--ok);font-weight:700}
+body.crm .cov-needs li.unmet>span:first-child{color:var(--warn);font-weight:700}
+body.crm .cov-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+body.crm .cov-col{border:1px solid var(--rule);border-radius:12px;padding:.9rem 1rem}
+body.crm .cov-col h3{display:flex;justify-content:space-between;align-items:center;margin:0 0 .5rem;font-size:18px}
+body.crm .cov-col .count{font-family:inherit;font-size:14px;font-weight:700;background:var(--mist);border:1px solid var(--line);border-radius:999px;padding:0 .55rem;color:var(--ink)}
+body.crm .cov-list{list-style:none;margin:0;padding:0;display:grid;gap:.6rem}
+body.crm .cov-need{border-left:4px solid var(--line);padding:.2rem 0 .3rem .7rem}
+body.crm .cov-need.cov-late{border-left-color:var(--stop)}
+body.crm .cov-need.cov-asked{border-left-color:#e0a63a}
+body.crm .cov-need .cov-nname{font-weight:700;color:var(--ink)}
+body.crm .cov-need .help{display:block;font-size:14px}
+body.crm .cov-group{margin-top:.75rem}
+body.crm .cov-got{border-bottom:1px solid var(--rule)}
+body.crm .cov-got>summary{display:grid;grid-template-columns:18px minmax(0,1fr);column-gap:.5rem;padding:.5rem .25rem;cursor:pointer;list-style:none}
+body.crm .cov-got>summary::-webkit-details-marker{display:none}
+body.crm .cov-got>summary:hover{background:var(--mist)}
+body.crm .cov-tick{color:var(--ok);font-weight:700;grid-row:span 3}
+body.crm .cov-gname{font-weight:700;color:var(--ink)}
+body.crm .cov-gval{font-size:15px;overflow-wrap:anywhere}
+body.crm .cov-src{justify-self:start;font-size:13px;font-weight:700;border-radius:999px;padding:0 .5rem;margin-top:.15rem;background:var(--mist);color:var(--thead);border:1px solid var(--line)}
+body.crm .cov-src-lookup{background:var(--g-win-bg);color:var(--g-win-ink);border-color:var(--g-win-bg)}
+body.crm .cov-src-client{background:var(--g-gather-bg);color:var(--g-gather-ink);border-color:var(--g-gather-bg)}
+body.crm .cov-src-surveyor{background:var(--g-survey-bg);color:var(--g-survey-ink);border-color:var(--g-survey-bg)}
+body.crm .cov-src-adviser{background:var(--g-sign-bg);color:var(--g-sign-ink);border-color:var(--g-sign-bg)}
+body.crm .cov-where{padding:.25rem .5rem .9rem 1.85rem}
+body.crm .cov-kv{display:grid;grid-template-columns:minmax(110px,160px) minmax(0,1fr);gap:.2rem .75rem;margin:0;font-size:15px}
+body.crm .cov-kv dt{color:var(--thead);font-weight:700}
+body.crm .cov-kv dd{margin:0;overflow-wrap:anywhere}
+body.crm .cov-fields{width:100%;border-collapse:collapse;font-size:14px}
+body.crm .cov-fields th{text-align:left;font-weight:700;color:var(--thead);width:42%;padding:.25rem .4rem;border-bottom:1px solid var(--rule);text-transform:none;letter-spacing:0;font-size:14px;background:none}
+body.crm .cov-fields td{padding:.25rem .4rem;border-bottom:1px solid var(--rule);overflow-wrap:anywhere}
+body.crm .cov-hist{margin:0;padding-left:1.2rem;display:grid;gap:.35rem;font-size:15px}
+body.crm .cov-hist .help{font-size:14px}
+body.crm .cov-hist .cov-now{font-size:12px;background:var(--ink);color:var(--mint);border-radius:999px;padding:0 .4rem}
+body.crm .cov-pack,body.crm .cov-audit{border:1px solid var(--rule);border-radius:12px;padding:.9rem 1rem}
+body.crm .cov-pack-top{display:flex;justify-content:space-between;align-items:baseline}
+body.crm .cov-pack h3,body.crm .cov-audit h3{margin:0;font-size:18px}
+body.crm .cov-pct{font-size:24px;font-weight:700;color:var(--ink)}
+body.crm .cov-bar{height:12px;border-radius:6px;background:var(--rule);overflow:hidden;margin:.5rem 0}
+body.crm .cov-bar span{display:block;height:12px;background:var(--ok)}
+body.crm .cov-bar-0{width:0%}body.crm .cov-bar-5{width:5%}body.crm .cov-bar-10{width:10%}body.crm .cov-bar-15{width:15%}body.crm .cov-bar-20{width:20%}body.crm .cov-bar-25{width:25%}body.crm .cov-bar-30{width:30%}body.crm .cov-bar-35{width:35%}body.crm .cov-bar-40{width:40%}body.crm .cov-bar-45{width:45%}body.crm .cov-bar-50{width:50%}body.crm .cov-bar-55{width:55%}body.crm .cov-bar-60{width:60%}body.crm .cov-bar-65{width:65%}body.crm .cov-bar-70{width:70%}body.crm .cov-bar-75{width:75%}body.crm .cov-bar-80{width:80%}body.crm .cov-bar-85{width:85%}body.crm .cov-bar-90{width:90%}body.crm .cov-bar-95{width:95%}body.crm .cov-bar-100{width:100%}
+body.crm .cov-tiles{list-style:none;margin:.5rem 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px;font-size:14px}
+body.crm .cov-tiles li{border-radius:.4rem;padding:.35rem .5rem;line-height:1.3}
+body.crm .cov-tiles li.done{background:var(--okbg);color:var(--ok)}
+body.crm .cov-tiles li.todo{background:var(--mist);color:var(--thead);border:1px solid var(--rule)}
+body.crm .cov-tiles li span{font-weight:700}
+body.crm .cov-gloss{border:1px solid var(--rule);border-radius:12px;padding:.6rem 1rem}
+body.crm .cov-gloss summary{cursor:pointer;font-weight:700;color:var(--ink)}
+body.crm .cov-gloss dl{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:.3rem .9rem;margin:.6rem 0 0;font-size:15px}
+body.crm .cov-gloss dt{font-weight:700;color:var(--ink)}
+body.crm .cov-gloss dd{margin:0}
+@media (max-width:900px){body.crm .cov-grid{grid-template-columns:1fr}body.crm .cov-rail ol{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}body.crm .cov-kv,body.crm .cov-gloss dl{grid-template-columns:1fr}}
+
 /* ================================================================== *
  * THE PUBLIC PAGES IN THE HOME PAGE'S COLOURS — 29 September 2026.
  * Lakhbir: "when someone clicks am i eligible it matches the colours of
