@@ -29,55 +29,75 @@ const visible = (html: string) => html.replace(/<script[\s\S]*?<\/script>/g, ' '
   .replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ');
 
 describe('the home page', () => {
-  test('/ is the new page, under its own policy: this site, plus Cloudflare’s security check, and nothing else', async () => {
+  /* PHASE 160k, 21 OCTOBER 2026: the home page is the "Kurbelwerk" design (Lakhbir: "push it live"), written from its
+     design file by tools/site-from-design.mjs. The promises are the same as before; the markup they look for is new. */
+  test('/ is the new page, under its own policy: this site, its fonts, plus Cloudflare’s security check, and nothing else', async () => {
     const r = await get('/');
     assert.equal(r.status, 200);
     assert.equal(r.headers.get('content-security-policy'), HOME_PAGE_CSP);
-    assert.match(HOME_PAGE_CSP, /script-src 'self' https:\/\/challenges\.cloudflare\.com; frame-src https:\/\/challenges\.cloudflare\.com;/);
+    assert.match(HOME_PAGE_CSP, /font-src 'self'; script-src 'self' https:\/\/challenges\.cloudflare\.com; frame-src https:\/\/challenges\.cloudflare\.com;/);
     assert.doesNotMatch(HOME_PAGE_CSP, /unsafe-inline|unsafe-eval|\*/);
     const body = await r.text();
-    assert.match(body, /<h1 id="hero-title"><span class="kick">Capital allowances for healthcare property<\/span>There is tax relief built into your building\.<\/h1>/);
-    assert.doesNotMatch(body, /cdnjs\.cloudflare\.com/, 'GSAP is still fetched from a CDN');
-    assert.match(body, /<script src="\/assets\/gsap\.min\.js" defer><\/script>/);
+    assert.match(body, /<h1 id="h1"[^>]*><span class="sr">Capital allowances for healthcare property: <\/span>There is tax relief built into your building<\/h1>/);
+    assert.doesNotMatch(body, /cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com/, 'something is still fetched from another site');
   });
 
-  test('every button that starts the assessment says "Am I eligible?" and goes to the back end', async () => {
+  test('every link that starts the assessment says "Am I eligible" and goes to the back end', async () => {
     const body = await (await get('/')).text();
-    const ctas = [...body.matchAll(/<a class="cta[^"]*" href="([^"]*)">([^<]*)<\/a>/g)];
-    assert.ok(ctas.length >= 4);
-    for (const m of ctas) assert.deepEqual([m[1], m[2]], ['/assessment', 'Am I eligible?']);
+    const links = [...body.matchAll(/<a\b[^>]*\shref="([^"]*)"[^>]*>((?:(?!<\/a>)[\s\S])*?)<\/a>/g)].filter((m) => /Am I eligible/.test(m[2] ?? ''));
+    assert.ok(links.length >= 4, `only ${links.length} "Am I eligible" links`);
+    for (const m of links) assert.equal(m[1], '/assessment');
     assert.doesNotMatch(visible(body), /Start the free assessment/);
   });
 
-  test('its style and script are files from this site; the page itself carries nothing inline', async () => {
+  test('its style and scripts are files from this site; the page itself carries nothing inline', async () => {
     const css = await get('/assets/home.css');
     assert.equal(css.status, 200);
     assert.match(css.headers.get('content-type') ?? '', /^text\/css/);
-    assert.match(await css.text(), /\.funnel\{/);
+    const sheet = await css.text();
+    assert.match(sheet, /@font-face\{font-family:"IBM Plex Sans";[^}]*src:url\(\/assets\/fonts\/ibm-plex-sans-latin-400-normal\.woff2\)/);
+    assert.match(sheet, /\.fxd \.it\.on \.fx/, 'the drawings’ effects are missing');
+    const head = await get('/assets/home-head.js');
+    assert.equal(head.status, 200);
+    assert.match(await head.text(), /document\.documentElement\.classList\.add\('js'\)/);
     const js = await get('/assets/home.js');
     assert.equal(js.status, 200);
     assert.match(js.headers.get('content-type') ?? '', /^text\/javascript/);
     const src = await js.text();
-    assert.match(src, /function capBuilding\(gsap, root, opts\)/);
-    assert.match(src, /function setVars\(root\)/);
+    assert.match(src, /function prep\(\)/, 'the scan is missing');
+    assert.match(src, /var BANDS=\{/, 'the calculator is missing');
     const body = await (await get('/')).text();
     assert.doesNotMatch(body, /\sstyle\s*=/i, 'a style attribute');
     assert.doesNotMatch(body, /\son[a-z]+\s*=/i, 'an inline event handler');
     assert.doesNotMatch(body, /<style\b/i, 'an inline <style>');
+    // the head script is in the head, the page's script after everything it reads
+    assert.ok(body.indexOf('<script src="/assets/home-head.js">') < body.indexOf('</head>'));
+    assert.ok(body.indexOf('<script src="/assets/home.js">') > body.lastIndexOf('</footer>'));
   });
 
-  test('a phone can sign in: Log in stays in the top bar when the menu is hidden (2 Oct 2026, Lakhbir on an iPhone)', async () => {
+  test('the fonts are this site’s own, and only the named ones are served', async () => {
+    const font = await get('/assets/fonts/ibm-plex-mono-latin-400-normal.woff2');
+    assert.equal(font.status, 200);
+    assert.equal(font.headers.get('content-type'), 'font/woff2');
+    assert.ok((await font.arrayBuffer()).byteLength > 5000);
+    assert.equal((await get('/assets/fonts/../../package.json')).status, 404);
+    assert.equal((await get('/assets/fonts/OFL-LICENSE.txt')).status, 404);
+  });
+
+  test('a phone can sign in: Log in is in the menu, which a phone opens from the Menu button', async () => {
     const body = await (await get('/')).text();
-    const header = /<header class="bar" id="bar">([\s\S]*?)<\/header>/.exec(body)?.[1] ?? '';
-    assert.match(header, /<\/nav>\s*<a class="bar-login-m" href="\/login">Log in<\/a>\s*<a class="cta bar-cta" href="\/assessment">/, 'no Log in beside "Am I eligible?"');
-    const css = await (await get('/assets/home.css')).text();
-    assert.match(css, /\.bar-login-m\{display:none;/, 'the phone link shows on a wide screen too');
-    assert.ok(css.includes('@media (max-width:980px){.bar-nav{display:none}.bar-login-m{display:inline-flex}'), 'the menu hides with no Log in in its place');
+    const header = /<header class="top" id="top">([\s\S]*?)<\/header>/.exec(body)?.[1] ?? '';
+    assert.match(header, /<li class="nav-login"><a href="\/login">Log in<\/a><\/li>/, 'no Log in in the menu');
+    assert.match(header, /<button class="mbtn" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav">/);
   });
 
-  test('the edition is refused if the file gains anything inline', () => {
-    const ok = '<html><head><style>a{}</style></head><body><p>x</p><script>1</script></body></html>';
+  test('the edition is refused if the file gains anything inline; head and body scripts are kept apart', () => {
+    const ok = '<html><head><script>0</script><style>a{}</style></head><body><p>x</p><script>1</script><p>y</p><script>2</script></body></html>';
     assert.doesNotThrow(() => buildHomeEdition(ok));
+    const e = buildHomeEdition(ok);
+    assert.equal(e.headJs, '0');
+    assert.equal(e.js, '1\n;\n2');
+    assert.ok(e.html.indexOf('<script src="/assets/home.js">') > e.html.indexOf('<p>y</p>'), 'the body script is not after the page');
     assert.throws(() => buildHomeEdition(ok.replace('<p>x</p>', '<p style="color:red">x</p>')), /style attribute/);
     assert.throws(() => buildHomeEdition(ok.replace('<p>x</p>', '<a onclick="go()">x</a>')), /event handler/);
     assert.throws(() => buildHomeEdition(ok.replace('<p>x</p>', '<style>p{}</style>')), /inline <style>/);
@@ -86,9 +106,12 @@ describe('the home page', () => {
 
   test('the contact form is the live form: the same fields, posted to /enquiry, and an enquiry from it is kept', async () => {
     const body = await (await get('/')).text();
-    const form = /<form class="c-form" id="contactform" action="\/enquiry" method="post" novalidate[\s\S]*?<\/form>/.exec(body)?.[0] ?? '';
+    const form = /<form class="form" id="contactform" action="\/enquiry" method="post" novalidate[\s\S]*?<\/form>/.exec(body)?.[0] ?? '';
     const names = [...form.matchAll(/\sname="([a-z]+)"/g)].map((m) => m[1]);
     assert.deepEqual(names, ['name', 'firm', 'email', 'phone', 'ptype', 'message']);
+    assert.match(form, /<div id="c-turnstile" class="c-turnstile"><\/div>/);
+    assert.match(form, /<input id="c-website" type="text" tabindex="-1" autocomplete="off">/, 'the honeypot is missing');
+    assert.match(await (await get('/assets/home.js')).text(), /var SITEKEY='[^']+';/);
     const r = await fetch(`${base}/enquiry`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ name: 'Home Page Person', firm: '', email: 'home.page@example.invalid', phone: '', ptype: 'Care home', message: '' }).toString() });
     assert.equal(r.status, 200);
@@ -100,10 +123,11 @@ describe('the home page', () => {
     assert.deepEqual(avoidHits(text).map((x) => x.word), []);
     assert.equal(text.includes('!'), false);
     assert.equal(/Caprebate/.test(text), false);
+    assert.equal(text.includes('—'), false, 'a long dash');
   });
 
   test('the file in the repository is the page served', () => {
-    assert.match(readFileSync(HOME_PATH, 'utf8'), /There is tax relief built into your building\./);
+    assert.match(readFileSync(HOME_PATH, 'utf8'), /There is tax relief built into your building/);
   });
 });
 
