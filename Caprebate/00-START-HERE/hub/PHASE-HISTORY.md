@@ -13479,3 +13479,24 @@ NOTHING LEFT  beyond that line.
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160m — every website section fits one window on a desktop screen — 21 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 160m, 21 Oct 2026: Lakhbir, with a screenshot of the hero cut off at the bottom of a 1896x931 window: "polish the website - look at the scroll points everything in each section should fit within one window". On a desktop screen each section is now one window tall, its content centred and sized by the window's height, and the page rests on each section as you scroll. test/phase160m.test.ts, 12 tests; 5,318 checks, all green.
+
+- **Claim.** hub/CLAIM.md and tracker row 13334969550, pushed first, cut from main after PR 67 merged.
+- **Measured first.** At 1896x931 the hero, the three views, the calculator, the sectors, the fee and the steps all ran past one window (the calculator by 440px); at 1536x730 every section but the questions did.
+- **Built.** One block of style, the same on all six design files, only for a window 1,000px wide and 600px tall or more: `--sheet` (the window less the frame and menu bar); sections at least that tall and centred; sizes by the window's height (headings, the hero heading and drawing, the views' drawings, the calculator's answers, figure and notes, list and table rows, the fee figure, the steps' stagger, the questions); a heading and its introduction side by side; the calculator's figure beside its questions from the top; long note lists in two columns; a closing call in one row; a tighter step for a window 900px tall or less; `scroll-snap-type: y proximity`. Phones and tablets unchanged.
+- **Seen in the browser** (headless Chrome, the design files and the served pages): every home section fits at 1896x931, 1920x1080, 1440x840, 1440x780 and 1536x730; every sector section except the guides and the pinned drawing at 1896x931, 1920x1080 and 1440x840, with a few 2 to 35px over at 1536x730; no overflow at 320, 375, 768 and 1440.
+- **The checks, at the close:** site 1,427 pass (3 xfail); phase3 440; phase9 417; back end 3,034 pass / 0 fail over 192 tracked files; **5,318** in all; the tracker green.
+
+```
+DONE          Every section fits one window on a desktop screen, and the page rests on each. test/phase160m.test.ts (12).
+              5,318 checks; all green.
+NOT DONE      The sector guides (about 2,000 words each) and the pinned drawings still scroll - by design, not a gap.
+              A window under about 730px tall: a few sector sections run a little over - a choice for Lakhbir if it matters.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines.
+```
+
+**Claim cleared** in the commit that carries this record.
