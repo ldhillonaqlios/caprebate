@@ -13439,3 +13439,25 @@ NOTHING LEFT  beyond those lines.
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160k — the new public website: the Kurbelwerk home page and five sector landing pages — 21 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 160k, 21 Oct 2026: Lakhbir chose the Kurbelwerk design from five template options, had it animated and given five sector landing pages written to rank, then said "push it live" and chose the test site. The home page is now that design, with the live enquiry form (the same fields to `/enquiry`, the Cloudflare check, the honeypot), Log in, the legal links and the cookie banner kept. The five sector pages are at `/capital-allowances/<sector>/`: care homes, dental practices, GP surgeries, supported living, private hospitals and clinics. test/phase160k.test.ts, 35 tests; 5,293 checks, all green.
+
+- **Claim.** hub/CLAIM.md and tracker row 13334969548, pushed first (`39eb5cd`), cut from main.
+- **Built.** `backend/tools/site-from-design.mjs` turns the design files into `site/home.html` and `site/capital-allowances/<slug>.html` with nothing inline (every `style=""` becomes a class; a page still carrying an inline style, Google Fonts or a design-folder link is refused). `src/web/home-site.ts`: `SECTOR_SLUGS`, `sectorEdition`, `buildEdition` (a head script gets its own asset), `fontFile` off a fixed list. `src/web/router.ts`: the sector pages and their assets, the redirects, `/assets/home-head.js`, `/assets/fonts/<name>`. IBM Plex self-hosted (SIL Open Font Licence); the page policy gains `font-src 'self'` and nothing else.
+- **Tests.** `test/phase160k.test.ts` (35); `test/home-page.test.ts` rewritten for the new page; three older tests restated for the new header, form id, script order and policy. Two faults the full run caught and fixed: the form's required labels said "*" not "(required)", and the font reader joined a path at request time (DB-W1); the paths are now fixed at start-up.
+- **Seen in the browser** (the local server, headless Chrome): no policy violations, no errors, no failed requests on all six pages; no sideways overflow at 320, 375, 768 and 1440; the calculators right (supported living, bought, £1.5m: £375,000); the fonts load. The form's Cloudflare check cannot load on 127.0.0.1 because the real site key is tied to the test domain; on the live test site the same code shows the check.
+- **The checks, at the close:** site 1,427 pass (3 xfail); phase3 440; phase9 417; back end 3,009 pass / 0 fail over 190 tracked files; **5,293** in all; the tracker green.
+
+```
+DONE          The Kurbelwerk home page and five sector landing pages, served on the test site once merged.
+              test/phase160k.test.ts (35). 5,293 checks; all green.
+NOT DONE      The sector pages' tax statements - BLOCKED on the accountant's review
+              (Website Content/landing-page/template-options/capital-allowances/ACCOUNTANT-CHECKS.md).
+              The test site tells search engines not to index it, so nothing ranks until the pages move to caprebate.com.
+              Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond those lines.
+```
+
+**Claim cleared** in the commit that carries this record.

@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 339 |
-| Working on it | 1 |
+| Done | 340 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160k - The new public website: the Kurbelwerk home page (scan, cut-aways, dark calculator, sector drop-downs) and five sector landing pages written to rank, on the test site
-
-`13334969548` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-21 (Phase 160k): Written and claimed 21 Oct 2026 on Lakhbir's instruction ('push it live', the test site chosen): the Kurbelwerk design from Website Content/landing-page/template-options onto the app.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-339 items.
+340 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3485,4 +3479,11 @@
 `13334969547` · **Done** · owner Claude
 
 - Note 2026-10-20 (Phase 160i): carried from 160i, which built the claim page's overview without these two. | 2026-10-20 (Phase 160j): written and claimed on Lakhbir's instruction ("Do this task here"). | 2026-10-20 (Phase 160j): Done: what the client sends checked (accept or ask again), a fact found where it stands; 11 tests, 5,244 checks.
+
+### Phase 160k - The new public website: the Kurbelwerk home page (scan, cut-aways, dark calculator, sector drop-downs) and five sector landing pages written to rank, on the test site
+
+`13334969548` · **Done** · owner Claude
+
+- Note 2026-10-21 (Phase 160k): Written and claimed 21 Oct 2026 on Lakhbir's instruction ('push it live', the test site chosen): the Kurbelwerk design from Website Content/landing-page/template-options onto the app.
+- Note 2026-10-21 (Phase 160k): Done: the Kurbelwerk home page and five sector landing pages on the test site (on merge); 35 tests, 5,293 checks. The sector pages' tax statements wait on the accountant (ACCOUNTANT-CHECKS.md).
 

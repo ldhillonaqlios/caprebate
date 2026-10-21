@@ -1071,54 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 160k — The new public website: the Kurbelwerk home page and five sector landing pages
-
- **Model: Opus. Written 21 October 2026 on Lakhbir's instruction** ("push it live", with the Caprebate test site chosen over a separate preview link or a private page). The design is the one he chose and refined over 20 and 21 October: the "Kurbelwerk" drawing-sheet style, built as design files in `Website Content/landing-page/template-options/` (outside the repository, which ignores that folder): the animated home page `06-kurbelwerk-animated.html` and the five sector pages in `capital-allowances/<sector>/index.html`, each written to rank (an "In brief" answer, a guide of about 2,000 words, ten FAQs matched in their JSON-LD). The tax statements those pages make are listed for the accountant in `capital-allowances/ACCOUNTANT-CHECKS.md` beside them; that review does not block the test site (build, then check).
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Read THE STANDING INSTRUCTION (thirteen points,
-AMENDMENTS 1 AND 2, the CLOSING CHECK) and COORDINATES in ACTION-PLAN.md first.
-Claim the work in hub/CLAIM.md (commit and push first). Board item 13334969548.
-Work on claude/phase-160k from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges, and the merge deploys the test site.
-
-WHAT IS THERE (re-derive it; rule 8): src/web/home-site.ts builds the home
-"edition" from site/home.html: the first bare <style> becomes /assets/home.css,
-every bare inline <script> is joined into /assets/home.js at the first one's
-place, and anything else inline (a style attribute, an on* handler) throws.
-HOME_PAGE_CSP allows only 'self' for styles and scripts plus Cloudflare's
-Turnstile; there is no font-src, so Google Fonts is blocked. /enquiry takes
-name, firm, email, phone, ptype and message with the Turnstile token, and the
-server swaps the site key into the line var SITEKEY='...'. There is no
-/capital-allowances route; a test expects /capital-allowances/care-homes/ to be
-a 404. Eight back-end tests pin the old home page's markup.
-
-BUILD (plain English at grade 9; no long dash; no internal code on a screen):
-1. A converter from the design files to app-safe pages: every style attribute
-   becomes a generated class, links become site paths (/, /#how,
-   /capital-allowances/<sector>/), every "Am I eligible" goes to /assessment,
-   the header carries Log in, the footer the real legal links, the review label
-   goes, and the fonts are self-hosted (IBM Plex, OFL) under /assets/fonts/.
-2. The enquiry form on the new home page is the live one: the same six field
-   names, the honeypot, Turnstile with the SITEKEY line, posting to /enquiry.
-3. The server serves the new home page and the five sector pages from the same
-   edition builder (CSS and JS as /assets files, head and body scripts kept
-   apart so the body script runs after the page), adds font-src 'self' to the
-   page policy, and keeps the cookie banner, HEAD handling and caching.
-4. The tests move to the new markup, and a new test file covers the sector
-   routes, the policy, the assets, the form, the links and the JSON-LD.
-5. The developer spec (phase section, routes table, figures) and the guide.
-
-WHEN THE PHASE IS DONE: the record in hub/PHASE-HISTORY.md, a short entry at
-the end of the monday run sheet, this section deleted, the board item to its
-true status, hub/CLAIM.md cleared, and a pull request against main.
-═══════════════════════════════════════════
-```
-
----
-
-
 ## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 
