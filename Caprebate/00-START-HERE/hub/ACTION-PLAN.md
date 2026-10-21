@@ -1071,12 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 160l — The website's finishing touches: the 3% outlined, the title block dated today, Scale removed, a signature
-
-**Model: Opus.** Board item 13334969548's follow-on, 13334969549. **Why** Lakhbir, 21 Oct 2026, on the live test site's screenshots: "add black outline to the 3%", "ensure the date here is always todays date", "remove scale", "add fake signiture".
-**Build** In the design files (`Website Content/landing-page/template-options/`), then `node tools/site-from-design.mjs` from 09-app/backend: both 3% figures inked with a black outline; the title block's Date set to the visitor's today by the page script (the file's own date stays as the fallback); the Scale box removed and Region across the row; a made-up signature (no real person's) that writes itself on the "Signature" line when it comes into view, shown still for reduced motion or no script.
-**Accept** a test of each on the served pages; the full check green; no overflow at 320/375/768/1440.
-
 ## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 

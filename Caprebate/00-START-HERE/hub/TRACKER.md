@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 340 |
-| Working on it | 1 |
+| Done | 341 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160l - The website's finishing touches: the 3% outlined in black, the title block dated today with Scale removed, a signature on the surveyor's line
-
-`13334969549` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-21 (Phase 160l): Written and claimed on Lakhbir's instruction (screenshots: 'add black outline to the 3%', 'ensure the date here is always todays date', 'remove scale', 'add fake signiture').
-
 ---
 
 ## Z · Complete / Not Applicable
 
-340 items.
+341 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3492,4 +3486,11 @@
 
 - Note 2026-10-21 (Phase 160k): Written and claimed 21 Oct 2026 on Lakhbir's instruction ('push it live', the test site chosen): the Kurbelwerk design from Website Content/landing-page/template-options onto the app.
 - Note 2026-10-21 (Phase 160k): Done: the Kurbelwerk home page and five sector landing pages on the test site (on merge); 35 tests, 5,293 checks. The sector pages' tax statements wait on the accountant (ACCOUNTANT-CHECKS.md).
+
+### Phase 160l - The website's finishing touches: the 3% outlined in black, the title block dated today with Scale removed, a signature on the surveyor's line
+
+`13334969549` · **Done** · owner Claude
+
+- Note 2026-10-21 (Phase 160l): Written and claimed on Lakhbir's instruction (screenshots: 'add black outline to the 3%', 'ensure the date here is always todays date', 'remove scale', 'add fake signiture').
+- Note 2026-10-21 (Phase 160l): Done: the 3% outlined, the title block dated today, Scale removed, a signature; 13 tests, 5,306 checks.
 

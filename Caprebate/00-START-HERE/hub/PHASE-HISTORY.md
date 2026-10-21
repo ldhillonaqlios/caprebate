@@ -13461,3 +13461,21 @@ NOTHING LEFT  beyond those lines.
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 160l — the website's finishing touches — 21 October 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES.** Phase 160l, 21 Oct 2026: Lakhbir, on the live test site's screenshots, asked for the 3% outlined in black, the title block's date always today, the Scale box removed and a fake signature. All four made in the design files and written into the site by the converter. test/phase160l.test.ts, 13 tests; 5,306 checks, all green.
+
+- **Claim.** hub/CLAIM.md and tracker row 13334969549, pushed first (`58833af`), cut from main after PR 66 merged.
+- **Built.** Both 3% figures get a black outline (`-webkit-text-stroke`, painted under the teal so it sits outside). The title block's Date is marked `data-today` and the page script writes the visitor's today as dd.mm.yyyy; the file's date is the fallback. Scale removed; Region spans the row (one column on phones). On the home page a made-up signature (an SVG scribble, no real person's) on the Signature line, drawn in when it comes into view; with no script or reduced motion it is simply there.
+- **Found on the way.** The signature's first hiding class, `.pre`, was the loading screen's own: the loaded page hides `.pre`, so the signature never showed. Renamed `sg-wait`/`sg-go`; a test guards it.
+- **Seen in the browser** (headless Chrome, the design file): the outline on both figures, today's date, Region across at desktop and phone widths, the signature written; no overflow at 320, 375, 768 and 1440 on the home page and the care homes page.
+- **The checks, at the close:** site 1,427 pass (3 xfail); phase3 440; phase9 417; back end 3,022 pass / 0 fail over 191 tracked files; **5,306** in all; the tracker green.
+
+```
+DONE          The 3% outlined; the date always today; Scale removed; a signature. test/phase160l.test.ts (13). 5,306 checks; all green.
+NOT DONE      Merging this phase's pull request - Lakhbir's click.
+NOTHING LEFT  beyond that line.
+```
+
+**Claim cleared** in the commit that carries this record.
