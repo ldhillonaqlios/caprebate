@@ -1071,12 +1071,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 160m — Every website section fits one window on a desktop screen
-
-**Model: Opus.** Board item 13334969550. **Why** Lakhbir, 21 Oct 2026, with a screenshot of the hero cut off at the bottom: "polish the website - look at the scroll points everything in each section should fit within one window".
-**Build** In the design files, then `node tools/site-from-design.mjs`: on a desktop screen (1,000px wide and 600px tall or more) every section is at least one window tall (the window less the frame and menu bar), its content centred, and sized by the window's height as well as its width so it fits; the page rests on each section as you scroll (scroll snapping, "proximity", so it never fights a long section). Phones and tablets unchanged. Long reading (the sector guides) and the pinned drawing are left to scroll.
-**Accept** every section measured against the window at 1896x931, 1920x1080, 1440x840, 1440x780 and 1536x730 on all six pages; no overflow at 320/375/768/1440; a test that the rules are served and only inside the desktop query.
-
 ## PHASE 161 — Sweep and stress-test (the recurring one, always last)
 
 

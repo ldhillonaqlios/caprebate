@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 11 |
-| Done | 341 |
-| Working on it | 1 |
+| Done | 342 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1208,7 +1208,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-34 items.
+33 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1434,17 +1434,11 @@
 
 - Note 2026-10-10 (Phase 159g): Word question 267 (the data protection officer); FOR THE SOLICITOR, DPO AND DEVELOPER SDP-P44. Created on monday in group 05.
 
-### Phase 160m - The website's sections each fit one window on a desktop screen, and the page rests on each
-
-`13334969550` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-10-21 (Phase 160m): Written and claimed on Lakhbir's instruction ('polish the website - look at the scroll points everything in each section should fit within one window', the hero cropped at the bottom in his screenshot).
-
 ---
 
 ## Z · Complete / Not Applicable
 
-341 items.
+342 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3499,4 +3493,11 @@
 
 - Note 2026-10-21 (Phase 160l): Written and claimed on Lakhbir's instruction (screenshots: 'add black outline to the 3%', 'ensure the date here is always todays date', 'remove scale', 'add fake signiture').
 - Note 2026-10-21 (Phase 160l): Done: the 3% outlined, the title block dated today, Scale removed, a signature; 13 tests, 5,306 checks.
+
+### Phase 160m - The website's sections each fit one window on a desktop screen, and the page rests on each
+
+`13334969550` · **Done** · owner Claude
+
+- Note 2026-10-21 (Phase 160m): Written and claimed on Lakhbir's instruction ('polish the website - look at the scroll points everything in each section should fit within one window', the hero cropped at the bottom in his screenshot).
+- Note 2026-10-21 (Phase 160m): Done: every home section fits one window at five desktop sizes; sector sections too except the guides and the pinned drawing; 12 tests, 5,318 checks.
 
